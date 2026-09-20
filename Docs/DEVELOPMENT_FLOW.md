@@ -1,9 +1,11 @@
 # Development Flow — 전체 개발 흐름
 
-기준일: 2026-09-12
-상태: 실행 순서 기준
+기준일: 2026-09-20
+상태: 실행 순서 기준 / Sprint 1 Stage 1 PoC 실행 중
 
 이 문서는 [milestones-and-core-design.md](milestones-and-core-design.md)의 M0~M5를 Sprint에서 실행하는 방법을 설명한다. Milestone 이름과 범위를 별도로 재정의하지 않는다.
+
+현재 Sprint 1은 2026-10-02까지 Stage 1 PoC를 통합하는 time-box다. PoC 결과는 핵심 재미와 기술 위험을 판정하는 증거이며, 기존 M1/M2 Gate 통과와 프로덕션 이식을 자동 승인하지 않는다.
 
 ## 1. 전체 흐름
 
@@ -161,9 +163,11 @@ Priority별 상세 업무는 Core Design 문서를 사용한다.
 
 ## 9. 지금 실행할 순서
 
-1. [SPRINT_0_BACKLOG.md](SPRINT_0_BACKLOG.md)의 M0 P0 Owner와 예상 시간을 확인한다.
-2. C 김진태와 D 황재동의 가용 시간·첫 P0 착수 가능일을 확인한다.
-3. Build·CI·`.meta` Baseline을 정상화한다.
-4. M1의 Core 계약, Player, World, Defense, Enemy Slice를 Ready로 만든다.
-5. M0 Gate를 통과하면 M1에서 Minimal Test Scene을 먼저 연결한다.
-6. M1 통과 전 Hub/Planet 완성 Content와 Online SDK 작업은 시작하지 않는다.
+1. [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md)의 업무를 GitHub Issue로 만들고 담당자·완료 조건·검증 방법을 기록한다.
+2. D가 터렛 인스턴스와 평가 데이터를 제공하고 E와 인터페이스를 합의한다.
+3. E가 터렛 점수 기반 brute-force 목표 선택을 구현하고 필요 시 region 방식과 비교한다.
+4. C가 거점 확보·상실과 전선 확장 Graybox를 E/D 결과에 연결한다.
+5. B가 Netcode/RPC/권한 구조 조사 결과와 현재 PoC의 향후 네트워크 전환 위험을 공유한다.
+6. A가 Player 지원 행동과 임시 승패 조건을 정해 한 Build로 통합한다.
+7. 2026-10-02 전체 팀 플레이 테스트 뒤 2026-10-03 회의에서 재미, 문제점, 프로덕션 이식 여부를 판정한다.
+8. PoC 동안 최종 아트, 모든 Content, 실시간 협동과 장기 성장 확정은 시작하지 않는다.
