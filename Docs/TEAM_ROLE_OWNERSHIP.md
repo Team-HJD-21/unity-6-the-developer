@@ -1,7 +1,7 @@
 # Team Role Ownership — 5개 제품 영역
 
-기준일: 2026-09-12
-상태: 역할·AI·협업 경계의 현행 기준 / A~E 담당 확정
+기준일: 2026-09-20
+상태: 역할·AI·협업 경계의 현행 기준 / Sprint 1 역할 확정
 
 ## 1. 팀 구성
 
@@ -144,6 +144,18 @@ AI는 `GameCommand`를 생성하고 A의 Authority/Simulation이 검증·처리�
 | E | A 또는 D | Authority와 Balance Data를 우회하지 않는가 |
 
 GitHub의 Required Approval 수는 0으로 유지한다. 작은 독립 변경은 Self-review와 CI 통과 후 Merge할 수 있다. 공용 계약, Save/Profile, Scene 구조, Build 설정, Network 변경은 표의 검토자에게 Review를 요청하고 의견을 해결한 뒤 Merge한다.
+
+## Sprint 1 Stage 1 PoC 역할 초점
+
+| 담당 | 핵심 책임 | 협업 경계 |
+| --- | --- | --- |
+| A · 양현석 | PoC 범위·계약·임시 승패 조건·10월 2일 통합 | B/C/D/E 결과를 한 Build에 연결하고 범위 결정을 기록 |
+| B · 이영빈 | Unity Netcode 계열 조사와 Player/Combat 지원 | 실시간 협동은 구현하지 않고 RPC·동기화·권한 위험을 문서화 |
+| C · 김진태 | 전선·거점 확장 Graybox와 Spaceship 공간 조사 | D의 터렛 상태와 E의 공격 결과를 World 변화에 연결 |
+| D · 황재동 | 터렛 인스턴스 관리와 AI 평가 데이터 | 위치·활성·체력·화력·거리·위협도 계약을 E와 합의 |
+| E · 조수빈 | 터렛 점수 기반 목표 선택, 경로·Spawn 실험 | brute-force를 먼저 검증하고 필요 시 region 방식과 비교 |
+
+Sprint 1의 연결 순서는 `D 터렛 데이터 → E 목표 선택 AI → C 전선 확장 → A 통합`을 기본으로 한다. 이 표는 이번 PoC의 업무 초점이며 장기 제품 영역의 Owner를 바꾸지 않는다.
 
 ## 7. Milestone 적용
 

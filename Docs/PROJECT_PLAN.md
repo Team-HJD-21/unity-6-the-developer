@@ -1,16 +1,16 @@
 # The Developer — Product Plan
 
-버전: 0.2
-기준일: 2026-09-11
-상태: 현행 PL 기준 / M0 팀 검토 대상
+버전: 0.3
+기준일: 2026-09-19
+상태: 현행 PL 기준 / Sprint 1 Stage 1 PoC 실행 중
 
 이 문서는 `무엇을 왜 만드는가`를 정의한다. 구현 순서와 일정은 [milestones-and-core-design.md](milestones-and-core-design.md), 담당 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md)를 따른다.
 
 ## 1. 게임 정체성
 
-> 플레이어가 직접 전투하면서, 선발대가 행성에 미리 설치한 수많은 터렛 중 일부만 제한된 전력으로 가동하고, Mission이 진행될수록 확장되는 전장을 방어하는 2D 탑다운 액션 타워디펜스.
+> 선발대가 행성에 미리 설치한 터렛 거점을 제한된 전력으로 운용해 전선을 밀고 당기며, 플레이어가 위험한 전선을 찾아가 지원하는 2D 탑다운 액션 타워디펜스.
 
-터렛은 플레이어가 건설하거나 이동하지 않는다. `설치`는 제작자가 Scene/Prefab에 미리 배치한다는 뜻이며, 플레이어 행동은 터렛 선택·가동·정지와 전력 재배치다.
+터렛은 플레이어가 건설하거나 이동하지 않는다. `설치`는 제작자가 Scene/Prefab에 미리 배치한다는 뜻이며, 플레이어 행동은 터렛 선택·가동·정지, 전력 재배치와 현장 지원이다. 플레이어는 혼자 적을 쓸어버리는 주 화력보다 수리·보조 공격·군중 제어로 무너지는 전선을 복구하는 기동 지원 유닛에 가깝다.
 
 ## 2. 플레이어 경험 목표
 
@@ -27,25 +27,21 @@
 Spaceship에서 Mission·행성 상태 확인
 → Research·Power·Turret 준비
 → Planet으로 Launch
-→ Wave·공격 방향 확인
-→ 제한 전력 안에서 터렛 가동 조합 선택
-→ 플레이어 직접 전투와 전력 재배치
-→ Control Unit 방어 및 Mission 완료
-→ Sector Expansion·보상 획득
+→ 초기 적 제거와 첫 터렛 거점 확보
+→ 제한 전력 안에서 터렛 활성화·강화
+→ 약한 전선으로 이동해 수리·보조 전투·군중 제어
+→ 새 거점 확보와 전장 확장 또는 거점 상실과 전선 후퇴
+→ 임시 승리·실패 조건 확인
 → Spaceship으로 Return
 → Result 확인·성장 적용·다음 Mission 선택
 ```
 
-### 승리 조건
+### 승리·실패 조건
 
-- 해당 Mission의 필수 Wave 또는 목표를 완료한다.
-- Planet 1 마지막 Mission에서는 Boss를 처치한다.
-
-### 실패 조건과 보상
-
-- Player 또는 Control Unit HP가 0이면 실패한다.
-- 실패해도 낮은 비율의 재화를 지급한다. 정확한 비율은 `ModeRules`와 Balance Data에서 결정한다.
-- 보상은 `RewardReceipt`를 통해 Profile에 반영하며, Release의 최종 권한은 Backend가 가진다.
+- 최종 승리 조건은 마지막 거점 점령, Boss 처치, 별도 목표 점령 중에서 아직 결정하지 않았다.
+- 최종 실패 조건은 Player 사망, Spaceship·Control Unit 파괴, 핵심 거점 상실 중에서 아직 결정하지 않았다.
+- Stage 1 PoC에서는 한 사이클을 끝낼 수 있는 임시 승리·실패 조건만 구현하고 2026-10-02 플레이 테스트 결과로 결정한다.
+- 실패 보상 비율과 `RewardReceipt` 반영 규칙은 최종 조건이 정해진 뒤 `ModeRules`와 Balance Data에서 결정한다.
 
 ## 4. 핵심 게임 규칙
 
@@ -67,10 +63,13 @@ Spaceship에서 Mission·행성 상태 확인
 
 면적과 배경만 늘어나는 확장은 Content로 인정하지 않는다. 이전 Sector의 터렛은 확장 후에도 내곽 방어선으로 유효해야 한다.
 
+Stage 1 PoC에서는 여러 짧은 맵보다 하나의 확장형 전장을 먼저 검증한다. 터렛 거점을 확보하면 안개가 걷히고 다음 터렛·목표가 드러나며, 어느 방향을 먼저 공략할지 선택할 수 있는 비선형 확장을 후보로 둔다.
+
 ### 4.3 Player와 Turret
 
 - 터렛만 켜고 기다리는 플레이와 Player 화력만으로 전력 규칙을 무시하는 플레이를 모두 피한다.
-- Player는 이동 가능한 화력이며 터렛 사각, 긴급 Enemy, 전력이 없는 구역을 담당한다.
+- Player는 이동 가능한 지원 전력이며 터렛 사각, 긴급 Enemy, 전력이 없는 구역을 담당한다.
+- Stage 1 PoC에서는 수리, 보조 공격, 군중 제어 중 어떤 행동이 주 역할인지 비교한다.
 - Turret Cost·Range·역할·현재 상태와 Enemy의 주요 특성은 전투 중 읽을 수 있어야 한다.
 
 ### 4.4 Spaceship Hub
@@ -84,9 +83,21 @@ Spaceship은 장식 Lobby가 아니라 Mission 준비와 성장 결과를 이해
 
 Vertical Slice에서는 기능이 있는 작은 Interior만 만든다. 빈 복도를 오래 이동하거나 다층 함선을 구현하지 않는다.
 
+### 4.5 Enemy와 전선
+
+- Enemy의 1차 목표는 Player 추격이 아니라 터렛 거점과 핵심 시설 공격이다.
+- Stage 1 PoC는 위치, 활성 상태, 체력, 화력, 거리와 위협도를 사용해 터렛별 점수를 비교하는 brute-force 타게팅부터 검증한다.
+- 결과가 불명확하면 터렛 주변을 region으로 묶는 지역 단위 점수 방식과 비교한다.
+- Spawn 위치와 주기는 약한 전선과 Player 위치를 고려하되, 구체 규칙은 PoC 결과로 결정한다.
+
+### 4.6 낮과 밤 실험
+
+- 낮에는 전선을 밀고 밤에는 시야 감소·Enemy 증가 등 불리함을 주어 Spaceship 복귀와 정비를 유도하는 방향을 검토한다.
+- 밤의 정확한 길이와 효과는 확정하지 않았으며 Stage 1 필수 범위가 아니다.
+
 ## 5. M2 Product Vertical Slice
 
-M1 New Core Foundation이 통과된 뒤 M2에서 제작한다.
+M1 New Core Foundation이 통과된 뒤 M2에서 제작한다. 2026-10-02 Stage 1 PoC는 핵심 재미와 구현 가능성을 빠르게 확인하는 time-box 실험이며, 그 자체로 M1 또는 M2 Gate 통과를 뜻하지 않는다.
 
 ### 플레이 범위
 
@@ -147,6 +158,10 @@ M1 New Core Foundation이 통과된 뒤 M2에서 제작한다.
 - Sector 일괄 전원 제어의 필요성
 - Single-player Offline 정책과 Backend 장애 시 동작
 - Host Migration의 출시 포함 여부
+- Player의 주 지원 행동과 공격 조작 방식
+- 터렛 단위와 region 단위 전선 계산 중 채택할 방식
+- 낮/밤 주기와 위험 효과
+- 한 행성의 목표 플레이 시간. 20~25분 의견은 나왔으나 확정하지 않음
 
 미결정 항목은 현재 Milestone의 P0/P1을 대체하지 않는다. 실험 결과와 함께 Decision Log에 승인된 뒤 Backlog로 이동한다.
 
@@ -162,3 +177,7 @@ M1 New Core Foundation이 통과된 뒤 M2에서 제작한다.
 | 2026-09-11 | Profile은 Backend authoritative, Local Binary는 cache | Single·Co-op의 공정한 공유 성장 유지 | M1은 Port/Fake, 운영 Backend는 M4 |
 | 2026-09-11 | M3의 Online 목표를 친구 초대 기반 2인 Co-op으로 제한 | Online 범위 팽창 방지 | Random/SOS/Chat/Ping은 M4 |
 | 2026-09-11 | Host Migration 실제 기능과 PvP를 Deferred로 유지 | M2/M3 핵심 검증 우선 | M4는 Migration PoC까지만 기본 범위 |
+| 2026-09-19 | 직접 전투보다 터렛 중심 전선 운영을 Stage 1 핵심으로 검증 | 기존 플레이가 Player 화력에 치우치는 위험을 줄이고 고유한 전략성을 확인 | Player는 기동 지원 역할, Enemy는 터렛·시설을 우선 고려 |
+| 2026-09-19 | 여러 짧은 맵보다 하나의 확장형 전장을 우선 검증 | 거점 확보와 전선 변화가 한 사이클에서 보이는지 확인 | 거점 기반 Expansion, 전진·후퇴와 비선형 공략 후보 포함 |
+| 2026-09-19 | 2026-10-02까지 기능 중심 Stage 1 PoC 통합 | 아트보다 핵심 재미와 구현 가능성을 먼저 판정 | `SPRINT_1_STAGE_1_POC.md`를 현재 실행 기준으로 사용 |
+| 2026-09-19 | 실시간 협동은 PoC 범위에서 제외하되 network-aware 계약 유지 | 구현 범위는 줄이고 향후 전면 재작성 위험은 낮춤 | B가 Netcode/RPC/권한 구조를 조사하고 현재 코드 위험을 기록 |
