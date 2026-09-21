@@ -1,7 +1,7 @@
 # Milestones and Core Design
 
-기준일: 2026-09-12
-상태: Milestone·Priority·기술 구현의 현행 기준 / M0 팀 검토 대상
+기준일: 2026-09-20
+상태: Milestone·Priority·기술 구현의 현행 기준 / Sprint 1 Stage 1 PoC 실행 중
 
 이 문서는 M0~M5의 순서, 각 Priority에서 A~E가 맡는 책임, 기술 통과 기준을 정의한다. 제품 범위는 [PROJECT_PLAN.md](PROJECT_PLAN.md), 제품 영역 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md)를 따른다.
 
@@ -27,6 +27,21 @@
 | M5 · Beta & Release | 2~3 Sprints | 기능 동결, QA, 최적화, Steam 출시 후보 | Clean Install·Save·License·Release Build 통과 |
 
 기간은 5인 파트타임 팀을 위한 계획값이다. 개인 가용 시간, 시험 기간, 기술 PoC 결과에 따라 Sprint 계획에서 재산정한다.
+
+## 현재 Time-box — Sprint 1 Stage 1 PoC
+
+2026-09-19 회의 결정에 따라 2026-10-02까지 터렛 중심 전선 운영의 핵심 재미와 구현 가능성을 통합 검증한다. 이 PoC는 M1/M2의 일부 위험을 앞당겨 확인하는 실험이며 기존 Milestone Gate를 자동 통과시키지 않는다. 프로덕션 코드로 이식할 부분은 PoC 결과와 M1 계약 검토 뒤 결정한다.
+
+| 연결 순서 | Owner | 결과물 |
+| --- | --- | --- |
+| 범위·계약·통합 기준 | A · 양현석 | Issue, 인터페이스, 임시 승패 조건, 10월 2일 통합 Build |
+| Network-aware 위험 조사 | B · 이영빈 | Netcode/RPC/권한 최소 가이드와 향후 전환 위험 목록 |
+| 터렛 상태 데이터 | D · 황재동 | 터렛 인스턴스 관리, 위치·활성·체력·화력·거리·위협도 제공 |
+| 목표 선택 AI | E · 조수빈 | 터렛 점수 기반 brute-force 타게팅, 경로·목표 전환·Spawn 실험 |
+| 전선·거점 확장 | C · 김진태 | Graybox, 거점 확보·상실, 전장 확장과 E/D 데이터 연동 |
+| 통합 Playtest | 전체 팀 | 2026-10-02 같은 Build에서 플레이, 2026-10-03 피드백 회의 |
+
+상세 범위와 완료 기준은 [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md)를 따른다.
 
 ## 3. 공통 역할 코드
 
