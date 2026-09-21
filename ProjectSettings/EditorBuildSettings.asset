@@ -32,4 +32,8 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/UI Demo/GameOver.unity
     guid: a6edc5e7e8dbc4360b1b631eef97337a
+  - enabled: 1
+    path: Assets/Scenes/TestScene/EnemySandbox.unity
+    guid: 9ff428f7b35658f498d4c55cf13b5cc6
   m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0
