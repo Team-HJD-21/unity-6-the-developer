@@ -60,6 +60,6 @@ crashlytics-build.properties
 Thumbs.db
 Desktop.ini
 
-# Local architecture notes. Promote a document to tracked project documentation
-# deliberately when it becomes a team-maintained source of truth.
-/Docs/
+# Local drafts only
+/Docs/Local/
+/Docs/Drafts/
