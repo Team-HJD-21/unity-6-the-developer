@@ -1,52 +1,41 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TeamHjd.Game.Turrets;
 using Tower;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public abstract class DefaultMissileTurret : MonoBehaviour, IActivateTower
+public abstract class DefaultMissileTurret : TurretBase, IActivateTower
 {   
-    //-------------------------------------------------------
-    public bool isActivated = false;//타워 가동 여부
-    public bool previousIsActivated = false;//버퍼(토글 확인)
-    public bool ShowRange;
-    //-------------------------------------------------------
-    protected Transform TurretRotationPoint;//타워 회전 각도
-    protected LayerMask EnemyMask;
+    [SerializeField] protected GameObject missilePrefab;
+    
+    
     protected Transform[] Targets;
-    protected Animator Animator;            //타워 부분 Animator
-    protected SpriteRenderer GunRenderer;   //과열시 색 변화
-    protected SpriteRenderer RangeRenderer;
     protected Transform RangeTransform;
-    protected float Range;                  //타워 사거리
-    protected float FireRate;               //발사 속도, 충격발 애니메이션이랑 연동시키기? ㄱㄴ?
-    protected float RotationSpeed;
-    protected int Power;                    //타워 사용 전력량
-    protected int OverHeatMissileCount;     //~초 격발시 과열
-    protected int Level;
-    protected int RPM;
-    protected int Damage;
+    
+    protected int OverHeatMissileCount => Definition.OverHeatMissileCount;
+ 
     protected float CurMissileCount = 0f;   //과열시 중지 위한 변수
     
-    private GameObject _originPower;        //ControlUnitStatus Script의 함수사용
-    private ControlUnitStatus _cus;         //_cus = _OriginPower.GetComponent<ControlUnitStatus>();
-    private String _name;                  //타워이름
-    private float _timeTilFire;             //다음 발사까지의 시간
-    private float _angleThreshold = 360f;   // 타워와 적의 각도 차이 허용 범위 (조정 가능)
-    private float _totCoolTime;             //냉각시 누적 냉각시간
-    public Transform turret;
-    public LayerMask playerMask;
-    // protected Transform Turret;
+   
+    
     //Override Methods---------------------------
     protected abstract void Shoot();
     //--------------------------------------------
     private void Awake()
     {
+        if (Definition == null)
+        {
+            Debug.LogError($"Turret Definition is missing on {name}.", this);
+            enabled = false;
+            return;
+        }
         _originPower = GameObject.Find("ControlUnit");
         _cus = _originPower.GetComponent<ControlUnitStatus>();//제어장치 정보 가져오기 위함
-        _name = "Missile Turret";
+        Name = "Missile Turret";
+        _angleThreshold = 360f;
         ShowRange = false;
     }
     private void Update()
@@ -279,7 +268,7 @@ public abstract class DefaultMissileTurret : MonoBehaviour, IActivateTower
     //Getter
     public String GetName()
     {
-        return _name;
+        return Name;
     }
 
     public int GetLevel()

@@ -11,46 +11,20 @@ using UnityEditor;
 public class CanonTurretLv3 : DefaultCanonTurret
 {   
     [Header("References")]
-    [SerializeField] private Transform turretRotationPoint; // 타워 회전 각도
     [SerializeField] private Transform []bulletSpawnPoint;       //총알 스폰 지점
     [SerializeField] private Transform []bulletFireDirection;    //총 격발 방향
-    [SerializeField] private LayerMask enemyMask;           //raycast 감지 Layer
-    [SerializeField] private Animator animator;             //타워 부분 Animator
-    [SerializeField] private GameObject bulletPrefab;           //총알 오브젝트 생성 위한 변수
-    [SerializeField] private SpriteRenderer gunRenderer;    //과열시 색 변화
-    [SerializeField] private SpriteRenderer rangeRenderer;
-    [SerializeField] private Transform rangeTransform;
 
-    [Header("Attributes")] 
-    [SerializeField] private float range;                   // 타워 사거리
-    [SerializeField] private float rotationSpeed;           // 타워 회전 속도
-    [SerializeField] private float fireRate;                // 발사 속도, 충격발 애니메이션이랑 연동시키기? ㄱㄴ?
-    [SerializeField] private int power;                     //타워 사용 전력량
-    [SerializeField] private float overHeatTime;            //~초 격발시 과열
-    [SerializeField] private float coolTime;                //~초 지나면 냉각
     private GameObject []_bulletObj;
+    [Header("Attributes")]
     [SerializeField] private bool showRange;
     
     private void Start()
     {
         _bulletObj = new GameObject[bulletSpawnPoint.Length];
-        GunRenderer = gunRenderer;
-        Animator = animator;
-        TurretRotationPoint = turretRotationPoint;
-        Range = range;         // 타워 사거리
-        RotationSpeed = rotationSpeed;// 타워 회전 속도
-        FireRate = fireRate;       // 발사 속도, 충격발 애니메이션이랑 연동시키기? ㄱㄴ?
-        Power = power;            //타워 사용 전력량
-        OverHeatTime = overHeatTime;    //~초 격발시 과열
-        CoolTime = coolTime; //~초 지나면 냉각
         GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
-        EnemyMask = enemyMask;
-        RangeRenderer = rangeRenderer;
         //Turrets Attack Range
         rangeTransform.localScale = new Vector3(Range*2.5f, Range*2.5f, 1f);
         //Info for Ui
-        Level = 3;
-        RPM = (int)(60 / (1 / fireRate));
         Damage = DataManager.GetAttributeData(AttributeType.TurretBullet) * 3;
     } 
     protected override void Shoot()//총알 객체화 후 목표로 발사(FireRateController에서 수행)
@@ -70,7 +44,8 @@ public class CanonTurretLv3 : DefaultCanonTurret
     {
 #if UNITY_EDITOR
         Handles.color = Color.magenta;
-        Handles.DrawWireDisc(transform.position, transform.forward, range);
+        if (Definition != null)
+            Handles.DrawWireDisc(transform.position, transform.forward, Range);
 #endif
     }
 }
