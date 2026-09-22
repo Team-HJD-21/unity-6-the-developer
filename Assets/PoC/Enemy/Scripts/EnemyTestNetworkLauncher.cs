@@ -11,6 +11,9 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
     // 현재 네트워크 관리자
     private NetworkManager _networkManager;
 
+    // 임시 스폰너
+    public PoCMonsterSpawner  monsterSpawner;
+    
     private void Awake()
     {
         _networkManager = GetComponent<NetworkManager>();
@@ -86,6 +89,7 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
         {
             Debug.LogError("Failed to start the network host.");
         }
+        monsterSpawner.Spawn();
     }
 
     /// <summary>
