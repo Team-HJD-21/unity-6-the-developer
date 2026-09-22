@@ -1,6 +1,6 @@
 # The Developer — Project Documentation
 
-수정일: 2026-09-20
+수정일: 2026-09-22
 상태: 현행 PL 기준 / Sprint 1 Stage 1 PoC 실행 중
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
@@ -10,7 +10,7 @@
 - 장르: 2D 탑다운 액션 타워디펜스
 - 핵심 경험: 제한된 전력으로 미리 배치된 터렛을 선택해 전선을 운영하고, 플레이어가 무너지는 전선을 찾아가 보조한다.
 - Meta Loop: Spaceship에서 Mission·Research를 준비하고 Planet에 출격한 뒤 결과를 반영해 귀환한다.
-- 현재 검증: 2026-10-02까지 하나의 확장형 전장에서 거점 확보, 전력 배분, 적의 터렛 공격, 전선 전진·후퇴를 통합한 Stage 1 PoC를 만든다.
+- 현재 검증: 2026-10-02 Stage 1 PoC는 터렛 중심 전선 운영을 검증한다. 2026-09-22 대표 회의에서 진행 방식 3안을 비교하기로 했으며 최종 선택은 9월 26일 논의 대상이다.
 - 개발 순서: New Core Foundation → Single-player Vertical Slice → 2-player Co-op → Online/Alpha → Release
 - Deferred: 실제 Host Migration, PvP, `RivalPlayerAgent`, 대형 우주선, 두 번째 Planet
 
@@ -35,8 +35,9 @@ C와 D의 담당은 각각 김진태, 황재동으로 확정됐다. 각 역할�
 5. [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md) — A~E 제품 영역과 협업 경계
 6. [TEAM_WORKFLOW.md](TEAM_WORKFLOW.md) — Sprint, Git, Review, Ready/Done 규칙
 7. [DEVELOPMENT_FLOW.md](DEVELOPMENT_FLOW.md) — Milestone 안에서 실제 작업이 흘러가는 순서
-8. [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md) — 2026-10-02 Stage 1 PoC 범위, 역할, 완료 기준과 통합 순서
-9. [SPRINT_0_BACKLOG.md](SPRINT_0_BACKLOG.md) — M0 Alignment & Baseline의 역사적 실행 기록
+8. [2026-09-22-progression-options.md](2026-09-22-progression-options.md) — 전선·지역 해금·웨이브 3안과 우주선/제어 장치 합의·미결정 사항
+9. [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md) — 2026-10-02 Stage 1 PoC 범위, 역할, 완료 기준과 통합 순서
+10. [SPRINT_0_BACKLOG.md](SPRINT_0_BACKLOG.md) — M0 Alignment & Baseline의 역사적 실행 기록
 
 [architecture-rebuild-notes.md](architecture-rebuild-notes.md)는 레거시 분석과 이식 대응표를 담은 참고 문서다. [team-recruitment-proposal.md](team-recruitment-proposal.md)는 모집 당시의 역사적 자료이며 현재 인원·역할·일정의 기준이 아니다.
 
@@ -44,7 +45,7 @@ C와 D의 담당은 각각 김진태, 황재동으로 확정됐다. 각 역할�
 
 | 질문 | 기준 문서 | 보조 문서 |
 | --- | --- | --- |
-| 무엇을 만들고 무엇을 미룰 것인가? | `PROJECT_PLAN.md` Decision Log | System Charter |
+| 무엇을 만들고 무엇을 미룰 것인가? | `PROJECT_PLAN.md` Decision Log | [2026-09-22 진행 방식 비교](2026-09-22-progression-options.md), System Charter |
 | 레거시를 어떻게 교체하고 어떤 의존성을 허용하는가? | System Charter | Naming, Architecture Notes |
 | M0~M5에서 무엇을 언제 검증하는가? | Milestones and Core Design | Development Flow |
 | 누가 무엇을 소유하는가? | Team Role Ownership | Team Workflow |
