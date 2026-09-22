@@ -1,6 +1,6 @@
 # The Developer — Project Documentation
 
-수정일: 2026-09-20
+수정일: 2026-09-23
 상태: 현행 PL 기준 / Sprint 1 Stage 1 PoC 실행 중
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
@@ -26,30 +26,40 @@
 
 C와 D의 담당은 각각 김진태, 황재동으로 확정됐다. 각 역할은 자신의 제품 영역과 관련 Task의 구현·검증·인수 기준을 끝까지 책임진다.
 
+## 폴더 안내
+
+새 문서의 배치·이동·보관 방법은 [Docs 정리 규칙](DOCS_ORGANIZATION_RULES.md)을 따른다.
+
+- `product/` — 게임의 정체성, 제품 범위, Decision Log
+- `architecture/` — 새 Core의 경계, 코드 명명 규칙, 레거시 이식 참고
+- `planning/` — Milestone, 전체 개발 흐름, 현재 Sprint 실행 계획
+- `team/` — 담당 영역, 협업 규칙, GitHub Issue 분류
+- `archive/` — 지난 Sprint와 모집 자료. 현재 기준으로 사용하지 않음
+- `Local/` — 개인 메모·초안. `.gitignore` 대상이며 팀 공유 문서가 아님
+
 ## 읽는 순서
 
-1. [PROJECT_PLAN.md](PROJECT_PLAN.md) — 게임 정체성, 제품 범위, Vertical Slice와 Decision Log
-2. [system-rearchitecture-charter.md](system-rearchitecture-charter.md) — 레거시 교체 원칙과 변경할 수 없는 시스템 경계
-3. [milestones-and-core-design.md](milestones-and-core-design.md) — M0~M5, Priority별 역할, 통과 기준
-4. [naming-and-architecture-conventions.md](naming-and-architecture-conventions.md) — 계층, asmdef 의존성, 타입 명명
-5. [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md) — A~E 제품 영역과 협업 경계
-6. [TEAM_WORKFLOW.md](TEAM_WORKFLOW.md) — Sprint, Git, Review, Ready/Done 규칙
-7. [DEVELOPMENT_FLOW.md](DEVELOPMENT_FLOW.md) — Milestone 안에서 실제 작업이 흘러가는 순서
-8. [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md) — 2026-10-02 Stage 1 PoC 범위, 역할, 완료 기준과 통합 순서
-9. [SPRINT_0_BACKLOG.md](SPRINT_0_BACKLOG.md) — M0 Alignment & Baseline의 역사적 실행 기록
+1. [PROJECT_PLAN.md](product/PROJECT_PLAN.md) — 게임 정체성, 제품 범위, Vertical Slice와 Decision Log
+2. [system-rearchitecture-charter.md](architecture/system-rearchitecture-charter.md) — 레거시 교체 원칙과 변경할 수 없는 시스템 경계
+3. [milestones-and-core-design.md](planning/milestones-and-core-design.md) — M0~M5, Priority별 역할, 통과 기준
+4. [naming-and-architecture-conventions.md](architecture/naming-and-architecture-conventions.md) — 계층, asmdef 의존성, 타입 명명
+5. [TEAM_ROLE_OWNERSHIP.md](team/TEAM_ROLE_OWNERSHIP.md) — A~E 제품 영역과 협업 경계
+6. [TEAM_WORKFLOW.md](team/TEAM_WORKFLOW.md) — Sprint, Git, Review, Ready/Done 규칙
+7. [DEVELOPMENT_FLOW.md](planning/DEVELOPMENT_FLOW.md) — Milestone 안에서 실제 작업이 흘러가는 순서
+8. [SPRINT_1_STAGE_1_POC.md](planning/SPRINT_1_STAGE_1_POC.md) — 2026-10-02 Stage 1 PoC 범위, 역할, 완료 기준과 통합 순서
 
-[architecture-rebuild-notes.md](architecture-rebuild-notes.md)는 레거시 분석과 이식 대응표를 담은 참고 문서다. [team-recruitment-proposal.md](team-recruitment-proposal.md)는 모집 당시의 역사적 자료이며 현재 인원·역할·일정의 기준이 아니다.
+Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 함께 본다. [architecture-rebuild-notes.md](architecture/architecture-rebuild-notes.md)는 레거시 분석과 이식 대응표를 담은 참고 문서다. [SPRINT_0_BACKLOG.md](archive/SPRINT_0_BACKLOG.md)와 [team-recruitment-proposal.md](archive/team-recruitment-proposal.md)는 역사적 자료이며 현재 일정·역할의 기준이 아니다.
 
 ## Source of Truth
 
 | 질문 | 기준 문서 | 보조 문서 |
 | --- | --- | --- |
-| 무엇을 만들고 무엇을 미룰 것인가? | `PROJECT_PLAN.md` Decision Log | System Charter |
-| 레거시를 어떻게 교체하고 어떤 의존성을 허용하는가? | System Charter | Naming, Architecture Notes |
-| M0~M5에서 무엇을 언제 검증하는가? | Milestones and Core Design | Development Flow |
-| 누가 무엇을 소유하는가? | Team Role Ownership | Team Workflow |
-| Sprint·Git·Review·Ready·Done은 어떻게 운영하는가? | Team Workflow | Development Flow |
-| 현재 무엇을 하는가? | `SPRINT_1_STAGE_1_POC.md` | GitHub Issue/Project |
+| 무엇을 만들고 무엇을 미룰 것인가? | [Product Plan](product/PROJECT_PLAN.md) Decision Log | [System Charter](architecture/system-rearchitecture-charter.md) |
+| 레거시를 어떻게 교체하고 어떤 의존성을 허용하는가? | [System Charter](architecture/system-rearchitecture-charter.md) | [Naming](architecture/naming-and-architecture-conventions.md), [Architecture Notes](architecture/architecture-rebuild-notes.md) |
+| M0~M5에서 무엇을 언제 검증하는가? | [Milestones and Core Design](planning/milestones-and-core-design.md) | [Development Flow](planning/DEVELOPMENT_FLOW.md) |
+| 누가 무엇을 소유하는가? | [Team Role Ownership](team/TEAM_ROLE_OWNERSHIP.md) | [Team Workflow](team/TEAM_WORKFLOW.md) |
+| Sprint·Git·Review·Ready·Done은 어떻게 운영하는가? | [Team Workflow](team/TEAM_WORKFLOW.md) | [Development Flow](planning/DEVELOPMENT_FLOW.md) |
+| 현재 무엇을 하는가? | [Sprint 1 Stage 1 PoC](planning/SPRINT_1_STAGE_1_POC.md) | GitHub Issue/Project |
 
 충돌할 경우 위 표의 기준 문서가 우선한다. 기준을 변경할 때는 보조 문서와 현재 Backlog를 같은 PR에서 함께 갱신한다.
 
@@ -64,7 +74,7 @@ C와 D의 담당은 각각 김진태, 황재동으로 확정됐다. 각 역할�
 
 ## 문서 변경 규칙
 
-- 게임 규칙·범위·Deferred 변경: `PROJECT_PLAN.md` Decision Log
+- 게임 규칙·범위·Deferred 변경: [PROJECT_PLAN.md](product/PROJECT_PLAN.md) Decision Log
 - Core lifecycle·data contract·외부 SDK 경계 변경: System Charter와 Core Design
 - 역할·AI Owner 변경: Team Role Ownership과 Team Workflow
 - Milestone 또는 Priority 변경: Core Design, Development Flow, 현재 Sprint Backlog

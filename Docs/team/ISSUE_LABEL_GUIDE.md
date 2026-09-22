@@ -3,6 +3,8 @@
 기준일: 2026-09-21
 상태: 팀 공용 운영 가이드
 
+[문서 목차](../README.md)
+
 이 문서는 `The Developer V2`의 GitHub Issue에 Type, Priority, Label을 일관되게 지정하기 위한 기준이다. Sprint, Ready/Done, Review 규칙은 [TEAM_WORKFLOW.md](TEAM_WORKFLOW.md)를 따른다.
 
 ## 1. Type, Field, Label의 역할

@@ -4,7 +4,7 @@
 기준일: 2026-09-19
 상태: 현행 PL 기준 / Sprint 1 Stage 1 PoC 실행 중
 
-이 문서는 `무엇을 왜 만드는가`를 정의한다. 구현 순서와 일정은 [milestones-and-core-design.md](milestones-and-core-design.md), 담당 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md)를 따른다.
+이 문서는 `무엇을 왜 만드는가`를 정의한다. 구현 순서와 일정은 [milestones-and-core-design.md](../planning/milestones-and-core-design.md), 담당 경계는 [TEAM_ROLE_OWNERSHIP.md](../team/TEAM_ROLE_OWNERSHIP.md)를 따른다.
 
 ## 1. 게임 정체성
 
@@ -179,5 +179,5 @@ M1 New Core Foundation이 통과된 뒤 M2에서 제작한다. 2026-10-02 Stage 
 | 2026-09-11 | Host Migration 실제 기능과 PvP를 Deferred로 유지 | M2/M3 핵심 검증 우선 | M4는 Migration PoC까지만 기본 범위 |
 | 2026-09-19 | 직접 전투보다 터렛 중심 전선 운영을 Stage 1 핵심으로 검증 | 기존 플레이가 Player 화력에 치우치는 위험을 줄이고 고유한 전략성을 확인 | Player는 기동 지원 역할, Enemy는 터렛·시설을 우선 고려 |
 | 2026-09-19 | 여러 짧은 맵보다 하나의 확장형 전장을 우선 검증 | 거점 확보와 전선 변화가 한 사이클에서 보이는지 확인 | 거점 기반 Expansion, 전진·후퇴와 비선형 공략 후보 포함 |
-| 2026-09-19 | 2026-10-02까지 기능 중심 Stage 1 PoC 통합 | 아트보다 핵심 재미와 구현 가능성을 먼저 판정 | `SPRINT_1_STAGE_1_POC.md`를 현재 실행 기준으로 사용 |
+| 2026-09-19 | 2026-10-02까지 기능 중심 Stage 1 PoC 통합 | 아트보다 핵심 재미와 구현 가능성을 먼저 판정 | [SPRINT_1_STAGE_1_POC.md](../planning/SPRINT_1_STAGE_1_POC.md)를 현재 실행 기준으로 사용 |
 | 2026-09-19 | 실시간 협동은 PoC 범위에서 제외하되 network-aware 계약 유지 | 구현 범위는 줄이고 향후 전면 재작성 위험은 낮춤 | B가 Netcode/RPC/권한 구조를 조사하고 현재 코드 위험을 기록 |

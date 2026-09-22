@@ -10,8 +10,8 @@
 회의록의 Unreal 관련 마이그레이션 문구는 과거 이력으로만 취급한다. 현재 프로젝트의 기술 기준은
 Unity 6이다.
 
-아키텍처 계층 및 클래스 명명은 `naming-and-architecture-conventions.md`를 기준으로 한다.
-레거시와 목표 구조의 클래스/의존성 대응은 `architecture-rebuild-notes.md`를 기준으로 한다.
+아키텍처 계층 및 클래스 명명은 [naming-and-architecture-conventions.md](naming-and-architecture-conventions.md)를 기준으로 한다.
+레거시와 목표 구조의 클래스/의존성 대응은 [architecture-rebuild-notes.md](architecture-rebuild-notes.md)를 기준으로 한다.
 
 ### 제품 방향
 
@@ -175,7 +175,7 @@ per-scene scripts. Runtime difficulty adjustments belong to `MatchConfig`/`ModeR
 
 Host Migration PoC는 testable `MatchSnapshot` serialization과 authority handoff protocol을
 검증한다. Relay나 Lobby만으로 gameplay state가 이전되지는 않는다. PoC 성공은 실제 기능의
-자동 승인이 아니며 `PROJECT_PLAN.md` Decision Log에서 별도로 범위를 결정한다.
+자동 승인이 아니며 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md) Decision Log에서 별도로 범위를 결정한다.
 
 ## Refactoring guardrails
 
@@ -200,4 +200,4 @@ Host Migration PoC는 testable `MatchSnapshot` serialization과 authority handof
 4. M3 — Lobby, player slot, replicated state, reconnect/Ally AI의 Co-op adapter
 5. M4 — 두 Client의 host loss, snapshot restore, authority handoff PoC
 
-정확한 Milestone·Priority·Exit Criteria는 `milestones-and-core-design.md`를 따른다.
+정확한 Milestone·Priority·Exit Criteria는 [milestones-and-core-design.md](../planning/milestones-and-core-design.md)를 따른다.

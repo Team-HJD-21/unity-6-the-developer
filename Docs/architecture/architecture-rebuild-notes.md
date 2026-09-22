@@ -16,7 +16,7 @@ Unity 6 및 Steam 출시를 목표로, 기존 동작을 한 번에 재작성하�
 이 문서는 레거시를 재사용의 기반이 아니라 **행동·수치·연출의 레퍼런스**로 기록한다.
 목표 아키텍처는 `Domain / Application / Infrastructure / Presentation / Bootstrap`의
 가벼운 Clean Architecture 용어를 사용한다. 이 문서는 Milestone이나 최종 이름을 결정하지 않는다.
-명명은 `naming-and-architecture-conventions.md`, 순서는 `milestones-and-core-design.md`를 따른다.
+명명은 [naming-and-architecture-conventions.md](naming-and-architecture-conventions.md), 순서는 [milestones-and-core-design.md](../planning/milestones-and-core-design.md)를 따른다.
 
 ## 현재 구조와 의존성
 

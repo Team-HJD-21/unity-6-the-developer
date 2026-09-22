@@ -3,6 +3,8 @@
 기준일: 2026-09-20
 상태: 실행 순서 기준 / Sprint 1 Stage 1 PoC 실행 중
 
+[문서 목차](../README.md)
+
 이 문서는 [milestones-and-core-design.md](milestones-and-core-design.md)의 M0~M5를 Sprint에서 실행하는 방법을 설명한다. Milestone 이름과 범위를 별도로 재정의하지 않는다.
 
 현재 Sprint 1은 2026-10-02까지 Stage 1 PoC를 통합하는 time-box다. PoC 결과는 핵심 재미와 기술 위험을 판정하는 증거이며, 기존 M1/M2 Gate 통과와 프로덕션 이식을 자동 승인하지 않는다.
