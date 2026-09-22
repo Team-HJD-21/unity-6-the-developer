@@ -68,12 +68,7 @@ MonoBehaviour:
   bulletFirePoint: {fileID: 701655428692059149}
   rangeRenderer: {fileID: 5496085443188878580}
   rangeTransform: {fileID: 3735823970655440404}
-  range: 35
-  rotationSpeed: 500
-  fireRate: 8
-  power: 15
-  overHeatTime: 10
-  coolTime: 2.5
+  _definition: {fileID: 11400000, guid: ab927dede89b403995526cc72ef6e18a, type: 2}
   showRange: 0
 --- !u!58 &7130774518783448330
 CircleCollider2D:
