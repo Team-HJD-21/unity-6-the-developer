@@ -1,7 +1,7 @@
 # The Developer — Product Plan
 
-버전: 0.3
-기준일: 2026-09-19
+버전: 0.4
+기준일: 2026-09-22
 상태: 현행 PL 기준 / Sprint 1 Stage 1 PoC 실행 중
 
 이 문서는 `무엇을 왜 만드는가`를 정의한다. 구현 순서와 일정은 [milestones-and-core-design.md](../planning/milestones-and-core-design.md), 담당 경계는 [TEAM_ROLE_OWNERSHIP.md](../team/TEAM_ROLE_OWNERSHIP.md)를 따른다.
@@ -23,6 +23,8 @@
 
 ## 3. Core Loop와 Meta Loop
 
+아래는 2026-09-19 Stage 1 PoC에서 검증하기로 한 흐름이다. 2026-09-22 대표 회의에서 동적 전선, 지역 해금, 기존 웨이브의 세 진행 방식을 비교하기로 했으며 최종 방식은 선택하지 않았다. [진행 방식 비교](2026-09-22-progression-options.md)를 참고한다.
+
 ```text
 Spaceship에서 Mission·행성 상태 확인
 → Research·Power·Turret 준비
@@ -39,7 +41,7 @@ Spaceship에서 Mission·행성 상태 확인
 ### 승리·실패 조건
 
 - 최종 승리 조건은 마지막 거점 점령, Boss 처치, 별도 목표 점령 중에서 아직 결정하지 않았다.
-- 최종 실패 조건은 Player 사망, Spaceship·Control Unit 파괴, 핵심 거점 상실 중에서 아직 결정하지 않았다.
+- Player 사망과 Control Unit 파괴를 패배 조건 후보로 논의했다. 두 경우의 결과, 패배 후 유지·초기화 범위, 핵심 거점 상실 처리 방식은 아직 결정하지 않았다.
 - Stage 1 PoC에서는 한 사이클을 끝낼 수 있는 임시 승리·실패 조건만 구현하고 2026-10-02 플레이 테스트 결과로 결정한다.
 - 실패 보상 비율과 `RewardReceipt` 반영 규칙은 최종 조건이 정해진 뒤 `ModeRules`와 Balance Data에서 결정한다.
 
@@ -63,7 +65,7 @@ Spaceship에서 Mission·행성 상태 확인
 
 면적과 배경만 늘어나는 확장은 Content로 인정하지 않는다. 이전 Sector의 터렛은 확장 후에도 내곽 방어선으로 유효해야 한다.
 
-Stage 1 PoC에서는 여러 짧은 맵보다 하나의 확장형 전장을 먼저 검증한다. 터렛 거점을 확보하면 안개가 걷히고 다음 터렛·목표가 드러나며, 어느 방향을 먼저 공략할지 선택할 수 있는 비선형 확장을 후보로 둔다.
+2026-09-19 Stage 1 PoC에서는 여러 짧은 맵보다 하나의 확장형 전장을 먼저 검증하기로 했다. 다만 2026-09-22 대표 회의에서 ① 동적 전선에 따른 영역 변화, ② 지역 해금에 따른 전진, ③ 기존 마이너 스테이지·웨이브의 세 진행 방식을 비교하기로 했고 최종안은 선택하지 않았다. 거점 확보와 비선형 확장은 검증 후보이며 확정 규칙이 아니다.
 
 ### 4.3 Player와 Turret
 
@@ -77,9 +79,11 @@ Stage 1 PoC에서는 여러 짧은 맵보다 하나의 확장형 전장을 먼�
 Spaceship은 장식 Lobby가 아니라 Mission 준비와 성장 결과를 이해하는 Gameplay Space다.
 
 - Navigation: 행성 상태·Expansion·Mission 선택
-- Engineering/Research: 전력 또는 터렛 성장 적용
+- Engineering/Research: Player 연구·성장. 전력·지역 해금·터렛 운용 편의는 Control Unit의 현장 기능으로 분리하는 방향이다. 지역 해금은 진행 방식 ②를 채택할 때만 해당한다.
 - Communications: 선발대 기록과 Mission 정보
 - Launch Point: 선택한 Mission 확인 후 출격
+
+Spaceship은 언제든 출입할 수 있는 Hub로 정리했다. 진입 중 시간 진행, 전장 상태와 메뉴 제한은 미정이다. Control Unit은 별도 내부 Map보다 현장 상호작용으로 전력·터렛 기능을 제공하는 방안을 검토한다.
 
 Vertical Slice에서는 기능이 있는 작은 Interior만 만든다. 빈 복도를 오래 이동하거나 다층 함선을 구현하지 않는다.
 
@@ -149,7 +153,7 @@ M1 New Core Foundation이 통과된 뒤 M2에서 제작한다. 2026-10-02 Stage 
 
 다음은 정해진 기능이 아니라 검증할 질문이다.
 
-- 모든 Sub-stage 후 Spaceship으로 귀환할지, 주요 Mission 뒤에만 귀환할지
+- 언제든 Spaceship에 출입할 때 전장 시간·상태와 메뉴를 어떻게 처리할지
 - 이전 Mission의 터렛 상태·피해를 다음 Mission에 유지할지
 - In-Wave 전력 전환의 지연과 횟수 제한
 - 터렛 파괴·수리 규칙
@@ -159,7 +163,10 @@ M1 New Core Foundation이 통과된 뒤 M2에서 제작한다. 2026-10-02 Stage 
 - Single-player Offline 정책과 Backend 장애 시 동작
 - Host Migration의 출시 포함 여부
 - Player의 주 지원 행동과 공격 조작 방식
+- 동적 전선·지역 해금·기존 웨이브 중 최종 진행 방식과 점유율 판정 데이터
 - 터렛 단위와 region 단위 전선 계산 중 채택할 방식
+- 터렛 파괴·수리·재활성화 비용과 Player 사망/Control Unit 파괴 뒤 유지·초기화 범위
+- 2인 SOS의 late join, 매칭 실패 시 Ally AI, 난이도·보상·호스트 권한 규칙. 10월 2일 PoC 범위 밖
 - 낮/밤 주기와 위험 효과
 - 한 행성의 목표 플레이 시간. 20~25분 의견은 나왔으나 확정하지 않음
 
@@ -181,3 +188,5 @@ M1 New Core Foundation이 통과된 뒤 M2에서 제작한다. 2026-10-02 Stage 
 | 2026-09-19 | 여러 짧은 맵보다 하나의 확장형 전장을 우선 검증 | 거점 확보와 전선 변화가 한 사이클에서 보이는지 확인 | 거점 기반 Expansion, 전진·후퇴와 비선형 공략 후보 포함 |
 | 2026-09-19 | 2026-10-02까지 기능 중심 Stage 1 PoC 통합 | 아트보다 핵심 재미와 구현 가능성을 먼저 판정 | [SPRINT_1_STAGE_1_POC.md](../planning/SPRINT_1_STAGE_1_POC.md)를 현재 실행 기준으로 사용 |
 | 2026-09-19 | 실시간 협동은 PoC 범위에서 제외하되 network-aware 계약 유지 | 구현 범위는 줄이고 향후 전면 재작성 위험은 낮춤 | B가 Netcode/RPC/권한 구조를 조사하고 현재 코드 위험을 기록 |
+| 2026-09-22 | Spaceship은 언제든 출입 가능한 Hub, Control Unit은 현장 전력·터렛 기능으로 분리 | 이동·정비·전선 운영의 역할 혼동 해소 | 시간 진행·메뉴 제한·지역 해금 규칙은 추가 설계 |
+| 2026-09-22 | 진행 방식 3안을 비교하고 9월 26일 논의 | 동적 전선/지역 해금/기존 웨이브의 장단점이 아직 미검증 | 최종안, 점유율, 승패 및 SOS 세부 규칙은 미정; PoC 마감·담당 변경 없음 |

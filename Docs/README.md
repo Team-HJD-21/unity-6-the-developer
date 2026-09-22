@@ -10,7 +10,7 @@
 - 장르: 2D 탑다운 액션 타워디펜스
 - 핵심 경험: 제한된 전력으로 미리 배치된 터렛을 선택해 전선을 운영하고, 플레이어가 무너지는 전선을 찾아가 보조한다.
 - Meta Loop: Spaceship에서 Mission·Research를 준비하고 Planet에 출격한 뒤 결과를 반영해 귀환한다.
-- 현재 검증: 2026-10-02까지 하나의 확장형 전장에서 거점 확보, 전력 배분, 적의 터렛 공격, 전선 전진·후퇴를 통합한 Stage 1 PoC를 만든다.
+- 현재 검증: 2026-10-02 Stage 1 PoC는 터렛 중심 전선 운영을 검증한다. 2026-09-22 대표 회의에서 진행 방식 3안을 비교하기로 했으며 최종 선택은 9월 26일 논의 대상이다.
 - 개발 순서: New Core Foundation → Single-player Vertical Slice → 2-player Co-op → Online/Alpha → Release
 - Deferred: 실제 Host Migration, PvP, `RivalPlayerAgent`, 대형 우주선, 두 번째 Planet
 
