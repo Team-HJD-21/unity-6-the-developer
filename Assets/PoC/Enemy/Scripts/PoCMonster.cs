@@ -1,45 +1,49 @@
-using System;
 using UnityEngine;
 
+/// <summary>
+/// 몬스터의 타겟 추적, 이동, 공격 판단과 애니메이션을 처리한다.
+/// 네트워크 환경에서는 서버가 <see cref="Tick"/>을 호출한다.
+/// </summary>
 public class PoCMonster : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 2f;
+    private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
+    private static readonly int MoveXHash = Animator.StringToHash("MoveX");
+    private static readonly int MoveYHash = Animator.StringToHash("MoveY");
+    private static readonly int MoveAnimSpeedHash = Animator.StringToHash("MoveAnimSpeed");
+    private static readonly int AttackHash = Animator.StringToHash("Attack");
+
+    [Header("References")]
     [SerializeField] private Animator animator;
+
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float animationReferenceSpeed = 2f;
-    private Transform _target;
-    public Transform Target => _target;
+
+    [Header("Attack")]
     [SerializeField] private float attackRange = 0.4f;
-    [SerializeField] private float attackDamage = 10f;
     [SerializeField] private float attackCooldown = 1f;
 
+    private Transform _target;
     private float _nextAttackTime;
-    
-    private Vector2 _moveDirection;
 
-    
-    public event Action AttackStarted;
-    
     private void Awake()
     {
-        animator = GetComponent<Animator>();
+        if (animator == null)
+            animator = GetComponent<Animator>();
     }
 
-    private void Start()
-    {
-            
-    }
-
+    /// <summary>
+    /// 타겟과의 거리에 따라 이동하거나 공격한다.
+    /// </summary>
     public void Tick()
     {
-        if (!_target)
+        if (_target == null)
             return;
-        
-        Vector2 toTarget =
-            (Vector2)_target.position - (Vector2)transform.position;
 
-        _moveDirection = toTarget.normalized;
-        
-        UpdateFacingDirection();
+        Vector2 toTarget = (Vector2)_target.position - (Vector2)transform.position;
+        Vector2 moveDirection = toTarget.normalized;
+
+        UpdateFacingDirection(moveDirection);
 
         if (IsInAttackRange())
         {
@@ -47,73 +51,61 @@ public class PoCMonster : MonoBehaviour
             TryAttack();
             return;
         }
-        
-        MoveTowardsTarget();
+
+        MoveTowardsTarget(moveDirection);
     }
 
+    /// <summary>
+    /// 몬스터가 추적할 타겟을 지정한다.
+    /// </summary>
     public void SetTarget(Transform target)
     {
         _target = target;
     }
 
-    private void MoveTowardsTarget()
+    private void MoveTowardsTarget(Vector2 moveDirection)
     {
-        animator.SetBool("IsMoving", true);
-        
-        float animationSpeed =
-            moveSpeed / animationReferenceSpeed;
-        animator.SetFloat("MoveAnimSpeed", animationSpeed);
-        
-        transform.position +=
-            (Vector3)_moveDirection * (moveSpeed * Time.deltaTime);
+        animator.SetBool(IsMovingHash, true);
+
+        float animationSpeed = moveSpeed / animationReferenceSpeed;
+        animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
+
+        transform.position += (Vector3)moveDirection * (moveSpeed * Time.deltaTime);
     }
-    
+
     private void StopMoving()
     {
-        animator.SetBool("IsMoving", false);
+        animator.SetBool(IsMovingHash, false);
     }
-    
-    private void UpdateFacingDirection()
+
+    private void UpdateFacingDirection(Vector2 moveDirection)
     {
-        Vector2 animationDirection =
-            GetAnimationDirection(_moveDirection);
+        Vector2 animationDirection = GetAnimationDirection(moveDirection);
 
-        animator.SetFloat("MoveX", animationDirection.x);
-        animator.SetFloat("MoveY", animationDirection.y);
+        animator.SetFloat(MoveXHash, animationDirection.x);
+        animator.SetFloat(MoveYHash, animationDirection.y);
     }
 
-    private Vector2 GetAnimationDirection(Vector2 direction)
+    private static Vector2 GetAnimationDirection(Vector2 direction)
     {
         if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-        {
             return new Vector2(Mathf.Sign(direction.x), 0f);
-        }
 
         return new Vector2(0f, Mathf.Sign(direction.y));
     }
 
     private void TryAttack()
     {
-        if (!_target)
-            return;
-
-        if (!IsInAttackRange())
-            return;
-
         if (Time.time < _nextAttackTime)
             return;
 
         _nextAttackTime = Time.time + attackCooldown;
-
-        AttackStarted?.Invoke();
-        
-        // TakeDamage(attackDamage);
+        animator.SetTrigger(AttackHash);
     }
 
     private bool IsInAttackRange()
     {
-        float distanceSqr =
-            (_target.position - transform.position).sqrMagnitude;
+        float distanceSqr = (_target.position - transform.position).sqrMagnitude;
 
         return distanceSqr <= attackRange * attackRange;
     }
