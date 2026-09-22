@@ -13,10 +13,15 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
 
     // 임시 스폰너
     public PoCMonsterSpawner  monsterSpawner;
-    
+
     private void Awake()
     {
         _networkManager = GetComponent<NetworkManager>();
+
+        Application.runInBackground = true;
+
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 120;
     }
 
     private void OnGUI()

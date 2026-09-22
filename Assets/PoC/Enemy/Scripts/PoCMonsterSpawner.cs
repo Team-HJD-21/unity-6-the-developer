@@ -18,6 +18,8 @@ public class PoCMonsterSpawner : NetworkBehaviour
             spawnPoint.rotation
             );
         
+        PoCMonster pocMonster = monster.GetComponent<PoCMonster>();
+        pocMonster.SetTarget(tempTarget);
         
         monster.GetComponent<NetworkObject>().Spawn();
     }
