@@ -89,7 +89,7 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
 
     private void NoTargetInRange()//적이 타워 범위에 없을 때 탐색(TowerIsActivatedNow에서 수행)
     {
-        if (Target is null)
+        if (Target == null)
         {
             _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
@@ -99,7 +99,7 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
     }
     private void RotateTowardsTarget()//적향해 타워 z축 회전(TowerIsActivatedNow에서 수행)
     {
-        if (Target is not null) //
+        if (Target != null) //
         {
             float angle =
                 Mathf.Atan2(Target.position.y - turret.position.y, Target.position.x - turret.position.x) *
@@ -111,7 +111,7 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
     }
     private void FireRateController()//총알 객체화 후 발사 동작 수행(TowerIsActivatedNow에서 수행)
     {
-        if (CheckTargetIsInRange())//적이 범위에 없음
+        if (!CheckTargetIsInRange())//적이 범위에 없음
         {
             _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
@@ -183,12 +183,12 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
-        if (Target is null) return false;
+        if (Target == null) return false;
         return Vector2.Distance(Target.position, turret.position) <= Range;
     }
     private bool IsTargetInSight()//적이 시야각에 있는지 확인(FireRateController, OverHeatAnimationController에서 수행)
     {
-        if (Target is null) return false;
+        if (Target == null) return false;
         float angleToTarget = Mathf.Atan2(Target.position.y - turret.position.y, Target.position.x - turret.position.x) * Mathf.Rad2Deg - 90f;
         float turretAngle = TurretRotationPoint.eulerAngles.z;
         float angleDifference = Mathf.DeltaAngle(turretAngle, angleToTarget);
