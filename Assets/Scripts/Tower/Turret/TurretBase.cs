@@ -19,11 +19,31 @@ namespace TeamHjd.Game.Turrets
 
         [Header("Definition and State")]
         [SerializeField] private TurretDefinition _definition;
-        [SerializeField] protected bool isActivated;
+        [SerializeField] private TurretRuntimeState _runtimeState = new();
 
         public TurretDefinition Definition => _definition;
-        public bool IsActivated => isActivated;
+        public TurretRuntimeState RuntimeState => _runtimeState;
+        public int InstanceId => _runtimeState.InstanceId;
+        public string DisplayName => _definition != null ? _definition.DisplayName : name;
+        public bool IsActivated => _runtimeState.IsActivated;
         public bool ShowRange { get; set; }
+
+        protected bool ActivationChanged => _runtimeState.ActivationChanged;
+
+        protected void SetActivated(bool isActivated)
+        {
+            _runtimeState.SetActivated(isActivated);
+        }
+
+        protected void CommitActivationState()
+        {
+            _runtimeState.CommitActivationState();
+        }
+
+        protected void SynchronizeActivationState(bool isActivated)
+        {
+            _runtimeState.SynchronizeActivationState(isActivated);
+        }
 
         protected Transform TurretRotationPoint => turretRotationPoint;
         protected LayerMask EnemyMask => enemyMask;
@@ -36,15 +56,34 @@ namespace TeamHjd.Game.Turrets
         protected int Power => _definition.Power;
         protected int Level => _definition.Level;
         protected int RPM => (int)(60 / (1 / FireRate));
+        protected float TargetingAngle => _definition.TargetingAngle;
 
         // Runtime state is not configured in the Inspector.
-        protected bool PreviousIsActivated;
-        protected string Name;
-        protected int Damage;
+        protected int Damage => Mathf.Max(0, _definition.Damage + _runtimeState.DamageBonus);
         protected float TimeTilFire;
-        protected float AngleThreshold = 10f;//If Missile turret this value changes into 360f
         protected float TotCoolTime;
         protected GameObject OriginPower;
         protected ControlUnitStatus ControlUnitStatus;
+
+        protected virtual void OnEnable()
+        {
+            TurretInstanceRegistry.Register(this);
+        }
+
+        protected virtual void OnDisable()
+        {
+            TurretInstanceRegistry.Unregister(this);
+        }
+
+        public void SetDamageBonus(int damageBonus)
+        {
+            _runtimeState.SetDamageBonus(damageBonus);
+        }
+
+        public void AddDamageBonus(int damageBonus)
+        {
+            _runtimeState.AddDamageBonus(damageBonus);
+        }
     }
+
 }

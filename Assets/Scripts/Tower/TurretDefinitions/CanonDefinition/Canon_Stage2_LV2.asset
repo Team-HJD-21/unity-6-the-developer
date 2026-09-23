@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 642a658f044b468089a5fbfc7257c466, type: 3}
   m_Name: Canon_Stage2_LV2
   m_EditorClassIdentifier: Assembly-CSharp::TeamHjd.Game.Content.TurretDefinition
+  _id: canon_stage2_lv2
+  _displayName: Canon Turret LV.2
+  _targetingAngle: 10
   _level: 2
+  _damage: 24
   _range: 32
   _rotationSpeed: 500
   _fireRate: 8

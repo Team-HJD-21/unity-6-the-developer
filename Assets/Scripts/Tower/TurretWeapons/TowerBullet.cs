@@ -19,9 +19,9 @@ public class TowerBullet : MonoBehaviour
         StartCoroutine(DestroyObjectIfNotHit());
     }
 
-    private void Awake()
+    public void SetDamage(float damage)
     {
-        _bulletDamage = DataManager.GetAttributeData(AttributeType.TurretBullet);
+        _bulletDamage = damage;
     }
 
     private void Update()

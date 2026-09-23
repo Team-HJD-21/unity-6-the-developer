@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using TeamHjd.Game.Turrets;
@@ -12,8 +11,6 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
    
    
     protected Transform Target;             //target of bullets
-    protected Transform RangeTransform;
-
     protected float OverHeatTime => Definition.OverHeatTime;
     protected float CoolTime => Definition.CoolTime;
     
@@ -30,7 +27,6 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
         }
         OriginPower = GameObject.Find("ControlUnit");
         ControlUnitStatus = OriginPower.GetComponent<ControlUnitStatus>();//제어장치 정보 가져오기 위함
-        Name = "Canon Turret";
         ShowRange = false;
     }
     protected void Update()
@@ -42,28 +38,27 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
     private void CheckToggle()//Checks toggle of isActivated
     {
         RangeRenderer.enabled = ShowRange;
-        if (isActivated != PreviousIsActivated)//toggle check
+        if (ActivationChanged)//toggle check
         {
-            if (isActivated)
+            if (IsActivated)
             {
-                PreviousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
                 AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
                 AddTurret();
             }
-            else if (isActivated == false)
+            else
             {
                 Animator.SetBool("isShoot", false);
                 AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
                 StartCoroutine(DeactivateProcess());
-                PreviousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
                 DeleteTurret();
             }
-            
+
+            CommitActivationState();
         }
     }
     private void TowerIsActivatedNow()//사용자에 의해 타워가 가동 됐다면 역할 수행(Update에서 수행)
     {
-        if (isActivated)
+        if (IsActivated)
         {
             NoTargetInRange();//적이 타워 범위에 없을 때 탐색(raycast 사용)
             RotateTowardsTarget();//적 발견시 적을 향해 타워 돌리기
@@ -125,8 +120,7 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
             _fireTime += Time.deltaTime;
             if (_fireTime >= OverHeatTime)//터렛 과열
             {
-                isActivated = false;
-                PreviousIsActivated = false;
+                SynchronizeActivationState(false);
                 Animator.SetBool("isShoot", false);
                 StartCoroutine(OverHeat());
             }
@@ -177,7 +171,7 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
         float angleToTarget = Mathf.Atan2(Target.position.y - turret.position.y, Target.position.x - turret.position.x) * Mathf.Rad2Deg - 90f;
         float turretAngle = TurretRotationPoint.eulerAngles.z;
         float angleDifference = Mathf.DeltaAngle(turretAngle, angleToTarget);
-        return Mathf.Abs(angleDifference) <= AngleThreshold;
+        return Mathf.Abs(angleDifference) <= TargetingAngle;
     }
     //Coroutine Methods--------------------------------------------------------------------------------------------------------
     private IEnumerator DeactivateProcess()
@@ -204,8 +198,7 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
         //yield return new WaitForSeconds(5f);
         GunRenderer.color = Color.white;
         _fireTime = 0f;
-        isActivated = true;
-        PreviousIsActivated = true;
+        SynchronizeActivationState(true);
     }
     private void FireSound()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
     {
@@ -227,8 +220,7 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
         }
         else
         {
-            isActivated = false;
-            PreviousIsActivated = false;
+            SynchronizeActivationState(false);
         }
     }
     private void DeleteTurret()//ControlUnitStatus script 사용(CheckToggle에서 수행)
@@ -239,17 +231,17 @@ public abstract class DefaultCanonTurret : TurretBase, IActivateTower
     //For UI------------------------- 
     public void ActivateTurret()
     {
-        isActivated = true;
+        SetActivated(true);
     }
     public void DeactivateTurret()
     {
-        isActivated = false;
+        SetActivated(false);
     }
     
     //Getter
-    public String GetName()
+    public string GetName()
     {
-        return Name;
+        return DisplayName;
     }
     public int GetLevel()
     {
