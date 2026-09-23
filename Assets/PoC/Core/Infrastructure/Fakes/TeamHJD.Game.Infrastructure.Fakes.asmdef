@@ -1,0 +1,14 @@
+{
+  "name": "TeamHJD.Game.Infrastructure.Fakes",
+  "rootNamespace": "TeamHJD.Game.Infrastructure.Fakes",
+  "references": ["TeamHJD.Game.Contracts", "TeamHJD.Game.Domain"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}

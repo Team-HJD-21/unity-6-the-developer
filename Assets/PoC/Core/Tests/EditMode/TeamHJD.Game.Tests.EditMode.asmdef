@@ -1,0 +1,21 @@
+{
+  "name": "TeamHJD.Game.Tests.EditMode",
+  "rootNamespace": "TeamHJD.Game.Tests.EditMode",
+  "references": [
+    "TeamHJD.Game.Application",
+    "TeamHJD.Game.Content.Runtime",
+    "TeamHJD.Game.Contracts",
+    "TeamHJD.Game.Domain",
+    "TeamHJD.Game.Infrastructure.Fakes"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}
