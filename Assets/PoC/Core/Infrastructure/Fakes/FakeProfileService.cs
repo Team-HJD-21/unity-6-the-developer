@@ -16,7 +16,13 @@ namespace TeamHJD.Game.Infrastructure.Fakes
         public FakeProfileService(IEnumerable<PlayerProfileSnapshot> profiles = null)
         {
             if (profiles == null) return;
-            foreach (var profile in profiles) _profiles[profile.PlayerId] = profile;
+            foreach (var profile in profiles)
+            {
+                if (profile == null) throw new ArgumentException("Profile entries cannot be null.", nameof(profiles));
+                if (_profiles.ContainsKey(profile.PlayerId))
+                    throw new ArgumentException($"Duplicate fake profile for '{profile.PlayerId}'.", nameof(profiles));
+                _profiles.Add(profile.PlayerId, profile);
+            }
         }
 
         public Task<PlayerProfileSnapshot> LoadAsync(PlayerId playerId, CancellationToken cancellationToken)

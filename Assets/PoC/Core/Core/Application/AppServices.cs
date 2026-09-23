@@ -1,8 +1,8 @@
-// Owns app-scoped services and the currently active match session.
+// Owns app-scoped service dependencies and the match-session factory.
 
 using System;
+using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
-using TeamHJD.Game.Domain;
 
 namespace TeamHJD.Game.Application
 {
@@ -15,7 +15,6 @@ namespace TeamHJD.Game.Application
         public IPlatformService Platform { get; }
         public ISceneFlow SceneFlow { get; }
         public MatchSessionFactory MatchSessions { get; }
-        public MatchSession CurrentMatch { get; private set; }
 
         public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority)
         {
@@ -26,58 +25,30 @@ namespace TeamHJD.Game.Application
             MatchSessions = new MatchSessionFactory(authority ?? throw new ArgumentNullException(nameof(authority)));
         }
 
-        public MatchSession StartMatch(MatchConfig config, MatchState initialState, IModeRules modeRules)
-        {
-            ThrowIfDisposed();
-            var nextMatch = MatchSessions.Create(config, initialState, modeRules);
-            try
-            {
-                nextMatch.Start();
-            }
-            catch
-            {
-                nextMatch.Dispose();
-                throw;
-            }
-
-            CurrentMatch?.Dispose();
-            CurrentMatch = nextMatch;
-            return nextMatch;
-        }
-
-        public MatchResult CompleteCurrentMatch(MatchOutcome outcome, long eventSequence)
-        {
-            ThrowIfDisposed();
-            if (CurrentMatch == null) throw new InvalidOperationException("There is no active match.");
-            return CurrentMatch.Complete(outcome, eventSequence);
-        }
-
-        public void EndCurrentMatch()
-        {
-            if (CurrentMatch == null) return;
-            CurrentMatch.Dispose();
-            CurrentMatch = null;
-        }
-
         public void Dispose()
         {
             if (_isDisposed) return;
-            EndCurrentMatch();
-            DisposeIfNeeded(Profiles);
-            DisposeIfNeeded(Content);
-            DisposeIfNeeded(Platform);
-            DisposeIfNeeded(SceneFlow);
             _isDisposed = true;
+            List<Exception> errors = null;
+            DisposeIfNeeded(Profiles, ref errors);
+            DisposeIfNeeded(Content, ref errors);
+            DisposeIfNeeded(Platform, ref errors);
+            DisposeIfNeeded(SceneFlow, ref errors);
+            if (errors != null) throw new AggregateException("One or more app services failed to dispose.", errors);
         }
 
-        private static void DisposeIfNeeded(object service)
+        private static void DisposeIfNeeded(object service, ref List<Exception> errors)
         {
-            if (service is IDisposable disposable) disposable.Dispose();
-        }
-
-        private void ThrowIfDisposed()
-        {
-            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (!(service is IDisposable disposable)) return;
+            try
+            {
+                disposable.Dispose();
+            }
+            catch (Exception exception)
+            {
+                if (errors == null) errors = new List<Exception>();
+                errors.Add(exception);
+            }
         }
     }
 }

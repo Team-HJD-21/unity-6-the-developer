@@ -12,6 +12,8 @@ namespace TeamHJD.Game.Domain
 
         protected GameCommand(Guid commandId, PlayerId issuerId)
         {
+            if (commandId == Guid.Empty) throw new ArgumentException("A command requires a unique command ID.", nameof(commandId));
+            if (issuerId.IsEmpty) throw new ArgumentException("A command requires an issuer ID.", nameof(issuerId));
             CommandId = commandId;
             IssuerId = issuerId;
         }

@@ -1,4 +1,4 @@
-// Creates one persistent AppRoot from the first scene's composition settings.
+// Creates the app scope once before scenes load and resets its guard per runtime session.
 
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Content.Runtime;
@@ -9,39 +9,55 @@ using UnityEngine;
 
 namespace TeamHJD.Game.Bootstrap
 {
-    public sealed class AppBootstrap : MonoBehaviour
+    public static class AppBootstrap
     {
-        [SerializeField] private ContentCatalog _contentCatalog;
-        [SerializeField] private string _localPlayerKey = "local-player";
-        [SerializeField] private string _localDisplayName = "Local Player";
+        private const string ContentCatalogResourceKey = "Core/ContentCatalog";
+        private static bool _hasBootstrapped;
 
-        private void Awake()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetForNewRuntimeSession()
         {
-            var existingRoot = FindFirstObjectByType<AppRoot>();
-            if (existingRoot != null)
+            _hasBootstrapped = false;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void CreateAppRoot()
+        {
+            if (_hasBootstrapped) return;
+            _hasBootstrapped = true;
+
+            var rootObject = new GameObject(nameof(AppRoot));
+            try
             {
-                Destroy(this);
-                return;
+                var root = rootObject.AddComponent<AppRoot>();
+                root.Initialize(CreateServices());
+                Object.DontDestroyOnLoad(rootObject);
+            }
+            catch
+            {
+                _hasBootstrapped = false;
+                Object.Destroy(rootObject);
+                throw;
+            }
+        }
+
+        private static AppServices CreateServices()
+        {
+            var contentCatalog = Resources.Load<ContentCatalog>(ContentCatalogResourceKey);
+            IContentCatalog content = contentCatalog;
+            if (content == null)
+            {
+                Debug.LogWarning($"No ContentCatalog at Resources/{ContentCatalogResourceKey}; using an empty fake catalog.");
+                content = new FakeContentCatalog();
             }
 
-            if (_contentCatalog == null)
-            {
-                Debug.LogError("AppBootstrap requires a ContentCatalog asset.", this);
-                enabled = false;
-                return;
-            }
-
-            var rootObject = new GameObject("AppRoot");
-            DontDestroyOnLoad(rootObject);
-            var root = rootObject.AddComponent<AppRoot>();
-            var localUser = new PlatformUser(new PlayerId(_localPlayerKey), _localDisplayName);
-            var services = new AppServices(
+            var localUser = new PlatformUser(new PlayerId("local-player"), "Local Player");
+            return new AppServices(
                 new FakeProfileService(),
-                _contentCatalog,
+                content,
                 new FakePlatformService(localUser),
                 new FakeSceneFlow(),
                 new LocalAuthority());
-            root.Initialize(services);
         }
     }
 }

@@ -1,4 +1,4 @@
-// Resolves preconfigured match configs for tests without loading Unity assets.
+// Resolves registered stage and difficulty IDs into match configs without Unity assets.
 
 using System;
 using System.Collections.Generic;
@@ -9,20 +9,36 @@ namespace TeamHJD.Game.Infrastructure.Fakes
 {
     public sealed class FakeContentCatalog : IContentCatalog
     {
-        private readonly Dictionary<MatchId, MatchConfig> _configs = new Dictionary<MatchId, MatchConfig>();
+        private readonly HashSet<StageId> _stageIds;
+        private readonly HashSet<DefinitionId> _difficultyProfileIds;
+        private readonly string _contentVersion;
 
-        public FakeContentCatalog(IEnumerable<MatchConfig> configs = null)
+        public FakeContentCatalog(
+            IEnumerable<StageId> stageIds = null,
+            IEnumerable<DefinitionId> difficultyProfileIds = null,
+            string contentVersion = "fake")
         {
-            if (configs == null) return;
-            foreach (var config in configs) _configs[config.MatchId] = config;
+            _stageIds = new HashSet<StageId>(stageIds ?? new StageId[0]);
+            _difficultyProfileIds = new HashSet<DefinitionId>(difficultyProfileIds ?? new DefinitionId[0]);
+            _contentVersion = contentVersion ?? string.Empty;
         }
 
         public MatchConfig ResolveMatchConfig(MatchSelection selection)
         {
             if (selection == null) throw new ArgumentNullException(nameof(selection));
-            if (!_configs.TryGetValue(selection.MatchId, out var config))
-                throw new KeyNotFoundException($"No fake match config is registered for '{selection.MatchId}'.");
-            return config;
+            if (!_stageIds.Contains(selection.StageId))
+                throw new KeyNotFoundException($"Stage '{selection.StageId}' is not registered in the fake catalog.");
+            if (!_difficultyProfileIds.Contains(selection.DifficultyProfileId))
+                throw new KeyNotFoundException($"Difficulty profile '{selection.DifficultyProfileId}' is not registered in the fake catalog.");
+
+            return new MatchConfig(
+                selection.MatchId,
+                selection.Mode,
+                selection.StageId,
+                selection.DifficultyProfileId,
+                _contentVersion,
+                selection.RandomSeed,
+                selection.Players);
         }
     }
 }

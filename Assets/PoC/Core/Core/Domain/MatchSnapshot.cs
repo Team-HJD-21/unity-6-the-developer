@@ -1,6 +1,7 @@
 // Detached, immutable match state at one sequence for persistence or recovery boundaries.
 
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -31,19 +32,24 @@ namespace TeamHJD.Game.Domain
             IEnumerable<SectorState> sectors,
             MatchResult result)
         {
+            if (matchId.IsEmpty) throw new ArgumentException("Snapshot requires a valid match ID.", nameof(matchId));
+            if (sequence < 0) throw new ArgumentOutOfRangeException(nameof(sequence));
+            if (!Enum.IsDefined(typeof(MatchPhase), phase)) throw new ArgumentOutOfRangeException(nameof(phase));
             MatchId = matchId;
             Sequence = sequence;
             Phase = phase;
             Players = Copy(players);
             ControlUnit = controlUnit;
             Wave = wave;
+            if (result != null && result.MatchId != matchId)
+                throw new ArgumentException("Snapshot result must belong to the snapshot match.", nameof(result));
             Turrets = Copy(turrets);
             Enemies = Copy(enemies);
             Sectors = Copy(sectors);
             Result = result;
         }
 
-        private static IReadOnlyList<T> Copy<T>(IEnumerable<T> values) =>
-            new ReadOnlyCollection<T>(new List<T>(values ?? new T[0]));
+        private static IReadOnlyList<T> Copy<T>(IEnumerable<T> values) where T : class =>
+            new ReadOnlyCollection<T>(CollectionCopy.CopyNonNull(values, nameof(values)));
     }
 }

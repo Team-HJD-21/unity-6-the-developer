@@ -18,9 +18,11 @@ namespace TeamHJD.Game.Domain
             IEnumerable<CurrencyBalance> currencies,
             IEnumerable<DefinitionId> unlockedDefinitions)
         {
+            if (playerId.IsEmpty) throw new System.ArgumentException("Profile requires a valid player ID.", nameof(playerId));
+            if (revision < 0) throw new System.ArgumentOutOfRangeException(nameof(revision));
             PlayerId = playerId;
             Revision = revision;
-            Currencies = new ReadOnlyCollection<CurrencyBalance>(new List<CurrencyBalance>(currencies ?? new CurrencyBalance[0]));
+            Currencies = new ReadOnlyCollection<CurrencyBalance>(CollectionCopy.CopyNonNull(currencies, nameof(currencies)));
             UnlockedDefinitions = new ReadOnlyCollection<DefinitionId>(new List<DefinitionId>(unlockedDefinitions ?? new DefinitionId[0]));
         }
     }

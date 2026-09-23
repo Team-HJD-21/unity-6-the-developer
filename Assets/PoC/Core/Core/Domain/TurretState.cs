@@ -1,6 +1,8 @@
 // Immutable runtime values for one placed defense unit.
 
 
+using System;
+
 namespace TeamHJD.Game.Domain
 {
     public sealed class TurretState
@@ -12,6 +14,8 @@ namespace TeamHJD.Game.Domain
 
         public TurretState(EntityId entityId, DefinitionId definitionId, int health, bool isActive)
         {
+            if (entityId.IsEmpty) throw new ArgumentException("Turret state requires a valid entity ID.", nameof(entityId));
+            if (definitionId.IsEmpty) throw new ArgumentException("Turret state requires a valid definition ID.", nameof(definitionId));
             EntityId = entityId;
             DefinitionId = definitionId;
             Health = health;

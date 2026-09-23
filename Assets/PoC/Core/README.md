@@ -39,14 +39,15 @@ All C# files begin with a role summary of no more than seven lines. The folder n
 
 ## Runtime composition
 
-Place `AppBootstrap` on the first scene's composition object and assign its `ContentCatalog` asset. It creates one persistent `AppRoot`; later scene copies detect that root and do not create another. The bootstrap currently composes in-memory profile/platform/scene fakes and the local authority so the object graph can be inspected without production SDKs. Replace those adapters in composition before shipping.
+`AppBootstrap` resets a private guard at `SubsystemRegistration` and creates one persistent `AppRoot` at `BeforeSceneLoad`; no scene component or runtime object search is required. It loads an optional `ContentCatalog` from `Resources/Core/ContentCatalog` and otherwise uses an empty fake catalog. The bootstrap currently composes in-memory profile/platform/scene fakes and local authority so the object graph can be inspected without production SDKs. Replace those adapters in composition before shipping.
 
-`AppServices` owns app-scoped services and the current `MatchSession`. `StartMatch` receives already-resolved `MatchConfig`, initialized `MatchState`, and mode rules; `CompleteCurrentMatch` records the result and `EndCurrentMatch` disposes the match scope. A scene adapter can submit commands, while presenters bind through read-only state snapshots and event subscriptions.
+`AppRoot` owns the current `MatchSession` lifecycle. `AppServices` is only a typed dependency bundle and factory holder. `StartMatch` receives already-resolved `MatchConfig`, initialized `MatchState`, and mode rules; `CompleteCurrentMatch` returns the result plus reward proposal, and `EndCurrentMatch` disposes the match scope. A scene adapter can submit commands, while presenters bind through read-only state snapshots and event subscriptions.
 
 ```mermaid
 flowchart TD
-    SceneBootstrap[Scene AppBootstrap] --> AppRoot[Persistent AppRoot]
+    RuntimeBootstrap[BeforeSceneLoad AppBootstrap] --> AppRoot[Persistent AppRoot]
     AppRoot --> AppServices
+    AppRoot -->|owns current match| Session
     AppServices --> MatchFactory[MatchSessionFactory]
     AppServices --> ProfilePort[IProfileService]
     AppServices --> ContentPort[IContentCatalog]

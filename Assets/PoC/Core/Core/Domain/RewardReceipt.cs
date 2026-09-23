@@ -4,6 +4,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
+using System;
+
 namespace TeamHJD.Game.Domain
 {
     public sealed class RewardReceipt
@@ -14,9 +16,11 @@ namespace TeamHJD.Game.Domain
 
         public RewardReceipt(MatchId matchId, MatchOutcome outcome, IEnumerable<CurrencyDelta> currencyDeltas)
         {
+            if (matchId.IsEmpty) throw new ArgumentException("Reward receipt requires a valid match ID.", nameof(matchId));
+            if (!Enum.IsDefined(typeof(MatchOutcome), outcome)) throw new ArgumentOutOfRangeException(nameof(outcome));
             MatchId = matchId;
             Outcome = outcome;
-            CurrencyDeltas = new ReadOnlyCollection<CurrencyDelta>(new List<CurrencyDelta>(currencyDeltas ?? new CurrencyDelta[0]));
+            CurrencyDeltas = new ReadOnlyCollection<CurrencyDelta>(CollectionCopy.CopyNonNull(currencyDeltas, nameof(currencyDeltas)));
         }
     }
 }

@@ -45,7 +45,12 @@ namespace TeamHJD.Game.Application
                 return new CommandSubmissionResult(CommandSubmissionStatus.Unauthorized, authorization.Reason, null);
 
             var outcome = _simulation.Execute(State, command, _modeRules);
-            foreach (var matchEvent in outcome.Events) _eventBus.Publish(matchEvent);
+            foreach (var matchEvent in outcome.Events)
+            {
+                if (matchEvent.MatchId != State.MatchId)
+                    throw new InvalidOperationException("Simulation emitted an event for another match.");
+                _eventBus.Publish(matchEvent);
+            }
             var status = outcome.Status == SimulationStatus.NotHandled
                 ? CommandSubmissionStatus.NotHandled
                 : outcome.Status == SimulationStatus.Rejected
@@ -54,14 +59,19 @@ namespace TeamHJD.Game.Application
             return new CommandSubmissionResult(status, string.Empty, outcome);
         }
 
-        public MatchResult Complete(MatchOutcome outcome, long eventSequence)
+        public MatchCompletion Complete(MatchOutcome outcome, long eventSequence)
         {
             ThrowIfDisposed();
+            if (eventSequence < 0) throw new ArgumentOutOfRangeException(nameof(eventSequence));
             var result = _modeRules.CreateResult(State, outcome);
             if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
+            if (result.MatchId != State.MatchId) throw new InvalidOperationException("Mode rules returned a result for another match.");
+            var rewardReceipt = _modeRules.CreateRewardReceipt(result);
+            if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
+            var completion = new MatchCompletion(result, rewardReceipt);
             _simulation.Complete(State, result);
-            _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, result));
-            return result;
+            _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, completion));
+            return completion;
         }
 
         public MatchSnapshot CreateSnapshot(long sequence)

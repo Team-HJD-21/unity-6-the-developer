@@ -11,6 +11,7 @@ namespace TeamHJD.Game.Domain
 
         public CurrencyBalance(CurrencyId currencyId, long amount)
         {
+            if (currencyId.IsEmpty) throw new ArgumentException("Currency balance requires a valid currency ID.", nameof(currencyId));
             if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
             CurrencyId = currencyId;
             Amount = amount;

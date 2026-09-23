@@ -35,18 +35,26 @@ namespace TeamHJD.Game.Domain
             IEnumerable<SectorState> sectors,
             MatchResult result = null)
         {
+            if (matchId.IsEmpty) throw new ArgumentException("Match state requires a valid match ID.", nameof(matchId));
+            if (!Enum.IsDefined(typeof(MatchPhase), phase)) throw new ArgumentOutOfRangeException(nameof(phase));
             MatchId = matchId;
             Phase = phase;
-            _players = new List<PlayerState>(players ?? new PlayerState[0]);
-            _turrets = new List<TurretState>(turrets ?? new TurretState[0]);
-            _enemies = new List<EnemyState>(enemies ?? new EnemyState[0]);
-            _sectors = new List<SectorState>(sectors ?? new SectorState[0]);
+            _players = CollectionCopy.CopyNonNull(players, nameof(players));
+            _turrets = CollectionCopy.CopyNonNull(turrets, nameof(turrets));
+            _enemies = CollectionCopy.CopyNonNull(enemies, nameof(enemies));
+            _sectors = CollectionCopy.CopyNonNull(sectors, nameof(sectors));
+            EnsureUnique(_players, player => player.PlayerId, id => id.IsEmpty, "player");
+            EnsureUnique(_turrets, turret => turret.EntityId, id => id.IsEmpty, "turret");
+            EnsureUnique(_enemies, enemy => enemy.EntityId, id => id.IsEmpty, "enemy");
+            EnsureUnique(_sectors, sector => sector.SectorDefinitionId, id => id.IsEmpty, "sector");
             Players = new ReadOnlyCollection<PlayerState>(_players);
             Turrets = new ReadOnlyCollection<TurretState>(_turrets);
             Enemies = new ReadOnlyCollection<EnemyState>(_enemies);
             Sectors = new ReadOnlyCollection<SectorState>(_sectors);
-            ControlUnit = controlUnit;
-            Wave = wave;
+            ControlUnit = controlUnit ?? throw new ArgumentNullException(nameof(controlUnit));
+            Wave = wave ?? throw new ArgumentNullException(nameof(wave));
+            if (result != null && result.MatchId != matchId)
+                throw new ArgumentException("Initial result must belong to this match state.", nameof(result));
             Result = result;
         }
 
@@ -76,6 +84,22 @@ namespace TeamHJD.Game.Domain
             var index = values.FindIndex(item => getId(item) == id);
             if (index < 0) throw new InvalidOperationException($"Entity '{id}' is not part of this match state.");
             values[index] = value;
+        }
+
+        private static void EnsureUnique<TValue, TId>(
+            IEnumerable<TValue> values,
+            Func<TValue, TId> getId,
+            Func<TId, bool> isEmpty,
+            string category)
+            where TValue : class
+        {
+            var ids = new HashSet<TId>();
+            foreach (var value in values)
+            {
+                var id = getId(value);
+                if (isEmpty(id)) throw new ArgumentException($"A {category} state has no ID.", nameof(values));
+                if (!ids.Add(id)) throw new ArgumentException($"Duplicate {category} ID '{id}'.", nameof(values));
+            }
         }
     }
 }

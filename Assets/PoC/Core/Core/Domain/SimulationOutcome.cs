@@ -15,7 +15,7 @@ namespace TeamHJD.Game.Domain
         public SimulationOutcome(SimulationStatus status, IEnumerable<MatchEvent> events, MatchResult result = null)
         {
             Status = status;
-            Events = new ReadOnlyCollection<MatchEvent>(new List<MatchEvent>(events ?? new MatchEvent[0]));
+            Events = new ReadOnlyCollection<MatchEvent>(CollectionCopy.CopyNonNull(events, nameof(events)));
             Result = result;
         }
     }

@@ -1,6 +1,8 @@
 // Immutable runtime values for one enemy actor.
 
 
+using System;
+
 namespace TeamHJD.Game.Domain
 {
     public sealed class EnemyState
@@ -12,6 +14,8 @@ namespace TeamHJD.Game.Domain
 
         public EnemyState(EntityId entityId, DefinitionId archetypeId, int health, bool isAlive)
         {
+            if (entityId.IsEmpty) throw new ArgumentException("Enemy state requires a valid entity ID.", nameof(entityId));
+            if (archetypeId.IsEmpty) throw new ArgumentException("Enemy state requires a valid archetype ID.", nameof(archetypeId));
             EntityId = entityId;
             ArchetypeId = archetypeId;
             Health = health;

@@ -13,6 +13,7 @@ namespace TeamHJD.Game.Domain
 
         public PlayerLoadoutSnapshot(PlayerId playerId, IDictionary<DefinitionId, int> upgradeLevels)
         {
+            if (playerId.IsEmpty) throw new System.ArgumentException("Player loadout requires a valid player ID.", nameof(playerId));
             PlayerId = playerId;
             UpgradeLevels = new ReadOnlyDictionary<DefinitionId, int>(
                 new Dictionary<DefinitionId, int>(upgradeLevels ?? new Dictionary<DefinitionId, int>()));
