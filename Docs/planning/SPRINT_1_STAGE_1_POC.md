@@ -6,6 +6,8 @@
 피드백 회의: 2026-10-03 예정
 상태: 실행 기준
 
+[문서 목차](../README.md)
+
 > Sprint Goal: 최소 Graybox에서 터렛 거점을 확보하고 제한 전력을 배분해 전선을 밀고 당기며, Player가 약한 전선을 지원하는 한 사이클을 같은 Build에서 검증한다.
 
 ## 1. 검증할 핵심 가설
@@ -102,4 +104,4 @@ B의 Network-aware 조사는 위 통합을 막지 않는 병렬 작업이다. �
 
 ## 9. Playtest 기록
 
-2026-10-02 Build/Commit, 참가자, 관찰 결과와 Blocker를 여기에 연결한다. 2026-10-03 회의에서 각 가설을 통과·수정·폐기로 판정하고 `PROJECT_PLAN.md` Decision Log와 다음 Backlog를 갱신한다.
+2026-10-02 Build/Commit, 참가자, 관찰 결과와 Blocker를 여기에 연결한다. 2026-10-03 회의에서 각 가설을 통과·수정·폐기로 판정하고 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md) Decision Log와 다음 Backlog를 갱신한다.

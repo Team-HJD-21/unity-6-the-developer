@@ -1,48 +1,33 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TeamHjd.Game.Turrets;
 using Tower;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
-public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
+public abstract class DefaultCanonTurret : TurretBase, IActivateTower
 {   
-    //-------------------------------------------------------
-    public bool isActivated = false;//타워 가동 여부
-    public bool previousIsActivated = false;//버퍼(토글 확인)
-    public bool ShowRange;
-    public LayerMask playerMask;
-    //-------------------------------------------------------
-    protected Transform TurretRotationPoint;// 타워 회전 각도
+    [SerializeField] protected GameObject bulletPrefab;
+   
+   
     protected Transform Target;             //target of bullets
-    protected Animator Animator;            //타워 부분 Animator
-    protected SpriteRenderer GunRenderer;   //과열시 색 변화
-    protected String Name;                  //타워 이름
-    protected LayerMask EnemyMask;
-    protected SpriteRenderer RangeRenderer;
     protected Transform RangeTransform;
 
-    protected float Range;                  //타워 사거리
-    protected float RotationSpeed;          //타워 회전 속도
-    protected float FireRate;               //발사 속도, 충격발 애니메이션이랑 연동시키기? ㄱㄴ?
-    protected int Power;                    //타워 사용 전력량
-    protected float OverHeatTime;           //~초 격발시 과열
-    protected float CoolTime;               //~초 지나면 냉각
-    protected int Level;                    //타워레벨 정보
-    protected int RPM;
-    protected int Damage;
+    protected float OverHeatTime => Definition.OverHeatTime;
+    protected float CoolTime => Definition.CoolTime;
     
-    private GameObject _originPower;    //ControlUnitStatus Script의 함수사용
-    private ControlUnitStatus _cus;     //_cus = _OriginPower.GetComponent<ControlUnitStatus>();
-    private float _timeTilFire;         //다음 발사까지의 시간
-    private float _angleThreshold = 10f; // 타워와 적의 각도 차이 허용 범위 (조정 가능)
     private float _fireTime = 0f;       //과열시 중지 위한 변수
-    private float _totCoolTime;         //냉각시 누적 냉각시간
 
-    public Transform turret;
     protected abstract void Shoot();//총알 객체화 후 목표로 발사(FireRateController에서 수행)
     private void Awake()
     {
+        if (Definition == null)
+        {
+            Debug.LogError($"Turret Definition is missing on {name}.", this);
+            enabled = false;
+            return;
+        }
         _originPower = GameObject.Find("ControlUnit");
         _cus = _originPower.GetComponent<ControlUnitStatus>();//제어장치 정보 가져오기 위함
         Name = "Canon Turret";
@@ -89,7 +74,7 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
 
     private void NoTargetInRange()//적이 타워 범위에 없을 때 탐색(TowerIsActivatedNow에서 수행)
     {
-        if (Target is null)
+        if (Target == null)
         {
             _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
@@ -99,7 +84,7 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
     }
     private void RotateTowardsTarget()//적향해 타워 z축 회전(TowerIsActivatedNow에서 수행)
     {
-        if (Target is not null) //
+        if (Target != null) //
         {
             float angle =
                 Mathf.Atan2(Target.position.y - turret.position.y, Target.position.x - turret.position.x) *
@@ -111,7 +96,7 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
     }
     private void FireRateController()//총알 객체화 후 발사 동작 수행(TowerIsActivatedNow에서 수행)
     {
-        if (CheckTargetIsInRange())//적이 범위에 없음
+        if (!CheckTargetIsInRange())//적이 범위에 없음
         {
             _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
@@ -183,12 +168,12 @@ public abstract class DefaultCanonTurret : MonoBehaviour, IActivateTower
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
-        if (Target is null) return false;
+        if (Target == null) return false;
         return Vector2.Distance(Target.position, turret.position) <= Range;
     }
     private bool IsTargetInSight()//적이 시야각에 있는지 확인(FireRateController, OverHeatAnimationController에서 수행)
     {
-        if (Target is null) return false;
+        if (Target == null) return false;
         float angleToTarget = Mathf.Atan2(Target.position.y - turret.position.y, Target.position.x - turret.position.x) * Mathf.Rad2Deg - 90f;
         float turretAngle = TurretRotationPoint.eulerAngles.z;
         float angleDifference = Mathf.DeltaAngle(turretAngle, angleToTarget);

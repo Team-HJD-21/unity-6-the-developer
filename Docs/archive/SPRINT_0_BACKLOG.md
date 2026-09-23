@@ -1,5 +1,7 @@
 # Sprint 0 Backlog — M0 Alignment & Baseline
 
+> 과거 Sprint 0 계획 기록이다. 현재 실행 기준은 [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)를 따른다.
+
 기간: 2026-09-14 ~ 2026-09-20, 1주 가안
 목표: M1 New Core Foundation을 시작할 수 있도록 팀 기준, Owner, Build/CI와 입력 자료를 확정한다.
 

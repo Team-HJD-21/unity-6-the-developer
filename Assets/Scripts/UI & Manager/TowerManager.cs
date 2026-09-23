@@ -304,7 +304,7 @@ public class TowerManager : MonoBehaviour
         damageText.SetText("Damage : " + curCanonTower.GetDamage());
         rpm.SetText("RPM : " + curCanonTower.GetRpm());
 
-        if (curCanonTower.isActivated)
+        if (curCanonTower.IsActivated)
         {
             activateText.SetText("Deactivate");
             activateText.color = Color.red;
@@ -335,7 +335,7 @@ public class TowerManager : MonoBehaviour
         damageText.SetText("Damage : " + curMissileTower.GetDamage());
         rpm.SetText("RPM : " + curMissileTower.GetRPM());
 
-        if (curMissileTower.isActivated)
+        if (curMissileTower.IsActivated)
         {
             activateText.SetText("Deactivate");
             activateText.color = Color.red;
@@ -356,7 +356,7 @@ public class TowerManager : MonoBehaviour
             if (curCanonTower != null)
             {
                 //  이미 활성화 상태
-                if (curCanonTower.isActivated)
+                if (curCanonTower.IsActivated)
                 {
                     curCanonTower.DeactivateTurret();
 
@@ -400,7 +400,7 @@ public class TowerManager : MonoBehaviour
             else if (curMissileTower != null)
             {
                 //  이미 활성화 상태
-                if (curMissileTower.isActivated)
+                if (curMissileTower.IsActivated)
                 {
                     curMissileTower.DeactivateTurret();
 

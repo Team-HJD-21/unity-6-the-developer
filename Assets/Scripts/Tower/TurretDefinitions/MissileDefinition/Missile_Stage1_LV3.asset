@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 642a658f044b468089a5fbfc7257c466, type: 3}
+  m_Name: Missile_Stage1_LV3
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHjd.Game.Content.TurretDefinition
+  _level: 3
+  _range: 100
+  _rotationSpeed: 175
+  _fireRate: 0.2
+  _power: 45
+  _overHeatTime: 0
+  _overHeatMissileCount: 7
+  _coolTime: 5

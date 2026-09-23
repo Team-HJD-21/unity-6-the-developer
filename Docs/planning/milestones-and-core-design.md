@@ -3,7 +3,7 @@
 기준일: 2026-09-20
 상태: Milestone·Priority·기술 구현의 현행 기준 / Sprint 1 Stage 1 PoC 실행 중
 
-이 문서는 M0~M5의 순서, 각 Priority에서 A~E가 맡는 책임, 기술 통과 기준을 정의한다. 제품 범위는 [PROJECT_PLAN.md](PROJECT_PLAN.md), 제품 영역 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md)를 따른다.
+이 문서는 M0~M5의 순서, 각 Priority에서 A~E가 맡는 책임, 기술 통과 기준을 정의한다. 제품 범위는 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md), 제품 영역 경계는 [TEAM_ROLE_OWNERSHIP.md](../team/TEAM_ROLE_OWNERSHIP.md)를 따른다.
 
 ## 1. 운영 원칙
 
@@ -227,7 +227,7 @@ flowchart LR
 
 ## 11. 변경 통제
 
-- Milestone 이름·순서·Exit Criteria 변경은 이 문서와 `PROJECT_PLAN.md` Decision Log를 함께 수정한다.
+- Milestone 이름·순서·Exit Criteria 변경은 이 문서와 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md) Decision Log를 함께 수정한다.
 - P3를 P0/P1으로 올릴 때는 같은 크기의 작업을 빼거나 기간을 다시 산정한다.
-- Owner 변경은 `TEAM_ROLE_OWNERSHIP.md`와 현재 Backlog를 함께 수정한다.
+- Owner 변경은 [TEAM_ROLE_OWNERSHIP.md](../team/TEAM_ROLE_OWNERSHIP.md)와 현재 Backlog를 함께 수정한다.
 - 통과 증거는 GitHub Issue/PR, CI Run, Build, Playtest 기록 중 하나 이상으로 남긴다.
