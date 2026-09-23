@@ -22,6 +22,7 @@ namespace TeamHJD.Game.Application
         {
             Config = config ?? throw new ArgumentNullException(nameof(config));
             State = state ?? throw new ArgumentNullException(nameof(state));
+            if (Config.MatchId != State.MatchId) throw new ArgumentException("Match config and initial state must belong to the same match.", nameof(state));
             _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             _modeRules = modeRules ?? throw new ArgumentNullException(nameof(modeRules));
             _authority = authority ?? throw new ArgumentNullException(nameof(authority));

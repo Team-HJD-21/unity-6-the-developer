@@ -28,6 +28,7 @@ namespace TeamHJD.Game.Domain
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (result == null) throw new ArgumentNullException(nameof(result));
+            if (result.MatchId != state.MatchId) throw new ArgumentException("Match result must belong to the target match.", nameof(result));
             if (state.Phase != MatchPhase.Running) throw new InvalidOperationException("Only a running match can complete.");
             state.SetResult(result);
             state.SetPhase(MatchPhase.Completed);
