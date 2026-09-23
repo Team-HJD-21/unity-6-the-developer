@@ -20,7 +20,6 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     private Animator _animator;
     private uint _nextAttackSequence;
     private uint _lastAppliedAttackSequence;
-    private bool _hasAppliedAttack;
 
     /// <summary>
     /// Animator 참조를 초기화한다.
@@ -44,12 +43,11 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     }
 
     /// <summary>
-    /// 이동 상태 변경 이벤트를 해제하고 공격 상태를 초기화한다.
+    /// 이동 상태 변경 이벤트를 해제한다.
     /// </summary>
     public override void OnNetworkDespawn()
     {
         _movementState.OnValueChanged -= OnMovementStateChanged;
-        _hasAppliedAttack = false;
         base.OnNetworkDespawn();
     }
 
@@ -81,10 +79,9 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     private void PlayAttackRpc(uint sequence)
     {
         // 같은 공격 중복 실행 방지
-        if (_hasAppliedAttack && sequence == _lastAppliedAttackSequence)
+        if (sequence == _lastAppliedAttackSequence)
             return;
 
-        _hasAppliedAttack = true;
         _lastAppliedAttackSequence = sequence;
         _animator.SetTrigger(AttackHash);
     }
