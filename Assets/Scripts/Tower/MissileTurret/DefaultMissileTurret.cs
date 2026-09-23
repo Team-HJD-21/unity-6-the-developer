@@ -32,10 +32,10 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
             enabled = false;
             return;
         }
-        _originPower = GameObject.Find("ControlUnit");
-        _cus = _originPower.GetComponent<ControlUnitStatus>();//제어장치 정보 가져오기 위함
+        OriginPower = GameObject.Find("ControlUnit");
+        ControlUnitStatus = OriginPower.GetComponent<ControlUnitStatus>();//제어장치 정보 가져오기 위함
         Name = "Missile Turret";
-        _angleThreshold = 360f;
+        AngleThreshold = 360f;
         ShowRange = false;
     }
     private void Update()
@@ -46,11 +46,11 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
     private void CheckToggle()//Checks toggle of isActivated
     {
         RangeRenderer.enabled = ShowRange;
-        if (isActivated != previousIsActivated)//toggle check
+        if (isActivated != PreviousIsActivated)//toggle check
         {
             if (isActivated)
             {
-                previousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
+                PreviousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
                 AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
                 AddTurret();
             }
@@ -60,7 +60,7 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
                 Animator.SetBool("isShoot", false);
                 AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
                 StartCoroutine(DeactivateProcess());
-                previousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
+                PreviousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
                 DeleteTurret();
             }
         }
@@ -149,17 +149,17 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
     {
         if (!CheckTargetIsInRange())//적이 범위에 없음
         {
-            _timeTilFire = 0f;
+            TimeTilFire = 0f;
         }
         else//적이 범위에 있음
         {
             
-            _timeTilFire += Time.deltaTime;
-            if (_timeTilFire >= 1f / FireRate)//적이 타워의 시야각에 있고 RPS만큼 발사
+            TimeTilFire += Time.deltaTime;
+            if (TimeTilFire >= 1f / FireRate)//적이 타워의 시야각에 있고 RPS만큼 발사
             {
                 FireSound();
                 Shoot();
-                _timeTilFire = 0f;
+                TimeTilFire = 0f;
             }
         }
     }
@@ -172,7 +172,7 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
             if (CurMissileCount >= OverHeatMissileCount)//터렛 과열
             {
                 isActivated = false;
-                previousIsActivated = false;
+                PreviousIsActivated = false;
                 StartCoroutine(OverHeat());
             }
         }
@@ -188,7 +188,7 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
         float angleToTarget = Mathf.Atan2(Targets[0].position.y - turret.position.y, Targets[0].position.x - turret.position.x) * Mathf.Rad2Deg - 90f;
         float turretAngle = TurretRotationPoint.eulerAngles.z;
         float angleDifference = Mathf.DeltaAngle(turretAngle, angleToTarget);
-        return Mathf.Abs(angleDifference) <= _angleThreshold;
+        return Mathf.Abs(angleDifference) <= AngleThreshold;
         
     }
     private void FireSound()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
@@ -204,19 +204,19 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
     //for Control Unit----------------------------------------------------------------------
     private void AddTurret()//ControlUnitStatus script 사용(CheckToggle에서 수행)
     {
-        if (_cus.GetCurrentPower() >= Power)
+        if (ControlUnitStatus.GetCurrentPower() >= Power)
         {
-            _cus.AddUnit(Power);
+            ControlUnitStatus.AddUnit(Power);
         }
         else
         {
             isActivated = false;
-            previousIsActivated = false;
+            PreviousIsActivated = false;
         }
     }
     private void DeleteTurret()//ControlUnitStatus script 사용(CheckToggle에서 수행)
     {
-        _cus.RemoveUnit(Power);
+        ControlUnitStatus.RemoveUnit(Power);
     }
     //Coroutine Methods------------------------------------------------------------------
     private IEnumerator DeactivateProcess()
@@ -245,7 +245,7 @@ public abstract class DefaultMissileTurret : TurretBase, IActivateTower
         GunRenderer.color = Color.white;
         CurMissileCount = 0f;
         isActivated = true;
-        previousIsActivated = true;
+        PreviousIsActivated = true;
     }
 
     protected IEnumerator ShootAnimation()

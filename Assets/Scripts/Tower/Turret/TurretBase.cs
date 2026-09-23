@@ -6,6 +6,7 @@ namespace TeamHjd.Game.Turrets
     public abstract class TurretBase : MonoBehaviour
     {
         // Keep serialized field names unchanged so existing prefab values remain mapped.
+        //제발 바꾸지 말아주세요요요요!
         [Header("Common References")]
         [SerializeField] protected Transform turret;
         [SerializeField] protected Transform turretRotationPoint;
@@ -37,13 +38,13 @@ namespace TeamHjd.Game.Turrets
         protected int RPM => (int)(60 / (1 / FireRate));
 
         // Runtime state is not configured in the Inspector.
-        protected bool previousIsActivated;
+        protected bool PreviousIsActivated;
         protected string Name;
         protected int Damage;
-        protected float _timeTilFire;
-        protected float _angleThreshold = 10f;
-        protected float _totCoolTime;
-        protected GameObject _originPower;
-        protected ControlUnitStatus _cus;
+        protected float TimeTilFire;
+        protected float AngleThreshold = 10f;//If Missile turret this value changes into 360f
+        protected float TotCoolTime;
+        protected GameObject OriginPower;
+        protected ControlUnitStatus ControlUnitStatus;
     }
 }
