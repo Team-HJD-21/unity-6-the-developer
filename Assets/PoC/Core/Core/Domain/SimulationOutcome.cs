@@ -8,11 +8,13 @@ namespace TeamHJD.Game.Domain
 {
     public sealed class SimulationOutcome
     {
+        public SimulationStatus Status { get; }
         public IReadOnlyList<MatchEvent> Events { get; }
         public MatchResult Result { get; }
 
-        public SimulationOutcome(IEnumerable<MatchEvent> events, MatchResult result = null)
+        public SimulationOutcome(SimulationStatus status, IEnumerable<MatchEvent> events, MatchResult result = null)
         {
+            Status = status;
             Events = new ReadOnlyCollection<MatchEvent>(new List<MatchEvent>(events ?? new MatchEvent[0]));
             Result = result;
         }
