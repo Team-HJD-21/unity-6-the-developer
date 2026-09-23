@@ -42,3 +42,25 @@ All C# files begin with a role summary of no more than seven lines. The folder n
 Place `AppBootstrap` on the first scene's composition object and assign its `ContentCatalog` asset. It creates one persistent `AppRoot`; later scene copies detect that root and do not create another. The bootstrap currently composes in-memory profile/platform/scene fakes and the local authority so the object graph can be inspected without production SDKs. Replace those adapters in composition before shipping.
 
 `AppServices` owns app-scoped services and the current `MatchSession`. `StartMatch` receives already-resolved `MatchConfig`, initialized `MatchState`, and mode rules; `CompleteCurrentMatch` records the result and `EndCurrentMatch` disposes the match scope. A scene adapter can submit commands, while presenters bind through read-only state snapshots and event subscriptions.
+
+```mermaid
+flowchart TD
+    SceneBootstrap[Scene AppBootstrap] --> AppRoot[Persistent AppRoot]
+    AppRoot --> AppServices
+    AppServices --> MatchFactory[MatchSessionFactory]
+    AppServices --> ProfilePort[IProfileService]
+    AppServices --> ContentPort[IContentCatalog]
+    AppServices --> PlatformPort[IPlatformService]
+    AppServices --> ScenePort[ISceneFlow]
+    MatchFactory --> Session[MatchSession]
+    Session --> State[MatchState]
+    Session --> Simulation[MatchSimulation]
+    Session --> Rules[IModeRules]
+    Session --> Authority[IAuthority]
+    Session --> Bus[MatchEventBus]
+    Bus -. read-only subscriptions .-> Presenter[HudPresenter]
+    SceneAdapter[PlayerSceneAdapter] -->|GameCommand| Session
+    ContentAsset[ContentCatalog ScriptableObject] -. implements .-> ContentPort
+```
+
+App and Match scopes are explicit and disposable; no static service locator or gameplay Manager singleton is introduced. Network authority/transport, profile persistence, backend validation, Steam integration, mode rules, and gameplay command handlers are extension points, not implemented behavior in this foundation.
