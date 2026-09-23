@@ -63,11 +63,13 @@ MonoBehaviour:
   rangeRenderer: {fileID: 15490981806211254}
   rangeTransform: {fileID: 1935032444102061095}
   _definition: {fileID: 11400000, guid: 628f4ecf4feb4d15beb13ee83df2da66, type: 2}
-  isActivated: 0
+  _runtimeState:
+    _instanceId: 0
+    _isActivated: 0
+    _damageBonus: 0
   bulletPrefab: {fileID: 5527518119625726090, guid: d68bdf48dc0984e30ba45c78cad3a501, type: 3}
   bulletSpawnPoint: {fileID: 3577476696653598682}
   bulletFirePoint: {fileID: 701655428692059149}
-  showRange: 0
 --- !u!58 &7130774518783448330
 CircleCollider2D:
   m_ObjectHideFlags: 0

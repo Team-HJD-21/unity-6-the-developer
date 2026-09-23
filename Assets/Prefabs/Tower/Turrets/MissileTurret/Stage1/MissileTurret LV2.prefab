@@ -517,7 +517,10 @@ MonoBehaviour:
   rangeRenderer: {fileID: 3901330275991765378}
   rangeTransform: {fileID: 1257971736238878355}
   _definition: {fileID: 11400000, guid: 379e75428df04592955b813a7200ba32, type: 2}
-  isActivated: 0
+  _runtimeState:
+    _instanceId: 0
+    _isActivated: 0
+    _damageBonus: 0
   missilePrefab: {fileID: 6223032590839111759, guid: d66faf99a1ab241cbb368fd9178b0030, type: 3}
   missileSpawnPoint:
   - {fileID: 5693288934300119009}
