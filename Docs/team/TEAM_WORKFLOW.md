@@ -3,7 +3,7 @@
 기준일: 2026-09-12
 상태: Sprint·Git·Review·Ready/Done의 Source of Truth
 
-역할 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md), Milestone별 Priority 업무는 [milestones-and-core-design.md](milestones-and-core-design.md)를 따른다.
+역할 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md), Milestone별 Priority 업무는 [milestones-and-core-design.md](../planning/milestones-and-core-design.md)를 따른다.
 
 ## 1. PL 운영 원칙
 
@@ -175,7 +175,7 @@ Blocker: 필요한 결정·사람·선행 작업
 결정 담당 / 날짜:
 ```
 
-Core Rule·제품 범위는 `PROJECT_PLAN.md`, Milestone/Exit Criteria는 Core Design, 역할은 Team Role Ownership에 기록한다. 회의·Discord·Notion은 결정 근거일 수 있지만 Source of Truth 변경을 대신하지 않는다.
+Core Rule·제품 범위는 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md), Milestone/Exit Criteria는 Core Design, 역할은 Team Role Ownership에 기록한다. 회의·Discord·Notion은 결정 근거일 수 있지만 Source of Truth 변경을 대신하지 않는다.
 
 ## 11. PL 주간 점검
 

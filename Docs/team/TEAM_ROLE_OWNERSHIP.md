@@ -159,7 +159,7 @@ Sprint 1의 연결 순서는 `D 터렛 데이터 → E 목표 선택 AI → C �
 
 ## 7. Milestone 적용
 
-Milestone별 P0/P1/P2/P3 업무는 [milestones-and-core-design.md](milestones-and-core-design.md)가 기준이다. 역할 자체는 Milestone마다 바뀌지 않으며, 작업량만 달라진다.
+Milestone별 P0/P1/P2/P3 업무는 [milestones-and-core-design.md](../planning/milestones-and-core-design.md)가 기준이다. 역할 자체는 Milestone마다 바뀌지 않으며, 작업량만 달라진다.
 
 - M0/M1: A의 Core 부담이 가장 크고 B/C/D/E가 각 Feature의 계약·최소 Slice를 병렬 제공한다.
 - M2: C/D/E의 Content·Gameplay 비중이 커지고 B가 Player/UX, A가 왕복 통합을 책임진다.
