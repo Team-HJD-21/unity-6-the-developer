@@ -192,12 +192,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 5527518119625726090, guid: d68bdf48dc0984e30ba45c78cad3a501, type: 3}
   rangeRenderer: {fileID: 1284848239774362822}
   rangeTransform: {fileID: 3519787758005607087}
-  range: 32
-  rotationSpeed: 500
-  fireRate: 8
-  power: 25
-  overHeatTime: 10
-  coolTime: 3
+  _definition: {fileID: 11400000, guid: 19fdc000b294474988f69ec532d59624, type: 2}
 --- !u!58 &8337633065169574392
 CircleCollider2D:
   m_ObjectHideFlags: 0

@@ -105,12 +105,7 @@ MonoBehaviour:
   gunRenderer: {fileID: 4948167733929469205}
   rangeRenderer: {fileID: 4473596579251596241}
   rangeTransform: {fileID: 8617299572104649329}
-  range: 30
-  rotationSpeed: 500
-  fireRate: 8
-  power: 35
-  overHeatTime: 10
-  coolTime: 3.5
+  _definition: {fileID: 11400000, guid: ef0b841e26c24e5facc7bf10ccd5cff0, type: 2}
   showRange: 0
 --- !u!58 &7125781412258440163
 CircleCollider2D:

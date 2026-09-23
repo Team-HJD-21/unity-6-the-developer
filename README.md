@@ -1,6 +1,6 @@
 # CBC
 
-> 2026 리뉴얼의 전체 개발 순서는 [Development Flow](Docs/DEVELOPMENT_FLOW.md), Project Plan과 Backlog 등 전체 문서 목록은 [Project Docs](Docs/README.md)를 참고하세요.
+> 2026 리뉴얼의 전체 개발 순서는 [Development Flow](Docs/planning/DEVELOPMENT_FLOW.md), Project Plan과 Backlog 등 전체 문서 목록은 [Project Docs](Docs/README.md)를 참고하세요.
 
 ### Department of Software, Sejong University  
 ### Software Design Basics Section 001, Team 2
