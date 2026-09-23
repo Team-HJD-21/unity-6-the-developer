@@ -18,8 +18,6 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     // 네트워크 상태
     private readonly NetworkVariable<PoCMonsterAnimatorState> _movementState = new();
     private Animator _animator;
-    private uint _nextAttackSequence;
-    private uint _lastAppliedAttackSequence;
 
     /// <summary>
     /// Animator 참조를 초기화한다.
@@ -67,22 +65,15 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     {
         if (!IsSpawned || !IsServer)
             return;
-
-        _nextAttackSequence++;
-        PlayAttackRpc(_nextAttackSequence);
+        PlayAttackRpc();
     }
 
     /// <summary>
     /// 공격 이벤트를 로컬 Animator에 한 번만 적용한다.
     /// </summary>
     [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
-    private void PlayAttackRpc(uint sequence)
+    private void PlayAttackRpc()
     {
-        // 같은 공격 중복 실행 방지
-        if (sequence == _lastAppliedAttackSequence)
-            return;
-
-        _lastAppliedAttackSequence = sequence;
         _animator.SetTrigger(AttackHash);
     }
 
