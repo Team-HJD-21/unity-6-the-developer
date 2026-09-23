@@ -81,9 +81,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2079d1b0768a48be920a6f7237fb129, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isActivated: 0
-  previousIsActivated: 0
-  ShowRange: 0
+  _runtimeState:
+    _instanceId: 0
+    _isActivated: 0
+    _damageBonus: 0
   playerMask:
     serializedVersion: 2
     m_Bits: 262144
@@ -106,7 +107,6 @@ MonoBehaviour:
   rangeRenderer: {fileID: 4473596579251596241}
   rangeTransform: {fileID: 8617299572104649329}
   _definition: {fileID: 11400000, guid: ef0b841e26c24e5facc7bf10ccd5cff0, type: 2}
-  showRange: 0
 --- !u!58 &7125781412258440163
 CircleCollider2D:
   m_ObjectHideFlags: 0

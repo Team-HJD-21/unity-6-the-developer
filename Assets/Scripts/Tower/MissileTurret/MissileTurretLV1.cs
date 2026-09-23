@@ -16,18 +16,16 @@ public class MissileTurretLV1 : DefaultMissileTurret
     private GameObject []_missileObj;
     private void Start()
     {
-        Targets = new Transform[2];
+        Targets = new Transform[missileSpawnPoint.Length];
         gunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
         _missileObj = new GameObject[missileSpawnPoint.Length];
         //Turrets Attack Range
         rangeTransform.localScale = new Vector3(Range*2.5f, Range*2.5f, 1f);
-        //Info for UI
-        Damage = 10;
     }
     protected override void Shoot()
     {
         // Debug.Log("shooting now");
-        CurMissileCount += 1;
+        RecordMissileLaunch();
         StartCoroutine(ShootAnimation());
         for (int i = 0; i < _missileObj.Length; i++)
         {
@@ -35,6 +33,7 @@ public class MissileTurretLV1 : DefaultMissileTurret
             {
                 _missileObj[i] = Instantiate(missilePrefab, missileSpawnPoint[i].position, turretRotationPoint.rotation);
                 TowerMissile missileScript = _missileObj[i].GetComponent<TowerMissile>();
+                missileScript.SetDamage(Damage);
                 missileScript.SetTarget(Targets[i]);
             }
         }

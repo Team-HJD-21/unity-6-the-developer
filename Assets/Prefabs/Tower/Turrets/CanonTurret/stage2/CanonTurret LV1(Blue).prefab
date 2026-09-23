@@ -50,9 +50,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1bd8bb9366149bab62297b29550d748, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isActivated: 0
-  previousIsActivated: 0
-  ShowRange: 1
+  _runtimeState:
+    _instanceId: 0
+    _isActivated: 0
+    _damageBonus: 0
   playerMask:
     serializedVersion: 2
     m_Bits: 262144
@@ -69,7 +70,6 @@ MonoBehaviour:
   rangeRenderer: {fileID: 7506254957663382205}
   rangeTransform: {fileID: 8414836952263305618}
   _definition: {fileID: 11400000, guid: ef62303428084f879060d63eaad0ad6d, type: 2}
-  showRange: 0
 --- !u!58 &7130774518783448330
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -274,7 +274,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 1}
-  m_LocalScale: {x: 87, y: 87, z: 1}
+  m_LocalScale: {x: 87.5, y: 87.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1659131349136534652}
