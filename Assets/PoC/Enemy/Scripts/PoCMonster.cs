@@ -6,28 +6,35 @@ using UnityEngine;
 /// </summary>
 public class PoCMonster : MonoBehaviour
 {
+    // Animator 파라미터
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
     private static readonly int MoveXHash = Animator.StringToHash("MoveX");
     private static readonly int MoveYHash = Animator.StringToHash("MoveY");
     private static readonly int MoveAnimSpeedHash = Animator.StringToHash("MoveAnimSpeed");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
 
-    [Header("References")]
+    [Header("참조")]
     [SerializeField] private Animator animator;
 
-    [Header("Movement")]
+    [Header("이동 설정")]
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float animationReferenceSpeed = 2f;
 
-    [Header("Attack")]
+    [Header("공격 설정")]
     [SerializeField] private float attackRange = 0.4f;
     [SerializeField] private float attackCooldown = 1f;
 
+    // 런타임 상태
     private Transform _target;
     private float _nextAttackTime;
+    private PoCMonsterNetworkAnimator _networkAnimator;
 
+    /// <summary>
+    /// 필요한 컴포넌트 참조를 초기화한다.
+    /// </summary>
     private void Awake()
     {
+        _networkAnimator = GetComponent<PoCMonsterNetworkAnimator>();
         if (animator == null)
             animator = GetComponent<Animator>();
     }
@@ -63,6 +70,9 @@ public class PoCMonster : MonoBehaviour
         _target = target;
     }
 
+    /// <summary>
+    /// 지정된 방향으로 이동하고 이동 애니메이션 속도를 갱신한다.
+    /// </summary>
     private void MoveTowardsTarget(Vector2 moveDirection)
     {
         animator.SetBool(IsMovingHash, true);
@@ -88,23 +98,34 @@ public class PoCMonster : MonoBehaviour
 
     private static Vector2 GetAnimationDirection(Vector2 direction)
     {
+        // 대각선 방향은 더 큰 축을 기준으로 상하좌우 네 방향으로 변환한다.
         if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
             return new Vector2(Mathf.Sign(direction.x), 0f);
 
         return new Vector2(0f, Mathf.Sign(direction.y));
     }
 
+    /// <summary>
+    /// 공격 쿨타임을 확인한 뒤 네트워크 공격을 실행한다.
+    /// </summary>
     private void TryAttack()
     {
         if (Time.time < _nextAttackTime)
             return;
 
         _nextAttackTime = Time.time + attackCooldown;
-        animator.SetTrigger(AttackHash);
+        if (_networkAnimator != null)
+            _networkAnimator.PlayAttack();
+        else
+            animator.SetTrigger(AttackHash);
     }
 
+    /// <summary>
+    /// 타겟이 공격 범위 안에 있는지 확인한다.
+    /// </summary>
     private bool IsInAttackRange()
     {
+        // 제곱 거리를 비교해 불필요한 제곱근 계산을 피한다.
         float distanceSqr = (_target.position - transform.position).sqrMagnitude;
 
         return distanceSqr <= attackRange * attackRange;

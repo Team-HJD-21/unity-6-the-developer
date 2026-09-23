@@ -10,20 +10,27 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
 {
     private const int TargetFrameRate = 120;
 
+    [Header("참조")]
     [SerializeField] private PoCMonsterSpawner monsterSpawner;
 
     private NetworkManager _networkManager;
 
+    /// <summary>
+    /// 네트워크 관리자와 테스트 실행 환경을 초기화한다.
+    /// </summary>
     private void Awake()
     {
         _networkManager = GetComponent<NetworkManager>();
 
-        // Host와 Client 창의 포커스가 바뀌어도 테스트가 계속 실행되도록 한다.
+        // 백그라운드 테스트 유지
         Application.runInBackground = true;
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = TargetFrameRate;
     }
 
+    /// <summary>
+    /// 네트워크 실행 버튼과 연결 상태를 표시한다.
+    /// </summary>
     private void OnGUI()
     {
         GUILayout.BeginArea(
@@ -61,6 +68,9 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
             _networkManager.Shutdown();
     }
 
+    /// <summary>
+    /// 호스트를 시작하고 테스트 몬스터를 생성한다.
+    /// </summary>
     private void StartHost()
     {
         if (!_networkManager.StartHost())
@@ -69,13 +79,22 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
             return;
         }
 
+        Debug.Log("Enemy network host started.");
         monsterSpawner.Spawn();
     }
 
+    /// <summary>
+    /// 클라이언트 연결을 시작한다.
+    /// </summary>
     private void StartClient()
     {
         if (!_networkManager.StartClient())
+        {
             Debug.LogError("Failed to start the network client.");
+            return;
+        }
+
+        Debug.Log("Enemy network client started.");
     }
 
     private string GetCurrentMode()

@@ -2,13 +2,16 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 네트워크에서 몬스터 AI가 서버에서만 실행되도록 제어한다.
-/// 위치와 애니메이션 결과는 NetworkTransform과 NetworkAnimator가 동기화한다.
+/// 서버에서 몬스터 AI를 실행한다.
 /// </summary>
 public class PoCMonsterNetwork : NetworkBehaviour
 {
+    [Header("참조")]
     [SerializeField] private PoCMonster monster;
 
+    /// <summary>
+    /// 서버에서만 몬스터 AI를 갱신한다.
+    /// </summary>
     private void Update()
     {
         if (!IsSpawned || !IsServer)

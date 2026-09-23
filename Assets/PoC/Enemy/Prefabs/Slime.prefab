@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6051569727894897635}
   - component: {fileID: -4820293985112137665}
   - component: {fileID: -8740136632330153983}
-  - component: {fileID: 3205867814329284503}
+  - component: {fileID: 784396215047286331}
   m_Layer: 0
   m_Name: Slime
   m_TagString: Untagged
@@ -242,11 +242,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6b71b327c7eb134787ef7d24c941dfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoCMonster
-  moveSpeed: 1.5
   animator: {fileID: 5135953631903945395}
+  moveSpeed: 1.5
   animationReferenceSpeed: 2
   attackRange: 1
-  attackDamage: 10
   attackCooldown: 1
 --- !u!114 &-8740136632330153983
 MonoBehaviour:
@@ -262,7 +261,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PoCMonsterNetwork
   ShowTopMostFoldoutHeaderGroup: 1
   monster: {fileID: -4820293985112137665}
---- !u!114 &3205867814329284503
+--- !u!114 &784396215047286331
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -271,48 +270,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3068615185566250658}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Script: {fileID: 11500000, guid: b7f21c4e932a4c6d8a1075be49d3f602, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkAnimator
+  m_EditorClassIdentifier: Assembly-CSharp::PoCMonsterNetworkAnimator
   ShowTopMostFoldoutHeaderGroup: 1
-  NetworkAnimatorExpanded: 0
-  AuthorityMode: 0
-  m_Animator: {fileID: 5135953631903945395}
-  TransitionStateInfoList:
-  - IsCrossFadeExit: 0
-    Layer: 0
-    OriginatingState: 1326225478
-    DestinationState: 1080829965
-    TransitionDuration: 0
-    TriggerNameHash: 1080829965
-    TransitionIndex: 0
-  - IsCrossFadeExit: 0
-    Layer: 0
-    OriginatingState: 2081823275
-    DestinationState: 1080829965
-    TransitionDuration: 0
-    TriggerNameHash: 1080829965
-    TransitionIndex: 1
-  AnimatorParameterEntries:
-    ParameterEntries:
-    - name: MoveX
-      NameHash: 675470966
-      Synchronize: 1
-      ParameterType: 1
-    - name: MoveY
-      NameHash: 1598418656
-      Synchronize: 1
-      ParameterType: 1
-    - name: MoveAnimSpeed
-      NameHash: 541295930
-      Synchronize: 1
-      ParameterType: 1
-    - name: IsMoving
-      NameHash: 120489994
-      Synchronize: 1
-      ParameterType: 4
-    - name: Attack
-      NameHash: 1080829965
-      Synchronize: 1
-      ParameterType: 9
-  AnimatorParametersExpanded: 0

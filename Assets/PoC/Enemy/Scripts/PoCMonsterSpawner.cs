@@ -6,8 +6,11 @@ using UnityEngine;
 /// </summary>
 public class PoCMonsterSpawner : NetworkBehaviour
 {
+    [Header("생성 설정")]
     [SerializeField] private GameObject monsterPrefab;
     [SerializeField] private Transform spawnPoint;
+
+    [Header("타겟 설정")]
     [SerializeField] private Transform tempTarget;
 
     /// <summary>
@@ -26,6 +29,9 @@ public class PoCMonsterSpawner : NetworkBehaviour
         PoCMonster monster = spawnedMonster.GetComponent<PoCMonster>();
         monster.SetTarget(tempTarget);
 
-        spawnedMonster.GetComponent<NetworkObject>().Spawn();
+        NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
+        networkObject.Spawn();
+
+        Debug.Log($"Spawned test monster. NetworkObjectId: {networkObject.NetworkObjectId}");
     }
 }
