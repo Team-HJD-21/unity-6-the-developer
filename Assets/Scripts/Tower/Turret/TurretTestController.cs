@@ -14,18 +14,36 @@ namespace TeamHjd.Game.Debugging
     {
         private const float PanelWidth = 440f;
 
+        [Header("Camera Movement")]
+        [SerializeField, Min(0f)] private float cameraMoveSpeed = 8f;
+        [SerializeField, Min(1f)] private float cameraFastMoveMultiplier = 2f;
+        [SerializeField, Min(0.1f)] private float cameraSpeedScrollStep = 1f;
+        [SerializeField, Min(0.1f)] private float minimumCameraMoveSpeed = 1f;
+        [SerializeField, Min(0.1f)] private float maximumCameraMoveSpeed = 30f;
+
+        [Header("Camera Zoom")]
+        [SerializeField, Min(0.1f)] private float cameraZoomSpeed = 6f;
+        [SerializeField, Min(0.1f)] private float minimumOrthographicSize = 2f;
+        [SerializeField, Min(0.1f)] private float maximumOrthographicSize = 20f;
+
         private readonly List<TurretBase> _turrets = new();
         private ControlUnitStatus _controlUnit;
+        private Camera _mainCamera;
         private Vector2 _scrollPosition;
         private bool _isPanelVisible = true;
 
         private void Awake()
         {
             RefreshReferences();
+            _mainCamera = Camera.main;
         }
 
         private void Update()
         {
+            AdjustCameraMoveSpeed();
+            MoveCamera();
+            ZoomCamera();
+
             if (Input.GetKeyDown(KeyCode.F1))
             {
                 _isPanelVisible = !_isPanelVisible;
@@ -95,8 +113,77 @@ namespace TeamHjd.Game.Debugging
             }
 
             GUILayout.EndScrollView();
+            string cameraStatus = _mainCamera == null
+                ? $"Move Speed: {cameraMoveSpeed:0.0}"
+                : $"Move Speed: {cameraMoveSpeed:0.0} / Zoom Size: {_mainCamera.orthographicSize:0.0}";
+            GUILayout.Label(cameraStatus);
+            GUILayout.Label("Camera: WASD / Fast: Shift / Speed: Mouse Wheel");
+            GUILayout.Label("Zoom In: Q / Zoom Out: Space");
             GUILayout.Label("Add a Monster-layer target to the scene to test tracking and firing.");
             GUILayout.EndArea();
+        }
+
+        private void AdjustCameraMoveSpeed()
+        {
+            float scrollInput = Input.mouseScrollDelta.y;
+            if (Mathf.Approximately(scrollInput, 0f))
+            {
+                return;
+            }
+
+            cameraMoveSpeed = Mathf.Clamp(
+                cameraMoveSpeed + scrollInput * cameraSpeedScrollStep,
+                minimumCameraMoveSpeed,
+                maximumCameraMoveSpeed);
+        }
+
+        private void MoveCamera()
+        {
+            if (_mainCamera == null)
+            {
+                _mainCamera = Camera.main;
+                if (_mainCamera == null)
+                {
+                    return;
+                }
+            }
+
+            Vector2 direction = Vector2.zero;
+
+            if (Input.GetKey(KeyCode.W)) direction.y += 1f;
+            if (Input.GetKey(KeyCode.S)) direction.y -= 1f;
+            if (Input.GetKey(KeyCode.A)) direction.x -= 1f;
+            if (Input.GetKey(KeyCode.D)) direction.x += 1f;
+
+            if (direction.sqrMagnitude > 1f)
+            {
+                direction.Normalize();
+            }
+
+            bool isFastMove = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            float speed = isFastMove
+                ? cameraMoveSpeed * cameraFastMoveMultiplier
+                : cameraMoveSpeed;
+
+            Vector3 movement = new(direction.x, direction.y, 0f);
+            _mainCamera.transform.position += movement * (speed * Time.unscaledDeltaTime);
+        }
+
+        private void ZoomCamera()
+        {
+            if (_mainCamera == null || !_mainCamera.orthographic)
+            {
+                return;
+            }
+
+            float zoomDirection = 0f;
+            if (Input.GetKey(KeyCode.Q)) zoomDirection -= 1f;
+            if (Input.GetKey(KeyCode.Space)) zoomDirection += 1f;
+
+            _mainCamera.orthographicSize = Mathf.Clamp(
+                _mainCamera.orthographicSize + zoomDirection * cameraZoomSpeed * Time.unscaledDeltaTime,
+                minimumOrthographicSize,
+                maximumOrthographicSize);
         }
 
         private void DrawTurretRow(TurretBase turret)
