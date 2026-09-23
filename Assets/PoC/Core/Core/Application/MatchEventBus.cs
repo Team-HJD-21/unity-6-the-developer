@@ -2,11 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 
 namespace TeamHJD.Game.Application
 {
-    public sealed class MatchEventBus : IDisposable
+    public sealed class MatchEventBus : IMatchEventStream, IDisposable
     {
         private readonly List<Action<MatchEvent>> _listeners = new List<Action<MatchEvent>>();
         private bool _isDisposed;

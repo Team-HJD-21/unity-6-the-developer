@@ -11,11 +11,12 @@ namespace TeamHJD.Game.Application
         private readonly MatchSimulation _simulation;
         private readonly IModeRules _modeRules;
         private readonly IAuthority _authority;
+        private readonly MatchEventBus _eventBus;
         private bool _isDisposed;
 
         public MatchConfig Config { get; }
         public MatchState State { get; }
-        public MatchEventBus Events { get; }
+        public IMatchEventStream Events => _eventBus;
 
         internal MatchSession(MatchConfig config, MatchState state, MatchSimulation simulation, IModeRules modeRules, IAuthority authority)
         {
@@ -24,7 +25,7 @@ namespace TeamHJD.Game.Application
             _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             _modeRules = modeRules ?? throw new ArgumentNullException(nameof(modeRules));
             _authority = authority ?? throw new ArgumentNullException(nameof(authority));
-            Events = new MatchEventBus();
+            _eventBus = new MatchEventBus();
         }
 
         public void Start()
@@ -43,7 +44,7 @@ namespace TeamHJD.Game.Application
                 return new CommandSubmissionResult(CommandSubmissionStatus.Unauthorized, authorization.Reason, null);
 
             var outcome = _simulation.Execute(State, command, _modeRules);
-            foreach (var matchEvent in outcome.Events) Events.Publish(matchEvent);
+            foreach (var matchEvent in outcome.Events) _eventBus.Publish(matchEvent);
             var status = outcome.Status == SimulationStatus.NotHandled
                 ? CommandSubmissionStatus.NotHandled
                 : outcome.Status == SimulationStatus.Rejected
@@ -58,7 +59,7 @@ namespace TeamHJD.Game.Application
             var result = _modeRules.CreateResult(State, outcome);
             if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
             _simulation.Complete(State, result);
-            Events.Publish(new MatchCompleted(State.MatchId, eventSequence, result));
+            _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, result));
             return result;
         }
 
@@ -72,7 +73,7 @@ namespace TeamHJD.Game.Application
         {
             if (_isDisposed) return;
             _simulation.Dispose(State);
-            Events.Dispose();
+            _eventBus.Dispose();
             _isDisposed = true;
         }
 
