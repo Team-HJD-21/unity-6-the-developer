@@ -15,16 +15,11 @@ public class CanonTurretLv1 : DefaultCanonTurret
     [SerializeField] private Transform bulletSpawnPoint;    //총알 스폰 지점
     [SerializeField] private Transform bulletFirePoint;
     
-    [Header("Attributes")] 
-    [SerializeField] private bool showRange;
-  
     private void Start()
     {
         GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
         //Turrets Attack Range
         rangeTransform.localScale = new Vector3(Range*2.5f, Range*2.5f, 1f);
-        //Info for Ui
-        Damage = DataManager.GetAttributeData(AttributeType.TurretBullet);
     }
     override 
     protected void Shoot()//총알 객체화 후 목표로 발사(FireRateController에서 수행)
@@ -32,6 +27,7 @@ public class CanonTurretLv1 : DefaultCanonTurret
         animator.enabled = true; // 발사할 때 애니메이션 시작
         GameObject bulletObj = Instantiate(bulletPrefab, bulletSpawnPoint.position, Quaternion.identity);
         TowerBullet towerBulletScript = bulletObj.GetComponent<TowerBullet>();
+        towerBulletScript.SetDamage(Damage);
         float randomX = bulletFirePoint.position.x + Random.Range(-0.5f, 0.5f);
         bulletFirePoint.position = new Vector3(randomX, bulletFirePoint.position.y,0f);
         towerBulletScript.SetTarget(bulletFirePoint);   

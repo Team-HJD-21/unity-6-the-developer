@@ -54,10 +54,15 @@ public class TowerMissile : MonoBehaviour
         StartCoroutine(InitialStraightMovement());
         StartCoroutine(ExplodeMissileIfNotHit());
     }
+
+    public void SetDamage(float damage)
+    {
+        _bulletDamage = damage;
+    }
+
     private void Awake()
     {
         _sr = gameObject.GetComponent<SpriteRenderer>();
-        _bulletDamage = DataManager.GetAttributeData(AttributeType.TurretMissile);
     }
     private void FixedUpdate()
     {
