@@ -34,7 +34,7 @@ public class gunflash : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKey(KeyCode.Space))
+        if (GameInput.IsPressed(GameKey.Space))
         {
             if (GeneralManager.Instance.inGameManager.isWave)
             {

@@ -166,15 +166,15 @@ public class TowerManager : MonoBehaviour
     //  마우스 클릭 시 타워를 클릭했는지 확인
     private void ClickProcess()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (GameInput.PrimaryPointerWasPressedThisFrame)
         {
-            Vector2 mousePoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 mousePoint = Camera.main.ScreenToWorldPoint(GameInput.PointerPosition);
             hit = Physics2D.Raycast(mousePoint, Vector2.zero);
 
             //  UI 클릭 감지을 위한 변수
             PointerEventData pointerEventData = new PointerEventData(EventSystem.current)
             {
-                position = Input.mousePosition
+                position = GameInput.PointerPosition
             };
 
             //  Ui 클릭 시

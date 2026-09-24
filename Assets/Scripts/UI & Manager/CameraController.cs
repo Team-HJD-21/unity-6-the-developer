@@ -78,8 +78,9 @@ public class CameraController : MonoBehaviour
     {
         Bounds tilemapBounds = map.GetComponent<Renderer>().bounds;
         
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
+        Vector2 moveInput = GameInput.Move;
+        float horizontal = moveInput.x;
+        float vertical = moveInput.y;
 
         Vector3 desiredPosition = new Vector3(
             Mathf.Clamp(transform.position.x + horizontal * 2.5f, tilemapBounds.min.x + _cameraHalfWidth, tilemapBounds.max.x - _cameraHalfWidth),

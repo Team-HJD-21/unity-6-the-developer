@@ -68,7 +68,7 @@ public class OpeningViewer : MonoBehaviour
             yield return StartCoroutine(TalkCoroutine(buff));
             idx++;
 
-            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
+            yield return new WaitUntil(() => GameInput.WasPressedThisFrame(GameKey.Space));
         }
     }
 

@@ -57,7 +57,7 @@ public class Player : MonoBehaviour
         
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _animator = GetComponent<Animator>();
-        _mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        _mouse = Camera.main.ScreenToWorldPoint(GameInput.PointerPosition);
 
         if (map == null)
         {
@@ -93,14 +93,14 @@ public class Player : MonoBehaviour
         sumVector = Vector3.zero;
 
         // 키 입력 처리
-        if (Input.GetKey(KeyCode.UpArrow)) sumVector += Vector3.up * moveSpeed;
-        if (Input.GetKey(KeyCode.LeftArrow)) sumVector += Vector3.left * moveSpeed;
-        if (Input.GetKey(KeyCode.DownArrow)) sumVector += Vector3.down * moveSpeed;
-        if (Input.GetKey(KeyCode.RightArrow)) sumVector += Vector3.right * moveSpeed;
-        if (Input.GetKey(KeyCode.W)) sumVector += Vector3.up * moveSpeed;
-        if (Input.GetKey(KeyCode.A)) sumVector += Vector3.left * moveSpeed;
-        if (Input.GetKey(KeyCode.S)) sumVector += Vector3.down * moveSpeed;
-        if (Input.GetKey(KeyCode.D)) sumVector += Vector3.right * moveSpeed;
+        if (GameInput.IsPressed(GameKey.UpArrow)) sumVector += Vector3.up * moveSpeed;
+        if (GameInput.IsPressed(GameKey.LeftArrow)) sumVector += Vector3.left * moveSpeed;
+        if (GameInput.IsPressed(GameKey.DownArrow)) sumVector += Vector3.down * moveSpeed;
+        if (GameInput.IsPressed(GameKey.RightArrow)) sumVector += Vector3.right * moveSpeed;
+        if (GameInput.IsPressed(GameKey.W)) sumVector += Vector3.up * moveSpeed;
+        if (GameInput.IsPressed(GameKey.A)) sumVector += Vector3.left * moveSpeed;
+        if (GameInput.IsPressed(GameKey.S)) sumVector += Vector3.down * moveSpeed;
+        if (GameInput.IsPressed(GameKey.D)) sumVector += Vector3.right * moveSpeed;
 
         // 이동 처리
         transform.position += sumVector * Time.fixedDeltaTime;
@@ -145,7 +145,7 @@ public class Player : MonoBehaviour
     private void Update()
     {
         // 마우스의 월드 좌표를 가져옴
-        _mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        _mouse = Camera.main.ScreenToWorldPoint(GameInput.PointerPosition);
 
         // 방향에 따라 애니메이션 파라미터를 설정
         if (_animator != null)
@@ -175,7 +175,7 @@ public class Player : MonoBehaviour
         _timeTilFire += Time.deltaTime;
         if (_timeTilFire >= (1f / fireRate))
         {
-            if (Input.GetKey(KeyCode.Space))
+            if (GameInput.IsPressed(GameKey.Space))
             {
                 AudioManager.Instance.PlaySfx(AudioManager.Sfx.PlayerBullet);
                 Vector2 baseDirection = (_mouse - (Vector2)bulletSpawnPoint.position).normalized;
@@ -202,7 +202,7 @@ public class Player : MonoBehaviour
             }
             
             //  똑같이 쿨타임 존재
-            if (Input.GetKeyDown(KeyCode.E)) PlaceBomb();
+            if (GameInput.WasPressedThisFrame(GameKey.E)) PlaceBomb();
         }
     }
     // StartCoroutine(PlayerAttackCoroutine());

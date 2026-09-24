@@ -201,7 +201,7 @@ public class InGameManager : MonoBehaviour
     //  Blind를 통해 다른 UI 클릭을 방지한다.
     private void CheckKeyBoardInput()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (GameInput.WasPressedThisFrame(GameKey.Escape))
         {
             if (settingVisible)
             {
@@ -269,7 +269,7 @@ public class InGameManager : MonoBehaviour
             yield return StartCoroutine(TalkCoroutine(buff));
             idx++;
 
-            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
+            yield return new WaitUntil(() => GameInput.WasPressedThisFrame(GameKey.Space));
         }
 
         talkIdx++;
@@ -362,7 +362,7 @@ public class InGameManager : MonoBehaviour
     public void StartWave()
     {
         //  오작동 방지
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (GameInput.WasPressedThisFrame(GameKey.Space))
         {
             return;
         }

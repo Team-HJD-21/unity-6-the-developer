@@ -40,7 +40,7 @@ public class playerguncontrol : MonoBehaviour
     private void CheckDirectionToMouse()
     {
         // 마우스 위치를 월드 좌표로 변환
-        _mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        _mousePosition = Camera.main.ScreenToWorldPoint(GameInput.PointerPosition);
 
         // 현재 위치와 마우스 위치 간의 방향 계산
         Vector2 direction = _mousePosition - (Vector2)playerpoint.position;

@@ -51,7 +51,7 @@ public class VariousManager : MonoBehaviour
 
     public void CheckKeyBoard()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (GameInput.WasPressedThisFrame(GameKey.Escape))
         {
             if (settingsMain != null && settingsMainVisible)
             {
