@@ -19,11 +19,17 @@ public class PoCAIBrain : MonoBehaviour
         _monster = GetComponent<PoCMonster>();
     }
 
-    public void Tick()
+    public void UpdateAI()
+    {
+        UpdateTarget();
+        _monster.ExecuteBehavior();
+    }
+
+    private void UpdateTarget()
     {
         if (targetSettings == null || _targetSelector == null || _monster == null)
             return;
-
+        
         bool hasValidTarget =
             _currentTarget is Object targetObject &&
             targetObject != null &&
@@ -37,7 +43,5 @@ public class PoCAIBrain : MonoBehaviour
             _monster.SetTarget(_currentTarget?.TargetTransform);
             _nextRetargetTime = Time.time + targetSettings.retargetInterval;
         }
-
-        _monster.Tick();
     }
 }

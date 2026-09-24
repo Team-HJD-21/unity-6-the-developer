@@ -22,6 +22,6 @@ public class PoCMonsterNetwork : NetworkBehaviour
         if (!IsSpawned || !IsServer)
             return;
 
-        _monsterAiBrain.Tick();
+        _monsterAiBrain.UpdateAI();
     }
 }

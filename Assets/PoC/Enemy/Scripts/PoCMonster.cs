@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 몬스터의 타겟 추적, 이동, 공격 판단과 애니메이션을 처리한다.
-/// 네트워크 환경에서는 서버가 <see cref="Tick"/>을 호출한다.
+/// 네트워크 환경에서는 서버가 <see cref="ExecuteBehavior"/>을 호출한다.
 /// </summary>
 public class PoCMonster : MonoBehaviour
 {
@@ -42,7 +42,7 @@ public class PoCMonster : MonoBehaviour
     /// <summary>
     /// 타겟과의 거리에 따라 이동하거나 공격한다.
     /// </summary>
-    public void Tick()
+    public void ExecuteBehavior()
     {
         if (_target == null)
         {
