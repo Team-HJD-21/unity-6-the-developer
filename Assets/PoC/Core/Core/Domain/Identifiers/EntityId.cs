@@ -1,4 +1,4 @@
-// Identifies a runtime entity within a match.
+// Match 안에서 실행 중인 개체를 식별합니다.
 
 
 using System;

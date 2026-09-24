@@ -1,4 +1,4 @@
-// Immutable runtime values for one enemy actor.
+// 적 개체 하나의 불변 런타임 값입니다.
 
 
 using System;

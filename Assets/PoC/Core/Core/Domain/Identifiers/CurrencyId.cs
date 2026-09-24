@@ -1,4 +1,4 @@
-// Identifies a currency type used by profile and reward contracts.
+// 프로필과 보상 계약에서 사용하는 재화 종류를 식별합니다.
 
 
 using System;

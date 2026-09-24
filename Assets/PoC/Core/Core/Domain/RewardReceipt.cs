@@ -1,4 +1,4 @@
-// Immutable reward proposal associated with a completed match result.
+// 완료된 Match 결과에 연결된 불변 보상 제안입니다.
 
 
 using System.Collections.Generic;

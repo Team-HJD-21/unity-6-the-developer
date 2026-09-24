@@ -1,4 +1,4 @@
-// Identifies reusable authored gameplay or content data.
+// 재사용 가능한 게임플레이 또는 콘텐츠 정의를 식별합니다.
 
 
 using System;

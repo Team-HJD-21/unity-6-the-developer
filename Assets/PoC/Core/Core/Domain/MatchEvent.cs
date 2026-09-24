@@ -1,4 +1,4 @@
-// Base data for an immutable fact emitted by a match simulation step.
+// Match 시뮬레이션 단계에서 발생한 불변 사실의 공통 데이터를 정의합니다.
 
 
 using System;

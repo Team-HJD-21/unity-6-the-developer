@@ -1,4 +1,4 @@
-// Authorizes commands in the local simulation without depending on a network transport.
+// 네트워크 전송 계층에 의존하지 않고 로컬 시뮬레이션 명령을 인가합니다.
 
 using System;
 using TeamHJD.Game.Contracts;

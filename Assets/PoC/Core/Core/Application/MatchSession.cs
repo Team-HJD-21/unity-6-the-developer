@@ -1,4 +1,4 @@
-// Owns the lifetime and command flow for exactly one match.
+// Match 하나의 수명과 명령 흐름을 관리합니다.
 
 using System;
 using TeamHJD.Game.Contracts;

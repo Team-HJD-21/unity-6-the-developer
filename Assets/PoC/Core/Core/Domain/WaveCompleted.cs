@@ -1,4 +1,4 @@
-// Records completion of a wave in a match.
+// Match에서 웨이브가 완료되었음을 기록합니다.
 
 
 namespace TeamHJD.Game.Domain

@@ -1,4 +1,4 @@
-// Returns command routing status and the denial reason, if authority rejected it.
+// 명령 처리 상태와 권한 거부 시 그 사유를 반환합니다.
 
 using TeamHJD.Game.Domain;
 

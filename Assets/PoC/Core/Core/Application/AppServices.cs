@@ -1,4 +1,4 @@
-// Owns app-scoped service dependencies and the match-session factory.
+// 앱 범위 서비스 의존성과 Match 세션 Factory를 소유합니다.
 
 using System;
 using System.Collections.Generic;

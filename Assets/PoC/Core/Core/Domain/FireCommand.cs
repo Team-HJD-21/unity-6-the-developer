@@ -1,4 +1,4 @@
-// Requests a player attack toward a domain-space target position.
+// 게임 좌표계의 목표 위치를 향한 플레이어 공격을 요청합니다.
 
 
 using System;

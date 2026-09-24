@@ -1,4 +1,4 @@
-// Carries the authority decision and a machine-readable denial reason.
+// 권한 판정 결과와 코드에서 처리할 거부 사유를 전달합니다.
 
 namespace TeamHJD.Game.Contracts
 {

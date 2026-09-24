@@ -1,4 +1,4 @@
-// Runtime source of truth for one match, mutated only inside the Domain assembly.
+// Domain 어셈블리 내부에서만 변경되는 Match 하나의 런타임 기준 상태입니다.
 
 
 using System;

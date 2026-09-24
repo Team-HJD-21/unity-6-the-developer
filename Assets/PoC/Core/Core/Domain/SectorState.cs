@@ -1,4 +1,4 @@
-// Immutable runtime values for one expandable stage sector.
+// 확장 가능한 스테이지 구역 하나의 불변 런타임 값입니다.
 
 
 using System;

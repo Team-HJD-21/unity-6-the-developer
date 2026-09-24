@@ -1,4 +1,4 @@
-// Represents one currency amount stored in a player profile snapshot.
+// 플레이어 프로필 Snapshot에 저장되는 재화 수량을 나타냅니다.
 
 using System;
 

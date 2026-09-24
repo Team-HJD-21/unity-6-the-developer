@@ -1,4 +1,4 @@
-// Stores authoring identity and presentation metadata for a difficulty profile.
+// 난이도 프로필의 제작 식별자와 화면 표시 정보를 저장합니다.
 
 using UnityEngine;
 

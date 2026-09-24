@@ -1,4 +1,4 @@
-// Stores authoring identity and presentation metadata for a playable stage.
+// 플레이 가능한 스테이지의 제작 식별자와 화면 표시 정보를 저장합니다.
 
 using UnityEngine;
 

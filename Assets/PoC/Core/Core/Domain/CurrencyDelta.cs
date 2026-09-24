@@ -1,4 +1,4 @@
-// Represents a signed change for a typed currency identifier.
+// 재화 식별자와 연결된 증감량을 나타냅니다.
 
 
 using System;

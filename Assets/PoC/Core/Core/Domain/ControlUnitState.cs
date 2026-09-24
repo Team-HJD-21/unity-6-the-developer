@@ -1,4 +1,4 @@
-// Immutable runtime values for the defended control unit.
+// 방어 대상 제어 장치의 불변 런타임 값입니다.
 
 
 namespace TeamHJD.Game.Domain

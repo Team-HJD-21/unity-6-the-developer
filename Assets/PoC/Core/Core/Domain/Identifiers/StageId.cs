@@ -1,4 +1,4 @@
-// Identifies authored stage content without exposing a Unity asset reference.
+// Unity 에셋 참조를 노출하지 않고 제작된 스테이지 콘텐츠를 식별합니다.
 
 
 using System;

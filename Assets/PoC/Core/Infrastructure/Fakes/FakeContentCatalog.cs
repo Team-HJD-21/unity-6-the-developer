@@ -1,4 +1,4 @@
-// Resolves registered stage and difficulty IDs into match configs without Unity assets.
+// Unity 에셋 없이 등록된 스테이지·난이도 ID를 Match 설정으로 해석합니다.
 
 using System;
 using System.Collections.Generic;

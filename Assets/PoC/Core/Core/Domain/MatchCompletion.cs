@@ -1,4 +1,4 @@
-// Packages final match outcome and proposed rewards for profile or backend processing.
+// 최종 Match 결과와 제안 보상을 프로필 또는 Backend 처리용으로 묶습니다.
 
 using System;
 

@@ -1,4 +1,4 @@
-// Returns a configured platform user without requiring external SDK initialization.
+// 외부 SDK를 초기화하지 않고 미리 지정한 플랫폼 사용자를 반환합니다.
 
 using System;
 using System.Threading;

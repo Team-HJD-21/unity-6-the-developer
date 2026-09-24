@@ -1,4 +1,4 @@
-// Identifies a player independently of platform-specific account identifiers.
+// 플랫폼별 계정 식별자와 분리해 플레이어를 식별합니다.
 
 
 using System;

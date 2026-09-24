@@ -1,4 +1,4 @@
-// Identifies one match session without depending on Unity or transport types.
+// Unity나 전송 계층 타입에 의존하지 않고 Match 세션 하나를 식별합니다.
 
 
 using System;

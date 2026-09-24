@@ -1,4 +1,4 @@
-// Publishes immutable match facts to listeners within one match lifetime.
+// Match 수명 안에서 발생한 불변 사실을 구독자에게 발행합니다.
 
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-// Creates defensive list copies and rejects null object entries at model boundaries.
+// 모델 경계에서 목록을 방어적으로 복사하고 null 항목을 거부합니다.
 
 using System;
 using System.Collections.Generic;

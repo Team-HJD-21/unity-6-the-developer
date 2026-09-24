@@ -1,4 +1,4 @@
-// Immutable, resolved input captured when a match is created.
+// Match 생성 시 확정해 보관하는 불변 입력입니다.
 
 
 using System;

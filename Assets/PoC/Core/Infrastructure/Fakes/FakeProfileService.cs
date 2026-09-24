@@ -1,4 +1,4 @@
-// Provides an in-memory profile implementation for tests and local development.
+// 테스트와 로컬 개발을 위한 메모리 기반 프로필 구현입니다.
 
 using System;
 using System.Collections.Generic;

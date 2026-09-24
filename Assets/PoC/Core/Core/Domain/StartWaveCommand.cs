@@ -1,4 +1,4 @@
-// Requests the start of the next wave for a match.
+// Match의 다음 웨이브 시작을 요청합니다.
 
 
 using System;

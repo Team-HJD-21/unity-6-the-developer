@@ -1,4 +1,4 @@
-// Records the resulting player health after a state transition.
+// 상태 전이 후 플레이어 체력을 기록합니다.
 
 
 namespace TeamHJD.Game.Domain

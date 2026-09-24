@@ -1,4 +1,4 @@
-// Carries user-selected match inputs before content resolution produces MatchConfig.
+// 콘텐츠 해석을 통해 MatchConfig를 만들기 전, 사용자가 고른 Match 입력을 담습니다.
 
 using System;
 using System.Collections.Generic;

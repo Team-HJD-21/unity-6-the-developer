@@ -1,4 +1,4 @@
-// Resolves authored ScriptableObject definitions into immutable match configuration.
+// ScriptableObject로 작성한 정의를 불변 Match 설정으로 해석합니다.
 
 using System;
 using System.Collections.Generic;

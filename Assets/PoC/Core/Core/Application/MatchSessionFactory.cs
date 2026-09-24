@@ -1,4 +1,4 @@
-// Creates a match-scoped object graph and transfers its lifetime to the caller.
+// Match 범위 객체 묶음을 만들고 그 수명 관리를 호출자에게 넘깁니다.
 
 using System;
 using TeamHJD.Game.Contracts;

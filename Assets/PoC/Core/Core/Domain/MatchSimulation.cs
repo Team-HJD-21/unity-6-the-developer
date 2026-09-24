@@ -1,4 +1,4 @@
-// Owns match phase transitions and the domain command execution boundary.
+// Match 단계 전이와 Domain 명령 실행 경계를 담당합니다.
 
 using System;
 
@@ -20,7 +20,7 @@ namespace TeamHJD.Game.Domain
             if (modeRules == null) throw new ArgumentNullException(nameof(modeRules));
             if (state.Phase != MatchPhase.Running) throw new InvalidOperationException("Commands can only be simulated while the match is running.");
 
-            // Handlers are intentionally absent until gameplay rules are implemented.
+            // 실제 게임 규칙을 구현하기 전까지 명령 처리기는 의도적으로 비워 둡니다.
             return new SimulationOutcome(SimulationStatus.NotHandled, Array.Empty<MatchEvent>());
         }
 

@@ -1,4 +1,4 @@
-// Immutable terminal result produced for a match.
+// Match 종료 시 생성되는 불변 결과입니다.
 
 
 using System;

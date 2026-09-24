@@ -1,4 +1,4 @@
-// Immutable counters describing the current wave position and progress.
+// 현재 웨이브 위치와 진행 상황을 나타내는 불변 카운터입니다.
 
 
 namespace TeamHJD.Game.Domain

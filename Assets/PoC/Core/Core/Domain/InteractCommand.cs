@@ -1,4 +1,4 @@
-// Requests interaction with a domain entity or scene-bound target.
+// Domain 개체 또는 Scene 대상과의 상호작용을 요청합니다.
 
 
 using System;

@@ -1,4 +1,4 @@
-// Detached, immutable match state at one sequence for persistence or recovery boundaries.
+// 저장·복구 경계에서 사용할 특정 순번의 분리된 불변 Match 상태입니다.
 
 
 using System;

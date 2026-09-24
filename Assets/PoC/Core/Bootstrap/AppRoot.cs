@@ -1,4 +1,4 @@
-// Persistent Unity owner for app-scoped service composition and shutdown.
+// 앱 범위 서비스 구성과 종료를 맡으며 Scene 전환 후에도 유지되는 Unity 객체입니다.
 
 using System;
 using TeamHJD.Game.Application;

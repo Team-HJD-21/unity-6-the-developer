@@ -1,4 +1,4 @@
-// Immutable per-player loadout input resolved before a match starts.
+// Match 시작 전에 확정되는 플레이어별 장비 구성 입력입니다.
 
 
 using System.Collections.Generic;

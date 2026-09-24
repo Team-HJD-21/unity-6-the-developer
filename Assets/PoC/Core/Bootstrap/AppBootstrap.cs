@@ -1,4 +1,4 @@
-// Creates the app scope once before scenes load and resets its guard per runtime session.
+// 씬 오브젝트의 Awake 전에 앱 범위를 한 번 만들고 런타임 세션마다 중복 방지 상태를 초기화합니다.
 
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Content.Runtime;

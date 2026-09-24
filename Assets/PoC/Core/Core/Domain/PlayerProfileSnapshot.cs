@@ -1,4 +1,4 @@
-// Immutable local or backend profile data used to resolve a player's loadout.
+// 플레이어 장비 구성을 결정할 때 사용하는 로컬 또는 Backend 프로필 불변 데이터입니다.
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

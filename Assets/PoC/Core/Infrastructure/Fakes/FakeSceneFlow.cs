@@ -1,4 +1,4 @@
-// Tracks requested scene transitions in memory for composition and adapter tests.
+// 구성부와 Adapter 테스트를 위해 요청된 Scene 전환을 메모리에 기록합니다.
 
 using System;
 using System.Collections.Generic;

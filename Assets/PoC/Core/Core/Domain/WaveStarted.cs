@@ -1,4 +1,4 @@
-// Records that a wave has entered its running phase.
+// 웨이브가 진행 단계에 진입했음을 기록합니다.
 
 
 namespace TeamHJD.Game.Domain

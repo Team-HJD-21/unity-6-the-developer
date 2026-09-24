@@ -1,4 +1,4 @@
-// Records that an enemy actor has been defeated.
+// 적 개체가 처치되었음을 기록합니다.
 
 
 namespace TeamHJD.Game.Domain

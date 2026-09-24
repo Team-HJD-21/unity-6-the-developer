@@ -1,4 +1,4 @@
-// Projects match snapshots into a HUD view and refreshes on match events.
+// Match Snapshot을 HUD View에 전달하고 Match 이벤트가 발생하면 화면을 갱신합니다.
 
 using System;
 using TeamHJD.Game.Application;

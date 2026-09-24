@@ -1,4 +1,4 @@
-// Immutable runtime values owned by one player slot in a match.
+// Match 내 플레이어 슬롯 하나가 소유하는 불변 런타임 값입니다.
 
 
 using System;

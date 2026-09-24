@@ -1,4 +1,4 @@
-// Immutable state-transition output and facts to be published by the application layer.
+// 상태 전이 결과와 Application 계층이 발행할 사실을 담는 불변 객체입니다.
 
 
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-// Bridges scene-owned player input to the current match command boundary.
+// Scene이 소유한 플레이어 입력을 현재 Match 명령 경계로 전달합니다.
 
 using System;
 using TeamHJD.Game.Application;

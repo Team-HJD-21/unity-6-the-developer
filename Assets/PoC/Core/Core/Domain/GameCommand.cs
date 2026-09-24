@@ -1,4 +1,4 @@
-// Base data for an actor's request to change match state.
+// 게임 상태 변경 요청의 공통 데이터를 정의합니다.
 
 
 using System;

@@ -1,4 +1,4 @@
-// Records the final result and proposed rewards already produced for a match.
+// Match에 대해 확정된 최종 결과와 제안 보상을 기록합니다.
 
 using System;
 

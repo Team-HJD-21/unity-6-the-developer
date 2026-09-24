@@ -1,4 +1,4 @@
-// Requests activation of a placed defense entity.
+// 배치된 방어 개체의 활성화를 요청합니다.
 
 
 using System;

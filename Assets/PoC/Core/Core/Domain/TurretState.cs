@@ -1,4 +1,4 @@
-// Immutable runtime values for one placed defense unit.
+// 배치된 방어 시설 하나의 불변 런타임 값입니다.
 
 
 using System;

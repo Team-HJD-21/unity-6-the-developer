@@ -1,4 +1,4 @@
-// Records damage already applied to an enemy actor.
+// 적 개체에 피해가 적용되었음을 기록합니다.
 
 
 namespace TeamHJD.Game.Domain
