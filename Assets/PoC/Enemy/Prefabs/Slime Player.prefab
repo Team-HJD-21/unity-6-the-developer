@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 7837487122097187362}
   - component: {fileID: 984415393098425011}
   m_Layer: 0
-  m_Name: Slime
+  m_Name: Slime Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -135,7 +135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2848244634
+  GlobalObjectIdHash: 4279986327
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -289,7 +289,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bceca7750ead6d04eba92690706f2534, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoCTargetScoreEvaluator
-  targetPreference: {fileID: 11400000, guid: 941deda545bd88145b73b5d007eba092, type: 2}
+  targetPreference: {fileID: 11400000, guid: d6214593820b83e4fa09013e172ef55f, type: 2}
   targetSetting: {fileID: 11400000, guid: 2646ddc844b7a9341a3db4fc4c291197, type: 2}
 --- !u!114 &7837487122097187362
 MonoBehaviour:
