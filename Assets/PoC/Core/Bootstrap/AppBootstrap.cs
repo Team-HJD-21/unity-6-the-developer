@@ -11,6 +11,7 @@ namespace TeamHJD.Game.Bootstrap
 {
     public static class AppBootstrap
     {
+        //  Game에서 제공하는 모든 콘텐츠 정보에 대한 목록 파일 위치
         private const string ContentCatalogResourceKey = "Core/ContentCatalog";
         private static bool _hasBootstrapped;
 
@@ -45,6 +46,8 @@ namespace TeamHJD.Game.Bootstrap
         {
             var contentCatalog = Resources.Load<ContentCatalog>(ContentCatalogResourceKey);
             IContentCatalog content = contentCatalog;
+
+            //  일단 PoC 단계에서는 해당 구문을 타게 됩니다.
             if (content == null)
             {
                 Debug.LogWarning($"No ContentCatalog at Resources/{ContentCatalogResourceKey}; using an empty fake catalog.");
@@ -52,6 +55,8 @@ namespace TeamHJD.Game.Bootstrap
             }
 
             var localUser = new PlatformUser(new PlayerId("local-player"), "Local Player");
+
+            //  FakeProfileService()도 마찬가지로 PoC 단계에서 사용되는 임시 클래스입니다.
             return new AppServices(
                 new FakeProfileService(),
                 content,

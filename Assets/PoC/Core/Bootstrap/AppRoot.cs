@@ -18,6 +18,7 @@ namespace TeamHJD.Game.Bootstrap
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(AppRoot));
             if (Services != null) throw new InvalidOperationException("AppRoot has already been initialized.");
+
             Services = services ?? throw new ArgumentNullException(nameof(services));
         }
 
