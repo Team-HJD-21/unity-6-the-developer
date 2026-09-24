@@ -59,7 +59,7 @@ Definition 값을 실행 중 상태 저장소처럼 직접 수정하지 않는�
 
 ### 3.1 `TurretDefinition`
 
-파일: [`TurretDefinition.cs`](../../Assets/Scripts/Tower/Turret/TurretDefinition.cs)
+파일: [`TurretDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretDefinition.cs)
 
 Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. 현재 18개 Canon/Missile Definition이 존재한다.
 
@@ -84,7 +84,7 @@ Editor에서 Definition을 수정하면 전체 `TurretDefinition`을 검사한�
 
 ### 3.2 `TurretRuntimeState`
 
-파일: [`TurretRuntimeState.cs`](../../Assets/Scripts/Tower/Turret/TurretRuntimeState.cs)
+파일: [`TurretRuntimeState.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretRuntimeState.cs)
 
 각 터렛 GameObject가 독립적으로 가지는 실행 중 상태다.
 
@@ -107,7 +107,7 @@ Final Damage = max(0, Definition.Damage + RuntimeState.DamageBonus)
 
 ### 3.3 `TurretBase`
 
-파일: [`TurretBase.cs`](../../Assets/Scripts/Tower/Turret/TurretBase.cs)
+파일: [`TurretBase.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretBase.cs)
 
 Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base class다. 공통 Scene 참조와 Definition/RuntimeState 접근을 제공한다.
 
@@ -127,7 +127,7 @@ Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base
 
 ### 3.4 `TurretInstanceRegistry`
 
-파일: [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/TurretInstanceRegistry.cs)
+파일: [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
 
 활성화된 터렛에 로컬 `InstanceId`를 발급하고 ID로 터렛을 조회한다.
 
@@ -142,7 +142,24 @@ if (TurretInstanceRegistry.TryGet(instanceId, out TurretBase turret))
 
 Registry는 현재 PoC용 로컬 등록부다. AI 조회용 상태 집계, 전력 총합, 구역별 터렛 관리까지 책임지는 정식 Manager가 아니다. `TowerManager`를 다른 이름의 전역 Singleton으로 다시 만드는 방식으로 확장하지 않는다.
 
-### 3.5 Canon과 Missile 구현체
+### 3.5 Assembly 경계
+
+Turret의 독립 가능한 계약과 공통 구조는 다음 두 assembly로 분리한다.
+
+| Assembly | 포함 범위 | 허용 의존성 |
+| --- | --- | --- |
+| `TeamHJD.Game.Turrets.Contracts` | `IActivateTower`, `ITurretPowerSource` | .NET BCL만 |
+| `TeamHJD.Game.Turrets` | Definition, RuntimeState, Base, InstanceRegistry | Contracts, Unity |
+
+`Contracts`는 `noEngineReferences: true`를 유지한다. `Turrets`는 ScriptableObject와
+MonoBehaviour를 포함하므로 Unity Engine을 참조한다. Canon/Missile/Laser concrete 구현은
+`AudioManager`, `Monster` 등 legacy 코드 의존성이 남아 있어 현재 `Assembly-CSharp`에
+유지한다. 새 assembly에서 legacy `Assembly-CSharp`를 역참조하도록 설정하지 않는다.
+
+Assembly와 namespace는 `TeamHJD.Game.*` 표기를 사용한다. 새 reference를 추가할 때는
+편의를 위해 양방향 참조를 만들지 말고 위 표의 단방향을 유지한다.
+
+### 3.6 Canon과 Missile 구현체
 
 | 타입 | 책임 |
 | --- | --- |
@@ -153,7 +170,7 @@ Registry는 현재 PoC용 로컬 등록부다. AI 조회용 상태 집계, 전�
 | `TowerBullet` | Canon이 계산한 공격력을 받아 충돌 대상에 적용 |
 | `TowerMissile` | Missile이 계산한 공격력을 받아 폭발 범위 대상에 적용 |
 
-Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드코딩하지 않는다. 발사할 때 `SetDamage(Damage)`를 통해 Definition과 RuntimeState에서 계산된 값을 발사체에 전달한다.
+Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드코딩하지 않는다. 발사체를 생성한 직후 `Initialize(target, Damage)`를 호출하여 Target과 Definition/RuntimeState에서 계산된 공격력을 한 번에 전달한다.
 
 ## 4. 실행 흐름
 
@@ -273,6 +290,7 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 - [ ] Definition ID가 비어 있지 않고 중복되지 않는다.
 - [ ] Prefab에 올바른 Definition이 연결되어 있다.
 - [ ] `.cs`·`.asset`·Prefab의 `.meta`가 함께 존재한다.
+- [ ] `TeamHJD.Game.Turrets`가 Contracts 외의 legacy assembly를 참조하지 않는다.
 - [ ] Level 스크립트에 Definition 수치가 중복 하드코딩되지 않았다.
 - [ ] Laser Turret을 실수로 Canon/Missile 변경 범위에 포함하지 않았다.
 
@@ -295,7 +313,7 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 | --- | --- | --- |
 | Control Unit 탐색 | `GameObject.Find("ControlUnit")` | Scene Composition에서 명시적으로 주입 |
 | 등록부 | static 로컬 Registry | Match 수명주기의 조회 서비스로 이전 |
-| 전력 변경 | 터렛이 `ControlUnitStatus` 직접 호출 | Command와 Authority 검증으로 분리 |
+| 전력 변경 | `ITurretPowerSource`를 통해 legacy `ControlUnitStatus` 호출 | Command와 Authority 검증으로 분리 |
 | Target 평가 | concrete 코드가 Physics와 `Monster.isTargeted` 직접 사용 | AI/Combat 계약과 평가 모델 분리 |
 | Namespace | 일부 concrete 터렛이 전역 namespace | 이식 시 `Presentation` 경계로 정리 |
 | 네트워크 | 로컬 상태만 존재 | Host authoritative 상태와 Snapshot 추가 |
@@ -305,10 +323,12 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 
 ## 11. 관련 파일
 
-- [`TurretBase.cs`](../../Assets/Scripts/Tower/Turret/TurretBase.cs)
-- [`TurretDefinition.cs`](../../Assets/Scripts/Tower/Turret/TurretDefinition.cs)
-- [`TurretRuntimeState.cs`](../../Assets/Scripts/Tower/Turret/TurretRuntimeState.cs)
-- [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/TurretInstanceRegistry.cs)
+- [`TurretBase.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretBase.cs)
+- [`TurretDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretDefinition.cs)
+- [`TurretRuntimeState.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretRuntimeState.cs)
+- [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
+- [`TeamHJD.Game.Turrets.Contracts.asmdef`](../../Assets/Scripts/Tower/Turret/Contracts/TeamHJD.Game.Turrets.Contracts.asmdef)
+- [`TeamHJD.Game.Turrets.asmdef`](../../Assets/Scripts/Tower/Turret/Core/TeamHJD.Game.Turrets.asmdef)
 - [`DefaultCanonTurret.cs`](../../Assets/Scripts/Tower/CanonTurret/DefaultCanonTurret.cs)
 - [`DefaultMissileTurret.cs`](../../Assets/Scripts/Tower/MissileTurret/DefaultMissileTurret.cs)
 - [`TowerBullet.cs`](../../Assets/Scripts/Tower/TurretWeapons/TowerBullet.cs)

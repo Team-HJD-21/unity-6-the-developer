@@ -133,12 +133,12 @@ SceneAdapterBase : MonoBehaviour
 ## Namespace와 파일 규칙
 
 ```text
-TeamHjd.Game.Domain
-TeamHjd.Game.Application
-TeamHjd.Game.Contracts
-TeamHjd.Game.Content
-TeamHjd.Game.Infrastructure
-TeamHjd.Game.Presentation
+TeamHJD.Game.Domain
+TeamHJD.Game.Application
+TeamHJD.Game.Contracts
+TeamHJD.Game.Content
+TeamHJD.Game.Infrastructure
+TeamHJD.Game.Presentation
 ```
 
 - public 타입 하나당 파일 하나를 원칙으로 한다.
