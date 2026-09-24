@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 탐색 범위 안의 유효한 후보를 평가하고 변경 기준에 따라 타깃을 선택한다.
+/// 몬스터 주변에서 선택 가능한 타깃을 수집하고 최고 점수의 타깃을 선택한다.
+/// 기존 타깃보다 점수가 일정 값 이상 높을 때만 교체해 잦은 타깃 전환을 방지한다.
 /// </summary>
 [RequireComponent(typeof(PoCTargetScoreEvaluator))]
 public class PoCTargetSelector : MonoBehaviour
@@ -20,10 +21,14 @@ public class PoCTargetSelector : MonoBehaviour
 
     private ContactFilter2D _contactFilter;
 
+    /// <summary>
+    /// 점수 계산기와 물리 탐색 필터를 초기화한다.
+    /// </summary>
     private void Awake()
     {
         _scoreEvaluator = GetComponent<PoCTargetScoreEvaluator>();
 
+        // 현재는 모든 레이어의 Trigger Collider를 타깃 후보로 탐색한다.
         _contactFilter = new ContactFilter2D
         {
             useLayerMask = false,
@@ -34,11 +39,17 @@ public class PoCTargetSelector : MonoBehaviour
         };
     }
 
+    /// <summary>
+    /// 탐색 범위에서 최고 점수의 타깃을 찾고 교체 기준을 적용한다.
+    /// </summary>
+    /// <returns>유지하거나 새로 선택한 타깃. 후보가 없으면 null.</returns>
     public ITargetable SelectTarget()
     {
+        // 점수 계산에 필요한 참조가 없으면 타깃을 선택하지 않는다.
         if (_scoreEvaluator == null || targetSettings == null)
             return null;
 
+        // 매 선택 시점의 탐색 범위에 포함되는 후보를 새로 수집한다.
         CollectTargets();
 
         ITargetable bestTarget = null;
@@ -81,14 +92,21 @@ public class PoCTargetSelector : MonoBehaviour
         return _target;
     }
 
+    /// <summary>
+    /// 현재 타깃이 선택 가능한 상태이며 이번 탐색 범위에도 포함되는지 확인한다.
+    /// </summary>
     private bool IsCurrentTargetValid()
     {
+        // 인터페이스 참조만 남은 파괴된 Unity 오브젝트도 유효하지 않은 타깃으로 처리한다.
         return _target is Object targetObject &&
                targetObject != null &&
                _target.CanBeTargeted &&
                _targetPool.Contains(_target);
     }
 
+    /// <summary>
+    /// 탐색 범위 안에서 공격 대상으로 선택 가능한 타깃을 수집한다.
+    /// </summary>
     private void CollectTargets()
     {
         // 기존 저장 공간을 유지하고 내용만 초기화한다.

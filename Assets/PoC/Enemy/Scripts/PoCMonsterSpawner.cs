@@ -3,7 +3,8 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 서버에서 테스트용 몬스터 유형 하나를 무작위로 생성한다.
+/// 등록된 적 프리팹 중 하나를 서버에서 무작위로 생성하는 PoC용 스포너다.
+/// 생성된 몬스터는 <see cref="NetworkObject"/>로 모든 클라이언트에 스폰한다.
 /// </summary>
 public class PoCMonsterSpawner : NetworkBehaviour
 {
@@ -16,6 +17,7 @@ public class PoCMonsterSpawner : NetworkBehaviour
     /// </summary>
     public void Spawn()
     {
+        // 네트워크 오브젝트 생성은 서버에서만 수행한다.
         if (!IsServer)
             return;
 
@@ -32,6 +34,7 @@ public class PoCMonsterSpawner : NetworkBehaviour
             spawnPoint.position,
             spawnPoint.rotation);
 
+        // 생성된 몬스터를 NGO에 등록해 모든 클라이언트에 전달한다.
         NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
         networkObject.Spawn();
 
