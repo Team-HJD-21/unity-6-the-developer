@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using TeamHjd.Game.Turrets;
-using Tower;
+using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
-namespace TeamHjd.Game.Debugging
+namespace TeamHJD.Game.Debugging
 {
     /// <summary>
     /// Lightweight Play Mode controls for the isolated TurretTest scene.
@@ -12,7 +12,11 @@ namespace TeamHjd.Game.Debugging
     [DisallowMultipleComponent]
     public sealed class TurretTestController : MonoBehaviour
     {
-        private const float PanelWidth = 440f;
+        private const float PanelWidth = 520f;
+        private const float MaximumPanelHeight = 700f;
+
+        [Header("Debug UI")]
+        [SerializeField, Range(1f, 2f)] private float uiScale = 1.25f;
 
         [Header("Camera Movement")]
         [SerializeField, Min(0f)] private float cameraMoveSpeed = 8f;
@@ -44,7 +48,7 @@ namespace TeamHjd.Game.Debugging
             MoveCamera();
             ZoomCamera();
 
-            if (Input.GetKeyDown(KeyCode.F1))
+            if (GameInput.WasPressedThisFrame(GameKey.F1))
             {
                 _isPanelVisible = !_isPanelVisible;
             }
@@ -52,6 +56,10 @@ namespace TeamHjd.Game.Debugging
 
         private void OnGUI()
         {
+            Matrix4x4 previousGuiMatrix = GUI.matrix;
+            float appliedUiScale = Mathf.Max(1f, uiScale);
+            GUI.matrix = Matrix4x4.Scale(new Vector3(appliedUiScale, appliedUiScale, 1f));
+
             if (!_isPanelVisible)
             {
                 if (GUI.Button(new Rect(16f, 16f, 180f, 32f), "Open Turret Test (F1)"))
@@ -59,10 +67,12 @@ namespace TeamHjd.Game.Debugging
                     _isPanelVisible = true;
                 }
 
+                GUI.matrix = previousGuiMatrix;
                 return;
             }
 
-            float panelHeight = Mathf.Min(Screen.height - 32f, 620f);
+            float availableHeight = Screen.height / appliedUiScale - 32f;
+            float panelHeight = Mathf.Min(availableHeight, MaximumPanelHeight);
             GUILayout.BeginArea(new Rect(16f, 16f, PanelWidth, panelHeight), GUI.skin.box);
 
             GUILayout.BeginHorizontal();
@@ -70,6 +80,18 @@ namespace TeamHjd.Game.Debugging
             if (GUILayout.Button("Hide", GUILayout.Width(64f)))
             {
                 _isPanelVisible = false;
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Show All Ranges"))
+            {
+                SetAllRangesVisible(true);
+            }
+
+            if (GUILayout.Button("Hide All Ranges"))
+            {
+                SetAllRangesVisible(false);
             }
             GUILayout.EndHorizontal();
 
@@ -121,11 +143,12 @@ namespace TeamHjd.Game.Debugging
             GUILayout.Label("Zoom In: Q / Zoom Out: Space");
             GUILayout.Label("Add a Monster-layer target to the scene to test tracking and firing.");
             GUILayout.EndArea();
+            GUI.matrix = previousGuiMatrix;
         }
 
         private void AdjustCameraMoveSpeed()
         {
-            float scrollInput = Input.mouseScrollDelta.y;
+            float scrollInput = GameInput.ScrollY;
             if (Mathf.Approximately(scrollInput, 0f))
             {
                 return;
@@ -150,17 +173,17 @@ namespace TeamHjd.Game.Debugging
 
             Vector2 direction = Vector2.zero;
 
-            if (Input.GetKey(KeyCode.W)) direction.y += 1f;
-            if (Input.GetKey(KeyCode.S)) direction.y -= 1f;
-            if (Input.GetKey(KeyCode.A)) direction.x -= 1f;
-            if (Input.GetKey(KeyCode.D)) direction.x += 1f;
+            if (GameInput.IsPressed(GameKey.W)) direction.y += 1f;
+            if (GameInput.IsPressed(GameKey.S)) direction.y -= 1f;
+            if (GameInput.IsPressed(GameKey.A)) direction.x -= 1f;
+            if (GameInput.IsPressed(GameKey.D)) direction.x += 1f;
 
             if (direction.sqrMagnitude > 1f)
             {
                 direction.Normalize();
             }
 
-            bool isFastMove = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool isFastMove = GameInput.IsPressed(GameKey.LeftShift) || GameInput.IsPressed(GameKey.RightShift);
             float speed = isFastMove
                 ? cameraMoveSpeed * cameraFastMoveMultiplier
                 : cameraMoveSpeed;
@@ -177,8 +200,8 @@ namespace TeamHjd.Game.Debugging
             }
 
             float zoomDirection = 0f;
-            if (Input.GetKey(KeyCode.Q)) zoomDirection -= 1f;
-            if (Input.GetKey(KeyCode.Space)) zoomDirection += 1f;
+            if (GameInput.IsPressed(GameKey.Q)) zoomDirection -= 1f;
+            if (GameInput.IsPressed(GameKey.Space)) zoomDirection += 1f;
 
             _mainCamera.orthographicSize = Mathf.Clamp(
                 _mainCamera.orthographicSize + zoomDirection * cameraZoomSpeed * Time.unscaledDeltaTime,
@@ -208,6 +231,11 @@ namespace TeamHjd.Game.Debugging
                 turret.ShowRange = !turret.ShowRange;
             }
 
+            if (GUILayout.Button("Focus", GUILayout.Width(72f)))
+            {
+                FocusCameraOn(turret);
+            }
+
             GUILayout.Label(turret.IsActivated ? "ACTIVE" : "OFF");
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
@@ -233,6 +261,37 @@ namespace TeamHjd.Game.Debugging
                     SetTurretActive(turret, isActive);
                 }
             }
+        }
+
+        private void SetAllRangesVisible(bool isVisible)
+        {
+            foreach (TurretBase turret in _turrets)
+            {
+                if (turret != null)
+                {
+                    turret.ShowRange = isVisible;
+                }
+            }
+        }
+
+        private void FocusCameraOn(TurretBase turret)
+        {
+            if (_mainCamera == null)
+            {
+                _mainCamera = Camera.main;
+            }
+
+            if (_mainCamera == null || turret == null)
+            {
+                return;
+            }
+
+            Vector3 cameraPosition = _mainCamera.transform.position;
+            Vector3 turretPosition = turret.transform.position;
+            _mainCamera.transform.position = new Vector3(
+                turretPosition.x,
+                turretPosition.y,
+                cameraPosition.z);
         }
 
         private static void SetTurretActive(TurretBase turret, bool isActive)

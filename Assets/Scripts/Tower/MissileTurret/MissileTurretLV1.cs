@@ -33,8 +33,7 @@ public class MissileTurretLV1 : DefaultMissileTurret
             {
                 _missileObj[i] = Instantiate(missilePrefab, missileSpawnPoint[i].position, turretRotationPoint.rotation);
                 TowerMissile missileScript = _missileObj[i].GetComponent<TowerMissile>();
-                missileScript.SetDamage(Damage);
-                missileScript.SetTarget(Targets[i]);
+                missileScript.Initialize(Targets[i], Damage);
             }
         }
         for (var i = 0; i < _missileObj.Length; i++)

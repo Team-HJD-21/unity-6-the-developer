@@ -1,7 +1,8 @@
-using TeamHjd.Game.Content;
+using TeamHJD.Game.Content;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
-namespace TeamHjd.Game.Turrets
+namespace TeamHJD.Game.Turrets
 {
     public abstract class TurretBase : MonoBehaviour
     {
@@ -63,7 +64,7 @@ namespace TeamHjd.Game.Turrets
         protected float TimeTilFire;
         protected float TotCoolTime;
         protected GameObject OriginPower;
-        protected ControlUnitStatus ControlUnitStatus;
+        protected ITurretPowerSource ControlUnitStatus;
 
         protected virtual void OnEnable()
         {

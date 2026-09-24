@@ -1,0 +1,14 @@
+{
+  "name": "TeamHJD.Game.Turrets",
+  "rootNamespace": "TeamHJD.Game.Turrets",
+  "references": ["TeamHJD.Game.Turrets.Contracts"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

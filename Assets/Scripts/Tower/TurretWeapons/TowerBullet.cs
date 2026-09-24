@@ -10,22 +10,28 @@ public class TowerBullet : MonoBehaviour
     private Transform _target;
 
     private Vector3 _direction;
+    private bool _isInitialized;
 
-    // 타겟 설정 메서드
-    public void SetTarget(Transform target)
+    public void Initialize(Transform target, float damage)
     {
-        this._target = target;
-        _direction = (_target.position - transform.position).normalized; // 정규화된 방향 계산
-        StartCoroutine(DestroyObjectIfNotHit());
-    }
+        if (_isInitialized)
+            throw new InvalidOperationException("TowerBullet has already been initialized.");
+        if (target == null)
+            throw new ArgumentNullException(nameof(target));
+        if (damage < 0f)
+            throw new ArgumentOutOfRangeException(nameof(damage));
 
-    public void SetDamage(float damage)
-    {
+        _target = target;
         _bulletDamage = damage;
+        _direction = (_target.position - transform.position).normalized; // 정규화된 방향 계산
+        _isInitialized = true;
+        StartCoroutine(DestroyObjectIfNotHit());
     }
 
     private void Update()
     {
+        if (!_isInitialized) return;
+
         if (_target == null)
         {
             Destroy(gameObject); // 타겟이 없으면 총알 파괴

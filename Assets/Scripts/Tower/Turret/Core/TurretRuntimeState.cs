@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace TeamHjd.Game.Turrets
+namespace TeamHJD.Game.Turrets
 {
     [Serializable]
     public sealed class TurretRuntimeState

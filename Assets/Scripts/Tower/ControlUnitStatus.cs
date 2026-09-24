@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-public class ControlUnitStatus : MonoBehaviour
+public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
 {
     [Header("Attributes")]
     [SerializeField] private int maxPower;

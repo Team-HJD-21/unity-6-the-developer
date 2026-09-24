@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 using UnityEditor;
 #endif
 
-namespace TeamHjd.Game.Content
+namespace TeamHJD.Game.Content
 {
     // Each prefab has its own definition so stage-specific balancing stays independent.
     // Values that change while the game is running are stored in TurretRuntimeState

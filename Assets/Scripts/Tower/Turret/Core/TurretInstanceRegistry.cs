@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using TeamHjd.Game.Content;
+using TeamHJD.Game.Content;
 using UnityEngine;
 
-namespace TeamHjd.Game.Turrets
+namespace TeamHJD.Game.Turrets
 {
     public static class TurretInstanceRegistry
     {
