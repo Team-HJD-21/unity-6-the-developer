@@ -15,10 +15,7 @@ public class PoCTargetable : MonoBehaviour, ITargetable
     [SerializeField] private float currentHealth;
 
     [Header("화력")]
-    [FormerlySerializedAs("maxPower")]
     [SerializeField] private float maxFirepower;
-
-    [FormerlySerializedAs("currentPower")]
     [SerializeField] private float currentFirepower;
 
     /// <summary>
