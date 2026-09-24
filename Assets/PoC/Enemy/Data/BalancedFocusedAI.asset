@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d9b20b4c59f5f584db2c07c7330164a1, type: 3}
-  m_Name: BalancFocusedAI
+  m_Name: BalancedFocusedAI
   m_EditorClassIdentifier: Assembly-CSharp::PoCAIProfile
   playerPreference: 0
   turretPreference: 0
