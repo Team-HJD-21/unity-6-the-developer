@@ -7,8 +7,13 @@ using UnityEngine;
 public class PoCMonsterNetwork : NetworkBehaviour
 {
     [Header("참조")]
-    [SerializeField] private PoCMonster monster;
+    [SerializeField] private PoCAIBrain monsterAiBrain;
 
+    private void Awake()
+    {
+        monsterAiBrain = GetComponent<PoCAIBrain>();
+    }
+    
     /// <summary>
     /// 서버에서만 몬스터 AI를 갱신한다.
     /// </summary>
@@ -17,6 +22,6 @@ public class PoCMonsterNetwork : NetworkBehaviour
         if (!IsSpawned || !IsServer)
             return;
 
-        monster.Tick();
+        monsterAiBrain.Tick();
     }
 }

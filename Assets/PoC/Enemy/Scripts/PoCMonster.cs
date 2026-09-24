@@ -45,7 +45,10 @@ public class PoCMonster : MonoBehaviour
     public void Tick()
     {
         if (_target == null)
+        {
+            StopMoving();
             return;
+        }
 
         Vector2 toTarget = (Vector2)_target.position - (Vector2)transform.position;
         Vector2 moveDirection = toTarget.normalized;

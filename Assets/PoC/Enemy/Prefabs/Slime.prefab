@@ -17,6 +17,9 @@ GameObject:
   - component: {fileID: -4820293985112137665}
   - component: {fileID: -8740136632330153983}
   - component: {fileID: 784396215047286331}
+  - component: {fileID: 3523354453040660885}
+  - component: {fileID: 7837487122097187362}
+  - component: {fileID: 984415393098425011}
   m_Layer: 0
   m_Name: Slime
   m_TagString: Untagged
@@ -274,3 +277,43 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoCMonsterNetworkAnimator
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &3523354453040660885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bceca7750ead6d04eba92690706f2534, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetScoreEvaluator
+  targetPreference: {fileID: 11400000, guid: 941deda545bd88145b73b5d007eba092, type: 2}
+  targetSetting: {fileID: 11400000, guid: 2646ddc844b7a9341a3db4fc4c291197, type: 2}
+--- !u!114 &7837487122097187362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6e720a8befe41a4f976eba38b016ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetSelector
+  targetSettings: {fileID: 11400000, guid: 2646ddc844b7a9341a3db4fc4c291197, type: 2}
+--- !u!114 &984415393098425011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8196e77bc84ebe4faebb25d667ab2f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoCAIBrain
+  targetSettings: {fileID: 11400000, guid: 2646ddc844b7a9341a3db4fc4c291197, type: 2}
