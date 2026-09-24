@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
 /// <summary>
 /// 플레이어와 터렛을 <see cref="ITargetable"/>로 연결하는 PoC용 컴포넌트다.
