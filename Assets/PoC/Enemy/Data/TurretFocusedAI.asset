@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: TurretFocusedAI
   m_EditorClassIdentifier: Assembly-CSharp::PoCAIProfile
   playerPreference: 0
-  turretPreference: 30
+  turretPreference: 5

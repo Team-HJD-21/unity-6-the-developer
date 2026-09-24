@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9b20b4c59f5f584db2c07c7330164a1, type: 3}
   m_Name: PlayerFocusedAI
   m_EditorClassIdentifier: Assembly-CSharp::PoCAIProfile
-  playerPreference: 30
+  playerPreference: 5
   turretPreference: 0

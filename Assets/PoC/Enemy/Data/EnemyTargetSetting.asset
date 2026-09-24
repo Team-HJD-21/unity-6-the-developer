@@ -17,4 +17,4 @@ MonoBehaviour:
   maxThreatWeight: 15
   retargetInterval: 1
   maxSearchDistance: 15
-  switchThreshold: 20
+  switchThreshold: 10

@@ -10,8 +10,7 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
 {
     private const int TargetFrameRate = 120;
 
-    [Header("참조")]
-    [SerializeField] private PoCMonsterSpawner monsterSpawner;
+    [Header("참조")] [SerializeField] private PoCMonsterSpawner monsterSpawner;
 
     private NetworkManager _networkManager;
 
@@ -75,11 +74,14 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
     {
         if (!_networkManager.StartHost())
         {
+            // 테스트 실행 실패 원인을 확인하기 위해 오류 로그를 유지한다.
             Debug.LogError("Failed to start the network host.");
             return;
         }
 
-        Debug.Log("Enemy network host started.");
+        // 테스트 용 스폰
+        monsterSpawner.Spawn();
+        monsterSpawner.Spawn();
         monsterSpawner.Spawn();
     }
 
@@ -90,11 +92,9 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
     {
         if (!_networkManager.StartClient())
         {
+            // 테스트 실행 실패 원인을 확인하기 위해 오류 로그를 유지한다.
             Debug.LogError("Failed to start the network client.");
-            return;
         }
-
-        Debug.Log("Enemy network client started.");
     }
 
     private string GetCurrentMode()
