@@ -4,10 +4,15 @@ using UnityEngine;
 /// <summary>
 /// 서버에서 몬스터 AI를 실행한다.
 /// </summary>
+[RequireComponent(typeof(PoCAIBrain))]
 public class PoCMonsterNetwork : NetworkBehaviour
 {
-    [Header("참조")]
-    [SerializeField] private PoCMonster monster;
+    private PoCAIBrain _monsterAiBrain;
+
+    private void Awake()
+    {
+        _monsterAiBrain = GetComponent<PoCAIBrain>();
+    }
 
     /// <summary>
     /// 서버에서만 몬스터 AI를 갱신한다.
@@ -17,6 +22,6 @@ public class PoCMonsterNetwork : NetworkBehaviour
         if (!IsSpawned || !IsServer)
             return;
 
-        monster.Tick();
+        _monsterAiBrain.Tick();
     }
 }
