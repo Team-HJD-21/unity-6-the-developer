@@ -24,7 +24,7 @@ public interface ITargetable
     /// <summary>
     /// 현재 화력 비율을 0에서 1 사이로 반환한다.
     /// </summary>
-    float PowerRatio { get; }
+    float FirepowerRatio { get; }
 
     /// <summary>
     /// 현재 AI가 공격 대상으로 선택할 수 있는지 반환한다.
