@@ -85,7 +85,7 @@ public class PoCTargetSelector : MonoBehaviour
     {
         return _target is Object targetObject &&
                targetObject != null &&
-               _target.IsTargetable &&
+               _target.CanBeTargeted &&
                _targetPool.Contains(_target);
     }
 
@@ -109,7 +109,7 @@ public class PoCTargetSelector : MonoBehaviour
             PoCTargetable targetable =
                 targetCollider.GetComponentInParent<PoCTargetable>();
 
-            if (targetable == null || !targetable.IsTargetable)
+            if (targetable == null || !targetable.CanBeTargeted)
                 continue;
 
             // Collider가 여러 개인 오브젝트의 중복 등록을 방지한다.

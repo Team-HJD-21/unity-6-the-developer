@@ -27,7 +27,7 @@ public class PoCAIBrain : MonoBehaviour
         bool hasValidTarget =
             _currentTarget is Object targetObject &&
             targetObject != null &&
-            _currentTarget.IsTargetable;
+            _currentTarget.CanBeTargeted;
 
         bool shouldRetarget = !hasValidTarget || Time.time >= _nextRetargetTime;
 

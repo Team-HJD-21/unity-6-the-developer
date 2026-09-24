@@ -15,5 +15,5 @@ public interface ITargetable
     float PowerRatio { get; }
     
     // 현재 공격 가능한 타깃인지 여부
-    bool IsTargetable { get; }
+    bool CanBeTargeted { get; }
 }

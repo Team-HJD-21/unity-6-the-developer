@@ -10,7 +10,7 @@ public class PoCTargetScoreEvaluator : MonoBehaviour
 
     public float CalculateScore(ITargetable target)
     {
-        if (target is not Object targetObject || targetObject == null || !target.IsTargetable ||
+        if (target is not Object targetObject || targetObject == null || !target.CanBeTargeted ||
             targetPreference == null || targetSetting == null)
             return float.NegativeInfinity;
 

@@ -29,6 +29,6 @@ public class PoCTargetable : MonoBehaviour, ITargetable
             ? 0f
             : Mathf.Clamp01(currentPower / maxPower);
 
-    public bool IsTargetable =>
+    public bool CanBeTargeted =>
         isActiveAndEnabled && maxHealth > 0f && currentHealth > 0f;
 }
