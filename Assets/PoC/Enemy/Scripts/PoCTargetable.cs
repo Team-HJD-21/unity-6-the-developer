@@ -14,8 +14,13 @@ public class PoCTargetable : MonoBehaviour, ITargetable
     [SerializeField] private float currentHealth;
 
     [Header("화력")]
-    [SerializeField] private float maxPower;
-    [SerializeField] private float currentPower;
+    [SerializeField] private float maxFirepower;
+    [SerializeField] private float currentFirepower;
+
+    /// <summary>
+    /// 점수 계산에 사용할 타깃 종류를 반환한다.
+    /// </summary>
+    public TargetType TargetType => targetType;
 
     /// <summary>
     /// AI가 추적할 현재 오브젝트의 위치를 반환한다.
@@ -23,9 +28,16 @@ public class PoCTargetable : MonoBehaviour, ITargetable
     public Transform TargetTransform => transform;
 
     /// <summary>
-    /// 점수 계산에 사용할 타깃 종류를 반환한다.
+    /// 실제 상태 시스템에서 전달받은 현재 체력과 최대 체력을 저장한다.
     /// </summary>
-    public TargetType TargetType => targetType;
+    /// <param name="currentHealth">현재 체력.</param>
+    /// <param name="maxHealth">최대 체력.</param>
+    public void SetHealth(float currentHealth, float maxHealth)
+    {
+        // 최대 체력을 먼저 보정한 뒤 현재 체력을 유효 범위로 제한한다.
+        this.maxHealth = Mathf.Max(0f, maxHealth);
+        this.currentHealth = Mathf.Clamp(currentHealth, 0f, this.maxHealth);
+    }
 
     /// <summary>
     /// 최대 체력을 기준으로 정규화한 현재 체력 비율을 반환한다.
@@ -36,12 +48,24 @@ public class PoCTargetable : MonoBehaviour, ITargetable
             : Mathf.Clamp01(currentHealth / maxHealth);
 
     /// <summary>
+    /// 실제 상태 시스템에서 전달받은 현재 화력과 최대 화력을 저장한다.
+    /// </summary>
+    /// <param name="currentFirepower">현재 화력.</param>
+    /// <param name="maxFirepower">최대 화력.</param>
+    public void SetFirepower(float currentFirepower, float maxFirepower)
+    {
+        // 최대 화력을 먼저 보정한 뒤 현재 화력을 유효 범위로 제한한다.
+        this.maxFirepower = Mathf.Max(0f, maxFirepower);
+        this.currentFirepower = Mathf.Clamp(currentFirepower, 0f, this.maxFirepower);
+    }
+
+    /// <summary>
     /// 최대 화력을 기준으로 정규화한 현재 화력 비율을 반환한다.
     /// </summary>
-    public float PowerRatio =>
-        maxPower <= 0f
+    public float FirepowerRatio =>
+        maxFirepower <= 0f
             ? 0f
-            : Mathf.Clamp01(currentPower / maxPower);
+            : Mathf.Clamp01(currentFirepower / maxFirepower);
 
     /// <summary>
     /// 오브젝트가 활성화되어 있고 체력이 남아 있는지 반환한다.
