@@ -35,7 +35,7 @@ public class SamplePlayer : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("InteractArea"))
+        if (other.gameObject.layer == LayerMask.NameToLayer("PocInteractArea"))
         {
             PocInteractableViewer viewer = other.GetComponentInParent<PocInteractableViewer>();
             if (viewer == null)
