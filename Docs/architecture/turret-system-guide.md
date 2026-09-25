@@ -17,12 +17,13 @@
 - Missile Turret LV1~LV3, Stage 1~3
 - `TurretDefinition`, `TurretRuntimeState`, `TurretBase`
 - 로컬 런타임 등록을 위한 `TurretInstanceRegistry`
+- 터렛 체력·파괴·플레이어 복구 흐름
 - `TowerBullet`, `TowerMissile`로 전달되는 공격력
 
 다음 항목은 이 문서의 현재 적용 범위가 아니다.
 
 - Laser Turret 이식
-- 터렛 체력·파괴 규칙 확정
+- 파괴 연출과 복구 비용·시간의 최종 게임 규칙
 - 최종 업그레이드 규칙과 Spaceship Research 연동
 - NGO를 통한 `InstanceId`와 상태 동기화
 - AI 평가값·위협도·전선 정보를 집계하는 정식 Turret Manager
@@ -33,8 +34,8 @@
 
 | 종류 | 의미 | 저장 위치 | 예시 |
 | --- | --- | --- | --- |
-| Definition | 실행 중 원본을 바꾸지 않는 콘텐츠·밸런스 값 | `TurretDefinition` ScriptableObject | 사거리, 기본 공격력, 전력, 발사 속도 |
-| Runtime State | 터렛 인스턴스마다 실행 중 바뀌는 값 | `TurretRuntimeState` | 자동 발급 ID, 활성 상태, 공격력 보너스 |
+| Definition | 실행 중 원본을 바꾸지 않는 콘텐츠·밸런스 값 | `TurretDefinition` ScriptableObject | 사거리, 기본 공격력, 최대 체력, 전력, 발사 속도 |
+| Runtime State | 터렛 인스턴스마다 실행 중 바뀌는 값 | `TurretRuntimeState` | 자동 발급 ID, 활성 상태, 현재 체력, 파괴 여부, 공격력 보너스 |
 | Behavior-local State | 공격 동작 내부에서만 필요한 짧은 상태 | Canon/Missile 구현체 | 현재 Target, 발사 타이머, 현재 미사일 과열 수치 |
 
 ```text
@@ -73,6 +74,7 @@ Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. 현재 18�
 | `RotationSpeed` | 포신 회전 속도 | 0 이상 |
 | `TargetingAngle` | 발사를 허용하는 조준 오차 | Canon 10°, Missile 360° |
 | `FireRate` | 초당 발사 횟수 | 0보다 커야 함 |
+| `MaxHealth` | 터렛의 최대 체력 | 1 이상 |
 | `Power` | 활성화할 때 필요한 전력 | 0 이상 |
 | `OverHeatTime` | Canon 연속 사격 과열 기준 | 초 단위 |
 | `OverHeatMissileCount` | Missile 과열 기준 발사 횟수 | Canon에서는 0 |
@@ -91,9 +93,11 @@ Editor에서 Definition을 수정하면 전체 `TurretDefinition`을 검사한�
 | 상태 | 설명 | 변경 방법 |
 | --- | --- | --- |
 | `InstanceId` | 현재 실행에서 터렛 한 개를 식별 | Registry가 자동 발급 |
-| `IsActivated` | 현재 전력을 공급받아 작동 중인지 표시 | `SetActivated` 계열 API |
+| `IsActivated` | 사용자가 켜서 전력을 예약한 상태인지 표시 | `RequestActivation` |
+| `IsOperational` | 활성화됐고 과열·파괴 상태가 아닌지 표시 | 활성화·과열·파괴 흐름에서 자동 계산 |
+| `CurrentHealth` | 현재 남아 있는 체력 | `ApplyDamage`, `Restore` |
+| `IsDestroyed` | 체력 0으로 파괴됐는지 표시 | `ApplyDamage`, `Restore` |
 | `DamageBonus` | 연구·버프 등 실행 중 공격력 보정 | `SetDamageBonus`, `AddDamageBonus` |
-| `ActivationChanged` | 이전 프레임 처리 상태와 현재 상태 비교 | 터렛 내부 토글 처리용 |
 
 Prefab의 `_instanceId` 기본값 `0`은 **미할당**을 뜻한다. Inspector에서 ID를 수동으로 정하지 않는다. 실제 ID는 Play Mode에서 등록될 때 양수로 자동 발급된다.
 
@@ -115,7 +119,8 @@ Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base
 
 - 포신, 회전 지점, Animator, SpriteRenderer, LayerMask 참조 보관
 - Definition의 수치를 읽기 전용 property로 제공
-- 활성 상태 변경 API 제공
+- 활성화·전력 예약의 단일 요청 API 제공
+- 체력 감소, 파괴, 복구 API 제공
 - 최종 공격력 계산
 - `OnEnable`/`OnDisable`에서 Registry 등록·해제
 
@@ -129,7 +134,7 @@ Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base
 
 파일: [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
 
-활성화된 터렛에 로컬 `InstanceId`를 발급하고 ID로 터렛을 조회한다.
+씬에 존재하는 터렛에 로컬 `InstanceId`를 발급하고 ID와 상태로 터렛을 조회한다.
 
 ```csharp
 if (TurretInstanceRegistry.TryGet(instanceId, out TurretBase turret))
@@ -142,14 +147,18 @@ if (TurretInstanceRegistry.TryGet(instanceId, out TurretBase turret))
 
 Registry는 현재 PoC용 로컬 등록부다. AI 조회용 상태 집계, 전력 총합, 구역별 터렛 관리까지 책임지는 정식 Manager가 아니다. `TowerManager`를 다른 이름의 전역 Singleton으로 다시 만드는 방식으로 확장하지 않는다.
 
+현재 제공하는 조회는 `GetAll`, `GetActive`, `GetOperational`이다. 등록·해제,
+활성화·작동 상태, 체력 변경, 파괴, 복구는 각각 Registry 이벤트로 알린다. 파괴된
+터렛은 Registry에 남아 복구할 수 있지만 Active/Operational 조회에서는 제외된다.
+
 ### 3.5 Assembly 경계
 
 Turret의 독립 가능한 계약과 공통 구조는 다음 두 assembly로 분리한다.
 
 | Assembly | 포함 범위 | 허용 의존성 |
 | --- | --- | --- |
-| `TeamHJD.Game.Turrets.Contracts` | `IActivateTower`, `ITurretPowerSource` | .NET BCL만 |
-| `TeamHJD.Game.Turrets` | Definition, RuntimeState, Base, InstanceRegistry | Contracts, Unity |
+| `TeamHJD.Game.Turrets.Contracts` | `ITurretActivationRequester`, `ITurretPowerSource`, 활성화 결과 | .NET BCL만 |
+| `TeamHJD.Game.Turrets` | Definition, RuntimeState, Base, InstanceRegistry, 활성화·탐색 공통 로직 | Contracts, Unity |
 
 `Contracts`는 `noEngineReferences: true`를 유지한다. `Turrets`는 ScriptableObject와
 MonoBehaviour를 포함하므로 Unity Engine을 참조한다. Canon/Missile/Laser concrete 구현은
@@ -163,9 +172,9 @@ Assembly와 namespace는 `TeamHJD.Game.*` 표기를 사용한다. 새 reference�
 
 | 타입 | 책임 |
 | --- | --- |
-| `DefaultCanonTurret` | 단일 Target 탐색, 포신 회전, 발사·과열·냉각, 전력 토글 |
+| `DefaultCanonTurret` | 단일 Target 탐색, 포신 회전, 발사·과열·냉각, 활성화 표현 |
 | `CanonTurretLv1~3` | Level별 발사구와 발사체 생성 |
-| `DefaultMissileTurret` | 복수 Target 탐색, 포신 회전, 발사 횟수 기반 과열, 전력 토글 |
+| `DefaultMissileTurret` | 복수 Target 탐색, 포신 회전, 발사 횟수 기반 과열, 활성화 표현 |
 | `MissileTurretLV1~3` | 발사구 수에 맞는 Target 배열과 미사일 생성 |
 | `TowerBullet` | Canon이 계산한 공격력을 받아 충돌 대상에 적용 |
 | `TowerMissile` | Missile이 계산한 공격력을 받아 폭발 범위 대상에 적용 |
@@ -189,17 +198,41 @@ Prefab 활성화
 ### 4.2 활성화와 전력
 
 ```text
-UI 또는 다른 시스템이 ActivateTurret() 호출
-→ RuntimeState.IsActivated 변경
-→ Update에서 ActivationChanged 확인
-→ 남은 전력이 충분하면 ControlUnitStatus.AddUnit(Power)
-→ 부족하면 비활성 상태로 되돌림
-→ 처리한 상태를 CommitActivationState()로 기록
+UI 또는 다른 시스템이 RequestActivation(bool) 호출
+→ TurretActivationController가 현재 상태 확인
+→ 활성화 요청이면 ITurretPowerSource.TryConsumePower(Power)
+→ 전력 예약 성공 후 RuntimeState.IsActivated 변경
+→ 비활성화 요청이면 예약 전력을 ReleasePower(Power)로 반환
+→ TurretActivationResult와 Registry 상태 이벤트 전달
 ```
 
-비활성화할 때는 전력을 반환하고 냉각 표현을 실행한다. 과열에 의한 일시 정지는 사용자 토글과 다른 내부 상태 전이이므로 현재 구현은 `SynchronizeActivationState`로 이전 상태까지 함께 맞춘다.
+호출부는 전력을 먼저 검사한 다음 별도 활성화 메서드를 호출하지 않는다. 전력 확인과 상태
+변경은 반드시 `RequestActivation` 한 경로에서 처리한다. 과열은 사용자가 끈 상태가 아니므로
+`IsActivated`와 전력 예약을 유지하고 `IsOperational`만 일시적으로 `false`가 된다.
 
-### 4.3 탐색과 공격
+### 4.3 체력, 파괴와 복구
+
+```text
+ApplyDamage(damage)
+→ RuntimeState.CurrentHealth 감소
+→ HealthChanged 이벤트
+→ 체력이 0이면 RequestActivation(false)로 전력 반환
+→ IsDestroyed = true
+→ Destroyed 이벤트
+
+플레이어가 Restore() 호출
+→ CurrentHealth = Definition.MaxHealth
+→ IsDestroyed = false
+→ Restored 이벤트
+→ 비활성 상태 유지
+→ 플레이어가 별도로 RequestActivation(true) 호출
+```
+
+파괴된 터렛은 Registry에서 즉시 제거하지 않는다. 플레이어가 같은 인스턴스를 복구할 수
+있도록 등록 상태를 유지하되 Active/Operational 조회와 활성화 요청에서는 제외한다. Scene
+전환이나 실제 GameObject 제거는 `Unregistered`로 구분한다.
+
+### 4.4 탐색과 공격
 
 Canon은 범위 안에서 가까운 적 하나를 선택하고, `TargetingAngle` 이내로 회전한 뒤 발사한다. Missile은 발사구 수만큼 Target 배열을 만들며 복수의 적을 선택한다. 적 수가 부족하면 첫 Target을 보조 슬롯에서 재사용할 수 있다.
 
@@ -232,7 +265,8 @@ Physics2D 범위 탐색
 5. `_runtimeState._instanceId`는 `0`으로 둔다.
 6. Gizmo 사거리와 실제 적 탐지 범위를 비교한다.
 7. 활성화·비활성화, 전력 부족, 과열·냉각, Target 사망 후 재탐색을 검증한다.
-8. 새 에셋과 `.meta` 파일을 함께 커밋한다.
+8. 체력 감소, 파괴, 복구 후 수동 재활성화를 검증한다.
+9. 새 에셋과 `.meta` 파일을 함께 커밋한다.
 
 ### 사거리 표시
 
@@ -299,6 +333,11 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 - [ ] 6개 레벨별 터렛이 `TurretTest` Scene에서 활성화된다.
 - [ ] 전력이 부족하면 활성화가 거부된다.
 - [ ] 비활성화하면 전력이 반환된다.
+- [ ] `Damage`로 현재 체력이 감소한다.
+- [ ] 체력 0에서 파괴되고 예약 전력이 반환된다.
+- [ ] 파괴된 터렛은 활성화할 수 없다.
+- [ ] `Restore` 후 최대 체력·비활성 상태로 돌아오며 다시 활성화할 수 있다.
+- [ ] 파괴와 복구 시 Registry 이벤트가 한 번씩 발생한다.
 - [ ] Target이 사망하거나 범위를 벗어나면 새 Target을 찾는다.
 - [ ] Canon과 Missile의 Gizmo·실제 탐지 범위가 Definition과 일치한다.
 - [ ] 발사체 피해량이 Definition Damage와 Runtime Bonus를 반영한다.
