@@ -1,0 +1,14 @@
+{
+  "name": "TeamHJD.Game.Contracts",
+  "rootNamespace": "TeamHJD.Game.Contracts",
+  "references": ["TeamHJD.Game.Domain"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}
