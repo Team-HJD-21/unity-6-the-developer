@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using TMPro;
 using TMPro.Examples;
+using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
@@ -54,7 +56,6 @@ public class TowerManager : MonoBehaviour
     private bool isVisible;
     private DefaultCanonTurret curCanonTower;
     private DefaultMissileTurret curMissileTower;
-    private Transform curTower;
 
     //  게임 시작 시 초기화
     private void InGame()
@@ -70,7 +71,6 @@ public class TowerManager : MonoBehaviour
         _animator = towerMenu.GetComponent<Animator>();
         isVisible = false;
         curCanonTower = null;
-        curTower = null;
 
         //  타워 메뉴의 Activate 버튼 연결
         activateButton.GetComponent<Button>().onClick.AddListener(SetTowerActive);
@@ -352,103 +352,55 @@ public class TowerManager : MonoBehaviour
     //  타워의 활성화 상태를 변경할 수 있음 또한 미니맵에 표시되는 색상을 변경
     public void SetTowerActive()
     {
+        if (curCanonTower != null)
+        {
+            RequestTurretActivation(curCanonTower, SetCanonTowerInfo);
+            return;
+        }
 
-            if (curCanonTower != null)
+        if (curMissileTower != null)
+        {
+            RequestTurretActivation(curMissileTower, SetMissileTowerInfo);
+        }
+    }
+
+    private void RequestTurretActivation(TurretBase turret, Action refreshTowerInfo)
+    {
+        TurretActivationResult result = turret.RequestActivation(!turret.IsActivated);
+        if (result == TurretActivationResult.InsufficientPower)
+        {
+            alertManager.Show(1);
+            return;
+        }
+
+        if (result is TurretActivationResult.PowerSourceUnavailable or
+            TurretActivationResult.InvalidPowerCost)
+        {
+            Debug.LogError($"Failed to change activation for {turret.name}: {result}", turret);
+            return;
+        }
+
+        UpdateTurretMapElement(turret);
+        refreshTowerInfo?.Invoke();
+    }
+
+    private static void UpdateTurretMapElement(TurretBase turret)
+    {
+        GameObject[] mapElements = GameObject.FindGameObjectsWithTag("MapElement");
+        foreach (GameObject mapElement in mapElements)
+        {
+            if (!mapElement.transform.IsChildOf(turret.transform))
             {
-                //  이미 활성화 상태
-                if (curCanonTower.IsActivated)
-                {
-                    curCanonTower.DeactivateTurret();
-
-                    GameObject[] childs = GameObject.FindGameObjectsWithTag("MapElement");
-
-                    foreach (var child in childs)
-                    {
-                        if (child.transform.IsChildOf(curCanonTower.transform))
-                        {
-                            child.GetComponent<SpriteRenderer>().color = Color.yellow;
-                            SetCanonTowerInfo();
-                            return;
-                        }
-                    }
-                }
-                //  비활성화 상태
-                else
-                {
-                    if (controlUnit.CheckEnoughPower(curCanonTower.GetPower()))
-                    {
-                        curCanonTower.ActivateTurret();
-                        GameObject[] childs = GameObject.FindGameObjectsWithTag("MapElement");
-
-                        foreach (var child in childs)
-                        {
-                            if (child.transform.IsChildOf(curCanonTower.transform))
-                            {
-                                child.GetComponent<SpriteRenderer>().color = Color.green;
-                                SetCanonTowerInfo();
-                                return;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        alertManager.Show(1);
-                        // Debug.Log("Power가 부족합니다.");
-                    }
-                }
+                continue;
             }
-            else if (curMissileTower != null)
+
+            if (mapElement.TryGetComponent(out SpriteRenderer spriteRenderer))
             {
-                //  이미 활성화 상태
-                if (curMissileTower.IsActivated)
-                {
-                    curMissileTower.DeactivateTurret();
-
-                    GameObject[] childs = GameObject.FindGameObjectsWithTag("MapElement");
-
-                    foreach (var child in childs)
-                    {
-                        if (child.transform.IsChildOf(curMissileTower.transform))
-                        {
-                            child.GetComponent<SpriteRenderer>().color = Color.yellow;
-                            SetMissileTowerInfo();
-                            return;
-                        }
-                    }
-                }
-                //  비활성화 상태
-                else
-                {
-                    if (controlUnit.CheckEnoughPower(curMissileTower.GetPower()))
-                    {
-                        curMissileTower.ActivateTurret();
-
-                        GameObject[] childs = GameObject.FindGameObjectsWithTag("MapElement");
-
-                        foreach (var child in childs)
-                        {
-                            if (child.transform.IsChildOf(curMissileTower.transform))
-                            {
-                                child.GetComponent<SpriteRenderer>().color = Color.green;
-                                SetMissileTowerInfo();
-                                return;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        alertManager.Show(1);
-                        // Debug.Log("Power가 부족합니다.");
-                    }
-                }
+                spriteRenderer.color = turret.IsActivated ? Color.green : Color.yellow;
             }
-            //  디버깅 용
-            else
-            {
-                // Debug.LogError("Tower is null");
-                return;
-            }
-        
+
+            return;
+        }
     }
 
     //  Menu 흔들림 효과

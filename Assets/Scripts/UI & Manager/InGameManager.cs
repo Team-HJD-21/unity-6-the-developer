@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using TMPro;
+using TeamHJD.Game.Turrets;
 using Unity.Properties;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Dependencies.NCalc;
@@ -520,20 +521,9 @@ public class InGameManager : MonoBehaviour
             GameObject towerObject = TowerManager.towerList[i];
             if (towerObject != null)
             {
-                // 타워 컴포넌트 가져오기
-                DefaultCanonTurret canonTurret = towerObject.GetComponent<DefaultCanonTurret>();
-                DefaultMissileTurret missileTurret = towerObject.GetComponent<DefaultMissileTurret>();
-
-                if (canonTurret != null)
+                if (towerObject.TryGetComponent(out TurretBase turret))
                 {
-                    canonTurret.DeactivateTurret();
-                    // Debug.Log($"Deactivated Canon Turret: {towerObject.name}");
-                }
-
-                if (missileTurret != null)
-                {
-                    missileTurret.DeactivateTurret();
-                    // Debug.Log($"Deactivated Missile Turret: {towerObject.name}");
+                    turret.RequestActivation(false);
                 }
 
                 // 미니맵 요소 색상 업데이트
