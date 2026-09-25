@@ -35,5 +35,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/PoC/Enemy/Scenes/EnemySandbox.unity
     guid: 9ff428f7b35658f498d4c55cf13b5cc6
+  - enabled: 1
+    path: Assets/PoC/Spaceship/Scenes/MutiSceneEdit.unity
+    guid: 0e05f78b576a445d3b48c87bf20dbe24
+  - enabled: 1
+    path: Assets/PoC/Spaceship/Scenes/SpaceShipGrayBox.unity
+    guid: fffd0c02060ee45e293914dfd01f8927
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
