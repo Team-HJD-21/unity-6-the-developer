@@ -1,0 +1,14 @@
+{
+  "name": "TeamHJD.Game.Content.Authoring",
+  "rootNamespace": "TeamHJD.Game.Content.Authoring",
+  "references": ["TeamHJD.Game.Domain"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

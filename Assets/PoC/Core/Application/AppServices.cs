@@ -1,4 +1,4 @@
-// 앱 범위의 플랫폼 및 Scene 전환 서비스를 소유하고 종료 시 해제합니다.
+// 앱 범위 서비스 의존성과 Match 세션 Factory를 소유합니다.
 
 using System;
 using System.Collections.Generic;
@@ -10,13 +10,19 @@ namespace TeamHJD.Game.Application
     {
         private bool _isDisposed;
 
+        public IProfileService Profiles { get; }
+        public IContentCatalog Content { get; }
         public IPlatformService Platform { get; }
         public ISceneFlow SceneFlow { get; }
+        public MatchSessionFactory MatchSessions { get; }
 
-        public AppServices(IPlatformService platform, ISceneFlow sceneFlow)
+        public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority)
         {
+            Profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
+            Content = content ?? throw new ArgumentNullException(nameof(content));
             Platform = platform ?? throw new ArgumentNullException(nameof(platform));
             SceneFlow = sceneFlow ?? throw new ArgumentNullException(nameof(sceneFlow));
+            MatchSessions = new MatchSessionFactory(authority ?? throw new ArgumentNullException(nameof(authority)));
         }
 
         public void Dispose()
@@ -24,6 +30,8 @@ namespace TeamHJD.Game.Application
             if (_isDisposed) return;
             _isDisposed = true;
             List<Exception> errors = null;
+            DisposeIfNeeded(Profiles, ref errors);
+            DisposeIfNeeded(Content, ref errors);
             DisposeIfNeeded(Platform, ref errors);
             DisposeIfNeeded(SceneFlow, ref errors);
             if (errors != null) throw new AggregateException("One or more app services failed to dispose.", errors);
