@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Content;
 using UnityEngine;
@@ -10,7 +11,16 @@ namespace TeamHJD.Game.Turrets
         private static readonly Dictionary<string, TurretDefinition> DefinitionsById = new();
         private static int _nextInstanceId = 1;
 
+        public static event Action<TurretBase> Registered;
+        public static event Action<TurretBase> Unregistered;
+        public static event Action<TurretBase, bool> ActivationChanged;
+        public static event Action<TurretBase, bool> OperationalStateChanged;
+        public static event Action<TurretBase, int, int> HealthChanged;
+        public static event Action<TurretBase> Destroyed;
+        public static event Action<TurretBase> Restored;
+
         public static IReadOnlyDictionary<int, TurretBase> RegisteredInstances => Instances;
+        public static int Count => Instances.Count;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -18,26 +28,53 @@ namespace TeamHJD.Game.Turrets
             Instances.Clear();
             DefinitionsById.Clear();
             _nextInstanceId = 1;
+            Registered = null;
+            Unregistered = null;
+            ActivationChanged = null;
+            OperationalStateChanged = null;
+            HealthChanged = null;
+            Destroyed = null;
+            Restored = null;
         }
 
-        public static void Register(TurretBase turret)
+        public static bool Register(TurretBase turret)
         {
             if (turret == null)
             {
-                return;
+                return false;
             }
 
-            ValidateDefinitionId(turret);
+            if (!ValidateDefinitionId(turret))
+            {
+                return false;
+            }
+
+            if (turret.RuntimeState.HasInstanceId &&
+                Instances.TryGetValue(turret.RuntimeState.InstanceId, out TurretBase existing) &&
+                existing == turret)
+            {
+                return true;
+            }
 
             int instanceId = turret.RuntimeState.InstanceId;
             if (!turret.RuntimeState.HasInstanceId ||
                 Instances.TryGetValue(instanceId, out TurretBase registeredTurret) && registeredTurret != turret)
             {
+                if (turret.RuntimeState.HasInstanceId)
+                {
+                    Debug.LogWarning(
+                        $"Turret Instance ID {instanceId} is already registered. " +
+                        $"A new runtime ID will be assigned to {turret.name}.",
+                        turret);
+                }
+
                 instanceId = AllocateInstanceId();
                 turret.RuntimeState.AssignInstanceId(instanceId);
             }
 
             Instances[instanceId] = turret;
+            Registered?.Invoke(turret);
+            return true;
         }
 
         public static void Unregister(TurretBase turret)
@@ -51,12 +88,71 @@ namespace TeamHJD.Game.Turrets
             if (Instances.TryGetValue(instanceId, out TurretBase registeredTurret) && registeredTurret == turret)
             {
                 Instances.Remove(instanceId);
+                Unregistered?.Invoke(turret);
             }
         }
 
         public static bool TryGet(int instanceId, out TurretBase turret)
         {
             return Instances.TryGetValue(instanceId, out turret);
+        }
+
+        public static IReadOnlyList<TurretBase> GetAll()
+        {
+            return new List<TurretBase>(Instances.Values);
+        }
+
+        public static IReadOnlyList<TurretBase> GetActive()
+        {
+            var activeTurrets = new List<TurretBase>();
+            foreach (TurretBase turret in Instances.Values)
+            {
+                if (turret != null && turret.IsActivated && !turret.IsDestroyed)
+                {
+                    activeTurrets.Add(turret);
+                }
+            }
+
+            return activeTurrets;
+        }
+
+        public static IReadOnlyList<TurretBase> GetOperational()
+        {
+            var operationalTurrets = new List<TurretBase>();
+            foreach (TurretBase turret in Instances.Values)
+            {
+                if (turret != null && turret.IsOperational)
+                {
+                    operationalTurrets.Add(turret);
+                }
+            }
+
+            return operationalTurrets;
+        }
+
+        internal static void NotifyActivationChanged(TurretBase turret, bool isActivated)
+        {
+            ActivationChanged?.Invoke(turret, isActivated);
+        }
+
+        internal static void NotifyOperationalStateChanged(TurretBase turret, bool isOperational)
+        {
+            OperationalStateChanged?.Invoke(turret, isOperational);
+        }
+
+        internal static void NotifyHealthChanged(TurretBase turret, int currentHealth, int maxHealth)
+        {
+            HealthChanged?.Invoke(turret, currentHealth, maxHealth);
+        }
+
+        internal static void NotifyDestroyed(TurretBase turret)
+        {
+            Destroyed?.Invoke(turret);
+        }
+
+        internal static void NotifyRestored(TurretBase turret)
+        {
+            Restored?.Invoke(turret);
         }
 
         private static int AllocateInstanceId()
@@ -69,19 +165,19 @@ namespace TeamHJD.Game.Turrets
             return _nextInstanceId++;
         }
 
-        private static void ValidateDefinitionId(TurretBase turret)
+        private static bool ValidateDefinitionId(TurretBase turret)
         {
             TurretDefinition definition = turret.Definition;
             if (definition == null)
             {
                 Debug.LogError($"Turret Definition is missing on {turret.name}.", turret);
-                return;
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(definition.Id))
             {
                 Debug.LogError($"Turret Definition ID is empty on {turret.name}.", turret);
-                return;
+                return false;
             }
 
             if (DefinitionsById.TryGetValue(definition.Id, out TurretDefinition registeredDefinition) &&
@@ -91,10 +187,11 @@ namespace TeamHJD.Game.Turrets
                     $"Duplicate Turret Definition ID '{definition.Id}' is used by " +
                     $"'{registeredDefinition.name}' and '{definition.name}'.",
                     turret);
-                return;
+                return false;
             }
 
             DefinitionsById[definition.Id] = definition;
+            return true;
         }
     }
 }

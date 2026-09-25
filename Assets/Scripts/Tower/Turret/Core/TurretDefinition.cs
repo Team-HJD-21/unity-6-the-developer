@@ -26,6 +26,9 @@ namespace TeamHJD.Game.Content
         [FormerlySerializedAs("_shotsPerSecond")]
         [SerializeField, Min(0.01f)] private float _fireRate = 1f;
 
+        [Header("Durability")]
+        [SerializeField, Min(1)] private int _maxHealth = 100;
+
         [Header("Power and Heat")]
         [FormerlySerializedAs("_powerCost")]
         [SerializeField, Min(0)] private int _power;
@@ -44,6 +47,7 @@ namespace TeamHJD.Game.Content
         public float RotationSpeed => _rotationSpeed;
         public float TargetingAngle => _targetingAngle;
         public float FireRate => _fireRate;
+        public int MaxHealth => _maxHealth;
         public int Power => _power;
         public float OverHeatTime => _overHeatTime;
         public int OverHeatMissileCount => _overHeatMissileCount;

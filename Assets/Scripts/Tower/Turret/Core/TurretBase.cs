@@ -1,10 +1,11 @@
+using System.Collections;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
 namespace TeamHJD.Game.Turrets
 {
-    public abstract class TurretBase : MonoBehaviour
+    public abstract class TurretBase : MonoBehaviour, ITurretActivationRequester
     {
         // Keep serialized field names unchanged so existing prefab values remain mapped.
         //제발 바꾸지 말아주세요요요요!
@@ -22,29 +23,18 @@ namespace TeamHJD.Game.Turrets
         [SerializeField] private TurretDefinition _definition;
         [SerializeField] private TurretRuntimeState _runtimeState = new();
 
+        private TurretActivationController _activationController;
+
         public TurretDefinition Definition => _definition;
         public TurretRuntimeState RuntimeState => _runtimeState;
         public int InstanceId => _runtimeState.InstanceId;
         public string DisplayName => _definition != null ? _definition.DisplayName : name;
         public bool IsActivated => _runtimeState.IsActivated;
+        public bool IsOperational => _runtimeState.IsOperational;
+        public bool IsDestroyed => _runtimeState.IsDestroyed;
+        public int CurrentHealth => _runtimeState.CurrentHealth;
+        public int MaxHealth => _definition != null ? _definition.MaxHealth : 0;
         public bool ShowRange { get; set; }
-
-        protected bool ActivationChanged => _runtimeState.ActivationChanged;
-
-        protected void SetActivated(bool isActivated)
-        {
-            _runtimeState.SetActivated(isActivated);
-        }
-
-        protected void CommitActivationState()
-        {
-            _runtimeState.CommitActivationState();
-        }
-
-        protected void SynchronizeActivationState(bool isActivated)
-        {
-            _runtimeState.SynchronizeActivationState(isActivated);
-        }
 
         protected Transform TurretRotationPoint => turretRotationPoint;
         protected LayerMask EnemyMask => enemyMask;
@@ -63,17 +53,127 @@ namespace TeamHJD.Game.Turrets
         protected int Damage => Mathf.Max(0, _definition.Damage + _runtimeState.DamageBonus);
         protected float TimeTilFire;
         protected float TotCoolTime;
-        protected GameObject OriginPower;
-        protected ITurretPowerSource ControlUnitStatus;
+
+        protected bool ConfigureActivation(ITurretPowerSource powerSource)
+        {
+            if (_definition == null)
+            {
+                Debug.LogError($"Turret Definition is missing on {name}.", this);
+                return false;
+            }
+
+            if (powerSource == null ||
+                powerSource is Object unityObject && unityObject == null)
+            {
+                Debug.LogError($"Turret power source is missing on {name}.", this);
+                return false;
+            }
+
+            bool shouldStartActivated = _runtimeState.IsActivated;
+            _runtimeState.SetActivated(false);
+            _runtimeState.InitializeHealth(MaxHealth);
+            _activationController = new TurretActivationController(
+                _runtimeState,
+                powerSource,
+                Power);
+
+            if (shouldStartActivated)
+            {
+                StartCoroutine(RequestInitialActivation());
+            }
+
+            return true;
+        }
+
+        public TurretActivationResult RequestActivation(bool shouldActivate)
+        {
+            if (shouldActivate && IsDestroyed)
+            {
+                return TurretActivationResult.Destroyed;
+            }
+
+            if (_activationController == null)
+            {
+                return TurretActivationResult.PowerSourceUnavailable;
+            }
+
+            bool wasOperational = IsOperational;
+            TurretActivationResult result =
+                _activationController.RequestActivation(shouldActivate);
+
+            if (result is TurretActivationResult.Activated or
+                TurretActivationResult.Deactivated)
+            {
+                OnActivationChanged(shouldActivate);
+                TurretInstanceRegistry.NotifyActivationChanged(this, shouldActivate);
+
+                if (wasOperational != IsOperational)
+                {
+                    TurretInstanceRegistry.NotifyOperationalStateChanged(this, IsOperational);
+                }
+            }
+
+            return result;
+        }
+
+        protected void SetTemporarilySuspended(bool isSuspended)
+        {
+            bool wasOperational = IsOperational;
+            _runtimeState.SetTemporarilySuspended(isSuspended);
+
+            if (wasOperational != IsOperational)
+            {
+                TurretInstanceRegistry.NotifyOperationalStateChanged(this, IsOperational);
+            }
+        }
+
+        protected virtual void OnActivationChanged(bool isActivated)
+        {
+        }
+
+        protected virtual void OnDestroyed()
+        {
+        }
+
+        protected virtual void OnRestored()
+        {
+        }
 
         protected virtual void OnEnable()
         {
-            TurretInstanceRegistry.Register(this);
+            if (!TurretInstanceRegistry.Register(this))
+            {
+                enabled = false;
+            }
         }
 
         protected virtual void OnDisable()
         {
+            bool wasOperational = IsOperational;
+            bool wasActivated = IsActivated;
+
+            if (_activationController != null &&
+                _activationController.ReleaseForShutdown())
+            {
+                if (wasActivated)
+                {
+                    TurretInstanceRegistry.NotifyActivationChanged(this, false);
+                }
+
+                if (wasOperational)
+                {
+                    TurretInstanceRegistry.NotifyOperationalStateChanged(this, false);
+                }
+            }
+
+            _runtimeState.SetTemporarilySuspended(false);
             TurretInstanceRegistry.Unregister(this);
+        }
+
+        private IEnumerator RequestInitialActivation()
+        {
+            yield return null;
+            RequestActivation(true);
         }
 
         public void SetDamageBonus(int damageBonus)
@@ -84,6 +184,39 @@ namespace TeamHJD.Game.Turrets
         public void AddDamageBonus(int damageBonus)
         {
             _runtimeState.AddDamageBonus(damageBonus);
+        }
+
+        public bool ApplyDamage(int damage)
+        {
+            if (!_runtimeState.ApplyDamage(damage))
+            {
+                return false;
+            }
+
+            TurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
+            if (CurrentHealth > 0)
+            {
+                return true;
+            }
+
+            RequestActivation(false);
+            _runtimeState.MarkDestroyed();
+            OnDestroyed();
+            TurretInstanceRegistry.NotifyDestroyed(this);
+            return true;
+        }
+
+        public bool Restore()
+        {
+            if (!_runtimeState.Restore(MaxHealth))
+            {
+                return false;
+            }
+
+            OnRestored();
+            TurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
+            TurretInstanceRegistry.NotifyRestored(this);
+            return true;
         }
     }
 
