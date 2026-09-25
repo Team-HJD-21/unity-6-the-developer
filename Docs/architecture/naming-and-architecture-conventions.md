@@ -17,7 +17,7 @@
 | 계층 | 책임 | 허용 의존성 | 예시 |
 | --- | --- | --- | --- |
 | `Bootstrap` | 앱 조립·수명주기 시작 | 모든 구체 구현 | `AppBootstrap`, `CompositionRoot` |
-| `Domain` | 순수 게임 규칙·상태·값 | .NET BCL만 | `MatchState`, `GameSimulation`, `WaveState` |
+| `Domain` | 순수 게임 규칙·상태·값 | .NET BCL만 | `MatchState`, `MatchSimulation`, `WaveState` |
 | `Application` | Use Case 조율·세션 흐름·Port | Domain, Contracts | `MatchSession`, `ProfileUseCase` |
 | `Contracts` | 외부 기능의 추상 Port | Domain BCL | `IProfileService`, `IContentCatalog` |
 | `Infrastructure` | 외부 SDK/저장/HTTP의 구현 | Contracts, Domain, Unity/SDK | `SteamPlatformAdapter`, `BinaryProfileCache` |
@@ -60,7 +60,7 @@ AppRoot                 App 스코프 composition root
 AppServices             Bootstrap 내부의 앱 서비스 집합
 MatchSession            한 번의 스테이지·던전·협동 매치 수명주기
 MatchState              해당 매치의 런타임 상태
-GameSimulation          순수 전투·웨이브 상태 전이
+MatchSimulation         Match command 실행과 순수 게임 규칙 상태 전이
 PlayerProfile           계정 진행도
 ContentCatalog          Definition을 검색/해석하는 API
 SceneFlowController     Hub/Lobby/Match 씬 흐름
@@ -116,7 +116,7 @@ Binary와 Backend를 같은 권한의 대체 Repository로 만들지 않는다. 
 게임 규칙/서비스에는 상속보다 조합을 사용한다.
 
 ```text
-good: MatchSession(GameSimulation, IModeRules, IMatchEvents, IClock)
+good: MatchSession(MatchSimulation, IModeRules, IMatchEvents, IClock)
 bad:  BaseGameManager -> InGameManager -> CoopGameManager -> PvPGameManager
 ```
 
@@ -133,13 +133,17 @@ SceneAdapterBase : MonoBehaviour
 ## Namespace와 파일 규칙
 
 ```text
-TeamHjd.Game.Domain
-TeamHjd.Game.Application
-TeamHjd.Game.Contracts
-TeamHjd.Game.Content
-TeamHjd.Game.Infrastructure
-TeamHjd.Game.Presentation
+TeamHJD.Game.Domain
+TeamHJD.Game.Application
+TeamHJD.Game.Contracts
+TeamHJD.Game.Content
+TeamHJD.Game.Infrastructure
+TeamHJD.Game.Presentation
+TeamHJD.Game.Bootstrap
 ```
+
+`TeamHJD`는 프로젝트의 실제 회사명이며 root namespace로 사용한다. 프로젝트명과 `Core` 중복 경로는
+추가하지 않는다. 새 Core의 규칙 실행기는 `GameSimulation` 대신 `MatchSimulation`으로 부른다.
 
 - public 타입 하나당 파일 하나를 원칙으로 한다.
 - 파일명은 public 타입명과 정확히 일치한다.

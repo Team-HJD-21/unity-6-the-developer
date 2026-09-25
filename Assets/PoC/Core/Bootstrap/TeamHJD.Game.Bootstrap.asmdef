@@ -1,0 +1,22 @@
+{
+  "name": "TeamHJD.Game.Bootstrap",
+  "rootNamespace": "TeamHJD.Game.Bootstrap",
+  "references": [
+    "TeamHJD.Game.Application",
+    "TeamHJD.Game.Content.Runtime",
+    "TeamHJD.Game.Contracts",
+    "TeamHJD.Game.Domain",
+    "TeamHJD.Game.Infrastructure",
+    "TeamHJD.Game.Infrastructure.Fakes",
+    "TeamHJD.Game.Presentation"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
