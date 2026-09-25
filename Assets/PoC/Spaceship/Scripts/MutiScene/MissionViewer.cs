@@ -1,10 +1,10 @@
 using PoC.Spaceship.Scripts.MutiScene;
 using UnityEngine;
 
-public class PocMissionViewer : PocInteractableViewer
+public class MissionViewer : InteractableViewer
 {
-    [SerializeField] private PocSpaceshipProgressReader _reader;
-    [SerializeField] private PocMissionProgresser _progresser;
+    [SerializeField] private SpaceshipProgressReader _reader;
+    [SerializeField] private MissionProgresser _progresser;
 
     protected override string ActionText => "mission level";
 

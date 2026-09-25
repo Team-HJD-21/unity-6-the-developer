@@ -8,7 +8,7 @@ public class SamplePlayer : MonoBehaviour
     [SerializeField] private Rigidbody2D _rb;
     [SerializeField] private Camera _camera;
 
-    private PocInteractableViewer nearbyViewer;
+    private InteractableViewer nearbyViewer;
     
     // Update is called once per frame
     void Update()
@@ -37,7 +37,7 @@ public class SamplePlayer : MonoBehaviour
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("PocInteractArea"))
         {
-            PocInteractableViewer viewer = other.GetComponentInParent<PocInteractableViewer>();
+            InteractableViewer viewer = other.GetComponentInParent<InteractableViewer>();
             if (viewer == null)
             {
                 return;
@@ -56,7 +56,7 @@ public class SamplePlayer : MonoBehaviour
     void OnTriggerExit2D(Collider2D other)
     {
         if (nearbyViewer == null ||
-            other.GetComponentInParent<PocInteractableViewer>() != nearbyViewer)
+            other.GetComponentInParent<InteractableViewer>() != nearbyViewer)
         {
             return;
         }

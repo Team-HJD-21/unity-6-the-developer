@@ -5,19 +5,19 @@ using UnityEngine;
 namespace PoC.Spaceship.Scripts.MutiScene
 {
     [Serializable]
-    public class PocSpaceshipProgressMissionData
+    public class SpaceshipProgressMissionData
     {
         public int selectedMissionId = 1;
     }
 
     [Serializable]
-    public class PocSpaceshipProgressData
+    public class SpaceshipProgressData
     {
         public int coin = 3;
         public int progressLevel = 1;
     }
 
-    public class PocSpaceshipProgressReader : MonoBehaviour
+    public class SpaceshipProgressReader : MonoBehaviour
     {
         // 초기 설정 Json
         [SerializeField] private TextAsset initialMissionJson;
@@ -26,16 +26,16 @@ namespace PoC.Spaceship.Scripts.MutiScene
         public const string MissionFileName = "PocMissonData.json";
         public const string ProgressFileName = "PocProgressData.json";
 
-        [SerializeField] private PocSpaceshipProgressMissionData _missionData = new PocSpaceshipProgressMissionData();
-        public PocSpaceshipProgressMissionData MissionData => _missionData;
-        [SerializeField] private PocSpaceshipProgressData _progressData = new PocSpaceshipProgressData();
-        public PocSpaceshipProgressData ProgressData => _progressData;
+        [SerializeField] private SpaceshipProgressMissionData _missionData = new SpaceshipProgressMissionData();
+        public SpaceshipProgressMissionData MissionData => _missionData;
+        [SerializeField] private SpaceshipProgressData _progressData = new SpaceshipProgressData();
+        public SpaceshipProgressData ProgressData => _progressData;
 
         private void Awake()
         {
             // Spaceship Load 시 바로 json읽기
-            Load(initialMissionJson, MissionFileName, MissionData, PocSaveSession.MissionSaved);
-            Load(initialProgressJson, ProgressFileName, ProgressData, PocSaveSession.ProgressSaved);
+            Load(initialMissionJson, MissionFileName, MissionData, SaveSession.MissionSaved);
+            Load(initialProgressJson, ProgressFileName, ProgressData, SaveSession.ProgressSaved);
         }
 
         public static void Load<T>(TextAsset initialJson, string file, T target, bool savedThisSession) where T : class
@@ -71,7 +71,7 @@ namespace PoC.Spaceship.Scripts.MutiScene
     }
 
     // 검증용 클래스 
-    public static class PocSaveSession
+    public static class SaveSession
     {
         public static bool MissionSaved;
         public static bool ProgressSaved;

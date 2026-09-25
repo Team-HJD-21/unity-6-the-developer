@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-public abstract class PocInteractableViewer : MonoBehaviour
+public abstract class InteractableViewer : MonoBehaviour
 {
     [SerializeField] protected TextMeshPro stateText;
 
