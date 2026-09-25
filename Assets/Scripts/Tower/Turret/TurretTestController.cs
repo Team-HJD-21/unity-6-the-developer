@@ -17,6 +17,7 @@ namespace TeamHJD.Game.Debugging
 
         [Header("Debug UI")]
         [SerializeField, Range(1f, 2f)] private float uiScale = 1.25f;
+        [SerializeField, Min(1)] private int damagePerClick = 25;
 
         [Header("Camera Movement")]
         [SerializeField, Min(0f)] private float cameraMoveSpeed = 8f;
@@ -35,11 +36,26 @@ namespace TeamHJD.Game.Debugging
         private Camera _mainCamera;
         private Vector2 _scrollPosition;
         private bool _isPanelVisible = true;
+        private TurretActivationResult? _lastActivationResult;
+        private string _lastDurabilityAction;
 
         private void Awake()
         {
             RefreshReferences();
             _mainCamera = Camera.main;
+        }
+
+        private void OnEnable()
+        {
+            TurretInstanceRegistry.Registered += HandleRegistryChanged;
+            TurretInstanceRegistry.Unregistered += HandleRegistryChanged;
+            RefreshReferences();
+        }
+
+        private void OnDisable()
+        {
+            TurretInstanceRegistry.Registered -= HandleRegistryChanged;
+            TurretInstanceRegistry.Unregistered -= HandleRegistryChanged;
         }
 
         private void Update()
@@ -102,6 +118,16 @@ namespace TeamHJD.Game.Debugging
             else
             {
                 GUILayout.Label("ControlUnit: not found");
+            }
+
+            if (_lastActivationResult.HasValue)
+            {
+                GUILayout.Label($"Last Activation Request: {_lastActivationResult.Value}");
+            }
+
+            if (!string.IsNullOrEmpty(_lastDurabilityAction))
+            {
+                GUILayout.Label($"Last Durability Action: {_lastDurabilityAction}");
             }
 
             GUILayout.BeginHorizontal();
@@ -215,11 +241,12 @@ namespace TeamHJD.Game.Debugging
             string power = turret.Definition == null ? "?" : turret.Definition.Power.ToString();
 
             GUILayout.BeginVertical(GUI.skin.box);
-            GUILayout.Label($"{turret.name}  |  LV {level}  |  Power {power}");
+            GUILayout.Label(
+                $"{turret.name}  |  LV {level}  |  Power {power}  |  " +
+                $"HP {turret.CurrentHealth}/{turret.MaxHealth}");
             GUILayout.BeginHorizontal();
 
-            bool canActivate = turret is IActivateTower;
-            GUI.enabled = canActivate;
+            GUI.enabled = !turret.IsDestroyed;
             if (GUILayout.Button(turret.IsActivated ? "Deactivate" : "Activate", GUILayout.Width(100f)))
             {
                 SetTurretActive(turret, !turret.IsActivated);
@@ -236,7 +263,36 @@ namespace TeamHJD.Game.Debugging
                 FocusCameraOn(turret);
             }
 
-            GUILayout.Label(turret.IsActivated ? "ACTIVE" : "OFF");
+            string status = turret.IsDestroyed
+                ? "DESTROYED"
+                : turret.IsOperational
+                    ? "ACTIVE"
+                    : turret.IsActivated ? "SUSPENDED" : "OFF";
+            GUILayout.Label(status);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUI.enabled = !turret.IsDestroyed;
+            if (GUILayout.Button($"Damage -{damagePerClick}", GUILayout.Width(112f)))
+            {
+                bool changed = turret.ApplyDamage(damagePerClick);
+                _lastDurabilityAction = $"{turret.name}: Damage {(changed ? "applied" : "ignored")}";
+            }
+
+            if (GUILayout.Button("Destroy", GUILayout.Width(80f)))
+            {
+                bool changed = turret.ApplyDamage(turret.CurrentHealth);
+                _lastDurabilityAction = $"{turret.name}: Destroy {(changed ? "applied" : "ignored")}";
+            }
+
+            GUI.enabled = turret.IsDestroyed;
+            if (GUILayout.Button("Restore", GUILayout.Width(80f)))
+            {
+                bool changed = turret.Restore();
+                _lastDurabilityAction = $"{turret.name}: Restore {(changed ? "applied" : "ignored")}";
+            }
+
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
         }
@@ -244,9 +300,7 @@ namespace TeamHJD.Game.Debugging
         private void RefreshReferences()
         {
             _turrets.Clear();
-            _turrets.AddRange(FindObjectsByType<TurretBase>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None));
+            _turrets.AddRange(TurretInstanceRegistry.GetAll());
             _turrets.Sort((left, right) => string.CompareOrdinal(left.name, right.name));
 
             _controlUnit = FindFirstObjectByType<ControlUnitStatus>();
@@ -294,21 +348,19 @@ namespace TeamHJD.Game.Debugging
                 cameraPosition.z);
         }
 
-        private static void SetTurretActive(TurretBase turret, bool isActive)
+        private void SetTurretActive(TurretBase turret, bool isActive)
         {
-            if (turret is not IActivateTower activatableTurret)
+            if (turret == null)
             {
                 return;
             }
 
-            if (isActive)
-            {
-                activatableTurret.ActivateTurret();
-            }
-            else
-            {
-                activatableTurret.DeactivateTurret();
-            }
+            _lastActivationResult = turret.RequestActivation(isActive);
+        }
+
+        private void HandleRegistryChanged(TurretBase turret)
+        {
+            RefreshReferences();
         }
     }
 }
