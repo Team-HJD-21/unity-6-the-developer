@@ -35,7 +35,10 @@ C와 D의 담당은 각각 김진태, 황재동으로 확정됐다. 각 역할�
 - `planning/` — Milestone, 전체 개발 흐름, 현재 Sprint 실행 계획
 - `team/` — 담당 영역, 협업 규칙, GitHub Issue 분류
 - `archive/` — 지난 Sprint와 모집 자료. 현재 기준으로 사용하지 않음
+- `tooling/` — 팀 공통 Unity 패키지·CLI 설치 및 오류 구분 절차
 - `Local/` — 개인 메모·초안. `.gitignore` 대상이며 팀 공유 문서가 아님
+
+Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOLING_SETUP.md)을 따른다.
 
 ## 읽는 순서
 

@@ -63,3 +63,6 @@ Desktop.ini
 # Local drafts only
 /Docs/Local/
 /Docs/Drafts/
+
+# AI Assistant의 개인별 Editor 설정은 공유하지 않는다.
+/ProjectSettings/Packages/com.unity.ai.assistant/Settings.json
