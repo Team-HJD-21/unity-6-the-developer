@@ -1,0 +1,18 @@
+{
+  "name": "TeamHJD.Game.Content.Runtime",
+  "rootNamespace": "TeamHJD.Game.Content.Runtime",
+  "references": [
+    "TeamHJD.Game.Content.Authoring",
+    "TeamHJD.Game.Contracts",
+    "TeamHJD.Game.Domain"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
