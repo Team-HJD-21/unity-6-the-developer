@@ -43,7 +43,7 @@ public class MiniMapController : MonoBehaviour
     public void SetVisible(bool status)
     {
         //  키보드 입력으로 인해 MiniMap 오작동을 방지함.
-        if (Input.GetKey(KeyCode.Space))
+        if (GameInput.IsPressed(GameKey.Space))
         {
             return;
         }

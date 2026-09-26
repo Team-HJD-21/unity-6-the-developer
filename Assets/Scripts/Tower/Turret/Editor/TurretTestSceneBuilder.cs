@@ -1,12 +1,12 @@
 using System.IO;
 using System.Linq;
-using TeamHjd.Game.Debugging;
+using TeamHJD.Game.Debugging;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace TeamHjd.Game.Editor
+namespace TeamHJD.Game.Editor
 {
     [InitializeOnLoad]
     internal static class TurretTestSceneBuilder

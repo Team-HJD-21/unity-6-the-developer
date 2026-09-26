@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections;
 
@@ -36,13 +37,25 @@ public class TowerMissile : MonoBehaviour
     private float _distanceToTarget;
     private string _missileSoundId; // MissileFlying SFX ID 저장
     private string _missileDetectId; // MissileDetect SFX ID 저장
+    private bool _isInitialized;
     
-    public void SetTarget(Transform target)//각 미사일 터렛에서 호출됨
+    public void Initialize(Transform target, float damage)
     {
+        if (_isInitialized)
+            throw new InvalidOperationException("TowerMissile has already been initialized.");
+        if (target == null)
+            throw new ArgumentNullException(nameof(target));
+        if (damage < 0f)
+            throw new ArgumentOutOfRangeException(nameof(damage));
+        if (rb == null)
+            throw new InvalidOperationException("TowerMissile requires a Rigidbody2D reference.");
+
         _target = target;
+        _bulletDamage = damage;
         _initialDirection = transform.up;
         _currentSpeed = initialSpeed;
         rb.linearVelocity = _initialDirection * _currentSpeed;
+        _isInitialized = true;
 
         // MissileFlying SFX 재생 및 ID 저장
         Collider2D hits = Physics2D.OverlapCircle(transform.position, 80, layerMask);
@@ -55,17 +68,14 @@ public class TowerMissile : MonoBehaviour
         StartCoroutine(ExplodeMissileIfNotHit());
     }
 
-    public void SetDamage(float damage)
-    {
-        _bulletDamage = damage;
-    }
-
     private void Awake()
     {
         _sr = gameObject.GetComponent<SpriteRenderer>();
     }
     private void FixedUpdate()
     {
+        if (!_isInitialized) return;
+
         DrawTargetLineToTarget();
         SearchForNewTarget();
         AccelerateToTarget();

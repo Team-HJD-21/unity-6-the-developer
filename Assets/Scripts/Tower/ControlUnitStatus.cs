@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-public class ControlUnitStatus : MonoBehaviour
+public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
 {
     [Header("Attributes")]
     [SerializeField] private int maxPower;
@@ -24,7 +25,14 @@ public class ControlUnitStatus : MonoBehaviour
     public UnityEvent<int, int, float> onCUHpChange = new UnityEvent<int, int, float>();
     public UnityEvent<int, int, float> onCUPowerChange = new UnityEvent<int, int,float>();
 
+    public event Action<int, int> PowerChanged;
+
+    public int CurrentPower => currentPower;
+    public int MaximumPower => maxPower;
+
     private bool attackCool;
+    private int _pendingPowerRecovery;
+    private Coroutine _powerRecoveryCoroutine;
 
     private void Start()
     {
@@ -44,19 +52,52 @@ public class ControlUnitStatus : MonoBehaviour
     {
         curHealth = maxHealth = DataManager.GetAttributeData(AttributeType.ControlUnitHealth);
         currentPower = maxPower = DataManager.GetAttributeData(AttributeType.ControlUnitPower);
+        NotifyPowerChanged();
     }
 
+    public bool TryConsumePower(int power)
+    {
+        if (power < 0 || currentPower < power)
+        {
+            return false;
+        }
+
+        SetCurrentPower(currentPower - power);
+        return true;
+    }
+
+    public void ReleasePower(int power)
+    {
+        if (power <= 0)
+        {
+            return;
+        }
+
+        int recoverablePower = Mathf.Max(
+            0,
+            maxPower - currentPower - _pendingPowerRecovery);
+        int acceptedPower = Mathf.Min(power, recoverablePower);
+        if (acceptedPower <= 0)
+        {
+            return;
+        }
+
+        _pendingPowerRecovery += acceptedPower;
+        if (_powerRecoveryCoroutine == null && isActiveAndEnabled)
+        {
+            _powerRecoveryCoroutine = StartCoroutine(RecoverCoroutine());
+        }
+    }
+
+    // Legacy entry points kept for Laser Turret until it is migrated.
     public void AddUnit(int power)
     {
-        onCUPowerChange.Invoke(currentPower-power, maxPower, currentPower/(float)maxPower);
-        
-        currentPower = currentPower - power;
+        TryConsumePower(power);
     }
 
     public void RemoveUnit(int power)
     {
-        //  반드시 이 Method를 거쳐야 합니다. (천천히 파워가 올라감)
-        RecoverPower(power);
+        ReleasePower(power);
     }
 
     public int GetCurrentPower()
@@ -121,39 +162,32 @@ public class ControlUnitStatus : MonoBehaviour
         return currentPower;
     }
 
-    public bool CheckEnoughPower(int offset)
+    private void SetCurrentPower(int power)
     {
-        int diff = currentPower - offset;
-
-        return (diff >= 0 ? true : false);
+        currentPower = Mathf.Clamp(power, 0, maxPower);
+        NotifyPowerChanged();
     }
 
-    //  파워 회복량, 속도
-    [SerializeField] private int powerOffset = 7;
-    // [SerializeField] private float recoverSpeed = 0.1f;
-
-    private void RecoverPower(int power)
+    private void NotifyPowerChanged()
     {
-        StartCoroutine(RecoverCoroutine(power));
+        float ratio = maxPower <= 0
+            ? 0f
+            : currentPower / (float)maxPower;
+        onCUPowerChange.Invoke(currentPower, maxPower, ratio);
+        PowerChanged?.Invoke(currentPower, maxPower);
     }
 
-    private IEnumerator RecoverCoroutine(int power)
+    private IEnumerator RecoverCoroutine()
     {
-        //  tmp는 혹시 몰라 만들어 놓는다.(실제 회복량은 다를 수 있기에 복원을 위해)
-        int tmp = power;
-        while (true)
+        while (_pendingPowerRecovery > 0 && currentPower < maxPower)
         {
-            if (tmp <= 0) yield break;
-            
-            tmp--;
-            
-            onCUPowerChange.Invoke(currentPower + 1, maxPower, currentPower/(float)maxPower);
-            
-            currentPower++;
-            
+            _pendingPowerRecovery--;
+            SetCurrentPower(currentPower + 1);
             yield return new WaitForSeconds(0.1f);
-            
         }
+
+        _pendingPowerRecovery = 0;
+        _powerRecoveryCoroutine = null;
     }
 }
 

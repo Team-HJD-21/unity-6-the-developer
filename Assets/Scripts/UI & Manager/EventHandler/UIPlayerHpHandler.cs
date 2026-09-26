@@ -64,7 +64,7 @@ public class UIPlayerHpHandler : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
     private void UpdateUIPosition(Vector2? pointerPosition = null)
     {
-        Vector2 targetPosition = pointerPosition ?? Input.mousePosition;
+        Vector2 targetPosition = pointerPosition ?? GameInput.PointerPosition;
 
         RectTransform rectTransform = uiInfoWrapper.GetComponent<RectTransform>();
 

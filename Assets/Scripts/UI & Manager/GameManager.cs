@@ -110,7 +110,7 @@ public class GameManager : Singleton<GameManager>
     //  Loading 창에서 Space 입력 받기
     private void CheckSpaceKey()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (GameInput.WasPressedThisFrame(GameKey.Space))
         {
             // Debug.Log("Press!");
             if (SceneController.NowScene == "Loading")

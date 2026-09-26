@@ -63,7 +63,7 @@ public class SceneController : Singleton<SceneController>
         AudioManager.Instance.StopAllSfx();
         if (!_isStart)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (GameInput.WasPressedThisFrame(GameKey.Space))
             {
                 return;
             }
