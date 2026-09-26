@@ -66,6 +66,27 @@ public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
         return true;
     }
 
+    public bool TryChangeReservation(int previousPower, int newPower)
+    {
+        if (previousPower < 0 || newPower < 0)
+        {
+            return false;
+        }
+
+        int difference = newPower - previousPower;
+        if (difference > 0)
+        {
+            return TryConsumePower(difference);
+        }
+
+        if (difference < 0)
+        {
+            SetCurrentPower(currentPower - difference);
+        }
+
+        return true;
+    }
+
     public void ReleasePower(int power)
     {
         if (power <= 0)
