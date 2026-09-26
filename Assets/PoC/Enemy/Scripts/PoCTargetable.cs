@@ -22,6 +22,11 @@ public class PoCTargetable : MonoBehaviour, ITargetable
     /// </summary>
     public TargetType TargetType => targetType;
 
+    public void SetTargetType(TargetType type)
+    {
+        targetType = type;
+    }
+
     /// <summary>
     /// AI가 추적할 현재 오브젝트의 위치를 반환한다.
     /// </summary>
