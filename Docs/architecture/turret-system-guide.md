@@ -235,6 +235,8 @@ ApplyDamage(damage)
 → 플레이어가 별도로 RequestActivation(true) 호출
 ```
 
+위 흐름의 파괴 시 전량 반환은 **현재 코드의 전환기 동작**이며 확정된 제품 규칙이 아니다. 2026-09-26 회의와 9월 27일 정리에 따라, 터렛 API는 파괴 시 예약 전력의 **손실률(0~100%)**을 설정값으로 받을 수 있어야 한다. 반환량은 `예약 전력 × (1 - 손실률 / 100)`으로 계산할 수 있게 한다. 예를 들어 예약 전력 100에서 손실률 0%면 100, 50%면 50을 반환한다. 값의 실제 설정, 반환 여부와 시점, 점유율에 미치는 영향은 아직 결정하지 않았다. API 입력값을 열어두는 요구와 현재 코드에 이 동작이 구현되었다는 주장을 구분한다.
+
 파괴된 터렛은 Registry에서 즉시 제거하지 않는다. 플레이어가 같은 인스턴스를 복구할 수
 있도록 등록 상태를 유지하되 Active/Operational 조회와 활성화 요청에서는 제외한다. Scene
 전환이나 실제 GameObject 제거는 `Unregistered`로 구분한다.
@@ -374,7 +376,7 @@ Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다
 - [ ] 전력이 부족하면 활성화가 거부된다.
 - [ ] 비활성화하면 전력이 반환된다.
 - [ ] `Damage`로 현재 체력이 감소한다.
-- [ ] 체력 0에서 파괴되고 예약 전력이 반환된다.
+- [ ] 현재 구현에서는 체력 0에서 파괴되고 예약 전력이 전량 반환된다. 향후 손실률 API 구현 시에는 0%·50%·100% 설정별 반환량을 별도로 검증한다.
 - [ ] 파괴된 터렛은 활성화할 수 없다.
 - [ ] `Restore` 후 최대 체력·비활성 상태로 돌아오며 다시 활성화할 수 있다.
 - [ ] 파괴와 복구 시 Registry 이벤트가 한 번씩 발생한다.
@@ -397,6 +399,7 @@ Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다
 | Control Unit 탐색 | `GameObject.Find("ControlUnit")` | Scene Composition에서 명시적으로 주입 |
 | 등록부 | static 로컬 Registry | Match 수명주기의 조회 서비스로 이전 |
 | 전력 변경 | `ITurretPowerSource`를 통해 legacy `ControlUnitStatus` 호출 | Command와 Authority 검증으로 분리 |
+| 파괴 시 예약 전력 | 현재는 전량 반환 | 손실률(0~100%)을 터렛 API 입력값으로 열고 반환량을 조정 가능하게 한다. 제품 기본값과 반환 정책은 미정 |
 | Target 평가 | concrete 코드가 Physics와 `Monster.isTargeted` 직접 사용 | AI/Combat 계약과 평가 모델 분리 |
 | Namespace | 일부 concrete 터렛이 전역 namespace | 이식 시 `Presentation` 경계로 정리 |
 | 네트워크 | 로컬 상태만 존재 | Host authoritative 상태와 Snapshot 추가 |

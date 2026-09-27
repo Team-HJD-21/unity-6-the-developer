@@ -1,6 +1,6 @@
 # Docs 정리 규칙
 
-기준일: 2026-09-23
+기준일: 2026-09-27
 상태: 팀 공용 문서 배치·유지 가이드
 
 이 문서는 **문서를 어디에 두고 어떻게 연결·관리할지** 정한다. 게임 규칙, 일정, 역할의 결정권은 [문서 목차의 Source of Truth](README.md#source-of-truth) 표를 따른다.
@@ -11,9 +11,10 @@
 | --- | --- | --- |
 | `product/` | 게임 정체성, 플레이 경험, 제품 범위와 결정 기록 | [Product Plan](product/PROJECT_PLAN.md) |
 | `architecture/` | Core 경계, 코드·계약 명명, 레거시 이식 참고 | [System Charter](architecture/system-rearchitecture-charter.md) |
-| `planning/` | Milestone, 개발 흐름, **현재 진행 중인** Sprint 계획 | [Sprint 1 PoC](planning/SPRINT_1_STAGE_1_POC.md) |
+| `planning/` | Milestone, 개발 흐름, 현재 Sprint 계획과 아직 진행 중인 검토 기록 | [Sprint 1 PoC](planning/SPRINT_1_STAGE_1_POC.md) |
 | `team/` | 담당 영역, 협업 절차, Issue 분류·Review 규칙 | [Team Workflow](team/TEAM_WORKFLOW.md) |
-| `archive/` | 종료된 Sprint, 모집 자료 등 현재 기준이 아닌 기록 | [Sprint 0 Backlog](archive/SPRINT_0_BACKLOG.md) |
+| `tooling/` | 팀 공통 Unity·CLI 설치, 패키지 복원과 환경 오류 해결 절차 | [Unity Tooling Setup](tooling/UNITY_TOOLING_SETUP.md) |
+| `archive/` | 현행 기준에 반영을 마친 회의 요약, 종료된 Sprint, 모집 자료와 레거시 분석 | [9월 26일 회의 요약](archive/2026-09-26-stage1-planning.md) |
 | `Local/` | 개인 메모와 승인 전 초안. Git에서 무시하며 팀 기준으로 사용하지 않음 | 로컬 전용 |
 
 `Docs/` 최상위에는 탐색용 [README.md](README.md)와 이 정리 규칙을 둔다. 새 문서는 목적에 맞는 하위 폴더에 배치한다.
@@ -29,6 +30,9 @@
 ## 3. 내용의 기준을 유지할 때
 
 - 같은 결정은 한 기준 문서에서 관리하고, 다른 문서는 그 문서로 연결한다. 충돌 시 [Source of Truth 표](README.md#source-of-truth)의 기준 문서가 우선한다.
+- 회의록 원본은 회의록 저장소에 보존한다. Docs에는 추적할 필요가 있는 회의별 결정·검토 요약만 날짜별로 남기고, 확정된 결정과 현재 Sprint에 영향을 주는 내용은 각각 Product Plan과 실행 문서에 반영한다. 제안·예시·미결정 항목은 확정 규칙으로 옮기지 않는다.
+- 회의 요약의 유효한 결정·담당·일정·미결정 항목을 현행 기준 문서에 모두 반영한 뒤에는 그 요약을 `archive/`로 옮긴다. 아직 실행 기준으로 쓰거나 옮기지 않은 결정이 있다면 `planning/`에 두고 먼저 기준 문서와 Backlog를 정리한다. Archive의 내용은 결정의 근거이지 현재 실행 지시가 아니다.
+- 이전 회의 기록이 새로운 결정으로 대체되어도 원문을 삭제하거나 과거 결론을 소급 수정하지 않는다. 현재 기준과의 관계를 상태나 후속 문서 링크로 표시한다.
 - 게임 범위·Core 계약·역할·Milestone을 바꾸면 해당 기준 문서와 영향을 받는 계획·Backlog를 함께 갱신한다. 자세한 협업 절차는 [Team Workflow](team/TEAM_WORKFLOW.md)를 따른다.
 - `archive/` 문서를 다시 현재 기준처럼 고치지 않는다. 필요하면 현행 기준 문서에 결정을 반영하고, 과거 문서에는 현재 문서로 가는 안내만 둔다.
 - `Local/`은 원격에 올라가지 않는다. 팀에 공유할 내용은 검토한 뒤 적절한 폴더로 옮기고 README에서 연결한다. 비밀키·토큰은 로컬 문서에도 기록하지 않는다.
