@@ -30,14 +30,14 @@
 
 ## 현재 Time-box — Sprint 1 Stage 1 PoC
 
-2026-09-19 회의 결정에 따라 2026-10-02까지 터렛 중심 전선 운영의 핵심 재미와 구현 가능성을 통합 검증한다. 이 PoC는 M1/M2의 일부 위험을 앞당겨 확인하는 실험이며 기존 Milestone Gate를 자동 통과시키지 않는다. 프로덕션 코드로 이식할 부분은 PoC 결과와 M1 계약 검토 뒤 결정한다.
+전제 1(동적 전선)과 전제 2(지역 해금)의 전력·전선 선택이 재미있는지 시험한다. 2026-10-02에는 통합 가능한 시제품의 첫 플레이 감각을 확인하며, 나머지 후보의 구현 순서·일정과 병행 범위는 미정이다. 기존 웨이브 진행은 보류한다. 이 PoC는 M1/M2의 일부 위험을 앞당겨 확인하는 실험이며 기존 Milestone Gate를 자동 통과시키지 않는다. 프로덕션 코드로 이식할 부분은 PoC 결과와 M1 계약 검토 뒤 결정한다.
 
 | 연결 순서 | Owner | 결과물 |
 | --- | --- | --- |
-| 범위·계약·통합 기준 | A · 양현석 | Issue, 인터페이스, 임시 승패 조건, 10월 2일 통합 Build |
+| 범위·계약·통합 기준 | A · 양현석 | Issue, 인터페이스, 전제 1·2 관찰 기준, 10월 2일 통합 Build |
 | Network-aware 위험 조사 | B · 이영빈 | Netcode/RPC/권한 최소 가이드와 향후 전환 위험 목록 |
-| 터렛 상태 데이터 | D · 황재동 | 터렛 인스턴스 관리, 위치·활성·체력·화력·거리·위협도 제공 |
-| 목표 선택 AI | E · 조수빈 | 터렛 점수 기반 brute-force 타게팅, 경로·목표 전환·Spawn 실험 |
+| 터렛 상태 데이터 | D · 황재동 | 터렛 인스턴스 관리, 위치·활성·체력·화력·거리·위협도 및 파괴 시 전력 손실률 API 입력값 제공 |
+| 목표 선택 AI | E · 조수빈 | Region 단위 공격 목표 선택을 우선 시험, 타깃 점수 세부 조정은 후순위 |
 | 전선·거점 확장 | C · 김진태 | Graybox, 거점 확보·상실, 전장 확장과 E/D 데이터 연동 |
 | 통합 Playtest | 전체 팀 | 2026-10-02 같은 Build에서 플레이, 2026-10-03 피드백 회의 |
 
@@ -123,10 +123,12 @@ MatchSession → GameSimulation → MatchState
 
 M1 계약 위에 15~20분짜리 Spaceship 준비 → Planet 전투·Expansion → Result·Return 경험을 완성한다.
 
+진행 방식은 Stage 1에서 전제 1(동적 전선)과 전제 2(지역 해금)를 시험한 뒤 결정한다. 아래 Expansion 단계와 Encounter 구성은 M2 계획값이며, 기존 웨이브 진행을 최종 채택했다는 뜻이 아니다.
+
 | Priority | A — 양현석 | B — 이영빈 | C — 김진태 | D — 황재동 | E — 조수빈 |
 | --- | --- | --- | --- | --- | --- |
-| P0 | Mission→MatchConfig→Result→Profile 왕복, Scene Flow, Meta UI, Single ModeRules | Player 전투 1세트, Combat HUD, Tutorial, Camera/Input | Planet 1 Full Graybox, 50/75/100 Expansion, Hub Interior·Mission 동선 | Cannon/Missile/Laser, Power Budget/회수, Upgrade 1개, 핵심 Balance | 3 Enemy Archetype, Wave/Spawn curve, Boss 1종과 Fail/Clear 연동 |
-| P1 | Save/cache migration, Result/Retry, 공통 UI navigation | 피격·사격·터렛 상태 feedback, 짧은 Launch/Return 연출 | 65/90% 설계 초안, 환경 Storytelling, Minimap/Collision/Spawn 갱신 | Counter table, 두 Clear 가능 build, in-wave 전환 제한 조정 | 혼합 Wave, Boss phase, AI profile·성능 tuning |
+| P0 | Mission→MatchConfig→Result→Profile 왕복, Scene Flow, Meta UI, Single ModeRules | Player 전투 1세트, Combat HUD, Tutorial, Camera/Input | Planet 1 Full Graybox, 50/75/100 Expansion, Hub Interior·Mission 동선 | Cannon/Missile/Laser, Power Budget/회수, Upgrade 1개, 핵심 Balance | 3 Enemy Archetype, 채택한 진행 방식의 Encounter/Spawn curve, Boss 1종과 Fail/Clear 연동 |
+| P1 | Save/cache migration, Result/Retry, 공통 UI navigation | 피격·사격·터렛 상태 feedback, 짧은 Launch/Return 연출 | 65/90% 설계 초안, 환경 Storytelling, Minimap/Collision/Spawn 갱신 | Counter table, 두 Clear 가능 build, 전투 중 전력 전환 제한 검토 | 선택한 진행 방식의 Encounter 조합, Boss phase, AI profile·성능 tuning |
 | P2 | Debug tools와 telemetry event, 오류 메시지 | 접근성·가독성·Audio/VFX 연결 | 환경 기믹 후보 1개와 시각적 polish | Balance simulation 자동화 | Object pooling·profiling과 연출 polish |
 | P3 | Online, 실제 Backend 운영 | Co-op UI | Planet 2, 대형 Hub | Sector 일괄 전원, 다수 Upgrade | Enemy 대량 추가 |
 
@@ -135,7 +137,7 @@ M1 계약 위에 15~20분짜리 Spaceship 준비 → Planet 전투·Expansion �
 - Hub → Mission → Planet → Result → Hub를 5회 연속 Blocker/Console Error 없이 완주
 - 서로 다른 Turret Build 2개 이상으로 Clear 가능
 - Expansion이 공격 방향과 Power 배분을 실제로 변경
-- Locked Sector에서 Collision/Projectile/Spawn 누출 없음
+- 선택된 진행 방식의 미접근 영역에서 Collision/Projectile/Spawn 누출 없음
 - 외부 Tester 5명 중 4명이 Power, Expansion, 다음 행동을 설명 없이 이해
 - Target PC 성능 하한, Save/Retry, Missing Reference 검증 통과
 

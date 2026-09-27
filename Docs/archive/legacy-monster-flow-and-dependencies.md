@@ -1,5 +1,7 @@
 # 기존 몬스터 동작 흐름 및 의존성 분석
 
+상태: 레거시 코드 분석 기록 / 현행 Enemy AI 규칙 아님. 현재 Stage 1 목표 선택 실험은 [Sprint 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)를 따른다.
+
 | 항목 | 내용 |
 |---|---|
 | 관련 작업 | Issue #384 — 기존 몬스터 구조 분석 및 Netcode 테스트 환경 구성 |
