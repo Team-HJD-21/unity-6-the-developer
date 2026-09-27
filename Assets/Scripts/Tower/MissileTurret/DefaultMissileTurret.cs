@@ -10,6 +10,7 @@ public abstract class DefaultMissileTurret : TurretBase
     
     protected Transform[] Targets;
     protected int OverHeatMissileCount => Definition.OverHeatMissileCount;
+    protected float CoolTime => Definition.CoolTime;
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _currentMissileCount;   //과열시 중지 위한 변수
@@ -188,11 +189,15 @@ public abstract class DefaultMissileTurret : TurretBase
     }
     private IEnumerator OverHeat()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
     {
-        while (CurMissileCount>=0)
+        float initialMissileCount = Mathf.Max(0f, CurMissileCount);
+        float cooldownSeconds = Mathf.Max(0f, CoolTime);
+        float elapsed = 0f;
+        while (elapsed < cooldownSeconds)
         {
+            CurMissileCount = Mathf.Lerp(initialMissileCount, 0f, elapsed / cooldownSeconds);
             GunRenderer.color = new Color(1f,(255f-255f* (CurMissileCount / OverHeatMissileCount))/255f,(255f-255f*
                 (CurMissileCount / OverHeatMissileCount))/255f);
-            CurMissileCount -= Time.deltaTime;
+            elapsed += Time.deltaTime;
             yield return null;
         }
         Animator.SetBool("isShoot", false);

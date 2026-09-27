@@ -78,7 +78,7 @@ Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. 현재 18�
 | `Power` | 활성화할 때 필요한 전력 | 0 이상 |
 | `OverHeatTime` | Canon 연속 사격 과열 기준 | 초 단위 |
 | `OverHeatMissileCount` | Missile 과열 기준 발사 횟수 | Canon에서는 0 |
-| `CoolTime` | Canon 냉각 시간 | 초 단위 |
+| `CoolTime` | Canon/Missile 과열 후 냉각 시간 | 초 단위 |
 
 예시 ID는 `canon_stage1_lv1`, `missile_stage3_lv2`다. `Id`는 저장·조회용이고 `DisplayName`은 UI용이므로 서로 대신 사용하지 않는다.
 
@@ -305,7 +305,7 @@ flowchart TD
     Cool --> Resume["SetTemporarilySuspended(false): 공격 재개"]
 ```
 
-과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile의 과열 카운트는 현재 `Shoot()` 호출마다 증가한다.
+과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile은 `Shoot()` 호출마다 카운트가 1씩 증가하므로 한 번에 여러 발을 쏴도 발사 1회로 센다. 과열 기준은 `OverHeatMissileCount`, 과열 후 냉각 시간은 `CoolTime`이 정한다.
 
 ## 5. Prefab과 Definition 설정 방법
 
