@@ -43,15 +43,15 @@
 
 ```mermaid
 flowchart TD
-    Definition["TurretDefinition: 고정 수치"] --> Base["TurretBase: 공통 상태 변경"]
-    State["TurretRuntimeState: 인스턴스별 상태"] <--> Base
-    Base --> Canon["DefaultCanonTurret: 단일 대상 공격"]
-    Base --> Missile["DefaultMissileTurret: 복수 대상 공격"]
-    Canon --> CanonLv["CanonTurretLv1~3: 총알 생성"]
-    Missile --> MissileLv["MissileTurretLV1~3: 미사일 생성"]
-    CanonLv --> Bullet["TowerBullet: 충돌 피해"]
-    MissileLv --> Projectile["TowerMissile: 추적·범위 피해"]
-    Base <--> Registry["TurretInstanceRegistry: ID 조회·상태 알림"]
+    Definition["TurretDefinition<br>고정 수치"] --> Base["TurretBase<br>공통 상태 변경"]
+    State["TurretRuntimeState<br>인스턴스별 상태"] <--> Base
+    Base --> Canon["DefaultCanonTurret<br>단일 대상 공격"]
+    Base --> Missile["DefaultMissileTurret<br>복수 대상 공격"]
+    Canon --> CanonLv["CanonTurretLv1~3<br>총알 생성"]
+    Missile --> MissileLv["MissileTurretLV1~3<br>미사일 생성"]
+    CanonLv --> Bullet["TowerBullet<br>충돌 피해"]
+    MissileLv --> Projectile["TowerMissile<br>추적·범위 피해"]
+    Base <--> Registry["TurretInstanceRegistry<br>ID 조회·상태 알림"]
 ```
 
 Definition 값을 실행 중 상태 저장소처럼 직접 수정하지 않는다. 반대로 Target, 활성 상태, 과열 진행도처럼 매번 달라지는 값은 Definition에 넣지 않는다.
@@ -191,32 +191,40 @@ Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드�
 
 ```mermaid
 flowchart TD
-    Prefab["Canon/Missile Prefab 활성화"] --> Awake["DefaultCanon/MissileTurret.Awake()"]
+    Prefab["Canon/Missile Prefab<br>활성화"] --> Awake["DefaultCanon/MissileTurret<br>Awake()"]
     Awake --> Find["ControlUnitStatus 찾기"]
-    Find --> Configure["TurretBase.ConfigureActivation()"]
-    Configure --> Health["RuntimeState 체력 초기화"]
-    Configure --> Controller["TurretActivationController 준비"]
-    Prefab --> Enable["TurretBase.OnEnable()"]
-    Enable --> Register["TurretInstanceRegistry.Register()"]
-    Register --> Validate["Definition ID 검사·InstanceId 발급"]
-    Prefab --> Start["Level 구현체.Start(): 발사구·사거리 표시 준비"]
+    Find --> Configure["TurretBase<br>ConfigureActivation()"]
+    Configure --> Health["RuntimeState<br>체력 초기화"]
+    Configure --> Controller["TurretActivationController<br>준비"]
+    Prefab --> Enable["TurretBase<br>OnEnable()"]
+    Enable --> Register["TurretInstanceRegistry<br>Register()"]
+    Register --> Validate["Definition ID 검사<br>InstanceId 발급"]
+    Prefab --> Start["Level 구현체 Start()<br>발사구·사거리 표시"]
 ```
 
 `Awake`에서 Definition 또는 ControlUnit 참조가 없으면 초기화에 실패하고 터렛 컴포넌트를 비활성화한다. `InstanceId`는 Prefab에 수동 입력하지 않고 Registry가 로컬 실행 중 발급한다.
 
 ### 4.2 활성화와 전력
 
+켜기와 끄기는 같은 `RequestActivation(bool)` API를 사용한다. 가로로 넓어져 글자가 잘리지 않도록 결과 흐름을 나눠 표시한다.
+
 ```mermaid
 flowchart TD
-    Request["TowerManager 또는 TurretTestController"] --> Base["TurretBase.RequestActivation(bool)"]
-    Base --> Controller["TurretActivationController.RequestActivation()"]
-    Controller -->|켜기| Consume["ControlUnitStatus.TryConsumePower(EffectivePower)"]
-    Consume -->|전력 충분| On["RuntimeState.IsActivated = true"]
-    Consume -->|전력 부족| Reject["InsufficientPower 반환"]
-    Controller -->|끄기| Off["RuntimeState.IsActivated = false"]
-    Off --> Release["ControlUnitStatus.ReleasePower()"]
-    On --> Notify["OnActivationChanged()·Registry 상태 알림"]
-    Release --> Notify
+    Request["TowerManager 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(true)"]
+    Base --> Controller["TurretActivationController<br>RequestActivation()"]
+    Controller --> Consume["ControlUnitStatus<br>TryConsumePower<br>(EffectivePower)"]
+    Consume -->|충분| On["RuntimeState<br>IsActivated = true"]
+    Consume -->|부족| Reject["InsufficientPower<br>반환"]
+    On --> Notify["OnActivationChanged()<br>Registry 알림"]
+```
+
+```mermaid
+flowchart TD
+    Request["TowerManager 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(false)"]
+    Base --> Controller["TurretActivationController<br>RequestActivation()"]
+    Controller --> Off["RuntimeState<br>IsActivated = false"]
+    Off --> Release["ControlUnitStatus<br>ReleasePower()"]
+    Release --> Notify["OnActivationChanged()<br>Registry 알림"]
 ```
 
 호출부는 전력을 먼저 검사한 다음 별도 활성화 메서드를 호출하지 않는다. 전력 확인과 상태
@@ -229,16 +237,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Hit["TurretBase.ApplyDamage(damage)"] --> Reduce["RuntimeState.ApplyDamage(): 현재 체력 감소"]
-    Reduce --> HealthEvent["Registry.HealthChanged"]
+    Hit["TurretBase<br>ApplyDamage(damage)"] --> Reduce["RuntimeState.ApplyDamage()<br>현재 체력 감소"]
+    Reduce --> HealthEvent["Registry<br>HealthChanged"]
     HealthEvent -->|체력 남음| Alive["기존 활성 상태 유지"]
-    HealthEvent -->|체력 0| Off["RequestActivation(false): 전력 반환"]
-    Off --> Destroyed["RuntimeState.MarkDestroyed()"]
-    Destroyed --> DestroyEvent["Registry.Destroyed"]
-    DestroyEvent --> Restore["TurretBase.Restore()"]
+    HealthEvent -->|체력 0| Off["RequestActivation(false)<br>전력 반환"]
+    Off --> Destroyed["RuntimeState<br>MarkDestroyed()"]
+    Destroyed --> DestroyEvent["Registry<br>Destroyed"]
+    DestroyEvent --> Restore["TurretBase<br>Restore()"]
     Restore --> Full["최대 체력·비활성 상태로 복구"]
-    Full --> RestoreEvent["Registry.HealthChanged·Restored"]
-    RestoreEvent --> Manual["별도 RequestActivation(true) 필요"]
+    Full --> RestoreEvent["Registry<br>HealthChanged·Restored"]
+    RestoreEvent --> Manual["별도 RequestActivation(true)<br>필요"]
 ```
 
 위 흐름의 파괴 시 전량 반환은 **현재 코드의 전환기 동작**이며 확정된 제품 규칙이 아니다. 2026-09-26 회의와 9월 27일 정리에 따라, 터렛 API는 파괴 시 예약 전력의 **손실률(0~100%)**을 설정값으로 받을 수 있어야 한다. 반환량은 `예약 전력 × (1 - 손실률 / 100)`으로 계산할 수 있게 한다. 예를 들어 예약 전력 100에서 손실률 0%면 100, 50%면 50을 반환한다. 값의 실제 설정, 반환 여부와 시점, 점유율에 미치는 영향은 아직 결정하지 않았다. API 입력값을 열어두는 요구와 현재 코드에 이 동작이 구현되었다는 주장을 구분한다.
@@ -255,16 +263,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Update["DefaultCanonTurret.Update()"] --> Search["NoTargetInRange() → FindTarget()"]
-    Search --> Collect["TurretTargetingUtility.CollectByDistance()"]
+    Update["DefaultCanonTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
+    Search --> Collect["TurretTargetingUtility<br>CollectByDistance()"]
     Collect --> Target["가장 가까운 Target 선택"]
-    Target --> Rotate["RotateTowardsTarget(): 포신 회전"]
-    Rotate --> Fire["FireRateController(): 사거리·조준각·발사 간격 확인"]
-    Fire --> Shoot["CanonTurretLv1~3.Shoot()"]
-    Shoot --> Init["TowerBullet.Initialize(발사 방향점, Damage)"]
-    Init --> Move["TowerBullet.Update(): 정해진 방향으로 직진"]
-    Move --> Collision["TowerBullet.OnCollisionEnter2D()"]
-    Collision --> Damage["Monster.TakeDamage()"]
+    Target --> Rotate["RotateTowardsTarget()<br>포신 회전"]
+    Rotate --> Fire["FireRateController()<br>사거리·조준각·간격 확인"]
+    Fire --> Shoot["CanonTurretLv1~3<br>Shoot()"]
+    Shoot --> Init["TowerBullet.Initialize()<br>방향점·Damage 전달"]
+    Init --> Move["TowerBullet.Update()<br>정해진 방향으로 직진"]
+    Move --> Collision["TowerBullet<br>OnCollisionEnter2D()"]
+    Collision --> Damage["Monster<br>TakeDamage()"]
     Damage -->|체력 0| Die["Monster.Die()"]
 ```
 
@@ -274,19 +282,19 @@ Canon 포신은 Target을 향해 돌지만, **발사된 `TowerBullet`은 몬스�
 
 ```mermaid
 flowchart TD
-    Update["DefaultMissileTurret.Update()"] --> Search["NoTargetInRange() → FindTarget()"]
-    Search --> Collect["TurretTargetingUtility.CollectByDistance()"]
-    Collect --> Targets["발사구 수에 맞게 Targets 배열 지정"]
-    Targets --> Rotate["RotateTowardsTarget(): 포신 회전"]
-    Rotate --> Fire["FireRateController(): 사거리·발사 간격 확인"]
-    Fire --> Shoot["MissileTurretLV1~3.Shoot()"]
-    Shoot --> Init["TowerMissile.Initialize(Target, Damage)"]
-    Init --> Straight["잠시 직진한 뒤 FixedUpdate()에서 목표 추적"]
+    Update["DefaultMissileTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
+    Search --> Collect["TurretTargetingUtility<br>CollectByDistance()"]
+    Collect --> Targets["발사구 수에 맞게<br>Targets 배열 지정"]
+    Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
+    Rotate --> Fire["FireRateController()<br>사거리·발사 간격 확인"]
+    Fire --> Shoot["MissileTurretLV1~3<br>Shoot()"]
+    Shoot --> Init["TowerMissile.Initialize()<br>Target·Damage 전달"]
+    Init --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
     Straight -->|목표 소실| Retarget["SearchForNewTarget()"]
     Retarget --> Straight
     Straight -->|충돌 또는 수명 종료| Explosion["폭발 이펙트 생성"]
-    Explosion --> Area["TowerMissile.DestroyObject(): 범위 내 Enemy 탐색"]
-    Area --> Damage["Monster.TakeDamage()"]
+    Explosion --> Area["TowerMissile.DestroyObject()<br>범위 내 Enemy 탐색"]
+    Area --> Damage["Monster<br>TakeDamage()"]
     Damage -->|체력 0| Die["Monster.Die()"]
 ```
 
@@ -296,13 +304,13 @@ Missile은 적 수가 부족하면 첫 Target을 다른 발사 슬롯에서도 �
 
 ```mermaid
 flowchart TD
-    Combat["Canon/Missile.Update()"] --> Check["OverHeatAnimationController()"]
-    Check -->|Canon: 연속 사격 시간 누적| CanonHeat["Definition.OverHeatTime 도달"]
-    Check -->|Missile: 발사 횟수 누적| MissileHeat["Definition.OverHeatMissileCount 도달"]
-    CanonHeat --> Suspend["TurretBase.SetTemporarilySuspended(true)"]
+    Combat["Canon/Missile<br>Update()"] --> Check["OverHeatAnimationController()"]
+    Check -->|Canon: 시간 누적| CanonHeat["Definition<br>OverHeatTime 도달"]
+    Check -->|Missile: 발사 횟수| MissileHeat["Definition<br>OverHeatMissileCount 도달"]
+    CanonHeat --> Suspend["TurretBase<br>SetTemporarilySuspended(true)"]
     MissileHeat --> Suspend
-    Suspend --> Cool["OverHeat() 냉각 코루틴"]
-    Cool --> Resume["SetTemporarilySuspended(false): 공격 재개"]
+    Suspend --> Cool["OverHeat()<br>냉각 코루틴"]
+    Cool --> Resume["SetTemporarilySuspended(false)<br>공격 재개"]
 ```
 
 과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile은 `Shoot()` 호출마다 카운트가 1씩 증가하므로 한 번에 여러 발을 쏴도 발사 1회로 센다. 과열 기준은 `OverHeatMissileCount`, 과열 후 냉각 시간은 `CoolTime`이 정한다.
@@ -348,14 +356,14 @@ TurretUpgradeResult result = turret.ApplyUpgrade(upgradeDefinition);
 
 ```mermaid
 flowchart TD
-    UI["TurretTestController: Upgrade 버튼"] --> Base["TurretBase.ApplyUpgrade(upgrade)"]
-    Base --> Check["Upgrade ID·Definition 호환성·중복 적용 검사"]
-    Check --> Power["TurretActivationController.TrySetPowerCost()"]
-    Power -->|활성 상태면 필요 전력 차액 조정| CU["ControlUnitStatus.TryChangeReservation()"]
-    Power -->|성공| State["TurretRuntimeState.ApplyUpgrade()"]
+    UI["TurretTestController<br>Upgrade 버튼"] --> Base["TurretBase<br>ApplyUpgrade(upgrade)"]
+    Base --> Check["ID·호환성·중복<br>검사"]
+    Check --> Power["TurretActivationController<br>TrySetPowerCost()"]
+    Power -->|활성: 전력 차액| CU["ControlUnitStatus<br>TryChangeReservation()"]
+    Power -->|성공| State["TurretRuntimeState<br>ApplyUpgrade()"]
     CU -->|성공| State
     CU -->|전력 부족| Reject["업그레이드 미적용"]
-    State --> Event["Registry.UpgradeApplied 알림"]
+    State --> Event["Registry<br>UpgradeApplied 알림"]
 ```
 
 적용 규칙은 다음과 같다.
@@ -384,18 +392,18 @@ if (catalog.TryGetNext(turret.Definition, out TurretBase nextPrefab))
 
 ```mermaid
 flowchart TD
-    UI["TurretTestController: Level Up 버튼"] --> Catalog["TurretLevelUpgradeCatalog.TryGetNext()"]
-    Catalog --> Base["TurretBase.RequestLevelUpgrade(nextPrefab)"]
-    Base --> Validate["다음 Level·같은 터렛 종류·전력 확인"]
-    Validate -->|가능| Create["다음 Level Prefab을 비활성 상태로 생성"]
+    UI["TurretTestController<br>Level Up 버튼"] --> Catalog["TurretLevelUpgradeCatalog<br>TryGetNext()"]
+    Catalog --> Base["TurretBase<br>RequestLevelUpgrade<br>(nextPrefab)"]
+    Base --> Validate["다음 Level·터렛 종류<br>전력 확인"]
+    Validate -->|가능| Create["다음 Level Prefab<br>비활성 상태로 생성"]
     Validate -->|불가능| Reject["기존 터렛 유지"]
-    Create --> Power["TurretActivationController.TrySetPowerCost()"]
+    Create --> Power["TurretActivationController<br>TrySetPowerCost()"]
     Power -->|전력 부족| Reject
-    Power -->|성공| Copy["RuntimeState.CopyForLevelUpgrade()"]
-    Copy --> Swap["기존 객체 비활성화·새 객체 활성화"]
-    Swap --> Registry["Registry에서 같은 InstanceId로 새 객체 등록"]
-    Registry --> Active["원래 켜져 있었다면 전력 예약·활성 상태 승계"]
-    Active --> Event["Registry.LevelUpgraded 알림"]
+    Power -->|성공| Copy["RuntimeState<br>CopyForLevelUpgrade()"]
+    Copy --> Swap["기존 객체 끄기<br>새 객체 켜기"]
+    Swap --> Registry["Registry에 같은 ID로<br>새 객체 등록"]
+    Registry --> Active["기존 전력 예약·활성 상태<br>승계"]
+    Active --> Event["Registry<br>LevelUpgraded 알림"]
 ```
 
 승급은 다음 레벨 프리팹으로 GameObject를 교체한다. 같은 `InstanceId`, 위치, 현재 체력 비율, 세부 업그레이드 보정 및 적용 이력, 활성 상태와 사거리 표시 설정을 이전한다. 체력 비율을 유지하므로 승급만으로 전체 회복되지는 않는다. 활성 터렛은 새 전력 사용량에 맞춰 예약량을 즉시 변경하며, 전력이 부족하면 원래 터렛을 유지한다. 성공하면 `TurretInstanceRegistry.LevelUpgraded(previous, current)`가 발생한다. 이전 컴포넌트를 직접 보관하는 소비자는 이 이벤트를 받아 새 컴포넌트로 참조를 갱신해야 한다. 이미 발사된 총알·미사일은 기존 발사체로 남는다.
@@ -424,10 +432,10 @@ NGO 연동 시 다음 규칙을 적용한다.
 Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다. Stage 1 Canon/Missile Prefab에는 `TurretTargetableAdapter`와 `PoCTargetable`을 함께 붙였다. Adapter는 터렛의 현재·최대 체력과 활성·파괴 상태를 전달한다. 비활성·파괴된 터렛의 `PoCTargetable`은 비활성화되어 목표 후보에서 빠진다. 이 연결은 Enemy PoC 쪽에만 있고 `TeamHJD.Game.Turrets`는 Enemy assembly를 참조하지 않는다.
 
 ```mermaid
-flowchart LR
-    Base["TurretBase: 활성·체력·파괴 상태"] --> Adapter["TurretTargetableAdapter.Synchronize()"]
+flowchart TD
+    Base["TurretBase<br>활성·체력·파괴 상태"] --> Adapter["TurretTargetableAdapter<br>Synchronize()"]
     Registry["Registry 상태 이벤트"] --> Adapter
-    Adapter --> Targetable["PoCTargetable: Enemy가 읽는 대상 정보"]
+    Adapter --> Targetable["PoCTargetable<br>Enemy가 읽는 정보"]
     Targetable -->|켜져 있고 체력이 남음| Enemy["Enemy PoC 목표 후보"]
     Targetable -->|꺼짐 또는 파괴| Excluded["목표 후보에서 제외"]
 ```
