@@ -146,7 +146,7 @@ GitHub Required Approval은 0이다. Core/Save/Scene/Build/Network처럼 영향�
 | --- | --- | --- | --- | --- | --- |
 | M0 | 범위·Architecture·CI | Player/HUD 분석 | World/Hub 설계 | Turret/Power 설계 | Enemy/Wave 분석 |
 | M1 | New Core·Profile·Match | Player Adapter·HUD | Definition·Test World | Defense Rule/Data | Enemy/Director 최소 Slice |
-| M2 | 왕복·Meta UI·통합 | Player Combat·Tutorial | Planet/Hub/Expansion | 3 Turret·Power·Growth | 3 Enemy·Boss·Wave |
+| M2 | 왕복·Meta UI·통합 | Player Combat·Tutorial | Planet/Hub/Expansion | 3 Turret·Power·Growth | 3 Enemy·Boss·선택된 진행 방식의 Encounter |
 | M3 | Steam/Authority/Network | Co-op UX | Ally Agent·Mission | Co-op Balance | Network-safe AI/Encounter |
 | M4 | Backend·운영·Alpha Gate | Online UX·Polish | Content Pipeline | Progression/Balance Pipeline | Encounter Pipeline |
 | M5 | Release·복구·승인 | UX/접근성 QA | Scene/Content QA | Economy/Balance QA | AI/Performance QA |
@@ -167,9 +167,9 @@ Priority별 상세 업무는 Core Design 문서를 사용한다.
 
 1. [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md)의 업무를 GitHub Issue로 만들고 담당자·완료 조건·검증 방법을 기록한다.
 2. D가 터렛 인스턴스와 평가 데이터를 제공하고 E와 인터페이스를 합의한다.
-3. E가 터렛 점수 기반 brute-force 목표 선택을 구현하고 필요 시 region 방식과 비교한다.
-4. C가 거점 확보·상실과 전선 확장 Graybox를 E/D 결과에 연결한다.
+3. E가 Region 단위 공격 목표 선택을 먼저 시험하고, 지역 내부 타깃 점수의 세부 조정은 후순위로 둔다.
+4. C가 전제 1의 동적 전선과 전제 2의 지역 해금을 관찰할 Graybox를 E/D 결과와 연결한다. 실험 순서·병행 범위는 별도 결정한다.
 5. B가 Netcode/RPC/권한 구조 조사 결과와 현재 PoC의 향후 네트워크 전환 위험을 공유한다.
-6. A가 Player 지원 행동과 임시 승패 조건을 정해 한 Build로 통합한다.
+6. A가 Player 지원 행동과 전제 1·2의 재미 관찰 기준을 정해 한 Build로 통합한다. 사망은 디버그 부활 또는 무적으로 시험하고 승리 조건은 미정으로 둔다.
 7. 2026-10-02 전체 팀 플레이 테스트 뒤 2026-10-03 회의에서 재미, 문제점, 프로덕션 이식 여부를 판정한다.
-8. PoC 동안 최종 아트, 모든 Content, 실시간 협동과 장기 성장 확정은 시작하지 않는다.
+8. PoC 동안 최종 아트, 모든 Content, 실시간 협동과 장기 성장 확정은 시작하지 않는다. Spaceship 연구·결과 성장·다음 Mission은 PoC 완료 조건이 아니다.
