@@ -1,7 +1,7 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-09-26
+최종 갱신: 2026-09-28
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
@@ -41,20 +41,17 @@
 | Runtime State | 터렛 인스턴스마다 실행 중 바뀌는 값 | `TurretRuntimeState` | 자동 발급 ID, 활성 상태, 현재 체력, 파괴 여부, 업그레이드 보정값 |
 | Behavior-local State | 공격 동작 내부에서만 필요한 짧은 상태 | Canon/Missile 구현체 | 현재 Target, 발사 타이머, 현재 미사일 과열 수치 |
 
-```text
-TurretDefinition ───────────────┐
-  고정 수치                     │
-                                v
-Prefab → Canon/Missile → TurretBase → Projectile
-             │              │          └─ 최종 공격력 전달
-             │              └─ 공통 참조·Definition 조회
-             v
-      TurretRuntimeState
-        인스턴스별 상태
-             │
-             v
-    TurretInstanceRegistry
-      로컬 ID 등록·조회
+```mermaid
+flowchart TD
+    Definition["TurretDefinition: 고정 수치"] --> Base["TurretBase: 공통 상태 변경"]
+    State["TurretRuntimeState: 인스턴스별 상태"] <--> Base
+    Base --> Canon["DefaultCanonTurret: 단일 대상 공격"]
+    Base --> Missile["DefaultMissileTurret: 복수 대상 공격"]
+    Canon --> CanonLv["CanonTurretLv1~3: 총알 생성"]
+    Missile --> MissileLv["MissileTurretLV1~3: 미사일 생성"]
+    CanonLv --> Bullet["TowerBullet: 충돌 피해"]
+    MissileLv --> Projectile["TowerMissile: 추적·범위 피해"]
+    Base <--> Registry["TurretInstanceRegistry: ID 조회·상태 알림"]
 ```
 
 Definition 값을 실행 중 상태 저장소처럼 직접 수정하지 않는다. 반대로 Target, 활성 상태, 과열 진행도처럼 매번 달라지는 값은 Definition에 넣지 않는다.
@@ -184,31 +181,42 @@ Assembly와 namespace는 `TeamHJD.Game.*` 표기를 사용한다. 새 reference�
 | `TowerBullet` | Canon이 계산한 공격력을 받아 충돌 대상에 적용 |
 | `TowerMissile` | Missile이 계산한 공격력을 받아 폭발 범위 대상에 적용 |
 
-Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드코딩하지 않는다. 발사체를 생성한 직후 `Initialize(target, Damage)`를 호출하여 Target과 Definition/RuntimeState에서 계산된 공격력을 한 번에 전달한다.
+Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드코딩하지 않는다. 발사체를 생성한 직후 `Initialize(..., Damage)`로 Definition/RuntimeState에서 계산된 공격력을 전달한다. Canon은 발사 방향점 `Transform`을, Missile은 실제 몬스터 Target을 첫 번째 인자로 전달한다.
 
 ## 4. 실행 흐름
 
+아래 흐름도는 **현재 Canon/Missile 구현의 실제 호출 경로**다. 상자는 클래스의 메서드 또는 변경되는 상태를 뜻한다. 실패 조건과 생략된 연출은 본문에서 따로 설명한다. Laser는 아직 이 경로를 사용하지 않는다.
+
 ### 4.1 생성과 등록
 
-```text
-Prefab 활성화
-→ Canon/Missile Awake에서 Definition과 ControlUnit 참조 확인
-→ TurretBase.OnEnable()
-→ Registry 등록
-→ InstanceId가 0이면 새 ID 자동 발급
-→ Definition ID 유효성 검사
-→ Level Start에서 발사구 배열과 사거리 표시 크기 초기화
+```mermaid
+flowchart TD
+    Prefab["Canon/Missile Prefab 활성화"] --> Awake["DefaultCanon/MissileTurret.Awake()"]
+    Awake --> Find["ControlUnitStatus 찾기"]
+    Find --> Configure["TurretBase.ConfigureActivation()"]
+    Configure --> Health["RuntimeState 체력 초기화"]
+    Configure --> Controller["TurretActivationController 준비"]
+    Prefab --> Enable["TurretBase.OnEnable()"]
+    Enable --> Register["TurretInstanceRegistry.Register()"]
+    Register --> Validate["Definition ID 검사·InstanceId 발급"]
+    Prefab --> Start["Level 구현체.Start(): 발사구·사거리 표시 준비"]
 ```
+
+`Awake`에서 Definition 또는 ControlUnit 참조가 없으면 초기화에 실패하고 터렛 컴포넌트를 비활성화한다. `InstanceId`는 Prefab에 수동 입력하지 않고 Registry가 로컬 실행 중 발급한다.
 
 ### 4.2 활성화와 전력
 
-```text
-UI 또는 다른 시스템이 RequestActivation(bool) 호출
-→ TurretActivationController가 현재 상태 확인
-→ 활성화 요청이면 ITurretPowerSource.TryConsumePower(EffectivePower)
-→ 전력 예약 성공 후 RuntimeState.IsActivated 변경
-→ 비활성화 요청이면 예약 전력을 ReleasePower(EffectivePower)로 반환
-→ TurretActivationResult와 Registry 상태 이벤트 전달
+```mermaid
+flowchart TD
+    Request["TowerManager 또는 TurretTestController"] --> Base["TurretBase.RequestActivation(bool)"]
+    Base --> Controller["TurretActivationController.RequestActivation()"]
+    Controller -->|켜기| Consume["ControlUnitStatus.TryConsumePower(EffectivePower)"]
+    Consume -->|전력 충분| On["RuntimeState.IsActivated = true"]
+    Consume -->|전력 부족| Reject["InsufficientPower 반환"]
+    Controller -->|끄기| Off["RuntimeState.IsActivated = false"]
+    Off --> Release["ControlUnitStatus.ReleasePower()"]
+    On --> Notify["OnActivationChanged()·Registry 상태 알림"]
+    Release --> Notify
 ```
 
 호출부는 전력을 먼저 검사한 다음 별도 활성화 메서드를 호출하지 않는다. 전력 확인과 상태
@@ -219,41 +227,85 @@ UI 또는 다른 시스템이 RequestActivation(bool) 호출
 
 ### 4.3 체력, 파괴와 복구
 
-```text
-ApplyDamage(damage)
-→ RuntimeState.CurrentHealth 감소
-→ HealthChanged 이벤트
-→ 체력이 0이면 RequestActivation(false)로 전력 반환
-→ IsDestroyed = true
-→ Destroyed 이벤트
-
-플레이어가 Restore() 호출
-→ CurrentHealth = Definition.MaxHealth
-→ IsDestroyed = false
-→ Restored 이벤트
-→ 비활성 상태 유지
-→ 플레이어가 별도로 RequestActivation(true) 호출
+```mermaid
+flowchart TD
+    Hit["TurretBase.ApplyDamage(damage)"] --> Reduce["RuntimeState.ApplyDamage(): 현재 체력 감소"]
+    Reduce --> HealthEvent["Registry.HealthChanged"]
+    HealthEvent -->|체력 남음| Alive["기존 활성 상태 유지"]
+    HealthEvent -->|체력 0| Off["RequestActivation(false): 전력 반환"]
+    Off --> Destroyed["RuntimeState.MarkDestroyed()"]
+    Destroyed --> DestroyEvent["Registry.Destroyed"]
+    DestroyEvent --> Restore["TurretBase.Restore()"]
+    Restore --> Full["최대 체력·비활성 상태로 복구"]
+    Full --> RestoreEvent["Registry.HealthChanged·Restored"]
+    RestoreEvent --> Manual["별도 RequestActivation(true) 필요"]
 ```
 
 위 흐름의 파괴 시 전량 반환은 **현재 코드의 전환기 동작**이며 확정된 제품 규칙이 아니다. 2026-09-26 회의와 9월 27일 정리에 따라, 터렛 API는 파괴 시 예약 전력의 **손실률(0~100%)**을 설정값으로 받을 수 있어야 한다. 반환량은 `예약 전력 × (1 - 손실률 / 100)`으로 계산할 수 있게 한다. 예를 들어 예약 전력 100에서 손실률 0%면 100, 50%면 50을 반환한다. 값의 실제 설정, 반환 여부와 시점, 점유율에 미치는 영향은 아직 결정하지 않았다. API 입력값을 열어두는 요구와 현재 코드에 이 동작이 구현되었다는 주장을 구분한다.
 
 파괴된 터렛은 Registry에서 즉시 제거하지 않는다. 플레이어가 같은 인스턴스를 복구할 수
 있도록 등록 상태를 유지하되 Active/Operational 조회와 활성화 요청에서는 제외한다. Scene
-전환이나 실제 GameObject 제거는 `Unregistered`로 구분한다.
+전환이나 실제 GameObject 제거는 `Unregistered`로 구분한다. 현재 `TurretTestController`의 Damage·Destroy·Restore 버튼이 이 경로를 직접 호출한다. Enemy PoC의 타깃 어댑터는 조회용이며, 적의 공격을 `TurretBase.ApplyDamage()`에 전달하는 기능까지 뜻하지는 않는다.
 
 ### 4.4 탐색과 공격
 
-Canon은 범위 안에서 가까운 적 하나를 선택하고, `TargetingAngle` 이내로 회전한 뒤 발사한다. Missile은 발사구 수만큼 Target 배열을 만들며 복수의 적을 선택한다. 적 수가 부족하면 첫 Target을 보조 슬롯에서 재사용할 수 있다.
+`IsOperational`이 `true`일 때만 각 터렛의 `Update()`가 탐색·회전·발사·과열 확인을 수행한다. 실제 탐색은 `TurretTargetingUtility.CollectByDistance()`가 사거리 안의 `enemyMask` Collider를 거리순으로 모으는 방식이다.
 
-```text
-Physics2D 범위 탐색
-→ Target 선택
-→ 포신 회전
-→ FireRate 충족
-→ 발사체 생성
-→ Definition Damage + Runtime Bonus 전달
-→ 발사체 충돌 또는 폭발에서 피해 적용
+#### Canon: 한 대상을 조준하고 직진 탄환으로 피해
+
+```mermaid
+flowchart TD
+    Update["DefaultCanonTurret.Update()"] --> Search["NoTargetInRange() → FindTarget()"]
+    Search --> Collect["TurretTargetingUtility.CollectByDistance()"]
+    Collect --> Target["가장 가까운 Target 선택"]
+    Target --> Rotate["RotateTowardsTarget(): 포신 회전"]
+    Rotate --> Fire["FireRateController(): 사거리·조준각·발사 간격 확인"]
+    Fire --> Shoot["CanonTurretLv1~3.Shoot()"]
+    Shoot --> Init["TowerBullet.Initialize(발사 방향점, Damage)"]
+    Init --> Move["TowerBullet.Update(): 정해진 방향으로 직진"]
+    Move --> Collision["TowerBullet.OnCollisionEnter2D()"]
+    Collision --> Damage["Monster.TakeDamage()"]
+    Damage -->|체력 0| Die["Monster.Die()"]
 ```
+
+Canon 포신은 Target을 향해 돌지만, **발사된 `TowerBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며, 충돌한 오브젝트에 `Monster`가 있으면 피해를 준다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
+
+#### Missile: 복수 대상을 지정하고 유도·범위 피해
+
+```mermaid
+flowchart TD
+    Update["DefaultMissileTurret.Update()"] --> Search["NoTargetInRange() → FindTarget()"]
+    Search --> Collect["TurretTargetingUtility.CollectByDistance()"]
+    Collect --> Targets["발사구 수에 맞게 Targets 배열 지정"]
+    Targets --> Rotate["RotateTowardsTarget(): 포신 회전"]
+    Rotate --> Fire["FireRateController(): 사거리·발사 간격 확인"]
+    Fire --> Shoot["MissileTurretLV1~3.Shoot()"]
+    Shoot --> Init["TowerMissile.Initialize(Target, Damage)"]
+    Init --> Straight["잠시 직진한 뒤 FixedUpdate()에서 목표 추적"]
+    Straight -->|목표 소실| Retarget["SearchForNewTarget()"]
+    Retarget --> Straight
+    Straight -->|충돌 또는 수명 종료| Explosion["폭발 이펙트 생성"]
+    Explosion --> Area["TowerMissile.DestroyObject(): 범위 내 Enemy 탐색"]
+    Area --> Damage["Monster.TakeDamage()"]
+    Damage -->|체력 0| Die["Monster.Die()"]
+```
+
+Missile은 적 수가 부족하면 첫 Target을 다른 발사 슬롯에서도 사용할 수 있다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.DestroyObject()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 `Damage = max(0, Definition.Damage + RuntimeState.DamageBonus)`를 전달한다.
+
+### 4.5 과열과 냉각
+
+```mermaid
+flowchart TD
+    Combat["Canon/Missile.Update()"] --> Check["OverHeatAnimationController()"]
+    Check -->|Canon: 연속 사격 시간 누적| CanonHeat["Definition.OverHeatTime 도달"]
+    Check -->|Missile: 발사 횟수 누적| MissileHeat["Definition.OverHeatMissileCount 도달"]
+    CanonHeat --> Suspend["TurretBase.SetTemporarilySuspended(true)"]
+    MissileHeat --> Suspend
+    Suspend --> Cool["OverHeat() 냉각 코루틴"]
+    Cool --> Resume["SetTemporarilySuspended(false): 공격 재개"]
+```
+
+과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile의 과열 카운트는 현재 `Shoot()` 호출마다 증가한다.
 
 ## 5. Prefab과 Definition 설정 방법
 
@@ -294,6 +346,18 @@ Physics2D 범위 탐색
 TurretUpgradeResult result = turret.ApplyUpgrade(upgradeDefinition);
 ```
 
+```mermaid
+flowchart TD
+    UI["TurretTestController: Upgrade 버튼"] --> Base["TurretBase.ApplyUpgrade(upgrade)"]
+    Base --> Check["Upgrade ID·Definition 호환성·중복 적용 검사"]
+    Check --> Power["TurretActivationController.TrySetPowerCost()"]
+    Power -->|활성 상태면 필요 전력 차액 조정| CU["ControlUnitStatus.TryChangeReservation()"]
+    Power -->|성공| State["TurretRuntimeState.ApplyUpgrade()"]
+    CU -->|성공| State
+    CU -->|전력 부족| Reject["업그레이드 미적용"]
+    State --> Event["Registry.UpgradeApplied 알림"]
+```
+
 적용 규칙은 다음과 같다.
 
 - 원본 `TurretDefinition` ScriptableObject는 수정하지 않는다.
@@ -316,6 +380,22 @@ if (catalog.TryGetNext(turret.Definition, out TurretBase nextPrefab))
     TurretLevelUpgradeResult result =
         turret.RequestLevelUpgrade(nextPrefab, out TurretBase replacement);
 }
+```
+
+```mermaid
+flowchart TD
+    UI["TurretTestController: Level Up 버튼"] --> Catalog["TurretLevelUpgradeCatalog.TryGetNext()"]
+    Catalog --> Base["TurretBase.RequestLevelUpgrade(nextPrefab)"]
+    Base --> Validate["다음 Level·같은 터렛 종류·전력 확인"]
+    Validate -->|가능| Create["다음 Level Prefab을 비활성 상태로 생성"]
+    Validate -->|불가능| Reject["기존 터렛 유지"]
+    Create --> Power["TurretActivationController.TrySetPowerCost()"]
+    Power -->|전력 부족| Reject
+    Power -->|성공| Copy["RuntimeState.CopyForLevelUpgrade()"]
+    Copy --> Swap["기존 객체 비활성화·새 객체 활성화"]
+    Swap --> Registry["Registry에서 같은 InstanceId로 새 객체 등록"]
+    Registry --> Active["원래 켜져 있었다면 전력 예약·활성 상태 승계"]
+    Active --> Event["Registry.LevelUpgraded 알림"]
 ```
 
 승급은 다음 레벨 프리팹으로 GameObject를 교체한다. 같은 `InstanceId`, 위치, 현재 체력 비율, 세부 업그레이드 보정 및 적용 이력, 활성 상태와 사거리 표시 설정을 이전한다. 체력 비율을 유지하므로 승급만으로 전체 회복되지는 않는다. 활성 터렛은 새 전력 사용량에 맞춰 예약량을 즉시 변경하며, 전력이 부족하면 원래 터렛을 유지한다. 성공하면 `TurretInstanceRegistry.LevelUpgraded(previous, current)`가 발생한다. 이전 컴포넌트를 직접 보관하는 소비자는 이 이벤트를 받아 새 컴포넌트로 참조를 갱신해야 한다. 이미 발사된 총알·미사일은 기존 발사체로 남는다.
@@ -342,6 +422,15 @@ NGO 연동 시 다음 규칙을 적용한다.
 ## 8. AI·전선 시스템 연동 기준
 
 Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다. Stage 1 Canon/Missile Prefab에는 `TurretTargetableAdapter`와 `PoCTargetable`을 함께 붙였다. Adapter는 터렛의 현재·최대 체력과 활성·파괴 상태를 전달한다. 비활성·파괴된 터렛의 `PoCTargetable`은 비활성화되어 목표 후보에서 빠진다. 이 연결은 Enemy PoC 쪽에만 있고 `TeamHJD.Game.Turrets`는 Enemy assembly를 참조하지 않는다.
+
+```mermaid
+flowchart LR
+    Base["TurretBase: 활성·체력·파괴 상태"] --> Adapter["TurretTargetableAdapter.Synchronize()"]
+    Registry["Registry 상태 이벤트"] --> Adapter
+    Adapter --> Targetable["PoCTargetable: Enemy가 읽는 대상 정보"]
+    Targetable -->|켜져 있고 체력이 남음| Enemy["Enemy PoC 목표 후보"]
+    Targetable -->|꺼짐 또는 파괴| Excluded["목표 후보에서 제외"]
+```
 
 `FirepowerRatio`는 계산 기준이 아직 정해지지 않아 Adapter의 임시값 0.5를 사용한다. 세부 업그레이드와 레벨 승급으로 `EffectiveDamage`가 바뀌어도 이 비율은 아직 바뀌지 않는다. AI 평가 규칙을 정하면 `PoCTargetable.SetFirepower`에 실제 현재/최대 화력을 전달해야 한다.
 
