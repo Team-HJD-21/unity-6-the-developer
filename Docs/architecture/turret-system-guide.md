@@ -1,6 +1,7 @@
 # Turret System Guide
 
 작성일: 2026-09-24
+최종 갱신: 2026-09-26
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
@@ -18,13 +19,15 @@
 - `TurretDefinition`, `TurretRuntimeState`, `TurretBase`
 - 로컬 런타임 등록을 위한 `TurretInstanceRegistry`
 - 터렛 체력·파괴·플레이어 복구 흐름
+- 인스턴스별 Damage/Power 보정과 Stage 1 프리팹 교체 방식의 레벨 승급
+- Enemy PoC의 `PoCTargetable` 연결
 - `TowerBullet`, `TowerMissile`로 전달되는 공격력
 
 다음 항목은 이 문서의 현재 적용 범위가 아니다.
 
 - Laser Turret 이식
 - 파괴 연출과 복구 비용·시간의 최종 게임 규칙
-- 최종 업그레이드 규칙과 Spaceship Research 연동
+- 승급 비용·시간과 Spaceship Research 연동
 - NGO를 통한 `InstanceId`와 상태 동기화
 - AI 평가값·위협도·전선 정보를 집계하는 정식 Turret Manager
 
@@ -35,7 +38,7 @@
 | 종류 | 의미 | 저장 위치 | 예시 |
 | --- | --- | --- | --- |
 | Definition | 실행 중 원본을 바꾸지 않는 콘텐츠·밸런스 값 | `TurretDefinition` ScriptableObject | 사거리, 기본 공격력, 최대 체력, 전력, 발사 속도 |
-| Runtime State | 터렛 인스턴스마다 실행 중 바뀌는 값 | `TurretRuntimeState` | 자동 발급 ID, 활성 상태, 현재 체력, 파괴 여부, 공격력 보너스 |
+| Runtime State | 터렛 인스턴스마다 실행 중 바뀌는 값 | `TurretRuntimeState` | 자동 발급 ID, 활성 상태, 현재 체력, 파괴 여부, 업그레이드 보정값 |
 | Behavior-local State | 공격 동작 내부에서만 필요한 짧은 상태 | Canon/Missile 구현체 | 현재 Target, 발사 타이머, 현재 미사일 과열 수치 |
 
 ```text
@@ -97,7 +100,8 @@ Editor에서 Definition을 수정하면 전체 `TurretDefinition`을 검사한�
 | `IsOperational` | 활성화됐고 과열·파괴 상태가 아닌지 표시 | 활성화·과열·파괴 흐름에서 자동 계산 |
 | `CurrentHealth` | 현재 남아 있는 체력 | `ApplyDamage`, `Restore` |
 | `IsDestroyed` | 체력 0으로 파괴됐는지 표시 | `ApplyDamage`, `Restore` |
-| `DamageBonus` | 연구·버프 등 실행 중 공격력 보정 | `SetDamageBonus`, `AddDamageBonus` |
+| `DamageBonus` | 수동 보너스와 적용된 업그레이드의 공격력 보정 합 | `SetDamageBonus`, `AddDamageBonus`, `ApplyUpgrade` |
+| `PowerBonus` | 적용된 업그레이드의 실행 중 전력 보정 | `ApplyUpgrade` |
 
 Prefab의 `_instanceId` 기본값 `0`은 **미할당**을 뜻한다. Inspector에서 ID를 수동으로 정하지 않는다. 실제 ID는 Play Mode에서 등록될 때 양수로 자동 발급된다.
 
@@ -105,6 +109,7 @@ Prefab의 `_instanceId` 기본값 `0`은 **미할당**을 뜻한다. Inspector�
 
 ```text
 Final Damage = max(0, Definition.Damage + RuntimeState.DamageBonus)
+Effective Power = max(0, Definition.Power + RuntimeState.PowerBonus)
 ```
 
 영구 연구 수치를 Definition에 덮어쓰지 않는다. Profile/Research 결과를 Match 시작 시 런타임 보너스로 변환하는 Adapter가 이후 필요하다.
@@ -148,7 +153,7 @@ if (TurretInstanceRegistry.TryGet(instanceId, out TurretBase turret))
 Registry는 현재 PoC용 로컬 등록부다. AI 조회용 상태 집계, 전력 총합, 구역별 터렛 관리까지 책임지는 정식 Manager가 아니다. `TowerManager`를 다른 이름의 전역 Singleton으로 다시 만드는 방식으로 확장하지 않는다.
 
 현재 제공하는 조회는 `GetAll`, `GetActive`, `GetOperational`이다. 등록·해제,
-활성화·작동 상태, 체력 변경, 파괴, 복구는 각각 Registry 이벤트로 알린다. 파괴된
+활성화·작동 상태, 체력 변경, 파괴, 복구, 세부 업그레이드와 레벨 승급은 각각 Registry 이벤트로 알린다. 파괴된
 터렛은 Registry에 남아 복구할 수 있지만 Active/Operational 조회에서는 제외된다.
 
 ### 3.5 Assembly 경계
@@ -200,15 +205,17 @@ Prefab 활성화
 ```text
 UI 또는 다른 시스템이 RequestActivation(bool) 호출
 → TurretActivationController가 현재 상태 확인
-→ 활성화 요청이면 ITurretPowerSource.TryConsumePower(Power)
+→ 활성화 요청이면 ITurretPowerSource.TryConsumePower(EffectivePower)
 → 전력 예약 성공 후 RuntimeState.IsActivated 변경
-→ 비활성화 요청이면 예약 전력을 ReleasePower(Power)로 반환
+→ 비활성화 요청이면 예약 전력을 ReleasePower(EffectivePower)로 반환
 → TurretActivationResult와 Registry 상태 이벤트 전달
 ```
 
 호출부는 전력을 먼저 검사한 다음 별도 활성화 메서드를 호출하지 않는다. 전력 확인과 상태
 변경은 반드시 `RequestActivation` 한 경로에서 처리한다. 과열은 사용자가 끈 상태가 아니므로
 `IsActivated`와 전력 예약을 유지하고 `IsOperational`만 일시적으로 `false`가 된다.
+`ControlUnitStatus.ReleasePower`는 반환 전력을 0.1초에 1씩 회복한다. 반면 업그레이드로
+전력 사용량이 감소할 때의 차액은 `TryChangeReservation`에서 즉시 반환한다.
 
 ### 4.3 체력, 파괴와 복구
 
@@ -275,16 +282,45 @@ Physics2D 범위 탐색
 ## 6. 업그레이드와 밸런스 규칙
 
 - 기본 수치 조정: Definition 에셋 수정
-- 한 판 동안 적용되는 강화·버프: RuntimeState 보너스 사용
+- 한 판 동안 적용되는 강화·버프: `TurretUpgradeDefinition`을 선택한 인스턴스의 RuntimeState에 적용
 - 계정 영구 성장: Profile/Research에서 보관하고 Match 시작 시 RuntimeState 또는 immutable `MatchConfig`로 변환
 - 발사체: 자신이 생성될 때 받은 최종 공격력만 사용
 
+`TurretUpgradeDefinition`은 업그레이드 ID, 표시 이름, 호환 가능한 `TurretDefinition.Id` 목록, Damage/Power 보정값을 가진다. 호환 목록이 비어 있으면 모든 터렛 Definition에 적용할 수 있다.
+
 ```csharp
-turret.SetDamageBonus(10); // 현재 보너스를 10으로 설정
-turret.AddDamageBonus(5);  // 현재 보너스에 5 추가
+TurretUpgradeResult result = turret.ApplyUpgrade(upgradeDefinition);
 ```
 
-현재는 공격력 보너스 API만 마련되어 있다. 사거리, 발사 속도, 전력 비용까지 Runtime modifier가 필요한지는 업그레이드 규칙이 확정된 뒤 각각 명시적인 modifier로 추가한다. 모든 값을 하나의 범용 Dictionary에 넣지 않는다.
+적용 규칙은 다음과 같다.
+
+- 원본 `TurretDefinition` ScriptableObject는 수정하지 않는다.
+- 보정값과 적용 이력은 선택한 `TurretRuntimeState`에만 저장된다.
+- 같은 업그레이드 ID는 동일 인스턴스에 한 번만 적용된다.
+- 활성 터렛의 Power가 증가하면 추가 전력을 즉시 예약한다. 전력이 부족하면 업그레이드 전체를 적용하지 않는다.
+- Power가 감소하면 차액을 즉시 반환한다.
+- 외부 조회에는 `EffectiveDamage`, `EffectivePower`를 사용한다.
+- 적용 성공 시 `TurretInstanceRegistry.UpgradeApplied`가 발생하므로 AI·전선 Adapter가 값을 다시 읽을 수 있다.
+
+현재 제공하는 샘플은 Canon용 `Low Power`(Damage -3, Power -5)와 `High Firepower`(Damage +6, Power +8)다. 두 업그레이드는 서로 배타적이지 않아 같은 인스턴스에 모두 적용할 수 있다. 새 업그레이드는 에셋을 추가해 확장하며 기존 Canon/Missile 구현체에 조건문을 추가하지 않는다. 사거리와 발사 속도 modifier는 실제 규칙이 확정되기 전까지 추가하지 않는다. 모든 값을 하나의 범용 Dictionary에 넣지 않는다.
+
+### 6.1 레벨 승급
+
+`TurretLevelUpgradeCatalog`은 현재 Definition과 다음 레벨 프리팹을 연결한다. 현재 카탈로그에는 Stage 1 Canon/Missile의 LV1→LV2, LV2→LV3 경로만 등록되어 있다. `TurretTest`에서 각 터렛의 `Level Up` 버튼으로 확인할 수 있다. Stage 2·3의 승급 경로는 카탈로그에 추가해야 한다.
+
+```csharp
+if (catalog.TryGetNext(turret.Definition, out TurretBase nextPrefab))
+{
+    TurretLevelUpgradeResult result =
+        turret.RequestLevelUpgrade(nextPrefab, out TurretBase replacement);
+}
+```
+
+승급은 다음 레벨 프리팹으로 GameObject를 교체한다. 같은 `InstanceId`, 위치, 현재 체력 비율, 세부 업그레이드 보정 및 적용 이력, 활성 상태와 사거리 표시 설정을 이전한다. 체력 비율을 유지하므로 승급만으로 전체 회복되지는 않는다. 활성 터렛은 새 전력 사용량에 맞춰 예약량을 즉시 변경하며, 전력이 부족하면 원래 터렛을 유지한다. 성공하면 `TurretInstanceRegistry.LevelUpgraded(previous, current)`가 발생한다. 이전 컴포넌트를 직접 보관하는 소비자는 이 이벤트를 받아 새 컴포넌트로 참조를 갱신해야 한다. 이미 발사된 총알·미사일은 기존 발사체로 남는다.
+
+현재 승급 비용·시간, 멀티플레이 상태 동기화, 파괴된 터렛의 승급 규칙은 확정되지 않았다. 파괴된 터렛의 승급 요청은 거부한다. 제품 UI에서 승급 버튼을 노출하는 작업은 아직 별도다.
+
+`TurretTest`에서 수동으로 검증할 때는 Canon LV1 하나의 ID와 ControlUnit 전력을 기록하고 활성화·Damage·세부 업그레이드 후 `Level Up`을 누른다. LV2가 같은 ID와 체력 비율·보정값을 유지하는지 확인하고 LV3까지 반복한다. Missile도 같은 순서로 확인한다. 여러 터렛을 켜 남은 전력을 낮춘 뒤 승급을 요청하면 부족한 전력으로 거부되는지도 확인할 수 있다. 이 Play Mode 검증은 코드 컴파일 검사와 별개로 수행해야 한다.
 
 ## 7. 멀티플레이 전환 시 주의점
 
@@ -303,9 +339,11 @@ NGO 연동 시 다음 규칙을 적용한다.
 
 ## 8. AI·전선 시스템 연동 기준
 
-Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 않는다. 필요한 데이터를 명시적인 조회 모델 또는 인터페이스로 제공한다.
+Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다. Stage 1 Canon/Missile Prefab에는 `TurretTargetableAdapter`와 `PoCTargetable`을 함께 붙였다. Adapter는 터렛의 현재·최대 체력과 활성·파괴 상태를 전달한다. 비활성·파괴된 터렛의 `PoCTargetable`은 비활성화되어 목표 후보에서 빠진다. 이 연결은 Enemy PoC 쪽에만 있고 `TeamHJD.Game.Turrets`는 Enemy assembly를 참조하지 않는다.
 
-향후 제공할 후보 데이터는 다음과 같다.
+`FirepowerRatio`는 계산 기준이 아직 정해지지 않아 Adapter의 임시값 0.5를 사용한다. 세부 업그레이드와 레벨 승급으로 `EffectiveDamage`가 바뀌어도 이 비율은 아직 바뀌지 않는다. AI 평가 규칙을 정하면 `PoCTargetable.SetFirepower`에 실제 현재/최대 화력을 전달해야 한다.
+
+전선 시스템과 후속 AI 계약에 제공할 후보 데이터는 다음과 같다.
 
 - Instance ID와 Definition ID
 - 위치와 소속 구역
@@ -315,7 +353,7 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 - 공격 가능 여부와 과열 상태
 - AI 목표 평가용 위협도·방어 가치
 
-이 데이터 집계는 별도 Issue에서 구현할 정식 터렛 조회 시스템의 책임이다. `TurretRuntimeState`에 모든 Scene 참조와 AI 계산 결과를 무조건 넣지 않는다.
+현재는 `TurretInstanceRegistry.GetActive()`와 터렛의 공개 읽기 속성으로 위치·상태·기본 수치를 조회할 수 있다. 소속 구역, 위협도·방어 가치와 읽기 전용 Snapshot 계약은 미구현이다. `TurretRuntimeState`에 모든 Scene 참조와 AI 계산 결과를 무조건 넣지 않는다.
 
 ## 9. 검증 체크리스트
 
@@ -323,6 +361,8 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 
 - [ ] Definition ID가 비어 있지 않고 중복되지 않는다.
 - [ ] Prefab에 올바른 Definition이 연결되어 있다.
+- [ ] Stage 1 승급 카탈로그의 네 경로가 실제 다음 LV TurretBase Prefab을 가리킨다.
+- [ ] Stage 1 Canon/Missile Prefab에 PoCTargetable과 Adapter가 함께 있다.
 - [ ] `.cs`·`.asset`·Prefab의 `.meta`가 함께 존재한다.
 - [ ] `TeamHJD.Game.Turrets`가 Contracts 외의 legacy assembly를 참조하지 않는다.
 - [ ] Level 스크립트에 Definition 수치가 중복 하드코딩되지 않았다.
@@ -343,6 +383,10 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 - [ ] 발사체 피해량이 Definition Damage와 Runtime Bonus를 반영한다.
 - [ ] 과열 후 냉각과 재활성화가 정상 동작한다.
 - [ ] 각 활성 터렛의 `InstanceId`가 0이 아니며 서로 다르다.
+- [ ] Canon과 Missile을 각각 LV1→LV2→LV3으로 승급하며 발사구·공격 동작이 바뀐다.
+- [ ] 승급 전후 `InstanceId`, 체력 비율, 세부 업그레이드와 활성 상태가 유지된다.
+- [ ] 활성 중 승급으로 증가한 전력만 추가 예약되고, 부족하면 승급이 거부된다.
+- [ ] 꺼지거나 파괴된 터렛은 Enemy PoC의 목표 후보에서 빠진다.
 
 ## 10. 현재 기술 부채와 후속 작업
 
@@ -356,6 +400,8 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 | Target 평가 | concrete 코드가 Physics와 `Monster.isTargeted` 직접 사용 | AI/Combat 계약과 평가 모델 분리 |
 | Namespace | 일부 concrete 터렛이 전역 namespace | 이식 시 `Presentation` 경계로 정리 |
 | 네트워크 | 로컬 상태만 존재 | Host authoritative 상태와 Snapshot 추가 |
+| AI 화력 평가 | Stage 1 Adapter에서 `FirepowerRatio = 0.5` 임시 사용 | 조수빈과 계산식·갱신 시점을 확정 |
+| 레벨 승급 | Stage 1 카탈로그와 테스트 UI만 연결 | 제품 UI, 다른 Stage 경로, 비용·시간 및 참조 갱신 정책 검증 |
 | Laser | 기존 독립 구조 유지 | 별도 Issue에서 행동 확인 후 이식 |
 
 이 항목을 해결할 때 한 번에 전체 시스템을 다시 쓰지 않는다. observable behavior를 먼저 기록하고, 테스트 가능한 작은 Architecture Slice로 교체한다.
@@ -365,6 +411,11 @@ Enemy AI와 전선 시스템은 concrete LV 스크립트를 직접 탐색하지 
 - [`TurretBase.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretBase.cs)
 - [`TurretDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretDefinition.cs)
 - [`TurretRuntimeState.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretRuntimeState.cs)
+- [`TurretUpgradeDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretUpgradeDefinition.cs)
+- [`TurretLevelUpgradeCatalog.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretLevelUpgradeCatalog.cs)
+- [`TurretLevelUpgrade_Stage1.asset`](../../Assets/Scripts/Tower/TurretDefinitions/TurretLevelUpgrade_Stage1.asset)
+- [`TurretTargetableAdapter.cs`](../../Assets/PoC/Enemy/Scripts/TurretTargetableAdapter.cs)
+- [`TurretTestController.cs`](../../Assets/Scripts/Tower/Turret/TurretTestController.cs)
 - [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
 - [`TeamHJD.Game.Turrets.Contracts.asmdef`](../../Assets/Scripts/Tower/Turret/Contracts/TeamHJD.Game.Turrets.Contracts.asmdef)
 - [`TeamHJD.Game.Turrets.asmdef`](../../Assets/Scripts/Tower/Turret/Core/TeamHJD.Game.Turrets.asmdef)

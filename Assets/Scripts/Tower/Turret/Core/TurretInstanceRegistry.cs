@@ -18,6 +18,8 @@ namespace TeamHJD.Game.Turrets
         public static event Action<TurretBase, int, int> HealthChanged;
         public static event Action<TurretBase> Destroyed;
         public static event Action<TurretBase> Restored;
+        public static event Action<TurretBase, TurretUpgradeDefinition> UpgradeApplied;
+        public static event Action<TurretBase, TurretBase> LevelUpgraded;
 
         public static IReadOnlyDictionary<int, TurretBase> RegisteredInstances => Instances;
         public static int Count => Instances.Count;
@@ -35,6 +37,8 @@ namespace TeamHJD.Game.Turrets
             HealthChanged = null;
             Destroyed = null;
             Restored = null;
+            UpgradeApplied = null;
+            LevelUpgraded = null;
         }
 
         public static bool Register(TurretBase turret)
@@ -153,6 +157,18 @@ namespace TeamHJD.Game.Turrets
         internal static void NotifyRestored(TurretBase turret)
         {
             Restored?.Invoke(turret);
+        }
+
+        internal static void NotifyUpgradeApplied(
+            TurretBase turret,
+            TurretUpgradeDefinition upgrade)
+        {
+            UpgradeApplied?.Invoke(turret, upgrade);
+        }
+
+        internal static void NotifyLevelUpgraded(TurretBase previous, TurretBase current)
+        {
+            LevelUpgraded?.Invoke(previous, current);
         }
 
         private static int AllocateInstanceId()

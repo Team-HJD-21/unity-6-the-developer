@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
@@ -19,6 +20,10 @@ namespace TeamHJD.Game.Debugging
         [SerializeField, Range(1f, 2f)] private float uiScale = 1.25f;
         [SerializeField, Min(1)] private int damagePerClick = 25;
 
+        [Header("Sample Upgrades")]
+        [SerializeField] private TurretUpgradeDefinition[] sampleUpgrades;
+        [SerializeField] private TurretLevelUpgradeCatalog levelUpgradeCatalog;
+
         [Header("Camera Movement")]
         [SerializeField, Min(0f)] private float cameraMoveSpeed = 8f;
         [SerializeField, Min(1f)] private float cameraFastMoveMultiplier = 2f;
@@ -38,6 +43,8 @@ namespace TeamHJD.Game.Debugging
         private bool _isPanelVisible = true;
         private TurretActivationResult? _lastActivationResult;
         private string _lastDurabilityAction;
+        private string _lastUpgradeAction;
+        private string _lastLevelUpgradeAction;
 
         private void Awake()
         {
@@ -130,6 +137,16 @@ namespace TeamHJD.Game.Debugging
                 GUILayout.Label($"Last Durability Action: {_lastDurabilityAction}");
             }
 
+            if (!string.IsNullOrEmpty(_lastUpgradeAction))
+            {
+                GUILayout.Label($"Last Upgrade Request: {_lastUpgradeAction}");
+            }
+
+            if (!string.IsNullOrEmpty(_lastLevelUpgradeAction))
+            {
+                GUILayout.Label($"Last Level Upgrade: {_lastLevelUpgradeAction}");
+            }
+
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Refresh"))
             {
@@ -150,8 +167,9 @@ namespace TeamHJD.Game.Debugging
             GUILayout.Space(6f);
             _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
 
-            foreach (TurretBase turret in _turrets)
+            for (int index = 0; index < _turrets.Count; index++)
             {
+                TurretBase turret = _turrets[index];
                 if (turret == null)
                 {
                     continue;
@@ -238,11 +256,12 @@ namespace TeamHJD.Game.Debugging
         private void DrawTurretRow(TurretBase turret)
         {
             string level = turret.Definition == null ? "?" : turret.Definition.Level.ToString();
-            string power = turret.Definition == null ? "?" : turret.Definition.Power.ToString();
+            string power = turret.Definition == null ? "?" : turret.EffectivePower.ToString();
+            string damage = turret.Definition == null ? "?" : turret.EffectiveDamage.ToString();
 
             GUILayout.BeginVertical(GUI.skin.box);
             GUILayout.Label(
-                $"{turret.name}  |  LV {level}  |  Power {power}  |  " +
+                $"{turret.name}  |  ID {turret.InstanceId}  |  LV {level}  |  Damage {damage}  |  Power {power}  |  " +
                 $"HP {turret.CurrentHealth}/{turret.MaxHealth}");
             GUILayout.BeginHorizontal();
 
@@ -294,7 +313,62 @@ namespace TeamHJD.Game.Debugging
 
             GUI.enabled = true;
             GUILayout.EndHorizontal();
+
+            DrawUpgradeButtons(turret);
+            DrawLevelUpgradeButton(turret);
             GUILayout.EndVertical();
+        }
+
+        private void DrawLevelUpgradeButton(TurretBase turret)
+        {
+            if (levelUpgradeCatalog == null ||
+                !levelUpgradeCatalog.TryGetNext(turret.Definition, out TurretBase nextPrefab))
+                return;
+
+            GUI.enabled = !turret.IsDestroyed;
+            if (GUILayout.Button($"Level Up: LV {nextPrefab.Definition.Level}"))
+            {
+                string previousName = turret.name;
+                int previousId = turret.InstanceId;
+                TurretLevelUpgradeResult result =
+                    turret.RequestLevelUpgrade(nextPrefab, out TurretBase replacement);
+                _lastLevelUpgradeAction = result == TurretLevelUpgradeResult.Upgraded
+                    ? $"{previousName}: {result} (ID {previousId} -> {replacement.InstanceId})"
+                    : $"{previousName} (ID {previousId}): {result}";
+            }
+            GUI.enabled = true;
+        }
+
+        private void DrawUpgradeButtons(TurretBase turret)
+        {
+            if (sampleUpgrades == null || sampleUpgrades.Length == 0)
+            {
+                return;
+            }
+
+            GUILayout.BeginHorizontal();
+            foreach (TurretUpgradeDefinition upgrade in sampleUpgrades)
+            {
+                if (upgrade == null)
+                {
+                    continue;
+                }
+
+                bool canApply =
+                    !turret.IsDestroyed &&
+                    upgrade.IsCompatibleWith(turret.Definition?.Id) &&
+                    !turret.RuntimeState.HasAppliedUpgrade(upgrade.Id);
+                GUI.enabled = canApply;
+
+                if (GUILayout.Button($"Upgrade: {upgrade.DisplayName}"))
+                {
+                    TurretUpgradeResult result = turret.ApplyUpgrade(upgrade);
+                    _lastUpgradeAction = $"{turret.name} / {upgrade.DisplayName}: {result}";
+                }
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
         }
 
         private void RefreshReferences()

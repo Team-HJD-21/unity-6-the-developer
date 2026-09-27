@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 909354653455416701}
   - component: {fileID: 7130774518783448330}
   - component: {fileID: 896279948231493691}
+  - component: {fileID: 4623217508369570170}
+  - component: {fileID: 4623217508369570199}
   m_Layer: 0
   m_Name: CanonTurret LV1
   m_TagString: Tower
@@ -19,6 +21,37 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &4623217508369570170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 769347541509622616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f52a29d5e2e4832a13e80d597e26764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _turret: {fileID: 909354653455416701}
+  _fakeFirepowerRatio: 0.5
+--- !u!114 &4623217508369570199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 769347541509622616}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  targetType: 1
+  maxHealth: 0
+  currentHealth: 0
+  maxFirepower: 1
+  currentFirepower: 0.5
 --- !u!4 &1659131349136534652
 Transform:
   m_ObjectHideFlags: 0

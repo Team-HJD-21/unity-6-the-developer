@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00d047dcb3494b7f9364068a588d8d44, type: 3}
+  m_Name: TurretLevelUpgrade_Stage1
+  m_EditorClassIdentifier:
+  _transitions:
+  - _source: {fileID: 11400000, guid: 628f4ecf4feb4d15beb13ee83df2da66, type: 2}
+    _nextLevelPrefab: {fileID: 513411788051588595, guid: f2b8259b169597d42b4492ee92247abb, type: 3}
+  - _source: {fileID: 11400000, guid: 507642e632ff4dbd959cbf5a0e232183, type: 2}
+    _nextLevelPrefab: {fileID: 4743552121227763710, guid: c718ed48561235c48971f42202b531bf, type: 3}
+  - _source: {fileID: 11400000, guid: 2dd7a21e52b8414bb7a347e240db86f2, type: 2}
+    _nextLevelPrefab: {fileID: 3469234538060691382, guid: c68ebb667d8fb5346b678bc81ac2f95f, type: 3}
+  - _source: {fileID: 11400000, guid: 379e75428df04592955b813a7200ba32, type: 2}
+    _nextLevelPrefab: {fileID: 8835418960737341895, guid: 7f71962adbfb5f44888a83f7ee814926, type: 3}

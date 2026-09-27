@@ -1,6 +1,8 @@
+using System;
 using System.IO;
 using System.Linq;
 using TeamHJD.Game.Debugging;
+using TeamHJD.Game.Turrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -14,6 +16,11 @@ namespace TeamHJD.Game.Editor
         private const string ScenePath = "Assets/Scenes/TestScene/TurretTest.unity";
         private const string SourceScenePath = "Assets/Scenes/Main.unity";
         private const string RequestPath = "Temp/TurretTestSceneBuilder.request";
+        private const string BackupDirectory = "Temp/TurretTestSceneBuilder/Backups";
+        private const string ControlUnitPrefabPath = "Assets/Prefabs/Tower/ControlUnit.prefab";
+        private const string HighFirepowerPath = "Assets/Scripts/Tower/TurretDefinitions/UpgradeDefinitions/Canon_HighFirepower.asset";
+        private const string LowPowerPath = "Assets/Scripts/Tower/TurretDefinitions/UpgradeDefinitions/Canon_LowPower.asset";
+        private const string LevelUpgradeCatalogPath = "Assets/Scripts/Tower/TurretDefinitions/TurretLevelUpgrade_Stage1.asset";
 
         private static readonly (string Path, string Name, Vector3 Position)[] TurretPlacements =
         {
@@ -36,6 +43,12 @@ namespace TeamHJD.Game.Editor
         [MenuItem("Tools/The Developer/Rebuild Turret Test Scene")]
         private static void RebuildFromMenu()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                Debug.LogWarning("[TurretTestSceneBuilder] Exit Play Mode before rebuilding the scene.");
+                return;
+            }
+
             RebuildScene();
         }
 
@@ -60,7 +73,20 @@ namespace TeamHJD.Game.Editor
 
         private static void RebuildScene()
         {
-            Scene testScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            Scene testScene = SceneManager.GetSceneByPath(ScenePath);
+            if (!File.Exists(ScenePath))
+                throw new FileNotFoundException("TurretTest scene was not found", ScenePath);
+
+            if (!testScene.IsValid() || !testScene.isLoaded)
+                testScene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
+
+            if (testScene.isDirty)
+            {
+                Debug.LogWarning("[TurretTestSceneBuilder] Save or discard pending TurretTest scene changes before rebuilding.");
+                return;
+            }
+
+            SceneManager.SetActiveScene(testScene);
 
             CreateCamera();
             CopyConfiguredAudioManager(testScene);
@@ -72,25 +98,45 @@ namespace TeamHJD.Game.Editor
 
             InstantiatePrefab(
                 testScene,
-                "Assets/Prefabs/Tower/ControlUnit.prefab",
+                ControlUnitPrefabPath,
                 "ControlUnit",
                 new Vector3(0f, -6f, 0f));
 
-            GameObject controllerObject = new("[Debug] Turret Test Controller");
-            controllerObject.AddComponent<TurretTestController>();
+            TurretTestController controller = testScene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<TurretTestController>(true))
+                .FirstOrDefault();
+            if (controller == null)
+            {
+                GameObject controllerObject = new("[Debug] Turret Test Controller");
+                controller = controllerObject.AddComponent<TurretTestController>();
+            }
+
+            ConfigureController(controller);
+
+            Directory.CreateDirectory(BackupDirectory);
+            string backupPath = Path.Combine(
+                BackupDirectory,
+                $"TurretTest-{DateTime.Now:yyyyMMdd-HHmmss-fff}.unity");
+            File.Copy(ScenePath, backupPath);
 
             EditorSceneManager.MarkSceneDirty(testScene);
             if (!EditorSceneManager.SaveScene(testScene, ScenePath))
-            {
-                throw new IOException($"Failed to save {ScenePath}");
-            }
+                throw new IOException($"Failed to save {ScenePath}; backup: {backupPath}");
 
-            Selection.activeGameObject = controllerObject;
-            Debug.Log($"[TurretTestSceneBuilder] Rebuilt {ScenePath} with 6 turrets and ControlUnit.");
+            Selection.activeGameObject = controller.gameObject;
+            Debug.Log($"[TurretTestSceneBuilder] Preserved existing map and objects. Backup: {backupPath}");
         }
 
         private static void CreateCamera()
         {
+            bool hasMainCamera = SceneManager.GetActiveScene().GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Camera>(true))
+                .Any(camera => camera.CompareTag("MainCamera"));
+            if (hasMainCamera)
+            {
+                return;
+            }
+
             GameObject cameraObject = new("Main Camera");
             cameraObject.tag = "MainCamera";
             cameraObject.transform.position = new Vector3(0f, -1.5f, -10f);
@@ -108,24 +154,68 @@ namespace TeamHJD.Game.Editor
 
         private static void CopyConfiguredAudioManager(Scene testScene)
         {
-            Scene sourceScene = EditorSceneManager.OpenScene(SourceScenePath, OpenSceneMode.Additive);
-            AudioManager source = sourceScene
-                .GetRootGameObjects()
+            bool hasAudioManager = testScene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<AudioManager>(true))
-                .FirstOrDefault();
+                .Any();
+            if (hasAudioManager)
+                return;
 
-            if (source == null)
+            Scene sourceScene = SceneManager.GetSceneByPath(SourceScenePath);
+            bool openedSourceScene = !sourceScene.IsValid() || !sourceScene.isLoaded;
+            if (openedSourceScene)
+                sourceScene = EditorSceneManager.OpenScene(SourceScenePath, OpenSceneMode.Additive);
+
+            try
             {
-                EditorSceneManager.CloseScene(sourceScene, true);
-                throw new MissingReferenceException($"AudioManager was not found in {SourceScenePath}");
+                AudioManager source = sourceScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<AudioManager>(true))
+                    .FirstOrDefault();
+                if (source == null)
+                    throw new MissingReferenceException($"AudioManager was not found in {SourceScenePath}");
+
+                SceneManager.SetActiveScene(testScene);
+                GameObject audioObject = new("AudioManager");
+                AudioManager destination = audioObject.AddComponent<AudioManager>();
+                EditorUtility.CopySerialized(source, destination);
+            }
+            finally
+            {
+                if (openedSourceScene)
+                    EditorSceneManager.CloseScene(sourceScene, true);
+            }
+        }
+
+        private static void ConfigureController(TurretTestController controller)
+        {
+            SerializedObject serializedController = new(controller);
+            serializedController.Update();
+
+            SerializedProperty upgrades = serializedController.FindProperty("sampleUpgrades");
+            if (upgrades != null && upgrades.arraySize == 0)
+            {
+                UnityEngine.Object highFirepower = AssetDatabase.LoadMainAssetAtPath(HighFirepowerPath);
+                UnityEngine.Object lowPower = AssetDatabase.LoadMainAssetAtPath(LowPowerPath);
+                if (highFirepower != null && lowPower != null)
+                {
+                    upgrades.arraySize = 2;
+                    upgrades.GetArrayElementAtIndex(0).objectReferenceValue = highFirepower;
+                    upgrades.GetArrayElementAtIndex(1).objectReferenceValue = lowPower;
+                }
+                else
+                {
+                    Debug.LogWarning("[TurretTestSceneBuilder] Sample upgrade assets were not found.");
+                }
             }
 
-            SceneManager.SetActiveScene(testScene);
-            GameObject audioObject = new("AudioManager");
-            AudioManager destination = audioObject.AddComponent<AudioManager>();
-            EditorUtility.CopySerialized(source, destination);
+            SerializedProperty catalog = serializedController.FindProperty("levelUpgradeCatalog");
+            if (catalog != null && catalog.objectReferenceValue == null)
+            {
+                catalog.objectReferenceValue = AssetDatabase.LoadMainAssetAtPath(LevelUpgradeCatalogPath);
+                if (catalog.objectReferenceValue == null)
+                    Debug.LogWarning("[TurretTestSceneBuilder] Level upgrade catalog was not found.");
+            }
 
-            EditorSceneManager.CloseScene(sourceScene, true);
+            serializedController.ApplyModifiedProperties();
         }
 
         private static GameObject InstantiatePrefab(
@@ -134,6 +224,26 @@ namespace TeamHJD.Game.Editor
             string instanceName,
             Vector3 position)
         {
+            if (prefabPath == ControlUnitPrefabPath)
+            {
+                ControlUnitStatus existingUnit = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<ControlUnitStatus>(true))
+                    .FirstOrDefault(unit => unit.name == "ControlUnit");
+                if (existingUnit != null)
+                    return existingUnit.gameObject;
+            }
+            else
+            {
+                TurretBase existingTurret = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<TurretBase>(true))
+                    .FirstOrDefault(turret => string.Equals(
+                        PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(turret.gameObject),
+                        prefabPath,
+                        StringComparison.OrdinalIgnoreCase));
+                if (existingTurret != null)
+                    return existingTurret.gameObject;
+            }
+
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             if (prefab == null)
             {

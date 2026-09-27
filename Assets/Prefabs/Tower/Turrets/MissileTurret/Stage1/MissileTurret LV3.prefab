@@ -780,6 +780,8 @@ GameObject:
   - component: {fileID: 5975951976129630125}
   - component: {fileID: 1963368194955897969}
   - component: {fileID: 5345101069304882934}
+  - component: {fileID: 4848100535385575986}
+  - component: {fileID: 4623217508369570199}
   m_Layer: 0
   m_Name: MissileTurret LV3
   m_TagString: Tower
@@ -787,6 +789,37 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &4848100535385575986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7841013048737065956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f52a29d5e2e4832a13e80d597e26764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _turret: {fileID: 8835418960737341895}
+  _fakeFirepowerRatio: 0.5
+--- !u!114 &4623217508369570199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7841013048737065956}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  targetType: 1
+  maxHealth: 0
+  currentHealth: 0
+  maxFirepower: 1
+  currentFirepower: 0.5
 --- !u!4 &7382555984001617204
 Transform:
   m_ObjectHideFlags: 0
