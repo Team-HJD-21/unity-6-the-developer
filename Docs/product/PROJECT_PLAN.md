@@ -23,7 +23,7 @@
 
 ## 3. Core Loop와 Meta Loop
 
-Stage 1 PoC는 전제 1(동적 전선)과 전제 2(지역 해금)가 각각 재미있는 전력·전선 선택을 만드는지 시험한다. 두 안의 구현 순서와 병행 범위는 아직 정하지 않았고, 전제 3(기존 웨이브 진행)은 보류한다. Spaceship의 연구, 결과 성장, 다음 Mission 선택은 이번 재미 검증의 완료 조건이 아니라 M2 Product Vertical Slice의 목표다. [진행 방식 비교](../planning/2026-09-22-progression-options.md)와 [9월 26일 검토 방향](../planning/2026-09-26-stage1-planning.md)을 참고한다.
+Stage 1 PoC는 전제 1(동적 전선)과 전제 2(지역 해금)가 각각 재미있는 전력·전선 선택을 만드는지 시험한다. 두 안의 구현 순서와 병행 범위는 아직 정하지 않았고, 전제 3(기존 웨이브 진행)은 보류한다. Spaceship의 연구, 결과 성장, 다음 Mission 선택은 이번 재미 검증의 완료 조건이 아니라 M2 Product Vertical Slice의 목표다. 보관된 [진행 방식 비교](../archive/2026-09-22-progression-options.md)와 [9월 26일 회의 근거](../archive/2026-09-26-stage1-planning.md)를 참고한다.
 
 ```text
 Spaceship에서 Stage 1으로 이동
