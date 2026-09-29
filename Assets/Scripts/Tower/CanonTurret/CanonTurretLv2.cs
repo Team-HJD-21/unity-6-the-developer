@@ -21,8 +21,6 @@ public class CanonTurretLv2 : DefaultCanonTurret
     {
         _bulletObj = new GameObject[bulletSpawnPoint.Length];
         GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
-        //Turrets Attack Range
-        rangeTransform.localScale = new Vector3(Range*2.5f, Range*2.5f, 1f);
     }
     override 
     protected void Shoot()//총알 객체화 후 목표로 발사(FireRateController에서 수행)

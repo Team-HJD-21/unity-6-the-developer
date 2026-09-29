@@ -83,12 +83,41 @@ namespace TeamHJD.Game.Turrets
                 powerSource,
                 Power);
 
+            RefreshRangeVisual();
+
             if (shouldStartActivated)
             {
                 StartCoroutine(RequestInitialActivation());
             }
 
             return true;
+        }
+
+        protected void RefreshRangeVisual()
+        {
+            if (rangeTransform == null || rangeRenderer == null || rangeRenderer.sprite == null)
+            {
+                return;
+            }
+
+            // Sprite.bounds already accounts for Pixels Per Unit. Compensate for the
+            // parent hierarchy so the rendered diameter matches the attack range.
+            Vector2 spriteSize = rangeRenderer.sprite.bounds.size;
+            Vector3 parentScale = rangeTransform.parent != null
+                ? rangeTransform.parent.lossyScale
+                : Vector3.one;
+            float width = spriteSize.x * Mathf.Abs(parentScale.x);
+            float height = spriteSize.y * Mathf.Abs(parentScale.y);
+            if (width <= Mathf.Epsilon || height <= Mathf.Epsilon)
+            {
+                return;
+            }
+
+            float diameter = Range * 2f;
+            Vector3 localScale = rangeTransform.localScale;
+            localScale.x = diameter / width;
+            localScale.y = diameter / height;
+            rangeTransform.localScale = localScale;
         }
 
         public TurretActivationResult RequestActivation(bool shouldActivate)
