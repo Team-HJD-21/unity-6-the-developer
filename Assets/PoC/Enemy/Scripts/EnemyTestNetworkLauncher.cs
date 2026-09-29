@@ -83,6 +83,12 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
     /// </summary>
     private void StartHost()
     {
+        if (monsterSpawner == null)
+        {
+            Debug.LogError("Monster spawner is not assigned.");
+            return;
+        }
+
         // Host 실행에 실패하면 몬스터를 생성하지 않는다.
         if (!_networkManager.StartHost())
         {
@@ -90,6 +96,11 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
             Debug.LogError("Failed to start the network host.");
             return;
         }
+        
+        SpawnInstruction instruction =
+            new SpawnInstruction("Slime", "SpawnPoint1", 3);
+            
+        monsterSpawner.Execute(instruction);
     }
 
     /// <summary>

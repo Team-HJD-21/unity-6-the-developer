@@ -4,6 +4,7 @@ using UnityEngine;
 /// <see cref="PoCAIBrain"/>이 선택한 타겟에 따라 실제 몬스터 행동을 수행한다.
 /// 타겟과의 거리를 기준으로 이동 또는 공격을 실행하고 애니메이션 상태를 갱신한다.
 /// </summary>
+[RequireComponent(typeof(Animator))]
 public class PoCMonster : MonoBehaviour
 {
     // Animator 파라미터

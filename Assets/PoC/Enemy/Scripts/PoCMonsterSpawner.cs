@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,10 +7,10 @@ using UnityEngine;
 /// </summary>
 public class PoCMonsterSpawner : NetworkBehaviour
 {
-    [Header("임시 생성")]
-    [SerializeField] private GameObject tempMonsterPrefab;
-    [SerializeField] private Transform tempSpawnPoint;
-
+    [SerializeField] private EnemyCatalog enemyList;
+    [SerializeField] private SpawnPointRegistry spawnPointList;
+    
+    
     /// <summary>
     /// 전달받은 명령을 검증하고 서버에서 테스트 몬스터를 생성한다.
     /// </summary>
@@ -19,24 +18,58 @@ public class PoCMonsterSpawner : NetworkBehaviour
     public void Execute(SpawnInstruction spawnInstruction)
     {
         // 네트워크 오브젝트 생성은 서버에서만 수행한다.
-        if (!IsServer || spawnInstruction.Count < 0)
+        if (!IsServer || spawnInstruction.Count <= 0)
             return;
 
-        // [임시] 등록된 프리팹이 없으면 생성하지 않는다.
-        if (tempMonsterPrefab == null || tempSpawnPoint == null)
+        if (enemyList == null || spawnPointList == null)
+        {
+            Debug.LogError("Spawner dependencies are not assigned.");
             return;
+        }
 
-        // 임시 프리팹을 지정된 테스트 위치에 생성한다.
-        GameObject spawnedMonster = Instantiate(
-            tempMonsterPrefab,
-            tempSpawnPoint.position,
-            tempSpawnPoint.rotation);
+        
+        if (!enemyList.TryGetDefinition(
+                spawnInstruction.EnemyId,
+                out EnemyDefinition enemy))
+        {
+            Debug.LogError($"Enemy not found: {spawnInstruction.EnemyId}");
+            return;
+        }
 
-        // 생성된 몬스터를 NGO에 등록해 모든 클라이언트에 전달한다.
-        NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
-        networkObject.Spawn();
+        if (!spawnPointList.TryGetSpawnPoint(
+                spawnInstruction.SpawnPointId,
+                out SpawnPoint spawnPoint))
+        {
+            Debug.LogError($"SpawnPoint not found: {spawnInstruction.SpawnPointId}");
+            return;
+        }
 
-        // 테스트 중 생성된 위치를 확인하기 위해 로그를 남긴다.
-        Debug.Log($"Spawned test monster: {tempSpawnPoint.name}");
+        if (enemy.Prefab == null ||
+            !enemy.Prefab.TryGetComponent<NetworkObject>(out _))
+        {
+            Debug.LogError(
+                $"Enemy prefab requires NetworkObject: {enemy.EnemyId}");
+            return;
+        }
+
+        for (int i = 0; i < spawnInstruction.Count; i++)
+        {
+            
+            Vector2 offset = Random.insideUnitCircle * spawnPoint.SpawnRadius;
+
+            Vector3 spawnPosition =
+                spawnPoint.Position + new Vector3(offset.x, offset.y, 0f);
+            
+            GameObject spawnedMonster = Instantiate(
+                enemy.Prefab,
+                spawnPosition,
+                spawnPoint.Rotation);
+
+            // 생성된 몬스터를 NGO에 등록해 모든 클라이언트에 전달한다.
+            NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
+            networkObject.Spawn();
+            
+            
+        }
     }
 }
