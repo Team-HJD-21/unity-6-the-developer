@@ -135,7 +135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2848244634
+  GlobalObjectIdHash: 523127757
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -263,7 +263,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoCMonsterNetwork
   ShowTopMostFoldoutHeaderGroup: 1
-  monsterAiBrain: {fileID: 0}
 --- !u!114 &784396215047286331
 MonoBehaviour:
   m_ObjectHideFlags: 0

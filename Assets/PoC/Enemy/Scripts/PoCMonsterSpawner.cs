@@ -3,42 +3,40 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 등록된 적 프리팹 중 하나를 서버에서 무작위로 생성하는 PoC용 스포너다.
-/// 생성된 몬스터는 <see cref="NetworkObject"/>로 모든 클라이언트에 스폰한다.
+/// 전달받은 생성 명령을 서버에서 실행하는 PoC용 스폰 실행기다.
+/// 현재는 임시 프리팹과 위치를 사용하며, 생성된 몬스터를 모든 클라이언트에 동기화한다.
 /// </summary>
 public class PoCMonsterSpawner : NetworkBehaviour
 {
-    [Header("생성 설정")]
-    [SerializeField] private List<GameObject> monsterPrefabs;
-    [SerializeField] private Transform spawnPoint;
+    [Header("임시 생성")]
+    [SerializeField] private GameObject tempMonsterPrefab;
+    [SerializeField] private Transform tempSpawnPoint;
 
     /// <summary>
-    /// 서버에서 몬스터를 생성한 뒤 모든 클라이언트에 스폰한다.
+    /// 전달받은 명령을 검증하고 서버에서 테스트 몬스터를 생성한다.
     /// </summary>
-    public void Spawn()
+    /// <param name="spawnInstruction">생성할 적과 위치, 수량 정보가 담긴 명령.</param>
+    public void Execute(SpawnInstruction spawnInstruction)
     {
         // 네트워크 오브젝트 생성은 서버에서만 수행한다.
-        if (!IsServer)
+        if (!IsServer || spawnInstruction.Count < 0)
             return;
 
-        // 등록된 프리팹이 없으면 생성하지 않는다.
-        if (monsterPrefabs == null || monsterPrefabs.Count == 0)
+        // [임시] 등록된 프리팹이 없으면 생성하지 않는다.
+        if (tempMonsterPrefab == null || tempSpawnPoint == null)
             return;
 
-        // 생성할 몬스터 유형을 무작위로 선택한다.
-        GameObject selectedPrefab =
-            monsterPrefabs[Random.Range(0, monsterPrefabs.Count)];
-
+        // 임시 프리팹을 지정된 테스트 위치에 생성한다.
         GameObject spawnedMonster = Instantiate(
-            selectedPrefab,
-            spawnPoint.position,
-            spawnPoint.rotation);
+            tempMonsterPrefab,
+            tempSpawnPoint.position,
+            tempSpawnPoint.rotation);
 
         // 생성된 몬스터를 NGO에 등록해 모든 클라이언트에 전달한다.
         NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
         networkObject.Spawn();
 
-        // 무작위로 선택된 AI 유형을 테스트 중 확인하기 위해 유지한다.
-        Debug.Log($"Spawned test monster: {selectedPrefab.name}");
+        // 테스트 중 생성된 위치를 확인하기 위해 로그를 남긴다.
+        Debug.Log($"Spawned test monster: {tempSpawnPoint.name}");
     }
 }

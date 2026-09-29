@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// 적 AI 네트워크 PoC를 실행하기 위한 테스트 UI다.
-/// Host와 Client 시작, 연결 상태 확인, 테스트 몬스터 생성을 담당한다.
+/// Host와 Client 시작 및 연결 상태 확인을 담당한다.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
@@ -79,7 +79,7 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
     }
 
     /// <summary>
-    /// 호스트를 시작하고 테스트 몬스터를 생성한다.
+    /// 네트워크 호스트를 시작한다.
     /// </summary>
     private void StartHost()
     {
@@ -90,11 +90,6 @@ public sealed class EnemyTestNetworkLauncher : MonoBehaviour
             Debug.LogError("Failed to start the network host.");
             return;
         }
-
-        // 타깃 선택 동작을 비교할 테스트 몬스터 세 마리를 생성한다.
-        monsterSpawner.Spawn();
-        monsterSpawner.Spawn();
-        monsterSpawner.Spawn();
     }
 
     /// <summary>
