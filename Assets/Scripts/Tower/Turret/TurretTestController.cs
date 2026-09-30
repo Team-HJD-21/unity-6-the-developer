@@ -283,6 +283,7 @@ namespace TeamHJD.Game.Debugging
                 GUILayout.Label(
                     $"HP {snapshot.CurrentHealth}/{snapshot.MaxHealth}  |  Damage {snapshot.EffectiveDamage}  |  " +
                     $"Range {snapshot.Range:F1}  |  Power {snapshot.EffectivePower}");
+                GUILayout.Label($"Spec Branch: {snapshot.SelectedUpgradeId} / Rank {snapshot.UpgradeLevel}/5");
             }
             else
             {
@@ -364,6 +365,7 @@ namespace TeamHJD.Game.Debugging
                     $"Damage {before.EffectiveDamage} / Range {before.Range:F1} / Power {before.EffectivePower}");
                 GUILayout.Label($"Before: Active {before.IsActivated} / Locked {before.IsLocked} / " +
                     $"Destroyed {before.IsDestroyed}");
+                GUILayout.Label($"Before: Branch {before.SelectedUpgradeId} / Rank {before.UpgradeLevel}/5");
             }
 
             DrawUpgradeButtons(turret);
@@ -411,7 +413,6 @@ namespace TeamHJD.Game.Debugging
                 return;
             }
 
-            GUILayout.BeginHorizontal();
             foreach (TurretUpgradeDefinition upgrade in sampleUpgrades)
             {
                 if (upgrade == null || !upgrade.IsCompatibleWith(turret.Definition?.Id))
@@ -419,21 +420,32 @@ namespace TeamHJD.Game.Debugging
                     continue;
                 }
 
-                bool canApply =
-                    !turret.IsDestroyed &&
-                    upgrade.IsCompatibleWith(turret.Definition?.Id) &&
-                    !turret.RuntimeState.HasAppliedUpgrade(upgrade.Id);
-                GUI.enabled = canApply;
-
-                if (GUILayout.Button($"{upgrade.DisplayName} (R {upgrade.RangeModifierRatio:+0%;-0%;0%})"))
+                TurretRuntimeState state = turret.RuntimeState;
+                bool branchAvailable = state.UpgradeLevel == 0 || state.SelectedUpgradeId == upgrade.Id;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(upgrade.DisplayName, GUILayout.Width(150f));
+                GUI.enabled = !turret.IsDestroyed && branchAvailable &&
+                    state.UpgradeLevel < TurretRuntimeState.MaximumUpgradeLevel;
+                if (GUILayout.Button("+1", GUILayout.Width(50f)))
                 {
                     TurretUpgradeResult result = turret.ApplyUpgrade(upgrade);
                     _lastUpgradeAction = $"{turret.name} / {upgrade.DisplayName}: {result}";
                 }
+                GUI.enabled = !turret.IsDestroyed && state.HasAppliedUpgrade(upgrade.Id);
+                if (GUILayout.Button("-1", GUILayout.Width(50f)))
+                {
+                    TurretUpgradeResult result = turret.DowngradeUpgrade(upgrade);
+                    _lastUpgradeAction = $"{turret.name} / {upgrade.DisplayName}: {result}";
+                }
+                GUI.enabled = true;
+                if (!branchAvailable)
+                    GUILayout.Label("LOCKED");
+                GUILayout.EndHorizontal();
+                GUILayout.Label($"Per step: Damage {upgrade.DamageModifierRatio:+0%;-0%;0%} / " +
+                    $"Power {upgrade.PowerModifierRatio:+0%;-0%;0%} / Range {upgrade.RangeModifierRatio:+0%;-0%;0%}");
             }
 
             GUI.enabled = true;
-            GUILayout.EndHorizontal();
         }
 
         private void RefreshReferences()

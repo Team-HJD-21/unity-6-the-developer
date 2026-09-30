@@ -19,6 +19,7 @@ namespace TeamHJD.Game.Turrets
         public static event Action<TurretBase> Destroyed;
         public static event Action<TurretBase> Restored;
         public static event Action<TurretBase, TurretUpgradeDefinition> UpgradeApplied;
+        public static event Action<TurretBase, TurretUpgradeDefinition> UpgradeDowngraded;
         public static event Action<TurretBase, TurretBase> LevelUpgraded;
         public static event Action<TurretBase, TurretBase> LevelDowngraded;
         // The ID is the only event payload. Query again for the latest values.
@@ -42,6 +43,7 @@ namespace TeamHJD.Game.Turrets
             Destroyed = null;
             Restored = null;
             UpgradeApplied = null;
+            UpgradeDowngraded = null;
             LevelUpgraded = null;
             LevelDowngraded = null;
             SnapshotChanged = null;
@@ -226,6 +228,12 @@ namespace TeamHJD.Game.Turrets
             LevelUpgraded?.Invoke(previous, current);
         }
 
+        internal static void NotifyUpgradeDowngraded(TurretBase turret, TurretUpgradeDefinition upgrade)
+        {
+            NotifySnapshotChanged(turret);
+            UpgradeDowngraded?.Invoke(turret, upgrade);
+        }
+
         internal static void NotifyLevelDowngraded(TurretBase previous, TurretBase current)
         {
             NotifySnapshotChanged(current);
@@ -274,7 +282,9 @@ namespace TeamHJD.Game.Turrets
                 turret.MaxHealth,
                 turret.EffectiveDamage,
                 turret.EffectiveRange,
-                turret.EffectivePower);
+                turret.EffectivePower,
+                turret.RuntimeState.SelectedUpgradeId,
+                turret.RuntimeState.UpgradeLevel);
         }
 
         private static int AllocateInstanceId()

@@ -24,6 +24,6 @@ MonoBehaviour:
   - missile_stage3_lv1
   - missile_stage3_lv2
   - missile_stage3_lv3
-  _damageModifier: -3
-  _powerModifier: -5
+  _damageModifierRatio: -0.1
+  _powerModifierRatio: -0.1
   _rangeModifierRatio: 0.1

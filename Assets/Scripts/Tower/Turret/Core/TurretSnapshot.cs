@@ -20,6 +20,8 @@ namespace TeamHJD.Game.Turrets
         public int EffectiveDamage { get; }
         public float Range { get; }
         public int EffectivePower { get; }
+        public string SelectedUpgradeId { get; }
+        public int UpgradeLevel { get; }
 
         internal TurretSnapshot(
             int instanceId,
@@ -33,7 +35,9 @@ namespace TeamHJD.Game.Turrets
             int maxHealth,
             int effectiveDamage,
             float range,
-            int effectivePower)
+            int effectivePower,
+            string selectedUpgradeId,
+            int upgradeLevel)
         {
             InstanceId = instanceId;
             DefinitionId = definitionId;
@@ -47,6 +51,8 @@ namespace TeamHJD.Game.Turrets
             EffectiveDamage = effectiveDamage;
             Range = range;
             EffectivePower = effectivePower;
+            SelectedUpgradeId = selectedUpgradeId;
+            UpgradeLevel = upgradeLevel;
         }
     }
 }
