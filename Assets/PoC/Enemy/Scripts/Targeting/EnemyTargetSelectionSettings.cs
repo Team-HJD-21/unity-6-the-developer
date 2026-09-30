@@ -2,10 +2,10 @@ using UnityEngine;
 
 /// <summary>
 /// 모든 적 AI가 공유하는 점수 가중치와 타깃 재선택 기준을 보관한다.
-/// AI 유형별 선호 점수는 <see cref="PoCAIProfile"/>에서 별도로 관리한다.
+/// AI 유형별 선호 점수는 <see cref="EnemyAIProfile"/>에서 별도로 관리한다.
 /// </summary>
-[CreateAssetMenu(menuName = "The Developer/PoC Target Selection Settings")]
-public class PoCTargetSelectionSettings : ScriptableObject
+[CreateAssetMenu(menuName = "The Developer/Enemy/Target Selection Settings")]
+public class EnemyTargetSelectionSettings : ScriptableObject
 {
     /// <summary>
     /// 가장 가까운 타깃이 받을 수 있는 최대 거리 점수다.

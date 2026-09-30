@@ -4,10 +4,10 @@ using UnityEngine;
 /// 타깃 선택에 사용되는 최종 점수를 계산한다.
 /// AI 유형 선호도, 거리, 낮은 체력은 가산하고 높은 화력은 위험 요소로 감점한다.
 /// </summary>
-public class PoCTargetScoreEvaluator : MonoBehaviour
+public class EnemyTargetScoreEvaluator : MonoBehaviour
 {
-    [SerializeField] private PoCAIProfile targetPreference;
-    [SerializeField] private PoCTargetSelectionSettings targetSetting;
+    [SerializeField] private EnemyAIProfile targetPreference;
+    [SerializeField] private EnemyTargetSelectionSettings targetSetting;
 
     /// <summary>
     /// 유형 선호도와 거리, 체력, 화력을 기준으로 타깃 선택 점수를 계산한다.

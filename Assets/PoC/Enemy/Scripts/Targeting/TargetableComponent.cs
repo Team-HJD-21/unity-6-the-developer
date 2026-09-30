@@ -4,7 +4,7 @@ using UnityEngine;
 /// 플레이어와 터렛을 <see cref="ITargetable"/>로 연결하는 PoC용 컴포넌트다.
 /// 타깃 유형과 체력, 화력 상태를 점수 계산에 사용할 수 있는 형태로 제공한다.
 /// </summary>
-public class PoCTargetable : MonoBehaviour, ITargetable
+public class TargetableComponent : MonoBehaviour, ITargetable
 {
     [Header("타깃 설정")]
     [SerializeField] private TargetType targetType;

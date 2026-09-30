@@ -176,7 +176,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCMonsterSpawner
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
   ShowTopMostFoldoutHeaderGroup: 1
   enemyList: {fileID: 11400000, guid: 88948902b3d6e24488d5e338c2ccff02, type: 2}
   spawnPointList: {fileID: 225821990}
@@ -362,7 +362,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetable
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
   targetType: 0
   maxHealth: 100
   currentHealth: 100
@@ -398,7 +398,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetable
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
   targetType: 1
   maxHealth: 100
   currentHealth: 100
@@ -554,7 +554,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetable
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
   targetType: 1
   maxHealth: 100
   currentHealth: 100
@@ -1122,7 +1122,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: afee2fd02998d994f8f62eda64603f11, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyTestNetworkLauncher
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
   monsterSpawner: {fileID: 225821988}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

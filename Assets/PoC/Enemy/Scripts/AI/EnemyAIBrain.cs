@@ -3,25 +3,25 @@ using UnityEngine;
 /// <summary>
 /// 몬스터 AI의 판단 흐름을 관리한다.
 /// 타깃이 유효하지 않거나 재탐색 주기가 지나면 새 타깃을 선택하고,
-/// 선택 결과를 <see cref="PoCMonster"/>에 전달해 행동을 실행시킨다.
+/// 선택 결과를 <see cref="EnemyController"/>에 전달해 행동을 실행시킨다.
 /// </summary>
-[RequireComponent(typeof(PoCTargetSelector), typeof(PoCMonster))]
-public class PoCAIBrain : MonoBehaviour
+[RequireComponent(typeof(EnemyTargetSelector), typeof(EnemyController))]
+public class EnemyAIBrain : MonoBehaviour
 {
-    [SerializeField] private PoCTargetSelectionSettings targetSettings;
+    [SerializeField] private EnemyTargetSelectionSettings targetSettings;
 
     private float _nextRetargetTime;
     private ITargetable _currentTarget;
-    private PoCTargetSelector _targetSelector;
-    private PoCMonster _monster;
+    private EnemyTargetSelector _targetSelector;
+    private EnemyController _monster;
 
     /// <summary>
     /// 타깃 선택기와 행동 실행 컴포넌트를 초기화한다.
     /// </summary>
     private void Awake()
     {
-        _targetSelector = GetComponent<PoCTargetSelector>();
-        _monster = GetComponent<PoCMonster>();
+        _targetSelector = GetComponent<EnemyTargetSelector>();
+        _monster = GetComponent<EnemyController>();
     }
 
     /// <summary>

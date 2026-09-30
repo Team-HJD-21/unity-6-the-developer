@@ -5,13 +5,13 @@ using UnityEngine;
 /// 몬스터 주변에서 선택 가능한 타깃을 수집하고 최고 점수의 타깃을 선택한다.
 /// 기존 타깃보다 점수가 일정 값 이상 높을 때만 교체해 잦은 타깃 전환을 방지한다.
 /// </summary>
-[RequireComponent(typeof(PoCTargetScoreEvaluator))]
-public class PoCTargetSelector : MonoBehaviour
+[RequireComponent(typeof(EnemyTargetScoreEvaluator))]
+public class EnemyTargetSelector : MonoBehaviour
 {
-    [SerializeField] private PoCTargetSelectionSettings targetSettings;
+    [SerializeField] private EnemyTargetSelectionSettings targetSettings;
 
     private ITargetable _target;
-    private PoCTargetScoreEvaluator _scoreEvaluator;
+    private EnemyTargetScoreEvaluator _scoreEvaluator;
 
     // 탐색 결과를 재사용하는 리스트
     private readonly List<Collider2D> _overlapResults = new(32);
@@ -26,7 +26,7 @@ public class PoCTargetSelector : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        _scoreEvaluator = GetComponent<PoCTargetScoreEvaluator>();
+        _scoreEvaluator = GetComponent<EnemyTargetScoreEvaluator>();
 
         // 현재는 모든 레이어의 Trigger Collider를 타깃 후보로 탐색한다.
         _contactFilter = new ContactFilter2D
@@ -124,8 +124,8 @@ public class PoCTargetSelector : MonoBehaviour
         foreach (Collider2D targetCollider in _overlapResults)
         {
             // Collider의 부모까지 확인한다.
-            PoCTargetable targetable =
-                targetCollider.GetComponentInParent<PoCTargetable>();
+            TargetableComponent targetable =
+                targetCollider.GetComponentInParent<TargetableComponent>();
 
             if (targetable == null || !targetable.CanBeTargeted)
                 continue;

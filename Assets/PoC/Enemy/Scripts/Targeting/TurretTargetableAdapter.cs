@@ -6,13 +6,13 @@ using UnityEngine;
 /// Firepower remains a temporary ratio until its calculation is agreed.
 /// </summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(PoCTargetable))]
+[RequireComponent(typeof(TargetableComponent))]
 public sealed class TurretTargetableAdapter : MonoBehaviour
 {
     [SerializeField] private TurretBase _turret;
     [SerializeField, Range(0f, 1f)] private float _fakeFirepowerRatio = 0.5f;
 
-    private PoCTargetable _targetable;
+    private TargetableComponent _targetable;
 
     private void Reset()
     {
@@ -21,7 +21,7 @@ public sealed class TurretTargetableAdapter : MonoBehaviour
 
     private void Awake()
     {
-        _targetable = GetComponent<PoCTargetable>();
+        _targetable = GetComponent<TargetableComponent>();
         if (_turret == null)
             _turret = GetComponentInParent<TurretBase>();
 

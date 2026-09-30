@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 63ddac7749620e24499e35d04e2a7d05, type: 3}
-  m_Name: EnemyTargetSetting
-  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetSelectionSettings
+  m_Name: EnemyTargetSelectionSettings
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyTargetSelectionSettings
   maxDistanceWeight: 40
   maxLowHealthWeight: 20
   maxThreatWeight: 15

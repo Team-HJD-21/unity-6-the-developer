@@ -7,7 +7,7 @@ using UnityEngine;
 /// 이동 상태는 <see cref="NetworkVariable{T}"/>로, 공격은 RPC 이벤트로 전달한다.
 /// </summary>
 [RequireComponent(typeof(Animator))]
-public class PoCMonsterNetworkAnimator : NetworkBehaviour
+public class EnemyNetworkAnimator : NetworkBehaviour
 {
     // Animator 파라미터
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
@@ -17,7 +17,7 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     private static readonly int AttackHash = Animator.StringToHash("Attack");
 
     // 네트워크 상태
-    private readonly NetworkVariable<PoCMonsterAnimatorState> _movementState = new();
+    private readonly NetworkVariable<EnemyAnimatorState> _movementState = new();
     private Animator _animator;
 
     /// <summary>
@@ -86,7 +86,7 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     private void PublishMovementState()
     {
         // 서버 Animator의 현재 이동 값을 네트워크 전송 구조체로 변환한다.
-        var nextState = new PoCMonsterAnimatorState(
+        var nextState = new EnemyAnimatorState(
             _animator.GetBool(IsMovingHash),
             _animator.GetFloat(MoveXHash),
             _animator.GetFloat(MoveYHash),
@@ -103,8 +103,8 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     /// <param name="previous">변경 전 이동 상태.</param>
     /// <param name="current">변경 후 이동 상태.</param>
     private void OnMovementStateChanged(
-        PoCMonsterAnimatorState previous,
-        PoCMonsterAnimatorState current)
+        EnemyAnimatorState previous,
+        EnemyAnimatorState current)
     {
         // 서버는 원본 Animator를 사용하므로 수신한 상태는 클라이언트에만 적용한다.
         if (!IsServer)
@@ -114,7 +114,7 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
     /// <summary>
     /// 동기화된 이동 상태를 Animator 파라미터에 적용한다.
     /// </summary>
-    private void ApplyMovementState(PoCMonsterAnimatorState state)
+    private void ApplyMovementState(EnemyAnimatorState state)
     {
         _animator.SetBool(IsMovingHash, state.IsMoving);
         _animator.SetFloat(MoveXHash, state.MoveX);
@@ -126,7 +126,7 @@ public class PoCMonsterNetworkAnimator : NetworkBehaviour
 /// <summary>
 /// 네트워크로 전달할 이동 애니메이션 값을 보관한다.
 /// </summary>
-public struct PoCMonsterAnimatorState : INetworkSerializable, IEquatable<PoCMonsterAnimatorState>
+public struct EnemyAnimatorState : INetworkSerializable, IEquatable<EnemyAnimatorState>
 {
     // 이동 애니메이션 값
     public bool IsMoving;
@@ -137,7 +137,7 @@ public struct PoCMonsterAnimatorState : INetworkSerializable, IEquatable<PoCMons
     /// <summary>
     /// 동기화할 이동 애니메이션 상태를 생성한다.
     /// </summary>
-    public PoCMonsterAnimatorState(bool isMoving, float moveX, float moveY, float moveAnimSpeed)
+    public EnemyAnimatorState(bool isMoving, float moveX, float moveY, float moveAnimSpeed)
     {
         IsMoving = isMoving;
         MoveX = moveX;
@@ -160,7 +160,7 @@ public struct PoCMonsterAnimatorState : INetworkSerializable, IEquatable<PoCMons
     /// <summary>
     /// 두 이동 상태의 모든 값이 같은지 비교한다.
     /// </summary>
-    public bool Equals(PoCMonsterAnimatorState other)
+    public bool Equals(EnemyAnimatorState other)
     {
         return IsMoving == other.IsMoving &&
                MoveX.Equals(other.MoveX) &&
@@ -173,7 +173,7 @@ public struct PoCMonsterAnimatorState : INetworkSerializable, IEquatable<PoCMons
     /// </summary>
     public override bool Equals(object obj)
     {
-        return obj is PoCMonsterAnimatorState other && Equals(other);
+        return obj is EnemyAnimatorState other && Equals(other);
     }
 
     /// <summary>

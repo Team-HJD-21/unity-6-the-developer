@@ -1,11 +1,11 @@
 using UnityEngine;
 
 /// <summary>
-/// <see cref="PoCAIBrain"/>이 선택한 타겟에 따라 실제 몬스터 행동을 수행한다.
+/// <see cref="EnemyAIBrain"/>이 선택한 타겟에 따라 실제 몬스터 행동을 수행한다.
 /// 타겟과의 거리를 기준으로 이동 또는 공격을 실행하고 애니메이션 상태를 갱신한다.
 /// </summary>
 [RequireComponent(typeof(Animator))]
-public class PoCMonster : MonoBehaviour
+public class EnemyController : MonoBehaviour
 {
     // Animator 파라미터
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
@@ -28,14 +28,14 @@ public class PoCMonster : MonoBehaviour
     // 런타임 상태
     private Transform _target;
     private float _nextAttackTime;
-    private PoCMonsterNetworkAnimator _networkAnimator;
+    private EnemyNetworkAnimator _networkAnimator;
 
     /// <summary>
     /// 필요한 컴포넌트 참조를 초기화한다.
     /// </summary>
     private void Awake()
     {
-        _networkAnimator = GetComponent<PoCMonsterNetworkAnimator>();
+        _networkAnimator = GetComponent<EnemyNetworkAnimator>();
         if (animator == null)
             animator = GetComponent<Animator>();
     }

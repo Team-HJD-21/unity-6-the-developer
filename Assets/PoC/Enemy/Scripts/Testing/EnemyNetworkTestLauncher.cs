@@ -7,11 +7,11 @@ using UnityEngine;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyTestNetworkLauncher : MonoBehaviour
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour
 {
     private const int TargetFrameRate = 120;
 
-    [Header("참조")] [SerializeField] private PoCMonsterSpawner monsterSpawner;
+    [Header("참조")] [SerializeField] private EnemySpawnExecutor monsterSpawner;
 
     private NetworkManager _networkManager;
 
