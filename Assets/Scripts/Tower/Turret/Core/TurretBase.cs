@@ -32,6 +32,7 @@ namespace TeamHJD.Game.Turrets
         public bool IsActivated => _runtimeState.IsActivated;
         public bool IsOperational => _runtimeState.IsOperational;
         public bool IsDestroyed => _runtimeState.IsDestroyed;
+        public bool IsLocked => _runtimeState.IsLocked;
         public int CurrentHealth => _runtimeState.CurrentHealth;
         public int MaxHealth => _definition != null ? _definition.MaxHealth : 0;
         public int EffectiveDamage => _definition == null
@@ -40,6 +41,9 @@ namespace TeamHJD.Game.Turrets
         public int EffectivePower => _definition == null
             ? 0
             : Mathf.Max(0, _definition.Power + _runtimeState.PowerBonus);
+        public float EffectiveRange => _definition == null
+            ? 0f
+            : Mathf.Max(0f, _definition.Range * (1f + _runtimeState.RangeModifierRatio));
         public bool ShowRange { get; set; }
 
         protected Transform TurretRotationPoint => turretRotationPoint;
@@ -47,7 +51,7 @@ namespace TeamHJD.Game.Turrets
         protected Animator Animator => animator;
         protected SpriteRenderer GunRenderer => gunRenderer;
         protected SpriteRenderer RangeRenderer => rangeRenderer;
-        protected float Range => _definition.Range;
+        protected float Range => EffectiveRange;
         protected float RotationSpeed => _definition.RotationSpeed;
         protected float FireRate => _definition.FireRate;
         protected int Power => EffectivePower;
@@ -127,6 +131,11 @@ namespace TeamHJD.Game.Turrets
                 return TurretActivationResult.Destroyed;
             }
 
+            if (shouldActivate && IsLocked)
+            {
+                return TurretActivationResult.Locked;
+            }
+
             if (_activationController == null)
             {
                 return TurretActivationResult.PowerSourceUnavailable;
@@ -149,6 +158,26 @@ namespace TeamHJD.Game.Turrets
             }
 
             return result;
+        }
+
+        public bool SetLocked(bool isLocked)
+        {
+            if (_runtimeState.IsLocked == isLocked)
+            {
+                return false;
+            }
+
+            if (isLocked && IsActivated)
+            {
+                if (RequestActivation(false) != TurretActivationResult.Deactivated)
+                {
+                    return false;
+                }
+            }
+
+            _runtimeState.SetLocked(isLocked);
+            TurretInstanceRegistry.NotifySnapshotChanged(this);
+            return true;
         }
 
         protected void SetTemporarilySuspended(bool isSuspended)
@@ -214,11 +243,13 @@ namespace TeamHJD.Game.Turrets
         public void SetDamageBonus(int damageBonus)
         {
             _runtimeState.SetDamageBonus(damageBonus);
+            TurretInstanceRegistry.NotifySnapshotChanged(this);
         }
 
         public void AddDamageBonus(int damageBonus)
         {
             _runtimeState.AddDamageBonus(damageBonus);
+            TurretInstanceRegistry.NotifySnapshotChanged(this);
         }
 
         public TurretUpgradeResult ApplyUpgrade(TurretUpgradeDefinition upgrade)
@@ -270,7 +301,9 @@ namespace TeamHJD.Game.Turrets
             _runtimeState.ApplyUpgrade(
                 upgrade.Id,
                 upgrade.DamageModifier,
-                upgrade.PowerModifier);
+                upgrade.PowerModifier,
+                upgrade.RangeModifierRatio);
+            RefreshRangeVisual();
             TurretInstanceRegistry.NotifyUpgradeApplied(this, upgrade);
             return TurretUpgradeResult.Applied;
         }
@@ -278,35 +311,51 @@ namespace TeamHJD.Game.Turrets
         public TurretLevelUpgradeResult RequestLevelUpgrade(
             TurretBase nextLevelPrefab, out TurretBase upgradedTurret)
         {
-            upgradedTurret = null;
+            return RequestLevelChange(nextLevelPrefab, 1, out upgradedTurret);
+        }
+
+        public TurretLevelUpgradeResult RequestLevelDowngrade(
+            TurretBase previousLevelPrefab, out TurretBase downgradedTurret)
+        {
+            return RequestLevelChange(previousLevelPrefab, -1, out downgradedTurret);
+        }
+
+        private TurretLevelUpgradeResult RequestLevelChange(
+            TurretBase targetLevelPrefab, int levelDelta, out TurretBase changedTurret)
+        {
+            changedTurret = null;
             if (IsDestroyed)
                 return TurretLevelUpgradeResult.Destroyed;
             if (_activationController == null || !isActiveAndEnabled)
                 return TurretLevelUpgradeResult.NotInitialized;
-            if (nextLevelPrefab == null || nextLevelPrefab.Definition == null ||
-                _definition == null || nextLevelPrefab.Definition.Level != _definition.Level + 1 ||
-                nextLevelPrefab.GetType().BaseType != GetType().BaseType)
-                return TurretLevelUpgradeResult.InvalidNextLevel;
+            if (targetLevelPrefab == null || targetLevelPrefab.Definition == null ||
+                _definition == null || targetLevelPrefab.Definition.Level != _definition.Level + levelDelta ||
+                targetLevelPrefab.GetType().BaseType != GetType().BaseType)
+                return levelDelta > 0
+                    ? TurretLevelUpgradeResult.InvalidNextLevel
+                    : TurretLevelUpgradeResult.InvalidPreviousLevel;
 
             bool wasActivated = IsActivated;
             bool showRange = ShowRange;
-            int nextPower = Mathf.Max(
-                0, nextLevelPrefab.Definition.Power + _runtimeState.PowerBonus);
+            int targetPower = Mathf.Max(
+                0, targetLevelPrefab.Definition.Power + _runtimeState.PowerBonus);
 
             // Keep the replacement asleep until its ID and health have been transferred.
-            GameObject staging = new GameObject("Turret Upgrade Staging");
+            GameObject staging = new GameObject("Turret Level Change Staging");
             staging.SetActive(false);
             GameObject replacementObject = Instantiate(
-                nextLevelPrefab.gameObject, transform.position, transform.rotation, staging.transform);
+                targetLevelPrefab.gameObject, transform.position, transform.rotation, staging.transform);
             TurretBase replacement = replacementObject.GetComponent<TurretBase>();
             if (replacement == null)
             {
                 Destroy(replacementObject);
                 Destroy(staging);
-                return TurretLevelUpgradeResult.InvalidNextLevel;
+                return levelDelta > 0
+                    ? TurretLevelUpgradeResult.InvalidNextLevel
+                    : TurretLevelUpgradeResult.InvalidPreviousLevel;
             }
 
-            PowerCostChangeResult powerResult = _activationController.TrySetPowerCost(nextPower);
+            PowerCostChangeResult powerResult = _activationController.TrySetPowerCost(targetPower);
             if (powerResult != PowerCostChangeResult.Changed)
             {
                 Destroy(replacementObject);
@@ -316,7 +365,7 @@ namespace TeamHJD.Game.Turrets
                     : TurretLevelUpgradeResult.PowerSourceUnavailable;
             }
 
-            _runtimeState.CopyForLevelUpgrade(
+            _runtimeState.CopyForLevelChange(
                 replacement._runtimeState, MaxHealth, replacement.MaxHealth);
             Transform originalParent = transform.parent;
             _activationController.DetachReservationForLevelUpgrade();
@@ -346,6 +395,7 @@ namespace TeamHJD.Game.Turrets
             }
 
             replacement.ShowRange = showRange;
+            replacement.RefreshRangeVisual();
             if (wasActivated)
             {
                 replacement._activationController.AdoptReservationForLevelUpgrade();
@@ -355,10 +405,15 @@ namespace TeamHJD.Game.Turrets
                     TurretInstanceRegistry.NotifyOperationalStateChanged(replacement, true);
             }
 
-            upgradedTurret = replacement;
-            TurretInstanceRegistry.NotifyLevelUpgraded(this, replacement);
+            changedTurret = replacement;
+            if (levelDelta > 0)
+                TurretInstanceRegistry.NotifyLevelUpgraded(this, replacement);
+            else
+                TurretInstanceRegistry.NotifyLevelDowngraded(this, replacement);
             Destroy(gameObject);
-            return TurretLevelUpgradeResult.Upgraded;
+            return levelDelta > 0
+                ? TurretLevelUpgradeResult.Upgraded
+                : TurretLevelUpgradeResult.Downgraded;
         }
 
         public bool ApplyDamage(int damage)

@@ -9,34 +9,21 @@ using UnityEngine;
 [RequireComponent(typeof(PoCTargetable))]
 public sealed class TurretTargetableAdapter : MonoBehaviour
 {
-    [SerializeField] private TurretBase _turret;
     [SerializeField, Range(0f, 1f)] private float _fakeFirepowerRatio = 0.5f;
 
     private PoCTargetable _targetable;
-
-    private void Reset()
-    {
-        _turret = GetComponentInParent<TurretBase>();
-    }
+    private int _instanceId;
 
     private void Awake()
     {
         _targetable = GetComponent<PoCTargetable>();
-        if (_turret == null)
-            _turret = GetComponentInParent<TurretBase>();
-
         _targetable.SetTargetType(TargetType.Turret);
         Synchronize();
     }
 
     private void OnEnable()
     {
-        TurretInstanceRegistry.ActivationChanged += OnActivationChanged;
-        TurretInstanceRegistry.HealthChanged += OnHealthChanged;
-        TurretInstanceRegistry.Registered += OnTurretChanged;
-        TurretInstanceRegistry.Unregistered += OnTurretChanged;
-        TurretInstanceRegistry.Destroyed += OnTurretChanged;
-        TurretInstanceRegistry.Restored += OnTurretChanged;
+        TurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
         Synchronize();
     }
 
@@ -47,22 +34,17 @@ public sealed class TurretTargetableAdapter : MonoBehaviour
 
     private void OnDisable()
     {
-        TurretInstanceRegistry.ActivationChanged -= OnActivationChanged;
-        TurretInstanceRegistry.HealthChanged -= OnHealthChanged;
-        TurretInstanceRegistry.Registered -= OnTurretChanged;
-        TurretInstanceRegistry.Unregistered -= OnTurretChanged;
-        TurretInstanceRegistry.Destroyed -= OnTurretChanged;
-        TurretInstanceRegistry.Restored -= OnTurretChanged;
+        TurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
         if (_targetable != null)
             _targetable.enabled = false;
     }
 
-    private void OnActivationChanged(TurretBase turret, bool active) => OnTurretChanged(turret);
-    private void OnHealthChanged(TurretBase turret, int current, int maximum) => OnTurretChanged(turret);
-
-    private void OnTurretChanged(TurretBase turret)
+    private void OnSnapshotChanged(int instanceId)
     {
-        if (turret == _turret)
+        if (_instanceId == 0)
+            TurretInstanceRegistry.TryGetInstanceId(transform, out _instanceId);
+
+        if (instanceId == _instanceId)
             Synchronize();
     }
 
@@ -71,11 +53,17 @@ public sealed class TurretTargetableAdapter : MonoBehaviour
         if (_targetable == null)
             return;
 
-        _targetable.SetHealth(_turret != null ? _turret.CurrentHealth : 0,
-            _turret != null ? _turret.MaxHealth : 0);
+        if (_instanceId == 0)
+            TurretInstanceRegistry.TryGetInstanceId(transform, out _instanceId);
+
+        TurretSnapshot snapshot = default;
+        bool hasSnapshot = _instanceId > 0 &&
+            TurretInstanceRegistry.TryGetSnapshot(_instanceId, out snapshot);
+        _targetable.SetHealth(hasSnapshot ? snapshot.CurrentHealth : 0,
+            hasSnapshot ? snapshot.MaxHealth : 0);
         _targetable.SetFirepower(Mathf.Clamp01(_fakeFirepowerRatio), 1f);
         _targetable.enabled = isActiveAndEnabled &&
-            _turret != null && _turret.isActiveAndEnabled &&
-            _turret.IsActivated && !_turret.IsDestroyed && _turret.CurrentHealth > 0;
+            hasSnapshot && snapshot.IsActivated && !snapshot.IsDestroyed &&
+            snapshot.CurrentHealth > 0;
     }
 }

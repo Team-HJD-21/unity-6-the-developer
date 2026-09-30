@@ -19,11 +19,14 @@ namespace TeamHJD.Game.Content
         [Header("Runtime Modifiers")]
         [SerializeField] private int _damageModifier;
         [SerializeField] private int _powerModifier;
+        [Tooltip("Additive fraction of the definition range. -0.1 means 10% shorter.")]
+        [SerializeField, Range(-1f, 1f)] private float _rangeModifierRatio;
 
         public string Id => _id;
         public string DisplayName => _displayName;
         public int DamageModifier => _damageModifier;
         public int PowerModifier => _powerModifier;
+        public float RangeModifierRatio => _rangeModifierRatio;
 
         public bool IsCompatibleWith(string definitionId)
         {
