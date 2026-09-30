@@ -26,3 +26,4 @@ MonoBehaviour:
   - canon_stage3_lv3
   _damageModifier: -3
   _powerModifier: -5
+  _rangeModifierRatio: 0.1
