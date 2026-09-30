@@ -33,9 +33,15 @@ public class SpawnPoint : MonoBehaviour
     /// 몬스터 생성 시 적용할 회전값을 반환한다.
     /// </summary>
     public Quaternion Rotation => transform.rotation;
-    
+
+    /// <summary>
+    /// 스폰 위치를 무작위로 분산할 반지름을 반환한다.
+    /// </summary>
     public float SpawnRadius => spawnRadius;
 
+    /// <summary>
+    /// Scene 뷰에 스폰 가능 영역을 원형 Gizmo로 표시한다.
+    /// </summary>
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;

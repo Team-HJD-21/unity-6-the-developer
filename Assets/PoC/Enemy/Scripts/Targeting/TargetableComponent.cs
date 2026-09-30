@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 플레이어와 터렛을 <see cref="ITargetable"/>로 연결하는 PoC용 컴포넌트다.
+/// 플레이어와 터렛을 <see cref="ITargetable"/>로 연결하는 타깃 상태 컴포넌트다.
 /// 타깃 유형과 체력, 화력 상태를 점수 계산에 사용할 수 있는 형태로 제공한다.
 /// </summary>
 public class TargetableComponent : MonoBehaviour, ITargetable
@@ -22,6 +22,10 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     /// </summary>
     public TargetType TargetType => targetType;
 
+    /// <summary>
+    /// 점수 계산에 사용할 타깃 종류를 지정한다.
+    /// </summary>
+    /// <param name="type">설정할 타깃 종류.</param>
     public void SetTargetType(TargetType type)
     {
         targetType = type;

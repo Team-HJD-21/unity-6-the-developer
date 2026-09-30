@@ -114,6 +114,7 @@ public class EnemyNetworkAnimator : NetworkBehaviour
     /// <summary>
     /// 동기화된 이동 상태를 Animator 파라미터에 적용한다.
     /// </summary>
+    /// <param name="state">Animator에 적용할 이동 상태.</param>
     private void ApplyMovementState(EnemyAnimatorState state)
     {
         _animator.SetBool(IsMovingHash, state.IsMoving);
@@ -137,6 +138,10 @@ public struct EnemyAnimatorState : INetworkSerializable, IEquatable<EnemyAnimato
     /// <summary>
     /// 동기화할 이동 애니메이션 상태를 생성한다.
     /// </summary>
+    /// <param name="isMoving">이동 중인지 여부.</param>
+    /// <param name="moveX">수평 이동 방향.</param>
+    /// <param name="moveY">수직 이동 방향.</param>
+    /// <param name="moveAnimSpeed">이동 애니메이션 재생 속도.</param>
     public EnemyAnimatorState(bool isMoving, float moveX, float moveY, float moveAnimSpeed)
     {
         IsMoving = isMoving;
@@ -148,6 +153,7 @@ public struct EnemyAnimatorState : INetworkSerializable, IEquatable<EnemyAnimato
     /// <summary>
     /// 이동 상태를 네트워크 버퍼에 쓰거나 버퍼에서 읽는다.
     /// </summary>
+    /// <param name="serializer">송수신에 사용할 NGO 버퍼 직렬화기.</param>
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         // 송신과 수신에서 같은 순서로 값을 쓰고 읽는다.
@@ -160,6 +166,8 @@ public struct EnemyAnimatorState : INetworkSerializable, IEquatable<EnemyAnimato
     /// <summary>
     /// 두 이동 상태의 모든 값이 같은지 비교한다.
     /// </summary>
+    /// <param name="other">비교할 이동 상태.</param>
+    /// <returns>모든 이동 값이 같으면 <see langword="true"/>.</returns>
     public bool Equals(EnemyAnimatorState other)
     {
         return IsMoving == other.IsMoving &&
@@ -171,6 +179,8 @@ public struct EnemyAnimatorState : INetworkSerializable, IEquatable<EnemyAnimato
     /// <summary>
     /// 전달된 객체가 동일한 이동 상태인지 확인한다.
     /// </summary>
+    /// <param name="obj">비교할 객체.</param>
+    /// <returns>동일한 이동 상태이면 <see langword="true"/>.</returns>
     public override bool Equals(object obj)
     {
         return obj is EnemyAnimatorState other && Equals(other);
@@ -179,6 +189,7 @@ public struct EnemyAnimatorState : INetworkSerializable, IEquatable<EnemyAnimato
     /// <summary>
     /// 이동 상태의 네 값을 조합한 해시를 반환한다.
     /// </summary>
+    /// <returns>이동 상태를 나타내는 해시 코드.</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(IsMoving, MoveX, MoveY, MoveAnimSpeed);

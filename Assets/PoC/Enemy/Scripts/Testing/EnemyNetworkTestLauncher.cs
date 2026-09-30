@@ -2,7 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 적 AI 네트워크 PoC를 실행하기 위한 테스트 UI다.
+/// 적 AI 네트워크 동작을 실행하고 확인하기 위한 테스트 UI다.
 /// Host와 Client 시작 및 연결 상태 확인을 담당한다.
 /// </summary>
 [DisallowMultipleComponent]
@@ -97,6 +97,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
             return;
         }
         
+        // 임시 스폰
         SpawnInstruction instruction =
             new SpawnInstruction("Slime", "SpawnPoint1", 3);
             

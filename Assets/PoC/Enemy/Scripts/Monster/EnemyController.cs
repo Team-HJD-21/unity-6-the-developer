@@ -74,6 +74,7 @@ public class EnemyController : MonoBehaviour
     /// <summary>
     /// 몬스터가 추적할 타겟을 지정한다.
     /// </summary>
+    /// <param name="target">추적할 타겟의 Transform.</param>
     public void SetTarget(Transform target)
     {
         _target = target;
@@ -82,6 +83,7 @@ public class EnemyController : MonoBehaviour
     /// <summary>
     /// 지정된 방향으로 이동하고 이동 애니메이션 속도를 갱신한다.
     /// </summary>
+    /// <param name="moveDirection">정규화된 이동 방향.</param>
     private void MoveTowardsTarget(Vector2 moveDirection)
     {
         // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
@@ -105,6 +107,7 @@ public class EnemyController : MonoBehaviour
     /// <summary>
     /// 이동 방향을 상하좌우 애니메이션 방향으로 변환해 적용한다.
     /// </summary>
+    /// <param name="moveDirection">현재 이동 방향.</param>
     private void UpdateFacingDirection(Vector2 moveDirection)
     {
         Vector2 animationDirection = GetAnimationDirection(moveDirection);
@@ -116,6 +119,8 @@ public class EnemyController : MonoBehaviour
     /// <summary>
     /// 연속적인 이동 방향을 상하좌우 네 방향 중 하나로 변환한다.
     /// </summary>
+    /// <param name="direction">변환할 이동 방향.</param>
+    /// <returns>상하좌우 중 하나로 정규화된 애니메이션 방향.</returns>
     private static Vector2 GetAnimationDirection(Vector2 direction)
     {
         // 대각선 방향은 더 큰 축을 기준으로 상하좌우 네 방향으로 변환한다.
@@ -146,6 +151,7 @@ public class EnemyController : MonoBehaviour
     /// <summary>
     /// 타겟이 공격 범위 안에 있는지 확인한다.
     /// </summary>
+    /// <returns>타겟이 공격 범위 안에 있으면 <see langword="true"/>.</returns>
     private bool IsInAttackRange()
     {
         // 제곱 거리를 비교해 불필요한 제곱근 계산을 피한다.

@@ -2,8 +2,8 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 전달받은 생성 명령을 서버에서 실행하는 PoC용 스폰 실행기다.
-/// 현재는 임시 프리팹과 위치를 사용하며, 생성된 몬스터를 모든 클라이언트에 동기화한다.
+/// 전달받은 생성 명령을 서버에서 실행하는 적 스폰 실행기다.
+/// 적 정의와 스폰 지점을 조회하고 생성된 적을 모든 클라이언트에 동기화한다.
 /// </summary>
 public class EnemySpawnExecutor : NetworkBehaviour
 {
