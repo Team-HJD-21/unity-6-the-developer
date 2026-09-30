@@ -101,17 +101,20 @@ Editor에서 Definition을 수정하면 전체 `TurretDefinition`을 검사한�
 | `IsLocked` | 해당 인스턴스를 켤 수 없는 상태 | `SetLocked` |
 | `CurrentHealth` | 현재 남아 있는 체력 | `ApplyDamage`, `Restore` |
 | `IsDestroyed` | 체력 0으로 파괴됐는지 표시 | `ApplyDamage`, `Restore` |
-| `DamageBonus` | 수동 보너스와 적용된 업그레이드의 공격력 보정 합 | `SetDamageBonus`, `AddDamageBonus`, `ApplyUpgrade` |
-| `PowerBonus` | 적용된 업그레이드의 실행 중 전력 보정 | `ApplyUpgrade` |
+| `DamageBonus` | 퍼센트 보정 후 더하는 별도 수동 공격력 보너스 | `SetDamageBonus` / `AddDamageBonus` |
+| `DamageModifierRatio` | 현재 단계의 기본 공격력 대비 보정 비율 | `ApplyUpgrade` / `DowngradeUpgrade` |
+| `PowerModifierRatio` | 현재 단계의 기본 전력 대비 보정 비율 | `ApplyUpgrade` / `DowngradeUpgrade` |
 | `RangeModifierRatio` | 기본 사거리에 더할 비율 보정의 합 | `ApplyUpgrade` |
+| `SelectedUpgradeId` | 현재 선택한 세부 경로 ID. 0단계에서는 빈 문자열 | `ApplyUpgrade` / `DowngradeUpgrade` |
+| `UpgradeLevel` | 프리팹 LV와 별개인 세부 단계 0~5 | `ApplyUpgrade` / `DowngradeUpgrade` |
 
 Prefab의 `_instanceId` 기본값 `0`은 **미할당**을 뜻한다. Inspector에서 ID를 수동으로 정하지 않는다. 실제 ID는 Play Mode에서 등록될 때 양수로 자동 발급된다.
 
 최종 공격력은 다음 규칙을 사용한다.
 
 ```text
-Final Damage = max(0, Definition.Damage + RuntimeState.DamageBonus)
-Effective Power = max(0, Definition.Power + RuntimeState.PowerBonus)
+Final Damage = max(0, ceil(Definition.Damage × (1 + RuntimeState.DamageModifierRatio)) + RuntimeState.DamageBonus)
+Effective Power = max(0, ceil(Definition.Power × (1 + RuntimeState.PowerModifierRatio)))
 Effective Range = max(0, Definition.Range × (1 + RuntimeState.RangeModifierRatio))
 ```
 
@@ -143,7 +146,7 @@ Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base
 
 파일: [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
 
-씬에 존재하는 터렛에 로컬 `InstanceId`를 발급한다. AI와 전선 등 읽기 전용 소비자는 컴포넌트 대신 조회 시점의 값만 복사한 [`TurretSnapshot`](../../Assets/Scripts/Tower/Turret/Core/TurretSnapshot.cs)을 받는다. 스냅샷에는 `InstanceId`, Definition ID, 월드 위치, 활성·작동·파괴·잠금 상태, 현재·최대 체력, 유효 공격력, 실제 사거리와 유효 전력 비용이 들어 있다. `TurretBase`, `TurretRuntimeState`, `TurretDefinition` 참조는 들어 있지 않다.
+씬에 존재하는 터렛에 로컬 `InstanceId`를 발급한다. AI와 전선 등 읽기 전용 소비자는 컴포넌트 대신 조회 시점의 값만 복사한 [`TurretSnapshot`](../../Assets/Scripts/Tower/Turret/Core/TurretSnapshot.cs)을 받는다. 스냅샷에는 `InstanceId`, Definition ID, 월드 위치, 활성·작동·파괴·잠금 상태, 현재·최대 체력, 유효 공격력, 실제 사거리와 유효 전력 비용 및 선택 경로 ID와 세부 단계가 들어 있다. `TurretBase`, `TurretRuntimeState`, `TurretDefinition` 참조는 들어 있지 않다.
 
 ```csharp
 if (TurretInstanceRegistry.TryGetSnapshot(instanceId, out TurretSnapshot snapshot))
@@ -311,7 +314,7 @@ flowchart TD
     Damage -->|체력 0| Die["Monster.Die()"]
 ```
 
-Missile은 적 수가 부족하면 첫 Target을 다른 발사 슬롯에서도 사용할 수 있다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.DestroyObject()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 `Damage = max(0, Definition.Damage + RuntimeState.DamageBonus)`를 전달한다.
+Missile은 적 수가 부족하면 첫 Target을 다른 발사 슬롯에서도 사용할 수 있다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.DestroyObject()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 위 공식으로 계산한 `EffectiveDamage`를 전달한다.
 
 ### 4.5 과열과 냉각
 
@@ -361,36 +364,41 @@ flowchart TD
 - 계정 영구 성장: Profile/Research에서 보관하고 Match 시작 시 RuntimeState 또는 immutable `MatchConfig`로 변환
 - 발사체: 자신이 생성될 때 받은 최종 공격력만 사용
 
-`TurretUpgradeDefinition`은 업그레이드 ID, 표시 이름, 호환 가능한 `TurretDefinition.Id` 목록, Damage/Power 보정값과 기본 사거리 대비 비율 보정값을 가진다. 호환 목록이 비어 있으면 모든 터렛 Definition에 적용할 수 있다.
+`TurretUpgradeDefinition`은 업그레이드 ID와 표시 이름 및 호환 가능한 `TurretDefinition.Id` 목록과 Damage/Power/Range의 단계당 비율 보정을 가진다. 호환 목록이 비어 있으면 모든 터렛 Definition에 적용할 수 있다. 기존 정수 `_damageModifier`와 `_powerModifier` 필드는 제거하고 에셋 4개를 `_damageModifierRatio`와 `_powerModifierRatio`로 이전했다.
 
 ```csharp
 TurretUpgradeResult result = turret.ApplyUpgrade(upgradeDefinition);
+TurretUpgradeResult rollback = turret.DowngradeUpgrade(upgradeDefinition);
 ```
 
 ```mermaid
 flowchart TD
-    UI["TurretTestController<br>Upgrade 버튼"] --> Base["TurretBase<br>ApplyUpgrade(upgrade)"]
-    Base --> Check["ID·호환성·중복<br>검사"]
+    UI["TurretTestController<br>Spec +1 / -1"] --> Base["TurretBase<br>ApplyUpgrade / DowngradeUpgrade"]
+    Base --> Check["ID와 호환성 검사<br>선택 경로와 0~5단계 검사"]
     Check --> Power["TurretActivationController<br>TrySetPowerCost()"]
     Power -->|활성: 전력 차액| CU["ControlUnitStatus<br>TryChangeReservation()"]
-    Power -->|성공| State["TurretRuntimeState<br>Damage·Power·Range 보정"]
+    Power -->|성공| State["TurretRuntimeState<br>단계당 10% × 현재 단계"]
     CU -->|성공| State
     CU -->|전력 부족| Reject["업그레이드 미적용"]
     State --> Visual["TurretBase<br>RefreshRangeVisual()"]
-    Visual --> Event["Registry<br>UpgradeApplied·SnapshotChanged 알림"]
+    Visual --> Event["Registry<br>UpgradeApplied 또는 UpgradeDowngraded<br>SnapshotChanged 알림"]
 ```
 
 적용 규칙은 다음과 같다.
 
 - 원본 `TurretDefinition` ScriptableObject는 수정하지 않는다.
-- 보정값과 적용 이력은 선택한 `TurretRuntimeState`에만 저장된다.
-- 같은 업그레이드 ID는 동일 인스턴스에 한 번만 적용된다.
+- 선택 경로와 단계 및 보정값은 인스턴스의 `TurretRuntimeState`에만 저장된다.
+- 기본 0단계에서 경로를 선택한다. 같은 경로는 `ApplyUpgrade` 호출마다 한 단계씩 최대 5단계까지 올라간다. 반대 경로 요청은 `BranchLocked`로 거부한다.
+- `DowngradeUpgrade`는 선택 경로를 한 단계 낮춘다. 0단계로 돌아오면 경로 선택을 해제해 반대 경로를 다시 선택할 수 있다.
+- 단계는 0~5로 Clamp한다. 경계에서 추가 요청은 `MinimumLevel` 또는 `MaximumLevel`을 반환하고 상태와 전력을 바꾸지 않는다. 기존 `AlreadyApplied` enum은 호환성을 위해 남겨두지만 이 경로에서는 반환하지 않는다.
+- 단계별 보정은 에셋의 1단계 보정 × 현재 단계로 재계산한다. 누적 덧셈을 되돌리는 방식이 아니므로 반복 왕복 시 사거리 오차가 쌓이지 않는다. `HasAppliedUpgrade(id)`는 현재 선택 경로에 1단계 이상 투자되어 있는지를 뜻한다.
 - 활성 터렛의 Power가 증가하면 추가 전력을 즉시 예약한다. 전력이 부족하면 업그레이드 전체를 적용하지 않는다.
-- Power가 감소하면 차액을 즉시 반환한다.
+- Power가 감소하면 차액을 즉시 반환한다. 절전 경로를 되돌려 Power가 증가하는 경우에도 전력 부족 검사를 먼저 수행하며 실패하면 단계와 수치가 모두 유지된다.
+- 최종 Damage와 Power 및 Range는 0 미만으로 내려가지 않는다. Clamp된 최종값에서 보정량을 빼지 않고 원본 수치와 현재 단계로 다시 계산하므로 0단계에서 원래 수치로 복귀한다. 별도 최대 능력치 상한은 아직 없다.
 - 외부 조회에는 `EffectiveDamage`, `EffectivePower`, `EffectiveRange`를 사용한다.
-- 적용 성공 시 `TurretInstanceRegistry.UpgradeApplied`가 발생하므로 AI·전선 Adapter가 값을 다시 읽을 수 있다.
+- 상승 성공 시 `UpgradeApplied`가 발생하고 하락 성공 시 `UpgradeDowngraded`가 발생한다. 두 경우 모두 `SnapshotChanged`가 발생한다. 스냅샷은 `SelectedUpgradeId`와 `UpgradeLevel`을 제공한다.
 
-현재 제공하는 샘플은 Canon과 Missile 각각의 `Low Power`(Damage -3 / Power -5 / Range +10%)와 `High Firepower`(Damage +6 / Power +8 / Range -10%)다. 테스트용 수치이며 실제 밸런스 확정값은 아니다. 두 업그레이드는 서로 배타적이지 않아 같은 인스턴스에 모두 적용할 수 있다. 사거리 비율은 더하는 방식이므로 둘 다 적용하면 사거리 보정은 0%다. 새 업그레이드는 에셋을 추가해 확장하며 기존 Canon/Missile 구현체에 조건문을 추가하지 않는다. 발사 속도 보정은 아직 없다.
+현재 제공하는 샘플은 Canon과 Missile 각각의 `Low Power`(단계당 Damage -10% / Power -10% / Range +10%)와 `High Firepower`(단계당 Damage +10% / Power +10% / Range -10%)다. 테스트용 수치이며 실제 밸런스 확정값은 아니다. 두 경로는 서로 배타적이다. 화력 경로 5단계는 기본 대비 Damage +50% / Power +50% / Range -50%이고 절전 경로 5단계는 Damage -50% / Power -50% / Range +50%다. 현재값에 매번 0.9 또는 1.1을 곱하는 복리 방식이 아니라 현재 Definition의 기본값에 단계 × 10%를 보정한다. 따라서 LV 교체 후에도 새 Definition의 기본값에 같은 비율을 적용한다. Damage와 Power는 정수이므로 소수점은 올림한다. 기본값이 양수라면 샘플의 절전 5단계만으로 0이 되지는 않는다. 발사 속도 보정은 아직 없다. 현재 스킬트리는 인스턴스당 단일 경로이며 서로 독립적인 복수 업그레이드 트리는 지원하지 않는다.
 
 ### 6.1 레벨 승급과 다운그레이드
 
@@ -511,7 +519,7 @@ flowchart TD
 1. `Capture Snapshot`으로 변경 전 값을 저장한다. 저장된 값은 ID별로 유지되므로 프리팹 교체 후에도 비교할 수 있다. 다시 누르면 비교 기준을 현재 값으로 바꾼다.
 2. `Activate` 후 `Lock`을 누른다. 전력이 반환되고 현재 스냅샷의 Locked가 true인지 확인한다. `Request Activate`를 눌러 결과가 `Locked`인지 확인한다.
 3. `Unlock` 후 자동 활성화되지 않는지 확인하고 직접 다시 켠다.
-4. 각 터렛에 표시되는 `High Firepower` 또는 `Low Power`를 적용한다. 현재 Damage / Range / Power를 저장된 Before 값과 비교하고 `Show Range`로 표시 원도 확인한다. 같은 업그레이드는 인스턴스당 한 번만 적용할 수 있다. 각각의 단독 효과를 다시 확인하려면 Play Mode를 재시작한다.
+4. 각 터렛의 `High Firepower` 또는 `Low Power` 옆 `+1`로 5단계까지 올린다. 반대 경로가 LOCKED로 표시되고 5단계에서 +1이 비활성화되는지 확인한다. `-1`로 0단계까지 내려 기본 수치로 돌아오는지 확인한 뒤 반대 경로를 선택한다. 현재 수치와 저장된 Before 값을 비교하고 `Show Range`로 표시 원도 확인한다. 절전 경로를 되돌릴 때 전력이 부족하면 단계가 유지되는지도 확인한다.
 5. `Level Up`과 `Level Down`으로 LV1↔LV2↔LV3를 왕복한다. ID와 보정값이 유지되는지 확인한다. LV1에는 Level Down이 없고 LV3에는 Level Up이 없다.
 6. `Damage` → `Destroy` → `Request Activate` → `Restore`로 피해와 파괴 거부 및 복구를 확인한다. 복구해도 잠금 상태는 유지된다.
 7. 패널의 All / Active / Operational 개수와 ID별 현재 스냅샷을 확인한다. Before 값은 이후 상태 변화에 따라 자동으로 바뀌지 않는다.
@@ -546,6 +554,9 @@ flowchart TD
 - [ ] Canon과 Missile을 각각 LV3→LV2→LV1로 다운그레이드할 수 있다.
 - [ ] 레벨 변경 전후 `InstanceId`, 체력 비율, 세부 업그레이드, 활성·잠금 상태가 유지된다.
 - [ ] Canon과 Missile의 High Firepower는 Range -10%이고 Low Power는 Range +10%이며 탐지 범위와 표시 원에 즉시 반영된다.
+- [ ] 세부 경로는 한 단계씩 0↔5를 왕복하고 반대 경로는 0단계 복귀 전까지 선택할 수 없다.
+- [ ] 절전 경로 되돌리기에서 전력이 부족하면 단계와 수치 및 예약량이 유지된다.
+- [ ] 프리팹 레벨 변경과 파괴/복구 후에도 선택 경로와 세부 단계가 유지된다.
 - [ ] Capture Snapshot의 Before 값은 상태 변경 후에도 유지되고 같은 ID의 현재 스냅샷만 갱신된다.
 - [ ] 활성 중 승급으로 증가한 전력만 추가 예약되고, 부족하면 승급이 거부된다.
 - [ ] 꺼지거나 파괴된 터렛은 Enemy PoC의 목표 후보에서 빠진다.
