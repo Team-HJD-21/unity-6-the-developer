@@ -13,10 +13,11 @@ public class SamplePlayer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        xInput = Input.GetAxis("Horizontal");
-        yInput = Input.GetAxis("Vertical");
+        Vector2 moveInput = GameInput.Move;
+        xInput = moveInput.x;
+        yInput = moveInput.y;
 
-        if (Input.GetKeyDown(KeyCode.E) && nearbyViewer != null)
+        if (GameInput.WasPressedThisFrame(GameKey.E) && nearbyViewer != null)
         {
             nearbyViewer.Interact();
         }

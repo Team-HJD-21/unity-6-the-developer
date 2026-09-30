@@ -10,6 +10,20 @@
 
 > Sprint Goal: 최소 Graybox에서 전제 1(동적 전선)과 전제 2(지역 해금)가 각각 재미있는 전력·전선 선택을 만드는지 시험한다. 2026-10-02 통합 Build에서는 가능한 시제품의 플레이 감각과 기술 위험을 관찰한다. 두 안의 구현 순서·병행 범위와 최종 채택안은 미정이다.
 
+## Sprint 1 2주차 목표 — 마무리 주간 (2026-09-28 ~ 2026-10-02)
+
+> 이 절의 영역별 작업은 2026-09-28 현재 GitHub `Stage 1 PoC` 마일스톤의 열린 Issue를 모아 보여준다. 각 Issue가 실제 담당·진행 상태의 기준이며, 표는 새 담당 배정이나 완료 선언이 아니다. Sprint 1의 공통 목표는 전제 1(동적 전선)과 전제 2(지역 해금)의 재미를 시험하는 것이다. 둘 중 무엇을 먼저 또는 함께 구현할지는 정해지지 않았다.
+
+| 영역 | 2주차에 확인할 작업 | 담당 / Issue |
+| --- | --- | --- |
+| 공통 통합 | 10월 2일 같은 Build에서 전력 배분, 터렛·Enemy 전투, 거점·전선 변화를 플레이하고 관찰 결과를 기록한다. Issue에 적힌 임시 승패 조건은 최근 결정 문서에서 확정되지 않았으므로 확정 기준으로 취급하지 않는다. | 전체 팀 · [#420](https://github.com/Team-HJD-21/unity-6-the-developer/issues/420) |
+| Core·전선·도구 | Turret snapshot을 받아 점유 topology와 경계 데이터를 만들고 Scene View에서 관찰한다. 레거시 경로 제거는 Owner가 검토·승인한 항목에 한해 진행한다. | A · [#443](https://github.com/Team-HJD-21/unity-6-the-developer/issues/443), [#446](https://github.com/Team-HJD-21/unity-6-the-developer/issues/446), [#441](https://github.com/Team-HJD-21/unity-6-the-developer/issues/441) |
+| Player | 새 스킬 입력·쿨다운·기본 피드백을 구현하고 터렛 보조 수단으로 유효한지 확인한다. P2 품질 개선 Issue이므로 공통 PoC 통합 완료 조건과는 구분한다. | B · [#452](https://github.com/Team-HJD-21/unity-6-the-developer/issues/452) |
+| Turret·전력 | AI·전선용 읽기 전용 snapshot, 해금·활성화 제한, 업그레이드와 Enemy 연동을 구현·검증하고 통합 담당자에게 결과를 전달한다. 파괴 전력 반환 여부와 비율은 미정이며 API 입력값만 열어둔다. | D · [#422](https://github.com/Team-HJD-21/unity-6-the-developer/issues/422), [#425](https://github.com/Team-HJD-21/unity-6-the-developer/issues/425), [#426](https://github.com/Team-HJD-21/unity-6-the-developer/issues/426), [#427](https://github.com/Team-HJD-21/unity-6-the-developer/issues/427), [#430](https://github.com/Team-HJD-21/unity-6-the-developer/issues/430), [#432](https://github.com/Team-HJD-21/unity-6-the-developer/issues/432) |
+| Enemy | Player·Turret·Stage 연동 및 네트워크 동작을 검증하고, 선행 오류를 정리한 뒤 Spawner 동작을 확인한다. 최종 Wave 구성이나 난이도 조정은 범위에 포함하지 않는다. | E · [#394](https://github.com/Team-HJD-21/unity-6-the-developer/issues/394), [#395](https://github.com/Team-HJD-21/unity-6-the-developer/issues/395), [#403](https://github.com/Team-HJD-21/unity-6-the-developer/issues/403), [#437](https://github.com/Team-HJD-21/unity-6-the-developer/issues/437) |
+| World·Map | 현재 열린 Issue 중 C 담당 Stage 1 PoC 마일스톤 작업은 확인되지 않았다. 지도 시연 #450과 Stage 1 이식 #451은 M1로 등록되어 있으므로 이 표의 Stage 1 목표에 포함하지 않는다. Sprint 1에 포함할지 여부는 별도 분류가 필요하다. | C · [#450](https://github.com/Team-HJD-21/unity-6-the-developer/issues/450), [#451](https://github.com/Team-HJD-21/unity-6-the-developer/issues/451) |
+
+이 주차 목표는 **Sprint 1의 2주차**를 뜻하며 `Sprint 2`를 새로 정의하지 않는다. 주차는 마일스톤과 Issue 분류를 읽기 쉽게 묶은 것이고, Issue의 상태·담당자·완료 조건을 대신하지 않는다.
 ## 1. 검증할 핵심 가설
 
 1. 직접 전투보다 터렛 중심 전선 운영이 게임의 고유한 재미로 작동한다.
