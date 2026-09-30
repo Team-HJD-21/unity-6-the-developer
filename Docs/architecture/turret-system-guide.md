@@ -1,7 +1,7 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-09-28
+최종 갱신: 2026-09-30
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
@@ -18,6 +18,7 @@
 - Missile Turret LV1~LV3, Stage 1~3
 - `TurretDefinition`, `TurretRuntimeState`, `TurretBase`
 - 로컬 런타임 등록을 위한 `TurretInstanceRegistry`
+- AI와 전선 소비자를 위한 읽기 전용 `TurretSnapshot`
 - 터렛 체력·파괴·플레이어 복구 흐름
 - 인스턴스별 Damage/Power 보정과 Stage 1 프리팹 교체 방식의 레벨 승급
 - Enemy PoC의 `PoCTargetable` 연결
@@ -52,6 +53,8 @@ flowchart TD
     CanonLv --> Bullet["TowerBullet<br>충돌 피해"]
     MissileLv --> Projectile["TowerMissile<br>추적·범위 피해"]
     Base <--> Registry["TurretInstanceRegistry<br>ID 조회·상태 알림"]
+    Registry --> Snapshot["TurretSnapshot<br>조회 시점의 값"]
+    Snapshot --> Consumers["Enemy Adapter·전선 소비자<br>읽기 전용 조회"]
 ```
 
 Definition 값을 실행 중 상태 저장소처럼 직접 수정하지 않는다. 반대로 Target, 활성 상태, 과열 진행도처럼 매번 달라지는 값은 Definition에 넣지 않는다.
@@ -94,11 +97,13 @@ Editor에서 Definition을 수정하면 전체 `TurretDefinition`을 검사한�
 | --- | --- | --- |
 | `InstanceId` | 현재 실행에서 터렛 한 개를 식별 | Registry가 자동 발급 |
 | `IsActivated` | 사용자가 켜서 전력을 예약한 상태인지 표시 | `RequestActivation` |
-| `IsOperational` | 활성화됐고 과열·파괴 상태가 아닌지 표시 | 활성화·과열·파괴 흐름에서 자동 계산 |
+| `IsOperational` | 활성화됐고 과열·파괴·잠금 상태가 아닌지 표시 | 활성화·과열·파괴·잠금 흐름에서 자동 계산 |
+| `IsLocked` | 해당 인스턴스를 켤 수 없는 상태 | `SetLocked` |
 | `CurrentHealth` | 현재 남아 있는 체력 | `ApplyDamage`, `Restore` |
 | `IsDestroyed` | 체력 0으로 파괴됐는지 표시 | `ApplyDamage`, `Restore` |
 | `DamageBonus` | 수동 보너스와 적용된 업그레이드의 공격력 보정 합 | `SetDamageBonus`, `AddDamageBonus`, `ApplyUpgrade` |
 | `PowerBonus` | 적용된 업그레이드의 실행 중 전력 보정 | `ApplyUpgrade` |
+| `RangeModifierRatio` | 기본 사거리에 더할 비율 보정의 합 | `ApplyUpgrade` |
 
 Prefab의 `_instanceId` 기본값 `0`은 **미할당**을 뜻한다. Inspector에서 ID를 수동으로 정하지 않는다. 실제 ID는 Play Mode에서 등록될 때 양수로 자동 발급된다.
 
@@ -107,6 +112,7 @@ Prefab의 `_instanceId` 기본값 `0`은 **미할당**을 뜻한다. Inspector�
 ```text
 Final Damage = max(0, Definition.Damage + RuntimeState.DamageBonus)
 Effective Power = max(0, Definition.Power + RuntimeState.PowerBonus)
+Effective Range = max(0, Definition.Range × (1 + RuntimeState.RangeModifierRatio))
 ```
 
 영구 연구 수치를 Definition에 덮어쓰지 않는다. Profile/Research 결과를 Match 시작 시 런타임 보너스로 변환하는 Adapter가 이후 필요하다.
@@ -122,6 +128,7 @@ Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base
 - 포신, 회전 지점, Animator, SpriteRenderer, LayerMask 참조 보관
 - Definition의 수치를 읽기 전용 property로 제공
 - 활성화·전력 예약의 단일 요청 API 제공
+- 잠금·해금과 활성화 거부 처리
 - 체력 감소, 파괴, 복구 API 제공
 - 최종 공격력 계산
 - `OnEnable`/`OnDisable`에서 Registry 등록·해제
@@ -136,22 +143,28 @@ Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base
 
 파일: [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
 
-씬에 존재하는 터렛에 로컬 `InstanceId`를 발급하고 ID와 상태로 터렛을 조회한다.
+씬에 존재하는 터렛에 로컬 `InstanceId`를 발급한다. AI와 전선 등 읽기 전용 소비자는 컴포넌트 대신 조회 시점의 값만 복사한 [`TurretSnapshot`](../../Assets/Scripts/Tower/Turret/Core/TurretSnapshot.cs)을 받는다. 스냅샷에는 `InstanceId`, Definition ID, 월드 위치, 활성·작동·파괴·잠금 상태, 현재·최대 체력, 유효 공격력, 실제 사거리와 유효 전력 비용이 들어 있다. `TurretBase`, `TurretRuntimeState`, `TurretDefinition` 참조는 들어 있지 않다.
 
 ```csharp
-if (TurretInstanceRegistry.TryGet(instanceId, out TurretBase turret))
+if (TurretInstanceRegistry.TryGetSnapshot(instanceId, out TurretSnapshot snapshot))
 {
-    turret.AddDamageBonus(5);
+    Debug.Log($"{snapshot.DefinitionId}: {snapshot.CurrentHealth}/{snapshot.MaxHealth}");
 }
 ```
+
+`GetAllSnapshots()`, `GetActiveSnapshots()`, `GetOperationalSnapshots()`는 각각 전체·활성·작동 가능한 터렛의 읽기 전용 목록을 반환한다. 각 호출 결과는 그 순간의 복사본이며, 보관한 스냅샷은 터렛이 이동하거나 상태가 바뀌어도 자동 갱신되지 않는다. 이동 중 위치가 필요하면 원하는 주기에 ID로 다시 조회한다.
+
+Prefab 안의 Adapter처럼 자신의 `Transform`만 아는 소비자는 `TryGetInstanceId(transform, out int instanceId)`로 부모 터렛의 ID를 얻은 뒤 단건 조회를 사용할 수 있다. 이 보조 메서드도 터렛 컴포넌트를 반환하지 않는다.
+
+`SnapshotChanged(int instanceId)`는 등록·해제·활성화·작동 상태·체력·파괴·복구·잠금·공격력 보너스·세부 업그레이드·레벨 변경 후 발생한다. 이벤트에는 객체 참조를 싣지 않는다. 구독자는 같은 ID로 `TryGetSnapshot`을 다시 호출한다. 해제 후에는 조회가 실패한다. 레벨 변경은 프리팹이 바뀌어도 ID를 유지하므로 기존 `TurretBase` 참조 대신 ID로 새 값을 조회한다. 하나의 동작에서 상태가 여러 번 바뀌면 이벤트도 여러 번 발생할 수 있으므로 횟수에 의존하지 않는다.
+
+기존 `TryGet`, `GetAll`, `GetActive`, `GetOperational` 및 `RegisteredInstances`는 기존 게임플레이·디버그 호출부의 호환을 위해 남아 있다. 이들은 `TurretBase`를 반환하므로 새 읽기 전용 소비자에게 사용하지 않는다. 터렛 상태 변경은 별도의 기존 요청 API를 사용한다.
 
 같은 Definition 에셋을 여러 터렛 인스턴스가 사용하는 것은 정상이다. 오류가 되는 경우는 **서로 다른 Definition 에셋이 같은 `Definition.Id`를 사용하는 경우**다.
 
 Registry는 현재 PoC용 로컬 등록부다. AI 조회용 상태 집계, 전력 총합, 구역별 터렛 관리까지 책임지는 정식 Manager가 아니다. `TowerManager`를 다른 이름의 전역 Singleton으로 다시 만드는 방식으로 확장하지 않는다.
 
-현재 제공하는 조회는 `GetAll`, `GetActive`, `GetOperational`이다. 등록·해제,
-활성화·작동 상태, 체력 변경, 파괴, 복구, 세부 업그레이드와 레벨 승급은 각각 Registry 이벤트로 알린다. 파괴된
-터렛은 Registry에 남아 복구할 수 있지만 Active/Operational 조회에서는 제외된다.
+파괴된 터렛은 Registry에 남아 복구할 수 있지만 Active/Operational 조회에서는 제외된다.
 
 ### 3.5 Assembly 경계
 
@@ -339,7 +352,7 @@ flowchart TD
 
 ### 사거리 표시
 
-실제 탐지와 Scene Gizmo는 `Definition.Range`를 사용한다. 인게임 원형 Sprite는 원본 이미지 크기 때문에 현재 `Range * 2.5` scale을 사용한다. 이 배율은 시각 표현용이며 게임 규칙의 실제 사거리가 아니다.
+실제 탐지와 원형 Sprite는 모두 `EffectiveRange`를 사용한다. `TurretBase.RefreshRangeVisual()`은 Sprite의 월드 크기와 부모 Scale을 고려해 표시 원의 지름을 `EffectiveRange × 2`로 맞춘다. 세부 업그레이드로 사거리가 변하면 바로 다시 계산한다.
 
 ## 6. 업그레이드와 밸런스 규칙
 
@@ -348,7 +361,7 @@ flowchart TD
 - 계정 영구 성장: Profile/Research에서 보관하고 Match 시작 시 RuntimeState 또는 immutable `MatchConfig`로 변환
 - 발사체: 자신이 생성될 때 받은 최종 공격력만 사용
 
-`TurretUpgradeDefinition`은 업그레이드 ID, 표시 이름, 호환 가능한 `TurretDefinition.Id` 목록, Damage/Power 보정값을 가진다. 호환 목록이 비어 있으면 모든 터렛 Definition에 적용할 수 있다.
+`TurretUpgradeDefinition`은 업그레이드 ID, 표시 이름, 호환 가능한 `TurretDefinition.Id` 목록, Damage/Power 보정값과 기본 사거리 대비 비율 보정값을 가진다. 호환 목록이 비어 있으면 모든 터렛 Definition에 적용할 수 있다.
 
 ```csharp
 TurretUpgradeResult result = turret.ApplyUpgrade(upgradeDefinition);
@@ -360,10 +373,11 @@ flowchart TD
     Base --> Check["ID·호환성·중복<br>검사"]
     Check --> Power["TurretActivationController<br>TrySetPowerCost()"]
     Power -->|활성: 전력 차액| CU["ControlUnitStatus<br>TryChangeReservation()"]
-    Power -->|성공| State["TurretRuntimeState<br>ApplyUpgrade()"]
+    Power -->|성공| State["TurretRuntimeState<br>Damage·Power·Range 보정"]
     CU -->|성공| State
     CU -->|전력 부족| Reject["업그레이드 미적용"]
-    State --> Event["Registry<br>UpgradeApplied 알림"]
+    State --> Visual["TurretBase<br>RefreshRangeVisual()"]
+    Visual --> Event["Registry<br>UpgradeApplied·SnapshotChanged 알림"]
 ```
 
 적용 규칙은 다음과 같다.
@@ -373,14 +387,14 @@ flowchart TD
 - 같은 업그레이드 ID는 동일 인스턴스에 한 번만 적용된다.
 - 활성 터렛의 Power가 증가하면 추가 전력을 즉시 예약한다. 전력이 부족하면 업그레이드 전체를 적용하지 않는다.
 - Power가 감소하면 차액을 즉시 반환한다.
-- 외부 조회에는 `EffectiveDamage`, `EffectivePower`를 사용한다.
+- 외부 조회에는 `EffectiveDamage`, `EffectivePower`, `EffectiveRange`를 사용한다.
 - 적용 성공 시 `TurretInstanceRegistry.UpgradeApplied`가 발생하므로 AI·전선 Adapter가 값을 다시 읽을 수 있다.
 
-현재 제공하는 샘플은 Canon용 `Low Power`(Damage -3, Power -5)와 `High Firepower`(Damage +6, Power +8)다. 두 업그레이드는 서로 배타적이지 않아 같은 인스턴스에 모두 적용할 수 있다. 새 업그레이드는 에셋을 추가해 확장하며 기존 Canon/Missile 구현체에 조건문을 추가하지 않는다. 사거리와 발사 속도 modifier는 실제 규칙이 확정되기 전까지 추가하지 않는다. 모든 값을 하나의 범용 Dictionary에 넣지 않는다.
+현재 제공하는 샘플은 Canon과 Missile 각각의 `Low Power`(Damage -3 / Power -5 / Range +10%)와 `High Firepower`(Damage +6 / Power +8 / Range -10%)다. 테스트용 수치이며 실제 밸런스 확정값은 아니다. 두 업그레이드는 서로 배타적이지 않아 같은 인스턴스에 모두 적용할 수 있다. 사거리 비율은 더하는 방식이므로 둘 다 적용하면 사거리 보정은 0%다. 새 업그레이드는 에셋을 추가해 확장하며 기존 Canon/Missile 구현체에 조건문을 추가하지 않는다. 발사 속도 보정은 아직 없다.
 
-### 6.1 레벨 승급
+### 6.1 레벨 승급과 다운그레이드
 
-`TurretLevelUpgradeCatalog`은 현재 Definition과 다음 레벨 프리팹을 연결한다. 현재 카탈로그에는 Stage 1 Canon/Missile의 LV1→LV2, LV2→LV3 경로만 등록되어 있다. `TurretTest`에서 각 터렛의 `Level Up` 버튼으로 확인할 수 있다. Stage 2·3의 승급 경로는 카탈로그에 추가해야 한다.
+`TurretLevelUpgradeCatalog`은 현재 Definition과 양쪽 레벨의 프리팹을 연결한다. 현재 카탈로그에는 Stage 1 Canon/Missile의 LV1↔LV2, LV2↔LV3 경로만 등록되어 있다. `TurretTest`의 `Level Up`과 `Level Down` 버튼으로 확인할 수 있다. Stage 2·3은 양방향 경로를 카탈로그에 추가해야 한다.
 
 ```csharp
 if (catalog.TryGetNext(turret.Definition, out TurretBase nextPrefab))
@@ -388,29 +402,48 @@ if (catalog.TryGetNext(turret.Definition, out TurretBase nextPrefab))
     TurretLevelUpgradeResult result =
         turret.RequestLevelUpgrade(nextPrefab, out TurretBase replacement);
 }
+
+if (catalog.TryGetPrevious(turret.Definition, out TurretBase previousPrefab))
+{
+    TurretLevelUpgradeResult result =
+        turret.RequestLevelDowngrade(previousPrefab, out TurretBase replacement);
+}
 ```
 
 ```mermaid
 flowchart TD
-    UI["TurretTestController<br>Level Up 버튼"] --> Catalog["TurretLevelUpgradeCatalog<br>TryGetNext()"]
-    Catalog --> Base["TurretBase<br>RequestLevelUpgrade<br>(nextPrefab)"]
-    Base --> Validate["다음 Level·터렛 종류<br>전력 확인"]
-    Validate -->|가능| Create["다음 Level Prefab<br>비활성 상태로 생성"]
+    UI["TurretTestController<br>Level Up·Down"] --> Catalog["TurretLevelUpgradeCatalog<br>이전·다음 Prefab 조회"]
+    Catalog --> Base["TurretBase<br>RequestLevelChange()"]
+    Base --> Validate["한 단계 차이·종류<br>전력 확인"]
+    Validate -->|가능| Create["대상 Level Prefab<br>비활성 상태로 생성"]
     Validate -->|불가능| Reject["기존 터렛 유지"]
     Create --> Power["TurretActivationController<br>TrySetPowerCost()"]
     Power -->|전력 부족| Reject
-    Power -->|성공| Copy["RuntimeState<br>CopyForLevelUpgrade()"]
+    Power -->|성공| Copy["RuntimeState<br>CopyForLevelChange()"]
     Copy --> Swap["기존 객체 끄기<br>새 객체 켜기"]
     Swap --> Registry["Registry에 같은 ID로<br>새 객체 등록"]
-    Registry --> Active["기존 전력 예약·활성 상태<br>승계"]
-    Active --> Event["Registry<br>LevelUpgraded 알림"]
+    Registry --> Active["전력 예약·활성·잠금 상태<br>승계"]
+    Active --> Event["Registry<br>LevelUpgraded·LevelDowngraded"]
 ```
 
-승급은 다음 레벨 프리팹으로 GameObject를 교체한다. 같은 `InstanceId`, 위치, 현재 체력 비율, 세부 업그레이드 보정 및 적용 이력, 활성 상태와 사거리 표시 설정을 이전한다. 체력 비율을 유지하므로 승급만으로 전체 회복되지는 않는다. 활성 터렛은 새 전력 사용량에 맞춰 예약량을 즉시 변경하며, 전력이 부족하면 원래 터렛을 유지한다. 성공하면 `TurretInstanceRegistry.LevelUpgraded(previous, current)`가 발생한다. 이전 컴포넌트를 직접 보관하는 소비자는 이 이벤트를 받아 새 컴포넌트로 참조를 갱신해야 한다. 이미 발사된 총알·미사일은 기존 발사체로 남는다.
+레벨 변경은 이전 또는 다음 레벨 프리팹으로 GameObject를 교체한다. 같은 `InstanceId`, 위치, 현재 체력 비율, 세부 업그레이드 보정과 적용 이력, 활성·잠금 상태 및 사거리 표시 설정을 이전한다. 체력 비율을 유지하므로 레벨 변경만으로 전체 회복되지는 않는다. 활성 터렛은 대상 레벨의 전력 사용량에 맞춰 예약량을 즉시 변경하며 전력이 부족하면 원래 터렛을 유지한다. 성공하면 방향에 따라 `LevelUpgraded` 또는 `LevelDowngraded` 이벤트가 발생한다. 읽기 전용 소비자는 객체 참조 대신 같은 ID로 스냅샷을 다시 조회한다. 이미 발사된 총알·미사일은 기존 발사체로 남는다.
 
-현재 승급 비용·시간, 멀티플레이 상태 동기화, 파괴된 터렛의 승급 규칙은 확정되지 않았다. 파괴된 터렛의 승급 요청은 거부한다. 제품 UI에서 승급 버튼을 노출하는 작업은 아직 별도다.
+현재 레벨 변경 비용·시간, 멀티플레이 상태 동기화, 파괴된 터렛의 변경 규칙은 확정되지 않았다. 파괴된 터렛의 레벨 변경 요청은 거부한다. 제품 UI에서 변경 버튼을 노출하는 작업은 아직 별도다.
 
-`TurretTest`에서 수동으로 검증할 때는 Canon LV1 하나의 ID와 ControlUnit 전력을 기록하고 활성화·Damage·세부 업그레이드 후 `Level Up`을 누른다. LV2가 같은 ID와 체력 비율·보정값을 유지하는지 확인하고 LV3까지 반복한다. Missile도 같은 순서로 확인한다. 여러 터렛을 켜 남은 전력을 낮춘 뒤 승급을 요청하면 부족한 전력으로 거부되는지도 확인할 수 있다. 이 Play Mode 검증은 코드 컴파일 검사와 별개로 수행해야 한다.
+`TurretTest`에서 Canon LV1 하나의 ID와 ControlUnit 전력을 기록하고 활성화·Damage·세부 업그레이드 후 `Level Up`을 누른다. LV2가 같은 ID와 체력 비율·보정값을 유지하는지 확인한다. 이어 `Level Down`으로 LV1에 돌아와 같은 항목을 재확인한다. Missile도 같은 순서로 확인한다. 여러 터렛을 켜 남은 전력을 낮춘 뒤 승급을 요청하면 부족한 전력으로 거부되는지도 확인할 수 있다. 이 Play Mode 검증은 코드 컴파일 검사와 별개다.
+
+### 6.2 잠금과 해금
+
+잠금은 Definition의 고정 능력치가 아니라 터렛 인스턴스의 런타임 상태다. 기본값은 해금 상태여서 기존 Prefab 동작을 바꾸지 않는다. `SetLocked(true)`는 활성 터렛을 먼저 끄고 예약 전력을 반환한 뒤 잠근다. 잠긴 터렛의 `RequestActivation(true)`는 `Locked`를 반환한다. `SetLocked(false)`로 해금해도 자동으로 켜지지 않으며 플레이어가 다시 활성화해야 한다. 잠금 상태는 레벨 변경 시 이어받고 읽기 전용 스냅샷의 `IsLocked`에도 반영된다. 기존 `TowerManager`는 잠긴 터렛에 `Locked`라고 표시하고 활성화 요청을 더 진행하지 않는다. `TurretTest`에는 잠금·해금 버튼이 있지만 제품 UI의 해금 동작과 비용·영구 저장 규칙은 아직 적용하지 않았다.
+
+```mermaid
+flowchart LR
+    Lock["SetLocked(true)"] --> Off["활성 해제<br>전력 반환"]
+    Off --> State["RuntimeState<br>IsLocked = true"]
+    State --> Reject["RequestActivation(true)<br>Locked 반환"]
+    State --> Unlock["SetLocked(false)"]
+    Unlock --> Wait["비활성 유지<br>플레이어 재활성화"]
+```
 
 ## 7. 멀티플레이 전환 시 주의점
 
@@ -429,13 +462,16 @@ NGO 연동 시 다음 규칙을 적용한다.
 
 ## 8. AI·전선 시스템 연동 기준
 
-Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다. Stage 1 Canon/Missile Prefab에는 `TurretTargetableAdapter`와 `PoCTargetable`을 함께 붙였다. Adapter는 터렛의 현재·최대 체력과 활성·파괴 상태를 전달한다. 비활성·파괴된 터렛의 `PoCTargetable`은 비활성화되어 목표 후보에서 빠진다. 이 연결은 Enemy PoC 쪽에만 있고 `TeamHJD.Game.Turrets`는 Enemy assembly를 참조하지 않는다.
+Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다. Stage 1 Canon/Missile Prefab에는 `TurretTargetableAdapter`와 `PoCTargetable`을 함께 붙였다. Adapter는 자신의 Transform으로 Registry에서 부모 터렛의 ID만 찾고, 그 ID의 스냅샷으로 현재·최대 체력과 활성·파괴 상태를 전달한다. `TurretBase` 참조를 보관하거나 상태를 직접 수정하지 않는다. 비활성·파괴된 터렛의 `PoCTargetable`은 비활성화되어 목표 후보에서 빠진다. 이 연결은 Enemy PoC 쪽에만 있고 `TeamHJD.Game.Turrets`는 Enemy assembly를 참조하지 않는다.
 
 ```mermaid
 flowchart TD
-    Base["TurretBase<br>활성·체력·파괴 상태"] --> Adapter["TurretTargetableAdapter<br>Synchronize()"]
-    Registry["Registry 상태 이벤트"] --> Adapter
+    Base["TurretBase<br>상태 변경"] --> Registry["TurretInstanceRegistry<br>ID와 현재 상태"]
+    Registry -->|"TryGetSnapshot(ID)"| Snapshot["TurretSnapshot<br>복사된 읽기 전용 값"]
+    Registry -->|"SnapshotChanged(ID)"| Adapter["TurretTargetableAdapter<br>Synchronize()"]
+    Snapshot --> Adapter
     Adapter --> Targetable["PoCTargetable<br>Enemy가 읽는 정보"]
+    Snapshot -.-> Frontline["전선 소비자<br>연결은 후속 작업"]
     Targetable -->|켜져 있고 체력이 남음| Enemy["Enemy PoC 목표 후보"]
     Targetable -->|꺼짐 또는 파괴| Excluded["목표 후보에서 제외"]
 ```
@@ -446,13 +482,13 @@ flowchart TD
 
 - Instance ID와 Definition ID
 - 위치와 소속 구역
-- 활성화 여부
+- 활성화·잠금 여부
 - 현재·최대 체력
 - 공격력, 사거리, 전력 비용
 - 공격 가능 여부와 과열 상태
 - AI 목표 평가용 위협도·방어 가치
 
-현재는 `TurretInstanceRegistry.GetActive()`와 터렛의 공개 읽기 속성으로 위치·상태·기본 수치를 조회할 수 있다. 소속 구역, 위협도·방어 가치와 읽기 전용 Snapshot 계약은 미구현이다. `TurretRuntimeState`에 모든 Scene 참조와 AI 계산 결과를 무조건 넣지 않는다.
+현재 읽기 전용 스냅샷은 ID·위치·상태·기본 평가값을 제공한다. Enemy PoC 어댑터는 이 계약으로 체력과 활성 상태를 읽는다. 전선 시스템의 실제 소비 코드는 아직 없어 연결되지 않았다. 소속 구역과 위협도·방어 가치의 최종 계산 역시 포함하지 않는다. `TurretRuntimeState`에 모든 Scene 참조와 AI 계산 결과를 무조건 넣지 않는다.
 
 ## 9. 검증 체크리스트
 
@@ -460,17 +496,41 @@ flowchart TD
 
 - [ ] Definition ID가 비어 있지 않고 중복되지 않는다.
 - [ ] Prefab에 올바른 Definition이 연결되어 있다.
-- [ ] Stage 1 승급 카탈로그의 네 경로가 실제 다음 LV TurretBase Prefab을 가리킨다.
+- [ ] Stage 1 레벨 카탈로그의 네 경로가 실제 이전·다음 LV TurretBase Prefab을 가리킨다.
 - [ ] Stage 1 Canon/Missile Prefab에 PoCTargetable과 Adapter가 함께 있다.
+- [ ] TurretTest에서 활성화·피해·복구·세부 업그레이드·레벨 승급 전후 스냅샷을 ID로 재조회해 비교했다.
 - [ ] `.cs`·`.asset`·Prefab의 `.meta`가 함께 존재한다.
 - [ ] `TeamHJD.Game.Turrets`가 Contracts 외의 legacy assembly를 참조하지 않는다.
 - [ ] Level 스크립트에 Definition 수치가 중복 하드코딩되지 않았다.
 - [ ] Laser Turret을 실수로 Canon/Missile 변경 범위에 포함하지 않았다.
 
+### TurretTest 조작 순서
+
+기존 맵을 유지한 채 `Assets/Scenes/TestScene/TurretTest.unity`를 열고 Play Mode에 진입한다. 현재 Scene에는 Canon/Missile 업그레이드 에셋 4개와 Stage 1 양방향 레벨 카탈로그가 연결되어 있다. Rebuild 메뉴도 기존 참조를 보존하면서 누락된 샘플만 추가한다. 이번 기능 확인을 위해 Scene을 재구성할 필요는 없다.
+
+1. `Capture Snapshot`으로 변경 전 값을 저장한다. 저장된 값은 ID별로 유지되므로 프리팹 교체 후에도 비교할 수 있다. 다시 누르면 비교 기준을 현재 값으로 바꾼다.
+2. `Activate` 후 `Lock`을 누른다. 전력이 반환되고 현재 스냅샷의 Locked가 true인지 확인한다. `Request Activate`를 눌러 결과가 `Locked`인지 확인한다.
+3. `Unlock` 후 자동 활성화되지 않는지 확인하고 직접 다시 켠다.
+4. 각 터렛에 표시되는 `High Firepower` 또는 `Low Power`를 적용한다. 현재 Damage / Range / Power를 저장된 Before 값과 비교하고 `Show Range`로 표시 원도 확인한다. 같은 업그레이드는 인스턴스당 한 번만 적용할 수 있다. 각각의 단독 효과를 다시 확인하려면 Play Mode를 재시작한다.
+5. `Level Up`과 `Level Down`으로 LV1↔LV2↔LV3를 왕복한다. ID와 보정값이 유지되는지 확인한다. LV1에는 Level Down이 없고 LV3에는 Level Up이 없다.
+6. `Damage` → `Destroy` → `Request Activate` → `Restore`로 피해와 파괴 거부 및 복구를 확인한다. 복구해도 잠금 상태는 유지된다.
+7. 패널의 All / Active / Operational 개수와 ID별 현재 스냅샷을 확인한다. Before 값은 이후 상태 변화에 따라 자동으로 바뀌지 않는다.
+
+```mermaid
+flowchart TD
+    Capture["Capture Snapshot"] --> Stored["ID별 Before 값 저장"]
+    Action["활성화 / 잠금 / 피해<br>업그레이드 / 레벨 변경"] --> Query["TryGetSnapshot<br>현재 값 재조회"]
+    Stored --> Compare["Before와 현재 값 비교"]
+    Query --> Compare
+    Compare --> Visual["Show Range와 CU 전력 확인"]
+```
+
 ### Play Mode
 
 - [ ] 6개 레벨별 터렛이 `TurretTest` Scene에서 활성화된다.
 - [ ] 전력이 부족하면 활성화가 거부된다.
+- [ ] 활성 터렛을 잠그면 비활성화되고 예약 전력이 반환된다.
+- [ ] 잠긴 터렛은 켜지지 않고 해금 후 수동으로 다시 켤 수 있다.
 - [ ] 비활성화하면 전력이 반환된다.
 - [ ] `Damage`로 현재 체력이 감소한다.
 - [ ] 현재 구현에서는 체력 0에서 파괴되고 예약 전력이 전량 반환된다. 향후 손실률 API 구현 시에는 0%·50%·100% 설정별 반환량을 별도로 검증한다.
@@ -478,12 +538,15 @@ flowchart TD
 - [ ] `Restore` 후 최대 체력·비활성 상태로 돌아오며 다시 활성화할 수 있다.
 - [ ] 파괴와 복구 시 Registry 이벤트가 한 번씩 발생한다.
 - [ ] Target이 사망하거나 범위를 벗어나면 새 Target을 찾는다.
-- [ ] Canon과 Missile의 Gizmo·실제 탐지 범위가 Definition과 일치한다.
+- [ ] Canon과 Missile의 표시 원·실제 탐지 범위가 EffectiveRange와 일치한다.
 - [ ] 발사체 피해량이 Definition Damage와 Runtime Bonus를 반영한다.
 - [ ] 과열 후 냉각과 재활성화가 정상 동작한다.
 - [ ] 각 활성 터렛의 `InstanceId`가 0이 아니며 서로 다르다.
 - [ ] Canon과 Missile을 각각 LV1→LV2→LV3으로 승급하며 발사구·공격 동작이 바뀐다.
-- [ ] 승급 전후 `InstanceId`, 체력 비율, 세부 업그레이드와 활성 상태가 유지된다.
+- [ ] Canon과 Missile을 각각 LV3→LV2→LV1로 다운그레이드할 수 있다.
+- [ ] 레벨 변경 전후 `InstanceId`, 체력 비율, 세부 업그레이드, 활성·잠금 상태가 유지된다.
+- [ ] Canon과 Missile의 High Firepower는 Range -10%이고 Low Power는 Range +10%이며 탐지 범위와 표시 원에 즉시 반영된다.
+- [ ] Capture Snapshot의 Before 값은 상태 변경 후에도 유지되고 같은 ID의 현재 스냅샷만 갱신된다.
 - [ ] 활성 중 승급으로 증가한 전력만 추가 예약되고, 부족하면 승급이 거부된다.
 - [ ] 꺼지거나 파괴된 터렛은 Enemy PoC의 목표 후보에서 빠진다.
 
