@@ -14,7 +14,6 @@ namespace TeamHJD.Game.Debugging
     public sealed class TurretTestController : MonoBehaviour
     {
         private const float PanelWidth = 520f;
-        private const float MaximumPanelHeight = 700f;
 
         [Header("Debug UI")]
         [SerializeField, Range(1f, 2f)] private float uiScale = 1.25f;
@@ -97,7 +96,7 @@ namespace TeamHJD.Game.Debugging
             }
 
             float availableHeight = Screen.height / appliedUiScale - 32f;
-            float panelHeight = Mathf.Min(availableHeight, MaximumPanelHeight);
+            float panelHeight = Mathf.Max(0f, availableHeight);
             GUILayout.BeginArea(new Rect(16f, 16f, PanelWidth, panelHeight), GUI.skin.box);
 
             GUILayout.BeginHorizontal();
@@ -452,7 +451,9 @@ namespace TeamHJD.Game.Debugging
         {
             _turrets.Clear();
             _turrets.AddRange(TurretInstanceRegistry.GetAll());
-            _turrets.Sort((left, right) => string.CompareOrdinal(left.name, right.name));
+            // Prefab names and levels change during promotion/demotion, but the
+            // logical instance ID is transferred to the replacement turret.
+            _turrets.Sort((left, right) => left.InstanceId.CompareTo(right.InstanceId));
 
             _controlUnit = FindFirstObjectByType<ControlUnitStatus>();
         }
