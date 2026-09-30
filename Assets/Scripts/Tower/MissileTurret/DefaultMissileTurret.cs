@@ -63,9 +63,13 @@ public abstract class DefaultMissileTurret : TurretBase
 
     private void NoTargetInRange()//적이 타워 범위에 없을 때 탐색(TowerIsActivatedNow에서 수행)
     {
-        if (Targets[0] == null)
+        if (Targets == null || Targets.Length == 0)
+            return;
+
+        if (!TurretTargetingUtility.IsInRange(turret, Targets[0], Range))
         {
-            CurMissileCount -= Time.deltaTime;
+            ReleaseUnlaunchedTargets();
+            CurMissileCount = Mathf.Max(0f, CurMissileCount - Time.deltaTime);
             FindTarget();//(raycast 사용)
         }
     }
@@ -77,26 +81,41 @@ public abstract class DefaultMissileTurret : TurretBase
             EnemyMask,
             _targetCandidates);
 
-        for (int i = 0; i < Targets.Length; i++)
+        int slot = 0;
+        foreach (Collider2D candidate in _targetCandidates)
         {
-            if (_targetCandidates.Count == 0)
-            {
+            if (slot >= Targets.Length)
                 break;
-            }
+            if (candidate == null || !candidate.TryGetComponent(out Monster monster) || monster.isTargeted)
+                continue;
 
-            if (_targetCandidates.Count > 0)
-            {
-                if(!_targetCandidates[0].GetComponent<Monster>().isTargeted)
-                {
-                    Targets[i] = _targetCandidates[0].transform;
-                    _targetCandidates[0].GetComponent<Monster>().isTargeted = true;
-                    _targetCandidates.RemoveAt(0); // 할당된 타겟은 리스트에서 제거
-                    if (_targetCandidates.Count != 0)
-                        _targetCandidates.RemoveAt(0);
-                }
-            }
+            Targets[slot++] = candidate.transform;
+            monster.isTargeted = true;
         }
         if (Targets.Length > 1 && Targets[1] == null) Targets[1] = Targets[0];
+    }
+
+    private void ReleaseUnlaunchedTargets()
+    {
+        if (Targets == null)
+            return;
+
+        // Shoot clears these slots after handing their reservations to the missiles.
+        // Only targets still waiting for launch belong to this turret.
+        for (int index = 0; index < Targets.Length; index++)
+        {
+            Transform target = Targets[index];
+            if (target != null && target.TryGetComponent(out Monster monster))
+                monster.isTargeted = false;
+            Targets[index] = null;
+        }
+        TimeTilFire = 0f;
+    }
+
+    protected override void OnDisable()
+    {
+        ReleaseUnlaunchedTargets();
+        base.OnDisable();
     }
     private void RotateTowardsTarget() //적향해 타워 z축 회전(TowerIsActivatedNow에서 수행)
     {
@@ -220,6 +239,7 @@ public abstract class DefaultMissileTurret : TurretBase
             return;
         }
 
+        ReleaseUnlaunchedTargets();
         Animator.SetBool("isShoot", false);
         AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
         StartCoroutine(DeactivateProcess());

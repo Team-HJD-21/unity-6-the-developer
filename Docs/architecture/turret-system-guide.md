@@ -300,11 +300,15 @@ Canon 포신은 Target을 향해 돌지만, **발사된 `TowerBullet`은 몬스�
 flowchart TD
     Update["DefaultMissileTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
     Search --> Collect["TurretTargetingUtility<br>CollectByDistance()"]
-    Collect --> Targets["발사구 수에 맞게<br>Targets 배열 지정"]
+    Collect --> Filter["예약된 적은 건너뛰고<br>다음 후보 검사"]
+    Filter --> Targets["발사구 수에 맞게<br>Targets 배열 지정·예약"]
     Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>사거리·발사 간격 확인"]
     Fire --> Shoot["MissileTurretLV1~3<br>Shoot()"]
     Shoot --> Init["TowerMissile.Initialize()<br>Target·Damage 전달"]
+    Shoot --> Transfer["터렛 Target 슬롯 비우기<br>예약 관리는 발사체로 이전"]
+    Change["승급·강등·비활성화<br>또는 사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약만 해제"]
+    Release --> Search
     Init --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
     Straight -->|목표 소실| Retarget["SearchForNewTarget()"]
     Retarget --> Straight
@@ -315,6 +319,8 @@ flowchart TD
 ```
 
 Missile은 적 수가 부족하면 첫 Target을 다른 발사 슬롯에서도 사용할 수 있다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.DestroyObject()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 위 공식으로 계산한 `EffectiveDamage`를 전달한다.
+
+미사일 탐색은 가장 가까운 후보가 `Monster.isTargeted`인 경우 그 후보를 건너뛰고 다음 후보를 검사한다. 후보를 중복 제거해 바로 다음 적까지 건너뛰던 동작도 제거했다. 발사 전 선택한 타깃은 터렛이 예약하며 비활성화와 프리팹 교체 및 첫 타깃의 사망·사거리 이탈 시 `ReleaseUnlaunchedTargets()`로 정리한다. `OnDisable()`은 예약 정리 후 공통 Registry·전력 종료 경로를 호출한다. 발사 후에는 각 LV 스크립트가 Target 슬롯을 비우므로 이미 비행 중인 미사일의 예약은 터렛 종료로 해제하지 않는다. 기존 발사체가 충돌하거나 수명을 마칠 때 예약을 해제한다. `isTargeted`는 여전히 단일 bool이므로 복수 발사체 예약의 정확한 개수나 외부 Destroy 경로까지 관리하는 계약은 후속 과제다.
 
 ### 4.5 과열과 냉각
 
@@ -514,6 +520,10 @@ flowchart TD
 
 ### TurretTest 조작 순서
 
+테스트 패널은 UI 배율을 반영한 화면 높이에서 위아래 16의 여백만 남기고 세로 공간을 채운다. 고정 최대 높이 제한은 없으며 터렛 목록은 남은 공간에서 스크롤한다.
+
+터렛 목록은 이름이나 프리팹 레벨이 아니라 `InstanceId` 오름차순으로 정렬한다. 승급과 다운그레이드는 같은 ID를 유지하므로 목록에서도 같은 순서를 유지한다. Refresh나 상태 변경으로 목록을 갱신해도 이름 변경 때문에 다른 위치로 이동하지 않는다. 실제 인스턴스가 새로 생성되거나 제거되면 목록 구성 자체는 바뀔 수 있다.
+
 기존 맵을 유지한 채 `Assets/Scenes/TestScene/TurretTest.unity`를 열고 Play Mode에 진입한다. 현재 Scene에는 Canon/Missile 업그레이드 에셋 4개와 Stage 1 양방향 레벨 카탈로그가 연결되어 있다. Rebuild 메뉴도 기존 참조를 보존하면서 누락된 샘플만 추가한다. 이번 기능 확인을 위해 Scene을 재구성할 필요는 없다.
 
 1. `Capture Snapshot`으로 변경 전 값을 저장한다. 저장된 값은 ID별로 유지되므로 프리팹 교체 후에도 비교할 수 있다. 다시 누르면 비교 기준을 현재 값으로 바꾼다.
@@ -546,6 +556,9 @@ flowchart TD
 - [ ] `Restore` 후 최대 체력·비활성 상태로 돌아오며 다시 활성화할 수 있다.
 - [ ] 파괴와 복구 시 Registry 이벤트가 한 번씩 발생한다.
 - [ ] Target이 사망하거나 범위를 벗어나면 새 Target을 찾는다.
+- [ ] 미사일이 발사 전 적을 조준한 상태에서 승급·강등해도 예약이 남아 탐색이 멈추지 않는다.
+- [ ] 가장 가까운 적이 다른 미사일에 예약되어 있어도 다음 예약되지 않은 적을 선택한다.
+- [ ] 미사일 발사 후 승급·비활성화해도 이미 비행 중인 미사일의 타깃 예약을 풀지 않는다.
 - [ ] Canon과 Missile의 표시 원·실제 탐지 범위가 EffectiveRange와 일치한다.
 - [ ] 발사체 피해량이 Definition Damage와 Runtime Bonus를 반영한다.
 - [ ] 과열 후 냉각과 재활성화가 정상 동작한다.
