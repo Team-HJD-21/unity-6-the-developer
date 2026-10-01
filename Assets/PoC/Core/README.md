@@ -261,7 +261,7 @@ MatchState (authoritative state)
 BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
 ```
 
-현재 `BattlefieldPoint`, `TurretSpatialInput`, `BattlefieldSpatialInput`, `BattlefieldTopologyBuilder`가 Unity 독립 Domain에 구현되어 있습니다. 입력 점으로 Delaunay 삼각형을 만들고 변 인접 관계를 구성하며, 삼각형 하나만 공유하는 외곽 변을 Frontline으로 노출합니다. `BattlefieldSpatialSnapshot`의 컬렉션은 읽기 전용 복사본입니다. 점이 3개 미만이거나 공선이면 빈 topology를 반환하고, 동일 좌표의 터렛은 모호한 topology를 피하기 위해 예외 처리합니다. 계산은 정규화된 double 좌표 및 고정 epsilon을 사용하며, 이 정밀도 정책은 검토 가능한 초기 구현입니다.
+현재 `BattlefieldPoint`, `TurretSpatialInput`, `BattlefieldSpatialInput`, `BattlefieldTopologyBuilder`가 Unity 독립 Domain에 구현되어 있습니다. 입력 점으로 Delaunay 삼각형을 만들고 변 인접 관계를 구성하며, 삼각형 하나만 공유하는 외곽 변을 Frontline으로 노출합니다. `BattlefieldSpatialSnapshot`은 ID-좌표 vertex, triangle, edge adjacency, Frontline을 읽기 전용 복사본으로 제공합니다. 점이 3개 미만이거나 공선이면 topology는 비지만 유효 입력 vertex는 보존하며, 동일 좌표의 터렛은 모호한 topology를 피하기 위해 예외 처리합니다. 계산은 좌표 범위를 먼저 축소해 정규화하고 고정 epsilon을 사용하며, 이 정밀도 정책은 검토 가능한 초기 구현입니다.
 
 `AppRoot.StartMatch(..., BattlefieldSpatialInput)` 또는 `MatchSessionFactory.Create(..., BattlefieldSpatialInput)` 경로로 입력을 전달하면 Match 생성 중 `BattlefieldSpatialRuntime`이 결과를 만들고, `MatchSession`이 그 Runtime의 수명을 소유합니다. 기존 3개 인자 호출 경로는 빈 입력을 사용하므로, 현재 실제 #426 Turret snapshot을 읽는 Unity composition adapter는 아직 연결되지 않았습니다. 현 `TurretState`/`EnemyState`에는 위치 필드도 없습니다. #426의 ID/위치/좌표계 계약을 확인한 뒤 snapshot을 Domain input으로 투영해야 하며, Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않아야 합니다.
 

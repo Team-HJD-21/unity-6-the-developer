@@ -19,9 +19,12 @@ namespace TeamHJD.Game.Tests.EditMode
                 Point("a", 0, 0), Point("b", 1, 0), Point("c", 1, 1), Point("d", 0, 1)));
 
             Assert.That(snapshot.Triangles, Has.Count.EqualTo(2));
+            Assert.That(snapshot.Vertices, Has.Count.EqualTo(4));
             Assert.That(snapshot.EdgeAdjacencies, Has.Count.EqualTo(5));
             Assert.That(snapshot.FrontlineEdges, Has.Count.EqualTo(4));
             Assert.That(snapshot.EdgeAdjacencies.Count(edge => !edge.IsBoundary), Is.EqualTo(1));
+            Assert.That(snapshot.Vertices[0].EntityId, Is.EqualTo(new EntityId("a")));
+            Assert.That(snapshot.Vertices[0].Position, Is.EqualTo(new BattlefieldPoint(0, 0)));
         }
 
         [Test]
@@ -55,6 +58,7 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(snapshot.Triangles, Is.Empty);
             Assert.That(snapshot.EdgeAdjacencies, Is.Empty);
             Assert.That(snapshot.FrontlineEdges, Is.Empty);
+            Assert.That(snapshot.Vertices, Has.Count.EqualTo(count));
         }
 
         [Test]

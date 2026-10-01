@@ -16,10 +16,11 @@ namespace TeamHJD.Game.Domain
             turrets.Sort(CompareTurrets);
             EnsureDistinctPositions(turrets);
             var points = Normalize(turrets);
-            if (turrets.Count < 3 || AreCollinear(points)) return EmptySnapshot();
+            var vertices = CreateVertices(turrets);
+            if (turrets.Count < 3 || AreCollinear(points)) return EmptySnapshot(vertices);
             var triangulated = Triangulate(points);
             var triangles = CreateStableTriangles(triangulated, turrets.Count, turrets);
-            return CreateSnapshot(triangles);
+            return CreateSnapshot(vertices, triangles);
         }
 
         private static int CompareTurrets(TurretSpatialInput left, TurretSpatialInput right)
@@ -155,7 +156,16 @@ namespace TeamHJD.Game.Domain
             return result != 0 ? result : StringComparer.Ordinal.Compare(left.VertexC.Value, right.VertexC.Value);
         }
 
-        private static BattlefieldSpatialSnapshot CreateSnapshot(IList<BattlefieldTriangle> triangles)
+        private static List<BattlefieldVertex> CreateVertices(IReadOnlyList<TurretSpatialInput> turrets)
+        {
+            var vertices = new List<BattlefieldVertex>(turrets.Count);
+            foreach (var turret in turrets) vertices.Add(new BattlefieldVertex(turret.EntityId, turret.Position));
+            return vertices;
+        }
+
+        private static BattlefieldSpatialSnapshot CreateSnapshot(
+            IList<BattlefieldVertex> vertices,
+            IList<BattlefieldTriangle> triangles)
         {
             var edgeOwners = new Dictionary<BattlefieldEdge, List<int>>();
             for (var i = 0; i < triangles.Count; i++)
@@ -175,7 +185,7 @@ namespace TeamHJD.Game.Domain
                 if (owners.Count > 2) throw new InvalidOperationException("A planar edge cannot border more than two triangles.");
                 adjacencies.Add(new BattlefieldEdgeAdjacency(edge, owners[0], owners.Count == 1 ? -1 : owners[1]));
             }
-            return new BattlefieldSpatialSnapshot(triangles, adjacencies);
+            return new BattlefieldSpatialSnapshot(vertices, triangles, adjacencies);
         }
 
         private static int CompareEdges(BattlefieldEdge left, BattlefieldEdge right)
@@ -194,8 +204,8 @@ namespace TeamHJD.Game.Domain
             list.Add(triangleIndex);
         }
 
-        private static BattlefieldSpatialSnapshot EmptySnapshot() =>
-            new BattlefieldSpatialSnapshot(new List<BattlefieldTriangle>(), new List<BattlefieldEdgeAdjacency>());
+        private static BattlefieldSpatialSnapshot EmptySnapshot(IList<BattlefieldVertex> vertices) =>
+            new BattlefieldSpatialSnapshot(vertices, new List<BattlefieldTriangle>(), new List<BattlefieldEdgeAdjacency>());
 
         private static void CountEdge(IDictionary<IndexEdge, int> counts, IndexEdge edge)
         {
