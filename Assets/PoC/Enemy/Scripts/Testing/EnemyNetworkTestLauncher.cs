@@ -97,9 +97,12 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
             return;
         }
         
-        // 임시 스폰
+        // Planner 연결 전 네트워크 생성 동작만 확인하기 위해 단일 적 구성 명령을 직접 전달한다.
         SpawnInstruction instruction =
-            new SpawnInstruction("Slime", "SpawnPoint1", 3);
+            new SpawnInstruction(
+                "Test",
+                "SpawnPoint1",
+                new[] { new EnemySpawnEntry("Slime", 3) });
             
         monsterSpawner.Execute(instruction);
     }
