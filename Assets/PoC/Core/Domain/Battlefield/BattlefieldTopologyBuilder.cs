@@ -15,9 +15,8 @@ namespace TeamHJD.Game.Domain
             var turrets = new List<TurretSpatialInput>(input.Turrets);
             turrets.Sort(CompareTurrets);
             EnsureDistinctPositions(turrets);
-            if (turrets.Count < 3 || AreCollinear(turrets)) return EmptySnapshot();
-
             var points = Normalize(turrets);
+            if (turrets.Count < 3 || AreCollinear(points)) return EmptySnapshot();
             var triangulated = Triangulate(points);
             var triangles = CreateStableTriangles(triangulated, turrets.Count, turrets);
             return CreateSnapshot(triangles);
@@ -38,51 +37,44 @@ namespace TeamHJD.Game.Domain
                     throw new ArgumentException($"Turrets '{turrets[i - 1].EntityId}' and '{turrets[i].EntityId}' share a position.", nameof(turrets));
         }
 
-        private static bool AreCollinear(IReadOnlyList<TurretSpatialInput> turrets)
+        private static bool AreCollinear(IReadOnlyList<Point> points)
         {
-            var minX = turrets[0].Position.X;
-            var minY = turrets[0].Position.Y;
-            var maxX = minX;
-            var maxY = minY;
-            foreach (var turret in turrets)
+            if (points.Count < 3) return true;
+            var origin = points[0];
+            var second = points[1];
+            for (var i = 2; i < points.Count; i++)
             {
-                minX = Math.Min(minX, turret.Position.X);
-                minY = Math.Min(minY, turret.Position.Y);
-                maxX = Math.Max(maxX, turret.Position.X);
-                maxY = Math.Max(maxY, turret.Position.Y);
-            }
-            var scale = Math.Max(maxX - minX, maxY - minY);
-            if (scale == 0d) return true;
-            var origin = turrets[0].Position;
-            var second = turrets[1].Position;
-            var ax = (second.X - origin.X) / scale;
-            var ay = (second.Y - origin.Y) / scale;
-            for (var i = 2; i < turrets.Count; i++)
-            {
-                var bx = (turrets[i].Position.X - origin.X) / scale;
-                var by = (turrets[i].Position.Y - origin.Y) / scale;
-                if (Math.Abs((ax * by) - (ay * bx)) > GeometryEpsilon) return false;
+                if (Math.Abs(Cross(origin, second, points[i])) > GeometryEpsilon) return false;
             }
             return true;
         }
 
         private static List<Point> Normalize(IReadOnlyList<TurretSpatialInput> turrets)
         {
-            var minX = turrets[0].Position.X;
-            var minY = turrets[0].Position.Y;
+            var coordinateScale = 0d;
+            foreach (var turret in turrets)
+                coordinateScale = Math.Max(coordinateScale, Math.Max(Math.Abs(turret.Position.X), Math.Abs(turret.Position.Y)));
+            if (coordinateScale == 0d) return new List<Point>();
+
+            var scaled = new List<Point>(turrets.Count);
+            foreach (var turret in turrets)
+                scaled.Add(new Point(turret.Position.X / coordinateScale, turret.Position.Y / coordinateScale));
+
+            var minX = scaled[0].X;
+            var minY = scaled[0].Y;
             var maxX = minX;
             var maxY = minY;
-            foreach (var turret in turrets)
+            foreach (var point in scaled)
             {
-                minX = Math.Min(minX, turret.Position.X);
-                minY = Math.Min(minY, turret.Position.Y);
-                maxX = Math.Max(maxX, turret.Position.X);
-                maxY = Math.Max(maxY, turret.Position.Y);
+                minX = Math.Min(minX, point.X);
+                minY = Math.Min(minY, point.Y);
+                maxX = Math.Max(maxX, point.X);
+                maxY = Math.Max(maxY, point.Y);
             }
             var scale = Math.Max(maxX - minX, maxY - minY);
             var points = new List<Point>(turrets.Count + 3);
-            foreach (var turret in turrets)
-                points.Add(new Point((turret.Position.X - minX) / scale, (turret.Position.Y - minY) / scale));
+            foreach (var point in scaled)
+                points.Add(new Point((point.X - minX) / scale, (point.Y - minY) / scale));
             return points;
         }
 

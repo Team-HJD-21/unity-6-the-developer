@@ -68,6 +68,16 @@ namespace TeamHJD.Game.Tests.EditMode
         }
 
         [Test]
+        public void Build_ExtremeFiniteCoordinates_AvoidsNormalizationOverflow()
+        {
+            var snapshot = _builder.Build(CreateInput(
+                Point("a", -double.MaxValue, 0), Point("b", double.MaxValue, 0), Point("c", 0, double.MaxValue)));
+
+            Assert.That(snapshot.Triangles, Has.Count.EqualTo(1));
+            Assert.That(snapshot.FrontlineEdges, Has.Count.EqualTo(3));
+        }
+
+        [Test]
         public void Build_CoincidentPositions_RejectsAmbiguousTopology()
         {
             var input = CreateInput(Point("a", 0, 0), Point("b", 0, 0), Point("c", 1, 1));
