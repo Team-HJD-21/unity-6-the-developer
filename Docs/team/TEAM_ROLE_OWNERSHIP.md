@@ -135,6 +135,8 @@ AI는 `GameCommand`를 생성하고 A의 Authority/Simulation이 검증·처리�
 
 ## 6. Review 조합
 
+아래 표는 영역 간 품질 검토 조합이다. GitHub의 필수 Code Owner 승인과 별개로 영향이 큰 변경에 적용한다.
+
 | 작성자 | 기본 검토자 | 주요 검토 관점 |
 | --- | --- | --- |
 | A | D 또는 E | 계약이 Feature 구현을 과도하게 제한하지 않는가 |
@@ -143,7 +145,7 @@ AI는 `GameCommand`를 생성하고 A의 Authority/Simulation이 검증·처리�
 | D | A 또는 E | State/Reward 계약과 Enemy 난이도가 맞는가 |
 | E | A 또는 D | Authority와 Balance Data를 우회하지 않는가 |
 
-GitHub의 Required Approval 수는 0으로 유지한다. 작은 독립 변경은 Self-review와 CI 통과 후 Merge할 수 있다. 공용 계약, Save/Profile, Scene 구조, Build 설정, Network 변경은 표의 검토자에게 Review를 요청하고 의견을 해결한 뒤 Merge한다.
+2026-09-28 기준 `main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 승인 1명과 Code Owner 승인을 요구한다. 따라서 작은 독립 변경도 Self-review와 CI만으로 Merge할 수 없다. 공용 계약, Save/Profile, Scene 구조, Build 설정, Network 변경은 필수 승인과 별도로 표의 영역 검토자에게 Review를 요청하고 의견을 해결한 뒤 Merge한다.
 
 ## Sprint 1 Stage 1 PoC 역할 초점
 

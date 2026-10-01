@@ -13,9 +13,11 @@ namespace TeamHJD.Game.Turrets
         private struct Transition
         {
             [SerializeField] private TurretDefinition _source;
+            [SerializeField] private TurretBase _sourceLevelPrefab;
             [SerializeField] private TurretBase _nextLevelPrefab;
 
             public TurretDefinition Source => _source;
+            public TurretBase SourceLevelPrefab => _sourceLevelPrefab;
             public TurretBase NextLevelPrefab => _nextLevelPrefab;
         }
 
@@ -33,6 +35,24 @@ namespace TeamHJD.Game.Turrets
             }
 
             nextLevelPrefab = null;
+            return false;
+        }
+
+        public bool TryGetPrevious(TurretDefinition source, out TurretBase previousLevelPrefab)
+        {
+            foreach (Transition transition in _transitions)
+            {
+                if (transition.NextLevelPrefab == null ||
+                    transition.NextLevelPrefab.Definition != source)
+                {
+                    continue;
+                }
+
+                previousLevelPrefab = transition.SourceLevelPrefab;
+                return previousLevelPrefab != null;
+            }
+
+            previousLevelPrefab = null;
             return false;
         }
     }

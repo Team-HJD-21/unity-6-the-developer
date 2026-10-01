@@ -304,7 +304,12 @@ public class TowerManager : MonoBehaviour
         damageText.SetText("Damage : " + curCanonTower.GetDamage());
         rpm.SetText("RPM : " + curCanonTower.GetRpm());
 
-        if (curCanonTower.IsActivated)
+        if (curCanonTower.IsLocked)
+        {
+            activateText.SetText("Locked");
+            activateText.color = Color.gray;
+        }
+        else if (curCanonTower.IsActivated)
         {
             activateText.SetText("Deactivate");
             activateText.color = Color.red;
@@ -335,7 +340,12 @@ public class TowerManager : MonoBehaviour
         damageText.SetText("Damage : " + curMissileTower.GetDamage());
         rpm.SetText("RPM : " + curMissileTower.GetRPM());
 
-        if (curMissileTower.IsActivated)
+        if (curMissileTower.IsLocked)
+        {
+            activateText.SetText("Locked");
+            activateText.color = Color.gray;
+        }
+        else if (curMissileTower.IsActivated)
         {
             activateText.SetText("Deactivate");
             activateText.color = Color.red;
@@ -370,6 +380,12 @@ public class TowerManager : MonoBehaviour
         if (result == TurretActivationResult.InsufficientPower)
         {
             alertManager.Show(1);
+            return;
+        }
+
+        if (result == TurretActivationResult.Locked)
+        {
+            refreshTowerInfo?.Invoke();
             return;
         }
 

@@ -20,6 +20,8 @@ namespace TeamHJD.Game.Editor
         private const string ControlUnitPrefabPath = "Assets/Prefabs/Tower/ControlUnit.prefab";
         private const string HighFirepowerPath = "Assets/Scripts/Tower/TurretDefinitions/UpgradeDefinitions/Canon_HighFirepower.asset";
         private const string LowPowerPath = "Assets/Scripts/Tower/TurretDefinitions/UpgradeDefinitions/Canon_LowPower.asset";
+        private const string MissileHighFirepowerPath = "Assets/Scripts/Tower/TurretDefinitions/UpgradeDefinitions/Missile_HighFirepower.asset";
+        private const string MissileLowPowerPath = "Assets/Scripts/Tower/TurretDefinitions/UpgradeDefinitions/Missile_LowPower.asset";
         private const string LevelUpgradeCatalogPath = "Assets/Scripts/Tower/TurretDefinitions/TurretLevelUpgrade_Stage1.asset";
 
         private static readonly (string Path, string Name, Vector3 Position)[] TurretPlacements =
@@ -191,19 +193,24 @@ namespace TeamHJD.Game.Editor
             serializedController.Update();
 
             SerializedProperty upgrades = serializedController.FindProperty("sampleUpgrades");
-            if (upgrades != null && upgrades.arraySize == 0)
+            if (upgrades != null)
             {
-                UnityEngine.Object highFirepower = AssetDatabase.LoadMainAssetAtPath(HighFirepowerPath);
-                UnityEngine.Object lowPower = AssetDatabase.LoadMainAssetAtPath(LowPowerPath);
-                if (highFirepower != null && lowPower != null)
+                foreach (string path in new[] { HighFirepowerPath, LowPowerPath, MissileHighFirepowerPath, MissileLowPowerPath })
                 {
-                    upgrades.arraySize = 2;
-                    upgrades.GetArrayElementAtIndex(0).objectReferenceValue = highFirepower;
-                    upgrades.GetArrayElementAtIndex(1).objectReferenceValue = lowPower;
-                }
-                else
-                {
-                    Debug.LogWarning("[TurretTestSceneBuilder] Sample upgrade assets were not found.");
+                    UnityEngine.Object asset = AssetDatabase.LoadMainAssetAtPath(path);
+                    if (asset == null)
+                    {
+                        Debug.LogWarning($"[TurretTestSceneBuilder] Sample upgrade asset was not found: {path}");
+                        continue;
+                    }
+                    bool exists = false;
+                    for (int index = 0; index < upgrades.arraySize; index++)
+                        exists |= upgrades.GetArrayElementAtIndex(index).objectReferenceValue == asset;
+                    if (!exists)
+                    {
+                        int index = upgrades.arraySize++;
+                        upgrades.GetArrayElementAtIndex(index).objectReferenceValue = asset;
+                    }
                 }
             }
 
