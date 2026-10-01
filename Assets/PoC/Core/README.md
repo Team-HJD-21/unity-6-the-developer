@@ -14,6 +14,7 @@ TeamHJD.Game.Infrastructure → Contracts, Domain
 TeamHJD.Game.Infrastructure.Fakes → Contracts, Domain
 TeamHJD.Game.Presentation → Application, Contracts, Domain
 TeamHJD.Game.Bootstrap → Application, Content.Runtime, Contracts, Domain, Infrastructure, Fakes, Presentation
+TeamHJD.Game.Editor → Bootstrap, Domain (Editor only)
 TeamHJD.Game.Tests.EditMode → Application, Content.Runtime, Contracts, Domain, Fakes (Editor only)
 ```
 
@@ -35,6 +36,7 @@ Assets/PoC/Core/
 │  ├─ MatchEventBus.cs
 │  ├─ MatchSession.cs
 │  ├─ MatchSessionFactory.cs
+│  ├─ BattlefieldSpatialRuntime.cs
 │  └─ TeamHJD.Game.Application.asmdef
 ├─ Content/
 │  ├─ Authoring/
@@ -61,6 +63,7 @@ Assets/PoC/Core/
 │  ├─ Identifiers/ (CurrencyId, DefinitionId, EntityId, MatchId, PlayerId, StageId)
 │  ├─ Internal/CollectionCopy.cs
 │  ├─ Match/ (설정, 상태, 생명주기, Simulation, 결과, 규칙)
+│  ├─ Battlefield/ (터렛 공간 입력, Territory topology, 경계 변 snapshot)
 │  ├─ Players/ (PlayerState와 Profile/Loadout Snapshot)
 │  ├─ World/ (ControlUnit, Enemy, Sector, Turret, Wave 상태)
 │  └─ TeamHJD.Game.Domain.asmdef
@@ -77,11 +80,16 @@ Assets/PoC/Core/
 │  ├─ UI/HudPresenter.cs
 │  ├─ UI/IHudView.cs
 │  └─ TeamHJD.Game.Presentation.asmdef
-├─ Tests/EditMode/TeamHJD.Game.Tests.EditMode.asmdef
+├─ Editor/
+│  ├─ BattlefieldDebugWindow.cs
+│  └─ TeamHJD.Game.Editor.asmdef (Editor 전용)
+├─ Tests/EditMode/
+│  ├─ BattlefieldTopologyBuilderTests.cs
+│  └─ TeamHJD.Game.Tests.EditMode.asmdef
 └─ README.md
 ```
 
-트리는 `.cs`, `.asmdef`, `.md` 파일만 요약해 보여주며 디렉터리와 asmdef 경로는 현재 코드와 일치합니다. Unity `.meta` 파일은 생략했습니다. `Tests/EditMode`에는 테스트 Assembly Definition만 있고 아직 테스트 코드는 없습니다. 이제 `Application`, `Contracts`, `Domain`은 모두 `Assets/PoC/Core/` 바로 아래에 있으며, Domain은 타입 역할별 하위 폴더로 구분했습니다. namespace는 계속 `TeamHJD.Game.*`로 유지하므로 물리 경로 정리가 코드 의존성이나 이름 변경을 뜻하지 않습니다.
+트리는 `.cs`, `.asmdef`, `.md` 파일을 기준으로 현재 디렉터리를 요약하며 Unity `.meta` 파일은 생략했습니다. `Domain/Battlefield`는 순수 입력·계산·결과 타입, `Application/BattlefieldSpatialRuntime`은 Match 수명 경계, `Editor`는 Scene View 표시, `Tests/EditMode`는 해당 Domain 계산을 검증하는 코드입니다. 이 분리는 실제 의존 경계와 일치합니다. namespace는 계속 `TeamHJD.Game.*`로 유지하므로 물리 경로가 코드 의존성이나 타입 이름을 바꾸지는 않습니다.
 
 모든 C# 파일 맨 위에는 해당 파일의 역할을 한국어로 설명하는 짧은 주석을 둡니다. 업계에서 통용되는 타입명과 API명은 코드와 일치하도록 영어로 유지하고, 설명은 한국어로 작성합니다.
 
@@ -249,7 +257,7 @@ flowchart LR
 
 ## Match-scope 공간 분석 (현재 구현 상태)
 
-이번 Sprint의 설계 방향에서는 Territory/Frontline을 Encounter 내부에 두지 않고, Match 범위의 공용 `BattlefieldSpatialRuntime`에서 생성하는 파생 데이터로 다룹니다. 목표 책임 연결은 다음과 같습니다.
+이번 Sprint의 설계 방향에서는 Territory/Frontline을 Encounter 내부에 두지 않고, Match 범위의 공용 `BattlefieldSpatialRuntime`에서 생성하는 파생 데이터로 다룹니다. **Stage 1 PoC 목표는 2026-10-02에 갱신되어 Uniform Grid와 최소 Encounter → Spawn 실행 흐름까지 같은 PoC에서 확인하는 것으로 확장되었습니다.** 이 기능들은 현재 구현 상태와 동일시하면 안 됩니다. #458–#460이 Grid·Encounter·Editor 진단 범위를 추적하고, #420이 통합 흐름을 추적합니다.
 
 ```text
 MatchState (authoritative state)
@@ -263,13 +271,42 @@ BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
 
 현재 `BattlefieldPoint`, `TurretSpatialInput`, `BattlefieldSpatialInput`, `BattlefieldTopologyBuilder`가 Unity 독립 Domain에 구현되어 있습니다. 입력 점으로 Delaunay 삼각형을 만들고 변 인접 관계를 구성하며, 삼각형 하나만 공유하는 외곽 변을 Frontline으로 노출합니다. `BattlefieldSpatialSnapshot`은 ID-좌표 vertex, triangle, edge adjacency, Frontline을 읽기 전용 복사본으로 제공합니다. 점이 3개 미만이거나 공선이면 topology는 비지만 유효 입력 vertex는 보존하며, 동일 좌표의 터렛은 모호한 topology를 피하기 위해 예외 처리합니다. 계산은 좌표 범위를 먼저 축소해 정규화하고 고정 epsilon을 사용하며, 이 정밀도 정책은 검토 가능한 초기 구현입니다.
 
-`AppRoot.StartMatch(..., BattlefieldSpatialInput)` 또는 `MatchSessionFactory.Create(..., BattlefieldSpatialInput)` 경로로 입력을 전달하면 Match 생성 중 `BattlefieldSpatialRuntime`이 결과를 만들고, `MatchSession`이 그 Runtime의 수명을 소유합니다. 기존 3개 인자 호출 경로는 빈 입력을 사용하므로, 현재 실제 #426 Turret snapshot을 읽는 Unity composition adapter는 아직 연결되지 않았습니다. 현 `TurretState`/`EnemyState`에는 위치 필드도 없습니다. #426의 ID/위치/좌표계 계약을 확인한 뒤 snapshot을 Domain input으로 투영해야 하며, Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않아야 합니다.
+`AppRoot.StartMatch(..., BattlefieldSpatialInput)` 또는 `MatchSessionFactory.Create(..., BattlefieldSpatialInput)` 경로로 입력을 전달하면 Match 생성 중 `BattlefieldSpatialRuntime`이 결과를 만들고, `MatchSession`이 그 Runtime의 수명을 소유합니다. 기존 3개 인자 호출 경로는 빈 입력을 사용하므로, main의 #457에서 제공하는 immutable `TurretSnapshot`을 Battlefield Domain input으로 변환하는 Unity composition adapter는 아직 연결되지 않았습니다. 현 `TurretState`/`EnemyState`에는 위치 필드도 없습니다. snapshot의 ID/위치/좌표계 계약을 확인해 투영해야 하며, Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않아야 합니다.
+
+### 팀 간 연결 API — 현재 공개된 것과 빈 경계
+
+현재 호출할 수 있는 입력·조회 API는 다음과 같습니다.
+
+```csharp
+var spatialInput = new BattlefieldSpatialInput(new[]
+{
+    new TurretSpatialInput(turretEntityId, new BattlefieldPoint(x, y))
+});
+
+MatchSession session = appRoot.StartMatch(config, initialState, modeRules, spatialInput);
+BattlefieldSpatialSnapshot snapshot = session.Battlefield;
+```
+
+- `BattlefieldSpatialInput` / `TurretSpatialInput`: Match 생성 시 전달하는 불변 초기 입력. 입력 ID는 현재 `EntityId`를 받습니다.
+- `BattlefieldSpatialSnapshot`: `Vertices`, `Triangles`, `EdgeAdjacencies`, `FrontlineEdges` 읽기 전용 결과.
+- `AppRoot.StartMatch(..., BattlefieldSpatialInput)`: App 조립부가 Match에 공간 입력을 전달하는 진입점. 호출자는 반환된 `MatchSession`을 소유한 시스템에 명시적으로 전달할 수 있습니다.
+- `MatchSession.Battlefield`: Match가 보유한 초기 계산 결과 조회. Match 중 터렛 변경을 반영하는 갱신 API는 아직 없습니다.
+- `AppRoot.BattlefieldSnapshotChanged` / `CurrentBattlefieldSnapshot`: `UNITY_EDITOR` 전용이며 Debug Window만을 위한 진단 연결입니다. 게임 Feature API가 아닙니다.
+
+현재 열려 있지 않은 연결 지점도 분명히 구분해야 합니다.
+
+1. **Turret → Core 입력 Adapter:** main의 병합 PR #457에서 추가된 `TurretSnapshot` 값 타입/API가 현재 통합 브랜치에 있습니다. #426은 아직 Open이며 소비자 합의·실제 사용 경로 검증을 남깁니다. 스냅샷을 Domain spatial input으로 투영하는 Adapter와 좌표 평면/단위 합의는 별도 연결 작업입니다. Core가 `TurretBase`, `Transform`, static registry를 직접 조회하지 않습니다.
+2. **Match 생성자 → 다른 Runtime Feature:** `AppRoot`는 현재 Match를 private하게 보유하고, `StartMatch` 반환값 외에 `CurrentMatch` 조회 API가 없습니다. 현재는 Match를 만든 조립자가 `MatchSession`을 필요한 Feature에 주입해야 합니다. 서로 독립된 Feature가 나중에 임의로 현재 Match를 조회해야 한다면, static 접근자를 추가하기보다 Match-scope composition/injection API를 별도로 열어야 합니다.
+3. **Battlefield 갱신/구독:** 현재 Snapshot은 Match 시작 입력으로 한 번 계산됩니다. 터렛 설치·파괴 후 재계산, `BattlefieldChanged` 이벤트, 조회 인터페이스는 없습니다. 실시간 변경 소비자가 합의되기 전에는 확정 API로 만들지 않습니다.
+4. **Enemy/Encounter 소비:** 현재 구현에서 Enemy 또는 Spawner 코드와 연결된 API는 없습니다. 갱신된 Stage 1 목표에서는 Encounter가 `BattlefieldSpatialSnapshot`과 Uniform Grid를 읽고 SpawnPlan을 내어 executor로 연결되어야 하지만, 이 소비·실행 경로는 아직 구현되어 있지 않습니다. 전선 결과 자체가 직접 Spawn을 결정하지 않으며 정책/실행 계약은 별도 Feature 경계입니다.
+
+따라서 현 API는 **초기 입력을 주고 topology 결과를 읽는 것까지**입니다. 실제 팀 통합을 완료했다고 보려면 최소한 #426 producer adapter, Match-scope의 명시적 전달 방식, 필요한 경우 재계산 수명 규칙을 먼저 연결해야 합니다.
 
 이 계산 코어에는 Legacy Manager나 Scene 객체 참조가 없습니다. 다만 Project Build Settings에 Legacy `Main`/Stage 씬이 남아 있고 해당 Manager는 기존 Scene/Prefab에서 사용 중입니다. #440 Legacy 목록화 및 Owner 검토가 미완료이고 #441은 승인 대상을 전제로 하므로, 이번 변경에서 Legacy 씬·스크립트를 일괄 제거하거나 비활성화하지 않았습니다. 신규 Core Runtime과 실제 게임 Scene을 혼합하지 않는 작업 경계는 확보했지만, Player 빌드에서 Legacy를 완전히 제거했다고 간주하면 안 됩니다.
 
-이번 Stage 1 범위는 Territory topology와 boundary/Frontline입니다. `TeamHJD.Game.Editor` Editor-only assembly의 `BattlefieldDebugWindow`는 Tools 메뉴에서 열며, Play Mode Hierarchy의 `AppRoot`를 명시적으로 지정해 active Match snapshot을 읽습니다. `AppRoot`의 Editor 전용 인스턴스 이벤트가 Match 시작 시 snapshot을 전달하고 종료 시 비웁니다. Scene unload 때 표시 데이터를 비우고 Scene load 후 현재 Match snapshot을 다시 읽으며, Play Mode 종료/창 닫기 때 이벤트를 해제합니다. `AppRoot.Instance`나 전역 검색은 사용하지 않습니다. Scene View에서 Territory/Frontline 표시를 토글할 수 있고, 좌표 평면(XY/XZ)과 offset을 도구에서 선택합니다. 격리 worktree의 Unity CLI 실행 중 `TeamHJD.Game.Editor.dll` 컴파일 및 복사는 확인했지만, EditMode 테스트는 첫 프로젝트 임포트 중 240초 제한에 걸려 결과를 얻지 못했습니다. 도구의 Scene View 표시 및 Play Mode/Scene lifecycle은 별도 확인이 필요합니다.
+이번 Stage 1 범위는 Territory topology와 boundary/Frontline입니다. `TeamHJD.Game.Editor` Editor-only assembly의 `BattlefieldDebugWindow`는 Tools 메뉴에서 열며, Play Mode의 active Match snapshot을 표시하도록 구성했습니다. `AppRoot`의 Editor 전용 instance event를 사용하며 `AppRoot.Instance`나 전역 검색은 추가하지 않습니다. Unity 6.3.23f1 Pipeline Test Runner에서 Battlefield EditMode 테스트 11개가 통과했고, `EnemySandbox`에서 Play Mode 진입/종료 시 AppBootstrap 실행과 Console Error 0건을 확인했습니다. 단, 해당 Scene은 Match를 시작하지 않으므로 Debug Window의 실제 시각 표시, Scene 재진입 후 snapshot 갱신, Match Dispose 동작은 아직 확인되지 않았습니다. 프로젝트에 자동 PlayMode 테스트도 없습니다.
 
-Edit Mode fixture preview는 제외합니다. Uniform Grid, Influence Map, Enemy density, Encounter Director, spawn scoring/budget/difficulty는 미래 확장 후보이며 이번 구현에 넣지 않았습니다.
+Edit Mode fixture preview는 제외합니다. 현재 체크아웃에 구현된 것은 Territory topology/frontline 계산과 Match 수명 연결, Editor 표시 코드까지이며, #426 실제 adapter 연결 및 Unity 동작 검증은 추가 확인이 필요합니다. Uniform Grid, Encounter Director → SpawnPlan → 실제 실행은 갱신된 Stage 1 목표에 포함됐지만 아직 구현 완료로 간주하지 않습니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 임시 PoC 정책과 분리해 합의 후 결정합니다.
 
 ## 관련 공식 문서
 
