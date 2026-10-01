@@ -247,6 +247,28 @@ flowchart LR
 
 전투/웨이브/경제 규칙, 완성된 `IModeRules`, 정의 데이터로 초기 MatchState를 만드는 Factory, 로컬 바이너리 저장, Backend 검증, Steam, 네트워크·Host Migration, 실제 HUD View 및 Scene 연결은 아직 구현하지 않았습니다. 실제 adapter를 붙이기 전까지 Bootstrap은 개발용 Fake를 사용합니다.
 
+## Match-scope 공간 분석 (현재 구현 상태)
+
+이번 Sprint의 설계 방향에서는 Territory/Frontline을 Encounter 내부에 두지 않고, Match 범위의 공용 `BattlefieldSpatialRuntime`에서 생성하는 파생 데이터로 다룹니다. 목표 책임 연결은 다음과 같습니다.
+
+```text
+MatchState (authoritative state)
+  → BattlefieldSpatialRuntime (derived spatial analysis)
+      → Territory / Frontline snapshot (read-only)
+          → future Encounter / SpawnPlanner
+              → SpawnPlan → Unity/Network Spawn Executor
+
+BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
+```
+
+현재 `BattlefieldPoint`, `TurretSpatialInput`, `BattlefieldSpatialInput`, `BattlefieldTopologyBuilder`가 Unity 독립 Domain에 구현되어 있습니다. 입력 점으로 Delaunay 삼각형을 만들고 변 인접 관계를 구성하며, 삼각형 하나만 공유하는 외곽 변을 Frontline으로 노출합니다. `BattlefieldSpatialSnapshot`의 컬렉션은 읽기 전용 복사본입니다. 점이 3개 미만이거나 공선이면 빈 topology를 반환하고, 동일 좌표의 터렛은 모호한 topology를 피하기 위해 예외 처리합니다. 계산은 정규화된 double 좌표 및 고정 epsilon을 사용하며, 이 정밀도 정책은 검토 가능한 초기 구현입니다.
+
+`AppRoot.StartMatch(..., BattlefieldSpatialInput)` 또는 `MatchSessionFactory.Create(..., BattlefieldSpatialInput)` 경로로 입력을 전달하면 Match 생성 중 `BattlefieldSpatialRuntime`이 결과를 만들고, `MatchSession`이 그 Runtime의 수명을 소유합니다. 기존 3개 인자 호출 경로는 빈 입력을 사용하므로, 현재 실제 #426 Turret snapshot을 읽는 Unity composition adapter는 아직 연결되지 않았습니다. 현 `TurretState`/`EnemyState`에는 위치 필드도 없습니다. #426의 ID/위치/좌표계 계약을 확인한 뒤 snapshot을 Domain input으로 투영해야 하며, Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않아야 합니다.
+
+이 계산 코어에는 Legacy Manager나 Scene 객체 참조가 없습니다. 다만 Project Build Settings에 Legacy `Main`/Stage 씬이 남아 있고 해당 Manager는 기존 Scene/Prefab에서 사용 중입니다. #440 Legacy 목록화 및 Owner 검토가 미완료이고 #441은 승인 대상을 전제로 하므로, 이번 변경에서 Legacy 씬·스크립트를 일괄 제거하거나 비활성화하지 않았습니다. 신규 Core Runtime과 실제 게임 Scene을 혼합하지 않는 작업 경계는 확보했지만, Player 빌드에서 Legacy를 완전히 제거했다고 간주하면 안 됩니다.
+
+이번 Stage 1 범위는 Territory topology와 boundary/Frontline입니다. Editor 도구(#446)는 Play Mode의 active Match snapshot을 읽고 Match 시작/종료에 맞춘 Editor-only 진단 연결부를 통해 데이터를 받아야 하지만 아직 구현하지 않았습니다. Edit Mode fixture preview도 제외합니다. Uniform Grid, Influence Map, Enemy density, Encounter Director, spawn scoring/budget/difficulty는 미래 확장 후보이며 이번 구현에 넣지 않았습니다.
+
 ## 관련 공식 문서
 
 - [Unity 런타임 초기화 콜백과 실행 순서](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/RuntimeInitializeOnLoadMethodAttribute.html)

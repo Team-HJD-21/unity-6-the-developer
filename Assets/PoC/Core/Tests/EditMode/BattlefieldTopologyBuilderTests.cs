@@ -2,6 +2,7 @@
 
 using System;
 using System.Linq;
+using TeamHJD.Game.Application;
 using NUnit.Framework;
 using TeamHJD.Game.Domain;
 
@@ -72,6 +73,18 @@ namespace TeamHJD.Game.Tests.EditMode
             var input = CreateInput(Point("a", 0, 0), Point("b", 0, 0), Point("c", 1, 1));
 
             Assert.Throws<ArgumentException>(() => _builder.Build(input));
+        }
+
+        [Test]
+        public void Runtime_Dispose_ReleasesSnapshotAccess()
+        {
+            var runtime = new BattlefieldSpatialRuntime(CreateInput(
+                Point("a", 0, 0), Point("b", 1, 0), Point("c", 0, 1)));
+            Assert.That(runtime.Snapshot.Triangles, Has.Count.EqualTo(1));
+
+            runtime.Dispose();
+
+            Assert.Throws<ObjectDisposedException>(() => _ = runtime.Snapshot);
         }
 
         private static BattlefieldSpatialInput CreateInput(params TurretSpatialInput[] turrets) =>

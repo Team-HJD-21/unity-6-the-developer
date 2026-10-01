@@ -24,8 +24,17 @@ namespace TeamHJD.Game.Bootstrap
 
         public MatchSession StartMatch(MatchConfig config, MatchState initialState, IModeRules modeRules)
         {
+            return StartMatch(config, initialState, modeRules, BattlefieldSpatialInput.Empty);
+        }
+
+        public MatchSession StartMatch(
+            MatchConfig config,
+            MatchState initialState,
+            IModeRules modeRules,
+            BattlefieldSpatialInput battlefieldInput)
+        {
             ThrowIfUnavailable();
-            var nextMatch = Services.MatchSessions.Create(config, initialState, modeRules);
+            var nextMatch = Services.MatchSessions.Create(config, initialState, modeRules, battlefieldInput);
             try
             {
                 nextMatch.Start();
