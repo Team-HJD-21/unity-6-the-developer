@@ -11,6 +11,10 @@ namespace TeamHJD.Game.Turrets.Contracts
         NotInitialized,
         InsufficientPower,
         PowerSourceUnavailable,
-        InvalidPowerCost
+        InvalidPowerCost,
+        Downgraded,
+        BranchLocked,
+        MaximumLevel,
+        MinimumLevel
     }
 }

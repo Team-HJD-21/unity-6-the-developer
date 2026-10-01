@@ -6,6 +6,7 @@ namespace TeamHJD.Game.Turrets.Contracts
         Deactivated,
         Unchanged,
         Destroyed,
+        Locked,
         InsufficientPower,
         PowerSourceUnavailable,
         InvalidPowerCost

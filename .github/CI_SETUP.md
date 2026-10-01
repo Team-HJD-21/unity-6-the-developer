@@ -18,7 +18,7 @@
 - 해결되지 않은 Merge conflict 표시
 - 50MB 초과 Asset 경고
 
-Branch rule의 Required status check에는 우선 `Repository checks`만 지정한다. 이 검사는 Unity License가 없어도 항상 실행된다.
+2026-09-28 기준 [활성 `main` Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)의 필수 Status Check는 `Repository checks`다. 최신 `main` 기준으로 검사를 통과해야 하며, 이 검사는 Unity License가 없어도 실행된다.
 
 ## CI 실패를 Discord로 알리기
 
@@ -65,20 +65,16 @@ python -B .github/scripts/validate_meta.py
 
 Actions는 push/PR 이벤트를 받은 **뒤에** 실행된다. 작업 브랜치에 push하는 것과 `main`에 반영하는 것은 다르다. 작업 브랜치 push는 허용하고, CI가 실패한 변경의 `main` 반영을 차단한다.
 
-2026-09-11 확인 시 원격 `main`은 보호되지 않았고 활성 Ruleset도 없었다. 아래 설정은 권장 구성으로, 이 문서를 수정한다고 GitHub 설정까지 자동 적용되지는 않는다.
+2026-09-28 기준 원격 `main`에는 `Project Default Branch Ruleset`이 **Active** 상태로 적용된다. 예전 `CI Approval` Ruleset은 **Disabled**이며 Merge 조건에 적용되지 않는다. 실제 GitHub 설정이 바뀌면 이 문서보다 [Ruleset 화면](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)을 우선 확인한다.
 
-1. 저장소 `Settings → Rules → Rulesets → New ruleset → New branch ruleset`.
-2. 이름: `main-ci-required`. Enforcement status: **Active**.
-3. Target branches: `main`만 지정. Bypass list는 비워 관리자도 우회하지 않도록 한다.
-4. **Require a pull request before merging** 켜기.
-5. **Required approvals: 0**. 팀원의 Approve와 댓글 해결을 일괄 필수로 강제하지 않는다.
-6. **Require status checks to pass** 켜기 → `Repository checks` 추가 (GitHub Actions에서 제공하는 검사).
-7. **Require branches to be up to date before merging** 켜기.
-8. **Block force pushes**, **Restrict deletions** 켜기. 저장한다.
+- PR을 통해 Merge해야 하며, 승인 1명과 Code Owner 승인이 필요하다. 현재 [CODEOWNERS](CODEOWNERS)는 모든 파일에 `@hjd5031`, `@yanggogi1423`를 지정하므로 두 사람 중 한 명이 승인하면 된다. PR 작성자는 자기 PR을 승인할 수 없다.
+- 새 검토 가능 커밋을 push하면 기존 승인이 해제된다. Review 대화를 모두 해결해야 한다.
+- 필수 Status Check는 `Repository checks`이며 최신 `main` 기준으로 통과해야 한다. Force push와 기본 브랜치 삭제는 금지된다.
+- 사람 협업자가 없는 Copilot PR은 추가 승인을 요구할 수 있다. Copilot 자동 리뷰는 Code Owner 승인을 대체하지 않는다.
 
-수정된 CI를 한 번 실행한 뒤 정확한 check 이름을 선택한다. `UNITY_CI_ENABLED`가 꺼져 있다면 선택 Unity Job을 필수 검사로 지정하지 않는다. Unity Job을 켜고 검증을 마친 뒤 필수 검사에 추가하며, 조건에 의해 skip된 Job은 실제 Unity 검증 통과를 뜻하지 않는다.
+`UNITY_CI_ENABLED`가 꺼져 있다면 선택 Unity Job은 실행되지 않으며, 현재 필수 Status Check에도 포함돼 있지 않다. Unity Job을 켜고 검증을 마친 뒤 필수 검사에 추가할 수 있다. 조건에 의해 skip된 Job은 실제 Unity 검증 통과를 뜻하지 않는다.
 
-사용 흐름: `작업 브랜치 push → PR → Repository checks 성공 → Merge`. 실패하면 해당 작업 브랜치에 수정 commit을 push하여 재검사한다. PR은 필요하지만 사람의 Approve는 필수가 아니다.
+사용 흐름: `작업 브랜치 push → PR → Repository checks 성공 → Code Owner 승인 → Review 대화 해결 → Merge`. 실패하면 작업 브랜치에 수정 commit을 push하고 CI와 승인을 다시 확인한다.
 
 로컬 pre-push hook으로 일부 오류를 더 빨리 확인할 수는 있지만, 개발자별 설치가 필요하고 우회할 수 있으므로 서버 Ruleset을 대체할 수 없다.
 

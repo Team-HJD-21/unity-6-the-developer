@@ -115,14 +115,14 @@ Ready
 → Self-review
 → PR + Evidence
 → CI
-→ 필요 시 관련 Owner Review
+→ Code Owner 승인 + 필요 시 관련 Owner Review
 → Merge
 → 통합 Build
 → Verify
 → Done
 ```
 
-GitHub Required Approval은 0이다. Core/Save/Scene/Build/Network처럼 영향이 큰 변경만 관련 Owner Review를 운영상 요구한다.
+`main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 Code Owner의 승인 1명, Review 대화 해결, 최신 `Repository checks` 통과를 요구한다. 새 검토 가능 커밋을 push하면 승인을 다시 받아야 한다. Core/Save/Scene/Build/Network처럼 영향이 큰 변경은 이 필수 승인과 별도로 관련 영역 Owner에게도 Review를 요청한다.
 
 ## 6. Playtest와 Gate 판정
 

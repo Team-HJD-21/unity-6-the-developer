@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace TeamHJD.Game.Turrets
@@ -10,10 +9,14 @@ namespace TeamHJD.Game.Turrets
         [SerializeField, Min(0)] private int _instanceId;
         [SerializeField] private bool _isActivated;
         [SerializeField] private int _damageBonus;
+        [SerializeField] private bool _isLocked;
 
-        [NonSerialized] private HashSet<string> _appliedUpgradeIds = new();
-        [NonSerialized] private int _upgradeDamageBonus;
-        [NonSerialized] private int _upgradePowerBonus;
+        public const int MaximumUpgradeLevel = 5;
+        [NonSerialized] private string _selectedUpgradeId;
+        [NonSerialized] private int _upgradeLevel;
+        [NonSerialized] private float _upgradeDamageModifierRatio;
+        [NonSerialized] private float _upgradePowerModifierRatio;
+        [NonSerialized] private float _upgradeRangeModifierRatio;
         [NonSerialized] private int _currentHealth;
         [NonSerialized] private bool _isDestroyed;
         [NonSerialized] private bool _healthInitialized;
@@ -22,12 +25,26 @@ namespace TeamHJD.Game.Turrets
         public int InstanceId => _instanceId;
         public bool HasInstanceId => _instanceId > 0;
         public bool IsActivated => _isActivated;
-        public bool IsOperational => _isActivated && !_isTemporarilySuspended && !_isDestroyed;
+        public bool IsOperational => _isActivated && !_isTemporarilySuspended && !_isDestroyed && !_isLocked;
+        public bool IsLocked => _isLocked;
         public bool IsTemporarilySuspended => _isTemporarilySuspended;
         public int CurrentHealth => _currentHealth;
         public bool IsDestroyed => _isDestroyed;
-        public int DamageBonus => _damageBonus + _upgradeDamageBonus;
-        public int PowerBonus => _upgradePowerBonus;
+        public int DamageBonus => _damageBonus;
+        public float DamageModifierRatio => _upgradeDamageModifierRatio;
+        public float PowerModifierRatio => _upgradePowerModifierRatio;
+        public float RangeModifierRatio => _upgradeRangeModifierRatio;
+        public string SelectedUpgradeId => _selectedUpgradeId ?? string.Empty;
+        public int UpgradeLevel => _upgradeLevel;
+
+        public int GetEffectiveDamage(int definitionDamage) =>
+            Mathf.Max(0, CalculateScaledStat(definitionDamage, DamageModifierRatio) + DamageBonus);
+
+        public int GetEffectivePower(int definitionPower) =>
+            CalculateScaledStat(definitionPower, PowerModifierRatio);
+
+        internal static int CalculateScaledStat(int baseValue, float modifierRatio) =>
+            Mathf.Max(0, Mathf.CeilToInt(baseValue * (1f + modifierRatio)));
 
         public void AssignInstanceId(int instanceId)
         {
@@ -52,27 +69,31 @@ namespace TeamHJD.Game.Turrets
         public bool HasAppliedUpgrade(string upgradeId)
         {
             return !string.IsNullOrWhiteSpace(upgradeId) &&
-                   AppliedUpgradeIds.Contains(upgradeId);
+                   _upgradeLevel > 0 && _selectedUpgradeId == upgradeId;
         }
 
-        internal void ApplyUpgrade(string upgradeId, int damageModifier, int powerModifier)
+        internal void SetUpgradeLevel(
+            string upgradeId, int level, float damageModifierRatio, float powerModifierRatio, float rangeModifierRatio)
         {
-            AppliedUpgradeIds.Add(upgradeId);
-            _upgradeDamageBonus += damageModifier;
-            _upgradePowerBonus += powerModifier;
+            _upgradeLevel = Mathf.Clamp(level, 0, MaximumUpgradeLevel);
+            _selectedUpgradeId = _upgradeLevel == 0 ? null : upgradeId;
+            // Recalculate from the rank rather than accumulating floating point deltas.
+            _upgradeDamageModifierRatio = damageModifierRatio * _upgradeLevel;
+            _upgradePowerModifierRatio = powerModifierRatio * _upgradeLevel;
+            _upgradeRangeModifierRatio = rangeModifierRatio * _upgradeLevel;
         }
 
-        private HashSet<string> AppliedUpgradeIds =>
-            _appliedUpgradeIds ??= new HashSet<string>();
-
-        internal void CopyForLevelUpgrade(TurretRuntimeState target, int sourceMaxHealth, int targetMaxHealth)
+        internal void CopyForLevelChange(TurretRuntimeState target, int sourceMaxHealth, int targetMaxHealth)
         {
             target._instanceId = _instanceId;
             target._isActivated = false;
             target._damageBonus = _damageBonus;
-            target._upgradeDamageBonus = _upgradeDamageBonus;
-            target._upgradePowerBonus = _upgradePowerBonus;
-            target._appliedUpgradeIds = new HashSet<string>(AppliedUpgradeIds);
+            target._upgradeDamageModifierRatio = _upgradeDamageModifierRatio;
+            target._upgradePowerModifierRatio = _upgradePowerModifierRatio;
+            target._upgradeRangeModifierRatio = _upgradeRangeModifierRatio;
+            target._isLocked = _isLocked;
+            target._selectedUpgradeId = _selectedUpgradeId;
+            target._upgradeLevel = _upgradeLevel;
             target._currentHealth = Mathf.Clamp(
                 Mathf.CeilToInt(_currentHealth / (float)Mathf.Max(1, sourceMaxHealth) *
                                 Mathf.Max(1, targetMaxHealth)),
@@ -86,6 +107,11 @@ namespace TeamHJD.Game.Turrets
         internal void SetActivated(bool isActivated)
         {
             _isActivated = isActivated;
+        }
+
+        internal void SetLocked(bool isLocked)
+        {
+            _isLocked = isLocked;
         }
 
         internal void SetTemporarilySuspended(bool isTemporarilySuspended)

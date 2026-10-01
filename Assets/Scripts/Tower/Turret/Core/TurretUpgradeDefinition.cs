@@ -16,14 +16,19 @@ namespace TeamHJD.Game.Content
         [Tooltip("An empty list allows this upgrade on every turret definition.")]
         [SerializeField] private List<string> _compatibleDefinitionIds = new();
 
-        [Header("Runtime Modifiers")]
-        [SerializeField] private int _damageModifier;
-        [SerializeField] private int _powerModifier;
+        [Header("Runtime Modifiers Per Step")]
+        [Tooltip("Fraction of definition damage per step. 0.1 means 10% more per step.")]
+        [SerializeField, Range(-0.1f, 0.1f)] private float _damageModifierRatio;
+        [Tooltip("Fraction of definition power per step. -0.1 means 10% less per step.")]
+        [SerializeField, Range(-0.1f, 0.1f)] private float _powerModifierRatio;
+        [Tooltip("Fraction of the definition range per step. -0.1 means 10% shorter per step.")]
+        [SerializeField, Range(-1f, 1f)] private float _rangeModifierRatio;
 
         public string Id => _id;
         public string DisplayName => _displayName;
-        public int DamageModifier => _damageModifier;
-        public int PowerModifier => _powerModifier;
+        public float DamageModifierRatio => _damageModifierRatio;
+        public float PowerModifierRatio => _powerModifierRatio;
+        public float RangeModifierRatio => _rangeModifierRatio;
 
         public bool IsCompatibleWith(string definitionId)
         {

@@ -9,28 +9,17 @@ using UnityEngine;
 [RequireComponent(typeof(TargetableComponent))]
 public sealed class TurretTargetableAdapter : MonoBehaviour
 {
-    [SerializeField] private TurretBase _turret;
     [SerializeField, Range(0f, 1f)] private float _fakeFirepowerRatio = 0.5f;
 
     private TargetableComponent _targetable;
+    private int _instanceId;
 
     /// <summary>
-    /// Inspector에서 컴포넌트를 추가하거나 초기화할 때 상위 터렛 참조를 자동으로 설정한다.
-    /// </summary>
-    private void Reset()
-    {
-        _turret = GetComponentInParent<TurretBase>();
-    }
-
-    /// <summary>
-    /// 타깃 상태 컴포넌트와 상위 터렛 참조를 초기화한다.
+    /// 타깃 상태 컴포넌트를 찾고 터렛 타깃으로 초기화한다.
     /// </summary>
     private void Awake()
     {
         _targetable = GetComponent<TargetableComponent>();
-        if (_turret == null)
-            _turret = GetComponentInParent<TurretBase>();
-
         _targetable.SetTargetType(TargetType.Turret);
         Synchronize();
     }
@@ -40,12 +29,7 @@ public sealed class TurretTargetableAdapter : MonoBehaviour
     /// </summary>
     private void OnEnable()
     {
-        TurretInstanceRegistry.ActivationChanged += OnActivationChanged;
-        TurretInstanceRegistry.HealthChanged += OnHealthChanged;
-        TurretInstanceRegistry.Registered += OnTurretChanged;
-        TurretInstanceRegistry.Unregistered += OnTurretChanged;
-        TurretInstanceRegistry.Destroyed += OnTurretChanged;
-        TurretInstanceRegistry.Restored += OnTurretChanged;
+        TurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
         Synchronize();
     }
 
@@ -64,38 +48,21 @@ public sealed class TurretTargetableAdapter : MonoBehaviour
     /// </summary>
     private void OnDisable()
     {
-        TurretInstanceRegistry.ActivationChanged -= OnActivationChanged;
-        TurretInstanceRegistry.HealthChanged -= OnHealthChanged;
-        TurretInstanceRegistry.Registered -= OnTurretChanged;
-        TurretInstanceRegistry.Unregistered -= OnTurretChanged;
-        TurretInstanceRegistry.Destroyed -= OnTurretChanged;
-        TurretInstanceRegistry.Restored -= OnTurretChanged;
+        TurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
         if (_targetable != null)
             _targetable.enabled = false;
     }
 
     /// <summary>
-    /// 터렛 활성 상태가 변경되면 대상 터렛의 상태를 다시 동기화한다.
+    /// 현재 연결된 터렛의 스냅샷이 변경되면 타깃 상태를 다시 동기화한다.
     /// </summary>
-    /// <param name="turret">활성 상태가 변경된 터렛.</param>
-    /// <param name="active">변경 후 활성 상태.</param>
-    private void OnActivationChanged(TurretBase turret, bool active) => OnTurretChanged(turret);
-
-    /// <summary>
-    /// 터렛 체력이 변경되면 대상 터렛의 상태를 다시 동기화한다.
-    /// </summary>
-    /// <param name="turret">체력이 변경된 터렛.</param>
-    /// <param name="current">변경 후 현재 체력.</param>
-    /// <param name="maximum">현재 최대 체력.</param>
-    private void OnHealthChanged(TurretBase turret, int current, int maximum) => OnTurretChanged(turret);
-
-    /// <summary>
-    /// 이벤트가 현재 연결된 터렛에서 발생했을 때 상태를 동기화한다.
-    /// </summary>
-    /// <param name="turret">상태가 변경된 터렛.</param>
-    private void OnTurretChanged(TurretBase turret)
+    /// <param name="instanceId">상태가 변경된 터렛의 런타임 식별 값.</param>
+    private void OnSnapshotChanged(int instanceId)
     {
-        if (turret == _turret)
+        if (_instanceId == 0)
+            TurretInstanceRegistry.TryGetInstanceId(transform, out _instanceId);
+
+        if (instanceId == _instanceId)
             Synchronize();
     }
 
@@ -107,11 +74,17 @@ public sealed class TurretTargetableAdapter : MonoBehaviour
         if (_targetable == null)
             return;
 
-        _targetable.SetHealth(_turret != null ? _turret.CurrentHealth : 0,
-            _turret != null ? _turret.MaxHealth : 0);
+        if (_instanceId == 0)
+            TurretInstanceRegistry.TryGetInstanceId(transform, out _instanceId);
+
+        TurretSnapshot snapshot = default;
+        bool hasSnapshot = _instanceId > 0 &&
+            TurretInstanceRegistry.TryGetSnapshot(_instanceId, out snapshot);
+        _targetable.SetHealth(hasSnapshot ? snapshot.CurrentHealth : 0,
+            hasSnapshot ? snapshot.MaxHealth : 0);
         _targetable.SetFirepower(Mathf.Clamp01(_fakeFirepowerRatio), 1f);
         _targetable.enabled = isActiveAndEnabled &&
-            _turret != null && _turret.isActiveAndEnabled &&
-            _turret.IsActivated && !_turret.IsDestroyed && _turret.CurrentHealth > 0;
+            hasSnapshot && snapshot.IsActivated && !snapshot.IsDestroyed &&
+            snapshot.CurrentHealth > 0;
     }
 }

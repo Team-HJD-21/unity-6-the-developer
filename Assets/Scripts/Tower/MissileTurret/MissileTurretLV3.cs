@@ -20,8 +20,6 @@ public class MissileTurretLV3 : DefaultMissileTurret
         Targets = new Transform[missileSpawnPoint.Length];
         _missileObj = new GameObject[missileSpawnPoint.Length];
         
-        //Turrets Attack Range
-        rangeTransform.localScale = new Vector3(Range*2.5f, Range*2.5f, 1f);;
     }
     protected override void Shoot()
     {
