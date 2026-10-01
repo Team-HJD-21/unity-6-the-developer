@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using DomainEntityId = TeamHJD.Game.Domain.EntityId;
 
 namespace TeamHJD.Game.Editor
 {
@@ -114,7 +115,7 @@ namespace TeamHJD.Game.Editor
         {
             if (!EditorApplication.isPlaying || _appRoot == null || _snapshot == null) return;
 
-            var positions = new Dictionary<EntityId, Vector3>(_snapshot.Vertices.Count);
+            var positions = new Dictionary<DomainEntityId, Vector3>(_snapshot.Vertices.Count);
             foreach (var vertex in _snapshot.Vertices)
                 positions.Add(vertex.EntityId, ToWorldPosition(vertex.Position));
 
@@ -134,7 +135,7 @@ namespace TeamHJD.Game.Editor
             }
         }
 
-        private void DrawTerritory(IReadOnlyDictionary<EntityId, Vector3> positions)
+        private void DrawTerritory(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
         {
             Handles.color = new Color(0.1f, 0.75f, 1f, 0.12f);
             foreach (var triangle in _snapshot.Triangles)
@@ -151,14 +152,14 @@ namespace TeamHJD.Game.Editor
             }
         }
 
-        private void DrawFrontlines(IReadOnlyDictionary<EntityId, Vector3> positions)
+        private void DrawFrontlines(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
         {
             Handles.color = new Color(1f, 0.35f, 0.1f, 1f);
             foreach (var edge in _snapshot.FrontlineEdges)
                 Handles.DrawAAPolyLine(3f, positions[edge.First], positions[edge.Second]);
         }
 
-        private void DrawVertexLabels(IReadOnlyDictionary<EntityId, Vector3> positions)
+        private void DrawVertexLabels(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
         {
             Handles.color = Color.white;
             foreach (var vertex in _snapshot.Vertices)
