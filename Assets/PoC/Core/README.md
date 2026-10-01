@@ -267,7 +267,9 @@ BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
 
 이 계산 코어에는 Legacy Manager나 Scene 객체 참조가 없습니다. 다만 Project Build Settings에 Legacy `Main`/Stage 씬이 남아 있고 해당 Manager는 기존 Scene/Prefab에서 사용 중입니다. #440 Legacy 목록화 및 Owner 검토가 미완료이고 #441은 승인 대상을 전제로 하므로, 이번 변경에서 Legacy 씬·스크립트를 일괄 제거하거나 비활성화하지 않았습니다. 신규 Core Runtime과 실제 게임 Scene을 혼합하지 않는 작업 경계는 확보했지만, Player 빌드에서 Legacy를 완전히 제거했다고 간주하면 안 됩니다.
 
-이번 Stage 1 범위는 Territory topology와 boundary/Frontline입니다. Editor 도구(#446)는 Play Mode의 active Match snapshot을 읽고 Match 시작/종료에 맞춘 Editor-only 진단 연결부를 통해 데이터를 받아야 하지만 아직 구현하지 않았습니다. Edit Mode fixture preview도 제외합니다. Uniform Grid, Influence Map, Enemy density, Encounter Director, spawn scoring/budget/difficulty는 미래 확장 후보이며 이번 구현에 넣지 않았습니다.
+이번 Stage 1 범위는 Territory topology와 boundary/Frontline입니다. `TeamHJD.Game.Editor` Editor-only assembly의 `BattlefieldDebugWindow`는 Tools 메뉴에서 열며, Play Mode Hierarchy의 `AppRoot`를 명시적으로 지정해 active Match snapshot을 읽습니다. `AppRoot`의 Editor 전용 인스턴스 이벤트가 Match 시작 시 snapshot을 전달하고 종료 시 비웁니다. Scene unload 때 표시 데이터를 비우고 Scene load 후 현재 Match snapshot을 다시 읽으며, Play Mode 종료/창 닫기 때 이벤트를 해제합니다. `AppRoot.Instance`나 전역 검색은 사용하지 않습니다. Scene View에서 Territory/Frontline 표시를 토글할 수 있고, 좌표 평면(XY/XZ)과 offset을 도구에서 선택합니다. 이 연결은 아직 Unity Editor에서 실행 검증하지 않았습니다.
+
+Edit Mode fixture preview는 제외합니다. Uniform Grid, Influence Map, Enemy density, Encounter Director, spawn scoring/budget/difficulty는 미래 확장 후보이며 이번 구현에 넣지 않았습니다.
 
 ## 관련 공식 문서
 

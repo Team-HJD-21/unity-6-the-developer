@@ -1,6 +1,7 @@
 // 전장 topology 생성의 경계 입력과 결정론적 결과를 검증합니다.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Application;
 using NUnit.Framework;
@@ -25,6 +26,29 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(snapshot.EdgeAdjacencies.Count(edge => !edge.IsBoundary), Is.EqualTo(1));
             Assert.That(snapshot.Vertices[0].EntityId, Is.EqualTo(new EntityId("a")));
             Assert.That(snapshot.Vertices[0].Position, Is.EqualTo(new BattlefieldPoint(0, 0)));
+        }
+
+        [Test]
+        public void Build_InteriorTurretPoint_CreatesConnectedTerritoryAndBoundary()
+        {
+            var snapshot = _builder.Build(CreateInput(
+                Point("a", 0, 0), Point("b", 4, 0), Point("c", 0, 4), Point("center", 1, 1)));
+
+            Assert.That(snapshot.Triangles, Has.Count.EqualTo(3));
+            Assert.That(snapshot.EdgeAdjacencies, Has.Count.EqualTo(6));
+            Assert.That(snapshot.EdgeAdjacencies.Count(edge => edge.IsBoundary), Is.EqualTo(3));
+            Assert.That(snapshot.EdgeAdjacencies.Count(edge => !edge.IsBoundary), Is.EqualTo(3));
+            Assert.That(snapshot.FrontlineEdges, Has.Count.EqualTo(3));
+        }
+
+        [Test]
+        public void Build_SnapshotCollections_RejectMutation()
+        {
+            var snapshot = _builder.Build(CreateInput(
+                Point("a", 0, 0), Point("b", 1, 0), Point("c", 0, 1)));
+
+            Assert.Throws<NotSupportedException>(() =>
+                ((IList<BattlefieldVertex>)snapshot.Vertices).Add(snapshot.Vertices[0]));
         }
 
         [Test]
