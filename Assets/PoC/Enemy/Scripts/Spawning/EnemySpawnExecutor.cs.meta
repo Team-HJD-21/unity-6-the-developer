@@ -4,9 +4,8 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - monsterPrefab: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-  - spawnPoint: {instanceID: 0}
-  - tempTarget: {instanceID: 0}
+  - enemyList: {fileID: 11400000, guid: 88948902b3d6e24488d5e338c2ccff02, type: 2}
+  - spawnPointList: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
