@@ -12,13 +12,21 @@ namespace TeamHJD.Game.Application
         private readonly IModeRules _modeRules;
         private readonly IAuthority _authority;
         private readonly MatchEventBus _eventBus;
+        private readonly BattlefieldSpatialRuntime _battlefield;
         private bool _isDisposed;
 
         public MatchConfig Config { get; }
         public MatchState State { get; }
+        public BattlefieldSpatialSnapshot Battlefield => _battlefield.Snapshot;
         public IMatchEventStream Events => _eventBus;
 
-        internal MatchSession(MatchConfig config, MatchState state, MatchSimulation simulation, IModeRules modeRules, IAuthority authority)
+        internal MatchSession(
+            MatchConfig config,
+            MatchState state,
+            MatchSimulation simulation,
+            IModeRules modeRules,
+            IAuthority authority,
+            BattlefieldSpatialInput battlefieldInput)
         {
             Config = config ?? throw new ArgumentNullException(nameof(config));
             State = state ?? throw new ArgumentNullException(nameof(state));
@@ -26,6 +34,7 @@ namespace TeamHJD.Game.Application
             _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             _modeRules = modeRules ?? throw new ArgumentNullException(nameof(modeRules));
             _authority = authority ?? throw new ArgumentNullException(nameof(authority));
+            _battlefield = new BattlefieldSpatialRuntime(battlefieldInput);
             _eventBus = new MatchEventBus();
         }
 
@@ -83,9 +92,22 @@ namespace TeamHJD.Game.Application
         public void Dispose()
         {
             if (_isDisposed) return;
-            _simulation.Dispose(State);
-            _eventBus.Dispose();
             _isDisposed = true;
+            Exception simulationError = null;
+            try
+            {
+                _simulation.Dispose(State);
+            }
+            catch (Exception exception)
+            {
+                simulationError = exception;
+            }
+            finally
+            {
+                _eventBus.Dispose();
+                _battlefield.Dispose();
+            }
+            if (simulationError != null) throw new InvalidOperationException("Match simulation failed to dispose.", simulationError);
         }
 
         private void ThrowIfDisposed()
