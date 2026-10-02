@@ -94,6 +94,7 @@ MonoBehaviour:
   rangeRenderer: {fileID: 6220006798756236841}
   rangeTransform: {fileID: 7681714393617022161}
   _definition: {fileID: 11400000, guid: 125f124d37f1442b9e9ead6c85ecabe2, type: 2}
+  minimumRange: 4.59
   _runtimeState:
     _instanceId: 0
     _isActivated: 0

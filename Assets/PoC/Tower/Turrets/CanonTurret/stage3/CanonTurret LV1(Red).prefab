@@ -70,6 +70,7 @@ MonoBehaviour:
   rangeRenderer: {fileID: 5496085443188878580}
   rangeTransform: {fileID: 3735823970655440404}
   _definition: {fileID: 11400000, guid: ab927dede89b403995526cc72ef6e18a, type: 2}
+  minimumRange: 4.47
 --- !u!50 &896279948231493691
 Rigidbody2D:
   serializedVersion: 4

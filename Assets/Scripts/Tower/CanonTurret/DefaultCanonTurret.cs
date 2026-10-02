@@ -13,6 +13,7 @@ public abstract class DefaultCanonTurret : TurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _fireTime = 0f;       //과열시 중지 위한 변수
+    protected override bool UsesMinimumRange => true;
 
     protected abstract void Shoot();//총알 객체화 후 목표로 발사(FireRateController에서 수행)
     private void Awake()
@@ -31,7 +32,7 @@ public abstract class DefaultCanonTurret : TurretBase
     }
     protected void Update()
     {
-        RangeRenderer.enabled = ShowRange;
+        UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
     private void TowerIsActivatedNow()//사용자에 의해 타워가 가동 됐다면 역할 수행(Update에서 수행)
@@ -47,8 +48,10 @@ public abstract class DefaultCanonTurret : TurretBase
 
     private void NoTargetInRange()//적이 타워 범위에 없을 때 탐색(TowerIsActivatedNow에서 수행)
     {
-        if (Target == null)
+        if (!CheckTargetIsInRange())
         {
+            Target = null;
+            TimeTilFire = 0f;
             _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
             Animator.SetBool("isShoot", false);
@@ -120,14 +123,15 @@ public abstract class DefaultCanonTurret : TurretBase
             turret.position,
             Range,
             EnemyMask,
-            _targetCandidates);
+            _targetCandidates,
+            MinimumRange);
         Target = _targetCandidates.Count == 0
             ? null
             : _targetCandidates[0].transform;
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
-        return TurretTargetingUtility.IsInRange(turret, Target, Range);
+        return TurretTargetingUtility.IsInAttackRange(turret, Target, MinimumRange, Range);
     }
     private bool IsTargetInSight()//적이 시야각에 있는지 확인(FireRateController, OverHeatAnimationController에서 수행)
     {

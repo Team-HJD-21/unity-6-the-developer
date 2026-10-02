@@ -14,6 +14,7 @@ public abstract class DefaultMissileTurret : TurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _currentMissileCount;   //과열시 중지 위한 변수
+    protected override bool UsesMinimumRange => true;
 
     private float CurMissileCount
     {
@@ -47,7 +48,7 @@ public abstract class DefaultMissileTurret : TurretBase
     }
     private void Update()
     {
-        RangeRenderer.enabled = ShowRange;
+        UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
     private void TowerIsActivatedNow()//사용자에 의해 타워가 가동 됐다면 역할 수행(Update에서 수행)
@@ -66,7 +67,15 @@ public abstract class DefaultMissileTurret : TurretBase
         if (Targets == null || Targets.Length == 0)
             return;
 
-        if (!TurretTargetingUtility.IsInRange(turret, Targets[0], Range))
+        bool needsNewTargets = Targets[0] == null;
+        foreach (Transform target in Targets)
+        {
+            if (target != null &&
+                !TurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range))
+                needsNewTargets = true;
+        }
+
+        if (needsNewTargets)
         {
             ReleaseUnlaunchedTargets();
             CurMissileCount = Mathf.Max(0f, CurMissileCount - Time.deltaTime);
@@ -79,7 +88,8 @@ public abstract class DefaultMissileTurret : TurretBase
             turret.position,
             Range,
             EnemyMask,
-            _targetCandidates);
+            _targetCandidates,
+            MinimumRange);
 
         int slot = 0;
         foreach (Collider2D candidate in _targetCandidates)
@@ -171,7 +181,7 @@ public abstract class DefaultMissileTurret : TurretBase
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
-        return TurretTargetingUtility.IsInRange(turret, Targets[0], Range);
+        return TurretTargetingUtility.IsInAttackRange(turret, Targets[0], MinimumRange, Range);
     }
     private bool IsTargetInSight()//적이 시야각에 있는지 확인(FireRateController, OverHeatAnimationController에서 수행)
     {

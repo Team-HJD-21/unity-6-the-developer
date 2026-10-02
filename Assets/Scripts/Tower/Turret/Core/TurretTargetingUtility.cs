@@ -9,10 +9,13 @@ namespace TeamHJD.Game.Turrets
             Vector2 origin,
             float range,
             LayerMask targetMask,
-            List<Collider2D> results)
+            List<Collider2D> results,
+            float minimumRange = 0f)
         {
             results.Clear();
             results.AddRange(Physics2D.OverlapCircleAll(origin, range, targetMask));
+            results.RemoveAll(candidate => candidate == null ||
+                !IsInAttackRange(origin, candidate.transform.position, minimumRange, range));
             results.Sort((left, right) =>
                 Vector2.Distance(origin, left.transform.position)
                     .CompareTo(Vector2.Distance(origin, right.transform.position)));
@@ -38,6 +41,26 @@ namespace TeamHJD.Game.Turrets
         {
             return target != null &&
                    Vector2.Distance(target.position, origin.position) <= range;
+        }
+
+        public static bool IsInAttackRange(
+            Vector2 origin, Vector2 target, float minimumRange, float maximumRange)
+        {
+            if (maximumRange <= 0f)
+                return false;
+
+            float minimum = Mathf.Max(0f, minimumRange);
+            float distanceSquared = (target - origin).sqrMagnitude;
+            return distanceSquared >= minimum * minimum &&
+                   distanceSquared <= maximumRange * maximumRange;
+        }
+
+        public static bool IsInAttackRange(
+            Transform origin, Transform target, float minimumRange, float maximumRange)
+        {
+            return origin != null && target != null &&
+                   IsInAttackRange((Vector2)origin.position, (Vector2)target.position,
+                       minimumRange, maximumRange);
         }
 
         public static bool IsInSight(
