@@ -1,0 +1,17 @@
+{
+  "name": "TeamHJD.Game.Editor",
+  "rootNamespace": "TeamHJD.Game.Editor",
+  "references": [
+    "TeamHJD.Game.Bootstrap",
+    "TeamHJD.Game.Domain"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
