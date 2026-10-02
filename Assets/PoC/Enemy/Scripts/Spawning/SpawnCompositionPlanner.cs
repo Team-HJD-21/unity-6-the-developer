@@ -8,9 +8,6 @@ using TeamHJD.Game.Domain;
 /// </summary>
 public sealed class SpawnCompositionPlanner
 {
-    private const string PoCSquadOrder = "Normal";
-    private const int PoCMaxCount = 10;
-
     // TODO: Encounter의 전선/Grid 정보와 Spawn Policy가 준비되면 고정된 분대 유형과 생성 상한을 상황별 계산으로 교체한다.
     private readonly EnemySquadPresetCatalog _catalog;
 
@@ -46,7 +43,17 @@ public sealed class SpawnCompositionPlanner
         SpawnPointRegistry spawnPoints,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
-        SpawnRequest request = new SpawnRequest(PoCSquadOrder, PoCMaxCount);
+        return TryPlan(new SpawnRequest("Normal", 10), spawnPoints, out instructions);
+    }
+
+    /// <summary>
+    /// 호출자가 지정한 PoC 분대 요청을 현재 스폰 지점 상태에 맞춰 계획합니다.
+    /// </summary>
+    public bool TryPlan(
+        SpawnRequest request,
+        SpawnPointRegistry spawnPoints,
+        out IReadOnlyList<SpawnInstruction> instructions)
+    {
         return TryBuildInstructions(request, spawnPoints, out instructions);
     }
 

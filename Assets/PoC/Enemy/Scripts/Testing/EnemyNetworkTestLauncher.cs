@@ -1,4 +1,5 @@
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Contracts;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ using UnityEngine;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget
 {
     private const int TargetFrameRate = 120;
 
@@ -22,7 +23,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
     private void Awake()
     {
         _networkManager = GetComponent<NetworkManager>();
-        _encounterRuntime = new EncounterRuntime();
+        _encounterRuntime = null;
 
         // Host와 Client 창이 포커스를 잃어도 네트워크 테스트를 계속 실행한다.
         Application.runInBackground = true;
@@ -87,10 +88,11 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
     }
 
     /// <summary>
-    /// 네트워크 호스트를 시작하고 현재 스폰 가능한 지점에 테스트 분대를 생성한다.
+    /// 네트워크 호스트만 시작한다. Encounter 요청은 Battlefield Debug Window 명령으로 분리한다.
     /// </summary>
     private void StartHost()
     {
+        _encounterRuntime ??= new EncounterRuntime();
         if (!_encounterRuntime.HasExecutor || !_encounterRuntime.HasCatalog)
         {
             Debug.LogError("Spawner or squad preset catalog is missing for the spawn test.");
@@ -103,8 +105,57 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
             Debug.LogError("Failed to start the network host.");
             return;
         }
-        
-        _encounterRuntime.Spawn();
+    }
+
+    /// <summary>Debug Window가 현재 Match snapshot을 전달하고 Encounter 요청을 시작합니다.</summary>
+    public bool CanRequestEncounter(out string reason)
+    {
+        if (_networkManager == null)
+        {
+            reason = "NetworkManager가 없습니다.";
+            return false;
+        }
+
+        _encounterRuntime ??= new EncounterRuntime();
+        if (!_encounterRuntime.HasExecutor || !_encounterRuntime.HasCatalog)
+        {
+            reason = "EnemySpawnExecutor 또는 EnemySquadPresetCatalog가 없습니다.";
+            return false;
+        }
+
+        if (_networkManager.IsListening && !_networkManager.IsServer)
+        {
+            reason = "현재 Client 인스턴스에서는 Encounter를 요청할 수 없습니다.";
+            return false;
+        }
+
+        reason = "준비됨. 요청 시 Host를 시작한 뒤 Encounter를 실행합니다.";
+        return true;
+    }
+
+    /// <summary>Host 권한을 확보한 뒤 Match 공간 snapshot과 테스트 요청을 EncounterRuntime에 전달합니다.</summary>
+    public bool TryRequestEncounter(
+        BattlefieldSpatialSnapshot snapshot,
+        string squadOrder,
+        int maxEnemyCount,
+        out string result)
+    {
+        if (snapshot == null)
+        {
+            result = "활성 Match Battlefield snapshot이 없습니다.";
+            return false;
+        }
+
+        if (!CanRequestEncounter(out result)) return false;
+
+        if (!_networkManager.IsListening && !_networkManager.StartHost())
+        {
+            result = "NGO Host를 시작하지 못했습니다.";
+            return false;
+        }
+
+        _encounterRuntime ??= new EncounterRuntime();
+        return _encounterRuntime.TrySpawn(snapshot, squadOrder, maxEnemyCount, out result);
     }
 
     /// <summary>

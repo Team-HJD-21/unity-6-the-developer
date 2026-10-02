@@ -22,9 +22,10 @@ GameObject:
   - component: {fileID: 984415393098425011}
   - component: {fileID: 3568187623676949036}
   - component: {fileID: 7071173705403751221}
-  m_Layer: 0
+  - component: {fileID: 1692933235676204002}
+  m_Layer: 7
   m_Name: Slime
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38,8 +39,8 @@ Transform:
   m_GameObject: {fileID: 3068615185566250658}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.7, y: -0.02, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3955363823177183227}
@@ -138,7 +139,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 523127757
+  GlobalObjectIdHash: 2848244634
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -254,6 +255,7 @@ MonoBehaviour:
   animationReferenceSpeed: 2
   attackRange: 1
   attackCooldown: 1
+  attackDamage: 5
   sortingOrigin: {fileID: 3955363823177183227}
 --- !u!114 &-8740136632330153983
 MonoBehaviour:
@@ -394,6 +396,21 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &1692933235676204002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283aebe7defcae547ac8cbb2d45c081a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  ShowTopMostFoldoutHeaderGroup: 1
+  currentHealth: 0
+  maxHealth: 20
 --- !u!1 &7124270777038784271
 GameObject:
   m_ObjectHideFlags: 0
