@@ -1,7 +1,11 @@
 {
   "name": "TeamHJD.Game.Turrets",
   "rootNamespace": "TeamHJD.Game.Turrets",
-  "references": ["TeamHJD.Game.Turrets.Contracts"],
+  "references": [
+    "TeamHJD.Game.Turrets.Contracts",
+    "TeamHJD.Game.Contracts",
+    "TeamHJD.Game.Domain"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

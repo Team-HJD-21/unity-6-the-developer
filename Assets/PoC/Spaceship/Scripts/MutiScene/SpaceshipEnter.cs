@@ -9,22 +9,20 @@ public class SpaceshipEnter : MonoBehaviour
 
     [SerializeField]
     private string destinationName = "Triangle";
-    private string originName = "";
 
     private bool isTransitioning;
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        SamplePlayer player = other.GetComponentInParent<SamplePlayer>();
-        if (player == null || isTransitioning)
-        {
+        if (other.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
-        }
+        
+        Transform player = other.transform;
 
         StartCoroutine(EnterSpaceship(player));
     }
 
-    private IEnumerator EnterSpaceship(SamplePlayer player)
+    private IEnumerator EnterSpaceship(Transform player)
     {
         isTransitioning = true;
 
@@ -86,9 +84,9 @@ public class SpaceshipEnter : MonoBehaviour
         return null;
     }
 
-    private static void MovePlayer(SamplePlayer player, Vector3 destination)
+    private static void MovePlayer(Transform player, Vector3 destination)
     {
-        Rigidbody2D body = player.GetComponent<Rigidbody2D>();
+        Rigidbody2D body = player.gameObject.GetComponentInParent<Rigidbody2D>();
         if (body != null)
         {
             body.linearVelocity = Vector2.zero;
