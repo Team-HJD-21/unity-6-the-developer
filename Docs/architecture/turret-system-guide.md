@@ -287,15 +287,33 @@ flowchart TD
 
 `IsOperational`이 `true`일 때만 각 터렛의 `Update()`가 탐색·회전·발사·과열 확인을 수행한다. 실제 탐색은 `TurretTargetingUtility.CollectByDistance()`가 사거리 안의 `enemyMask` Collider를 거리순으로 모으는 방식이다.
 
+#### 최소 사거리와 내부 공격 금지 범위
+
+Canon과 Missile은 `TurretBase.minimumRange` 안에 있는 몬스터를 새 타겟으로 선택하거나 발사하지 않는다. `[SerializeField, HideInInspector] private` 필드로 외부 코드에서 직접 변경할 수 없으며 일반 Inspector에도 표시하지 않는다. 읽기 전용 `MinimumRange`로 실제 clamp된 값을 조회한다. 원본과 PoC의 Stage 1~3 프리팹 모두 아래 월드 단위 반지름을 적용했다. 마지막 Canon 값은 사용자 목록 순서에 따라 LV3 값으로 해석했다.
+
+| 터렛 | LV1 | LV2 | LV3 |
+| --- | --- | --- | --- |
+| Missile | 3.57 | 4.38 | 5.31 |
+| Canon | 4.47 | 4.47 | 4.59 |
+
+실제 공격 범위는 `MinimumRange <= 대상 중심까지의 거리 <= EffectiveRange`다. 대상 중심은 탐색으로 얻은 Collider의 Transform 위치를 기준으로 한다. `minimumRange`는 유효 최대 사거리 안으로 clamp되며 0이면 내부 금지 범위가 없다. 최대 사거리 0에서는 공격하지 않는다. 스펙 업그레이드는 최대 사거리만 변경한다. 프리팹 레벨 승급과 강등에서는 교체 대상 프리팹의 minimumRange를 사용하므로 새 레벨의 반지름이 적용된다. Snapshot의 기존 Range는 여전히 최대 사거리이며 최소 사거리 필드는 추가하지 않았다. Mermaid의 최소 및 최대 거리 판정 흐름은 유지한다.
+
+이미 선택한 대상이 내부로 들어오면 Canon은 타겟을 해제하고 다시 탐색한다. Missile은 발사 전 슬롯 중 하나라도 내부 또는 최대 범위 밖으로 나가면 예약을 해제하고 다시 탐색한다. 이미 발사된 탄환과 미사일의 추적 및 폭발 피해는 변경하지 않는다. 따라서 내부 범위는 피해 면역 구역이 아니라 새 발사를 금지하는 구역이다. Laser의 공격 규칙에는 적용하지 않는다.
+
+TurretTest의 `Attack Range`에서 최소와 최대 사거리를 읽기 전용으로 확인한다. `Show Range` 또는 `Show All Ranges`를 켜면 기존 최대 사거리 원에 주황색 내부 원이 함께 표시된다. 내부 원은 SpriteRenderer만 생성하며 Collider는 추가하지 않는다. minimumRange를 변경하는 런타임 API나 일반 Inspector 조절 항목은 제공하지 않는다.
+
+검증 순서: 몬스터를 내부에만 놓았을 때 발사하지 않는지 확인한다. 내부와 외부에 동시에 몬스터를 놓으면 바깥 후보를 선택하는지 확인한다. 선택된 몬스터를 내부로 옮긴 후 새 발사가 중지되는지 확인한다. 미사일은 두 번째 발사 슬롯의 몬스터도 내부로 이동시켜 확인한다. 스펙 업그레이드 및 레벨 승급 후 범위 표시와 레벨별 지정값도 확인한다.
+
 #### Canon: 한 대상을 조준하고 직진 탄환으로 피해
 
 ```mermaid
 flowchart TD
     Update["DefaultCanonTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
     Search --> Collect["TurretTargetingUtility<br>CollectByDistance()"]
-    Collect --> Target["가장 가까운 Target 선택"]
+    Collect --> RangeCheck["IsInAttackRange()<br>내부 범위 후보 제외"]
+    RangeCheck --> Target["가장 가까운 유효 Target 선택"]
     Target --> Rotate["RotateTowardsTarget()<br>포신 회전"]
-    Rotate --> Fire["FireRateController()<br>사거리·조준각·간격 확인"]
+    Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>조준각·발사 간격 확인"]
     Fire --> Shoot["CanonTurretLv1~3<br>Shoot()"]
     Shoot --> Init["TowerBullet.Initialize()<br>방향점·Damage 전달"]
     Init --> Move["TowerBullet.Update()<br>정해진 방향으로 직진"]
@@ -312,14 +330,15 @@ Canon 포신은 Target을 향해 돌지만, **발사된 `TowerBullet`은 몬스�
 flowchart TD
     Update["DefaultMissileTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
     Search --> Collect["TurretTargetingUtility<br>CollectByDistance()"]
-    Collect --> Filter["예약된 적은 건너뛰고<br>다음 후보 검사"]
+    Collect --> RangeCheck["IsInAttackRange()<br>내부 범위 후보 제외"]
+    RangeCheck --> Filter["예약된 적은 건너뛰고<br>다음 후보 검사"]
     Filter --> Targets["발사구 수에 맞게<br>Targets 배열 지정·예약"]
     Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
-    Rotate --> Fire["FireRateController()<br>사거리·발사 간격 확인"]
+    Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>발사 간격 확인"]
     Fire --> Shoot["MissileTurretLV1~3<br>Shoot()"]
     Shoot --> Init["TowerMissile.Initialize()<br>Target·Damage 전달"]
     Shoot --> Transfer["터렛 Target 슬롯 비우기<br>예약 관리는 발사체로 이전"]
-    Change["승급·강등·비활성화<br>또는 사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약만 해제"]
+    Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약만 해제"]
     Release --> Search
     Init --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
     Straight -->|목표 소실| Retarget["SearchForNewTarget()"]
