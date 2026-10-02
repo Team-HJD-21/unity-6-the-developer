@@ -1,9 +1,10 @@
+using TeamHJD.Game.Domain;
 using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 적 AI 네트워크 동작을 실행하고 확인하기 위한 테스트 UI다.
-/// Host와 Client 시작 및 연결 상태 확인을 담당한다.
+/// 적 스폰의 Host·Client 동기화를 확인하기 위한 PoC 테스트 UI다.
+/// 네트워크 시작과 연결 상태 표시, Host의 임시 분대 생성 요청을 담당한다.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
@@ -11,16 +12,17 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
 {
     private const int TargetFrameRate = 120;
 
-    [Header("참조")] [SerializeField] private EnemySpawnExecutor monsterSpawner;
-
     private NetworkManager _networkManager;
+    private EncounterRuntime _encounterRuntime;
 
     /// <summary>
     /// 네트워크 관리자와 테스트 실행 환경을 초기화한다.
+    /// Encounter가 사용할 분대 프리셋 카탈로그는 생성 시 한 번 로드한다.
     /// </summary>
     private void Awake()
     {
         _networkManager = GetComponent<NetworkManager>();
+        _encounterRuntime = new EncounterRuntime();
 
         // Host와 Client 창이 포커스를 잃어도 네트워크 테스트를 계속 실행한다.
         Application.runInBackground = true;
@@ -72,39 +74,37 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
 
         // 서버에서만 전체 접속 인원을 확인할 수 있다.
         if (_networkManager.IsServer)
+        {
             GUILayout.Label($"Connected Clients: {_networkManager.ConnectedClientsIds.Count}");
+
+            // 점령 상태를 바꾼 뒤에도 같은 Host에서 다시 계획해 확인할 수 있다.
+            if (GUILayout.Button("Plan & Spawn"))
+                _encounterRuntime.Spawn();
+        }
 
         if (GUILayout.Button("Shutdown"))
             _networkManager.Shutdown();
     }
 
     /// <summary>
-    /// 네트워크 호스트를 시작한다.
+    /// 네트워크 호스트를 시작하고 현재 스폰 가능한 지점에 테스트 분대를 생성한다.
     /// </summary>
     private void StartHost()
     {
-        if (monsterSpawner == null)
+        if (!_encounterRuntime.HasExecutor || !_encounterRuntime.HasCatalog)
         {
-            Debug.LogError("Monster spawner is not assigned.");
+            Debug.LogError("Spawner or squad preset catalog is missing for the spawn test.");
             return;
         }
 
-        // Host 실행에 실패하면 몬스터를 생성하지 않는다.
+        // Host 시작에 실패하면 스폰 계획을 실행하지 않는다.
         if (!_networkManager.StartHost())
         {
-            // 테스트 실행 실패 원인을 확인하기 위해 오류 로그를 유지한다.
             Debug.LogError("Failed to start the network host.");
             return;
         }
         
-        // Planner 연결 전 네트워크 생성 동작만 확인하기 위해 단일 적 구성 명령을 직접 전달한다.
-        SpawnInstruction instruction =
-            new SpawnInstruction(
-                "Test",
-                "SpawnPoint1",
-                new[] { new EnemySpawnEntry("Slime", 3) });
-            
-        monsterSpawner.Execute(instruction);
+        _encounterRuntime.Spawn();
     }
 
     /// <summary>
@@ -114,7 +114,6 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour
     {
         if (!_networkManager.StartClient())
         {
-            // 테스트 실행 실패 원인을 확인하기 위해 오류 로그를 유지한다.
             Debug.LogError("Failed to start the network client.");
         }
     }
