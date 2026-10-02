@@ -171,19 +171,19 @@ public abstract class DefaultCanonTurret : TurretBase
         if(player is not null)
         {
             float distance = Vector2.Distance(turret.position, player.transform.position);
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire, distance, 50);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire, distance, 50);
         }
     }
     protected override void OnActivationChanged(bool isActivated)
     {
         if (isActivated)
         {
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
             return;
         }
 
         Animator.SetBool("isShoot", false);
-        AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
+        // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
         StartCoroutine(DeactivateProcess());
     }
 

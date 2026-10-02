@@ -62,7 +62,7 @@ public class TowerMissile : MonoBehaviour
         if (hits != null)
         {
             float distance = Vector2.Distance(transform.position, hits.transform.position);
-            _missileSoundId = AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFlying, distance, 80);
+            // _missileSoundId = AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFlying, distance, 80);
         }
         StartCoroutine(InitialStraightMovement());
         StartCoroutine(ExplodeMissileIfNotHit());
@@ -131,7 +131,7 @@ public class TowerMissile : MonoBehaviour
         {
             float distance = Vector2.Distance(transform.position, hits.transform.position);
             // Debug.Log("Distance with player" + distance);
-            AudioManager.Instance.ChangeVolume(_missileSoundId,distance,80);
+            // AudioManager.Instance.ChangeVolume(_missileSoundId,distance,80);
         }
 
     }
@@ -174,7 +174,7 @@ public class TowerMissile : MonoBehaviour
         // }
         if (!string.IsNullOrEmpty(_missileSoundId))
         {
-            AudioManager.Instance.StopSfx(_missileSoundId);
+            // AudioManager.Instance.StopSfx(_missileSoundId);
             // Debug.Log("missilesound delete");
         }
         Collider2D[] monsters = Physics2D.OverlapCircleAll(rb.position, explosionRange);

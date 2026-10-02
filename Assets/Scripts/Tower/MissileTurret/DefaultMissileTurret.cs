@@ -189,7 +189,7 @@ public abstract class DefaultMissileTurret : TurretBase
         if (player != null)
         {
             float distance = Vector2.Distance(turret.position, player.transform.position);
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileLaunch, distance, 70);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileLaunch, distance, 70);
         }
     }
     //Coroutine Methods------------------------------------------------------------------
@@ -235,13 +235,13 @@ public abstract class DefaultMissileTurret : TurretBase
     {
         if (isActivated)
         {
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
             return;
         }
 
         ReleaseUnlaunchedTargets();
         Animator.SetBool("isShoot", false);
-        AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
+        // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
         StartCoroutine(DeactivateProcess());
     }
 
