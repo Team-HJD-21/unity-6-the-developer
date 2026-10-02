@@ -1,4 +1,4 @@
-// 등록된 작동 가능 터렛의 위치 스냅샷을 Battlefield용 불변 입력으로 변환합니다.
+// 배치된 터렛의 위치 스냅샷을 Battlefield용 불변 입력으로 변환합니다.
 // Transform이나 TurretBase 참조는 Match Runtime으로 전달하지 않습니다.
 
 using System.Collections.Generic;
@@ -36,8 +36,9 @@ namespace TeamHJD.Game.Turrets
             {
                 if (turret == null || !turret.isActiveAndEnabled || turret.gameObject.scene != gameObject.scene)
                     continue;
-                // Edit Mode previews intended placement; the running Match only consumes operational Turrets.
-                if (Application.isPlaying && !turret.IsOperational)
+                // Operational includes transient suspension (for example, overheat cooldown).
+                // Battlefield membership follows placement, not firing availability.
+                if (Application.isPlaying && turret.IsDestroyed)
                     continue;
 
                 int instanceId = Application.isPlaying && turret.InstanceId > 0
