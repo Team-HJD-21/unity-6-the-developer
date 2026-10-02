@@ -11,6 +11,7 @@ public class TowerBullet : MonoBehaviour
 
     private Vector3 _direction;
     private bool _isInitialized;
+    private bool _hasHit;
 
     public void Initialize(Transform target, float damage)
     {
@@ -55,10 +56,13 @@ public class TowerBullet : MonoBehaviour
     // 충돌 처리
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        Monster monster = collision.gameObject.GetComponent<Monster>();
-        if (monster != null)
+        if (!_isInitialized || _hasHit)
+            return;
+        _hasHit = true;
+        EnemyHealth enemyHealth = collision.collider.GetComponentInParent<EnemyHealth>();
+        if (enemyHealth != null)
         {
-            monster.TakeDamage(_bulletDamage);
+            enemyHealth.TakeDamage(Mathf.RoundToInt(_bulletDamage));
         }
 
         Destroy(gameObject); // 충돌 시 총알 파괴

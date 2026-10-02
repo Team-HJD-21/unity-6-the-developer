@@ -96,11 +96,28 @@ public abstract class DefaultMissileTurret : TurretBase
         {
             if (slot >= Targets.Length)
                 break;
-            if (candidate == null || !candidate.TryGetComponent(out Monster monster) || monster.isTargeted)
+            if (candidate == null)
                 continue;
 
-            Targets[slot++] = candidate.transform;
-            monster.isTargeted = true;
+            EnemyController enemy = candidate.GetComponentInParent<EnemyController>();
+            if (enemy == null || !enemy.isActiveAndEnabled ||
+                !TurretTargetingUtility.IsInAttackRange(turret, enemy.transform, MinimumRange, Range))
+                continue;
+
+            // Keep legacy reservation handling optional until the new Enemy contract is agreed.
+            Monster monster = enemy.GetComponent<Monster>();
+            if (monster != null && monster.isTargeted)
+                continue;
+
+            bool alreadySelected = false;
+            for (int index = 0; index < slot; index++)
+                alreadySelected |= Targets[index] == enemy.transform;
+            if (alreadySelected)
+                continue;
+
+            Targets[slot++] = enemy.transform;
+            if (monster != null)
+                monster.isTargeted = true;
         }
         if (Targets.Length > 1 && Targets[1] == null) Targets[1] = Targets[0];
     }
