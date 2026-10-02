@@ -19,6 +19,7 @@ TagManager:
   - TargetPoint
   - Forest
   - CUBoundary
+  - Bullet
   layers:
   - Default
   - TransparentFX
