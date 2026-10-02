@@ -3,16 +3,6 @@ using UnityEngine;
 
 /// <summary>
 /// 소환된 보조 포탑의 적 탐색, 조준 회전, 탄환 자동 발사 및 수명 관리 전담 컴포넌트
-/// 
-/// [채택 이유 및 대안 비교]
-/// 1. 기존 'PlayerBullet' 100% 재활용:
-///    - 대안: 포탑 전용 탄환 및 피격 로직 신규 작성.
-///    - 채택 이유: 기존에 제작된 PlayerBullet.cs의 색상, 대미지, Enemy 태그 판정,
-///      MonsterSlowDebuff 연동을 그대로 활용하여 코드 중복과 버그를 원천 차단했습니다.
-/// 
-/// 2. OverlapCircleAll 기반 고속 타겟팅:
-///    - 매 프레임 모든 몬스터를 순회하는 대신, 탐지 반경 내의 Enemy 태그 오브젝트만
-///      거리 계산(sqrMagnitude)을 통해 가장 가까운 적을 조준합니다.
 /// </summary>
 public class TemporaryTurret : MonoBehaviour
 {
@@ -79,7 +69,7 @@ public class TemporaryTurret : MonoBehaviour
     }
 
     /// <summary>
-    /// 사거리 내에서 가장 가까운 적을 탐색
+    /// 사거리 내에서 가장 가까운 적을 탐색 (EnemyHealth 우선, Monster 폴백)
     /// </summary>
     private void FindClosestTarget()
     {
@@ -91,6 +81,20 @@ public class TemporaryTurret : MonoBehaviour
         {
             if (hit.CompareTag(enemyTag) || hit.transform.root.CompareTag(enemyTag))
             {
+                // EnemyHealth 검사 (체력이 남아있는지 확인)
+                EnemyHealth enemyHealth = hit.GetComponentInParent<EnemyHealth>();
+                if (enemyHealth != null && enemyHealth.CurrentHealth > 0)
+                {
+                    float distSqr = (hit.transform.position - transform.position).sqrMagnitude;
+                    if (distSqr < closestDistanceSqr)
+                    {
+                        closestDistanceSqr = distSqr;
+                        closestEnemy = hit.transform;
+                    }
+                    continue;
+                }
+
+                // 레거시 Monster 검사
                 Monster monster = hit.GetComponentInParent<Monster>();
                 if (monster != null && !monster.isDead)
                 {
@@ -130,7 +134,6 @@ public class TemporaryTurret : MonoBehaviour
         PlayerBullet bullet = bulletObj.GetComponent<PlayerBullet>();
         if (bullet != null)
         {
-            // 기본 산탄총 타입 속성으로 초기화 (원하면 CryoBlaster로 바꿔 슬로우 포탑으로도 사용 가능)
             bullet.InitBullet(WeaponType.DefaultShotgun, bulletColor, damagePerShot, dir, Vector2.zero);
         }
     }
@@ -138,14 +141,11 @@ public class TemporaryTurret : MonoBehaviour
     private IEnumerator LifeTimeRoutine()
     {
         yield return new WaitForSeconds(duration);
-
-        // (선택) 여기에 자폭 작은 폭발 이펙트 추가 가능
         Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()
     {
-        // 사거리 기즈모 시각화
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }

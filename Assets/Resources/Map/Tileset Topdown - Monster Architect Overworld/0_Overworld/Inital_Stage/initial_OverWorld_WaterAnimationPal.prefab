@@ -182,7 +182,7 @@ GameObject:
   - component: {fileID: 3700309616438350629}
   - component: {fileID: 3656086430852645951}
   m_Layer: 0
-  m_Name: WaterAnimationPal
+  m_Name: initial_OverWorld_WaterAnimationPal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
