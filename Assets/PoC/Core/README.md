@@ -339,6 +339,29 @@ BattlefieldSpatialSnapshot snapshot = session.Battlefield;
 
 따라서 Core의 현 API는 **초기·갱신 spatial 입력을 받고 Territory/Frontline/Grid snapshot을 제공하는 생산 경계까지**입니다. E handoff composition, #426 Turret adapter, 실제 Player/Enemy 위치 공급자, 갱신 cadence 및 Unity Play Mode/EditMode 실행 검증은 별도로 연결·확인해야 합니다.
 
+### Encounter에 연결할 때의 실제 호출 경계
+
+Core 쪽에서 Encounter에 넘길 데이터는 별도 복사본이나 새 singleton이 아니라 Match가 소유한 `MatchSession.Battlefield`입니다. Match를 시작한 조립자가 반환된 세션 참조를 보유하고, Encounter 평가 시점에 최신 snapshot을 읽어 E의 입력 API에 전달하는 방식이 현재 코드와 맞습니다.
+
+```csharp
+// Match 조립부의 개념적 흐름. Encounter 입력 메서드는 E와 합의 후 연결합니다.
+MatchSession match = appRoot.StartMatch(
+    config, initialState, modeRules,
+    turretInput, participantInput, gridConfiguration);
+
+BattlefieldSpatialSnapshot currentBattlefield = match.Battlefield;
+// encounter.<합의된 평가 메서드>(currentBattlefield);
+
+// Match 종료는 소유자인 AppRoot가 처리합니다.
+appRoot.EndCurrentMatch();
+```
+
+- `AppRoot`는 내부의 현재 Match를 소유하고 `StartMatch`의 반환값으로 조립자에게 세션을 제공합니다. 따라서 조립자가 세션 참조를 보관해야 하며, `AppRoot`에는 아직 `CurrentMatch` 조회자가 없습니다.
+- 현재 Unity bootstrap이 `AppRoot`를 `BeforeSceneLoad`에 만들지만, Scene 조립 코드에 해당 참조를 전달하는 공개 API는 없습니다. 실제 연결 PR에서는 Scene 조립 경계에서 이를 한 번 명시적으로 해결해야 합니다. Core에 `AppRoot.Instance`나 Encounter 전용 static accessor를 급히 추가하지 않습니다.
+- `MatchSession.Battlefield`는 Match 수명 중 explicit update가 끝날 때마다 새 revision을 가리킵니다. Encounter는 평가 시점의 snapshot/revision을 소비하고, Match 종료 시 Encounter 상태를 먼저 끝낸 뒤 `AppRoot.EndCurrentMatch()`로 Core Match를 종료해야 합니다. Encounter가 `MatchSession`을 Dispose하지 않습니다.
+- SpawnPoint 위치를 Grid에 조회하려면 Encounter/조립부가 SpawnPoint의 XY를 `BattlefieldPoint`로 투영하고 `snapshot.Grid.TryGetCellAt(...)`을 사용할 수 있습니다. 이는 raw cell occupancy 조회일 뿐이고, Spawn suitability 정책·Grid cell score를 뜻하지 않습니다.
+- 아직 E의 `EncounterRuntime`에는 snapshot 인자/평가 API가 없으므로 위의 Encounter 호출 한 줄은 의도적으로 미완성 표시입니다. 이 줄을 실제 코드로 바꾸기 전 입력 시점, Match 소유권, revision 사용, 종료 순서를 E와 합의합니다.
+
 ### main #463 Encounter 수신 검토 (2026-10-02)
 
 `Assets/PoC/Enemy/Scripts/Spawning`에는 `EncounterRuntime`, `SpawnCompositionPlanner`, `SpawnInstruction`, `EnemySpawnExecutor`, `SpawnPoint` 경로가 추가됐습니다. 이는 기존 빈 상태가 아니라 **적을 실제 생성하는 첫 수직 프로토타입**이지만, 열린 #459 완료와 Battlefield 통합을 같은 것으로 보면 안 됩니다.
