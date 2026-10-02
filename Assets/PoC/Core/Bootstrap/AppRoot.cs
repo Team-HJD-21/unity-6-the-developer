@@ -38,8 +38,21 @@ namespace TeamHJD.Game.Bootstrap
             IModeRules modeRules,
             BattlefieldSpatialInput battlefieldInput)
         {
+            return StartMatch(config, initialState, modeRules, battlefieldInput,
+                BattlefieldDynamicSpatialInput.Empty, BattlefieldGridConfiguration.Default);
+        }
+
+        public MatchSession StartMatch(
+            MatchConfig config,
+            MatchState initialState,
+            IModeRules modeRules,
+            BattlefieldSpatialInput battlefieldInput,
+            BattlefieldDynamicSpatialInput dynamicBattlefieldInput,
+            BattlefieldGridConfiguration battlefieldGridConfiguration)
+        {
             ThrowIfUnavailable();
-            var nextMatch = Services.MatchSessions.Create(config, initialState, modeRules, battlefieldInput);
+            var nextMatch = Services.MatchSessions.Create(config, initialState, modeRules, battlefieldInput,
+                dynamicBattlefieldInput, battlefieldGridConfiguration);
             try
             {
                 nextMatch.Start();
@@ -56,6 +69,36 @@ namespace TeamHJD.Game.Bootstrap
             PublishBattlefieldSnapshot(_currentMatch.Battlefield);
 #endif
             return nextMatch;
+        }
+
+        public void UpdateBattlefieldParticipants(BattlefieldDynamicSpatialInput dynamicInput)
+        {
+            ThrowIfUnavailable();
+            if (_currentMatch == null) throw new InvalidOperationException("There is no active match.");
+            _currentMatch.UpdateBattlefieldParticipants(dynamicInput);
+#if UNITY_EDITOR
+            PublishBattlefieldSnapshot(_currentMatch.Battlefield);
+#endif
+        }
+
+        public void ReconfigureBattlefieldGrid(BattlefieldGridConfiguration configuration)
+        {
+            ThrowIfUnavailable();
+            if (_currentMatch == null) throw new InvalidOperationException("There is no active match.");
+            _currentMatch.ReconfigureBattlefieldGrid(configuration);
+#if UNITY_EDITOR
+            PublishBattlefieldSnapshot(_currentMatch.Battlefield);
+#endif
+        }
+
+        public void UpdateBattlefieldTurretLayout(BattlefieldSpatialInput staticInput)
+        {
+            ThrowIfUnavailable();
+            if (_currentMatch == null) throw new InvalidOperationException("There is no active match.");
+            _currentMatch.UpdateBattlefieldTurretLayout(staticInput);
+#if UNITY_EDITOR
+            PublishBattlefieldSnapshot(_currentMatch.Battlefield);
+#endif
         }
 
         public MatchCompletion CompleteCurrentMatch(MatchOutcome outcome, long eventSequence)
