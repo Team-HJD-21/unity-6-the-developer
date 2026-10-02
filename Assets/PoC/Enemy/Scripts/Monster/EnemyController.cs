@@ -1,3 +1,4 @@
+using TeamHJD.Game.Turrets;
 using UnityEngine;
 
 /// <summary>
@@ -19,12 +20,13 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private SpriteRenderer  spriteRenderer;
     
     [Header("이동 설정")]
-    [SerializeField] private float moveSpeed = 2f;
+    [SerializeField] private float moveSpeed = 1.5f;
     [SerializeField] private float animationReferenceSpeed = 2f;
 
     [Header("공격 설정")]
     [SerializeField] private float attackRange = 0.4f;
     [SerializeField] private float attackCooldown = 1f;
+    [SerializeField] private int attackDamage = 5;
     
     // 런타임 상태
     private Transform _target;
@@ -163,6 +165,32 @@ public class EnemyController : MonoBehaviour
 
         _nextAttackTime = Time.time + attackCooldown;
 
+        if (_target == null)
+        {
+            return;
+        }
+
+
+        TargetableComponent targetable = _target.GetComponent<TargetableComponent>();
+        if (targetable == null)
+            return;
+
+        if (targetable.TargetType == TargetType.Turret)
+        {
+            if (TurretInstanceRegistry.TryGetInstanceId(_target, out int turretId) &&
+                TurretInstanceRegistry.TryGet(turretId, out TurretBase turret) &&
+                turret != null)
+            {
+                turret.ApplyDamage(attackDamage);
+            }
+        }
+        else if (targetable.TargetType == TargetType.Player)
+        {
+            PlayerInfo player = _target.GetComponentInParent<PlayerInfo>();
+            if (player != null)
+                player.TakeDamage(attackDamage);
+        }
+        
         // Network Animator가 있으면 RPC로, 없으면 로컬 Animator로 공격을 재생한다.
         if (_networkAnimator != null)
             _networkAnimator.PlayAttack();
