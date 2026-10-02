@@ -16,7 +16,8 @@ public class EnemyController : MonoBehaviour
 
     [Header("참조")]
     [SerializeField] private Animator animator;
-
+    [SerializeField] private SpriteRenderer  spriteRenderer;
+    
     [Header("이동 설정")]
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float animationReferenceSpeed = 2f;
@@ -24,11 +25,15 @@ public class EnemyController : MonoBehaviour
     [Header("공격 설정")]
     [SerializeField] private float attackRange = 0.4f;
     [SerializeField] private float attackCooldown = 1f;
-
+    
     // 런타임 상태
     private Transform _target;
     private float _nextAttackTime;
     private EnemyNetworkAnimator _networkAnimator;
+    
+    // 렌더링
+    private const int SortingScale = 100;
+    [SerializeField] private Transform sortingOrigin;
 
     /// <summary>
     /// 필요한 컴포넌트 참조를 초기화한다.
@@ -38,6 +43,23 @@ public class EnemyController : MonoBehaviour
         _networkAnimator = GetComponent<EnemyNetworkAnimator>();
         if (animator == null)
             animator = GetComponent<Animator>();
+        if(spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        
+    }
+
+    private void LateUpdate()
+    {
+        if (spriteRenderer == null)
+            return;
+        
+        float y = sortingOrigin != null
+            ? sortingOrigin.position.y
+            : transform.position.y;
+
+        // Y가 낮을수록 앞에 표시한다.
+        spriteRenderer.sortingOrder =
+            Mathf.Clamp(-Mathf.RoundToInt(y * SortingScale), short.MinValue, short.MaxValue);
     }
 
     /// <summary>
