@@ -26,7 +26,20 @@ namespace TeamHJD.Game.Application
             IModeRules modeRules,
             BattlefieldSpatialInput battlefieldInput)
         {
-            return new MatchSession(config, initialState, new MatchSimulation(), modeRules, _authority, battlefieldInput);
+            return Create(config, initialState, modeRules, battlefieldInput,
+                BattlefieldDynamicSpatialInput.Empty, BattlefieldGridConfiguration.Default);
+        }
+
+        public MatchSession Create(
+            MatchConfig config,
+            MatchState initialState,
+            IModeRules modeRules,
+            BattlefieldSpatialInput battlefieldInput,
+            BattlefieldDynamicSpatialInput dynamicBattlefieldInput,
+            BattlefieldGridConfiguration battlefieldGridConfiguration)
+        {
+            return new MatchSession(config, initialState, new MatchSimulation(), modeRules, _authority,
+                battlefieldInput, dynamicBattlefieldInput, battlefieldGridConfiguration);
         }
     }
 }
