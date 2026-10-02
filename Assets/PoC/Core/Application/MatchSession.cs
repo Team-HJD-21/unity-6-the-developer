@@ -26,7 +26,9 @@ namespace TeamHJD.Game.Application
             MatchSimulation simulation,
             IModeRules modeRules,
             IAuthority authority,
-            BattlefieldSpatialInput battlefieldInput)
+            BattlefieldSpatialInput battlefieldInput,
+            BattlefieldDynamicSpatialInput dynamicBattlefieldInput,
+            BattlefieldGridConfiguration battlefieldGridConfiguration)
         {
             Config = config ?? throw new ArgumentNullException(nameof(config));
             State = state ?? throw new ArgumentNullException(nameof(state));
@@ -34,8 +36,30 @@ namespace TeamHJD.Game.Application
             _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             _modeRules = modeRules ?? throw new ArgumentNullException(nameof(modeRules));
             _authority = authority ?? throw new ArgumentNullException(nameof(authority));
-            _battlefield = new BattlefieldSpatialRuntime(battlefieldInput);
+            _battlefield = new BattlefieldSpatialRuntime(
+                State.MatchId,
+                battlefieldInput,
+                dynamicBattlefieldInput,
+                battlefieldGridConfiguration);
             _eventBus = new MatchEventBus();
+        }
+
+        public void UpdateBattlefieldParticipants(BattlefieldDynamicSpatialInput dynamicInput)
+        {
+            ThrowIfDisposed();
+            _battlefield.UpdateDynamicInput(dynamicInput);
+        }
+
+        public void ReconfigureBattlefieldGrid(BattlefieldGridConfiguration configuration)
+        {
+            ThrowIfDisposed();
+            _battlefield.ReconfigureGrid(configuration);
+        }
+
+        public void UpdateBattlefieldTurretLayout(BattlefieldSpatialInput staticInput)
+        {
+            ThrowIfDisposed();
+            _battlefield.UpdateTurretLayout(staticInput);
         }
 
         public void Start()

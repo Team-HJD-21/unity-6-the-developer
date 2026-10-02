@@ -259,19 +259,52 @@ flowchart LR
 
 이번 Sprint의 설계 방향에서는 Territory/Frontline을 Encounter 내부에 두지 않고, Match 범위의 공용 `BattlefieldSpatialRuntime`에서 생성하는 파생 데이터로 다룹니다. **Stage 1 PoC 목표는 2026-10-02에 갱신되어 Uniform Grid와 최소 Encounter → Spawn 실행 흐름까지 같은 PoC에서 확인하는 것으로 확장되었습니다.** 이 기능들은 현재 구현 상태와 동일시하면 안 됩니다. #458–#460이 Grid·Encounter·Editor 진단 범위를 추적하고, #420이 통합 흐름을 추적합니다.
 
+현재 구현된 Core producer의 수명/갱신 흐름은 다음과 같습니다.
+
+```mermaid
+sequenceDiagram
+    participant C as Match Composer
+    participant S as MatchSession
+    participant R as BattlefieldSpatialRuntime
+    participant T as TopologyBuilder
+    participant G as GridBuilder
+    participant E as Encounter consumer (E-owned)
+    C->>S: Create(config, initial spatial inputs)
+    S->>R: Create Match-scoped runtime
+    R->>T: Build(turret layout)
+    R->>G: Build(config, turret/player/enemy positions)
+    R-->>S: immutable snapshot (revision 1)
+    C-->>E: 목표: inject/read S.Battlefield
+    C->>S: UpdateBattlefieldParticipants(new positions)
+    S->>R: UpdateDynamicInput
+    R->>G: rebuild occupancy only
+    R-->>S: publish next revision
+    C-->>E: 목표: provide latest S.Battlefield when Encounter evaluates
+```
+
+마지막 두 Encounter 화살표는 목표 handoff이며 현재 main #463 코드와 연결되어 있지 않다. 현재 `EncounterRuntime.Spawn()`은 snapshot 입력 없이 독립적으로 실행된다. 전달 방식과 평가 cadence는 E와 조립부가 합의할 연결 지점이다. Core는 Encounter 정책을 소유하지 않는다.
+
 ```text
 MatchState (authoritative state)
   → BattlefieldSpatialRuntime (derived spatial analysis)
-      → Territory / Frontline snapshot (read-only)
-          → future Encounter / SpawnPlanner
+      ├─ Territory / Frontline snapshot (read-only)
+      └─ Uniform Grid / raw occupancy
+              ⋮ 목표 handoff (현재 미연결)
+          EncounterRuntime (E-owned prototype)
               → SpawnPlan → Unity/Network Spawn Executor
 
 BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
 ```
 
-현재 `BattlefieldPoint`, `TurretSpatialInput`, `BattlefieldSpatialInput`, `BattlefieldTopologyBuilder`가 Unity 독립 Domain에 구현되어 있습니다. 입력 점으로 Delaunay 삼각형을 만들고 변 인접 관계를 구성하며, 삼각형 하나만 공유하는 외곽 변을 Frontline으로 노출합니다. `BattlefieldSpatialSnapshot`은 ID-좌표 vertex, triangle, edge adjacency, Frontline을 읽기 전용 복사본으로 제공합니다. 점이 3개 미만이거나 공선이면 topology는 비지만 유효 입력 vertex는 보존하며, 동일 좌표의 터렛은 모호한 topology를 피하기 위해 예외 처리합니다. 계산은 좌표 범위를 먼저 축소해 정규화하고 고정 epsilon을 사용하며, 이 정밀도 정책은 검토 가능한 초기 구현입니다.
+현재 `BattlefieldPoint`, `TurretSpatialInput`, `BattlefieldSpatialInput`, `BattlefieldTopologyBuilder`가 Unity 독립 Domain에 구현되어 있습니다. 입력 점으로 Delaunay 삼각형을 만들고 변 인접 관계를 구성하며, 삼각형 하나만 공유하는 외곽 변을 Frontline으로 노출합니다. 점이 3개 미만이거나 공선이면 topology는 비지만 유효 입력 vertex는 보존하며, 동일 좌표의 터렛은 모호한 topology를 피하기 위해 예외 처리합니다. 계산은 좌표 범위를 먼저 축소해 정규화하고 고정 epsilon을 사용하며, 이 정밀도 정책은 검토 가능한 초기 구현입니다.
 
-`AppRoot.StartMatch(..., BattlefieldSpatialInput)` 또는 `MatchSessionFactory.Create(..., BattlefieldSpatialInput)` 경로로 입력을 전달하면 Match 생성 중 `BattlefieldSpatialRuntime`이 결과를 만들고, `MatchSession`이 그 Runtime의 수명을 소유합니다. 기존 3개 인자 호출 경로는 빈 입력을 사용하므로, main의 #457에서 제공하는 immutable `TurretSnapshot`을 Battlefield Domain input으로 변환하는 Unity composition adapter는 아직 연결되지 않았습니다. 현 `TurretState`/`EnemyState`에는 위치 필드도 없습니다. snapshot의 ID/위치/좌표계 계약을 확인해 투영해야 하며, Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않아야 합니다.
+여기에 Uniform Grid 생산 경로를 추가했습니다. `BattlefieldGridConfiguration`은 XY 중심 원점, Z 표시 평면, 맵 너비/높이, 가로/세로 셀 수를 보유합니다. 원점은 Grid의 중심이며 경계는 `center ± size / 2`로 계산합니다. 기본은 중심 `(0,0,0)`, 크기 `16×16`, 셀 분할 `16×16`이며 전부 구성 변경 가능합니다. 공간 조회는 XY만 사용합니다. 셀은 row-major `CellId = y * CellsX + x`를 사용하고, 동일한 Grid 설정 안에서 재현 가능한 ID입니다. 분할 설정을 바꾸면 CellId 의미도 바뀌므로 Match snapshot의 revision/config와 함께 해석해야 합니다. 내부 경계점은 양의 방향 셀에 속하며 맵의 최대 X/Y 경계는 마지막 셀에 포함됩니다. 범위 밖 입력은 무시하지 않고 종류별 out-of-bounds ID 목록에 기록합니다. 최대 셀 수는 과도한 메모리 할당을 막기 위해 262,144로 제한합니다.
+
+Editor 창 `Tools > TeamHJD > Battlefield Debug`의 `Authored Grid Defaults`에서 `BattlefieldGridSettings` 공용 에셋을 편집합니다. Scene View는 Edit Mode에서 이 authored 기본값을, Play Mode에서는 활성 Match Grid를 표시합니다. Scene composition은 Match 생성 시 이 에셋에서 초기 Grid 설정을 읽습니다. Play Mode의 `Runtime Grid Override`는 활성 Match에만 명시적으로 적용되며 authoring asset을 수정하지 않습니다. `Restore Authored Defaults`는 활성 Match에 공용 기본값을 다시 적용합니다. Editor에서 입력하는 Center X/Y는 Grid의 중심 좌표이며 좌측 하단은 중심에서 맵 크기의 절반을 뺀 위치입니다.
+
+`BattlefieldGridBuilder`는 전달된 Turret/Player/Enemy 위치만 셀별로 모읍니다. 결과인 `BattlefieldGridSnapshot`과 `BattlefieldGridCellSnapshot`은 셀 및 ID 목록을 정렬해 deterministic하게 노출하는 읽기 전용 snapshot입니다. 빈 셀은 occupant 목록을 공유하고, 점유 셀에서만 목록을 할당하며 `OccupiedCells` query도 제공합니다. 이것은 raw occupancy일 뿐 영향력, 위험도, 전술 우세, Spawn suitability를 계산하지 않습니다. Player/Enemy의 실제 위치 공급자와 tick/update cadence는 해당 Feature Owner 및 Encounter 쪽과 연결해야 합니다. Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않습니다.
+
+Match 생성 시 `BattlefieldSpatialRuntime`이 topology와 Grid를 조립합니다. Match 도중에는 `MatchSession.UpdateBattlefieldParticipants`, `UpdateBattlefieldTurretLayout`, `ReconfigureBattlefieldGrid`를 명시적으로 호출해 새 immutable snapshot/revision을 만듭니다. Dynamic occupancy 갱신은 topology를 다시 계산하지 않습니다. 아직 매 프레임 자동 갱신은 없으며, 호출 주기와 실제 위치 입력은 Feature/Match 조립 코드가 책임집니다. `MatchSession.Battlefield`는 항상 최신 snapshot을 반환합니다. main의 #463에 E 소유 `EncounterRuntime`/Planner/Executor의 첫 동작 경로가 추가됐지만, 현재 그 경로는 Battlefield snapshot을 받지 않으므로 Core producer와 아직 연결되지 않았습니다.
 
 ### 팀 간 연결 API — 현재 공개된 것과 빈 경계
 
@@ -288,25 +321,121 @@ BattlefieldSpatialSnapshot snapshot = session.Battlefield;
 ```
 
 - `BattlefieldSpatialInput` / `TurretSpatialInput`: Match 생성 시 전달하는 불변 초기 입력. 입력 ID는 현재 `EntityId`를 받습니다.
-- `BattlefieldSpatialSnapshot`: `Vertices`, `Triangles`, `EdgeAdjacencies`, `FrontlineEdges` 읽기 전용 결과.
-- `AppRoot.StartMatch(..., BattlefieldSpatialInput)`: App 조립부가 Match에 공간 입력을 전달하는 진입점. 호출자는 반환된 `MatchSession`을 소유한 시스템에 명시적으로 전달할 수 있습니다.
-- `MatchSession.Battlefield`: Match가 보유한 초기 계산 결과 조회. Match 중 터렛 변경을 반영하는 갱신 API는 아직 없습니다.
+- `BattlefieldSpatialSnapshot`: `MatchId`, `Revision`, `Vertices`, `Triangles`, `EdgeAdjacencies`, `FrontlineEdges`, `Grid` 읽기 전용 결과.
+- `BattlefieldGridConfiguration` / `BattlefieldGridSnapshot`: Grid 정의, 모든 셀의 raw occupancy, 좌표→셀 조회, out-of-bounds actor ID를 제공합니다.
+- `BattlefieldDynamicSpatialInput`: Match 도중 변하는 Player/Enemy 위치를 명시적으로 전달하는 불변 입력입니다. 중복 ID와 null 항목은 거부됩니다.
+- `AppRoot.StartMatch(..., staticInput, dynamicInput, gridConfiguration)`: Match 조립부가 초기 spatial inputs 및 Grid 설정을 전달하는 진입점. 반환된 `MatchSession`을 Encounter 등 필요한 소비자에게 명시적으로 넘깁니다.
+- `MatchSession.Battlefield`: Match가 소유한 최신 immutable snapshot 조회.
+- `MatchSession.UpdateBattlefieldParticipants(...)`: Player/Enemy 위치 갱신을 전달해 Grid만 다시 계산.
+- `MatchSession.UpdateBattlefieldTurretLayout(...)`: Turret layout 변경을 전달해 Territory와 Grid 모두 다시 계산.
+- `MatchSession.ReconfigureBattlefieldGrid(...)`: Origin/맵 크기/가로·세로 분할 변경을 Match 중 적용.
+- 동일 갱신 API는 `AppRoot`에도 제공됩니다. Editor 진단에서는 이를 사용해 현재 Match 결과를 갱신합니다.
 - `AppRoot.BattlefieldSnapshotChanged` / `CurrentBattlefieldSnapshot`: `UNITY_EDITOR` 전용이며 Debug Window만을 위한 진단 연결입니다. 게임 Feature API가 아닙니다.
 
-현재 열려 있지 않은 연결 지점도 분명히 구분해야 합니다.
+실제 팀 통합에서 열려 있는 연결 지점도 분명히 구분해야 합니다.
 
-1. **Turret → Core 입력 Adapter:** main의 병합 PR #457에서 추가된 `TurretSnapshot` 값 타입/API가 현재 통합 브랜치에 있습니다. #426은 아직 Open이며 소비자 합의·실제 사용 경로 검증을 남깁니다. 스냅샷을 Domain spatial input으로 투영하는 Adapter와 좌표 평면/단위 합의는 별도 연결 작업입니다. Core가 `TurretBase`, `Transform`, static registry를 직접 조회하지 않습니다.
+1. **Turret → Core 입력 Adapter:** main의 병합 PR #457에서 추가된 `TurretSnapshot` 값 타입/API가 현재 통합 브랜치에 있습니다. #426은 아직 Open이며 소비자 합의·실제 사용 경로 검증을 남깁니다. 그 immutable snapshot을 Domain `TurretSpatialInput`으로 투영하는 adapter와 실제 좌표/단위 합의가 필요합니다. Core가 `TurretBase`, `Transform`, static registry를 직접 조회하지 않습니다.
 2. **Match 생성자 → 다른 Runtime Feature:** `AppRoot`는 현재 Match를 private하게 보유하고, `StartMatch` 반환값 외에 `CurrentMatch` 조회 API가 없습니다. 현재는 Match를 만든 조립자가 `MatchSession`을 필요한 Feature에 주입해야 합니다. 서로 독립된 Feature가 나중에 임의로 현재 Match를 조회해야 한다면, static 접근자를 추가하기보다 Match-scope composition/injection API를 별도로 열어야 합니다.
-3. **Battlefield 갱신/구독:** 현재 Snapshot은 Match 시작 입력으로 한 번 계산됩니다. 터렛 설치·파괴 후 재계산, `BattlefieldChanged` 이벤트, 조회 인터페이스는 없습니다. 실시간 변경 소비자가 합의되기 전에는 확정 API로 만들지 않습니다.
-4. **Enemy/Encounter 소비:** 현재 구현에서 Enemy 또는 Spawner 코드와 연결된 API는 없습니다. 갱신된 Stage 1 목표에서는 Encounter가 `BattlefieldSpatialSnapshot`과 Uniform Grid를 읽고 SpawnPlan을 내어 executor로 연결되어야 하지만, 이 소비·실행 경로는 아직 구현되어 있지 않습니다. 전선 결과 자체가 직접 Spawn을 결정하지 않으며 정책/실행 계약은 별도 Feature 경계입니다.
+3. **위치 입력 공급자/갱신 cadence:** Match API는 이미 명시적 Player/Enemy 입력 및 갱신 경계를 제공합니다. 이를 실제 Feature의 위치 snapshot과 연결하고, 몇 tick/이벤트마다 갱신할지 조립부가 결정해야 합니다. 임의 Scene scan이나 매 프레임 자동 rebuild는 하지 않습니다.
+4. **Enemy/Encounter 소비:** Core는 `MatchSession.Battlefield` snapshot을 producer-side로 제공합니다. main #463의 현재 `EncounterRuntime.Spawn()`은 인자 없이 내부 Planner/Executor를 실행하며 Battlefield/Grid를 읽지 않습니다. 따라서 snapshot을 Encounter 평가 입력으로 전달하는 Match composition/consumer API 연결은 남아 있습니다. 전선/Grid 결과 자체가 직접 Spawn을 결정하지 않습니다.
 
-따라서 현 API는 **초기 입력을 주고 topology 결과를 읽는 것까지**입니다. 실제 팀 통합을 완료했다고 보려면 최소한 #426 producer adapter, Match-scope의 명시적 전달 방식, 필요한 경우 재계산 수명 규칙을 먼저 연결해야 합니다.
+따라서 Core의 현 API는 **초기·갱신 spatial 입력을 받고 Territory/Frontline/Grid snapshot을 제공하는 생산 경계까지**입니다. E handoff composition, #426 Turret adapter, 실제 Player/Enemy 위치 공급자, 갱신 cadence 및 Unity Play Mode/EditMode 실행 검증은 별도로 연결·확인해야 합니다.
+
+### Encounter에 연결할 때의 실제 호출 경계
+
+Core 쪽에서 Encounter에 넘길 데이터는 별도 복사본이나 새 singleton이 아니라 Match가 소유한 `MatchSession.Battlefield`입니다. Match를 시작한 조립자가 반환된 세션 참조를 보유하고, Encounter 평가 시점에 최신 snapshot을 읽어 E의 입력 API에 전달하는 방식이 현재 코드와 맞습니다.
+
+```csharp
+// Match 조립부의 개념적 흐름. Encounter 입력 메서드는 E와 합의 후 연결합니다.
+MatchSession match = appMatchHost.StartMatch(
+    config, initialState, modeRules,
+    turretInput, participantInput, gridConfiguration);
+
+BattlefieldSpatialSnapshot currentBattlefield = match.Battlefield;
+// encounter.<합의된 평가 메서드>(currentBattlefield);
+
+// Match 종료는 소유자인 AppRoot가 처리합니다.
+appMatchHost.EndCurrentMatch();
+```
+
+- `AppRoot`는 내부의 현재 Match를 소유하고 `StartMatch`의 반환값으로 조립자에게 세션을 제공합니다. 따라서 조립자가 세션 참조를 보관해야 하며, `AppRoot`에는 아직 `CurrentMatch` 조회자가 없습니다.
+- Unity bootstrap은 `BeforeSceneLoad`에 `AppRoot`를 만들고, `AppRoot`는 Scene 로드 시 해당 Scene의 활성 `ISceneCompositionRoot` 하나를 찾아 `IAppMatchHost`로 전달합니다. 이 검색은 Scene당 한 번의 composition 작업이며, Core는 Enemy/Encounter 구현 타입을 참조하지 않습니다. 한 Scene에 조립자가 둘 이상이면 중복 Match 소유를 막기 위해 오류를 기록하고 조립하지 않습니다.
+- Scene 조립자는 `IAppMatchHost`만 받아 Match 수명 API를 사용합니다. `AppRoot.Instance`나 Encounter 전용 static accessor는 두지 않습니다. Scene 조립자는 자신이 만든 Encounter/Scene 객체를 Scene 종료 때 정리하고, AppRoot의 `EndCurrentMatch()`로 Match 수명을 끝냅니다.
+- `MatchSession.Battlefield`는 Match 수명 중 explicit update가 끝날 때마다 새 revision을 가리킵니다. Encounter는 평가 시점의 snapshot/revision을 소비하고, Match 종료 시 Encounter 상태를 먼저 끝낸 뒤 `AppRoot.EndCurrentMatch()`로 Core Match를 종료해야 합니다. Encounter가 `MatchSession`을 Dispose하지 않습니다.
+- SpawnPoint 위치를 Grid에 조회하려면 Encounter/조립부가 SpawnPoint의 XY를 `BattlefieldPoint`로 투영하고 `snapshot.Grid.TryGetCellAt(...)`을 사용할 수 있습니다. 이는 raw cell occupancy 조회일 뿐이고, Spawn suitability 정책·Grid cell score를 뜻하지 않습니다.
+- 아직 E의 `EncounterRuntime`에는 snapshot 인자/평가 API가 없으므로 위의 Encounter 호출 한 줄은 의도적으로 미완성 표시입니다. 이 줄을 실제 코드로 바꾸기 전 입력 시점, Match 소유권, revision 사용, 종료 순서를 E와 합의합니다.
+- Encounter의 `Advance`/평가 cadence도 E 책임입니다. 권장 방향은 Match 시간 또는 권위 tick에서 저비용 상태/타이머를 진행하고, 이벤트나 별도 Decision Interval에서만 SpawnPlan을 평가하는 혼합형입니다. 매 렌더 프레임마다 Grid 전체를 재구축하거나 SpawnPlan을 재생성한다는 뜻은 아닙니다. 이번 Core 변경은 Encounter 시간 시스템을 새로 만들지 않습니다.
+
+### main #463 Encounter 수신 검토 (2026-10-02)
+
+`Assets/PoC/Enemy/Scripts/Spawning`에는 `EncounterRuntime`, `SpawnCompositionPlanner`, `SpawnInstruction`, `EnemySpawnExecutor`, `SpawnPoint` 경로가 추가됐습니다. 이는 기존 빈 상태가 아니라 **적을 실제 생성하는 첫 수직 프로토타입**이지만, 열린 #459 완료와 Battlefield 통합을 같은 것으로 보면 안 됩니다.
+
+| 현재 E 코드 | #459/Core와의 관계 |
+|---|---|
+| `EncounterRuntime()` | `Object.FindAnyObjectByType<EnemySpawnExecutor>()`로 Scene에서 executor를 찾고, 기본 planner가 Resources 카탈로그를 로드합니다. Match에서 명시적으로 생성/폐기하는 수명과 주입 경계는 아직 없습니다. |
+| `Spawn()` | 매개변수 없이 planner와 executor를 바로 호출합니다. `BattlefieldSpatialSnapshot`/`MatchSnapshot`을 받거나 보관하지 않습니다. |
+| `SpawnCompositionPlanner.TryPlan(...)` | SpawnPoint 활성/점령 가능 여부만 보고, 현재는 `"Normal"`·최대 10마리의 임시값을 사용합니다. Territory/Frontline/Grid/Match 상태와는 연결되지 않았습니다. |
+| `SpawnInstruction` | 지점별 적 ID/수량 명령입니다. Issue가 요구하는 inspectable aggregate `SpawnPlan`, Plan ID, 결과/중복 실행 계약과는 아직 구분됩니다. |
+| `EnemySpawnExecutor.Execute(...)` | NGO Server 검사, prefab/NetworkObject 검증, 지점 재검증, 서버 Spawn을 수행합니다. 현재 반환 결과나 한 Plan의 idempotency 상태를 제공하지 않습니다. |
+| `SpawnPoint` | `AreaId`, 위치, 반경, `CanSpawnEnemies`를 제공합니다. Area와 Grid cell/Territory의 매핑은 아직 없습니다. |
+
+따라서 다음 연결은 Core가 Enemy에 의존하도록 만드는 것이 아니라, E/조립 계층에서 `MatchSession.Battlefield`를 명시적으로 Encounter 입력으로 전달하는 방향이어야 합니다. 현재 Enemy 스크립트에는 별도 asmdef가 없고 Core는 named asmdef이므로, Core Bootstrap asmdef에 Enemy/Encounter 참조를 추가하는 방식은 피합니다. 먼저 E와 snapshot 입력 signature·정책이 소비할 최소 필드·Match 생성/폐기 소유자를 맞춘 뒤, 실제 Scene composition에서 연결합니다. #459 acceptance와 원격 상태는 GitHub 이슈를 기준으로 확인합니다.
 
 이 계산 코어에는 Legacy Manager나 Scene 객체 참조가 없습니다. 다만 Project Build Settings에 Legacy `Main`/Stage 씬이 남아 있고 해당 Manager는 기존 Scene/Prefab에서 사용 중입니다. #440 Legacy 목록화 및 Owner 검토가 미완료이고 #441은 승인 대상을 전제로 하므로, 이번 변경에서 Legacy 씬·스크립트를 일괄 제거하거나 비활성화하지 않았습니다. 신규 Core Runtime과 실제 게임 Scene을 혼합하지 않는 작업 경계는 확보했지만, Player 빌드에서 Legacy를 완전히 제거했다고 간주하면 안 됩니다.
 
-이번 Stage 1 범위는 Territory topology와 boundary/Frontline입니다. `TeamHJD.Game.Editor` Editor-only assembly의 `BattlefieldDebugWindow`는 Tools 메뉴에서 열며, Play Mode의 active Match snapshot을 표시하도록 구성했습니다. `AppRoot`의 Editor 전용 instance event를 사용하며 `AppRoot.Instance`나 전역 검색은 추가하지 않습니다. Unity 6.3.23f1 Pipeline Test Runner에서 Battlefield EditMode 테스트 11개가 통과했고, `EnemySandbox`에서 Play Mode 진입/종료 시 AppBootstrap 실행과 Console Error 0건을 확인했습니다. 단, 해당 Scene은 Match를 시작하지 않으므로 Debug Window의 실제 시각 표시, Scene 재진입 후 snapshot 갱신, Match Dispose 동작은 아직 확인되지 않았습니다. 프로젝트에 자동 PlayMode 테스트도 없습니다.
+기존 #461/EnemySandbox 검증 기록은 당시의 AppBootstrap 실행 증거이며 Match 시작/종료 검증과는 구분합니다. 이번 `Initial_Stage` 검증에서는 Match 및 Player 생성·정리를 확인했습니다. Player prefab의 구형 스크립트가 `GeneralManager.Instance`를 통해 존재하지 않는 Legacy Manager를 생성하려던 경로는 `TryGetExistingInstance` 조회 API로 바꿔, Core Scene에서 Manager를 자동 생성하지 않고 안전하게 건너뛰도록 했습니다. Play Mode 재진입 후 `Player(Clone)` 1개, Legacy `GeneralManager`/`AudioManager` 0개, 신규 Console Error 0건을 확인했습니다. Player의 이동·공격이 실제로 가능한지는 별도 미검증입니다.
 
-Edit Mode fixture preview는 제외합니다. 현재 체크아웃에 구현된 것은 Territory topology/frontline 계산과 Match 수명 연결, Editor 표시 코드까지이며, #426 실제 adapter 연결 및 Unity 동작 검증은 추가 확인이 필요합니다. Uniform Grid, Encounter Director → SpawnPlan → 실제 실행은 갱신된 Stage 1 목표에 포함됐지만 아직 구현 완료로 간주하지 않습니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 임시 PoC 정책과 분리해 합의 후 결정합니다.
+현재 A/Core 구현 범위에는 Territory topology/frontline, Match-scope Uniform Grid, Grid 구성 Editor 진단 UI, `InitialStageCompositionRoot` 기반의 로컬 Match/Player spawn 및 teardown 경로가 포함됩니다. main #463의 Encounter→Spawn 초기 코드는 추가됐지만 #459의 Battlefield/Grid consumer handoff, 명시적 Plan 결과 및 end-to-end 통합은 미완료입니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 이번 Core 구현에 포함하지 않습니다.
+
+## Player Feature와 Core의 소유 경계 (2026-10-02)
+
+main에 병합된 Player_V2는 Unity Scene의 입력·이동·표현·무기/스킬 동작을 담당하는 Feature 코드이며 Core의 authoritative Player 모델과 아직 연결되어 있지 않습니다. Player 코드를 Core 디렉터리로 옮기거나 App 전역 Manager가 Player를 직접 소유하게 만들지 않습니다.
+
+| 관심사 | 소유자 | Core와의 연결 원칙 |
+|---|---|---|
+| 입력 수집, Rigidbody2D 이동, 조준/애니메이션, 무기·폭탄·스킬의 Scene 동작 | Player Feature / Scene | 각자 Player 객체와 Unity 컴포넌트를 관리. Core Domain은 `Transform`, `MonoBehaviour`, prefab을 참조하지 않음 |
+| Match 내 Player 식별·생존/체력 등 규칙 상태, 명령 승인, 결과 | Core Match/Domain | `PlayerId` 기반 `PlayerState`와 `GameCommand`를 Match 수명 안에서 authoritative state로 관리 |
+| 현재 위치를 Battlefield Grid에 제공 | Player Feature → Match composition → Core spatial input | Feature가 소유한 ID+XY immutable 값을 명시적으로 전달. 현재 `BattlefieldDynamicSpatialInput` API는 있으나 Player V2 producer adapter/cadence는 미연결 |
+| Player prefab 생성/제거 | Match의 Scene composition root / Player spawner adapter | `PlayerStart`는 Scene spawn 위치만 제공. Match 조립부가 Player prefab을 생성하고 Match/Scene 종료 때 제거. Core는 Unity GameObject 수명을 직접 관리하지 않음 |
+| 온라인 소유권/입력 전달 및 복제 | Network adapter / Match authority | Player Scene 객체 자체를 authority로 간주하지 않음. 로컬 입력과 권위 명령을 분리하고, Core가 검증 가능한 command 경계를 사용 |
+| HUD 표시 | Presentation | Match snapshot/event를 표시. UI가 Player 상태의 별도 진실 원천이 되지 않음 |
+
+현재 Player V2 구현에서 확인된 통합 리스크는 `PlayerInfo`가 `DataManager` 및 `GeneralManager.Instance.inGameManager.GameOver()`를 호출하고, 이동/외형/공격/터렛 스킬도 `GeneralManager`의 대화·웨이브 상태를 조회한다는 점입니다. `PlayerBomb`는 Scene에서 `InGameManager`를 검색해 폭탄 UI를 직접 갱신합니다. `PlayerInputHandler`는 커스텀 `GameInput`과 `Input.GetKeyDown`을 함께 쓰며, 발사체/임시 터렛은 Unity 객체를 직접 생성합니다. 이는 기존 Player feature의 현재 상태를 설명하는 것이며 즉시 레거시 제거 대상이라는 뜻은 아닙니다. 단계적 교체 시 아래 경계부터 좁혀야 합니다.
+
+전투 통합도 아직 맞물리지 않습니다. Player V2 `PlayerBullet`은 Enemy 태그 다음 `Monster` 컴포넌트에서 피해 처리를 찾지만, main #468의 `Slime.prefab`에는 `EnemyController`/`EnemyAIBrain`이 있고 `Monster`는 없습니다. 따라서 현재 Player/Turret projectile이 Slime을 실제로 피해 입힌다고 가정할 수 없습니다. PoC 전투를 연결하기 전에 Player, Turret, Enemy Owner가 공통 피해 입력/체력·사망 결과와 authority 경계를 합의해야 합니다.
+
+### Player 생성과 수명주기
+
+Player는 Stage Scene에 고정 배치하지 않고 Match 시작 시 prefab에서 생성합니다. Scene composition root가 Match/Scene runtime을 구성하면서 Player actor spawner를 호출하고, 반환된 actor handle을 보관해 Match 종료 또는 Scene unload 때 제거합니다. Core `MatchSession`은 `PlayerState`와 규칙 상태만 보유하고 `Instantiate`/`Destroy`를 호출하지 않습니다. `PlayerStart`는 위치/회전/향후 player slot 같은 authoring 정보만 제공하며 스폰 결정을 수행하지 않습니다. AppRoot는 App 서비스와 MatchSession을 소유하며 Player prefab은 생성하지 않습니다.
+
+협동을 위해 local Player spawner와 향후 network-authoritative spawner를 adapter 경계로 교체 가능하게 둡니다. NGO 구현에서는 authority가 Player NetworkObject를 spawn/despawn해야 하며, Core `PlayerId`와 Steam/platform identity는 spawner/identity adapter에서 매핑합니다. Stage 1은 한 PlayerStart에서 local Player 하나를 생성하는 경로만 먼저 증명하고, 두 명의 spawn point/seat mapping 및 network ownership은 협동 통합 단계에서 추가합니다.
+
+PoC 테스트 Scene은 `Assets/PoC/Spaceship/Scenes/Initial_Stage.unity`입니다. `InitialStageCompositionRoot`가 `ISceneCompositionRoot`를 구현해 AppRoot로부터 Match host를 받고, 테스트용 Match 데이터·규칙을 구성한 뒤 Player actor를 생성합니다. 이 Scene에는 `PlayerStart_Local` 하나가 있고, Player prefab source는 Stage_1에서 사용 중인 `Assets/Prefabs/Player/Player.prefab`입니다. 기존 Stage_1의 `PlayerSpawnPoint`와 고정 배치 Player는 참고 대상이지 테스트 Scene에 복사할 대상은 아닙니다.
+
+`MatchPlayerActorScope.SpawnPlayers(...)`는 Match roster에 맞춰 0부터 연속된 `PlayerStart.SlotIndex`를 사용해 Player actor를 만들고 각 actor의 `PlayerSceneAdapter`를 해당 `MatchSession`에 바인딩합니다. 초기화 중 실패하면 생성된 actor를 정리하며, Scene unload/Play Mode 종료 때 composition root가 scope를 폐기한 다음 `IAppMatchHost.EndCurrentMatch()`를 호출합니다. 즉 AppRoot는 Match 규칙 세션을, Scene scope는 Unity actor를 소유합니다. 현재 Scene의 테스트 grid는 PlayerStart 주변 16×16 월드 범위와 16×16 cell로 설정돼 있습니다.
+
+Initial_Stage의 `Main Camera`에는 임시 `MatchCameraFollow`가 붙어 있고, `InitialStageCompositionRoot`가 Match 시작 뒤 생성된 Player Transform을 타겟으로 연결합니다. Stage_1의 기존 `CameraController`와 달리 구형 `GeneralManager`/Tilemap에 의존하지 않는 Match Scene 전용 follow입니다. 현재는 부드러운 XY 추적만 제공하며 맵 경계 제한, 컷씬/화면 전환, 카메라 흔들림은 포함하지 않습니다. 향후 카메라 전환·경계·연출을 소유하는 Scene camera rig/director로 분리할 수 있게 두었으며, Editor/Pipeline 연결 문제로 이 컴포넌트 추가 뒤 Unity Scene import 및 Play Mode 동작은 아직 검증 전입니다.
+
+`SpawnPoint`만 Stage Scene에 놓아도 Enemy는 생성되지 않습니다. 현재 E 소유 EnemySandbox 경로는 `NetworkManager` Host 시작 → Scene의 `EnemyNetworkTestLauncher` → `EncounterRuntime.Spawn()` → `SpawnCompositionPlanner` → `EnemySpawnExecutor` → 등록된 `NetworkObject` prefab 순서입니다. Executor 아래에 활성 `SpawnPoint`가 자식으로 있어야 하고 각 ID가 유효해야 하며, Executor의 `EnemyCatalog`, `Resources/Spawning/EnemySquadPresetCatalog`의 `Normal` preset, 각 Enemy prefab 및 NGO Network Prefab 등록도 필요합니다. `Initial_Stage`에는 현재 이 Enemy/Network 실행 구성요소가 없어 그 Scene에서 SpawnPoint만 추가하는 것으로는 연결되지 않습니다. Encounter가 Core Battlefield/Grid snapshot을 받는 runtime handoff도 아직 없습니다.
+
+```text
+PlayerInputHandler / Player Scene Components
+        ├─ local presentation & physics (Player Feature)
+        ├─ typed player action → Match command boundary (future adapter)
+        └─ stable PlayerId + XY → BattlefieldDynamicSpatialInput
+                                      ↓
+                            MatchSession / Core Domain
+                                      ↓
+                   snapshot/events → HUD and other features
+```
+
+### Stage 1 PoC 한 사이클의 현재 판정
+
+현재 구현은 Battlefield/Uniform Grid producer와 Match-scoped 갱신 경계, Editor 설정/진단 코드, Initial_Stage Scene composition 및 local Player prefab spawn/teardown까지입니다. 전체 게임 사이클은 아닙니다. `MatchSimulation.Execute()`는 모든 명령에 `NotHandled`를 반환하고, Player input/health/action은 Core Match state와 아직 연결되지 않았습니다. Encounter는 별도 Enemy prototype으로 실제 spawn 기반이 있지만 snapshot 소비, Match 소유 수명, 결과 계약/중복 실행 처리는 연결되지 않았습니다.
+
+Unity 6000.3.23f1 Pipeline에서 기존 EditMode suite 18개 통과 기록이 있습니다(이번 Singleton 조회 추가 뒤 전체 suite 재실행은 완료되지 않음). 직전 Play Mode에서는 Match 시작 로그와 `/Player(Clone)` 단일 생성, 정지 시 clone 제거, 재진입 재생성을 확인했습니다. `GeneralManager`/`AudioManager` 미생성과 신규 Console Error 0건도 확인했습니다. 이전 Legacy NRE 경로는 Player가 생성형 `Instance` 대신 존재하는 Singleton만 조회하도록 바꿔 Core Scene에서 발생하지 않습니다. 이후 추가한 `MatchCameraFollow` source/Scene component 연결은 Unity Editor/Pipeline 응답이 끊겨 import·컴파일·Play Mode 검증 전입니다. Player 입력·전투 및 Encounter까지 이어지는 한 판도 미검증이므로 PoC 완료로 판정할 수 없습니다.
+
+Stage 1 PoC를 닫기 위한 최소 수직 흐름과 검증 기준은 로컬 비공유 문서 [`YGDocs/POC_CLOSEOUT_AND_PLAYER_BOUNDARY_20261002.md`](../../../YGDocs/POC_CLOSEOUT_AND_PLAYER_BOUNDARY_20261002.md)에 정리합니다. 해당 문서는 `.gitignore` 정책에 따라 팀 공유되지 않으며, 이 README에는 Core/Player 책임 경계와 주요 미완료 사실만 둡니다.
 
 ## 관련 공식 문서
 

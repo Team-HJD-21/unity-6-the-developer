@@ -73,9 +73,9 @@ public class PlayerTurretSkill : MonoBehaviour
 
     private bool CanUseSkillInCurrentState()
     {
-        if (GeneralManager.Instance?.inGameManager == null) return true;
+        if (!GeneralManager.TryGetExistingInstance(out var manager) || manager.inGameManager == null) return true;
 
-        var igm = GeneralManager.Instance.inGameManager;
+        var igm = manager.inGameManager;
         if (igm.isTalking || igm.pauseVisible || !igm.isWave) return false;
 
         return true;

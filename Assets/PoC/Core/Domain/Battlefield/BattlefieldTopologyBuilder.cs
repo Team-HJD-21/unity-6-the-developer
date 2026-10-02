@@ -1,4 +1,5 @@
 // 터렛 점 집합에서 결정론적 Delaunay 삼각형과 외곽 변을 계산합니다.
+//  현석 : 현재 이 부분 소스코드가 좀 지저분한 걸 인지하고 있습니다. 급한 관계로 일단 임시로 유지합니다. 추후 개선 방안이 있다면 적용하겠습니다.
 
 using System;
 using System.Collections.Generic;

@@ -36,7 +36,7 @@ EditorBuildSettings:
     path: Assets/PoC/Enemy/Scenes/EnemySandbox.unity
     guid: 9ff428f7b35658f498d4c55cf13b5cc6
   - enabled: 1
-    path: Assets/PoC/Spaceship/Scenes/inital_stage.unity
+    path: Assets/PoC/Spaceship/Scenes/Initial_Stage.unity
     guid: 787377b97207e74df2db8e6b48d60c66
   - enabled: 1
     path: Assets/PoC/Spaceship/Scenes/SpaceShipGrayBox.unity

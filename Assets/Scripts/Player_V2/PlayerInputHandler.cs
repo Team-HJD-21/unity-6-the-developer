@@ -11,6 +11,8 @@ using UnityEngine;
 /// </summary>
 public class PlayerInputHandler : MonoBehaviour
 {
+    private static readonly Plane AimPlane = new Plane(Vector3.forward, Vector3.zero);
+
     // [이동 및 조준]
     public Vector2 MoveInput { get; private set; }
     public Vector2 AimDirection { get; private set; }
@@ -49,13 +51,13 @@ public class PlayerInputHandler : MonoBehaviour
         if (mainCamera == null) mainCamera = Camera.main;
         if (mainCamera != null)
         {
-            Vector3 screenPos = GameInput.PointerPosition;
-            Vector3 worldPos = mainCamera.ScreenToWorldPoint(screenPos);
-            worldPos.z = 0f;
-            MouseWorldPosition = worldPos;
-
-            Vector2 dir = (MouseWorldPosition - (Vector2)transform.position);
-            AimDirection = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector2.right;
+            Ray pointerRay = mainCamera.ScreenPointToRay(GameInput.PointerPosition);
+            if (AimPlane.Raycast(pointerRay, out float distance))
+            {
+                MouseWorldPosition = pointerRay.GetPoint(distance);
+                Vector2 direction = MouseWorldPosition - (Vector2)transform.position;
+                AimDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
+            }
         }
 
         // 3. 공격 입력 (Space 연사 지속)
