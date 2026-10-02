@@ -116,8 +116,11 @@ namespace TeamHJD.Game.Tests.EditMode
         [Test]
         public void Runtime_Dispose_ReleasesSnapshotAccess()
         {
-            var runtime = new BattlefieldSpatialRuntime(CreateInput(
-                Point("a", 0, 0), Point("b", 1, 0), Point("c", 0, 1)));
+            var runtime = new BattlefieldSpatialRuntime(
+                new MatchId("match-test"),
+                CreateInput(Point("a", 0, 0), Point("b", 1, 0), Point("c", 0, 1)),
+                BattlefieldDynamicSpatialInput.Empty,
+                BattlefieldGridConfiguration.Default);
             Assert.That(runtime.Snapshot.Triangles, Has.Count.EqualTo(1));
 
             runtime.Dispose();
