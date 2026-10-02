@@ -259,6 +259,31 @@ flowchart LR
 
 이번 Sprint의 설계 방향에서는 Territory/Frontline을 Encounter 내부에 두지 않고, Match 범위의 공용 `BattlefieldSpatialRuntime`에서 생성하는 파생 데이터로 다룹니다. **Stage 1 PoC 목표는 2026-10-02에 갱신되어 Uniform Grid와 최소 Encounter → Spawn 실행 흐름까지 같은 PoC에서 확인하는 것으로 확장되었습니다.** 이 기능들은 현재 구현 상태와 동일시하면 안 됩니다. #458–#460이 Grid·Encounter·Editor 진단 범위를 추적하고, #420이 통합 흐름을 추적합니다.
 
+현재 구현된 Core producer의 수명/갱신 흐름은 다음과 같습니다.
+
+```mermaid
+sequenceDiagram
+    participant C as Match Composer
+    participant S as MatchSession
+    participant R as BattlefieldSpatialRuntime
+    participant T as TopologyBuilder
+    participant G as GridBuilder
+    participant E as Encounter consumer (E-owned)
+    C->>S: Create(config, initial spatial inputs)
+    S->>R: Create Match-scoped runtime
+    R->>T: Build(turret layout)
+    R->>G: Build(config, turret/player/enemy positions)
+    R-->>S: immutable snapshot (revision 1)
+    C->>E: inject/read S.Battlefield
+    C->>S: UpdateBattlefieldParticipants(new positions)
+    S->>R: UpdateDynamicInput
+    R->>G: rebuild occupancy only
+    R-->>S: publish next revision
+    C->>E: provide latest S.Battlefield when Encounter evaluates
+```
+
+Encounter의 주입 형태와 평가 cadence는 E와 조립부가 합의할 연결 지점이다. 그림은 Encounter가 Grid를 계산하거나 Core가 Encounter 정책을 소유한다는 뜻이 아니다.
+
 ```text
 MatchState (authoritative state)
   → BattlefieldSpatialRuntime (derived spatial analysis)

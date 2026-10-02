@@ -1,4 +1,4 @@
-// Territory 삼각형과 변 인접·외곽 변을 복사해 제공하는 읽기 전용 결과입니다.
+// Territory·Frontline·Grid를 한 Match revision으로 묶어 제공하는 읽기 전용 spatial 결과입니다.
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
