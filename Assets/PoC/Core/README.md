@@ -341,7 +341,7 @@ BattlefieldSpatialSnapshot snapshot = session.Battlefield;
 
 이번 Stage 1 범위는 Territory topology와 boundary/Frontline입니다. `TeamHJD.Game.Editor` Editor-only assembly의 `BattlefieldDebugWindow`는 Tools 메뉴에서 열며, Play Mode의 active Match snapshot을 표시하도록 구성했습니다. `AppRoot`의 Editor 전용 instance event를 사용하며 `AppRoot.Instance`나 전역 검색은 추가하지 않습니다. Unity 6.3.23f1 Pipeline Test Runner에서 Battlefield EditMode 테스트 11개가 통과했고, `EnemySandbox`에서 Play Mode 진입/종료 시 AppBootstrap 실행과 Console Error 0건을 확인했습니다. 단, 해당 Scene은 Match를 시작하지 않으므로 Debug Window의 실제 시각 표시, Scene 재진입 후 snapshot 갱신, Match Dispose 동작은 아직 확인되지 않았습니다. 프로젝트에 자동 PlayMode 테스트도 없습니다.
 
-현재 구현 범위는 Territory topology/frontline, Match-scope Uniform Grid와 명시적 occupancy 갱신 API, Grid 구성 Editor 진단 UI까지입니다. EditMode 테스트 코드는 추가했으나 Unity Test Runner 실행은 확인 전입니다. 실제 Unity Play Mode 및 Scene 재진입 확인도 별도 검증이 필요합니다. #426 adapter 연결과 Encounter Director → SpawnPlan → 실제 실행은 아직 구현되지 않았습니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 이번 구현에 포함하지 않습니다.
+현재 구현 범위는 Territory topology/frontline, Match-scope Uniform Grid와 명시적 occupancy 갱신 API, Grid 구성 Editor 진단 UI까지입니다. EditMode 테스트 코드는 추가하고 생성된 Unity `.csproj`로 source compile을 확인했으나, Unity Test Runner 실행은 확인 전입니다. 2026-10-02 CLI 재시도는 같은 프로젝트를 사용 중인 Editor 및 Unity Licensing Client mutex 충돌로 중단됐으며, 사용자 Editor를 닫지 않았습니다. 실제 Unity Play Mode 및 Scene 재진입 확인도 별도 검증이 필요합니다. #426 adapter 연결과 Encounter Director → SpawnPlan → 실제 실행은 아직 구현되지 않았습니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 이번 구현에 포함하지 않습니다.
 
 ## 관련 공식 문서
 
