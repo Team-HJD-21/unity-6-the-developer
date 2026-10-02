@@ -5,6 +5,17 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     private static T _instance;
 
+    public static bool TryGetExistingInstance(out T instance)
+    {
+        if (_instance == null)
+        {
+            _instance = FindFirstObjectByType<T>();
+        }
+
+        instance = _instance;
+        return instance != null;
+    }
+
     public static T Instance
     {
         get

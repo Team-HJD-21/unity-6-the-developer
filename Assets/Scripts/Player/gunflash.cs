@@ -36,7 +36,9 @@ public class gunflash : MonoBehaviour
     {
         if (GameInput.IsPressed(GameKey.Space))
         {
-            if (GeneralManager.Instance.inGameManager.isWave)
+            if (GeneralManager.TryGetExistingInstance(out var manager)
+                && manager.inGameManager != null
+                && manager.inGameManager.isWave)
             {
                 GunFlash();
             }
@@ -46,7 +48,9 @@ public class gunflash : MonoBehaviour
     private void GunFlash()
     {
         // 스페이스바 입력 시 플래시 동작
-        if (!GeneralManager.Instance.inGameManager.isTalking)
+        if (GeneralManager.TryGetExistingInstance(out var manager)
+            && manager.inGameManager != null
+            && !manager.inGameManager.isTalking)
         {
             if (attackAble && !isFlashing)
             {

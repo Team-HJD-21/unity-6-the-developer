@@ -74,9 +74,9 @@ public class PlayerVisual : MonoBehaviour
     /// </summary>
     private bool CanAimInCurrentState()
     {
-        if (GeneralManager.Instance?.inGameManager == null) return true;
+        if (!GeneralManager.TryGetExistingInstance(out var manager) || manager.inGameManager == null) return true;
 
-        var igm = GeneralManager.Instance.inGameManager;
+        var igm = manager.inGameManager;
 
         // 대화 중이거나 일시정지 창이 떠 있는 경우 차단
         if (igm.isTalking || igm.pauseVisible) return false;
