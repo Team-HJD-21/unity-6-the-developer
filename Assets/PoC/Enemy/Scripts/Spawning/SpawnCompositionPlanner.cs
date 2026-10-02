@@ -1,72 +1,125 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine;
+using TeamHJD.Game.Domain;
 
 /// <summary>
-/// 분대 명령에 맞는 프리셋을 찾아 구성 비율을 실제 생성 수로 변환한다.
-/// 스폰 지점별 상한 안에서 완전한 구성 세트만 반복하며, 몬스터 생성 자체는 담당하지 않는다.
+/// 분대 프리셋의 구성 비율과 현재 사용 가능한 스폰 지점을 바탕으로 생성 명령을 만든다.
+/// 생성 자체는 담당하지 않으며, 점령된 지점에는 생성 수를 배정하지 않는다.
 /// </summary>
-public sealed class SpawnCompositionPlanner : MonoBehaviour
+public sealed class SpawnCompositionPlanner
 {
-    // Inspector에서 분대 명령별 프리셋을 등록한다. 요청이 오면 순서대로 일치하는 프리셋을 찾는다.
-    [SerializeField] private List<EnemySquadPreset> enemySquadPresets = new();
+    private const string PoCSquadOrder = "Normal";
+    private const int PoCMaxCount = 10;
+
+    // TODO: Encounter의 전선/Grid 정보와 Spawn Policy가 준비되면 고정된 분대 유형과 생성 상한을 상황별 계산으로 교체한다.
+    private readonly EnemySquadPresetCatalog _catalog;
 
     /// <summary>
-    /// 요청에 맞는 프리셋을 조회해 한 분대의 적별 생성 수를 확정한다.
-    /// 프리셋이 없거나 한 구성 세트도 채울 수 없으면 명령을 만들지 않는다.
+    /// 분대 프리셋을 조회할 카탈로그가 로드되었는지 반환한다.
     /// </summary>
-    /// <param name="spawnRequest">분대 명령과 스폰 지점, 최대 생성 수가 담긴 요청.</param>
-    /// <param name="instruction">계획에 성공한 경우 반환할 분대 생성 명령.</param>
-    /// <returns>유효한 프리셋으로 최소 한 세트를 구성하면 <see langword="true"/>. 그렇지 않으면 <see langword="false"/>.</returns>
-    public bool TryPlan(SpawnRequest spawnRequest, out SpawnInstruction instruction)
+    public bool HasCatalog => _catalog != null;
+
+    /// <summary>
+    /// 기본 카탈로그를 한 번 로드해 Planner를 만든다.
+    /// </summary>
+    public SpawnCompositionPlanner() : this(EnemySquadPresetCatalog.Load())
     {
-        instruction = default;
+    }
 
-        // 식별 값이나 생성 상한이 유효하지 않은 요청은 프리셋 조회 전에 제외한다.
-        if (string.IsNullOrWhiteSpace(spawnRequest.SquadOrder) ||
-            string.IsNullOrWhiteSpace(spawnRequest.SpawnPointId) ||
-            spawnRequest.MaxCount <= 0)
+    /// <summary>
+    /// Core 구성 계층이나 테스트에서 이미 로드한 카탈로그를 전달받는다.
+    /// </summary>
+    /// <param name="catalog">분대 명령으로 조회할 프리셋 카탈로그.</param>
+    public SpawnCompositionPlanner(EnemySquadPresetCatalog catalog)
+    {
+        _catalog = catalog;
+    }
+
+    /// <summary>
+    /// 현재 PoC 기준으로 분대 유형과 생성 상한을 정하고, 스폰 가능한 지점별 명령을 만든다.
+    /// Normal과 최대 10마리는 임시 판단값이며 실제 생성 수는 프리셋의 완전한 세트 수에 따라 결정된다.
+    /// </summary>
+    /// <param name="spawnPoints">현재 지점의 점령 상태를 조회할 레지스트리.</param>
+    /// <param name="instructions">스폰 지점별로 확정된 생성 명령 목록.</param>
+    /// <returns>적어도 한 지점에 한 구성 세트를 배정했으면 <see langword="true"/>, 아니면 <see langword="false"/>.</returns>
+    public bool TryPlan(
+        SpawnPointRegistry spawnPoints,
+        out IReadOnlyList<SpawnInstruction> instructions)
+    {
+        SpawnRequest request = new SpawnRequest(PoCSquadOrder, PoCMaxCount);
+        return TryBuildInstructions(request, spawnPoints, out instructions);
+    }
+
+    /// <summary>
+    /// 현재 적을 생성할 수 있는 모든 지점에 완전한 프리셋 세트를 배분한다.
+    /// 점령된 지점은 배분 대상에서 제외되므로 요청의 생성 한도를 소비하지 않는다.
+    /// 생성 한도보다 작은 프리셋 잔여 수량은 생성하지 않는다.
+    /// </summary>
+    /// <param name="spawnRequest">분대 명령과 전체 생성 상한.</param>
+    /// <param name="spawnPoints">현재 지점의 점령 상태를 조회할 레지스트리.</param>
+    /// <param name="instructions">스폰 지점별로 확정된 생성 명령 목록.</param>
+    /// <returns>적어도 한 지점에 한 구성 세트를 배정했으면 <see langword="true"/>, 아니면 <see langword="false"/>.</returns>
+    private bool TryBuildInstructions(
+        SpawnRequest spawnRequest,
+        SpawnPointRegistry spawnPoints,
+        out IReadOnlyList<SpawnInstruction> instructions)
+    {
+        instructions = Array.Empty<SpawnInstruction>();
+
+        if (spawnPoints == null ||
+            string.IsNullOrWhiteSpace(spawnRequest.SquadOrder) ||
+            spawnRequest.MaxCount <= 0 ||
+            !TryGetPreset(spawnRequest.SquadOrder, out EnemySquadPreset squadPreset) ||
+            squadPreset.Composition == null || squadPreset.Composition.Count == 0)
             return false;
 
-        EnemySquadPreset squadPreset = null;
-        // 요청의 분대 명령과 일치하는 첫 번째 프리셋을 사용한다.
-        foreach (EnemySquadPreset preset in enemySquadPresets)
-        {
-            if (preset != null && preset.SquadOrder == spawnRequest.SquadOrder)
-            {
-                squadPreset = preset;
-                break;
-            }
-        }
-
-        if (squadPreset == null || squadPreset.Composition == null ||
-            squadPreset.Composition.Count == 0)
-            return false;
-
-        // 전체 가중치는 한 구성 세트를 완성하는 데 필요한 최소 생성 수다.
         int totalWeight = squadPreset.TotalWeight;
-        if (totalWeight <= 0 || spawnRequest.MaxCount < totalWeight)
+        if (totalWeight <= 0)
             return false;
 
-        // 예: 상한 10, 구성 1:1:1이면 3세트(9마리)를 만들고 남는 1마리는 생성하지 않는다.
-        int setCount = spawnRequest.MaxCount / totalWeight;
-        List<EnemySpawnEntry> enemies = new(squadPreset.Composition.Count);
-
+        // 잘못된 프리셋은 어느 지점에도 부분적으로 배정하지 않는다.
         foreach (EnemySquadCompositionEntry entry in squadPreset.Composition)
         {
-            // 식별 값이나 가중치가 잘못된 항목이 있으면 부분적인 명령을 반환하지 않는다.
             if (entry == null || string.IsNullOrWhiteSpace(entry.EnemyId) ||
                 entry.Weight <= 0)
                 return false;
-
-            // 적별 가중치에 완전한 세트 수를 곱해 최종 생성 수를 확정한다.
-            enemies.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight * setCount));
         }
 
-        // 공통 분대 정보와 모든 적별 수량을 하나의 명령으로 묶는다.
-        instruction = new SpawnInstruction(
-            spawnRequest.SquadOrder,
-            spawnRequest.SpawnPointId,
-            enemies);
+        // 요청 상한을 프리셋 한 세트의 크기로 나눠 배정 가능한 완전한 세트 수를 구한다.
+        int totalSets = spawnRequest.MaxCount / totalWeight;
+        IReadOnlyList<SpawnPoint> availablePoints = spawnPoints.GetAvailableSpawnPoints();
+        if (totalSets == 0 || availablePoints.Count == 0)
+            return false;
+
+        // 세트 수를 균등하게 나누고 남는 세트는 등록 순서상 앞쪽 지점부터 배정한다. (추후 점수 계산을 통해 세트 수 비균등)
+        int setsPerPoint = totalSets / availablePoints.Count;
+        int extraSets = totalSets % availablePoints.Count;
+        List<SpawnInstruction> planned = new();
+
+        for (int pointIndex = 0; pointIndex < availablePoints.Count; pointIndex++)
+        {
+            int pointSets = setsPerPoint + (pointIndex < extraSets ? 1 : 0);
+            if (pointSets == 0)
+                continue;
+
+            List<EnemySpawnEntry> enemies = new(squadPreset.Composition.Count);
+            foreach (EnemySquadCompositionEntry entry in squadPreset.Composition)
+                enemies.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight * pointSets));
+
+            planned.Add(new SpawnInstruction(
+                spawnRequest.SquadOrder,
+                availablePoints[pointIndex].SpawnPointId,
+                enemies));
+        }
+
+        instructions = planned.AsReadOnly();
         return true;
+    }
+
+    private bool TryGetPreset(string squadOrder, out EnemySquadPreset squadPreset)
+    {
+        squadPreset = null;
+        return _catalog != null &&
+               _catalog.TryGetPreset(squadOrder, out squadPreset);
     }
 }
