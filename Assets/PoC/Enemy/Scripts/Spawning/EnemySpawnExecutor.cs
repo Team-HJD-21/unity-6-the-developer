@@ -11,10 +11,34 @@ using UnityEngine;
 /// </summary>
 public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSource
 {
+    /// <summary>
+    /// 생성된 적의 네트워크 객체와 분대 소속을 함께 보관한다.
+    /// Despawn 시 두 목록을 같은 식별자로 정리하기 위한 서버 측 기록이다.
+    /// </summary>
+    private readonly struct TrackedEnemy
+    {
+        public readonly NetworkObject NetworkObject;
+        public readonly EnemyController Controller;
+        public readonly EnemyNetworkController NetworkController;
+        public readonly EnemySquad Squad;
+
+        public TrackedEnemy(
+            NetworkObject networkObject,
+            EnemyController controller,
+            EnemyNetworkController networkController,
+            EnemySquad squad)
+        {
+            NetworkObject = networkObject;
+            Controller = controller;
+            NetworkController = networkController;
+            Squad = squad;
+        }
+    }
+
     [SerializeField] private EnemyCatalog enemyList;
     private SpawnPointRegistry _spawnPointList = new();
     private readonly List<EnemySquad> _squads = new();
-    private readonly Dictionary<ulong, NetworkObject> _spawnedEnemies = new();
+    private readonly Dictionary<ulong, TrackedEnemy> _spawnedEnemies = new();
 
     /// <summary>
     /// Planner와 Executor가 함께 사용하는 스폰 지점 및 점령 상태 목록을 반환한다.
@@ -34,9 +58,9 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     {
         var positions = new List<EnemySpatialInput>(_spawnedEnemies.Count);
         var staleIds = new List<ulong>();
-        foreach (KeyValuePair<ulong, NetworkObject> enemy in _spawnedEnemies)
+        foreach (KeyValuePair<ulong, TrackedEnemy> enemy in _spawnedEnemies)
         {
-            NetworkObject networkObject = enemy.Value;
+            NetworkObject networkObject = enemy.Value.NetworkObject;
             if (networkObject == null || !networkObject.IsSpawned)
             {
                 staleIds.Add(enemy.Key);
@@ -50,7 +74,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         }
 
         foreach (ulong staleId in staleIds)
-            _spawnedEnemies.Remove(staleId);
+            UntrackEnemy(staleId);
         return positions.AsReadOnly();
     }
 
@@ -81,9 +105,42 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        foreach (TrackedEnemy enemy in _spawnedEnemies.Values)
+        {
+            if (enemy.NetworkController != null)
+                enemy.NetworkController.Despawned -= OnEnemyDespawned;
+        }
+
         _squads.Clear();
         _spawnedEnemies.Clear();
         base.OnNetworkDespawn();
+    }
+
+    /// <summary>
+    /// 적이 NGO에서 제거되면 생성 기록과 분대 소속을 함께 정리한다.
+    /// </summary>
+    /// <param name="networkObjectId">Despawn된 적의 NGO 식별자.</param>
+    private void OnEnemyDespawned(ulong networkObjectId)
+    {
+        UntrackEnemy(networkObjectId);
+    }
+
+    /// <summary>
+    /// 생성 기록을 해제하고 마지막 분대원이 사라졌다면 빈 분대도 제거한다.
+    /// </summary>
+    /// <param name="networkObjectId">해제할 적의 NGO 식별자.</param>
+    private void UntrackEnemy(ulong networkObjectId)
+    {
+        if (!_spawnedEnemies.TryGetValue(networkObjectId, out TrackedEnemy enemy))
+            return;
+
+        _spawnedEnemies.Remove(networkObjectId);
+        if (enemy.NetworkController != null)
+            enemy.NetworkController.Despawned -= OnEnemyDespawned;
+
+        enemy.Squad.RemoveMember(enemy.Controller);
+        if (enemy.Squad.IsEmpty)
+            _squads.Remove(enemy.Squad);
     }
     
     /// <summary>
@@ -132,10 +189,11 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             if (enemy.Prefab == null ||
                 !enemy.Prefab.TryGetComponent<NetworkObject>(out _) ||
                 !enemy.Prefab.TryGetComponent<EnemyController>(out _) ||
-                !enemy.Prefab.TryGetComponent<EnemyAIBrain>(out _))
+                !enemy.Prefab.TryGetComponent<EnemyAIBrain>(out _) ||
+                !enemy.Prefab.TryGetComponent<EnemyNetworkController>(out _))
             {
                 Debug.LogError(
-                    $"Enemy prefab requires NetworkObject, EnemyController, and EnemyAIBrain: {enemy.EnemyId}");
+                    $"Enemy prefab requires NetworkObject, EnemyController, EnemyAIBrain, and EnemyNetworkController: {enemy.EnemyId}");
                 return 0;
             }
 
@@ -172,8 +230,12 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
                 // 생성된 적을 NGO에 등록해 클라이언트에도 나타나게 한다.
                 NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
+                EnemyNetworkController networkController =
+                    spawnedMonster.GetComponent<EnemyNetworkController>();
                 networkObject.Spawn();
-                _spawnedEnemies[networkObject.NetworkObjectId] = networkObject;
+                _spawnedEnemies[networkObject.NetworkObjectId] =
+                    new TrackedEnemy(networkObject, controller, networkController, squad);
+                networkController.Despawned += OnEnemyDespawned;
                 spawnedCount++;
             }
         }

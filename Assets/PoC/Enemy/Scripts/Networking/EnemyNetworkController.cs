@@ -1,3 +1,4 @@
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -9,6 +10,12 @@ using UnityEngine;
 public class EnemyNetworkController : NetworkBehaviour
 {
     private EnemyAIBrain _monsterAiBrain;
+
+    /// <summary>
+    /// 이 적이 네트워크에서 제거될 때 생성 주체에게 알린다.
+    /// 서버의 Executor가 구독하며, Enemy는 Executor를 직접 참조하지 않는다.
+    /// </summary>
+    public event Action<ulong> Despawned;
 
     /// <summary>
     /// 서버가 실행할 AI Brain 컴포넌트를 초기화한다.
@@ -27,5 +34,14 @@ public class EnemyNetworkController : NetworkBehaviour
             return;
 
         _monsterAiBrain.UpdateAI();
+    }
+
+    /// <summary>
+    /// 사망뿐 아니라 다른 원인으로 Despawn되어도 분대에서 해제할 수 있도록 통지한다.
+    /// </summary>
+    public override void OnNetworkDespawn()
+    {
+        Despawned?.Invoke(NetworkObjectId);
+        base.OnNetworkDespawn();
     }
 }
