@@ -298,7 +298,9 @@ BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
 
 현재 `BattlefieldPoint`, `TurretSpatialInput`, `BattlefieldSpatialInput`, `BattlefieldTopologyBuilder`가 Unity 독립 Domain에 구현되어 있습니다. 입력 점으로 Delaunay 삼각형을 만들고 변 인접 관계를 구성하며, 삼각형 하나만 공유하는 외곽 변을 Frontline으로 노출합니다. 점이 3개 미만이거나 공선이면 topology는 비지만 유효 입력 vertex는 보존하며, 동일 좌표의 터렛은 모호한 topology를 피하기 위해 예외 처리합니다. 계산은 좌표 범위를 먼저 축소해 정규화하고 고정 epsilon을 사용하며, 이 정밀도 정책은 검토 가능한 초기 구현입니다.
 
-여기에 Uniform Grid 생산 경로를 추가했습니다. `BattlefieldGridConfiguration`은 XY 원점, Z 표시 평면, 맵 너비/높이, 가로/세로 셀 수를 보유합니다. 기본은 원점 `(0,0,0)`, 크기 `16×16`, 셀 분할 `16×16`이며 전부 구성 변경 가능합니다. 공간 조회는 XY만 사용합니다. 셀은 row-major `CellId = y * CellsX + x`를 사용하고, 동일한 Grid 설정 안에서 재현 가능한 ID입니다. 분할 설정을 바꾸면 CellId 의미도 바뀌므로 Match snapshot의 revision/config와 함께 해석해야 합니다. 내부 경계점은 양의 방향 셀에 속하며 맵의 최대 X/Y 경계는 마지막 셀에 포함됩니다. 범위 밖 입력은 무시하지 않고 종류별 out-of-bounds ID 목록에 기록합니다. 최대 셀 수는 과도한 메모리 할당을 막기 위해 262,144로 제한합니다.
+여기에 Uniform Grid 생산 경로를 추가했습니다. `BattlefieldGridConfiguration`은 XY 중심 원점, Z 표시 평면, 맵 너비/높이, 가로/세로 셀 수를 보유합니다. 원점은 Grid의 중심이며 경계는 `center ± size / 2`로 계산합니다. 기본은 중심 `(0,0,0)`, 크기 `16×16`, 셀 분할 `16×16`이며 전부 구성 변경 가능합니다. 공간 조회는 XY만 사용합니다. 셀은 row-major `CellId = y * CellsX + x`를 사용하고, 동일한 Grid 설정 안에서 재현 가능한 ID입니다. 분할 설정을 바꾸면 CellId 의미도 바뀌므로 Match snapshot의 revision/config와 함께 해석해야 합니다. 내부 경계점은 양의 방향 셀에 속하며 맵의 최대 X/Y 경계는 마지막 셀에 포함됩니다. 범위 밖 입력은 무시하지 않고 종류별 out-of-bounds ID 목록에 기록합니다. 최대 셀 수는 과도한 메모리 할당을 막기 위해 262,144로 제한합니다.
+
+Editor 창 `Tools > TeamHJD > Battlefield Debug`의 `Authored Grid Defaults`에서 `BattlefieldGridSettings` 공용 에셋을 편집합니다. Scene View는 Edit Mode에서 이 authored 기본값을, Play Mode에서는 활성 Match Grid를 표시합니다. Scene composition은 Match 생성 시 이 에셋에서 초기 Grid 설정을 읽습니다. Play Mode의 `Runtime Grid Override`는 활성 Match에만 명시적으로 적용되며 authoring asset을 수정하지 않습니다. `Restore Authored Defaults`는 활성 Match에 공용 기본값을 다시 적용합니다. Editor에서 입력하는 Center X/Y는 Grid의 중심 좌표이며 좌측 하단은 중심에서 맵 크기의 절반을 뺀 위치입니다.
 
 `BattlefieldGridBuilder`는 전달된 Turret/Player/Enemy 위치만 셀별로 모읍니다. 결과인 `BattlefieldGridSnapshot`과 `BattlefieldGridCellSnapshot`은 셀 및 ID 목록을 정렬해 deterministic하게 노출하는 읽기 전용 snapshot입니다. 빈 셀은 occupant 목록을 공유하고, 점유 셀에서만 목록을 할당하며 `OccupiedCells` query도 제공합니다. 이것은 raw occupancy일 뿐 영향력, 위험도, 전술 우세, Spawn suitability를 계산하지 않습니다. Player/Enemy의 실제 위치 공급자와 tick/update cadence는 해당 Feature Owner 및 Encounter 쪽과 연결해야 합니다. Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않습니다.
 
@@ -381,9 +383,59 @@ appMatchHost.EndCurrentMatch();
 
 이 계산 코어에는 Legacy Manager나 Scene 객체 참조가 없습니다. 다만 Project Build Settings에 Legacy `Main`/Stage 씬이 남아 있고 해당 Manager는 기존 Scene/Prefab에서 사용 중입니다. #440 Legacy 목록화 및 Owner 검토가 미완료이고 #441은 승인 대상을 전제로 하므로, 이번 변경에서 Legacy 씬·스크립트를 일괄 제거하거나 비활성화하지 않았습니다. 신규 Core Runtime과 실제 게임 Scene을 혼합하지 않는 작업 경계는 확보했지만, Player 빌드에서 Legacy를 완전히 제거했다고 간주하면 안 됩니다.
 
-기존 #461 작업 당시 `TeamHJD.Game.Editor` Editor-only assembly의 `BattlefieldDebugWindow` 및 topology EditMode 테스트가 확인되었다는 기록이 있습니다. 이는 이번에 추가한 Grid 테스트의 Unity Test Runner 실행 근거가 아닙니다. `EnemySandbox`에서 Play Mode 진입/종료 시 AppBootstrap 실행과 Console Error 0건을 확인했으나, 해당 Scene은 Match를 시작하지 않아 Debug Window의 실제 시각 표시와 snapshot 재진입 갱신은 그때도 검증되지 않았습니다. 프로젝트에 자동 PlayMode 테스트도 없습니다.
+기존 #461/EnemySandbox 검증 기록은 당시의 AppBootstrap 실행 증거이며 Match 시작/종료 검증과는 구분합니다. 이번 `Initial_Stage` 검증에서는 Match 및 Player 생성·정리를 확인했습니다. Player prefab의 구형 스크립트가 `GeneralManager.Instance`를 통해 존재하지 않는 Legacy Manager를 생성하려던 경로는 `TryGetExistingInstance` 조회 API로 바꿔, Core Scene에서 Manager를 자동 생성하지 않고 안전하게 건너뛰도록 했습니다. Play Mode 재진입 후 `Player(Clone)` 1개, Legacy `GeneralManager`/`AudioManager` 0개, 신규 Console Error 0건을 확인했습니다. Player의 이동·공격이 실제로 가능한지는 별도 미검증입니다.
 
-현재 A/Core 구현 범위는 Territory topology/frontline, Match-scope Uniform Grid와 명시적 occupancy 갱신 API, Grid 구성 Editor 진단 UI까지입니다. EditMode 테스트 코드는 추가하고 생성된 Unity `.csproj`로 source compile을 확인했으나, Unity Test Runner 실행은 확인 전입니다. 2026-10-02 CLI 재시도는 같은 프로젝트를 사용 중인 Editor 및 Unity Licensing Client mutex 충돌로 중단됐으며, 사용자 Editor를 닫지 않았습니다. 실제 Unity Play Mode 및 Scene 재진입 확인도 별도 검증이 필요합니다. main #463의 Encounter→Spawn 초기 코드는 추가됐지만 #459의 Battlefield/Grid consumer handoff, Match 수명, 명시적 Plan 결과 및 end-to-end 통합은 미완료입니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 이번 Core 구현에 포함하지 않습니다.
+현재 A/Core 구현 범위에는 Territory topology/frontline, Match-scope Uniform Grid, Grid 구성 Editor 진단 UI, `InitialStageCompositionRoot` 기반의 로컬 Match/Player spawn 및 teardown 경로가 포함됩니다. main #463의 Encounter→Spawn 초기 코드는 추가됐지만 #459의 Battlefield/Grid consumer handoff, 명시적 Plan 결과 및 end-to-end 통합은 미완료입니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 이번 Core 구현에 포함하지 않습니다.
+
+## Player Feature와 Core의 소유 경계 (2026-10-02)
+
+main에 병합된 Player_V2는 Unity Scene의 입력·이동·표현·무기/스킬 동작을 담당하는 Feature 코드이며 Core의 authoritative Player 모델과 아직 연결되어 있지 않습니다. Player 코드를 Core 디렉터리로 옮기거나 App 전역 Manager가 Player를 직접 소유하게 만들지 않습니다.
+
+| 관심사 | 소유자 | Core와의 연결 원칙 |
+|---|---|---|
+| 입력 수집, Rigidbody2D 이동, 조준/애니메이션, 무기·폭탄·스킬의 Scene 동작 | Player Feature / Scene | 각자 Player 객체와 Unity 컴포넌트를 관리. Core Domain은 `Transform`, `MonoBehaviour`, prefab을 참조하지 않음 |
+| Match 내 Player 식별·생존/체력 등 규칙 상태, 명령 승인, 결과 | Core Match/Domain | `PlayerId` 기반 `PlayerState`와 `GameCommand`를 Match 수명 안에서 authoritative state로 관리 |
+| 현재 위치를 Battlefield Grid에 제공 | Player Feature → Match composition → Core spatial input | Feature가 소유한 ID+XY immutable 값을 명시적으로 전달. 현재 `BattlefieldDynamicSpatialInput` API는 있으나 Player V2 producer adapter/cadence는 미연결 |
+| Player prefab 생성/제거 | Match의 Scene composition root / Player spawner adapter | `PlayerStart`는 Scene spawn 위치만 제공. Match 조립부가 Player prefab을 생성하고 Match/Scene 종료 때 제거. Core는 Unity GameObject 수명을 직접 관리하지 않음 |
+| 온라인 소유권/입력 전달 및 복제 | Network adapter / Match authority | Player Scene 객체 자체를 authority로 간주하지 않음. 로컬 입력과 권위 명령을 분리하고, Core가 검증 가능한 command 경계를 사용 |
+| HUD 표시 | Presentation | Match snapshot/event를 표시. UI가 Player 상태의 별도 진실 원천이 되지 않음 |
+
+현재 Player V2 구현에서 확인된 통합 리스크는 `PlayerInfo`가 `DataManager` 및 `GeneralManager.Instance.inGameManager.GameOver()`를 호출하고, 이동/외형/공격/터렛 스킬도 `GeneralManager`의 대화·웨이브 상태를 조회한다는 점입니다. `PlayerBomb`는 Scene에서 `InGameManager`를 검색해 폭탄 UI를 직접 갱신합니다. `PlayerInputHandler`는 커스텀 `GameInput`과 `Input.GetKeyDown`을 함께 쓰며, 발사체/임시 터렛은 Unity 객체를 직접 생성합니다. 이는 기존 Player feature의 현재 상태를 설명하는 것이며 즉시 레거시 제거 대상이라는 뜻은 아닙니다. 단계적 교체 시 아래 경계부터 좁혀야 합니다.
+
+전투 통합도 아직 맞물리지 않습니다. Player V2 `PlayerBullet`은 Enemy 태그 다음 `Monster` 컴포넌트에서 피해 처리를 찾지만, main #468의 `Slime.prefab`에는 `EnemyController`/`EnemyAIBrain`이 있고 `Monster`는 없습니다. 따라서 현재 Player/Turret projectile이 Slime을 실제로 피해 입힌다고 가정할 수 없습니다. PoC 전투를 연결하기 전에 Player, Turret, Enemy Owner가 공통 피해 입력/체력·사망 결과와 authority 경계를 합의해야 합니다.
+
+### Player 생성과 수명주기
+
+Player는 Stage Scene에 고정 배치하지 않고 Match 시작 시 prefab에서 생성합니다. Scene composition root가 Match/Scene runtime을 구성하면서 Player actor spawner를 호출하고, 반환된 actor handle을 보관해 Match 종료 또는 Scene unload 때 제거합니다. Core `MatchSession`은 `PlayerState`와 규칙 상태만 보유하고 `Instantiate`/`Destroy`를 호출하지 않습니다. `PlayerStart`는 위치/회전/향후 player slot 같은 authoring 정보만 제공하며 스폰 결정을 수행하지 않습니다. AppRoot는 App 서비스와 MatchSession을 소유하며 Player prefab은 생성하지 않습니다.
+
+협동을 위해 local Player spawner와 향후 network-authoritative spawner를 adapter 경계로 교체 가능하게 둡니다. NGO 구현에서는 authority가 Player NetworkObject를 spawn/despawn해야 하며, Core `PlayerId`와 Steam/platform identity는 spawner/identity adapter에서 매핑합니다. Stage 1은 한 PlayerStart에서 local Player 하나를 생성하는 경로만 먼저 증명하고, 두 명의 spawn point/seat mapping 및 network ownership은 협동 통합 단계에서 추가합니다.
+
+PoC 테스트 Scene은 `Assets/PoC/Spaceship/Scenes/Initial_Stage.unity`입니다. `InitialStageCompositionRoot`가 `ISceneCompositionRoot`를 구현해 AppRoot로부터 Match host를 받고, 테스트용 Match 데이터·규칙을 구성한 뒤 Player actor를 생성합니다. 이 Scene에는 `PlayerStart_Local` 하나가 있고, Player prefab source는 Stage_1에서 사용 중인 `Assets/Prefabs/Player/Player.prefab`입니다. 기존 Stage_1의 `PlayerSpawnPoint`와 고정 배치 Player는 참고 대상이지 테스트 Scene에 복사할 대상은 아닙니다.
+
+`MatchPlayerActorScope.SpawnPlayers(...)`는 Match roster에 맞춰 0부터 연속된 `PlayerStart.SlotIndex`를 사용해 Player actor를 만들고 각 actor의 `PlayerSceneAdapter`를 해당 `MatchSession`에 바인딩합니다. 초기화 중 실패하면 생성된 actor를 정리하며, Scene unload/Play Mode 종료 때 composition root가 scope를 폐기한 다음 `IAppMatchHost.EndCurrentMatch()`를 호출합니다. 즉 AppRoot는 Match 규칙 세션을, Scene scope는 Unity actor를 소유합니다. 현재 Scene의 테스트 grid는 PlayerStart 주변 16×16 월드 범위와 16×16 cell로 설정돼 있습니다.
+
+Initial_Stage의 `Main Camera`에는 임시 `MatchCameraFollow`가 붙어 있고, `InitialStageCompositionRoot`가 Match 시작 뒤 생성된 Player Transform을 타겟으로 연결합니다. Stage_1의 기존 `CameraController`와 달리 구형 `GeneralManager`/Tilemap에 의존하지 않는 Match Scene 전용 follow입니다. 현재는 부드러운 XY 추적만 제공하며 맵 경계 제한, 컷씬/화면 전환, 카메라 흔들림은 포함하지 않습니다. 향후 카메라 전환·경계·연출을 소유하는 Scene camera rig/director로 분리할 수 있게 두었으며, Editor/Pipeline 연결 문제로 이 컴포넌트 추가 뒤 Unity Scene import 및 Play Mode 동작은 아직 검증 전입니다.
+
+`SpawnPoint`만 Stage Scene에 놓아도 Enemy는 생성되지 않습니다. 현재 E 소유 EnemySandbox 경로는 `NetworkManager` Host 시작 → Scene의 `EnemyNetworkTestLauncher` → `EncounterRuntime.Spawn()` → `SpawnCompositionPlanner` → `EnemySpawnExecutor` → 등록된 `NetworkObject` prefab 순서입니다. Executor 아래에 활성 `SpawnPoint`가 자식으로 있어야 하고 각 ID가 유효해야 하며, Executor의 `EnemyCatalog`, `Resources/Spawning/EnemySquadPresetCatalog`의 `Normal` preset, 각 Enemy prefab 및 NGO Network Prefab 등록도 필요합니다. `Initial_Stage`에는 현재 이 Enemy/Network 실행 구성요소가 없어 그 Scene에서 SpawnPoint만 추가하는 것으로는 연결되지 않습니다. Encounter가 Core Battlefield/Grid snapshot을 받는 runtime handoff도 아직 없습니다.
+
+```text
+PlayerInputHandler / Player Scene Components
+        ├─ local presentation & physics (Player Feature)
+        ├─ typed player action → Match command boundary (future adapter)
+        └─ stable PlayerId + XY → BattlefieldDynamicSpatialInput
+                                      ↓
+                            MatchSession / Core Domain
+                                      ↓
+                   snapshot/events → HUD and other features
+```
+
+### Stage 1 PoC 한 사이클의 현재 판정
+
+현재 구현은 Battlefield/Uniform Grid producer와 Match-scoped 갱신 경계, Editor 설정/진단 코드, Initial_Stage Scene composition 및 local Player prefab spawn/teardown까지입니다. 전체 게임 사이클은 아닙니다. `MatchSimulation.Execute()`는 모든 명령에 `NotHandled`를 반환하고, Player input/health/action은 Core Match state와 아직 연결되지 않았습니다. Encounter는 별도 Enemy prototype으로 실제 spawn 기반이 있지만 snapshot 소비, Match 소유 수명, 결과 계약/중복 실행 처리는 연결되지 않았습니다.
+
+Unity 6000.3.23f1 Pipeline에서 기존 EditMode suite 18개 통과 기록이 있습니다(이번 Singleton 조회 추가 뒤 전체 suite 재실행은 완료되지 않음). 직전 Play Mode에서는 Match 시작 로그와 `/Player(Clone)` 단일 생성, 정지 시 clone 제거, 재진입 재생성을 확인했습니다. `GeneralManager`/`AudioManager` 미생성과 신규 Console Error 0건도 확인했습니다. 이전 Legacy NRE 경로는 Player가 생성형 `Instance` 대신 존재하는 Singleton만 조회하도록 바꿔 Core Scene에서 발생하지 않습니다. 이후 추가한 `MatchCameraFollow` source/Scene component 연결은 Unity Editor/Pipeline 응답이 끊겨 import·컴파일·Play Mode 검증 전입니다. Player 입력·전투 및 Encounter까지 이어지는 한 판도 미검증이므로 PoC 완료로 판정할 수 없습니다.
+
+Stage 1 PoC를 닫기 위한 최소 수직 흐름과 검증 기준은 로컬 비공유 문서 [`YGDocs/POC_CLOSEOUT_AND_PLAYER_BOUNDARY_20261002.md`](../../../YGDocs/POC_CLOSEOUT_AND_PLAYER_BOUNDARY_20261002.md)에 정리합니다. 해당 문서는 `.gitignore` 정책에 따라 팀 공유되지 않으며, 이 README에는 Core/Player 책임 경계와 주요 미완료 사실만 둡니다.
 
 ## 관련 공식 문서
 

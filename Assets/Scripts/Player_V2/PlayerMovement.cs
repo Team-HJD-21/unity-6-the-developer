@@ -56,9 +56,9 @@ public class PlayerMovement : MonoBehaviour
     // 물리 이동은 프레임 레이트와 상관없이 일정한 물리 주기로 도는 FixedUpdate에서 처리
     private void FixedUpdate()
     {
-        if (GeneralManager.Instance?.inGameManager != null)
+        if (GeneralManager.TryGetExistingInstance(out var manager) && manager.inGameManager != null)
         {
-            var igm = GeneralManager.Instance.inGameManager;
+            var igm = manager.inGameManager;
             if (igm.isTalking || !igm.isWave)
             {
                 rb.linearVelocity = Vector2.zero;

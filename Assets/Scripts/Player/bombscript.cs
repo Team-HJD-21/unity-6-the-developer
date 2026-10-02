@@ -31,7 +31,8 @@ public class bombscript : MonoBehaviour
         
         // isbomb 파라미터를 true로 설정
         
-        AudioManager.Instance.PlaySfx(AudioManager.Sfx.PlayerMine);
+        // Core 오디오 서비스로 교체되기 전까지 Legacy AudioManager의 암묵적 생성을 막습니다.
+        // AudioManager.Instance.PlaySfx(AudioManager.Sfx.PlayerMine);
         
         // yield return new WaitForSeconds(0.6f);
         Collider2D[] monsters = Physics2D.OverlapCircleAll(GetComponent<Rigidbody2D>().position, explosionRange);

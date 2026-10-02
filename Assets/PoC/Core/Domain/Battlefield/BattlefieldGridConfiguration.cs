@@ -1,4 +1,4 @@
-// Unity 2D XY 전장을 나누는 불변 설정입니다.
+// Unity 2D XY 전장을 나누는 불변 설정입니다. Origin은 Grid의 중심 좌표입니다.
 
 using System;
 
@@ -11,6 +11,10 @@ namespace TeamHJD.Game.Domain
         public const int MaximumCellCount = 262144;
 
         public BattlefieldPoint Origin { get; }
+        public double MinimumX => Origin.X - MapWidth * 0.5d;
+        public double MaximumX => Origin.X + MapWidth * 0.5d;
+        public double MinimumY => Origin.Y - MapHeight * 0.5d;
+        public double MaximumY => Origin.Y + MapHeight * 0.5d;
         public double OriginZ { get; }
         public double MapWidth { get; }
         public double MapHeight { get; }
@@ -31,6 +35,8 @@ namespace TeamHJD.Game.Domain
             int cellsX,
             int cellsY)
         {
+            if (double.IsNaN(origin.X) || double.IsInfinity(origin.X)) throw new ArgumentOutOfRangeException(nameof(origin));
+            if (double.IsNaN(origin.Y) || double.IsInfinity(origin.Y)) throw new ArgumentOutOfRangeException(nameof(origin));
             if (double.IsNaN(originZ) || double.IsInfinity(originZ)) throw new ArgumentOutOfRangeException(nameof(originZ));
             if (double.IsNaN(mapWidth) || double.IsInfinity(mapWidth) || mapWidth <= 0d) throw new ArgumentOutOfRangeException(nameof(mapWidth));
             if (double.IsNaN(mapHeight) || double.IsInfinity(mapHeight) || mapHeight <= 0d) throw new ArgumentOutOfRangeException(nameof(mapHeight));
@@ -38,8 +44,9 @@ namespace TeamHJD.Game.Domain
             if (cellsY <= 0) throw new ArgumentOutOfRangeException(nameof(cellsY));
             if ((long)cellsX * cellsY > MaximumCellCount)
                 throw new ArgumentOutOfRangeException(nameof(cellsY), $"Grid cannot exceed {MaximumCellCount} cells.");
-            if (double.IsInfinity(origin.X + mapWidth) || double.IsInfinity(origin.Y + mapHeight))
-                throw new ArgumentOutOfRangeException(nameof(mapWidth), "Grid maximum bounds must remain finite.");
+            if (double.IsInfinity(origin.X - mapWidth * 0.5d) || double.IsInfinity(origin.X + mapWidth * 0.5d) ||
+                double.IsInfinity(origin.Y - mapHeight * 0.5d) || double.IsInfinity(origin.Y + mapHeight * 0.5d))
+                throw new ArgumentOutOfRangeException(nameof(mapWidth), "Grid bounds must remain finite around its center.");
             if (mapWidth / cellsX <= 0d || mapHeight / cellsY <= 0d)
                 throw new ArgumentOutOfRangeException(nameof(cellsX), "Grid cell dimensions must remain greater than zero.");
 
@@ -53,17 +60,15 @@ namespace TeamHJD.Game.Domain
 
         public bool TryMapPoint(BattlefieldPoint point, out int cellX, out int cellY)
         {
-            var maxX = Origin.X + MapWidth;
-            var maxY = Origin.Y + MapHeight;
-            if (point.X < Origin.X || point.X > maxX || point.Y < Origin.Y || point.Y > maxY)
+            if (point.X < MinimumX || point.X > MaximumX || point.Y < MinimumY || point.Y > MaximumY)
             {
                 cellX = -1;
                 cellY = -1;
                 return false;
             }
 
-            cellX = point.X == maxX ? CellsX - 1 : (int)Math.Floor((point.X - Origin.X) / CellWidth);
-            cellY = point.Y == maxY ? CellsY - 1 : (int)Math.Floor((point.Y - Origin.Y) / CellHeight);
+            cellX = point.X == MaximumX ? CellsX - 1 : (int)Math.Floor((point.X - MinimumX) / CellWidth);
+            cellY = point.Y == MaximumY ? CellsY - 1 : (int)Math.Floor((point.Y - MinimumY) / CellHeight);
             return cellX >= 0 && cellX < CellsX && cellY >= 0 && cellY < CellsY;
         }
     }

@@ -33,10 +33,12 @@ namespace TeamHJD.Game.Tests.EditMode
             var snapshot = _builder.Build(Config(10d, 20d, 8d, 4d, 4, 2),
                 BattlefieldSpatialInput.Empty, BattlefieldDynamicSpatialInput.Empty);
 
-            Assert.That(snapshot.TryGetCellAt(new BattlefieldPoint(12d, 22d), out var boundaryCell), Is.True);
+            Assert.That(snapshot.TryGetCellAt(new BattlefieldPoint(8d, 20d), out var boundaryCell), Is.True);
             Assert.That(boundaryCell.CellId, Is.EqualTo(5));
-            Assert.That(snapshot.TryGetCellAt(new BattlefieldPoint(18d, 24d), out var maximumCell), Is.True);
+            Assert.That(snapshot.TryGetCellAt(new BattlefieldPoint(14d, 22d), out var maximumCell), Is.True);
             Assert.That(maximumCell.CellId, Is.EqualTo(7));
+            Assert.That(snapshot.TryGetCellAt(new BattlefieldPoint(10d, 20d), out var centerCell), Is.True);
+            Assert.That(centerCell.CellId, Is.EqualTo(6));
         }
 
         [Test]
@@ -49,12 +51,13 @@ namespace TeamHJD.Game.Tests.EditMode
                 Turret("outside-turret", 30d, 30d)
             });
             var dynamicInput = new BattlefieldDynamicSpatialInput(
-                new[] { Player("player-1", 11d, 21d), Player("outside-player", 9d, 20d) },
+                new[] { Player("player-1", 11d, 21d), Player("outside-player", 5d, 20d) },
                 new[] { Enemy("enemy-1", 11d, 21d) });
 
             var snapshot = _builder.Build(Config(10d, 20d, 8d, 4d, 4, 2), staticInput, dynamicInput);
-            var cell = snapshot.Cells[0];
+            var cell = snapshot.Cells[6];
 
+            Assert.That(cell.CellId, Is.EqualTo(6));
             Assert.That(cell.TurretCount, Is.EqualTo(2));
             Assert.That(cell.TurretIds[0], Is.EqualTo(new EntityId("turret-a")));
             Assert.That(cell.PlayerCount, Is.EqualTo(1));
