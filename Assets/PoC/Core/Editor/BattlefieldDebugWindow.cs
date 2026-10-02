@@ -13,15 +13,13 @@ namespace TeamHJD.Game.Editor
 {
     public sealed class BattlefieldDebugWindow : EditorWindow
     {
-        private enum ProjectionPlane { XY, XZ }
-
         private AppRoot _appRoot;
         private BattlefieldSpatialSnapshot _snapshot;
-        private ProjectionPlane _projectionPlane;
-        private float _planeOffset;
         private bool _showTerritory = true;
         private bool _showFrontline = true;
         private bool _showVertexLabels;
+        private bool _showGrid = true;
+        private bool _showOccupancy = true;
 
         [MenuItem("Tools/TeamHJD/Battlefield Debug")]
         private static void Open()
@@ -56,15 +54,21 @@ namespace TeamHJD.Game.Editor
             _showTerritory = EditorGUILayout.Toggle("Territory", _showTerritory);
             _showFrontline = EditorGUILayout.Toggle("Frontline", _showFrontline);
             _showVertexLabels = EditorGUILayout.Toggle("Vertex labels", _showVertexLabels);
-            _projectionPlane = (ProjectionPlane)EditorGUILayout.EnumPopup("World plane", _projectionPlane);
-            _planeOffset = EditorGUILayout.FloatField("Plane offset", _planeOffset);
+            _showGrid = EditorGUILayout.Toggle("Uniform Grid", _showGrid);
+            _showOccupancy = EditorGUILayout.Toggle("Cell occupancy", _showOccupancy);
 
             if (!EditorApplication.isPlaying)
                 EditorGUILayout.HelpBox("Play Mode에 진입한 뒤 Hierarchy에서 AppRoot를 지정하세요.", MessageType.Warning);
             else if (_appRoot == null || _snapshot == null)
                 EditorGUILayout.HelpBox("연결된 AppRoot에 활성 Match snapshot이 없습니다.", MessageType.None);
             else
+            {
+                EditorGUILayout.LabelField("Match / revision", $"{_snapshot.MatchId} / {_snapshot.Revision}");
                 EditorGUILayout.LabelField("Vertices / triangles / frontline", $"{_snapshot.Vertices.Count} / {_snapshot.Triangles.Count} / {_snapshot.FrontlineEdges.Count}");
+                DrawGridConfigurationControls();
+                EditorGUILayout.LabelField("Out of bounds (T / P / E)",
+                    $"{_snapshot.Grid.OutOfBoundsTurretIds.Count} / {_snapshot.Grid.OutOfBoundsPlayerIds.Count} / {_snapshot.Grid.OutOfBoundsEnemyIds.Count}");
+            }
 
             SceneView.RepaintAll();
         }
@@ -124,9 +128,11 @@ namespace TeamHJD.Game.Editor
             Handles.zTest = CompareFunction.Always;
             try
             {
+                if (_showGrid) DrawGrid();
                 if (_showTerritory) DrawTerritory(positions);
                 if (_showFrontline) DrawFrontlines(positions);
                 if (_showVertexLabels) DrawVertexLabels(positions);
+                if (_showOccupancy) DrawOccupancy();
             }
             finally
             {
@@ -146,7 +152,7 @@ namespace TeamHJD.Game.Editor
                     positions[triangle.VertexB],
                     positions[triangle.VertexC]
                 };
-                SortAroundCentroid(polygon, _projectionPlane == ProjectionPlane.XY);
+                SortAroundCentroid(polygon);
                 Handles.DrawAAConvexPolygon(polygon);
                 Handles.DrawAAPolyLine(1.5f, polygon[0], polygon[1], polygon[2], polygon[0]);
             }
@@ -166,20 +172,75 @@ namespace TeamHJD.Game.Editor
                 Handles.Label(positions[vertex.EntityId], vertex.EntityId.ToString());
         }
 
-        private Vector3 ToWorldPosition(BattlefieldPoint point) => _projectionPlane == ProjectionPlane.XY
-            ? new Vector3((float)point.X, (float)point.Y, _planeOffset)
-            : new Vector3((float)point.X, _planeOffset, (float)point.Y);
+        private Vector3 ToWorldPosition(BattlefieldPoint point) =>
+            new Vector3((float)point.X, (float)point.Y, (float)_snapshot.Grid.Configuration.OriginZ);
 
-        private static void SortAroundCentroid(Vector3[] points, bool isXYPlane)
+        private void DrawGrid()
+        {
+            var configuration = _snapshot.Grid.Configuration;
+            var minX = (float)configuration.Origin.X;
+            var minY = (float)configuration.Origin.Y;
+            var maxX = minX + (float)configuration.MapWidth;
+            var maxY = minY + (float)configuration.MapHeight;
+            var z = (float)configuration.OriginZ;
+            Handles.color = new Color(0.75f, 0.85f, 1f, 0.55f);
+            for (var x = 0; x <= configuration.CellsX; x++)
+            {
+                var worldX = minX + x * (float)configuration.CellWidth;
+                Handles.DrawAAPolyLine(1f, new Vector3(worldX, minY, z), new Vector3(worldX, maxY, z));
+            }
+            for (var y = 0; y <= configuration.CellsY; y++)
+            {
+                var worldY = minY + y * (float)configuration.CellHeight;
+                Handles.DrawAAPolyLine(1f, new Vector3(minX, worldY, z), new Vector3(maxX, worldY, z));
+            }
+        }
+
+        private void DrawOccupancy()
+        {
+            foreach (var cell in _snapshot.Grid.OccupiedCells)
+            {
+                var configuration = _snapshot.Grid.Configuration;
+                var x = configuration.Origin.X + (cell.X + 0.5d) * configuration.CellWidth;
+                var y = configuration.Origin.Y + (cell.Y + 0.5d) * configuration.CellHeight;
+                var position = new Vector3((float)x, (float)y, (float)configuration.OriginZ);
+                Handles.Label(position, $"T:{cell.TurretCount} P:{cell.PlayerCount} E:{cell.EnemyCount}");
+            }
+        }
+
+        private void DrawGridConfigurationControls()
+        {
+            var current = _snapshot.Grid.Configuration;
+            EditorGUILayout.LabelField("Runtime Grid Configuration", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            var originX = EditorGUILayout.DoubleField("Origin X", current.Origin.X);
+            var originY = EditorGUILayout.DoubleField("Origin Y", current.Origin.Y);
+            var originZ = EditorGUILayout.DoubleField("Origin Z (draw only)", current.OriginZ);
+            var mapWidth = EditorGUILayout.DoubleField("Map Width", current.MapWidth);
+            var mapHeight = EditorGUILayout.DoubleField("Map Height", current.MapHeight);
+            var cellsX = EditorGUILayout.IntField("Cells X", current.CellsX);
+            var cellsY = EditorGUILayout.IntField("Cells Y", current.CellsY);
+            if (!EditorGUI.EndChangeCheck()) return;
+
+            try
+            {
+                var configuration = new BattlefieldGridConfiguration(
+                    new BattlefieldPoint(originX, originY), originZ, mapWidth, mapHeight, cellsX, cellsY);
+                _appRoot.ReconfigureBattlefieldGrid(configuration);
+            }
+            catch (System.ArgumentException exception)
+            {
+                EditorGUILayout.HelpBox(exception.Message, MessageType.Error);
+            }
+        }
+
+        private static void SortAroundCentroid(Vector3[] points)
         {
             var center = (points[0] + points[1] + points[2]) / 3f;
-            var centerY = isXYPlane ? center.y : center.z;
             System.Array.Sort(points, (left, right) =>
             {
-                var leftY = isXYPlane ? left.y : left.z;
-                var rightY = isXYPlane ? right.y : right.z;
-                var leftAngle = Mathf.Atan2(leftY - centerY, left.x - center.x);
-                var rightAngle = Mathf.Atan2(rightY - centerY, right.x - center.x);
+                var leftAngle = Mathf.Atan2(left.y - center.y, left.x - center.x);
+                var rightAngle = Mathf.Atan2(right.y - center.y, right.x - center.x);
                 return leftAngle.CompareTo(rightAngle);
             });
         }
