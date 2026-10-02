@@ -17,7 +17,16 @@ namespace TeamHJD.Game.Application
 
         public MatchSession Create(MatchConfig config, MatchState initialState, IModeRules modeRules)
         {
-            return new MatchSession(config, initialState, new MatchSimulation(), modeRules, _authority);
+            return Create(config, initialState, modeRules, BattlefieldSpatialInput.Empty);
+        }
+
+        public MatchSession Create(
+            MatchConfig config,
+            MatchState initialState,
+            IModeRules modeRules,
+            BattlefieldSpatialInput battlefieldInput)
+        {
+            return new MatchSession(config, initialState, new MatchSimulation(), modeRules, _authority, battlefieldInput);
         }
     }
 }
