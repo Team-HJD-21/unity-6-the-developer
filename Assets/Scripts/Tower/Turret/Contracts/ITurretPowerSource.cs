@@ -10,6 +10,7 @@ namespace TeamHJD.Game.Turrets.Contracts
         int MaximumPower { get; }
 
         bool TryConsumePower(int power);
+        bool TryChangeReservation(int previousPower, int newPower);
         void ReleasePower(int power);
     }
 }

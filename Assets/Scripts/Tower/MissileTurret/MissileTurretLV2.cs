@@ -24,8 +24,6 @@ public class MissileTurretLV2 : DefaultMissileTurret
         gunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
         _missileObj = new GameObject[missileSpawnPoint.Length];
         Targets = new Transform[missileSpawnPoint.Length];
-        //Turrets Attack Range
-        rangeTransform.localScale = new Vector3(Range*2.5f, Range*2.5f, 1f);
     }
     protected override void Shoot()
     {

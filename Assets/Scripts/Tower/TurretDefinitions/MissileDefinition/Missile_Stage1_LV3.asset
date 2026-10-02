@@ -14,13 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TeamHjd.Game.Content.TurretDefinition
   _id: missile_stage1_lv3
   _displayName: Missile Turret LV.3
-  _targetingAngle: 360
   _level: 3
   _damage: 30
   _range: 100
   _rotationSpeed: 175
+  _targetingAngle: 360
   _fireRate: 0.2
-  _power: 45
+  _maxHealth: 100
+  _power: 100
   _overHeatTime: 0
   _overHeatMissileCount: 7
   _coolTime: 5

@@ -18,6 +18,13 @@ namespace TeamHJD.Game.Turrets
         public static event Action<TurretBase, int, int> HealthChanged;
         public static event Action<TurretBase> Destroyed;
         public static event Action<TurretBase> Restored;
+        public static event Action<TurretBase, TurretUpgradeDefinition> UpgradeApplied;
+        public static event Action<TurretBase, TurretUpgradeDefinition> UpgradeDowngraded;
+        public static event Action<TurretBase, TurretBase> LevelUpgraded;
+        public static event Action<TurretBase, TurretBase> LevelDowngraded;
+        // The ID is the only event payload. Query again for the latest values.
+        // After unregistration, TryGetSnapshot returns false for this ID.
+        public static event Action<int> SnapshotChanged;
 
         public static IReadOnlyDictionary<int, TurretBase> RegisteredInstances => Instances;
         public static int Count => Instances.Count;
@@ -35,6 +42,11 @@ namespace TeamHJD.Game.Turrets
             HealthChanged = null;
             Destroyed = null;
             Restored = null;
+            UpgradeApplied = null;
+            UpgradeDowngraded = null;
+            LevelUpgraded = null;
+            LevelDowngraded = null;
+            SnapshotChanged = null;
         }
 
         public static bool Register(TurretBase turret)
@@ -73,6 +85,7 @@ namespace TeamHJD.Game.Turrets
             }
 
             Instances[instanceId] = turret;
+            SnapshotChanged?.Invoke(instanceId);
             Registered?.Invoke(turret);
             return true;
         }
@@ -88,6 +101,7 @@ namespace TeamHJD.Game.Turrets
             if (Instances.TryGetValue(instanceId, out TurretBase registeredTurret) && registeredTurret == turret)
             {
                 Instances.Remove(instanceId);
+                SnapshotChanged?.Invoke(instanceId);
                 Unregistered?.Invoke(turret);
             }
         }
@@ -130,29 +144,147 @@ namespace TeamHJD.Game.Turrets
             return operationalTurrets;
         }
 
+        public static bool TryGetSnapshot(int instanceId, out TurretSnapshot snapshot)
+        {
+            if (Instances.TryGetValue(instanceId, out TurretBase turret) && turret != null)
+            {
+                snapshot = CreateSnapshot(turret);
+                return true;
+            }
+
+            snapshot = default;
+            return false;
+        }
+
+        public static bool TryGetInstanceId(Transform child, out int instanceId)
+        {
+            TurretBase turret = child != null ? child.GetComponentInParent<TurretBase>(true) : null;
+            if (turret != null && turret.InstanceId > 0)
+            {
+                instanceId = turret.InstanceId;
+                return true;
+            }
+
+            instanceId = 0;
+            return false;
+        }
+
+        public static IReadOnlyList<TurretSnapshot> GetAllSnapshots()
+        {
+            return GetSnapshots(false, false);
+        }
+
+        public static IReadOnlyList<TurretSnapshot> GetActiveSnapshots()
+        {
+            return GetSnapshots(true, false);
+        }
+
+        public static IReadOnlyList<TurretSnapshot> GetOperationalSnapshots()
+        {
+            return GetSnapshots(false, true);
+        }
+
         internal static void NotifyActivationChanged(TurretBase turret, bool isActivated)
         {
+            NotifySnapshotChanged(turret);
             ActivationChanged?.Invoke(turret, isActivated);
         }
 
         internal static void NotifyOperationalStateChanged(TurretBase turret, bool isOperational)
         {
+            NotifySnapshotChanged(turret);
             OperationalStateChanged?.Invoke(turret, isOperational);
         }
 
         internal static void NotifyHealthChanged(TurretBase turret, int currentHealth, int maxHealth)
         {
+            NotifySnapshotChanged(turret);
             HealthChanged?.Invoke(turret, currentHealth, maxHealth);
         }
 
         internal static void NotifyDestroyed(TurretBase turret)
         {
+            NotifySnapshotChanged(turret);
             Destroyed?.Invoke(turret);
         }
 
         internal static void NotifyRestored(TurretBase turret)
         {
+            NotifySnapshotChanged(turret);
             Restored?.Invoke(turret);
+        }
+
+        internal static void NotifyUpgradeApplied(
+            TurretBase turret,
+            TurretUpgradeDefinition upgrade)
+        {
+            NotifySnapshotChanged(turret);
+            UpgradeApplied?.Invoke(turret, upgrade);
+        }
+
+        internal static void NotifyLevelUpgraded(TurretBase previous, TurretBase current)
+        {
+            NotifySnapshotChanged(current);
+            LevelUpgraded?.Invoke(previous, current);
+        }
+
+        internal static void NotifyUpgradeDowngraded(TurretBase turret, TurretUpgradeDefinition upgrade)
+        {
+            NotifySnapshotChanged(turret);
+            UpgradeDowngraded?.Invoke(turret, upgrade);
+        }
+
+        internal static void NotifyLevelDowngraded(TurretBase previous, TurretBase current)
+        {
+            NotifySnapshotChanged(current);
+            LevelDowngraded?.Invoke(previous, current);
+        }
+
+        internal static void NotifySnapshotChanged(TurretBase turret)
+        {
+            if (turret != null &&
+                Instances.TryGetValue(turret.InstanceId, out TurretBase registered) &&
+                registered == turret)
+            {
+                SnapshotChanged?.Invoke(turret.InstanceId);
+            }
+        }
+
+        private static IReadOnlyList<TurretSnapshot> GetSnapshots(bool activeOnly, bool operationalOnly)
+        {
+            var snapshots = new List<TurretSnapshot>(Instances.Count);
+            foreach (TurretBase turret in Instances.Values)
+            {
+                if (turret == null ||
+                    (activeOnly && (!turret.IsActivated || turret.IsDestroyed)) ||
+                    (operationalOnly && !turret.IsOperational))
+                {
+                    continue;
+                }
+
+                snapshots.Add(CreateSnapshot(turret));
+            }
+
+            return snapshots.AsReadOnly();
+        }
+
+        private static TurretSnapshot CreateSnapshot(TurretBase turret)
+        {
+            return new TurretSnapshot(
+                turret.InstanceId,
+                turret.Definition.Id,
+                turret.transform.position,
+                turret.IsActivated,
+                turret.IsOperational,
+                turret.IsDestroyed,
+                turret.IsLocked,
+                turret.CurrentHealth,
+                turret.MaxHealth,
+                turret.EffectiveDamage,
+                turret.EffectiveRange,
+                turret.EffectivePower,
+                turret.RuntimeState.SelectedUpgradeId,
+                turret.RuntimeState.UpgradeLevel);
         }
 
         private static int AllocateInstanceId()

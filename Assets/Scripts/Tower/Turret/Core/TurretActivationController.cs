@@ -7,7 +7,7 @@ namespace TeamHJD.Game.Turrets
     {
         private readonly TurretRuntimeState _runtimeState;
         private readonly ITurretPowerSource _powerSource;
-        private readonly int _powerCost;
+        private int _powerCost;
 
         private bool _hasPowerReservation;
 
@@ -47,6 +47,51 @@ namespace TeamHJD.Game.Turrets
             _runtimeState.SetActivated(false);
             ReleaseReservedPower();
             return true;
+        }
+
+        internal PowerCostChangeResult TrySetPowerCost(int powerCost)
+        {
+            if (powerCost < 0)
+            {
+                return PowerCostChangeResult.InvalidPowerCost;
+            }
+
+            if (_powerCost == powerCost)
+            {
+                return PowerCostChangeResult.Changed;
+            }
+
+            if (!_runtimeState.IsActivated)
+            {
+                _powerCost = powerCost;
+                return PowerCostChangeResult.Changed;
+            }
+
+            if (!IsPowerSourceAvailable())
+            {
+                return PowerCostChangeResult.PowerSourceUnavailable;
+            }
+
+            if (!_powerSource.TryChangeReservation(_powerCost, powerCost))
+            {
+                return PowerCostChangeResult.InsufficientPower;
+            }
+
+            _powerCost = powerCost;
+            _hasPowerReservation = powerCost > 0;
+            return PowerCostChangeResult.Changed;
+        }
+
+        internal void DetachReservationForLevelUpgrade()
+        {
+            _hasPowerReservation = false;
+            _runtimeState.SetActivated(false);
+        }
+
+        internal void AdoptReservationForLevelUpgrade()
+        {
+            _hasPowerReservation = _powerCost > 0;
+            _runtimeState.SetActivated(true);
         }
 
         private TurretActivationResult Activate()
@@ -97,5 +142,13 @@ namespace TeamHJD.Game.Turrets
             return _powerSource != null &&
                    (_powerSource is not Object unityObject || unityObject != null);
         }
+    }
+
+    internal enum PowerCostChangeResult
+    {
+        Changed,
+        InsufficientPower,
+        PowerSourceUnavailable,
+        InvalidPowerCost
     }
 }

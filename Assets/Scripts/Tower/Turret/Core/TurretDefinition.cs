@@ -56,8 +56,8 @@ namespace TeamHJD.Game.Content
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            EditorApplication.delayCall -= ValidateDefinitionIds;
-            EditorApplication.delayCall += ValidateDefinitionIds;
+            EditorApplication.delayCall -= ValidateDefinitionIds;   //이미 예약돼 있으면 제거
+            EditorApplication.delayCall += ValidateDefinitionIds;   //한 번 다시 예약
         }
 
         private static void ValidateDefinitionIds()
