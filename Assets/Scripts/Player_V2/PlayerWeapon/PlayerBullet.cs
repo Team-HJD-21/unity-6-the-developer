@@ -83,7 +83,11 @@ public class PlayerBullet : MonoBehaviour
     {
         Vector2 normalizedDir = dir.normalized;
         float totalSpeed = bulletSpeed + playerSpeed.magnitude;
+#if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = normalizedDir * totalSpeed;
+#else
+        rb.velocity = normalizedDir * totalSpeed;
+#endif
 
         float angle = Mathf.Atan2(normalizedDir.y, normalizedDir.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
@@ -106,7 +110,7 @@ public class PlayerBullet : MonoBehaviour
         if (isDestroyed || target == null) return;
         if (target.CompareTag("Player") || target.CompareTag("Bullet")) return;
 
-        // 1. 규격에 따라 "Enemy" 태그를 가진 대상인지 1차 필터링 (자식/부모 콜라이더 대응)
+        // 1. 규격에 따라 "Enemy" 태그를 가진 대상인지 1차 필터링
         bool isEnemy = target.CompareTag(targetTag) || target.transform.root.CompareTag(targetTag);
 
         if (isEnemy)
