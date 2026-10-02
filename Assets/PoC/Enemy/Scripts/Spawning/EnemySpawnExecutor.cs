@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TeamHJD.Game.Domain;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -10,12 +11,26 @@ using UnityEngine;
 public class EnemySpawnExecutor : NetworkBehaviour
 {
     [SerializeField] private EnemyCatalog enemyList;
-    [SerializeField] private SpawnPointRegistry spawnPointList;
-    
+    private SpawnPointRegistry _spawnPointList = new();
+
+    /// <summary>
+    /// 자식 오브젝트에 등록된 스폰 지점과 현재 점령 상태를 조회할 레지스트리다.
+    /// </summary>
+    public SpawnPointRegistry SpawnPointList => _spawnPointList;
+
+    /// <summary>
+    /// 자식 SpawnPoint를 수집해 Planner와 Executor가 같은 지점 목록을 사용하게 한다.
+    /// </summary>
+    void Awake()
+    {
+        SpawnPoint[] points = GetComponentsInChildren<SpawnPoint>();
+        _spawnPointList.Initialize(points);
+    }
     
     /// <summary>
     /// 명령에 포함된 모든 적 정의를 검증한 뒤 서버에서 적별 수량만큼 생성한다.
-    /// 필수 참조나 프리팹이 잘못되면 일부 종류만 생성하지 않도록 실행 전 중단한다.
+    /// 실행 전 적 정의와 NetworkObject를 모두 검증해 일부 종류만 생성되는 일을 막는다.
+    /// 계획 후 점령 상태가 바뀐 지점에서는 생성하지 않는다.
     /// </summary>
     /// <param name="spawnInstruction">분대의 스폰 지점과 적별 수량이 담긴 명령.</param>
     public void Execute(SpawnInstruction spawnInstruction)
@@ -25,20 +40,24 @@ public class EnemySpawnExecutor : NetworkBehaviour
             spawnInstruction.Enemies.Count == 0)
             return;
 
-        if (enemyList == null || spawnPointList == null)
+        if (enemyList == null || _spawnPointList == null)
         {
             Debug.LogError("Spawner dependencies are not assigned.");
             return;
         }
 
         // 분대 내 모든 적은 같은 스폰 지점을 공유하므로 한 번만 조회한다.
-        if (!spawnPointList.TryGetSpawnPoint(
+        if (!_spawnPointList.TryGetSpawnPoint(
                 spawnInstruction.SpawnPointId,
                 out SpawnPoint spawnPoint))
         {
             Debug.LogError($"SpawnPoint not found: {spawnInstruction.SpawnPointId}");
             return;
         }
+
+        // 계획 이후 점령 상태가 바뀐 지점에서는 적을 생성하지 않는다.
+        if (!spawnPoint.CanSpawnEnemies)
+            return;
 
         // 적 종류를 순서대로 조회하고 프리팹의 NetworkObject까지 확인한 후 생성한다.
         List<EnemyDefinition> definitions = new(spawnInstruction.Enemies.Count);

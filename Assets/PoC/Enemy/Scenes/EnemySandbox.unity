@@ -130,7 +130,6 @@ GameObject:
   - component: {fileID: 225821989}
   - component: {fileID: 225821987}
   - component: {fileID: 225821988}
-  - component: {fileID: 225821990}
   m_Layer: 0
   m_Name: MonsterManager
   m_TagString: Untagged
@@ -179,7 +178,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
   ShowTopMostFoldoutHeaderGroup: 1
   enemyList: {fileID: 11400000, guid: 88948902b3d6e24488d5e338c2ccff02, type: 2}
-  spawnPointList: {fileID: 225821990}
 --- !u!4 &225821989
 Transform:
   m_ObjectHideFlags: 0
@@ -197,21 +195,6 @@ Transform:
   - {fileID: 1070373502}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &225821990
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 225821986}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa5c970b2205a4143a14c87eb5b52898, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpawnPointRegistry
-  spawnPoints:
-  - {fileID: 1030722112}
-  - {fileID: 1070373503}
 --- !u!1 &507783350
 GameObject:
   m_ObjectHideFlags: 0
@@ -865,6 +848,7 @@ MonoBehaviour:
   spawnPointId: SpawnPoint1
   areaId: West
   spawnRadius: 1
+  canSpawnEnemies: 1
 --- !u!1 &1070373501
 GameObject:
   m_ObjectHideFlags: 0
@@ -912,6 +896,7 @@ MonoBehaviour:
   spawnPointId: SpawnPoint2
   areaId: West
   spawnRadius: 1
+  canSpawnEnemies: 1
 --- !u!1 &1077408008
 GameObject:
   m_ObjectHideFlags: 0
@@ -1124,6 +1109,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
   monsterSpawner: {fileID: 225821988}
+  testSquadOrder: Normal
+  testMaxCount: 16
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
