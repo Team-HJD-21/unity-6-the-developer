@@ -1,0 +1,137 @@
+using TeamHJD.Game.Domain;
+using Unity.Netcode;
+using UnityEngine;
+
+/// <summary>
+/// 적 스폰의 Host·Client 동기화를 확인하기 위한 PoC 테스트 UI다.
+/// 네트워크 시작과 연결 상태 표시, Host의 임시 분대 생성 요청을 담당한다.
+/// </summary>
+[DisallowMultipleComponent]
+[RequireComponent(typeof(NetworkManager))]
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour
+{
+    private const int TargetFrameRate = 120;
+
+    private NetworkManager _networkManager;
+    private EncounterRuntime _encounterRuntime;
+
+    /// <summary>
+    /// 네트워크 관리자와 테스트 실행 환경을 초기화한다.
+    /// Encounter가 사용할 분대 프리셋 카탈로그는 생성 시 한 번 로드한다.
+    /// </summary>
+    private void Awake()
+    {
+        _networkManager = GetComponent<NetworkManager>();
+        _encounterRuntime = new EncounterRuntime();
+
+        // Host와 Client 창이 포커스를 잃어도 네트워크 테스트를 계속 실행한다.
+        Application.runInBackground = true;
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = TargetFrameRate;
+    }
+
+    /// <summary>
+    /// 네트워크 실행 버튼과 연결 상태를 표시한다.
+    /// </summary>
+    private void OnGUI()
+    {
+        // 네트워크 테스트 UI 영역을 생성한다.
+        GUILayout.BeginArea(
+            new Rect(20f, 20f, 240f, 180f),
+            GUI.skin.box);
+
+        GUILayout.Label("Enemy Network Test");
+
+        // 실행 상태에 따라 연결 정보 또는 시작 버튼을 표시한다.
+        if (_networkManager.IsListening)
+            DrawConnectionStatus();
+        else
+            DrawLaunchButtons();
+
+        GUILayout.EndArea();
+    }
+
+    /// <summary>
+    /// 네트워크가 실행 중이 아닐 때 Host와 Client 시작 버튼을 표시한다.
+    /// </summary>
+    private void DrawLaunchButtons()
+    {
+        if (GUILayout.Button("Start Host"))
+            StartHost();
+
+        if (GUILayout.Button("Start Client"))
+            StartClient();
+    }
+
+    /// <summary>
+    /// 현재 네트워크 모드와 연결 정보를 표시한다.
+    /// </summary>
+    private void DrawConnectionStatus()
+    {
+        // 현재 인스턴스의 네트워크 상태를 표시한다.
+        GUILayout.Label($"Mode: {GetCurrentMode()}");
+        GUILayout.Label($"Client ID: {_networkManager.LocalClientId}");
+
+        // 서버에서만 전체 접속 인원을 확인할 수 있다.
+        if (_networkManager.IsServer)
+        {
+            GUILayout.Label($"Connected Clients: {_networkManager.ConnectedClientsIds.Count}");
+
+            // 점령 상태를 바꾼 뒤에도 같은 Host에서 다시 계획해 확인할 수 있다.
+            if (GUILayout.Button("Plan & Spawn"))
+                _encounterRuntime.Spawn();
+        }
+
+        if (GUILayout.Button("Shutdown"))
+            _networkManager.Shutdown();
+    }
+
+    /// <summary>
+    /// 네트워크 호스트를 시작하고 현재 스폰 가능한 지점에 테스트 분대를 생성한다.
+    /// </summary>
+    private void StartHost()
+    {
+        if (!_encounterRuntime.HasExecutor || !_encounterRuntime.HasCatalog)
+        {
+            Debug.LogError("Spawner or squad preset catalog is missing for the spawn test.");
+            return;
+        }
+
+        // Host 시작에 실패하면 스폰 계획을 실행하지 않는다.
+        if (!_networkManager.StartHost())
+        {
+            Debug.LogError("Failed to start the network host.");
+            return;
+        }
+        
+        _encounterRuntime.Spawn();
+    }
+
+    /// <summary>
+    /// 클라이언트 연결을 시작한다.
+    /// </summary>
+    private void StartClient()
+    {
+        if (!_networkManager.StartClient())
+        {
+            Debug.LogError("Failed to start the network client.");
+        }
+    }
+
+    /// <summary>
+    /// 현재 실행 중인 네트워크 모드 이름을 반환한다.
+    /// </summary>
+    private string GetCurrentMode()
+    {
+        if (_networkManager.IsHost)
+            return "Host";
+
+        if (_networkManager.IsServer)
+            return "Server";
+
+        if (_networkManager.IsClient)
+            return "Client";
+
+        return "Offline";
+    }
+}

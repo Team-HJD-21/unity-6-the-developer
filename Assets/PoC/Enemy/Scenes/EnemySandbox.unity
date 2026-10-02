@@ -175,13 +175,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCMonsterSpawner
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
   ShowTopMostFoldoutHeaderGroup: 1
-  monsterPrefabs:
-  - {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-  - {fileID: 3068615185566250658, guid: 8ab02c3fed839d949bab3696f37bbfdf, type: 3}
-  - {fileID: 3068615185566250658, guid: 9f14700baac6ffd44a6e520f3bbf297f, type: 3}
-  spawnPoint: {fileID: 1030722111}
+  enemyList: {fileID: 11400000, guid: 88948902b3d6e24488d5e338c2ccff02, type: 2}
 --- !u!4 &225821989
 Transform:
   m_ObjectHideFlags: 0
@@ -196,6 +192,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1030722111}
+  - {fileID: 1070373502}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &507783350
@@ -348,7 +345,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetable
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
   targetType: 0
   maxHealth: 100
   currentHealth: 100
@@ -384,7 +381,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetable
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
   targetType: 1
   maxHealth: 100
   currentHealth: 100
@@ -540,7 +537,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoCTargetable
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
   targetType: 1
   maxHealth: 100
   currentHealth: 100
@@ -813,10 +810,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1030722111}
+  - component: {fileID: 1030722112}
   m_Layer: 0
-  m_Name: SpawnPoint
+  m_Name: SpawnPoint1
   m_TagString: Untagged
-  m_Icon: {fileID: 7866945982896999795, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -829,12 +827,76 @@ Transform:
   m_GameObject: {fileID: 1030722110}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -12.33183, y: -0.85054, z: 0}
+  m_LocalPosition: {x: -15.11, y: 1.74, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 225821989}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1030722112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1030722110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a706a0437709ae8478a97081b61dd731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
+  spawnPointId: SpawnPoint1
+  areaId: West
+  spawnRadius: 1
+  canSpawnEnemies: 1
+--- !u!1 &1070373501
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1070373502}
+  - component: {fileID: 1070373503}
+  m_Layer: 0
+  m_Name: SpawnPoint2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1070373502
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070373501}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -15.14, y: -3.44, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 225821989}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1070373503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070373501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a706a0437709ae8478a97081b61dd731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
+  spawnPointId: SpawnPoint2
+  areaId: West
+  spawnRadius: 1
+  canSpawnEnemies: 1
 --- !u!1 &1077408008
 GameObject:
   m_ObjectHideFlags: 0
@@ -1045,8 +1107,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: afee2fd02998d994f8f62eda64603f11, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyTestNetworkLauncher
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
   monsterSpawner: {fileID: 225821988}
+  testSquadOrder: Normal
+  testMaxCount: 16
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
