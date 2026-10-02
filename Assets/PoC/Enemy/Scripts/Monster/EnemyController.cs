@@ -32,6 +32,12 @@ public class EnemyController : MonoBehaviour
     private Transform _target;
     private float _nextAttackTime;
     private EnemyNetworkAnimator _networkAnimator;
+
+    /// <summary>
+    /// 다른 미사일이 이미 이 적을 목표로 삼았는지 나타낸다.
+    /// 미사일 시스템은 중복 목표 배정을 막기 위해 이 값을 확인하고 설정한다.
+    /// </summary>
+    public bool IsTargeted { get; set; }
     
     // 렌더링
     private const int SortingScale = 100;
