@@ -1,4 +1,4 @@
-"""Render a GitHub-style weekly contributor dashboard for the last 90 days."""
+"""Render a GitHub-style weekly contributor dashboard for the last 30 days."""
 
 import argparse
 import io
@@ -69,8 +69,8 @@ def main():
                 raise
             time.sleep(5)
     now = datetime.now(timezone(timedelta(hours=9)))
-    cutoff = (now - timedelta(days=90)).timestamp()
-    # Keep whole API week buckets intersecting the rolling 90-day window.
+    cutoff = (now - timedelta(days=30)).timestamp()
+    # Keep whole API week buckets intersecting the rolling 30-day window.
     weeks = sorted({week["w"] for item in statistics for week in item["weeks"] if week["w"] + 604800 > cutoff and week["w"] <= now.timestamp()})
     contributors = []
     for item in statistics:
@@ -87,7 +87,7 @@ def main():
     draw = ImageDraw.Draw(image)
     draw.text((28, 18), "Contributors", font=font(36), fill="#f0f6fc")
     draw.text((28, 68), "Weekly commits to default branch, excluding merge commits", font=font(21), fill="#8b949e")
-    draw.text((28, 105), f"{repository} | Last 90 days (whole weeks) | {stamp}", font=font(18), fill="#8b949e")
+    draw.text((28, 105), f"{repository} | Last 30 days (whole weeks) | {stamp}", font=font(18), fill="#8b949e")
     draw.rounded_rectangle((28, 150, 1372, 510), radius=10, outline="#30363d", width=2)
     draw.text((52, 170), "Commits over time", font=font(25), fill="#f0f6fc")
     chart(draw, (60, 225, 1225, 225), weeks, total)
