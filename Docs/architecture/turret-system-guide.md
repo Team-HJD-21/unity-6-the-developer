@@ -38,7 +38,7 @@
 
 `Assets/Scripts/Tower`의 런타임 스크립트에서 `AudioManager` 호출을 임시로 주석 처리했다. Canon과 Missile 및 기존 Laser의 활성화 사운드와 발사 사운드가 재생되지 않는다. 미사일 비행 사운드와 폭발 사운드 및 `WitchSound` 호출도 비활성화했다. 해당 런타임 호출은 AudioManager가 없는 테스트 Scene에서도 실행을 방해하지 않는다.
 
-CU 전력 공급 의존성과 기존 `Monster` 기반 탐색 및 피해 처리는 그대로 유지한다. 아래 Mermaid의 활성화와 공격 흐름은 변경하지 않았다. Editor의 `TurretTestSceneBuilder`가 AudioManager를 복사하는 기능도 그대로 유지한다. 사운드 연동이 준비되면 주석 처리한 호출을 복원해야 한다.
+CU 전력 공급 의존성은 유지한다. Missile 탐색과 재탐색은 `EnemyController`를 기준으로 하고 Canon 탄환과 Missile 폭발 피해는 `EnemyHealth.TakeDamage(int)`로 전달한다. 아래 Mermaid도 해당 연결에 맞춰 갱신했다. Editor의 `TurretTestSceneBuilder`가 AudioManager를 복사하는 기능은 그대로 유지한다. 사운드 연동이 준비되면 주석 처리한 호출을 복원해야 한다.
 
 ### PoC 프리팹의 몸체 콜라이더
 
@@ -318,11 +318,12 @@ flowchart TD
     Shoot --> Init["TowerBullet.Initialize()<br>방향점·Damage 전달"]
     Init --> Move["TowerBullet.Update()<br>정해진 방향으로 직진"]
     Move --> Collision["TowerBullet<br>OnCollisionEnter2D()"]
-    Collision --> Damage["Monster<br>TakeDamage()"]
-    Damage -->|체력 0| Die["Monster.Die()"]
+    Collision --> Health["GetComponentInParent()<br>EnemyHealth 조회"]
+    Health --> Damage["EnemyHealth.TakeDamage(int)<br>서버에서 피해 확정"]
+    Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
-Canon 포신은 Target을 향해 돌지만, **발사된 `TowerBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며, 충돌한 오브젝트에 `Monster`가 있으면 피해를 준다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
+Canon 포신은 Target을 향해 돌지만, **발사된 `TowerBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TakeDamage()`는 서버에서 Network Spawn된 적에 대해서만 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
 
 #### Missile: 복수 대상을 지정하고 유도·범위 피해
 
@@ -331,7 +332,7 @@ flowchart TD
     Update["DefaultMissileTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
     Search --> Collect["TurretTargetingUtility<br>CollectByDistance()"]
     Collect --> RangeCheck["IsInAttackRange()<br>내부 범위 후보 제외"]
-    RangeCheck --> Filter["예약된 적은 건너뛰고<br>다음 후보 검사"]
+    RangeCheck --> Filter["EnemyController 조회<br>기존 예약이 있으면 제외"]
     Filter --> Targets["발사구 수에 맞게<br>Targets 배열 지정·예약"]
     Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>발사 간격 확인"]
@@ -341,17 +342,22 @@ flowchart TD
     Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약만 해제"]
     Release --> Search
     Init --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
-    Straight -->|목표 소실| Retarget["SearchForNewTarget()"]
+    Straight -->|목표 소실| Retarget["SearchForNewTarget()<br>EnemyController 재탐색"]
     Retarget --> Straight
     Straight -->|충돌 또는 수명 종료| Explosion["폭발 이펙트 생성"]
     Explosion --> Area["TowerMissile.DestroyObject()<br>범위 내 Enemy 탐색"]
-    Area --> Damage["Monster<br>TakeDamage()"]
-    Damage -->|체력 0| Die["Monster.Die()"]
+    Area --> Health["EnemyHealth 조회<br>동일 적 콜라이더 중복 제거"]
+    Health --> Damage["EnemyHealth.TakeDamage(int)<br>서버에서 피해 확정"]
+    Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
 Missile은 적 수가 부족하면 첫 Target을 다른 발사 슬롯에서도 사용할 수 있다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.DestroyObject()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 위 공식으로 계산한 `EffectiveDamage`를 전달한다.
 
-미사일 탐색은 가장 가까운 후보가 `Monster.isTargeted`인 경우 그 후보를 건너뛰고 다음 후보를 검사한다. 후보를 중복 제거해 바로 다음 적까지 건너뛰던 동작도 제거했다. 발사 전 선택한 타깃은 터렛이 예약하며 비활성화와 프리팹 교체 및 첫 타깃의 사망·사거리 이탈 시 `ReleaseUnlaunchedTargets()`로 정리한다. `OnDisable()`은 예약 정리 후 공통 Registry·전력 종료 경로를 호출한다. 발사 후에는 각 LV 스크립트가 Target 슬롯을 비우므로 이미 비행 중인 미사일의 예약은 터렛 종료로 해제하지 않는다. 기존 발사체가 충돌하거나 수명을 마칠 때 예약을 해제한다. `isTargeted`는 여전히 단일 bool이므로 복수 발사체 예약의 정확한 개수나 외부 Destroy 경로까지 관리하는 계약은 후속 과제다.
+미사일의 최초 탐색과 비행 중 재탐색은 Collider와 그 부모의 활성 `EnemyController`를 기준으로 한다. 최초 탐색은 EnemyController Transform의 최소 및 최대 사거리도 검사한다. 선택된 EnemyController의 Transform을 기존 유도 이동이 추적한다. 같은 Enemy의 여러 Collider가 최초 탐색 슬롯에 중복 등록되지 않도록 한다. 비행 중 재탐색은 기존 300 단위 탐색 반경을 유지하며 터렛의 최소 사거리를 다시 적용하지 않는다.
+
+`Monster.isTargeted`는 새 Enemy 계약으로 이식하지 않았다. 선택된 EnemyController와 같은 오브젝트에 기존 Monster가 있으면 예약 표시를 읽고 쓰며 없으면 예약 없이 추적한다. 새 Enemy 여러 마리에 대한 미사일 간 중복 타겟 방지 기능은 아직 제공하지 않는다. 비활성화와 프리팹 교체 및 발사 전 사거리 이탈에서는 `ReleaseUnlaunchedTargets()`로 기존 예약만 정리한다. 발사 후에는 각 LV 스크립트가 Target 슬롯을 비우므로 비행 중인 미사일의 예약은 터렛 종료로 해제하지 않는다. `isTargeted`의 정식 대체와 복수 발사체 예약의 개수 및 외부 Destroy 정리는 후속 과제다.
+
+폭발 피해는 Collider의 부모까지 `EnemyHealth`를 조회하고 동일 적은 한 번만 피해를 적용한다. 기존 Enemy Tag 대신 EnemyHealth 존재 여부를 피해 대상으로 사용한다. 충돌 및 수명 종료가 겹쳐도 동일 미사일의 폭발 처리는 한 번만 수행한다. 발사체 이동과 서버 전용 피해 API를 연결한 PoC이며 터렛 및 발사체 전체의 네트워크 동기화나 권한 구조를 완성한 것은 아니다. Host에서 Network Spawn된 적을 대상으로 추적과 HP 감소 및 사망 Despawn을 검증해야 한다. 기존 Monster만 있는 적은 더 이상 이 피해 API로 체력이 감소하지 않는다.
 
 ### 4.5 과열과 냉각
 
