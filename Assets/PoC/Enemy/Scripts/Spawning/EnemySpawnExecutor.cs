@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using Unity.Netcode;
 using UnityEngine;
@@ -8,16 +9,50 @@ using UnityEngine;
 /// 스폰 지점과 적 프리팹을 확인하고, 생성된 적을 분대에 등록한 뒤 NGO로 동기화한다.
 /// 생성 수와 프리셋 구성은 다시 결정하지 않는다.
 /// </summary>
-public class EnemySpawnExecutor : NetworkBehaviour
+public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSource
 {
     [SerializeField] private EnemyCatalog enemyList;
     private SpawnPointRegistry _spawnPointList = new();
     private readonly List<EnemySquad> _squads = new();
+    private readonly Dictionary<ulong, NetworkObject> _spawnedEnemies = new();
 
     /// <summary>
     /// Planner와 Executor가 함께 사용하는 스폰 지점 및 점령 상태 목록을 반환한다.
     /// </summary>
     public SpawnPointRegistry SpawnPointList => _spawnPointList;
+
+    /// <summary>현재 네트워크 서버 권한으로 실제 생성을 수행할 수 있는지 반환합니다.</summary>
+    public bool CanSpawn => IsSpawned && IsServer;
+
+    /// <summary>Executor가 추적 중인 현재 네트워크 적 수를 반환합니다.</summary>
+    public int SpawnedEnemyCount => _spawnedEnemies.Count;
+
+    /// <summary>
+    /// 현재 네트워크에 생성되어 있는 적의 식별자와 XY 위치만 복사해 반환한다.
+    /// </summary>
+    public IReadOnlyList<EnemySpatialInput> CaptureEnemyPositions()
+    {
+        var positions = new List<EnemySpatialInput>(_spawnedEnemies.Count);
+        var staleIds = new List<ulong>();
+        foreach (KeyValuePair<ulong, NetworkObject> enemy in _spawnedEnemies)
+        {
+            NetworkObject networkObject = enemy.Value;
+            if (networkObject == null || !networkObject.IsSpawned)
+            {
+                staleIds.Add(enemy.Key);
+                continue;
+            }
+
+            Vector3 position = networkObject.transform.position;
+            positions.Add(new EnemySpatialInput(
+                new TeamHJD.Game.Domain.EntityId($"enemy-{networkObject.NetworkObjectId}"),
+                new BattlefieldPoint(position.x, position.y)));
+        }
+
+        foreach (ulong staleId in staleIds)
+            _spawnedEnemies.Remove(staleId);
+        return positions.AsReadOnly();
+    }
 
     /// <summary>
     /// 자식 SpawnPoint를 수집해 생성 전 확인과 Planner의 계획에 사용할 목록을 초기화한다.
@@ -47,6 +82,7 @@ public class EnemySpawnExecutor : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         _squads.Clear();
+        _spawnedEnemies.Clear();
         base.OnNetworkDespawn();
     }
     
@@ -56,17 +92,17 @@ public class EnemySpawnExecutor : NetworkBehaviour
     /// 계획 후 지점이 점령되어 생성할 수 없게 되었다면 명령을 실행하지 않는다.
     /// </summary>
     /// <param name="spawnInstruction">분대의 스폰 지점과 적별 수량이 담긴 명령.</param>
-    public void Execute(SpawnInstruction spawnInstruction)
+    public int Execute(SpawnInstruction spawnInstruction)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || spawnInstruction.Enemies == null ||
             spawnInstruction.Enemies.Count == 0)
-            return;
+            return 0;
 
         if (enemyList == null || _spawnPointList == null)
         {
             Debug.LogError("Spawner dependencies are not assigned.");
-            return;
+            return 0;
         }
 
         // 명령 하나가 분대 하나이므로 모든 구성원이 공유할 스폰 지점을 한 번만 찾는다.
@@ -75,12 +111,12 @@ public class EnemySpawnExecutor : NetworkBehaviour
                 out SpawnPoint spawnPoint))
         {
             Debug.LogError($"SpawnPoint not found: {spawnInstruction.SpawnPointId}");
-            return;
+            return 0;
         }
 
         // 계획 이후 점령 상태가 바뀐 지점에서는 적을 생성하지 않는다.
         if (!spawnPoint.CanSpawnEnemies)
-            return;
+            return 0;
 
         // 생성 전에 모든 적 정의와 필수 컴포넌트를 확인해 일부 종류만 스폰되는 일을 막는다.
         List<EnemyDefinition> definitions = new(spawnInstruction.Enemies.Count);
@@ -90,7 +126,7 @@ public class EnemySpawnExecutor : NetworkBehaviour
                 !enemyList.TryGetDefinition(entry.EnemyId, out EnemyDefinition enemy))
             {
                 Debug.LogError($"Invalid enemy spawn entry: {entry.EnemyId}");
-                return;
+                return 0;
             }
 
             if (enemy.Prefab == null ||
@@ -100,14 +136,14 @@ public class EnemySpawnExecutor : NetworkBehaviour
             {
                 Debug.LogError(
                     $"Enemy prefab requires NetworkObject, EnemyController, and EnemyAIBrain: {enemy.EnemyId}");
-                return;
+                return 0;
             }
 
             definitions.Add(enemy);
         }
 
         EnemySquad squad = new EnemySquad();
-
+        int spawnedCount = 0;
         for (int entryIndex = 0; entryIndex < spawnInstruction.Enemies.Count; entryIndex++)
         {
             EnemyDefinition enemy = definitions[entryIndex];
@@ -137,12 +173,14 @@ public class EnemySpawnExecutor : NetworkBehaviour
                 // 생성된 적을 NGO에 등록해 클라이언트에도 나타나게 한다.
                 NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
                 networkObject.Spawn();
+                _spawnedEnemies[networkObject.NetworkObjectId] = networkObject;
+                spawnedCount++;
             }
         }
 
         // 한 명도 생성되지 않았다면 빈 분대는 보관하지 않는다.
         if (!squad.TryGetCenterPosition(out _))
-            return;
+            return spawnedCount;
 
         // 모든 구성원이 모인 뒤 분대 중심에서 최초 공동 목표를 선택한다.
         bool hasTarget = squad.SetTarget();
@@ -150,5 +188,6 @@ public class EnemySpawnExecutor : NetworkBehaviour
         _squads.Add(squad);
         if (!hasTarget)
             Debug.LogWarning($"No targetable Player or Turret found for squad at {spawnInstruction.SpawnPointId}.");
+        return spawnedCount;
     }
 }
