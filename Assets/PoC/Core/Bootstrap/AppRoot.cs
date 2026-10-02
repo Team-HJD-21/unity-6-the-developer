@@ -14,6 +14,11 @@ namespace TeamHJD.Game.Bootstrap
 
         internal AppServices Services { get; private set; }
 
+#if UNITY_EDITOR
+        public event Action<BattlefieldSpatialSnapshot> BattlefieldSnapshotChanged;
+        public BattlefieldSpatialSnapshot CurrentBattlefieldSnapshot => _currentMatch?.Battlefield;
+#endif
+
         public void Initialize(AppServices services)
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(AppRoot));
@@ -24,8 +29,17 @@ namespace TeamHJD.Game.Bootstrap
 
         public MatchSession StartMatch(MatchConfig config, MatchState initialState, IModeRules modeRules)
         {
+            return StartMatch(config, initialState, modeRules, BattlefieldSpatialInput.Empty);
+        }
+
+        public MatchSession StartMatch(
+            MatchConfig config,
+            MatchState initialState,
+            IModeRules modeRules,
+            BattlefieldSpatialInput battlefieldInput)
+        {
             ThrowIfUnavailable();
-            var nextMatch = Services.MatchSessions.Create(config, initialState, modeRules);
+            var nextMatch = Services.MatchSessions.Create(config, initialState, modeRules, battlefieldInput);
             try
             {
                 nextMatch.Start();
@@ -38,6 +52,9 @@ namespace TeamHJD.Game.Bootstrap
 
             EndCurrentMatch();
             _currentMatch = nextMatch;
+#if UNITY_EDITOR
+            PublishBattlefieldSnapshot(_currentMatch.Battlefield);
+#endif
             return nextMatch;
         }
 
@@ -50,8 +67,19 @@ namespace TeamHJD.Game.Bootstrap
 
         public void EndCurrentMatch()
         {
-            _currentMatch?.Dispose();
+            if (_currentMatch == null) return;
+            var endingMatch = _currentMatch;
             _currentMatch = null;
+            try
+            {
+                endingMatch.Dispose();
+            }
+            finally
+            {
+#if UNITY_EDITOR
+                PublishBattlefieldSnapshot(null);
+#endif
+            }
         }
 
         private void OnDestroy()
@@ -68,5 +96,19 @@ namespace TeamHJD.Game.Bootstrap
             if (_isDisposed) throw new ObjectDisposedException(nameof(AppRoot));
             if (Services == null) throw new InvalidOperationException("AppRoot has not been initialized.");
         }
+
+#if UNITY_EDITOR
+        private void PublishBattlefieldSnapshot(BattlefieldSpatialSnapshot snapshot)
+        {
+            try
+            {
+                BattlefieldSnapshotChanged?.Invoke(snapshot);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+        }
+#endif
     }
 }
