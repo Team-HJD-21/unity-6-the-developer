@@ -345,7 +345,7 @@ Core 쪽에서 Encounter에 넘길 데이터는 별도 복사본이나 새 singl
 
 ```csharp
 // Match 조립부의 개념적 흐름. Encounter 입력 메서드는 E와 합의 후 연결합니다.
-MatchSession match = appRoot.StartMatch(
+MatchSession match = appMatchHost.StartMatch(
     config, initialState, modeRules,
     turretInput, participantInput, gridConfiguration);
 
@@ -353,14 +353,16 @@ BattlefieldSpatialSnapshot currentBattlefield = match.Battlefield;
 // encounter.<합의된 평가 메서드>(currentBattlefield);
 
 // Match 종료는 소유자인 AppRoot가 처리합니다.
-appRoot.EndCurrentMatch();
+appMatchHost.EndCurrentMatch();
 ```
 
 - `AppRoot`는 내부의 현재 Match를 소유하고 `StartMatch`의 반환값으로 조립자에게 세션을 제공합니다. 따라서 조립자가 세션 참조를 보관해야 하며, `AppRoot`에는 아직 `CurrentMatch` 조회자가 없습니다.
-- 현재 Unity bootstrap이 `AppRoot`를 `BeforeSceneLoad`에 만들지만, Scene 조립 코드에 해당 참조를 전달하는 공개 API는 없습니다. 실제 연결 PR에서는 Scene 조립 경계에서 이를 한 번 명시적으로 해결해야 합니다. Core에 `AppRoot.Instance`나 Encounter 전용 static accessor를 급히 추가하지 않습니다.
+- Unity bootstrap은 `BeforeSceneLoad`에 `AppRoot`를 만들고, `AppRoot`는 Scene 로드 시 해당 Scene의 활성 `ISceneCompositionRoot` 하나를 찾아 `IAppMatchHost`로 전달합니다. 이 검색은 Scene당 한 번의 composition 작업이며, Core는 Enemy/Encounter 구현 타입을 참조하지 않습니다. 한 Scene에 조립자가 둘 이상이면 중복 Match 소유를 막기 위해 오류를 기록하고 조립하지 않습니다.
+- Scene 조립자는 `IAppMatchHost`만 받아 Match 수명 API를 사용합니다. `AppRoot.Instance`나 Encounter 전용 static accessor는 두지 않습니다. Scene 조립자는 자신이 만든 Encounter/Scene 객체를 Scene 종료 때 정리하고, AppRoot의 `EndCurrentMatch()`로 Match 수명을 끝냅니다.
 - `MatchSession.Battlefield`는 Match 수명 중 explicit update가 끝날 때마다 새 revision을 가리킵니다. Encounter는 평가 시점의 snapshot/revision을 소비하고, Match 종료 시 Encounter 상태를 먼저 끝낸 뒤 `AppRoot.EndCurrentMatch()`로 Core Match를 종료해야 합니다. Encounter가 `MatchSession`을 Dispose하지 않습니다.
 - SpawnPoint 위치를 Grid에 조회하려면 Encounter/조립부가 SpawnPoint의 XY를 `BattlefieldPoint`로 투영하고 `snapshot.Grid.TryGetCellAt(...)`을 사용할 수 있습니다. 이는 raw cell occupancy 조회일 뿐이고, Spawn suitability 정책·Grid cell score를 뜻하지 않습니다.
 - 아직 E의 `EncounterRuntime`에는 snapshot 인자/평가 API가 없으므로 위의 Encounter 호출 한 줄은 의도적으로 미완성 표시입니다. 이 줄을 실제 코드로 바꾸기 전 입력 시점, Match 소유권, revision 사용, 종료 순서를 E와 합의합니다.
+- Encounter의 `Advance`/평가 cadence도 E 책임입니다. 권장 방향은 Match 시간 또는 권위 tick에서 저비용 상태/타이머를 진행하고, 이벤트나 별도 Decision Interval에서만 SpawnPlan을 평가하는 혼합형입니다. 매 렌더 프레임마다 Grid 전체를 재구축하거나 SpawnPlan을 재생성한다는 뜻은 아닙니다. 이번 Core 변경은 Encounter 시간 시스템을 새로 만들지 않습니다.
 
 ### main #463 Encounter 수신 검토 (2026-10-02)
 

@@ -1,18 +1,34 @@
-// 앱 범위 서비스 구성과 종료를 맡으며 Scene 전환 후에도 유지되는 Unity 객체입니다.
+// 앱 범위 서비스를 소유하고 Scene composition root에 Match host를 전달하는 persistent Unity 객체입니다.
 
 using System;
+using System.Collections.Generic;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Domain;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace TeamHJD.Game.Bootstrap
 {
-    public sealed class AppRoot : MonoBehaviour
+    public sealed class AppRoot : MonoBehaviour, IAppMatchHost
     {
+        private readonly HashSet<int> _composedSceneHandles = new HashSet<int>();
         private MatchSession _currentMatch;
         private bool _isDisposed;
 
         internal AppServices Services { get; private set; }
+
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+            if (Services != null) ComposeScene(SceneManager.GetActiveScene());
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+        }
 
 #if UNITY_EDITOR
         public event Action<BattlefieldSpatialSnapshot> BattlefieldSnapshotChanged;
@@ -138,6 +154,51 @@ namespace TeamHJD.Game.Bootstrap
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(AppRoot));
             if (Services == null) throw new InvalidOperationException("AppRoot has not been initialized.");
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            ComposeScene(scene);
+        }
+
+        private void OnSceneUnloaded(Scene scene)
+        {
+            _composedSceneHandles.Remove(scene.handle);
+        }
+
+        private void ComposeScene(Scene scene)
+        {
+            if (Services == null || !scene.IsValid() || !scene.isLoaded) return;
+            if (_composedSceneHandles.Contains(scene.handle)) return;
+
+            var compositionRoots = new List<ISceneCompositionRoot>();
+            foreach (GameObject rootObject in scene.GetRootGameObjects())
+            {
+                foreach (MonoBehaviour behaviour in rootObject.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled)
+                        compositionRoots.Add(compositionRoot);
+                }
+            }
+
+            if (compositionRoots.Count == 0) return;
+            if (compositionRoots.Count > 1)
+            {
+                Debug.LogError(
+                    $"Scene '{scene.name}' has {compositionRoots.Count} active scene composition roots. " +
+                    "Keep one composition root per scene to avoid duplicate Match ownership.");
+                return;
+            }
+
+            try
+            {
+                compositionRoots[0].Compose(this);
+                _composedSceneHandles.Add(scene.handle);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, compositionRoots[0] as MonoBehaviour);
+            }
         }
 
 #if UNITY_EDITOR
