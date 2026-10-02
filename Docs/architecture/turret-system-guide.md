@@ -1,7 +1,7 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-09-30
+최종 갱신: 2026-10-03
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
@@ -33,6 +33,18 @@
 - AI 평가값·위협도·전선 정보를 집계하는 정식 Turret Manager
 
 ## 2. 핵심 원칙
+
+### PoC 통합을 위한 임시 사운드 비활성화
+
+`Assets/Scripts/Tower`의 런타임 스크립트에서 `AudioManager` 호출을 임시로 주석 처리했다. Canon과 Missile 및 기존 Laser의 활성화 사운드와 발사 사운드가 재생되지 않는다. 미사일 비행 사운드와 폭발 사운드 및 `WitchSound` 호출도 비활성화했다. 해당 런타임 호출은 AudioManager가 없는 테스트 Scene에서도 실행을 방해하지 않는다.
+
+CU 전력 공급 의존성과 기존 `Monster` 기반 탐색 및 피해 처리는 그대로 유지한다. 아래 Mermaid의 활성화와 공격 흐름은 변경하지 않았다. Editor의 `TurretTestSceneBuilder`가 AudioManager를 복사하는 기능도 그대로 유지한다. 사운드 연동이 준비되면 주석 처리한 호출을 복원해야 한다.
+
+### PoC 프리팹의 몸체 콜라이더
+
+`Assets/PoC/Tower/Turrets`의 Canon과 Missile 프리팹은 큰 `CircleCollider2D`를 제거하고 Base 자식의 활성 `PolygonCollider2D`를 최상위 터렛 오브젝트로 옮겼다. Canon의 좌표는 그대로 사용하며 Missile은 Base의 1.3배 스케일을 Polygon 꼭짓점에 반영해서 기존 2D 충돌 모양과 크기를 유지한다. 사거리 표시용 Circle의 SpriteRenderer는 유지한다. 원본 `Assets/Prefabs/Tower/Turrets`와 Laser는 변경하지 않았다.
+
+Enemy의 `EnemyTargetSelector`는 Collider2D에서 자신과 부모의 `TargetableComponent`를 찾아 대상을 수집한다. PolygonCollider가 있는 최상위 터렛의 Layer가 Enemy 탐색 마스크에 포함되어야 하며 TargetableComponent가 있어야 한다. 삭제 후 탐색 거리 판정은 큰 원이 아니라 몸체 PolygonCollider 기준이다. 승급 대상이 원본 프리팹을 참조한다면 교체 후 원본의 CircleCollider가 다시 생길 수 있으므로 PoC 승급 경로도 확인한다. 아래 Mermaid의 공격과 상태 변경 흐름은 그대로 유지한다.
 
 터렛 데이터는 다음 세 종류로 나눈다.
 
