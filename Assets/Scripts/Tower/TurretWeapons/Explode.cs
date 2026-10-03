@@ -14,7 +14,7 @@ public class Explode : MonoBehaviour
         if (hits != null)
         {
             float distance = Vector2.Distance(transform.position, hits.transform.position);
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.PlayerMine, distance, 50);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.PlayerMine, distance, 50);
         }
 
         _animator = GetComponent<Animator>();

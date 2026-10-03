@@ -67,14 +67,14 @@ public abstract class DefaultLaserTurret : MonoBehaviour, IActivateTower
                 previousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
                 enableRotation = true;
                 Animator.SetBool("isOn", true);
-                AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
+                // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
                 AddTurret();
             }
             else if (isActivated == false)
             {
                 Animator.SetBool("isShoot", false);
                 Animator.SetBool("isOn", false);
-                AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
+                // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
                 StartCoroutine(DeactivateProcess());
                 previousIsActivated = isActivated; // 이전 상태를 현재 상태로 업데이트
                 DeleteTurret();
@@ -241,7 +241,7 @@ public abstract class DefaultLaserTurret : MonoBehaviour, IActivateTower
         if(player is not null)
         {
             float distance = Vector2.Distance(turret.position, player.transform.position);
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire, distance, 50);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire, distance, 50);
         }
     }
     //--------------------------------------------------------------------------------------------------------------------------

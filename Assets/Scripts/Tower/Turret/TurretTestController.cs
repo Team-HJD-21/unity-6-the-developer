@@ -37,7 +37,8 @@ namespace TeamHJD.Game.Debugging
 
         private readonly List<TurretBase> _turrets = new();
         private readonly Dictionary<int, TurretSnapshot> _capturedSnapshots = new();
-        private ControlUnitStatus _controlUnit;
+        private TurretController _turretController;
+        private TurretControllerSnapshot _controllerSnapshot;
         private Camera _mainCamera;
         private Vector2 _scrollPosition;
         private bool _isPanelVisible = true;
@@ -119,13 +120,21 @@ namespace TeamHJD.Game.Debugging
             }
             GUILayout.EndHorizontal();
 
-            if (_controlUnit != null)
+            if (_controllerSnapshot != null)
             {
-                GUILayout.Label($"ControlUnit Power: {_controlUnit.GetCurPower()} / {_controlUnit.GetMaxPower()}");
+                GUILayout.Label($"Turret Power: {_controllerSnapshot.AvailablePower} / {_controllerSnapshot.MaximumPower}");
+                GUILayout.Label($"Reserved: {_controllerSnapshot.ReservedPower} / Recovering: {_controllerSnapshot.PendingRecoveryPower}");
+                GUILayout.Label($"Controller Turrets: {_controllerSnapshot.RegisteredTurretCount} / " +
+                    $"Activated: {_controllerSnapshot.ActivatedTurretCount} / Operational: {_controllerSnapshot.OperationalTurretCount}");
+                GUILayout.Label($"Activated Types: Canon {_controllerSnapshot.GetActivatedCount(TurretKind.Canon)} / " +
+                    $"Missile {_controllerSnapshot.GetActivatedCount(TurretKind.Missile)} / " +
+                    $"Laser {_controllerSnapshot.GetActivatedCount(TurretKind.Laser)} / " +
+                    $"Tesla {_controllerSnapshot.GetActivatedCount(TurretKind.Tesla)} / " +
+                    $"Unknown {_controllerSnapshot.GetActivatedCount(TurretKind.Unknown)}");
             }
             else
             {
-                GUILayout.Label("ControlUnit: not found");
+                GUILayout.Label("TurretController: not found");
             }
 
             if (_lastActivationResult.HasValue)
@@ -273,6 +282,7 @@ namespace TeamHJD.Game.Debugging
                 $"{turret.name}  |  ID {turret.InstanceId}  |  LV {level}");
             GUILayout.Label($"Damage {damage}  |  Power {power}  |  " +
                 $"HP {turret.CurrentHealth}/{turret.MaxHealth}");
+            GUILayout.Label($"Attack Range {turret.MinimumRange:F1} ~ {turret.EffectiveRange:F1}");
             if (TurretInstanceRegistry.TryGetSnapshot(turret.InstanceId, out TurretSnapshot snapshot))
             {
                 GUILayout.Label($"Snapshot: {snapshot.DefinitionId}  |  Pos {snapshot.Position.x:F1}, {snapshot.Position.y:F1}");
@@ -455,7 +465,14 @@ namespace TeamHJD.Game.Debugging
             // logical instance ID is transferred to the replacement turret.
             _turrets.Sort((left, right) => left.InstanceId.CompareTo(right.InstanceId));
 
-            _controlUnit = FindFirstObjectByType<ControlUnitStatus>();
+            _turretController = TurretController.FindForScene(gameObject.scene);
+        }
+
+        private void LateUpdate()
+        {
+            // IMGUI can run multiple times per frame. Capture once after gameplay Updates.
+            if (_isPanelVisible)
+                _controllerSnapshot = _turretController != null ? _turretController.GetSnapshot() : null;
         }
 
         private void SetAllTurretsActive(bool isActive)

@@ -19,13 +19,22 @@ namespace TeamHJD.Game.Turrets
         [SerializeField] protected SpriteRenderer rangeRenderer;
         [SerializeField] protected Transform rangeTransform;
 
+        // Authored per prefab. Hidden from the normal Inspector and read-only to callers.
+        [SerializeField, HideInInspector] private float minimumRange = 3f;
+
         [Header("Definition and State")]
         [SerializeField] private TurretDefinition _definition;
         [SerializeField] private TurretRuntimeState _runtimeState = new();
 
         private TurretActivationController _activationController;
+        [SerializeField] private TurretController _turretController;
+        private ITurretPowerSource _configuredPowerSource;
+        private SpriteRenderer _minimumRangeRenderer;
+        private float _lastVisualRange = -1f;
+        private float _lastVisualMinimumRange = -1f;
 
         public TurretDefinition Definition => _definition;
+        public virtual TurretKind Kind => TurretKind.Unknown;
         public TurretRuntimeState RuntimeState => _runtimeState;
         public int InstanceId => _runtimeState.InstanceId;
         public string DisplayName => _definition != null ? _definition.DisplayName : name;
@@ -45,6 +54,11 @@ namespace TeamHJD.Game.Turrets
             ? 0f
             : Mathf.Max(0f, _definition.Range * (1f + _runtimeState.RangeModifierRatio));
         public bool ShowRange { get; set; }
+        // Spec upgrades change the outer radius only. Keep the physical dead zone fixed.
+        public float MinimumRange => UsesMinimumRange
+            ? Mathf.Clamp(minimumRange, 0f, EffectiveRange)
+            : 0f;
+        protected virtual bool UsesMinimumRange => false;
 
         protected Transform TurretRotationPoint => turretRotationPoint;
         protected LayerMask EnemyMask => enemyMask;
@@ -64,6 +78,19 @@ namespace TeamHJD.Game.Turrets
         protected float TimeTilFire;
         protected float TotCoolTime;
 
+        protected bool ConfigureSceneActivation()
+        {
+            if (_configuredPowerSource == null)
+            {
+                if (_turretController == null)
+                    _turretController = TurretController.GetOrCreateForScene(gameObject.scene);
+                _configuredPowerSource = _turretController;
+            }
+            return ConfigureActivation(_configuredPowerSource);
+        }
+
+        internal bool UsesPowerSource(ITurretPowerSource source) => ReferenceEquals(_configuredPowerSource, source);
+
         protected bool ConfigureActivation(ITurretPowerSource powerSource)
         {
             if (_definition == null)
@@ -80,6 +107,7 @@ namespace TeamHJD.Game.Turrets
             }
 
             bool shouldStartActivated = _runtimeState.IsActivated;
+            _configuredPowerSource = powerSource;
             _runtimeState.SetActivated(false);
             _runtimeState.InitializeHealth(MaxHealth);
             _activationController = new TurretActivationController(
@@ -122,6 +150,40 @@ namespace TeamHJD.Game.Turrets
             localScale.x = diameter / width;
             localScale.y = diameter / height;
             rangeTransform.localScale = localScale;
+
+            if (UsesMinimumRange && _minimumRangeRenderer == null)
+            {
+                GameObject innerCircle = new("MinimumRangeCircle");
+                innerCircle.layer = rangeTransform.gameObject.layer;
+                innerCircle.transform.SetParent(rangeTransform.parent, false);
+                _minimumRangeRenderer = innerCircle.AddComponent<SpriteRenderer>();
+            }
+
+            if (_minimumRangeRenderer != null)
+            {
+                Transform innerTransform = _minimumRangeRenderer.transform;
+                innerTransform.localPosition = rangeTransform.localPosition;
+                innerTransform.localRotation = rangeTransform.localRotation;
+                innerTransform.localScale = new Vector3(
+                    MinimumRange * 2f / width, MinimumRange * 2f / height, localScale.z);
+                _minimumRangeRenderer.sprite = rangeRenderer.sprite;
+                _minimumRangeRenderer.sharedMaterial = rangeRenderer.sharedMaterial;
+                _minimumRangeRenderer.sortingLayerID = rangeRenderer.sortingLayerID;
+                _minimumRangeRenderer.sortingOrder = rangeRenderer.sortingOrder + 1;
+                _minimumRangeRenderer.color = new Color(1f, 0.35f, 0.25f, rangeRenderer.color.a);
+            }
+            _lastVisualRange = Range;
+            _lastVisualMinimumRange = MinimumRange;
+        }
+
+        protected void UpdateRangeVisibility()
+        {
+            if (_lastVisualRange != Range || _lastVisualMinimumRange != MinimumRange)
+                RefreshRangeVisual();
+            if (rangeRenderer != null)
+                rangeRenderer.enabled = ShowRange;
+            if (_minimumRangeRenderer != null)
+                _minimumRangeRenderer.enabled = ShowRange && MinimumRange > 0f;
         }
 
         public TurretActivationResult RequestActivation(bool shouldActivate)
@@ -213,6 +275,8 @@ namespace TeamHJD.Game.Turrets
 
         protected virtual void OnDisable()
         {
+            if (_minimumRangeRenderer != null)
+                _minimumRangeRenderer.enabled = false;
             bool wasOperational = IsOperational;
             bool wasActivated = IsActivated;
 
@@ -388,6 +452,8 @@ namespace TeamHJD.Game.Turrets
 
             _runtimeState.CopyForLevelChange(
                 replacement._runtimeState, MaxHealth, replacement.MaxHealth);
+            replacement._configuredPowerSource = _configuredPowerSource;
+            replacement._turretController = _turretController;
             Transform originalParent = transform.parent;
             _activationController.DetachReservationForLevelUpgrade();
             gameObject.SetActive(false);

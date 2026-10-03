@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
 public abstract class DefaultMissileTurret : TurretBase
 {   
+    public override TurretKind Kind => TurretKind.Missile;
     [SerializeField] protected GameObject missilePrefab;
     
     
@@ -14,6 +16,7 @@ public abstract class DefaultMissileTurret : TurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _currentMissileCount;   //과열시 중지 위한 변수
+    protected override bool UsesMinimumRange => true;
 
     private float CurMissileCount
     {
@@ -33,10 +36,7 @@ public abstract class DefaultMissileTurret : TurretBase
     //--------------------------------------------
     private void Awake()
     {
-        GameObject powerObject = GameObject.Find("ControlUnit");
-        if (powerObject == null ||
-            !powerObject.TryGetComponent(out ControlUnitStatus powerSource) ||
-            !ConfigureActivation(powerSource))
+        if (!ConfigureSceneActivation())
         {
             Debug.LogError($"Failed to initialize turret dependencies on {name}.", this);
             enabled = false;
@@ -47,7 +47,7 @@ public abstract class DefaultMissileTurret : TurretBase
     }
     private void Update()
     {
-        RangeRenderer.enabled = ShowRange;
+        UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
     private void TowerIsActivatedNow()//사용자에 의해 타워가 가동 됐다면 역할 수행(Update에서 수행)
@@ -66,7 +66,15 @@ public abstract class DefaultMissileTurret : TurretBase
         if (Targets == null || Targets.Length == 0)
             return;
 
-        if (!TurretTargetingUtility.IsInRange(turret, Targets[0], Range))
+        bool needsNewTargets = Targets[0] == null;
+        foreach (Transform target in Targets)
+        {
+            if (target != null &&
+                !TurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range))
+                needsNewTargets = true;
+        }
+
+        if (needsNewTargets)
         {
             ReleaseUnlaunchedTargets();
             CurMissileCount = Mathf.Max(0f, CurMissileCount - Time.deltaTime);
@@ -79,18 +87,33 @@ public abstract class DefaultMissileTurret : TurretBase
             turret.position,
             Range,
             EnemyMask,
-            _targetCandidates);
+            _targetCandidates,
+            MinimumRange);
 
         int slot = 0;
         foreach (Collider2D candidate in _targetCandidates)
         {
             if (slot >= Targets.Length)
                 break;
-            if (candidate == null || !candidate.TryGetComponent(out Monster monster) || monster.isTargeted)
+            if (candidate == null)
                 continue;
 
-            Targets[slot++] = candidate.transform;
-            monster.isTargeted = true;
+            EnemyController enemy = candidate.GetComponentInParent<EnemyController>();
+            if (enemy == null || !enemy.isActiveAndEnabled ||
+                !TurretTargetingUtility.IsInAttackRange(turret, enemy.transform, MinimumRange, Range))
+                continue;
+
+            if (enemy.IsTargeted)
+                continue;
+
+            bool alreadySelected = false;
+            for (int index = 0; index < slot; index++)
+                alreadySelected |= Targets[index] == enemy.transform;
+            if (alreadySelected)
+                continue;
+
+            Targets[slot++] = enemy.transform;
+            enemy.IsTargeted = true;
         }
         if (Targets.Length > 1 && Targets[1] == null) Targets[1] = Targets[0];
     }
@@ -105,8 +128,8 @@ public abstract class DefaultMissileTurret : TurretBase
         for (int index = 0; index < Targets.Length; index++)
         {
             Transform target = Targets[index];
-            if (target != null && target.TryGetComponent(out Monster monster))
-                monster.isTargeted = false;
+            if (target != null && target.TryGetComponent(out EnemyController enemy))
+                enemy.IsTargeted = false;
             Targets[index] = null;
         }
         TimeTilFire = 0f;
@@ -171,7 +194,7 @@ public abstract class DefaultMissileTurret : TurretBase
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
-        return TurretTargetingUtility.IsInRange(turret, Targets[0], Range);
+        return TurretTargetingUtility.IsInAttackRange(turret, Targets[0], MinimumRange, Range);
     }
     private bool IsTargetInSight()//적이 시야각에 있는지 확인(FireRateController, OverHeatAnimationController에서 수행)
     {
@@ -189,7 +212,7 @@ public abstract class DefaultMissileTurret : TurretBase
         if (player != null)
         {
             float distance = Vector2.Distance(turret.position, player.transform.position);
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileLaunch, distance, 70);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileLaunch, distance, 70);
         }
     }
     //Coroutine Methods------------------------------------------------------------------
@@ -235,13 +258,13 @@ public abstract class DefaultMissileTurret : TurretBase
     {
         if (isActivated)
         {
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
             return;
         }
 
         ReleaseUnlaunchedTargets();
         Animator.SetBool("isShoot", false);
-        AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
+        // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
         StartCoroutine(DeactivateProcess());
     }
 

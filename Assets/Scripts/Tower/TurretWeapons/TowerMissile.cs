@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -38,6 +39,7 @@ public class TowerMissile : MonoBehaviour
     private string _missileSoundId; // MissileFlying SFX ID 저장
     private string _missileDetectId; // MissileDetect SFX ID 저장
     private bool _isInitialized;
+    private bool _isExploding;
     
     public void Initialize(Transform target, float damage)
     {
@@ -62,7 +64,7 @@ public class TowerMissile : MonoBehaviour
         if (hits != null)
         {
             float distance = Vector2.Distance(transform.position, hits.transform.position);
-            _missileSoundId = AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFlying, distance, 80);
+            // _missileSoundId = AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFlying, distance, 80);
         }
         StartCoroutine(InitialStraightMovement());
         StartCoroutine(ExplodeMissileIfNotHit());
@@ -74,7 +76,7 @@ public class TowerMissile : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (!_isInitialized) return;
+        if (!_isInitialized || _isExploding) return;
 
         DrawTargetLineToTarget();
         SearchForNewTarget();
@@ -86,14 +88,18 @@ public class TowerMissile : MonoBehaviour
         if (_target == null)
         {
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 300,enemyMask);
-            foreach (var monster in hits)
+            foreach (Collider2D candidate in hits)
             {
-                if(_target == null&&!monster.GetComponent<Monster>().isTargeted)
-                {
-                    // _missileDetectId =  AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFinalDetect);
-                    monster.GetComponent<Monster>().isTargeted = true; 
-                    _target = monster.transform;
-                }
+                EnemyController enemy = candidate.GetComponentInParent<EnemyController>();
+                if (enemy == null || !enemy.isActiveAndEnabled)
+                    continue;
+
+                if (enemy.IsTargeted)
+                    continue;
+
+                enemy.IsTargeted = true;
+                _target = enemy.transform;
+                break;
             }
         }
     }
@@ -131,13 +137,15 @@ public class TowerMissile : MonoBehaviour
         {
             float distance = Vector2.Distance(transform.position, hits.transform.position);
             // Debug.Log("Distance with player" + distance);
-            AudioManager.Instance.ChangeVolume(_missileSoundId,distance,80);
+            // AudioManager.Instance.ChangeVolume(_missileSoundId,distance,80);
         }
 
     }
 
     private void OnCollisionEnter2D(Collision2D other)
     {
+        if (_isExploding)
+            return;
         StartCoroutine(DestroyObject());
         GameObject explosion = Instantiate(explodePrefab, explosionPosition.position, Quaternion.identity);
         explosion.GetComponent<Explode>().TriggerExplosion();
@@ -153,18 +161,24 @@ public class TowerMissile : MonoBehaviour
     private IEnumerator ExplodeMissileIfNotHit()//미사일 임무 시간 내에 
     {
         yield return new WaitForSeconds(10f);
+        if (_isExploding)
+            yield break;
         StartCoroutine(DestroyObject());
         GameObject explosion = Instantiate(explodePrefab, explosionPosition.position, Quaternion.identity);
         explosion.GetComponent<Explode>().TriggerExplosion();
     }
     private IEnumerator DestroyObject()
     {
+        if (_isExploding)
+            yield break;
+        _isExploding = true;
+        rb.linearVelocity = Vector2.zero;
         _sr.enabled = false;
         minimapMissile.enabled = false;
         yield return new WaitForSeconds(0.1f);
-        if(_target != null)
+        if (_target != null && _target.TryGetComponent(out EnemyController reservedEnemy))
         {
-            _target.GetComponent<Monster>().isTargeted = false;
+            reservedEnemy.IsTargeted = false;
         }
         // MissileFlying SFX 중단
         // if (!string.IsNullOrEmpty(_missileDetectId))
@@ -174,15 +188,17 @@ public class TowerMissile : MonoBehaviour
         // }
         if (!string.IsNullOrEmpty(_missileSoundId))
         {
-            AudioManager.Instance.StopSfx(_missileSoundId);
+            // AudioManager.Instance.StopSfx(_missileSoundId);
             // Debug.Log("missilesound delete");
         }
         Collider2D[] monsters = Physics2D.OverlapCircleAll(rb.position, explosionRange);
-        foreach (var monster in monsters)
+        HashSet<EnemyHealth> damagedEnemies = new();
+        foreach (Collider2D candidate in monsters)
         {
-            if (monster.CompareTag("Enemy"))
+            EnemyHealth enemyHealth = candidate.GetComponentInParent<EnemyHealth>();
+            if (enemyHealth != null && damagedEnemies.Add(enemyHealth))
             {
-                monster.GetComponent<Monster>().TakeDamage(_bulletDamage);
+                enemyHealth.TakeDamage(Mathf.RoundToInt(_bulletDamage));
             }
         }
         Destroy(gameObject);

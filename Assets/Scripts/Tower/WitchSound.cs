@@ -16,7 +16,7 @@ public class WitchSound : MonoBehaviour
         if (hits != null)
         {
             float distance = Vector2.Distance(transform.position, hits.transform.position);
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.WitchLaughing, distance, 50);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.WitchLaughing, distance, 50);
         }
 
         _time = 20f;
@@ -31,7 +31,7 @@ public class WitchSound : MonoBehaviour
             if (hits != null)
             {
                 float distance = Vector2.Distance(transform.position, hits.transform.position);
-                _witchSound = AudioManager.Instance.PlaySfx(AudioManager.Sfx.WitchLaughing, distance, 50);
+                // _witchSound = AudioManager.Instance.PlaySfx(AudioManager.Sfx.WitchLaughing, distance, 50);
                 _time = 0f;
             }
         }
@@ -44,7 +44,7 @@ public class WitchSound : MonoBehaviour
         if (hits != null&&_witchSound!=null)
         {
             float distance = Vector2.Distance(transform.position, hits.transform.position);
-            AudioManager.Instance.ChangeVolume(_witchSound,distance,50);
+            // AudioManager.Instance.ChangeVolume(_witchSound,distance,50);
         }
 
     }

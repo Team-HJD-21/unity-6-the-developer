@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.Turrets;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -27,12 +28,32 @@ public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
 
     public event Action<int, int> PowerChanged;
 
-    public int CurrentPower => currentPower;
-    public int MaximumPower => maxPower;
+    [SerializeField] private TurretController turretController;
+    [SerializeField] private bool initializePowerFromLegacyData = true;
+    public int CurrentPower => turretController != null ? turretController.CurrentPower : 0;
+    public int MaximumPower => turretController != null ? turretController.MaximumPower : 0;
 
     private bool attackCool;
-    private int _pendingPowerRecovery;
-    private Coroutine _powerRecoveryCoroutine;
+    private void Awake()
+    {
+        if (turretController == null)
+            turretController = TurretController.GetOrCreateForScene(gameObject.scene);
+        turretController.PowerChanged += HandlePowerChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (turretController != null)
+            turretController.PowerChanged -= HandlePowerChanged;
+    }
+
+    private void HandlePowerChanged(int availablePower, int capacity)
+    {
+        // Serialized mirrors preserve old Inspector/UI integrations. The budget owns the values.
+        currentPower = availablePower;
+        maxPower = capacity;
+        NotifyPowerChanged();
+    }
 
     private void Start()
     {
@@ -51,63 +72,28 @@ public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
     private void ValidateData()
     {
         curHealth = maxHealth = DataManager.GetAttributeData(AttributeType.ControlUnitHealth);
-        currentPower = maxPower = DataManager.GetAttributeData(AttributeType.ControlUnitPower);
-        NotifyPowerChanged();
+        if (initializePowerFromLegacyData)
+        {
+            int capacity = DataManager.GetAttributeData(AttributeType.ControlUnitPower);
+            if (turretController.TrySetMaximumPower(capacity)) return;
+            Debug.LogError("CU power capacity is lower than existing turret reservations.", this);
+        }
+        HandlePowerChanged(CurrentPower, MaximumPower);
     }
 
     public bool TryConsumePower(int power)
     {
-        if (power < 0 || currentPower < power)
-        {
-            return false;
-        }
-
-        SetCurrentPower(currentPower - power);
-        return true;
+        return turretController != null && turretController.TryConsumePower(power);
     }
 
     public bool TryChangeReservation(int previousPower, int newPower)
     {
-        if (previousPower < 0 || newPower < 0)
-        {
-            return false;
-        }
-
-        int difference = newPower - previousPower;
-        if (difference > 0)
-        {
-            return TryConsumePower(difference);
-        }
-
-        if (difference < 0)
-        {
-            SetCurrentPower(currentPower - difference);
-        }
-
-        return true;
+        return turretController != null && turretController.TryChangeReservation(previousPower, newPower);
     }
 
     public void ReleasePower(int power)
     {
-        if (power <= 0)
-        {
-            return;
-        }
-
-        int recoverablePower = Mathf.Max(
-            0,
-            maxPower - currentPower - _pendingPowerRecovery);
-        int acceptedPower = Mathf.Min(power, recoverablePower);
-        if (acceptedPower <= 0)
-        {
-            return;
-        }
-
-        _pendingPowerRecovery += acceptedPower;
-        if (_powerRecoveryCoroutine == null && isActiveAndEnabled)
-        {
-            _powerRecoveryCoroutine = StartCoroutine(RecoverCoroutine());
-        }
+        if (turretController != null) turretController.ReleasePower(power);
     }
 
     // Legacy entry points kept for Laser Turret until it is migrated.
@@ -123,7 +109,7 @@ public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
 
     public int GetCurrentPower()
     {
-        return currentPower;
+        return CurrentPower;
     }
     
     private void Die()
@@ -176,17 +162,11 @@ public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
     }
     public int GetMaxPower()
     {
-        return maxPower;
+        return MaximumPower;
     }
     public int GetCurPower()
     {
-        return currentPower;
-    }
-
-    private void SetCurrentPower(int power)
-    {
-        currentPower = Mathf.Clamp(power, 0, maxPower);
-        NotifyPowerChanged();
+        return CurrentPower;
     }
 
     private void NotifyPowerChanged()
@@ -198,17 +178,5 @@ public class ControlUnitStatus : MonoBehaviour, ITurretPowerSource
         PowerChanged?.Invoke(currentPower, maxPower);
     }
 
-    private IEnumerator RecoverCoroutine()
-    {
-        while (_pendingPowerRecovery > 0 && currentPower < maxPower)
-        {
-            _pendingPowerRecovery--;
-            SetCurrentPower(currentPower + 1);
-            yield return new WaitForSeconds(0.1f);
-        }
-
-        _pendingPowerRecovery = 0;
-        _powerRecoveryCoroutine = null;
-    }
 }
 
