@@ -27,11 +27,14 @@ namespace TeamHJD.Game.Turrets
         [SerializeField] private TurretRuntimeState _runtimeState = new();
 
         private TurretActivationController _activationController;
+        [SerializeField] private TurretController _turretController;
+        private ITurretPowerSource _configuredPowerSource;
         private SpriteRenderer _minimumRangeRenderer;
         private float _lastVisualRange = -1f;
         private float _lastVisualMinimumRange = -1f;
 
         public TurretDefinition Definition => _definition;
+        public virtual TurretKind Kind => TurretKind.Unknown;
         public TurretRuntimeState RuntimeState => _runtimeState;
         public int InstanceId => _runtimeState.InstanceId;
         public string DisplayName => _definition != null ? _definition.DisplayName : name;
@@ -75,6 +78,19 @@ namespace TeamHJD.Game.Turrets
         protected float TimeTilFire;
         protected float TotCoolTime;
 
+        protected bool ConfigureSceneActivation()
+        {
+            if (_configuredPowerSource == null)
+            {
+                if (_turretController == null)
+                    _turretController = TurretController.GetOrCreateForScene(gameObject.scene);
+                _configuredPowerSource = _turretController;
+            }
+            return ConfigureActivation(_configuredPowerSource);
+        }
+
+        internal bool UsesPowerSource(ITurretPowerSource source) => ReferenceEquals(_configuredPowerSource, source);
+
         protected bool ConfigureActivation(ITurretPowerSource powerSource)
         {
             if (_definition == null)
@@ -91,6 +107,7 @@ namespace TeamHJD.Game.Turrets
             }
 
             bool shouldStartActivated = _runtimeState.IsActivated;
+            _configuredPowerSource = powerSource;
             _runtimeState.SetActivated(false);
             _runtimeState.InitializeHealth(MaxHealth);
             _activationController = new TurretActivationController(
@@ -435,6 +452,8 @@ namespace TeamHJD.Game.Turrets
 
             _runtimeState.CopyForLevelChange(
                 replacement._runtimeState, MaxHealth, replacement.MaxHealth);
+            replacement._configuredPowerSource = _configuredPowerSource;
+            replacement._turretController = _turretController;
             Transform originalParent = transform.parent;
             _activationController.DetachReservationForLevelUpgrade();
             gameObject.SetActive(false);

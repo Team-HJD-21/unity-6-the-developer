@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
 public abstract class DefaultMissileTurret : TurretBase
 {   
+    public override TurretKind Kind => TurretKind.Missile;
     [SerializeField] protected GameObject missilePrefab;
     
     
@@ -34,10 +36,7 @@ public abstract class DefaultMissileTurret : TurretBase
     //--------------------------------------------
     private void Awake()
     {
-        GameObject powerObject = GameObject.Find("ControlUnit");
-        if (powerObject == null ||
-            !powerObject.TryGetComponent(out ControlUnitStatus powerSource) ||
-            !ConfigureActivation(powerSource))
+        if (!ConfigureSceneActivation())
         {
             Debug.LogError($"Failed to initialize turret dependencies on {name}.", this);
             enabled = false;
@@ -104,9 +103,7 @@ public abstract class DefaultMissileTurret : TurretBase
                 !TurretTargetingUtility.IsInAttackRange(turret, enemy.transform, MinimumRange, Range))
                 continue;
 
-            // Keep legacy reservation handling optional until the new Enemy contract is agreed.
-            Monster monster = enemy.GetComponent<Monster>();
-            if (monster != null && monster.isTargeted)
+            if (enemy.IsTargeted)
                 continue;
 
             bool alreadySelected = false;
@@ -116,8 +113,7 @@ public abstract class DefaultMissileTurret : TurretBase
                 continue;
 
             Targets[slot++] = enemy.transform;
-            if (monster != null)
-                monster.isTargeted = true;
+            enemy.IsTargeted = true;
         }
         if (Targets.Length > 1 && Targets[1] == null) Targets[1] = Targets[0];
     }
@@ -132,8 +128,8 @@ public abstract class DefaultMissileTurret : TurretBase
         for (int index = 0; index < Targets.Length; index++)
         {
             Transform target = Targets[index];
-            if (target != null && target.TryGetComponent(out Monster monster))
-                monster.isTargeted = false;
+            if (target != null && target.TryGetComponent(out EnemyController enemy))
+                enemy.IsTargeted = false;
             Targets[index] = null;
         }
         TimeTilFire = 0f;

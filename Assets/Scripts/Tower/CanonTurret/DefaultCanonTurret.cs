@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
 public abstract class DefaultCanonTurret : TurretBase
 {   
+    public override TurretKind Kind => TurretKind.Canon;
     [SerializeField] protected GameObject bulletPrefab;
 
     protected Transform Target;             //target of bullets
@@ -18,10 +20,7 @@ public abstract class DefaultCanonTurret : TurretBase
     protected abstract void Shoot();//총알 객체화 후 목표로 발사(FireRateController에서 수행)
     private void Awake()
     {
-        GameObject powerObject = GameObject.Find("ControlUnit");
-        if (powerObject == null ||
-            !powerObject.TryGetComponent(out ControlUnitStatus powerSource) ||
-            !ConfigureActivation(powerSource))
+        if (!ConfigureSceneActivation())
         {
             Debug.LogError($"Failed to initialize turret dependencies on {name}.", this);
             enabled = false;

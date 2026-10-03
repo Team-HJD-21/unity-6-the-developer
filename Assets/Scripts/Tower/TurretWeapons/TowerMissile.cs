@@ -94,12 +94,10 @@ public class TowerMissile : MonoBehaviour
                 if (enemy == null || !enemy.isActiveAndEnabled)
                     continue;
 
-                Monster monster = enemy.GetComponent<Monster>();
-                if (monster != null && monster.isTargeted)
+                if (enemy.IsTargeted)
                     continue;
 
-                if (monster != null)
-                    monster.isTargeted = true;
+                enemy.IsTargeted = true;
                 _target = enemy.transform;
                 break;
             }
@@ -178,9 +176,9 @@ public class TowerMissile : MonoBehaviour
         _sr.enabled = false;
         minimapMissile.enabled = false;
         yield return new WaitForSeconds(0.1f);
-        if (_target != null && _target.TryGetComponent(out Monster reservedMonster))
+        if (_target != null && _target.TryGetComponent(out EnemyController reservedEnemy))
         {
-            reservedMonster.isTargeted = false;
+            reservedEnemy.IsTargeted = false;
         }
         // MissileFlying SFX 중단
         // if (!string.IsNullOrEmpty(_missileDetectId))
