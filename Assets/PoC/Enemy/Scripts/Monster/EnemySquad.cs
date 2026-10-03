@@ -11,6 +11,11 @@ public class EnemySquad
     private ITargetable _target;
 
     /// <summary>
+    /// 등록된 분대원이 모두 제거되었는지 반환한다.
+    /// </summary>
+    public bool IsEmpty => _members.Count == 0;
+
+    /// <summary>
     /// 생성 직후 적을 등록할 빈 분대를 만든다.
     /// </summary>
     public EnemySquad()
@@ -35,6 +40,15 @@ public class EnemySquad
         _members.Add(enemy);
         brain.AssignSquad(this);
         return true;
+    }
+
+    /// <summary>
+    /// 네트워크에서 제거된 적을 분대원 목록에서 해제한다.
+    /// </summary>
+    /// <param name="enemy">제거할 적의 행동 컴포넌트.</param>
+    public void RemoveMember(EnemyController enemy)
+    {
+        _members.Remove(enemy);
     }
 
     /// <summary>

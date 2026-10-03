@@ -8,17 +8,6 @@ public enum WeaponType
 
 /// <summary>
 /// 플레이어 발사 탄환의 이동 궤적, 수명 관리, 태그 기반 충돌 판정 및 디버프 주입 컴포넌트
-/// 
-/// [채택 이유 및 대안 비교]
-/// 1. 단일 프리팹 멀티 무기 색상/속성 주입:
-///    - 대안: 무기마다 별도의 총알 프리팹을 따로 생성하여 관리.
-///    - 채택 이유: 프로토타입 단계에서 불필요한 프리팹 에셋 증식을 막고, InitBullet()을 통해
-///      런타임에 색상(SpriteRenderer.color)과 피해량, 디버프 속성을 주입하여 유지보수성을 극대화했습니다.
-/// 
-/// 2. 'Enemy' 태그 1차 필터링 후 컴포넌트 접근:
-///    - 대안: 모든 충돌체에 GetComponent<Monster>()를 매번 호출.
-///    - 채택 이유: 매 충돌마다 GetComponent를 실행하면 불필요한 GC 및 CPU 부하가 발생합니다.
-///      기존 규칙에 맞춰 target.CompareTag("Enemy")로 1차 유효성을 검증한 후 피격 및 디버프를 전달합니다.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerBullet : MonoBehaviour
@@ -110,16 +99,31 @@ public class PlayerBullet : MonoBehaviour
         if (isDestroyed || target == null) return;
         if (target.CompareTag("Player") || target.CompareTag("Bullet")) return;
 
-        // 1. 규격에 따라 "Enemy" 태그를 가진 대상인지 1차 필터링
+        // 1. "Enemy" 태그를 가진 대상인지 1차 필터링
         bool isEnemy = target.CompareTag(targetTag) || target.transform.root.CompareTag(targetTag);
 
         if (isEnemy)
         {
+            int damageInt = Mathf.RoundToInt(bulletDamage);
+            bool damageApplied = false;
+
+            // 1) EnemyHealth 컴포넌트 우선 조회 및 TakeDamage(int) 호출
+            EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage(damageInt);
+                damageApplied = true;
+            }
+
+            // 2) 레거시 Monster 컴포넌트 탐색 (피해 적용 폴백 및 슬로우 디버프용)
             Monster monster = target.GetComponentInParent<Monster>();
             if (monster != null)
             {
-                // 피해 적용
-                monster.TakeDamage(bulletDamage);
+                // EnemyHealth가 없는 경우에만 Monster.TakeDamage 호출
+                if (!damageApplied)
+                {
+                    monster.TakeDamage(bulletDamage);
+                }
 
                 // 감속 무기인 경우 동적 디버프 컴포넌트 부착
                 if (currentWeaponType == WeaponType.CryoBlaster)
@@ -138,7 +142,7 @@ public class PlayerBullet : MonoBehaviour
             return;
         }
 
-        // 몬스터가 아닌 장애물이나 벽에 부딪힌 경우 소멸
+        // 장애물이나 벽에 충돌한 경우 소멸
         isDestroyed = true;
         Destroy(gameObject);
     }

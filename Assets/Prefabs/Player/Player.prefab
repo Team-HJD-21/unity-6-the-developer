@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7730548574754890507}
   - component: {fileID: 1569588268470032}
-  - component: {fileID: 1704625248126144740}
   - component: {fileID: 1841352158916220710}
   m_Layer: 0
   m_Name: gunsideR
@@ -94,23 +93,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &1704625248126144740
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 35664318898737409}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a056bac36ec1784e90d50dd15950456, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gunsideL: {fileID: 1461408625267929976}
-  gunsideR: {fileID: 35664318898737409}
-  gunup: {fileID: 4842808037945612809}
-  gundown: {fileID: 8017330660361639463}
-  playerpoint: {fileID: 3862206841887158358}
 --- !u!114 &1841352158916220710
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,7 +211,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3331482133165670146}
   - component: {fileID: 5274076902421995538}
-  - component: {fileID: 3338838102651870007}
   - component: {fileID: 4372804592214245676}
   m_Layer: 0
   m_Name: gunsideL
@@ -313,23 +294,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &3338838102651870007
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1461408625267929976}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a056bac36ec1784e90d50dd15950456, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gunsideL: {fileID: 1461408625267929976}
-  gunsideR: {fileID: 35664318898737409}
-  gunup: {fileID: 4842808037945612809}
-  gundown: {fileID: 8017330660361639463}
-  playerpoint: {fileID: 3862206841887158358}
 --- !u!114 &4372804592214245676
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -447,6 +411,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3862206841887158358}
+  - component: {fileID: 1602775552470066737}
   m_Layer: 0
   m_Name: tempPlayerpos
   m_TagString: Untagged
@@ -473,6 +438,23 @@ Transform:
   - {fileID: 7730548574754890507}
   m_Father: {fileID: 132358397131132597}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1602775552470066737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2038151393336081040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a056bac36ec1784e90d50dd15950456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerGunControl
+  GunsideL: {fileID: 3331482133165670146}
+  GunsideR: {fileID: 7730548574754890507}
+  Gunup: {fileID: 5446618005193479639}
+  Gundown: {fileID: 6900519741424853040}
+  Playerpoint: {fileID: 5513808030836162447}
 --- !u!1 &2527811850007884930
 GameObject:
   m_ObjectHideFlags: 0
@@ -620,7 +602,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5446618005193479639}
   - component: {fileID: 680328120282854951}
-  - component: {fileID: 6734406926477196927}
   - component: {fileID: 5835681106461663034}
   m_Layer: 0
   m_Name: gunup
@@ -704,23 +685,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &6734406926477196927
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4842808037945612809}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a056bac36ec1784e90d50dd15950456, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gunsideL: {fileID: 1461408625267929976}
-  gunsideR: {fileID: 35664318898737409}
-  gunup: {fileID: 4842808037945612809}
-  gundown: {fileID: 8017330660361639463}
-  playerpoint: {fileID: 3862206841887158358}
 --- !u!114 &5835681106461663034
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1162,14 +1126,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBomb
   bombPrefab: {fileID: 6757870014131357828, guid: 38ba50bc42116c549b973019e7f5b15f, type: 3}
   maxBombCount: 5
-  curBombCount: 5
-  bombElapsedMax: 500
-  bombElapsed: 0
-  isCharging: 0
-  onBombRecharge:
-    m_PersistentCalls:
-      m_Calls: []
-  inputHandler: {fileID: -6787196589204068366}
+  bombRechargeTime: 500
+  bombCooldown: 1
 --- !u!114 &-6895610628420138530
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1383,7 +1341,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6900519741424853040}
   - component: {fileID: 304789584671600397}
-  - component: {fileID: 7928316842506077369}
   - component: {fileID: 6529665289736058149}
   m_Layer: 0
   m_Name: gundown
@@ -1467,23 +1424,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &7928316842506077369
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8017330660361639463}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a056bac36ec1784e90d50dd15950456, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gunsideL: {fileID: 1461408625267929976}
-  gunsideR: {fileID: 35664318898737409}
-  gunup: {fileID: 4842808037945612809}
-  gundown: {fileID: 8017330660361639463}
-  playerpoint: {fileID: 3862206841887158358}
 --- !u!114 &6529665289736058149
 MonoBehaviour:
   m_ObjectHideFlags: 0
