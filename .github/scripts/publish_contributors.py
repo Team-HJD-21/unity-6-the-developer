@@ -113,7 +113,11 @@ def main():
     if not args.send:
         return
     boundary = uuid.uuid4().hex
-    payload = json.dumps({"content": "@everyone", "allowed_mentions": {"parse": ["everyone"]}}).encode()
+    is_test = os.environ.get("CONTRIBUTORS_TEST_NOTIFICATION") == "true"
+    payload = json.dumps({
+        "content": "[알림 테스트] 비공개 저장소 contributors 이미지 전송 확인" if is_test else "@everyone",
+        "allowed_mentions": {"parse": [] if is_test else ["everyone"]},
+    }).encode()
     body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"payload_json\"\r\nContent-Type: application/json\r\n\r\n".encode() + payload + f"\r\n--{boundary}\r\nContent-Disposition: form-data; name=\"files[0]\"; filename=\"contributors.png\"\r\nContent-Type: image/png\r\n\r\n".encode() + output.read_bytes() + f"\r\n--{boundary}--\r\n".encode())
     separator = "&" if "?" in webhook else "?"
     request = Request(webhook + separator + "wait=true", data=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}", "User-Agent": "TeamHJD-contributors"})

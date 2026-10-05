@@ -108,6 +108,16 @@ Unity Personal License 기준으로 다음 Secret을 등록한다.
 
 ## 현재 Build 대상
 
+## Discord 알림 점검과 contributors 예약
+
+- PR·Issue 알림은 저장소 Webhook, CI 실패 알림은 `DISCORD_WEBHOOK_URL`, contributors 이미지는 `DISCORD_CONTRIBUTORS_WEBHOOK`을 사용한다. 비공개 저장소의 contributors 조회에는 Actions의 읽기 전용 `GITHUB_TOKEN`을 사용한다.
+- contributors 예약은 `Asia/Seoul` 기준 매일 00:00이다. GitHub Actions 예약은 혼잡 시 지연되거나 누락될 수 있으므로 정시 전달 보장으로 해석하지 않는다.
+- 수동 `Daily Discord contributors` 실행에서 `test_notification=true`를 선택하면 테스트 표식이 붙은 이미지가 전송되며 `@everyone`은 멘션하지 않는다.
+- 수동 `PR CI` 실행에서 `test_discord_notification=true`를 선택하면 실제 검사 결과와 함께 CI 알림 테스트가 전송된다. 고의로 검사 실패를 만들지 않는다. 기본값은 false로 기존 실패 시 알림 동작을 유지한다.
+- Discord 전송은 `wait=true` 응답의 메시지 ID로 수신 확인한다. 비밀 Webhook 주소나 전체 응답을 로그에 출력하지 않는다. CI 알림 전송 실패는 해당 알림 Job의 실패로 드러난다.
+
+## 현재 Build 대상
+
 `ProjectSettings/EditorBuildSettings.asset`에서 활성화된 Scene 전체를 Windows `StandaloneWindows64`로 Build한다. 결과물은 `TheDeveloper-Windows` Artifact로 7일간 보관한다.
 
 Unity 버전을 올릴 때는 다음 두 곳을 함께 변경한다.
