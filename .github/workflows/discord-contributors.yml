@@ -2,9 +2,15 @@ name: Daily Discord contributors
 
 on:
   schedule:
-    # 15:00 UTC = 00:00 Asia/Seoul the following day.
-    - cron: '0 15 * * *'
+    # Midnight Korea time; GitHub may delay scheduled starts under load.
+    - cron: '0 0 * * *'
+      timezone: Asia/Seoul
   workflow_dispatch:
+    inputs:
+      test_notification:
+        description: 'Send a labeled test image without mentioning everyone'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -29,4 +35,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           DISCORD_CONTRIBUTORS_WEBHOOK: ${{ secrets.DISCORD_CONTRIBUTORS_WEBHOOK }}
+          CONTRIBUTORS_TEST_NOTIFICATION: ${{ inputs.test_notification && 'true' || 'false' }}
         run: python .github/scripts/publish_contributors.py --send

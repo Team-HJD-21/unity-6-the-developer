@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      test_discord_notification:
+        description: 'Send a labeled Discord test after checks (does not simulate a CI failure)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -248,7 +253,7 @@ jobs:
   notify-discord:
     name: Discord failure notification
     needs: [repository-checks, unity-validation]
-    if: ${{ always() && (needs.repository-checks.result == 'failure' || needs.unity-validation.result == 'failure') }}
+    if: ${{ always() && (needs.repository-checks.result == 'failure' || needs.unity-validation.result == 'failure' || (github.event_name == 'workflow_dispatch' && inputs.test_discord_notification)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -280,6 +285,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REPOSITORY_CHECKS_RESULT: ${{ needs.repository-checks.result }}
           UNITY_VALIDATION_RESULT: ${{ needs.unity-validation.result }}
+          IS_NOTIFICATION_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.test_discord_notification && 'true' || 'false' }}
         run: |
           set -euo pipefail
           short_sha="${COMMIT_SHA:0:7}"
@@ -293,14 +299,15 @@ jobs:
             --arg run_url "$RUN_URL" \
             --arg repository_checks "$REPOSITORY_CHECKS_RESULT" \
             --arg unity_validation "$UNITY_VALIDATION_RESULT" \
+            --arg is_test "$IS_NOTIFICATION_TEST" \
             '{
               username: "The Developer CI",
               allowed_mentions: {parse: []},
               embeds: [{
-                title: "❌ PR CI 실패",
+                title: (if $is_test == "true" then "🧪 CI 알림 테스트" else "❌ PR CI 실패" end),
                 url: $run_url,
                 color: 15158332,
-                description: ("**" + $repository + "**에서 CI 오류가 발생했습니다."),
+                description: (if $is_test == "true" then "**" + $repository + "**의 Discord 전송 경로 테스트입니다. 실제 CI 실패를 의미하지 않습니다." else "**" + $repository + "**에서 CI 오류가 발생했습니다." end),
                 fields: [
                   {name: "Workflow", value: $workflow, inline: true},
                   {name: "Event", value: $event, inline: true},
@@ -313,9 +320,16 @@ jobs:
               }]
             }')
 
-          if ! curl --fail-with-body --silent --show-error --retry 2 \
+          if [[ "$DISCORD_WEBHOOK_URL" == *\?* ]]; then
+            delivery_url="${DISCORD_WEBHOOK_URL}&wait=true"
+          else
+            delivery_url="${DISCORD_WEBHOOK_URL}?wait=true"
+          fi
+          if ! response=$(curl --fail-with-body --silent --retry 2 \
             -H 'Content-Type: application/json' \
             -d "$payload" \
-            "$DISCORD_WEBHOOK_URL"; then
-            echo "::warning::Discord 실패 알림 전송에 실패했습니다. 기존 CI 결과는 변경하지 않습니다."
+            "$delivery_url"); then
+            echo "::error::Discord 알림 전송에 실패했습니다. Webhook 주소와 응답 내용은 출력하지 않습니다."
+            exit 1
           fi
+          echo "$response" | jq -er '"Discord confirmed message " + .id'
