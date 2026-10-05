@@ -106,8 +106,6 @@ Unity Personal License 기준으로 다음 Secret을 등록한다.
 
 설정이 완료되면 Branch rule에 `Unity EditMode test and Windows build`도 Required status check로 추가할 수 있다.
 
-## 현재 Build 대상
-
 ## Discord 알림 점검과 contributors 예약
 
 - PR·Issue 알림은 저장소 Webhook, CI 실패 알림은 `DISCORD_WEBHOOK_URL`, contributors 이미지는 `DISCORD_CONTRIBUTORS_WEBHOOK`을 사용한다. 비공개 저장소의 contributors 조회에는 Actions의 읽기 전용 `GITHUB_TOKEN`을 사용한다.
