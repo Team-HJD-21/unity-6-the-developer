@@ -1,6 +1,6 @@
 # The Developer — Project Documentation
 
-수정일: 2026-09-27
+수정일: 2026-10-04
 상태: 현행 PL 기준 / Sprint 1 Stage 1 PoC 실행 중
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
@@ -10,7 +10,7 @@
 - 장르: 2D 탑다운 액션 타워디펜스
 - 핵심 경험: 제한된 전력으로 미리 배치된 터렛을 선택해 전선을 운영하고, 플레이어가 무너지는 전선을 찾아가 보조한다.
 - Meta Loop: Spaceship에서 Mission·Research를 준비하고 Planet에 출격한 뒤 결과를 반영해 귀환한다.
-- 현재 검증: 2026-10-02 Stage 1 PoC는 전제 1(동적 전선)과 전제 2(지역 해금)의 재미를 시험한다. 기존 웨이브 진행은 보류하고, 두 안의 구현 순서·병행 범위와 최종 선택은 미정이다. 연구·결과 성장·다음 Mission은 M2 목표이며, PoC의 승리 조건도 미정이다. [Sprint 기준](planning/SPRINT_1_STAGE_1_POC.md) · [9월 26일 회의 근거](archive/2026-09-26-stage1-planning.md)
+- 현재 검증: Stage 1 PoC는 전제 1(동적 전선)과 전제 2(지역 해금)의 재미를 시험한다. 10월 3일 회의 시점에는 통합·플레이 결과가 확인되지 않아 주말 마무리와 전선 형성 관찰이 남았다. 기존 웨이브 진행은 보류하고, 두 안의 구현 순서·병행 범위와 최종 선택은 미정이다. 연구·결과 성장·다음 Mission은 M2 목표이며, PoC의 승리 조건도 미정이다. [Sprint 기준](planning/SPRINT_1_STAGE_1_POC.md) · [10월 3일 후속 검토](planning/2026-10-03-poc-followup.md)
 - 개발 순서: New Core Foundation → Single-player Vertical Slice → 2-player Co-op → Online/Alpha → Release
 - Deferred: 실제 Host Migration, PvP, `RivalPlayerAgent`, 대형 우주선, 두 번째 Planet
 
@@ -32,7 +32,7 @@ C와 D의 담당은 각각 김진태, 황재동으로 확정됐다. 각 역할�
 
 - `product/` — 게임의 정체성, 제품 범위, Decision Log
 - `architecture/` — 새 Core의 경계, 코드 명명 규칙, 레거시 이식 참고
-- `planning/` — Milestone, 전체 개발 흐름, 현재 Sprint 실행 계획
+- `planning/` — Milestone, 전체 개발 흐름, 현재 Sprint 실행 계획, 아직 진행 중인 회의 검토 기록
 - `team/` — 담당 영역, 협업 규칙, GitHub Issue 분류
 - `archive/` — 현행 기준에 반영한 회의 요약, 종료된 Sprint, 모집 자료와 레거시 분석. 현재 규칙으로 사용하지 않음
 - `tooling/` — 팀 공통 Unity 패키지·CLI 설치 및 오류 구분 절차
@@ -53,7 +53,10 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOL
 7. [TEAM_WORKFLOW.md](team/TEAM_WORKFLOW.md) — Sprint, Git, Review, Ready/Done 규칙
 8. [DEVELOPMENT_FLOW.md](planning/DEVELOPMENT_FLOW.md) — Milestone 안에서 실제 작업이 흘러가는 순서
 9. [SPRINT_1_STAGE_1_POC.md](planning/SPRINT_1_STAGE_1_POC.md) — 2026-10-02 Stage 1 PoC 범위, 역할, 완료 기준과 통합 순서
-9월 22일 [진행 방식 비교](archive/2026-09-22-progression-options.md)와 9월 26일 [Stage 1 회의 요약](archive/2026-09-26-stage1-planning.md)은 현재 Product Plan·Sprint 기준에 반영한 회의 근거로 보관한다. [레거시 몬스터 흐름 분석](archive/legacy-monster-flow-and-dependencies.md)은 현재 Enemy AI 규칙이 아닌 이전 코드의 참고 자료다.
+10. [2026-10-02 AI 구조 검토](planning/2026-10-02-ai-architecture-review.md) — 현재 점수 기반 몬스터 AI 우선 시험, 미채택 경로안, 상위 AI 구조·라이벌 AI 미결정 범위
+11. [2026-10-03 PoC 후속 검토](planning/2026-10-03-poc-followup.md) — 전선 통합·몬스터 분대·해금·복귀 방향, 시험 기간 운영과 미확정 사항
+
+9월 22일 [진행 방식 비교](archive/2026-09-22-progression-options.md)와 9월 26일 [Stage 1 회의 요약](archive/2026-09-26-stage1-planning.md)은 현재 Product Plan·Sprint 기준에 반영한 회의 근거로 보관한다. 10월 2일 [AI 구조 검토](planning/2026-10-02-ai-architecture-review.md)와 10월 3일 [PoC 후속 검토](planning/2026-10-03-poc-followup.md)는 실행·설계 확인이 남아 `planning/`에 둔다. [레거시 몬스터 흐름 분석](archive/legacy-monster-flow-and-dependencies.md)은 현재 Enemy AI 규칙이 아닌 이전 코드의 참고 자료다.
 
 Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 함께 본다. [architecture-rebuild-notes.md](architecture/architecture-rebuild-notes.md)는 레거시 분석과 이식 대응표를 담은 참고 문서다. [SPRINT_0_BACKLOG.md](archive/SPRINT_0_BACKLOG.md)와 [team-recruitment-proposal.md](archive/team-recruitment-proposal.md)는 역사적 자료이며 현재 일정·역할의 기준이 아니다.
 
