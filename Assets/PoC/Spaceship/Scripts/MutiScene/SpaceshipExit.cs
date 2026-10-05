@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[RequireComponent(typeof(CircleCollider2D))]
+[RequireComponent(typeof(BoxCollider2D))]
+[RequireComponent(typeof(Animator))]
 public class SpaceshipExit : MonoBehaviour
 {
     [SerializeField]
@@ -17,15 +20,30 @@ public class SpaceshipExit : MonoBehaviour
 
     private bool isTransitioning;
 
+    private Animator _animator;
+    private BoxCollider2D _blockingCollider;
+    
+    private void Awake()
+    {
+        _animator = GetComponent<Animator>();
+        _blockingCollider = GetComponent<BoxCollider2D>();
+    }
+    
     private void OnTriggerEnter2D(Collider2D other)
     {
-        TryExit(other);
+        if(other.gameObject.layer != LayerMask.NameToLayer("Player"))
+            return;
+        _animator.SetBool("nearPlayer", true);
+    }
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.gameObject.layer != LayerMask.NameToLayer("Player"))
+            return;
+        _animator.SetBool("nearPlayer", false);
     }
     
     private void TryExit(Collider2D other)
     {
-        if(other.gameObject.layer != LayerMask.NameToLayer("Player"))
-            return;
         
         Transform player = other.transform;
 
@@ -100,5 +118,20 @@ public class SpaceshipExit : MonoBehaviour
         }
 
         player.transform.position = destination;
+    }
+    // 애니메이션 이벤트로 처리할 함수들
+    public void ActivateDoorCollider(int active)
+    {
+        _blockingCollider.enabled = active == 0;
+    }
+
+    // 문이 열리고 BoxCollider가 활성화 된 후 충돌
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.layer != LayerMask.NameToLayer("Player"))
+            return;
+        isTransitioning = true;
+        // 이동
+        TryExit(collision.collider);
     }
 }
