@@ -8,6 +8,8 @@
 
 ## 1. 문서 목적과 적용 범위
 
+외부 영역에서 API를 사용하려면 [터렛 연동 가이드](turrets/index.md)부터 읽는다. [빠른 시작](turrets/quick-start.md)과 [API 사용법](turrets/api-reference.md) 및 [스냅샷](turrets/snapshots.md)을 별도 페이지로 제공한다. 이 문서는 내부 구현과 Mermaid 실행 흐름의 상세 기준으로 유지한다.
+
 이 문서는 현재 Canon Turret과 Missile Turret의 데이터 구조, 실행 흐름, Prefab 설정법과 확장 규칙을 설명한다. 터렛 코드를 수정하거나 AI·전력·업그레이드 시스템에서 터렛 정보를 사용할 때 먼저 확인한다.
 
 이 문서는 현재 구현을 설명하는 **전환기 가이드**다. 제품 규칙이나 New Core의 최종 계약을 새로 확정하지 않는다. 게임 범위와 장기 구조가 충돌하면 [System Re-architecture Charter](system-rearchitecture-charter.md)와 [Docs Source of Truth](../README.md#source-of-truth)가 우선한다.
