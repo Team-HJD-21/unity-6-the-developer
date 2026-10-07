@@ -120,7 +120,7 @@ namespace TeamHJD.Game.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Encounter Request", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "현재 Match의 Battlefield snapshot을 Enemy 측 Encounter 명령 대상으로 전달합니다. 적 구성과 스폰 지점 배분은 기존 Squad Preset/Planner가 결정하며, Grid 기반 배치 정책은 아직 포함되지 않습니다.",
+                "현재 Match의 Battlefield snapshot을 Enemy 측 Encounter 명령 대상으로 전달합니다. 분대 구성은 Squad Preset을 따르고, Grid 점유·적 밀도·Frontline 거리로 사용 가능한 SpawnPoint와 세트 배분을 결정합니다.",
                 MessageType.Info);
 
             if (!EditorApplication.isPlaying)

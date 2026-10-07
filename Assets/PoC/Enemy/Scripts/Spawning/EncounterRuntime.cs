@@ -1,3 +1,6 @@
+// 최신 Battlefield snapshot을 Spawn Planner에 전달하고 실행 결과를 보고합니다.
+// 실제 NGO 생성은 Scene의 EnemySpawnExecutor에 위임합니다.
+
 using System.Collections.Generic;
 using System.Text;
 using TeamHJD.Game.Domain;
@@ -6,7 +9,7 @@ using UnityEngine;
 namespace TeamHJD.Game.Domain
 {
     /// <summary>
-    /// Encounter 입력 계약이 정해지기 전, Planner의 임시 판단 결과로 스폰 흐름을 확인한다.
+    /// Match 공간 정보를 Planner에 전달하고 분대 생성 결과를 보고한다.
     /// 스폰 계획은 Planner에, 실제 네트워크 생성은 Executor에 위임한다.
     /// </summary>
     public class EncounterRuntime
@@ -23,6 +26,7 @@ namespace TeamHJD.Game.Domain
         /// 게임 시작 시 씬에서 Executor를 찾았는지 반환한다.
         /// </summary>
         public bool HasExecutor => _spawnExecutor != null;
+        public bool CanExecute => _spawnExecutor != null && _spawnExecutor.CanSpawn;
         
         /// <summary>
         /// 기본 Planner를 준비하고 현재 씬의 Executor를 한 번 찾아 보관한다.
@@ -59,7 +63,7 @@ namespace TeamHJD.Game.Domain
 
         /// <summary>
         /// Match 공간 snapshot을 Encounter 경계로 받아 요청한 PoC 분대를 계획하고 서버 Executor에 전달합니다.
-        /// snapshot의 topology/Grid를 이용한 배치 정책은 Encounter 정책이 확정되기 전이므로 아직 적용하지 않습니다.
+        /// Grid의 점유·적 밀도와 Frontline 거리를 PoC 배치 정책에 적용합니다.
         /// </summary>
         public bool TrySpawn(
             BattlefieldSpatialSnapshot snapshot,
@@ -92,11 +96,12 @@ namespace TeamHJD.Game.Domain
             }
 
             var request = new SpawnRequest(squadOrder.Trim(), maxEnemyCount);
-            if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList,
+            if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot,
                     out IReadOnlyList<SpawnInstruction> instructions))
             {
                 result = $"SpawnPlan 생성 실패: preset '{request.SquadOrder}', budget {request.MaxCount}, " +
-                         $"available points {_spawnExecutor.SpawnPointList.GetAvailableSpawnPoints().Count}.";
+                         $"available points {_spawnExecutor.SpawnPointList.GetAvailableSpawnPoints().Count}. " +
+                         "Grid 밖 또는 Player/Turret 점유 셀의 SpawnPoint는 제외됩니다.";
                 return false;
             }
 

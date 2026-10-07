@@ -1,5 +1,5 @@
-// Initial_Stage PoC에서 App이 제공한 Match 기능과 Scene 전용 Player actor를 조립합니다.
-// 게임 규칙은 Core에, Unity 오브젝트 생성·정리는 이 Scene 범위 조립자가 맡습니다.
+// Initial_Stage에서 Match·Player를 조립하고 Encounter에 공간 조회 경로를 연결합니다.
+// Scene 수명에 맞춰 actor와 Match, Encounter 바인딩을 정리합니다.
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +27,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private MatchSession _matchSession;
         private MatchPlayerActorScope _playerActors;
         private IBattlefieldTurretInputSource _turretInputSource;
+        private IEncounterMatchConsumer _encounterConsumer;
         private IBattlefieldEnemyPositionSource[] _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
         private readonly Dictionary<TeamHJD.Game.Domain.EntityId, int> _lastEntityCells =
             new Dictionary<TeamHJD.Game.Domain.EntityId, int>();
@@ -102,6 +103,18 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     new LocalPlayerActorSpawner(playerPrefab, actorParent),
                     starts);
                 _matchSession = session;
+                // NGO NetworkManager는 Awake에서 자기 GameObject를 DontDestroyOnLoad로 이동시킨다.
+                // 따라서 Encounter 소비자는 현재 Scene 루트가 아니라 활성 오브젝트 전체에서 찾는다.
+                IEncounterMatchConsumer[] encounterConsumers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+                    .OfType<IEncounterMatchConsumer>()
+                    .ToArray();
+                if (encounterConsumers.Length > 1)
+                    throw new InvalidOperationException("Initial_Stage requires exactly one active Encounter Match consumer.");
+                _encounterConsumer = encounterConsumers.FirstOrDefault();
+                if (_encounterConsumer != null)
+                    _encounterConsumer.BindMatch(matchId, () => _matchSession?.Battlefield);
+                else
+                    Debug.LogWarning("Initial_Stage has no IEncounterMatchConsumer; automatic Encounter is unavailable.", this);
                 _lastEntityCells.Clear();
                 _nextBattlefieldSampleTime = 0f;
                 cameraFollow.Bind(_playerActors.Actors[LocalPlayerId].transform);
@@ -119,6 +132,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             catch
             {
+                _encounterConsumer?.UnbindMatch(matchId);
+                _encounterConsumer = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -148,6 +163,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             finally
             {
+                if (_matchSession != null)
+                    _encounterConsumer?.UnbindMatch(_matchSession.Config.MatchId);
+                _encounterConsumer = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -176,11 +194,21 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private IBattlefieldTurretInputSource FindTurretInputSource()
         {
-            MonoBehaviour source = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-                .FirstOrDefault(component =>
-                    component.gameObject.scene == gameObject.scene &&
-                    component is IBattlefieldTurretInputSource);
+            MonoBehaviour source = FindSceneBehaviours()
+                .FirstOrDefault(component => component is IBattlefieldTurretInputSource);
             return source as IBattlefieldTurretInputSource;
+        }
+
+        private IEnumerable<MonoBehaviour> FindSceneBehaviours()
+        {
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                foreach (MonoBehaviour component in root.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (component != null && component.isActiveAndEnabled)
+                        yield return component;
+                }
+            }
         }
 
         private void OnTurretLayoutChanged()
@@ -191,8 +219,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private IBattlefieldEnemyPositionSource[] FindEnemyPositionSources()
         {
-            return FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-                .Where(component => component.gameObject.scene == gameObject.scene)
+            return FindSceneBehaviours()
                 .OfType<IBattlefieldEnemyPositionSource>()
                 .ToArray();
         }
