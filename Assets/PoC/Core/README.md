@@ -482,11 +482,11 @@ PlayerInputHandler / Player Scene Components
 
 ### Stage 1 PoC 한 사이클의 현재 판정
 
-현재 로컬 1차 패치에는 Battlefield/Uniform Grid producer, Editor 진단, Initial_Stage 조립·Player 생성/정리, Match 시작 시 첫 Encounter 자동 요청과 Grid/Frontline 기반 임시 SpawnPoint 배분이 있습니다. 이것이 전체 팀 PoC의 한 사이클 완료를 뜻하지는 않습니다. `MatchSimulation.Execute()`는 아직 `NotHandled`를 반환하고 정식 승패·결과 흐름도 범위 밖입니다. Player/Enemy/Turret 피해 코드는 최근 병합됐지만 같은 Stage Build에서의 상호 전투·전선 변화는 재검증해야 합니다.
+2026-10-08 PL의 실제 런타임 확인으로 A의 기술 PoC를 완료 인수했습니다. 현재 Battlefield/Uniform Grid producer, Initial_Stage 조립·Player 생성/정리, 최신 snapshot을 쓰는 첫 자동/일회/반복 Encounter 요청, 실제 NGO Spawn 및 셀 공유 service 기반 분산, Game Debugger/Scene 진단이 연결돼 있습니다. 정식 승패·결과 흐름은 이 인수 범위가 아니며 `MatchSimulation.Execute()`는 실제 전투 명령을 아직 처리하지 않습니다.
 
-PR #473에서 Repository checks는 통과했고 Unity CLI live Editor 상태와 사용자 Play Mode 요청 후 Slime 10마리 생성이 확인됐습니다. 이번 로컬 패치는 `BattlefieldGridBuilderTests` 7개, `SpawnPointSpatialPolicyTests` 3개, 명시적 `InitialStageEncounterIntegrationTests` 1개를 Unity CLI로 통과했습니다. 통합 로그는 `Match r2`, `2 plan(s)`, `10 spawned`를 기록했습니다. 같은 로그의 `No targetable Player or Turret found`는 실제 Enemy 전투 진입이 아직 연결되지 않았다는 증거입니다. Windows Build와 전체 EditMode suite, topology 실제 입력 및 #443/#458 Issue acceptance와 #420 팀 통합은 별도로 확인해야 합니다.
+최신 공간 정책 검사 24/24, 최종 집중 회귀 20/20, 실제 Scene 요청 검사 2/2 및 동적 Grid 재검사 1/1이 통과했습니다. 고정 입력 480마리에서 30/30셀을 사용했고 최신 동적 점유 240마리에서는 27/30셀을 사용했습니다. 이전의 타깃 없음 경고는 `dcb583d1` Player 타깃 HOTFIX와 실제 이동 회귀로 보완했습니다. HOTFIX는 임시로 제외/교체할 수 있지만 대체 타깃 연결 없이 제거하면 정지가 재발할 수 있습니다. 팀 공통 Windows Build·플레이 관찰과 E의 공식 Plan 중복 방지 인수는 여전히 별도입니다.
 
-Stage 1 PoC를 닫기 위한 최소 수직 흐름과 검증 기준은 로컬 비공유 문서 [`YGDocs/POC_CLOSEOUT_AND_PLAYER_BOUNDARY_20261002.md`](../../../YGDocs/POC_CLOSEOUT_AND_PLAYER_BOUNDARY_20261002.md)에 정리합니다. 해당 문서는 `.gitignore` 정책에 따라 팀 공유되지 않으며, 이 README에는 Core/Player 책임 경계와 주요 미완료 사실만 둡니다.
+최신 완료 범위·검사·Issue 판정은 팀 공유 [PoC 인수 기록](../../../Docs/planning/2026-10-08-poc-closeout-and-pr-handoff.md)에 정리합니다. 개인 YGDocs는 여전히 ignore 대상이며 PR의 필수 참고 자료로 사용하지 않습니다.
 
 ## 2026-10-08 2차 통합: Core 수명과 Editor 진단
 

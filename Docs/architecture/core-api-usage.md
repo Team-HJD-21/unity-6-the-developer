@@ -6,6 +6,17 @@
 
 ## 호출 방향과 상태 소유권
 
+이전 `Global` 계열과의 대응은 책임을 이해하기 위한 것이며 상속·호환 계보가 아니다. 신규 구현은 해당 레거시를 호출하지 않는다.
+
+| 이전 구조 | 현재 Core 대응 |
+| --- | --- |
+| `GlobalBootstrap / Global` | `AppBootstrap / AppRoot`: App 생성과 소유 |
+| `GlobalServices` | `AppServices`: composition 내부 typed dependency 묶음 |
+| `Game` | `MatchSession`과 Scene composition: 한 판 수명과 Unity 연결 분리 |
+| `RunState` | `MatchState`: 한 판의 현재 상태. 계정 진행도는 별도 Profile |
+
+기존 #388의 `IMatchFactory`는 후보 명칭이며 현재 생성 책임은 `MatchSessionFactory`로 구현돼 있다. 새 호출자는 존재하지 않는 후보 인터페이스를 전제로 작성하지 않는다.
+
 | 호출자 | 계약과 동작 | 호출자가 하지 않을 일 |
 | --- | --- | --- |
 | Scene 조립부 | `IAppMatchHost.StartMatch(...)`로 세션을 만들고 필요한 Feature에 주입 | `AppServices`를 게임 서비스 검색기로 공개하거나 static Instance 사용 |
