@@ -8,11 +8,19 @@
 
 ## 2026-10-08 Game Debugger 확장
 
-`Tools > TeamHJD > Game Debugger`에서 Overview/Battlefield/Encounter/Statistics/Timeline/Capture·Compare를 사용합니다. 기존 창과 Scene Overlay도 유지됩니다. 배속/Pause/Step, 실제 생성·제거 기록과 시간별 histogram·표본 추이, 터렛/전력·연결 검사, 조건부 정지, 북마크, JSON/CSV·실행 A/B를 제공합니다. Editor 수집은 게임 서비스가 아니며 계산/스폰 정책을 대신하지 않습니다.
+상단 `Layout`에서 단일/좌우·상하 2분할/4분할을 선택해 여러 기능을 동시에 볼 수 있습니다. 각 영역의 드롭다운으로 기능을 고르고 분할선을 드래그해 크기를 조절합니다. `Battlefield + Stats`, `Encounter + Stats`, `Monitor ×4` 빠른 배치와 영역별 기록·지표·필터·스크롤 보존을 지원합니다. 시간 제어·Match·수집·Scene 표시 설정은 공용이며, 좌측 메뉴는 강조된 `ACTIVE · P#` 영역에 적용됩니다. 자세한 사용법은 [Game Debugger 가이드](../../../Docs/tooling/game-debugger-guide.md)를 참고하세요.
+
+`Tools > TeamHJD > Game Debugger`에서 Overview/Battlefield/Encounter/Statistics/Timeline/Capture·Compare를 사용합니다. 독립 Battlefield 창은 제거하고 편집 기능을 내부 패널로 통합했습니다. Scene Overlay는 유지됩니다. 배속/Pause/Step, 요청·실제 생성·실제 사망의 선 그래프, 터렛/전력·연결 검사, 조건부 정지, 북마크, JSON/CSV·실행 A/B를 제공합니다. Editor 수집은 게임 서비스가 아니며 계산/스폰 정책을 대신하지 않습니다.
+
+Statistics의 `Time series`는 명시적인 X/Y축, 최신 시간 추적, 가시 구간 최대값 기반 Auto Y, 상하좌우 탐색·축 확대/축소와 독립 큰 창을 제공합니다. `Spawn decisions / distribution`에서는 요청 당시 Grid/전선·후보 제외 사유·배정·계획/실제 수량·개체 생성 좌표를 지도와 표로 조회합니다. Overview와 Encounter/Timeline도 수치 카드·선택 가능한 스크롤 표·접힌 상세 설명으로 분리했습니다.
+
+Encounter의 `연속 Encounter 요청 / 시뮬레이션`에서 간격과 횟수(0 = 무제한)를 설정합니다. 기본은 게임시간 2초·10회이며 기존 최신 Match 요청 계약을 사용합니다. Battlefield 및 Scene Overlay의 `Frontline geometry`는 면적·외곽 길이·연결군·경계 선택과 안/밖 방향을 표시하는 읽기 전용 기하 진단입니다. 기하 외곽을 전술 우세나 실제 교전 전선으로 오인하지 않습니다. [반복 요청](../../../Docs/tooling/encounter-repeat-debugging.md) · [Spawn 검사](../../../Docs/tooling/game-debugger-spawn-inspection.md) · [전선 설계/시각화](../../../Docs/tooling/frontline-visualization-design.md)
+
+Player prefab의 타깃 등록 누락은 별도 HOTFIX `dcb583d1`로 수정했습니다. 실제 Initial_Stage에서 생성된 적의 이동, 모든 타깃 해제 시 정지, Player만 복원 시 이동 재개를 CLI로 확인했습니다. [원인·검증](../../../Docs/planning/2026-10-08-enemy-movement-hotfix.md)
 
 `MatchStart`, `DebugWindow`, `RuntimeUI`, `SceneCollision`은 공통 Match snapshot 경계를 사용합니다. `IGameDiagnosticsSource`의 사실 이벤트를 `GameDebuggerSession → Recorder → Statistics/Chart/Export`로 전달합니다. 스폰 성공 후 이벤트와 생존 수 차분은 다르며 Despawn은 처치가 아닙니다. 종료 기록은 활성 snapshot과 분리됩니다. [사용/API·제한](../../../Docs/tooling/game-debugger-guide.md) · [배치 결과/CLI 증거](../../../Docs/planning/2026-10-08-game-debugger-batch-results.md)
 
-전체 EditMode 36 성공·실패 0·Explicit 1 제외, 마지막 GameDebuggerTests 10/10, 명시적 Initial_Stage 통합 1/1을 확인했습니다. 실제 화면·물리 충돌·영상/멀티 Client는 미실행이며 전체 PoC 승패 완료 판정이 아닙니다.
+초기 전체 EditMode 36 성공·Explicit 1 제외 이후, 실사용 모니터 후속 집중 검사는 **54/54 성공**, 실제 Initial_Stage snapshot·사망·반복 Spawn 통합은 **1/1 성공**입니다. 별도 이동 HOTFIX Scene 검사도 **1/1 성공**입니다. 창 GUI 렌더링은 자동 확인했지만 실제 사용자 드래그·도킹·물리 충돌·영상/멀티 Client 인수는 별도이며 전체 PoC 승패 완료 판정이 아닙니다.
 
 ## 2026-10-03 병합본의 구현·검증 기록
 
@@ -102,14 +110,17 @@ Assets/PoC/Core/
 │  ├─ UI/IHudView.cs
 │  └─ TeamHJD.Game.Presentation.asmdef
 ├─ Editor/
-│  ├─ BattlefieldDebugWindow.cs
 │  ├─ BattlefieldDebugSession.cs / SceneDrawer / SceneOverlay / DiagnosticPanels
 │  ├─ GameDebugger/
-│  │  ├─ GameDebuggerWindow.cs / GameDebugger.uss
+│  │  ├─ GameDebuggerWindow.cs / GameDebuggerLayout.cs / GameDebugger.uss
 │  │  ├─ Recording/ (Session, Recorder, Archive, DTOs, Statistics, Export)
 │  │  ├─ Simulation/ (GameSimulationControls, TimeScaleLease)
-│  │  ├─ Charts/ (GameDebugChart, GameDebugMetric)
-│  │  └─ Panels/ (GameDebugInspectionPanels)
+│  │  ├─ Charts/ (GameDebugChart, GameDebugChartViewport, GameDebugMetric)
+│  │  ├─ GameDebugStatisticsWindow.cs (큰 통계 조회 창)
+│  │  ├─ Spawning/ (판단 snapshot 기록·검증·XY map·Inspector)
+│  │  ├─ Controls/ (EncounterRepeatScheduler, EncounterRepeatDebugControls)
+│  │  ├─ Frontline/ (기하 보고·선택 session·Inspector)
+│  │  └─ Panels/ (GameDebuggerPane, GameDebuggerPaneState, BattlefieldDebugPanel, GameDebugInspectionPanels)
 │  └─ TeamHJD.Game.Editor.asmdef (Editor 전용)
 ├─ Tests/EditMode/
 │  ├─ BattlefieldTopologyBuilderTests.cs
@@ -310,7 +321,7 @@ sequenceDiagram
     C-->>E: 목표: provide latest S.Battlefield when Encounter evaluates
 ```
 
-`BattlefieldDebugWindow`는 Play Mode에서 활성 Match snapshot을 `IEncounterDebugCommandTarget` 계약으로 Encounter 측에 전달합니다. 1차 통합 패치에서는 Scene 조립부가 `IEncounterMatchConsumer`에도 최신 snapshot 조회 함수를 바인딩하고 Match 시작 뒤 첫 요청을 자동 실행합니다. Core는 Encounter 정책을 소유하지 않습니다. Enemy 쪽 Planner는 Squad Preset·예산을 유지하면서 Grid 점유·기존 적 수·Frontline 거리를 지점 배분에 사용합니다.
+`BattlefieldDebugPanel`는 Play Mode에서 활성 Match snapshot을 `IEncounterDebugCommandTarget` 계약으로 Encounter 측에 전달합니다. 1차 통합 패치에서는 Scene 조립부가 `IEncounterMatchConsumer`에도 최신 snapshot 조회 함수를 바인딩하고 Match 시작 뒤 첫 요청을 자동 실행합니다. Core는 Encounter 정책을 소유하지 않습니다. Enemy 쪽 Planner는 Squad Preset·예산을 유지하면서 Grid 점유·기존 적 수·Frontline 거리를 지점 배분에 사용합니다.
 
 ```text
 MatchState (authoritative state)
@@ -328,7 +339,7 @@ BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
 
 여기에 Uniform Grid 생산 경로를 추가했습니다. `BattlefieldGridConfiguration`은 XY 중심 원점, Z 표시 평면, 맵 너비/높이, 가로/세로 셀 수를 보유합니다. 원점은 Grid의 중심이며 경계는 `center ± size / 2`로 계산합니다. 기본은 중심 `(0,0,0)`, 크기 `16×16`, 셀 분할 `16×16`이며 전부 구성 변경 가능합니다. 공간 조회는 XY만 사용합니다. 셀은 row-major `CellId = y * CellsX + x`를 사용하고, 동일한 Grid 설정 안에서 재현 가능한 ID입니다. 분할 설정을 바꾸면 CellId 의미도 바뀌므로 Match snapshot의 revision/config와 함께 해석해야 합니다. 내부 경계점은 양의 방향 셀에 속하며 맵의 최대 X/Y 경계는 마지막 셀에 포함됩니다. 범위 밖 입력은 무시하지 않고 종류별 out-of-bounds ID 목록에 기록합니다. 최대 셀 수는 과도한 메모리 할당을 막기 위해 262,144로 제한합니다.
 
-Editor 창 `Tools > TeamHJD > Battlefield Debug`의 `Authored Grid Defaults`에서 `BattlefieldGridSettings` 공용 에셋을 편집합니다. Scene View는 Edit Mode에서 이 authored 기본값을, Play Mode에서는 활성 Match Grid를 표시합니다. Edit Mode의 Territory/Frontline은 현재 Scene의 Turret 배치를 입력으로 Core `BattlefieldTopologyBuilder`를 호출해 그리는 미리보기이며 Match나 게임 상태를 만들지 않습니다. 창의 `Add Turret Battlefield Input Source to Active Scene` 버튼으로 Source를 Scene에 한 번 추가하면 Play Mode에서 작동 중인 Turret 배치/상태의 변경을 구독해 Core snapshot을 갱신합니다. Play Mode의 `Runtime Grid Override`는 활성 Match에만 명시적으로 적용되며 authoring asset을 수정하지 않습니다. `Restore Authored Defaults`는 활성 Match에 공용 기본값을 다시 적용합니다. Editor에서 입력하는 Center X/Y는 Grid의 중심 좌표이며 좌측 하단은 중심에서 맵 크기의 절반을 뺀 위치입니다. Play Mode에서 실행 중 AppRoot를 자동 탐색하며, `Encounter Request`는 현재 Match snapshot을 전달합니다. 사전 준비는 Edit Mode의 `Install Encounter Test Runtime in Active Scene` 버튼으로 하고, Scene 저장 후 Play Mode에서 요청합니다.
+Editor 창 `Tools > TeamHJD > Game Debugger`의 Battlefield 패널에서 `Authored Grid Defaults`에서 `BattlefieldGridSettings` 공용 에셋을 편집합니다. Scene View는 Edit Mode에서 이 authored 기본값을, Play Mode에서는 활성 Match Grid를 표시합니다. Edit Mode의 Territory/Frontline은 현재 Scene의 Turret 배치를 입력으로 Core `BattlefieldTopologyBuilder`를 호출해 그리는 미리보기이며 Match나 게임 상태를 만들지 않습니다. 창의 `Add Turret Battlefield Input Source to Active Scene` 버튼으로 Source를 Scene에 한 번 추가하면 Play Mode에서 작동 중인 Turret 배치/상태의 변경을 구독해 Core snapshot을 갱신합니다. Play Mode의 `Runtime Grid Override`는 활성 Match에만 명시적으로 적용되며 authoring asset을 수정하지 않습니다. `Restore Authored Defaults`는 활성 Match에 공용 기본값을 다시 적용합니다. Editor에서 입력하는 Center X/Y는 Grid의 중심 좌표이며 좌측 하단은 중심에서 맵 크기의 절반을 뺀 위치입니다. Play Mode에서 실행 중 AppRoot를 자동 탐색하며, `Encounter Request`는 현재 Match snapshot을 전달합니다. 사전 준비는 Edit Mode의 `Install Encounter Test Runtime in Active Scene` 버튼으로 하고, Scene 저장 후 Play Mode에서 요청합니다.
 
 `BattlefieldGridBuilder`는 전달된 Turret/Player/Enemy 위치만 셀별로 모읍니다. 결과인 `BattlefieldGridSnapshot`과 `BattlefieldGridCellSnapshot`은 셀 및 ID 목록을 정렬해 deterministic하게 노출하는 읽기 전용 snapshot입니다. 빈 셀은 occupant 목록을 공유하고, 점유 셀에서만 목록을 할당하며 `OccupiedCells` query도 제공합니다. 이것은 raw occupancy일 뿐 영향력, 위험도, 전술 우세, Spawn suitability를 계산하지 않습니다. Initial Stage composition은 Player transform과 `IBattlefieldEnemyPositionSource`에서 0.1초 간격으로 위치를 읽고 cell 점유가 바뀐 때만 갱신합니다. Domain은 `UnityEngine`/`UnityEditor`/NGO에 의존하지 않습니다.
 
@@ -397,6 +408,8 @@ appMatchHost.TryEndMatch(match.Config.MatchId);
 - Encounter의 `Advance`/평가 cadence도 E 책임입니다. 권장 방향은 Match 시간 또는 권위 tick에서 저비용 상태/타이머를 진행하고, 이벤트나 별도 Decision Interval에서만 SpawnPlan을 평가하는 혼합형입니다. 매 렌더 프레임마다 Grid 전체를 재구축하거나 SpawnPlan을 재생성한다는 뜻은 아닙니다. 이번 Core 변경은 Encounter 시간 시스템을 새로 만들지 않습니다.
 
 ### main #463 Encounter 수신 검토 (2026-10-02)
+
+아래 표는 10월 2일 당시의 검토 기록입니다. 현재는 상단 10월 8일 통합 패치처럼 Match 바인딩 및 Grid/전선 기반 지점 배분이 연결되어 있으며, 생성 결과와 공간 판단 snapshot을 Statistics에 제공합니다. 과거의 “미연결”을 현재 상태로 읽지 않습니다.
 
 `Assets/PoC/Enemy/Scripts/Spawning`에는 `EncounterRuntime`, `SpawnCompositionPlanner`, `SpawnInstruction`, `EnemySpawnExecutor`, `SpawnPoint` 경로가 추가됐습니다. 이는 기존 빈 상태가 아니라 **적을 실제 생성하는 첫 수직 프로토타입**이지만, 열린 #459 완료와 Battlefield 통합을 같은 것으로 보면 안 됩니다.
 
@@ -475,7 +488,7 @@ Stage 1 PoC를 닫기 위한 최소 수직 흐름과 검증 기준은 로컬 비
 
 1. `IAppMatchHost.CurrentMatchId / TryEndMatch` → `AppRoot` → `InitialStageCompositionRoot.HasCurrentMatch`를 읽습니다. 이전 Scene의 Update·터렛 이벤트·snapshot provider·종료는 새 Match를 대상으로 실행되지 않습니다.
 2. Scene 조립부의 `_encounterConsumerBehaviour`에는 활성 `IEncounterMatchConsumer` 구현체를 직접 연결할 수 있습니다. NGO/DDOL 이동 뒤에도 참조를 유지합니다. 기존 저장 Scene 호환용 미지정 조회는 남아 있지만 복수 소비자는 오류이며 임의로 선택하지 않습니다. **이번 배치에서 Scene YAML은 변경하지 않았습니다.**
-3. `Tools > TeamHJD > Battlefield Debug`를 엽니다. `Overview / Battlefield / Encounter / History` 탭으로 조회·명령을 구분합니다. 공용 에셋/현재 Match Grid 변경과 Source 추가는 `Battlefield`, 수동 요청/테스트 런타임 설치는 `Encounter`입니다.
+3. `Tools > TeamHJD > Game Debugger`를 엽니다. 공용 에셋/현재 Match Grid 변경과 Source 추가는 `Battlefield`, 수동 요청/테스트 런타임 설치는 `Encounter`, 기록 조회는 `Timeline`과 `Capture / Compare`입니다.
 4. Scene View의 Overlays 메뉴에서 `Battlefield`를 표시합니다. 창과 같은 레이어 토글을 공유하고 **창을 닫아도 표시가 유지**됩니다. 숨기려면 `Scene layers`를 끕니다. 상태는 EditorPrefs에 프로젝트별로 저장되며 게임 데이터가 아닙니다.
 5. `Pick cell` 활성화 후 Scene View에서 왼쪽 클릭합니다. XY 평면은 Grid Origin Z입니다. 선택 셀은 노랑 테두리이며 ID·X/Y·좌표 범위·T/P/E ID와 범위 밖 ID는 `Battlefield` 탭에서 읽습니다. 일반 Scene 편집 전에는 Pick cell을 끕니다.
 6. `Topology / Grid / Capture` 프리셋을 사용합니다. 법선은 외곽 변의 **안→밖 기하 방향**이며 우세 방향이 아닙니다. Capture는 라벨/선택 강조/게임 변경 명령을 줄이고 Scene·Match/revision·Grid·범례를 유지합니다. Commit/Build 라벨을 직접 입력한 뒤 `Copy capture metadata`로 공유 설명을 복사합니다. 스크린샷 자동 저장 기능은 아닙니다.
@@ -489,7 +502,8 @@ Stage 1 PoC를 닫기 위한 최소 수직 흐름과 검증 기준은 로컬 비
 | `BattlefieldSceneDrawer` | Scene Handles·외곽 기하 법선·셀 선택·범례. Window의 생명주기에 종속되지 않음 |
 | `BattlefieldSceneOverlay` | Scene View에서 공유 표시 상태 조작 |
 | `BattlefieldDiagnosticPanels` | 공용 조회·상세·프리셋·메타데이터 UI |
-| `BattlefieldDebugWindow` | 탭과 공용 에셋/현재 Match/Scene/Encounter 명령의 명시적 실행 |
+| `GameDebuggerWindow` / `GameDebuggerPane` | 단일/좌우·상하 2분할/4분할 배치, 영역별 기능·기록·필터·스크롤; 공용 Match/시간/수집기 유지 |
+| `BattlefieldDebugPanel` | 내부 패널에서 공용 에셋/현재 Match/Scene/Encounter 명령의 명시적 실행 (독립 창 없음) |
 
 PREVIEW는 활성 Scene의 정적 터렛 입력만으로 Core builder를 호출합니다. LIVE는 활성 Match snapshot만 사용합니다. Match 종료/소스 무효화 시 이전 값을 제거하고 `UNAVAILABLE`로 표시합니다. 오래된 값을 보존하는 STALE 모드는 만들지 않았습니다. 기본 조회는 0.25초 간격이며 표시/소스 변경 때만 repaint합니다. Grid 각 축은 최대 약 1,024개 선, 점유 면은 2,048개 셀, 라벨은 최대 128개로 제한해 Editor 부하를 줄입니다. **표시만 제한하며 Core snapshot을 줄이지 않습니다.**
 

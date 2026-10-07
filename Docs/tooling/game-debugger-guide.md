@@ -1,30 +1,47 @@
 # Game Debugger 사용·연동 가이드
 
-기준일: 2026-10-08 · 상태: 구현 / CLI 검증 · 화면·영상 인수 확인 별도
+기준일: 2026-10-08 · 상태: 실사용 모니터 후속 집중 검사 54/54·실제 Scene 통합 1/1 성공 · 화면 조작·영상 인수 확인 별도
 
 [배치 계획](../planning/2026-10-08-game-debugger-batch-plan.md) · [구현 결과·검증](../planning/2026-10-08-game-debugger-batch-results.md) · [Core README](../../Assets/PoC/Core/README.md)
+
+세부 사용법: [반복 Encounter 요청](encounter-repeat-debugging.md) · [요청별 Spawn 판단 검사](game-debugger-spawn-inspection.md) · [전선 디자인/기하 시각화](frontline-visualization-design.md).
 
 ## 실행 순서
 
 1. `Assets/PoC/Spaceship/Scenes/Initial_Stage.unity`를 연다.
-2. `Tools > TeamHJD > Game Debugger`. 기존 `Battlefield Debug` 메뉴도 유지된다.
+2. `Tools > TeamHJD > Game Debugger`. 독립 `Battlefield Debug` 메뉴/창은 제거했다. Grid/Encounter 기능은 내부 패널, Scene Overlay는 그대로 유지된다.
 3. Play → Overview의 SERVER·Match ID, 터렛·전력과 경고를 확인한다. 첫 Encounter는 기존 정책대로 자동 요청된다. 창을 연다고 자동 요청을 끄지 않는다.
 4. Battlefield에서 기존 Grid 에셋/현재 Match override, 셀 선택과 Scene 레이어를 사용한다. 계산은 Core, 창과 Overlay는 표시·명시적 요청만 담당한다.
 5. Encounter의 Request는 추가 생성 요청이다. Game View의 Plan & Spawn 및 Scene 충돌도 같은 snapshot 경계를 사용한다. 성공한 수동 요청은 **아직 예약된** 자동 첫 요청만 취소한다. 완료된 자동 요청은 되돌리지 않는다.
-6. Statistics의 A=LIVE, Metric=Spawned, Bin=5초가 기본이다. Enemy type / SpawnPoint ID / Squad preset은 정확한 문자열 일치, source는 enum 필터다. 막대에 마우스를 올려 구간을 확인한다.
+6. Statistics의 A=LIVE, 요청/생성/사망 동시 선 그래프, Bin=5초, 최근 60초 추적이 기본이다. `Chart settings / filters`에서 단일 Metric/필터/A-B를 설정한다. 클릭해 구간별 수치를 조회한다. `View`를 Spawn decisions / distribution으로 바꾸면 요청별 판단 snapshot을 조회한다.
 7. Timeline에서 source/kind/문자열을 검색하고 북마크를 추가한다. 터렛 파괴·복구 마커는 현재 Scene 터렛을 선택/Frame할 수 있다. 실제 제거를 처치로 해석하지 않는다.
 8. Capture / Compare에서 종료한 Match ID를 A/B로 선택하거나 JSON을 import한다. Commit/Build 라벨을 직접 입력한 뒤 `Stamp build/commit label on live record`로 활성 기록에 반영한다. Git commit을 자동 추측하지 않는다.
 9. Scene Capture preset, Overlay/창, Game/Scene View를 조합해 스크린샷/영상을 남긴다. JSON과 events/samples CSV는 명시적으로 경로를 선택해 저장한다. 기본 저장을 저장소 내부로 강제하지 않는다.
 
+## 여러 기능 동시 보기
+
+상단 `Layout`에서 `Single`, `2 · Columns`(좌우), `2 · Rows`(상하), `4 · Panels`를 선택한다. 기본은 좌우 2분할이다. 분할 경계선을 드래그해 크기를 조절할 수 있다. 각 영역의 `P1~P4` 옆 드롭다운으로 표시할 기능을 선택하며 **같은 Statistics 기능을 두 영역에 열어 서로 다른 지표를 비교**할 수도 있다.
+
+- `Battlefield + Stats`: 공간/터렛 상태와 통계를 동시에 표시한다.
+- `Encounter + Stats`: 요청 버튼·요청 결과와 실제 생성량을 동시에 표시한다.
+- `Monitor ×4`: Overview / Battlefield / Encounter / Statistics를 한 화면에 배치한다.
+- 클릭·키보드 포커스한 영역에 강조 테두리가 표시된다. 좌측 탐색 메뉴는 `ACTIVE · P#` 영역의 기능만 바꾼다.
+- 기능 선택, A/B 기록 선택, 지표, 필터, bin/clock, 검색·북마크 입력과 기능별 스크롤 위치는 **영역별** 상태다. Single로 바꾸어 숨긴 영역도 다시 열면 설정을 유지한다. 창/domain reload의 직렬화 대상이며 게임 저장 데이터는 아니다.
+- Match·기록 수집·Imported 기록 슬롯·시간 도구·Scene 표시 옵션/셀 선택·조건부 정지의 무장 상태는 **공유**한다. 여러 Battlefield 영역에서 명령을 실행하더라도 같은 활성 Match/에셋에 적용된다. 분할은 별도 Match나 별도 Scene 시뮬레이션이 아니다.
+
+기능 상태는 `GameDebuggerPaneState`, 영역 UI는 `GameDebuggerPane`, 창 배치·공용 toolbar는 `GameDebuggerWindow`가 담당한다. 레이아웃 전환은 UI 구독만 재구성하고 공용 Collector/Recorder를 다시 만들거나 Encounter 요청을 발행하지 않는다. 좁은 dock에서는 Single/상하 배치가 편리하며, 4분할은 넓은 창을 권장한다.
+
 ## 창 구성과 데이터의 뜻
+
+핵심 수치는 Overview의 큰 계기 카드로, 터렛·요청·Timeline은 고정 높이의 스크롤 표로 표시한다. 요청/이벤트를 선택하면 하단 상세를 펼칠 수 있으며 긴 메시지는 기본 목록에 풀어쓰지 않는다. Grid 기본값/override, 연결 정보, 필터/설명은 범주별 Foldout으로 구분한다. Unity Editor의 기본 toolbar·표·접힘 구조와 Dark/Light 색상을 사용한다.
 
 | 패널 | 제공 기능 |
 | --- | --- |
 | Overview | LIVE/PREVIEW, authority, 게임/실제 경과, 수집/손실, 생존 수·귀속 불명 수, 전력, 영역 면적·외곽 길이, 연결 경고, 터렛 목록 |
 | Battlefield | 기존 공용 Grid authoring/current override, 레이어·셀 상세·Scene 설치 명령, 현재 터렛 표 |
-| Encounter | 기존 snapshot Request, 최근 20개 요청의 source/RequestId/revision/preset/planned/actual 및 사유 |
-| Statistics | Spawned/Removed histogram, Alive/CumulativeSpawned/AvailablePower/OperationalRatio/TerritoryArea/FrontlineLength 추이, Planned/Executed/Failures, 필터·A/B |
-| Timeline | Match/요청/실제 생성·제거/터렛 파괴·복구/snapshot revision 이력, 검색·북마크·조건부 정지 |
+| Encounter | 기존 snapshot Request, 최근 200개 요청 결과의 구조화된 표/선택 상세, 명시적 연속 요청 도구 |
+| Statistics | 요청/실제 생성/실제 사망/제거 선 그래프, 기타 단일 지표·A/B, 당시 Spawn decisions / distribution, 큰 독립 통계 창 |
+| Timeline | Match/요청/실제 생성·사망·제거/터렛 파괴·복구/snapshot revision을 시간순 표로 표시, 선택 상세·검색·북마크·조건부 정지 |
 | Capture / Compare | Scene 캡처 메타데이터, 조회용 차트, JSON/CSV 내보내기, import·A/B 비교 |
 
 상단 시간 도구는 로컬 Editor 전용이다. 0.25/0.5/1/2/4배 또는 0~8 직접 입력, Pause/Resume/Step/Restore를 제공한다. `fixedDeltaTime`, FPS, 네트워크 시간을 자동 조절하지 않는다. timeScale=0이면 게임시간만 멈추므로 Step은 비활성이다. Step은 Unity 한 프레임이며 결정론적 Match tick이 아니다. Host의 Pause가 다른 Client를 멈추지는 않는다.
@@ -33,7 +50,15 @@ Capture mode에서는 시간·기존 게임 변경 명령을 비활성/숨김 �
 
 ## 집계·누락·보존
 
-- 실제 생성은 서버의 `NetworkObject.Spawn()` 성공 후 발행한 사실, 제거는 Executor의 untrack/Despawn 사실이다. 현재 생존 수 차분이나 로그 파싱으로 생성량을 추측하지 않는다. 생성과 제거가 같은 bin에 있어도 각각 집계한다.
+### 그래프 탐색 / 큰 통계 창
+
+- `Open in window`는 Statistics 전용 창을 연다. 현재 영역의 조회 설정을 복사하고 동일 Collector/기록을 조회한다. 이후 필터·축·기록 선택은 독립적이며 Game Debugger를 닫아도 공용 수집은 유지된다. 별도 Battlefield 창을 복구한 것이 아니다.
+- `Follow latest`는 기본으로 최신 60초를 따라간다. 가로 scrollbar·가운데 드래그·Shift+휠로 과거를 탐색하면 Follow를 끈다. 다시 켜면 최신 구간으로 복귀한다. X+/X− 또는 Ctrl+휠로 시간 폭을 확대/축소, Fit으로 전체 기록을 표시한다.
+- `Auto Y`는 **현재 X 가시 구간의 표시 중인 series** 최댓값에 최소 15% 여유와 보기 좋은 눈금을 둔다. 세로 scrollbar·휠/가운데 드래그 또는 Y+/Y−/Alt+휠은 수동 범위로 전환한다. Auto Y를 다시 켜면 가시 구간에 맞춘다.
+- X축은 Game/Real seconds, Y축은 수량/bin 또는 선택 지표의 단위다. 요청은 **요청 횟수**, 생성/사망/제거는 **객체 수**다. 범례로 각각의 선을 끌 수 있으며 비교 기록 B는 점선으로 구분한다. 선택한 구간의 A/B 값을 그래프 아래 표시한다.
+- [Spawn 판단/분포 Inspector](game-debugger-spawn-inspection.md): 요청 시점의 Grid 점유·전선·후보 적합성/제외 이유·계획/실제 수량·실제 생성 XY를 조회한다. 현재 Scene 상태로 과거 snapshot을 다시 계산하지 않는다. 같은 지점/몬스터의 반복 계획 항목은 합산해 actual과 비교한다.
+
+- 실제 생성은 서버의 `NetworkObject.Spawn()` 성공 후, 사망은 `EnemyHealth`가 HP 소진을 확정했을 때, 제거는 Executor의 untrack/Despawn 사실이다. 한 사망 뒤 제거도 기록될 수 있으며 같은 사건을 합산한 처치 수가 아니다. 현재 생존 수 차분이나 로그 파싱으로 생성/사망량을 추측하지 않는다. 사망 계약 없는 이전 기록은 N/A다.
 - 서버 현재 생존 수는 해당 Match에 귀속된 Executor 추적 수다. 무 context 생성은 별도 귀속 불명 수이며 차트에 현재 Match 생성 사실처럼 넣지 않는다. Client에 서버 집계 계약이 없으면 N/A다.
 - 수치 표본은 0.25초 실제 시간 간격, 연결 검사는 1초, UI 갱신은 최대 4Hz. 터렛 topology 면적/외곽 길이는 geometry 변경 때 재계산한다. 정적 데이터와 동적 점유 revision을 혼동하지 않는다.
 - 기본 bin은 게임시간 5초. Real clock은 실제 경과시간으로 구간을 바꾼다. bin 상한 2,048개를 넘으면 실제 폭을 늘리고 축에 표시한다. 표본이 없는 bin은 N/A, 없는 값을 0으로 잇지 않는다.
@@ -58,7 +83,7 @@ flowchart LR
   CORE[AppRoot current Battlefield snapshot] --> L
   L --> R[EncounterRuntime / existing Planner]
   R --> E[EnemySpawnExecutor / server]
-  E -->|successful spawn / removal| L
+  E -->|successful spawn / death / removal| L
   L -->|IGameDiagnosticsSource| SESSION[GameDebuggerSession]
   SESSION --> REC[Recorder / Archive]
   REC --> CHART[Statistics / Chart / CSV JSON]
@@ -72,6 +97,10 @@ flowchart LR
 
 ## 구현하지 않은 지표 / 별도 인수
 
-후보별 판단 이유/점수, 공식 PlanId·중복 실행 방지, 처치/피해/DPS/전술 압력·우세도, 분대 타깃의 실제 유효성은 아직 계약이 없어 N/A다. 연결 경고는 SpawnPoint ID/위치, topology 부족, OOB, 진단 소스 수와 TargetableComponent 존재를 검사하며 공격 성공까지 인증하지 않는다. 정확한 snapshot 발행 timestamp는 없으므로 observed age와 구분한다.
+실제 후보별 셀 점유/전선 거리/ID 순위·제외 사유·배정은 이제 Snapshot Inspector에서 확인한다. 가상의 통합 위험 점수, 공식 PlanId·중복 실행 방지, 피해/DPS/전술 압력·우세도는 여전히 N/A다. 연결 경고는 SpawnPoint ID/위치, topology 부족, OOB, 진단 소스 수와 TargetableComponent 존재를 검사하며 공격 성공까지 인증하지 않는다. 정확한 snapshot 발행 timestamp는 없으므로 observed age와 구분한다.
 
-자동 통합 검사는 충돌 adapter 메서드를 직접 호출했다. 물리 `OnCollisionEnter2D`, 실제 Game UI 클릭, 다중 Client 동기화, 그래프 화면·dock layout·영상은 별도 시각/조작 확인이다. 전체 전투·지역 해금·승패 한 사이클 완료를 이번 도구 배치 완료와 동일시하지 않는다.
+## 사용성 레퍼런스
+
+[Unity Profiler의 선택 구간→상세 패널](https://docs.unity.com/en-us/engine/6000.0/manual/analysis/profiler/window-navigating)과 [Unreal Insights의 그래프 탐색/축 조정](https://dev.epicgames.com/documentation/unreal-engine/using-the-timing-panel-in-unreal-insights-for-unreal-engine?lang=en-US)을 참고하여 공용 toolbar, 접힘 설정, 선택 가능한 표/상세, 축 탐색과 최신 추적을 적용했다. 엔진 성능 지표를 모방하지 않고 실제 게임 관측 사실에 적용한 사용성 설계다.
+
+자동 통합 검사는 충돌 adapter 메서드를 직접 호출했다. 독립 Statistics 창의 GUI 렌더링/레이아웃 검사는 통과했다. 물리 `OnCollisionEnter2D`, 실제 Game UI 클릭, 다중 Client 동기화, 그래프 시각 인수·dock layout·영상은 별도 시각/조작 확인이다. 전체 전투·지역 해금·승패 한 사이클 완료를 이번 도구 배치 완료와 동일시하지 않는다.

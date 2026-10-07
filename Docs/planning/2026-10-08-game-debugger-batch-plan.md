@@ -44,7 +44,7 @@ Scene YAML에서 `SpawnerTest` 오브젝트와 `SpawnerTester` 컴포넌트가 �
 | 배치 | 구현·커밋 단위 | 완료 기준·의존성 |
 | --- | --- | --- |
 | G0 — 계약/기준 고정 | 위 확정 정책에 따라 Scene 요청 통합 경계를 지정, 시간 기준·요청 원인·MatchId/revision·생성/제거/실패 진단 DTO 및 adapter 경계, 데이터가 없는 항목 명시 | A/E/C 연결 합의. 실제 Scene 터렛 baseline은 배치 G8과 연결. 자동/수동 모드를 추가하거나 기존 자동 요청을 끄지 않음 |
-| G1 — 상위 창과 디자인 | Game Debugger UI Toolkit shell, 상단 공통 상태/시간 toolbar, 좌측 탐색, 중앙 패널, 하단 경고. 기존 Battlefield/Overlay와 명령 유지. UXML/USS/차트 view는 Editor 영역에 분리 | 기존 메뉴 호환, 좁은 dock/넓은 창, domain reload, Capture와 LIVE/PREVIEW 구분 |
+| G1 — 상위 창과 디자인 | Game Debugger UI Toolkit shell, 상단 공통 상태/시간 toolbar, 좌측 탐색, 중앙 단일/좌우·상하 2분할/4분할, 하단 경고. 영역별 기능·기록·필터·스크롤 보존. Battlefield 기능은 내부 패널, Scene Overlay와 기존 명령 유지. USS/차트 view는 Editor 영역에 분리 | 단일 Game Debugger 메뉴, 각 분할의 독립 설정·경계선 크기 조절, 좁은 dock/넓은 창, domain reload, Capture와 LIVE/PREVIEW 구분 |
 | G2 — 시간·실행 제어 | 0.25/0.5/1/2/4배·직접 입력, Editor Pause/Resume/Step, 게임/실제 경과시간, fixed step 표시, 변경한 설정 복원. Editor 수명과 분리한 제어 scope | 종료/reload 후 누수 없음. 멀티 Client 위험 경고. timeScale=0을 전체 정지로 표시하지 않음. fixedDeltaTime 자동 변경은 기본 Off |
 | G3 — 현재 상태·연결 검사 | Match/authority 연결 상태, Grid/Topology/Frontline, 터렛 상태 표·Scene 선택, 전력/가동/파괴, snapshot 나이. 비공선 부족/중복 SpawnPoint ID/범위 밖 입력/소비자 누락/타깃 미연결 검사 | 현재 snapshot/Feature 조회를 읽기 전용으로 사용. 권한/타깃 등 추가 계약 없으면 Unknown. 정책 재계산으로 후보 결과를 꾸미지 않음 |
 | G4 — 관측 수집·요청 연결 | E Executor의 실제 생성 성공/제거/실패 기록 수신, Match-scoped recorder, 요청 원인/계획과 결과 상관 ID. 모든 진입점의 telemetry coverage 표. E/C와 Scene 요청을 공통 snapshot 경계로 연결 | 생성/제거 동시 발생에도 정확한 수, Client 중복 집계 금지. Despawn과 처치 구분. 원시 이벤트 상한·완료 실행 기록/활성 snapshot 분리 |
@@ -71,6 +71,21 @@ E: 실제 spawn/despawn/failure 및 request/plan 진단·Match 수명, 서버 �
 실제 DPS/처치율/피해 누적처럼 아직 사실 이벤트가 없는 지표는 계약 전에는 N/A다. Unity Step은 렌더 프레임 진행이지 결정론적 Match tick 진행이 아니다. 자동 재실행/대규모 배치 시뮬레이션·완전 리플레이는 이번 9개 배치에 포함하지 않는다.
 
 ## 현재 구현의 상태
+
+### 실사용 모니터 확장 (후속 요구 반영)
+
+초기 막대 차트·원시 텍스트 중심 UI는 아래 범위로 대체한다. 기존 G0~G8은 초기 계획 기록이고 현재 수락 범위는 이 후속 항목을 포함한다.
+
+1. 요청/생성/확정 사망의 공통 시간축 선 그래프, 축 단위, 최신 추적·가시 구간 Auto Y·양축 탐색·독립 큰 Statistics 창.
+2. 실시간 카드와 스크롤 표·선택 상세, 설정/설명 foldout과 native Editor 스타일.
+3. 실제 정책/실행 경로에서 얻은 요청 당시 후보·제외 사유·배정·계획/결과·생성 XY의 bounded snapshot 및 Statistics 지도/Inspector. 추정 점수를 만들지 않는다.
+4. 동일 요청 계약을 간격/횟수로 반복하는 Editor 도구. 일시정지·Match 수명·실패·pane 해제 보호.
+5. 전선 디자인/Unity·UE 레퍼런스 조사와 현재 기하의 경계 선택·법선·길이·면적 Inspector. 실제 교전/전술 우세와 구분하며 Core 계산 정책을 바꾸지 않는다.
+6. Player 타깃 누락으로 인한 이동 정지 HOTFIX는 별도 커밋·명시적 Scene 검사로 관리.
+
+자동 검사는 변경된 순수 모델/창 구성과 실제 Initial_Stage 요청·snapshot·사망 경로만 집중 실행한다. 반복 전체 suite 대신 결과 문서에 검사별 증거를 남긴다. 실제 Scene 클릭·도킹·가독성 QA는 사람이 확인할 항목으로 구분한다.
+
+독립 Battlefield 창은 기능 차이가 없어 후속 정리에서 제거했다. `BattlefieldDebugPanel`은 일반 C# 패널이며 Game Debugger가 Attach/Dispose를 관리한다. 별도 EditorWindow를 숨겨 생성하지 않는다. Scene Overlay도 단일 Game Debugger를 연다. 이 후속 정리의 테스트 상태는 배치 결과의 별도 항목을 따른다.
 
 G0~G7의 도구·관측 기능을 구현했다. Scene 충돌은 이제 `SpawnerTester.TryRequestEncounter → IEncounterDebugCommandTarget.TryRequestCurrentEncounter → bound snapshot → TryRequestEncounter → TrySpawn`을 사용하며 Match ID/권한 준비 조건과 같은 예약 취소 정책을 따른다. DebugWindow/RuntimeUI/SceneCollision/MatchStart를 모두 구조화해 기록한다. 자동/수동 모드는 추가하지 않았다.
 

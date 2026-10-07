@@ -43,6 +43,25 @@ public sealed class InitialStageEncounterIntegrationTests
         bool sceneRequest = sceneTrigger.TryRequestEncounter(out string sceneResult);
         bool uiRequest = launcher.TryRequestCurrentEncounter("Normal",10,EncounterRequestSource.RuntimeUI,out string uiResult);
         bool debugRequest = launcher.TryRequestCurrentEncounter("Normal",10,EncounterRequestSource.DebugWindow,out string debugResult);
+        // 반복 UI와 같은 상태 머신이 최신 Match 요청 계약으로 실제 생성하는지도 함께 검사합니다.
+        var repeat = new EncounterRepeatScheduler();
+        string repeatMatch = launcher.BoundMatchId.ToString();
+        int repeatBefore = launcher.RecentDiagnostics.Count(item => item.Kind == GameDiagnosticKind.EnemySpawned);
+        repeat.Start(repeatMatch, 0.1, 2);
+        repeat.Tick(0.1, repeatMatch, true, true, true, null, RequestRepeat);
+        bool repeatPaused = repeat.CompletedRequests == 0;
+        repeat.Tick(0.1, repeatMatch, true, false, true, null, RequestRepeat);
+        repeat.Tick(0.1, repeatMatch, true, false, true, null, RequestRepeat);
+        bool repeatSpawned = repeat.CompletedRequests == 2 && !repeat.IsRunning &&
+            launcher.RecentDiagnostics.Count(item => item.Kind == GameDiagnosticKind.EnemySpawned) == repeatBefore + 20;
+        var decision=launcher.RecentDiagnostics.LastOrDefault(item=>item.SpawnDecision!=null)?.SpawnDecision;
+        bool capturedDecision=decision!=null&&decision.Candidates.Count>0&&decision.Plans.Count>0&&decision.Actuals.Count>0;
+        int deathBefore=launcher.RecentDiagnostics.Count(item=>item.Kind==GameDiagnosticKind.EnemyDied);
+        var health=Object.FindAnyObjectByType<EnemyHealth>();
+        Assert.That(health,Is.Not.Null);
+        health.TakeDamage(health.MaxHealth);
+        yield return null;
+        bool deathObserved=launcher.RecentDiagnostics.Count(item=>item.Kind==GameDiagnosticKind.EnemyDied)==deathBefore+1;
         yield return null;
         var root = Object.FindAnyObjectByType<TeamHJD.Game.Bootstrap.AppRoot>();
         int triangles = root == null ? 0 : root.CurrentBattlefieldSnapshot.Triangles.Count;
@@ -73,6 +92,9 @@ public sealed class InitialStageEncounterIntegrationTests
         Assert.That(sceneRequest, Is.True, sceneResult);
         Assert.That(uiRequest, Is.True, uiResult);
         Assert.That(debugRequest, Is.True, debugResult);
+        Assert.That(repeatPaused && repeatSpawned, Is.True, "반복 요청도 Pause를 존중하며 공통 Match 계약으로 2회/20마리를 생성해야 합니다.");
+        Assert.That(capturedDecision,Is.True,"실제 판단 후보/계획/생성 위치가 요청 완료에 포함되어야 합니다.");
+        Assert.That(deathObserved,Is.True,"EnemyHealth 확정 사망은 일반 Despawn과 별도로 정확히 1회 기록되어야 합니다.");
         Assert.That(triangles, Is.GreaterThan(0), "Scene 터렛 배치로 Core topology가 형성되어야 합니다.");
         Assert.That(frontline, Is.GreaterThan(0));
         Assert.That(missingRejected && staleRejected, Is.True, "빈 snapshot/이전 Match 요청은 공간 검사 우회 없이 거부해야 합니다.");
@@ -81,5 +103,13 @@ public sealed class InitialStageEncounterIntegrationTests
         Assert.That(recorderConnected, Is.True, "창을 열지 않아도 실제 생성 기록을 수집해야 합니다.");
         Assert.That(GameDebuggerSession.Recorder.Find(matchId), Is.Not.Null, "Play 종료/domain reload 이후에도 비교용 기록을 유지해야 합니다.");
         Assert.That(GameDebuggerSession.Recorder.Find(matchId).IsComplete, Is.True, "정상 Unbind 종료 기록이 있어야 합니다.");
+    }
+
+    // EnterPlayMode의 domain reload를 넘는 coroutine에 closure를 보관하지 않습니다.
+    private static bool RequestRepeat(out string result)
+    {
+        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        if (launcher == null) { result = "Encounter launcher missing"; return false; }
+        return launcher.TryRequestCurrentEncounter("Normal", 10, EncounterRequestSource.DebugWindow, out result);
     }
 }
