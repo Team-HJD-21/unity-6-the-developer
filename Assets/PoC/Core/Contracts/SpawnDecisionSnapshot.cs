@@ -21,7 +21,8 @@ namespace TeamHJD.Game.Contracts
         public string Policy {get;}
         public string Outcome {get;}
         public SpawnDecisionSnapshot(BattlefieldSpatialSnapshot battlefield, IEnumerable<Candidate> candidates,
-            IEnumerable<Plan> plans, IEnumerable<Actual> actuals, string outcome)
+            IEnumerable<Plan> plans, IEnumerable<Actual> actuals, string outcome,
+            string policy = "Lowest cell enemy pressure → nearest frontline → ordinal point ID; complete preset sets only")
         {
             Grid=battlefield.Grid.Configuration;
             Cells=Array.AsReadOnly(battlefield.Grid.OccupiedCells.Take(MaximumGeometry)
@@ -36,7 +37,7 @@ namespace TeamHJD.Game.Contracts
             DroppedActuals=Math.Max(0,a.Length-MaximumActuals);
             DroppedItems=Math.Max(0,c.Length-MaximumCandidates)+Math.Max(0,p.Length-MaximumPlans)+Math.Max(0,a.Length-MaximumActuals)
                 +Math.Max(0,battlefield.Grid.OccupiedCells.Count-MaximumGeometry)+Math.Max(0,battlefield.FrontlineEdges.Count-MaximumGeometry);
-            Policy="Lowest cell enemy pressure → nearest frontline → ordinal point ID; complete preset sets only";
+            Policy=policy;
             Outcome=outcome;
         }
         public sealed class Cell
@@ -54,8 +55,12 @@ namespace TeamHJD.Game.Contracts
             public string Id{get;} public BattlefieldPoint Position{get;} public int CellX{get;} public int CellY{get;}
             public int EnemyCount{get;} public int AssignedSets{get;} public double Distance{get;}
             public bool HasFrontline{get;} public string Reason{get;}
-            public Candidate(string id,BattlefieldPoint position,int cellX,int cellY,int enemies,int assigned,double distance,bool hasFrontline,string reason)
-            {Id=id;Position=position;CellX=cellX;CellY=cellY;EnemyCount=enemies;AssignedSets=assigned;Distance=distance;HasFrontline=hasFrontline;Reason=reason;}
+            public long CellService{get;} public long PointService{get;} public long CellPendingEnemies{get;} public long CellScore{get;}
+            public bool HasDistributionMetrics{get;}
+            public Candidate(string id,BattlefieldPoint position,int cellX,int cellY,int enemies,int assigned,double distance,bool hasFrontline,string reason,
+                long cellService=0,long pointService=0,long cellPendingEnemies=0,long cellScore=0,bool hasDistributionMetrics=false)
+            {Id=id;Position=position;CellX=cellX;CellY=cellY;EnemyCount=enemies;AssignedSets=assigned;Distance=distance;HasFrontline=hasFrontline;Reason=reason;
+                CellService=cellService;PointService=pointService;CellPendingEnemies=cellPendingEnemies;CellScore=cellScore;HasDistributionMetrics=hasDistributionMetrics;}
         }
         public sealed class Plan
         {

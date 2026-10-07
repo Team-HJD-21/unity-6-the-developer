@@ -15,6 +15,72 @@ using UnityEngine.TestTools;
 public sealed class InitialStageEncounterIntegrationTests
 {
     [UnityTest]
+    [Explicit("Initial_Stage와 NGO Host에서 실제 지점/셀별 반복 배분을 검증")]
+    public IEnumerator InitialStage_DistributesRepeatedRequestsAcrossAvailableGridCells()
+    {
+        EditorSceneManager.OpenScene("Assets/PoC/Spaceship/Scenes/Initial_Stage.unity", OpenSceneMode.Single);
+        yield return new EnterPlayMode();
+        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        Assert.That(launcher, Is.Not.Null);
+        float deadline = Time.realtimeSinceStartup + 20f;
+        while (Time.realtimeSinceStartup < deadline && !launcher.RecentDiagnostics.Any(e => e.SpawnDecision != null))
+            yield return null;
+        var root = Object.FindAnyObjectByType<TeamHJD.Game.Bootstrap.AppRoot>();
+        Assert.That(root, Is.Not.Null);
+        var snapshot = root.CurrentBattlefieldSnapshot;
+        Assert.That(snapshot, Is.Not.Null);
+        Assert.That(snapshot.FrontlineEdges, Is.Not.Empty, "실제 Scene 터렛의 전선 기하를 사용해야 합니다.");
+
+        // 이동 후 비는 셀을 모사하기 위해 같은 snapshot을 유지합니다. 실제 NGO 생성/이력 commit은 우회하지 않습니다.
+        var cellCounts = new System.Collections.Generic.Dictionary<string, int>();
+        var pointCells = new System.Collections.Generic.Dictionary<string, string>();
+        int requests = 0, actualCount = 0, maximumInitialEnemies = 0;
+        for (int i = 0; i < 48; i++)
+        {
+            bool succeeded = launcher.TryRequestEncounter(snapshot, "Normal", 10, EncounterRequestSource.DebugWindow, out string result);
+            Assert.That(succeeded, Is.True, result);
+            var decision = launcher.RecentDiagnostics.Last(e => e.SpawnDecision != null).SpawnDecision;
+            if (i == 0)
+            {
+                foreach (var c in decision.Candidates.Where(c => c.HasDistributionMetrics))
+                {
+                    string cell = c.CellX + ":" + c.CellY;
+                    pointCells.Add(c.Id, cell);
+                    cellCounts[cell] = 0;
+                    maximumInitialEnemies = System.Math.Max(maximumInitialEnemies, c.EnemyCount);
+                }
+                Assert.That(cellCounts.Count, Is.GreaterThan(2), "다수의 Scene 스폰 셀로 회귀 현상을 검사해야 합니다.");
+            }
+            Assert.That(decision.Actuals.Count, Is.EqualTo(10));
+            foreach (var actual in decision.Actuals) cellCounts[pointCells[actual.PointId]]++;
+            actualCount += decision.Actuals.Count; requests++;
+            yield return null;
+        }
+        int cellCount = cellCounts.Count, usedCells = cellCounts.Count(c => c.Value > 0);
+        int min = cellCounts.Values.Min(), max = cellCounts.Values.Max();
+        Debug.Log($"Spatial spawn integration: requests={requests}, actual={actualCount}, available cells={cellCount}, used cells={usedCells}, min={min}, max={max}, initial enemy max={maximumInitialEnemies}.");
+
+        var liveCells = new System.Collections.Generic.HashSet<string>();
+        int liveActual = 0;
+        for (int i = 0; i < 24; i++)
+        {
+            // 실시간 요청도 동일 Planner 이력을 사용하고, 이동 중인 적의 최신 Grid를 조회합니다.
+            yield return new WaitForSecondsRealtime(0.1f);
+            bool succeeded = launcher.TryRequestCurrentEncounter("Normal", 10, EncounterRequestSource.DebugWindow, out string result);
+            Assert.That(succeeded, Is.True, result);
+            var decision = launcher.RecentDiagnostics.Last(e => e.SpawnDecision != null).SpawnDecision;
+            foreach (var actual in decision.Actuals) liveCells.Add(pointCells[actual.PointId]);
+            liveActual += decision.Actuals.Count;
+        }
+        Debug.Log($"Spatial spawn live integration: requests=24, actual={liveActual}, used cells={liveCells.Count}/{cellCount}.");
+        yield return new ExitPlayMode();
+        Assert.That(usedCells, Is.EqualTo(cellCount), "반복 요청은 전선 거리에 관계없이 모든 적합 셀에 생성 기회를 제공해야 합니다.");
+        Assert.That(max - min, Is.LessThanOrEqualTo(maximumInitialEnemies + 10), "복제 지점의 수가 셀별 생성 비중을 배수로 늘리면 안 됩니다.");
+        Assert.That(liveActual, Is.EqualTo(240));
+        Assert.That(liveCells.Count, Is.GreaterThanOrEqualTo((int)System.Math.Ceiling(cellCount * 0.75)), "실시간 Grid 입력에서도 일부 가까운 스포너만 반복 선택하면 안 됩니다.");
+    }
+
+    [UnityTest]
     [Explicit("Stage 1 통합 Scene과 NGO Host가 필요한 경우에만 실행")]
     public IEnumerator InitialStage_StartsEncounterWithoutDebugRequest()
     {

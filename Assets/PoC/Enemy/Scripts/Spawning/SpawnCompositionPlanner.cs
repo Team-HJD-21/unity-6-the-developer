@@ -22,6 +22,10 @@ public sealed class SpawnCompositionPlanner
     /// </summary>
     public bool HasCatalog => _catalog != null;
 
+    /// <summary>Executor가 실제로 생성한 적만 Match별 공간 배분 이력에 반영합니다.</summary>
+    public void RecordExecuted(BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpawnDecisionSnapshot.Actual> actuals)
+        => _spatialPolicy.RecordExecuted(snapshot, actuals);
+
     /// <summary>
     /// 기본 카탈로그를 한 번 로드해 Planner를 만든다.
     /// </summary>

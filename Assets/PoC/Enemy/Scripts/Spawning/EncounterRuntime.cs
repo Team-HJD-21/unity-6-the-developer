@@ -110,7 +110,8 @@ namespace TeamHJD.Game.Domain
                          $"available points {_spawnExecutor.SpawnPointList.GetAvailableSpawnPoints().Count}. " +
                          "Grid 밖 또는 Player/Turret 점유 셀의 SpawnPoint는 제외됩니다.";
                 summary = new EncounterExecutionSummary(0,0,"PlanRejected", new SpawnDecisionSnapshot(snapshot,
-                    _planner.LastCandidates,System.Array.Empty<SpawnDecisionSnapshot.Plan>(),System.Array.Empty<SpawnDecisionSnapshot.Actual>(),result));
+                    _planner.LastCandidates,System.Array.Empty<SpawnDecisionSnapshot.Plan>(),System.Array.Empty<SpawnDecisionSnapshot.Actual>(),result,
+                    SpawnPointSpatialPolicy.Description));
                 return false;
             }
 
@@ -141,6 +142,7 @@ namespace TeamHJD.Game.Domain
                 executionSummary.Append(" / spawned ").Append(instructionSpawned);
             }
 
+            _planner.RecordExecuted(snapshot, actuals);
             result = $"Match {snapshot.MatchId} r{snapshot.Revision} → Encounter: " +
                      $"{snapshot.Triangles.Count} triangles, {snapshot.FrontlineEdges.Count} frontline edges, " +
                      $"{snapshot.Grid.OccupiedCells.Count} occupied cells; " +
@@ -149,7 +151,8 @@ namespace TeamHJD.Game.Domain
             summary = new EncounterExecutionSummary(plannedCount, spawnedCount,
                 spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
                 new SpawnDecisionSnapshot(snapshot,_planner.LastCandidates,plans,actuals,
-                    spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn"));
+                    spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
+                    SpawnPointSpatialPolicy.Description));
             return spawnedCount > 0;
         }
     }
