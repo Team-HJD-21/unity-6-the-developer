@@ -7,6 +7,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure.Fakes;
 using UnityEngine;
+using EntityId = TeamHJD.Game.Domain.EntityId;
 
 namespace TeamHJD.Game.Tests.EditMode
 {

@@ -132,8 +132,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             catch
             {
-                _encounterConsumer?.UnbindMatch(matchId);
-                _encounterConsumer = null;
+                ReleaseEncounterConsumer(matchId);
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -165,8 +164,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             finally
             {
                 if (_matchSession != null)
-                    _encounterConsumer?.UnbindMatch(_matchSession.Config.MatchId);
-                _encounterConsumer = null;
+                    ReleaseEncounterConsumer(_matchSession.Config.MatchId);
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -206,6 +204,18 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (consumers.Length > 1)
                 throw new InvalidOperationException("Assign an explicit Encounter consumer when more than one is active.");
             return consumers.FirstOrDefault();
+        }
+
+        private void ReleaseEncounterConsumer(MatchId matchId)
+        {
+            IEncounterMatchConsumer consumer = _encounterConsumer;
+            _encounterConsumer = null;
+            try { consumer?.UnbindMatch(matchId); }
+            catch (Exception exception)
+            {
+                // Feature 해제 실패가 Player/Core Match 정리를 중단해서는 안 됩니다.
+                Debug.LogException(exception, this);
+            }
         }
 
         private MatchCameraFollow FindSceneCameraFollow()
