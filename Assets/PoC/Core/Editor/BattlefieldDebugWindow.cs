@@ -10,33 +10,25 @@ using TeamHJD.Game.Domain;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
-using DomainEntityId = TeamHJD.Game.Domain.EntityId;
 
 namespace TeamHJD.Game.Editor
 {
     public sealed class BattlefieldDebugWindow : EditorWindow
     {
-        private AppRoot _appRoot;
-        private BattlefieldSpatialSnapshot _snapshot;
-        [SerializeField] private BattlefieldGridSettings _gridSettings;
+        private AppRoot _appRoot => BattlefieldDebugSession.AppRoot;
+        private BattlefieldSpatialSnapshot _snapshot => BattlefieldDebugSession.Snapshot;
+        private BattlefieldGridSettings _gridSettings { get => BattlefieldDebugSession.GridSettings; set => BattlefieldDebugSession.GridSettings = value; }
         private BattlefieldGridConfiguration _runtimeConfiguration;
         private MatchId _runtimeMatchId;
-        private bool _showTerritory = true;
-        private bool _showFrontline = true;
-        private bool _showVertexLabels;
-        private bool _showGrid = true;
-        private bool _showOccupancy = true;
-        private string _previewError;
+        private string _previewError { get => BattlefieldDebugSession.Error; set => BattlefieldDebugSession.Error = value; }
         [SerializeField] private string _encounterSquadOrder = "Normal";
         [SerializeField] private int _encounterMaxEnemyCount = 10;
         private string _encounterStatus;
         private bool _encounterRequestSucceeded;
-        private double _nextPreviewRefresh;
 
         [MenuItem("Tools/TeamHJD/Battlefield Debug")]
-        private static void Open()
+        public static void Open()
         {
             var window = GetWindow<BattlefieldDebugWindow>("Battlefield Debug");
             window.minSize = new Vector2(300f, 180f);
@@ -44,34 +36,24 @@ namespace TeamHJD.Game.Editor
 
         private void OnEnable()
         {
-            if (_gridSettings == null)
-                _gridSettings = AssetDatabase.LoadAssetAtPath<BattlefieldGridSettings>(
-                    "Assets/PoC/Core/Content/Authoring/BattlefieldGridSettings_Default.asset");
-            SceneView.duringSceneGui += DrawSceneView;
-            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-            SceneManager.sceneUnloaded += OnSceneUnloaded;
-            SceneManager.sceneLoaded += OnSceneLoaded;
-            EditorApplication.update += RefreshEditModeTopologyPreview;
-            EditorApplication.hierarchyChanged += OnHierarchyChanged;
-            Undo.undoRedoPerformed += OnUndoRedo;
+            BattlefieldDebugSession.Changed += OnDiagnosticsChanged;
+            BattlefieldDebugSession.Display.IsEnabled = true;
+            BattlefieldDebugSession.NotifyDisplayChanged();
+            OnDiagnosticsChanged();
         }
 
-        private void OnDisable()
+        private void OnDisable() => BattlefieldDebugSession.Changed -= OnDiagnosticsChanged;
+
+        private void OnDiagnosticsChanged()
         {
-            SceneView.duringSceneGui -= DrawSceneView;
-            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-            SceneManager.sceneUnloaded -= OnSceneUnloaded;
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-            EditorApplication.update -= RefreshEditModeTopologyPreview;
-            EditorApplication.hierarchyChanged -= OnHierarchyChanged;
-            Undo.undoRedoPerformed -= OnUndoRedo;
-            Bind(null);
+            if (_snapshot == null || _snapshot.MatchId != _runtimeMatchId)
+                ResetRuntimeConfiguration();
+            Repaint();
         }
 
         private void OnGUI()
         {
-            if (EditorApplication.isPlaying && _appRoot == null)
-                Bind(FindActiveSceneAppRoot());
+            EditorGUI.BeginChangeCheck();
 
             DrawAuthoredGridSettings();
             EditorGUILayout.Space();
@@ -79,13 +61,13 @@ namespace TeamHJD.Game.Editor
             EditorGUILayout.HelpBox("Edit Mode는 Core의 동일한 topology 계산으로 터렛 배치 미리보기를 표시하고, Play Mode는 활성 Match snapshot을 표시합니다. 미리보기는 Match를 생성하거나 게임 상태를 변경하지 않습니다.", MessageType.Info);
             EditorGUILayout.HelpBox("Scene View Grid는 Edit Mode에서 공용 기본값, Play Mode에서 활성 Match 설정을 표시합니다. 토폴로지 계산은 Core가 소유하고 이 창은 그 결과만 그립니다.", MessageType.Info);
             var selectedRoot = (AppRoot)EditorGUILayout.ObjectField("App Root", _appRoot, typeof(AppRoot), true);
-            if (selectedRoot != _appRoot) Bind(selectedRoot);
+            if (selectedRoot != _appRoot) BattlefieldDebugSession.Bind(selectedRoot);
 
-            _showTerritory = EditorGUILayout.Toggle("Territory", _showTerritory);
-            _showFrontline = EditorGUILayout.Toggle("Frontline", _showFrontline);
-            _showVertexLabels = EditorGUILayout.Toggle("Vertex labels", _showVertexLabels);
-            _showGrid = EditorGUILayout.Toggle("Uniform Grid", _showGrid);
-            _showOccupancy = EditorGUILayout.Toggle("Cell occupancy", _showOccupancy);
+            BattlefieldDebugSession.Display.ShowTerritory = EditorGUILayout.Toggle("Territory", BattlefieldDebugSession.Display.ShowTerritory);
+            BattlefieldDebugSession.Display.ShowFrontline = EditorGUILayout.Toggle("Frontline", BattlefieldDebugSession.Display.ShowFrontline);
+            BattlefieldDebugSession.Display.ShowVertexLabels = EditorGUILayout.Toggle("Vertex labels", BattlefieldDebugSession.Display.ShowVertexLabels);
+            BattlefieldDebugSession.Display.ShowGrid = EditorGUILayout.Toggle("Uniform Grid", BattlefieldDebugSession.Display.ShowGrid);
+            BattlefieldDebugSession.Display.ShowOccupancy = EditorGUILayout.Toggle("Cell occupancy", BattlefieldDebugSession.Display.ShowOccupancy);
 
             if (!EditorApplication.isPlaying)
             {
@@ -112,7 +94,11 @@ namespace TeamHJD.Game.Editor
 
             DrawEncounterControls();
 
-            SceneView.RepaintAll();
+            if (EditorGUI.EndChangeCheck())
+            {
+                BattlefieldDebugSession.InvalidatePreview();
+                BattlefieldDebugSession.NotifyDisplayChanged();
+            }
         }
 
         private void DrawEncounterControls()
@@ -376,171 +362,6 @@ namespace TeamHJD.Game.Editor
             EditorGUILayout.HelpBox("이 값은 저장되어 이후 생성되는 Match의 기본값이 됩니다. 활성 Match에는 자동 적용되지 않습니다.", MessageType.Info);
         }
 
-        private void Bind(AppRoot appRoot)
-        {
-            if (_appRoot != null) _appRoot.BattlefieldSnapshotChanged -= OnSnapshotChanged;
-            _appRoot = appRoot;
-            _snapshot = null;
-            if (_appRoot != null)
-            {
-                _appRoot.BattlefieldSnapshotChanged += OnSnapshotChanged;
-                _snapshot = _appRoot.CurrentBattlefieldSnapshot;
-                ResetRuntimeConfiguration();
-            }
-            Repaint();
-            SceneView.RepaintAll();
-        }
-
-        private void OnSnapshotChanged(BattlefieldSpatialSnapshot snapshot)
-        {
-            _snapshot = snapshot;
-            if (snapshot == null || snapshot.MatchId != _runtimeMatchId)
-                ResetRuntimeConfiguration();
-            Repaint();
-            SceneView.RepaintAll();
-        }
-
-        private void OnPlayModeStateChanged(PlayModeStateChange state)
-        {
-            if (state == PlayModeStateChange.EnteredPlayMode)
-                Bind(FindActiveSceneAppRoot());
-            if (state == PlayModeStateChange.ExitingPlayMode || state == PlayModeStateChange.EnteredEditMode)
-                Bind(null);
-        }
-
-        private void OnSceneUnloaded(Scene scene)
-        {
-            _snapshot = null;
-            _previewError = null;
-            Repaint();
-            SceneView.RepaintAll();
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (EditorApplication.isPlaying && _appRoot != null)
-            {
-                _snapshot = _appRoot.CurrentBattlefieldSnapshot;
-                ResetRuntimeConfiguration();
-            }
-            Repaint();
-            SceneView.RepaintAll();
-        }
-
-        private void DrawSceneView(SceneView sceneView)
-        {
-            BattlefieldGridConfiguration gridConfiguration = ResolveGridConfiguration();
-            var previousColor = Handles.color;
-            var previousZTest = Handles.zTest;
-            Handles.zTest = CompareFunction.Always;
-            try
-            {
-                if (_showGrid && gridConfiguration != null) DrawGrid(gridConfiguration);
-                if (_snapshot == null) return;
-                if (EditorApplication.isPlaying && _appRoot == null) return;
-
-                var positions = new Dictionary<DomainEntityId, Vector3>(_snapshot.Vertices.Count);
-                foreach (var vertex in _snapshot.Vertices)
-                    positions.Add(vertex.EntityId, ToWorldPosition(vertex.Position));
-
-                if (_showTerritory) DrawTerritory(positions);
-                if (_showFrontline) DrawFrontlines(positions);
-                if (_showVertexLabels) DrawVertexLabels(positions);
-                if (EditorApplication.isPlaying && _showOccupancy) DrawOccupancy();
-            }
-            finally
-            {
-                Handles.color = previousColor;
-                Handles.zTest = previousZTest;
-            }
-        }
-
-        private void DrawTerritory(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
-        {
-            Handles.color = new Color(0.1f, 0.75f, 1f, 0.12f);
-            foreach (var triangle in _snapshot.Triangles)
-            {
-                var polygon = new[]
-                {
-                    positions[triangle.VertexA],
-                    positions[triangle.VertexB],
-                    positions[triangle.VertexC]
-                };
-                SortAroundCentroid(polygon);
-                Handles.DrawAAConvexPolygon(polygon);
-                Handles.DrawAAPolyLine(1.5f, polygon[0], polygon[1], polygon[2], polygon[0]);
-            }
-        }
-
-        private void DrawFrontlines(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
-        {
-            Handles.color = new Color(1f, 0.35f, 0.1f, 1f);
-            foreach (var edge in _snapshot.FrontlineEdges)
-                Handles.DrawAAPolyLine(3f, positions[edge.First], positions[edge.Second]);
-        }
-
-        private void DrawVertexLabels(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
-        {
-            Handles.color = Color.white;
-            foreach (var vertex in _snapshot.Vertices)
-                Handles.Label(positions[vertex.EntityId], vertex.EntityId.ToString());
-        }
-
-        private Vector3 ToWorldPosition(BattlefieldPoint point)
-        {
-            BattlefieldGridConfiguration configuration = ResolveGridConfiguration();
-            return new Vector3((float)point.X, (float)point.Y,
-                (float)(configuration == null ? 0d : configuration.OriginZ));
-        }
-
-        private BattlefieldGridConfiguration ResolveGridConfiguration()
-        {
-            if (EditorApplication.isPlaying && _snapshot != null)
-                return _snapshot.Grid.Configuration;
-
-            if (_gridSettings == null) return BattlefieldGridConfiguration.Default;
-            try
-            {
-                return _gridSettings.CreateConfiguration();
-            }
-            catch (System.ArgumentException)
-            {
-                return null;
-            }
-        }
-
-        private static void DrawGrid(BattlefieldGridConfiguration configuration)
-        {
-            var minX = (float)configuration.MinimumX;
-            var minY = (float)configuration.MinimumY;
-            var maxX = (float)configuration.MaximumX;
-            var maxY = (float)configuration.MaximumY;
-            var z = (float)configuration.OriginZ;
-            Handles.color = new Color(0.75f, 0.85f, 1f, 0.55f);
-            for (var x = 0; x <= configuration.CellsX; x++)
-            {
-                var worldX = minX + x * (float)configuration.CellWidth;
-                Handles.DrawAAPolyLine(1f, new Vector3(worldX, minY, z), new Vector3(worldX, maxY, z));
-            }
-            for (var y = 0; y <= configuration.CellsY; y++)
-            {
-                var worldY = minY + y * (float)configuration.CellHeight;
-                Handles.DrawAAPolyLine(1f, new Vector3(minX, worldY, z), new Vector3(maxX, worldY, z));
-            }
-        }
-
-        private void DrawOccupancy()
-        {
-            foreach (var cell in _snapshot.Grid.OccupiedCells)
-            {
-                var configuration = _snapshot.Grid.Configuration;
-                var x = configuration.MinimumX + (cell.X + 0.5d) * configuration.CellWidth;
-                var y = configuration.MinimumY + (cell.Y + 0.5d) * configuration.CellHeight;
-                var position = new Vector3((float)x, (float)y, (float)configuration.OriginZ);
-                Handles.Label(position, $"T:{cell.TurretCount} P:{cell.PlayerCount} E:{cell.EnemyCount}");
-            }
-        }
-
         private void ResetRuntimeConfiguration()
         {
             _runtimeMatchId = _snapshot == null ? default : _snapshot.MatchId;
@@ -599,64 +420,6 @@ namespace TeamHJD.Game.Editor
             EditorGUILayout.HelpBox("여기서 적용한 값은 현재 Match에서만 유지됩니다. 공유 설정 에셋에 저장되지 않습니다.", MessageType.Warning);
         }
 
-        private void RefreshEditModeTopologyPreview()
-        {
-            if (EditorApplication.isPlaying || EditorApplication.timeSinceStartup < _nextPreviewRefresh) return;
-            _nextPreviewRefresh = EditorApplication.timeSinceStartup + 0.25d;
-
-            IBattlefieldTurretInputSource source = FindActiveSceneTurretInputSource();
-            if (source == null)
-            {
-                if (_snapshot != null)
-                {
-                    _snapshot = null;
-                    _previewError = null;
-                    Repaint();
-                    SceneView.RepaintAll();
-                }
-                return;
-            }
-
-            try
-            {
-                BattlefieldSpatialInput input = source.CaptureTurretLayout();
-                if (HasSameInput(_snapshot, input)) return;
-                _snapshot = new BattlefieldTopologyBuilder().Build(input);
-                _previewError = null;
-                Repaint();
-                SceneView.RepaintAll();
-            }
-            catch (Exception exception)
-            {
-                _snapshot = null;
-                _previewError = $"Core topology preview failed: {exception.Message}";
-                Repaint();
-                SceneView.RepaintAll();
-            }
-        }
-
-        private IBattlefieldTurretInputSource FindActiveSceneTurretInputSource()
-        {
-            Scene activeScene = SceneManager.GetActiveScene();
-            foreach (MonoBehaviour component in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
-                if (component != null && component.gameObject.scene == activeScene &&
-                    component is IBattlefieldTurretInputSource source)
-                    return source;
-            return null;
-        }
-
-        private void OnHierarchyChanged()
-        {
-            _nextPreviewRefresh = 0d;
-            RefreshEditModeTopologyPreview();
-        }
-
-        private void OnUndoRedo()
-        {
-            _nextPreviewRefresh = 0d;
-            RefreshEditModeTopologyPreview();
-        }
-
         private void AddTurretInputSourceToActiveScene()
         {
             const string typeName = "TeamHJD.Game.Turrets.TurretBattlefieldInputSource";
@@ -680,8 +443,7 @@ namespace TeamHJD.Game.Editor
             sourceObject.AddComponent(componentType);
             Selection.activeGameObject = sourceObject;
             _previewError = null;
-            _nextPreviewRefresh = 0d;
-            RefreshEditModeTopologyPreview();
+            BattlefieldDebugSession.InvalidatePreview();
         }
 
         private static Type FindLoadedType(string fullTypeName)
@@ -694,30 +456,5 @@ namespace TeamHJD.Game.Editor
             return null;
         }
 
-        private static bool HasSameInput(BattlefieldSpatialSnapshot snapshot, BattlefieldSpatialInput input)
-        {
-            if (snapshot == null || snapshot.Vertices.Count != input.Turrets.Count) return false;
-            var verticesById = new Dictionary<DomainEntityId, BattlefieldVertex>(snapshot.Vertices.Count);
-            foreach (BattlefieldVertex vertex in snapshot.Vertices)
-                verticesById.Add(vertex.EntityId, vertex);
-            for (int index = 0; index < input.Turrets.Count; index++)
-            {
-                TurretSpatialInput turret = input.Turrets[index];
-                if (!verticesById.TryGetValue(turret.EntityId, out BattlefieldVertex vertex)) return false;
-                if (!vertex.EntityId.Equals(turret.EntityId) || vertex.Position != turret.Position) return false;
-            }
-            return true;
-        }
-
-        private static void SortAroundCentroid(Vector3[] points)
-        {
-            var center = (points[0] + points[1] + points[2]) / 3f;
-            System.Array.Sort(points, (left, right) =>
-            {
-                var leftAngle = Mathf.Atan2(left.y - center.y, left.x - center.x);
-                var rightAngle = Mathf.Atan2(right.y - center.y, right.x - center.x);
-                return leftAngle.CompareTo(rightAngle);
-            });
-        }
     }
 }
