@@ -54,6 +54,9 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Map
+    uniqueID: 2025306083
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
