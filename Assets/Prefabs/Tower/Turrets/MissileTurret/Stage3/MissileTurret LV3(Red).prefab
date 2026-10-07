@@ -830,6 +830,7 @@ MonoBehaviour:
   rangeRenderer: {fileID: 7592123090567658909}
   rangeTransform: {fileID: 4616769300326080906}
   _definition: {fileID: 11400000, guid: 48f7d0011c12486a947d20207d4b7769, type: 2}
+  minimumRange: 5.31
   _runtimeState:
     _instanceId: 0
     _isActivated: 0

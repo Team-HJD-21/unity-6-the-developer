@@ -8,6 +8,7 @@
 | 하고 싶은 일 | 먼저 읽을 문서 |
 | --- | --- |
 | 테스트 씬에 터렛 배치 | [빠른 시작](quick-start.md) |
+| 초기 상태를 지정해 터렛 생성 | [명시적 초기화](initialization.md) |
 | 터렛 ID 조회와 활성화 또는 피해 적용 | [API 사용법](api-reference.md) |
 | AI와 전선 및 UI에 값 제공 | [스냅샷](snapshots.md) |
 | 발사부터 피격까지 실행 순서 확인 | [전체 구조와 Mermaid](../turret-system-guide.md) |

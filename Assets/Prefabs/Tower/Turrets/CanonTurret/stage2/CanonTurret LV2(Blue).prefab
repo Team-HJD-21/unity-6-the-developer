@@ -194,6 +194,7 @@ MonoBehaviour:
   rangeRenderer: {fileID: 548673198802090129}
   rangeTransform: {fileID: 3858989689895090832}
   _definition: {fileID: 11400000, guid: fa2ed579ce29453ab742b554ac3d24a2, type: 2}
+  minimumRange: 4.47
 --- !u!58 &8337633065169574392
 CircleCollider2D:
   m_ObjectHideFlags: 0

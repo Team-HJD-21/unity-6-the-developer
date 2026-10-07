@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
 public abstract class DefaultCanonTurret : TurretBase
 {   
+    public override TurretKind Kind => TurretKind.Canon;
     [SerializeField] protected GameObject bulletPrefab;
 
     protected Transform Target;             //target of bullets
@@ -13,14 +15,12 @@ public abstract class DefaultCanonTurret : TurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _fireTime = 0f;       //과열시 중지 위한 변수
+    protected override bool UsesMinimumRange => true;
 
     protected abstract void Shoot();//총알 객체화 후 목표로 발사(FireRateController에서 수행)
     private void Awake()
     {
-        GameObject powerObject = GameObject.Find("ControlUnit");
-        if (powerObject == null ||
-            !powerObject.TryGetComponent(out ControlUnitStatus powerSource) ||
-            !ConfigureActivation(powerSource))
+        if (!ConfigureSceneActivation())
         {
             Debug.LogError($"Failed to initialize turret dependencies on {name}.", this);
             enabled = false;
@@ -31,7 +31,7 @@ public abstract class DefaultCanonTurret : TurretBase
     }
     protected void Update()
     {
-        RangeRenderer.enabled = ShowRange;
+        UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
     private void TowerIsActivatedNow()//사용자에 의해 타워가 가동 됐다면 역할 수행(Update에서 수행)
@@ -47,8 +47,10 @@ public abstract class DefaultCanonTurret : TurretBase
 
     private void NoTargetInRange()//적이 타워 범위에 없을 때 탐색(TowerIsActivatedNow에서 수행)
     {
-        if (Target == null)
+        if (!CheckTargetIsInRange())
         {
+            Target = null;
+            TimeTilFire = 0f;
             _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
             Animator.SetBool("isShoot", false);
@@ -120,14 +122,15 @@ public abstract class DefaultCanonTurret : TurretBase
             turret.position,
             Range,
             EnemyMask,
-            _targetCandidates);
+            _targetCandidates,
+            MinimumRange);
         Target = _targetCandidates.Count == 0
             ? null
             : _targetCandidates[0].transform;
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
-        return TurretTargetingUtility.IsInRange(turret, Target, Range);
+        return TurretTargetingUtility.IsInAttackRange(turret, Target, MinimumRange, Range);
     }
     private bool IsTargetInSight()//적이 시야각에 있는지 확인(FireRateController, OverHeatAnimationController에서 수행)
     {
@@ -171,19 +174,19 @@ public abstract class DefaultCanonTurret : TurretBase
         if(player is not null)
         {
             float distance = Vector2.Distance(turret.position, player.transform.position);
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire, distance, 50);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire, distance, 50);
         }
     }
     protected override void OnActivationChanged(bool isActivated)
     {
         if (isActivated)
         {
-            AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
+            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOn);
             return;
         }
 
         Animator.SetBool("isShoot", false);
-        AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
+        // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
         StartCoroutine(DeactivateProcess());
     }
 
