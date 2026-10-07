@@ -4,6 +4,8 @@
 
 ## 2026-10-08 로컬 1차 통합 패치
 
+최신 인수: PL이 실제 런타임을 확인하고 A의 공간 분석·Spawn 전달/분산·Game Debugger 기술 PoC를 승인했습니다. [마감과 Issue 판정](../../../Docs/planning/2026-10-08-poc-closeout-and-pr-handoff.md) · [팀 Core API 규약](../../../Docs/architecture/core-api-usage.md). 아래 날짜별 배치에서 남긴 미검증 기록은 당시 결과이며, 최신 인수와 구분합니다. 정식 승패·성장·2인 Network·공통 Windows Build를 모두 완료했다는 뜻은 아닙니다.
+
 `IEncounterMatchConsumer`를 통한 Match 시작 바인딩, 최신 Battlefield snapshot 조회, Grid 점유·적 밀도·Frontline 거리 기반 SpawnPoint 배분, 첫 Encounter 자동 요청이 구현되어 있습니다. 분대 구성과 수량 `Normal`/10은 임시값입니다. 자동 요청은 기본 0.5초 실시간 지연 후 NGO Host/Executor 준비를 기다립니다. 기존 1차 검증 때는 터렛 0개였지만, 팀원의 #490 Scene 반영 후 최신 CLI 통합 검사에서는 삼각형 8개·외곽 6개와 네 source의 스폰 성공을 확인했습니다. 실제 전투/승패는 별도 Gate입니다. 반복 진행·공식 PlanId/중복 방지·지역 해금·최종 난이도는 [통합 준비표](../../../Docs/planning/2026-10-07-stage1-poc-integration-prep.md)의 후속 범위입니다.
 
 ## 2026-10-08 Game Debugger 확장
@@ -317,12 +319,12 @@ sequenceDiagram
     R->>T: Build(turret layout)
     R->>G: Build(config, turret/player/enemy positions)
     R-->>S: immutable snapshot (revision 1)
-    C-->>E: 목표: inject/read S.Battlefield
+    C-->>E: BindMatch(matchId, latest snapshot provider)
     C->>S: UpdateBattlefieldParticipants(new positions)
     S->>R: UpdateDynamicInput
     R->>G: rebuild occupancy only
     R-->>S: publish next revision
-    C-->>E: 목표: provide latest S.Battlefield when Encounter evaluates
+    E->>S: Encounter 평가 시 최신 Battlefield 조회
 ```
 
 `BattlefieldDebugPanel`는 Play Mode에서 활성 Match snapshot을 `IEncounterDebugCommandTarget` 계약으로 Encounter 측에 전달합니다. 1차 통합 패치에서는 Scene 조립부가 `IEncounterMatchConsumer`에도 최신 snapshot 조회 함수를 바인딩하고 Match 시작 뒤 첫 요청을 자동 실행합니다. Core는 Encounter 정책을 소유하지 않습니다. Enemy 쪽 Planner는 Squad Preset·예산을 유지하면서 Grid 점유·기존 적 수·Frontline 거리를 지점 배분에 사용합니다.

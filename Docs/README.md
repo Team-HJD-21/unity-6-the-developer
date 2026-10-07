@@ -1,11 +1,15 @@
 # The Developer — Project Documentation
 
 수정일: 2026-10-08
-상태: 현행 PL 기준 / Sprint 1 Stage 1 PoC 실행 중
+상태: 현행 PL 기준 / A 기술 PoC 인수 완료 · 팀 공통 Build 기록 별도
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
 ## 현재 기준
+
+2026-10-08 PL이 실제 런타임을 확인해 A의 Core 공간 분석·스폰 통합·Game Debugger 기술 PoC를 인수했다. 현재 완료 범위와 Issue/PR 인수는 [PoC 마감 기록](planning/2026-10-08-poc-closeout-and-pr-handoff.md)을 따른다. 아래의 10월 3일 내용은 당시 검토 배경이며 최신 실행 상태로 읽지 않는다. 정식 승패·성장·멀티플레이 완성과 팀 공통 Windows Build 검증은 별도다.
+
+팀원의 호출 규칙은 [Core API 사용 규약](architecture/core-api-usage.md), 도구 조작은 [Game Debugger 사용법](tooling/game-debugger-guide.md)을 참고한다.
 
 - 장르: 2D 탑다운 액션 타워디펜스
 - 핵심 경험: 제한된 전력으로 미리 배치된 터렛을 선택해 전선을 운영하고, 플레이어가 무너지는 전선을 찾아가 보조한다.
