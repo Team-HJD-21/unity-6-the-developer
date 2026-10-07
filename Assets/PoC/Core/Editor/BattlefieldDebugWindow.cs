@@ -26,6 +26,8 @@ namespace TeamHJD.Game.Editor
         [SerializeField] private int _encounterMaxEnemyCount = 10;
         private string _encounterStatus;
         private bool _encounterRequestSucceeded;
+        [SerializeField] private int _tab;
+        private Vector2 _scrollPosition;
 
         [MenuItem("Tools/TeamHJD/Battlefield Debug")]
         public static void Open()
@@ -47,58 +49,60 @@ namespace TeamHJD.Game.Editor
         private void OnDiagnosticsChanged()
         {
             if (_snapshot == null || _snapshot.MatchId != _runtimeMatchId)
+            {
                 ResetRuntimeConfiguration();
+                _encounterStatus = null;
+                _encounterRequestSucceeded = false;
+            }
             Repaint();
         }
 
         private void OnGUI()
         {
+            _tab = GUILayout.Toolbar(_tab, new[] { "Overview", "Battlefield", "Encounter", "History" });
+            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             EditorGUI.BeginChangeCheck();
-
-            DrawAuthoredGridSettings();
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Runtime Match Diagnostics", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("Edit Mode는 Core의 동일한 topology 계산으로 터렛 배치 미리보기를 표시하고, Play Mode는 활성 Match snapshot을 표시합니다. 미리보기는 Match를 생성하거나 게임 상태를 변경하지 않습니다.", MessageType.Info);
-            EditorGUILayout.HelpBox("Scene View Grid는 Edit Mode에서 공용 기본값, Play Mode에서 활성 Match 설정을 표시합니다. 토폴로지 계산은 Core가 소유하고 이 창은 그 결과만 그립니다.", MessageType.Info);
-            var selectedRoot = (AppRoot)EditorGUILayout.ObjectField("App Root", _appRoot, typeof(AppRoot), true);
-            if (selectedRoot != _appRoot) BattlefieldDebugSession.Bind(selectedRoot);
-
-            BattlefieldDebugSession.Display.ShowTerritory = EditorGUILayout.Toggle("Territory", BattlefieldDebugSession.Display.ShowTerritory);
-            BattlefieldDebugSession.Display.ShowFrontline = EditorGUILayout.Toggle("Frontline", BattlefieldDebugSession.Display.ShowFrontline);
-            BattlefieldDebugSession.Display.ShowVertexLabels = EditorGUILayout.Toggle("Vertex labels", BattlefieldDebugSession.Display.ShowVertexLabels);
-            BattlefieldDebugSession.Display.ShowGrid = EditorGUILayout.Toggle("Uniform Grid", BattlefieldDebugSession.Display.ShowGrid);
-            BattlefieldDebugSession.Display.ShowOccupancy = EditorGUILayout.Toggle("Cell occupancy", BattlefieldDebugSession.Display.ShowOccupancy);
-
-            if (!EditorApplication.isPlaying)
+            if (_tab == 0)
             {
-                if (!string.IsNullOrEmpty(_previewError))
-                    EditorGUILayout.HelpBox(_previewError, MessageType.Error);
-                else if (_snapshot == null || _snapshot.Vertices.Count == 0)
-                    EditorGUILayout.HelpBox("활성 Scene에 미리보기 가능한 Turret이 없거나 TurretBattlefieldInputSource가 없습니다. 런타임 자동 갱신을 위해 입력 Source를 Scene에 추가하세요.", MessageType.Warning);
-                if (GUILayout.Button("Add Turret Battlefield Input Source to Active Scene"))
-                    AddTurretInputSourceToActiveScene();
-                if (_snapshot != null)
-                    EditorGUILayout.LabelField("Edit Preview / vertices / triangles / frontline",
-                        $"{_snapshot.Vertices.Count} / {_snapshot.Triangles.Count} / {_snapshot.FrontlineEdges.Count}");
+                BattlefieldDiagnosticPanels.DrawOverview();
+                BattlefieldDiagnosticPanels.DrawDisplayControls();
+                BattlefieldDiagnosticPanels.DrawCapture();
             }
-            else if (_appRoot == null || _snapshot == null)
-                EditorGUILayout.HelpBox("연결된 AppRoot에 활성 Match snapshot이 없습니다.", MessageType.None);
+            else if (_tab == 1)
+            {
+                BattlefieldDiagnosticPanels.DrawOverview();
+                BattlefieldDiagnosticPanels.DrawDisplayControls();
+                BattlefieldDiagnosticPanels.DrawCellDetails();
+                if (!BattlefieldDebugSession.Display.IsCaptureMode)
+                {
+                    EditorGUILayout.Space();
+                    EditorGUILayout.LabelField("Commands / 공용 에셋·현재 Match", EditorStyles.boldLabel);
+                    DrawAuthoredGridSettings();
+                    if (EditorApplication.isPlaying && _appRoot != null && _snapshot != null)
+                        DrawRuntimeGridControls();
+                    if (!EditorApplication.isPlaying &&
+                        GUILayout.Button("Add Turret Battlefield Input Source to Active Scene"))
+                        AddTurretInputSourceToActiveScene();
+                }
+            }
+            else if (_tab == 2)
+            {
+                BattlefieldDiagnosticPanels.DrawOverview();
+                if (!BattlefieldDebugSession.Display.IsCaptureMode) DrawEncounterControls();
+                EditorGUILayout.HelpBox("구조화된 후보 이유·PlanId·권한·planned/actual 기록은 E의 후속 진단 계약에서 연결합니다.", MessageType.Info);
+            }
             else
             {
-                EditorGUILayout.LabelField("Match / revision", $"{_snapshot.MatchId} / {_snapshot.Revision}");
-                EditorGUILayout.LabelField("Vertices / triangles / frontline", $"{_snapshot.Vertices.Count} / {_snapshot.Triangles.Count} / {_snapshot.FrontlineEdges.Count}");
-                DrawRuntimeGridControls();
-                EditorGUILayout.LabelField("Out of bounds (T / P / E)",
-                    $"{_snapshot.Grid.OutOfBoundsTurretIds.Count} / {_snapshot.Grid.OutOfBoundsPlayerIds.Count} / {_snapshot.Grid.OutOfBoundsEnemyIds.Count}");
+                BattlefieldDiagnosticPanels.DrawCapture();
+                foreach (string entry in BattlefieldDebugSession.History)
+                    EditorGUILayout.LabelField(entry, EditorStyles.wordWrappedLabel);
             }
-
-            DrawEncounterControls();
-
             if (EditorGUI.EndChangeCheck())
             {
                 BattlefieldDebugSession.InvalidatePreview();
                 BattlefieldDebugSession.NotifyDisplayChanged();
             }
+            EditorGUILayout.EndScrollView();
         }
 
         private void DrawEncounterControls()
@@ -145,19 +149,12 @@ namespace TeamHJD.Game.Editor
 
         private IEncounterDebugCommandTarget FindEncounterCommandTarget()
         {
-            // NGO moves NetworkManager roots to DontDestroyOnLoad when networking starts.
-            // The debug command target lives on that same root, so it may no longer belong
-            // to the gameplay scene even though it is the active Match's valid target.
+            // NGO 루트는 DDOL로 이동하므로 활성 오브젝트 전체에서 명령 대상을 조회합니다.
             foreach (MonoBehaviour component in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
                 if (component != null && component.isActiveAndEnabled &&
                     component is IEncounterDebugCommandTarget target)
                     return target;
             return null;
-        }
-
-        private AppRoot FindActiveSceneAppRoot()
-        {
-            return FindAnyObjectByType<AppRoot>();
         }
 
         private void InstallEncounterTestRuntime()

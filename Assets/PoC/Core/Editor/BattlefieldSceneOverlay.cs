@@ -14,14 +14,16 @@ namespace TeamHJD.Game.Editor
         private static void DrawControls()
         {
             EditorGUILayout.LabelField("Battlefield / " + BattlefieldDebugSession.Mode, EditorStyles.boldLabel);
-            EditorGUI.BeginChangeCheck();
-            BattlefieldDebugDisplaySettings display = BattlefieldDebugSession.Display;
-            display.IsEnabled = EditorGUILayout.Toggle("Scene layers", display.IsEnabled);
-            display.ShowGrid = EditorGUILayout.Toggle("Grid", display.ShowGrid);
-            display.ShowTerritory = EditorGUILayout.Toggle("Territory", display.ShowTerritory);
-            display.ShowFrontline = EditorGUILayout.Toggle("Frontline", display.ShowFrontline);
-            display.ShowOccupancy = EditorGUILayout.Toggle("Occupancy", display.ShowOccupancy);
-            if (EditorGUI.EndChangeCheck()) BattlefieldDebugSession.NotifyDisplayChanged();
+            if (!BattlefieldDebugSession.Display.IsCaptureMode)
+                BattlefieldDiagnosticPanels.DrawDisplayControls();
+            else if (GUILayout.Button("Exit Capture mode"))
+            {
+                BattlefieldDebugSession.Display.IsCaptureMode = false;
+                BattlefieldDebugSession.NotifyDisplayChanged();
+            }
+            var snapshot = BattlefieldDebugSession.Snapshot;
+            EditorGUILayout.LabelField("Revision / occupied",
+                $"{snapshot?.Revision ?? 0} / {BattlefieldDebugSession.Grid?.OccupiedCells.Count ?? 0}");
             if (GUILayout.Button("Open Debug Window")) BattlefieldDebugWindow.Open();
         }
     }

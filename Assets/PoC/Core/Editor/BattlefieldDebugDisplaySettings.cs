@@ -10,10 +10,12 @@ namespace TeamHJD.Game.Editor
         public bool IsEnabled;
         public bool ShowTerritory = true;
         public bool ShowFrontline = true;
+        public bool ShowBoundaryNormals;
         public bool ShowVertexLabels;
         public bool ShowGrid = true;
         public bool ShowOccupancy = true;
         public bool IsCellPickingEnabled;
         public bool IsCaptureMode;
+        public string CaptureLabel = "Commit/Build: 미기록";
     }
 }

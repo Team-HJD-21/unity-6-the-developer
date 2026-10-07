@@ -9,6 +9,8 @@ using TeamHJD.Game.Domain;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using EntityId = TeamHJD.Game.Domain.EntityId;
+using Application = UnityEngine.Application;
 
 namespace TeamHJD.Game.Editor
 {
@@ -76,6 +78,37 @@ namespace TeamHJD.Game.Editor
         }
 
         public static void InvalidatePreview() => _nextRefresh = 0d;
+
+        public static string CreateCaptureMetadata()
+        {
+            BattlefieldGridConfiguration configuration = Configuration;
+            BattlefieldSpatialSnapshot snapshot = Snapshot;
+            string grid = configuration == null ? "N/A" :
+                $"{configuration.MapWidth} x {configuration.MapHeight}, cells {configuration.CellsX} x {configuration.CellsY}, " +
+                $"center ({configuration.Origin.X}, {configuration.Origin.Y}), Z {configuration.OriginZ}";
+            return $"{Display.CaptureLabel}\nUnity {Application.unityVersion} | {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                $"Scene {SceneManager.GetActiveScene().name} | {Mode}\n" +
+                $"Match {(snapshot == null || snapshot.MatchId.IsEmpty ? "N/A" : snapshot.MatchId.ToString())} | revision {snapshot?.Revision.ToString() ?? "N/A"}\n" +
+                $"Grid {grid}\nV/T/F {snapshot?.Vertices.Count ?? 0}/{snapshot?.Triangles.Count ?? 0}/{snapshot?.FrontlineEdges.Count ?? 0}\n" +
+                $"Occupied {Grid?.OccupiedCells.Count ?? 0} | OOB T/P/E {Grid?.OutOfBoundsTurretIds.Count ?? 0}/" +
+                $"{Grid?.OutOfBoundsPlayerIds.Count ?? 0}/{Grid?.OutOfBoundsEnemyIds.Count ?? 0}\n" +
+                "Cyan = Territory; orange = Frontline; yellow = selected cell; E = raw Enemy count.\n" +
+                "Authority/PlanId/pressure: N/A (Feature 진단 계약 미연결)";
+        }
+
+        public static void ApplyPreset(string preset)
+        {
+            Display.IsEnabled = true;
+            Display.IsCaptureMode = preset == "Capture";
+            Display.ShowGrid = true;
+            Display.ShowTerritory = preset != "Grid";
+            Display.ShowFrontline = preset != "Grid";
+            Display.ShowOccupancy = preset != "Topology";
+            Display.ShowBoundaryNormals = preset == "Topology";
+            Display.ShowVertexLabels = false;
+            Display.IsCellPickingEnabled = false;
+            NotifyDisplayChanged();
+        }
 
         private static void Refresh()
         {

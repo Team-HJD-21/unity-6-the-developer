@@ -20,7 +20,9 @@ namespace TeamHJD.Game.Editor
 
         private static void DrawSceneView(SceneView sceneView)
         {
-            if (!BattlefieldDebugSession.Display.IsEnabled || Event.current.type != EventType.Repaint) return;
+            if (!BattlefieldDebugSession.Display.IsEnabled) return;
+            PickCell();
+            if (Event.current.type != EventType.Repaint) return;
             BattlefieldGridConfiguration gridConfiguration = ResolveGridConfiguration();
             var previousColor = Handles.color;
             var previousZTest = Handles.zTest;
@@ -28,6 +30,7 @@ namespace TeamHJD.Game.Editor
             try
             {
                 if (BattlefieldDebugSession.Display.ShowGrid && gridConfiguration != null) DrawGrid(gridConfiguration);
+                DrawSelectedCell();
                 if (BattlefieldDebugSession.Snapshot == null) return;
                 if (EditorApplication.isPlaying && BattlefieldDebugSession.AppRoot == null) return;
 
@@ -38,13 +41,104 @@ namespace TeamHJD.Game.Editor
                 if (BattlefieldDebugSession.Display.ShowTerritory) DrawTerritory(positions);
                 if (BattlefieldDebugSession.Display.ShowFrontline) DrawFrontlines(positions);
                 if (BattlefieldDebugSession.Display.ShowVertexLabels) DrawVertexLabels(positions);
-                if (EditorApplication.isPlaying && BattlefieldDebugSession.Display.ShowOccupancy) DrawOccupancy();
+                if (BattlefieldDebugSession.Display.ShowBoundaryNormals) DrawBoundaryNormals(positions);
+                if (BattlefieldDebugSession.Display.ShowOccupancy) DrawOccupancy();
             }
             finally
             {
                 Handles.color = previousColor;
                 Handles.zTest = previousZTest;
+                DrawLegend(sceneView);
             }
+        }
+
+        private static void PickCell()
+        {
+            if (!BattlefieldDebugSession.Display.IsCellPickingEnabled ||
+                BattlefieldDebugSession.Display.IsCaptureMode || Event.current.alt) return;
+            BattlefieldGridConfiguration configuration = ResolveGridConfiguration();
+            if (configuration == null) return;
+            if (Event.current.type == EventType.Layout)
+                HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
+            if (Event.current.type != EventType.MouseDown || Event.current.button != 0) return;
+            Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+            var plane = new Plane(Vector3.forward, new Vector3(0, 0, (float)configuration.OriginZ));
+            if (!plane.Raycast(ray, out float distance)) return;
+            Vector3 point = ray.GetPoint(distance);
+            int cellId = configuration.TryMapPoint(new BattlefieldPoint(point.x, point.y), out int x, out int y)
+                ? y * configuration.CellsX + x : -1;
+            BattlefieldDebugSession.SelectCell(cellId);
+            Event.current.Use();
+        }
+
+        private static void DrawSelectedCell()
+        {
+            BattlefieldGridSnapshot grid = BattlefieldDebugSession.Grid;
+            int selected = BattlefieldDebugSession.SelectedCellId;
+            if (grid == null || selected < 0 || selected >= grid.Cells.Count ||
+                BattlefieldDebugSession.Display.IsCaptureMode) return;
+            BattlefieldGridCellSnapshot cell = grid.Cells[selected];
+            Handles.color = Color.yellow;
+            Vector3[] corners = CellCorners(grid.Configuration, cell);
+            Handles.DrawAAPolyLine(3f, corners[0], corners[1], corners[2], corners[3], corners[0]);
+            Handles.Label((corners[0] + corners[2]) * 0.5f,
+                $"Cell {cell.CellId} ({cell.X}, {cell.Y})\nT:{cell.TurretCount} P:{cell.PlayerCount} E:{cell.EnemyCount}");
+        }
+
+        private static Vector3[] CellCorners(BattlefieldGridConfiguration configuration, BattlefieldGridCellSnapshot cell)
+        {
+            float x = (float)(configuration.MinimumX + cell.X * configuration.CellWidth);
+            float y = (float)(configuration.MinimumY + cell.Y * configuration.CellHeight);
+            float width = (float)configuration.CellWidth;
+            float height = (float)configuration.CellHeight;
+            float z = (float)configuration.OriginZ;
+            return new[] { new Vector3(x, y, z), new Vector3(x + width, y, z),
+                new Vector3(x + width, y + height, z), new Vector3(x, y + height, z) };
+        }
+
+        private static void DrawBoundaryNormals(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
+        {
+            BattlefieldSpatialSnapshot snapshot = BattlefieldDebugSession.Snapshot;
+            Handles.color = new Color(1f, 0.6f, 0.2f);
+            foreach (BattlefieldEdgeAdjacency adjacency in snapshot.EdgeAdjacencies)
+            {
+                if (!adjacency.IsBoundary) continue;
+                Vector3 first = positions[adjacency.Edge.First];
+                Vector3 second = positions[adjacency.Edge.Second];
+                Vector3 midpoint = (first + second) * 0.5f;
+                BattlefieldTriangle triangle = snapshot.Triangles[adjacency.FirstTriangleIndex];
+                Vector3 centroid = (positions[triangle.VertexA] + positions[triangle.VertexB] + positions[triangle.VertexC]) / 3f;
+                Vector3 normal = new Vector3(-(second.y - first.y), second.x - first.x, 0f).normalized;
+                if (Vector3.Dot(normal, midpoint - centroid) < 0) normal = -normal;
+                // 법선은 외곽 기하의 방향일 뿐 공격/방어 우세 신호가 아닙니다.
+                float length = Mathf.Min(Vector3.Distance(first, second) * 0.2f, HandleUtility.GetHandleSize(midpoint));
+                if (length <= 0.0001f) continue;
+                Handles.ArrowHandleCap(0, midpoint, Quaternion.LookRotation(normal, Vector3.forward), length, EventType.Repaint);
+            }
+        }
+
+        private static void DrawLegend(SceneView sceneView)
+        {
+            Handles.BeginGUI();
+            try
+            {
+                float width = Mathf.Max(160f, Mathf.Min(430f, sceneView.position.width - 24f));
+                var area = new Rect(12, Mathf.Max(12, sceneView.position.height - 148), width, 112);
+                GUI.Box(area, GUIContent.none, EditorStyles.helpBox);
+                var snapshot = BattlefieldDebugSession.Snapshot;
+                string match = snapshot == null || snapshot.MatchId.IsEmpty ? "N/A" : snapshot.MatchId.ToString();
+                if (match.Length > 10) match = match.Substring(0, 10);
+                // Scene 그리기는 Repaint에만 실행되므로 GUILayout의 Layout 캐시를 사용하지 않습니다.
+                GUI.Label(new Rect(area.x + 6, area.y + 4, width - 12, 20),
+                    $"{BattlefieldDebugSession.Mode} | {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name} | Match {match} r{snapshot?.Revision ?? 0}", EditorStyles.boldLabel);
+                GUI.Label(new Rect(area.x + 6, area.y + 24, width - 12, 20), BattlefieldDebugSession.Display.CaptureLabel);
+                var configuration = ResolveGridConfiguration();
+                GUI.Label(new Rect(area.x + 6, area.y + 44, width - 12, 20), configuration == null ? "Grid N/A" :
+                    $"Grid {configuration.MapWidth}×{configuration.MapHeight} / {configuration.CellsX}×{configuration.CellsY} cells");
+                GUI.Label(new Rect(area.x + 6, area.y + 64, width - 12, 20), "청록 Territory · 주황 Frontline · 노랑 선택 셀 · E 원시 적 수");
+                GUI.Label(new Rect(area.x + 6, area.y + 84, width - 12, 20), "법선 = 안→밖 기하 방향 / 우세·권한·PlanId = N/A");
+            }
+            finally { Handles.EndGUI(); }
         }
 
         private static void DrawTerritory(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
@@ -74,8 +168,12 @@ namespace TeamHJD.Game.Editor
         private static void DrawVertexLabels(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
         {
             Handles.color = Color.white;
+            int count = 0;
             foreach (var vertex in BattlefieldDebugSession.Snapshot.Vertices)
+            {
+                if (++count > 128) break;
                 Handles.Label(positions[vertex.EntityId], vertex.EntityId.ToString());
+            }
         }
 
         private static Vector3 ToWorldPosition(BattlefieldPoint point)
@@ -95,27 +193,43 @@ namespace TeamHJD.Game.Editor
             var maxY = (float)configuration.MaximumY;
             var z = (float)configuration.OriginZ;
             Handles.color = new Color(0.75f, 0.85f, 1f, 0.55f);
-            for (var x = 0; x <= configuration.CellsX; x++)
+            int stepX = Mathf.Max(1, Mathf.CeilToInt(configuration.CellsX / 1024f));
+            int stepY = Mathf.Max(1, Mathf.CeilToInt(configuration.CellsY / 1024f));
+            for (var x = 0; x <= configuration.CellsX; x += stepX)
             {
                 var worldX = minX + x * (float)configuration.CellWidth;
                 Handles.DrawAAPolyLine(1f, new Vector3(worldX, minY, z), new Vector3(worldX, maxY, z));
             }
-            for (var y = 0; y <= configuration.CellsY; y++)
+            for (var y = 0; y <= configuration.CellsY; y += stepY)
             {
                 var worldY = minY + y * (float)configuration.CellHeight;
                 Handles.DrawAAPolyLine(1f, new Vector3(minX, worldY, z), new Vector3(maxX, worldY, z));
             }
+            Handles.DrawAAPolyLine(1.5f, new Vector3(minX, minY, z), new Vector3(maxX, minY, z),
+                new Vector3(maxX, maxY, z), new Vector3(minX, maxY, z), new Vector3(minX, minY, z));
         }
 
         private static void DrawOccupancy()
         {
-            foreach (var cell in BattlefieldDebugSession.Snapshot.Grid.OccupiedCells)
+            BattlefieldGridSnapshot grid = BattlefieldDebugSession.Grid;
+            if (grid == null) return;
+            int count = 0;
+            foreach (var cell in grid.OccupiedCells)
             {
-                var configuration = BattlefieldDebugSession.Snapshot.Grid.Configuration;
+                if (++count > 2048) break;
+                var configuration = grid.Configuration;
                 var x = configuration.MinimumX + (cell.X + 0.5d) * configuration.CellWidth;
                 var y = configuration.MinimumY + (cell.Y + 0.5d) * configuration.CellHeight;
                 var position = new Vector3((float)x, (float)y, (float)configuration.OriginZ);
-                Handles.Label(position, $"T:{cell.TurretCount} P:{cell.PlayerCount} E:{cell.EnemyCount}");
+                Vector3[] corners = CellCorners(configuration, cell);
+                // 색은 해당 셀의 Enemy 원시 수만 표시합니다. 위험도/우세도가 아닙니다.
+                Handles.color = cell.EnemyCount > 0 ? new Color(1f, 0.4f, 0.1f, 0.18f) : new Color(0.2f, 0.8f, 1f, 0.14f);
+                Handles.DrawAAConvexPolygon(corners);
+                Vector2 screenMin = HandleUtility.WorldToGUIPoint(corners[0]);
+                Vector2 screenMax = HandleUtility.WorldToGUIPoint(corners[2]);
+                if (!BattlefieldDebugSession.Display.IsCaptureMode && count <= 128 &&
+                    Mathf.Abs(screenMax.x - screenMin.x) >= 48f && Mathf.Abs(screenMax.y - screenMin.y) >= 24f)
+                    Handles.Label(position, $"T:{cell.TurretCount} P:{cell.PlayerCount} E:{cell.EnemyCount}");
             }
         }
 
