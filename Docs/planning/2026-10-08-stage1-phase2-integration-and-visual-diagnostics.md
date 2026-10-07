@@ -1,16 +1,18 @@
 # Stage 1 PoC 2차 통합·시각 진단 설계 초안
 
-기준일: 2026-10-08 · 상태: **배치 준비/팀 합의 전** · 기준 Scene: `Assets/PoC/Spaceship/Scenes/Initial_Stage.unity`  
+기준일: 2026-10-08 · 상태: **A 단독 B0~B3 구현·CLI 검사 완료 / B4·B5 팀 계약 대기** · 기준 Scene: `Assets/PoC/Spaceship/Scenes/Initial_Stage.unity`
 [1~3차 통합 준비표](2026-10-07-stage1-poc-integration-prep.md) · [Core 실행 구조](../../Assets/PoC/Core/README.md)
 
 ## 목표와 현재 증거
+
+진행 결과는 [배치 결과/검증/사용법](2026-10-08-phase2-batch-results.md)에 기록합니다. 아래 감사 표는 **구현 전 발견 사항**이며 현재 코드와 혼동하지 않습니다. B0는 `5a323898`로 보존했고 B1의 ID 소유권 검사, App host 경유 위치 통지, 명시적 소비자 참조와 B2/B3의 창 독립 표시·Overlay·셀 상세·캡처를 구현했습니다. 실제 Scene YAML은 변경하지 않았습니다. STALE snapshot은 보관하지 않고 소스 종료 시 지워 `UNAVAILABLE`로 표시합니다. 프리셋은 지금 데이터로 동작하는 Topology/Grid/Capture만 제공합니다. Spawn Decision/Combat 프리셋은 B4/B5 계약 이후입니다.
 
 2차는 “적이 생성됐다”에서 “**같은 Match의 상태를 보고 계획한 적이 타깃과 상호작용하며, 그 판단·결과를 팀이 화면으로 확인한다**”로 넘어가는 단계다. 전체 팀의 같은 Build 플레이 판정·제품 가설 결론은 3차로 남긴다. 터렛은 담당 팀원이 작업 후 올릴 예정이므로 **실제 터렛 배치·삼각형·전선·터렛 타깃의 Scene 검증은 업로드 이후 Gate T**로 미룬다. A가 터렛이나 Player/Enemy 기능을 대신 구현하는 계획은 아니다.
 
 - Core의 `BattlefieldSpatialSnapshot`에는 `MatchId`, `Revision`, Turret vertex/triangle/boundary edge, Grid 셀별 T/P/E ID·개수와 범위 밖 ID가 있다. **전선 압력·우세·공격 방향 값은 없다.**
 - `SpawnPointSpatialPolicy`는 현재 후보 필터와 분대 세트 배분을 수행하지만, 후보별 탈락 이유·점수·plan ID를 진단 결과로 보관하지 않는다. `EncounterRuntime`은 계획/실행 결과를 문자열로만 반환한다.
-- `BattlefieldDebugWindow`는 Editor에서 Grid·Territory·Frontline과 Match/Revision을 그린다. `SceneView.duringSceneGui` 등록이 창의 `OnEnable`에 묶여 있어 **창을 닫으면 Scene 표시도 사라진다.** `OnGUI`의 `SceneView.RepaintAll()`도 화면 갱신과 계산 갱신을 분리할 여지가 있다. `SpawnPoint`에는 빨간 반경 Gizmo가 이미 있다.
-- 1차 CLI 통합 테스트에서는 Host·2개 지점·Slime 10마리 생성이 통과했지만 타깃 없음 경고가 났고, 터렛 0개라 삼각형/전선은 0이었다. 이것을 2차 작업의 출발 실패 사례로 보존한다. 첫 패치는 아직 `feature/core`의 미커밋 변경이므로 배치 전에 복구 가능한 기준 커밋으로 고정한다. 기존 `Validation/`은 별도 미추적 자료이며 임의로 포함하지 않는다.
+- 구현 전 `BattlefieldDebugWindow`의 Scene 등록은 창에 묶여 있었다. B2에서 `BattlefieldDebugSession / BattlefieldSceneDrawer / BattlefieldSceneOverlay`로 분리해 창 종료 후에도 표시를 유지한다. `OnGUI`의 무조건 repaint를 제거했다. `SpawnPoint`의 기존 빨간 반경 Gizmo는 그대로 두었으며 E의 계획 표시를 겹쳐 만들지 않았다.
+- 1차 CLI 통합 테스트에서는 Host·2개 지점·Slime 10마리 생성이 통과했지만 타깃 없음 경고가 났고, 터렛 0개라 삼각형/전선은 0이었다. B0 커밋으로 기준점을 고정했고 2차 마지막 명시적 테스트에서도 같은 결과를 확인했다. 기존 `Validation/`은 별도 미추적 자료이며 포함하지 않았다.
 - GitHub [#443](https://github.com/Team-HJD-21/unity-6-the-developer/issues/443)·[#458](https://github.com/Team-HJD-21/unity-6-the-developer/issues/458)은 A의 Core 생산 경계, [#459](https://github.com/Team-HJD-21/unity-6-the-developer/issues/459)는 E의 Match-scoped Encounter·SpawnPlan/실행 경계다. [#460](https://github.com/Team-HJD-21/unity-6-the-developer/issues/460)은 기존 Editor 진단 기반으로 닫혀 있으므로 아래 **확장**은 별도 후속 범위로 추적하고, 완료된 Issue의 의미를 소급해 바꾸지 않는다.
 
 ## 2차 통합 작업 묶음

@@ -1,11 +1,13 @@
 # Stage 1 PoC 통합 준비표
 
-기준일: 2026-10-07 · 수정일: 2026-10-08 · 병합 기준: `main` `a7f57bc9` · 1차 패치: 로컬 `feature/core` 미커밋  
+기준일: 2026-10-07 · 수정일: 2026-10-08 · 병합 기준: `main` `a7f57bc9` · 1차 패치: `feature/core` `5a323898`
 상태: 1차 통합 코드 및 CLI의 명시적 `Initial_Stage` 자동 생성 테스트 통과, 2·3차 팀 통합 계획. **동일 Build의 전체 전투·재진입·지역 해금 테스트 완료 보고가 아니다.**
 
 [문서 목차](../README.md) · [Sprint 기준](SPRINT_1_STAGE_1_POC.md) · [제품 범위](../product/PROJECT_PLAN.md) · [10월 3일 후속 검토](2026-10-03-poc-followup.md) · [10월 5일 스폰 논의](2026-10-05-monster-map-spawn-review.md)
 
 2차 Match/Encounter 연결과 Editor 시각 진단의 세부 제안은 [2차 통합·시각 진단 설계](2026-10-08-stage1-phase2-integration-and-visual-diagnostics.md)를 본다. 이 제안은 아래 1~3차 경계와 Issue 담당을 변경하지 않는다.
+
+**2차 진행:** A 단독 B0~B3의 구현과 CLI 검사는 [배치 결과](2026-10-08-phase2-batch-results.md)에 기록했다. Scene-owned Match 종료, 위치 변경 통지, 창 독립 Overlay·셀 상세·범례·Capture를 추가했으며, E의 Encounter 수명/판단 기록과 Player 타깃·실제 터렛 테스트는 완료로 바꾸지 않았다.
 
 ## 1. 이번 통합에서 무엇을 판정하는가
 
