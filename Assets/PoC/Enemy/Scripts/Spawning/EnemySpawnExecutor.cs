@@ -51,6 +51,8 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
     [SerializeField] private EnemyCatalog enemyList;
     private SpawnPointRegistry _spawnPointList = new();
+    private readonly List<GameObject> _spawnSceneRoots = new();
+    private readonly List<SpawnPoint> _discoveredSpawnPoints = new();
     private readonly List<EnemySquad> _squads = new();
     private readonly Dictionary<ulong, TrackedEnemy> _spawnedEnemies = new();
     public event Action<EnemyLifecycleObservation> LifecycleObserved;
@@ -66,7 +68,15 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     /// <summary>
     /// Planner와 Executor가 함께 사용하는 스폰 지점 및 점령 상태 목록을 반환한다.
     /// </summary>
-    public SpawnPointRegistry SpawnPointList => _spawnPointList;
+    public SpawnPointRegistry SpawnPointList
+    {
+        get
+        {
+            // Update마다 전장을 검색하지 않고 계획 요청 직전에 추가/복제/제거를 반영합니다.
+            RefreshSpawnPoints();
+            return _spawnPointList;
+        }
+    }
 
     /// <summary>현재 네트워크 서버 권한으로 실제 생성을 수행할 수 있는지 반환합니다.</summary>
     public bool CanSpawn => IsSpawned && IsServer;
@@ -102,12 +112,33 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     }
 
     /// <summary>
-    /// 자식 SpawnPoint를 수집해 생성 전 확인과 Planner의 계획에 사용할 목록을 초기화한다.
+    /// 같은 Scene의 SpawnPoint를 수집해 Planner의 계획에 사용할 목록을 초기화한다.
     /// </summary>
     void Awake()
     {
-        SpawnPoint[] points = GetComponentsInChildren<SpawnPoint>();
-        _spawnPointList.Initialize(points);
+        RefreshSpawnPoints();
+    }
+
+    /// <summary>
+    /// 부모 이름/Executor 계층과 관계없이 같은 Scene의 모든 지점을 등록합니다.
+    /// 다른 Scene의 지점은 포함하지 않습니다.
+    /// 비활성 지점도 보관하며, 실제 생성 가능 여부와 공간 배정은 기존 정책이 판단합니다.
+    /// </summary>
+    public void RefreshSpawnPoints()
+    {
+        _discoveredSpawnPoints.Clear();
+        var scene = gameObject.scene;
+        if (!scene.IsValid() || !scene.isLoaded)
+        {
+            _spawnPointList.Initialize(_discoveredSpawnPoints);
+            return;
+        }
+        _spawnSceneRoots.Clear();
+        scene.GetRootGameObjects(_spawnSceneRoots);
+        foreach (GameObject root in _spawnSceneRoots)
+            foreach (SpawnPoint point in root.GetComponentsInChildren<SpawnPoint>(true))
+                _discoveredSpawnPoints.Add(point);
+        _spawnPointList.Initialize(_discoveredSpawnPoints);
     }
 
     /// <summary>
