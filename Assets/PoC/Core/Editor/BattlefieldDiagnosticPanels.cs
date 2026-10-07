@@ -39,7 +39,6 @@ namespace TeamHJD.Game.Editor
             EditorGUILayout.LabelField("Match", snapshot == null || snapshot.MatchId.IsEmpty ? "N/A" : snapshot.MatchId.ToString());
             EditorGUILayout.LabelField("Revision / V / T / F",
                 $"{snapshot?.Revision ?? 0} / {snapshot?.Vertices.Count ?? 0} / {snapshot?.Triangles.Count ?? 0} / {snapshot?.FrontlineEdges.Count ?? 0}");
-            EditorGUILayout.HelpBox("청록 면: 아군 기하 영역 · 주황 선: 전선 외곽 · 노랑: 선택 셀\nT/P/E는 원시 개체 수입니다. 법선은 안→밖 기하 방향이며 우세·위험 점수가 아닙니다.", MessageType.Info);
             if (!string.IsNullOrEmpty(BattlefieldDebugSession.Error))
                 EditorGUILayout.HelpBox(BattlefieldDebugSession.Error, MessageType.Error);
             if (BattlefieldDebugSession.Mode == "UNAVAILABLE")

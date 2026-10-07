@@ -7,6 +7,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Editor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace TeamHJD.Game.Tests.EditMode
 {
@@ -108,9 +109,15 @@ namespace TeamHJD.Game.Tests.EditMode
             {
                 window.CreateGUI();
                 Assert.That(window.rootVisualElement.childCount,Is.GreaterThan(0));
-                var field=typeof(GameDebuggerWindow).GetField("_page",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
-                var build=typeof(GameDebuggerWindow).GetMethod("BuildPage",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
-                for (int index=0;index<6;index++) { field.SetValue(window,index); Assert.DoesNotThrow(()=>build.Invoke(window,null)); }
+                foreach (GameDebuggerLayout layout in Enum.GetValues(typeof(GameDebuggerLayout)))
+                {
+                    window.SetLayout(layout);
+                    Assert.That(window.rootVisualElement.Query<GameDebuggerPane>().ToList().Count,Is.EqualTo(window.VisiblePaneCount));
+                    foreach (var split in window.rootVisualElement.Query<TwoPaneSplitView>().ToList())
+                        Assert.That(split.contentContainer.childCount,Is.EqualTo(2));
+                    for (int pane=0;pane<window.VisiblePaneCount;pane++)
+                        for (int page=0;page<6;page++) Assert.DoesNotThrow(()=>window.SelectPage(pane,page));
+                }
             }
             finally
             {
@@ -119,6 +126,60 @@ namespace TeamHJD.Game.Tests.EditMode
                 BattlefieldDebugSession.NotifyDisplayChanged();
             }
             Assert.That(Time.timeScale,Is.EqualTo(scale));
+        }
+
+        [Test]
+        public void Workspace_IndependentState_SurvivesLayoutChanges_AndRebuild()
+        {
+            string previousDisplay=JsonUtility.ToJson(BattlefieldDebugSession.Display);
+            var window=ScriptableObject.CreateInstance<GameDebuggerWindow>();
+            try
+            {
+                window.CreateGUI(); window.SetLayout(GameDebuggerLayout.FourPanels);
+                window.SelectPage(0,3); window.SelectPage(1,3); window.SelectPage(3,4);
+                var first=window.GetPaneState(0); var second=window.GetPaneState(1); var fourth=window.GetPaneState(3);
+                first.Metric=GameDebugMetric.Spawned; first.EnemyFilter="Slime";
+                second.Metric=GameDebugMetric.Removed; second.EnemyFilter="Boss"; second.BinSeconds=10;
+                fourth.Search="turret"; fourth.ScrollOffsets[4]=new Vector2(0,120);
+                window.SetActivePane(3);
+                window.SetLayout(GameDebuggerLayout.Single);
+                Assert.That(window.ActivePane,Is.EqualTo(0));
+                window.SetLayout(GameDebuggerLayout.FourPanels); window.CreateGUI();
+                Assert.That(window.GetPaneState(0),Is.SameAs(first));
+                Assert.That(window.GetPaneState(1).Metric,Is.EqualTo(GameDebugMetric.Removed));
+                Assert.That(window.GetPaneState(0).EnemyFilter,Is.EqualTo("Slime"));
+                Assert.That(window.GetPaneState(1).EnemyFilter,Is.EqualTo("Boss"));
+                Assert.That(window.GetPaneState(1).BinSeconds,Is.EqualTo(10));
+                Assert.That(window.GetPaneState(3).Page,Is.EqualTo(4));
+                Assert.That(window.GetPaneState(3).Search,Is.EqualTo("turret"));
+                Assert.That(window.GetPaneState(3).ScrollOffsets[4].y,Is.EqualTo(120));
+                window.SetActivePane(1);
+                Assert.That(window.rootVisualElement.Q<GameDebuggerPane>("debug-pane-1").ClassListContains("active-pane"),Is.True);
+                Assert.That(window.rootVisualElement.Q<GameDebuggerPane>("debug-pane-0").ClassListContains("active-pane"),Is.False);
+                Assert.Throws<ArgumentOutOfRangeException>(()=>window.SelectPage(4,0));
+                Assert.Throws<ArgumentOutOfRangeException>(()=>window.SetLayout((GameDebuggerLayout)99));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(window);
+                JsonUtility.FromJsonOverwrite(previousDisplay,BattlefieldDebugSession.Display);
+                BattlefieldDebugSession.NotifyDisplayChanged();
+            }
+        }
+
+        [Test]
+        public void PaneState_RoundTrip_PreservesPerPageScroll_AndNormalizesInvalidValues()
+        {
+            var state=new GameDebuggerPaneState{Page=4, Search="failure", Metric=GameDebugMetric.Removed, BinSeconds=7};
+            state.ScrollOffsets[3]=new Vector2(0,50); state.ScrollOffsets[4]=new Vector2(0,200);
+            var restored=JsonUtility.FromJson<GameDebuggerPaneState>(JsonUtility.ToJson(state));
+            restored.Validate();
+            Assert.That(restored.Search,Is.EqualTo("failure")); Assert.That(restored.Metric,Is.EqualTo(GameDebugMetric.Removed));
+            Assert.That(restored.ScrollOffsets[3].y,Is.EqualTo(50)); Assert.That(restored.ScrollOffsets[4].y,Is.EqualTo(200));
+            restored.BinSeconds=float.NaN; restored.Page=99; restored.ScrollOffsets=null; restored.BattlefieldPanel=null;
+            restored.Validate();
+            Assert.That(restored.BinSeconds,Is.EqualTo(5)); Assert.That(restored.Page,Is.EqualTo(5));
+            Assert.That(restored.ScrollOffsets.Length,Is.EqualTo(6)); Assert.That(restored.BattlefieldPanel,Is.Not.Null);
         }
     }
 }

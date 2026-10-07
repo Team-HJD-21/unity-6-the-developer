@@ -28,8 +28,8 @@ namespace TeamHJD.Game.Editor
             EditorGUILayout.LabelField("Authority / alive", source == null ? "N/A" :
                 $"{(source.IsServer ? "SERVER" : "CLIENT/OFFLINE")} / {(source.IsServer ? source.ActiveEnemyCount.ToString() : "N/A")}");
             EditorGUILayout.LabelField("Game / real seconds", source == null ? "N/A" : $"{source.GameSeconds:F1} / {source.RealSeconds:F1}");
+            FrontlineInspector.Draw();
             if (GUILayout.Button("Open Game Debugger")) GameDebuggerWindow.Open();
-            if (GUILayout.Button("Open Debug Window")) BattlefieldDebugWindow.Open();
         }
     }
 }

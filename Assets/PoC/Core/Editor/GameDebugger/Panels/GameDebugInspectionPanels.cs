@@ -1,6 +1,7 @@
-// 현재 Match의 연결·터렛·요청 결과와 타임라인을 조회합니다.
-// 과거 기록은 조회만 하고, 선택 명령은 현재 Scene의 객체만 대상으로 합니다.
+// 실시간 핵심 수치는 계기 카드, 반복 기록은 선택 가능한 표와 상세 영역으로 표시합니다.
+// 목록 스크롤·접힘·선택은 영역별 상태로 유지하고 게임 상태는 변경하지 않습니다.
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Turrets;
@@ -11,78 +12,176 @@ namespace TeamHJD.Game.Editor
 {
     public static class GameDebugInspectionPanels
     {
-        public static void DrawOverview()
+        public static void DrawOverview(GameDebugMonitorState view)
         {
             var source=GameDebuggerSession.Source;
-            BattlefieldDiagnosticPanels.DrawOverview();
-            EditorGUILayout.LabelField("Authority", source==null ? "Unknown" : $"server={source.IsServer} client={source.IsClient} listening={source.IsListening}");
-            EditorGUILayout.LabelField("Clock", source==null ? "N/A" : $"game {source.GameSeconds:F2}s / real {source.RealSeconds:F2}s");
-            EditorGUILayout.LabelField("Snapshot observed age", GameDebuggerSession.SnapshotObservedAge<0 ? "N/A" : $"{GameDebuggerSession.SnapshotObservedAge:F2}s (revision을 처음 관측한 후)");
             var run=GameDebuggerSession.Current;
-            if (run!=null)
+            var sample=run?.Samples.LastOrDefault();
+            var snapshot=BattlefieldDebugSession.Snapshot;
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("Recorded events / samples", $"{run.Events.Count} / {run.Samples.Count} (partial={run.IsPartial})");
-                EditorGUILayout.LabelField("Dropped E / S / runtime buffer", $"{run.DroppedEvents} / {run.DroppedSamples} / {run.RuntimeDroppedEvents}");
-                var sample=run.Samples.LastOrDefault();
-                if (sample!=null)
+                EditorGUILayout.LabelField("MATCH MONITOR",EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(BattlefieldDebugSession.Mode+" · "+(source==null?"NO SOURCE":source.IsServer?"SERVER":"CLIENT"),EditorStyles.miniLabel);
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("Match alive / unassigned", $"{Unknown(sample.AliveEnemies)} / {Unknown(sample.UnattributedEnemies)}");
-                    EditorGUILayout.LabelField("Power available / maximum", $"{Unknown(sample.AvailablePower)} / {Unknown(sample.MaximumPower)}");
-                    EditorGUILayout.LabelField("Territory area / boundary length", $"{sample.TerritoryArea:F2} / {sample.FrontlineLength:F2} world units");
+                    Tile("생존",sample==null?"—":Unknown(sample.AliveEnemies),"현재 Match 서버 생존 객체 수");
+                    Tile("전력",sample==null?"—":$"{Unknown(sample.AvailablePower)} / {Unknown(sample.MaximumPower)}","사용 가능한 전력 / 최대");
+                    Tile("가동 터렛",sample==null?"—":$"{sample.OperationalTurrets} / {sample.TurretCount}","현재 가동 / 등록된 터렛");
+                }
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    Tile("게임 시간",source==null?"—":source.GameSeconds.ToString("F1")+"s","Time.timeScale이 반영된 시간");
+                    Tile("실제 시간",source==null?"—":source.RealSeconds.ToString("F1")+"s","Editor 정지와 clock 정책은 가이드 참고");
+                    Tile("Snapshot",snapshot==null?"—":"r"+snapshot.Revision,"최신 snapshot revision");
+                }
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    Tile("영역 면적",sample==null?"—":sample.TerritoryArea.ToString("F1"),"기하 면적 (world²), 우세도가 아닙니다.");
+                    Tile("외곽 길이",sample==null?"—":sample.FrontlineLength.ToString("F1"),"기하 외곽 길이 (world)");
+                    Tile("수집",run==null?"—":run.IsPartial?"PARTIAL":run.IsComplete?"ENDED":"LIVE","중간 수집/손실이 있으면 PARTIAL");
                 }
             }
-            EditorGUILayout.HelpBox("읽기 전용 관측 도구입니다. Despawn ≠ 처치. HP/전력은 Feature 조회값이며 전선 기하는 전술 우세도가 아닙니다. snapshot 발행 timestamp 계약이 없어 정확한 snapshot age는 N/A입니다.",MessageType.Info);
-            foreach (string warning in GameDebuggerSession.Warnings) EditorGUILayout.HelpBox(warning,MessageType.Warning);
-            DrawTurrets();
-        }
-        private static string Unknown(int value) => value<0 ? "N/A" : value.ToString();
-        public static void DrawTurrets()
-        {
-            EditorGUILayout.Space(); EditorGUILayout.LabelField("Turrets · Current Scene / read-only",EditorStyles.boldLabel);
-            if (!EditorApplication.isPlaying) { EditorGUILayout.HelpBox("Runtime registry는 Play Mode에서 조회됩니다. 배치 Preview는 Battlefield 패널을 사용하세요.",MessageType.None); return; }
-            foreach (var turret in GameDebuggerSession.GetSceneTurrets())
+            view.IsConnectionsExpanded=EditorGUILayout.Foldout(view.IsConnectionsExpanded,"연결 및 수집 상태 · "+GameDebuggerSession.Warnings.Count+" warnings",true);
+            if (view.IsConnectionsExpanded) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("#"+turret.InstanceId,GUILayout.Width(56)) && TurretInstanceRegistry.TryGet(turret.InstanceId,out var component))
-                { Selection.activeGameObject=component.gameObject; SceneView.lastActiveSceneView?.FrameSelected(); }
-                EditorGUILayout.LabelField($"{turret.DefinitionId} | HP {turret.CurrentHealth}/{turret.MaxHealth} | power {turret.EffectivePower} | {(turret.IsDestroyed?"DESTROYED":turret.IsOperational?"OPERATIONAL":turret.IsActivated?"ACTIVATED / PAUSED":"OFF")} | ({turret.Position.x:F1}, {turret.Position.y:F1})",EditorStyles.wordWrappedLabel);
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.LabelField("Match",snapshot?.MatchId.ToString() ?? "N/A");
+                EditorGUILayout.LabelField("Authority",source==null?"N/A":$"server {source.IsServer} · client {source.IsClient} · listening {source.IsListening}");
+                EditorGUILayout.LabelField("이벤트 / 표본",run==null?"—":$"{run.Events.Count:N0} / {run.Samples.Count:N0}");
+                EditorGUILayout.LabelField("손실 E / S / buffer",run==null?"—":$"{run.DroppedEvents} / {run.DroppedSamples} / {run.RuntimeDroppedEvents}");
+                EditorGUILayout.LabelField("관측 revision age",GameDebuggerSession.SnapshotObservedAge<0?"—":$"{GameDebuggerSession.SnapshotObservedAge:F2}s");
+                EditorGUILayout.LabelField("귀속 불명 객체",sample==null?"—":Unknown(sample.UnattributedEnemies));
+                foreach (string warning in GameDebuggerSession.Warnings.Take(8)) EditorGUILayout.HelpBox(warning,MessageType.Warning);
+                if (GameDebuggerSession.Warnings.Count>8) EditorGUILayout.LabelField("추가 경고 "+(GameDebuggerSession.Warnings.Count-8)+"개",EditorStyles.miniLabel);
+            }
+            DrawTurrets(view);
+            view.IsNotesExpanded=EditorGUILayout.Foldout(view.IsNotesExpanded,"관측값 해석 / 제한",true);
+            if (view.IsNotesExpanded) EditorGUILayout.HelpBox("제거 ≠ 사망. 전선 기하는 우세도/위험도가 아닙니다. revision 관측 age는 정확한 발행 age가 아닙니다. 수집/창 종료는 Match를 변경하지 않습니다.",MessageType.None);
+        }
+        private static string Unknown(int value) => value<0?"N/A":value.ToString();
+        private static void Tile(string title,string value,string help)
+        {
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox,GUILayout.MinWidth(72),GUILayout.ExpandWidth(true)))
+            {
+                GUILayout.Label(new GUIContent(title,help),EditorStyles.miniLabel);
+                var number=new GUIStyle(EditorStyles.boldLabel){fontSize=17};
+                GUILayout.Label(new GUIContent(value,help),number,GUILayout.Height(24));
             }
         }
-        public static void DrawRequests(GameDebugRun run)
+        public static void DrawTurrets(GameDebugMonitorState view)
         {
-            EditorGUILayout.Space(); EditorGUILayout.LabelField("Request results · latest 20",EditorStyles.boldLabel);
-            if (run==null) return;
-            foreach (var item in run.Events.Where(item=>item.Kind==GameDiagnosticKind.RequestCompleted || item.Kind==GameDiagnosticKind.RequestFailed).Reverse().Take(20))
-                EditorGUILayout.LabelField($"#{item.RequestId} r{item.Revision} · {item.Source} · {item.SquadOrder} · planned {item.PlannedCount} / actual {item.ActualCount}\n{item.Message}",EditorStyles.wordWrappedLabel);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("터렛 · 현재 Scene",EditorStyles.boldLabel);
+                if (!EditorApplication.isPlaying) { EditorGUILayout.LabelField("배치 Preview는 Battlefield에서 조회합니다.",EditorStyles.miniLabel); return; }
+                using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+                { Cell("ID",54); Cell("정의 / HP",120); Cell("전력",48); Cell("상태",100); Cell("XY",90); }
+                view.TurretScroll=EditorGUILayout.BeginScrollView(view.TurretScroll,GUILayout.Height(160));
+                foreach (var turret in GameDebuggerSession.GetSceneTurrets())
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button("#"+turret.InstanceId,EditorStyles.miniButton,GUILayout.Width(54)) &&
+                            TurretInstanceRegistry.TryGet(turret.InstanceId,out var component))
+                        { Selection.activeGameObject=component.gameObject; SceneView.lastActiveSceneView?.FrameSelected(); }
+                        Cell($"{turret.DefinitionId}  {turret.CurrentHealth}/{turret.MaxHealth}",120);
+                        Cell(turret.EffectivePower.ToString(),48);
+                        Cell(turret.IsDestroyed?"DESTROYED":turret.IsOperational?"RUNNING":turret.IsActivated?"PAUSED":"OFF",100);
+                        Cell($"{turret.Position.x:F1}, {turret.Position.y:F1}",90);
+                    }
+                }
+                EditorGUILayout.EndScrollView();
+            }
         }
-        public static void DrawTimeline(GameDebugRun run, string search, string bookmark)
+        private static void Cell(string text,float width) =>
+            GUILayout.Label(new GUIContent(text,text),EditorStyles.label,GUILayout.Width(width));
+        public static void DrawRequests(GameDebugRun run,GameDebugMonitorState view)
+        {
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("Encounter 요청 결과",EditorStyles.boldLabel);
+                var entries=run?.Events.Where(e=>e.Kind==GameDiagnosticKind.RequestCompleted || e.Kind==GameDiagnosticKind.RequestFailed).Reverse().Take(200).ToArray()
+                    ?? Array.Empty<GameDebugEventEntry>();
+                if (entries.Length==0) { EditorGUILayout.LabelField("아직 요청 결과가 없습니다.",EditorStyles.miniLabel); return; }
+                using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+                { Cell("시간",54); Cell("요청",58); Cell("Source",105); Cell("Preset",80); Cell("계획",40); Cell("생성",40); Cell("결과",60); }
+                view.RequestScroll=EditorGUILayout.BeginScrollView(view.RequestScroll,GUILayout.Height(190));
+                foreach (var item in entries) using (new EditorGUILayout.HorizontalScope(
+                    item.Sequence==view.SelectedRequestSequence?EditorStyles.helpBox:GUIStyle.none))
+                {
+                    Cell(item.GameSeconds.ToString("F1")+"s",54);
+                    if (GUILayout.Button("#"+item.RequestId,EditorStyles.miniButton,GUILayout.Width(58))) view.SelectedRequestSequence=item.Sequence;
+                    Cell(item.Source.ToString(),105); Cell(item.SquadOrder,80); Cell(item.PlannedCount.ToString(),40);
+                    Cell(item.ActualCount.ToString(),40); Cell(item.Kind==GameDiagnosticKind.RequestFailed?"FAILED":"OK",60);
+                }
+                EditorGUILayout.EndScrollView();
+                var selected=entries.FirstOrDefault(e=>e.Sequence==view.SelectedRequestSequence);
+                if (selected==null) return;
+                view.IsRequestDetailsExpanded=EditorGUILayout.Foldout(view.IsRequestDetailsExpanded,"선택 요청 #"+selected.RequestId+" · r"+selected.Revision,true);
+                if (view.IsRequestDetailsExpanded) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    EditorGUILayout.LabelField("Match",selected.MatchId);
+                    EditorGUILayout.LabelField("계획 / 실제",selected.PlannedCount+" / "+selected.ActualCount);
+                    EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(76));
+                    EditorGUILayout.LabelField("공간 판단·분포는 Statistics > Spawn decisions에서 조회",EditorStyles.miniLabel);
+                }
+            }
+        }
+        public static void DrawTimeline(GameDebugRun run,string search,string bookmark,GameDebugMonitorState view)
         {
             bool live=run!=null && ReferenceEquals(run,GameDebuggerSession.Current);
-            using (new EditorGUI.DisabledGroupScope(!live))
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                GameDebuggerSession.ShouldPauseOnFailure=EditorGUILayout.Toggle("Pause on request failure",GameDebuggerSession.ShouldPauseOnFailure);
-                GameDebuggerSession.ShouldPauseOnTurretDestroyed=EditorGUILayout.Toggle("Pause on turret destroyed",GameDebuggerSession.ShouldPauseOnTurretDestroyed);
-                GameDebuggerSession.ShouldPauseOnOutOfBounds=EditorGUILayout.Toggle("Pause on Grid OOB",GameDebuggerSession.ShouldPauseOnOutOfBounds);
-                EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Rearm conditions")) GameDebuggerSession.Rearm();
-                if (GUILayout.Button("Add bookmark")) GameDebuggerSession.AddMarker("Bookmark: "+bookmark);
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.LabelField("조건부 정지",EditorStyles.boldLabel);
+                using (new EditorGUI.DisabledGroupScope(!live))
+                {
+                    GameDebuggerSession.ShouldPauseOnFailure=EditorGUILayout.Toggle("요청 실패",GameDebuggerSession.ShouldPauseOnFailure);
+                    GameDebuggerSession.ShouldPauseOnTurretDestroyed=EditorGUILayout.Toggle("터렛 파괴",GameDebuggerSession.ShouldPauseOnTurretDestroyed);
+                    GameDebuggerSession.ShouldPauseOnOutOfBounds=EditorGUILayout.Toggle("Grid 범위 초과",GameDebuggerSession.ShouldPauseOnOutOfBounds);
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button("Rearm")) GameDebuggerSession.Rearm();
+                        if (GUILayout.Button("Bookmark")) GameDebuggerSession.AddMarker("Bookmark: "+bookmark);
+                    }
+                }
+                if (!string.IsNullOrEmpty(GameDebuggerSession.LastPauseReason)) EditorGUILayout.HelpBox(GameDebuggerSession.LastPauseReason,MessageType.Warning);
             }
-            if (!string.IsNullOrEmpty(GameDebuggerSession.LastPauseReason)) EditorGUILayout.HelpBox(GameDebuggerSession.LastPauseReason+" · Resume 후 재무장해야 다시 정지합니다.",MessageType.Warning);
             if (run==null) return;
-            // 서로 다른 공급 경로라도 게임시간으로 하나의 타임라인에 정렬합니다.
-            var entries=run.Events.Select(item=>(time:item.GameSeconds, text:$"[{item.Source}/{item.Kind}] request #{item.RequestId} r{item.Revision} {item.SquadOrder} {item.EnemyType} {item.SpawnPointId}: {item.Message}",turret:0))
-                .Concat(run.Markers.Select(item=>(time:item.GameSeconds,text:"[Editor] "+item.Message,turret:item.TurretId)))
-                .Where(item=>string.IsNullOrEmpty(search) || item.text.IndexOf(search,StringComparison.OrdinalIgnoreCase)>=0)
-                .OrderByDescending(item=>item.time).Take(200);
-            foreach (var item in entries)
+            var entries=run.Events.Select(item=>(time:item.GameSeconds,eventItem:item,marker:(GameDebugMarker)null))
+                .Concat(run.Markers.Select(marker=>(time:marker.GameSeconds,eventItem:(GameDebugEventEntry)null,marker:marker)))
+                .Where(row=>string.IsNullOrEmpty(search) ||
+                    (row.eventItem==null ? row.marker.Message ?? "" : row.eventItem.Source+" "+row.eventItem.Kind+" "+row.eventItem.EnemyType+" "+row.eventItem.Message)
+                    .IndexOf(search,StringComparison.OrdinalIgnoreCase)>=0)
+                .OrderByDescending(row=>row.time).Take(300).ToArray();
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField($"{item.time:F2}s {item.text}",EditorStyles.wordWrappedLabel);
-                if (live && item.turret>0 && GUILayout.Button("Select",GUILayout.Width(55)) && TurretInstanceRegistry.TryGet(item.turret,out var turret))
-                { Selection.activeGameObject=turret.gameObject; SceneView.lastActiveSceneView?.FrameSelected(); }
-                EditorGUILayout.EndHorizontal();
+                using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+                { Cell("시간",62); Cell("이벤트",145); Cell("요청",65); Cell("Source",105); Cell("개체 / 지점",170); }
+                view.TimelineScroll=EditorGUILayout.BeginScrollView(view.TimelineScroll,GUILayout.Height(240));
+                foreach (var row in entries) using (new EditorGUILayout.HorizontalScope())
+                {
+                    Cell(row.time.ToString("F2")+"s",62);
+                    var item=row.eventItem;
+                    if (item!=null)
+                    {
+                        if (GUILayout.Button(item.Kind.ToString(),EditorStyles.miniButton,GUILayout.Width(145))) view.SelectedEventSequence=item.Sequence;
+                        Cell(item.RequestId.ToString(),65); Cell(item.Source.ToString(),105); Cell(item.EnemyType+" / "+item.SpawnPointId,170);
+                    }
+                    else
+                    {
+                        var marker=row.marker;
+                        Cell("Editor marker",145); Cell("—",65); Cell("Editor",105); Cell(marker.Message,170);
+                        if (live && marker.TurretId>0 && GUILayout.Button("Frame",GUILayout.Width(50)) &&
+                            TurretInstanceRegistry.TryGet(marker.TurretId,out var turret))
+                        { Selection.activeGameObject=turret.gameObject; SceneView.lastActiveSceneView?.FrameSelected(); }
+                    }
+                }
+                EditorGUILayout.EndScrollView();
+                var selected=run.Events.FirstOrDefault(e=>e.Sequence==view.SelectedEventSequence);
+                if (selected!=null)
+                {
+                    view.IsEventDetailsExpanded=EditorGUILayout.Foldout(view.IsEventDetailsExpanded,"선택 이벤트 · "+selected.Kind,true);
+                    if (view.IsEventDetailsExpanded) EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(70));
+                }
             }
         }
     }

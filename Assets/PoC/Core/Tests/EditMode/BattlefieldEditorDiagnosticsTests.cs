@@ -17,7 +17,7 @@ namespace TeamHJD.Game.Tests.EditMode
         private GameObject _rootObject;
         private AppRoot _root;
         private string _displayBefore;
-        private BattlefieldDebugWindow _window;
+        private GameDebuggerWindow _window;
 
         [SetUp]
         public void SetUp()
@@ -51,7 +51,7 @@ namespace TeamHJD.Game.Tests.EditMode
         [Test]
         public void WindowClose_DoesNotUnbindDiagnosticSource()
         {
-            _window = ScriptableObject.CreateInstance<BattlefieldDebugWindow>();
+            _window = ScriptableObject.CreateInstance<GameDebuggerWindow>();
             UnityEngine.Object.DestroyImmediate(_window);
             _window = null;
             Assert.That(BattlefieldDebugSession.AppRoot, Is.SameAs(_root));

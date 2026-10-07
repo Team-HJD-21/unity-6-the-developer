@@ -1,10 +1,9 @@
-// 상위 Game Debugger 창: 공간 도구·시간 제어·관측 통계·타임라인·보고서를 묶습니다.
-// 게임 정책은 Runtime Feature에 두고 기록/집계/뷰를 별도 클래스로 위임합니다.
+// 단일 Game Debugger 창에서 여러 진단 패널을 동시에 배치합니다.
+// 영역별 편집 상태는 유지하고 Match 관측·시간 제어는 공용 Session을 사용합니다.
+// 실제 게임 정책과 데이터 수집은 이 창의 표시 수명과 분리되어 있습니다.
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using TeamHJD.Game.Contracts;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -13,194 +12,196 @@ namespace TeamHJD.Game.Editor
 {
     public sealed class GameDebuggerWindow : EditorWindow
     {
-        [SerializeField] private int _page;
-        [SerializeField] private string _selectedRun="LIVE", _referenceRun="None", _search="", _bookmark="", _enemyFilter="", _pointFilter="", _presetFilter="", _sourceFilter="All";
-        [SerializeField] private float _binSeconds=5;
-        [SerializeField] private bool _realClock;
-        [SerializeField] private GameDebugMetric _metric;
-        private BattlefieldDebugWindow _battlefieldPanel;
-        private Label _header, _footer, _axes, _recordStatus;
-        private VisualElement _body;
-        private GameDebugChart _chart;
-        private DropdownField _runs, _reference;
-        private bool _refreshing;
+        [SerializeField] private GameDebuggerLayout _layout=GameDebuggerLayout.TwoColumns;
+        [SerializeField] private List<GameDebuggerPaneState> _paneStates;
+        [SerializeField] private int _activePane;
+
+        // 이전 단일 탭 창의 직렬화 설정을 최초 한 번 첫 영역으로 이관합니다.
+        [SerializeField, HideInInspector] private int _page;
+        [SerializeField, HideInInspector] private string _selectedRun="LIVE", _referenceRun="None", _search="", _bookmark="", _enemyFilter="", _pointFilter="", _presetFilter="", _sourceFilter="All";
+        [SerializeField, HideInInspector] private float _binSeconds=5;
+        [SerializeField, HideInInspector] private bool _realClock;
+        [SerializeField, HideInInspector] private GameDebugMetric _metric;
+        [SerializeField, HideInInspector] private BattlefieldDebugPanel _battlefieldPanel;
+        private readonly List<GameDebuggerPane> _panes=new List<GameDebuggerPane>();
+        private static readonly List<string> LayoutNames=new List<string>{"Single", "2 · Columns", "2 · Rows", "4 · Panels"};
+        private Label _header, _footer, _navigationTarget;
+        private VisualElement _paneHost, _navigation;
+        private DropdownField _layoutSelector;
         private bool _pendingRefresh;
         private double _nextUiRefresh;
         private string _fileStatus;
-        private static readonly string[] Pages={"Overview","Battlefield","Encounter","Statistics","Timeline","Capture / Compare"};
+        public GameDebuggerLayout Layout => _layout;
+        public int ActivePane => _activePane;
+        public int VisiblePaneCount => _layout==GameDebuggerLayout.Single ? 1 : _layout==GameDebuggerLayout.FourPanels ? 4 : 2;
 
         [MenuItem("Tools/TeamHJD/Game Debugger")]
-        public static void Open()
-        {
-            var window=GetWindow<GameDebuggerWindow>("Game Debugger");
-            window.minSize=new Vector2(660,450);
-        }
+        public static void Open() => GetWindow<GameDebuggerWindow>("Game Debugger");
         private void OnEnable()
         {
-            _battlefieldPanel=CreateInstance<BattlefieldDebugWindow>();
-            _battlefieldPanel.hideFlags=HideFlags.HideAndDontSave;
+            EnsurePaneStates();
+            BattlefieldDebugSession.Display.IsEnabled=true;
             GameDebuggerSession.Changed+=Refresh;
             BattlefieldDebugSession.Changed+=Refresh;
             EditorApplication.update+=UpdateView;
+            BattlefieldDebugSession.NotifyDisplayChanged();
         }
         private void OnDisable()
         {
             GameDebuggerSession.Changed-=Refresh;
             BattlefieldDebugSession.Changed-=Refresh;
             EditorApplication.update-=UpdateView;
-            if (_battlefieldPanel!=null) DestroyImmediate(_battlefieldPanel);
+            DisposePanes();
+        }
+        private void EnsurePaneStates()
+        {
+            if (!Enum.IsDefined(typeof(GameDebuggerLayout),_layout)) _layout=GameDebuggerLayout.TwoColumns;
+            if (_paneStates==null || _paneStates.Count==0)
+            {
+                _paneStates=new List<GameDebuggerPaneState>{
+                    new GameDebuggerPaneState{
+                        Page=_page, SelectedRun=_selectedRun, ReferenceRun=_referenceRun,
+                        Search=_search, Bookmark=_bookmark, EnemyFilter=_enemyFilter,
+                        PointFilter=_pointFilter, PresetFilter=_presetFilter, SourceFilter=_sourceFilter,
+                        BinSeconds=_binSeconds, IsRealClock=_realClock, Metric=_metric,
+                        BattlefieldPanel=_battlefieldPanel ?? new BattlefieldDebugPanel()
+                    }
+                };
+                _battlefieldPanel=null;
+            }
+            int[] defaults={0,3,2,4};
+            while (_paneStates.Count<4) _paneStates.Add(new GameDebuggerPaneState{Page=defaults[_paneStates.Count]});
+            for (int index=0;index<4;index++)
+            {
+                _paneStates[index] ??= new GameDebuggerPaneState{Page=defaults[index]};
+                _paneStates[index].Validate();
+            }
+            _activePane=Mathf.Clamp(_activePane,0,VisiblePaneCount-1);
+        }
+        public GameDebuggerPaneState GetPaneState(int index)
+        {
+            if (index<0 || index>=4) throw new ArgumentOutOfRangeException(nameof(index));
+            EnsurePaneStates();
+            return _paneStates[index];
         }
         public void CreateGUI()
         {
+            wantsMouseMove=true;
+            DisposePanes(); EnsurePaneStates();
             var root=rootVisualElement; root.Clear();
             var stylesheet=AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/PoC/Core/Editor/GameDebugger/GameDebugger.uss");
-            if (stylesheet!=null) root.styleSheets.Add(stylesheet);
+            if (stylesheet!=null && !root.styleSheets.Contains(stylesheet)) root.styleSheets.Add(stylesheet);
             root.AddToClassList("game-debugger");
+            root.EnableInClassList("light",!EditorGUIUtility.isProSkin);
             _header=new Label(); _header.AddToClassList("status-header"); root.Add(_header);
             root.Add(new IMGUIContainer(()=> {
-                using (new EditorGUI.DisabledGroupScope(BattlefieldDebugSession.Display.IsCaptureMode)) GameSimulationControls.DrawToolbar();
+                using (new EditorGUI.DisabledGroupScope(BattlefieldDebugSession.Display.IsCaptureMode))
+                    GameSimulationControls.DrawToolbar();
             }));
+            var layouts=new VisualElement(); layouts.AddToClassList("layout-toolbar"); root.Add(layouts);
+            _layoutSelector=new DropdownField("Layout",LayoutNames,(int)_layout);
+            _layoutSelector.RegisterValueChangedCallback(evt=>SetLayout((GameDebuggerLayout)LayoutNames.IndexOf(evt.newValue)));
+            layouts.Add(_layoutSelector);
+            layouts.Add(new Button(()=>ApplyPreset(1,3)){text="Battlefield + Stats"});
+            layouts.Add(new Button(()=>ApplyPreset(2,3)){text="Encounter + Stats"});
+            layouts.Add(new Button(()=>ApplyPreset(0,1,2,3)){text="Monitor ×4"});
             var workspace=new VisualElement(); workspace.AddToClassList("workspace"); root.Add(workspace);
-            var navigation=new VisualElement(); navigation.AddToClassList("navigation"); workspace.Add(navigation);
-            for (int index=0;index<Pages.Length;index++)
+            _navigation=new VisualElement(); _navigation.AddToClassList("navigation"); workspace.Add(_navigation);
+            _navigationTarget=new Label(); _navigationTarget.AddToClassList("navigation-target"); _navigation.Add(_navigationTarget);
+            for (int index=0;index<GameDebuggerPane.PageNames.Count;index++)
             {
-                int page=index; var button=new Button(()=>{ _page=page; BuildPage(); }) { text=Pages[index], name="page-"+index };
-                navigation.Add(button);
+                int page=index;
+                _navigation.Add(new Button(()=>SelectPage(_activePane,page)){
+                    text=GameDebuggerPane.PageNames[index], name="page-"+index});
             }
-            navigation.Add(new Button(BattlefieldDebugWindow.Open){text="Legacy window ↗"});
-            _body=new ScrollView(); _body.AddToClassList("content"); workspace.Add(_body);
+            _paneHost=new VisualElement {name="pane-workspace"};
+            _paneHost.AddToClassList("pane-workspace"); workspace.Add(_paneHost);
             _footer=new Label(); _footer.AddToClassList("footer"); root.Add(_footer);
-            BuildPage();
+            RebuildPanes();
         }
-        private void BuildPage()
+        public void SetLayout(GameDebuggerLayout layout)
         {
-            if (_body==null) return;
-            _body.Clear(); _chart=null; _runs=_reference=null; _axes=_recordStatus=null;
-            for (int index=0;index<Pages.Length;index++) rootVisualElement.Q<Button>("page-"+index)?.EnableInClassList("active-page",index==_page);
-            var title=new Label(Pages[Mathf.Clamp(_page,0,Pages.Length-1)]); title.AddToClassList("page-title"); _body.Add(title);
-            if (_page==0) _body.Add(new IMGUIContainer(GameDebugInspectionPanels.DrawOverview));
-            if (_page==1) _body.Add(new IMGUIContainer(()=> { _battlefieldPanel?.DrawEmbeddedPanel(1); GameDebugInspectionPanels.DrawTurrets(); }));
-            if (_page==2) _body.Add(new IMGUIContainer(()=> { _battlefieldPanel?.DrawEmbeddedPanel(2); GameDebugInspectionPanels.DrawRequests(GameDebuggerSession.Current); }));
-            if (_page==3 || _page==4 || _page==5) BuildRecordSelector();
-            if (_page==3 || _page==5) BuildStatistics();
-            if (_page==4)
+            if (!Enum.IsDefined(typeof(GameDebuggerLayout),layout)) throw new ArgumentOutOfRangeException(nameof(layout));
+            _layout=layout; EnsurePaneStates();
+            _layoutSelector?.SetValueWithoutNotify(LayoutNames[(int)layout]);
+            if (_paneHost!=null) RebuildPanes();
+        }
+        public void SetActivePane(int index)
+        {
+            if (index<0 || index>=VisiblePaneCount) throw new ArgumentOutOfRangeException(nameof(index));
+            _activePane=index; RefreshNavigation();
+        }
+        public void SelectPage(int paneIndex,int page)
+        {
+            if (paneIndex<0 || paneIndex>=VisiblePaneCount) throw new ArgumentOutOfRangeException(nameof(paneIndex));
+            if (page<0 || page>=GameDebuggerPane.PageNames.Count) throw new ArgumentOutOfRangeException(nameof(page));
+            EnsurePaneStates(); SetActivePane(paneIndex);
+            if (_panes.Count>paneIndex) _panes[paneIndex].SelectPage(page);
+            else _paneStates[paneIndex].Page=page;
+            RefreshNavigation();
+        }
+        private void ApplyPreset(params int[] pages)
+        {
+            // 배치는 명시적으로 선택한 기능만 변경하며 각 영역의 필터/기록은 보존합니다.
+            SetLayout(pages.Length==4 ? GameDebuggerLayout.FourPanels : GameDebuggerLayout.TwoColumns);
+            for (int index=0;index<pages.Length;index++) SelectPage(index,pages[index]);
+            SetActivePane(0);
+        }
+        private void RebuildPanes()
+        {
+            DisposePanes(); _paneHost.Clear();
+            for (int index=0;index<VisiblePaneCount;index++)
+                _panes.Add(new GameDebuggerPane(index,_paneStates[index],Refresh,SetActivePane,value=>{_fileStatus=value;Refresh();}));
+            minSize=_layout==GameDebuggerLayout.Single ? new Vector2(660,450) :
+                _layout==GameDebuggerLayout.TwoColumns ? new Vector2(960,500) :
+                _layout==GameDebuggerLayout.TwoRows ? new Vector2(660,700) : new Vector2(1000,740);
+            if (_layout==GameDebuggerLayout.Single) _paneHost.Add(_panes[0]);
+            else if (_layout==GameDebuggerLayout.TwoColumns)
+                _paneHost.Add(Split(_panes[0],_panes[1],TwoPaneSplitViewOrientation.Horizontal,"columns",Mathf.Max(340,(position.width-180)/2)));
+            else if (_layout==GameDebuggerLayout.TwoRows)
+                _paneHost.Add(Split(_panes[0],_panes[1],TwoPaneSplitViewOrientation.Vertical,"rows",Mathf.Max(220,(position.height-160)/2)));
+            else
             {
-                var search=new TextField("Search source / kind / text"){value=_search}; search.RegisterValueChangedCallback(evt=>_search=evt.newValue); _body.Add(search);
-                var bookmark=new TextField("Bookmark"){value=_bookmark}; bookmark.RegisterValueChangedCallback(evt=>_bookmark=evt.newValue); _body.Add(bookmark);
-                _body.Add(new IMGUIContainer(()=>GameDebugInspectionPanels.DrawTimeline(SelectedRun(),_search,_bookmark)));
+                var left=Split(_panes[0],_panes[2],TwoPaneSplitViewOrientation.Vertical,"quad-left",Mathf.Max(220,(position.height-160)/2));
+                var right=Split(_panes[1],_panes[3],TwoPaneSplitViewOrientation.Vertical,"quad-right",Mathf.Max(220,(position.height-160)/2));
+                _paneHost.Add(Split(left,right,TwoPaneSplitViewOrientation.Horizontal,"quad-columns",Mathf.Max(360,(position.width-180)/2)));
             }
-            if (_page==5) BuildCapture();
-            RefreshView();
+            RefreshNavigation(); RefreshView();
         }
-        private void BuildRecordSelector()
+        private static TwoPaneSplitView Split(VisualElement first,VisualElement second,TwoPaneSplitViewOrientation orientation,string key,float initialSize)
         {
-            _runs=new DropdownField("A · Record",RunChoices(),_selectedRun);
-            _runs.RegisterValueChangedCallback(evt=> { if (!_refreshing) { _selectedRun=evt.newValue; Refresh(); } }); _body.Add(_runs);
-            _recordStatus=new Label(); _recordStatus.AddToClassList("record-status"); _body.Add(_recordStatus);
+            var split=new TwoPaneSplitView(0,initialSize,orientation){viewDataKey="game-debugger-"+key};
+            split.AddToClassList("pane-split"); split.Add(first); split.Add(second); return split;
         }
-        private List<string> RunChoices()
+        private void DisposePanes()
         {
-            var choices=new List<string>{"LIVE"}; choices.AddRange(GameDebuggerSession.Recorder.Runs.Select(item=>item.MatchId));
-            if (GameDebuggerSession.Imported!=null) choices.Add("IMPORTED"); return choices;
+            foreach (var pane in _panes) pane.Dispose();
+            _panes.Clear();
         }
-        private GameDebugRun SelectedRun() => Resolve(_selectedRun);
-        private static GameDebugRun Resolve(string id) => id=="LIVE" ? GameDebuggerSession.Current : id=="IMPORTED" ? GameDebuggerSession.Imported : GameDebuggerSession.Recorder.Find(id);
-        private void BuildStatistics()
+        private void RefreshNavigation()
         {
-            var row=new VisualElement(); row.AddToClassList("filter-row"); _body.Add(row);
-            var clock=new Toggle("Real clock"){value=_realClock}; clock.RegisterValueChangedCallback(evt=>{_realClock=evt.newValue;Refresh();}); row.Add(clock);
-            var bin=new FloatField("Bin seconds"){value=_binSeconds}; bin.RegisterValueChangedCallback(evt=>{if (float.IsNaN(evt.newValue)||float.IsInfinity(evt.newValue)) return; _binSeconds=Mathf.Clamp(evt.newValue,0.1f,3600);Refresh();}); row.Add(bin);
-            var metric=new EnumField("Metric",_metric); metric.RegisterValueChangedCallback(evt=>{_metric=(GameDebugMetric)evt.newValue;Refresh();}); _body.Add(metric);
-            AddFilter("Enemy type",_enemyFilter,value=>_enemyFilter=value);
-            AddFilter("SpawnPoint ID",_pointFilter,value=>_pointFilter=value);
-            AddFilter("Squad preset",_presetFilter,value=>_presetFilter=value);
-            var origins=new List<string>{"All"}; origins.AddRange(Enum.GetNames(typeof(EncounterRequestSource)));
-            var source=new DropdownField("Request source",origins,_sourceFilter); source.RegisterValueChangedCallback(evt=>{_sourceFilter=evt.newValue;Refresh();}); _body.Add(source);
-            _reference=new DropdownField("B · Compare",new List<string>{"None"},"None");
-            _reference.RegisterValueChangedCallback(evt=>{if (!_refreshing) {_referenceRun=evt.newValue;Refresh();}}); _body.Add(_reference);
-            _chart=new GameDebugChart(); _chart.AddToClassList("chart"); _body.Add(_chart);
-            _axes=new Label(); _axes.AddToClassList("chart-axes"); _body.Add(_axes);
-            _body.Add(new Label("수량: 사실 이벤트. Alive/Power/Ratio/Area/Length: Match 전체 표본 (필터 미적용).\n종류/지점 필터 시 Request 집계는 N/A. 빈 표본은 0으로 연결하지 않습니다. Bin은 최대 2,048개로 제한됩니다."){style={whiteSpace=WhiteSpace.Normal}});
+            if (_navigation==null) return;
+            _navigationTarget.text="ACTIVE · P"+(_activePane+1);
+            for (int index=0;index<GameDebuggerPane.PageNames.Count;index++)
+                _navigation.Q<Button>("page-"+index)?.EnableInClassList("active-page",index==_paneStates[_activePane].Page);
+            foreach (var pane in _panes) pane.SetActive(pane.Index==_activePane);
         }
-        private void AddFilter(string label,string value,Action<string> apply)
-        { var field=new TextField(label){value=value,isDelayed=true}; field.RegisterValueChangedCallback(evt=>{apply(evt.newValue);Refresh();});_body.Add(field); }
-        private void BuildCapture()
-        {
-            _body.Add(new IMGUIContainer(BattlefieldDiagnosticPanels.DrawCapture));
-            _body.Add(new Button(()=>BattlefieldDebugSession.ApplyPreset("Capture")){text="Scene Capture preset"});
-            _body.Add(new Button(()=>Export("json")){text="Export run JSON + metadata"});
-            _body.Add(new Button(()=>Export("events.csv")){text="Export events CSV"});
-            _body.Add(new Button(()=>Export("samples.csv")){text="Export samples CSV"});
-            _body.Add(new Button(Import){text="Import read-only comparison JSON"});
-            _body.Add(new Button(()=> {
-                if (GameDebuggerSession.Current!=null) GameDebuggerSession.Current.BuildLabel=BattlefieldDebugSession.Display.CaptureLabel;
-                Refresh();
-            }){text="Stamp build/commit label on live record"});
-            _body.Add(new Label("Import/Compare는 관측 비교이며 게임 상태 복원/결정론적 리플레이가 아닙니다.\n캡처 preset은 Scene 표시만 바꿉니다. 게임 시간 제어는 상단의 명시적 명령입니다."){style={whiteSpace=WhiteSpace.Normal}});
-        }
-        private void Refresh()
-        { _pendingRefresh=true; }
+        private void Refresh() => _pendingRefresh=true;
         private void UpdateView()
         {
             if (!_pendingRefresh || EditorApplication.timeSinceStartup<_nextUiRefresh) return;
-            _pendingRefresh=false; _nextUiRefresh=EditorApplication.timeSinceStartup+0.25;
-            RefreshView();
+            _pendingRefresh=false; _nextUiRefresh=EditorApplication.timeSinceStartup+0.25; RefreshView();
         }
         private void RefreshView()
         {
             if (_header==null) return;
-            _refreshing=true;
-            try
-            {
-                var source=GameDebuggerSession.Source;
-                _header.text=$"GAME DEBUGGER  ·  {BattlefieldDebugSession.Mode}  ·  {(source==null?"authority N/A":source.IsServer?"SERVER":"CLIENT/OFFLINE")}  ·  game {source?.GameSeconds ?? 0:F1}s / real {source?.RealSeconds ?? 0:F1}s";
-                _footer.text=_fileStatus ?? (GameDebuggerSession.Warnings.Count==0 ? "READ-ONLY diagnostics · explicit commands · local Editor pause only" : string.Join(" | ",GameDebuggerSession.Warnings.Take(3)));
-                var choices=RunChoices();
-                if (_runs!=null) { _runs.choices=choices; if (!choices.Contains(_selectedRun)) _selectedRun="LIVE"; _runs.SetValueWithoutNotify(_selectedRun); }
-                var run=SelectedRun();
-                if (_recordStatus!=null) _recordStatus.text=run==null ? "NO RECORD · Play Mode에서 Match를 시작하세요." :
-                    $"{(ReferenceEquals(run,GameDebuggerSession.Current)?"LIVE":_selectedRun=="IMPORTED"?"IMPORTED / READ-ONLY":"ARCHIVE / READ-ONLY")} · {run.MatchId}\n{run.Scene} · {run.BuildLabel} · seed {(run.HasSeed?run.RandomSeed.ToString():"N/A")} · {(run.IsPartial?"PARTIAL":"event coverage from Match start")} · {(run.IsComplete?"ENDED":"end marker not received")}";
-                if (_chart!=null)
-                {
-                    var references=new List<string>{"None"}; references.AddRange(choices);
-                    _reference.choices=references; if (!references.Contains(_referenceRun)) _referenceRun="None"; _reference.SetValueWithoutNotify(_referenceRun);
-                    EncounterRequestSource? origin=Enum.TryParse(_sourceFilter,out EncounterRequestSource parsed)?parsed:(EncounterRequestSource?)null;
-                    var reference=_referenceRun=="None"?null:Resolve(_referenceRun);
-                    // 같은 bin 폭을 사용하고 같은 x축으로 비교합니다. 설정 차이는 숨기지 않습니다.
-                    double duration=0;
-                    foreach (var item in new[]{run,reference}) if (item!=null)
-                    { foreach(var e in item.Events) duration=Math.Max(duration,_realClock?e.RealSeconds:e.GameSeconds); foreach(var s in item.Samples) duration=Math.Max(duration,_realClock?s.RealSeconds:s.GameSeconds); }
-                    double width=Math.Max(_binSeconds,(duration+0.0001)/2048);
-                    bool invalidRequestFilter=(!string.IsNullOrEmpty(_enemyFilter)||!string.IsNullOrEmpty(_pointFilter)) && (_metric==GameDebugMetric.Planned||_metric==GameDebugMetric.Executed||_metric==GameDebugMetric.Failures);
-                    _chart.SetData(invalidRequestFilter?null:GameDebugStatistics.Build(run,width,_realClock,_enemyFilter,_pointFilter,_presetFilter,origin),
-                        invalidRequestFilter?null:GameDebugStatistics.Build(reference,width,_realClock,_enemyFilter,_pointFilter,_presetFilter,origin),_metric);
-                    _axes.text=invalidRequestFilter ? "N/A: Request 결과에는 Enemy type/SpawnPoint별 배분 계약이 없습니다." : $"{(_realClock?"REAL":"GAME")} seconds · bin {width:F2}s · {_chart.AxisDescription}";
-                    if (reference!=null && run!=null && (run.GridDescription!=reference.GridDescription || run.RandomSeed!=reference.RandomSeed || run.ContentVersion!=reference.ContentVersion || run.Scene!=reference.Scene))
-                        _axes.text+="\n⚠ A/B Scene, Grid, seed 또는 content 설정이 다릅니다. 동일 조건의 재현으로 해석하지 마세요.";
-                }
-                Repaint();
-            }
-            finally { _refreshing=false; }
-        }
-        private void Export(string type)
-        {
-            var run=SelectedRun(); if (run==null) { _fileStatus="내보낼 기록이 없습니다."; Refresh(); return; }
-            string path=EditorUtility.SaveFilePanel("Export Game Debugger record","", "game-debug-"+run.MatchId+(type=="json"?"":"-"+type.Split('.')[0]),type=="json"?"json":"csv");
-            if (string.IsNullOrEmpty(path)) return;
-            try { File.WriteAllText(path,type=="json"?GameDebugExport.ToJson(run):type=="events.csv"?GameDebugExport.EventsCsv(run):GameDebugExport.SamplesCsv(run),new System.Text.UTF8Encoding(true)); _fileStatus="Exported: "+path; }
-            catch (Exception exception) { _fileStatus="Export failed: "+exception.Message; }
-            Refresh();
-        }
-        private void Import()
-        {
-            string path=EditorUtility.OpenFilePanel("Import comparison JSON","","json"); if (string.IsNullOrEmpty(path)) return;
-            try
-            {
-                if (new FileInfo(path).Length>16*1024*1024) throw new ArgumentException("파일이 16MiB 제한을 넘었습니다.");
-                GameDebuggerSession.SetImported(GameDebugExport.FromJson(File.ReadAllText(path))); _referenceRun="IMPORTED"; _fileStatus="Imported read-only: "+path;
-            }
-            catch (Exception exception) { _fileStatus="Import failed: "+exception.Message; }
-            Refresh();
+            var source=GameDebuggerSession.Source;
+            _header.text=$"GAME DEBUGGER · {BattlefieldDebugSession.Mode} · {(source==null?"authority N/A":source.IsServer?"SERVER":"CLIENT/OFFLINE")} · game {source?.GameSeconds ?? 0:F1}s / real {source?.RealSeconds ?? 0:F1}s";
+            _footer.text=_fileStatus ?? (GameDebuggerSession.Warnings.Count==0 ?
+                "공용 Match / 시간 / Scene 표시 · 영역별 기능 / 기록 / 필터 · 경계선을 드래그해 크기 조절" :
+                string.Join(" | ",GameDebuggerSession.Warnings.Take(3)));
+            foreach (var pane in _panes) pane.RefreshView();
+            RefreshNavigation(); Repaint();
         }
     }
 }

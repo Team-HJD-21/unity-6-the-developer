@@ -21,6 +21,9 @@ namespace TeamHJD.Game.Editor
         private static void DrawSceneView(SceneView sceneView)
         {
             if (!BattlefieldDebugSession.Display.IsEnabled) return;
+            if (BattlefieldDebugSession.Display.IsCellPickingEnabled)
+                FrontlineInspectionSession.YieldToCellPicking();
+            PickFrontline();
             PickCell();
             if (Event.current.type != EventType.Repaint) return;
             BattlefieldGridConfiguration gridConfiguration = ResolveGridConfiguration();
@@ -40,6 +43,7 @@ namespace TeamHJD.Game.Editor
 
                 if (BattlefieldDebugSession.Display.ShowTerritory) DrawTerritory(positions);
                 if (BattlefieldDebugSession.Display.ShowFrontline) DrawFrontlines(positions);
+                if (BattlefieldDebugSession.Display.ShowFrontline) DrawSelectedFrontline();
                 if (BattlefieldDebugSession.Display.ShowVertexLabels) DrawVertexLabels(positions);
                 if (BattlefieldDebugSession.Display.ShowBoundaryNormals) DrawBoundaryNormals(positions);
                 if (BattlefieldDebugSession.Display.ShowOccupancy) DrawOccupancy();
@@ -50,6 +54,46 @@ namespace TeamHJD.Game.Editor
                 Handles.zTest = previousZTest;
                 DrawLegend(sceneView);
             }
+        }
+
+        private static void PickFrontline()
+        {
+            if (!FrontlineInspectionSession.IsPickingEnabled || !BattlefieldDebugSession.Display.ShowFrontline ||
+                BattlefieldDebugSession.Display.IsCaptureMode || Event.current.alt) return;
+            FrontlineInspectionSession.Refresh();
+            FrontlineGeometryReport report = FrontlineInspectionSession.Report;
+            if (report == null) return;
+            foreach (FrontlineEdgeInspection edge in report.Edges)
+            {
+                int control = GUIUtility.GetControlID(FocusType.Passive);
+                float distance = HandleUtility.DistanceToLine(edge.FirstPosition, edge.SecondPosition);
+                if (Event.current.type == EventType.Layout && distance <= 12f)
+                    HandleUtility.AddControl(control, distance);
+                if (Event.current.type != EventType.MouseDown || Event.current.button != 0 ||
+                    HandleUtility.nearestControl != control || distance > 12f) continue;
+                FrontlineInspectionSession.Select(edge.Edge);
+                Event.current.Use();
+                break;
+            }
+        }
+
+        private static void DrawSelectedFrontline()
+        {
+            if (BattlefieldDebugSession.Display.IsCaptureMode) return;
+            FrontlineEdgeInspection edge = FrontlineInspectionSession.Selected;
+            if (edge == null) return;
+            Handles.color = Color.yellow;
+            Handles.DrawAAPolyLine(6f, edge.FirstPosition, edge.SecondPosition);
+            float length = Mathf.Min((float)edge.Length * 0.2f, HandleUtility.GetHandleSize(edge.Midpoint) * 1.4f);
+            if (length > 0.0001f)
+            {
+                Handles.color = new Color(1f, 0.6f, 0.2f);
+                Handles.ArrowHandleCap(0, edge.Midpoint, Quaternion.LookRotation(edge.OutwardNormal, Vector3.forward), length, EventType.Repaint);
+                Handles.color = Color.cyan;
+                Handles.ArrowHandleCap(0, edge.Midpoint, Quaternion.LookRotation(edge.InwardNormal, Vector3.forward), length, EventType.Repaint);
+            }
+            Handles.color = Color.white;
+            Handles.Label(edge.Midpoint, $"{edge.Edge.First} ↔ {edge.Edge.Second}\n{edge.Length:F2} u · triangle {edge.TriangleIndex} · group {edge.ComponentIndex}");
         }
 
         private static void PickCell()
