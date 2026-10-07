@@ -61,9 +61,9 @@ namespace TeamHJD.Game.Editor
             bool live=run!=null && ReferenceEquals(run,GameDebuggerSession.Current);
             using (new EditorGUI.DisabledGroupScope(!live))
             {
-                GameDebuggerSession.PauseOnFailure=EditorGUILayout.Toggle("Pause on request failure",GameDebuggerSession.PauseOnFailure);
-                GameDebuggerSession.PauseOnTurretDestroyed=EditorGUILayout.Toggle("Pause on turret destroyed",GameDebuggerSession.PauseOnTurretDestroyed);
-                GameDebuggerSession.PauseOnOutOfBounds=EditorGUILayout.Toggle("Pause on Grid OOB",GameDebuggerSession.PauseOnOutOfBounds);
+                GameDebuggerSession.ShouldPauseOnFailure=EditorGUILayout.Toggle("Pause on request failure",GameDebuggerSession.ShouldPauseOnFailure);
+                GameDebuggerSession.ShouldPauseOnTurretDestroyed=EditorGUILayout.Toggle("Pause on turret destroyed",GameDebuggerSession.ShouldPauseOnTurretDestroyed);
+                GameDebuggerSession.ShouldPauseOnOutOfBounds=EditorGUILayout.Toggle("Pause on Grid OOB",GameDebuggerSession.ShouldPauseOnOutOfBounds);
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("Rearm conditions")) GameDebuggerSession.Rearm();
                 if (GUILayout.Button("Add bookmark")) GameDebuggerSession.AddMarker("Bookmark: "+bookmark);

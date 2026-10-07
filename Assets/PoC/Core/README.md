@@ -4,7 +4,15 @@
 
 ## 2026-10-08 로컬 1차 통합 패치
 
-`main`의 #473 수동 스폰 경로와 별도로, 현재 `feature/core` 작업 트리에는 `IEncounterMatchConsumer`를 통한 Match 시작 바인딩, 최신 Battlefield snapshot 조회, Grid 점유·적 밀도·Frontline 거리 기반 SpawnPoint 배분, 첫 Encounter 자동 요청을 추가했습니다. 분대 구성과 수량 `Normal`/10은 임시값입니다. 첫 자동 요청은 Match 시작 후 기본 0.5초 지연되며, NGO Host/Executor 준비를 기다립니다. Debug Window의 수동 요청도 같은 공간 정책을 사용합니다. Unity CLI의 명시적 `Initial_Stage` 통합 테스트에서 Host 시작·10마리 생성을 확인했지만, 해당 Scene에는 터렛 0개라 Frontline 정책의 실제 Scene 선택은 아직 미검증이고 Enemy는 공격 가능한 Player/Turret 타깃을 찾지 못했습니다. 반복 주기·plan ID/중복 방지·지역 해금·최종 난이도는 [통합 준비표](../../../Docs/planning/2026-10-07-stage1-poc-integration-prep.md)의 2·3차 범위입니다.
+`IEncounterMatchConsumer`를 통한 Match 시작 바인딩, 최신 Battlefield snapshot 조회, Grid 점유·적 밀도·Frontline 거리 기반 SpawnPoint 배분, 첫 Encounter 자동 요청이 구현되어 있습니다. 분대 구성과 수량 `Normal`/10은 임시값입니다. 자동 요청은 기본 0.5초 실시간 지연 후 NGO Host/Executor 준비를 기다립니다. 기존 1차 검증 때는 터렛 0개였지만, 팀원의 #490 Scene 반영 후 최신 CLI 통합 검사에서는 삼각형 8개·외곽 6개와 네 source의 스폰 성공을 확인했습니다. 실제 전투/승패는 별도 Gate입니다. 반복 진행·공식 PlanId/중복 방지·지역 해금·최종 난이도는 [통합 준비표](../../../Docs/planning/2026-10-07-stage1-poc-integration-prep.md)의 후속 범위입니다.
+
+## 2026-10-08 Game Debugger 확장
+
+`Tools > TeamHJD > Game Debugger`에서 Overview/Battlefield/Encounter/Statistics/Timeline/Capture·Compare를 사용합니다. 기존 창과 Scene Overlay도 유지됩니다. 배속/Pause/Step, 실제 생성·제거 기록과 시간별 histogram·표본 추이, 터렛/전력·연결 검사, 조건부 정지, 북마크, JSON/CSV·실행 A/B를 제공합니다. Editor 수집은 게임 서비스가 아니며 계산/스폰 정책을 대신하지 않습니다.
+
+`MatchStart`, `DebugWindow`, `RuntimeUI`, `SceneCollision`은 공통 Match snapshot 경계를 사용합니다. `IGameDiagnosticsSource`의 사실 이벤트를 `GameDebuggerSession → Recorder → Statistics/Chart/Export`로 전달합니다. 스폰 성공 후 이벤트와 생존 수 차분은 다르며 Despawn은 처치가 아닙니다. 종료 기록은 활성 snapshot과 분리됩니다. [사용/API·제한](../../../Docs/tooling/game-debugger-guide.md) · [배치 결과/CLI 증거](../../../Docs/planning/2026-10-08-game-debugger-batch-results.md)
+
+전체 EditMode 36 성공·실패 0·Explicit 1 제외, 마지막 GameDebuggerTests 10/10, 명시적 Initial_Stage 통합 1/1을 확인했습니다. 실제 화면·물리 충돌·영상/멀티 Client는 미실행이며 전체 PoC 승패 완료 판정이 아닙니다.
 
 ## 2026-10-03 병합본의 구현·검증 기록
 
@@ -27,7 +35,7 @@ TeamHJD.Game.Infrastructure → Contracts, Domain
 TeamHJD.Game.Infrastructure.Fakes → Contracts, Domain
 TeamHJD.Game.Presentation → Application, Contracts, Domain
 TeamHJD.Game.Bootstrap → Application, Content.Runtime, Contracts, Domain, Infrastructure, Fakes, Presentation
-TeamHJD.Game.Editor → Bootstrap, Domain (Editor only)
+TeamHJD.Game.Editor → Bootstrap, Content.Authoring, Contracts, Domain, Turrets (Editor only)
 TeamHJD.Game.Tests.EditMode → Application, Content.Runtime, Contracts, Domain, Fakes (Editor only)
 ```
 
@@ -95,6 +103,13 @@ Assets/PoC/Core/
 │  └─ TeamHJD.Game.Presentation.asmdef
 ├─ Editor/
 │  ├─ BattlefieldDebugWindow.cs
+│  ├─ BattlefieldDebugSession.cs / SceneDrawer / SceneOverlay / DiagnosticPanels
+│  ├─ GameDebugger/
+│  │  ├─ GameDebuggerWindow.cs / GameDebugger.uss
+│  │  ├─ Recording/ (Session, Recorder, Archive, DTOs, Statistics, Export)
+│  │  ├─ Simulation/ (GameSimulationControls, TimeScaleLease)
+│  │  ├─ Charts/ (GameDebugChart, GameDebugMetric)
+│  │  └─ Panels/ (GameDebugInspectionPanels)
 │  └─ TeamHJD.Game.Editor.asmdef (Editor 전용)
 ├─ Tests/EditMode/
 │  ├─ BattlefieldTopologyBuilderTests.cs

@@ -33,7 +33,7 @@ namespace TeamHJD.Game.Editor
         public static GameDebugRun Current => Source == null ? null : Recorder.Find(Source.BoundMatchId.ToString());
         public static GameDebugRun Imported { get; private set; }
         public static IReadOnlyList<string> Warnings => _warnings.AsReadOnly();
-        public static bool PauseOnFailure, PauseOnTurretDestroyed, PauseOnOutOfBounds;
+        public static bool ShouldPauseOnFailure, ShouldPauseOnTurretDestroyed, ShouldPauseOnOutOfBounds;
         public static string LastPauseReason { get; private set; }
         public static double SnapshotObservedAge => _revision < 0 ? -1 : Math.Max(0,EditorApplication.timeSinceStartup-_snapshotObservedAt);
 
@@ -148,7 +148,7 @@ namespace TeamHJD.Game.Editor
         private static void Accept(GameDiagnosticEvent item, bool replay)
         {
             Recorder.Accept(item, () => CreateRun(item));
-            if (!replay && item.Kind == GameDiagnosticKind.RequestFailed && PauseOnFailure) Pause("Encounter 요청 실패: " + item.Message);
+            if (!replay && item.Kind == GameDiagnosticKind.RequestFailed && ShouldPauseOnFailure) Pause("Encounter 요청 실패: " + item.Message);
             Changed?.Invoke();
         }
         private static void Sample(GameDebugRun run)
@@ -177,7 +177,7 @@ namespace TeamHJD.Game.Editor
             var grid = snapshot.Grid;
             if (run.GridDescription == "Unknown") run.GridDescription=JsonUtility.ToJson(new GridMetadata(grid.Configuration));
             bool oob = grid.OutOfBoundsTurretIds.Count + grid.OutOfBoundsEnemyIds.Count + grid.OutOfBoundsPlayerIds.Count > 0;
-            if (oob && PauseOnOutOfBounds) Pause("Grid 범위 밖 입력");
+            if (oob && ShouldPauseOnOutOfBounds) Pause("Grid 범위 밖 입력");
             if (EditorApplication.timeSinceStartup<_nextValidation) return;
             _nextValidation=EditorApplication.timeSinceStartup+1;
             _warnings.Clear();
@@ -241,7 +241,7 @@ namespace TeamHJD.Game.Editor
         {
             if (turret.gameObject.scene != SceneManager.GetActiveScene()) return;
             AddMarker("Turret destroyed: " + turret.name, turret.InstanceId);
-            if (PauseOnTurretDestroyed) Pause("터렛 파괴: " + turret.name);
+            if (ShouldPauseOnTurretDestroyed) Pause("터렛 파괴: " + turret.name);
         }
         private static void OnTurretRestored(TurretBase turret)
         {

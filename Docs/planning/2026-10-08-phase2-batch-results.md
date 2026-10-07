@@ -2,6 +2,8 @@
 
 기준일: 2026-10-08 · 브랜치: `feature/core` · 실행 Scene: `Assets/PoC/Spaceship/Scenes/Initial_Stage.unity`
 
+후속 [Game Debugger 배치 결과](2026-10-08-game-debugger-batch-results.md)가 실제 spawn/despawn·authority/request 관측, 상위 Window와 통계 및 Scene 터렛 검증을 추가했다. 아래 B0~B3/과거 미연결 기록은 해당 작업 당시 근거이며 후속 관측 구현과 구분한다. 공식 PlanId·후보 점수·전체 전투 Gate는 여전히 별도다.
+
 ## 결론
 
 A가 독립적으로 맡는 B0~B3를 구현했다. 이번 작업은 Core 소유권·공간 진단의 보강이며 **전체 PoC/전투/팀 통합 완료 판정은 아니다.** 팀원이 수정 중인 Scene YAML과 터렛 기능, E의 Encounter lifecycle/판단 기록은 변경하지 않았다. 원격 Issue 변경·push·PR 발행도 이번 배치에서는 하지 않았다.
