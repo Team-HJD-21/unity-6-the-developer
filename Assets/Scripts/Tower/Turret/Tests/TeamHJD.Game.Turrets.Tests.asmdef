@@ -1,0 +1,6 @@
+{
+  "name": "TeamHJD.Game.Turrets.Tests",
+  "references": ["TeamHJD.Game.Turrets", "TeamHJD.Game.Turrets.Contracts"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

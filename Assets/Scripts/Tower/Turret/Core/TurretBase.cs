@@ -32,6 +32,11 @@ namespace TeamHJD.Game.Turrets
         private SpriteRenderer _minimumRangeRenderer;
         private float _lastVisualRange = -1f;
         private float _lastVisualMinimumRange = -1f;
+        private TurretInitializationData _initializationData;
+        private bool _initialActivationPending;
+        private Coroutine _initialActivationRoutine;
+        public bool IsInitialized => _activationController != null;
+        public TurretActivationResult? LastInitialActivationResult { get; private set; }
 
         public TurretDefinition Definition => _definition;
         public virtual TurretKind Kind => TurretKind.Unknown;
@@ -89,10 +94,26 @@ namespace TeamHJD.Game.Turrets
             return ConfigureActivation(_configuredPowerSource);
         }
 
+        /// <summary>Only call on a new inactive instance, before its first Awake. Never overwrite a live turret.</summary>
+        public void PrepareInitialization(TurretInitializationData data, ITurretPowerSource powerSource)
+        {
+            if (data == null) throw new System.ArgumentNullException(nameof(data));
+            data.Validate();
+            if (gameObject.activeInHierarchy || IsInitialized || _initializationData != null)
+                throw new System.InvalidOperationException("Initial state can only be prepared once on a new inactive turret.");
+            if (_definition != data.Definition)
+                throw new System.ArgumentException("Initialization definition must match the prefab.", nameof(data));
+            if (powerSource == null || powerSource is Object unityObject && unityObject == null)
+                throw new System.ArgumentNullException(nameof(powerSource));
+            _initializationData = data;
+            _configuredPowerSource = powerSource;
+        }
+
         internal bool UsesPowerSource(ITurretPowerSource source) => ReferenceEquals(_configuredPowerSource, source);
 
         protected bool ConfigureActivation(ITurretPowerSource powerSource)
         {
+            if (IsInitialized) return true;
             if (_definition == null)
             {
                 Debug.LogError($"Turret Definition is missing on {name}.", this);
@@ -107,6 +128,11 @@ namespace TeamHJD.Game.Turrets
             }
 
             bool shouldStartActivated = _runtimeState.IsActivated;
+            if (_initializationData != null)
+            {
+                _runtimeState.Initialize(_initializationData);
+                shouldStartActivated = _initializationData.ShouldActivate;
+            }
             _configuredPowerSource = powerSource;
             _runtimeState.SetActivated(false);
             _runtimeState.InitializeHealth(MaxHealth);
@@ -117,10 +143,7 @@ namespace TeamHJD.Game.Turrets
 
             RefreshRangeVisual();
 
-            if (shouldStartActivated)
-            {
-                StartCoroutine(RequestInitialActivation());
-            }
+            _initialActivationPending = shouldStartActivated;
 
             return true;
         }
@@ -188,6 +211,8 @@ namespace TeamHJD.Game.Turrets
 
         public TurretActivationResult RequestActivation(bool shouldActivate)
         {
+            // Any explicit request supersedes a queued startup intent.
+            CancelInitialActivation();
             if (shouldActivate && IsDestroyed)
             {
                 return TurretActivationResult.Destroyed;
@@ -224,6 +249,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool SetLocked(bool isLocked)
         {
+            if (isLocked) CancelInitialActivation();
             if (_runtimeState.IsLocked == isLocked)
             {
                 return false;
@@ -267,14 +293,19 @@ namespace TeamHJD.Game.Turrets
 
         protected virtual void OnEnable()
         {
+            if (!IsInitialized) return;
             if (!TurretInstanceRegistry.Register(this))
             {
                 enabled = false;
+                return;
             }
+            if (_initialActivationPending)
+                _initialActivationRoutine = StartCoroutine(RequestInitialActivation());
         }
 
         protected virtual void OnDisable()
         {
+            CancelInitialActivation();
             if (_minimumRangeRenderer != null)
                 _minimumRangeRenderer.enabled = false;
             bool wasOperational = IsOperational;
@@ -301,7 +332,18 @@ namespace TeamHJD.Game.Turrets
         private IEnumerator RequestInitialActivation()
         {
             yield return null;
-            RequestActivation(true);
+            _initialActivationRoutine = null;
+            if (!_initialActivationPending || !isActiveAndEnabled) yield break;
+            _initialActivationPending = false;
+            LastInitialActivationResult = RequestActivation(true);
+        }
+
+        private void CancelInitialActivation()
+        {
+            _initialActivationPending = false;
+            if (_initialActivationRoutine == null) return;
+            StopCoroutine(_initialActivationRoutine);
+            _initialActivationRoutine = null;
         }
 
         public void SetDamageBonus(int damageBonus)

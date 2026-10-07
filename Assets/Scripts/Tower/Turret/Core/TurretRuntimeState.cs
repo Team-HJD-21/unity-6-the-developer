@@ -104,6 +104,24 @@ namespace TeamHJD.Game.Turrets
             target._isTemporarilySuspended = false;
         }
 
+        // Creation/load input is intentionally separate from level-change transfer and repair.
+        internal void Initialize(TurretInitializationData data)
+        {
+            data.Validate();
+            _instanceId = 0; // A fresh runtime identity; not a persistent save ID.
+            _isActivated = false; // Activation always needs a real power reservation.
+            _damageBonus = data.DamageBonus;
+            _isLocked = data.IsLocked;
+            _currentHealth = data.CurrentHealth;
+            _isDestroyed = data.IsDestroyed;
+            _healthInitialized = true;
+            _isTemporarilySuspended = false;
+            SetUpgradeLevel(data.Upgrade != null ? data.Upgrade.Id : null, data.UpgradeLevel,
+                data.Upgrade != null ? data.Upgrade.DamageModifierRatio : 0f,
+                data.Upgrade != null ? data.Upgrade.PowerModifierRatio : 0f,
+                data.Upgrade != null ? data.Upgrade.RangeModifierRatio : 0f);
+        }
+
         internal void SetActivated(bool isActivated)
         {
             _isActivated = isActivated;
