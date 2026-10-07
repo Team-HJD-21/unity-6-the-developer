@@ -17,7 +17,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var grid=new BattlefieldGridBuilder().Build(BattlefieldGridConfiguration.Default,spatial,BattlefieldDynamicSpatialInput.Empty);
             var battlefield=BattlefieldSpatialSnapshot.CreateMatchSnapshot(new BattlefieldTopologyBuilder().Build(spatial),new MatchId("inspect"),1,grid);
             return new SpawnDecisionSnapshot(battlefield,
-                new[]{new SpawnDecisionSnapshot.Candidate("Left",new BattlefieldPoint(-3,0),5,8,2,1,0,false,"Allocated by pressure / distance / ID")},
+                new[]{new SpawnDecisionSnapshot.Candidate("Left",new BattlefieldPoint(-3,0),5,8,2,1,0,false,"Allocated by cell service",20,10,5,27,true)},
                 new[]{new SpawnDecisionSnapshot.Plan("Left","Slime",1)},
                 new[]{new SpawnDecisionSnapshot.Actual("Left","Slime","42",new BattlefieldPoint(-2.5,0.1))},"Spawned");
         }
@@ -44,8 +44,23 @@ namespace TeamHJD.Game.Tests.EditMode
             var copied=GameDebugExport.FromJson(GameDebugExport.ToJson(run));
             Assert.That(copied.SpawnDecisions[0].Actuals[0].X,Is.EqualTo(-2.5));
             Assert.That(copied.SpawnDecisions[0].Grid.CellsX,Is.EqualTo(16));
+            var candidate=copied.SpawnDecisions[0].Candidates[0];
+            Assert.That(candidate.HasDistributionMetrics,Is.True);
+            Assert.That(candidate.CellService,Is.EqualTo(20));Assert.That(candidate.PointService,Is.EqualTo(10));
+            Assert.That(candidate.CellPendingEnemies,Is.EqualTo(5));Assert.That(candidate.CellScore,Is.EqualTo(27));
             copied.SpawnDecisions[0].Candidates[0].X=double.NaN;
             Assert.Throws<ArgumentException>(()=>GameDebugSpawnValidation.Validate(copied));
+        }
+        [Test]
+        public void OldCandidate_LeavesDistributionMetricsUnavailable_AndNegativeServiceIsRejected()
+        {
+            var recorder=new GameDebugRecorder();var run=recorder.Accept(Event(1,Snapshot()),()=>new GameDebugRun());
+            var candidate=run.SpawnDecisions[0].Candidates[0];
+            candidate.HasDistributionMetrics=false;candidate.CellService=0;candidate.PointService=0;candidate.CellPendingEnemies=0;candidate.CellScore=0;
+            var read=GameDebugExport.FromJson(GameDebugExport.ToJson(run));
+            Assert.That(read.SpawnDecisions[0].Candidates[0].HasDistributionMetrics,Is.False);
+            read.SpawnDecisions[0].Candidates[0].CellService=-1;
+            Assert.Throws<ArgumentException>(()=>GameDebugSpawnValidation.Validate(read));
         }
         [Test]
         public void OldArchive_UsesEmptySnapshotsAndDoesNotClaimDeathCoverage()

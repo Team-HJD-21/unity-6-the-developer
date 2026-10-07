@@ -31,7 +31,9 @@ namespace TeamHJD.Game.Editor
                 Cells=s.Cells.Select(c=>new Cell{X=c.X,Y=c.Y,Players=c.Players,Turrets=c.Turrets,Enemies=c.Enemies}).ToList(),
                 Frontline=s.Frontline.Select(e=>new Edge{X1=e.First.X,Y1=e.First.Y,X2=e.Second.X,Y2=e.Second.Y}).ToList(),
                 Candidates=s.Candidates.Select(c=>new Candidate{Id=c.Id,X=c.Position.X,Y=c.Position.Y,CellX=c.CellX,CellY=c.CellY,
-                    Enemies=c.EnemyCount,Sets=c.AssignedSets,Distance=c.Distance,HasFrontline=c.HasFrontline,Reason=c.Reason}).ToList(),
+                    Enemies=c.EnemyCount,Sets=c.AssignedSets,Distance=c.Distance,HasFrontline=c.HasFrontline,Reason=c.Reason,
+                    CellService=c.CellService,PointService=c.PointService,CellPendingEnemies=c.CellPendingEnemies,CellScore=c.CellScore,
+                    HasDistributionMetrics=c.HasDistributionMetrics}).ToList(),
                 Plans=s.Plans.Select(p=>new Plan{Point=p.PointId,Enemy=p.EnemyType,Count=p.Count,ExecutionReason=p.ExecutionReason}).ToList(),
                 Actuals=s.Actuals.Select(a=>new Actual{Point=a.PointId,Enemy=a.EnemyType,Entity=a.EntityId,X=a.Position.X,Y=a.Position.Y}).ToList()
             };
@@ -39,7 +41,8 @@ namespace TeamHJD.Game.Editor
         [Serializable] public sealed class Cell {public int X,Y,Players,Turrets,Enemies;}
         [Serializable] public sealed class Edge {public double X1,Y1,X2,Y2;}
         [Serializable] public sealed class Candidate
-        {public string Id,Reason;public double X,Y,Distance;public int CellX,CellY,Enemies,Sets;public bool HasFrontline;}
+        {public string Id,Reason;public double X,Y,Distance;public int CellX,CellY,Enemies,Sets;public bool HasFrontline,HasDistributionMetrics;
+            public long CellService,PointService,CellPendingEnemies,CellScore;}
         [Serializable] public sealed class Plan {public string Point,Enemy,ExecutionReason;public int Count;}
         [Serializable] public sealed class Actual {public string Point,Enemy,Entity;public double X,Y;}
     }

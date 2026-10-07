@@ -29,12 +29,14 @@ Game Debugger → Statistics에서 **Spawn decisions & distribution**을 선택�
 
 지점 수집은 `EnemySpawnExecutor.SpawnPointList` 조회 시 같은 Scene 전체에서 갱신한다. 부모/이름을 Left/Right에 고정하지 않고 런타임 추가·복제·제거를 반영한다. 비활성 지점도 레지스트리에 보관한다. Editor는 빈/복제 ID를 authoring 값에 저장하고, 런타임 복제는 등록 시 객체 수명 동안 고유 ID를 유지한다. 다른 Scene은 포함하지 않는다.
 
-등록 지점 수를 늘려도 전체 요청 예산은 자동 증가하지 않는다. 기존 공간 배정 정책은 유지하며, 사용 가능한 지점을 대상으로:
+등록 지점 수를 늘려도 전체 요청 예산은 자동 증가하지 않는다. 2026-10-08 반복 편중 수정은 [Spatial Spawn Distribution](../architecture/spatial-spawn-distribution.md)을 따른다. 사용 가능한 지점을 대상으로:
 
 1. Grid 밖, Player/Turret 점유 셀, 중복/누락 ID를 제외한다.
-2. 기존 셀 Enemy 수 + 이번 요청에 이미 배정한 Enemy 수가 가장 적은 후보를 고른다.
-3. 동률이면 전선까지의 최단 거리, 다시 동률이면 ordinal 지점 ID 순서로 고른다.
-4. 프리셋의 완전한 세트만 배정한다. 잔여 예산은 새로운 부분 세트를 만들지 않는다.
+2. 같은 Grid 셀의 지점을 묶고, 셀의 `service + 현재 Enemy 수 + 이번 요청 예정량`이 가장 작은 셀을 고른다. 예정량은 셀 내부 후보들이 공유한다.
+3. 셀 내부 지점은 `point service + 지점 예정량`으로 분산한다. 셀 동률은 현재/예정 적 부하 → 전선 거리 → ID, 지점 동률은 전선 거리 → ID를 사용한다.
+4. 프리셋의 완전한 세트만 배정한다. 잔여 예산은 새로운 부분 세트를 만들지 않는다. Executor의 실제 생성만 service에 commit하고, 실패/미실행 계획은 소비하지 않는다.
+
+Candidates의 **Cell service / Cell pending / Final cell score / Point service**로 편중 원인을 확인한다. service는 신규 후보 시작 기준값을 포함하는 가상 부하이며 실제 생성 통계와 다르다. Final cell score는 요청 전체 배정 후 값이지 매 세트 선택 순간의 점수가 아니다. 이전 기록의 미계측 값은 N/A다. 같은 셀을 여러 지점이 나눠 쓰므로 지점별 수량이 아닌 **셀별 생성 합계**를 비교한다. 새 Match/XY Grid 변경 시 이력 초기화, 표시용 Z/revision 변화 시 이력 유지다.
 
 계획 이후 disabled/captured 상태, 카탈로그/프리팹 누락, 분대 등록 실패는 Executor의 별도 거부 사유다. 없는 원인을 Inspector가 추정하지 않는다. 카탈로그/권한/Match 검증에서 공간 정책에 진입하기 전에 거부된 요청은 공간 snapshot이 없을 수 있다.
 

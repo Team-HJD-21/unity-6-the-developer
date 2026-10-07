@@ -48,7 +48,7 @@ Grid 크기를 바꾸려면 `공용 Grid 기본값 / 에셋`에서 Center XY, Ma
 1. Encounter에서 preset/요청 예산을 정하고 한 번 Request한다. 최근 요청 표에서 source, 계획/실제 수량, 성공·실패를 확인하고 요청을 선택해 상세를 펼친다.
 2. 자동 반복은 `연속 Encounter 요청 / 시뮬레이션`에서 간격/최대 횟수/clock을 정하고 `Start repeat`한다. 첫 요청은 한 간격 뒤다. `0`회는 무제한이며 생존 적이 누적될 수 있다. 종료는 `Stop repeat`다.
 3. Statistics를 `Spawn decisions / distribution`으로 바꾸고 Request를 선택한다. `Follow latest`를 끄면 보고 있는 요청이 새 요청 때문에 바뀌지 않는다.
-4. `Candidates · eligibility and allocation`에서 지점별 cell/초기 적 수/전선 거리/배정 세트/Reason을 확인한다. 검색은 지점 ID 또는 사유, `Monster`는 계획/실제 개체와 지도 실제 점을 필터링한다.
+4. `Candidates · eligibility and allocation`에서 지점별 cell/초기 적 수/Cell service·pending·final score/Point service/전선 거리/배정 세트/Reason을 확인한다. 새 정책은 같은 셀의 예정량을 공유하고 실제 생성 이력을 유지해 반복 편중을 막는다. 상세는 [Spatial Spawn Distribution](../architecture/spatial-spawn-distribution.md). 검색은 지점 ID 또는 사유, `Monster`는 계획/실제 개체와 지도 실제 점을 필터링한다.
 5. `Planned composition · actual result`로 계획 대비 실제 수를, `Actual objects · immutable spawn positions`로 종류/Network ID/생성 XY를 확인한다. 지도는 휠 확대·드래그 이동, `Frame snapshot`으로 전체 범위를 다시 맞춘다.
 6. 표/지도에서 지점 또는 개체를 선택하고 `Select ... in Scene`으로 현재 Scene 대상을 찾는다. **같은 활성 Match**만 가능하며 종료·Imported 기록의 과거 객체를 임의로 선택하지 않는다.
 7. `Copy request evidence`로 판단 자료를 공유한다. 고정한 요청의 상세가 최신 32개 보존 범위에서 사라졌다면 다른 요청을 선택하거나 Follow latest를 켠다.

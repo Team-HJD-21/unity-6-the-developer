@@ -33,7 +33,8 @@ namespace TeamHJD.Game.Editor
                 foreach(var c in d.Candidates)
                 {
                     if(c==null||!Finite(c.X)||!Finite(c.Y)||!Finite(c.Distance)||c.Distance<0||c.Sets<0||c.Enemies<0||
-                        c.CellX< -1||c.CellX>=g.CellsX||c.CellY< -1||c.CellY>=g.CellsY) Invalid();
+                        c.CellX< -1||c.CellX>=g.CellsX||c.CellY< -1||c.CellY>=g.CellsY||
+                        c.CellService<0||c.PointService<0||c.CellPendingEnemies<0||c.CellScore<0) Invalid();
                     Text(c.Id);Text(c.Reason);
                 }
                 foreach(var p in d.Plans) {if(p==null||p.Count<0) Invalid();Text(p.Point);Text(p.Enemy);Text(p.ExecutionReason);}

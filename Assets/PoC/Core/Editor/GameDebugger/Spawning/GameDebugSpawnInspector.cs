@@ -151,8 +151,12 @@ namespace TeamHJD.Game.Editor
             _candidates.Clear();if(_decision==null)return;
             string search=_filter.value??"";
             var rows=_decision.Candidates.Where(c=>(c.Id+" "+c.Reason).IndexOf(search,StringComparison.OrdinalIgnoreCase)>=0)
-                .Select(c=>new Row(c.Id,new[]{c.Id,c.CellX<0?"N/A":$"({c.CellX}, {c.CellY})",c.CellX<0?"N/A":c.Enemies.ToString(),c.HasFrontline?c.Distance.ToString("F2"):"N/A",c.Sets.ToString(),c.Reason})).ToList();
-            _candidates.Add(Table(new[]{"Point","Grid cell","Enemies","Frontline units","Sets","Decision"},new[]{150,90,70,100,60,290},rows,row=>SelectPoint(row.Key),200));
+                .Select(c=>new Row(c.Id,new[]{c.Id,c.CellX<0?"N/A":$"({c.CellX}, {c.CellY})",c.CellX<0?"N/A":c.Enemies.ToString(),
+                    c.HasDistributionMetrics?c.CellService.ToString():"N/A",c.HasDistributionMetrics?c.CellPendingEnemies.ToString():"N/A",
+                    c.HasDistributionMetrics?c.CellScore.ToString():"N/A",c.HasDistributionMetrics?c.PointService.ToString():"N/A",
+                    c.HasFrontline?c.Distance.ToString("F2"):"N/A",c.Sets.ToString(),c.Reason})).ToList();
+            _candidates.Add(Table(new[]{"Point","Grid cell","Enemies","Cell service","Cell pending","Final cell score","Point service","Frontline units","Sets","Decision"},
+                new[]{150,90,70,100,100,110,100,100,60,340},rows,row=>SelectPoint(row.Key),200));
         }
         private void BuildResults()
         {
@@ -184,6 +188,8 @@ namespace TeamHJD.Game.Editor
             var c=_decision?.Candidates.FirstOrDefault(v=>v.Id==_selectedPoint);
             _selection.text=c==null?"Select a candidate row or a map point.":$"{c.Id}  ·  World XY ({c.X:F2}, {c.Y:F2})\n{c.Reason} · initial cell enemies {(c.CellX<0?"N/A":c.Enemies.ToString())} · assigned sets {c.Sets}"+
                 (c.HasFrontline?$" · frontline distance {c.Distance:F2}":" · no frontline distance criterion");
+            if(c?.HasDistributionMetrics==true)
+                _selection.text+=$"\nCell service {c.CellService} + enemies {c.Enemies} + pending {c.CellPendingEnemies} = final score {c.CellScore} · point service {c.PointService}. 신규 후보의 service에는 시작 기준값이 포함됩니다.";
             _selectScene.SetEnabled(CanSelectScene());
             _selectScene.text="Select point in Scene";
             var actual=_decision?.Actuals.FirstOrDefault(a=>a.Entity==_selectedEntity);
