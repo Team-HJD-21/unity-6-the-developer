@@ -2,6 +2,7 @@
   "name": "TeamHJD.Game.Tests.EditMode",
   "rootNamespace": "TeamHJD.Game.Tests.EditMode",
   "references": [
+    "TeamHJD.Game.Bootstrap",
     "TeamHJD.Game.Application",
     "TeamHJD.Game.Content.Runtime",
     "TeamHJD.Game.Contracts",

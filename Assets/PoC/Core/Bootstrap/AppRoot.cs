@@ -16,6 +16,7 @@ namespace TeamHJD.Game.Bootstrap
         private bool _isDisposed;
 
         internal AppServices Services { get; private set; }
+        public MatchId CurrentMatchId => _currentMatch == null ? default : _currentMatch.Config.MatchId;
 
         private void OnEnable()
         {
@@ -122,6 +123,13 @@ namespace TeamHJD.Game.Bootstrap
             ThrowIfUnavailable();
             if (_currentMatch == null) throw new InvalidOperationException("There is no active match.");
             return _currentMatch.Complete(outcome, eventSequence);
+        }
+
+        public bool TryEndMatch(MatchId expectedMatchId)
+        {
+            if (expectedMatchId.IsEmpty || expectedMatchId != CurrentMatchId) return false;
+            EndCurrentMatch();
+            return true;
         }
 
         public void EndCurrentMatch()

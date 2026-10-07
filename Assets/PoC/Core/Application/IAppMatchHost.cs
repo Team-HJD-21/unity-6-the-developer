@@ -6,6 +6,9 @@ namespace TeamHJD.Game.Application
 {
     public interface IAppMatchHost
     {
+        /// <summary>현재 Match의 식별자입니다. Match가 없으면 빈 ID입니다.</summary>
+        MatchId CurrentMatchId { get; }
+
         /// <summary>새 Match를 만들고 시작한 세션을 호출자에게 반환합니다.</summary>
         MatchSession StartMatch(
             MatchConfig config,
@@ -29,5 +32,8 @@ namespace TeamHJD.Game.Application
 
         /// <summary>현재 Match를 종료하고 Match 범위 리소스를 폐기합니다.</summary>
         void EndCurrentMatch();
+
+        /// <summary>호출자가 소유한 Match가 아직 활성일 때만 종료합니다.</summary>
+        bool TryEndMatch(MatchId expectedMatchId);
     }
 }
