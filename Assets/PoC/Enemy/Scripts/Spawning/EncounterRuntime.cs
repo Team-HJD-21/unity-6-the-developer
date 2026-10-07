@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Text;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Contracts;
 using UnityEngine;
 
 namespace TeamHJD.Game.Domain
@@ -27,6 +28,7 @@ namespace TeamHJD.Game.Domain
         /// </summary>
         public bool HasExecutor => _spawnExecutor != null;
         public bool CanExecute => _spawnExecutor != null && _spawnExecutor.CanSpawn;
+        public EnemySpawnExecutor Executor => _spawnExecutor;
         
         /// <summary>
         /// 기본 Planner를 준비하고 현재 씬의 Executor를 한 번 찾아 보관한다.
@@ -70,7 +72,12 @@ namespace TeamHJD.Game.Domain
             string squadOrder,
             int maxEnemyCount,
             out string result)
+            => TrySpawn(snapshot, squadOrder, maxEnemyCount, null, out result, out _);
+
+        public bool TrySpawn(BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
+            EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
         {
+            summary = new EncounterExecutionSummary(0, 0, "Rejected");
             if (snapshot == null || snapshot.MatchId.IsEmpty)
             {
                 result = "활성 Match Battlefield snapshot이 없습니다.";
@@ -107,9 +114,11 @@ namespace TeamHJD.Game.Domain
 
             var executionSummary = new StringBuilder();
             int spawnedCount = 0;
+            int plannedCount = 0;
             foreach (SpawnInstruction instruction in instructions)
             {
-                int instructionSpawned = _spawnExecutor.Execute(instruction);
+                foreach (EnemySpawnEntry entry in instruction.Enemies) plannedCount += entry.Count;
+                int instructionSpawned = _spawnExecutor.Execute(instruction, context);
                 spawnedCount += instructionSpawned;
                 if (executionSummary.Length > 0) executionSummary.Append(" | ");
                 executionSummary.Append(instruction.SpawnPointId).Append(": ");
@@ -127,6 +136,8 @@ namespace TeamHJD.Game.Domain
                      $"{snapshot.Grid.OccupiedCells.Count} occupied cells; " +
                      $"{instructions.Count} plan(s), {spawnedCount} spawned. {executionSummary}";
             Debug.Log(result);
+            summary = new EncounterExecutionSummary(plannedCount, spawnedCount,
+                spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn");
             return spawnedCount > 0;
         }
     }

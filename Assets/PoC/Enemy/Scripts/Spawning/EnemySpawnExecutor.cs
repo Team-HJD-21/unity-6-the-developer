@@ -1,8 +1,12 @@
+// 확정된 분대 명령을 서버에서 실행하고 실제 생성/제거 사실을 발행합니다.
+// 요청 context는 관측 상관관계에만 쓰며 생성 정책을 바꾸지 않습니다.
 using System.Collections.Generic;
+using System;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using Unity.Netcode;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 /// <summary>
 /// Planner가 확정한 SpawnInstruction 하나를 서버에서 하나의 분대로 생성한다.
@@ -21,17 +25,25 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         public readonly EnemyController Controller;
         public readonly EnemyNetworkController NetworkController;
         public readonly EnemySquad Squad;
+        public readonly EncounterExecutionContext Context;
+        public readonly string EnemyType;
+        public readonly string SpawnPointId;
+        public readonly string NetworkId;
 
         public TrackedEnemy(
             NetworkObject networkObject,
             EnemyController controller,
             EnemyNetworkController networkController,
-            EnemySquad squad)
+            EnemySquad squad, EncounterExecutionContext context, string enemyType, string spawnPointId)
         {
             NetworkObject = networkObject;
             Controller = controller;
             NetworkController = networkController;
             Squad = squad;
+            Context = context;
+            EnemyType = enemyType;
+            SpawnPointId = spawnPointId;
+            NetworkId = networkObject.NetworkObjectId.ToString();
         }
     }
 
@@ -39,6 +51,15 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     private SpawnPointRegistry _spawnPointList = new();
     private readonly List<EnemySquad> _squads = new();
     private readonly Dictionary<ulong, TrackedEnemy> _spawnedEnemies = new();
+    public event Action<EnemyLifecycleObservation> LifecycleObserved;
+
+    public int CountForMatch(MatchId matchId)
+    {
+        int count = 0;
+        foreach (TrackedEnemy enemy in _spawnedEnemies.Values)
+            if (enemy.Context != null && enemy.Context.MatchId == matchId) count++;
+        return count;
+    }
 
     /// <summary>
     /// Planner와 Executor가 함께 사용하는 스폰 지점 및 점령 상태 목록을 반환한다.
@@ -107,6 +128,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     {
         foreach (TrackedEnemy enemy in _spawnedEnemies.Values)
         {
+            Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Executor shutdown");
             if (enemy.NetworkController != null)
                 enemy.NetworkController.Despawned -= OnEnemyDespawned;
         }
@@ -135,6 +157,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             return;
 
         _spawnedEnemies.Remove(networkObjectId);
+        Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Despawn / untracked (not a kill)");
         if (enemy.NetworkController != null)
             enemy.NetworkController.Despawned -= OnEnemyDespawned;
 
@@ -150,6 +173,10 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     /// </summary>
     /// <param name="spawnInstruction">분대의 스폰 지점과 적별 수량이 담긴 명령.</param>
     public int Execute(SpawnInstruction spawnInstruction)
+        => Execute(spawnInstruction, null);
+
+    /// <summary>정책은 그대로 실행하며 관측용 요청 식별자만 생성 기록에 연결합니다.</summary>
+    public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || spawnInstruction.Enemies == null ||
@@ -234,8 +261,10 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                     spawnedMonster.GetComponent<EnemyNetworkController>();
                 networkObject.Spawn();
                 _spawnedEnemies[networkObject.NetworkObjectId] =
-                    new TrackedEnemy(networkObject, controller, networkController, squad);
+                    new TrackedEnemy(networkObject, controller, networkController, squad,
+                        context, enemy.EnemyId, spawnInstruction.SpawnPointId);
                 networkController.Despawned += OnEnemyDespawned;
+                Observe(_spawnedEnemies[networkObject.NetworkObjectId], GameDiagnosticKind.EnemySpawned, "Network spawn succeeded");
                 spawnedCount++;
             }
         }
@@ -251,5 +280,14 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         if (!hasTarget)
             Debug.LogWarning($"No targetable Player or Turret found for squad at {spawnInstruction.SpawnPointId}.");
         return spawnedCount;
+    }
+
+    private void Observe(TrackedEnemy enemy, GameDiagnosticKind kind, string reason)
+    {
+        var observation = new EnemyLifecycleObservation(enemy.Context, kind, enemy.EnemyType, enemy.SpawnPointId, enemy.NetworkId, reason);
+        // 관측 구독 실패가 스폰이나 제거 처리를 중단하지 않도록 격리합니다.
+        if (LifecycleObserved == null) return;
+        foreach (Action<EnemyLifecycleObservation> observer in LifecycleObserved.GetInvocationList())
+            try { observer(observation); } catch (Exception exception) { Debug.LogException(exception, this); }
     }
 }
