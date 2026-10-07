@@ -1,0 +1,15 @@
+.game-debugger { background-color: rgb(28, 32, 39); padding: 8px; }
+.status-header { color: rgb(90, 220, 225); font-size: 13px; -unity-font-style: bold; padding: 10px; background-color: rgb(36, 44, 54); border-bottom-width: 2px; border-bottom-color: rgb(55, 150, 158); }
+.workspace { flex-direction: row; flex-grow: 1; margin-top: 8px; }
+.navigation { width: 142px; flex-shrink: 0; margin-right: 10px; }
+.navigation Button { height: 32px; margin-bottom: 4px; -unity-text-align: middle-left; padding-left: 8px; background-color: rgb(45, 53, 63); border-width: 0; }
+.navigation Button:hover { background-color: rgb(55, 83, 95); }
+.navigation Button.active-page { background-color: rgb(46, 88, 103); border-left-width: 3px; border-left-color: rgb(90, 220, 225); }
+.content { flex-grow: 1; min-width: 0; padding: 8px; background-color: rgb(34, 38, 45); }
+.page-title { font-size: 18px; -unity-font-style: bold; color: rgb(215, 225, 235); margin-bottom: 12px; }
+.record-status { white-space: normal; color: rgb(175, 200, 210); padding: 8px; margin-bottom: 8px; background-color: rgb(40, 48, 58); }
+.filter-row { flex-direction: row; flex-wrap: wrap; }
+.filter-row > * { margin-right: 10px; }
+.chart { margin-top: 12px; padding: 8px; background-color: rgb(22, 27, 33); border-width: 1px; border-color: rgb(65, 85, 95); }
+.chart-axes { white-space: normal; color: rgb(155, 185, 195); margin-top: 6px; margin-bottom: 10px; }
+.footer { white-space: normal; color: rgb(220, 190, 120); font-size: 11px; padding: 8px; margin-top: 8px; }

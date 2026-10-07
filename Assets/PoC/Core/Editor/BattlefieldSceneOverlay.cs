@@ -24,6 +24,11 @@ namespace TeamHJD.Game.Editor
             var snapshot = BattlefieldDebugSession.Snapshot;
             EditorGUILayout.LabelField("Revision / occupied",
                 $"{snapshot?.Revision ?? 0} / {BattlefieldDebugSession.Grid?.OccupiedCells.Count ?? 0}");
+            var source = GameDebuggerSession.Source;
+            EditorGUILayout.LabelField("Authority / alive", source == null ? "N/A" :
+                $"{(source.IsServer ? "SERVER" : "CLIENT/OFFLINE")} / {(source.IsServer ? source.ActiveEnemyCount.ToString() : "N/A")}");
+            EditorGUILayout.LabelField("Game / real seconds", source == null ? "N/A" : $"{source.GameSeconds:F1} / {source.RealSeconds:F1}");
+            if (GUILayout.Button("Open Game Debugger")) GameDebuggerWindow.Open();
             if (GUILayout.Button("Open Debug Window")) BattlefieldDebugWindow.Open();
         }
     }

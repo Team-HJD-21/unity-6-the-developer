@@ -61,6 +61,13 @@ namespace TeamHJD.Game.Editor
         {
             _tab = GUILayout.Toolbar(_tab, new[] { "Overview", "Battlefield", "Encounter", "History" });
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
+            DrawEmbeddedPanel(_tab);
+            EditorGUILayout.EndScrollView();
+        }
+
+        internal void DrawEmbeddedPanel(int tab)
+        {
+            _tab = tab;
             EditorGUI.BeginChangeCheck();
             if (_tab == 0)
             {
@@ -89,7 +96,7 @@ namespace TeamHJD.Game.Editor
             {
                 BattlefieldDiagnosticPanels.DrawOverview();
                 if (!BattlefieldDebugSession.Display.IsCaptureMode) DrawEncounterControls();
-                EditorGUILayout.HelpBox("구조화된 후보 이유·PlanId·권한·planned/actual 기록은 E의 후속 진단 계약에서 연결합니다.", MessageType.Info);
+                EditorGUILayout.HelpBox("요청 source/RequestId/revision·계획/실제 생성 기록은 Game Debugger에서 확인합니다. PlanId·후보별 점수는 Feature 계약이 없어 N/A입니다.", MessageType.Info);
             }
             else
             {
@@ -102,7 +109,6 @@ namespace TeamHJD.Game.Editor
                 BattlefieldDebugSession.InvalidatePreview();
                 BattlefieldDebugSession.NotifyDisplayChanged();
             }
-            EditorGUILayout.EndScrollView();
         }
 
         private void DrawEncounterControls()
