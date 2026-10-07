@@ -27,6 +27,7 @@ namespace TeamHJD.Game.Editor
             foreach (var item in run.Markers)
                 if (item == null || !Finite(item.GameSeconds) || !Finite(item.RealSeconds) || item.GameSeconds<0 || item.RealSeconds<0)
                     throw new ArgumentException("북마크 시간이 잘못되었습니다.");
+            GameDebugSpawnValidation.Validate(run);
             return run;
         }
         private static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);

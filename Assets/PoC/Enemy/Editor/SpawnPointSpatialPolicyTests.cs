@@ -10,6 +10,22 @@ public sealed class SpawnPointSpatialPolicyTests
     private readonly SpawnPointSpatialPolicy _policy = new SpawnPointSpatialPolicy();
 
     [Test]
+    public void Allocate_RecordsActualRejectionsAndPressureWithoutChangingAllocation()
+    {
+        var participants=new BattlefieldDynamicSpatialInput(new[]{Player("friendly",0,0)},new[]{Enemy("enemy",-3,0)});
+        var snapshot=Snapshot(BattlefieldSpatialInput.Empty,participants);
+        var result=_policy.Allocate(snapshot,new[]{
+            Candidate("friendly",0,0),Candidate("outside",30,0),Candidate("dense",-3,0),Candidate("free",3,0),
+            Candidate("free",3,0)},1,1,out var decisions);
+        Assert.That(result[0].SpawnPointId,Is.EqualTo("free"));
+        Assert.That(decisions,Has.Count.EqualTo(5));
+        Assert.That(System.Linq.Enumerable.Any(decisions,d=>d.Reason=="Duplicate ID"),Is.True);
+        Assert.That(System.Linq.Enumerable.Any(decisions,d=>d.Reason=="Player occupied cell"),Is.True);
+        Assert.That(System.Linq.Enumerable.Any(decisions,d=>d.Id=="dense"&&d.EnemyCount==1&&d.AssignedSets==0),Is.True);
+        Assert.That(System.Linq.Enumerable.Any(decisions,d=>d.Id=="free"&&d.AssignedSets==1),Is.True);
+    }
+
+    [Test]
     public void Allocate_RejectsFriendlyOccupiedAndOutsideCells()
     {
         var turrets = new BattlefieldSpatialInput(new[] { Turret("turret", 3d, -3d) });

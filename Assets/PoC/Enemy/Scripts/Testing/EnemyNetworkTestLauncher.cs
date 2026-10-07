@@ -31,6 +31,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private Coroutine _initialEncounterRoutine;
     private bool _initialEncounterPending;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
+    private int _retainedDecisionCount;
     private long _diagnosticSequence;
     private long _requestSequence;
     private double _gameStartTime;
@@ -333,7 +334,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         EnsureEncounterRuntime();
         bool succeeded = _encounterRuntime.TrySpawn(snapshot, squadOrder, maxEnemyCount, context, out result, out EncounterExecutionSummary summary);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
-            planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result);
+            planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
+            spawnDecision: summary.SpawnDecision);
         if (succeeded && snapshot.MatchId == _boundMatchId && source != EncounterRequestSource.MatchStart)
             CancelPendingInitialEncounter();
         return succeeded;
@@ -357,12 +359,32 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     }
 
     private void Emit(GameDiagnosticKind kind, EncounterExecutionContext context, int planned = 0, int actual = 0,
-        string enemyType = "", string point = "", string entity = "", string message = "")
+        string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null)
     {
         var observation = new GameDiagnosticEvent(++_diagnosticSequence, _boundMatchId,
             context?.Revision ?? 0, context?.RequestId ?? 0, context?.Source ?? EncounterRequestSource.Unspecified,
-            kind, GameSeconds, RealSeconds, enemyType, point, entity, planned, actual, message, context?.SquadOrder ?? "");
-        if (_diagnostics.Count >= 4096) { _diagnostics.Dequeue(); DroppedDiagnosticCount++; }
+            kind, GameSeconds, RealSeconds, enemyType, point, entity, planned, actual, message, context?.SquadOrder ?? "",spawnDecision,
+            hasDeathEvents: true);
+        if (_diagnostics.Count >= 4096)
+        {
+            if(_diagnostics.Dequeue().SpawnDecision!=null)_retainedDecisionCount--;
+            DroppedDiagnosticCount++;
+        }
+        if(spawnDecision!=null)
+        {
+            // 오래된 이벤트 수량은 유지하되 무거운 공간 payload만 제한합니다.
+            if(_retainedDecisionCount>=SpawnDecisionSnapshot.MaximumRecordedDecisions)
+            {
+                var buffered=_diagnostics.ToArray();_diagnostics.Clear();bool removed=false;
+                foreach(var item in buffered)
+                {
+                    if(!removed&&item.SpawnDecision!=null)
+                    {_diagnostics.Enqueue(item.WithoutSpawnDecision());removed=true;_retainedDecisionCount--;}
+                    else _diagnostics.Enqueue(item);
+                }
+            }
+            _retainedDecisionCount++;
+        }
         _diagnostics.Enqueue(observation);
         if (DiagnosticEmitted == null) return;
         foreach (Action<GameDiagnosticEvent> observer in DiagnosticEmitted.GetInvocationList())

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Contracts;
 
 public sealed class SpawnPointSpatialPolicy
 {
@@ -13,6 +14,8 @@ public sealed class SpawnPointSpatialPolicy
         public int EnemyCount;
         public double FrontlineDistanceSquared;
         public int AssignedSets;
+        public SpatialSpawnCandidate Input;
+        public int CellX, CellY;
     }
 
     public IReadOnlyList<SpatialSpawnAllocation> Allocate(
@@ -20,7 +23,14 @@ public sealed class SpawnPointSpatialPolicy
         IReadOnlyList<SpatialSpawnCandidate> candidates,
         int totalSets,
         int enemiesPerSet)
+        => Allocate(snapshot, candidates, totalSets, enemiesPerSet, out _);
+
+    public IReadOnlyList<SpatialSpawnAllocation> Allocate(
+        BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpatialSpawnCandidate> candidates,
+        int totalSets, int enemiesPerSet, out IReadOnlyList<SpawnDecisionSnapshot.Candidate> observations)
     {
+        var decisions = new List<SpawnDecisionSnapshot.Candidate>();
+        observations = decisions.AsReadOnly();
         var allocations = new List<SpatialSpawnAllocation>();
         if (snapshot?.Grid == null || candidates == null || totalSets <= 0 || enemiesPerSet <= 0)
             return allocations;
@@ -33,15 +43,22 @@ public sealed class SpawnPointSpatialPolicy
         var seenIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (SpatialSpawnCandidate candidate in candidates)
         {
-            if (string.IsNullOrWhiteSpace(candidate.Id) || !seenIds.Add(candidate.Id) ||
-                !snapshot.Grid.TryGetCellAt(candidate.Position, out BattlefieldGridCellSnapshot cell) ||
-                cell.TurretCount > 0 || cell.PlayerCount > 0)
+            bool mapped = snapshot.Grid.TryGetCellAt(candidate.Position, out BattlefieldGridCellSnapshot cell);
+            string reason = string.IsNullOrWhiteSpace(candidate.Id) ? "Missing ID" :
+                !seenIds.Add(candidate.Id) ? "Duplicate ID" : !mapped ? "Outside grid" :
+                cell.TurretCount > 0 ? "Turret occupied cell" : cell.PlayerCount > 0 ? "Player occupied cell" : "";
+            if (reason.Length > 0)
+            {
+                decisions.Add(new SpawnDecisionSnapshot.Candidate(candidate.Id,candidate.Position,cell?.X??-1,cell?.Y??-1,
+                    cell?.EnemyCount??0,0,0,false,reason));
                 continue;
+            }
 
             eligible.Add(new CandidateState
             {
                 Id = candidate.Id,
                 EnemyCount = cell.EnemyCount,
+                Input = candidate, CellX = cell.X, CellY = cell.Y,
                 FrontlineDistanceSquared = DistanceToFrontlineSquared(candidate.Position, snapshot.FrontlineEdges, vertices)
             });
         }
@@ -67,8 +84,13 @@ public sealed class SpawnPointSpatialPolicy
 
         eligible.Sort((left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
         foreach (CandidateState candidate in eligible)
+        {
+            decisions.Add(new SpawnDecisionSnapshot.Candidate(candidate.Id,candidate.Input.Position,candidate.CellX,candidate.CellY,
+                candidate.EnemyCount,candidate.AssignedSets,Math.Sqrt(candidate.FrontlineDistanceSquared),
+                snapshot.FrontlineEdges.Count>0,candidate.AssignedSets>0 ? "Allocated by pressure / distance / ID" : "Eligible; budget exhausted"));
             if (candidate.AssignedSets > 0)
                 allocations.Add(new SpatialSpawnAllocation(candidate.Id, candidate.AssignedSets));
+        }
         return allocations.AsReadOnly();
     }
 

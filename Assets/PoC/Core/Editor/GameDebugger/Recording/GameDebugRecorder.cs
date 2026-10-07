@@ -38,6 +38,14 @@ namespace TeamHJD.Game.Editor
             if (item.Kind == GameDiagnosticKind.MatchStarted) run.IsPartial = false;
             if (run.Events.Count >= MaximumEvents) { run.Events.RemoveAt(0); run.DroppedEvents++; run.IsPartial = true; }
             run.Events.Add(GameDebugEventEntry.Copy(item));
+            if (item.HasDeathEvents) run.HasDeathEvents=true;
+            if (item.IsSpawnDecisionOmitted) run.DroppedSpawnDecisions++;
+            if (item.SpawnDecision != null)
+            {
+                if (run.SpawnDecisions.Count>=GameDebugSpawnDecision.MaximumRecords)
+                { run.SpawnDecisions.RemoveAt(0); run.DroppedSpawnDecisions++; }
+                run.SpawnDecisions.Add(GameDebugSpawnDecision.Copy(item));
+            }
             if (item.Kind == GameDiagnosticKind.MatchEnded) run.IsComplete = true;
             Version++;
             return run;

@@ -1,3 +1,6 @@
+// 서버가 확정한 체력과 사망을 관리하며 실제 사망 사실을 관측자에게 전달합니다.
+// Despawn과 사망은 별개이며 진단 실패가 사망 처리를 막지 않습니다.
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -13,6 +16,7 @@ public class EnemyHealth : NetworkBehaviour
     [SerializeField, Min(1)] private int maxHealth = 20;
     // 같은 적에 사망 처리가 여러 번 실행되는 것을 막는다.
     private bool _isDead;
+    public event Action<ulong> Died;
     
     /// <summary>
     /// 서버가 관리하는 현재 체력을 반환한다.
@@ -61,6 +65,9 @@ public class EnemyHealth : NetworkBehaviour
     {
         currentHealth = 0;
         _isDead = true;
+        if (Died != null)
+            foreach (Action<ulong> observer in Died.GetInvocationList())
+                try { observer(NetworkObjectId); } catch (Exception exception) { Debug.LogException(exception, this); }
         NetworkObject.Despawn();
     }
 }

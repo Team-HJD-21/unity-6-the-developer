@@ -17,7 +17,10 @@ namespace TeamHJD.Game.Editor
             width = Math.Max(width, (duration + 0.0001d) / 2048d);
             int count = Math.Min(2048, (int)Math.Floor(duration / width) + 1);
             var buckets = new List<GameDebugBucket>(count);
-            for (int index = 0; index < count; index++) buckets.Add(new GameDebugBucket { Start=index*width, Width=width, HasFullEventCoverage=!run.IsPartial });
+            bool hasRequestBreakdown=string.IsNullOrEmpty(enemyFilter) && string.IsNullOrEmpty(pointFilter);
+            for (int index = 0; index < count; index++) buckets.Add(new GameDebugBucket {
+                Start=index*width, Width=width, HasFullEventCoverage=!run.IsPartial, HasDeathEvents=run.HasDeathEvents,
+                Requests=hasRequestBreakdown ? 0 : -1 });
             foreach (GameDebugEventEntry item in run.Events)
             {
                 if (sourceFilter.HasValue && item.Source != sourceFilter.Value) continue;
@@ -26,7 +29,9 @@ namespace TeamHJD.Game.Editor
                 if (!string.IsNullOrEmpty(pointFilter) && !string.Equals(item.SpawnPointId, pointFilter, StringComparison.Ordinal)) continue;
                 int index = Math.Min(count-1, Math.Max(0, (int)Math.Floor((useRealTime ? item.RealSeconds : item.GameSeconds) / width)));
                 GameDebugBucket bucket = buckets[index];
+                if (item.Kind == GameDiagnosticKind.RequestStarted && hasRequestBreakdown) bucket.Requests++;
                 if (item.Kind == GameDiagnosticKind.EnemySpawned) bucket.Spawned += item.ActualCount;
+                if (item.Kind == GameDiagnosticKind.EnemyDied) bucket.Died += item.ActualCount;
                 if (item.Kind == GameDiagnosticKind.EnemyRemoved) bucket.Removed += item.ActualCount;
                 if (item.Kind == GameDiagnosticKind.RequestCompleted || item.Kind == GameDiagnosticKind.RequestFailed)
                 { bucket.Planned += item.PlannedCount; bucket.Executed += item.ActualCount; }

@@ -109,16 +109,26 @@ namespace TeamHJD.Game.Domain
                 result = $"SpawnPlan 생성 실패: preset '{request.SquadOrder}', budget {request.MaxCount}, " +
                          $"available points {_spawnExecutor.SpawnPointList.GetAvailableSpawnPoints().Count}. " +
                          "Grid 밖 또는 Player/Turret 점유 셀의 SpawnPoint는 제외됩니다.";
+                summary = new EncounterExecutionSummary(0,0,"PlanRejected", new SpawnDecisionSnapshot(snapshot,
+                    _planner.LastCandidates,System.Array.Empty<SpawnDecisionSnapshot.Plan>(),System.Array.Empty<SpawnDecisionSnapshot.Actual>(),result));
                 return false;
             }
 
             var executionSummary = new StringBuilder();
             int spawnedCount = 0;
             int plannedCount = 0;
+            var plans = new List<SpawnDecisionSnapshot.Plan>();
+            var actuals = new List<SpawnDecisionSnapshot.Actual>();
             foreach (SpawnInstruction instruction in instructions)
             {
-                foreach (EnemySpawnEntry entry in instruction.Enemies) plannedCount += entry.Count;
-                int instructionSpawned = _spawnExecutor.Execute(instruction, context);
+                foreach (EnemySpawnEntry entry in instruction.Enemies)
+                {
+                    plannedCount += entry.Count;
+                }
+                string failure="";
+                int instructionSpawned = _spawnExecutor.Execute(instruction, context, actuals.Add,reason=>failure=reason);
+                foreach(EnemySpawnEntry entry in instruction.Enemies)
+                    plans.Add(new SpawnDecisionSnapshot.Plan(instruction.SpawnPointId,entry.EnemyId,entry.Count,failure));
                 spawnedCount += instructionSpawned;
                 if (executionSummary.Length > 0) executionSummary.Append(" | ");
                 executionSummary.Append(instruction.SpawnPointId).Append(": ");
@@ -137,7 +147,9 @@ namespace TeamHJD.Game.Domain
                      $"{instructions.Count} plan(s), {spawnedCount} spawned. {executionSummary}";
             Debug.Log(result);
             summary = new EncounterExecutionSummary(plannedCount, spawnedCount,
-                spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn");
+                spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
+                new SpawnDecisionSnapshot(snapshot,_planner.LastCandidates,plans,actuals,
+                    spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn"));
             return spawnedCount > 0;
         }
     }

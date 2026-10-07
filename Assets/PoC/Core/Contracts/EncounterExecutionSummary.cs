@@ -6,7 +6,8 @@ namespace TeamHJD.Game.Contracts
         public int PlannedCount { get; }
         public int SpawnedCount { get; }
         public string ResultCode { get; }
-        public EncounterExecutionSummary(int plannedCount, int spawnedCount, string resultCode)
-        { PlannedCount = plannedCount; SpawnedCount = spawnedCount; ResultCode = resultCode; }
+        public SpawnDecisionSnapshot SpawnDecision { get; }
+        public EncounterExecutionSummary(int plannedCount, int spawnedCount, string resultCode, SpawnDecisionSnapshot spawnDecision = null)
+        { PlannedCount = plannedCount; SpawnedCount = spawnedCount; ResultCode = resultCode; SpawnDecision = spawnDecision; }
     }
 }

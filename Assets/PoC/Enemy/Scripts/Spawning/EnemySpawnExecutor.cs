@@ -29,6 +29,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         public readonly string EnemyType;
         public readonly string SpawnPointId;
         public readonly string NetworkId;
+        public readonly EnemyHealth Health;
 
         public TrackedEnemy(
             NetworkObject networkObject,
@@ -44,6 +45,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             EnemyType = enemyType;
             SpawnPointId = spawnPointId;
             NetworkId = networkObject.NetworkObjectId.ToString();
+            Health = networkObject.GetComponent<EnemyHealth>();
         }
     }
 
@@ -131,6 +133,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Executor shutdown");
             if (enemy.NetworkController != null)
                 enemy.NetworkController.Despawned -= OnEnemyDespawned;
+            if (enemy.Health != null) enemy.Health.Died -= OnEnemyDied;
         }
 
         _squads.Clear();
@@ -147,6 +150,12 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         UntrackEnemy(networkObjectId);
     }
 
+    private void OnEnemyDied(ulong networkObjectId)
+    {
+        if (_spawnedEnemies.TryGetValue(networkObjectId, out TrackedEnemy enemy))
+            Observe(enemy, GameDiagnosticKind.EnemyDied, "EnemyHealth confirmed death");
+    }
+
     /// <summary>
     /// 생성 기록을 해제하고 마지막 분대원이 사라졌다면 빈 분대도 제거한다.
     /// </summary>
@@ -160,6 +169,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Despawn / untracked (not a kill)");
         if (enemy.NetworkController != null)
             enemy.NetworkController.Despawned -= OnEnemyDespawned;
+        if (enemy.Health != null) enemy.Health.Died -= OnEnemyDied;
 
         enemy.Squad.RemoveMember(enemy.Controller);
         if (enemy.Squad.IsEmpty)
@@ -177,16 +187,20 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
     /// <summary>정책은 그대로 실행하며 관측용 요청 식별자만 생성 기록에 연결합니다.</summary>
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context)
+        => Execute(spawnInstruction, context, null);
+
+    public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
+        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure=null)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || spawnInstruction.Enemies == null ||
             spawnInstruction.Enemies.Count == 0)
-            return 0;
+            return Fail("Not server / empty composition",observeFailure);
 
         if (enemyList == null || _spawnPointList == null)
         {
             Debug.LogError("Spawner dependencies are not assigned.");
-            return 0;
+            return Fail("Enemy catalog / registry missing",observeFailure);
         }
 
         // 명령 하나가 분대 하나이므로 모든 구성원이 공유할 스폰 지점을 한 번만 찾는다.
@@ -195,12 +209,12 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 out SpawnPoint spawnPoint))
         {
             Debug.LogError($"SpawnPoint not found: {spawnInstruction.SpawnPointId}");
-            return 0;
+            return Fail("Spawn point missing at execution",observeFailure);
         }
 
         // 계획 이후 점령 상태가 바뀐 지점에서는 적을 생성하지 않는다.
         if (!spawnPoint.CanSpawnEnemies)
-            return 0;
+            return Fail("Spawn point disabled / captured after planning",observeFailure);
 
         // 생성 전에 모든 적 정의와 필수 컴포넌트를 확인해 일부 종류만 스폰되는 일을 막는다.
         List<EnemyDefinition> definitions = new(spawnInstruction.Enemies.Count);
@@ -210,7 +224,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 !enemyList.TryGetDefinition(entry.EnemyId, out EnemyDefinition enemy))
             {
                 Debug.LogError($"Invalid enemy spawn entry: {entry.EnemyId}");
-                return 0;
+                return Fail("Invalid catalog entry: "+entry.EnemyId,observeFailure);
             }
 
             if (enemy.Prefab == null ||
@@ -221,7 +235,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             {
                 Debug.LogError(
                     $"Enemy prefab requires NetworkObject, EnemyController, EnemyAIBrain, and EnemyNetworkController: {enemy.EnemyId}");
-                return 0;
+                return Fail("Enemy prefab missing required components: "+enemy.EnemyId,observeFailure);
             }
 
             definitions.Add(enemy);
@@ -251,6 +265,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 if (!squad.AddMember(controller))
                 {
                     Debug.LogError($"Failed to register enemy in squad: {enemy.EnemyId}");
+                    Fail("Failed to register squad member: "+enemy.EnemyId,observeFailure);
                     Destroy(spawnedMonster);
                     continue;
                 }
@@ -264,6 +279,12 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                     new TrackedEnemy(networkObject, controller, networkController, squad,
                         context, enemy.EnemyId, spawnInstruction.SpawnPointId);
                 networkController.Despawned += OnEnemyDespawned;
+                EnemyHealth health = spawnedMonster.GetComponent<EnemyHealth>();
+                if (health != null) health.Died += OnEnemyDied;
+                if (observeSpawn != null)
+                    try { observeSpawn(new SpawnDecisionSnapshot.Actual(spawnInstruction.SpawnPointId,enemy.EnemyId,
+                        networkObject.NetworkObjectId.ToString(),new BattlefieldPoint(networkObject.transform.position.x,networkObject.transform.position.y))); }
+                    catch (Exception exception) { Debug.LogException(exception,this); }
                 Observe(_spawnedEnemies[networkObject.NetworkObjectId], GameDiagnosticKind.EnemySpawned, "Network spawn succeeded");
                 spawnedCount++;
             }
@@ -289,5 +310,11 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         if (LifecycleObserved == null) return;
         foreach (Action<EnemyLifecycleObservation> observer in LifecycleObserved.GetInvocationList())
             try { observer(observation); } catch (Exception exception) { Debug.LogException(exception, this); }
+    }
+    private int Fail(string reason,Action<string> observer)
+    {
+        if(observer!=null)
+            try {observer(reason);}catch(Exception exception){Debug.LogException(exception,this);}
+        return 0;
     }
 }

@@ -11,6 +11,9 @@ namespace TeamHJD.Game.Editor
         public string ClockPolicy = "Game: scaled; Host/start wait: realtime; samples: realtime";
         public int RandomSeed;
         public bool HasSeed, IsPartial = true, IsComplete;
+        public bool HasDeathEvents;
+        public int DroppedSpawnDecisions;
+        public List<GameDebugSpawnDecision> SpawnDecisions = new List<GameDebugSpawnDecision>();
         public int DroppedEvents, DroppedSamples;
         public long LastSequence, RuntimeDroppedEvents;
         public List<GameDebugEventEntry> Events = new List<GameDebugEventEntry>();

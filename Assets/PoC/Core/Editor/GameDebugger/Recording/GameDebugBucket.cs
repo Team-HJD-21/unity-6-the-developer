@@ -6,6 +6,8 @@ namespace TeamHJD.Game.Editor
         public double Start, Width;
         public bool HasFullEventCoverage;
         public int Spawned, Removed, Planned, Executed, Failures, CumulativeSpawned;
+        public int Requests, Died;
+        public bool HasDeathEvents;
         public int Alive = -1, AvailablePower = -1;
         public double OperationalRatio = -1, Area = -1, FrontlineLength = -1;
     }

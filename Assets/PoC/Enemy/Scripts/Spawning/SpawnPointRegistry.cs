@@ -9,6 +9,7 @@ namespace TeamHJD.Game.Domain
     public class SpawnPointRegistry
     {
         private readonly List<SpawnPoint> spawnPoints = new();
+        public IReadOnlyList<SpawnPoint> GetRegisteredSpawnPoints() => spawnPoints.AsReadOnly();
 
         /// <summary>
         /// Executor의 자식 오브젝트에서 찾은 스폰 지점으로 등록 목록을 교체한다.

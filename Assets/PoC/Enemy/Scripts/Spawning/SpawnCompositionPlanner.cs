@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Contracts;
 
 /// <summary>
 /// 분대 프리셋의 비율과 스폰 지점, 선택적으로 Grid·전선을 이용해 생성 명령을 만든다.
@@ -14,6 +15,7 @@ public sealed class SpawnCompositionPlanner
     // 분대 프리셋과 상한은 임시값이며, 공간별 난이도·스폰율 조정은 후속 정책이다.
     private readonly EnemySquadPresetCatalog _catalog;
     private readonly SpawnPointSpatialPolicy _spatialPolicy = new SpawnPointSpatialPolicy();
+    public IReadOnlyList<SpawnDecisionSnapshot.Candidate> LastCandidates { get; private set; } = Array.Empty<SpawnDecisionSnapshot.Candidate>();
 
     /// <summary>
     /// 분대 프리셋을 조회할 카탈로그가 로드되었는지 반환한다.
@@ -87,6 +89,14 @@ public sealed class SpawnCompositionPlanner
         out IReadOnlyList<SpawnInstruction> instructions)
     {
         instructions = Array.Empty<SpawnInstruction>();
+        var observations = new List<SpawnDecisionSnapshot.Candidate>();
+        LastCandidates = observations.AsReadOnly();
+        if (spawnPoints != null)
+            foreach (SpawnPoint point in spawnPoints.GetRegisteredSpawnPoints())
+                if (point != null && (!point.CanSpawnEnemies || string.IsNullOrWhiteSpace(point.SpawnPointId)))
+                    observations.Add(new SpawnDecisionSnapshot.Candidate(point.SpawnPointId,
+                        new BattlefieldPoint(point.Position.x,point.Position.y),-1,-1,0,0,0,false,
+                        !point.isActiveAndEnabled ? "Inactive point" : !point.CanSpawnEnemies ? "Spawn disabled / captured" : "Missing ID"));
 
         if (spawnPoints == null ||
             string.IsNullOrWhiteSpace(spawnRequest.SquadOrder) ||
@@ -121,7 +131,8 @@ public sealed class SpawnCompositionPlanner
                 candidates.Add(new SpatialSpawnCandidate(
                     point.SpawnPointId,
                     new BattlefieldPoint(point.Position.x, point.Position.y)));
-            allocations = _spatialPolicy.Allocate(snapshot, candidates, totalSets, totalWeight);
+            allocations = _spatialPolicy.Allocate(snapshot, candidates, totalSets, totalWeight, out var evaluated);
+            observations.AddRange(evaluated);
         }
         else
         {
