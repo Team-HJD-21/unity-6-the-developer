@@ -34,6 +34,7 @@ namespace TeamHJD.Game.Bootstrap
 #if UNITY_EDITOR
         public event Action<BattlefieldSpatialSnapshot> BattlefieldSnapshotChanged;
         public BattlefieldSpatialSnapshot CurrentBattlefieldSnapshot => _currentMatch?.Battlefield;
+        public MatchConfig CurrentMatchConfig => _currentMatch?.Config;
 #endif
 
         public void Initialize(AppServices services)
