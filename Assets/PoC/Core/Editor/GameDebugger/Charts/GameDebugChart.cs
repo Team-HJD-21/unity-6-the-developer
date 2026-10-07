@@ -64,6 +64,10 @@ namespace TeamHJD.Game.Editor
                 case GameDebugMetric.Requests: value=item.Requests; break;
                 default: value=item.Died; break;
             }
+            // Client의 서버 미관측 구간은 0회 생성/사망으로 단정하지 않습니다.
+            bool needsServerObservation=metric==GameDebugMetric.Spawned || metric==GameDebugMetric.Removed ||
+                metric==GameDebugMetric.Died || metric==GameDebugMetric.CumulativeSpawned;
+            if(needsServerObservation && value==0 && item.IsServerObservationUnavailable)return -1;
             return value==0 && !item.HasFullEventCoverage ? -1 : value;
         }
         private IEnumerable<GameDebugMetric> Metrics()
@@ -75,15 +79,7 @@ namespace TeamHJD.Game.Editor
             if (_viewport.IsRemovalsVisible) yield return GameDebugMetric.Removed;
         }
         private static Color MetricColor(GameDebugMetric metric)
-        {
-            switch(metric)
-            {
-                case GameDebugMetric.Requests: return new Color(0.9f,0.69f,0.3f);
-                case GameDebugMetric.Died: return new Color(0.92f,0.39f,0.43f);
-                case GameDebugMetric.Removed: return new Color(0.65f,0.57f,0.84f);
-                default: return new Color(0.36f,0.77f,0.64f);
-            }
-        }
+            => GameDebugVisualStyle.Series(metric,EditorGUIUtility.isProSkin);
         private static string MetricName(GameDebugMetric metric) => metric==GameDebugMetric.Requests?"요청 횟수" :
             metric==GameDebugMetric.Spawned?"실제 생성" : metric==GameDebugMetric.Died?"실제 사망" :
             metric==GameDebugMetric.Removed?"제거 (Despawn)" : metric.ToString();
@@ -190,7 +186,8 @@ namespace TeamHJD.Game.Editor
         {
             if (data==null) return;
             Color color=MetricColor(metric);
-            if (reference) color=new Color(Mathf.Min(1,color.r+0.22f),Mathf.Min(1,color.g+0.12f),Mathf.Min(1,color.b+0.14f),0.8f);
+            if (reference && EditorGUIUtility.isProSkin)
+                color=new Color(Mathf.Min(1,color.r+0.22f),Mathf.Min(1,color.g+0.12f),Mathf.Min(1,color.b+0.14f),1);
             Handles.color=color;
             Vector3 previous=default; bool hasPrevious=false;
             foreach (var item in data)

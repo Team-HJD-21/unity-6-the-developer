@@ -21,6 +21,7 @@ namespace TeamHJD.Game.Editor
                 BattlefieldDebugSession.Display.IsCaptureMode = false;
                 BattlefieldDebugSession.NotifyDisplayChanged();
             }
+            if (BattlefieldDebugSession.Display.IsCaptureMode) BattlefieldDiagnosticPanels.DrawSceneNavigation();
             var snapshot = BattlefieldDebugSession.Snapshot;
             EditorGUILayout.LabelField("Revision / occupied",
                 $"{snapshot?.Revision ?? 0} / {BattlefieldDebugSession.Grid?.OccupiedCells.Count ?? 0}");

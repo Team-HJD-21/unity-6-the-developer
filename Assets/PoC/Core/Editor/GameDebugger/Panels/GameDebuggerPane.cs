@@ -132,13 +132,19 @@ namespace TeamHJD.Game.Editor
             row.Add(new Button(()=>GameDebugStatisticsWindow.Open(_state)){text="Open in window",tooltip="같은 기록·필터 설정으로 큰 통계 창을 엽니다. Match/수집기는 공유합니다."});
             if (_state.IsSpawnInspector)
             {
-                _spawnInspector=new GameDebugSpawnInspector(); _body.Add(_spawnInspector); return;
+                _spawnInspector=new GameDebugSpawnInspector(_state.SpawnView); _body.Add(_spawnInspector); return;
             }
             var settings=new Foldout{text="Chart settings / filters",value=_state.IsChartSettingsExpanded};
             settings.RegisterValueChangedCallback(evt=>_state.IsChartSettingsExpanded=evt.newValue);
             settings.AddToClassList("debug-section"); _body.Add(settings);
             var clock=new Toggle("Real clock"){value=_state.IsRealClock}; clock.RegisterValueChangedCallback(evt=>{_state.IsRealClock=evt.newValue;Refresh();}); settings.Add(clock);
-            var bin=new FloatField("Bin seconds"){value=_state.BinSeconds}; bin.RegisterValueChangedCallback(evt=>{if (float.IsNaN(evt.newValue)||float.IsInfinity(evt.newValue)) return; _state.BinSeconds=Mathf.Clamp(evt.newValue,0.1f,3600);Refresh();}); settings.Add(bin);
+            var bin=new FloatField("Bin seconds"){value=_state.BinSeconds};
+            bin.RegisterValueChangedCallback(evt=> {
+                _state.BinSeconds = float.IsNaN(evt.newValue) || float.IsInfinity(evt.newValue)
+                    ? _state.BinSeconds : Mathf.Clamp(evt.newValue,0.1f,3600);
+                bin.SetValueWithoutNotify(_state.BinSeconds);
+                Refresh();
+            }); settings.Add(bin);
             var traffic=new Toggle("Requests / Spawned / Died together"){value=_state.ChartViewport.IsTrafficView};
             var metric=new EnumField("Single metric",_state.Metric); metric.SetEnabled(!traffic.value);
             traffic.RegisterValueChangedCallback(evt=>{_state.ChartViewport.IsTrafficView=evt.newValue; metric.SetEnabled(!evt.newValue);Refresh();}); settings.Add(traffic);

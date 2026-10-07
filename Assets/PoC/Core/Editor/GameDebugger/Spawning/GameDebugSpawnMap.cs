@@ -11,27 +11,41 @@ namespace TeamHJD.Game.Editor
         private GameDebugSpawnDecision _decision;
         private string _selectedPoint="";
         private string _monsterFilter="All";
-        private float _zoom=1;
-        private Vector2 _pan,_drag;
+        private readonly GameDebugSpawnViewState _view;
+        private Vector2 _dragStart, _drag, _panStart;
+        private int _pointerId=-1;
         private bool _dragging;
         public event Action<string> PointSelected;
         public event Action<string> ActualSelected;
-        public GameDebugSpawnMap()
+        public GameDebugSpawnMap() : this(new GameDebugSpawnViewState()) { }
+        public GameDebugSpawnMap(GameDebugSpawnViewState view)
         {
+            _view=view ?? throw new ArgumentNullException(nameof(view));
+            _view.Validate();
+            name="spawn-map";
             style.height=320;style.minHeight=220;style.overflow=Overflow.Hidden;
             style.backgroundColor=EditorGUIUtility.isProSkin?new Color(.13f,.13f,.13f):new Color(.85f,.85f,.85f);
             var xAxis=new Label("X"){pickingMode=PickingMode.Ignore};xAxis.style.position=Position.Absolute;xAxis.style.left=58;xAxis.style.bottom=8;Add(xAxis);
             var yAxis=new Label("Y"){pickingMode=PickingMode.Ignore};yAxis.style.position=Position.Absolute;yAxis.style.left=5;yAxis.style.bottom=62;Add(yAxis);
             generateVisualContent+=Draw;
-            RegisterCallback<WheelEvent>(e=>{_zoom=Mathf.Clamp(_zoom*Mathf.Pow(1.1f,-e.delta.y),.5f,8);MarkDirtyRepaint();e.StopPropagation();});
+            RegisterCallback<WheelEvent>(e=>{_view.Zoom=Mathf.Clamp(_view.Zoom*Mathf.Pow(1.1f,-e.delta.y),.5f,8);MarkDirtyRepaint();e.StopPropagation();});
             RegisterCallback<PointerDownEvent>(e=>{
-                if(e.button!=0)return;_drag=e.localPosition;_dragging=true;this.CapturePointer(e.pointerId);
+                if(e.button!=0 && e.button!=2)return;
+                _dragStart=_drag=e.localPosition;_panStart=_view.Pan;
+                _dragging=true;_pointerId=e.pointerId;this.CapturePointer(e.pointerId);
+                e.StopPropagation();
             });
             RegisterCallback<PointerMoveEvent>(e=>{
-                if(!_dragging)return;var p=(Vector2)e.localPosition;_pan+=p-_drag;_drag=p;MarkDirtyRepaint();
+                if(!_dragging || e.pointerId!=_pointerId)return;
+                var p=(Vector2)e.localPosition;_view.Pan+=p-_drag;_drag=p;MarkDirtyRepaint();e.StopPropagation();
             });
             RegisterCallback<PointerUpEvent>(e=>{
-                if(!_dragging)return;_dragging=false;this.ReleasePointer(e.pointerId);
+                if(!_dragging || e.pointerId!=_pointerId)return;
+                _dragging=false;_pointerId=-1;this.ReleasePointer(e.pointerId);e.StopPropagation();
+                // 작은 손 떨림은 클릭으로 처리하되 지도 이동을 요청 선택으로 오인하지 않습니다.
+                if (!IsClickGesture(_dragStart,e.localPosition) || e.button!=0) return;
+                _view.Pan=_panStart;
+                MarkDirtyRepaint();
                 if(_decision==null)return;
                 foreach(var actual in _decision.Actuals)
                     if((_monsterFilter=="All"||actual.Enemy==_monsterFilter)&&Vector2.Distance(Project(actual.X,actual.Y),e.localPosition)<4)
@@ -43,6 +57,7 @@ namespace TeamHJD.Game.Editor
                 }
                 if(best!=null)PointSelected?.Invoke(best.Id);
             });
+            RegisterCallback<PointerCaptureOutEvent>(_=>{_dragging=false;_pointerId=-1;});
             RegisterCallback<MouseMoveEvent>(e=>{
                 tooltip="XY · 휠: 확대/축소 · 드래그: 이동 · 지점: 상세 선택";
                 if(_decision==null)return;
@@ -56,13 +71,14 @@ namespace TeamHJD.Game.Editor
         }
         public void SetData(GameDebugSpawnDecision decision,string selectedPoint)
         {_decision=decision;_selectedPoint=selectedPoint??"";MarkDirtyRepaint();}
-        public void FrameAll(){_zoom=1;_pan=Vector2.zero;MarkDirtyRepaint();}
+        public void FrameAll(){_view.Zoom=1;_view.Pan=Vector2.zero;MarkDirtyRepaint();}
+        public static bool IsClickGesture(Vector2 start,Vector2 end) => (end-start).sqrMagnitude<=16;
         public void SetMonsterFilter(string enemy){_monsterFilter=enemy??"All";MarkDirtyRepaint();}
         private Vector2 Project(double x,double y)
         {
             var g=_decision.Grid;
-            float scale=Math.Min(Math.Max(1,contentRect.width-40)/(float)g.Width,Math.Max(1,contentRect.height-40)/(float)g.Height)*_zoom;
-            return new Vector2(contentRect.width*.5f+(float)(x-g.CenterX)*scale,contentRect.height*.5f-(float)(y-g.CenterY)*scale)+_pan;
+            float scale=Math.Min(Math.Max(1,contentRect.width-40)/(float)g.Width,Math.Max(1,contentRect.height-40)/(float)g.Height)*_view.Zoom;
+            return new Vector2(contentRect.width*.5f+(float)(x-g.CenterX)*scale,contentRect.height*.5f-(float)(y-g.CenterY)*scale)+_view.Pan;
         }
         private static void Line(Painter2D p,Vector2 a,Vector2 b,Color color,float width=1)
         {p.strokeColor=color;p.lineWidth=width;p.BeginPath();p.MoveTo(a);p.LineTo(b);p.Stroke();}
@@ -86,16 +102,22 @@ namespace TeamHJD.Game.Editor
                 Line(p,Project(minX+x*g.Width/g.CellsX,minY),Project(minX+x*g.Width/g.CellsX,minY+g.Height),grid);
             for(int y=0;y<=g.CellsY;y+=strideY)
                 Line(p,Project(minX,minY+y*g.Height/g.CellsY),Project(minX+g.Width,minY+y*g.Height/g.CellsY),grid);
-            foreach(var e in _decision.Frontline)Line(p,Project(e.X1,e.Y1),Project(e.X2,e.Y2),new Color(.85f,.7f,.3f),2);
+            foreach(var e in _decision.Frontline)Line(p,Project(e.X1,e.Y1),Project(e.X2,e.Y2),GameDebugVisualStyle.Frontline,2);
             foreach(var c in _decision.Candidates)
             {
                 var at=Project(c.X,c.Y);
                 bool selected=c.Id==_selectedPoint;
-                if(selected)Dot(p,at,8,new Color(.95f,.95f,.95f));
-                Dot(p,at,selected?5:4,c.Sets>0?new Color(.3f,.6f,.85f):new Color(.8f,.38f,.28f));
+                if(selected)Dot(p,at,8,GameDebugVisualStyle.Selection);
+                // 미배정에는 적합 후보의 예산 소진도 포함됩니다. 전부 '제외' 빨강으로 표시하지 않습니다.
+                Dot(p,at,selected?5:4,c.Sets>0?GameDebugVisualStyle.AllocatedPoint:GameDebugVisualStyle.UnallocatedPoint);
             }
             foreach(var a in _decision.Actuals)
-                if(_monsterFilter=="All"||a.Enemy==_monsterFilter)Dot(p,Project(a.X,a.Y),2,new Color(.45f,.8f,.45f));
+                if(_monsterFilter=="All"||a.Enemy==_monsterFilter)
+                {
+                    var point=Project(a.X,a.Y);
+                    if(a.Entity==_view.SelectedEntity)Dot(p,point,6,GameDebugVisualStyle.Selection);
+                    Dot(p,point,2,GameDebugVisualStyle.Series(GameDebugMetric.Spawned,EditorGUIUtility.isProSkin));
+                }
             Line(p,new Vector2(12,contentRect.height-18),new Vector2(55,contentRect.height-18),Color.gray);
             Line(p,new Vector2(12,contentRect.height-18),new Vector2(12,contentRect.height-60),Color.gray);
         }

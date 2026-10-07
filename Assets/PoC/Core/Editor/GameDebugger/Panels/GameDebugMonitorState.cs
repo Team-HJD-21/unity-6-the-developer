@@ -6,6 +6,8 @@ namespace TeamHJD.Game.Editor
     [Serializable]
     public sealed class GameDebugMonitorState
     {
+        [NonSerialized] private GameDebugListCache _lists;
+        public GameDebugListCache Lists => _lists ??= new GameDebugListCache();
         public Vector2 TurretScroll, RequestScroll, TimelineScroll;
         public long SelectedRequestSequence=-1, SelectedEventSequence=-1;
         public bool IsConnectionsExpanded=true, IsNotesExpanded, IsRequestDetailsExpanded=true, IsEventDetailsExpanded=true;

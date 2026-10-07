@@ -11,6 +11,7 @@ namespace TeamHJD.Game.Editor
     public sealed class GameDebugSpawnInspector : VisualElement
     {
         private GameDebugRun _run;
+        private readonly GameDebugSpawnViewState _view;
         private GameDebugSpawnDecision _decision;
         private readonly DropdownField _requests;
         private readonly Toggle _follow;
@@ -20,37 +21,48 @@ namespace TeamHJD.Game.Editor
         private readonly GameDebugSpawnMap _map;
         private readonly VisualElement _candidates,_plans,_actuals;
         private readonly Button _selectScene;
-        private string _selectedPoint="";
-        private string _selectedEntity="";
+        private string _selectedPoint { get => _view.SelectedPoint; set => _view.SelectedPoint=value; }
+        private string _selectedEntity { get => _view.SelectedEntity; set => _view.SelectedEntity=value; }
         private readonly List<GameDebugSpawnDecision> _choices=new List<GameDebugSpawnDecision>();
         private int _previousCount=-1;
         private long _lastSequence=-1;
-        public GameDebugSpawnInspector()
+        public GameDebugSpawnInspector() : this(new GameDebugSpawnViewState()) { }
+        public GameDebugSpawnInspector(GameDebugSpawnViewState view)
         {
+            _view=view ?? throw new ArgumentNullException(nameof(view));
+            _view.Validate();
             name="spawn-inspector";
             AddToClassList("spawn-inspector");
             var bar=new VisualElement();bar.style.flexDirection=FlexDirection.Row;bar.style.flexWrap=Wrap.Wrap;
             _requests=new DropdownField("Request",new List<string>{"No snapshots"},0);_requests.style.flexGrow=1;_requests.style.minWidth=240;
             _requests.RegisterValueChangedCallback(e=>{
                 int index=_requests.choices.IndexOf(e.newValue);
-                if(index>=0&&index<_choices.Count){_follow.SetValueWithoutNotify(false);Show(_choices[index]);}
+                if(index>=0&&index<_choices.Count && _choices[index]!=null){_view.IsFollowingLatest=false;_follow.SetValueWithoutNotify(false);Show(_choices[index]);}
             });
-            _follow=new Toggle("Follow latest"){value=true};_follow.RegisterValueChangedCallback(_=>RefreshChoices(true));
+            _follow=new Toggle("Follow latest"){value=_view.IsFollowingLatest};
+            _follow.RegisterValueChangedCallback(evt=>{_view.IsFollowingLatest=evt.newValue;RefreshChoices();});
             bar.Add(_requests);bar.Add(_follow);Add(bar);
             _monsterFilter=new DropdownField("Monster",new List<string>{"All"},0);
-            _monsterFilter.RegisterValueChangedCallback(_=>{BuildResults();_map.SetMonsterFilter(_monsterFilter.value);});Add(_monsterFilter);
+            _monsterFilter.RegisterValueChangedCallback(evt=>{
+                _view.MonsterFilter=evt.newValue;
+                if(_decision?.Actuals.FirstOrDefault(a=>a.Entity==_selectedEntity) is GameDebugSpawnDecision.Actual selected &&
+                    evt.newValue!="All" && selected.Enemy!=evt.newValue)_selectedEntity="";
+                BuildResults();_map.SetMonsterFilter(evt.newValue);UpdateSelection();
+            });Add(_monsterFilter);
             _summary=new Label();_summary.style.whiteSpace=WhiteSpace.Normal;_summary.style.unityFontStyleAndWeight=FontStyle.Bold;_summary.style.marginTop=8;Add(_summary);
             _warning=new Label();_warning.style.whiteSpace=WhiteSpace.Normal;_warning.style.marginBottom=8;Add(_warning);
             var geometry=new Foldout{text="Decision snapshot · XY",value=true};geometry.AddToClassList("debug-section");
             var tools=new VisualElement();tools.style.flexDirection=FlexDirection.Row;
             tools.Add(new Button(()=>_map.FrameAll()){text="Frame snapshot"});
             _selectScene=new Button(SelectScene){text="Select point in Scene"};tools.Add(_selectScene);geometry.Add(tools);
-            geometry.Add(new Label("Gold: frontline · Blue: allocated point · Red: excluded/unallocated · Green: actual spawn"));
-            _map=new GameDebugSpawnMap();_map.PointSelected+=SelectPoint;_map.ActualSelected+=SelectActual;geometry.Add(_map);
+            tools.Add(new Button(()=>{if(_decision!=null)EditorGUIUtility.systemCopyBuffer=UnityEngine.JsonUtility.ToJson(_decision,true);}){text="Copy request evidence"});
+            geometry.Add(new Label("Orange: frontline · Blue: allocated point · Gray: unallocated (see reason) · Green: actual spawn"){style={whiteSpace=WhiteSpace.Normal}});
+            _map=new GameDebugSpawnMap(_view);_map.PointSelected+=SelectPoint;_map.ActualSelected+=SelectActual;geometry.Add(_map);
             var bounds=new Label();bounds.name="snapshot-bounds";bounds.style.whiteSpace=WhiteSpace.Normal;geometry.Add(bounds);
             _selection=new Label();_selection.style.whiteSpace=WhiteSpace.Normal;_selection.style.marginTop=8;geometry.Add(_selection);Add(geometry);
             var candidates=new Foldout{text="Candidates · eligibility and allocation",value=true};candidates.AddToClassList("debug-section");
-            _filter=new TextField("Search point / reason");_filter.RegisterValueChangedCallback(_=>BuildCandidates());candidates.Add(_filter);
+            _filter=new TextField("Search point / reason"){value=_view.Search};
+            _filter.RegisterValueChangedCallback(evt=>{_view.Search=evt.newValue;BuildCandidates();});candidates.Add(_filter);
             _candidates=new VisualElement();candidates.Add(_candidates);Add(candidates);
             var plans=new Foldout{text="Planned composition · actual result",value=true};plans.AddToClassList("debug-section");
             _plans=new VisualElement{name="spawn-composition"};plans.Add(_plans);Add(plans);
@@ -62,9 +74,15 @@ namespace TeamHJD.Game.Editor
         {
             bool changed=!ReferenceEquals(_run,run);
             _run=run;
+            if (run!=null && _view.MatchId!=run.MatchId)
+            {
+                _view.MatchId=run.MatchId;
+                _view.SelectedRequestId=-1;
+                _selectedPoint=_selectedEntity="";
+            }
             int count=run?.SpawnDecisions?.Count??0;
             long sequence=count>0?run.SpawnDecisions[count-1].Sequence:-1;
-            if(changed||count!=_previousCount||sequence!=_lastSequence)RefreshChoices(changed);
+            if(changed||count!=_previousCount||sequence!=_lastSequence)RefreshChoices();
             _previousCount=count;_lastSequence=sequence;
             _selectScene.SetEnabled(CanSelectScene());
         }
@@ -72,40 +90,59 @@ namespace TeamHJD.Game.Editor
         {
             var decision=_run?.SpawnDecisions?.FirstOrDefault(d=>d.RequestId==requestId);
             if(decision==null)return false;
+            _view.IsFollowingLatest=false;
             _follow.SetValueWithoutNotify(false);
             Show(decision);
-            int index=_choices.FindIndex(d=>d.RequestId==requestId);
+            int index=_choices.FindIndex(d=>d!=null && d.RequestId==requestId);
             if(index>=0)_requests.SetValueWithoutNotify(_requests.choices[index]);
             return true;
         }
-        private void RefreshChoices(bool force)
+        private void RefreshChoices()
         {
-            long selected=_decision?.RequestId??-1;
+            long selected=_view.SelectedRequestId;
             _choices.Clear();
             if(_run?.SpawnDecisions!=null)_choices.AddRange(_run.SpawnDecisions.AsEnumerable().Reverse());
             _requests.choices=_choices.Select(d=>$"#{d.RequestId} · {d.GameSeconds:F1}s · {d.Source} · {d.Preset} · {d.Planned} → {d.Spawned} · r{d.Revision}").ToList();
             if(_choices.Count==0) {
                 _requests.choices=new List<string>{"No captured decision snapshots"};_requests.SetValueWithoutNotify(_requests.choices[0]);Show(null);return;
             }
-            int index=_follow.value||force?0:Math.Max(0,_choices.FindIndex(d=>d.RequestId==selected));
+            int index=_view.IsFollowingLatest||selected<0 ? 0 : _choices.FindIndex(d=>d.RequestId==selected);
+            if(index<0)
+            {
+                // 고정한 자료가 보존 상한으로 사라져도 다른 요청으로 조용히 바꾸지 않습니다.
+                _choices.Insert(0,null);
+                _requests.choices.Insert(0,$"#{selected} · snapshot no longer retained");
+                _requests.SetValueWithoutNotify(_requests.choices[0]);Show(null);return;
+            }
             _requests.SetValueWithoutNotify(_requests.choices[index]);Show(_choices[index]);
         }
         private void Show(GameDebugSpawnDecision decision)
         {
+            bool newSelection=decision!=null && _view.SelectedRequestId!=decision.RequestId;
             _decision=decision;
-            _selectedEntity="";
-            _selectedPoint=decision?.Candidates.FirstOrDefault(c=>c.Sets>0)?.Id??"";
-            _summary.text=decision==null?"No spawn decision captured":$"Request #{decision.RequestId}  ·  planned {decision.Planned}  /  spawned {decision.Spawned}  ·  {decision.Outcome}";
-            _warning.text=decision==null?"이전 기록 또는 계획 전 거부 요청은 공간 판단 자료를 포함하지 않습니다. 이후 요청부터 기록됩니다.":
+            if(decision!=null)
+            {
+                _view.SelectedRequestId=decision.RequestId;
+                if(newSelection || !decision.Candidates.Any(c=>c.Id==_selectedPoint))
+                {
+                    _selectedEntity="";
+                    _selectedPoint=decision.Candidates.FirstOrDefault(c=>c.Sets>0)?.Id??"";
+                }
+            }
+            _summary.text=decision==null?"No retained decision snapshot":$"Request #{decision.RequestId}  ·  planned {decision.Planned}  /  spawned {decision.Spawned}  ·  {decision.Outcome}";
+            _warning.text=decision==null?(_view.SelectedRequestId>=0 && !_view.IsFollowingLatest
+                ? $"선택 요청 #{_view.SelectedRequestId}의 상세가 현재 보존 목록에 없습니다. 다른 요청을 선택하거나 Follow latest를 켜세요."
+                : "이전 기록 또는 계획 전 거부 요청은 공간 판단 자료를 포함하지 않습니다. 이후 요청부터 기록됩니다."):
                 decision.Policy+(_run.DroppedSpawnDecisions>0?$"\n오래된 요청 {_run.DroppedSpawnDecisions}개는 보존 상한으로 제거되었습니다.":"")+
                 (decision.DroppedItems>0?$"\n이 요청의 상세 항목 {decision.DroppedItems}개가 관측 상한으로 생략되었습니다.":"");
             var g=decision?.Grid;
             this.Q<Label>("snapshot-bounds").text=g==null?"":$"X [{g.CenterX-g.Width*.5:F1}, {g.CenterX+g.Width*.5:F1}]  /  Y [{g.CenterY-g.Height*.5:F1}, {g.CenterY+g.Height*.5:F1}]  ·  Grid {g.CellsX} × {g.CellsY}";
             _map.SetData(decision,_selectedPoint);
-            string monster=_monsterFilter.value;
+            string monster=_view.MonsterFilter;
             _monsterFilter.choices=new List<string>{"All"};
             if(decision!=null)_monsterFilter.choices.AddRange(decision.Plans.Select(p=>p.Enemy).Distinct().OrderBy(v=>v));
             _monsterFilter.SetValueWithoutNotify(_monsterFilter.choices.Contains(monster)?monster:"All");
+            if(decision!=null)_view.MonsterFilter=_monsterFilter.value;
             _map.SetMonsterFilter(_monsterFilter.value);
             BuildCandidates();BuildResults();UpdateSelection();
         }
@@ -139,8 +176,8 @@ namespace TeamHJD.Game.Editor
             var actual=_decision.Actuals.FirstOrDefault(a=>a.Entity==entity);
             if(actual==null)return;
             SelectPoint(actual.Point);_selectedEntity=entity;
-            _selection.text+=$"\nObject {actual.Entity} · {actual.Enemy} · spawned XY ({actual.X:F2}, {actual.Y:F2})";
-            _selectScene.text="Select object in Scene";
+            UpdateSelection();
+            _map.MarkDirtyRepaint();
         }
         private void UpdateSelection()
         {
@@ -149,6 +186,12 @@ namespace TeamHJD.Game.Editor
                 (c.HasFrontline?$" · frontline distance {c.Distance:F2}":" · no frontline distance criterion");
             _selectScene.SetEnabled(CanSelectScene());
             _selectScene.text="Select point in Scene";
+            var actual=_decision?.Actuals.FirstOrDefault(a=>a.Entity==_selectedEntity);
+            if(actual!=null)
+            {
+                _selection.text+=$"\nObject {actual.Entity} · {actual.Enemy} · spawned XY ({actual.X:F2}, {actual.Y:F2})";
+                _selectScene.text="Select object in Scene";
+            }
         }
         private bool CanSelectScene()=>_decision!=null&&_selectedPoint.Length>0&&ReferenceEquals(_run,GameDebuggerSession.Current)&&
             _run.MatchId==_decision.MatchId;

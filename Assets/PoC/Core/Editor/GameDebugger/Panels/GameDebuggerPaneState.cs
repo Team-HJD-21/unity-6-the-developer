@@ -18,6 +18,7 @@ namespace TeamHJD.Game.Editor
         public bool IsSpawnInspector;
         public bool IsChartSettingsExpanded, IsChartNotesExpanded;
         public GameDebugMonitorState Monitor=new GameDebugMonitorState();
+        public GameDebugSpawnViewState SpawnView=new GameDebugSpawnViewState();
         public Vector2[] ScrollOffsets=new Vector2[6];
         public BattlefieldDebugPanel BattlefieldPanel=new BattlefieldDebugPanel();
 
@@ -36,6 +37,8 @@ namespace TeamHJD.Game.Editor
             ChartViewport=ChartViewport ?? new GameDebugChartViewport();
             ChartViewport.Validate();
             Monitor=Monitor ?? new GameDebugMonitorState();
+            SpawnView ??= new GameDebugSpawnViewState();
+            SpawnView.Validate();
         }
     }
 }

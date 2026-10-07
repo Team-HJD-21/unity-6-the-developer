@@ -27,6 +27,7 @@ namespace TeamHJD.Game.Editor
         [SerializeField] private string _encounterSquadOrder = "Normal";
         [SerializeField] private int _encounterMaxEnemyCount = 10;
         [SerializeField] private bool _showLayers=true, _showCell, _showAuthored, _showRuntime, _showSetup, _showNotes, _showLastCommand;
+        [SerializeField] private Vector2 _cellContentsScroll;
         private string _encounterStatus;
         private bool _encounterRequestSucceeded;
         [NonSerialized] private bool _isAttached;
@@ -67,7 +68,7 @@ namespace TeamHJD.Game.Editor
                 _showLayers=EditorGUILayout.Foldout(_showLayers,"Scene 표시 / 레이어",true);
                 if (_showLayers) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox)) BattlefieldDiagnosticPanels.DrawDisplayControls();
                 _showCell=EditorGUILayout.Foldout(_showCell,"선택 셀 / 범위 초과 개체",true);
-                if (_showCell) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox)) BattlefieldDiagnosticPanels.DrawCellDetails();
+                if (_showCell) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox)) BattlefieldDiagnosticPanels.DrawCellDetails(ref _cellContentsScroll);
                 if (!BattlefieldDebugSession.Display.IsCaptureMode)
                 {
                     _showAuthored=EditorGUILayout.Foldout(_showAuthored,"공용 Grid 기본값 / 에셋",true);

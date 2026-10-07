@@ -63,8 +63,7 @@ namespace TeamHJD.Game.Editor
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox,GUILayout.MinWidth(72),GUILayout.ExpandWidth(true)))
             {
                 GUILayout.Label(new GUIContent(title,help),EditorStyles.miniLabel);
-                var number=new GUIStyle(EditorStyles.boldLabel){fontSize=17};
-                GUILayout.Label(new GUIContent(value,help),number,GUILayout.Height(24));
+                GUILayout.Label(new GUIContent(value,help),GameDebugVisualStyle.Number,GUILayout.Height(24));
             }
         }
         public static void DrawTurrets(GameDebugMonitorState view)
@@ -73,9 +72,9 @@ namespace TeamHJD.Game.Editor
             {
                 EditorGUILayout.LabelField("터렛 · 현재 Scene",EditorStyles.boldLabel);
                 if (!EditorApplication.isPlaying) { EditorGUILayout.LabelField("배치 Preview는 Battlefield에서 조회합니다.",EditorStyles.miniLabel); return; }
+                view.TurretScroll=EditorGUILayout.BeginScrollView(view.TurretScroll,GUILayout.Height(160));
                 using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
                 { Cell("ID",54); Cell("정의 / HP",120); Cell("전력",48); Cell("상태",100); Cell("XY",90); }
-                view.TurretScroll=EditorGUILayout.BeginScrollView(view.TurretScroll,GUILayout.Height(160));
                 foreach (var turret in GameDebuggerSession.GetSceneTurrets())
                 {
                     using (new EditorGUILayout.HorizontalScope())
@@ -99,12 +98,11 @@ namespace TeamHJD.Game.Editor
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("Encounter 요청 결과",EditorStyles.boldLabel);
-                var entries=run?.Events.Where(e=>e.Kind==GameDiagnosticKind.RequestCompleted || e.Kind==GameDiagnosticKind.RequestFailed).Reverse().Take(200).ToArray()
-                    ?? Array.Empty<GameDebugEventEntry>();
-                if (entries.Length==0) { EditorGUILayout.LabelField("아직 요청 결과가 없습니다.",EditorStyles.miniLabel); return; }
+                var entries=view.Lists.Requests(run);
+                if (entries.Count==0) { EditorGUILayout.LabelField("아직 요청 결과가 없습니다.",EditorStyles.miniLabel); return; }
+                view.RequestScroll=EditorGUILayout.BeginScrollView(view.RequestScroll,GUILayout.Height(190));
                 using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
                 { Cell("시간",54); Cell("요청",58); Cell("Source",105); Cell("Preset",80); Cell("계획",40); Cell("생성",40); Cell("결과",60); }
-                view.RequestScroll=EditorGUILayout.BeginScrollView(view.RequestScroll,GUILayout.Height(190));
                 foreach (var item in entries) using (new EditorGUILayout.HorizontalScope(
                     item.Sequence==view.SelectedRequestSequence?EditorStyles.helpBox:GUIStyle.none))
                 {
@@ -146,21 +144,16 @@ namespace TeamHJD.Game.Editor
                 if (!string.IsNullOrEmpty(GameDebuggerSession.LastPauseReason)) EditorGUILayout.HelpBox(GameDebuggerSession.LastPauseReason,MessageType.Warning);
             }
             if (run==null) return;
-            var entries=run.Events.Select(item=>(time:item.GameSeconds,eventItem:item,marker:(GameDebugMarker)null))
-                .Concat(run.Markers.Select(marker=>(time:marker.GameSeconds,eventItem:(GameDebugEventEntry)null,marker:marker)))
-                .Where(row=>string.IsNullOrEmpty(search) ||
-                    (row.eventItem==null ? row.marker.Message ?? "" : row.eventItem.Source+" "+row.eventItem.Kind+" "+row.eventItem.EnemyType+" "+row.eventItem.Message)
-                    .IndexOf(search,StringComparison.OrdinalIgnoreCase)>=0)
-                .OrderByDescending(row=>row.time).Take(300).ToArray();
+            var entries=view.Lists.Timeline(run,search);
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
+                view.TimelineScroll=EditorGUILayout.BeginScrollView(view.TimelineScroll,GUILayout.Height(240));
                 using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
                 { Cell("시간",62); Cell("이벤트",145); Cell("요청",65); Cell("Source",105); Cell("개체 / 지점",170); }
-                view.TimelineScroll=EditorGUILayout.BeginScrollView(view.TimelineScroll,GUILayout.Height(240));
                 foreach (var row in entries) using (new EditorGUILayout.HorizontalScope())
                 {
-                    Cell(row.time.ToString("F2")+"s",62);
-                    var item=row.eventItem;
+                    Cell(row.Time.ToString("F2")+"s",62);
+                    var item=row.Event;
                     if (item!=null)
                     {
                         if (GUILayout.Button(item.Kind.ToString(),EditorStyles.miniButton,GUILayout.Width(145))) view.SelectedEventSequence=item.Sequence;
@@ -168,7 +161,7 @@ namespace TeamHJD.Game.Editor
                     }
                     else
                     {
-                        var marker=row.marker;
+                        var marker=row.Marker;
                         Cell("Editor marker",145); Cell("—",65); Cell("Editor",105); Cell(marker.Message,170);
                         if (live && marker.TurretId>0 && GUILayout.Button("Frame",GUILayout.Width(50)) &&
                             TurretInstanceRegistry.TryGet(marker.TurretId,out var turret))

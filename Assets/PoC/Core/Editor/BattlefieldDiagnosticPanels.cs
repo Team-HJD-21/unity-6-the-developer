@@ -30,6 +30,24 @@ namespace TeamHJD.Game.Editor
             if (GUILayout.Button("Grid")) BattlefieldDebugSession.ApplyPreset("Grid");
             if (GUILayout.Button("Capture")) BattlefieldDebugSession.ApplyPreset("Capture");
             EditorGUILayout.EndHorizontal();
+            DrawSceneNavigation();
+        }
+
+        public static void DrawSceneNavigation()
+        {
+            BattlefieldGridConfiguration grid = BattlefieldDebugSession.Configuration;
+            using (new EditorGUI.DisabledGroupScope(grid == null))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button(new GUIContent("Frame Grid", "Scene 카메라만 이동합니다. 게임 객체/설정은 바꾸지 않습니다.")))
+                    GameDebugSceneNavigation.Frame(GameDebugSceneNavigation.GridBounds(grid));
+                using (new EditorGUI.DisabledGroupScope(grid == null ||
+                    !GameDebugSceneNavigation.TryGetCellBounds(grid, BattlefieldDebugSession.SelectedCellId, out _)))
+                    if (GUILayout.Button("Frame Cell") && GameDebugSceneNavigation.TryGetCellBounds(
+                        grid, BattlefieldDebugSession.SelectedCellId, out Bounds bounds)) GameDebugSceneNavigation.Frame(bounds);
+                if (GUILayout.Button(new GUIContent("Copy context", "Scene/Match/revision/Grid 설정을 버그 보고용으로 복사합니다.")))
+                    EditorGUIUtility.systemCopyBuffer = BattlefieldDebugSession.CreateCaptureMetadata();
+            }
         }
 
         public static void DrawOverview()
@@ -48,6 +66,12 @@ namespace TeamHJD.Game.Editor
         }
 
         public static void DrawCellDetails()
+        {
+            Vector2 scroll = Vector2.zero;
+            DrawCellDetails(ref scroll);
+        }
+
+        public static void DrawCellDetails(ref Vector2 scroll)
         {
             BattlefieldGridSnapshot grid = BattlefieldDebugSession.Grid;
             if (grid == null)
@@ -68,30 +92,43 @@ namespace TeamHJD.Game.Editor
                 EditorGUILayout.LabelField("Index X/Y", $"{cell.X} / {cell.Y}");
                 EditorGUILayout.LabelField("Bounds X", $"{minX:F2} .. {minX + configuration.CellWidth:F2}");
                 EditorGUILayout.LabelField("Bounds Y", $"{minY:F2} .. {minY + configuration.CellHeight:F2}");
-                DrawIds("Turret", cell.TurretIds);
-                DrawIds("Player", cell.PlayerIds);
-                DrawIds("Enemy", cell.EnemyIds);
                 if (!EditorApplication.isPlaying)
                     EditorGUILayout.HelpBox("PREVIEW: 정적 터렛 배치만 집계합니다. Player/Enemy는 LIVE 입력에서 조회됩니다.", MessageType.None);
             }
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Out of Bounds IDs", EditorStyles.boldLabel);
-            DrawIds("Turret OOB", grid.OutOfBoundsTurretIds);
-            DrawIds("Player OOB", grid.OutOfBoundsPlayerIds);
-            DrawIds("Enemy OOB", grid.OutOfBoundsEnemyIds);
+            using (var list = new EditorGUILayout.ScrollViewScope(scroll, GUILayout.Height(230)))
+            {
+                scroll = list.scrollPosition;
+                if (selected >= 0 && selected < grid.Cells.Count)
+                {
+                    BattlefieldGridCellSnapshot cell = grid.Cells[selected];
+                    DrawIds("Turret", cell.TurretIds);
+                    DrawIds("Player", cell.PlayerIds);
+                    DrawIds("Enemy", cell.EnemyIds);
+                }
+                DrawIds("Turret OOB", grid.OutOfBoundsTurretIds);
+                DrawIds("Player OOB", grid.OutOfBoundsPlayerIds);
+                DrawIds("Enemy OOB", grid.OutOfBoundsEnemyIds);
+            }
+            if (GUILayout.Button("Copy cell / OOB evidence"))
+            {
+                EditorGUIUtility.systemCopyBuffer = BattlefieldDebugSession.CreateCaptureMetadata() +
+                    "\n" + GameDebugSceneNavigation.CellEvidence(grid,selected);
+            }
         }
 
         private static void DrawIds(string label, IReadOnlyList<EntityId> ids)
         {
-            var text = new System.Text.StringBuilder();
-            int count = Mathf.Min(ids.Count, 32);
-            for (int index = 0; index < count; index++)
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                if (index > 0) text.Append(", ");
-                text.Append(ids[index]);
+                EditorGUILayout.LabelField($"{label} ({ids.Count})", EditorStyles.boldLabel);
+                int count = Mathf.Min(ids.Count, 128);
+                for (int index = 0; index < count; index++)
+                    EditorGUILayout.SelectableLabel(ids[index].Value, EditorStyles.label,
+                        GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                if (ids.Count == 0) EditorGUILayout.LabelField("없음", EditorStyles.miniLabel);
+                if (ids.Count > count) EditorGUILayout.LabelField($"표시 상한: 추가 {ids.Count - count}개 · Copy evidence로 전체 ID 복사", EditorStyles.miniLabel);
             }
-            if (ids.Count > count) text.Append($" … (+{ids.Count - count})");
-            EditorGUILayout.LabelField($"{label} ({ids.Count})", ids.Count == 0 ? "—" : text.ToString(), EditorStyles.wordWrappedLabel);
         }
 
         public static void DrawCapture()

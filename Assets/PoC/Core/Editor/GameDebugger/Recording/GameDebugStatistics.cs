@@ -42,6 +42,7 @@ namespace TeamHJD.Game.Editor
                 int index = Math.Min(count-1, Math.Max(0, (int)Math.Floor((useRealTime ? sample.RealSeconds : sample.GameSeconds) / width)));
                 GameDebugBucket bucket = buckets[index];
                 bucket.Alive = sample.AliveEnemies; bucket.AvailablePower = sample.AvailablePower;
+                bucket.IsServerObservationUnavailable=sample.AliveEnemies<0;
                 bucket.OperationalRatio = sample.TurretCount == 0 ? -1d : (double)sample.OperationalTurrets / sample.TurretCount;
                 bucket.Area = sample.TerritoryArea; bucket.FrontlineLength = sample.FrontlineLength;
             }

@@ -20,7 +20,7 @@ namespace TeamHJD.Game.Editor
 
         private static void DrawSceneView(SceneView sceneView)
         {
-            if (!BattlefieldDebugSession.Display.IsEnabled) return;
+            if (!sceneView.drawGizmos || !BattlefieldDebugSession.Display.IsEnabled) return;
             if (BattlefieldDebugSession.Display.IsCellPickingEnabled)
                 FrontlineInspectionSession.YieldToCellPicking();
             PickFrontline();
@@ -204,7 +204,7 @@ namespace TeamHJD.Game.Editor
 
         private static void DrawFrontlines(IReadOnlyDictionary<DomainEntityId, Vector3> positions)
         {
-            Handles.color = new Color(1f, 0.35f, 0.1f, 1f);
+            Handles.color = GameDebugVisualStyle.Frontline;
             foreach (var edge in BattlefieldDebugSession.Snapshot.FrontlineEdges)
                 Handles.DrawAAPolyLine(3f, positions[edge.First], positions[edge.Second]);
         }
