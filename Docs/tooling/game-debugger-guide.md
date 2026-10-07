@@ -1,10 +1,12 @@
 # Game Debugger 사용·연동 가이드
 
-기준일: 2026-10-08 · 상태: 실사용 모니터 후속 집중 검사 54/54·실제 Scene 통합 1/1 성공 · 화면 조작·영상 인수 확인 별도
+기준일: 2026-10-08 · 상태: 기존 집중 검사 54/54·Scene 통합 1/1 성공, 후속 사용성 검사 40/40·관측 보완 검사 31/31 성공(검사 범위 중복 포함) · 화면 조작·영상 인수 확인 별도
 
 [배치 계획](../planning/2026-10-08-game-debugger-batch-plan.md) · [구현 결과·검증](../planning/2026-10-08-game-debugger-batch-results.md) · [Core README](../../Assets/PoC/Core/README.md)
 
 세부 사용법: [반복 Encounter 요청](encounter-repeat-debugging.md) · [요청별 Spawn 판단 검사](game-debugger-spawn-inspection.md) · [전선 디자인/기하 시각화](frontline-visualization-design.md).
+
+[Design.md](game-debugger/Design.md)는 글꼴·색·레이아웃뿐 아니라 실제 개발 관측 흐름, 상태 보존, 읽기/명령 경계, 확장 구조와 확인 기준을 규정한다.
 
 ## 실행 순서
 
@@ -12,6 +14,7 @@
 2. `Tools > TeamHJD > Game Debugger`. 독립 `Battlefield Debug` 메뉴/창은 제거했다. Grid/Encounter 기능은 내부 패널, Scene Overlay는 그대로 유지된다.
 3. Play → Overview의 SERVER·Match ID, 터렛·전력과 경고를 확인한다. 첫 Encounter는 기존 정책대로 자동 요청된다. 창을 연다고 자동 요청을 끄지 않는다.
 4. Battlefield에서 기존 Grid 에셋/현재 Match override, 셀 선택과 Scene 레이어를 사용한다. 계산은 Core, 창과 Overlay는 표시·명시적 요청만 담당한다.
+   - Scene View의 **Gizmos**와 **Scene layers**를 모두 켠다. `Frame Grid` / `Frame Cell`은 Scene 카메라만 이동하고 `Copy context` / `Copy cell / OOB evidence`는 버그 보고용 자료를 복사한다. 셀/OOB ID는 범주별 scroll 목록이다.
 5. Encounter의 Request는 추가 생성 요청이다. Game View의 Plan & Spawn 및 Scene 충돌도 같은 snapshot 경계를 사용한다. 성공한 수동 요청은 **아직 예약된** 자동 첫 요청만 취소한다. 완료된 자동 요청은 되돌리지 않는다.
 6. Statistics의 A=LIVE, 요청/생성/사망 동시 선 그래프, Bin=5초, 최근 60초 추적이 기본이다. `Chart settings / filters`에서 단일 Metric/필터/A-B를 설정한다. 클릭해 구간별 수치를 조회한다. `View`를 Spawn decisions / distribution으로 바꾸면 요청별 판단 snapshot을 조회한다.
 7. Timeline에서 source/kind/문자열을 검색하고 북마크를 추가한다. 터렛 파괴·복구 마커는 현재 Scene 터렛을 선택/Frame할 수 있다. 실제 제거를 처치로 해석하지 않는다.
@@ -27,6 +30,7 @@
 - `Monitor ×4`: Overview / Battlefield / Encounter / Statistics를 한 화면에 배치한다.
 - 클릭·키보드 포커스한 영역에 강조 테두리가 표시된다. 좌측 탐색 메뉴는 `ACTIVE · P#` 영역의 기능만 바꾼다.
 - 기능 선택, A/B 기록 선택, 지표, 필터, bin/clock, 검색·북마크 입력과 기능별 스크롤 위치는 **영역별** 상태다. Single로 바꾸어 숨긴 영역도 다시 열면 설정을 유지한다. 창/domain reload의 직렬화 대상이며 게임 저장 데이터는 아니다.
+- Spawn Inspector의 선택 요청·Follow·몬스터 필터·검색·zoom/pan도 영역별 보존한다. 오래된 고정 자료가 상한으로 사라지면 다른 요청으로 조용히 전환하지 않고 unavailable 안내를 표시한다.
 - Match·기록 수집·Imported 기록 슬롯·시간 도구·Scene 표시 옵션/셀 선택·조건부 정지의 무장 상태는 **공유**한다. 여러 Battlefield 영역에서 명령을 실행하더라도 같은 활성 Match/에셋에 적용된다. 분할은 별도 Match나 별도 Scene 시뮬레이션이 아니다.
 
 기능 상태는 `GameDebuggerPaneState`, 영역 UI는 `GameDebuggerPane`, 창 배치·공용 toolbar는 `GameDebuggerWindow`가 담당한다. 레이아웃 전환은 UI 구독만 재구성하고 공용 Collector/Recorder를 다시 만들거나 Encounter 요청을 발행하지 않는다. 좁은 dock에서는 Single/상하 배치가 편리하며, 4분할은 넓은 창을 권장한다.
@@ -60,6 +64,7 @@ Capture mode에서는 시간·기존 게임 변경 명령을 비활성/숨김 �
 
 - 실제 생성은 서버의 `NetworkObject.Spawn()` 성공 후, 사망은 `EnemyHealth`가 HP 소진을 확정했을 때, 제거는 Executor의 untrack/Despawn 사실이다. 한 사망 뒤 제거도 기록될 수 있으며 같은 사건을 합산한 처치 수가 아니다. 현재 생존 수 차분이나 로그 파싱으로 생성/사망량을 추측하지 않는다. 사망 계약 없는 이전 기록은 N/A다.
 - 서버 현재 생존 수는 해당 Match에 귀속된 Executor 추적 수다. 무 context 생성은 별도 귀속 불명 수이며 차트에 현재 Match 생성 사실처럼 넣지 않는다. Client에 서버 집계 계약이 없으면 N/A다.
+- 서버 관측 불가 표본이 있는 시간 구간에서 생성/사망/제거/누적의 관측 없는 0은 N/A다. 실제 수신한 양수 사실은 버리지 않는다. 현재 Client에 서버 전체 사건 복제 계약이 제공된다는 뜻은 아니다.
 - 수치 표본은 0.25초 실제 시간 간격, 연결 검사는 1초, UI 갱신은 최대 4Hz. 터렛 topology 면적/외곽 길이는 geometry 변경 때 재계산한다. 정적 데이터와 동적 점유 revision을 혼동하지 않는다.
 - 기본 bin은 게임시간 5초. Real clock은 실제 경과시간으로 구간을 바꾼다. bin 상한 2,048개를 넘으면 실제 폭을 늘리고 축에 표시한다. 표본이 없는 bin은 N/A, 없는 값을 0으로 잇지 않는다.
 - source/preset/type/point 필터는 **이벤트**에만 적용한다. Alive/Power/Ratio/Area/Length는 Match 전체 표본이다. type/point별 계획 수 계약이 없으므로 해당 필터에서 Planned/Executed/Failures 차트는 N/A다.

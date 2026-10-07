@@ -26,6 +26,8 @@
 
 Scene View의 Battlefield Overlay에서 `Frontline geometry`를 펼치고 `Pick boundary edge in Scene View`를 켠다. 주황 경계선의 12 pixel 이내를 클릭하면 노란 선택선과 안/밖 화살표가 표시된다. 일반 오브젝트 선택과 경쟁하는 Unity Handle picking을 이용하며 Alt 카메라 탐색은 가로채지 않는다. `Frame`은 선택 변으로 Scene 카메라를 이동하고, `Copy`는 현재 Match/revision과 선택 기하 자료를 복사한다.
 
+Scene View의 Gizmos와 Scene layers가 모두 켜져 있어야 표시/선택이 동작한다. 공유 Scene 도구의 Frame Grid/Frame Cell과 좌표·ID evidence 복사도 사용할 수 있다. 이들은 Scene 카메라/clipboard만 변경한다.
+
 - 기하 전체: 면적(u²), 외곽 길이(u), 삼각형/연결군/경계 수.
 - 선택 변: 양끝 터렛 ID, 길이, 중점 XY, 소유 삼각형 index, 연결군 index, 안/밖 단위 법선.
 - ID 기반 선택은 같은 Match/revision 변경에서 유지하지만 경계가 사라지거나 Match가 바뀌거나 Play Mode를 종료하면 해제한다. 선택 변을 다른 변의 index로 대체하지 않는다.

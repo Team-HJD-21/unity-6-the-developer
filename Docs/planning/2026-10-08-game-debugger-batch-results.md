@@ -97,3 +97,30 @@ PlanId/피해/전술 우세 지표는 없는 계약을 추정해 채우지 않�
 검사 중 Unity 6의 동명 `UnityEngine.EntityId`와 Domain ID 충돌은 명시적 alias로 수정했다. 첫 통합 실행은 테스트 coroutine의 closure가 EnterPlayMode domain reload 후 복원되지 않아 실패했고, static helper로 분리한 뒤 동일 검사 재실행이 통과했다. 최종 결과에 컴파일/테스트 실패는 없다. 테스트용 Scene 변경은 저장하지 않았으며 전체 승패·전술 밸런스는 이 도구 검사의 범위가 아니다.
 
 후속 복구 커밋: 이동 HOTFIX `dcb583d1` → 실제 판단/사망 관측 `a0cd5848` → 실사용 UI·분할 창·반복 요청·전선 도구/단위 검사 `268fba68` → 이 문서와 실제 Scene 회귀 검사를 담은 후속 커밋. 원격 push/PR은 실행하지 않았다. 기존 untracked `Validation/`은 포함하지 않았다.
+
+## 디자인·구조·일반 개발 도구 활용성 재검수
+
+[Design.md](../tooling/game-debugger/Design.md)를 추가했다. native Editor 글꼴·계층(본문 12px/보조 11px/계기 17px), Dark/Light 의미 색, 표/박스/스크롤, LIVE와 과거 기록 구분, 명령 안전성, 확장 계약과 사람이 확인할 항목을 명시한다.
+
+| 확인 축 | 발견한 문제와 보완 |
+| --- | --- |
+| 디자인/읽기 | 가로 scroll 시 헤더/본문 분리 → 같은 scroll 안에 배치. 미배정 지점 전체를 실패처럼 표시 → 회색으로 구분. 공통 수치 스타일·그래프/지도 색을 공유하고 skin별 대비를 검사 |
+| 상태/구조 | Snapshot 선택·필터·zoom/pan 재구성 초기화 → 영역별 serialized view state. 고정 요청이 보존 범위에서 사라지면 다른 요청으로 치환하지 않고 unavailable 표시. Match ID 경계 유지 |
+| 실질 기능 | 지도 drag 후 잘못된 선택 → 4px 클릭 임계값/버튼 분리. bin 보정값과 표시 일치. Client의 서버 미관측 0을 N/A로 표시하되 실제 양수 사실 유지 |
+| Scene 탐색/공유 | Gizmos와 도구 layer가 모두 켜진 경우만 그리기/선택. Frame Grid/Cell, Copy context/전체 cell·OOB ID, 요청 JSON evidence 추가. 목록은 박스/scroll 및 표시 상한 안내 |
+| 비용/책임 | 요청/Timeline 정렬·검색 cache로 반복 IMGUI repaint의 재계산 방지. Scene 이동·스타일·cache·view state를 Editor helper로 분리. Runtime 정책을 Editor에서 재구현하지 않음 |
+
+일반 개발 작업에는 **관측 → 사건 선택 → Scene 위치 확인 → 재현 자료 공유** 흐름으로 활용할 수 있다. 현재는 이 프로젝트의 Core/Match/Spawn 진단에 특화된 도구다. 다른 게임에 그대로 적용 가능한 범용 패키지, Profiler/Console 대체, AI 의사결정·DPS·네트워크 trace·결정론적 Replay·전체 승패 검증까지 제공한다고 해석하지 않는다. 추가 Feature는 실제 관측 계약을 제공한 뒤 panel/집계로 확장한다.
+
+### 이번 검수의 최종 자동 검사
+
+| 검사 | 결과 | 로컬 XML |
+| --- | --- | --- |
+| 사용성·Spawn Inspector·Chart·Battlefield Editor·창 구성 | **40/40 성공, 실패·제외 0** | `%TEMP%/game-debugger-usability-review.xml` |
+| 서버 미관측 보완 후 사용성·Chart·창 구성/집계 회귀 | **31/31 성공, 실패·제외 0** | `%TEMP%/game-debugger-authority-coverage-review.xml` |
+
+두 실행은 상당한 중복을 포함하므로 서로 다른 테스트 71개라고 계산하지 않는다. 새 `GameDebuggerUsabilityTests`의 최종 12개 케이스에는 영역 상태/직렬화·고정 기록 소실·Match 전환·입력/drag 임계값·cache 교체·중앙 XY Frame bounds/전체 ID·서버 미관측·Dark/Light 선 대비·실제 native GUI 생성/렌더링 검사가 포함된다. 초기 검사에서 발견한 새 meta GUID 길이 오류와 소실 요청 placeholder 선택 오류는 수정했고 최종 실행에서 통과했다.
+
+이번 변경은 Editor 코드·EditMode 테스트·문서뿐이다. Runtime/Scene/프리팹/Package 설정과 기존 `Validation/`은 변경하지 않았다. 이전 실제 Spawn/사망/이동 통합 증거는 위에 보존하되 이번에는 해당 PlayMode 검사를 중복 실행하지 않았다. 실제 dock/드래그·한글 glyph·DPI·전체 Dark/Light 화면·Gizmos/Alt 조작·영상은 사람이 확인할 항목이며 자동 GUI 검사를 시각 QA 완료로 표기하지 않는다. 원격 push/Issue 수정/PR은 하지 않았다.
+
+복구 경계: Editor 구현·검사 `dff8cd33` → 디자인 기준·사용 가이드·본 검수 기록을 담은 문서 커밋.

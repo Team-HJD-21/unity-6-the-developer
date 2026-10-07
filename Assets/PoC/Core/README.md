@@ -20,6 +20,8 @@ Player prefab의 타깃 등록 누락은 별도 HOTFIX `dcb583d1`로 수정했�
 
 `MatchStart`, `DebugWindow`, `RuntimeUI`, `SceneCollision`은 공통 Match snapshot 경계를 사용합니다. `IGameDiagnosticsSource`의 사실 이벤트를 `GameDebuggerSession → Recorder → Statistics/Chart/Export`로 전달합니다. 스폰 성공 후 이벤트와 생존 수 차분은 다르며 Despawn은 처치가 아닙니다. 종료 기록은 활성 snapshot과 분리됩니다. [사용/API·제한](../../../Docs/tooling/game-debugger-guide.md) · [배치 결과/CLI 증거](../../../Docs/planning/2026-10-08-game-debugger-batch-results.md)
 
+[Game Debugger Design.md](../../../Docs/tooling/game-debugger/Design.md)에 글꼴·Dark/Light 색·가독성·관측 흐름·확장 경계를 정리했습니다. Scene Gizmos/Scene layers를 함께 켜고 Frame Grid/Cell과 context/evidence 복사를 사용할 수 있습니다. Snapshot 조회 상태는 영역별로 보존되며 오래된 선택 자료가 사라져도 다른 요청으로 대체하지 않습니다. 목록 정렬은 변경 기반 캐시를 사용하고 Client의 서버 미관측 0은 N/A로 구분합니다.
+
 초기 전체 EditMode 36 성공·Explicit 1 제외 이후, 실사용 모니터 후속 집중 검사는 **54/54 성공**, 실제 Initial_Stage snapshot·사망·반복 Spawn 통합은 **1/1 성공**입니다. 별도 이동 HOTFIX Scene 검사도 **1/1 성공**입니다. 창 GUI 렌더링은 자동 확인했지만 실제 사용자 드래그·도킹·물리 충돌·영상/멀티 Client 인수는 별도이며 전체 PoC 승패 완료 판정이 아닙니다.
 
 ## 2026-10-03 병합본의 구현·검증 기록
