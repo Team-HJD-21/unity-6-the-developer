@@ -10,6 +10,8 @@
 
 상단 `Layout`에서 단일/좌우·상하 2분할/4분할을 선택해 여러 기능을 동시에 볼 수 있습니다. 각 영역의 드롭다운으로 기능을 고르고 분할선을 드래그해 크기를 조절합니다. `Battlefield + Stats`, `Encounter + Stats`, `Monitor ×4` 빠른 배치와 영역별 기록·지표·필터·스크롤 보존을 지원합니다. 시간 제어·Match·수집·Scene 표시 설정은 공용이며, 좌측 메뉴는 강조된 `ACTIVE · P#` 영역에 적용됩니다. 자세한 사용법은 [Game Debugger 가이드](../../../Docs/tooling/game-debugger-guide.md)를 참고하세요.
 
+사용 가이드는 빠른 시작부터 배속·Scene Gizmo/셀·전선 선택·일회/반복 요청·Spawn 판단·큰 통계 창·Timeline 정지·기록 공유까지 실제 작업 순서로 정리했습니다. SpawnPoint는 같은 Scene 전체에서 요청 직전에 갱신하며, 이후 복제한 지점도 고유 ID로 등록합니다. 등록과 실제 스폰 배정은 다르므로 지점별 결과는 Statistics의 후보 Reason으로 확인합니다.
+
 `Tools > TeamHJD > Game Debugger`에서 Overview/Battlefield/Encounter/Statistics/Timeline/Capture·Compare를 사용합니다. 독립 Battlefield 창은 제거하고 편집 기능을 내부 패널로 통합했습니다. Scene Overlay는 유지됩니다. 배속/Pause/Step, 요청·실제 생성·실제 사망의 선 그래프, 터렛/전력·연결 검사, 조건부 정지, 북마크, JSON/CSV·실행 A/B를 제공합니다. Editor 수집은 게임 서비스가 아니며 계산/스폰 정책을 대신하지 않습니다.
 
 Statistics의 `Time series`는 명시적인 X/Y축, 최신 시간 추적, 가시 구간 최대값 기반 Auto Y, 상하좌우 탐색·축 확대/축소와 독립 큰 창을 제공합니다. `Spawn decisions / distribution`에서는 요청 당시 Grid/전선·후보 제외 사유·배정·계획/실제 수량·개체 생성 좌표를 지도와 표로 조회합니다. Overview와 Encounter/Timeline도 수치 카드·선택 가능한 스크롤 표·접힌 상세 설명으로 분리했습니다.

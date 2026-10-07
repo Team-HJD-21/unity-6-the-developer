@@ -8,18 +8,81 @@
 
 [Design.md](game-debugger/Design.md)는 글꼴·색·레이아웃뿐 아니라 실제 개발 관측 흐름, 상태 보존, 읽기/명령 경계, 확장 구조와 확인 기준을 규정한다.
 
-## 실행 순서
+이 문서는 **Game Debugger 전체 사용 매뉴얼**이다. 처음 사용하는 팀원은 아래 빠른 시작과 목적별 사용 순서부터 읽는다. 코드/API 경계와 보존 상한은 뒤쪽에 정리했다.
 
-1. `Assets/PoC/Spaceship/Scenes/Initial_Stage.unity`를 연다.
-2. `Tools > TeamHJD > Game Debugger`. 독립 `Battlefield Debug` 메뉴/창은 제거했다. Grid/Encounter 기능은 내부 패널, Scene Overlay는 그대로 유지된다.
-3. Play → Overview의 SERVER·Match ID, 터렛·전력과 경고를 확인한다. 첫 Encounter는 기존 정책대로 자동 요청된다. 창을 연다고 자동 요청을 끄지 않는다.
-4. Battlefield에서 기존 Grid 에셋/현재 Match override, 셀 선택과 Scene 레이어를 사용한다. 계산은 Core, 창과 Overlay는 표시·명시적 요청만 담당한다.
-   - Scene View의 **Gizmos**와 **Scene layers**를 모두 켠다. `Frame Grid` / `Frame Cell`은 Scene 카메라만 이동하고 `Copy context` / `Copy cell / OOB evidence`는 버그 보고용 자료를 복사한다. 셀/OOB ID는 범주별 scroll 목록이다.
-5. Encounter의 Request는 추가 생성 요청이다. Game View의 Plan & Spawn 및 Scene 충돌도 같은 snapshot 경계를 사용한다. 성공한 수동 요청은 **아직 예약된** 자동 첫 요청만 취소한다. 완료된 자동 요청은 되돌리지 않는다.
-6. Statistics의 A=LIVE, 요청/생성/사망 동시 선 그래프, Bin=5초, 최근 60초 추적이 기본이다. `Chart settings / filters`에서 단일 Metric/필터/A-B를 설정한다. 클릭해 구간별 수치를 조회한다. `View`를 Spawn decisions / distribution으로 바꾸면 요청별 판단 snapshot을 조회한다.
-7. Timeline에서 source/kind/문자열을 검색하고 북마크를 추가한다. 터렛 파괴·복구 마커는 현재 Scene 터렛을 선택/Frame할 수 있다. 실제 제거를 처치로 해석하지 않는다.
-8. Capture / Compare에서 종료한 Match ID를 A/B로 선택하거나 JSON을 import한다. Commit/Build 라벨을 직접 입력한 뒤 `Stamp build/commit label on live record`로 활성 기록에 반영한다. Git commit을 자동 추측하지 않는다.
-9. Scene Capture preset, Overlay/창, Game/Scene View를 조합해 스크린샷/영상을 남긴다. JSON과 events/samples CSV는 명시적으로 경로를 선택해 저장한다. 기본 저장을 저장소 내부로 강제하지 않는다.
+## 처음 사용할 때 · 빠른 시작
+
+1. `Initial_Stage`를 열고 Scene 변경을 저장한다. 별도 Battlefield Debug 창을 찾지 말고 `Tools > TeamHJD > Game Debugger`를 연다.
+2. 상단 `Monitor ×4`로 Overview / Battlefield / Encounter / Statistics를 동시에 표시한다. 좁으면 `Encounter + Stats` 또는 `Battlefield + Stats`를 사용한다.
+3. Play를 누른다. Overview에 활성 Match와 **SERVER**, 생존 수/게임 시간/수집 상태가 나타나는지 확인한다. 첫 자동 Encounter가 이미 생성됐을 수 있으므로 시작부터 0마리라고 가정하지 않는다.
+4. Encounter에서 `Squad Preset Order`와 `Max Enemy Count`를 지정하고 `Request Encounter from Current Match Snapshot`을 누른다. 이 수량은 **한 요청의 전체 예산**이며 지점별 수량/생존 상한이 아니다.
+5. Statistics는 기본 `Time series`로 요청·실제 생성·사망 추이를 보여 준다. `View`를 `Spawn decisions / distribution`으로 바꾸면 **왜 이 지점/종류/수량으로 생성됐는지** 후보와 실제 결과를 확인한다.
+6. Scene View로 이동해 Gizmos를 켜고 Battlefield의 `Scene layers`를 켠다. `Frame Grid`로 전장을 맞춘 뒤 Grid/외곽과 실제 객체 배치를 비교한다.
+7. 이상을 찾으면 요청을 고정하고 `Copy request evidence` 또는 `Copy context`로 자료를 남긴다. 종료/재시작 전에 기록을 보관하려면 Capture / Compare에서 JSON을 Export한다.
+
+재시작할 때마다 창을 다시 열 필요는 없다. 창을 닫는 것과 Match를 종료하는 것은 다르다. 단, 반복 실행을 시작한 pane을 닫거나 재구성하면 그 반복은 중지된다.
+
+## 목적별 작업 순서
+
+### 실시간 상태와 배속 시험
+
+Overview에서 생존/전력/가동 터렛/게임·실제 시간/revision/영역 면적을 확인한다. `연결 및 수집 상태`를 펼치면 Match, authority, 이벤트·표본 수, 손실, 경고를 볼 수 있다. 터렛 표의 ID 버튼으로 현재 Scene 객체를 선택/Frame한다.
+
+상단 시간 toolbar의 배속 또는 직접 입력으로 시험 속도를 조정한다. `Pause`로 Editor를 정지하고 `Step`으로 한 프레임 진행, `Resume`으로 재개한다. `Restore`로 이 도구가 변경한 시간값을 복원한다. 게임시간과 실시간의 변화가 다른 것은 정상이며, 네트워크의 다른 Client까지 멈추는 도구가 아니다. `timeScale = 0`은 Editor Pause와 다르므로 Step을 사용할 수 없다.
+
+### Grid와 전선 형상 확인
+
+1. Battlefield의 `Scene 표시 / 레이어`를 펼친다. 빠른 버튼 `Grid` 또는 `Topology`로 기본 표시 조합을 적용한다.
+2. `Uniform Grid`, `Territory`, `Frontline`, `Cell occupancy`, `Geometric normals`, `Vertex labels`를 필요한 것만 켠다. 겹쳐 보이면 labels/occupancy부터 끈다.
+3. `Pick cell (left click)`을 켜고 Scene에서 셀을 클릭한다. 또는 `선택 셀 / 범위 초과 개체`의 Cell ID를 직접 입력한다. `Frame Cell`로 선택 셀에 이동한다.
+4. 셀의 bounds/Player·Turret·Enemy ID와 OOB(범위 밖) 목록을 확인한다. `Copy cell / OOB evidence`는 화면 표시 상한과 무관하게 전체 ID를 복사한다.
+5. Frontline geometry Inspector에서 변을 선택해 강조·양쪽 법선을 확인한다. Grid 셀 pick과 전선 변 pick은 서로 배제된다. Alt를 이용한 Scene 카메라 탐색은 유지된다.
+6. Scene 안의 `Battlefield` Overlay도 동일한 표시·선택 상태를 사용한다. Overlay가 숨겨져 있으면 Scene View의 Overlays 메뉴에서 Battlefield를 표시한다. 창과 Overlay의 설정은 공유하므로 별도로 맞출 필요가 없다.
+
+**Edit Mode는 PREVIEW**로 정적 터렛 배치를 보여 주고, **Play Mode는 LIVE**로 실제 Match snapshot을 보여 준다. 통계 화면의 요청 당시 지도는 이 둘과 달리 과거 자료다. 외곽선/법선은 기하 정보이며 실제 교전 방향이나 방어 우세도를 확정하는 값이 아니다.
+
+Grid 크기를 바꾸려면 `공용 Grid 기본값 / 에셋`에서 Center XY, Map Width/Height, Cells X/Y를 편집한다. Center는 좌측 하단이 아닌 **Grid 중앙**이다. 에셋 값은 이후 생성되는 Match 기본값이며, 활성 Match 변경은 `현재 Match Grid override / 명시적 적용`에서 값을 입력한 뒤 `Apply to Active Match`를 눌러야 한다. `Restore Authored Defaults`로 해당 Match를 기본 설정에 맞춘다.
+
+### 일회 스폰 → 반복 실험 → 원인 확인
+
+1. Encounter에서 preset/요청 예산을 정하고 한 번 Request한다. 최근 요청 표에서 source, 계획/실제 수량, 성공·실패를 확인하고 요청을 선택해 상세를 펼친다.
+2. 자동 반복은 `연속 Encounter 요청 / 시뮬레이션`에서 간격/최대 횟수/clock을 정하고 `Start repeat`한다. 첫 요청은 한 간격 뒤다. `0`회는 무제한이며 생존 적이 누적될 수 있다. 종료는 `Stop repeat`다.
+3. Statistics를 `Spawn decisions / distribution`으로 바꾸고 Request를 선택한다. `Follow latest`를 끄면 보고 있는 요청이 새 요청 때문에 바뀌지 않는다.
+4. `Candidates · eligibility and allocation`에서 지점별 cell/초기 적 수/전선 거리/배정 세트/Reason을 확인한다. 검색은 지점 ID 또는 사유, `Monster`는 계획/실제 개체와 지도 실제 점을 필터링한다.
+5. `Planned composition · actual result`로 계획 대비 실제 수를, `Actual objects · immutable spawn positions`로 종류/Network ID/생성 XY를 확인한다. 지도는 휠 확대·드래그 이동, `Frame snapshot`으로 전체 범위를 다시 맞춘다.
+6. 표/지도에서 지점 또는 개체를 선택하고 `Select ... in Scene`으로 현재 Scene 대상을 찾는다. **같은 활성 Match**만 가능하며 종료·Imported 기록의 과거 객체를 임의로 선택하지 않는다.
+7. `Copy request evidence`로 판단 자료를 공유한다. 고정한 요청의 상세가 최신 32개 보존 범위에서 사라졌다면 다른 요청을 선택하거나 Follow latest를 켠다.
+
+스폰 지점은 이름이 Left/Right인 두 개로 제한되지 않는다. **같은 Scene의 모든 `SpawnPoint` 컴포넌트**를 계획 요청 직전에 등록하므로 계층 밖의 배치, 추가/복제/삭제도 다음 요청에 반영된다. 비활성/점령 지점은 등록 자료에 남되 스폰 후보에서는 제외된다. Editor에서 복제·빈 ID는 고유 ID로 자동 보정되어 Scene 저장에 포함되고 Undo할 수 있다. Play Mode 복제는 객체 수명 동안만 별도 ID를 유지한다. 다른 Scene의 지점은 섞지 않는다.
+
+**등록 = 모든 지점에서 매번 생성**은 아니다. Grid 밖/Player·Turret 점유/비활성/점령, 기존 적 밀도, 전선 거리, preset 세트 크기와 요청 예산에 따라 일부 지점에만 배정된다. 미배정은 회색이며 후보의 `Reason`이 실제 근거다. 모든 지점을 시험하려고 필터를 우회하거나 예산을 지점마다 곱하지 않는다. 자세한 정책은 [Spawn 판단 검사](game-debugger-spawn-inspection.md), 반복 종료 규칙은 [연속 요청](encounter-repeat-debugging.md)을 참고한다.
+
+### 그래프 분석과 큰 화면
+
+Statistics에서 `View = Time series`, 기록 A를 LIVE/종료 Match/IMPORTED 중 선택한다. 기본은 요청·생성·사망을 함께 표시한다. 다른 지표는 `Chart settings / filters`에서 `Requests / Spawned / Died together`를 끄고 `Single metric`을 선택한다. Bin은 한 점이 집계하는 초 단위 구간이다.
+
+최신 추적은 `Follow latest`, Y 자동 범위는 `Auto Y`다. 과거를 가로 스크롤하면 Follow가 꺼지므로 최신으로 돌아올 때 다시 켠다. `Open in window`로 Statistics만 크게 띄우면 같은 기록을 독립 필터/축으로 조회할 수 있다. X/Y 조작과 단축 입력은 아래 그래프 탐색 항목을 참고한다. 수량 비교는 같은 clock/bin과 필터를 맞추고 B 기록을 지정한다. B는 점선이며 실시간 수집기를 추가로 생성하지 않는다.
+
+### 사건에서 멈추고 기록 공유
+
+Timeline에서 검색 후 사건 행을 선택해 상세를 확인한다. 특정 상황 전후를 찾을 때 `Bookmark`로 메모를 남긴다. 요청 실패/터렛 파괴/OOB 조건을 무장하면 신규 관측 시 Editor가 한 번 정지한다. 원인 확인 후 Resume하고, 다음 조건도 잡으려면 `Rearm`으로 재무장한다.
+
+Capture / Compare에서 Commit/Build 라벨을 입력하고 `Stamp build/commit label on live record`로 기록에 반영한다. `Scene Capture preset`은 공유용 표시 프리셋이지 자동 screenshot/영상 녹화가 아니다. 화면을 직접 캡처하고 `Export run JSON + metadata`, `Export events CSV`, `Export samples CSV`로 자료를 저장한다. 이전 JSON은 `Import read-only comparison JSON`으로 불러와 A/B로 비교한다. Import는 게임을 복원하거나 다시 실행하지 않는다.
+
+팀원 공유에는 **화면 + Scene/Match/revision + 문제 Request ID + preset/예산 + JSON 또는 CSV**를 함께 남기는 것을 권장한다. Editor 완전 종료 전 Export하지 않으면 SessionState 기반 기록은 다음 Editor 세션에 보존되지 않는다.
+
+## 빠른 문제 해결
+
+| 증상 | 먼저 확인할 것 |
+| --- | --- |
+| NO RECORD / N/A | Play Mode, 활성 Match/진단 source, SERVER 권한. Client 미관측 수치는 0으로 해석하지 않음 |
+| Request 비활성/실패 | Capture mode 해제, 현재 Match/NGO Host/Executor/catalog 준비, preset/예산, 화면의 반환 사유 |
+| 스포너를 늘렸는데 생성이 적음 | 후보 표에 ID가 있는지 확인 → Reason/완전한 preset 세트/전체 요청 예산 확인. 지점 수만큼 예산이 자동 증가하지 않음 |
+| Scene Grid/전선이 안 보임 | Scene Gizmos + Scene layers + 해당 레이어, `Frame Grid`, LIVE/PREVIEW 상태. 전선은 유효한 비공선 터렛 3개 이상 필요 |
+| 과거 선택이 unavailable | 상세 보존 상한에 의해 제거됐는지 확인. 다른 요청/Follow latest 또는 이미 Export한 기록 사용 |
+| 그래프가 최신으로 안 움직임 | 수동 X 탐색으로 Follow latest가 꺼졌는지 확인 |
+| 반복이 중지됨 | 실패/준비·권한 상실/Match 변경/reload/소유 pane dispose와 표시된 중지 사유. 설정 변경 후 Stop→Start |
+| Frame은 되는데 과거 개체를 못 찾음 | 종료/Imported 기록 또는 제거된 개체인지 확인. 당시 XY는 지도에서 조회 |
 
 ## 여러 기능 동시 보기
 

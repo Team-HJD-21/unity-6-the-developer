@@ -124,3 +124,17 @@ PlanId/피해/전술 우세 지표는 없는 계약을 추정해 채우지 않�
 이번 변경은 Editor 코드·EditMode 테스트·문서뿐이다. Runtime/Scene/프리팹/Package 설정과 기존 `Validation/`은 변경하지 않았다. 이전 실제 Spawn/사망/이동 통합 증거는 위에 보존하되 이번에는 해당 PlayMode 검사를 중복 실행하지 않았다. 실제 dock/드래그·한글 glyph·DPI·전체 Dark/Light 화면·Gizmos/Alt 조작·영상은 사람이 확인할 항목이며 자동 GUI 검사를 시각 QA 완료로 표기하지 않는다. 원격 push/Issue 수정/PR은 하지 않았다.
 
 복구 경계: Editor 구현·검사 `dff8cd33` → 디자인 기준·사용 가이드·본 검수 기록을 담은 문서 커밋.
+
+## SpawnPoint 자동 등록 및 전체 사용 매뉴얼 후속
+
+- 이전 `Awake` 한 번/Executor 자식만 수집하던 방식에서, 계획용 `SpawnPointList` 조회 직전에 **같은 Scene 전체**를 갱신하도록 변경했다. 다른 Executor 계층 아래 지점도 포함하며 다른 Scene은 제외한다. 비활성/점령 상태는 등록 후 기존 후보 정책에서 판단한다. 매 Update마다 Scene을 검색하지 않는다.
+- 빈/복제 ID는 Editor authoring 보정으로 구분한다. 기존 고유 ID는 보존하고 Undo·Scene 저장 대상이다. Runtime 복제는 serialized ID를 덮어쓰지 않고 객체 수명 동안 ID를 유지한다. 좌우 두 지점 하드코딩을 추가하지 않았고 전체 요청 예산·Grid/분포 배정 정책은 유지했다.
+- 사용자 Editor의 첫 실시간 조회에서 **31개**(두 Executor의 기존 계층에 25개/6개)를 확인했고 당시 Scene은 저장되지 않은 dirty 상태였다. 이후 사용자 Editor가 종료되어 마지막 전체 Scene 재등록 수의 live 조회/추가 배치의 영속 보존은 확인하지 못했다. Scene을 강제로 저장하거나 복제 위치를 임의 복원하지 않았다.
+- 디스크에는 Left/Right의 직접 serialized 지점과 기존 `EnemySpawnRoot`/`SpawnPoint` Prefab 인스턴스가 남아 있다. 따라서 직접 `spawnPointId:` 항목 두 개만 세어 전체 지점이 두 개라고 판단하면 안 된다. 다만 메모리 조회에서 확인한 `Encounter Spawn Right (1)`부터 `(23)`까지의 추가 복제는 저장 Scene에서 찾지 못했고, 종료 후 임시 Scene 백업도 찾지 못했다. 코드의 자동 등록과 별개로 해당 추가 배치는 저장/복구가 필요한 사용자 자료다.
+- Unity CLI 재컴파일에서 컴파일 오류 0을 확인했다. 연결 Editor 테스트는 저장 확인/응답 지연으로 완료 증거가 없어 성공으로 기록하지 않는다. 종료 후 headless 검사의 첫 실행은 fixture의 Untitled Scene Additive 생성 제한으로 실패하여, batch에서만 Single을 사용하고 foreign Scene은 preview Scene으로 분리했다.
+- 최종 `SpawnPointRegistrationTests;SpawnPointSpatialPolicyTests`는 **8/8 성공, 실패·제외 0**, `%TEMP%/spawn-point-registration-review.xml`이다. 실제 등록/후속 복제·삭제·비활성 전환·동일 Scene의 다른 부모/Executor 계층 포함·다른 Scene 제외·ID 보존/authoring 수정과 기존 공간 배정 회귀를 확인했다. 실제 전투/31개 지점 전부의 실제 스폰을 인증하는 검사는 아니다.
+- [Game Debugger 전체 사용법](../tooling/game-debugger-guide.md)을 빠른 시작, 목적별 작업 흐름, 큰 통계 창·그래프 조작, Scene Overlay/Gizmo, 반복 요청, Timeline 조건부 정지, Export/Compare, 문제 해결까지 최신화했다. API/수집 한계는 별도 하단에 유지하고 중복된 이전 실행 순서는 제거했다.
+
+사용자의 Scene 배치는 이번 코드/문서 커밋에 포함하지 않는다. 저장하지 않은 Edit Mode 배치나 Play Mode 복제는 다음 Editor 실행에 유지된다고 가정하지 않는다. 원격 push/PR/Issue 변경은 하지 않는다.
+
+복구 경계: 자동 등록·ID·검사 `2a4b90eb` → 전체 사용 매뉴얼·README·본 후속 결과를 담은 문서 커밋.

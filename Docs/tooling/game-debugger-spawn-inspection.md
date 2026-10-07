@@ -27,7 +27,9 @@ Game Debugger → Statistics에서 **Spawn decisions & distribution**을 선택�
 
 ## 실제 판단 정책과 관측 경계
 
-기존 정책을 변경하지 않았다. 사용 가능한 지점을 대상으로:
+지점 수집은 `EnemySpawnExecutor.SpawnPointList` 조회 시 같은 Scene 전체에서 갱신한다. 부모/이름을 Left/Right에 고정하지 않고 런타임 추가·복제·제거를 반영한다. 비활성 지점도 레지스트리에 보관한다. Editor는 빈/복제 ID를 authoring 값에 저장하고, 런타임 복제는 등록 시 객체 수명 동안 고유 ID를 유지한다. 다른 Scene은 포함하지 않는다.
+
+등록 지점 수를 늘려도 전체 요청 예산은 자동 증가하지 않는다. 기존 공간 배정 정책은 유지하며, 사용 가능한 지점을 대상으로:
 
 1. Grid 밖, Player/Turret 점유 셀, 중복/누락 ID를 제외한다.
 2. 기존 셀 Enemy 수 + 이번 요청에 이미 배정한 Enemy 수가 가장 적은 후보를 고른다.
