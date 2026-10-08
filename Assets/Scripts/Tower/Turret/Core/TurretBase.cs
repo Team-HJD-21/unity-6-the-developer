@@ -228,7 +228,20 @@ namespace TeamHJD.Game.Turrets
                 _minimumRangeRenderer.enabled = ShowRange && MinimumRange > 0f;
         }
 
+        public bool IsManualActivationBlocked =>
+            _configuredPowerSource is TurretController controller && controller.IsAutoActivationRunning;
+
         public TurretActivationResult RequestActivation(bool shouldActivate)
+        {
+            if (IsManualActivationBlocked)
+            {
+                Debug.Log("자동 활성화 진행 중에는 터렛을 수동으로 켜거나 끌 수 없습니다.", this);
+                return TurretActivationResult.AutoActivationInProgress;
+            }
+            return RequestSystemActivation(shouldActivate);
+        }
+
+        internal TurretActivationResult RequestSystemActivation(bool shouldActivate)
         {
             // Any explicit request supersedes a queued startup intent.
             CancelInitialActivation();
@@ -276,7 +289,7 @@ namespace TeamHJD.Game.Turrets
 
             if (isLocked && IsActivated)
             {
-                if (RequestActivation(false) != TurretActivationResult.Deactivated)
+                if (RequestSystemActivation(false) != TurretActivationResult.Deactivated)
                 {
                     return false;
                 }
@@ -577,7 +590,7 @@ namespace TeamHJD.Game.Turrets
                 return true;
             }
 
-            RequestActivation(false);
+            RequestSystemActivation(false);
             _runtimeState.MarkDestroyed();
             OnDestroyed();
             TurretInstanceRegistry.NotifyDestroyed(this);

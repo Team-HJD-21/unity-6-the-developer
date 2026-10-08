@@ -9,6 +9,7 @@ namespace TeamHJD.Game.Turrets.Contracts
         Locked,
         InsufficientPower,
         PowerSourceUnavailable,
-        InvalidPowerCost
+        InvalidPowerCost,
+        AutoActivationInProgress
     }
 }

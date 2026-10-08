@@ -269,6 +269,9 @@ namespace TeamHJD.Game.Turrets.Tests
             Assert.That(controller.IsAutoActivationRunning, Is.True);
             Assert.That(controller.Budget.PendingRecovery, Is.EqualTo(20));
             Assert.That(controller.TryStartAutoActivation(), Is.False);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.AutoActivationInProgress));
+            Assert.That(controller.RequestActivation(turret.InstanceId, false), Is.EqualTo(TurretActivationResult.AutoActivationInProgress));
+            Assert.That(turret.IsActivated, Is.False);
             controller.Budget.Tick(2.1f);
             typeof(TurretController).GetMethod("AdvanceAutoActivation", BindingFlags.Instance | BindingFlags.NonPublic)
                 .Invoke(controller, null);

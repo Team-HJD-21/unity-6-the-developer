@@ -80,9 +80,9 @@ namespace TeamHJD.Game.Turrets
             });
 
             _nextAutoActivationTime = Time.time + AutoActivationCooldownSeconds;
-            foreach (TurretBase turret in owned)
-                if (turret.IsActivated) RequestActivation(turret.InstanceId, false);
             IsAutoActivationRunning = true;
+            foreach (TurretBase turret in owned)
+                if (turret.IsActivated) turret.RequestSystemActivation(false);
             AdvanceAutoActivation();
             return true;
         }
@@ -106,7 +106,7 @@ namespace TeamHJD.Game.Turrets
                     candidate.Completed = true;
                     continue;
                 }
-                TurretActivationResult result = RequestActivation(candidate.InstanceId, true);
+                TurretActivationResult result = turret.RequestSystemActivation(true);
                 candidate.Completed = result != TurretActivationResult.InsufficientPower;
                 if (!candidate.Completed) hasPendingCandidate = true;
             }
