@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace TeamHJD.Game.Turrets
 {
-    public abstract class TurretBase : MonoBehaviour, ITurretActivationRequester
+    public abstract class TurretBase : MonoBehaviour, ITurretActivationRequester, IDamageableTarget
     {
         // Keep serialized field names unchanged so existing prefab values remain mapped.
         //제발 바꾸지 말아주세요요요요!

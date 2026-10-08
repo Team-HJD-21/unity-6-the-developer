@@ -8,7 +8,7 @@ namespace TeamHJD.Game.Debugging
 {
     /// <summary>
     /// Lightweight Play Mode controls for the isolated TurretTest scene.
-    /// This intentionally replaces TowerManager and its production UI dependencies.
+    /// This intentionally replaces the production TurretInteractionUI dependencies.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TurretTestController : MonoBehaviour

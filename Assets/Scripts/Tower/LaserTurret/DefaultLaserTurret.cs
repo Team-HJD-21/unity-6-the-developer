@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
 using Tower;
 using Unity.VisualScripting;
@@ -34,8 +35,8 @@ public abstract class DefaultLaserTurret : MonoBehaviour, IActivateTower
     protected int RPM;
     protected int Damage;
     
-    private GameObject _originPower;    //ControlUnitStatus Script의 함수사용
-    private ControlUnitStatus _cus;     //_cus = _OriginPower.GetComponent<ControlUnitStatus>();
+    private TurretController _turretController;
+    private bool _hasPowerReservation;
     private float _timeTilFire;         //다음 발사까지의 시간
     private float _angleThreshold = 10f; // 타워와 적의 각도 차이 허용 범위 (조정 가능)
     private float _fireTime = 0f;       //과열시 중지 위한 변수
@@ -45,8 +46,7 @@ public abstract class DefaultLaserTurret : MonoBehaviour, IActivateTower
     protected abstract void Shoot();//총알 객체화 후 목표로 발사(FireRateController에서 수행)
     private void Awake()
     {
-        _originPower = GameObject.Find("ControlUnit");
-        _cus = _originPower.GetComponent<ControlUnitStatus>();//제어장치 정보 가져오기 위함
+        _turretController = TurretController.GetOrCreateForScene(gameObject.scene);
         Name = "Laser Turret";
         ShowRange = false;
         
@@ -246,21 +246,37 @@ public abstract class DefaultLaserTurret : MonoBehaviour, IActivateTower
     }
     //--------------------------------------------------------------------------------------------------------------------------
     //for Control Unit----------------------------------------------------------
-    private void AddTurret()//ControlUnitStatus script 사용(CheckToggle에서 수행)
+    private void AddTurret()
     {
-        if (_cus.GetCurrentPower() >= Power)
+        if (_hasPowerReservation)
         {
-            _cus.AddUnit(Power);
+            return;
         }
-        else
+
+        if (_turretController != null && _turretController.TryConsumePower(Power))
         {
-            isActivated = false;
-            previousIsActivated = false;
+            _hasPowerReservation = true;
+            return;
         }
+
+        isActivated = false;
+        previousIsActivated = false;
     }
-    private void DeleteTurret()//ControlUnitStatus script 사용(CheckToggle에서 수행)
+
+    private void DeleteTurret()
     {
-        _cus.RemoveUnit(Power);
+        if (!_hasPowerReservation || _turretController == null)
+        {
+            return;
+        }
+
+        _turretController.ReleasePower(Power);
+        _hasPowerReservation = false;
+    }
+
+    private void OnDisable()
+    {
+        DeleteTurret();
     }
     //----------------------------------------------------------------------------
     //For UI------------------------- 

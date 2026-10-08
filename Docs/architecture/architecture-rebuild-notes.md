@@ -27,8 +27,9 @@ Persistent legacy objects (Main)
 
 Stage scene
   InGameManager ─┬─ Wave + Spawner + Dialogue + Pause + Reward + GameOver
-                 ├─ TowerManager / ControlUnitStatus
+                 ├─ TurretController / ControlUnitHealth
                  └─ Player / MonsterSpawner / UI
+  TurretInteractionUI ── direct turret selection and activation UI
 ```
 
 ```mermaid
@@ -43,7 +44,6 @@ classDiagram
         +sceneController
         +audioManager
         +inGameManager
-        +towerManager
         +FindManagers()
     }
     class GameManager {
@@ -70,9 +70,10 @@ classDiagram
         +StartWave()
         +ListenMonsterDie()
     }
-    class TowerManager
+    class TurretController
+    class TurretInteractionUI
     class PlayerInfo
-    class ControlUnitStatus
+    class ControlUnitHealth
     class UIPlayerHp
     class MonsterSpawner
     class Monster
@@ -85,12 +86,12 @@ classDiagram
     GeneralManager --> GameManager : global reference
     GeneralManager --> SceneController : global reference
     GeneralManager --> InGameManager : Find every FixedUpdate
-    GeneralManager --> TowerManager : Find every FixedUpdate
     SceneController --> GameManager : static state
     InGameManager --> DataManager : progression/reward
-    InGameManager --> TowerManager : direct control
+    InGameManager --> TurretController : activation command
+    TurretInteractionUI --> TurretController : TurretBase activation path
     PlayerInfo --> InGameManager : GameOver direct call
-    ControlUnitStatus --> InGameManager : GameOver direct call
+    ControlUnitHealth --> MatchEvents : HealthChanged / Destroyed
     UIPlayerHp --> PlayerInfo : UnityEvent/direct lookup
     MonsterSpawner --> InGameManager : spawn report
     Monster --> InGameManager : death report
@@ -253,10 +254,10 @@ AppRoot (프로세스당 1개; composition root)
 | `DataManager` | `ContentCatalog`, `PlayerProfile`, `ProfileService` | 밸런스 정의, 계정 진행도, Backend Gateway와 Local Cache를 분리한다. |
 | `InGameManager` | `MatchSession`, `GameSimulation`, `StoryModeRules` | 웨이브·승패·보상을 Domain/Application으로 이식한다. UI/Animator는 Presenter로 이동한다. |
 | `PlayerInfo` | `PlayerState` + `PlayerSceneAdapter` | HP 원본은 State, MonoBehaviour는 피격/표현 Adapter가 된다. |
-| `ControlUnitStatus` | `ControlUnitState` + `ControlUnitSceneAdapter` | HP/전력 원본을 State로 이동한다. |
+| `ControlUnitHealth` | `ControlUnitState` + `ControlUnitSceneAdapter` | HP 원본을 State로 이동한다. 전력은 `TurretController` 경계에 유지한다. |
 | `UIPlayerHp`, `UICUInfo` | `HudPresenter` + View | State/event 구독으로 갱신하고 Player/Manager 검색을 제거한다. |
 | `MonsterSpawner`, `Monster` | `SpawnerSceneAdapter`, `MonsterSceneAdapter` | spawn/death를 `GameCommand`/result로 보고한다. |
-| `TowerManager` | `TowerSystem` + `TowerSceneAdapter` | 미리 배치된 터렛의 활성화/전력 규칙은 System, 선택 메뉴/프리팹은 Presentation으로 분리한다. 플레이어 건설 기능은 포함하지 않는다. |
+| 제거된 `TowerManager` | `TurretController` + `TurretInteractionUI` | 활성화·전력 규칙과 선택 메뉴를 분리했다. 플레이어 건설 기능은 포함하지 않는다. |
 | `AudioManager` | `IAudioService` + `UnityAudioAdapter` | Game event를 표현하되, Domain에 직접 참조되지 않는다. |
 
 이 표는 상속 계보가 아니라 **책임의 이식 지도**다. 레거시 클래스를 새 이름으로 바꿔
@@ -304,7 +305,7 @@ public interface IMatchEvents
 
 ### 0. 안전망
 
-- `DataManager`의 ControlUnit Power/Health 배열 인덱스 역전 및 미사일 기본값 불일치를 고친다.
+- Control Unit 체력은 Definition으로 이관했다. `DataManager`의 남은 CU 상점 데이터와 미사일 기본값 불일치는 해당 상점 이관 때 정리한다.
 - `GameManager`, `DataManager`의 static 상태를 테스트 시작마다 초기화할 수 있는 임시 리셋 도구를 둔다.
 - `GeneralManager.FixedUpdate`의 반복 Find 의존성을 더 늘리지 않는다.
 
@@ -316,7 +317,7 @@ public interface IMatchEvents
 
 ### 2. HP/CU/웨이브를 첫 vertical slice로 이관
 
-- PlayerInfo와 ControlUnitStatus의 수치를 `MatchState`의 분리된 상태 모델로 이관한다.
+- PlayerInfo와 ControlUnitHealth의 수치를 `MatchState`의 분리된 상태 모델로 이관한다.
 - UIPlayerHp/UICUInfo는 이벤트를 구독하는 Presenter로 변경한다.
 - MonsterSpawner와 Monster는 직접 `InGameManager.Listen...`을 호출하지 않고
   Spawn/Death 이벤트를 발행한다.
@@ -383,7 +384,7 @@ FakeAudioService, FakeSceneLoader만 배치한다. Main, GeneralManager,
 
 - `GeneralManager`가 물리 프레임마다 `GameObject.Find`로 로컬 매니저와 UI를 찾는다.
 - `InGameManager`가 약 840줄로 다수 도메인 책임을 가진다.
-- `DataManager.ApplyLevelingSystem()`의 ControlUnit Power/Health 배열 인덱스는 `AttributeType`과 불일치한다.
+- `DataManager`의 CU 상점 수치는 현재 `ControlUnitHealth`와 `TurretController`가 소비하지 않는 레거시 데이터다.
 - 미사일 기본 공격력은 초기 배열 `120`, 레벨 적용 기준값 `110`으로 불일치한다.
 - `PlayerInfo`는 변경 여부와 무관하게 매 FixedUpdate에 HP 이벤트를 발행한다.
 - 현재 EventBus/Global/Game 초안은 실행 흐름에 연결되지 않았다.

@@ -10,7 +10,7 @@ namespace TeamHJD.Game.Turrets
     [DisallowMultipleComponent]
     public sealed class TurretController : MonoBehaviour, ITurretPowerSource
     {
-        [SerializeField, Min(0)] private int maximumPower = 100;
+        [SerializeField, Min(0)] private int maximumPower = 250;
         private TurretPowerBudget _budget;
         public TurretPowerBudget Budget => _budget ??= new TurretPowerBudget(Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;

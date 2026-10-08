@@ -1,6 +1,6 @@
 # API 사용법
 
-최종 갱신: 2026-10-03
+최종 갱신: 2026-10-08
 상태: 현재 Canon / Missile 공개 API. 명령용 호환 API는 컴포넌트 참조를 사용할 수 있다.
 
 네임스페이스는 `TeamHJD.Game.Turrets`다. 결과 타입과 터렛 종류는 `TeamHJD.Game.Turrets.Contracts`에 있다. 소비자 asmdef에서 사용하는 어셈블리를 참조해야 한다.
@@ -39,6 +39,16 @@ ID는 로컬 런타임 식별자다. Network ID나 저장 데이터 ID가 아니
 없는 ID 또는 다른 전력 공급자를 사용하는 터렛의 활성화 요청은 `PowerSourceUnavailable`이다. `GetSnapshot()`은 전역 집계가 아니라 해당 컨트롤러를 사용하는 등록 터렛의 집계다.
 
 ## 피해와 복구 및 업그레이드
+
+Enemy처럼 일반 터렛과 CU를 같은 방식으로 공격하는 소비자는 `TeamHJD.Game.Turrets.Contracts.IDamageableTarget`을 사용한다.
+
+| IDamageableTarget API | 의미 |
+| --- | --- |
+| `CurrentHealth` / `MaxHealth` | 현재 체력과 Definition 기준 최대 체력 |
+| `IsDestroyed` | 체력이 0인 상태 |
+| `ApplyDamage(int)` | 유효한 피해가 적용됐는지 반환 |
+
+`TurretBase`와 `ControlUnitHealth`가 이 계약을 구현한다. CU는 이 계약만 공유하며 Registry, 활성화, 전력 명령에는 포함되지 않는다.
 
 아래는 현재 `TurretBase`의 명령 API다. **읽기 전용 조회와 달리 컴포넌트를 조회해서 호출하는 호환 경로**다. 모든 명령이 ID 기반 전용 인터페이스로 분리된 상태는 아니다.
 

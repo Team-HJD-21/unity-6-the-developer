@@ -1,4 +1,5 @@
 using UnityEngine;
+using TeamHJD.Game.Turrets.Contracts;
 
 /// <summary>
 /// 플레이어와 터렛을 <see cref="ITargetable"/>로 연결하는 타깃 상태 컴포넌트다.
@@ -81,4 +82,18 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     /// </summary>
     public bool CanBeTargeted =>
         isActiveAndEnabled && maxHealth > 0f && currentHealth > 0f;
+
+    public bool TryApplyDamage(int damage)
+    {
+        MonoBehaviour[] candidates = GetComponentsInParent<MonoBehaviour>(true);
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            if (candidates[i] is IDamageableTarget damageable)
+            {
+                return damageable.ApplyDamage(damage);
+            }
+        }
+
+        return false;
+    }
 }

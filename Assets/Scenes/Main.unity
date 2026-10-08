@@ -1484,7 +1484,6 @@ MonoBehaviour:
   cameraController: {fileID: 0}
   minimapController: {fileID: 0}
   alertManager: {fileID: 0}
-  towerManager: {fileID: 0}
   inGameManager: {fileID: 0}
   shopManager: {fileID: 0}
   uiCUInfo: {fileID: 0}

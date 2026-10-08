@@ -53187,11 +53187,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd585ff8b659d4e44a25dcedb3a24ba9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerInfo: {fileID: 1185280638}
-  towerList: []
-  towerTag: Tower
-  totalTowers: 0
-  activeTowers: 0
 --- !u!1 &1996870427
 GameObject:
   m_ObjectHideFlags: 0

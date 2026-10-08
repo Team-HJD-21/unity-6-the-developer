@@ -145735,11 +145735,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   towerMenu: {fileID: 1187008938}
-  towerInfo: {fileID: 1185280638}
-  towerList: []
-  towerTag: Tower
-  totalTowers: 0
-  activeTowers: 0
   nameText: {fileID: 136126181}
   activateButton: {fileID: 1938216476}
   activateText: {fileID: 1988881598}
@@ -145980,8 +145975,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1871004783}
-        m_TargetAssemblyTypeName: ControlUnitStatus, Assembly-CSharp
-        m_MethodName: GetDamage
+        m_TargetAssemblyTypeName: ControlUnitHealth, Assembly-CSharp
+        m_MethodName: ApplyDamageFromEvent
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Tower;
 using Unity.VisualScripting;
@@ -22,7 +22,8 @@ public class LaserTurret : DefaultLaserTurret
     [SerializeField] private SpriteRenderer rangeRenderer;
     [SerializeField] private Transform rangeTransform;
     
-    [Header("Attributes")] 
+    [Header("Attributes")]
+    [SerializeField, Min(0)] private int damage = 12;
     [SerializeField] private float range;        // 타워 사거리
     [SerializeField] private float rotationSpeed;// 타워 회전 속도
     [SerializeField] private float fireRate;       // 발사 속도, 충격발 애니메이션이랑 연동시키기? ㄱㄴ?
@@ -57,7 +58,7 @@ public class LaserTurret : DefaultLaserTurret
         //Info for Ui
         Level = 1;
         RPM = (int)(60 / (1 / fireRate));
-        Damage = DataManager.GetAttributeData(AttributeType.TurretBullet);
+        Damage = damage;
         _nowShooting = false;
     }
     override 
