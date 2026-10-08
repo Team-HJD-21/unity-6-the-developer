@@ -814,6 +814,8 @@ GameObject:
   - component: {fileID: 4090183095164620409}
   - component: {fileID: 5846448872476402325}
   - component: {fileID: -6895610628420138530}
+  - component: {fileID: 1827649334803957301}
+  - component: {fileID: 1827649334803957302}
   m_Layer: 18
   m_Name: Player
   m_TagString: Player
@@ -821,6 +823,35 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1827649334803957301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
+  targetType: 0
+  maxHealth: 0
+  currentHealth: 0
+  maxFirepower: 0
+  currentFirepower: 0
+--- !u!114 &1827649334803957302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be1c495d7f304f81a38d0f1cb5668f08, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.Enemies.Targeting.PlayerTargetableAdapter
 --- !u!4 &5513808030836162447
 Transform:
   m_ObjectHideFlags: 0

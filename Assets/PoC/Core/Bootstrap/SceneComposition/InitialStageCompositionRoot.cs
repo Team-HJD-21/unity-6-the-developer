@@ -1,5 +1,5 @@
-// Initial_Stage PoC에서 App이 제공한 Match 기능과 Scene 전용 Player actor를 조립합니다.
-// 게임 규칙은 Core에, Unity 오브젝트 생성·정리는 이 Scene 범위 조립자가 맡습니다.
+// Initial_Stage에서 Match·Player를 조립하고 Encounter에 공간 조회 경로를 연결합니다.
+// Scene 수명에 맞춰 actor와 Match, Encounter 바인딩을 정리합니다.
 
 using System;
 using System.Collections.Generic;
@@ -22,16 +22,23 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private GameObject playerPrefab;
         [SerializeField] private Transform actorParent;
         [SerializeField] private BattlefieldGridSettings battlefieldGridSettings;
+        [Tooltip("IEncounterMatchConsumer 구현체. 기존 Scene 호환을 위해 미지정 시 활성 소비자 하나를 조회합니다.")]
+        [SerializeField] private MonoBehaviour _encounterConsumerBehaviour;
 
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
         private MatchPlayerActorScope _playerActors;
         private IBattlefieldTurretInputSource _turretInputSource;
+        private IEncounterMatchConsumer _encounterConsumer;
         private IBattlefieldEnemyPositionSource[] _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
         private readonly Dictionary<TeamHJD.Game.Domain.EntityId, int> _lastEntityCells =
             new Dictionary<TeamHJD.Game.Domain.EntityId, int>();
         private float _nextBattlefieldSampleTime;
         private bool _ownsMatch;
+        private MatchId _ownedMatchId;
+
+        private bool HasCurrentMatch => _ownsMatch && _matchHost != null &&
+            _matchHost.CurrentMatchId == _ownedMatchId;
 
         public void Compose(IAppMatchHost appMatchHost)
         {
@@ -94,6 +101,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     grid);
                 _matchHost = appMatchHost;
                 _ownsMatch = true;
+                _ownedMatchId = matchId;
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
@@ -102,6 +110,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     new LocalPlayerActorSpawner(playerPrefab, actorParent),
                     starts);
                 _matchSession = session;
+                _encounterConsumer = ResolveEncounterConsumer();
+                if (_encounterConsumer != null)
+                    _encounterConsumer.BindMatch(matchId, () => HasCurrentMatch ? _matchSession?.Battlefield : null);
+                else
+                    Debug.LogWarning("Initial_Stage has no IEncounterMatchConsumer; automatic Encounter is unavailable.", this);
                 _lastEntityCells.Clear();
                 _nextBattlefieldSampleTime = 0f;
                 cameraFollow.Bind(_playerActors.Actors[LocalPlayerId].transform);
@@ -119,6 +132,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             catch
             {
+                ReleaseEncounterConsumer(matchId);
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -128,9 +142,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _playerActors = null;
                 if (_ownsMatch)
                 {
-                    _matchHost.EndCurrentMatch();
+                    _matchHost.TryEndMatch(_ownedMatchId);
                     _ownsMatch = false;
                     _matchHost = null;
+                    _ownedMatchId = default;
                 }
                 throw;
             }
@@ -148,6 +163,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             finally
             {
+                if (_matchSession != null)
+                    ReleaseEncounterConsumer(_matchSession.Config.MatchId);
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -155,8 +172,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
                 _lastEntityCells.Clear();
                 _playerActors = null;
-                if (_ownsMatch) _matchHost?.EndCurrentMatch();
+                if (_ownsMatch) _matchHost?.TryEndMatch(_ownedMatchId);
                 _ownsMatch = false;
+                _ownedMatchId = default;
                 _matchHost = null;
             }
         }
@@ -168,6 +186,38 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 .ToArray();
         }
 
+        private IEncounterMatchConsumer ResolveEncounterConsumer()
+        {
+            if (_encounterConsumerBehaviour != null)
+            {
+                if (!_encounterConsumerBehaviour.isActiveAndEnabled ||
+                    !(_encounterConsumerBehaviour is IEncounterMatchConsumer consumer))
+                    throw new InvalidOperationException("Assigned Encounter consumer must be active and implement IEncounterMatchConsumer.");
+                return consumer;
+            }
+
+            // 기존 Scene의 NGO 루트는 Awake에서 DDOL로 이동합니다. 직렬화 연결 전까지만
+            // 전역 조회를 허용하되 복수 소비자는 임의로 선택하지 않고 오류로 처리합니다.
+            IEncounterMatchConsumer[] consumers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+                .Where(component => component != null && component.isActiveAndEnabled)
+                .OfType<IEncounterMatchConsumer>().ToArray();
+            if (consumers.Length > 1)
+                throw new InvalidOperationException("Assign an explicit Encounter consumer when more than one is active.");
+            return consumers.FirstOrDefault();
+        }
+
+        private void ReleaseEncounterConsumer(MatchId matchId)
+        {
+            IEncounterMatchConsumer consumer = _encounterConsumer;
+            _encounterConsumer = null;
+            try { consumer?.UnbindMatch(matchId); }
+            catch (Exception exception)
+            {
+                // Feature 해제 실패가 Player/Core Match 정리를 중단해서는 안 됩니다.
+                Debug.LogException(exception, this);
+            }
+        }
+
         private MatchCameraFollow FindSceneCameraFollow()
         {
             return FindObjectsByType<MatchCameraFollow>(FindObjectsSortMode.None)
@@ -176,30 +226,39 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private IBattlefieldTurretInputSource FindTurretInputSource()
         {
-            MonoBehaviour source = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-                .FirstOrDefault(component =>
-                    component.gameObject.scene == gameObject.scene &&
-                    component is IBattlefieldTurretInputSource);
+            MonoBehaviour source = FindSceneBehaviours()
+                .FirstOrDefault(component => component is IBattlefieldTurretInputSource);
             return source as IBattlefieldTurretInputSource;
+        }
+
+        private IEnumerable<MonoBehaviour> FindSceneBehaviours()
+        {
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                foreach (MonoBehaviour component in root.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (component != null && component.isActiveAndEnabled)
+                        yield return component;
+                }
+            }
         }
 
         private void OnTurretLayoutChanged()
         {
-            if (_matchHost == null || _turretInputSource == null) return;
+            if (!HasCurrentMatch || _turretInputSource == null) return;
             _matchHost.UpdateBattlefieldTurretLayout(_turretInputSource.CaptureTurretLayout());
         }
 
         private IBattlefieldEnemyPositionSource[] FindEnemyPositionSources()
         {
-            return FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-                .Where(component => component.gameObject.scene == gameObject.scene)
+            return FindSceneBehaviours()
                 .OfType<IBattlefieldEnemyPositionSource>()
                 .ToArray();
         }
 
         private void Update()
         {
-            if (_matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
+            if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
 
             _nextBattlefieldSampleTime = Time.unscaledTime + BattlefieldSampleInterval;
@@ -226,7 +285,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             Dictionary<TeamHJD.Game.Domain.EntityId, int> nextCells = GetOccupiedCellByEntity(nextInput);
             if (HaveSameCellOccupancy(_lastEntityCells, nextCells)) return;
 
-            _matchSession.UpdateBattlefieldParticipants(nextInput);
+            // App 경계를 거쳐야 Editor의 snapshot 변경 통지도 같은 revision을 받습니다.
+            _matchHost.UpdateBattlefieldParticipants(nextInput);
             _lastEntityCells.Clear();
             foreach (KeyValuePair<TeamHJD.Game.Domain.EntityId, int> cell in nextCells)
                 _lastEntityCells.Add(cell.Key, cell.Value);

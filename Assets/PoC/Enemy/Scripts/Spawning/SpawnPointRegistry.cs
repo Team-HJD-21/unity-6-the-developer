@@ -1,5 +1,7 @@
+// Scene에서 발견한 생성 지점을 고유 ID로 등록하고 조회합니다.
+// 비활성/점령 상태도 보관하되 Planner에는 현재 생성 가능한 지점만 제공합니다.
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace TeamHJD.Game.Domain
 {
@@ -9,16 +11,25 @@ namespace TeamHJD.Game.Domain
     public class SpawnPointRegistry
     {
         private readonly List<SpawnPoint> spawnPoints = new();
+        public IReadOnlyList<SpawnPoint> GetRegisteredSpawnPoints() => spawnPoints.AsReadOnly();
 
         /// <summary>
-        /// Executor의 자식 오브젝트에서 찾은 스폰 지점으로 등록 목록을 교체한다.
+        /// Executor가 같은 Scene에서 찾은 스폰 지점으로 등록 목록을 교체한다.
         /// 점령 상태에 관계없이 모두 보관하며, 사용 가능 여부는 조회 시 확인한다.
         /// </summary>
         /// <param name="points">등록할 스폰 지점 목록.</param>
         public void Initialize(IEnumerable<SpawnPoint> points)
         {
             spawnPoints.Clear();
-            spawnPoints.AddRange(points);
+            if (points == null) return;
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var seen = new HashSet<SpawnPoint>();
+            foreach (SpawnPoint point in points)
+            {
+                if (point == null || !seen.Add(point)) continue;
+                point.EnsureUniqueRegistrationId(ids);
+                spawnPoints.Add(point);
+            }
         }
 
         /// <summary>

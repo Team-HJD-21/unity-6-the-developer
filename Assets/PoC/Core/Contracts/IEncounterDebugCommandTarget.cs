@@ -13,5 +13,11 @@ namespace TeamHJD.Game.Contracts
             string squadOrder,
             int maxEnemyCount,
             out string result);
+        bool TryRequestEncounter(
+            BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
+            EncounterRequestSource source, out string result);
+        /// <summary>Scene/UI 입력은 바인딩된 현재 Match의 최신 공간 결과로 요청합니다.</summary>
+        bool TryRequestCurrentEncounter(
+            string squadOrder, int maxEnemyCount, EncounterRequestSource source, out string result);
     }
 }

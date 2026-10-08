@@ -1,0 +1,31 @@
+.game-debugger { background-color: rgb(47, 47, 47); color: rgb(210, 210, 210); font-size: 12px; padding: 6px; }
+.status-header { font-size: 12px; -unity-font-style: bold; padding: 7px; background-color: rgb(56, 56, 56); border-bottom-width: 1px; border-bottom-color: rgb(32, 32, 32); }
+.workspace { flex-direction: row; flex-grow: 1; min-height: 0; margin-top: 6px; }
+.navigation { width: 132px; flex-shrink: 0; margin-right: 6px; }
+.navigation Button { height: 28px; margin-bottom: 3px; -unity-text-align: middle-left; padding-left: 8px; border-width: 1px; border-color: rgb(38, 38, 38); }
+.navigation Button.active-page { background-color: rgb(64, 80, 98); border-left-width: 2px; border-left-color: rgb(110, 150, 190); }
+.content { flex-grow: 1; min-width: 0; min-height: 0; padding: 7px; }
+.layout-toolbar { flex-direction: row; flex-wrap: wrap; margin-top: 4px; padding-bottom: 4px; border-bottom-width: 1px; border-bottom-color: rgb(34, 34, 34); }
+.layout-toolbar > * { margin-right: 5px; }
+.layout-toolbar .unity-base-field__label { min-width: 42px; }
+.pane-workspace, .pane-split { flex-grow: 1; min-width: 0; min-height: 0; }
+.debug-pane { flex-grow: 1; min-width: 240px; min-height: 140px; border-width: 1px; border-color: rgb(34, 34, 34); }
+.debug-pane.active-pane { border-color: rgb(98, 126, 153); }
+.pane-toolbar { flex-direction: row; align-items: center; padding: 3px 5px; background-color: rgb(58, 58, 58); border-bottom-width: 1px; border-bottom-color: rgb(32, 32, 32); }
+.pane-toolbar Label { margin-right: 7px; }
+.pane-selector { flex-grow: 1; min-width: 0; }
+.navigation-target { font-size: 11px; padding: 6px; color: rgb(185, 185, 185); }
+.record-status { white-space: normal; font-size: 12px; color: rgb(195, 195, 195); padding: 5px; margin-bottom: 6px; border-bottom-width: 1px; border-bottom-color: rgb(38, 38, 38); }
+.filter-row { flex-direction: row; flex-wrap: wrap; margin-bottom: 6px; }
+.filter-row > * { margin-right: 6px; }
+.chart { margin-top: 6px; padding: 5px; border-width: 1px; border-color: rgb(32, 32, 32); }
+.chart-axes { white-space: normal; color: rgb(185, 185, 185); font-size: 11px; margin: 4px 0 6px 0; }
+.debug-section { margin-top: 7px; margin-bottom: 7px; padding: 6px; border-width: 1px; border-color: rgb(36, 36, 36); }
+.debug-table { margin-top: 6px; margin-bottom: 6px; border-width: 1px; border-color: rgb(30, 30, 30); }
+.spawn-inspector { padding: 4px; }
+.footer { white-space: normal; color: rgb(185, 185, 185); font-size: 11px; padding: 5px; margin-top: 5px; border-top-width: 1px; border-top-color: rgb(33, 33, 33); }
+.game-debugger.light { background-color: rgb(202, 202, 202); color: rgb(35, 35, 35); }
+.game-debugger.light .status-header, .game-debugger.light .pane-toolbar { background-color: rgb(215, 215, 215); border-color: rgb(158, 158, 158); }
+.game-debugger.light .debug-pane, .game-debugger.light .debug-section, .game-debugger.light .debug-table, .game-debugger.light .chart { border-color: rgb(150, 150, 150); }
+.game-debugger.light .navigation Button.active-page { background-color: rgb(164, 190, 218); }
+.game-debugger.light .record-status, .game-debugger.light .chart-axes, .game-debugger.light .footer, .game-debugger.light .navigation-target { color: rgb(65, 65, 65); border-color: rgb(158, 158, 158); }

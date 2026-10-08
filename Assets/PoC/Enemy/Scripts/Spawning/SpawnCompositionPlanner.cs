@@ -1,20 +1,30 @@
+// Squad Preset과 요청 상한을 지점별 SpawnInstruction으로 변환합니다.
+// Match snapshot이 있으면 공간 정책으로 후보와 분량을 선택합니다.
+
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Contracts;
 
 /// <summary>
-/// 분대 프리셋의 구성 비율과 현재 사용 가능한 스폰 지점을 바탕으로 생성 명령을 만든다.
-/// 생성 자체는 담당하지 않으며, 점령된 지점에는 생성 수를 배정하지 않는다.
+/// 분대 프리셋의 비율과 스폰 지점, 선택적으로 Grid·전선을 이용해 생성 명령을 만든다.
+/// 생성 자체는 담당하지 않으며, 점령·아군 점유 지점에는 생성 수를 배정하지 않는다.
 /// </summary>
 public sealed class SpawnCompositionPlanner
 {
-    // TODO: Encounter의 전선/Grid 정보와 Spawn Policy가 준비되면 고정된 분대 유형과 생성 상한을 상황별 계산으로 교체한다.
+    // 분대 프리셋과 상한은 임시값이며, 공간별 난이도·스폰율 조정은 후속 정책이다.
     private readonly EnemySquadPresetCatalog _catalog;
+    private readonly SpawnPointSpatialPolicy _spatialPolicy = new SpawnPointSpatialPolicy();
+    public IReadOnlyList<SpawnDecisionSnapshot.Candidate> LastCandidates { get; private set; } = Array.Empty<SpawnDecisionSnapshot.Candidate>();
 
     /// <summary>
     /// 분대 프리셋을 조회할 카탈로그가 로드되었는지 반환한다.
     /// </summary>
     public bool HasCatalog => _catalog != null;
+
+    /// <summary>Executor가 실제로 생성한 적만 Match별 공간 배분 이력에 반영합니다.</summary>
+    public void RecordExecuted(BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpawnDecisionSnapshot.Actual> actuals)
+        => _spatialPolicy.RecordExecuted(snapshot, actuals);
 
     /// <summary>
     /// 기본 카탈로그를 한 번 로드해 Planner를 만든다.
@@ -54,7 +64,17 @@ public sealed class SpawnCompositionPlanner
         SpawnPointRegistry spawnPoints,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
-        return TryBuildInstructions(request, spawnPoints, out instructions);
+        return TryBuildInstructions(request, spawnPoints, null, out instructions);
+    }
+
+    /// <summary>현재 Match의 공간 스냅샷으로 후보를 걸러 분대 세트를 배분합니다.</summary>
+    public bool TryPlan(
+        SpawnRequest request,
+        SpawnPointRegistry spawnPoints,
+        BattlefieldSpatialSnapshot snapshot,
+        out IReadOnlyList<SpawnInstruction> instructions)
+    {
+        return TryBuildInstructions(request, spawnPoints, snapshot, out instructions);
     }
 
     /// <summary>
@@ -69,9 +89,18 @@ public sealed class SpawnCompositionPlanner
     private bool TryBuildInstructions(
         SpawnRequest spawnRequest,
         SpawnPointRegistry spawnPoints,
+        BattlefieldSpatialSnapshot snapshot,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
         instructions = Array.Empty<SpawnInstruction>();
+        var observations = new List<SpawnDecisionSnapshot.Candidate>();
+        LastCandidates = observations.AsReadOnly();
+        if (spawnPoints != null)
+            foreach (SpawnPoint point in spawnPoints.GetRegisteredSpawnPoints())
+                if (point != null && (!point.CanSpawnEnemies || string.IsNullOrWhiteSpace(point.SpawnPointId)))
+                    observations.Add(new SpawnDecisionSnapshot.Candidate(point.SpawnPointId,
+                        new BattlefieldPoint(point.Position.x,point.Position.y),-1,-1,0,0,0,false,
+                        !point.isActiveAndEnabled ? "Inactive point" : !point.CanSpawnEnemies ? "Spawn disabled / captured" : "Missing ID"));
 
         if (spawnPoints == null ||
             string.IsNullOrWhiteSpace(spawnRequest.SquadOrder) ||
@@ -98,29 +127,48 @@ public sealed class SpawnCompositionPlanner
         if (totalSets == 0 || availablePoints.Count == 0)
             return false;
 
-        // 세트 수를 균등하게 나누고 남는 세트는 등록 순서상 앞쪽 지점부터 배정한다. (추후 점수 계산을 통해 세트 수 비균등)
-        int setsPerPoint = totalSets / availablePoints.Count;
-        int extraSets = totalSets % availablePoints.Count;
-        List<SpawnInstruction> planned = new();
-
-        for (int pointIndex = 0; pointIndex < availablePoints.Count; pointIndex++)
+        IReadOnlyList<SpatialSpawnAllocation> allocations;
+        if (snapshot != null)
         {
-            int pointSets = setsPerPoint + (pointIndex < extraSets ? 1 : 0);
-            if (pointSets == 0)
+            var candidates = new List<SpatialSpawnCandidate>(availablePoints.Count);
+            foreach (SpawnPoint point in availablePoints)
+                candidates.Add(new SpatialSpawnCandidate(
+                    point.SpawnPointId,
+                    new BattlefieldPoint(point.Position.x, point.Position.y)));
+            allocations = _spatialPolicy.Allocate(snapshot, candidates, totalSets, totalWeight, out var evaluated);
+            observations.AddRange(evaluated);
+        }
+        else
+        {
+            // 기존 독립 스폰 테스트 경로는 공간 입력이 없어 균등 배분을 유지한다.
+            int setsPerPoint = totalSets / availablePoints.Count;
+            int extraSets = totalSets % availablePoints.Count;
+            var evenlyDistributed = new List<SpatialSpawnAllocation>();
+            for (int index = 0; index < availablePoints.Count; index++)
+                evenlyDistributed.Add(new SpatialSpawnAllocation(
+                    availablePoints[index].SpawnPointId,
+                    setsPerPoint + (index < extraSets ? 1 : 0)));
+            allocations = evenlyDistributed;
+        }
+
+        List<SpawnInstruction> planned = new();
+        foreach (SpatialSpawnAllocation allocation in allocations)
+        {
+            if (allocation.Sets == 0)
                 continue;
 
             List<EnemySpawnEntry> enemies = new(squadPreset.Composition.Count);
             foreach (EnemySquadCompositionEntry entry in squadPreset.Composition)
-                enemies.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight * pointSets));
+                enemies.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight * allocation.Sets));
 
             planned.Add(new SpawnInstruction(
                 spawnRequest.SquadOrder,
-                availablePoints[pointIndex].SpawnPointId,
+                allocation.SpawnPointId,
                 enemies));
         }
 
         instructions = planned.AsReadOnly();
-        return true;
+        return planned.Count > 0;
     }
 
     private bool TryGetPreset(string squadOrder, out EnemySquadPreset squadPreset)

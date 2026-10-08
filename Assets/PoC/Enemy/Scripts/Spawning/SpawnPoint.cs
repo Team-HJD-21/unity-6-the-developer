@@ -1,3 +1,7 @@
+// Scene의 적 생성 지점과 점령 상태를 제공합니다.
+// 복제된 지점도 등록 시 고유 ID를 부여받으며 종류·수량 결정은 Planner가 담당합니다.
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 
@@ -10,6 +14,9 @@ public class SpawnPoint : MonoBehaviour
     [Header("식별 정보")]
     [SerializeField] private string spawnPointId;
     [SerializeField] private string areaId;
+    // 런타임 복제는 authoring 값을 저장하지 않고 이 객체의 수명 동안 ID를 유지합니다.
+    private string _runtimeSpawnPointId;
+    private string _runtimeAuthoredId;
 
     [Header("생성 영역")]
     [SerializeField, Min(0f)] private float spawnRadius = 1f;
@@ -20,7 +27,22 @@ public class SpawnPoint : MonoBehaviour
     /// <summary>
     /// 스폰 지점을 식별하는 고유 값을 반환한다.
     /// </summary>
-    public string SpawnPointId => spawnPointId;
+    public string SpawnPointId => _runtimeSpawnPointId != null && _runtimeAuthoredId == spawnPointId
+        ? _runtimeSpawnPointId : spawnPointId;
+
+    /// <summary>레지스트리 안에서 빈 ID/복제 ID를 구분하고, 기존의 유효한 ID는 유지합니다.</summary>
+    internal void EnsureUniqueRegistrationId(HashSet<string> registeredIds)
+    {
+        if (!string.IsNullOrWhiteSpace(SpawnPointId) && registeredIds.Add(SpawnPointId)) return;
+        _runtimeAuthoredId = spawnPointId;
+        do { _runtimeSpawnPointId = "SpawnPoint-" + Guid.NewGuid().ToString("N"); }
+        while (!registeredIds.Add(_runtimeSpawnPointId));
+    }
+
+    private void Reset()
+    {
+        spawnPointId = "SpawnPoint-" + Guid.NewGuid().ToString("N");
+    }
 
     /// <summary>
     /// 스폰 지점이 속한 전장 구역의 식별 값을 반환한다.
