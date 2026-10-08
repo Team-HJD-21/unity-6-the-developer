@@ -1,5 +1,6 @@
 // Match가 시작되면 첫 Encounter를 자동으로 요청합니다.
 // 기존 네트워크 테스트 UI의 수동 요청도 같은 Encounter 경로로 전달합니다.
+// 이 임시 테스트 Host의 수명은 Executor의 Scene에 한정하며 App 네트워크 서비스가 아닙니다.
 
 using System;
 using System.Collections;
@@ -8,6 +9,7 @@ using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Match 시작과 테스트 UI의 요청을 Host 권한의 EncounterRuntime에 전달한다.
@@ -92,6 +94,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
         EnsureEncounterRuntime();
+        BindTestHostToExecutorScene();
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
         _initialEncounterPending = true;
         if (_networkManager != null) StartInitialEncounterIfBound();
@@ -102,6 +105,10 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     {
         if (_snapshotProvider == null || _boundMatchId != matchId) return;
         CancelPendingInitialEncounter();
+        // Scene 소유 임시 Host는 SDK 종료를 먼저 요청하고 Scene 파괴 시 정리를 완료합니다.
+        if (_encounterRuntime?.Executor != null &&
+            gameObject.scene == _encounterRuntime.Executor.gameObject.scene && _networkManager != null)
+            _networkManager.Shutdown();
         Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Enemy despawn is Feature-owned");
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
@@ -115,6 +122,18 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (_snapshotProvider != null) UnbindMatch(_boundMatchId);
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+    }
+
+    private void BindTestHostToExecutorScene()
+    {
+        if (_encounterRuntime?.Executor == null) return;
+        Scene owner = _encounterRuntime.Executor.gameObject.scene;
+        if (!owner.IsValid() || !owner.isLoaded || gameObject.scene == owner) return;
+        // NGO의 OnEnable은 루트를 DDOL로 옮깁니다. 임시 Host를 Scene에 돌려놓아
+        // Scene 재진입 때 이전 소비자/연결이 남지 않도록 SDK의 종료 경로를 사용합니다.
+        if (transform.parent != null)
+            throw new InvalidOperationException("Scene-owned test NetworkManager must be a root GameObject.");
+        SceneManager.MoveGameObjectToScene(gameObject, owner);
     }
 
     private void StartInitialEncounterIfBound()
