@@ -1,12 +1,14 @@
 # Naming and Architecture Conventions
 
 작성일: 2026-09-08
-수정일: 2026-09-11
+수정일: 2026-10-09
 상태: 코드·폴더·계약 명명의 Source of Truth
 
 [문서 목차](../README.md)
 
 ## 목적
+
+현행 폴더 기준은 [Assets 구조와 Legacy 교체 기준](asset-layout-and-migration.md)을 따른다. 코드 루트는 `Assets/Scripts/Core`, 기능 루트는 `Assets/Scripts/Features/{Player,Enemy,Turrets,Spaceship}`다. 타입 코드와 `.asset`을 분리하며 기존 `TeamHJD.Game.*` namespace/asmdef 이름은 유지한다. 아래 Legacy는 과거 분석 영역이며 현행 Runtime 계층이 아니다.
 
 이 규칙은 Unity 게임에서 널리 이해되는 Clean Architecture 및 게임플레이 용어를 사용해,
 클래스의 책임과 의존성 방향이 이름만으로도 드러나게 한다. 특정 프레임워크를 강제하지 않으며,

@@ -48,4 +48,4 @@ JSON/파일 저장, 슬롯·버전·마이그레이션, 영구 ID, Research/Prof
 
 ## 회귀 테스트
 
-`Assets/Scripts/Tower/Turret/Tests`에 초기 입력 검증, 부분 체력·업그레이드 재계산, 잠금·파괴 거부, 재초기화 방지, 승급 상태 이전, 초기 등록 순서와 자동 활성화 취소를 검사하는 Unity 테스트가 있다. 코루틴/Factory 테스트는 **PlayMode**에서 실행해야 한다.
+`Assets/Scripts/Features/Turrets/Tests`에 초기 입력 검증, 부분 체력·업그레이드 재계산, 잠금·파괴 거부, 재초기화 방지, 승급 상태 이전, 초기 등록 순서와 자동 활성화 취소를 검사하는 Unity 테스트가 있다. 코루틴/Factory 테스트는 **PlayMode**에서 실행해야 한다.

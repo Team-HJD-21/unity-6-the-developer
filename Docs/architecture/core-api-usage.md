@@ -2,7 +2,7 @@
 
 기준일: 2026-10-08 · 상태: 현재 코드 기준 · 관련 Issue: #445
 
-팀원이 Player·Turret·Enemy를 Core에 연결할 때 사용할 계약과 종료 책임을 정리한다. 명명 규칙은 [Convention](naming-and-architecture-conventions.md), 타입·실행 흐름은 [Core README](../../Assets/PoC/Core/README.md)를 따른다. 아래의 공개 계약이 모두 출시용 게임 규칙을 구현했다는 뜻은 아니다.
+팀원이 Player·Turret·Enemy를 Core에 연결할 때 사용할 계약과 종료 책임을 정리한다. 명명 규칙은 [Convention](naming-and-architecture-conventions.md), 타입·실행 흐름은 [Core README](../../Assets/Scripts/Core/README.md)를 따른다. 아래의 공개 계약이 모두 출시용 게임 규칙을 구현했다는 뜻은 아니다.
 
 ## 호출 방향과 상태 소유권
 

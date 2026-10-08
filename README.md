@@ -1,5 +1,7 @@
 # CBC
 
+> 현재 개발 Scene: `Assets/Scenes/Gameplay/Initial_Stage.unity`. 2026-10-09 Legacy 제거·PoC 이관 후의 [Assets 구조](Docs/architecture/asset-layout-and-migration.md)와 [실행 검증 기록](Docs/planning/2026-10-09-asset-migration-results.md)을 먼저 확인하세요. 아래 2024 제작 설명은 이전 게임의 기록입니다.
+
 > 2026 리뉴얼의 전체 개발 순서는 [Development Flow](Docs/planning/DEVELOPMENT_FLOW.md), Project Plan과 Backlog 등 전체 문서 목록은 [Project Docs](Docs/README.md)를 참고하세요.
 
 ### Department of Software, Sejong University  

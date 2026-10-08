@@ -2,7 +2,7 @@
 
 기준일: 2026-10-08 · 상태: 기존 집중 검사 54/54·Scene 통합 1/1 성공, 후속 사용성 검사 40/40·관측 보완 검사 31/31 성공(검사 범위 중복 포함) · 화면 조작·영상 인수 확인 별도
 
-[배치 계획](../planning/2026-10-08-game-debugger-batch-plan.md) · [구현 결과·검증](../planning/2026-10-08-game-debugger-batch-results.md) · [Core README](../../Assets/PoC/Core/README.md)
+[배치 계획](../planning/2026-10-08-game-debugger-batch-plan.md) · [구현 결과·검증](../planning/2026-10-08-game-debugger-batch-results.md) · [Core README](../../Assets/Scripts/Core/README.md)
 
 세부 사용법: [반복 Encounter 요청](encounter-repeat-debugging.md) · [요청별 Spawn 판단 검사](game-debugger-spawn-inspection.md) · [전선 디자인/기하 시각화](frontline-visualization-design.md).
 
