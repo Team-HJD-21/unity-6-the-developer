@@ -59,7 +59,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.28, y: 0.28, z: 1}
+  m_LocalScale: {x: 0.7, y: 0.7, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4301739478787231800}
@@ -114,8 +114,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 8
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 89ffcac9029ab334f8c3d8281f92b009, type: 3}
-  m_Color: {r: 0.8, g: 0.9, b: 0.7, a: 1}
+  m_Sprite: {fileID: 21300000, guid: b3ec91074b0845e79163e0524fdfbfc2, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -166,13 +166,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e9b243afcb4d5f4bbcb892f5996ffaf, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::TemporaryTurret
-  bulletPrefab: {fileID: 5527518119625726090, guid: 71d691117f0b648c0ba428ef30cd6bba, type: 3}
+  bulletPrefab: {fileID: 5527518119625726090, guid: 1698f33ea9824356baa582f287fe7114, type: 3}
   firePoint: {fileID: 7151821700250404988}
-  damagePerShot: 10
-  bulletColor: {r: 0.2, g: 1, b: 0.4, a: 1}
-  attackRange: 7
+  damagePerShot: 6
+  bulletColor: {r: 1, g: 1, b: 1, a: 1}
+  attackRange: 21
   fireRate: 0.3
   turretHead: {fileID: 4301739478787231800}
   enemyTag: Enemy

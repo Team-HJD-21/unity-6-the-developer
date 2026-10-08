@@ -62,4 +62,35 @@ public sealed class PlayerWeaponMigrationTests
         }
         finally { Object.DestroyImmediate(bomb); }
     }
+
+    [Test]
+    public void TimeBombPrefab_UsesNewVisualAndHidesBodyOnDetonation()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/bomb.prefab");
+        Assert.That(prefab.GetComponent<Animator>(), Is.Null, "The body keeps the time bomb sprite");
+        var legacyAnimator = prefab.GetComponentInChildren<Animator>(true);
+        Assert.That(legacyAnimator, Is.Not.Null);
+        Assert.That(legacyAnimator.runtimeAnimatorController, Is.Not.Null);
+        Assert.That(legacyAnimator.gameObject.activeSelf, Is.False);
+        Assert.That(prefab.transform.localScale.x, Is.EqualTo(2.5f));
+        Assert.That(prefab.GetComponent<PlayerTimeBombVisual>(), Is.Not.Null);
+        var instance = Object.Instantiate(prefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+        try
+        {
+            var presentation = instance.GetComponent<PlayerTimeBombVisual>();
+            var explosion = instance.GetComponent<PlayerBombExplosion>();
+            explosion.SendMessage("Awake");
+            explosion.SendMessage("OnEnable");
+            Assert.That(instance.GetComponent<SpriteRenderer>().enabled, Is.True);
+            Assert.That(instance.transform.Find("Live Timer").gameObject.activeSelf, Is.True);
+            presentation.UpdateFuse(1, 2.1f, 3);
+            Assert.That(explosion.Explode(), Is.True);
+            Assert.That(instance.GetComponent<SpriteRenderer>().enabled, Is.False);
+            Assert.That(instance.transform.Find("Live Timer").gameObject.activeSelf, Is.False);
+            Assert.That(instance.transform.Find("Legacy Explosion").gameObject.activeSelf, Is.True);
+            Assert.That(instance.GetComponentsInChildren<LineRenderer>(true), Is.Empty, "Bomb has no range indicator or shockwave ring");
+            Assert.That(explosion.Explode(), Is.False);
+        }
+        finally { Object.DestroyImmediate(instance); }
+    }
 }

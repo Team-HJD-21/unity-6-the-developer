@@ -943,6 +943,8 @@ GameObject:
   - component: {fileID: 1827649334803957301}
   - component: {fileID: 1827649334803957302}
   - component: {fileID: 1827649334803957303}
+  - component: {fileID: 1827649334803957304}
+  - component: {fileID: 1827649334803957305}
   m_Layer: 18
   m_Name: Player
   m_TagString: Player
@@ -1290,9 +1292,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3d1d03e47d44f5896a8b2ebcf0cf0cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bombIcon: {fileID: 21300000, guid: dda4598a0f8347a3b0198ac0b4d8412b, type: 3}
+  bombIcon: {fileID: 21300000, guid: 68aebf015af5411cb28e584d84eb3a48, type: 3}
   turretIcon: {fileID: 21300000, guid: 2e51fe1c85ab4f88a696b67c3ef15fd2, type: 3}
+  _barrierIcon: {fileID: 21300000, guid: c47e002ca0504465bd0f90064a717910, type: 3}
+  _beaconIcon: {fileID: 21300000, guid: 87a943baf368413fb0d1f320ef716a38, type: 3}
+  _recoveryKeyIcon: {fileID: -1000857641, guid: 39ea407869a0d60418e2574d78bcfb04, type: 3}
   uiFont: {fileID: 11400000, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
+--- !u!114 &1827649334803957304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4673e2f1f45073644ba7e146de689b09, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBarrierSkill
+  _prefab: {fileID: 11400000, guid: 7affea5c252042efa555c5ca52a11127, type: 3}
+  _maxCharges: 3
+  _rechargeSeconds: 18
+  _health: 300
+  _duration: 8
+  _minDistance: 1
+  _maxDistance: 18
+  _width: 0.3
+  _pendingSeconds: 15
+  _terrainLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &1827649334803957305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c355a7f32c188fe4f9cca55f03b168d6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBeaconSkill
+  _prefab: {fileID: 11400000, guid: d765d256e3124773be3df7eb3a502d96, type: 3}
+  _cooldown: 14
+  _duration: 8
+  _radius: 12
+  _health: 80
 --- !u!1 &5971586974638979900
 GameObject:
   m_ObjectHideFlags: 0

@@ -30,6 +30,9 @@ public static class GameInput
     public static bool PrimaryPointerWasPressedThisFrame =>
         Mouse.current?.leftButton.wasPressedThisFrame ?? false;
 
+    public static bool SecondaryPointerWasPressedThisFrame =>
+        Mouse.current?.rightButton.wasPressedThisFrame ?? false;
+
     public static float ScrollY
     {
         get

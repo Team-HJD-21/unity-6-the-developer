@@ -11,7 +11,7 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     [FormerlySerializedAs("bombDamage")]
     [SerializeField, Min(0f)] private float _damage = 250f;
     [FormerlySerializedAs("explosionRange")]
-    [SerializeField, Min(.01f)] private float _radius = 3f;
+    [SerializeField, Min(.01f)] private float _radius = 6f;
     [SerializeField, Min(0f)] private float _fuseSeconds = 2.1f;
     [SerializeField, Min(.01f)] private float _effectSeconds = .8f;
     [FormerlySerializedAs("animator")]
@@ -22,9 +22,11 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     private float _elapsed;
     private bool _exploded;
     private bool _hasExplosionParameter;
+    private PlayerTimeBombVisual _presentation;
 
     private void Awake()
     {
+        _presentation = GetComponent<PlayerTimeBombVisual>();
         if (_animator == null) _animator = GetComponent<Animator>();
         if (_animator != null && _animator.runtimeAnimatorController != null)
             foreach (var parameter in _animator.parameters)
@@ -40,11 +42,13 @@ public sealed class PlayerBombExplosion : MonoBehaviour
         _hitMonsters.Clear();
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, false);
         if (_bombVisual != null && _bombVisual != gameObject) _bombVisual.SetActive(true);
+        if (_presentation != null) _presentation.BeginFuse(_fuseSeconds, _radius);
     }
 
     private void Update()
     {
         _elapsed += Time.deltaTime;
+        if (!_exploded && _presentation != null) _presentation.UpdateFuse(_elapsed, _fuseSeconds, _radius);
         if (!_exploded && _elapsed >= _fuseSeconds) Explode();
         if (_exploded && _elapsed >= _fuseSeconds + _effectSeconds) Destroy(gameObject);
     }
@@ -55,6 +59,7 @@ public sealed class PlayerBombExplosion : MonoBehaviour
         _exploded = true;
         _elapsed = Mathf.Max(_elapsed, _fuseSeconds);
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, true);
+        if (_presentation != null) _presentation.PlayExplosion(_radius, _effectSeconds);
         foreach (var hit in Physics2D.OverlapCircleAll(transform.position, Mathf.Max(.01f, _radius)))
         {
             if (hit == null) continue;

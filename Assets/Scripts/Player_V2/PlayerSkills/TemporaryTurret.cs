@@ -6,21 +6,21 @@ using UnityEngine;
 public class TemporaryTurret : MonoBehaviour
 {
     [Header("Bullet Settings")]
-    [Tooltip("기존 플레이어 총알 프리팹 (PlayerBullet 컴포넌트 포함)")]
+    [Tooltip("보조 포탑 전용 실탄 프리팹 (TemporaryTurretProjectile 컴포넌트 포함)")]
     [SerializeField] private GameObject bulletPrefab;
 
     [Tooltip("총알이 생성될 포구 위치")]
     [SerializeField] private Transform firePoint;
 
     [Tooltip("포탑 탄환 피해량")]
-    [SerializeField] private float damagePerShot = 10f;
+    [SerializeField, Min(0f)] private float damagePerShot = 6f;
 
-    [Tooltip("포탑 탄환 색상 (에메랄드 녹색)")]
-    [SerializeField] private Color bulletColor = new Color(0.2f, 1f, 0.4f, 1f);
+    [Tooltip("포탑 탄환 색상")]
+    [SerializeField] private Color bulletColor = Color.white;
 
     [Header("Turret Attributes")]
     [Tooltip("적 탐지 사거리 반경")]
-    [SerializeField] private float attackRange = 7f;
+    [SerializeField] private float attackRange = 21f;
 
     [Tooltip("발사 간격 (초당 약 3.3발)")]
     [SerializeField] private float fireRate = 0.3f;
@@ -131,20 +131,22 @@ public class TemporaryTurret : MonoBehaviour
     }
 
     /// <summary>
-    /// 기존 PlayerBullet을 재활용하여 탄환 발사
+    /// 설치된 캐논과 같은 외형의 전용 실탄을 실제 총구에서 발사합니다.
     /// </summary>
     private void Shoot()
     {
-        if (bulletPrefab == null) return;
+        if (bulletPrefab == null || targetEnemy == null || firePoint == null ||
+            turretHead == null || !firePoint.IsChildOf(turretHead) ||
+            bulletPrefab.GetComponent<TemporaryTurretProjectile>() == null) return;
 
         Vector2 dir = (targetEnemy.position - firePoint.position).normalized;
+        if (!PlayerAimUtility.IsValidDirection(dir)) return;
         GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-        PlayerBullet bullet = bulletObj.GetComponent<PlayerBullet>();
-        if (bullet != null)
-        {
-            bullet.InitBullet(WeaponType.DefaultShotgun, bulletColor, damagePerShot, dir, Vector2.zero);
-        }
+        var bullet = bulletObj.GetComponent<TemporaryTurretProjectile>();
+        if (!bullet.Initialize(dir, damagePerShot)) { PlayerFieldDevice.Dispose(bulletObj); return; }
+        var renderer = bulletObj.GetComponent<SpriteRenderer>();
+        if (renderer != null) renderer.color = bulletColor;
     }
 
     private void OnDestroy() { if (_owner != null) _owner.ReleaseTurret(this); }
