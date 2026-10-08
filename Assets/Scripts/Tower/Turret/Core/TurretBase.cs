@@ -86,6 +86,22 @@ namespace TeamHJD.Game.Turrets
         protected float TimeTilFire;
         protected float TotCoolTime;
 
+        /// <summary>버튼 요청 시점에만 호출한다. 동일 Rigidbody의 여러 Collider는 한 적으로 센다.</summary>
+        public int CountEnemiesInAttackRange()
+        {
+            Vector2 origin = turret != null ? turret.position : transform.position;
+            Collider2D[] hits = Physics2D.OverlapCircleAll(origin, EffectiveRange, enemyMask);
+            var enemies = new System.Collections.Generic.HashSet<int>();
+            foreach (Collider2D hit in hits)
+            {
+                if (hit == null || !hit.gameObject.activeInHierarchy) continue;
+                Transform target = hit.attachedRigidbody != null ? hit.attachedRigidbody.transform : hit.transform;
+                if (TurretTargetingUtility.IsInAttackRange(origin, target.position, MinimumRange, EffectiveRange))
+                    enemies.Add(target.GetInstanceID());
+            }
+            return enemies.Count;
+        }
+
         protected bool ConfigureSceneActivation()
         {
             if (_configuredPowerSource == null)

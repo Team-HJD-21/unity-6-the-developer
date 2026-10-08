@@ -255,6 +255,60 @@ namespace TeamHJD.Game.Turrets.Tests
             Assert.That(target.IsActivated, Is.False);
         }
 
+        [Test]
+        public void AutoActivationWaitsForRecoveryAndRejectsRepeatedButton()
+        {
+            var controller = Track(new GameObject("Auto Controller")).AddComponent<TurretController>();
+            controller.TrySetMaximumPower(20);
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+            Assert.That(controller.TryStartAutoActivation(), Is.True);
+            Assert.That(turret.IsActivated, Is.False);
+            Assert.That(controller.IsAutoActivationRunning, Is.True);
+            Assert.That(controller.Budget.PendingRecovery, Is.EqualTo(20));
+            Assert.That(controller.TryStartAutoActivation(), Is.False);
+            controller.Budget.Tick(2.1f);
+            typeof(TurretController).GetMethod("AdvanceAutoActivation", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(controller, null);
+            Assert.That(turret.IsActivated, Is.True);
+            Assert.That(controller.IsAutoActivationRunning, Is.False);
+        }
+
+        [Test]
+        public void AutoActivationSkipsUnaffordableCandidateAndExcludesLockedDestroyed()
+        {
+            var controller = Track(new GameObject("Auto Controller")).AddComponent<TurretController>();
+            controller.TrySetMaximumPower(10);
+            var costly = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var cheapDefinition = Track(ScriptableObject.CreateInstance<TurretDefinition>());
+            SetField(cheapDefinition, "_id", "cheap");
+            SetField(cheapDefinition, "_power", 5);
+            var cheapPrefab = MakeInactiveTurret();
+            SetField(cheapPrefab, "_definition", cheapDefinition, typeof(TurretBase));
+            var cheap = Track(TurretFactory.Create(cheapPrefab,
+                TurretInitializationData.CreateDefault(cheapDefinition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var locked = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition, isLocked: true), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var destroyed = Track(TurretFactory.Create(MakeInactiveTurret(),
+                new TurretInitializationData(_definition, 0), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            controller.AutoActivationScoreProvider = (candidate, count) => candidate == costly ? 100f : 0f;
+            Assert.That(controller.TryStartAutoActivation(), Is.True);
+            Assert.That(controller.AutoActivationCandidates.Count, Is.EqualTo(2));
+            Assert.That(controller.AutoActivationCandidates[0].InstanceId, Is.EqualTo(costly.InstanceId));
+            Assert.That(costly.IsActivated, Is.False);
+            Assert.That(cheap.IsActivated, Is.True);
+            Assert.That(locked.IsActivated, Is.False);
+            Assert.That(destroyed.IsActivated, Is.False);
+            Assert.That(controller.IsAutoActivationRunning, Is.False);
+        }
+
         private TurretBase CreateWithActivationIntent(FakePower power)
         {
             return Track(TurretFactory.Create(MakeInactiveTurret(),
