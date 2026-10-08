@@ -40,7 +40,7 @@
 
 ### PoC 통합을 위한 임시 사운드 비활성화
 
-`Assets/Scripts/Tower`의 런타임 스크립트에서 `AudioManager` 호출을 임시로 주석 처리했다. Canon과 Missile 및 기존 Laser의 활성화 사운드와 발사 사운드가 재생되지 않는다. 미사일 비행 사운드와 폭발 사운드 및 `WitchSound` 호출도 비활성화했다. 해당 런타임 호출은 AudioManager가 없는 테스트 Scene에서도 실행을 방해하지 않는다.
+`Assets/Scripts/Features/Turrets`의 런타임 스크립트에서 `AudioManager` 호출을 주석 처리했다. Canon과 Missile 및 기존 Laser의 활성화 사운드와 발사 사운드가 재생되지 않는다. 미사일 비행 사운드와 폭발 사운드 및 `WitchSound` 호출도 비활성화했다. 2026-10-09 Legacy 제거로 AudioManager 실행 코드 자체도 제거했다. 신규 Audio service 연결은 별도이며 이번 이관에서 효과음을 복원하지 않는다.
 
 Canon과 Missile은 CU를 직접 찾지 않는다. 전력은 `TurretController`가 소유한 `TurretPowerBudget`을 통해 공급한다. Missile 탐색과 재탐색은 `EnemyController`를 기준으로 하고 Canon 탄환과 Missile 폭발 피해는 `EnemyHealth.TakeDamage(int)`로 전달한다. 아래 Mermaid도 해당 연결에 맞춰 갱신했다. Editor의 `TurretTestSceneBuilder`가 AudioManager를 복사하는 기능은 그대로 유지한다. 사운드 연동이 준비되면 주석 처리한 호출을 복원해야 한다.
 
@@ -71,7 +71,7 @@ flowchart TD
 
 ### PoC 프리팹의 몸체 콜라이더
 
-`Assets/PoC/Tower/Turrets`의 Canon과 Missile 프리팹은 큰 `CircleCollider2D`를 제거하고 Base 자식의 활성 `PolygonCollider2D`를 최상위 터렛 오브젝트로 옮겼다. Canon의 좌표는 그대로 사용하며 Missile은 Base의 1.3배 스케일을 Polygon 꼭짓점에 반영해서 기존 2D 충돌 모양과 크기를 유지한다. 사거리 표시용 Circle의 SpriteRenderer는 유지한다. 원본 `Assets/Prefabs/Tower/Turrets`와 Laser는 변경하지 않았다.
+`Assets/Prefabs/Turrets/Turrets`의 Canon과 Missile 프리팹은 큰 `CircleCollider2D`를 제거하고 Base 자식의 활성 `PolygonCollider2D`를 최상위 터렛 오브젝트로 옮겼다. Canon의 좌표는 그대로 사용하며 Missile은 Base의 1.3배 스케일을 Polygon 꼭짓점에 반영해서 기존 2D 충돌 모양과 크기를 유지한다. 사거리 표시용 Circle의 SpriteRenderer는 유지한다. 원본 `Assets/Prefabs/Turrets/Turrets`와 Laser는 변경하지 않았다.
 
 Enemy의 `EnemyTargetSelector`는 Collider2D에서 자신과 부모의 `TargetableComponent`를 찾아 대상을 수집한다. PolygonCollider가 있는 최상위 터렛의 Layer가 Enemy 탐색 마스크에 포함되어야 하며 TargetableComponent가 있어야 한다. 삭제 후 탐색 거리 판정은 큰 원이 아니라 몸체 PolygonCollider 기준이다. 승급 대상이 원본 프리팹을 참조한다면 교체 후 원본의 CircleCollider가 다시 생길 수 있으므로 PoC 승급 경로도 확인한다. 아래 Mermaid의 공격과 상태 변경 흐름은 그대로 유지한다.
 
@@ -104,7 +104,7 @@ Definition 값을 실행 중 상태 저장소처럼 직접 수정하지 않는�
 
 ### 3.1 `TurretDefinition`
 
-파일: [`TurretDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretDefinition.cs)
+파일: [`TurretDefinition.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretDefinition.cs)
 
 Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. 현재 18개 Canon/Missile Definition이 존재한다.
 
@@ -130,7 +130,7 @@ Editor에서 Definition을 수정하면 전체 `TurretDefinition`을 검사한�
 
 ### 3.2 `TurretRuntimeState`
 
-파일: [`TurretRuntimeState.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretRuntimeState.cs)
+파일: [`TurretRuntimeState.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretRuntimeState.cs)
 
 각 터렛 GameObject가 독립적으로 가지는 실행 중 상태다.
 
@@ -163,7 +163,7 @@ Effective Range = max(0, Definition.Range × (1 + RuntimeState.RangeModifierRati
 
 ### 3.3 `TurretBase`
 
-파일: [`TurretBase.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretBase.cs)
+파일: [`TurretBase.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretBase.cs)
 
 Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base class다. 공통 Scene 참조와 Definition/RuntimeState 접근을 제공한다.
 
@@ -185,9 +185,9 @@ Canon과 Missile이 공통으로 사용하는 Unity 표현 계층의 작은 base
 
 ### 3.4 `TurretInstanceRegistry`
 
-파일: [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
+파일: [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretInstanceRegistry.cs)
 
-씬에 존재하는 터렛에 로컬 `InstanceId`를 발급한다. AI와 전선 등 읽기 전용 소비자는 컴포넌트 대신 조회 시점의 값만 복사한 [`TurretSnapshot`](../../Assets/Scripts/Tower/Turret/Core/TurretSnapshot.cs)을 받는다. 스냅샷에는 `InstanceId`, Definition ID, 월드 위치, 활성·작동·파괴·잠금 상태, 현재·최대 체력, 유효 공격력, 실제 사거리와 유효 전력 비용 및 선택 경로 ID와 세부 단계가 들어 있다. `TurretBase`, `TurretRuntimeState`, `TurretDefinition` 참조는 들어 있지 않다.
+씬에 존재하는 터렛에 로컬 `InstanceId`를 발급한다. AI와 전선 등 읽기 전용 소비자는 컴포넌트 대신 조회 시점의 값만 복사한 [`TurretSnapshot`](../../Assets/Scripts/Features/Turrets/Core/TurretSnapshot.cs)을 받는다. 스냅샷에는 `InstanceId`, Definition ID, 월드 위치, 활성·작동·파괴·잠금 상태, 현재·최대 체력, 유효 공격력, 실제 사거리와 유효 전력 비용 및 선택 경로 ID와 세부 단계가 들어 있다. `TurretBase`, `TurretRuntimeState`, `TurretDefinition` 참조는 들어 있지 않다.
 
 ```csharp
 if (TurretInstanceRegistry.TryGetSnapshot(instanceId, out TurretSnapshot snapshot))
@@ -645,7 +645,7 @@ flowchart TD
 
 터렛 목록은 이름이나 프리팹 레벨이 아니라 `InstanceId` 오름차순으로 정렬한다. 승급과 다운그레이드는 같은 ID를 유지하므로 목록에서도 같은 순서를 유지한다. Refresh나 상태 변경으로 목록을 갱신해도 이름 변경 때문에 다른 위치로 이동하지 않는다. 실제 인스턴스가 새로 생성되거나 제거되면 목록 구성 자체는 바뀔 수 있다.
 
-기존 맵을 유지한 채 `Assets/Scenes/TestScene/TurretTest.unity`를 열고 Play Mode에 진입한다. 현재 Scene에는 Canon/Missile 업그레이드 에셋 4개와 Stage 1 양방향 레벨 카탈로그가 연결되어 있다. Rebuild 메뉴도 기존 참조를 보존하면서 누락된 샘플만 추가한다. 이번 기능 확인을 위해 Scene을 재구성할 필요는 없다.
+기존 맵을 유지한 채 `Assets/Scenes/Tests/TurretTest.unity`를 열고 Play Mode에 진입한다. 현재 Scene에는 Canon/Missile 업그레이드 에셋 4개와 Stage 1 양방향 레벨 카탈로그가 연결되어 있다. Rebuild 메뉴도 기존 참조를 보존하면서 누락된 샘플만 추가한다. 이번 기능 확인을 위해 Scene을 재구성할 필요는 없다.
 
 1. `Capture Snapshot`으로 변경 전 값을 저장한다. 저장된 값은 ID별로 유지되므로 프리팹 교체 후에도 비교할 수 있다. 다시 누르면 비교 기준을 현재 값으로 바꾼다.
 2. `Activate` 후 `Lock`을 누른다. 전력이 반환되고 현재 스냅샷의 Locked가 true인지 확인한다. `Request Activate`를 눌러 결과가 `Locked`인지 확인한다.
@@ -725,27 +725,27 @@ flowchart TD
 
 ## 11. 관련 파일
 
-- [`TurretBase.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretBase.cs)
-- [`TurretController.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretController.cs)
-- [`TurretPowerBudget.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretPowerBudget.cs)
-- [`TurretControllerSnapshot.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretControllerSnapshot.cs)
-- [`TurretKind.cs`](../../Assets/Scripts/Tower/Turret/Contracts/TurretKind.cs)
-- [`TurretDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretDefinition.cs)
-- [`TurretRuntimeState.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretRuntimeState.cs)
-- [`TurretUpgradeDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretUpgradeDefinition.cs)
-- [`TurretLevelUpgradeCatalog.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretLevelUpgradeCatalog.cs)
-- [`TurretLevelUpgrade_Stage1.asset`](../../Assets/Scripts/Tower/TurretDefinitions/TurretLevelUpgrade_Stage1.asset)
-- [`IDamageableTarget.cs`](../../Assets/Scripts/Tower/Turret/Contracts/IDamageableTarget.cs)
-- [`DamageableTargetAdapter.cs`](../../Assets/PoC/Enemy/Scripts/Targeting/DamageableTargetAdapter.cs)
-- [`ControlUnit.asset`](../../Assets/Scripts/Tower/TurretDefinitions/ControlUnit.asset)
-- [`TurretTestController.cs`](../../Assets/Scripts/Tower/Turret/TurretTestController.cs)
-- [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
-- [`TeamHJD.Game.Turrets.Contracts.asmdef`](../../Assets/Scripts/Tower/Turret/Contracts/TeamHJD.Game.Turrets.Contracts.asmdef)
-- [`TeamHJD.Game.Turrets.asmdef`](../../Assets/Scripts/Tower/Turret/Core/TeamHJD.Game.Turrets.asmdef)
-- [`DefaultCanonTurret.cs`](../../Assets/Scripts/Tower/CanonTurret/DefaultCanonTurret.cs)
-- [`DefaultMissileTurret.cs`](../../Assets/Scripts/Tower/MissileTurret/DefaultMissileTurret.cs)
-- [`TowerBullet.cs`](../../Assets/Scripts/Tower/TurretWeapons/TowerBullet.cs)
-- [`TowerMissile.cs`](../../Assets/Scripts/Tower/TurretWeapons/TowerMissile.cs)
+- [`TurretBase.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretBase.cs)
+- [`TurretController.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretController.cs)
+- [`TurretPowerBudget.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretPowerBudget.cs)
+- [`TurretControllerSnapshot.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretControllerSnapshot.cs)
+- [`TurretKind.cs`](../../Assets/Scripts/Features/Turrets/Contracts/TurretKind.cs)
+- [`TurretDefinition.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretDefinition.cs)
+- [`TurretRuntimeState.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretRuntimeState.cs)
+- [`TurretUpgradeDefinition.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretUpgradeDefinition.cs)
+- [`TurretLevelUpgradeCatalog.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretLevelUpgradeCatalog.cs)
+- [`TurretLevelUpgrade_Stage1.asset`](../../Assets/Data/Turrets/TurretLevelUpgrade_Stage1.asset)
+- [`IDamageableTarget.cs`](../../Assets/Scripts/Features/Turrets/Contracts/IDamageableTarget.cs)
+- [`DamageableTargetAdapter.cs`](../../Assets/Scripts/Features/Enemy/Targeting/DamageableTargetAdapter.cs)
+- [`ControlUnit.asset`](../../Assets/Data/Turrets/ControlUnit.asset)
+- [`TurretTestController.cs`](../../Assets/Scripts/Features/Turrets/TurretTestController.cs)
+- [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretInstanceRegistry.cs)
+- [`TeamHJD.Game.Turrets.Contracts.asmdef`](../../Assets/Scripts/Features/Turrets/Contracts/TeamHJD.Game.Turrets.Contracts.asmdef)
+- [`TeamHJD.Game.Turrets.asmdef`](../../Assets/Scripts/Features/Turrets/Core/TeamHJD.Game.Turrets.asmdef)
+- [`DefaultCanonTurret.cs`](../../Assets/Scripts/Features/Turrets/Cannon/DefaultCanonTurret.cs)
+- [`DefaultMissileTurret.cs`](../../Assets/Scripts/Features/Turrets/Missile/DefaultMissileTurret.cs)
+- [`TowerBullet.cs`](../../Assets/Scripts/Features/TurretsWeapons/TowerBullet.cs)
+- [`TowerMissile.cs`](../../Assets/Scripts/Features/TurretsWeapons/TowerMissile.cs)
 
 ## 자동 활성화 (2026-10-08)
 
