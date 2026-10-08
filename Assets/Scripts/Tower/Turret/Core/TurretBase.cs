@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace TeamHJD.Game.Turrets
 {
-    public abstract class TurretBase : MonoBehaviour, ITurretActivationRequester
+    public abstract class TurretBase : MonoBehaviour, ITurretActivationRequester, IDamageableTarget
     {
         // Keep serialized field names unchanged so existing prefab values remain mapped.
         //제발 바꾸지 말아주세요요요요!
@@ -55,6 +55,9 @@ namespace TeamHJD.Game.Turrets
         public int EffectivePower => _definition == null
             ? 0
             : _runtimeState.GetEffectivePower(_definition.Power);
+        public virtual int ProjectilesPerShot => 1;
+        public float TheoreticalDps => _definition == null ? 0f : EffectiveDamage * _definition.FireRate * ProjectilesPerShot;
+        public float DpsPerPower => EffectivePower > 0 ? TheoreticalDps / EffectivePower : 0f;
         public float EffectiveRange => _definition == null
             ? 0f
             : Mathf.Max(0f, _definition.Range * (1f + _runtimeState.RangeModifierRatio));
@@ -82,6 +85,22 @@ namespace TeamHJD.Game.Turrets
         protected int Damage => EffectiveDamage;
         protected float TimeTilFire;
         protected float TotCoolTime;
+
+        /// <summary>버튼 요청 시점에만 호출한다. 동일 Rigidbody의 여러 Collider는 한 적으로 센다.</summary>
+        public int CountEnemiesInAttackRange()
+        {
+            Vector2 origin = turret != null ? turret.position : transform.position;
+            Collider2D[] hits = Physics2D.OverlapCircleAll(origin, EffectiveRange, enemyMask);
+            var enemies = new System.Collections.Generic.HashSet<int>();
+            foreach (Collider2D hit in hits)
+            {
+                if (hit == null || !hit.gameObject.activeInHierarchy) continue;
+                Transform target = hit.attachedRigidbody != null ? hit.attachedRigidbody.transform : hit.transform;
+                if (TurretTargetingUtility.IsInAttackRange(origin, target.position, MinimumRange, EffectiveRange))
+                    enemies.Add(target.GetInstanceID());
+            }
+            return enemies.Count;
+        }
 
         protected bool ConfigureSceneActivation()
         {
@@ -209,7 +228,20 @@ namespace TeamHJD.Game.Turrets
                 _minimumRangeRenderer.enabled = ShowRange && MinimumRange > 0f;
         }
 
+        public bool IsManualActivationBlocked =>
+            _configuredPowerSource is TurretController controller && controller.IsAutoActivationRunning;
+
         public TurretActivationResult RequestActivation(bool shouldActivate)
+        {
+            if (IsManualActivationBlocked)
+            {
+                Debug.Log("자동 활성화 진행 중에는 터렛을 수동으로 켜거나 끌 수 없습니다.", this);
+                return TurretActivationResult.AutoActivationInProgress;
+            }
+            return RequestSystemActivation(shouldActivate);
+        }
+
+        internal TurretActivationResult RequestSystemActivation(bool shouldActivate)
         {
             // Any explicit request supersedes a queued startup intent.
             CancelInitialActivation();
@@ -257,7 +289,7 @@ namespace TeamHJD.Game.Turrets
 
             if (isLocked && IsActivated)
             {
-                if (RequestActivation(false) != TurretActivationResult.Deactivated)
+                if (RequestSystemActivation(false) != TurretActivationResult.Deactivated)
                 {
                     return false;
                 }
@@ -558,7 +590,7 @@ namespace TeamHJD.Game.Turrets
                 return true;
             }
 
-            RequestActivation(false);
+            RequestSystemActivation(false);
             _runtimeState.MarkDestroyed();
             OnDestroyed();
             TurretInstanceRegistry.NotifyDestroyed(this);

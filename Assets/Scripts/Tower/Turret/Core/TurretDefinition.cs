@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -17,6 +18,7 @@ namespace TeamHJD.Game.Content
         [Header("Identity")]
         [SerializeField] private string _id;
         [SerializeField] private string _displayName;
+        [SerializeField] private TurretRole _role = TurretRole.Weapon;
         [Header("Combat")]
         [SerializeField, Min(1)] private int _level = 1;
         [SerializeField, Min(0)] private int _damage;
@@ -41,6 +43,7 @@ namespace TeamHJD.Game.Content
 
         public string Id => _id;
         public string DisplayName => _displayName;
+        public TurretRole Role => _role;
         public int Level => _level;
         public int Damage => _damage;
         public float Range => _range;

@@ -1,3 +1,4 @@
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
 public class Treant : Monster
@@ -40,8 +41,8 @@ public class Treant : Monster
 
         SetDirection(DIRECTION_DOWN);
 
-        // ControlUnitStatus가 Monster.cs에서 자동 할당되었는지 확인
-        if (controlUnitStatus == null)
+        // ControlUnitHealth가 Monster.cs에서 자동 할당되었는지 확인
+        if (controlUnitHealth == null)
         {
             // Debug.LogWarning($"{monsterName}의 Control Unit이 할당되지 않았습니다.");
         }
@@ -49,7 +50,7 @@ public class Treant : Monster
 
     private void Update()
     {
-        if (player == null || controlUnitStatus == null) return;
+        if (player == null || controlUnitHealth == null) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
@@ -80,7 +81,7 @@ public class Treant : Monster
         Transform closestPoint = null;
         float closestDistance = Mathf.Infinity;
 
-        foreach (Transform accessPoint in controlUnitStatus.accessPoints)
+        foreach (Transform accessPoint in controlUnitHealth.accessPoints)
         {
             float distance = Vector2.Distance(transform.position, accessPoint.position);
             if (distance < closestDistance)
@@ -192,10 +193,10 @@ public class Treant : Monster
         }
         else if (currentTarget.CompareTag("CU"))
         {
-            ControlUnitStatus controlUnit = controlUnitStatus;
+            IDamageableTarget controlUnit = controlUnitHealth;
             if (controlUnit != null)
             {
-                controlUnit.GetDamage((int)attackDamage);
+                controlUnit.ApplyDamage((int)attackDamage);
             }
         }
 

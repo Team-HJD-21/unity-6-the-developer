@@ -1,4 +1,3 @@
-using TeamHJD.Game.Turrets;
 using UnityEngine;
 
 /// <summary>
@@ -183,12 +182,7 @@ public class EnemyController : MonoBehaviour
 
         if (targetable.TargetType == TargetType.Turret)
         {
-            if (TurretInstanceRegistry.TryGetInstanceId(_target, out int turretId) &&
-                TurretInstanceRegistry.TryGet(turretId, out TurretBase turret) &&
-                turret != null)
-            {
-                turret.ApplyDamage(attackDamage);
-            }
+            targetable.TryApplyDamage(attackDamage);
         }
         else if (targetable.TargetType == TargetType.Player)
         {

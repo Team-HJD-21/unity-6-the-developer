@@ -20,6 +20,8 @@ namespace TeamHJD.Game.Turrets
         public int EffectiveDamage { get; }
         public float Range { get; }
         public int EffectivePower { get; }
+        public float TheoreticalDps { get; }
+        public float DpsPerPower => EffectivePower > 0 ? TheoreticalDps / EffectivePower : 0f;
         public string SelectedUpgradeId { get; }
         public int UpgradeLevel { get; }
 
@@ -37,7 +39,8 @@ namespace TeamHJD.Game.Turrets
             float range,
             int effectivePower,
             string selectedUpgradeId,
-            int upgradeLevel)
+            int upgradeLevel,
+            float theoreticalDps = 0f)
         {
             InstanceId = instanceId;
             DefinitionId = definitionId;
@@ -53,6 +56,7 @@ namespace TeamHJD.Game.Turrets
             EffectivePower = effectivePower;
             SelectedUpgradeId = selectedUpgradeId;
             UpgradeLevel = upgradeLevel;
+            TheoreticalDps = theoreticalDps;
         }
     }
 }

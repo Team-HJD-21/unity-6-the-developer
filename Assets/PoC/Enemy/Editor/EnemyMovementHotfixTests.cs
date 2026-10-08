@@ -7,6 +7,7 @@ using System.Reflection;
 using NUnit.Framework;
 using TeamHJD.Game.Enemies.Targeting;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -14,6 +15,22 @@ using UnityEngine.TestTools;
 
 public sealed class EnemyMovementHotfixTests
 {
+    [Test]
+    public void ControlUnitPrefab_UsesSharedDamageContractWithoutBecomingWeaponTurret()
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Tower/ControlUnit.prefab");
+        ControlUnitHealth health = prefab.GetComponent<ControlUnitHealth>();
+
+        Assert.That(health, Is.Not.Null);
+        Assert.That(health, Is.InstanceOf<IDamageableTarget>());
+        Assert.That(health.Definition, Is.Not.Null);
+        Assert.That(health.Definition.Role, Is.EqualTo(TurretRole.ControlUnit));
+        Assert.That(prefab.GetComponent<TurretBase>(), Is.Null,
+            "CU must stay outside activation, power and TurretInstanceRegistry flows.");
+        Assert.That(prefab.GetComponent<DamageableTargetAdapter>(), Is.Not.Null);
+        Assert.That(prefab.GetComponent<TargetableComponent>(), Is.Not.Null);
+    }
+
     [Test]
     public void InitialStagePlayerPrefab_ContainsActualHealthTargetAdapter()
     {
@@ -66,7 +83,7 @@ public sealed class EnemyMovementHotfixTests
         // 터렛이 모두 꺼진 경우를 재현해 Player 연결 자체가 정지/이동을 좌우하는지 확인합니다.
         foreach (TurretBase turret in Object.FindObjectsByType<TurretBase>(FindObjectsSortMode.None))
             turret.enabled = false;
-        foreach (TurretTargetableAdapter adapter in Object.FindObjectsByType<TurretTargetableAdapter>(FindObjectsSortMode.None))
+        foreach (DamageableTargetAdapter adapter in Object.FindObjectsByType<DamageableTargetAdapter>(FindObjectsSortMode.None))
             adapter.enabled = false;
         PlayerTargetableAdapter playerAdapter = Object.FindAnyObjectByType<PlayerTargetableAdapter>();
         Assert.That(playerAdapter, Is.Not.Null);

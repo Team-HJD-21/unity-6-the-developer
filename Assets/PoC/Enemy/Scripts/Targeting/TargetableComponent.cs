@@ -1,4 +1,5 @@
 using UnityEngine;
+using TeamHJD.Game.Turrets.Contracts;
 
 /// <summary>
 /// 플레이어와 터렛을 <see cref="ITargetable"/>로 연결하는 타깃 상태 컴포넌트다.
@@ -14,8 +15,8 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     [SerializeField] private float currentHealth;
 
     [Header("화력")]
-    [SerializeField] private float maxFirepower;
-    [SerializeField] private float currentFirepower;
+    [SerializeField, Min(0f)] private float firepowerEfficiency;
+
 
     /// <summary>
     /// 점수 계산에 사용할 타깃 종류를 반환한다.
@@ -56,29 +57,32 @@ public class TargetableComponent : MonoBehaviour, ITargetable
             ? 0f
             : Mathf.Clamp01(currentHealth / maxHealth);
 
-    /// <summary>
-    /// 실제 상태 시스템에서 전달받은 현재 화력과 최대 화력을 저장한다.
-    /// </summary>
-    /// <param name="currentFirepower">현재 화력.</param>
-    /// <param name="maxFirepower">최대 화력.</param>
-    public void SetFirepower(float currentFirepower, float maxFirepower)
+    public void SetFirepowerEfficiency(float dpsPerPower)
     {
-        // 최대 화력을 먼저 보정한 뒤 현재 화력을 유효 범위로 제한한다.
-        this.maxFirepower = Mathf.Max(0f, maxFirepower);
-        this.currentFirepower = Mathf.Clamp(currentFirepower, 0f, this.maxFirepower);
+        firepowerEfficiency = float.IsNaN(dpsPerPower) || float.IsInfinity(dpsPerPower) ? 0f : Mathf.Max(0f, dpsPerPower);
     }
 
-    /// <summary>
-    /// 최대 화력을 기준으로 정규화한 현재 화력 비율을 반환한다.
-    /// </summary>
-    public float FirepowerRatio =>
-        maxFirepower <= 0f
-            ? 0f
-            : Mathf.Clamp01(currentFirepower / maxFirepower);
+    // Compatibility name: this is raw DPS per power, not a normalized ratio.
+    public float FirepowerRatio => firepowerEfficiency;
+    public float FirepowerEfficiency => firepowerEfficiency;
 
     /// <summary>
     /// 오브젝트가 활성화되어 있고 체력이 남아 있는지 반환한다.
     /// </summary>
     public bool CanBeTargeted =>
         isActiveAndEnabled && maxHealth > 0f && currentHealth > 0f;
+
+    public bool TryApplyDamage(int damage)
+    {
+        MonoBehaviour[] candidates = GetComponentsInParent<MonoBehaviour>(true);
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            if (candidates[i] is IDamageableTarget damageable)
+            {
+                return damageable.ApplyDamage(damage);
+            }
+        }
+
+        return false;
+    }
 }

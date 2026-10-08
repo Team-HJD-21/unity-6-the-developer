@@ -25,7 +25,6 @@ public class GeneralManager : Singleton<GeneralManager>
     public CameraController cameraController;
     public MiniMapController minimapController;
     public AlertManager alertManager;
-    public TowerManager towerManager;
     public InGameManager inGameManager;
     
     //  Shop Manager (Local)
@@ -93,13 +92,11 @@ public class GeneralManager : Singleton<GeneralManager>
         cameraController = GameObject.Find("Main Camera").GetComponent<CameraController>();
         minimapController = GameObject.Find("UIMiniMap").GetComponent<MiniMapController>();
         alertManager = GameObject.Find("AlertManager").GetComponent<AlertManager>();
-        towerManager = GameObject.Find("TowerManager").GetComponent<TowerManager>();
         inGameManager = GameObject.Find("InGameManager").GetComponent<InGameManager>();
         
         // if(cameraController == null) Debug.LogError("Camera Controller 스크립트 오류");
         // if(minimapController == null) Debug.LogError("MiniMap Controller 스크립트 오류");
         // if(alertManager == null) Debug.LogError("Alert Manager 스크립트 오류");
-        // if(towerManager == null) Debug.LogError("Tower Manager 스크립트 오류");
         // if(inGameManager == null) Debug.LogError("InGame Manager 스크립트 오류");
     }
 
@@ -108,7 +105,6 @@ public class GeneralManager : Singleton<GeneralManager>
         cameraController = null;
         minimapController = null;
         alertManager = null;
-        towerManager = null;
     }
 
     private void FindUIManagements()

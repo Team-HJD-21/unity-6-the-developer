@@ -1,3 +1,4 @@
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 
 public class WalkAndAttackMonster : Monster
@@ -38,8 +39,8 @@ public class WalkAndAttackMonster : Monster
 
         SetDirection(DIRECTION_DOWN);
 
-        // ControlUnitStatus가 Monster.cs에서 자동 할당되었는지 확인
-        if (controlUnitStatus == null)
+        // ControlUnitHealth가 Monster.cs에서 자동 할당되었는지 확인
+        if (controlUnitHealth == null)
         {
             // Debug.LogWarning($"{monsterName}의 Control Unit이 할당되지 않았습니다.");
         }
@@ -47,7 +48,7 @@ public class WalkAndAttackMonster : Monster
 
     private void Update()
     {
-        if (player == null || controlUnitStatus == null) return;
+        if (player == null || controlUnitHealth == null) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
@@ -78,7 +79,7 @@ public class WalkAndAttackMonster : Monster
         Transform closestPoint = null;
         float closestDistance = Mathf.Infinity;
 
-        foreach (Transform accessPoint in controlUnitStatus.accessPoints)
+        foreach (Transform accessPoint in controlUnitHealth.accessPoints)
         {
             float distance = Vector2.Distance(transform.position, accessPoint.position);
             if (distance < closestDistance)
@@ -191,11 +192,11 @@ public class WalkAndAttackMonster : Monster
         //  아마 이 코드는 사용이 어려울 것 같습니다. - 현석
         else if (currentTarget.CompareTag("CU"))
         {
-            ControlUnitStatus controlUnit = controlUnitStatus;
+            IDamageableTarget controlUnit = controlUnitHealth;
             if (controlUnit != null)
             {
                 // Debug.LogError("Attack CU");
-                controlUnit.GetDamage((int)attackDamage);
+                controlUnit.ApplyDamage((int)attackDamage);
             }
             else
             {
@@ -205,17 +206,17 @@ public class WalkAndAttackMonster : Monster
         //  요 아래껄로 대체해주세요.
         else
         {
-            ControlUnitStatus controlUnit = controlUnitStatus;
+            IDamageableTarget controlUnit = controlUnitHealth;
             if (controlUnit == null)
             {
                 // Debug.LogError("Control Unit 을 불러올 수 없습니다. 공격 불가");
                 return;
             }
-            foreach (Transform accessPoint in controlUnitStatus.accessPoints)
+            foreach (Transform accessPoint in controlUnitHealth.accessPoints)
             {
                 if (accessPoint == currentTarget)
                 {
-                    controlUnit.GetDamage((int)attackDamage);
+                    controlUnit.ApplyDamage((int)attackDamage);
                     break;
                 }
             }

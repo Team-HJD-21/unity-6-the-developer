@@ -1091372,7 +1091372,7 @@ GameObject:
   - component: {fileID: 1994418720}
   - component: {fileID: 1994418719}
   m_Layer: 0
-  m_Name: TowerManager
+  m_Name: TurretInteractionUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1091390,15 +1091390,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd585ff8b659d4e44a25dcedb3a24ba9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerTag: Tower
-  totalTowers: 0
-  activeTowers: 0
-  controlUnit: {fileID: 0}
   alertManager: {fileID: 0}
   towerMenu: {fileID: 214769214}
-  towerInfo: {fileID: 0}
-  defaultFontSize: 0
-  missileFontSize: 0
   nameText: {fileID: 214769213}
   activateButton: {fileID: 214769212}
   activateText: {fileID: 214769211}
