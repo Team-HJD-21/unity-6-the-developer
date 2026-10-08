@@ -6,40 +6,13 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Main.unity
-    guid: 39687c7ec2a11924a90cba3e7987090a
-  - enabled: 1
-    path: Assets/Scenes/Loading.unity
-    guid: 6c46156c609323147839d6fcfb937958
-  - enabled: 1
-    path: Assets/Scenes/Opening.unity
-    guid: 0c4ceb63c106d1449b3d4766f5327c57
-  - enabled: 1
-    path: Assets/Scenes/StageMenu.unity
-    guid: a0ec2fcbea00d9c4386cc66c6d2cdbd3
-  - enabled: 1
-    path: Assets/Scenes/Stages/Stage_1.unity
-    guid: a56c214b98944e344aa74a36486b4f95
-  - enabled: 1
-    path: Assets/Scenes/Stages/Stage_2.unity
-    guid: 2c71637191d1e4f0a940735ee9d69c02
-  - enabled: 1
-    path: Assets/Scenes/Stages/Stage_3.unity
-    guid: b2a76f0852ca5412ea53f3312cb3e4cd
-  - enabled: 1
-    path: Assets/Scenes/Ending.unity
-    guid: 87669a1ed1af0574f85424c675a8671d
-  - enabled: 0
-    path: Assets/Scenes/UI Demo/GameOver.unity
-    guid: a6edc5e7e8dbc4360b1b631eef97337a
-  - enabled: 1
-    path: Assets/PoC/Enemy/Scenes/EnemySandbox.unity
-    guid: 9ff428f7b35658f498d4c55cf13b5cc6
-  - enabled: 1
-    path: Assets/PoC/Spaceship/Scenes/Initial_Stage.unity
+    path: Assets/Scenes/Gameplay/Initial_Stage.unity
     guid: 787377b97207e74df2db8e6b48d60c66
   - enabled: 1
-    path: Assets/PoC/Spaceship/Scenes/SpaceShipGrayBox.unity
+    path: Assets/Scenes/Spaceship/SpaceShipGrayBox.unity
     guid: fffd0c02060ee45e293914dfd01f8927
+  - enabled: 0
+    path: Assets/Scenes/Tests/EnemySandbox.unity
+    guid: 9ff428f7b35658f498d4c55cf13b5cc6
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
