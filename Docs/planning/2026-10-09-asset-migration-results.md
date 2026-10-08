@@ -1,6 +1,6 @@
 # 2026-10-09 Assets 이관 결과
 
-상태: 구현·CLI 회귀 검증 완료. 원격 PR/push 및 Windows Build 미수행
+상태: 구현·최종 CLI 검증 완료, PR 제출 준비. Windows Build 미수행
 관련: #441 / [폴더·Legacy 대응](../architecture/asset-layout-and-migration.md)
 
 ## 범위
@@ -40,8 +40,12 @@ Unity 6000.3.23f1의 CLI batch Editor에서 실행했다. 단순 C# 정적 확�
 | 전체 EditMode | 208개: 201 성공·3 실패·Explicit 4 제외. 아래 보완 후 실패 항목 모두 재검사 |
 | 첫 이관 집중 재검사 | 7개: 6 성공·1 실패. 자동/수동 스폰·재진입 성공, App 파괴의 테스트 대기 방식 보완 |
 | 최종 집중 검사 | 이관 7개 + 실제 Enemy 이동 1개 = **8/8 성공**, 제외/실패 0 |
+| PR 제출 전 최종 전체 EditMode | **209개: 205 성공·실패 0·Explicit 4 제외** (`final-editmode.xml`). 일반 Player assembly 경계 검사 포함 |
+| meta validator 자체 회귀 | 9/9 성공. 프로젝트 meta 검사 오류 0 |
 
 원시 XML·Editor 로그는 Git ignore인 `Docs/Local/Validation/AssetMigration/`에 있다. `editmode.xml`, `migration-regression.xml`, `runtime-regression.xml`, `guid-verification.txt`를 보존한다. 전체 테스트를 반복 실행하지 않고 실패 및 실제 Scene 영향 부위만 재검사했다.
+
+PR 제출 전 #441의 Player 빌드 경계 검사를 추가하여 전체 검사를 확정했다. `AssembliesType.Player`는 테스트용 Player assembly도 포함하므로 초기 검사에서 Turret 테스트 assembly를 배포 코드로 오인했다. 구현/asmdef를 바꾸지 않고 일반 배포 목록인 `PlayerWithoutTestAssemblies`로 수정해 최종 전체 검사가 통과했다. 프로젝트 Editor/Tests 소스와 UnityEditor DLL이 일반 Player graph에 없는 것을 검사했다. 실제 Windows Build 성공을 의미하지 않는다. [Unity 공식 API](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Compilation.AssembliesType.html)
 
 ### 발견한 문제와 보완
 
@@ -74,3 +78,5 @@ Unity 6000.3.23f1의 CLI batch Editor에서 실행했다. 단순 C# 정적 확�
 3. 공유 구조·Legacy 기능 제한·검증 기록 및 기존 가이드를 갱신한다.
 
 기록한 커밋: `feb1a539` 구조/Legacy 이관, `6702000d` 임시 Host 수명/회귀 검사. 문서 갱신은 그 다음 독립 커밋으로 기록한다. 원격 push/PR은 하지 않았다. 검증 결과는 이 커밋들을 모두 적용한 최종 작업 트리 기준이며 중간 커밋 각각의 독립 실행 보증이 아니다.
+
+PR 제출 시 추가: 최종 Player assembly 검사를 별도 커밋으로 기록한다. 원격 feature/core의 이전 tip `17fa8334`와 main의 #491 squash 커밋 `b4dd215e`는 파일 tree가 동일함을 확인했다. 이 이미 반영된 이력은 파일 변경 없는 history-only merge로 연결하여 원격 브랜치를 강제로 덮어쓰지 않고 feature/core에서 PR을 제출한다.

@@ -8,6 +8,7 @@ using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Turrets;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -46,6 +47,28 @@ public sealed class ProjectAssetMigrationTests
         Assert.That(dependencies.Where(path => path.EndsWith(".prefab")).All(path => guids.Contains(AssetDatabase.AssetPathToGUID(path))), Is.True);
         Assert.That(AssetDatabase.IsValidFolder("Assets/Prefabs/Tower"), Is.False);
         Assert.That(Resources.Load<EnemySquadPresetCatalog>("Spawning/EnemySquadPresetCatalog"), Is.Not.Null);
+    }
+
+    [Test]
+    public void PlayerAssemblies_ExcludeProjectEditorAndTests()
+    {
+        // Player는 테스트용 Player assembly도 포함하므로 일반 배포용 graph를 조회합니다.
+        // 이 검사는 Windows Build 실행과는 별개입니다.
+        UnityEditor.Compilation.Assembly[] assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
+        Assert.That(assemblies, Is.Not.Empty);
+        foreach (UnityEditor.Compilation.Assembly assembly in assemblies)
+        {
+            foreach (string source in assembly.sourceFiles)
+            {
+                string path = source.Replace('\\', '/');
+                if (!path.StartsWith("Assets/") && !path.Contains("/Assets/")) continue;
+                Assert.That(path.Contains("/Editor/") || path.Contains("/Tests/"), Is.False,
+                    assembly.name + "에 Editor/Test 소스가 유입됨: " + path);
+            }
+            foreach (string reference in assembly.compiledAssemblyReferences)
+                Assert.That(System.IO.Path.GetFileNameWithoutExtension(reference).StartsWith("UnityEditor"), Is.False,
+                    assembly.name + "의 Player 참조에 Editor DLL이 유입됨: " + reference);
+        }
     }
 
     [Test]
