@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 2328132698315919751}
   - component: {fileID: 2447509266196521892}
   - component: {fileID: 1552290093040203522}
+  - component: {fileID: 910202610090000001}
   m_Layer: 0
   m_Name: TemporaryTurret
   m_TagString: Untagged
@@ -176,6 +177,20 @@ MonoBehaviour:
   fireRate: 0.3
   turretHead: {fileID: 4301739478787231800}
   enemyTag: Enemy
+--- !u!114 &910202610090000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5037733788499361552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3d4604cf50644fcb80fc0a17ff991ab, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TemporaryTurretHealth
+  _maxHealth: 100
+  _blockRadius: 0.35
 --- !u!1 &5112776578772971927
 GameObject:
   m_ObjectHideFlags: 0

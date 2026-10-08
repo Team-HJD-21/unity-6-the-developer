@@ -11,6 +11,7 @@ public class PlayerInfo : MonoBehaviour
     
     public UnityEvent onDeath = new UnityEvent();
     public UnityEvent<int,int> onHpChange = new UnityEvent<int, int>();
+    private bool _isDead;
 
     private void Awake()
     {
@@ -30,20 +31,22 @@ public class PlayerInfo : MonoBehaviour
 
     public void Die()
     {
-        // Debug.Log("Player Die");
-        
-        //  SceneController를 사용할 때는 반드시 Build Setting 확인
-        
-        GeneralManager.Instance.inGameManager.GameOver();
+        if (_isDead) return;
+        _isDead = true;
+        GetComponent<PlayerControlState>()?.SetInputBlocked(true);
+        GetComponent<PlayerMovement>()?.StopImmediately();
+        GetComponent<PlayerSkillController>()?.CloseSelection();
+        onDeath.Invoke();
     }
 
     public void TakeDamage(int damage)
     {
+        if (_isDead || damage <= 0) return;
         curHp -= damage;
         
         if (curHp <= 0)
         {
-            Invoke("Die", 0f);
+            Die();
         }
     }
 

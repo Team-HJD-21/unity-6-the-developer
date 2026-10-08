@@ -18,7 +18,7 @@ namespace TeamHJD.Game.Editor
     public static class BattlefieldDebugSession
     {
         private static readonly List<string> _history = new List<string>();
-        private static readonly string PreferenceKey = "TeamHJD.Battlefield.Display." + Application.dataPath;
+        private static readonly string PreferenceKey = "TeamHJD.Battlefield.Display." + UnityEngine.Application.dataPath;
         private static double _nextRefresh;
         private static BattlefieldGridConfiguration _previewConfiguration;
         private static int _sceneHandle;
@@ -86,7 +86,7 @@ namespace TeamHJD.Game.Editor
             string grid = configuration == null ? "N/A" :
                 $"{configuration.MapWidth} x {configuration.MapHeight}, cells {configuration.CellsX} x {configuration.CellsY}, " +
                 $"center ({configuration.Origin.X}, {configuration.Origin.Y}), Z {configuration.OriginZ}";
-            return $"{Display.CaptureLabel}\nUnity {Application.unityVersion} | {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+            return $"{Display.CaptureLabel}\nUnity {UnityEngine.Application.unityVersion} | {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
                 $"Scene {SceneManager.GetActiveScene().name} | {Mode}\n" +
                 $"Match {(snapshot == null || snapshot.MatchId.IsEmpty ? "N/A" : snapshot.MatchId.ToString())} | revision {snapshot?.Revision.ToString() ?? "N/A"}\n" +
                 $"Grid {grid}\nV/T/F {snapshot?.Vertices.Count ?? 0}/{snapshot?.Triangles.Count ?? 0}/{snapshot?.FrontlineEdges.Count ?? 0}\n" +

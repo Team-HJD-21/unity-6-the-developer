@@ -15,9 +15,8 @@ using UnityEngine;
 ///    - 채택 이유: 우주선 관성 비행이 아닌 탑다운 캐릭터 조작이므로, 키를 뗐을 때 즉시 멈추고
 ///      눌렀을 때 즉시 목표 속도에 도달해야 하므로 velocity 직접 지정이 조작감에 가장 적합합니다.
 /// 
-/// 3. GeneralManager 의존성 제거:
-///    - 대안: InGameManager.Instance.canMove 검사.
-///    - 채택 이유: 싱글톤 참조를 끊어야 매니저가 없는 독립 테스트 씬(PlayerTest.unity)에서도 단독 검증이 가능합니다.
+/// 3. 조작 가능 여부는 PlayerControlState와 스킬 선택 상태에서 전달받습니다.
+///    매니저가 없는 독립 테스트 씬에서도 이동을 검증할 수 있습니다.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
@@ -58,17 +57,8 @@ public class PlayerMovement : MonoBehaviour
     // 물리 이동은 프레임 레이트와 상관없이 일정한 물리 주기로 도는 FixedUpdate에서 처리
     private void FixedUpdate()
     {
-        if (GeneralManager.TryGetExistingInstance(out var manager) && manager.inGameManager != null)
-        {
-            var igm = manager.inGameManager;
-            if (igm.isTalking || !igm.isWave)
-            {
-                rb.linearVelocity = Vector2.zero;
-                return;
-            }
-        }
         // 이동 불가 상태이거나 입력 컴포넌트가 없으면 즉시 정지
-        if (!CanMove || inputHandler == null || (_skills != null && _skills.IsSelectionOpen))
+        if (!CanMove || inputHandler == null || (_skills != null && !_skills.CanUse))
         {
             rb.linearVelocity = Vector2.zero;
             return;

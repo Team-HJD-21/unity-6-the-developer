@@ -19,6 +19,11 @@ using UnityEngine.UI;
 
 public class InGameManager : MonoBehaviour
 {
+    private PlayerInfo _playerDeathSource;
+    private void OnDestroy()
+    {
+        if (_playerDeathSource != null) _playerDeathSource.onDeath.RemoveListener(GameOver);
+    }
     [Header("Status")] 
     public int curWave;
     public int maxWave;
@@ -178,6 +183,8 @@ public class InGameManager : MonoBehaviour
         
         //  Bomb Count init
         if (player == null) return;
+        _playerDeathSource = player.GetComponent<PlayerInfo>();
+        if (_playerDeathSource != null) _playerDeathSource.onDeath.AddListener(GameOver);
         var skillController = player.GetComponent<PlayerSkillController>();
         if (skillController != null)
         {
