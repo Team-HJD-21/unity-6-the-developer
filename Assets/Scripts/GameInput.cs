@@ -17,7 +17,9 @@ public enum GameKey
     UpArrow,
     DownArrow,
     LeftArrow,
-    RightArrow
+    RightArrow,
+    F,
+    Tab
 }
 
 public static class GameInput
@@ -27,6 +29,9 @@ public static class GameInput
 
     public static bool PrimaryPointerWasPressedThisFrame =>
         Mouse.current?.leftButton.wasPressedThisFrame ?? false;
+
+    public static bool SecondaryPointerWasPressedThisFrame =>
+        Mouse.current?.rightButton.wasPressedThisFrame ?? false;
 
     public static float ScrollY
     {
@@ -83,6 +88,8 @@ public static class GameInput
             GameKey.Space => keyboard.spaceKey,
             GameKey.E => keyboard.eKey,
             GameKey.F1 => keyboard.f1Key,
+            GameKey.F => keyboard.fKey,
+            GameKey.Tab => keyboard.tabKey,
             GameKey.W => keyboard.wKey,
             GameKey.A => keyboard.aKey,
             GameKey.S => keyboard.sKey,

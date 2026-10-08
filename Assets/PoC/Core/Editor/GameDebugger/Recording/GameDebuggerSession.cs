@@ -24,7 +24,7 @@ namespace TeamHJD.Game.Editor
         private static double _area, _length;
         private static long _revision = -1;
         private static bool _pauseLatched;
-        private static readonly string ArchiveKey = "TeamHJD.GameDebugger.Archive." + Application.dataPath;
+        private static readonly string ArchiveKey = "TeamHJD.GameDebugger.Archive." + UnityEngine.Application.dataPath;
         private static double _snapshotObservedAt;
         private static readonly List<string> _warnings = new List<string>();
         public static GameDebugRecorder Recorder { get; } = new GameDebugRecorder();
@@ -135,7 +135,7 @@ namespace TeamHJD.Game.Editor
             var config = root == null ? null : root.CurrentMatchConfig;
             bool matches = config != null && config.MatchId == item.MatchId;
             return new GameDebugRun {
-                Scene = SceneManager.GetActiveScene().path, UnityVersion = Application.unityVersion,
+                Scene = SceneManager.GetActiveScene().path, UnityVersion = UnityEngine.Application.unityVersion,
                 BuildLabel = BattlefieldDebugSession.Display.CaptureLabel, StartedAt = DateTime.Now.ToString("O"),
                 ContentVersion = matches ? config.ContentVersion : "Unknown", RandomSeed = matches ? config.RandomSeed : 0,
                 StageId = matches ? config.StageId.ToString() : "Unknown", DifficultyProfileId = matches ? config.DifficultyProfileId.ToString() : "Unknown",

@@ -48,6 +48,8 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOL
 
 터렛을 사용하는 다른 영역은 [터렛 연동 가이드](architecture/turrets/index.md)에서 빠른 시작과 API 및 스냅샷을 따로 확인할 수 있다. 내부 실행 흐름은 기존 Turret System Guide의 Mermaid를 유지한다.
 
+플레이어 스킬의 책임 분리와 신규 네트워크 몬스터 연동·테스트 범위는 [Player skill review](architecture/player-skill-review.md)를 참고한다.
+
 1. [PROJECT_PLAN.md](product/PROJECT_PLAN.md) — 게임 정체성, 제품 범위, Vertical Slice와 Decision Log
 2. [system-rearchitecture-charter.md](architecture/system-rearchitecture-charter.md) — 레거시 교체 원칙과 변경할 수 없는 시스템 경계
 3. [milestones-and-core-design.md](planning/milestones-and-core-design.md) — M0~M5, Priority별 역할, 통과 기준
@@ -101,3 +103,5 @@ Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 �
 - 역할·AI Owner 변경: Team Role Ownership과 Team Workflow
 - Milestone 또는 Priority 변경: Core Design, Development Flow, 현재 Sprint Backlog
 - 승인되지 않은 초안은 Source of Truth와 같은 표현을 사용하지 않는다.
+
+- [Player Input Guide](team/player-input-guide.md): Player V2 입력, Match 연결과 임시 포탑 체력·재충전 설정

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1348089770151452486}
   - component: {fileID: 6227263087199873650}
   - component: {fileID: 8285395145536134858}
+  - component: {fileID: 812003050}
   m_Layer: 0
   m_Name: bombeffect
   m_TagString: Untagged
@@ -106,3 +107,17 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &812003050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6110299117615622972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb02f52c6f648cabb1eba89413e053c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerTimedEffect
+  _effectVisual: {fileID: 0}
+  _lifetime: 0.8

@@ -16,6 +16,8 @@ namespace TeamHJD.Game.Presentation.Scene
             if (session == null) throw new ArgumentNullException(nameof(session));
             Unbind();
             _session = session;
+            foreach (var component in GetComponents<MonoBehaviour>())
+                if (component is IPlayerMatchBinding binding) binding.BindMatch(session);
         }
 
         public CommandSubmissionResult Submit(GameCommand command)
@@ -26,6 +28,9 @@ namespace TeamHJD.Game.Presentation.Scene
 
         public void Unbind()
         {
+            if (_session != null)
+                foreach (var component in GetComponents<MonoBehaviour>())
+                    if (component is IPlayerMatchBinding binding) binding.UnbindMatch();
             _session = null;
         }
 
