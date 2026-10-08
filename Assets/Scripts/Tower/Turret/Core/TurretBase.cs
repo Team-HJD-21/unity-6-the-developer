@@ -55,6 +55,9 @@ namespace TeamHJD.Game.Turrets
         public int EffectivePower => _definition == null
             ? 0
             : _runtimeState.GetEffectivePower(_definition.Power);
+        public virtual int ProjectilesPerShot => 1;
+        public float TheoreticalDps => _definition == null ? 0f : EffectiveDamage * _definition.FireRate * ProjectilesPerShot;
+        public float DpsPerPower => EffectivePower > 0 ? TheoreticalDps / EffectivePower : 0f;
         public float EffectiveRange => _definition == null
             ? 0f
             : Mathf.Max(0f, _definition.Range * (1f + _runtimeState.RangeModifierRatio));

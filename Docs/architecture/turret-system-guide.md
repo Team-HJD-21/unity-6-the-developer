@@ -604,13 +604,14 @@ flowchart TD
     Base["TurretBase"] --> Contract
     CU["ControlUnitHealth"] --> Contract
     Contract --> Adapter["DamageableTargetAdapter<br>상태 동기화"]
+    Efficiency["TurretBase와 Snapshot<br>이론 DPS / EffectivePower"] --> Adapter
     Adapter --> Targetable["TargetableComponent<br>Enemy가 읽는 정보"]
     Targetable -->|"TryApplyDamage"| Contract
     Targetable -->|"무기 터렛 활성 또는 CU 생존"| Enemy["Enemy 목표 후보"]
     Targetable -->|"비활성 무기 터렛 또는 파괴"| Excluded["목표 후보에서 제외"]
 ```
 
-`FirepowerRatio`는 계산 기준이 아직 정해지지 않아 무기 터렛 Adapter의 임시값 0.5를 사용하고 CU는 0을 사용한다. 세부 업그레이드와 레벨 승급으로 `EffectiveDamage`가 바뀌어도 이 비율은 아직 바뀌지 않는다. AI 평가 규칙을 정하면 `TargetableComponent.SetFirepower`에 실제 현재/최대 화력을 전달해야 한다.
+`TurretBase.TheoreticalDps = EffectiveDamage × Definition.FireRate × ProjectilesPerShot`이며 `DpsPerPower = TheoreticalDps / EffectivePower`다. Missile은 발사구 수를 발사당 최대 미사일 수로 반영한다. 이는 연속 사격 이론값으로 과열·명중률·폭발 다중 피해는 포함하지 않는다. 전력 0은 효율 0으로 처리하며 CU도 0이다. Snapshot에도 동일 값을 제공한다. Adapter의 fake 값은 제거했다. Enemy의 기존 `FirepowerRatio` 이름은 호환을 위해 유지하지만 실제 값은 0~1로 제한하지 않는 DPS/전력이며 위협 가중치가 효율 단위에 곱해진다.
 
 전선 시스템과 후속 AI 계약에 제공할 후보 데이터는 다음과 같다.
 

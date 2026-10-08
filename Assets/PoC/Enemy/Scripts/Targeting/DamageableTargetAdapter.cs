@@ -10,7 +10,6 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
 {
     [FormerlySerializedAs("_turret")]
     [SerializeField] private MonoBehaviour _damageableSource;
-    [SerializeField, Range(0f, 1f)] private float _fakeFirepowerRatio = 0.5f;
 
     private TargetableComponent _targetable;
     private IDamageableTarget _damageable;
@@ -107,7 +106,7 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
         _targetable.SetHealth(
             hasTarget ? _damageable.CurrentHealth : 0,
             _damageable != null ? _damageable.MaxHealth : 0);
-        _targetable.SetFirepower(Mathf.Clamp01(_fakeFirepowerRatio), 1f);
+        _targetable.SetFirepowerEfficiency(_weaponTurret != null ? _weaponTurret.DpsPerPower : 0f);
 
         bool activationAllowsTargeting = _weaponTurret == null || _weaponTurret.IsActivated;
         _targetable.enabled = isActiveAndEnabled && hasTarget && activationAllowsTargeting;

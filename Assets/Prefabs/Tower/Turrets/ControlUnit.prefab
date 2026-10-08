@@ -1060,7 +1060,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   _damageableSource: {fileID: 3864370946044495358}
-  _fakeFirepowerRatio: 0
 --- !u!114 &920000000000000002
 MonoBehaviour:
   m_ObjectHideFlags: 0

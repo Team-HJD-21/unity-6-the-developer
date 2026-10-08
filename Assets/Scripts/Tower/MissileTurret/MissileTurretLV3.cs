@@ -13,6 +13,7 @@ public class MissileTurretLV3 : DefaultMissileTurret
     [SerializeField] private Transform[] missileSpawnPoint; //미사일 스폰 지점
     [SerializeField] private Transform[] missileTargetPoint; //미사일 스폰 지점
     private GameObject[] _missileObj;
+    public override int ProjectilesPerShot => missileSpawnPoint != null ? missileSpawnPoint.Length : 0;
 
     private void Start()
     {

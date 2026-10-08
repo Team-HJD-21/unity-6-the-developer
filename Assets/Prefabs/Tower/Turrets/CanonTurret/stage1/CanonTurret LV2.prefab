@@ -189,7 +189,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   _turret: {fileID: 513411788051588595}
-  _fakeFirepowerRatio: 0.5
 --- !u!114 &4623217508369570199
 MonoBehaviour:
   m_ObjectHideFlags: 0

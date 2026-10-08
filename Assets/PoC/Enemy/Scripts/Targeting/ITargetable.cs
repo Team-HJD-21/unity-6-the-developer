@@ -22,7 +22,7 @@ public interface ITargetable
     float HealthRatio { get; }
 
     /// <summary>
-    /// 현재 화력 비율을 0에서 1 사이로 반환한다.
+    /// 현재 이론 DPS / 활성화 전력 효율을 반환한다. 0~1 정규화 값이 아니다.
     /// </summary>
     float FirepowerRatio { get; }
 
