@@ -1,7 +1,7 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-10-03
+최종 갱신: 2026-10-08
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
@@ -50,20 +50,23 @@ Canon과 Missile은 CU를 직접 찾지 않는다. 전력은 `TurretController`�
 
 `TurretPowerBudget`은 Unity와 CU를 참조하지 않는 C# 클래스다. 가용 전력과 최대 전력 및 반환 대기 전력을 관리한다. 활성화 전력 예약과 업그레이드 차액 변경 및 비활성화 후 지연 반환을 처리한다. `TurretController.Update`는 `Tick(Time.deltaTime)`을 호출해 반환을 진행한다. CU가 없어도 전력 계산은 작동한다.
 
-씬에 활성 `TurretController`를 미리 배치하고 최대 전력을 설정하는 것을 권장한다. 터렛의 `_turretController` 참조로 명시적으로 지정할 수도 있다. 참조가 없으면 자신의 씬에서 활성 컨트롤러를 찾으며 없으면 런타임에 기본 전력 100인 컨트롤러를 생성한다. 이름이 `ControlUnit`인 오브젝트는 필요 없다. 기본값 100은 테스트용이며 제품 밸런스 확정값이 아니다. 런타임 용량 변경은 `TrySetMaximumPower(int)`를 사용한다. 이미 예약된 전력보다 낮은 용량은 거부한다. 기존 예약과 반환 대기를 유지하므로 용량 변경으로 사용 중인 전력을 임의로 초기화하지 않는다.
+씬에 활성 `TurretController`를 미리 배치하고 최대 전력을 설정하는 것을 권장한다. 터렛의 `_turretController` 참조로 명시적으로 지정할 수도 있다. 참조가 없으면 자신의 씬에서 활성 컨트롤러를 찾으며 없으면 런타임에 기본 전력 250인 컨트롤러를 생성한다. 이름이 `ControlUnit`인 오브젝트는 필요 없다. 런타임 용량 변경은 `TrySetMaximumPower(int)`를 사용한다. 이미 예약된 전력보다 낮은 용량은 거부한다. 기존 예약과 반환 대기를 유지하므로 용량 변경으로 사용 중인 전력을 임의로 초기화하지 않는다.
 
-기존 `ControlUnitStatus`는 CU 체력과 기존 UI 이벤트를 담당한다. 전력 메서드는 컨트롤러로 전달하는 호환 API다. 기존 씬에서는 Start에 DataManager의 CU 전력 값을 컨트롤러 용량으로 적용한다. 컨트롤러에 설정한 용량을 사용하려면 CU Inspector의 `Initialize Power From Legacy Data`를 끈다. CU와 터렛이 같은 컨트롤러를 참조해야 UI 값이 일치한다. CU 삭제나 파괴가 자동으로 전력 공급 중단을 뜻하지는 않는다. CU 파괴 시 제어 정책과 네트워크 권한은 별도 미정 사항이다. Laser는 아직 CU를 직접 찾는 legacy 구조지만 그 전력 API도 같은 예산으로 전달되어 별도 전력 통장을 만들지 않는다.
+`ControlUnitHealth`는 CU 체력, 피격, 접근 지점과 상태 이벤트만 담당한다. 최대 체력은 `ControlUnit.asset`의 `TurretDefinition`에서 읽으며 `DataManager`의 CU 수치를 사용하지 않는다. CU와 `TurretBase`는 모두 `IDamageableTarget`을 구현하므로 Enemy는 구체 타입이나 Registry를 확인하지 않고 같은 `ApplyDamage(int)` 계약으로 피해를 준다. Definition의 `TurretRole.ControlUnit`은 CU를 무기 터렛과 구분한다.
+
+CU는 Enemy의 `TargetType.Turret` 후보에는 포함되지만 `TurretBase`를 상속하거나 `TurretInstanceRegistry`에 등록되지 않는다. 따라서 터렛 등록 수, 전력 예약, 자동 활성화, 개별 터렛 UI에는 포함되지 않는다. 터렛 전력은 `DataManager`와 CU 컴포넌트를 거치지 않고 `TurretController`가 직접 소유한다. CU 파괴 시 `Destroyed` 이벤트를 한 번 발행한다. `HealthChanged`는 체력 변경을 전달한다. 레거시 `InGameManager`와 `AlertManager`를 조회하거나 호출하지 않는다. 현재 PoC 승패 정책은 패배 판정을 구현하지 않았으므로 파괴 이벤트를 게임 오버에 연결하는 소비자는 후속 연동 대상이다.
 
 ```mermaid
 flowchart TD
-    CU["ControlUnitStatus<br>체력과 기존 UI 호환"] --> Control["TurretController<br>씬 제어와 전력 공급"]
+    Definition["ControlUnit Definition<br>Role과 최대 체력"] --> CU["ControlUnitHealth<br>IDamageableTarget"]
+    CU --> HealthUI["HealthChanged와 Destroyed 이벤트"]
     Commands["UI 또는 외부 시스템<br>InstanceId 기반 요청"] --> Control
     Control --> Base["TurretBase<br>RequestActivation()"]
     Base --> Activation["TurretActivationController<br>ITurretPowerSource 사용"]
     Activation --> Control
     Control --> Budget["TurretPowerBudget<br>예약과 반환 계산"]
     Tick["TurretController.Update()<br>Tick(deltaTime)"] --> Budget
-    Budget --> Events["PowerChanged<br>CU 전력 UI로 전달"]
+    Budget --> Events["PowerChanged<br>전력 UI와 Laser로 전달"]
 ```
 
 ### PoC 프리팹의 몸체 콜라이더
@@ -203,7 +206,7 @@ Prefab 안의 Adapter처럼 자신의 `Transform`만 아는 소비자는 `TryGet
 
 같은 Definition 에셋을 여러 터렛 인스턴스가 사용하는 것은 정상이다. 오류가 되는 경우는 **서로 다른 Definition 에셋이 같은 `Definition.Id`를 사용하는 경우**다.
 
-Registry는 현재 PoC용 로컬 등록부다. AI 조회용 상태 집계, 전력 총합, 구역별 터렛 관리까지 책임지는 정식 Manager가 아니다. `TowerManager`를 다른 이름의 전역 Singleton으로 다시 만드는 방식으로 확장하지 않는다.
+Registry는 현재 PoC용 로컬 등록부다. AI 조회용 상태 집계, 전력 총합, 구역별 터렛 관리까지 책임지는 정식 Manager가 아니다. 제거한 전역 `TowerManager`와 같은 구조를 다른 이름으로 다시 만들지 않는다.
 
 파괴된 터렛은 Registry에 남아 복구할 수 있지만 Active/Operational 조회에서는 제외된다.
 
@@ -266,7 +269,15 @@ flowchart TD
 
 `TurretTest` 화면 상단에서 전력 값과 컨트롤러별 등록 수 및 활성 수와 작동 수 및 종류별 활성 수를 확인할 수 있다. Debug UI는 패널이 보이는 동안 LateUpdate에 한 번 조회해서 동일 프레임의 IMGUI 호출이 집계를 반복하지 않도록 한다.
 
-### 3.7 Canon과 Missile 구현체
+### 3.7 개별 터렛 선택 UI
+
+`TurretInteractionUI`는 Scene의 터렛을 직접 클릭했을 때 선택·사거리 표시·정보 표시·개별 활성화 요청만 담당한다. `TowerManager`의 태그 기반 정적 목록과 Canon/Missile 구체 타입 분기는 제거했다. 클릭한 Collider의 부모에서 `TurretBase`를 찾으므로 새 터렛도 공통 기반을 사용하면 별도 타입 분기 없이 같은 UI에 들어온다.
+
+UI에는 Definition의 이름·레벨·발사 속도와 현재 유효 공격력·전력 비용을 표시한다. 전력은 `DataManager`의 CU 용량 비율이 아니라 해당 터렛의 `EffectivePower` 절대값이다. 상태 변경은 `RequestActivation(bool)`로만 요청하며 부족한 전력·잠금·파괴 결과를 UI에 반영한다. Scene에 있던 기존 UI 참조는 스크립트 GUID를 유지해 이전 연결을 이어받는다.
+
+웨이브 종료의 전체 비활성화는 `InGameManager`가 Scene의 `TurretController`에 InstanceId 명령을 보내 처리한다. 보상 계산에 필요한 CU 체력은 `InGameManager`가 `ControlUnitHealth`를 직접 참조하며 터렛 UI를 경유하지 않는다.
+
+### 3.8 Canon과 Missile 구현체
 
 | 타입 | 책임 |
 | --- | --- |
@@ -307,7 +318,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Request["TowerManager 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(true)"]
+    Request["TurretInteractionUI 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(true)"]
     Base --> Controller["TurretActivationController<br>RequestActivation()"]
     Controller --> Source["TurretController<br>TryConsumePower()"]
     Source --> Consume["TurretPowerBudget<br>EffectivePower 예약"]
@@ -318,7 +329,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Request["TowerManager 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(false)"]
+    Request["TurretInteractionUI 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(false)"]
     Base --> Controller["TurretActivationController<br>RequestActivation()"]
     Controller --> Off["RuntimeState<br>IsActivated = false"]
     Off --> Source["TurretController<br>ReleasePower()"]
@@ -352,7 +363,7 @@ flowchart TD
 
 파괴된 터렛은 Registry에서 즉시 제거하지 않는다. 플레이어가 같은 인스턴스를 복구할 수
 있도록 등록 상태를 유지하되 Active/Operational 조회와 활성화 요청에서는 제외한다. Scene
-전환이나 실제 GameObject 제거는 `Unregistered`로 구분한다. 현재 `TurretTestController`의 Damage·Destroy·Restore 버튼이 이 경로를 직접 호출한다. Enemy PoC의 타깃 어댑터는 조회용이며, 적의 공격을 `TurretBase.ApplyDamage()`에 전달하는 기능까지 뜻하지는 않는다.
+전환이나 실제 GameObject 제거는 `Unregistered`로 구분한다. 현재 `TurretTestController`의 Damage·Destroy·Restore 버튼이 이 경로를 직접 호출한다. Enemy PoC는 `TargetableComponent.TryApplyDamage()`에서 `IDamageableTarget`을 찾아 일반 터렛과 CU에 같은 피해 명령을 전달한다.
 
 ### 4.4 탐색과 공격
 
@@ -557,7 +568,7 @@ flowchart TD
 
 ### 6.2 잠금과 해금
 
-잠금은 Definition의 고정 능력치가 아니라 터렛 인스턴스의 런타임 상태다. 기본값은 해금 상태여서 기존 Prefab 동작을 바꾸지 않는다. `SetLocked(true)`는 활성 터렛을 먼저 끄고 예약 전력을 반환한 뒤 잠근다. 잠긴 터렛의 `RequestActivation(true)`는 `Locked`를 반환한다. `SetLocked(false)`로 해금해도 자동으로 켜지지 않으며 플레이어가 다시 활성화해야 한다. 잠금 상태는 레벨 변경 시 이어받고 읽기 전용 스냅샷의 `IsLocked`에도 반영된다. 기존 `TowerManager`는 잠긴 터렛에 `Locked`라고 표시하고 활성화 요청을 더 진행하지 않는다. `TurretTest`에는 잠금·해금 버튼이 있지만 제품 UI의 해금 동작과 비용·영구 저장 규칙은 아직 적용하지 않았다.
+잠금은 Definition의 고정 능력치가 아니라 터렛 인스턴스의 런타임 상태다. 기본값은 해금 상태여서 기존 Prefab 동작을 바꾸지 않는다. `SetLocked(true)`는 활성 터렛을 먼저 끄고 예약 전력을 반환한 뒤 잠근다. 잠긴 터렛의 `RequestActivation(true)`는 `Locked`를 반환한다. `SetLocked(false)`로 해금해도 자동으로 켜지지 않으며 플레이어가 다시 활성화해야 한다. 잠금 상태는 레벨 변경 시 이어받고 읽기 전용 스냅샷의 `IsLocked`에도 반영된다. `TurretInteractionUI`는 잠긴 터렛에 `Locked`라고 표시한다. `TurretTest`에는 잠금·해금 버튼이 있지만 제품 UI의 해금 동작과 비용·영구 저장 규칙은 아직 적용하지 않았다.
 
 ```mermaid
 flowchart LR
@@ -585,21 +596,22 @@ NGO 연동 시 다음 규칙을 적용한다.
 
 ## 8. AI·전선 시스템 연동 기준
 
-Enemy PoC의 `PoCTargetSelector`는 `PoCTargetable` 컴포넌트를 수집한다. Stage 1 Canon/Missile Prefab에는 `TurretTargetableAdapter`와 `PoCTargetable`을 함께 붙였다. Adapter는 자신의 Transform으로 Registry에서 부모 터렛의 ID만 찾고, 그 ID의 스냅샷으로 현재·최대 체력과 활성·파괴 상태를 전달한다. `TurretBase` 참조를 보관하거나 상태를 직접 수정하지 않는다. 비활성·파괴된 터렛의 `PoCTargetable`은 비활성화되어 목표 후보에서 빠진다. 이 연결은 Enemy PoC 쪽에만 있고 `TeamHJD.Game.Turrets`는 Enemy assembly를 참조하지 않는다.
+Enemy PoC의 `EnemyTargetSelector`는 `TargetableComponent`를 수집한다. Canon, Missile, CU Prefab에는 `DamageableTargetAdapter`와 `TargetableComponent`가 연결된다. Adapter는 부모의 `IDamageableTarget`에서 현재·최대 체력과 파괴 상태를 읽는다. 무기 터렛은 활성 상태일 때만 후보가 되고 CU는 체력이 남아 있는 동안 항상 후보가 된다. Enemy의 실제 공격은 `TargetableComponent.TryApplyDamage(int)`를 거쳐 같은 `IDamageableTarget.ApplyDamage(int)` 계약으로 전달된다.
 
 ```mermaid
 flowchart TD
-    Base["TurretBase<br>상태 변경"] --> Registry["TurretInstanceRegistry<br>ID와 현재 상태"]
-    Registry -->|"TryGetSnapshot(ID)"| Snapshot["TurretSnapshot<br>복사된 읽기 전용 값"]
-    Registry -->|"SnapshotChanged(ID)"| Adapter["TurretTargetableAdapter<br>Synchronize()"]
-    Snapshot --> Adapter
-    Adapter --> Targetable["PoCTargetable<br>Enemy가 읽는 정보"]
-    Snapshot -.-> Frontline["전선 소비자<br>연결은 후속 작업"]
-    Targetable -->|켜져 있고 체력이 남음| Enemy["Enemy PoC 목표 후보"]
-    Targetable -->|꺼짐 또는 파괴| Excluded["목표 후보에서 제외"]
+    Contract["IDamageableTarget<br>ApplyDamage와 체력"]
+    Base["TurretBase"] --> Contract
+    CU["ControlUnitHealth"] --> Contract
+    Contract --> Adapter["DamageableTargetAdapter<br>상태 동기화"]
+    Efficiency["TurretBase와 Snapshot<br>이론 DPS / EffectivePower"] --> Adapter
+    Adapter --> Targetable["TargetableComponent<br>Enemy가 읽는 정보"]
+    Targetable -->|"TryApplyDamage"| Contract
+    Targetable -->|"무기 터렛 활성 또는 CU 생존"| Enemy["Enemy 목표 후보"]
+    Targetable -->|"비활성 무기 터렛 또는 파괴"| Excluded["목표 후보에서 제외"]
 ```
 
-`FirepowerRatio`는 계산 기준이 아직 정해지지 않아 Adapter의 임시값 0.5를 사용한다. 세부 업그레이드와 레벨 승급으로 `EffectiveDamage`가 바뀌어도 이 비율은 아직 바뀌지 않는다. AI 평가 규칙을 정하면 `PoCTargetable.SetFirepower`에 실제 현재/최대 화력을 전달해야 한다.
+`TurretBase.TheoreticalDps = EffectiveDamage × Definition.FireRate × ProjectilesPerShot`이며 `DpsPerPower = TheoreticalDps / EffectivePower`다. Missile은 발사구 수를 발사당 최대 미사일 수로 반영한다. 이는 연속 사격 이론값으로 과열·명중률·폭발 다중 피해는 포함하지 않는다. 전력 0은 효율 0으로 처리하며 CU도 0이다. Snapshot에도 동일 값을 제공한다. Adapter의 fake 값은 제거했다. Enemy의 기존 `FirepowerRatio` 이름은 호환을 위해 유지하지만 실제 값은 0~1로 제한하지 않는 DPS/전력이며 위협 가중치가 효율 단위에 곱해진다.
 
 전선 시스템과 후속 AI 계약에 제공할 후보 데이터는 다음과 같다.
 
@@ -723,7 +735,9 @@ flowchart TD
 - [`TurretUpgradeDefinition.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretUpgradeDefinition.cs)
 - [`TurretLevelUpgradeCatalog.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretLevelUpgradeCatalog.cs)
 - [`TurretLevelUpgrade_Stage1.asset`](../../Assets/Scripts/Tower/TurretDefinitions/TurretLevelUpgrade_Stage1.asset)
-- [`TurretTargetableAdapter.cs`](../../Assets/PoC/Enemy/Scripts/TurretTargetableAdapter.cs)
+- [`IDamageableTarget.cs`](../../Assets/Scripts/Tower/Turret/Contracts/IDamageableTarget.cs)
+- [`DamageableTargetAdapter.cs`](../../Assets/PoC/Enemy/Scripts/Targeting/DamageableTargetAdapter.cs)
+- [`ControlUnit.asset`](../../Assets/Scripts/Tower/TurretDefinitions/ControlUnit.asset)
 - [`TurretTestController.cs`](../../Assets/Scripts/Tower/Turret/TurretTestController.cs)
 - [`TurretInstanceRegistry.cs`](../../Assets/Scripts/Tower/Turret/Core/TurretInstanceRegistry.cs)
 - [`TeamHJD.Game.Turrets.Contracts.asmdef`](../../Assets/Scripts/Tower/Turret/Contracts/TeamHJD.Game.Turrets.Contracts.asmdef)
@@ -732,3 +746,26 @@ flowchart TD
 - [`DefaultMissileTurret.cs`](../../Assets/Scripts/Tower/MissileTurret/DefaultMissileTurret.cs)
 - [`TowerBullet.cs`](../../Assets/Scripts/Tower/TurretWeapons/TowerBullet.cs)
 - [`TowerMissile.cs`](../../Assets/Scripts/Tower/TurretWeapons/TowerMissile.cs)
+
+## 자동 활성화 (2026-10-08)
+
+`TurretController.TryStartAutoActivation()`은 같은 Scene·컨트롤러의 등록된 무기 터렛을 대상으로 한다. 잠금·파괴 후보를 제외하고 버튼 시점의 공격 가능 사거리 내 적 수를 저장한다. Missile 최소 사거리도 반영하고 동일 Rigidbody의 여러 Collider를 중복 집계하지 않는다. enemyMask에는 적 Collider만 포함해야 한다. Rigidbody 없는 적의 여러 Collider는 개별 집계될 수 있다.
+
+적 수 내림차순, 동점은 InstanceId 오름차순으로 고정한다. 현재 켜진 소속 터렛을 모두 끈 뒤 가용 전력으로 순서대로 활성화를 시도한다. 부족한 후보는 건너뛰고 전력 반환 중에는 다시 시도한다. 후보를 모두 처리했거나 반환 대기가 끝나 더 켤 수 없는 경우 종료한다. 진행 중 잠금·파괴·제거된 후보는 제외하고 새 후보를 추가하거나 순위를 재계산하지 않는다. 자동 활성화가 진행되는 동안 공개 개별 활성화 요청은 `AutoActivationInProgress`로 거부하고 Console 로그로 알린다. 종료 후 수동 켜기·끄기를 다시 허용한다. 자동화 내부 요청과 피격·잠금에 따른 시스템 비활성화는 계속 처리한다.
+
+쿨타임은 요청 수락부터 게임 시간 60초이며 일시정지 동안 진행하지 않는다. 진행 중 재요청은 거부한다. 비활성화된 컨트롤러는 작업을 중단한다. `AutoActivationScoreProvider`는 이후 가중치 정책을 주입할 수 있는 경계이며 현재 기본 점수는 적 수다.
+
+CU interaction의 UGUI Button에는 `TurretAutoActivationButton`을 연결하고 OnClick에 `ActivateAutomatically()`를 지정한다. CU 체력 컴포넌트와 연결할 필요는 없다. `TurretTestController`에도 테스트용 Auto Activate 버튼과 고정 후보 목록·쿨타임을 표시한다. 실제 CU interaction 화면과 네트워크 권한은 후속 연결 대상이다.
+
+```mermaid
+flowchart TD
+    Button[CU 버튼 요청] --> Capture[적 수 캡처 / 잠금·파괴 제외]
+    Capture --> Sort[적 수순 고정 목록]
+    Sort --> Off[현재 활성 터렛 전체 끄기]
+    Off --> Try[가용 전력으로 순서대로 시도]
+    Try --> Skip[부족한 후보 건너뛰기]
+    Skip --> Wait{반환 대기와 미처리 후보 있음?}
+    Wait -->|있음| Recover[전력 회복]
+    Recover --> Try
+    Wait -->|없음| End[종료]
+```

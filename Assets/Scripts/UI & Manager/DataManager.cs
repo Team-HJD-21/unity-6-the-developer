@@ -62,9 +62,9 @@ public class DataManager : MonoBehaviour
 
         //  Control Unit
         ControlUnitHp = ControlUnitHpLv * MarginList[4] + 1500;
-        AttributeList[4] = ControlUnitHp;
+        AttributeList[(int)AttributeType.ControlUnitHealth] = ControlUnitHp;
         ControlUnitPower = ControlUnitPowerLv * MarginList[5] + 250;
-        AttributeList[5] = ControlUnitPower;
+        AttributeList[(int)AttributeType.ControlUnitPower] = ControlUnitPower;
 
         /*
          * Player Hp : 400 475 550 625 (+ 75)

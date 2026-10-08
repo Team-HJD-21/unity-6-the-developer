@@ -24,6 +24,9 @@ public class InGameManager : MonoBehaviour
     {
         if (_playerDeathSource != null) _playerDeathSource.onDeath.RemoveListener(GameOver);
     }
+    [Header("Control Unit")]
+    [SerializeField] private ControlUnitHealth controlUnit;
+
     [Header("Status")] 
     public int curWave;
     public int maxWave;
@@ -124,6 +127,8 @@ public class InGameManager : MonoBehaviour
 
     private void Start()
     {
+        controlUnit ??= FindFirstObjectByType<ControlUnitHealth>();
+
         isGameOver = false;
         clear = 0f;
         
@@ -550,24 +555,23 @@ public class InGameManager : MonoBehaviour
 
     private void StopAllTurrets()
     {
-        // 모든 타워 비활성화
-        for (int i = 0; i < TowerManager.towerList.Count; i++)
+        TurretController controller = TurretController.FindForScene(gameObject.scene);
+        if (controller == null)
         {
-            GameObject towerObject = TowerManager.towerList[i];
-            if (towerObject != null)
-            {
-                if (towerObject.TryGetComponent(out TurretBase turret))
-                {
-                    turret.RequestActivation(false);
-                }
+            return;
+        }
 
-                // 미니맵 요소 색상 업데이트
-                UpdateMiniMapElement(towerObject, false); // 비활성화 상태
-            }
-            else
+        IReadOnlyList<TurretBase> turrets = TurretInstanceRegistry.GetAll();
+        for (int i = 0; i < turrets.Count; i++)
+        {
+            TurretBase turret = turrets[i];
+            if (turret == null || turret.gameObject.scene != gameObject.scene)
             {
-                // Debug.LogWarning($"Tower at index {i} in towerList is null.");
+                continue;
             }
+
+            controller.RequestActivation(turret.InstanceId, false);
+            UpdateMiniMapElement(turret.gameObject, false);
         }
     }
 
@@ -711,8 +715,14 @@ public class InGameManager : MonoBehaviour
 
     private int CalculateCoin()
     {
-        int curCUHp = GeneralManager.Instance.towerManager.controlUnit.GetCurHp();
-        int maxCUHp = GeneralManager.Instance.towerManager.controlUnit.GetMaxHp();
+        if (controlUnit == null)
+        {
+            Debug.LogError("ControlUnitHealth is required to calculate the stage reward.", this);
+            return 0;
+        }
+
+        int curCUHp = controlUnit.CurrentHealth;
+        int maxCUHp = controlUnit.MaxHealth;
 
         float ratio = (float)curCUHp / maxCUHp;
         int reward = (int)(ratio * StageInfoManager.GetReward() * clear);

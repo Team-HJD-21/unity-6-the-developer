@@ -284,7 +284,8 @@ namespace TeamHJD.Game.Turrets
                 turret.EffectiveRange,
                 turret.EffectivePower,
                 turret.RuntimeState.SelectedUpgradeId,
-                turret.RuntimeState.UpgradeLevel);
+                turret.RuntimeState.UpgradeLevel,
+                turret.TheoreticalDps);
         }
 
         private static int AllocateInstanceId()

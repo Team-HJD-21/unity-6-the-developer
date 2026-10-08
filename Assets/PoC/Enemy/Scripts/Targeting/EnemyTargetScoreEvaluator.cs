@@ -39,7 +39,7 @@ public class EnemyTargetScoreEvaluator : MonoBehaviour
         float healthScore = lowHealthRatio * targetSetting.maxLowHealthWeight;
 
         // 화력이 높은 타깃은 위험하므로 선택 점수에서 감점한다.
-        float threatPenalty = Mathf.Clamp01(target.FirepowerRatio) * targetSetting.maxThreatWeight;
+        float threatPenalty = Mathf.Max(0f, target.FirepowerRatio) * targetSetting.maxThreatWeight;
 
         return preferenceScore + distanceScore + healthScore - threatPenalty;
     }

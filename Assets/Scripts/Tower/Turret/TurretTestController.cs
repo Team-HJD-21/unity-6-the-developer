@@ -8,7 +8,7 @@ namespace TeamHJD.Game.Debugging
 {
     /// <summary>
     /// Lightweight Play Mode controls for the isolated TurretTest scene.
-    /// This intentionally replaces TowerManager and its production UI dependencies.
+    /// This intentionally replaces the production TurretInteractionUI dependencies.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TurretTestController : MonoBehaviour
@@ -135,6 +135,18 @@ namespace TeamHJD.Game.Debugging
             else
             {
                 GUILayout.Label("TurretController: not found");
+            }
+
+            TurretController autoController = TurretController.FindForScene(gameObject.scene);
+            if (autoController != null)
+            {
+                bool previousEnabled = GUI.enabled;
+                GUI.enabled = !autoController.IsAutoActivationRunning && autoController.AutoActivationCooldownRemaining <= 0f;
+                if (GUILayout.Button("Auto Activate")) autoController.TryStartAutoActivation();
+                GUI.enabled = previousEnabled;
+                GUILayout.Label($"Auto: {(autoController.IsAutoActivationRunning ? "Running" : "Idle")} / Cooldown: {autoController.AutoActivationCooldownRemaining:F1}s");
+                foreach (TurretController.AutoActivationCandidate candidate in autoController.AutoActivationCandidates)
+                    GUILayout.Label($"Priority ID {candidate.InstanceId}: enemies at click {candidate.EnemyCount}");
             }
 
             if (_lastActivationResult.HasValue)

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using TeamHJD.Game.Turrets.Contracts;
+using UnityEngine;
 
 public class AdcMonster : Monster
 {
@@ -44,8 +45,8 @@ public class AdcMonster : Monster
 
         SetDirection(DIRECTION_DOWN);
 
-        // ControlUnitStatus가 Monster.cs에서 자동 할당되었는지 확인
-        if (controlUnitStatus == null)
+        // ControlUnitHealth가 Monster.cs에서 자동 할당되었는지 확인
+        if (controlUnitHealth == null)
         {
             // Debug.LogWarning($"{monsterName}의 Control Unit이 할당되지 않았습니다.");
         }
@@ -53,7 +54,7 @@ public class AdcMonster : Monster
 
     private void Update()
     {
-        if (player|| controlUnitStatus) return;
+        if (player|| controlUnitHealth) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
@@ -84,7 +85,7 @@ public class AdcMonster : Monster
         Transform closestPoint = null;
         float closestDistance = Mathf.Infinity;
 
-        foreach (Transform accessPoint in controlUnitStatus.accessPoints)
+        foreach (Transform accessPoint in controlUnitHealth.accessPoints)
         {
             float distance = Vector2.Distance(transform.position, accessPoint.position);
             if (distance < closestDistance)
@@ -200,7 +201,7 @@ public class AdcMonster : Monster
         }
         else
         {
-            ControlUnitStatus controlUnit = controlUnitStatus;
+            IDamageableTarget controlUnit = controlUnitHealth;
             
             if (controlUnit == null)
             {
@@ -208,7 +209,7 @@ public class AdcMonster : Monster
                 return;
             }
             
-            // foreach (Transform accessPoint in controlUnitStatus.accessPoints)
+            // foreach (Transform accessPoint in controlUnitHealth.accessPoints)
             // {
             //     if (accessPoint == currentTarget)
             //     {
@@ -217,7 +218,7 @@ public class AdcMonster : Monster
             GameObject bulletObj = Instantiate(bulletPrefabGreen, transform.position, Quaternion.identity);
             AdcBullet adcBulletScript = bulletObj.GetComponent<AdcBullet>();
                 
-            adcBulletScript.SetControlUnitTarget(controlUnitStatus);
+            adcBulletScript.SetControlUnitTarget(controlUnitHealth);
 
             adcBulletScript.SetDirection(targetDirection);
 

@@ -233,8 +233,8 @@ namespace TeamHJD.Game.Editor
         {
             if (prefabPath == ControlUnitPrefabPath)
             {
-                ControlUnitStatus existingUnit = scene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<ControlUnitStatus>(true))
+                ControlUnitHealth existingUnit = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<ControlUnitHealth>(true))
                     .FirstOrDefault(unit => unit.name == "ControlUnit");
                 if (existingUnit != null)
                     return existingUnit.gameObject;

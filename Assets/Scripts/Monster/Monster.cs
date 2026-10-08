@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public abstract class Monster : MonoBehaviour
@@ -19,8 +20,9 @@ public abstract class Monster : MonoBehaviour
     [Header("References")] [Tooltip("플레이어 Transform 할당")]
     public Transform player;
 
-    [Tooltip("제어 장치의 ControlUnitStatus를 할당")]
-    public ControlUnitStatus controlUnitStatus;
+    [FormerlySerializedAs("controlUnitStatus")]
+    [Tooltip("제어 장치의 ControlUnitHealth를 할당")]
+    public ControlUnitHealth controlUnitHealth;
 
     [Header("UI Elements")] public GameObject healthBarPrefab;
     private Image healthBarCurrentImage; // Current 이미지를 참조
@@ -67,16 +69,16 @@ public abstract class Monster : MonoBehaviour
             // Debug.LogWarning("Health bar prefab is not assigned on " + monsterName);
         }
 
-        // ControlUnitStatus가 할당되지 않은 경우, 태그를 통해 씬에서 찾아 할당
-        if (controlUnitStatus == null)
+        // ControlUnitHealth가 할당되지 않은 경우, 태그를 통해 씬에서 찾아 할당
+        if (controlUnitHealth == null)
         {
             GameObject controlUnitObj = GameObject.FindWithTag("CU");
             if (controlUnitObj != null)
             {
-                controlUnitStatus = controlUnitObj.GetComponent<ControlUnitStatus>();
-                if (controlUnitStatus == null)
+                controlUnitHealth = controlUnitObj.GetComponent<ControlUnitHealth>();
+                if (controlUnitHealth == null)
                 {
-                    // Debug.LogWarning("ControlUnitStatus component not found on the ControlUnit object.");
+                    // Debug.LogWarning("ControlUnitHealth component not found on the ControlUnit object.");
                 }
             }
             else

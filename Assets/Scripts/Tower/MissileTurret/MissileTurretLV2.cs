@@ -19,6 +19,7 @@ public class MissileTurretLV2 : DefaultMissileTurret
     //[SerializeField] private GameObject towerPrefab;
     
     private GameObject[] _missileObj;
+    public override int ProjectilesPerShot => missileSpawnPoint != null ? missileSpawnPoint.Length : 0;
     private void Start()
     {
         gunRenderer.color = new Color(0.5f, 0.5f, 0.5f);

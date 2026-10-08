@@ -1,6 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
+using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class AdcBullet : MonoBehaviour
 {
@@ -12,7 +12,7 @@ public class AdcBullet : MonoBehaviour
     [SerializeField] private int bulletDamage = 30;
     [SerializeField] private Transform bulletSpawnPoint;
 
-    [Header("ControlUnit")] public ControlUnitStatus controlUnit;
+    private IDamageableTarget controlUnit;
     
     private Vector2 direction;
     
@@ -42,7 +42,7 @@ public class AdcBullet : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public void SetControlUnitTarget(ControlUnitStatus target)
+    public void SetControlUnitTarget(IDamageableTarget target)
     {
         controlUnit = target;
     }
@@ -56,11 +56,10 @@ public class AdcBullet : MonoBehaviour
             player.TakeDamage(bulletDamage);
         }
         
-        //  수정이 필요하긴 할 것 같음 - 현석
-        ControlUnitStatus cu = collision.gameObject.GetComponent<ControlUnitStatus>();
-        if (cu != null)
+        TargetableComponent targetable = collision.gameObject.GetComponentInParent<TargetableComponent>();
+        if (targetable != null)
         {
-            cu.GetDamage(bulletDamage);
+            targetable.TryApplyDamage(bulletDamage);
         }
         Destroy(gameObject);
     }

@@ -1,3 +1,4 @@
+using TeamHJD.Game.Turrets.Contracts;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -52,8 +53,8 @@ public class BossMonster : Monster
 
         SetDirection(DIRECTION_DOWN);
 
-        // ControlUnitStatus가 Monster.cs에서 자동 할당되었는지 확인
-        if (controlUnitStatus == null)
+        // ControlUnitHealth가 Monster.cs에서 자동 할당되었는지 확인
+        if (controlUnitHealth == null)
         {
             // Debug.LogWarning($"{monsterName}의 Control Unit이 할당되지 않았습니다.");
         }
@@ -69,7 +70,7 @@ public class BossMonster : Monster
 
     private void Update()
     {
-        if (player == null || controlUnitStatus == null || isDead) return;
+        if (player == null || controlUnitHealth == null || isDead) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
@@ -282,18 +283,18 @@ public class BossMonster : Monster
         }
         else
         {
-            ControlUnitStatus controlUnit = controlUnitStatus;
+            IDamageableTarget controlUnit = controlUnitHealth;
             if (controlUnit == null)
             {
                 // Debug.LogError("Control Unit 을 불러올 수 없습니다. 공격 불가");
                 return;
             }
 
-            foreach (Transform accessPoint in controlUnitStatus.accessPoints)
+            foreach (Transform accessPoint in controlUnitHealth.accessPoints)
             {
                 if (accessPoint == currentTarget)
                 {
-                    controlUnit.GetDamage(damage);
+                    controlUnit.ApplyDamage(damage);
                     break;
                 }
             }
@@ -363,7 +364,7 @@ public class BossMonster : Monster
         Transform closestPoint = null;
         float closestDistance = Mathf.Infinity;
 
-        foreach (Transform accessPoint in controlUnitStatus.accessPoints)
+        foreach (Transform accessPoint in controlUnitHealth.accessPoints)
         {
             float distance = Vector2.Distance(transform.position, accessPoint.position);
             if (distance < closestDistance)

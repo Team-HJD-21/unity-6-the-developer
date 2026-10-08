@@ -14,6 +14,7 @@ public class MissileTurretLV1 : DefaultMissileTurret
     // [SerializeField] private Transform missileSpawnPoint2;  //미사일 스폰 지점
     [SerializeField] private Transform []missileSpawnPoint;
     private GameObject []_missileObj;
+    public override int ProjectilesPerShot => missileSpawnPoint != null ? missileSpawnPoint.Length : 0;
     private void Start()
     {
         Targets = new Transform[missileSpawnPoint.Length];

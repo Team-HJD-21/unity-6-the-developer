@@ -113,7 +113,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f52a29d5e2e4832a13e80d597e26764, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _fakeFirepowerRatio: 0.5
 --- !u!114 &4623217508369570199
 MonoBehaviour:
   m_ObjectHideFlags: 0

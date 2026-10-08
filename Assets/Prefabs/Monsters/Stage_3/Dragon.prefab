@@ -160,7 +160,7 @@ MonoBehaviour:
   isTargeted: 0
   detectionRange: 30
   player: {fileID: 0}
-  controlUnitStatus: {fileID: 0}
+  controlUnitHealth: {fileID: 0}
   healthBarPrefab: {fileID: 5923136517399835792, guid: 9f5f595c12ea043288a57743f47ba096, type: 3}
   healthBarYOffset: 10
   isDerivedBoss: 0

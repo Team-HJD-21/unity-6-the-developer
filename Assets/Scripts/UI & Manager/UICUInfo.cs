@@ -1,163 +1,139 @@
 using System.Collections;
-using System.Collections.Generic;
+using TeamHJD.Game.Turrets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/*
- *  UI 중 Control Unit에 대한 체력바 등을 관리하는 스크립트입니다.
- *  Control Unit의 태그는 CU, TMP는 CUHpText로 지정되어 있습니다.
- *  (본 스크립트 CU Power Object에만 연결되어 있습니다.)
- */
-
 public class UICUInfo : MonoBehaviour
 {
-    private GameObject controlUnit;
-    private ControlUnitStatus status;
+    private ControlUnitHealth controlUnitHealth;
+    private TurretController turretController;
+    private float powerRatio = 1f;
+
     public TMP_Text powerText;
     public TMP_Text hpText;
-    
+
     [Header("Filler")]
     public Image filledHpImage;
-
     public Image filledPowerImage;
 
     private void Awake()
     {
-        //  Control Unit Object 자동 연결
-        if (controlUnit == null)
+        GameObject controlUnit = GameObject.FindGameObjectWithTag("CU");
+        if (controlUnit != null)
         {
-            controlUnit = GameObject.FindGameObjectWithTag("CU");
+            controlUnitHealth = controlUnit.GetComponent<ControlUnitHealth>();
         }
-        status = controlUnit.GetComponent<ControlUnitStatus>();
-        
-        //  Control Unit UI의 Text 자동 연결
+
+        turretController = TurretController.GetOrCreateForScene(gameObject.scene);
+
         if (hpText == null)
         {
-            hpText = GameObject.FindWithTag("CUHpText").GetComponent<TMP_Text>();
-            if (hpText == null)
+            GameObject hpTextObject = GameObject.FindWithTag("CUHpText");
+            if (hpTextObject != null)
             {
-                // Debug.LogError("UI ERROR : Hp Text를 반드시 연결해주어야 합니다.");
-                SceneController.ExitProgram();
+                hpText = hpTextObject.GetComponent<TMP_Text>();
             }
         }
-        
-        
-        //  Control Unit Status의 Event와 연결
-        status.onCUHpChange.AddListener(SetUICUHpInfo);
-        status.onCUPowerChange.AddListener(SetUICUPowerInfo);
+
+        if (controlUnitHealth != null)
+        {
+            bool hasPersistentListener = false;
+            for (int i = 0; i < controlUnitHealth.onCUHpChange.GetPersistentEventCount(); i++)
+            {
+                hasPersistentListener |= controlUnitHealth.onCUHpChange.GetPersistentTarget(i) == this &&
+                                         controlUnitHealth.onCUHpChange.GetPersistentMethodName(i) == nameof(SetUICUHpInfo);
+            }
+
+            if (!hasPersistentListener)
+            {
+                controlUnitHealth.onCUHpChange.AddListener(SetUICUHpInfo);
+            }
+        }
+
+        turretController.PowerChanged += HandlePowerChanged;
     }
-    
-    //  Hp에 대한 변동사항이 있을 때 호출됩니다.
+
+    private void Start()
+    {
+        if (controlUnitHealth != null)
+        {
+            SetUICUHpInfo(controlUnitHealth.CurrentHealth, controlUnitHealth.MaxHealth, 1f);
+        }
+
+        HandlePowerChanged(turretController.CurrentPower, turretController.MaximumPower);
+    }
+
+    private void OnDestroy()
+    {
+        if (controlUnitHealth != null)
+        {
+            controlUnitHealth.onCUHpChange.RemoveListener(SetUICUHpInfo);
+        }
+
+        if (turretController != null)
+        {
+            turretController.PowerChanged -= HandlePowerChanged;
+        }
+    }
+
     public void SetUICUHpInfo(int curHp, int maxHp, float preRatio)
     {
-        int ratio = (int)((curHp / (float)maxHp) * 100);
-        if (preRatio > (curHp / (float)maxHp))
+        float ratio = maxHp > 0 ? curHp / (float)maxHp : 0f;
+        if (filledHpImage != null)
         {
-            StartCoroutine(UIHpInfoCoroutine(preRatio, (curHp / (float)maxHp)));
+            if (preRatio > ratio)
+            {
+                StartCoroutine(UpdateFill(filledHpImage, preRatio, ratio));
+            }
+            else
+            {
+                filledHpImage.fillAmount = ratio;
+            }
         }
-        else
+
+        if (hpText != null)
         {
-            filledHpImage.fillAmount = curHp / (float)maxHp;
+            hpText.SetText(Mathf.RoundToInt(ratio * 100f) + "%");
         }
-        hpText.SetText(ratio + "%");
     }
-    
-    //  Power에 대한 변동사항이 있을 때 호출됩니다.
+
     public void SetUICUPowerInfo(int curPower, int maxPower, float preRatio)
     {
-        int ratio = (int)((curPower / (float)maxPower) * 100);
-        
-        if (preRatio > (curPower / (float)maxPower))
+        float ratio = maxPower > 0 ? curPower / (float)maxPower : 0f;
+        if (filledPowerImage != null)
         {
-            StartCoroutine(UIPowerInfoCoroutine(preRatio, (curPower / (float)maxPower)));
-        }
-        //  Power Recover
-        else
-        {
-            filledPowerImage.fillAmount = (curPower / (float)maxPower);
-        }
-        
-        
-        powerText.SetText(ratio + "%");
-    }
-
-    private IEnumerator UIPowerInfoCoroutine(float preRatio, float fRatio)
-    {
-        float elapsedRatio = preRatio;
-
-        if (preRatio > fRatio)  //  power use
-        {
-            while (true)
+            if (preRatio > ratio)
             {
-                if (elapsedRatio <= fRatio)
-                {
-                    yield break;
-                }
-
-                elapsedRatio -= 0.01f;
-
-                filledPowerImage.fillAmount = elapsedRatio;
-            
-                yield return new WaitForSeconds(0.01f);
+                StartCoroutine(UpdateFill(filledPowerImage, preRatio, ratio));
+            }
+            else
+            {
+                filledPowerImage.fillAmount = ratio;
             }
         }
-        //  power recover
-        // else
-        // {
-        //     while (true)
-        //     {
-        //         if (elapsedRatio >= fRatio)
-        //         {
-        //             yield break;
-        //         }
-        //
-        //         elapsedRatio += 0.01f;
-        //
-        //         filledPowerImage.fillAmount = elapsedRatio;
-        //     
-        //         yield return new WaitForSeconds(0.01f);
-        //     }
-        // }
-    }
 
-    private IEnumerator UIHpInfoCoroutine(float preRatio, float fRatio)
-    {
-        float elapsedRatio = preRatio;
-
-        if (preRatio > fRatio)  //  power use
+        if (powerText != null)
         {
-            while (true)
-            {
-                if (elapsedRatio <= fRatio)
-                {
-                    yield break;
-                }
-
-                elapsedRatio -= 0.01f;
-
-                filledHpImage.fillAmount = elapsedRatio;
-            
-                yield return new WaitForSeconds(0.01f);
-            }
+            powerText.SetText(Mathf.RoundToInt(ratio * 100f) + "%");
         }
-        //  power recover
-        // else
-        // {
-        //     while (true)
-        //     {
-        //         if (elapsedRatio >= fRatio)
-        //         {
-        //             yield break;
-        //         }
-        //
-        //         elapsedRatio += 0.01f;
-        //
-        //         filledHpImage.fillAmount = elapsedRatio;
-        //     
-        //         yield return new WaitForSeconds(0.01f);
-        //     }
-        // }
+
+        powerRatio = ratio;
     }
-    
+
+    private void HandlePowerChanged(int curPower, int maxPower)
+    {
+        SetUICUPowerInfo(curPower, maxPower, powerRatio);
+    }
+
+    private static IEnumerator UpdateFill(Image image, float from, float to)
+    {
+        float value = from;
+        while (value > to)
+        {
+            value = Mathf.Max(to, value - 0.01f);
+            image.fillAmount = value;
+            yield return new WaitForSeconds(0.01f);
+        }
+    }
 }
