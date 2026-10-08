@@ -19,7 +19,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour
     private bool _initialized;
     private BoxCollider2D _blocker;
     private Material _material;
-    private LineRenderer _energy, _healthLine;
+    private LineRenderer _energy;
     public PlayerFieldDeviceKind Kind => _kind;
     public float Health => _health;
     public bool IsAlive => _initialized && isActiveAndEnabled && _health > 0 && _remaining > 0;
@@ -75,10 +75,8 @@ public sealed class PlayerFieldDevice : MonoBehaviour
         }
         PlaceEmitter(_firstEmitter, start);
         PlaceEmitter(_secondEmitter, end);
-        _healthLine = Line("Device Health", _material, .07f, color);
         _initialized = true;
         if (!Active.Contains(this)) Active.Add(this);
-        UpdateHealthLine();
     }
 
     private static void PlaceEmitter(SpriteRenderer emitter, Vector3 position)
@@ -127,13 +125,6 @@ public sealed class PlayerFieldDevice : MonoBehaviour
         Color bodyColor = _hitFlash > 0 ? new Color(1, .6f, .6f) : Color.white;
         if (_firstEmitter != null) _firstEmitter.color = bodyColor;
         if (_secondEmitter != null) _secondEmitter.color = bodyColor;
-        UpdateHealthLine();
-    }
-
-    private void UpdateHealthLine()
-    {
-        Vector3 left = transform.position + new Vector3(-.5f, 1.05f * VisualScale, 0);
-        SetLine(_healthLine, left, left + Vector3.right * Mathf.Clamp01(_health / _maxHealth));
     }
 
     public void TakeDamage(float damage)
@@ -142,7 +133,6 @@ public sealed class PlayerFieldDevice : MonoBehaviour
         _health = Mathf.Max(0, _health - damage);
         _hitFlash = .12f;
         if (_health <= 0) Retire();
-        else UpdateHealthLine();
     }
 
     private void Retire()
