@@ -125,13 +125,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 6757870014131357828}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5cf9b42bca77e684ebfb261677d1faeb, type: 3}
+  m_Script: {fileID: 11500000, guid: 0fcedcb4b88941d0aefb5118e86c6421, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  bomb: {fileID: 6757870014131357828}
-  bombDamage: 250
-  animator: {fileID: 0}
-  isBomb: 0
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBombExplosion
+  _bombVisual: {fileID: 6757870014131357828}
+  _damage: 250
+  _animator: {fileID: 0}
+  _radius: 3
+  _fuseSeconds: 2.1
+  _effectSeconds: 0.8
 --- !u!50 &5950224543752731837
 Rigidbody2D:
   serializedVersion: 5

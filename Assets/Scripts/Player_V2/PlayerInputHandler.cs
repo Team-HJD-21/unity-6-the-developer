@@ -9,14 +9,15 @@ using UnityEngine;
 ///    - 채택 이유: 입력 창구를 한곳으로 모아 일시정지, 대화 등의 상황에서 일괄 제어가 가능하며,
 ///      스킬 키 바인딩 변경 시 PlayerInputHandler만 수정하면 됩니다.
 /// </summary>
+[DefaultExecutionOrder(-200)]
 public class PlayerInputHandler : MonoBehaviour
 {
-    private static readonly Plane AimPlane = new Plane(Vector3.forward, Vector3.zero);
 
     // [이동 및 조준]
     public Vector2 MoveInput { get; private set; }
-    public Vector2 AimDirection { get; private set; }
+    public Vector2 AimDirection { get; private set; } = Vector2.down;
     public Vector2 MouseWorldPosition { get; private set; }
+    public bool HasAimTarget { get; private set; }
 
     // [기본 사격 (Space)]
     public bool IsAttackPressed { get; private set; }
@@ -32,33 +33,32 @@ public class PlayerInputHandler : MonoBehaviour
     // [무기 교체 (Tab)]
     public bool WasWeaponSwitchPressed { get; private set; }
 
-    private Camera mainCamera;
+    private Camera _mainCamera;
 
     private void Awake()
     {
-        mainCamera = Camera.main;
+        _mainCamera = Camera.main;
+        MouseWorldPosition = transform.position;
     }
 
     private void Update()
     {
         // 1. 이동 방향 (WASD 및 화살표)
-        Vector2 move = Vector2.zero;
-        if (GameInput.IsPressed(GameKey.W) || GameInput.IsPressed(GameKey.UpArrow)) move.y += 1f;
-        if (GameInput.IsPressed(GameKey.S) || GameInput.IsPressed(GameKey.DownArrow)) move.y -= 1f;
-        if (GameInput.IsPressed(GameKey.A) || GameInput.IsPressed(GameKey.LeftArrow)) move.x -= 1f;
-        if (GameInput.IsPressed(GameKey.D) || GameInput.IsPressed(GameKey.RightArrow)) move.x += 1f;
-        MoveInput = move.normalized;
+        MoveInput = GameInput.Move;
 
         // 2. 마우스 조준 방향 및 월드 좌표
-        if (mainCamera == null) mainCamera = Camera.main;
-        if (mainCamera != null)
+        HasAimTarget = false;
+        if (_mainCamera == null) _mainCamera = Camera.main;
+        if (_mainCamera != null)
         {
-            Ray pointerRay = mainCamera.ScreenPointToRay(GameInput.PointerPosition);
-            if (AimPlane.Raycast(pointerRay, out float distance))
+            var aimPlane = new Plane(Vector3.forward, transform.position);
+            Ray pointerRay = _mainCamera.ScreenPointToRay(GameInput.PointerPosition);
+            if (aimPlane.Raycast(pointerRay, out float distance))
             {
+                HasAimTarget = true;
                 MouseWorldPosition = pointerRay.GetPoint(distance);
                 Vector2 direction = MouseWorldPosition - (Vector2)transform.position;
-                AimDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
+                if (PlayerAimUtility.IsValidDirection(direction)) AimDirection = direction.normalized;
             }
         }
 
@@ -73,6 +73,6 @@ public class PlayerInputHandler : MonoBehaviour
         WasRecoverPressed = GameInput.WasPressedThisFrame(GameKey.F);
 
         // 6. 무기 교체 입력 (Tab 키 감지)
-        WasWeaponSwitchPressed = Input.GetKeyDown(KeyCode.Tab);
+        WasWeaponSwitchPressed = GameInput.WasPressedThisFrame(GameKey.Tab);
     }
 }

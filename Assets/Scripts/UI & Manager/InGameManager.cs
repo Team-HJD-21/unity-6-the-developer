@@ -177,6 +177,7 @@ public class InGameManager : MonoBehaviour
         }
         
         //  Bomb Count init
+        if (player == null) return;
         var skillController = player.GetComponent<PlayerSkillController>();
         if (skillController != null)
         {
@@ -196,8 +197,8 @@ public class InGameManager : MonoBehaviour
                 bombImage.gameObject.SetActive(false);
             }
         }
-        else if (bombCount != null && player.TryGetComponent(out Player legacyPlayer))
-            bombCount.SetText(legacyPlayer.maxBombCount.ToString());
+        else if (bombCount != null && player.TryGetComponent(out PlayerBomb playerBomb))
+            bombCount.SetText(playerBomb.CurrentBombCount.ToString());
     }
 
     //  대화 중에는 스킵 불가능
