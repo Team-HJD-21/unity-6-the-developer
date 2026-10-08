@@ -50,6 +50,7 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] private Rigidbody2D playerRb;
 
     private bool canAttack = true;
+    private PlayerSkillController _skills;
 
     private void Reset()
     {
@@ -59,6 +60,7 @@ public class PlayerAttack : MonoBehaviour
 
     private void Awake()
     {
+        _skills = GetComponent<PlayerSkillController>();
         if (inputHandler == null) inputHandler = GetComponent<PlayerInputHandler>();
         if (playerRb == null) playerRb = GetComponent<Rigidbody2D>();
     }
@@ -66,6 +68,7 @@ public class PlayerAttack : MonoBehaviour
     private void Update()
     {
         if (inputHandler == null) return;
+        if (_skills != null && _skills.IsSelectionOpen) return;
 
         // 1. Tab 키 입력 시 무기 교체 (PlayerInputHandler 단일 의존)
         if (inputHandler.WasWeaponSwitchPressed)

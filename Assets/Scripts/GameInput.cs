@@ -17,7 +17,8 @@ public enum GameKey
     UpArrow,
     DownArrow,
     LeftArrow,
-    RightArrow
+    RightArrow,
+    F
 }
 
 public static class GameInput
@@ -83,6 +84,7 @@ public static class GameInput
             GameKey.Space => keyboard.spaceKey,
             GameKey.E => keyboard.eKey,
             GameKey.F1 => keyboard.f1Key,
+            GameKey.F => keyboard.fKey,
             GameKey.W => keyboard.wKey,
             GameKey.A => keyboard.aKey,
             GameKey.S => keyboard.sKey,

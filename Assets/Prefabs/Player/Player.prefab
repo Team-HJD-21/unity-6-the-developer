@@ -816,6 +816,7 @@ GameObject:
   - component: {fileID: -6895610628420138530}
   - component: {fileID: 1827649334803957301}
   - component: {fileID: 1827649334803957302}
+  - component: {fileID: 1827649334803957303}
   m_Layer: 18
   m_Name: Player
   m_TagString: Player
@@ -823,6 +824,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1827649334803957303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3d1d03e47d44f5896a8b2ebcf0cf0cb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  bombIcon: {fileID: 21300000, guid: dda4598a0f8347a3b0198ac0b4d8412b, type: 3}
+  turretIcon: {fileID: 21300000, guid: 2e51fe1c85ab4f88a696b67c3ef15fd2, type: 3}
+  uiFont: {fileID: 11400000, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
 --- !u!114 &1827649334803957301
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1172,8 +1188,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTurretSkill
   turretPrefab: {fileID: 5037733788499361552, guid: 5bba6ae4c3420f148a5ed5acf3721788, type: 3}
-  skillCooldown: 15
-  spawnOffset: {x: 0, y: -0.5, z: 0}
+  skillCooldown: 3
+  maxTurretCount: 3
+  recoveryRange: 2.5
+  spawnOffset: {x: 0, y: -0.9, z: 0}
   inputHandler: {fileID: -6787196589204068366}
 --- !u!1 &5971586974638979900
 GameObject:

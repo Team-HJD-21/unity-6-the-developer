@@ -14,14 +14,19 @@ public class PlayerBomb : MonoBehaviour
     private Coroutine _rechargeCoroutine;
     private InGameManager _inGameManager;
     private PlayerInputHandler _inputHandler;
+    private PlayerSkillController _skills;
 
     public int CurrentBombCount => _currentBombCount;
     public int MaxBombCount => maxBombCount;
+    public bool HasPrefab => bombPrefab != null;
+    public float RemainingCooldown => Mathf.Max(0f, bombCooldown - (Time.time - _lastBombTime));
+    public float CooldownDuration => bombCooldown;
 
     private void Awake()
     {
         _currentBombCount = maxBombCount;
         _inputHandler = GetComponent<PlayerInputHandler>();
+        _skills = GetComponent<PlayerSkillController>();
     }
 
     private void Start()
@@ -32,6 +37,8 @@ public class PlayerBomb : MonoBehaviour
 
     private void Update()
     {
+        // 선택 슬롯이 있으면 Q/E 처리는 Controller가 한 번만 수행합니다.
+        if (_skills != null) return;
         // 1. PlayerInputHandler가 연결되어 있으면 WasBombPressed 확인
         bool isBombPressed = false;
         if (_inputHandler != null)
@@ -76,17 +83,19 @@ public class PlayerBomb : MonoBehaviour
     }
 
     /// <summary>
-    /// E키 입력 시 호출되는 폭탄 투하 로직
+    /// 선택된 Q/E 슬롯에서 호출되는 폭탄 투하 로직
     /// </summary>
     public void TryDropBomb()
     {
-        // 쿨타임 검사
-        if (Time.time - _lastBombTime < bombCooldown) return;
+        TryUseSkill();
+    }
 
-        // 폭탄 개수 검사
-        if (_currentBombCount <= 0) return;
-
+    public bool TryUseSkill()
+    {
+        if (!isActiveAndEnabled || bombPrefab == null || RemainingCooldown > 0f || _currentBombCount <= 0) return false;
+        if (_skills != null && (!_skills.CanUse || !_skills.Loadout.Contains(PlayerSkillId.Bomb))) return false;
         DropBomb();
+        return true;
     }
 
     private void DropBomb()
@@ -119,7 +128,7 @@ public class PlayerBomb : MonoBehaviour
             while (timer < bombRechargeTime)
             {
                 timer += Time.deltaTime;
-                if (_inGameManager != null)
+                if (_skills == null && _inGameManager != null)
                 {
                     _inGameManager.ChargeBombImage((int)(timer * 10), (int)(bombRechargeTime * 10));
                 }
@@ -130,7 +139,7 @@ public class PlayerBomb : MonoBehaviour
             SyncBombUI();
         }
 
-        if (_inGameManager != null)
+        if (_skills == null && _inGameManager != null)
         {
             _inGameManager.ChargeBombImage(1, 1);
         }
@@ -143,6 +152,7 @@ public class PlayerBomb : MonoBehaviour
     /// </summary>
     public void SyncBombUI()
     {
+        if (_skills != null) return;
         FindInGameManager();
 
         if (_inGameManager != null)

@@ -177,7 +177,27 @@ public class InGameManager : MonoBehaviour
         }
         
         //  Bomb Count init
-        bombCount.SetText(player.GetComponent<Player>().maxBombCount.ToString());
+        var skillController = player.GetComponent<PlayerSkillController>();
+        if (skillController != null)
+        {
+            skillController.BindSceneState(
+                () => this != null && !isWave && !isTalking && !pauseVisible && !isGameOver && !isClear,
+                () => this != null && isWave && !isTalking && !pauseVisible && !isGameOver && !isClear);
+            // 기존 폭탄 HUD의 공통 wrapper만 숨겨 중복 표시를 방지합니다.
+            if (bombCount != null && bombImage != null)
+            {
+                Transform wrapper = bombImage.transform.parent;
+                while (wrapper != null && wrapper.GetComponent<Canvas>() == null)
+                {
+                    if (bombCount.transform.IsChildOf(wrapper)) { wrapper.gameObject.SetActive(false); break; }
+                    wrapper = wrapper.parent;
+                }
+                bombCount.gameObject.SetActive(false);
+                bombImage.gameObject.SetActive(false);
+            }
+        }
+        else if (bombCount != null && player.TryGetComponent(out Player legacyPlayer))
+            bombCount.SetText(legacyPlayer.maxBombCount.ToString());
     }
 
     //  대화 중에는 스킵 불가능
@@ -202,6 +222,12 @@ public class InGameManager : MonoBehaviour
     //  Blind를 통해 다른 UI 클릭을 방지한다.
     private void CheckKeyBoardInput()
     {
+        var skills = player != null ? player.GetComponent<PlayerSkillController>() : null;
+        if (skills != null && skills.IsSelectionOpen)
+        {
+            if (GameInput.WasPressedThisFrame(GameKey.Escape)) skills.CloseSelection();
+            return;
+        }
         if (GameInput.WasPressedThisFrame(GameKey.Escape))
         {
             if (settingVisible)
@@ -362,6 +388,7 @@ public class InGameManager : MonoBehaviour
 
     public void StartWave()
     {
+        if (player != null && player.TryGetComponent(out PlayerSkillController skills)) skills.CloseSelection();
         //  오작동 방지
         if (GameInput.WasPressedThisFrame(GameKey.Space))
         {

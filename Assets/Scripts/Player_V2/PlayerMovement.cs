@@ -29,6 +29,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("References")]
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private PlayerInputHandler inputHandler;
+    private PlayerSkillController _skills;
 
     // 대화 중이거나 사망 시 외부(매니저, UI, 컷씬 등)에서 이동을 멈출 수 있는 스위치
     public bool CanMove { get; set; } = true;
@@ -42,6 +43,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Awake()
     {
+        _skills = GetComponent<PlayerSkillController>();
         // 인스펙터 할당을 깜빡했을 때를 대비한 널 세이프 방어 코드
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (inputHandler == null) inputHandler = GetComponent<PlayerInputHandler>();
@@ -66,7 +68,7 @@ public class PlayerMovement : MonoBehaviour
             }
         }
         // 이동 불가 상태이거나 입력 컴포넌트가 없으면 즉시 정지
-        if (!CanMove || inputHandler == null)
+        if (!CanMove || inputHandler == null || (_skills != null && _skills.IsSelectionOpen))
         {
             rb.linearVelocity = Vector2.zero;
             return;

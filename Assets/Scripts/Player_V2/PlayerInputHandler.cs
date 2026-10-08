@@ -21,11 +21,13 @@ public class PlayerInputHandler : MonoBehaviour
     // [기본 사격 (Space)]
     public bool IsAttackPressed { get; private set; }
 
-    // [폭탄 설치 (E)]
+    // [E 슬롯 입력 — 선택된 스킬은 PlayerSkillController가 결정]
     public bool WasBombPressed { get; private set; }
 
-    // [보조 포탑 스킬 (Q)]
+    // [Q 슬롯 입력 — 선택된 스킬은 PlayerSkillController가 결정]
     public bool WasSkillQPressed { get; private set; }
+
+    public bool WasRecoverPressed { get; private set; }
 
     // [무기 교체 (Tab)]
     public bool WasWeaponSwitchPressed { get; private set; }
@@ -63,11 +65,12 @@ public class PlayerInputHandler : MonoBehaviour
         // 3. 공격 입력 (Space 연사 지속)
         IsAttackPressed = GameInput.IsPressed(GameKey.Space);
 
-        // 4. 폭탄 설치 입력 (E 단발)
+        // 4. E 슬롯 입력 (단발)
         WasBombPressed = GameInput.WasPressedThisFrame(GameKey.E);
 
-        // 5. 보조 포탑 스킬 입력 (Q 단발)
-        WasSkillQPressed = Input.GetKeyDown(KeyCode.Q);
+        // 5. Q 슬롯 입력 (단발)
+        WasSkillQPressed = GameInput.WasPressedThisFrame(GameKey.Q);
+        WasRecoverPressed = GameInput.WasPressedThisFrame(GameKey.F);
 
         // 6. 무기 교체 입력 (Tab 키 감지)
         WasWeaponSwitchPressed = Input.GetKeyDown(KeyCode.Tab);

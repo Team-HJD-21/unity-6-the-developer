@@ -1,8 +1,7 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// 소환된 보조 포탑의 적 탐색, 조준 회전, 탄환 자동 발사 및 수명 관리 전담 컴포넌트
+/// 회수 가능한 보조 포탑의 적 탐색, 조준 회전 및 탄환 자동 발사를 담당합니다.
 /// </summary>
 public class TemporaryTurret : MonoBehaviour
 {
@@ -20,9 +19,6 @@ public class TemporaryTurret : MonoBehaviour
     [SerializeField] private Color bulletColor = new Color(0.2f, 1f, 0.4f, 1f);
 
     [Header("Turret Attributes")]
-    [Tooltip("포탑 작동 수명(초)")]
-    [SerializeField] private float duration = 8f;
-
     [Tooltip("적 탐지 사거리 반경")]
     [SerializeField] private float attackRange = 7f;
 
@@ -37,14 +33,27 @@ public class TemporaryTurret : MonoBehaviour
 
     private Transform targetEnemy;
     private float fireTimer = 0f;
+    private PlayerTurretSkill _owner;
+    private bool _recovered;
+
+    public void AssignOwner(PlayerTurretSkill owner) => _owner = owner;
+
+    public bool TryRecover(PlayerTurretSkill owner)
+    {
+        if (_recovered || owner == null || _owner != owner || !owner.ReleaseTurret(this)) return false;
+        _recovered = true;
+        _owner = null;
+        gameObject.SetActive(false);
+        if (Application.isPlaying) Destroy(gameObject);
+        else DestroyImmediate(gameObject);
+        return true;
+    }
 
     private void Start()
     {
         if (firePoint == null) firePoint = transform;
         if (turretHead == null) turretHead = transform;
 
-        // 수명 종료 시 자동 파괴
-        StartCoroutine(LifeTimeRoutine());
     }
 
     private void Update()
@@ -138,11 +147,7 @@ public class TemporaryTurret : MonoBehaviour
         }
     }
 
-    private IEnumerator LifeTimeRoutine()
-    {
-        yield return new WaitForSeconds(duration);
-        Destroy(gameObject);
-    }
+    private void OnDestroy() { if (_owner != null) _owner.ReleaseTurret(this); }
 
     private void OnDrawGizmosSelected()
     {
