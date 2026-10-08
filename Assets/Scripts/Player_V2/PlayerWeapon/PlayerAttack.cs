@@ -72,7 +72,7 @@ public class PlayerAttack : MonoBehaviour
             }
             return false;
         }
-        Vector2 direction = _input.HasAimTarget ? _input.MouseWorldPosition - (Vector2)muzzle.position : _input.AimDirection;
+        Vector2 direction = _input.HasAimTarget ? _input.MouseWorldPosition - (Vector2)transform.position : _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) return false;
         direction.Normalize();
