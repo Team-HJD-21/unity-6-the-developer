@@ -281,6 +281,13 @@ namespace TeamHJD.Game.Turrets
 
         public bool SetLocked(bool isLocked)
         {
+            if (!isLocked && _configuredPowerSource is TurretController controller &&
+                !controller.CanUnlock(this)) return false;
+            return ApplyZoneLocked(isLocked);
+        }
+
+        internal bool ApplyZoneLocked(bool isLocked)
+        {
             if (isLocked) CancelInitialActivation();
             if (_runtimeState.IsLocked == isLocked)
             {
@@ -380,12 +387,14 @@ namespace TeamHJD.Game.Turrets
 
         public void SetDamageBonus(int damageBonus)
         {
+            if (IsLocked) return;
             _runtimeState.SetDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
         }
 
         public void AddDamageBonus(int damageBonus)
         {
+            if (IsLocked) return;
             _runtimeState.AddDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
         }
@@ -402,6 +411,9 @@ namespace TeamHJD.Game.Turrets
 
         private TurretUpgradeResult ChangeUpgradeLevel(TurretUpgradeDefinition upgrade, int direction)
         {
+            if (IsLocked)
+                return TurretUpgradeResult.Locked;
+
             if (_definition == null || upgrade == null)
             {
                 return TurretUpgradeResult.MissingDefinition;
@@ -484,6 +496,8 @@ namespace TeamHJD.Game.Turrets
             TurretBase targetLevelPrefab, int levelDelta, out TurretBase changedTurret)
         {
             changedTurret = null;
+            if (IsLocked)
+                return TurretLevelUpgradeResult.Locked;
             if (IsDestroyed)
                 return TurretLevelUpgradeResult.Destroyed;
             if (_activationController == null || !isActiveAndEnabled)
@@ -579,6 +593,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool ApplyDamage(int damage)
         {
+            if (IsLocked) return false;
             if (!_runtimeState.ApplyDamage(damage))
             {
                 return false;
@@ -599,6 +614,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool Restore()
         {
+            if (IsLocked) return false;
             if (!_runtimeState.Restore(MaxHealth))
             {
                 return false;
