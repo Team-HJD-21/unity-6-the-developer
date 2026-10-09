@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using TeamHJD.Game.Content;
+using TeamHJD.Game.Domain;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -101,6 +102,93 @@ namespace TeamHJD.Game.Turrets.Tests
             turret.SetLocked(false);
             Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
             Assert.That(power.ConsumeCalls, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void LockedTurretRejectsBothUpgradePathsWithoutChangingState()
+        {
+            var power = new FakePower();
+            var turret = MakeInactiveTurret();
+            turret.PrepareInitialization(new TurretInitializationData(_definition, 100, isLocked: true), power);
+            Assert.That(turret.ConfigureForTest(), Is.True);
+            int originalPower = turret.EffectivePower;
+            Assert.That(turret.ApplyUpgrade(MakeUpgrade()), Is.EqualTo(TurretUpgradeResult.Locked));
+            Assert.That(turret.RequestLevelUpgrade(null, out TurretBase replacement),
+                Is.EqualTo(TurretLevelUpgradeResult.Locked));
+            Assert.That(replacement, Is.Null);
+            Assert.That(turret.RuntimeState.UpgradeLevel, Is.Zero);
+            Assert.That(turret.EffectivePower, Is.EqualTo(originalPower));
+            Assert.That(power.ConsumeCalls, Is.Zero);
+        }
+
+        [Test]
+        public void LockedDestroyedTurretCannotBeRestoredUntilUnlocked()
+        {
+            var turret = MakeInactiveTurret();
+            turret.PrepareInitialization(new TurretInitializationData(_definition, 0, isLocked: true), new FakePower());
+            Assert.That(turret.ConfigureForTest(), Is.True);
+            Assert.That(turret.Restore(), Is.False);
+            Assert.That(turret.IsDestroyed, Is.True);
+            Assert.That(turret.SetLocked(false), Is.True);
+            Assert.That(turret.Restore(), Is.True);
+        }
+
+        [Test]
+        public void CellDistanceZonesCoverTheGridWithoutStoredCellIds()
+        {
+            var grid = new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 8, 8, 8, 8);
+            var zones = new TurretUnlockZones(grid, new Vector2(-3f, -3f), 4);
+            Assert.That(zones.MaximumCellDistance, Is.EqualTo(12));
+            Assert.That(zones.TryGetZone(new Vector2(-3f, -3f), out int nearest), Is.True);
+            Assert.That(nearest, Is.EqualTo(1));
+            Assert.That(zones.TryGetZone(new Vector2(3f, 3f), out int farthest), Is.True);
+            Assert.That(farthest, Is.EqualTo(4));
+            Assert.That(zones.TryGetZone(new Vector2(5f, 5f), out _), Is.False);
+        }
+
+        [Test]
+        public void ControllerStartsWithOnlyFirstZoneUnlockedAndProgressesExplicitly()
+        {
+            var controller = Track(new GameObject("Unlock Controller")).AddComponent<TurretController>();
+            var near = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var far = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                new Vector3(6f, 6f), Quaternion.identity).gameObject).GetComponent<TurretBase>();
+
+            Assert.That(controller.ConfigureUnlockZones(BattlefieldGridConfiguration.Default, Vector2.zero, 4), Is.True);
+            Assert.That(near.IsLocked, Is.False);
+            Assert.That(far.IsLocked, Is.True);
+            Assert.That(far.SetLocked(false), Is.False);
+            Assert.That(far.ApplyDamage(25), Is.False);
+            Assert.That(far.CurrentHealth, Is.EqualTo(100));
+            var middle = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                new Vector3(6f, 0f), Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            Assert.That(middle.IsLocked, Is.True, "New turrets inherit the current zone policy.");
+            Assert.That(controller.UnlockThroughZone(2), Is.True);
+            Assert.That(middle.IsLocked, Is.False);
+            Assert.That(far.IsLocked, Is.True);
+            Assert.That(controller.UnlockThroughZone(4), Is.True);
+            Assert.That(far.IsLocked, Is.False);
+            Assert.That(far.IsActivated, Is.False);
+            Assert.That(controller.GetSnapshot().ReservedPower, Is.Zero);
+        }
+
+        [UnityTest]
+        public IEnumerator ZoneLockBlocksQueuedInitialActivation()
+        {
+            var controller = Track(new GameObject("Unlock Controller")).AddComponent<TurretController>();
+            Assert.That(controller.ConfigureUnlockZones(BattlefieldGridConfiguration.Default, Vector2.zero, 4), Is.True);
+            var far = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition, shouldActivate: true), controller,
+                new Vector3(6f, 6f), Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            yield return null;
+            yield return null;
+            Assert.That(far.IsLocked, Is.True);
+            Assert.That(far.IsActivated, Is.False);
+            Assert.That(controller.GetSnapshot().ReservedPower, Is.Zero);
         }
 
         [Test]

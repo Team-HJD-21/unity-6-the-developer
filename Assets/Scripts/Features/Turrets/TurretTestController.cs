@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.Domain;
 using UnityEngine;
 
 namespace TeamHJD.Game.Debugging
@@ -11,6 +12,7 @@ namespace TeamHJD.Game.Debugging
     /// This intentionally replaces the production TurretInteractionUI dependencies.
     /// </summary>
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-1000)]
     public sealed class TurretTestController : MonoBehaviour
     {
         private const float PanelWidth = 520f;
@@ -18,6 +20,8 @@ namespace TeamHJD.Game.Debugging
         [Header("Debug UI")]
         [SerializeField, Range(1f, 2f)] private float uiScale = 1.25f;
         [SerializeField, Min(1)] private int damagePerClick = 25;
+        [SerializeField, Min(1)] private int unlockZoneCount = 4;
+        [SerializeField] private bool showUnlockZones = true;
 
         [Header("Sample Upgrades")]
         [SerializeField] private TurretUpgradeDefinition[] sampleUpgrades;
@@ -50,6 +54,7 @@ namespace TeamHJD.Game.Debugging
 
         private void Awake()
         {
+            ConfigureTestUnlockZones();
             RefreshReferences();
             _mainCamera = Camera.main;
         }
@@ -59,6 +64,59 @@ namespace TeamHJD.Game.Debugging
             TurretInstanceRegistry.Registered += HandleRegistryChanged;
             TurretInstanceRegistry.Unregistered += HandleRegistryChanged;
             RefreshReferences();
+        }
+
+        private void ConfigureTestUnlockZones()
+        {
+            _turretController = TurretController.GetOrCreateForScene(gameObject.scene);
+            foreach (ControlUnitHealth cu in FindObjectsByType<ControlUnitHealth>(FindObjectsSortMode.None))
+            {
+                if (cu.gameObject.scene != gameObject.scene) continue;
+                Vector2 minimum = cu.transform.position;
+                Vector2 maximum = minimum;
+                foreach (TurretBase turret in FindObjectsByType<TurretBase>(FindObjectsSortMode.None))
+                {
+                    if (turret.gameObject.scene != gameObject.scene) continue;
+                    Vector2 position = turret.transform.position;
+                    minimum = Vector2.Min(minimum, position);
+                    maximum = Vector2.Max(maximum, position);
+                }
+
+                // The test scene is not centred on Core's default 16x16 grid.
+                Vector2 centre = (minimum + maximum) * 0.5f;
+                Vector2 size = maximum - minimum + Vector2.one * 4f;
+                var grid = new BattlefieldGridConfiguration(
+                    new BattlefieldPoint(centre.x, centre.y), 0d,
+                    Mathf.Max(16f, size.x), Mathf.Max(16f, size.y), 16, 16);
+                _turretController.ConfigureUnlockZones(grid, cu.transform.position, unlockZoneCount);
+                return;
+            }
+            Debug.LogWarning("TurretTest: CU was not found; unlock zones are unavailable.", this);
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (!showUnlockZones || _turretController == null || _turretController.UnlockZones == null) return;
+            TurretUnlockZones zones = _turretController.UnlockZones;
+            BattlefieldGridConfiguration grid = zones.Grid;
+            for (int y = 0; y < grid.CellsY; y++)
+            for (int x = 0; x < grid.CellsX; x++)
+            {
+                int zone = zones.GetZoneForCell(x, y);
+                bool unlocked = zone <= _turretController.UnlockedZoneCount;
+                Gizmos.color = unlocked ? new Color(0.1f, 0.9f, 0.25f, 0.08f)
+                    : new Color(0.95f, 0.2f, 0.2f, 0.08f);
+                Vector3 center = new Vector3((float)(grid.MinimumX + (x + 0.5d) * grid.CellWidth),
+                    (float)(grid.MinimumY + (y + 0.5d) * grid.CellHeight), (float)grid.OriginZ);
+                Vector3 size = new Vector3((float)grid.CellWidth, (float)grid.CellHeight, 0f);
+                Gizmos.DrawCube(center, size);
+                if (x == 0 || zones.GetZoneForCell(x - 1, y) != zone ||
+                    y == 0 || zones.GetZoneForCell(x, y - 1) != zone)
+                {
+                    Gizmos.color = unlocked ? Color.green : Color.red;
+                    Gizmos.DrawWireCube(center, size);
+                }
+            }
         }
 
         private void OnDisable()
@@ -84,6 +142,7 @@ namespace TeamHJD.Game.Debugging
             Matrix4x4 previousGuiMatrix = GUI.matrix;
             float appliedUiScale = Mathf.Max(1f, uiScale);
             GUI.matrix = Matrix4x4.Scale(new Vector3(appliedUiScale, appliedUiScale, 1f));
+            DrawUnlockZoneOverlay(appliedUiScale);
 
             if (!_isPanelVisible)
             {
@@ -140,6 +199,15 @@ namespace TeamHJD.Game.Debugging
             TurretController autoController = TurretController.FindForScene(gameObject.scene);
             if (autoController != null)
             {
+                if (autoController.UnlockZones != null)
+                {
+                    GUILayout.Label($"Unlock Zones: {autoController.UnlockedZoneCount} / {autoController.UnlockZones.ZoneCount} (cell steps from CU)");
+                    GUILayout.Label("Game view overlay: green = unlocked, red = locked; number = zone");
+                    if (GUILayout.Button("Unlock Next Zone") &&
+                        autoController.UnlockedZoneCount < autoController.UnlockZones.ZoneCount)
+                        autoController.UnlockThroughZone(autoController.UnlockedZoneCount + 1);
+                    if (GUILayout.Button("Reset Zones (Inspector count)")) ConfigureTestUnlockZones();
+                }
                 bool previousEnabled = GUI.enabled;
                 GUI.enabled = !autoController.IsAutoActivationRunning && autoController.AutoActivationCooldownRemaining <= 0f;
                 if (GUILayout.Button("Auto Activate")) autoController.TryStartAutoActivation();
@@ -220,6 +288,58 @@ namespace TeamHJD.Game.Debugging
             GUI.matrix = previousGuiMatrix;
         }
 
+        private void DrawUnlockZoneOverlay(float appliedUiScale)
+        {
+            if (!showUnlockZones || _mainCamera == null || _turretController == null ||
+                _turretController.UnlockZones == null)
+                return;
+
+            TurretUnlockZones zones = _turretController.UnlockZones;
+            BattlefieldGridConfiguration grid = zones.Grid;
+            Color previousColor = GUI.color;
+            float scale = Mathf.Max(1f, appliedUiScale);
+
+            for (int y = 0; y < grid.CellsY; y++)
+            for (int x = 0; x < grid.CellsX; x++)
+            {
+                float left = (float)(grid.MinimumX + x * grid.CellWidth);
+                float right = (float)(left + grid.CellWidth);
+                float bottom = (float)(grid.MinimumY + y * grid.CellHeight);
+                float top = (float)(bottom + grid.CellHeight);
+                float z = (float)grid.OriginZ;
+                Vector3 p0 = _mainCamera.WorldToScreenPoint(new Vector3(left, bottom, z));
+                Vector3 p1 = _mainCamera.WorldToScreenPoint(new Vector3(right, top, z));
+                if (p0.z <= 0f || p1.z <= 0f) continue;
+
+                float guiLeft = Mathf.Min(p0.x, p1.x) / scale;
+                float guiTop = (Screen.height - Mathf.Max(p0.y, p1.y)) / scale;
+                float width = Mathf.Abs(p1.x - p0.x) / scale;
+                float height = Mathf.Abs(p1.y - p0.y) / scale;
+                if (width < 2f || height < 2f) continue;
+
+                int zone = zones.GetZoneForCell(x, y);
+                bool unlocked = zone <= _turretController.UnlockedZoneCount;
+                Color zoneColor = unlocked ? new Color(0.1f, 1f, 0.25f) : new Color(1f, 0.2f, 0.15f);
+                GUI.color = new Color(zoneColor.r, zoneColor.g, zoneColor.b, 0.14f);
+                GUI.DrawTexture(new Rect(guiLeft, guiTop, width, height), Texture2D.whiteTexture);
+
+                GUI.color = new Color(zoneColor.r, zoneColor.g, zoneColor.b, 0.9f);
+                const float border = 1.5f;
+                GUI.DrawTexture(new Rect(guiLeft, guiTop, width, border), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(guiLeft, guiTop + height - border, width, border), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(guiLeft, guiTop, border, height), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(guiLeft + width - border, guiTop, border, height), Texture2D.whiteTexture);
+
+                if (width >= 24f && height >= 18f)
+                {
+                    GUI.color = Color.white;
+                    GUI.Label(new Rect(guiLeft, guiTop, width, height), zone.ToString());
+                }
+            }
+
+            GUI.color = previousColor;
+        }
+
         private void AdjustCameraMoveSpeed()
         {
             float scrollInput = GameInput.ScrollY;
@@ -295,6 +415,8 @@ namespace TeamHJD.Game.Debugging
             GUILayout.Label($"Damage {damage}  |  Power {power}  |  " +
                 $"HP {turret.CurrentHealth}/{turret.MaxHealth}");
             GUILayout.Label($"Attack Range {turret.MinimumRange:F1} ~ {turret.EffectiveRange:F1}");
+            if (_turretController != null && _turretController.TryGetUnlockZone(turret, out int unlockZone))
+                GUILayout.Label($"Unlock Zone {unlockZone} / available through {_turretController.UnlockedZoneCount}");
             if (TurretInstanceRegistry.TryGetSnapshot(turret.InstanceId, out TurretSnapshot snapshot))
             {
                 GUILayout.Label($"Snapshot: {snapshot.DefinitionId}  |  Pos {snapshot.Position.x:F1}, {snapshot.Position.y:F1}");
@@ -347,7 +469,7 @@ namespace TeamHJD.Game.Debugging
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUI.enabled = !turret.IsDestroyed;
+            GUI.enabled = !turret.IsDestroyed && !turret.IsLocked;
             if (GUILayout.Button($"Damage -{damagePerClick}", GUILayout.Width(112f)))
             {
                 bool changed = turret.ApplyDamage(damagePerClick);
@@ -360,7 +482,7 @@ namespace TeamHJD.Game.Debugging
                 _lastDurabilityAction = $"{turret.name}: Destroy {(changed ? "applied" : "ignored")}";
             }
 
-            GUI.enabled = turret.IsDestroyed;
+            GUI.enabled = turret.IsDestroyed && !turret.IsLocked;
             if (GUILayout.Button("Restore", GUILayout.Width(80f)))
             {
                 bool changed = turret.Restore();
@@ -400,7 +522,7 @@ namespace TeamHJD.Game.Debugging
                 return;
 
             GUILayout.BeginHorizontal();
-            GUI.enabled = !turret.IsDestroyed;
+            GUI.enabled = !turret.IsDestroyed && !turret.IsLocked;
             if (levelUpgradeCatalog.TryGetNext(turret.Definition, out TurretBase nextPrefab) &&
                 GUILayout.Button($"Level Up: LV {nextPrefab.Definition.Level}"))
             {
@@ -445,14 +567,14 @@ namespace TeamHJD.Game.Debugging
                 bool branchAvailable = state.UpgradeLevel == 0 || state.SelectedUpgradeId == upgrade.Id;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(upgrade.DisplayName, GUILayout.Width(150f));
-                GUI.enabled = !turret.IsDestroyed && branchAvailable &&
+                GUI.enabled = !turret.IsDestroyed && !turret.IsLocked && branchAvailable &&
                     state.UpgradeLevel < TurretRuntimeState.MaximumUpgradeLevel;
                 if (GUILayout.Button("+1", GUILayout.Width(50f)))
                 {
                     TurretUpgradeResult result = turret.ApplyUpgrade(upgrade);
                     _lastUpgradeAction = $"{turret.name} / {upgrade.DisplayName}: {result}";
                 }
-                GUI.enabled = !turret.IsDestroyed && state.HasAppliedUpgrade(upgrade.Id);
+                GUI.enabled = !turret.IsDestroyed && !turret.IsLocked && state.HasAppliedUpgrade(upgrade.Id);
                 if (GUILayout.Button("-1", GUILayout.Width(50f)))
                 {
                     TurretUpgradeResult result = turret.DowngradeUpgrade(upgrade);

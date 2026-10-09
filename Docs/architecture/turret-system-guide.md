@@ -570,12 +570,18 @@ flowchart TD
 
 잠금은 Definition의 고정 능력치가 아니라 터렛 인스턴스의 런타임 상태다. 기본값은 해금 상태여서 기존 Prefab 동작을 바꾸지 않는다. `SetLocked(true)`는 활성 터렛을 먼저 끄고 예약 전력을 반환한 뒤 잠근다. 잠긴 터렛의 `RequestActivation(true)`는 `Locked`를 반환한다. `SetLocked(false)`로 해금해도 자동으로 켜지지 않으며 플레이어가 다시 활성화해야 한다. 잠금 상태는 레벨 변경 시 이어받고 읽기 전용 스냅샷의 `IsLocked`에도 반영된다. `TurretInteractionUI`는 잠긴 터렛에 `Locked`라고 표시한다. `TurretTest`에는 잠금·해금 버튼이 있지만 제품 UI의 해금 동작과 비용·영구 저장 규칙은 아직 적용하지 않았다.
 
+잠긴 터렛은 세부 업그레이드·되돌리기와 레벨 승급·강등을 `Locked`로 거부하고, 피격·파괴·복구 및 공격력 보너스 변경도 처리하지 않는다. `TurretController.ConfigureUnlockZones(grid, cuPosition, zoneCount)`는 Core Grid 설정과 CU 월드 좌표로 셀 거리를 계산한다. CU 셀에서 상하좌우로 이동하는 최소 칸 수를 기준으로 가장 먼 셀까지의 거리를 구하고 기본 4개 구역으로 나눈다. 구역 수는 호출자가 바꿀 수 있으며, 첫 구역만 즉시 해금한다. `UnlockThroughZone(zone)` API는 해당 구역과 더 가까운 구역을 해금한다. 새로 등록된 터렛도 현재 구역 상태를 적용한다. CU와 터렛은 `CellId`를 저장하지 않고 조회 시 위치로 계산한다. Grid 밖 터렛은 잠근다. 해금만으로 활성화되거나 전력이 예약되지는 않는다.
+
+`TurretTest`는 CU와 터렛 배치를 포함하도록 테스트 전용 Grid 설정을 만들어 이 규칙을 시작하고 Inspector의 `unlockZoneCount`, `Unlock Next Zone` 버튼 및 Scene/Game 뷰 구역 표시로 시험한다. 이 Grid는 Core가 `Initial_Stage`에서 사용하는 Grid 설정과 같다고 보장되지 않는다. 실제 Stage에서는 Match가 만들어진 뒤 Core Grid 설정과 CU 위치를 `TurretController.ConfigureUnlockZones(...)`에 전달해야 한다. 이 셀 거리 구역은 CU 중심의 동심 구역이며 동부·서부처럼 이름 붙은 지역 ID는 아니다. Core에는 현재 터렛 `RegionId`와 Cell→Region 매핑이 없고, `SpawnPoint.AreaId`도 터렛 지역으로 사용하지 않는다. Research/Profile 저장과 지역 이름 정책은 별도로 합의한다.
+
 ```mermaid
 flowchart LR
-    Lock["SetLocked(true)"] --> Off["활성 해제<br>전력 반환"]
+    Grid["Grid 설정 + CU 위치<br>셀 거리 구역 계산"] --> First["1구역 초기 해금"]
+    Grid --> Lock["나머지 구역 잠금"]
+    Lock --> Off["활성 해제<br>전력 반환"]
     Off --> State["RuntimeState<br>IsLocked = true"]
-    State --> Reject["RequestActivation(true)<br>Locked 반환"]
-    State --> Unlock["SetLocked(false)"]
+    State --> Reject["활성화·업그레이드 거부<br>피격·복구 무시"]
+    State --> Unlock["UnlockThroughZone API"]
     Unlock --> Wait["비활성 유지<br>플레이어 재활성화"]
 ```
 

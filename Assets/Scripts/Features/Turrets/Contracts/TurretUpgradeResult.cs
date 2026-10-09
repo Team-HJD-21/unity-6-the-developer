@@ -8,6 +8,7 @@ namespace TeamHJD.Game.Turrets.Contracts
         IncompatibleDefinition,
         AlreadyApplied,
         Destroyed,
+        Locked,
         NotInitialized,
         InsufficientPower,
         PowerSourceUnavailable,

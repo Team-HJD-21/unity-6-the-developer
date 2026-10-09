@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TeamHJD.Game.Domain;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,6 +12,10 @@ namespace TeamHJD.Game.Turrets
     public sealed class TurretController : MonoBehaviour, ITurretPowerSource
     {
         [SerializeField, Min(0)] private int maximumPower = 250;
+        private TurretUnlockZones _unlockZones;
+        private int _unlockedZoneCount;
+        public TurretUnlockZones UnlockZones => _unlockZones;
+        public int UnlockedZoneCount => _unlockedZoneCount;
         private TurretPowerBudget _budget;
         public TurretPowerBudget Budget => _budget ??= new TurretPowerBudget(Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;
@@ -22,6 +27,7 @@ namespace TeamHJD.Game.Turrets
         }
 
         private void Awake() { _ = Budget; }
+        private void OnEnable() => TurretInstanceRegistry.Registered += ApplyUnlockZoneToNewTurret;
         private void Update()
         {
             Budget.Tick(Time.deltaTime);
@@ -114,7 +120,11 @@ namespace TeamHJD.Game.Turrets
                 IsAutoActivationRunning = false;
         }
 
-        private void OnDisable() => IsAutoActivationRunning = false;
+        private void OnDisable()
+        {
+            TurretInstanceRegistry.Registered -= ApplyUnlockZoneToNewTurret;
+            IsAutoActivationRunning = false;
+        }
 
         public bool TrySetMaximumPower(int power)
         {
@@ -160,6 +170,64 @@ namespace TeamHJD.Game.Turrets
                 !turret.UsesPowerSource(this))
                 return TurretActivationResult.PowerSourceUnavailable;
             return turret.RequestActivation(shouldActivate);
+        }
+
+        /// <summary>Configures cell-distance bands. Zone one is available from the start.</summary>
+        public bool ConfigureUnlockZones(BattlefieldGridConfiguration grid, Vector2 cuPosition, int zoneCount = 4)
+        {
+            TurretUnlockZones zones = new TurretUnlockZones(grid, cuPosition, zoneCount);
+            _unlockZones = zones;
+            _unlockedZoneCount = 1;
+            bool applied = true;
+            foreach (TurretBase turret in TurretInstanceRegistry.RegisteredInstances.Values)
+            {
+                if (turret == null || turret.gameObject.scene != gameObject.scene ||
+                    !turret.UsesPowerSource(this)) continue;
+                applied &= ApplyUnlockZone(turret);
+            }
+            return applied;
+        }
+
+        /// <summary>Unlocks the requested zone and all nearer zones. A game rule may call this later.</summary>
+        public bool UnlockThroughZone(int zone)
+        {
+            if (_unlockZones == null || zone < _unlockedZoneCount || zone > _unlockZones.ZoneCount)
+                return false;
+            _unlockedZoneCount = zone;
+            bool applied = true;
+            foreach (TurretBase turret in TurretInstanceRegistry.RegisteredInstances.Values)
+            {
+                if (turret == null || turret.gameObject.scene != gameObject.scene ||
+                    !turret.UsesPowerSource(this)) continue;
+                applied &= ApplyUnlockZone(turret);
+            }
+            return applied;
+        }
+
+        public bool TryGetUnlockZone(TurretBase turret, out int zone)
+        {
+            zone = 0;
+            return _unlockZones != null && turret != null &&
+                   turret.gameObject.scene == gameObject.scene && turret.UsesPowerSource(this) &&
+                   _unlockZones.TryGetZone(turret.transform.position, out zone);
+        }
+
+        internal bool CanUnlock(TurretBase turret) =>
+            _unlockZones == null ||
+            TryGetUnlockZone(turret, out int zone) && zone <= _unlockedZoneCount;
+
+        private void ApplyUnlockZoneToNewTurret(TurretBase turret)
+        {
+            if (_unlockZones != null && turret != null && turret.gameObject.scene == gameObject.scene &&
+                turret.UsesPowerSource(this))
+                ApplyUnlockZone(turret);
+        }
+
+        private bool ApplyUnlockZone(TurretBase turret)
+        {
+            bool shouldLock = !CanUnlock(turret);
+            if (turret.IsLocked == shouldLock) return true;
+            return turret.ApplyZoneLocked(shouldLock);
         }
 
         public static TurretController FindForScene(Scene scene)
