@@ -242,7 +242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1354819612
+  GlobalObjectIdHash: 1913526778
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -509,6 +509,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
   m_PrefabInstance: {fileID: 78163638}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &79214407
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 79214408}
+  m_Layer: 0
+  m_Name: t
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &79214408
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 79214407}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -35.45, y: -21.55, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &99608073
 GameObject:
   m_ObjectHideFlags: 0
@@ -620,6 +651,10 @@ PrefabInstance:
     - target: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       propertyPath: m_Name
       value: MissileTurret LV1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -494578,6 +494613,11 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!4 &301079683 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 2000501889}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &322789858
 GameObject:
   m_ObjectHideFlags: 0
@@ -494922,6 +494962,10 @@ PrefabInstance:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
       value: CanonTurret LV1 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -1268311,6 +1268355,83 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!1001 &826480545
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -253652355755475643, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: map
+      value: 
+      objectReference: {fileID: 894255434}
+    - target: {fileID: -253652355755475643, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 79214408}
+    - target: {fileID: 1895200168680509220, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_Name
+      value: SlimeManualTest (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538879141844084439, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538879141844084439, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 528784697
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538879141844084439, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 3481536332
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -61.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 45.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
 --- !u!1 &834350858
 GameObject:
   m_ObjectHideFlags: 0
@@ -1334410,6 +1334531,7 @@ GameObject:
   m_Component:
   - component: {fileID: 894255433}
   - component: {fileID: 894255432}
+  - component: {fileID: 894255434}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -1334449,6 +1334571,21 @@ Transform:
   - {fileID: 300471855}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &894255434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 894255431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff97ef445dd1b364c89a7ac0963ad6ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNavigationMap
+  groundTilemap: {fileID: 141550351}
+  debugCenter: {fileID: 1295082061}
+  debugRadius: 8
 --- !u!1001 &953425779
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1334713,6 +1334850,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MissileTurret LV1 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1334814,6 +1334955,83 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!1001 &1261519533
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -253652355755475643, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: map
+      value: 
+      objectReference: {fileID: 894255434}
+    - target: {fileID: -253652355755475643, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 301079683}
+    - target: {fileID: 1895200168680509220, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_Name
+      value: SlimeManualTest
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538879141844084439, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538879141844084439, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3299523007
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538879141844084439, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 3481536332
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -62.73
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 45.11
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
 --- !u!1001 &1264729469
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1334825,6 +1335043,10 @@ PrefabInstance:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
       value: CanonTurret LV1 (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -1334927,6 +1335149,11 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!4 &1295082061 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4008539942663378862, guid: 4c2ce45602ac38b498813a336412aad2, type: 3}
+  m_PrefabInstance: {fileID: 1261519533}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1304836942
 GameObject:
   m_ObjectHideFlags: 0
@@ -1335704,6 +1335931,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CanonTurret LV1 (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
       value: 
@@ -1336270,7 +1336501,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8468781063020958165, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 1092060804
+      value: 2386874080
       objectReference: {fileID: 0}
     - target: {fileID: 8468781063020958165, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
@@ -1336312,6 +1336543,10 @@ PrefabInstance:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
       value: CanonTurret LV1 (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -1358284,6 +1358519,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MissileTurret LV1 (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1358314,3 +1358553,6 @@ SceneRoots:
   - {fileID: 2120963519}
   - {fileID: 1885139232}
   - {fileID: 1603658788}
+  - {fileID: 1261519533}
+  - {fileID: 826480545}
+  - {fileID: 79214408}
