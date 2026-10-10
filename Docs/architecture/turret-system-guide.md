@@ -574,6 +574,8 @@ flowchart TD
 
 `TurretTest`는 CU와 터렛 배치를 포함하도록 테스트 전용 Grid 설정을 만들어 이 규칙을 시작하고 Inspector의 `unlockZoneCount`, `Unlock Next Zone` 버튼 및 Scene/Game 뷰 구역 표시로 시험한다. 이 Grid는 Core가 `Initial_Stage`에서 사용하는 Grid 설정과 같다고 보장되지 않는다. 실제 Stage에서는 Match가 만들어진 뒤 Core Grid 설정과 CU 위치를 `TurretController.ConfigureUnlockZones(...)`에 전달해야 한다. 이 셀 거리 구역은 CU 중심의 동심 구역이며 동부·서부처럼 이름 붙은 지역 ID는 아니다. Core에는 현재 터렛 `RegionId`와 Cell→Region 매핑이 없고, `SpawnPoint.AreaId`도 터렛 지역으로 사용하지 않는다. Research/Profile 저장과 지역 이름 정책은 별도로 합의한다.
 
+2026-10-10 회의에서는 잠긴 터렛은 파괴 불가, 해금 뒤 별도 수리 없이 사용 가능, 전력 부족으로 꺼진 터렛은 공격 가능 대상으로 구분하는 제품 방향을 정리했다. 현재 API에서는 해금이 자동 활성화나 전력 예약을 하지 않으며, 회의에서 합의된 제품 방향과 구현·저장 정책은 구별한다. 설치 시 물·지형·다른 오브젝트와 겹침을 판정하는 기술은 아직 조사 중이다. [회의 검토 기록](../planning/2026-10-10-regular-meeting.md)
+
 ```mermaid
 flowchart LR
     Grid["Grid 설정 + CU 위치<br>셀 거리 구역 계산"] --> First["1구역 초기 해금"]
