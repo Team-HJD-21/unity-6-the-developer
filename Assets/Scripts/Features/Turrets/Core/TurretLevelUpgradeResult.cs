@@ -5,6 +5,7 @@ namespace TeamHJD.Game.Turrets
         Upgraded,
         Downgraded,
         Destroyed,
+        Locked,
         NotInitialized,
         InvalidNextLevel,
         InvalidPreviousLevel,
