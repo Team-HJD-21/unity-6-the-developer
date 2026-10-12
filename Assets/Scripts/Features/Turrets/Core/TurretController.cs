@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TeamHJD.Game.Domain;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,6 +11,14 @@ namespace TeamHJD.Game.Turrets
     public sealed class TurretController : MonoBehaviour, ITurretPowerSource
     {
         [SerializeField, Min(0)] private int maximumPower = 250;
+        [Header("Unlock Grid")]
+        [SerializeField] private Vector2 unlockGridOrigin;
+        [SerializeField] private float unlockGridOriginZ;
+        [SerializeField, Min(0.1f)] private float unlockGridMapWidth = TurretGridConfiguration.DefaultMapWidth;
+        [SerializeField, Min(0.1f)] private float unlockGridMapHeight = TurretGridConfiguration.DefaultMapHeight;
+        [SerializeField, Min(1)] private int unlockGridCellsX = TurretGridConfiguration.DefaultCellsX;
+        [SerializeField, Min(1)] private int unlockGridCellsY = TurretGridConfiguration.DefaultCellsY;
+        [SerializeField, Min(1)] private int unlockZoneCount = 4;
         private TurretUnlockZones _unlockZones;
         private int _unlockedZoneCount;
         public TurretUnlockZones UnlockZones => _unlockZones;
@@ -95,7 +102,8 @@ namespace TeamHJD.Game.Turrets
 
         private void AdvanceAutoActivation()
         {
-            bool hasPendingCandidate = false;
+            bool hasCoolingCandidate = false;
+            bool hasPowerPendingCandidate = false;
             foreach (AutoActivationCandidate candidate in _autoCandidates)
             {
                 if (candidate.Completed) continue;
@@ -113,10 +121,17 @@ namespace TeamHJD.Game.Turrets
                     continue;
                 }
                 TurretActivationResult result = turret.RequestSystemActivation(true);
+                if (result == TurretActivationResult.CoolingDown)
+                {
+                    hasCoolingCandidate = true;
+                    continue;
+                }
+
                 candidate.Completed = result != TurretActivationResult.InsufficientPower;
-                if (!candidate.Completed) hasPendingCandidate = true;
+                if (!candidate.Completed) hasPowerPendingCandidate = true;
             }
-            if (!hasPendingCandidate || Budget.PendingRecovery == 0)
+            if (!hasCoolingCandidate &&
+                (!hasPowerPendingCandidate || Budget.PendingRecovery == 0))
                 IsAutoActivationRunning = false;
         }
 
@@ -172,8 +187,20 @@ namespace TeamHJD.Game.Turrets
             return turret.RequestActivation(shouldActivate);
         }
 
+        /// <summary>Builds the turret-owned grid from Inspector settings. Zone one starts unlocked.</summary>
+        public bool ConfigureUnlockZones(Vector2 cuPosition)
+            => ConfigureUnlockZones(cuPosition, unlockZoneCount);
+
+        public bool ConfigureUnlockZones(Vector2 cuPosition, int zoneCount)
+        {
+            var grid = new TurretGridConfiguration(
+                unlockGridOrigin, unlockGridMapWidth, unlockGridMapHeight,
+                unlockGridCellsX, unlockGridCellsY, unlockGridOriginZ);
+            return ConfigureUnlockZones(grid, cuPosition, zoneCount);
+        }
+
         /// <summary>Configures cell-distance bands. Zone one is available from the start.</summary>
-        public bool ConfigureUnlockZones(BattlefieldGridConfiguration grid, Vector2 cuPosition, int zoneCount = 4)
+        public bool ConfigureUnlockZones(TurretGridConfiguration grid, Vector2 cuPosition, int zoneCount = 4)
         {
             TurretUnlockZones zones = new TurretUnlockZones(grid, cuPosition, zoneCount);
             _unlockZones = zones;
