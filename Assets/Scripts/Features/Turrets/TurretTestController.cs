@@ -701,11 +701,7 @@ namespace TeamHJD.Game.Debugging
                 return;
             }
 
-            if (_turretController == null)
-                _turretController = TurretController.FindForScene(gameObject.scene);
-            _lastActivationResult = _turretController != null
-                ? _turretController.RequestActivation(turret.InstanceId, isActive)
-                : TurretActivationResult.PowerSourceUnavailable;
+            _lastActivationResult = turret.RequestActivation(isActive);
         }
 
         private void HandleRegistryChanged(TurretBase turret)
