@@ -190,11 +190,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8472963676150703458, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 116.3
+      value: 116.7
       objectReference: {fileID: 0}
     - target: {fileID: 8472963676150703458, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -124.8
+      value: -122.3
       objectReference: {fileID: 0}
     - target: {fileID: 8472963676150703458, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2060,6 +2060,8 @@ MonoBehaviour:
   damagePerClick: 25
   unlockZoneCount: 4
   showUnlockZones: 1
+  unlockGridCellsX: 16
+  unlockGridCellsY: 16
   sampleUpgrades:
   - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
   - {fileID: 11400000, guid: ed4eb21118c1461caba77c381399f6d1, type: 2}

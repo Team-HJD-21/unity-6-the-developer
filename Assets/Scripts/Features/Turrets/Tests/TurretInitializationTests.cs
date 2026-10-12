@@ -136,7 +136,7 @@ namespace TeamHJD.Game.Turrets.Tests
         [Test]
         public void CellDistanceZonesCoverTheGridWithoutStoredCellIds()
         {
-            var grid = new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 8, 8, 8, 8);
+            var grid = new TurretGridConfiguration(Vector2.zero, 8, 8, 8, 8);
             var zones = new TurretUnlockZones(grid, new Vector2(-3f, -3f), 4);
             Assert.That(zones.MaximumCellDistance, Is.EqualTo(12));
             Assert.That(zones.TryGetZone(new Vector2(-3f, -3f), out int nearest), Is.True);
@@ -144,6 +144,29 @@ namespace TeamHJD.Game.Turrets.Tests
             Assert.That(zones.TryGetZone(new Vector2(3f, 3f), out int farthest), Is.True);
             Assert.That(farthest, Is.EqualTo(4));
             Assert.That(zones.TryGetZone(new Vector2(5f, 5f), out _), Is.False);
+        }
+
+        [Test]
+        public void TurretGridDefaultsMatchTheConfiguredFullMapAndExposeCellDivisions()
+        {
+            var grid = new TurretGridConfiguration(
+                Vector2.zero,
+                TurretGridConfiguration.DefaultMapWidth,
+                TurretGridConfiguration.DefaultMapHeight,
+                TurretGridConfiguration.DefaultCellsX,
+                TurretGridConfiguration.DefaultCellsY);
+
+            Assert.That(grid.MapWidth, Is.EqualTo(275f));
+            Assert.That(grid.MapHeight, Is.EqualTo(275f));
+            Assert.That(grid.CellsX, Is.EqualTo(16));
+            Assert.That(grid.CellsY, Is.EqualTo(16));
+            Assert.That(grid.TryMapPoint(new Vector2(-137.5f, -137.5f), out int firstX, out int firstY), Is.True);
+            Assert.That(firstX, Is.Zero);
+            Assert.That(firstY, Is.Zero);
+            Assert.That(grid.TryMapPoint(new Vector2(137.5f, 137.5f), out int lastX, out int lastY), Is.True);
+            Assert.That(lastX, Is.EqualTo(15));
+            Assert.That(lastY, Is.EqualTo(15));
+            Assert.That(grid.TryMapPoint(new Vector2(137.51f, 0f), out _, out _), Is.False);
         }
 
         [Test]
@@ -157,7 +180,8 @@ namespace TeamHJD.Game.Turrets.Tests
                 TurretInitializationData.CreateDefault(_definition), controller,
                 new Vector3(6f, 6f), Quaternion.identity).gameObject).GetComponent<TurretBase>();
 
-            Assert.That(controller.ConfigureUnlockZones(BattlefieldGridConfiguration.Default, Vector2.zero, 4), Is.True);
+            Assert.That(controller.ConfigureUnlockZones(
+                new TurretGridConfiguration(Vector2.zero, 16, 16, 16, 16), Vector2.zero, 4), Is.True);
             Assert.That(near.IsLocked, Is.False);
             Assert.That(far.IsLocked, Is.True);
             Assert.That(far.SetLocked(false), Is.False);

@@ -12,6 +12,10 @@ using UnityEngine.SceneManagement;
 
 namespace TeamHJD.Game.Editor
 {
+    /// <summary>
+    /// Editor-only builder for creating and maintaining the isolated TurretTest scene.
+    /// This builder supports turret testing and does not configure production gameplay scenes.
+    /// </summary>
     [InitializeOnLoad]
     internal static class TurretTestSceneBuilder
     {

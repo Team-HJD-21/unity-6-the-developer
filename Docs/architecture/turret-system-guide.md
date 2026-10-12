@@ -314,11 +314,12 @@ flowchart TD
 
 ### 4.2 활성화와 전력
 
-켜기와 끄기는 같은 `RequestActivation(bool)` API를 사용한다. 가로로 넓어져 글자가 잘리지 않도록 결과 흐름을 나눠 표시한다.
+켜기와 끄기는 같은 `RequestActivation(bool)` API를 사용한다. 제품 UI와 TurretTest UI는 `TurretController.RequestActivation(instanceId, shouldActivate)`를 호출하고, Test UI는 그 외 잠금·피해·복구·승급·업그레이드도 `TurretBase`의 실제 런타임 API를 호출한다. `TurretTestController`는 UI와 표시만 담당하며 컨트롤러를 생성하거나 게임 규칙을 구현하지 않는다. 가로로 넓어져 글자가 잘리지 않도록 결과 흐름을 나눠 표시한다.
 
 ```mermaid
 flowchart TD
-    Request["TurretInteractionUI 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(true)"]
+    Request["TurretInteractionUI 또는<br>TurretTestController UI"] --> TurretController["TurretController<br>RequestActivation(id, true)"]
+    TurretController --> Base["TurretBase<br>RequestActivation(true)"]
     Base --> Controller["TurretActivationController<br>RequestActivation()"]
     Controller --> Source["TurretController<br>TryConsumePower()"]
     Source --> Consume["TurretPowerBudget<br>EffectivePower 예약"]
@@ -329,7 +330,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Request["TurretInteractionUI 또는<br>TurretTestController"] --> Base["TurretBase<br>RequestActivation(false)"]
+    Request["TurretInteractionUI 또는<br>TurretTestController UI"] --> TurretController["TurretController<br>RequestActivation(id, false)"]
+    TurretController --> Base["TurretBase<br>RequestActivation(false)"]
     Base --> Controller["TurretActivationController<br>RequestActivation()"]
     Controller --> Off["RuntimeState<br>IsActivated = false"]
     Off --> Source["TurretController<br>ReleasePower()"]
@@ -570,13 +572,13 @@ flowchart TD
 
 잠금은 Definition의 고정 능력치가 아니라 터렛 인스턴스의 런타임 상태다. 기본값은 해금 상태여서 기존 Prefab 동작을 바꾸지 않는다. `SetLocked(true)`는 활성 터렛을 먼저 끄고 예약 전력을 반환한 뒤 잠근다. 잠긴 터렛의 `RequestActivation(true)`는 `Locked`를 반환한다. `SetLocked(false)`로 해금해도 자동으로 켜지지 않으며 플레이어가 다시 활성화해야 한다. 잠금 상태는 레벨 변경 시 이어받고 읽기 전용 스냅샷의 `IsLocked`에도 반영된다. `TurretInteractionUI`는 잠긴 터렛에 `Locked`라고 표시한다. `TurretTest`에는 잠금·해금 버튼이 있지만 제품 UI의 해금 동작과 비용·영구 저장 규칙은 아직 적용하지 않았다.
 
-잠긴 터렛은 세부 업그레이드·되돌리기와 레벨 승급·강등을 `Locked`로 거부하고, 피격·파괴·복구 및 공격력 보너스 변경도 처리하지 않는다. `TurretController.ConfigureUnlockZones(grid, cuPosition, zoneCount)`는 Core Grid 설정과 CU 월드 좌표로 셀 거리를 계산한다. CU 셀에서 상하좌우로 이동하는 최소 칸 수를 기준으로 가장 먼 셀까지의 거리를 구하고 기본 4개 구역으로 나눈다. 구역 수는 호출자가 바꿀 수 있으며, 첫 구역만 즉시 해금한다. `UnlockThroughZone(zone)` API는 해당 구역과 더 가까운 구역을 해금한다. 새로 등록된 터렛도 현재 구역 상태를 적용한다. CU와 터렛은 `CellId`를 저장하지 않고 조회 시 위치로 계산한다. Grid 밖 터렛은 잠근다. 해금만으로 활성화되거나 전력이 예약되지는 않는다.
+잠긴 터렛은 세부 업그레이드·되돌리기와 레벨 승급·강등을 `Locked`로 거부하고, 피격·파괴·복구 및 공격력 보너스 변경도 처리하지 않는다. `TurretUnlockZones`는 Core의 `BattlefieldGridConfiguration`을 사용하지 않고 터렛 전용 `TurretGridConfiguration`으로 CU와 터렛의 셀을 계산한다. `TurretController` Inspector에서 그리드 중심, 맵 너비·높이, 가로·세로 셀 수, 해금 구역 수를 조정할 수 있다. 기본 맵 크기 275×275는 현재 `Initial_Stage`의 Core Grid 맵 크기와 맞춘 값이며, 설정 객체와 계산 코드는 터렛 모듈 소유다. 기본 셀 분할은 16×16, 해금 구역 수는 4개다. CU 셀에서 상하좌우로 이동하는 최소 칸 수를 기준으로 가장 먼 셀까지의 거리를 나누며, 첫 구역만 처음부터 해금한다. `UnlockThroughZone(zone)` API는 해당 구역과 더 가까운 구역을 해금한다. 새로 등록된 터렛도 현재 구역 상태를 적용한다. CU와 터렛은 `CellId`를 저장하지 않고 조회 시 위치로 계산한다. Grid 밖 터렛은 잠근다. 해금만으로 활성화되거나 전력이 예약되지는 않는다.
 
-`TurretTest`는 CU와 터렛 배치를 포함하도록 테스트 전용 Grid 설정을 만들어 이 규칙을 시작하고 Inspector의 `unlockZoneCount`, `Unlock Next Zone` 버튼 및 Scene/Game 뷰 구역 표시로 시험한다. 이 Grid는 Core가 `Initial_Stage`에서 사용하는 Grid 설정과 같다고 보장되지 않는다. 실제 Stage에서는 Match가 만들어진 뒤 Core Grid 설정과 CU 위치를 `TurretController.ConfigureUnlockZones(...)`에 전달해야 한다. 이 셀 거리 구역은 CU 중심의 동심 구역이며 동부·서부처럼 이름 붙은 지역 ID는 아니다. Core에는 현재 터렛 `RegionId`와 Cell→Region 매핑이 없고, `SpawnPoint.AreaId`도 터렛 지역으로 사용하지 않는다. Research/Profile 저장과 지역 이름 정책은 별도로 합의한다.
+`TurretTest`는 가장 큰 Tilemap의 월드 경계 전체를 터렛 전용 Grid로 덮고 Inspector의 `unlockGridCellsX/Y`, `unlockZoneCount`, `Unlock Next Zone` 버튼 및 Scene/Game 뷰 표시로 시험한다. 실제 Stage에서는 CU 위치를 찾은 뒤 `TurretController.ConfigureUnlockZones(cuPosition)`을 호출한다. 이 경로는 컨트롤러 Inspector의 터렛 전용 맵 크기와 셀 분할을 사용하며 기본 맵 크기는 현재 275×275다. 현재 계산되는 구역은 CU 중심의 셀 거리 구역이며 동부·서부처럼 이름 붙은 지역 ID는 아니다. Core의 Grid 설정 변경은 터렛 설정에 자동 전파되지 않으므로 맵 크기를 바꿀 때 터렛 Inspector 값도 맞춰야 한다. Research/Profile 저장은 별도 범위다.
 
 ```mermaid
 flowchart LR
-    Grid["Grid 설정 + CU 위치<br>셀 거리 구역 계산"] --> First["1구역 초기 해금"]
+    Grid["TurretGridConfiguration + CU 위치<br>셀 거리 구역 계산"] --> First["1구역 초기 해금"]
     Grid --> Lock["나머지 구역 잠금"]
     Lock --> Off["활성 해제<br>전력 반환"]
     Off --> State["RuntimeState<br>IsLocked = true"]
@@ -733,6 +735,7 @@ flowchart TD
 
 - [`TurretBase.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretBase.cs)
 - [`TurretController.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretController.cs)
+- [`TurretGridConfiguration.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretGridConfiguration.cs)
 - [`TurretPowerBudget.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretPowerBudget.cs)
 - [`TurretControllerSnapshot.cs`](../../Assets/Scripts/Features/Turrets/Core/TurretControllerSnapshot.cs)
 - [`TurretKind.cs`](../../Assets/Scripts/Features/Turrets/Contracts/TurretKind.cs)
