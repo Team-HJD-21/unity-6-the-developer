@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 1452530}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.6, y: -15.9, z: 0}
+  m_LocalPosition: {x: -62, y: -27.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1358491,6 +1358491,10 @@ PrefabInstance:
       propertyPath: _turretController
       value: 
       objectReference: {fileID: 393497335}
+    - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: _runtimeState._isLocked
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _runtimeState._instanceId
       value: 1

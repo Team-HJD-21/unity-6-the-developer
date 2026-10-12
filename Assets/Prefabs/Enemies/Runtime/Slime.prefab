@@ -249,8 +249,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   animator: {fileID: 5135953631903945395}
   spriteRenderer: {fileID: 1967399324537491502}
+  rigidbody2D: {fileID: 0}
   moveSpeed: 1.5
   animationReferenceSpeed: 2
+  arrivalDistance: 0.4
   attackRange: 1
   attackCooldown: 1
   attackDamage: 5
@@ -352,7 +354,7 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDamping: 0
+  m_LinearDamping: 1
   m_AngularDamping: 0
   m_GravityScale: 0
   m_Material: {fileID: 0}
@@ -364,7 +366,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!114 &1692933235676204002
 MonoBehaviour:

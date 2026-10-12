@@ -28,7 +28,7 @@ public class EnemyNetworkController : NetworkBehaviour
     /// <summary>
     /// 서버에서만 몬스터 AI를 갱신한다.
     /// </summary>
-    private void Update()
+    private void FixedUpdate()
     {
         if (!IsSpawned || !IsServer)
             return;

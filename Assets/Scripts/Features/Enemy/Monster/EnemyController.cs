@@ -22,14 +22,16 @@ public class EnemyController : MonoBehaviour
     [Header("참조")]
     [SerializeField] private Animator animator;
     [SerializeField] private SpriteRenderer  spriteRenderer;
+    [SerializeField] private Rigidbody2D rigidbody2D;  
     
     [Header("이동 설정")]
     [SerializeField] private float moveSpeed = 1.5f;
     [SerializeField] private float animationReferenceSpeed = 2f;
-    [SerializeField] private float arrivalDistance = 0.1f;
+    [SerializeField] private float arrivalDistance = 0.4f;
     private Vector3[] _path;
     private bool _isPath = false;
     private int _currentPath = 0;
+    private bool _isStopped = true;
     
     [Header("공격 설정")]
     [SerializeField] private float attackRange = 0.4f;
@@ -61,7 +63,8 @@ public class EnemyController : MonoBehaviour
             animator = GetComponent<Animator>();
         if(spriteRenderer == null)
             spriteRenderer = GetComponent<SpriteRenderer>();
-        
+        if(rigidbody2D == null)
+            rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
     private void LateUpdate()
@@ -164,7 +167,8 @@ public class EnemyController : MonoBehaviour
             animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
 
             // 계산한 방향과 속도로 몬스터 위치를 이동시킨다.
-            transform.position += (Vector3)moveDirection * (moveSpeed * Time.deltaTime);
+            _isStopped = false;
+            rigidbody2D.linearVelocity = moveDirection * moveSpeed;
         }
     }
 
@@ -174,6 +178,12 @@ public class EnemyController : MonoBehaviour
     private void StopMoving()
     {
         animator.SetBool(IsMovingHash, false);
+
+        if (_isStopped)
+            return;
+
+        rigidbody2D.linearVelocity = Vector2.zero;
+        _isStopped = true;
     }
 
     /// <summary>
