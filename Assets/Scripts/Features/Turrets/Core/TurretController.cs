@@ -102,7 +102,8 @@ namespace TeamHJD.Game.Turrets
 
         private void AdvanceAutoActivation()
         {
-            bool hasPendingCandidate = false;
+            bool hasCoolingCandidate = false;
+            bool hasPowerPendingCandidate = false;
             foreach (AutoActivationCandidate candidate in _autoCandidates)
             {
                 if (candidate.Completed) continue;
@@ -120,10 +121,17 @@ namespace TeamHJD.Game.Turrets
                     continue;
                 }
                 TurretActivationResult result = turret.RequestSystemActivation(true);
+                if (result == TurretActivationResult.CoolingDown)
+                {
+                    hasCoolingCandidate = true;
+                    continue;
+                }
+
                 candidate.Completed = result != TurretActivationResult.InsufficientPower;
-                if (!candidate.Completed) hasPendingCandidate = true;
+                if (!candidate.Completed) hasPowerPendingCandidate = true;
             }
-            if (!hasPendingCandidate || Budget.PendingRecovery == 0)
+            if (!hasCoolingCandidate &&
+                (!hasPowerPendingCandidate || Budget.PendingRecovery == 0))
                 IsAutoActivationRunning = false;
         }
 

@@ -391,6 +391,49 @@ namespace TeamHJD.Game.Turrets.Tests
             Assert.That(controller.IsAutoActivationRunning, Is.False);
         }
 
+        [UnityTest]
+        public IEnumerator ManualActivationWaitsUntilHeatCooldownCompletes()
+        {
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), new FakePower(),
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            turret.SetCooldownAfterDeactivation(0.2f);
+
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+            Assert.That(turret.RequestActivation(false), Is.EqualTo(TurretActivationResult.Deactivated));
+            Assert.That(turret.IsCoolingDown, Is.True);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.CoolingDown));
+
+            yield return new WaitForSeconds(0.25f);
+
+            Assert.That(turret.IsCoolingDown, Is.False);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+        }
+
+        [UnityTest]
+        public IEnumerator AutoActivationWaitsUntilCoolingTurretCanRestart()
+        {
+            var controller = Track(new GameObject("Cooling Auto Controller")).AddComponent<TurretController>();
+            controller.TrySetMaximumPower(20);
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            turret.SetCooldownAfterDeactivation(0.2f);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+
+            Assert.That(controller.TryStartAutoActivation(), Is.True);
+            Assert.That(turret.IsActivated, Is.False);
+            Assert.That(turret.IsCoolingDown, Is.True);
+            Assert.That(controller.IsAutoActivationRunning, Is.True);
+            controller.Budget.Tick(2.1f);
+
+            yield return new WaitForSeconds(0.25f);
+            yield return null;
+
+            Assert.That(turret.IsActivated, Is.True);
+            Assert.That(controller.IsAutoActivationRunning, Is.False);
+        }
+
         [Test]
         public void AutoActivationSkipsUnaffordableCandidateAndExcludesLockedDestroyed()
         {
