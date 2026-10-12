@@ -204,7 +204,8 @@ namespace TeamHJD.Game.Turrets.Tests
         public IEnumerator ZoneLockBlocksQueuedInitialActivation()
         {
             var controller = Track(new GameObject("Unlock Controller")).AddComponent<TurretController>();
-            Assert.That(controller.ConfigureUnlockZones(BattlefieldGridConfiguration.Default, Vector2.zero, 4), Is.True);
+            Assert.That(controller.ConfigureUnlockZones(
+                new TurretGridConfiguration(Vector2.zero, 16, 16, 16, 16), Vector2.zero, 4), Is.True);
             var far = Track(TurretFactory.Create(MakeInactiveTurret(),
                 TurretInitializationData.CreateDefault(_definition, shouldActivate: true), controller,
                 new Vector3(6f, 6f), Quaternion.identity).gameObject).GetComponent<TurretBase>();
