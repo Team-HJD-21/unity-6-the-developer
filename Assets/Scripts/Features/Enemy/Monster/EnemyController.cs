@@ -1,4 +1,9 @@
+using System.Collections.Generic;
+using System.Numerics;
 using UnityEngine;
+using UnityEngine.UIElements;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 /// <summary>
 /// <see cref="EnemyAIBrain"/>이 선택한 타겟에 따라 실제 몬스터 행동을 수행한다.
@@ -21,7 +26,11 @@ public class EnemyController : MonoBehaviour
     [Header("이동 설정")]
     [SerializeField] private float moveSpeed = 1.5f;
     [SerializeField] private float animationReferenceSpeed = 2f;
-
+    [SerializeField] private float arrivalDistance = 0.1f;
+    private Vector3[] _path;
+    private bool _isPath = false;
+    private int _currentPath = 0;
+    
     [Header("공격 설정")]
     [SerializeField] private float attackRange = 0.4f;
     [SerializeField] private float attackCooldown = 1f;
@@ -80,14 +89,7 @@ public class EnemyController : MonoBehaviour
             StopMoving();
             return;
         }
-
-        // 현재 위치에서 타겟까지의 이동 방향을 계산한다.
-        Vector2 toTarget = (Vector2)_target.position - (Vector2)transform.position;
-        Vector2 moveDirection = toTarget.normalized;
-
-        // 이동 전 타겟 방향에 맞춰 바라보는 방향을 갱신한다.
-        UpdateFacingDirection(moveDirection);
-
+        
         // 공격 범위 안에서는 이동을 멈추고 공격을 시도한다.
         if (IsInAttackRange())
         {
@@ -95,8 +97,14 @@ public class EnemyController : MonoBehaviour
             TryAttack();
             return;
         }
+        
+        if (!TryGetNextPathDirection(out Vector2 moveDirection))
+        {
+            StopMoving();
+            return;
+        }
 
-        // 공격 범위 밖에서는 타겟을 향해 이동한다.
+        UpdateFacingDirection(moveDirection);
         MoveTowardsTarget(moveDirection);
     }
 
@@ -107,22 +115,57 @@ public class EnemyController : MonoBehaviour
     public void SetTarget(Transform target)
     {
         _target = target;
+        _path = null;
+        _currentPath = 0;
+        _isPath = false;
+        
+        if (target == null)
+            return;
+        
+        Vector3 startLocation = this.transform.position;
+        Vector3 arriveLocation = target.position;
+        _isPath = EnemyNavMeshPathfinder.TryCalculatePath(startLocation, arriveLocation, out _path);
     }
 
+    private bool TryGetNextPathDirection(out Vector2 direction)
+    {
+        direction = Vector2.zero;
+
+        if (!_isPath || _path == null)
+            return false;
+
+        // 이미 도착한 지점은 건너뛴다.
+        while (_currentPath < _path.Length &&
+               Vector2.Distance(transform.position, _path[_currentPath]) <= arrivalDistance)
+        {
+            _currentPath++;
+        }
+
+        if (_currentPath >= _path.Length)
+            return false;
+
+        direction = ((Vector2)_path[_currentPath] -
+                     (Vector2)transform.position).normalized;
+        return true;
+    }
+    
     /// <summary>
     /// 지정된 방향으로 이동하고 이동 애니메이션 속도를 갱신한다.
     /// </summary>
     /// <param name="moveDirection">정규화된 이동 방향.</param>
     private void MoveTowardsTarget(Vector2 moveDirection)
     {
-        // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
-        animator.SetBool(IsMovingHash, true);
+        if (_isPath)
+        {
+            // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
+            animator.SetBool(IsMovingHash, true);
 
-        float animationSpeed = moveSpeed / animationReferenceSpeed;
-        animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
+            float animationSpeed = moveSpeed / animationReferenceSpeed;
+            animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
 
-        // 계산한 방향과 속도로 몬스터 위치를 이동시킨다.
-        transform.position += (Vector3)moveDirection * (moveSpeed * Time.deltaTime);
+            // 계산한 방향과 속도로 몬스터 위치를 이동시킨다.
+            transform.position += (Vector3)moveDirection * (moveSpeed * Time.deltaTime);
+        }
     }
 
     /// <summary>
@@ -140,7 +183,7 @@ public class EnemyController : MonoBehaviour
     private void UpdateFacingDirection(Vector2 moveDirection)
     {
         Vector2 animationDirection = GetAnimationDirection(moveDirection);
-
+        
         animator.SetFloat(MoveXHash, animationDirection.x);
         animator.SetFloat(MoveYHash, animationDirection.y);
     }
@@ -208,5 +251,26 @@ public class EnemyController : MonoBehaviour
         float distanceSqr = (_target.position - transform.position).sqrMagnitude;
 
         return distanceSqr <= attackRange * attackRange;
+    }
+    
+    private void OnDrawGizmosSelected()
+    {
+        if (_path == null)
+            return;
+
+        Gizmos.color = Color.yellow;
+        for (int i = 0; i < _path.Length; i++)
+        {
+            Vector3 point = _path[i];
+            point.z = transform.position.z;
+            Gizmos.DrawSphere(point, 0.15f);
+
+            if (i > 0)
+            {
+                Vector3 previous = _path[i - 1];
+                previous.z = transform.position.z;
+                Gizmos.DrawLine(previous, point);
+            }
+        }
     }
 }
