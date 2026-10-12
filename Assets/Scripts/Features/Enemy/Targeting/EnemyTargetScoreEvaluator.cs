@@ -27,7 +27,7 @@ public class EnemyTargetScoreEvaluator : MonoBehaviour
             : targetPreference.turretPreference;
 
         // 가까운 타깃일수록 높은 거리 점수를 부여한다.
-        float diffDistance = (transform.position - target.TargetTransform.position).magnitude;
+        float diffDistance = Vector2.Distance(transform.position, target.TargetTransform.position);
         float searchDistance = Mathf.Max(targetSetting.maxSearchDistance, Mathf.Epsilon);
         float distanceRatio = 1f - Mathf.Clamp01(
             diffDistance / searchDistance
