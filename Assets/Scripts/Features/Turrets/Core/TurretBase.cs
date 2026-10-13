@@ -35,7 +35,10 @@ namespace TeamHJD.Game.Turrets
         private TurretInitializationData _initializationData;
         private bool _initialActivationPending;
         private Coroutine _initialActivationRoutine;
+        private float _activationAvailableTime;
         public bool IsInitialized => _activationController != null;
+        public bool IsCoolingDown => Time.time < _activationAvailableTime;
+        public float CoolingDownRemaining => Mathf.Max(0f, _activationAvailableTime - Time.time);
         public TurretActivationResult? LastInitialActivationResult { get; private set; }
 
         public TurretDefinition Definition => _definition;
@@ -255,6 +258,11 @@ namespace TeamHJD.Game.Turrets
                 return TurretActivationResult.Locked;
             }
 
+            if (shouldActivate && IsCoolingDown)
+            {
+                return TurretActivationResult.CoolingDown;
+            }
+
             if (_activationController == null)
             {
                 return TurretActivationResult.PowerSourceUnavailable;
@@ -316,6 +324,11 @@ namespace TeamHJD.Game.Turrets
             {
                 TurretInstanceRegistry.NotifyOperationalStateChanged(this, IsOperational);
             }
+        }
+
+        protected void BeginActivationCooldown(float duration)
+        {
+            _activationAvailableTime = Time.time + Mathf.Max(0f, duration);
         }
 
         protected virtual void OnActivationChanged(bool isActivated)

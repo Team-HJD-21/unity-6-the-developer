@@ -15,6 +15,7 @@ public abstract class DefaultCanonTurret : TurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _fireTime = 0f;       //과열시 중지 위한 변수
+    private bool _overheatCooldownRunning;
     protected override bool UsesMinimumRange => true;
 
     protected abstract void Shoot();//총알 객체화 후 목표로 발사(FireRateController에서 수행)
@@ -100,6 +101,7 @@ public abstract class DefaultCanonTurret : TurretBase
             if (_fireTime >= OverHeatTime)//터렛 과열
             {
                 SetTemporarilySuspended(true);
+                _overheatCooldownRunning = true;
                 Animator.SetBool("isShoot", false);
                 StartCoroutine(OverHeat());
             }
@@ -141,17 +143,24 @@ public abstract class DefaultCanonTurret : TurretBase
             TargetingAngle);
     }
     //Coroutine Methods--------------------------------------------------------------------------------------------------------
-    private IEnumerator DeactivateProcess()
+    private IEnumerator DeactivateProcess(float initialHeat, float cooldownDuration)
     {
-        // _totCoolTime = _fireTime;
-        while (_fireTime >= 0f)
+        float elapsed = 0f;
+        while (elapsed < cooldownDuration)
         {
-            GunRenderer.color = new Color(1f,1-(_fireTime / OverHeatTime),1-(_fireTime / OverHeatTime));
-            _fireTime -= Time.deltaTime;
+            float remaining = 1f - elapsed / cooldownDuration;
+            _fireTime = initialHeat * remaining;
+            float heatRatio = OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f;
+            GunRenderer.color = new Color(1f, 1f - heatRatio, 1f - heatRatio);
+            elapsed += Time.deltaTime;
             yield return null;
         }
+
+        _fireTime = 0f;
+        TotCoolTime = 0f;
         GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
     }
+
     private IEnumerator OverHeat()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
     {
         TotCoolTime = CoolTime;
@@ -165,6 +174,7 @@ public abstract class DefaultCanonTurret : TurretBase
         //yield return new WaitForSeconds(5f);
         GunRenderer.color = Color.white;
         _fireTime = 0f;
+        _overheatCooldownRunning = false;
         SetTemporarilySuspended(false);
     }
     private void FireSound()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
@@ -185,9 +195,27 @@ public abstract class DefaultCanonTurret : TurretBase
             return;
         }
 
+        float cooldownDuration = _overheatCooldownRunning
+            ? Mathf.Max(0f, TotCoolTime)
+            : OverHeatTime > 0f
+                ? Mathf.Clamp01(_fireTime / OverHeatTime) * Mathf.Max(0f, CoolTime)
+                : 0f;
+        float initialHeat = Mathf.Max(0f, _fireTime);
+        StopAllCoroutines();
+        _overheatCooldownRunning = false;
+        TimeTilFire = 0f;
+        SetTemporarilySuspended(false);
         Animator.SetBool("isShoot", false);
         // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
-        StartCoroutine(DeactivateProcess());
+        BeginActivationCooldown(cooldownDuration);
+        if (cooldownDuration > 0f)
+            StartCoroutine(DeactivateProcess(initialHeat, cooldownDuration));
+        else
+        {
+            _fireTime = 0f;
+            TotCoolTime = 0f;
+            GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
+        }
     }
 
     //Getter

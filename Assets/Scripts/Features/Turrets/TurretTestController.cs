@@ -2,14 +2,15 @@ using System.Collections.Generic;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
-using TeamHJD.Game.Domain;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 namespace TeamHJD.Game.Debugging
 {
     /// <summary>
-    /// Lightweight Play Mode controls for the isolated TurretTest scene.
-    /// This intentionally replaces the production TurretInteractionUI dependencies.
+    /// UI-only controls for exercising production TurretController and TurretBase APIs in TurretTest.
+    /// It displays test state and forwards player-like requests without owning gameplay rules.
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-1000)]
@@ -22,6 +23,8 @@ namespace TeamHJD.Game.Debugging
         [SerializeField, Min(1)] private int damagePerClick = 25;
         [SerializeField, Min(1)] private int unlockZoneCount = 4;
         [SerializeField] private bool showUnlockZones = true;
+        [SerializeField, Min(1)] private int unlockGridCellsX = TurretGridConfiguration.DefaultCellsX;
+        [SerializeField, Min(1)] private int unlockGridCellsY = TurretGridConfiguration.DefaultCellsY;
 
         [Header("Sample Upgrades")]
         [SerializeField] private TurretUpgradeDefinition[] sampleUpgrades;
@@ -52,7 +55,7 @@ namespace TeamHJD.Game.Debugging
         private string _lastLevelUpgradeAction;
         private string _lastLockAction;
 
-        private void Awake()
+        private void Start()
         {
             ConfigureTestUnlockZones();
             RefreshReferences();
@@ -68,37 +71,77 @@ namespace TeamHJD.Game.Debugging
 
         private void ConfigureTestUnlockZones()
         {
-            _turretController = TurretController.GetOrCreateForScene(gameObject.scene);
+            _turretController = TurretController.FindForScene(gameObject.scene);
+            if (_turretController == null)
+            {
+                Debug.LogWarning("TurretTest: production TurretController was not created by any turret.", this);
+                return;
+            }
+
+            if (!TryGetTestMapBounds(gameObject.scene, out Bounds mapBounds))
+            {
+                Debug.LogWarning("TurretTest: map Tilemap bounds were not found; unlock zones are unavailable.", this);
+                return;
+            }
+
             foreach (ControlUnitHealth cu in FindObjectsByType<ControlUnitHealth>(FindObjectsSortMode.None))
             {
                 if (cu.gameObject.scene != gameObject.scene) continue;
-                Vector2 minimum = cu.transform.position;
-                Vector2 maximum = minimum;
-                foreach (TurretBase turret in FindObjectsByType<TurretBase>(FindObjectsSortMode.None))
-                {
-                    if (turret.gameObject.scene != gameObject.scene) continue;
-                    Vector2 position = turret.transform.position;
-                    minimum = Vector2.Min(minimum, position);
-                    maximum = Vector2.Max(maximum, position);
-                }
-
-                // The test scene is not centred on Core's default 16x16 grid.
-                Vector2 centre = (minimum + maximum) * 0.5f;
-                Vector2 size = maximum - minimum + Vector2.one * 4f;
-                var grid = new BattlefieldGridConfiguration(
-                    new BattlefieldPoint(centre.x, centre.y), 0d,
-                    Mathf.Max(16f, size.x), Mathf.Max(16f, size.y), 16, 16);
+                var grid = new TurretGridConfiguration(
+                    mapBounds.center, mapBounds.size.x, mapBounds.size.y,
+                    unlockGridCellsX, unlockGridCellsY, cu.transform.position.z);
                 _turretController.ConfigureUnlockZones(grid, cu.transform.position, unlockZoneCount);
                 return;
             }
             Debug.LogWarning("TurretTest: CU was not found; unlock zones are unavailable.", this);
         }
 
+        private static bool TryGetTestMapBounds(Scene scene, out Bounds mapBounds)
+        {
+            Tilemap selectedMap = null;
+            long largestArea = 0;
+            foreach (Tilemap tilemap in FindObjectsByType<Tilemap>(FindObjectsSortMode.None))
+            {
+                if (tilemap.gameObject.scene != scene) continue;
+                BoundsInt cells = tilemap.cellBounds;
+                long area = (long)cells.size.x * cells.size.y;
+                if (area <= largestArea) continue;
+                selectedMap = tilemap;
+                largestArea = area;
+            }
+
+            if (selectedMap == null || largestArea == 0)
+            {
+                mapBounds = default;
+                return false;
+            }
+
+            BoundsInt cellBounds = selectedMap.cellBounds;
+            mapBounds = default;
+            bool hasPoint = false;
+            foreach (int x in new[] { cellBounds.xMin, cellBounds.xMax })
+            foreach (int y in new[] { cellBounds.yMin, cellBounds.yMax })
+            {
+                Vector3 point = selectedMap.CellToWorld(new Vector3Int(x, y, cellBounds.zMin));
+                if (!hasPoint)
+                {
+                    mapBounds = new Bounds(point, Vector3.zero);
+                    hasPoint = true;
+                }
+                else
+                {
+                    mapBounds.Encapsulate(point);
+                }
+            }
+
+            return hasPoint && mapBounds.size.x > 0f && mapBounds.size.y > 0f;
+        }
+
         private void OnDrawGizmos()
         {
             if (!showUnlockZones || _turretController == null || _turretController.UnlockZones == null) return;
             TurretUnlockZones zones = _turretController.UnlockZones;
-            BattlefieldGridConfiguration grid = zones.Grid;
+            TurretGridConfiguration grid = zones.Grid;
             for (int y = 0; y < grid.CellsY; y++)
             for (int x = 0; x < grid.CellsX; x++)
             {
@@ -196,7 +239,7 @@ namespace TeamHJD.Game.Debugging
                 GUILayout.Label("TurretController: not found");
             }
 
-            TurretController autoController = TurretController.FindForScene(gameObject.scene);
+            TurretController autoController = _turretController;
             if (autoController != null)
             {
                 if (autoController.UnlockZones != null)
@@ -295,7 +338,7 @@ namespace TeamHJD.Game.Debugging
                 return;
 
             TurretUnlockZones zones = _turretController.UnlockZones;
-            BattlefieldGridConfiguration grid = zones.Grid;
+            TurretGridConfiguration grid = zones.Grid;
             Color previousColor = GUI.color;
             float scale = Mathf.Max(1f, appliedUiScale);
 

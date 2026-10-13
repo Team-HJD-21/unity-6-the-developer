@@ -1,5 +1,4 @@
 using System;
-using TeamHJD.Game.Domain;
 using UnityEngine;
 
 namespace TeamHJD.Game.Turrets
@@ -7,18 +6,18 @@ namespace TeamHJD.Game.Turrets
     /// <summary>Cell-distance bands around a CU position. Neither CU nor turrets store a CellId.</summary>
     public sealed class TurretUnlockZones
     {
-        public BattlefieldGridConfiguration Grid { get; }
+        public TurretGridConfiguration Grid { get; }
         public int CuCellX { get; }
         public int CuCellY { get; }
         public int ZoneCount { get; }
         public int MaximumCellDistance { get; }
 
-        public TurretUnlockZones(BattlefieldGridConfiguration grid, Vector2 cuPosition, int zoneCount)
+        public TurretUnlockZones(TurretGridConfiguration grid, Vector2 cuPosition, int zoneCount)
         {
             Grid = grid ?? throw new ArgumentNullException(nameof(grid));
             if (zoneCount < 1) throw new ArgumentOutOfRangeException(nameof(zoneCount));
-            if (!grid.TryMapPoint(new BattlefieldPoint(cuPosition.x, cuPosition.y), out int x, out int y))
-                throw new ArgumentOutOfRangeException(nameof(cuPosition), "CU is outside the battlefield grid.");
+            if (!grid.TryMapPoint(cuPosition, out int x, out int y))
+                throw new ArgumentOutOfRangeException(nameof(cuPosition), "CU is outside the turret unlock grid.");
             CuCellX = x;
             CuCellY = y;
             MaximumCellDistance = Math.Max(x, grid.CellsX - 1 - x) +
@@ -37,7 +36,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool TryGetZone(Vector2 position, out int zone)
         {
-            if (!Grid.TryMapPoint(new BattlefieldPoint(position.x, position.y), out int x, out int y))
+            if (!Grid.TryMapPoint(position, out int x, out int y))
             {
                 zone = 0;
                 return false;

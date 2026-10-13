@@ -21,7 +21,6 @@ public class EnemyController : MonoBehaviour
 
     [Header("참조")]
     [SerializeField] private Animator animator;
-    [SerializeField] private SpriteRenderer  spriteRenderer;
     [SerializeField] private Rigidbody2D rigidbody2D;  
     
     [Header("이동 설정")]
@@ -61,24 +60,15 @@ public class EnemyController : MonoBehaviour
         _networkAnimator = GetComponent<EnemyNetworkAnimator>();
         if (animator == null)
             animator = GetComponent<Animator>();
-        if(spriteRenderer == null)
-            spriteRenderer = GetComponent<SpriteRenderer>();
         if(rigidbody2D == null)
             rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
     private void LateUpdate()
     {
-        if (spriteRenderer == null)
-            return;
-        
-        float y = sortingOrigin != null
-            ? sortingOrigin.position.y
-            : transform.position.y;
-
-        // Y가 낮을수록 앞에 표시한다.
-        spriteRenderer.sortingOrder =
-            Mathf.Clamp(-Mathf.RoundToInt(y * SortingScale), short.MinValue, short.MaxValue);
+        Vector3 position = transform.position;
+        position.z = position.y;
+        transform.position = position;
     }
 
     /// <summary>
@@ -258,7 +248,8 @@ public class EnemyController : MonoBehaviour
     private bool IsInAttackRange()
     {
         // 제곱 거리를 비교해 불필요한 제곱근 계산을 피한다.
-        float distanceSqr = (_target.position - transform.position).sqrMagnitude;
+        float distanceSqr =
+            ((Vector2)_target.position - (Vector2)transform.position).sqrMagnitude;
 
         return distanceSqr <= attackRange * attackRange;
     }
