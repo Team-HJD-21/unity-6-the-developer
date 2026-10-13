@@ -4,6 +4,14 @@ using TeamHJD.Game.Turrets.Contracts;
 /// <summary>터렛 API 요청 결과의 표시 문구를 관리합니다.</summary>
 internal static class StageTurretUiText
 {
+    public static string LockChanged(bool locked) => locked
+        ? "Turret locked."
+        : "Turret unlocked. Activate it to resume.";
+
+    public static string LockRejected(int? blockedZone) => blockedZone.HasValue
+        ? $"Unlock zone {blockedZone.Value} first."
+        : "Unable to change turret lock.";
+
     public static string Activation(TurretActivationResult result) => result switch
     {
         TurretActivationResult.Activated => "Turret activated.",

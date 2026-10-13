@@ -21,6 +21,11 @@ public sealed class StageTurretControlView : MonoBehaviour
     [SerializeField] private Button levelUpButton;
     [SerializeField] private Button levelDownButton;
     [SerializeField] private Button closeButton;
+    [SerializeField] private Button lockButton;
+
+    [Header("Lock Icons")]
+    [SerializeField] private GameObject lockedIcon;
+    [SerializeField] private GameObject unlockedIcon;
 
     [Header("Activation Colors")]
     [SerializeField] private Color activateColor = Color.green;
@@ -31,12 +36,14 @@ public sealed class StageTurretControlView : MonoBehaviour
     public event Action LevelUpRequested;
     public event Action LevelDownRequested;
     public event Action CloseRequested;
+    public event Action LockToggleRequested;
 
     public bool IsConfigured =>
         titleText != null && levelText != null && statsText != null &&
         statusText != null && feedbackText != null && activationText != null &&
         activationButton != null && levelUpButton != null &&
-        levelDownButton != null && closeButton != null;
+        levelDownButton != null && closeButton != null && lockButton != null &&
+        lockedIcon != null && unlockedIcon != null;
 
     private void OnEnable()
     {
@@ -50,6 +57,7 @@ public sealed class StageTurretControlView : MonoBehaviour
         levelUpButton.onClick.AddListener(RequestLevelUp);
         levelDownButton.onClick.AddListener(RequestLevelDown);
         closeButton.onClick.AddListener(RequestClose);
+        lockButton.onClick.AddListener(RequestLockToggle);
     }
 
     private void OnDisable()
@@ -58,6 +66,7 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (levelUpButton != null) levelUpButton.onClick.RemoveListener(RequestLevelUp);
         if (levelDownButton != null) levelDownButton.onClick.RemoveListener(RequestLevelDown);
         if (closeButton != null) closeButton.onClick.RemoveListener(RequestClose);
+        if (lockButton != null) lockButton.onClick.RemoveListener(RequestLockToggle);
     }
 
     public void Show(TurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown)
@@ -80,6 +89,9 @@ public sealed class StageTurretControlView : MonoBehaviour
                                         (turret.IsActivated || !turret.IsCoolingDown);
         levelUpButton.interactable = editable && canLevelUp;
         levelDownButton.interactable = editable && canLevelDown;
+        lockButton.interactable = canInteract && turret.IsInitialized && !turret.IsManualActivationBlocked;
+        lockedIcon.SetActive(turret.IsLocked);
+        unlockedIcon.SetActive(!turret.IsLocked);
 
         activationText.text = turret.IsDestroyed ? "Destroyed" :
             turret.IsLocked ? "Locked" : turret.IsActivated ? "Deactivate" : "Activate";
@@ -108,4 +120,5 @@ public sealed class StageTurretControlView : MonoBehaviour
     private void RequestLevelUp() => LevelUpRequested?.Invoke();
     private void RequestLevelDown() => LevelDownRequested?.Invoke();
     private void RequestClose() => CloseRequested?.Invoke();
+    private void RequestLockToggle() => LockToggleRequested?.Invoke();
 }

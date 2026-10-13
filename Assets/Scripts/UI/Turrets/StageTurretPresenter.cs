@@ -27,6 +27,7 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelUpRequested += LevelUp;
         _view.LevelDownRequested += LevelDown;
         _view.CloseRequested += Close;
+        _view.LockToggleRequested += ToggleLock;
         TurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
     }
 
@@ -64,6 +65,34 @@ internal sealed class StageTurretPresenter : IDisposable
 
     private void LevelUp() => ChangeLevel(true);
     private void LevelDown() => ChangeLevel(false);
+
+    private void ToggleLock()
+    {
+        if (!CanRequest(out TurretBase turret)) return;
+        if (turret.IsManualActivationBlocked)
+        {
+            _view.SetFeedback("Cannot change lock during automatic activation.");
+            Refresh(true);
+            return;
+        }
+
+        bool shouldLock = !turret.IsLocked;
+        bool changed = turret.SetLocked(shouldLock);
+        if (changed)
+        {
+            _view.SetFeedback(StageTurretUiText.LockChanged(turret.IsLocked));
+        }
+        else
+        {
+            TurretController controller = _getController();
+            int? blockedZone = !shouldLock && controller != null &&
+                controller.TryGetUnlockZone(turret, out int zone) && zone > controller.UnlockedZoneCount
+                ? zone : (int?)null;
+            _view.SetFeedback(StageTurretUiText.LockRejected(blockedZone));
+        }
+
+        Refresh(true);
+    }
 
     private void ChangeLevel(bool upgrade)
     {
@@ -116,6 +145,7 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelUpRequested -= LevelUp;
         _view.LevelDownRequested -= LevelDown;
         _view.CloseRequested -= Close;
+        _view.LockToggleRequested -= ToggleLock;
         TurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
     }
 }

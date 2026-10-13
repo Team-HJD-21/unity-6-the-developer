@@ -35,6 +35,9 @@ Initial Stage Player UI (Canvas)
    ├─ StatsText
    ├─ StatusText
    ├─ FeedbackText
+   ├─ LockToggleButton
+   │  ├─ LockedIcon
+   │  └─ UnlockedIcon
    └─ CloseButton
 ```
 
@@ -50,7 +53,7 @@ Canvas를 잠시 켜고, 터렛 창은 해당 GameObject를 잠시 켠다. 미�
 - Canvas의 `StagePlayerVitalsView`: 체력 칸 Image 배열, 플레이어 체력 Text,
   CU 체력 Fill/Text, 전력 Fill/Percent/Details Text 및 체력 칸 색상.
 - TurretControlPanel의 `StageTurretControlView`: 제목·레벨·수치·상태·결과·활성화 Text,
-  Activate·Up·Down·Close Button 및 활성화 상태 색상.
+  Activate·Up·Down·Close·Lock Button, 잠금/해금 아이콘과 활성화 상태 색상.
 - Arrow의 `StageLevelArrowGraphic`: 왼쪽·오른쪽 Stroke RectTransform과 위/아래 방향.
   두 Stroke는 프리팹에 배치된 기본 Image다.
 
@@ -101,6 +104,12 @@ Button의 Inspector OnClick에 요청 메서드를 중복 연결하지 않는다
   현재 상태와 마지막 요청 결과를 분리하며, 다른 터렛을 선택하면 이전 결과를 지운다.
 - UI 문구·Stage 1 스프라이트·NEXON 폰트·중앙 Activate/Deactivate 버튼·Level 옆 화살표는
   기존 외형을 유지한다. 네트워크 테스트 패널과의 겹침 정리는 후속 작업이다.
+- 선택 패널 왼쪽 아래 LockToggleButton은 `SetLocked(!IsLocked)`를 요청한다.
+  한 번 누르면 잠기고 다시 누르면 해금되며 닫힌/열린 자물쇠 아이콘으로 상태를 표시한다.
+  아이콘은 프리팹에 배치한 기본 Image로 구성해 Inspector에서 편집할 수 있다.
+  잠금 시 기존 API가 활성화를 해제하고 전력 반환을 처리한다. 해금 후 활성화는 별도다.
+  아직 열리지 않은 구역의 터렛은 API가 해금을 거부하며 `Unlock zone N first.`를 표시한다.
+  자동 활성화 진행 중에는 Lock 버튼도 비활성화한다. 구역 자체를 해금하는 버튼은 아니다.
 
 ## 기존 시작 설정
 
@@ -119,6 +128,8 @@ Button의 Inspector OnClick에 요청 메서드를 중복 연결하지 않는다
 7. Prefab Mode에서 위치·폰트 등을 변경할 수 있고 실행 코드가 이를 덮어쓰지 않는지 확인한다.
 8. Scene의 UI 인스턴스에 체력 칸 너비·위치 Override가 남아 프리팹의 배치를 덮어쓰지
    않는지 확인한다. 체력 바가 사라지는 원인이었던 예전 체력 칸 Override는 제거했다.
+9. 같은 자물쇠 버튼을 연속으로 눌러 잠금/해금, 아이콘 전환, 활성화·레벨 버튼 상태와
+   전력 반환을 확인한다. 미해금 구역의 터렛은 해금이 거부되는지 확인한다.
 
 ## 이후 갱신 기준
 
