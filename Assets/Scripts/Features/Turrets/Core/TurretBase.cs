@@ -35,10 +35,14 @@ namespace TeamHJD.Game.Turrets
         private TurretInitializationData _initializationData;
         private bool _initialActivationPending;
         private Coroutine _initialActivationRoutine;
-        private float _activationAvailableTime;
+        private float _coolingEndsAt;
+        private float _coolingDuration;
+        private float _coolingInitialHeatRatio;
         public bool IsInitialized => _activationController != null;
-        public bool IsCoolingDown => Time.time < _activationAvailableTime;
-        public float CoolingDownRemaining => Mathf.Max(0f, _activationAvailableTime - Time.time);
+        // Shared by active overheat recovery and cooling after switching off.
+        // IsActivated determines whether completion resumes attacks or only permits activation.
+        public bool IsCoolingDown => Time.time < _coolingEndsAt;
+        public float CoolingDownRemaining => Mathf.Max(0f, _coolingEndsAt - Time.time);
         public TurretActivationResult? LastInitialActivationResult { get; private set; }
 
         public TurretDefinition Definition => _definition;
@@ -87,7 +91,6 @@ namespace TeamHJD.Game.Turrets
         // Runtime state is not configured in the Inspector.
         protected int Damage => EffectiveDamage;
         protected float TimeTilFire;
-        protected float TotCoolTime;
 
         /// <summary>버튼 요청 시점에만 호출한다. 동일 Rigidbody의 여러 Collider는 한 적으로 센다.</summary>
         public int CountEnemiesInAttackRange()
@@ -258,7 +261,7 @@ namespace TeamHJD.Game.Turrets
                 return TurretActivationResult.Locked;
             }
 
-            if (shouldActivate && IsCoolingDown)
+            if (shouldActivate && !IsActivated && IsCoolingDown)
             {
                 return TurretActivationResult.CoolingDown;
             }
@@ -326,10 +329,46 @@ namespace TeamHJD.Game.Turrets
             }
         }
 
-        protected void BeginActivationCooldown(float duration)
+        protected void BeginCooling(float duration, float initialHeatRatio = 1f)
         {
-            _activationAvailableTime = Time.time + Mathf.Max(0f, duration);
+            // Switching off during cooling keeps the same deadline and heat progression.
+            if (!IsCoolingDown)
+            {
+                _coolingDuration = Mathf.Max(0f, duration);
+                _coolingInitialHeatRatio = Mathf.Clamp01(initialHeatRatio);
+                _coolingEndsAt = Time.time + _coolingDuration;
+            }
+
+            TimeTilFire = 0f;
+            if (Animator != null) Animator.SetBool("isShoot", false);
+            SetTemporarilySuspended(IsActivated && IsCoolingDown);
+            UpdateCooling();
         }
+
+        protected virtual void Update()
+        {
+            if (_coolingDuration > 0f) UpdateCooling();
+        }
+
+        private void UpdateCooling()
+        {
+            float remaining = CoolingDownRemaining;
+            float heatRatio = _coolingDuration > 0f
+                ? _coolingInitialHeatRatio * remaining / _coolingDuration
+                : 0f;
+            ApplyCoolingHeat(heatRatio);
+            if (GunRenderer != null)
+                GunRenderer.color = new Color(1f, 1f - heatRatio, 1f - heatRatio);
+            if (remaining > 0f) return;
+
+            _coolingEndsAt = 0f;
+            _coolingDuration = 0f;
+            if (GunRenderer != null)
+                GunRenderer.color = IsActivated ? Color.white : new Color(0.5f, 0.5f, 0.5f);
+            SetTemporarilySuspended(false);
+        }
+
+        protected virtual void ApplyCoolingHeat(float heatRatio) { }
 
         protected virtual void OnActivationChanged(bool isActivated)
         {

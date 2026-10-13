@@ -451,13 +451,20 @@ flowchart TD
     Combat["Canon/Missile<br>Update()"] --> Check["OverHeatAnimationController()"]
     Check -->|Canon: 시간 누적| CanonHeat["Definition<br>OverHeatTime 도달"]
     Check -->|Missile: 발사 횟수| MissileHeat["Definition<br>OverHeatMissileCount 도달"]
-    CanonHeat --> Suspend["TurretBase<br>SetTemporarilySuspended(true)"]
-    MissileHeat --> Suspend
-    Suspend --> Cool["OverHeat()<br>냉각 코루틴"]
-    Cool --> Resume["SetTemporarilySuspended(false)<br>공격 재개"]
+    CanonHeat --> Begin["TurretBase.BeginCooling()<br>공통 냉각 시작"]
+    MissileHeat --> Begin
+    Off["수동 또는 시스템 비활성화<br>남은 열 비율"] --> Begin
+    Begin --> Cool["TurretBase.UpdateCooling()<br>열·시간·표시 갱신"]
+    Cool --> Complete{"냉각 완료 시 IsActivated?"}
+    Complete -->|true| Resume["공격 재개"]
+    Complete -->|false| Ready["꺼진 상태 유지<br>재활성화 허용"]
 ```
 
 과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile은 `Shoot()` 호출마다 카운트가 1씩 증가하므로 한 번에 여러 발을 쏴도 발사 1회로 센다. 과열 기준은 `OverHeatMissileCount`, 과열 후 냉각 시간은 `CoolTime`이 정한다.
+
+Canon/Missile의 과열 냉각과 비활성화 후 냉각은 `TurretBase.BeginCooling()` 및 `UpdateCooling()`으로 통합했다. `IsCoolingDown`은 두 경우 모두 냉각 여부를 나타내고, `CoolingDownRemaining`도 같은 타이머에서 남은 초를 제공한다. 별도 `_overheatCooldownRunning`과 `TotCoolTime`, 종류별 `OverHeat()`/`DeactivateProcess()`는 사용하지 않는다. 열 누적 기준은 각 터렛이 유지하고 `ApplyCoolingHeat()`로 공통 냉각 진행률을 적용한다.
+
+꺼질 때는 현재 열 비율에 비례한 냉각 시간이 적용된다. 이미 과열 냉각 중이면 끄더라도 기존 종료 시각을 유지해 남은 시간만 냉각한다. 냉각 중 꺼진 터렛의 켜기 요청은 `CoolingDown`으로 거부하고, 켜진 터렛은 예약 전력을 유지한 채 공격만 중지한다. 냉각 완료 시 켜져 있으면 공격을 재개하며, 꺼져 있으면 자동으로 켜지지 않는다. UI의 켜기 버튼은 `IsCoolingDown`을 차단 조건으로 사용할 수 있고, 끄기 버튼은 냉각 중에도 허용한다(자동 활성화 중의 수동 조작 차단은 별도다).
 
 ## 5. Prefab과 Definition 설정 방법
 

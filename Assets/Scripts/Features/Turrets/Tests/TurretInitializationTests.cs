@@ -393,6 +393,75 @@ namespace TeamHJD.Game.Turrets.Tests
         }
 
         [UnityTest]
+        public IEnumerator ActiveOverheatUsesSharedCoolingAndResumesWithoutReservingPowerAgain()
+        {
+            var power = new FakePower();
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), power,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+
+            turret.BeginCoolingForTest(0.2f);
+
+            Assert.That(turret.IsCoolingDown, Is.True);
+            Assert.That(turret.CoolingDownRemaining, Is.GreaterThan(0f));
+            Assert.That(turret.IsActivated, Is.True);
+            Assert.That(turret.IsOperational, Is.False);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Unchanged));
+            Assert.That(power.ReleaseCalls, Is.Zero);
+
+            yield return new WaitForSeconds(0.25f);
+            yield return null;
+
+            Assert.That(turret.IsCoolingDown, Is.False);
+            Assert.That(turret.CoolingDownRemaining, Is.Zero);
+            Assert.That(turret.IsActivated, Is.True);
+            Assert.That(turret.IsOperational, Is.True);
+            Assert.That(power.ConsumeCalls, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator SwitchingOffDuringCoolingPreservesDeadlineAndDoesNotReactivate()
+        {
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), new FakePower(),
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            turret.SetCooldownAfterDeactivation(5f);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+            turret.BeginCoolingForTest(0.3f);
+            yield return new WaitForSeconds(0.05f);
+
+            float remainingBeforeOff = turret.CoolingDownRemaining;
+            Assert.That(turret.RequestActivation(false), Is.EqualTo(TurretActivationResult.Deactivated));
+            Assert.That(turret.CoolingDownRemaining, Is.EqualTo(remainingBeforeOff).Within(0.001f));
+            Assert.That(turret.IsCoolingDown, Is.True);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.CoolingDown));
+
+            yield return new WaitForSeconds(0.35f);
+            yield return null;
+
+            Assert.That(turret.IsCoolingDown, Is.False);
+            Assert.That(turret.IsActivated, Is.False);
+            Assert.That(turret.IsOperational, Is.False);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+        }
+
+        [Test]
+        public void ZeroDurationCoolingDoesNotSuspendAnActiveTurret()
+        {
+            var turret = MakeInactiveTurret();
+            turret.PrepareInitialization(TurretInitializationData.CreateDefault(_definition), new FakePower());
+            turret.ConfigureForTest();
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+
+            turret.BeginCoolingForTest(0f);
+
+            Assert.That(turret.IsCoolingDown, Is.False);
+            Assert.That(turret.CoolingDownRemaining, Is.Zero);
+            Assert.That(turret.IsOperational, Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator ManualActivationWaitsUntilHeatCooldownCompletes()
         {
             var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
