@@ -77,6 +77,9 @@ Button의 Inspector OnClick에 요청 메서드를 중복 연결하지 않는다
 - 플레이어 체력 원본은 `PlayerInfo.curHp/maxHp`와 `onHpChange`다.
   같은 씬의 `PlayerActorIdentity.PlayerId`가 `local-player`인 활성 PlayerInfo를
   우선 연결한다. Identity 없는 기존 구성은 활성 PlayerInfo로 대체한다.
+  대체 대상을 연결한 뒤에도 로컬 actor를 재탐색하며 생성되면 연결을 전환한다.
+  UI 활성화 직후 연결 전에는 Waiting for player와 CU 체력 미연결 표시를 사용한다.
+  null 대상을 다시 바인딩하는 경우에도 샘플 체력 값이 남지 않도록 갱신한다.
   다중 플레이어에서는 로컬 actor를 명시적으로 주입하는 연동이 추가로 필요하다.
 - CU 체력은 `ControlUnitHealth.CurrentHealth/MaxHealth`와 `HealthChanged`를 사용한다.
   최초 연결은 Start 이후에 진행하여 다른 컴포넌트의 Awake 초기화를 기다린다.
@@ -114,6 +117,8 @@ Button의 Inspector OnClick에 요청 메서드를 중복 연결하지 않는다
 5. 플레이어 사망·입력 차단·일시정지에서 버튼 요청이 막히는지 확인한다.
 6. UI 루트 컴포넌트 비활성화·재활성화 후 표시·사거리·이벤트 중복 여부를 확인한다.
 7. Prefab Mode에서 위치·폰트 등을 변경할 수 있고 실행 코드가 이를 덮어쓰지 않는지 확인한다.
+8. Scene의 UI 인스턴스에 체력 칸 너비·위치 Override가 남아 프리팹의 배치를 덮어쓰지
+   않는지 확인한다. 체력 바가 사라지는 원인이었던 예전 체력 칸 Override는 제거했다.
 
 ## 이후 갱신 기준
 

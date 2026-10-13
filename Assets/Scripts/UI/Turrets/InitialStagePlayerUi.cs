@@ -26,6 +26,7 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
     private float _nextSourceRetry;
     private float _nextDisplayRefresh;
     private bool _initialized;
+    private bool _hasLocalActor;
 
     private void Awake()
     {
@@ -47,6 +48,7 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
         if (!_initialized) return;
 
         _canvas.enabled = true;
+        vitalsView.ShowWaitingForSources();
         turretView.Hide();
         _presenter = new StageTurretPresenter(_selection, turretView, levelCatalog,
             CanInteract, () => _controller);
@@ -100,11 +102,13 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
             _controller = TurretController.FindForScene(gameObject.scene);
         vitalsView.BindPower(_controller);
 
-        if (!vitalsView.HasPlayer)
+        if (!vitalsView.HasPlayer || !_hasLocalActor)
         {
             PlayerInfo player = FindLocalPlayer();
             vitalsView.BindPlayer(player);
             _playerControl = player != null ? player.GetComponent<PlayerControlState>() : null;
+            var identity = player != null ? player.GetComponent<PlayerActorIdentity>() : null;
+            _hasLocalActor = identity != null && identity.PlayerId.Value == LocalPlayerId;
         }
 
         if (!vitalsView.HasControlUnit)
@@ -113,7 +117,8 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
 
     private PlayerInfo FindLocalPlayer()
     {
-        PlayerInfo fallback = null;
+        PlayerInfo fallback = vitalsView.HasPlayer &&
+            vitalsView.Player.GetComponent<PlayerActorIdentity>() == null ? vitalsView.Player : null;
         foreach (PlayerInfo player in FindObjectsByType<PlayerInfo>(FindObjectsSortMode.None))
         {
             if (player.gameObject.scene != gameObject.scene || !player.isActiveAndEnabled) continue;
@@ -142,5 +147,6 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
         if (turretView != null) turretView.Hide();
         if (vitalsView != null) vitalsView.Unbind();
         if (_canvas != null) _canvas.enabled = false;
+        _hasLocalActor = false;
     }
 }

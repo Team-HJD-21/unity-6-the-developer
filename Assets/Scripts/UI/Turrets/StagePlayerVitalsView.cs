@@ -44,7 +44,12 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     public void BindPlayer(PlayerInfo player)
     {
-        if (ReferenceEquals(_player, player)) return;
+        if (ReferenceEquals(_player, player))
+        {
+            if (_player != null) ShowPlayerHealth(_player.curHp, _player.maxHp);
+            else ShowPlayerHealth(0, 0);
+            return;
+        }
         if (_player != null) _player.onHpChange.RemoveListener(ShowPlayerHealth);
 
         _player = player;
@@ -62,7 +67,12 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     public void BindControlUnit(ControlUnitHealth controlUnit)
     {
-        if (ReferenceEquals(_controlUnit, controlUnit)) return;
+        if (ReferenceEquals(_controlUnit, controlUnit))
+        {
+            if (_controlUnit != null) ShowControlUnitHealth(_controlUnit.CurrentHealth, _controlUnit.MaxHealth);
+            else ShowControlUnitUnavailable();
+            return;
+        }
         if (_controlUnit != null) _controlUnit.HealthChanged -= ShowControlUnitHealth;
 
         _controlUnit = controlUnit;
@@ -73,9 +83,25 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
         }
         else
         {
-            controlUnitFill.fillAmount = 0;
-            controlUnitHealthText.text = "—";
+            ShowControlUnitUnavailable();
         }
+    }
+
+    public void ShowWaitingForSources()
+    {
+        _lastHealth = _lastMaxHealth = int.MinValue;
+        ShowPlayerHealth(0, 0);
+        ShowControlUnitUnavailable();
+        powerFill.fillAmount = 0;
+        powerPercentText.text = "—";
+        powerDetailsText.text = "Waiting for power source";
+        _lastPower = _lastMaxPower = _lastPendingPower = int.MinValue;
+    }
+
+    private void ShowControlUnitUnavailable()
+    {
+        controlUnitFill.fillAmount = 0;
+        controlUnitHealthText.text = "—";
     }
 
     public void BindPower(TurretController controller)
