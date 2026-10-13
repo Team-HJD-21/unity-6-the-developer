@@ -234,14 +234,26 @@ namespace TeamHJD.Game.Turrets
                 _minimumRangeRenderer.enabled = ShowRange && MinimumRange > 0f;
         }
 
-        public bool IsManualActivationBlocked =>
+        public bool IsManualOperationBlocked =>
             _configuredPowerSource is TurretController controller && controller.IsAutoActivationRunning;
+
+        // Retained for existing activation UI consumers.
+        public bool IsManualActivationBlocked => IsManualOperationBlocked;
+
+        public bool CanModifyUpgrades => IsInitialized && isActiveAndEnabled &&
+            !IsManualOperationBlocked && !IsLocked && !IsDestroyed && !IsActivated && !IsCoolingDown;
+
+        private bool RejectManualOperation()
+        {
+            if (!IsManualOperationBlocked) return false;
+            Debug.Log("자동 활성화 진행 중에는 터렛을 수동으로 조작할 수 없습니다.", this);
+            return true;
+        }
 
         public TurretActivationResult RequestActivation(bool shouldActivate)
         {
-            if (IsManualActivationBlocked)
+            if (RejectManualOperation())
             {
-                Debug.Log("자동 활성화 진행 중에는 터렛을 수동으로 켜거나 끌 수 없습니다.", this);
                 return TurretActivationResult.AutoActivationInProgress;
             }
             return RequestSystemActivation(shouldActivate);
@@ -292,6 +304,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool SetLocked(bool isLocked)
         {
+            if (RejectManualOperation()) return false;
             if (!isLocked && _configuredPowerSource is TurretController controller &&
                 !controller.CanUnlock(this)) return false;
             return ApplyZoneLocked(isLocked);
@@ -439,14 +452,14 @@ namespace TeamHJD.Game.Turrets
 
         public void SetDamageBonus(int damageBonus)
         {
-            if (IsLocked) return;
+            if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.SetDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
         }
 
         public void AddDamageBonus(int damageBonus)
         {
-            if (IsLocked) return;
+            if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.AddDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
         }
@@ -463,8 +476,16 @@ namespace TeamHJD.Game.Turrets
 
         private TurretUpgradeResult ChangeUpgradeLevel(TurretUpgradeDefinition upgrade, int direction)
         {
+            if (RejectManualOperation())
+                return TurretUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
                 return TurretUpgradeResult.Locked;
+            if (IsDestroyed)
+                return TurretUpgradeResult.Destroyed;
+            if (IsActivated)
+                return TurretUpgradeResult.RequiresDeactivation;
+            if (IsCoolingDown)
+                return TurretUpgradeResult.CoolingDown;
 
             if (_definition == null || upgrade == null)
             {
@@ -491,18 +512,13 @@ namespace TeamHJD.Game.Turrets
             if (targetLevel == _runtimeState.UpgradeLevel)
                 return direction > 0 ? TurretUpgradeResult.MaximumLevel : TurretUpgradeResult.MinimumLevel;
 
-            if (IsDestroyed)
-            {
-                return TurretUpgradeResult.Destroyed;
-            }
-
-            if (_activationController == null)
+            if (_activationController == null || !isActiveAndEnabled)
             {
                 return TurretUpgradeResult.NotInitialized;
             }
 
-            // Compute from the base definition. Reversing Low Power can increase
-            // the reservation and must fail atomically if CU power is insufficient.
+            // Only an inactive, cooled turret can reach this point. The new cost
+            // takes effect when activation next reserves power.
             int upgradedPower = TurretRuntimeState.CalculateScaledStat(
                 _definition.Power, upgrade.PowerModifierRatio * targetLevel);
             PowerCostChangeResult powerResult =
@@ -548,10 +564,16 @@ namespace TeamHJD.Game.Turrets
             TurretBase targetLevelPrefab, int levelDelta, out TurretBase changedTurret)
         {
             changedTurret = null;
+            if (RejectManualOperation())
+                return TurretLevelUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
                 return TurretLevelUpgradeResult.Locked;
             if (IsDestroyed)
                 return TurretLevelUpgradeResult.Destroyed;
+            if (IsActivated)
+                return TurretLevelUpgradeResult.RequiresDeactivation;
+            if (IsCoolingDown)
+                return TurretLevelUpgradeResult.CoolingDown;
             if (_activationController == null || !isActiveAndEnabled)
                 return TurretLevelUpgradeResult.NotInitialized;
             if (targetLevelPrefab == null || targetLevelPrefab.Definition == null ||
@@ -561,7 +583,6 @@ namespace TeamHJD.Game.Turrets
                     ? TurretLevelUpgradeResult.InvalidNextLevel
                     : TurretLevelUpgradeResult.InvalidPreviousLevel;
 
-            bool wasActivated = IsActivated;
             bool showRange = ShowRange;
             int targetPower = _runtimeState.GetEffectivePower(targetLevelPrefab.Definition.Power);
 
@@ -605,33 +626,12 @@ namespace TeamHJD.Game.Turrets
                 replacementObject.SetActive(false);
                 Destroy(replacementObject);
                 gameObject.SetActive(true);
-                if (wasActivated)
-                {
-                    _activationController.AdoptReservationForLevelUpgrade();
-                    _activationController.TrySetPowerCost(EffectivePower);
-                    OnActivationChanged(true);
-                    TurretInstanceRegistry.NotifyActivationChanged(this, true);
-                    if (IsOperational)
-                        TurretInstanceRegistry.NotifyOperationalStateChanged(this, true);
-                }
-                else
-                {
-                    _activationController.TrySetPowerCost(EffectivePower);
-                }
+                _activationController.TrySetPowerCost(EffectivePower);
                 return TurretLevelUpgradeResult.ReplacementInitializationFailed;
             }
 
             replacement.ShowRange = showRange;
             replacement.RefreshRangeVisual();
-            if (wasActivated)
-            {
-                replacement._activationController.AdoptReservationForLevelUpgrade();
-                replacement.OnActivationChanged(true);
-                TurretInstanceRegistry.NotifyActivationChanged(replacement, true);
-                if (replacement.IsOperational)
-                    TurretInstanceRegistry.NotifyOperationalStateChanged(replacement, true);
-            }
-
             changedTurret = replacement;
             if (levelDelta > 0)
                 TurretInstanceRegistry.NotifyLevelUpgraded(this, replacement);
@@ -666,6 +666,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool Restore()
         {
+            if (RejectManualOperation()) return false;
             if (IsLocked) return false;
             if (!_runtimeState.Restore(MaxHealth))
             {

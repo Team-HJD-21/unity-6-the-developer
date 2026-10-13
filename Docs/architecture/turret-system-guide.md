@@ -509,12 +509,11 @@ TurretUpgradeResult rollback = turret.DowngradeUpgrade(upgradeDefinition);
 ```mermaid
 flowchart TD
     UI["TurretTestController<br>Spec +1 / -1"] --> Base["TurretBase<br>ApplyUpgrade / DowngradeUpgrade"]
-    Base --> Check["ID와 호환성 검사<br>선택 경로와 0~5단계 검사"]
+    Base --> Gate{"자동 활성화 미진행<br>비활성·냉각 완료?"}
+    Gate -->|아니오| Reject["업그레이드 미적용"]
+    Gate -->|예| Check["ID와 호환성 검사<br>선택 경로와 0~5단계 검사"]
     Check --> Power["TurretActivationController<br>TrySetPowerCost()"]
-    Power -->|활성: 전력 차액| CU["TurretController → PowerBudget<br>TryChangeReservation()"]
     Power -->|성공| State["TurretRuntimeState<br>단계당 10% × 현재 단계"]
-    CU -->|성공| State
-    CU -->|전력 부족| Reject["업그레이드 미적용"]
     State --> Visual["TurretBase<br>RefreshRangeVisual()"]
     Visual --> Event["Registry<br>UpgradeApplied 또는 UpgradeDowngraded<br>SnapshotChanged 알림"]
 ```
@@ -527,8 +526,8 @@ flowchart TD
 - `DowngradeUpgrade`는 선택 경로를 한 단계 낮춘다. 0단계로 돌아오면 경로 선택을 해제해 반대 경로를 다시 선택할 수 있다.
 - 단계는 0~5로 Clamp한다. 경계에서 추가 요청은 `MinimumLevel` 또는 `MaximumLevel`을 반환하고 상태와 전력을 바꾸지 않는다. 기존 `AlreadyApplied` enum은 호환성을 위해 남겨두지만 이 경로에서는 반환하지 않는다.
 - 단계별 보정은 에셋의 1단계 보정 × 현재 단계로 재계산한다. 누적 덧셈을 되돌리는 방식이 아니므로 반복 왕복 시 사거리 오차가 쌓이지 않는다. `HasAppliedUpgrade(id)`는 현재 선택 경로에 1단계 이상 투자되어 있는지를 뜻한다.
-- 활성 터렛의 Power가 증가하면 추가 전력을 즉시 예약한다. 전력이 부족하면 업그레이드 전체를 적용하지 않는다.
-- Power가 감소하면 차액을 즉시 반환한다. 절전 경로를 되돌려 Power가 증가하는 경우에도 전력 부족 검사를 먼저 수행하며 실패하면 단계와 수치가 모두 유지된다.
+- 세부 상승·되돌리기는 비활성화 상태이며 냉각이 끝나야 가능하다. 활성 중에는 `RequiresDeactivation`, 꺼진 냉각 중에는 `CoolingDown`, 자동 활성화 중에는 `AutoActivationInProgress`로 거부한다.
+- 업그레이드는 꺼진 터렛의 요구 전력만 변경하며 즉시 전력을 예약하거나 반환하지 않는다. 절전 경로를 되돌려 요구 전력이 증가한 경우 실제 전력 부족은 다음 활성화 요청에서 검사한다.
 - 최종 Damage와 Power 및 Range는 0 미만으로 내려가지 않는다. Clamp된 최종값에서 보정량을 빼지 않고 원본 수치와 현재 단계로 다시 계산하므로 0단계에서 원래 수치로 복귀한다. 별도 최대 능력치 상한은 아직 없다.
 - 외부 조회에는 `EffectiveDamage`, `EffectivePower`, `EffectiveRange`를 사용한다.
 - 상승 성공 시 `UpgradeApplied`가 발생하고 하락 성공 시 `UpgradeDowngraded`가 발생한다. 두 경우 모두 `SnapshotChanged`가 발생한다. 스냅샷은 `SelectedUpgradeId`와 `UpgradeLevel`을 제공한다.
@@ -557,23 +556,24 @@ if (catalog.TryGetPrevious(turret.Definition, out TurretBase previousPrefab))
 flowchart TD
     UI["TurretTestController<br>Level Up·Down"] --> Catalog["TurretLevelUpgradeCatalog<br>이전·다음 Prefab 조회"]
     Catalog --> Base["TurretBase<br>RequestLevelChange()"]
-    Base --> Validate["한 단계 차이·종류<br>전력 확인"]
+    Base --> Gate{"자동 활성화 미진행<br>비활성·냉각 완료?"}
+    Gate -->|아니오| Reject["기존 터렛 유지"]
+    Gate -->|예| Validate["한 단계 차이·종류 검사"]
     Validate -->|가능| Create["대상 Level Prefab<br>비활성 상태로 생성"]
     Validate -->|불가능| Reject["기존 터렛 유지"]
     Create --> Power["TurretActivationController<br>TrySetPowerCost()"]
-    Power -->|전력 부족| Reject
     Power -->|성공| Copy["RuntimeState<br>CopyForLevelChange()"]
     Copy --> Swap["기존 객체 끄기<br>새 객체 켜기"]
     Swap --> Registry["Registry에 같은 ID로<br>새 객체 등록"]
-    Registry --> Active["전력 예약·활성·잠금 상태<br>승계"]
+    Registry --> Active["비활성 상태 유지<br>같은 ID·체력·세부 단계 승계"]
     Active --> Event["Registry<br>LevelUpgraded·LevelDowngraded"]
 ```
 
-레벨 변경은 이전 또는 다음 레벨 프리팹으로 GameObject를 교체한다. 같은 `InstanceId`, 위치, 현재 체력 비율, 세부 업그레이드 보정과 적용 이력, 활성·잠금 상태 및 사거리 표시 설정을 이전한다. 체력 비율을 유지하므로 레벨 변경만으로 전체 회복되지는 않는다. 활성 터렛은 대상 레벨의 전력 사용량에 맞춰 예약량을 즉시 변경하며 전력이 부족하면 원래 터렛을 유지한다. 성공하면 방향에 따라 `LevelUpgraded` 또는 `LevelDowngraded` 이벤트가 발생한다. 읽기 전용 소비자는 객체 참조 대신 같은 ID로 스냅샷을 다시 조회한다. 이미 발사된 총알·미사일은 기존 발사체로 남는다.
+레벨 변경은 비활성화되고 냉각이 끝난 터렛만 이전 또는 다음 레벨 프리팹으로 교체한다. 같은 `InstanceId`, 위치, 현재 체력 비율, 세부 업그레이드 보정과 적용 이력 및 사거리 표시 설정을 이전하고 새 터렛도 비활성 상태로 유지한다. 활성 중에는 `RequiresDeactivation`, 꺼진 냉각 중에는 `CoolingDown`, 자동 활성화 중에는 `AutoActivationInProgress`로 거부하며 기존 객체와 전력은 유지된다. 체력 비율을 유지하므로 레벨 변경만으로 전체 회복되지는 않는다. 변경된 요구 전력은 다음 활성화에서 예약하며 전력 부족도 그때 검사한다. 성공하면 방향에 따라 `LevelUpgraded` 또는 `LevelDowngraded` 이벤트가 발생한다. 읽기 전용 소비자는 객체 참조 대신 같은 ID로 스냅샷을 다시 조회한다. 이미 발사된 총알·미사일은 기존 발사체로 남는다.
 
 현재 레벨 변경 비용·시간, 멀티플레이 상태 동기화, 파괴된 터렛의 변경 규칙은 확정되지 않았다. 파괴된 터렛의 레벨 변경 요청은 거부한다. 제품 UI에서 변경 버튼을 노출하는 작업은 아직 별도다.
 
-`TurretTest`에서 Canon LV1 하나의 ID와 TurretController 전력을 기록하고 활성화·Damage·세부 업그레이드 후 `Level Up`을 누른다. LV2가 같은 ID와 체력 비율·보정값을 유지하는지 확인한다. 이어 `Level Down`으로 LV1에 돌아와 같은 항목을 재확인한다. Missile도 같은 순서로 확인한다. 여러 터렛을 켜 남은 전력을 낮춘 뒤 승급을 요청하면 부족한 전력으로 거부되는지도 확인할 수 있다. 이 Play Mode 검증은 코드 컴파일 검사와 별개다.
+`TurretTest`에서 Canon LV1 하나의 ID와 TurretController 전력을 기록하고 활성화·Damage 후 비활성화한다. 냉각 중에는 세부 변경·승급·강등이 거부되고, 냉각 완료 뒤 세부 업그레이드와 `Level Up`이 가능해야 한다. LV2가 같은 ID와 체력 비율·보정값을 유지하고 꺼진 상태인지 확인한다. 이어 `Level Down`으로 LV1에 돌아와 같은 항목을 재확인한다. Missile도 같은 순서로 확인한다. 요구 전력이 커졌을 때 가용 전력이 부족하면 다음 활성화가 거부되는지 확인한다. 이 Play Mode 검증은 코드 컴파일 검사와 별개다.
 
 ### 6.2 잠금과 해금
 
@@ -667,7 +667,7 @@ flowchart TD
 1. `Capture Snapshot`으로 변경 전 값을 저장한다. 저장된 값은 ID별로 유지되므로 프리팹 교체 후에도 비교할 수 있다. 다시 누르면 비교 기준을 현재 값으로 바꾼다.
 2. `Activate` 후 `Lock`을 누른다. 전력이 반환되고 현재 스냅샷의 Locked가 true인지 확인한다. `Request Activate`를 눌러 결과가 `Locked`인지 확인한다.
 3. `Unlock` 후 자동 활성화되지 않는지 확인하고 직접 다시 켠다.
-4. 각 터렛의 `High Firepower` 또는 `Low Power` 옆 `+1`로 5단계까지 올린다. 반대 경로가 LOCKED로 표시되고 5단계에서 +1이 비활성화되는지 확인한다. `-1`로 0단계까지 내려 기본 수치로 돌아오는지 확인한 뒤 반대 경로를 선택한다. 현재 수치와 저장된 Before 값을 비교하고 `Show Range`로 표시 원도 확인한다. 절전 경로를 되돌릴 때 전력이 부족하면 단계가 유지되는지도 확인한다.
+4. 터렛을 끄고 냉각이 끝난 뒤 `High Firepower` 또는 `Low Power` 옆 `+1`로 5단계까지 올린다. 반대 경로가 LOCKED로 표시되고 5단계에서 +1이 비활성화되는지 확인한다. `-1`로 0단계까지 내려 기본 수치로 돌아오는지 확인한 뒤 반대 경로를 선택한다. 현재 수치와 저장된 Before 값을 비교하고 `Show Range`로 표시 원도 확인한다. 절전 경로를 되돌릴 때 요구 전력이 증가하며 실제 예약은 다음 활성화에서 수행되는지 확인한다.
 5. `Level Up`과 `Level Down`으로 LV1↔LV2↔LV3를 왕복한다. ID와 보정값이 유지되는지 확인한다. LV1에는 Level Down이 없고 LV3에는 Level Up이 없다.
 6. `Damage` → `Destroy` → `Request Activate` → `Restore`로 피해와 파괴 거부 및 복구를 확인한다. 복구해도 잠금 상태는 유지된다.
 7. 패널의 All / Active / Operational 개수와 ID별 현재 스냅샷을 확인한다. Before 값은 이후 상태 변화에 따라 자동으로 바뀌지 않는다.
@@ -694,11 +694,11 @@ flowchart TD
 - [ ] `Restore` 후 최대 체력·비활성 상태로 돌아오며 다시 활성화할 수 있다.
 - [ ] 파괴와 복구 시 Registry 이벤트가 한 번씩 발생한다.
 - [ ] Target이 사망하거나 범위를 벗어나면 새 Target을 찾는다.
-- [ ] 미사일이 발사 전 적을 조준한 상태에서 승급·강등해도 예약이 남아 탐색이 멈추지 않는다.
+- [ ] 미사일이 발사 전 적을 조준한 활성 상태에서는 승급·강등이 거부되며 현재 객체와 타깃 예약이 유지된다.
 - [ ] 가장 가까운 적이 다른 미사일에 예약되어 있어도 다음 예약되지 않은 적을 선택한다.
 - [ ] CU 없는 씬에서 Canon/Missile이 컨트롤러 전력만으로 초기화되고 활성화된다.
 - [ ] 컨트롤러를 미리 배치하지 않아도 같은 씬의 터렛들이 하나의 자동 생성 컨트롤러를 공유한다.
-- [ ] 비활성화 반환은 0.1초마다 1이며 업그레이드 전력 감소 차액은 즉시 반환된다.
+- [ ] 비활성화 반환은 0.1초마다 1이며 꺼진 터렛의 업그레이드는 요구 전력만 바꾼다.
 - [ ] 승급과 강등 후에도 같은 컨트롤러를 사용하고 전력이 이중 예약되지 않는다.
 - [ ] 기존 CU 전력 UI가 컨트롤러의 전력 변경을 반영한다.
 - [ ] 컨트롤러 스냅샷에서 종류별 활성 수 합계가 ActivatedTurretCount와 일치한다.
@@ -712,13 +712,13 @@ flowchart TD
 - [ ] 각 활성 터렛의 `InstanceId`가 0이 아니며 서로 다르다.
 - [ ] Canon과 Missile을 각각 LV1→LV2→LV3으로 승급하며 발사구·공격 동작이 바뀐다.
 - [ ] Canon과 Missile을 각각 LV3→LV2→LV1로 다운그레이드할 수 있다.
-- [ ] 레벨 변경 전후 `InstanceId`, 체력 비율, 세부 업그레이드, 활성·잠금 상태가 유지된다.
+- [ ] 레벨 변경 전후 `InstanceId`, 체력 비율, 세부 업그레이드가 유지되고 새 터렛은 비활성 상태다.
 - [ ] Canon과 Missile의 High Firepower는 Range -10%이고 Low Power는 Range +10%이며 탐지 범위와 표시 원에 즉시 반영된다.
 - [ ] 세부 경로는 한 단계씩 0↔5를 왕복하고 반대 경로는 0단계 복귀 전까지 선택할 수 없다.
-- [ ] 절전 경로 되돌리기에서 전력이 부족하면 단계와 수치 및 예약량이 유지된다.
+- [ ] 절전 경로 되돌리기는 비활성·냉각 완료 후 가능하고 증가한 전력의 부족 검사는 다음 활성화에서 수행된다.
 - [ ] 프리팹 레벨 변경과 파괴/복구 후에도 선택 경로와 세부 단계가 유지된다.
 - [ ] Capture Snapshot의 Before 값은 상태 변경 후에도 유지되고 같은 ID의 현재 스냅샷만 갱신된다.
-- [ ] 활성 중 승급으로 증가한 전력만 추가 예약되고, 부족하면 승급이 거부된다.
+- [ ] 활성·냉각·자동 활성화 중 승급·강등과 세부 변경이 거부되며 객체·단계·전력이 유지된다.
 - [ ] 꺼지거나 파괴된 터렛은 Enemy PoC의 목표 후보에서 빠진다.
 
 ## 10. 현재 기술 부채와 후속 작업
@@ -769,7 +769,7 @@ flowchart TD
 
 `TurretController.TryStartAutoActivation()`은 같은 Scene·컨트롤러의 등록된 무기 터렛을 대상으로 한다. 잠금·파괴 후보를 제외하고 버튼 시점의 공격 가능 사거리 내 적 수를 저장한다. Missile 최소 사거리도 반영하고 동일 Rigidbody의 여러 Collider를 중복 집계하지 않는다. enemyMask에는 적 Collider만 포함해야 한다. Rigidbody 없는 적의 여러 Collider는 개별 집계될 수 있다.
 
-적 수 내림차순, 동점은 InstanceId 오름차순으로 고정한다. 현재 켜진 소속 터렛을 모두 끈 뒤 가용 전력으로 순서대로 활성화를 시도한다. 부족한 후보는 건너뛰고 전력 반환 중에는 다시 시도한다. 후보를 모두 처리했거나 반환 대기가 끝나 더 켤 수 없는 경우 종료한다. 진행 중 잠금·파괴·제거된 후보는 제외하고 새 후보를 추가하거나 순위를 재계산하지 않는다. 자동 활성화가 진행되는 동안 공개 개별 활성화 요청은 `AutoActivationInProgress`로 거부하고 Console 로그로 알린다. 종료 후 수동 켜기·끄기를 다시 허용한다. 자동화 내부 요청과 피격·잠금에 따른 시스템 비활성화는 계속 처리한다.
+적 수 내림차순, 동점은 InstanceId 오름차순으로 고정한다. 현재 켜진 소속 터렛을 모두 끈 뒤 가용 전력으로 순서대로 활성화를 시도한다. 부족한 후보는 건너뛰고 전력 반환 중에는 다시 시도한다. 후보를 모두 처리했거나 반환 대기가 끝나 더 켤 수 없는 경우 종료한다. 진행 중 시스템에 의해 잠금·파괴·제거된 후보는 제외하고 새 후보를 추가하거나 순위를 재계산하지 않는다. 자동 활성화 중에는 `IsManualOperationBlocked`가 true이며 사용자 개별 활성화·세부 업그레이드·레벨 변경은 `AutoActivationInProgress`로 거부한다. 수동 잠금·해금과 복구는 false, 공격력 보너스 변경은 미적용으로 처리하고 Console 로그로 알린다. 기존 `IsManualActivationBlocked`도 같은 값을 반환한다. 종료 후 수동 조작을 다시 허용하되 업그레이드에는 비활성·냉각 완료 조건이 계속 적용된다. UI는 `CanModifyUpgrades`로 세부/레벨 버튼을 제어한다. 자동화 내부 요청, 적의 피격과 이에 따른 파괴·시스템 비활성화, 게임 규칙의 구역 해금은 계속 처리한다. TurretTest의 수동 피해·구역 변경 버튼은 진행 중 차단한다.
 
 쿨타임은 요청 수락부터 게임 시간 60초이며 일시정지 동안 진행하지 않는다. 진행 중 재요청은 거부한다. 비활성화된 컨트롤러는 작업을 중단한다. `AutoActivationScoreProvider`는 이후 가중치 정책을 주입할 수 있는 경계이며 현재 기본 점수는 적 수다.
 

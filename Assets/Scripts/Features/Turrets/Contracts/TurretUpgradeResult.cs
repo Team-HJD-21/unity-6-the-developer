@@ -16,6 +16,9 @@ namespace TeamHJD.Game.Turrets.Contracts
         Downgraded,
         BranchLocked,
         MaximumLevel,
-        MinimumLevel
+        MinimumLevel,
+        RequiresDeactivation,
+        CoolingDown,
+        AutoActivationInProgress
     }
 }
