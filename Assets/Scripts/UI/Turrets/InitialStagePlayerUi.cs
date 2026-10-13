@@ -1,102 +1,146 @@
-using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Presentation.Scene;
-using TMPro;
+using TeamHJD.Game.Turrets;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-/// <summary>Initial 씬의 상태 표시와 터렛 선택 UI를 조립합니다.</summary>
+/// <summary>프리팹의 상태 View와 터렛 조작 Presenter를 씬 데이터에 연결합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster))]
 public sealed class InitialStagePlayerUi : MonoBehaviour
 {
-    [SerializeField] private RectTransform playerHealthRoot;
-    [SerializeField] private RectTransform controlUnitHealthRoot;
-    [SerializeField] private RectTransform powerRoot;
-    [SerializeField] private TMP_FontAsset font;
-    [SerializeField] private Sprite menuSprite;
-    [SerializeField] private Sprite buttonSprite;
+    private const string LocalPlayerId = "local-player";
+    private const float SourceRetryInterval = .5f;
+    private const float DisplayRefreshInterval = .1f;
+
+    [Header("Prefab Views")]
+    [SerializeField] private StagePlayerVitalsView vitalsView;
+    [SerializeField] private StageTurretControlView turretView;
+    [Header("Turret Data")]
     [SerializeField] private TurretLevelUpgradeCatalog levelCatalog;
-    private StagePlayerVitalsView _vitals;
-    private StageTurretControlView _view;
+
+    private Canvas _canvas;
     private StageTurretSelection _selection;
     private StageTurretPresenter _presenter;
     private TurretController _controller;
-    private float _nextBindTime;
+    private PlayerControlState _playerControl;
+    private float _nextSourceRetry;
+    private float _nextDisplayRefresh;
+    private bool _initialized;
 
     private void Awake()
     {
-        if (playerHealthRoot == null || controlUnitHealthRoot == null || powerRoot == null || font == null)
+        _canvas = GetComponent<Canvas>();
+        if (vitalsView == null || turretView == null ||
+            !vitalsView.IsConfigured || !turretView.IsConfigured || levelCatalog == null)
         {
-            Debug.LogError("[InitialStagePlayerUi] 상태 UI와 폰트 참조가 필요합니다.", this);
+            Debug.LogError("[InitialStagePlayerUi] Connect the prefab views and level catalog.", this);
             enabled = false;
             return;
         }
-        var canvas = GetComponent<Canvas>();
-        canvas.enabled = true;
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 10;
-        var scaler = GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        scaler.matchWidthOrHeight = .5f;
-        if (EventSystem.current == null)
-        {
-            var events = new GameObject("Gameplay UI EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-            events.transform.SetParent(transform, false);
-        }
-        _vitals = new StagePlayerVitalsView(playerHealthRoot, controlUnitHealthRoot, powerRoot, font);
-        _view = new StageTurretControlView((RectTransform)transform, font, menuSprite, buttonSprite);
+
         _selection = new StageTurretSelection(gameObject.scene);
-        _presenter = new StageTurretPresenter(_selection, _view, levelCatalog);
+        _initialized = true;
     }
 
-    // Other scene sources initialize in Awake; read their initial values afterwards.
+    private void OnEnable()
+    {
+        if (!_initialized) return;
+
+        _canvas.enabled = true;
+        turretView.Hide();
+        _presenter = new StageTurretPresenter(_selection, turretView, levelCatalog,
+            CanInteract, () => _controller);
+        _nextSourceRetry = 0;
+        _nextDisplayRefresh = 0;
+    }
+
+    // Start runs after the scene's health sources finish Awake.
     private void Start()
     {
-        if (_presenter != null) BindSceneSources();
+        if (_initialized) BindSceneSources();
     }
 
     private void Update()
     {
         if (_presenter == null) return;
-        if (Time.unscaledTime >= _nextBindTime)
+
+        if (Time.unscaledTime >= _nextSourceRetry)
         {
-            _nextBindTime = Time.unscaledTime + .5f;
+            _nextSourceRetry = Time.unscaledTime + SourceRetryInterval;
             BindSceneSources();
         }
-        _selection.ProcessInput(_controller);
-        _presenter.Refresh();
+
+        if (CanInteract()) _selection.ProcessInput(_controller);
+        else _selection.Clear();
+
+        bool updateDisplay = Time.unscaledTime >= _nextDisplayRefresh;
+        if (updateDisplay)
+        {
+            _nextDisplayRefresh = Time.unscaledTime + DisplayRefreshInterval;
+            vitalsView.RefreshPower();
+        }
+
+        _presenter.Refresh(updateDisplay);
+    }
+
+    private bool CanInteract()
+    {
+        PlayerInfo player = vitalsView.Player;
+        if (!isActiveAndEnabled || Time.timeScale <= 0 ||
+            player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
+            _controller == null || !_controller.isActiveAndEnabled)
+            return false;
+
+        return _playerControl == null || _playerControl.CanAct;
     }
 
     private void BindSceneSources()
     {
-        if (_controller == null) _controller = TurretController.FindForScene(gameObject.scene);
-        _vitals.BindPower(_controller);
-        if (!_vitals.HasPlayer)
+        if (_controller == null || !_controller.isActiveAndEnabled)
+            _controller = TurretController.FindForScene(gameObject.scene);
+        vitalsView.BindPower(_controller);
+
+        if (!vitalsView.HasPlayer)
         {
-            PlayerInfo fallback = null;
-            foreach (var player in FindObjectsByType<PlayerInfo>(FindObjectsSortMode.None))
-            {
-                if (player.gameObject.scene != gameObject.scene || !player.isActiveAndEnabled) continue;
-                var identity = player.GetComponent<PlayerActorIdentity>();
-                if (identity != null && identity.PlayerId.Value == "local-player")
-                { _vitals.BindPlayer(player); break; }
-                if (identity == null && fallback == null) fallback = player;
-            }
-            if (!_vitals.HasPlayer && fallback != null) _vitals.BindPlayer(fallback);
+            PlayerInfo player = FindLocalPlayer();
+            vitalsView.BindPlayer(player);
+            _playerControl = player != null ? player.GetComponent<PlayerControlState>() : null;
         }
-        if (!_vitals.HasControlUnit)
-            foreach (var cu in FindObjectsByType<ControlUnitHealth>(FindObjectsSortMode.None))
-                if (cu.gameObject.scene == gameObject.scene) { _vitals.BindControlUnit(cu); break; }
+
+        if (!vitalsView.HasControlUnit)
+            vitalsView.BindControlUnit(FindControlUnit());
     }
 
-    private void OnDisable() => _selection?.Clear();
-    private void OnDestroy()
+    private PlayerInfo FindLocalPlayer()
+    {
+        PlayerInfo fallback = null;
+        foreach (PlayerInfo player in FindObjectsByType<PlayerInfo>(FindObjectsSortMode.None))
+        {
+            if (player.gameObject.scene != gameObject.scene || !player.isActiveAndEnabled) continue;
+
+            var identity = player.GetComponent<PlayerActorIdentity>();
+            if (identity != null && identity.PlayerId.Value == LocalPlayerId) return player;
+            if (identity == null && fallback == null) fallback = player;
+        }
+
+        return fallback;
+    }
+
+    private ControlUnitHealth FindControlUnit()
+    {
+        foreach (var controlUnit in FindObjectsByType<ControlUnitHealth>(FindObjectsSortMode.None))
+            if (controlUnit.gameObject.scene == gameObject.scene && controlUnit.isActiveAndEnabled)
+                return controlUnit;
+        return null;
+    }
+
+    private void OnDisable()
     {
         _presenter?.Dispose();
+        _presenter = null;
         _selection?.Clear();
-        _vitals?.Dispose();
+        if (turretView != null) turretView.Hide();
+        if (vitalsView != null) vitalsView.Unbind();
+        if (_canvas != null) _canvas.enabled = false;
     }
 }

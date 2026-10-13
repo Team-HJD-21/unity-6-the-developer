@@ -4,118 +4,157 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Stage 1 외형에 실제 PlayerInfo, CU 체력과 터렛 전력 값을 표시합니다.</summary>
-internal sealed class StagePlayerVitalsView : IDisposable
+/// <summary>Inspector로 연결한 게이지에 체력과 전력을 표시합니다.</summary>
+[DisallowMultipleComponent]
+public sealed class StagePlayerVitalsView : MonoBehaviour
 {
-    private readonly Image[] _cells;
-    private readonly Image _cuFill, _powerFill;
-    private readonly TMP_Text _playerText, _cuText, _powerText, _powerDetails;
+    [Header("Player Health")]
+    [SerializeField] private Image[] healthCells;
+    [SerializeField] private TMP_Text playerHealthText;
+    [SerializeField] private Color filledCellColor = new Color(.4f, 1f, 1f);
+    [SerializeField] private Color emptyCellColor = new Color(.25f, .4f, .45f);
+
+    [Header("Control Unit Health")]
+    [SerializeField] private Image controlUnitFill;
+    [SerializeField] private TMP_Text controlUnitHealthText;
+
+    [Header("Power")]
+    [SerializeField] private Image powerFill;
+    [SerializeField] private TMP_Text powerPercentText;
+    [SerializeField] private TMP_Text powerDetailsText;
+
     private PlayerInfo _player;
-    private ControlUnitHealth _cu;
+    private ControlUnitHealth _controlUnit;
     private TurretController _controller;
-    public bool HasPlayer => _player != null;
-    public bool HasControlUnit => _cu != null;
+    private int _lastHealth = int.MinValue;
+    private int _lastMaxHealth = int.MinValue;
+    private int _lastPower = int.MinValue;
+    private int _lastMaxPower = int.MinValue;
+    private int _lastPendingPower = int.MinValue;
 
-    public StagePlayerVitalsView(RectTransform player, RectTransform cu, RectTransform power, TMP_FontAsset font)
-    {
-        _cells = Array.FindAll(player.GetComponentsInChildren<Image>(true), image => image.name.StartsWith("Cell") || image.name == "MSCell");
-        ArrangeHealthCells();
-        _cuFill = Find<Image>(cu, "FillHp");
-        _powerFill = Find<Image>(power, "FillPower");
-        _cuText = Find<TMP_Text>(cu, "CUHpInfo");
-        _powerText = Find<TMP_Text>(power, "CUPowerInfo");
-        _playerText = StageTurretControlView.Label(player, font, "Player HP", new Vector2(0, -62), new Vector2(360, 28), 20);
-        _powerDetails = StageTurretControlView.Label(power, font, "Waiting for power source", new Vector2(-180, -115), new Vector2(400, 30), 16);
-        ShowPlayer(0, 0);
-        if (_cuText != null) _cuText.text = "—";
-        if (_powerText != null) _powerText.text = "—";
-    }
-
-    private static T Find<T>(Transform root, string name) where T : Component =>
-        Array.Find(root.GetComponentsInChildren<T>(true), component => component.name == name);
-
-    private void ArrangeHealthCells()
-    {
-        if (_cells.Length == 0) return;
-        var row = (RectTransform)_cells[0].transform.parent;
-        var layout = row.GetComponent<HorizontalLayoutGroup>();
-        if (layout != null) layout.enabled = false;
-        row.anchorMin = row.anchorMax = row.pivot = new Vector2(0, 1);
-        row.anchoredPosition = new Vector2(2, -6);
-        row.sizeDelta = new Vector2(240, 20);
-        float width = (240f - (_cells.Length - 1) * 1.8f) / _cells.Length;
-        for (int i = 0; i < _cells.Length; i++)
-        {
-            var image = _cells[i];
-            var aspect = image.GetComponent<AspectRatioFitter>();
-            if (aspect != null) aspect.enabled = false;
-            var rect = image.rectTransform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
-            rect.pivot = new Vector2(0, 1);
-            rect.anchoredPosition = new Vector2(i * (width + 1.8f), 0);
-            rect.sizeDelta = new Vector2(width, 20);
-            image.enabled = true;
-        }
-    }
+    public PlayerInfo Player => _player;
+    public bool HasPlayer => _player != null && _player.isActiveAndEnabled;
+    public bool HasControlUnit => _controlUnit != null && _controlUnit.isActiveAndEnabled;
+    public bool IsConfigured =>
+        healthCells != null && healthCells.Length > 0 &&
+        Array.TrueForAll(healthCells, cell => cell != null) &&
+        playerHealthText != null && controlUnitFill != null &&
+        controlUnitHealthText != null && powerFill != null &&
+        powerPercentText != null && powerDetailsText != null;
 
     public void BindPlayer(PlayerInfo player)
     {
         if (ReferenceEquals(_player, player)) return;
-        if (_player != null) _player.onHpChange.RemoveListener(ShowPlayer);
+        if (_player != null) _player.onHpChange.RemoveListener(ShowPlayerHealth);
+
         _player = player;
-        if (_player == null) { ShowPlayer(0, 0); return; }
-        _player.onHpChange.AddListener(ShowPlayer);
-        ShowPlayer(_player.curHp, _player.maxHp);
+        if (_player != null)
+        {
+            _player.onHpChange.AddListener(ShowPlayerHealth);
+            ShowPlayerHealth(_player.curHp, _player.maxHp);
+        }
+        else
+        {
+            _lastHealth = _lastMaxHealth = int.MinValue;
+            ShowPlayerHealth(0, 0);
+        }
     }
 
-    public void BindControlUnit(ControlUnitHealth cu)
+    public void BindControlUnit(ControlUnitHealth controlUnit)
     {
-        if (ReferenceEquals(_cu, cu)) return;
-        if (_cu != null) _cu.HealthChanged -= ShowControlUnit;
-        _cu = cu;
-        if (_cu == null) return;
-        _cu.HealthChanged += ShowControlUnit;
-        ShowControlUnit(_cu.CurrentHealth, _cu.MaxHealth);
+        if (ReferenceEquals(_controlUnit, controlUnit)) return;
+        if (_controlUnit != null) _controlUnit.HealthChanged -= ShowControlUnitHealth;
+
+        _controlUnit = controlUnit;
+        if (_controlUnit != null)
+        {
+            _controlUnit.HealthChanged += ShowControlUnitHealth;
+            ShowControlUnitHealth(_controlUnit.CurrentHealth, _controlUnit.MaxHealth);
+        }
+        else
+        {
+            controlUnitFill.fillAmount = 0;
+            controlUnitHealthText.text = "—";
+        }
     }
 
     public void BindPower(TurretController controller)
     {
-        if (ReferenceEquals(_controller, controller)) { ShowPower(0, 0); return; }
-        if (_controller != null) _controller.PowerChanged -= ShowPower;
-        _controller = controller;
-        if (_controller != null) _controller.PowerChanged += ShowPower;
-        ShowPower(0, 0);
+        if (!ReferenceEquals(_controller, controller))
+        {
+            if (_controller != null) _controller.PowerChanged -= OnPowerChanged;
+            _controller = controller;
+            if (_controller != null) _controller.PowerChanged += OnPowerChanged;
+        }
+
+        RefreshPower();
     }
 
-    private void ShowPlayer(int current, int maximum)
+    // Pending recovery can change without a PowerChanged notification.
+    public void RefreshPower()
+    {
+        if (_controller == null)
+        {
+            powerFill.fillAmount = 0;
+            powerPercentText.text = "—";
+            powerDetailsText.text = "Waiting for power source";
+            _lastPower = _lastMaxPower = _lastPendingPower = int.MinValue;
+            return;
+        }
+
+        var budget = _controller.Budget;
+        int available = budget.CurrentPower;
+        int maximum = budget.MaximumPower;
+        int pending = budget.PendingRecovery;
+        if (available == _lastPower && maximum == _lastMaxPower && pending == _lastPendingPower) return;
+
+        _lastPower = available;
+        _lastMaxPower = maximum;
+        _lastPendingPower = pending;
+        float ratio = maximum > 0 ? Mathf.Clamp01((float)available / maximum) : 0;
+        powerFill.fillAmount = ratio;
+        powerPercentText.text = $"{Mathf.RoundToInt(ratio * 100)}%";
+        powerDetailsText.text = $"Power {available}/{maximum} | Recovering {pending}";
+    }
+
+    public void Unbind()
+    {
+        if (_player != null) _player.onHpChange.RemoveListener(ShowPlayerHealth);
+        if (_controlUnit != null) _controlUnit.HealthChanged -= ShowControlUnitHealth;
+        if (_controller != null) _controller.PowerChanged -= OnPowerChanged;
+
+        _player = null;
+        _controlUnit = null;
+        _controller = null;
+        _lastHealth = _lastMaxHealth = int.MinValue;
+        _lastPower = _lastMaxPower = _lastPendingPower = int.MinValue;
+    }
+
+    private void ShowPlayerHealth(int current, int maximum)
+    {
+        if (_lastHealth == current && _lastMaxHealth == maximum) return;
+        _lastHealth = current;
+        _lastMaxHealth = maximum;
+
+        float ratio = maximum > 0 ? Mathf.Clamp01((float)current / maximum) : 0;
+        for (int i = 0; i < healthCells.Length; i++)
+        {
+            float fill = Mathf.Clamp01(ratio * healthCells.Length - i);
+            healthCells[i].color = Color.Lerp(emptyCellColor, filledCellColor, fill);
+        }
+
+        playerHealthText.text = maximum > 0 ?
+            $"Player HP {Mathf.Clamp(current, 0, maximum)} / {maximum}" : "Waiting for player";
+    }
+
+    private void ShowControlUnitHealth(int current, int maximum)
     {
         float ratio = maximum > 0 ? Mathf.Clamp01((float)current / maximum) : 0;
-        for (int i = 0; i < _cells.Length; i++)
-            _cells[i].color = Color.Lerp(new Color(.25f, .4f, .45f), new Color(.4f, 1, 1), Mathf.Clamp01(ratio * _cells.Length - i));
-        _playerText.text = maximum > 0 ? $"Player HP {Mathf.Clamp(current, 0, maximum)} / {maximum}" : "Waiting for player";
+        controlUnitFill.fillAmount = ratio;
+        controlUnitHealthText.text = $"{Mathf.RoundToInt(ratio * 100)}%";
     }
 
-    private void ShowControlUnit(int current, int maximum)
-    {
-        float ratio = maximum > 0 ? Mathf.Clamp01((float)current / maximum) : 0;
-        if (_cuFill != null) _cuFill.fillAmount = ratio;
-        if (_cuText != null) _cuText.text = $"{Mathf.RoundToInt(ratio * 100)}%";
-    }
+    private void OnPowerChanged(int available, int maximum) => RefreshPower();
 
-    private void ShowPower(int current, int maximum)
-    {
-        if (_controller == null) return;
-        var state = _controller.GetSnapshot();
-        float ratio = state.MaximumPower > 0 ? Mathf.Clamp01((float)state.AvailablePower / state.MaximumPower) : 0;
-        if (_powerFill != null) _powerFill.fillAmount = ratio;
-        if (_powerText != null) _powerText.text = $"{Mathf.RoundToInt(ratio * 100)}%";
-        _powerDetails.text = $"Power {state.AvailablePower}/{state.MaximumPower} | Recovering {state.PendingRecoveryPower}";
-    }
-
-    public void Dispose()
-    {
-        if (_player != null) _player.onHpChange.RemoveListener(ShowPlayer);
-        if (_cu != null) _cu.HealthChanged -= ShowControlUnit;
-        if (_controller != null) _controller.PowerChanged -= ShowPower;
-    }
+    private void OnDisable() => Unbind();
 }
