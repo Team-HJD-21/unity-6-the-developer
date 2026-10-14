@@ -1,6 +1,6 @@
 # API 사용법
 
-최종 갱신: 2026-10-08
+최종 갱신: 2026-10-13
 상태: 현재 Canon / Missile 공개 API. 명령용 호환 API는 컴포넌트 참조를 사용할 수 있다.
 
 네임스페이스는 `TeamHJD.Game.Turrets`다. 결과 타입과 터렛 종류는 `TeamHJD.Game.Turrets.Contracts`에 있다. 소비자 asmdef에서 사용하는 어셈블리를 참조해야 한다.
@@ -67,6 +67,12 @@ if (TurretInstanceRegistry.TryGet(targetTurretId, out var turret))
 | `SetLocked(bool)` | `bool` |
 | `ApplyUpgrade(TurretUpgradeDefinition)` | `TurretUpgradeResult` |
 | `DowngradeUpgrade(TurretUpgradeDefinition)` | `TurretUpgradeResult` |
+
+세부 업그레이드·되돌리기와 레벨 승급·강등은 **비활성화 상태이며 냉각이 끝난 터렛**에만 허용한다. 켜져 있으면 `RequiresDeactivation`, 꺼져 있지만 냉각 중이면 `CoolingDown`, 자동 활성화 진행 중이면 `AutoActivationInProgress`를 반환한다. 거부 시 기존 객체·단계·능력치·전력은 변경하지 않는다. 꺼진 터렛의 업그레이드는 요구 전력만 바꾸며, 실제 예약은 다음 활성화에서 수행한다.
+
+UI는 `CanModifyUpgrades`로 승급·강등 및 세부 업그레이드 버튼을 활성화하고, 요청 시 API 결과도 확인한다. `IsOperational == false`는 과열 중 켜진 터렛도 포함하므로 업그레이드 허용 조건으로 사용하지 않는다.
+
+`IsManualOperationBlocked`는 해당 전력 공급자의 자동 활성화가 진행 중인지 나타낸다. 이때 개별 활성화, 세부/레벨 변경, `SetLocked`, `Restore`, 공격력 보너스 변경을 거부한다. 기존 `IsManualActivationBlocked`는 같은 값을 반환하는 호환 속성이다. bool API는 `false`, void 보너스 API는 미적용으로 처리하며 Console에 거부 로그를 남긴다. 적의 `ApplyDamage`, 자동 처리 내부 활성화 및 게임 규칙의 구역 해금 호출은 계속 처리한다. 개발 UI에서 피해 주입·구역 변경 등 시스템 API를 수동으로 호출하는 버튼도 진행 중에는 비활성화한다.
 
 체력이 0이면 파괴되고 비활성화된다. Restore는 최대 체력과 비활성 상태로 복구한다. 복구 이후 활성화는 별도로 요청한다. 잠금과 해금의 제품 조건은 호출자가 결정한다.
 

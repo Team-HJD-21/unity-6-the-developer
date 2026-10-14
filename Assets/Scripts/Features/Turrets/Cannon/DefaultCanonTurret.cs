@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
@@ -15,7 +14,6 @@ public abstract class DefaultCanonTurret : TurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _fireTime = 0f;       //과열시 중지 위한 변수
-    private bool _overheatCooldownRunning;
     protected override bool UsesMinimumRange => true;
 
     protected abstract void Shoot();//총알 객체화 후 목표로 발사(FireRateController에서 수행)
@@ -30,8 +28,9 @@ public abstract class DefaultCanonTurret : TurretBase
 
         ShowRange = false;
     }
-    protected void Update()
+    protected override void Update()
     {
+        base.Update();
         UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
@@ -100,10 +99,7 @@ public abstract class DefaultCanonTurret : TurretBase
             _fireTime += Time.deltaTime;
             if (_fireTime >= OverHeatTime)//터렛 과열
             {
-                SetTemporarilySuspended(true);
-                _overheatCooldownRunning = true;
-                Animator.SetBool("isShoot", false);
-                StartCoroutine(OverHeat());
+                BeginCooling(CoolTime);
             }
             else
             {
@@ -142,41 +138,8 @@ public abstract class DefaultCanonTurret : TurretBase
             Target,
             TargetingAngle);
     }
-    //Coroutine Methods--------------------------------------------------------------------------------------------------------
-    private IEnumerator DeactivateProcess(float initialHeat, float cooldownDuration)
-    {
-        float elapsed = 0f;
-        while (elapsed < cooldownDuration)
-        {
-            float remaining = 1f - elapsed / cooldownDuration;
-            _fireTime = initialHeat * remaining;
-            float heatRatio = OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f;
-            GunRenderer.color = new Color(1f, 1f - heatRatio, 1f - heatRatio);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        _fireTime = 0f;
-        TotCoolTime = 0f;
-        GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
-    }
-
-    private IEnumerator OverHeat()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
-    {
-        TotCoolTime = CoolTime;
-        while (TotCoolTime >= 0f)
-        {
-            GunRenderer.color = new Color(1f,1-(TotCoolTime / CoolTime),1-(TotCoolTime / CoolTime));
-            TotCoolTime -= Time.deltaTime;
-            yield return null;
-        }
-        Animator.SetBool("isShoot", false);
-        //yield return new WaitForSeconds(5f);
-        GunRenderer.color = Color.white;
-        _fireTime = 0f;
-        _overheatCooldownRunning = false;
-        SetTemporarilySuspended(false);
-    }
+    protected override void ApplyCoolingHeat(float heatRatio)
+        => _fireTime = heatRatio * Mathf.Max(0f, OverHeatTime);
     private void FireSound()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
     {
         // yield return new WaitForSeconds(0.2f);
@@ -195,27 +158,10 @@ public abstract class DefaultCanonTurret : TurretBase
             return;
         }
 
-        float cooldownDuration = _overheatCooldownRunning
-            ? Mathf.Max(0f, TotCoolTime)
-            : OverHeatTime > 0f
-                ? Mathf.Clamp01(_fireTime / OverHeatTime) * Mathf.Max(0f, CoolTime)
-                : 0f;
-        float initialHeat = Mathf.Max(0f, _fireTime);
+        float heatRatio = OverHeatTime > 0f ? Mathf.Clamp01(_fireTime / OverHeatTime) : 0f;
         StopAllCoroutines();
-        _overheatCooldownRunning = false;
-        TimeTilFire = 0f;
-        SetTemporarilySuspended(false);
-        Animator.SetBool("isShoot", false);
         // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
-        BeginActivationCooldown(cooldownDuration);
-        if (cooldownDuration > 0f)
-            StartCoroutine(DeactivateProcess(initialHeat, cooldownDuration));
-        else
-        {
-            _fireTime = 0f;
-            TotCoolTime = 0f;
-            GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
-        }
+        BeginCooling(heatRatio * Mathf.Max(0f, CoolTime), heatRatio);
     }
 
     //Getter
