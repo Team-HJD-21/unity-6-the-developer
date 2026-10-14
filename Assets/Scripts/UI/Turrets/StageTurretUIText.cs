@@ -4,10 +4,15 @@ using TeamHJD.Game.Turrets.Contracts;
 /// <summary>터렛 API 요청 결과의 표시 문구를 관리합니다.</summary>
 internal static class StageTurretUIText
 {
+    public static string WithCooling(string message, TurretBase turret) => turret.IsCoolingDown
+        ? $"{message} | Cooling {turret.CoolingDownRemaining:0.0}s"
+        : message;
+
     public static string UpgradeRestriction(TurretBase turret)
     {
         if (!turret.IsInitialized) return "Upgrades: waiting for initialization";
-        if (turret.IsManualOperationBlocked) return "Upgrades: automatic activation in progress";
+        if (turret.IsManualOperationBlocked)
+            return WithCooling("Upgrades: automatic activation in progress", turret);
         if (turret.IsDestroyed) return "Upgrades: turret destroyed";
         if (turret.IsLocked) return "Upgrades: zone locked";
         if (turret.IsCoolingDown) return $"Upgrades: cooling down ({turret.CoolingDownRemaining:0.0}s)";

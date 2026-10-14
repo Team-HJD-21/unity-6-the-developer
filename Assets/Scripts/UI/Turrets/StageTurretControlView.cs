@@ -119,7 +119,8 @@ public sealed class StageTurretControlView : MonoBehaviour
     private static string GetStatus(TurretBase turret)
     {
         if (!turret.IsInitialized) return "Waiting for turret initialization";
-        if (turret.IsManualOperationBlocked) return "Automatic activation - manual controls disabled";
+        if (turret.IsManualOperationBlocked)
+            return StageTurretUIText.WithCooling("Automatic activation - manual controls disabled", turret);
         if (turret.IsDestroyed) return "Destroyed";
         if (turret.IsLocked) return "Locked";
         if (turret.IsCoolingDown) return $"Cooling down: {turret.CoolingDownRemaining:0.0}s";
