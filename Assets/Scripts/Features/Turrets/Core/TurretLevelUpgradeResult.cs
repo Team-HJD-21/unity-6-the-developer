@@ -11,6 +11,9 @@ namespace TeamHJD.Game.Turrets
         InvalidPreviousLevel,
         InsufficientPower,
         PowerSourceUnavailable,
-        ReplacementInitializationFailed
+        ReplacementInitializationFailed,
+        RequiresDeactivation,
+        CoolingDown,
+        AutoActivationInProgress
     }
 }

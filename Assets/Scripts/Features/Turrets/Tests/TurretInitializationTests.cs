@@ -393,6 +393,218 @@ namespace TeamHJD.Game.Turrets.Tests
         }
 
         [UnityTest]
+        public IEnumerator ActiveOverheatUsesSharedCoolingAndResumesWithoutReservingPowerAgain()
+        {
+            var power = new FakePower();
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), power,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+
+            turret.BeginCoolingForTest(0.2f);
+
+            Assert.That(turret.IsCoolingDown, Is.True);
+            Assert.That(turret.CoolingDownRemaining, Is.GreaterThan(0f));
+            Assert.That(turret.IsActivated, Is.True);
+            Assert.That(turret.IsOperational, Is.False);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Unchanged));
+            Assert.That(power.ReleaseCalls, Is.Zero);
+
+            yield return new WaitForSeconds(0.25f);
+            yield return null;
+
+            Assert.That(turret.IsCoolingDown, Is.False);
+            Assert.That(turret.CoolingDownRemaining, Is.Zero);
+            Assert.That(turret.IsActivated, Is.True);
+            Assert.That(turret.IsOperational, Is.True);
+            Assert.That(power.ConsumeCalls, Is.EqualTo(1));
+        }
+
+        [TestCase(false, false)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        [TestCase(true, true)]
+        public void ActiveTurretRejectsBothUpgradeDirectionsWithoutChangingState(bool upgrade, bool overheated)
+        {
+            SetField(_definition, "_level", 2);
+            var specification = MakeUpgrade();
+            var power = new FakePower();
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                new TurretInitializationData(_definition, 70, upgrade: specification, upgradeLevel: 1),
+                power, Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            var targetPrefab = MakeLevelPrefab(upgrade ? 3 : 1);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+            if (overheated) turret.BeginCoolingForTest(1f);
+            int originalDamage = turret.EffectiveDamage;
+            int originalPower = turret.EffectivePower;
+            int originalId = turret.InstanceId;
+
+            Assert.That(turret.CanModifyUpgrades, Is.False);
+            Assert.That(upgrade ? turret.ApplyUpgrade(specification) : turret.DowngradeUpgrade(specification),
+                Is.EqualTo(TurretUpgradeResult.RequiresDeactivation));
+            TurretBase replacement;
+            Assert.That(upgrade ? turret.RequestLevelUpgrade(targetPrefab, out replacement)
+                : turret.RequestLevelDowngrade(targetPrefab, out replacement),
+                Is.EqualTo(TurretLevelUpgradeResult.RequiresDeactivation));
+
+            Assert.That(replacement, Is.Null);
+            Assert.That(turret.RuntimeState.UpgradeLevel, Is.EqualTo(1));
+            Assert.That(turret.EffectiveDamage, Is.EqualTo(originalDamage));
+            Assert.That(turret.EffectivePower, Is.EqualTo(originalPower));
+            Assert.That(turret.CurrentHealth, Is.EqualTo(70));
+            Assert.That(TurretInstanceRegistry.TryGet(originalId, out var registered), Is.True);
+            Assert.That(registered, Is.SameAs(turret));
+            Assert.That(power.ConsumeCalls, Is.EqualTo(1));
+            Assert.That(power.ReleaseCalls, Is.Zero);
+        }
+
+        [UnityTest]
+        public IEnumerator CoolingBlocksUpgradeChangesUntilInactiveTurretIsFullyCooled()
+        {
+            SetField(_definition, "_level", 2);
+            var specification = MakeUpgrade();
+            var power = new FakePower();
+            var originalPrefab = MakeInactiveTurret();
+            var nextPrefab = MakeLevelPrefab(3);
+            var previousPrefab = MakeLevelPrefab(1);
+            var turret = Track(TurretFactory.Create(originalPrefab,
+                new TurretInitializationData(_definition, 70, upgrade: specification, upgradeLevel: 1),
+                power, Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            turret.SetCooldownAfterDeactivation(.2f);
+            turret.RequestActivation(true);
+            turret.RequestActivation(false);
+            int originalId = turret.InstanceId;
+
+            Assert.That(turret.IsActivated, Is.False);
+            Assert.That(turret.CanModifyUpgrades, Is.False);
+            Assert.That(turret.ApplyUpgrade(specification), Is.EqualTo(TurretUpgradeResult.CoolingDown));
+            Assert.That(turret.DowngradeUpgrade(specification), Is.EqualTo(TurretUpgradeResult.CoolingDown));
+            Assert.That(turret.RequestLevelUpgrade(nextPrefab, out var rejectedUp),
+                Is.EqualTo(TurretLevelUpgradeResult.CoolingDown));
+            Assert.That(turret.RequestLevelDowngrade(previousPrefab, out var rejectedDown),
+                Is.EqualTo(TurretLevelUpgradeResult.CoolingDown));
+            Assert.That(rejectedUp, Is.Null);
+            Assert.That(rejectedDown, Is.Null);
+            Assert.That(turret.RuntimeState.UpgradeLevel, Is.EqualTo(1));
+
+            yield return new WaitForSeconds(.25f);
+            yield return null;
+
+            Assert.That(turret.CanModifyUpgrades, Is.True);
+            Assert.That(turret.ApplyUpgrade(specification), Is.EqualTo(TurretUpgradeResult.Applied));
+            Assert.That(turret.DowngradeUpgrade(specification), Is.EqualTo(TurretUpgradeResult.Downgraded));
+            Assert.That(turret.RequestLevelUpgrade(nextPrefab, out var upgraded),
+                Is.EqualTo(TurretLevelUpgradeResult.Upgraded));
+            Track(upgraded.gameObject);
+            Assert.That(upgraded.RequestLevelDowngrade(originalPrefab, out var downgraded),
+                Is.EqualTo(TurretLevelUpgradeResult.Downgraded));
+            Track(downgraded.gameObject);
+            Assert.That(downgraded.InstanceId, Is.EqualTo(originalId));
+            Assert.That(downgraded.CurrentHealth, Is.EqualTo(70));
+            Assert.That(downgraded.RuntimeState.UpgradeLevel, Is.EqualTo(1));
+            Assert.That(downgraded.IsActivated, Is.False);
+            Assert.That(downgraded.IsCoolingDown, Is.False);
+            Assert.That(power.ConsumeCalls, Is.EqualTo(1), "Upgrade changes must not reserve power.");
+        }
+
+        [Test]
+        public void AutoActivationBlocksManualMutationsButStillProcessesDamageAndActivation()
+        {
+            SetField(_definition, "_level", 2);
+            var controller = Track(new GameObject("Auto Controller")).AddComponent<TurretController>();
+            controller.TrySetMaximumPower(20);
+            var specification = MakeUpgrade();
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                new TurretInitializationData(_definition, 70, upgrade: specification, upgradeLevel: 1),
+                controller, Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var locked = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition, isLocked: true), controller,
+                Vector3.one, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var destroyed = Track(TurretFactory.Create(MakeInactiveTurret(),
+                new TurretInitializationData(_definition, 0), controller,
+                Vector3.down, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var nextPrefab = MakeLevelPrefab(3);
+            var previousPrefab = MakeLevelPrefab(1);
+            turret.RequestActivation(true);
+            Assert.That(controller.TryStartAutoActivation(), Is.True);
+            Assert.That(controller.IsAutoActivationRunning, Is.True);
+            int originalDamage = turret.EffectiveDamage;
+            int originalPower = turret.EffectivePower;
+            int pendingPower = controller.Budget.PendingRecovery;
+
+            Assert.That(turret.IsManualOperationBlocked, Is.True);
+            Assert.That(turret.CanModifyUpgrades, Is.False);
+            Assert.That(turret.ApplyUpgrade(specification), Is.EqualTo(TurretUpgradeResult.AutoActivationInProgress));
+            Assert.That(turret.DowngradeUpgrade(specification), Is.EqualTo(TurretUpgradeResult.AutoActivationInProgress));
+            Assert.That(turret.RequestLevelUpgrade(nextPrefab, out var rejectedUp),
+                Is.EqualTo(TurretLevelUpgradeResult.AutoActivationInProgress));
+            Assert.That(turret.RequestLevelDowngrade(previousPrefab, out var rejectedDown),
+                Is.EqualTo(TurretLevelUpgradeResult.AutoActivationInProgress));
+            Assert.That(rejectedUp, Is.Null);
+            Assert.That(rejectedDown, Is.Null);
+            Assert.That(turret.SetLocked(true), Is.False);
+            Assert.That(locked.SetLocked(false), Is.False);
+            Assert.That(destroyed.Restore(), Is.False);
+            turret.SetDamageBonus(100);
+            turret.AddDamageBonus(100);
+            Assert.That(turret.EffectiveDamage, Is.EqualTo(originalDamage));
+            Assert.That(turret.EffectivePower, Is.EqualTo(originalPower));
+            Assert.That(turret.RuntimeState.UpgradeLevel, Is.EqualTo(1));
+            Assert.That(controller.Budget.PendingRecovery, Is.EqualTo(pendingPower));
+            Assert.That(turret.ApplyDamage(10), Is.True, "Enemy damage remains a system operation.");
+            Assert.That(turret.CurrentHealth, Is.EqualTo(60));
+
+            controller.Budget.Tick(2.1f);
+            typeof(TurretController).GetMethod("AdvanceAutoActivation", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(controller, null);
+            Assert.That(turret.IsActivated, Is.True);
+            Assert.That(controller.IsAutoActivationRunning, Is.False);
+            Assert.That(turret.IsManualOperationBlocked, Is.False);
+            Assert.That(destroyed.Restore(), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator SwitchingOffDuringCoolingPreservesDeadlineAndDoesNotReactivate()
+        {
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), new FakePower(),
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<InitializationProbeTurret>();
+            turret.SetCooldownAfterDeactivation(5f);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+            turret.BeginCoolingForTest(0.3f);
+            yield return new WaitForSeconds(0.05f);
+
+            float remainingBeforeOff = turret.CoolingDownRemaining;
+            Assert.That(turret.RequestActivation(false), Is.EqualTo(TurretActivationResult.Deactivated));
+            Assert.That(turret.CoolingDownRemaining, Is.EqualTo(remainingBeforeOff).Within(0.001f));
+            Assert.That(turret.IsCoolingDown, Is.True);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.CoolingDown));
+
+            yield return new WaitForSeconds(0.35f);
+            yield return null;
+
+            Assert.That(turret.IsCoolingDown, Is.False);
+            Assert.That(turret.IsActivated, Is.False);
+            Assert.That(turret.IsOperational, Is.False);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+        }
+
+        [Test]
+        public void ZeroDurationCoolingDoesNotSuspendAnActiveTurret()
+        {
+            var turret = MakeInactiveTurret();
+            turret.PrepareInitialization(TurretInitializationData.CreateDefault(_definition), new FakePower());
+            turret.ConfigureForTest();
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+
+            turret.BeginCoolingForTest(0f);
+
+            Assert.That(turret.IsCoolingDown, Is.False);
+            Assert.That(turret.CoolingDownRemaining, Is.Zero);
+            Assert.That(turret.IsOperational, Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator ManualActivationWaitsUntilHeatCooldownCompletes()
         {
             var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
@@ -491,6 +703,18 @@ namespace TeamHJD.Game.Turrets.Tests
             SetField(upgrade, "_damageModifierRatio", 0.1f);
             SetField(upgrade, "_powerModifierRatio", -0.1f);
             return upgrade;
+        }
+
+        private InitializationProbeTurret MakeLevelPrefab(int level)
+        {
+            var definition = Track(ScriptableObject.CreateInstance<TurretDefinition>());
+            SetField(definition, "_id", $"test-canon-level-{level}");
+            SetField(definition, "_level", level);
+            SetField(definition, "_maxHealth", 100);
+            SetField(definition, "_power", 20);
+            var prefab = MakeInactiveTurret();
+            SetField(prefab, "_definition", definition, typeof(TurretBase));
+            return prefab;
         }
 
         private T Track<T>(T value) where T : Object { _objects.Add(value); return value; }

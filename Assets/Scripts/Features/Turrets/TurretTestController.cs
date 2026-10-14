@@ -246,10 +246,12 @@ namespace TeamHJD.Game.Debugging
                 {
                     GUILayout.Label($"Unlock Zones: {autoController.UnlockedZoneCount} / {autoController.UnlockZones.ZoneCount} (cell steps from CU)");
                     GUILayout.Label("Game view overlay: green = unlocked, red = locked; number = zone");
+                    GUI.enabled = !autoController.IsAutoActivationRunning;
                     if (GUILayout.Button("Unlock Next Zone") &&
                         autoController.UnlockedZoneCount < autoController.UnlockZones.ZoneCount)
                         autoController.UnlockThroughZone(autoController.UnlockedZoneCount + 1);
                     if (GUILayout.Button("Reset Zones (Inspector count)")) ConfigureTestUnlockZones();
+                    GUI.enabled = true;
                 }
                 bool previousEnabled = GUI.enabled;
                 GUI.enabled = !autoController.IsAutoActivationRunning && autoController.AutoActivationCooldownRemaining <= 0f;
@@ -291,6 +293,7 @@ namespace TeamHJD.Game.Debugging
                 RefreshReferences();
             }
 
+            GUI.enabled = _turretController == null || !_turretController.IsAutoActivationRunning;
             if (GUILayout.Button("Activate All"))
             {
                 SetAllTurretsActive(true);
@@ -300,6 +303,7 @@ namespace TeamHJD.Game.Debugging
             {
                 SetAllTurretsActive(false);
             }
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
 
             GUILayout.Space(6f);
@@ -477,7 +481,8 @@ namespace TeamHJD.Game.Debugging
             }
             GUILayout.BeginHorizontal();
 
-            GUI.enabled = !turret.IsDestroyed && (!turret.IsLocked || turret.IsActivated);
+            GUI.enabled = !turret.IsManualOperationBlocked && !turret.IsDestroyed &&
+                !turret.IsLocked && (turret.IsActivated || !turret.IsCoolingDown);
             if (GUILayout.Button(turret.IsActivated ? "Deactivate" : "Activate", GUILayout.Width(100f)))
             {
                 SetTurretActive(turret, !turret.IsActivated);
@@ -494,6 +499,7 @@ namespace TeamHJD.Game.Debugging
                 FocusCameraOn(turret);
             }
 
+            GUI.enabled = !turret.IsManualOperationBlocked;
             if (GUILayout.Button(turret.IsLocked ? "Unlock" : "Lock", GUILayout.Width(72f)))
             {
                 bool changed = turret.SetLocked(!turret.IsLocked);
@@ -512,7 +518,7 @@ namespace TeamHJD.Game.Debugging
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUI.enabled = !turret.IsDestroyed && !turret.IsLocked;
+            GUI.enabled = !turret.IsManualOperationBlocked && !turret.IsDestroyed && !turret.IsLocked;
             if (GUILayout.Button($"Damage -{damagePerClick}", GUILayout.Width(112f)))
             {
                 bool changed = turret.ApplyDamage(damagePerClick);
@@ -525,7 +531,7 @@ namespace TeamHJD.Game.Debugging
                 _lastDurabilityAction = $"{turret.name}: Destroy {(changed ? "applied" : "ignored")}";
             }
 
-            GUI.enabled = turret.IsDestroyed && !turret.IsLocked;
+            GUI.enabled = !turret.IsManualOperationBlocked && turret.IsDestroyed && !turret.IsLocked;
             if (GUILayout.Button("Restore", GUILayout.Width(80f)))
             {
                 bool changed = turret.Restore();
@@ -541,8 +547,10 @@ namespace TeamHJD.Game.Debugging
                 if (TurretInstanceRegistry.TryGetSnapshot(turret.InstanceId, out TurretSnapshot captured))
                     _capturedSnapshots[turret.InstanceId] = captured;
             }
+            GUI.enabled = !turret.IsManualOperationBlocked;
             if (GUILayout.Button("Request Activate"))
                 SetTurretActive(turret, true);
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
             if (_capturedSnapshots.TryGetValue(turret.InstanceId, out TurretSnapshot before))
             {
@@ -556,6 +564,12 @@ namespace TeamHJD.Game.Debugging
 
             DrawUpgradeButtons(turret);
             DrawLevelChangeButtons(turret);
+            if (turret.IsManualOperationBlocked)
+                GUILayout.Label("Manual operations blocked during automatic activation.");
+            else if (turret.IsActivated)
+                GUILayout.Label("Deactivate and finish cooling before changing upgrades.");
+            else if (turret.IsCoolingDown)
+                GUILayout.Label($"Cooling: {turret.CoolingDownRemaining:F1}s. Upgrades unavailable.");
             GUILayout.EndVertical();
         }
 
@@ -565,7 +579,7 @@ namespace TeamHJD.Game.Debugging
                 return;
 
             GUILayout.BeginHorizontal();
-            GUI.enabled = !turret.IsDestroyed && !turret.IsLocked;
+            GUI.enabled = turret.CanModifyUpgrades;
             if (levelUpgradeCatalog.TryGetNext(turret.Definition, out TurretBase nextPrefab) &&
                 GUILayout.Button($"Level Up: LV {nextPrefab.Definition.Level}"))
             {
@@ -610,14 +624,14 @@ namespace TeamHJD.Game.Debugging
                 bool branchAvailable = state.UpgradeLevel == 0 || state.SelectedUpgradeId == upgrade.Id;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(upgrade.DisplayName, GUILayout.Width(150f));
-                GUI.enabled = !turret.IsDestroyed && !turret.IsLocked && branchAvailable &&
+                GUI.enabled = turret.CanModifyUpgrades && branchAvailable &&
                     state.UpgradeLevel < TurretRuntimeState.MaximumUpgradeLevel;
                 if (GUILayout.Button("+1", GUILayout.Width(50f)))
                 {
                     TurretUpgradeResult result = turret.ApplyUpgrade(upgrade);
                     _lastUpgradeAction = $"{turret.name} / {upgrade.DisplayName}: {result}";
                 }
-                GUI.enabled = !turret.IsDestroyed && !turret.IsLocked && state.HasAppliedUpgrade(upgrade.Id);
+                GUI.enabled = turret.CanModifyUpgrades && state.HasAppliedUpgrade(upgrade.Id);
                 if (GUILayout.Button("-1", GUILayout.Width(50f)))
                 {
                     TurretUpgradeResult result = turret.DowngradeUpgrade(upgrade);

@@ -16,7 +16,6 @@ public abstract class DefaultMissileTurret : TurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private float _currentMissileCount;   //과열시 중지 위한 변수
-    private bool _overheatCooldownRunning;
     protected override bool UsesMinimumRange => true;
 
     private float CurMissileCount
@@ -46,8 +45,9 @@ public abstract class DefaultMissileTurret : TurretBase
 
         ShowRange = false;
     }
-    private void Update()
+    protected override void Update()
     {
+        base.Update();
         UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
@@ -188,9 +188,7 @@ public abstract class DefaultMissileTurret : TurretBase
         {
             if (CurMissileCount >= OverHeatMissileCount)//터렛 과열
             {
-                SetTemporarilySuspended(true);
-                _overheatCooldownRunning = true;
-                StartCoroutine(OverHeat());
+                BeginCooling(CoolTime);
             }
         }
     }
@@ -217,47 +215,8 @@ public abstract class DefaultMissileTurret : TurretBase
             // AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileLaunch, distance, 70);
         }
     }
-    //Coroutine Methods------------------------------------------------------------------
-    private IEnumerator DeactivateProcess(float initialHeat, float cooldownDuration)
-    {
-        float elapsed = 0f;
-        while (elapsed < cooldownDuration)
-        {
-            CurMissileCount = initialHeat * (1f - elapsed / cooldownDuration);
-            float heatRatio = OverHeatMissileCount > 0
-                ? CurMissileCount / OverHeatMissileCount
-                : 0f;
-            GunRenderer.color = new Color(1f, 1f - heatRatio, 1f - heatRatio);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        CurMissileCount = 0f;
-        TotCoolTime = 0f;
-        GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
-    }
-
-    private IEnumerator OverHeat()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
-    {
-        float initialMissileCount = Mathf.Max(0f, CurMissileCount);
-        float cooldownSeconds = Mathf.Max(0f, CoolTime);
-        float elapsed = 0f;
-        while (elapsed < cooldownSeconds)
-        {
-            CurMissileCount = Mathf.Lerp(initialMissileCount, 0f, elapsed / cooldownSeconds);
-            TotCoolTime = Mathf.Max(0f, cooldownSeconds - elapsed);
-            GunRenderer.color = new Color(1f,(255f-255f* (CurMissileCount / OverHeatMissileCount))/255f,(255f-255f*
-                (CurMissileCount / OverHeatMissileCount))/255f);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-        Animator.SetBool("isShoot", false);
-        GunRenderer.color = Color.white;
-        CurMissileCount = 0f;
-        TotCoolTime = 0f;
-        _overheatCooldownRunning = false;
-        SetTemporarilySuspended(false);
-    }
+    protected override void ApplyCoolingHeat(float heatRatio)
+        => CurMissileCount = heatRatio * Mathf.Max(0, OverHeatMissileCount);
 
     protected IEnumerator ShootAnimation()
     {
@@ -274,27 +233,12 @@ public abstract class DefaultMissileTurret : TurretBase
         }
 
         ReleaseUnlaunchedTargets();
-        float cooldownDuration = _overheatCooldownRunning
-            ? Mathf.Max(0f, TotCoolTime)
-            : OverHeatMissileCount > 0
-                ? Mathf.Clamp01(CurMissileCount / OverHeatMissileCount) * Mathf.Max(0f, CoolTime)
-                : 0f;
-        float initialHeat = Mathf.Max(0f, CurMissileCount);
+        float heatRatio = OverHeatMissileCount > 0
+            ? Mathf.Clamp01(CurMissileCount / OverHeatMissileCount)
+            : 0f;
         StopAllCoroutines();
-        _overheatCooldownRunning = false;
-        TimeTilFire = 0f;
-        SetTemporarilySuspended(false);
-        Animator.SetBool("isShoot", false);
         // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
-        BeginActivationCooldown(cooldownDuration);
-        if (cooldownDuration > 0f)
-            StartCoroutine(DeactivateProcess(initialHeat, cooldownDuration));
-        else
-        {
-            CurMissileCount = 0f;
-            TotCoolTime = 0f;
-            GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
-        }
+        BeginCooling(heatRatio * Mathf.Max(0f, CoolTime), heatRatio);
     }
 
     //Getter
