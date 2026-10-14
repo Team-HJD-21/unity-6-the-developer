@@ -35,12 +35,22 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
     public PlayerInfo Player => _player;
     public bool HasPlayer => _player != null && _player.isActiveAndEnabled;
     public bool HasControlUnit => _controlUnit != null && _controlUnit.isActiveAndEnabled;
-    public bool IsConfigured =>
-        healthCells != null && healthCells.Length > 0 &&
-        Array.TrueForAll(healthCells, cell => cell != null) &&
-        playerHealthText != null && controlUnitFill != null &&
-        controlUnitHealthText != null && powerFill != null &&
-        powerPercentText != null && powerDetailsText != null;
+    public bool IsConfigured => string.IsNullOrEmpty(MissingReferences);
+    public string MissingReferences => StageUIReferenceValidation.Missing(
+        (nameof(healthCells), healthCells != null && healthCells.Length > 0 &&
+            Array.TrueForAll(healthCells, cell => cell != null)),
+        (nameof(playerHealthText), playerHealthText != null),
+        (nameof(controlUnitFill), controlUnitFill != null),
+        (nameof(controlUnitHealthText), controlUnitHealthText != null),
+        (nameof(powerFill), powerFill != null),
+        (nameof(powerPercentText), powerPercentText != null),
+        (nameof(powerDetailsText), powerDetailsText != null));
+
+    private void OnValidate()
+    {
+        string missing = MissingReferences;
+        if (missing.Length > 0) Debug.LogWarning($"[StagePlayerVitalsView] Missing {missing}.", this);
+    }
 
     public void BindPlayer(PlayerInfo player)
     {

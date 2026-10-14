@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets;
 using UnityEngine;
@@ -8,11 +9,32 @@ using UnityEngine.SceneManagement;
 internal sealed class StageTurretSelection
 {
     private readonly Scene _scene;
+    private readonly Func<PlayerInfo> _getPlayer;
+    private readonly Func<float> _getInteractionDistance;
     private readonly List<RaycastResult> _uiHits = new();
     private TurretBase _selected;
     public int SelectedId { get; private set; }
 
-    public StageTurretSelection(Scene scene) => _scene = scene;
+    public StageTurretSelection(Scene scene, Func<PlayerInfo> getPlayer,
+        Func<float> getInteractionDistance)
+    {
+        _scene = scene;
+        _getPlayer = getPlayer;
+        _getInteractionDistance = getInteractionDistance;
+    }
+
+    private bool IsWithinReach(TurretBase turret)
+    {
+        PlayerInfo player = _getPlayer();
+        float distance = _getInteractionDistance();
+        return player != null && player.isActiveAndEnabled && distance > 0f &&
+            ((Vector2)player.transform.position - (Vector2)turret.transform.position).sqrMagnitude
+            <= distance * distance;
+    }
+
+    public bool CanSelect(TurretBase turret) => turret != null &&
+        turret.gameObject.scene == _scene && turret.isActiveAndEnabled && IsWithinReach(turret) &&
+        TurretInstanceRegistry.TryGet(turret.InstanceId, out var registered) && registered == turret;
 
     public void ProcessInput(TurretController controller)
     {
@@ -60,10 +82,7 @@ internal sealed class StageTurretSelection
         foreach (Collider2D hit in Physics2D.OverlapPointAll(point))
         {
             TurretBase candidate = hit.GetComponentInParent<TurretBase>();
-            if (candidate == null || candidate.gameObject.scene != _scene || !candidate.isActiveAndEnabled)
-                continue;
-            if (!TurretInstanceRegistry.TryGet(candidate.InstanceId, out var registered) || registered != candidate)
-                continue;
+            if (!CanSelect(candidate)) continue;
 
             float distanceSquared = ((Vector2)candidate.transform.position - point).sqrMagnitude;
             if (distanceSquared >= nearestDistance) continue;
@@ -80,7 +99,7 @@ internal sealed class StageTurretSelection
         if (SelectedId == 0) return null;
 
         if (!TurretInstanceRegistry.TryGet(SelectedId, out var current) || current == null ||
-            current.gameObject.scene != _scene || !current.isActiveAndEnabled)
+            !CanSelect(current))
         {
             Clear();
             return null;

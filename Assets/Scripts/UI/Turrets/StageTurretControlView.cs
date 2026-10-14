@@ -21,11 +21,9 @@ public sealed class StageTurretControlView : MonoBehaviour
     [SerializeField] private Button levelUpButton;
     [SerializeField] private Button levelDownButton;
     [SerializeField] private Button closeButton;
-    [SerializeField] private Button lockButton;
-
-    [Header("Lock Icons")]
-    [SerializeField] private GameObject lockedIcon;
-    [SerializeField] private GameObject unlockedIcon;
+    [SerializeField] private StageTurretUpgradeView upgradeView;
+    [SerializeField] private TMP_Text upgradeRestrictionText;
+    public StageTurretUpgradeView Upgrades => upgradeView;
 
     [Header("Activation Colors")]
     [SerializeField] private Color activateColor = Color.green;
@@ -36,20 +34,36 @@ public sealed class StageTurretControlView : MonoBehaviour
     public event Action LevelUpRequested;
     public event Action LevelDownRequested;
     public event Action CloseRequested;
-    public event Action LockToggleRequested;
 
-    public bool IsConfigured =>
-        titleText != null && levelText != null && statsText != null &&
-        statusText != null && feedbackText != null && activationText != null &&
-        activationButton != null && levelUpButton != null &&
-        levelDownButton != null && closeButton != null && lockButton != null &&
-        lockedIcon != null && unlockedIcon != null;
+    public bool IsConfigured => string.IsNullOrEmpty(MissingReferences);
+    public string MissingReferences
+    {
+        get
+        {
+            string missing = StageUIReferenceValidation.Missing(
+                (nameof(titleText), titleText != null), (nameof(levelText), levelText != null),
+                (nameof(statsText), statsText != null), (nameof(statusText), statusText != null),
+                (nameof(feedbackText), feedbackText != null), (nameof(activationText), activationText != null),
+                (nameof(activationButton), activationButton != null), (nameof(levelUpButton), levelUpButton != null),
+                (nameof(levelDownButton), levelDownButton != null), (nameof(closeButton), closeButton != null),
+                (nameof(upgradeRestrictionText), upgradeRestrictionText != null), (nameof(upgradeView), upgradeView != null));
+            if (upgradeView != null && !upgradeView.IsConfigured)
+                missing += (missing.Length > 0 ? ", " : "") + $"upgradeView: {upgradeView.MissingReferences}";
+            return missing;
+        }
+    }
+
+    private void OnValidate()
+    {
+        string missing = MissingReferences;
+        if (missing.Length > 0) Debug.LogWarning($"[StageTurretControlView] Missing {missing}.", this);
+    }
 
     private void OnEnable()
     {
         if (!IsConfigured)
         {
-            Debug.LogError("[StageTurretControlView] Connect all text and button references.", this);
+            Debug.LogError($"[StageTurretControlView] Missing {MissingReferences}.", this);
             return;
         }
 
@@ -57,7 +71,6 @@ public sealed class StageTurretControlView : MonoBehaviour
         levelUpButton.onClick.AddListener(RequestLevelUp);
         levelDownButton.onClick.AddListener(RequestLevelDown);
         closeButton.onClick.AddListener(RequestClose);
-        lockButton.onClick.AddListener(RequestLockToggle);
     }
 
     private void OnDisable()
@@ -66,7 +79,6 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (levelUpButton != null) levelUpButton.onClick.RemoveListener(RequestLevelUp);
         if (levelDownButton != null) levelDownButton.onClick.RemoveListener(RequestLevelDown);
         if (closeButton != null) closeButton.onClick.RemoveListener(RequestClose);
-        if (lockButton != null) lockButton.onClick.RemoveListener(RequestLockToggle);
     }
 
     public void Show(TurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown)
@@ -84,18 +96,16 @@ public sealed class StageTurretControlView : MonoBehaviour
         statsText.text = $"HP {turret.CurrentHealth}/{turret.MaxHealth}   Power {turret.EffectivePower}   Damage {turret.EffectiveDamage}   Range {turret.EffectiveRange:0.#}";
         statusText.text = GetStatus(turret);
 
-        bool editable = canInteract && turret.IsInitialized && !turret.IsDestroyed && !turret.IsLocked;
-        activationButton.interactable = editable && !turret.IsManualActivationBlocked &&
-                                        (turret.IsActivated || !turret.IsCoolingDown);
+        bool editable = canInteract && turret.CanModifyUpgrades;
+        activationButton.interactable = canInteract && StageTurretInteractionRules.CanToggle(turret);
         levelUpButton.interactable = editable && canLevelUp;
         levelDownButton.interactable = editable && canLevelDown;
-        lockButton.interactable = canInteract && turret.IsInitialized && !turret.IsManualActivationBlocked;
-        lockedIcon.SetActive(turret.IsLocked);
-        unlockedIcon.SetActive(!turret.IsLocked);
+        upgradeRestrictionText.text = StageTurretUIText.UpgradeRestriction(turret);
+        upgradeView.Show(turret, canInteract);
 
         activationText.text = turret.IsDestroyed ? "Destroyed" :
             turret.IsLocked ? "Locked" : turret.IsActivated ? "Deactivate" : "Activate";
-        activationText.color = turret.IsDestroyed || turret.IsLocked ? unavailableColor :
+        activationText.color = !activationButton.interactable ? unavailableColor :
             turret.IsActivated ? deactivateColor : activateColor;
     }
 
@@ -108,11 +118,13 @@ public sealed class StageTurretControlView : MonoBehaviour
 
     private static string GetStatus(TurretBase turret)
     {
+        if (!turret.IsInitialized) return "Waiting for turret initialization";
+        if (turret.IsManualOperationBlocked) return "Automatic activation - manual controls disabled";
         if (turret.IsDestroyed) return "Destroyed";
         if (turret.IsLocked) return "Locked";
+        if (turret.IsCoolingDown) return $"Cooling down: {turret.CoolingDownRemaining:0.0}s";
         if (turret.IsOperational) return "Operational";
         if (turret.IsActivated) return "Activated - Suspended";
-        if (turret.IsCoolingDown) return $"Cooling down: {turret.CoolingDownRemaining:0.0}s";
         return "Inactive";
     }
 
@@ -120,5 +132,4 @@ public sealed class StageTurretControlView : MonoBehaviour
     private void RequestLevelUp() => LevelUpRequested?.Invoke();
     private void RequestLevelDown() => LevelDownRequested?.Invoke();
     private void RequestClose() => CloseRequested?.Invoke();
-    private void RequestLockToggle() => LockToggleRequested?.Invoke();
 }

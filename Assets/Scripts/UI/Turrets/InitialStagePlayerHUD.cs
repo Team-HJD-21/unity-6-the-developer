@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// <summary>프리팹의 상태 View와 터렛 조작 Presenter를 씬 데이터에 연결합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster))]
-public sealed class InitialStagePlayerUi : MonoBehaviour
+public sealed class InitialStagePlayerHUD : MonoBehaviour
 {
     private const string LocalPlayerId = "local-player";
     private const float SourceRetryInterval = .5f;
@@ -17,41 +17,30 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
     [SerializeField] private StageTurretControlView turretView;
     [Header("Turret Data")]
     [SerializeField] private TurretLevelUpgradeCatalog levelCatalog;
+    [SerializeField, Min(0.1f)] private float interactionDistance = 10f;
 
     private Canvas _canvas;
     private StageTurretSelection _selection;
     private StageTurretPresenter _presenter;
     private TurretController _controller;
+    private PlayerInfo _player;
     private PlayerControlState _playerControl;
     private float _nextSourceRetry;
     private float _nextDisplayRefresh;
-    private bool _initialized;
+    private bool _vitalsReady;
+    private bool _turretControlsReady;
     private bool _hasLocalActor;
 
     private void Awake()
     {
         _canvas = GetComponent<Canvas>();
-        if (vitalsView == null || turretView == null ||
-            !vitalsView.IsConfigured || !turretView.IsConfigured || levelCatalog == null)
-        {
-            Debug.LogError("[InitialStagePlayerUi] Connect the prefab views and level catalog.", this);
-            enabled = false;
-            return;
-        }
-
-        _selection = new StageTurretSelection(gameObject.scene);
-        _initialized = true;
     }
 
     private void OnEnable()
     {
-        if (!_initialized) return;
-
-        _canvas.enabled = true;
-        vitalsView.ShowWaitingForSources();
-        turretView.Hide();
-        _presenter = new StageTurretPresenter(_selection, turretView, levelCatalog,
-            CanInteract, () => _controller);
+        _vitalsReady = TryInitializeVitals();
+        _turretControlsReady = TryInitializeTurretControls();
+        _canvas.enabled = _vitalsReady || _turretControlsReady;
         _nextSourceRetry = 0;
         _nextDisplayRefresh = 0;
     }
@@ -59,12 +48,59 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
     // Start runs after the scene's health sources finish Awake.
     private void Start()
     {
-        if (_initialized) BindSceneSources();
+        if (_vitalsReady || _turretControlsReady) BindSceneSources();
+    }
+
+    private bool TryInitializeVitals()
+    {
+        if (vitalsView == null)
+        {
+            Debug.LogError("[InitialStagePlayerHUD] Vitals unavailable: missing vitalsView.", this);
+            return false;
+        }
+        if (!vitalsView.IsConfigured)
+        {
+            Debug.LogError($"[InitialStagePlayerHUD] Vitals unavailable: missing {vitalsView.MissingReferences}.", vitalsView);
+            return false;
+        }
+        vitalsView.ShowWaitingForSources();
+        return true;
+    }
+
+    private bool TryInitializeTurretControls()
+    {
+        if (turretView != null) turretView.Hide();
+        if (turretView == null || levelCatalog == null)
+        {
+            string missing = turretView == null ? nameof(turretView) : nameof(levelCatalog);
+            Debug.LogError($"[InitialStagePlayerHUD] Turret controls unavailable: missing {missing}.", this);
+            return false;
+        }
+        if (!turretView.IsConfigured)
+        {
+            Debug.LogError($"[InitialStagePlayerHUD] Turret controls unavailable: missing {turretView.MissingReferences}.", turretView);
+            return false;
+        }
+        _selection = new StageTurretSelection(gameObject.scene, () => _player, () => interactionDistance);
+        _presenter = new StageTurretPresenter(_selection, turretView, levelCatalog,
+            CanInteract, () => _controller);
+        return true;
+    }
+
+    private void OnValidate()
+    {
+        if (vitalsView == null) Debug.LogWarning("[InitialStagePlayerHUD] Missing vitalsView.", this);
+        else if (!vitalsView.IsConfigured)
+            Debug.LogWarning($"[InitialStagePlayerHUD] Missing {vitalsView.MissingReferences}.", vitalsView);
+        if (turretView == null) Debug.LogWarning("[InitialStagePlayerHUD] Missing turretView.", this);
+        else if (!turretView.IsConfigured)
+            Debug.LogWarning($"[InitialStagePlayerHUD] Missing {turretView.MissingReferences}.", turretView);
+        if (levelCatalog == null) Debug.LogWarning("[InitialStagePlayerHUD] Missing levelCatalog.", this);
     }
 
     private void Update()
     {
-        if (_presenter == null) return;
+        if (!_vitalsReady && !_turretControlsReady) return;
 
         if (Time.unscaledTime >= _nextSourceRetry)
         {
@@ -72,22 +108,25 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
             BindSceneSources();
         }
 
-        if (CanInteract()) _selection.ProcessInput(_controller);
-        else _selection.Clear();
+        if (_turretControlsReady)
+        {
+            if (CanInteract()) _selection.ProcessInput(_controller);
+            else _selection.Clear();
+        }
 
         bool updateDisplay = Time.unscaledTime >= _nextDisplayRefresh;
         if (updateDisplay)
         {
             _nextDisplayRefresh = Time.unscaledTime + DisplayRefreshInterval;
-            vitalsView.RefreshPower();
+            if (_vitalsReady) vitalsView.RefreshPower();
         }
 
-        _presenter.Refresh(updateDisplay);
+        _presenter?.Refresh(updateDisplay);
     }
 
     private bool CanInteract()
     {
-        PlayerInfo player = vitalsView.Player;
+        PlayerInfo player = _player;
         if (!isActiveAndEnabled || Time.timeScale <= 0 ||
             player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
             _controller == null || !_controller.isActiveAndEnabled)
@@ -100,25 +139,25 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
     {
         if (_controller == null || !_controller.isActiveAndEnabled)
             _controller = TurretController.FindForScene(gameObject.scene);
-        vitalsView.BindPower(_controller);
+        if (_vitalsReady) vitalsView.BindPower(_controller);
 
-        if (!vitalsView.HasPlayer || !_hasLocalActor)
+        if (_player == null || !_player.isActiveAndEnabled || !_hasLocalActor)
         {
-            PlayerInfo player = FindLocalPlayer();
-            vitalsView.BindPlayer(player);
+            PlayerInfo player = _player = FindLocalPlayer();
             _playerControl = player != null ? player.GetComponent<PlayerControlState>() : null;
             var identity = player != null ? player.GetComponent<PlayerActorIdentity>() : null;
             _hasLocalActor = identity != null && identity.PlayerId.Value == LocalPlayerId;
         }
+        if (_vitalsReady) vitalsView.BindPlayer(_player);
 
-        if (!vitalsView.HasControlUnit)
+        if (_vitalsReady && !vitalsView.HasControlUnit)
             vitalsView.BindControlUnit(FindControlUnit());
     }
 
     private PlayerInfo FindLocalPlayer()
     {
-        PlayerInfo fallback = vitalsView.HasPlayer &&
-            vitalsView.Player.GetComponent<PlayerActorIdentity>() == null ? vitalsView.Player : null;
+        PlayerInfo fallback = _player != null && _player.isActiveAndEnabled &&
+            _player.GetComponent<PlayerActorIdentity>() == null ? _player : null;
         foreach (PlayerInfo player in FindObjectsByType<PlayerInfo>(FindObjectsSortMode.None))
         {
             if (player.gameObject.scene != gameObject.scene || !player.isActiveAndEnabled) continue;
@@ -148,5 +187,10 @@ public sealed class InitialStagePlayerUi : MonoBehaviour
         if (vitalsView != null) vitalsView.Unbind();
         if (_canvas != null) _canvas.enabled = false;
         _hasLocalActor = false;
+        _player = null;
+        _playerControl = null;
+        _selection = null;
+        _vitalsReady = false;
+        _turretControlsReady = false;
     }
 }

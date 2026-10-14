@@ -1,4 +1,5 @@
 using System;
+using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets;
 
 /// <summary>선택 ID를 유지하고 UI 입력을 기존 터렛 API에 전달합니다.</summary>
@@ -27,7 +28,7 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelUpRequested += LevelUp;
         _view.LevelDownRequested += LevelDown;
         _view.CloseRequested += Close;
-        _view.LockToggleRequested += ToggleLock;
+        _view.Upgrades.ChangeRequested += ChangeUpgrade;
         TurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
     }
 
@@ -54,49 +55,32 @@ internal sealed class StageTurretPresenter : IDisposable
     private void Toggle()
     {
         if (!CanRequest(out TurretBase turret)) return;
+        if (!StageTurretInteractionRules.CanToggle(turret)) return;
         TurretController controller = _getController();
         if (controller == null) return;
 
         // The ID-based controller API also rejects a turret using a different power source.
         var result = controller.RequestActivation(turret.InstanceId, !turret.IsActivated);
-        _view.SetFeedback(StageTurretUiText.Activation(result));
+        _view.SetFeedback(StageTurretUIText.Activation(result));
         Refresh(true);
     }
 
     private void LevelUp() => ChangeLevel(true);
     private void LevelDown() => ChangeLevel(false);
 
-    private void ToggleLock()
+    private void ChangeUpgrade(TurretUpgradeDefinition upgrade, bool increase)
     {
         if (!CanRequest(out TurretBase turret)) return;
-        if (turret.IsManualActivationBlocked)
-        {
-            _view.SetFeedback("Cannot change lock during automatic activation.");
-            Refresh(true);
-            return;
-        }
-
-        bool shouldLock = !turret.IsLocked;
-        bool changed = turret.SetLocked(shouldLock);
-        if (changed)
-        {
-            _view.SetFeedback(StageTurretUiText.LockChanged(turret.IsLocked));
-        }
-        else
-        {
-            TurretController controller = _getController();
-            int? blockedZone = !shouldLock && controller != null &&
-                controller.TryGetUnlockZone(turret, out int zone) && zone > controller.UnlockedZoneCount
-                ? zone : (int?)null;
-            _view.SetFeedback(StageTurretUiText.LockRejected(blockedZone));
-        }
-
+        if (!StageTurretInteractionRules.CanChangeUpgrade(turret, upgrade, increase)) return;
+        var result = increase ? turret.ApplyUpgrade(upgrade) : turret.DowngradeUpgrade(upgrade);
+        _view.SetFeedback(StageTurretUIText.Upgrade(result));
         Refresh(true);
     }
 
     private void ChangeLevel(bool upgrade)
     {
         if (!CanRequest(out TurretBase turret)) return;
+        if (!turret.CanModifyUpgrades) return;
 
         TurretBase targetPrefab;
         bool found = upgrade
@@ -112,7 +96,7 @@ internal sealed class StageTurretPresenter : IDisposable
         var result = upgrade
             ? turret.RequestLevelUpgrade(targetPrefab, out _)
             : turret.RequestLevelDowngrade(targetPrefab, out _);
-        _view.SetFeedback(StageTurretUiText.Level(result));
+        _view.SetFeedback(StageTurretUIText.Level(result));
 
         // The replacement keeps InstanceId; resolve the new component instead of the old reference.
         Refresh(true);
@@ -145,7 +129,7 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelUpRequested -= LevelUp;
         _view.LevelDownRequested -= LevelDown;
         _view.CloseRequested -= Close;
-        _view.LockToggleRequested -= ToggleLock;
+        _view.Upgrades.ChangeRequested -= ChangeUpgrade;
         TurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
     }
 }

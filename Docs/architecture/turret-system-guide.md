@@ -1,8 +1,10 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-10-08
+최종 갱신: 2026-10-14
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
+
+냉각·수동 조작·강화 제한은 main `8d08001a`에 병합된 PR #525를 기준으로 최신화했다.
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
 
