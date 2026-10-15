@@ -19,6 +19,13 @@ namespace TeamHJD.Game.Domain
         internal RegionGridSnapshot(MatchId matchId, Guid gridId, long revision,
             RegionPolicyMode mode, RegionGridDefinition definition, bool[] capturedCells)
         {
+            if (matchId.IsEmpty) throw new ArgumentException("A match id is required.", nameof(matchId));
+            if (gridId == Guid.Empty) throw new ArgumentException("A grid id is required.", nameof(gridId));
+            if (revision < 0) throw new ArgumentOutOfRangeException(nameof(revision));
+            if (!Enum.IsDefined(typeof(RegionPolicyMode), mode)) throw new ArgumentOutOfRangeException(nameof(mode));
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            if (capturedCells == null || capturedCells.Length != definition.Geometry.TotalCellCount)
+                throw new ArgumentException("Capture cells must match the grid definition.", nameof(capturedCells));
             MatchId = matchId;
             GridId = gridId;
             Revision = revision;
@@ -29,6 +36,21 @@ namespace TeamHJD.Game.Domain
             foreach (bool captured in copied) if (captured) count++;
             CapturedCellCount = count;
             CapturedCells = new ReadOnlyCollection<bool>(copied);
+        }
+
+        /// <summary>저장/복제 어댑터의 전체 Snapshot을 검증하여 복원합니다. 부분 갱신 명령이 아닙니다.</summary>
+        public static RegionGridSnapshot FromCapturedCells(MatchId matchId, Guid gridId, long revision,
+            RegionPolicyMode mode, RegionGridDefinition definition, IEnumerable<int> capturedCells)
+        {
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            if (capturedCells == null) throw new ArgumentNullException(nameof(capturedCells));
+            var cells = new bool[definition.Geometry.TotalCellCount];
+            foreach (int index in capturedCells)
+            {
+                if (index < 0 || index >= cells.Length) throw new ArgumentOutOfRangeException(nameof(capturedCells));
+                cells[index] = true;
+            }
+            return new RegionGridSnapshot(matchId, gridId, revision, mode, definition, cells);
         }
 
         public bool IsCaptured(int x, int y) => CapturedCells[Definition.GetCellIndex(x, y)];
