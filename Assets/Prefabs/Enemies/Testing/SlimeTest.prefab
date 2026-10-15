@@ -48,37 +48,12 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1433018669385785169, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-      propertyPath: GlobalObjectIdHash
-      value: 3481536332
-      objectReference: {fileID: 0}
     - target: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
       propertyPath: m_Name
-      value: SlimeManualTest
+      value: SlimeTest
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: -253652355755475643}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
---- !u!1 &1895200168680509220 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-  m_PrefabInstance: {fileID: 3519831131534784902}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &-253652355755475643
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1895200168680509220}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e65f98eba6c45ac438567cbfd5c12a5e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyManualTestDriver
-  target: {fileID: 0}

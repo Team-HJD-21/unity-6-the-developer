@@ -1,9 +1,4 @@
-using System.Collections.Generic;
-using System.Numerics;
 using UnityEngine;
-using UnityEngine.UIElements;
-using Vector2 = UnityEngine.Vector2;
-using Vector3 = UnityEngine.Vector3;
 
 /// <summary>
 /// <see cref="EnemyAIBrain"/>이 선택한 타겟에 따라 실제 몬스터 행동을 수행한다.
@@ -41,7 +36,7 @@ public class EnemyController : MonoBehaviour
     private Transform _target;
     private float _nextAttackTime;
     private EnemyNetworkAnimator _networkAnimator;
-
+    
     /// <summary>
     /// 다른 미사일이 이미 이 적을 목표로 삼았는지 나타낸다.
     /// 미사일 시스템은 중복 목표 배정을 막기 위해 이 값을 확인하고 설정한다.
@@ -238,7 +233,7 @@ public class EnemyController : MonoBehaviour
         if (_networkAnimator != null)
             _networkAnimator.PlayAttack();
         else
-            animator.SetTrigger(AttackHash);
+            animator.SetTrigger(AttackHash);    
     }
 
     /// <summary>
