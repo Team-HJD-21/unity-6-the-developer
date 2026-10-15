@@ -4,7 +4,8 @@
   "references": [
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
-    "Unity.Netcode.Runtime"
+    "Unity.Netcode.Runtime",
+    "Unity.Collections"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
