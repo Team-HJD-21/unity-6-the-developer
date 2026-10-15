@@ -39,7 +39,7 @@
 | B1 | 공통 식별/요청·정리 안전성 | App/Match 정리·요청 Context/Ledger·등록 토큰과 양방향 논리 ID/로컬 핸들 대응표 구현. Feature별 명령 결과·전송은 B4 |
 | B2 | 지역 데이터/Runtime·정적 어댑터 | Match/D 연결·Initial_Stage 정적 기본 시작 검증 완료 |
 | B3 | 네트워크 Match 기반 | NGO·App 소유권·Scene-ready 준비/명시 시작/종료·실제 UTP 및 Windows 두 실행 파일 검증. 최소 Match 객체 생성/상태/제거·재생성 확인. 원격 정상 Feature 요청은 B4, 실제 Scene의 실행 중 연결 유실 인수는 추가 대상 |
-| B4 | D/E 실제 요청 | D 지역·논리 ID/등록·실제 승급/강등/Factory·Match 해제 연결 검증. E 타입 요청·최신 조회·중복 방지·App 연결 유지/적 제거 구현. 원격 요청·터렛 명령 gateway·D 실행 상태 정리 미완료. 생성 추적 수 불일치 1회 별도 추적 |
+| B4 | D/E 실제 요청 | D 지역·논리 ID/등록·명령/결과·실제 승급/강등/Factory·제어 수명·자동 큐/예약 해제 검증. 실제 UTP 터렛 gateway 구현·검증. 정식 Scene/HUD 원격 연결은 진행 중. E 타입 요청·최신 조회·중복 방지·App 연결 유지/적 제거 구현. 생성 추적 수 불일치 1회 별도 추적 |
 | B5 | 동적 판정·Debugger | 셀 투영·점령 회수·Debugger/Scene 구현. 실제 모드 전환·3개 ON/1개 OFF 검사 통과 |
 | B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 합치기·App 수명·Client 읽기 모델 구현. 두 SDK 및 Windows 실제 Scene 두 프로세스에서 정적/동적·회수·종료/재시작과 전체 해시 일치 확인 |
 | B7 | HUD | 정책/점령·CU 자동 활성화·로컬 actor 주입·Client 입력 수명 구현. 로컬 HUD 검사와 별도 Client Scene의 슬롯 actor/읽기 연결 확인. 원격 HUD 명령·거리·시각 인수 미완료 |
@@ -262,3 +262,18 @@ ON/OFF·CU 자동 활성화·레벨 승급/강등·정의 ID 기반 강화/강�
 - `turret-match-scope-regression.xml`: 기존 D 초기화/지역 어댑터 42/42 통과.
 
 실제 Scene에 명령용 레벨/강화 카탈로그 참조도 연결했다. 현재 명령 서비스는 명시적으로 BindCommands한 경계에서만 사용한다. **Client 요청 전송·HUD gateway는 후속 연결 중이며 이미 완료됐다고 표시하지 않는다.** 권한 없는 로컬 D 호출은 이제 거부되므로 이 경계를 연결하기 전 Client 버튼을 정상 작동으로 인수할 수 없다. 새 Windows 빌드 검사는 이 단계에서 아직 실행 전이다.
+
+## 공용 터렛 요청 전송·Host 검증 정책
+
+사용자 답변으로 **모든 참가자가 ON/OFF·CU 자동 활성화를 요청하고 Host가 검증**하는 정책을 확정했다. 승급/강화·강등의 원격 허용 범위는 별도 질문 중이다. 실제 상태 변경은 항상 Host의 D API가 수행한다.
+
+`TurretCommandGateway`는 준비 세대/Match별 요청 경계다. Host는 실제 SDK 연결→참가자 매핑을 사용하고 payload 발신자와 대조한다. Client는 서버 연결·세대·Match·요청 GUID·명령 종류·대상이 모두 맞는 결과만 확정한다. Pending은 기본 64개, 서버 응답 대기도 같은 제한이며 전송 압력이 있으면 실행 전 거부하거나 확정 결과를 보존해 다음 Pump에 보낸다. InProgress는 확정 응답이 아니다. 응답 미도착은 실행 실패로 만들지 않으며 TryRetry는 같은 의도/GUID만 재전송한다. 자동 재전송·새 GUID 재실행·낙관적 D 상태 변경은 하지 않는다.
+
+`NgoTurretCommandTransport`는 기존 제한 바이트 채널을 이용한다. 명령 최대 8KiB, Client→Host 요청/Host→Client 결과만 허용하고 명령을 합치지 않는다. `TurretCommandCodec`는 버전·길이·UTF-8·열거형·필드 의미·bool·후행 바이트를 검증한다.
+
+- `turret-command-gateway.xml`: 초기 서비스/gateway 12/12 통과.
+- `turret-command-utp-repaired.xml`: 실제 UTP/재접속은 통과했으나 빈 논리 대상의 default/null과 빈 문자열 비교 불일치로 codec 1개 실패(총 2 통과/1 실패). 자동 CU 응답 상관관계에도 영향을 주는 결함이므로 DTO의 선택 ID를 정규화했다.
+- `turret-command-utp-normalized.xml`: 수정 후 codec/실제 UTP 3/3 통과. CU 자동 요청 왕복도 추가 확인했다. 실제 D/별도 두 프로세스 검증은 아직 아니다.
+- `turret-gateway-and-authorization.xml`: InProgress 처리·권한 상태 재확인·서버 actor 등록/거리 정책 포함 15/15 통과.
+
+`PlayerInteractionRegistry`는 Host가 명시적으로 등록한 제공자에서 **명령 검증 순간**의 위치/생존/조작 상태를 읽는다. `TurretInteractionAuthorization`은 그 값과 서버의 실제 터렛/CU 위치를 사용한다. 원격 actor가 없으면 AuthorityActorUnavailable이다. Client payload 좌표·다른 참가자 좌표·PlayerStart를 대신 넣어 통과시키지 않는다. B의 Host 측 원격 actor 연결 Port와 정식 Scene/HUD 조립은 다음 작업이다. 아직 이 결과로 #442/#495/#528을 닫지 않는다.

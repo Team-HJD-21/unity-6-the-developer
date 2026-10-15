@@ -23,7 +23,7 @@ namespace TeamHJD.Game.Contracts
             if (!Enum.IsDefined(typeof(TurretCommandKind), kind) || !Enum.IsDefined(typeof(TurretCommandStatus), status))
                 throw new ArgumentOutOfRangeException(nameof(status));
             if ((featureCode?.Length ?? 0) > 128 || (reason?.Length ?? 0) > 512) throw new ArgumentException("Result text exceeds its contract limit.");
-            MatchId = matchId; RequestId = requestId; Kind = kind; TargetId = targetId;
+            MatchId = matchId; RequestId = requestId; Kind = kind; TargetId = targetId.IsEmpty ? default : targetId;
             ExecutionSequence = executionSequence; Status = status; FeatureCode = featureCode ?? string.Empty;
             Reason = reason ?? string.Empty; IsReplay = isReplay;
         }

@@ -24,7 +24,8 @@ namespace TeamHJD.Game.Contracts
                 throw new ArgumentException("Only activation accepts an ON/OFF flag.", nameof(shouldActivate));
             if ((!targetId.IsEmpty && targetId.Value.Length > 128) || (!upgradeId.IsEmpty && upgradeId.Value.Length > 128))
                 throw new ArgumentException("Command identifiers are limited to 128 characters.");
-            Kind = kind; TargetId = targetId; ShouldActivate = shouldActivate; UpgradeId = upgradeId;
+            Kind = kind; TargetId = targetId.IsEmpty ? default : targetId;
+            ShouldActivate = shouldActivate; UpgradeId = upgradeId.IsEmpty ? default : upgradeId;
         }
         public string GetPayloadKey()
         {
