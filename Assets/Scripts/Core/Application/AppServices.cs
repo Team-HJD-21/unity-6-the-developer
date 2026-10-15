@@ -21,6 +21,7 @@ namespace TeamHJD.Game.Application
         public RegionReplicationSession NetworkRegions { get; private set; }
         private IRegionSnapshotTransport _regionTransport;
         public ITurretCommandTransport NetworkTurretCommands { get; private set; }
+        public ITurretPresentationTransport NetworkTurretPresentation { get; private set; }
 
         public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority,
             INetworkSession networkSession = null)
@@ -74,6 +75,7 @@ namespace TeamHJD.Game.Application
             NetworkRegions?.FlushPending();
             if (_regionTransport is INetworkMessagePump regionPump) regionPump.Pump();
             if (NetworkTurretCommands is INetworkMessagePump turretPump) turretPump.Pump();
+            if (NetworkTurretPresentation is INetworkMessagePump presentationPump) presentationPump.Pump();
         }
 
         /// <summary>접속 수명 동안 전송을 소유합니다. Match별 gateway/정책은 Scene 조립부가 소유합니다.</summary>
@@ -84,6 +86,15 @@ namespace TeamHJD.Game.Application
             if (NetworkMatches == null) throw new InvalidOperationException("Attach the Match lifecycle transport first.");
             if (NetworkTurretCommands != null) throw new InvalidOperationException("The turret command transport is already attached.");
             NetworkTurretCommands = transport;
+        }
+
+        public void AttachTurretPresentationTransport(ITurretPresentationTransport transport)
+        {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (transport == null) throw new ArgumentNullException(nameof(transport));
+            if (NetworkMatches == null) throw new InvalidOperationException("Attach the Match lifecycle transport first.");
+            if (NetworkTurretPresentation != null) throw new InvalidOperationException("The turret presentation transport is already attached.");
+            NetworkTurretPresentation = transport;
         }
 
         public void Dispose()
@@ -103,6 +114,8 @@ namespace TeamHJD.Game.Application
             DisposeIfNeeded(regionTransport, ref errors);
             var turretTransport = NetworkTurretCommands; NetworkTurretCommands = null;
             DisposeIfNeeded(turretTransport, ref errors);
+            var presentationTransport = NetworkTurretPresentation; NetworkTurretPresentation = null;
+            DisposeIfNeeded(presentationTransport, ref errors);
             DisposeIfNeeded(transport, ref errors);
             DisposeIfNeeded(Profiles, ref errors);
             DisposeIfNeeded(Content, ref errors);

@@ -34,6 +34,9 @@ namespace TeamHJD.Game.Tests.EditMode
             var turretTransport = new ProbeTurretTransport();
             root.AttachTurretCommandTransport(turretTransport);
             Assert.Throws<InvalidOperationException>(() => root.AttachTurretCommandTransport(new ProbeTurretTransport()));
+            var presentationTransport = new ProbePresentationTransport();
+            root.AttachTurretPresentationTransport(presentationTransport);
+            Assert.Throws<InvalidOperationException>(() => root.AttachTurretPresentationTransport(new ProbePresentationTransport()));
             services.PumpNetwork();
             try
             {
@@ -52,6 +55,9 @@ namespace TeamHJD.Game.Tests.EditMode
                 Assert.That(root.NetworkTurretCommands, Is.Null);
                 Assert.That(turretTransport.Pumps, Is.EqualTo(1));
                 Assert.That(turretTransport.Disposals, Is.EqualTo(1));
+                Assert.That(root.NetworkTurretPresentation, Is.Null);
+                Assert.That(presentationTransport.Pumps, Is.EqualTo(1));
+                Assert.That(presentationTransport.Disposals, Is.EqualTo(1));
                 Assert.That(root.CurrentMatchId.IsEmpty, Is.True);
                 Assert.DoesNotThrow(() => root.Dispose());
                 Assert.That(scenes.DisposedCount, Is.EqualTo(1));
@@ -122,6 +128,14 @@ namespace TeamHJD.Game.Tests.EditMode
             public event Action<ulong, Guid, TurretCommandResult> ResultReceived { add { } remove { } }
             public bool TrySendRequest(ulong connectionId, Guid descriptorId, TurretCommandRequest request) => false;
             public bool TrySendResult(ulong connectionId, Guid descriptorId, TurretCommandResult result) => false;
+            public void Pump() => Pumps++;
+            public void Dispose() => Disposals++;
+        }
+        private sealed class ProbePresentationTransport : ITurretPresentationTransport, INetworkMessagePump, IDisposable
+        {
+            public int Pumps, Disposals;
+            public event Action<ulong, TurretPresentationFrame> FrameReceived { add { } remove { } }
+            public bool TrySendFrame(ulong connectionId, TurretPresentationFrame frame) => false;
             public void Pump() => Pumps++;
             public void Dispose() => Disposals++;
         }

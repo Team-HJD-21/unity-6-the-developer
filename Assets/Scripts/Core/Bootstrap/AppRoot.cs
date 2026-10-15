@@ -22,6 +22,13 @@ namespace TeamHJD.Game.Bootstrap
         public NetworkMatchCoordinator NetworkMatches => Services?.NetworkMatches;
         public RegionReplicationSession NetworkRegions => Services?.NetworkRegions;
         public ITurretCommandTransport NetworkTurretCommands => Services?.NetworkTurretCommands;
+        public ITurretPresentationTransport NetworkTurretPresentation => Services?.NetworkTurretPresentation;
+
+        public void AttachTurretPresentationTransport(ITurretPresentationTransport transport)
+        {
+            ThrowIfUnavailable();
+            Services.AttachTurretPresentationTransport(transport);
+        }
 
         public void AttachTurretCommandTransport(ITurretCommandTransport transport)
         {

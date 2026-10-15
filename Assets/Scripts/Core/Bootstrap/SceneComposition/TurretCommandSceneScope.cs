@@ -25,6 +25,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private TurretCommandGateway _gateway;
         private TurretPresentationSceneSource _hostPresentation;
         private TurretPresentationReplica _clientPresentation;
+        private TurretPresentationReplication _presentationReplication;
         private readonly List<ITurretCommandConsumer> _consumers = new List<ITurretCommandConsumer>();
         private float _nextPresentationSample;
         private bool _disposed;
@@ -38,6 +39,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private PlayerId? Resolve(ulong connection) => IsRunning() && _matches.TryResolveParticipant(connection, out var player) ? player : (PlayerId?)null;
         private bool IsParticipant(PlayerId player) => IsRunning() && _matches.Descriptor.Participants.Any(item => item.PlayerId == player);
         public TurretCommandSceneScope(NetworkMatchCoordinator matches, INetworkSession network, ITurretCommandTransport transport,
+            ITurretPresentationTransport presentationTransport,
             TurretMatchBinding turrets, Transform controlUnit, IReadOnlyDictionary<PlayerId, GameObject> localActors,
             double interactionDistance)
         {
@@ -46,6 +48,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _turrets = turrets != null ? turrets : throw new ArgumentNullException(nameof(turrets));
             _controlUnit = controlUnit != null ? controlUnit : throw new ArgumentNullException(nameof(controlUnit));
             if (transport == null) throw new ArgumentNullException(nameof(transport));
+            if (presentationTransport == null) throw new ArgumentNullException(nameof(presentationTransport));
             if (matches.Phase != NetworkMatchPhase.Running || matches.Descriptor == null ||
                 !matches.TryResolveParticipant(network.LocalConnectionId, out var localPlayer))
                 throw new InvalidOperationException("Compose turret commands for the current running participant.");
@@ -80,6 +83,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     _hostPresentation.Refresh();
                 }
                 else _clientPresentation = new TurretPresentationReplica(MatchId, DescriptorId);
+                _presentationReplication = new TurretPresentationReplication(network, matches, presentationTransport, _hostPresentation, _clientPresentation);
                 foreach (var consumer in turrets.gameObject.scene.GetRootGameObjects()
                     .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true)).OfType<ITurretCommandConsumer>())
                 {
@@ -107,12 +111,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private BattlefieldPoint? CaptureControlPosition() => IsAuthority() && _controlUnit != null &&
             _controlTargetBehaviour != null && _controlTargetBehaviour.isActiveAndEnabled &&
             _controlTarget.TryCaptureInteractionPosition(out var point) ? point : (BattlefieldPoint?)null;
-        public bool TryApplyPresentation(ulong verifiedSender, TurretPresentationFrame frame)
-        {
-            if (_disposed || _network.IsServer || !IsRunning() ||
-                !_matches.Descriptor.Participants.Any(item => item.IsHost && item.ConnectionId == verifiedSender)) return false;
-            return _clientPresentation.TryApply(frame);
-        }
         public void Pump()
         {
             if (_disposed) return;
@@ -121,11 +119,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_hostPresentation != null && Time.unscaledTime >= _nextPresentationSample)
             { _nextPresentationSample = Time.unscaledTime + .1f; _hostPresentation.Refresh(); }
             _gateway?.Pump();
+            _presentationReplication?.Pump();
         }
         public void Dispose()
         {
             if (_disposed) return; _disposed = true;
             List<Exception> errors = null;
+            _presentationReplication?.Dispose(); _presentationReplication = null;
             foreach (var consumer in _consumers)
             { try { consumer.UnbindTurretCommands(MatchId); } catch (Exception error) { (errors ??= new List<Exception>()).Add(error); } }
             _consumers.Clear();

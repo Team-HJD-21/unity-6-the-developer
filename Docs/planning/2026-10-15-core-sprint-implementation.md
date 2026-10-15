@@ -42,7 +42,7 @@
 | B4 | D/E 실제 요청 | D 지역·논리 ID/등록·명령/결과·실제 승급/강등/Factory·제어 수명·자동 큐/예약 해제 검증. 실제 UTP 터렛 gateway 구현·검증. 정식 Scene/HUD 원격 연결은 진행 중. E 타입 요청·최신 조회·중복 방지·App 연결 유지/적 제거 구현. 생성 추적 수 불일치 1회 별도 추적 |
 | B5 | 동적 판정·Debugger | 셀 투영·점령 회수·Debugger/Scene 구현. 실제 모드 전환·3개 ON/1개 OFF 검사 통과 |
 | B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 합치기·App 수명·Client 읽기 모델 구현. 두 SDK 및 Windows 실제 Scene 두 프로세스에서 정적/동적·회수·종료/재시작과 전체 해시 일치 확인 |
-| B7 | HUD | 기존 View/Presenter를 정식 명령 Port·Host 확정 표시 투영에 연결. 실제 ON/OFF·승급/강등·강화·CU·재활성화와 응답/상태 순서 검증. Client 읽기 replica는 구현, 표시 Frame 전송 및 원격 실제 actor 연결·시각 인수는 진행 중 |
+| B7 | HUD | 기존 View/Presenter를 정식 명령 Port·Host 확정 표시 투영에 연결. 실제 버튼·CU·재활성화 및 응답/상태 순서 검증. Client replica/실제 표시 Frame 전송·App/Scene 조립 검증. 최신 두 실행 파일/실제 원격 actor 연계·시각 인수는 진행 중 |
 | B8 | 통합 검증/문서 | 실제 두 SDK·저장 Scene 최종 8/8·연결 회귀 10/10 및 Windows 두 프로세스 2회 통과. 생성 수 불일치 1회 원인 미확정. 원격 Feature·실행 중 유실·시각 인수와 전체 이슈 감사는 미완료 |
 
 ## PR·커밋 경계
@@ -315,3 +315,16 @@ HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구�
 - `turret-hud-final-binding.xml`: 멱등 주입·재전송/구독 해제·실제 버튼/재활성화 최종 5/5.
 
 **남은 A 구현:** 표시 Frame의 Host→Client 실제 전송/정식 조립·독립 실행 파일 검사. 현재 Client replica는 아직 전송을 받지 않아 대기 표시하며 로컬 D 초기값을 진짜처럼 보여주지 않는다. **B 연계:** Host 측 실제 원격 Player actor와 이동/상태 제공자. **D 연계:** 실제 터렛의 원격 생성/레벨 외형/발사체 등 Feature 표현·전투 복제. 표시 Frame 전송을 D에게 넘기는 것은 아니며 A가 다음 배치에서 연결한다. Client의 기존 로컬 사거리 원은 D 표현 복제 전까지 잘못 그리지 않도록 숨긴다. 아직 이슈/PR을 완료 처리하지 않았다.
+
+## Client 표시 Frame 실제 전송 연결
+
+`ITurretPresentationTransport → NgoTurretPresentationTransport`와 `TurretPresentationCodec`를 추가했다. Host→Client만 허용하고 Client의 상태 제출은 분할 조립 전에 거부한다. 최대 payload 4MiB와 기존 조립/대기 메모리·프레임 예산을 재사용한다. 최대 1,024개 행/문자열 경계의 실제 왕복을 검사했다. 이는 프로토콜 자원 한계이며 해당 최대 크기의 실시간 성능 보장은 아니다.
+
+`TurretPresentationReplication`은 Match/준비 세대·역할을 확인하고 Host source와 Client replica를 연결한다. 송신 큐가 미접수한 최신 Frame은 보존한다. 전송 채널은 아직 보내지 않은 전체 상태만 합치며 일부 조각을 보낸 payload를 바꾸지 않는다. 명령과 수명 메시지는 이 합치기를 사용하지 않는다. replica는 이전 세대·revision 역행·같은 revision의 충돌·확정 명령 순번 역행을 거부한다.
+
+전송은 `AppServices.AttachTurretPresentationTransport`로 App이 소유·Pump·Dispose한다. Scene의 `TurretCommandSceneScope`가 Match별 replication을 소유하고, 종료 시 먼저 전송/상태 구독을 끊은 뒤 HUD·source/replica를 정리한다. Source는 표시용이며 Encounter/점령 판정의 원본으로 사용하지 않는다. 정식 게임 흐름은 계속 Battlefield/지역/D 원본을 사용한다.
+
+- `turret-presentation-utp.xml`: codec/실제 UTP 3/3. 약 2MiB 최대 문자/행 payload 왕복, 최신 합치기, 실제 수명/준비 교환, 같은 MatchId의 새 준비 세대, revision 충돌, 재접속, 실제 Client 상태 주입 패킷 거부를 확인했다. DTO 공급 fixture이며 실제 D/Player의 두 실행 파일 검증은 아니다.
+- `turret-presentation-app-scene.xml`: App 소유/중복 부착/Pump/실패 중 Dispose와 실제 Initial_Stage HUD/Host 재시작 조립 4/4.
+
+다음 필수 검증은 실제 Windows 두 프로세스에서 D 표시 Frame 전체 해시/수신 revision·Client 읽기 모델/수명 정리와 정상·중복·무권한·다른 Match 요청을 함께 확인하는 것이다. #442는 전체 전투 동기화를 제외하지만 실제 정상 Client 요청 검증은 제외하지 않으므로 이 조건을 포트 단위 검사로 대체하지 않는다. B 연계의 실제 원격 actor 생성/이동 복제와 Core API 검사를 구분해 증거에 명시한다.

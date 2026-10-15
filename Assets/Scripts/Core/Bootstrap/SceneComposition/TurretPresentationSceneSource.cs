@@ -61,7 +61,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (turret.IsManualOperationBlocked) flags |= TurretPresentationFlags.ManualOperationBlocked;
                 Vector3 position = turret.transform.position;
                 string displayName = string.IsNullOrWhiteSpace(turret.DisplayName) ? turret.Definition.Id : turret.DisplayName;
-                if (displayName.Length > 256) displayName = displayName.Substring(0, 255) + "…";
+                if (displayName.Length > 256)
+                {
+                    int length = 255;
+                    if (char.IsHighSurrogate(displayName[length - 1]) && char.IsLowSurrogate(displayName[length])) length--;
+                    displayName = displayName.Substring(0, length) + "…";
+                }
                 rows.Add(new TurretPresentationSnapshot(registration.EntityId, new DefinitionId(turret.Definition.Id), displayName,
                     new BattlefieldPoint(position.x, position.y), turret.Definition.Level, turret.CurrentHealth, turret.MaxHealth,
                     turret.EffectiveDamage, turret.EffectivePower, turret.EffectiveRange, turret.CoolingDownRemaining,

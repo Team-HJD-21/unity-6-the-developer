@@ -202,7 +202,7 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 `TrySelectTurret(entityId)`는 튜토리얼 등 명시적 선택에도 기존 Scene/거리 조건을 적용한다. `RetryPendingTurretCommand(entityId)`는 같은 GUID를 재전송하며 CU는 빈 ID로 지정한다. View/프리팹을 코드로 재생성하지 않는다.
 
-Host는 D 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **현재 Host 표시 및 Client replica는 구현됐지만 Frame 전송은 다음 연결 대상**이다. Client는 수신 전 대기 표시한다. 원격 D 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다.
+Host는 D 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **Host 표시·Client replica·실제 Frame 전송을 구현했다.** App이 접속 전송을 소유하고 Match별 replication이 source/replica를 연결한다. Client는 수신 전 대기 표시한다. 원격 D 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다. 실제 UTP/Scene 검사는 통과했고 최신 두 실행 파일/원격 actor 연계 및 시각 인수는 진행 중이다.
 
 실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../planning/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
 

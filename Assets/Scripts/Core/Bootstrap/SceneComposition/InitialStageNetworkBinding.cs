@@ -167,6 +167,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 try { _app.AttachTurretCommandTransport(transport); }
                 catch { transport.Dispose(); throw; }
             }
+            if (_app.NetworkTurretPresentation == null)
+            {
+                var transport = new NgoTurretPresentationTransport(_manager);
+                try { _app.AttachTurretPresentationTransport(transport); }
+                catch { transport.Dispose(); throw; }
+            }
             if (ReferenceEquals(_matches, _app.NetworkMatches)) return;
             _matches = _app.NetworkMatches; _regions = _app.NetworkRegions;
             _matches.Preparing += OnPreparing;
@@ -197,7 +203,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 _scene.ComposeNetworkMatch(_matches, _session.IsServer, _session.LocalConnectionId);
                 if (_turretCommands != null) throw new InvalidOperationException("Release the previous command scope first.");
-                _turretCommands = new TurretCommandSceneScope(_matches, _session, _app.NetworkTurretCommands,
+                _turretCommands = new TurretCommandSceneScope(_matches, _session, _app.NetworkTurretCommands, _app.NetworkTurretPresentation,
                     _scene.GetComponent<TurretMatchBinding>(), _scene.RegionBinding.ControlUnit,
                     _scene.LocalPlayerActors, _turretInteractionDistance);
                 if (_session.IsServer)
