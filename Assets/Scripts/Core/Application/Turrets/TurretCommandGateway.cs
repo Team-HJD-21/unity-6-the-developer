@@ -81,10 +81,12 @@ namespace TeamHJD.Game.Application
         private void OnRequest(ulong sender, Guid descriptorId, TurretCommandRequest request)
         {
             if (!CanOperate || !_isAuthority || descriptorId != _descriptorId ||
-                request == null || request.Context.MatchId != _matchId || _replies.Count >= _capacity)
+                request == null || _replies.Count >= _capacity)
             { RejectedMessages++; return; }
             PlayerId? actual = _resolveParticipant(sender);
             if (!actual.HasValue || actual.Value.IsEmpty) { RejectedMessages++; return; }
+            // 현재 준비 세대의 실제 참가자에게는 잘못된 Match도 명시적 결과로 알립니다.
+            // 알 수 없는 연결·지난 준비 세대는 서비스/원본에 접근시키지 않습니다.
             TurretCommandResult result = _service.Submit(request, actual.Value);
             if (!_disposed) AuthorityResultProduced?.Invoke(result);
             // Feature 콜백이 Match를 끝냈다면 폐기된 gateway에 늦은 응답을 쌓지 않습니다.

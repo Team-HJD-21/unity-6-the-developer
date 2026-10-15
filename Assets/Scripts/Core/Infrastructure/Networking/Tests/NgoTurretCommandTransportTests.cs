@@ -97,6 +97,17 @@ namespace TeamHJD.Game.Infrastructure.Tests
                 deadline = Time.realtimeSinceStartup + 20;
                 while (_lastResult == null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
                 Assert.That(_lastResult.Status, Is.EqualTo(TurretCommandStatus.Unauthorized)); Assert.That(_calls, Is.EqualTo(before + 2));
+                _lastResult = null;
+                var foreign = Request(new MatchId("foreign-match"), Client);
+                Assert.That(_clientGateway.TrySubmit(foreign), Is.False);
+                Assert.That(_clientTransport.TrySendRequest(NetworkManager.ServerClientId, descriptor, foreign), Is.True);
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_lastResult == null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
+                Assert.That(_lastResult, Is.Not.Null);
+                Assert.That(_lastResult.Status, Is.EqualTo(TurretCommandStatus.DifferentMatch));
+                Assert.That(_lastResult.MatchId, Is.EqualTo(foreign.Context.MatchId));
+                Assert.That(_lastResult.RequestId, Is.EqualTo(foreign.Context.RequestId));
+                Assert.That(_calls, Is.EqualTo(before + 2));
                 Assert.That(_hostTransport.TrySendRequest(_client.LocalConnectionId, descriptor, request), Is.False);
                 Assert.That(_clientTransport.TrySendResult(NetworkManager.ServerClientId, descriptor, _lastResult), Is.False);
                 if (cycle > 0)

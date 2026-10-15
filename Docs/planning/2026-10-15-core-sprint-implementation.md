@@ -334,3 +334,7 @@ HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구�
 지역 상태와 HUD Frame은 서로 다른 채널이다. HUD에 `RegionGridId`·`RegionRevision`을 추가하여 CU 점령 표시는 모드/세대/revision이 모두 일치하는 지역 Snapshot만 사용한다. 불일치 중에는 이전 점령 수치를 섞지 않고 대기 상태를 표시한다. payload 변경에 맞춰 표시 채널/codec을 v2로 올렸다. 혼합 버전 간 호환을 보장하지 않으며 같은 빌드 검사가 원칙이다.
 
 `turret-presentation-region-reference.xml`: codec/실제 UTP 3/3 통과. 지역 참조가 포함된 최대 Frame 왕복과 기존 전송 보호를 확인했다. 독립 Windows 두 프로세스 검증을 대신하지 않는다.
+
+### 다른 Match 요청의 명시적 거부
+
+현재 준비 세대의 실제 참가자가 잘못된 Match를 보내면 gateway가 조용히 버리지 않고 서비스의 `DifferentMatch` 결과를 반환한다. 알 수 없는 연결/지난 준비 세대는 여전히 실행 경계 전에 버린다. 정식 Client requester는 다른 Match 의도를 로컬에서도 거부한다. `turret-foreign-match-result.xml` 실제 UTP 1/1 통과: 두 접속 주기에서 원본 실행 없이 요청 Match/GUID를 되돌려 받는 것을 확인했다.
