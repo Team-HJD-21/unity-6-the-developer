@@ -81,7 +81,7 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (closeButton != null) closeButton.onClick.RemoveListener(RequestClose);
     }
 
-    public void Show(TurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown)
+    public void Show(TurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown, bool dynamicRegions = false)
     {
         if (turret == null)
         {
@@ -95,6 +95,7 @@ public sealed class StageTurretControlView : MonoBehaviour
         levelText.text = $"Level {turret.Definition?.Level ?? 0}";
         statsText.text = $"HP {turret.CurrentHealth}/{turret.MaxHealth}   Power {turret.EffectivePower}   Damage {turret.EffectiveDamage}   Range {turret.EffectiveRange:0.#}";
         statusText.text = GetStatus(turret);
+        if (dynamicRegions) statusText.text += " | Dynamic capture: activate to form territory";
 
         bool editable = canInteract && turret.CanModifyUpgrades;
         activationButton.interactable = canInteract && StageTurretInteractionRules.CanToggle(turret);

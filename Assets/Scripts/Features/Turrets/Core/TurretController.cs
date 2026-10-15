@@ -30,6 +30,7 @@ namespace TeamHJD.Game.Turrets
         public TurretPowerBudget Budget => _budget ??= new TurretPowerBudget(Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;
         public int MaximumPower => Budget.MaximumPower;
+        public IRegionGridSource Regions => _regionAccess?.Regions;
         public event Action<int, int> PowerChanged
         {
             add => Budget.PowerChanged += value;
