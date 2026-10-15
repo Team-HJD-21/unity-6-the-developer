@@ -871158,6 +871158,51 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &765547576
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 765547578}
+  - component: {fileID: 765547577}
+  m_Layer: 0
+  m_Name: PlayerStart_Peer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &765547577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 765547576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45392bf6c866474d8689fe370fedbee9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.PlayerStart
+  slotIndex: 1
+--- !u!4 &765547578
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 765547576}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 17.6, y: -15.9, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &782158924
 GameObject:
   m_ObjectHideFlags: 0
@@ -937384,6 +937429,7 @@ GameObject:
   - component: {fileID: 877435132}
   - component: {fileID: 877435133}
   - component: {fileID: 877435134}
+  - component: {fileID: 877435135}
   m_Layer: 0
   m_Name: InitialStageCompositionRoot
   m_TagString: Untagged
@@ -937422,6 +937468,7 @@ MonoBehaviour:
   actorParent: {fileID: 0}
   battlefieldGridSettings: {fileID: 11400000, guid: 414e8db3e6ce4f86ad48b9d060045120, type: 2}
   _encounterConsumerBehaviour: {fileID: 1735068340}
+  _networkBinding: {fileID: 877435135}
 --- !u!114 &877435134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -937437,6 +937484,20 @@ MonoBehaviour:
   _controller: {fileID: 393497335}
   _controlUnit: {fileID: 52902671}
   _initialMode: 0
+--- !u!114 &877435135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74fd1e727ceb4ef2b24f3fa7e96cb337, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.InitialStageNetworkBinding
+  _manager: {fileID: 1735068337}
+  _entry: 1
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -961538,3 +961599,4 @@ SceneRoots:
   - {fileID: 1885139232}
   - {fileID: 1603658788}
   - {fileID: 2000501900}
+  - {fileID: 765547578}
