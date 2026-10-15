@@ -328,3 +328,9 @@ HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구�
 - `turret-presentation-app-scene.xml`: App 소유/중복 부착/Pump/실패 중 Dispose와 실제 Initial_Stage HUD/Host 재시작 조립 4/4.
 
 다음 필수 검증은 실제 Windows 두 프로세스에서 D 표시 Frame 전체 해시/수신 revision·Client 읽기 모델/수명 정리와 정상·중복·무권한·다른 Match 요청을 함께 확인하는 것이다. #442는 전체 전투 동기화를 제외하지만 실제 정상 Client 요청 검증은 제외하지 않으므로 이 조건을 포트 단위 검사로 대체하지 않는다. B 연계의 실제 원격 actor 생성/이동 복제와 Core API 검사를 구분해 증거에 명시한다.
+
+### 지역과 HUD의 수신 시점 일치
+
+지역 상태와 HUD Frame은 서로 다른 채널이다. HUD에 `RegionGridId`·`RegionRevision`을 추가하여 CU 점령 표시는 모드/세대/revision이 모두 일치하는 지역 Snapshot만 사용한다. 불일치 중에는 이전 점령 수치를 섞지 않고 대기 상태를 표시한다. payload 변경에 맞춰 표시 채널/codec을 v2로 올렸다. 혼합 버전 간 호환을 보장하지 않으며 같은 빌드 검사가 원칙이다.
+
+`turret-presentation-region-reference.xml`: codec/실제 UTP 3/3 통과. 지역 참조가 포함된 최대 Frame 왕복과 기존 전송 보호를 확인했다. 독립 Windows 두 프로세스 검증을 대신하지 않는다.

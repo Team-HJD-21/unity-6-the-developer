@@ -11,7 +11,7 @@ namespace TeamHJD.Game.Infrastructure
     public static class TurretPresentationCodec
     {
         public const int MaximumMessageBytes = NetworkMessageLimits.MaximumMessageBytes;
-        private const int Magic = 0x31504A48;
+        private const int Magic = 0x32504A48;
         public static byte[] Encode(TurretPresentationFrame frame)
         {
             if (frame == null) throw new ArgumentNullException(nameof(frame));
@@ -24,6 +24,7 @@ namespace TeamHJD.Game.Infrastructure
             writer.Write(controller.ControlUnitPosition.X); writer.Write(controller.ControlUnitPosition.Y);
             writer.Write(controller.IsControlUnitAvailable); writer.Write(controller.IsAutoActivationRunning);
             writer.Write(controller.AutoActivationCooldown); writer.Write((int)controller.RegionMode);
+            writer.Write(controller.RegionGridId.ToByteArray()); writer.Write(controller.RegionRevision);
             writer.Write(frame.Turrets.Count);
             foreach (var row in frame.Turrets)
             {
@@ -48,8 +49,9 @@ namespace TeamHJD.Game.Infrastructure
                 int health = reader.ReadInt32(), maxHealth = reader.ReadInt32(); var position = new BattlefieldPoint(reader.ReadDouble(), reader.ReadDouble());
                 bool cuAvailable = ReadBoolean(reader), autoRunning = ReadBoolean(reader);
                 double autoCooldown = reader.ReadDouble(); var mode = (RegionPolicyMode)reader.ReadInt32();
+                Guid regionGridId = ReadGuid(reader); long regionRevision = reader.ReadInt64();
                 var controller = new TurretControllerPresentationSnapshot(maximum, available, reserved, pending, health, maxHealth,
-                    position, autoRunning, autoCooldown, mode, cuAvailable);
+                    position, autoRunning, autoCooldown, mode, cuAvailable, regionGridId, regionRevision);
                 int count = ReadCount(reader, TurretPresentationFrame.MaximumTurrets); var rows = new List<TurretPresentationSnapshot>(count);
                 for (int index = 0; index < count; index++)
                 {

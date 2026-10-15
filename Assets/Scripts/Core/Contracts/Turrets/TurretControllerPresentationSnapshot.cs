@@ -16,9 +16,12 @@ namespace TeamHJD.Game.Contracts
         public bool IsAutoActivationRunning { get; }
         public double AutoActivationCooldown { get; }
         public RegionPolicyMode RegionMode { get; }
+        public Guid RegionGridId { get; }
+        public long RegionRevision { get; }
         public TurretControllerPresentationSnapshot(int maximumPower, int availablePower, int reservedPower, int pendingRecoveryPower,
             int controlUnitHealth, int controlUnitMaxHealth, BattlefieldPoint controlUnitPosition, bool isAutoActivationRunning,
-            double autoActivationCooldown, RegionPolicyMode regionMode, bool isControlUnitAvailable = true)
+            double autoActivationCooldown, RegionPolicyMode regionMode, bool isControlUnitAvailable = true,
+            Guid regionGridId = default, long regionRevision = 0)
         {
             if (maximumPower < 0 || availablePower < 0 || reservedPower < 0 || pendingRecoveryPower < 0 ||
                 (long)availablePower + reservedPower + pendingRecoveryPower != maximumPower)
@@ -27,16 +30,19 @@ namespace TeamHJD.Game.Contracts
             if (double.IsNaN(autoActivationCooldown) || double.IsInfinity(autoActivationCooldown) || autoActivationCooldown < 0)
                 throw new ArgumentOutOfRangeException(nameof(autoActivationCooldown));
             if (!Enum.IsDefined(typeof(RegionPolicyMode), regionMode)) throw new ArgumentOutOfRangeException(nameof(regionMode));
+            if (regionRevision < 0 || (regionGridId == Guid.Empty && regionRevision != 0)) throw new ArgumentException("Invalid region reference.");
             MaximumPower = maximumPower; AvailablePower = availablePower; ReservedPower = reservedPower; PendingRecoveryPower = pendingRecoveryPower;
             ControlUnitHealth = controlUnitHealth; ControlUnitMaxHealth = controlUnitMaxHealth; ControlUnitPosition = controlUnitPosition;
             IsAutoActivationRunning = isAutoActivationRunning; AutoActivationCooldown = autoActivationCooldown; RegionMode = regionMode;
             IsControlUnitAvailable = isControlUnitAvailable;
+            RegionGridId = regionGridId; RegionRevision = regionRevision;
         }
         public bool Equals(TurretControllerPresentationSnapshot other) => other != null && MaximumPower == other.MaximumPower &&
             AvailablePower == other.AvailablePower && ReservedPower == other.ReservedPower && PendingRecoveryPower == other.PendingRecoveryPower &&
             ControlUnitHealth == other.ControlUnitHealth && ControlUnitMaxHealth == other.ControlUnitMaxHealth &&
             ControlUnitPosition == other.ControlUnitPosition && IsAutoActivationRunning == other.IsAutoActivationRunning &&
-            AutoActivationCooldown == other.AutoActivationCooldown && RegionMode == other.RegionMode && IsControlUnitAvailable == other.IsControlUnitAvailable;
+            AutoActivationCooldown == other.AutoActivationCooldown && RegionMode == other.RegionMode && IsControlUnitAvailable == other.IsControlUnitAvailable &&
+            RegionGridId == other.RegionGridId && RegionRevision == other.RegionRevision;
         public override bool Equals(object obj) => obj is TurretControllerPresentationSnapshot other && Equals(other);
         public override int GetHashCode() => MaximumPower.GetHashCode();
     }

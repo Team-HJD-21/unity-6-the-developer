@@ -120,7 +120,7 @@ namespace TeamHJD.Game.Infrastructure.Tests
                 if (cycle == 1)
                 {
                     _clientTransport.Dispose(); _clientTransport = null;
-                    using var forged = new NgoMessageChannel(_clientManager, "teamhjd.core.turret-presentation.v1", 0);
+                    using var forged = new NgoMessageChannel(_clientManager, "teamhjd.core.turret-presentation.v2", 0);
                     long rejectedPackets = _hostTransport.RejectedPackets;
                     Assert.That(forged.TrySend(NetworkManager.ServerClientId, TurretPresentationCodec.Encode(_source.Snapshot)), Is.True);
                     deadline = Time.realtimeSinceStartup + 20;

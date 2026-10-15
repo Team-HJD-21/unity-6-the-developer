@@ -18,7 +18,7 @@ namespace TeamHJD.Game.Infrastructure
         public event Action<ulong, TurretPresentationFrame> FrameReceived;
         public NgoTurretPresentationTransport(NetworkManager manager)
         {
-            _manager = manager; _channel = new NgoMessageChannel(manager, "teamhjd.core.turret-presentation.v1", 0);
+            _manager = manager; _channel = new NgoMessageChannel(manager, "teamhjd.core.turret-presentation.v2", 0);
             _channel.MessageReceived += OnMessage;
         }
         public bool TrySendFrame(ulong connectionId, TurretPresentationFrame frame)

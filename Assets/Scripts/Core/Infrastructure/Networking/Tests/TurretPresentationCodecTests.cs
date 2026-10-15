@@ -18,7 +18,7 @@ namespace TeamHJD.Game.Infrastructure.Tests
                     new DefinitionId(maximumText ? new string('라', 128) : "power"), 5,
                     TurretPresentationFlags.Initialized | TurretPresentationFlags.Activated | TurretPresentationFlags.Operational));
             return new TurretPresentationFrame(new MatchId("match"), Guid.NewGuid(), 9,
-                new TurretControllerPresentationSnapshot(100, 60, 30, 10, 900, 1000, new BattlefieldPoint(1, 2), true, 12.5, RegionPolicyMode.Dynamic, false), rows, 17);
+                new TurretControllerPresentationSnapshot(100, 60, 30, 10, 900, 1000, new BattlefieldPoint(1, 2), true, 12.5, RegionPolicyMode.Dynamic, false, Guid.NewGuid(), 6), rows, 17);
         }
         [Test]
         public void MaximumCollectionAndTextFitWireAndPreserveEveryField()

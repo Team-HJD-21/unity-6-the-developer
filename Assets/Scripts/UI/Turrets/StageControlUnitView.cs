@@ -50,7 +50,8 @@ public sealed class StageControlUnitView : MonoBehaviour
             regionText.text = "Region: waiting for Host state"; autoStatusText.text = "Waiting for Host state";
             autoActivationButton.interactable = false; return;
         }
-        if (region != null && region.Mode != controller.RegionMode) region = null;
+        if (region != null && (region.Mode != controller.RegionMode || region.GridId != controller.RegionGridId ||
+            region.Revision != controller.RegionRevision)) region = null;
         regionText.text = (controller.RegionMode == RegionPolicyMode.Dynamic ? "DYNAMIC - no region locks\nActivate turrets to capture" :
             "STATIC - unlock regions to activate") + (region == null ? " | region snapshot pending" : $" | {region.CapturedCellCount}/{region.CapturedCells.Count} cells");
         autoStatusText.text = !controller.IsControlUnitAvailable || controller.ControlUnitHealth <= 0 ? "Control unit unavailable" :

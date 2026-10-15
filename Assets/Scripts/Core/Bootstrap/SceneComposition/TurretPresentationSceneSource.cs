@@ -43,11 +43,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (!_isAuthority() || _binding == null || _binding.BoundMatchId != _matchId || _controller == null || !_controller.HasWriteAuthority || _controlUnit == null)
             { Clear(); return; }
             var power = _controller.GetSnapshot(); Vector3 cu = _controlUnit.position;
+            var regions = _controller.Regions?.Snapshot;
             var controller = new TurretControllerPresentationSnapshot(power.MaximumPower, power.AvailablePower, power.ReservedPower,
                 power.PendingRecoveryPower, _controlVitals.CurrentHealth, _controlVitals.MaxHealth, new BattlefieldPoint(cu.x, cu.y),
                 _controller.IsAutoActivationRunning, _controller.AutoActivationCooldownRemaining,
-                _controller.Regions?.Snapshot.Mode ?? RegionPolicyMode.Static,
-                _controlVitalsBehaviour != null && _controlVitalsBehaviour.isActiveAndEnabled);
+                regions?.Mode ?? RegionPolicyMode.Static,
+                _controlVitalsBehaviour != null && _controlVitalsBehaviour.isActiveAndEnabled,
+                regions?.GridId ?? Guid.Empty, regions?.Revision ?? 0);
             var rows = new List<TurretPresentationSnapshot>();
             foreach (var registration in _binding.Registrations)
             {

@@ -173,6 +173,8 @@ UI는 적용/접수 결과 또는 ExecutionFailed를 받더라도 표시 Frame�
 
 `AppRoot.AttachTurretPresentationTransport`는 접속 전송의 소유권을 App에 이전한다. Match별 `TurretPresentationReplication`은 전송을 빌리고 종료 시 구독/미접수 Frame만 정리한다. 최대 4MiB의 전체 payload를 허용하며 아직 보내지 않은 상태만 최신 것으로 합친다. Client 상태 주입은 조립 전에 거부한다. 준비 세대·Host 발신·revision/내용 충돌·확정 순번을 확인한 뒤 replica에 적용한다. 이 UI 투영을 Encounter/지역 판정 원본으로 사용하지 않는다. 실제 UTP 및 App/Scene 검사 증거와 아직 남은 Windows 검증은 배치 기록을 따른다.
 
+Controller 표시에는 참조한 `RegionGridId`·`RegionRevision`도 담는다. CU는 모드와 이 두 값이 모두 일치하는 지역 Snapshot만 결합한다. 다른 채널의 도착 순서가 달라도 이전 점령 수치와 새 HUD 상태를 섞지 않는다. 표시 채널/codec은 v2이며 혼합 빌드 호환은 보장하지 않는다.
+
 - Game Debugger → Battlefield → **지역 Grid · 점령 원본**에서 현재 정책/점령 수를 확인한다. 모드/Grid Reset은 확인창을 거친다.
 - Scene 점령 Grid는 확정 셀, 임시 판정 삼각형은 계산 입력을 표시한다. 후자는 표시용이며 새 상태 원본이 아니다.
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.
