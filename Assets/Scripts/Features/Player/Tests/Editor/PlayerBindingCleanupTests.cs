@@ -163,9 +163,15 @@ public sealed class PlayerBindingCleanupTests
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity");
         yield return new EnterPlayMode(); yield return null;
         AssertSceneFailureCleanup();
-        yield return null;
+        int frames = 0;
+        float deadline = Time.realtimeSinceStartup + 2f;
+        // Destroy/NGO Despawn은 프레임 끝에 확정됩니다. 잔존을 무시하지 않고 제한 시간 안에 0개를 요구합니다.
+        while ((Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length != 0 ||
+            Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length != 0) && Time.realtimeSinceStartup < deadline)
+        { frames++; yield return null; }
         Assert.That(Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None), Is.Empty);
         Assert.That(Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None), Is.Empty);
+        Debug.Log("PLAYER_CLEANUP_DESTROY_CONFIRMED frames=" + frames);
         yield return new ExitPlayMode();
     }
     private static void AssertSceneFailureCleanup()
