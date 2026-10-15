@@ -1,5 +1,6 @@
 using System;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Contracts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -113,6 +114,33 @@ public sealed class StageTurretControlView : MonoBehaviour
     public void Hide()
     {
         if (gameObject.activeSelf) gameObject.SetActive(false);
+    }
+
+    public void ShowWaitingForHost()
+    {
+        if (!gameObject.activeSelf) gameObject.SetActive(true);
+        titleText.text = "Turret · Host state pending"; levelText.text = "Level —"; statsText.text = "—";
+        statusText.text = "Waiting for authoritative turret state"; upgradeRestrictionText.text = "Controls are unavailable until Host state arrives";
+        activationButton.interactable = levelUpButton.interactable = levelDownButton.interactable = false;
+        activationText.text = "Waiting"; activationText.color = unavailableColor; upgradeView.ShowSnapshot(null, false);
+    }
+    public void ShowSnapshot(TurretPresentationSnapshot turret, bool canInteract, bool canLevelUp, bool canLevelDown,
+        bool dynamicRegions, bool pending)
+    {
+        if (turret == null) { ShowWaitingForHost(); return; }
+        if (!gameObject.activeSelf) gameObject.SetActive(true);
+        titleText.text = turret.DisplayName; levelText.text = $"Level {turret.Level}";
+        statsText.text = $"HP {turret.CurrentHealth}/{turret.MaxHealth}   Power {turret.Power}   Damage {turret.Damage}   Range {turret.Range:0.#}";
+        statusText.text = pending ? "Waiting for Host confirmation/state" : turret.IsManualOperationBlocked ? "Automatic activation - manual controls disabled" :
+            turret.IsDestroyed ? "Destroyed" : turret.IsLocked ? "Locked" : turret.IsCoolingDown ? $"Cooling down: {turret.CoolingRemaining:0.0}s" :
+            turret.IsOperational ? "Operational" : turret.IsActivated ? "Activated - Suspended" : "Inactive";
+        if (dynamicRegions) statusText.text += " | Dynamic capture: activate to form territory";
+        bool editable = canInteract && !pending && turret.CanModifyUpgrades;
+        activationButton.interactable = canInteract && !pending && StageTurretInteractionRules.CanToggle(turret);
+        levelUpButton.interactable = editable && canLevelUp; levelDownButton.interactable = editable && canLevelDown;
+        upgradeRestrictionText.text = StageTurretUIText.UpgradeRestriction(turret); upgradeView.ShowSnapshot(turret, canInteract && !pending);
+        activationText.text = turret.IsDestroyed ? "Destroyed" : turret.IsLocked ? "Locked" : turret.IsActivated ? "Deactivate" : "Activate";
+        activationText.color = !activationButton.interactable ? unavailableColor : turret.IsActivated ? deactivateColor : activateColor;
     }
 
     public void SetFeedback(string message) => feedbackText.text = message;

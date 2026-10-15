@@ -36,6 +36,7 @@ namespace TeamHJD.Game.Application
         public int PendingCount => _pending.Count;
         public long RejectedMessages { get; private set; }
         public event Action<TurretCommandResult> ResultReceived;
+        public event Action<TurretCommandResult> AuthorityResultProduced;
         public TurretCommandGateway(MatchId matchId, Guid descriptorId, PlayerId localPlayer,
             ulong serverConnection, INetworkSession network, ITurretCommandTransport transport,
             Func<bool> isRunning, Func<ulong, PlayerId?> resolveParticipant,
@@ -61,6 +62,7 @@ namespace TeamHJD.Game.Application
             if (_network.IsServer)
             {
                 TurretCommandResult result = _service.Submit(request, _localPlayer);
+                if (!_disposed) AuthorityResultProduced?.Invoke(result);
                 if (!_disposed) ResultReceived?.Invoke(result);
                 return true;
             }
@@ -84,6 +86,7 @@ namespace TeamHJD.Game.Application
             PlayerId? actual = _resolveParticipant(sender);
             if (!actual.HasValue || actual.Value.IsEmpty) { RejectedMessages++; return; }
             TurretCommandResult result = _service.Submit(request, actual.Value);
+            if (!_disposed) AuthorityResultProduced?.Invoke(result);
             // Feature 콜백이 Match를 끝냈다면 폐기된 gateway에 늦은 응답을 쌓지 않습니다.
             if (CanOperate) _replies.Enqueue((sender, result));
         }
@@ -113,7 +116,7 @@ namespace TeamHJD.Game.Application
         {
             if (_disposed) return; _disposed = true;
             _transport.RequestReceived -= OnRequest; _transport.ResultReceived -= OnResult;
-            _pending.Clear(); _replies.Clear(); ResultReceived = null;
+            _pending.Clear(); _replies.Clear(); ResultReceived = null; AuthorityResultProduced = null;
         }
     }
 }

@@ -14,7 +14,11 @@ Initial_Stage의 SinglePlayerHost는 명시적인 연결→준비→시작 API�
 
 터렛 명령은 `TurretCommandRequest → TurretCommandGateway → TurretCommandService → TurretFeatureCommandExecutor → D API`로 연결합니다. 모든 참가자가 ON/OFF·CU 자동 활성화·승급·강화/강등을 요청하고 Host가 실제 연결 발신자·Match·최신 actor 위치/생존/조작·D 규칙을 검증합니다. 실제 NGO 왕복/재전송/위조 거부·재접속과 Initial_Stage의 거리 정책/명령·정리/재시작을 검사했습니다. `InitialStageNetworkBinding.TurretCommands`는 현재 Match의 입력 Port이며 접수와 서버 확정 결과는 다릅니다. 같은 요청은 GUID를 유지해 재전송합니다.
 
-Host가 실제 소유하는 B actor는 `RegisterAuthorityPlayerActor`로 연결하고 반환 lease를 actor 수명에 맞춰 해제합니다. 원격 actor가 없으면 AuthorityActorUnavailable로 거부합니다. Client payload 좌표·PlayerStart로 거리 검증을 대신하지 않습니다. **기존 HUD 버튼의 requester 교체와 D의 Client 읽기 상태 연결은 아직 진행 중**이며, 원격 요청 전송 검사만으로 전체 Client 조작이 완료된 것은 아닙니다. Match 종료는 D 자동 큐/예약을 해제하지만 체력·강화·열 상태의 전체 초기화는 수행하지 않습니다.
+Host가 실제 소유하는 B actor는 `RegisterAuthorityPlayerActor`로 연결하고 반환 lease를 actor 수명에 맞춰 해제합니다. 원격 actor가 없으면 AuthorityActorUnavailable로 거부합니다. Client payload 좌표·PlayerStart로 거리 검증을 대신하지 않습니다. Match 종료는 D 자동 큐/예약을 해제하지만 체력·강화·열 상태의 전체 초기화는 수행하지 않습니다.
+
+기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 Host 확정 표시 source를 주입받습니다. D API를 직접 실행하는 정식 UI 경로는 제거했으며, Port가 대기/해제 상태면 로컬 D 쓰기로 되돌아가지 않습니다. `TurretPresentationSceneSource`가 D 원본을 읽어 표시 복사본을 만들고 Client에는 `TurretPresentationReplica` 읽기 모델을 둡니다. 서버 결과와 `ConfirmedCommandSequence`가 반영된 표시 상태를 모두 기다린 뒤 같은 대상의 입력을 다시 엽니다. 실제 버튼·응답 순서·부분 실패·재활성화·CU 가용성 검사를 통과했습니다.
+
+**표시 Frame의 Client 전송은 다음 연결 대상**입니다. 현재 Client는 수신 전 대기로 표시하며 로컬 D 초기값을 진짜처럼 보여주지 않습니다. 원격 B actor 및 D의 실제 표현/전투 복제와 이 표시 전송은 서로 다른 책임입니다. 전송·Client HUD·독립 두 실행 파일 재검사가 끝나기 전에 전체 네트워크 완료로 선언하지 않습니다. [HUD API와 확인 순서](../../../Docs/architecture/player-ui-api.md#현재-hud-입력표시-흐름)를 참고하세요.
 
 AppRoot.Update는 App 소유 네트워크 큐를 게임시간 정지와 무관하게 Pump합니다. OnApplicationQuit/OnDestroy는 같은 Dispose를 호출하며, Editor의 AppPlayModeShutdown은 ExitingPlayMode에서 Scene 파괴 전 정리를 시작합니다. 자세한 단계·커밋·실패/수정 증거는 위 스프린트 기록을 확인하세요.
 

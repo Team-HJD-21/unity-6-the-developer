@@ -27,6 +27,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public MatchId BoundMatchId => _registry?.MatchId ?? default;
         public int Count => _registry?.Count ?? 0;
         public ITurretCommandService Commands => _commands;
+        public TurretController Controller => _controller;
         public IReadOnlyList<EntityRegistration<int>> Registrations => _registry?.CaptureRegistrations() ?? Array.Empty<EntityRegistration<int>>();
 
         public void BindCommands(Func<bool> isAuthority, Func<bool> isMatchRunning,

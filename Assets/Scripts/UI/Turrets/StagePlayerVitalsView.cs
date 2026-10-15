@@ -1,5 +1,6 @@
 using System;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Contracts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -145,6 +146,26 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
         int pending = budget.PendingRecovery;
         if (available == _lastPower && maximum == _lastMaxPower && pending == _lastPendingPower) return;
 
+        ShowPower(available, maximum, pending);
+    }
+
+    public void UseAuthorityVitals()
+    {
+        if (_controlUnit != null) _controlUnit.HealthChanged -= ShowControlUnitHealth;
+        if (_controller != null) _controller.PowerChanged -= OnPowerChanged;
+        _controlUnit = null; _controller = null;
+        _lastPower = _lastMaxPower = _lastPendingPower = int.MinValue;
+    }
+    public void RefreshAuthority(TurretControllerPresentationSnapshot state)
+    {
+        if (state == null) { ShowControlUnitUnavailable(); RefreshPower(); return; }
+        if (state.IsControlUnitAvailable) ShowControlUnitHealth(state.ControlUnitHealth, state.ControlUnitMaxHealth);
+        else ShowControlUnitUnavailable();
+        ShowPower(state.AvailablePower, state.MaximumPower, state.PendingRecoveryPower);
+    }
+    private void ShowPower(int available, int maximum, int pending)
+    {
+        if (available == _lastPower && maximum == _lastMaxPower && pending == _lastPendingPower) return;
         _lastPower = available;
         _lastMaxPower = maximum;
         _lastPendingPower = pending;

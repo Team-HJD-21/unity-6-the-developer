@@ -191,7 +191,20 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 `PlayerControlState`는 `IPlayerInteractionActor`로 현재 actor의 XY·생존·CanAct를 제공한다. Host의 명령 검증은 이 Port를 실제 서버 actor에 연결해 사용한다. 원격 Client의 좌표/생존 payload를 그 대신 넣지 않는다. B의 서버 actor 생성/복제 경로에서 `InitialStageNetworkBinding.RegisterAuthorityPlayerActor(matchId, playerId, actor)`를 호출하고 반환 lease를 교체/Despawn에 해제한다. 현재 각 인스턴스에는 자기 로컬 actor만 생성되므로 이 API가 존재한다고 상대 이동 복제가 완료된 것은 아니다.
 
-공용 터렛 ON/OFF·CU 자동 활성화·승급·강화/강등은 모든 참가자가 요청하고 Host가 검증하도록 확정했다. Core `TurretCommands` requester와 실제 D 명령 서비스는 Scene의 Match 시작/종료에 자동 조립한다. 기존 HUD 버튼의 requester 교체는 진행 중이며, D의 Client 읽기 상태와 함께 연결해야 한다. Client의 초기 로컬 D 값을 서버 확정 상태로 표시하지 않는다.
+공용 터렛 ON/OFF·CU 자동 활성화·승급·강화/강등은 모든 참가자가 요청하고 Host가 검증하도록 확정했다. Core `TurretCommands` requester와 실제 D 명령 서비스는 Scene의 Match 시작/종료에 자동 조립한다. 기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 표시 source를 주입받아 사용한다. Client의 초기 로컬 D 값을 서버 확정 상태로 표시하지 않는다.
+
+### 현재 HUD 입력/표시 흐름
+
+1. Scene이 로컬 actor를 주입한 뒤 `BindTurretCommands(matchId, playerId, requester, presentation)`를 호출한다. 같은 Port 재주입은 구독·대기 요청을 유지하고, 다른 Port로 교체하려면 먼저 명시적으로 해제한다.
+2. `StageTurretPresenter`는 `TurretPresentationFrame`의 논리 ID/정의/활성/강화/냉각 상태로 버튼과 의도를 구성한다. Client에 원래 배치된 터렛의 초기 상태로 ON/OFF를 판단하지 않는다.
+3. `StageTurretCommandBinding`이 GUID를 만들어 요청하고 해당 대상의 추가 입력을 잠근다. 서버 결과와 그 순번을 반영한 표시 Frame을 모두 받은 뒤 입력을 다시 연다. ExecutionFailed도 일부 부작용이 있을 수 있어 최신 상태를 기다린다. 거부는 즉시 표시한다.
+4. HUD 잠시 숨김/재활성화는 대기 추적을 보존하며, Presenter/View 이벤트를 한 번씩 다시 연결한다. Match 해제·실제 파괴는 요청/표시 구독을 정리한다. 다른 Match의 결과나 해제는 현재 UI에 적용하지 않는다.
+
+`TrySelectTurret(entityId)`는 튜토리얼 등 명시적 선택에도 기존 Scene/거리 조건을 적용한다. `RetryPendingTurretCommand(entityId)`는 같은 GUID를 재전송하며 CU는 빈 ID로 지정한다. View/프리팹을 코드로 재생성하지 않는다.
+
+Host는 D 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **현재 Host 표시 및 Client replica는 구현됐지만 Frame 전송은 다음 연결 대상**이다. Client는 수신 전 대기 표시한다. 원격 D 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다.
+
+실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../planning/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
 
 플레이어 연동 스크립트를 추가·수정하면 같은 변경에서 책임·호출 조건·연동 API를
 갱신한다. 자동 활성화 시작 버튼과 최종 UI 연출은 이번 범위에 포함하지 않는다.

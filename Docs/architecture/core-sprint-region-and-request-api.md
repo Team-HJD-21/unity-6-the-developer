@@ -132,21 +132,45 @@ Core의 `TurretMatchBinding.BindCommands`에는 현재 권한/실행 상태·참
 
 `TurretCommandRequest`는 SetActivation, StartAutoActivation, UpgradeLevel/DowngradeLevel, ApplyUpgrade/DowngradeUpgrade를 표현한다. 실제 D 처리 결과는 `TurretCommandResult`로 돌려준다. 같은 요청 GUID를 재전송하면 최초 확정 결과를 재사용한다. 다른 의도를 같은 GUID로 보내면 RequestConflict다. Accepted는 CU 자동 작업의 시작, Applied는 즉시 적용이며 두 상태를 혼동하지 않는다. 체력 수리·임의 피해·생성 명령은 이 API에 포함하지 않았다.
 
-Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Dispose한다. Client/종료 상태에서 직접 D 쓰기·공격은 허용하지 않는다. 자동 큐/예약 해제와 개체 체력·강화 초기화는 다른 책임이며 후자를 이 lease가 수행하지 않는다. 독립 D 테스트 Scene은 기존 로컬 동작을 유지한다. 원격 명령 전송은 구현/검증했고 HUD 입력 교체는 진행 중이다.
+Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Dispose한다. Client/종료 상태에서 직접 D 쓰기·공격은 허용하지 않는다. 자동 큐/예약 해제와 개체 체력·강화 초기화는 다른 책임이며 후자를 이 lease가 수행하지 않는다. 독립 D 테스트 Scene은 기존 로컬 동작을 유지한다. 원격 명령 전송과 HUD 입력 교체는 구현/검증했고, 표시 Frame의 Client 전송은 다음 연결 대상이다.
 
-입력 소비자용 `ITurretCommandRequester.TrySubmit`은 **큐 접수 여부**, `ResultReceived`는 서버 결과다. `TryRetry(requestId)`는 미확정 의도를 같은 GUID로만 재전송한다. 응답이 없다고 미실행으로 단정하지 않으며, InProgress는 Pending을 끝내지 않는다. 기본 미확정 요청 한도는 64개다. Match별 gateway는 종료 때 Dispose하고 App 연결의 transport를 대신 파괴하지 않는다. 실제 UTP transport/gateway와 정식 Scene 자동 조립을 검증했으며 HUD 입력 연결은 진행 중이다.
+입력 소비자용 `ITurretCommandRequester.TrySubmit`은 **큐 접수 여부**, `ResultReceived`는 서버 결과다. `TryRetry(requestId)`는 미확정 의도를 같은 GUID로만 재전송한다. 응답이 없다고 미실행으로 단정하지 않으며, InProgress는 Pending을 끝내지 않는다. 기본 미확정 요청 한도는 64개다. Match별 gateway는 종료 때 Dispose하고 App 연결의 transport를 대신 파괴하지 않는다. 실제 UTP transport/gateway·정식 Scene 자동 조립·Host HUD 버튼 연결을 검증했다.
 
 공용 ON/OFF·CU 자동 요청·승급·강화/강등은 모두 참가자에게 허용하기로 확정했다. Host는 `IPlayerInteractionSource`의 최신 권위 상태와 실제 대상 위치로 거리·생존·조작 상태를 검사한다. 제공자가 없으면 AuthorityActorUnavailable로 거부한다. `PlayerInteractionRegistry.Register`의 lease는 B의 서버 actor 수명에 연결하고 교체 전 이전 등록을 해제한다. Client payload의 좌표/생존 주장이나 PlayerStart로 이 원본을 대신하지 않는다.
 
-실제 B actor는 `PlayerControlState : IPlayerInteractionActor`가 최신 상태를 제공한다. `PlayerInteractionActorBinding`에는 Host가 소유하는 생성된 GameObject와 참가자 ID를 명시한다. Client의 로컬 actor나 prefab을 Host 권위 actor라고 대신 등록하지 않는다. `AppRoot.AttachTurretCommandTransport`는 전송 소유권만 App에 이전한다. `NetworkTurretCommands`를 빌린 Match gateway의 Dispose가 연결/전송을 닫아서는 안 된다. 실제 Scene의 전송 부착·actor Port·gateway 자동 조립을 검사했으며 HUD 입력 교체가 남아 있다.
+실제 B actor는 `PlayerControlState : IPlayerInteractionActor`가 최신 상태를 제공한다. `PlayerInteractionActorBinding`에는 Host가 소유하는 생성된 GameObject와 참가자 ID를 명시한다. Client의 로컬 actor나 prefab을 Host 권위 actor라고 대신 등록하지 않는다. `AppRoot.AttachTurretCommandTransport`는 전송 소유권만 App에 이전한다. `NetworkTurretCommands`를 빌린 Match gateway의 Dispose가 연결/전송을 닫아서는 안 된다. 실제 Scene의 전송 부착·actor Port·gateway/HUD 조립을 검사했다.
 
 Initial_Stage의 **gateway 자동 조립은 구현/검증 완료**다. `InitialStageNetworkBinding.TurretCommands`를 통해 현재 참가자의 `MatchRequestContext`와 의도를 보낸다. Host의 최대 상호작용 거리는 NetworkBinding의 `_turretInteractionDistance`(기본 10)가 원본이고 HUD의 거리 힌트로 인증하지 않는다. CU 자동 요청도 실제 CU 생존·활성 여부를 검사한다.
 
-`RegisterAuthorityPlayerActor(matchId, playerId, actualHostActor)`는 Host에서만 사용할 수 있다. B가 생성/복제하는 실제 actor를 넘기고 반환 lease를 그 actor의 교체/Despawn 수명에 연결한다. 아직 Host actor가 없는 원격 참가자의 요청은 AuthorityActorUnavailable이다. 정상 입력용 requester가 있어도 B 원격 actor 복제나 D의 Client 터렛 상태 복제가 자동 구현된 것은 아니다. **HUD requester 입력 교체는 진행 중**이다.
+`RegisterAuthorityPlayerActor(matchId, playerId, actualHostActor)`는 Host에서만 사용할 수 있다. B가 생성/복제하는 실제 actor를 넘기고 반환 lease를 그 actor의 교체/Despawn 수명에 연결한다. 아직 Host actor가 없는 원격 참가자의 요청은 AuthorityActorUnavailable이다. 정상 입력용 requester가 있어도 B 원격 actor 복제나 D의 실제 터렛 표현/전투 복제가 자동 구현된 것은 아니다.
+
+### HUD 표시 경계
+
+`ITurretCommandConsumer.BindTurretCommands`는 requester와 `ITurretPresentationSource`를 함께 주입한다. 정식 HUD는 Port가 없을 때 로컬 D 쓰기로 우회하지 않는다. Host의 `TurretPresentationSceneSource`는 D 원본에서 읽기 전용 표시 복사본을 만든다. Client의 `TurretPresentationReplica`는 원본을 계산하거나 D 컴포넌트에 적용하지 않는다. 아직 표시 Frame 전송 어댑터는 연결 전이며 Client는 대기로 표시한다.
+
+```mermaid
+flowchart LR
+    HUD[기존 HUD / Presenter] -->|의도| G[Match Command Gateway]
+    G -->|실제 발신 연결 검증| S[Host Command Service]
+    S -->|D API| D[D Controller / 실제 터렛 원본]
+    D -->|읽기 전용 투영| F[Presentation Frame]
+    F -->|Host 조회 / Client replica| HUD
+    S -->|확정 결과| HUD
+```
+
+| 값 | 의미 |
+| --- | --- |
+| `EntityId` | UI/명령/등록 대응표가 공유하는 논리 대상 키 |
+| `MatchId` / `DescriptorId` | 한 판 / 준비 세대. 이전 판·준비 응답과 분리 |
+| `ExecutionSequence` | 중복 요청은 같은 값을 재사용하는 서버 처리 순번 |
+| `ConfirmedCommandSequence` | 이 표시 Frame이 반영한 처리 순번. 적용 결과와 부분 부작용 가능한 실행 실패의 최신 조회를 포함 |
+| 표시 `Revision` | 표시 내용의 버전. Battlefield/지역 Grid revision과 다른 값 |
+
+UI는 적용/접수 결과 또는 ExecutionFailed를 받더라도 표시 Frame의 확정 순번을 기다린다. 그 전에는 새 GUID로 같은 대상의 의도를 보내지 않는다. `RetryPendingTurretCommand(entityId)`만 이전 GUID를 재전송한다(CU는 빈 ID). 거부는 즉시 표시하며 D 판단을 UI에서 재구현하지 않는다. 표시 Frame은 최대 1,024개 터렛을 지원하는 프로토콜 계약이며 초과분을 몰래 잘라 완전한 상태처럼 보여주지 않는다. 표시 이름은 256자 제한이며 논리 ID를 축약하지 않는다.
 
 - Game Debugger → Battlefield → **지역 Grid · 점령 원본**에서 현재 정책/점령 수를 확인한다. 모드/Grid Reset은 확인창을 거친다.
 - Scene 점령 Grid는 확정 셀, 임시 판정 삼각형은 계산 입력을 표시한다. 후자는 표시용이며 새 상태 원본이 아니다.
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.
 - 살아 있는 Player가 CU의 interactionDistance 안에 있고 조작 가능할 때 자동 활성화를 요청할 수 있다. 재실행 대기/진행 중 거부·전력·우선순위는 D Controller가 소유한다.
 - HUD actor는 `ILocalPlayerActorConsumer`의 PrepareLocalActor/BindLocalActor/UnbindLocalActor로 명시한다. 실제 Scene에서 대기·교체·다른 Match 해제 거부·HUD 비활성/재활성을 검증했다. UI가 actor를 생성/파괴하지 않는다.
-- 현재 CU/터렛 입력은 D 로컬 API에 연결됐다. 별도 Client 실행 파일의 로컬 슬롯 actor와 지역 읽기 연결은 확인했다. 원격 공용 요청·Client HUD 명령/거리 검증·최종 해상도별 시각 인수는 미완료다.
+- 현재 정식 CU/터렛 입력은 Host 명령 경계를 사용한다. 실제 버튼·actor/요청 수명은 검사했고, 표시 Frame의 Client 전송·실제 원격 actor 통합·최종 해상도별 시각 인수는 아직 남아 있다.

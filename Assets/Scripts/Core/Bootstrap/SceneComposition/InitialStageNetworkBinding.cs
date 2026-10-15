@@ -21,6 +21,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField, Min(0.1f)] private float _turretInteractionDistance = 10f;
         private TurretCommandSceneScope _turretCommands;
         public ITurretCommandRequester TurretCommands => _turretCommands?.Requester;
+        public ITurretPresentationSource TurretPresentation => _turretCommands?.Presentation;
 
         /// <summary>Client가 보낸 좌표가 아니라 B의 실제 Host 측 actor만 등록합니다.</summary>
         public IDisposable RegisterAuthorityPlayerActor(MatchId matchId, PlayerId playerId, GameObject actor)
@@ -242,9 +243,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void OnEnded(MatchId matchId)
         {
-            try { _turretCommands?.Dispose(); _turretCommands = null; ReleaseAnchor(); }
-            finally { _scene.ReleaseNetworkMatch(matchId); }
+            try { ReleaseCommandScope(); }
+            finally { try { ReleaseAnchor(); } finally { _scene.ReleaseNetworkMatch(matchId); } }
         }
+        private void ReleaseCommandScope()
+        { TurretCommandSceneScope scope = _turretCommands; _turretCommands = null; scope?.Dispose(); }
         private void OnRegionSource(IRegionGridSource source)
         {
             if (!_session.IsServer && _scene != null) _scene.BindRegionReplica(source);
@@ -267,7 +270,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void Update()
         {
-            _turretCommands?.Pump();
+            try { _turretCommands?.Pump(); }
+            catch (Exception error) { FailMatch(error); Debug.LogException(error, this); return; }
             if (!_entryPending || _disposed || _app == null) return;
             _entryPending = false;
             try
@@ -295,10 +299,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matches.Preparing -= OnPreparing; _matches.Started -= OnStarted; _matches.Ended -= OnEnded;
             }
             if (_regions != null) _regions.SourceChanged -= OnRegionSource;
-            try { _turretCommands?.Dispose(); _turretCommands = null; ReleaseAnchor(); }
+            try { ReleaseCommandScope(); }
             finally
             {
-                if (_matches != null && _session.IsServer && _matches.Phase != NetworkMatchPhase.Disposed) _matches.TryEnd();
+                try { ReleaseAnchor(); }
+                finally { if (_matches != null && _session.IsServer && _matches.Phase != NetworkMatchPhase.Disposed) _matches.TryEnd(); }
             }
         }
 

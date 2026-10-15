@@ -19,13 +19,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly TurretMatchBinding _turrets;
         private readonly Transform _controlUnit;
         private readonly IControlUnitInteractionTarget _controlTarget;
+        private readonly MonoBehaviour _controlTargetBehaviour;
         private readonly PlayerInteractionRegistry _actors;
         private readonly List<PlayerInteractionActorBinding> _localActors = new List<PlayerInteractionActorBinding>();
         private TurretCommandGateway _gateway;
+        private TurretPresentationSceneSource _hostPresentation;
+        private TurretPresentationReplica _clientPresentation;
+        private readonly List<ITurretCommandConsumer> _consumers = new List<ITurretCommandConsumer>();
+        private float _nextPresentationSample;
         private bool _disposed;
         public MatchId MatchId { get; }
         public Guid DescriptorId { get; }
         public ITurretCommandRequester Requester => _gateway;
+        public ITurretPresentationSource Presentation => _hostPresentation ?? (ITurretPresentationSource)_clientPresentation;
         private bool IsRunning() => !_disposed && _matches.Phase == NetworkMatchPhase.Running &&
             _matches.Descriptor?.DescriptorId == DescriptorId && _turrets.BoundMatchId == MatchId;
         private bool IsAuthority() => IsRunning() && _network.IsServer;
@@ -54,6 +60,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     IControlUnitInteractionTarget[] targets = controlUnit.GetComponents<MonoBehaviour>().OfType<IControlUnitInteractionTarget>().ToArray();
                     if (targets.Length != 1) throw new InvalidOperationException("Provide one CU interaction target.");
                     _controlTarget = targets[0];
+                    _controlTargetBehaviour = (MonoBehaviour)_controlTarget;
                     if (localActors == null || !localActors.ContainsKey(localPlayer)) throw new InvalidOperationException("Provide the current Host actor.");
                     foreach (var actor in localActors) _localActors.Add(RegisterAuthorityActor(actor.Key, actor.Value));
                     // 사용자 확정 정책: 이 여섯 공용 명령 모두 참가자가 요청하고 Host가 검증합니다.
@@ -66,6 +73,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 }
                 _gateway = new TurretCommandGateway(MatchId, DescriptorId, localPlayer, hostConnection, network,
                     transport, IsRunning, Resolve, network.IsServer ? turrets.Commands : null);
+                if (network.IsServer)
+                {
+                    _hostPresentation = new TurretPresentationSceneSource(MatchId, DescriptorId, turrets, controlUnit, IsAuthority);
+                    _gateway.AuthorityResultProduced += _hostPresentation.ObserveCommand;
+                    _hostPresentation.Refresh();
+                }
+                else _clientPresentation = new TurretPresentationReplica(MatchId, DescriptorId);
+                foreach (var consumer in turrets.gameObject.scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true)).OfType<ITurretCommandConsumer>())
+                {
+                    _consumers.Add(consumer);
+                    consumer.BindTurretCommands(MatchId, localPlayer, _gateway, Presentation);
+                }
             }
             catch { Dispose(); throw; }
         }
@@ -85,14 +105,36 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             return new BattlefieldPoint(point.x, point.y);
         }
         private BattlefieldPoint? CaptureControlPosition() => IsAuthority() && _controlUnit != null &&
+            _controlTargetBehaviour != null && _controlTargetBehaviour.isActiveAndEnabled &&
             _controlTarget.TryCaptureInteractionPosition(out var point) ? point : (BattlefieldPoint?)null;
-        public void Pump() { if (!_disposed) _gateway?.Pump(); }
+        public bool TryApplyPresentation(ulong verifiedSender, TurretPresentationFrame frame)
+        {
+            if (_disposed || _network.IsServer || !IsRunning() ||
+                !_matches.Descriptor.Participants.Any(item => item.IsHost && item.ConnectionId == verifiedSender)) return false;
+            return _clientPresentation.TryApply(frame);
+        }
+        public void Pump()
+        {
+            if (_disposed) return;
+            if (_network.IsServer && (_controlUnit == null || !_turrets.Controller.isActiveAndEnabled || !_turrets.Controller.HasWriteAuthority))
+                throw new InvalidOperationException("The Match lost its D control scope.");
+            if (_hostPresentation != null && Time.unscaledTime >= _nextPresentationSample)
+            { _nextPresentationSample = Time.unscaledTime + .1f; _hostPresentation.Refresh(); }
+            _gateway?.Pump();
+        }
         public void Dispose()
         {
             if (_disposed) return; _disposed = true;
+            List<Exception> errors = null;
+            foreach (var consumer in _consumers)
+            { try { consumer.UnbindTurretCommands(MatchId); } catch (Exception error) { (errors ??= new List<Exception>()).Add(error); } }
+            _consumers.Clear();
             _gateway?.Dispose(); _gateway = null;
+            try { _hostPresentation?.Dispose(); } catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            try { _clientPresentation?.Dispose(); } catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
             foreach (var actor in _localActors) actor.Dispose();
             _localActors.Clear(); _actors?.Dispose();
+            if (errors != null) throw new AggregateException("Turret command presentation cleanup failed.", errors);
         }
     }
 }

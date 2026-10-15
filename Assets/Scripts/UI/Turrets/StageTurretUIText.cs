@@ -1,9 +1,36 @@
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.Contracts;
 
 /// <summary>터렛 API 요청 결과의 표시 문구를 관리합니다.</summary>
 internal static class StageTurretUIText
 {
+    public static string Command(TurretCommandResult result)
+    {
+        if (result.Status == TurretCommandStatus.Accepted) return "Automatic activation accepted by Host.";
+        if (result.Status == TurretCommandStatus.Applied) return "Applied by Host.";
+        if (result.Status == TurretCommandStatus.Unchanged) return "Already in the requested state.";
+        if (result.Status == TurretCommandStatus.ExecutionFailed) return "Host execution failed. Inspect the updated state before retrying.";
+        return result.FeatureCode switch
+        {
+            "AuthorityActorUnavailable" => "Waiting for the Host's verified player actor.",
+            "OutOfInteractionRange" => "Move closer to the target (Host validation).",
+            "PlayerDead" => "Cannot interact while dead.",
+            "InteractionBlocked" => "Player interaction is currently blocked.",
+            "InteractionTargetUnavailable" => "Interaction target is unavailable.",
+            _ => $"Host rejected: {(string.IsNullOrEmpty(result.FeatureCode) ? result.Status.ToString() : result.FeatureCode)}"
+        };
+    }
+    public static string UpgradeRestriction(TurretPresentationSnapshot turret)
+    {
+        if (turret == null || !turret.IsInitialized) return "Upgrades: waiting for Host state";
+        if (turret.IsManualOperationBlocked) return "Upgrades: automatic activation in progress";
+        if (turret.IsDestroyed) return "Upgrades: turret destroyed";
+        if (turret.IsLocked) return "Upgrades: zone locked";
+        if (turret.IsCoolingDown) return $"Upgrades: cooling down ({turret.CoolingRemaining:0.0}s)";
+        if (turret.IsActivated) return "Upgrades: deactivate the turret first";
+        return turret.UpgradeLevel == 0 ? "Choose one upgrade branch" : "Reduce the selected branch to 0 to switch";
+    }
     public static string WithCooling(string message, TurretBase turret) => turret.IsCoolingDown
         ? $"{message} | Cooling {turret.CoolingDownRemaining:0.0}s"
         : message;

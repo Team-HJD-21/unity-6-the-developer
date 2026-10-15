@@ -42,7 +42,7 @@
 | B4 | D/E 실제 요청 | D 지역·논리 ID/등록·명령/결과·실제 승급/강등/Factory·제어 수명·자동 큐/예약 해제 검증. 실제 UTP 터렛 gateway 구현·검증. 정식 Scene/HUD 원격 연결은 진행 중. E 타입 요청·최신 조회·중복 방지·App 연결 유지/적 제거 구현. 생성 추적 수 불일치 1회 별도 추적 |
 | B5 | 동적 판정·Debugger | 셀 투영·점령 회수·Debugger/Scene 구현. 실제 모드 전환·3개 ON/1개 OFF 검사 통과 |
 | B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 합치기·App 수명·Client 읽기 모델 구현. 두 SDK 및 Windows 실제 Scene 두 프로세스에서 정적/동적·회수·종료/재시작과 전체 해시 일치 확인 |
-| B7 | HUD | 정책/점령·CU 자동 활성화·로컬 actor 주입·Client 입력 수명 구현. 로컬 HUD 검사와 별도 Client Scene의 슬롯 actor/읽기 연결 확인. 원격 HUD 명령·거리·시각 인수 미완료 |
+| B7 | HUD | 기존 View/Presenter를 정식 명령 Port·Host 확정 표시 투영에 연결. 실제 ON/OFF·승급/강등·강화·CU·재활성화와 응답/상태 순서 검증. Client 읽기 replica는 구현, 표시 Frame 전송 및 원격 실제 actor 연결·시각 인수는 진행 중 |
 | B8 | 통합 검증/문서 | 실제 두 SDK·저장 Scene 최종 8/8·연결 회귀 10/10 및 Windows 두 프로세스 2회 통과. 생성 수 불일치 1회 원인 미확정. 원격 Feature·실행 중 유실·시각 인수와 전체 이슈 감사는 미완료 |
 
 ## PR·커밋 경계
@@ -295,3 +295,23 @@ B의 `PlayerControlState`는 `IPlayerInteractionActor`를 구현한다. 현재 �
 검사 `turret-command-scene-scope.xml`은 4 통과/1 실패였다. 이전 fixture는 없는 대상을 D 처리기의 TargetUnavailable로 기대했지만 새 실제 정책이 그 전에 Unauthorized/InteractionTargetUnavailable로 거부했다. 기대값을 이 명시적 계약에 맞춘 `turret-command-scene-policy-aligned.xml`은 5/5 통과했다. 거리 밖 거부·동일 GUID 재전송·승급/강화·자동 작업·종료 후 차단·재시작과 기존 지역/ID 검사를 포함한다.
 
 **이 시점의 남은 경계:** 실제 HUD 버튼은 아직 이 requester로 교체 전이다. B의 원격 Host actor 생성/이동 복제, D의 Client용 실제 터렛 상태 읽기 연결은 별도 Feature 협의/통합 대상이다. Client의 로컬 D 초기값을 Host 확정 상태로 간주하지 않는다. 새 Windows 두 프로세스 및 연결 유실 검증도 후속으로 수행한다.
+
+## HUD 정식 명령·표시 투영 연결
+
+`InitialStagePlayerHUD : ITurretCommandConsumer`와 `StageTurretCommandBinding`을 추가했다. 정식 Match는 ON/OFF·승급/강등·강화·CU 버튼 모두 requester를 사용한다. Port가 대기/해제 상태면 로컬 D 변경으로 되돌아가지 않는다. 별도 D Feature 테스트 Scene의 명시적 standalone 동작만 기존 로컬 경로를 유지한다.
+
+`TurretPresentationSceneSource`는 Host의 D 실제 상태에서 읽기 전용 `TurretPresentationFrame`을 만든다. 전력 예산·CU 체력/가용성·자동 작업·터렛 상태/정의·레벨·강화·냉각·표시 수치를 담고 최대 0.1초 주기로 조회한다. 내용이 같으면 새 revision을 만들지 않는다. 비어 있는 표시 이름은 정의 ID로 대체하고 UI 이름만 최대 256자로 제한한다. 실제 생성자/원본/공격 규칙·Client의 D 런타임을 변경하지 않는다. Client용 `TurretPresentationReplica`는 준비 세대·revision·같은 revision의 내용 충돌·확정 순번 역행을 검사한다.
+
+서버 결과와 표시 Frame은 도착 순서가 다를 수 있다. UI는 적용/접수 성공 및 부분 부작용 가능성이 있는 ExecutionFailed에서, `ConfirmedCommandSequence`가 해당 `ExecutionSequence` 이상인 Frame까지 기다린다. 그 전에는 해당 대상의 새 입력을 막고 같은 GUID의 명시적 재전송만 허용한다. 순수 거부는 즉시 표시한다. UI 미확정 의도는 최대 64개다. 같은 Port 재주입은 멱등이며 다른 Port 교체에는 명시적 해제가 필요하다.
+
+HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구독은 재구성한다. 실제 파괴·Match 해제는 요청/상태 구독을 정리한다. `TrySelectTurret(entityId)`는 튜토리얼/명시적 입력에도 기존 Scene/거리 검사를 적용한다. `RetryPendingTurretCommand(entityId)`는 이전 GUID를 유지하며, CU 요청은 빈 EntityId로 지정한다.
+
+검증(서로 겹치는 사례는 합산하지 않는다):
+
+- `turret-hud-authority-binding.xml`: 기존 CU·로컬 actor 교체/재활성화·명령 Scene 4/4.
+- `turret-hud-confirmation-and-buttons.xml`: DTO/replica·도착 순서·실제 터렛 버튼 7/7.
+- `turret-hud-partial-failure-and-scope.xml`: 부분 실패의 상태 대기·gateway·replica 11/11.
+- `turret-hud-cu-availability.xml`: 실제 명령/버튼·CU 비활성/복구 투영 2/2.
+- `turret-hud-final-binding.xml`: 멱등 주입·재전송/구독 해제·실제 버튼/재활성화 최종 5/5.
+
+**남은 A 구현:** 표시 Frame의 Host→Client 실제 전송/정식 조립·독립 실행 파일 검사. 현재 Client replica는 아직 전송을 받지 않아 대기 표시하며 로컬 D 초기값을 진짜처럼 보여주지 않는다. **B 연계:** Host 측 실제 원격 Player actor와 이동/상태 제공자. **D 연계:** 실제 터렛의 원격 생성/레벨 외형/발사체 등 Feature 표현·전투 복제. 표시 Frame 전송을 D에게 넘기는 것은 아니며 A가 다음 배치에서 연결한다. Client의 기존 로컬 사거리 원은 D 표현 복제 전까지 잘못 그리지 않도록 숨긴다. 아직 이슈/PR을 완료 처리하지 않았다.
