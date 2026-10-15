@@ -34,6 +34,7 @@ public sealed class PlayerSkillSelectionTests
     [TestCase("_beaconIcon")]
     [TestCase("_recoveryKeyIcon")]
     [TestCase("uiFont")]
+    [TestCase("_hudPrefab")]
     public void PlayerPrefab_AssignsHudAsset(string field)
     {
         var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");

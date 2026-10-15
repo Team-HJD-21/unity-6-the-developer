@@ -4,6 +4,19 @@ using UnityEngine;
 
 public sealed class PlayerSkillPrefabTests
 {
+    [Test]
+    public void SkillHudPrefab_HasConnectedCanvasAndRedBoldFailureText()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
+        Assert.That(prefab.GetComponent<PlayerSkillHud>().IsConfigured, Is.True);
+        Assert.That(prefab.GetComponent<Canvas>().enabled, Is.True);
+        Assert.That(prefab.GetComponent<Canvas>().renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+        var failure = prefab.transform.Find("Placement Failure").GetComponent<TMPro.TMP_Text>();
+        Assert.That(failure.color, Is.EqualTo(Color.red));
+        Assert.That((failure.fontStyle & TMPro.FontStyles.Bold) != 0, Is.True);
+        Assert.That(failure.raycastTarget, Is.False);
+    }
+
     [TestCase("EnergyBarrier")]
     [TestCase("LureBeacon")]
     public void DevicePrefab_AssignsEmitterSprite(string name)

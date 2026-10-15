@@ -1313,6 +1313,7 @@ MonoBehaviour:
   _beaconIcon: {fileID: 21300000, guid: 87a943baf368413fb0d1f320ef716a38, type: 3}
   _recoveryKeyIcon: {fileID: -1000857641, guid: 39ea407869a0d60418e2574d78bcfb04, type: 3}
   uiFont: {fileID: 11400000, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
+  _hudPrefab: {fileID: 1005, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
 --- !u!114 &1827649334803957304
 MonoBehaviour:
   m_ObjectHideFlags: 0

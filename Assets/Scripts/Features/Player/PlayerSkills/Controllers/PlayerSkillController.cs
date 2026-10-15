@@ -15,6 +15,7 @@ public sealed class PlayerSkillController : MonoBehaviour
     [SerializeField] private Sprite _beaconIcon;
     [SerializeField] private Sprite _recoveryKeyIcon;
     [SerializeField] private TMP_FontAsset uiFont;
+    [SerializeField] private PlayerSkillHud _hudPrefab;
     private PlayerInputHandler _input;
     private PlayerBomb _bomb;
     private PlayerTurretSkill _turret;
@@ -44,7 +45,8 @@ public sealed class PlayerSkillController : MonoBehaviour
         _beacon = GetComponent<PlayerBeaconSkill>();
     }
 
-    private void Start() => _hud = PlayerSkillHudFactory.Create(this, bombIcon, turretIcon, uiFont, _barrierIcon, _beaconIcon, _recoveryKeyIcon);
+    private void Start() => _hud = PlayerSkillHudFactory.Create(this, bombIcon, turretIcon, uiFont,
+        _barrierIcon, _beaconIcon, _recoveryKeyIcon, _hudPrefab);
 
     public void BindSceneState(Func<bool> canPrepare, Func<bool> canUse)
     {
@@ -66,6 +68,8 @@ public sealed class PlayerSkillController : MonoBehaviour
     public int SkillCount(PlayerSkillId id) => FindSkill(id)?.AvailableCount ?? 0;
     public bool IsSkillReady(PlayerSkillId id) => FindSkill(id)?.IsReady ?? false;
     public string BarrierPlacementHint => _barrier != null ? _barrier.PlacementHint : "";
+    public PlayerTurretPlacementResult TurretPlacementFeedback =>
+        _turret != null ? _turret.PlacementFeedback : PlayerTurretPlacementResult.Allowed;
     public int BombCount => _bomb.CurrentBombCount;
     public int TurretCount => _turret.CurrentTurretCount;
     public Transform RecoverableTurret
