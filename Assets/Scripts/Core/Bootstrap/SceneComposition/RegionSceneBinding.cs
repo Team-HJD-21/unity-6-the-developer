@@ -77,13 +77,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_source == null && _session == null) return;
             if (_session != null) _session.Disposing -= UnbindMatch;
             TurretInstanceRegistry.SnapshotChanged -= OnTurretChanged;
-            if (_controller != null) _controller.SetRegionAccessPolicy(null);
             _session = null;
             _source = null;
             _lastInputs = null;
             _mayWrite = null;
             _entityIds = null;
             LastEvaluation = null;
+            if (_controller != null) _controller.SetRegionAccessPolicy(null);
         }
 
         /// <summary>Client는 Host의 확정 상태를 연결하며 Match/정책/삼각형 계산을 새로 만들지 않습니다.</summary>

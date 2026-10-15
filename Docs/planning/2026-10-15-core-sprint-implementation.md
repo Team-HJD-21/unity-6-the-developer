@@ -6,7 +6,7 @@
 
 작업 브랜치: `codex/core-sprint-network-regions`
 
-상태: A 구현·핵심 자동 검증 후 이슈 감사/인수 정리 중. 아래 완료 표시는 구현 단위별이며 전체 협동 게임 완료가 아니다. PL 요청으로 수동 화면 확인은 PL에게 맡긴다. [이슈별 판정·직접 확인·PR 경계](2026-10-15-core-sprint-review-handoff.md).
+상태: A 구현·핵심 자동 검증 후 이슈 감사 중. 후속 Player/Scene 정리 예외 경로 보완은 C# 컴파일만 확인했으며 Unity 재검증 대기다(문서 마지막 절). 아래 기존 통과 결과를 이 보완의 실행 근거로 확장하지 않는다. 전체 협동 게임 완료가 아니다. PL 요청으로 수동 화면 확인은 PL에게 맡긴다. [이슈별 판정·직접 확인·PR 경계](2026-10-15-core-sprint-review-handoff.md).
 
 [문서 목차](../README.md) · [Core API](../architecture/core-api-usage.md) · [터렛 API](../architecture/turrets/api-reference.md) · [HUD](../architecture/player-ui-api.md)
 
@@ -352,3 +352,22 @@ HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구�
 도구 실패도 보존했다. `20261015T112012Z-6e54ecd3`은 마지막 진단 지시를 Pump하지 않아 Client가 대기하다 실패했고, `20261015T112336Z-e0c2f6e3`은 SDK 종료 후 null이 된 SpawnManager를 검사 도구가 읽어 실패했다. NGO 소스의 종료 순서에 맞춰 정상 Disconnected의 null과 연결 유지 중의 null을 구분하고, App 선행 Dispose 뒤에도 보관한 borrowed transport의 이벤트를 해제하도록 수정했다. 검사 조건을 삭제하거나 이 실패를 성공 수치에 합치지 않았다.
 
 `encounter-and-host-final.xml` 실제 Scene 2/2 통과: E의 10개 생성/동일 요청 추가 생성 0/무권한·변조 거부, Host의 종료 시 적 정리·연결 유지·재시작을 확인했다. 앞선 생성 추적 수 불일치 1회의 원인을 이것만으로 해결됐다고 선언하지 않는다.
+
+## 후속 검토 — Player/Scene 정리 실패 격리 (Unity 실행 대기)
+
+요구 근거는 #442의 **Feature 하나의 정리 실패가 나머지 Match/App 자원 정리를 건너뛰지 않을 것**이다. 코드 검토에서 PlayerSceneAdapter의 첫 Feature Unbind 예외가 같은 actor의 뒤 Feature를 건너뛰고, MatchPlayerActorScope의 첫 actor 예외가 다음 actor 및 spawner Dispose를 건너뛰는 경로를 확인했다. Scene의 순차 finally 내부에서도 지역 해제 예외가 D 해제를 막을 수 있었다. Encounter 추적 수 불일치의 원인이라고 단정하지 않는다.
+
+보완:
+
+- Player adapter는 콜백 전에 권한 참조를 닫고 모든 기능을 해제한 뒤 오류를 모아 전달한다. 설정 도중 실패도 rollback하고 원래 설정 오류/정리 오류를 함께 보존한다. 설정/해제 중 다른 Match 바인딩 재진입은 거부한다.
+- Player actor scope는 바인딩 전에 생성된 actor를 등록한다. 모든 actor 해제를 시도한 다음 spawner를 Dispose하고, 실패를 합쳐 전달한다. 두 번 정리하지 않는다.
+- InitialStageCompositionRoot의 설정 실패/종료/Client 해제/파괴가 공통 해제 경계를 사용한다. Scene 참조를 먼저 끊고 actor·지역·D·입력 구독·필요한 Match 종료 통지를 각각 시도한다. 지역 바인딩도 D 콜백 전에 자체 참조를 닫는다.
+- `PlayerBindingCleanupTests` 6개를 추가했다: 일부 Feature 해제 실패, 설정+rollback 동시 실패, 해제 중 재바인딩, 여러 actor/spawner 동시 실패, scope 설정 실패, 실제 Initial_Stage의 Player 해제 실패 후 다른 자원 정리.
+
+`tools/Test-CoreManagedCompile.ps1`은 기존 Unity Editor Bee response file을 읽고 별도 Docs/Local 출력으로 Presentation→Bootstrap→Editor 테스트 어셈블리를 컴파일한다. Editor/Scene/Library 출력은 바꾸지 않는다. Unity 실행·소스 import·패키지 해석·Runtime/PlayMode 성공을 뜻하지 않는다.
+
+최신 컴파일 증거: `ManagedCompile/20261015T113739Z-9292fc89/compiled.json`, 어셈블리 3개 종료 0, 변경 소스 SHA256 전/후 일치. 최초 실행 `20261015T113653Z-b2012d36`은 새 검사 파일의 Infrastructure using 누락으로 Editor 테스트 어셈블리만 실패했고, 수정 후 성공했다. `NetworkObject.IsSceneObject` 사용 중단 경고는 기존 진단 코드에 남아 있다.
+
+**아직 실행하지 않음:** `PlayerBindingCleanupTests` 및 영향을 받는 기존 Scene 검사의 Unity 실행, 보완 후 Windows 빌드/두 프로세스 재검사. PL이 수동 확인을 담당하고 Editor를 사용 중일 수 있으므로 이 작업을 위해 창을 조작/종료하거나 검사를 강제로 시작하지 않았다.
+
+다음 자동 검증은 `PlayerBindingCleanupTests;NetworkLocalActorTests;InitialStageNetworkSceneTests;StageTurretCommandHudTests`만 묶고, 통과한 뒤 실제 Windows 빌드와 `tools/Test-CoreNetworkPair.ps1`을 한 번 실행하는 범위다. 기존 전체 테스트를 반복하지 않는다. 검사 결과가 나올 때까지 이 후속 보완을 검증 완료로 적거나 PR/이슈를 종료하지 않는다.

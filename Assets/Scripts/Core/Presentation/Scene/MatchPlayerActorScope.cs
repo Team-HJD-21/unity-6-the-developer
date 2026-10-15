@@ -57,18 +57,19 @@ namespace TeamHJD.Game.Presentation.Scene
                     GameObject actor = spawner.Spawn(player.PlayerId, playerStart);
                     if (actor == null) throw new InvalidOperationException($"Spawner returned no actor for player '{player.PlayerId}'.");
 
+                    scope._actors.Add(player.PlayerId, actor);
                     PlayerSceneAdapter adapter = actor.GetComponent<PlayerSceneAdapter>();
                     if (adapter == null) adapter = actor.AddComponent<PlayerSceneAdapter>();
                     adapter.Bind(session);
-                    scope._actors.Add(player.PlayerId, actor);
                     slot++;
                 }
 
                 return scope;
             }
-            catch
+            catch (Exception error)
             {
-                scope.Dispose();
+                try { scope.Dispose(); }
+                catch (Exception cleanupError) { throw new AggregateException("Player scope setup and cleanup failed.", error, cleanupError); }
                 throw;
             }
         }
@@ -110,7 +111,12 @@ namespace TeamHJD.Game.Presentation.Scene
                 else adapter.BindNetworkMatch(match, playerId);
                 return scope;
             }
-            catch { scope.Dispose(); throw; }
+            catch (Exception error)
+            {
+                try { scope.Dispose(); }
+                catch (Exception cleanupError) { throw new AggregateException("Player scope setup and cleanup failed.", error, cleanupError); }
+                throw;
+            }
         }
 
         public void Dispose()
@@ -118,15 +124,22 @@ namespace TeamHJD.Game.Presentation.Scene
             if (_isDisposed) return;
             _isDisposed = true;
 
-            foreach (GameObject actor in _actors.Values)
+            var actors = new List<GameObject>(_actors.Values);
+            _actors.Clear();
+            List<Exception> errors = null;
+            foreach (GameObject actor in actors)
             {
                 if (actor == null) continue;
-                PlayerSceneAdapter adapter = actor.GetComponent<PlayerSceneAdapter>();
-                if (adapter != null) adapter.Unbind();
+                try
+                {
+                    PlayerSceneAdapter adapter = actor.GetComponent<PlayerSceneAdapter>();
+                    if (adapter != null) adapter.Unbind();
+                }
+                catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
             }
-
-            _actors.Clear();
-            _spawner.Dispose();
+            try { _spawner.Dispose(); }
+            catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            if (errors != null) throw new AggregateException("Player scope cleanup failed after all owned actors were released.", errors);
         }
     }
 }

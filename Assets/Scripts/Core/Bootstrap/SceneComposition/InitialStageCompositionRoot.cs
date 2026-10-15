@@ -185,26 +185,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         "are registered at non-collinear XY positions inside the authored grid bounds.",
                         this);
             }
-            catch
+            catch (Exception error)
             {
-                ReleaseLocalActorConsumers(matchId);
-                ReleaseEncounterConsumer(matchId);
-                _regionBinding?.UnbindMatch();
-                _regionBinding = null;
-                _turretBinding?.UnbindMatch(matchId); _turretBinding = null;
-                if (_turretInputSource != null)
-                    _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
-                _turretInputSource = null;
-                _matchSession = null;
-                _lastEntityCells.Clear();
-                _playerActors?.Dispose();
-                _playerActors = null;
-                if (_ownsMatch)
-                {
-                    _matchHost.TryEndMatch(_ownedMatchId);
-                    _ownsMatch = false;
-                    _ownedMatchId = default;
-                }
+                try { ReleaseOwnedBindings(matchId, endOwnedMatch: true); }
+                catch (Exception cleanupError) { throw new AggregateException("Scene setup and rollback failed.", error, cleanupError); }
                 throw;
             }
         }
@@ -257,7 +241,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     consumer.BindLocalActor(_ownedMatchId, playerId, _playerActors.Actors[playerId]);
                 FindSceneCameraFollow().Bind(_playerActors.Actors[playerId].transform);
             }
-            catch { ReleaseNetworkMatch(_ownedMatchId); throw; }
+            catch (Exception error)
+            {
+                try { ReleaseNetworkMatch(_ownedMatchId); }
+                catch (Exception cleanupError) { throw new AggregateException("Client Scene setup and rollback failed.", error, cleanupError); }
+                throw;
+            }
         }
 
         public void BindRegionReplica(IRegionGridSource source)
@@ -271,72 +260,58 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_ownedMatchId != matchId) return;
             if (_ownsMatch) { _matchHost.TryEndMatch(matchId); return; }
-            ReleaseLocalActorConsumers(matchId);
-            try { _playerActors?.Dispose(); }
-            finally
-            {
-                _playerActors = null; _ownedMatchId = default;
-                _regionBinding?.UnbindMatch(); _regionBinding = null;
-                _turretBinding?.UnbindMatch(matchId); _turretBinding = null;
-            }
+            ReleaseOwnedBindings(matchId);
         }
 
         private void OnDestroy()
         {
-            ReleaseLocalActorConsumers(_ownedMatchId);
-            if (_matchSession != null) _matchSession.Disposing -= ReleaseMatchBindings;
-            try
-            {
-                _playerActors?.Dispose();
-            }
+            try { ReleaseOwnedBindings(_ownedMatchId, endOwnedMatch: true); }
             catch (Exception exception)
             {
                 Debug.LogException(exception, this);
             }
-            finally
-            {
-                if (_matchSession != null)
-                    ReleaseEncounterConsumer(_matchSession.Config.MatchId);
-                _regionBinding?.UnbindMatch();
-                _regionBinding = null;
-                _turretBinding?.UnbindMatch(_ownedMatchId); _turretBinding = null;
-                if (_turretInputSource != null)
-                    _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
-                _turretInputSource = null;
-                _matchSession = null;
-                _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
-                _lastEntityCells.Clear();
-                _playerActors = null;
-                if (_ownsMatch) _matchHost?.TryEndMatch(_ownedMatchId);
-                _ownsMatch = false;
-                _ownedMatchId = default;
-                _matchHost = null;
-            }
+            finally { _matchHost = null; }
         }
 
         private void ReleaseMatchBindings()
         {
             MatchSession session = _matchSession;
             if (session == null) return;
-            session.Disposing -= ReleaseMatchBindings;
+            ReleaseOwnedBindings(session.Config.MatchId, notifyNetworkEnd: true);
+        }
+
+        private void ReleaseOwnedBindings(MatchId matchId, bool endOwnedMatch = false, bool notifyNetworkEnd = false)
+        {
+            if (_matchSession != null) _matchSession.Disposing -= ReleaseMatchBindings;
+            MatchPlayerActorScope actors = _playerActors;
+            RegionSceneBinding regions = _regionBinding;
+            TurretMatchBinding turrets = _turretBinding;
+            IBattlefieldTurretInputSource input = _turretInputSource;
+            IAppMatchHost host = _matchHost;
+            bool ownedMatch = _ownsMatch;
+            // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
+            _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
             _ownedMatchId = default;
-            ReleaseLocalActorConsumers(session.Config.MatchId);
-            ReleaseEncounterConsumer(session.Config.MatchId);
-            try { _playerActors?.Dispose(); }
-            finally
-            {
-                _playerActors = null;
-                _regionBinding?.UnbindMatch();
-                _regionBinding = null;
-                _turretBinding?.UnbindMatch(session.Config.MatchId); _turretBinding = null;
-                if (_turretInputSource != null) _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
-                _turretInputSource = null;
-                _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
-                _lastEntityCells.Clear();
-                _networkBinding?.OnAuthorityMatchReleased(session.Config.MatchId);
-            }
+            _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
+            _lastEntityCells.Clear();
+            var errors = new List<Exception>();
+            RunCleanup(() => ReleaseLocalActorConsumers(matchId), errors);
+            RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
+            RunCleanup(() => actors?.Dispose(), errors);
+            RunCleanup(() => { if (regions != null) regions.UnbindMatch(); }, errors);
+            RunCleanup(() => { if (turrets != null) turrets.UnbindMatch(matchId); }, errors);
+            RunCleanup(() => { if (input != null) input.LayoutChanged -= OnTurretLayoutChanged; }, errors);
+            if (endOwnedMatch && ownedMatch) RunCleanup(() => host?.TryEndMatch(matchId), errors);
+            if (notifyNetworkEnd) RunCleanup(() => _networkBinding?.OnAuthorityMatchReleased(matchId), errors);
+            if (errors.Count > 0) throw new AggregateException("Scene cleanup failed after all owned bindings were released.", errors);
+        }
+
+        private static void RunCleanup(Action cleanup, List<Exception> errors)
+        {
+            try { cleanup(); }
+            catch (Exception error) { errors.Add(error); }
         }
 
         private PlayerStart[] FindPlayerStarts()
