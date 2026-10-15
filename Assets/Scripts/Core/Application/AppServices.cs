@@ -15,14 +15,27 @@ namespace TeamHJD.Game.Application
         public IPlatformService Platform { get; }
         public ISceneFlow SceneFlow { get; }
         public MatchSessionFactory MatchSessions { get; }
+        public INetworkSession NetworkSession { get; private set; }
 
-        public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority)
+        public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority,
+            INetworkSession networkSession = null)
         {
             Profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
             Content = content ?? throw new ArgumentNullException(nameof(content));
             Platform = platform ?? throw new ArgumentNullException(nameof(platform));
             SceneFlow = sceneFlow ?? throw new ArgumentNullException(nameof(sceneFlow));
             MatchSessions = new MatchSessionFactory(authority ?? throw new ArgumentNullException(nameof(authority)));
+            NetworkSession = networkSession;
+        }
+
+        /// <summary>조립부가 실제 어댑터의 소유권을 App에 한 번 전달합니다. 연결 시작은 별도 API입니다.</summary>
+        public void AttachNetworkSession(INetworkSession session)
+        {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (session == null) throw new ArgumentNullException(nameof(session));
+            if (NetworkSession != null && !ReferenceEquals(NetworkSession, session))
+                throw new InvalidOperationException("An app network session is already attached.");
+            NetworkSession = session;
         }
 
         public void Dispose()
@@ -34,6 +47,9 @@ namespace TeamHJD.Game.Application
             DisposeIfNeeded(Content, ref errors);
             DisposeIfNeeded(Platform, ref errors);
             DisposeIfNeeded(SceneFlow, ref errors);
+            INetworkSession network = NetworkSession;
+            NetworkSession = null;
+            DisposeIfNeeded(network, ref errors);
             if (errors != null) throw new AggregateException("One or more app services failed to dispose.", errors);
         }
 

@@ -22,15 +22,18 @@ namespace TeamHJD.Game.Tests.EditMode
             var root = owner.AddComponent<AppRoot>();
             var profiles = new ProbeProfiles { Fail = failProfile };
             var scenes = new ProbeScenes();
+            var network = new ProbeNetwork();
             root.Initialize(new AppServices(profiles, new FakeContentCatalog(),
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
-                scenes, new LocalAuthority()));
+                scenes, new LocalAuthority(), network));
             try
             {
                 if (failProfile) Assert.Throws<AggregateException>(() => root.Dispose());
                 else Assert.DoesNotThrow(() => root.Dispose());
                 Assert.That(profiles.DisposedCount, Is.EqualTo(1));
                 Assert.That(scenes.DisposedCount, Is.EqualTo(1));
+                Assert.That(network.DisposedCount, Is.EqualTo(1));
+                Assert.That(root.NetworkSession, Is.Null);
                 Assert.That(root.CurrentMatchId.IsEmpty, Is.True);
                 Assert.DoesNotThrow(() => root.Dispose());
                 Assert.That(scenes.DisposedCount, Is.EqualTo(1));
@@ -59,6 +62,21 @@ namespace TeamHJD.Game.Tests.EditMode
             public int DisposedCount;
             public Task LoadAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;
             public Task UnloadAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;
+            public void Dispose() => DisposedCount++;
+        }
+
+        private sealed class ProbeNetwork : INetworkSession
+        {
+            public int DisposedCount;
+            public NetworkConnectionState State => NetworkConnectionState.Disconnected;
+            public bool IsServer => false;
+            public ulong LocalConnectionId => 0;
+            public event Action<NetworkConnectionState> StateChanged { add { } remove { } }
+            public event Action<ulong> PeerConnected { add { } remove { } }
+            public event Action<ulong> PeerDisconnected { add { } remove { } }
+            public bool TryStartHost() => false;
+            public bool TryStartClient() => false;
+            public void Shutdown() { }
             public void Dispose() => DisposedCount++;
         }
     }
