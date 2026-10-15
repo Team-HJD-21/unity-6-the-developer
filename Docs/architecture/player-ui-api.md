@@ -202,11 +202,13 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 `TrySelectTurret(entityId)`는 튜토리얼 등 명시적 선택에도 기존 Scene/거리 조건을 적용한다. `RetryPendingTurretCommand(entityId)`는 같은 GUID를 재전송하며 CU는 빈 ID로 지정한다. View/프리팹을 코드로 재생성하지 않는다.
 
-Host는 D 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **Host 표시·Client replica·실제 Frame 전송을 구현했다.** App이 접속 전송을 소유하고 Match별 replication이 source/replica를 연결한다. Client는 수신 전 대기 표시한다. 원격 D 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다. 실제 UTP/Scene 검사는 통과했고 최신 두 실행 파일/원격 actor 연계 및 시각 인수는 진행 중이다.
+Host는 D 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **Host 표시·Client replica·실제 Frame 전송을 구현했다.** App이 접속 전송을 소유하고 Match별 replication이 source/replica를 연결한다. Client는 수신 전 대기 표시한다. 원격 D 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다. 실제 UTP/Scene과 Windows 두 프로세스의 전체 Frame 해시 검사는 통과했다. 후자는 Host interaction actor만 개발 fixture이며 B의 원격 Player 복제를 검증하지 않는다. 실제 원격 actor 연계와 PL 시각 인수는 [인계 안내](../planning/2026-10-15-core-sprint-review-handoff.md)를 따른다.
+
+CU의 점령 수치는 모드뿐 아니라 표시 Frame의 RegionGridId/RegionRevision이 현재 지역 Snapshot과 일치할 때만 결합한다. 독립 채널이 서로 다른 시점의 상태를 전달하면 대기 안내를 표시한다.
 
 실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../planning/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
 
 플레이어 연동 스크립트를 추가·수정하면 같은 변경에서 책임·호출 조건·연동 API를
-갱신한다. 자동 활성화 시작 버튼과 최종 UI 연출은 이번 범위에 포함하지 않는다.
+갱신한다. CU 자동 활성화 시작 버튼은 현재 정식 명령 경계에 연결돼 있으며 최종 UI 연출/제품 밸런스 확정은 이번 기반 작업과 구분한다.
 HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후속 제안이며,
 현재는 상태 View·터렛 View의 책임과 초기화를 분리한 단일 HUD 프리팹을 사용한다.

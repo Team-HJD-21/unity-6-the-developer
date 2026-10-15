@@ -18,7 +18,7 @@ Host가 실제 소유하는 B actor는 `RegisterAuthorityPlayerActor`로 연결�
 
 기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 Host 확정 표시 source를 주입받습니다. D API를 직접 실행하는 정식 UI 경로는 제거했으며, Port가 대기/해제 상태면 로컬 D 쓰기로 되돌아가지 않습니다. `TurretPresentationSceneSource`가 D 원본을 읽어 표시 복사본을 만들고 Client에는 `TurretPresentationReplica` 읽기 모델을 둡니다. 서버 결과와 `ConfirmedCommandSequence`가 반영된 표시 상태를 모두 기다린 뒤 같은 대상의 입력을 다시 엽니다. 실제 버튼·응답 순서·부분 실패·재활성화·CU 가용성 검사를 통과했습니다.
 
-**표시 Frame의 Client 전송을 연결했습니다.** `TurretPresentationReplication`이 Host source와 Client replica를 연결하고, App이 별도 제한 채널을 소유합니다. 실제 UTP에서 최대 payload·최신 합치기·세대/충돌·재접속·Client 상태 주입 거부를 확인했습니다. Client는 수신 전 대기로 표시하며 로컬 D 초기값을 진짜처럼 보여주지 않습니다. 원격 B actor 및 D의 실제 표현/전투 복제와 이 표시 전송은 서로 다른 책임입니다. 최신 Client HUD·독립 두 실행 파일 재검사가 끝나기 전에 전체 네트워크 완료로 선언하지 않습니다. [HUD API와 확인 순서](../../../Docs/architecture/player-ui-api.md#현재-hud-입력표시-흐름)를 참고하세요.
+**표시 Frame의 Client 전송을 연결했습니다.** `TurretPresentationReplication`이 Host source와 Client replica를 연결하고, App이 별도 제한 채널을 소유합니다. 실제 UTP에서 최대 payload·최신 합치기·세대/충돌·재접속·Client 상태 주입 거부를 확인했습니다. Client는 수신 전 대기로 표시하며 로컬 D 초기값을 진짜처럼 보여주지 않습니다. 원격 B actor 및 D의 실제 표현/전투 복제와 이 표시 전송은 서로 다른 책임입니다. 최신 Windows 두 프로세스에서도 production Client 요청→Host 실제 D 처리, 전체 표시 Frame 해시 일치·종료/재시작·실행 중 Client 연결 해제를 확인했습니다. Host interaction actor는 명시적 개발 fixture이므로 B의 실제 원격 Player 복제까지 통과했다는 의미는 아닙니다. [이슈별 감사·직접 확인](../../../Docs/planning/2026-10-15-core-sprint-review-handoff.md)과 [HUD API](../../../Docs/architecture/player-ui-api.md#현재-hud-입력표시-흐름)를 참고하세요. PL 요청으로 수동 화면 인수는 PL에게 맡깁니다.
 
 AppRoot.Update는 App 소유 네트워크 큐를 게임시간 정지와 무관하게 Pump합니다. OnApplicationQuit/OnDestroy는 같은 Dispose를 호출하며, Editor의 AppPlayModeShutdown은 ExitingPlayMode에서 Scene 파괴 전 정리를 시작합니다. 자세한 단계·커밋·실패/수정 증거는 위 스프린트 기록을 확인하세요.
 

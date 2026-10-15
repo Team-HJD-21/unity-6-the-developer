@@ -132,9 +132,11 @@ Core의 `TurretMatchBinding.BindCommands`에는 현재 권한/실행 상태·참
 
 `TurretCommandRequest`는 SetActivation, StartAutoActivation, UpgradeLevel/DowngradeLevel, ApplyUpgrade/DowngradeUpgrade를 표현한다. 실제 D 처리 결과는 `TurretCommandResult`로 돌려준다. 같은 요청 GUID를 재전송하면 최초 확정 결과를 재사용한다. 다른 의도를 같은 GUID로 보내면 RequestConflict다. Accepted는 CU 자동 작업의 시작, Applied는 즉시 적용이며 두 상태를 혼동하지 않는다. 체력 수리·임의 피해·생성 명령은 이 API에 포함하지 않았다.
 
-Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Dispose한다. Client/종료 상태에서 직접 D 쓰기·공격은 허용하지 않는다. 자동 큐/예약 해제와 개체 체력·강화 초기화는 다른 책임이며 후자를 이 lease가 수행하지 않는다. 독립 D 테스트 Scene은 기존 로컬 동작을 유지한다. 원격 명령 전송·HUD 입력·표시 Frame 전송은 구현/검증했고 최신 두 실행 파일 검증은 진행 중이다.
+Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Dispose한다. Client/종료 상태에서 직접 D 쓰기·공격은 허용하지 않는다. 자동 큐/예약 해제와 개체 체력·강화 초기화는 다른 책임이며 후자를 이 lease가 수행하지 않는다. 독립 D 테스트 Scene은 기존 로컬 동작을 유지한다. 원격 명령 전송·HUD 입력·표시 Frame 전송과 실제 Windows 두 프로세스 검증을 수행했다. 개발 actor fixture/실제 B 연계의 구분과 인수 상태는 [이슈 감사](../planning/2026-10-15-core-sprint-review-handoff.md)를 따른다.
 
 입력 소비자용 `ITurretCommandRequester.TrySubmit`은 **큐 접수 여부**, `ResultReceived`는 서버 결과다. `TryRetry(requestId)`는 미확정 의도를 같은 GUID로만 재전송한다. 응답이 없다고 미실행으로 단정하지 않으며, InProgress는 Pending을 끝내지 않는다. 기본 미확정 요청 한도는 64개다. Match별 gateway는 종료 때 Dispose하고 App 연결의 transport를 대신 파괴하지 않는다. 실제 UTP transport/gateway·정식 Scene 자동 조립·Host HUD 버튼 연결을 검증했다.
+
+현재 준비 세대의 실제 참가자가 다른 Match 요청을 보내면 `DifferentMatch`를 반환한다. 알 수 없는 연결/지난 준비 세대는 실행 전에 버린다. Client requester 자체도 현재 Match/로컬 참가자가 아닌 의도는 접수하지 않는다.
 
 공용 ON/OFF·CU 자동 요청·승급·강화/강등은 모두 참가자에게 허용하기로 확정했다. Host는 `IPlayerInteractionSource`의 최신 권위 상태와 실제 대상 위치로 거리·생존·조작 상태를 검사한다. 제공자가 없으면 AuthorityActorUnavailable로 거부한다. `PlayerInteractionRegistry.Register`의 lease는 B의 서버 actor 수명에 연결하고 교체 전 이전 등록을 해제한다. Client payload의 좌표/생존 주장이나 PlayerStart로 이 원본을 대신하지 않는다.
 
@@ -180,4 +182,4 @@ Controller 표시에는 참조한 `RegionGridId`·`RegionRevision`도 담는다.
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.
 - 살아 있는 Player가 CU의 interactionDistance 안에 있고 조작 가능할 때 자동 활성화를 요청할 수 있다. 재실행 대기/진행 중 거부·전력·우선순위는 D Controller가 소유한다.
 - HUD actor는 `ILocalPlayerActorConsumer`의 PrepareLocalActor/BindLocalActor/UnbindLocalActor로 명시한다. 실제 Scene에서 대기·교체·다른 Match 해제 거부·HUD 비활성/재활성을 검증했다. UI가 actor를 생성/파괴하지 않는다.
-- 현재 정식 CU/터렛 입력은 Host 명령 경계를 사용한다. 실제 버튼·actor/요청 수명 및 표시 Frame의 UTP 전송은 검사했고, 최신 Windows 두 프로세스·실제 원격 actor 통합·최종 해상도별 시각 인수는 아직 남아 있다.
+- 현재 정식 CU/터렛 입력은 Host 명령 경계를 사용한다. 실제 버튼·actor/요청 수명·UTP 전송과 Windows 두 프로세스에서의 전체 Frame 수신을 검사했다. 실제 B 원격 actor 통합·최종 해상도별 시각 인수는 남아 있으며 PL이 수동 확인을 담당한다.
