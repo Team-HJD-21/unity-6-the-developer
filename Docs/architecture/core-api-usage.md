@@ -1,10 +1,12 @@
 # Core API 호출과 소유권 규약
 
-기준일: 2026-10-08 · 상태: 현재 코드 기준 · 관련 Issue: #445
+기준일: 2026-10-15 · 상태: 현재 작업 브랜치 기준 · 관련 Issue: #445, #442, #495, #496, #526–#528
 
 팀원이 Player·Turret·Enemy를 Core에 연결할 때 사용할 계약과 종료 책임을 정리한다. 명명 규칙은 [Convention](naming-and-architecture-conventions.md), 타입·실행 흐름은 [Core README](../../Assets/Scripts/Core/README.md)를 따른다. 아래의 공개 계약이 모두 출시용 게임 규칙을 구현했다는 뜻은 아니다.
 
 ## 호출 방향과 상태 소유권
+
+현재 지역/네트워크/정식 Encounter API는 [스프린트 API 보충](core-sprint-region-and-request-api.md)을 함께 확인한다. 기존 문자열 메서드는 정식 요청으로 변환하는 호환 진입점이며, 별도 생성 경로가 아니다.
 
 이전 `Global` 계열과의 대응은 책임을 이해하기 위한 것이며 상속·호환 계보가 아니다. 신규 구현은 해당 레거시를 호출하지 않는다.
 

@@ -165,7 +165,17 @@ flowchart LR
 
 ## 구현하지 않은 지표 / 별도 인수
 
+10월 15일 정식 Encounter API에 GUID RequestId 기반 중복 실행 방지를 추가했다. 통계의 정수 RequestId는 여전히 실행 상관 번호이며 GUID/E PlanId와 다르다. 아래 기존 지표의 미구현 표기는 정식 API의 중복 Ledger까지 미구현이라는 뜻이 아니다. [정식 요청 규약](../architecture/core-sprint-region-and-request-api.md)
+
 실제 후보별 셀 점유/전선 거리/ID 순위·제외 사유·배정은 이제 Snapshot Inspector에서 확인한다. 가상의 통합 위험 점수, 공식 PlanId·중복 실행 방지, 피해/DPS/전술 압력·우세도는 여전히 N/A다. 연결 경고는 SpawnPoint ID/위치, topology 부족, OOB, 진단 소스 수와 TargetableComponent 존재를 검사하며 공격 성공까지 인증하지 않는다. 정확한 snapshot 발행 timestamp는 없으므로 observed age와 구분한다.
+
+## 2026-10-15 지역 정책 비교
+
+Battlefield 패널의 **지역 Grid · 점령 원본**에서 Static/Dynamic 모드를 선택한다. 기본값은 Static이며 변경/설정 다시 읽기는 확인 후 새 Grid 세대로 적용한다. Static으로 돌아가면 첫 구역부터 적용하므로 구역 밖 활성 터렛은 잠기고 꺼질 수 있다.
+
+`Scene 점령 Grid`는 Match가 확정한 셀을 녹색으로 표시한다. `임시 판정 삼각형`은 Dynamic 입력 계산 자료를 별도로 표시한다. 셀 원본은 RegionRuntime이고 Editor가 점령을 계산해 저장하지 않는다. Battlefield 참가자 밀도 Grid와 다른 데이터다. Dynamic에서는 터렛을 지역 잠금으로 제한하지 않고, OFF/파괴 시 점령만 회수하며 남은 활성/전력을 유지한다.
+
+실제 Initial_Stage의 정책 전환·3개 활성/1개 OFF는 자동 검증했다. Scene Drawer의 색상/겹침·해상도별 시각 인수와 실제 Host/Client 지역 전송은 별도다. [API·경계](../architecture/core-sprint-region-and-request-api.md)
 
 ## 사용성 레퍼런스
 
