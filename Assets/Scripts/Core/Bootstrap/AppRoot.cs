@@ -19,11 +19,23 @@ namespace TeamHJD.Game.Bootstrap
         internal AppServices Services { get; private set; }
         public MatchId CurrentMatchId => _currentMatch == null ? default : _currentMatch.Config.MatchId;
         public INetworkSession NetworkSession => Services?.NetworkSession;
+        public NetworkMatchCoordinator NetworkMatches => Services?.NetworkMatches;
 
         public void AttachNetworkSession(INetworkSession session)
         {
             ThrowIfUnavailable();
             Services.AttachNetworkSession(session);
+        }
+
+        public NetworkMatchCoordinator AttachNetworkMatchTransport(IMatchLifecycleTransport transport)
+        {
+            ThrowIfUnavailable();
+            return Services.AttachNetworkMatchTransport(transport);
+        }
+
+        private void Update()
+        {
+            if (!_isDisposed && Services != null) Services.PumpNetwork();
         }
 
         private void OnEnable()

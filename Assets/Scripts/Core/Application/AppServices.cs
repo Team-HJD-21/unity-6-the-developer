@@ -16,6 +16,8 @@ namespace TeamHJD.Game.Application
         public ISceneFlow SceneFlow { get; }
         public MatchSessionFactory MatchSessions { get; }
         public INetworkSession NetworkSession { get; private set; }
+        public NetworkMatchCoordinator NetworkMatches { get; private set; }
+        private IMatchLifecycleTransport _matchTransport;
 
         public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority,
             INetworkSession networkSession = null)
@@ -38,11 +40,36 @@ namespace TeamHJD.Game.Application
             NetworkSession = session;
         }
 
+        /// <summary>성공한 연결의 전송 Port 소유권을 전달합니다. 실제 Match 시작은 별도 명시 API입니다.</summary>
+        public NetworkMatchCoordinator AttachNetworkMatchTransport(IMatchLifecycleTransport transport)
+        {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (transport == null) throw new ArgumentNullException(nameof(transport));
+            if (NetworkSession == null) throw new InvalidOperationException("Attach the app network session first.");
+            if (NetworkMatches != null) throw new InvalidOperationException("The app match transport is already attached.");
+            var matches = new NetworkMatchCoordinator(NetworkSession, transport);
+            _matchTransport = transport;
+            NetworkMatches = matches;
+            return matches;
+        }
+
+        public void PumpNetwork()
+        {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (_matchTransport is INetworkMessagePump pump) pump.Pump();
+        }
+
         public void Dispose()
         {
             if (_isDisposed) return;
             _isDisposed = true;
             List<Exception> errors = null;
+            var matches = NetworkMatches;
+            var transport = _matchTransport;
+            NetworkMatches = null;
+            _matchTransport = null;
+            DisposeIfNeeded(matches, ref errors);
+            DisposeIfNeeded(transport, ref errors);
             DisposeIfNeeded(Profiles, ref errors);
             DisposeIfNeeded(Content, ref errors);
             DisposeIfNeeded(Platform, ref errors);

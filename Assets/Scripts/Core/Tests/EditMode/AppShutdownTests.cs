@@ -23,9 +23,13 @@ namespace TeamHJD.Game.Tests.EditMode
             var profiles = new ProbeProfiles { Fail = failProfile };
             var scenes = new ProbeScenes();
             var network = new ProbeNetwork();
-            root.Initialize(new AppServices(profiles, new FakeContentCatalog(),
+            var services = new AppServices(profiles, new FakeContentCatalog(),
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
-                scenes, new LocalAuthority(), network));
+                scenes, new LocalAuthority(), network);
+            root.Initialize(services);
+            var transport = new ProbeTransport();
+            root.AttachNetworkMatchTransport(transport);
+            services.PumpNetwork();
             try
             {
                 if (failProfile) Assert.Throws<AggregateException>(() => root.Dispose());
@@ -34,6 +38,9 @@ namespace TeamHJD.Game.Tests.EditMode
                 Assert.That(scenes.DisposedCount, Is.EqualTo(1));
                 Assert.That(network.DisposedCount, Is.EqualTo(1));
                 Assert.That(root.NetworkSession, Is.Null);
+                Assert.That(root.NetworkMatches, Is.Null);
+                Assert.That(transport.Pumps, Is.EqualTo(1));
+                Assert.That(transport.Disposals, Is.EqualTo(1));
                 Assert.That(root.CurrentMatchId.IsEmpty, Is.True);
                 Assert.DoesNotThrow(() => root.Dispose());
                 Assert.That(scenes.DisposedCount, Is.EqualTo(1));
@@ -78,6 +85,16 @@ namespace TeamHJD.Game.Tests.EditMode
             public bool TryStartClient() => false;
             public void Shutdown() { }
             public void Dispose() => DisposedCount++;
+        }
+        private sealed class ProbeTransport : IMatchLifecycleTransport, INetworkMessagePump, IDisposable
+        {
+            public int Pumps, Disposals;
+            public event Action<ulong, NetworkMatchDescriptor> DescriptorReceived { add { } remove { } }
+            public event Action<ulong, MatchLifecycleSignalKind, MatchLifecycleSignal> SignalReceived { add { } remove { } }
+            public bool TrySendDescriptor(ulong connectionId, NetworkMatchDescriptor descriptor) => false;
+            public bool TrySendSignal(ulong connectionId, MatchLifecycleSignalKind kind, MatchLifecycleSignal signal) => false;
+            public void Pump() => Pumps++;
+            public void Dispose() => Disposals++;
         }
     }
 }
