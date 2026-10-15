@@ -73,6 +73,20 @@ namespace TeamHJD.Game.Infrastructure.Tests
             Assert.That(_session.TryStartHost(), Is.False);
             Assert.That(_manager.IsListening, Is.False);
         }
+        [Test]
+        public void DisposalNotifiesTerminalStateBeforeRemovingObservers()
+        {
+            _session = new NgoNetworkSession(_manager);
+            int notifications = 0;
+            _session.StateChanged += state =>
+            {
+                Assert.That(state, Is.EqualTo(NetworkConnectionState.Disposed));
+                Assert.That(_session.State, Is.EqualTo(state));
+                notifications++;
+            };
+            _session.Dispose(); _session.Dispose();
+            Assert.That(notifications, Is.EqualTo(1));
+        }
 
         [UnityTest]
         public IEnumerator ExplicitHostStart_RequiresNoOtherParticipant_AndStops()

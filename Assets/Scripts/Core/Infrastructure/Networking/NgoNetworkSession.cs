@@ -138,6 +138,7 @@ namespace TeamHJD.Game.Infrastructure
             if (_isDisposed) return;
             _isDisposed = true;
             State = NetworkConnectionState.Disposed;
+            Notify(StateChanged, State);
             if (_manager != null)
             {
                 _manager.OnServerStarted -= OnServerStarted;
