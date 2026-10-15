@@ -33,7 +33,7 @@ flowchart LR
 
 위 S와 T 경로는 선택한 모드 하나만 실행한다. Dynamic은 지역 잠금 없이 활성화로 점령한다. OFF·파괴 시 현재 입력으로 다시 계산해 점령을 회수하지만 남은 터렛의 활성/전력 예약은 유지한다. 과열은 OFF가 아니므로 점을 제거하지 않는다. 삼각형 자체는 정확한 점유영역이 아니며 최종 결과는 셀 집합이다.
 
-GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revision은 같은 Grid 안의 변경 순서다. MatchDescriptorId는 같은 Match ID라도 다른 준비 시도와 분리한다. Client 모델은 이전 준비·이전 Grid 세대·과거 revision 및 동일 revision의 상충 결과를 거부한다. 실제 NGO/UTP의 초기·변경·Reset·종료/재시작 검사는 통과했다. Initial_Stage Host 조립도 추가했으며 별도 두 실행 파일의 Client Scene 확인은 남아 있다.
+GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revision은 같은 Grid 안의 변경 순서다. MatchDescriptorId는 같은 Match ID라도 다른 준비 시도와 분리한다. Client 모델은 이전 준비·이전 Grid 세대·과거 revision 및 동일 revision의 상충 결과를 거부한다. 실제 NGO/UTP의 초기·변경·Reset·종료/재시작 검사와 Windows 두 실행 파일의 Initial_Stage 지역 수신·정적/동적 점령·회수·재시작 검사를 통과했다. 원격 Feature 명령과 전체 협동 전투 완료를 뜻하지 않는다.
 
 지역은 전체 Snapshot으로 전송한다. 소속은 RLE, 점령은 bitset이며 Client에서 삼각형을 복원하지 않는다. 큐에 아직 보내지 않은 전체 상태는 최신 상태로 합친다. 미접수 전송은 다음 App Pump에서 재시도하며 구식 변경량을 무제한 쌓지 않는다. 이미 전송 중인 메시지는 바꾸지 않는다. 이 처리와 달리 준비/시작/종료는 순서를 유지하고 합치지 않는다.
 
@@ -68,7 +68,7 @@ EncounterRequestResult result = requests.Submit(request, verifiedIssuer);
 
 `NetworkMatchCoordinator.TryPrepare(config, grid, mode, participants)`는 실제 Host만 설정을 확정한다. 각 인스턴스의 Feature 준비 후 `MarkLocalReady()`, Host가 `TryStart()`를 호출한다. `Preparing/Started/Ended`는 조립부의 Feature 연결/해제 진입점이다. Client는 Host의 Descriptor를 사용하며 로컬 Match 설정을 생성하지 않는다. `TryResolveParticipant(verifiedConnectionId, out playerId)`는 실제 발신 연결을 참가자에 대응시킨다.
 
-`NgoMatchLifecycleTransport`는 실제 NGO가 시작된 뒤 하나만 조립한다. `AppRoot.AttachNetworkMatchTransport(transport)`로 전송/조율기 소유권을 넘기면 AppRoot.Update가 게임시간 정지와 무관하게 Pump한다. 독립 테스트처럼 App에 붙이지 않은 소유자는 직접 Pump한다. 명시적 준비·시작/종료 및 RLE 지역 정의를 전송하며, 큰 설정은 제한된 조각 큐로 전달한다. 두 SDK 인스턴스의 실제 UTP 수명/지역 패킷 검사와 Initial_Stage의 Host 연결·시작·종료·재시작 검사는 통과했다. 별도 두 실행 파일의 Client Scene·최소 Core NetworkObject 검증은 남아 있다.
+`NgoMatchLifecycleTransport`는 실제 NGO가 시작된 뒤 하나만 조립한다. `AppRoot.AttachNetworkMatchTransport(transport)`로 전송/조율기 소유권을 넘기면 AppRoot.Update가 게임시간 정지와 무관하게 Pump한다. 독립 테스트처럼 App에 붙이지 않은 소유자는 직접 Pump한다. 명시적 준비·시작/종료 및 RLE 지역 정의를 전송하며, 큰 설정은 제한된 조각 큐로 전달한다. 두 SDK 인스턴스의 실제 UTP 검사에 이어 **별도 Windows 프로세스 두 개**로 실제 Scene·최소 Core NetworkObject·지역 상태·종료/재시작을 확인했다. 정상 Client Feature 요청·거부 경계의 실제 연결은 후속 작업이다.
 
 권장 조립 순서는 AttachNetworkSession → 명시적 TryStartHost/TryStartClient → 연결 성공 후 NgoMatchLifecycleTransport 생성/AttachNetworkMatchTransport → TryPrepare/Feature 준비/MarkLocalReady/TryStart다. 서버 전용 연결과 Match 설정을 UI가 생성하지 않는다. Descriptor의 참가자 순서는 Host Config의 Player 순서를 보존하며 TryGetSlot으로 확인할 수 있다. 이는 프로세스마다 달라질 수 있는 Unity InstanceID와 다르다.
 
@@ -86,6 +86,22 @@ App 정리는 Match의 Feature 바인딩과 자원을 먼저 해제하고 네트
 
 `SinglePlayerHost` 진입 설정만 동일한 연결→준비→시작 API를 순서대로 호출한다. `Manual`은 Inspector의 별도 버튼 또는 게임 흐름 코드에서 호출한다. Client 진입은 연결만 열고 Host 설정을 기다린다. Stage/content version·PlayerStart 슬롯·필수 제작 연결 검사가 실패하면 준비/실행을 중단한다. `peer-{connectionId}`는 Match-local 식별자일 뿐 Steam 계정 인증 결과가 아니다.
 
+`NgoNetworkSession.ConnectedPeerIds`는 SDK의 접속 완료 콜백을 받은 연결만 복사해 제공한다. NGO Scene 관리가 켜져 있을 때 이 콜백은 Scene 동기화 완료 뒤 발생한다. Scene의 준비 API는 승인만 된 연결과 이 목록이 다르면 거부한다. 어댑터는 연결 전에 App에 붙이는 것이 정식 경로다. 외부에서 이미 열린 Host를 관찰하는 경우 과거 원격 콜백을 임의로 복원하거나 Scene 준비를 추정하지 않는다.
+
+### 최소 Match 네트워크 객체
+
+`Assets/Prefabs/Core/NetworkMatchAnchor.prefab`은 실행 중 Match당 Host가 하나만 생성한다. `NetworkMatchAnchorState` 한 NetworkVariable에 MatchId·DescriptorId·Stage·Seed와 지역 GridId/revision/모드/점령 셀 수를 원자적으로 투영한다. Client 쓰기는 불가하며 **전체 지역 원본이나 두 번째 Match 상태 관리자가 아니다.** 실제 Grid payload는 기존 지역 채널이 계속 전달한다.
+
+논리 EntityId는 `match-anchor/{descriptorId}`이고 SDK NetworkObjectId와 같은 값이 아니다. Host는 명시적으로 주입한 NGO 관리자의 InstantiateAndSpawn을 사용한다. Match 종료에 구독을 해제하고 Despawn하며 다음 Match는 새 객체/DescriptorId를 사용한다. 이 객체가 보인다고 상대 Player/Turret 전투 복제가 완료된 것은 아니다.
+
+### 독립 실행 파일 검증
+
+1. Unity CLI로 `TeamHJD.Game.Editor.NetworkSceneSetup.ConfigureInitialStage`를 실행하면 기존 Scene의 프리팹 참조를 연결한다. 일반 사용 때 매번 실행하지 않는다.
+2. `TeamHJD.Game.Editor.CoreNetworkBuildPipeline.BuildWindowsDevelopment`가 현재 Build Settings의 Initial_Stage·Spaceship으로 Windows 개발 빌드를 만든다.
+3. PowerShell에서 `./tools/Test-CoreNetworkPair.ps1`을 실행한다. 자신이 시작한 Host/Client PID만 관리하며 결과와 실패 로그는 ignored `Docs/Local/Validation/CoreSprint20261015/NetworkPair/<run>/`에 보존한다.
+
+개발 빌드의 `CoreNetworkBuild`는 전용 CLI 옵션이 있을 때만 동작한다. 실제 Scene 조립 API를 호출하고 별도 진단 채널로 결과를 대조한다. Match 설정 전체와 지역 Snapshot의 해시, 실제 최소 객체 ID, Client의 로컬 슬롯/무권한 상태, 정적→동적→회수→종료→재시작을 확인한다. 일반 실행/Release에는 검증 루프를 시작하지 않으며 게임 진행 정책을 대체하지 않는다. Loopback 검증은 LAN/인터넷·지연·손실·GUI 인수와 구분한다.
+
 Host는 Descriptor의 전체 참가자 상태를 가지되 **현재 각 인스턴스에는 자기 로컬 Player actor만 생성한다**. `MatchPlayerActorScope.SpawnLocalPlayer`와 `IPlayerNetworkMatchBinding`은 Client의 로컬 actor를 권한 MatchSession 없이 연결한다. 상대 actor 이동/공격 복제와 Host의 원격 Player 위치 수집은 B의 후속 Feature 연결이 필요하다. 가짜 원격 좌표를 Battlefield에 채우지 않는다.
 
 `IAppOwnedEncounterMatchConsumer.UseAppNetworkOwnership()`는 Match 바인딩 전에 호출한다. 이어서 `BindAuthorityMatch(matchId, verifiedHostPlayerId, latestProvider)`로 Host 요청을 연결한다. E의 자동 Spawn/UI는 연결을 개설하지 않으며 테스트 OnGUI도 표시하지 않는다. Unbind 시 E의 `EnemySpawnExecutor.DespawnForMatch`가 해당 Match의 적만 제거한다. 실제 Spawn/Despawn 구현은 계속 E가 소유한다.
@@ -99,4 +115,4 @@ NGO 연결을 종료했다가 다시 시작할 때도 같은 Port를 유지할 �
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.
 - 살아 있는 Player가 CU의 interactionDistance 안에 있고 조작 가능할 때 자동 활성화를 요청할 수 있다. 재실행 대기/진행 중 거부·전력·우선순위는 D Controller가 소유한다.
 - HUD actor는 `ILocalPlayerActorConsumer`의 PrepareLocalActor/BindLocalActor/UnbindLocalActor로 명시한다. 실제 Scene에서 대기·교체·다른 Match 해제 거부·HUD 비활성/재활성을 검증했다. UI가 actor를 생성/파괴하지 않는다.
-- 현재 CU/터렛 입력은 D 로컬 API에 연결됐다. Client 로컬 actor 조립 코드는 추가했으나 별도 Client Scene 인수·원격 공용 요청·최종 해상도별 시각 인수는 미완료다.
+- 현재 CU/터렛 입력은 D 로컬 API에 연결됐다. 별도 Client 실행 파일의 로컬 슬롯 actor와 지역 읽기 연결은 확인했다. 원격 공용 요청·Client HUD 명령/거리 검증·최종 해상도별 시각 인수는 미완료다.

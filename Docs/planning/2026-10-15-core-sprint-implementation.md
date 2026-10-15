@@ -38,12 +38,12 @@
 | --- | --- | --- |
 | B1 | 공통 식별/요청·정리 안전성 | App/Match 정리, 요청 Context/중복 Ledger 구현. 최종 Feature별 결과·전송 연결은 B4 |
 | B2 | 지역 데이터/Runtime·정적 어댑터 | Match/D 연결·Initial_Stage 정적 기본 시작 검증 완료 |
-| B3 | 네트워크 Match 기반 | NGO·App 소유권·시작 설정·준비/명시 시작/종료·실제 UTP 전송 및 Initial_Stage Host 조립 검증. Client Scene 코드 추가. 별도 두 실행 파일·최소 Core NetworkObject 검증 미완료 |
+| B3 | 네트워크 Match 기반 | NGO·App 소유권·Scene-ready 준비/명시 시작/종료·실제 UTP 및 Windows 두 실행 파일 검증. 최소 Match 객체 생성/상태/제거·재생성 확인. 원격 정상 Feature 요청은 B4, 실제 Scene의 실행 중 연결 유실 인수는 추가 대상 |
 | B4 | D/E 실제 요청 | D 지역 접근·Match 수명, E 타입 요청·최신 조회·중복 방지·App 연결 유지/Match별 적 제거 구현. 원격 요청·터렛 명령 gateway 미완료. 생성 추적 수 검사 1회 불일치는 별도 추적 |
 | B5 | 동적 판정·Debugger | 셀 투영·점령 회수·Debugger/Scene 구현. 실제 모드 전환·3개 ON/1개 OFF 검사 통과 |
-| B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 전송 합치기·App 수명·Client Scene 읽기 바인딩 구현. 실제 UTP 두 SDK에서 검증. 정식 Scene/별도 실행 파일 검증은 B8 |
-| B7 | HUD | 정책/점령·CU 자동 활성화·로컬 actor 주입과 Client의 세션 없는 입력 수명 구현. 로컬 Scene/Client 슬롯 단위 검증. 원격 공용 요청·별도 Client Scene 인수는 미완료 |
-| B8 | 통합 검증/문서 | 실제 두 SDK·지역·Host Scene·재접속·종료 검사 및 저장 Scene 최종 8/8 통과. 앞선 7/8 실행의 생성 수 불일치 원인 미확정. 독립 실행 파일 2개·최소 Core 객체·시각 인수 미완료 |
+| B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 합치기·App 수명·Client 읽기 모델 구현. 두 SDK 및 Windows 실제 Scene 두 프로세스에서 정적/동적·회수·종료/재시작과 전체 해시 일치 확인 |
+| B7 | HUD | 정책/점령·CU 자동 활성화·로컬 actor 주입·Client 입력 수명 구현. 로컬 HUD 검사와 별도 Client Scene의 슬롯 actor/읽기 연결 확인. 원격 HUD 명령·거리·시각 인수 미완료 |
+| B8 | 통합 검증/문서 | 실제 두 SDK·저장 Scene 최종 8/8·연결 회귀 10/10 및 Windows 두 프로세스 2회 통과. 생성 수 불일치 1회 원인 미확정. 원격 Feature·실행 중 유실·시각 인수와 전체 이슈 감사는 미완료 |
 
 ## PR·커밋 경계
 
@@ -82,6 +82,8 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 - `60b324d0` — E의 App 연결 소유권과 Match별 적 제거를 분리.
 - `98a6381a` — 정식 Host/Client Scene 조립·Inspector API·실제 Host 수명 검사.
 - `cd64ae84` — Initial_Stage의 SinglePlayerHost 전환·PlayerStart 슬롯 1 연결.
+- `0775a18d` — SDK Scene-ready 참가자 집합·최소 Match 객체와 실제 Scene 제작 연결.
+- `bc9f3d26` — 실제 Build Settings의 Windows 빌드·독립 Host/Client 검증 도구.
 - `71f3c0d3` — AppQuit/Editor 재생 종료에서 Scene 파괴 전 App 정리.
 
 추가 커밋과 마지막 검증 결과는 해당 배치 검증 후 기록한다. 앞선 테스트 결과를 이후 미검증 코드 전체의 완료 근거로 재사용하지 않는다.
@@ -156,6 +158,8 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 | `authored-network-scene-regression.xml` | 7 통과 / 1 실패 | 실제 저장 Scene에서 생성 결과 10이지만 Executor 추적 수 증가 0인 불일치 1회 |
 | `authored-encounter-count-diagnostic.xml` | 1/1 통과 | 객체 ID 진단 추가 후 실패 검사 단독 통과. 원인 해결 증거로 간주하지 않음 |
 | `authored-network-scene-count-diagnostic.xml` | 8/8 통과 | 같은 Scene 회귀 묶음 재검사 통과. 이전 불일치 원인은 아직 미확정 |
+| `network-scene-anchor-host.xml` | 1/1 통과 | 실제 Host 최소 NetworkObject 생성·지역 메타데이터 변경·제거·새 객체 재시작 |
+| `scene-ready-peer-regression.xml` | 10/10 통과 | Scene-ready 연결 추적 추가 후 NGO 소유권·수명/지역 전송·재접속 회귀 |
 
 새 Scene Drawer 작성 중 Unity 6의 EntityId 이름 충돌을 발견해 Domain 별칭으로 수정했다. 컴파일 실패한 실행은 통과 수치에 포함하지 않는다.
 
@@ -206,3 +210,21 @@ E는 `IAppOwnedEncounterMatchConsumer`로 연결 소유권과 권한 참가자�
 제작 도구 `NetworkSceneSetup`은 기존 Scene NGO를 재사용하고 PlayerStart 슬롯 1을 추가한다. Inspector용 UI 첫 컴파일에서 Application namespace 충돌이 있어 UnityEngine.Application으로 수정했다. 실패한 `network-scene-authoring.log`와 수정 후 로그를 따로 보존하며 컴파일 실패를 통과로 기록하지 않는다. 실제 Scene은 SinglePlayerHost로 저장했고 제작 저장 시 생긴 무관한 TMP 기본값 override는 제외했다. 기존 Scene/Prefab GUID와 타일맵은 변경하지 않았다.
 
 저장된 Scene 회귀 묶음은 최종 8/8 통과했다. 다만 첫 묶음 실행에서 `EncounterRequestIntegrationTests`의 실제 추적 수 증가가 기대 10 대신 0인 불일치가 한 번 발생했다. 당시 Spawn 결과/로그는 10이었으나 실패 시 객체 ID 진단은 없었다. 진단을 추가한 단독 1/1·같은 묶음 8/8은 통과했다. **원인 재현·해결로 단정하지 않으며 생성 누계와 생존/추적 상태, 실행 순서 영향을 다음 검토에서 구분한다.** 이 결과만으로 이슈를 닫거나 PR을 만들지 않는다.
+
+## 실제 Windows Host/Client 연결 — 추가 진행
+
+`NetworkMatchAnchor`는 최소 Match-scope NetworkObject다. 전체 지역 원본은 기존 RegionRuntime/복제 채널에 남기고 객체는 식별자·시작 메타데이터·지역 revision/셀 수만 읽기 전용으로 표시한다. Host의 명시적 NGO 관리자에서 생성하며 Match 종료 때 구독 해제/제거한다. `NetworkSceneSetup`은 기존 DefaultNetworkPrefabs에 등록된 이 프리팹과 실제 Scene 참조를 연결한다.
+
+현재 접속자 확정은 SDK Scene 동기화 완료 콜백을 받은 집합을 사용한다. 승인만 된 연결과 Scene-ready 목록이 다르면 준비 API는 거부한다. 연결 전에 어댑터를 붙이는 정식 흐름을 대상으로 하며 외부 Host의 과거 원격 준비 상태를 추정하지 않는다.
+
+Windows 개발 빌드는 실제 Build Settings의 Initial_Stage와 Spaceship을 사용한다. 최소 테스트 Scene으로 바꾸지 않았다. 개발 전용 CoreNetworkBuild + tools/Test-CoreNetworkPair.ps1이 명시적 API로 연결하고 결과를 검사한다. 첫 컴파일의 Application 이름·D Contracts 참조/using 누락은 수정했으며 실패한 authoring 로그도 보존한다.
+
+첫 독립 실행 검증 `NetworkPair/20261015T085549Z-feafcedf`는 Host PID 22024 / Client PID 16588, 두 종료 코드 0, 같은 Build GUID `867737fe6b324c059259444c1332daf0`으로 성공했다. Client는 권한 MatchSession 없이 자기 actor 하나만 가지며 전체 Descriptor·지역 Snapshot 해시와 NetworkObjectId가 Host와 일치했다. 정적 41셀 → 동적 23셀 → OFF 후 0셀 회수, 종료 시 actor/지역/최소 객체 정리, 새 Match에서 정적 41셀·새 객체 ID 3→4를 확인했다. Client가 동적 판정 삼각형이나 쓰기 권한을 갖지 않음도 검사했다.
+
+두 전체 endpoint 로그에서 Exception/Error/LogError/LogException signature는 없었다. 종료 때 Unity의 `GarbageCollector disposing of ComputeBuffer` 문구는 두 로그 모두 있었다. Assets/Scripts에는 해당 버퍼 사용이 없었으며 원인은 미확정이다. 이를 무경고 실행으로 표현하지 않고 그래픽 자원 종료 경고로 별도 관측한다. 이 검증은 전체 Player/Turret 전투 복제, LAN/인터넷, GUI/영상 인수를 뜻하지 않는다.
+
+최종 실행 `NetworkPair/20261015T090046Z-17b9ee25`는 Host PID 13348 / Client PID 23468, 두 종료 0, Build GUID `c76dfcbba1144143ad1de8bc6bef29af`로 같은 여섯 단계 검사를 다시 통과했다. 전체 로그 스캐너도 오류 표식 0/ComputeBuffer 종료 경고 2를 verified.json에 기록했다. Source Scene은 기존 HUD RectTransform 값을 보존했고 실제 변경은 Match anchor 참조 한 줄뿐이다. 빌드 크기는 311,257,222 bytes다.
+
+다음 핵심 묶음은 D의 안정적인 논리 ID 대응·Match 수명 정리·명령/구조화된 결과·실제 발신자 권한 gateway, HUD의 정식 요청 연결이다. 원격 거리가 필요한 요청은 B의 신뢰 가능한 Player 위치 Port와 연결해야 하며 Client가 보낸 좌표를 그대로 믿지 않는다. Player 전체 복제를 A가 임의로 대신 구현하지 않는다. E Encounter는 Host 시스템 요청으로 유지하며 임의 Client Spawn 권한을 열지 않는다. 실행 중 연결 유실과 앞선 생성 추적 불일치도 최종 감사에서 빠뜨리지 않는다. 아직 PR/이슈 종료는 하지 않았다.
+
+권한 확인 질문: 공용 터렛 ON/OFF·CU 자동 활성화 요청을 모든 실제 참가자에게 허용하고 Host가 검증할지, Host만 허용할지를 PL에게 확인 중이다. 답변 전 제품 권한을 확정했다고 쓰지 않는다. 거리 제한이 있는 동작과 전역 공용 명령도 구분해야 한다.
