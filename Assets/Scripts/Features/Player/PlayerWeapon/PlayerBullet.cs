@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -24,6 +25,7 @@ public sealed class PlayerBullet : MonoBehaviour
     [FormerlySerializedAs("targetTag")]
     [SerializeField] private string _targetTag = "Enemy";
     private bool _hasHit;
+    private readonly List<Collider2D> _hitboxes = new();
 
     private void Reset() => CacheReferences();
     private void Awake() => CacheReferences();
@@ -32,16 +34,28 @@ public sealed class PlayerBullet : MonoBehaviour
     {
         if (_body == null || _body.gameObject != gameObject) _body = GetComponent<Rigidbody2D>();
         if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
+        ConfigureHitboxes();
+    }
+
+    private void ConfigureHitboxes()
+    {
+        _hitboxes.Clear();
+        foreach (Collider2D hitbox in GetComponentsInChildren<Collider2D>(true))
+        {
+            if (hitbox.attachedRigidbody != _body) continue;
+            hitbox.isTrigger = true;
+            _hitboxes.Add(hitbox);
+        }
     }
 
     /// <summary>색상·피해량·월드 방향으로 초기화합니다. 발사자의 이동속도는 전달받지 않습니다.</summary>
     public bool Initialize(Color color, float damage, Vector2 direction)
     {
-        if (_body == null || !PlayerAimUtility.IsValidDirection(direction) ||
+        if (_body == null || _hitboxes.Count == 0 || !PlayerAimUtility.IsValidDirection(direction) ||
             !IsFinite(_speed) || _speed < 0f || !IsFinite(_lifetime) || _lifetime <= 0f ||
             !IsFinite(damage) || damage < 0f)
         {
-            Debug.LogWarning("[PlayerBullet] Rigidbody2D, finite direction, non-negative speed/damage and positive lifetime are required.", this);
+            Debug.LogWarning("[PlayerBullet] Rigidbody2D, attached Collider2D, finite direction, non-negative speed/damage and positive lifetime are required.", this);
             return false;
         }
         _damage = damage;
@@ -65,19 +79,25 @@ public sealed class PlayerBullet : MonoBehaviour
 
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
-    private void OnCollisionEnter2D(Collision2D collision) => ProcessHit(collision.gameObject);
-    private void OnTriggerEnter2D(Collider2D other) => ProcessHit(other.gameObject);
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        // 기존 Collision2D와 같이 Rigidbody 소유자를 대상으로 처리해 자식 Collider의 태그 차이를 피합니다.
+        GameObject target = other.attachedRigidbody != null ? other.attachedRigidbody.gameObject : other.gameObject;
+        ProcessHit(target);
+    }
 
     private void ProcessHit(GameObject target)
     {
         if (_hasHit || target == null || target.CompareTag("Player") || target.CompareTag("Bullet")) return;
+        _hasHit = true;
+        foreach (Collider2D hitbox in _hitboxes)
+            if (hitbox != null) hitbox.enabled = false;
         bool isEnemy = target.CompareTag(_targetTag) || target.transform.root.CompareTag(_targetTag);
         if (isEnemy)
         {
             var health = target.GetComponentInParent<EnemyHealth>();
             if (health != null) health.TakeDamage(Mathf.RoundToInt(_damage));
         }
-        _hasHit = true;
         Destroy(gameObject);
     }
 }

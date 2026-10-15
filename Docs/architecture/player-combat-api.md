@@ -1,7 +1,7 @@
 # Player Combat API
 
 최종 갱신: 2026-10-15
-범위: 기본 무기 사격과 플레이어 탄환. #509 이동속도 가산 버그 수정 기준.
+범위: 기본 무기 사격과 플레이어 탄환. #509 속도 가산 / #510 충돌 밀림 수정 기준.
 
 ## 스크립트별 책임
 
@@ -31,6 +31,10 @@ bool initialized = bullet.Initialize(color, damage, worldDirection);
 정상 초기화 시 방향을 정규화하고 `linearVelocity = direction * speed`를 적용한다.
 속도는 월드 단위/초이며, 수명 종료 또는 유효 충돌 시 탄환이 제거된다.
 
+탄환에는 같은 Rigidbody2D에 속한 Collider2D가 하나 이상 필요하다. Awake/Reset에서
+해당 Collider들을 트리거로 설정하고 목록을 캐시한다. Init 시 Collider가 없으면 실패한다.
+중첩된 별도 Rigidbody의 Collider는 변경하지 않는다.
+
 기존 `InitBullet(WeaponType, Color, float, Vector2, Vector2)` API는 제거했다.
 무기 종류는 PlayerAttack이 색상·피해·발사 간격 선택에 사용한다.
 새 탄환 API에는 무기 종류나 플레이어 속도를 전달하지 않는다.
@@ -48,7 +52,23 @@ bool initialized = bullet.Initialize(color, damage, worldDirection);
 
 현재 사용하지 않는 구형 Monster 감속 주입 주석과 미사용 Slow 필드는 정리했다.
 Cryo 감속은 기존에도 현행 Enemy에 적용되지 않았으며 이번 수정에서 새로 구현하지 않는다.
-탄환·플레이어·몬스터의 물리 충돌 및 밀림은 별도 #510/#511/#514의 검토 범위다.
+플레이어가 몬스터를 직접 미는 현상과 겹침은 별도 #511/#514의 검토 범위다.
+
+## #510 원인과 변경
+
+기존 PlayerBullet 프리팹은 질량 1인 Dynamic Rigidbody2D와 일반 PolygonCollider2D를
+사용했다. 피해 콜백에서 Destroy를 호출해도 그 전에 물리 충돌 반응이 계산돼
+몬스터에게 충격량이 전달될 수 있었다. EnemyHealth.TakeDamage에는 넉백 처리가 없다.
+
+프리팹의 `Is Trigger`를 켜고, 실행 시에도 탄환 Rigidbody 소속 Collider들을 트리거로
+설정한다. 피해 판정은 OnTriggerEnter2D를 사용하므로 물리 충격량을 전달하지 않는다.
+자식 Collider는 attachedRigidbody의 GameObject를 대상으로 해 기존 Collision2D의
+태그/소유자 기준을 유지한다. Player/Bullet은 통과하고, 적은 피해 후 제거하며,
+그 외 장애물에도 탄환을 제거한다. 첫 유효 피격 시 즉시 처리 플래그를 세우고
+탄환 Collider들을 꺼서 중복 콜백 피해를 막는다.
+
+몬스터 AI·Rigidbody·피해 API와 전역 Layer Collision Matrix는 변경하지 않는다.
+고속 탄환이 작은 적을 통과하지 않는지는 Initial 씬의 단발·연사에서 함께 확인한다.
 
 ## 검증
 
@@ -58,6 +78,10 @@ Cryo 감속은 기존에도 현행 Enemy에 적용되지 않았으며 이번 수
 - 실제 PlayerAttack 호출로 정지·이동·역방향·대각선·고속 이동 시 탄환 속도와 물리 이동 확인.
 - 총구 생성 위치, 산탄 수 5, -12.5~12.5도 분산 유지 확인.
 - 0/NaN/Infinity 방향 거부 확인.
+- 자식 Collider를 가진 동적 타깃에 연속 발사해 탄환 피격과 대상 속도·위치 유지 확인.
+- 자식 Player Collider 통과와 일반 장애물에서 탄환 제거 확인.
+- `ServerEnemy_TakesDamageOnceFromTriggerProjectile`는 실제 Initial_Stage Host가 필요한
+  Explicit 테스트다. 서버 적에 피해가 1회 적용되는지 확인한다.
 
 Initial 씬에서 정지·이동 사격 외형과 기존 무기 전환도 별도로 확인한다.
 테스트 코드 추가 자체가 실행 통과 기록은 아니다.
