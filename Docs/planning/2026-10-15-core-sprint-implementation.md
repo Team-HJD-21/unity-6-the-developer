@@ -285,3 +285,13 @@ ON/OFF·CU 자동 활성화·레벨 승급/강등·정의 ID 기반 강화/강�
 B의 `PlayerControlState`는 `IPlayerInteractionActor`를 구현한다. 현재 실제 actor의 XY·HP·CanAct를 읽으며, `PlayerInteractionActorBinding`은 명시적으로 주입한 actor의 PlayerActorIdentity와 제공자 하나를 검사해 registry에 등록한다. actor 검색·생성·복제는 이 바인딩의 책임이 아니다. actor 비활성/파괴·권한 유실·lease 해제 시 조회를 닫는다.
 
 `turret-app-and-actor-scene.xml` 4/4 통과: App Pump/중복 부착 거부/실패 중 전체 Dispose와 실제 Initial_Stage Player 조회·입력 차단·권한 유실·lease 해제, 기존 명령/Host 재시작을 확인했다. 이 시점에는 Match별 명령 gateway의 자동 Scene 조립과 HUD 명령 입력 연결이 아직 남아 있다. 원격 B actor 복제를 구현한 것으로 간주하지 않는다.
+
+### 실제 Scene의 명령 scope 자동 조립
+
+`InitialStageNetworkBinding.OnStarted`는 Scene의 D/Player/지역 조립 후 `TurretCommandSceneScope`를 만든다. Host는 현재 로컬 actor를 등록하고 여섯 공용 명령을 모든 참가자에게 허용하는 거리 정책·D 서비스·gateway를 구성한다. Client는 권위 서비스 없이 requester gateway만 구성한다. App은 실제 전송을 Pump하고 Scene은 제한된 미전송 응답을 Pump한다. Ended/Scene 해제는 gateway와 actor 제공자를 닫은 뒤 나머지 Feature를 정리한다.
+
+`InitialStageNetworkBinding.TurretCommands`가 입력 소비자용 Port다. `RegisterAuthorityPlayerActor(matchId, playerId, actor)`는 B가 Host에 실제 생성한 참가자 actor를 명시적으로 연결하는 API다. 반환 lease는 교체/Despawn 시 해제한다. 현재 Host가 갖지 않은 Client actor를 자동 검색하거나 PlayerStart로 위조하지 않는다. CU의 `IControlUnitInteractionTarget`은 실제 생존/활성 상태와 위치를 조회한다.
+
+검사 `turret-command-scene-scope.xml`은 4 통과/1 실패였다. 이전 fixture는 없는 대상을 D 처리기의 TargetUnavailable로 기대했지만 새 실제 정책이 그 전에 Unauthorized/InteractionTargetUnavailable로 거부했다. 기대값을 이 명시적 계약에 맞춘 `turret-command-scene-policy-aligned.xml`은 5/5 통과했다. 거리 밖 거부·동일 GUID 재전송·승급/강화·자동 작업·종료 후 차단·재시작과 기존 지역/ID 검사를 포함한다.
+
+**이 시점의 남은 경계:** 실제 HUD 버튼은 아직 이 requester로 교체 전이다. B의 원격 Host actor 생성/이동 복제, D의 Client용 실제 터렛 상태 읽기 연결은 별도 Feature 협의/통합 대상이다. Client의 로컬 D 초기값을 Host 확정 상태로 간주하지 않는다. 새 Windows 두 프로세스 및 연결 유실 검증도 후속으로 수행한다.

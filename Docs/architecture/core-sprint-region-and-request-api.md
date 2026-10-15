@@ -140,6 +140,10 @@ Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Disp
 
 실제 B actor는 `PlayerControlState : IPlayerInteractionActor`가 최신 상태를 제공한다. `PlayerInteractionActorBinding`에는 Host가 소유하는 생성된 GameObject와 참가자 ID를 명시한다. Client의 로컬 actor나 prefab을 Host 권위 actor라고 대신 등록하지 않는다. `AppRoot.AttachTurretCommandTransport`는 전송 소유권만 App에 이전한다. `NetworkTurretCommands`를 빌린 Match gateway의 Dispose가 연결/전송을 닫아서는 안 된다. 실제 Scene의 이 전송 부착과 actor Port는 검사했으며 gateway/HUD 자동 조립은 진행 중이다.
 
+Initial_Stage의 **gateway 자동 조립은 구현/검증 완료**다. `InitialStageNetworkBinding.TurretCommands`를 통해 현재 참가자의 `MatchRequestContext`와 의도를 보낸다. Host의 최대 상호작용 거리는 NetworkBinding의 `_turretInteractionDistance`(기본 10)가 원본이고 HUD의 거리 힌트로 인증하지 않는다. CU 자동 요청도 실제 CU 생존·활성 여부를 검사한다.
+
+`RegisterAuthorityPlayerActor(matchId, playerId, actualHostActor)`는 Host에서만 사용할 수 있다. B가 생성/복제하는 실제 actor를 넘기고 반환 lease를 그 actor의 교체/Despawn 수명에 연결한다. 아직 Host actor가 없는 원격 참가자의 요청은 AuthorityActorUnavailable이다. 정상 입력용 requester가 있어도 B 원격 actor 복제나 D의 Client 터렛 상태 복제가 자동 구현된 것은 아니다. **HUD requester 입력 교체는 진행 중**이다.
+
 - Game Debugger → Battlefield → **지역 Grid · 점령 원본**에서 현재 정책/점령 수를 확인한다. 모드/Grid Reset은 확인창을 거친다.
 - Scene 점령 Grid는 확정 셀, 임시 판정 삼각형은 계산 입력을 표시한다. 후자는 표시용이며 새 상태 원본이 아니다.
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.

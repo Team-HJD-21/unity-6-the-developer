@@ -187,6 +187,12 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 ## 이후 갱신 기준
 
+### Core 명령 연결 시 유의점 (2026-10-15)
+
+`PlayerControlState`는 `IPlayerInteractionActor`로 현재 actor의 XY·생존·CanAct를 제공한다. Host의 명령 검증은 이 Port를 실제 서버 actor에 연결해 사용한다. 원격 Client의 좌표/생존 payload를 그 대신 넣지 않는다. B의 서버 actor 생성/복제 경로에서 `InitialStageNetworkBinding.RegisterAuthorityPlayerActor(matchId, playerId, actor)`를 호출하고 반환 lease를 교체/Despawn에 해제한다. 현재 각 인스턴스에는 자기 로컬 actor만 생성되므로 이 API가 존재한다고 상대 이동 복제가 완료된 것은 아니다.
+
+공용 터렛 ON/OFF·CU 자동 활성화·승급·강화/강등은 모든 참가자가 요청하고 Host가 검증하도록 확정했다. Core `TurretCommands` requester와 실제 D 명령 서비스는 Scene의 Match 시작/종료에 자동 조립한다. 기존 HUD 버튼의 requester 교체는 진행 중이며, D의 Client 읽기 상태와 함께 연결해야 한다. Client의 초기 로컬 D 값을 서버 확정 상태로 표시하지 않는다.
+
 플레이어 연동 스크립트를 추가·수정하면 같은 변경에서 책임·호출 조건·연동 API를
 갱신한다. 자동 활성화 시작 버튼과 최종 UI 연출은 이번 범위에 포함하지 않는다.
 HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후속 제안이며,

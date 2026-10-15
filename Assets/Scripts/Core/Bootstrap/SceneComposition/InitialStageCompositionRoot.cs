@@ -210,6 +210,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
 
         public RegionSceneBinding RegionBinding => GetComponent<RegionSceneBinding>();
+        public IReadOnlyDictionary<PlayerId, GameObject> LocalPlayerActors => _playerActors?.Actors;
 
         public void SetNetworkEncounterConsumer(MonoBehaviour consumer)
         {

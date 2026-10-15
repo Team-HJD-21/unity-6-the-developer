@@ -34,6 +34,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _mayWrite != null && _mayWrite();
 
         public RegionPolicyMode InitialMode => _initialMode;
+        public Transform ControlUnit => _controlUnit;
         public RegionGridDefinition CaptureInitialDefinition() => CreateDefinition(_initialMode, out _);
 
         public void BindMatch(MatchSession session, Func<bool> mayWrite = null, ITurretEntityIdResolver entityIds = null)

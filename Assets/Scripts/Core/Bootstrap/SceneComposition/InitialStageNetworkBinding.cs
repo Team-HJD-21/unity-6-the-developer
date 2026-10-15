@@ -18,6 +18,17 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private NetworkManager _manager;
         [SerializeField] private GameObject _matchAnchorPrefab;
         [SerializeField] private InitialStageNetworkEntry _entry = InitialStageNetworkEntry.Manual;
+        [SerializeField, Min(0.1f)] private float _turretInteractionDistance = 10f;
+        private TurretCommandSceneScope _turretCommands;
+        public ITurretCommandRequester TurretCommands => _turretCommands?.Requester;
+
+        /// <summary>Client가 보낸 좌표가 아니라 B의 실제 Host 측 actor만 등록합니다.</summary>
+        public IDisposable RegisterAuthorityPlayerActor(MatchId matchId, PlayerId playerId, GameObject actor)
+        {
+            if (_turretCommands == null || _turretCommands.MatchId != matchId)
+                throw new InvalidOperationException("Register the actor against the current Match command scope.");
+            return _turretCommands.RegisterAuthorityActor(playerId, actor);
+        }
         private AppRoot _app;
         private InitialStageCompositionRoot _scene;
         private NgoNetworkSession _session;
@@ -184,6 +195,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _scene.ComposeNetworkMatch(_matches, _session.IsServer, _session.LocalConnectionId);
+                if (_turretCommands != null) throw new InvalidOperationException("Release the previous command scope first.");
+                _turretCommands = new TurretCommandSceneScope(_matches, _session, _app.NetworkTurretCommands,
+                    _scene.GetComponent<TurretMatchBinding>(), _scene.RegionBinding.ControlUnit,
+                    _scene.LocalPlayerActors, _turretInteractionDistance);
                 if (_session.IsServer)
                 {
                     _regions.BindHostSource(_scene.RegionBinding.Source);
@@ -227,7 +242,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void OnEnded(MatchId matchId)
         {
-            try { ReleaseAnchor(); }
+            try { _turretCommands?.Dispose(); _turretCommands = null; ReleaseAnchor(); }
             finally { _scene.ReleaseNetworkMatch(matchId); }
         }
         private void OnRegionSource(IRegionGridSource source)
@@ -252,6 +267,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void Update()
         {
+            _turretCommands?.Pump();
             if (!_entryPending || _disposed || _app == null) return;
             _entryPending = false;
             try
@@ -279,7 +295,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matches.Preparing -= OnPreparing; _matches.Started -= OnStarted; _matches.Ended -= OnEnded;
             }
             if (_regions != null) _regions.SourceChanged -= OnRegionSource;
-            try { ReleaseAnchor(); }
+            try { _turretCommands?.Dispose(); _turretCommands = null; ReleaseAnchor(); }
             finally
             {
                 if (_matches != null && _session.IsServer && _matches.Phase != NetworkMatchPhase.Disposed) _matches.TryEnd();

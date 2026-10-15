@@ -1,5 +1,5 @@
 // 실제 Initial_Stage의 D 처리기를 정식 요청으로 호출해 결과·중복·종료 수명을 대조합니다.
-// 검증용 Host 정책은 제품의 공용 참가자 권한을 확정하는 기본값이 아닙니다.
+// 실제 Scene 조립의 Host 거리 정책·actor 제공자·명령 gateway 수명도 확인합니다.
 using System;
 using System.Collections;
 using NUnit.Framework;
@@ -22,14 +22,6 @@ using Object = UnityEngine.Object;
 
 public sealed class TurretCommandIntegrationTests
 {
-    private sealed class ValidationHostPolicy : ITurretCommandAuthorization
-    {
-        private readonly PlayerId _host;
-        public bool Allow = true;
-        public ValidationHostPolicy(PlayerId host) { _host = host; }
-        public TurretCommandPermission Authorize(TurretCommandRequest request, PlayerId issuer)
-            => Allow && issuer == _host ? TurretCommandPermission.Allowed : TurretCommandPermission.Denied("ValidationDenied");
-    }
     [UnityTearDown]
     public IEnumerator Cleanup()
     {
@@ -48,17 +40,20 @@ public sealed class TurretCommandIntegrationTests
         Assert.That(controller.HasWriteAuthority, Is.True);
         Assert.That(app.NetworkMatches.TryResolveParticipant(app.NetworkSession.LocalConnectionId, out PlayerId issuer), Is.True);
         VerifyActualAuthorityActor(app.CurrentMatchId, issuer);
-        var policy = BindValidationCommands(binding, app, issuer);
         ITurretCommandService commands = binding.Commands;
+        Assert.That(commands, Is.Not.Null);
+        var networkBinding = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
+        Assert.That(networkBinding.TurretCommands, Is.Not.Null);
         var levels = AssetDatabase.LoadAssetAtPath<TurretLevelUpgradeCatalog>("Assets/Data/Turrets/TurretLevelUpgrade_Stage1.asset");
         TurretBase turret = FindLevelCandidate(controller, levels);
         Assert.That(turret, Is.Not.Null);
         Assert.That(binding.TryResolveEntityId(turret.InstanceId, out EntityId target), Is.True);
         MatchId matchId = app.CurrentMatchId;
-        policy.Allow = false;
+        var actorTransform = Object.FindAnyObjectByType<PlayerActorIdentity>().transform;
+        actorTransform.position = turret.transform.position + new Vector3(100, 100, 0);
         TurretCommandRequest denied = Request(matchId, issuer, target, TurretCommandKind.UpgradeLevel);
-        Assert.That(commands.Submit(denied, issuer).FeatureCode, Is.EqualTo("ValidationDenied"));
-        policy.Allow = true;
+        Assert.That(commands.Submit(denied, issuer).FeatureCode, Is.EqualTo("OutOfInteractionRange"));
+        actorTransform.position = turret.transform.position;
         Assert.That(commands.Submit(denied, issuer).IsReplay, Is.True);
 
         int initialLevel = turret.Definition.Level;
@@ -93,9 +88,11 @@ public sealed class TurretCommandIntegrationTests
         Assert.That(controller.Budget.ReservedPower, Is.EqualTo(reserved));
         Assert.That(commands.Submit(Request(matchId, issuer, target, TurretCommandKind.SetActivation), issuer).FeatureCode, Is.EqualTo("Deactivated"));
         Assert.That(turret.IsActivated, Is.False);
-        Assert.That(commands.Submit(Request(matchId, issuer, new EntityId("turret/missing"), TurretCommandKind.SetActivation), issuer).Status,
-            Is.EqualTo(TurretCommandStatus.TargetUnavailable));
+        var missingTarget = commands.Submit(Request(matchId, issuer, new EntityId("turret/missing"), TurretCommandKind.SetActivation), issuer);
+        Assert.That(missingTarget.Status, Is.EqualTo(TurretCommandStatus.Unauthorized));
+        Assert.That(missingTarget.FeatureCode, Is.EqualTo("InteractionTargetUnavailable"));
         var automatic = Request(matchId, issuer, default, TurretCommandKind.StartAutoActivation);
+        actorTransform.position = Object.FindAnyObjectByType<ControlUnitHealth>().transform.position;
         var accepted = commands.Submit(automatic, issuer);
         Assert.That(accepted.Status, Is.EqualTo(TurretCommandStatus.Accepted));
         Assert.That(commands.Submit(automatic, issuer).IsReplay, Is.True);
@@ -103,6 +100,7 @@ public sealed class TurretCommandIntegrationTests
             Is.EqualTo(TurretCommandStatus.FeatureRejected));
         app.EndCurrentMatch();
         Assert.That(binding.Commands, Is.Null);
+        Assert.That(networkBinding.TurretCommands, Is.Null);
         Assert.That(controller.IsAutoActivationRunning, Is.False);
         Assert.That(controller.Budget.ReservedPower, Is.Zero);
         Assert.That(controller.HasWriteAuthority, Is.False);
@@ -114,19 +112,10 @@ public sealed class TurretCommandIntegrationTests
         var network = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
         Assert.That(network.TryPrepareMatch(), Is.True); Assert.That(network.TryStartMatch(), Is.True);
         Assert.That(controller.HasWriteAuthority, Is.True);
-        BindValidationCommands(binding, app, issuer);
+        Assert.That(binding.Commands, Is.Not.Null);
         Assert.That(binding.Commands.Submit(turnOn, issuer).Status, Is.EqualTo(TurretCommandStatus.DifferentMatch));
         app.EndCurrentMatch();
         yield return new ExitPlayMode();
-    }
-    private static ValidationHostPolicy BindValidationCommands(TurretMatchBinding binding, AppRoot app, PlayerId issuer)
-    {
-        // 재로드 이전 iterator에 캡처를 만들지 않도록 일반 함수에서만 delegate를 생성합니다.
-        var policy = new ValidationHostPolicy(issuer);
-        binding.BindCommands(() => app.NetworkSession.IsServer,
-            () => !binding.BoundMatchId.IsEmpty && app.CurrentMatchId == binding.BoundMatchId,
-            id => id == issuer, policy);
-        return policy;
     }
     private static void VerifyActualAuthorityActor(MatchId matchId, PlayerId playerId)
     {
