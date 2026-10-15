@@ -29,6 +29,8 @@ namespace TeamHJD.Game.Tests.EditMode
             root.Initialize(services);
             var transport = new ProbeTransport();
             root.AttachNetworkMatchTransport(transport);
+            var regionTransport = new ProbeRegionTransport();
+            root.AttachRegionSnapshotTransport(regionTransport);
             services.PumpNetwork();
             try
             {
@@ -41,6 +43,9 @@ namespace TeamHJD.Game.Tests.EditMode
                 Assert.That(root.NetworkMatches, Is.Null);
                 Assert.That(transport.Pumps, Is.EqualTo(1));
                 Assert.That(transport.Disposals, Is.EqualTo(1));
+                Assert.That(root.NetworkRegions, Is.Null);
+                Assert.That(regionTransport.Pumps, Is.EqualTo(1));
+                Assert.That(regionTransport.Disposals, Is.EqualTo(1));
                 Assert.That(root.CurrentMatchId.IsEmpty, Is.True);
                 Assert.DoesNotThrow(() => root.Dispose());
                 Assert.That(scenes.DisposedCount, Is.EqualTo(1));
@@ -93,6 +98,14 @@ namespace TeamHJD.Game.Tests.EditMode
             public event Action<ulong, MatchLifecycleSignalKind, MatchLifecycleSignal> SignalReceived { add { } remove { } }
             public bool TrySendDescriptor(ulong connectionId, NetworkMatchDescriptor descriptor) => false;
             public bool TrySendSignal(ulong connectionId, MatchLifecycleSignalKind kind, MatchLifecycleSignal signal) => false;
+            public void Pump() => Pumps++;
+            public void Dispose() => Disposals++;
+        }
+        private sealed class ProbeRegionTransport : IRegionSnapshotTransport, INetworkMessagePump, IDisposable
+        {
+            public int Pumps, Disposals;
+            public event Action<ulong, RegionReplicationFrame> FrameReceived { add { } remove { } }
+            public bool TrySendFrame(ulong connectionId, RegionReplicationFrame frame) => false;
             public void Pump() => Pumps++;
             public void Dispose() => Disposals++;
         }

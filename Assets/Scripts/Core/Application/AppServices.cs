@@ -18,6 +18,8 @@ namespace TeamHJD.Game.Application
         public INetworkSession NetworkSession { get; private set; }
         public NetworkMatchCoordinator NetworkMatches { get; private set; }
         private IMatchLifecycleTransport _matchTransport;
+        public RegionReplicationSession NetworkRegions { get; private set; }
+        private IRegionSnapshotTransport _regionTransport;
 
         public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority,
             INetworkSession networkSession = null)
@@ -53,10 +55,23 @@ namespace TeamHJD.Game.Application
             return matches;
         }
 
+        public RegionReplicationSession AttachRegionSnapshotTransport(IRegionSnapshotTransport transport)
+        {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (transport == null) throw new ArgumentNullException(nameof(transport));
+            if (NetworkMatches == null) throw new InvalidOperationException("Attach the Match lifecycle transport first.");
+            if (NetworkRegions != null) throw new InvalidOperationException("The region transport is already attached.");
+            var regions = new RegionReplicationSession(NetworkSession, NetworkMatches, transport);
+            _regionTransport = transport; NetworkRegions = regions;
+            return regions;
+        }
+
         public void PumpNetwork()
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
             if (_matchTransport is INetworkMessagePump pump) pump.Pump();
+            NetworkRegions?.FlushPending();
+            if (_regionTransport is INetworkMessagePump regionPump) regionPump.Pump();
         }
 
         public void Dispose()
@@ -69,6 +84,11 @@ namespace TeamHJD.Game.Application
             NetworkMatches = null;
             _matchTransport = null;
             DisposeIfNeeded(matches, ref errors);
+            var regions = NetworkRegions;
+            var regionTransport = _regionTransport;
+            NetworkRegions = null; _regionTransport = null;
+            DisposeIfNeeded(regions, ref errors);
+            DisposeIfNeeded(regionTransport, ref errors);
             DisposeIfNeeded(transport, ref errors);
             DisposeIfNeeded(Profiles, ref errors);
             DisposeIfNeeded(Content, ref errors);
