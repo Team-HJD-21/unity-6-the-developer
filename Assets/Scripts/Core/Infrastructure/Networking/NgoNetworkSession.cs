@@ -2,6 +2,7 @@
 // 실제 전송 설정·객체 복제는 NGO가 담당하고 이 어댑터는 Match나 Enemy를 생성하지 않습니다.
 // 자신이 시작한 연결만 종료하며 외부 테스트 Host의 소유권을 암묵적으로 가져오지 않습니다.
 using System;
+using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
 using Unity.Netcode;
 using UnityEngine;
@@ -13,8 +14,11 @@ namespace TeamHJD.Game.Infrastructure
         private readonly NetworkManager _manager;
         private bool _ownsConnection;
         private bool _isDisposed;
+        private readonly HashSet<ulong> _readyPeers = new HashSet<ulong>();
         /// <summary>SDK가 필요한 조립부에만 제공하며 Feature의 전역 조회 경로로 쓰지 않습니다.</summary>
         public NetworkManager Manager => _manager;
+        /// <summary>SDK의 Scene 동기화 완료 후 접속 콜백을 받은 연결입니다. 계정 인증 결과는 아닙니다.</summary>
+        public IReadOnlyCollection<ulong> ConnectedPeerIds => new List<ulong>(_readyPeers).AsReadOnly();
         public NetworkConnectionState State { get; private set; }
         public bool IsServer => !_isDisposed && _manager != null && _manager.IsServer && _manager.IsListening;
         public ulong LocalConnectionId => !_isDisposed && _manager != null ? _manager.LocalClientId : 0;
@@ -26,6 +30,8 @@ namespace TeamHJD.Game.Infrastructure
         {
             _manager = manager != null ? manager : throw new ArgumentNullException(nameof(manager));
             State = ReadState();
+            if (_manager.IsHost && _manager.IsListening) _readyPeers.Add(_manager.LocalClientId);
+            else if (_manager.IsConnectedClient) _readyPeers.Add(_manager.LocalClientId);
             _manager.OnServerStarted += OnServerStarted;
             _manager.OnClientConnectedCallback += OnPeerConnected;
             _manager.OnClientDisconnectCallback += OnPeerDisconnected;
@@ -47,6 +53,7 @@ namespace TeamHJD.Game.Infrastructure
             if (_isDisposed) return false;
             // SDK 콜백은 Start 호출 중에도 발생합니다. 소유권은 호출 전에 설정합니다.
             _ownsConnection = true;
+            _readyPeers.Clear();
             try
             {
                 bool accepted = host ? _manager.StartHost() : _manager.StartClient();
@@ -98,20 +105,27 @@ namespace TeamHJD.Game.Infrastructure
             return _manager.IsListening ? NetworkConnectionState.StartingClient : NetworkConnectionState.Disconnected;
         }
 
-        private void OnServerStarted() => SetState(ReadState());
+        private void OnServerStarted()
+        {
+            _readyPeers.Add(_manager.LocalClientId);
+            SetState(ReadState());
+        }
         private void OnPeerConnected(ulong id)
         {
+            _readyPeers.Add(id);
             SetState(ReadState());
             Notify(PeerConnected, id);
         }
         private void OnPeerDisconnected(ulong id)
         {
+            _readyPeers.Remove(id);
             Notify(PeerDisconnected, id);
             SetState(ReadState());
         }
         private void OnStopped(bool wasHost)
         {
             if (_isDisposed || _manager == null) return;
+            _readyPeers.Clear();
             SetState(ReadState());
             if (State == NetworkConnectionState.Disconnected) _ownsConnection = false;
         }
@@ -152,6 +166,7 @@ namespace TeamHJD.Game.Infrastructure
                 if (_ownsConnection && _manager.IsListening && !_manager.ShutdownInProgress) _manager.Shutdown();
             }
             _ownsConnection = false;
+            _readyPeers.Clear();
             StateChanged = null;
             PeerConnected = null;
             PeerDisconnected = null;

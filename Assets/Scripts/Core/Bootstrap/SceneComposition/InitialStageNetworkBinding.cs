@@ -18,12 +18,16 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     public sealed class InitialStageNetworkBinding : MonoBehaviour
     {
         [SerializeField] private NetworkManager _manager;
+        [SerializeField] private GameObject _matchAnchorPrefab;
         [SerializeField] private InitialStageNetworkEntry _entry = InitialStageNetworkEntry.Manual;
         private AppRoot _app;
         private InitialStageCompositionRoot _scene;
         private NgoNetworkSession _session;
         private NetworkMatchCoordinator _matches;
         private RegionReplicationSession _regions;
+        private NetworkMatchAnchor _anchor;
+        private IRegionGridSource _anchorSource;
+        private NetworkMatchDescriptor _anchorDescriptor;
         private bool _entryPending;
         private bool _disposed;
         public NetworkMatchCoordinator Matches => _matches;
@@ -57,6 +61,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 }
             }
             if (_manager == null) throw new InvalidOperationException("The App NetworkManager was destroyed.");
+            if (_matchAnchorPrefab == null || _matchAnchorPrefab.GetComponent<NetworkMatchAnchor>() == null ||
+                _matchAnchorPrefab.GetComponent<NetworkObject>() == null)
+                throw new InvalidOperationException("Assign the registered Match anchor prefab.");
+            if (!_manager.NetworkConfig.Prefabs.Contains(_matchAnchorPrefab)) _manager.AddNetworkPrefab(_matchAnchorPrefab);
             MonoBehaviour[] consumers = _manager.GetComponents<MonoBehaviour>()
                 .Where(behaviour => behaviour is IAppOwnedEncounterMatchConsumer && behaviour.isActiveAndEnabled).ToArray();
             if (consumers.Length != 1) throw new InvalidOperationException("The App manager requires one explicit Encounter consumer.");
@@ -76,6 +84,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             return started;
         }
 
+        /// <summary>연결 전 진입 흐름을 선택합니다. 연결 중인 세션의 역할을 바꾸지 않습니다.</summary>
+        public void ConfigureEntry(InitialStageNetworkEntry entry)
+        {
+            if (!Enum.IsDefined(typeof(InitialStageNetworkEntry), entry)) throw new ArgumentOutOfRangeException(nameof(entry));
+            if (_session != null && _session.State != NetworkConnectionState.Disconnected)
+                throw new InvalidOperationException("Choose the entry flow before opening the connection.");
+            _entry = entry;
+        }
+
         public bool TryStartClient()
         {
             ThrowIfUnavailable();
@@ -90,8 +107,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             ThrowIfUnavailable();
             EnsureTransports();
             if (!_session.IsServer || _matches == null || _matches.Phase == NetworkMatchPhase.Running) return false;
-            ulong[] connections = _manager.ConnectedClientsIds.OrderBy(id => id).ToArray();
+            ulong[] connections = _session.ConnectedPeerIds.OrderBy(id => id).ToArray();
             if (connections.Length < 1 || connections.Length > 2 || !connections.Contains(_session.LocalConnectionId)) return false;
+            if (!connections.SequenceEqual(_manager.ConnectedClientsIds.OrderBy(id => id))) return false;
             var participants = connections.Select(id => new MatchParticipantBinding(id,
                 new PlayerId(id == _session.LocalConnectionId ? "local-player" : "peer-" + id),
                 id == _session.LocalConnectionId)).ToArray();
@@ -162,7 +180,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _scene.ComposeNetworkMatch(_matches, _session.IsServer, _session.LocalConnectionId);
-                if (_session.IsServer) _regions.BindHostSource(_scene.RegionBinding.Source);
+                if (_session.IsServer)
+                {
+                    _regions.BindHostSource(_scene.RegionBinding.Source);
+                    SpawnAnchor(descriptor, _scene.RegionBinding.Source);
+                }
             }
             catch (Exception error) { FailMatch(error); throw; }
         }
@@ -174,7 +196,36 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             else _session.Shutdown();
         }
 
-        private void OnEnded(MatchId matchId) => _scene.ReleaseNetworkMatch(matchId);
+        private void SpawnAnchor(NetworkMatchDescriptor descriptor, IRegionGridSource source)
+        {
+            if (_anchor != null) throw new InvalidOperationException("The previous Match anchor is still alive.");
+            NetworkObject spawned = NetworkObject.InstantiateAndSpawn(_matchAnchorPrefab, _manager,
+                destroyWithScene: true, rotation: Quaternion.identity);
+            if (spawned == null) throw new InvalidOperationException("Match anchor spawn was rejected by NGO.");
+            _anchor = spawned.GetComponent<NetworkMatchAnchor>();
+            _anchorDescriptor = descriptor; _anchorSource = source;
+            _anchor.ApplyAuthorityState(descriptor, source.Snapshot);
+            _anchorSource.Changed += OnRegionChanged;
+        }
+
+        private void OnRegionChanged(RegionGridSnapshot snapshot)
+        {
+            if (_anchor != null && _anchor.IsSpawned) _anchor.ApplyAuthorityState(_anchorDescriptor, snapshot);
+        }
+
+        private void ReleaseAnchor()
+        {
+            if (_anchorSource != null) _anchorSource.Changed -= OnRegionChanged;
+            _anchorSource = null; _anchorDescriptor = null;
+            NetworkMatchAnchor anchor = _anchor; _anchor = null;
+            if (anchor != null && anchor.IsSpawned && anchor.IsServer) anchor.NetworkObject.Despawn(true);
+        }
+
+        private void OnEnded(MatchId matchId)
+        {
+            try { ReleaseAnchor(); }
+            finally { _scene.ReleaseNetworkMatch(matchId); }
+        }
         private void OnRegionSource(IRegionGridSource source)
         {
             if (!_session.IsServer && _scene != null) _scene.BindRegionReplica(source);
@@ -222,9 +273,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_matches != null)
             {
                 _matches.Preparing -= OnPreparing; _matches.Started -= OnStarted; _matches.Ended -= OnEnded;
-                if (_session.IsServer && _matches.Phase != NetworkMatchPhase.Disposed) _matches.TryEnd();
             }
             if (_regions != null) _regions.SourceChanged -= OnRegionSource;
+            try { ReleaseAnchor(); }
+            finally
+            {
+                if (_matches != null && _session.IsServer && _matches.Phase != NetworkMatchPhase.Disposed) _matches.TryEnd();
+            }
         }
 
         private void ThrowIfUnavailable()

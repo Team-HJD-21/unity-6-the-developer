@@ -4,6 +4,8 @@ using System;
 using System.Linq;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Infrastructure;
+using Unity.Netcode;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -25,6 +27,7 @@ namespace TeamHJD.Game.Editor
             if (binding == null) binding = Undo.AddComponent<InitialStageNetworkBinding>(root.gameObject);
             var serialized = new SerializedObject(binding);
             serialized.FindProperty("_manager").objectReferenceValue = manager;
+            serialized.FindProperty("_matchAnchorPrefab").objectReferenceValue = EnsureAnchorPrefab();
             serialized.FindProperty("_entry").enumValueIndex = (int)InitialStageNetworkEntry.SinglePlayerHost;
             serialized.ApplyModifiedProperties();
             serialized = new SerializedObject(root);
@@ -44,6 +47,22 @@ namespace TeamHJD.Game.Editor
                 serialized.ApplyModifiedProperties();
             }
             EditorSceneManager.MarkSceneDirty(scene);
+        }
+
+        private static GameObject EnsureAnchorPrefab()
+        {
+            const string path = "Assets/Prefabs/Core/NetworkMatchAnchor.prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab != null)
+            {
+                if (prefab.GetComponent<NetworkMatchAnchor>() == null || prefab.GetComponent<NetworkObject>() == null)
+                    throw new InvalidOperationException("The authored Match anchor prefab is invalid.");
+                return prefab;
+            }
+            if (!AssetDatabase.IsValidFolder("Assets/Prefabs/Core")) AssetDatabase.CreateFolder("Assets/Prefabs", "Core");
+            var owner = new GameObject("NetworkMatchAnchor", typeof(NetworkObject), typeof(NetworkMatchAnchor));
+            try { return PrefabUtility.SaveAsPrefabAsset(owner, path); }
+            finally { UnityEngine.Object.DestroyImmediate(owner); }
         }
 
         public static void ConfigureInitialStage()

@@ -8,7 +8,9 @@
     "TeamHJD.Game.Content.Authoring",
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
-    "TeamHJD.Game.Presentation"
+    "TeamHJD.Game.Presentation",
+    "TeamHJD.Game.Networking",
+    "Unity.Netcode.Runtime"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

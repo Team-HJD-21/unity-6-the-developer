@@ -937497,6 +937497,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.InitialStageNetworkBinding
   _manager: {fileID: 1735068337}
+  _matchAnchorPrefab: {fileID: 4380366090066215120, guid: 21b016e9a8ba90446b7c53c9cabf4676, type: 3}
   _entry: 1
 --- !u!1 &894255431
 GameObject:
