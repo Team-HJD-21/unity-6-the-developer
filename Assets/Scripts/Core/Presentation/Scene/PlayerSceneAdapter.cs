@@ -10,6 +10,16 @@ namespace TeamHJD.Game.Presentation.Scene
     public sealed class PlayerSceneAdapter : MonoBehaviour
     {
         private MatchSession _session;
+        private NetworkMatchCoordinator _networkMatch;
+
+        public void BindNetworkMatch(NetworkMatchCoordinator match, PlayerId localPlayerId)
+        {
+            if (match == null) throw new ArgumentNullException(nameof(match));
+            if (localPlayerId.IsEmpty) throw new ArgumentException("A local participant is required.", nameof(localPlayerId));
+            Unbind(); _networkMatch = match;
+            foreach (var component in GetComponents<MonoBehaviour>())
+                if (component is IPlayerNetworkMatchBinding binding) binding.BindNetworkMatch(match, localPlayerId);
+        }
 
         public void Bind(MatchSession session)
         {
@@ -28,10 +38,14 @@ namespace TeamHJD.Game.Presentation.Scene
 
         public void Unbind()
         {
+            if (_networkMatch != null)
+                foreach (var component in GetComponents<MonoBehaviour>())
+                    if (component is IPlayerNetworkMatchBinding binding) binding.UnbindNetworkMatch();
             if (_session != null)
                 foreach (var component in GetComponents<MonoBehaviour>())
                     if (component is IPlayerMatchBinding binding) binding.UnbindMatch();
             _session = null;
+            _networkMatch = null;
         }
 
         private void OnDestroy() => Unbind();
