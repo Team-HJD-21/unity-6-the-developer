@@ -24,6 +24,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private BattlefieldGridSettings battlefieldGridSettings;
         [Tooltip("IEncounterMatchConsumer 구현체. 기존 Scene 호환을 위해 미지정 시 활성 소비자 하나를 조회합니다.")]
         [SerializeField] private MonoBehaviour _encounterConsumerBehaviour;
+        [SerializeField] private InitialStageNetworkBinding _networkBinding;
 
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
@@ -46,6 +47,21 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_matchHost != null) throw new InvalidOperationException("Initial Stage has already been composed.");
             if (appMatchHost == null) throw new ArgumentNullException(nameof(appMatchHost));
+            if (_networkBinding != null)
+            {
+                if (!(appMatchHost is AppRoot app))
+                    throw new InvalidOperationException("The network Scene requires its owning AppRoot.");
+                _matchHost = appMatchHost;
+                _networkBinding.Initialize(app, this);
+                return;
+            }
+            ComposeAuthority(appMatchHost);
+        }
+
+        private void ComposeAuthority(IAppMatchHost appMatchHost, NetworkMatchCoordinator network = null,
+            ulong connectionId = 0)
+        {
+            if (_ownsMatch || _playerActors != null) throw new InvalidOperationException("The Scene already has Match actors.");
             if (playerPrefab == null) throw new InvalidOperationException("Assign the Stage_1 Player prefab before entering Play Mode.");
             if (battlefieldGridSettings == null) throw new InvalidOperationException("Assign shared BattlefieldGridSettings before entering Play Mode.");
 
@@ -54,9 +70,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             MatchCameraFollow cameraFollow = FindSceneCameraFollow();
             if (cameraFollow == null) throw new InvalidOperationException("Initial_Stage requires a MatchCameraFollow on its Main Camera.");
 
-            MatchId matchId = new MatchId(Guid.NewGuid().ToString("N"));
+            MatchId matchId = network?.Descriptor.Config.MatchId ?? new MatchId(Guid.NewGuid().ToString("N"));
+            PlayerId localPlayerId = LocalPlayerId;
+            int localSlot = 0;
+            if (network != null && (!network.TryResolveParticipant(connectionId, out localPlayerId) ||
+                !network.Descriptor.TryGetSlot(connectionId, out localSlot)))
+                throw new InvalidOperationException("Local connection is outside the prepared Match.");
             var loadout = new PlayerLoadoutSnapshot(LocalPlayerId, new Dictionary<DefinitionId, int>());
-            var config = new MatchConfig(
+            MatchConfig config = network?.Descriptor.Config ?? new MatchConfig(
                 matchId,
                 MatchMode.Story,
                 new StageId("initial-stage"),
@@ -67,14 +88,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var initialState = new MatchState(
                 matchId,
                 MatchPhase.Preparing,
-                new[] { new PlayerState(LocalPlayerId, 400, 400, true) },
+                config.Players.Select(player => new PlayerState(player.PlayerId, 400, 400, true)),
                 new ControlUnitState(1500, 1500, 250, 250),
                 new WaveState(0, 1, 0, 0),
                 Array.Empty<TurretState>(),
                 Array.Empty<EnemyState>(),
                 Array.Empty<SectorState>());
 
-            PlayerStart firstStart = starts.OrderBy(start => start.SlotIndex).First();
+            PlayerStart firstStart = starts.Single(start => start.SlotIndex == localSlot);
             IBattlefieldTurretInputSource turretInputSource = FindTurretInputSource();
             BattlefieldSpatialInput turretBattlefieldInput = turretInputSource != null
                 ? turretInputSource.CaptureTurretLayout()
@@ -86,7 +107,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 new[]
                 {
                     new PlayerSpatialInput(
-                        new TeamHJD.Game.Domain.EntityId(LocalPlayerId.Value),
+                        new TeamHJD.Game.Domain.EntityId(localPlayerId.Value),
                         new BattlefieldPoint(firstStart.Position.x, firstStart.Position.y))
                 },
                 Array.Empty<EnemySpatialInput>());
@@ -111,27 +132,43 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
                     .OfType<ILocalPlayerActorConsumer>().ToArray();
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
-                    consumer.PrepareLocalActor(matchId, LocalPlayerId);
-                _playerActors = MatchPlayerActorScope.SpawnPlayers(
-                    session,
-                    new LocalPlayerActorSpawner(playerPrefab, actorParent),
-                    starts);
+                    consumer.PrepareLocalActor(matchId, localPlayerId);
+                var spawner = new LocalPlayerActorSpawner(playerPrefab, actorParent);
+                _playerActors = network == null ? MatchPlayerActorScope.SpawnPlayers(session, spawner, starts) :
+                    MatchPlayerActorScope.SpawnLocalPlayer(network, connectionId, spawner, starts, session);
                 _matchSession = session;
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
-                    consumer.BindLocalActor(matchId, LocalPlayerId, _playerActors.Actors[LocalPlayerId]);
+                    consumer.BindLocalActor(matchId, localPlayerId, _playerActors.Actors[localPlayerId]);
                 RegionSceneBinding[] regionBindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
                     .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
                 if (regionBindings.Length > 1) throw new InvalidOperationException("Keep one RegionSceneBinding per Match scene.");
                 _regionBinding = regionBindings.FirstOrDefault();
-                _regionBinding?.BindMatch(session);
+                if (network == null) _regionBinding?.BindMatch(session);
+                else
+                {
+                    if (_regionBinding == null) throw new InvalidOperationException("Network Match requires a RegionSceneBinding.");
+                    _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
+                        network.Descriptor.RegionMode, () => network.Phase == NetworkMatchPhase.Running);
+                }
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
-                    _encounterConsumer.BindMatch(matchId, () => HasCurrentMatch ? _matchSession?.Battlefield : null);
+                {
+                    Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
+                        !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
+                    if (network != null)
+                    {
+                        if (!(_encounterConsumer is IAppOwnedEncounterMatchConsumer managed))
+                            throw new InvalidOperationException("Network Encounter consumer must support App connection ownership.");
+                        managed.UseAppNetworkOwnership();
+                        managed.BindAuthorityMatch(matchId, localPlayerId, latest);
+                    }
+                    else _encounterConsumer.BindMatch(matchId, latest);
+                }
                 else
                     Debug.LogWarning("Initial_Stage has no IEncounterMatchConsumer; automatic Encounter is unavailable.", this);
                 _lastEntityCells.Clear();
                 _nextBattlefieldSampleTime = 0f;
-                cameraFollow.Bind(_playerActors.Actors[LocalPlayerId].transform);
+                cameraFollow.Bind(_playerActors.Actors[localPlayerId].transform);
                 session.Disposing += ReleaseMatchBindings;
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
@@ -162,10 +199,76 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 {
                     _matchHost.TryEndMatch(_ownedMatchId);
                     _ownsMatch = false;
-                    _matchHost = null;
                     _ownedMatchId = default;
                 }
                 throw;
+            }
+        }
+
+        public RegionSceneBinding RegionBinding => GetComponent<RegionSceneBinding>();
+
+        public void SetNetworkEncounterConsumer(MonoBehaviour consumer)
+        {
+            if (_ownsMatch || _playerActors != null) throw new InvalidOperationException("Set the consumer before Match composition.");
+            if (consumer == null || !consumer.isActiveAndEnabled || !(consumer is IAppOwnedEncounterMatchConsumer))
+                throw new ArgumentException("An active App-owned Encounter consumer is required.", nameof(consumer));
+            _encounterConsumerBehaviour = consumer;
+        }
+
+        /// <summary>준비 응답 전에 양쪽 Scene의 슬롯·콘텐츠·필수 제작 연결을 검사합니다.</summary>
+        public void ValidateNetworkPreparation(NetworkMatchDescriptor descriptor)
+        {
+            if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
+            if (descriptor.Config.StageId.Value != "initial-stage" || descriptor.Config.ContentVersion != "poc")
+                throw new InvalidOperationException("The prepared Stage/content version is not supported by this Scene.");
+            if (playerPrefab == null || battlefieldGridSettings == null || FindSceneCameraFollow() == null || RegionBinding == null)
+                throw new InvalidOperationException("Player, Grid, camera and region Scene references are required.");
+            PlayerStart[] starts = FindPlayerStarts();
+            for (int slot = 0; slot < descriptor.Config.Players.Count; slot++)
+                if (starts.Count(start => start.SlotIndex == slot) != 1)
+                    throw new InvalidOperationException($"Expected exactly one active PlayerStart for slot {slot}.");
+        }
+
+        public void ComposeNetworkMatch(NetworkMatchCoordinator matches, bool isServer, ulong connectionId)
+        {
+            ValidateNetworkPreparation(matches?.Descriptor);
+            if (isServer) { ComposeAuthority(_matchHost, matches, connectionId); return; }
+            if (_playerActors != null) throw new InvalidOperationException("Client actors are already composed.");
+            if (!matches.TryResolveParticipant(connectionId, out PlayerId playerId))
+                throw new InvalidOperationException("The Client connection is not a participant.");
+            _ownedMatchId = matches.Descriptor.Config.MatchId;
+            try
+            {
+                _localActorConsumers = gameObject.scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                    .OfType<ILocalPlayerActorConsumer>().ToArray();
+                foreach (var consumer in _localActorConsumers) consumer.PrepareLocalActor(_ownedMatchId, playerId);
+                _playerActors = MatchPlayerActorScope.SpawnLocalPlayer(matches, connectionId,
+                    new LocalPlayerActorSpawner(playerPrefab, actorParent), FindPlayerStarts());
+                foreach (var consumer in _localActorConsumers)
+                    consumer.BindLocalActor(_ownedMatchId, playerId, _playerActors.Actors[playerId]);
+                FindSceneCameraFollow().Bind(_playerActors.Actors[playerId].transform);
+            }
+            catch { ReleaseNetworkMatch(_ownedMatchId); throw; }
+        }
+
+        public void BindRegionReplica(IRegionGridSource source)
+        {
+            _regionBinding = RegionBinding;
+            _regionBinding.UnbindMatch();
+            if (source != null) _regionBinding.BindReplica(source);
+        }
+
+        public void ReleaseNetworkMatch(MatchId matchId)
+        {
+            if (_ownedMatchId != matchId) return;
+            if (_ownsMatch) { _matchHost.TryEndMatch(matchId); return; }
+            ReleaseLocalActorConsumers(matchId);
+            try { _playerActors?.Dispose(); }
+            finally
+            {
+                _playerActors = null; _ownedMatchId = default;
+                _regionBinding?.UnbindMatch(); _regionBinding = null;
             }
         }
 
@@ -221,6 +324,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _turretInputSource = null;
                 _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
                 _lastEntityCells.Clear();
+                _networkBinding?.OnAuthorityMatchReleased(session.Config.MatchId);
             }
         }
 

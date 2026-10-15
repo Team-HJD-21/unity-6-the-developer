@@ -32,14 +32,24 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             (_session.State.Phase == MatchPhase.Preparing || _session.State.Phase == MatchPhase.Running) &&
             _mayWrite != null && _mayWrite();
 
+        public RegionPolicyMode InitialMode => _initialMode;
+        public RegionGridDefinition CaptureInitialDefinition() => CreateDefinition(_initialMode, out _);
+
         public void BindMatch(MatchSession session, Func<bool> mayWrite = null)
+            => BindMatch(session, CreateDefinition(_initialMode, out _), _initialMode, mayWrite);
+
+        /// <summary>네트워크 시작 때는 Inspector가 아니라 Host가 준비한 불변 정의를 적용합니다.</summary>
+        public void BindMatch(MatchSession session, RegionGridDefinition definition,
+            RegionPolicyMode mode, Func<bool> mayWrite = null)
         {
             if (_source != null) throw new InvalidOperationException("Region scene is already bound.");
             if (session == null) throw new ArgumentNullException(nameof(session));
             if (_controller == null)
                 throw new InvalidOperationException("Assign TurretController to RegionSceneBinding.");
-            RegionGridDefinition definition = CreateDefinition(_initialMode, out int zoneCount);
-            _source = session.InitializeRegions(definition, _initialMode);
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            int zoneCount = 0;
+            foreach (int regionId in definition.RegionIds) zoneCount = Math.Max(zoneCount, regionId);
+            _source = session.InitializeRegions(definition, mode);
             _session = session;
             _definition = definition;
             _zoneCount = zoneCount;
@@ -49,7 +59,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 if (HasWriteAuthority)
                 {
-                    if (_initialMode == RegionPolicyMode.Static) ApplyStatic(1);
+                    if (mode == RegionPolicyMode.Static) ApplyStatic(1);
                     else RefreshDynamic(true);
                 }
                 _controller.SetRegionAccessPolicy(new RegionAccessPolicy(_source));

@@ -13,6 +13,8 @@ namespace TeamHJD.Game.Infrastructure
         private readonly NetworkManager _manager;
         private bool _ownsConnection;
         private bool _isDisposed;
+        /// <summary>SDK가 필요한 조립부에만 제공하며 Feature의 전역 조회 경로로 쓰지 않습니다.</summary>
+        public NetworkManager Manager => _manager;
         public NetworkConnectionState State { get; private set; }
         public bool IsServer => !_isDisposed && _manager != null && _manager.IsServer && _manager.IsListening;
         public ulong LocalConnectionId => !_isDisposed && _manager != null ? _manager.LocalClientId : 0;
