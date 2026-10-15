@@ -37,8 +37,9 @@ namespace TeamHJD.Game.Editor
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     EditorGUILayout.LabelField("Selected edge", EditorStyles.boldLabel);
-                    EditorGUILayout.SelectableLabel(edge.Edge.First.Value + " ↔ " + edge.Edge.Second.Value,
-                        EditorStyles.wordWrappedLabel, GUILayout.Height(36));
+                    EditorGUILayout.LabelField(new GUIContent(
+                        EntityLabelFormatter.Format(edge.Edge.First) + " ↔ " + EntityLabelFormatter.Format(edge.Edge.Second),
+                        edge.Edge.First.Value + " ↔ " + edge.Edge.Second.Value), EditorStyles.boldLabel);
                     EditorGUILayout.LabelField("Length / triangle / group", $"{edge.Length:F2} u / {edge.TriangleIndex} / {edge.ComponentIndex}");
                     EditorGUILayout.LabelField("Midpoint XY", Format(edge.Midpoint));
                     EditorGUILayout.LabelField("Outward / inward", Format(edge.OutwardNormal) + " / " + Format(edge.InwardNormal));
