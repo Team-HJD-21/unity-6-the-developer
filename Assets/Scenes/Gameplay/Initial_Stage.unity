@@ -937556,6 +937556,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.TurretMatchBinding
   _controller: {fileID: 393497335}
   _battlefieldSource: {fileID: 1493643881}
+  _commandLevelCatalog: {fileID: 11400000, guid: 248f482a7ee948478f1e0528ed60cf86, type: 2}
+  _commandUpgrades:
+  - {fileID: 11400000, guid: ed4eb21118c1461caba77c381399f6d1, type: 2}
+  - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
+  - {fileID: 11400000, guid: a710a35a5d3c49b794d2f387d53dce10, type: 2}
+  - {fileID: 11400000, guid: b28a795f5a364f249b632692a760317c, type: 2}
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0

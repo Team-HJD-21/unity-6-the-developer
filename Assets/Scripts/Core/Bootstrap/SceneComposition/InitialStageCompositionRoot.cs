@@ -117,7 +117,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _turretBinding = GetComponent<TurretMatchBinding>();
-                _turretBinding?.BindMatch(matchId);
+                _turretBinding?.BindMatch(matchId, () => HasCurrentMatch && (network == null || network.Phase == NetworkMatchPhase.Running));
                 MatchSession session = appMatchHost.StartMatch(
                     config,
                     initialState,
@@ -245,7 +245,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _turretBinding = GetComponent<TurretMatchBinding>();
-                _turretBinding.BindMatch(_ownedMatchId);
+                _turretBinding.BindMatch(_ownedMatchId, () => false);
                 _localActorConsumers = gameObject.scene.GetRootGameObjects()
                     .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
                     .OfType<ILocalPlayerActorConsumer>().ToArray();

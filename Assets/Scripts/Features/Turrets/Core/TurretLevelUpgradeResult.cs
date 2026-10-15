@@ -14,6 +14,7 @@ namespace TeamHJD.Game.Turrets
         ReplacementInitializationFailed,
         RequiresDeactivation,
         CoolingDown,
-        AutoActivationInProgress
+        AutoActivationInProgress,
+        NotAuthoritative
     }
 }

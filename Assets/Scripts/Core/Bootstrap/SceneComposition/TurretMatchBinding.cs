@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Content;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Presentation.Scene;
 using TeamHJD.Game.Turrets;
@@ -17,13 +18,30 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     {
         [SerializeField] private TurretController _controller;
         [SerializeField] private TurretBattlefieldInputSource _battlefieldSource;
+        [SerializeField] private TurretLevelUpgradeCatalog _commandLevelCatalog;
+        [SerializeField] private TurretUpgradeDefinition[] _commandUpgrades = Array.Empty<TurretUpgradeDefinition>();
         private MatchEntityRegistry<int> _registry;
+        private TurretCommandService _commands;
+        private IDisposable _featureScope;
         private readonly Dictionary<TurretBase, EntityRegistration<int>> _actors = new Dictionary<TurretBase, EntityRegistration<int>>();
         public MatchId BoundMatchId => _registry?.MatchId ?? default;
         public int Count => _registry?.Count ?? 0;
+        public ITurretCommandService Commands => _commands;
         public IReadOnlyList<EntityRegistration<int>> Registrations => _registry?.CaptureRegistrations() ?? Array.Empty<EntityRegistration<int>>();
 
-        public void BindMatch(MatchId matchId)
+        public void BindCommands(Func<bool> isAuthority, Func<bool> isMatchRunning,
+            Func<PlayerId, bool> isParticipant, ITurretCommandAuthorization authorization)
+        {
+            if (_registry == null || _commands != null) throw new InvalidOperationException("Bind one command service to a ready Match identity scope.");
+            if (isAuthority == null || isMatchRunning == null) throw new ArgumentNullException(isAuthority == null ? nameof(isAuthority) : nameof(isMatchRunning));
+            var executor = new TurretFeatureCommandExecutor(_controller, this, _commandLevelCatalog, _commandUpgrades,
+                () => _registry != null && isAuthority() && isMatchRunning());
+            _commands = new TurretCommandService(BoundMatchId, isAuthority, isMatchRunning, isParticipant, authorization, executor);
+        }
+
+        private void Awake() { if (_controller != null) _controller.RequireMatchScope(); }
+
+        public void BindMatch(MatchId matchId, Func<bool> mayWrite = null)
         {
             if (_registry != null) throw new InvalidOperationException("Turret identities are already bound to a Match.");
             if (_controller == null || _battlefieldSource == null) throw new InvalidOperationException("Assign D controller and Battlefield source.");
@@ -38,13 +56,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     _actors.Add(turret, registry.Register(id, turret.InstanceId));
                 }
                 _registry = registry;
+                _featureScope = _controller.BindMatchScope(matchId, mayWrite ?? (() => true));
                 TurretInstanceRegistry.Registered += OnRegistered;
                 TurretInstanceRegistry.Unregistered += OnUnregistered;
                 TurretInstanceRegistry.LevelUpgraded += OnLevelReplaced;
                 TurretInstanceRegistry.LevelDowngraded += OnLevelReplaced;
                 _battlefieldSource.SetEntityIdResolver(this);
             }
-            catch { registry.Dispose(); _actors.Clear(); _registry = null; throw; }
+            catch
+            {
+                try { _featureScope?.Dispose(); }
+                finally { _featureScope = null; registry.Dispose(); _actors.Clear(); _registry = null; }
+                throw;
+            }
         }
 
         public bool TryResolveEntityId(int localInstanceId, out EntityId entityId)
@@ -112,12 +136,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public void UnbindMatch(MatchId matchId)
         {
             if (_registry == null || matchId != BoundMatchId) return;
+            _commands?.Dispose(); _commands = null;
             TurretInstanceRegistry.Registered -= OnRegistered;
             TurretInstanceRegistry.Unregistered -= OnUnregistered;
             TurretInstanceRegistry.LevelUpgraded -= OnLevelReplaced;
             TurretInstanceRegistry.LevelDowngraded -= OnLevelReplaced;
-            _battlefieldSource.SetEntityIdResolver(null);
-            _registry.Dispose(); _registry = null; _actors.Clear();
+            MatchEntityRegistry<int> registry = _registry;
+            _registry = null; _actors.Clear();
+            try { _featureScope?.Dispose(); }
+            finally
+            {
+                _featureScope = null;
+                try { if (_battlefieldSource != null) _battlefieldSource.SetEntityIdResolver(null); }
+                finally { registry.Dispose(); }
+            }
         }
         private void OnDestroy() => UnbindMatch(BoundMatchId);
     }

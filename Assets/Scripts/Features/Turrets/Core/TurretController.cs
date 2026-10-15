@@ -29,6 +29,54 @@ namespace TeamHJD.Game.Turrets
         public TurretUnlockZones UnlockZones => _unlockZones;
         public int UnlockedZoneCount => _unlockedZoneCount;
         private TurretPowerBudget _budget;
+        private bool _requiresMatchScope;
+        private MatchScope _matchScope;
+        public MatchId BoundMatchId => _matchScope?.MatchId ?? default;
+        public bool HasWriteAuthority => !_requiresMatchScope ||
+            (_matchScope != null && isActiveAndEnabled && _matchScope.HasAuthority());
+        private sealed class MatchScope : IDisposable
+        {
+            private TurretController _owner;
+            private readonly Func<bool> _authority;
+            public MatchId MatchId { get; }
+            public MatchScope(TurretController owner, MatchId matchId, Func<bool> authority)
+            { _owner = owner; MatchId = matchId; _authority = authority; }
+            public bool HasAuthority() => _owner != null && _authority();
+            public void Dispose()
+            {
+                TurretController owner = _owner; _owner = null;
+                if (owner != null) owner.ReleaseMatchScope(this);
+            }
+        }
+
+        /// <summary>Core가 조립하는 Scene은 첫 Match 전과 종료 후에도 직접 상태 변경을 허용하지 않습니다.</summary>
+        public void RequireMatchScope() => _requiresMatchScope = true;
+
+        /// <summary>Feature 제어 수명만 임대합니다. 실제 생성자·체력·강화·개별 열 상태를 재초기화하지 않습니다.</summary>
+        public IDisposable BindMatchScope(MatchId matchId, Func<bool> hasAuthority)
+        {
+            if (matchId.IsEmpty) throw new ArgumentException("A Match ID is required.", nameof(matchId));
+            if (hasAuthority == null) throw new ArgumentNullException(nameof(hasAuthority));
+            if (_matchScope != null) throw new InvalidOperationException("The D controller already has a Match owner.");
+            _requiresMatchScope = true; _nextAutoActivationTime = 0;
+            _matchScope = new MatchScope(this, matchId, hasAuthority);
+            return _matchScope;
+        }
+
+        private void ReleaseMatchScope(MatchScope scope)
+        {
+            if (!ReferenceEquals(_matchScope, scope)) return;
+            // 먼저 권한과 자동 큐를 닫아 정리 이벤트에서 새 작업이 재진입하지 않게 합니다.
+            _matchScope = null; IsAutoActivationRunning = false; _autoCandidates.Clear();
+            List<Exception> errors = null;
+            foreach (TurretBase turret in new List<TurretBase>(TurretInstanceRegistry.RegisteredInstances.Values))
+            {
+                if (!OwnsTurret(turret)) continue;
+                try { turret.ReleaseMatchOperations(); }
+                catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            }
+            if (errors != null) throw new AggregateException("D Match control cleanup failed.", errors);
+        }
         public TurretPowerBudget Budget => _budget ??= new TurretPowerBudget(Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;
         public int MaximumPower => Budget.MaximumPower;
@@ -54,7 +102,7 @@ namespace TeamHJD.Game.Turrets
         private void Update()
         {
             Budget.Tick(Time.deltaTime);
-            if (IsAutoActivationRunning) AdvanceAutoActivation();
+            if (HasWriteAuthority && IsAutoActivationRunning) AdvanceAutoActivation();
         }
 
         public const float AutoActivationCooldownSeconds = 60f;
@@ -86,7 +134,7 @@ namespace TeamHJD.Game.Turrets
         /// <summary>CU interaction/button calls this once. No CU component is required.</summary>
         public bool TryStartAutoActivation()
         {
-            if (!isActiveAndEnabled || IsAutoActivationRunning || AutoActivationCooldownRemaining > 0f)
+            if (!HasWriteAuthority || !isActiveAndEnabled || IsAutoActivationRunning || AutoActivationCooldownRemaining > 0f)
                 return false;
 
             var owned = new List<TurretBase>();
@@ -156,10 +204,12 @@ namespace TeamHJD.Game.Turrets
             TurretInstanceRegistry.Registered -= ApplyUnlockZoneToNewTurret;
             if (_regionAccess != null) _regionAccess.Regions.Changed -= OnRegionChanged;
             IsAutoActivationRunning = false;
+            _matchScope?.Dispose();
         }
 
         public bool TrySetMaximumPower(int power)
         {
+            if (!HasWriteAuthority) return false;
             if (!Budget.TrySetMaximumPower(power)) return false;
             maximumPower = power;
             return true;

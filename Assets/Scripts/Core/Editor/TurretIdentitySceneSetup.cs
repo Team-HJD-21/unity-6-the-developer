@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -26,6 +27,13 @@ namespace TeamHJD.Game.Editor
             var serialized = new SerializedObject(binding);
             serialized.FindProperty("_controller").objectReferenceValue = controller;
             serialized.FindProperty("_battlefieldSource").objectReferenceValue = source;
+            serialized.FindProperty("_commandLevelCatalog").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<TurretLevelUpgradeCatalog>("Assets/Data/Turrets/TurretLevelUpgrade_Stage1.asset");
+            var upgradeAssets = AssetDatabase.FindAssets("t:TurretUpgradeDefinition", new[] { "Assets/Data/Turrets" })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<TurretUpgradeDefinition>(AssetDatabase.GUIDToAssetPath(guid)))
+                .OrderBy(asset => asset.Id, StringComparer.Ordinal).ToArray();
+            SerializedProperty upgrades = serialized.FindProperty("_commandUpgrades"); upgrades.arraySize = upgradeAssets.Length;
+            for (int index = 0; index < upgradeAssets.Length; index++) upgrades.GetArrayElementAtIndex(index).objectReferenceValue = upgradeAssets[index];
             serialized.ApplyModifiedProperties();
             var ids = new HashSet<string>(StringComparer.Ordinal);
             foreach (TurretBase turret in scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<TurretBase>(true)))

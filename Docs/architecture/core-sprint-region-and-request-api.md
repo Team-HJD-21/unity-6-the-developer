@@ -126,6 +126,14 @@ NGO 연결을 종료했다가 다시 시작할 때도 같은 Port를 유지할 �
 
 ## HUD / Debugger 확인
 
+### 터렛 명령과 제어 수명
+
+Core의 `TurretMatchBinding.BindCommands`에는 현재 권한/실행 상태·참가자 검사와 필수 `ITurretCommandAuthorization`을 주입한다. 제품 요청 권한의 기본 정책은 아직 확정 전이다. `Commands.Submit(request, verifiedIssuer)`의 verifiedIssuer는 실제 연결 매핑 결과여야 하며 payload의 IssuerId를 그대로 복사해 인증하지 않는다.
+
+`TurretCommandRequest`는 SetActivation, StartAutoActivation, UpgradeLevel/DowngradeLevel, ApplyUpgrade/DowngradeUpgrade를 표현한다. 실제 D 처리 결과는 `TurretCommandResult`로 돌려준다. 같은 요청 GUID를 재전송하면 최초 확정 결과를 재사용한다. 다른 의도를 같은 GUID로 보내면 RequestConflict다. Accepted는 CU 자동 작업의 시작, Applied는 즉시 적용이며 두 상태를 혼동하지 않는다. 체력 수리·임의 피해·생성 명령은 이 API에 포함하지 않았다.
+
+Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Dispose한다. Client/종료 상태에서 직접 D 쓰기·공격은 허용하지 않는다. 자동 큐/예약 해제와 개체 체력·강화 초기화는 다른 책임이며 후자를 이 lease가 수행하지 않는다. 독립 D 테스트 Scene은 기존 로컬 동작을 유지한다. 원격 명령 전송과 HUD 입력 연결은 진행 중이다.
+
 - Game Debugger → Battlefield → **지역 Grid · 점령 원본**에서 현재 정책/점령 수를 확인한다. 모드/Grid Reset은 확인창을 거친다.
 - Scene 점령 Grid는 확정 셀, 임시 판정 삼각형은 계산 입력을 표시한다. 후자는 표시용이며 새 상태 원본이 아니다.
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.

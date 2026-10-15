@@ -66,7 +66,8 @@ namespace TeamHJD.Game.Turrets
         }
         public string DisplayName => _definition != null ? _definition.DisplayName : name;
         public bool IsActivated => _runtimeState.IsActivated;
-        public bool IsOperational => _runtimeState.IsOperational;
+        public bool HasStateAuthority => !(_configuredPowerSource is TurretController controller) || controller.HasWriteAuthority;
+        public bool IsOperational => HasStateAuthority && _runtimeState.IsOperational;
         public bool IsDestroyed => _runtimeState.IsDestroyed;
         public bool IsLocked => _runtimeState.IsLocked;
         public int CurrentHealth => _runtimeState.CurrentHealth;
@@ -255,7 +256,7 @@ namespace TeamHJD.Game.Turrets
         // Retained for existing activation UI consumers.
         public bool IsManualActivationBlocked => IsManualOperationBlocked;
 
-        public bool CanModifyUpgrades => IsInitialized && isActiveAndEnabled &&
+        public bool CanModifyUpgrades => HasStateAuthority && IsInitialized && isActiveAndEnabled &&
             !IsManualOperationBlocked && !IsLocked && !IsDestroyed && !IsActivated && !IsCoolingDown;
 
         private bool RejectManualOperation()
@@ -267,6 +268,7 @@ namespace TeamHJD.Game.Turrets
 
         public TurretActivationResult RequestActivation(bool shouldActivate)
         {
+            if (!HasStateAuthority) return TurretActivationResult.NotAuthoritative;
             if (RejectManualOperation())
             {
                 return TurretActivationResult.AutoActivationInProgress;
@@ -319,6 +321,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool SetLocked(bool isLocked)
         {
+            if (!HasStateAuthority) return false;
             if (RejectManualOperation()) return false;
             if (!isLocked && _configuredPowerSource is TurretController controller &&
                 !controller.CanUnlock(this)) return false;
@@ -424,6 +427,12 @@ namespace TeamHJD.Game.Turrets
 
         protected virtual void OnDisable()
         {
+            ReleaseMatchOperations();
+            TurretInstanceRegistry.Unregister(this);
+        }
+
+        internal void ReleaseMatchOperations()
+        {
             CancelInitialActivation();
             if (_minimumRangeRenderer != null)
                 _minimumRangeRenderer.enabled = false;
@@ -445,7 +454,6 @@ namespace TeamHJD.Game.Turrets
             }
 
             _runtimeState.SetTemporarilySuspended(false);
-            TurretInstanceRegistry.Unregister(this);
         }
 
         private IEnumerator RequestInitialActivation()
@@ -467,6 +475,7 @@ namespace TeamHJD.Game.Turrets
 
         public void SetDamageBonus(int damageBonus)
         {
+            if (!HasStateAuthority) return;
             if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.SetDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
@@ -474,6 +483,7 @@ namespace TeamHJD.Game.Turrets
 
         public void AddDamageBonus(int damageBonus)
         {
+            if (!HasStateAuthority) return;
             if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.AddDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
@@ -491,6 +501,7 @@ namespace TeamHJD.Game.Turrets
 
         private TurretUpgradeResult ChangeUpgradeLevel(TurretUpgradeDefinition upgrade, int direction)
         {
+            if (!HasStateAuthority) return TurretUpgradeResult.NotAuthoritative;
             if (RejectManualOperation())
                 return TurretUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
@@ -579,6 +590,7 @@ namespace TeamHJD.Game.Turrets
             TurretBase targetLevelPrefab, int levelDelta, out TurretBase changedTurret)
         {
             changedTurret = null;
+            if (!HasStateAuthority) return TurretLevelUpgradeResult.NotAuthoritative;
             if (RejectManualOperation())
                 return TurretLevelUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
@@ -662,6 +674,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool ApplyDamage(int damage)
         {
+            if (!HasStateAuthority) return false;
             if (IsLocked) return false;
             if (!_runtimeState.ApplyDamage(damage))
             {
@@ -683,6 +696,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool Restore()
         {
+            if (!HasStateAuthority) return false;
             if (RejectManualOperation()) return false;
             if (IsLocked) return false;
             if (!_runtimeState.Restore(MaxHealth))

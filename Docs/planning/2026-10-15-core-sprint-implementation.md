@@ -246,3 +246,19 @@ Windows 개발 빌드는 실제 Build Settings의 Initial_Stage와 Spaceship을 
 Windows 검증 `NetworkPair/20261015T092844Z-ecaeb39a`: Host PID 42472 / Client PID 46160, 두 종료 0, Build GUID `4086d5d0fe724daaaa94a3fdeab89b88`. Scene 원문에서 추출한 제작 키 8개, Host·Client 등록 키 정렬 해시는 모두 `iixIXoeWPs4jan4HoCEaVXiJR/+RwbXLEsQmQ6WTRPQ=`로 같았다. 기존 여섯 단계도 통과하며 종료 때 Client 대응표 Count 0을 검사했다. 오류 표식 0, 기존 ComputeBuffer 종료 경고 2다.
 
 긴 키는 Scene/전선 패널에서만 짧게 표시하고 원본 ID·tooltip·Copy·Capture는 유지한다. 문자열 검사는 통과했지만 사람의 실제 화면 가독성을 자동 인수한 것은 아니다. 다음 작업은 D 명령/구조화된 결과·권한 gateway·HUD 연결과 명시적 Feature 실행 정리이며, 위 등록 해제를 전력/체력/업그레이드 전체 초기화로 표시하지 않는다. 공용 요청 권한 질문은 아직 답변 전이다. PR/이슈 종료는 하지 않았다.
+
+## 터렛 명령 계약과 D 제어 수명
+
+`TurretCommandRequest → TurretCommandService → TurretFeatureCommandExecutor → D API`를 추가했다. 요청에는 Match/요청 GUID/발신 PlayerId/논리 대상/의도만 담는다. 서버가 실제 연결로 확인한 발신자는 별도로 전달하며, 필수 `ITurretCommandAuthorization` 정책을 주입한다. 제품의 공용 요청 허용 범위는 답변 전이며 테스트 정책을 기본 권한으로 사용하지 않는다.
+
+ON/OFF·CU 자동 활성화·레벨 승급/강등·정의 ID 기반 강화/강등을 지원한다. 전력·열·배치·프리팹 교체는 D에 남긴다. 같은 요청은 실패/거부도 기록해 재실행하지 않고 변경된 의도는 충돌로 거부한다. 자동 활성화의 Accepted는 작업 시작이며 모든 터렛의 활성화 완료가 아니다. 예외는 일부 부작용 가능성이 있어 ExecutionFailed로 확정한다.
+
+`TurretController.BindMatchScope`는 Core가 임대한 제어 수명이다. 정식 Scene에서는 첫 Match 전·Client·Match 종료 후 직접 D 쓰기를 거부한다. 종료는 먼저 쓰기 권한과 자동 큐를 닫고 예약을 해제한다. 체력·강화·개별 열 상태를 초기화하거나 실제 D 개체를 파괴하지 않는다. 기존 D 단독 Scene에는 이 필수 수명을 임의로 강제하지 않는다.
+
+검증 결과:
+
+- `turret-command-service.xml`: 순수 요청 검사 8/8 통과.
+- `turret-command-and-lifetime-scene.xml`: 실제 Initial_Stage 명령·승급 교체/ID·지역·Host 종료/재시작 5/5 통과.
+- `turret-match-scope-regression.xml`: 기존 D 초기화/지역 어댑터 42/42 통과.
+
+실제 Scene에 명령용 레벨/강화 카탈로그 참조도 연결했다. 현재 명령 서비스는 명시적으로 BindCommands한 경계에서만 사용한다. **Client 요청 전송·HUD gateway는 후속 연결 중이며 이미 완료됐다고 표시하지 않는다.** 권한 없는 로컬 D 호출은 이제 거부되므로 이 경계를 연결하기 전 Client 버튼을 정상 작동으로 인수할 수 없다. 새 Windows 빌드 검사는 이 단계에서 아직 실행 전이다.
