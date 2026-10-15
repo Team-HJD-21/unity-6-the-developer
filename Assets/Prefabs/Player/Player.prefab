@@ -1222,7 +1222,6 @@ MonoBehaviour:
   _muzzleAnchor: {fileID: 5693769757480734795}
   _weaponRig: {fileID: 1602775552470066737}
   _input: {fileID: -6787196589204068366}
-  _playerBody: {fileID: 384049816153568952}
   _currentWeapon: 0
   _shotgunColor: {r: 1, g: 0.5, b: 0.1, a: 1}
   _shotgunDamage: 13

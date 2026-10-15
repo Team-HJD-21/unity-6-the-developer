@@ -1,0 +1,147 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.TestTools;
+
+public sealed class PlayerBulletRuntimeTests
+{
+    private GameObject _shooter;
+    private GameObject _bulletPrefab;
+    private Rigidbody2D _shooterBody;
+    private PlayerAttack _attack;
+    private Transform _muzzle;
+    private readonly List<PlayerBullet> _bullets = new();
+
+    [UnitySetUp]
+    public IEnumerator SetUp()
+    {
+        yield return new EnterPlayMode();
+        _bulletPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerBullet.prefab");
+        _shooter = new GameObject("Bullet speed test shooter");
+        _shooter.SetActive(false);
+        _shooter.transform.position = new Vector3(12000f, 12000f, 0f);
+        _shooterBody = _shooter.AddComponent<Rigidbody2D>();
+        _shooterBody.gravityScale = 0f;
+        var input = _shooter.AddComponent<PlayerInputHandler>();
+        input.enabled = false;
+
+        var rigObject = new GameObject("Weapon Rig");
+        rigObject.transform.SetParent(_shooter.transform, false);
+        var rig = rigObject.AddComponent<PlayerWeaponRig>();
+        var gun = new GameObject("Down Gun").transform;
+        gun.SetParent(rig.transform, false);
+        _muzzle = new GameObject("Down Muzzle").transform;
+        _muzzle.SetParent(gun, false);
+        _muzzle.localPosition = new Vector3(.4f, -.8f, 0f);
+        SetReference(rig, "_playerRoot", _shooter.transform);
+        SetReference(rig, "_downGun", gun);
+        SetReference(rig, "_downMuzzle", _muzzle);
+
+        var anchorObject = new GameObject("Muzzle Anchor");
+        anchorObject.transform.SetParent(_shooter.transform, false);
+        var anchor = anchorObject.AddComponent<PlayerMuzzleAnchor>();
+        SetReference(anchor, "_playerRoot", _shooter.transform);
+        SetReference(anchor, "_weaponRig", rig);
+        _attack = _shooter.AddComponent<PlayerAttack>();
+        SetReference(_attack, "_bulletPrefab", _bulletPrefab);
+        _shooter.SetActive(true);
+    }
+
+    [UnityTearDown]
+    public IEnumerator Cleanup()
+    {
+        ClearBullets();
+        if (_shooter != null) Object.DestroyImmediate(_shooter);
+        if (Application.isPlaying) yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
+    public IEnumerator MovingShooter_PreservesConfiguredBulletSpeedAndFreeFlight()
+    {
+        var attackData = new SerializedObject(_attack);
+        attackData.FindProperty("_pelletCount").intValue = 1;
+        attackData.ApplyModifiedPropertiesWithoutUndo();
+        float speed = new SerializedObject(_bulletPrefab.GetComponent<PlayerBullet>()).FindProperty("_speed").floatValue;
+        var velocities = new[] { Vector2.zero, Vector2.right * 5f, Vector2.down * 5f,
+            Vector2.up * 5f, new Vector2(3f, 4f), Vector2.right * 20f };
+
+        foreach (Vector2 velocity in velocities)
+        {
+            _shooterBody.linearVelocity = velocity;
+            Assert.That(_attack.TryFire(), Is.True);
+            CaptureBullets();
+            Assert.That(_bullets.Count, Is.EqualTo(1));
+            var bullet = _bullets[0];
+            var body = bullet.GetComponent<Rigidbody2D>();
+            Assert.That(bullet.transform.parent, Is.Null);
+            Assert.That(Vector3.Distance(bullet.transform.position, _muzzle.position), Is.LessThan(.001f));
+            Assert.That(Vector2.Distance(body.linearVelocity, Vector2.down * speed), Is.LessThan(.001f),
+                $"Shooter velocity {velocity} must not affect bullet flight.");
+
+            Vector2 startPosition = body.position;
+            float startTime = Time.fixedTime;
+            yield return new WaitForFixedUpdate();
+            float elapsed = Time.fixedTime - startTime;
+            Vector2 expectedPosition = startPosition + Vector2.down * speed * elapsed;
+            Assert.That(Vector2.Distance(body.position, expectedPosition), Is.LessThan(.02f));
+            Assert.That(body.linearVelocity.magnitude, Is.EqualTo(speed).Within(.001f));
+            ClearBullets();
+            yield return new WaitForSeconds(.21f);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator Shotgun_PreservesMuzzlePositionPelletCountAndSpread()
+    {
+        _shooterBody.linearVelocity = Vector2.right * 5f;
+        Assert.That(_attack.TryFire(), Is.True);
+        CaptureBullets();
+        Assert.That(_bullets.Count, Is.EqualTo(5));
+        var angles = _bullets.Select(bullet =>
+            Vector2.SignedAngle(Vector2.down, bullet.GetComponent<Rigidbody2D>().linearVelocity)).OrderBy(value => value).ToArray();
+        for (int i = 0; i < _bullets.Count; i++)
+        {
+            Assert.That(Vector3.Distance(_bullets[i].transform.position, _muzzle.position), Is.LessThan(.001f));
+            Assert.That(angles[i], Is.EqualTo(-12.5f + 6.25f * i).Within(.001f));
+        }
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator InvalidDirection_IsRejectedWithoutChangingVelocity()
+    {
+        var bullet = Object.Instantiate(_bulletPrefab, _muzzle.position, Quaternion.identity).GetComponent<PlayerBullet>();
+        _bullets.Add(bullet);
+        foreach (Vector2 direction in new[] { Vector2.zero, new Vector2(float.NaN, 1f), new Vector2(1f, float.PositiveInfinity) })
+        {
+            LogAssert.Expect(LogType.Warning, new Regex(@"^\[PlayerBullet\]"));
+            Assert.That(bullet.Initialize(Color.white, 13f, direction), Is.False);
+            Assert.That(bullet.GetComponent<Rigidbody2D>().linearVelocity, Is.EqualTo(Vector2.zero));
+        }
+        yield break;
+    }
+
+    private void CaptureBullets()
+    {
+        _bullets.AddRange(Object.FindObjectsByType<PlayerBullet>(FindObjectsSortMode.None)
+            .Where(bullet => Vector3.Distance(bullet.transform.position, _shooter.transform.position) < 5f));
+    }
+
+    private void ClearBullets()
+    {
+        foreach (PlayerBullet bullet in _bullets)
+            if (bullet != null) Object.DestroyImmediate(bullet.gameObject);
+        _bullets.Clear();
+    }
+
+    private static void SetReference(Object target, string field, Object value)
+    {
+        var data = new SerializedObject(target);
+        data.FindProperty(field).objectReferenceValue = value;
+        data.ApplyModifiedPropertiesWithoutUndo();
+    }
+}
