@@ -6,11 +6,15 @@
 
 지역 원본은 Match 소유 `RegionRuntime`의 Uniform Grid입니다. `RegionSceneBinding`이 정적 CU 구역을 연결하거나 동적 활성 터렛을 임시 삼각형으로 계산해 셀에 투영합니다. 동적 터렛에는 지역 잠금을 걸지 않으며 점령 회수로 나머지 터렛을 끄지 않습니다. Battlefield의 참가자 밀도 Grid와 지역 점령 Grid는 별개입니다.
 
-현재 Initial_Stage의 실제 모드 전환·점령 형성/회수, HUD의 CU 자동 활성화와 로컬 actor 주입은 검증했습니다. 정식 Encounter 요청은 타입 결과·최신 조회·중복 방지를 거쳐 E의 실제 Planner/Executor를 사용합니다. 실제 UTP 두 SDK 검사에 이어 **Windows 실행 파일 두 개**에서 같은 설정·지역 해시·최소 NetworkObject를 확인하고 정적→동적→회수→종료→재시작을 검증했습니다. Client는 권한 MatchSession을 만들지 않습니다. 원격 Feature 명령과 Client HUD 조작·전체 전투 동기화는 아직 남아 있습니다.
+현재 Initial_Stage의 실제 모드 전환·점령 형성/회수, HUD의 CU 자동 활성화와 로컬 actor 주입은 검증했습니다. 정식 Encounter 요청은 타입 결과·최신 조회·중복 방지를 거쳐 E의 실제 Planner/Executor를 사용합니다. 실제 UTP 두 SDK 검사에 이어 **Windows 실행 파일 두 개**에서 같은 설정·지역 해시·최소 NetworkObject를 확인하고 정적→동적→회수→종료→재시작을 검증했습니다. Client는 권한 MatchSession을 만들지 않습니다. 추가한 터렛 명령 전송/정책/Scene gateway는 아래와 같으며, 이 최신 명령 조립을 포함한 Windows 재검사·Client HUD 조작·전체 전투 동기화는 아직 남아 있습니다.
 
 Initial_Stage의 SinglePlayerHost는 명시적인 연결→준비→시작 API를 호출합니다. Manual로 바꾸면 InitialStageCompositionRoot의 InitialStageNetworkBinding Inspector에서 단계를 나눠 실행할 수 있습니다. Host만 MatchSession을 소유하고 Client는 공유 설정/지역 읽기 모델과 자기 로컬 actor를 연결합니다. 상대 Player의 실제 이동/전투 복제는 아직 이 경로가 제공하지 않습니다. [실행 API와 정확한 책임 경계](../../../Docs/architecture/core-sprint-region-and-request-api.md#initial_stage-실행-api)를 확인하세요.
 
-터렛은 SceneEntityIdentity의 논리 ID와 D의 로컬 InstanceId를 분리합니다. TurretMatchBinding이 Match별 대응표를 만들고 D의 승급/강등 사실에서 ID만 이전합니다. 실제 D Factory·교체·삭제 및 Windows Host/Client의 제작 키 8개 일치를 검증했습니다. Battlefield 배치와 동적 지역 입력은 같은 논리 ID를 사용하되 서로 다른 상태를 나타냅니다. 명령 권한·정식 결과·HUD gateway는 다음 연결 대상입니다.
+터렛은 SceneEntityIdentity의 논리 ID와 D의 로컬 InstanceId를 분리합니다. TurretMatchBinding이 Match별 대응표를 만들고 D의 승급/강등 사실에서 ID만 이전합니다. 실제 D Factory·교체·삭제 및 Windows Host/Client의 제작 키 8개 일치를 검증했습니다. Battlefield 배치와 동적 지역 입력은 같은 논리 ID를 사용하되 서로 다른 상태를 나타냅니다.
+
+터렛 명령은 `TurretCommandRequest → TurretCommandGateway → TurretCommandService → TurretFeatureCommandExecutor → D API`로 연결합니다. 모든 참가자가 ON/OFF·CU 자동 활성화·승급·강화/강등을 요청하고 Host가 실제 연결 발신자·Match·최신 actor 위치/생존/조작·D 규칙을 검증합니다. 실제 NGO 왕복/재전송/위조 거부·재접속과 Initial_Stage의 거리 정책/명령·정리/재시작을 검사했습니다. `InitialStageNetworkBinding.TurretCommands`는 현재 Match의 입력 Port이며 접수와 서버 확정 결과는 다릅니다. 같은 요청은 GUID를 유지해 재전송합니다.
+
+Host가 실제 소유하는 B actor는 `RegisterAuthorityPlayerActor`로 연결하고 반환 lease를 actor 수명에 맞춰 해제합니다. 원격 actor가 없으면 AuthorityActorUnavailable로 거부합니다. Client payload 좌표·PlayerStart로 거리 검증을 대신하지 않습니다. **기존 HUD 버튼의 requester 교체와 D의 Client 읽기 상태 연결은 아직 진행 중**이며, 원격 요청 전송 검사만으로 전체 Client 조작이 완료된 것은 아닙니다. Match 종료는 D 자동 큐/예약을 해제하지만 체력·강화·열 상태의 전체 초기화는 수행하지 않습니다.
 
 AppRoot.Update는 App 소유 네트워크 큐를 게임시간 정지와 무관하게 Pump합니다. OnApplicationQuit/OnDestroy는 같은 Dispose를 호출하며, Editor의 AppPlayModeShutdown은 ExitingPlayMode에서 Scene 파괴 전 정리를 시작합니다. 자세한 단계·커밋·실패/수정 증거는 위 스프린트 기록을 확인하세요.
 
