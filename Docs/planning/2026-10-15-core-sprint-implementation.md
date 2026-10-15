@@ -38,12 +38,12 @@
 | --- | --- | --- |
 | B1 | 공통 식별/요청·정리 안전성 | App/Match 정리, 요청 Context/중복 Ledger 구현. 최종 Feature별 결과·전송 연결은 B4 |
 | B2 | 지역 데이터/Runtime·정적 어댑터 | Match/D 연결·Initial_Stage 정적 기본 시작 검증 완료 |
-| B3 | 네트워크 Match 기반 | NGO 어댑터·App 소유권·타입 시작 설정·준비/시작/종료 조율·실제 UTP 전송 구현. 두 SDK 인스턴스의 시작/종료/재시작 확인. 정식 Scene 조립·별도 두 실행 파일 검증 미완료 |
-| B4 | D/E 실제 요청 | D 지역 접근·Match 수명 연결, E 타입 요청/결과·최신 조회·중복 방지·실제 Host 검증 완료. 원격 요청·터렛 명령 gateway 미완료 |
+| B3 | 네트워크 Match 기반 | NGO·App 소유권·시작 설정·준비/명시 시작/종료·실제 UTP 전송 및 Initial_Stage Host 조립 검증. Client Scene 코드 추가. 별도 두 실행 파일·최소 Core NetworkObject 검증 미완료 |
+| B4 | D/E 실제 요청 | D 지역 접근·Match 수명, E 타입 요청·최신 조회·중복 방지·App 연결 유지/Match별 적 제거 구현. 원격 요청·터렛 명령 gateway 미완료. 생성 추적 수 검사 1회 불일치는 별도 추적 |
 | B5 | 동적 판정·Debugger | 셀 투영·점령 회수·Debugger/Scene 구현. 실제 모드 전환·3개 ON/1개 OFF 검사 통과 |
 | B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 전송 합치기·App 수명·Client Scene 읽기 바인딩 구현. 실제 UTP 두 SDK에서 검증. 정식 Scene/별도 실행 파일 검증은 B8 |
-| B7 | HUD | 정책/점령·CU 자동 활성화와 명시적 로컬 actor 준비/주입/해제 구현·Scene 검증. 원격 공용 요청 및 실제 Client actor 조립은 미완료 |
-| B8 | 통합 검증/문서 | 실제 두 SDK·지역 복제·로컬 Scene·연결 재시작·종료 검사 통과. 독립 실행 파일 2개·정식 네트워크 Scene·시각 인수는 미완료 |
+| B7 | HUD | 정책/점령·CU 자동 활성화·로컬 actor 주입과 Client의 세션 없는 입력 수명 구현. 로컬 Scene/Client 슬롯 단위 검증. 원격 공용 요청·별도 Client Scene 인수는 미완료 |
+| B8 | 통합 검증/문서 | 실제 두 SDK·지역·Host Scene·재접속·종료 검사 및 저장 Scene 최종 8/8 통과. 앞선 7/8 실행의 생성 수 불일치 원인 미확정. 독립 실행 파일 2개·최소 Core 객체·시각 인수 미완료 |
 
 ## PR·커밋 경계
 
@@ -78,6 +78,10 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 - `17792381` — 지역 전체 상태 실제 전송·Client 적용·최신 합치기·Reset/종료 수명.
 - `d263ee77` — HUD 로컬 actor의 명시적 준비·주입·해제와 Scene 연결.
 - `a6aa607f` — SDK 연결 재시작 후 메시지 채널 재등록 및 옛 큐/조립 정리.
+- `066af84d` — Client의 로컬 슬롯 actor 생성·공유 Match 입력 수명 바인딩.
+- `60b324d0` — E의 App 연결 소유권과 Match별 적 제거를 분리.
+- `98a6381a` — 정식 Host/Client Scene 조립·Inspector API·실제 Host 수명 검사.
+- `cd64ae84` — Initial_Stage의 SinglePlayerHost 전환·PlayerStart 슬롯 1 연결.
 - `71f3c0d3` — AppQuit/Editor 재생 종료에서 Scene 파괴 전 App 정리.
 
 추가 커밋과 마지막 검증 결과는 해당 배치 검증 후 기록한다. 앞선 테스트 결과를 이후 미검증 코드 전체의 완료 근거로 재사용하지 않는다.
@@ -146,12 +150,20 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 | `hud-region-scene-final.xml` | 5/5 통과 | HUD 주입·CU 버튼·실제 정적/동적 점령·Client 바인딩 최종 Scene 묶음 |
 | `network-connection-restart.xml` | 13/13 통과 | 동일 Port 인스턴스로 실제 UTP 연결 종료/재접속 후 Match·지역 복제 재실행 |
 | `app-exit-scene-final.xml` | 6/6 통과 | ExitingPlayMode에서 Scene 파괴 전에 App 종료 관측 및 HUD/CU/지역 회귀 |
+| `network-scene-contract-compile.xml` | 12/12 통과 | 새 Scene 조립 코드 컴파일 및 기존 Encounter/Match 조율기 회귀 |
+| `network-scene-host-and-local-actor.xml` | 2 통과 / 1 실패 | Host 흐름의 assertions는 통과했으나 App 종료 때 전송을 재조립하려는 오류 발견 |
+| `network-scene-host-and-local-actor-repaired.xml` | 3/3 통과 | 종료 알림 수정 후 실제 Host 연결/준비/시작·적 생성/정리·연결 유지/Match 재시작과 Client 로컬 슬롯 검증 |
+| `authored-network-scene-regression.xml` | 7 통과 / 1 실패 | 실제 저장 Scene에서 생성 결과 10이지만 Executor 추적 수 증가 0인 불일치 1회 |
+| `authored-encounter-count-diagnostic.xml` | 1/1 통과 | 객체 ID 진단 추가 후 실패 검사 단독 통과. 원인 해결 증거로 간주하지 않음 |
+| `authored-network-scene-count-diagnostic.xml` | 8/8 통과 | 같은 Scene 회귀 묶음 재검사 통과. 이전 불일치 원인은 아직 미확정 |
 
 새 Scene Drawer 작성 중 Unity 6의 EntityId 이름 충돌을 발견해 Domain 별칭으로 수정했다. 컴파일 실패한 실행은 통과 수치에 포함하지 않는다.
 
 전체 Player 이동/공격 복제, 터렛/Enemy 전체 상태 복제, Steam/Backend·매칭·Host Migration, Windows Build, 실제 창의 가독성/색/클릭 인수는 아직 검증하지 않았다. 이번 작업을 근거로 #442/#495/#496/#526/#527/#528을 닫지 않았다.
 
-## 현재 실행과 다음 연결의 정확한 경계
+## 이전 체크포인트의 실행 경계
+
+아래 로컬 Scene 설명은 정식 네트워크 조립 전 체크포인트다. 최신 추가 결과는 문서 끝의 **정식 Scene 연결** 절을 우선한다.
 
 Initial_Stage는 아직 기존 **로컬 Match + Scene 테스트 Host 시작 정책**이다. AppServices에 NGO 어댑터를 붙일 수 있지만 이 Scene이 새 App 네트워크 소유자로 자동 전환된 것은 아니다. Launcher의 첫 시작 coroutine만 명시적으로 Host를 시작한다. 개별 정식 Spawn 요청은 Host를 열지 않는다. 테스트 Launcher의 Scene 종료 Shutdown도 정식 App 조립 전까지 남아 있다.
 
@@ -180,3 +192,17 @@ App은 `AttachRegionSnapshotTransport`로 수명을 소유한다. Host는 실행
 NGO 연결을 다시 열면 CustomMessagingManager도 교체되므로 공용 채널이 SDK 시작/종료 콜백에서 등록을 갱신한다. 이전 연결의 미전송 조각·조립 버퍼는 폐기한다. 같은 세션/전송 객체를 유지한 실제 재접속 뒤 세 번째 Match와 지역 복제가 정상 동작함을 확인했다.
 
 AppRoot는 OnApplicationQuit/OnDestroy에서 같은 idempotent 정리를 수행한다. Editor는 AppPlayModeShutdown이 ExitingPlayMode 알림에서 먼저 Dispose해 지연 Host 시작이 종료 프레임에 남지 않게 한다. 자동 검사에서 실제 AppRoot가 아직 존재하는 이 알림 시점에 현재 Match가 이미 해제됐음을 관측했다. 예외는 숨기지 않고 정리 후 보고한다.
+
+## 정식 Scene 연결 — 추가 진행
+
+`InitialStageNetworkBinding`은 실제 Scene의 NetworkManager를 App에 한 번 전달하고, 연결 후 수명/지역 전송을 연결한다. 연결 개설, 현재 접속자 집합 확정, 준비 응답, Host 명시 시작은 별도 API다. SinglePlayerHost 진입만 이 API들을 순서대로 호출한다. 참가자 수를 감시해 Match를 자동 시작하지 않는다. 현재 1~2명 cohort를 고정하며 준비 이후 새 접속은 거절한다. Steam 신원 인증이나 SOS/도중 참가 구현은 아니다.
+
+Host는 Descriptor로 MatchSession을 만들고 지역 정의를 적용한다. Client는 같은 Descriptor의 자기 슬롯 actor와 읽기 지역 바인딩만 만든다. Client에 권한 MatchSession을 새로 만들지 않는다. **현재 각 실행 인스턴스는 자기 로컬 Player만 생성한다. 상대 Player의 실제 복제는 B의 후속 Feature 연결이 필요하며 이번 기반으로 완료됐다고 하지 않는다.**
+
+E는 `IAppOwnedEncounterMatchConsumer`로 연결 소유권과 권한 참가자를 받는다. Host 자동 Encounter는 같은 정식 요청 서비스를 사용한다. Match 종료 때 Executor가 그 Match의 적만 Despawn하고 App 연결은 유지한다. Client가 임의로 적을 생성할 수 있도록 권한을 열지 않았다. standalone Enemy 테스트 Scene의 기존 연결 정책은 유지한다.
+
+새 자동 Scene 검사는 실제 Initial_Stage에서 제작 연결을 주입해 Host API를 실행했다. Host 연결만으로 Match가 생성되지 않음, 준비 후 시작, 실제 적 생성, 종료 시 적/actor 정리와 연결 유지, 새 MatchId로 재시작을 확인했다. 별도 Client 실행 파일과 Scene 동기화 경로 검증은 아직 남아 있다. Inspector 버튼 외형/사람 클릭도 자동 검사 결과에 포함하지 않는다.
+
+제작 도구 `NetworkSceneSetup`은 기존 Scene NGO를 재사용하고 PlayerStart 슬롯 1을 추가한다. Inspector용 UI 첫 컴파일에서 Application namespace 충돌이 있어 UnityEngine.Application으로 수정했다. 실패한 `network-scene-authoring.log`와 수정 후 로그를 따로 보존하며 컴파일 실패를 통과로 기록하지 않는다. 실제 Scene은 SinglePlayerHost로 저장했고 제작 저장 시 생긴 무관한 TMP 기본값 override는 제외했다. 기존 Scene/Prefab GUID와 타일맵은 변경하지 않았다.
+
+저장된 Scene 회귀 묶음은 최종 8/8 통과했다. 다만 첫 묶음 실행에서 `EncounterRequestIntegrationTests`의 실제 추적 수 증가가 기대 10 대신 0인 불일치가 한 번 발생했다. 당시 Spawn 결과/로그는 10이었으나 실패 시 객체 ID 진단은 없었다. 진단을 추가한 단독 1/1·같은 묶음 8/8은 통과했다. **원인 재현·해결로 단정하지 않으며 생성 누계와 생존/추적 상태, 실행 순서 영향을 다음 검토에서 구분한다.** 이 결과만으로 이슈를 닫거나 PR을 만들지 않는다.

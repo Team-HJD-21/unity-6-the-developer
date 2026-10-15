@@ -33,7 +33,7 @@ flowchart LR
 
 위 S와 T 경로는 선택한 모드 하나만 실행한다. Dynamic은 지역 잠금 없이 활성화로 점령한다. OFF·파괴 시 현재 입력으로 다시 계산해 점령을 회수하지만 남은 터렛의 활성/전력 예약은 유지한다. 과열은 OFF가 아니므로 점을 제거하지 않는다. 삼각형 자체는 정확한 점유영역이 아니며 최종 결과는 셀 집합이다.
 
-GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revision은 같은 Grid 안의 변경 순서다. MatchDescriptorId는 같은 Match ID라도 다른 준비 시도와 분리한다. Client 모델은 이전 준비·이전 Grid 세대·과거 revision 및 동일 revision의 상충 결과를 거부한다. 실제 NGO/UTP의 초기·변경·Reset·종료/재시작 검사는 통과했다. Initial_Stage 정식 네트워크 조립과 별도 두 실행 파일 확인은 남아 있다.
+GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revision은 같은 Grid 안의 변경 순서다. MatchDescriptorId는 같은 Match ID라도 다른 준비 시도와 분리한다. Client 모델은 이전 준비·이전 Grid 세대·과거 revision 및 동일 revision의 상충 결과를 거부한다. 실제 NGO/UTP의 초기·변경·Reset·종료/재시작 검사는 통과했다. Initial_Stage Host 조립도 추가했으며 별도 두 실행 파일의 Client Scene 확인은 남아 있다.
 
 지역은 전체 Snapshot으로 전송한다. 소속은 RLE, 점령은 bitset이며 Client에서 삼각형을 복원하지 않는다. 큐에 아직 보내지 않은 전체 상태는 최신 상태로 합친다. 미접수 전송은 다음 App Pump에서 재시도하며 구식 변경량을 무제한 쌓지 않는다. 이미 전송 중인 메시지는 바꾸지 않는다. 이 처리와 달리 준비/시작/종료는 순서를 유지하고 합치지 않는다.
 
@@ -49,14 +49,14 @@ EncounterRequestResult result = requests.Submit(request, verifiedIssuer);
 ```
 
 - verifiedIssuer는 실제 연결에서 검증한 참가자 ID다. payload의 IssuerId나 DebugWindow 출처를 인증으로 신뢰하지 않는다.
-- 현재 Scene은 로컬 `local-player` 바인딩만 지원한다. 원격 연결 검증/주입은 다음 통합 대상이다.
+- 정식 Scene의 자동 Encounter는 준비된 Host 참가자 ID를 명시적으로 주입한다. 현재 Host의 Match-local ID는 `local-player`다. Client에게 임의 적 생성 권한을 주지 않으며 원격 Feature 요청 gateway는 별도 통합 대상이다.
 - 입력에는 Snapshot을 넣지 않는다. 권한 측 provider에서 현재 Match의 최신 결과를 조회한다. 호환 Snapshot 메서드도 다른 Match는 거부하고 현재 Match의 옛 결과는 실행 원본으로 사용하지 않는다.
 - 같은 요청의 재전송은 같은 RequestId·동일 payload다. 반복 생성은 새로운 RequestId를 발급한다.
 - 결과는 Spawned/PartialSpawn/PlanRejected/SpawnFailed, 권한·Match·충돌·용량 거부 등으로 구분한다. 부분 실행/실패도 확정해 전체 재실행으로 중복 생성하지 않는다.
 - IsReplay는 기존 확정 결과의 재사용이다. ExecutionFailed의 실제 부작용 수는 불명확할 수 있으므로 HasKnownExecutionCounts가 false이며 0마리 생성으로 단정하지 않는다.
 - Ledger는 기본 4096개/Match, 임의 퇴출 없음. 용량 초과는 명시적으로 거부한다. 요청 중복 보장은 같은 Match 수명 안에서만 유효하며 영속 백엔드 보장이 아니다.
 - 게임 cadence는 게임 요청 주체가 소유한다. Snapshot 변경 자체를 Spawn 명령으로 해석하지 않는다.
-- 요청은 Host를 시작하지 않는다. 현재 테스트 Scene의 첫 시작 coroutine은 별도의 명시적 Host 시작을 아직 담당한다.
+- 요청은 Host를 시작하지 않는다. App 소유 경로는 연결 API가 담당하고 standalone Enemy 테스트 Scene만 기존 첫 시작 coroutine 정책을 유지한다.
 
 실제 Host 검사에서 10개 생성, 동일 요청 재전송 추가 생성 0, 예산/발신자 변조 거부, Unbind 후 요청 거부를 확인했다. 최종 E 타입·원격 정책은 담당자 리뷰 대상이며 E의 분포/생성 알고리즘은 재작성하지 않았다.
 
@@ -68,11 +68,27 @@ EncounterRequestResult result = requests.Submit(request, verifiedIssuer);
 
 `NetworkMatchCoordinator.TryPrepare(config, grid, mode, participants)`는 실제 Host만 설정을 확정한다. 각 인스턴스의 Feature 준비 후 `MarkLocalReady()`, Host가 `TryStart()`를 호출한다. `Preparing/Started/Ended`는 조립부의 Feature 연결/해제 진입점이다. Client는 Host의 Descriptor를 사용하며 로컬 Match 설정을 생성하지 않는다. `TryResolveParticipant(verifiedConnectionId, out playerId)`는 실제 발신 연결을 참가자에 대응시킨다.
 
-`NgoMatchLifecycleTransport`는 실제 NGO가 시작된 뒤 하나만 조립한다. `AppRoot.AttachNetworkMatchTransport(transport)`로 전송/조율기 소유권을 넘기면 AppRoot.Update가 게임시간 정지와 무관하게 Pump한다. 독립 테스트처럼 App에 붙이지 않은 소유자는 직접 Pump한다. 명시적 준비·시작/종료 및 RLE 지역 정의를 전송하며, 큰 설정은 제한된 조각 큐로 전달한다. 두 SDK 인스턴스의 실제 UTP 수명/지역 패킷 검사는 통과했으나 Initial_Stage 정식 Scene 조립, 별도 두 실행 파일·최소 NetworkObject 검증은 남아 있다.
+`NgoMatchLifecycleTransport`는 실제 NGO가 시작된 뒤 하나만 조립한다. `AppRoot.AttachNetworkMatchTransport(transport)`로 전송/조율기 소유권을 넘기면 AppRoot.Update가 게임시간 정지와 무관하게 Pump한다. 독립 테스트처럼 App에 붙이지 않은 소유자는 직접 Pump한다. 명시적 준비·시작/종료 및 RLE 지역 정의를 전송하며, 큰 설정은 제한된 조각 큐로 전달한다. 두 SDK 인스턴스의 실제 UTP 수명/지역 패킷 검사와 Initial_Stage의 Host 연결·시작·종료·재시작 검사는 통과했다. 별도 두 실행 파일의 Client Scene·최소 Core NetworkObject 검증은 남아 있다.
 
 권장 조립 순서는 AttachNetworkSession → 명시적 TryStartHost/TryStartClient → 연결 성공 후 NgoMatchLifecycleTransport 생성/AttachNetworkMatchTransport → TryPrepare/Feature 준비/MarkLocalReady/TryStart다. 서버 전용 연결과 Match 설정을 UI가 생성하지 않는다. Descriptor의 참가자 순서는 Host Config의 Player 순서를 보존하며 TryGetSlot으로 확인할 수 있다. 이는 프로세스마다 달라질 수 있는 Unity InstanceID와 다르다.
 
-App 정리는 Match의 Feature 바인딩과 자원을 먼저 해제하고 네트워크 서비스를 포함한 App 자원을 정리한다. 하나의 Feature/서비스가 실패해도 나머지 정리를 수행하고 오류를 모아 보고한다. Initial_Stage는 아직 로컬 Match/테스트 Launcher 경로이며 새 App 네트워크 시작 흐름으로 자동 전환하지 않았다.
+App 정리는 Match의 Feature 바인딩과 자원을 먼저 해제하고 네트워크 서비스를 포함한 App 자원을 정리한다. 하나의 Feature/서비스가 실패해도 나머지 정리를 수행하고 오류를 모아 보고한다. `InitialStageNetworkBinding`이 연결된 Initial_Stage는 App 소유 경로를 사용한다. 이 컴포넌트가 없는 기존 Feature 테스트 Scene은 로컬 호환 경로를 유지한다.
+
+### Initial_Stage 실행 API
+
+| `InitialStageNetworkBinding` | 의미 |
+| --- | --- |
+| `TryStartHost()` / `TryStartClient()` | 실제 SDK 연결 시작. Match를 만들지 않음 |
+| `TryPrepareMatch()` | Host가 현재 실제 접속자 1~2명을 고정하고 설정 전송. 준비 이후 도중 참가 제외 |
+| `TryStartMatch()` | 모두 준비된 경우 Host만 시작. 인원수 감시로 자동 실행하지 않음 |
+| `TryEndMatch()` | Match/actor/적·지역 바인딩 정리. App 연결은 유지 |
+| `ShutdownConnection()` | App이 소유한 실제 연결 종료 |
+
+`SinglePlayerHost` 진입 설정만 동일한 연결→준비→시작 API를 순서대로 호출한다. `Manual`은 Inspector의 별도 버튼 또는 게임 흐름 코드에서 호출한다. Client 진입은 연결만 열고 Host 설정을 기다린다. Stage/content version·PlayerStart 슬롯·필수 제작 연결 검사가 실패하면 준비/실행을 중단한다. `peer-{connectionId}`는 Match-local 식별자일 뿐 Steam 계정 인증 결과가 아니다.
+
+Host는 Descriptor의 전체 참가자 상태를 가지되 **현재 각 인스턴스에는 자기 로컬 Player actor만 생성한다**. `MatchPlayerActorScope.SpawnLocalPlayer`와 `IPlayerNetworkMatchBinding`은 Client의 로컬 actor를 권한 MatchSession 없이 연결한다. 상대 actor 이동/공격 복제와 Host의 원격 Player 위치 수집은 B의 후속 Feature 연결이 필요하다. 가짜 원격 좌표를 Battlefield에 채우지 않는다.
+
+`IAppOwnedEncounterMatchConsumer.UseAppNetworkOwnership()`는 Match 바인딩 전에 호출한다. 이어서 `BindAuthorityMatch(matchId, verifiedHostPlayerId, latestProvider)`로 Host 요청을 연결한다. E의 자동 Spawn/UI는 연결을 개설하지 않으며 테스트 OnGUI도 표시하지 않는다. Unbind 시 E의 `EnemySpawnExecutor.DespawnForMatch`가 해당 Match의 적만 제거한다. 실제 Spawn/Despawn 구현은 계속 E가 소유한다.
 
 NGO 연결을 종료했다가 다시 시작할 때도 같은 Port를 유지할 수 있다. 공용 채널은 새 SDK 메시지 관리자에 재등록하고 옛 연결의 큐/조립 버퍼를 폐기한다. Match 재시작과 실제 연결 재시작은 각각 별도로 검사했다. Runtime App 종료는 OnApplicationQuit/OnDestroy, Editor 재생 종료는 ExitingPlayMode의 선행 Dispose를 사용한다.
 
@@ -83,4 +99,4 @@ NGO 연결을 종료했다가 다시 시작할 때도 같은 Port를 유지할 �
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.
 - 살아 있는 Player가 CU의 interactionDistance 안에 있고 조작 가능할 때 자동 활성화를 요청할 수 있다. 재실행 대기/진행 중 거부·전력·우선순위는 D Controller가 소유한다.
 - HUD actor는 `ILocalPlayerActorConsumer`의 PrepareLocalActor/BindLocalActor/UnbindLocalActor로 명시한다. 실제 Scene에서 대기·교체·다른 Match 해제 거부·HUD 비활성/재활성을 검증했다. UI가 actor를 생성/파괴하지 않는다.
-- 현재 CU/터렛 입력은 D 로컬 API에 연결됐다. 원격 공용 요청·실제 Client actor 조립과 최종 해상도별 시각 인수는 미완료다.
+- 현재 CU/터렛 입력은 D 로컬 API에 연결됐다. Client 로컬 actor 조립 코드는 추가했으나 별도 Client Scene 인수·원격 공용 요청·최종 해상도별 시각 인수는 미완료다.
