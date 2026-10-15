@@ -38,7 +38,7 @@ namespace TeamHJD.Game.Turrets.Tests
             var zones = new TurretUnlockZones(new TurretGridConfiguration(Vector2.zero, 8, 8, 4, 4), Vector2.zero, 4);
             Assert.Throws<ArgumentOutOfRangeException>(() => TurretRegionGridAdapter.GetUnlockedCells(zones, -1));
             Assert.Throws<ArgumentOutOfRangeException>(() => TurretRegionGridAdapter.GetUnlockedCells(zones, zones.ZoneCount + 1));
-            Assert.Throws<ArgumentNullException>(() => TurretRegionGridAdapter.CreateDefinition(null));
+            Assert.Throws<ArgumentNullException>(() => TurretRegionGridAdapter.CreateDefinition((TurretUnlockZones)null));
         }
     }
 }

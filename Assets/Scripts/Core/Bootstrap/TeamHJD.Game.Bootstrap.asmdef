@@ -9,7 +9,8 @@
     "TeamHJD.Game.Domain",
     "TeamHJD.Game.Infrastructure",
     "TeamHJD.Game.Infrastructure.Fakes",
-    "TeamHJD.Game.Presentation"
+    "TeamHJD.Game.Presentation",
+    "TeamHJD.Game.Turrets"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

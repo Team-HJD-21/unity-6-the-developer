@@ -680,6 +680,52 @@ namespace TeamHJD.Game.Turrets.Tests
             Assert.That(controller.IsAutoActivationRunning, Is.False);
         }
 
+        [Test]
+        public void CoreRegionDynamic_ReleaseDoesNotLockOrDeactivateTurret()
+        {
+            var controller = Track(new GameObject("Dynamic Region Controller")).AddComponent<TurretController>();
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            var definition = new RegionGridDefinition(new BattlefieldGridConfiguration(
+                new BattlefieldPoint(0, 0), 0, 16, 16, 16, 16));
+            using var runtime = new TeamHJD.Game.Application.RegionRuntime(new MatchId("dynamic"), definition, RegionPolicyMode.Dynamic);
+            controller.SetRegionAccessPolicy(new TeamHJD.Game.Application.RegionAccessPolicy(runtime));
+            try
+            {
+                Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+                runtime.TryApply(runtime.Snapshot, new[] { 136 }, RegionCaptureUpdateMode.Replace);
+                runtime.TryApply(runtime.Snapshot, Array.Empty<int>(), RegionCaptureUpdateMode.Replace);
+                Assert.That(runtime.Snapshot.CapturedCellCount, Is.Zero);
+                Assert.That(turret.IsLocked, Is.False);
+                Assert.That(turret.IsActivated, Is.True);
+                Assert.That(controller.GetSnapshot().ReservedPower, Is.EqualTo(20));
+            }
+            finally { controller.SetRegionAccessPolicy(null); }
+        }
+
+        [Test]
+        public void CoreRegionStatic_UsesCapturedGridAndRejectsIndependentLegacyUnlock()
+        {
+            var controller = Track(new GameObject("Static Region Controller")).AddComponent<TurretController>();
+            var turret = Track(TurretFactory.Create(MakeInactiveTurret(),
+                TurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<TurretBase>();
+            using var runtime = new TeamHJD.Game.Application.RegionRuntime(new MatchId("static"),
+                new RegionGridDefinition(new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 16, 16, 16, 16)));
+            controller.SetRegionAccessPolicy(new TeamHJD.Game.Application.RegionAccessPolicy(runtime));
+            try
+            {
+                Assert.That(turret.IsLocked, Is.True);
+                runtime.TryApply(runtime.Snapshot, new[] { 136 }, RegionCaptureUpdateMode.Replace);
+                Assert.That(turret.IsLocked, Is.False);
+                Assert.That(turret.IsActivated, Is.False);
+                Assert.That(controller.UnlockThroughZone(4), Is.False);
+                Assert.Throws<InvalidOperationException>(() => controller.ConfigureUnlockZones(Vector2.zero));
+            }
+            finally { controller.SetRegionAccessPolicy(null); }
+        }
+
         private TurretBase CreateWithActivationIntent(FakePower power)
         {
             return Track(TurretFactory.Create(MakeInactiveTurret(),

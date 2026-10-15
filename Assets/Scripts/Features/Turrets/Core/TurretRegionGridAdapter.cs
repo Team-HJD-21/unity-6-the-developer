@@ -3,11 +3,20 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
+using EntityId = TeamHJD.Game.Domain.EntityId;
 
 namespace TeamHJD.Game.Turrets
 {
     public static class TurretRegionGridAdapter
     {
+        public static RegionGridDefinition CreateDefinition(TurretGridConfiguration source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            return new RegionGridDefinition(new BattlefieldGridConfiguration(
+                new BattlefieldPoint(source.Origin.x, source.Origin.y), source.OriginZ,
+                source.MapWidth, source.MapHeight, source.CellsX, source.CellsY));
+        }
+
         public static RegionGridDefinition CreateDefinition(TurretUnlockZones zones)
         {
             if (zones == null) throw new ArgumentNullException(nameof(zones));

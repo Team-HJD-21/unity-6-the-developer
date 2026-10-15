@@ -41,11 +41,13 @@ namespace TeamHJD.Game.Application
         }
 
         /// <summary>명시적 초기화입니다. 기존 점령을 비우고 새 Grid 세대를 발급합니다.</summary>
-        public void Reset(RegionGridDefinition definition, RegionPolicyMode mode)
+        public void Reset(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells = null)
         {
             ThrowIfDisposed();
             if (_isNotifying) throw new InvalidOperationException("Do not reset regions inside a change notification.");
-            _state = new RegionGridState(_state.Snapshot.MatchId, Guid.NewGuid(), definition, mode);
+            var next = new RegionGridState(_state.Snapshot.MatchId, Guid.NewGuid(), definition, mode);
+            if (initialCells != null) next.Apply(initialCells, RegionCaptureUpdateMode.Replace);
+            _state = next;
             Notify();
         }
 

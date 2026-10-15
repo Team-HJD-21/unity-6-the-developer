@@ -27,6 +27,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
+        private RegionSceneBinding _regionBinding;
         private MatchPlayerActorScope _playerActors;
         private IBattlefieldTurretInputSource _turretInputSource;
         private IEncounterMatchConsumer _encounterConsumer;
@@ -110,6 +111,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     new LocalPlayerActorSpawner(playerPrefab, actorParent),
                     starts);
                 _matchSession = session;
+                RegionSceneBinding[] regionBindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
+                    .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
+                if (regionBindings.Length > 1) throw new InvalidOperationException("Keep one RegionSceneBinding per Match scene.");
+                _regionBinding = regionBindings.FirstOrDefault();
+                _regionBinding?.BindMatch(session);
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
                     _encounterConsumer.BindMatch(matchId, () => HasCurrentMatch ? _matchSession?.Battlefield : null);
@@ -133,6 +139,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             catch
             {
                 ReleaseEncounterConsumer(matchId);
+                _regionBinding?.UnbindMatch();
+                _regionBinding = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -165,6 +173,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 if (_matchSession != null)
                     ReleaseEncounterConsumer(_matchSession.Config.MatchId);
+                _regionBinding?.UnbindMatch();
+                _regionBinding = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
