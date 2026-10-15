@@ -6,7 +6,7 @@
 
 작업 브랜치: `codex/core-sprint-network-regions`
 
-상태: A 구현·핵심 자동 검증 후 이슈 감사 중. 후속 Player/Scene 정리 예외 경로 보완은 C# 컴파일만 확인했으며 Unity 재검증 대기다(문서 마지막 절). 아래 기존 통과 결과를 이 보완의 실행 근거로 확장하지 않는다. 전체 협동 게임 완료가 아니다. PL 요청으로 수동 화면 확인은 PL에게 맡긴다. [이슈별 판정·직접 확인·PR 경계](2026-10-15-core-sprint-review-handoff.md).
+상태: A 구현·핵심 자동 검증 후 이슈 감사 중. 후속 Player/Scene 정리 보완도 별도 사본의 Unity/Windows 두 프로세스로 재검증했다(마지막 절). PR 중간 head 검증·PL 수동 인수와 팀원 계약 리뷰를 구분한다. 전체 협동 게임 완료가 아니다. PL 요청으로 수동 화면 확인은 PL에게 맡긴다. [이슈별 판정·직접 확인·PR 경계](2026-10-15-core-sprint-review-handoff.md).
 
 [문서 목차](../README.md) · [Core API](../architecture/core-api-usage.md) · [터렛 API](../architecture/turrets/api-reference.md) · [HUD](../architecture/player-ui-api.md)
 
@@ -353,7 +353,7 @@ HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구�
 
 `encounter-and-host-final.xml` 실제 Scene 2/2 통과: E의 10개 생성/동일 요청 추가 생성 0/무권한·변조 거부, Host의 종료 시 적 정리·연결 유지·재시작을 확인했다. 앞선 생성 추적 수 불일치 1회의 원인을 이것만으로 해결됐다고 선언하지 않는다.
 
-## 후속 검토 — Player/Scene 정리 실패 격리 (Unity 실행 대기)
+## 후속 검토 — Player/Scene 정리 실패 격리
 
 요구 근거는 #442의 **Feature 하나의 정리 실패가 나머지 Match/App 자원 정리를 건너뛰지 않을 것**이다. 코드 검토에서 PlayerSceneAdapter의 첫 Feature Unbind 예외가 같은 actor의 뒤 Feature를 건너뛰고, MatchPlayerActorScope의 첫 actor 예외가 다음 actor 및 spawner Dispose를 건너뛰는 경로를 확인했다. Scene의 순차 finally 내부에서도 지역 해제 예외가 D 해제를 막을 수 있었다. Encounter 추적 수 불일치의 원인이라고 단정하지 않는다.
 
@@ -368,6 +368,19 @@ HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구�
 
 최신 컴파일 증거: `ManagedCompile/20261015T113739Z-9292fc89/compiled.json`, 어셈블리 3개 종료 0, 변경 소스 SHA256 전/후 일치. 최초 실행 `20261015T113653Z-b2012d36`은 새 검사 파일의 Infrastructure using 누락으로 Editor 테스트 어셈블리만 실패했고, 수정 후 성공했다. `NetworkObject.IsSceneObject` 사용 중단 경고는 기존 진단 코드에 남아 있다.
 
-**아직 실행하지 않음:** `PlayerBindingCleanupTests` 및 영향을 받는 기존 Scene 검사의 Unity 실행, 보완 후 Windows 빌드/두 프로세스 재검사. PL이 수동 확인을 담당하고 Editor를 사용 중일 수 있으므로 이 작업을 위해 창을 조작/종료하거나 검사를 강제로 시작하지 않았다.
+기존 `battlefield-validation` 사본에는 미커밋 변경이 있어 보존했다. 새 관리형 `C:/Users/c/.codex/worktrees/core-sprint-validation/Unity_3D_CBC`를 검증용으로 만들었으며 원본 Editor를 조작/종료하지 않았다. 결과/로그는 원본 `Docs/Local/Validation/CoreSprint20261015`에 보존한다.
 
-다음 자동 검증은 `PlayerBindingCleanupTests;NetworkLocalActorTests;InitialStageNetworkSceneTests;StageTurretCommandHudTests`만 묶고, 통과한 뒤 실제 Windows 빌드와 `tools/Test-CoreNetworkPair.ps1`을 한 번 실행하는 범위다. 기존 전체 테스트를 반복하지 않는다. 검사 결과가 나올 때까지 이 후속 보완을 검증 완료로 적거나 PR/이슈를 종료하지 않는다.
+- `player-scene-cleanup-isolated.xml`: 실제 깨끗한 사본에서 지정한 10개 중 9 통과/1 실패. Scene 사례가 한 프레임 뒤 즉시 객체 0개를 기대했으나 Player 하나가 아직 남아 있었다. 순수 오류 격리 5개와 기존 Network actor/Host/HUD 4개는 통과했다.
+- `6910135a`는 그 Scene 검사만 지연 파괴의 실제 완료를 제한 시간 안에 확인하도록 바꿨다. `player-scene-cleanup-deferred.xml` 1/1 통과, `PLAYER_CLEANUP_DESTROY_CONFIRMED frames=2`. 잔존을 무시하거나 단순 대기 후 성공 처리하지 않고 Player/anchor 모두 실제 0개를 요구한다. 제품 정리 코드를 다시 바꿔 통과시킨 것은 아니다.
+- `network-cleanup-isolated-build.log`: 같은 최신 사본의 실제 Build Settings로 Windows 개발 빌드 성공, 311,435,682 bytes.
+- `NetworkPair/20261015T115423Z-6a16c79f/verified.json`: Host PID 43284 / Client PID 1008, Build GUID `5a625e4d0db246a2b20648f5e113c181`, 양쪽 종료0. 기존과 같은 수명 8단계/명령 7종/표시 전체 해시/실행 중 Client 해제를 재확인했다. 런타임 오류 서명0, ComputeBuffer 종료 경고2. Host interaction actor fixture 한계는 앞 절과 동일하다.
+
+원본의 전체 `.meta` 검사 오류0, 검사기 자체 회귀9/9, Unity 버전/Force Text/Visible Meta·활성 Scene 두 개·생성 폴더/충돌 표시·submodule 매핑도 로컬에서 확인했다. Python 기본 sandbox 임시 폴더 권한 오류는 작업 폴더 안 테스트 tempdir로, Git MSYS 보조 셸 거부는 승인된 읽기 전용 실행으로 구분해 해결했다. 공통 환경 기록에 남겼으며 게임 버그나 실제 GitHub CI 성공으로 표현하지 않는다.
+
+## PR 중간 경계와 검증 사본 정리
+
+`80ee8f06`에서 지역/Encounter 순수 검사16/16, `7fe89c25`에서 지역 replica/Match 조율12/12, `1115880d`에서 D 명령/gateway/Host 정책15/15를 각각 실제 Unity 전체 컴파일 후 통과했다. 최종 head 통과만으로 중간 head의 빌드를 추정하지 않았다. 이는 해당 순수 계약/컴파일 증거이며 중간 상태의 전체 게임 플레이나 Windows 빌드 증거는 아니다. [PR 분할 검토안](2026-10-15-core-sprint-pr-plan.md) 참조.
+
+최신 검증 빌드는 원본 `Builds/CoreNetworkValidation`에 보존했다. 원본과 검증 사본의 파일335개 전체 SHA256 일치 및 추가 파일0을 확인했다. XML/로그/JSON은 원본 Docs/Local에 남겼다. 그 뒤 이번에 만든 `core-sprint-validation`만 복구 가능한 managed archive로 정리했다. 원본 Editor와 기존 `battlefield-validation`의 미커밋 수정은 보존했다. archive의 ignored Library는 검증용 생성 캐시이며 결과/빌드 보존과 구분한다.
+
+마지막 원격 조회에서도 main SHA는 `1277de107b5165d1712cdb72e41f49a9f4790dd1`로 시작 기준과 같았고, 대상 이슈6개도 여전히 열려 있었다. 새로운 원격 변경이 없어 rebase/push/PR 생성/병합/이슈 종료는 실행하지 않았다. PL 수동 인수와 B/D/E 계약 확인은 아직 완료 증거가 없다.
