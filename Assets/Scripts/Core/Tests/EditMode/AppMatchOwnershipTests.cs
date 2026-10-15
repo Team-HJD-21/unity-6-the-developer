@@ -62,6 +62,17 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(notifications, Is.EqualTo(2));
         }
 
+        [Test]
+        public void DisposedRoot_EndsOwnedMatchAndCannotStartAgain()
+        {
+            MatchSession session = Start("shutdown");
+            _root.Dispose();
+            Assert.That(session.State.Phase, Is.EqualTo(MatchPhase.Disposed));
+            Assert.That(_root.CurrentMatchId.IsEmpty, Is.True);
+            Assert.Throws<ObjectDisposedException>(() => Start("after-shutdown"));
+            Assert.DoesNotThrow(() => _root.Dispose());
+        }
+
         private MatchSession Start(string id)
         {
             var matchId = new MatchId(id);
