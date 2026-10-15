@@ -56,7 +56,8 @@ namespace TeamHJD.Game.Application
                 result = new EncounterRequestResult(request.Context.RequestId, sequence, snapshot.Revision,
                     EncounterRequestStatus.ExecutionFailed, reason: error.Message);
             }
-            _ledger.Complete(request.Context.RequestId, result);
+            // 실행 중 Feature 이벤트가 Match를 종료할 수 있습니다. 종료된 기록을 다시 사용하지 않습니다.
+            if (!_disposed) _ledger.Complete(request.Context.RequestId, result);
             return result;
         }
         private static EncounterRequestResult Reject(EncounterRequest request, EncounterRequestStatus status)

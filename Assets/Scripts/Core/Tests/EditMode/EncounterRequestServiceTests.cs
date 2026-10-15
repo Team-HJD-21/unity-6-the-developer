@@ -96,5 +96,14 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(service.Submit(first, Host).IsReplay, Is.True);
             Assert.That(executor.Calls, Is.EqualTo(1));
         }
+        [Test]
+        public void DisposalInsideExecutorDoesNotAccessDisposedLedger()
+        {
+            using var spatial = Spatial(); var executor = new Executor();
+            using var service = new EncounterRequestService(Match, () => spatial.Snapshot, () => true, _ => true, executor);
+            executor.Reentrant = _ => { service.Dispose(); return null; };
+            Assert.That(service.Submit(Request(), Host).Status, Is.EqualTo(EncounterRequestStatus.PartialSpawn));
+            Assert.That(service.Submit(Request(), Host).Status, Is.EqualTo(EncounterRequestStatus.MatchUnavailable));
+        }
     }
 }
