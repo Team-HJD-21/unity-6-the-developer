@@ -28,22 +28,24 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     {
         [Serializable] private sealed class Probe
         {
-            public string Run, Phase, Match, Descriptor, DescriptorHash, Grid, RegionHash, Player, TurretIdentityHash;
-            public int Seed, Captured, Mode, ActorCount; public long Revision; public ulong Anchor;
+            public string Run, Phase, Match, Descriptor, DescriptorHash, Grid, RegionHash, Player, TurretIdentityHash, PresentationHash;
+            public int Seed, Captured, Mode, ActorCount; public long Revision, PresentationRevision; public ulong Anchor;
         }
         [Serializable] private sealed class Result
         {
             public bool Success; public string Role, Run, Step, Error, Unity, Build;
-            public int ProcessId; public Probe[] Observations; public string[] Errors;
+            public int ProcessId; public Probe[] Observations; public string[] Errors, TurretChecks; public string TurretFixtureScope;
         }
         private string _role, _run, _path, _step, _firstMatch, _lastMatch, _lastDescriptor;
         private ushort _port;
         private InitialStageNetworkBinding _binding;
         private NgoNetworkSession _session;
         private NgoMessageChannel _probe;
+        private CoreNetworkTurretValidation _turretProbe;
         private readonly List<Probe> _observations = new List<Probe>();
         private readonly List<string> _errors = new List<string>();
         private readonly HashSet<string> _sent = new HashSet<string>();
+        private readonly HashSet<string> _seenMatches = new HashSet<string>();
         private TurretBase[] _selected;
         private float _deadline, _finishAt;
         private int _dynamicCount;
@@ -95,6 +97,22 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     if (Time.realtimeSinceStartup >= _finishAt) Finish(true, null);
                     return;
                 }
+                if (_step == "ClientDisconnecting")
+                {
+                    if (Time.realtimeSinceStartup < _finishAt) return;
+                    _binding.ShutdownConnection(); Move("ClientAwaitDisconnected"); return;
+                }
+                if (_step == "ClientAwaitDisconnected" || _step == "WaitDisconnected")
+                {
+                    // Host의 마지막 진단 지시도 큐에서 실제 전송해야 Client가 연결을 닫습니다.
+                    _probe.Pump();
+                    if (IsMatchClean())
+                    {
+                        _observations.Add(new Probe { Phase = "Disconnected", Match = _lastMatch, Run = _run });
+                        Finish(true, null);
+                    }
+                    return;
+                }
                 if (_binding == null) _binding = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
                 if (_binding == null || _binding.Connection == null) return;
                 if (_session == null)
@@ -107,24 +125,50 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         throw new InvalidOperationException("The explicit connection API rejected startup.");
                     _probe = new NgoMessageChannel(_session.Manager, "teamhjd.validation.core.v1");
                     _probe.MessageReceived += OnProbe;
+                    _turretProbe = new CoreNetworkTurretValidation(_binding, _session, _run);
                     Move(_role == "host" ? "WaitPeers" : "ClientMonitor");
                     if (_role == "host") Debug.Log("CORE_NETWORK_PROBE_HOST_LISTENING");
                 }
                 _probe.Pump();
+                _turretProbe.Pump();
+                if (_turretProbe.Failure != null) throw new InvalidOperationException(_turretProbe.Failure);
                 if (_role == "client") { ObserveClient(); return; }
                 if (_step == "WaitPeers" && _session.ConnectedPeerIds.Count == 2)
                 {
                     if (!_binding.TryPrepareMatch()) throw new InvalidOperationException("Host preparation rejected after Scene-ready cohort.");
                     Move("WaitReady");
                 }
-                else if ((_step == "WaitReady" || _step == "WaitRestartReady") && _binding.Matches.CanStart)
+                else if ((_step == "WaitReady" || _step == "WaitRestartReady" || _step == "WaitDisconnectReady") && _binding.Matches.CanStart)
                 {
                     bool restart = _step == "WaitRestartReady";
+                    bool disconnect = _step == "WaitDisconnectReady";
                     if (!_binding.TryStartMatch()) throw new InvalidOperationException("Host start rejected despite readiness.");
-                    Move(restart ? "WaitRestartAck" : "WaitStaticAck");
+                    Move(disconnect ? "WaitDisconnectAck" : restart ? "WaitRestartAck" : "WaitStaticAck");
+                }
+                else if (_step == "WaitTurretCommands" && _turretProbe.Completed)
+                {
+                    if (!_binding.GetComponent<RegionSceneBinding>().ResetPolicy(RegionPolicyMode.Dynamic, true))
+                        throw new InvalidOperationException("The authoritative region policy reset was rejected.");
+                    ActivateTriangle(); Move("WaitDynamicAck");
                 }
             }
             catch (Exception error) { Fail(error.ToString()); }
+        }
+
+        private bool IsMatchClean()
+        {
+            var app = Object.FindAnyObjectByType<AppRoot>();
+            var spawnManager = _session.Manager.SpawnManager;
+            // NGO는 연결 종료 시 SpawnManager 자체를 null로 정리합니다.
+            // Host 연결 유지 중 null인 경우와 정상 Disconnected 상태를 구분합니다.
+            bool objectsClean = spawnManager == null ? _session.State == NetworkConnectionState.Disconnected :
+                !spawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true);
+            return app != null && _binding.Matches?.Phase == NetworkMatchPhase.Ended && app.CurrentMatchId.IsEmpty &&
+                _binding.TurretCommands == null && _binding.TurretPresentation == null && app.NetworkRegions.Source == null &&
+                _binding.GetComponent<TurretMatchBinding>().Count == 0 &&
+                Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length == 0 &&
+                Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length == 0 &&
+                objectsClean;
         }
 
         private void ObserveClient()
@@ -138,6 +182,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length != 0 ||
                     Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length != 0 ||
                     app.NetworkRegions.Source != null || !app.CurrentMatchId.IsEmpty ||
+                    _binding.TurretCommands != null || _binding.TurretPresentation != null ||
                     _binding.GetComponent<TurretMatchBinding>().Count != 0 ||
                     _session.Manager.SpawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true)) return;
                 string phase = _lastMatch == _firstMatch ? "Ended" : "FinalEnded";
@@ -161,12 +206,17 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 state.CapturedCells != snapshot.CapturedCellCount || state.RegionMode != (int)snapshot.Mode) return;
             if (state.StageId.ToString() != descriptor.Config.StageId.Value || state.Seed != descriptor.Config.RandomSeed)
                 throw new InvalidOperationException("Anchor metadata differs from the authoritative descriptor.");
+            var presentation = _binding.TurretPresentation?.Snapshot;
+            if (presentation == null || presentation.MatchId != snapshot.MatchId || presentation.DescriptorId != descriptor.DescriptorId ||
+                presentation.Controller.RegionGridId != snapshot.GridId || presentation.Controller.RegionRevision != snapshot.Revision ||
+                presentation.Controller.RegionMode != snapshot.Mode) return;
             var actors = Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None);
             if (!_binding.Matches.TryResolveParticipant(_session.LocalConnectionId, out PlayerId player) ||
                 actors.Length != 1 || actors[0].PlayerId != player) return;
             _firstMatch ??= snapshot.MatchId.Value; _lastMatch = snapshot.MatchId.Value;
+            _seenMatches.Add(_lastMatch);
             _lastDescriptor = descriptor.DescriptorId.ToString("N");
-            string phaseName = _firstMatch != _lastMatch ? "Restart" : snapshot.Mode == RegionPolicyMode.Static ? "Static" :
+            string phaseName = _seenMatches.Count >= 3 ? "Disconnect" : _firstMatch != _lastMatch ? "Restart" : snapshot.Mode == RegionPolicyMode.Static ? "Static" :
                 _dynamicCount == 0 ? (snapshot.CapturedCellCount > 0 ? "Dynamic" : null) :
                 snapshot.Revision > _dynamicRevision && snapshot.CapturedCellCount < _dynamicCount ? "Release" : null;
             if (phaseName == null) return;
@@ -179,6 +229,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 Seed = descriptor.Config.RandomSeed, Captured = snapshot.CapturedCellCount,
                 Mode = (int)snapshot.Mode, Revision = snapshot.Revision, Anchor = anchor.NetworkObjectId,
                 Player = player.Value, ActorCount = actors.Length,
+                PresentationHash = CoreNetworkTurretValidation.Hash(presentation), PresentationRevision = presentation.Revision,
                 TurretIdentityHash = TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>())
             });
         }
@@ -199,6 +250,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (packet == null || packet.Run != _run) throw new InvalidOperationException("Wrong probe run.");
                 if (_role == "client")
                 {
+                    if (sender == 0 && packet.Phase == "DisconnectNow" && _sent.Contains(_lastMatch + "/Disconnect"))
+                    { _finishAt = Time.realtimeSinceStartup + .2f; Move("ClientDisconnecting"); return; }
                     if (sender != 0 || packet.Phase != "Complete" || !_sent.Contains(_lastMatch + "/FinalEnded"))
                         throw new InvalidOperationException("Unexpected server completion.");
                     SendOnce(new Probe { Phase = "Closing", Match = _lastMatch });
@@ -220,10 +273,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     }
                     else
                     {
-                        var complete = new Probe { Run = _run, Phase = "Complete", Match = _lastMatch };
-                        if (!_probe.TrySend(sender, Encoding.UTF8.GetBytes(JsonUtility.ToJson(complete))))
-                            throw new InvalidOperationException("Completion message was not queued.");
-                        Move("WaitClosing");
+                        if (!_binding.TryPrepareMatch()) throw new InvalidOperationException("Disconnect verification preparation rejected.");
+                        Move("WaitDisconnectReady");
                     }
                     return;
                 }
@@ -231,9 +282,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (_step == "WaitStaticAck" && packet.Phase == "Static")
                 {
                     _firstAnchor = packet.Anchor;
-                    if (!_binding.GetComponent<RegionSceneBinding>().ResetPolicy(RegionPolicyMode.Dynamic, true))
-                        throw new InvalidOperationException("The authoritative region policy reset was rejected.");
-                    ActivateTriangle(); Move("WaitDynamicAck");
+                    _turretProbe.Begin(sender); Move("WaitTurretCommands");
                 }
                 else if (_step == "WaitDynamicAck" && packet.Phase == "Dynamic")
                 {
@@ -253,6 +302,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     if (!_binding.TryEndMatch()) throw new InvalidOperationException("Host end rejected.");
                     Move(restart ? "WaitFinalEndedAck" : "WaitEndedAck");
                 }
+                else if (_step == "WaitDisconnectAck" && packet.Phase == "Disconnect")
+                {
+                    _lastMatch = packet.Match;
+                    if (!_probe.TrySend(sender, Encoding.UTF8.GetBytes(JsonUtility.ToJson(new Probe { Run = _run, Phase = "DisconnectNow" }))))
+                        throw new InvalidOperationException("Disconnect instruction could not be queued.");
+                    Move("WaitDisconnected");
+                }
                 else throw new InvalidOperationException("Unexpected phase " + packet.Phase + " in " + _step);
             }
             catch (Exception error) { Fail(error.ToString()); }
@@ -266,14 +322,16 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 packet.DescriptorHash != Hash(MatchLifecycleCodec.Encode(descriptor)) ||
                 packet.RegionHash != RegionHash(descriptor, region) || packet.Anchor != anchor.NetworkObjectId ||
                 packet.TurretIdentityHash != TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>()) ||
+                !_turretProbe.MatchesAuthoritativeFrame(descriptor.DescriptorId, packet.PresentationRevision, packet.PresentationHash) ||
                 !_binding.Matches.TryResolveParticipant(sender, out PlayerId player) || packet.Player != player.Value || packet.ActorCount != 1)
-                throw new InvalidOperationException("Client settings/region/anchor/local participant differ from Host.");
+                throw new InvalidOperationException("Client settings/region/anchor/presentation/local participant differ from Host.");
         }
         private void ActivateTriangle()
         {
             var controller = TurretController.FindForScene(_binding.gameObject.scene);
             var turrets = Object.FindObjectsByType<TurretBase>(FindObjectsSortMode.None)
-                .Where(t => t.gameObject.scene == _binding.gameObject.scene && !t.IsDestroyed && t.isActiveAndEnabled)
+                .Where(t => t.gameObject.scene == _binding.gameObject.scene && !t.IsDestroyed && t.isActiveAndEnabled &&
+                    t.TryGetEntityId(out var id) && id != _turretProbe.TargetId)
                 .OrderBy(t => t.EffectivePower).ToArray();
             for (int a = 0; a < turrets.Length && _selected == null; a++)
                 for (int b = a + 1; b < turrets.Length && _selected == null; b++)
@@ -315,7 +373,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     {
                         Success = success, Role = _role, Run = _run, Step = _step, Error = error,
                         Unity = UnityApplication.unityVersion, Build = UnityApplication.buildGUID, ProcessId = Process.GetCurrentProcess().Id,
-                        Observations = _observations.ToArray(), Errors = _errors.ToArray()
+                        Observations = _observations.ToArray(), Errors = _errors.ToArray(),
+                        TurretChecks = _turretProbe?.Checks ?? Array.Empty<string>(), TurretFixtureScope = CoreNetworkTurretValidation.FixtureScope
                     }, true));
                 }
             }
@@ -329,6 +388,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void OnDestroy()
         {
             UnityApplication.logMessageReceived -= OnLog;
+            _turretProbe?.Dispose();
             _probe?.Dispose();
         }
     }

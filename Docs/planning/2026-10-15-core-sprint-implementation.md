@@ -338,3 +338,17 @@ HUD 비활성/재활성화는 요청 추적을 보존하고 Presenter/View 구�
 ### 다른 Match 요청의 명시적 거부
 
 현재 준비 세대의 실제 참가자가 잘못된 Match를 보내면 gateway가 조용히 버리지 않고 서비스의 `DifferentMatch` 결과를 반환한다. 알 수 없는 연결/지난 준비 세대는 여전히 실행 경계 전에 버린다. 정식 Client requester는 다른 Match 의도를 로컬에서도 거부한다. `turret-foreign-match-result.xml` 실제 UTP 1/1 통과: 두 접속 주기에서 원본 실행 없이 요청 Match/GUID를 되돌려 받는 것을 확인했다.
+
+## 실제 Windows 명령·표시·연결 해제 검증
+
+최신 성공: `NetworkPair/20261015T112511Z-af50a905`, Host PID 47444 / Client PID 49588, 동일 Build GUID `e109187da3b840a3ad8b6195be69d007`, 양쪽 종료 0. 실제 Build Settings의 Initial_Stage를 사용했다. 런타임 오류 서명 0, 기존 ComputeBuffer 종료 경고는 2개이며 원인 해결/경고 0으로 표현하지 않는다.
+
+- 실제 Client의 production requester → Host 발신자/거리 정책 → D 처리기로 ON/OFF를 수행했다. 동일 ON GUID의 재요청은 같은 처리 순번/예약 전력으로 재사용했다.
+- 거리 밖은 OutOfInteractionRange, Host actor 등록 해제 후는 AuthorityActorUnavailable, 다른 Match는 DifferentMatch, 실제 연결과 다른 발신자 payload는 Unauthorized였다. 이 거부에서 터렛이 다시 켜지지 않았다.
+- Client가 받은 표시 Frame 전체 binary 해시를 Host가 실제 발행한 해당 revision의 해시와 비교했다. 지역 GridId/revision도 맞춰 정적 41셀 → 동적 14셀 → OFF 후 0셀을 확인했다. 남은 두 터렛의 활성은 유지했다.
+- 종료/새 Match 재시작/다시 종료 후 **세 번째 실행 중 Client 연결을 닫았다**. 양쪽 모두 Match Ended, actor/터렛 등록/명령·표시 Port/지역 source/최소 NetworkObject 정리를 확인했다. Anchor ID는 3 → 14 → 15로 새로 생성됐다.
+- 요청·표시 검사는 명시적 개발 인자에서만 생성하는 **Host interaction actor fixture**를 사용했다. 실제 서버 Transform과 production 등록 API/권한 정책은 그대로 사용하지만 **B의 원격 Player 생성·이동 복제를 검증한 것이 아니다**. 정식 게임은 이 fixture를 생성하지 않으며 원격 actor 미등록을 우회하지 않는다.
+
+도구 실패도 보존했다. `20261015T112012Z-6e54ecd3`은 마지막 진단 지시를 Pump하지 않아 Client가 대기하다 실패했고, `20261015T112336Z-e0c2f6e3`은 SDK 종료 후 null이 된 SpawnManager를 검사 도구가 읽어 실패했다. NGO 소스의 종료 순서에 맞춰 정상 Disconnected의 null과 연결 유지 중의 null을 구분하고, App 선행 Dispose 뒤에도 보관한 borrowed transport의 이벤트를 해제하도록 수정했다. 검사 조건을 삭제하거나 이 실패를 성공 수치에 합치지 않았다.
+
+`encounter-and-host-final.xml` 실제 Scene 2/2 통과: E의 10개 생성/동일 요청 추가 생성 0/무권한·변조 거부, Host의 종료 시 적 정리·연결 유지·재시작을 확인했다. 앞선 생성 추적 수 불일치 1회의 원인을 이것만으로 해결됐다고 선언하지 않는다.

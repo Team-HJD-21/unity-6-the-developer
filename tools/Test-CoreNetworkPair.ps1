@@ -69,12 +69,16 @@ try {
     if ($hostProcess.ExitCode -ne 0 -or $clientProcess.ExitCode -ne 0 -or !$hostResult.Success -or !$clientResult.Success) {
         throw "Endpoint verification failed. Host=$($hostResult.Error); Client=$($clientResult.Error)"
     }
-    $required = @('Static', 'Dynamic', 'Release', 'Ended', 'Restart', 'FinalEnded')
+    $required = @('Static', 'Dynamic', 'Release', 'Ended', 'Restart', 'FinalEnded', 'Disconnect', 'Disconnected')
     foreach ($result in @($hostResult, $clientResult)) {
         foreach ($phase in $required) {
             if ($phase -notin $result.Observations.Phase) { throw "Missing phase $phase in $($result.Role)." }
         }
         if ($result.Run -ne $runId -or $result.Errors.Count -ne 0) { throw 'Wrong run or runtime errors in endpoint evidence.' }
+        foreach ($check in @('On:Applied:', 'Replay:Applied:', 'Off:Applied:', 'Far:Unauthorized:OutOfInteractionRange',
+            'NoActor:Unauthorized:AuthorityActorUnavailable', 'ForeignMatch:DifferentMatch:', 'ForgedIssuer:Unauthorized:')) {
+            if (!@($result.TurretChecks | Where-Object { $_.StartsWith($check) }).Count) { throw "Missing real command check $check in $($result.Role)." }
+        }
     }
     if ($hostResult.ProcessId -eq $clientResult.ProcessId -or $hostResult.Build -ne $clientResult.Build) {
         throw 'Expected two independent processes of the same build.'
@@ -91,7 +95,8 @@ try {
         hostPid = $hostResult.ProcessId; clientPid = $clientResult.ProcessId
         hostExit = $hostProcess.ExitCode; clientExit = $clientProcess.ExitCode; build = $hostResult.Build
         runtimeErrorSignatures = $runtimeErrors.Count; computeBufferShutdownWarnings = $shutdownWarnings.Count
-        requiredPhases = $required; scope = 'Actual Initial_Stage; loopback; no full Player/Turret combat replication or GUI acceptance'
+        requiredPhases = $required; turretChecks = $hostResult.TurretChecks; turretFixtureScope = $hostResult.TurretFixtureScope
+        scope = 'Actual Initial_Stage; loopback; full HUD-frame hashes; active cohort disconnect. No full Player/Turret combat replication or GUI acceptance'
     }
     $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $runDirectory 'verified.json') -Encoding utf8
     $completed = $true
