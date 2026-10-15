@@ -29,6 +29,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
         private RegionSceneBinding _regionBinding;
+        private TurretMatchBinding _turretBinding;
         private MatchPlayerActorScope _playerActors;
         private ILocalPlayerActorConsumer[] _localActorConsumers = Array.Empty<ILocalPlayerActorConsumer>();
         private IBattlefieldTurretInputSource _turretInputSource;
@@ -115,6 +116,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
             try
             {
+                _turretBinding = GetComponent<TurretMatchBinding>();
+                _turretBinding?.BindMatch(matchId);
                 MatchSession session = appMatchHost.StartMatch(
                     config,
                     initialState,
@@ -143,12 +146,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
                 if (regionBindings.Length > 1) throw new InvalidOperationException("Keep one RegionSceneBinding per Match scene.");
                 _regionBinding = regionBindings.FirstOrDefault();
-                if (network == null) _regionBinding?.BindMatch(session);
+                if (network == null) _regionBinding?.BindMatch(session, entityIds: _turretBinding);
                 else
                 {
                     if (_regionBinding == null) throw new InvalidOperationException("Network Match requires a RegionSceneBinding.");
                     _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
-                        network.Descriptor.RegionMode, () => network.Phase == NetworkMatchPhase.Running);
+                        network.Descriptor.RegionMode, () => network.Phase == NetworkMatchPhase.Running, _turretBinding);
                 }
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
@@ -188,6 +191,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 ReleaseEncounterConsumer(matchId);
                 _regionBinding?.UnbindMatch();
                 _regionBinding = null;
+                _turretBinding?.UnbindMatch(matchId); _turretBinding = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -221,7 +225,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
             if (descriptor.Config.StageId.Value != "initial-stage" || descriptor.Config.ContentVersion != "poc")
                 throw new InvalidOperationException("The prepared Stage/content version is not supported by this Scene.");
-            if (playerPrefab == null || battlefieldGridSettings == null || FindSceneCameraFollow() == null || RegionBinding == null)
+            if (playerPrefab == null || battlefieldGridSettings == null || FindSceneCameraFollow() == null || RegionBinding == null ||
+                GetComponent<TurretMatchBinding>() == null)
                 throw new InvalidOperationException("Player, Grid, camera and region Scene references are required.");
             PlayerStart[] starts = FindPlayerStarts();
             for (int slot = 0; slot < descriptor.Config.Players.Count; slot++)
@@ -239,6 +244,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _ownedMatchId = matches.Descriptor.Config.MatchId;
             try
             {
+                _turretBinding = GetComponent<TurretMatchBinding>();
+                _turretBinding.BindMatch(_ownedMatchId);
                 _localActorConsumers = gameObject.scene.GetRootGameObjects()
                     .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
                     .OfType<ILocalPlayerActorConsumer>().ToArray();
@@ -269,6 +276,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 _playerActors = null; _ownedMatchId = default;
                 _regionBinding?.UnbindMatch(); _regionBinding = null;
+                _turretBinding?.UnbindMatch(matchId); _turretBinding = null;
             }
         }
 
@@ -290,6 +298,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     ReleaseEncounterConsumer(_matchSession.Config.MatchId);
                 _regionBinding?.UnbindMatch();
                 _regionBinding = null;
+                _turretBinding?.UnbindMatch(_ownedMatchId); _turretBinding = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -320,6 +329,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _playerActors = null;
                 _regionBinding?.UnbindMatch();
                 _regionBinding = null;
+                _turretBinding?.UnbindMatch(session.Config.MatchId); _turretBinding = null;
                 if (_turretInputSource != null) _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
                 _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();

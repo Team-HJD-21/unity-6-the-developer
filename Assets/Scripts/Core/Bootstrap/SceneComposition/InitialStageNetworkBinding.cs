@@ -12,8 +12,6 @@ using UnityEngine;
 
 namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
-    public enum InitialStageNetworkEntry { Manual, SinglePlayerHost, Client }
-
     [DisallowMultipleComponent]
     public sealed class InitialStageNetworkBinding : MonoBehaviour
     {

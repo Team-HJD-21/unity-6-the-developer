@@ -1,4 +1,7 @@
+// 터렛의 개체 상태·활성화·공격·교체 수명을 관리합니다.
+// 논리 ID는 별도 제작/생성 메타데이터에서 읽고 로컬 InstanceId와 구분합니다.
 using System.Collections;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
@@ -49,6 +52,18 @@ namespace TeamHJD.Game.Turrets
         public virtual TurretKind Kind => TurretKind.Unknown;
         public TurretRuntimeState RuntimeState => _runtimeState;
         public int InstanceId => _runtimeState.InstanceId;
+        public bool TryGetEntityId(out TeamHJD.Game.Domain.EntityId entityId)
+        {
+            entityId = default;
+            foreach (MonoBehaviour component in GetComponents<MonoBehaviour>())
+            {
+                if (!(component is IEntityIdentity identity) || identity.EntityId.IsEmpty) continue;
+                if (!entityId.IsEmpty && entityId != identity.EntityId)
+                    throw new System.InvalidOperationException("A turret has conflicting logical identities.");
+                entityId = identity.EntityId;
+            }
+            return !entityId.IsEmpty;
+        }
         public string DisplayName => _definition != null ? _definition.DisplayName : name;
         public bool IsActivated => _runtimeState.IsActivated;
         public bool IsOperational => _runtimeState.IsOperational;

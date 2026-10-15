@@ -1,3 +1,5 @@
+// Scene의 터렛 전력·자동 활성화와 지역 사용 제한을 관리하는 D Feature 소유자입니다.
+// Core 조립부에는 실제 소유 개체를 확인하는 읽기 API를 제공합니다.
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets.Contracts;
@@ -31,6 +33,8 @@ namespace TeamHJD.Game.Turrets
         public int CurrentPower => Budget.CurrentPower;
         public int MaximumPower => Budget.MaximumPower;
         public IRegionGridSource Regions => _regionAccess?.Regions;
+        public bool OwnsTurret(TurretBase turret) => turret != null &&
+            turret.gameObject.scene == gameObject.scene && turret.UsesPowerSource(this);
         public event Action<int, int> PowerChanged
         {
             add => Budget.PowerChanged += value;

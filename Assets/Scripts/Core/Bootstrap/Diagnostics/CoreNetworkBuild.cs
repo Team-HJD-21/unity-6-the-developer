@@ -28,7 +28,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     {
         [Serializable] private sealed class Probe
         {
-            public string Run, Phase, Match, Descriptor, DescriptorHash, Grid, RegionHash, Player;
+            public string Run, Phase, Match, Descriptor, DescriptorHash, Grid, RegionHash, Player, TurretIdentityHash;
             public int Seed, Captured, Mode, ActorCount; public long Revision; public ulong Anchor;
         }
         [Serializable] private sealed class Result
@@ -138,6 +138,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length != 0 ||
                     Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length != 0 ||
                     app.NetworkRegions.Source != null || !app.CurrentMatchId.IsEmpty ||
+                    _binding.GetComponent<TurretMatchBinding>().Count != 0 ||
                     _session.Manager.SpawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true)) return;
                 string phase = _lastMatch == _firstMatch ? "Ended" : "FinalEnded";
                 SendOnce(new Probe { Phase = phase, Match = _lastMatch, Descriptor = _lastDescriptor });
@@ -177,7 +178,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 Grid = snapshot.GridId.ToString("N"), RegionHash = RegionHash(descriptor, snapshot),
                 Seed = descriptor.Config.RandomSeed, Captured = snapshot.CapturedCellCount,
                 Mode = (int)snapshot.Mode, Revision = snapshot.Revision, Anchor = anchor.NetworkObjectId,
-                Player = player.Value, ActorCount = actors.Length
+                Player = player.Value, ActorCount = actors.Length,
+                TurretIdentityHash = TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>())
             });
         }
         private void SendOnce(Probe value)
@@ -263,6 +265,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (packet.Match != descriptor.Config.MatchId.Value || packet.Descriptor != descriptor.DescriptorId.ToString("N") ||
                 packet.DescriptorHash != Hash(MatchLifecycleCodec.Encode(descriptor)) ||
                 packet.RegionHash != RegionHash(descriptor, region) || packet.Anchor != anchor.NetworkObjectId ||
+                packet.TurretIdentityHash != TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>()) ||
                 !_binding.Matches.TryResolveParticipant(sender, out PlayerId player) || packet.Player != player.Value || packet.ActorCount != 1)
                 throw new InvalidOperationException("Client settings/region/anchor/local participant differ from Host.");
         }
@@ -289,6 +292,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
         private static string RegionHash(NetworkMatchDescriptor descriptor, RegionGridSnapshot snapshot)
             => Hash(RegionReplicationCodec.Encode(new RegionReplicationFrame(descriptor.DescriptorId, 1, snapshot)));
+        private static string TurretIdentityHash(TurretMatchBinding binding)
+            => Hash(Encoding.UTF8.GetBytes(string.Join("\n", binding.Registrations.Select(item => item.EntityId.Value).OrderBy(value => value, StringComparer.Ordinal))));
         private static string Hash(byte[] bytes)
         { using var hash = SHA256.Create(); return Convert.ToBase64String(hash.ComputeHash(bytes)); }
         private void OnLog(string message, string stack, LogType type)
