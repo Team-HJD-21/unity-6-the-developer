@@ -10,7 +10,7 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     [FormerlySerializedAs("bombDamage")]
     [SerializeField, Min(0f)] private float _damage = 250f;
     [FormerlySerializedAs("explosionRange")]
-    [SerializeField, Min(.01f)] private float _radius = 6f;
+    [SerializeField, Min(.01f)] private float _radius = 9f;
     [SerializeField, Min(0f)] private float _fuseSeconds = 2.1f;
     [SerializeField, Min(.01f)] private float _effectSeconds = .8f;
     [FormerlySerializedAs("animator")]

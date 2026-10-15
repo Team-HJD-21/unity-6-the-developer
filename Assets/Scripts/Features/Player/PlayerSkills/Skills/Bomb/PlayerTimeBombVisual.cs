@@ -7,6 +7,8 @@ public sealed class PlayerTimeBombVisual : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer _body;
     [SerializeField] private Animator _explosionAnimator;
+    [Tooltip("기존 폭발 클립 전체의 보이는 최대 외곽 지름. 투명 여백을 제외한 스케일 1 기준입니다.")]
+    [SerializeField, Min(.01f)] private float _explosionDiameterAtScaleOne = 11.521f;
     [SerializeField] private TMP_FontAsset _displayFont;
     [SerializeField] private Vector2 _displayOffset = new Vector2(0, .06f);
     private TextMeshPro _countdown;
@@ -71,7 +73,22 @@ public sealed class PlayerTimeBombVisual : MonoBehaviour
         _explosionAnimator.speed = 1;
         _explosionAnimator.Play(EffectState, 0, 0);
         _explosionAnimator.Update(0);
+        MatchExplosionRadius(radius);
         float clipSeconds = _explosionAnimator.GetCurrentAnimatorStateInfo(0).length;
         _explosionAnimator.speed = Mathf.Max(.01f, clipSeconds) / Mathf.Max(.01f, seconds);
+    }
+
+    private void MatchExplosionRadius(float radius)
+    {
+        Transform effect = _explosionAnimator.transform;
+        Vector3 parentScale = effect.parent != null ? effect.parent.lossyScale : Vector3.one;
+        float diameter = Mathf.Max(.01f, radius) * 2f;
+        float referenceDiameter = Mathf.Max(.01f, _explosionDiameterAtScaleOne);
+
+        // 본체 크기와 무관하게 최대 폭발 외곽이 월드 피해 반경에 맞도록 부모 스케일을 상쇄합니다.
+        effect.localScale = new Vector3(
+            diameter / (referenceDiameter * Mathf.Max(.0001f, Mathf.Abs(parentScale.x))),
+            diameter / (referenceDiameter * Mathf.Max(.0001f, Mathf.Abs(parentScale.y))),
+            effect.localScale.z);
     }
 }

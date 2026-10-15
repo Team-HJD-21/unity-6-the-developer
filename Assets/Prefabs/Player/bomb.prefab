@@ -110,7 +110,7 @@ MonoBehaviour:
   _bombVisual: {fileID: 6757870014131357828}
   _damage: 250
   _animator: {fileID: 0}
-  _radius: 6
+  _radius: 9
   _fuseSeconds: 2.1
   _effectSeconds: 0.8
 --- !u!50 &5950224543752731837
@@ -155,6 +155,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTimeBombVisual
   _body: {fileID: 5991018625898441018}
   _explosionAnimator: {fileID: 9500002}
+  _explosionDiameterAtScaleOne: 11.521
   _displayFont: {fileID: 11400000, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
   _displayOffset: {x: 0, y: 0.06}
 --- !u!1 &100002

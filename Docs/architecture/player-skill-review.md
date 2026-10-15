@@ -154,3 +154,35 @@ PlayerSkillHud는 텍스트 내용을 갱신하고 GameObject의 표시 여부�
 PlayerSkillPrefabTests는 Canvas 활성 상태, 직렬화된 텍스트 연결, 빨간색 Bold 설정과
 입력 차단 여부를 검사한다. PlayerSkillSelectionTests는 Player의 HUD 프리팹 연결도 확인한다.
 프리팹 편집 후 실제 실행에서 해상도별 위치·문구 표시와 스킬 입력을 추가 확인해야 한다.
+## #513 폭탄 피해 반경과 폭발 외형 일치 (2026-10-16)
+
+PlayerBombExplosion의 Radius와 bomb.prefab의 `_radius`를 9로 맞췄다.
+현재 비콘 반경 12보다 작으며 폭탄 지름은 18, 비콘 최대 지름은 24다.
+피해량 250, 대기 2.1초, 이펙트 재생 0.8초와 폭탄 본체 스케일 2.5는 유지한다.
+
+기존 PlayerTimeBombVisual.PlayExplosion은 전달받은 radius를 이펙트 크기에 사용하지 않았다.
+기존 클립의 최대 외곽은 스케일 1에서 약 반경 5.76이고, 부모 스케일 2.5가 곱해져 약
+반경 14.4까지 보였지만 실제 피해 반경은 6이었다.
+
+PlayerTimeBombVisual의 MatchExplosionRadius가 폭발 자식 Transform의 XY 스케일만 계산한다.
+
+`이펙트 로컬 스케일 = (피해 반경 × 2) / (기준 외형 지름 × 부모 월드 스케일)`
+
+- PlayerBombExplosion: 피해 반경을 단일 기준으로 시각 효과와 PlayerBombAreaDamage에 전달.
+- PlayerTimeBombVisual: 기존 애니메이션 재생·타이머 표시와 최대 폭발 외형 크기 동기화.
+- bomb.prefab: 실제 반경과 외형 기준값을 직렬화. 기존 Legacy Explosion 자식과 클립을 유지.
+
+`Explosion Diameter At Scale One`은 11.521이다. 현재 effect.anim의 11개 Sprite(20 PPU)에 대해
+투명 여백을 제외하고, 알파 10/255 초과 픽셀의 중심에서 Sprite 피벗까지 최대 거리와
+픽셀 반대각선을 포함해 구한 최대 외곽 지름이다. 이미지 전체 사각형 크기로 계산하면
+투명 여백 때문에 시각적 크기가 달라지므로 이 측정값을 사용한다. 클립 이미지·PPU·피벗을
+교체할 때는 이 기준값도 다시 측정한다. Radius만 조정할 때는 별도 크기 조정이 필요 없다.
+
+기존 불규칙한 폭발 그림과 확장·소멸 모션은 그대로다. 애니메이션 내내 원형 범위를
+채우는 것이 아니라 가장 크게 퍼진 프레임의 외곽이 피해 반경에 맞는다.
+사전 반경 표시나 새 범위 링은 추가하지 않는다. 실제 피해는 기존대로 폭발 시점 1회이며,
+반경 안에 적 Collider가 걸치면 해당 적에 피해를 적용한다.
+
+PlayerBombRuntimeTests에 본체 스케일 0.5/2.5/5 및 비균일 XY 스케일, 반경 6/9/10에서도
+최대 이펙트 지름이 피해 지름과 같고 본체 스케일은 유지되는지 확인하는 회귀 테스트를 추가했다.
+컴파일과 테스트 실행은 구분하며, Initial_Stage에서 비콘 최대 범위와 실제 폭발 최대 외곽도 비교한다.
