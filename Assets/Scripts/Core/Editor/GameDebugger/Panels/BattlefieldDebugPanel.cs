@@ -64,6 +64,7 @@ namespace TeamHJD.Game.Editor
             if (tab == 1)
             {
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox)) BattlefieldDiagnosticPanels.DrawOverview();
+                if (!BattlefieldDebugSession.Display.IsCaptureMode) RegionDebugControls.Draw();
                 FrontlineInspector.Draw();
                 _showLayers=EditorGUILayout.Foldout(_showLayers,"Scene 표시 / 레이어",true);
                 if (_showLayers) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox)) BattlefieldDiagnosticPanels.DrawDisplayControls();
