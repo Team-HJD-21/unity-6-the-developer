@@ -63,6 +63,11 @@ namespace TeamHJD.Game.Infrastructure
         {
             if (_pending.TryGetValue(key, out Buffer buffer)) { PendingBytes -= buffer.Bytes.Length; _pending.Remove(key); }
         }
-        public void Dispose() { if (_disposed) return; _disposed = true; _pending.Clear(); PendingBytes = 0; }
+        public void Clear()
+        {
+            if (_disposed) throw new ObjectDisposedException(nameof(BoundedPacketAssembler));
+            _pending.Clear(); PendingBytes = 0;
+        }
+        public void Dispose() { if (_disposed) return; Clear(); _disposed = true; }
     }
 }

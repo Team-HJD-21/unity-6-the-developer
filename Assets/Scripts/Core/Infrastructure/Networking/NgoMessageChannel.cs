@@ -14,6 +14,7 @@ namespace TeamHJD.Game.Infrastructure
         private readonly int _maximumClientMessageBytes;
         private const int PacketMagic = 0x31434A48;
         private readonly NetworkManager _manager;
+        private CustomMessagingManager _registeredMessaging;
         private readonly BoundedPacketAssembler _assembler = new BoundedPacketAssembler();
         private sealed class Outgoing
         {
@@ -36,8 +37,27 @@ namespace TeamHJD.Game.Infrastructure
             _manager = manager;
             _channelName = channelName;
             _maximumClientMessageBytes = maximumClientMessageBytes;
-            manager.CustomMessagingManager.RegisterNamedMessageHandler(_channelName, OnMessage);
+            RegisterMessaging();
             manager.OnClientDisconnectCallback += OnPeerDisconnected;
+            manager.OnServerStarted += RegisterMessaging;
+            manager.OnClientStarted += RegisterMessaging;
+            manager.OnServerStopped += OnStopped;
+            manager.OnClientStopped += OnStopped;
+        }
+        private void RegisterMessaging()
+        {
+            if (_disposed || _manager == null || _manager.CustomMessagingManager == null ||
+                ReferenceEquals(_registeredMessaging, _manager.CustomMessagingManager)) return;
+            _registeredMessaging?.UnregisterNamedMessageHandler(_channelName);
+            _registeredMessaging = _manager.CustomMessagingManager;
+            _registeredMessaging.RegisterNamedMessageHandler(_channelName, OnMessage);
+        }
+        private void OnStopped(bool wasHost)
+        {
+            if (_disposed) return;
+            _registeredMessaging?.UnregisterNamedMessageHandler(_channelName);
+            _registeredMessaging = null;
+            _outgoing.Clear(); _pendingBytes = 0; _assembler.Clear();
         }
         public bool TrySend(ulong target, byte[] bytes, bool replaceUnsent = false)
         {
@@ -75,7 +95,7 @@ namespace TeamHJD.Game.Infrastructure
                 writer.WriteValueSafe(PacketMagic); writer.WriteValueSafe(job.Low); writer.WriteValueSafe(job.High);
                 writer.WriteValueSafe(job.Bytes.Length); writer.WriteValueSafe(job.Offset);
                 writer.WriteBytesSafe(job.Bytes, bytes, job.Offset);
-                _manager.CustomMessagingManager.SendNamedMessage(_channelName, job.Target, writer, NetworkDelivery.ReliableSequenced);
+                _registeredMessaging.SendNamedMessage(_channelName, job.Target, writer, NetworkDelivery.ReliableSequenced);
                 job.Offset += bytes;
                 if (job.Offset == job.Bytes.Length) RemoveOutgoing();
             }
@@ -84,7 +104,8 @@ namespace TeamHJD.Game.Infrastructure
         private void RemoveOutgoing() { _pendingBytes -= _outgoing.Dequeue().Bytes.Length; }
         private bool IsPeer(ulong id)
         {
-            if (_manager == null || !_manager.IsListening || _manager.ShutdownInProgress || id == _manager.LocalClientId) return false;
+            if (_manager == null || !_manager.IsListening || _manager.ShutdownInProgress || _registeredMessaging == null ||
+                !ReferenceEquals(_registeredMessaging, _manager.CustomMessagingManager) || id == _manager.LocalClientId) return false;
             if (!_manager.IsServer) return id == NetworkManager.ServerClientId && _manager.IsConnectedClient;
             return _manager.ConnectedClients.ContainsKey(id);
         }
@@ -118,8 +139,13 @@ namespace TeamHJD.Game.Infrastructure
             if (_manager != null)
             {
                 _manager.OnClientDisconnectCallback -= OnPeerDisconnected;
-                _manager.CustomMessagingManager?.UnregisterNamedMessageHandler(_channelName);
+                _manager.OnServerStarted -= RegisterMessaging;
+                _manager.OnClientStarted -= RegisterMessaging;
+                _manager.OnServerStopped -= OnStopped;
+                _manager.OnClientStopped -= OnStopped;
             }
+            _registeredMessaging?.UnregisterNamedMessageHandler(_channelName);
+            _registeredMessaging = null;
             _outgoing.Clear(); _pendingBytes = 0; _assembler.Dispose();
             MessageReceived = null;
         }

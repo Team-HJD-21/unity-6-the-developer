@@ -115,8 +115,23 @@ namespace TeamHJD.Game.Infrastructure.Tests
             var bindings = new[] { original.Participants[0],
                 new MatchParticipantBinding(clientManager.LocalClientId, original.Participants[1].PlayerId, false) };
             RegionReplicationFrame previousPreparation = null;
-            for (int cycle = 0; cycle < 2; cycle++)
+            for (int cycle = 0; cycle < 3; cycle++)
             {
+                if (cycle == 2)
+                {
+                    _clientSession.Shutdown(); _hostSession.Shutdown();
+                    deadline = Time.realtimeSinceStartup + 20;
+                    while ((hostManager.IsListening || clientManager.IsListening || hostManager.ShutdownInProgress ||
+                        clientManager.ShutdownInProgress) && Time.realtimeSinceStartup < deadline) yield return null;
+                    Assert.That(hostManager.IsListening || clientManager.IsListening, Is.False);
+                    Assert.That(_hostSession.TryStartHost(), Is.True);
+                    Assert.That(_clientSession.TryStartClient(), Is.True);
+                    deadline = Time.realtimeSinceStartup + 20;
+                    while (!clientManager.IsConnectedClient && Time.realtimeSinceStartup < deadline) yield return null;
+                    Assert.That(clientManager.IsConnectedClient, Is.True);
+                    bindings = new[] { original.Participants[0],
+                        new MatchParticipantBinding(clientManager.LocalClientId, original.Participants[1].PlayerId, false) };
+                }
                 Assert.That(_host.TryPrepare(original.Config, original.RegionGrid,
                     cycle == 0 ? RegionPolicyMode.Dynamic : RegionPolicyMode.Static, bindings), Is.True);
                 _host.MarkLocalReady(); Assert.That(_host.TryStart(), Is.False);
