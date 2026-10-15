@@ -1,7 +1,17 @@
 # 빠른 시작
 
-최종 갱신: 2026-10-03
+최종 갱신: 2026-10-14
 상태: Canon / Missile 로컬 런타임 통합 안내.
+
+최신 조작 조건은 main `8d08001a`에 병합된 PR #525를 기준으로 한다.
+전체 계약은 [API 사용법](api-reference.md), Initial의 버튼 연결은
+[Player UI API](../player-ui-api.md)를 참고한다.
+
+UI는 ON 전에 잠금·파괴·냉각·자동 활성화 여부를 확인한다. 활성 과열 중에도 OFF는
+가능하지만 자동 활성화 진행 중에는 수동 OFF도 막힌다. `IsCoolingDown`과
+`CoolingDownRemaining`으로 남은 냉각 시간을 표시한다. 레벨과 세부 강화 버튼은
+`CanModifyUpgrades`가 true인 비활성·냉각 완료 상태에서 사용한다. 전력 예약과
+강화 값은 직접 변경하지 않고 API 요청 결과를 처리한다.
 
 ## 씬 준비
 

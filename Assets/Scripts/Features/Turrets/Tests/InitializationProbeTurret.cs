@@ -10,10 +10,11 @@ namespace TeamHJD.Game.Turrets.Tests
         private void Awake() => ConfigureSceneActivation();
         public bool ConfigureForTest() => ConfigureSceneActivation();
         public void SetCooldownAfterDeactivation(float seconds) => _cooldownAfterDeactivation = seconds;
+        public void BeginCoolingForTest(float seconds) => BeginCooling(seconds);
 
         protected override void OnActivationChanged(bool isActivated)
         {
-            if (!isActivated) BeginActivationCooldown(_cooldownAfterDeactivation);
+            if (!isActivated) BeginCooling(_cooldownAfterDeactivation);
         }
     }
 }
