@@ -265,7 +265,7 @@ ON/OFF·CU 자동 활성화·레벨 승급/강등·정의 ID 기반 강화/강�
 
 ## 공용 터렛 요청 전송·Host 검증 정책
 
-사용자 답변으로 **모든 참가자가 ON/OFF·CU 자동 활성화를 요청하고 Host가 검증**하는 정책을 확정했다. 승급/강화·강등의 원격 허용 범위는 별도 질문 중이다. 실제 상태 변경은 항상 Host의 D API가 수행한다.
+사용자 답변으로 **모든 참가자가 ON/OFF·CU 자동 활성화·승급·강화/강등을 요청하고 Host가 검증**하는 정책을 확정했다. 실제 상태 변경은 항상 Host의 D API가 수행한다.
 
 `TurretCommandGateway`는 준비 세대/Match별 요청 경계다. Host는 실제 SDK 연결→참가자 매핑을 사용하고 payload 발신자와 대조한다. Client는 서버 연결·세대·Match·요청 GUID·명령 종류·대상이 모두 맞는 결과만 확정한다. Pending은 기본 64개, 서버 응답 대기도 같은 제한이며 전송 압력이 있으면 실행 전 거부하거나 확정 결과를 보존해 다음 Pump에 보낸다. InProgress는 확정 응답이 아니다. 응답 미도착은 실행 실패로 만들지 않으며 TryRetry는 같은 의도/GUID만 재전송한다. 자동 재전송·새 GUID 재실행·낙관적 D 상태 변경은 하지 않는다.
 
@@ -277,3 +277,11 @@ ON/OFF·CU 자동 활성화·레벨 승급/강등·정의 ID 기반 강화/강�
 - `turret-gateway-and-authorization.xml`: InProgress 처리·권한 상태 재확인·서버 actor 등록/거리 정책 포함 15/15 통과.
 
 `PlayerInteractionRegistry`는 Host가 명시적으로 등록한 제공자에서 **명령 검증 순간**의 위치/생존/조작 상태를 읽는다. `TurretInteractionAuthorization`은 그 값과 서버의 실제 터렛/CU 위치를 사용한다. 원격 actor가 없으면 AuthorityActorUnavailable이다. Client payload 좌표·다른 참가자 좌표·PlayerStart를 대신 넣어 통과시키지 않는다. B의 Host 측 원격 actor 연결 Port와 정식 Scene/HUD 조립은 다음 작업이다. 아직 이 결과로 #442/#495/#528을 닫지 않는다.
+
+### App 전송 소유권과 실제 B actor 조회 연결
+
+`AppServices.AttachTurretCommandTransport`와 `AppRoot.NetworkTurretCommands`를 추가했다. Initial_Stage가 실제 연결 후 한 번 부착하고 App Update가 Pump한다. Match별 gateway는 이 전송을 빌려 쓰며 전송 자체는 App 정리에서 폐기한다.
+
+B의 `PlayerControlState`는 `IPlayerInteractionActor`를 구현한다. 현재 실제 actor의 XY·HP·CanAct를 읽으며, `PlayerInteractionActorBinding`은 명시적으로 주입한 actor의 PlayerActorIdentity와 제공자 하나를 검사해 registry에 등록한다. actor 검색·생성·복제는 이 바인딩의 책임이 아니다. actor 비활성/파괴·권한 유실·lease 해제 시 조회를 닫는다.
+
+`turret-app-and-actor-scene.xml` 4/4 통과: App Pump/중복 부착 거부/실패 중 전체 Dispose와 실제 Initial_Stage Player 조회·입력 차단·권한 유실·lease 해제, 기존 명령/Host 재시작을 확인했다. 이 시점에는 Match별 명령 gateway의 자동 Scene 조립과 HUD 명령 입력 연결이 아직 남아 있다. 원격 B actor 복제를 구현한 것으로 간주하지 않는다.

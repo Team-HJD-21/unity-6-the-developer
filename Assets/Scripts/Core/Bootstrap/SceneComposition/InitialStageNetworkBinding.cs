@@ -149,6 +149,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 try { _app.AttachRegionSnapshotTransport(transport); }
                 catch { transport.Dispose(); throw; }
             }
+            if (_app.NetworkTurretCommands == null)
+            {
+                var transport = new NgoTurretCommandTransport(_manager);
+                try { _app.AttachTurretCommandTransport(transport); }
+                catch { transport.Dispose(); throw; }
+            }
             if (ReferenceEquals(_matches, _app.NetworkMatches)) return;
             _matches = _app.NetworkMatches; _regions = _app.NetworkRegions;
             _matches.Preparing += OnPreparing;

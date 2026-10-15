@@ -7,6 +7,8 @@ using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Application;
+using TeamHJD.Game.Presentation.Scene;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Editor;
 using TeamHJD.Game.Turrets;
@@ -32,7 +34,7 @@ public sealed class TurretCommandIntegrationTests
     public IEnumerator Cleanup()
     {
         var app = Object.FindAnyObjectByType<AppRoot>(); if (app != null) app.EndCurrentMatch();
-        if (Application.isPlaying) yield return new ExitPlayMode();
+        if (UnityEngine.Application.isPlaying) yield return new ExitPlayMode();
     }
     [UnityTest]
     public IEnumerator ActualDCommandsAreScopedIdempotentAndStoppedOnMatchEnd()
@@ -45,6 +47,7 @@ public sealed class TurretCommandIntegrationTests
         var controller = Object.FindAnyObjectByType<TurretController>();
         Assert.That(controller.HasWriteAuthority, Is.True);
         Assert.That(app.NetworkMatches.TryResolveParticipant(app.NetworkSession.LocalConnectionId, out PlayerId issuer), Is.True);
+        VerifyActualAuthorityActor(app.CurrentMatchId, issuer);
         var policy = BindValidationCommands(binding, app, issuer);
         ITurretCommandService commands = binding.Commands;
         var levels = AssetDatabase.LoadAssetAtPath<TurretLevelUpgradeCatalog>("Assets/Data/Turrets/TurretLevelUpgrade_Stage1.asset");
@@ -124,6 +127,22 @@ public sealed class TurretCommandIntegrationTests
             () => !binding.BoundMatchId.IsEmpty && app.CurrentMatchId == binding.BoundMatchId,
             id => id == issuer, policy);
         return policy;
+    }
+    private static void VerifyActualAuthorityActor(MatchId matchId, PlayerId playerId)
+    {
+        var identity = Object.FindAnyObjectByType<PlayerActorIdentity>();
+        Assert.That(identity.PlayerId, Is.EqualTo(playerId));
+        var controls = identity.GetComponent<PlayerControlState>(); bool authority = true;
+        using var registry = new PlayerInteractionRegistry(matchId, new[] { playerId });
+        using var actor = new PlayerInteractionActorBinding(registry, playerId, identity.gameObject, () => authority);
+        Assert.That(registry.TryCapture(matchId, playerId, out var state), Is.True);
+        Assert.That(state.IsAlive, Is.True); Assert.That(state.CanInteract, Is.True);
+        Assert.That(state.Position.X, Is.EqualTo((double)identity.transform.position.x));
+        controls.SetInputBlocked(true);
+        Assert.That(registry.TryCapture(matchId, playerId, out state), Is.True);
+        Assert.That(state.CanInteract, Is.False); controls.SetInputBlocked(false);
+        authority = false; Assert.That(registry.TryCapture(matchId, playerId, out _), Is.False);
+        actor.Dispose(); Assert.That(registry.TryCapture(matchId, playerId, out _), Is.False);
     }
     private static TurretCommandRequest Request(MatchId matchId, PlayerId issuer, EntityId target, TurretCommandKind kind,
         bool on = false, DefinitionId upgrade = default)

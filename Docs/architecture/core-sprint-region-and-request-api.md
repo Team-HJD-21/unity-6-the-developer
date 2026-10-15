@@ -136,7 +136,9 @@ Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Disp
 
 입력 소비자용 `ITurretCommandRequester.TrySubmit`은 **큐 접수 여부**, `ResultReceived`는 서버 결과다. `TryRetry(requestId)`는 미확정 의도를 같은 GUID로만 재전송한다. 응답이 없다고 미실행으로 단정하지 않으며, InProgress는 Pending을 끝내지 않는다. 기본 미확정 요청 한도는 64개다. Match별 gateway는 종료 때 Dispose하고 App 연결의 transport를 대신 파괴하지 않는다. 현재 실제 UTP transport/gateway 검증은 끝났지만 정식 Scene/HUD 조립은 진행 중이다.
 
-공용 ON/OFF·CU 자동 요청은 모든 참가자에게 허용하기로 확정했다. Host는 `IPlayerInteractionSource`의 최신 권위 상태와 실제 대상 위치로 거리·생존·조작 상태를 검사한다. 제공자가 없으면 AuthorityActorUnavailable로 거부한다. `PlayerInteractionRegistry.Register`의 lease는 B의 서버 actor 수명에 연결하고 교체 전 이전 등록을 해제한다. Client payload의 좌표/생존 주장이나 PlayerStart로 이 원본을 대신하지 않는다. 승급·강화/강등의 원격 공유 범위는 별도 확인 중이다.
+공용 ON/OFF·CU 자동 요청·승급·강화/강등은 모두 참가자에게 허용하기로 확정했다. Host는 `IPlayerInteractionSource`의 최신 권위 상태와 실제 대상 위치로 거리·생존·조작 상태를 검사한다. 제공자가 없으면 AuthorityActorUnavailable로 거부한다. `PlayerInteractionRegistry.Register`의 lease는 B의 서버 actor 수명에 연결하고 교체 전 이전 등록을 해제한다. Client payload의 좌표/생존 주장이나 PlayerStart로 이 원본을 대신하지 않는다.
+
+실제 B actor는 `PlayerControlState : IPlayerInteractionActor`가 최신 상태를 제공한다. `PlayerInteractionActorBinding`에는 Host가 소유하는 생성된 GameObject와 참가자 ID를 명시한다. Client의 로컬 actor나 prefab을 Host 권위 actor라고 대신 등록하지 않는다. `AppRoot.AttachTurretCommandTransport`는 전송 소유권만 App에 이전한다. `NetworkTurretCommands`를 빌린 Match gateway의 Dispose가 연결/전송을 닫아서는 안 된다. 실제 Scene의 이 전송 부착과 actor Port는 검사했으며 gateway/HUD 자동 조립은 진행 중이다.
 
 - Game Debugger → Battlefield → **지역 Grid · 점령 원본**에서 현재 정책/점령 수를 확인한다. 모드/Grid Reset은 확인창을 거친다.
 - Scene 점령 Grid는 확정 셀, 임시 판정 삼각형은 계산 입력을 표시한다. 후자는 표시용이며 새 상태 원본이 아니다.
