@@ -29,6 +29,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private MatchSession _matchSession;
         private RegionSceneBinding _regionBinding;
         private MatchPlayerActorScope _playerActors;
+        private ILocalPlayerActorConsumer[] _localActorConsumers = Array.Empty<ILocalPlayerActorConsumer>();
         private IBattlefieldTurretInputSource _turretInputSource;
         private IEncounterMatchConsumer _encounterConsumer;
         private IBattlefieldEnemyPositionSource[] _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
@@ -106,11 +107,18 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
+                _localActorConsumers = gameObject.scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                    .OfType<ILocalPlayerActorConsumer>().ToArray();
+                foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
+                    consumer.PrepareLocalActor(matchId, LocalPlayerId);
                 _playerActors = MatchPlayerActorScope.SpawnPlayers(
                     session,
                     new LocalPlayerActorSpawner(playerPrefab, actorParent),
                     starts);
                 _matchSession = session;
+                foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
+                    consumer.BindLocalActor(matchId, LocalPlayerId, _playerActors.Actors[LocalPlayerId]);
                 RegionSceneBinding[] regionBindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
                     .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
                 if (regionBindings.Length > 1) throw new InvalidOperationException("Keep one RegionSceneBinding per Match scene.");
@@ -139,6 +147,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             catch
             {
+                ReleaseLocalActorConsumers(matchId);
                 ReleaseEncounterConsumer(matchId);
                 _regionBinding?.UnbindMatch();
                 _regionBinding = null;
@@ -162,6 +171,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void OnDestroy()
         {
+            ReleaseLocalActorConsumers(_ownedMatchId);
             if (_matchSession != null) _matchSession.Disposing -= ReleaseMatchBindings;
             try
             {
@@ -199,6 +209,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _matchSession = null;
             _ownsMatch = false;
             _ownedMatchId = default;
+            ReleaseLocalActorConsumers(session.Config.MatchId);
             ReleaseEncounterConsumer(session.Config.MatchId);
             try { _playerActors?.Dispose(); }
             finally
@@ -218,6 +229,18 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             return FindObjectsByType<PlayerStart>(FindObjectsSortMode.None)
                 .Where(start => start.gameObject.scene == gameObject.scene && start.isActiveAndEnabled)
                 .ToArray();
+        }
+
+        private void ReleaseLocalActorConsumers(MatchId matchId)
+        {
+            ILocalPlayerActorConsumer[] consumers = _localActorConsumers;
+            _localActorConsumers = Array.Empty<ILocalPlayerActorConsumer>();
+            foreach (ILocalPlayerActorConsumer consumer in consumers)
+            {
+                if (consumer is MonoBehaviour behaviour && behaviour == null) continue;
+                try { consumer.UnbindLocalActor(matchId); }
+                catch (Exception exception) { Debug.LogException(exception, this); }
+            }
         }
 
         private IEncounterMatchConsumer ResolveEncounterConsumer()
