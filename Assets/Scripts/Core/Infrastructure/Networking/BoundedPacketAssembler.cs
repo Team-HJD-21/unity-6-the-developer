@@ -22,7 +22,7 @@ namespace TeamHJD.Game.Infrastructure
             if (_disposed) throw new ObjectDisposedException(nameof(BoundedPacketAssembler));
             if (double.IsNaN(now) || double.IsInfinity(now)) throw new ArgumentOutOfRangeException(nameof(now));
             complete = null; Prune(now);
-            if (transferId == Guid.Empty || total < 1 || total > MatchLifecycleCodec.MaximumMessageBytes ||
+            if (transferId == Guid.Empty || total < 1 || total > NetworkMessageLimits.MaximumMessageBytes ||
                 offset < 0 || offset >= total || offset % ChunkBytes != 0 || chunk == null ||
                 chunk.Length != Math.Min(ChunkBytes, total - offset)) return PacketAssemblyStatus.Rejected;
             var key = (sender, transferId);
