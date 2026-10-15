@@ -12,6 +12,8 @@
 
 2026-10-15 연결 변경: Initial_Stage의 SinglePlayerHost는 App 소유 연결과 Match를 순서대로 시작한다. 기존 Enemy Network Test 화면의 연결 버튼은 이 경로에서 표시하지 않는다. 단계를 나눌 때는 재생 전에 InitialStageCompositionRoot의 InitialStageNetworkBinding을 Manual로 바꾸고 재생 후 해당 Inspector의 Host/Client 연결 → Match 준비 → Host Match 시작 버튼을 사용한다. Game Debugger의 Encounter 버튼은 여전히 **이미 시작한 Host Match**에 요청할 뿐 서버를 열지 않는다. [현재 검증/미완료 경계](../planning/2026-10-15-core-sprint-implementation.md).
 
+터렛 논리 ID 연결 후 Scene 정점/선택 전선의 라벨은 `T:01234567`처럼 표시용으로 축약한다. 선택 전선 패널의 tooltip과 Copy 결과, Capture·요청 데이터는 전체 원본 ID를 유지한다. 짧은 라벨을 네트워크/저장 키로 사용하지 않는다. Scene에 터렛을 복제했다면 재생 전 `Tools > TeamHJD > The Developer > Configure Turret Identities`로 누락/중복 제작 키를 명시적으로 정리한다.
+
 ## 처음 사용할 때 · 빠른 시작
 
 1. `Initial_Stage`를 열고 Scene 변경을 저장한다. 별도 Battlefield Debug 창을 찾지 말고 `Tools > TeamHJD > Game Debugger`를 연다.

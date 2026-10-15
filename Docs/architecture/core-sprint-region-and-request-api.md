@@ -37,6 +37,22 @@ GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revis
 
 지역은 전체 Snapshot으로 전송한다. 소속은 RLE, 점령은 bitset이며 Client에서 삼각형을 복원하지 않는다. 큐에 아직 보내지 않은 전체 상태는 최신 상태로 합친다. 미접수 전송은 다음 App Pump에서 재시도하며 구식 변경량을 무제한 쌓지 않는다. 이미 전송 중인 메시지는 바꾸지 않는다. 이 처리와 달리 준비/시작/종료는 순서를 유지하고 합치지 않는다.
 
+## 터렛 논리 ID와 실제 등록 연결
+
+`SceneEntityIdentity`는 Scene에 저장한 **배치 개체의 논리 ID**다. 동일한 프리팹의 배치마다 다른 키를 가지며 DefinitionId, D의 InstanceId, SDK NetworkObjectId와 다르다. 키는 Match가 바뀌어도 배치를 가리킬 수 있지만 요청은 반드시 현재 MatchId를 포함한다. 계정 Profile/세이브 파일 ID 체계를 이 키로 구현한 것은 아니다.
+
+`TurretMatchBinding`은 Match별 `MatchEntityRegistry<int>`로 논리 ID↔현재 D InstanceId를 대응한다. D의 실제 Registry가 원본이며 Core는 별도 터렛 생성자·매니저를 만들지 않는다. `TryResolveEntityId`/`TryResolveLocalId`는 현재 실제 등록과 객체 소유자까지 대조한다. 다른 Match의 해제는 무시하고 종료 시 대응표·구독을 함께 폐기한다. 등록 토큰이 달라지면 이전 토큰으로 새 등록을 해제할 수 없다.
+
+정식 Initial_Stage에서는 `NetworkSceneSetup`이 Core 바인딩과 제작 키를 연결한다. 추가 배치를 복제했다면 재생 전에 `Tools > TeamHJD > The Developer > Configure Turret Identities`로 누락·중복 키를 명시적으로 고친다. 정상 키는 유지하며 런타임에서 각 Client가 임의 GUID를 만들지 않는다.
+
+동적 생성은 D Factory의 실제 생성/등록이 먼저다. 생성 담당자는 주입받은 `ITurretEntityRegistration`에 `TryRegisterEntity(matchId, authorityAssignedEntityId, actor.InstanceId, out reason)`를 호출한다. ID 충돌·잘못된 Match·없는 D 개체는 거부한다. 실패 시 생성 객체를 롤백하는 책임도 D에 남는다. 등록 전 개체를 Core 배치/명령 대상으로 임의 편입하지 않는다.
+
+D 승급/강등은 기존 로컬 ID·상태 이전을 그대로 수행한다. Core는 D의 명시적 LevelUpgraded/LevelDowngraded 사실을 받아 새 객체에 같은 논리 ID 메타데이터만 이전한다. Core-bound Battlefield source는 한 프레임의 해제→등록→ID 이전이 끝난 LateUpdate에 최종 배치를 발행해 빈 중간 배치를 내보내지 않는다. 초기 조립의 명시적 Capture는 즉시 읽는다.
+
+Battlefield의 배치 입력과 동적 지역의 활성 터렛 입력은 같은 논리 ID를 사용하되 서로 다른 의미의 자료다. 과열은 배치 제거/OFF로 취급하지 않는다. D의 원래 TurretSnapshot과 InstanceId 기반 UI/API는 보존한다. Core가 연결되지 않은 standalone D Scene의 로컬 ID 호환 경로를 네트워크 식별자로 사용하지 않는다.
+
+명령/권한 gateway와 구조화된 결과, Match 종료 시 D의 실행 상태 정리 계약은 이어지는 구현 대상이다. 위 대응표 구현만으로 전력/체력/업그레이드 초기화나 전체 터렛 복제를 완료했다고 하지 않는다.
+
 ## 정식 Encounter 요청
 
 `EncounterRequestService`는 A의 조율, `IEncounterExecutor` 구현은 E의 실제 계획/생성 경계다. 기존 `EnemyNetworkTestLauncher`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.

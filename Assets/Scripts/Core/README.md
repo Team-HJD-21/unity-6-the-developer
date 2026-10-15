@@ -10,6 +10,8 @@
 
 Initial_Stage의 SinglePlayerHost는 명시적인 연결→준비→시작 API를 호출합니다. Manual로 바꾸면 InitialStageCompositionRoot의 InitialStageNetworkBinding Inspector에서 단계를 나눠 실행할 수 있습니다. Host만 MatchSession을 소유하고 Client는 공유 설정/지역 읽기 모델과 자기 로컬 actor를 연결합니다. 상대 Player의 실제 이동/전투 복제는 아직 이 경로가 제공하지 않습니다. [실행 API와 정확한 책임 경계](../../../Docs/architecture/core-sprint-region-and-request-api.md#initial_stage-실행-api)를 확인하세요.
 
+터렛은 SceneEntityIdentity의 논리 ID와 D의 로컬 InstanceId를 분리합니다. TurretMatchBinding이 Match별 대응표를 만들고 D의 승급/강등 사실에서 ID만 이전합니다. 실제 D Factory·교체·삭제 및 Windows Host/Client의 제작 키 8개 일치를 검증했습니다. Battlefield 배치와 동적 지역 입력은 같은 논리 ID를 사용하되 서로 다른 상태를 나타냅니다. 명령 권한·정식 결과·HUD gateway는 다음 연결 대상입니다.
+
 AppRoot.Update는 App 소유 네트워크 큐를 게임시간 정지와 무관하게 Pump합니다. OnApplicationQuit/OnDestroy는 같은 Dispose를 호출하며, Editor의 AppPlayModeShutdown은 ExitingPlayMode에서 Scene 파괴 전 정리를 시작합니다. 자세한 단계·커밋·실패/수정 증거는 위 스프린트 기록을 확인하세요.
 
 이 디렉터리는 기존 게임 코드와 연결하지 않고 새로 구성한 게임 Core입니다. 코드는 `TeamHJD.Game.*` namespace를 사용하며, 기존 `Global`/`Game`/Manager 구조와 호환된다고 가정하지 않습니다. 현재 App/Match 수명주기, Battlefield topology/Grid producer, Stage 1 Encounter 진단 요청 경계가 구현되어 있습니다. 다만 `MatchSimulation.Execute()`의 전투 규칙, 최종 밸런스, 전체 승패 루프는 아직 구현되지 않았습니다.

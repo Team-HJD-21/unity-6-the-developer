@@ -36,10 +36,10 @@
 
 | 배치 | 구현 범위 | 현재 상태 |
 | --- | --- | --- |
-| B1 | 공통 식별/요청·정리 안전성 | App/Match 정리, 요청 Context/중복 Ledger 구현. 최종 Feature별 결과·전송 연결은 B4 |
+| B1 | 공통 식별/요청·정리 안전성 | App/Match 정리·요청 Context/Ledger·등록 토큰과 양방향 논리 ID/로컬 핸들 대응표 구현. Feature별 명령 결과·전송은 B4 |
 | B2 | 지역 데이터/Runtime·정적 어댑터 | Match/D 연결·Initial_Stage 정적 기본 시작 검증 완료 |
 | B3 | 네트워크 Match 기반 | NGO·App 소유권·Scene-ready 준비/명시 시작/종료·실제 UTP 및 Windows 두 실행 파일 검증. 최소 Match 객체 생성/상태/제거·재생성 확인. 원격 정상 Feature 요청은 B4, 실제 Scene의 실행 중 연결 유실 인수는 추가 대상 |
-| B4 | D/E 실제 요청 | D 지역 접근·Match 수명, E 타입 요청·최신 조회·중복 방지·App 연결 유지/Match별 적 제거 구현. 원격 요청·터렛 명령 gateway 미완료. 생성 추적 수 검사 1회 불일치는 별도 추적 |
+| B4 | D/E 실제 요청 | D 지역·논리 ID/등록·실제 승급/강등/Factory·Match 해제 연결 검증. E 타입 요청·최신 조회·중복 방지·App 연결 유지/적 제거 구현. 원격 요청·터렛 명령 gateway·D 실행 상태 정리 미완료. 생성 추적 수 불일치 1회 별도 추적 |
 | B5 | 동적 판정·Debugger | 셀 투영·점령 회수·Debugger/Scene 구현. 실제 모드 전환·3개 ON/1개 OFF 검사 통과 |
 | B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 합치기·App 수명·Client 읽기 모델 구현. 두 SDK 및 Windows 실제 Scene 두 프로세스에서 정적/동적·회수·종료/재시작과 전체 해시 일치 확인 |
 | B7 | HUD | 정책/점령·CU 자동 활성화·로컬 actor 주입·Client 입력 수명 구현. 로컬 HUD 검사와 별도 Client Scene의 슬롯 actor/읽기 연결 확인. 원격 HUD 명령·거리·시각 인수 미완료 |
@@ -84,6 +84,9 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 - `cd64ae84` — Initial_Stage의 SinglePlayerHost 전환·PlayerStart 슬롯 1 연결.
 - `0775a18d` — SDK Scene-ready 참가자 집합·최소 Match 객체와 실제 Scene 제작 연결.
 - `bc9f3d26` — 실제 Build Settings의 Windows 빌드·독립 Host/Client 검증 도구.
+- `1ee2ad40` — Match Entity 등록 토큰·양방향 대응표·명시적 논리 ID/등록 Port.
+- `a34ed4d0` — 실제 D Registry/교체/Factory·Match·Battlefield/지역 입력의 논리 ID 연결.
+- `34c242a7` — Scene/선택 전선의 표시 라벨만 축약. 원본·복사·Capture ID 유지.
 - `71f3c0d3` — AppQuit/Editor 재생 종료에서 Scene 파괴 전 App 정리.
 
 추가 커밋과 마지막 검증 결과는 해당 배치 검증 후 기록한다. 앞선 테스트 결과를 이후 미검증 코드 전체의 완료 근거로 재사용하지 않는다.
@@ -160,6 +163,9 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 | `authored-network-scene-count-diagnostic.xml` | 8/8 통과 | 같은 Scene 회귀 묶음 재검사 통과. 이전 불일치 원인은 아직 미확정 |
 | `network-scene-anchor-host.xml` | 1/1 통과 | 실제 Host 최소 NetworkObject 생성·지역 메타데이터 변경·제거·새 객체 재시작 |
 | `scene-ready-peer-regression.xml` | 10/10 통과 | Scene-ready 연결 추적 추가 후 NGO 소유권·수명/지역 전송·재접속 회귀 |
+| `turret-identity-and-scene.xml` | 9 통과 / 1 실패 | 등록 모델 6개·기존 지역/Host Scene 통과. 새 실제 D 검사는 iterator 캡처 NRE로 중단 |
+| `turret-identity-scene-closure-fixed.xml` | 1/1 통과 | 캡처 제거 후 실제 승급/강등·배치 연속성·비활성/재활성·Factory 등록/삭제·Match 해제 |
+| `entity-label-formatting.xml` | 3/3 통과 | 긴 ID 표시 축약·원본 키 보존. 실제 Window 시각 인수는 아님 |
 
 새 Scene Drawer 작성 중 Unity 6의 EntityId 이름 충돌을 발견해 Domain 별칭으로 수정했다. 컴파일 실패한 실행은 통과 수치에 포함하지 않는다.
 
@@ -228,3 +234,15 @@ Windows 개발 빌드는 실제 Build Settings의 Initial_Stage와 Spaceship을 
 다음 핵심 묶음은 D의 안정적인 논리 ID 대응·Match 수명 정리·명령/구조화된 결과·실제 발신자 권한 gateway, HUD의 정식 요청 연결이다. 원격 거리가 필요한 요청은 B의 신뢰 가능한 Player 위치 Port와 연결해야 하며 Client가 보낸 좌표를 그대로 믿지 않는다. Player 전체 복제를 A가 임의로 대신 구현하지 않는다. E Encounter는 Host 시스템 요청으로 유지하며 임의 Client Spawn 권한을 열지 않는다. 실행 중 연결 유실과 앞선 생성 추적 불일치도 최종 감사에서 빠뜨리지 않는다. 아직 PR/이슈 종료는 하지 않았다.
 
 권한 확인 질문: 공용 터렛 ON/OFF·CU 자동 활성화 요청을 모든 실제 참가자에게 허용하고 Host가 검증할지, Host만 허용할지를 PL에게 확인 중이다. 답변 전 제품 권한을 확정했다고 쓰지 않는다. 거리 제한이 있는 동작과 전역 공용 명령도 구분해야 한다.
+
+## D 개체의 논리 ID·수명 연결 — 추가 진행
+
+`IEntityIdentity`/`SceneEntityIdentity`는 제작 또는 권한 생성자가 부여한 논리 개체 키다. `MatchEntityRegistry<THandle>`는 일대일 대응표와 등록 토큰만 소유하고 실제 생성/삭제를 하지 않는다. 충돌·옛 토큰·다른 인덱스 해제·종료 후 등록을 검사했다. D의 원래 InstanceId·Snapshot·Definition 구조는 보존한다.
+
+`TurretMatchBinding`이 현재 Match에서 실제 D Registry와 제작 키를 대응한다. Runtime Factory의 신규 개체는 `ITurretEntityRegistration`으로 명시적으로 편입한다. D의 LevelUpgraded/LevelDowngraded 사실에서 같은 키를 새 객체에 이전하고, Unregistered는 해당 토큰만 해제한다. Source는 교체 프레임의 최종 배치만 발행하며 동적 지역은 같은 키로 활성/파괴 상태를 읽는다. 과열을 OFF로 바꾸지 않았다.
+
+실제 Initial_Stage에 고유 키 8개와 Core binding 참조를 저장했다. 정상 키는 유지하고 제작 메뉴에서만 누락/중복을 수정한다. 기존 Prefab GUID·타일맵·HUD 스타일은 변경하지 않았다. 신규 meta 하나의 GUID 길이 33자리 때문에 계약 소스가 컴파일 목록에서 빠진 실패가 있어 32자리로 바로잡았고 모든 새 meta의 형식을 확인했다. 실제 D 검사의 iterator 람다 캡처는 기존 재로드 문제와 같은 원인으로 일반 함수로 분리했다. 두 실패 로그/XML도 보존한다.
+
+Windows 검증 `NetworkPair/20261015T092844Z-ecaeb39a`: Host PID 42472 / Client PID 46160, 두 종료 0, Build GUID `4086d5d0fe724daaaa94a3fdeab89b88`. Scene 원문에서 추출한 제작 키 8개, Host·Client 등록 키 정렬 해시는 모두 `iixIXoeWPs4jan4HoCEaVXiJR/+RwbXLEsQmQ6WTRPQ=`로 같았다. 기존 여섯 단계도 통과하며 종료 때 Client 대응표 Count 0을 검사했다. 오류 표식 0, 기존 ComputeBuffer 종료 경고 2다.
+
+긴 키는 Scene/전선 패널에서만 짧게 표시하고 원본 ID·tooltip·Copy·Capture는 유지한다. 문자열 검사는 통과했지만 사람의 실제 화면 가독성을 자동 인수한 것은 아니다. 다음 작업은 D 명령/구조화된 결과·권한 gateway·HUD 연결과 명시적 Feature 실행 정리이며, 위 등록 해제를 전력/체력/업그레이드 전체 초기화로 표시하지 않는다. 공용 요청 권한 질문은 아직 답변 전이다. PR/이슈 종료는 하지 않았다.
