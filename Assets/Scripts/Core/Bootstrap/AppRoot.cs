@@ -190,7 +190,10 @@ namespace TeamHJD.Game.Bootstrap
             }
         }
 
-        private void OnDestroy()
+        private void OnApplicationQuit() => DisposeSafely();
+        private void OnDestroy() => DisposeSafely();
+
+        private void DisposeSafely()
         {
             try { Dispose(); }
             catch (Exception exception) { Debug.LogException(exception, this); }
