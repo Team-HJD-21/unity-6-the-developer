@@ -12,7 +12,9 @@
     "TeamHJD.Game.Infrastructure.Fakes",
     "TeamHJD.Game.Presentation",
     "TeamHJD.Game.Turrets",
-    "Unity.Netcode.Runtime"
+    "TeamHJD.Game.Turrets.Contracts",
+    "Unity.Netcode.Runtime",
+    "Unity.Collections"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

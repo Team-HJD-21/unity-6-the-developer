@@ -1,0 +1,331 @@
+// 개발 빌드에서만 Initial_Stage의 명시적 연결 API를 두 실행 파일로 검증합니다.
+// 실제 Scene/설정/지역/NetworkObject를 사용하며 게임 규칙이나 권한 구현을 대체하지 않습니다.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using TeamHJD.Game.Application;
+using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
+using TeamHJD.Game.Infrastructure;
+using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Turrets.Contracts;
+using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
+using UnityEngine;
+using UnityApplication = UnityEngine.Application;
+using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
+
+namespace TeamHJD.Game.Bootstrap.SceneComposition
+{
+    public sealed class CoreNetworkBuild : MonoBehaviour
+    {
+        [Serializable] private sealed class Probe
+        {
+            public string Run, Phase, Match, Descriptor, DescriptorHash, Grid, RegionHash, Player;
+            public int Seed, Captured, Mode, ActorCount; public long Revision; public ulong Anchor;
+        }
+        [Serializable] private sealed class Result
+        {
+            public bool Success; public string Role, Run, Step, Error, Unity, Build;
+            public int ProcessId; public Probe[] Observations; public string[] Errors;
+        }
+        private string _role, _run, _path, _step, _firstMatch, _lastMatch, _lastDescriptor;
+        private ushort _port;
+        private InitialStageNetworkBinding _binding;
+        private NgoNetworkSession _session;
+        private NgoMessageChannel _probe;
+        private readonly List<Probe> _observations = new List<Probe>();
+        private readonly List<string> _errors = new List<string>();
+        private readonly HashSet<string> _sent = new HashSet<string>();
+        private TurretBase[] _selected;
+        private float _deadline, _finishAt;
+        private int _dynamicCount;
+        private long _dynamicRevision;
+        private ulong _firstAnchor;
+        private bool _terminal;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void LaunchIfRequested()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string role = Option(args, "--core-network-role");
+            if (string.IsNullOrEmpty(role)) return;
+            var binding = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
+            if (binding == null) throw new InvalidOperationException("The build probe requires the authored Initial_Stage.");
+            binding.ConfigureEntry(InitialStageNetworkEntry.Manual);
+            var owner = new GameObject("Core Network Build Validation");
+            DontDestroyOnLoad(owner);
+            var runner = owner.AddComponent<CoreNetworkBuild>();
+            runner._role = role; runner._run = Option(args, "--core-network-run");
+            runner._path = Option(args, "--core-network-result");
+            if ((role != "host" && role != "client") || string.IsNullOrEmpty(runner._run) ||
+                string.IsNullOrEmpty(runner._path) || !ushort.TryParse(Option(args, "--core-network-port"), out runner._port))
+            { runner.Fail("Invalid development probe arguments."); return; }
+            runner._binding = binding; runner.Move("Connect");
+            UnityApplication.logMessageReceived += runner.OnLog;
+        }
+        private static string Option(string[] args, string name)
+        {
+            int index = Array.IndexOf(args, name);
+            return index >= 0 && index + 1 < args.Length ? args[index + 1] : string.Empty;
+        }
+        private void Move(string step)
+        {
+            _step = step; _deadline = Time.realtimeSinceStartup + 120;
+            Debug.Log("CORE_NETWORK_PROBE " + _role + " " + step);
+        }
+        private void Update()
+        {
+            if (_terminal) return;
+            try
+            {
+                if (_errors.Count > 0) throw new InvalidOperationException(_errors[0]);
+                if (Time.realtimeSinceStartup > _deadline)
+                    throw new TimeoutException($"Step={_step}; connection={_session?.State}; Match={_binding?.Matches?.Phase}; detail={_binding?.LastFailure}");
+                if (_step == "ClientClosing")
+                {
+                    _probe.Pump();
+                    if (Time.realtimeSinceStartup >= _finishAt) Finish(true, null);
+                    return;
+                }
+                if (_binding == null) _binding = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
+                if (_binding == null || _binding.Connection == null) return;
+                if (_session == null)
+                {
+                    _session = (NgoNetworkSession)_binding.Connection;
+                    var transport = _session.Manager.GetComponent<UnityTransport>();
+                    if (transport == null) throw new InvalidOperationException("The validation build requires UTP.");
+                    transport.SetConnectionData("127.0.0.1", _port, "127.0.0.1");
+                    if (!(_role == "host" ? _binding.TryStartHost() : _binding.TryStartClient()))
+                        throw new InvalidOperationException("The explicit connection API rejected startup.");
+                    _probe = new NgoMessageChannel(_session.Manager, "teamhjd.validation.core.v1");
+                    _probe.MessageReceived += OnProbe;
+                    Move(_role == "host" ? "WaitPeers" : "ClientMonitor");
+                    if (_role == "host") Debug.Log("CORE_NETWORK_PROBE_HOST_LISTENING");
+                }
+                _probe.Pump();
+                if (_role == "client") { ObserveClient(); return; }
+                if (_step == "WaitPeers" && _session.ConnectedPeerIds.Count == 2)
+                {
+                    if (!_binding.TryPrepareMatch()) throw new InvalidOperationException("Host preparation rejected after Scene-ready cohort.");
+                    Move("WaitReady");
+                }
+                else if ((_step == "WaitReady" || _step == "WaitRestartReady") && _binding.Matches.CanStart)
+                {
+                    bool restart = _step == "WaitRestartReady";
+                    if (!_binding.TryStartMatch()) throw new InvalidOperationException("Host start rejected despite readiness.");
+                    Move(restart ? "WaitRestartAck" : "WaitStaticAck");
+                }
+            }
+            catch (Exception error) { Fail(error.ToString()); }
+        }
+
+        private void ObserveClient()
+        {
+            var app = Object.FindAnyObjectByType<AppRoot>();
+            if (app == null || _binding.Matches == null) return;
+            var descriptor = _binding.Matches.Descriptor;
+            if (descriptor == null)
+            {
+                if (_binding.Matches.Phase != NetworkMatchPhase.Ended || string.IsNullOrEmpty(_lastMatch)) return;
+                if (Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length != 0 ||
+                    Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length != 0 ||
+                    app.NetworkRegions.Source != null || !app.CurrentMatchId.IsEmpty ||
+                    _session.Manager.SpawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true)) return;
+                string phase = _lastMatch == _firstMatch ? "Ended" : "FinalEnded";
+                SendOnce(new Probe { Phase = phase, Match = _lastMatch, Descriptor = _lastDescriptor });
+                return;
+            }
+            if (_binding.Matches.Phase != NetworkMatchPhase.Running) return;
+            if (!app.CurrentMatchId.IsEmpty) throw new InvalidOperationException("Client created an authority MatchSession.");
+            RegionGridSnapshot snapshot = app.NetworkRegions?.Source?.Snapshot;
+            if (snapshot == null || snapshot.MatchId != descriptor.Config.MatchId) return;
+            RegionSceneBinding regionBinding = _binding.GetComponent<RegionSceneBinding>();
+            if (!ReferenceEquals(regionBinding.Source, app.NetworkRegions.Source)) return;
+            if (regionBinding.HasWriteAuthority || regionBinding.LastEvaluation != null)
+                throw new InvalidOperationException("Client computed an authoritative region policy.");
+            var anchors = Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None);
+            if (anchors.Length != 1 || !anchors[0].IsSpawned) return;
+            var anchor = anchors[0]; var state = anchor.State;
+            if (state.MatchId.ToString() != snapshot.MatchId.Value ||
+                state.DescriptorId.ToString() != descriptor.DescriptorId.ToString("N") ||
+                state.RegionGridId.ToString() != snapshot.GridId.ToString("N") || state.RegionRevision != snapshot.Revision ||
+                state.CapturedCells != snapshot.CapturedCellCount || state.RegionMode != (int)snapshot.Mode) return;
+            if (state.StageId.ToString() != descriptor.Config.StageId.Value || state.Seed != descriptor.Config.RandomSeed)
+                throw new InvalidOperationException("Anchor metadata differs from the authoritative descriptor.");
+            var actors = Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None);
+            if (!_binding.Matches.TryResolveParticipant(_session.LocalConnectionId, out PlayerId player) ||
+                actors.Length != 1 || actors[0].PlayerId != player) return;
+            _firstMatch ??= snapshot.MatchId.Value; _lastMatch = snapshot.MatchId.Value;
+            _lastDescriptor = descriptor.DescriptorId.ToString("N");
+            string phaseName = _firstMatch != _lastMatch ? "Restart" : snapshot.Mode == RegionPolicyMode.Static ? "Static" :
+                _dynamicCount == 0 ? (snapshot.CapturedCellCount > 0 ? "Dynamic" : null) :
+                snapshot.Revision > _dynamicRevision && snapshot.CapturedCellCount < _dynamicCount ? "Release" : null;
+            if (phaseName == null) return;
+            if (phaseName == "Dynamic") { _dynamicCount = snapshot.CapturedCellCount; _dynamicRevision = snapshot.Revision; }
+            SendOnce(new Probe
+            {
+                Phase = phaseName, Match = snapshot.MatchId.Value, Descriptor = _lastDescriptor,
+                DescriptorHash = Hash(MatchLifecycleCodec.Encode(descriptor)),
+                Grid = snapshot.GridId.ToString("N"), RegionHash = RegionHash(descriptor, snapshot),
+                Seed = descriptor.Config.RandomSeed, Captured = snapshot.CapturedCellCount,
+                Mode = (int)snapshot.Mode, Revision = snapshot.Revision, Anchor = anchor.NetworkObjectId,
+                Player = player.Value, ActorCount = actors.Length
+            });
+        }
+        private void SendOnce(Probe value)
+        {
+            string key = value.Match + "/" + value.Phase;
+            if (_sent.Contains(key)) return;
+            value.Run = _run;
+            if (!_probe.TrySend(0, Encoding.UTF8.GetBytes(JsonUtility.ToJson(value)))) return;
+            _sent.Add(key); _observations.Add(value);
+            Debug.Log("CORE_NETWORK_PROBE_CLIENT " + value.Phase + " " + value.Match);
+        }
+        private void OnProbe(ulong sender, byte[] bytes)
+        {
+            try
+            {
+                var packet = JsonUtility.FromJson<Probe>(Encoding.UTF8.GetString(bytes));
+                if (packet == null || packet.Run != _run) throw new InvalidOperationException("Wrong probe run.");
+                if (_role == "client")
+                {
+                    if (sender != 0 || packet.Phase != "Complete" || !_sent.Contains(_lastMatch + "/FinalEnded"))
+                        throw new InvalidOperationException("Unexpected server completion.");
+                    SendOnce(new Probe { Phase = "Closing", Match = _lastMatch });
+                    _finishAt = Time.realtimeSinceStartup + .5f; Move("ClientClosing"); return;
+                }
+                if (sender == 0 || !_session.ConnectedPeerIds.Contains(sender))
+                    throw new InvalidOperationException("Probe sender is not the connected Client.");
+                _observations.Add(packet);
+                if (_step == "WaitClosing" && packet.Phase == "Closing") { Finish(true, null); return; }
+                if (_step == "WaitEndedAck" || _step == "WaitFinalEndedAck")
+                {
+                    string expected = _step == "WaitEndedAck" ? "Ended" : "FinalEnded";
+                    if (packet.Phase != expected || packet.Match != _lastMatch)
+                        throw new InvalidOperationException("Unexpected Match end acknowledgement.");
+                    if (expected == "Ended")
+                    {
+                        if (!_binding.TryPrepareMatch()) throw new InvalidOperationException("Match restart preparation rejected.");
+                        Move("WaitRestartReady");
+                    }
+                    else
+                    {
+                        var complete = new Probe { Run = _run, Phase = "Complete", Match = _lastMatch };
+                        if (!_probe.TrySend(sender, Encoding.UTF8.GetBytes(JsonUtility.ToJson(complete))))
+                            throw new InvalidOperationException("Completion message was not queued.");
+                        Move("WaitClosing");
+                    }
+                    return;
+                }
+                ValidateRunning(packet, sender);
+                if (_step == "WaitStaticAck" && packet.Phase == "Static")
+                {
+                    _firstAnchor = packet.Anchor;
+                    if (!_binding.GetComponent<RegionSceneBinding>().ResetPolicy(RegionPolicyMode.Dynamic, true))
+                        throw new InvalidOperationException("The authoritative region policy reset was rejected.");
+                    ActivateTriangle(); Move("WaitDynamicAck");
+                }
+                else if (_step == "WaitDynamicAck" && packet.Phase == "Dynamic")
+                {
+                    var controller = TurretController.FindForScene(_binding.gameObject.scene);
+                    if (controller.RequestActivation(_selected[0].InstanceId, false) != TurretActivationResult.Deactivated)
+                        throw new InvalidOperationException("Turret OFF rejected.");
+                    if (!_selected[1].IsActivated || !_selected[2].IsActivated)
+                        throw new InvalidOperationException("Capture release disabled remaining turrets.");
+                    Move("WaitReleaseAck");
+                }
+                else if ((_step == "WaitReleaseAck" && packet.Phase == "Release") ||
+                    (_step == "WaitRestartAck" && packet.Phase == "Restart"))
+                {
+                    bool restart = packet.Phase == "Restart";
+                    if (restart && packet.Anchor == _firstAnchor) throw new InvalidOperationException("Restart reused the old live anchor.");
+                    _lastMatch = packet.Match;
+                    if (!_binding.TryEndMatch()) throw new InvalidOperationException("Host end rejected.");
+                    Move(restart ? "WaitFinalEndedAck" : "WaitEndedAck");
+                }
+                else throw new InvalidOperationException("Unexpected phase " + packet.Phase + " in " + _step);
+            }
+            catch (Exception error) { Fail(error.ToString()); }
+        }
+        private void ValidateRunning(Probe packet, ulong sender)
+        {
+            var descriptor = _binding.Matches.Descriptor;
+            var region = _binding.GetComponent<RegionSceneBinding>().Source.Snapshot;
+            var anchor = Object.FindAnyObjectByType<NetworkMatchAnchor>();
+            if (packet.Match != descriptor.Config.MatchId.Value || packet.Descriptor != descriptor.DescriptorId.ToString("N") ||
+                packet.DescriptorHash != Hash(MatchLifecycleCodec.Encode(descriptor)) ||
+                packet.RegionHash != RegionHash(descriptor, region) || packet.Anchor != anchor.NetworkObjectId ||
+                !_binding.Matches.TryResolveParticipant(sender, out PlayerId player) || packet.Player != player.Value || packet.ActorCount != 1)
+                throw new InvalidOperationException("Client settings/region/anchor/local participant differ from Host.");
+        }
+        private void ActivateTriangle()
+        {
+            var controller = TurretController.FindForScene(_binding.gameObject.scene);
+            var turrets = Object.FindObjectsByType<TurretBase>(FindObjectsSortMode.None)
+                .Where(t => t.gameObject.scene == _binding.gameObject.scene && !t.IsDestroyed && t.isActiveAndEnabled)
+                .OrderBy(t => t.EffectivePower).ToArray();
+            for (int a = 0; a < turrets.Length && _selected == null; a++)
+                for (int b = a + 1; b < turrets.Length && _selected == null; b++)
+                    for (int c = b + 1; c < turrets.Length && _selected == null; c++)
+                    {
+                        Vector2 ab = turrets[b].transform.position - turrets[a].transform.position;
+                        Vector2 ac = turrets[c].transform.position - turrets[a].transform.position;
+                        if (Mathf.Abs(ab.x * ac.y - ab.y * ac.x) > 1 &&
+                            turrets[a].EffectivePower + turrets[b].EffectivePower + turrets[c].EffectivePower <= controller.Budget.MaximumPower)
+                            _selected = new[] { turrets[a], turrets[b], turrets[c] };
+                    }
+            if (_selected == null) throw new InvalidOperationException("The authored Scene has no affordable non-collinear turret triangle.");
+            foreach (var turret in _selected)
+                if (controller.RequestActivation(turret.InstanceId, true) != TurretActivationResult.Activated)
+                    throw new InvalidOperationException("Authored turret activation rejected.");
+        }
+        private static string RegionHash(NetworkMatchDescriptor descriptor, RegionGridSnapshot snapshot)
+            => Hash(RegionReplicationCodec.Encode(new RegionReplicationFrame(descriptor.DescriptorId, 1, snapshot)));
+        private static string Hash(byte[] bytes)
+        { using var hash = SHA256.Create(); return Convert.ToBase64String(hash.ComputeHash(bytes)); }
+        private void OnLog(string message, string stack, LogType type)
+        {
+            if (!_terminal && (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) && _errors.Count < 32)
+                _errors.Add(message + "\n" + stack);
+        }
+        private void Fail(string error) => Finish(false, error);
+        private void Finish(bool success, string error)
+        {
+            if (_terminal) return; _terminal = true;
+            UnityApplication.logMessageReceived -= OnLog;
+            try
+            {
+                if (!string.IsNullOrEmpty(_path))
+                {
+                    string absolute = Path.GetFullPath(_path); Directory.CreateDirectory(Path.GetDirectoryName(absolute));
+                    File.WriteAllText(absolute, JsonUtility.ToJson(new Result
+                    {
+                        Success = success, Role = _role, Run = _run, Step = _step, Error = error,
+                        Unity = UnityApplication.unityVersion, Build = UnityApplication.buildGUID, ProcessId = Process.GetCurrentProcess().Id,
+                        Observations = _observations.ToArray(), Errors = _errors.ToArray()
+                    }, true));
+                }
+            }
+            finally
+            {
+                if (success) Debug.Log("CORE_NETWORK_PROBE_SUCCESS " + _role);
+                else Debug.LogError("CORE_NETWORK_PROBE_FAILED " + _role + ": " + error);
+                UnityApplication.Quit(success ? 0 : 1);
+            }
+        }
+        private void OnDestroy()
+        {
+            UnityApplication.logMessageReceived -= OnLog;
+            _probe?.Dispose();
+        }
+    }
+}
+#endif
