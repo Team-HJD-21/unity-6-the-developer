@@ -20,13 +20,14 @@ namespace TeamHJD.Game.Application
         public bool CanStart => !HasStarted && Participants.Count >= RequiredParticipantCount && _ready.Count == Participants.Count;
 
         public MatchReadyBarrier(MatchConfig config, IEnumerable<MatchParticipantBinding> participants,
-            int requiredParticipantCount = 1)
+            int requiredParticipantCount = 1, Guid? descriptorId = null)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
             if (participants == null) throw new ArgumentNullException(nameof(participants));
             if (requiredParticipantCount < 1) throw new ArgumentOutOfRangeException(nameof(requiredParticipantCount));
             MatchId = config.MatchId;
-            DescriptorId = Guid.NewGuid();
+            DescriptorId = descriptorId ?? Guid.NewGuid();
+            if (DescriptorId == Guid.Empty) throw new ArgumentException("A descriptor id is required.", nameof(descriptorId));
             RequiredParticipantCount = requiredParticipantCount;
             var registered = new List<MatchParticipantBinding>();
             var playerIds = new HashSet<PlayerId>();
