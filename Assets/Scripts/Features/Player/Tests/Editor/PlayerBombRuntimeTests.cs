@@ -46,4 +46,24 @@ public sealed class PlayerBombRuntimeTests
         Assert.That(_explosion.Explode(), Is.False);
         yield break;
     }
+
+    [TestCase(.5f, 6f)]
+    [TestCase(2.5f, 9f)]
+    [TestCase(5f, 10f)]
+    public void Detonation_MatchesDamageRadiusRegardlessOfBodyScale(float bodyScale, float radius)
+    {
+        _bomb.transform.localScale = new Vector3(bodyScale, bodyScale * .8f, 1f);
+        Vector3 originalBodyScale = _bomb.transform.localScale;
+        var data = new SerializedObject(_explosion);
+        data.FindProperty("_radius").floatValue = radius;
+        data.ApplyModifiedPropertiesWithoutUndo();
+
+        Assert.That(_explosion.Explode(), Is.True);
+        var visualData = new SerializedObject(_bomb.GetComponent<PlayerTimeBombVisual>());
+        float referenceDiameter = visualData.FindProperty("_explosionDiameterAtScaleOne").floatValue;
+        Transform effect = _bomb.transform.Find("Legacy Explosion");
+        Assert.That(referenceDiameter * Mathf.Abs(effect.lossyScale.x), Is.EqualTo(radius * 2f).Within(.001f));
+        Assert.That(referenceDiameter * Mathf.Abs(effect.lossyScale.y), Is.EqualTo(radius * 2f).Within(.001f));
+        Assert.That(_bomb.transform.localScale, Is.EqualTo(originalBodyScale));
+    }
 }

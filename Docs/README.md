@@ -56,6 +56,8 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOL
 
 Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변경 UI는 [Player UI API](architecture/player-ui-api.md)를 참고한다.
 
+플레이어 기본 무기·총구·탄환 초기화 계약과 이동속도 독립 사격은 [Player Combat API](architecture/player-combat-api.md)를 참고한다.
+
 1. [PROJECT_PLAN.md](product/PROJECT_PLAN.md) — 게임 정체성, 제품 범위, Vertical Slice와 Decision Log
 2. [system-rearchitecture-charter.md](architecture/system-rearchitecture-charter.md) — 레거시 교체 원칙과 변경할 수 없는 시스템 경계
 3. [milestones-and-core-design.md](planning/milestones-and-core-design.md) — M0~M5, Priority별 역할, 통과 기준

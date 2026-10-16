@@ -1,6 +1,15 @@
 /// <summary>스킬 이름과 설명문을 모아 둔 표시용 카탈로그입니다.</summary>
 public static class PlayerSkillDescriptions
 {
+    public static string TurretPlacementFailure(PlayerTurretPlacementResult result) => result switch
+    {
+        PlayerTurretPlacementResult.Allowed => "",
+        PlayerTurretPlacementResult.OutsideGround => "지면이 부족합니다. 안쪽으로 이동해 주세요.",
+        PlayerTurretPlacementResult.OverlapsTurret => "다른 포탑과 겹쳐 설치할 수 없습니다.",
+        PlayerTurretPlacementResult.BlockedByObstacle => "장애물과 겹쳐 설치할 수 없습니다.",
+        _ => "이곳에는 포탑을 설치할 수 없습니다."
+    };
+
     public static string Name(PlayerSkillId skill) => skill switch
     {
         PlayerSkillId.Bomb => "시한폭탄",
