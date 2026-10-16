@@ -7,6 +7,43 @@ using UnityEngine;
 public sealed class PlayerWeaponMigrationTests
 {
     private GameObject PlayerPrefab => AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+
+    [Test]
+    public void DirectionalColliders_SelectOnePairAndPreserveManualPositions()
+    {
+        var player = Object.Instantiate(PlayerPrefab);
+        try
+        {
+            var selector = player.GetComponent<PlayerDirectionalColliders>();
+            Assert.That(selector.IsConfigured, Is.True);
+            string[] fields = { "_bodyUpDown", "_bodyLeft", "_bodyRight", "_bulletUpDown", "_bulletLeft", "_bulletRight" };
+            var data = new SerializedObject(selector);
+            Collider2D[] colliders = fields.Select(field =>
+                (Collider2D)data.FindProperty(field).objectReferenceValue).ToArray();
+            Assert.That(colliders.Distinct().Count(), Is.EqualTo(6));
+
+            colliders[1].transform.localPosition = new Vector3(-.3f, .2f, 0f);
+            colliders[2].transform.localPosition = new Vector3(.4f, -.1f, 0f);
+            Vector3[] positions = colliders.Select(collider => collider.transform.localPosition).ToArray();
+            Vector2[] offsets = colliders.Select(collider => collider.offset).ToArray();
+            foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.Down, PlayerAimFacing.Left,
+                         PlayerAimFacing.Right, PlayerAimFacing.Up, PlayerAimFacing.Down })
+            {
+                selector.SetFacing(facing);
+                int active = facing == PlayerAimFacing.Left ? 1 : facing == PlayerAimFacing.Right ? 2 : 0;
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    Assert.That(colliders[i].enabled, Is.EqualTo(i % 3 == active));
+                    Assert.That(colliders[i].isTrigger, Is.EqualTo(i >= 3));
+                    Assert.That(colliders[i].attachedRigidbody, Is.EqualTo(player.GetComponent<Rigidbody2D>()));
+                    Assert.That(colliders[i].transform.localPosition, Is.EqualTo(positions[i]));
+                    Assert.That(colliders[i].offset, Is.EqualTo(offsets[i]));
+                }
+            }
+        }
+        finally { Object.DestroyImmediate(player); }
+    }
+
     [Test]
     public void WeaponRig_IsOwnedByPlayer()
     {

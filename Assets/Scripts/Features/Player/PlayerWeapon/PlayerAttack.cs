@@ -13,8 +13,6 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] private PlayerWeaponRig _weaponRig;
     [FormerlySerializedAs("inputHandler")]
     [SerializeField] private PlayerInputHandler _input;
-    [FormerlySerializedAs("playerRb")]
-    [SerializeField] private Rigidbody2D _playerBody;
 
     [Header("Weapons")]
     [FormerlySerializedAs("currentWeapon")]
@@ -43,7 +41,6 @@ public class PlayerAttack : MonoBehaviour
     private void Awake()
     {
         if (_input == null) _input = GetComponent<PlayerInputHandler>();
-        if (_playerBody == null) _playerBody = GetComponent<Rigidbody2D>();
         if (_muzzleAnchor == null) _muzzleAnchor = GetComponentInChildren<PlayerMuzzleAnchor>(true);
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
         _skills = GetComponent<PlayerSkillController>();
@@ -60,10 +57,26 @@ public class PlayerAttack : MonoBehaviour
     public bool TryFire()
     {
         if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || Time.time < _nextShotTime) return false;
+        if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
+
+        bool isShotgun = _currentWeapon == WeaponType.DefaultShotgun;
+        Color color = isShotgun ? _shotgunColor : _cryoColor;
+        float damage = Mathf.Max(0f, isShotgun ? _shotgunDamage : _cryoDamage);
+        if (!FirePellets(muzzle.position, direction, color, damage)) return false;
+
+        float interval = isShotgun ? _shotgunInterval : _cryoInterval;
+        _nextShotTime = Time.time + Mathf.Max(.01f, interval);
+        _weaponRig.ShowShotFlash();
+        return true;
+    }
+
+    private bool TryGetMuzzle(out Transform muzzle)
+    {
+        muzzle = null;
         if (_input == null || _input.transform != transform || _bulletPrefab == null ||
             _bulletPrefab.GetComponent<PlayerBullet>() == null || _muzzleAnchor == null ||
             _weaponRig == null || _weaponRig.PlayerRoot != transform || _muzzleAnchor.WeaponRig != _weaponRig ||
-            !_muzzleAnchor.TryGetMuzzle(out var muzzle))
+            !_muzzleAnchor.TryGetMuzzle(out muzzle))
         {
             if (!_reportedConfigurationError)
             {
@@ -72,25 +85,32 @@ public class PlayerAttack : MonoBehaviour
             }
             return false;
         }
-        Vector2 direction = _input.HasAimTarget ? _input.MouseWorldPosition - (Vector2)transform.position : _input.AimDirection;
+        return true;
+    }
+
+    private bool TryGetAimDirection(out Vector2 direction)
+    {
+        direction = _input.HasAimTarget ? _input.MouseWorldPosition - (Vector2)transform.position : _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) return false;
         direction.Normalize();
-        Vector2 inheritedVelocity = _playerBody != null ? _playerBody.linearVelocity : Vector2.zero;
-        bool shotgun = _currentWeapon == WeaponType.DefaultShotgun;
-        int pellets = Mathf.Clamp(_pelletCount, 1, 32);
-        float spread = Mathf.Clamp(_spreadAngle, 0f, 180f);
-        float step = pellets > 1 ? spread / (pellets - 1) : 0f;
-        for (int i = 0; i < pellets; i++)
-        {
-            float angle = pellets > 1 ? -spread * .5f + step * i : 0f;
-            Vector2 shotDirection = Quaternion.Euler(0, 0, angle) * direction;
-            var bullet = Instantiate(_bulletPrefab, muzzle.position, Quaternion.identity).GetComponent<PlayerBullet>();
-            bullet.InitBullet(_currentWeapon, shotgun ? _shotgunColor : _cryoColor,
-                Mathf.Max(0f, shotgun ? _shotgunDamage : _cryoDamage), shotDirection, inheritedVelocity);
-        }
-        _nextShotTime = Time.time + Mathf.Max(.01f, shotgun ? _shotgunInterval : _cryoInterval);
-        _weaponRig.ShowShotFlash();
         return true;
+    }
+
+    private bool FirePellets(Vector3 spawnPosition, Vector2 direction, Color color, float damage)
+    {
+        int pelletCount = Mathf.Clamp(_pelletCount, 1, 32);
+        float spreadAngle = Mathf.Clamp(_spreadAngle, 0f, 180f);
+        float angleStep = pelletCount > 1 ? spreadAngle / (pelletCount - 1) : 0f;
+        bool fired = false;
+        for (int pelletIndex = 0; pelletIndex < pelletCount; pelletIndex++)
+        {
+            float angle = pelletCount > 1 ? -spreadAngle * .5f + angleStep * pelletIndex : 0f;
+            Vector2 pelletDirection = Quaternion.Euler(0f, 0f, angle) * direction;
+            var bullet = Instantiate(_bulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
+            if (bullet.Initialize(color, damage, pelletDirection)) fired = true;
+            else Destroy(bullet.gameObject);
+        }
+        return fired;
     }
 }

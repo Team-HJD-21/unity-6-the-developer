@@ -1,6 +1,6 @@
 # Player skill responsibilities and review validation
 
-수정일: 2026-10-09
+수정일: 2026-10-16
 
 PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 Player 소스와 몬스터 원본은 변경하지 않는다. 기존 MonoBehaviour의 GUID와 직렬화 필드는 유지하므로 현재 프리팹 연결을 그대로 사용한다. 공통 스킬 베이스와 역할별 보조 클래스로 분리했다. 임시 포탑 체력 컴포넌트는 프리팹에 연결했다. 피격 표시는 기존 색상 틴트만 유지한다.
 
@@ -29,6 +29,8 @@ PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 P
 | `PlayerSkillDescriptions` | 스킬 표시 이름과 설명문 |
 | `PlayerSkillUiFactory`, `PlayerSkillHudFactory` | UI 부품 및 HUD 생성 |
 | `PlayerSupportTurretTargeting`, `PlayerSupportTurretWeapon` | 임시 포탑 적 검색과 탄환 생성 |
+| `PlayerTurretPlacementRules` | 임시 포탑 바닥 전체의 지면 포함·장애물·다른 포탑 겹침 검사 |
+| `PlayerTurretPlacementResult` | 설치 성공과 지면 부족·포탑 겹침·장애물 등 실패 사유 enum |
 | `PlayerBombAreaDamage` | 범위 피해와 대상별 중복 피해 방지 |
 
 ## 공통 스킬과 Scene 연결
@@ -68,3 +70,119 @@ Unity Test Runner에서 `PlayerFieldSkillTests`, `PlayerFieldTargetSelectionTest
 - 공개 팀 문서 사이트는 Cloudflare Access 로그인 화면으로 연결되어 본문을 확인할 수 없었다. 로컬 Docs와 실제 Core/Enemy 계약을 기준으로 반영했다.
 
 - 임시 포탑 재충전 규칙은 독립 실행 검증 17개가 통과했다. 초기 3개, 초과 설치 거부, 정상 회수 즉시 반환, 반피 15초, 파괴 30초, 병렬 충전, 중복 반환 거부, 잘못된 시간·체력 입력을 확인했다. 실행 환경의 구형 C# 컴파일러에 맞추어 검증용 복사본의 프로퍼티·초기화 문법만 변환했다.
+
+## #512 임시포탑 설치 판정 (2026-10-16)
+
+기존 PlayerTurretSkill은 위치 검사 없이 수량을 먼저 차감하고 포탑을 생성했다.
+작은 충돌 반경만으로는 큰 바닥 외형의 맵 밖 돌출이나 포탑끼리 겹침을 막을 수 없었다.
+
+`PlayerTurretPlacementRules`는 설치 판정을 전담하는 정적 클래스이며 씬에 붙이지 않는다.
+
+- `FindGround(Scene)`: 해당 씬에서 활성 TilemapCollider2D가 있는 가장 큰 Tilemap을 찾는다.
+  Initial_Stage에서는 Initial_Overworld_Base가 선택된다. 더 큰 Water Tilemap은 Collider가 없어 제외된다.
+- `TryGetFootprint(GameObject, Vector3, out Bounds)`: 프리팹 루트 SpriteRenderer의 localBounds와
+  루트 스케일로 고정 바닥의 월드 XY 영역을 구한다. 회전하는 포신은 제외한다.
+- `CanPlace(GameObject, Vector3, GameObject, Tilemap)`: 바닥 영역에 0.05 단위 여유를 더하고
+  그 영역이 걸치는 모든 지면 타일, 기존 임시포탑 바닥, 일반 장애물 Collider를 검사한다.
+  렌더링 정렬용 Z 차이는 포탑 겹침 판정에 사용하지 않는다.
+
+PlayerTurretSkill의 Inspector `Placement Ground`를 지정하면 그 Tilemap을 사용한다.
+미지정이면 같은 씬에서 자동으로 찾고 캐시한다. 선택할 지면이 없으면 설치를 거부한다.
+자동 선택은 현행 씬 구조를 위한 기본값이다. 다른 맵에서 Collider가 있는 더 큰 배경 레이어를
+추가한다면 명시적으로 지면을 지정해야 한다. Core Grid나 터렛 해금 구역을 지형 판정으로 사용하지 않는다.
+
+현재 축에 정렬된 XY Tilemap과 고정된 임시포탑 바닥을 기준으로 한다. 외형을 교체할 때는
+루트 SpriteRenderer에 바닥 Sprite를 유지해야 한다. 지면 타일이 있어도 벽 Collider와
+겹치면 거부한다. 트리거(사거리 표시 포함), 설치자 자신, EnemyHealth를 가진 몬스터,
+탄환 레이어는 장애물에서 제외한다. 일반 지형은 플레이어 레이어 충돌 설정과
+Collider의 excludeLayers를 따른다. 기존 영구 포탑의 일반 본체 Collider는 별도로 차단한다.
+
+PlayerTurretSkill은 판정 성공 후에만 TryDeploy와 생성을 수행하며, 실패 시 수량과
+설치 쿨타임을 사용하지 않는다. 생성한 포탑은 설치 플레이어와 같은 씬에 둔다.
+보유 수량·회수·수리 충전 규칙은 기존 PlayerTurretInventory를 그대로 사용한다.
+
+`PlayerTurretPlacementTests`는 Test Runner의 EditMode에서 실행한다. Play Mode 진입 후
+별도 테스트 씬에 지면을 만들어 다음을 검사한다.
+
+- 중심은 지면 안이어도 바닥이 맵 밖으로 나가거나 빈 타일에 걸치면 설치 거부.
+- 기존 임시포탑과 Z가 달라도 바닥 겹침 거부, 충분히 떨어진 위치 허용.
+- 벽에서 거부하고 설치자 Collider·트리거는 허용.
+- 설치 실패 후 수량 3/쿨타임 0 유지, 성공 1회 차감, 같은 위치 재설치 거부.
+
+컴파일 성공은 Unity 테스트 실행 통과가 아니다. 실제 Initial_Stage에서 외곽·오목한 경계·
+영구 포탑 옆·다른 플레이어가 설치한 임시포탑 옆 설치와 회수 후 재설치를 확인해야 한다.
+
+### 설치 실패 안내
+
+`PlayerTurretPlacementRules.Evaluate`는 `PlayerTurretPlacementResult`를 반환한다.
+Allowed / GroundUnavailable / InvalidFootprint / OutsideGround / OverlapsTurret /
+BlockedByObstacle로 구분하며 기존 `CanPlace`는 Allowed 여부만 반환하는 편의 API로 유지한다.
+
+PlayerTurretSkill은 실패 결과를 2.5초간 `PlacementFeedback`으로 노출한다.
+Tick으로 표시 시간이 줄고, 설치 성공 또는 비활성화 시 즉시 지운다. 같은 실패를 다시
+시도하면 표시 시간을 갱신한다. 수량과 쿨타임은 실패 시에도 그대로 유지한다.
+
+PlayerSkillController의 `TurretPlacementFeedback`이 HUD에 결과를 전달하고,
+PlayerSkillDescriptions의 `TurretPlacementFailure`가 표시 문구를 결정한다.
+PlayerSkillHud는 Canvas 프리팹의 화면 하단 안내 영역에 빨간색 볼드체로 다음을 표시한다.
+
+- 지면 부족: "지면이 부족합니다. 안쪽으로 이동해 주세요."
+- 포탑 겹침: "다른 포탑과 겹쳐 설치할 수 없습니다."
+- 장애물: "장애물과 겹쳐 설치할 수 없습니다."
+- 지면 미설정·외형 오류: "이곳에는 포탑을 설치할 수 없습니다."
+
+표시 중에는 방벽 설치 안내보다 실패 문구를 우선하고, 만료되면 방벽 안내로 돌아간다.
+스킬 선택창이 열려 있을 때는 안내를 숨긴다. 수량 부족·충전 상태는 기존 슬롯 표시를 사용한다.
+추가 테스트는 실제 실패 결과 구분, 성공 시 안내 초기화, 2.5초 후 안내 만료를 확인한다.
+
+### Canvas 프리팹에서 안내 UI 편집
+
+`Assets/Prefabs/UI/PlayerSkillHUD.prefab`에 Canvas, CanvasScaler, GraphicRaycaster,
+PlayerSkillHud와 두 TMP 텍스트를 미리 배치했다. Player 프리팹의 PlayerSkillController에
+`Hud Prefab` 참조를 연결했다. PlayerSkillHudFactory는 이 프리팹을 Instantiate하고 Bind한다.
+프리팹이나 텍스트 참조가 없으면 경고를 남기고 HUD를 생성하지 않는다.
+
+- `Placement Failure`: 빨간색(1, 0, 0), Bold, 글자 크기 28. 하단 중앙에서 위로 160,
+  영역 1200×60. 프리팹 편집 시 예시 문구가 보이고, 실행 시 Bind가 먼저 숨긴다.
+- `Placement Hint`: 기존 방벽 안내용 텍스트. 같은 위치에 배치하고 실패 안내와 번갈아 표시한다.
+- Canvas: Screen Space Overlay, 정렬 순서 20. 기준 해상도 1920×1080, 폭/높이 비율 0.5.
+
+PlayerSkillHud는 텍스트 내용을 갱신하고 GameObject의 표시 여부만 바꾼다.
+텍스트 위치·색·크기·볼드 설정은 코드로 덮어쓰지 않는다. 두 텍스트의 Raycast Target은
+꺼져 있으므로 설치/선택 입력을 가리지 않는다. 기존 스킬 슬롯과 선택창은 Bind 과정에서 조립한다.
+
+PlayerSkillPrefabTests는 Canvas 활성 상태, 직렬화된 텍스트 연결, 빨간색 Bold 설정과
+입력 차단 여부를 검사한다. PlayerSkillSelectionTests는 Player의 HUD 프리팹 연결도 확인한다.
+프리팹 편집 후 실제 실행에서 해상도별 위치·문구 표시와 스킬 입력을 추가 확인해야 한다.
+## #513 폭탄 피해 반경과 폭발 외형 일치 (2026-10-16)
+
+PlayerBombExplosion의 Radius와 bomb.prefab의 `_radius`를 9로 맞췄다.
+현재 비콘 반경 12보다 작으며 폭탄 지름은 18, 비콘 최대 지름은 24다.
+피해량 250, 대기 2.1초, 이펙트 재생 0.8초와 폭탄 본체 스케일 2.5는 유지한다.
+
+기존 PlayerTimeBombVisual.PlayExplosion은 전달받은 radius를 이펙트 크기에 사용하지 않았다.
+기존 클립의 최대 외곽은 스케일 1에서 약 반경 5.76이고, 부모 스케일 2.5가 곱해져 약
+반경 14.4까지 보였지만 실제 피해 반경은 6이었다.
+
+PlayerTimeBombVisual의 MatchExplosionRadius가 폭발 자식 Transform의 XY 스케일만 계산한다.
+
+`이펙트 로컬 스케일 = (피해 반경 × 2) / (기준 외형 지름 × 부모 월드 스케일)`
+
+- PlayerBombExplosion: 피해 반경을 단일 기준으로 시각 효과와 PlayerBombAreaDamage에 전달.
+- PlayerTimeBombVisual: 기존 애니메이션 재생·타이머 표시와 최대 폭발 외형 크기 동기화.
+- bomb.prefab: 실제 반경과 외형 기준값을 직렬화. 기존 Legacy Explosion 자식과 클립을 유지.
+
+`Explosion Diameter At Scale One`은 11.521이다. 현재 effect.anim의 11개 Sprite(20 PPU)에 대해
+투명 여백을 제외하고, 알파 10/255 초과 픽셀의 중심에서 Sprite 피벗까지 최대 거리와
+픽셀 반대각선을 포함해 구한 최대 외곽 지름이다. 이미지 전체 사각형 크기로 계산하면
+투명 여백 때문에 시각적 크기가 달라지므로 이 측정값을 사용한다. 클립 이미지·PPU·피벗을
+교체할 때는 이 기준값도 다시 측정한다. Radius만 조정할 때는 별도 크기 조정이 필요 없다.
+
+기존 불규칙한 폭발 그림과 확장·소멸 모션은 그대로다. 애니메이션 내내 원형 범위를
+채우는 것이 아니라 가장 크게 퍼진 프레임의 외곽이 피해 반경에 맞는다.
+사전 반경 표시나 새 범위 링은 추가하지 않는다. 실제 피해는 기존대로 폭발 시점 1회이며,
+반경 안에 적 Collider가 걸치면 해당 적에 피해를 적용한다.
+
+PlayerBombRuntimeTests에 본체 스케일 0.5/2.5/5 및 비균일 XY 스케일, 반경 6/9/10에서도
+최대 이펙트 지름이 피해 지름과 같고 본체 스케일은 유지되는지 확인하는 회귀 테스트를 추가했다.
+컴파일과 테스트 실행은 구분하며, Initial_Stage에서 비콘 최대 범위와 실제 폭발 최대 외곽도 비교한다.

@@ -961210,7 +961210,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 19856798, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_sharedMaterial
-      value:
+      value: 
       objectReference: {fileID: 6633813256750574405, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
     - target: {fileID: 76689850, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.y
@@ -961226,7 +961226,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 341792978, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_sharedMaterial
-      value:
+      value: 
       objectReference: {fileID: 6633813256750574405, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
     - target: {fileID: 474914851, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.y

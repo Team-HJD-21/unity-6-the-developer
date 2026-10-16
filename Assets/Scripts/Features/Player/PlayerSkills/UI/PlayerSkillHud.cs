@@ -5,19 +5,24 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster))]
 public sealed class PlayerSkillHud : MonoBehaviour
 {
+    [Header("Canvas Prefab References")]
+    [SerializeField] private TMP_Text _placementHint;
+    [SerializeField] private TMP_Text _placementFailure;
+
     private PlayerSkillController _owner;
     private Sprite _bombIcon, _turretIcon, _barrierIcon, _beaconIcon;
     private TMP_FontAsset _font;
     private Sprite _cooldownMaskSprite;
-    private TMP_Text _placementHint;
     private PlayerSkillUiFactory _ui;
     private PlayerSkillTooltipView _tooltip;
     private PlayerTurretRecoveryPromptView _recovery;
     private PlayerSkillSelectionPanelView _panel;
     private readonly PlayerSkillSlotView[] _slots = new PlayerSkillSlotView[2];
     public bool IsOpen => _panel != null && _panel.IsOpen && gameObject.activeInHierarchy;
+    public bool IsConfigured => _placementHint != null && _placementFailure != null;
     public void Bind(PlayerSkillController owner, Sprite bombIcon, Sprite turretIcon, TMP_FontAsset font,
         Sprite barrierIcon = null, Sprite beaconIcon = null, Sprite recoveryKeyIcon = null)
     {
@@ -27,14 +32,8 @@ public sealed class PlayerSkillHud : MonoBehaviour
         _barrierIcon = barrierIcon;
         _beaconIcon = beaconIcon;
         _font = font != null ? font : TMP_Settings.defaultFontAsset;
-        var canvas = gameObject.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 20;
-        var scaler = gameObject.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        scaler.matchWidthOrHeight = .5f;
-        gameObject.AddComponent<GraphicRaycaster>();
+        _placementHint.gameObject.SetActive(false);
+        _placementFailure.gameObject.SetActive(false);
         _cooldownMaskSprite = Sprite.Create(Texture2D.whiteTexture,
             new Rect(0, 0, Texture2D.whiteTexture.width, Texture2D.whiteTexture.height), Vector2.one * .5f);
         if (EventSystem.current == null)
@@ -46,7 +45,6 @@ public sealed class PlayerSkillHud : MonoBehaviour
         _tooltip = new PlayerSkillTooltipView((RectTransform)transform, _owner, _ui, () => IsOpen);
         for (int i = 0; i < _slots.Length; i++) _slots[i] = CreateSlot(i, null);
         _recovery = new PlayerTurretRecoveryPromptView((RectTransform)transform, _owner, _ui, () => IsOpen, recoveryKeyIcon);
-        _placementHint = _ui.Label("", transform, new Vector2(1050, 40), new Vector2(0, -380), 24, PlayerSkillUiFactory.Cyan);
         _panel = new PlayerSkillSelectionPanelView(transform, _owner, _ui, _tooltip, Icon, CreateSlot, Close, Select);
         _owner.Loadout.Changed += Refresh;
         Refresh();
@@ -76,11 +74,17 @@ public sealed class PlayerSkillHud : MonoBehaviour
         Refresh();
         _recovery.Refresh();
         _tooltip.Refresh();
-        if (_placementHint != null)
-        {
-            _placementHint.text = _owner.BarrierPlacementHint;
-            _placementHint.gameObject.SetActive(!IsOpen && _placementHint.text.Length > 0);
-        }
+        RefreshPlacementHint();
+    }
+
+    private void RefreshPlacementHint()
+    {
+        string failure = PlayerSkillDescriptions.TurretPlacementFailure(_owner.TurretPlacementFeedback);
+        bool hasFailure = failure.Length > 0;
+        _placementFailure.text = failure;
+        _placementFailure.gameObject.SetActive(!IsOpen && hasFailure);
+        _placementHint.text = _owner.BarrierPlacementHint;
+        _placementHint.gameObject.SetActive(!IsOpen && !hasFailure && _placementHint.text.Length > 0);
     }
     private PlayerSkillSlotView CreateSlot(int index, Transform parent) =>
         PlayerSkillSlotView.Create(index, parent, transform, _owner, _ui, Icon, _cooldownMaskSprite, _tooltip, Open);

@@ -8,6 +8,7 @@ public class PlayerVisual : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerWeaponRig _weaponRig;
+    [SerializeField] private PlayerDirectionalColliders _directionalColliders;
     private PlayerSkillController _skills;
     private bool _hasSide, _hasIdle, _hasUp;
     private static readonly int IsSideHash = Animator.StringToHash("isSide");
@@ -20,6 +21,7 @@ public class PlayerVisual : MonoBehaviour
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
         if (animator == null) animator = GetComponent<Animator>();
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
+        if (_directionalColliders == null) _directionalColliders = GetComponent<PlayerDirectionalColliders>();
         _skills = GetComponent<PlayerSkillController>();
         if (animator != null && animator.runtimeAnimatorController != null)
             foreach (var parameter in animator.parameters)
@@ -42,6 +44,7 @@ public class PlayerVisual : MonoBehaviour
 
     private void ApplyFacing(PlayerAimFacing facing)
     {
+        if (_directionalColliders != null) _directionalColliders.SetFacing(facing);
         if (spriteRenderer != null) spriteRenderer.flipX = facing == PlayerAimFacing.Right;
         if (animator == null || animator.runtimeAnimatorController == null) return;
         if (_hasSide) animator.SetBool(IsSideHash, facing == PlayerAimFacing.Left || facing == PlayerAimFacing.Right);
