@@ -3,13 +3,14 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Application;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace TeamHJD.Game.Bootstrap
 {
-    public sealed class AppRoot : MonoBehaviour, IAppMatchHost
+    public sealed class AppRoot : MonoBehaviour, IAppMatchHost, IDisposable
     {
         private readonly HashSet<int> _composedSceneHandles = new HashSet<int>();
         private MatchSession _currentMatch;
@@ -17,6 +18,25 @@ namespace TeamHJD.Game.Bootstrap
 
         internal AppServices Services { get; private set; }
         public MatchId CurrentMatchId => _currentMatch == null ? default : _currentMatch.Config.MatchId;
+        public INetworkSession NetworkSession => Services?.NetworkSession;
+        public NetworkMatchCoordinator NetworkMatches => Services?.NetworkMatches;
+
+        public void AttachNetworkSession(INetworkSession session)
+        {
+            ThrowIfUnavailable();
+            Services.AttachNetworkSession(session);
+        }
+
+        public NetworkMatchCoordinator AttachNetworkMatchTransport(IMatchLifecycleTransport transport)
+        {
+            ThrowIfUnavailable();
+            return Services.AttachNetworkMatchTransport(transport);
+        }
+
+        private void Update()
+        {
+            if (!_isDisposed && Services != null) Services.PumpNetwork();
+        }
 
         private void OnEnable()
         {
@@ -81,7 +101,20 @@ namespace TeamHJD.Game.Bootstrap
                 throw;
             }
 
-            EndCurrentMatch();
+            try
+            {
+                EndCurrentMatch();
+            }
+            catch (Exception endingError)
+            {
+                // 이전 세션 정리에 실패해도 아직 소유권을 넘기지 않은 새 세션을 누수시키지 않습니다.
+                try { nextMatch.Dispose(); }
+                catch (Exception nextError)
+                {
+                    throw new AggregateException("Match replacement and rollback both failed.", endingError, nextError);
+                }
+                throw;
+            }
             _currentMatch = nextMatch;
 #if UNITY_EDITOR
             PublishBattlefieldSnapshot(_currentMatch.Battlefield);
@@ -152,11 +185,26 @@ namespace TeamHJD.Game.Bootstrap
 
         private void OnDestroy()
         {
+            try { Dispose(); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+        }
+
+        /// <summary>Match와 App 서비스를 모두 정리합니다. 실패는 정리가 끝난 뒤 함께 보고합니다.</summary>
+        public void Dispose()
+        {
             if (_isDisposed) return;
             _isDisposed = true;
-            EndCurrentMatch();
-            Services?.Dispose();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+            _composedSceneHandles.Clear();
+            AppServices services = Services;
             Services = null;
+            var errors = new List<Exception>();
+            try { EndCurrentMatch(); }
+            catch (Exception exception) { errors.Add(exception); }
+            try { services?.Dispose(); }
+            catch (Exception exception) { errors.Add(exception); }
+            if (errors.Count > 0) throw new AggregateException("App shutdown failed after cleanup.", errors);
         }
 
         private void ThrowIfUnavailable()

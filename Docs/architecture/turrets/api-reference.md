@@ -1,6 +1,6 @@
 # API 사용법
 
-최종 갱신: 2026-10-14
+최종 갱신: 2026-10-15
 상태: 현재 Canon / Missile 공개 API. 명령용 호환 API는 컴포넌트 참조를 사용할 수 있다.
 
 이 문서의 최신 냉각·강화 제한 기준은 main `8d08001a`에 병합된 PR #525다.
@@ -8,6 +8,8 @@
 네임스페이스는 `TeamHJD.Game.Turrets`다. 결과 타입과 터렛 종류는 `TeamHJD.Game.Turrets.Contracts`에 있다. 소비자 asmdef에서 사용하는 어셈블리를 참조해야 한다.
 
 ## ID와 읽기 전용 조회
+
+Core 지역이 바인딩된 Scene은 `TurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 D 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
 
 `TurretInstanceRegistry`는 static 클래스다. 별도 씬 인스턴스를 만들지 않는다.
 

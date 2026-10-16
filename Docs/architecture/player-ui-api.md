@@ -1,6 +1,6 @@
 # Initial Stage Player HUD API
 
-최종 갱신: 2026-10-14
+최종 갱신: 2026-10-15
 상태: 프리팹 기반 UI 구현. 최종 PlayMode 외형·조작 확인은 별도.
 
 API 기준: main `8d08001a`의 PR #525 냉각·수동 조작 제한 계약이다.
@@ -8,6 +8,14 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 `InitialStagePlayerHUD`, UI 약어는 `UI`로 표기를 통일한다.
 
 [문서 목차](../README.md) · [터렛 API](turrets/api-reference.md)
+
+## 10월 15일 CU·지역 표시 추가
+
+`StageControlUnitView`를 기존 HUD 프리팹 우측 하단에 추가했다. 정적/동적 정책과 점령 셀 수를 `TurretController.Regions`에서 읽는다. Dynamic은 지역 잠금이 없고 활성화로 점령한다는 안내를 표시한다. 터렛 선택창에도 동적 점령 안내를 표시한다.
+
+살아 있는 Player가 CU와 interactionDistance(현재 10) 이내에 있고 조작 가능한 상태이면 자동 활성화 버튼을 사용할 수 있다. 버튼은 D의 `TryStartAutoActivation()`을 호출하며 진행 중/재실행 대기/전력·냉각 규칙을 새로 구현하지 않는다. 프리팹·실제 Scene Button.onClick 검사는 통과했다. 사람의 마우스 조작·해상도별 외형은 별도다.
+
+현재 이 입력은 로컬 경로다. 원격 Client 전송과 하드코딩된 local-player를 실제 참가자/actor 주입으로 바꾸는 작업은 아직 남아 있다. [Core 연결 API](core-sprint-region-and-request-api.md)를 함께 확인한다.
 
 ## 적용 위치와 편집 방법
 

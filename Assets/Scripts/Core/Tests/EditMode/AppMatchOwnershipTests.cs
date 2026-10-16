@@ -62,6 +62,34 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(notifications, Is.EqualTo(2));
         }
 
+        [Test]
+        public void DisposedRoot_EndsOwnedMatchAndCannotStartAgain()
+        {
+            MatchSession session = Start("shutdown");
+            _root.Dispose();
+            Assert.That(session.State.Phase, Is.EqualTo(MatchPhase.Disposed));
+            Assert.That(_root.CurrentMatchId.IsEmpty, Is.True);
+            Assert.Throws<ObjectDisposedException>(() => Start("after-shutdown"));
+            Assert.DoesNotThrow(() => _root.Dispose());
+        }
+
+        [Test]
+        public void DisposingListenerFailure_DoesNotSkipRegionOrOtherFeatureCleanup()
+        {
+            MatchSession session = Start("listener-failure");
+            IRegionGridSource regions = session.InitializeRegions(
+                new RegionGridDefinition(BattlefieldGridConfiguration.Default), RegionPolicyMode.Static);
+            bool secondFeatureReleased = false;
+            session.Disposing += () => throw new InvalidOperationException("feature cleanup failed");
+            session.Disposing += () => secondFeatureReleased = true;
+            Assert.Throws<AggregateException>(() => _root.EndCurrentMatch());
+            Assert.That(secondFeatureReleased, Is.True);
+            Assert.That(session.IsDisposed, Is.True);
+            Assert.That(session.State.Phase, Is.EqualTo(MatchPhase.Disposed));
+            Assert.That(_root.CurrentMatchId.IsEmpty, Is.True);
+            Assert.Throws<ObjectDisposedException>(() => { _ = regions.Snapshot; });
+        }
+
         private MatchSession Start(string id)
         {
             var matchId = new MatchId(id);

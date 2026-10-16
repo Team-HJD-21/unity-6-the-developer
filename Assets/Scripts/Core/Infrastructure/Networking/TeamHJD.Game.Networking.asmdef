@@ -1,0 +1,19 @@
+{
+  "name": "TeamHJD.Game.Networking",
+  "rootNamespace": "TeamHJD.Game.Infrastructure",
+  "references": [
+    "TeamHJD.Game.Contracts",
+    "TeamHJD.Game.Domain",
+    "Unity.Netcode.Runtime",
+    "Unity.Collections"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -3,6 +3,7 @@
   "rootNamespace": "TeamHJD.Game.Editor",
   "references": [
     "TeamHJD.Game.Turrets",
+    "TeamHJD.Game.Application",
     "TeamHJD.Game.Bootstrap",
     "TeamHJD.Game.Content.Authoring",
     "TeamHJD.Game.Contracts",
