@@ -37,6 +37,22 @@ GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revis
 
 지역은 전체 Snapshot으로 전송한다. 소속은 RLE, 점령은 bitset이며 Client에서 삼각형을 복원하지 않는다. 큐에 아직 보내지 않은 전체 상태는 최신 상태로 합친다. 미접수 전송은 다음 App Pump에서 재시도하며 구식 변경량을 무제한 쌓지 않는다. 이미 전송 중인 메시지는 바꾸지 않는다. 이 처리와 달리 준비/시작/종료는 순서를 유지하고 합치지 않는다.
 
+## 터렛 논리 ID와 실제 등록 연결
+
+`SceneEntityIdentity`는 Scene에 저장한 **배치 개체의 논리 ID**다. 동일한 프리팹의 배치마다 다른 키를 가지며 DefinitionId, D의 InstanceId, SDK NetworkObjectId와 다르다. 키는 Match가 바뀌어도 배치를 가리킬 수 있지만 요청은 반드시 현재 MatchId를 포함한다. 계정 Profile/세이브 파일 ID 체계를 이 키로 구현한 것은 아니다.
+
+`TurretMatchBinding`은 Match별 `MatchEntityRegistry<int>`로 논리 ID↔현재 D InstanceId를 대응한다. D의 실제 Registry가 원본이며 Core는 별도 터렛 생성자·매니저를 만들지 않는다. `TryResolveEntityId`/`TryResolveLocalId`는 현재 실제 등록과 객체 소유자까지 대조한다. 다른 Match의 해제는 무시하고 종료 시 대응표·구독을 함께 폐기한다. 등록 토큰이 달라지면 이전 토큰으로 새 등록을 해제할 수 없다.
+
+정식 Initial_Stage에서는 `NetworkSceneSetup`이 Core 바인딩과 제작 키를 연결한다. 추가 배치를 복제했다면 재생 전에 `Tools > TeamHJD > The Developer > Configure Turret Identities`로 누락·중복 키를 명시적으로 고친다. 정상 키는 유지하며 런타임에서 각 Client가 임의 GUID를 만들지 않는다.
+
+동적 생성은 D Factory의 실제 생성/등록이 먼저다. 생성 담당자는 주입받은 `ITurretEntityRegistration`에 `TryRegisterEntity(matchId, authorityAssignedEntityId, actor.InstanceId, out reason)`를 호출한다. ID 충돌·잘못된 Match·없는 D 개체는 거부한다. 실패 시 생성 객체를 롤백하는 책임도 D에 남는다. 등록 전 개체를 Core 배치/명령 대상으로 임의 편입하지 않는다.
+
+D 승급/강등은 기존 로컬 ID·상태 이전을 그대로 수행한다. Core는 D의 명시적 LevelUpgraded/LevelDowngraded 사실을 받아 새 객체에 같은 논리 ID 메타데이터만 이전한다. Core-bound Battlefield source는 한 프레임의 해제→등록→ID 이전이 끝난 LateUpdate에 최종 배치를 발행해 빈 중간 배치를 내보내지 않는다. 초기 조립의 명시적 Capture는 즉시 읽는다.
+
+Battlefield의 배치 입력과 동적 지역의 활성 터렛 입력은 같은 논리 ID를 사용하되 서로 다른 의미의 자료다. 과열은 배치 제거/OFF로 취급하지 않는다. D의 원래 TurretSnapshot과 InstanceId 기반 UI/API는 보존한다. Core가 연결되지 않은 standalone D Scene의 로컬 ID 호환 경로를 네트워크 식별자로 사용하지 않는다.
+
+명령/권한 gateway와 구조화된 결과, Match 종료 시 D의 실행 상태 정리 계약은 이어지는 구현 대상이다. 위 대응표 구현만으로 전력/체력/업그레이드 초기화나 전체 터렛 복제를 완료했다고 하지 않는다.
+
 ## 정식 Encounter 요청
 
 `EncounterRequestService`는 A의 조율, `IEncounterExecutor` 구현은 E의 실제 계획/생성 경계다. 기존 `EnemyNetworkTestLauncher`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.
@@ -109,6 +125,24 @@ Host는 Descriptor의 전체 참가자 상태를 가지되 **현재 각 인스�
 NGO 연결을 종료했다가 다시 시작할 때도 같은 Port를 유지할 수 있다. 공용 채널은 새 SDK 메시지 관리자에 재등록하고 옛 연결의 큐/조립 버퍼를 폐기한다. Match 재시작과 실제 연결 재시작은 각각 별도로 검사했다. Runtime App 종료는 OnApplicationQuit/OnDestroy, Editor 재생 종료는 ExitingPlayMode의 선행 Dispose를 사용한다.
 
 ## HUD / Debugger 확인
+
+### 터렛 명령과 제어 수명
+
+Core의 `TurretMatchBinding.BindCommands`에는 현재 권한/실행 상태·참가자 검사와 필수 `ITurretCommandAuthorization`을 주입한다. 정식 Scene은 아래의 확정된 공용 명령/Host 거리 정책을 사용한다. `Commands.Submit(request, verifiedIssuer)`의 verifiedIssuer는 실제 연결 매핑 결과여야 하며 payload의 IssuerId를 그대로 복사해 인증하지 않는다.
+
+`TurretCommandRequest`는 SetActivation, StartAutoActivation, UpgradeLevel/DowngradeLevel, ApplyUpgrade/DowngradeUpgrade를 표현한다. 실제 D 처리 결과는 `TurretCommandResult`로 돌려준다. 같은 요청 GUID를 재전송하면 최초 확정 결과를 재사용한다. 다른 의도를 같은 GUID로 보내면 RequestConflict다. Accepted는 CU 자동 작업의 시작, Applied는 즉시 적용이며 두 상태를 혼동하지 않는다. 체력 수리·임의 피해·생성 명령은 이 API에 포함하지 않았다.
+
+Host의 D 제어 lease는 `BindMatchScope`로 조립하고 Match 해제 시 Dispose한다. Client/종료 상태에서 직접 D 쓰기·공격은 허용하지 않는다. 자동 큐/예약 해제와 개체 체력·강화 초기화는 다른 책임이며 후자를 이 lease가 수행하지 않는다. 독립 D 테스트 Scene은 기존 로컬 동작을 유지한다. 원격 명령 전송은 구현/검증했고 HUD 입력 교체는 진행 중이다.
+
+입력 소비자용 `ITurretCommandRequester.TrySubmit`은 **큐 접수 여부**, `ResultReceived`는 서버 결과다. `TryRetry(requestId)`는 미확정 의도를 같은 GUID로만 재전송한다. 응답이 없다고 미실행으로 단정하지 않으며, InProgress는 Pending을 끝내지 않는다. 기본 미확정 요청 한도는 64개다. Match별 gateway는 종료 때 Dispose하고 App 연결의 transport를 대신 파괴하지 않는다. 실제 UTP transport/gateway와 정식 Scene 자동 조립을 검증했으며 HUD 입력 연결은 진행 중이다.
+
+공용 ON/OFF·CU 자동 요청·승급·강화/강등은 모두 참가자에게 허용하기로 확정했다. Host는 `IPlayerInteractionSource`의 최신 권위 상태와 실제 대상 위치로 거리·생존·조작 상태를 검사한다. 제공자가 없으면 AuthorityActorUnavailable로 거부한다. `PlayerInteractionRegistry.Register`의 lease는 B의 서버 actor 수명에 연결하고 교체 전 이전 등록을 해제한다. Client payload의 좌표/생존 주장이나 PlayerStart로 이 원본을 대신하지 않는다.
+
+실제 B actor는 `PlayerControlState : IPlayerInteractionActor`가 최신 상태를 제공한다. `PlayerInteractionActorBinding`에는 Host가 소유하는 생성된 GameObject와 참가자 ID를 명시한다. Client의 로컬 actor나 prefab을 Host 권위 actor라고 대신 등록하지 않는다. `AppRoot.AttachTurretCommandTransport`는 전송 소유권만 App에 이전한다. `NetworkTurretCommands`를 빌린 Match gateway의 Dispose가 연결/전송을 닫아서는 안 된다. 실제 Scene의 전송 부착·actor Port·gateway 자동 조립을 검사했으며 HUD 입력 교체가 남아 있다.
+
+Initial_Stage의 **gateway 자동 조립은 구현/검증 완료**다. `InitialStageNetworkBinding.TurretCommands`를 통해 현재 참가자의 `MatchRequestContext`와 의도를 보낸다. Host의 최대 상호작용 거리는 NetworkBinding의 `_turretInteractionDistance`(기본 10)가 원본이고 HUD의 거리 힌트로 인증하지 않는다. CU 자동 요청도 실제 CU 생존·활성 여부를 검사한다.
+
+`RegisterAuthorityPlayerActor(matchId, playerId, actualHostActor)`는 Host에서만 사용할 수 있다. B가 생성/복제하는 실제 actor를 넘기고 반환 lease를 그 actor의 교체/Despawn 수명에 연결한다. 아직 Host actor가 없는 원격 참가자의 요청은 AuthorityActorUnavailable이다. 정상 입력용 requester가 있어도 B 원격 actor 복제나 D의 Client 터렛 상태 복제가 자동 구현된 것은 아니다. **HUD requester 입력 교체는 진행 중**이다.
 
 - Game Debugger → Battlefield → **지역 Grid · 점령 원본**에서 현재 정책/점령 수를 확인한다. 모드/Grid Reset은 확인창을 거친다.
 - Scene 점령 Grid는 확정 셀, 임시 판정 삼각형은 계산 입력을 표시한다. 후자는 표시용이며 새 상태 원본이 아니다.

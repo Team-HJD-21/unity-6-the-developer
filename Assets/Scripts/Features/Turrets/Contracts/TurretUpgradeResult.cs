@@ -19,6 +19,7 @@ namespace TeamHJD.Game.Turrets.Contracts
         MinimumLevel,
         RequiresDeactivation,
         CoolingDown,
-        AutoActivationInProgress
+        AutoActivationInProgress,
+        NotAuthoritative
     }
 }

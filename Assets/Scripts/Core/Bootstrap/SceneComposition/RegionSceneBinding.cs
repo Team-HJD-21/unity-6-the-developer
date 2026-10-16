@@ -19,6 +19,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private RegionPolicyMode _initialMode = RegionPolicyMode.Static;
         private MatchSession _session;
         private IRegionGridSource _source;
+        private ITurretEntityIdResolver _entityIds;
         private RegionGridDefinition _definition;
         private readonly DynamicRegionCapturePolicy _dynamicPolicy = new DynamicRegionCapturePolicy();
         private IReadOnlyList<RegionTurretInput> _lastInputs;
@@ -33,14 +34,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _mayWrite != null && _mayWrite();
 
         public RegionPolicyMode InitialMode => _initialMode;
+        public Transform ControlUnit => _controlUnit;
         public RegionGridDefinition CaptureInitialDefinition() => CreateDefinition(_initialMode, out _);
 
-        public void BindMatch(MatchSession session, Func<bool> mayWrite = null)
-            => BindMatch(session, CreateDefinition(_initialMode, out _), _initialMode, mayWrite);
+        public void BindMatch(MatchSession session, Func<bool> mayWrite = null, ITurretEntityIdResolver entityIds = null)
+            => BindMatch(session, CreateDefinition(_initialMode, out _), _initialMode, mayWrite, entityIds);
 
         /// <summary>네트워크 시작 때는 Inspector가 아니라 Host가 준비한 불변 정의를 적용합니다.</summary>
         public void BindMatch(MatchSession session, RegionGridDefinition definition,
-            RegionPolicyMode mode, Func<bool> mayWrite = null)
+            RegionPolicyMode mode, Func<bool> mayWrite = null, ITurretEntityIdResolver entityIds = null)
         {
             if (_source != null) throw new InvalidOperationException("Region scene is already bound.");
             if (session == null) throw new ArgumentNullException(nameof(session));
@@ -54,6 +56,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _definition = definition;
             _zoneCount = zoneCount;
             _mayWrite = mayWrite ?? (() => true);
+            _entityIds = entityIds;
             _session.Disposing += UnbindMatch;
             try
             {
@@ -79,6 +82,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _source = null;
             _lastInputs = null;
             _mayWrite = null;
+            _entityIds = null;
             LastEvaluation = null;
         }
 
@@ -101,7 +105,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             IReadOnlyList<int> cells;
             if (mode == RegionPolicyMode.Dynamic)
             {
-                evaluation = _dynamicPolicy.Evaluate(definition, TurretRegionGridAdapter.CaptureTurrets(_controller));
+                evaluation = _dynamicPolicy.Evaluate(definition, TurretRegionGridAdapter.CaptureTurrets(_controller, _entityIds));
                 cells = evaluation.CellIndices;
             }
             else if (mode == RegionPolicyMode.Static) cells = StaticCells(definition, 1);
@@ -159,7 +163,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void RefreshDynamic(bool force)
         {
-            IReadOnlyList<RegionTurretInput> inputs = TurretRegionGridAdapter.CaptureTurrets(_controller);
+            IReadOnlyList<RegionTurretInput> inputs = TurretRegionGridAdapter.CaptureTurrets(_controller, _entityIds);
             _dirty = false;
             if (!force && SameInputs(inputs, _lastInputs)) return;
             RegionGridSnapshot basis = _source.Snapshot;

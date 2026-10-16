@@ -1,4 +1,7 @@
+// 터렛의 개체 상태·활성화·공격·교체 수명을 관리합니다.
+// 논리 ID는 별도 제작/생성 메타데이터에서 읽고 로컬 InstanceId와 구분합니다.
 using System.Collections;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
@@ -49,9 +52,22 @@ namespace TeamHJD.Game.Turrets
         public virtual TurretKind Kind => TurretKind.Unknown;
         public TurretRuntimeState RuntimeState => _runtimeState;
         public int InstanceId => _runtimeState.InstanceId;
+        public bool TryGetEntityId(out TeamHJD.Game.Domain.EntityId entityId)
+        {
+            entityId = default;
+            foreach (MonoBehaviour component in GetComponents<MonoBehaviour>())
+            {
+                if (!(component is IEntityIdentity identity) || identity.EntityId.IsEmpty) continue;
+                if (!entityId.IsEmpty && entityId != identity.EntityId)
+                    throw new System.InvalidOperationException("A turret has conflicting logical identities.");
+                entityId = identity.EntityId;
+            }
+            return !entityId.IsEmpty;
+        }
         public string DisplayName => _definition != null ? _definition.DisplayName : name;
         public bool IsActivated => _runtimeState.IsActivated;
-        public bool IsOperational => _runtimeState.IsOperational;
+        public bool HasStateAuthority => !(_configuredPowerSource is TurretController controller) || controller.HasWriteAuthority;
+        public bool IsOperational => HasStateAuthority && _runtimeState.IsOperational;
         public bool IsDestroyed => _runtimeState.IsDestroyed;
         public bool IsLocked => _runtimeState.IsLocked;
         public int CurrentHealth => _runtimeState.CurrentHealth;
@@ -240,7 +256,7 @@ namespace TeamHJD.Game.Turrets
         // Retained for existing activation UI consumers.
         public bool IsManualActivationBlocked => IsManualOperationBlocked;
 
-        public bool CanModifyUpgrades => IsInitialized && isActiveAndEnabled &&
+        public bool CanModifyUpgrades => HasStateAuthority && IsInitialized && isActiveAndEnabled &&
             !IsManualOperationBlocked && !IsLocked && !IsDestroyed && !IsActivated && !IsCoolingDown;
 
         private bool RejectManualOperation()
@@ -252,6 +268,7 @@ namespace TeamHJD.Game.Turrets
 
         public TurretActivationResult RequestActivation(bool shouldActivate)
         {
+            if (!HasStateAuthority) return TurretActivationResult.NotAuthoritative;
             if (RejectManualOperation())
             {
                 return TurretActivationResult.AutoActivationInProgress;
@@ -304,6 +321,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool SetLocked(bool isLocked)
         {
+            if (!HasStateAuthority) return false;
             if (RejectManualOperation()) return false;
             if (!isLocked && _configuredPowerSource is TurretController controller &&
                 !controller.CanUnlock(this)) return false;
@@ -409,6 +427,12 @@ namespace TeamHJD.Game.Turrets
 
         protected virtual void OnDisable()
         {
+            ReleaseMatchOperations();
+            TurretInstanceRegistry.Unregister(this);
+        }
+
+        internal void ReleaseMatchOperations()
+        {
             CancelInitialActivation();
             if (_minimumRangeRenderer != null)
                 _minimumRangeRenderer.enabled = false;
@@ -430,7 +454,6 @@ namespace TeamHJD.Game.Turrets
             }
 
             _runtimeState.SetTemporarilySuspended(false);
-            TurretInstanceRegistry.Unregister(this);
         }
 
         private IEnumerator RequestInitialActivation()
@@ -452,6 +475,7 @@ namespace TeamHJD.Game.Turrets
 
         public void SetDamageBonus(int damageBonus)
         {
+            if (!HasStateAuthority) return;
             if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.SetDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
@@ -459,6 +483,7 @@ namespace TeamHJD.Game.Turrets
 
         public void AddDamageBonus(int damageBonus)
         {
+            if (!HasStateAuthority) return;
             if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.AddDamageBonus(damageBonus);
             TurretInstanceRegistry.NotifySnapshotChanged(this);
@@ -476,6 +501,7 @@ namespace TeamHJD.Game.Turrets
 
         private TurretUpgradeResult ChangeUpgradeLevel(TurretUpgradeDefinition upgrade, int direction)
         {
+            if (!HasStateAuthority) return TurretUpgradeResult.NotAuthoritative;
             if (RejectManualOperation())
                 return TurretUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
@@ -564,6 +590,7 @@ namespace TeamHJD.Game.Turrets
             TurretBase targetLevelPrefab, int levelDelta, out TurretBase changedTurret)
         {
             changedTurret = null;
+            if (!HasStateAuthority) return TurretLevelUpgradeResult.NotAuthoritative;
             if (RejectManualOperation())
                 return TurretLevelUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
@@ -647,6 +674,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool ApplyDamage(int damage)
         {
+            if (!HasStateAuthority) return false;
             if (IsLocked) return false;
             if (!_runtimeState.ApplyDamage(damage))
             {
@@ -668,6 +696,7 @@ namespace TeamHJD.Game.Turrets
 
         public bool Restore()
         {
+            if (!HasStateAuthority) return false;
             if (RejectManualOperation()) return false;
             if (IsLocked) return false;
             if (!_runtimeState.Restore(MaxHealth))

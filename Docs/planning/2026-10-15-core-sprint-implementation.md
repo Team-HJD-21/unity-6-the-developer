@@ -36,10 +36,10 @@
 
 | 배치 | 구현 범위 | 현재 상태 |
 | --- | --- | --- |
-| B1 | 공통 식별/요청·정리 안전성 | App/Match 정리, 요청 Context/중복 Ledger 구현. 최종 Feature별 결과·전송 연결은 B4 |
+| B1 | 공통 식별/요청·정리 안전성 | App/Match 정리·요청 Context/Ledger·등록 토큰과 양방향 논리 ID/로컬 핸들 대응표 구현. Feature별 명령 결과·전송은 B4 |
 | B2 | 지역 데이터/Runtime·정적 어댑터 | Match/D 연결·Initial_Stage 정적 기본 시작 검증 완료 |
 | B3 | 네트워크 Match 기반 | NGO·App 소유권·Scene-ready 준비/명시 시작/종료·실제 UTP 및 Windows 두 실행 파일 검증. 최소 Match 객체 생성/상태/제거·재생성 확인. 원격 정상 Feature 요청은 B4, 실제 Scene의 실행 중 연결 유실 인수는 추가 대상 |
-| B4 | D/E 실제 요청 | D 지역 접근·Match 수명, E 타입 요청·최신 조회·중복 방지·App 연결 유지/Match별 적 제거 구현. 원격 요청·터렛 명령 gateway 미완료. 생성 추적 수 검사 1회 불일치는 별도 추적 |
+| B4 | D/E 실제 요청 | D 지역·논리 ID/등록·명령/결과·실제 승급/강등/Factory·제어 수명·자동 큐/예약 해제 검증. 실제 UTP 터렛 gateway 구현·검증. 정식 Scene/HUD 원격 연결은 진행 중. E 타입 요청·최신 조회·중복 방지·App 연결 유지/적 제거 구현. 생성 추적 수 불일치 1회 별도 추적 |
 | B5 | 동적 판정·Debugger | 셀 투영·점령 회수·Debugger/Scene 구현. 실제 모드 전환·3개 ON/1개 OFF 검사 통과 |
 | B6 | 지역 상태 복제 | 초기/변경 전체 상태·Reset 세대·최신 합치기·App 수명·Client 읽기 모델 구현. 두 SDK 및 Windows 실제 Scene 두 프로세스에서 정적/동적·회수·종료/재시작과 전체 해시 일치 확인 |
 | B7 | HUD | 정책/점령·CU 자동 활성화·로컬 actor 주입·Client 입력 수명 구현. 로컬 HUD 검사와 별도 Client Scene의 슬롯 actor/읽기 연결 확인. 원격 HUD 명령·거리·시각 인수 미완료 |
@@ -84,6 +84,9 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 - `cd64ae84` — Initial_Stage의 SinglePlayerHost 전환·PlayerStart 슬롯 1 연결.
 - `0775a18d` — SDK Scene-ready 참가자 집합·최소 Match 객체와 실제 Scene 제작 연결.
 - `bc9f3d26` — 실제 Build Settings의 Windows 빌드·독립 Host/Client 검증 도구.
+- `1ee2ad40` — Match Entity 등록 토큰·양방향 대응표·명시적 논리 ID/등록 Port.
+- `a34ed4d0` — 실제 D Registry/교체/Factory·Match·Battlefield/지역 입력의 논리 ID 연결.
+- `34c242a7` — Scene/선택 전선의 표시 라벨만 축약. 원본·복사·Capture ID 유지.
 - `71f3c0d3` — AppQuit/Editor 재생 종료에서 Scene 파괴 전 App 정리.
 
 추가 커밋과 마지막 검증 결과는 해당 배치 검증 후 기록한다. 앞선 테스트 결과를 이후 미검증 코드 전체의 완료 근거로 재사용하지 않는다.
@@ -160,6 +163,9 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 | `authored-network-scene-count-diagnostic.xml` | 8/8 통과 | 같은 Scene 회귀 묶음 재검사 통과. 이전 불일치 원인은 아직 미확정 |
 | `network-scene-anchor-host.xml` | 1/1 통과 | 실제 Host 최소 NetworkObject 생성·지역 메타데이터 변경·제거·새 객체 재시작 |
 | `scene-ready-peer-regression.xml` | 10/10 통과 | Scene-ready 연결 추적 추가 후 NGO 소유권·수명/지역 전송·재접속 회귀 |
+| `turret-identity-and-scene.xml` | 9 통과 / 1 실패 | 등록 모델 6개·기존 지역/Host Scene 통과. 새 실제 D 검사는 iterator 캡처 NRE로 중단 |
+| `turret-identity-scene-closure-fixed.xml` | 1/1 통과 | 캡처 제거 후 실제 승급/강등·배치 연속성·비활성/재활성·Factory 등록/삭제·Match 해제 |
+| `entity-label-formatting.xml` | 3/3 통과 | 긴 ID 표시 축약·원본 키 보존. 실제 Window 시각 인수는 아님 |
 
 새 Scene Drawer 작성 중 Unity 6의 EntityId 이름 충돌을 발견해 Domain 별칭으로 수정했다. 컴파일 실패한 실행은 통과 수치에 포함하지 않는다.
 
@@ -228,3 +234,64 @@ Windows 개발 빌드는 실제 Build Settings의 Initial_Stage와 Spaceship을 
 다음 핵심 묶음은 D의 안정적인 논리 ID 대응·Match 수명 정리·명령/구조화된 결과·실제 발신자 권한 gateway, HUD의 정식 요청 연결이다. 원격 거리가 필요한 요청은 B의 신뢰 가능한 Player 위치 Port와 연결해야 하며 Client가 보낸 좌표를 그대로 믿지 않는다. Player 전체 복제를 A가 임의로 대신 구현하지 않는다. E Encounter는 Host 시스템 요청으로 유지하며 임의 Client Spawn 권한을 열지 않는다. 실행 중 연결 유실과 앞선 생성 추적 불일치도 최종 감사에서 빠뜨리지 않는다. 아직 PR/이슈 종료는 하지 않았다.
 
 권한 확인 질문: 공용 터렛 ON/OFF·CU 자동 활성화 요청을 모든 실제 참가자에게 허용하고 Host가 검증할지, Host만 허용할지를 PL에게 확인 중이다. 답변 전 제품 권한을 확정했다고 쓰지 않는다. 거리 제한이 있는 동작과 전역 공용 명령도 구분해야 한다.
+
+## D 개체의 논리 ID·수명 연결 — 추가 진행
+
+`IEntityIdentity`/`SceneEntityIdentity`는 제작 또는 권한 생성자가 부여한 논리 개체 키다. `MatchEntityRegistry<THandle>`는 일대일 대응표와 등록 토큰만 소유하고 실제 생성/삭제를 하지 않는다. 충돌·옛 토큰·다른 인덱스 해제·종료 후 등록을 검사했다. D의 원래 InstanceId·Snapshot·Definition 구조는 보존한다.
+
+`TurretMatchBinding`이 현재 Match에서 실제 D Registry와 제작 키를 대응한다. Runtime Factory의 신규 개체는 `ITurretEntityRegistration`으로 명시적으로 편입한다. D의 LevelUpgraded/LevelDowngraded 사실에서 같은 키를 새 객체에 이전하고, Unregistered는 해당 토큰만 해제한다. Source는 교체 프레임의 최종 배치만 발행하며 동적 지역은 같은 키로 활성/파괴 상태를 읽는다. 과열을 OFF로 바꾸지 않았다.
+
+실제 Initial_Stage에 고유 키 8개와 Core binding 참조를 저장했다. 정상 키는 유지하고 제작 메뉴에서만 누락/중복을 수정한다. 기존 Prefab GUID·타일맵·HUD 스타일은 변경하지 않았다. 신규 meta 하나의 GUID 길이 33자리 때문에 계약 소스가 컴파일 목록에서 빠진 실패가 있어 32자리로 바로잡았고 모든 새 meta의 형식을 확인했다. 실제 D 검사의 iterator 람다 캡처는 기존 재로드 문제와 같은 원인으로 일반 함수로 분리했다. 두 실패 로그/XML도 보존한다.
+
+Windows 검증 `NetworkPair/20261015T092844Z-ecaeb39a`: Host PID 42472 / Client PID 46160, 두 종료 0, Build GUID `4086d5d0fe724daaaa94a3fdeab89b88`. Scene 원문에서 추출한 제작 키 8개, Host·Client 등록 키 정렬 해시는 모두 `iixIXoeWPs4jan4HoCEaVXiJR/+RwbXLEsQmQ6WTRPQ=`로 같았다. 기존 여섯 단계도 통과하며 종료 때 Client 대응표 Count 0을 검사했다. 오류 표식 0, 기존 ComputeBuffer 종료 경고 2다.
+
+긴 키는 Scene/전선 패널에서만 짧게 표시하고 원본 ID·tooltip·Copy·Capture는 유지한다. 문자열 검사는 통과했지만 사람의 실제 화면 가독성을 자동 인수한 것은 아니다. 다음 작업은 D 명령/구조화된 결과·권한 gateway·HUD 연결과 명시적 Feature 실행 정리이며, 위 등록 해제를 전력/체력/업그레이드 전체 초기화로 표시하지 않는다. 공용 요청 권한 질문은 아직 답변 전이다. PR/이슈 종료는 하지 않았다.
+
+## 터렛 명령 계약과 D 제어 수명
+
+`TurretCommandRequest → TurretCommandService → TurretFeatureCommandExecutor → D API`를 추가했다. 요청에는 Match/요청 GUID/발신 PlayerId/논리 대상/의도만 담는다. 서버가 실제 연결로 확인한 발신자는 별도로 전달하며, 필수 `ITurretCommandAuthorization` 정책을 주입한다. 제품의 공용 요청 허용 범위는 답변 전이며 테스트 정책을 기본 권한으로 사용하지 않는다.
+
+ON/OFF·CU 자동 활성화·레벨 승급/강등·정의 ID 기반 강화/강등을 지원한다. 전력·열·배치·프리팹 교체는 D에 남긴다. 같은 요청은 실패/거부도 기록해 재실행하지 않고 변경된 의도는 충돌로 거부한다. 자동 활성화의 Accepted는 작업 시작이며 모든 터렛의 활성화 완료가 아니다. 예외는 일부 부작용 가능성이 있어 ExecutionFailed로 확정한다.
+
+`TurretController.BindMatchScope`는 Core가 임대한 제어 수명이다. 정식 Scene에서는 첫 Match 전·Client·Match 종료 후 직접 D 쓰기를 거부한다. 종료는 먼저 쓰기 권한과 자동 큐를 닫고 예약을 해제한다. 체력·강화·개별 열 상태를 초기화하거나 실제 D 개체를 파괴하지 않는다. 기존 D 단독 Scene에는 이 필수 수명을 임의로 강제하지 않는다.
+
+검증 결과:
+
+- `turret-command-service.xml`: 순수 요청 검사 8/8 통과.
+- `turret-command-and-lifetime-scene.xml`: 실제 Initial_Stage 명령·승급 교체/ID·지역·Host 종료/재시작 5/5 통과.
+- `turret-match-scope-regression.xml`: 기존 D 초기화/지역 어댑터 42/42 통과.
+
+실제 Scene에 명령용 레벨/강화 카탈로그 참조도 연결했다. 현재 명령 서비스는 명시적으로 BindCommands한 경계에서만 사용한다. **Client 요청 전송·HUD gateway는 후속 연결 중이며 이미 완료됐다고 표시하지 않는다.** 권한 없는 로컬 D 호출은 이제 거부되므로 이 경계를 연결하기 전 Client 버튼을 정상 작동으로 인수할 수 없다. 새 Windows 빌드 검사는 이 단계에서 아직 실행 전이다.
+
+## 공용 터렛 요청 전송·Host 검증 정책
+
+사용자 답변으로 **모든 참가자가 ON/OFF·CU 자동 활성화·승급·강화/강등을 요청하고 Host가 검증**하는 정책을 확정했다. 실제 상태 변경은 항상 Host의 D API가 수행한다.
+
+`TurretCommandGateway`는 준비 세대/Match별 요청 경계다. Host는 실제 SDK 연결→참가자 매핑을 사용하고 payload 발신자와 대조한다. Client는 서버 연결·세대·Match·요청 GUID·명령 종류·대상이 모두 맞는 결과만 확정한다. Pending은 기본 64개, 서버 응답 대기도 같은 제한이며 전송 압력이 있으면 실행 전 거부하거나 확정 결과를 보존해 다음 Pump에 보낸다. InProgress는 확정 응답이 아니다. 응답 미도착은 실행 실패로 만들지 않으며 TryRetry는 같은 의도/GUID만 재전송한다. 자동 재전송·새 GUID 재실행·낙관적 D 상태 변경은 하지 않는다.
+
+`NgoTurretCommandTransport`는 기존 제한 바이트 채널을 이용한다. 명령 최대 8KiB, Client→Host 요청/Host→Client 결과만 허용하고 명령을 합치지 않는다. `TurretCommandCodec`는 버전·길이·UTF-8·열거형·필드 의미·bool·후행 바이트를 검증한다.
+
+- `turret-command-gateway.xml`: 초기 서비스/gateway 12/12 통과.
+- `turret-command-utp-repaired.xml`: 실제 UTP/재접속은 통과했으나 빈 논리 대상의 default/null과 빈 문자열 비교 불일치로 codec 1개 실패(총 2 통과/1 실패). 자동 CU 응답 상관관계에도 영향을 주는 결함이므로 DTO의 선택 ID를 정규화했다.
+- `turret-command-utp-normalized.xml`: 수정 후 codec/실제 UTP 3/3 통과. CU 자동 요청 왕복도 추가 확인했다. 실제 D/별도 두 프로세스 검증은 아직 아니다.
+- `turret-gateway-and-authorization.xml`: InProgress 처리·권한 상태 재확인·서버 actor 등록/거리 정책 포함 15/15 통과.
+
+`PlayerInteractionRegistry`는 Host가 명시적으로 등록한 제공자에서 **명령 검증 순간**의 위치/생존/조작 상태를 읽는다. `TurretInteractionAuthorization`은 그 값과 서버의 실제 터렛/CU 위치를 사용한다. 원격 actor가 없으면 AuthorityActorUnavailable이다. Client payload 좌표·다른 참가자 좌표·PlayerStart를 대신 넣어 통과시키지 않는다. B의 Host 측 원격 actor 연결 Port와 정식 Scene/HUD 조립은 다음 작업이다. 아직 이 결과로 #442/#495/#528을 닫지 않는다.
+
+### App 전송 소유권과 실제 B actor 조회 연결
+
+`AppServices.AttachTurretCommandTransport`와 `AppRoot.NetworkTurretCommands`를 추가했다. Initial_Stage가 실제 연결 후 한 번 부착하고 App Update가 Pump한다. Match별 gateway는 이 전송을 빌려 쓰며 전송 자체는 App 정리에서 폐기한다.
+
+B의 `PlayerControlState`는 `IPlayerInteractionActor`를 구현한다. 현재 실제 actor의 XY·HP·CanAct를 읽으며, `PlayerInteractionActorBinding`은 명시적으로 주입한 actor의 PlayerActorIdentity와 제공자 하나를 검사해 registry에 등록한다. actor 검색·생성·복제는 이 바인딩의 책임이 아니다. actor 비활성/파괴·권한 유실·lease 해제 시 조회를 닫는다.
+
+`turret-app-and-actor-scene.xml` 4/4 통과: App Pump/중복 부착 거부/실패 중 전체 Dispose와 실제 Initial_Stage Player 조회·입력 차단·권한 유실·lease 해제, 기존 명령/Host 재시작을 확인했다. 이 시점에는 Match별 명령 gateway의 자동 Scene 조립과 HUD 명령 입력 연결이 아직 남아 있다. 원격 B actor 복제를 구현한 것으로 간주하지 않는다.
+
+### 실제 Scene의 명령 scope 자동 조립
+
+`InitialStageNetworkBinding.OnStarted`는 Scene의 D/Player/지역 조립 후 `TurretCommandSceneScope`를 만든다. Host는 현재 로컬 actor를 등록하고 여섯 공용 명령을 모든 참가자에게 허용하는 거리 정책·D 서비스·gateway를 구성한다. Client는 권위 서비스 없이 requester gateway만 구성한다. App은 실제 전송을 Pump하고 Scene은 제한된 미전송 응답을 Pump한다. Ended/Scene 해제는 gateway와 actor 제공자를 닫은 뒤 나머지 Feature를 정리한다.
+
+`InitialStageNetworkBinding.TurretCommands`가 입력 소비자용 Port다. `RegisterAuthorityPlayerActor(matchId, playerId, actor)`는 B가 Host에 실제 생성한 참가자 actor를 명시적으로 연결하는 API다. 반환 lease는 교체/Despawn 시 해제한다. 현재 Host가 갖지 않은 Client actor를 자동 검색하거나 PlayerStart로 위조하지 않는다. CU의 `IControlUnitInteractionTarget`은 실제 생존/활성 상태와 위치를 조회한다.
+
+검사 `turret-command-scene-scope.xml`은 4 통과/1 실패였다. 이전 fixture는 없는 대상을 D 처리기의 TargetUnavailable로 기대했지만 새 실제 정책이 그 전에 Unauthorized/InteractionTargetUnavailable로 거부했다. 기대값을 이 명시적 계약에 맞춘 `turret-command-scene-policy-aligned.xml`은 5/5 통과했다. 거리 밖 거부·동일 GUID 재전송·승급/강화·자동 작업·종료 후 차단·재시작과 기존 지역/ID 검사를 포함한다.
+
+**이 시점의 남은 경계:** 실제 HUD 버튼은 아직 이 requester로 교체 전이다. B의 원격 Host actor 생성/이동 복제, D의 Client용 실제 터렛 상태 읽기 연결은 별도 Feature 협의/통합 대상이다. Client의 로컬 D 초기값을 Host 확정 상태로 간주하지 않는다. 새 Windows 두 프로세스 및 연결 유실 검증도 후속으로 수행한다.

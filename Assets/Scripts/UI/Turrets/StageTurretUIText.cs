@@ -11,6 +11,7 @@ internal static class StageTurretUIText
     public static string UpgradeRestriction(TurretBase turret)
     {
         if (!turret.IsInitialized) return "Upgrades: waiting for initialization";
+        if (!turret.HasStateAuthority) return "Upgrades: requires server authority";
         if (turret.IsManualOperationBlocked)
             return WithCooling("Upgrades: automatic activation in progress", turret);
         if (turret.IsDestroyed) return "Upgrades: turret destroyed";
@@ -33,6 +34,7 @@ internal static class StageTurretUIText
         TurretActivationResult.AutoActivationInProgress => "Automatic activation is in progress.",
         TurretActivationResult.PowerSourceUnavailable => "Turret power source unavailable.",
         TurretActivationResult.InvalidPowerCost => "Invalid turret power cost.",
+        TurretActivationResult.NotAuthoritative => "Requires server authority.",
         _ => "Unable to process activation request."
     };
 

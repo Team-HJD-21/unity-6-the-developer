@@ -81,7 +81,9 @@ playerAdapter.Unbind();
 
 #442는 아직 미완료다. `LocalAuthority`는 Core 명령의 Match 상태·참가자만 확인하는 로컬 구현이지 NGO Server 또는 Steam 인증 구현이 아니다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
 
-`CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. RequestId는 요청과 생성 이벤트의 상관 ID이며 PlanId/재시도 중복 방지 토큰이 아니다. Turret 공간 입력의 instance 기반 ID도 저장·네트워크 ID가 아니다. Host/Client 공통 명령 전송·ID 매핑·상태 복제·소유권·중복 방지 규칙은 #442 및 E의 #459에서 합의할 미결 계약이다. 이 가이드는 네트워크 완성을 선언하지 않는다.
+`CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. 기존 진단의 요청 번호를 정식 `MatchRequestContext.RequestId` GUID와 혼동하지 않는다. 정식 요청 GUID는 발신자·의도와 함께 중복 실행을 막으며 재전송 때 유지한다. 실제 터렛 배치의 `SceneEntityIdentity` 제작 키와 `TurretMatchBinding` 대응표를 공용 명령/공간 입력에서 사용한다. 로컬 InstanceId·SDK NetworkObjectId는 이 논리 ID를 대신하지 않는다.
+
+터렛의 정식 요청/결과·실제 UTP 전송·Host 검증과 지역 전체 상태 복제는 [Core 스프린트 API](core-sprint-region-and-request-api.md)를 따른다. `TurretCommandGateway`는 Client 의도를 Host로 전달하고, 실제 연결 발신자를 검증한 서비스만 D 상태를 변경한다. 정식 Scene/HUD 원격 연결과 B의 권위 원격 actor 상태 연결은 진행 중이므로 전체 네트워크 완성을 선언하지 않는다. Client 위치를 payload에 넣어 거리 검증을 우회하지 않는다.
 
 ## PoC 요청과 Editor 경계
 

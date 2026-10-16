@@ -47,6 +47,7 @@ namespace TeamHJD.Game.Editor
                 serialized.ApplyModifiedProperties();
             }
             EditorSceneManager.MarkSceneDirty(scene);
+            TurretIdentitySceneSetup.InstallOnActiveScene();
         }
 
         private static GameObject EnsureAnchorPrefab()
