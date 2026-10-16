@@ -15,7 +15,13 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 살아 있는 Player가 CU와 interactionDistance(현재 10) 이내에 있고 조작 가능한 상태이면 자동 활성화 버튼을 사용할 수 있다. 버튼은 D의 `TryStartAutoActivation()`을 호출하며 진행 중/재실행 대기/전력·냉각 규칙을 새로 구현하지 않는다. 프리팹·실제 Scene Button.onClick 검사는 통과했다. 사람의 마우스 조작·해상도별 외형은 별도다.
 
-현재 이 입력은 로컬 경로다. 원격 Client 전송과 하드코딩된 local-player를 실제 참가자/actor 주입으로 바꾸는 작업은 아직 남아 있다. [Core 연결 API](core-sprint-region-and-request-api.md)를 함께 확인한다.
+현재 CU/터렛 입력은 로컬 경로이고 원격 Client 전송은 남아 있다. 로컬 actor는 이제 Core가 `ILocalPlayerActorConsumer`로 명시적으로 주입한다. [Core 연결 API](core-sprint-region-and-request-api.md)를 함께 확인한다.
+
+### 로컬 actor 주입과 종료
+
+`PrepareLocalActor(matchId, playerId)`로 대기 상태를 만들고 생성/소유자가 확인한 뒤 `BindLocalActor(matchId, playerId, actor)`를 호출한다. actor에는 같은 PlayerId의 PlayerActorIdentity와 PlayerInfo가 있어야 한다. `UnbindLocalActor(matchId)`는 같은 Match만 해제한다. 대기/해제 중 다른 Player를 대신 선택하지 않으며 HUD 비활성/재활성은 주입 정보를 보존한다. UI가 actor를 파괴하지 않는다.
+
+InitialStageCompositionRoot가 이 수명을 연결한다. standalone Feature Scene의 기존 검색은 호환 경로일 뿐이며 네트워크 조립부는 SDK 연결에서 확인한 PlayerId와 실제 로컬 actor를 주입한다. Client의 PlayerControlState는 IPlayerNetworkMatchBinding으로 공유 Match 단계를 받아 종료 후 입력을 차단한다. Client에 권한 MatchSession을 만들지 않는다. 현재 각 인스턴스의 자기 로컬 actor만 생성하며 별도 Windows Client Scene의 슬롯·종료/재시작을 확인했다. 원격 actor 생성·이동/공격 복제나 Client HUD 명령/시각 인수를 이 결과로 완료했다고 보지 않는다.
 
 ## 적용 위치와 편집 방법
 

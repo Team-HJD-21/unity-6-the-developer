@@ -1,4 +1,6 @@
 using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Domain;
+using System;
 using TeamHJD.Game.Turrets;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,9 +8,9 @@ using UnityEngine.UI;
 /// <summary>프리팹의 상태 View와 터렛 조작 Presenter를 씬 데이터에 연결합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster))]
-public sealed class InitialStagePlayerHUD : MonoBehaviour
+public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorConsumer
 {
-    private const string LocalPlayerId = "local-player";
+    private const string StandaloneLocalPlayerId = "local-player";
     private const float SourceRetryInterval = .5f;
     private const float DisplayRefreshInterval = .1f;
 
@@ -31,6 +33,49 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
     private bool _vitalsReady;
     private bool _turretControlsReady;
     private bool _hasLocalActor;
+    private MatchId _boundMatchId;
+    private PlayerId _boundPlayerId;
+    private GameObject _boundActor;
+    private bool _hasExplicitBinding;
+    private bool _waitingForMatch;
+    public MatchId BoundMatchId => _boundMatchId;
+    public PlayerId BoundPlayerId => _boundPlayerId;
+
+    public void PrepareLocalActor(MatchId matchId, PlayerId playerId)
+    {
+        if (matchId.IsEmpty || playerId.IsEmpty) throw new ArgumentException("A valid local Match/Player binding is required.");
+        _boundMatchId = matchId; _boundPlayerId = playerId; _boundActor = null;
+        _hasExplicitBinding = true; _waitingForMatch = false;
+        _player = null; _playerControl = null; _hasLocalActor = false;
+        _selection?.Clear(); _presenter?.Refresh(true);
+        if (_vitalsReady) { vitalsView.Unbind(); vitalsView.ShowWaitingForSources(); }
+    }
+
+    public void BindLocalActor(MatchId matchId, PlayerId playerId, GameObject actor)
+    {
+        if (matchId.IsEmpty || playerId.IsEmpty) throw new ArgumentException("A valid local Match/Player binding is required.");
+        if (actor == null || actor.scene != gameObject.scene || actor.GetComponent<PlayerInfo>() == null)
+            throw new ArgumentException("The local actor must contain PlayerInfo in the HUD scene.", nameof(actor));
+        var identity = actor.GetComponent<PlayerActorIdentity>();
+        if (identity == null || identity.PlayerId != playerId) throw new ArgumentException("Actor identity does not match the local participant.", nameof(actor));
+        if (_hasExplicitBinding && _boundMatchId == matchId && _boundPlayerId == playerId && _boundActor == actor) return;
+        _boundMatchId = matchId; _boundPlayerId = playerId; _boundActor = actor;
+        _hasExplicitBinding = true; _waitingForMatch = false;
+        _player = null; _hasLocalActor = false;
+        _selection?.Clear(); _presenter?.Refresh(true);
+        if (isActiveAndEnabled && (_vitalsReady || _turretControlsReady)) BindSceneSources();
+    }
+
+    public void UnbindLocalActor(MatchId matchId)
+    {
+        if (!_hasExplicitBinding || matchId != _boundMatchId) return;
+        _boundMatchId = default; _boundPlayerId = default; _boundActor = null;
+        _hasExplicitBinding = false; _waitingForMatch = true;
+        _player = null; _playerControl = null; _hasLocalActor = false; _controller = null;
+        _selection?.Clear(); _presenter?.Refresh(true);
+        if (_vitalsReady) { vitalsView.Unbind(); vitalsView.ShowWaitingForSources(); }
+        if (controlUnitView != null) controlUnitView.Refresh(null, false);
+    }
 
     private void Awake()
     {
@@ -47,7 +92,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         if (controlUnitView != null) controlUnitView.AutoActivationRequested += RequestAutoActivation;
     }
 
-    // Start runs after the scene's health sources finish Awake.
+    // Scene의 체력 초기화가 끝난 뒤 source를 연결합니다. 정식 Match는 조립부가 로컬 actor를 주입합니다.
     private void Start()
     {
         if (_vitalsReady || _turretControlsReady) BindSceneSources();
@@ -130,7 +175,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
     private bool CanInteract()
     {
         PlayerInfo player = _player;
-        if (!isActiveAndEnabled || Time.timeScale <= 0 ||
+        if (_waitingForMatch || !isActiveAndEnabled || Time.timeScale <= 0 ||
             player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
             _controller == null || !_controller.isActiveAndEnabled)
             return false;
@@ -155,6 +200,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
 
     private void BindSceneSources()
     {
+        if (_waitingForMatch) return;
         if (_controller == null || !_controller.isActiveAndEnabled)
             _controller = TurretController.FindForScene(gameObject.scene);
         if (_vitalsReady) vitalsView.BindPower(_controller);
@@ -164,7 +210,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
             PlayerInfo player = _player = FindLocalPlayer();
             _playerControl = player != null ? player.GetComponent<PlayerControlState>() : null;
             var identity = player != null ? player.GetComponent<PlayerActorIdentity>() : null;
-            _hasLocalActor = identity != null && identity.PlayerId.Value == LocalPlayerId;
+            _hasLocalActor = identity != null && (_hasExplicitBinding ? identity.PlayerId == _boundPlayerId : identity.PlayerId.Value == StandaloneLocalPlayerId);
         }
         if (_vitalsReady) vitalsView.BindPlayer(_player);
 
@@ -174,6 +220,12 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
 
     private PlayerInfo FindLocalPlayer()
     {
+        if (_hasExplicitBinding)
+        {
+            if (_boundActor == null || !_boundActor.activeInHierarchy) return null;
+            var identity = _boundActor.GetComponent<PlayerActorIdentity>();
+            return identity != null && identity.PlayerId == _boundPlayerId ? _boundActor.GetComponent<PlayerInfo>() : null;
+        }
         PlayerInfo fallback = _player != null && _player.isActiveAndEnabled &&
             _player.GetComponent<PlayerActorIdentity>() == null ? _player : null;
         foreach (PlayerInfo player in FindObjectsByType<PlayerInfo>(FindObjectsSortMode.None))
@@ -181,7 +233,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
             if (player.gameObject.scene != gameObject.scene || !player.isActiveAndEnabled) continue;
 
             var identity = player.GetComponent<PlayerActorIdentity>();
-            if (identity != null && identity.PlayerId.Value == LocalPlayerId) return player;
+            if (identity != null && identity.PlayerId.Value == StandaloneLocalPlayerId) return player;
             if (identity == null && fallback == null) fallback = player;
         }
 

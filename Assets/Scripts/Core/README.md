@@ -6,7 +6,11 @@
 
 지역 원본은 Match 소유 `RegionRuntime`의 Uniform Grid입니다. `RegionSceneBinding`이 정적 CU 구역을 연결하거나 동적 활성 터렛을 임시 삼각형으로 계산해 셀에 투영합니다. 동적 터렛에는 지역 잠금을 걸지 않으며 점령 회수로 나머지 터렛을 끄지 않습니다. Battlefield의 참가자 밀도 Grid와 지역 점령 Grid는 별개입니다.
 
-현재 Initial_Stage의 실제 모드 전환·점령 형성/회수와 HUD의 CU 자동 활성화는 검증했습니다. 정식 Encounter 요청은 타입 결과·최신 조회·중복 방지를 거쳐 E의 실제 Planner/Executor를 사용합니다. NGO 어댑터와 App 소유권은 준비됐지만, 정식 네트워크 Scene 시작·원격 요청·지역 실제 복제는 아직 연결하지 않았습니다.
+현재 Initial_Stage의 실제 모드 전환·점령 형성/회수, HUD의 CU 자동 활성화와 로컬 actor 주입은 검증했습니다. 정식 Encounter 요청은 타입 결과·최신 조회·중복 방지를 거쳐 E의 실제 Planner/Executor를 사용합니다. 실제 UTP 두 SDK 검사에 이어 **Windows 실행 파일 두 개**에서 같은 설정·지역 해시·최소 NetworkObject를 확인하고 정적→동적→회수→종료→재시작을 검증했습니다. Client는 권한 MatchSession을 만들지 않습니다. 원격 Feature 명령과 Client HUD 조작·전체 전투 동기화는 아직 남아 있습니다.
+
+Initial_Stage의 SinglePlayerHost는 명시적인 연결→준비→시작 API를 호출합니다. Manual로 바꾸면 InitialStageCompositionRoot의 InitialStageNetworkBinding Inspector에서 단계를 나눠 실행할 수 있습니다. Host만 MatchSession을 소유하고 Client는 공유 설정/지역 읽기 모델과 자기 로컬 actor를 연결합니다. 상대 Player의 실제 이동/전투 복제는 아직 이 경로가 제공하지 않습니다. [실행 API와 정확한 책임 경계](../../../Docs/architecture/core-sprint-region-and-request-api.md#initial_stage-실행-api)를 확인하세요.
+
+AppRoot.Update는 App 소유 네트워크 큐를 게임시간 정지와 무관하게 Pump합니다. OnApplicationQuit/OnDestroy는 같은 Dispose를 호출하며, Editor의 AppPlayModeShutdown은 ExitingPlayMode에서 Scene 파괴 전 정리를 시작합니다. 자세한 단계·커밋·실패/수정 증거는 위 스프린트 기록을 확인하세요.
 
 이 디렉터리는 기존 게임 코드와 연결하지 않고 새로 구성한 게임 Core입니다. 코드는 `TeamHJD.Game.*` namespace를 사용하며, 기존 `Global`/`Game`/Manager 구조와 호환된다고 가정하지 않습니다. 현재 App/Match 수명주기, Battlefield topology/Grid producer, Stage 1 Encounter 진단 요청 경계가 구현되어 있습니다. 다만 `MatchSimulation.Execute()`의 전투 규칙, 최종 밸런스, 전체 승패 루프는 아직 구현되지 않았습니다.
 

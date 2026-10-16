@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Application;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
 
@@ -70,6 +71,46 @@ namespace TeamHJD.Game.Presentation.Scene
                 scope.Dispose();
                 throw;
             }
+        }
+
+        /// <summary>해당 연결이 소유한 actor만 생성합니다. Client에는 권한 MatchSession을 만들지 않습니다.</summary>
+        public static MatchPlayerActorScope SpawnLocalPlayer(
+            NetworkMatchCoordinator match, ulong localConnectionId, IPlayerActorSpawner spawner,
+            IEnumerable<PlayerStart> playerStarts, MatchSession authoritySession = null)
+        {
+            if (match == null) throw new ArgumentNullException(nameof(match));
+            if (match.Phase != NetworkMatchPhase.Running || match.Descriptor == null)
+                throw new InvalidOperationException("A started network Match is required.");
+            if (!match.Descriptor.TryGetSlot(localConnectionId, out int slot) ||
+                !match.TryResolveParticipant(localConnectionId, out PlayerId playerId))
+                throw new InvalidOperationException("The local connection is not a Match participant.");
+            if (authoritySession != null && (authoritySession.IsDisposed ||
+                authoritySession.Config.MatchId != match.Descriptor.Config.MatchId))
+                throw new ArgumentException("The authority session belongs to another Match.", nameof(authoritySession));
+            if (playerStarts == null) throw new ArgumentNullException(nameof(playerStarts));
+            var scope = new MatchPlayerActorScope(spawner);
+            try
+            {
+                var starts = new Dictionary<int, PlayerStart>();
+                foreach (PlayerStart start in playerStarts)
+                {
+                    if (start == null) throw new ArgumentException("Player starts cannot contain null entries.", nameof(playerStarts));
+                    if (start.isActiveAndEnabled && !starts.TryAdd(start.SlotIndex, start))
+                        throw new ArgumentException($"Duplicate PlayerStart slot '{start.SlotIndex}'.", nameof(playerStarts));
+                }
+                if (!starts.TryGetValue(slot, out PlayerStart localStart))
+                    throw new InvalidOperationException($"Missing local PlayerStart slot '{slot}'.");
+                GameObject actor = spawner.Spawn(playerId, localStart);
+                if (actor == null) throw new InvalidOperationException("Spawner returned no local actor.");
+                // Bind 실패도 이 scope의 정리 대상이어야 합니다.
+                scope._actors.Add(playerId, actor);
+                PlayerSceneAdapter adapter = actor.GetComponent<PlayerSceneAdapter>();
+                if (adapter == null) adapter = actor.AddComponent<PlayerSceneAdapter>();
+                if (authoritySession != null) adapter.Bind(authoritySession);
+                else adapter.BindNetworkMatch(match, playerId);
+                return scope;
+            }
+            catch { scope.Dispose(); throw; }
         }
 
         public void Dispose()

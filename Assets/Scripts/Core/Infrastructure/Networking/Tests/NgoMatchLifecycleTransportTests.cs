@@ -21,6 +21,8 @@ namespace TeamHJD.Game.Infrastructure.Tests
         private NgoNetworkSession _hostSession, _clientSession;
         private NgoMatchLifecycleTransport _hostChannel, _clientChannel;
         private NetworkMatchCoordinator _host, _client;
+        private NgoRegionSnapshotTransport _hostRegionChannel, _clientRegionChannel;
+        private RegionReplicationSession _hostRegions, _clientRegions;
         private static NetworkMatchDescriptor Descriptor()
         {
             int[] regions = new int[256]; for (int i = 0; i < regions.Length; i++) regions[i] = i % 2 + 1;
@@ -106,11 +108,30 @@ namespace TeamHJD.Game.Infrastructure.Tests
             Assert.That(clientManager.IsConnectedClient, Is.True);
             _hostChannel = new NgoMatchLifecycleTransport(hostManager); _clientChannel = new NgoMatchLifecycleTransport(clientManager);
             _host = new NetworkMatchCoordinator(_hostSession, _hostChannel); _client = new NetworkMatchCoordinator(_clientSession, _clientChannel);
+            _hostRegionChannel = new NgoRegionSnapshotTransport(hostManager); _clientRegionChannel = new NgoRegionSnapshotTransport(clientManager);
+            _hostRegions = new RegionReplicationSession(_hostSession, _host, _hostRegionChannel);
+            _clientRegions = new RegionReplicationSession(_clientSession, _client, _clientRegionChannel);
             var original = Descriptor();
             var bindings = new[] { original.Participants[0],
                 new MatchParticipantBinding(clientManager.LocalClientId, original.Participants[1].PlayerId, false) };
-            for (int cycle = 0; cycle < 2; cycle++)
+            RegionReplicationFrame previousPreparation = null;
+            for (int cycle = 0; cycle < 3; cycle++)
             {
+                if (cycle == 2)
+                {
+                    _clientSession.Shutdown(); _hostSession.Shutdown();
+                    deadline = Time.realtimeSinceStartup + 20;
+                    while ((hostManager.IsListening || clientManager.IsListening || hostManager.ShutdownInProgress ||
+                        clientManager.ShutdownInProgress) && Time.realtimeSinceStartup < deadline) yield return null;
+                    Assert.That(hostManager.IsListening || clientManager.IsListening, Is.False);
+                    Assert.That(_hostSession.TryStartHost(), Is.True);
+                    Assert.That(_clientSession.TryStartClient(), Is.True);
+                    deadline = Time.realtimeSinceStartup + 20;
+                    while (!clientManager.IsConnectedClient && Time.realtimeSinceStartup < deadline) yield return null;
+                    Assert.That(clientManager.IsConnectedClient, Is.True);
+                    bindings = new[] { original.Participants[0],
+                        new MatchParticipantBinding(clientManager.LocalClientId, original.Participants[1].PlayerId, false) };
+                }
                 Assert.That(_host.TryPrepare(original.Config, original.RegionGrid,
                     cycle == 0 ? RegionPolicyMode.Dynamic : RegionPolicyMode.Static, bindings), Is.True);
                 _host.MarkLocalReady(); Assert.That(_host.TryStart(), Is.False);
@@ -128,18 +149,71 @@ namespace TeamHJD.Game.Infrastructure.Tests
                 deadline = Time.realtimeSinceStartup + 20;
                 while (_client.Phase != NetworkMatchPhase.Running && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
                 Assert.That(_client.Phase, Is.EqualTo(NetworkMatchPhase.Running));
+                using var regions = new RegionRuntime(original.Config.MatchId, original.RegionGrid,
+                    cycle == 0 ? RegionPolicyMode.Dynamic : RegionPolicyMode.Static);
+                regions.TryApply(regions.Snapshot, new[] { 0, 2, 5 }, RegionCaptureUpdateMode.Replace);
+                _hostRegions.BindHostSource(regions);
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_clientRegions.Source == null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
+                Assert.That(_clientRegions.Source, Is.Not.Null);
+                Assert.That(_clientRegions.Source.Snapshot.GridId, Is.EqualTo(regions.Snapshot.GridId));
+                Assert.That(_clientRegions.Source.Snapshot.CapturedCells, Is.EqualTo(regions.Snapshot.CapturedCells));
+
+                // 이미 큐에 있지만 아직 보내지 않은 두 상태는 최신 전체 Snapshot 하나로 합칩니다.
+                regions.TryApply(regions.Snapshot, new[] { 20 }, RegionCaptureUpdateMode.Replace);
+                _hostRegions.FlushPending();
+                regions.TryApply(regions.Snapshot, new[] { 30, 40 }, RegionCaptureUpdateMode.Replace);
+                _hostRegions.FlushPending();
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_clientRegions.Source.Snapshot.Revision != regions.Snapshot.Revision && Time.realtimeSinceStartup < deadline)
+                { Pump(); yield return null; }
+                Assert.That(_clientRegions.Source.Snapshot.CapturedCells, Is.EqualTo(regions.Snapshot.CapturedCells));
+                Assert.That(_hostRegionChannel.CoalescedFrames, Is.GreaterThan(0));
+                RegionReplicationFrame oldGrid = _hostRegions.LastPublishedFrame;
+                regions.Reset(new RegionGridDefinition(new BattlefieldGridConfiguration(new BattlefieldPoint(50, -20),
+                    1, 21, 35, 7, 5)), RegionPolicyMode.Static, new[] { 1, 3 });
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_clientRegions.Source.Snapshot.GridId != regions.Snapshot.GridId && Time.realtimeSinceStartup < deadline)
+                { Pump(); yield return null; }
+                Assert.That(_clientRegions.Source.Snapshot.Definition.HasSameDefinition(regions.Snapshot.Definition), Is.True);
+                Assert.That(_clientRegions.Source.Snapshot.CapturedCells, Is.EqualTo(regions.Snapshot.CapturedCells));
+                Assert.That(_hostRegionChannel.TrySendFrame(clientManager.LocalClientId, oldGrid), Is.True);
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_clientRegions.LastReceiveStatus != RegionReplicationStatus.StaleGrid && Time.realtimeSinceStartup < deadline)
+                { Pump(); yield return null; }
+                Assert.That(_clientRegions.LastReceiveStatus, Is.EqualTo(RegionReplicationStatus.StaleGrid));
+                if (previousPreparation != null)
+                {
+                    _hostRegionChannel.TrySendFrame(clientManager.LocalClientId, previousPreparation);
+                    deadline = Time.realtimeSinceStartup + 20;
+                    while (_clientRegions.LastReceiveStatus != RegionReplicationStatus.DifferentDescriptor && Time.realtimeSinceStartup < deadline)
+                    { Pump(); yield return null; }
+                    Assert.That(_clientRegions.LastReceiveStatus, Is.EqualTo(RegionReplicationStatus.DifferentDescriptor));
+                }
+                previousPreparation = _hostRegions.LastPublishedFrame;
+                IRegionGridSource expiredClientSource = _clientRegions.Source;
                 Assert.That(_host.TryEnd(), Is.True);
                 deadline = Time.realtimeSinceStartup + 20;
                 while (_client.Descriptor != null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
                 Assert.That(_client.Descriptor, Is.Null);
+                Assert.That(_clientRegions.Source, Is.Null);
+                Assert.Throws<ObjectDisposedException>(() => { var unused = expiredClientSource.Snapshot; });
             }
             Assert.That(_hostChannel.RejectedPackets + _clientChannel.RejectedPackets, Is.Zero);
+            Assert.That(_hostRegionChannel.RejectedPackets + _clientRegionChannel.RejectedPackets, Is.Zero);
         }
-        private void Pump() { _hostChannel.Pump(); _clientChannel.Pump(); }
+        private void Pump()
+        {
+            _hostChannel.Pump(); _clientChannel.Pump();
+            _hostRegions.FlushPending(); _clientRegions.FlushPending();
+            _hostRegionChannel.Pump(); _clientRegionChannel.Pump();
+        }
         [UnityTearDown]
         public IEnumerator TearDown()
         {
             _host?.Dispose(); _client?.Dispose(); _host = _client = null;
+            _hostRegions?.Dispose(); _clientRegions?.Dispose(); _hostRegions = _clientRegions = null;
+            _hostRegionChannel?.Dispose(); _clientRegionChannel?.Dispose(); _hostRegionChannel = _clientRegionChannel = null;
             _hostChannel?.Dispose(); _clientChannel?.Dispose(); _hostChannel = _clientChannel = null;
             _clientSession?.Dispose(); _hostSession?.Dispose(); _clientSession = _hostSession = null;
             foreach (var go in _objects) if (go != null) UnityEngine.Object.Destroy(go);

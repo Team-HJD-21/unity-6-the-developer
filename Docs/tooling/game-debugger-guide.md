@@ -10,6 +10,8 @@
 
 이 문서는 **Game Debugger 전체 사용 매뉴얼**이다. 처음 사용하는 팀원은 아래 빠른 시작과 목적별 사용 순서부터 읽는다. 코드/API 경계와 보존 상한은 뒤쪽에 정리했다.
 
+2026-10-15 연결 변경: Initial_Stage의 SinglePlayerHost는 App 소유 연결과 Match를 순서대로 시작한다. 기존 Enemy Network Test 화면의 연결 버튼은 이 경로에서 표시하지 않는다. 단계를 나눌 때는 재생 전에 InitialStageCompositionRoot의 InitialStageNetworkBinding을 Manual로 바꾸고 재생 후 해당 Inspector의 Host/Client 연결 → Match 준비 → Host Match 시작 버튼을 사용한다. Game Debugger의 Encounter 버튼은 여전히 **이미 시작한 Host Match**에 요청할 뿐 서버를 열지 않는다. [현재 검증/미완료 경계](../planning/2026-10-15-core-sprint-implementation.md).
+
 ## 처음 사용할 때 · 빠른 시작
 
 1. `Initial_Stage`를 열고 Scene 변경을 저장한다. 별도 Battlefield Debug 창을 찾지 말고 `Tools > TeamHJD > Game Debugger`를 연다.
