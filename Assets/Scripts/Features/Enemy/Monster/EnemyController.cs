@@ -242,11 +242,18 @@ public class EnemyController : MonoBehaviour
     /// <returns>타겟이 공격 범위 안에 있으면 <see langword="true"/>.</returns>
     private bool IsInAttackRange()
     {
-        // 제곱 거리를 비교해 불필요한 제곱근 계산을 피한다.
-        float distanceSqr =
-            ((Vector2)_target.position - (Vector2)transform.position).sqrMagnitude;
+        Vector2 enemyPosition = transform.position;
+        Vector2 attackPoint = _target.position;
 
-        return distanceSqr <= attackRange * attackRange;
+        TargetableComponent targetable = _target.GetComponent<TargetableComponent>();
+        if (targetable != null)
+        {
+            Collider2D targetCollider = _target.GetComponentInChildren<Collider2D>();
+            if (targetCollider != null)
+                attackPoint = targetCollider.ClosestPoint(enemyPosition);
+        }
+
+        return (attackPoint - enemyPosition).sqrMagnitude <= attackRange * attackRange;
     }
     
     private void OnDrawGizmosSelected()
