@@ -1,6 +1,7 @@
 using System;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets;
+using TeamHJD.Game.Domain;
 
 /// <summary>선택 ID를 유지하고 UI 입력을 기존 터렛 API에 전달합니다.</summary>
 internal sealed class StageTurretPresenter : IDisposable
@@ -49,7 +50,8 @@ internal sealed class StageTurretPresenter : IDisposable
 
         bool canLevelUp = turret != null && _catalog.TryGetNext(turret.Definition, out _);
         bool canLevelDown = turret != null && _catalog.TryGetPrevious(turret.Definition, out _);
-        _view.Show(turret, canInteract, canLevelUp, canLevelDown);
+        _view.Show(turret, canInteract, canLevelUp, canLevelDown,
+            _getController()?.Regions?.Snapshot.Mode == RegionPolicyMode.Dynamic);
     }
 
     private void Toggle()

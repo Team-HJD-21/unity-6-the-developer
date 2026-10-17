@@ -1,0 +1,14 @@
+{
+  "name": "TeamHJD.Game.Networking.Tests",
+  "references": [
+    "TeamHJD.Game.Application",
+    "TeamHJD.Game.Domain",
+    "TeamHJD.Game.Networking",
+    "TeamHJD.Game.Contracts",
+    "Unity.Netcode.Runtime"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

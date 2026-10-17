@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -20,6 +22,7 @@ namespace TeamHJD.Game.Turrets
         [SerializeField, Min(1)] private int unlockGridCellsY = TurretGridConfiguration.DefaultCellsY;
         [SerializeField, Min(1)] private int unlockZoneCount = 4;
         private TurretUnlockZones _unlockZones;
+        private IRegionAccessPolicy _regionAccess;
         private int _unlockedZoneCount;
         public TurretUnlockZones UnlockZones => _unlockZones;
         public int UnlockedZoneCount => _unlockedZoneCount;
@@ -27,6 +30,7 @@ namespace TeamHJD.Game.Turrets
         public TurretPowerBudget Budget => _budget ??= new TurretPowerBudget(Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;
         public int MaximumPower => Budget.MaximumPower;
+        public IRegionGridSource Regions => _regionAccess?.Regions;
         public event Action<int, int> PowerChanged
         {
             add => Budget.PowerChanged += value;
@@ -34,7 +38,15 @@ namespace TeamHJD.Game.Turrets
         }
 
         private void Awake() { _ = Budget; }
-        private void OnEnable() => TurretInstanceRegistry.Registered += ApplyUnlockZoneToNewTurret;
+        private void OnEnable()
+        {
+            TurretInstanceRegistry.Registered += ApplyUnlockZoneToNewTurret;
+            if (_regionAccess != null)
+            {
+                _regionAccess.Regions.Changed += OnRegionChanged;
+                ApplyRegionRestrictions();
+            }
+        }
         private void Update()
         {
             Budget.Tick(Time.deltaTime);
@@ -138,6 +150,7 @@ namespace TeamHJD.Game.Turrets
         private void OnDisable()
         {
             TurretInstanceRegistry.Registered -= ApplyUnlockZoneToNewTurret;
+            if (_regionAccess != null) _regionAccess.Regions.Changed -= OnRegionChanged;
             IsAutoActivationRunning = false;
         }
 
@@ -193,15 +206,15 @@ namespace TeamHJD.Game.Turrets
 
         public bool ConfigureUnlockZones(Vector2 cuPosition, int zoneCount)
         {
-            var grid = new TurretGridConfiguration(
-                unlockGridOrigin, unlockGridMapWidth, unlockGridMapHeight,
-                unlockGridCellsX, unlockGridCellsY, unlockGridOriginZ);
+            TurretGridConfiguration grid = CreateUnlockGridConfiguration();
             return ConfigureUnlockZones(grid, cuPosition, zoneCount);
         }
 
         /// <summary>Configures cell-distance bands. Zone one is available from the start.</summary>
         public bool ConfigureUnlockZones(TurretGridConfiguration grid, Vector2 cuPosition, int zoneCount = 4)
         {
+            if (_regionAccess != null)
+                throw new InvalidOperationException("The Match region policy owns access; update it through Core.");
             TurretUnlockZones zones = new TurretUnlockZones(grid, cuPosition, zoneCount);
             _unlockZones = zones;
             _unlockedZoneCount = 1;
@@ -218,6 +231,7 @@ namespace TeamHJD.Game.Turrets
         /// <summary>Unlocks the requested zone and all nearer zones. A game rule may call this later.</summary>
         public bool UnlockThroughZone(int zone)
         {
+            if (_regionAccess != null) return false;
             if (_unlockZones == null || zone < _unlockedZoneCount || zone > _unlockZones.ZoneCount)
                 return false;
             _unlockedZoneCount = zone;
@@ -239,13 +253,53 @@ namespace TeamHJD.Game.Turrets
                    _unlockZones.TryGetZone(turret.transform.position, out zone);
         }
 
-        internal bool CanUnlock(TurretBase turret) =>
-            _unlockZones == null ||
-            TryGetUnlockZone(turret, out int zone) && zone <= _unlockedZoneCount;
+        internal bool CanUnlock(TurretBase turret)
+        {
+            if (_regionAccess != null)
+            {
+                Vector3 position = turret.transform.position;
+                return _regionAccess.CanUseAt(new BattlefieldPoint(position.x, position.y));
+            }
+            return _unlockZones == null ||
+                TryGetUnlockZone(turret, out int zone) && zone <= _unlockedZoneCount;
+        }
+
+        /// <summary>Inspector 설정의 정적 구역 정의만 계산합니다. 터렛 상태나 해금을 변경하지 않습니다.</summary>
+        public TurretUnlockZones CreateUnlockZoneDefinition(Vector2 cuPosition)
+        {
+            return new TurretUnlockZones(CreateUnlockGridConfiguration(), cuPosition, unlockZoneCount);
+        }
+
+        /// <summary>CU 거리 정책과 별개로 동일한 지역 Grid 공간 정의를 읽습니다.</summary>
+        public TurretGridConfiguration CreateUnlockGridConfiguration() => new TurretGridConfiguration(
+            unlockGridOrigin, unlockGridMapWidth, unlockGridMapHeight, unlockGridCellsX, unlockGridCellsY, unlockGridOriginZ);
+
+        /// <summary>Core의 읽기 정책을 연결합니다. null 해제는 기존 터렛 상태를 다시 쓰지 않습니다.</summary>
+        public void SetRegionAccessPolicy(IRegionAccessPolicy policy)
+        {
+            if (ReferenceEquals(_regionAccess, policy)) return;
+            if (_regionAccess != null) _regionAccess.Regions.Changed -= OnRegionChanged;
+            _regionAccess = policy;
+            if (_regionAccess == null) return;
+            if (isActiveAndEnabled) _regionAccess.Regions.Changed += OnRegionChanged;
+            ApplyRegionRestrictions();
+        }
+
+        private void OnRegionChanged(RegionGridSnapshot snapshot) => ApplyRegionRestrictions();
+
+        private void ApplyRegionRestrictions()
+        {
+            foreach (TurretBase turret in new List<TurretBase>(TurretInstanceRegistry.RegisteredInstances.Values))
+            {
+                if (_regionAccess == null) break;
+                if (turret != null && turret.gameObject.scene == gameObject.scene && turret.UsesPowerSource(this))
+                    ApplyUnlockZone(turret);
+            }
+        }
 
         private void ApplyUnlockZoneToNewTurret(TurretBase turret)
         {
-            if (_unlockZones != null && turret != null && turret.gameObject.scene == gameObject.scene &&
+            if ((_unlockZones != null || _regionAccess != null) && turret != null && turret.gameObject.scene == gameObject.scene &&
                 turret.UsesPowerSource(this))
                 ApplyUnlockZone(turret);
         }

@@ -27,6 +27,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
+        private RegionSceneBinding _regionBinding;
         private MatchPlayerActorScope _playerActors;
         private IBattlefieldTurretInputSource _turretInputSource;
         private IEncounterMatchConsumer _encounterConsumer;
@@ -110,6 +111,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     new LocalPlayerActorSpawner(playerPrefab, actorParent),
                     starts);
                 _matchSession = session;
+                RegionSceneBinding[] regionBindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
+                    .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
+                if (regionBindings.Length > 1) throw new InvalidOperationException("Keep one RegionSceneBinding per Match scene.");
+                _regionBinding = regionBindings.FirstOrDefault();
+                _regionBinding?.BindMatch(session);
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
                     _encounterConsumer.BindMatch(matchId, () => HasCurrentMatch ? _matchSession?.Battlefield : null);
@@ -118,6 +124,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _lastEntityCells.Clear();
                 _nextBattlefieldSampleTime = 0f;
                 cameraFollow.Bind(_playerActors.Actors[LocalPlayerId].transform);
+                session.Disposing += ReleaseMatchBindings;
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
                     $"Initial_Stage Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
@@ -133,6 +140,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             catch
             {
                 ReleaseEncounterConsumer(matchId);
+                _regionBinding?.UnbindMatch();
+                _regionBinding = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -153,6 +162,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void OnDestroy()
         {
+            if (_matchSession != null) _matchSession.Disposing -= ReleaseMatchBindings;
             try
             {
                 _playerActors?.Dispose();
@@ -165,6 +175,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 if (_matchSession != null)
                     ReleaseEncounterConsumer(_matchSession.Config.MatchId);
+                _regionBinding?.UnbindMatch();
+                _regionBinding = null;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
                 _turretInputSource = null;
@@ -176,6 +188,28 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _ownsMatch = false;
                 _ownedMatchId = default;
                 _matchHost = null;
+            }
+        }
+
+        private void ReleaseMatchBindings()
+        {
+            MatchSession session = _matchSession;
+            if (session == null) return;
+            session.Disposing -= ReleaseMatchBindings;
+            _matchSession = null;
+            _ownsMatch = false;
+            _ownedMatchId = default;
+            ReleaseEncounterConsumer(session.Config.MatchId);
+            try { _playerActors?.Dispose(); }
+            finally
+            {
+                _playerActors = null;
+                _regionBinding?.UnbindMatch();
+                _regionBinding = null;
+                if (_turretInputSource != null) _turretInputSource.LayoutChanged -= OnTurretLayoutChanged;
+                _turretInputSource = null;
+                _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
+                _lastEntityCells.Clear();
             }
         }
 
