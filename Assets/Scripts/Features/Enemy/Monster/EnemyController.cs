@@ -23,7 +23,6 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float animationReferenceSpeed = 2f;
     [SerializeField] private float arrivalDistance = 0.4f;
     private Vector3[] _path;
-    private bool _isPath = false;
     private int _currentPath = 0;
     private bool _isStopped = true;
     
@@ -34,6 +33,8 @@ public class EnemyController : MonoBehaviour
     
     // 런타임 상태
     private Transform _target;
+    private Collider2D _bodyCollider;
+    private Collider2D[] _targetColliders;
     private float _nextAttackTime;
     private EnemyNetworkAnimator _networkAnimator;
     
@@ -43,10 +44,6 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     public bool IsTargeted { get; set; }
     
-    // 렌더링
-    private const int SortingScale = 100;
-    [SerializeField] private Transform sortingOrigin;
-
     /// <summary>
     /// 필요한 컴포넌트 참조를 초기화한다.
     /// </summary>
@@ -57,6 +54,16 @@ public class EnemyController : MonoBehaviour
             animator = GetComponent<Animator>();
         if(rigidbody2D == null)
             rigidbody2D = GetComponent<Rigidbody2D>();
+
+        // 공격 거리는 몬스터 몸통 콜라이더의 겉면부터 계산한다.
+        foreach (Collider2D collider in GetComponents<Collider2D>())
+        {
+            if (collider.isTrigger)
+                continue;
+
+            _bodyCollider = collider;
+            break;
+        }
     }
 
     private void LateUpdate()
@@ -110,23 +117,25 @@ public class EnemyController : MonoBehaviour
     public void SetTarget(Transform target)
     {
         _target = target;
+        _targetColliders = target != null
+            ? target.GetComponentsInChildren<Collider2D>(true)
+            : null;
         _path = null;
         _currentPath = 0;
-        _isPath = false;
         
         if (target == null)
             return;
         
         Vector3 startLocation = this.transform.position;
         Vector3 arriveLocation = target.position;
-        _isPath = EnemyNavMeshPathfinder.TryCalculatePath(startLocation, arriveLocation, out _path);
+        EnemyNavMeshPathfinder.TryCalculatePath(startLocation, arriveLocation, out _path);
     }
 
     private bool TryGetNextPathDirection(out Vector2 direction)
     {
         direction = Vector2.zero;
 
-        if (!_isPath || _path == null)
+        if (_path == null)
             return false;
 
         // 이미 도착한 지점은 건너뛴다.
@@ -150,18 +159,15 @@ public class EnemyController : MonoBehaviour
     /// <param name="moveDirection">정규화된 이동 방향.</param>
     private void MoveTowardsTarget(Vector2 moveDirection)
     {
-        if (_isPath)
-        {
-            // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
-            animator.SetBool(IsMovingHash, true);
+        // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
+        animator.SetBool(IsMovingHash, true);
 
-            float animationSpeed = moveSpeed / animationReferenceSpeed;
-            animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
+        float animationSpeed = moveSpeed / animationReferenceSpeed;
+        animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
 
-            // 계산한 방향과 속도로 몬스터 위치를 이동시킨다.
-            _isStopped = false;
-            rigidbody2D.linearVelocity = moveDirection * moveSpeed;
-        }
+        // 계산한 방향과 속도로 몬스터 위치를 이동시킨다.
+        _isStopped = false;
+        rigidbody2D.linearVelocity = moveDirection * moveSpeed;
     }
 
     /// <summary>
@@ -244,23 +250,27 @@ public class EnemyController : MonoBehaviour
     }
 
     /// <summary>
-    /// 타겟이 공격 범위 안에 있는지 확인한다.
+    /// 몬스터와 타겟의 활성 몸통 콜라이더 사이 거리가 공격 범위 안인지 확인한다.
     /// </summary>
     /// <returns>타겟이 공격 범위 안에 있으면 <see langword="true"/>.</returns>
     private bool IsInAttackRange()
     {
-        Vector2 enemyPosition = transform.position;
-        Vector2 attackPoint = _target.position;
+        if (_bodyCollider == null || !_bodyCollider.enabled || _targetColliders == null)
+            return false;
 
-        TargetableComponent targetable = _target.GetComponent<TargetableComponent>();
-        if (targetable != null)
+        foreach (Collider2D targetCollider in _targetColliders)
         {
-            Collider2D targetCollider = _target.GetComponentInChildren<Collider2D>();
-            if (targetCollider != null)
-                attackPoint = targetCollider.ClosestPoint(enemyPosition);
+            // 방향 전환 등으로 비활성화된 콜라이더와 피격용 트리거는 제외한다.
+            if (targetCollider == null || !targetCollider.enabled ||
+                !targetCollider.gameObject.activeInHierarchy || targetCollider.isTrigger)
+                continue;
+
+            ColliderDistance2D distance = _bodyCollider.Distance(targetCollider);
+            if (distance.isValid && distance.distance <= attackRange)
+                return true;
         }
 
-        return (attackPoint - enemyPosition).sqrMagnitude <= attackRange * attackRange;
+        return false;
     }
     
     private void OnDrawGizmosSelected()
