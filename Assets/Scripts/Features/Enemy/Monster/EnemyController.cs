@@ -82,6 +82,13 @@ public class EnemyController : MonoBehaviour
         if (IsInAttackRange())
         {
             StopMoving();
+
+            Vector2 attackDirection =
+                (Vector2)_target.position - (Vector2)transform.position;
+
+            if (attackDirection.sqrMagnitude > 0.0001f)
+                UpdateFacingDirection(attackDirection);
+
             TryAttack();
             return;
         }
