@@ -387,7 +387,7 @@ Canon과 Missile은 `TurretBase.minimumRange` 안에 있는 몬스터를 새 타
 
 이미 선택한 대상이 내부로 들어오면 Canon은 타겟을 해제하고 다시 탐색한다. Missile은 발사 전 슬롯 중 하나라도 내부 또는 최대 범위 밖으로 나가면 예약을 해제하고 다시 탐색한다. 이미 발사된 탄환과 미사일의 추적 및 폭발 피해는 변경하지 않는다. 따라서 내부 범위는 피해 면역 구역이 아니라 새 발사를 금지하는 구역이다. Laser의 공격 규칙에는 적용하지 않는다.
 
-TurretTest의 `Attack Range`에서 최소와 최대 사거리를 읽기 전용으로 확인한다. `Show Range` 또는 `Show All Ranges`를 켜면 기존 최대 사거리 원에 주황색 내부 원이 함께 표시된다. 내부 원은 SpriteRenderer만 생성하며 Collider는 추가하지 않는다. minimumRange를 변경하는 런타임 API나 일반 Inspector 조절 항목은 제공하지 않는다.
+TurretTest의 `Attack Range`에서 최소와 최대 사거리를 읽기 전용으로 확인한다. 맵에서 터렛을 선택하면 최대 사거리 원과 주황색 내부 원을 자동으로 표시하고 선택을 해제하면 숨긴다. `Show All Ranges`는 모든 터렛의 범위를 표시하는 별도 디버그 모드이며 `Selected Range Only`로 선택한 터렛만 표시하는 기본 모드에 돌아온다. 내부 원은 SpriteRenderer만 생성하며 Collider는 추가하지 않는다. minimumRange를 변경하는 런타임 API나 일반 Inspector 조절 항목은 제공하지 않는다.
 
 검증 순서: 몬스터를 내부에만 놓았을 때 발사하지 않는지 확인한다. 내부와 외부에 동시에 몬스터를 놓으면 바깥 후보를 선택하는지 확인한다. 선택된 몬스터를 내부로 옮긴 후 새 발사가 중지되는지 확인한다. 미사일은 두 번째 발사 슬롯의 몬스터도 내부로 이동시켜 확인한다. 스펙 업그레이드 및 레벨 승급 후 범위 표시와 레벨별 지정값도 확인한다.
 
@@ -670,6 +670,8 @@ flowchart TD
 
 맵의 터렛을 왼쪽 클릭하면 해당 터렛의 독립 창을 연다. 창에는 현재 수치·잠금·냉각·스냅샷, 개별 활성화·피해·파괴·복구, 호환되는 세부 업그레이드와 이전·다음 레벨 변경을 모아 표시한다. 다른 터렛을 클릭하면 같은 창의 대상이 바뀐다. 제목 표시줄을 드래그해 이동하고 Close 또는 Esc, 맵의 빈 공간 클릭으로 닫는다. F1은 왼쪽 공통 패널만 접거나 펼친다. UI 위 클릭은 뒤쪽 터렛 선택으로 전달하지 않으며 UI를 스크롤해도 카메라 이동 속도를 변경하지 않는다.
 
+기본 모드에서는 선택한 터렛의 최소·최대 사거리만 자동 표시한다. 다른 터렛으로 전환하면 이전 범위를 숨기고 새 범위를 표시하며 창을 닫거나 선택 대상이 제거되면 숨긴다. 승급·강등으로 프리팹이 교체돼도 같은 선택 ID의 새 범위를 표시한다. 개별 창의 Show Range/Hide Range 버튼은 제공하지 않는다. 전체 범위를 비교할 때는 왼쪽 `Show All Ranges`를 사용하며 이 모드에서는 선택 해제 후에도 전체 표시를 유지한다. `Selected Range Only`로 돌아오면 선택이 없는 터렛의 범위를 숨긴다.
+
 선택 대상과 조작 결과 및 Before 스냅샷은 `InstanceId`로 구분한다. 승급·강등 시 같은 ID로 교체된 실제 터렛을 다시 조회하므로 창의 대상과 수치가 새 프리팹을 따라간다. 등록이 해제되고 같은 ID의 대체 터렛이 없으면 프레임 후반에 창을 닫는다. 이 UI는 같은 씬의 등록된 터렛만 조작하며 게임 규칙과 조작 제한은 기존 `TurretBase`·`TurretController` API를 그대로 사용한다.
 
 기존 맵을 유지한 채 `Assets/Scenes/Tests/TurretTest.unity`를 열고 Play Mode에 진입한다. 현재 Scene에는 Canon/Missile 업그레이드 에셋 4개와 Stage 1 양방향 레벨 카탈로그가 연결되어 있다. Rebuild 메뉴도 기존 참조를 보존하면서 누락된 샘플만 추가한다. 이번 기능 확인을 위해 Scene을 재구성할 필요는 없다.
@@ -677,7 +679,7 @@ flowchart TD
 1. 맵에서 확인할 터렛을 클릭해 전용 창을 열고 `Capture Snapshot`으로 변경 전 값을 저장한다. 저장된 값은 ID별로 유지되므로 프리팹 교체 후에도 비교할 수 있다. 다시 누르면 비교 기준을 현재 값으로 바꾼다.
 2. `Activate` 후 `Lock`을 누른다. 전력이 반환되고 현재 스냅샷의 Locked가 true인지 확인한다. `Request Activate`를 눌러 결과가 `Locked`인지 확인한다.
 3. `Unlock` 후 자동 활성화되지 않는지 확인하고 직접 다시 켠다.
-4. 터렛을 끄고 냉각이 끝난 뒤 `High Firepower` 또는 `Low Power` 옆 `+1`로 5단계까지 올린다. 반대 경로가 LOCKED로 표시되고 5단계에서 +1이 비활성화되는지 확인한다. `-1`로 0단계까지 내려 기본 수치로 돌아오는지 확인한 뒤 반대 경로를 선택한다. 현재 수치와 저장된 Before 값을 비교하고 `Show Range`로 표시 원도 확인한다. 절전 경로를 되돌릴 때 요구 전력이 증가하며 실제 예약은 다음 활성화에서 수행되는지 확인한다.
+4. 터렛을 끄고 냉각이 끝난 뒤 `High Firepower` 또는 `Low Power` 옆 `+1`로 5단계까지 올린다. 반대 경로가 LOCKED로 표시되고 5단계에서 +1이 비활성화되는지 확인한다. `-1`로 0단계까지 내려 기본 수치로 돌아오는지 확인한 뒤 반대 경로를 선택한다. 현재 수치와 저장된 Before 값을 비교하고 선택 중인 터렛의 사거리 표시 원도 확인한다. 절전 경로를 되돌릴 때 요구 전력이 증가하며 실제 예약은 다음 활성화에서 수행되는지 확인한다.
 5. `Level Up`과 `Level Down`으로 LV1↔LV2↔LV3를 왕복한다. ID와 보정값이 유지되는지 확인한다. LV1에는 Level Down이 없고 LV3에는 Level Up이 없다.
 6. `Damage` → `Destroy` → `Request Activate` → `Restore`로 피해와 파괴 거부 및 복구를 확인한다. 복구해도 잠금 상태는 유지된다.
 7. 패널의 All / Active / Operational 개수와 ID별 현재 스냅샷을 확인한다. Before 값은 이후 상태 변화에 따라 자동으로 바뀌지 않는다.
@@ -685,16 +687,17 @@ flowchart TD
 ```mermaid
 flowchart TD
     Click["맵에서 터렛 클릭"] --> Select["같은 씬의 등록된 InstanceId 선택"]
-    Select --> Window["개별 터렛 창<br>현재 ID로 대상 재조회"]
+    Select --> Window["개별 터렛 창 + 사거리 표시<br>현재 ID로 대상 재조회"]
     Window --> Capture
     Window --> Action
     Replacement["승급·강등으로 프리팹 교체"] -->|"같은 ID"| Window
-    Missing["ID 등록 해제·대체 대상 없음"] --> Close["개별 창 닫기"]
+    Missing["ID 등록 해제·대체 대상 없음"] --> Close["개별 창 닫기<br>선택 전용 모드에서 사거리 숨김"]
+    Deselect["Close / Esc / 빈 공간 클릭"] --> Close
     Capture["Capture Snapshot"] --> Stored["ID별 Before 값 저장"]
     Action["활성화 / 잠금 / 피해<br>업그레이드 / 레벨 변경"] --> Query["TryGetSnapshot<br>현재 값 재조회"]
     Stored --> Compare["Before와 현재 값 비교"]
     Query --> Compare
-    Compare --> Visual["Show Range와 CU 전력 확인"]
+    Compare --> Visual["선택 사거리와 CU 전력 확인"]
 ```
 
 ### Play Mode

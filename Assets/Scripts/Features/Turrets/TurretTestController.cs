@@ -10,7 +10,7 @@ namespace TeamHJD.Game.Debugging
 {
     /// <summary>
     /// UI-only controls for exercising production TurretController and TurretBase APIs in TurretTest.
-    /// Global controls stay in the side panel; clicking a turret opens its independent debug window.
+    /// Global controls stay in the side panel; selecting a turret opens its window and shows its range.
     /// This test-scene UI forwards requests without owning gameplay rules.
     /// </summary>
     [DisallowMultipleComponent]
@@ -63,6 +63,7 @@ namespace TeamHJD.Game.Debugging
         private Vector2 _scrollPosition;
         private Vector2 _turretScrollPosition;
         private bool _isPanelVisible = true;
+        private bool _showAllRanges;
         private int _selectedTurretId;
         private Rect _turretWindowRect;
         private bool _hasTurretWindowPosition;
@@ -179,6 +180,7 @@ namespace TeamHJD.Game.Debugging
         {
             TurretInstanceRegistry.Registered -= HandleRegistryChanged;
             TurretInstanceRegistry.Unregistered -= HandleRegistryChanged;
+            _showAllRanges = false;
             CloseTurretWindow();
         }
 
@@ -256,7 +258,7 @@ namespace TeamHJD.Game.Debugging
                 SetAllRangesVisible(true);
             }
 
-            if (GUILayout.Button("Hide All Ranges"))
+            if (GUILayout.Button("Selected Range Only"))
             {
                 SetAllRangesVisible(false);
             }
@@ -390,10 +392,15 @@ namespace TeamHJD.Game.Debugging
             if (_selectedTurretId != turret.InstanceId)
                 _turretScrollPosition = Vector2.zero;
             _selectedTurretId = turret.InstanceId;
+            ApplyRangeVisibility();
             UpdateTurretWindowRect(Mathf.Max(1f, uiScale));
         }
 
-        private void CloseTurretWindow() => _selectedTurretId = 0;
+        private void CloseTurretWindow()
+        {
+            _selectedTurretId = 0;
+            ApplyRangeVisibility();
+        }
 
         private bool IsPointerOverDebugUi(Vector2 screenPosition)
         {
@@ -603,11 +610,6 @@ namespace TeamHJD.Game.Debugging
             }
 
             GUI.enabled = true;
-            if (GUILayout.Button(turret.ShowRange ? "Hide Range" : "Show Range", GUILayout.Width(100f)))
-            {
-                turret.ShowRange = !turret.ShowRange;
-            }
-
             if (GUILayout.Button("Focus", GUILayout.Width(72f)))
             {
                 FocusCameraOn(turret);
@@ -773,6 +775,7 @@ namespace TeamHJD.Game.Debugging
             _turrets.Sort((left, right) => left.InstanceId.CompareTo(right.InstanceId));
 
             _turretController = TurretController.FindForScene(gameObject.scene);
+            ApplyRangeVisibility();
         }
 
         private void LateUpdate()
@@ -780,6 +783,7 @@ namespace TeamHJD.Game.Debugging
             // Resolve by logical ID after all Updates, including prefab replacement.
             if (_selectedTurretId > 0 && !TryGetSelectedTurret(out _))
                 CloseTurretWindow();
+            ApplyRangeVisibility();
             // IMGUI can run multiple times per frame. Capture once after gameplay Updates.
             if (_isPanelVisible)
                 _controllerSnapshot = _turretController != null ? _turretController.GetSnapshot() : null;
@@ -798,11 +802,18 @@ namespace TeamHJD.Game.Debugging
 
         private void SetAllRangesVisible(bool isVisible)
         {
+            _showAllRanges = isVisible;
+            ApplyRangeVisibility();
+        }
+
+        private void ApplyRangeVisibility()
+        {
             foreach (TurretBase turret in _turrets)
             {
                 if (turret != null)
                 {
-                    turret.ShowRange = isVisible;
+                    turret.ShowRange = isActiveAndEnabled &&
+                        (_showAllRanges || (_selectedTurretId > 0 && turret.InstanceId == _selectedTurretId));
                 }
             }
         }
