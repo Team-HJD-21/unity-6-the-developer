@@ -35,6 +35,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
     public PlayerInfo Player => _player;
     public bool HasPlayer => _player != null && _player.isActiveAndEnabled;
     public bool HasControlUnit => _controlUnit != null && _controlUnit.isActiveAndEnabled;
+    public ControlUnitHealth ControlUnit => _controlUnit;
     public bool IsConfigured => string.IsNullOrEmpty(MissingReferences);
     public string MissingReferences => StageUIReferenceValidation.Missing(
         (nameof(healthCells), healthCells != null && healthCells.Length > 0 &&

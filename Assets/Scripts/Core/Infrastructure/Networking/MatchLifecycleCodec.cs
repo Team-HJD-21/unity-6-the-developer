@@ -1,0 +1,154 @@
+// Match 시작 설정과 준비/시작/종료 메시지를 제한된 바이너리 형식으로 변환합니다.
+// 문자열·참가자·셀 수를 검증하며 지역 소속은 RLE로 기록하고 무제한 입력 할당을 허용하지 않습니다.
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
+namespace TeamHJD.Game.Infrastructure
+{
+    public static class MatchLifecycleCodec
+    {
+        public const int MaximumMessageBytes = 4 * 1024 * 1024;
+        private const int Magic = 0x314D4A48;
+        private static readonly UTF8Encoding Utf8 = new UTF8Encoding(false, true);
+        public static byte[] Encode(NetworkMatchDescriptor descriptor)
+        {
+            if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
+            using var stream = new MemoryStream();
+            using var writer = new BinaryWriter(stream, Utf8, true);
+            writer.Write(Magic); writer.Write((byte)0);
+            writer.Write(descriptor.DescriptorId.ToByteArray()); writer.Write(descriptor.PreparationSequence);
+            MatchConfig config = descriptor.Config;
+            WriteText(writer, config.MatchId.Value); WriteText(writer, config.StageId.Value);
+            WriteText(writer, config.DifficultyProfileId.Value); WriteText(writer, config.ContentVersion, 4096);
+            writer.Write((int)config.Mode); writer.Write(config.RandomSeed);
+            if (descriptor.Participants.Count > 16) throw new ArgumentException("Protocol supports at most 16 participants.");
+            writer.Write(descriptor.Participants.Count);
+            foreach (var binding in descriptor.Participants)
+            {
+                WriteText(writer, binding.PlayerId.Value); writer.Write(binding.ConnectionId); writer.Write(binding.IsHost);
+                var loadout = config.Players.First(item => item.PlayerId == binding.PlayerId);
+                if (loadout.UpgradeLevels.Count > 256) throw new ArgumentException("Too many upgrade entries.");
+                writer.Write(loadout.UpgradeLevels.Count);
+                foreach (var upgrade in loadout.UpgradeLevels.OrderBy(item => item.Key.Value, StringComparer.Ordinal))
+                {
+                    if (upgrade.Value < 0) throw new ArgumentException("Upgrade level cannot be negative.");
+                    WriteText(writer, upgrade.Key.Value); writer.Write(upgrade.Value);
+                }
+            }
+            writer.Write((int)descriptor.RegionMode);
+            BattlefieldGridConfiguration grid = descriptor.RegionGrid.Geometry;
+            writer.Write(grid.Origin.X); writer.Write(grid.Origin.Y); writer.Write(grid.OriginZ);
+            writer.Write(grid.MapWidth); writer.Write(grid.MapHeight); writer.Write(grid.CellsX); writer.Write(grid.CellsY);
+            var runs = new List<(int length, int region)>();
+            foreach (int region in descriptor.RegionGrid.RegionIds)
+            {
+                if (runs.Count > 0 && runs[runs.Count - 1].region == region)
+                { var last = runs[runs.Count - 1]; runs[runs.Count - 1] = (last.length + 1, region); }
+                else runs.Add((1, region));
+            }
+            writer.Write(runs.Count);
+            foreach (var run in runs) { writer.Write(run.length); writer.Write(run.region); }
+            return Finish(stream);
+        }
+        public static byte[] Encode(MatchLifecycleSignalKind kind, MatchLifecycleSignal signal)
+        {
+            if (!Enum.IsDefined(typeof(MatchLifecycleSignalKind), kind)) throw new ArgumentOutOfRangeException(nameof(kind));
+            if (signal.MatchId.IsEmpty || signal.DescriptorId == Guid.Empty) throw new ArgumentException("Invalid signal.", nameof(signal));
+            using var stream = new MemoryStream(); using var writer = new BinaryWriter(stream, Utf8, true);
+            writer.Write(Magic); writer.Write((byte)((int)kind + 1));
+            WriteText(writer, signal.MatchId.Value); writer.Write(signal.DescriptorId.ToByteArray());
+            return Finish(stream);
+        }
+        public static void Decode(byte[] bytes, out NetworkMatchDescriptor descriptor,
+            out MatchLifecycleSignalKind kind, out MatchLifecycleSignal signal)
+        {
+            if (bytes == null || bytes.Length > MaximumMessageBytes) throw new FormatException("Invalid message length.");
+            using var stream = new MemoryStream(bytes, false); using var reader = new BinaryReader(stream, Utf8, true);
+            descriptor = null; kind = default; signal = default;
+            try
+            {
+                if (reader.ReadInt32() != Magic) throw new FormatException("Unknown protocol.");
+                int tag = reader.ReadByte();
+                if (tag == 0)
+                {
+                    Guid id = ReadGuid(reader); long sequence = reader.ReadInt64();
+                    var match = new MatchId(ReadText(reader)); var stage = new StageId(ReadText(reader));
+                    var difficulty = new DefinitionId(ReadText(reader)); string content = ReadText(reader, 4096);
+                    var mode = (MatchMode)reader.ReadInt32(); int seed = reader.ReadInt32();
+                    int playerCount = ReadCount(reader, 16); if (playerCount < 1) throw new FormatException("Missing participants.");
+                    var players = new List<PlayerLoadoutSnapshot>(); var bindings = new List<MatchParticipantBinding>();
+                    for (int i = 0; i < playerCount; i++)
+                    {
+                        var player = new PlayerId(ReadText(reader)); ulong connection = reader.ReadUInt64(); bool host = reader.ReadBoolean();
+                        int upgradeCount = ReadCount(reader, 256); var upgrades = new Dictionary<DefinitionId, int>();
+                        for (int u = 0; u < upgradeCount; u++)
+                        {
+                            var upgrade = new DefinitionId(ReadText(reader)); int level = reader.ReadInt32();
+                            if (upgrade.IsEmpty || level < 0 || upgrades.ContainsKey(upgrade)) throw new FormatException("Invalid upgrade.");
+                            upgrades.Add(upgrade, level);
+                        }
+                        players.Add(new PlayerLoadoutSnapshot(player, upgrades)); bindings.Add(new MatchParticipantBinding(connection, player, host));
+                    }
+                    var regionMode = (RegionPolicyMode)reader.ReadInt32();
+                    var origin = new BattlefieldPoint(reader.ReadDouble(), reader.ReadDouble());
+                    var grid = new BattlefieldGridConfiguration(origin, reader.ReadDouble(), reader.ReadDouble(),
+                        reader.ReadDouble(), reader.ReadInt32(), reader.ReadInt32());
+                    int runCount = ReadCount(reader, grid.TotalCellCount);
+                    var membership = new int[grid.TotalCellCount]; int offset = 0;
+                    for (int i = 0; i < runCount; i++)
+                    {
+                        int length = reader.ReadInt32(), region = reader.ReadInt32();
+                        if (length < 1 || region < 0 || length > membership.Length - offset) throw new FormatException("Invalid region run.");
+                        for (int cell = 0; cell < length; cell++) membership[offset++] = region;
+                    }
+                    if (offset != membership.Length) throw new FormatException("Incomplete region membership.");
+                    descriptor = new NetworkMatchDescriptor(id, sequence,
+                        new MatchConfig(match, mode, stage, difficulty, content, seed, players),
+                        regionMode, new RegionGridDefinition(grid, membership), bindings);
+                }
+                else if (tag >= 1 && tag <= 3)
+                {
+                    kind = (MatchLifecycleSignalKind)(tag - 1);
+                    signal = new MatchLifecycleSignal(new MatchId(ReadText(reader)), ReadGuid(reader));
+                }
+                else throw new FormatException("Unknown message kind.");
+                if (stream.Position != stream.Length) throw new FormatException("Unexpected trailing payload.");
+            }
+            catch (Exception error) when (error is EndOfStreamException || error is ArgumentException || error is OverflowException)
+            { throw new FormatException("Invalid lifecycle payload.", error); }
+        }
+        private static byte[] Finish(MemoryStream stream)
+        {
+            if (stream.Length > MaximumMessageBytes) throw new ArgumentException("Lifecycle payload exceeds the protocol limit.");
+            return stream.ToArray();
+        }
+        private static int ReadCount(BinaryReader reader, int maximum)
+        {
+            int count = reader.ReadInt32();
+            if (count < 0 || count > maximum) throw new FormatException("Invalid collection length.");
+            return count;
+        }
+        private static Guid ReadGuid(BinaryReader reader)
+        {
+            byte[] bytes = reader.ReadBytes(16);
+            if (bytes.Length != 16) throw new EndOfStreamException();
+            return new Guid(bytes);
+        }
+        private static void WriteText(BinaryWriter writer, string value, int maximumBytes = 1024)
+        {
+            byte[] bytes = Utf8.GetBytes(value ?? "");
+            if (bytes.Length > maximumBytes) throw new ArgumentException("Text exceeds the protocol limit.");
+            writer.Write((ushort)bytes.Length); writer.Write(bytes);
+        }
+        private static string ReadText(BinaryReader reader, int maximumBytes = 1024)
+        {
+            int count = reader.ReadUInt16(); if (count > maximumBytes) throw new FormatException("Text exceeds the protocol limit.");
+            byte[] bytes = reader.ReadBytes(count); if (bytes.Length != count) throw new EndOfStreamException();
+            return Utf8.GetString(bytes);
+        }
+    }
+}

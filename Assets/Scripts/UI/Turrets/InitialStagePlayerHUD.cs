@@ -15,6 +15,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
     [Header("Prefab Views")]
     [SerializeField] private StagePlayerVitalsView vitalsView;
     [SerializeField] private StageTurretControlView turretView;
+    [SerializeField] private StageControlUnitView controlUnitView;
     [Header("Turret Data")]
     [SerializeField] private TurretLevelUpgradeCatalog levelCatalog;
     [SerializeField, Min(0.1f)] private float interactionDistance = 10f;
@@ -43,6 +44,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         _canvas.enabled = _vitalsReady || _turretControlsReady;
         _nextSourceRetry = 0;
         _nextDisplayRefresh = 0;
+        if (controlUnitView != null) controlUnitView.AutoActivationRequested += RequestAutoActivation;
     }
 
     // Start runs after the scene's health sources finish Awake.
@@ -119,6 +121,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         {
             _nextDisplayRefresh = Time.unscaledTime + DisplayRefreshInterval;
             if (_vitalsReady) vitalsView.RefreshPower();
+            if (controlUnitView != null) controlUnitView.Refresh(_controller, CanInteractAtControlUnit());
         }
 
         _presenter?.Refresh(updateDisplay);
@@ -133,6 +136,21 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
             return false;
 
         return _playerControl == null || _playerControl.CanAct;
+    }
+
+    private bool CanInteractAtControlUnit()
+    {
+        ControlUnitHealth cu = _vitalsReady ? vitalsView.ControlUnit : null;
+        return CanInteract() && cu != null && cu.isActiveAndEnabled && cu.CurrentHealth > 0 &&
+            Vector2.Distance(_player.transform.position, cu.transform.position) <= interactionDistance;
+    }
+
+    private void RequestAutoActivation()
+    {
+        if (!CanInteractAtControlUnit() || _controller == null) return;
+        bool started = _controller.TryStartAutoActivation();
+        controlUnitView.SetFeedback(started ? "Automatic activation started." : "Automatic activation is unavailable.");
+        controlUnitView.Refresh(_controller, CanInteractAtControlUnit());
     }
 
     private void BindSceneSources()
@@ -180,6 +198,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
 
     private void OnDisable()
     {
+        if (controlUnitView != null) controlUnitView.AutoActivationRequested -= RequestAutoActivation;
         _presenter?.Dispose();
         _presenter = null;
         _selection?.Clear();

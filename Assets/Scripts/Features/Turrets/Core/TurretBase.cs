@@ -619,6 +619,8 @@ namespace TeamHJD.Game.Turrets
             _activationController.DetachReservationForLevelUpgrade();
             gameObject.SetActive(false);
             replacementObject.transform.SetParent(originalParent, true);
+            // 비활성 프리팹도 상태 이전이 끝난 뒤 공통 Awake/등록 경로를 실행해야 합니다.
+            replacementObject.SetActive(true);
             Destroy(staging);
 
             if (!replacement.isActiveAndEnabled || replacement._activationController == null)

@@ -431,6 +431,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
+--- !u!4 &52902671 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8472963676150703458, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
+  m_PrefabInstance: {fileID: 52902670}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &78163638
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -937378,6 +937383,7 @@ GameObject:
   m_Component:
   - component: {fileID: 877435132}
   - component: {fileID: 877435133}
+  - component: {fileID: 877435134}
   m_Layer: 0
   m_Name: InitialStageCompositionRoot
   m_TagString: Untagged
@@ -937416,6 +937422,21 @@ MonoBehaviour:
   actorParent: {fileID: 0}
   battlefieldGridSettings: {fileID: 11400000, guid: 414e8db3e6ce4f86ad48b9d060045120, type: 2}
   _encounterConsumerBehaviour: {fileID: 1735068340}
+--- !u!114 &877435134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a518c49703f37de4f99e89bc37b9f58, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.RegionSceneBinding
+  _controller: {fileID: 393497335}
+  _controlUnit: {fileID: 52902671}
+  _initialMode: 0
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -961210,7 +961231,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 19856798, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_sharedMaterial
-      value:
+      value: 
       objectReference: {fileID: 6633813256750574405, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
     - target: {fileID: 76689850, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.y
@@ -961226,7 +961247,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 341792978, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_sharedMaterial
-      value:
+      value: 
       objectReference: {fileID: 6633813256750574405, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
     - target: {fileID: 474914851, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.y

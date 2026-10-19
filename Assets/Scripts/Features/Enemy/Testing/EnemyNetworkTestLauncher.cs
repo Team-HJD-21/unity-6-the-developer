@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Application;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,7 +18,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IEncounterMatchConsumer, IGameDiagnosticsSource
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService
 {
     private const int TargetFrameRate = 120;
     private const float HostReadyTimeout = 10f;
@@ -30,6 +31,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private EncounterRuntime _encounterRuntime;
     private MatchId _boundMatchId;
     private Func<BattlefieldSpatialSnapshot> _snapshotProvider;
+    private EncounterRequestService _requests;
+    private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
     private Coroutine _initialEncounterRoutine;
     private bool _initialEncounterPending;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
@@ -90,6 +93,10 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 
         _boundMatchId = matchId;
         _snapshotProvider = snapshotProvider;
+        // 현재 로컬 Scene의 참가자 바인딩입니다. 네트워크 조립 시 실제 연결→참가자 대응으로 교체합니다.
+        _requests = new EncounterRequestService(matchId, snapshotProvider,
+            () => _networkManager != null && _networkManager.IsServer,
+            issuer => issuer == LocalIssuer, this);
         _gameStartTime = Time.timeAsDouble;
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
@@ -105,6 +112,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     {
         if (_snapshotProvider == null || _boundMatchId != matchId) return;
         CancelPendingInitialEncounter();
+        _requests?.Dispose();
+        _requests = null;
         // Scene 소유 임시 Host는 SDK 종료를 먼저 요청하고 Scene 파괴 시 정리를 완료합니다.
         if (_encounterRuntime?.Executor != null &&
             gameObject.scene == _encounterRuntime.Executor.gameObject.scene && _networkManager != null)
@@ -155,19 +164,12 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         yield return new WaitForSecondsRealtime(Mathf.Max(0f, initialEncounterDelay));
         if (!_initialEncounterPending) yield break;
 
+        // 임시 Scene 시작 정책만 연결을 명시적으로 엽니다. 개별 Spawn 요청은 연결을 열지 않습니다.
+        if (_networkManager != null && !_networkManager.IsListening) StartHost();
         if (!CanRequestEncounter(out string reason))
         {
             Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: reason);
             Debug.LogError($"Initial Encounter cannot start: {reason}", this);
-            _initialEncounterPending = false;
-            _initialEncounterRoutine = null;
-            yield break;
-        }
-
-        if (!_networkManager.IsListening && !_networkManager.StartHost())
-        {
-            Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: "Initial Host start failed");
-            Debug.LogError("Initial Encounter could not start the NGO Host.", this);
             _initialEncounterPending = false;
             _initialEncounterRoutine = null;
             yield break;
@@ -291,13 +293,13 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             return false;
         }
 
-        if (_networkManager.IsListening && !_networkManager.IsServer)
+        if (!_networkManager.IsListening || !_networkManager.IsServer)
         {
-            reason = "현재 Client 인스턴스에서는 Encounter를 요청할 수 없습니다.";
+            reason = "Host/Server를 명시적으로 시작한 뒤 Encounter를 요청하세요.";
             return false;
         }
 
-        reason = "준비됨. 요청 시 Host를 시작한 뒤 Encounter를 실행합니다.";
+        reason = "Host 준비됨. 현재 Match의 최신 Snapshot으로 요청합니다.";
         return true;
     }
 
@@ -321,43 +323,49 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     public bool TryRequestEncounter(BattlefieldSpatialSnapshot snapshot, string squadOrder,
         int maxEnemyCount, EncounterRequestSource source, out string result)
     {
-        var context = new EncounterExecutionContext(_boundMatchId, ++_requestSequence, snapshot?.Revision ?? 0, source, squadOrder);
-        Emit(GameDiagnosticKind.RequestStarted, context, message: $"preset={squadOrder}, budget={maxEnemyCount}");
-        if (snapshot == null || _snapshotProvider == null || _boundMatchId.IsEmpty)
+        if (snapshot == null || _requests == null || snapshot.MatchId != _boundMatchId)
         {
-            result = "활성 Match Battlefield snapshot이 없습니다.";
-            Emit(GameDiagnosticKind.RequestFailed, context, message: result);
+            result = "현재 바인딩된 Match가 아닙니다.";
             return false;
         }
-
-        if (_snapshotProvider != null && snapshot.MatchId != _boundMatchId)
+        if (string.IsNullOrWhiteSpace(squadOrder) || squadOrder.Trim().Length > 128 || maxEnemyCount < 1 || !Enum.IsDefined(typeof(EncounterRequestSource), source))
         {
-            result = "Encounter 요청의 Match ID가 현재 바인딩된 Match와 다릅니다.";
-            Emit(GameDiagnosticKind.RequestFailed, context, message: result);
+            result = "Preset·생성 예산·출처를 확인하세요.";
             return false;
         }
+        var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), LocalIssuer),
+            new DefinitionId(squadOrder.Trim()), maxEnemyCount, source);
+        EncounterRequestResult response = Submit(request, LocalIssuer);
+        result = response.Reason;
+        return response.HasSpawned;
+    }
 
-        if (!CanRequestEncounter(out result))
-        {
-            Emit(GameDiagnosticKind.RequestFailed, context, message: result);
-            return false;
-        }
+    public EncounterRequestResult Submit(EncounterRequest request, PlayerId verifiedIssuer)
+    {
+        if (request == null) throw new ArgumentNullException(nameof(request));
+        return _requests != null ? _requests.Submit(request, verifiedIssuer) :
+            new EncounterRequestResult(request.Context.RequestId, 0, 0, EncounterRequestStatus.MatchUnavailable);
+    }
 
-        if (!_networkManager.IsListening && !_networkManager.StartHost())
-        {
-            result = "NGO Host를 시작하지 못했습니다.";
-            Emit(GameDiagnosticKind.RequestFailed, context, message: result);
-            return false;
-        }
-
+    EncounterRequestResult IEncounterExecutor.Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot, long executionSequence)
+    {
+        _requestSequence = executionSequence;
+        var context = new EncounterExecutionContext(_boundMatchId, executionSequence, snapshot.Revision,
+            request.Source, request.PresetId.Value);
+        Emit(GameDiagnosticKind.RequestStarted, context, message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, budget={request.MaximumEnemyCount}");
         EnsureEncounterRuntime();
-        bool succeeded = _encounterRuntime.TrySpawn(snapshot, squadOrder, maxEnemyCount, context, out result, out EncounterExecutionSummary summary);
+        bool succeeded = _encounterRuntime.TrySpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
+            context, out string result, out EncounterExecutionSummary summary);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
             spawnDecision: summary.SpawnDecision);
-        if (succeeded && snapshot.MatchId == _boundMatchId && source != EncounterRequestSource.MatchStart)
+        if (succeeded && request.Source != EncounterRequestSource.MatchStart)
             CancelPendingInitialEncounter();
-        return succeeded;
+        EncounterRequestStatus status = summary.PlannedCount > 0 && summary.SpawnedCount == summary.PlannedCount
+            ? EncounterRequestStatus.Spawned : summary.SpawnedCount > 0 ? EncounterRequestStatus.PartialSpawn :
+            summary.ResultCode == "PlanRejected" ? EncounterRequestStatus.PlanRejected : EncounterRequestStatus.SpawnFailed;
+        return new EncounterRequestResult(request.Context.RequestId, executionSequence, snapshot.Revision,
+            status, summary.PlannedCount, summary.SpawnedCount, result);
     }
 
     private void EnsureEncounterRuntime()

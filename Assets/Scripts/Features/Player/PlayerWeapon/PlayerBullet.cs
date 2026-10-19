@@ -1,151 +1,103 @@
-// 플레이어 탄환의 이동·수명·충돌과 현행 EnemyHealth 피해 처리를 담당합니다.
-// 구형 Monster 피해 및 감속 연결은 Legacy 제거에 따라 비활성화했습니다.
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
-public enum WeaponType
-{
-    DefaultShotgun, // 1번: 기본 산탄총 (일반 피해)
-    CryoBlaster     // 2번: 감속 냉각총 (감속 디버프 부여)
-}
-
-/// <summary>
-/// 플레이어 발사 탄환의 이동 궤적, 수명 관리, 태그 기반 충돌 판정 및 디버프 주입 컴포넌트
-/// </summary>
+/// <summary>설정된 고정 속도로 이동하며 수명과 충돌 피해를 처리하는 플레이어 탄환입니다.</summary>
+[DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerBullet : MonoBehaviour
+public sealed class PlayerBullet : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    [FormerlySerializedAs("rb")]
+    [SerializeField] private Rigidbody2D _body;
+    [FormerlySerializedAs("spriteRenderer")]
+    [SerializeField] private SpriteRenderer _spriteRenderer;
 
-    [Header("Attributes")]
-    [Tooltip("탄환 기본 비행 속도")]
-    [SerializeField] private float bulletSpeed = 6f;
+    [Header("Flight")]
+    [FormerlySerializedAs("bulletSpeed")]
+    [SerializeField, Min(0f)] private float _speed = 6f;
+    [FormerlySerializedAs("lifeTime")]
+    [SerializeField, Min(.01f)] private float _lifetime = 2f;
 
-    [Tooltip("탄환 피해량")]
-    [SerializeField] private float bulletDamage = 13f;
+    [Header("Damage")]
+    [FormerlySerializedAs("bulletDamage")]
+    [SerializeField, Min(0f)] private float _damage = 13f;
+    [FormerlySerializedAs("targetTag")]
+    [SerializeField] private string _targetTag = "Enemy";
+    private bool _hasHit;
+    private readonly List<Collider2D> _hitboxes = new();
 
-    [Tooltip("탄환 자연 소멸 수명(초)")]
-    [SerializeField] private float lifeTime = 2f;
+    private void Reset() => CacheReferences();
+    private void Awake() => CacheReferences();
 
-    [Header("Slow Effect")]
-    [Tooltip("감속 무기일 때 깎을 이동속도 비율 (0.5 = 50% 감속)")]
-    [SerializeField] private float slowRatio = 0.5f;
-
-    [Tooltip("감속 지속 시간(초)")]
-    [SerializeField] private float slowDuration = 2.5f;
-
-    [Header("Targeting")]
-    [Tooltip("피격 대상 태그")]
-    [SerializeField] private string targetTag = "Enemy";
-
-    private WeaponType currentWeaponType = WeaponType.DefaultShotgun;
-    private bool isDestroyed = false;
-
-    private void Reset()
+    private void CacheReferences()
     {
-        rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (_body == null || _body.gameObject != gameObject) _body = GetComponent<Rigidbody2D>();
+        if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
+        ConfigureHitboxes();
     }
 
-    private void Awake()
+    private void ConfigureHitboxes()
     {
-        if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
-    }
-
-    /// <summary>
-    /// 발사 주체(PlayerAttack)로부터 탄환 속성을 주입받아 초기화
-    /// </summary>
-    public void InitBullet(WeaponType weaponType, Color bulletColor, float damage, Vector2 dir, Vector2 playerSpeed)
-    {
-        currentWeaponType = weaponType;
-        bulletDamage = damage;
-
-        if (spriteRenderer != null)
+        _hitboxes.Clear();
+        foreach (Collider2D hitbox in GetComponentsInChildren<Collider2D>(true))
         {
-            spriteRenderer.color = bulletColor;
+            if (hitbox.attachedRigidbody != _body) continue;
+            hitbox.isTrigger = true;
+            _hitboxes.Add(hitbox);
         }
-
-        SetDirection(dir, playerSpeed);
     }
 
-    private void SetDirection(Vector2 dir, Vector2 playerSpeed)
+    /// <summary>색상·피해량·월드 방향으로 초기화합니다. 발사자의 이동속도는 전달받지 않습니다.</summary>
+    public bool Initialize(Color color, float damage, Vector2 direction)
     {
-        Vector2 normalizedDir = dir.normalized;
-        float totalSpeed = bulletSpeed + playerSpeed.magnitude;
+        if (_body == null || _hitboxes.Count == 0 || !PlayerAimUtility.IsValidDirection(direction) ||
+            !IsFinite(_speed) || _speed < 0f || !IsFinite(_lifetime) || _lifetime <= 0f ||
+            !IsFinite(damage) || damage < 0f)
+        {
+            Debug.LogWarning("[PlayerBullet] Rigidbody2D, attached Collider2D, finite direction, non-negative speed/damage and positive lifetime are required.", this);
+            return false;
+        }
+        _damage = damage;
+        _hasHit = false;
+        if (_spriteRenderer != null) _spriteRenderer.color = color;
+        Launch(direction.normalized);
+        return true;
+    }
+
+    private void Launch(Vector2 direction)
+    {
 #if UNITY_6000_0_OR_NEWER
-        rb.linearVelocity = normalizedDir * totalSpeed;
+        _body.linearVelocity = direction * _speed;
 #else
-        rb.velocity = normalizedDir * totalSpeed;
+        _body.velocity = direction * _speed;
 #endif
-
-        float angle = Mathf.Atan2(normalizedDir.y, normalizedDir.x) * Mathf.Rad2Deg;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
-
-        Destroy(gameObject, lifeTime);
+        Destroy(gameObject, _lifetime);
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        ProcessHit(collision.gameObject);
-    }
+    private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        ProcessHit(other.gameObject);
+        // 기존 Collision2D와 같이 Rigidbody 소유자를 대상으로 처리해 자식 Collider의 태그 차이를 피합니다.
+        GameObject target = other.attachedRigidbody != null ? other.attachedRigidbody.gameObject : other.gameObject;
+        ProcessHit(target);
     }
 
     private void ProcessHit(GameObject target)
     {
-        if (isDestroyed || target == null) return;
-        if (target.CompareTag("Player") || target.CompareTag("Bullet")) return;
-
-        // 1. "Enemy" 태그를 가진 대상인지 1차 필터링
-        bool isEnemy = target.CompareTag(targetTag) || target.transform.root.CompareTag(targetTag);
-
+        if (_hasHit || target == null || target.CompareTag("Player") || target.CompareTag("Bullet")) return;
+        _hasHit = true;
+        foreach (Collider2D hitbox in _hitboxes)
+            if (hitbox != null) hitbox.enabled = false;
+        bool isEnemy = target.CompareTag(_targetTag) || target.transform.root.CompareTag(_targetTag);
         if (isEnemy)
         {
-            int damageInt = Mathf.RoundToInt(bulletDamage);
-
-            // 1) EnemyHealth 컴포넌트 우선 조회 및 TakeDamage(int) 호출
-            EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
-            if (enemyHealth != null)
-            {
-                enemyHealth.TakeDamage(damageInt);
-            }
-
-            // Legacy 제거로 인해 로직 무효화: 구형 Monster 피해·Cryo 감속 폴백.
-            /*
-            Monster monster = target.GetComponentInParent<Monster>();
-            if (monster != null)
-            {
-                // EnemyHealth가 없는 경우에만 Monster.TakeDamage 호출
-                if (!damageApplied)
-                {
-                    monster.TakeDamage(bulletDamage);
-                }
-
-                // 감속 무기인 경우 동적 디버프 컴포넌트 부착
-                if (currentWeaponType == WeaponType.CryoBlaster)
-                {
-                    MonsterSlowDebuff debuff = monster.gameObject.GetComponent<MonsterSlowDebuff>();
-                    if (debuff == null)
-                    {
-                        debuff = monster.gameObject.AddComponent<MonsterSlowDebuff>();
-                    }
-                    debuff.ApplySlow(monster, slowRatio, slowDuration);
-                }
-            }
-
-            */
-            isDestroyed = true;
-            Destroy(gameObject);
-            return;
+            var health = target.GetComponentInParent<EnemyHealth>();
+            if (health != null) health.TakeDamage(Mathf.RoundToInt(_damage));
         }
-
-        // 장애물이나 벽에 충돌한 경우 소멸
-        isDestroyed = true;
         Destroy(gameObject);
     }
 }

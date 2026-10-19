@@ -1,6 +1,7 @@
 // Match 하나의 수명과 명령 흐름을 관리합니다.
 
 using System;
+using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 
@@ -13,12 +14,40 @@ namespace TeamHJD.Game.Application
         private readonly IAuthority _authority;
         private readonly MatchEventBus _eventBus;
         private readonly BattlefieldSpatialRuntime _battlefield;
+        private RegionRuntime _regions;
         private bool _isDisposed;
+        public bool IsDisposed => _isDisposed;
+        public event Action Disposing;
 
         public MatchConfig Config { get; }
         public MatchState State { get; }
         public BattlefieldSpatialSnapshot Battlefield => _battlefield.Snapshot;
         public IMatchEventStream Events => _eventBus;
+        public IRegionGridSource Regions => _regions;
+
+        /// <summary>Scene 조립부가 실제 지역 정의를 한 번 연결합니다. RegionRuntime은 Match가 정리합니다.</summary>
+        public IRegionGridSource InitializeRegions(RegionGridDefinition definition, RegionPolicyMode mode)
+        {
+            ThrowIfDisposed();
+            if (_regions != null) throw new InvalidOperationException("Regions are already initialized.");
+            _regions = new RegionRuntime(Config.MatchId, definition, mode);
+            return _regions;
+        }
+
+        public RegionUpdateStatus UpdateRegionCapture(RegionGridSnapshot basis, IEnumerable<int> cells,
+            RegionCaptureUpdateMode updateMode)
+        {
+            ThrowIfDisposed();
+            if (_regions == null) throw new InvalidOperationException("Regions are not initialized.");
+            return _regions.TryApply(basis, cells, updateMode);
+        }
+
+        public void ResetRegions(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells)
+        {
+            ThrowIfDisposed();
+            if (_regions == null) throw new InvalidOperationException("Regions are not initialized.");
+            _regions.Reset(definition, mode, initialCells);
+        }
 
         internal MatchSession(
             MatchConfig config,
@@ -117,21 +146,27 @@ namespace TeamHJD.Game.Application
         {
             if (_isDisposed) return;
             _isDisposed = true;
-            Exception simulationError = null;
-            try
+            var errors = new List<Exception>();
+            Action handlers = Disposing;
+            Disposing = null;
+            if (handlers != null)
             {
-                _simulation.Dispose(State);
+                // Feature가 먼저 연결을 해제한 뒤 Match 소유 자료를 폐기합니다.
+                foreach (Action handler in handlers.GetInvocationList())
+                    try { handler(); }
+                    catch (Exception exception) { errors.Add(exception); }
             }
-            catch (Exception exception)
-            {
-                simulationError = exception;
-            }
-            finally
-            {
-                _eventBus.Dispose();
-                _battlefield.Dispose();
-            }
-            if (simulationError != null) throw new InvalidOperationException("Match simulation failed to dispose.", simulationError);
+            DisposeOwned(() => _simulation.Dispose(State), errors);
+            DisposeOwned(_eventBus.Dispose, errors);
+            DisposeOwned(_battlefield.Dispose, errors);
+            if (_regions != null) DisposeOwned(_regions.Dispose, errors);
+            if (errors.Count > 0) throw new AggregateException("Match cleanup failed after releasing all owned resources.", errors);
+        }
+
+        private static void DisposeOwned(Action cleanup, List<Exception> errors)
+        {
+            try { cleanup(); }
+            catch (Exception exception) { errors.Add(exception); }
         }
 
         private void ThrowIfDisposed()
