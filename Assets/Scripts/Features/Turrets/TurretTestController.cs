@@ -10,13 +10,25 @@ namespace TeamHJD.Game.Debugging
 {
     /// <summary>
     /// UI-only controls for exercising production TurretController and TurretBase APIs in TurretTest.
-    /// It displays test state and forwards player-like requests without owning gameplay rules.
+    /// Global controls stay in the side panel; clicking a turret opens its independent debug window.
+    /// This test-scene UI forwards requests without owning gameplay rules.
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-1000)]
     public sealed class TurretTestController : MonoBehaviour
     {
-        private const float PanelWidth = 520f;
+        private const float PanelWidth = 360f;
+        private const float TurretWindowWidth = 540f;
+        private const float TurretWindowHeight = 720f;
+
+        private sealed class TurretFeedback
+        {
+            public TurretActivationResult? Activation;
+            public string Durability;
+            public string Upgrade;
+            public string LevelChange;
+            public string Lock;
+        }
 
         [Header("Debug UI")]
         [SerializeField, Range(1f, 2f)] private float uiScale = 1.25f;
@@ -44,16 +56,17 @@ namespace TeamHJD.Game.Debugging
 
         private readonly List<TurretBase> _turrets = new();
         private readonly Dictionary<int, TurretSnapshot> _capturedSnapshots = new();
+        private readonly Dictionary<int, TurretFeedback> _turretFeedback = new();
         private TurretController _turretController;
         private TurretControllerSnapshot _controllerSnapshot;
         private Camera _mainCamera;
         private Vector2 _scrollPosition;
+        private Vector2 _turretScrollPosition;
         private bool _isPanelVisible = true;
-        private TurretActivationResult? _lastActivationResult;
-        private string _lastDurabilityAction;
-        private string _lastUpgradeAction;
-        private string _lastLevelUpgradeAction;
-        private string _lastLockAction;
+        private int _selectedTurretId;
+        private Rect _turretWindowRect;
+        private bool _hasTurretWindowPosition;
+        private GUIStyle _wrappedLabel;
 
         private void Start()
         {
@@ -166,11 +179,14 @@ namespace TeamHJD.Game.Debugging
         {
             TurretInstanceRegistry.Registered -= HandleRegistryChanged;
             TurretInstanceRegistry.Unregistered -= HandleRegistryChanged;
+            CloseTurretWindow();
         }
 
         private void Update()
         {
-            AdjustCameraMoveSpeed();
+            HandleTurretSelection();
+            if (!IsPointerOverDebugUi(GameInput.PointerPosition))
+                AdjustCameraMoveSpeed();
             MoveCamera();
             ZoomCamera();
 
@@ -183,33 +199,57 @@ namespace TeamHJD.Game.Debugging
         private void OnGUI()
         {
             Matrix4x4 previousGuiMatrix = GUI.matrix;
+            bool previousEnabled = GUI.enabled;
             float appliedUiScale = Mathf.Max(1f, uiScale);
-            GUI.matrix = Matrix4x4.Scale(new Vector3(appliedUiScale, appliedUiScale, 1f));
-            DrawUnlockZoneOverlay(appliedUiScale);
-
-            if (!_isPanelVisible)
+            try
             {
-                if (GUI.Button(new Rect(16f, 16f, 180f, 32f), "Open Turret Test (F1)"))
-                {
+                GUI.matrix = Matrix4x4.Scale(new Vector3(appliedUiScale, appliedUiScale, 1f));
+                DrawUnlockZoneOverlay(appliedUiScale);
+                if (_isPanelVisible)
+                    DrawGlobalPanel(appliedUiScale);
+                else if (GUI.Button(new Rect(16f, 16f, 180f, 32f), "Open Turret Test (F1)"))
                     _isPanelVisible = true;
+
+                if (TryGetSelectedTurret(out TurretBase turret))
+                {
+                    UpdateTurretWindowRect(appliedUiScale);
+                    string level = turret.Definition != null ? turret.Definition.Level.ToString() : "?";
+                    string title = $"{turret.name} | ID {turret.InstanceId} | LV {level}";
+                    _turretWindowRect = GUILayout.Window(
+                        GetInstanceID(), _turretWindowRect, DrawTurretWindow, title);
                 }
-
-                GUI.matrix = previousGuiMatrix;
-                return;
             }
+            finally
+            {
+                GUI.enabled = previousEnabled;
+                GUI.matrix = previousGuiMatrix;
+            }
+        }
 
-            float availableHeight = Screen.height / appliedUiScale - 32f;
-            float panelHeight = Mathf.Max(0f, availableHeight);
-            GUILayout.BeginArea(new Rect(16f, 16f, PanelWidth, panelHeight), GUI.skin.box);
+        private static Rect GlobalPanelRect(float scale) => new(
+            16f, 16f, Mathf.Min(PanelWidth, Mathf.Max(1f, Screen.width / scale - 32f)),
+            Mathf.Max(1f, Screen.height / scale - 32f));
+
+        private void DrawWrappedLabel(string text, params GUILayoutOption[] options)
+        {
+            _wrappedLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true };
+            GUILayout.Label(text, _wrappedLabel, options);
+        }
+
+        private void DrawGlobalPanel(float appliedUiScale)
+        {
+            GUILayout.BeginArea(GlobalPanelRect(appliedUiScale), GUI.skin.box);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Turret Test Controls (F1)", GUILayout.ExpandWidth(true));
+            DrawWrappedLabel("Turret Test Controls (F1)", GUILayout.ExpandWidth(true));
             if (GUILayout.Button("Hide", GUILayout.Width(64f)))
             {
                 _isPanelVisible = false;
             }
             GUILayout.EndHorizontal();
 
+            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+            DrawWrappedLabel("Click a turret in the map to open its controls.");
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Show All Ranges"))
             {
@@ -224,11 +264,11 @@ namespace TeamHJD.Game.Debugging
 
             if (_controllerSnapshot != null)
             {
-                GUILayout.Label($"Turret Power: {_controllerSnapshot.AvailablePower} / {_controllerSnapshot.MaximumPower}");
-                GUILayout.Label($"Reserved: {_controllerSnapshot.ReservedPower} / Recovering: {_controllerSnapshot.PendingRecoveryPower}");
-                GUILayout.Label($"Controller Turrets: {_controllerSnapshot.RegisteredTurretCount} / " +
+                DrawWrappedLabel($"Turret Power: {_controllerSnapshot.AvailablePower} / {_controllerSnapshot.MaximumPower}");
+                DrawWrappedLabel($"Reserved: {_controllerSnapshot.ReservedPower} / Recovering: {_controllerSnapshot.PendingRecoveryPower}");
+                DrawWrappedLabel($"Controller Turrets: {_controllerSnapshot.RegisteredTurretCount} / " +
                     $"Activated: {_controllerSnapshot.ActivatedTurretCount} / Operational: {_controllerSnapshot.OperationalTurretCount}");
-                GUILayout.Label($"Activated Types: Canon {_controllerSnapshot.GetActivatedCount(TurretKind.Canon)} / " +
+                DrawWrappedLabel($"Activated Types: Canon {_controllerSnapshot.GetActivatedCount(TurretKind.Canon)} / " +
                     $"Missile {_controllerSnapshot.GetActivatedCount(TurretKind.Missile)} / " +
                     $"Laser {_controllerSnapshot.GetActivatedCount(TurretKind.Laser)} / " +
                     $"Tesla {_controllerSnapshot.GetActivatedCount(TurretKind.Tesla)} / " +
@@ -236,7 +276,7 @@ namespace TeamHJD.Game.Debugging
             }
             else
             {
-                GUILayout.Label("TurretController: not found");
+                DrawWrappedLabel("TurretController: not found");
             }
 
             TurretController autoController = _turretController;
@@ -244,8 +284,8 @@ namespace TeamHJD.Game.Debugging
             {
                 if (autoController.UnlockZones != null)
                 {
-                    GUILayout.Label($"Unlock Zones: {autoController.UnlockedZoneCount} / {autoController.UnlockZones.ZoneCount} (cell steps from CU)");
-                    GUILayout.Label("Game view overlay: green = unlocked, red = locked; number = zone");
+                    DrawWrappedLabel($"Unlock Zones: {autoController.UnlockedZoneCount} / {autoController.UnlockZones.ZoneCount} (cell steps from CU)");
+                    DrawWrappedLabel("Game view overlay: green = unlocked, red = locked; number = zone");
                     GUI.enabled = !autoController.IsAutoActivationRunning;
                     if (GUILayout.Button("Unlock Next Zone") &&
                         autoController.UnlockedZoneCount < autoController.UnlockZones.ZoneCount)
@@ -257,34 +297,9 @@ namespace TeamHJD.Game.Debugging
                 GUI.enabled = !autoController.IsAutoActivationRunning && autoController.AutoActivationCooldownRemaining <= 0f;
                 if (GUILayout.Button("Auto Activate")) autoController.TryStartAutoActivation();
                 GUI.enabled = previousEnabled;
-                GUILayout.Label($"Auto: {(autoController.IsAutoActivationRunning ? "Running" : "Idle")} / Cooldown: {autoController.AutoActivationCooldownRemaining:F1}s");
+                DrawWrappedLabel($"Auto: {(autoController.IsAutoActivationRunning ? "Running" : "Idle")} / Cooldown: {autoController.AutoActivationCooldownRemaining:F1}s");
                 foreach (TurretController.AutoActivationCandidate candidate in autoController.AutoActivationCandidates)
-                    GUILayout.Label($"Priority ID {candidate.InstanceId}: enemies at click {candidate.EnemyCount}");
-            }
-
-            if (_lastActivationResult.HasValue)
-            {
-                GUILayout.Label($"Last Activation Request: {_lastActivationResult.Value}");
-            }
-
-            if (!string.IsNullOrEmpty(_lastDurabilityAction))
-            {
-                GUILayout.Label($"Last Durability Action: {_lastDurabilityAction}");
-            }
-
-            if (!string.IsNullOrEmpty(_lastUpgradeAction))
-            {
-                GUILayout.Label($"Last Upgrade Request: {_lastUpgradeAction}");
-            }
-
-            if (!string.IsNullOrEmpty(_lastLevelUpgradeAction))
-            {
-                GUILayout.Label($"Last Level Change: {_lastLevelUpgradeAction}");
-            }
-
-            if (!string.IsNullOrEmpty(_lastLockAction))
-            {
-                GUILayout.Label($"Last Lock Action: {_lastLockAction}");
+                    DrawWrappedLabel($"Priority ID {candidate.InstanceId}: enemies at click {candidate.EnemyCount}");
             }
 
             GUILayout.BeginHorizontal();
@@ -307,32 +322,131 @@ namespace TeamHJD.Game.Debugging
             GUILayout.EndHorizontal();
 
             GUILayout.Space(6f);
-            GUILayout.Label($"Snapshots: All {TurretInstanceRegistry.GetAllSnapshots().Count} / " +
+            DrawWrappedLabel($"Snapshots: All {TurretInstanceRegistry.GetAllSnapshots().Count} / " +
                 $"Active {TurretInstanceRegistry.GetActiveSnapshots().Count} / " +
                 $"Operational {TurretInstanceRegistry.GetOperationalSnapshots().Count}");
-            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
-
-            for (int index = 0; index < _turrets.Count; index++)
-            {
-                TurretBase turret = _turrets[index];
-                if (turret == null)
-                {
-                    continue;
-                }
-
-                DrawTurretRow(turret);
-            }
-
-            GUILayout.EndScrollView();
             string cameraStatus = _mainCamera == null
                 ? $"Move Speed: {cameraMoveSpeed:0.0}"
                 : $"Move Speed: {cameraMoveSpeed:0.0} / Zoom Size: {_mainCamera.orthographicSize:0.0}";
-            GUILayout.Label(cameraStatus);
-            GUILayout.Label("Camera: WASD / Fast: Shift / Speed: Mouse Wheel");
-            GUILayout.Label("Zoom In: Q / Zoom Out: Space");
-            GUILayout.Label("Add a Monster-layer target to the scene to test tracking and firing.");
+            DrawWrappedLabel(cameraStatus);
+            DrawWrappedLabel("Camera: WASD / Fast: Shift / Speed: Mouse Wheel");
+            DrawWrappedLabel("Zoom In: Q / Zoom Out: Space");
+            DrawWrappedLabel("Turret window: drag its title / Close or Esc");
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
-            GUI.matrix = previousGuiMatrix;
+        }
+
+        private void DrawTurretWindow(int windowId)
+        {
+            GUILayout.BeginHorizontal();
+            DrawWrappedLabel("Selected turret controls", GUILayout.ExpandWidth(true));
+            bool close = GUILayout.Button("Close (Esc)", GUILayout.Width(100f));
+            GUILayout.EndHorizontal();
+            if (close)
+            {
+                CloseTurretWindow();
+                return;
+            }
+
+            if (TryGetSelectedTurret(out TurretBase turret))
+            {
+                _turretScrollPosition = GUILayout.BeginScrollView(_turretScrollPosition);
+                DrawTurretControls(turret);
+                DrawTurretFeedback(turret);
+                GUILayout.EndScrollView();
+            }
+            GUI.DragWindow(new Rect(0f, 0f, _turretWindowRect.width, 22f));
+        }
+
+        private void UpdateTurretWindowRect(float scale)
+        {
+            float screenWidth = Screen.width / scale;
+            float screenHeight = Screen.height / scale;
+            float width = Mathf.Min(TurretWindowWidth, Mathf.Max(1f, screenWidth - 32f));
+            float height = Mathf.Min(TurretWindowHeight, Mathf.Max(1f, screenHeight - 32f));
+            if (!_hasTurretWindowPosition)
+            {
+                _turretWindowRect = new Rect(Mathf.Max(16f, screenWidth - width - 16f), 16f, width, height);
+                _hasTurretWindowPosition = true;
+            }
+            _turretWindowRect.width = width;
+            _turretWindowRect.height = height;
+            _turretWindowRect.x = Mathf.Clamp(_turretWindowRect.x, 16f, Mathf.Max(16f, screenWidth - width - 16f));
+            _turretWindowRect.y = Mathf.Clamp(_turretWindowRect.y, 16f, Mathf.Max(16f, screenHeight - height - 16f));
+        }
+
+        private bool TryGetSelectedTurret(out TurretBase turret)
+        {
+            turret = null;
+            return _selectedTurretId > 0 && TurretInstanceRegistry.TryGet(_selectedTurretId, out turret) &&
+                   turret != null && turret.gameObject.scene == gameObject.scene;
+        }
+
+        private void OpenTurretWindow(TurretBase turret)
+        {
+            if (turret == null || turret.gameObject.scene != gameObject.scene ||
+                !TurretInstanceRegistry.TryGet(turret.InstanceId, out TurretBase registered) || registered != turret)
+                return;
+            if (_selectedTurretId != turret.InstanceId)
+                _turretScrollPosition = Vector2.zero;
+            _selectedTurretId = turret.InstanceId;
+            UpdateTurretWindowRect(Mathf.Max(1f, uiScale));
+        }
+
+        private void CloseTurretWindow() => _selectedTurretId = 0;
+
+        private bool IsPointerOverDebugUi(Vector2 screenPosition)
+        {
+            float scale = Mathf.Max(1f, uiScale);
+            Vector2 guiPosition = new Vector2(screenPosition.x, Screen.height - screenPosition.y) / scale;
+            Rect panel = _isPanelVisible ? GlobalPanelRect(scale) : new Rect(16f, 16f, 180f, 32f);
+            if (panel.Contains(guiPosition)) return true;
+            if (_selectedTurretId <= 0) return false;
+            UpdateTurretWindowRect(scale);
+            return _turretWindowRect.Contains(guiPosition);
+        }
+
+        private void HandleTurretSelection()
+        {
+            if (GameInput.WasPressedThisFrame(GameKey.Escape))
+                CloseTurretWindow();
+            if (!GameInput.PrimaryPointerWasPressedThisFrame || IsPointerOverDebugUi(GameInput.PointerPosition))
+                return;
+            if (_mainCamera == null) _mainCamera = Camera.main;
+            if (_mainCamera == null || !_mainCamera.pixelRect.Contains(GameInput.PointerPosition)) return;
+
+            Ray ray = _mainCamera.ScreenPointToRay(GameInput.PointerPosition);
+            TurretBase selected = null;
+            float closest = float.PositiveInfinity;
+            foreach (RaycastHit2D hit in Physics2D.GetRayIntersectionAll(ray, float.PositiveInfinity, Physics2D.AllLayers))
+            {
+                TurretBase candidate = hit.collider.GetComponentInParent<TurretBase>();
+                if (candidate == null || candidate.gameObject.scene != gameObject.scene || hit.distance >= closest)
+                    continue;
+                if (!TurretInstanceRegistry.TryGet(candidate.InstanceId, out TurretBase registered) || registered != candidate)
+                    continue;
+                selected = candidate;
+                closest = hit.distance;
+            }
+            if (selected != null) OpenTurretWindow(selected);
+            else CloseTurretWindow();
+        }
+
+        private TurretFeedback FeedbackFor(TurretBase turret)
+        {
+            if (!_turretFeedback.TryGetValue(turret.InstanceId, out TurretFeedback feedback))
+                _turretFeedback.Add(turret.InstanceId, feedback = new TurretFeedback());
+            return feedback;
+        }
+
+        private void DrawTurretFeedback(TurretBase turret)
+        {
+            if (!_turretFeedback.TryGetValue(turret.InstanceId, out TurretFeedback feedback)) return;
+            if (feedback.Activation.HasValue) DrawWrappedLabel($"Last activation: {feedback.Activation.Value}");
+            if (!string.IsNullOrEmpty(feedback.Durability)) DrawWrappedLabel(feedback.Durability);
+            if (!string.IsNullOrEmpty(feedback.Upgrade)) DrawWrappedLabel(feedback.Upgrade);
+            if (!string.IsNullOrEmpty(feedback.LevelChange)) DrawWrappedLabel(feedback.LevelChange);
+            if (!string.IsNullOrEmpty(feedback.Lock)) DrawWrappedLabel(feedback.Lock);
         }
 
         private void DrawUnlockZoneOverlay(float appliedUiScale)
@@ -450,34 +564,34 @@ namespace TeamHJD.Game.Debugging
                 maximumOrthographicSize);
         }
 
-        private void DrawTurretRow(TurretBase turret)
+        private void DrawTurretControls(TurretBase turret)
         {
             string level = turret.Definition == null ? "?" : turret.Definition.Level.ToString();
             string power = turret.Definition == null ? "?" : turret.EffectivePower.ToString();
             string damage = turret.Definition == null ? "?" : turret.EffectiveDamage.ToString();
 
             GUILayout.BeginVertical(GUI.skin.box);
-            GUILayout.Label(
+            DrawWrappedLabel(
                 $"{turret.name}  |  ID {turret.InstanceId}  |  LV {level}");
-            GUILayout.Label($"Damage {damage}  |  Power {power}  |  " +
+            DrawWrappedLabel($"Damage {damage}  |  Power {power}  |  " +
                 $"HP {turret.CurrentHealth}/{turret.MaxHealth}");
-            GUILayout.Label($"Attack Range {turret.MinimumRange:F1} ~ {turret.EffectiveRange:F1}");
+            DrawWrappedLabel($"Attack Range {turret.MinimumRange:F1} ~ {turret.EffectiveRange:F1}");
             if (_turretController != null && _turretController.TryGetUnlockZone(turret, out int unlockZone))
-                GUILayout.Label($"Unlock Zone {unlockZone} / available through {_turretController.UnlockedZoneCount}");
+                DrawWrappedLabel($"Unlock Zone {unlockZone} / available through {_turretController.UnlockedZoneCount}");
             if (TurretInstanceRegistry.TryGetSnapshot(turret.InstanceId, out TurretSnapshot snapshot))
             {
-                GUILayout.Label($"Snapshot: {snapshot.DefinitionId}  |  Pos {snapshot.Position.x:F1}, {snapshot.Position.y:F1}");
-                GUILayout.Label(
+                DrawWrappedLabel($"Snapshot: {snapshot.DefinitionId}  |  Pos {snapshot.Position.x:F1}, {snapshot.Position.y:F1}");
+                DrawWrappedLabel(
                     $"Active {snapshot.IsActivated}  |  Operational {snapshot.IsOperational}  |  " +
                     $"Destroyed {snapshot.IsDestroyed}  |  Locked {snapshot.IsLocked}");
-                GUILayout.Label(
+                DrawWrappedLabel(
                     $"HP {snapshot.CurrentHealth}/{snapshot.MaxHealth}  |  Damage {snapshot.EffectiveDamage}  |  " +
                     $"Range {snapshot.Range:F1}  |  Power {snapshot.EffectivePower}");
-                GUILayout.Label($"Spec Branch: {snapshot.SelectedUpgradeId} / Rank {snapshot.UpgradeLevel}/5");
+                DrawWrappedLabel($"Spec Branch: {snapshot.SelectedUpgradeId} / Rank {snapshot.UpgradeLevel}/5");
             }
             else
             {
-                GUILayout.Label("Snapshot: not registered");
+                DrawWrappedLabel("Snapshot: not registered");
             }
             GUILayout.BeginHorizontal();
 
@@ -504,7 +618,7 @@ namespace TeamHJD.Game.Debugging
             {
                 bool changed = turret.SetLocked(!turret.IsLocked);
                 string outcome = !changed ? "Unchanged" : turret.IsLocked ? "Locked" : "Unlocked";
-                _lastLockAction = $"{turret.name}: {outcome}";
+                FeedbackFor(turret).Lock = $"{turret.name}: {outcome}";
             }
 
             string status = turret.IsDestroyed
@@ -514,7 +628,7 @@ namespace TeamHJD.Game.Debugging
                 : turret.IsOperational
                     ? "ACTIVE"
                     : turret.IsActivated ? "SUSPENDED" : "OFF";
-            GUILayout.Label(status);
+            DrawWrappedLabel(status);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
@@ -522,20 +636,20 @@ namespace TeamHJD.Game.Debugging
             if (GUILayout.Button($"Damage -{damagePerClick}", GUILayout.Width(112f)))
             {
                 bool changed = turret.ApplyDamage(damagePerClick);
-                _lastDurabilityAction = $"{turret.name}: Damage {(changed ? "applied" : "ignored")}";
+                FeedbackFor(turret).Durability = $"{turret.name}: Damage {(changed ? "applied" : "ignored")}";
             }
 
             if (GUILayout.Button("Destroy", GUILayout.Width(80f)))
             {
                 bool changed = turret.ApplyDamage(turret.CurrentHealth);
-                _lastDurabilityAction = $"{turret.name}: Destroy {(changed ? "applied" : "ignored")}";
+                FeedbackFor(turret).Durability = $"{turret.name}: Destroy {(changed ? "applied" : "ignored")}";
             }
 
             GUI.enabled = !turret.IsManualOperationBlocked && turret.IsDestroyed && !turret.IsLocked;
             if (GUILayout.Button("Restore", GUILayout.Width(80f)))
             {
                 bool changed = turret.Restore();
-                _lastDurabilityAction = $"{turret.name}: Restore {(changed ? "applied" : "ignored")}";
+                FeedbackFor(turret).Durability = $"{turret.name}: Restore {(changed ? "applied" : "ignored")}";
             }
 
             GUI.enabled = true;
@@ -554,22 +668,22 @@ namespace TeamHJD.Game.Debugging
             GUILayout.EndHorizontal();
             if (_capturedSnapshots.TryGetValue(turret.InstanceId, out TurretSnapshot before))
             {
-                GUILayout.Label($"Captured ID {before.InstanceId}: {before.DefinitionId}");
-                GUILayout.Label($"Before: HP {before.CurrentHealth}/{before.MaxHealth} / " +
+                DrawWrappedLabel($"Captured ID {before.InstanceId}: {before.DefinitionId}");
+                DrawWrappedLabel($"Before: HP {before.CurrentHealth}/{before.MaxHealth} / " +
                     $"Damage {before.EffectiveDamage} / Range {before.Range:F1} / Power {before.EffectivePower}");
-                GUILayout.Label($"Before: Active {before.IsActivated} / Locked {before.IsLocked} / " +
+                DrawWrappedLabel($"Before: Active {before.IsActivated} / Locked {before.IsLocked} / " +
                     $"Destroyed {before.IsDestroyed}");
-                GUILayout.Label($"Before: Branch {before.SelectedUpgradeId} / Rank {before.UpgradeLevel}/5");
+                DrawWrappedLabel($"Before: Branch {before.SelectedUpgradeId} / Rank {before.UpgradeLevel}/5");
             }
 
             DrawUpgradeButtons(turret);
             DrawLevelChangeButtons(turret);
             if (turret.IsManualOperationBlocked)
-                GUILayout.Label("Manual operations blocked during automatic activation.");
+                DrawWrappedLabel("Manual operations blocked during automatic activation.");
             else if (turret.IsActivated)
-                GUILayout.Label("Deactivate and finish cooling before changing upgrades.");
+                DrawWrappedLabel("Deactivate and finish cooling before changing upgrades.");
             else if (turret.IsCoolingDown)
-                GUILayout.Label($"Cooling: {turret.CoolingDownRemaining:F1}s. Upgrades unavailable.");
+                DrawWrappedLabel($"Cooling: {turret.CoolingDownRemaining:F1}s. Upgrades unavailable.");
             GUILayout.EndVertical();
         }
 
@@ -587,7 +701,7 @@ namespace TeamHJD.Game.Debugging
                 int previousId = turret.InstanceId;
                 TurretLevelUpgradeResult result =
                     turret.RequestLevelUpgrade(nextPrefab, out TurretBase replacement);
-                _lastLevelUpgradeAction = result == TurretLevelUpgradeResult.Upgraded
+                FeedbackFor(turret).LevelChange = result == TurretLevelUpgradeResult.Upgraded
                     ? $"{previousName}: {result} (ID {previousId} -> {replacement.InstanceId})"
                     : $"{previousName} (ID {previousId}): {result}";
             }
@@ -598,7 +712,7 @@ namespace TeamHJD.Game.Debugging
                 int previousId = turret.InstanceId;
                 TurretLevelUpgradeResult result =
                     turret.RequestLevelDowngrade(previousPrefab, out TurretBase replacement);
-                _lastLevelUpgradeAction = result == TurretLevelUpgradeResult.Downgraded
+                FeedbackFor(turret).LevelChange = result == TurretLevelUpgradeResult.Downgraded
                     ? $"{previousName}: {result} (ID {previousId} -> {replacement.InstanceId})"
                     : $"{previousName} (ID {previousId}): {result}";
             }
@@ -623,25 +737,25 @@ namespace TeamHJD.Game.Debugging
                 TurretRuntimeState state = turret.RuntimeState;
                 bool branchAvailable = state.UpgradeLevel == 0 || state.SelectedUpgradeId == upgrade.Id;
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(upgrade.DisplayName, GUILayout.Width(150f));
+                DrawWrappedLabel(upgrade.DisplayName, GUILayout.Width(150f));
                 GUI.enabled = turret.CanModifyUpgrades && branchAvailable &&
                     state.UpgradeLevel < TurretRuntimeState.MaximumUpgradeLevel;
                 if (GUILayout.Button("+1", GUILayout.Width(50f)))
                 {
                     TurretUpgradeResult result = turret.ApplyUpgrade(upgrade);
-                    _lastUpgradeAction = $"{turret.name} / {upgrade.DisplayName}: {result}";
+                    FeedbackFor(turret).Upgrade = $"{turret.name} / {upgrade.DisplayName}: {result}";
                 }
                 GUI.enabled = turret.CanModifyUpgrades && state.HasAppliedUpgrade(upgrade.Id);
                 if (GUILayout.Button("-1", GUILayout.Width(50f)))
                 {
                     TurretUpgradeResult result = turret.DowngradeUpgrade(upgrade);
-                    _lastUpgradeAction = $"{turret.name} / {upgrade.DisplayName}: {result}";
+                    FeedbackFor(turret).Upgrade = $"{turret.name} / {upgrade.DisplayName}: {result}";
                 }
                 GUI.enabled = true;
                 if (!branchAvailable)
-                    GUILayout.Label("LOCKED");
+                    DrawWrappedLabel("LOCKED");
                 GUILayout.EndHorizontal();
-                GUILayout.Label($"Per step: Damage {upgrade.DamageModifierRatio:+0%;-0%;0%} / " +
+                DrawWrappedLabel($"Per step: Damage {upgrade.DamageModifierRatio:+0%;-0%;0%} / " +
                     $"Power {upgrade.PowerModifierRatio:+0%;-0%;0%} / Range {upgrade.RangeModifierRatio:+0%;-0%;0%}");
             }
 
@@ -651,7 +765,9 @@ namespace TeamHJD.Game.Debugging
         private void RefreshReferences()
         {
             _turrets.Clear();
-            _turrets.AddRange(TurretInstanceRegistry.GetAll());
+            foreach (TurretBase turret in TurretInstanceRegistry.GetAll())
+                if (turret != null && turret.gameObject.scene == gameObject.scene)
+                    _turrets.Add(turret);
             // Prefab names and levels change during promotion/demotion, but the
             // logical instance ID is transferred to the replacement turret.
             _turrets.Sort((left, right) => left.InstanceId.CompareTo(right.InstanceId));
@@ -661,6 +777,9 @@ namespace TeamHJD.Game.Debugging
 
         private void LateUpdate()
         {
+            // Resolve by logical ID after all Updates, including prefab replacement.
+            if (_selectedTurretId > 0 && !TryGetSelectedTurret(out _))
+                CloseTurretWindow();
             // IMGUI can run multiple times per frame. Capture once after gameplay Updates.
             if (_isPanelVisible)
                 _controllerSnapshot = _turretController != null ? _turretController.GetSnapshot() : null;
@@ -715,7 +834,7 @@ namespace TeamHJD.Game.Debugging
                 return;
             }
 
-            _lastActivationResult = turret.RequestActivation(isActive);
+            FeedbackFor(turret).Activation = turret.RequestActivation(isActive);
         }
 
         private void HandleRegistryChanged(TurretBase turret)
