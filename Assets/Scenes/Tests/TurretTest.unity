@@ -2075,7 +2075,7 @@ MonoBehaviour:
   maximumCameraMoveSpeed: 100
   cameraZoomSpeed: 10
   minimumOrthographicSize: 2
-  maximumOrthographicSize: 120
+  maximumOrthographicSize: 140
 --- !u!4 &856785811
 Transform:
   m_ObjectHideFlags: 0
