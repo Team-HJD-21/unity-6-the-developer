@@ -1,6 +1,6 @@
 using System;
+using TeamHJD.Game.Turrets;
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 #if UNITY_EDITOR
@@ -30,6 +30,7 @@ public class TowerMissile : MonoBehaviour
     public LayerMask layerMask;
     private float _bulletDamage;
     private Transform _target;
+    private MissileTargetReservation _targetReservation;
     private Vector2 _initialDirection;
     private SpriteRenderer _sr;
     private int _maxReassign;
@@ -40,23 +41,53 @@ public class TowerMissile : MonoBehaviour
     private string _missileDetectId; // MissileDetect SFX ID 저장
     private bool _isInitialized;
     private bool _isExploding;
+    private bool _hasAppliedExplosion;
+    private float _homingStartsAt;
+    private float _expiresAt;
+    private float _explosionDamageAt;
     
     public void Initialize(Transform target, float damage)
     {
-        if (_isInitialized)
-            throw new InvalidOperationException("TowerMissile has already been initialized.");
+        ValidateInitialization(damage);
         if (target == null)
             throw new ArgumentNullException(nameof(target));
+        if (!MissileTargetReservation.TryAcquire(target, out var reservation))
+            throw new InvalidOperationException("The missile target is unavailable or already reserved.");
+        try
+        {
+            Initialize(reservation, damage);
+        }
+        finally
+        {
+            reservation.Dispose();
+        }
+    }
+
+    private void ValidateInitialization(float damage)
+    {
+        if (_isInitialized)
+            throw new InvalidOperationException("TowerMissile has already been initialized.");
+        if (!isActiveAndEnabled)
+            throw new InvalidOperationException("TowerMissile must be active before initialization.");
         if (damage < 0f)
             throw new ArgumentOutOfRangeException(nameof(damage));
         if (rb == null)
             throw new InvalidOperationException("TowerMissile requires a Rigidbody2D reference.");
+    }
 
-        _target = target;
+    public void Initialize(MissileTargetReservation reservation, float damage)
+    {
+        ValidateInitialization(damage);
+        if (reservation == null || !reservation.IsValid)
+            throw new ArgumentException("A valid missile target reservation is required.", nameof(reservation));
+        _targetReservation = reservation.Transfer();
+        _target = _targetReservation.Target;
         _bulletDamage = damage;
         _initialDirection = transform.up;
         _currentSpeed = initialSpeed;
         rb.linearVelocity = _initialDirection * _currentSpeed;
+        _homingStartsAt = Time.time + initialStraightTime;
+        _expiresAt = Time.time + 10f;
         _isInitialized = true;
 
         // MissileFlying SFX 재생 및 ID 저장
@@ -66,8 +97,6 @@ public class TowerMissile : MonoBehaviour
             float distance = Vector2.Distance(transform.position, hits.transform.position);
             // _missileSoundId = AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFlying, distance, 80);
         }
-        StartCoroutine(InitialStraightMovement());
-        StartCoroutine(ExplodeMissileIfNotHit());
     }
 
     private void Awake()
@@ -76,8 +105,20 @@ public class TowerMissile : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (!_isInitialized || _isExploding) return;
+        if (!_isInitialized) return;
+        if (_isExploding)
+        {
+            if (!_hasAppliedExplosion && Time.time >= _explosionDamageAt)
+                ApplyExplosionDamage();
+            return;
+        }
+        if (Time.time >= _expiresAt)
+        {
+            BeginExplosion();
+            return;
+        }
 
+        _isHoming = Time.time >= _homingStartsAt;
         DrawTargetLineToTarget();
         SearchForNewTarget();
         AccelerateToTarget();
@@ -85,24 +126,36 @@ public class TowerMissile : MonoBehaviour
     }
     private void SearchForNewTarget()//목표하던 목표가 사라지면 호출
     {
-        if (_target == null)
+        if (_target != null && _targetReservation != null && _targetReservation.IsValid &&
+            (!_target.TryGetComponent(out EnemyController currentEnemy) || currentEnemy.isActiveAndEnabled))
+            return;
+
+        ReleaseTargetReservation();
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 300, enemyMask);
+        foreach (Collider2D candidate in hits)
         {
-            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 300,enemyMask);
-            foreach (Collider2D candidate in hits)
-            {
-                EnemyController enemy = candidate.GetComponentInParent<EnemyController>();
-                if (enemy == null || !enemy.isActiveAndEnabled)
-                    continue;
+            EnemyController enemy = candidate.GetComponentInParent<EnemyController>();
+            if (enemy == null || !enemy.isActiveAndEnabled)
+                continue;
 
-                if (enemy.IsTargeted)
-                    continue;
+            if (!MissileTargetReservation.TryAcquire(enemy.transform, out var reservation))
+                continue;
 
-                enemy.IsTargeted = true;
-                _target = enemy.transform;
-                break;
-            }
+            _targetReservation = reservation;
+            _target = reservation.Target;
+            break;
         }
     }
+
+    private void ReleaseTargetReservation()
+    {
+        _targetReservation?.Dispose();
+        _targetReservation = null;
+        _target = null;
+    }
+
+    private void OnDisable() => ReleaseTargetReservation();
+    private void OnDestroy() => ReleaseTargetReservation();
     private void AccelerateToTarget()
     {
         if (!_isHoming || !_target) return;
@@ -144,42 +197,32 @@ public class TowerMissile : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (_isExploding)
-            return;
-        StartCoroutine(DestroyObject());
-        GameObject explosion = Instantiate(explodePrefab, explosionPosition.position, Quaternion.identity);
-        explosion.GetComponent<Explode>().TriggerExplosion();
-    }
-    //for Coroutine Methods------------------------------------------------------------
-    private IEnumerator InitialStraightMovement()//일정시간 직진 후 목표를 향해 가속
-    {
-        yield return new WaitForSeconds(initialStraightTime);
-        _isHoming = true;
-        // _missileDetectId =  AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFinalDetect);
+        if (_isInitialized && isActiveAndEnabled)
+            BeginExplosion();
     }
 
-    private IEnumerator ExplodeMissileIfNotHit()//미사일 임무 시간 내에 
-    {
-        yield return new WaitForSeconds(10f);
-        if (_isExploding)
-            yield break;
-        StartCoroutine(DestroyObject());
-        GameObject explosion = Instantiate(explodePrefab, explosionPosition.position, Quaternion.identity);
-        explosion.GetComponent<Explode>().TriggerExplosion();
-    }
-    private IEnumerator DestroyObject()
+    private void BeginExplosion()
     {
         if (_isExploding)
-            yield break;
+            return;
         _isExploding = true;
+        // Release synchronously, before effects or delayed damage can be interrupted.
+        ReleaseTargetReservation();
+        _explosionDamageAt = Time.time + 0.1f;
         rb.linearVelocity = Vector2.zero;
-        _sr.enabled = false;
-        minimapMissile.enabled = false;
-        yield return new WaitForSeconds(0.1f);
-        if (_target != null && _target.TryGetComponent(out EnemyController reservedEnemy))
+        if (_sr != null) _sr.enabled = false;
+        if (minimapMissile != null) minimapMissile.enabled = false;
+        if (explodePrefab != null)
         {
-            reservedEnemy.IsTargeted = false;
+            Vector3 position = explosionPosition != null ? explosionPosition.position : transform.position;
+            GameObject explosion = Instantiate(explodePrefab, position, Quaternion.identity);
+            explosion.GetComponent<Explode>().TriggerExplosion();
         }
+    }
+
+    private void ApplyExplosionDamage()
+    {
+        _hasAppliedExplosion = true;
         // MissileFlying SFX 중단
         // if (!string.IsNullOrEmpty(_missileDetectId))
         // {
@@ -191,17 +234,21 @@ public class TowerMissile : MonoBehaviour
             // AudioManager.Instance.StopSfx(_missileSoundId);
             // Debug.Log("missilesound delete");
         }
-        Collider2D[] monsters = Physics2D.OverlapCircleAll(rb.position, explosionRange);
-        HashSet<EnemyHealth> damagedEnemies = new();
-        foreach (Collider2D candidate in monsters)
+        try
         {
-            EnemyHealth enemyHealth = candidate.GetComponentInParent<EnemyHealth>();
-            if (enemyHealth != null && damagedEnemies.Add(enemyHealth))
+            Collider2D[] monsters = Physics2D.OverlapCircleAll(rb.position, explosionRange);
+            HashSet<EnemyHealth> damagedEnemies = new();
+            foreach (Collider2D candidate in monsters)
             {
-                enemyHealth.TakeDamage(Mathf.RoundToInt(_bulletDamage));
+                EnemyHealth enemyHealth = candidate.GetComponentInParent<EnemyHealth>();
+                if (enemyHealth != null && damagedEnemies.Add(enemyHealth))
+                    enemyHealth.TakeDamage(Mathf.RoundToInt(_bulletDamage));
             }
         }
-        Destroy(gameObject);
+        finally
+        {
+            Destroy(gameObject);
+        }
     }
     //for debug-------------------------------------------------------------
     private void OnDrawGizmosSelected()

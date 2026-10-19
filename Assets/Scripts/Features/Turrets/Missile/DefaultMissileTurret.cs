@@ -15,6 +15,7 @@ public abstract class DefaultMissileTurret : TurretBase
     protected float CoolTime => Definition.CoolTime;
 
     private readonly List<Collider2D> _targetCandidates = new();
+    private MissileTargetReservation[] _targetReservations;
     private float _currentMissileCount;   //과열시 중지 위한 변수
     protected override bool UsesMinimumRange => true;
 
@@ -71,7 +72,9 @@ public abstract class DefaultMissileTurret : TurretBase
         foreach (Transform target in Targets)
         {
             if (target != null &&
-                !TurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range))
+                (!target.gameObject.activeInHierarchy ||
+                 !target.TryGetComponent(out EnemyController enemy) || !enemy.isActiveAndEnabled ||
+                 !TurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range)))
                 needsNewTargets = true;
         }
 
@@ -84,6 +87,7 @@ public abstract class DefaultMissileTurret : TurretBase
     }
     private void FindTarget()
     {
+        _targetReservations ??= new MissileTargetReservation[Targets.Length];
         TurretTargetingUtility.CollectByDistance(
             turret.position,
             Range,
@@ -104,36 +108,70 @@ public abstract class DefaultMissileTurret : TurretBase
                 !TurretTargetingUtility.IsInAttackRange(turret, enemy.transform, MinimumRange, Range))
                 continue;
 
-            if (enemy.IsTargeted)
-                continue;
-
             bool alreadySelected = false;
             for (int index = 0; index < slot; index++)
                 alreadySelected |= Targets[index] == enemy.transform;
             if (alreadySelected)
                 continue;
 
+            if (!MissileTargetReservation.TryAcquire(enemy.transform, out var reservation))
+                continue;
+
+            _targetReservations[slot] = reservation;
             Targets[slot++] = enemy.transform;
-            enemy.IsTargeted = true;
         }
-        if (Targets.Length > 1 && Targets[1] == null) Targets[1] = Targets[0];
+        if (Targets.Length > 1 && Targets[1] == null && _targetReservations[0] != null)
+        {
+            Targets[1] = Targets[0];
+            _targetReservations[1] = _targetReservations[0].Retain();
+        }
     }
 
     private void ReleaseUnlaunchedTargets()
     {
-        if (Targets == null)
-            return;
-
-        // Shoot clears these slots after handing their reservations to the missiles.
-        // Only targets still waiting for launch belong to this turret.
-        for (int index = 0; index < Targets.Length; index++)
+        if (_targetReservations != null)
         {
-            Transform target = Targets[index];
-            if (target != null && target.TryGetComponent(out EnemyController enemy))
-                enemy.IsTargeted = false;
-            Targets[index] = null;
+            for (int index = 0; index < _targetReservations.Length; index++)
+            {
+                _targetReservations[index]?.Dispose();
+                _targetReservations[index] = null;
+            }
         }
+        if (Targets != null)
+            System.Array.Clear(Targets, 0, Targets.Length);
         TimeTilFire = 0f;
+    }
+
+    protected void LaunchMissiles(Transform[] spawnPoints)
+    {
+        try
+        {
+            RecordMissileLaunch();
+            StartCoroutine(ShootAnimation());
+            for (int index = 0; index < spawnPoints.Length; index++)
+            {
+                MissileTargetReservation reservation = _targetReservations?[index];
+                if (reservation == null || !reservation.IsValid)
+                    continue;
+
+                GameObject missileObject = Instantiate(
+                    missilePrefab, spawnPoints[index].position, turretRotationPoint.rotation);
+                try
+                {
+                    missileObject.GetComponent<TowerMissile>().Initialize(reservation, Damage);
+                }
+                catch
+                {
+                    Destroy(missileObject);
+                    throw;
+                }
+            }
+        }
+        finally
+        {
+            // Transferred handles are already invalid. Only unlaunched claims are released.
+            ReleaseUnlaunchedTargets();
+        }
     }
 
     protected override void OnDisable()

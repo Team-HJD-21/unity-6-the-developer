@@ -1,10 +1,11 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-10-14
+최종 갱신: 2026-10-20
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 냉각·수동 조작·강화 제한은 main `8d08001a`에 병합된 PR #525를 기준으로 최신화했다.
+미사일 예약 토큰과 시간 기반 발사체 수명 처리는 현재 작업 브랜치의 변경 사항이며 병합·실제 Stage 검증과 구분한다.
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
 
@@ -418,31 +419,34 @@ flowchart TD
     Update["DefaultMissileTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
     Search --> Collect["TurretTargetingUtility<br>CollectByDistance()"]
     Collect --> RangeCheck["IsInAttackRange()<br>내부 범위 후보 제외"]
-    RangeCheck --> Filter["EnemyController 조회<br>IsTargeted인 적은 제외"]
-    Filter --> Targets["발사구 수에 맞게 Targets 지정<br>IsTargeted = true"]
+    RangeCheck --> Filter["활성 EnemyController 조회<br>MissileTargetReservation.TryAcquire()"]
+    Filter --> Targets["발사구별 예약 토큰과 Targets 지정<br>같은 목표의 추가 발은 Retain()"]
     Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>발사 간격 확인"]
     Fire --> Shoot["MissileTurretLV1~3<br>Shoot()"]
-    Shoot --> Init["TowerMissile.Initialize()<br>Target·Damage 전달"]
-    Shoot --> Transfer["터렛 Target 슬롯 비우기<br>예약 관리는 발사체로 이전"]
-    Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 IsTargeted = false"]
+    Shoot --> Init["LaunchMissiles()<br>TowerMissile.Initialize(예약, Damage)"]
+    Init --> Transfer["Transfer()로 미사일에 소유권 이전<br>터렛 슬롯 정리는 이전된 예약에 영향 없음"]
+    Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약 토큰만 Dispose()"]
     Release --> Search
-    Init --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
-    Straight -->|목표 소실| Retarget["SearchForNewTarget()<br>미예약 EnemyController 선택·예약"]
+    Transfer --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
+    Straight -->|목표 소실·비활성화| Retarget["SearchForNewTarget()<br>기존 토큰 반환 후 새 목표 예약"]
     Retarget --> Straight
-    Straight -->|충돌 또는 수명 종료| Explosion["폭발 이펙트 생성"]
-    Explosion --> Unreserve["TowerMissile.DestroyObject()<br>목표 IsTargeted = false"]
-    Unreserve --> Area["폭발 범위 내<br>Enemy 탐색"]
+    Straight -->|충돌 또는 10초 수명 종료| Unreserve["BeginExplosion()<br>자신의 예약 토큰을 즉시 반환"]
+    Disabled["미사일 OnDisable / OnDestroy"] --> Cleanup["자신의 토큰 반환<br>중복 호출은 무시"]
+    Unreserve --> Explosion["폭발 이펙트 생성"]
+    Explosion --> Area["FixedUpdate()에서 0.1초 후<br>ApplyExplosionDamage()"]
     Area --> Health["EnemyHealth 조회<br>동일 적 콜라이더 중복 제거"]
     Health --> Damage["EnemyHealth.TakeDamage(int)<br>서버에서 피해 확정"]
     Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
-Missile은 적 수가 부족하면 첫 Target을 다른 발사 슬롯에서도 사용할 수 있다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.DestroyObject()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 위 공식으로 계산한 `EffectiveDamage`를 전달한다.
+Missile은 적 수가 부족하면 첫 Target을 두 번째 발사 슬롯에서도 사용할 수 있다. 슬롯마다 별도 예약 토큰을 가지며 마지막 토큰이 반환될 때까지 다른 발사 묶음은 해당 적을 예약할 수 없다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.ApplyExplosionDamage()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 위 공식으로 계산한 `EffectiveDamage`를 전달한다.
+
+예약은 터렛 영역의 `MissileTargetReservation`이 관리하며 `EnemyController.IsTargeted`를 읽거나 변경하지 않는다. 발사 전에는 터렛이 토큰을 소유하고 `Initialize(예약, Damage)`가 `Transfer()`로 소유권을 가져간다. 발사 실패 시 미발사 토큰을 반환하고, 이미 이전된 토큰은 터렛 비활성화·승급으로 해제하지 않는다. `Initialize(Transform, Damage)`도 유지하며 직접 호출할 때는 미예약 목표를 새로 예약한다. 같은 목표에 여러 발을 의도적으로 발사할 때는 기존 토큰의 `Retain()`을 사용한다.
+
+미사일의 초기 직진 시간, 10초 수명과 0.1초 폭발 피해 지연은 `Time.time`을 `FixedUpdate()`에서 확인한다. 예약 반환을 코루틴 완료에 의존하지 않으며 폭발 시작·비활성화·파괴에서 자기 토큰만 반환한다. 미사일을 비활성화했다가 재활성화하면 기존 예약은 되살리지 않고 다음 물리 갱신에서 새 목표를 탐색한다. 수명은 최초 발사 시각을 기준으로 유지한다. 이 예약은 로컬 프로세스 안에서만 유효하며 네트워크 복제를 제공하지 않는다.
 
 미사일의 최초 탐색과 비행 중 재탐색은 Collider와 그 부모의 활성 `EnemyController`를 기준으로 한다. 최초 탐색은 EnemyController Transform의 최소 및 최대 사거리도 검사한다. 선택된 EnemyController의 Transform을 기존 유도 이동이 추적한다. 같은 Enemy의 여러 Collider가 최초 탐색 슬롯에 중복 등록되지 않도록 한다. 비행 중 재탐색은 기존 300 단위 탐색 반경을 유지하며 터렛의 최소 사거리를 다시 적용하지 않는다.
-
-목표 예약은 PoC `EnemyController.IsTargeted`를 사용한다. 최초 탐색과 비행 중 재탐색에서 이미 예약된 적을 제외하고 선택한 적을 `true`로 설정한다. 기존 `Monster.isTargeted`는 더 이상 참조하지 않는다. 비활성화와 프리팹 교체 및 발사 전 사거리 이탈에서는 `ReleaseUnlaunchedTargets()`로 발사 전 예약을 `false`로 되돌린다. 발사 후에는 각 LV 스크립트가 Target 슬롯을 비우므로 비행 중인 미사일의 예약은 터렛 종료로 해제하지 않는다. 미사일은 폭발 처리에서 자신의 목표 예약을 해제한다. 적이 부족할 때 같은 목표를 여러 발에 배정하는 기존 동작은 유지하며 bool 예약이므로 한 발이 먼저 해제하면 다른 발이 추적 중이어도 다시 선택될 수 있다. 복수 발사체 예약의 개수 및 외부 Destroy 정리는 후속 과제다. 이 속성은 로컬 상태이며 네트워크 동기화 값이 아니다.
 
 폭발 피해는 Collider의 부모까지 `EnemyHealth`를 조회하고 동일 적은 한 번만 피해를 적용한다. 기존 Enemy Tag 대신 EnemyHealth 존재 여부를 피해 대상으로 사용한다. 충돌 및 수명 종료가 겹쳐도 동일 미사일의 폭발 처리는 한 번만 수행한다. 발사체 이동과 서버 전용 피해 API를 연결한 PoC이며 터렛 및 발사체 전체의 네트워크 동기화나 권한 구조를 완성한 것은 아니다. Host에서 Network Spawn된 적을 대상으로 추적과 HP 감소 및 사망 Despawn을 검증해야 한다. 기존 Monster만 있는 적은 더 이상 이 피해 API로 체력이 감소하지 않는다.
 
@@ -733,7 +737,7 @@ flowchart TD
 | 등록부 | static 로컬 Registry | Match 수명주기의 조회 서비스로 이전 |
 | 전력 변경 | `ITurretPowerSource`로 독립 `TurretPowerBudget` 사용 | Command와 Authority 검증으로 분리 |
 | 파괴 시 예약 전력 | 현재는 전량 반환 | 손실률(0~100%)을 터렛 API 입력값으로 열고 반환량을 조정 가능하게 한다. 제품 기본값과 반환 정책은 미정 |
-| Target 평가 | concrete 코드가 Physics와 `EnemyController.IsTargeted` 직접 사용 | AI/Combat 계약과 평가 모델 분리 |
+| Target 평가 | concrete 코드가 Physics와 활성 `EnemyController`를 조회하고 터렛 측 예약 토큰 사용 | AI/Combat 계약과 평가 모델 분리 |
 | Namespace | 일부 concrete 터렛이 전역 namespace | 이식 시 `Presentation` 경계로 정리 |
 | 네트워크 | 로컬 상태만 존재 | Host authoritative 상태와 Snapshot 추가 |
 | AI 화력 평가 | Stage 1 Adapter에서 `FirepowerRatio = 0.5` 임시 사용 | 조수빈과 계산식·갱신 시점을 확정 |
@@ -765,7 +769,8 @@ flowchart TD
 - [`DefaultCanonTurret.cs`](../../Assets/Scripts/Features/Turrets/Cannon/DefaultCanonTurret.cs)
 - [`DefaultMissileTurret.cs`](../../Assets/Scripts/Features/Turrets/Missile/DefaultMissileTurret.cs)
 - [`TowerBullet.cs`](../../Assets/Scripts/Features/TurretsWeapons/TowerBullet.cs)
-- [`TowerMissile.cs`](../../Assets/Scripts/Features/TurretsWeapons/TowerMissile.cs)
+- [`TowerMissile.cs`](../../Assets/Scripts/Features/Turrets/Weapons/TowerMissile.cs)
+- [`MissileTargetReservation.cs`](../../Assets/Scripts/Features/Turrets/Core/MissileTargetReservation.cs)
 
 ## 자동 활성화 (2026-10-08)
 

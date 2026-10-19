@@ -13,33 +13,13 @@ public class MissileTurretLV1 : DefaultMissileTurret
     // [SerializeField] private Transform missileSpawnPoint;   //미사일 스폰 지점
     // [SerializeField] private Transform missileSpawnPoint2;  //미사일 스폰 지점
     [SerializeField] private Transform []missileSpawnPoint;
-    private GameObject []_missileObj;
     public override int ProjectilesPerShot => missileSpawnPoint != null ? missileSpawnPoint.Length : 0;
     private void Start()
     {
         Targets = new Transform[missileSpawnPoint.Length];
         gunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
-        _missileObj = new GameObject[missileSpawnPoint.Length];
     }
-    protected override void Shoot()
-    {
-        // Debug.Log("shooting now");
-        RecordMissileLaunch();
-        StartCoroutine(ShootAnimation());
-        for (int i = 0; i < _missileObj.Length; i++)
-        {
-            if (Targets[i] != null)
-            {
-                _missileObj[i] = Instantiate(missilePrefab, missileSpawnPoint[i].position, turretRotationPoint.rotation);
-                TowerMissile missileScript = _missileObj[i].GetComponent<TowerMissile>();
-                missileScript.Initialize(Targets[i], Damage);
-            }
-        }
-        for (var i = 0; i < _missileObj.Length; i++)
-        {
-            Targets[i] = null;
-        }
-    }
+    protected override void Shoot() => LaunchMissiles(missileSpawnPoint);
     private void OnDrawGizmosSelected()//타워의 반경 그려줌(디버깅용, 인게임에는 안나옴)
     {
 #if UNITY_EDITOR
