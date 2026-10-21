@@ -13,6 +13,8 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] private PlayerWeaponRig _weaponRig;
     [FormerlySerializedAs("inputHandler")]
     [SerializeField] private PlayerInputHandler _input;
+    [SerializeField] private PlayerSpannerWeapon _spannerPrefab;
+    private PlayerSpannerWeapon _spanner;
 
     [Header("Weapons")]
     [FormerlySerializedAs("currentWeapon")]
@@ -34,6 +36,7 @@ public class PlayerAttack : MonoBehaviour
     [FormerlySerializedAs("spreadAngle")]
     [SerializeField, Range(0f, 180f)] private float _spreadAngle = 25f;
     private PlayerSkillController _skills;
+    private PlayerSpriteMotion _motion;
     private float _nextShotTime;
     private bool _reportedConfigurationError;
     public WeaponType CurrentWeapon => _currentWeapon;
@@ -44,19 +47,27 @@ public class PlayerAttack : MonoBehaviour
         if (_muzzleAnchor == null) _muzzleAnchor = GetComponentInChildren<PlayerMuzzleAnchor>(true);
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
         _skills = GetComponent<PlayerSkillController>();
+        _motion = GetComponent<PlayerSpriteMotion>();
+        if (_spannerPrefab != null)
+        {
+            _spanner = Instantiate(_spannerPrefab, transform);
+            _spanner.Bind(transform, _input);
+        }
+        RefreshWeaponVisual();
     }
 
     private void Update()
     {
         if (_input == null || (_skills != null && !_skills.CanUse)) return;
         if (_input.WasWeaponSwitchPressed)
-            _currentWeapon = _currentWeapon == WeaponType.DefaultShotgun ? WeaponType.CryoBlaster : WeaponType.DefaultShotgun;
+            SelectNextWeapon();
         if (_input.IsAttackPressed) TryFire();
     }
 
     public bool TryFire()
     {
         if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || Time.time < _nextShotTime) return false;
+        if (_currentWeapon == WeaponType.Spanner) return TrySwingSpanner();
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
         bool isShotgun = _currentWeapon == WeaponType.DefaultShotgun;
@@ -66,7 +77,8 @@ public class PlayerAttack : MonoBehaviour
 
         float interval = isShotgun ? _shotgunInterval : _cryoInterval;
         _nextShotTime = Time.time + Mathf.Max(.01f, interval);
-        _weaponRig.ShowShotFlash();
+        _weaponRig.ShowShotFlash(color);
+        if (_motion != null) _motion.PlayRangedShot();
         return true;
     }
 
@@ -90,6 +102,8 @@ public class PlayerAttack : MonoBehaviour
 
     private bool TryGetAimDirection(out Vector2 direction)
     {
+        direction = Vector2.zero;
+        if (_input == null) return false;
         direction = _input.HasAimTarget ? _input.MouseWorldPosition - (Vector2)transform.position : _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) return false;
@@ -108,9 +122,36 @@ public class PlayerAttack : MonoBehaviour
             float angle = pelletCount > 1 ? -spreadAngle * .5f + angleStep * pelletIndex : 0f;
             Vector2 pelletDirection = Quaternion.Euler(0f, 0f, angle) * direction;
             var bullet = Instantiate(_bulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
-            if (bullet.Initialize(color, damage, pelletDirection)) fired = true;
+            if (bullet.Initialize(color, damage, pelletDirection, _currentWeapon == WeaponType.CryoBlaster)) fired = true;
             else Destroy(bullet.gameObject);
         }
         return fired;
+    }
+
+    public void SelectNextWeapon()
+    {
+        switch (_currentWeapon)
+        {
+            case WeaponType.DefaultShotgun: _currentWeapon = WeaponType.CryoBlaster; break;
+            case WeaponType.CryoBlaster:
+                _currentWeapon = _spanner != null ? WeaponType.Spanner : WeaponType.DefaultShotgun;
+                break;
+            default: _currentWeapon = WeaponType.DefaultShotgun; break;
+        }
+        RefreshWeaponVisual();
+    }
+
+    private void RefreshWeaponVisual()
+    {
+        bool melee = _currentWeapon == WeaponType.Spanner && _spanner != null;
+        if (_weaponRig != null) _weaponRig.SetRangedWeaponVisible(!melee);
+        if (_spanner != null) _spanner.gameObject.SetActive(melee);
+    }
+
+    private bool TrySwingSpanner()
+    {
+        if (_spanner == null || !TryGetAimDirection(out Vector2 direction) || !_spanner.TryAttack(direction)) return false;
+        _nextShotTime = Time.time + _spanner.AttackInterval;
+        return true;
     }
 }

@@ -161,6 +161,15 @@ namespace TeamHJD.Game.Turrets
             return previousHealth != _currentHealth;
         }
 
+        internal bool Repair(int amount, int maxHealth)
+        {
+            if (!_healthInitialized || _isDestroyed || _currentHealth <= 0 || amount <= 0 || maxHealth <= _currentHealth)
+                return false;
+            // 큰 회복량도 덧셈 오버플로 없이 최대 체력까지만 반영합니다.
+            _currentHealth = (int)Math.Min((long)maxHealth, (long)_currentHealth + amount);
+            return true;
+        }
+
         internal void MarkDestroyed()
         {
             _currentHealth = 0;

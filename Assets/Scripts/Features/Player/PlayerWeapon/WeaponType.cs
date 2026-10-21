@@ -2,5 +2,6 @@
 public enum WeaponType
 {
     DefaultShotgun = 0,
-    CryoBlaster = 1
+    CryoBlaster = 1,
+    Spanner = 2
 }

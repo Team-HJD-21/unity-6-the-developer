@@ -461,8 +461,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812003010}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.9, y: 0.15, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: -0.18562499999999993, y: 0.240625, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -492,8 +492,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812003020}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.9, y: 0.15, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: 0.10749999999999993, y: 0.209375, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -523,8 +523,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812003030}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: 0.30625, y: 0.37187499999999996, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -554,8 +554,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812003040}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.9, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: 0.35, y: 0.09999999999999998, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -587,8 +587,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 35664318898737409}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: 0.8, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: 1.92, y: -0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -604,7 +604,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 35664318898737409}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -668,7 +668,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMuzzleFlash
   _flashVisual: {fileID: 989502019032446004}
-  _duration: 0.05
+  _duration: 0.1
   _muzzle: {fileID: 812003011}
 --- !u!1 &989502019032446004
 GameObject:
@@ -680,8 +680,9 @@ GameObject:
   m_Component:
   - component: {fileID: 824029187505986754}
   - component: {fileID: 5431939817919555952}
+  - component: {fileID: 910202610210000013}
   m_Layer: 0
-  m_Name: gunflashside
+  m_Name: Authored Muzzle Flash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -695,8 +696,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 989502019032446004}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.9, y: 0.15, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -751,7 +752,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: f8e77d2eab0c44a298caa0b221733c06, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a6f8e7b4488a5ab6bf9e91b09dce4f10, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -787,8 +788,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1461408625267929976}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.8, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: -1.92, y: -0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -804,7 +805,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1461408625267929976}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -868,7 +869,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMuzzleFlash
   _flashVisual: {fileID: 5082557610794694642}
-  _duration: 0.05
+  _duration: 0.1
   _muzzle: {fileID: 812003021}
 --- !u!1 &1615219223918248107
 GameObject:
@@ -880,8 +881,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2777831674390306201}
   - component: {fileID: 8086523746208960244}
+  - component: {fileID: 910202610210000010}
   m_Layer: 0
-  m_Name: gunflashdown
+  m_Name: Authored Muzzle Flash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -895,8 +897,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1615219223918248107}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -0.02, y: -0.74, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: -0.70710678, w: 0.70710678}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -951,7 +953,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: f8e77d2eab0c44a298caa0b221733c06, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a6f8e7b4488a5ab6bf9e91b09dce4f10, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1020,6 +1022,23 @@ MonoBehaviour:
   _rightMuzzle: {fileID: 812003011}
   _upMuzzle: {fileID: 812003031}
   _downMuzzle: {fileID: 812003041}
+  _bodyIncludesGunSprite: 1
+  _usePoseMuzzles: 1
+  _firingMuzzles:
+    left: {x: -1.8125, y: 0.109375}
+    right: {x: 1.734375, y: 0.140625}
+    down: {x: 0.35, y: -0.75}
+    up: {x: 1.15625, y: 0.921875}
+  _leftLeanMuzzles:
+    left: {x: -1.625, y: 0}
+    right: {x: 1.3125, y: 0.03125}
+    down: {x: 0.1, y: -0.875}
+    up: {x: 1.03125, y: 1.4375}
+  _rightLeanMuzzles:
+    left: {x: -1.5, y: -0.09375}
+    right: {x: 1.625, y: 0}
+    down: {x: -0.12, y: -0.875}
+    up: {x: 1.25, y: 1.375}
 --- !u!1 &2207644932941873413
 GameObject:
   m_ObjectHideFlags: 0
@@ -1200,7 +1219,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 428416400, guid: 21503a1d34a324ec2b34bc15ef1b6bf3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ec1c515020f65c3586ea6d4e0891ae1a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1282,8 +1301,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4842808037945612809}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.65, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: 0.85, y: 0.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1299,7 +1318,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4842808037945612809}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -1363,7 +1382,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMuzzleFlash
   _flashVisual: {fileID: 6576108410052862800}
-  _duration: 0.05
+  _duration: 0.1
   _muzzle: {fileID: 812003031}
 --- !u!1 &5082557610794694642
 GameObject:
@@ -1375,8 +1394,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3106810154188232433}
   - component: {fileID: 7531810501814499578}
+  - component: {fileID: 910202610210000012}
   m_Layer: 0
-  m_Name: gunflashside
+  m_Name: Authored Muzzle Flash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1390,8 +1410,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5082557610794694642}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.9, y: 0.15, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 1.00000000, w: 0.00000000}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1446,7 +1466,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: f8e77d2eab0c44a298caa0b221733c06, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a6f8e7b4488a5ab6bf9e91b09dce4f10, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1482,6 +1502,7 @@ GameObject:
   - component: {fileID: 1827649334803957304}
   - component: {fileID: 1827649334803957305}
   - component: {fileID: 910202610090000002}
+  - component: {fileID: 910202610190000001}
   m_Layer: 18
   m_Name: Player
   m_TagString: Player
@@ -1558,7 +1579,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 428416400, guid: 21503a1d34a324ec2b34bc15ef1b6bf3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c06202155e2c5a50b5362882de89829e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 1
   m_FlipY: 0
@@ -1610,7 +1631,7 @@ Animator:
   m_GameObject: {fileID: 5369298898549314971}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 91103e8d3bc1f4f7e96182d9077a9421, type: 2}
+  m_Controller: {fileID: 9100000, guid: c9f0cb73b1036044ea6495bedb7ca9e9, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1727,6 +1748,7 @@ MonoBehaviour:
   _muzzleAnchor: {fileID: 5693769757480734795}
   _weaponRig: {fileID: 1602775552470066737}
   _input: {fileID: -6787196589204068366}
+  _spannerPrefab: {fileID: 1004, guid: e558c38b3bb34eacbb759eb6ba52d327, type: 3}
   _currentWeapon: 0
   _shotgunColor: {r: 1, g: 0.5, b: 0.1, a: 1}
   _shotgunDamage: 13
@@ -1873,6 +1895,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControlState
   _allowSelectionDuringCombat: 1
   _allowActionsDuringPreparation: 1
+--- !u!114 &910202610190000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a660b3f14e115c369966d916dd98a66b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpriteMotion
+  _motions: {fileID: 11400000, guid: 2760b8ed3fc75a95bf8f1d4ede7f17c9, type: 2}
+  _renderer: {fileID: 2008014413884619221}
+  _animator: {fileID: 4704063242810534}
 --- !u!1 &5971586974638979900
 GameObject:
   m_ObjectHideFlags: 0
@@ -1917,8 +1954,9 @@ GameObject:
   m_Component:
   - component: {fileID: 7919841115669253568}
   - component: {fileID: 6611754918144206426}
+  - component: {fileID: 910202610210000011}
   m_Layer: 0
-  m_Name: gunflashup
+  m_Name: Authored Muzzle Flash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1932,8 +1970,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6576108410052862800}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0, z: 0.7071068, w: -0.7071068}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.70710678, w: 0.70710678}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1988,7 +2026,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: f8e77d2eab0c44a298caa0b221733c06, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a6f8e7b4488a5ab6bf9e91b09dce4f10, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -2024,8 +2062,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8017330660361639463}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.65, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.00000000, w: 1.00000000}
+  m_LocalPosition: {x: 0, y: -0.85, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2041,7 +2079,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8017330660361639463}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -2105,5 +2143,93 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMuzzleFlash
   _flashVisual: {fileID: 1615219223918248107}
-  _duration: 0.05
+  _duration: 0.1
   _muzzle: {fileID: 812003041}
+--- !u!95 &910202610210000010
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1615219223918248107}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d6e5d4d2cad77e74abfbc3beae3b8b90, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage:
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!95 &910202610210000011
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6576108410052862800}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d6e5d4d2cad77e74abfbc3beae3b8b90, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage:
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!95 &910202610210000012
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5082557610794694642}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d6e5d4d2cad77e74abfbc3beae3b8b90, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage:
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!95 &910202610210000013
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 989502019032446004}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d6e5d4d2cad77e74abfbc3beae3b8b90, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage:
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

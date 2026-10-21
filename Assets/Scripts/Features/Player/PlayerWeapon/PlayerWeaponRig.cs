@@ -25,11 +25,32 @@ public static class PlayerAimUtility
 [DefaultExecutionOrder(-100)]
 public sealed class PlayerWeaponRig : MonoBehaviour
 {
+    [System.Serializable]
+    private sealed class MuzzlePose
+    {
+        public Vector2 down = Vector2.zero;
+        public Vector2 right = Vector2.zero;
+        public Vector2 up = Vector2.zero;
+        public Vector2 left = Vector2.zero;
+
+        public Vector2 GetPosition(PlayerAimFacing facing)
+        {
+            switch (facing)
+            {
+                case PlayerAimFacing.Right: return right;
+                case PlayerAimFacing.Up: return up;
+                case PlayerAimFacing.Left: return left;
+                default: return down;
+            }
+        }
+    }
+
     [Header("Owner and Mount")]
     [FormerlySerializedAs("Playerpoint"), FormerlySerializedAs("playerpoint")]
     [SerializeField] private Transform _playerRoot;
     [SerializeField] private PlayerInputHandler _input;
     [SerializeField] private Vector3 _mountLocalPosition;
+    [SerializeField] private bool _bodyIncludesGunSprite;
 
     [Header("Directional Guns")]
     [FormerlySerializedAs("GunsideL"), FormerlySerializedAs("gunsideL")]
@@ -46,11 +67,23 @@ public sealed class PlayerWeaponRig : MonoBehaviour
     [SerializeField] private Transform _rightMuzzle;
     [SerializeField] private Transform _upMuzzle;
     [SerializeField] private Transform _downMuzzle;
+    [Header("Firing positions (Weapon Rig local coordinates)")]
+    [SerializeField] private bool _usePoseMuzzles;
+    [SerializeField] private MuzzlePose _firingMuzzles = new MuzzlePose();
+    [SerializeField] private MuzzlePose _leftLeanMuzzles = new MuzzlePose();
+    [SerializeField] private MuzzlePose _rightLeanMuzzles = new MuzzlePose();
     private PlayerSkillController _skills;
     private Transform _activeGun;
     private Transform _activeMuzzle;
     private PlayerMuzzleFlash _activeFlash;
     private bool _initialized;
+    private bool _showGuns = true;
+
+    public void SetRangedWeaponVisible(bool visible)
+    {
+        _showGuns = visible;
+        RefreshPose(_input != null ? _input.AimDirection : Vector2.down);
+    }
 
     public PlayerAimFacing Facing { get; private set; } = PlayerAimFacing.Down;
     public Transform PlayerRoot => _playerRoot;
@@ -96,10 +129,35 @@ public sealed class PlayerWeaponRig : MonoBehaviour
             case PlayerAimFacing.Up: Select(_upGun, _upMuzzle); break;
             default: Select(_downGun, _downMuzzle); break;
         }
-        SetVisible(_leftGun, _leftGun == _activeGun);
-        SetVisible(_rightGun, _rightGun == _activeGun);
-        SetVisible(_upGun, _upGun == _activeGun);
-        SetVisible(_downGun, _downGun == _activeGun);
+        UpdateMuzzlePosition();
+        SetVisible(_leftGun, _showGuns && _leftGun == _activeGun);
+        SetVisible(_rightGun, _showGuns && _rightGun == _activeGun);
+        SetVisible(_upGun, _showGuns && _upGun == _activeGun);
+        SetVisible(_downGun, _showGuns && _downGun == _activeGun);
+        SetGunSpriteVisible(_leftGun);
+        SetGunSpriteVisible(_rightGun);
+        SetGunSpriteVisible(_upGun);
+        SetGunSpriteVisible(_downGun);
+    }
+
+    private void UpdateMuzzlePosition()
+    {
+        if (!_usePoseMuzzles || _activeMuzzle == null) return;
+        MuzzlePose pose = _firingMuzzles;
+        if (_input != null && _input.MoveInput.sqrMagnitude > .001f)
+        {
+            if (_input.MoveInput.x < -.01f) pose = _leftLeanMuzzles;
+            else if (_input.MoveInput.x > .01f) pose = _rightLeanMuzzles;
+        }
+        Vector2 position = pose.GetPosition(Facing);
+        _activeMuzzle.position = transform.TransformPoint(new Vector3(position.x, position.y, 0));
+    }
+
+    private void SetGunSpriteVisible(Transform gun)
+    {
+        if (gun == null) return;
+        SpriteRenderer renderer = gun.GetComponent<SpriteRenderer>();
+        if (renderer != null) renderer.enabled = !_bodyIncludesGunSprite;
     }
 
     private void Select(Transform gun, Transform muzzle)
@@ -123,4 +181,5 @@ public sealed class PlayerWeaponRig : MonoBehaviour
     }
 
     public void ShowShotFlash() { if (_activeFlash != null) _activeFlash.Show(); }
+    public void ShowShotFlash(Color tint) { if (_activeFlash != null) _activeFlash.Show(tint); }
 }
