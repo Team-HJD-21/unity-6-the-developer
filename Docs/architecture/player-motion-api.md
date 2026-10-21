@@ -34,6 +34,12 @@
 
 같은 날 사격 자세 후속 수정: Fire/HoverFire 32장과 고정 좌우 이동 자세 8장을 팔을 더 앞으로 뻗고 어깨를 여는 두 손 사격 자세로 교체했다. 정지·상하 이동 사격은 4프레임 반동을 사용하고 좌우 이동 사격은 기존처럼 고정된 이동 그림을 공유한다. 원본은 `Source/ConfidentFire.png`, `ConfidentHeld.png`다. 원래 복장·무기 색상·둥근 헬멧과 기존 Sprite 참조를 유지하며, 발사 피해량·속도·간격을 바꾸지 않는다.
 
+대기 자세 후속 수정에서는 Idle/ToolIdle의 좌우 16장만 조금 작게 조정하고 신발의 밝은 면을
+흰색·중립 회색으로 맞췄다. 내장 `image_gen`으로 기존 프레임의 신발 색을 편집한 원본은
+`Source/IdleSideBoots.png`다. 4프레임마다 같은 균일 배율을 사용해 밝은 헬멧 폭을 약 44.5픽셀로
+맞추고 기존 헬멧 중심·160×160 캔버스·32 PPU·Sprite GUID를 유지했다.
+상하 대기와 이동·공격·수리 등 나머지 몸체 208장은 수정하지 않았다.
+
 총구 효과는 별 모양 대신 오른쪽으로 퍼지는 짧은 섬광 4장(`Source/DirectionalMuzzleFlash.png`)으로 교체했다. 96×96·96 PPU이며 왼쪽 발사 원점을 고정하려고 Custom 피벗 (0.25, 0.5)를 사용한다. Player 프리팹의 기존 방향별 섬광 회전으로 상하좌우를 표시한다. 발사 효과가 활성화되는 시점과 0.1초 클립은 유지한다.
 
 이동은 발을 번갈아 내딛는 걷기 대신, 발을 내려두고 작은 추진 효과와 함께 미끄러지듯 떠 있는 형태다. 원본은 `Source/HoverLocomotion.png`이며 두 무기의 이동 32장만 교체했다. 프레임의 헬멧 기준 높이를 0/-2/0/+2 픽셀로 등록해 미세한 부유감을 표현한다. 이 오르내림은 Sprite 그림 안에만 있으며 실제 Transform·Rigidbody·Collider를 움직이지 않는다. 몸체의 손은 프레임 사이에 반전하지 않는다.
@@ -56,6 +62,31 @@
 - `PlayerMuzzleFlash`: 발사 성공 시 프리팹에 배치된 섬광 오브젝트를 잠깐 활성화한다. 색은 흰 탄심을 유지하는 약한 틴트로 적용한다.
 
 몸체에 그려진 무기까지 회전시키지는 않는다. 실제 발사 방향은 기존 마우스 조준 벡터를 유지하므로 몸체의 네 방향 그림과 대각선 발사각은 근사 관계다. 사격 중 발 위치 그림은 짧은 Fire 포즈로 전환되지만 플레이어 이동은 중단하지 않는다.
+
+## 바닥 그림자 프리팹
+
+`Assets/Prefabs/Player/PlayerGroundShadow.prefab`은 Transform과 SpriteRenderer로 구성한
+반투명 검정 원형 그림자다. 기존 `TurretRangeCircleSmooth` 스프라이트와 조명의 영향을 받지 않는
+`Sprites-Default` 재질을 사용한다. 별도의 런타임 생성·추적 스크립트와 충돌 컴포넌트는 없다.
+
+`Player.prefab`의 직계 자식인 중첩 프리팹으로 배치했다. 루트 `PlayerGroundShadow`는 발 기준점이며
+자식 `Shadow Visual`이 실제 원형 그림과 크기를 가진다. 기본 Visual Scale은 `(1.7, 0.65, 1)`이다.
+색상은 검정·Alpha `0.28`, Sorting Layer는 `Default`, Order in Layer는 `4`로 몸체의 `5`보다 뒤에 둔다.
+
+56개 몸체 Animation Clip에 자식 경로 `PlayerGroundShadow`의 Position/Scale 키를 추가했다.
+현재 참조하는 168장 Sprite의 발 아래 위치를 제작 단계에서 계산하고 Sprite 교체 시점과 같은
+시간에 위치 키를 기록했다. 런타임에 텍스처를 읽거나 발을 탐색하지 않는다.
+크기는 하체 폭과 방향별 프로필을 사용하며 기본 상하 폭 1.7, 좌우 폭 1.95, 기울임 폭 2.1을
+최소 기준으로 한다. 무기의 길이는 크기 기준에 포함하지 않는다. 한 클립 안에서는 가로폭을
+일정하게 유지하며 세로폭·투명도도 유지한다. 동일 그림을 공유하는 기울임 이동·사격은
+동일한 발 위치와 폭을 사용한다.
+
+Prefab Mode에서 `Shadow Visual`의 Transform으로 전체 위치 보정·기본 크기를 조절하고
+SpriteRenderer의 Color Alpha로 농도를 조절한다. 특정 행동만 보정하려면 Animation 창에서
+해당 클립의 `PlayerGroundShadow` Position/Scale 키를 수정한다. 애니메이션은 그림자 루트만
+움직이며 플레이어 루트·Rigidbody·Collider·총구에는 키를 추가하지 않는다.
+Sprite 참조·기존 클립 길이·반복 설정도 유지한다. 원형 원본과 다른 터렛 에셋은 수정하지 않는다.
+프리팹·키·참조 보존은 정적으로 검사하며 실제 Unity 재생과 발 정렬·가려짐 확인은 별도다.
 
 ## 타격 시점
 
@@ -81,4 +112,10 @@
 
 사격 후속 검사는 `shooting-verification.json`에 기록한다. 몸체 40장·섬광 4장, 섬광의 원점 피벗, 자세별 총구 좌표 12개, 프리팹의 물리·다른 컴포넌트 보존을 확인했다. `MovingDuringAction_ChangesHoverPoseWithoutRestartingActionOrMovingRoot`는 이동 입력 변경 시 실제 총구의 Rig 로컬 좌표도 확인하도록 확장했다. 런타임·Editor 빌드는 오류 0건·기존 경고 4건이며 Unity Test Runner/실제 플레이는 아직 실행하지 않았다. `shooting-before-after.gif`는 32 PPU 몸체·96 PPU 섬광을 조합한 제작용 미리보기로 게임 실행 캡처와 구분한다.
 
-현재 V2 검증: 런타임 및 Editor C# 빌드 오류 0건, 기존 경고 4건. 128장 PNG와 32개 AnimationClip의 정적 검사를 수행했다. 부유 이동으로 교체한 32장·8클립은 알파·여백·프레임 구분·GUID 참조·반전 키·반복 길이를 다시 검사했다. Unity 에셋 검증 메서드의 첫 실행에서 Animator Controller 레이어가 저장되지 않은 문제를 발견해 네 컨트롤러를 복구했다. 복구 후 Unity 검증 메서드의 재실행과 실제 플레이 검증은 아직 수행하지 않았다. 임시 자동 검증 코드는 Assets에서 제거했으며 기존 Editor 테스트로 다시 확인할 수 있다.
+현재 검증: `shadow-and-idle-validation.json`으로 몸체 56클립의 Sprite 키·길이·반복·GUID 보존,
+그림자 Position/Scale 키의 자식 경로, 플레이어 루트에 Transform 키가 없는지 확인했다.
+좌우 대기 16장의 160×160·이진 알파·Sprite GUID와 나머지 몸체 208장의 원본 바이트 보존을 확인했다.
+그림자 폭은 1.7~2.1이며 각 클립 안에서는 일정하다. 부유 이동·부유 행동·고정 기울임 에셋 검사도
+그림자 자식 키를 허용하도록 갱신해 통과했다. 기존 C# 빌드는 오류 0건·기존 경고 4건이며
+이번 후속 수정은 에셋만 변경했다. Unity의 실제 클립 임포트·Test Runner·플레이 확인은 남아 있다.
+로컬 `validation.txt`의 이전 Controller 실패는 이번 변경의 검증 결과가 아니다.
