@@ -1,6 +1,6 @@
 # 플레이어 무기별 스프라이트·이펙트 API
 
-수정일: 2026-10-21. 스패너 브랜치의 작업 중 변경이며 main 반영 전이다.
+수정일: 2026-10-22. 스패너 브랜치의 작업 중 변경이며 main 반영 전이다.
 
 ## 에셋 구성
 
@@ -52,7 +52,7 @@
 
 ## 표시와 판정의 책임
 
-- `PlayerMotionSet`: 방향별 원본 Sprite와 AnimationClip, Controller 참조를 보관한다. `GetClip(PlayerMotion)`은 정지 버전, `GetClip(PlayerMotion, bool hovering)`은 이동 중 행동의 부유 버전, 세 번째 `PlayerLateralLean` 인자는 총기 이동/사격의 좌우 쏠림을 조회한다. `duration`/`Sample`은 프레임 제작 기준이고 실제 행동 종료 시간은 AnimationClip 길이다.
+- `PlayerMotionSet`: 방향별 AnimationClip과 Controller 참조를 보관한다. `GetClip(PlayerMotion)`은 정지 버전, `GetClip(PlayerMotion, bool hovering)`은 이동 중 행동의 부유 버전, 세 번째 `PlayerLateralLean` 인자는 총기 이동/사격의 좌우 쏠림을 조회한다. Sprite 키·반복·재생 길이는 AnimationClip이 소유하며 별도 프레임 배열이나 `duration`을 저장하지 않는다.
 - `PlayerSpriteMotion`: 현재 무기와 이동 입력에 따라 Idle/Move 또는 ToolIdle/ToolMove를 선택한다. `PlayRangedShot()`은 Fire를, `PlayToolAction(repairing)`은 Attack/Repair를 시작한다. 이동 중에는 해당 행동의 Hover 상태를 사용한다. 방향이나 이동 여부만 바뀌면 진행 비율을 이어간다. 상태를 고를 뿐 피해량·콜라이더를 변경하지 않는다.
 - `PlayerVisual`: 조준 방향에 따른 기존 방향별 콜라이더 선택을 유지한다. `PlayerSpriteMotion.OwnsDisplay`가 true면 Sprite 반전은 AnimationClip에 맡긴다.
 - `PlayerWeaponRig`: `_bodyIncludesGunSprite`가 켜진 구성에서는 별도 총 SpriteRenderer를 숨긴다. 방향별 총구·발사 이펙트 오브젝트는 유지한다. 기존 그림과 새 몸체 속 총이 중복되지 않는다. `_usePoseMuzzles`가 켜진 Player 프리팹은 Weapon Rig 로컬 좌표의 `_firingMuzzles`, `_leftLeanMuzzles`, `_rightLeanMuzzles`에서 방향별 총구 위치를 편집한다. `RefreshPose`/`TryGetMuzzle`에서 현재 이동 입력에 맞춰 해당 총구 자식 Transform을 갱신한다. 이 옵션이 꺼진 구성은 기존 Transform 위치를 사용한다.
@@ -90,6 +90,14 @@ Sprite 참조·기존 클립 길이·반복 설정도 유지한다. 원형 원�
 
 ## 타격 시점
 
+2026-10-21 구조 개선: `PlayerMotionSet.Clip`의 Sprite 배열 56개와 중복 재생 시간 14개를
+제거했다. 클립 연결 이름과 GUID는 유지한다. 프레임을 수정할 때 Animation 창에서
+해당 AnimationClip만 편집하면 표시와 행동 종료 시간에 같은 데이터가 사용된다.
+`Frames`와 `Sample` 조회는 제거했으며, Editor 검증은 클립의 실제 Sprite 키를 읽는다.
+`Clip.IsConfigured`는 네 방향 모두 유효한 길이의 클립인지 검사하고,
+`HasAnimatorConfiguration`은 전체 모션과 Controller 참조를 함께 검사한다.
+기존 56개 몸체 클립의 그림자 키·길이·Sprite와 Controller는 수정하지 않았다.
+
 스패너 판정은 Attack/Repair 클립의 50% 지점에 한 번 적용한다. 기본 공격 0.2초, 수리 0.3초이다. `ToolImpactDelay(repairing)`가 연결된 클립 길이에서 지연 시간을 계산한다. 무기 전환·비활성화·조작 차단은 예약 판정을 취소한다.
 
 성공한 스패너 타격은 `PauseAtImpact(seconds)`로 해당 플레이어 Animator만 잠깐 멈춘다. 기본 0.045초이고 전체 게임 시간·물리·적 AI는 바꾸지 않는다. 취소나 비활성화 시 Animator 속도를 복구한다.
@@ -119,3 +127,25 @@ Sprite 참조·기존 클립 길이·반복 설정도 유지한다. 원형 원�
 그림자 자식 키를 허용하도록 갱신해 통과했다. 기존 C# 빌드는 오류 0건·기존 경고 4건이며
 이번 후속 수정은 에셋만 변경했다. Unity의 실제 클립 임포트·Test Runner·플레이 확인은 남아 있다.
 로컬 `validation.txt`의 이전 Controller 실패는 이번 변경의 검증 결과가 아니다.
+
+## 좌우 반대 이동 자세 (2026-10-22)
+
+- `Backpedal/Backpedal_Left.png`: 왼쪽 조준·오른쪽 이동. 상체는 화면 오른쪽으로 눕고, 하체와 발은 화면 왼쪽 앞으로 나오는 고정 자세.
+- `Backpedal/Backpedal_Right.png`: 오른쪽 조준·왼쪽 이동. 상체는 화면 왼쪽으로 눕고, 하체와 발은 화면 오른쪽 앞으로 나오는 대칭 자세.
+- 생성 경로는 내장 `image_gen`이다. 사용자가 선택한 **현재 AI 대기·이동 스프라이트**를
+  기준으로 다시 생성했다. `Idle_Left_0.png`·`Idle_Right_0.png`가 외형·비율 기준이고,
+  이전 Backpedal은 자세 참고로만 사용했다. AI 적용 전 원본이나 직전 시안 대비 축소율을 기준으로 삼지 않는다.
+- 최신 원본은 V2/Source의 `Backpedal_*_IdleMatched_Source.png`에 보존한다.
+  원본과 기존 대기·이동 그림은 그대로 두고, Backpedal 두 장만 교체한다.
+  헬멧의 흰 부분만 보지 않고 검은 바이저·윤곽까지 포함한 전체 머리 폭을 비교한다.
+  좌우 모두 대기 기준 54px이며, 가로·세로에 동일한 배율을 사용해 얼굴을 늘이지 않는다.
+  실제 파일은 160×160, 32 PPU, 중앙 피벗, 기존 공통 팔레트와 이진 알파로 패키징했다.
+- 기존 방향/이동 판정은 이미 조준 방향과 이동 X를 따로 선택한다. 새 런타임 상태를 추가하지 않고
+  `MoveLeanRight_Left`·`HoverFireLeanRight_Left`,
+  `MoveLeanLeft_Right`·`HoverFireLeanLeft_Right`의 그림만 새 자세로 연결했다.
+  이동과 사격에서 동일한 고정 그림을 유지하며 나머지 자세와 애니메이션 길이/반복은 보존한다.
+- 새 그림의 발 위치에 맞춰 해당 네 클립의 그림자 Position 키를 맞추고, Player 프리팹의
+  `_rightLeanMuzzles.left`, `_leftLeanMuzzles.right`를 실제 총구 끝에 맞췄다.
+  플레이어 루트/Rigidbody/Collider를 기울이지 않는다.
+- 회귀 테스트는 두 반대 방향 조합의 실제 Sprite/Animator 상태, 총구 방향과 루트 위치를 검사한다.
+  컴파일·참조·프레임/그림자 키의 정적 검증을 수행했으며 Unity Test Runner/실제 플레이는 별도 확인이 필요하다.

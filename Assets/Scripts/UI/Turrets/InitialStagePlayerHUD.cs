@@ -27,6 +27,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
     private TurretController _controller;
     private PlayerInfo _player;
     private PlayerControlState _playerControl;
+    private PlayerSkillController _playerSkills;
     private float _nextSourceRetry;
     private float _nextDisplayRefresh;
     private bool _vitalsReady;
@@ -133,7 +134,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         PlayerInfo player = _player;
         if (!isActiveAndEnabled || Time.timeScale <= 0 ||
             player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
-            _controller == null || !_controller.isActiveAndEnabled)
+            _controller == null || !_controller.isActiveAndEnabled ||
+            (_playerSkills != null && _playerSkills.IsPlacingTurret))
             return false;
 
         return _playerControl == null || _playerControl.CanAct;
@@ -164,6 +166,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         {
             PlayerInfo player = _player = FindLocalPlayer();
             _playerControl = player != null ? player.GetComponent<PlayerControlState>() : null;
+            _playerSkills = player != null ? player.GetComponent<PlayerSkillController>() : null;
             var identity = player != null ? player.GetComponent<PlayerActorIdentity>() : null;
             _hasLocalActor = identity != null && identity.PlayerId.Value == LocalPlayerId;
         }
@@ -209,6 +212,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         _hasLocalActor = false;
         _player = null;
         _playerControl = null;
+        _playerSkills = null;
         _selection = null;
         _vitalsReady = false;
         _turretControlsReady = false;

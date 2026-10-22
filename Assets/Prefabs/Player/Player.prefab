@@ -1031,11 +1031,11 @@ MonoBehaviour:
     up: {x: 1.15625, y: 0.921875}
   _leftLeanMuzzles:
     left: {x: -1.625, y: 0}
-    right: {x: 1.3125, y: 0.03125}
+    right: {x: 1.6875, y: 0.0}
     down: {x: 0.1, y: -0.875}
     up: {x: 1.03125, y: 1.4375}
   _rightLeanMuzzles:
-    left: {x: -1.5, y: -0.09375}
+    left: {x: -1.78125, y: 0.0}
     right: {x: 1.625, y: 0}
     down: {x: -0.12, y: -0.875}
     up: {x: 1.25, y: 1.375}
@@ -1792,7 +1792,8 @@ MonoBehaviour:
   maxTurretCount: 3
   recoveryRange: 2.5
   _maximumRepairSeconds: 30
-  spawnOffset: {x: 0, y: -0.9, z: 0}
+  _previewPrefab: {fileID: 910222610090000001, guid: 28d342b930d84dd6818845d654e6ee2b, type: 3}
+  _placementCellSize: 4
   _placementGround: {fileID: 0}
 --- !u!114 &1827649334803957301
 MonoBehaviour:
@@ -1834,13 +1835,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3d1d03e47d44f5896a8b2ebcf0cf0cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bombIcon: {fileID: 21300000, guid: 68aebf015af5411cb28e584d84eb3a48, type: 3}
-  turretIcon: {fileID: 21300000, guid: 2e51fe1c85ab4f88a696b67c3ef15fd2, type: 3}
-  _barrierIcon: {fileID: 21300000, guid: c47e002ca0504465bd0f90064a717910, type: 3}
-  _beaconIcon: {fileID: 21300000, guid: 87a943baf368413fb0d1f320ef716a38, type: 3}
-  _recoveryKeyIcon: {fileID: -1000857641, guid: 39ea407869a0d60418e2574d78bcfb04, type: 3}
-  uiFont: {fileID: 11400000, guid: 166b688a4516207439d5ad9c643bd8aa, type: 2}
-  _hudPrefab: {fileID: 1005, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
 --- !u!114 &1827649334803957304
 MonoBehaviour:
   m_ObjectHideFlags: 0

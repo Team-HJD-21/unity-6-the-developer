@@ -10,6 +10,14 @@ public sealed class PlayerWeaponMigrationTests
 {
     private GameObject PlayerPrefab => AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
 
+    // 별도 프레임 배열 없이 AnimationClip에 저장된 실제 Sprite 키를 확인합니다.
+    private static Sprite[] Frames(AnimationClip animation)
+    {
+        var binding = AnimationUtility.GetObjectReferenceCurveBindings(animation).Single();
+        return AnimationUtility.GetObjectReferenceCurve(animation, binding)
+            .Select(key => (Sprite)key.value).Distinct().ToArray();
+    }
+
     [Test]
     public void MotionSet_ContainsEveryDirectionAndUsesNewSpriteAssets()
     {
@@ -25,9 +33,9 @@ public sealed class PlayerWeaponMigrationTests
         foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
         {
             PlayerMotionSet.Clip clip = motions.GetClip(motion);
-            Sprite[] frames = clip.Frames(facing);
             AnimationClip animation = clip.Animation(facing);
-            Assert.That(animation.length, Is.EqualTo(clip.duration).Within(.001f));
+            Sprite[] frames = Frames(animation);
+            Assert.That(animation.length, Is.GreaterThan(0f));
             bool looping = motion == PlayerMotion.Idle || motion == PlayerMotion.Move ||
                 motion == PlayerMotion.ToolIdle || motion == PlayerMotion.ToolMove;
             Assert.That(animation.isLooping, Is.EqualTo(looping));
@@ -45,8 +53,6 @@ public sealed class PlayerWeaponMigrationTests
                 Assert.That(AssetDatabase.GetAssetPath(sprite), Does.StartWith("Assets/Art/Sprites/Player/Motions/"));
                 Assert.That(sprite.rect.size, Is.EqualTo(new Vector2(160, 160)));
             }
-            Assert.That(clip.Sample(facing, clip.duration, true), Is.EqualTo(frames[0]));
-            Assert.That(clip.Sample(facing, clip.duration * 2, false), Is.EqualTo(frames[3]));
         }
     }
 
@@ -56,8 +62,8 @@ public sealed class PlayerWeaponMigrationTests
         var motions = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Data/Player/PlayerMotions.asset");
         foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
         {
-            Assert.That(motions.GetClip(PlayerMotion.ToolIdle).Frames(facing)[0],
-                Is.Not.EqualTo(motions.GetClip(PlayerMotion.Idle).Frames(facing)[0]));
+            Assert.That(Frames(motions.GetClip(PlayerMotion.ToolIdle).Animation(facing))[0],
+                Is.Not.EqualTo(Frames(motions.GetClip(PlayerMotion.Idle).Animation(facing))[0]));
             Assert.That(motions.GetClip(PlayerMotion.ToolMove).Animation(facing),
                 Is.Not.EqualTo(motions.GetClip(PlayerMotion.Move).Animation(facing)));
         }
@@ -114,13 +120,13 @@ public sealed class PlayerWeaponMigrationTests
             var grounded = motions.GetClip(action);
             var hovering = motions.GetClip(action, true);
             Assert.That(hovering, Is.Not.SameAs(grounded));
-            Assert.That(hovering.duration, Is.EqualTo(grounded.duration));
             var animation = hovering.Animation(facing);
+            Sprite[] frames = Frames(animation);
             Assert.That(animation.length, Is.EqualTo(grounded.Animation(facing).length).Within(.001f));
             Assert.That(animation.isLooping, Is.False);
             Assert.That(states.Any(state => state.state.name == $"Hover{action}_{facing}" && state.state.motion == animation), Is.True);
-            Assert.That(hovering.Frames(facing).Length, Is.EqualTo(4));
-            foreach (Sprite sprite in hovering.Frames(facing))
+            Assert.That(frames.Length, Is.EqualTo(4));
+            foreach (Sprite sprite in frames)
                 Assert.That(AssetDatabase.GetAssetPath(sprite), Does.StartWith($"Assets/Art/Sprites/Player/Motions/V2/Hover{action}/"));
         }
     }
@@ -194,23 +200,64 @@ public sealed class PlayerWeaponMigrationTests
             var original = motions.GetClip(action, hovering);
             var banked = motions.GetClip(action, hovering, lean);
             Assert.That(banked, Is.Not.SameAs(original));
-            Assert.That(banked.duration, Is.EqualTo(original.duration));
             var animation = banked.Animation(facing);
+            Sprite[] frames = Frames(animation);
             Assert.That(animation.length, Is.EqualTo(original.Animation(facing).length).Within(.001f));
             Assert.That(animation.isLooping, Is.EqualTo(action == PlayerMotion.Move));
             string name = $"{(hovering ? "Hover" : "")}{action}Lean{lean}_{facing}";
             Assert.That(states.Any(state => state.state.name == name && state.state.motion == animation), Is.True);
-            Assert.That(banked.Frames(facing).Length, Is.EqualTo(1));
-            var spriteBinding = AnimationUtility.GetObjectReferenceCurveBindings(animation).Single();
-            var keys = AnimationUtility.GetObjectReferenceCurve(animation, spriteBinding);
-            Assert.That(keys.Select(key => key.value).Distinct(), Is.EqualTo(new Object[] { banked.Frames(facing)[0] }));
+            Assert.That(frames.Length, Is.EqualTo(1));
             if (action == PlayerMotion.Fire)
-                Assert.That(banked.Frames(facing)[0], Is.EqualTo(motions.GetClip(PlayerMotion.Move, false, lean).Frames(facing)[0]),
+                Assert.That(frames[0], Is.EqualTo(Frames(motions.GetClip(PlayerMotion.Move, false, lean).Animation(facing))[0]),
                     "Moving fire must keep the exact movement pose.");
             var opposite = motions.GetClip(action, hovering,
                 lean == PlayerLateralLean.Left ? PlayerLateralLean.Right : PlayerLateralLean.Left);
-            Assert.That(banked.Frames(facing)[0], Is.Not.EqualTo(opposite.Frames(facing)[0]));
+            Assert.That(frames[0], Is.Not.EqualTo(Frames(opposite.Animation(facing))[0]));
         }
+    }
+
+    [UnityTest]
+    public System.Collections.IEnumerator Backpedal_OppositeMovementUsesNewPoseWithoutMovingPhysicsRoot()
+    {
+        yield return new EnterPlayMode();
+        GameObject player = null;
+        try
+        {
+            player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            var input = player.GetComponent<PlayerInputHandler>();
+            var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
+            var motion = player.GetComponent<PlayerSpriteMotion>();
+            var animator = player.GetComponent<Animator>();
+            var renderer = player.GetComponent<SpriteRenderer>();
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var evaluate = typeof(PlayerSpriteMotion).GetMethod("UpdateAnimatorState", flags);
+            var setMove = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.MoveInput)).GetSetMethod(true);
+            var setAim = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.AimDirection)).GetSetMethod(true);
+            Vector3 root = player.transform.position;
+            foreach (bool aimingLeft in new[] { true, false })
+            {
+                Vector2 aim = aimingLeft ? Vector2.left : Vector2.right;
+                setAim.Invoke(input, new object[] { aim });
+                setMove.Invoke(input, new object[] { -aim });
+                rig.RefreshPose(aim);
+                motion.PlayRangedShot();
+                evaluate.Invoke(motion, null);
+                animator.Update(0f);
+                string facing = aimingLeft ? "Left" : "Right";
+                string movement = aimingLeft ? "Right" : "Left";
+                var expected = AssetDatabase.LoadAssetAtPath<Sprite>(
+                    $"Assets/Art/Sprites/Player/Motions/V2/Backpedal/Backpedal_{facing}.png");
+                Assert.That(renderer.sprite, Is.EqualTo(expected));
+                Assert.That(animator.GetCurrentAnimatorStateInfo(0).fullPathHash,
+                    Is.EqualTo(Animator.StringToHash($"Base Layer.HoverFireLean{movement}_{facing}")));
+                Assert.That(rig.TryGetMuzzle(out Transform muzzle), Is.True);
+                Assert.That(Vector2.Dot((Vector2)(muzzle.position - player.transform.position), aim), Is.GreaterThan(0f));
+                Assert.That(player.transform.position, Is.EqualTo(root));
+                Assert.That(renderer.flipX, Is.False, "Each direction has its own authored sprite.");
+            }
+        }
+        finally { if (player != null) Object.DestroyImmediate(player); }
+        yield return new ExitPlayMode();
     }
 
     [Test]

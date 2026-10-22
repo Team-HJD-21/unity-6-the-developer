@@ -1,6 +1,6 @@
 # Player skill responsibilities and review validation
 
-수정일: 2026-10-16
+수정일: 2026-10-22
 
 PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 Player 소스와 몬스터 원본은 변경하지 않는다. 기존 MonoBehaviour의 GUID와 직렬화 필드는 유지하므로 현재 프리팹 연결을 그대로 사용한다. 공통 스킬 베이스와 역할별 보조 클래스로 분리했다. 임시 포탑 체력 컴포넌트는 프리팹에 연결했다. 피격 표시는 기존 색상 틴트만 유지한다.
 
@@ -27,9 +27,11 @@ PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 P
 | `PlayerSkillTooltipView` | 툴팁과 hover 처리 |
 | `PlayerTurretRecoveryPromptView` | 포탑 아래 F 안내 |
 | `PlayerSkillDescriptions` | 스킬 표시 이름과 설명문 |
-| `PlayerSkillUiFactory`, `PlayerSkillHudFactory` | UI 부품 및 HUD 생성 |
+| `PlayerSkillHudSceneBinding` | 씬 HUD와 같은 씬의 로컬 플레이어 연결 |
+| `PlayerSkillCardView` | 프리팹 스킬 카드의 선택·상태·포인터 안내 |
 | `PlayerSupportTurretTargeting`, `PlayerSupportTurretWeapon` | 임시 포탑 적 검색과 탄환 생성 |
-| `PlayerTurretPlacementRules` | 임시 포탑 바닥 전체의 지면 포함·장애물·다른 포탑 겹침 검사 |
+| `PlayerTurretPlacementRules` | 임시 포탑 바닥·충돌체의 지면 포함과 캐릭터·장애물·포탑 겹침 검사 |
+| `PlayerTurretPlacementPreview` | 미리 제작한 반투명 프리팹의 위치·설치 가능 색상 갱신 |
 | `PlayerTurretPlacementResult` | 설치 성공과 지면 부족·포탑 겹침·장애물 등 실패 사유 enum |
 | `PlayerBombAreaDamage` | 범위 피해와 대상별 중복 피해 방지 |
 
@@ -81,7 +83,8 @@ Unity Test Runner에서 `PlayerFieldSkillTests`, `PlayerFieldTargetSelectionTest
 - `FindGround(Scene)`: 해당 씬에서 활성 TilemapCollider2D가 있는 가장 큰 Tilemap을 찾는다.
   Initial_Stage에서는 Initial_Overworld_Base가 선택된다. 더 큰 Water Tilemap은 Collider가 없어 제외된다.
 - `TryGetFootprint(GameObject, Vector3, out Bounds)`: 프리팹 루트 SpriteRenderer의 localBounds와
-  루트 스케일로 고정 바닥의 월드 XY 영역을 구한다. 회전하는 포신은 제외한다.
+  루트 스케일로 고정 바닥의 월드 XY 영역을 구한다. 실제 BoxCollider2D가 더 넓으면
+  해당 영역까지 포함한다. 회전하는 포신은 제외한다.
 - `CanPlace(GameObject, Vector3, GameObject, Tilemap)`: 바닥 영역에 0.05 단위 여유를 더하고
   그 영역이 걸치는 모든 지면 타일, 기존 임시포탑 바닥, 일반 장애물 Collider를 검사한다.
   렌더링 정렬용 Z 차이는 포탑 겹침 판정에 사용하지 않는다.
@@ -93,9 +96,24 @@ PlayerTurretSkill의 Inspector `Placement Ground`를 지정하면 그 Tilemap을
 
 현재 축에 정렬된 XY Tilemap과 고정된 임시포탑 바닥을 기준으로 한다. 외형을 교체할 때는
 루트 SpriteRenderer에 바닥 Sprite를 유지해야 한다. 지면 타일이 있어도 벽 Collider와
-겹치면 거부한다. 트리거(사거리 표시 포함), 설치자 자신, EnemyHealth를 가진 몬스터,
-탄환 레이어는 장애물에서 제외한다. 일반 지형은 플레이어 레이어 충돌 설정과
-Collider의 excludeLayers를 따른다. 기존 영구 포탑의 일반 본체 Collider는 별도로 차단한다.
+겹치면 거부한다. 2026-10-22부터 설치자 자신·다른 플레이어·몬스터의 실제 몸 Collider도
+설치를 막는다. 설치자 하위 몸, PlayerInfo를 가진 부모, Player 레이어는 플레이어로,
+EnemyHealth를 가진 부모 또는 Enemy 레이어는 몬스터로 분류한다. 자식 Collider의 태그에
+의존하지 않으며 캐릭터 점유 판정은 충돌 행렬·excludeLayers와 관계없이 적용한다.
+트리거(탄환 피격·공격·탐지·사거리 표시 포함)와 탄환 레이어는 계속 제외한다.
+일반 지형은 플레이어 레이어 충돌 설정과 Collider의 excludeLayers를 따른다.
+기존 영구 포탑의 일반 본체 Collider는 별도로 차단한다.
+
+2026-10-22부터 발밑 즉시 설치 대신 플레이어 주변 8칸 중 마우스 방향의 칸을 선택하고 왼쪽 클릭으로 확정한다.
+플레이어의 정렬 Z를 유지하며 자동으로 몸 밖으로 밀어내던 `spawnOffset`과
+`MoveOutsidePlayer`는 제거했다. 플레이어를 가운데 둔 3×3 격자에서 가운데를 제외한
+8칸을 사용한다. 마우스 각도를 45도 구간으로 나누며, 커서 거리와 무관하게 인접 한 칸에
+고정한다. Inspector의 `Placement Cell Size` 기본값은 4로 포탑 바닥 약 3.77보다 크다.
+플레이어가 이동하면 격자 중심도 같이 이동한다. 월드 Tilemap 셀에 고정하는 방식은 아니다.
+후보 위치는 플레이어를 중심으로 매 프레임 추적하되 지면·충돌 재검사는 0.05초 간격으로 제한한다.
+확정 시에는 `Physics2D.SyncTransforms()`와 전체 판정을 반드시 다시 수행하므로
+미리보기 이후 들어온 캐릭터와 겹치는 설치도 차단한다.
+다른 포탑은 주변 Collider 쿼리에서 찾으며 매번 전체 포탑 목록을 탐색하지 않는다.
 
 PlayerTurretSkill은 판정 성공 후에만 TryDeploy와 생성을 수행하며, 실패 시 수량과
 설치 쿨타임을 사용하지 않는다. 생성한 포탑은 설치 플레이어와 같은 씬에 둔다.
@@ -106,7 +124,13 @@ PlayerTurretSkill은 판정 성공 후에만 TryDeploy와 생성을 수행하며
 
 - 중심은 지면 안이어도 바닥이 맵 밖으로 나가거나 빈 타일에 걸치면 설치 거부.
 - 기존 임시포탑과 Z가 달라도 바닥 겹침 거부, 충분히 떨어진 위치 허용.
-- 벽에서 거부하고 설치자 Collider·트리거는 허용.
+- 벽·설치자·다른 플레이어·몬스터 몸은 거부하고 트리거·탄환 레이어는 허용.
+- 충돌 행렬에서 무시한 캐릭터 몸과 태그 없는 자식 Collider도 점유 판정에 포함.
+- 미리보기 진입·취소 시 수량/쿨타임 미사용, 몸과 겹치는 후보는 거부하고 선택 위치에 설치.
+- 먼 커서도 인접 칸에만 설치, 8방향/각도 경계/플레이어 이동·정렬 Z 유지, 이중 확정 거부.
+- 선택창 진입·비활성화 시 미리보기 취소.
+- 플레이어/몬스터와 전역 충돌이 꺼져 있어도 본체 충돌 설정으로 통과 차단, 파괴 시 차단 해제.
+- 캐릭터 때문에 설치 실패하면 수량·쿨타임 유지, 캐릭터가 이동한 다음 요청은 성공 가능.
 - 설치 실패 후 수량 3/쿨타임 0 유지, 성공 1회 차감, 같은 위치 재설치 거부.
 
 컴파일 성공은 Unity 테스트 실행 통과가 아니다. 실제 Initial_Stage에서 외곽·오목한 경계·
@@ -116,11 +140,12 @@ PlayerTurretSkill은 판정 성공 후에만 TryDeploy와 생성을 수행하며
 
 `PlayerTurretPlacementRules.Evaluate`는 `PlayerTurretPlacementResult`를 반환한다.
 Allowed / GroundUnavailable / InvalidFootprint / OutsideGround / OverlapsTurret /
-BlockedByObstacle로 구분하며 기존 `CanPlace`는 Allowed 여부만 반환하는 편의 API로 유지한다.
+BlockedByObstacle / OverlapsPlayer / OverlapsEnemy로 구분한다. 기존 `CanPlace`는
+Allowed 여부만 반환하는 편의 API로 유지한다. 새 결과는 enum 끝에 추가해 기존 값은 유지한다.
 
-PlayerTurretSkill은 실패 결과를 2.5초간 `PlacementFeedback`으로 노출한다.
-Tick으로 표시 시간이 줄고, 설치 성공 또는 비활성화 시 즉시 지운다. 같은 실패를 다시
-시도하면 표시 시간을 갱신한다. 수량과 쿨타임은 실패 시에도 그대로 유지한다.
+PlayerTurretSkill은 미리보기가 켜진 동안 최신 결과를 `PlacementFeedback`으로 노출한다.
+설치 불가 위치를 클릭해도 미리보기는 유지하고 수량과 쿨타임은 그대로 둔다.
+설치 성공 또는 취소·비활성화 시 결과를 즉시 지운다.
 
 PlayerSkillController의 `TurretPlacementFeedback`이 HUD에 결과를 전달하고,
 PlayerSkillDescriptions의 `TurretPlacementFailure`가 표시 문구를 결정한다.
@@ -129,18 +154,51 @@ PlayerSkillHud는 Canvas 프리팹의 화면 하단 안내 영역에 빨간색 �
 - 지면 부족: "지면이 부족합니다. 안쪽으로 이동해 주세요."
 - 포탑 겹침: "다른 포탑과 겹쳐 설치할 수 없습니다."
 - 장애물: "장애물과 겹쳐 설치할 수 없습니다."
+- 플레이어 겹침: "플레이어와 겹쳐 설치할 수 없습니다."
+- 몬스터 겹침: "몬스터와 겹쳐 설치할 수 없습니다."
 - 지면 미설정·외형 오류: "이곳에는 포탑을 설치할 수 없습니다."
 
-표시 중에는 방벽 설치 안내보다 실패 문구를 우선하고, 만료되면 방벽 안내로 돌아간다.
+표시 중에는 일반 설치 안내보다 실패 문구를 우선한다. 정상 위치에서는
+"왼쪽 클릭으로 설치 · 오른쪽 클릭 / Esc로 취소"를 표시한다.
 스킬 선택창이 열려 있을 때는 안내를 숨긴다. 수량 부족·충전 상태는 기존 슬롯 표시를 사용한다.
-추가 테스트는 실제 실패 결과 구분, 성공 시 안내 초기화, 2.5초 후 안내 만료를 확인한다.
+
+### 반투명 미리보기와 설치된 본체 (2026-10-22)
+
+- `Assets/Prefabs/Player/TemporaryTurretPreview.prefab`: 바닥·포신 SpriteRenderer와
+  `PlayerTurretPlacementPreview`만 가진 시각 전용 프리팹. 충돌체·발사·체력·적 타깃 등록이 없다.
+  위치는 플레이어 주변 8칸 중 마우스 방향을 따라가며 설치 가능하면 초록, 불가능하면 빨강,
+  두 경우 모두 반투명이다.
+  색·투명도와 Sprite는 Prefab Mode에서 편집한다. 게임플레이 포탑을 복제해 숨기는 방식이 아니다.
+- Player 프리팹의 `PlayerTurretSkill`에 미리보기 참조를 미리 연결했다.
+  스킬 키로 진입하고, 왼쪽 클릭으로 확정, 우클릭/Esc/같은 스킬 키로 취소한다.
+  선택창 열기·다른 스킬 사용·행동 불가·장착 해제·플레이어 비활성화 때도 취소한다.
+  UI 위 클릭은 설치에 사용하지 않는다. 설치 확정은 LateUpdate에서 처리하며
+  `InitialStagePlayerHUD`는 설치 중 기존 포탑 선택을 막아 같은 클릭의 중복 처리를 피한다.
+- `TemporaryTurret.prefab`: 고정 바닥을 덮는 BoxCollider2D를 미리 배치했다.
+  크기·Offset은 프리팹에서 편집한다. `TemporaryTurretHealth`는 Player/Enemy의
+  includeLayers와 나머지 레이어 excludeLayers, 우선순위 10을 적용하여 전역 제외 설정보다 우선한다.
+  플레이어의 탄환 피격 트리거와 탄환은 본체에 막히지 않는다.
+- 기존 체력 100, 손상 충전, 파괴 시 충돌 해제는 유지한다.
+  F 회수는 중심이 아닌 Collider 표면까지의 XY 거리 2.5를 사용한다. 큰 본체를 통과하지
+  않아도 회수할 수 있으며, 정렬용 Z가 달라져도 회수 거리에 영향을 주지 않는다.
+  기존 임시 몬스터 Adapter의 접근점은 Collider.ClosestPoint, 경로 교차는 본체 XY 경계로 맞췄다.
+  정렬 Z는 무시한다. 일반 `TurretBase` API 통합과 정식 몬스터 공격 계약 연결은 후속 작업이다.
+  이번 변경은 해당 담당자의 원본 Turret/Enemy 코드를 수정하지 않는다.
+
+확인 범위: Runtime/Editor C# 컴파일과 프리팹 참조·구성 정적 검사.
+회귀 테스트 코드는 추가했으나 열린 Unity 에디터의 Test Runner/실제 플레이는 실행하지 않았다.
+Initial_Stage에서 Q/E → 위치 선택 → 왼쪽 클릭, UI 위 클릭 무시, 취소, 플레이어/슬라임 충돌,
+포탑 파괴·회수를 직접 확인해야 한다.
 
 ### Canvas 프리팹에서 안내 UI 편집
 
 `Assets/Prefabs/UI/PlayerSkillHUD.prefab`에 Canvas, CanvasScaler, GraphicRaycaster,
-PlayerSkillHud와 두 TMP 텍스트를 미리 배치했다. Player 프리팹의 PlayerSkillController에
-`Hud Prefab` 참조를 연결했다. PlayerSkillHudFactory는 이 프리팹을 Instantiate하고 Bind한다.
-프리팹이나 텍스트 참조가 없으면 경고를 남기고 HUD를 생성하지 않는다.
+PlayerSkillHud와 두 TMP 텍스트를 미리 배치했다. 2026-10-21에는 Q/E 슬롯, 선택창,
+툴팁, 포탑 회수 안내도 같은 프리팹에 미리 배치하고 런타임 UI 생성 팩토리를 제거했다.
+`Initial_Stage`, `PlayerTest` 씬에 HUD 프리팹 인스턴스를 두고,
+`PlayerSkillHudSceneBinding`이 생성된 로컬 플레이어를 연결한다.
+필수 슬롯·선택창 참조가 누락되면 오류를 남기고 해당 HUD를 연결하지 않는다.
+툴팁·회수/설치 안내·스킬 아이콘은 누락된 기능만 건너뛰고 선택 기능을 유지한다.
 
 - `Placement Failure`: 빨간색(1, 0, 0), Bold, 글자 크기 28. 하단 중앙에서 위로 160,
   영역 1200×60. 프리팹 편집 시 예시 문구가 보이고, 실행 시 Bind가 먼저 숨긴다.
@@ -149,11 +207,13 @@ PlayerSkillHud와 두 TMP 텍스트를 미리 배치했다. Player 프리팹의 
 
 PlayerSkillHud는 텍스트 내용을 갱신하고 GameObject의 표시 여부만 바꾼다.
 텍스트 위치·색·크기·볼드 설정은 코드로 덮어쓰지 않는다. 두 텍스트의 Raycast Target은
-꺼져 있으므로 설치/선택 입력을 가리지 않는다. 기존 스킬 슬롯과 선택창은 Bind 과정에서 조립한다.
+꺼져 있으므로 설치/선택 입력을 가리지 않는다. 슬롯과 선택창도 Bind 과정에서 생성하지 않는다.
 
 PlayerSkillPrefabTests는 Canvas 활성 상태, 직렬화된 텍스트 연결, 빨간색 Bold 설정과
-입력 차단 여부를 검사한다. PlayerSkillSelectionTests는 Player의 HUD 프리팹 연결도 확인한다.
+입력 차단 여부를 검사한다. PlayerSkillSelectionTests는 HUD 프리팹의 아이콘 연결도 확인한다.
 프리팹 편집 후 실제 실행에서 해상도별 위치·문구 표시와 스킬 입력을 추가 확인해야 한다.
+
+씬 연결 조건과 편집 방법은 [스킬 HUD 연결 API](player-skill-hud-api.md)를 참고한다.
 ## #513 폭탄 피해 반경과 폭발 외형 일치 (2026-10-16)
 
 PlayerBombExplosion의 Radius와 bomb.prefab의 `_radius`를 9로 맞췄다.

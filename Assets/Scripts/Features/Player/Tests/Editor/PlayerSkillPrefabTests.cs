@@ -9,12 +9,29 @@ public sealed class PlayerSkillPrefabTests
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
         Assert.That(prefab.GetComponent<PlayerSkillHud>().IsConfigured, Is.True);
+        Assert.That(prefab.GetComponent<PlayerSkillHud>().IsFullyConfigured, Is.True);
         Assert.That(prefab.GetComponent<Canvas>().enabled, Is.True);
         Assert.That(prefab.GetComponent<Canvas>().renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
         var failure = prefab.transform.Find("Placement Failure").GetComponent<TMPro.TMP_Text>();
         Assert.That(failure.color, Is.EqualTo(Color.red));
         Assert.That((failure.fontStyle & TMPro.FontStyles.Bold) != 0, Is.True);
         Assert.That(failure.raycastTarget, Is.False);
+    }
+
+    [Test]
+    public void SkillHudPrefab_ContainsEditableViewsAndFontsBeforePlay()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
+        Assert.That(prefab.GetComponent<PlayerSkillHudSceneBinding>(), Is.Not.Null);
+        Assert.That(prefab.GetComponentsInChildren<PlayerSkillSlotView>(true).Length, Is.EqualTo(4));
+        Assert.That(prefab.GetComponentsInChildren<PlayerSkillCardView>(true).Length, Is.EqualTo(4));
+        Assert.That(prefab.GetComponentsInChildren<PlayerSkillTooltipView>(true).Length, Is.EqualTo(1));
+        Assert.That(prefab.GetComponentsInChildren<PlayerTurretRecoveryPromptView>(true).Length, Is.EqualTo(1));
+        foreach (var text in prefab.GetComponentsInChildren<TMPro.TMP_Text>(true))
+            Assert.That(text.font, Is.Not.Null, text.name);
+        var key = prefab.transform.Find("Turret Recovery Prompt/F Key Icon").GetComponent<UnityEngine.UI.Image>();
+        Assert.That(key.sprite, Is.Not.Null);
+        Assert.That(key.raycastTarget, Is.False);
     }
 
     [TestCase("EnergyBarrier")]
@@ -39,6 +56,43 @@ public sealed class PlayerSkillPrefabTests
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
         Assert.That(prefab.GetComponent<TemporaryTurretHealth>(), Is.Not.Null);
         Assert.That(prefab.GetComponent<TemporaryTurretHealth>().MaxHealth, Is.EqualTo(100).Within(.001f));
+    }
+
+    [Test]
+    public void SupportTurretPreview_IsVisualOnlyAndConnectedToPlayer()
+    {
+        var preview = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurretPreview.prefab");
+        Assert.That(preview.GetComponent<PlayerTurretPlacementPreview>().IsConfigured, Is.True);
+        Assert.That(preview.GetComponentsInChildren<Collider2D>(true), Is.Empty);
+        Assert.That(preview.GetComponentsInChildren<Rigidbody2D>(true), Is.Empty);
+        Assert.That(preview.GetComponent<TemporaryTurret>(), Is.Null);
+        Assert.That(preview.GetComponent<TemporaryTurretHealth>(), Is.Null);
+        var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+        Assert.That(player.GetComponent<PlayerTurretSkill>().HasPrefab, Is.True);
+        var data = new SerializedObject(player.GetComponent<PlayerTurretSkill>());
+        Assert.That(data.FindProperty("_previewPrefab").objectReferenceValue,
+            Is.EqualTo(preview.GetComponent<PlayerTurretPlacementPreview>()));
+    }
+
+    [Test]
+    public void SupportTurret_AuthoredBodyCoversBaseAndBlocksBothActorLayers()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
+        var body = prefab.GetComponent<BoxCollider2D>();
+        Assert.That(body, Is.Not.Null);
+        Assert.That(body.isTrigger, Is.False);
+        Bounds visual = prefab.GetComponent<SpriteRenderer>().localBounds;
+        Assert.That(body.offset.x - body.size.x * .5f, Is.LessThanOrEqualTo(visual.min.x + .001f));
+        Assert.That(body.offset.x + body.size.x * .5f, Is.GreaterThanOrEqualTo(visual.max.x - .001f));
+        Assert.That(body.offset.y - body.size.y * .5f, Is.LessThanOrEqualTo(visual.min.y + .001f));
+        Assert.That(body.offset.y + body.size.y * .5f, Is.GreaterThanOrEqualTo(visual.max.y - .001f));
+        foreach (string layer in new[] { "Player", "Enemy" })
+        {
+            int bit = 1 << LayerMask.NameToLayer(layer);
+            Assert.That(body.includeLayers.value & bit, Is.Not.Zero);
+            Assert.That(body.excludeLayers.value & bit, Is.Zero);
+        }
+        Assert.That(body.excludeLayers.value & (1 << LayerMask.NameToLayer("Bullet")), Is.Not.Zero);
     }
     [Test]
     public void SupportTurret_MuzzleFollowsRotatingHead()

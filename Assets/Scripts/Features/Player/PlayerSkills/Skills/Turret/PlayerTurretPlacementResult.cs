@@ -6,5 +6,7 @@ public enum PlayerTurretPlacementResult
     InvalidFootprint,
     OutsideGround,
     OverlapsTurret,
-    BlockedByObstacle
+    BlockedByObstacle,
+    OverlapsPlayer,
+    OverlapsEnemy
 }

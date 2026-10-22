@@ -4,18 +4,13 @@ using UnityEngine;
 public enum PlayerMotion { Idle, Move, Attack, Repair, ToolIdle, ToolMove, Fire }
 public enum PlayerLateralLean { Neutral, Left, Right }
 
-/// <summary>플레이어의 네 방향 프레임과 재생 시간만 보관합니다. 전투 판정을 수행하지 않습니다.</summary>
+/// <summary>행동·방향에 맞는 AnimationClip을 연결합니다. 프레임과 재생 시간은 클립이 소유합니다.</summary>
 [CreateAssetMenu(menuName = "Player/Motion Set")]
 public sealed class PlayerMotionSet : ScriptableObject
 {
     [Serializable]
     public sealed class Clip
     {
-        [Min(.01f)] public float duration = .4f;
-        public Sprite[] down = Array.Empty<Sprite>();
-        public Sprite[] up = Array.Empty<Sprite>();
-        public Sprite[] left = Array.Empty<Sprite>();
-        public Sprite[] right = Array.Empty<Sprite>();
         public AnimationClip downAnimation;
         public AnimationClip upAnimation;
         public AnimationClip leftAnimation;
@@ -32,41 +27,11 @@ public sealed class PlayerMotionSet : ScriptableObject
             }
         }
 
-        public bool HasAnimations => downAnimation != null && upAnimation != null &&
-            leftAnimation != null && rightAnimation != null;
+        public bool IsConfigured => IsPlayable(downAnimation) && IsPlayable(upAnimation)
+            && IsPlayable(leftAnimation) && IsPlayable(rightAnimation);
 
-        public Sprite[] Frames(PlayerAimFacing facing)
-        {
-            switch (facing)
-            {
-                case PlayerAimFacing.Up: return up;
-                case PlayerAimFacing.Left: return left;
-                case PlayerAimFacing.Right: return right;
-                default: return down;
-            }
-        }
-
-        public bool IsConfigured
-        {
-            get
-            {
-                foreach (var frames in new[] { down, up, left, right })
-                {
-                    if (frames == null || frames.Length == 0) return false;
-                    foreach (Sprite sprite in frames) if (sprite == null) return false;
-                }
-                return !float.IsNaN(duration) && !float.IsInfinity(duration) && duration > 0f;
-            }
-        }
-
-        public Sprite Sample(PlayerAimFacing facing, float elapsed, bool loop)
-        {
-            Sprite[] frames = Frames(facing);
-            if (frames == null || frames.Length == 0) return null;
-            float progress = elapsed / Mathf.Max(.01f, duration);
-            progress = loop ? Mathf.Repeat(progress, 1f) : Mathf.Clamp01(progress);
-            return frames[Mathf.Min(frames.Length - 1, Mathf.FloorToInt(progress * frames.Length))];
-        }
+        private static bool IsPlayable(AnimationClip animation) => animation != null
+            && !float.IsNaN(animation.length) && !float.IsInfinity(animation.length) && animation.length > 0f;
     }
 
     [SerializeField] private Clip _idle = new Clip();
@@ -86,12 +51,7 @@ public sealed class PlayerMotionSet : ScriptableObject
     [SerializeField] private RuntimeAnimatorController _controller;
 
     public RuntimeAnimatorController Controller => _controller;
-    public bool HasAnimatorConfiguration => IsConfigured && _controller != null &&
-        _idle.HasAnimations && _move.HasAnimations && _attack.HasAnimations && _repair.HasAnimations &&
-        _toolIdle.HasAnimations && _toolMove.HasAnimations && _fire.HasAnimations &&
-        _hoverFire.HasAnimations && _hoverAttack.HasAnimations && _hoverRepair.HasAnimations &&
-        _moveLeanLeft.HasAnimations && _moveLeanRight.HasAnimations &&
-        _hoverFireLeanLeft.HasAnimations && _hoverFireLeanRight.HasAnimations;
+    public bool HasAnimatorConfiguration => _controller != null && IsConfigured;
 
     public bool IsConfigured => _idle != null && _move != null && _attack != null && _repair != null &&
         _idle.IsConfigured && _move.IsConfigured && _attack.IsConfigured && _repair.IsConfigured &&
