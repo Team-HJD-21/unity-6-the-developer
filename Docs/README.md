@@ -1,7 +1,7 @@
 # The Developer — Project Documentation
 
-수정일: 2026-10-17
-상태: 현행 PL 기준 / 양현석 기술 PoC 인수 완료 · 팀 공통 Build 기록 별도
+수정일: 2026-10-23
+상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
@@ -12,6 +12,8 @@
 2026-10-10 회의에서는 팀이 M1과 M2 사이에 있다고 설명했으며, M1·M2 완료나 새 일정을 승인하지 않았다. 터렛 수리와 잠금 해금의 제품 방향 및 설치 판정, 지역 Grid와 저장 방식의 미결 사항은 [회의 검토 기록](planning/2026-10-10-regular-meeting.md)을 따른다.
 
 2026-10-17 회의는 해금·활성화·점유를 분리하고, CU에서 이어지는 점유 방향과 정적 송신탑 해금 시제품을 검토했다. 점유 후 보스 처치 승리 흐름과 CU 파괴 게임오버 방향도 기록했으며, 상세 규칙·체크포인트와 전제 1·2의 최종 선택은 미정이다. [회의 검토 기록](planning/2026-10-17-regular-meeting.md)에서 회의 방향, 발언 당시 보고와 미검증 범위를 구분한다.
+
+2026-10-23 몬스터 비정기회의에서는 최단거리와 주변 밀집도를 우선 사용한 터렛 목표 배정, 목표 유지, 플레이어 감지 시 추적 동작을 먼저 시험하기로 했다. 초기 Stage의 `ConfigureUnlockZones` 호출 연결도 양현석이 맡기로 했으며, main 정적 검색에서는 호출을 찾지 못했다. 세부 규칙과 실제 구현·실행 결과는 [회의 검토 기록](planning/2026-10-23-monster-meeting.md)을 따른다.
 
 2026-10-09 Legacy 실행 코드와 PoC 경로를 정리했다. [Assets 구조와 Legacy 교체 기준](architecture/asset-layout-and-migration.md) 및 [이관 결과](planning/2026-10-09-asset-migration-results.md)를 따른다. 현재 실행 Scene은 `Assets/Scenes/Gameplay/Initial_Stage.unity`다. 과거 분석의 경로는 당시 위치이며 현재 경로와 구분한다.
 
@@ -83,6 +85,7 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 19. [Spatial Spawn Distribution](architecture/spatial-spawn-distribution.md) — Grid 셀 공유 부하·Match별 실제 생성 이력과 전선 보조 기준, 반복 스폰 편중 수정
 20. [2026-10-10 정기회의 검토 기록](planning/2026-10-10-regular-meeting.md) — 터렛 수리·잠금/해금 방향, 설치 판정, 지역 Grid 후속 작업과 미정 사항
 21. [2026-10-17 정기회의 검토 기록](planning/2026-10-17-regular-meeting.md) — 해금·점유 구분, 송신탑 시제품, 보스 승리 흐름과 후속 문서화
+22. [2026-10-23 몬스터 비정기회의 검토 기록](planning/2026-10-23-monster-meeting.md) — 최단거리·밀집도 기반 타깃 시험, 플레이어 추적, 넉백 검토와 터렛 해금 초기화 연결 요청
 
 9월 22일 [진행 방식 비교](archive/2026-09-22-progression-options.md)와 9월 26일 [Stage 1 회의 요약](archive/2026-09-26-stage1-planning.md)은 현재 Product Plan·Sprint 기준에 반영한 회의 근거로 보관한다. 10월 2일 [AI 구조 검토](planning/2026-10-02-ai-architecture-review.md), 10월 3일 [PoC 후속 검토](planning/2026-10-03-poc-followup.md), 10월 5일 [스폰 연동 검토](planning/2026-10-05-monster-map-spawn-review.md)는 실행·설계 확인이 남아 `planning/`에 둔다. [레거시 몬스터 흐름 분석](archive/legacy-monster-flow-and-dependencies.md)은 현재 Enemy AI 규칙이 아닌 이전 코드의 참고 자료다.
 
