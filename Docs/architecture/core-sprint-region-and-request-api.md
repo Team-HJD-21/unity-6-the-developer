@@ -13,7 +13,7 @@
 | `TurretController.Regions` | HUD/Feature의 읽기 Port. 바인딩 없으면 null |
 | `RegionGridReplica.Apply(frame, senderIsVerifiedServer)` | Client 읽기 모델. 실제 서버 검증은 전송 어댑터 책임 |
 
-정적·동적 모두 지역 Grid가 원본이다. D의 별도 Grid 설정은 명시적 값 변환으로 연결한다. Battlefield의 Player/Enemy 밀도 셀과 같은 데이터라고 취급하지 않는다.
+정적·동적 모두 지역 Grid가 원본이다. 황재동의 별도 Grid 설정은 명시적 값 변환으로 연결한다. Battlefield의 Player/Enemy 밀도 셀과 같은 데이터라고 취급하지 않는다.
 
 ```mermaid
 flowchart LR
@@ -21,10 +21,10 @@ flowchart LR
   T[활성·비파괴 터렛] --> G[임시 들로네 삼각형]
   G --> C[양의 면적으로 겹치는 셀]
   C --> R
-  R --> D[D 지역 접근]
+  R --> D[황재동 지역 접근]
   R --> H[HUD]
   R --> E[Editor 표시]
-  B[Battlefield 참가자 밀도·전선] --> N[E Encounter 판단]
+  B[Battlefield 참가자 밀도·전선] --> N[조수빈 Encounter 판단]
 ```
 
 위 S와 T 경로는 선택한 모드 하나만 실행한다. Dynamic은 지역 잠금 없이 활성화로 점령한다. OFF·파괴 시 현재 입력으로 다시 계산해 점령을 회수하지만 남은 터렛의 활성/전력 예약은 유지한다. 과열은 OFF가 아니므로 점을 제거하지 않는다. 삼각형 자체는 정확한 점유영역이 아니며 최종 결과는 셀 집합이다.
@@ -33,7 +33,7 @@ GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revis
 
 ## 정식 Encounter 요청
 
-`EncounterRequestService`는 A의 조율, `IEncounterExecutor` 구현은 E의 실제 계획/생성 경계다. 기존 `EnemyNetworkTestLauncher`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.
+`EncounterRequestService`는 양현석의 조율, `IEncounterExecutor` 구현은 조수빈의 실제 계획/생성 경계다. 기존 `EnemyNetworkTestLauncher`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.
 
 ```csharp
 var context = new MatchRequestContext(matchId, requestId, issuerId);
@@ -52,7 +52,7 @@ EncounterRequestResult result = requests.Submit(request, verifiedIssuer);
 - 게임 cadence는 게임 요청 주체가 소유한다. Snapshot 변경 자체를 Spawn 명령으로 해석하지 않는다.
 - 요청은 Host를 시작하지 않는다. 현재 테스트 Scene의 첫 시작 coroutine은 별도의 명시적 Host 시작을 아직 담당한다.
 
-실제 Host 검사에서 10개 생성, 동일 요청 재전송 추가 생성 0, 예산/발신자 변조 거부, Unbind 후 요청 거부를 확인했다. 최종 E 타입·원격 정책은 담당자 리뷰 대상이며 E의 분포/생성 알고리즘은 재작성하지 않았다.
+실제 Host 검사에서 10개 생성, 동일 요청 재전송 추가 생성 0, 예산/발신자 변조 거부, Unbind 후 요청 거부를 확인했다. 최종 조수빈 타입·원격 정책은 담당자 리뷰 대상이며 조수빈의 분포/생성 알고리즘은 재작성하지 않았다.
 
 ## App 연결 수명과 권장 시작 순서
 
@@ -73,5 +73,5 @@ App 정리는 Match의 Feature 바인딩과 자원을 먼저 해제하고 네트
 - Game Debugger → Battlefield → **지역 Grid · 점령 원본**에서 현재 정책/점령 수를 확인한다. 모드/Grid Reset은 확인창을 거친다.
 - Scene 점령 Grid는 확정 셀, 임시 판정 삼각형은 계산 입력을 표시한다. 후자는 표시용이며 새 상태 원본이 아니다.
 - HUD 우측 하단의 CU 패널은 Static/Dynamic 정책·점령 셀·자동 활성화 상태를 표시한다. Dynamic 안내는 잠금 해제가 아니라 활성화로 점령한다는 뜻이다.
-- 살아 있는 Player가 CU의 interactionDistance 안에 있고 조작 가능할 때 자동 활성화를 요청할 수 있다. 재실행 대기/진행 중 거부·전력·우선순위는 D Controller가 소유한다.
-- 현재 HUD 입력은 D 로컬 API에 연결됐다. 원격 공용 요청/로컬 actor 주입과 최종 해상도별 시각 인수는 미완료다.
+- 살아 있는 Player가 CU의 interactionDistance 안에 있고 조작 가능할 때 자동 활성화를 요청할 수 있다. 재실행 대기/진행 중 거부·전력·우선순위는 황재동 Controller가 소유한다.
+- 현재 HUD 입력은 황재동 로컬 API에 연결됐다. 원격 공용 요청/로컬 actor 주입과 최종 해상도별 시각 인수는 미완료다.

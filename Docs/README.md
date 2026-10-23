@@ -1,7 +1,7 @@
 # The Developer — Project Documentation
 
 수정일: 2026-10-17
-상태: 현행 PL 기준 / A 기술 PoC 인수 완료 · 팀 공통 Build 기록 별도
+상태: 현행 PL 기준 / 양현석 기술 PoC 인수 완료 · 팀 공통 Build 기록 별도
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
@@ -15,7 +15,7 @@
 
 2026-10-09 Legacy 실행 코드와 PoC 경로를 정리했다. [Assets 구조와 Legacy 교체 기준](architecture/asset-layout-and-migration.md) 및 [이관 결과](planning/2026-10-09-asset-migration-results.md)를 따른다. 현재 실행 Scene은 `Assets/Scenes/Gameplay/Initial_Stage.unity`다. 과거 분석의 경로는 당시 위치이며 현재 경로와 구분한다.
 
-2026-10-08 PL이 실제 런타임을 확인해 A의 Core 공간 분석·스폰 통합·Game Debugger 기술 PoC를 인수했다. 현재 완료 범위와 Issue/PR 인수는 [PoC 마감 기록](planning/2026-10-08-poc-closeout-and-pr-handoff.md)을 따른다. 아래의 10월 3일 내용은 당시 검토 배경이며 최신 실행 상태로 읽지 않는다. 정식 승패·성장·멀티플레이 완성과 팀 공통 Windows Build 검증은 별도다.
+2026-10-08 PL이 실제 런타임을 확인해 양현석의 Core 공간 분석·스폰 통합·Game Debugger 기술 PoC를 인수했다. 현재 완료 범위와 Issue/PR 인수는 [PoC 마감 기록](planning/2026-10-08-poc-closeout-and-pr-handoff.md)을 따른다. 아래의 10월 3일 내용은 당시 검토 배경이며 최신 실행 상태로 읽지 않는다. 정식 승패·성장·멀티플레이 완성과 팀 공통 Windows Build 검증은 별도다.
 
 팀원의 호출 규칙은 [Core API 사용 규약](architecture/core-api-usage.md), 도구 조작은 [Game Debugger 사용법](tooling/game-debugger-guide.md)을 참고한다.
 
@@ -28,15 +28,15 @@
 
 ## 현재 팀
 
-| 코드 | 이름 | 제품 영역 |
-| --- | --- | --- |
-| A | 양현석 | Project Lead / Core Systems & UI Architecture |
-| B | 이영빈 | Player / Combat·Co-op UX / Cinematic |
-| C | 김진태 | World / Mission / Ally Player Agent |
-| D | 황재동 | Defense / Progression / Balance |
-| E | 조수빈 | Enemy / Encounter / AI Platform |
+| 이름 | 제품 영역 |
+| --- | --- |
+| 양현석 | Project Lead / Core Systems & UI Architecture |
+| 이영빈 | Player / Combat·Co-op UX / Cinematic |
+| 김진태 | World / Mission / Ally Player Agent |
+| 황재동 | Defense / Progression / Balance |
+| 조수빈 | Enemy / Encounter / AI Platform |
 
-C와 D의 담당은 각각 김진태, 황재동으로 확정됐다. 각 역할은 자신의 제품 영역과 관련 Task의 구현·검증·인수 기준을 끝까지 책임진다.
+김진태와 황재동의 담당 영역을 포함해 각 역할은 자신의 제품 영역과 관련 Task의 구현·검증·인수 기준을 끝까지 책임진다.
 
 ## 폴더 안내
 
@@ -67,7 +67,7 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 3. [milestones-and-core-design.md](planning/milestones-and-core-design.md) — M0~M5, Priority별 역할, 통과 기준
 4. [naming-and-architecture-conventions.md](architecture/naming-and-architecture-conventions.md) — 계층, asmdef 의존성, 타입 명명
 5. [turret-system-guide.md](architecture/turret-system-guide.md) — Canon·Missile 터렛의 상태·전력·Enemy 연동, 세부 업그레이드·레벨 승급 및 검증 방법
-6. [TEAM_ROLE_OWNERSHIP.md](team/TEAM_ROLE_OWNERSHIP.md) — A~E 제품 영역과 협업 경계
+6. [TEAM_ROLE_OWNERSHIP.md](team/TEAM_ROLE_OWNERSHIP.md) — 양현석~조수빈 제품 영역과 협업 경계
 7. [TEAM_WORKFLOW.md](team/TEAM_WORKFLOW.md) — Sprint, Git, Review, Ready/Done 규칙
 8. [DEVELOPMENT_FLOW.md](planning/DEVELOPMENT_FLOW.md) — Milestone 안에서 실제 작업이 흘러가는 순서
 9. [SPRINT_1_STAGE_1_POC.md](planning/SPRINT_1_STAGE_1_POC.md) — 2026-10-02 Stage 1 PoC 범위, 역할, 완료 기준과 통합 순서
@@ -75,7 +75,7 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 11. [2026-10-03 PoC 후속 검토](planning/2026-10-03-poc-followup.md) — 전선 통합·몬스터 분대·해금·복귀 방향, 시험 기간 운영과 미확정 사항
 12. [2026-10-05 몬스터·맵 스폰 연동 검토](planning/2026-10-05-monster-map-spawn-review.md) — 세 전선의 스폰 계획, 생성 확인 범위와 문·통로 피드백. 실제 생성·이동 결과는 미확인
 13. [2026-10-07 Stage 1 PoC 통합 준비표](planning/2026-10-07-stage1-poc-integration-prep.md) — 최신 main·Issue 기준, 로컬 1차 패치와 2·3차 통합 범위, 동일 Build 검증·기록 양식. 통합 완료 판정은 아님
-14. [2026-10-08 Stage 1 PoC 2차 통합·시각 진단 설계](planning/2026-10-08-stage1-phase2-integration-and-visual-diagnostics.md) — B0~B5와 Gate T, Core/Encounter·타깃 경계와 시각 진단 설계. A의 B0~B3는 구현, E의 후속 계약은 합의 전
+14. [2026-10-08 Stage 1 PoC 2차 통합·시각 진단 설계](planning/2026-10-08-stage1-phase2-integration-and-visual-diagnostics.md) — B0~B5와 Gate T, Core/Encounter·타깃 경계와 시각 진단 설계. 양현석의 B0~B3는 구현, 조수빈의 후속 계약은 합의 전
 15. [2026-10-08 2차 배치 결과](planning/2026-10-08-phase2-batch-results.md) — 커밋 경계, 구현 파일, CLI 검증 증거, 사용 순서와 팀원 후속 작업
 16. [2026-10-08 Game Debugger 확장 배치](planning/2026-10-08-game-debugger-batch-plan.md) — G0~G8 계획, 기존 스폰 경로와 Scene 통합 정책
 17. [Game Debugger 배치 결과](planning/2026-10-08-game-debugger-batch-results.md) — 구현 경계·CLI 검사·실제 Scene 검증과 미실행 항목

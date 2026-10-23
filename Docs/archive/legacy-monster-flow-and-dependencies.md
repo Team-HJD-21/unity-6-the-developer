@@ -5,7 +5,7 @@
 | 항목 | 내용 |
 |---|---|
 | 관련 작업 | Issue #384 — 기존 몬스터 구조 분석 및 Netcode 테스트 환경 구성 |
-| 담당 영역 | E — Enemy / Encounter / AI Platform |
+| 담당 영역 | 조수빈 — Enemy / Encounter / AI Platform |
 | 문서 유형 | 레거시 코드 분석 |
 | 최종 수정일 | 2026-09-22 |
 

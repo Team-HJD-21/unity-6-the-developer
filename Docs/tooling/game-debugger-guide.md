@@ -159,13 +159,13 @@ flowchart LR
 
 `IEncounterDebugCommandTarget.TryRequestCurrentEncounter(preset, max, source, out result)`는 bound 최신 snapshot을 사용한다. 명시적 snapshot과 source를 받는 overload, 이전 signature도 유지한다. Match ID와 Host/Executor 준비를 검사한다. 준비가 안 된 수동 요청은 즉시 사유를 반환하며 공간 검사를 우회하지 않는다.
 
-`IGameDiagnosticsSource`는 bounded recent buffer, sequence, bound Match, 게임/실제 clock, 서버 권한, 생존/귀속 불명 수와 `DiagnosticEmitted`를 제공한다. `GameDiagnosticEvent`는 MatchId/revision/RequestId/source/preset/type/point/entity/planned/actual/time/message의 불변 사실이다. RequestId는 이 런처의 Match 내 상관 ID이며 **E의 PlanId나 재시도 idempotency token이 아니다**. 요청 revision은 계획 입력 버전이지 생성 순간 최신 revision 보장이 아니다.
+`IGameDiagnosticsSource`는 bounded recent buffer, sequence, bound Match, 게임/실제 clock, 서버 권한, 생존/귀속 불명 수와 `DiagnosticEmitted`를 제공한다. `GameDiagnosticEvent`는 MatchId/revision/RequestId/source/preset/type/point/entity/planned/actual/time/message의 불변 사실이다. RequestId는 이 런처의 Match 내 상관 ID이며 **조수빈의 PlanId나 재시도 idempotency token이 아니다**. 요청 revision은 계획 입력 버전이지 생성 순간 최신 revision 보장이 아니다.
 
 `EncounterExecutionContext`는 실제 Executor 기록과 요청을 연결한다. 기존 `Execute(instruction)`/`Spawn()`는 독립 Feature 호환용으로 유지하나 네 프로젝트 진입점은 context·snapshot 공통 경계를 사용한다. 다른 Feature가 직접 호출하면 telemetry coverage는 별도로 연결해야 한다. 관측 subscriber 예외는 실제 생성 흐름을 중단하지 않는다.
 
 ## 구현하지 않은 지표 / 별도 인수
 
-10월 15일 정식 Encounter API에 GUID RequestId 기반 중복 실행 방지를 추가했다. 통계의 정수 RequestId는 여전히 실행 상관 번호이며 GUID/E PlanId와 다르다. 아래 기존 지표의 미구현 표기는 정식 API의 중복 Ledger까지 미구현이라는 뜻이 아니다. [정식 요청 규약](../architecture/core-sprint-region-and-request-api.md)
+10월 15일 정식 Encounter API에 GUID RequestId 기반 중복 실행 방지를 추가했다. 통계의 정수 RequestId는 여전히 실행 상관 번호이며 GUID/조수빈의 PlanId와 다르다. 아래 기존 지표의 미구현 표기는 정식 API의 중복 Ledger까지 미구현이라는 뜻이 아니다. [정식 요청 규약](../architecture/core-sprint-region-and-request-api.md)
 
 실제 후보별 셀 점유/전선 거리/ID 순위·제외 사유·배정은 이제 Snapshot Inspector에서 확인한다. 가상의 통합 위험 점수, 공식 PlanId·중복 실행 방지, 피해/DPS/전술 압력·우세도는 여전히 N/A다. 연결 경고는 SpawnPoint ID/위치, topology 부족, OOB, 진단 소스 수와 TargetableComponent 존재를 검사하며 공격 성공까지 인증하지 않는다. 정확한 snapshot 발행 timestamp는 없으므로 observed age와 구분한다.
 

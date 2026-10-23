@@ -1,8 +1,8 @@
 # Stage 1 기술 PoC 완료와 PR 인수
 
-기준일: 2026-10-08 · 담당: A 양현석 · 브랜치: `feature/core`
+기준일: 2026-10-08 · 담당: 양현석 · 브랜치: `feature/core`
 
-PL이 런타임을 직접 확인하고 문제가 없다고 승인했다. **A의 Core 공간 분석·Encounter 전달·Spawn 통합 및 Game Debugger 기술 PoC는 완료로 인수한다.** 정식 승패·성장·멀티플레이 출시 기능 완료를 의미하지 않는다. 이 기록이 이전 배치 문서의 미실행 화면 검증 및 터렛 업로드 대기 상태에 대한 최신 인수 결과다. 과거 테스트 결과는 당시의 기록으로 보존한다.
+PL이 런타임을 직접 확인하고 문제가 없다고 승인했다. **양현석의 Core 공간 분석·Encounter 전달·Spawn 통합 및 Game Debugger 기술 PoC는 완료로 인수한다.** 정식 승패·성장·멀티플레이 출시 기능 완료를 의미하지 않는다. 이 기록이 이전 배치 문서의 미실행 화면 검증 및 터렛 업로드 대기 상태에 대한 최신 인수 결과다. 과거 테스트 결과는 당시의 기록으로 보존한다.
 
 ## 실행 환경과 검증 근거
 
@@ -22,7 +22,7 @@ PL이 런타임을 직접 확인하고 문제가 없다고 승인했다. **A의 
 
 동일 snapshot 반복 실험에서 적합 30/30셀을 사용했고 480마리를 셀당 15~20마리로 배분했다. 최신 동적 Grid 실험은 240마리·27/30셀을 사용했다. 적합 셀별 생성 기회 분산이지 모든 SpawnPoint에 매번 같은 수를 생성하는 정책은 아니다. [분포 수정 설계](../architecture/spatial-spawn-distribution.md)와 [검증 결과](2026-10-08-spawn-distribution-fix.md)를 따른다.
 
-## 완료된 A 기능
+## 완료된 양현석 기능
 
 - App/Match/Scene 소유권과 이전 Scene의 종료 방어, immutable 공간 입력·snapshot.
 - Delaunay topology·외곽 Frontline, XY 중심 기반 Uniform Grid 및 명시적 동적 점유 갱신.
@@ -41,14 +41,14 @@ PL이 런타임을 직접 확인하고 문제가 없다고 승인했다. **A의 
 | #458 | 완료 | Grid 좌표/경계/ID/빈 입력/OOB·갱신 정책·Encounter 조회 및 집중/Scene 검증 |
 | #445 | 완료 | 실제 계약과 일치하는 예제·명명·권한·종료·취소·PoC 구분을 공유 가이드에 기록. #442 미결은 미결로 표시 |
 | #389, #446, #460 | 이미 Closed | 기존 수명주기·Editor 기반 완료. 이번 확장을 과거 검증으로 소급 기록하지 않음 |
-| #420 | 열어 둠 | PL의 A 기술 PoC 인수는 완료. 팀 공통 Windows Build·플레이 관찰 기록은 별도. 원문 임시 승패는 최신 Sprint의 미정/제외 기준과 불일치하므로 현재 기준을 Issue에 명시 |
-| #459 | 열어 둠 | A 전달·공간 소비/실제 생성은 확인. E 소유 전체 인수에는 공식 Plan 중복 실행 방지/권한 및 Enemy 상호작용·종료 범위의 담당자 확인이 필요 |
+| #420 | 열어 둠 | PL의 양현석 기술 PoC 인수는 완료. 팀 공통 Windows Build·플레이 관찰 기록은 별도. 원문 임시 승패는 최신 Sprint의 미정/제외 기준과 불일치하므로 현재 기준을 Issue에 명시 |
+| #459 | 열어 둠 | 양현석 전달·공간 소비/실제 생성은 확인. 조수빈 소유 전체 인수에는 공식 Plan 중복 실행 방지/권한 및 Enemy 상호작용·종료 범위의 담당자 확인이 필요 |
 | #441 | 열어 둠 | PL이 전역 Legacy 제거를 별도 범위 확정까지 보류함. Singleton 자동 생성 억제는 전체 제거가 아님 |
 | #442 | 열어 둠 | Core 전체의 2인 Host/Client 권한·ID·상태·생성/제거 검증 미완료. 로컬 Authority와 Enemy Host Spawn으로 대체 불가 |
 | #444 | 열어 둠 | Bootstrap의 Profile/Platform/SceneFlow는 Fake. 실제 서비스 선정·사용·실패/종료 구현은 별도 |
 | #403 | 열어 둠 | Enemy Legacy animator 중복 직렬화 범위이며 Player 타깃 누락 HOTFIX와 다른 결함. 이 작업에서 전체 대상 회귀를 인수하지 않음 |
 
-완료와 main 반영은 다르다. 완료 Issue를 닫아도 현재 feature/core 변경은 PR 검토·필수 checks·승인 후 main에 병합해야 팀 공용 기준이 된다. 다른 Owner의 전체 Feature를 A의 기술 인수만으로 닫지 않는다.
+완료와 main 반영은 다르다. 완료 Issue를 닫아도 현재 feature/core 변경은 PR 검토·필수 checks·승인 후 main에 병합해야 팀 공용 기준이 된다. 다른 Owner의 전체 Feature를 양현석의 기술 인수만으로 닫지 않는다.
 
 ## HOTFIX 제거와 교체
 
