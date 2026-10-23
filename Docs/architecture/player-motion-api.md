@@ -1,6 +1,8 @@
 # 플레이어 무기별 스프라이트·이펙트 API
 
-수정일: 2026-10-22. 스패너 브랜치의 작업 중 변경이며 main 반영 전이다.
+수정일: 2026-10-23. 스패너 브랜치의 작업 중 변경이며 main 반영 전이다.
+
+스패너 대각선 확장 후 최신 동작·연결·검사 기록은 [스패너 8방향 자세](../art/player-spanner-eight-way.md)를 참고한다. 아래 날짜별 기록 중 스패너를 4방향으로 설명하는 부분은 확장 전 상태다.
 
 ## 에셋 구성
 
@@ -27,8 +29,10 @@
 | HoverRepair | 0.6초 | X | 이동 중 부유 자세를 유지하는 수리 |
 | MoveLeanLeft / MoveLeanRight | 0.8초 | O | 좌우 이동에 따라 몸과 총이 쏠리는 자세 |
 | HoverFireLeanLeft / HoverFireLeanRight | 0.2초 | X | 좌우로 쏠리는 자세를 유지하는 사격 |
+| MoveLeanBack | 0.8초 | O | 대각선 조준 반대쪽으로 이동하는 고정 자세 |
+| HoverFireLeanBack | 0.2초 | X | 같은 대각선 후진 자세를 유지하는 사격 |
 
-모션은 Down/Up/Left/Right의 4방향이다. 기본 모션은 방향별 4프레임이고, 좌우 기울임 이동과 사격은 방향별 고정 Sprite 한 장을 사용한다. 몸체 PNG는 이전 시안을 포함해 224장 보존하며 현재 클립이 참조하는 고유 그림은 168장이다. 몸체 56클립과 이펙트 16장·4클립이다. 몸체는 160×160, 32 PPU, 중앙 피벗, Point 필터와 중립색·옅은 청록을 포함하는 공통 32색 팔레트를 사용한다. 이펙트는 96×96이며 탄환 128 PPU, 섬광·명중 96 PPU이다.
+총을 든 Idle/Move/Fire/HoverFire와 스패너의 대기·이동·공격·수리는 Down/Up/Left/Right와 대각선 네 방향을 사용한다. 기존 4방향 기본 모션은 방향별 4프레임이고, 좌우 기울임과 대각선 이동·이동 사격은 고정 Sprite 한 장을 사용한다. 대각선 정지 사격은 준비·반동·복귀의 세 그림을 사용한다. 기존 몸체 56클립에 총기 대각선 16클립, 대각선 후진 8클립, 스패너 대각선 24클립을 추가해 총 104클립을 사용한다. 몸체는 160×160, 32 PPU, 중앙 피벗, Point 필터와 공통 팔레트를 사용한다. 기존 탄환·섬광·명중 이펙트는 96×96이며 탄환 128 PPU, 섬광·명중 96 PPU이다. 추진 불꽃은 등쪽 표현을 사용하며 발밑에 별도 불꽃을 추가하지 않는다.
 
 2026-10-21 비율 보정: 오른쪽을 볼 때 길어 보이던 바이저·턱 실루엣을 짧고 둥글게 편집한 56프레임을 반영했다. 원본은 `Source/RightProportionsGrounded.png`와 `RightProportionsHover.png`다. 전체 몸체 224장은 밝은 헬멧 영역 폭 48픽셀을 목표로 같은 모션·방향의 4프레임에 동일한 균일 배율을 적용했다. 가로·세로를 별도로 늘이지 않으며 기존 헬멧 위치와 프레임별 이동을 유지한다. Sprite GUID·PPU·피벗·클립 참조·고정 이동 자세 선택은 유지했다. 원본과 보정 전 파일은 로컬 제작 자료에 보관했다.
 
@@ -46,7 +50,7 @@
 
 이동 중 공격하면 부유 공격 48장·12클립을 사용한다. 원본은 `Source/HoverFire.png`, `HoverAttack.png`, `HoverRepair.png`다. `PlayerMotion`의 기존 행동 값은 유지하고 `GetClip(motion, hovering)`으로 표시 자세만 선택한다. 공격 중 이동을 시작하거나 멈춰도 기존 진행률을 유지하며 행동·타격 예약을 새로 시작하지 않는다. 정지/부유 버전의 길이와 타격 지점은 같다.
 
-총을 든 좌우 이동은 별도 LeanLeft/LeanRight 그림을 사용한다. 원본은 `Source/MoveLateralLean.png`, `HoverFireLateralLean.png`다. `PlayerLateralLean`은 Neutral/Left/Right이며 `GetClip(motion, hovering, lean)`으로 조회한다. 좌우 이동 입력이 ±0.01을 넘으면 해당 기울임을 선택하고, 위아래만 이동하거나 멈추면 Neutral로 돌아간다. 조작 차단과 스패너 장착도 Neutral이다. 조준 방향은 기존 Facing으로 유지하고, 움직이는 방향으로 몸체 전체를 반전시키지 않는다. 총기 사격 중에도 같은 기울임을 사용하며 방향을 바꿔도 행동 진행률을 유지한다. 기울임은 그림에 포함되므로 물리 루트·콜라이더 회전은 변경하지 않는다.
+총을 든 좌우 이동은 별도 LeanLeft/LeanRight 그림을 사용한다. 원본은 `Source/MoveLateralLean.png`, `HoverFireLateralLean.png`다. `PlayerLateralLean`은 Neutral/Left/Right/Back이며 `GetClip(motion, hovering, lean)`으로 조회한다. 상하좌우 조준 중 좌우 이동 입력이 ±0.01을 넘으면 해당 기울임을 선택하고, 위아래만 이동하거나 멈추면 Neutral로 돌아간다. 대각선은 아래의 후진 규칙을 사용한다. 조작 차단과 스패너 장착도 Neutral이다. 조준 방향은 기존 Facing으로 유지하고, 움직이는 방향으로 몸체 전체를 반전시키지 않는다. 총기 사격 중에도 같은 기울임을 사용하며 방향을 바꿔도 행동 진행률을 유지한다. 기울임은 그림에 포함되므로 물리 루트·콜라이더 회전은 변경하지 않는다.
 
 좌우 이동 자세는 여러 프레임을 순환하지 않는다. 각 방향의 `MoveLeanLeft/Right_*_1.png` 한 장을 고정하며, 이동 중 사격도 같은 Sprite를 참조한다. 좌우 기울임 전체에서 실제 사용하는 그림은 2자세×4조준 방향의 8장이다. Animator 클립의 모든 Sprite 키가 같은 그림을 가리키므로 재생 시간이 지나거나 사격해도 몸·추진 효과 그림이 바뀌지 않는다. 사격 재생 길이와 발사 섬광은 유지한다.
 
@@ -61,7 +65,7 @@
 - `PlayerSpriteEffect`: 짧은 명중 그림의 색·정렬을 맞추고 지정한 수명 뒤 자기 인스턴스만 제거한다.
 - `PlayerMuzzleFlash`: 발사 성공 시 프리팹에 배치된 섬광 오브젝트를 잠깐 활성화한다. 색은 흰 탄심을 유지하는 약한 틴트로 적용한다.
 
-몸체에 그려진 무기까지 회전시키지는 않는다. 실제 발사 방향은 기존 마우스 조준 벡터를 유지하므로 몸체의 네 방향 그림과 대각선 발사각은 근사 관계다. 사격 중 발 위치 그림은 짧은 Fire 포즈로 전환되지만 플레이어 이동은 중단하지 않는다.
+몸체에 그려진 무기까지 회전시키지는 않는다. 실제 탄환은 기존 연속 마우스 조준 벡터로 발사하고, 총기 외형과 총구 자식은 가장 가까운 8방향을 사용한다. 사격 중 발 위치 그림은 짧은 Fire 포즈로 전환되지만 플레이어 이동은 중단하지 않는다.
 
 ## 바닥 그림자 프리팹
 
@@ -102,7 +106,7 @@ Sprite 참조·기존 클립 길이·반복 설정도 유지한다. 원형 원�
 
 성공한 스패너 타격은 `PauseAtImpact(seconds)`로 해당 플레이어 Animator만 잠깐 멈춘다. 기본 0.045초이고 전체 게임 시간·물리·적 AI는 바꾸지 않는다. 취소나 비활성화 시 Animator 속도를 복구한다.
 
-총기 사격의 피해·속도·사거리·산탄 수와 탄환 콜라이더는 변경하지 않는다. 기존 `PlayerBullet.Initialize(Color, float, Vector2)`를 유지하고, 새 오버로드의 `cryogenic` 인자가 비행 그림만 구분한다. 별도 서버 RPC는 추가하지 않았다.
+기본 총과 냉기 무기는 한 번의 발사마다 조준 방향을 중심으로 5발·25도 산탄을 생성한다. 기본 총은 `_defaultGunPelletCount`·`_defaultGunSpreadAngle`, 냉기는 `_cryoPelletCount`·`_cryoSpreadAngle`로 별도 조정한다. 기존 `PlayerBullet.Initialize(Color, float, Vector2)`를 유지하고, 새 오버로드의 `cryogenic` 인자가 비행 그림만 구분한다. 별도 서버 RPC는 추가하지 않았다.
 
 ## 제작과 검증
 
@@ -149,3 +153,103 @@ Sprite 참조·기존 클립 길이·반복 설정도 유지한다. 원형 원�
   플레이어 루트/Rigidbody/Collider를 기울이지 않는다.
 - 회귀 테스트는 두 반대 방향 조합의 실제 Sprite/Animator 상태, 총구 방향과 루트 위치를 검사한다.
   컴파일·참조·프레임/그림자 키의 정적 검증을 수행했으며 Unity Test Runner/실제 플레이는 별도 확인이 필요하다.
+
+## 기본 총 단일 탄환 시도 (2026-10-22, 이후 아래 5발 복원으로 대체)
+
+- `PlayerAttack`에서 기본 총의 단일 발사와 냉기 산탄 발사를 분리했다. 기본 총은 공격 입력 유지 중
+  0.2초마다 한 발, 탄당 피해 13이다. 기존 5발이 전부 맞을 때의 최대 피해 65를 한 발에 합산하지 않는다.
+  공유 탄환 프리팹의 속도는 45, 수명은 약 1.333초이며 기본 총과 냉기 총에 함께 적용한다.
+  이전 속도 30·수명 2초보다 1.5배 빠르고, 장애물이 없을 때 최대 비행거리는 약 60으로 유지한다.
+  기존 탄환 콜라이더는 유지한다.
+- `WeaponType.DefaultGun = 0`으로 명칭을 맞췄으며 직렬화된 무기 값 0/1/2는 보존한다.
+  기본 총 설정은 `_defaultGunColor`·`_defaultGunDamage`·`_defaultGunInterval`이다.
+  기존 `_shotgun*`, `_pelletCount`, `_spreadAngle` 필드는 `FormerlySerializedAs`로 이관한다.
+- `FX/Warm/Warm_0.png`부터 `Warm_3.png`까지 흰색 중심과 주황색 꼬리가 있는 비행 그림으로 교체한다.
+  `Warm.anim`과 프리팹의 GUID·연결은 유지하므로 Inspector와 Animation 창에서 계속 수정할 수 있다.
+  꼬리는 시각 효과이며 전체 꼬리에 피격 판정을 늘리지 않는다. 냉기 그림은 그대로 둔다.
+- 내장 `image_gen`으로 2×2 FX 시트를 생성하고 공통 배율·16색 팔레트·이진 알파·96×96으로 패키징했다.
+  원본은 `V2/Source/DefaultGunProjectile_Source.png`, 프롬프트·생성 경로·파일 검증은
+  `Docs/art/default-gun-projectile.json`에 보존한다.
+- `DefaultGun_FiresOneStraightBulletAndRespectsFireInterval`은 단일 생성·조준·연사 간격을,
+  `CryoBlaster_PreservesMuzzlePositionPelletCountAndSpread`는 냉기 산탄 유지를 검사한다.
+  테스트 소스와 빌드를 확인했으며 Unity Test Runner/플레이 검증은 별도 진행한다.
+
+## 8방향 대기 외형 시안 (2026-10-23)
+
+현재 총을 든 대기 외형을 기준으로 대각선 네 방향의 고정 자세를 제작한다.
+기존 상하좌우는 `Idle/Idle_{Down,Up,Left,Right}_0.png`를 그대로 사용하고,
+추가 그림은 `IdleEightWay/Idle_{DownLeft,DownRight,UpLeft,UpRight}.png`에 보관한다.
+총 여덟 방향의 원본·프롬프트·참조 파일·비율 측정값은 `Docs/art/player-idle-eight-way.json`을 참고한다.
+추가 그림은 160×160, 32 PPU, 중앙 피벗, Point 필터, 기존 중립색 팔레트와 이진 알파를 사용한다.
+머리·몸·무기를 가로와 세로로 따로 늘이지 않고 전체에 동일한 배율을 적용하며 발 기준선을 맞춘다.
+
+최초에는 대기 외형 확인용으로 제작했으며, 후속 요청으로 아래의 총기 8방향 연결에 사용한다.
+스프라이트는 방향별 한 장의 고정 그림이다.
+
+## 총기 8방향 연결과 추진 효과 (2026-10-23)
+
+- `PlayerAimFacing`은 기존 Down/Right/Up/Left 값 0~3을 유지하고 대각선을 4~7에 추가한다.
+  `GetFacing`은 기존 4방향 계약이고 `GetEightWayFacing`은 45도 간격으로 구분한다.
+  유효하지 않은 벡터는 Down이다. 탄환의 실제 비행 방향은 이 각도로 강제하지 않는다.
+- `PlayerMotionSet.Clip`에 대각선 네 클립을 추가한다. `HasEightWayRanged`는 Idle/Move/Fire/HoverFire의
+  여덟 방향이 모두 연결됐을 때만 true다. `PlayerWeaponRig`은 해당 구성이 있고 몸체에 총이 포함된
+  원거리 무기에서 8방향을 사용한다. 스패너는 기존 4방향이며 콜라이더는 기존 4방향 선택을 유지한다.
+- 대각선 이동은 고정 부유 자세를 사용한다. 이동 중 사격도 해당 Move 그림을 공유하므로 발사할 때
+  지면 자세로 내려오지 않는다. 기존 상하좌우 이동의 좌우 기울임은 유지한다. 대각선에는 별도
+  좌우 기울임 변형 대신 아래의 대각선 후진 전용 자세를 사용한다. 추진 불꽃은 등쪽에만 표시한다.
+- 새 뒤쪽 대각선 Move/Fire는 내장 `image_gen`으로 제작했다. 앞쪽 대각선 총 각도 편집은 생성 도구에서
+  거절돼 승인된 앞쪽 대각선 대기 그림을 사용한다. 앞쪽 Move는 전체 그림을 3픽셀 위에 등록하며
+  새로운 앞쪽 사격 반동 그림을 제작했다고 간주하지 않는다. 제작 정보·프롬프트·원본·총구 픽셀은
+  `Docs/art/player-ranged-eight-way.json`, 비교 이미지는 `player-ranged-eight-way-preview.png`에 보존한다.
+- Player 프리팹의 Weapon Rig 아래 총기·총구·섬광 자식 네 벌을 추가해 총 여덟 방향을 배치했다.
+  `_idleMuzzles`·`_moveMuzzles`·`_firingMuzzles`에 자세별 위치를 저장한다. 총구 픽셀을 Player 로컬
+  좌표로 바꾼 뒤 실제 Rig 로컬 배율 1.6666667로 나누므로, Rig 배율이 총구 오프셋에 중복 적용되지 않는다.
+  기존 세 MuzzlePose의 상하좌우 좌표도 같은 단위로 보정한다. Rig 배율을 바꾸면 이 좌표를 다시 맞춰야 한다.
+- `TryGetMuzzle(out muzzle, forShot: true)`는 첫 발 시점에도 Fire 총구를 사용한다. 화면 표시 위치를
+  동기화하는 `PlayerMuzzleAnchor`의 LateUpdate는 `forShot: false`로 현재 대기/사격 자세를 따른다.
+  각도 전환과 이동 시작/정지는 행동의 진행 비율을 유지한다.
+- 사용자의 후속 요청으로 새로 추가했던 발밑 추진 불꽃의 프리팹·스크립트·Animator·클립을 제거했다.
+  기존 등쪽 불꽃과 몸체 그림은 유지하며, 8방향 자세·총구·그림자 연결도 유지한다.
+- 각도 경계, 여덟 방향 클립/상태와 첫 발 총구 테스트를 추가했다.
+  C# 빌드와 에셋 정적 검증을 수행하며 Unity Test Runner/실제 플레이 검증은 별도로 기록한다.
+
+## 대각선 후진 자세와 등 불꽃 보완 (2026-10-23)
+
+- 대각선 조준 중 이동 방향과 조준 방향의 정규화 내적이 -0.5보다 작으면 `Back` 자세를 선택한다.
+  반대 방향 중심의 120도 범위이며 수직으로 비껴가는 이동과 정방향 이동은 일반 자세를 유지한다.
+  8방향 총기 설정과 Move/이동 Fire에만 적용한다. 새 후진 클립 네 방향이 모두 연결됐을 때만 사용한다.
+- `BackpedalEightWay/Backpedal_{DownLeft,DownRight,UpLeft,UpRight}.png` 네 장을
+  `MoveLeanBack_*`와 `HoverFireLeanBack_*`가 공유한다. 머리와 상체는 뒤에, 발은 앞에 오는 자세다.
+  현재 대기 그림의 헬멧 폭 약 54픽셀에 동일 배율로 맞췄다. 원본과 프롬프트는
+  `Docs/art/player-diagonal-backpedal.json`, 비교 이미지는 `player-diagonal-backpedal-preview.png`다.
+- `_backpedalMuzzles`는 새 후진 그림의 총구 좌표이며 다른 자세와 같은 Weapon Rig 로컬 단위다.
+  방향이나 전진/후진 전환은 사격 진행률을 유지한다. 이동과 이동 사격의 그림자 키도 같은 발 위치를 사용한다.
+- 등 불꽃은 기존 제트팩 아래의 짧은 하얀 표현을 기준으로 한다. 후속 수정에서는 한쪽만 보이던 자세와
+  불꽃 방향이 어긋났던 14자세·20프레임을 양쪽 불꽃으로 교체했다. 양쪽이 이미 맞는 나머지 28프레임은 유지한다.
+  `Source/BackpackExhaust_PairedMaster.png`는 생성 원본, `FX/Backpack/BackpackExhaust.png`는 공통 흰 불꽃이다.
+  제작 단계에서 자세별 제트팩 노즐 두 곳에 배치하고, 머리에서 골반으로 향하는 몸의 축을 따라 같은 각도로 회전한다.
+  가려지는 반대편 불꽃도 끝이 보이도록 등록한다. 교체 대상의 기존 불꽃은 제거하므로 중복으로 표시하지 않는다.
+  몸체의 불투명 픽셀은 기존 불꽃 제거 영역 밖에서 보존하며 기존 흰색·중립 팔레트와 이진 알파를 사용한다.
+  등 불꽃은 Sprite 안의 그림이고 새 런타임 컴포넌트나 발밑 이펙트는 없다.
+  원본·프롬프트·색상 처리·검증 기록은 `Docs/art/player-backpack-exhaust.json`에 보관한다.
+- `DiagonalBackpedal_PreservesShotPhaseAndUsesTheSameMovingSpriteAndMuzzle`는 자세 전환 시
+  사격 진행률·Sprite·총구·물리 루트 보존을 검사한다. 컴파일 및 에셋 연결을 정적으로 확인하며,
+  Unity Test Runner와 실제 플레이 결과는 별도다.
+
+## 대각선 정지 반동과 부유 자세 후속 수정 (2026-10-23)
+
+- `Fire_{DownLeft,DownRight,UpLeft,UpRight}.anim`에 실제 Sprite 교체 키를 연결한다.
+  0초 준비(기존 Idle), 0.05초 반동, 0.1초 복귀, 0.15초 준비 자세이며 전체 길이는 기존 0.2초다.
+  `RangedEightWay/Fire_*.png`는 반동, `FireRecover_*.png`는 복귀 그림이다. 두 키 자세는 생성 도구로 그렸고
+  원래 Idle의 발 기준점에 균일 배율로 등록한다. 첫 발 총구도 Idle 위치를 사용한다.
+- 아래쪽 대각선 `Move_DownLeft/DownRight.png`의 발을 넓게 벌린 정지 자세를 바꾸고,
+  무릎을 살짝 접은 부유 자세와 원근에 따른 앞뒤 발 위치로 수정한다. 이동 사격은 같은 이동 그림을 공유한다.
+- 대각선 이동/후진 여덟 자세의 불꽃은 캐릭터·제트팩과 함께 다시 그린 이미지다.
+  공통 불꽃을 별도로 붙이는 방식은 이 여덟 자세에서 사용하지 않는다. 기존 상하좌우 그림은 유지한다.
+  후진 자세의 가스는 등 가방의 노즐에서 다리가 뻗은 방향으로 흐른다. 왼쪽 대각선은 아래 왼쪽,
+  오른쪽 대각선은 아래 오른쪽이며 발·허리에 발생기를 붙이지 않는다.
+- 다시 그린 그림에 맞춰 그림자 자식의 위치 키와 이동/후진 총구 좌표를 갱신한다.
+  Animator 상태·클립 GUID·사격 간격·공격 판정·플레이어 루트와 콜라이더는 유지한다.
+- 실제 원본·프롬프트·등록 배율·클립 키와 검증 결과는 `Docs/art/player-diagonal-polish.json`에 보관한다.
+  `player-diagonal-recoil-preview.gif`와 `player-integrated-hover-preview.png`는 에셋 미리보기이며 Unity 실행 캡처는 아니다.
+  `StationaryDiagonalShot_HasRecoilAndRecoveryThenReturnsToIdle`는 정지 반동과 준비 자세 복귀를 검사한다.

@@ -31,6 +31,10 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     public bool IsPlayingToolAction => _ownsDisplay &&
         (_motion == PlayerMotion.Attack || _motion == PlayerMotion.Repair);
     public bool OwnsDisplay => _ownsDisplay;
+    public bool SupportsEightWayRanged => _motions != null && _motions.HasEightWayRanged;
+    public bool SupportsEightWayTools => _motions != null && _motions.HasEightWayTools;
+    public bool SupportsDiagonalBackpedal => SupportsEightWayRanged && _motions.HasDiagonalBackpedal;
+    public bool IsFiring => _ownsDisplay && _motion == PlayerMotion.Fire;
     private bool IsAction => IsPlayingToolAction || _motion == PlayerMotion.Fire;
     private bool HasSpanner => _attack != null && _attack.CurrentWeapon == WeaponType.Spanner;
     private bool HasMovementInput => _input.MoveInput.sqrMagnitude > .001f &&
@@ -146,8 +150,11 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     private void UpdateAnimatorState()
     {
         PlayerAimFacing facing = _rig != null ? _rig.Facing : PlayerAimUtility.GetFacing(_input.AimDirection);
+        bool supportsEightDirections = HasSpanner ? SupportsEightWayTools : SupportsEightWayRanged;
+        if (PlayerAimUtility.IsDiagonal(facing) && !supportsEightDirections)
+            facing = PlayerAimUtility.GetFacing(_input.AimDirection);
         bool hoveringAction = IsAction && HasMovementInput;
-        PlayerLateralLean lateralLean = GetMovementLean();
+        PlayerLateralLean lateralLean = GetMovementLean(facing);
         if (!_restart && facing == _facing && hoveringAction == _hoveringAction && lateralLean == _lateralLean) return;
         // Turning or starting/stopping movement preserves the action phase and impact timing.
         float previousLength = CurrentClip.length;
@@ -161,10 +168,14 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         _restart = false;
     }
 
-    private PlayerLateralLean GetMovementLean()
+    private PlayerLateralLean GetMovementLean(PlayerAimFacing facing)
     {
-        if (!HasMovementInput || HasSpanner || (_motion != PlayerMotion.Move && _motion != PlayerMotion.Fire))
+        if (!HasMovementInput || HasSpanner ||
+            (_motion != PlayerMotion.Move && _motion != PlayerMotion.Fire))
             return PlayerLateralLean.Neutral;
+        if (PlayerAimUtility.IsDiagonal(facing))
+            return SupportsDiagonalBackpedal && PlayerAimUtility.IsMovingBackward(facing, _input.MoveInput)
+                ? PlayerLateralLean.Back : PlayerLateralLean.Neutral;
         if (_input.MoveInput.x < -.01f) return PlayerLateralLean.Left;
         if (_input.MoveInput.x > .01f) return PlayerLateralLean.Right;
         return PlayerLateralLean.Neutral;

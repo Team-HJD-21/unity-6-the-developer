@@ -192,9 +192,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 8235949267977876978}
-  bulletSpeed: 30
+  bulletSpeed: 45
   bulletDamage: 13
-  lifeTime: 2
+  lifeTime: 1.3333334
 --- !u!95 &910202610210000020
 Animator:
   serializedVersion: 7

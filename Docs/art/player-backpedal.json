@@ -63,7 +63,22 @@
         104,
         76
       ],
-      "uniformSourceScale": 0.17467248908296942
+      "uniformSourceScale": 0.17467248908296942,
+      "sha256": "c27d402d82be8dee46397dee02cc9e0bea50815531dc58a41573d641e69a79fd",
+      "bodyBoundsBeforeExhaust": [
+        23,
+        34,
+        118,
+        127
+      ],
+      "bounds": [
+        23,
+        34,
+        118,
+        127
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "exhaustRepaint": "Docs/art/player-exhaust-consistency.json"
     },
     {
       "facing": "Right",
@@ -122,7 +137,22 @@
         108,
         75
       ],
-      "uniformSourceScale": 0.16455696202531644
+      "uniformSourceScale": 0.16455696202531644,
+      "sha256": "53112eaaca546ee6e5a73d149ec4b8a4210bbddcdeb0b6bd79c3f9878a303d70",
+      "bodyBoundsBeforeExhaust": [
+        40,
+        34,
+        134,
+        129
+      ],
+      "bounds": [
+        40,
+        34,
+        134,
+        129
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "exhaustRepaint": "Docs/art/player-exhaust-consistency.json"
     }
   ],
   "pose_rule": "Facing left + moving right: upper body screen-right, feet screen-left; mirrored when facing right + moving left.",

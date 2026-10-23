@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 public enum PlayerMotion { Idle, Move, Attack, Repair, ToolIdle, ToolMove, Fire }
-public enum PlayerLateralLean { Neutral, Left, Right }
+public enum PlayerLateralLean { Neutral = 0, Left = 1, Right = 2, Back = 3 }
 
 /// <summary>행동·방향에 맞는 AnimationClip을 연결합니다. 프레임과 재생 시간은 클립이 소유합니다.</summary>
 [CreateAssetMenu(menuName = "Player/Motion Set")]
@@ -15,11 +15,19 @@ public sealed class PlayerMotionSet : ScriptableObject
         public AnimationClip upAnimation;
         public AnimationClip leftAnimation;
         public AnimationClip rightAnimation;
+        public AnimationClip downLeftAnimation;
+        public AnimationClip downRightAnimation;
+        public AnimationClip upLeftAnimation;
+        public AnimationClip upRightAnimation;
 
         public AnimationClip Animation(PlayerAimFacing facing)
         {
             switch (facing)
             {
+                case PlayerAimFacing.DownLeft: return downLeftAnimation != null ? downLeftAnimation : leftAnimation;
+                case PlayerAimFacing.DownRight: return downRightAnimation != null ? downRightAnimation : rightAnimation;
+                case PlayerAimFacing.UpLeft: return upLeftAnimation != null ? upLeftAnimation : upAnimation;
+                case PlayerAimFacing.UpRight: return upRightAnimation != null ? upRightAnimation : upAnimation;
                 case PlayerAimFacing.Up: return upAnimation;
                 case PlayerAimFacing.Left: return leftAnimation;
                 case PlayerAimFacing.Right: return rightAnimation;
@@ -29,6 +37,9 @@ public sealed class PlayerMotionSet : ScriptableObject
 
         public bool IsConfigured => IsPlayable(downAnimation) && IsPlayable(upAnimation)
             && IsPlayable(leftAnimation) && IsPlayable(rightAnimation);
+        public bool HasDiagonalDirections => IsPlayable(downLeftAnimation) &&
+            IsPlayable(downRightAnimation) && IsPlayable(upLeftAnimation) && IsPlayable(upRightAnimation);
+        public bool HasEightDirections => IsConfigured && HasDiagonalDirections;
 
         private static bool IsPlayable(AnimationClip animation) => animation != null
             && !float.IsNaN(animation.length) && !float.IsInfinity(animation.length) && animation.length > 0f;
@@ -48,10 +59,22 @@ public sealed class PlayerMotionSet : ScriptableObject
     [SerializeField] private Clip _moveLeanRight = new Clip();
     [SerializeField] private Clip _hoverFireLeanLeft = new Clip();
     [SerializeField] private Clip _hoverFireLeanRight = new Clip();
+    [SerializeField] private Clip _moveBackpedal = new Clip();
+    [SerializeField] private Clip _hoverFireBackpedal = new Clip();
     [SerializeField] private RuntimeAnimatorController _controller;
 
     public RuntimeAnimatorController Controller => _controller;
     public bool HasAnimatorConfiguration => _controller != null && IsConfigured;
+    public bool HasEightWayRanged => _idle != null && _idle.HasEightDirections &&
+        _move != null && _move.HasEightDirections && _fire != null && _fire.HasEightDirections &&
+        _hoverFire != null && _hoverFire.HasEightDirections;
+    public bool HasEightWayTools => _toolIdle != null && _toolIdle.HasEightDirections &&
+        _toolMove != null && _toolMove.HasEightDirections &&
+        _attack != null && _attack.HasEightDirections && _repair != null && _repair.HasEightDirections &&
+        _hoverAttack != null && _hoverAttack.HasEightDirections &&
+        _hoverRepair != null && _hoverRepair.HasEightDirections;
+    public bool HasDiagonalBackpedal => _moveBackpedal != null && _moveBackpedal.HasDiagonalDirections &&
+        _hoverFireBackpedal != null && _hoverFireBackpedal.HasDiagonalDirections;
 
     public bool IsConfigured => _idle != null && _move != null && _attack != null && _repair != null &&
         _idle.IsConfigured && _move.IsConfigured && _attack.IsConfigured && _repair.IsConfigured &&
@@ -71,10 +94,15 @@ public sealed class PlayerMotionSet : ScriptableObject
     public Clip GetClip(PlayerMotion motion, bool hovering)
         => GetClip(motion, hovering, PlayerLateralLean.Neutral);
 
-    /// <summary>조준 방향과 별개로 좌우 이동에 따른 총기 자세를 선택합니다.</summary>
+    /// <summary>좌우 이동 기울임 또는 대각선 후진에 맞는 총기 자세를 선택합니다.</summary>
     public Clip GetClip(PlayerMotion motion, bool hovering, PlayerLateralLean lean)
     {
-        if (lean != PlayerLateralLean.Neutral)
+        if (lean == PlayerLateralLean.Back && HasDiagonalBackpedal)
+        {
+            if (motion == PlayerMotion.Move) return _moveBackpedal;
+            if (motion == PlayerMotion.Fire && hovering) return _hoverFireBackpedal;
+        }
+        if (lean == PlayerLateralLean.Left || lean == PlayerLateralLean.Right)
         {
             if (motion == PlayerMotion.Move)
                 return lean == PlayerLateralLean.Left ? _moveLeanLeft : _moveLeanRight;

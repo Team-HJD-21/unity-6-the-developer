@@ -1,0 +1,2995 @@
+{
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "model": "not exposed by host tool",
+  "estimateUsd": null,
+  "spriteCount": 56,
+  "newClipCount": 24,
+  "totalBodyStates": 104,
+  "sources": [
+    {
+      "direction": "DownLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerEightWay_DownLeft_Source.png",
+      "sha256": "cddc8ea1de7cca0de66904b7bd30f33ffab33d8b03e00c2425629c2be37fffaf",
+      "prompt": "Use case: identity-preserving precise game sprite pose edits. Make a transparent FOUR BY FOUR atlas of SIXTEEN full-body key poses of the EXACT same astronaut from FIRST reference, all facing DownLeft. FIRST is the exact approved identity and diagonal orientation, SECOND is a cardinal spanner action guide ONLY (six rows: idle, hover move, grounded attack, grounded repair, hover attack, hover repair), THIRD is the approved diagonal HOVER anatomy and soft WHITE BACKPACK EXHAUST style.\nReplace the rifle completely with ONE small black/grey/white open-ended SPANNER/WRENCH in the character's ANATOMICAL RIGHT HAND. The same right hand holds it in all sixteen cells; no switching hands. Keep the exact white-grey suit, round compact helmet diameter and proportions, same black visor, boots, backpack and thick dark contour. No new helmet ears, long head, colored equipment, new character or clothing. Camera is FRONT three-quarter view, black visor on the face, facing diagonally DOWN-LEFT. Every head, torso and feet must keep this SAME diagonal view; do NOT revert to front, side, or back cardinal poses. Use perspective on the feet; avoid a planted walking stride in hover poses.\nOUTPUT FORMAT: exact 4 columns x 4 rows, equal square cells, on genuine transparent background. One isolated full astronaut per cell, equal head size, equal generous margins and registration, all entire limbs/tool visible, no text or guides, no dividing lines, no floor/shadow, no extra props. The output is animation KEY POSES, not a comic. No monster/turret, no ground or sparks.\nEXACT cell order left-to-right, top-to-bottom:\nRow 1: [1 GROUNDED TOOL IDLE: wrench relaxed by right hip; 2 HOVER TOOL MOVE: knees relaxed and bent with two short soft white jets only below the backpack; 3 GROUNDED ATTACK WINDUP: right elbow and wrench raised above/behind shoulder ready to strike; 4 GROUNDED ATTACK CONTACT: visibly extended right arm making a strong downward-forward wrench strike toward the facing diagonal].\nRow 2: [5 GROUNDED ATTACK RECOVERY: right arm drawing wrench back, visibly between contact and idle; 6 GROUNDED REPAIR PREP: right elbow bent at waist, wrench held forward; 7 GROUNDED REPAIR CONTACT: right arm reaches diagonally forward at waist height, wrist turns wrench as though tightening a turret bolt, clearly NOT an overhead attack; 8 GROUNDED REPAIR RECOVERY: draws the wrench back toward waist].\nRow 3: [9 HOVER ATTACK WINDUP: same raised-wrench action as cell3 but feet NEVER grounded, hover knees and backpack white jets; 10 HOVER ATTACK CONTACT: same strong right-handed strike as cell4, maintains suspended bent-knee legs and jets; 11 HOVER ATTACK RECOVERY: follows cell10 returning toward cell2, still hovering; 12 HOVER REPAIR PREP: same forward waist-level preparation as cell6, hovering with jets].\nRow 4: [13 HOVER REPAIR CONTACT: same wrist-turn repair as cell7, hover knees and jets; 14 HOVER REPAIR RECOVERY: arm returning, hover legs and jets; 15 exact repeat of cell1 grounded tool idle; 16 exact repeat of cell2 hover tool move].\nGrounded cells have NO exhaust. All hover cells have the SAME COMPACT SOFT WHITE TUFTS under BOTH BACKPACK nozzles, faint neutral-grey shading, no cyan outline or angular triangles. No foot-mounted flames. Attack must have readable shoulder/elbow movement and distinct windup/contact/recovery while boots keep the same relative anchors; repair uses a shorter controlled hand action. Preserve consistent wrench length and open jaw shape and body scale across all sixteen cells. Black/white neutral palette matching the references. Do not render any rifle.",
+      "identityReference": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_DownLeft.png",
+      "hoverReference": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownLeft.png"
+    },
+    {
+      "direction": "DownRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerEightWay_DownRight_Source.png",
+      "sha256": "732fe35661516f46d7b126d20e14c8f9a4ba2dadb985d14d7fd4d69c242fd1ea",
+      "prompt": "Use case: identity-preserving precise game sprite pose edits. Make a transparent FOUR BY FOUR atlas of SIXTEEN full-body key poses of the EXACT same astronaut from FIRST reference, all facing DownRight. FIRST is the exact approved identity and diagonal orientation, SECOND is a cardinal spanner action guide ONLY (six rows: idle, hover move, grounded attack, grounded repair, hover attack, hover repair), THIRD is the approved diagonal HOVER anatomy and soft WHITE BACKPACK EXHAUST style.\nReplace the rifle completely with ONE small black/grey/white open-ended SPANNER/WRENCH in the character's ANATOMICAL RIGHT HAND. The same right hand holds it in all sixteen cells; no switching hands. Keep the exact white-grey suit, round compact helmet diameter and proportions, same black visor, boots, backpack and thick dark contour. No new helmet ears, long head, colored equipment, new character or clothing. Camera is FRONT three-quarter view, black visor on the face, facing diagonally DOWN-RIGHT. Every head, torso and feet must keep this SAME diagonal view; do NOT revert to front, side, or back cardinal poses. Use perspective on the feet; avoid a planted walking stride in hover poses.\nOUTPUT FORMAT: exact 4 columns x 4 rows, equal square cells, on genuine transparent background. One isolated full astronaut per cell, equal head size, equal generous margins and registration, all entire limbs/tool visible, no text or guides, no dividing lines, no floor/shadow, no extra props. The output is animation KEY POSES, not a comic. No monster/turret, no ground or sparks.\nEXACT cell order left-to-right, top-to-bottom:\nRow 1: [1 GROUNDED TOOL IDLE: wrench relaxed by right hip; 2 HOVER TOOL MOVE: knees relaxed and bent with two short soft white jets only below the backpack; 3 GROUNDED ATTACK WINDUP: right elbow and wrench raised above/behind shoulder ready to strike; 4 GROUNDED ATTACK CONTACT: visibly extended right arm making a strong downward-forward wrench strike toward the facing diagonal].\nRow 2: [5 GROUNDED ATTACK RECOVERY: right arm drawing wrench back, visibly between contact and idle; 6 GROUNDED REPAIR PREP: right elbow bent at waist, wrench held forward; 7 GROUNDED REPAIR CONTACT: right arm reaches diagonally forward at waist height, wrist turns wrench as though tightening a turret bolt, clearly NOT an overhead attack; 8 GROUNDED REPAIR RECOVERY: draws the wrench back toward waist].\nRow 3: [9 HOVER ATTACK WINDUP: same raised-wrench action as cell3 but feet NEVER grounded, hover knees and backpack white jets; 10 HOVER ATTACK CONTACT: same strong right-handed strike as cell4, maintains suspended bent-knee legs and jets; 11 HOVER ATTACK RECOVERY: follows cell10 returning toward cell2, still hovering; 12 HOVER REPAIR PREP: same forward waist-level preparation as cell6, hovering with jets].\nRow 4: [13 HOVER REPAIR CONTACT: same wrist-turn repair as cell7, hover knees and jets; 14 HOVER REPAIR RECOVERY: arm returning, hover legs and jets; 15 exact repeat of cell1 grounded tool idle; 16 exact repeat of cell2 hover tool move].\nGrounded cells have NO exhaust. All hover cells have the SAME COMPACT SOFT WHITE TUFTS under BOTH BACKPACK nozzles, faint neutral-grey shading, no cyan outline or angular triangles. No foot-mounted flames. Attack must have readable shoulder/elbow movement and distinct windup/contact/recovery while boots keep the same relative anchors; repair uses a shorter controlled hand action. Preserve consistent wrench length and open jaw shape and body scale across all sixteen cells. Black/white neutral palette matching the references. Do not render any rifle.",
+      "identityReference": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_DownRight.png",
+      "hoverReference": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownRight.png"
+    },
+    {
+      "direction": "UpLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerEightWay_UpLeft_Source.png",
+      "sha256": "6699bf2083f6279acb9230e7231ed0b81dabf007ef3f70c96162cecad8281e35",
+      "prompt": "Use case: identity-preserving precise game sprite pose edits. Make a transparent FOUR BY FOUR atlas of SIXTEEN full-body key poses of the EXACT same astronaut from FIRST reference, all facing UpLeft. FIRST is the exact approved identity and diagonal orientation, SECOND is a cardinal spanner action guide ONLY (six rows: idle, hover move, grounded attack, grounded repair, hover attack, hover repair), THIRD is the approved diagonal HOVER anatomy and soft WHITE BACKPACK EXHAUST style.\nReplace the rifle completely with ONE small black/grey/white open-ended SPANNER/WRENCH in the character's ANATOMICAL RIGHT HAND. The same right hand holds it in all sixteen cells; no switching hands. Keep the exact white-grey suit, round compact helmet diameter and proportions, same black visor, boots, backpack and thick dark contour. No new helmet ears, long head, colored equipment, new character or clothing. Camera is REAR three-quarter view, round helmet back and backpack clearly visible, visor only at the LEFT edge, facing diagonally UP-LEFT. Every head, torso and feet must keep this SAME diagonal view; do NOT revert to front, side, or back cardinal poses. Use perspective on the feet; avoid a planted walking stride in hover poses.\nOUTPUT FORMAT: exact 4 columns x 4 rows, equal square cells, on genuine transparent background. One isolated full astronaut per cell, equal head size, equal generous margins and registration, all entire limbs/tool visible, no text or guides, no dividing lines, no floor/shadow, no extra props. The output is animation KEY POSES, not a comic. No monster/turret, no ground or sparks.\nEXACT cell order left-to-right, top-to-bottom:\nRow 1: [1 GROUNDED TOOL IDLE: wrench relaxed by right hip; 2 HOVER TOOL MOVE: knees relaxed and bent with two short soft white jets only below the backpack; 3 GROUNDED ATTACK WINDUP: right elbow and wrench raised above/behind shoulder ready to strike; 4 GROUNDED ATTACK CONTACT: visibly extended right arm making a strong downward-forward wrench strike toward the facing diagonal].\nRow 2: [5 GROUNDED ATTACK RECOVERY: right arm drawing wrench back, visibly between contact and idle; 6 GROUNDED REPAIR PREP: right elbow bent at waist, wrench held forward; 7 GROUNDED REPAIR CONTACT: right arm reaches diagonally forward at waist height, wrist turns wrench as though tightening a turret bolt, clearly NOT an overhead attack; 8 GROUNDED REPAIR RECOVERY: draws the wrench back toward waist].\nRow 3: [9 HOVER ATTACK WINDUP: same raised-wrench action as cell3 but feet NEVER grounded, hover knees and backpack white jets; 10 HOVER ATTACK CONTACT: same strong right-handed strike as cell4, maintains suspended bent-knee legs and jets; 11 HOVER ATTACK RECOVERY: follows cell10 returning toward cell2, still hovering; 12 HOVER REPAIR PREP: same forward waist-level preparation as cell6, hovering with jets].\nRow 4: [13 HOVER REPAIR CONTACT: same wrist-turn repair as cell7, hover knees and jets; 14 HOVER REPAIR RECOVERY: arm returning, hover legs and jets; 15 exact repeat of cell1 grounded tool idle; 16 exact repeat of cell2 hover tool move].\nGrounded cells have NO exhaust. All hover cells have the SAME COMPACT SOFT WHITE TUFTS under BOTH BACKPACK nozzles, faint neutral-grey shading, no cyan outline or angular triangles. No foot-mounted flames. Attack must have readable shoulder/elbow movement and distinct windup/contact/recovery while boots keep the same relative anchors; repair uses a shorter controlled hand action. Preserve consistent wrench length and open jaw shape and body scale across all sixteen cells. Black/white neutral palette matching the references. Do not render any rifle.",
+      "identityReference": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_UpLeft.png",
+      "hoverReference": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpLeft.png"
+    },
+    {
+      "direction": "UpRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerEightWay_UpRight_Source.png",
+      "sha256": "174445571d5f56d2ddcac7546dc6e8d734ce6eb724a31dbe38a14f3fa74908c5",
+      "prompt": "Use case: identity-preserving precise game sprite pose edits. Make a transparent FOUR BY FOUR atlas of SIXTEEN full-body key poses of the EXACT same astronaut from FIRST reference, all facing UpRight. FIRST is the exact approved identity and diagonal orientation, SECOND is a cardinal spanner action guide ONLY (six rows: idle, hover move, grounded attack, grounded repair, hover attack, hover repair), THIRD is the approved diagonal HOVER anatomy and soft WHITE BACKPACK EXHAUST style.\nReplace the rifle completely with ONE small black/grey/white open-ended SPANNER/WRENCH in the character's ANATOMICAL RIGHT HAND. The same right hand holds it in all sixteen cells; no switching hands. Keep the exact white-grey suit, round compact helmet diameter and proportions, same black visor, boots, backpack and thick dark contour. No new helmet ears, long head, colored equipment, new character or clothing. Camera is REAR three-quarter view, round helmet back and backpack clearly visible, visor only at the RIGHT edge, facing diagonally UP-RIGHT. Every head, torso and feet must keep this SAME diagonal view; do NOT revert to front, side, or back cardinal poses. Use perspective on the feet; avoid a planted walking stride in hover poses.\nOUTPUT FORMAT: exact 4 columns x 4 rows, equal square cells, on genuine transparent background. One isolated full astronaut per cell, equal head size, equal generous margins and registration, all entire limbs/tool visible, no text or guides, no dividing lines, no floor/shadow, no extra props. The output is animation KEY POSES, not a comic. No monster/turret, no ground or sparks.\nEXACT cell order left-to-right, top-to-bottom:\nRow 1: [1 GROUNDED TOOL IDLE: wrench relaxed by right hip; 2 HOVER TOOL MOVE: knees relaxed and bent with two short soft white jets only below the backpack; 3 GROUNDED ATTACK WINDUP: right elbow and wrench raised above/behind shoulder ready to strike; 4 GROUNDED ATTACK CONTACT: visibly extended right arm making a strong downward-forward wrench strike toward the facing diagonal].\nRow 2: [5 GROUNDED ATTACK RECOVERY: right arm drawing wrench back, visibly between contact and idle; 6 GROUNDED REPAIR PREP: right elbow bent at waist, wrench held forward; 7 GROUNDED REPAIR CONTACT: right arm reaches diagonally forward at waist height, wrist turns wrench as though tightening a turret bolt, clearly NOT an overhead attack; 8 GROUNDED REPAIR RECOVERY: draws the wrench back toward waist].\nRow 3: [9 HOVER ATTACK WINDUP: same raised-wrench action as cell3 but feet NEVER grounded, hover knees and backpack white jets; 10 HOVER ATTACK CONTACT: same strong right-handed strike as cell4, maintains suspended bent-knee legs and jets; 11 HOVER ATTACK RECOVERY: follows cell10 returning toward cell2, still hovering; 12 HOVER REPAIR PREP: same forward waist-level preparation as cell6, hovering with jets].\nRow 4: [13 HOVER REPAIR CONTACT: same wrist-turn repair as cell7, hover knees and jets; 14 HOVER REPAIR RECOVERY: arm returning, hover legs and jets; 15 exact repeat of cell1 grounded tool idle; 16 exact repeat of cell2 hover tool move].\nGrounded cells have NO exhaust. All hover cells have the SAME COMPACT SOFT WHITE TUFTS under BOTH BACKPACK nozzles, faint neutral-grey shading, no cyan outline or angular triangles. No foot-mounted flames. Attack must have readable shoulder/elbow movement and distinct windup/contact/recovery while boots keep the same relative anchors; repair uses a shorter controlled hand action. Preserve consistent wrench length and open jaw shape and body scale across all sixteen cells. Black/white neutral palette matching the references. Do not render any rifle.",
+      "identityReference": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_UpRight.png",
+      "hoverReference": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpRight.png"
+    }
+  ],
+  "corrections": [
+    {
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerEightWay_UpRight_RightArm_Source.png",
+      "sha256": "413319f9ef83b412bca0be357a59582a5599d1a5393cb535d519ab206ac0b4c7",
+      "prompt": "Precise-object-edit. Edit ONLY TWO cells of this 4x4 astronaut key-pose atlas: row ONE column THREE (ground attack windup) and row THREE column ONE (hover attack windup). The wrench is mistakenly raised in the left arm in those two cells. Correct BOTH so the SAME ANATOMICAL RIGHT ARM that holds the wrench in all other cells raises it on the SCREEN-RIGHT side of the helmet. The astronaut faces diagonally UP-RIGHT, viewed from behind, so right shoulder and right elbow are on screen right. The right elbow should bend up, white right glove and small black/white wrench above the RIGHT shoulder. Leave the LEFT arm lowered and empty on the screen-left/backpack side. Do not raise the left arm or put the wrench left of the helmet. Both edits keep the same exact body pose, head shape and direction, clothes, original feet, cell registration, palette and transparency. The hover windup keeps existing backpack white exhaust and hovering legs; grounded windup has no flames. Every other pixel and the other fourteen cells should remain as close to unchanged as possible. No gun, text, extra equipment or background. Four equal columns and rows preserved. Reference2 shows the original upward spanner animation with the correct right arm raised on the screen-right side; only use it for arm anatomy, never change the target's diagonal facing.",
+      "cells": [
+        2,
+        8
+      ]
+    },
+    {
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerEightWay_UpRight_HoverBoots_Source.png",
+      "sha256": "f70cdb17a18a9e9594863217258f1a54cedf61140f5a95a010bff56da55df53f",
+      "prompt": "Precise-object-edit: correct the HOVER LEGS AND BACKPACK EXHAUST in this 4x4 astronaut tool atlas. Preserve the white/grey outfit, round head, diagonal UP-RIGHT rear-facing direction, wrench arm actions and cell positions. Grounded cells stay completely unchanged. Edit only HOVER cells: row1 col2; row3 all four; row4 col1,col2,col4. In these cells the feet currently look like two white gas blobs instead of boots. Make TWO SMALL READABLE DARK-GREY BOOTS on bent white-suited legs, hovering and overlapping in three-quarter perspective. The legs have white thigh/knee plates, dark grey boot soles and dark drawn outlines like the reference2 hovering gun astronaut. Boots are solid physical footwear, never glowing white blobs. Then show TWO SHORT SOFT WHITE EXHAUST TUFTS that originate ONLY under the BACKPACK nozzles BEHIND the legs, with the near tuft visible on screen-left behind the body and the far tuft a small partly occluded tip. NO exhaust attached to soles/boots, NO foot jets, NO long smoke or flames. Keep clean distinction between dark boots and soft white exhaust without a dark outline. Match reference2's compact integrated backpack exhaust texture. The right arm must keep the wrench, including the correct raised right-arm windup in row3 col1 on the SCREEN-RIGHT side of the helmet. Do not alter those upper-body actions. Same framing, no extra equipment, no rifle, no floor, text, shadow or background. True transparent 4x4 output.",
+      "cells": [
+        1,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        15
+      ]
+    }
+  ],
+  "records": [
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolIdle_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "ToolIdle",
+      "hovering": false,
+      "sha256": "6fc1d934616f9a821b9906660ee6ab4cf756443af534cf856f7f5985df432b3d",
+      "sourceCell": 0,
+      "sourceCorrection": null,
+      "scale": 0.42727272727272725,
+      "whiteHelmet": [
+        57,
+        33,
+        104,
+        78
+      ],
+      "footPixel": [
+        81.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        83.0,
+        121.0
+      ],
+      "bounds": [
+        36,
+        30,
+        113,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "ToolMove",
+      "hovering": true,
+      "sha256": "11607ff6d35c2aa84d52bb5fd80934129f0bf6075b7beb977a81971bdc9d0a31",
+      "sourceCell": 1,
+      "sourceCorrection": null,
+      "scale": 0.4444444444444444,
+      "whiteHelmet": [
+        58,
+        27,
+        105,
+        72
+      ],
+      "footPixel": [
+        83.5,
+        119.0
+      ],
+      "referenceFootPixel": [
+        87.5,
+        119.0
+      ],
+      "bounds": [
+        34,
+        24,
+        118,
+        119
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackWindup_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "AttackWindup",
+      "hovering": false,
+      "sha256": "756cd184ee5360255ce84aedcccf34288009e51730e654ebc4b83807d3aa0805",
+      "sourceCell": 2,
+      "sourceCorrection": null,
+      "scale": 0.415929203539823,
+      "whiteHelmet": [
+        57,
+        33,
+        104,
+        78
+      ],
+      "footPixel": [
+        76.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        83.0,
+        121.0
+      ],
+      "bounds": [
+        27,
+        27,
+        109,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackContact_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "AttackContact",
+      "hovering": false,
+      "sha256": "28d0db47f7c6cb5e79d0a39f4deeb2640db95b9167c099afe69620b36fed2c17",
+      "sourceCell": 3,
+      "sourceCorrection": null,
+      "scale": 0.42342342342342343,
+      "whiteHelmet": [
+        57,
+        38,
+        104,
+        83
+      ],
+      "footPixel": [
+        85.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        83.0,
+        121.0
+      ],
+      "bounds": [
+        22,
+        35,
+        119,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackRecover_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "AttackRecover",
+      "hovering": false,
+      "sha256": "81b733057b5f5e0871931d412bbf9893bc65a706bc3b4c02ad64224cbde0153b",
+      "sourceCell": 4,
+      "sourceCorrection": null,
+      "scale": 0.41964285714285715,
+      "whiteHelmet": [
+        57,
+        32,
+        104,
+        76
+      ],
+      "footPixel": [
+        86.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        83.0,
+        121.0
+      ],
+      "bounds": [
+        36,
+        30,
+        117,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairWindup_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "RepairWindup",
+      "hovering": false,
+      "sha256": "d1c10ea3491c4a3ea062d79ae1db3859714e6a2d1ce3c9a297b89c322aec9810",
+      "sourceCell": 5,
+      "sourceCorrection": null,
+      "scale": 0.41964285714285715,
+      "whiteHelmet": [
+        57,
+        34,
+        104,
+        77
+      ],
+      "footPixel": [
+        85.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        83.0,
+        121.0
+      ],
+      "bounds": [
+        35,
+        31,
+        116,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairContact_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "RepairContact",
+      "hovering": false,
+      "sha256": "e4e841b9cd943f4b793dc13956315c2870a6fb4b1136f6e374914adc675c0b45",
+      "sourceCell": 6,
+      "sourceCorrection": null,
+      "scale": 0.415929203539823,
+      "whiteHelmet": [
+        57,
+        33,
+        103,
+        76
+      ],
+      "footPixel": [
+        84.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        83.0,
+        121.0
+      ],
+      "bounds": [
+        33,
+        30,
+        116,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairRecover_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "RepairRecover",
+      "hovering": false,
+      "sha256": "0487992b060a3f366efaf71691ec0eefa8c13ed8cd4feb8b9e75ef77ffbbc8c1",
+      "sourceCell": 7,
+      "sourceCorrection": null,
+      "scale": 0.41964285714285715,
+      "whiteHelmet": [
+        57,
+        35,
+        104,
+        78
+      ],
+      "footPixel": [
+        84.65,
+        121.0
+      ],
+      "referenceFootPixel": [
+        83.0,
+        121.0
+      ],
+      "bounds": [
+        43,
+        32,
+        116,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "HoverAttackWindup",
+      "hovering": true,
+      "sha256": "3a414a303c58b29fa187e00bd7cebd3d0cd37ea660604c93bc16b940b9423c25",
+      "sourceCell": 8,
+      "sourceCorrection": null,
+      "scale": 0.41739130434782606,
+      "whiteHelmet": [
+        57,
+        30,
+        105,
+        75
+      ],
+      "footPixel": [
+        85.5,
+        119.0
+      ],
+      "referenceFootPixel": [
+        87.5,
+        119.0
+      ],
+      "bounds": [
+        30,
+        21,
+        114,
+        119
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "HoverAttackContact",
+      "hovering": true,
+      "sha256": "55accccff913fa940e2041959441531f3596ac0b1204a39d980d71ba133cd4fa",
+      "sourceCell": 9,
+      "sourceCorrection": null,
+      "scale": 0.42857142857142855,
+      "whiteHelmet": [
+        57,
+        36,
+        105,
+        80
+      ],
+      "footPixel": [
+        80.0,
+        119.0
+      ],
+      "referenceFootPixel": [
+        87.5,
+        119.0
+      ],
+      "bounds": [
+        32,
+        33,
+        129,
+        122
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "HoverAttackRecover",
+      "hovering": true,
+      "sha256": "09c3177a0c825c440455a8db70be19dfa482fa9968997b4fe7dd6d7932d883d2",
+      "sourceCell": 10,
+      "sourceCorrection": null,
+      "scale": 0.42105263157894735,
+      "whiteHelmet": [
+        58,
+        31,
+        105,
+        75
+      ],
+      "footPixel": [
+        87.35,
+        119.0
+      ],
+      "referenceFootPixel": [
+        87.5,
+        119.0
+      ],
+      "bounds": [
+        54,
+        28,
+        126,
+        119
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "HoverRepairWindup",
+      "hovering": true,
+      "sha256": "e7e72f0528f7f925c5de7bf5223bce8bca3cab410afc03f7b529ee8dacdc07c7",
+      "sourceCell": 11,
+      "sourceCorrection": null,
+      "scale": 0.42857142857142855,
+      "whiteHelmet": [
+        57,
+        32,
+        105,
+        77
+      ],
+      "footPixel": [
+        92.0,
+        119.0
+      ],
+      "referenceFootPixel": [
+        87.5,
+        119.0
+      ],
+      "bounds": [
+        35,
+        30,
+        125,
+        119
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "HoverRepairContact",
+      "hovering": true,
+      "sha256": "1f07f21868428afa1b635c423e2427f64fec552caecf03e1bfae09d69e57c510",
+      "sourceCell": 12,
+      "sourceCorrection": null,
+      "scale": 0.4067796610169492,
+      "whiteHelmet": [
+        57,
+        35,
+        104,
+        77
+      ],
+      "footPixel": [
+        96.5,
+        119.0
+      ],
+      "referenceFootPixel": [
+        87.5,
+        119.0
+      ],
+      "bounds": [
+        34,
+        32,
+        130,
+        119
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_DownLeft.png",
+      "direction": "DownLeft",
+      "pose": "HoverRepairRecover",
+      "hovering": true,
+      "sha256": "f1ee3023e65d8f949269fbf6ceaf4d86012efc0273b716f9ec1b0bec1dbc9474",
+      "sourceCell": 13,
+      "sourceCorrection": null,
+      "scale": 0.42105263157894735,
+      "whiteHelmet": [
+        58,
+        32,
+        105,
+        75
+      ],
+      "footPixel": [
+        91.5,
+        119.0
+      ],
+      "referenceFootPixel": [
+        87.5,
+        119.0
+      ],
+      "bounds": [
+        42,
+        29,
+        127,
+        119
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolIdle_DownRight.png",
+      "direction": "DownRight",
+      "pose": "ToolIdle",
+      "hovering": false,
+      "sha256": "da58d73578d4da8d7c8eb2271dcf83b3a53c998065fc0ab6a7d8c751ed2c523c",
+      "sourceCell": 0,
+      "sourceCorrection": null,
+      "scale": 0.41964285714285715,
+      "whiteHelmet": [
+        56,
+        33,
+        103,
+        75
+      ],
+      "footPixel": [
+        81.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.5,
+        121.0
+      ],
+      "bounds": [
+        43,
+        30,
+        112,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_DownRight.png",
+      "direction": "DownRight",
+      "pose": "ToolMove",
+      "hovering": true,
+      "sha256": "cce22e92c3e73a98c839a88542f8df7d1290f30da624b9361e7871f15f257316",
+      "sourceCell": 1,
+      "sourceCorrection": null,
+      "scale": 0.43243243243243246,
+      "whiteHelmet": [
+        56,
+        31,
+        103,
+        73
+      ],
+      "footPixel": [
+        71.7,
+        122.0
+      ],
+      "referenceFootPixel": [
+        74.5,
+        122.0
+      ],
+      "bounds": [
+        42,
+        28,
+        110,
+        122
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackWindup_DownRight.png",
+      "direction": "DownRight",
+      "pose": "AttackWindup",
+      "hovering": false,
+      "sha256": "e84aa51efa406e7b4069fb9c7841f5d9c8adfbc36195f04108a3dcdb73d148fa",
+      "sourceCell": 2,
+      "sourceCorrection": null,
+      "scale": 0.41228070175438597,
+      "whiteHelmet": [
+        56,
+        36,
+        103,
+        78
+      ],
+      "footPixel": [
+        77.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.5,
+        121.0
+      ],
+      "bounds": [
+        28,
+        31,
+        110,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackContact_DownRight.png",
+      "direction": "DownRight",
+      "pose": "AttackContact",
+      "hovering": false,
+      "sha256": "301d515bf6b585aac2a811843e82afbc62a669fe4457b9a2d7481874c02bb915",
+      "sourceCell": 3,
+      "sourceCorrection": null,
+      "scale": 0.4051724137931034,
+      "whiteHelmet": [
+        57,
+        41,
+        103,
+        83
+      ],
+      "footPixel": [
+        83.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.5,
+        121.0
+      ],
+      "bounds": [
+        44,
+        38,
+        123,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackRecover_DownRight.png",
+      "direction": "DownRight",
+      "pose": "AttackRecover",
+      "hovering": false,
+      "sha256": "94c577edaee0219f2ed74d3d154a085a508362992da2e6993d707afb5203fad9",
+      "sourceCell": 4,
+      "sourceCorrection": null,
+      "scale": 0.41228070175438597,
+      "whiteHelmet": [
+        56,
+        36,
+        102,
+        77
+      ],
+      "footPixel": [
+        77.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.5,
+        121.0
+      ],
+      "bounds": [
+        46,
+        33,
+        117,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairWindup_DownRight.png",
+      "direction": "DownRight",
+      "pose": "RepairWindup",
+      "hovering": false,
+      "sha256": "36d1483331742f946c4c816d7adcd84c489ba6b35fdc745303fa54442e2e6ae2",
+      "sourceCell": 5,
+      "sourceCorrection": null,
+      "scale": 0.415929203539823,
+      "whiteHelmet": [
+        56,
+        35,
+        103,
+        77
+      ],
+      "footPixel": [
+        78.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.5,
+        121.0
+      ],
+      "bounds": [
+        47,
+        33,
+        110,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairContact_DownRight.png",
+      "direction": "DownRight",
+      "pose": "RepairContact",
+      "hovering": false,
+      "sha256": "61ade6f305cf4d367af9f8209bd44ebd4b0feafd83f2f54813cf9dbe56151de0",
+      "sourceCell": 6,
+      "sourceCorrection": null,
+      "scale": 0.40869565217391307,
+      "whiteHelmet": [
+        57,
+        37,
+        103,
+        77
+      ],
+      "footPixel": [
+        78.45,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.5,
+        121.0
+      ],
+      "bounds": [
+        47,
+        34,
+        131,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairRecover_DownRight.png",
+      "direction": "DownRight",
+      "pose": "RepairRecover",
+      "hovering": false,
+      "sha256": "88d34174c4b493fd1908720280e0afadba58784aa00bcde465be5d1d517d02d8",
+      "sourceCell": 7,
+      "sourceCorrection": null,
+      "scale": 0.4051724137931034,
+      "whiteHelmet": [
+        56,
+        36,
+        102,
+        77
+      ],
+      "footPixel": [
+        75.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.5,
+        121.0
+      ],
+      "bounds": [
+        46,
+        33,
+        108,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_DownRight.png",
+      "direction": "DownRight",
+      "pose": "HoverAttackWindup",
+      "hovering": true,
+      "sha256": "56fdb4eaa23b52e60eb510beeefd465828172803ea7b9a5b1cd3ffb2bf9144fa",
+      "sourceCell": 8,
+      "sourceCorrection": null,
+      "scale": 0.41379310344827586,
+      "whiteHelmet": [
+        55,
+        37,
+        102,
+        79
+      ],
+      "footPixel": [
+        69.2,
+        122.0
+      ],
+      "referenceFootPixel": [
+        74.5,
+        122.0
+      ],
+      "bounds": [
+        31,
+        25,
+        107,
+        122
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_DownRight.png",
+      "direction": "DownRight",
+      "pose": "HoverAttackContact",
+      "hovering": true,
+      "sha256": "8fbbc767b086cba766d428e154deec1c9f90c06c509c35d9af24fe865d8b37a4",
+      "sourceCell": 9,
+      "sourceCorrection": null,
+      "scale": 0.41379310344827586,
+      "whiteHelmet": [
+        55,
+        40,
+        103,
+        82
+      ],
+      "footPixel": [
+        72.65,
+        122.0
+      ],
+      "referenceFootPixel": [
+        74.5,
+        122.0
+      ],
+      "bounds": [
+        37,
+        38,
+        125,
+        122
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_DownRight.png",
+      "direction": "DownRight",
+      "pose": "HoverAttackRecover",
+      "hovering": true,
+      "sha256": "2435a53281d4843b26c0b167603797d632b277ae1b773c39c403bcee922b2cff",
+      "sourceCell": 10,
+      "sourceCorrection": null,
+      "scale": 0.41379310344827586,
+      "whiteHelmet": [
+        55,
+        39,
+        103,
+        81
+      ],
+      "footPixel": [
+        74.5,
+        122.0
+      ],
+      "referenceFootPixel": [
+        74.5,
+        122.0
+      ],
+      "bounds": [
+        38,
+        37,
+        108,
+        122
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_DownRight.png",
+      "direction": "DownRight",
+      "pose": "HoverRepairWindup",
+      "hovering": true,
+      "sha256": "75340b59e8703002153a4437708258f3b5e468e74b058c2e2a183d7a6f98ab57",
+      "sourceCell": 11,
+      "sourceCorrection": null,
+      "scale": 0.41739130434782606,
+      "whiteHelmet": [
+        55,
+        42,
+        104,
+        83
+      ],
+      "footPixel": [
+        72.5,
+        123.0
+      ],
+      "referenceFootPixel": [
+        74.5,
+        122.0
+      ],
+      "bounds": [
+        39,
+        39,
+        120,
+        124
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_DownRight.png",
+      "direction": "DownRight",
+      "pose": "HoverRepairContact",
+      "hovering": true,
+      "sha256": "2d36c7a798495f39cf4d8afd62a20db633c924baff7b5ad15c239d42db272544",
+      "sourceCell": 12,
+      "sourceCorrection": null,
+      "scale": 0.41379310344827586,
+      "whiteHelmet": [
+        55,
+        41,
+        102,
+        80
+      ],
+      "footPixel": [
+        74.5,
+        122.0
+      ],
+      "referenceFootPixel": [
+        74.5,
+        122.0
+      ],
+      "bounds": [
+        39,
+        38,
+        130,
+        122
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_DownRight.png",
+      "direction": "DownRight",
+      "pose": "HoverRepairRecover",
+      "hovering": true,
+      "sha256": "2610534fdd03cbdcdf607441f11f235714e4351b20752791f58a43b163ea8487",
+      "sourceCell": 13,
+      "sourceCorrection": null,
+      "scale": 0.41739130434782606,
+      "whiteHelmet": [
+        55,
+        39,
+        103,
+        80
+      ],
+      "footPixel": [
+        74.5,
+        122.0
+      ],
+      "referenceFootPixel": [
+        74.5,
+        122.0
+      ],
+      "bounds": [
+        40,
+        37,
+        109,
+        122
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolIdle_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "ToolIdle",
+      "hovering": false,
+      "sha256": "f4b24195bf3993687287553cab0aa0c5e780693d826e44a0410f176e1d286760",
+      "sourceCell": 0,
+      "sourceCorrection": null,
+      "scale": 0.4444444444444444,
+      "whiteHelmet": [
+        57,
+        28,
+        104,
+        72
+      ],
+      "footPixel": [
+        83.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.0,
+        121.0
+      ],
+      "bounds": [
+        41,
+        25,
+        109,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "ToolMove",
+      "hovering": true,
+      "sha256": "33ccf3f0f3f2e8dd6ac6c267fb0eeec1e0c8a13ba2cea59888836dae6b592138",
+      "sourceCell": 1,
+      "sourceCorrection": null,
+      "scale": 0.43119266055045874,
+      "whiteHelmet": [
+        59,
+        36,
+        104,
+        79
+      ],
+      "footPixel": [
+        83.0,
+        127.0
+      ],
+      "referenceFootPixel": [
+        93.0,
+        127.0
+      ],
+      "bounds": [
+        45,
+        34,
+        117,
+        127
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackWindup_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "AttackWindup",
+      "hovering": false,
+      "sha256": "a2f64abab9233d581696e5fae1321a269a56f46d44d5a604eb90c9496d990d9b",
+      "sourceCell": 2,
+      "sourceCorrection": null,
+      "scale": 0.4444444444444444,
+      "whiteHelmet": [
+        57,
+        27,
+        105,
+        72
+      ],
+      "footPixel": [
+        86.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.0,
+        121.0
+      ],
+      "bounds": [
+        52,
+        24,
+        133,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackContact_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "AttackContact",
+      "hovering": false,
+      "sha256": "10de80824a673791110d718ecfc3c6601b8234d6713c0c30d88d3fe5767e5371",
+      "sourceCell": 3,
+      "sourceCorrection": null,
+      "scale": 0.43636363636363634,
+      "whiteHelmet": [
+        58,
+        33,
+        105,
+        77
+      ],
+      "footPixel": [
+        88.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.0,
+        121.0
+      ],
+      "bounds": [
+        30,
+        30,
+        128,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackRecover_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "AttackRecover",
+      "hovering": false,
+      "sha256": "93f44a05d0646f3f8a2bccd777f8ea01cb3245727bf42c7806a1ae1e017084c0",
+      "sourceCell": 4,
+      "sourceCorrection": null,
+      "scale": 0.43636363636363634,
+      "whiteHelmet": [
+        57,
+        29,
+        104,
+        72
+      ],
+      "footPixel": [
+        85.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.0,
+        121.0
+      ],
+      "bounds": [
+        39,
+        26,
+        122,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairWindup_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "RepairWindup",
+      "hovering": false,
+      "sha256": "f822235b6d236e542a690b25f34d20e916e338992896f9f2e0f27dd22d8645e6",
+      "sourceCell": 5,
+      "sourceCorrection": null,
+      "scale": 0.43636363636363634,
+      "whiteHelmet": [
+        58,
+        28,
+        105,
+        71
+      ],
+      "footPixel": [
+        85.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.0,
+        121.0
+      ],
+      "bounds": [
+        38,
+        25,
+        119,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairContact_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "RepairContact",
+      "hovering": false,
+      "sha256": "25b859d50050b829ae4a2a989776c71679fc99f9fd43942794a196e0cc01acd8",
+      "sourceCell": 6,
+      "sourceCorrection": null,
+      "scale": 0.44036697247706424,
+      "whiteHelmet": [
+        58,
+        31,
+        105,
+        74
+      ],
+      "footPixel": [
+        87.35,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.0,
+        121.0
+      ],
+      "bounds": [
+        35,
+        28,
+        125,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairRecover_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "RepairRecover",
+      "hovering": false,
+      "sha256": "f627333db9a3cc574180297f4fdbd940778b6eaf71dc4a7232a34647fdc4e6d3",
+      "sourceCell": 7,
+      "sourceCorrection": null,
+      "scale": 0.44036697247706424,
+      "whiteHelmet": [
+        57,
+        30,
+        105,
+        73
+      ],
+      "footPixel": [
+        85.9,
+        121.0
+      ],
+      "referenceFootPixel": [
+        79.0,
+        121.0
+      ],
+      "bounds": [
+        43,
+        27,
+        121,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "HoverAttackWindup",
+      "hovering": true,
+      "sha256": "28e116bf914199a0555904b4891a8c696b4d6b306516b42b7d921db56f8f333c",
+      "sourceCell": 8,
+      "sourceCorrection": null,
+      "scale": 0.42342342342342343,
+      "whiteHelmet": [
+        58,
+        38,
+        104,
+        81
+      ],
+      "footPixel": [
+        83.0,
+        127.0
+      ],
+      "referenceFootPixel": [
+        93.0,
+        127.0
+      ],
+      "bounds": [
+        52,
+        34,
+        131,
+        127
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "HoverAttackContact",
+      "hovering": true,
+      "sha256": "11896efc78ad47b76ca4a5acabfbecc90cb1ddcac4fb5a01a04d1749381d4c0c",
+      "sourceCell": 9,
+      "sourceCorrection": null,
+      "scale": 0.415929203539823,
+      "whiteHelmet": [
+        58,
+        40,
+        104,
+        81
+      ],
+      "footPixel": [
+        88.85000000000001,
+        127.0
+      ],
+      "referenceFootPixel": [
+        93.0,
+        127.0
+      ],
+      "bounds": [
+        31,
+        37,
+        127,
+        127
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "HoverAttackRecover",
+      "hovering": true,
+      "sha256": "ba44e672d88fa15f7d45f58cef3aa14890fb6288dfd613ca683423bcf9d4ccaa",
+      "sourceCell": 10,
+      "sourceCorrection": null,
+      "scale": 0.43119266055045874,
+      "whiteHelmet": [
+        59,
+        33,
+        106,
+        75
+      ],
+      "footPixel": [
+        87.0,
+        127.0
+      ],
+      "referenceFootPixel": [
+        93.0,
+        127.0
+      ],
+      "bounds": [
+        41,
+        30,
+        126,
+        127
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "HoverRepairWindup",
+      "hovering": true,
+      "sha256": "74137f61e9e9102764aa4cd41160c8b65df81d820297127fbbbc592f909232b6",
+      "sourceCell": 11,
+      "sourceCorrection": null,
+      "scale": 0.43119266055045874,
+      "whiteHelmet": [
+        58,
+        34,
+        105,
+        77
+      ],
+      "footPixel": [
+        87.0,
+        127.0
+      ],
+      "referenceFootPixel": [
+        93.0,
+        127.0
+      ],
+      "bounds": [
+        39,
+        31,
+        123,
+        127
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "HoverRepairContact",
+      "hovering": true,
+      "sha256": "f3b30cd413716c5e44415a7664fe4f3e5cef34977b3c7e652f9fccdecf6b6796",
+      "sourceCell": 12,
+      "sourceCorrection": null,
+      "scale": 0.42342342342342343,
+      "whiteHelmet": [
+        58,
+        41,
+        104,
+        83
+      ],
+      "footPixel": [
+        89.5,
+        127.0
+      ],
+      "referenceFootPixel": [
+        93.0,
+        127.0
+      ],
+      "bounds": [
+        36,
+        38,
+        127,
+        127
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpLeft.png",
+      "direction": "UpLeft",
+      "pose": "HoverRepairRecover",
+      "hovering": true,
+      "sha256": "001a176ca78b9d8dcc725d9fab976a713e5946ae480742063c4a0984294777eb",
+      "sourceCell": 13,
+      "sourceCorrection": null,
+      "scale": 0.43119266055045874,
+      "whiteHelmet": [
+        58,
+        37,
+        105,
+        79
+      ],
+      "footPixel": [
+        90.0,
+        127.0
+      ],
+      "referenceFootPixel": [
+        93.0,
+        127.0
+      ],
+      "bounds": [
+        43,
+        34,
+        127,
+        127
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolIdle_UpRight.png",
+      "direction": "UpRight",
+      "pose": "ToolIdle",
+      "hovering": false,
+      "sha256": "27e92022be5d3bb8fa60f3c9363df1a371f6f96b6a2549dbf75e13e0d6b25710",
+      "sourceCell": 0,
+      "sourceCorrection": null,
+      "scale": 0.4051724137931034,
+      "whiteHelmet": [
+        55,
+        35,
+        102,
+        74
+      ],
+      "footPixel": [
+        76.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        82.0,
+        121.0
+      ],
+      "bounds": [
+        47,
+        32,
+        122,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpRight.png",
+      "direction": "UpRight",
+      "pose": "ToolMove",
+      "hovering": true,
+      "sha256": "7334612d7c98659f31360757f96734b41c62977ffb2f76b0cc7bd6ddbb2aa45a",
+      "sourceCell": 1,
+      "sourceCorrection": "hover-boots",
+      "scale": 0.4051724137931034,
+      "whiteHelmet": [
+        55,
+        33,
+        101,
+        72
+      ],
+      "footPixel": [
+        78.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        70.0,
+        121.0
+      ],
+      "bounds": [
+        46,
+        30,
+        123,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackWindup_UpRight.png",
+      "direction": "UpRight",
+      "pose": "AttackWindup",
+      "hovering": false,
+      "sha256": "d4336f4cdfc469d50fdb906f94e6fc6419aa52cc18dcfb25b5cfee47b51fe926",
+      "sourceCell": 2,
+      "sourceCorrection": "right-arm",
+      "scale": 0.4051724137931034,
+      "whiteHelmet": [
+        55,
+        34,
+        102,
+        74
+      ],
+      "footPixel": [
+        77.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        82.0,
+        121.0
+      ],
+      "bounds": [
+        42,
+        31,
+        121,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackContact_UpRight.png",
+      "direction": "UpRight",
+      "pose": "AttackContact",
+      "hovering": false,
+      "sha256": "2afd66ac09655f97f3985c98c106a6f585751009c467dbd5d977c4fdba25942c",
+      "sourceCell": 3,
+      "sourceCorrection": null,
+      "scale": 0.3884297520661157,
+      "whiteHelmet": [
+        55,
+        41,
+        101,
+        79
+      ],
+      "footPixel": [
+        70.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        82.0,
+        121.0
+      ],
+      "bounds": [
+        36,
+        38,
+        121,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/AttackRecover_UpRight.png",
+      "direction": "UpRight",
+      "pose": "AttackRecover",
+      "hovering": false,
+      "sha256": "82d416337c8c4b3adeca2e48602590d24a03508eb4c8d08d4f35290240d2c960",
+      "sourceCell": 4,
+      "sourceCorrection": null,
+      "scale": 0.4051724137931034,
+      "whiteHelmet": [
+        56,
+        35,
+        103,
+        74
+      ],
+      "footPixel": [
+        76.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        82.0,
+        121.0
+      ],
+      "bounds": [
+        48,
+        32,
+        124,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairWindup_UpRight.png",
+      "direction": "UpRight",
+      "pose": "RepairWindup",
+      "hovering": false,
+      "sha256": "2ce7c94e77ca7f934f945210a69ad408a5a1e366f60757ac97f0903436cbc282",
+      "sourceCell": 5,
+      "sourceCorrection": null,
+      "scale": 0.3949579831932773,
+      "whiteHelmet": [
+        55,
+        37,
+        101,
+        75
+      ],
+      "footPixel": [
+        76.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        82.0,
+        121.0
+      ],
+      "bounds": [
+        48,
+        34,
+        123,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairContact_UpRight.png",
+      "direction": "UpRight",
+      "pose": "RepairContact",
+      "hovering": false,
+      "sha256": "5670764c5685904f25ebc7f0d3c276fca0e84d7d986d4cad7ef04dfc9e45b115",
+      "sourceCell": 6,
+      "sourceCorrection": null,
+      "scale": 0.3949579831932773,
+      "whiteHelmet": [
+        55,
+        37,
+        102,
+        75
+      ],
+      "footPixel": [
+        75.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        82.0,
+        121.0
+      ],
+      "bounds": [
+        45,
+        34,
+        128,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/RepairRecover_UpRight.png",
+      "direction": "UpRight",
+      "pose": "RepairRecover",
+      "hovering": false,
+      "sha256": "13a3320acee21e0ff0f9dd832477d53e3d50cea5d79c3f33a569084ca6dc26ba",
+      "sourceCell": 7,
+      "sourceCorrection": null,
+      "scale": 0.3983050847457627,
+      "whiteHelmet": [
+        55,
+        36,
+        102,
+        75
+      ],
+      "footPixel": [
+        76.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        82.0,
+        121.0
+      ],
+      "bounds": [
+        48,
+        33,
+        117,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpRight.png",
+      "direction": "UpRight",
+      "pose": "HoverAttackWindup",
+      "hovering": true,
+      "sha256": "4ee5a234fb2723393bed8c6a5abb239c1cbb8116f8c8bcd0a0de58ff5c5b0aad",
+      "sourceCell": 8,
+      "sourceCorrection": "hover-boots",
+      "scale": 0.39166666666666666,
+      "whiteHelmet": [
+        55,
+        34,
+        102,
+        72
+      ],
+      "footPixel": [
+        74.0,
+        121.0
+      ],
+      "referenceFootPixel": [
+        70.0,
+        121.0
+      ],
+      "bounds": [
+        41,
+        31,
+        120,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpRight.png",
+      "direction": "UpRight",
+      "pose": "HoverAttackContact",
+      "hovering": true,
+      "sha256": "4153d332cb00db06fd3418e5edf4b87df41f35aad91344ba29f92a42ecb2520a",
+      "sourceCell": 9,
+      "sourceCorrection": "hover-boots",
+      "scale": 0.38524590163934425,
+      "whiteHelmet": [
+        56,
+        36,
+        102,
+        74
+      ],
+      "footPixel": [
+        67.8,
+        121.0
+      ],
+      "referenceFootPixel": [
+        70.0,
+        121.0
+      ],
+      "bounds": [
+        37,
+        33,
+        126,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpRight.png",
+      "direction": "UpRight",
+      "pose": "HoverAttackRecover",
+      "hovering": true,
+      "sha256": "ca36478668a9dcc87321f189d18feb8e94b34c37cb9c74f9fc230bf5bbf29fcc",
+      "sourceCell": 10,
+      "sourceCorrection": "hover-boots",
+      "scale": 0.39166666666666666,
+      "whiteHelmet": [
+        55,
+        34,
+        101,
+        73
+      ],
+      "footPixel": [
+        75.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        70.0,
+        121.0
+      ],
+      "bounds": [
+        42,
+        31,
+        121,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpRight.png",
+      "direction": "UpRight",
+      "pose": "HoverRepairWindup",
+      "hovering": true,
+      "sha256": "ebb2171223b396c79654281413bb3733967c4b5f3f97f7a53793225323ef5ea3",
+      "sourceCell": 11,
+      "sourceCorrection": "hover-boots",
+      "scale": 0.3949579831932773,
+      "whiteHelmet": [
+        55,
+        33,
+        101,
+        72
+      ],
+      "footPixel": [
+        77.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        70.0,
+        121.0
+      ],
+      "bounds": [
+        45,
+        30,
+        124,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpRight.png",
+      "direction": "UpRight",
+      "pose": "HoverRepairContact",
+      "hovering": true,
+      "sha256": "2b049c558d37665e825f7bb81c357febcada866c6155361217fa7365e3ea9768",
+      "sourceCell": 12,
+      "sourceCorrection": "hover-boots",
+      "scale": 0.39166666666666666,
+      "whiteHelmet": [
+        55,
+        34,
+        101,
+        73
+      ],
+      "footPixel": [
+        77.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        70.0,
+        121.0
+      ],
+      "bounds": [
+        44,
+        31,
+        126,
+        121
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpRight.png",
+      "direction": "UpRight",
+      "pose": "HoverRepairRecover",
+      "hovering": true,
+      "sha256": "d24c29ccdecb9532e413e8e788788baf2e913742436795009559c1f9a1056464",
+      "sourceCell": 13,
+      "sourceCorrection": "hover-boots",
+      "scale": 0.3884297520661157,
+      "whiteHelmet": [
+        56,
+        34,
+        102,
+        73
+      ],
+      "footPixel": [
+        79.5,
+        121.0
+      ],
+      "referenceFootPixel": [
+        70.0,
+        121.0
+      ],
+      "bounds": [
+        46,
+        31,
+        119,
+        121
+      ]
+    }
+  ],
+  "clips": [
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_DownLeft.anim",
+      "guid": "caac00387b4c45fbace95f46f248920d",
+      "action": "ToolIdle",
+      "direction": "DownLeft",
+      "spriteKeys": [
+        "383b4865c15d474da9589f596f2f702b",
+        "383b4865c15d474da9589f596f2f702b",
+        "383b4865c15d474da9589f596f2f702b",
+        "383b4865c15d474da9589f596f2f702b",
+        "383b4865c15d474da9589f596f2f702b"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333336
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ],
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ],
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ],
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ],
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "527572fa77735197cafb299a15b3188fb061fb65058d1255079e29ad25bcf93e"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_DownLeft.anim",
+      "guid": "47b04b5ee1f84d838194ec20f3f24547",
+      "action": "ToolMove",
+      "direction": "DownLeft",
+      "spriteKeys": [
+        "33d3e8bd76d64ba696319b6699551924",
+        "33d3e8bd76d64ba696319b6699551924",
+        "33d3e8bd76d64ba696319b6699551924",
+        "33d3e8bd76d64ba696319b6699551924",
+        "33d3e8bd76d64ba696319b6699551924"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333333
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ]
+      ],
+      "sha256": "05cb38925d3885aefd5fb7c4a874953ff6ff676841e651ff0661fd66162c9ee3"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_DownLeft.anim",
+      "guid": "a4cc31f07ee9481b89bb4635d4cf2a77",
+      "action": "Attack",
+      "direction": "DownLeft",
+      "spriteKeys": [
+        "383b4865c15d474da9589f596f2f702b",
+        "c20c300c6410465aa30a7b734667c53c",
+        "014e47f412e944b486b0d70423bf09ca",
+        "c33f6c32869a4f7cab5de77b5f443aa4",
+        "383b4865c15d474da9589f596f2f702b"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.125,
+          -1.375,
+          0.01
+        ],
+        [
+          0.15625,
+          -1.375,
+          0.01
+        ],
+        [
+          0.20312,
+          -1.375,
+          0.01
+        ],
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "b4ed7b6378a07a8de2e655e3a5e61cb2f4eb14119ecfb44131414e91b836dcd9"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_DownLeft.anim",
+      "guid": "3a3f2edaaf9249dfa2d7726ca52837f6",
+      "action": "Repair",
+      "direction": "DownLeft",
+      "spriteKeys": [
+        "383b4865c15d474da9589f596f2f702b",
+        "2899d97dd1f34e8db3857504c3434fcb",
+        "ba4cb0bb550b47e081a8da1c7db37b20",
+        "787f1f3f75cf4ade91cc09de978003ca",
+        "383b4865c15d474da9589f596f2f702b"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ],
+        [
+          0.15625,
+          -1.375,
+          0.01
+        ],
+        [
+          0.14062,
+          -1.375,
+          0.01
+        ],
+        [
+          0.14531,
+          -1.375,
+          0.01
+        ],
+        [
+          0.04688,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "ffa78ea6d3954bda507db4bbf71d37381c014d31a263c4feeb54ca24a0b03a3b"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_DownLeft.anim",
+      "guid": "d4d8a426231b49e29474965b63e2abab",
+      "action": "HoverAttack",
+      "direction": "DownLeft",
+      "spriteKeys": [
+        "33d3e8bd76d64ba696319b6699551924",
+        "ce0e76ab55884dbb8ad8eb23690749d9",
+        "2572f57ea14d48739dab4aa2e82e7f23",
+        "80444d3365f64e2d8dc21b9fab5ffc81",
+        "33d3e8bd76d64ba696319b6699551924"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.17188,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.0,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.22969,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ]
+      ],
+      "sha256": "cb9d4aea3ae7103a071d3b6b76371d0fb24c6c9cc6c83923cc78db0430760939"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_DownLeft.anim",
+      "guid": "e9797d4476374a7daac528d8fdb984c0",
+      "action": "HoverRepair",
+      "direction": "DownLeft",
+      "spriteKeys": [
+        "33d3e8bd76d64ba696319b6699551924",
+        "e4accf320b374b779ff173959040432f",
+        "c4c5b20d74be4fdab180b2eb2430150d",
+        "cd0267fd88c74397bea0d71b91bb87e1",
+        "33d3e8bd76d64ba696319b6699551924"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.375,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.51562,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.35938,
+          -1.4375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.4375,
+          0.01
+        ]
+      ],
+      "sha256": "ecfefa9212691a39290d345940ceb7bc70b89f7dbb05158c8c2635ccc922ac56"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_DownRight.anim",
+      "guid": "8baf555e165c4377b356aed046dffc91",
+      "action": "ToolIdle",
+      "direction": "DownRight",
+      "spriteKeys": [
+        "20e81679f6954983aea4d6f66d4c58be",
+        "20e81679f6954983aea4d6f66d4c58be",
+        "20e81679f6954983aea4d6f66d4c58be",
+        "20e81679f6954983aea4d6f66d4c58be",
+        "20e81679f6954983aea4d6f66d4c58be"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333336
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ],
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ],
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ],
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ],
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "1f882c266948f8e1e836d451945e53278a80288c137e3e82a3a7a90d8c820fb6"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_DownRight.anim",
+      "guid": "a3308fc38a2e4f068b40d190fe494b29",
+      "action": "ToolMove",
+      "direction": "DownRight",
+      "spriteKeys": [
+        "dfab7f5d974d43069f6ae6a6a379cb3c",
+        "dfab7f5d974d43069f6ae6a6a379cb3c",
+        "dfab7f5d974d43069f6ae6a6a379cb3c",
+        "dfab7f5d974d43069f6ae6a6a379cb3c",
+        "dfab7f5d974d43069f6ae6a6a379cb3c"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333333
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ]
+      ],
+      "sha256": "85f168537bd84018c668442fef1adf7e0dacf92bb83909d5185b1f7670139198"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_DownRight.anim",
+      "guid": "6be16c54ff2549759664738b35dc2071",
+      "action": "Attack",
+      "direction": "DownRight",
+      "spriteKeys": [
+        "20e81679f6954983aea4d6f66d4c58be",
+        "89387457f15d45558e9c4a5c78164283",
+        "124fb5b3d7ba45409385da649f3f67c5",
+        "3971779f9574416d902f69158bbfc0f1",
+        "20e81679f6954983aea4d6f66d4c58be"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.07812,
+          -1.375,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.07812,
+          -1.375,
+          0.01
+        ],
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "2668681e442b42995b6c7dd45610c49d725975d71ded40ea50ee0072518877ed"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_DownRight.anim",
+      "guid": "d1eaa4b00a0541e9ab1e16e7fe00099c",
+      "action": "Repair",
+      "direction": "DownRight",
+      "spriteKeys": [
+        "20e81679f6954983aea4d6f66d4c58be",
+        "65f41268d6e7456b9626615fe4e506e0",
+        "5c8f2789a3674fe68def64a2ad2b60a4",
+        "ca08c03df3434711852c880ff8d2591b",
+        "20e81679f6954983aea4d6f66d4c58be"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.0625,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.04844,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.14062,
+          -1.375,
+          0.01
+        ],
+        [
+          0.03125,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "e3630783df1338b72a9f70124731e6de9e7cf80186690ed471f0950c9860c745"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_DownRight.anim",
+      "guid": "ec9c4a132e8f474b8d9fbcf22172b8a2",
+      "action": "HoverAttack",
+      "direction": "DownRight",
+      "spriteKeys": [
+        "dfab7f5d974d43069f6ae6a6a379cb3c",
+        "0e0ddab023c74375b772d5c9008e7863",
+        "700532ba0b7b45eb90244291f91ead1c",
+        "167eb4b7107b4f54bcaa3d512391c475",
+        "dfab7f5d974d43069f6ae6a6a379cb3c"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.3375,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.22969,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.17188,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ]
+      ],
+      "sha256": "316b9a131f2bd5b9dbe32ea51dd312957176eda1f30cd23a71805c723c2be277"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_DownRight.anim",
+      "guid": "976be1f84a2b4979b81366e1c3213a0f",
+      "action": "HoverRepair",
+      "direction": "DownRight",
+      "spriteKeys": [
+        "dfab7f5d974d43069f6ae6a6a379cb3c",
+        "4f0851ba96244b08a15ebd43fb40cbb6",
+        "ab94e8b8786e40269e81ce62a804f1a4",
+        "6d4c2a2dbd31412d8d08db33073b0e50",
+        "dfab7f5d974d43069f6ae6a6a379cb3c"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.23438,
+          -1.5625,
+          0.01
+        ],
+        [
+          -0.17188,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.17188,
+          -1.53125,
+          0.01
+        ],
+        [
+          -0.25937,
+          -1.53125,
+          0.01
+        ]
+      ],
+      "sha256": "9ec607f05b88b79a44d0ba2d50709f2b576fb9ede34e68f4e95c2f77456696e4"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_UpLeft.anim",
+      "guid": "57d16dd12acf4979b2632e288abc0060",
+      "action": "ToolIdle",
+      "direction": "UpLeft",
+      "spriteKeys": [
+        "2357bc2c55634e1f927c2e3a118b339e",
+        "2357bc2c55634e1f927c2e3a118b339e",
+        "2357bc2c55634e1f927c2e3a118b339e",
+        "2357bc2c55634e1f927c2e3a118b339e",
+        "2357bc2c55634e1f927c2e3a118b339e"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333336
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "0cc7f2dddc7c730e9dd2b9e2a4e698a8e449e3ac0be7952df871007e88c94bab"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_UpLeft.anim",
+      "guid": "67975211751c47c5bfdfda49baad558f",
+      "action": "ToolMove",
+      "direction": "UpLeft",
+      "spriteKeys": [
+        "643d540f0c624342905506be02382ede",
+        "643d540f0c624342905506be02382ede",
+        "643d540f0c624342905506be02382ede",
+        "643d540f0c624342905506be02382ede",
+        "643d540f0c624342905506be02382ede"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333333
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ]
+      ],
+      "sha256": "6c384bc206179fbe632988ca3295cd2bdb2977b55dbccec85a24fda902dd9c14"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_UpLeft.anim",
+      "guid": "eed440f476a44ad58be12966681a9e58",
+      "action": "Attack",
+      "direction": "UpLeft",
+      "spriteKeys": [
+        "2357bc2c55634e1f927c2e3a118b339e",
+        "faf164fc6c524e19875c4d52fd9f39cf",
+        "b46d80d92bf940869809023ea77cabec",
+        "a0e51113e2cc436f87d42bc577c6a8d4",
+        "2357bc2c55634e1f927c2e3a118b339e"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          0.1875,
+          -1.375,
+          0.01
+        ],
+        [
+          0.25,
+          -1.375,
+          0.01
+        ],
+        [
+          0.17188,
+          -1.375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "c6afe589175ec0109a402f4c8666f60709f31406f9c93f617341dfaac9d6dbfc"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_UpLeft.anim",
+      "guid": "370d81de7d2a4635853274abbbaf32fa",
+      "action": "Repair",
+      "direction": "UpLeft",
+      "spriteKeys": [
+        "2357bc2c55634e1f927c2e3a118b339e",
+        "f215cf44087f477ab7650550740596ce",
+        "fba9ed78be2d420cab10b27c541d3623",
+        "e09ee2671e5347f89f46e0864cf9fd3d",
+        "2357bc2c55634e1f927c2e3a118b339e"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          0.17188,
+          -1.375,
+          0.01
+        ],
+        [
+          0.22969,
+          -1.375,
+          0.01
+        ],
+        [
+          0.18438,
+          -1.375,
+          0.01
+        ],
+        [
+          0.10938,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "0c4dbe6c3e20041461b8fb2a4e39c571aa442919e708f077073ab051aa75bfed"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_UpLeft.anim",
+      "guid": "8d00046e418f4a86816920c409d04b0e",
+      "action": "HoverAttack",
+      "direction": "UpLeft",
+      "spriteKeys": [
+        "643d540f0c624342905506be02382ede",
+        "eddd5fe8e8d543c0a6de23140bd04fb6",
+        "4dd86dd6329f439181bb4551ecc50f62",
+        "3c04300a43a941bb87207d13b521afaf",
+        "643d540f0c624342905506be02382ede"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.27656,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.21875,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ]
+      ],
+      "sha256": "55fa52bcf4db22708ff31800f7e085811a7a9bd9004731327efcb26820da9c1d"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_UpLeft.anim",
+      "guid": "e378e5bcc9a54130a2e140795b3463bc",
+      "action": "HoverRepair",
+      "direction": "UpLeft",
+      "spriteKeys": [
+        "643d540f0c624342905506be02382ede",
+        "f5ad94a6b617449ab173e51531e49deb",
+        "027404c9a9564f889ea25f1bf8054108",
+        "6e196b55d67f43bd9ec9aeaf15cc799d",
+        "643d540f0c624342905506be02382ede"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.21875,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.29688,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.3125,
+          -1.6875,
+          0.01
+        ],
+        [
+          0.09375,
+          -1.6875,
+          0.01
+        ]
+      ],
+      "sha256": "976bc507240aab667f5ad400fef38e71cc6a94b44bc40dac431b25755de31903"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_UpRight.anim",
+      "guid": "7760344612fb494aa32e164e452c57f9",
+      "action": "ToolIdle",
+      "direction": "UpRight",
+      "spriteKeys": [
+        "9a7783a00eaa496bbeef431e3f451391",
+        "9a7783a00eaa496bbeef431e3f451391",
+        "9a7783a00eaa496bbeef431e3f451391",
+        "9a7783a00eaa496bbeef431e3f451391",
+        "9a7783a00eaa496bbeef431e3f451391"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333336
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "135f1ee52f4bf40cda77f75bb7f961d8fd8593e0c8599ede63ef2f9fb929afb0"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_UpRight.anim",
+      "guid": "a966eecf4cb44e16886f97cbfce91245",
+      "action": "ToolMove",
+      "direction": "UpRight",
+      "spriteKeys": [
+        "9be3a713d97849a2b069d1463d36c558",
+        "9be3a713d97849a2b069d1463d36c558",
+        "9be3a713d97849a2b069d1463d36c558",
+        "9be3a713d97849a2b069d1463d36c558",
+        "9be3a713d97849a2b069d1463d36c558"
+      ],
+      "keyTimes": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.78333333
+      ],
+      "duration": 0.8,
+      "shadowPositions": [
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ]
+      ],
+      "sha256": "7024076a4a4e93e7aaade32437cec2d50d6204c6caf5fb43e3bd8de661c9ce7c"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_UpRight.anim",
+      "guid": "468dc940f9244e25884dae72947fd7df",
+      "action": "Attack",
+      "direction": "UpRight",
+      "spriteKeys": [
+        "9a7783a00eaa496bbeef431e3f451391",
+        "8be6e550311445a8be1484bae4277e4e",
+        "52a3eda2219544c696d5ca806db9537a",
+        "bd2cf322dc7e48489c2a369b9bcab767",
+        "9a7783a00eaa496bbeef431e3f451391"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.07812,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.3125,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "b613ea9ef3eae0183d08f4b2b19e737dcda8c61170c18987d313f0f68f9700f8"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_UpRight.anim",
+      "guid": "560b17081e2a4661a3d2cd376944f8bd",
+      "action": "Repair",
+      "direction": "UpRight",
+      "spriteKeys": [
+        "9a7783a00eaa496bbeef431e3f451391",
+        "817859ad3dfa4d6ca77857265de9769f",
+        "27331b83f59b4217bc79cb4aae37a0db",
+        "e7cc948e873d415fb752127d1a4b6592",
+        "9a7783a00eaa496bbeef431e3f451391"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.15625,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.125,
+          -1.375,
+          0.01
+        ],
+        [
+          -0.10938,
+          -1.375,
+          0.01
+        ]
+      ],
+      "sha256": "75ffc28d360f59d3f9fba704d48e28e2e5d746e782316abbd14ae9dcaf2cd54e"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_UpRight.anim",
+      "guid": "93cc9de64d6f43d7bf3a0cc1dae3912b",
+      "action": "HoverAttack",
+      "direction": "UpRight",
+      "spriteKeys": [
+        "9be3a713d97849a2b069d1463d36c558",
+        "692f79a628024de0971a677271a25603",
+        "6a15fa765cc94782910d7abf7c8be46e",
+        "8154fdbe97fd4f719b2028a1d0706905",
+        "9be3a713d97849a2b069d1463d36c558"
+      ],
+      "keyTimes": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.38333333
+      ],
+      "duration": 0.4,
+      "shadowPositions": [
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.1875,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.38125,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.14062,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ]
+      ],
+      "sha256": "a3d2c5ebba01a996a7974eef78dc29c9151ac1c6106601b59c582dbb47ac24b6"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_UpRight.anim",
+      "guid": "11f41673db284c42888cd7f681721634",
+      "action": "HoverRepair",
+      "direction": "UpRight",
+      "spriteKeys": [
+        "9be3a713d97849a2b069d1463d36c558",
+        "c76b5ea6cbf54a13a659028f714a519b",
+        "9fa9fa273e694e42a8456b008661cc53",
+        "45d66adecad44a7c985e21d795f12305",
+        "9be3a713d97849a2b069d1463d36c558"
+      ],
+      "keyTimes": [
+        0.0,
+        0.15,
+        0.3,
+        0.45000002,
+        0.5833334
+      ],
+      "duration": 0.6,
+      "shadowPositions": [
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.07812,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.07812,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.01562,
+          -1.5,
+          0.01
+        ],
+        [
+          -0.04688,
+          -1.5,
+          0.01
+        ]
+      ],
+      "sha256": "27144bb5f77814945f79518a55f21685d916075c405743becd8b424e7d03eaa2"
+    }
+  ],
+  "sequences": {
+    "ToolIdle": [
+      "ToolIdle",
+      "ToolIdle",
+      "ToolIdle",
+      "ToolIdle",
+      "ToolIdle"
+    ],
+    "ToolMove": [
+      "ToolMove",
+      "ToolMove",
+      "ToolMove",
+      "ToolMove",
+      "ToolMove"
+    ],
+    "Attack": [
+      "ToolIdle",
+      "AttackWindup",
+      "AttackContact",
+      "AttackRecover",
+      "ToolIdle"
+    ],
+    "Repair": [
+      "ToolIdle",
+      "RepairWindup",
+      "RepairContact",
+      "RepairRecover",
+      "ToolIdle"
+    ],
+    "HoverAttack": [
+      "ToolMove",
+      "HoverAttackWindup",
+      "HoverAttackContact",
+      "HoverAttackRecover",
+      "ToolMove"
+    ],
+    "HoverRepair": [
+      "ToolMove",
+      "HoverRepairWindup",
+      "HoverRepairContact",
+      "HoverRepairRecover",
+      "ToolMove"
+    ]
+  },
+  "runtime": "All eight tool directions require idle, move, attack, repair, hovering attack and hovering repair to be configured; incomplete tool sets retain four-direction fallback.",
+  "combat": "Existing 0.4s strike, 0.6s repair and midpoint impact timing preserved; aim, damage, repair API, authority and colliders unchanged.",
+  "unityTestRunner": "NOT_RUN",
+  "unityPlayMode": "NOT_RUN",
+  "checks": {
+    "bodySpritesAndImportSettings": "PASS",
+    "authoredActionKeysAndImpactTiming": "PASS",
+    "24ClipBindingsAnd104States": "PASS",
+    "existing80AnimatorStatesPreserved": "PASS",
+    "previousSpriteAndClipBytesPreserved": "PASS",
+    "playerPrefabAndPhysicsUnchanged": "PASS",
+    "alignedBootBaselinesWithinOnePixel": "PASS",
+    "unityTestRunner": "NOT_RUN",
+    "unityPlayMode": "NOT_RUN"
+  },
+  "preservedOldArtFiles": 328,
+  "preservedOldBodyClips": 84,
+  "csharpBuild": {
+    "project": "Assembly-CSharp-Editor.csproj",
+    "errors": 0,
+    "existingWarnings": 4
+  }
+}

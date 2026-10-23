@@ -27,7 +27,6 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     private float _installationRemaining;
     private PlayerTurretPlacementPreview _preview;
     private PlayerInputHandler _input;
-    private PlayerControlState _control;
     private float _nextPreviewCheck;
     private int _placementStartFrame;
     private readonly List<RaycastResult> _uiHits = new();
@@ -57,7 +56,6 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
         base.Awake();
         _inventory = new PlayerTurretInventory(MaxTurretCount, _maximumRepairSeconds);
         _input = GetComponent<PlayerInputHandler>();
-        _control = GetComponent<PlayerControlState>();
     }
     private void Update() => Tick(Time.deltaTime);
     public void Tick(float elapsed)
@@ -97,7 +95,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     }
 
     private bool CanContinuePlacement() => isActiveAndEnabled && Time.timeScale > 0f && IsReady
-        && (_control == null || _control.CanAct)
+        && (ControlState == null || ControlState.CanAct)
         && (Controller == null || Controller.CanUse && Controller.Loadout.Contains(Id));
 
     private bool IsPointerOverUi()

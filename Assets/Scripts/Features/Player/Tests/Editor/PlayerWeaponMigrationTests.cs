@@ -10,6 +10,337 @@ public sealed class PlayerWeaponMigrationTests
 {
     private GameObject PlayerPrefab => AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
 
+    [Test]
+    public void EightWaySpannerClips_HaveAuthoredImpactRecoveryAndMatchingStates()
+    {
+        var motions = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Data/Player/PlayerMotions.asset");
+        Assert.That(motions.HasEightWayTools, Is.True);
+        var states = ((UnityEditor.Animations.AnimatorController)motions.Controller).layers[0].stateMachine.states;
+        foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.DownLeft, PlayerAimFacing.DownRight, PlayerAimFacing.UpLeft, PlayerAimFacing.UpRight })
+        foreach (PlayerMotion action in new[] { PlayerMotion.ToolIdle, PlayerMotion.ToolMove, PlayerMotion.Attack, PlayerMotion.Repair })
+        foreach (bool hovering in new[] { false, true })
+        {
+            if (hovering && (action == PlayerMotion.ToolIdle || action == PlayerMotion.ToolMove)) continue;
+            var clip = motions.GetClip(action, hovering).Animation(facing);
+            string stateName = $"{(hovering ? "Hover" : "")}{action}_{facing}";
+            Assert.That(states.Any(state => state.state.name == stateName && state.state.motion == clip), Is.True, stateName);
+            bool toolAction = action == PlayerMotion.Attack || action == PlayerMotion.Repair;
+            Assert.That(clip.length, Is.EqualTo(toolAction ? (action == PlayerMotion.Attack ? .4f : .6f) : .8f).Within(.001f));
+            Assert.That(clip.isLooping, Is.EqualTo(!toolAction));
+            foreach (Sprite frame in Frames(clip))
+            {
+                Assert.That(frame.rect.size, Is.EqualTo(new Vector2(160, 160)));
+                Assert.That(frame.pixelsPerUnit, Is.EqualTo(32));
+            }
+            if (!toolAction) continue;
+            var keys = AnimationUtility.GetObjectReferenceCurve(clip, AnimationUtility.GetObjectReferenceCurveBindings(clip).Single());
+            Assert.That(keys.Length, Is.EqualTo(5));
+            Assert.That(keys[2].time, Is.EqualTo(clip.length * .5f).Within(.001f));
+            Assert.That(keys.First().value, Is.EqualTo(keys.Last().value));
+            var ready = motions.GetClip(hovering ? PlayerMotion.ToolMove : PlayerMotion.ToolIdle).Animation(facing);
+            Assert.That(keys.First().value, Is.EqualTo(Frames(ready).Single()), "The same wrench must be held before and after the action.");
+            Assert.That(keys[1].value, Is.Not.EqualTo(keys[2].value));
+            Assert.That(keys[2].value, Is.Not.EqualTo(keys[3].value));
+            foreach (var binding in AnimationUtility.GetCurveBindings(clip).Where(binding => binding.type == typeof(Transform)))
+                Assert.That(binding.path, Is.EqualTo("PlayerGroundShadow"), "Tool artwork must not animate physics or weapon roots.");
+        }
+    }
+
+    [Test]
+    public void EightWaySpannerConfiguration_FallsBackWhenAHoverRepairDirectionIsMissing()
+    {
+        var source = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Data/Player/PlayerMotions.asset");
+        var motions = Object.Instantiate(source);
+        try
+        {
+            var data = new SerializedObject(motions);
+            data.FindProperty("_hoverRepair").FindPropertyRelative("upLeftAnimation").objectReferenceValue = null;
+            data.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(motions.HasEightWayTools, Is.False);
+            Assert.That(motions.HasEightWayRanged, Is.True, "An incomplete tool set must not disable ranged diagonals.");
+        }
+        finally { Object.DestroyImmediate(motions); }
+    }
+
+    [UnityTest]
+    public IEnumerator DiagonalSpanner_TurningAndChangingMovementPreserveImpactPhaseAndPhysics()
+    {
+        yield return new EnterPlayMode();
+        GameObject player = null;
+        try
+        {
+            player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            var input = player.GetComponent<PlayerInputHandler>();
+            input.enabled = false;
+            var attack = player.GetComponent<PlayerAttack>();
+            attack.SelectNextWeapon();
+            attack.SelectNextWeapon();
+            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
+            var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
+            var motion = player.GetComponent<PlayerSpriteMotion>();
+            var animator = player.GetComponent<Animator>();
+            var renderer = player.GetComponent<SpriteRenderer>();
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var evaluate = typeof(PlayerSpriteMotion).GetMethod("UpdateAnimatorState", flags);
+            var update = typeof(PlayerSpriteMotion).GetMethod("Update", flags);
+            var elapsed = typeof(PlayerSpriteMotion).GetField("_elapsed", flags);
+            var setAim = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.AimDirection)).GetSetMethod(true);
+            var setMove = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.MoveInput)).GetSetMethod(true);
+            Vector3 rootPosition = player.transform.position;
+            Quaternion rootRotation = player.transform.rotation;
+            foreach (bool repairing in new[] { false, true })
+            {
+                setMove.Invoke(input, new object[] { Vector2.zero });
+                Assert.That(motion.PlayToolAction(repairing), Is.True);
+                evaluate.Invoke(motion, null);
+                elapsed.SetValue(motion, repairing ? .15f : .1f);
+                foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.DownLeft, PlayerAimFacing.DownRight, PlayerAimFacing.UpLeft, PlayerAimFacing.UpRight })
+                foreach (Vector2 movement in new[] { Vector2.zero, Vector2.right, Vector2.left })
+                {
+                    Vector2 aim = PlayerAimUtility.GetFacingDirection(facing);
+                    setAim.Invoke(input, new object[] { aim });
+                    setMove.Invoke(input, new object[] { movement });
+                    rig.RefreshPose(aim);
+                    evaluate.Invoke(motion, null);
+                    animator.Update(0f);
+                    Assert.That(rig.Facing, Is.EqualTo(facing));
+                    bool hovering = movement != Vector2.zero;
+                    string action = repairing ? "Repair" : "Attack";
+                    Assert.That(animator.GetCurrentAnimatorStateInfo(0).fullPathHash,
+                        Is.EqualTo(Animator.StringToHash($"Base Layer.{(hovering ? "Hover" : "")}{action}_{facing}")));
+                    Assert.That(animator.GetCurrentAnimatorStateInfo(0).normalizedTime, Is.EqualTo(.25f).Within(.001f));
+                    Assert.That(renderer.sprite, Is.Not.Null);
+                    Assert.That(rig.ActiveGun.gameObject.activeSelf, Is.False);
+                    Assert.That(motion.ToolImpactDelay(repairing), Is.EqualTo(repairing ? .3f : .2f).Within(.001f));
+                    Assert.That(player.transform.position, Is.EqualTo(rootPosition));
+                    Assert.That(player.transform.rotation, Is.EqualTo(rootRotation));
+                }
+            }
+            motion.CancelToolAction();
+            elapsed.SetValue(motion, 10f);
+            update.Invoke(motion, null);
+            animator.Update(0f);
+            Assert.That(motion.IsPlayingToolAction, Is.False);
+        }
+        finally { if (player != null) Object.DestroyImmediate(player); }
+        yield return new ExitPlayMode();
+    }
+
+    [TestCase(PlayerAimFacing.UpLeft, 1, -1, true)]
+    [TestCase(PlayerAimFacing.UpLeft, 1, 0, true)]
+    [TestCase(PlayerAimFacing.UpLeft, 0, -1, true)]
+    [TestCase(PlayerAimFacing.UpLeft, 1, 1, false)]
+    [TestCase(PlayerAimFacing.UpLeft, -1, 1, false)]
+    [TestCase(PlayerAimFacing.DownRight, -1, 1, true)]
+    [TestCase(PlayerAimFacing.UpRight, -1, -1, true)]
+    [TestCase(PlayerAimFacing.DownLeft, 1, 1, true)]
+    [TestCase(PlayerAimFacing.DownLeft, 0, 0, false)]
+    public void BackpedalDetection_ExcludesForwardStationaryAndPerpendicularMovement(PlayerAimFacing facing, float x, float y, bool expected)
+    {
+        Assert.That(PlayerAimUtility.IsMovingBackward(facing, new Vector2(x, y)), Is.EqualTo(expected));
+        Assert.That(PlayerAimUtility.IsMovingBackward(facing, new Vector2(float.NaN, 0)), Is.False);
+    }
+
+    [UnityTest]
+    public IEnumerator DiagonalBackpedal_PreservesShotPhaseAndUsesTheSameMovingSpriteAndMuzzle()
+    {
+        yield return new EnterPlayMode();
+        GameObject player = null;
+        try
+        {
+            player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            var input = player.GetComponent<PlayerInputHandler>();
+            input.enabled = false;
+            var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
+            var motion = player.GetComponent<PlayerSpriteMotion>();
+            var animator = player.GetComponent<Animator>();
+            var renderer = player.GetComponent<SpriteRenderer>();
+            var motions = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Data/Player/PlayerMotions.asset");
+            Assert.That(motions.HasDiagonalBackpedal, Is.True);
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var evaluate = typeof(PlayerSpriteMotion).GetMethod("UpdateAnimatorState", flags);
+            var update = typeof(PlayerSpriteMotion).GetMethod("Update", flags);
+            var elapsed = typeof(PlayerSpriteMotion).GetField("_elapsed", flags);
+            var setMove = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.MoveInput)).GetSetMethod(true);
+            var setAim = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.AimDirection)).GetSetMethod(true);
+            Vector3 root = player.transform.position;
+            Quaternion rotation = player.transform.rotation;
+            foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.UpLeft, PlayerAimFacing.UpRight, PlayerAimFacing.DownLeft, PlayerAimFacing.DownRight })
+            {
+                Vector2 aim = PlayerAimUtility.GetFacingDirection(facing);
+                setAim.Invoke(input, new object[] { aim });
+                setMove.Invoke(input, new object[] { -aim });
+                rig.RefreshPose(aim);
+                motion.PlayRangedShot();
+                evaluate.Invoke(motion, null);
+                elapsed.SetValue(motion, .05f);
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_{facing}.png");
+                foreach (Vector2 movement in new[] { aim, -aim })
+                {
+                    setMove.Invoke(input, new object[] { movement });
+                    rig.RefreshPose(aim);
+                    evaluate.Invoke(motion, null);
+                    animator.Update(0);
+                    Assert.That(animator.GetCurrentAnimatorStateInfo(0).normalizedTime, Is.EqualTo(.25f).Within(.001f));
+                }
+                Assert.That(renderer.sprite, Is.EqualTo(sprite));
+                Assert.That(animator.GetCurrentAnimatorStateInfo(0).fullPathHash,
+                    Is.EqualTo(Animator.StringToHash($"Base Layer.HoverFireLeanBack_{facing}")));
+                Assert.That(rig.TryGetMuzzle(out Transform muzzle), Is.True);
+                var pose = new SerializedObject(rig).FindProperty("_backpedalMuzzles");
+                string field = char.ToLowerInvariant(facing.ToString()[0]) + facing.ToString().Substring(1);
+                Vector2 expected = pose.FindPropertyRelative(field).vector2Value;
+                Assert.That(Vector2.Distance(rig.transform.InverseTransformPoint(muzzle.position), expected), Is.LessThan(.002f));
+                if (facing == PlayerAimFacing.UpLeft)
+                {
+                    Vector2 right = pose.FindPropertyRelative("upRight").vector2Value;
+                    // The left rifle is shorter in the authored sprite. Pixel
+                    // (31, 64) is its barrel tip; a pure X mirror leaves a gap.
+                    Vector2 barrelTip = new Vector2(-.91875f, .3f);
+                    Assert.That(expected.y, Is.GreaterThan(0f), "The upper-left muzzle must stay above the player's feet.");
+                    Assert.That(expected.y, Is.EqualTo(right.y).Within(.002f));
+                    Assert.That(Vector2.Distance(expected, barrelTip), Is.LessThan(.002f));
+                }
+                Assert.That(Frames(motions.GetClip(PlayerMotion.Move, false, PlayerLateralLean.Back).Animation(facing))[0], Is.EqualTo(sprite));
+                elapsed.SetValue(motion, 1f);
+                update.Invoke(motion, null);
+                animator.Update(0);
+                Assert.That(renderer.sprite, Is.EqualTo(sprite));
+                Assert.That(animator.GetCurrentAnimatorStateInfo(0).fullPathHash,
+                    Is.EqualTo(Animator.StringToHash($"Base Layer.MoveLeanBack_{facing}")));
+                Assert.That(player.transform.position, Is.EqualTo(root));
+                Assert.That(player.transform.rotation, Is.EqualTo(rotation));
+            }
+        }
+        finally { if (player != null) Object.DestroyImmediate(player); }
+        yield return new ExitPlayMode();
+    }
+
+    [TestCase(0f, PlayerAimFacing.Right)]
+    [TestCase(22.4f, PlayerAimFacing.Right)]
+    [TestCase(22.6f, PlayerAimFacing.UpRight)]
+    [TestCase(67.4f, PlayerAimFacing.UpRight)]
+    [TestCase(67.6f, PlayerAimFacing.Up)]
+    [TestCase(135f, PlayerAimFacing.UpLeft)]
+    [TestCase(180f, PlayerAimFacing.Left)]
+    [TestCase(-135f, PlayerAimFacing.DownLeft)]
+    [TestCase(-90f, PlayerAimFacing.Down)]
+    [TestCase(-45f, PlayerAimFacing.DownRight)]
+    [TestCase(-22.4f, PlayerAimFacing.Right)]
+    [TestCase(-22.6f, PlayerAimFacing.DownRight)]
+    public void EightWayFacing_UsesFortyFiveDegreeSectors(float angle, PlayerAimFacing expected)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+        Assert.That(PlayerAimUtility.GetEightWayFacing(new Vector2(Mathf.Cos(radians), Mathf.Sin(radians))), Is.EqualTo(expected));
+        Assert.That(PlayerAimUtility.GetEightWayFacing(Vector2.zero), Is.EqualTo(PlayerAimFacing.Down));
+        Assert.That(PlayerAimUtility.GetEightWayFacing(new Vector2(float.NaN, 1)), Is.EqualTo(PlayerAimFacing.Down));
+    }
+
+    [Test]
+    public void EightWayRanged_ConnectsIdleMovementFireAndHoverWithoutMovingThePhysicsRoot()
+    {
+        var motions = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Data/Player/PlayerMotions.asset");
+        Assert.That(motions.HasEightWayRanged, Is.True);
+        var states = ((UnityEditor.Animations.AnimatorController)motions.Controller).layers[0].stateMachine.states;
+        foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+        foreach (PlayerMotion action in new[] { PlayerMotion.Idle, PlayerMotion.Move, PlayerMotion.Fire })
+        foreach (bool hovering in new[] { false, true })
+        {
+            var clip = motions.GetClip(action, hovering).Animation(facing);
+            string name = $"{(hovering && action == PlayerMotion.Fire ? "Hover" : "")}{action}_{facing}";
+            Assert.That(states.Any(state => state.state.name == name && state.state.motion == clip), Is.True, name);
+            Assert.That(clip.length, Is.EqualTo(action == PlayerMotion.Fire ? .2f : .8f).Within(.001f));
+            foreach (var binding in AnimationUtility.GetCurveBindings(clip).Where(binding => binding.type == typeof(Transform)))
+                Assert.That(binding.path, Is.EqualTo("PlayerGroundShadow"), "Only the shadow child may move.");
+            if (PlayerAimUtility.IsDiagonal(facing))
+            {
+                bool stationaryShot = action == PlayerMotion.Fire && !hovering;
+                Assert.That(Frames(clip).Length, Is.EqualTo(stationaryShot ? 3 : 1));
+                foreach (Sprite frame in Frames(clip))
+                {
+                    Assert.That(frame.rect.size, Is.EqualTo(new Vector2(160, 160)));
+                    Assert.That(frame.pixelsPerUnit, Is.EqualTo(32));
+                }
+                if (action == PlayerMotion.Fire && hovering)
+                    Assert.That(Frames(clip)[0], Is.EqualTo(Frames(motions.GetClip(PlayerMotion.Move).Animation(facing))[0]));
+            }
+        }
+    }
+
+    [TestCase(PlayerAimFacing.DownLeft)]
+    [TestCase(PlayerAimFacing.DownRight)]
+    [TestCase(PlayerAimFacing.UpLeft)]
+    [TestCase(PlayerAimFacing.UpRight)]
+    public void StationaryDiagonalShot_HasRecoilAndRecoveryThenReturnsToIdle(PlayerAimFacing facing)
+    {
+        var motions = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Data/Player/PlayerMotions.asset");
+        var fire = motions.GetClip(PlayerMotion.Fire).Animation(facing);
+        var binding = AnimationUtility.GetObjectReferenceCurveBindings(fire).Single();
+        var keys = AnimationUtility.GetObjectReferenceCurve(fire, binding);
+        Sprite idle = Frames(motions.GetClip(PlayerMotion.Idle).Animation(facing)).Single();
+        Assert.That(keys.First().value, Is.EqualTo(idle), "The first shot uses the idle muzzle and pose.");
+        Assert.That(keys.Last().value, Is.EqualTo(idle), "The recoil must finish at the idle pose.");
+        Assert.That(keys.Skip(1).First().value, Is.Not.EqualTo(idle));
+        Assert.That(keys[2].value, Is.Not.EqualTo(keys[1].value), "Recovery needs its own pose.");
+        Assert.That(Frames(fire).Length, Is.EqualTo(3));
+        Assert.That(fire.isLooping, Is.False);
+        Assert.That(fire.length, Is.EqualTo(.2f).Within(.001f));
+    }
+
+    [UnityTest]
+    public IEnumerator DiagonalAim_UsesMatchingPoseAndMuzzleBeforeTheFirstShot()
+    {
+        yield return new EnterPlayMode();
+        GameObject player = null;
+        try
+        {
+            player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            var input = player.GetComponent<PlayerInputHandler>();
+            input.enabled = false;
+            var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
+            var motion = player.GetComponent<PlayerSpriteMotion>();
+            var animator = player.GetComponent<Animator>();
+            var setAim = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.AimDirection)).GetSetMethod(true);
+            var setMove = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.MoveInput)).GetSetMethod(true);
+            var update = typeof(PlayerSpriteMotion).GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var evaluate = typeof(PlayerSpriteMotion).GetMethod("UpdateAnimatorState", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var elapsed = typeof(PlayerSpriteMotion).GetField("_elapsed", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Vector3 position = player.transform.position;
+            foreach (Vector2 direction in new[] { new Vector2(-1, -1), new Vector2(1, -1), new Vector2(-1, 1), new Vector2(1, 1) })
+            foreach (Vector2 movement in new[] { Vector2.zero, Vector2.right, Vector2.left })
+            {
+                setAim.Invoke(input, new object[] { direction.normalized });
+                setMove.Invoke(input, new object[] { movement });
+                rig.RefreshPose(direction);
+                elapsed.SetValue(motion, 10f);
+                update.Invoke(motion, null);
+                Assert.That(rig.TryGetMuzzle(out Transform displayedMuzzle, forShot: false), Is.True);
+                var rigData = new SerializedObject(rig);
+                string directionField = char.ToLowerInvariant(rig.Facing.ToString()[0]) + rig.Facing.ToString().Substring(1);
+                bool backpedaling = movement != Vector2.zero && PlayerAimUtility.IsMovingBackward(rig.Facing, movement);
+                string movingPose = backpedaling ? "_backpedalMuzzles" : "_moveMuzzles";
+                string displayedPose = movement == Vector2.zero ? "_idleMuzzles" : movingPose;
+                Vector2 idleExpected = rigData.FindProperty(displayedPose).FindPropertyRelative(directionField).vector2Value;
+                Assert.That(Vector2.Distance(rig.transform.InverseTransformPoint(displayedMuzzle.position), idleExpected), Is.LessThan(.002f));
+                Assert.That(rig.TryGetMuzzle(out Transform muzzle), Is.True);
+                Assert.That(muzzle.IsChildOf(rig.ActiveGun), Is.True);
+                string poseField = movement == Vector2.zero ? "_firingMuzzles" : movingPose;
+                Vector2 expected = rigData.FindProperty(poseField).FindPropertyRelative(directionField).vector2Value;
+                Assert.That(Vector2.Distance(rig.transform.InverseTransformPoint(muzzle.position), expected), Is.LessThan(.002f));
+                motion.PlayRangedShot();
+                evaluate.Invoke(motion, null);
+                animator.Update(0);
+                string prefix = movement == Vector2.zero ? "" : "Hover";
+                string lean = backpedaling ? "LeanBack" : "";
+                Assert.That(animator.GetCurrentAnimatorStateInfo(0).fullPathHash,
+                    Is.EqualTo(Animator.StringToHash($"Base Layer.{prefix}Fire{lean}_{rig.Facing}")));
+                Assert.That(player.transform.position, Is.EqualTo(position));
+            }
+        }
+        finally { if (player != null) Object.DestroyImmediate(player); }
+        yield return new ExitPlayMode();
+    }
+
     // 별도 프레임 배열 없이 AnimationClip에 저장된 실제 Sprite 키를 확인합니다.
     private static Sprite[] Frames(AnimationClip animation)
     {
@@ -30,7 +361,7 @@ public sealed class PlayerWeaponMigrationTests
         var states = controller.layers[0].stateMachine.states;
         Assert.That(PlayerPrefab.GetComponent<PlayerSpriteMotion>(), Is.Not.Null);
         foreach (PlayerMotion motion in System.Enum.GetValues(typeof(PlayerMotion)))
-        foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+        foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.Down, PlayerAimFacing.Up, PlayerAimFacing.Left, PlayerAimFacing.Right })
         {
             PlayerMotionSet.Clip clip = motions.GetClip(motion);
             AnimationClip animation = clip.Animation(facing);
@@ -60,7 +391,7 @@ public sealed class PlayerWeaponMigrationTests
     public void WeaponSpecificVisualsUseDistinctPosesAndAuthoredProjectileEffects()
     {
         var motions = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Data/Player/PlayerMotions.asset");
-        foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+        foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.Down, PlayerAimFacing.Up, PlayerAimFacing.Left, PlayerAimFacing.Right })
         {
             Assert.That(Frames(motions.GetClip(PlayerMotion.ToolIdle).Animation(facing))[0],
                 Is.Not.EqualTo(Frames(motions.GetClip(PlayerMotion.Idle).Animation(facing))[0]));
@@ -115,7 +446,7 @@ public sealed class PlayerWeaponMigrationTests
         var controller = (UnityEditor.Animations.AnimatorController)motions.Controller;
         var states = controller.layers[0].stateMachine.states;
         foreach (PlayerMotion action in new[] { PlayerMotion.Fire, PlayerMotion.Attack, PlayerMotion.Repair })
-        foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+        foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.Down, PlayerAimFacing.Up, PlayerAimFacing.Left, PlayerAimFacing.Right })
         {
             var grounded = motions.GetClip(action);
             var hovering = motions.GetClip(action, true);
@@ -194,7 +525,7 @@ public sealed class PlayerWeaponMigrationTests
         var states = controller.layers[0].stateMachine.states;
         foreach (PlayerMotion action in new[] { PlayerMotion.Move, PlayerMotion.Fire })
         foreach (PlayerLateralLean lean in new[] { PlayerLateralLean.Left, PlayerLateralLean.Right })
-        foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+        foreach (PlayerAimFacing facing in new[] { PlayerAimFacing.Down, PlayerAimFacing.Up, PlayerAimFacing.Left, PlayerAimFacing.Right })
         {
             bool hovering = action == PlayerMotion.Fire;
             var original = motions.GetClip(action, hovering);
@@ -326,7 +657,7 @@ public sealed class PlayerWeaponMigrationTests
             Assert.That(player.GetComponent<PlayerSpriteMotion>().IsPlayingToolAction, Is.True);
             Assert.That(spanner.TryAttack(Vector2.down), Is.False, "Holding attack must respect the melee cooldown.");
             attack.SelectNextWeapon();
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.DefaultShotgun));
+            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.DefaultGun));
             Assert.That(spanner.gameObject.activeSelf, Is.False);
             spannerData.Update();
             Assert.That(spannerData.FindProperty("_pendingStrike").boolValue, Is.False,

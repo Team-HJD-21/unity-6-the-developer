@@ -137,6 +137,9 @@ public sealed class PlayerSpannerWeapon : MonoBehaviour
         float swing = _swingRemaining > 0f ? Mathf.Lerp(-_arc * .5f, _arc * .5f, progress) : 0f;
         transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg + swing);
         PlayerAimFacing facing = _rig != null ? _rig.Facing : PlayerAimUtility.GetFacing(direction);
+        // The authored body sprite owns the diagonal tool. The separate legacy
+        // wrench uses its existing four hand anchors whenever it is displayed.
+        if (PlayerAimUtility.IsDiagonal(facing)) facing = PlayerAimUtility.GetFacing(direction);
         transform.localPosition = RightHandPosition(facing);
         if (_view != null)
         {
