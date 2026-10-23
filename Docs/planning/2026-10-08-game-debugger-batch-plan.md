@@ -30,7 +30,7 @@ Scene YAML에서 `SpawnerTest` 오브젝트와 `SpawnerTester` 컴포넌트가 �
 
 게임 UI의 Start Host는 Host 시작이지 직접 Spawn 명령이 아니다. 바인딩된 자동 요청이 있으면 별도 코루틴에서 이어질 수 있다. CurrentMatch가 없는 상태에서는 Game UI의 Plan & Spawn은 거부되지만 Scene Spawn은 Match를 검사하지 않는다.
 
-확정 목표는 Editor/UI/Scene/자동 트리거가 공통 Match-scoped 요청 경계로 들어가고, 요청 원인(DebugWindow/RuntimeUI/SceneCollision/MatchStart)을 기록하는 것이다. Scene 충돌 트리거는 유지하되 현재 무 snapshot `Spawn()` 호출을 최신 Battlefield snapshot을 사용하는 공통 요청 경계로 바꾼다. C/E와 연결 계약은 확인하되 충돌 트리거 자체를 삭제하거나 Enemy 정책을 임의로 교체하지 않는다.
+확정 목표는 Editor/UI/Scene/자동 트리거가 공통 Match-scoped 요청 경계로 들어가고, 요청 원인(DebugWindow/RuntimeUI/SceneCollision/MatchStart)을 기록하는 것이다. Scene 충돌 트리거는 유지하되 현재 무 snapshot `Spawn()` 호출을 최신 Battlefield snapshot을 사용하는 공통 요청 경계로 바꾼다. 김진태와 조수빈의 연결 계약은 확인하되 충돌 트리거 자체를 삭제하거나 Enemy 정책을 임의로 교체하지 않는다.
 
 ## 확정한 실행 정책
 
@@ -43,11 +43,11 @@ Scene YAML에서 `SpawnerTest` 오브젝트와 `SpawnerTester` 컴포넌트가 �
 
 | 배치 | 구현·커밋 단위 | 완료 기준·의존성 |
 | --- | --- | --- |
-| G0 — 계약/기준 고정 | 위 확정 정책에 따라 Scene 요청 통합 경계를 지정, 시간 기준·요청 원인·MatchId/revision·생성/제거/실패 진단 DTO 및 adapter 경계, 데이터가 없는 항목 명시 | A/E/C 연결 합의. 실제 Scene 터렛 baseline은 배치 G8과 연결. 자동/수동 모드를 추가하거나 기존 자동 요청을 끄지 않음 |
+| G0 — 계약/기준 고정 | 위 확정 정책에 따라 Scene 요청 통합 경계를 지정, 시간 기준·요청 원인·MatchId/revision·생성/제거/실패 진단 DTO 및 adapter 경계, 데이터가 없는 항목 명시 | 양현석/조수빈/김진태 연결 합의. 실제 Scene 터렛 baseline은 배치 G8과 연결. 자동/수동 모드를 추가하거나 기존 자동 요청을 끄지 않음 |
 | G1 — 상위 창과 디자인 | Game Debugger UI Toolkit shell, 상단 공통 상태/시간 toolbar, 좌측 탐색, 중앙 단일/좌우·상하 2분할/4분할, 하단 경고. 영역별 기능·기록·필터·스크롤 보존. Battlefield 기능은 내부 패널, Scene Overlay와 기존 명령 유지. USS/차트 view는 Editor 영역에 분리 | 단일 Game Debugger 메뉴, 각 분할의 독립 설정·경계선 크기 조절, 좁은 dock/넓은 창, domain reload, Capture와 LIVE/PREVIEW 구분 |
 | G2 — 시간·실행 제어 | 0.25/0.5/1/2/4배·직접 입력, Editor Pause/Resume/Step, 게임/실제 경과시간, fixed step 표시, 변경한 설정 복원. Editor 수명과 분리한 제어 scope | 종료/reload 후 누수 없음. 멀티 Client 위험 경고. timeScale=0을 전체 정지로 표시하지 않음. fixedDeltaTime 자동 변경은 기본 Off |
 | G3 — 현재 상태·연결 검사 | Match/authority 연결 상태, Grid/Topology/Frontline, 터렛 상태 표·Scene 선택, 전력/가동/파괴, snapshot 나이. 비공선 부족/중복 SpawnPoint ID/범위 밖 입력/소비자 누락/타깃 미연결 검사 | 현재 snapshot/Feature 조회를 읽기 전용으로 사용. 권한/타깃 등 추가 계약 없으면 Unknown. 정책 재계산으로 후보 결과를 꾸미지 않음 |
-| G4 — 관측 수집·요청 연결 | E Executor의 실제 생성 성공/제거/실패 기록 수신, Match-scoped recorder, 요청 원인/계획과 결과 상관 ID. 모든 진입점의 telemetry coverage 표. E/C와 Scene 요청을 공통 snapshot 경계로 연결 | 생성/제거 동시 발생에도 정확한 수, Client 중복 집계 금지. Despawn과 처치 구분. 원시 이벤트 상한·완료 실행 기록/활성 snapshot 분리 |
+| G4 — 관측 수집·요청 연결 | 조수빈 Executor의 실제 생성 성공/제거/실패 기록 수신, Match-scoped recorder, 요청 원인/계획과 결과 상관 ID. 모든 진입점의 telemetry coverage 표. 조수빈과 김진태의 Scene 요청을 공통 snapshot 경계로 연결 | 생성/제거 동시 발생에도 정확한 수, Client 중복 집계 금지. Despawn과 처치 구분. 원시 이벤트 상한·완료 실행 기록/활성 snapshot 분리 |
 | G5 — 통계·차트 | 기본 게임시간 5초 bin(변경 가능)의 생성량 막대, 생존 수/누적 생성 선, preset/종류/지점 필터, 계획/실제/실패 비교, 터렛 가동 비율·전력·영역 면적/외곽 길이 추이 | 배속과 실제/게임 시간 단위 명시. 생존 수는 표본, 생성 수는 이벤트. 데이터 누락/중간 기록 시작을 0으로 오인하지 않음. 압력/우세 지표는 만들지 않음 |
 | G6 — 타임라인·조건부 정지 | Match/요청/Spawn/제거/터렛 파괴·복구/전선 갱신 이력, 필터·북마크·Scene 강조. 생성 실패/터렛 파괴/OOB 조건별 정지·재무장 | 로컬 Editor pause만 실행. 같은 조건 매 프레임 반복 정지 방지. 외부 네트워크 전체가 멈췄다고 표시하지 않음 |
 | G7 — 캡처·보고·비교 | 읽기 전용 Capture layout, CSV/JSON 기록 내보내기, Commit/Unity/Scene/seed/config/time policy 메타데이터, 두 실행 A/B 차트 비교 | 종료한 기록은 별도 read-only archive로 표시. Match 상태를 되살리지 않음. 값 변경 명령과 조회 분리, Export는 명시적 경로 선택. 자동 기록 파일을 Git에 섞지 않음 |
@@ -66,7 +66,7 @@ Scene YAML에서 `SpawnerTest` 오브젝트와 `SpawnerTester` 컴포넌트가 �
 
 ## 포함되지만 Feature 계약이 필요한 사항
 
-E: 실제 spawn/despawn/failure 및 request/plan 진단·Match 수명, 서버 권한. C/E: Scene 충돌 요청 의도와 생성 지점/지역 규칙. D: 터렛 snapshot/전력·작동 이벤트. B/E: 타깃 등록/피해/처치 구분. A는 공용 계약·Editor·집계를 소유하되 각 Feature 정책은 Owner가 유지한다.
+조수빈: 실제 spawn/despawn/failure 및 request/plan 진단·Match 수명, 서버 권한. 김진태·조수빈: Scene 충돌 요청 의도와 생성 지점/지역 규칙. 황재동: 터렛 snapshot/전력·작동 이벤트. 이영빈/조수빈: 타깃 등록/피해/처치 구분. 양현석은 공용 계약·Editor·집계를 소유하되 각 Feature 정책은 Owner가 유지한다.
 
 실제 DPS/처치율/피해 누적처럼 아직 사실 이벤트가 없는 지표는 계약 전에는 N/A다. Unity Step은 렌더 프레임 진행이지 결정론적 Match tick 진행이 아니다. 자동 재실행/대규모 배치 시뮬레이션·완전 리플레이는 이번 9개 배치에 포함하지 않는다.
 
@@ -89,4 +89,4 @@ E: 실제 spawn/despawn/failure 및 request/plan 진단·Match 수명, 서버 �
 
 G0~G7의 도구·관측 기능을 구현했다. Scene 충돌은 이제 `SpawnerTester.TryRequestEncounter → IEncounterDebugCommandTarget.TryRequestCurrentEncounter → bound snapshot → TryRequestEncounter → TrySpawn`을 사용하며 Match ID/권한 준비 조건과 같은 예약 취소 정책을 따른다. DebugWindow/RuntimeUI/SceneCollision/MatchStart를 모두 구조화해 기록한다. 자동/수동 모드는 추가하지 않았다.
 
-G8의 CLI 검증은 통과했다. 실제 물리 충돌·UI 클릭·차트/도킹 시각 QA·영상은 별도 인수이며 전체 전투/승패 완료는 아니다. 아직 없는 PlanId/후보 점수/처치/피해/우세 지표는 N/A다. 현행 관측 계약은 E의 전체 Match Runtime 설계를 대신하지 않는다. GitHub Issue 수정·PR·push는 실행하지 않았다.
+G8의 CLI 검증은 통과했다. 실제 물리 충돌·UI 클릭·차트/도킹 시각 QA·영상은 별도 인수이며 전체 전투/승패 완료는 아니다. 아직 없는 PlanId/후보 점수/처치/피해/우세 지표는 N/A다. 현행 관측 계약은 조수빈의 전체 Match Runtime 설계를 대신하지 않는다. GitHub Issue 수정·PR·push는 실행하지 않았다.

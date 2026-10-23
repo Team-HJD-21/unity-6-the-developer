@@ -42,24 +42,24 @@ Assets/
 | 이전 | 현재 | 처리 |
 | --- | --- | --- |
 | `PoC/Core` | `Scripts/Core` | Core 전체·asmdef·Editor·Tests·README |
-| `PoC/Enemy/Scripts`, `Editor` | `Scripts/Features/Enemy` | 현행 Enemy/Encounter/Spawn |
+| `Po김진태·조수빈nemy/Scripts`, `Editor` | `Scripts/Features/Enemy` | 현행 Enemy/Encounter/Spawn |
 | `Scripts/Player_V2` | `Scripts/Features/Player` | Player·무기·스킬. Test → Tests |
 | `Scripts/Tower/Turret` 및 Tower의 나머지 코드 | `Scripts/Features/Turrets` | CU·전력·상태·업그레이드·연동 |
 | `PoC/Spaceship/Scripts` | `Scripts/Features/Spaceship` | MutiScene → SceneFlow |
 | `PoC/Spaceship/Scenes/Initial_Stage.unity` | `Scenes/Gameplay/Initial_Stage.unity` | 현행 통합 Scene |
 | `PoC/Spaceship/Scenes/SpaceShipGrayBox.unity` | `Scenes/Spaceship/SpaceShipGrayBox.unity` | 허브 |
-| `PoC/Enemy/Scenes/EnemySandbox.unity` | `Scenes/Tests/EnemySandbox.unity` | Enemy 테스트 |
+| `Po김진태·조수빈nemy/Scenes/EnemySandbox.unity` | `Scenes/Tests/EnemySandbox.unity` | Enemy 테스트 |
 | `PoC/Tower` | `Prefabs/Turrets` | **PL이 지정한 현행 터렛 정본** |
 | `Prefabs/Tower` | 제거 | 정본 GUID/fileID 검사·재연결 후 제거 |
-| `PoC/Enemy/Prefabs` | `Prefabs/Enemies/{Runtime,Spawning}` | 신형 Enemy·Spawn |
+| `Po김진태·조수빈nemy/Prefabs` | `Prefabs/Enemies/{Runtime,Spawning}` | 신형 Enemy·Spawn |
 | `Scripts/Tower/TurretDefinitions` | `Data/Turrets` | 정의값·Catalog |
-| `PoC/Enemy/Data` | `Data/Enemies` | EnemyCatalog·정의값 |
+| `Po김진태·조수빈nemy/Data` | `Data/Enemies` | EnemyCatalog·정의값 |
 | Grid 설정 asset | `Data/Core/BattlefieldGridSettings_Default.asset` | 사용자 설정값·GUID 보존 |
-| `PoC/Enemy/Resources/Spawning` | `Resources/Spawning` | Resources 키 유지 |
+| `Po김진태·조수빈nemy/Resources/Spawning` | `Resources/Spawning` | Resources 키 유지 |
 | 구형 Main·Stage·UI Demo | `Scenes/Reference` | 배치·화면 참고. 이전 실행 기능 보장 안 함 |
 | 구형 Monster·Spawner prefab | `Prefabs/Enemies/{Reference,ReferenceSpawning}` | 시각 참고. 제거된 Legacy 동작 없음 |
 
-터렛 내부의 기존 종류·레벨 구분(`Turrets/CanonTurret` 등)과 타입명은 유지한다. 새로운 터렛 생성/관리 계약은 D와 연계하는 #495의 별도 범위다.
+터렛 내부의 기존 종류·레벨 구분(`Turrets/CanonTurret` 등)과 타입명은 유지한다. 새로운 터렛 생성/관리 계약은 황재동과 연계하는 #495의 별도 범위다.
 
 ## 제거 기능과 대체 상태
 

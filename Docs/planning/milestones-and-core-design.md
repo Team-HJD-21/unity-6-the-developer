@@ -3,7 +3,7 @@
 기준일: 2026-09-20
 상태: Milestone·Priority·기술 구현의 현행 기준 / Sprint 1 Stage 1 PoC 실행 중
 
-이 문서는 M0~M5의 순서, 각 Priority에서 A~E가 맡는 책임, 기술 통과 기준을 정의한다. 제품 범위는 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md), 제품 영역 경계는 [TEAM_ROLE_OWNERSHIP.md](../team/TEAM_ROLE_OWNERSHIP.md)를 따른다.
+이 문서는 M0~M5의 순서, 각 Priority에서 팀원이 맡는 책임, 기술 통과 기준을 정의한다. 제품 범위는 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md), 제품 영역 경계는 [TEAM_ROLE_OWNERSHIP.md](../team/TEAM_ROLE_OWNERSHIP.md)를 따른다.
 
 ## 1. 운영 원칙
 
@@ -11,8 +11,8 @@
 - 한 Milestone의 P0가 끝나기 전 다음 Milestone을 시작하지 않는다.
 - P0는 Milestone Gate, P1은 핵심 결과, P2는 품질 향상, P3는 미착수 아이디어다.
 - P2는 P0/P1 일정에 여유가 있을 때만 수행한다.
-- C와 D는 각각 김진태, 황재동이 담당하며, A가 해당 업무를 자동으로 떠안지 않는다.
-- 기능 Owner는 구현·테스트·문서·통합 증거까지 책임진다. Build/CI/QA는 E의 전담 업무가 아니다.
+- 김진태와 황재동은 각자 맡은 영역을 담당하며, 양현석이 해당 업무를 자동으로 떠안지 않는다.
+- 기능 Owner는 구현·테스트·문서·통합 증거까지 책임진다. Build/CI/QA는 조수빈의 전담 업무가 아니다.
 - 실제 외부 SDK와 Online 기능은 Single-player Core가 검증된 뒤 연결한다.
 
 ## 2. 전체 Roadmap
@@ -38,24 +38,24 @@
 
 | 연결 순서 | Owner | 결과물 |
 | --- | --- | --- |
-| 범위·계약·통합 기준 | A · 양현석 | Issue, 인터페이스, 전제 1·2 관찰 기준, 10월 2일 통합 Build |
-| Network-aware 위험 조사 | B · 이영빈 | Netcode/RPC/권한 최소 가이드와 향후 전환 위험 목록 |
-| 터렛 상태 데이터 | D · 황재동 | 터렛 인스턴스 관리, 위치·활성·체력·화력·거리·위협도 및 파괴 시 전력 손실률 API 입력값 제공 |
-| 목표 선택 AI | E · 조수빈 | 기존 점수 기반 몬스터 타깃 선택을 우선 시험, Region·분대 계층과 세부 점수 조정은 후속 검토 |
-| 전선·거점 확장 | C · 김진태 | Graybox, 거점 확보·상실, 전장 확장과 E/D 데이터 연동 |
+| 범위·계약·통합 기준 | 양현석 | Issue, 인터페이스, 전제 1·2 관찰 기준, 10월 2일 통합 Build |
+| Network-aware 위험 조사 | 이영빈 | Netcode/RPC/권한 최소 가이드와 향후 전환 위험 목록 |
+| 터렛 상태 데이터 | 황재동 | 터렛 인스턴스 관리, 위치·활성·체력·화력·거리·위협도 및 파괴 시 전력 손실률 API 입력값 제공 |
+| 목표 선택 AI | 조수빈 | 기존 점수 기반 몬스터 타깃 선택을 우선 시험, Region·분대 계층과 세부 점수 조정은 후속 검토 |
+| 전선·거점 확장 | 김진태 | Graybox, 거점 확보·상실, 전장 확장과 조수빈·황재동 데이터 연동 |
 | 통합 Playtest | 전체 팀 | 2026-10-02 같은 Build에서 플레이, 2026-10-03 피드백 회의 |
 
 상세 범위와 완료 기준은 [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md)를 따른다.
 
-## 3. 공통 역할 코드
+## 3. 공통 역할
 
-| 코드 | 이름 | 고정 제품 영역 |
-| --- | --- | --- |
-| A | 양현석(PL) | Core lifecycle, 계약, Profile/Economy 정책, Meta UI, 통합 결정 |
-| B | 이영빈 | Player gameplay, Combat HUD, 입력/카메라, Co-op UX, 실시간 연출 |
-| C | 김진태 | Planet/Hub World, Mission/Expansion, 환경, Ally Player Agent |
-| D | 황재동 | Turret/Power, Research/Progression, 전투·경제 Balance |
-| E | 조수빈 | Enemy/Boss, Encounter/Wave, 공통 AI runtime |
+| 이름 | 고정 제품 영역 |
+| --- | --- |
+| 양현석(PL) | Core lifecycle, 계약, Profile/Economy 정책, Meta UI, 통합 결정 |
+| 이영빈 | Player gameplay, Combat HUD, 입력/카메라, Co-op UX, 실시간 연출 |
+| 김진태 | Planet/Hub World, Mission/Expansion, 환경, Ally Player Agent |
+| 황재동 | Turret/Power, Research/Progression, 전투·경제 Balance |
+| 조수빈 | Enemy/Boss, Encounter/Wave, 공통 AI runtime |
 
 ## 4. M0 — Alignment & Baseline
 
@@ -63,7 +63,7 @@
 
 New Core를 시작하기 전에 팀이 같은 범위·역할·완료 기준을 사용하고, 모든 변경을 검증할 수 있는 저장소 상태를 만든다.
 
-| Priority | A — 양현석 | B — 이영빈 | C — 김진태 | D — 황재동 | E — 조수빈 |
+| Priority | 양현석 | 이영빈 | 김진태 | 황재동 | 조수빈 |
 | --- | --- | --- | --- | --- | --- |
 | P0 | Scope·Decision Log 승인, M1 Architecture Backlog, CI/Branch rule 최종 확인 | Player/Input/HUD 레거시 행동 목록과 M1 Command 경계 작성 | Planet/Hub topology·Expansion 요구사항 작성 | Turret/Power 역할표와 Paper Simulation | Enemy/Wave 레거시 행동 목록, Enemy 1종·Director 최소 범위 작성 |
 | P1 | App/Profile/Content/Match 책임도와 asmdef 계획 | M1 Minimal HUD wireframe, Player damage/command Test Case | Planet 50/75/100 Graybox와 Hub 동선 초안 | Cannon/Missile/Laser 역할·Cost·Counter 초안 | Default/Tanker/Assassin/Boss 역할·첫 등장 초안 |
@@ -73,9 +73,9 @@ New Core를 시작하기 전에 팀이 같은 범위·역할·완료 기준을 �
 #### M0 Exit Criteria
 
 - Unity Compile Error 0, Repository Check와 필수 CI 성공
-- Source of Truth와 A~E 역할이 팀에 공유됨
+- Source of Truth와 팀원별 역할이 팀에 공유됨
 - 각 P0 Task에 예상 시간·선행 작업·검증 방법·증거 위치가 있음
-- C 김진태와 D 황재동을 포함한 전원의 역할·가용 시간이 기록됨
+- 김진태와 황재동을 포함한 전원의 역할·가용 시간이 기록됨
 - M1 Minimal Test Scene 범위와 asmdef 의존 방향이 승인됨
 - Planet 1, Turret, Enemy, Hub Paper Design이 M2 준비 자료로 연결됨
 
@@ -85,7 +85,7 @@ New Core를 시작하기 전에 팀이 같은 범위·역할·완료 기준을 �
 
 M1은 실제 Steam, Backend, Netcode, 완성된 Hub 또는 Planet 콘텐츠를 만드는 단계가 아니다. 외부 기능을 나중에 붙일 수 있는 계약과 수명주기, 테스트 가능한 Single Match의 Architecture Slice를 만든다.
 
-| Priority | A — 양현석 | B — 이영빈 | C — 김진태 | D — 황재동 | E — 조수빈 |
+| Priority | 양현석 | 이영빈 | 김진태 | 황재동 | 조수빈 |
 | --- | --- | --- | --- | --- | --- |
 | P0 | `AppBootstrap/AppRoot`, IDs·Command·Event·Result, `MatchSession/MatchState/GameSimulation`, Profile/Content Port와 Fake, asmdef 경계 | `PlayerAction`→`GameCommand` adapter, Player HP 표현과 최소 `HudPresenter` | `PlanetDefinition/MissionDefinition/SectorDefinition` 최소 schema와 Test Scene 공간 | `TurretDefinition/PowerDefinition`, 전력 소비·반환 규칙과 테스트 값 | `EnemyArchetype`, Enemy Command 경계, Enemy 1종과 최소 `EncounterDirector` |
 | P1 | immutable `MatchConfig`, `LocalAuthority`, `RewardReceipt`, versioned binary cache interface/개발 구현 | 이동·사격·피격 최소 adapter, HUD 구독/해제 Test | Control Unit·Spawn Point·Sector marker adapter | Cannon 1종과 Power ON/OFF를 Simulation에 연결 | Default Enemy spawn/defeat를 Command/Event로 연결 |
@@ -129,7 +129,7 @@ M1 계약 위에 15~20분짜리 Spaceship 준비 → Planet 전투·Expansion �
 
 진행 방식은 Stage 1에서 전제 1(동적 전선)과 전제 2(지역 해금)를 시험한 뒤 결정한다. 아래 Expansion 단계와 Encounter 구성은 M2 계획값이며, 기존 웨이브 진행을 최종 채택했다는 뜻이 아니다.
 
-| Priority | A — 양현석 | B — 이영빈 | C — 김진태 | D — 황재동 | E — 조수빈 |
+| Priority | 양현석 | 이영빈 | 김진태 | 황재동 | 조수빈 |
 | --- | --- | --- | --- | --- | --- |
 | P0 | Mission→MatchConfig→Result→Profile 왕복, Scene Flow, Meta UI, Single ModeRules | Player 전투 1세트, Combat HUD, Tutorial, Camera/Input | Planet 1 Full Graybox, 50/75/100 Expansion, Hub Interior·Mission 동선 | Cannon/Missile/Laser, Power Budget/회수, Upgrade 1개, 핵심 Balance | 3 Enemy Archetype, 채택한 진행 방식의 Encounter/Spawn curve, Boss 1종과 Fail/Clear 연동 |
 | P1 | Save/cache migration, Result/Retry, 공통 UI navigation | 피격·사격·터렛 상태 feedback, 짧은 Launch/Return 연출 | 65/90% 설계 초안, 환경 Storytelling, Minimap/Collision/Spawn 갱신 | Counter table, 두 Clear 가능 build, 전투 중 전력 전환 제한 검토 | 선택한 진행 방식의 Encounter 조합, Boss phase, AI profile·성능 tuning |
@@ -151,7 +151,7 @@ M1 계약 위에 15~20분짜리 Spaceship 준비 → Planet 전투·Expansion �
 
 M2의 동일한 `GameSimulation`을 사용해 Steam 친구 초대 기반 2-player Match를 만든다. Random Match, SOS, Chat/Ping, 실제 Host Migration은 포함하지 않는다.
 
-| Priority | A — 양현석 | B — 이영빈 | C — 김진태 | D — 황재동 | E — 조수빈 |
+| Priority | 양현석 | 이영빈 | 김진태 | 황재동 | 조수빈 |
 | --- | --- | --- | --- | --- | --- |
 | P0 | Steam identity/Lobby/Network adapter 경계, Host authority, replicated command/snapshot, 보상 중복 방지 | Invite/Lobby/Ready/Reconnect UX, 2-player HUD·Ping 최소 표현 | Player slot, 이탈자 `AllyPlayerAgent` 정책·Mission 행동 구현 | Co-op Turret/Power 공유 규칙, 난이도·보상 profile | AI runtime 재사용, Enemy/Director authority와 deterministic 검증 지원 |
 | P1 | 연결 종료·복귀 state, Match 결과 검증과 로깅 | Player 구분·상호 feedback, 오류/재시도 화면 | Ally AI takeover/return과 목표 우선순위 | 1인/2인 Scaling, griefing 방지 전력 규칙 | 2인 부하의 Wave/AI 성능과 Network action 검증 |
@@ -172,7 +172,7 @@ M2의 동일한 `GameSimulation`을 사용해 Steam 친구 초대 기반 2-playe
 
 검증된 Single/Co-op 위에 운영에 필요한 Online 기능과 반복 Content 제작 구조를 추가하고, 예정한 Alpha 범위를 처음부터 끝까지 실행 가능하게 만든다.
 
-| Priority | A — 양현석 | B — 이영빈 | C — 김진태 | D — 황재동 | E — 조수빈 |
+| Priority | 양현석 | 이영빈 | 김진태 | 황재동 | 조수빈 |
 | --- | --- | --- | --- | --- | --- |
 | P0 | 실제 Backend Profile/Reward validation, schema migration, 운영 로그·복구, Offline 정책 결정 | Random Match/SOS/Reconnect의 핵심 UX와 오류 복구 | Planet 1의 1-1~1-5, Mission/Environment Content Pipeline | Data-driven Turret/Power/Research/Balance Pipeline | Data-driven Enemy/Wave/Boss Pipeline과 Alpha Encounter |
 | P1 | Leaderboard/운영 도구, Host Migration Snapshot PoC | Chat/Ping, Onboarding과 주요 Cutscene polish | 추가 Mission/Challenge, Hub 변화와 환경 기믹 | 성장/경제 curve와 Co-op tuning | Enemy/Boss 변형과 성능 최적화 |
@@ -193,7 +193,7 @@ M2의 동일한 `GameSimulation`을 사용해 Steam 친구 초대 기반 2-playe
 
 기능을 동결하고 품질, 성능, 라이선스, 운영, Steam 배포를 검증해 Release Candidate를 만든다.
 
-| Priority | A — 양현석 | B — 이영빈 | C — 김진태 | D — 황재동 | E — 조수빈 |
+| Priority | 양현석 | 이영빈 | 김진태 | 황재동 | 조수빈 |
 | --- | --- | --- | --- | --- | --- |
 | P0 | Scope freeze, Release Build, Backend/Profile/Save 복구, Steam 배포·문서·승인 | 입력/HUD/접근성 Blocker와 사용자 흐름 QA | Scene/Collision/Mission Blocker, Asset license/source 정리 | Economy/Progression exploit와 필수 Balance | AI/Encounter 진행 불가·Crash·성능 Blocker |
 | P1 | Analytics/운영 Runbook, Credits, Store/Release checklist | UX·Localization·Cinematic polish | Art/VFX/환경 polish와 탐색 가독성 | 난이도·보상·터렛 미세 조정 | Wave/Boss/AI 미세 조정과 pooling |

@@ -9,7 +9,7 @@
 
 ## ID와 읽기 전용 조회
 
-Core 지역이 바인딩된 Scene은 `TurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 D 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
+Core 지역이 바인딩된 Scene은 `TurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 황재동 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
 
 `TurretInstanceRegistry`는 static 클래스다. 별도 씬 인스턴스를 만들지 않는다.
 
