@@ -92,4 +92,3 @@ MonoBehaviour:
   attackRange: 0.4
   attackCooldown: 1
   attackDamage: 5
-  sortingOrigin: {fileID: 0}
