@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 
 namespace TeamHJD.Game.Bootstrap.SceneComposition
@@ -14,7 +14,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     [DisallowMultipleComponent]
     public sealed class RegionSceneBinding : MonoBehaviour
     {
-        [SerializeField] private TurretController _controller;
+        [SerializeField] private FieldTurretController _controller;
         [SerializeField] private Transform _controlUnit;
         [SerializeField] private RegionPolicyMode _initialMode = RegionPolicyMode.Static;
         private MatchSession _session;
@@ -37,7 +37,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_session != null) throw new InvalidOperationException("Region scene is already bound.");
             if (session == null) throw new ArgumentNullException(nameof(session));
             if (_controller == null)
-                throw new InvalidOperationException("Assign TurretController to RegionSceneBinding.");
+                throw new InvalidOperationException("Assign FieldTurretController to RegionSceneBinding.");
             RegionGridDefinition definition = CreateDefinition(_initialMode, out int zoneCount);
             _source = session.InitializeRegions(definition, _initialMode);
             _session = session;
@@ -53,7 +53,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     else RefreshDynamic(true);
                 }
                 _controller.SetRegionAccessPolicy(new RegionAccessPolicy(_source));
-                TurretInstanceRegistry.SnapshotChanged += OnTurretChanged;
+                FieldTurretInstanceRegistry.SnapshotChanged += OnTurretChanged;
                 _dirty = true;
             }
             catch { UnbindMatch(); throw; }
@@ -63,7 +63,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_session == null) return;
             _session.Disposing -= UnbindMatch;
-            TurretInstanceRegistry.SnapshotChanged -= OnTurretChanged;
+            FieldTurretInstanceRegistry.SnapshotChanged -= OnTurretChanged;
             if (_controller != null) _controller.SetRegionAccessPolicy(null);
             _session = null;
             _source = null;
@@ -80,7 +80,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             IReadOnlyList<int> cells;
             if (mode == RegionPolicyMode.Dynamic)
             {
-                evaluation = _dynamicPolicy.Evaluate(definition, TurretRegionGridAdapter.CaptureTurrets(_controller));
+                evaluation = _dynamicPolicy.Evaluate(definition, FieldTurretRegionGridAdapter.CaptureTurrets(_controller));
                 cells = evaluation.CellIndices;
             }
             else if (mode == RegionPolicyMode.Static) cells = StaticCells(definition, 1);
@@ -110,11 +110,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             zoneCount = 0;
             if (mode == RegionPolicyMode.Dynamic)
-                return TurretRegionGridAdapter.CreateDefinition(_controller.CreateUnlockGridConfiguration());
+                return FieldTurretRegionGridAdapter.CreateDefinition(_controller.CreateUnlockGridConfiguration());
             if (_controlUnit == null) throw new InvalidOperationException("Static regions require a CU Transform.");
-            TurretUnlockZones zones = _controller.CreateUnlockZoneDefinition(_controlUnit.position);
+            FieldTurretUnlockZones zones = _controller.CreateUnlockZoneDefinition(_controlUnit.position);
             zoneCount = zones.ZoneCount;
-            return TurretRegionGridAdapter.CreateDefinition(zones);
+            return FieldTurretRegionGridAdapter.CreateDefinition(zones);
         }
 
         private static IReadOnlyList<int> StaticCells(RegionGridDefinition definition, int zone)
@@ -138,7 +138,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void RefreshDynamic(bool force)
         {
-            IReadOnlyList<RegionTurretInput> inputs = TurretRegionGridAdapter.CaptureTurrets(_controller);
+            IReadOnlyList<RegionTurretInput> inputs = FieldTurretRegionGridAdapter.CaptureTurrets(_controller);
             _dirty = false;
             if (!force && SameInputs(inputs, _lastInputs)) return;
             RegionGridSnapshot basis = _source.Snapshot;

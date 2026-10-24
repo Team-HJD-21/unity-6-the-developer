@@ -624,7 +624,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       propertyPath: m_Name
-      value: MissileTurret LV1
+      value: FieldMissileTurret LV1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -493409,7 +493409,7 @@ GameObject:
   - component: {fileID: 393497336}
   - component: {fileID: 393497335}
   m_Layer: 0
-  m_Name: TurretController
+  m_Name: FieldTurretController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -493426,7 +493426,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d63b0634f6034d23a6e314a837dd21ec, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TeamHJD.Game.Turrets::TeamHJD.Game.Turrets.TurretController
+  m_EditorClassIdentifier: TeamHJD.Game.FieldTurrets::TeamHJD.Game.FieldTurrets.FieldTurretController
   maximumPower: 100
   unlockGridOrigin: {x: 0, y: 0}
   unlockGridOriginZ: 0
@@ -493732,7 +493732,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV1 (1)
+      value: FieldCanonTurret LV1 (1)
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -937748,7 +937748,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       propertyPath: m_Name
-      value: MissileTurret LV1 (1)
+      value: FieldMissileTurret LV1 (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -937861,7 +937861,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV1 (2)
+      value: FieldCanonTurret LV1 (2)
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -938560,7 +938560,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 19682719f8c24b9c9f09d3128dcbf986, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TeamHJD.Game.Turrets::TeamHJD.Game.Turrets.TurretBattlefieldInputSource
+  m_EditorClassIdentifier: TeamHJD.Game.FieldTurrets::TeamHJD.Game.FieldTurrets.FieldTurretBattlefieldInputSource
 --- !u!4 &1493643882
 Transform:
   m_ObjectHideFlags: 0
@@ -938739,7 +938739,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV1 (4)
+      value: FieldCanonTurret LV1 (4)
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -939348,7 +939348,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV1 (3)
+      value: FieldCanonTurret LV1 (3)
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -961154,7 +961154,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV1
+      value: FieldCanonTurret LV1
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
@@ -961504,7 +961504,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       propertyPath: m_Name
-      value: MissileTurret LV1 (2)
+      value: FieldMissileTurret LV1 (2)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

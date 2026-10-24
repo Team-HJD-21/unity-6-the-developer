@@ -6,7 +6,7 @@ using System.Reflection;
 using NUnit.Framework;
 using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Contracts;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
@@ -39,9 +39,9 @@ public sealed class ProjectAssetMigrationTests
     [Test]
     public void CatalogTurrets_UseCurrentPrefabGuids()
     {
-        string[] current = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/Turrets" });
+        string[] current = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/FieldTurrets" });
         var guids = new System.Collections.Generic.HashSet<string>(current);
-        var upgrades = AssetDatabase.LoadAssetAtPath<TurretLevelUpgradeCatalog>("Assets/Data/Turrets/TurretLevelUpgrade_Stage1.asset");
+        var upgrades = AssetDatabase.LoadAssetAtPath<FieldTurretLevelUpgradeCatalog>("Assets/Data/FieldTurrets/FieldTurretLevelUpgrade_Stage1.asset");
         Assert.That(upgrades, Is.Not.Null);
         string[] dependencies = AssetDatabase.GetDependencies(AssetDatabase.GetAssetPath(upgrades), true);
         Assert.That(dependencies.Where(path => path.EndsWith(".prefab")).All(path => guids.Contains(AssetDatabase.AssetPathToGUID(path))), Is.True);
@@ -110,7 +110,7 @@ public sealed class ProjectAssetMigrationTests
         Assert.That(Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).Any(component =>
             new[] { "Global", "GeneralManager", "GameManager", "AudioManager", "DataManager" }.Contains(component.GetType().Name)), Is.False);
         Assert.That(Object.FindAnyObjectByType<PlayerInfo>().curHp, Is.GreaterThan(0));
-        Assert.That(Object.FindObjectsByType<TurretBase>(FindObjectsSortMode.None), Is.Not.Empty);
+        Assert.That(Object.FindObjectsByType<FieldTurretBase>(FindObjectsSortMode.None), Is.Not.Empty);
         var firstMatch = root.CurrentMatchId;
         var snapshot = root.CurrentBattlefieldSnapshot;
         Assert.That(snapshot.Triangles, Is.Not.Empty);

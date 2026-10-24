@@ -10,7 +10,7 @@
     "TeamHJD.Game.Infrastructure",
     "TeamHJD.Game.Infrastructure.Fakes",
     "TeamHJD.Game.Presentation",
-    "TeamHJD.Game.Turrets"
+    "TeamHJD.Game.FieldTurrets"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

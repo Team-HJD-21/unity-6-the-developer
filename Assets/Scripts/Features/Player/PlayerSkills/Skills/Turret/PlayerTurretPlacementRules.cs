@@ -44,7 +44,7 @@ public static class PlayerTurretPlacementRules
                 continue;
 
             // 사거리 트리거는 제외하지만 실제 포탑 본체는 충돌 행렬과 관계없이 설치를 막습니다.
-            if (hit.GetComponentInParent<TeamHJD.Game.Turrets.TurretBase>() != null)
+            if (hit.GetComponentInParent<TeamHJD.Game.FieldTurrets.FieldTurretBase>() != null)
                 return PlayerTurretPlacementResult.OverlapsTurret;
             int layer = hit.gameObject.layer;
             if (layer == LayerMask.NameToLayer("Bullet") || layer == LayerMask.NameToLayer("EmenyBullet") ||

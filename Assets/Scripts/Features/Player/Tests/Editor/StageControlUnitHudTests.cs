@@ -4,7 +4,7 @@ using System.Collections;
 using NUnit.Framework;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -29,7 +29,7 @@ public sealed class StageControlUnitHudTests
         yield return new EnterPlayMode();
         var view = Object.FindAnyObjectByType<StageControlUnitView>();
         var binding = Object.FindAnyObjectByType<RegionSceneBinding>();
-        var controller = Object.FindAnyObjectByType<TurretController>();
+        var controller = Object.FindAnyObjectByType<FieldTurretController>();
         var cu = Object.FindAnyObjectByType<ControlUnitHealth>();
         var player = Object.FindAnyObjectByType<PlayerInfo>();
         Assert.That(view, Is.Not.Null);

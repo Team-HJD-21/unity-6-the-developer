@@ -1,0 +1,13 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: FieldMissileTurretLV1(Blue)
+  m_Controller: {fileID: 9100000, guid: 60966f7cea2cb49699d026219bd5d72a, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 006fd8b375d06448e9bb2acde3b68bc2, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 7e2a33ac2e663450bb2fd62bbcc98f54, type: 2}

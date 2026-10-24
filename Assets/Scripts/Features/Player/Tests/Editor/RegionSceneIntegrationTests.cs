@@ -5,8 +5,8 @@ using System.Linq;
 using NUnit.Framework;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
-using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -42,13 +42,13 @@ public sealed class RegionSceneIntegrationTests
         Assert.That(binding.Source.Snapshot.Mode, Is.EqualTo(RegionPolicyMode.Static));
         Assert.That(binding.ResetPolicy(RegionPolicyMode.Dynamic, true), Is.True);
 
-        var controller = Object.FindAnyObjectByType<TurretController>();
-        var turrets = Object.FindObjectsByType<TurretBase>(FindObjectsSortMode.None)
+        var controller = Object.FindAnyObjectByType<FieldTurretController>();
+        var turrets = Object.FindObjectsByType<FieldTurretBase>(FindObjectsSortMode.None)
             .Where(turret => turret.isActiveAndEnabled && !turret.IsDestroyed)
             .OrderBy(turret => turret.EffectivePower).ToArray();
         Assert.That(turrets.All(turret => !turret.IsLocked), Is.True);
         Assert.That(turrets.All(turret => !turret.IsActivated), Is.True);
-        TurretBase[] selected = null;
+        FieldTurretBase[] selected = null;
         for (int a = 0; a < turrets.Length && selected == null; a++)
             for (int b = a + 1; b < turrets.Length && selected == null; b++)
                 for (int c = b + 1; c < turrets.Length && selected == null; c++)
@@ -60,14 +60,14 @@ public sealed class RegionSceneIntegrationTests
                         selected = new[] { turrets[a], turrets[b], turrets[c] };
                 }
         Assert.That(selected, Is.Not.Null, "Actual authored power must permit three non-collinear turrets.");
-        foreach (TurretBase turret in selected)
-            Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.Activated));
+        foreach (FieldTurretBase turret in selected)
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(FieldTurretActivationResult.Activated));
 
         float deadline = Time.realtimeSinceStartup + 3;
         while (binding.Source.Snapshot.CapturedCellCount == 0 && Time.realtimeSinceStartup < deadline) yield return null;
         Assert.That(binding.Source.Snapshot.CapturedCellCount, Is.GreaterThan(0));
         Assert.That(binding.LastEvaluation.Geometry.Triangles.Count, Is.EqualTo(1));
-        Assert.That(selected[0].RequestActivation(false), Is.EqualTo(TurretActivationResult.Deactivated));
+        Assert.That(selected[0].RequestActivation(false), Is.EqualTo(FieldTurretActivationResult.Deactivated));
         deadline = Time.realtimeSinceStartup + 3;
         while (binding.Source.Snapshot.CapturedCellCount != 0 && Time.realtimeSinceStartup < deadline) yield return null;
         Assert.That(binding.Source.Snapshot.CapturedCellCount, Is.Zero);
