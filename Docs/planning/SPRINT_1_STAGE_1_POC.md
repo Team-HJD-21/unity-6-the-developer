@@ -4,9 +4,9 @@
 실행 기간: 2026-09-19 ~ 2026-10-02
 팀 플레이 테스트: 2026-10-02
 피드백 회의: 2026-10-03 진행 · PoC 결과 판정 보류
-상태: 실행 기준 / A 기술 PoC 인수 완료 · 팀 공통 Build 기록 별도
+상태: 실행 기준 / 양현석 기술 PoC 인수 완료 · 팀 공통 Build 기록 별도
 
-2026-10-08: PL이 A의 런타임 공간 분석·스폰 통합과 도구 동작을 직접 확인하고 기술 PoC를 인수했다. [최신 마감 기록](2026-10-08-poc-closeout-and-pr-handoff.md)을 따른다. 아래의 팀 공동 플레이 가설·공통 Build 기준은 A 구현의 인수와 별도로 보존한다. 미정 승리 조건을 이번 구현의 완료 조건으로 추가하지 않는다.
+2026-10-08: PL이 양현석의 런타임 공간 분석·스폰 통합과 도구 동작을 직접 확인하고 기술 PoC를 인수했다. [최신 마감 기록](2026-10-08-poc-closeout-and-pr-handoff.md)을 따른다. 아래의 팀 공동 플레이 가설·공통 Build 기준은 양현석 구현의 인수와 별도로 보존한다. 미정 승리 조건을 이번 구현의 완료 조건으로 추가하지 않는다.
 
 2026-10-10 회의에서는 팀 상태를 M1과 M2 사이로 설명했고, M1 완료나 M2 일정은 확정하지 않았다. 재미 검증은 남아 있다. [정기회의 검토 기록](2026-10-10-regular-meeting.md)에는 터렛 수리·잠금 방향과 기술·일정 미정을 구분해 기록한다.
 
@@ -21,11 +21,11 @@
 | 영역 | 2주차에 확인할 작업 | 담당 / Issue |
 | --- | --- | --- |
 | 공통 통합 | 10월 2일 같은 Build에서 전력 배분, 터렛·Enemy 전투, 거점·전선 변화를 플레이하고 관찰 결과를 기록한다. Issue에 적힌 임시 승패 조건은 최근 결정 문서에서 확정되지 않았으므로 확정 기준으로 취급하지 않는다. | 전체 팀 · [#420](https://github.com/Team-HJD-21/unity-6-the-developer/issues/420) |
-| Core·전선·도구 | Turret snapshot을 받아 점유 topology와 경계 데이터를 만들고 Scene View에서 관찰한다. 레거시 경로 제거는 Owner가 검토·승인한 항목에 한해 진행한다. | A · [#443](https://github.com/Team-HJD-21/unity-6-the-developer/issues/443), [#446](https://github.com/Team-HJD-21/unity-6-the-developer/issues/446), [#441](https://github.com/Team-HJD-21/unity-6-the-developer/issues/441) |
-| Player | 새 스킬 입력·쿨다운·기본 피드백을 구현하고 터렛 보조 수단으로 유효한지 확인한다. P2 품질 개선 Issue이므로 공통 PoC 통합 완료 조건과는 구분한다. | B · [#452](https://github.com/Team-HJD-21/unity-6-the-developer/issues/452) |
-| Turret·전력 | AI·전선용 읽기 전용 snapshot, 해금·활성화 제한, 업그레이드와 Enemy 연동을 구현·검증하고 통합 담당자에게 결과를 전달한다. 파괴 전력 반환 여부와 비율은 미정이며 API 입력값만 열어둔다. | D · [#422](https://github.com/Team-HJD-21/unity-6-the-developer/issues/422), [#425](https://github.com/Team-HJD-21/unity-6-the-developer/issues/425), [#426](https://github.com/Team-HJD-21/unity-6-the-developer/issues/426), [#427](https://github.com/Team-HJD-21/unity-6-the-developer/issues/427), [#430](https://github.com/Team-HJD-21/unity-6-the-developer/issues/430), [#432](https://github.com/Team-HJD-21/unity-6-the-developer/issues/432) |
-| Enemy | Player·Turret·Stage 연동 및 네트워크 동작을 검증하고, 선행 오류를 정리한 뒤 Spawner 동작을 확인한다. 최종 Wave 구성이나 난이도 조정은 범위에 포함하지 않는다. | E · [#394](https://github.com/Team-HJD-21/unity-6-the-developer/issues/394), [#395](https://github.com/Team-HJD-21/unity-6-the-developer/issues/395), [#403](https://github.com/Team-HJD-21/unity-6-the-developer/issues/403), [#437](https://github.com/Team-HJD-21/unity-6-the-developer/issues/437) |
-| World·Map | 현재 열린 Issue 중 C 담당 Stage 1 PoC 마일스톤 작업은 확인되지 않았다. 지도 시연 #450과 Stage 1 이식 #451은 M1로 등록되어 있으므로 이 표의 Stage 1 목표에 포함하지 않는다. Sprint 1에 포함할지 여부는 별도 분류가 필요하다. | C · [#450](https://github.com/Team-HJD-21/unity-6-the-developer/issues/450), [#451](https://github.com/Team-HJD-21/unity-6-the-developer/issues/451) |
+| Core·전선·도구 | Turret snapshot을 받아 점유 topology와 경계 데이터를 만들고 Scene View에서 관찰한다. 레거시 경로 제거는 Owner가 검토·승인한 항목에 한해 진행한다. | 양현석 · [#443](https://github.com/Team-HJD-21/unity-6-the-developer/issues/443), [#446](https://github.com/Team-HJD-21/unity-6-the-developer/issues/446), [#441](https://github.com/Team-HJD-21/unity-6-the-developer/issues/441) |
+| Player | 새 스킬 입력·쿨다운·기본 피드백을 구현하고 터렛 보조 수단으로 유효한지 확인한다. P2 품질 개선 Issue이므로 공통 PoC 통합 완료 조건과는 구분한다. | 이영빈 · [#452](https://github.com/Team-HJD-21/unity-6-the-developer/issues/452) |
+| Turret·전력 | AI·전선용 읽기 전용 snapshot, 해금·활성화 제한, 업그레이드와 Enemy 연동을 구현·검증하고 통합 담당자에게 결과를 전달한다. 파괴 전력 반환 여부와 비율은 미정이며 API 입력값만 열어둔다. | 황재동 · [#422](https://github.com/Team-HJD-21/unity-6-the-developer/issues/422), [#425](https://github.com/Team-HJD-21/unity-6-the-developer/issues/425), [#426](https://github.com/Team-HJD-21/unity-6-the-developer/issues/426), [#427](https://github.com/Team-HJD-21/unity-6-the-developer/issues/427), [#430](https://github.com/Team-HJD-21/unity-6-the-developer/issues/430), [#432](https://github.com/Team-HJD-21/unity-6-the-developer/issues/432) |
+| Enemy | Player·Turret·Stage 연동 및 네트워크 동작을 검증하고, 선행 오류를 정리한 뒤 Spawner 동작을 확인한다. 최종 Wave 구성이나 난이도 조정은 범위에 포함하지 않는다. | 조수빈 · [#394](https://github.com/Team-HJD-21/unity-6-the-developer/issues/394), [#395](https://github.com/Team-HJD-21/unity-6-the-developer/issues/395), [#403](https://github.com/Team-HJD-21/unity-6-the-developer/issues/403), [#437](https://github.com/Team-HJD-21/unity-6-the-developer/issues/437) |
+| World·Map | 현재 열린 Issue 중 김진태 담당 Stage 1 PoC 마일스톤 작업은 확인되지 않았다. 지도 시연 #450과 Stage 1 이식 #451은 M1로 등록되어 있으므로 이 표의 Stage 1 목표에 포함하지 않는다. Sprint 1에 포함할지 여부는 별도 분류가 필요하다. | 김진태 · [#450](https://github.com/Team-HJD-21/unity-6-the-developer/issues/450), [#451](https://github.com/Team-HJD-21/unity-6-the-developer/issues/451) |
 
 이 주차 목표는 **Sprint 1의 2주차**를 뜻하며 `Sprint 2`를 새로 정의하지 않는다. 주차는 마일스톤과 Issue 분류를 읽기 쉽게 묶은 것이고, Issue의 상태·담당자·완료 조건을 대신하지 않는다.
 ## 1. 검증할 핵심 가설
@@ -64,27 +64,27 @@ Spaceship에서 Stage 1으로 이동
 
 | 담당 | 핵심 역할 | 구체 결과물 |
 | --- | --- | --- |
-| A — 양현석 | PoC 범위·계약·통합 | Sprint 1 Issue, 인터페이스, 전제 1·2 관찰 기준과 Player 지원 행동, 통합 Build |
-| B — 이영빈 | Network-aware 조사와 Combat 지원 | Unity Netcode/RPC/동기화/권한 최소 가이드, 향후 전환 위험 목록 |
-| C — 김진태 | World·Mission·전선 확장 | 거점 확장 Graybox, 거점 확보·상실에 따른 전장 변화, D/E 데이터 연동 규격, Spaceship 레퍼런스 |
-| D — 황재동 | Turret System | 터렛 인스턴스 관리, 기존 코드 정리, 위치·활성·체력·화력·거리·위협도 제공, 파괴 시 전력 손실률 API 입력값 공개 |
-| E — 조수빈 | Enemy AI | 기존 점수 기반 몬스터 타깃 선택을 우선 시험한다. Region·분대 계층과 세부 점수 조정은 후속 설계·검증 대상으로 둔다 |
+| 양현석 | PoC 범위·계약·통합 | Sprint 1 Issue, 인터페이스, 전제 1·2 관찰 기준과 Player 지원 행동, 통합 Build |
+| 이영빈 | Network-aware 조사와 Combat 지원 | Unity Netcode/RPC/동기화/권한 최소 가이드, 향후 전환 위험 목록 |
+| 김진태 | World·Mission·전선 확장 | 거점 확장 Graybox, 거점 확보·상실에 따른 전장 변화, 황재동/조수빈 데이터 연동 규격, Spaceship 레퍼런스 |
+| 황재동 | Turret System | 터렛 인스턴스 관리, 기존 코드 정리, 위치·활성·체력·화력·거리·위협도 제공, 파괴 시 전력 손실률 API 입력값 공개 |
+| 조수빈 | Enemy AI | 기존 점수 기반 몬스터 타깃 선택을 우선 시험한다. Region·분대 계층과 세부 점수 조정은 후속 설계·검증 대상으로 둔다 |
 
 ## 5. 통합 순서
 
 ```text
-D · 터렛 상태·평가 데이터
+황재동 · 터렛 상태·평가 데이터
         ↓
-E · 목표 선택 AI와 공격 결과
+조수빈 · 목표 선택 AI와 공격 결과
         ↓
-C · 거점 확보·상실과 전선 확장
+김진태 · 거점 확보·상실과 전선 확장
         ↓
-A · 전제 1·2 관찰·Player 지원·통합 Build
+양현석 · 전제 1·2 관찰·Player 지원·통합 Build
         ↓
 전체 팀 · 2026-10-02 Playtest
 ```
 
-B의 Network-aware 조사는 위 통합을 막지 않는 병렬 작업이다. 실제 실시간 협동 구현은 이번 범위에 포함하지 않는다.
+이영빈의 Network-aware 조사는 위 통합을 막지 않는 병렬 작업이다. 실제 실시간 협동 구현은 이번 범위에 포함하지 않는다.
 
 ## 6. 의도적으로 제외
 

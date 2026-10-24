@@ -6,7 +6,7 @@
 
 ## 결론
 
-A가 독립적으로 맡는 B0~B3를 구현했다. 이번 작업은 Core 소유권·공간 진단의 보강이며 **전체 PoC/전투/팀 통합 완료 판정은 아니다.** 팀원이 수정 중인 Scene YAML과 터렛 기능, E의 Encounter lifecycle/판단 기록은 변경하지 않았다. 원격 Issue 변경·push·PR 발행도 이번 배치에서는 하지 않았다.
+양현석이 독립적으로 맡는 B0~B3를 구현했다. 이번 작업은 Core 소유권·공간 진단의 보강이며 **전체 PoC/전투/팀 통합 완료 판정은 아니다.** 팀원이 수정 중인 Scene YAML과 터렛 기능, 조수빈의 Encounter lifecycle/판단 기록은 변경하지 않았다. 원격 Issue 변경·push·PR 발행도 이번 배치에서는 하지 않았다.
 
 ## 배치와 커밋 경계
 
@@ -16,8 +16,8 @@ A가 독립적으로 맡는 B0~B3를 구현했다. 이번 작업은 Core 소유�
 | B1 | 완료 · `b4244599` + `413b20f8` | `CurrentMatchId / TryEndMatch`, Scene 소유권 검사, 명시적 소비자 참조·낡은 provider 무효화, App host 경유 위치 통지. 소유권/통지 테스트 2개 |
 | B2 | 완료 · `f5e2d4b6` | 진단 Session·표시 설정·Scene drawer·Overlay 분리. Window 종료가 source를 해제하지 않음 |
 | B3 | 완료 · `77b131c0` | 탭/셀 상세·OOB ID·선택 강조·기하 법선·범례·프리셋·캡처 메타데이터·64개 이력. Editor 테스트 3개 |
-| B4 | E와 계약/구현 필요 | Match-scoped Encounter, Executor/authority 주입, PlanId/dedup/result/candidate 진단. B는 Player 실제 타깃/체력 연동, C/E는 지점 규칙 |
-| B5 | B4 후 A/E 연결 | 진짜 후보 이유·계획/실행·분대 타깃 진단 및 1차 임시 런처 교체. 현재 UI에 값을 추측해 넣지 않음 |
+| B4 | 조수빈과 계약/구현 필요 | Match-scoped Encounter, Executor/authority 주입, PlanId/dedup/result/candidate 진단. 이영빈은 Player 실제 타깃/체력 연동, 김진태와 조수빈은 지점 규칙 |
+| B5 | B4 후 양현석/조수빈 연결 | 진짜 후보 이유·계획/실행·분대 타깃 진단 및 1차 임시 런처 교체. 현재 UI에 값을 추측해 넣지 않음 |
 | Gate T | 터렛 업로드 뒤 검증 | 같은 Scene/Build에서 비공선 3개 터렛, topology·과열 유지/파괴 제거, Spawn 선택 및 실제 상호 전투 |
 
 각 커밋은 독립된 변경 경계이지만 순서대로 적용한다. B1 후속 컴파일 이름 충돌/해제 방어 변경은 B1 PR에 포함하고, B3의 Editor 테스트 asmdef 참조는 Editor PR에 포함한다. PR을 나눌 때 파일 이동만으로 런타임 계약을 빼먹지 않는다.
@@ -40,7 +40,7 @@ flowchart LR
 
 - `TryEndMatch(expectedId)`가 false면 이전 소유자의 종료 요청이며 새 Match는 유지된다. Scene의 Update와 터렛 이벤트도 같은 ID를 검사한다.
 - Scene 소비자 참조는 `_encounterConsumerBehaviour`로 연결한다. 현재 저장 Scene의 미지정 조회는 호환 경로로만 남겼으며 복수 소비자는 오류다. Scene 직렬화 연결은 업로드 뒤 담당자가 한다.
-- Feature의 Unbind 예외를 기록하되 Core/Player 정리를 중단하지 않는다. **E의 Executor 재구성·Enemy 정리·요청 중복 방지를 이 코드가 대신 보장하지 않는다.**
+- Feature의 Unbind 예외를 기록하되 Core/Player 정리를 중단하지 않는다. **조수빈의 Executor 재구성·Enemy 정리·요청 중복 방지를 이 코드가 대신 보장하지 않는다.**
 - Runtime `UnityEditor` 의존성을 추가하지 않았다. Editor의 static session은 편집 도구 상태이지 게임 서비스 locator가 아니다.
 - PREVIEW는 실제 Match가 아니다. LIVE는 AppRoot의 현재 snapshot이며 종료된 snapshot은 즉시 지운다. STALE 캐시 대신 UNAVAILABLE 표시를 사용한다.
 
@@ -51,7 +51,7 @@ flowchart LR
 3. Battlefield 탭 → 공용 에셋/현재 Match override와 셀 상세. Pick cell을 켜고 XY에서 클릭한다. 일반 Scene 편집으로 돌아갈 때 끈다.
 4. Topology 프리셋은 외곽 법선을 보여준다. 화살표는 기하 안→밖이고 우세 지표가 아니다. Grid 프리셋은 점유 관찰용이다.
 5. Capture → Commit/Build 라벨을 직접 입력 → 메타데이터 복사 → Scene/Game View를 함께 캡처한다. Capture는 게임 변경 명령과 과밀 라벨을 숨기지만 게임을 멈추거나 snapshot을 고정하지 않는다.
-6. Encounter 탭의 수동 요청은 기존 E 경계를 그대로 사용한다. 후보 이유·PlanId·권한이 구조화되어 들어오기 전에는 해당 값을 N/A로 표시한다.
+6. Encounter 탭의 수동 요청은 기존 조수빈 경계를 그대로 사용한다. 후보 이유·PlanId·권한이 구조화되어 들어오기 전에는 해당 값을 N/A로 표시한다.
 
 Grid 각 축 약 1,024개 선, 점유 면 2,048개, 라벨 128개 상한은 **렌더링 제한**이다. 선택 셀/데이터는 전체 Core snapshot을 조회한다. Preview는 정적 터렛만 집계하며 Player/Enemy는 LIVE에서만 의미 있다. 이력은 최대 64개, Scene/Play 전환 때 비운다. 기록은 영구 게임 로그가 아니다.
 
@@ -73,9 +73,9 @@ Editor 검사: 창 생성/파기 후 source 보존, 잘못된 셀 ID 거부, Mat
 
 ## 다음 담당별 준비
 
-- A/E: 첫 요청·반복 cadence·권한·PlanId/revision 불일치 처리와 read-only 진단 DTO 합의. Core Domain에 Enemy 정책 필드를 추가하지 않는다.
-- B/E: Player의 실제 체력/생존→타깃 adapter, Enemy 타깃 없을 때 재검색 주기와 피해 계약 검증.
-- D/A/E: 터렛 업로드 → Scene 참조 한 번 병합 → Gate T 캡처.
-- C/E: AreaId/통로/해금 규칙과 실제 SpawnRadius 위치의 bounds/점유 재검증.
+- 양현석/조수빈: 첫 요청·반복 cadence·권한·PlanId/revision 불일치 처리와 read-only 진단 DTO 합의. Core Domain에 Enemy 정책 필드를 추가하지 않는다.
+- 이영빈/조수빈: Player의 실제 체력/생존→타깃 adapter, Enemy 타깃 없을 때 재검색 주기와 피해 계약 검증.
+- 황재동/양현석/조수빈: 터렛 업로드 → Scene 참조 한 번 병합 → Gate T 캡처.
+- 김진태·조수빈: AreaId/통로/해금 규칙과 실제 SpawnRadius 위치의 bounds/점유 재검증.
 
 GitHub #443/#458/#459/#420의 미충족 검증을 닫지 않았다. 기존 #460 완료는 진단 기반의 완료 의미이며 이번 시각화 보강의 완료 근거로 소급 변경하지 않는다.

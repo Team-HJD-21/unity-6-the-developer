@@ -52,10 +52,10 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[A · Core 계약/통합] --> B[B · Player/UX Adapter]
-    A --> C[C · 김진태 · World/Mission Data]
-    A --> D[D · 황재동 · Defense/Balance Data]
-    A --> E[E · Enemy/AI Adapter]
+    A[양현석 · Core 계약/통합] --> B[이영빈 · Player/UX Adapter]
+    A --> C[김진태 · World/Mission Data]
+    A --> D[황재동 · Defense/Balance Data]
+    A --> E[조수빈 · Enemy/AI Adapter]
     C --> E
     D --> E
     B --> BUILD[통합 Build]
@@ -64,12 +64,12 @@ flowchart TD
     E --> BUILD
     A --> BUILD
     BUILD --> TEST[전체 팀 Playtest]
-    TEST --> GATE[A + Feature Owners Gate 판정]
+    TEST --> GATE[양현석과 Feature Owner들의 Gate 판정]
 ```
 
-- A는 공용 계약과 통합 지점을 먼저 제공하되 Feature를 대신 구현하지 않는다.
-- B/C/D/E는 계약이 완벽해질 때까지 기다리지 않고 Fake/Interface로 최소 Slice를 병렬 검증한다.
-- C와 D는 각각 김진태, 황재동이 담당하며, 자신의 Slice를 Fake/Interface로 병렬 검증한다.
+- 양현석은 공용 계약과 통합 지점을 먼저 제공하되 Feature를 대신 구현하지 않는다.
+- 이영빈·김진태·황재동·조수빈은 계약이 완벽해질 때까지 기다리지 않고 Fake/Interface로 최소 Slice를 병렬 검증한다.
+- 김진태와 황재동은 각각 김진태, 황재동이 담당하며, 자신의 Slice를 Fake/Interface로 병렬 검증한다.
 - Feature끼리 직접 참조를 늘리지 않고 Definition, Command, Event, Adapter로 연결한다.
 
 ## 4. Sprint Planning
@@ -135,14 +135,14 @@ Ready
 
 ### Milestone 종료
 
-- A가 Exit Criteria 증거를 모은다.
+- 양현석이 Exit Criteria 증거를 모은다.
 - 각 Feature Owner가 자신의 영역을 통과/미통과로 판정한다.
 - 미통과 항목은 수정, 범위 축소, P3 보류 중 하나로 결정한다.
 - 모든 P0가 통과하고 핵심 Playable 결과가 있어야 다음 Milestone으로 이동한다.
 
 ## 7. 단계별 역할 초점
 
-| Milestone | A | B | C | D | E |
+| Milestone | 양현석 | 이영빈 | 김진태 | 황재동 | 조수빈 |
 | --- | --- | --- | --- | --- | --- |
 | M0 | 범위·Architecture·CI | Player/HUD 분석 | World/Hub 설계 | Turret/Power 설계 | Enemy/Wave 분석 |
 | M1 | New Core·Profile·Match | Player Adapter·HUD | Definition·Test World | Defense Rule/Data | Enemy/Director 최소 Slice |
@@ -159,18 +159,21 @@ Priority별 상세 업무는 Core Design 문서를 사용한다.
 2. 현재 Milestone과 Priority를 판정한다.
 3. 추가 작업과 대신 제거·연기할 작업을 함께 적는다.
 4. Prototype/Test/Playtest 방법을 정한다.
-5. A가 채택·실험·보류·거절을 결정한다.
+5. 양현석이 채택·실험·보류·거절을 결정한다.
 6. 제품 범위면 Project Plan, 기술 Gate면 Core Design, 역할이면 Role Ownership을 갱신한다.
 7. 승인 후에만 Backlog Task를 만든다.
 
 ## 9. 지금 실행할 순서
 
 1. [SPRINT_1_STAGE_1_POC.md](SPRINT_1_STAGE_1_POC.md)의 업무를 GitHub Issue로 만들고 담당자·완료 조건·검증 방법을 기록한다.
-2. D가 터렛 인스턴스와 평가 데이터를 제공하고 E와 인터페이스를 합의한다.
-3. E가 기존 점수 기반 몬스터 타깃 선택을 PoC에서 먼저 시험하고 세부 점수 조정은 후순위로 둔다. 고정 경로안은 채택하지 않았다. 상위·분대·개체 구조는 설계 검토가 남았으며, 적용 범위는 별도 결정한다. ([10월 2일 AI 구조 검토](2026-10-02-ai-architecture-review.md))
-4. C가 전제 1의 동적 전선과 전제 2의 지역 해금을 관찰할 Graybox를 E/D 결과와 연결한다. 실험 순서·병행 범위는 별도 결정한다.
-5. B가 Netcode/RPC/권한 구조 조사 결과와 현재 PoC의 향후 네트워크 전환 위험을 공유한다.
-6. A가 Player 지원 행동과 전제 1·2의 재미 관찰 기준을 정해 한 Build로 통합한다. 사망은 디버그 부활 또는 무적으로 시험하고 승리 조건은 미정으로 둔다.
+2. 황재동이 터렛 인스턴스와 평가 데이터를 제공하고 조수빈과 인터페이스를 합의한다.
+3. 조수빈이 터렛 목표 배정에 최단거리와 주변 밀집도를 먼저 적용하고, 새 목표가 필요할 때까지 선택을 유지하는 방향을 시험한다. 플레이어 감지 범위 안의 추적과 이탈 뒤 터렛 행동 복귀도 먼저 확인한다. 복합 점수식은 결과가 부족할 때 확장하며 거리·밀집도 기준과 감지·복귀 세부 규칙은 미정이다. ([10월 23일 몬스터 회의](2026-10-23-monster-meeting.md))
+4. 김진태가 전제 1의 동적 전선과 전제 2의 지역 해금을 관찰할 Graybox를 조수빈·황재동 결과와 연결한다. 실험 순서·병행 범위는 별도 결정한다.
+5. 이영빈이 Netcode/RPC/권한 구조 조사 결과와 현재 PoC의 향후 네트워크 전환 위험을 공유한다.
+6. 양현석이 Player 지원 행동과 전제 1·2의 재미 관찰 기준을 정해 한 Build로 통합한다. 사망은 디버그 부활 또는 무적으로 시험하고 승리 조건은 미정으로 둔다.
 7. 2026-10-03 회의 시점에는 통합·플레이 테스트 결과가 확인되지 않았다. 주말에 통합을 마무리한 뒤 전선 형성·충돌·끼임을 우선 관찰하고, 재미·문제점·프로덕션 이식 여부를 실제 증거로 판정한다. ([10월 3일 PoC 후속 검토](2026-10-03-poc-followup.md))
 8. 10월 5일 논의에 따라 세 전선의 스폰 포인트·ID를 확인하고, 정확한 호출 계약을 코드에서 확인한 뒤 `Spawn`으로 생성부터 시험한다. 생성 성공은 아직 미보고이며, 네트워크 매니저가 필요할 수 있는 이동 검증과 구분한다. ([스폰 연동 검토](2026-10-05-monster-map-spawn-review.md))
 9. PoC 동안 최종 아트, 모든 Content, 실시간 협동과 장기 성장 확정은 시작하지 않는다. Spaceship 연구·결과 성장·다음 Mission은 PoC 완료 조건이 아니다.
+10. 양현석이 `InitialStageCompositionRoot`에서 `TurretController.ConfigureUnlockZones`를 호출하도록 연결한다. 기본 구역 수 4 사용 방향은 회의에서 확인했지만, 최신 main 정적 검색에서는 호출을 찾지 못했다. Unity 실행 검증은 별도다. ([10월 23일 몬스터 회의](2026-10-23-monster-meeting.md))
+11. 조수빈이 Enemy 밸런싱용 몬스터·스쿼드 표를 공유하고 양현석이 검토한다. 실제 업로드와 PR 리뷰 답변은 완료 확인 전까지 미완료로 둔다. ([10월 23일 몬스터 회의](2026-10-23-monster-meeting.md))
+12. 조수빈이 기존 PR 리뷰에 답하고 양현석에게 알린 뒤, 이동 속도 갱신과 물리적 밀림·넉백의 상호작용을 재현해 후속 수정 단위와 담당을 확정한다. `AddForce`/`Impulse`는 회의에서 제안된 방향이며 원인·수정·실행 검증은 미확인이다. ([10월 23일 몬스터 회의](2026-10-23-monster-meeting.md))

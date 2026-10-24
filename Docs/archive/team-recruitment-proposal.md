@@ -2,7 +2,7 @@
 
 > 상태: **모집 당시 참고 자료 / 현재 기준 아님** (2026-09-08)
 >
-> 현재 팀 인원, A~E 역할, Milestone과 일정은 이 문서가 아니라
+> 현재 팀 인원, 양현석~조수빈 역할, Milestone과 일정은 이 문서가 아니라
 > [TEAM_ROLE_OWNERSHIP.md](../team/TEAM_ROLE_OWNERSHIP.md)와 [milestones-and-core-design.md](../planning/milestones-and-core-design.md)를 따른다.
 
 > **호드 모드 타워 디펜스 게임 The Developer를 Steam 출시 가능한 온라인 협동 게임으로 재구축합니다.**

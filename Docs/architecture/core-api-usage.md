@@ -81,7 +81,7 @@ playerAdapter.Unbind();
 
 #442는 아직 미완료다. `LocalAuthority`는 Core 명령의 Match 상태·참가자만 확인하는 로컬 구현이지 NGO Server 또는 Steam 인증 구현이 아니다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
 
-`CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. RequestId는 요청과 생성 이벤트의 상관 ID이며 PlanId/재시도 중복 방지 토큰이 아니다. Turret 공간 입력의 instance 기반 ID도 저장·네트워크 ID가 아니다. Host/Client 공통 명령 전송·ID 매핑·상태 복제·소유권·중복 방지 규칙은 #442 및 E의 #459에서 합의할 미결 계약이다. 이 가이드는 네트워크 완성을 선언하지 않는다.
+`CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. RequestId는 요청과 생성 이벤트의 상관 ID이며 PlanId/재시도 중복 방지 토큰이 아니다. Turret 공간 입력의 instance 기반 ID도 저장·네트워크 ID가 아니다. Host/Client 공통 명령 전송·ID 매핑·상태 복제·소유권·중복 방지 규칙은 #442 및 조수빈의 #459에서 합의할 미결 계약이다. 이 가이드는 네트워크 완성을 선언하지 않는다.
 
 ## PoC 요청과 Editor 경계
 

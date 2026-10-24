@@ -13,7 +13,7 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 `StageControlUnitView`를 기존 HUD 프리팹 우측 하단에 추가했다. 정적/동적 정책과 점령 셀 수를 `FieldTurretController.Regions`에서 읽는다. Dynamic은 지역 잠금이 없고 활성화로 점령한다는 안내를 표시한다. 터렛 선택창에도 동적 점령 안내를 표시한다.
 
-살아 있는 Player가 CU와 interactionDistance(현재 10) 이내에 있고 조작 가능한 상태이면 자동 활성화 버튼을 사용할 수 있다. 버튼은 D의 `TryStartAutoActivation()`을 호출하며 진행 중/재실행 대기/전력·냉각 규칙을 새로 구현하지 않는다. 프리팹·실제 Scene Button.onClick 검사는 통과했다. 사람의 마우스 조작·해상도별 외형은 별도다.
+살아 있는 Player가 CU와 interactionDistance(현재 10) 이내에 있고 조작 가능한 상태이면 자동 활성화 버튼을 사용할 수 있다. 버튼은 황재동의 `TryStartAutoActivation()`을 호출하며 진행 중/재실행 대기/전력·냉각 규칙을 새로 구현하지 않는다. 프리팹·실제 Scene Button.onClick 검사는 통과했다. 사람의 마우스 조작·해상도별 외형은 별도다.
 
 현재 이 입력은 로컬 경로다. 원격 Client 전송과 하드코딩된 local-player를 실제 참가자/actor 주입으로 바꾸는 작업은 아직 남아 있다. [Core 연결 API](core-sprint-region-and-request-api.md)를 함께 확인한다.
 

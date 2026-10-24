@@ -140,7 +140,7 @@ Assignee: Defense Owner
 
 - `bug`, `feature`, `task` Label을 별도로 만들어 Issue Type과 중복하지 않는다.
 - `P0`, `high`, `urgent` 같은 Priority Label을 만들지 않는다.
-- 담당자 이름이나 A~E 역할을 Label로 만들지 않는다.
+- 담당자 이름이나 양현석~조수빈 역할을 Label로 만들지 않는다.
 - Sprint와 Milestone 이름을 Label로 중복 관리하지 않는다.
 - PR Merge 자체를 작업으로 분류하는 `type:merge`를 사용하지 않는다.
 - 관련 있어 보이는 Domain을 모두 붙이지 않는다.
