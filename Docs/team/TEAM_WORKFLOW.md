@@ -5,6 +5,14 @@
 
 역할 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md), Milestone별 Priority 업무는 [milestones-and-core-design.md](../planning/milestones-and-core-design.md)를 따른다.
 
+## 회의 운영 — 2026-10-24 수기 기준
+
+- 스프린트 중간 점검: 화요일 11시~11시 반.
+- 기획 보강 회의: 금요일 2시~4시, 약 2~4주 진행 방향.
+- 정기회의: 토요일 1시~3시 반.
+
+시각은 수기 원문 표기다. 오전·오후와 정확한 시작·종료일은 별도 확인하며 임의로 캘린더 일정을 생성하지 않는다. 새로운 Sprint 번호나 Milestone 마감일 변경으로 해석하지 않는다. [회의 검토 기록](../planning/2026-10-24-regular-meeting.md)
+
 ## 1. PL 운영 원칙
 
 양현석은 `Player-Coach` 형태의 PL로, 방향을 결정하면서 Core를 직접 구현한다.
