@@ -1,21 +1,21 @@
 # 명시적 터렛 생성·초기화
 
-`TurretInitializationData`는 새 게임 또는 향후 로드 경로에서 사용할 **해석된 생성 입력**이다. 조회용 `TurretSnapshot`과 다르며, 파일 저장 형식이 아니다. 저장 파일의 Definition/Upgrade ID를 실제 에셋으로 찾는 책임은 향후 로드 담당자에게 있다.
+`FieldTurretInitializationData`는 새 게임 또는 향후 로드 경로에서 사용할 **해석된 생성 입력**이다. 조회용 `FieldTurretSnapshot`과 다르며, 파일 저장 형식이 아니다. 저장 파일의 Definition/Upgrade ID를 실제 에셋으로 찾는 책임은 향후 로드 담당자에게 있다.
 
 ## 공통 생성 경로
 
 ```csharp
-var initial = TurretInitializationData.CreateDefault(
+var initial = FieldTurretInitializationData.CreateDefault(
     canonPrefab.Definition, isLocked: false, shouldActivate: true);
 
-TurretBase turret = TurretFactory.Create(
+FieldTurretBase turret = FieldTurretFactory.Create(
     canonPrefab, initial, controller, position, rotation, parent);
 ```
 
 나중에 로드된 값으로 입력을 만들 때도 같은 생성 경로를 사용한다.
 
 ```csharp
-var initial = new TurretInitializationData(
+var initial = new FieldTurretInitializationData(
     prefab.Definition, currentHealth: 37, isLocked: false,
     shouldActivate: true, damageBonus: 0,
     upgrade: resolvedUpgrade, upgradeLevel: 2);
@@ -32,7 +32,7 @@ var initial = new TurretInitializationData(
 
 ## 수명주기를 별도로 조립하는 소비자
 
-새 비활성 인스턴스에 `PrepareInitialization(data, source)`를 한 번 호출한 다음 활성화할 수 있다. 이미 초기화됐거나 활성 상태인 터렛에는 적용할 수 없다. 기본 경로는 `TurretFactory.Create`이며, 구체 터렛의 `Awake`는 반드시 `ConfigureSceneActivation()`을 호출해야 한다. 현재 Canon/Missile은 이 계약을 따른다. 기존 Laser는 이 경로를 지원하지 않는다.
+새 비활성 인스턴스에 `PrepareInitialization(data, source)`를 한 번 호출한 다음 활성화할 수 있다. 이미 초기화됐거나 활성 상태인 터렛에는 적용할 수 없다. 기본 경로는 `FieldTurretFactory.Create`이며, 구체 터렛의 `Awake`는 반드시 `ConfigureSceneActivation()`을 호출해야 한다. 현재 Canon/Missile은 이 계약을 따른다. 기존 Laser는 이 경로를 지원하지 않는다.
 
 ## 다른 복원 동작과의 구분
 
@@ -49,4 +49,4 @@ JSON/파일 저장, 슬롯·버전·마이그레이션, 영구 ID, Research/Prof
 
 ## 회귀 테스트
 
-`Assets/Scripts/Features/Turrets/Tests`에 초기 입력 검증, 부분 체력·업그레이드 재계산, 잠금·파괴 거부, 재초기화 방지, 승급 상태 이전, 초기 등록 순서와 자동 활성화 취소를 검사하는 Unity 테스트가 있다. 코루틴/Factory 테스트는 **PlayMode**에서 실행해야 한다.
+`Assets/Scripts/Features/FieldTurrets/Tests`에 초기 입력 검증, 부분 체력·업그레이드 재계산, 잠금·파괴 거부, 재초기화 방지, 승급 상태 이전, 초기 등록 순서와 자동 활성화 취소를 검사하는 Unity 테스트가 있다. 코루틴/Factory 테스트는 **PlayMode**에서 실행해야 한다.

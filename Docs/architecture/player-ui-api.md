@@ -11,7 +11,7 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 ## 10월 15일 CU·지역 표시 추가
 
-`StageControlUnitView`를 기존 HUD 프리팹 우측 하단에 추가했다. 정적/동적 정책과 점령 셀 수를 `TurretController.Regions`에서 읽는다. Dynamic은 지역 잠금이 없고 활성화로 점령한다는 안내를 표시한다. 터렛 선택창에도 동적 점령 안내를 표시한다.
+`StageControlUnitView`를 기존 HUD 프리팹 우측 하단에 추가했다. 정적/동적 정책과 점령 셀 수를 `FieldTurretController.Regions`에서 읽는다. Dynamic은 지역 잠금이 없고 활성화로 점령한다는 안내를 표시한다. 터렛 선택창에도 동적 점령 안내를 표시한다.
 
 살아 있는 Player가 CU와 interactionDistance(현재 10) 이내에 있고 조작 가능한 상태이면 자동 활성화 버튼을 사용할 수 있다. 버튼은 D의 `TryStartAutoActivation()`을 호출하며 진행 중/재실행 대기/전력·냉각 규칙을 새로 구현하지 않는다. 프리팹·실제 Scene Button.onClick 검사는 통과했다. 사람의 마우스 조작·해상도별 외형은 별도다.
 
@@ -110,7 +110,7 @@ Button의 Inspector OnClick에 요청 메서드를 중복 연결하지 않는다
   다중 플레이어에서는 로컬 actor를 명시적으로 주입하는 연동이 추가로 필요하다.
 - CU 체력은 `ControlUnitHealth.CurrentHealth/MaxHealth`와 `HealthChanged`를 사용한다.
   최초 연결은 Start 이후에 진행하여 다른 컴포넌트의 Awake 초기화를 기다린다.
-- 전력은 `TurretController.Budget`의 CurrentPower·MaximumPower·PendingRecovery를
+- 전력은 `FieldTurretController.Budget`의 CurrentPower·MaximumPower·PendingRecovery를
   읽는다. 전력 계산은 기존 API가 소유하며 UI는 예약이나 반환 수치를 직접 변경하지 않는다.
   PowerChanged 이벤트와 0.1초 표시 갱신으로 알림 없이 바뀌는 반환 대기 값도 반영한다.
 - 터렛 표시 갱신은 선택·상태·조작 권한 변경 또는 0.1초 표시 주기에 수행한다.

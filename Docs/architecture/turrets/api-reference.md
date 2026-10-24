@@ -1,31 +1,31 @@
 # API 사용법
 
-최종 갱신: 2026-10-23
+최종 갱신: 2026-10-24
 상태: 현재 Canon / Missile 공개 API. 명령용 호환 API는 컴포넌트 참조를 사용할 수 있다.
 
 이 문서의 최신 냉각·강화 제한 기준은 main `8d08001a`에 병합된 PR #525다.
 지속 수리 API는 현재 작업 브랜치의 추가 사항이며 플레이어 입력·실제 Stage 연결은 별도다.
 
-네임스페이스는 `TeamHJD.Game.Turrets`다. 결과 타입과 터렛 종류는 `TeamHJD.Game.Turrets.Contracts`에 있다. 소비자 asmdef에서 사용하는 어셈블리를 참조해야 한다.
+네임스페이스는 `TeamHJD.Game.FieldTurrets`다. 결과 타입과 터렛 종류는 `TeamHJD.Game.FieldTurrets.Contracts`에 있다. 소비자 asmdef에서 사용하는 어셈블리를 참조해야 한다.
 
 ## ID와 읽기 전용 조회
 
-Core 지역이 바인딩된 Scene은 `TurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 D 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
+Core 지역이 바인딩된 Scene은 `FieldTurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 D 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
 
-`TurretInstanceRegistry`는 static 클래스다. 별도 씬 인스턴스를 만들지 않는다.
+`FieldTurretInstanceRegistry`는 static 클래스다. 별도 씬 인스턴스를 만들지 않는다.
 
 | API | 용도 |
 | --- | --- |
 | `GetAllSnapshots()` | 등록된 전체 터렛 복사본 |
 | `GetActiveSnapshots()` | 활성 터렛 복사본 |
 | `GetOperationalSnapshots()` | 실제 작동 가능한 터렛 복사본 |
-| `TryGetSnapshot(int, out TurretSnapshot)` | ID 하나의 최신 값 |
+| `TryGetSnapshot(int, out FieldTurretSnapshot)` | ID 하나의 최신 값 |
 | `TryGetInstanceId(Transform, out int)` | 자식 Transform에서 등록된 부모 터렛 ID 조회 |
 | `SnapshotChanged` | 값 변경 또는 등록 해제 후 다시 조회할 ID 통지 |
 
 ```csharp
-if (TurretInstanceRegistry.TryGetInstanceId(hit.transform, out int turretId)
-    && TurretInstanceRegistry.TryGetSnapshot(turretId, out var snapshot))
+if (FieldTurretInstanceRegistry.TryGetInstanceId(hit.transform, out int turretId)
+    && FieldTurretInstanceRegistry.TryGetSnapshot(turretId, out var snapshot))
 {
     // snapshot.CurrentHealth와 snapshot.Position 등을 사용한다.
 }
@@ -37,7 +37,7 @@ ID는 로컬 런타임 식별자다. Network ID나 저장 데이터 ID가 아니
 
 | API | 결과와 의미 |
 | --- | --- |
-| `RequestActivation(int instanceId, bool shouldActivate)` | `TurretActivationResult`. 해당 컨트롤러 소속 터렛에 요청 |
+| `RequestActivation(int instanceId, bool shouldActivate)` | `FieldTurretActivationResult`. 해당 컨트롤러 소속 터렛에 요청 |
 | `GetSnapshot()` | 컨트롤러 전력과 터렛 집계 복사본 |
 | `TrySetMaximumPower(int)` | `bool`. 사용 중인 예약을 보존하며 용량 변경 |
 
@@ -45,7 +45,7 @@ ID는 로컬 런타임 식별자다. Network ID나 저장 데이터 ID가 아니
 
 ## 피해와 복구 및 업그레이드
 
-Enemy처럼 일반 터렛과 CU를 같은 방식으로 공격하는 소비자는 `TeamHJD.Game.Turrets.Contracts.IDamageableTarget`을 사용한다.
+Enemy처럼 일반 터렛과 CU를 같은 방식으로 공격하는 소비자는 `TeamHJD.Game.FieldTurrets.Contracts.IDamageableTarget`을 사용한다.
 
 | IDamageableTarget API | 의미 |
 | --- | --- |
@@ -53,26 +53,26 @@ Enemy처럼 일반 터렛과 CU를 같은 방식으로 공격하는 소비자는
 | `IsDestroyed` | 체력이 0인 상태 |
 | `ApplyDamage(int)` | 유효한 피해가 적용됐는지 반환 |
 
-`TurretBase`와 `ControlUnitHealth`가 이 계약을 구현한다. CU는 이 계약만 공유하며 Registry, 활성화, 전력 명령에는 포함되지 않는다.
+`FieldTurretBase`와 `ControlUnitHealth`가 이 계약을 구현한다. CU는 이 계약만 공유하며 Registry, 활성화, 전력 명령에는 포함되지 않는다.
 
-아래는 현재 `TurretBase`의 명령 API다. **읽기 전용 조회와 달리 컴포넌트를 조회해서 호출하는 호환 경로**다. 모든 명령이 ID 기반 전용 인터페이스로 분리된 상태는 아니다.
+아래는 현재 `FieldTurretBase`의 명령 API다. **읽기 전용 조회와 달리 컴포넌트를 조회해서 호출하는 호환 경로**다. 모든 명령이 ID 기반 전용 인터페이스로 분리된 상태는 아니다.
 
 ```csharp
-if (TurretInstanceRegistry.TryGet(targetTurretId, out var turret))
+if (FieldTurretInstanceRegistry.TryGet(targetTurretId, out var turret))
 {
     bool applied = turret.ApplyDamage(damage);
 }
 ```
 
-| TurretBase API | 반환 타입 |
+| FieldTurretBase API | 반환 타입 |
 | --- | --- |
-| `RequestActivation(bool)` | `TurretActivationResult` |
+| `RequestActivation(bool)` | `FieldTurretActivationResult` |
 | `ApplyDamage(int)` | `bool` |
-| `Repair(float healthPerSecond, float deltaTime)` | `TurretRepairResult` |
+| `Repair(float healthPerSecond, float deltaTime)` | `FieldTurretRepairResult` |
 | `Restore()` | `bool` |
 | `SetLocked(bool)` | `bool` |
-| `ApplyUpgrade(TurretUpgradeDefinition)` | `TurretUpgradeResult` |
-| `DowngradeUpgrade(TurretUpgradeDefinition)` | `TurretUpgradeResult` |
+| `ApplyUpgrade(FieldTurretUpgradeDefinition)` | `FieldTurretUpgradeResult` |
+| `DowngradeUpgrade(FieldTurretUpgradeDefinition)` | `FieldTurretUpgradeResult` |
 
 세부 업그레이드·되돌리기와 레벨 승급·강등은 **비활성화 상태이며 냉각이 끝난 터렛**에만 허용한다. 켜져 있으면 `RequiresDeactivation`, 꺼져 있지만 냉각 중이면 `CoolingDown`, 자동 활성화 진행 중이면 `AutoActivationInProgress`를 반환한다. 거부 시 기존 객체·단계·능력치·전력은 변경하지 않는다. 꺼진 터렛의 업그레이드는 요구 전력만 바꾸며, 실제 예약은 다음 활성화에서 수행한다.
 
@@ -89,13 +89,13 @@ UI는 `CanModifyUpgrades`로 승급·강등 및 세부 업그레이드 버튼을
 플레이어가 상호작용 가능한 무기·도구를 들었는지, 입력을 유지하는지, 대상과 거리가 유효한지는 **플레이어 측에서 검사**한다. 조건이 유지되는 동안 매 갱신에서 다음 API를 한 번 호출한다. 아래는 플레이어 연동 예시이며 기존 입력 코드에 연결된 상태는 아니다.
 
 ```csharp
-using TeamHJD.Game.Turrets;
-using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 
 // 플레이어 측 무기·입력·거리 조건을 통과한 Update 경로에서 호출한다.
-if (TurretInstanceRegistry.TryGet(targetTurretId, out var turret))
+if (FieldTurretInstanceRegistry.TryGet(targetTurretId, out var turret))
 {
-    TurretRepairResult result = turret.Repair(
+    FieldTurretRepairResult result = turret.Repair(
         healthPerSecond: 10f,
         deltaTime: Time.deltaTime);
     // Repaired / Accumulating은 유효한 수리 진행이다.
@@ -110,7 +110,7 @@ if (TurretInstanceRegistry.TryGet(targetTurretId, out var turret))
 - 실제 정수 HP가 증가할 때만 기존 `HealthChanged`와 `SnapshotChanged`를 통지한다. 파괴 후 복구 이벤트 `Restored`는 발행하지 않는다.
 - `CanRepair`는 현재 터렛 상태의 허용 여부다. 무기·입력·거리·회복 속도 검사를 대신하지 않으며 API도 호출 시 상태를 다시 검사한다.
 
-| `TurretRepairResult` | 의미 |
+| `FieldTurretRepairResult` | 의미 |
 | --- | --- |
 | `Repaired` | 이번 호출로 정수 HP가 증가함 |
 | `Accumulating` | 유효한 진행이지만 누적량이 아직 1 HP 미만임 |
