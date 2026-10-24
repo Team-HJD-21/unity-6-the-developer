@@ -20,6 +20,7 @@ namespace TeamHJD.Game.Turrets
         [NonSerialized] private int _currentHealth;
         [NonSerialized] private bool _isDestroyed;
         [NonSerialized] private bool _healthInitialized;
+        [NonSerialized] private double _pendingRepairHealth;
         private bool _isTemporarilySuspended;
 
         public int InstanceId => _instanceId;
@@ -100,6 +101,7 @@ namespace TeamHJD.Game.Turrets
                 1,
                 Mathf.Max(1, targetMaxHealth));
             target._healthInitialized = true;
+            target._pendingRepairHealth = 0d;
             target._isDestroyed = false;
             target._isTemporarilySuspended = false;
         }
@@ -115,6 +117,7 @@ namespace TeamHJD.Game.Turrets
             _currentHealth = data.CurrentHealth;
             _isDestroyed = data.IsDestroyed;
             _healthInitialized = true;
+            _pendingRepairHealth = 0d;
             _isTemporarilySuspended = false;
             SetUpgradeLevel(data.Upgrade != null ? data.Upgrade.Id : null, data.UpgradeLevel,
                 data.Upgrade != null ? data.Upgrade.DamageModifierRatio : 0f,
@@ -164,6 +167,7 @@ namespace TeamHJD.Game.Turrets
         internal void MarkDestroyed()
         {
             _currentHealth = 0;
+            _pendingRepairHealth = 0d;
             _isDestroyed = true;
             _isTemporarilySuspended = false;
         }
@@ -176,10 +180,26 @@ namespace TeamHJD.Game.Turrets
             }
 
             _currentHealth = Mathf.Max(1, maxHealth);
+            _pendingRepairHealth = 0d;
             _isDestroyed = false;
             _isActivated = false;
             _isTemporarilySuspended = false;
             return true;
+        }
+
+        internal int Repair(double amount, int maxHealth)
+        {
+            if (!_healthInitialized || _isDestroyed || _currentHealth <= 0 || _currentHealth >= maxHealth ||
+                amount <= 0d || double.IsNaN(amount) || double.IsInfinity(amount))
+                return 0;
+
+            double missingHealth = (double)maxHealth - _currentHealth;
+            double accumulated = Math.Min(missingHealth, _pendingRepairHealth + amount);
+            // Float frame durations can put a whole HP just below its boundary.
+            int healed = (int)Math.Min(missingHealth, Math.Floor(accumulated + 0.000001d));
+            _currentHealth += healed;
+            _pendingRepairHealth = _currentHealth >= maxHealth ? 0d : Math.Max(0d, accumulated - healed);
+            return healed;
         }
     }
 }

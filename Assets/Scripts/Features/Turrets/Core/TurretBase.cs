@@ -243,6 +243,9 @@ namespace TeamHJD.Game.Turrets
         public bool CanModifyUpgrades => IsInitialized && isActiveAndEnabled &&
             !IsManualOperationBlocked && !IsLocked && !IsDestroyed && !IsActivated && !IsCoolingDown;
 
+        public bool CanRepair => IsInitialized && isActiveAndEnabled &&
+            !IsManualOperationBlocked && !IsLocked && !IsDestroyed && CurrentHealth > 0 && CurrentHealth < MaxHealth;
+
         private bool RejectManualOperation()
         {
             if (!IsManualOperationBlocked) return false;
@@ -664,6 +667,32 @@ namespace TeamHJD.Game.Turrets
             OnDestroyed();
             TurretInstanceRegistry.NotifyDestroyed(this);
             return true;
+        }
+
+        /// <summary>
+        /// Call once per repair interval while the caller's weapon/input/range conditions hold.
+        /// Rates are HP per second; stopping calls stops repair. Does not revive destroyed turrets.
+        /// </summary>
+        public TurretRepairResult Repair(float healthPerSecond, float deltaTime)
+        {
+            if (float.IsNaN(healthPerSecond) || float.IsInfinity(healthPerSecond) || healthPerSecond <= 0f)
+                return TurretRepairResult.InvalidRepairRate;
+            if (float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime <= 0f)
+                return TurretRepairResult.InvalidDeltaTime;
+            // A held input can call every frame; report rejection without spamming the Console.
+            if (IsManualOperationBlocked) return TurretRepairResult.AutoActivationInProgress;
+            if (!IsInitialized) return TurretRepairResult.NotInitialized;
+            if (!isActiveAndEnabled) return TurretRepairResult.Inactive;
+            if (IsLocked) return TurretRepairResult.Locked;
+            // HealthChanged is published before damage finalizes IsDestroyed.
+            if (IsDestroyed || CurrentHealth <= 0) return TurretRepairResult.Destroyed;
+            if (CurrentHealth >= MaxHealth) return TurretRepairResult.FullHealth;
+
+            int healed = _runtimeState.Repair((double)healthPerSecond * deltaTime, MaxHealth);
+            if (healed == 0) return TurretRepairResult.Accumulating;
+
+            TurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
+            return TurretRepairResult.Repaired;
         }
 
         public bool Restore()
