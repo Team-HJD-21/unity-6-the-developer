@@ -27,6 +27,13 @@ public sealed class PlayerMuzzleFlash : MonoBehaviour
         _hideAt = Time.time + Mathf.Max(.01f, _duration);
     }
 
+    public void Show(Color tint)
+    {
+        if (_flashVisual != null && _flashVisual.TryGetComponent(out SpriteRenderer renderer))
+            renderer.color = Color.Lerp(Color.white, tint, .35f);
+        Show();
+    }
+
     private void Update() { if (_showing && Time.time >= _hideAt) Hide(); }
 
     private void Hide()

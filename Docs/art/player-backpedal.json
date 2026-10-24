@@ -1,0 +1,196 @@
+{
+  "art_source": "host_image",
+  "route": "built-in image_gen; existing approved sprites as identity references",
+  "model": "not exposed by host tool",
+  "estimateUsd": null,
+  "finish": "32-PPU, 160x160, accepted shared palette, binary alpha",
+  "single_static_pose_per_direction": true,
+  "records": [
+    {
+      "facing": "Left",
+      "movement": "Right",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/Backpedal/Backpedal_Left.png",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/Backpedal_Left_IdleMatched_Source.png",
+      "sourceSha256": "270d989d0b0f7525761f7fb34eae15f51d3c931ef93f6500b7aa2e1180e81bcb",
+      "helmet": [
+        71,
+        37,
+        115,
+        76
+      ],
+      "referenceHelmet": [
+        57,
+        36,
+        101,
+        76
+      ],
+      "inkBounds": [
+        23,
+        34,
+        118,
+        127
+      ],
+      "footPixel": [
+        64.0,
+        128
+      ],
+      "shadowPosition": [
+        -0.5,
+        -1.5,
+        0.01
+      ],
+      "shadowScale": [
+        1.23529,
+        1,
+        1
+      ],
+      "muzzle": [
+        -1.78125,
+        0.0
+      ],
+      "guid": "df8008388d5742a687fa3aa83ab8293c",
+      "upperBodyBehindFeetPixels": 29.0,
+      "appearanceReference": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Left_0.png",
+      "fullHeadBounds": [
+        64,
+        34,
+        118,
+        76
+      ],
+      "referenceFullHeadBounds": [
+        50,
+        33,
+        104,
+        76
+      ],
+      "uniformSourceScale": 0.17467248908296942,
+      "sha256": "c27d402d82be8dee46397dee02cc9e0bea50815531dc58a41573d641e69a79fd",
+      "bodyBoundsBeforeExhaust": [
+        23,
+        34,
+        118,
+        127
+      ],
+      "bounds": [
+        23,
+        34,
+        118,
+        127
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "exhaustRepaint": "Docs/art/player-exhaust-consistency.json"
+    },
+    {
+      "facing": "Right",
+      "movement": "Left",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/Backpedal/Backpedal_Right.png",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/Backpedal_Right_IdleMatched_Source.png",
+      "sourceSha256": "0b8594e1828f120bcd512ea1afc16daa3e4fbaace9471513013936df04e7223e",
+      "helmet": [
+        43,
+        37,
+        84,
+        75
+      ],
+      "referenceHelmet": [
+        57,
+        36,
+        101,
+        75
+      ],
+      "inkBounds": [
+        40,
+        34,
+        134,
+        129
+      ],
+      "footPixel": [
+        103.0,
+        130
+      ],
+      "shadowPosition": [
+        0.71875,
+        -1.5625,
+        0.01
+      ],
+      "shadowScale": [
+        1.23529,
+        1,
+        1
+      ],
+      "muzzle": [
+        1.6875,
+        0.0
+      ],
+      "guid": "09f42f200d1544dba18f94a6f7d9a79b",
+      "upperBodyBehindFeetPixels": 39.5,
+      "appearanceReference": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Right_0.png",
+      "fullHeadBounds": [
+        40,
+        34,
+        94,
+        75
+      ],
+      "referenceFullHeadBounds": [
+        54,
+        33,
+        108,
+        75
+      ],
+      "uniformSourceScale": 0.16455696202531644,
+      "sha256": "53112eaaca546ee6e5a73d149ec4b8a4210bbddcdeb0b6bd79c3f9878a303d70",
+      "bodyBoundsBeforeExhaust": [
+        40,
+        34,
+        134,
+        129
+      ],
+      "bounds": [
+        40,
+        34,
+        134,
+        129
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "exhaustRepaint": "Docs/art/player-exhaust-consistency.json"
+    }
+  ],
+  "pose_rule": "Facing left + moving right: upper body screen-right, feet screen-left; mirrored when facing right + moving left.",
+  "revision": "Match existing AI Idle/Move proportions and appearance directly; uniformly scaled by full helmet + visor bounds, preserve backward recline.",
+  "identity_checks": [
+    {
+      "facing": "Left",
+      "reference": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Left_0.png",
+      "fullHeadWidth": 54,
+      "referenceFullHeadWidth": 54,
+      "whiteHelmetHeight": 39,
+      "referenceWhiteHelmetHeight": 40,
+      "upperBodyBehindFeetPixels": 29.0,
+      "uniformScale": true
+    },
+    {
+      "facing": "Right",
+      "reference": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Right_0.png",
+      "fullHeadWidth": 54,
+      "referenceFullHeadWidth": 54,
+      "whiteHelmetHeight": 38,
+      "referenceWhiteHelmetHeight": 39,
+      "upperBodyBehindFeetPixels": 39.5,
+      "uniformScale": true
+    }
+  ],
+  "baseline": "Current AI Idle/Move sprites, explicitly chosen by user",
+  "approvedReferenceSha256": {
+    "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Left_0.png": "f0aae5830cf30eb1e58e35a8466a9ab7369566b92668af91f350894a5c2053f5",
+    "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Right_0.png": "e9d8ceb36069541e6cd949be0036bcac569e3f3bf166aeafd7f272443024d594",
+    "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_0.png": "7669c162ec2958edc682d9de8b6f521c696f153775693f00dc0c6d180bde1c6a",
+    "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_0.png": "c0174d38527e8b22fbddc3a745d47d8f3bf33f1d611e5642cab4c957b5878201"
+  },
+  "prompts": {
+    "left": "Identity-preserving pose edit for an existing Unity game. IMAGE 1 is the APPROVED CURRENT IDLE sprite and is the ONLY authority for the character's helmet/head/black visor shape, head-to-body proportions, outfit, short black-white gun, hand sizes, boots, outline thickness and shaded pixel-art style. IMAGE 2 is ONLY a skeleton/posture guide for backward-leaning movement. Create ONE LEFT-facing backward-leaning hover pose of the SAME character from Image 1: aim LEFT, move RIGHT, upper torso screen-RIGHT of the hips and bent legs/feet screen-LEFT. Keep a visible moderate recline and compact bent legs. Copy Image 1's head silhouette and black visor shape closely, with the SAME size relative to torso and arms as Image 1, NOT Image 2. Do not merely shrink Image 2's head. Do not lengthen/stretch the face or make a huge visor. Keep Image 1's original short gun silhouette and barrel length. No redesign, chibi changes, smooth 3D style or long legs. Same character scale and hovering height, all body parts/gun fit on one isolated transparent alpha canvas. No shadow, flame, scene, labels, grid, animation sheet or extra equipment. Important: current IDLE identity/proportions, only backward hover pose changes.",
+    "right": "Identity-preserving pose edit for an existing Unity game. IMAGE 1 is the APPROVED CURRENT RIGHT-FACING IDLE sprite. It is the ONLY appearance reference: copy its helmet/head/black visor silhouette, head-to-torso ratio, short black-white gun length and silhouette, hand/boot sizes, white-gray outfit, outline and shaded pixel-art finish. IMAGE 2 is only a skeleton/posture reference. Create ONE RIGHT-facing backward-leaning hover pose of the same Image 1 character: aims RIGHT, moves LEFT, upper torso displaced screen-LEFT of hips, bent knees and boots screen-RIGHT. Visible moderate recline, compact bent legs, same head/body proportion as IDLE. Do not use Image 2's head design or just shrink that head. Keep the exact Image 1 head silhouette, same roundness and visor size relative to torso/arms; no oversized head, elongated face, new equipment, smooth 3D rendering or long legs. Preserve original short gun held in two hands with barrel level right. Same body scale and hovering registration. One complete isolated character, full gun and margins, genuine transparent alpha background. No scene, shadow, flames, labels, grid or animation sheet. Important: approved IDLE identity/proportions, backward hover posture only.",
+    "art_source": "host_image",
+    "route": "image_gen",
+    "baseline": "Current AI Idle/Move sprites, explicitly selected by user; Idle appearance, previous Backpedal posture only"
+  }
+}

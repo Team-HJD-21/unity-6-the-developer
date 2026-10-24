@@ -12,6 +12,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
     public abstract float CooldownDuration { get; }
     public virtual bool IsReady => HasPrefab && AvailableCount > 0 && RemainingCooldown <= 0;
     protected PlayerSkillController Controller => _controller != null ? _controller : _controller = GetComponent<PlayerSkillController>();
+    protected PlayerControlState ControlState => _control != null ? _control : _control = GetComponent<PlayerControlState>();
     protected virtual void Awake() { _controller = GetComponent<PlayerSkillController>(); _control = GetComponent<PlayerControlState>(); }
     public bool TryUseSkill()
     {
@@ -20,7 +21,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         {
             if (!Controller.CanUse || !Controller.Loadout.Contains(Id)) return false;
         }
-        else if (_control != null && !_control.CanAct) return false;
+        else if (ControlState != null && !ControlState.CanAct) return false;
         return TryActivate();
     }
     protected abstract bool TryActivate();

@@ -1,0 +1,135 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a29e40a523775ea5bad0485aeb22dc1f, type: 3}
+  m_Name: PlayerMotions
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMotionSet
+  _idle:
+    downAnimation: {fileID: 7400000, guid: 711a49ba9b6ff9a43af7eb371da7186c, type: 2}
+    upAnimation: {fileID: 7400000, guid: 2a0f58dd4ff110442b5bb28ed175182e, type: 2}
+    leftAnimation: {fileID: 7400000, guid: e480bc483c38cf94488bfc812031efb7, type: 2}
+    rightAnimation: {fileID: 7400000, guid: 6d0dffb2df17e4a4781de51b1dbb8c5b, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: 131adf70e1d241789463e29f3b549ab3, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 0dc89b8e1e6f413f9f2731edc0c5bcab, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: fae1db60ab7d4d90afb93eedb593ed70, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: e87003facb994e40911a0c51b465c5a1, type: 2}
+  _move:
+    downAnimation: {fileID: 7400000, guid: c08c2b0320a18ff429627052bc6bafd6, type: 2}
+    upAnimation: {fileID: 7400000, guid: 434788f172f20974892e3e709b823b50, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 846ba0c6f29ec6e4db24a1aee5f69728, type: 2}
+    rightAnimation: {fileID: 7400000, guid: 73f49d45a35025b478d4b5cd9c9843c1, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: f77a6e31116947168adaee8b1989d112, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 884bdaf130ec4d5ca9699e61b2477926, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: ecb88e0782d34541b8d59cd02ef0ddba, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 4866f3887bd344e996dba539fafde713, type: 2}
+  _attack:
+    downAnimation: {fileID: 7400000, guid: a92781f8835c91b48a9a9f4aaecab9a0, type: 2}
+    upAnimation: {fileID: 7400000, guid: 9f6c3bcf2b6055e4e99cdddbeaa903fd, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 379ff4220f0513144bc01a47433def64, type: 2}
+    rightAnimation: {fileID: 7400000, guid: 414fef5a830ca51498e7b65d346ea6ce, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: a4cc31f07ee9481b89bb4635d4cf2a77, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 6be16c54ff2549759664738b35dc2071, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: eed440f476a44ad58be12966681a9e58, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 468dc940f9244e25884dae72947fd7df, type: 2}
+  _repair:
+    downAnimation: {fileID: 7400000, guid: c2cb34e7a8a001f45b9541318d244551, type: 2}
+    upAnimation: {fileID: 7400000, guid: 8a9194176957866488836cff8b3e01c5, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 99c9a1bca07c6cd4aa44998a04b876d9, type: 2}
+    rightAnimation: {fileID: 7400000, guid: a2c9bede6be475844ad6475989eda259, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: 3a3f2edaaf9249dfa2d7726ca52837f6, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: d1eaa4b00a0541e9ab1e16e7fe00099c, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: 370d81de7d2a4635853274abbbaf32fa, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 560b17081e2a4661a3d2cd376944f8bd, type: 2}
+  _toolIdle:
+    downAnimation: {fileID: 7400000, guid: abb61557eb33ba145936771f65d10db8, type: 2}
+    upAnimation: {fileID: 7400000, guid: 3cf8e16250adfca4187282a88557f04b, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 1d8055db7af1d7f4f9da863016342b80, type: 2}
+    rightAnimation: {fileID: 7400000, guid: d4b5c271ef315dd4d98f6e2872f3c1f5, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: caac00387b4c45fbace95f46f248920d, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 8baf555e165c4377b356aed046dffc91, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: 57d16dd12acf4979b2632e288abc0060, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 7760344612fb494aa32e164e452c57f9, type: 2}
+  _toolMove:
+    downAnimation: {fileID: 7400000, guid: 81fb48d803c305242bccbf9874bad08e, type: 2}
+    upAnimation: {fileID: 7400000, guid: 9654e77d619f53344b8f1ae739a8c203, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 3710e10737dbc01419560dd72883be92, type: 2}
+    rightAnimation: {fileID: 7400000, guid: ae0f8d76b7339c646a20d460d872c665, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: 47b04b5ee1f84d838194ec20f3f24547, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: a3308fc38a2e4f068b40d190fe494b29, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: 67975211751c47c5bfdfda49baad558f, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: a966eecf4cb44e16886f97cbfce91245, type: 2}
+  _fire:
+    downAnimation: {fileID: 7400000, guid: b27bf855f5c08994cb0bb7d809a785d0, type: 2}
+    upAnimation: {fileID: 7400000, guid: 8b8bd8f7363595940b9dff1df786d469, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 77eada38db3a8c041b139372229551e0, type: 2}
+    rightAnimation: {fileID: 7400000, guid: 59aaa54a4929be845850a83f32b1b8b3, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: 578c0ac11b34446a994246fad3e583d0, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 6b0365751f504dee944249545e58a6b1, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: 3b9940f3f2cc4fbfb19b5b5abccab4ce, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 76097de2c5694bd4837bccd3f9ce74c7, type: 2}
+  _hoverFire:
+    downAnimation: {fileID: 7400000, guid: 37d8a7b6e4975eef9c2a22c0c00076fe, type: 2}
+    upAnimation: {fileID: 7400000, guid: b9848cfea57d57759a35781e574d3f1c, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 537d9a69569750a1ae4ecbb5f61027ad, type: 2}
+    rightAnimation: {fileID: 7400000, guid: d8cdd2e6ac7f57c79f59461f10795810, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: 92c4f44568334093bd62e9112b704c2f, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 614fd7fbe2af46669318cd0c8a7b0bd9, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: ebdd6ce9ded54f298e61003280b2f5e8, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 2a6c11b7500f441891fda6dd688a0557, type: 2}
+  _hoverAttack:
+    downAnimation: {fileID: 7400000, guid: 76faf59c939d5be690d0dcb168203149, type: 2}
+    upAnimation: {fileID: 7400000, guid: cc6bb225d55654a1b1d370903c2c70f9, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 0e8b2fbc601a5ee196fffc4f33b70264, type: 2}
+    rightAnimation: {fileID: 7400000, guid: b522df28e5095c198372e3b5f4a3aa19, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: d4d8a426231b49e29474965b63e2abab, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: ec9c4a132e8f474b8d9fbcf22172b8a2, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: 8d00046e418f4a86816920c409d04b0e, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 93cc9de64d6f43d7bf3a0cc1dae3912b, type: 2}
+  _hoverRepair:
+    downAnimation: {fileID: 7400000, guid: 51ce7eadcb695603ad1b34c7421dbc99, type: 2}
+    upAnimation: {fileID: 7400000, guid: f31ff72ee9bf5b66b8a9ac3b83e92572, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 3faa3e2f893e54f7b01a0db96578ba31, type: 2}
+    rightAnimation: {fileID: 7400000, guid: 7a3d3391f8a0532c88012ebd78916473, type: 2}
+    downLeftAnimation: {fileID: 7400000, guid: e9797d4476374a7daac528d8fdb984c0, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 976be1f84a2b4979b81366e1c3213a0f, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: e378e5bcc9a54130a2e140795b3463bc, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 11f41673db284c42888cd7f681721634, type: 2}
+  _moveLeanLeft:
+    downAnimation: {fileID: 7400000, guid: cb41f6feada65613a1ce4705afb3ffe3, type: 2}
+    upAnimation: {fileID: 7400000, guid: e9c0ac4b8ff653f4902889927de9faf6, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 0475001b11f3590a93dd11f789574b77, type: 2}
+    rightAnimation: {fileID: 7400000, guid: 2a405caa1f9555b4a60e42328f1808a6, type: 2}
+  _moveLeanRight:
+    downAnimation: {fileID: 7400000, guid: 17c90358b6245ebf9093da3994f310be, type: 2}
+    upAnimation: {fileID: 7400000, guid: 0544c0aa90d4579aa96793d55e21dfbd, type: 2}
+    leftAnimation: {fileID: 7400000, guid: fb43a773527d54a1ace0fc9ef9c4924f, type: 2}
+    rightAnimation: {fileID: 7400000, guid: d986d5ae56645b019b2b38faaff410f6, type: 2}
+  _hoverFireLeanLeft:
+    downAnimation: {fileID: 7400000, guid: 581e523a4d9c50b5bdd733eb856d17f2, type: 2}
+    upAnimation: {fileID: 7400000, guid: 373c16ac6593555d81c16e362a5b9cfb, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 923abdf7c7635e21b7ee7c6a1aadb329, type: 2}
+    rightAnimation: {fileID: 7400000, guid: d6b662e8f7ce5b13bcd89cbe9fadf554, type: 2}
+  _hoverFireLeanRight:
+    downAnimation: {fileID: 7400000, guid: ec88abb8c1775c03ae3341854c8f3e05, type: 2}
+    upAnimation: {fileID: 7400000, guid: 384718d5825553e79e76a009e3d53235, type: 2}
+    leftAnimation: {fileID: 7400000, guid: 525e8e46fe8e53e0b9288188f27bebff, type: 2}
+    rightAnimation: {fileID: 7400000, guid: 53ad1aad3ff05ed89088f4b7c7982516, type: 2}
+  _moveBackpedal:
+    downLeftAnimation: {fileID: 7400000, guid: 21f6dea15cc14f6a829ad243641faacb, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: e2dae37c20414ae2940573ba50cd6ea8, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: 718ef218fef24ce48f29706f9a887551, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: b95916cf265348e38c29022a1904eda5, type: 2}
+  _hoverFireBackpedal:
+    downLeftAnimation: {fileID: 7400000, guid: 43f747413efa4461bd993f51932614a6, type: 2}
+    downRightAnimation: {fileID: 7400000, guid: 9d004a9368a8479c86c9fd6a20ec28d2, type: 2}
+    upLeftAnimation: {fileID: 7400000, guid: 35ca1aea45914ad285f39539528b6e66, type: 2}
+    upRightAnimation: {fileID: 7400000, guid: 198ea82e41ea45999fbf0ad2e7fa7a68, type: 2}
+  _controller: {fileID: 9100000, guid: c9f0cb73b1036044ea6495bedb7ca9e9, type: 2}

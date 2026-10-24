@@ -28,17 +28,14 @@ public sealed class PlayerSkillSelectionTests
         var loadout = new PlayerSkillLoadout(); loadout.TrySelect(PlayerSkillId.Bomb); loadout.TrySelect(PlayerSkillId.LureBeacon); loadout.Clear();
         Assert.That(loadout.Q, Is.EqualTo(PlayerSkillId.None)); Assert.That(loadout.E, Is.EqualTo(PlayerSkillId.None));
     }
-    [TestCase("bombIcon")]
-    [TestCase("turretIcon")]
+    [TestCase("_bombIcon")]
+    [TestCase("_turretIcon")]
     [TestCase("_barrierIcon")]
     [TestCase("_beaconIcon")]
-    [TestCase("_recoveryKeyIcon")]
-    [TestCase("uiFont")]
-    [TestCase("_hudPrefab")]
-    public void PlayerPrefab_AssignsHudAsset(string field)
+    public void HudPrefab_AssignsSkillIcon(string field)
     {
-        var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
-        Assert.That(new SerializedObject(player.GetComponent<PlayerSkillController>()).FindProperty(field).objectReferenceValue, Is.Not.Null);
+        var hud = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
+        Assert.That(new SerializedObject(hud.GetComponent<PlayerSkillHud>()).FindProperty(field).objectReferenceValue, Is.Not.Null);
     }
     [Test]
     public void PlayerPrefab_AssignsFieldSkills()

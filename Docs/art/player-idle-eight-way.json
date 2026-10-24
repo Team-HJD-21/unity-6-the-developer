@@ -1,0 +1,297 @@
+{
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "model": "not exposed by host tool",
+  "estimateUsd": null,
+  "scope": "single held-rifle idle still per direction; original four plus four new diagonals",
+  "canvas": [
+    160,
+    160
+  ],
+  "pixelsPerUnit": 32,
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "filter": "Point",
+  "finish": "approved neutral palette, binary alpha, no dither, uniform scaling",
+  "helmetMeasurement": "opaque upper silhouette through 55% of white-shell height, excluding raised diagonal rifle",
+  "sizeTolerance": {
+    "helmetWidth": [
+      53,
+      55
+    ],
+    "bodyHeight": [
+      85,
+      93
+    ],
+    "footBaseline": 121
+  },
+  "runtimeBound": true,
+  "unityPlayVerification": "not run",
+  "sizeChecks": [
+    {
+      "direction": "DownLeft",
+      "helmetWidth": 54,
+      "bodyHeight": 92,
+      "footBaseline": 121,
+      "whiteHelmetHeight": 45,
+      "sizeMatch": "PASS"
+    },
+    {
+      "direction": "DownRight",
+      "helmetWidth": 54,
+      "bodyHeight": 86,
+      "footBaseline": 121,
+      "whiteHelmetHeight": 44,
+      "sizeMatch": "PASS"
+    },
+    {
+      "direction": "UpLeft",
+      "helmetWidth": 54,
+      "bodyHeight": 88,
+      "footBaseline": 121,
+      "whiteHelmetHeight": 45,
+      "sizeMatch": "PASS"
+    },
+    {
+      "direction": "UpRight",
+      "helmetWidth": 54,
+      "bodyHeight": 91,
+      "footBaseline": 121,
+      "whiteHelmetHeight": 43,
+      "sizeMatch": "PASS"
+    }
+  ],
+  "frames": [
+    {
+      "direction": "Down",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Down_0.png",
+      "originalUnchanged": true,
+      "sha256": "67e2109a61a114ec0657304a6af3c5332ef3cc55661db5fb15c66876efc35e09",
+      "bounds": [
+        51,
+        30,
+        108,
+        119
+      ],
+      "whiteHelmet": [
+        56,
+        33,
+        103,
+        74
+      ],
+      "fullHelmet": [
+        52,
+        30,
+        107,
+        74
+      ]
+    },
+    {
+      "direction": "Up",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Up_0.png",
+      "originalUnchanged": true,
+      "sha256": "e10cdd35a60ccf1fbb62540e40b440b0ab46665d4df4ba767ef570b220bd4673",
+      "bounds": [
+        53,
+        34,
+        116,
+        121
+      ],
+      "whiteHelmet": [
+        56,
+        38,
+        105,
+        76
+      ],
+      "fullHelmet": [
+        53,
+        34,
+        109,
+        76
+      ]
+    },
+    {
+      "direction": "Left",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Left_0.png",
+      "originalUnchanged": true,
+      "sha256": "f0aae5830cf30eb1e58e35a8466a9ab7369566b92668af91f350894a5c2053f5",
+      "bounds": [
+        18,
+        33,
+        109,
+        120
+      ],
+      "whiteHelmet": [
+        57,
+        36,
+        101,
+        76
+      ],
+      "fullHelmet": [
+        50,
+        33,
+        104,
+        76
+      ]
+    },
+    {
+      "direction": "Right",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/Idle/Idle_Right_0.png",
+      "originalUnchanged": true,
+      "sha256": "e9d8ceb36069541e6cd949be0036bcac569e3f3bf166aeafd7f272443024d594",
+      "bounds": [
+        45,
+        33,
+        143,
+        123
+      ],
+      "whiteHelmet": [
+        57,
+        36,
+        101,
+        75
+      ],
+      "fullHelmet": [
+        54,
+        33,
+        108,
+        75
+      ]
+    },
+    {
+      "direction": "DownLeft",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_DownLeft.png",
+      "sha256": "feb197fc943e4000d719f4293044c434fea63d91cfa3cd1c99ed0eddc46c195f",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/Idle_DownLeft_Source.png",
+      "sourceSha256": "e185fbf9fc4bf512fc7d1e66d1eef9b1e10c73bb44cd65d5b1cef687777dab5a",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "uniformScale": 0.1651376146788991,
+      "bounds": [
+        38,
+        29,
+        114,
+        121
+      ],
+      "whiteHelmet": [
+        57,
+        31,
+        104,
+        76
+      ],
+      "fullHelmet": [
+        53,
+        29,
+        107,
+        76
+      ],
+      "prompt": "Use case: identity-preserve. Produce exactly ONE full-body standing idle sprite of the EXACT same little astronaut in the FOUR attached existing game sprite references. Reference order: front/down, back/up, left, right. They are identity and proportion references, not new costume ideas. This is one new orientation of that SAME character for an eight-direction top-down game. DIRECTION: three-quarter FRONT view looking diagonally toward the BOTTOM-LEFT of the game screen, 45 degrees between the front-facing and left-facing references. Black visor and front chest visible, rear backpack mostly behind. Rifle held with both hands, muzzle points diagonally lower LEFT, away from the body. Keep the identical very round white helmet (NOT elongated), short black visor with pale diagonal reflection, white and neutral grey padded suit, short stubby legs, neutral grey/white boots, compact square white backpack and compact black/grey rifle, identical limb thickness and helmet-to-body proportions. Helmet is about half the body height; squat shape identical to references. Standing still with both feet planted, ready two-hand grip matching the references; no firing, no walking, no leaning. Entirely redraw the requested diagonal view; don't just rotate the flat existing image. Match the references' clean small 2D game sprite aesthetic with restrained cel-shaded white, grey and near-black, crisp silhouette and outline. No colours added. Neutral fixed camera matching references. Generous transparent margin, whole character centred, character occupies about 65 percent of image height, one character only. No text, no labels, no grid, no frame, no ground, no shadow, no glow, no smoke, no extra objects. Genuinely transparent background. One square image."
+    },
+    {
+      "direction": "DownRight",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_DownRight.png",
+      "sha256": "6d874b7eea46a5e8cd1b4268af1a59169f3acd5620a67726e79ca08797571470",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/Idle_DownRight_Source.png",
+      "sourceSha256": "ba75bc5eb16d99357cac54c89e3b29955b0df4c0e7304ae72b632b23ef2caac4",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "uniformScale": 0.1529745042492918,
+      "bounds": [
+        51,
+        35,
+        119,
+        121
+      ],
+      "whiteHelmet": [
+        56,
+        38,
+        103,
+        82
+      ],
+      "fullHelmet": [
+        53,
+        35,
+        107,
+        82
+      ],
+      "prompt": "Use case: identity-preserve. Produce exactly ONE full-body standing idle sprite of the EXACT same little astronaut in the FOUR attached existing game sprite references. Reference order: front/down, back/up, left, right. They are identity and proportion references, not new costume ideas. This is one new orientation of that SAME character for an eight-direction top-down game. DIRECTION: three-quarter FRONT view looking diagonally toward the BOTTOM-RIGHT of the game screen, 45 degrees between the front-facing and right-facing references. Black visor and front chest visible, rear backpack mostly behind. Rifle held with both hands, muzzle points diagonally lower RIGHT, away from the body. Keep the identical very round white helmet (NOT elongated), short black visor with pale diagonal reflection, white and neutral grey padded suit, short stubby legs, neutral grey/white boots, compact square white backpack and compact black/grey rifle, identical limb thickness and helmet-to-body proportions. Helmet is about half the body height; squat shape identical to references. Standing still with both feet planted, ready two-hand grip matching the references; no firing, no walking, no leaning. Entirely redraw the requested diagonal view; don't just rotate the flat existing image. Match the references' clean small 2D game sprite aesthetic with restrained cel-shaded white, grey and near-black, crisp silhouette and outline. No colours added. Neutral fixed camera matching references. Generous transparent margin, whole character centred, character occupies about 65 percent of image height, one character only. No text, no labels, no grid, no frame, no ground, no shadow, no glow, no smoke, no extra objects. Genuinely transparent background. One square image."
+    },
+    {
+      "direction": "UpLeft",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_UpLeft.png",
+      "sha256": "cfc62658c3e184865356ceed3b78ce36a78c8e1991712a3ed9f51f6af2988cb0",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/Idle_UpLeft_Source.png",
+      "sourceSha256": "634933e70560caa2dc6bb556fb1a766bb08ef77e4b9695d20fc51c300a4b67ac",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "uniformScale": 0.1409921671018277,
+      "bounds": [
+        31,
+        33,
+        107,
+        121
+      ],
+      "whiteHelmet": [
+        57,
+        35,
+        105,
+        80
+      ],
+      "fullHelmet": [
+        53,
+        33,
+        107,
+        80
+      ],
+      "prompt": "Use case: identity-preserve. Produce exactly ONE full-body standing idle sprite of the EXACT same little astronaut in the FOUR attached existing game sprite references. Reference order: front/down, back/up, left, right. They are identity and proportion references, not new costume ideas. This is one new orientation of that SAME character for an eight-direction top-down game. DIRECTION: three-quarter BACK view looking diagonally toward the TOP-LEFT of the game screen, 45 degrees between the back-facing and left-facing references. Mostly WHITE BACK of the helmet visible, only a SMALL black visor sliver at its LEFT rim, square backpack visible on rear torso, shoulders turning away. Rifle held with both hands pointing diagonally upper LEFT, away from the body. This is a back view, not a front-left view. Keep the identical very round white helmet (NOT elongated), short black visor with pale diagonal reflection, white and neutral grey padded suit, short stubby legs, neutral grey/white boots, compact square white backpack and compact black/grey rifle, identical limb thickness and helmet-to-body proportions. Helmet is about half the body height; squat shape identical to references. Standing still with both feet planted, ready two-hand grip matching the references; no firing, no walking, no leaning. Entirely redraw the requested diagonal view; don't just rotate the flat existing image. Match the references' clean small 2D game sprite aesthetic with restrained cel-shaded white, grey and near-black, crisp silhouette and outline. No colours added. Neutral fixed camera matching references. Generous transparent margin, whole character centred, character occupies about 65 percent of image height, one character only. No text, no labels, no grid, no frame, no ground, no shadow, no glow, no smoke, no extra objects. Genuinely transparent background. One square image."
+    },
+    {
+      "direction": "UpRight",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_UpRight.png",
+      "sha256": "24ff2222e9d62d277f564f0fe9cb73c9ede29d1825b995eca2a5dd9e20a58653",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/Idle_UpRight_Source.png",
+      "sourceSha256": "ebef550efb8402f6c17a59fcd0b279bbff4cc3075a430306c9be1db1ed0e355d",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "uniformScale": 0.15561959654178675,
+      "bounds": [
+        53,
+        30,
+        133,
+        121
+      ],
+      "whiteHelmet": [
+        55,
+        32,
+        102,
+        75
+      ],
+      "fullHelmet": [
+        53,
+        30,
+        107,
+        75
+      ],
+      "prompt": "Use case: identity-preserve. Produce exactly ONE full-body standing idle sprite of the EXACT same little astronaut in the FOUR attached existing game sprite references. Reference order: front/down, back/up, left, right. They are identity and proportion references, not new costume ideas. This is one new orientation of that SAME character for an eight-direction top-down game. DIRECTION: three-quarter BACK view looking diagonally toward the TOP-RIGHT of the game screen, 45 degrees between the back-facing and right-facing references. Mostly WHITE BACK of the helmet visible, only a SMALL black visor sliver at its RIGHT rim, square backpack visible on rear torso, shoulders turning away. Rifle held with both hands pointing diagonally upper RIGHT, away from the body. This is a back view, not a front-right view. Keep the identical very round white helmet (NOT elongated), short black visor with pale diagonal reflection, white and neutral grey padded suit, short stubby legs, neutral grey/white boots, compact square white backpack and compact black/grey rifle, identical limb thickness and helmet-to-body proportions. Helmet is about half the body height; squat shape identical to references. Standing still with both feet planted, ready two-hand grip matching the references; no firing, no walking, no leaning. Entirely redraw the requested diagonal view; don't just rotate the flat existing image. Match the references' clean small 2D game sprite aesthetic with restrained cel-shaded white, grey and near-black, crisp silhouette and outline. No colours added. Neutral fixed camera matching references. Generous transparent margin, whole character centred, character occupies about 65 percent of image height, one character only. No text, no labels, no grid, no frame, no ground, no shadow, no glow, no smoke, no extra objects. Genuinely transparent background. One square image."
+    }
+  ],
+  "checks": {
+    "eightUniqueDirections": "PASS",
+    "canvasAndBinaryAlpha": "PASS",
+    "importerPpuPivotPointFilter": "PASS",
+    "sourceHashesAndUniqueSpriteGuids": "PASS",
+    "diagonalHeadWidthAndFootBaseline": "PASS",
+    "previewAndStripSize": "PASS"
+  },
+  "runtimeDetails": "player-ranged-eight-way.json"
+}

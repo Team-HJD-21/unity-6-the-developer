@@ -21,14 +21,14 @@ public sealed class PlayerMuzzleAnchor : MonoBehaviour
 
     private void LateUpdate() => Synchronize();
 
-    public bool TryGetMuzzle(out Transform muzzle)
+    public bool TryGetMuzzle(out Transform muzzle, bool forShot = true)
     {
         muzzle = null;
         if (!isActiveAndEnabled || _weaponRig == null || _weaponRig.PlayerRoot != _playerRoot ||
-            !_weaponRig.TryGetMuzzle(out muzzle)) return false;
+            !_weaponRig.TryGetMuzzle(out muzzle, forShot)) return false;
         transform.position = muzzle.position;
         return true;
     }
 
-    private void Synchronize() => TryGetMuzzle(out _);
+    private void Synchronize() => TryGetMuzzle(out _, forShot: false);
 }

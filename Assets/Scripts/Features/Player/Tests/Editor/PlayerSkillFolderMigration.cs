@@ -18,7 +18,7 @@ public static class PlayerSkillFolderMigration
             return;
         }
         MoveGroup("Controllers", "PlayerSkillController");
-        MoveGroup("UI", "PlayerSkillHud PlayerFieldSkillIcon PlayerSkillDescriptions PlayerSkillHudFactory PlayerSkillSelectionPanelView PlayerSkillSlotView PlayerSkillTooltipView PlayerSkillUiFactory PlayerTurretRecoveryPromptView");
+        MoveGroup("UI", "PlayerSkillHud PlayerFieldSkillIcon PlayerSkillDescriptions PlayerSkillHudSceneBinding PlayerSkillCardView PlayerSkillSelectionPanelView PlayerSkillSlotView PlayerSkillTooltipView PlayerTurretRecoveryPromptView");
         MoveGroup("Common", "PlayerSkillBase PlayerSkillCharges PlayerSkillLoadout IPlayerFieldTarget PlayerFieldLineFactory PlayerTimedEffect");
         MoveGroup("Devices", "PlayerFieldDevice PlayerFieldDeviceRegistry PlayerFieldDeviceVisual");
         MoveGroup("Enemy", "PlayerFieldEnemyAdapter PlayerFieldEnemyAnimation PlayerFieldEnemyBehaviour PlayerFieldEnemyControlLease PlayerFieldEnemyScanner");
