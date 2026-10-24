@@ -1,7 +1,7 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-10-20
+최종 갱신: 2026-10-23
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 냉각·수동 조작·강화 제한은 main `8d08001a`에 병합된 PR #525를 기준으로 최신화했다.
@@ -143,7 +143,7 @@ Editor에서 Definition을 수정하면 전체 `TurretDefinition`을 검사한�
 | `IsActivated` | 사용자가 켜서 전력을 예약한 상태인지 표시 | `RequestActivation` |
 | `IsOperational` | 활성화됐고 과열·파괴·잠금 상태가 아닌지 표시 | 활성화·과열·파괴·잠금 흐름에서 자동 계산 |
 | `IsLocked` | 해당 인스턴스를 켤 수 없는 상태 | `SetLocked` |
-| `CurrentHealth` | 현재 남아 있는 체력 | `ApplyDamage`, `Restore` |
+| `CurrentHealth` | 현재 남아 있는 체력 | `ApplyDamage`, `Repair`, `Restore` |
 | `IsDestroyed` | 체력 0으로 파괴됐는지 표시 | `ApplyDamage`, `Restore` |
 | `DamageBonus` | 퍼센트 보정 후 더하는 별도 수동 공격력 보너스 | `SetDamageBonus` / `AddDamageBonus` |
 | `DamageModifierRatio` | 현재 단계의 기본 공격력 대비 보정 비율 | `ApplyUpgrade` / `DowngradeUpgrade` |
@@ -369,6 +369,27 @@ flowchart TD
 파괴된 터렛은 Registry에서 즉시 제거하지 않는다. 플레이어가 같은 인스턴스를 복구할 수
 있도록 등록 상태를 유지하되 Active/Operational 조회와 활성화 요청에서는 제외한다. Scene
 전환이나 실제 GameObject 제거는 `Unregistered`로 구분한다. 현재 `TurretTestController`의 Damage·Destroy·Restore 버튼이 이 경로를 직접 호출한다. Enemy PoC는 `TargetableComponent.TryApplyDamage()`에서 `IDamageableTarget`을 찾아 일반 터렛과 CU에 같은 피해 명령을 전달한다.
+
+#### 살아 있는 터렛의 지속 수리
+
+`TurretBase.Repair(float healthPerSecond, float deltaTime)`는 파괴 전 잃은 체력을 회복한다. 플레이어 측에서 상호작용 가능한 무기·입력 유지·거리 조건을 검사한 뒤 매 갱신에 호출한다. 초당 회복량은 인자로 받으며 10 HP/초를 연동 예시로 사용한다. 터렛은 무기나 플레이어를 조회하지 않고, 호출을 멈추면 회복도 멈춘다. [호출 예시와 결과값](turrets/api-reference.md#플레이어의-지속-수리)
+
+```mermaid
+flowchart TD
+    Player["플레이어<br>무기·입력 유지·거리 검사"] -->|유효한 갱신마다 한 번| Repair["TurretBase.Repair<br>초당 HP × 이번 경과 시간"]
+    Repair --> Check{"양의 유한 입력·초기화·컴포넌트 활성<br>해금·생존·자동 활성화 종료?"}
+    Check -->|아니오| Reject["TurretRepairResult로 거부<br>체력·누적량 유지"]
+    Check -->|예| Full{"이미 최대 체력?"}
+    Full -->|예| NoChange["FullHealth"]
+    Full -->|아니오| Add["RuntimeState<br>소수점 회복량 누적·최대 체력 제한"]
+    Add --> Whole{"정수 HP 증가?"}
+    Whole -->|아니오| Pending["Accumulating"]
+    Whole -->|예| Event["HealthChanged·SnapshotChanged<br>Repaired 반환"]
+```
+
+활성화·OFF·냉각 중 모두 허용하고 활성 상태·냉각·전력 예약을 유지한다. `CanRepair`는 수리 가능한 현재 터렛 상태를 제공한다. 잠금·파괴·자동 활성화 진행 중에는 회복량을 누적하지 않는다. GameObject/컴포넌트 비활성도 거부한다. 정수 HP 미만의 진행은 보관하지만 최대 체력 도달·파괴·복구·초기화·레벨 교체 시 잔량을 비운다. `Restored`는 일반 수리에서 발행하지 않는다.
+
+이 변경은 터렛 API와 회귀 테스트 범위다. 플레이어의 무기·입력 연결과 서버의 요청 검증은 후속 연동이며, CU 체력 API는 변경하지 않았다.
 
 ### 4.4 탐색과 공격
 

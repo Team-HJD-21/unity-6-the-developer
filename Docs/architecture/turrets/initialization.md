@@ -37,7 +37,8 @@ var initial = new TurretInitializationData(
 ## 다른 복원 동작과의 구분
 
 - `CopyForLevelChange`: 승급/강등용 런타임 ID·체력 비율·업그레이드 이전. 저장 입력 적용으로 대체하지 않는다.
-- `Restore()`: 파괴된 터렛을 최대 체력으로 수리하는 게임 명령. 세이브 로드가 아니다.
+- `Repair(healthPerSecond, deltaTime)`: 살아 있는 터렛에 호출 시간만큼 체력을 더하는 게임 명령. 플레이어의 무기·입력·거리 조건은 호출자가 검사한다. [사용 예시와 결과값](api-reference.md#플레이어의-지속-수리)
+- `Restore()`: 파괴된 터렛을 최대 체력·OFF 상태로 복구하는 게임 명령. 지속 수리나 세이브 로드가 아니다.
 - `Initialize(data)`: 생성 시 정확한 체력·잠금·업그레이드 적용. 새 런타임 ID가 등록 단계에서 배정된다.
 
 ## 아직 구현하지 않은 것
