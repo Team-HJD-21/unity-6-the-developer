@@ -66,9 +66,6 @@ public sealed class PlayerBulletRuntimeTests
     [UnityTest]
     public IEnumerator MovingShooter_PreservesConfiguredBulletSpeedAndFreeFlight()
     {
-        var attackData = new SerializedObject(_attack);
-        attackData.FindProperty("_pelletCount").intValue = 1;
-        attackData.ApplyModifiedPropertiesWithoutUndo();
         float speed = new SerializedObject(_bulletPrefab.GetComponent<PlayerBullet>()).FindProperty("_speed").floatValue;
         var velocities = new[] { Vector2.zero, Vector2.right * 5f, Vector2.down * 5f,
             Vector2.up * 5f, new Vector2(3f, 4f), Vector2.right * 20f };
@@ -78,8 +75,9 @@ public sealed class PlayerBulletRuntimeTests
             _shooterBody.linearVelocity = velocity;
             Assert.That(_attack.TryFire(), Is.True);
             CaptureBullets();
-            Assert.That(_bullets.Count, Is.EqualTo(1));
-            var bullet = _bullets[0];
+            Assert.That(_bullets.Count, Is.EqualTo(5));
+            var bullet = _bullets.OrderBy(candidate => Vector2.Angle(Vector2.down,
+                candidate.GetComponent<Rigidbody2D>().linearVelocity)).First();
             var body = bullet.GetComponent<Rigidbody2D>();
             Assert.That(bullet.transform.parent, Is.Null);
             Assert.That(Vector3.Distance(bullet.transform.position, _muzzle.position), Is.LessThan(.001f));
@@ -99,8 +97,31 @@ public sealed class PlayerBulletRuntimeTests
     }
 
     [UnityTest]
-    public IEnumerator Shotgun_PreservesMuzzlePositionPelletCountAndSpread()
+    public IEnumerator DefaultGun_FiresFivePelletsFromMuzzleAndRespectsFireInterval()
     {
+        Assert.That(_attack.TryFire(), Is.True);
+        Assert.That(_attack.TryFire(), Is.False);
+        CaptureBullets();
+        Assert.That(_bullets.Count, Is.EqualTo(5));
+        float[] angles = _bullets.Select(bullet => Vector2.SignedAngle(Vector2.down,
+            bullet.GetComponent<Rigidbody2D>().linearVelocity)).OrderBy(angle => angle).ToArray();
+        foreach (PlayerBullet bullet in _bullets)
+            Assert.That(Vector3.Distance(bullet.transform.position, _muzzle.position), Is.LessThan(.001f));
+        for (int i = 0; i < angles.Length; i++)
+            Assert.That(angles[i], Is.EqualTo(-12.5f + 6.25f * i).Within(.001f));
+        ClearBullets();
+
+        yield return new WaitForSeconds(.21f);
+        Assert.That(_attack.TryFire(), Is.True);
+        CaptureBullets();
+        Assert.That(_bullets.Count, Is.EqualTo(5));
+    }
+
+    [UnityTest]
+    public IEnumerator CryoBlaster_PreservesMuzzlePositionPelletCountAndSpread()
+    {
+        _attack.SelectNextWeapon();
+        Assert.That(_attack.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
         _shooterBody.linearVelocity = Vector2.right * 5f;
         Assert.That(_attack.TryFire(), Is.True);
         CaptureBullets();

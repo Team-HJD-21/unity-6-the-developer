@@ -5,16 +5,24 @@
 
 역할 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md), Milestone별 Priority 업무는 [milestones-and-core-design.md](../planning/milestones-and-core-design.md)를 따른다.
 
+## 회의 운영 — 2026-10-24 수기 기준
+
+- 스프린트 중간 점검: 화요일 11시~11시 반.
+- 기획 보강 회의: 금요일 2시~4시, 약 2~4주 진행 방향.
+- 정기회의: 토요일 1시~3시 반.
+
+시각은 수기 원문 표기다. 오전·오후와 정확한 시작·종료일은 별도 확인하며 임의로 캘린더 일정을 생성하지 않는다. 새로운 Sprint 번호나 Milestone 마감일 변경으로 해석하지 않는다. [회의 검토 기록](../planning/2026-10-24-regular-meeting.md)
+
 ## 1. PL 운영 원칙
 
-A — 양현석은 `Player-Coach` 형태의 PL로, 방향을 결정하면서 Core를 직접 구현한다.
+양현석은 `Player-Coach` 형태의 PL로, 방향을 결정하면서 Core를 직접 구현한다.
 
 - 현재 Milestone과 Sprint Goal을 한 문장으로 유지한다.
 - 팀원당 동시에 진행하는 핵심 Task를 1개, 작은 Task를 1개 이하로 제한한다.
 - Task 착수 전에 범위·선행 작업·완료 조건·검증 방법을 확인한다.
 - Blocker와 역할 간 in-between 문제를 해결하고 필요한 결정을 기록한다.
 - 자신의 Core 변경도 영향 범위가 크면 다른 Owner의 Review를 받는다.
-- C 김진태와 D 황재동의 업무를 A가 자동으로 떠안지 않고, 가용 시간에 맞춰 범위 또는 일정을 조정한다.
+- 김진태와 황재동의 업무를 양현석이 자동으로 떠안지 않고, 가용 시간에 맞춰 범위 또는 일정을 조정한다.
 - Milestone Exit Criteria 전에는 다음 단계의 Content 대량 제작을 허용하지 않는다.
 
 ## 2. Priority
@@ -66,7 +74,7 @@ Milestone: M2 Single-player Vertical Slice
 3. Sprint Goal을 한 문장으로 정한다.
 4. P0와 Goal에 직접 연결된 P1만 먼저 선택한다.
 5. 각 Task가 Definition of Ready를 충족하는지 확인한다.
-6. C/D Task는 각각 김진태·황재동의 가용 시간과 지원자가 기록돼야 `Ready`로 전환한다.
+6. 김진태와 황재동의 Task는 각 담당자의 가용 시간과 지원자가 기록돼야 `Ready`로 전환한다.
 
 ### 작업일 공유
 
@@ -131,7 +139,7 @@ Blocker: 필요한 결정·사람·선행 작업
   - Build/CI/ProjectSettings
   - Network/Authority/Snapshot
 - Copilot 자동 리뷰는 사람 Code Owner 승인을 대신하지 않는다. 사람 협업자가 없는 Copilot PR에는 추가 승인 규칙이 적용될 수 있다.
-- Merge 책임은 PR 작성자와 해당 Feature Owner에게 있다. E가 모든 PR을 최종 승인하지 않는다.
+- Merge 책임은 PR 작성자와 해당 Feature Owner에게 있다. 조수빈이 모든 PR을 최종 승인하지 않는다.
 
 ## 7. Unity Asset 규칙
 
@@ -185,7 +193,7 @@ Core Rule·제품 범위는 [PROJECT_PLAN.md](../product/PROJECT_PLAN.md), Miles
 - Sprint Goal이 한 문장인가?
 - 모든 진행 Task가 Ready였는가?
 - 사람별 핵심 Task가 1개 이하인가?
-- C/D Task에 김진태·황재동의 가용 시간과 지원자가 기록됐는가?
+- 김진태와 황재동의 Task에 각 담당자의 가용 시간과 지원자가 기록됐는가?
 - `main` 필수 CI와 통합 Build가 정상인가?
 - 막힌 결정이 이틀 넘게 방치되지 않았는가?
 - P3가 몰래 P0/P1 범위에 들어오지 않았는가?

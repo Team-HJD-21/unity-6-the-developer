@@ -18,7 +18,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
     [SerializeField] private StageControlUnitView controlUnitView;
     [Header("Turret Data")]
     [SerializeField] private TurretLevelUpgradeCatalog levelCatalog;
-    [SerializeField, Min(0.1f)] private float interactionDistance = 10f;
+    [SerializeField, Min(0.1f), Tooltip("포탑·CU 조작에 필요한 XY 거리입니다. 포탑 선택 거리에는 영향을 주지 않습니다.")]
+    private float interactionDistance = 10f;
 
     private Canvas _canvas;
     private StageTurretSelection _selection;
@@ -26,6 +27,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
     private TurretController _controller;
     private PlayerInfo _player;
     private PlayerControlState _playerControl;
+    private PlayerSkillController _playerSkills;
     private float _nextSourceRetry;
     private float _nextDisplayRefresh;
     private bool _vitalsReady;
@@ -132,7 +134,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         PlayerInfo player = _player;
         if (!isActiveAndEnabled || Time.timeScale <= 0 ||
             player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
-            _controller == null || !_controller.isActiveAndEnabled)
+            _controller == null || !_controller.isActiveAndEnabled ||
+            (_playerSkills != null && _playerSkills.IsPlacingTurret))
             return false;
 
         return _playerControl == null || _playerControl.CanAct;
@@ -163,6 +166,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         {
             PlayerInfo player = _player = FindLocalPlayer();
             _playerControl = player != null ? player.GetComponent<PlayerControlState>() : null;
+            _playerSkills = player != null ? player.GetComponent<PlayerSkillController>() : null;
             var identity = player != null ? player.GetComponent<PlayerActorIdentity>() : null;
             _hasLocalActor = identity != null && identity.PlayerId.Value == LocalPlayerId;
         }
@@ -208,6 +212,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         _hasLocalActor = false;
         _player = null;
         _playerControl = null;
+        _playerSkills = null;
         _selection = null;
         _vitalsReady = false;
         _turretControlsReady = false;

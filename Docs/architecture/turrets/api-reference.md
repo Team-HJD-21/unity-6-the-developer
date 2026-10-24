@@ -9,7 +9,7 @@
 
 ## ID와 읽기 전용 조회
 
-Core 지역이 바인딩된 Scene은 `TurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 D 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
+Core 지역이 바인딩된 Scene은 `TurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 황재동 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
 
 `TurretInstanceRegistry`는 static 클래스다. 별도 씬 인스턴스를 만들지 않는다.
 
@@ -68,6 +68,7 @@ if (TurretInstanceRegistry.TryGet(targetTurretId, out var turret))
 | `RequestActivation(bool)` | `TurretActivationResult` |
 | `ApplyDamage(int)` | `bool` |
 | `Restore()` | `bool` |
+| `Repair(int amount)` | `bool`. 살아 있는 터렛을 부분 회복. 최대 체력 제한, 실제 회복 시 체력·Snapshot 변경 통지 |
 | `SetLocked(bool)` | `bool` |
 | `ApplyUpgrade(TurretUpgradeDefinition)` | `TurretUpgradeResult` |
 | `DowngradeUpgrade(TurretUpgradeDefinition)` | `TurretUpgradeResult` |
@@ -79,6 +80,9 @@ UI는 `CanModifyUpgrades`로 승급·강등 및 세부 업그레이드 버튼을
 `IsManualOperationBlocked`는 해당 전력 공급자의 자동 활성화가 진행 중인지 나타낸다. 이때 개별 활성화, 세부/레벨 변경, `SetLocked`, `Restore`, 공격력 보너스 변경을 거부한다. 기존 `IsManualActivationBlocked`는 같은 값을 반환하는 호환 속성이다. bool API는 `false`, void 보너스 API는 미적용으로 처리하며 Console에 거부 로그를 남긴다. 적의 `ApplyDamage`, 자동 처리 내부 활성화 및 게임 규칙의 구역 해금 호출은 계속 처리한다. 개발 UI에서 피해 주입·구역 변경 등 시스템 API를 수동으로 호출하는 버튼도 진행 중에는 비활성화한다.
 
 체력이 0이면 파괴되고 비활성화된다. Restore는 최대 체력과 비활성 상태로 복구한다. 복구 이후 활성화는 별도로 요청한다. Initial의 플레이어 UI에서 잠금과 해금을 직접 변경하지 않는다. 구역 해금은 Core의 게임 규칙이 관리한다.
+
+스패너 작업 브랜치의 `Repair(amount)`는 양수 회복량만 받으며 초기화 전·비활성 컴포넌트·잠금·파괴·자동 활성화 진행 중이면 false다.
+살아 있는 터렛의 체력만 회복하고 활성화, 전력 예약, 냉각 상태는 유지한다. 만피에서는 false이며 파괴 복구용 Restore와 구분한다.
 
 레벨 승급과 강등은 `RequestLevelUpgrade`와 `RequestLevelDowngrade`로 프리팹 교체를 요청한다. 매개변수와 상태 승계 규칙은 [전체 가이드](../turret-system-guide.md)의 레벨 승급 항목을 확인한다.
 

@@ -1,0 +1,99 @@
+{
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "prompt": "Use case: precise-object-edit. Asset type: Unity 2D sci-fi projectile FX sprite sheet. Input image is the current tiny warm bullet and is a palette/style reference. Replace its weak rounded silhouette with a crisp punchy SINGLE RIFLE PROJECTILE: compact bright ivory white capsule-like head pointing RIGHT (+X), warm pale yellow inner border, thin orange outer rim, short tapered orange trailing streak pointing LEFT. Four subtle flicker variants of this same flying bullet in a strictly 2 by 2 equal cell grid on genuinely transparent background; centered identical bright head positions and identical sizes across all cells. Each cell has ONE horizontal bullet only, generous clear padding. Fixed orientation right. Length about 3.6 times total thickness, solid readable core, small taper tail, dark warm edge gives contrast on grass. Not a rocket, no fins, no casing, no smoke, no explosion, no starbursts, no text, no dividers, no checkerboard, no environment. Match a small pixel-styled top down sci-fi game; simple clean forms, limited ivory/yellow/orange/brown palette, avoid soft fog or huge glow. Deliver a square image with 4 matching frames for slicing, each projectile contained well within own quadrant, centered at each quadrant midpoint.",
+  "model": "not exposed by host tool",
+  "estimateUsd": null,
+  "source": "Assets/Art/Sprites/Player/Motions/V2/Source/DefaultGunProjectile_Source.png",
+  "sourceSha256": "77416725359de0e09697290db51571b8a16451a3d0ca2d9c1eec34dae0ab26aa",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "grid": [
+    2,
+    2
+  ],
+  "uniformScale": 0.23972602739726026,
+  "registration": "right edge x=74; ivory core y=48; existing center pivot and 128 PPU",
+  "finish": "shared 16-colour palette; binary alpha; no dither; 96x96; preserve sprite GUIDs",
+  "frames": [
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/FX/Warm/Warm_0.png",
+      "size": [
+        96,
+        96
+      ],
+      "bounds": [
+        8,
+        37,
+        74,
+        59
+      ],
+      "paletteColorsIncludingTransparent": 14,
+      "sha256": "82b696b120f980bcc25b5e382d8db97266ffb91e8a656a1ec5d9e62ab05c39c9"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/FX/Warm/Warm_1.png",
+      "size": [
+        96,
+        96
+      ],
+      "bounds": [
+        4,
+        37,
+        74,
+        59
+      ],
+      "paletteColorsIncludingTransparent": 14,
+      "sha256": "e788c59612b279e37e51014641d7e82daead9e0db078f0b072f3bd473532c805"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/FX/Warm/Warm_2.png",
+      "size": [
+        96,
+        96
+      ],
+      "bounds": [
+        4,
+        37,
+        74,
+        59
+      ],
+      "paletteColorsIncludingTransparent": 14,
+      "sha256": "37caaa308bfd1eec5f2060a3c15a622a5328b7f66fc5e7116246af373c6a171a"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/FX/Warm/Warm_3.png",
+      "size": [
+        96,
+        96
+      ],
+      "bounds": [
+        10,
+        37,
+        74,
+        59
+      ],
+      "paletteColorsIncludingTransparent": 14,
+      "sha256": "cf6832968a1827c58820a6d3c95579bd5534863238328822f8d20ef845462a13"
+    }
+  ],
+  "checks": {
+    "frameSize": "PASS",
+    "binaryAlpha": "PASS",
+    "palette": "PASS",
+    "padding": "PASS",
+    "spriteGuidAndImporterPreserved": "PASS",
+    "warmClipReferences": "PASS",
+    "cryoArtAndBulletColliderPreserved": "PASS",
+    "flightDistancePreserved": "PASS"
+  },
+  "unityPlayVerification": "not run",
+  "flight": {
+    "speed": 45,
+    "lifetime": 1.3333334,
+    "maximumFreeFlightDistance": 60,
+    "sharedByDefaultAndCryo": true
+  }
+}

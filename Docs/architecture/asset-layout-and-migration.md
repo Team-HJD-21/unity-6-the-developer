@@ -59,7 +59,7 @@ Assets/
 | 구형 Main·Stage·UI Demo | `Scenes/Reference` | 배치·화면 참고. 이전 실행 기능 보장 안 함 |
 | 구형 Monster·Spawner prefab | `Prefabs/Enemies/{Reference,ReferenceSpawning}` | 시각 참고. 제거된 Legacy 동작 없음 |
 
-터렛 내부의 기존 종류·레벨 구분(`Turrets/CanonTurret` 등)과 타입명은 유지한다. 새로운 터렛 생성/관리 계약은 D와 연계하는 #495의 별도 범위다.
+터렛 내부의 기존 종류·레벨 구분(`Turrets/CanonTurret` 등)과 타입명은 유지한다. 새로운 터렛 생성/관리 계약은 황재동과 연계하는 #495의 별도 범위다.
 
 ## 제거 기능과 대체 상태
 

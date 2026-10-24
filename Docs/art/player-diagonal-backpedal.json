@@ -1,0 +1,233 @@
+{
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "model": "not exposed by host tool",
+  "estimateUsd": null,
+  "canvas": [
+    160,
+    160
+  ],
+  "pixelsPerUnit": 32,
+  "runtimeBound": true,
+  "unityPlayVerification": "not run",
+  "records": [
+    {
+      "direction": "DownLeft",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownLeft.png",
+      "sha256": "8ba96ffa33ff92630b4addc0abf405e5f27f8439951752470abfae00c8f99642",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_DownLeft_Source.png",
+      "sourceSha256": "b33372e61466ce56c5b59c5998b1d354b30462a48b8c32d0b9f0e22bf5c94773",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "prompt": "Use case: identity-preserve. ONE full-body held-rifle astronaut game sprite on true transparency. FIRST reference is the approved diagonal DownLeft astronaut and is the exact identity, facing, proportions, colour and held rifle reference. SECOND reference is an already approved SIDE-VIEW BACKWARD-LEAN pose: use only its body lean, not its facing. Make a diagonal equivalent of that pose using the FIRST character. The astronaut still faces diagonally DOWN-LEFT (front-left three-quarter view). It is moving backward toward UP-RIGHT: upper torso and helmet displaced to screen RIGHT and slightly UP relative to hips; legs and boots extend to screen LEFT and slightly DOWN. It should recline backwards away from where it is looking, like a relaxed hovering skater leaning back. The lean must be clear: helmet centre horizontally about one quarter helmet-width behind the boot centre, knees slightly bent forward, chest reclined, boots in front of hips in the viewing direction. Both hands maintain a steady grip on the exact same compact grey-black rifle, keeping the FIRST reference's rifle direction and appearance. Do NOT alter the rifle orientation, length or design. Do not rotate the whole flat image: draw the torso recline anatomically. Same compact ROUND white helmet and black visor, squat white/neutral-grey suit, short limbs, small square white backpack, neutral white-grey boots. Exact same helmet size relative to body as FIRST reference, no longer face, no large head. No foot exhaust, no new flames, no particles, no smoke, no floor or shadow, no motion trails, no text, no extra props. A single stable hovering backward posture for both movement and moving aim. Small sci-fi game sprite style, crisp silhouette, controlled monochrome cel shading matching references. Whole figure visible with generous empty margin, one square image, no panels.",
+      "uniformScale": 0.20454545454545456,
+      "bounds": [
+        28,
+        30,
+        118,
+        132
+      ],
+      "fullHelmet": [
+        61,
+        30,
+        116,
+        76
+      ],
+      "footPixel": [
+        50.5,
+        132.0
+      ],
+      "upperBodyBehindBootsPixels": 38.0,
+      "muzzlePixel": [
+        28.0,
+        92.5
+      ],
+      "rigLocalMuzzle": [
+        -0.975,
+        -0.234375
+      ],
+      "shadowPosition": [
+        -0.92188,
+        -1.84375,
+        0.01
+      ],
+      "bodyBoundsBeforeExhaust": [
+        28,
+        30,
+        118,
+        132
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "sourceCell": null,
+      "details": "player-diagonal-polish.json"
+    },
+    {
+      "direction": "DownRight",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownRight.png",
+      "sha256": "5ff2503664469f7a81024953949ed42b738cd88729ed823f96359f04bdf02492",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_DownRight_Source.png",
+      "sourceSha256": "028a8a0804d577a5ffe5403116f97baecc4b73541edd422da9a8aed97fd399be",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "prompt": "Use case: identity-preserve. ONE full-body held-rifle astronaut game sprite on true transparency. FIRST reference is the approved diagonal DownRight astronaut and is the exact identity, facing, proportions, colour and held rifle reference. SECOND reference is an already approved SIDE-VIEW BACKWARD-LEAN pose: use only its body lean, not its facing. Make a diagonal equivalent of that pose using the FIRST character. The astronaut still faces diagonally DOWN-RIGHT (front-right three-quarter view). It is moving backward toward UP-LEFT: upper torso and helmet displaced to screen LEFT and slightly UP relative to hips; legs and boots extend to screen RIGHT and slightly DOWN. It should recline backwards away from where it is looking, like a relaxed hovering skater leaning back. The lean must be clear: helmet centre horizontally about one quarter helmet-width behind the boot centre, knees slightly bent forward, chest reclined, boots in front of hips in the viewing direction. Both hands maintain a steady grip on the exact same compact grey-black rifle, keeping the FIRST reference's rifle direction and appearance. Do NOT alter the rifle orientation, length or design. Do not rotate the whole flat image: draw the torso recline anatomically. Same compact ROUND white helmet and black visor, squat white/neutral-grey suit, short limbs, small square white backpack, neutral white-grey boots. Exact same helmet size relative to body as FIRST reference, no longer face, no large head. No foot exhaust, no new flames, no particles, no smoke, no floor or shadow, no motion trails, no text, no extra props. A single stable hovering backward posture for both movement and moving aim. Small sci-fi game sprite style, crisp silhouette, controlled monochrome cel shading matching references. Whole figure visible with generous empty margin, one square image, no panels.",
+      "uniformScale": 0.2297872340425532,
+      "bounds": [
+        45,
+        37,
+        137,
+        134
+      ],
+      "fullHelmet": [
+        45,
+        37,
+        99,
+        81
+      ],
+      "footPixel": [
+        96.0,
+        134.0
+      ],
+      "upperBodyBehindBootsPixels": 24.0,
+      "muzzlePixel": [
+        137.0,
+        90.5
+      ],
+      "rigLocalMuzzle": [
+        1.06875,
+        -0.196875
+      ],
+      "shadowPosition": [
+        0.5,
+        -1.90625,
+        0.01
+      ],
+      "bodyBoundsBeforeExhaust": [
+        45,
+        37,
+        137,
+        134
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "sourceCell": null,
+      "details": "player-diagonal-polish.json"
+    },
+    {
+      "direction": "UpLeft",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpLeft.png",
+      "sha256": "05ab3ef682d2beff0709c38b4afd24abb85f80fe73a41c2c059257fb92be0577",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_Source.png",
+      "sourceSha256": "dd3b4af99442ef035498a83440ffd7e57c0b0702800b5f145999938e7078b12c",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "prompt": "Use case: identity-preserve. ONE full-body held-rifle astronaut game sprite on true transparency. FIRST reference is the approved diagonal UpLeft astronaut and is the exact identity, facing, proportions, colour and held rifle reference. SECOND reference is an already approved SIDE-VIEW BACKWARD-LEAN pose: use only its body lean, not its facing. Make a diagonal equivalent of that pose using the FIRST character. The astronaut still faces diagonally UP-LEFT (back-left three-quarter view, white rear helmet and rear backpack prominent). It is moving backward toward DOWN-RIGHT: upper torso and helmet displaced to screen RIGHT and slightly toward camera relative to hips; legs and boots extend to screen LEFT and away from camera. Reclining backward while retaining the back-left view. The lean must be clear: helmet centre horizontally about one quarter helmet-width behind the boot centre, knees slightly bent forward, chest reclined, boots in front of hips in the viewing direction. Both hands maintain a steady grip on the exact same compact grey-black rifle, keeping the FIRST reference's rifle direction and appearance. Do NOT alter the rifle orientation, length or design. Do not rotate the whole flat image: draw the torso recline anatomically. Same compact ROUND white helmet and black visor, squat white/neutral-grey suit, short limbs, small square white backpack, neutral white-grey boots. Exact same helmet size relative to body as FIRST reference, no longer face, no large head. No foot exhaust, no new flames, no particles, no smoke, no floor or shadow, no motion trails, no text, no extra props. A single stable hovering backward posture for both movement and moving aim. Small sci-fi game sprite style, crisp silhouette, controlled monochrome cel shading matching references. Whole figure visible with generous empty margin, one square image, no panels.",
+      "uniformScale": 0.2125984251968504,
+      "bounds": [
+        27,
+        34,
+        115,
+        125
+      ],
+      "fullHelmet": [
+        61,
+        34,
+        115,
+        79
+      ],
+      "footPixel": [
+        64.3,
+        125.0
+      ],
+      "upperBodyBehindBootsPixels": 23.700000000000003,
+      "muzzlePixel": [
+        31.0,
+        64.0
+      ],
+      "rigLocalMuzzle": [
+        -0.91875,
+        0.3
+      ],
+      "shadowPosition": [
+        -0.49063,
+        -1.625,
+        0.01
+      ],
+      "bodyBoundsBeforeExhaust": [
+        27,
+        34,
+        115,
+        122
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "sourceCell": 2,
+      "details": "player-diagonal-polish.json",
+      "muzzleAuthoring": "Upper-left barrel tip at pixel (31,64), matching the working UpRight muzzle height; the shorter left rifle requires a different X distance. Overrides the old boot-extremum measurement."
+    },
+    {
+      "direction": "UpRight",
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpRight.png",
+      "sha256": "c19b0f33c270f92332d853162ac991bc5f2b35962012f707ad17a4d9084b8f57",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_Source.png",
+      "sourceSha256": "dd3b4af99442ef035498a83440ffd7e57c0b0702800b5f145999938e7078b12c",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "prompt": "Use case: identity-preserve. ONE full-body held-rifle astronaut game sprite on true transparency. FIRST reference is the approved diagonal UpRight astronaut and is the exact identity, facing, proportions, colour and held rifle reference. SECOND reference is an already approved SIDE-VIEW BACKWARD-LEAN pose: use only its body lean, not its facing. Make a diagonal equivalent of that pose using the FIRST character. The astronaut still faces diagonally UP-RIGHT (back-right three-quarter view, white rear helmet and rear backpack prominent). It is moving backward toward DOWN-LEFT: upper torso and helmet displaced to screen LEFT and slightly toward camera relative to hips; legs and boots extend to screen RIGHT and away from camera. Reclining backward while retaining the back-right view. The lean must be clear: helmet centre horizontally about one quarter helmet-width behind the boot centre, knees slightly bent forward, chest reclined, boots in front of hips in the viewing direction. Both hands maintain a steady grip on the exact same compact grey-black rifle, keeping the FIRST reference's rifle direction and appearance. Do NOT alter the rifle orientation, length or design. Do not rotate the whole flat image: draw the torso recline anatomically. Same compact ROUND white helmet and black visor, squat white/neutral-grey suit, short limbs, small square white backpack, neutral white-grey boots. Exact same helmet size relative to body as FIRST reference, no longer face, no large head. No foot exhaust, no new flames, no particles, no smoke, no floor or shadow, no motion trails, no text, no extra props. A single stable hovering backward posture for both movement and moving aim. Small sci-fi game sprite style, crisp silhouette, controlled monochrome cel shading matching references. Whole figure visible with generous empty margin, one square image, no panels.",
+      "uniformScale": 0.19424460431654678,
+      "bounds": [
+        45,
+        31,
+        137,
+        123
+      ],
+      "fullHelmet": [
+        45,
+        31,
+        99,
+        75
+      ],
+      "footPixel": [
+        98.5,
+        123.0
+      ],
+      "upperBodyBehindBootsPixels": 26.5,
+      "muzzlePixel": [
+        137.0,
+        64.0
+      ],
+      "rigLocalMuzzle": [
+        1.06875,
+        0.3
+      ],
+      "shadowPosition": [
+        0.57812,
+        -1.5625,
+        0.01
+      ],
+      "bodyBoundsBeforeExhaust": [
+        45,
+        31,
+        136,
+        122
+      ],
+      "exhaustDetails": "player-backpack-exhaust.json",
+      "sourceCell": 3,
+      "details": "player-diagonal-polish.json"
+    }
+  ],
+  "checks": {
+    "fourRegisteredSpritesAndEightStates": "PASS",
+    "sameSpriteAcrossMoveAndFire": "PASS",
+    "clipTimingAndShadowOnlyCurves": "PASS",
+    "muzzleBindings": "PASS",
+    "previousStatesAndPhysicsPreserved": "PASS",
+    "unityTestRunner": "NOT_RUN",
+    "unityPlayMode": "NOT_RUN"
+  }
+}

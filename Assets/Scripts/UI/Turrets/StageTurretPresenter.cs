@@ -38,7 +38,8 @@ internal sealed class StageTurretPresenter : IDisposable
         if (_disposed) return;
 
         TurretBase turret = _selection.Resolve();
-        bool canInteract = _canInteract();
+        bool withinReach = _selection.CanInteractWith(turret);
+        bool canInteract = _canInteract() && withinReach;
         bool selectionChanged = _displayedId != _selection.SelectedId;
         bool permissionChanged = _displayedPermission != canInteract;
         if (!selectionChanged && !permissionChanged && !_dirty && !refreshDisplay) return;
@@ -51,7 +52,7 @@ internal sealed class StageTurretPresenter : IDisposable
         bool canLevelUp = turret != null && _catalog.TryGetNext(turret.Definition, out _);
         bool canLevelDown = turret != null && _catalog.TryGetPrevious(turret.Definition, out _);
         _view.Show(turret, canInteract, canLevelUp, canLevelDown,
-            _getController()?.Regions?.Snapshot.Mode == RegionPolicyMode.Dynamic);
+            _getController()?.Regions?.Snapshot.Mode == RegionPolicyMode.Dynamic, withinReach);
     }
 
     private void Toggle()
@@ -109,7 +110,11 @@ internal sealed class StageTurretPresenter : IDisposable
         turret = null;
         if (_disposed || !_canInteract()) return false;
         turret = _selection.Resolve();
-        return turret != null;
+        if (turret == null) return false;
+        if (_selection.CanInteractWith(turret)) return true;
+
+        Refresh(true);
+        return false;
     }
 
     private void OnSnapshotChanged(int instanceId)
