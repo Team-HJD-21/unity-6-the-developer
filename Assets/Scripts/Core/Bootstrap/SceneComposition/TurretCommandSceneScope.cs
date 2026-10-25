@@ -114,9 +114,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public void Pump()
         {
             if (_disposed) return;
-            if (_network.IsServer && (_controlUnit == null || !_turrets.Controller.isActiveAndEnabled || !_turrets.Controller.HasWriteAuthority))
+            if (_matches.IsGameplayRunning && _network.IsServer && (_controlUnit == null || _turrets == null ||
+                _turrets.Controller == null || !_turrets.Controller.isActiveAndEnabled || !_turrets.Controller.HasWriteAuthority))
                 throw new InvalidOperationException("The Match lost its D control scope.");
-            if (_hostPresentation != null && Time.unscaledTime >= _nextPresentationSample)
+            if (IsRunning() && _hostPresentation != null && Time.unscaledTime >= _nextPresentationSample)
             { _nextPresentationSample = Time.unscaledTime + .1f; _hostPresentation.Refresh(); }
             _gateway?.Pump();
             _presentationReplication?.Pump();

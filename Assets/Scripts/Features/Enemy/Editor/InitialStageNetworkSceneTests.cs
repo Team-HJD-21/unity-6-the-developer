@@ -121,6 +121,8 @@ public sealed class InitialStageNetworkSceneTests
         Assert.That(launcher.TryRequestCurrentEncounter("Normal", 10, EncounterRequestSource.RuntimeUI, out _), Is.False);
         Assert.That(Object.FindAnyObjectByType<PlayerControlState>().CanAct, Is.False);
         Assert.That(cu.ApplyDamage(1), Is.False);
+        yield return null;
+        Assert.That(binding.Matches.Phase, Is.EqualTo(NetworkMatchPhase.Running), "A completed result may wait without a false D-scope failure.");
         Assert.That(binding.TryEndMatch(), Is.True);
         Assert.That(app.CurrentMatchId.IsEmpty, Is.True);
         Assert.That(scene.MatchCoordinator, Is.Null);
