@@ -22,7 +22,7 @@ public sealed class PlayerControlState : MonoBehaviour, IPlayerMatchBinding, IPl
         ? _networkMatch.Phase == NetworkMatchPhase.Preparing
         : _session != null && !_session.IsDisposed && _session.State.Phase == MatchPhase.Preparing;
     private bool IsRunning => _networkMatch != null
-        ? _networkMatch.Phase == NetworkMatchPhase.Running
+        ? _networkMatch.IsGameplayRunning
         : _session != null && !_session.IsDisposed && _session.State.Phase == MatchPhase.Running;
     public bool CanPrepare => !IsBlocked && (!_wasBound || IsPreparing || (_allowSelectionDuringCombat && IsRunning));
     public bool CanAct => !IsBlocked && (!_wasBound || IsRunning || (_allowActionsDuringPreparation && IsPreparing));

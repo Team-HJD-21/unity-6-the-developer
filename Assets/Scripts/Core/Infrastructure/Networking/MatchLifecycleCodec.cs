@@ -12,7 +12,7 @@ namespace TeamHJD.Game.Infrastructure
     public static class MatchLifecycleCodec
     {
         public const int MaximumMessageBytes = NetworkMessageLimits.MaximumMessageBytes;
-        private const int Magic = 0x314D4A48;
+        private const int Magic = 0x324D4A48;
         public static byte[] Encode(NetworkMatchDescriptor descriptor)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
@@ -46,9 +46,12 @@ namespace TeamHJD.Game.Infrastructure
         {
             if (!Enum.IsDefined(typeof(MatchLifecycleSignalKind), kind)) throw new ArgumentOutOfRangeException(nameof(kind));
             if (signal.MatchId.IsEmpty || signal.DescriptorId == Guid.Empty) throw new ArgumentException("Invalid signal.", nameof(signal));
+            if ((kind == MatchLifecycleSignalKind.Completed) != (signal.Completion != null))
+                throw new ArgumentException("Only a Completed signal must contain a final completion.", nameof(signal));
             using var stream = new MemoryStream(); using var writer = new BinaryWriter(stream, Utf8, true);
             writer.Write(Magic); writer.Write((byte)((int)kind + 1));
             WriteText(writer, signal.MatchId.Value); writer.Write(signal.DescriptorId.ToByteArray());
+            if (signal.Completion != null) WriteCompletion(writer, signal.Completion);
             return Finish(stream);
         }
         public static void Decode(byte[] bytes, out NetworkMatchDescriptor descriptor,
@@ -87,10 +90,13 @@ namespace TeamHJD.Game.Infrastructure
                         new MatchConfig(match, mode, stage, difficulty, content, seed, players),
                         regionMode, definition, bindings);
                 }
-                else if (tag >= 1 && tag <= 3)
+                else if (tag >= 1 && tag <= 4)
                 {
                     kind = (MatchLifecycleSignalKind)(tag - 1);
-                    signal = new MatchLifecycleSignal(new MatchId(ReadText(reader)), ReadGuid(reader));
+                    var match = new MatchId(ReadText(reader));
+                    Guid preparation = ReadGuid(reader);
+                    signal = new MatchLifecycleSignal(match, preparation,
+                        kind == MatchLifecycleSignalKind.Completed ? ReadCompletion(reader, match) : null);
                 }
                 else throw new FormatException("Unknown message kind.");
                 if (stream.Position != stream.Length) throw new FormatException("Unexpected trailing payload.");
@@ -102,6 +108,34 @@ namespace TeamHJD.Game.Infrastructure
         {
             if (stream.Length > MaximumMessageBytes) throw new ArgumentException("Lifecycle payload exceeds the protocol limit.");
             return stream.ToArray();
+        }
+
+        private static void WriteCompletion(BinaryWriter writer, MatchCompletion completion)
+        {
+            writer.Write((int)completion.Result.Outcome);
+            writer.Write(completion.Result.CompletedWave);
+            writer.Write(completion.Result.CompletedAt.UtcDateTime.Ticks);
+            if (completion.RewardReceipt.CurrencyDeltas.Count > MatchLifecycleSignal.MaximumCurrencyEntries)
+                throw new ArgumentException("Too many proposed currency entries.", nameof(completion));
+            writer.Write(completion.RewardReceipt.CurrencyDeltas.Count);
+            foreach (CurrencyDelta delta in completion.RewardReceipt.CurrencyDeltas)
+            {
+                WriteText(writer, delta.CurrencyId.Value);
+                writer.Write(delta.Amount);
+            }
+        }
+
+        private static MatchCompletion ReadCompletion(BinaryReader reader, MatchId match)
+        {
+            var outcome = (MatchOutcome)reader.ReadInt32();
+            int wave = reader.ReadInt32();
+            var completedAt = new DateTimeOffset(reader.ReadInt64(), TimeSpan.Zero);
+            int count = ReadCount(reader, MatchLifecycleSignal.MaximumCurrencyEntries);
+            var deltas = new CurrencyDelta[count];
+            for (int i = 0; i < count; i++)
+                deltas[i] = new CurrencyDelta(new CurrencyId(ReadText(reader)), reader.ReadInt64());
+            return new MatchCompletion(new MatchResult(match, outcome, wave, completedAt),
+                new RewardReceipt(match, outcome, deltas));
         }
 
     }

@@ -118,7 +118,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _turretBinding = GetComponent<TurretMatchBinding>();
-                _turretBinding?.BindMatch(matchId, () => HasCurrentMatch && (network == null || network.Phase == NetworkMatchPhase.Running));
+                _turretBinding?.BindMatch(matchId, () => HasCurrentMatch && _matchSession != null &&
+                    !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running &&
+                    (network == null || network.IsGameplayRunning));
                 MatchSession session = appMatchHost.StartMatch(
                     config,
                     initialState,
@@ -129,6 +131,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matchHost = appMatchHost;
                 _ownsMatch = true;
                 _ownedMatchId = matchId;
+                _matchSession = session;
                 // D의 Match lease가 쓰기를 허용한 뒤, Core 지역 정책을 붙이기 전에 초기화합니다.
                 ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
                 _turretInputSource = turretInputSource;
@@ -151,7 +154,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 {
                     if (_regionBinding == null) throw new InvalidOperationException("Network Match requires a RegionSceneBinding.");
                     _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
-                        network.Descriptor.RegionMode, () => network.Phase == NetworkMatchPhase.Running, _turretBinding);
+                        network.Descriptor.RegionMode, () => network.IsGameplayRunning, _turretBinding);
                 }
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)

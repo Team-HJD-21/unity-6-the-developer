@@ -24,13 +24,14 @@ Unity `6000.3.23f1`, 새 사본에서 공식 batch EditMode 실행. 원본 Edito
 | --- | --- | --- |
 | `b0-core.xml` | 종료 0, 18/18 | 전체 스크립트 컴파일, NetworkMatchCoordinator / TurretCommandGateway / RegionGridReplica / AppShutdown |
 | `b2-scene.xml` | 종료 0, 7/7 | 실제 Scene의 읽기 전용 준비, CU 누락/범위 밖·서로 다른 Controller 거부, Static→Dynamic 점령/회수, 실제 Host 시작·Enemy 생성·종료·연결 유지·새 Match 재시작 |
+| `b3-network.xml` | 종료 0, 19/19 | Host 최종 결과·변조/이전 준비 거부·단일 관측·backpressure 재시도·결과 보존, codec·실제 UTP 두 SDK 인스턴스의 결과 전달/재시작, 기존 터렛 명령/종료 |
 | `.meta` 검사 | 오류 0 | 실제 Assets 전체 파일/메타 짝 검사 |
 
 Scene 검사는 Test Framework가 PlayMode로 진입해 실제 조립/API/객체를 확인했다. 사람의 마우스 입력·해상도별 UI 외형·실제 원격 Player 이동 복제·전체 협동 완료를 의미하지 않는다. 이전 10/15 검증은 당시 source 증거로 별도 보존한다.
 
 ## 다음 구현과 미결
 
-- B3: Host 최종 결과의 Client 전달과 gameplay gate. 연결 Running을 게임플레이 허용으로 취급하는 잔여 경로를 정리한다.
+- B3 구현: Host 최종 결과의 Client 전달·gameplay gate, pending 재시도와 정상 종료 보류, 결과 보존을 연결했다. Lifecycle v2로 변경했으며 같은 Build가 필요하다. 한 프로세스 두 SDK 검사를 실제 원격 Player/두 실행 파일 검증으로 확대하지 않는다.
 - B4: 실제 CU 파괴 → MatchCoordinator → Session 단일 완료 → 신규 요청/시간 작업 차단.
 - B5/B6: SceneFlowController / ScreenManager의 실제 결과·로딩·전환, owner별 로컬 입력 잠금.
 - B7/B8: 환경 context의 실제 Encounter 소비와 포인트 밖 origin/source의 실제 생성/추적.

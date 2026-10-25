@@ -33,7 +33,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public Guid DescriptorId { get; }
         public ITurretCommandRequester Requester => _gateway;
         public ITurretPresentationSource Presentation => _hostPresentation ?? (ITurretPresentationSource)_clientPresentation;
-        private bool IsRunning() => !_disposed && _matches.Phase == NetworkMatchPhase.Running &&
+        private bool IsRunning() => !_disposed && _matches.IsGameplayRunning &&
             _matches.Descriptor?.DescriptorId == DescriptorId && _turrets.BoundMatchId == MatchId;
         private bool IsAuthority() => IsRunning() && _network.IsServer;
         private PlayerId? Resolve(ulong connection) => IsRunning() && _matches.TryResolveParticipant(connection, out var player) ? player : (PlayerId?)null;

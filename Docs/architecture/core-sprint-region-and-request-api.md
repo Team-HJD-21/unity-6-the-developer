@@ -80,6 +80,14 @@ EncounterRequestResult result = requests.Submit(request, verifiedIssuer);
 
 ## App 연결 수명과 권장 시작 순서
 
+### 게임 완료와 연결 종료 (2026-10-26)
+
+`NetworkMatchCoordinator.IsGameplayRunning`으로 신규 게임 요청 가능 여부를 판단한다. `Phase == Running`만으로 판단하면 최종 결과 화면에서도 조작을 허용할 수 있다. Host의 `TryPublishCompletion(session.Completion)`이 확정 결과를 게시하면 양쪽 gameplay gate가 닫힌다. `Completion`/`Completed`는 actor 참조 없는 결과와 보상 **제안**을 제공하며 Backend 지급 승인이나 프로필 쓰기 API가 아니다.
+
+결과는 현재 Match/Descriptor와 실제 Host 발신을 검증한다. 같은 준비 세대에서 한 번만 적용하고, 새 준비의 이전 결과는 거부한다. 결과는 정상 End 뒤에도 새 준비 전까지 읽을 수 있다. 전송 backpressure가 있으면 `HasPendingCompletion`이 true이며 App pump가 재시도한다. 결과가 순서 보존 전송 큐에 접수되기 전 `TryEnd()`는 false다. 연결 강제 종료/상대 이탈은 통신 보장을 만들 수 없으며 정상 결과 인수와 구분한다.
+
+Lifecycle 채널/codec은 **v2**다. 동일 Build를 사용해야 하며 이전 v1과 혼합 실행을 지원하지 않는다. B3의 실제 UTP 검사는 한 프로세스의 두 SDK 인스턴스다. 실제 Player NetworkBehaviour/이동과 Windows 두 실행 파일의 이번 head 인수는 별도다.
+
 `NgoNetworkSession`은 전달된 NetworkManager를 사용하며 자신이 시작한 연결만 닫는다. App 조립부가 `AppRoot.AttachNetworkSession(adapter)`로 소유권을 넘긴 뒤 `appRoot.NetworkSession.TryStartHost()` 또는 TryStartClient를 명시적으로 호출한다. Attach 자체는 서버를 열지 않는다. 기존 외부 테스트 Host를 관찰한 어댑터는 그 연결을 임의 종료하지 않는다.
 
 권장 순서: **연결 API → 실제 참가자 집합/설정 확정 → Scene·Feature 준비 → Host의 Match 시작 API**. Host 혼자 시작할 수 있으며 연결되었다는 이유만으로 Match를 시작하지 않는다. MatchReadyBarrier는 준비 모델이고 실제 전송 구현을 대체하지 않는다. 참가자 집합이 바뀌면 새 준비 세대를 만들어야 한다.
