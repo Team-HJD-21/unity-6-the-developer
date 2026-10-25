@@ -11,7 +11,7 @@
 | NetworkMatchCoordinator | 연결의 Match 준비 세대 | 참가자·Scene 준비·Host 시작/종료·SDK 발신자 대응 | 플레이어 이동 복제·HP·승패 판단 |
 | MatchSession | 한 Match | 기존 상태/시뮬레이션·지역·사건·완료 자료 수명 | Scene 로딩·팝업 |
 | **MatchCoordinator** | 한 권위 Match | Feature 사실을 받아 모드 판단·단일 완료·새 요청/시간 작업 차단. 실제 CU 파괴 연결 구현 | 두 번째 MatchState·Feature HP 원본 |
-| **SceneFlowController (목표)** | App의 전환 작업 | 기존 ISceneFlow를 이용한 전환·취소·실패 복구, 입력 잠금 수명 | 승패·보상·Hub 콘텐츠 |
+| **SceneFlowController** | App의 전환 작업 | 실제 Unity/단독 Host NGO 전환·Additive 취소/실패 복구, 입력 잠금 수명 | 승패·보상·Hub 콘텐츠·다중 참가자 이동 합의 |
 | **ScreenManager (목표)** | 로컬 UI | 화면/팝업 stack·focus/back·Presenter 해제·입력 잠금 | Host 게임 시간·전투 권위 |
 | InitialStageCompositionRoot | Scene | CU/Grid/Feature 참조 검사, 순서 있는 연결과 rollback | 진행 규칙·전역 서비스 보관 |
 
@@ -82,7 +82,7 @@ sequenceDiagram
 | --- | --- | --- |
 | 전역 부팅·영구 Manager | AppBootstrap / AppRoot / AppServices | 기존 기반 |
 | 게임 시작·승패·종료 | MatchSession + MatchCoordinator + IModeRules | 실제 CU 파괴·단일 패배/요청 차단 구현. 승리·복귀 제품 정책 별도 |
-| Scene 이동 | ISceneFlow + SceneFlowController + Unity adapter | Port/Fake 존재, 실제 흐름 예정 |
+| Scene 이동 | ISceneFlow + SceneFlowController + Unity/NGO adapter | 실제 재로드·Hub 복귀 구현. 다중 참가자 준비 합의 별도 |
 | 화면/팝업·로딩·결과 | ScreenManager + Presenter/View | 기존 Combat HUD 유지, 운영 화면 예정 |
 | Player/CU HP·터렛 전력 | 실제 Feature | 유지, 별도 Core writer 없음 |
 | 프로필·재화·저장 | Profile/Backend/Local cache 경계 | Fake 존재, 이번 전체 구현 대상 아님 |

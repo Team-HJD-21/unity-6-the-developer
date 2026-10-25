@@ -14,6 +14,8 @@ namespace TeamHJD.Game.Application
         public IContentCatalog Content { get; }
         public IPlatformService Platform { get; }
         public ISceneFlow SceneFlow { get; }
+        public InputLockService InputLocks { get; }
+        public SceneFlowController SceneTransitions { get; }
         public MatchSessionFactory MatchSessions { get; }
         public INetworkSession NetworkSession { get; private set; }
         public NetworkMatchCoordinator NetworkMatches { get; private set; }
@@ -30,6 +32,8 @@ namespace TeamHJD.Game.Application
             Content = content ?? throw new ArgumentNullException(nameof(content));
             Platform = platform ?? throw new ArgumentNullException(nameof(platform));
             SceneFlow = sceneFlow ?? throw new ArgumentNullException(nameof(sceneFlow));
+            InputLocks = new InputLockService();
+            SceneTransitions = new SceneFlowController(SceneFlow, InputLocks);
             MatchSessions = new MatchSessionFactory(authority ?? throw new ArgumentNullException(nameof(authority)));
             NetworkSession = networkSession;
         }
@@ -103,6 +107,7 @@ namespace TeamHJD.Game.Application
             if (_isDisposed) return;
             _isDisposed = true;
             List<Exception> errors = null;
+            DisposeIfNeeded(SceneTransitions, ref errors);
             var matches = NetworkMatches;
             var transport = _matchTransport;
             NetworkMatches = null;
@@ -122,6 +127,7 @@ namespace TeamHJD.Game.Application
             DisposeIfNeeded(Content, ref errors);
             DisposeIfNeeded(Platform, ref errors);
             DisposeIfNeeded(SceneFlow, ref errors);
+            DisposeIfNeeded(InputLocks, ref errors);
             INetworkSession network = NetworkSession;
             NetworkSession = null;
             DisposeIfNeeded(network, ref errors);

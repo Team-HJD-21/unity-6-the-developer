@@ -7,7 +7,11 @@ namespace TeamHJD.Game.Contracts
 {
     public interface ISceneFlow
     {
+        bool CanLoad(string sceneKey);
+        bool IsLoaded(string sceneKey);
+        float Progress { get; }
         Task LoadAsync(string sceneKey, CancellationToken cancellationToken);
+        Task ReplaceAsync(string sceneKey, CancellationToken cancellationToken);
         Task UnloadAsync(string sceneKey, CancellationToken cancellationToken);
     }
 }

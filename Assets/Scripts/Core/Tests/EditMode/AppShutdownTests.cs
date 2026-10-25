@@ -83,6 +83,10 @@ namespace TeamHJD.Game.Tests.EditMode
 
         private sealed class ProbeScenes : ISceneFlow, IDisposable
         {
+            public bool CanLoad(string key) => true;
+            public bool IsLoaded(string key) => false;
+            public float Progress => 1f;
+            public Task ReplaceAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;
             public int DisposedCount;
             public Task LoadAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;
             public Task UnloadAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;

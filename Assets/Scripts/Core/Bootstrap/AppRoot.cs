@@ -18,6 +18,8 @@ namespace TeamHJD.Game.Bootstrap
 
         internal AppServices Services { get; private set; }
         public MatchId CurrentMatchId => _currentMatch == null ? default : _currentMatch.Config.MatchId;
+        public SceneFlowController SceneTransitions { get { ThrowIfUnavailable(); return Services.SceneTransitions; } }
+        public IInputBlocker LocalInput { get { ThrowIfUnavailable(); return Services.InputLocks; } }
         public INetworkSession NetworkSession => Services?.NetworkSession;
         public NetworkMatchCoordinator NetworkMatches => Services?.NetworkMatches;
         public RegionReplicationSession NetworkRegions => Services?.NetworkRegions;

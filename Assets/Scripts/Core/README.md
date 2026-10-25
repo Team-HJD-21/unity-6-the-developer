@@ -2,6 +2,8 @@
 
 ## 2026-10-26 Match 운영 연결
 
+Scene 전환은 [SceneFlowController API](../../../Docs/architecture/scene-flow-api.md)를 따른다. Bootstrap은 실제 UnitySceneFlow를 사용하고 NGO 연결 뒤에는 단독 Host용 NGO Scene driver를 연결한다. 소유자별 입력 잠금은 Player의 사망/Match 상태와 별개이며 서로의 잠금을 풀지 않는다. 실제 Initial_Stage 재로드→새 Match/CU/Enemy→우주선 복귀를 검사했다. 결과/로딩 화면은 다음 배치이며 다중 참가자 Scene 이동 완료는 아니다.
+
 [현재 배치·검증 기록](../../../Docs/planning/2026-10-26-core-sprint-implementation.md)과 [운영 책임](../../../Docs/architecture/match-management-responsibilities.md)을 먼저 확인하세요. 아래 과거 날짜의 미완료/검증 내용은 당시 기록입니다.
 
 `InitialStageCompositionRoot.ComposeAuthority`는 CU 구역을 명시 초기화한 뒤 실제 `ControlUnitHealth`의 읽기/파괴 Port를 `MatchCoordinator`에 연결합니다. CU `Destroyed` → `EvaluateProgress` → `StoryModeRules.Evaluate` → `MatchSession.Complete` → 취소 토큰/완료 알림 순서입니다. 기존 `MatchState.ControlUnit` 초기 HP를 실제 HP 원본으로 다시 쓰지 않습니다.

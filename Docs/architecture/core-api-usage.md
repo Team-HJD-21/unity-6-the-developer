@@ -77,7 +77,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 `IProfileService.LoadAsync(playerId, cancellationToken)`과 `SaveAsync(profile, cancellationToken)`은 취소 토큰을 명시적으로 받는다. 호출자가 자신의 Scene·화면·App 수명에 맞는 토큰을 소유하고 종료 때 취소한다. 취소 후 완료된 응답을 다른 사용자나 새 Match에 적용하지 않는다. `OperationCanceledException`은 취소 흐름으로, 다른 예외는 실패로 처리한다. 프로필이 없을 때 Load 결과의 null과 통신 실패를 동일시하지 않는다.
 
-현재 Bootstrap의 `FakeProfileService`, `FakePlatformService`, `FakeSceneFlow`는 개발용이며 실 Backend·저장·로그인을 보장하지 않는다. ContentCatalog 에셋이 없으면 Fake fallback을 쓴다. 전체 서비스 구현은 #444에서 선정한다.
+현재 Bootstrap의 `FakeProfileService`, `FakePlatformService`는 개발용이며 실 Backend·저장·로그인을 보장하지 않는다. ContentCatalog 에셋이 없으면 Fake fallback을 쓴다. Scene은 실제 UnitySceneFlow와 연결 시 NgoSceneFlow를 사용하며 [Scene API](scene-flow-api.md)의 수명/취소·Host 범위를 따른다. FakeSceneFlow는 검사 전용으로 남긴다. 전체 서비스 구현은 #444에서 선정한다.
 
 ## 현재 Network 경계
 
