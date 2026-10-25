@@ -2,9 +2,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Presentation;
+using TeamHJD.Game.Infrastructure;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,11 +19,14 @@ namespace TeamHJD.Game.Bootstrap
         private readonly HashSet<int> _composedSceneHandles = new HashSet<int>();
         private MatchSession _currentMatch;
         private bool _isDisposed;
+        private AppScreenPresenter _screenPresenter;
+        private IDisposable _completionSubscription;
 
         internal AppServices Services { get; private set; }
         public MatchId CurrentMatchId => _currentMatch == null ? default : _currentMatch.Config.MatchId;
         public SceneFlowController SceneTransitions { get { ThrowIfUnavailable(); return Services.SceneTransitions; } }
         public IInputBlocker LocalInput { get { ThrowIfUnavailable(); return Services.InputLocks; } }
+        public ScreenManager Screens { get { ThrowIfUnavailable(); return Services.Screens; } }
         public INetworkSession NetworkSession => Services?.NetworkSession;
         public NetworkMatchCoordinator NetworkMatches => Services?.NetworkMatches;
         public RegionReplicationSession NetworkRegions => Services?.NetworkRegions;
@@ -47,7 +54,10 @@ namespace TeamHJD.Game.Bootstrap
         public NetworkMatchCoordinator AttachNetworkMatchTransport(IMatchLifecycleTransport transport)
         {
             ThrowIfUnavailable();
-            return Services.AttachNetworkMatchTransport(transport);
+            var matches = Services.AttachNetworkMatchTransport(transport);
+            matches.Started += OnNetworkMatchStarted;
+            matches.Completed += OnNetworkMatchCompleted;
+            return matches;
         }
 
         public RegionReplicationSession AttachRegionSnapshotTransport(IRegionSnapshotTransport transport)
@@ -58,7 +68,11 @@ namespace TeamHJD.Game.Bootstrap
 
         private void Update()
         {
-            if (!_isDisposed && Services != null) Services.PumpNetwork();
+            if (!_isDisposed && Services != null)
+            {
+                Services.PumpNetwork();
+                _screenPresenter?.Render();
+            }
         }
 
         private void OnEnable()
@@ -86,6 +100,9 @@ namespace TeamHJD.Game.Bootstrap
             if (Services != null) throw new InvalidOperationException("AppRoot has already been initialized.");
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
+            if (UnityEngine.Application.isPlaying)
+                _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
+                    scene => ReplaceGameplaySceneAsync(scene), GetSceneTravelRestriction);
         }
 
         public MatchSession StartMatch(MatchConfig config, MatchState initialState, IModeRules modeRules)
@@ -139,6 +156,12 @@ namespace TeamHJD.Game.Bootstrap
                 throw;
             }
             _currentMatch = nextMatch;
+            Services.Screens.BindMatch(config.MatchId);
+            _completionSubscription = nextMatch.Events.Subscribe(fact =>
+            {
+                if (fact is MatchCompleted completed && _currentMatch == nextMatch)
+                    OnNetworkMatchCompleted(completed.Completion);
+            });
 #if UNITY_EDITOR
             PublishBattlefieldSnapshot(_currentMatch.Battlefield);
 #endif
@@ -192,6 +215,7 @@ namespace TeamHJD.Game.Bootstrap
         public void EndCurrentMatch()
         {
             if (_currentMatch == null) return;
+            _completionSubscription?.Dispose(); _completionSubscription = null;
             var endingMatch = _currentMatch;
             _currentMatch = null;
             try
@@ -224,11 +248,18 @@ namespace TeamHJD.Game.Bootstrap
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             _composedSceneHandles.Clear();
             AppServices services = Services;
+            if (services?.NetworkMatches != null)
+            {
+                services.NetworkMatches.Started -= OnNetworkMatchStarted;
+                services.NetworkMatches.Completed -= OnNetworkMatchCompleted;
+            }
             Services = null;
             var errors = new List<Exception>();
             try { EndCurrentMatch(); }
             catch (Exception exception) { errors.Add(exception); }
             try { services?.Dispose(); }
+            catch (Exception exception) { errors.Add(exception); }
+            try { _screenPresenter?.Dispose(); _screenPresenter = null; }
             catch (Exception exception) { errors.Add(exception); }
             if (errors.Count > 0) throw new AggregateException("App shutdown failed after cleanup.", errors);
         }
@@ -241,7 +272,39 @@ namespace TeamHJD.Game.Bootstrap
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            if (mode == LoadSceneMode.Single && Services != null) Services.Screens.ResetContext();
             ComposeScene(scene);
+        }
+
+        private void OnNetworkMatchStarted(NetworkMatchDescriptor descriptor) => Services?.Screens.BindMatch(descriptor.Config.MatchId);
+        private void OnNetworkMatchCompleted(MatchCompletion completion)
+        {
+            if (!_isDisposed && _screenPresenter != null) Services.Screens.ShowResult(completion);
+        }
+
+        /// <summary>화면의 재시작/복귀 의도를 Match 종료와 실제 Scene 교체에 연결하는 조립 경계입니다.</summary>
+        public async Task ReplaceGameplaySceneAsync(string scenePath, CancellationToken token = default)
+        {
+            ThrowIfUnavailable(); token.ThrowIfCancellationRequested();
+            if (!Services.SceneFlow.CanLoad(scenePath)) throw new ArgumentException("The Scene is unavailable in Build Settings.", nameof(scenePath));
+            string restriction = GetSceneTravelRestriction();
+            if (!string.IsNullOrEmpty(restriction)) throw new InvalidOperationException(restriction);
+            if (NetworkMatches?.Descriptor != null && !NetworkMatches.TryEnd())
+                throw new InvalidOperationException("Final result transmission is pending; wait before leaving.");
+            EndCurrentMatch();
+            await Services.SceneTransitions.ReplaceAsync(scenePath, token);
+        }
+
+        private string GetSceneTravelRestriction()
+        {
+            if (_isDisposed || Services == null) return "App is stopping.";
+            if (Services.SceneTransitions.IsTransitioning) return "Scene transition in progress.";
+            if (NetworkSession != null && NetworkSession.State == NetworkConnectionState.ConnectedClient)
+                return "Waiting for the Host's Scene decision.";
+            if (NetworkSession is NgoNetworkSession ngo && ngo.IsServer && ngo.ConnectedPeerIds.Count != 1)
+                return "Multiplayer Scene travel awaits the shared readiness contract.";
+            if (NetworkMatches?.HasPendingCompletion == true) return "Waiting for final result transmission.";
+            return string.Empty;
         }
 
         private void OnSceneUnloaded(Scene scene)
