@@ -1,34 +1,15 @@
 using UnityEngine;
 
 /// <summary>
-/// 지정된 타겟에 따라 몬스터의 이동과 공격 행동을 수행한다.
-/// 타겟과의 거리를 기준으로 이동 또는 공격을 실행하고 애니메이션 상태를 갱신한다.
+/// 지정된 타겟에 따라 몬스터의 이동과 공격 행동을 조율한다.
 /// </summary>
-[RequireComponent(typeof(Animator))]
 public class EnemyController : MonoBehaviour
 {
-    // Animator 파라미터
-    private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
-    private static readonly int MoveXHash = Animator.StringToHash("MoveX");
-    private static readonly int MoveYHash = Animator.StringToHash("MoveY");
-    private static readonly int MoveAnimSpeedHash = Animator.StringToHash("MoveAnimSpeed");
-    private static readonly int AttackHash = Animator.StringToHash("Attack");
-
     [Header("참조")]
-    [SerializeField] private Animator animator;
     [SerializeField] private EnemyTargeting  enemyTargeting;
     [SerializeField] private EnemyMovement enemyMovement;
     [SerializeField] private EnemyCombat enemyCombat;
-    
-    
-    [SerializeField] private float animationReferenceSpeed = 2f;
- 
-    
-    // 런타임 상태
-   
-    
-    
-    private EnemyNetworkAnimator _networkAnimator;
+    [SerializeField] private EnemyAnimation enemyAnimation;
     
     /// <summary>
     /// 다른 미사일이 이미 이 적을 목표로 삼았는지 나타낸다.
@@ -41,15 +22,14 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        _networkAnimator = GetComponent<EnemyNetworkAnimator>();
-        if (animator == null)
-            animator = GetComponent<Animator>();
         if (enemyTargeting == null)
             enemyTargeting = GetComponent<EnemyTargeting>();
         if (enemyMovement == null)
             enemyMovement = GetComponent<EnemyMovement>();
         if (enemyCombat == null)
             enemyCombat = GetComponent<EnemyCombat>();
+        if (enemyAnimation == null)
+            enemyAnimation = GetComponent<EnemyAnimation>();
     }
 
     private void LateUpdate()
@@ -80,7 +60,7 @@ public class EnemyController : MonoBehaviour
                 (Vector2)enemyTargeting.Target.position - (Vector2)transform.position;
 
             if (attackDirection.sqrMagnitude > 0.0001f)
-                UpdateFacingDirection(attackDirection);
+                enemyAnimation.SetFacingDirection(attackDirection);
 
             TryAttack();
             return;
@@ -92,7 +72,7 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        UpdateFacingDirection(moveDirection);
+        enemyAnimation.SetFacingDirection(moveDirection);
         MoveTowardsTarget(moveDirection);
     }
 
@@ -112,11 +92,7 @@ public class EnemyController : MonoBehaviour
     /// <param name="moveDirection">정규화된 이동 방향.</param>
     private void MoveTowardsTarget(Vector2 moveDirection)
     {
-        // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
-        animator.SetBool(IsMovingHash, true);
-
-        float animationSpeed = enemyMovement.MoveSpeed / animationReferenceSpeed;
-        animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
+        enemyAnimation.PlayMovementAnimation(enemyMovement.MoveSpeed);
         enemyMovement.Move(moveDirection);
     }
 
@@ -125,47 +101,18 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     private void StopMoving()
     {
-        animator.SetBool(IsMovingHash, false);
+        enemyAnimation.StopMovementAnimation();
         enemyMovement.Stop();
     }
-
+    
     /// <summary>
-    /// 이동 방향을 상하좌우 애니메이션 방향으로 변환해 적용한다.
-    /// </summary>
-    /// <param name="moveDirection">현재 이동 방향.</param>
-    private void UpdateFacingDirection(Vector2 moveDirection)
-    {
-        Vector2 animationDirection = GetAnimationDirection(moveDirection);
-        
-        animator.SetFloat(MoveXHash, animationDirection.x);
-        animator.SetFloat(MoveYHash, animationDirection.y);
-    }
-
-    /// <summary>
-    /// 연속적인 이동 방향을 상하좌우 네 방향 중 하나로 변환한다.
-    /// </summary>
-    /// <param name="direction">변환할 이동 방향.</param>
-    /// <returns>상하좌우 중 하나로 정규화된 애니메이션 방향.</returns>
-    private static Vector2 GetAnimationDirection(Vector2 direction)
-    {
-        // 대각선 방향은 더 큰 축을 기준으로 상하좌우 네 방향으로 변환한다.
-        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-            return new Vector2(Mathf.Sign(direction.x), 0f);
-
-        return new Vector2(0f, Mathf.Sign(direction.y));
-    }
-
-    /// <summary>
-    /// 공격 쿨타임을 확인한 뒤 네트워크 공격을 실행한다.
+    /// 전투 처리가 성공하면 공격 애니메이션을 재생한다.
     /// </summary>
     private void TryAttack()
     {
         if (!enemyCombat.TryAttack())
             return;
-        // Network Animator가 있으면 RPC로, 없으면 로컬 Animator로 공격을 재생한다.
-        if (_networkAnimator != null)
-            _networkAnimator.PlayAttack();
-        else
-            animator.SetTrigger(AttackHash);    
+
+        enemyAnimation.PlayAttackAnimation();
     }
 }
