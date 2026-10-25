@@ -24,7 +24,7 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// 적을 분대 구성원으로 등록하고 기존 타깃을 비운다.
+    /// 적을 분대 구성원으로 등록하고 유효한 기존 타깃을 전달한다.
     /// </summary>
     /// <param name="enemy">분대에 등록할 적.</param>
     /// <returns>적이 유효하고 아직 등록되지 않았다면 true.</returns>
@@ -34,7 +34,13 @@ public class EnemySquad
             return false;
 
         _members.Add(enemy);
-        enemy.SetTarget(null);
+        
+        Transform targetTransform =
+            _target != null && _target.CanBeTargeted
+                ? _target.TargetTransform
+                : null;
+        
+        enemy.SetTarget(targetTransform);
         return true;
     }
 

@@ -17,6 +17,7 @@ public class EnemyController : MonoBehaviour
     [Header("참조")]
     [SerializeField] private Animator animator;
     [SerializeField] private Rigidbody2D rigidbody2D;  
+    [SerializeField] private EnemyTargeting  enemyTargeting;
     
     [Header("이동 설정")]
     [SerializeField] private float moveSpeed = 1.5f;
@@ -32,9 +33,8 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private int attackDamage = 5;
     
     // 런타임 상태
-    private Transform _target;
     private Collider2D _bodyCollider;
-    private Collider2D[] _targetColliders;
+    
     private float _nextAttackTime;
     private EnemyNetworkAnimator _networkAnimator;
     
@@ -54,6 +54,8 @@ public class EnemyController : MonoBehaviour
             animator = GetComponent<Animator>();
         if(rigidbody2D == null)
             rigidbody2D = GetComponent<Rigidbody2D>();
+        if (enemyTargeting == null)
+            enemyTargeting = GetComponent<EnemyTargeting>();
 
         // 공격 거리는 몬스터 몸통 콜라이더의 겉면부터 계산한다.
         foreach (Collider2D collider in GetComponents<Collider2D>())
@@ -79,7 +81,7 @@ public class EnemyController : MonoBehaviour
     public void ExecuteBehavior()
     {
         // 타겟이 없으면 이동을 멈추고 대기한다.
-        if (_target == null)
+        if (enemyTargeting.Target == null)
         {
             StopMoving();
             return;
@@ -91,7 +93,7 @@ public class EnemyController : MonoBehaviour
             StopMoving();
 
             Vector2 attackDirection =
-                (Vector2)_target.position - (Vector2)transform.position;
+                (Vector2)enemyTargeting.Target.position - (Vector2)transform.position;
 
             if (attackDirection.sqrMagnitude > 0.0001f)
                 UpdateFacingDirection(attackDirection);
@@ -116,10 +118,7 @@ public class EnemyController : MonoBehaviour
     /// <param name="target">추적할 타겟의 Transform.</param>
     public void SetTarget(Transform target)
     {
-        _target = target;
-        _targetColliders = target != null
-            ? target.GetComponentsInChildren<Collider2D>(true)
-            : null;
+        enemyTargeting.SetTarget(target);
         _path = null;
         _currentPath = 0;
         
@@ -221,13 +220,13 @@ public class EnemyController : MonoBehaviour
 
         _nextAttackTime = Time.time + attackCooldown;
 
-        if (_target == null)
+        if (enemyTargeting.Target == null)
         {
             return;
         }
 
 
-        TargetableComponent targetable = _target.GetComponent<TargetableComponent>();
+        TargetableComponent targetable = enemyTargeting.Target.GetComponent<TargetableComponent>();
         if (targetable == null)
             return;
 
@@ -237,7 +236,7 @@ public class EnemyController : MonoBehaviour
         }
         else if (targetable.TargetType == TargetType.Player)
         {
-            PlayerInfo player = _target.GetComponentInParent<PlayerInfo>();
+            PlayerInfo player = enemyTargeting.Target.GetComponentInParent<PlayerInfo>();
             if (player != null)
                 player.TakeDamage(attackDamage);
         }
@@ -255,10 +254,10 @@ public class EnemyController : MonoBehaviour
     /// <returns>타겟이 공격 범위 안에 있으면 <see langword="true"/>.</returns>
     private bool IsInAttackRange()
     {
-        if (_bodyCollider == null || !_bodyCollider.enabled || _targetColliders == null)
+        if (_bodyCollider == null || !_bodyCollider.enabled || enemyTargeting.TargetColliders == null)
             return false;
 
-        foreach (Collider2D targetCollider in _targetColliders)
+        foreach (Collider2D targetCollider in enemyTargeting.TargetColliders)
         {
             // 방향 전환 등으로 비활성화된 콜라이더와 피격용 트리거는 제외한다.
             if (targetCollider == null || !targetCollider.enabled ||

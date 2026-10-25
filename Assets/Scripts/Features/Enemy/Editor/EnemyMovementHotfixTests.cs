@@ -3,7 +3,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using NUnit.Framework;
 using TeamHJD.Game.Enemies.Targeting;
 using TeamHJD.Game.Turrets;
@@ -70,8 +69,7 @@ public sealed class EnemyMovementHotfixTests
         foreach (KeyValuePair<EnemyController, Vector3> pair in positions.Take(3))
         {
             if (pair.Key == null) continue;
-            var target = typeof(EnemyController).GetField("_target", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(pair.Key) as Transform;
+            Transform target = pair.Key.GetComponent<EnemyTargeting>().Target;
             Rigidbody2D body = pair.Key.GetComponent<Rigidbody2D>();
             Debug.Log($"Enemy movement sample: target={(target == null ? "null" : target.name)}, " +
                 $"positionDelta={Vector2.Distance(pair.Value, pair.Key.transform.position):F3}, rigidbodyVelocity={body.linearVelocity}. " +
@@ -94,8 +92,7 @@ public sealed class EnemyMovementHotfixTests
         int movedWithoutTargets = positions.Count(pair => pair.Key != null &&
             Vector2.Distance(pair.Value, pair.Key.transform.position) > 0.1f);
         bool allTargetsCleared = positions.Keys.Where(enemy => enemy != null).All(enemy =>
-            typeof(EnemyController).GetField("_target", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(enemy) as Transform == null);
+            enemy.GetComponent<EnemyTargeting>().Target == null);
         playerAdapter.enabled = true;
         positions.Clear();
         foreach (EnemyController enemy in enemies)
