@@ -70,6 +70,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (starts.Length == 0) throw new InvalidOperationException("Initial_Stage requires at least one active PlayerStart.");
             MatchCameraFollow cameraFollow = FindSceneCameraFollow();
             if (cameraFollow == null) throw new InvalidOperationException("Initial_Stage requires a MatchCameraFollow on its Main Camera.");
+            RegionSceneBinding regionBinding = ValidateRegionAuthoring();
 
             MatchId matchId = network?.Descriptor.Config.MatchId ?? new MatchId(Guid.NewGuid().ToString("N"));
             PlayerId localPlayerId = LocalPlayerId;
@@ -128,6 +129,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matchHost = appMatchHost;
                 _ownsMatch = true;
                 _ownedMatchId = matchId;
+                // D의 Match lease가 쓰기를 허용한 뒤, Core 지역 정책을 붙이기 전에 초기화합니다.
+                ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
@@ -142,10 +145,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matchSession = session;
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
                     consumer.BindLocalActor(matchId, localPlayerId, _playerActors.Actors[localPlayerId]);
-                RegionSceneBinding[] regionBindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
-                    .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
-                if (regionBindings.Length > 1) throw new InvalidOperationException("Keep one RegionSceneBinding per Match scene.");
-                _regionBinding = regionBindings.FirstOrDefault();
+                _regionBinding = regionBinding;
                 if (network == null) _regionBinding?.BindMatch(session, entityIds: _turretBinding);
                 else
                 {
@@ -213,10 +213,42 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (playerPrefab == null || battlefieldGridSettings == null || FindSceneCameraFollow() == null || RegionBinding == null ||
                 GetComponent<TurretMatchBinding>() == null)
                 throw new InvalidOperationException("Player, Grid, camera and region Scene references are required.");
+            ValidateRegionAuthoring();
             PlayerStart[] starts = FindPlayerStarts();
             for (int slot = 0; slot < descriptor.Config.Players.Count; slot++)
                 if (starts.Count(start => start.SlotIndex == slot) != 1)
                     throw new InvalidOperationException($"Expected exactly one active PlayerStart for slot {slot}.");
+        }
+
+        private RegionSceneBinding ValidateRegionAuthoring()
+        {
+            RegionSceneBinding[] bindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
+                .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
+            if (bindings.Length != 1) throw new InvalidOperationException("Initial_Stage requires exactly one active RegionSceneBinding.");
+            RegionSceneBinding region = bindings[0];
+            TurretMatchBinding turrets = GetComponent<TurretMatchBinding>();
+            if (turrets == null || !turrets.isActiveAndEnabled || turrets.Controller == null ||
+                region.Controller != turrets.Controller || region.Controller.gameObject.scene != gameObject.scene)
+                throw new InvalidOperationException("Region and turret Match bindings must use the same active Scene controller.");
+            if (!region.Controller.isActiveAndEnabled || region.ControlUnit == null ||
+                region.ControlUnit.gameObject.scene != gameObject.scene || !region.ControlUnit.gameObject.activeInHierarchy)
+                throw new InvalidOperationException("Assign an active Scene CU and TurretController before preparing the Match.");
+            // 정의 생성은 읽기 전용입니다. CU의 유효 좌표·Grid 범위·Inspector 구역 수를 검사합니다.
+            region.Controller.CreateUnlockZoneDefinition(region.ControlUnit.position);
+            return region;
+        }
+
+        private void ConfigureUnlockZones(RegionSceneBinding region, RegionPolicyMode mode)
+        {
+            if (_turretBinding.Controller.BoundMatchId != _ownedMatchId || !_turretBinding.Controller.HasWriteAuthority)
+                throw new InvalidOperationException("CU initialization requires the current authoritative turret Match lease.");
+            if (mode == RegionPolicyMode.Static)
+            {
+                if (!_turretBinding.Controller.ConfigureUnlockZones(region.ControlUnit.position))
+                    throw new InvalidOperationException("CU unlock-zone initialization could not apply every owned turret restriction.");
+            }
+            else if (mode != RegionPolicyMode.Dynamic) throw new ArgumentOutOfRangeException(nameof(mode));
+            // Dynamic은 임시 삼각형에서 점령 셀을 만들므로 정적 잠금으로 기존 활성 상태를 변경하지 않습니다.
         }
 
         public void ComposeNetworkMatch(NetworkMatchCoordinator matches, bool isServer, ulong connectionId)

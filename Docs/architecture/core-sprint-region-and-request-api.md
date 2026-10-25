@@ -4,6 +4,8 @@
 
 ## 지역 데이터와 실제 연결
 
+2026-10-26 초기화 연결: Scene 준비 검사는 CU·Controller 일치/활성·Grid 범위를 읽기 전용으로 확인한다. Host 조립은 D Match lease → MatchSession 시작 → `ConfigureUnlockZones(cuPosition)` → Core RegionAccessPolicy 연결 순서다. Inspector `unlockZoneCount`를 사용하며 false/예외를 무시하지 않고 조립을 rollback한다. Dynamic 시작은 설정을 검증하지만 정적 잠금을 적용하지 않는다. Client는 이 초기화를 실행하지 않고 Host의 지역 snapshot을 연결한다. 모드 Reset 이후 변경은 RegionRuntime 하나를 통해 쓰며 D의 구역 API를 다시 호출하지 않는다.
+
 | 진입점 | 역할 |
 | --- | --- |
 | `MatchSession.InitializeRegions(definition, mode)` | 한 번 생성. Match가 Runtime을 소유하며 조회 Port 반환 |

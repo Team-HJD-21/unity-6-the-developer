@@ -75,6 +75,8 @@ public sealed class RegionSceneIntegrationTests
         Assert.That(binding.ResetPolicy(RegionPolicyMode.Dynamic, true), Is.True);
 
         var controller = Object.FindAnyObjectByType<TurretController>();
+        Assert.That(controller.UnlockZones, Is.Not.Null, "Scene composition must explicitly configure D's CU zones before binding Core access.");
+        Assert.That(controller.UnlockedZoneCount, Is.EqualTo(1));
         var turrets = Object.FindObjectsByType<TurretBase>(FindObjectsSortMode.None)
             .Where(turret => turret.isActiveAndEnabled && !turret.IsDestroyed)
             .OrderBy(turret => turret.EffectivePower).ToArray();

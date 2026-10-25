@@ -53,6 +53,8 @@ public sealed class InitialStageNetworkSceneTests
         Assert.That(anchor.State.DescriptorId.ToString(), Is.EqualTo(binding.Matches.Descriptor.DescriptorId.ToString("N")));
         ulong firstNetworkId = anchor.NetworkObjectId;
         var region = Object.FindAnyObjectByType<RegionSceneBinding>();
+        Assert.That(region.Controller.UnlockZones, Is.Not.Null);
+        Assert.That(region.Controller.UnlockedZoneCount, Is.EqualTo(1));
         Assert.That(region.ResetPolicy(RegionPolicyMode.Dynamic, true), Is.True);
         Assert.That(anchor.State.RegionGridId.ToString(), Is.EqualTo(region.Source.Snapshot.GridId.ToString("N")));
         Assert.That(anchor.State.RegionMode, Is.EqualTo((int)RegionPolicyMode.Dynamic));
@@ -73,6 +75,8 @@ public sealed class InitialStageNetworkSceneTests
         Assert.That(binding.TryPrepareMatch(), Is.True);
         Assert.That(binding.TryStartMatch(), Is.True);
         Assert.That(app.CurrentMatchId, Is.Not.EqualTo(first));
+        Assert.That(region.Controller.UnlockZones, Is.Not.Null);
+        Assert.That(region.Controller.BoundMatchId, Is.EqualTo(app.CurrentMatchId));
         Assert.That(Object.FindAnyObjectByType<NetworkMatchAnchor>().NetworkObjectId, Is.Not.EqualTo(firstNetworkId));
         Assert.That(Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
         Assert.That(binding.TryEndMatch(), Is.True);

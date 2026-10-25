@@ -34,6 +34,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _mayWrite != null && _mayWrite();
 
         public RegionPolicyMode InitialMode => _initialMode;
+        public TurretController Controller => _controller;
         public Transform ControlUnit => _controlUnit;
         public RegionGridDefinition CaptureInitialDefinition() => CreateDefinition(_initialMode, out _);
 
@@ -133,6 +134,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private RegionGridDefinition CreateDefinition(RegionPolicyMode mode, out int zoneCount)
         {
+            if (_controller == null) throw new InvalidOperationException("Assign TurretController to RegionSceneBinding.");
             zoneCount = 0;
             if (mode == RegionPolicyMode.Dynamic)
                 return TurretRegionGridAdapter.CreateDefinition(_controller.CreateUnlockGridConfiguration());
