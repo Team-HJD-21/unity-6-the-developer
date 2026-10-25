@@ -1,11 +1,13 @@
 # The Developer — Project Documentation
 
 수정일: 2026-10-26
-상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
+상태: 현행 PL 기준 / Core 5·6주차 구현·기술 검증 및 팀 인수 자료. 제품·팀 플레이 Gate와 구분한다.
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
 ## 현재 기준
+
+이번 Core 배치의 결과·검증 수준·수동 확인 순서·Issue/PR 경계는 [5·6주차 인수 문서](planning/2026-10-26-core-sprint-handoff.md)를 먼저 읽는다. 구현은 분리 worktree에 있으며 원본 checkout과 원격 main에 자동 반영한 상태가 아니다.
 
 운영 화면과 전환은 [ScreenManager](architecture/screen-management-api.md) / [SceneFlowController](architecture/scene-flow-api.md)를 따른다. 실제 CU 결과·재시작·우주선 복귀 버튼까지 연결했으며, 원격 Player/공동 Scene 이동과 외형 수동 인수는 별도다.
 
