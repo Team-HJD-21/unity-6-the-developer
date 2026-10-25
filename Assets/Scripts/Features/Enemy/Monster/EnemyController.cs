@@ -18,22 +18,16 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private EnemyTargeting  enemyTargeting;
     [SerializeField] private EnemyMovement enemyMovement;
+    [SerializeField] private EnemyCombat enemyCombat;
     
     
     [SerializeField] private float animationReferenceSpeed = 2f;
  
     
-    
-    
-    [Header("공격 설정")]
-    [SerializeField] private float attackRange = 0.4f;
-    [SerializeField] private float attackCooldown = 1f;
-    [SerializeField] private int attackDamage = 5;
-    
     // 런타임 상태
-    private Collider2D _bodyCollider;
+   
     
-    private float _nextAttackTime;
+    
     private EnemyNetworkAnimator _networkAnimator;
     
     /// <summary>
@@ -54,16 +48,8 @@ public class EnemyController : MonoBehaviour
             enemyTargeting = GetComponent<EnemyTargeting>();
         if (enemyMovement == null)
             enemyMovement = GetComponent<EnemyMovement>();
-        
-        // 공격 거리는 몬스터 몸통 콜라이더의 겉면부터 계산한다.
-        foreach (Collider2D collider in GetComponents<Collider2D>())
-        {
-            if (collider.isTrigger)
-                continue;
-
-            _bodyCollider = collider;
-            break;
-        }
+        if (enemyCombat == null)
+            enemyCombat = GetComponent<EnemyCombat>();
     }
 
     private void LateUpdate()
@@ -86,7 +72,7 @@ public class EnemyController : MonoBehaviour
         }
         
         // 공격 범위 안에서는 이동을 멈추고 공격을 시도한다.
-        if (IsInAttackRange())
+        if (enemyCombat.IsInAttackRange())
         {
             StopMoving();
 
@@ -174,63 +160,12 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     private void TryAttack()
     {
-        // 공격 쿨타임이 남아 있으면 이번 공격을 건너뛴다.
-        if (Time.time < _nextAttackTime)
+        if (!enemyCombat.TryAttack())
             return;
-
-        _nextAttackTime = Time.time + attackCooldown;
-
-        if (enemyTargeting.Target == null)
-        {
-            return;
-        }
-
-
-        TargetableComponent targetable = enemyTargeting.Target.GetComponent<TargetableComponent>();
-        if (targetable == null)
-            return;
-
-        if (targetable.TargetType == TargetType.Turret)
-        {
-            targetable.TryApplyDamage(attackDamage);
-        }
-        else if (targetable.TargetType == TargetType.Player)
-        {
-            PlayerInfo player = enemyTargeting.Target.GetComponentInParent<PlayerInfo>();
-            if (player != null)
-                player.TakeDamage(attackDamage);
-        }
-        
         // Network Animator가 있으면 RPC로, 없으면 로컬 Animator로 공격을 재생한다.
         if (_networkAnimator != null)
             _networkAnimator.PlayAttack();
         else
             animator.SetTrigger(AttackHash);    
     }
-
-    /// <summary>
-    /// 몬스터와 타겟의 활성 몸통 콜라이더 사이 거리가 공격 범위 안인지 확인한다.
-    /// </summary>
-    /// <returns>타겟이 공격 범위 안에 있으면 <see langword="true"/>.</returns>
-    private bool IsInAttackRange()
-    {
-        if (_bodyCollider == null || !_bodyCollider.enabled || enemyTargeting.TargetColliders == null)
-            return false;
-
-        foreach (Collider2D targetCollider in enemyTargeting.TargetColliders)
-        {
-            // 방향 전환 등으로 비활성화된 콜라이더와 피격용 트리거는 제외한다.
-            if (targetCollider == null || !targetCollider.enabled ||
-                !targetCollider.gameObject.activeInHierarchy || targetCollider.isTrigger)
-                continue;
-
-            ColliderDistance2D distance = _bodyCollider.Distance(targetCollider);
-            if (distance.isValid && distance.distance <= attackRange)
-                return true;
-        }
-
-        return false;
-    }
-    
-    
 }

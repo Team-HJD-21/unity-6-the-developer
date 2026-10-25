@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 1692933235676204002}
   - component: {fileID: 5271184540926039027}
   - component: {fileID: 5537959912745558319}
+  - component: {fileID: 8339984783810717595}
   m_Layer: 7
   m_Name: Slime
   m_TagString: Enemy
@@ -137,7 +138,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2848244634
+  GlobalObjectIdHash: 523127757
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -248,14 +249,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   animator: {fileID: 5135953631903945395}
-  rigidbody2D: {fileID: 0}
   enemyTargeting: {fileID: 0}
-  moveSpeed: 1.5
+  enemyMovement: {fileID: 0}
+  enemyCombat: {fileID: 0}
   animationReferenceSpeed: 2
-  arrivalDistance: 0.4
-  attackRange: 1
-  attackCooldown: 1
-  attackDamage: 5
 --- !u!114 &-8740136632330153983
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,3 +391,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95e4629e7cbab8f43b1546a0afb62589, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
+  arrivalDistance: 0.4
+  rigidbody2D: {fileID: 0}
+  moveSpeed: 1.5
+--- !u!114 &8339984783810717595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5097b24e3659e6745b14e8017d5ba008, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  enemyTargeting: {fileID: 0}
+  attackRange: 1
+  attackCooldown: 1
+  attackDamage: 5
