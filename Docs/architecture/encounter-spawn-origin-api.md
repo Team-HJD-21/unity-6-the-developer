@@ -39,6 +39,8 @@ Core는 새 Spawner를 만들거나 Instantiate하지 않는다. Enemy Planner�
 
 Enemy 실행 경계는 적마다 최대 16회 후보를 검사한다. XY 요청 영역·현재 Grid·Player/Turret 점유 제외·기존 XY NavMesh 표면과 대조하고 실패 이유/실제 수를 보고한다. NavMesh 표면 적합성이 최종 목표까지 완전한 경로를 보장한다는 뜻은 아니다. Visual Z는 표현 위치이며 NavMesh 검사 Z=0과 분리한다. 기본 Z=0이고 콘텐츠의 적합한 Z/지형·목표 경로는 담당 Feature가 검토한다.
 
+실행 중 예외의 `ExecutionFailed`는 이미 일부 부작용이 생겼을 수 있는 확정 실패다. 같은 요청을 자동 재실행하지 않으며 `HasKnownExecutionCounts=false`로 반환한다. 진단도 `IsExecutionCountUnknown=true`를 보존해 0마리로 오인하지 않게 한다. 반면 실행 전 거부는 실행 수량 0이 확정되며 가짜 실행 번호를 만들지 않는다. 현재 Match의 거부 사건은 공통 Timeline/조건부 정지로 전달하고, 이미 닫힌 Match의 기록은 다시 열지 않는다.
+
 동적 source는 임시 SpawnPoint로 만들지 않는다. World 명령/실제 객체의 PointId는 비어 있고 별도 origin/source와 실제 좌표를 기록한다. 내부 `world-cell/x/y`는 Grid 후보 식별자이며 제작 지점 ID가 아니다.
 
 | 전달 방식 | 현재 전이와 집계 |

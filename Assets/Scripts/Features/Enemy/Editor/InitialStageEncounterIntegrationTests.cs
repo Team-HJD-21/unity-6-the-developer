@@ -95,7 +95,7 @@ public sealed class InitialStageEncounterIntegrationTests
         bool serverStarted = false;
         while (Time.realtimeSinceStartup < deadline)
         {
-            EnemySpawnExecutor executor = Object.FindAnyObjectByType<EnemySpawnExecutor>();
+            EnemySpawnExecutor executor = launcher.ExecutionTarget;
             spawnedEnemies = executor != null ? executor.SpawnedEnemyCount : 0;
             serverStarted = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
             if (spawnedEnemies > 0) break;

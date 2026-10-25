@@ -42,7 +42,8 @@ namespace TeamHJD.Game.Editor
                             else
                             {
                                 var result = target.RequestOrigin(preset, maximum, EncounterRequestSource.DebugWindow, origin, Guid.NewGuid());
-                                _status = $"{result.Status} · {result.PlannedCount} planned / {result.SpawnedCount} actual · {result.Reason}";
+                                string counts = result.HasKnownExecutionCounts ? $"{result.PlannedCount} planned / {result.SpawnedCount} actual" : "N/A · 실행 수량 미확정";
+                                _status = $"{result.Status} · {counts} · {result.Reason}";
                             }
                         }
                         catch (ArgumentException error) { _status = error.Message; }

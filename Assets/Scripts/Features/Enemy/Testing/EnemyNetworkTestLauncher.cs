@@ -492,11 +492,13 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (snapshot == null || _requests == null || snapshot.MatchId != _boundMatchId)
         {
             result = "현재 바인딩된 Match가 아닙니다.";
+            ReportRejectedRequest(source, squadOrder, result, Guid.NewGuid(), snapshot: snapshot);
             return false;
         }
         if (string.IsNullOrWhiteSpace(squadOrder) || squadOrder.Trim().Length > 128 || maxEnemyCount < 1 || !Enum.IsDefined(typeof(EncounterRequestSource), source))
         {
             result = "Preset·생성 예산·출처를 확인하세요.";
+            ReportRejectedRequest(source, squadOrder, result, Guid.NewGuid(), snapshot: snapshot);
             return false;
         }
         var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
@@ -511,15 +513,28 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (request == null) throw new ArgumentNullException(nameof(request));
         var response = _requests != null ? _requests.Submit(request, verifiedIssuer) :
             new EncounterRequestResult(request.Context.RequestId, 0, 0, EncounterRequestStatus.MatchUnavailable);
-        if (_snapshotProvider != null && response.ExecutionSequence > _requestSequence &&
-            (response.Status == EncounterRequestStatus.OriginUnavailable || response.Status == EncounterRequestStatus.UnsupportedOrigin))
+        if (!response.IsReplay && response.Status != EncounterRequestStatus.InProgress &&
+            response.Status != EncounterRequestStatus.Spawned && response.Status != EncounterRequestStatus.PartialSpawn &&
+            (response.ExecutionSequence == 0 || response.ExecutionSequence > _requestSequence || response.Status == EncounterRequestStatus.ExecutionFailed))
         {
-            _requestSequence = response.ExecutionSequence;
-            var context = new EncounterExecutionContext(_boundMatchId, response.ExecutionSequence, response.SnapshotRevision,
-                request.Source, request.PresetId.Value, requestGuid: request.Context.RequestId, causeEventId: request.CauseEventId, origin: request.Origin);
-            Emit(GameDiagnosticKind.RequestFailed, context, message: response.Status + ": " + response.Reason);
+            _requestSequence = Math.Max(_requestSequence, response.ExecutionSequence);
+            ReportRejectedRequest(request.Source, request.PresetId.Value, response.Status + ": " + response.Reason,
+                request.Context.RequestId, request.CauseEventId, request.Origin, response.ExecutionSequence, response.SnapshotRevision,
+                countsUnknown: !response.HasKnownExecutionCounts);
         }
         return response;
+    }
+    private void ReportRejectedRequest(EncounterRequestSource source, string preset, string reason, Guid request,
+        Guid cause = default, EncounterSpawnOrigin origin = null, long executionSequence = 0, long revision = 0,
+        BattlefieldSpatialSnapshot snapshot = null, bool countsUnknown = false)
+    {
+        // 실행 전 거부에는 가짜 실행 번호를 배정하지 않습니다. 닫힌 Match 기록도 다시 열지 않습니다.
+        if (_requests == null || _snapshotProvider == null || _boundMatchId.IsEmpty) return;
+        if (snapshot != null && snapshot.MatchId == _boundMatchId) revision = snapshot.Revision;
+        if (!Enum.IsDefined(typeof(EncounterRequestSource), source)) source = EncounterRequestSource.Unspecified;
+        var context = new EncounterExecutionContext(_boundMatchId, executionSequence, revision, source, preset ?? "",
+            requestGuid: request, causeEventId: cause, origin: origin);
+        Emit(GameDiagnosticKind.RequestFailed, context, message: reason, countsUnknown: countsUnknown);
     }
 
     EncounterRequestResult IEncounterExecutor.Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot, long executionSequence)
@@ -574,12 +589,13 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     }
 
     private void Emit(GameDiagnosticKind kind, EncounterExecutionContext context, int planned = 0, int actual = 0,
-        string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null)
+        string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null,
+        bool countsUnknown = false)
     {
         var observation = new GameDiagnosticEvent(++_diagnosticSequence, _boundMatchId,
             context?.Revision ?? 0, context?.RequestId ?? 0, context?.Source ?? EncounterRequestSource.Unspecified,
             kind, GameSeconds, RealSeconds, enemyType, point, entity, planned, actual, message, context?.SquadOrder ?? "",spawnDecision,
-            hasDeathEvents: true, environment: context?.Environment, executionContext: context);
+            hasDeathEvents: true, environment: context?.Environment, executionContext: context, isExecutionCountUnknown: countsUnknown);
         if (_diagnostics.Count >= 4096)
         {
             if(_diagnostics.Dequeue().SpawnDecision!=null)_retainedDecisionCount--;

@@ -75,7 +75,9 @@ namespace TeamHJD.Game.Tests.EditMode
             using var spatial = Spatial(); var executor = new Executor { Throws = true };
             using var service = new EncounterRequestService(Match, () => spatial.Snapshot, () => true, _ => true, executor);
             var request = Request();
-            Assert.That(service.Submit(request, Host).Status, Is.EqualTo(EncounterRequestStatus.ExecutionFailed));
+            var failed = service.Submit(request, Host);
+            Assert.That(failed.Status, Is.EqualTo(EncounterRequestStatus.ExecutionFailed));
+            Assert.That(failed.HasKnownExecutionCounts, Is.False);
             Assert.That(service.Submit(request, Host).IsReplay, Is.True);
             Assert.That(executor.Calls, Is.EqualTo(1));
         }

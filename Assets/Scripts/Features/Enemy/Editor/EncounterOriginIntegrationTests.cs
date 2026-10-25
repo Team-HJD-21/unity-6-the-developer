@@ -184,6 +184,6 @@ public sealed class EncounterOriginIntegrationTests
         var decisions = launcher.RecentDiagnostics.Where(item => item.SpawnDecision != null).Select(item => item.SpawnDecision).ToArray();
         Debug.Log($"CORE_S3_COST samples={decisions.Length}; spatial-latest={scene.LastSpatialRefreshMilliseconds:F3}ms; " +
             $"plan-mean={decisions.Average(item => item.PlanningMilliseconds):F3}ms; spawn-commit-mean={decisions.Average(item => item.SpawningMilliseconds):F3}ms; " +
-            $"alive={launcher.ActiveEnemyCount}; scaled game-time={launcher.GameSeconds:F2}s. Editor headless sample, not a frame-budget guarantee.");
+            $"alive={launcher.ActiveEnemyCount}; scaled game-time={launcher.GameSeconds:F2}s. Editor batch sample, not a frame-budget guarantee.");
     }
 }

@@ -118,8 +118,8 @@ namespace TeamHJD.Game.Editor
                 {
                     Cell(item.GameSeconds.ToString("F1")+"s",54);
                     if (GUILayout.Button("#"+item.RequestId,EditorStyles.miniButton,GUILayout.Width(58))) view.SelectedRequestSequence=item.Sequence;
-                    Cell(item.Source.ToString(),105); Cell(item.SquadOrder,80); Cell(item.PlannedCount.ToString(),40);
-                    Cell(item.ActualCount.ToString(),40); Cell(item.Kind==GameDiagnosticKind.RequestFailed?"FAILED":"OK",60);
+                    Cell(item.Source.ToString(),105); Cell(item.SquadOrder,80); Cell(item.IsExecutionCountUnknown?"N/A":item.PlannedCount.ToString(),40);
+                    Cell(item.IsExecutionCountUnknown?"N/A":item.ActualCount.ToString(),40); Cell(item.Kind==GameDiagnosticKind.RequestFailed?"FAILED":"OK",60);
                 }
                 EditorGUILayout.EndScrollView();
                 var selected=entries.FirstOrDefault(e=>e.Sequence==view.SelectedRequestSequence);
@@ -128,7 +128,7 @@ namespace TeamHJD.Game.Editor
                 if (view.IsRequestDetailsExpanded) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     EditorGUILayout.LabelField("Match",selected.MatchId);
-                    EditorGUILayout.LabelField("계획 / 실제",selected.PlannedCount+" / "+selected.ActualCount);
+                    EditorGUILayout.LabelField("계획 / 실제",selected.IsExecutionCountUnknown?"N/A · 실행 중 예외로 수량 미확정":selected.PlannedCount+" / "+selected.ActualCount);
                     DrawOriginDetails(selected);
                     EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(76));
                     EditorGUILayout.LabelField("공간 판단·분포는 Statistics > Spawn decisions에서 조회",EditorStyles.miniLabel);

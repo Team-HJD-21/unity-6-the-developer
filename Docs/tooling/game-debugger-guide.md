@@ -52,6 +52,8 @@ Grid 크기를 바꾸려면 `공용 Grid 기본값 / 에셋`에서 Center XY, Ma
 ### 일회 스폰 → 반복 실험 → 원인 확인
 
 1. Encounter에서 preset/요청 예산을 정하고 한 번 Request한다. 최근 요청 표에서 source, 계획/실제 수량, 성공·실패를 확인하고 요청을 선택해 상세를 펼친다.
+
+   실행 전 거부도 현재 Match의 `RequestFailed` 사건으로 기록되어 Timeline의 요청 실패 정지 조건에 포함된다. 실행 전에는 실행 번호가 0일 수 있으므로 상세의 요청 GUID와 사유로 구분한다. 실행 중 예외는 부분 생성 여부를 확정할 수 없어 계획/실제 수량을 `N/A`로 표시한다. JSON의 `IsExecutionCountUnknown`, CSV의 `execution_counts_known=false`와 빈 수량 열로 이를 보존하며, 실제 생성/사망 그래프는 별도로 관측한 객체 사건을 사용한다. 이전 기록에 없던 수량 불명 정보를 사후 추정하지 않는다.
 2. 자동 반복은 `연속 Encounter 요청 / 시뮬레이션`에서 간격/최대 횟수/clock을 정하고 `Start repeat`한다. 첫 요청은 한 간격 뒤다. `0`회는 무제한이며 생존 적이 누적될 수 있다. 종료는 `Stop repeat`다.
 3. Statistics를 `Spawn decisions / distribution`으로 바꾸고 Request를 선택한다. `Follow latest`를 끄면 보고 있는 요청이 새 요청 때문에 바뀌지 않는다.
 4. `Candidates · eligibility and allocation`에서 지점별 cell/초기 적 수/Cell service·pending·final score/Point service/전선 거리/배정 세트/Reason을 확인한다. 새 정책은 같은 셀의 예정량을 공유하고 실제 생성 이력을 유지해 반복 편중을 막는다. 상세는 [Spatial Spawn Distribution](../architecture/spatial-spawn-distribution.md). 검색은 지점 ID 또는 사유, `Monster`는 계획/실제 개체와 지도 실제 점을 필터링한다.

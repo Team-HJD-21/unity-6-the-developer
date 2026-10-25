@@ -25,12 +25,14 @@ namespace TeamHJD.Game.Contracts
         public EncounterExecutionContext ExecutionContext { get; }
         public bool HasDeathEvents { get; }
         public bool IsSpawnDecisionOmitted { get; }
+        // 실행 중 예외는 부분 생성 여부를 확정할 수 없으므로 0마리와 구분합니다.
+        public bool IsExecutionCountUnknown { get; }
         public GameDiagnosticEvent(long sequence, MatchId matchId, long revision, long requestId,
             EncounterRequestSource source, GameDiagnosticKind kind, double gameSeconds, double realSeconds,
             string enemyType = "", string spawnPointId = "", string entityId = "",
             int plannedCount = 0, int actualCount = 0, string message = "", string squadOrder = "", SpawnDecisionSnapshot spawnDecision = null,
             bool hasDeathEvents = false, bool isSpawnDecisionOmitted = false, MatchEnvironmentSnapshot environment = null,
-            EncounterExecutionContext executionContext = null)
+            EncounterExecutionContext executionContext = null, bool isExecutionCountUnknown = false)
         {
             Sequence = sequence; MatchId = matchId; Revision = revision; RequestId = requestId;
             Source = source; Kind = kind; GameSeconds = gameSeconds; RealSeconds = realSeconds;
@@ -42,8 +44,9 @@ namespace TeamHJD.Game.Contracts
             ExecutionContext = executionContext;
             HasDeathEvents = hasDeathEvents;
             IsSpawnDecisionOmitted = isSpawnDecisionOmitted;
+            IsExecutionCountUnknown = isExecutionCountUnknown;
         }
         public GameDiagnosticEvent WithoutSpawnDecision() => new GameDiagnosticEvent(Sequence,MatchId,Revision,RequestId,Source,
-            Kind,GameSeconds,RealSeconds,EnemyType,SpawnPointId,EntityId,PlannedCount,ActualCount,Message,SquadOrder,null,HasDeathEvents,true,Environment,ExecutionContext);
+            Kind,GameSeconds,RealSeconds,EnemyType,SpawnPointId,EntityId,PlannedCount,ActualCount,Message,SquadOrder,null,HasDeathEvents,true,Environment,ExecutionContext,IsExecutionCountUnknown);
     }
 }
