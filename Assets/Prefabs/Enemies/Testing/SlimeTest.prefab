@@ -54,7 +54,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1433018669385785169, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 3481536332
+      value: 1041489617
       objectReference: {fileID: 0}
     - target: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
       propertyPath: m_Name
@@ -64,25 +64,5 @@ PrefabInstance:
     - {fileID: 984415393098425011, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6625420278461780848}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
---- !u!1 &1895200168680509220 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-  m_PrefabInstance: {fileID: 3519831131534784902}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &6625420278461780848
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1895200168680509220}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
