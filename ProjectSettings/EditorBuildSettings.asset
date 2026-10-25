@@ -14,5 +14,8 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Tests/EnemySandbox.unity
     guid: 9ff428f7b35658f498d4c55cf13b5cc6
+  - enabled: 1
+    path: Assets/Scenes/Tests/EnemyTest.unity
+    guid: b24f5bb5ec4f1cb4c8e3ac5e3c64ecac
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

@@ -3,6 +3,7 @@ using UnityEngine;
 /// <summary>
 /// 회수 가능한 보조 포탑의 적 탐색, 조준 회전 및 탄환 자동 발사를 담당합니다.
 /// </summary>
+[RequireComponent(typeof(TemporaryTurretHealth))]
 public class TemporaryTurret : MonoBehaviour
 {
     [Header("Bullet Settings")]
@@ -40,7 +41,6 @@ public class TemporaryTurret : MonoBehaviour
     private void Awake()
     {
         _health = GetComponent<TemporaryTurretHealth>();
-        if (_health == null) _health = gameObject.AddComponent<TemporaryTurretHealth>();
     }
 
     public void AssignOwner(PlayerTurretSkill owner) => _owner = owner;

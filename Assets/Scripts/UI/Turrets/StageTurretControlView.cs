@@ -30,6 +30,9 @@ public sealed class StageTurretControlView : MonoBehaviour
     [SerializeField] private Color deactivateColor = Color.red;
     [SerializeField] private Color unavailableColor = Color.gray;
 
+    private string _lastFeedback = "";
+    private bool _withinReach = true;
+
     public event Action ToggleRequested;
     public event Action LevelUpRequested;
     public event Action LevelDownRequested;
@@ -81,7 +84,8 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (closeButton != null) closeButton.onClick.RemoveListener(RequestClose);
     }
 
-    public void Show(FieldTurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown, bool dynamicRegions = false)
+    public void Show(FieldTurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown,
+        bool dynamicRegions = false, bool withinReach = true)
     {
         if (turret == null)
         {
@@ -96,6 +100,8 @@ public sealed class StageTurretControlView : MonoBehaviour
         statsText.text = $"HP {turret.CurrentHealth}/{turret.MaxHealth}   Power {turret.EffectivePower}   Damage {turret.EffectiveDamage}   Range {turret.EffectiveRange:0.#}";
         statusText.text = GetStatus(turret);
         if (dynamicRegions) statusText.text += " | Dynamic capture: activate to form territory";
+        _withinReach = withinReach;
+        RefreshFeedback();
 
         bool editable = canInteract && turret.CanModifyUpgrades;
         activationButton.interactable = canInteract && StageTurretInteractionRules.CanToggle(turret);
@@ -115,7 +121,17 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (gameObject.activeSelf) gameObject.SetActive(false);
     }
 
-    public void SetFeedback(string message) => feedbackText.text = message;
+    public void SetFeedback(string message)
+    {
+        _lastFeedback = message ?? "";
+        RefreshFeedback();
+    }
+
+    private void RefreshFeedback()
+    {
+        feedbackText.text = _withinReach ? _lastFeedback : StageTurretUIText.OutOfReach +
+            (_lastFeedback.Length > 0 ? $" | {_lastFeedback}" : "");
+    }
 
     private static string GetStatus(FieldTurretBase turret)
     {

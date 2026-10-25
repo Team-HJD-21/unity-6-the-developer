@@ -165,6 +165,12 @@ namespace TeamHJD.Game.FieldTurrets
             return previousHealth != _currentHealth;
         }
 
+        internal bool Repair(int amount, int maxHealth)
+        {
+            // Both public repair APIs share fractional progress and full-health cleanup.
+            return Repair((double)amount, maxHealth) > 0;
+        }
+
         internal void MarkDestroyed()
         {
             _currentHealth = 0;

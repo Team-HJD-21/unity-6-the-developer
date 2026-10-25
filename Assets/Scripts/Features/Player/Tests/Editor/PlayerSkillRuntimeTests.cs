@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using UnityEngine.Tilemaps;
 
 /// <summary>Unity 생명주기로 초기화된 스킬과 HUD의 동작을 검증합니다.</summary>
 public sealed class PlayerSkillRuntimeTests
@@ -12,6 +13,9 @@ public sealed class PlayerSkillRuntimeTests
     private GameObject _player;
     private PlayerSkillController _controller;
     private PlayerSkillHud _hud;
+    private GameObject _events;
+    private GameObject _groundGrid;
+    private Tile _groundTile;
     private bool _preparing;
 
     [UnitySetUp]
@@ -26,17 +30,33 @@ public sealed class PlayerSkillRuntimeTests
         _controller = _player.AddComponent<PlayerSkillController>();
         Assign(_player.GetComponent<PlayerBomb>(), "bombPrefab", "Assets/Prefabs/Player/bomb.prefab");
         Assign(_player.GetComponent<PlayerTurretSkill>(), "turretPrefab", "Assets/Prefabs/Player/TemporaryTurret.prefab");
+        var turretData = new SerializedObject(_player.GetComponent<PlayerTurretSkill>());
+        turretData.FindProperty("_previewPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/Player/TemporaryTurretPreview.prefab").GetComponent<PlayerTurretPlacementPreview>();
+        _groundGrid = new GameObject("Skill test ground", typeof(Grid));
+        _groundGrid.transform.position = _player.transform.position;
+        var mapObject = new GameObject("Ground", typeof(Tilemap), typeof(TilemapCollider2D));
+        mapObject.transform.SetParent(_groundGrid.transform, false);
+        var map = mapObject.GetComponent<Tilemap>();
+        _groundTile = ScriptableObject.CreateInstance<Tile>();
+        _groundTile.colliderType = Tile.ColliderType.None;
+        for (int y = -10; y <= 10; y++)
+        for (int x = -10; x <= 10; x++) map.SetTile(new Vector3Int(x, y, 0), _groundTile);
+        turretData.FindProperty("_placementGround").objectReferenceValue = map;
+        turretData.ApplyModifiedPropertiesWithoutUndo();
         Assign(_player.GetComponent<PlayerBarrierSkill>(), "_prefab", "Assets/Prefabs/Player/EnergyBarrier.prefab", true);
         Assign(_player.GetComponent<PlayerBeaconSkill>(), "_prefab", "Assets/Prefabs/Player/LureBeacon.prefab", true);
-        var source = new SerializedObject(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab").GetComponent<PlayerSkillController>());
-        var data = new SerializedObject(_controller);
-        foreach (string field in new[] { "bombIcon", "turretIcon", "_barrierIcon", "_beaconIcon", "uiFont", "_recoveryKeyIcon" })
-            data.FindProperty(field).objectReferenceValue = source.FindProperty(field).objectReferenceValue;
-        data.ApplyModifiedPropertiesWithoutUndo();
         _controller.BindSceneState(() => _preparing, () => true);
         _player.SetActive(true); // Awake/OnEnable을 Unity가 한 번씩 실행합니다.
-        yield return null; // Start에서 HUD가 생성될 때까지 기다립니다.
-        _hud = _player.GetComponentInChildren<PlayerSkillHud>();
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
+        _hud = Object.Instantiate(prefab).GetComponent<PlayerSkillHud>();
+        // 씬 바인더의 자동 탐색 대신 테스트 대상 플레이어를 명시적으로 연결합니다.
+        _hud.GetComponent<PlayerSkillHudSceneBinding>().enabled = false;
+        Assert.That(_controller.BindHud(_hud), Is.True);
+        if (EventSystem.current == null)
+            _events = new GameObject("Skill test EventSystem", typeof(EventSystem),
+                typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
+        yield return null;
     }
 
     private static void Assign(MonoBehaviour component, string field, string path, bool device = false)
@@ -51,7 +71,166 @@ public sealed class PlayerSkillRuntimeTests
     public IEnumerator TearDown()
     {
         if (_player != null) Object.DestroyImmediate(_player);
+        if (_hud != null) Object.DestroyImmediate(_hud.gameObject);
+        if (_events != null) Object.DestroyImmediate(_events);
+        if (_groundGrid != null) Object.DestroyImmediate(_groundGrid);
+        if (_groundTile != null) Object.DestroyImmediate(_groundTile);
         if (Application.isPlaying) yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
+    public IEnumerator Hud_RebindingReusesViewsAndPreservesSelection()
+    {
+        _controller.TrySelect(PlayerSkillId.Bomb);
+        int count = _hud.GetComponentsInChildren<Transform>(true).Length;
+        for (int i = 0; i < 3; i++)
+        {
+            _hud.Unbind();
+            Assert.That(_hud.Owner, Is.Null);
+            Assert.That(_hud.GetComponent<Canvas>().enabled, Is.False);
+            Assert.That(_controller.BindHud(_hud), Is.True);
+        }
+        Assert.That(_hud.transform.parent, Is.Null);
+        Assert.That(_hud.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(count));
+        Assert.That(_controller.Loadout.Q, Is.EqualTo(PlayerSkillId.Bomb));
+        _hud.Open();
+        var reset = _hud.transform.Find("Skill Selection/Panel Border/Skill Selection Panel/Reset Selection").GetComponent<Button>();
+        int changes = 0;
+        void CountChange() => changes++;
+        _controller.Loadout.Changed += CountChange;
+        reset.onClick.Invoke();
+        _controller.Loadout.Changed -= CountChange;
+        Assert.That(changes, Is.EqualTo(1));
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Hud_PlayerDisableHidesAndDetachesSceneCanvas()
+    {
+        _hud.Open();
+        _player.SetActive(false);
+        Assert.That(_hud.Owner, Is.Null);
+        Assert.That(_hud.gameObject.activeSelf, Is.True);
+        Assert.That(_hud.GetComponent<Canvas>().enabled, Is.False);
+        Assert.That(_controller.IsSelectionOpen, Is.False);
+        _player.SetActive(true);
+        Assert.That(_controller.BindHud(_hud), Is.True);
+        Assert.That(_hud.GetComponent<Canvas>().enabled, Is.True);
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Hud_MissingOptionalViewsAndIconKeepSelectionUsable()
+    {
+        _hud.Unbind();
+        var data = new SerializedObject(_hud);
+        foreach (string field in new[] { "_tooltip", "_recovery", "_placementHint", "_placementFailure", "_beaconIcon" })
+            data.FindProperty(field).objectReferenceValue = null;
+        data.ApplyModifiedPropertiesWithoutUndo();
+        Assert.That(_hud.IsConfigured, Is.True);
+        Assert.That(_hud.IsFullyConfigured, Is.False);
+        Assert.That(_controller.BindHud(_hud), Is.True);
+        _hud.Open();
+        var panel = _hud.transform.Find("Skill Selection/Panel Border/Skill Selection Panel");
+        var beacon = panel.Find("LureBeacon");
+        Assert.That(beacon.Find("Icon").GetComponent<Image>().enabled, Is.False);
+        beacon.GetComponent<Button>().onClick.Invoke();
+        Assert.That(_controller.Loadout.Q, Is.EqualTo(PlayerSkillId.LureBeacon));
+        _hud.ShowTooltip(_player, PlayerSkillId.LureBeacon);
+        _hud.Close();
+        yield return null;
+        Assert.That(_hud.GetComponent<Canvas>().enabled, Is.True);
+        Assert.That(_controller.CanUse, Is.True);
+    }
+
+    [UnityTest]
+    public IEnumerator Hud_IncompleteTooltipKeepsSlotsAndPanelUsable()
+    {
+        _hud.Unbind();
+        var tooltip = _hud.GetComponentInChildren<PlayerSkillTooltipView>(true);
+        var data = new SerializedObject(tooltip);
+        data.FindProperty("_title").objectReferenceValue = null;
+        data.ApplyModifiedPropertiesWithoutUndo();
+        Assert.That(_controller.BindHud(_hud), Is.True);
+        _hud.Open();
+        _hud.ShowTooltip(_player, PlayerSkillId.Bomb);
+        Assert.That(_hud.IsOpen, Is.True);
+        Assert.That(tooltip.gameObject.activeSelf, Is.False);
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Hud_MissingRequiredSlotRejectsBinding()
+    {
+        _hud.Unbind();
+        var data = new SerializedObject(_hud);
+        data.FindProperty("_qSlot").objectReferenceValue = null;
+        data.ApplyModifiedPropertiesWithoutUndo();
+        Assert.That(_hud.IsConfigured, Is.False);
+        Assert.That(_controller.BindHud(_hud), Is.False);
+        Assert.That(_hud.Owner, Is.Null);
+        Assert.That(_hud.GetComponent<Canvas>().enabled, Is.False);
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator SelectionPanel_ReopeningShowsSelectionChangedWhileClosed()
+    {
+        _hud.Open();
+        _hud.Close();
+        Assert.That(_controller.TrySelect(PlayerSkillId.LureBeacon), Is.True);
+        yield return null;
+        _hud.Open();
+        var panel = _hud.transform.Find("Skill Selection/Panel Border/Skill Selection Panel");
+        Assert.That(panel.Find("Q Selection").GetComponent<TMPro.TMP_Text>().text, Is.EqualTo("유도 비콘"));
+        Assert.That(panel.Find("LureBeacon/State").GetComponent<TMPro.TMP_Text>().text, Is.EqualTo("Q 등록됨"));
+        Assert.That(panel.Find("LureBeacon").GetComponent<Button>().interactable, Is.False);
+        Assert.That(panel.Find("Q Skill Slot/Background/Skill Icon").GetComponent<Image>().sprite,
+            Is.EqualTo(_hud.Icon(PlayerSkillId.LureBeacon)));
+    }
+
+    [UnityTest]
+    public IEnumerator Hud_SceneBindingRejectsRemoteIdentity()
+    {
+        var identity = _player.AddComponent<TeamHJD.Game.Presentation.Scene.PlayerActorIdentity>();
+        identity.Bind(new TeamHJD.Game.Domain.PlayerId("remote-player"));
+        var binding = _hud.GetComponent<PlayerSkillHudSceneBinding>();
+        _hud.Unbind();
+        binding.enabled = true;
+        Assert.That(binding.BindLocalPlayer(_controller), Is.False);
+        yield return null;
+        Assert.That(_hud.Owner == _controller, Is.False);
+        binding.enabled = false;
+    }
+
+    [UnityTest]
+    public IEnumerator Hud_SceneBindingWaitsForPlayerAndReusesCanvas()
+    {
+        var originalScene = _player.scene;
+        var testScene = UnityEngine.SceneManagement.SceneManager.CreateScene("Skill HUD binding test");
+        var binding = _hud.GetComponent<PlayerSkillHudSceneBinding>();
+        try
+        {
+            _player.SetActive(false);
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(_player, testScene);
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(_hud.gameObject, testScene);
+            binding.enabled = true;
+            yield return null;
+            Assert.That(_hud.Owner, Is.Null);
+            Assert.That(_hud.GetComponent<Canvas>().enabled, Is.False);
+            _player.SetActive(true);
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.That(_hud.Owner, Is.SameAs(_controller));
+            Assert.That(_hud.GetComponent<Canvas>().enabled, Is.True);
+            Assert.That(_player.GetComponentInChildren<PlayerSkillHud>(), Is.Null);
+        }
+        finally
+        {
+            binding.enabled = false;
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(_player, originalScene);
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(_hud.gameObject, originalScene);
+            UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(testScene);
+        }
     }
 
     [UnityTest]
@@ -76,6 +255,7 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator SelectionPanel_DevelopmentCardsCannotBeSelected()
     {
+        _hud.Open();
         var panel = _hud.transform.Find("Skill Selection/Panel Border/Skill Selection Panel");
         for (int i = 5; i <= 8; i++)
         {
@@ -176,7 +356,7 @@ public sealed class PlayerSkillRuntimeTests
     {
         _controller.TrySelect(PlayerSkillId.TemporaryTurret);
         var skill = _player.GetComponent<PlayerTurretSkill>();
-        Assert.That(_controller.TryUse(PlayerSkillId.TemporaryTurret), Is.True);
+        Assert.That(DeployTurret(), Is.True);
         Assert.That(skill.CurrentTurretCount, Is.EqualTo(2));
         Assert.That(skill.TryRecoverNearest(), Is.True);
         Assert.That(skill.CurrentTurretCount, Is.EqualTo(3));
@@ -188,11 +368,11 @@ public sealed class PlayerSkillRuntimeTests
     public IEnumerator Turret_DamagedRecoveryRequiresRepair()
     {
         _controller.TrySelect(PlayerSkillId.TemporaryTurret);
-        _controller.TryUse(PlayerSkillId.TemporaryTurret);
+        Assert.That(DeployTurret(), Is.True);
         var skill = _player.GetComponent<PlayerTurretSkill>();
         var health = skill.RecoverableTurret.Health;
         Assert.That(health.MaxHealth, Is.EqualTo(100).Within(.001f));
-        var blocker = health.GetComponent<CircleCollider2D>();
+        var blocker = health.GetComponent<BoxCollider2D>();
         Assert.That(blocker, Is.Not.Null);
         Assert.That(blocker.isTrigger, Is.False);
         health.TakeDamage(50);
@@ -208,7 +388,7 @@ public sealed class PlayerSkillRuntimeTests
     public IEnumerator Turret_DestroyedReturnsAfterThirtySeconds()
     {
         _controller.TrySelect(PlayerSkillId.TemporaryTurret);
-        _controller.TryUse(PlayerSkillId.TemporaryTurret);
+        Assert.That(DeployTurret(), Is.True);
         var skill = _player.GetComponent<PlayerTurretSkill>();
         skill.RecoverableTurret.Health.TakeDamage(100);
         yield return null; // Destroy completes through Unity's lifecycle.
@@ -221,7 +401,7 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Turret_CannotBeRecoveredOutsideRecoveryRange()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret); _controller.TryUse(PlayerSkillId.TemporaryTurret);
+        _controller.TrySelect(PlayerSkillId.TemporaryTurret); Assert.That(DeployTurret(), Is.True);
         _player.transform.position += Vector3.right * 100;
         Assert.That(_player.GetComponent<PlayerTurretSkill>().TryRecoverNearest(), Is.False);
         yield break;
@@ -230,7 +410,7 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Turret_CannotBeRecoveredByAnotherOwner()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret); _controller.TryUse(PlayerSkillId.TemporaryTurret);
+        _controller.TrySelect(PlayerSkillId.TemporaryTurret); Assert.That(DeployTurret(), Is.True);
         var other = new GameObject("Other owner", typeof(PlayerTurretSkill));
         try
         {
@@ -240,4 +420,23 @@ public sealed class PlayerSkillRuntimeTests
         finally { Object.DestroyImmediate(other); }
         yield break;
     }
+    [UnityTest]
+    public IEnumerator Turret_SelectionUiCancelsPreviewWithoutConsuming()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.TemporaryTurret), Is.True);
+        Assert.That(_controller.TryUse(PlayerSkillId.TemporaryTurret), Is.True);
+        var skill = _player.GetComponent<PlayerTurretSkill>();
+        Assert.That(_controller.IsPlacingTurret, Is.True);
+        Assert.That(_controller.CanRecover, Is.False);
+        _hud.Open();
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position), Is.False);
+        yield return null;
+        Assert.That(skill.IsPlacing, Is.False);
+        Assert.That(skill.AvailableCount, Is.EqualTo(3));
+        Assert.That(skill.CurrentCooldownTimer, Is.Zero);
+    }
+
+    private bool DeployTurret() => _controller.TryUse(PlayerSkillId.TemporaryTurret)
+        && _player.GetComponent<PlayerTurretSkill>().TryConfirmPlacement(_player.transform.position + Vector3.down);
+
 }

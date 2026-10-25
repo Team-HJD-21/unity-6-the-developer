@@ -1,10 +1,16 @@
 # 검증과 제한 사항
 
-최종 갱신: 2026-10-24
+최종 갱신: 2026-10-25
 상태: 통합 시 확인할 항목. 체크리스트 자체가 테스트 통과 기록은 아니다.
 
 냉각·강화 제한의 코드 기준은 main `8d08001a`에 병합된 PR #525다.
 Initial 플레이어 UI의 조작 검증 목록은 [Player UI API](../player-ui-api.md#확인-순서)에 있다.
+
+## main 병합 후 회귀 검증
+
+2026-10-25 로컬 검증: main `1560df6c` 병합 충돌에서 FieldTurret 명칭, 시간 기반 수리 API와 main의 정수 회복 API·원거리 선택/조작 거리 구분·설치 충돌 검사를 함께 유지했다. Unity 6000.3.23f1 컴파일 및 `TeamHJD.Game.FieldTurrets.Tests` PlayMode 테스트 77개가 통과했다. 정수 수리로 최대 체력에 도달한 뒤 시간 기반 수리를 호출해도 이전 소수점 회복량이 남지 않는 회귀를 포함한다.
+
+별도 EditMode 실행에서 `StageControlUnitHudTests`, `PlayerTurretPlacementTests`, `PlayerWeaponMigrationTests.SpannerTargetingRejectsRearDistantAndBlockedTargets`, `RegionSceneIntegrationTests` 총 32개가 통과했다. 총 109개 항목을 분리 실행했으며 화면 렌더링 인수·입력 장치별 수동 플레이·다중 클라이언트 검증은 포함하지 않는다.
 
 ## FieldTurret 명칭 변경 검증
 

@@ -1,11 +1,13 @@
 # The Developer — Project Documentation
 
-수정일: 2026-10-23
+수정일: 2026-10-24
 상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
 ## 현재 기준
+
+2026-10-24 회의는 수기와 완성된 자동 전사를 대조했다. 가동 준비 지연 없음·정지 전 자동 냉각/전력 반환, 일부 파괴 전력 예약과 키 유지 수리·복구 방향을 구분한다. 후반의 경험치 유지·토큰/Blueprint 성장·터렛 레벨별 Minor Upgrade 상한, 분대 목표 유지와 전체 스폰량 조절 방향도 기록했다. 확률·시간·일정 세부와 구현·성능 검증은 별도다. [회의 검토 기록](planning/2026-10-24-regular-meeting.md)에서 확정 방향과 추가 확인 항목을 구분한다.
 
 2026-10-15 Core 통합 스프린트를 진행한다. 정적·동적 지역 모두 지역 Grid의 상태가 원본이며, 동적 삼각형은 점령 셀을 계산하는 임시 자료다. 동적 모드는 지역 잠금 없이 활성 터렛으로 점령을 갱신하고, 점령 회수로 나머지 터렛을 끄지 않는다. [배치·구현·검증 기록](planning/2026-10-15-core-sprint-implementation.md)에서 실제 구현과 미완료 통합을 구분한다.
 
@@ -60,7 +62,13 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOL
 
 플레이어 스킬의 책임 분리와 신규 네트워크 몬스터 연동·테스트 범위는 [Player skill review](architecture/player-skill-review.md)를 참고한다.
 
+스킬 Canvas를 씬에 미리 배치하고 실행 중 생성되는 로컬 플레이어에게 연결하는 방법은 [Player Skill HUD API](architecture/player-skill-hud-api.md)를 참고한다.
+
 Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변경 UI는 [Player UI API](architecture/player-ui-api.md)를 참고한다.
+
+플레이어 무기 전환과 스패너 공격·수리는 [Player Weapon API](architecture/player-weapon-api.md)를 참고한다.
+
+새 플레이어 4방향 대기·이동·공격·수리 프레임은 [Player Motion API](architecture/player-motion-api.md)를 참고한다.
 
 플레이어 기본 무기·총구·탄환 초기화 계약과 이동속도 독립 사격은 [Player Combat API](architecture/player-combat-api.md)를 참고한다.
 
@@ -90,6 +98,8 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 9월 22일 [진행 방식 비교](archive/2026-09-22-progression-options.md)와 9월 26일 [Stage 1 회의 요약](archive/2026-09-26-stage1-planning.md)은 현재 Product Plan·Sprint 기준에 반영한 회의 근거로 보관한다. 10월 2일 [AI 구조 검토](planning/2026-10-02-ai-architecture-review.md), 10월 3일 [PoC 후속 검토](planning/2026-10-03-poc-followup.md), 10월 5일 [스폰 연동 검토](planning/2026-10-05-monster-map-spawn-review.md)는 실행·설계 확인이 남아 `planning/`에 둔다. [레거시 몬스터 흐름 분석](archive/legacy-monster-flow-and-dependencies.md)은 현재 Enemy AI 규칙이 아닌 이전 코드의 참고 자료다.
 
 Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 함께 본다. [architecture-rebuild-notes.md](architecture/architecture-rebuild-notes.md)는 레거시 분석과 이식 대응표를 담은 참고 문서다. [SPRINT_0_BACKLOG.md](archive/SPRINT_0_BACKLOG.md)와 [team-recruitment-proposal.md](archive/team-recruitment-proposal.md)는 역사적 자료이며 현재 일정·역할의 기준이 아니다.
+
+[2026-10-24 정기회의 검토 기록](planning/2026-10-24-regular-meeting.md) — 전력·수리·복구 방향, 재화 검토와 회의 운영 일정
 
 ## Source of Truth
 

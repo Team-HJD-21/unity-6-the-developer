@@ -696,6 +696,16 @@ namespace TeamHJD.Game.FieldTurrets
             return FieldTurretRepairResult.Repaired;
         }
 
+        /// <summary>살아 있는 터렛을 부분 수리합니다. 활성화·전력 예약·냉각 상태는 변경하지 않습니다.</summary>
+        public bool Repair(int amount)
+        {
+            if (!IsInitialized || !isActiveAndEnabled || amount <= 0 || IsLocked || IsDestroyed ||
+                IsManualOperationBlocked) return false;
+            if (!_runtimeState.Repair(amount, MaxHealth)) return false;
+            FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
+            return true;
+        }
+
         public bool Restore()
         {
             if (RejectManualOperation()) return false;

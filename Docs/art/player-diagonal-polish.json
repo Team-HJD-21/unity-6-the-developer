@@ -1,0 +1,559 @@
+{
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "model": "not exposed by host tool",
+  "estimateUsd": null,
+  "prompts": {
+    "DiagonalMove": "Use case: precise-object-edit, production astronaut movement sprites. FIRST image is the exact edit target, four figures in a 2x2 layout. SECOND image is the APPROVED original cardinal moving sprite set: use its INTEGRATED WHITE BACKPACK EXHAUST STYLE. Redraw the first image with exhaust drawn as part of each character, connected naturally to the lower backpack, following its torso tilt toward the hips/feet. Both left and right backpack nozzles have a short WHITE FLUFFY EXHAUST TUFT; the far one may be smaller but its tip MUST be visible. Match the softly irregular chunky white tufts with faint grey edge in reference 2, NOT separate sharp triangular stickers, arrowheads, or two pasted identical rigid flames. No foot or boot flames. The exhaust is at backpack/hip height, well above the boot soles, with natural perspective and overlap. Remove/replace any old exhaust in the target so there are only the two integrated plumes. For the two FRONT diagonal views in the top row: FIX THE LEGS into a natural relaxed HOVER posture like reference 2. Knees softly bent, boots suspended and pointed a little down, near/far leg overlap in proper perspective; feet not planted wide apart as if standing, not two flat disconnected shoes, not a walking stride. Rear diagonal poses keep their present leg anatomy. Preserve the exact existing facing in each cell, compact round helmet dimensions, same white-grey clothes and black visor, same gun design and orientation, same overall character size. No longer visor or bigger head, no new ornaments or colors, no weapon flash. Keep all four characters on the same 2x2 cell centers and generous clear margins. Actual transparent background, no shadows, no text or floor. This is a full sprite paint edit: the backpack-to-exhaust connection and soft shading must be drawn together naturally, not a disconnected FX layer.",
+    "DiagonalBack": "Use case: precise-object-edit. FIRST image is the exact four-pose edit target. SECOND image is an ART DIRECTOR GUIDE: two pink lines per astronaut show EXACTLY where the white exhaust must begin and flow. Follow those lines from BACKPACK to dot endpoints. LEFT COLUMN exhaust flows DOWN-LEFT; RIGHT COLUMN exhaust flows DOWN-RIGHT, matching the legs. Paint two short irregular WHITE exhaust streams directly along those guide paths from the bottom edge of the WHITE BACK BAG. They must NOT point out to the side of the backpack or straight screen-down. This is not a suggestion: the geometry is specified by the two pink lines. The far stream may be partly hidden by the body but show its tip. Do not draw puffy extra legs or grey teardrop objects; draw bright white hot-gas tufts with only a faint soft-grey edge, no dark outline, no blue, no orange. THIRD image is the white exhaust STYLE reference. Keep the original bodies, heads, weapons, feet and leaning poses untouched. Only add/paint the backpack outlets and their connected exhaust in the correct direction. Remove ALL guide lines, dots and guide background from output. Keep exact 2x2 positions and size. Transparent background, no text, no shadow or ground. No foot-mounted flames.",
+    "Recoil_DownLeft": "Use case: identity-preserve, animation key poses for an existing game sprite. Reference is the EXACT approved idle astronaut facing DownLeft. Produce TWO full-body key poses side by side, on transparent background, equal-sized square cells. LEFT cell: visible peak recoil from a single shot, elbows compressing and shoulders/upper torso responding backward by a small natural amount. RIGHT cell: almost recovered follow-through, arms extending back toward the exact reference ready pose. Keep both boots planted at precisely the SAME relative positions as the reference; lower body stays stable. Helmet remains the same round size and proportions, white-grey suit and black visor unchanged. Preserve the rifle design, length, and EXACT diagonal aim/orientation of the reference in BOTH cells; do not redesign or re-aim the weapon. The movement is in elbows and shoulders and small torso recoil, no whole-character rotation, no rubber legs, no backwards image flipping. The poses must visibly differ in the arms/rifle distance from shoulder. Peak recoil should pull hands and the rifle toward the chest by about 1/8 helmet width; recovery only 1/32 helmet width. This is STATIONARY, so no backpack flames, no boot flames, no muzzle flash, no particles, no floor or shadow, no extra props, no text. Fully visible figures, uniform scale, clear margins and well separated two cells. Match the exact cute compact neutral sprite style.",
+    "Recoil_DownRight": "Use case: identity-preserve, animation key poses for an existing game sprite. Reference is the EXACT approved idle astronaut facing DownRight. Produce TWO full-body key poses side by side, on transparent background, equal-sized square cells. LEFT cell: visible peak recoil from a single shot, elbows compressing and shoulders/upper torso responding backward by a small natural amount. RIGHT cell: almost recovered follow-through, arms extending back toward the exact reference ready pose. Keep both boots planted at precisely the SAME relative positions as the reference; lower body stays stable. Helmet remains the same round size and proportions, white-grey suit and black visor unchanged. Preserve the rifle design, length, and EXACT diagonal aim/orientation of the reference in BOTH cells; do not redesign or re-aim the weapon. The movement is in elbows and shoulders and small torso recoil, no whole-character rotation, no rubber legs, no backwards image flipping. The poses must visibly differ in the arms/rifle distance from shoulder. Peak recoil should pull hands and the rifle toward the chest by about 1/8 helmet width; recovery only 1/32 helmet width. This is STATIONARY, so no backpack flames, no boot flames, no muzzle flash, no particles, no floor or shadow, no extra props, no text. Fully visible figures, uniform scale, clear margins and well separated two cells. Match the exact cute compact neutral sprite style.",
+    "Recoil_UpLeft": "Use case: identity-preserve, animation key poses for an existing game sprite. Reference is the EXACT approved idle astronaut facing UpLeft. Produce TWO full-body key poses side by side, on transparent background, equal-sized square cells. LEFT cell: visible peak recoil from a single shot, elbows compressing and shoulders/upper torso responding backward by a small natural amount. RIGHT cell: almost recovered follow-through, arms extending back toward the exact reference ready pose. Keep both boots planted at precisely the SAME relative positions as the reference; lower body stays stable. Helmet remains the same round size and proportions, white-grey suit and black visor unchanged. Preserve the rifle design, length, and EXACT diagonal aim/orientation of the reference in BOTH cells; do not redesign or re-aim the weapon. The movement is in elbows and shoulders and small torso recoil, no whole-character rotation, no rubber legs, no backwards image flipping. The poses must visibly differ in the arms/rifle distance from shoulder. Peak recoil should pull hands and the rifle toward the chest by about 1/8 helmet width; recovery only 1/32 helmet width. This is STATIONARY, so no backpack flames, no boot flames, no muzzle flash, no particles, no floor or shadow, no extra props, no text. Fully visible figures, uniform scale, clear margins and well separated two cells. Match the exact cute compact neutral sprite style.",
+    "Recoil_UpRight": "Use case: identity-preserve, animation key poses for an existing game sprite. Reference is the EXACT approved idle astronaut facing UpRight. Produce TWO full-body key poses side by side, on transparent background, equal-sized square cells. LEFT cell: visible peak recoil from a single shot, elbows compressing and shoulders/upper torso responding backward by a small natural amount. RIGHT cell: almost recovered follow-through, arms extending back toward the exact reference ready pose. Keep both boots planted at precisely the SAME relative positions as the reference; lower body stays stable. Helmet remains the same round size and proportions, white-grey suit and black visor unchanged. Preserve the rifle design, length, and EXACT diagonal aim/orientation of the reference in BOTH cells; do not redesign or re-aim the weapon. The movement is in elbows and shoulders and small torso recoil, no whole-character rotation, no rubber legs, no backwards image flipping. The poses must visibly differ in the arms/rifle distance from shoulder. Peak recoil should pull hands and the rifle toward the chest by about 1/8 helmet width; recovery only 1/32 helmet width. This is STATIONARY, so no backpack flames, no boot flames, no muzzle flash, no particles, no floor or shadow, no extra props, no text. Fully visible figures, uniform scale, clear margins and well separated two cells. Match the exact cute compact neutral sprite style."
+  },
+  "directionOverrides": {
+    "DiagonalBack": {
+      "DownLeft": {
+        "artifact": "C:\\Users\\bmma1\\.codex\\generated_images\\01a11a0d-56ad-7d70-82ae-0959f35c9445\\exec-83b612f6-4c0e-4162-a9ca-f1099bdacac9.png",
+        "prompt": "Use case: precise-object-edit. Edit ONE existing diagonal reclining astronaut. First reference is the EXACT character to preserve; second is a nozzle/flow GUIDE. Add TWO white exhaust plumes FROM THE UNDERSIDE OF THE BACKPACK following the two pink lines exactly. The pink lines run from the bag at upper RIGHT to LOWER LEFT, like a forward slash /. The TWO WHITE PLUME TIPS must be to the LEFT of where they start on the bag. The exhaust runs parallel to the outstretched legs; the backpack is the origin, not boots or hips. Show both as two small distinct streams, one near and one far, with space between their white tips. The gas may pass partly in front of the bag's lower edge to remain visible, but must attach directly to its two nozzles and flow along the guide. Soft bright white irregular tapered tufts with faint neutral grey edge, NO dark outline or extra white limbs. Preserve pose, boots, round head size, clothes, rifle and aim EXACTLY. No muzzle flash. Output the same single sprite on actual transparency; remove the guide lines/dots/background. Do not redirect gas off to the other side or vertically."
+      },
+      "DownRight": {
+        "artifact": "C:\\Users\\bmma1\\.codex\\generated_images\\01a11a0d-56ad-7d70-82ae-0959f35c9445\\exec-e33ce86f-7480-4dbe-9503-6f54893372cb.png",
+        "prompt": "Use case: precise-object-edit. Edit ONE existing diagonal reclining astronaut. First reference is the EXACT character to preserve; second is a nozzle/flow GUIDE. Add TWO white exhaust plumes FROM THE UNDERSIDE OF THE BACKPACK following the two pink lines exactly. The pink lines run from the bag at upper LEFT to LOWER RIGHT, like a backslash. The TWO WHITE PLUME TIPS must be to the RIGHT of where they start on the bag. The exhaust runs parallel to the outstretched legs; the backpack is the origin, not boots or hips. Show both as two small distinct streams, one near and one far, with space between their white tips. The gas may pass partly in front of the bag's lower edge to remain visible, but must attach directly to its two nozzles and flow along the guide. Soft bright white irregular tapered tufts with faint neutral grey edge, NO dark outline or extra white limbs. Preserve pose, boots, round head size, clothes, rifle and aim EXACTLY. No muzzle flash. Output the same single sprite on actual transparency; remove the guide lines/dots/background. Do not redirect gas off to the other side or vertically."
+      }
+    }
+  },
+  "records": [
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownLeft.png",
+      "sha256": "a79371cb5f05d2105580db5faac364fbbeb2f9d10ae43e7399f954209610bee7",
+      "group": "DiagonalMove",
+      "direction": "DownLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalMove_Source.png",
+      "sourceSha256": "2e9ab0119a7f8ff2eb7412fd29acae0455731381b6e11d4f63d16a0ec60afaaf",
+      "sourceCell": 0,
+      "uniformScale": 0.2583732057416268,
+      "fullHelmet": [
+        53,
+        26,
+        107,
+        72
+      ],
+      "bounds": [
+        36,
+        26,
+        122,
+        119
+      ],
+      "footPixel": [
+        88.0,
+        119.0
+      ],
+      "muzzlePixel": [
+        36.0,
+        96.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownRight.png",
+      "sha256": "d371c1eda20508be8b71d3cfd28900dd4fe7fe8cb1a034ac735fc4e09e7e6d6c",
+      "group": "DiagonalMove",
+      "direction": "DownRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalMove_Source.png",
+      "sourceSha256": "2e9ab0119a7f8ff2eb7412fd29acae0455731381b6e11d4f63d16a0ec60afaaf",
+      "sourceCell": 1,
+      "uniformScale": 0.2535211267605634,
+      "fullHelmet": [
+        53,
+        33,
+        107,
+        78
+      ],
+      "bounds": [
+        42,
+        33,
+        121,
+        122
+      ],
+      "footPixel": [
+        74.0,
+        122.0
+      ],
+      "muzzlePixel": [
+        121.0,
+        101.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpLeft.png",
+      "sha256": "f2d1b0a687a521ff007ac531379336d65414f905b0726aa4618bb020dff1e71c",
+      "group": "DiagonalMove",
+      "direction": "UpLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalMove_Source.png",
+      "sourceSha256": "2e9ab0119a7f8ff2eb7412fd29acae0455731381b6e11d4f63d16a0ec60afaaf",
+      "sourceCell": 2,
+      "uniformScale": 0.26570048309178745,
+      "fullHelmet": [
+        53,
+        31,
+        108,
+        77
+      ],
+      "bounds": [
+        18,
+        31,
+        121,
+        127
+      ],
+      "footPixel": [
+        93.9,
+        127.0
+      ],
+      "muzzlePixel": [
+        18.0,
+        61.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpRight.png",
+      "sha256": "34453de6b3fe8e7126200e5c6535de253ac2b71f8b76e403d12393736f83cadf",
+      "group": "DiagonalMove",
+      "direction": "UpRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalMove_Source.png",
+      "sourceSha256": "2e9ab0119a7f8ff2eb7412fd29acae0455731381b6e11d4f63d16a0ec60afaaf",
+      "sourceCell": 3,
+      "uniformScale": 0.2583732057416268,
+      "fullHelmet": [
+        53,
+        28,
+        108,
+        72
+      ],
+      "bounds": [
+        40,
+        28,
+        140,
+        121
+      ],
+      "footPixel": [
+        70.0,
+        121.0
+      ],
+      "muzzlePixel": [
+        140.0,
+        59.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownLeft.png",
+      "sha256": "8ba96ffa33ff92630b4addc0abf405e5f27f8439951752470abfae00c8f99642",
+      "group": "DiagonalBack",
+      "direction": "DownLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_DownLeft_Source.png",
+      "sourceSha256": "b33372e61466ce56c5b59c5998b1d354b30462a48b8c32d0b9f0e22bf5c94773",
+      "sourceCell": null,
+      "uniformScale": 0.12761020881670534,
+      "fullHelmet": [
+        61,
+        30,
+        116,
+        76
+      ],
+      "bounds": [
+        28,
+        30,
+        118,
+        132
+      ],
+      "footPixel": [
+        50.5,
+        132.0
+      ],
+      "muzzlePixel": [
+        28.0,
+        92.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownRight.png",
+      "sha256": "5ff2503664469f7a81024953949ed42b738cd88729ed823f96359f04bdf02492",
+      "group": "DiagonalBack",
+      "direction": "DownRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_DownRight_Source.png",
+      "sourceSha256": "028a8a0804d577a5ffe5403116f97baecc4b73541edd422da9a8aed97fd399be",
+      "sourceCell": null,
+      "uniformScale": 0.12796208530805686,
+      "fullHelmet": [
+        45,
+        37,
+        99,
+        81
+      ],
+      "bounds": [
+        45,
+        37,
+        137,
+        134
+      ],
+      "footPixel": [
+        96.0,
+        134.0
+      ],
+      "muzzlePixel": [
+        137.0,
+        90.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpLeft.png",
+      "sha256": "05ab3ef682d2beff0709c38b4afd24abb85f80fe73a41c2c059257fb92be0577",
+      "group": "DiagonalBack",
+      "direction": "UpLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_Source.png",
+      "sourceSha256": "dd3b4af99442ef035498a83440ffd7e57c0b0702800b5f145999938e7078b12c",
+      "sourceCell": 2,
+      "uniformScale": 0.2559241706161137,
+      "fullHelmet": [
+        61,
+        34,
+        115,
+        79
+      ],
+      "bounds": [
+        27,
+        34,
+        115,
+        125
+      ],
+      "footPixel": [
+        64.3,
+        125.0
+      ],
+      "muzzlePixel": [
+        31.0,
+        64.0
+      ],
+      "muzzleAuthoring": "Upper-left barrel tip at pixel (31,64), matching the working UpRight muzzle height; the shorter left rifle requires a different X distance. Overrides the old boot-extremum measurement."
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpRight.png",
+      "sha256": "c19b0f33c270f92332d853162ac991bc5f2b35962012f707ad17a4d9084b8f57",
+      "group": "DiagonalBack",
+      "direction": "UpRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IntegratedHover_DiagonalBack_Source.png",
+      "sourceSha256": "dd3b4af99442ef035498a83440ffd7e57c0b0702800b5f145999938e7078b12c",
+      "sourceCell": 3,
+      "uniformScale": 0.2583732057416268,
+      "fullHelmet": [
+        45,
+        31,
+        99,
+        75
+      ],
+      "bounds": [
+        45,
+        31,
+        137,
+        123
+      ],
+      "footPixel": [
+        98.5,
+        123.0
+      ],
+      "muzzlePixel": [
+        137.0,
+        64.0
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Fire_DownLeft.png",
+      "sha256": "483aa6b29e919b3676ddf2ba34d75332cc24c13b69f0d8e02df31a7b2125f84f",
+      "group": "Fire",
+      "direction": "DownLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_DownLeft_Source.png",
+      "sourceSha256": "bcd531f65100681110df835dd080b8c2efccdbd2fe88723b92b2aef5ad0c0867",
+      "sourceCell": 0,
+      "uniformScale": 0.1641337386018237,
+      "fullHelmet": [
+        52,
+        28,
+        106,
+        74
+      ],
+      "bounds": [
+        42,
+        28,
+        114,
+        121
+      ],
+      "footPixel": [
+        82.95000000000002,
+        121.0
+      ],
+      "muzzlePixel": [
+        42.0,
+        100.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/FireRecover_DownLeft.png",
+      "sha256": "36c1e6ae42a4ea3e449f34ab7f26ae096213e0582fbd15d9ec61eeae578536d1",
+      "group": "FireRecover",
+      "direction": "DownLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_DownLeft_Source.png",
+      "sourceSha256": "bcd531f65100681110df835dd080b8c2efccdbd2fe88723b92b2aef5ad0c0867",
+      "sourceCell": 1,
+      "uniformScale": 0.16363636363636364,
+      "fullHelmet": [
+        52,
+        28,
+        106,
+        75
+      ],
+      "bounds": [
+        38,
+        28,
+        114,
+        121
+      ],
+      "footPixel": [
+        82.0,
+        121.0
+      ],
+      "muzzlePixel": [
+        38.0,
+        100.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Fire_DownRight.png",
+      "sha256": "fbb73680dd76a530a90a8e640b072ea3ccf18ab24cabdd6560b3a9e10ae28bd1",
+      "group": "Fire",
+      "direction": "DownRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_DownRight_Source.png",
+      "sourceSha256": "7c0ad41b4818698687a896b59d73d18b831303d2e114e52500963fc6fa3a20f7",
+      "sourceCell": 0,
+      "uniformScale": 0.17197452229299362,
+      "fullHelmet": [
+        50,
+        38,
+        104,
+        83
+      ],
+      "bounds": [
+        49,
+        38,
+        116,
+        121
+      ],
+      "footPixel": [
+        79.5,
+        121.0
+      ],
+      "muzzlePixel": [
+        116.0,
+        105.5
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/FireRecover_DownRight.png",
+      "sha256": "323b4f4a2897e41cd69c87e16af1697fe35846643d718dc5c2e6c7081f4ac331",
+      "group": "FireRecover",
+      "direction": "DownRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_DownRight_Source.png",
+      "sourceSha256": "7c0ad41b4818698687a896b59d73d18b831303d2e114e52500963fc6fa3a20f7",
+      "sourceCell": 1,
+      "uniformScale": 0.17197452229299362,
+      "fullHelmet": [
+        50,
+        38,
+        104,
+        83
+      ],
+      "bounds": [
+        49,
+        38,
+        116,
+        121
+      ],
+      "footPixel": [
+        79.5,
+        121.0
+      ],
+      "muzzlePixel": [
+        116.0,
+        105.0
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Fire_UpLeft.png",
+      "sha256": "22eec9a98b51b32893b9c136d712137fd079c4c550244660303d7f757449f693",
+      "group": "Fire",
+      "direction": "UpLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_UpLeft_Source.png",
+      "sourceSha256": "ee81f4bec27930edb6ecf84208b6b7fb1114ca7b34248654a2456d31b58776dc",
+      "sourceCell": 0,
+      "uniformScale": 0.1569767441860465,
+      "fullHelmet": [
+        56,
+        32,
+        110,
+        80
+      ],
+      "bounds": [
+        39,
+        32,
+        110,
+        121
+      ],
+      "footPixel": [
+        79.5,
+        121.0
+      ],
+      "muzzlePixel": [
+        39.0,
+        64.0
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/FireRecover_UpLeft.png",
+      "sha256": "3498ad37f11c06c6c84dac4d91836e696f2b724a0ad71ef8f3dd02d1956bd2ac",
+      "group": "FireRecover",
+      "direction": "UpLeft",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_UpLeft_Source.png",
+      "sourceSha256": "ee81f4bec27930edb6ecf84208b6b7fb1114ca7b34248654a2456d31b58776dc",
+      "sourceCell": 1,
+      "uniformScale": 0.15743440233236153,
+      "fullHelmet": [
+        53,
+        32,
+        107,
+        80
+      ],
+      "bounds": [
+        30,
+        32,
+        107,
+        121
+      ],
+      "footPixel": [
+        78.5,
+        121.0
+      ],
+      "muzzlePixel": [
+        30.0,
+        64.0
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Fire_UpRight.png",
+      "sha256": "173889c6c68210878fb4368d921fb6e96592d42c3d461d4365a986f091b7b343",
+      "group": "Fire",
+      "direction": "UpRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_UpRight_Source.png",
+      "sourceSha256": "5b70ab7dcdf7784c5b7a5068918b7dd88428a6518f9274007b563a30003f7941",
+      "sourceCell": 0,
+      "uniformScale": 0.17363344051446947,
+      "fullHelmet": [
+        50,
+        32,
+        104,
+        77
+      ],
+      "bounds": [
+        50,
+        32,
+        127,
+        121
+      ],
+      "footPixel": [
+        82.5,
+        121.0
+      ],
+      "muzzlePixel": [
+        127.0,
+        67.0
+      ]
+    },
+    {
+      "sprite": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/FireRecover_UpRight.png",
+      "sha256": "23edf2a6fec863dc4e2cf6b19ae916637ea2d00abf97b23d0d3c907158e797ea",
+      "group": "FireRecover",
+      "direction": "UpRight",
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/StationaryRecoil_UpRight_Source.png",
+      "sourceSha256": "5b70ab7dcdf7784c5b7a5068918b7dd88428a6518f9274007b563a30003f7941",
+      "sourceCell": 1,
+      "uniformScale": 0.17419354838709677,
+      "fullHelmet": [
+        50,
+        32,
+        104,
+        77
+      ],
+      "bounds": [
+        50,
+        32,
+        127,
+        121
+      ],
+      "footPixel": [
+        82.05,
+        121.0
+      ],
+      "muzzlePixel": [
+        127.0,
+        67.0
+      ]
+    }
+  ],
+  "stationaryRecoilSpriteKeys": {
+    "DownLeft": [
+      "61fd7847dd894d1daa7d63d54f318286",
+      "611a9cbc4618440db2cf5211f35d5435",
+      "ff36188e31b24fc7a5c41caf781e8488",
+      "61fd7847dd894d1daa7d63d54f318286",
+      "61fd7847dd894d1daa7d63d54f318286"
+    ],
+    "DownRight": [
+      "819efbac05254e0193412ccf899b490f",
+      "ff26031f7251461b83845841b08912d3",
+      "7583059685704d7b9e50009cd2e5e816",
+      "819efbac05254e0193412ccf899b490f",
+      "819efbac05254e0193412ccf899b490f"
+    ],
+    "UpLeft": [
+      "c1a2f9f74c6148b88843e760acb14566",
+      "f612b72832c54bbdac54a001594c5c3c",
+      "7b08a531babc4be2a284ba657b3b6a09",
+      "c1a2f9f74c6148b88843e760acb14566",
+      "c1a2f9f74c6148b88843e760acb14566"
+    ],
+    "UpRight": [
+      "4b8206659cac4d139c29c860bdf1647b",
+      "3c8fb7a6a09d40b1abc7f13a4df2c496",
+      "53e6961af50d40fcad534cfe17a440e0",
+      "4b8206659cac4d139c29c860bdf1647b",
+      "4b8206659cac4d139c29c860bdf1647b"
+    ]
+  },
+  "stationaryRecoilKeyTimes": [
+    0,
+    0.05,
+    0.1,
+    0.15,
+    0.18333334
+  ],
+  "recoilDurationSeconds": 0.2,
+  "runtimeBound": true,
+  "exhaustMethod": "Full painted body/backpack/exhaust pose edits; no shared FX stamp; diagonal backward jets follow legs from the bag",
+  "unityPlayMode": "NOT_RUN",
+  "checks": {
+    "paintedSpriteSizePaletteAndAlpha": "PASS",
+    "stationaryRecoilDistinctPosesAndIdleReturn": "PASS",
+    "shotTimingAndShadowOnlyCurves": "PASS",
+    "firstShotMuzzleMatchesIdle": "PASS",
+    "animatorGraphAndPhysicsUnchanged": "PASS",
+    "unityTestRunner": "NOT_RUN",
+    "unityPlayMode": "NOT_RUN"
+  }
+}

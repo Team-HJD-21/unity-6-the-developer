@@ -4,6 +4,8 @@ using TeamHJD.Game.FieldTurrets.Contracts;
 /// <summary>터렛 API 요청 결과의 표시 문구를 관리합니다.</summary>
 internal static class StageTurretUIText
 {
+    public const string OutOfReach = "Move closer to control this turret.";
+
     public static string WithCooling(string message, FieldTurretBase turret) => turret.IsCoolingDown
         ? $"{message} | Cooling {turret.CoolingDownRemaining:0.0}s"
         : message;

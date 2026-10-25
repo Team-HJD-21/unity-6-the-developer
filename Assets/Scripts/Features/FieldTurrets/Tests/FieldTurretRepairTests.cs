@@ -119,6 +119,20 @@ namespace TeamHJD.Game.FieldTurrets.Tests
         }
 
         [Test]
+        public void IntegerRepairReachingFullHealthDiscardsTimedRepairFraction()
+        {
+            var turret = CreateTurret(99);
+            Assert.That(turret.Repair(1f, 0.8f), Is.EqualTo(FieldTurretRepairResult.Accumulating));
+            Assert.That(turret.Repair(1), Is.True);
+            Assert.That(turret.CurrentHealth, Is.EqualTo(100));
+
+            turret.ApplyDamage(5);
+
+            Assert.That(turret.Repair(1f, 0.3f), Is.EqualTo(FieldTurretRepairResult.Accumulating));
+            Assert.That(turret.CurrentHealth, Is.EqualTo(95), "Full health must clear progress from either repair API.");
+        }
+
+        [Test]
         public void HealthEventsAndSnapshotsChangeOnlyWhenWholeHealthIsAdded()
         {
             var turret = CreateTurret(98);

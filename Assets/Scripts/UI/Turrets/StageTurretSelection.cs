@@ -33,8 +33,10 @@ internal sealed class StageTurretSelection
     }
 
     public bool CanSelect(FieldTurretBase turret) => turret != null &&
-        turret.gameObject.scene == _scene && turret.isActiveAndEnabled && IsWithinReach(turret) &&
+        turret.gameObject.scene == _scene && turret.isActiveAndEnabled &&
         FieldTurretInstanceRegistry.TryGet(turret.InstanceId, out var registered) && registered == turret;
+
+    public bool CanInteractWith(FieldTurretBase turret) => CanSelect(turret) && IsWithinReach(turret);
 
     public void ProcessInput(FieldTurretController controller)
     {

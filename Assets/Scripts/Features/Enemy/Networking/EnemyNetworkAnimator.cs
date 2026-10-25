@@ -68,18 +68,21 @@ public class EnemyNetworkAnimator : NetworkBehaviour
     {
         if (!IsSpawned || !IsServer)
             return;
-        PlayAttackRpc();
+        PlayAttackRpc(
+            _animator.GetFloat(MoveXHash),
+            _animator.GetFloat(MoveYHash));
     }
 
     /// <summary>
     /// 공격 이벤트를 로컬 Animator에 한 번만 적용한다.
     /// </summary>
     [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
-    private void PlayAttackRpc()
+    private void PlayAttackRpc(float moveX, float moveY)
     {
+        _animator.SetFloat(MoveXHash, moveX);
+        _animator.SetFloat(MoveYHash, moveY);
         _animator.SetTrigger(AttackHash);
     }
-
     /// <summary>
     /// Animator의 이동 값을 읽어 변경된 상태만 네트워크에 기록한다.
     /// </summary>

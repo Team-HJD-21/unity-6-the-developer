@@ -47,6 +47,66 @@ namespace TeamHJD.Game.FieldTurrets.Tests
             Assert.That(_definition.MaxHealth, Is.EqualTo(100));
         }
 
+        [Test]
+        public void PartialRepairCapsHealthAndPreservesActivationAndReservation()
+        {
+            var power = new FakePower();
+            var turret = MakeInactiveTurret();
+            turret.PrepareInitialization(new FieldTurretInitializationData(_definition, 37), power);
+            Assert.That(turret.ConfigureForTest(), Is.True);
+            turret.gameObject.SetActive(true);
+            FieldTurretInstanceRegistry.Register(turret);
+            Assert.That(turret.RequestActivation(true), Is.EqualTo(FieldTurretActivationResult.Activated));
+            int healthEvents = 0, snapshotEvents = 0;
+            Action<FieldTurretBase, int, int> health = (target, current, max) => { if (target == turret) healthEvents++; };
+            Action<int> snapshot = id => { if (id == turret.InstanceId) snapshotEvents++; };
+            FieldTurretInstanceRegistry.HealthChanged += health;
+            FieldTurretInstanceRegistry.SnapshotChanged += snapshot;
+            try
+            {
+                Assert.That(turret.Repair(10), Is.True);
+                Assert.That(turret.CurrentHealth, Is.EqualTo(47));
+                Assert.That(turret.Repair(int.MaxValue), Is.True);
+                Assert.That(turret.CurrentHealth, Is.EqualTo(100));
+                Assert.That(turret.Repair(10), Is.False);
+                Assert.That(turret.Repair(0), Is.False);
+                Assert.That(turret.Repair(-1), Is.False);
+                Assert.That(turret.IsActivated, Is.True);
+                Assert.That(power.ConsumeCalls, Is.EqualTo(1));
+                Assert.That(power.ReleaseCalls, Is.Zero);
+                Assert.That(healthEvents, Is.EqualTo(2));
+                Assert.That(snapshotEvents, Is.EqualTo(2));
+                Assert.That(FieldTurretInstanceRegistry.TryGetSnapshot(turret.InstanceId, out var latest), Is.True);
+                Assert.That(latest.CurrentHealth, Is.EqualTo(100));
+            }
+            finally
+            {
+                FieldTurretInstanceRegistry.HealthChanged -= health;
+                FieldTurretInstanceRegistry.SnapshotChanged -= snapshot;
+            }
+        }
+
+        [Test]
+        public void RepairDoesNotReviveDestroyedOrUnlockLockedTurret()
+        {
+            var destroyed = new FieldTurretRuntimeState();
+            destroyed.Initialize(new FieldTurretInitializationData(_definition, 0));
+            Assert.That(destroyed.Repair(10, 100), Is.False);
+            Assert.That(destroyed.CurrentHealth, Is.Zero);
+            Assert.That(destroyed.IsDestroyed, Is.True);
+            var dying = new FieldTurretRuntimeState();
+            dying.Initialize(new FieldTurretInitializationData(_definition, 30));
+            dying.ApplyDamage(30);
+            Assert.That(dying.Repair(10, 100), Is.False, "Health callbacks must not revive a zero-health target before MarkDestroyed.");
+            var turret = MakeInactiveTurret();
+            turret.PrepareInitialization(new FieldTurretInitializationData(_definition, 30, isLocked: true), new FakePower());
+            turret.ConfigureForTest();
+            turret.gameObject.SetActive(true);
+            Assert.That(turret.Repair(10), Is.False);
+            Assert.That(turret.CurrentHealth, Is.EqualTo(30));
+            Assert.That(turret.IsLocked, Is.True);
+        }
+
         [TestCase(-1)]
         [TestCase(101)]
         public void InvalidHealthIsRejected(int health) =>

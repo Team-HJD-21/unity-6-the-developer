@@ -1,6 +1,5 @@
 // 스킬 준비 상태와 Q/E 입력을 연결합니다. Scene이 전투/준비 가능 여부를 명시적으로 전달합니다.
 using System;
-using TMPro;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -9,13 +8,6 @@ using UnityEngine;
 [DefaultExecutionOrder(100)]
 public sealed class PlayerSkillController : MonoBehaviour
 {
-    [SerializeField] private Sprite bombIcon;
-    [SerializeField] private Sprite turretIcon;
-    [SerializeField] private Sprite _barrierIcon;
-    [SerializeField] private Sprite _beaconIcon;
-    [SerializeField] private Sprite _recoveryKeyIcon;
-    [SerializeField] private TMP_FontAsset uiFont;
-    [SerializeField] private PlayerSkillHud _hudPrefab;
     private PlayerInputHandler _input;
     private PlayerBomb _bomb;
     private PlayerTurretSkill _turret;
@@ -31,7 +23,8 @@ public sealed class PlayerSkillController : MonoBehaviour
     public bool IsSelectionOpen => _hud != null && _hud.IsOpen;
     public bool CanPrepare => isActiveAndEnabled && (_control == null || _control.CanPrepare) && (_control != null && _control.HasMatchBinding || _canPrepare == null || _canPrepare());
     public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
-    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && (CanPrepare || CanUse);
+    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingTurret && (CanPrepare || CanUse);
+    public bool IsPlacingTurret => _turret != null && _turret.IsPlacing;
 
     private void Awake()
     {
@@ -45,8 +38,21 @@ public sealed class PlayerSkillController : MonoBehaviour
         _beacon = GetComponent<PlayerBeaconSkill>();
     }
 
-    private void Start() => _hud = PlayerSkillHudFactory.Create(this, bombIcon, turretIcon, uiFont,
-        _barrierIcon, _beaconIcon, _recoveryKeyIcon, _hudPrefab);
+    /// <summary>씬에 미리 배치한 HUD를 연결합니다. 로컬 플레이어 선택은 씬 바인더가 담당합니다.</summary>
+    public bool BindHud(PlayerSkillHud hud)
+    {
+        if (!isActiveAndEnabled || hud == null || !hud.isActiveAndEnabled
+            || hud.gameObject.scene != gameObject.scene || !hud.IsConfigured) return false;
+        if (_hud != null && _hud != hud) _hud.Unbind();
+        if (!hud.Bind(this)) return false;
+        _hud = hud;
+        return true;
+    }
+
+    public void DetachHud(PlayerSkillHud hud)
+    {
+        if (_hud == hud) _hud = null;
+    }
 
     public void BindSceneState(Func<bool> canPrepare, Func<bool> canUse)
     {
@@ -61,6 +67,7 @@ public sealed class PlayerSkillController : MonoBehaviour
     {
         if (!CanPrepare) return;
         if (_barrier != null) _barrier.CancelPlacement();
+        if (_turret != null) _turret.CancelPlacement();
         Loadout.Clear();
     }
     private PlayerSkillBase FindSkill(PlayerSkillId id) => _skills.TryGetValue(id, out var skill) ? skill : null;
@@ -68,6 +75,7 @@ public sealed class PlayerSkillController : MonoBehaviour
     public int SkillCount(PlayerSkillId id) => FindSkill(id)?.AvailableCount ?? 0;
     public bool IsSkillReady(PlayerSkillId id) => FindSkill(id)?.IsReady ?? false;
     public string BarrierPlacementHint => _barrier != null ? _barrier.PlacementHint : "";
+    public string PlacementHint => IsPlacingTurret ? _turret.PlacementHint : BarrierPlacementHint;
     public PlayerTurretPlacementResult TurretPlacementFeedback =>
         _turret != null ? _turret.PlacementFeedback : PlayerTurretPlacementResult.Allowed;
     public int BombCount => _bomb.CurrentBombCount;
@@ -86,7 +94,13 @@ public sealed class PlayerSkillController : MonoBehaviour
         var skill = FindSkill(id);
         return skill != null && skill.CooldownDuration > 0 ? Mathf.Clamp01(skill.RemainingCooldown / skill.CooldownDuration) : 0;
     }
-    public bool TryUse(PlayerSkillId id) => CanUse && Loadout.Contains(id) && (FindSkill(id)?.TryUseSkill() ?? false);
+    public bool TryUse(PlayerSkillId id)
+    {
+        if (!CanUse || !Loadout.Contains(id)) return false;
+        if (id != PlayerSkillId.TemporaryTurret && _turret != null) _turret.CancelPlacement();
+        if (id == PlayerSkillId.TemporaryTurret && _barrier != null) _barrier.CancelPlacement();
+        return FindSkill(id)?.TryUseSkill() ?? false;
+    }
 
     private void Update()
     {
@@ -97,6 +111,9 @@ public sealed class PlayerSkillController : MonoBehaviour
         if (_input.WasBombPressed) TryUse(Loadout.E);
     }
 
-    private void OnDisable() { if (_hud != null) _hud.gameObject.SetActive(false); }
-    private void OnEnable() { if (_hud != null) _hud.gameObject.SetActive(true); }
+    private void OnDisable()
+    {
+        if (_turret != null) _turret.CancelPlacement();
+        if (_hud != null) _hud.Unbind();
+    }
 }

@@ -1,6 +1,6 @@
 # API 사용법
 
-최종 갱신: 2026-10-24
+최종 갱신: 2026-10-25
 상태: 현재 Canon / Missile 공개 API. 명령용 호환 API는 컴포넌트 참조를 사용할 수 있다.
 
 이 문서의 최신 냉각·강화 제한 기준은 main `8d08001a`에 병합된 PR #525다.
@@ -70,6 +70,7 @@ if (FieldTurretInstanceRegistry.TryGet(targetTurretId, out var turret))
 | `ApplyDamage(int)` | `bool` |
 | `Repair(float healthPerSecond, float deltaTime)` | `FieldTurretRepairResult` |
 | `Restore()` | `bool` |
+| `Repair(int amount)` | `bool`. 살아 있는 터렛을 부분 회복. 최대 체력 제한, 실제 회복 시 체력·Snapshot 변경 통지 |
 | `SetLocked(bool)` | `bool` |
 | `ApplyUpgrade(FieldTurretUpgradeDefinition)` | `FieldTurretUpgradeResult` |
 | `DowngradeUpgrade(FieldTurretUpgradeDefinition)` | `FieldTurretUpgradeResult` |
@@ -81,6 +82,9 @@ UI는 `CanModifyUpgrades`로 승급·강등 및 세부 업그레이드 버튼을
 `IsManualOperationBlocked`는 해당 전력 공급자의 자동 활성화가 진행 중인지 나타낸다. 이때 개별 활성화, 세부/레벨 변경, `SetLocked`, `Repair`, `Restore`, 공격력 보너스 변경을 거부한다. 기존 `IsManualActivationBlocked`는 같은 값을 반환하는 호환 속성이다. bool API는 `false`, void 보너스 API는 미적용으로 처리하며 Console에 거부 로그를 남긴다. `Repair`는 매 프레임 호출할 수 있으므로 거부 로그 없이 결과값으로 알린다. 적의 `ApplyDamage`, 자동 처리 내부 활성화 및 게임 규칙의 구역 해금 호출은 계속 처리한다. 개발 UI에서 피해 주입·구역 변경 등 시스템 API를 수동으로 호출하는 버튼도 진행 중에는 비활성화한다.
 
 체력이 0이면 파괴되고 비활성화된다. Restore는 최대 체력과 비활성 상태로 복구한다. 복구 이후 활성화는 별도로 요청한다. Initial의 플레이어 UI에서 잠금과 해금을 직접 변경하지 않는다. 구역 해금은 Core의 게임 규칙이 관리한다.
+
+스패너가 사용하는 `Repair(int amount)`는 양수 회복량만 받으며 초기화 전·비활성 컴포넌트·잠금·파괴·자동 활성화 진행 중이면 false다. 정수 HP를 즉시 더하고 실제 체력이 증가했을 때만 true를 반환한다. 아래의 `Repair(float healthPerSecond, float deltaTime)`와 같은 체력 처리 경로를 사용하며, 어느 API로든 최대 체력에 도달하면 남은 소수점 회복량을 비운다. 한 수리 동작에서 두 API를 중복 호출하지 않는다.
+살아 있는 터렛의 체력만 회복하고 활성화, 전력 예약, 냉각 상태는 유지한다. 만피에서는 false이며 파괴 복구용 Restore와 구분한다.
 
 레벨 승급과 강등은 `RequestLevelUpgrade`와 `RequestLevelDowngrade`로 프리팹 교체를 요청한다. 매개변수와 상태 승계 규칙은 [전체 가이드](../turret-system-guide.md)의 레벨 승급 항목을 확인한다.
 
