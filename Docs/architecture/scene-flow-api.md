@@ -39,4 +39,4 @@ Single 교체/Unload는 시작 이후 되돌릴 수 있는 작업으로 표시�
 
 ## 제작 Scene 관찰
 
-최신 main Initial_Stage에는 `Encounter Debug Spawner`와 `EnemySpawnRoot` 두 Executor가 함께 제작돼 있다. 재로드 검사는 한 개라는 가정 대신 이전 객체 모두의 폐기·새 Scene의 제작 개수/소유 Scene·실제 새 Enemy 생성을 확인한다. 둘 중 어떤 Executor를 EncounterRuntime에 주입할지의 정식 선택은 현재 전역 검색을 사용하고 있어 Enemy/Core 연계 점검 항목이다. 임의로 하나를 삭제하거나 전체 스폰 분포가 검증됐다고 쓰지 않는다.
+최신 main Initial_Stage에는 `Encounter Debug Spawner`와 `EnemySpawnRoot` 두 Executor가 함께 제작돼 있다. B8의 `EncounterSceneConfiguration`은 EnemySpawnRoot prefab 인스턴스를 실제 실행 대상으로 명시 연결한다. 재로드 시 persistent consumer에 새 Scene 참조를 전달한다. 다른 제작 Executor는 삭제하지 않았으며 검사는 이전 객체 모두의 폐기·새 Scene 제작 개수/소유 Scene·명시 대상과 실제 생성까지 확인한다. [origin/source API](encounter-spawn-origin-api.md) 참조.

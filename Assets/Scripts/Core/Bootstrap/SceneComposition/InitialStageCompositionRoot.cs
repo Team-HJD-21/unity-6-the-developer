@@ -35,6 +35,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IMatchEnvironmentSource _environmentReplica;
         public MatchCoordinator MatchCoordinator => _coordinator;
         public IMatchEnvironmentSource EnvironmentSource => _matchSession?.Environment ?? _environmentReplica;
+        public double LastSpatialRefreshMilliseconds { get; private set; } = double.NaN;
+        public double LastTopologyRefreshMilliseconds { get; private set; } = double.NaN;
+        private static readonly Unity.Profiling.ProfilerMarker SpatialMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Battlefield.SampleAndPublish");
+        private static readonly Unity.Profiling.ProfilerMarker TopologyMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Battlefield.TopologyAndPublish");
         private RegionSceneBinding _regionBinding;
         private TurretMatchBinding _turretBinding;
         private MatchPlayerActorScope _playerActors;
@@ -519,7 +523,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void OnTurretLayoutChanged()
         {
             if (!HasCurrentMatch || _turretInputSource == null) return;
-            _matchHost.UpdateBattlefieldTurretLayout(_turretInputSource.CaptureTurretLayout());
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                using (TopologyMarker.Auto()) _matchHost.UpdateBattlefieldTurretLayout(_turretInputSource.CaptureTurretLayout());
+            }
+            finally { LastTopologyRefreshMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000d / System.Diagnostics.Stopwatch.Frequency; }
         }
 
         private IBattlefieldEnemyPositionSource[] FindEnemyPositionSources()
@@ -537,6 +546,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (!_matchSession.IsGameplayRunning) return;
 
             _nextBattlefieldSampleTime = Time.unscaledTime + BattlefieldSampleInterval;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try { using (SpatialMarker.Auto()) RefreshDynamicInput(); }
+            finally { LastSpatialRefreshMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000d / System.Diagnostics.Stopwatch.Frequency; }
+        }
+
+        private void RefreshDynamicInput()
+        {
             var players = new List<PlayerSpatialInput>(_playerActors.Actors.Count);
             foreach (KeyValuePair<PlayerId, GameObject> actor in _playerActors.Actors)
             {

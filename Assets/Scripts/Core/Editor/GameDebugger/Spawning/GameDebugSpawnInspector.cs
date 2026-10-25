@@ -135,6 +135,8 @@ namespace TeamHJD.Game.Editor
             if (decision != null && decision.HasOrigin)
                 _summary.text += $"\n{decision.OriginKind} · {decision.DeliveryMode} · source {decision.SpawnSourceId ?? "없음"} · request {decision.RequestGuid}" +
                     (decision.HasResolvedArea ? $"\n실행 영역 XY ({decision.OriginX:F1}, {decision.OriginY:F1}) · {decision.OriginWidth:F1} × {decision.OriginHeight:F1} · Z {decision.OriginZ:F1}" : "");
+            if (decision != null && (decision.HasPlanningTiming || decision.HasSpawningTiming))
+                _summary.text += $"\n계획 {(decision.HasPlanningTiming ? decision.PlanningMilliseconds.ToString("F3") + "ms" : "N/A")} · 생성/기록 {(decision.HasSpawningTiming ? decision.SpawningMilliseconds.ToString("F3") + "ms" : "N/A")}";
             _warning.text=decision==null?(_view.SelectedRequestId>=0 && !_view.IsFollowingLatest
                 ? $"선택 요청 #{_view.SelectedRequestId}의 상세가 현재 보존 목록에 없습니다. 다른 요청을 선택하거나 Follow latest를 켜세요."
                 : "이전 기록 또는 계획 전 거부 요청은 공간 판단 자료를 포함하지 않습니다. 이후 요청부터 기록됩니다."):

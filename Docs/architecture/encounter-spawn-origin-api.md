@@ -56,6 +56,8 @@ Timeline은 RequestScheduled/RequestCancelled와 실행 사건을 구분한다. 
 
 JSON과 events CSV는 새 상관관계를 보존한다. CSV 열은 뒤에 추가했고 기존 JSON의 미계측 자료를 추정하지 않는다. 기존 Run content version/seed/Build label을 함께 사용하며 전체 결정론 replay를 주장하지 않는다.
 
+Profiler의 `TeamHJD.Encounter.Plan` / `SpawnAndCommit`으로 계획 및 실제 생성/서비스 이력 기록 구간을 관측한다. 요청별 계획/생성 시간은 Statistics/JSON에 보존하고 미실행 구간은 N/A다. `TeamHJD.Battlefield.SampleAndPublish` / `TopologyAndPublish`는 Unity 조립부의 공간 수집/발행 비용이다. Domain/Application에는 Unity 계측 의존성을 넣지 않았다.
+
 ## 현재 검증
 
 `b8-origin-foundation.xml`: Unity 6000.3.23f1, 종료 0, 11/11. source 세대/취소·권위·origin 충돌/재전송 계약 4개, 기존 요청 회귀 6개, 실제 Initial_Stage 재시작/Hub 복귀 1개. 마지막 검사는 재로드 전후 제작된 실행 대상과 consumer 참조가 같은지 직접 확인한다. 포인트 밖 실제 생성 성공 증거로 확대하지 않는다.

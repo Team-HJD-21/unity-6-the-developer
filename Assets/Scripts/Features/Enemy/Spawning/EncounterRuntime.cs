@@ -17,6 +17,8 @@ namespace TeamHJD.Game.Domain
     {
         private readonly SpawnCompositionPlanner _planner;
         private readonly EnemySpawnExecutor _spawnExecutor;
+        private static readonly Unity.Profiling.ProfilerMarker PlanMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Encounter.Plan");
+        private static readonly Unity.Profiling.ProfilerMarker SpawnMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Encounter.SpawnAndCommit");
 
         /// <summary>
         /// 분대 프리셋 카탈로그가 로드되어 계획을 세울 수 있는지 반환한다.
@@ -131,9 +133,13 @@ namespace TeamHJD.Game.Domain
 
             var request = new SpawnRequest(squadOrder.Trim(), maxEnemyCount);
             IReadOnlyList<SpawnInstruction> instructions;
-            bool planned = context?.Placement == null
-                ? _planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot, context?.Environment, environmentProfile, out instructions)
-                : _planner.TryPlanOrigin(request, _spawnExecutor.SpawnPointList, snapshot, context.Environment, environmentProfile, context.Placement, out instructions);
+            var planClock = System.Diagnostics.Stopwatch.StartNew();
+            bool planned;
+            using (PlanMarker.Auto())
+                planned = context?.Placement == null
+                    ? _planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot, context?.Environment, environmentProfile, out instructions)
+                    : _planner.TryPlanOrigin(request, _spawnExecutor.SpawnPointList, snapshot, context.Environment, environmentProfile, context.Placement, out instructions);
+            planClock.Stop();
             if (!planned)
             {
                 result = $"SpawnPlan 생성 실패: preset '{request.SquadOrder}', budget {request.MaxCount}, " +
@@ -141,7 +147,7 @@ namespace TeamHJD.Game.Domain
                          "Grid 밖 또는 Player/Turret 점유 셀의 SpawnPoint는 제외됩니다.";
                 summary = new EncounterExecutionSummary(0,0,"PlanRejected", new SpawnDecisionSnapshot(snapshot,
                     _planner.LastCandidates,System.Array.Empty<SpawnDecisionSnapshot.Plan>(),System.Array.Empty<SpawnDecisionSnapshot.Actual>(),result,
-                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy, context?.Placement));
+                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy, context?.Placement, planClock.Elapsed.TotalMilliseconds));
                 return false;
             }
 
@@ -150,6 +156,9 @@ namespace TeamHJD.Game.Domain
             int plannedCount = 0;
             var plans = new List<SpawnDecisionSnapshot.Plan>();
             var actuals = new List<SpawnDecisionSnapshot.Actual>();
+            var spawnClock = System.Diagnostics.Stopwatch.StartNew();
+            using (SpawnMarker.Auto())
+            {
             foreach (SpawnInstruction instruction in instructions)
             {
                 foreach (EnemySpawnEntry entry in instruction.Enemies)
@@ -173,6 +182,8 @@ namespace TeamHJD.Game.Domain
             }
 
             _planner.RecordExecuted(snapshot, actuals);
+            }
+            spawnClock.Stop();
             result = $"Match {snapshot.MatchId} r{snapshot.Revision} → Encounter: " +
                      $"{snapshot.Triangles.Count} triangles, {snapshot.FrontlineEdges.Count} frontline edges, " +
                      $"{snapshot.Grid.OccupiedCells.Count} occupied cells; " +
@@ -183,7 +194,8 @@ namespace TeamHJD.Game.Domain
                 spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
                 new SpawnDecisionSnapshot(snapshot,_planner.LastCandidates,plans,actuals,
                     spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
-                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy, context?.Placement));
+                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy, context?.Placement,
+                    planClock.Elapsed.TotalMilliseconds, spawnClock.Elapsed.TotalMilliseconds));
             return spawnedCount > 0;
         }
     }

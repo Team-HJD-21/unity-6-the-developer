@@ -50,6 +50,8 @@
 
 ## 폴더 안내
 
+2026-10-26 Core 구현 진입점: [배치·검증 기록](planning/2026-10-26-core-sprint-implementation.md), [운영 책임](architecture/match-management-responsibilities.md), [Scene](architecture/scene-flow-api.md), [화면](architecture/screen-management-api.md), [환경](architecture/match-environment-api.md), [origin/source](architecture/encounter-spawn-origin-api.md). 구현 증거와 팀 통합 Gate를 구분하며 이전 날짜의 성공을 최신 head에 소급하지 않는다.
+
 새 문서의 배치·이동·보관 방법은 [Docs 정리 규칙](DOCS_ORGANIZATION_RULES.md)을 따른다.
 
 - `product/` — 게임의 정체성, 제품 범위, Decision Log

@@ -20,6 +20,8 @@ namespace TeamHJD.Game.Editor
         public bool HasOrigin,HasResolvedArea;
         public string RequestGuid,CauseEventId,OriginKind,SpawnSourceId,SpawnSourceGeneration,DeliveryMode;
         public double OriginX,OriginY,OriginWidth,OriginHeight,OriginZ;
+        public bool HasPlanningTiming,HasSpawningTiming;
+        public double PlanningMilliseconds,SpawningMilliseconds;
         public int Planned,Spawned,DroppedItems,DroppedActuals;
         public GridMetadata Grid;
         public List<Cell> Cells=new List<Cell>();
@@ -46,6 +48,9 @@ namespace TeamHJD.Game.Editor
                 SpawnSourceId=context?.Origin.Source?.SourceId.Value,SpawnSourceGeneration=context?.Origin.Source?.Generation.ToString("N"),
                 HasResolvedArea=placement?.Area!=null,OriginX=placement?.Area?.Center.X??0,OriginY=placement?.Area?.Center.Y??0,
                 OriginWidth=placement?.Area?.Width??0,OriginHeight=placement?.Area?.Height??0,OriginZ=placement?.Area?.VisualZ??0,
+                HasPlanningTiming=!double.IsNaN(s.PlanningMilliseconds),HasSpawningTiming=!double.IsNaN(s.SpawningMilliseconds),
+                PlanningMilliseconds=double.IsNaN(s.PlanningMilliseconds)?0:s.PlanningMilliseconds,
+                SpawningMilliseconds=double.IsNaN(s.SpawningMilliseconds)?0:s.SpawningMilliseconds,
                 Cells=s.Cells.Select(c=>new Cell{X=c.X,Y=c.Y,Players=c.Players,Turrets=c.Turrets,Enemies=c.Enemies}).ToList(),
                 Frontline=s.Frontline.Select(e=>new Edge{X1=e.First.X,Y1=e.First.Y,X2=e.Second.X,Y2=e.Second.Y}).ToList(),
                 Candidates=s.Candidates.Select(c=>new Candidate{Id=c.Id,X=c.Position.X,Y=c.Position.Y,CellX=c.CellX,CellY=c.CellY,

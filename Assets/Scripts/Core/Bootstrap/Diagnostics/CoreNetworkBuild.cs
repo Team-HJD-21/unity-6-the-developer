@@ -30,6 +30,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             public string Run, Phase, Match, Descriptor, DescriptorHash, Grid, RegionHash, Player, TurretIdentityHash, PresentationHash;
             public int Seed, Captured, Mode, ActorCount; public long Revision, PresentationRevision; public ulong Anchor;
+            public string EnvironmentHash,Weather,TimeOfDay,CompletionHash,ResultScreen;
+            public long EnvironmentRevision;
         }
         [Serializable] private sealed class Result
         {
@@ -52,6 +54,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private long _dynamicRevision;
         private ulong _firstAnchor;
         private bool _terminal;
+        private string _environmentDescriptor;
+        private readonly Dictionary<long, string> _environmentHashes = new Dictionary<long, string>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void LaunchIfRequested()
@@ -129,6 +133,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     Move(_role == "host" ? "WaitPeers" : "ClientMonitor");
                     if (_role == "host") Debug.Log("CORE_NETWORK_PROBE_HOST_LISTENING");
                 }
+                if (_role == "host") RememberEnvironment();
                 _probe.Pump();
                 _turretProbe.Pump();
                 if (_turretProbe.Failure != null) throw new InvalidOperationException(_turretProbe.Failure);
@@ -165,6 +170,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 !spawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true);
             return app != null && _binding.Matches?.Phase == NetworkMatchPhase.Ended && app.CurrentMatchId.IsEmpty &&
                 _binding.TurretCommands == null && _binding.TurretPresentation == null && app.NetworkRegions.Source == null &&
+                app.NetworkEnvironments.Source == null && app.CurrentSpawnSources == null &&
                 _binding.GetComponent<TurretMatchBinding>().Count == 0 &&
                 Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length == 0 &&
                 Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length == 0 &&
@@ -182,6 +188,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length != 0 ||
                     Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length != 0 ||
                     app.NetworkRegions.Source != null || !app.CurrentMatchId.IsEmpty ||
+                    app.NetworkEnvironments.Source != null ||
                     _binding.TurretCommands != null || _binding.TurretPresentation != null ||
                     _binding.GetComponent<TurretMatchBinding>().Count != 0 ||
                     _session.Manager.SpawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true)) return;
@@ -191,6 +198,22 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             if (_binding.Matches.Phase != NetworkMatchPhase.Running) return;
             if (!app.CurrentMatchId.IsEmpty) throw new InvalidOperationException("Client created an authority MatchSession.");
+            if (_binding.Matches.Completion != null)
+            {
+                if (app.Screens.Top?.Kind != ScreenKind.MatchResult || app.Screens.Top.Completion == null) return;
+                if (_binding.Matches.IsGameplayRunning) throw new InvalidOperationException("Client gameplay remained open after the authoritative result.");
+                SendOnce(new Probe { Phase = "Completed", Match = descriptor.Config.MatchId.Value,
+                    Descriptor = descriptor.DescriptorId.ToString("N"), ResultScreen = app.Screens.Top.Kind.ToString(),
+                    CompletionHash = Hash(MatchLifecycleCodec.Encode(MatchLifecycleSignalKind.Completed,
+                        new MatchLifecycleSignal(descriptor.Config.MatchId, descriptor.DescriptorId, app.Screens.Top.Completion))) });
+                return;
+            }
+            var environment = app.CurrentEnvironment;
+            if (environment == null || environment.MatchId != descriptor.Config.MatchId) return;
+            var weatherSources = _binding.gameObject.scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<MonoBehaviour>())
+                .OfType<IMatchWeatherSource>().ToArray();
+            if (weatherSources.Length != 1 || weatherSources[0].WeatherId != environment.WeatherId ||
+                !weatherSources[0].Forecast.SequenceEqual(environment.Forecast)) return;
             RegionGridSnapshot snapshot = app.NetworkRegions?.Source?.Snapshot;
             if (snapshot == null || snapshot.MatchId != descriptor.Config.MatchId) return;
             RegionSceneBinding regionBinding = _binding.GetComponent<RegionSceneBinding>();
@@ -230,7 +253,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 Mode = (int)snapshot.Mode, Revision = snapshot.Revision, Anchor = anchor.NetworkObjectId,
                 Player = player.Value, ActorCount = actors.Length,
                 PresentationHash = CoreNetworkTurretValidation.Hash(presentation), PresentationRevision = presentation.Revision,
-                TurretIdentityHash = TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>())
+                TurretIdentityHash = TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>()),
+                EnvironmentRevision = environment.Revision,Weather = environment.WeatherId.Value,TimeOfDay = environment.TimeOfDayId.Value,
+                EnvironmentHash = Hash(EnvironmentReplicationCodec.Encode(new EnvironmentReplicationFrame(descriptor.DescriptorId, environment)))
             });
         }
         private void SendOnce(Probe value)
@@ -261,6 +286,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     throw new InvalidOperationException("Probe sender is not the connected Client.");
                 _observations.Add(packet);
                 if (_step == "WaitClosing" && packet.Phase == "Closing") { Finish(true, null); return; }
+                if (_step == "WaitCompletionAck" && packet.Phase == "Completed")
+                {
+                    var app = Object.FindAnyObjectByType<AppRoot>();
+                    var completion = _binding.Matches.Completion;
+                    if (completion == null || app.Screens.Top?.Kind != ScreenKind.MatchResult ||
+                        packet.ResultScreen != ScreenKind.MatchResult.ToString() || _binding.Matches.IsGameplayRunning ||
+                        packet.Match != completion.Result.MatchId.Value ||
+                        packet.CompletionHash != Hash(MatchLifecycleCodec.Encode(MatchLifecycleSignalKind.Completed,
+                            new MatchLifecycleSignal(completion.Result.MatchId, _binding.Matches.Descriptor.DescriptorId, completion))))
+                        throw new InvalidOperationException("The actual CU completion/result screen differed across processes.");
+                    if (!_probe.TrySend(sender, Encoding.UTF8.GetBytes(JsonUtility.ToJson(new Probe { Run = _run, Phase = "DisconnectNow" }))))
+                        throw new InvalidOperationException("Disconnect instruction could not be queued.");
+                    Move("WaitDisconnected"); return;
+                }
                 if (_step == "WaitEndedAck" || _step == "WaitFinalEndedAck")
                 {
                     string expected = _step == "WaitEndedAck" ? "Ended" : "FinalEnded";
@@ -305,9 +344,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 else if (_step == "WaitDisconnectAck" && packet.Phase == "Disconnect")
                 {
                     _lastMatch = packet.Match;
-                    if (!_probe.TrySend(sender, Encoding.UTF8.GetBytes(JsonUtility.ToJson(new Probe { Run = _run, Phase = "DisconnectNow" }))))
-                        throw new InvalidOperationException("Disconnect instruction could not be queued.");
-                    Move("WaitDisconnected");
+                    var target = _binding.GetComponent<RegionSceneBinding>().ControlUnit.GetComponents<MonoBehaviour>()
+                        .OfType<IDamageableTarget>().Single(item => item is IControlUnitHealthSource);
+                    if (!target.ApplyDamage(target.CurrentHealth))
+                        throw new InvalidOperationException("The authored CU rejected the validation damage.");
+                    if (_binding.Matches.Completion?.Result.Outcome != MatchOutcome.Defeat)
+                        throw new InvalidOperationException("Actual CU destruction did not commit the authoritative defeat.");
+                    Move("WaitCompletionAck");
                 }
                 else throw new InvalidOperationException("Unexpected phase " + packet.Phase + " in " + _step);
             }
@@ -325,6 +368,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 !_turretProbe.MatchesAuthoritativeFrame(descriptor.DescriptorId, packet.PresentationRevision, packet.PresentationHash) ||
                 !_binding.Matches.TryResolveParticipant(sender, out PlayerId player) || packet.Player != player.Value || packet.ActorCount != 1)
                 throw new InvalidOperationException("Client settings/region/anchor/presentation/local participant differ from Host.");
+            if (_environmentDescriptor != descriptor.DescriptorId.ToString("N") ||
+                !_environmentHashes.TryGetValue(packet.EnvironmentRevision, out string environmentHash) || packet.EnvironmentHash != environmentHash)
+                throw new InvalidOperationException("Client confirmed an unknown/different authoritative environment frame.");
+        }
+        private void RememberEnvironment()
+        {
+            var descriptor = _binding.Matches?.Descriptor;
+            var snapshot = Object.FindAnyObjectByType<AppRoot>()?.CurrentEnvironment;
+            if (descriptor == null || snapshot == null || descriptor.Config.MatchId != snapshot.MatchId) return;
+            string id = descriptor.DescriptorId.ToString("N");
+            if (_environmentDescriptor != id) { _environmentDescriptor = id; _environmentHashes.Clear(); }
+            _environmentHashes[snapshot.Revision] = Hash(EnvironmentReplicationCodec.Encode(new EnvironmentReplicationFrame(descriptor.DescriptorId, snapshot)));
+            if (_environmentHashes.Count > 64) _environmentHashes.Remove(_environmentHashes.Keys.Min());
         }
         private void ActivateTriangle()
         {

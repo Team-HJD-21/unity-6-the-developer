@@ -2,6 +2,12 @@
 
 ## 2026-10-26 Match 운영 연결
 
+새 API 문서: [환경 context](../../../Docs/architecture/match-environment-api.md) · [추가 생성 origin/source](../../../Docs/architecture/encounter-spawn-origin-api.md). Host의 실제 Weather → 불변 Match 환경 → Enemy 정책 소비를 연결했습니다. source가 없는 World 점/영역 요청과 동적 source도 기존 Enemy Planner/Executor를 사용하며, 지연·취소·공통 공간/사망 추적·Match 정리로 이어집니다. 실제 시간대 원본과 나무 AI/지면·공중 연출은 별도 Feature입니다.
+
+`EncounterSceneConfiguration`이 실제 EnemySpawnRoot를 제작 참조로 연결합니다. Scene 재로드 시 App의 persistent consumer에 새 참조를 전달하므로 여러 Executor 중 임의 선택하지 않습니다. Game Debugger Encounter에는 World origin/게임 시간 지연 요청을, Overview/Statistics에는 현재 환경과 요청에 쓰인 환경·origin/source를 추가했습니다.
+
+성능 관측은 Unity adapter의 `TeamHJD.Battlefield.SampleAndPublish`, `TopologyAndPublish`, `TeamHJD.Encounter.Plan`, `SpawnAndCommit` Profiler marker와 요청별 계획/생성 시간입니다. Domain/Application은 Unity에 의존하지 않습니다. 값이 없는 과거 기록은 N/A이며 Editor/headless 측정을 제품 frame-budget 보장으로 해석하지 않습니다.
+
 Scene 전환은 [SceneFlowController API](../../../Docs/architecture/scene-flow-api.md)를 따른다. Bootstrap은 실제 UnitySceneFlow를 사용하고 NGO 연결 뒤에는 단독 Host용 NGO Scene driver를 연결한다. 소유자별 입력 잠금은 Player의 사망/Match 상태와 별개이며 서로의 잠금을 풀지 않는다. 실제 Initial_Stage 재로드→새 Match/CU/Enemy→우주선 복귀를 검사했다. 결과/로딩 화면도 연결했으며 다중 참가자 Scene 이동 완료는 아니다.
 
 [현재 배치·검증 기록](../../../Docs/planning/2026-10-26-core-sprint-implementation.md)과 [운영 책임](../../../Docs/architecture/match-management-responsibilities.md)을 먼저 확인하세요. 아래 과거 날짜의 미완료/검증 내용은 당시 기록입니다.

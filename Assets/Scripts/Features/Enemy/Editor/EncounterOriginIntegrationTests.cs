@@ -110,6 +110,7 @@ public sealed class EncounterOriginIntegrationTests
         health.TakeDamage(health.MaxHealth);
         Assert.That(HasEvent(launcher, GameDiagnosticKind.EnemyDied, sourceRequest.Context.RequestId), Is.True);
         AssertCapture(sourceEvent);
+        RecordCosts(Object.FindAnyObjectByType<InitialStageCompositionRoot>(), launcher);
         Assert.That(launcher.TryScheduleEncounter(Request(match, issuer, EncounterSpawnOrigin.AtWorld(area)), 30, out var endCancelled), Is.True);
         Object.FindAnyObjectByType<InitialStageCompositionRoot>().RegionBinding.ControlUnit.GetComponent<ControlUnitHealth>().ApplyDamage(int.MaxValue);
         Assert.That(endCancelled.IsCancelled, Is.True);
@@ -150,6 +151,8 @@ public sealed class EncounterOriginIntegrationTests
         Assert.That(decision.SpawnSourceGeneration, Is.EqualTo(item.ExecutionContext.Origin.Source.Generation.ToString("N")));
         Assert.That(decision.RequestGuid, Is.EqualTo(item.ExecutionContext.RequestGuid.ToString("N")));
         Assert.That(decision.CauseEventId, Is.EqualTo(item.ExecutionContext.CauseEventId.ToString("N")));
+        Assert.That(decision.HasPlanningTiming && decision.HasSpawningTiming, Is.True);
+        Assert.That(decision.PlanningMilliseconds, Is.GreaterThanOrEqualTo(0));
     }
     private static void AssertAuthoredOrigin(EnemyNetworkTestLauncher launcher, BattlefieldSpatialSnapshot snapshot)
     {
@@ -175,5 +178,12 @@ public sealed class EncounterOriginIntegrationTests
             Assert.That(launcher.Submit(request, issuer).IsReplay, Is.True);
         }
         finally { executor.LifecycleObserved -= remove; }
+    }
+    private static void RecordCosts(InitialStageCompositionRoot scene, EnemyNetworkTestLauncher launcher)
+    {
+        var decisions = launcher.RecentDiagnostics.Where(item => item.SpawnDecision != null).Select(item => item.SpawnDecision).ToArray();
+        Debug.Log($"CORE_S3_COST samples={decisions.Length}; spatial-latest={scene.LastSpatialRefreshMilliseconds:F3}ms; " +
+            $"plan-mean={decisions.Average(item => item.PlanningMilliseconds):F3}ms; spawn-commit-mean={decisions.Average(item => item.SpawningMilliseconds):F3}ms; " +
+            $"alive={launcher.ActiveEnemyCount}; scaled game-time={launcher.GameSeconds:F2}s. Editor headless sample, not a frame-budget guarantee.");
     }
 }

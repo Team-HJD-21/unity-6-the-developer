@@ -102,3 +102,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 ## 환경 조회와 Encounter
 
 [Match 환경 API](match-environment-api.md)를 따른다. `AppRoot.CurrentEnvironment`는 불변 현재 값이다. World 쓰기/타이머는 Host Match lease에, Client는 replica에만 연결한다. 공통 Encounter 요청이 최신 Battlefield와 환경을 권위 측에서 조회하므로 호출자가 Client 날씨/좌표를 권위 상태로 제출하지 않는다. Debugger의 현재 환경과 각 요청의 사용 환경 revision을 구분한다.
+
+## 추가 생성과 source
+
+[origin/source API](encounter-spawn-origin-api.md)의 `IEncounterOriginRequestTarget` 또는 `IEncounterRequestService`를 조립부에서 주입받는다. `AtPoint`, `AtWorld`, `FromSource`를 구분하고 source lease의 등록 generation을 보존한다. 같은 요청 재전송은 GUID를 유지한다. 지연 등록은 실제 생성 성공이 아니며 현재 Match clock과 취소 수명을 따른다. 현재 지면/공중 실제 전이는 명시 미지원이다.
