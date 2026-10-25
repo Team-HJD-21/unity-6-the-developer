@@ -16,7 +16,10 @@ namespace TeamHJD.Game.Application
         private readonly BattlefieldSpatialRuntime _battlefield;
         private RegionRuntime _regions;
         private bool _isDisposed;
+        private bool _isCompleting;
         public bool IsDisposed => _isDisposed;
+        public MatchCompletion Completion { get; private set; }
+        public bool IsGameplayRunning => !_isDisposed && State.Phase == MatchPhase.Running && Completion == null;
         public event Action Disposing;
 
         public MatchConfig Config { get; }
@@ -101,6 +104,8 @@ namespace TeamHJD.Game.Application
         {
             ThrowIfDisposed();
             if (command == null) throw new ArgumentNullException(nameof(command));
+            if (Completion != null)
+                return new CommandSubmissionResult(CommandSubmissionStatus.Rejected, "MatchCompleted", null);
 
             var authorization = _authority.Authorize(command, State);
             if (!authorization.IsAuthorized)
@@ -125,15 +130,38 @@ namespace TeamHJD.Game.Application
         {
             ThrowIfDisposed();
             if (eventSequence < 0) throw new ArgumentOutOfRangeException(nameof(eventSequence));
-            var result = _modeRules.CreateResult(State, outcome);
-            if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
-            if (result.MatchId != State.MatchId) throw new InvalidOperationException("Mode rules returned a result for another match.");
-            var rewardReceipt = _modeRules.CreateRewardReceipt(result);
-            if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
-            var completion = new MatchCompletion(result, rewardReceipt);
-            _simulation.Complete(State, result);
-            _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, completion));
-            return completion;
+            if (Completion != null)
+            {
+                if (Completion.Result.Outcome != outcome) throw new InvalidOperationException("A different final outcome is already committed.");
+                return Completion;
+            }
+            if (_isCompleting || State.Phase != MatchPhase.Running)
+                throw new InvalidOperationException("Only a running Match can complete, without reentering completion.");
+            _isCompleting = true;
+            try
+            {
+                var result = _modeRules.CreateResult(State, outcome);
+                if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
+                if (result.MatchId != State.MatchId) throw new InvalidOperationException("Mode rules returned a result for another match.");
+                if (result.Outcome != outcome) throw new InvalidOperationException("Mode rules changed the requested final outcome.");
+                var rewardReceipt = _modeRules.CreateRewardReceipt(result);
+                if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
+                var completion = new MatchCompletion(result, rewardReceipt);
+                _simulation.Complete(State, result);
+                // 관측 실패/재진입에도 동일한 최종 결과를 반환하도록 먼저 보존합니다.
+                Completion = completion;
+                _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, completion));
+                return completion;
+            }
+            finally { _isCompleting = false; }
+        }
+
+        public MatchOutcome? EvaluateProgress(MatchProgressSnapshot progress)
+        {
+            ThrowIfDisposed();
+            if (progress == null || progress.MatchId != Config.MatchId)
+                throw new ArgumentException("Progress must belong to this Match.", nameof(progress));
+            return IsGameplayRunning && _modeRules is IMatchProgressRules rules ? rules.Evaluate(progress) : null;
         }
 
         public MatchSnapshot CreateSnapshot(long sequence)

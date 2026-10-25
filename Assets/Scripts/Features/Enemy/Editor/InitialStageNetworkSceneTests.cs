@@ -3,6 +3,7 @@
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using TeamHJD.Game.Application;
 using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
@@ -88,5 +89,42 @@ public sealed class InitialStageNetworkSceneTests
         var serialized = new SerializedObject(binding);
         serialized.FindProperty("_entry").enumValueIndex = (int)InitialStageNetworkEntry.Manual;
         serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    [UnityTest]
+    public IEnumerator ActualCuDestructionCommitsResultBlocksRequestsAndReleasesFeatureWork()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity");
+        NetworkSceneSetup.InstallOnActiveScene(); SetManualEntry();
+        yield return new EnterPlayMode(); yield return null;
+        var binding = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
+        var scene = Object.FindAnyObjectByType<InitialStageCompositionRoot>();
+        var app = Object.FindAnyObjectByType<AppRoot>();
+        Assert.That(binding.TryStartHost(), Is.True);
+        Assert.That(binding.TryPrepareMatch(), Is.True); Assert.That(binding.TryStartMatch(), Is.True);
+        var coordinator = scene.MatchCoordinator;
+        var token = coordinator.GameplayCancellation;
+        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        float deadline = Time.realtimeSinceStartup + 15;
+        while (launcher.ActiveEnemyCount == 0 && Time.realtimeSinceStartup < deadline) yield return null;
+        Assert.That(launcher.ActiveEnemyCount, Is.GreaterThan(0));
+        var cu = scene.RegionBinding.ControlUnit.GetComponent<ControlUnitHealth>();
+        Assert.That(cu.ApplyDamage(cu.CurrentHealth), Is.True);
+        Assert.That(coordinator.Completion.Result.Outcome, Is.EqualTo(MatchOutcome.Defeat));
+        Assert.That(binding.Matches.Completion, Is.SameAs(coordinator.Completion));
+        Assert.That(binding.Matches.Phase, Is.EqualTo(NetworkMatchPhase.Running));
+        Assert.That(binding.Matches.IsGameplayRunning, Is.False);
+        Assert.That(token.IsCancellationRequested, Is.True);
+        Assert.That(scene.RegionBinding.Controller.HasWriteAuthority, Is.False);
+        Assert.That(launcher.ActiveEnemyCount, Is.Zero);
+        Assert.That(Object.FindAnyObjectByType<EnemySpawnExecutor>().SpawnedEnemyCount, Is.Zero);
+        Assert.That(launcher.TryRequestCurrentEncounter("Normal", 10, EncounterRequestSource.RuntimeUI, out _), Is.False);
+        Assert.That(Object.FindAnyObjectByType<PlayerControlState>().CanAct, Is.False);
+        Assert.That(cu.ApplyDamage(1), Is.False);
+        Assert.That(binding.TryEndMatch(), Is.True);
+        Assert.That(app.CurrentMatchId.IsEmpty, Is.True);
+        Assert.That(scene.MatchCoordinator, Is.Null);
+        Assert.That(coordinator.Completion.Result.Outcome, Is.EqualTo(MatchOutcome.Defeat), "The immutable result survives cleanup.");
+        yield return new ExitPlayMode();
     }
 }

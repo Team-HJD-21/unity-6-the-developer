@@ -10,7 +10,7 @@
 | AppServices | App | 명시적으로 소유권을 넘겨받은 서비스/전송 해제 | Feature 전역 조회용 service locator |
 | NetworkMatchCoordinator | 연결의 Match 준비 세대 | 참가자·Scene 준비·Host 시작/종료·SDK 발신자 대응 | 플레이어 이동 복제·HP·승패 판단 |
 | MatchSession | 한 Match | 기존 상태/시뮬레이션·지역·사건·완료 자료 수명 | Scene 로딩·팝업 |
-| **MatchCoordinator (목표)** | 한 권위 Match | Feature 사실을 받아 모드 판단·단일 완료·새 요청/시간 작업 차단 | 두 번째 MatchState·Feature HP 원본 |
+| **MatchCoordinator** | 한 권위 Match | Feature 사실을 받아 모드 판단·단일 완료·새 요청/시간 작업 차단. 실제 CU 파괴 연결 구현 | 두 번째 MatchState·Feature HP 원본 |
 | **SceneFlowController (목표)** | App의 전환 작업 | 기존 ISceneFlow를 이용한 전환·취소·실패 복구, 입력 잠금 수명 | 승패·보상·Hub 콘텐츠 |
 | **ScreenManager (목표)** | 로컬 UI | 화면/팝업 stack·focus/back·Presenter 해제·입력 잠금 | Host 게임 시간·전투 권위 |
 | InitialStageCompositionRoot | Scene | CU/Grid/Feature 참조 검사, 순서 있는 연결과 rollback | 진행 규칙·전역 서비스 보관 |
@@ -49,8 +49,9 @@ sequenceDiagram
     F->>C: 실제 CU Destroyed
     C->>M: 모드 결과 단일 Complete
     M-->>C: 불변 MatchCompletion
+    C->>F: gameplay 토큰 취소
     C-->>U: 결과 전달 / gameplay 불허
-    C->>F: 반복·예약 작업 중지/취소
+    C->>F: Enemy·터렛 실행 작업 정리
     U->>S: 명시적 재시작/복귀 의도
     S->>M: Match 정리
 ```
@@ -80,7 +81,7 @@ sequenceDiagram
 | 예전 책임 | 현재/목표 대체 | 상태 |
 | --- | --- | --- |
 | 전역 부팅·영구 Manager | AppBootstrap / AppRoot / AppServices | 기존 기반 |
-| 게임 시작·승패·종료 | MatchSession + MatchCoordinator + IModeRules | Session 존재, Coordinator 실행 연결 예정 |
+| 게임 시작·승패·종료 | MatchSession + MatchCoordinator + IModeRules | 실제 CU 파괴·단일 패배/요청 차단 구현. 승리·복귀 제품 정책 별도 |
 | Scene 이동 | ISceneFlow + SceneFlowController + Unity adapter | Port/Fake 존재, 실제 흐름 예정 |
 | 화면/팝업·로딩·결과 | ScreenManager + Presenter/View | 기존 Combat HUD 유지, 운영 화면 예정 |
 | Player/CU HP·터렛 전력 | 실제 Feature | 유지, 별도 Core writer 없음 |
