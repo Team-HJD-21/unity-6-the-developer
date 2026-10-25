@@ -17,7 +17,6 @@ GameObject:
   - component: {fileID: -4820293985112137665}
   - component: {fileID: -8740136632330153983}
   - component: {fileID: 784396215047286331}
-  - component: {fileID: 984415393098425011}
   - component: {fileID: 3568187623676949036}
   - component: {fileID: 7071173705403751221}
   - component: {fileID: 1692933235676204002}
@@ -136,7 +135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3481536332
+  GlobalObjectIdHash: 2848244634
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -280,18 +279,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkAnimator
   ShowTopMostFoldoutHeaderGroup: 1
---- !u!114 &984415393098425011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3068615185566250658}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8196e77bc84ebe4faebb25d667ab2f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAIBrain
 --- !u!61 &3568187623676949036
 BoxCollider2D:
   m_ObjectHideFlags: 0

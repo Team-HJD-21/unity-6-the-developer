@@ -261,11 +261,10 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             if (enemy.Prefab == null ||
                 !enemy.Prefab.TryGetComponent<NetworkObject>(out _) ||
                 !enemy.Prefab.TryGetComponent<EnemyController>(out _) ||
-                !enemy.Prefab.TryGetComponent<EnemyAIBrain>(out _) ||
                 !enemy.Prefab.TryGetComponent<EnemyNetworkController>(out _))
             {
                 Debug.LogError(
-                    $"Enemy prefab requires NetworkObject, EnemyController, EnemyAIBrain, and EnemyNetworkController: {enemy.EnemyId}");
+                    $"Enemy prefab requires NetworkObject, EnemyController, and EnemyNetworkController: {enemy.EnemyId}");
                 return Fail("Enemy prefab missing required components: "+enemy.EnemyId,observeFailure);
             }
 

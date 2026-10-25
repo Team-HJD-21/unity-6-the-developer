@@ -60,7 +60,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: SlimeTest
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 984415393098425011, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

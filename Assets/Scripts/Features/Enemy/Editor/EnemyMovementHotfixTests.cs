@@ -72,10 +72,8 @@ public sealed class EnemyMovementHotfixTests
             if (pair.Key == null) continue;
             var target = typeof(EnemyController).GetField("_target", BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(pair.Key) as Transform;
-            var squad = typeof(EnemyAIBrain).GetField("_squad", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(pair.Key.GetComponent<EnemyAIBrain>());
             Rigidbody2D body = pair.Key.GetComponent<Rigidbody2D>();
-            Debug.Log($"Enemy movement sample: squad={squad != null}, target={(target == null ? "null" : target.name)}, " +
+            Debug.Log($"Enemy movement sample: target={(target == null ? "null" : target.name)}, " +
                 $"positionDelta={Vector2.Distance(pair.Value, pair.Key.transform.position):F3}, rigidbodyVelocity={body.linearVelocity}. " +
                 "이 AI는 NavMesh가 아니라 Transform XY 직접 이동을 사용합니다.");
         }
