@@ -8,9 +8,13 @@
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
     "TeamHJD.Game.Infrastructure",
+    "TeamHJD.Game.Networking",
     "TeamHJD.Game.Infrastructure.Fakes",
     "TeamHJD.Game.Presentation",
-    "TeamHJD.Game.Turrets"
+    "TeamHJD.Game.Turrets",
+    "TeamHJD.Game.Turrets.Contracts",
+    "Unity.Netcode.Runtime",
+    "Unity.Collections"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

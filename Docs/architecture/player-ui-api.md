@@ -15,7 +15,13 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 살아 있는 Player가 CU와 interactionDistance(현재 10) 이내에 있고 조작 가능한 상태이면 자동 활성화 버튼을 사용할 수 있다. 버튼은 황재동의 `TryStartAutoActivation()`을 호출하며 진행 중/재실행 대기/전력·냉각 규칙을 새로 구현하지 않는다. 프리팹·실제 Scene Button.onClick 검사는 통과했다. 사람의 마우스 조작·해상도별 외형은 별도다.
 
-현재 이 입력은 로컬 경로다. 원격 Client 전송과 하드코딩된 local-player를 실제 참가자/actor 주입으로 바꾸는 작업은 아직 남아 있다. [Core 연결 API](core-sprint-region-and-request-api.md)를 함께 확인한다.
+현재 CU/터렛 입력은 로컬 경로이고 원격 Client 전송은 남아 있다. 로컬 actor는 이제 Core가 `ILocalPlayerActorConsumer`로 명시적으로 주입한다. [Core 연결 API](core-sprint-region-and-request-api.md)를 함께 확인한다.
+
+### 로컬 actor 주입과 종료
+
+`PrepareLocalActor(matchId, playerId)`로 대기 상태를 만들고 생성/소유자가 확인한 뒤 `BindLocalActor(matchId, playerId, actor)`를 호출한다. actor에는 같은 PlayerId의 PlayerActorIdentity와 PlayerInfo가 있어야 한다. `UnbindLocalActor(matchId)`는 같은 Match만 해제한다. 대기/해제 중 다른 Player를 대신 선택하지 않으며 HUD 비활성/재활성은 주입 정보를 보존한다. UI가 actor를 파괴하지 않는다.
+
+InitialStageCompositionRoot가 이 수명을 연결한다. standalone Feature Scene의 기존 검색은 호환 경로일 뿐이며 네트워크 조립부는 SDK 연결에서 확인한 PlayerId와 실제 로컬 actor를 주입한다. Client의 PlayerControlState는 IPlayerNetworkMatchBinding으로 공유 Match 단계를 받아 종료 후 입력을 차단한다. Client에 권한 MatchSession을 만들지 않는다. 현재 각 인스턴스의 자기 로컬 actor만 생성하며 별도 Windows Client Scene의 슬롯·종료/재시작을 확인했다. 원격 actor 생성·이동/공격 복제나 Client HUD 명령/시각 인수를 이 결과로 완료했다고 보지 않는다.
 
 ## 적용 위치와 편집 방법
 
@@ -188,7 +194,28 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 ## 이후 갱신 기준
 
+### Core 명령 연결 시 유의점 (2026-10-15)
+
+`PlayerControlState`는 `IPlayerInteractionActor`로 현재 actor의 XY·생존·CanAct를 제공한다. Host의 명령 검증은 이 Port를 실제 서버 actor에 연결해 사용한다. 원격 Client의 좌표/생존 payload를 그 대신 넣지 않는다. B의 서버 actor 생성/복제 경로에서 `InitialStageNetworkBinding.RegisterAuthorityPlayerActor(matchId, playerId, actor)`를 호출하고 반환 lease를 교체/Despawn에 해제한다. 현재 각 인스턴스에는 자기 로컬 actor만 생성되므로 이 API가 존재한다고 상대 이동 복제가 완료된 것은 아니다.
+
+공용 터렛 ON/OFF·CU 자동 활성화·승급·강화/강등은 모든 참가자가 요청하고 Host가 검증하도록 확정했다. Core `TurretCommands` requester와 실제 D 명령 서비스는 Scene의 Match 시작/종료에 자동 조립한다. 기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 표시 source를 주입받아 사용한다. Client의 초기 로컬 D 값을 서버 확정 상태로 표시하지 않는다.
+
+### 현재 HUD 입력/표시 흐름
+
+1. Scene이 로컬 actor를 주입한 뒤 `BindTurretCommands(matchId, playerId, requester, presentation)`를 호출한다. 같은 Port 재주입은 구독·대기 요청을 유지하고, 다른 Port로 교체하려면 먼저 명시적으로 해제한다.
+2. `StageTurretPresenter`는 `TurretPresentationFrame`의 논리 ID/정의/활성/강화/냉각 상태로 버튼과 의도를 구성한다. Client에 원래 배치된 터렛의 초기 상태로 ON/OFF를 판단하지 않는다.
+3. `StageTurretCommandBinding`이 GUID를 만들어 요청하고 해당 대상의 추가 입력을 잠근다. 서버 결과와 그 순번을 반영한 표시 Frame을 모두 받은 뒤 입력을 다시 연다. ExecutionFailed도 일부 부작용이 있을 수 있어 최신 상태를 기다린다. 거부는 즉시 표시한다.
+4. HUD 잠시 숨김/재활성화는 대기 추적을 보존하며, Presenter/View 이벤트를 한 번씩 다시 연결한다. Match 해제·실제 파괴는 요청/표시 구독을 정리한다. 다른 Match의 결과나 해제는 현재 UI에 적용하지 않는다.
+
+`TrySelectTurret(entityId)`는 튜토리얼 등 명시적 선택에도 기존 Scene/거리 조건을 적용한다. `RetryPendingTurretCommand(entityId)`는 같은 GUID를 재전송하며 CU는 빈 ID로 지정한다. View/프리팹을 코드로 재생성하지 않는다.
+
+Host는 D 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **Host 표시·Client replica·실제 Frame 전송을 구현했다.** App이 접속 전송을 소유하고 Match별 replication이 source/replica를 연결한다. Client는 수신 전 대기 표시한다. 원격 D 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다. 실제 UTP/Scene과 Windows 두 프로세스의 전체 Frame 해시 검사는 통과했다. 후자는 Host interaction actor만 개발 fixture이며 B의 원격 Player 복제를 검증하지 않는다. 실제 원격 actor 연계와 PL 시각 인수는 [인계 안내](../planning/2026-10-15-core-sprint-review-handoff.md)를 따른다.
+
+CU의 점령 수치는 모드뿐 아니라 표시 Frame의 RegionGridId/RegionRevision이 현재 지역 Snapshot과 일치할 때만 결합한다. 독립 채널이 서로 다른 시점의 상태를 전달하면 대기 안내를 표시한다.
+
+실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../planning/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
+
 플레이어 연동 스크립트를 추가·수정하면 같은 변경에서 책임·호출 조건·연동 API를
-갱신한다. 자동 활성화 시작 버튼과 최종 UI 연출은 이번 범위에 포함하지 않는다.
+갱신한다. CU 자동 활성화 시작 버튼은 현재 정식 명령 경계에 연결돼 있으며 최종 UI 연출/제품 밸런스 확정은 이번 기반 작업과 구분한다.
 HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후속 제안이며,
 현재는 상태 View·터렛 View의 책임과 초기화를 분리한 단일 HUD 프리팹을 사용한다.

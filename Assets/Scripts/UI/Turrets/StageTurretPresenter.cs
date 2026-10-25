@@ -1,7 +1,10 @@
+// 선택한 논리 대상의 Host 확정 상태를 표시하고 입력을 명령 Port에 전달합니다.
+// 정식 Match는 Port 미연결/수신 대기를 로컬 D 호출로 우회하지 않습니다.
 using System;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Contracts;
 
 /// <summary>선택 ID를 유지하고 UI 입력을 기존 터렛 API에 전달합니다.</summary>
 internal sealed class StageTurretPresenter : IDisposable
@@ -11,19 +14,25 @@ internal sealed class StageTurretPresenter : IDisposable
     private readonly TurretLevelUpgradeCatalog _catalog;
     private readonly Func<bool> _canInteract;
     private readonly Func<TurretController> _getController;
+    private readonly Func<StageTurretCommandBinding> _getCommands;
+    private readonly Func<bool> _requiresCommands;
+    private long _displayedRevision = -1;
+    private bool _displayedPending;
     private int _displayedId;
     private bool _displayedPermission;
     private bool _dirty = true;
     private bool _disposed;
 
     public StageTurretPresenter(StageTurretSelection selection, StageTurretControlView view,
-        TurretLevelUpgradeCatalog catalog, Func<bool> canInteract, Func<TurretController> getController)
+        TurretLevelUpgradeCatalog catalog, Func<bool> canInteract, Func<TurretController> getController,
+        Func<StageTurretCommandBinding> getCommands = null, Func<bool> requiresCommands = null)
     {
         _selection = selection;
         _view = view;
         _catalog = catalog;
         _canInteract = canInteract;
         _getController = getController;
+        _getCommands = getCommands ?? (() => null); _requiresCommands = requiresCommands ?? (() => false);
 
         _view.ToggleRequested += Toggle;
         _view.LevelUpRequested += LevelUp;
@@ -40,6 +49,7 @@ internal sealed class StageTurretPresenter : IDisposable
         TurretBase turret = _selection.Resolve();
         bool withinReach = _selection.CanInteractWith(turret);
         bool canInteract = _canInteract() && withinReach;
+        if (_requiresCommands()) { RefreshAuthority(turret, canInteract, refreshDisplay); return; }
         bool selectionChanged = _displayedId != _selection.SelectedId;
         bool permissionChanged = _displayedPermission != canInteract;
         if (!selectionChanged && !permissionChanged && !_dirty && !refreshDisplay) return;
@@ -58,6 +68,12 @@ internal sealed class StageTurretPresenter : IDisposable
     private void Toggle()
     {
         if (!CanRequest(out TurretBase turret)) return;
+        if (_requiresCommands())
+        {
+            var state = ResolveSnapshot(turret);
+            if (StageTurretInteractionRules.CanToggle(state)) Submit(TurretCommandKind.SetActivation, state, !state.IsActivated);
+            return;
+        }
         if (!StageTurretInteractionRules.CanToggle(turret)) return;
         TurretController controller = _getController();
         if (controller == null) return;
@@ -74,6 +90,13 @@ internal sealed class StageTurretPresenter : IDisposable
     private void ChangeUpgrade(TurretUpgradeDefinition upgrade, bool increase)
     {
         if (!CanRequest(out TurretBase turret)) return;
+        if (_requiresCommands())
+        {
+            var state = ResolveSnapshot(turret);
+            if (StageTurretInteractionRules.CanChangeUpgrade(state, upgrade, increase))
+                Submit(increase ? TurretCommandKind.ApplyUpgrade : TurretCommandKind.DowngradeUpgrade, state, upgradeId: new DefinitionId(upgrade.Id));
+            return;
+        }
         if (!StageTurretInteractionRules.CanChangeUpgrade(turret, upgrade, increase)) return;
         var result = increase ? turret.ApplyUpgrade(upgrade) : turret.DowngradeUpgrade(upgrade);
         _view.SetFeedback(StageTurretUIText.Upgrade(result));
@@ -83,6 +106,12 @@ internal sealed class StageTurretPresenter : IDisposable
     private void ChangeLevel(bool upgrade)
     {
         if (!CanRequest(out TurretBase turret)) return;
+        if (_requiresCommands())
+        {
+            var state = ResolveSnapshot(turret);
+            if (state != null && state.CanModifyUpgrades) Submit(upgrade ? TurretCommandKind.UpgradeLevel : TurretCommandKind.DowngradeLevel, state);
+            return;
+        }
         if (!turret.CanModifyUpgrades) return;
 
         TurretBase targetPrefab;
@@ -115,6 +144,42 @@ internal sealed class StageTurretPresenter : IDisposable
 
         Refresh(true);
         return false;
+    }
+
+    private TurretPresentationSnapshot ResolveSnapshot(TurretBase turret)
+    {
+        var frame = _getCommands()?.Presentation.Snapshot;
+        return turret != null && frame != null && turret.TryGetEntityId(out var id) && frame.TryGet(id, out var state) ? state : null;
+    }
+    private void RefreshAuthority(TurretBase turret, bool canInteract, bool refreshDisplay)
+    {
+        if (turret == null) { _view.Hide(); _displayedId = 0; return; }
+        var commands = _getCommands(); var frame = commands?.Presentation.Snapshot;
+        var state = ResolveSnapshot(turret); long revision = frame?.Revision ?? 0;
+        bool pending = state != null && commands.HasPending(state.EntityId);
+        bool selectionChanged = _displayedId != _selection.SelectedId;
+        if (!selectionChanged && !_dirty && !refreshDisplay && _displayedRevision == revision &&
+            _displayedPermission == canInteract && _displayedPending == pending) return;
+        if (selectionChanged) _view.SetFeedback("");
+        _displayedId = _selection.SelectedId; _displayedRevision = revision; _displayedPermission = canInteract; _displayedPending = pending; _dirty = false;
+        if (state == null) { _view.ShowWaitingForHost(); return; }
+        bool known = _catalog.TryGetDefinition(state.DefinitionId.Value, out var definition);
+        bool up = known && _catalog.TryGetNext(definition, out _), down = known && _catalog.TryGetPrevious(definition, out _);
+        _view.ShowSnapshot(state, canInteract, up, down, frame.Controller.RegionMode == RegionPolicyMode.Dynamic,
+            pending, _selection.CanInteractWith(turret));
+    }
+    private void Submit(TurretCommandKind kind, TurretPresentationSnapshot state, bool activate = false, DefinitionId upgradeId = default)
+    {
+        var commands = _getCommands();
+        _view.SetFeedback("Waiting for Host confirmation/state...");
+        if (commands == null || !commands.TrySubmit(kind, state.EntityId, activate, upgradeId)) _view.SetFeedback("Request unavailable or already pending.");
+        Refresh(true);
+    }
+    public void OnCommandResult(TurretCommandResult result)
+    {
+        TurretBase turret = _selection.Resolve();
+        if (turret != null && turret.TryGetEntityId(out var id) && id == result.TargetId) _view.SetFeedback(StageTurretUIText.Command(result));
+        Refresh(true);
     }
 
     private void OnSnapshotChanged(int instanceId)

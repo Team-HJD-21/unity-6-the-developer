@@ -42,6 +42,17 @@ namespace TeamHJD.Game.Domain
             return y * Geometry.CellsX + x;
         }
 
+        public bool HasSameDefinition(RegionGridDefinition other)
+        {
+            if (ReferenceEquals(this, other)) return true;
+            if (other == null) return false;
+            var a = Geometry; var b = other.Geometry;
+            if (a.Origin != b.Origin || a.OriginZ != b.OriginZ || a.MapWidth != b.MapWidth ||
+                a.MapHeight != b.MapHeight || a.CellsX != b.CellsX || a.CellsY != b.CellsY) return false;
+            for (int i = 0; i < RegionIds.Count; i++) if (RegionIds[i] != other.RegionIds[i]) return false;
+            return true;
+        }
+
         public bool TryGetCellIndex(BattlefieldPoint point, out int index)
         {
             if (Geometry.TryMapPoint(point, out int x, out int y))

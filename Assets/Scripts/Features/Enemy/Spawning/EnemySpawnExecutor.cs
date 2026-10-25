@@ -65,6 +65,29 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         return count;
     }
 
+    /// <summary>App 연결은 유지한 채 이 Match가 생성한 적만 서버에서 정리합니다.</summary>
+    public int DespawnForMatch(MatchId matchId)
+    {
+        if (!IsServer || matchId.IsEmpty) return 0;
+        var selected = new List<ulong>();
+        foreach (KeyValuePair<ulong, TrackedEnemy> item in _spawnedEnemies)
+            if (item.Value.Context != null && item.Value.Context.MatchId == matchId) selected.Add(item.Key);
+        List<Exception> errors = null;
+        foreach (ulong id in selected)
+        {
+            try
+            {
+                if (_spawnedEnemies.TryGetValue(id, out TrackedEnemy enemy) &&
+                    enemy.NetworkObject != null && enemy.NetworkObject.IsSpawned)
+                    enemy.NetworkObject.Despawn(true);
+            }
+            catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            finally { UntrackEnemy(id); }
+        }
+        if (errors != null) throw new AggregateException("Match Enemy cleanup failed.", errors);
+        return selected.Count;
+    }
+
     /// <summary>
     /// Planner와 Executor가 함께 사용하는 스폰 지점 및 점령 상태 목록을 반환한다.
     /// </summary>

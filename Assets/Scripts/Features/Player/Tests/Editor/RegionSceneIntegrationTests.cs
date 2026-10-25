@@ -4,15 +4,47 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using TeamHJD.Game.Bootstrap.SceneComposition;
+using TeamHJD.Game.Application;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEditor.SceneManagement;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
 public sealed class RegionSceneIntegrationTests
 {
+    [Test]
+    public void ClientBindingUsesReceivedGridWithoutCreatingLocalAuthority()
+    {
+        var owner = new GameObject("Client region binding");
+        var controller = owner.AddComponent<TurretController>();
+        var binding = owner.AddComponent<RegionSceneBinding>();
+        var serialized = new SerializedObject(binding);
+        serialized.FindProperty("_controller").objectReferenceValue = controller;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        var match = new MatchId("replica-match"); var descriptor = System.Guid.NewGuid();
+        using var replica = new RegionGridReplica(match, descriptor);
+        try
+        {
+            var snapshot = RegionGridSnapshot.FromCapturedCells(match, System.Guid.NewGuid(), 3, RegionPolicyMode.Dynamic,
+                new RegionGridDefinition(BattlefieldGridConfiguration.Default), new[] { 1, 2 });
+            replica.Apply(new RegionReplicationFrame(descriptor, 1, snapshot), true);
+            binding.BindReplica(replica);
+            Assert.That(binding.Source.Snapshot, Is.SameAs(snapshot));
+            Assert.That(controller.Regions, Is.SameAs(replica));
+            Assert.That(binding.HasWriteAuthority, Is.False);
+            Assert.That(binding.ResetPolicy(RegionPolicyMode.Static, true), Is.False);
+            Assert.That(binding.TryUnlockThroughZone(2), Is.False);
+            Assert.That(binding.LastEvaluation, Is.Null);
+            binding.UnbindMatch();
+            Assert.That(binding.Source, Is.Null);
+            Assert.That(controller.Regions, Is.Null);
+        }
+        finally { Object.DestroyImmediate(owner); }
+    }
     private SceneSetup[] _setup;
     [SetUp]
     public void RememberScenes()
