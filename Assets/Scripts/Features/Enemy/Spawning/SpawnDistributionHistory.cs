@@ -58,4 +58,12 @@ public sealed class SpawnDistributionHistory
         _cells[cell] = checked(_cells[cell] + 1);
         _points[pointId] = checked(_points[pointId] + 1);
     }
+
+    public void RecordSpawn(string pointId, BattlefieldPoint actualPosition)
+    {
+        if (!string.IsNullOrEmpty(pointId)) { RecordSpawn(pointId); return; }
+        if (_grid == null || !_grid.TryMapPoint(actualPosition, out int x, out int y)) return;
+        int cell = y * _grid.CellsX + x;
+        if (_cells.TryGetValue(cell, out long service)) _cells[cell] = checked(service + 1);
+    }
 }

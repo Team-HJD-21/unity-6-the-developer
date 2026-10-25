@@ -132,6 +132,9 @@ namespace TeamHJD.Game.Editor
             _summary.text=decision==null?"No retained decision snapshot":$"Request #{decision.RequestId}  ·  planned {decision.Planned}  /  spawned {decision.Spawned}  ·  {decision.Outcome}";
             if (decision != null) _summary.text += decision.EnvironmentRevision == 0 ? "\n환경: 미계측 (이전 기록)" :
                 $"\n사용 환경 r{decision.EnvironmentRevision} · 날씨 {(string.IsNullOrEmpty(decision.WeatherId) ? "미제공" : decision.WeatherId)} / 시간대 {(string.IsNullOrEmpty(decision.TimeOfDayId) ? "미제공" : decision.TimeOfDayId)} · 규칙 {decision.EnvironmentPolicy}";
+            if (decision != null && decision.HasOrigin)
+                _summary.text += $"\n{decision.OriginKind} · {decision.DeliveryMode} · source {decision.SpawnSourceId ?? "없음"} · request {decision.RequestGuid}" +
+                    (decision.HasResolvedArea ? $"\n실행 영역 XY ({decision.OriginX:F1}, {decision.OriginY:F1}) · {decision.OriginWidth:F1} × {decision.OriginHeight:F1} · Z {decision.OriginZ:F1}" : "");
             _warning.text=decision==null?(_view.SelectedRequestId>=0 && !_view.IsFollowingLatest
                 ? $"선택 요청 #{_view.SelectedRequestId}의 상세가 현재 보존 목록에 없습니다. 다른 요청을 선택하거나 Follow latest를 켜세요."
                 : "이전 기록 또는 계획 전 거부 요청은 공간 판단 자료를 포함하지 않습니다. 이후 요청부터 기록됩니다."):
@@ -201,7 +204,8 @@ namespace TeamHJD.Game.Editor
                 _selectScene.text="Select object in Scene";
             }
         }
-        private bool CanSelectScene()=>_decision!=null&&_selectedPoint.Length>0&&ReferenceEquals(_run,GameDebuggerSession.Current)&&
+        private bool CanSelectScene()=>_decision!=null&&(_selectedEntity.Length>0 ||
+            (_selectedPoint.Length>0&&(!_decision.HasOrigin || _decision.OriginKind=="Automatic" || _decision.OriginKind=="AuthoredPoint")))&&ReferenceEquals(_run,GameDebuggerSession.Current)&&
             _run.MatchId==_decision.MatchId;
         private void SelectScene()
         {

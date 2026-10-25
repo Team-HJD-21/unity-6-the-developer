@@ -129,6 +129,7 @@ namespace TeamHJD.Game.Editor
                 {
                     EditorGUILayout.LabelField("Match",selected.MatchId);
                     EditorGUILayout.LabelField("계획 / 실제",selected.PlannedCount+" / "+selected.ActualCount);
+                    DrawOriginDetails(selected);
                     EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(76));
                     EditorGUILayout.LabelField("공간 판단·분포는 Statistics > Spawn decisions에서 조회",EditorStyles.miniLabel);
                 }
@@ -183,9 +184,22 @@ namespace TeamHJD.Game.Editor
                 if (selected!=null)
                 {
                     view.IsEventDetailsExpanded=EditorGUILayout.Foldout(view.IsEventDetailsExpanded,"선택 이벤트 · "+selected.Kind,true);
-                    if (view.IsEventDetailsExpanded) EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(70));
+                    if (view.IsEventDetailsExpanded)
+                    {
+                        DrawOriginDetails(selected);
+                        EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(70));
+                    }
                 }
             }
+        }
+        private static void DrawOriginDetails(GameDebugEventEntry item)
+        {
+            if (string.IsNullOrEmpty(item.OriginKind)) return;
+            EditorGUILayout.LabelField("Origin / Delivery", item.OriginKind + " / " + item.DeliveryMode);
+            EditorGUILayout.LabelField("Request GUID", string.IsNullOrEmpty(item.RequestGuid) ? "미계측" : item.RequestGuid);
+            if (!string.IsNullOrEmpty(item.CauseEventId)) EditorGUILayout.LabelField("원인 사건", item.CauseEventId);
+            if (!string.IsNullOrEmpty(item.SpawnSourceId))
+                EditorGUILayout.LabelField("Source / Generation", item.SpawnSourceId + " / " + item.SpawnSourceGeneration);
         }
     }
 }

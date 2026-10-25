@@ -51,6 +51,9 @@ namespace TeamHJD.Game.Application
                 catch (ObjectDisposedException) { return Reject(request, EncounterRequestStatus.MatchUnavailable); }
                 if (environment == null || environment.MatchId != _matchId) return Reject(request, EncounterRequestStatus.MatchUnavailable);
             }
+            if (_disposed) return Reject(request, EncounterRequestStatus.MatchUnavailable);
+            if (!_isAuthority() || !_isParticipant(verifiedIssuer)) return Reject(request, EncounterRequestStatus.Unauthorized);
+            if (_disposed) return Reject(request, EncounterRequestStatus.MatchUnavailable);
             MatchRequestRegistration registration = _ledger.TryBegin(request.Context, request.GetPayloadKey(), out EncounterRequestResult cached);
             if (registration == MatchRequestRegistration.Completed) return cached.AsReplay();
             if (registration != MatchRequestRegistration.Started)
@@ -70,6 +73,8 @@ namespace TeamHJD.Game.Application
                 else
                 {
                     var placement = _resolveOrigin?.Invoke(request.Origin);
+                    if (placement != null && placement.Origin.GetPayloadKey() != request.Origin.GetPayloadKey()) placement = null;
+                    if (_disposed || !_isAuthority()) placement = null;
                     result = placement == null ? new EncounterRequestResult(request.Context.RequestId, sequence, snapshot.Revision,
                         EncounterRequestStatus.OriginUnavailable, reason: "The source/placement is not available in this Host Match.",
                         environmentRevision: environment?.Revision ?? 0) :

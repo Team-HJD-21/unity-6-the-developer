@@ -39,6 +39,13 @@ namespace TeamHJD.Game.Application
                 lease.Reference.Generation != origin.Source.Generation || lease.Cancellation.IsCancellationRequested) return null;
             return new EncounterSpawnPlacement(origin, lease.Area);
         }
+        public CancellationToken GetSourceCancellation(SpawnSourceReference source)
+        {
+            if (!Active || source == null || source.MatchId != _match ||
+                !_sources.TryGetValue(source.SourceId, out var lease) || lease.Reference.Generation != source.Generation)
+                return new CancellationToken(true);
+            return lease.Cancellation;
+        }
         public void Dispose()
         {
             if (_disposed) return; _disposed = true;

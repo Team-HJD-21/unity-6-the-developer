@@ -244,7 +244,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         => Execute(spawnInstruction, context, null);
 
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
-        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure=null)
+        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure=null, BattlefieldSpatialSnapshot battlefield = null)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || spawnInstruction.Enemies == null ||
@@ -257,17 +257,22 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             return Fail("Enemy catalog / registry missing",observeFailure);
         }
 
-        // 명령 하나가 분대 하나이므로 모든 구성원이 공유할 스폰 지점을 한 번만 찾는다.
-        if (!_spawnPointList.TryGetSpawnPoint(
+        bool world = spawnInstruction.Placement?.Area != null;
+        SpawnPoint spawnPoint = null;
+        if (world && (battlefield == null || context == null || !context.MatchSeed.HasValue ||
+            spawnInstruction.Placement.Origin.Delivery != SpawnDeliveryMode.Immediate))
+            return Fail("World placement requires the current Match snapshot/seed and a supported delivery adapter.", observeFailure);
+        // World origin은 제작 지점 조회를 거치지 않으며 같은 공통 생성/추적 경로를 사용합니다.
+        if (!world && !_spawnPointList.TryGetSpawnPoint(
                 spawnInstruction.SpawnPointId,
-                out SpawnPoint spawnPoint))
+                out spawnPoint))
         {
             Debug.LogError($"SpawnPoint not found: {spawnInstruction.SpawnPointId}");
             return Fail("Spawn point missing at execution",observeFailure);
         }
 
         // 계획 이후 점령 상태가 바뀐 지점에서는 적을 생성하지 않는다.
-        if (!spawnPoint.CanSpawnEnemies)
+        if (!world && !spawnPoint.CanSpawnEnemies)
             return Fail("Spawn point disabled / captured after planning",observeFailure);
 
         // 생성 전에 모든 적 정의와 필수 컴포넌트를 확인해 일부 종류만 스폰되는 일을 막는다.
@@ -296,6 +301,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         }
 
         EnemySquad squad = new EnemySquad();
+        var positionRandom = world ? new System.Random(unchecked(context.MatchSeed.Value * 397 ^ context.RequestGuid.GetHashCode() ^ (int)context.RequestId)) : null;
         int spawnedCount = 0;
         for (int entryIndex = 0; entryIndex < spawnInstruction.Enemies.Count; entryIndex++)
         {
@@ -304,15 +310,24 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
             for (int i = 0; i < count; i++)
             {
-                // 같은 위치에 겹쳐 생성될 가능성을 줄이도록 반지름 안에 위치를 분산한다.
-                Vector2 offset = Random.insideUnitCircle * spawnPoint.SpawnRadius;
-                Vector3 spawnPosition =
-                    spawnPoint.Position + new Vector3(offset.x, offset.y, 0f);
+                if (context != null && context.SpawnCancellation.IsCancellationRequested)
+                { Fail("Match/source cancelled before the next enemy.", observeFailure); break; }
+                Vector3 spawnPosition;
+                if (world)
+                {
+                    if (!EnemySpawnPlacementPolicy.TryResolve(spawnInstruction.Placement.Area, battlefield, positionRandom, out spawnPosition, out string reason))
+                    { Fail(reason, observeFailure); continue; }
+                }
+                else
+                {
+                    Vector2 offset = Random.insideUnitCircle * spawnPoint.SpawnRadius;
+                    spawnPosition = spawnPoint.Position + new Vector3(offset.x, offset.y, 0f);
+                }
 
                 GameObject spawnedMonster = Instantiate(
                     enemy.Prefab,
                     spawnPosition,
-                    spawnPoint.Rotation);
+                    world ? Quaternion.identity : spawnPoint.Rotation);
 
                 EnemyController controller = spawnedMonster.GetComponent<EnemyController>();
                 // 네트워크 스폰 전에 분대 소속으로 지정해 개별 타깃 선택을 중지한다.

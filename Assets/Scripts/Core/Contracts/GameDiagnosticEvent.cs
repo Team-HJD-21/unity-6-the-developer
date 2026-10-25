@@ -22,13 +22,15 @@ namespace TeamHJD.Game.Contracts
         public string SquadOrder { get; }
         public SpawnDecisionSnapshot SpawnDecision { get; }
         public MatchEnvironmentSnapshot Environment { get; }
+        public EncounterExecutionContext ExecutionContext { get; }
         public bool HasDeathEvents { get; }
         public bool IsSpawnDecisionOmitted { get; }
         public GameDiagnosticEvent(long sequence, MatchId matchId, long revision, long requestId,
             EncounterRequestSource source, GameDiagnosticKind kind, double gameSeconds, double realSeconds,
             string enemyType = "", string spawnPointId = "", string entityId = "",
             int plannedCount = 0, int actualCount = 0, string message = "", string squadOrder = "", SpawnDecisionSnapshot spawnDecision = null,
-            bool hasDeathEvents = false, bool isSpawnDecisionOmitted = false, MatchEnvironmentSnapshot environment = null)
+            bool hasDeathEvents = false, bool isSpawnDecisionOmitted = false, MatchEnvironmentSnapshot environment = null,
+            EncounterExecutionContext executionContext = null)
         {
             Sequence = sequence; MatchId = matchId; Revision = revision; RequestId = requestId;
             Source = source; Kind = kind; GameSeconds = gameSeconds; RealSeconds = realSeconds;
@@ -37,10 +39,11 @@ namespace TeamHJD.Game.Contracts
             SquadOrder = squadOrder;
             SpawnDecision = spawnDecision;
             Environment = environment;
+            ExecutionContext = executionContext;
             HasDeathEvents = hasDeathEvents;
             IsSpawnDecisionOmitted = isSpawnDecisionOmitted;
         }
         public GameDiagnosticEvent WithoutSpawnDecision() => new GameDiagnosticEvent(Sequence,MatchId,Revision,RequestId,Source,
-            Kind,GameSeconds,RealSeconds,EnemyType,SpawnPointId,EntityId,PlannedCount,ActualCount,Message,SquadOrder,null,HasDeathEvents,true,Environment);
+            Kind,GameSeconds,RealSeconds,EnemyType,SpawnPointId,EntityId,PlannedCount,ActualCount,Message,SquadOrder,null,HasDeathEvents,true,Environment,ExecutionContext);
     }
 }

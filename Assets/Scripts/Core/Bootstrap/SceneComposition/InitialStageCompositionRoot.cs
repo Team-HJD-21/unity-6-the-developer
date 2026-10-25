@@ -148,6 +148,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
                 _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning));
+                session.InitializeSpawnSources(
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
+                    _coordinator.GameplayCancellation);
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
@@ -178,6 +181,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         throw new InvalidOperationException("The Stage Encounter consumer must support the explicit environment query port.");
                     environmentConsumer.BindEnvironment(matchId, () => HasCurrentMatch && _matchSession != null &&
                         _matchSession.IsGameplayRunning ? _matchSession.Environment?.Snapshot : null);
+                    if (!(_encounterConsumer is IEncounterSpawnContextConsumer spawnConsumer))
+                        throw new InvalidOperationException("Encounter must explicitly consume the current Match spawn scope.");
+                    spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _coordinator, config.RandomSeed, _coordinator.GameplayCancellation);
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
                     if (network != null)
@@ -472,7 +478,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 try { consumer?.UnbindMatch(matchId); }
-                finally { (consumer as IEncounterEnvironmentConsumer)?.UnbindEnvironment(matchId); }
+                finally
+                {
+                    try { (consumer as IEncounterEnvironmentConsumer)?.UnbindEnvironment(matchId); }
+                    finally { (consumer as IEncounterSpawnContextConsumer)?.UnbindSpawnContext(matchId); }
+                }
             }
             catch (Exception exception)
             {

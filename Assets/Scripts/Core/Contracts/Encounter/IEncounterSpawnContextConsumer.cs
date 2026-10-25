@@ -5,7 +5,7 @@ namespace TeamHJD.Game.Contracts
 {
     public interface IEncounterSpawnContextConsumer
     {
-        void BindSpawnContext(MatchId match, IEncounterSpawnSourceRegistry sources, IMatchClock clock, CancellationToken gameplay);
+        void BindSpawnContext(MatchId match, IEncounterSpawnSourceRegistry sources, IMatchClock clock, int seed, CancellationToken gameplay);
         void UnbindSpawnContext(MatchId match);
     }
 }

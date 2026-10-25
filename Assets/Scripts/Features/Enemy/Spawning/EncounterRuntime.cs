@@ -112,6 +112,17 @@ namespace TeamHJD.Game.Domain
                 return false;
             }
 
+            if (context != null && context.SpawnCancellation.IsCancellationRequested)
+            {
+                result = "The Match/source no longer accepts pending spawns.";
+                summary = new EncounterExecutionSummary(0, 0, "OriginUnavailable"); return false;
+            }
+            if (context?.Placement != null && context.Placement.Origin.Delivery != SpawnDeliveryMode.Immediate)
+            {
+                result = "Ground emergence / air drop transitions require an explicit Enemy delivery adapter.";
+                summary = new EncounterExecutionSummary(0, 0, "UnsupportedDelivery"); return false;
+            }
+
             if (string.IsNullOrWhiteSpace(squadOrder) || maxEnemyCount <= 0)
             {
                 result = "분대 명령과 최대 생성 수를 확인하세요.";
@@ -119,15 +130,18 @@ namespace TeamHJD.Game.Domain
             }
 
             var request = new SpawnRequest(squadOrder.Trim(), maxEnemyCount);
-            if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot, context?.Environment, environmentProfile,
-                    out IReadOnlyList<SpawnInstruction> instructions))
+            IReadOnlyList<SpawnInstruction> instructions;
+            bool planned = context?.Placement == null
+                ? _planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot, context?.Environment, environmentProfile, out instructions)
+                : _planner.TryPlanOrigin(request, _spawnExecutor.SpawnPointList, snapshot, context.Environment, environmentProfile, context.Placement, out instructions);
+            if (!planned)
             {
                 result = $"SpawnPlan 생성 실패: preset '{request.SquadOrder}', budget {request.MaxCount}, " +
                          $"available points {_spawnExecutor.SpawnPointList.GetAvailableSpawnPoints().Count}. " +
                          "Grid 밖 또는 Player/Turret 점유 셀의 SpawnPoint는 제외됩니다.";
                 summary = new EncounterExecutionSummary(0,0,"PlanRejected", new SpawnDecisionSnapshot(snapshot,
                     _planner.LastCandidates,System.Array.Empty<SpawnDecisionSnapshot.Plan>(),System.Array.Empty<SpawnDecisionSnapshot.Actual>(),result,
-                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy));
+                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy, context?.Placement));
                 return false;
             }
 
@@ -143,7 +157,7 @@ namespace TeamHJD.Game.Domain
                     plannedCount += entry.Count;
                 }
                 string failure="";
-                int instructionSpawned = _spawnExecutor.Execute(instruction, context, actuals.Add,reason=>failure=reason);
+                int instructionSpawned = _spawnExecutor.Execute(instruction, context, actuals.Add,reason=>failure=reason, snapshot);
                 foreach(EnemySpawnEntry entry in instruction.Enemies)
                     plans.Add(new SpawnDecisionSnapshot.Plan(instruction.SpawnPointId,entry.EnemyId,entry.Count,failure));
                 spawnedCount += instructionSpawned;
@@ -169,7 +183,7 @@ namespace TeamHJD.Game.Domain
                 spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
                 new SpawnDecisionSnapshot(snapshot,_planner.LastCandidates,plans,actuals,
                     spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
-                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy));
+                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy, context?.Placement));
             return spawnedCount > 0;
         }
     }

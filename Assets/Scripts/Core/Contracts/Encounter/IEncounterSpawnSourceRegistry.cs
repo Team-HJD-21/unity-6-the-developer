@@ -6,5 +6,6 @@ namespace TeamHJD.Game.Contracts
     {
         IEncounterSpawnSourceLease Register(MatchId match, DefinitionId sourceId, SpawnArea area);
         EncounterSpawnPlacement Resolve(EncounterSpawnOrigin origin);
+        System.Threading.CancellationToken GetSourceCancellation(SpawnSourceReference source);
     }
 }

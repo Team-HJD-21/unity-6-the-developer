@@ -100,5 +100,28 @@ namespace TeamHJD.Game.Tests.EditMode
             }
             finally { System.Globalization.CultureInfo.CurrentCulture = before; }
         }
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ResolverCannotReplaceTheIntentOrExecuteAfterClosingTheRequestScope(bool disposeDuringResolution)
+        {
+            using var battlefield = new BattlefieldSpatialRuntime(Match, BattlefieldSpatialInput.Empty,
+                BattlefieldDynamicSpatialInput.Empty, BattlefieldGridConfiguration.Default);
+            var executor = new Executor(); var host = new PlayerId("host");
+            var origin = EncounterSpawnOrigin.AtWorld(Area());
+            EncounterRequestService service = null;
+            service = new EncounterRequestService(Match, () => battlefield.Snapshot, () => true, _ => true, executor,
+                resolveOrigin: requested =>
+                {
+                    if (disposeDuringResolution) service.Dispose();
+                    return new EncounterSpawnPlacement(disposeDuringResolution ? requested : EncounterSpawnOrigin.AtWorld(Area(20)), Area());
+                });
+            using (service)
+            {
+                var request = new EncounterRequest(new MatchRequestContext(Match, Guid.NewGuid(), host),
+                    new DefinitionId("Normal"), 10, EncounterRequestSource.Unspecified, origin);
+                Assert.That(service.Submit(request, host).Status, Is.EqualTo(EncounterRequestStatus.OriginUnavailable));
+                Assert.That(executor.Calls, Is.Zero);
+            }
+        }
     }
 }

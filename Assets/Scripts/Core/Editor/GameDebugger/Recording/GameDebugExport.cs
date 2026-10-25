@@ -42,11 +42,13 @@ namespace TeamHJD.Game.Editor
         private static string Number(double value) => value.ToString("R", CultureInfo.InvariantCulture);
         public static string EventsCsv(GameDebugRun run)
         {
-            var text = new StringBuilder("match_id,sequence,request_id,revision,source,kind,game_seconds,real_seconds,preset,enemy_type,spawn_point,entity_id,planned,actual,message\n");
+            var text = new StringBuilder("match_id,sequence,request_id,revision,source,kind,game_seconds,real_seconds,preset,enemy_type,spawn_point,entity_id,planned,actual,message,request_guid,cause_event_id,origin,spawn_source_id,source_generation,delivery\n");
             foreach (var item in run.Events)
                 text.AppendLine(string.Join(",", CsvCell(run.MatchId), item.Sequence, item.RequestId, item.Revision, item.Source, item.Kind,
                     Number(item.GameSeconds), Number(item.RealSeconds), CsvCell(item.SquadOrder), CsvCell(item.EnemyType), CsvCell(item.SpawnPointId),
-                    CsvCell(item.EntityId), item.PlannedCount, item.ActualCount, CsvCell(item.Message)));
+                    CsvCell(item.EntityId), item.PlannedCount, item.ActualCount, CsvCell(item.Message),
+                    CsvCell(item.RequestGuid),CsvCell(item.CauseEventId),CsvCell(item.OriginKind),CsvCell(item.SpawnSourceId),
+                    CsvCell(item.SpawnSourceGeneration),CsvCell(item.DeliveryMode)));
             return text.ToString();
         }
         public static string SamplesCsv(GameDebugRun run)

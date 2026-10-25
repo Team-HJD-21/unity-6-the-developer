@@ -1,5 +1,7 @@
 # Game Debugger 사용·연동 가이드
 
+2026-10-26 추가: Overview의 **Match 환경 · 현재**는 날씨/시간대/예고와 revision을 표시한다. Encounter의 **추가 생성 · World origin / Match 시간 지연**은 지정 XY/크기(Z 기본0)에서 공통 API로 요청한다. 크기 0/0은 점, 양수는 영역이다. 지연은 게임 시간이며 대기 등록과 실제 생성 성공을 구분한다. Grid 밖·Player/Turret 점유·NavMesh 부적합은 거부될 수 있고 GroundEmergence/AirDrop은 아직 미지원이다. Statistics 요청 상세와 Timeline에서 GUID·원인·origin/source·대기/취소를 확인한다. [환경 API](../architecture/match-environment-api.md) · [origin/source API](../architecture/encounter-spawn-origin-api.md).
+
 기준일: 2026-10-08 · 상태: 기존 집중 검사 54/54·Scene 통합 1/1 성공, 후속 사용성 검사 40/40·관측 보완 검사 31/31 성공(검사 범위 중복 포함) · 화면 조작·영상 인수 확인 별도
 
 [배치 계획](../planning/2026-10-08-game-debugger-batch-plan.md) · [구현 결과·검증](../planning/2026-10-08-game-debugger-batch-results.md) · [Core README](../../Assets/Scripts/Core/README.md)
