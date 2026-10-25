@@ -43,7 +43,7 @@ Scene 검사는 Test Framework가 PlayMode로 진입해 실제 조립/API/객체
 - B5 구현: SceneFlowController / UnitySceneFlow / 단독 Host NgoSceneFlow의 실제 재로드·Hub 복귀와 owner별 입력 잠금. [Scene API](../architecture/scene-flow-api.md)의 범위·commit·다중 참가자 제한을 따른다.
 - B6 구현: ScreenManager의 실제 UGUI 결과/로딩/메뉴·Presenter/focus/back와 owner별 입력 수명. Session/Network 결과를 같은 불변 자료 경계에 연결하고 실제 버튼으로 S1 재시작/Hub 복귀를 확인했다. [화면 API](../architecture/screen-management-api.md) 참조. 사람의 외형/입력 인수와 다중 참가자 이동은 별도다.
 - B7 구현: 실제 Weather/CountTick을 Host Match clock/취소 수명에 연결하고 불변 초기·변경 환경과 Client 읽기 replica, 실제 Encounter 정책 소비·Debugger 기록을 추가했다. [환경 API](../architecture/match-environment-api.md) 참조. 시간대 원본 없음/중립 기본값/명시적 검증용 규칙과 최종 밸런스는 구분한다.
-- B8: 포인트 밖 origin/source의 실제 생성/추적.
+- B8 기반 구현: [origin/source 계약과 명시 Scene 실행 대상](../architecture/encounter-spawn-origin-api.md). source 세대/취소·origin 충돌/재전송, 실제 Scene 재로드의 실행 대상 연결 11/11 통과. 포인트 밖 실제 Enemy 생성/공통 추적은 다음 단계이며 아직 완료가 아니다.
 - B9: S1~S3 실행 수준별 인수. 실제 Player NetworkBehaviour는 이영빈, 터렛/수리·전력은 황재동, Encounter/생성·AI는 조수빈, World/환경 표현은 김진태가 소유한다.
 
 최종 제품의 CU 연결 점유·보스 게이트·저장/복귀 정책, OFF 터렛 타깃 가능 상태 및 수리 계약은 별도 결정/담당 연결을 보존한다. 미결을 새 임의 규칙으로 채우지 않는다.

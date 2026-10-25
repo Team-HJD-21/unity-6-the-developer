@@ -937473,6 +937473,7 @@ GameObject:
   - component: {fileID: 877435134}
   - component: {fileID: 877435135}
   - component: {fileID: 877435136}
+  - component: {fileID: 877435137}
   m_Layer: 0
   m_Name: InitialStageCompositionRoot
   m_TagString: Untagged
@@ -937562,6 +937563,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
   - {fileID: 11400000, guid: a710a35a5d3c49b794d2f387d53dce10, type: 2}
   - {fileID: 11400000, guid: b28a795f5a364f249b632692a760317c, type: 2}
+--- !u!114 &877435137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
+  spawnExecutor: {fileID: 1836352305}
+  environmentProfile: {fileID: 0}
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -938220,6 +938235,7 @@ GameObject:
   - component: {fileID: 1250254887}
   - component: {fileID: 1250254886}
   - component: {fileID: 1250254888}
+  - component: {fileID: 1250254889}
   m_Layer: 0
   m_Name: WeatherManager
   m_TagString: Untagged
@@ -938277,6 +938293,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountTick
   weatherChangeTime: 5
+--- !u!114 &1250254889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1250254885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d681a957a844bdea893b762e4b011cf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Map.WeatherChangeEvent
 --- !u!1001 &1264729469
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -939806,6 +939834,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2697276060320991427, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
   m_PrefabInstance: {fileID: 1836352303}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1836352305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1002043012098565792, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
+  m_PrefabInstance: {fileID: 1836352303}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
 --- !u!1001 &1885139232
 PrefabInstance:
   m_ObjectHideFlags: 0

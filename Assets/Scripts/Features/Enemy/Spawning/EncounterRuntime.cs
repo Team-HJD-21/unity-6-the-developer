@@ -33,10 +33,26 @@ namespace TeamHJD.Game.Domain
         /// <summary>
         /// 기본 Planner를 준비하고 현재 씬의 Executor를 한 번 찾아 보관한다.
         /// </summary>
-        public EncounterRuntime()
+        public EncounterRuntime() : this(FindStandaloneExecutor())
+        {
+        }
+
+        public EncounterRuntime(EnemySpawnExecutor executor)
         {
             _planner = new SpawnCompositionPlanner();
-            _spawnExecutor = Object.FindAnyObjectByType<EnemySpawnExecutor>();
+            _spawnExecutor = executor;
+        }
+
+        private static EnemySpawnExecutor FindStandaloneExecutor()
+        {
+            EnemySpawnExecutor selected = null;
+            foreach (var candidate in Object.FindObjectsByType<EnemySpawnExecutor>(FindObjectsSortMode.None))
+            {
+                if (candidate.gameObject.scene != UnityEngine.SceneManagement.SceneManager.GetActiveScene()) continue;
+                if (selected != null) throw new System.InvalidOperationException("Assign an explicit Enemy executor when the Scene contains multiple executors.");
+                selected = candidate;
+            }
+            return selected;
         }
 
         /// <summary>

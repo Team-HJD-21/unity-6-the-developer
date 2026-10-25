@@ -22,6 +22,15 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 {
     private const int TargetFrameRate = 120;
     [SerializeField] private EncounterEnvironmentProfile environmentProfile;
+    private EnemySpawnExecutor _sceneExecutor;
+    public EnemySpawnExecutor ExecutionTarget => _encounterRuntime?.Executor ?? _sceneExecutor;
+    public void ConfigureScene(EnemySpawnExecutor executor, EncounterEnvironmentProfile profile)
+    {
+        if (_snapshotProvider != null) throw new InvalidOperationException("Configure the Enemy Scene before binding a Match.");
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        if (_encounterRuntime?.Executor != null) _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+        _encounterRuntime = null; _sceneExecutor = executor; environmentProfile = profile;
+    }
     private MatchId _environmentMatch;
     private Func<MatchEnvironmentSnapshot> _environmentProvider;
 
@@ -415,7 +424,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (_encounterRuntime != null && _encounterRuntime.HasExecutor) return;
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = new EncounterRuntime();
+        _encounterRuntime = _sceneExecutor != null ? new EncounterRuntime(_sceneExecutor) : new EncounterRuntime();
         if (_encounterRuntime.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved += OnEnemyLifecycleObserved;
     }

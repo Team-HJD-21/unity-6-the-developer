@@ -226,6 +226,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (consumer == null || !consumer.isActiveAndEnabled || !(consumer is IAppOwnedEncounterMatchConsumer))
                 throw new ArgumentException("An active App-owned Encounter consumer is required.", nameof(consumer));
             _encounterConsumerBehaviour = consumer;
+            var configurations = FindSceneBehaviours().OfType<IEncounterSceneConfiguration>().ToArray();
+            if (configurations.Length != 1)
+                throw new InvalidOperationException("The Match Scene requires one explicit Encounter execution configuration.");
+            configurations[0].ConfigureEncounter((IEncounterMatchConsumer)consumer);
         }
 
         /// <summary>준비 응답 전에 양쪽 Scene의 슬롯·콘텐츠·필수 제작 연결을 검사합니다.</summary>

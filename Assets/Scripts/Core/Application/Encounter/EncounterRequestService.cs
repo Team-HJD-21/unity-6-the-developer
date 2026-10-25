@@ -13,12 +13,14 @@ namespace TeamHJD.Game.Application
         private readonly Func<PlayerId, bool> _isParticipant;
         private readonly IEncounterExecutor _executor;
         private readonly Func<MatchEnvironmentSnapshot> _environment;
+        private readonly Func<EncounterSpawnOrigin, EncounterSpawnPlacement> _resolveOrigin;
         private readonly MatchRequestLedger<EncounterRequestResult> _ledger;
         private long _sequence;
         private bool _disposed;
         public EncounterRequestService(MatchId matchId, Func<BattlefieldSpatialSnapshot> snapshot,
             Func<bool> isAuthority, Func<PlayerId, bool> isParticipant, IEncounterExecutor executor, int requestCapacity = 4096,
-            Func<MatchEnvironmentSnapshot> environment = null)
+            Func<MatchEnvironmentSnapshot> environment = null,
+            Func<EncounterSpawnOrigin, EncounterSpawnPlacement> resolveOrigin = null)
         {
             _matchId = matchId;
             _snapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
@@ -28,6 +30,7 @@ namespace TeamHJD.Game.Application
             if (environment != null && !(executor is IEnvironmentAwareEncounterExecutor))
                 throw new ArgumentException("The executor must explicitly consume the environment context.", nameof(executor));
             _environment = environment;
+            _resolveOrigin = resolveOrigin;
             _ledger = new MatchRequestLedger<EncounterRequestResult>(matchId, requestCapacity);
         }
         public EncounterRequestResult Submit(EncounterRequest request, PlayerId verifiedIssuer)
@@ -57,8 +60,21 @@ namespace TeamHJD.Game.Application
             long sequence = checked(++_sequence);
             try
             {
-                result = _environment == null ? _executor.Execute(request, snapshot, sequence) :
-                    ((IEnvironmentAwareEncounterExecutor)_executor).Execute(request, snapshot, environment, sequence);
+                if (request.Origin.Kind == SpawnOriginKind.Automatic)
+                    result = _environment == null ? _executor.Execute(request, snapshot, sequence) :
+                        ((IEnvironmentAwareEncounterExecutor)_executor).Execute(request, snapshot, environment, sequence);
+                else if (!(_executor is IOriginAwareEncounterExecutor originExecutor))
+                    result = new EncounterRequestResult(request.Context.RequestId, sequence, snapshot.Revision,
+                        EncounterRequestStatus.UnsupportedOrigin, reason: "The Feature executor does not support explicit origins.",
+                        environmentRevision: environment?.Revision ?? 0);
+                else
+                {
+                    var placement = _resolveOrigin?.Invoke(request.Origin);
+                    result = placement == null ? new EncounterRequestResult(request.Context.RequestId, sequence, snapshot.Revision,
+                        EncounterRequestStatus.OriginUnavailable, reason: "The source/placement is not available in this Host Match.",
+                        environmentRevision: environment?.Revision ?? 0) :
+                        originExecutor.Execute(request, snapshot, environment, placement, sequence);
+                }
                 if (result == null || result.RequestId != request.Context.RequestId ||
                     result.ExecutionSequence != sequence || result.SnapshotRevision != snapshot.Revision ||
                     result.EnvironmentRevision != (environment?.Revision ?? 0))

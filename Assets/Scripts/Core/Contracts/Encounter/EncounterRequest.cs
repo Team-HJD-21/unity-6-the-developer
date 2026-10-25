@@ -10,7 +10,10 @@ namespace TeamHJD.Game.Contracts
         public DefinitionId PresetId { get; }
         public int MaximumEnemyCount { get; }
         public EncounterRequestSource Source { get; }
-        public EncounterRequest(MatchRequestContext context, DefinitionId presetId, int maximumEnemyCount, EncounterRequestSource source)
+        public EncounterSpawnOrigin Origin { get; }
+        public Guid CauseEventId { get; }
+        public EncounterRequest(MatchRequestContext context, DefinitionId presetId, int maximumEnemyCount, EncounterRequestSource source,
+            EncounterSpawnOrigin origin = null, Guid causeEventId = default)
         {
             Context = context ?? throw new ArgumentNullException(nameof(context));
             if (presetId.IsEmpty || presetId.Value.Length > 128) throw new ArgumentException("A valid preset id is required.", nameof(presetId));
@@ -19,7 +22,9 @@ namespace TeamHJD.Game.Contracts
             PresetId = presetId;
             MaximumEnemyCount = maximumEnemyCount;
             Source = source;
+            Origin = origin ?? EncounterSpawnOrigin.Automatic; CauseEventId = causeEventId;
         }
-        public string GetPayloadKey() => PresetId.Value.Length + ":" + PresetId.Value + ":" + MaximumEnemyCount + ":" + (int)Source;
+        public string GetPayloadKey() => PresetId.Value.Length + ":" + PresetId.Value + ":" + MaximumEnemyCount + ":" + (int)Source +
+            ":" + CauseEventId.ToString("N") + ":" + Origin.GetPayloadKey();
     }
 }
