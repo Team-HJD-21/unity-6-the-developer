@@ -98,3 +98,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 `IEncounterDebugCommandTarget.TryRequestCurrentEncounter(preset, max, source, out result)`의 성공 여부와 결과를 확인한다. 수동/반복 Debugger 요청은 테스트 명령이며 출시용 Director·스테이지 진행 규칙이 아니다. `IGameDiagnosticsSource`는 조회/사실 이벤트 계약이다. 구독자는 `DiagnosticEmitted`에서 해제하고, bounded 기록의 손실·N/A를 실제 0으로 바꾸지 않는다.
 
 `AppRoot.BattlefieldSnapshotChanged` 및 `CurrentBattlefieldSnapshot`은 `UNITY_EDITOR` 진단 경로다. 게임 Feature는 조립부가 주입한 session/provider를 사용한다. [Game Debugger 사용법](../tooling/game-debugger-guide.md)은 이 게임 계약과 도구 UI를 구분해 설명한다.
+
+## 환경 조회와 Encounter
+
+[Match 환경 API](match-environment-api.md)를 따른다. `AppRoot.CurrentEnvironment`는 불변 현재 값이다. World 쓰기/타이머는 Host Match lease에, Client는 replica에만 연결한다. 공통 Encounter 요청이 최신 Battlefield와 환경을 권위 측에서 조회하므로 호출자가 Client 날씨/좌표를 권위 상태로 제출하지 않는다. Debugger의 현재 환경과 각 요청의 사용 환경 revision을 구분한다.

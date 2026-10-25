@@ -23,6 +23,9 @@ namespace TeamHJD.Game.Infrastructure.Tests
         private NetworkMatchCoordinator _host, _client;
         private NgoRegionSnapshotTransport _hostRegionChannel, _clientRegionChannel;
         private RegionReplicationSession _hostRegions, _clientRegions;
+        private NgoEnvironmentTransport _hostEnvironmentChannel, _clientEnvironmentChannel;
+        private EnvironmentReplicationSession _hostEnvironments, _clientEnvironments;
+        private sealed class Clock : IMatchClock { public double ElapsedSeconds => 5; }
         private static NetworkMatchDescriptor Descriptor()
         {
             int[] regions = new int[256]; for (int i = 0; i < regions.Length; i++) regions[i] = i % 2 + 1;
@@ -133,10 +136,14 @@ namespace TeamHJD.Game.Infrastructure.Tests
             _hostRegionChannel = new NgoRegionSnapshotTransport(hostManager); _clientRegionChannel = new NgoRegionSnapshotTransport(clientManager);
             _hostRegions = new RegionReplicationSession(_hostSession, _host, _hostRegionChannel);
             _clientRegions = new RegionReplicationSession(_clientSession, _client, _clientRegionChannel);
+            _hostEnvironmentChannel = new NgoEnvironmentTransport(hostManager); _clientEnvironmentChannel = new NgoEnvironmentTransport(clientManager);
+            _hostEnvironments = new EnvironmentReplicationSession(_hostSession, _host, _hostEnvironmentChannel);
+            _clientEnvironments = new EnvironmentReplicationSession(_clientSession, _client, _clientEnvironmentChannel);
             var original = Descriptor();
             var bindings = new[] { original.Participants[0],
                 new MatchParticipantBinding(clientManager.LocalClientId, original.Participants[1].PlayerId, false) };
             RegionReplicationFrame previousPreparation = null;
+            EnvironmentReplicationFrame previousEnvironment = null;
             for (int cycle = 0; cycle < 3; cycle++)
             {
                 if (cycle == 2)
@@ -168,9 +175,37 @@ namespace TeamHJD.Game.Infrastructure.Tests
                 deadline = Time.realtimeSinceStartup + 20;
                 while (!_host.CanStart && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
                 Assert.That(_host.TryStart(), Is.True);
+                using var environment = new MatchEnvironmentRuntime(original.Config.MatchId, new Clock(), () => _host.IsGameplayRunning);
+                environment.TryUpdate(new DefinitionId("rain"), default, new[] { new DefinitionId("sunny") });
+                _hostEnvironments.BindHostSource(environment);
                 deadline = Time.realtimeSinceStartup + 20;
                 while (_client.Phase != NetworkMatchPhase.Running && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
                 Assert.That(_client.Phase, Is.EqualTo(NetworkMatchPhase.Running));
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_clientEnvironments.Source == null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
+                Assert.That(_clientEnvironments.Source, Is.Not.Null);
+                Assert.That(_clientEnvironments.Source.Snapshot.HasSameValues(environment.Snapshot), Is.True);
+                var initialEnvironment = _hostEnvironments.LastPublishedFrame;
+                environment.TryUpdate(new DefinitionId("thunderstorm"), default, new[] { new DefinitionId("rain") });
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_clientEnvironments.Source.Snapshot.Revision != environment.Snapshot.Revision && Time.realtimeSinceStartup < deadline)
+                { Pump(); yield return null; }
+                Assert.That(_clientEnvironments.Source.Snapshot.HasSameValues(environment.Snapshot), Is.True);
+                Assert.That(_hostEnvironmentChannel.TrySendFrame(clientManager.LocalClientId, initialEnvironment), Is.True);
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_clientEnvironments.LastReceiveStatus != EnvironmentApplyStatus.Stale && Time.realtimeSinceStartup < deadline)
+                { Pump(); yield return null; }
+                Assert.That(_clientEnvironments.LastReceiveStatus, Is.EqualTo(EnvironmentApplyStatus.Stale));
+                if (previousEnvironment != null)
+                {
+                    _hostEnvironmentChannel.TrySendFrame(clientManager.LocalClientId, previousEnvironment);
+                    deadline = Time.realtimeSinceStartup + 20;
+                    while (_clientEnvironments.LastReceiveStatus != EnvironmentApplyStatus.DifferentDescriptor && Time.realtimeSinceStartup < deadline)
+                    { Pump(); yield return null; }
+                    Assert.That(_clientEnvironments.LastReceiveStatus, Is.EqualTo(EnvironmentApplyStatus.DifferentDescriptor));
+                }
+                previousEnvironment = _hostEnvironments.LastPublishedFrame;
+                var expiredEnvironment = _clientEnvironments.Source;
                 using var regions = new RegionRuntime(original.Config.MatchId, original.RegionGrid,
                     cycle == 0 ? RegionPolicyMode.Dynamic : RegionPolicyMode.Static);
                 regions.TryApply(regions.Snapshot, new[] { 0, 2, 5 }, RegionCaptureUpdateMode.Replace);
@@ -226,6 +261,8 @@ namespace TeamHJD.Game.Infrastructure.Tests
                 while (_client.Descriptor != null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
                 Assert.That(_client.Descriptor, Is.Null);
                 Assert.That(_clientRegions.Source, Is.Null);
+                Assert.That(_clientEnvironments.Source, Is.Null);
+                Assert.That(expiredEnvironment.Snapshot, Is.Null);
                 Assert.Throws<ObjectDisposedException>(() => { var unused = expiredClientSource.Snapshot; });
             }
             Assert.That(_hostChannel.RejectedPackets + _clientChannel.RejectedPackets, Is.Zero);
@@ -236,11 +273,15 @@ namespace TeamHJD.Game.Infrastructure.Tests
             _hostChannel.Pump(); _clientChannel.Pump();
             _hostRegions.FlushPending(); _clientRegions.FlushPending();
             _hostRegionChannel.Pump(); _clientRegionChannel.Pump();
+            _hostEnvironments.FlushPending(); _clientEnvironments.FlushPending();
+            _hostEnvironmentChannel.Pump(); _clientEnvironmentChannel.Pump();
         }
         [UnityTearDown]
         public IEnumerator TearDown()
         {
             _host?.Dispose(); _client?.Dispose(); _host = _client = null;
+            _hostEnvironments?.Dispose(); _clientEnvironments?.Dispose(); _hostEnvironments = _clientEnvironments = null;
+            _hostEnvironmentChannel?.Dispose(); _clientEnvironmentChannel?.Dispose(); _hostEnvironmentChannel = _clientEnvironmentChannel = null;
             _hostRegions?.Dispose(); _clientRegions?.Dispose(); _hostRegions = _clientRegions = null;
             _hostRegionChannel?.Dispose(); _clientRegionChannel?.Dispose(); _hostRegionChannel = _clientRegionChannel = null;
             _hostChannel?.Dispose(); _clientChannel?.Dispose(); _hostChannel = _clientChannel = null;

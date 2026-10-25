@@ -75,7 +75,7 @@ namespace TeamHJD.Game.Domain
             => TrySpawn(snapshot, squadOrder, maxEnemyCount, null, out result, out _);
 
         public bool TrySpawn(BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
-            EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
+            EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary, EncounterEnvironmentProfile environmentProfile = null)
         {
             summary = new EncounterExecutionSummary(0, 0, "Rejected");
             if (snapshot == null || snapshot.MatchId.IsEmpty)
@@ -103,7 +103,7 @@ namespace TeamHJD.Game.Domain
             }
 
             var request = new SpawnRequest(squadOrder.Trim(), maxEnemyCount);
-            if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot,
+            if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot, context?.Environment, environmentProfile,
                     out IReadOnlyList<SpawnInstruction> instructions))
             {
                 result = $"SpawnPlan 생성 실패: preset '{request.SquadOrder}', budget {request.MaxCount}, " +
@@ -111,7 +111,7 @@ namespace TeamHJD.Game.Domain
                          "Grid 밖 또는 Player/Turret 점유 셀의 SpawnPoint는 제외됩니다.";
                 summary = new EncounterExecutionSummary(0,0,"PlanRejected", new SpawnDecisionSnapshot(snapshot,
                     _planner.LastCandidates,System.Array.Empty<SpawnDecisionSnapshot.Plan>(),System.Array.Empty<SpawnDecisionSnapshot.Actual>(),result,
-                    SpawnPointSpatialPolicy.Description));
+                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy));
                 return false;
             }
 
@@ -146,13 +146,14 @@ namespace TeamHJD.Game.Domain
             result = $"Match {snapshot.MatchId} r{snapshot.Revision} → Encounter: " +
                      $"{snapshot.Triangles.Count} triangles, {snapshot.FrontlineEdges.Count} frontline edges, " +
                      $"{snapshot.Grid.OccupiedCells.Count} occupied cells; " +
-                     $"{instructions.Count} plan(s), {spawnedCount} spawned. {executionSummary}";
+                     $"{instructions.Count} plan(s), {spawnedCount} spawned. {executionSummary} " +
+                     $"Environment r{context?.Environment?.Revision ?? 0}, policy={_planner.LastEnvironmentPolicy}";
             Debug.Log(result);
             summary = new EncounterExecutionSummary(plannedCount, spawnedCount,
                 spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
                 new SpawnDecisionSnapshot(snapshot,_planner.LastCandidates,plans,actuals,
                     spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
-                    SpawnPointSpatialPolicy.Description));
+                    SpawnPointSpatialPolicy.Description, context?.Environment, _planner.LastEnvironmentPolicy));
             return spawnedCount > 0;
         }
     }

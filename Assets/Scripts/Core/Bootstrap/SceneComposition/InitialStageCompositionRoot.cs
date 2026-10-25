@@ -29,7 +29,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
         private MatchCoordinator _coordinator;
+        private IMatchWeatherSource _weatherSource;
+        private IMatchTimeOfDaySource _timeOfDaySource;
+        private IDisposable _environmentScope;
+        private IMatchEnvironmentSource _environmentReplica;
         public MatchCoordinator MatchCoordinator => _coordinator;
+        public IMatchEnvironmentSource EnvironmentSource => _matchSession?.Environment ?? _environmentReplica;
         private RegionSceneBinding _regionBinding;
         private TurretMatchBinding _turretBinding;
         private MatchPlayerActorScope _playerActors;
@@ -50,6 +55,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_matchHost != null) throw new InvalidOperationException("Initial Stage has already been composed.");
             if (appMatchHost == null) throw new ArgumentNullException(nameof(appMatchHost));
+            PrepareEnvironmentSources();
             if (_networkBinding != null)
             {
                 if (!(appMatchHost is AppRoot app))
@@ -136,6 +142,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matchSession = session;
                 // D의 Match lease가 쓰기를 허용한 뒤, Core 지역 정책을 붙이기 전에 초기화합니다.
                 ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
+                var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
+                    .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitHealthSource>().Single();
+                _coordinator = new MatchCoordinator(session, controlUnitHealth,
+                    () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
+                _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning));
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
@@ -162,6 +174,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
                 {
+                    if (!(_encounterConsumer is IEncounterEnvironmentConsumer environmentConsumer))
+                        throw new InvalidOperationException("The Stage Encounter consumer must support the explicit environment query port.");
+                    environmentConsumer.BindEnvironment(matchId, () => HasCurrentMatch && _matchSession != null &&
+                        _matchSession.IsGameplayRunning ? _matchSession.Environment?.Snapshot : null);
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
                     if (network != null)
@@ -179,10 +195,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _nextBattlefieldSampleTime = 0f;
                 cameraFollow.Bind(_playerActors.Actors[localPlayerId].transform);
                 session.Disposing += ReleaseMatchBindings;
-                var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
-                    .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitHealthSource>().Single();
-                _coordinator = new MatchCoordinator(session, controlUnitHealth,
-                    () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
                 _coordinator.Completed += OnMatchCompleted;
                 _coordinator.Start();
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
@@ -320,6 +332,25 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (source != null) _regionBinding.BindReplica(source);
         }
 
+        public void BindEnvironmentReplica(IMatchEnvironmentSource source)
+        {
+            IDisposable previous = _environmentScope; _environmentScope = null; _environmentReplica = null;
+            previous?.Dispose();
+            if (source == null) return;
+            if (_ownsMatch || _ownedMatchId.IsEmpty) throw new InvalidOperationException("Bind environment replicas only to a composed Client Match.");
+            _environmentScope = new MatchEnvironmentReplicaBinding(_ownedMatchId, source, _weatherSource, _timeOfDaySource);
+            _environmentReplica = source;
+        }
+
+        private void PrepareEnvironmentSources()
+        {
+            var weather = FindSceneBehaviours().OfType<IMatchWeatherSource>().ToArray();
+            var time = FindSceneBehaviours().OfType<IMatchTimeOfDaySource>().ToArray();
+            if (weather.Length > 1 || time.Length > 1) throw new InvalidOperationException("Keep one authoritative weather/time source per Match Scene.");
+            _weatherSource = weather.FirstOrDefault(); _timeOfDaySource = time.FirstOrDefault();
+            foreach (var feature in MatchEnvironmentSceneScope.Collect(_weatherSource, _timeOfDaySource)) feature.RequireMatchScope();
+        }
+
         private void BindLocalInput(GameObject actor)
         {
             if (!(_matchHost is AppRoot app)) return;
@@ -358,12 +389,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RegionSceneBinding regions = _regionBinding;
             TurretMatchBinding turrets = _turretBinding;
             MatchCoordinator coordinator = _coordinator;
+            IDisposable environment = _environmentScope;
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
             bool ownedMatch = _ownsMatch;
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
             _coordinator = null;
+            _environmentScope = null; _environmentReplica = null;
             _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
             _ownedMatchId = default;
@@ -371,6 +404,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _lastEntityCells.Clear();
             var errors = new List<Exception>();
             RunCleanup(() => coordinator?.Dispose(), errors);
+            RunCleanup(() => environment?.Dispose(), errors);
             RunCleanup(() => ReleaseLocalActorConsumers(matchId), errors);
             RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
             RunCleanup(() => actors?.Dispose(), errors);
@@ -431,7 +465,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             IEncounterMatchConsumer consumer = _encounterConsumer;
             _encounterConsumer = null;
-            try { consumer?.UnbindMatch(matchId); }
+            try
+            {
+                try { consumer?.UnbindMatch(matchId); }
+                finally { (consumer as IEncounterEnvironmentConsumer)?.UnbindEnvironment(matchId); }
+            }
             catch (Exception exception)
             {
                 // Feature 해제 실패가 Player/Core Match 정리를 중단해서는 안 됩니다.

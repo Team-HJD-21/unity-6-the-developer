@@ -20,10 +20,14 @@ namespace TeamHJD.Game.Contracts
         public int DroppedActuals {get;}
         public string Policy {get;}
         public string Outcome {get;}
+        public MatchEnvironmentSnapshot Environment {get;}
+        public string EnvironmentPolicy {get;}
         public SpawnDecisionSnapshot(BattlefieldSpatialSnapshot battlefield, IEnumerable<Candidate> candidates,
             IEnumerable<Plan> plans, IEnumerable<Actual> actuals, string outcome,
-            string policy = "Lowest cell enemy pressure → nearest frontline → ordinal point ID; complete preset sets only")
+            string policy = "Lowest cell enemy pressure → nearest frontline → ordinal point ID; complete preset sets only",
+            MatchEnvironmentSnapshot environment = null, string environmentPolicy = "")
         {
+            Environment = environment; EnvironmentPolicy = environmentPolicy ?? "";
             Grid=battlefield.Grid.Configuration;
             Cells=Array.AsReadOnly(battlefield.Grid.OccupiedCells.Take(MaximumGeometry)
                 .Select(c=>new Cell(c.X,c.Y,c.PlayerCount,c.TurretCount,c.EnemyCount)).ToArray());

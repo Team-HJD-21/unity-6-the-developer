@@ -35,6 +35,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private NgoNetworkSession _session;
         private NetworkMatchCoordinator _matches;
         private RegionReplicationSession _regions;
+        private EnvironmentReplicationSession _environments;
         private NetworkMatchAnchor _anchor;
         private IRegionGridSource _anchorSource;
         private NetworkMatchDescriptor _anchorDescriptor;
@@ -173,6 +174,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 try { _app.AttachTurretCommandTransport(transport); }
                 catch { transport.Dispose(); throw; }
             }
+            if (_app.NetworkEnvironments == null)
+            {
+                var transport = new NgoEnvironmentTransport(_manager);
+                try { _app.AttachEnvironmentTransport(transport); }
+                catch { transport.Dispose(); throw; }
+            }
             if (_app.NetworkTurretPresentation == null)
             {
                 var transport = new NgoTurretPresentationTransport(_manager);
@@ -181,15 +188,18 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             if (ReferenceEquals(_matches, _app.NetworkMatches)) return;
             _matches = _app.NetworkMatches; _regions = _app.NetworkRegions;
+            _environments = _app.NetworkEnvironments;
             _matches.Preparing += OnPreparing;
             _matches.Started += OnStarted;
             _matches.Ended += OnEnded;
             _regions.SourceChanged += OnRegionSource;
+            _environments.SourceChanged += OnEnvironmentSource;
             if (_matches.Phase == NetworkMatchPhase.Preparing) OnPreparing(_matches.Descriptor);
             else if (_matches.Phase == NetworkMatchPhase.Running)
             {
                 OnStarted(_matches.Descriptor);
                 if (!_session.IsServer && _regions.Source != null) OnRegionSource(_regions.Source);
+                if (!_session.IsServer && _environments.Source != null) OnEnvironmentSource(_environments.Source);
             }
         }
 
@@ -215,8 +225,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (_session.IsServer)
                 {
                     _regions.BindHostSource(_scene.RegionBinding.Source);
+                    _environments.BindHostSource(_scene.EnvironmentSource);
                     SpawnAnchor(descriptor, _scene.RegionBinding.Source);
                 }
+                else if (_environments.Source != null) OnEnvironmentSource(_environments.Source);
             }
             catch (Exception error) { FailMatch(error); throw; }
         }
@@ -265,6 +277,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (!_session.IsServer && _scene != null) _scene.BindRegionReplica(source);
         }
 
+        private void OnEnvironmentSource(IMatchEnvironmentSource source)
+        {
+            if (_session.IsServer || _scene == null) return;
+            if (source != null && _matches.Phase != NetworkMatchPhase.Running) return;
+            _scene.BindEnvironmentReplica(source);
+        }
+
         public void OnAuthorityMatchReleased(MatchId matchId)
         {
             if (!_disposed && _session != null && _session.IsServer && _matches?.Descriptor?.Config.MatchId == matchId)
@@ -311,6 +330,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matches.Preparing -= OnPreparing; _matches.Started -= OnStarted; _matches.Ended -= OnEnded;
             }
             if (_regions != null) _regions.SourceChanged -= OnRegionSource;
+            if (_environments != null) _environments.SourceChanged -= OnEnvironmentSource;
             try { ReleaseCommandScope(); }
             finally
             {
