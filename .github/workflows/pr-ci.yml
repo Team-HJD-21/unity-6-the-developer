@@ -111,7 +111,15 @@ jobs:
 
           exit "$fail"
 
-      - name: Test Unity .meta validator
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python test dependencies
+        run: python3 -m pip install Pillow==12.3.0
+
+      - name: Test repository Python scripts
         run: python3 -B -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
       - name: Validate all Unity .meta pairs

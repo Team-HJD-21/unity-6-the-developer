@@ -11,6 +11,7 @@
 - Unity 버전 `6000.3.23f1`
 - `Force Text`와 `Visible Meta Files` 설정
 - 활성화된 Build Scene과 Scene `.meta`
+- Python 스크립트 테스트 (`.meta` 검증기와 contributors 집계·그래프, Python 3.12 + Pillow 12.3.0)
 - `Assets` 아래 모든 파일·폴더의 `.meta` 쌍
 - 대상 파일이 없는 고아 `.meta` (단, `folderAsset: yes`인 빈 폴더 메타는 허용)
 - `.gitmodules` 연결이 누락된 중첩 저장소 / 잘못된 submodule
@@ -54,9 +55,10 @@ Git은 빈 폴더를 저장하지 않는다. 로컬의 빈 TextMesh Pro 폴더�
 
 `.github/scripts/validate_meta.py`는 `folderAsset: yes`인 폴더 메타를 허용한다. 일반 Asset 파일 누락, `.meta` 누락, 부모 폴더 메타 누락, 파일/폴더 종류 불일치는 계속 실패한다. Asset이나 GUID를 삭제하거나 새로 생성할 필요가 없다.
 
-로컬에서도 동일한 검사를 실행할 수 있다 (Python 3 필요).
+로컬에서도 동일한 검사를 실행할 수 있다 (Python 3.12와 Pillow 필요).
 
 ```sh
+python -m pip install Pillow==12.3.0
 python -B -m unittest discover -s .github/scripts -p 'test_*.py' -v
 python -B .github/scripts/validate_meta.py
 ```
