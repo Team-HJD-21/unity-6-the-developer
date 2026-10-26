@@ -9,7 +9,9 @@ using UnityEngine;
 [RequireComponent(typeof(EnemyController))]
 public class EnemyNetworkController : NetworkBehaviour
 {
-    private EnemyController _enemyController;
+    [SerializeField] private EnemyController enemyController;
+    [SerializeField] private EnemyHealth enemyHealth;
+    public event Action<ulong> DeathConfirmed;
 
     /// <summary>
     /// 이 적이 네트워크에서 제거될 때 생성 주체에게 알린다.
@@ -22,7 +24,10 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     private void Awake()
     {
-        _enemyController = GetComponent<EnemyController>();
+        if (enemyController == null)
+            enemyController = GetComponent<EnemyController>();
+        if (enemyHealth == null)
+            enemyHealth = GetComponent<EnemyHealth>();
     }
 
     /// <summary>
@@ -33,7 +38,39 @@ public class EnemyNetworkController : NetworkBehaviour
         if (!IsSpawned || !IsServer)
             return;
 
-        _enemyController.ExecuteBehavior();
+        enemyController.ExecuteBehavior();
+    }
+
+    /// <summary>
+    /// 적이 네트워크에 스폰되면 서버에서 현재 체력과 사망 상태를 초기화한다.
+    /// </summary>
+    public override void OnNetworkSpawn()
+    {
+        if (!IsServer || !enemyHealth)
+            return;
+
+        enemyHealth.Initialize();
+        enemyHealth.Died += OnHealthDied;
+    }
+
+    private void OnHealthDied(EnemyHealth health)
+    {
+        if (health != enemyHealth || !IsServer)
+            return;
+
+        if (DeathConfirmed != null)
+            foreach (Action<ulong> observer in DeathConfirmed.GetInvocationList())
+                try
+                {
+                    observer(NetworkObjectId);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                }
+
+        if (IsSpawned)
+            NetworkObject.Despawn();
     }
 
     /// <summary>
@@ -41,6 +78,12 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        if (enemyHealth != null)
+        {
+            enemyHealth.Died -= OnHealthDied;
+            enemyHealth.Deactivate();
+        }
+
         Despawned?.Invoke(NetworkObjectId);
         base.OnNetworkDespawn();
     }

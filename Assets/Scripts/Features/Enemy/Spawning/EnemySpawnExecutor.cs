@@ -1,5 +1,6 @@
 // 확정된 분대 명령을 서버에서 실행하고 실제 생성/제거 사실을 발행합니다.
 // 요청 context는 관측 상관관계에만 쓰며 생성 정책을 바꾸지 않습니다.
+
 using System.Collections.Generic;
 using System;
 using TeamHJD.Game.Contracts;
@@ -29,7 +30,6 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         public readonly string EnemyType;
         public readonly string SpawnPointId;
         public readonly string NetworkId;
-        public readonly EnemyHealth Health;
 
         public TrackedEnemy(
             NetworkObject networkObject,
@@ -45,7 +45,6 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             EnemyType = enemyType;
             SpawnPointId = spawnPointId;
             NetworkId = networkObject.NetworkObjectId.ToString();
-            Health = networkObject.GetComponent<EnemyHealth>();
         }
     }
 
@@ -61,7 +60,8 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     {
         int count = 0;
         foreach (TrackedEnemy enemy in _spawnedEnemies.Values)
-            if (enemy.Context != null && enemy.Context.MatchId == matchId) count++;
+            if (enemy.Context != null && enemy.Context.MatchId == matchId)
+                count++;
         return count;
     }
 
@@ -133,11 +133,12 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             _spawnPointList.Initialize(_discoveredSpawnPoints);
             return;
         }
+
         _spawnSceneRoots.Clear();
         scene.GetRootGameObjects(_spawnSceneRoots);
         foreach (GameObject root in _spawnSceneRoots)
-            foreach (SpawnPoint point in root.GetComponentsInChildren<SpawnPoint>(true))
-                _discoveredSpawnPoints.Add(point);
+        foreach (SpawnPoint point in root.GetComponentsInChildren<SpawnPoint>(true))
+            _discoveredSpawnPoints.Add(point);
         _spawnPointList.Initialize(_discoveredSpawnPoints);
     }
 
@@ -163,8 +164,10 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         {
             Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Executor shutdown");
             if (enemy.NetworkController != null)
+            {
                 enemy.NetworkController.Despawned -= OnEnemyDespawned;
-            if (enemy.Health != null) enemy.Health.Died -= OnEnemyDied;
+                enemy.NetworkController.DeathConfirmed -= OnEnemyDied;
+            }
         }
 
         _squads.Clear();
@@ -199,14 +202,16 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         _spawnedEnemies.Remove(networkObjectId);
         Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Despawn / untracked (not a kill)");
         if (enemy.NetworkController != null)
+        {
             enemy.NetworkController.Despawned -= OnEnemyDespawned;
-        if (enemy.Health != null) enemy.Health.Died -= OnEnemyDied;
+            enemy.NetworkController.DeathConfirmed -= OnEnemyDied;
+        }
 
         enemy.Squad.RemoveMember(enemy.Controller);
         if (enemy.Squad.IsEmpty)
             _squads.Remove(enemy.Squad);
     }
-    
+
     /// <summary>
     /// 서버에서 분대 생성 명령의 지점·수량·프리팹을 검증하고 적을 생성한다.
     /// 구성원을 같은 분대에 등록한 뒤 네트워크에 스폰하고 공동 목표를 지정한다.
@@ -221,17 +226,17 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         => Execute(spawnInstruction, context, null);
 
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
-        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure=null)
+        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || spawnInstruction.Enemies == null ||
             spawnInstruction.Enemies.Count == 0)
-            return Fail("Not server / empty composition",observeFailure);
+            return Fail("Not server / empty composition", observeFailure);
 
         if (enemyList == null || _spawnPointList == null)
         {
             Debug.LogError("Spawner dependencies are not assigned.");
-            return Fail("Enemy catalog / registry missing",observeFailure);
+            return Fail("Enemy catalog / registry missing", observeFailure);
         }
 
         // 명령 하나가 분대 하나이므로 모든 구성원이 공유할 스폰 지점을 한 번만 찾는다.
@@ -240,12 +245,12 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 out SpawnPoint spawnPoint))
         {
             Debug.LogError($"SpawnPoint not found: {spawnInstruction.SpawnPointId}");
-            return Fail("Spawn point missing at execution",observeFailure);
+            return Fail("Spawn point missing at execution", observeFailure);
         }
 
         // 계획 이후 점령 상태가 바뀐 지점에서는 적을 생성하지 않는다.
         if (!spawnPoint.CanSpawnEnemies)
-            return Fail("Spawn point disabled / captured after planning",observeFailure);
+            return Fail("Spawn point disabled / captured after planning", observeFailure);
 
         // 생성 전에 모든 적 정의와 필수 컴포넌트를 확인해 일부 종류만 스폰되는 일을 막는다.
         List<EnemyDefinition> definitions = new(spawnInstruction.Enemies.Count);
@@ -255,7 +260,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 !enemyList.TryGetDefinition(entry.EnemyId, out EnemyDefinition enemy))
             {
                 Debug.LogError($"Invalid enemy spawn entry: {entry.EnemyId}");
-                return Fail("Invalid catalog entry: "+entry.EnemyId,observeFailure);
+                return Fail("Invalid catalog entry: " + entry.EnemyId, observeFailure);
             }
 
             if (enemy.Prefab == null ||
@@ -265,7 +270,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             {
                 Debug.LogError(
                     $"Enemy prefab requires NetworkObject, EnemyController, and EnemyNetworkController: {enemy.EnemyId}");
-                return Fail("Enemy prefab missing required components: "+enemy.EnemyId,observeFailure);
+                return Fail("Enemy prefab missing required components: " + enemy.EnemyId, observeFailure);
             }
 
             definitions.Add(enemy);
@@ -295,7 +300,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 if (!squad.AddMember(controller))
                 {
                     Debug.LogError($"Failed to register enemy in squad: {enemy.EnemyId}");
-                    Fail("Failed to register squad member: "+enemy.EnemyId,observeFailure);
+                    Fail("Failed to register squad member: " + enemy.EnemyId, observeFailure);
                     Destroy(spawnedMonster);
                     continue;
                 }
@@ -309,13 +314,22 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                     new TrackedEnemy(networkObject, controller, networkController, squad,
                         context, enemy.EnemyId, spawnInstruction.SpawnPointId);
                 networkController.Despawned += OnEnemyDespawned;
-                EnemyHealth health = spawnedMonster.GetComponent<EnemyHealth>();
-                if (health != null) health.Died += OnEnemyDied;
+                networkController.DeathConfirmed += OnEnemyDied;
                 if (observeSpawn != null)
-                    try { observeSpawn(new SpawnDecisionSnapshot.Actual(spawnInstruction.SpawnPointId,enemy.EnemyId,
-                        networkObject.NetworkObjectId.ToString(),new BattlefieldPoint(networkObject.transform.position.x,networkObject.transform.position.y))); }
-                    catch (Exception exception) { Debug.LogException(exception,this); }
-                Observe(_spawnedEnemies[networkObject.NetworkObjectId], GameDiagnosticKind.EnemySpawned, "Network spawn succeeded");
+                    try
+                    {
+                        observeSpawn(new SpawnDecisionSnapshot.Actual(spawnInstruction.SpawnPointId, enemy.EnemyId,
+                            networkObject.NetworkObjectId.ToString(),
+                            new BattlefieldPoint(networkObject.transform.position.x,
+                                networkObject.transform.position.y)));
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.LogException(exception, this);
+                    }
+
+                Observe(_spawnedEnemies[networkObject.NetworkObjectId], GameDiagnosticKind.EnemySpawned,
+                    "Network spawn succeeded");
                 spawnedCount++;
             }
         }
@@ -335,16 +349,33 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
     private void Observe(TrackedEnemy enemy, GameDiagnosticKind kind, string reason)
     {
-        var observation = new EnemyLifecycleObservation(enemy.Context, kind, enemy.EnemyType, enemy.SpawnPointId, enemy.NetworkId, reason);
+        var observation = new EnemyLifecycleObservation(enemy.Context, kind, enemy.EnemyType, enemy.SpawnPointId,
+            enemy.NetworkId, reason);
         // 관측 구독 실패가 스폰이나 제거 처리를 중단하지 않도록 격리합니다.
         if (LifecycleObserved == null) return;
         foreach (Action<EnemyLifecycleObservation> observer in LifecycleObserved.GetInvocationList())
-            try { observer(observation); } catch (Exception exception) { Debug.LogException(exception, this); }
+            try
+            {
+                observer(observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
     }
-    private int Fail(string reason,Action<string> observer)
+
+    private int Fail(string reason, Action<string> observer)
     {
-        if(observer!=null)
-            try {observer(reason);}catch(Exception exception){Debug.LogException(exception,this);}
+        if (observer != null)
+            try
+            {
+                observer(reason);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+
         return 0;
     }
 }
