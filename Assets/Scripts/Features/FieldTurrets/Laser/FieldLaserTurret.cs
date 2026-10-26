@@ -75,10 +75,10 @@ public class FieldLaserTurret : DefaultFieldLaserTurret
         }
 
         // GameObject bulletObj = Instantiate(laserPrefab, laserSpawnPoint.position, Quaternion.identity);
-        // TowerBullet towerBulletScript = bulletObj.GetComponent<TowerBullet>();
+        // FieldTurretBullet fieldTurretBullet = bulletObj.GetComponent<FieldTurretBullet>();
         // // float randomX = bulletFirePoint.position.x + Random.Range(-0.5f, 0.5f);
         // // bulletFirePoint.position = new Vector3(randomX, bulletFirePoint.position.y,0f);
-        // // towerBulletScript.SetTarget(bulletFirePoint);   
+        // // fieldTurretBullet.SetTarget(bulletFirePoint);
         // // Collider2D player = Physics2D.OverlapCircle(transform.position, 40, playerMask);
         // // Debug.Log(player);
         // // if (player != null)

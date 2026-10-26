@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 
-public class TowerMissile : MonoBehaviour
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "TowerMissile")]
+public class FieldTurretMissile : MonoBehaviour
 {
     [Header("References")] 
     [SerializeField] private Rigidbody2D rb;
@@ -66,13 +67,13 @@ public class TowerMissile : MonoBehaviour
     private void ValidateInitialization(float damage)
     {
         if (_isInitialized)
-            throw new InvalidOperationException("TowerMissile has already been initialized.");
+            throw new InvalidOperationException("FieldTurretMissile has already been initialized.");
         if (!isActiveAndEnabled)
-            throw new InvalidOperationException("TowerMissile must be active before initialization.");
+            throw new InvalidOperationException("FieldTurretMissile must be active before initialization.");
         if (damage < 0f)
             throw new ArgumentOutOfRangeException(nameof(damage));
         if (rb == null)
-            throw new InvalidOperationException("TowerMissile requires a Rigidbody2D reference.");
+            throw new InvalidOperationException("FieldTurretMissile requires a Rigidbody2D reference.");
     }
 
     public void Initialize(MissileTargetReservation reservation, float damage)

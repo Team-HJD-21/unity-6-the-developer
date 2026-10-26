@@ -1,7 +1,7 @@
 # Turret System Guide
 
 작성일: 2026-09-24
-최종 갱신: 2026-10-25
+최종 갱신: 2026-10-26
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 냉각·수동 조작·강화 제한은 main `8d08001a`에 병합된 PR #525를 기준으로 최신화했다.
@@ -31,7 +31,7 @@
 - 터렛 체력·파괴·플레이어 복구 흐름
 - 인스턴스별 Damage/Power 보정과 Stage 1 프리팹 교체 방식의 레벨 승급
 - Enemy PoC의 `PoCTargetable` 연결
-- `TowerBullet`, `TowerMissile`로 전달되는 공격력
+- `FieldTurretBullet`, `FieldTurretMissile`로 전달되는 공격력
 
 다음 항목은 이 문서의 현재 적용 범위가 아니다.
 
@@ -102,8 +102,8 @@ flowchart TD
     Base --> Missile["DefaultFieldMissileTurret<br>복수 대상 공격"]
     Canon --> CanonLv["FieldCanonTurretLv1~3<br>총알 생성"]
     Missile --> MissileLv["FieldMissileTurretLV1~3<br>미사일 생성"]
-    CanonLv --> Bullet["TowerBullet<br>충돌 피해"]
-    MissileLv --> Projectile["TowerMissile<br>추적·범위 피해"]
+    CanonLv --> Bullet["FieldTurretBullet<br>충돌 피해"]
+    MissileLv --> Projectile["FieldTurretMissile<br>추적·범위 피해"]
     Base <--> Registry["FieldTurretInstanceRegistry<br>ID 조회·상태 알림"]
     Registry --> Snapshot["FieldTurretSnapshot<br>조회 시점의 값"]
     Snapshot --> Consumers["Enemy Adapter·전선 소비자<br>읽기 전용 조회"]
@@ -296,8 +296,8 @@ UI에는 Definition의 이름·레벨·발사 속도와 현재 유효 공격력�
 | `FieldCanonTurretLv1~3` | Level별 발사구와 발사체 생성 |
 | `DefaultFieldMissileTurret` | 복수 Target 탐색, 포신 회전, 발사 횟수 기반 과열, 활성화 표현 |
 | `FieldMissileTurretLV1~3` | 발사구 수에 맞는 Target 배열과 미사일 생성 |
-| `TowerBullet` | Canon이 계산한 공격력을 받아 충돌 대상에 적용 |
-| `TowerMissile` | Missile이 계산한 공격력을 받아 폭발 범위 대상에 적용 |
+| `FieldTurretBullet` | Canon이 계산한 공격력을 받아 충돌 대상에 적용 |
+| `FieldTurretMissile` | Missile이 계산한 공격력을 받아 폭발 범위 대상에 적용 |
 
 Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드코딩하지 않는다. 발사체를 생성한 직후 `Initialize(..., Damage)`로 Definition/RuntimeState에서 계산된 공격력을 전달한다. Canon은 발사 방향점 `Transform`을, Missile은 실제 몬스터 Target을 첫 번째 인자로 전달한다.
 
@@ -433,15 +433,15 @@ flowchart TD
     Target --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>조준각·발사 간격 확인"]
     Fire --> Shoot["FieldCanonTurretLv1~3<br>Shoot()"]
-    Shoot --> Init["TowerBullet.Initialize()<br>방향점·Damage 전달"]
-    Init --> Move["TowerBullet.Update()<br>정해진 방향으로 직진"]
-    Move --> Collision["TowerBullet<br>OnCollisionEnter2D()"]
+    Shoot --> Init["FieldTurretBullet.Initialize()<br>방향점·Damage 전달"]
+    Init --> Move["FieldTurretBullet.Update()<br>정해진 방향으로 직진"]
+    Move --> Collision["FieldTurretBullet<br>OnCollisionEnter2D()"]
     Collision --> Health["GetComponentInParent()<br>EnemyHealth 조회"]
     Health --> Damage["EnemyHealth.TakeDamage(int)<br>서버에서 피해 확정"]
     Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
-Canon 포신은 Target을 향해 돌지만, **발사된 `TowerBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TakeDamage()`는 서버에서 Network Spawn된 적에 대해서만 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
+Canon 포신은 Target을 향해 돌지만, **발사된 `FieldTurretBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TakeDamage()`는 서버에서 Network Spawn된 적에 대해서만 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
 
 #### Missile: 복수 대상을 지정하고 유도·범위 피해
 
@@ -455,7 +455,7 @@ flowchart TD
     Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>발사 간격 확인"]
     Fire --> Shoot["FieldMissileTurretLV1~3<br>Shoot()"]
-    Shoot --> Init["LaunchMissiles()<br>TowerMissile.Initialize(예약, Damage)"]
+    Shoot --> Init["LaunchMissiles()<br>FieldTurretMissile.Initialize(예약, Damage)"]
     Init --> Transfer["Transfer()로 미사일에 소유권 이전<br>터렛 슬롯 정리는 이전된 예약에 영향 없음"]
     Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약 토큰만 Dispose()"]
     Release --> Search
@@ -471,7 +471,7 @@ flowchart TD
     Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
-Missile은 적 수가 부족하면 첫 Target을 두 번째 발사 슬롯에서도 사용할 수 있다. 슬롯마다 별도 예약 토큰을 가지며 마지막 토큰이 반환될 때까지 다른 발사 묶음은 해당 적을 예약할 수 없다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `TowerMissile.ApplyExplosionDamage()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 위 공식으로 계산한 `EffectiveDamage`를 전달한다.
+Missile은 적 수가 부족하면 첫 Target을 두 번째 발사 슬롯에서도 사용할 수 있다. 슬롯마다 별도 예약 토큰을 가지며 마지막 토큰이 반환될 때까지 다른 발사 묶음은 해당 적을 예약할 수 없다. **`Explode`는 시각·소리 연출이고, 실제 범위 피해는 `FieldTurretMissile.ApplyExplosionDamage()`에서 적용한다.** 두 공격 방식 모두 발사체 생성 시 위 공식으로 계산한 `EffectiveDamage`를 전달한다.
 
 예약은 터렛 영역의 `MissileTargetReservation`이 관리하며 `EnemyController.IsTargeted`를 읽거나 변경하지 않는다. 발사 전에는 터렛이 토큰을 소유하고 `Initialize(예약, Damage)`가 `Transfer()`로 소유권을 가져간다. 발사 실패 시 미발사 토큰을 반환하고, 이미 이전된 토큰은 터렛 비활성화·승급으로 해제하지 않는다. `Initialize(Transform, Damage)`도 유지하며 직접 호출할 때는 미예약 목표를 새로 예약한다. 같은 목표에 여러 발을 의도적으로 발사할 때는 기존 토큰의 `Retain()`을 사용한다.
 
@@ -812,8 +812,8 @@ flowchart TD
 - [`TeamHJD.Game.FieldTurrets.asmdef`](../../Assets/Scripts/Features/FieldTurrets/Core/TeamHJD.Game.FieldTurrets.asmdef)
 - [`DefaultFieldCanonTurret.cs`](../../Assets/Scripts/Features/FieldTurrets/Cannon/DefaultFieldCanonTurret.cs)
 - [`DefaultFieldMissileTurret.cs`](../../Assets/Scripts/Features/FieldTurrets/Missile/DefaultFieldMissileTurret.cs)
-- [`TowerBullet.cs`](../../Assets/Scripts/Features/FieldTurretsWeapons/TowerBullet.cs)
-- [`TowerMissile.cs`](../../Assets/Scripts/Features/FieldTurrets/Weapons/TowerMissile.cs)
+- [`FieldTurretBullet.cs`](../../Assets/Scripts/Features/FieldTurrets/Weapons/FieldTurretBullet.cs)
+- [`FieldTurretMissile.cs`](../../Assets/Scripts/Features/FieldTurrets/Weapons/FieldTurretMissile.cs)
 - [`MissileTargetReservation.cs`](../../Assets/Scripts/Features/FieldTurrets/Core/MissileTargetReservation.cs)
 
 ## 자동 활성화 (2026-10-08)

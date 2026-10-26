@@ -160,7 +160,7 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
                     missilePrefab, spawnPoints[index].position, turretRotationPoint.rotation);
                 try
                 {
-                    missileObject.GetComponent<TowerMissile>().Initialize(reservation, Damage);
+                    missileObject.GetComponent<FieldTurretMissile>().Initialize(reservation, Damage);
                 }
                 catch
                 {

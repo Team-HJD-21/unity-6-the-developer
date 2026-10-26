@@ -1,10 +1,14 @@
 # 검증과 제한 사항
 
-최종 갱신: 2026-10-25
+최종 갱신: 2026-10-26
 상태: 통합 시 확인할 항목. 체크리스트 자체가 테스트 통과 기록은 아니다.
 
 냉각·강화 제한의 코드 기준은 main `8d08001a`에 병합된 PR #525다.
 Initial 플레이어 UI의 조작 검증 목록은 [Player UI API](../player-ui-api.md#확인-순서)에 있다.
+
+## 발사체 이름 변경 검증
+
+2026-10-26 로컬 검증: `TowerBullet` / `TowerMissile`을 `FieldTurretBullet` / `FieldTurretMissile`로 변경했다. 두 `.meta`는 기존 파일과 동일하고 직렬화된 필드 및 공격·추적 로직은 유지했다. 기존 타입에는 `MovedFrom` 정보를 제공한다. Unity 6000.3.23f1 컴파일과 기존 EditMode 테스트 14개가 통과했다. 대상은 `MissileReservationLifecycleTests` 10개, `PlayerSkillPrefabTests.SupportTurret_UsesIndependentCannonProjectile` 1개, `ProjectAssetMigrationTests.CurrentScenes_DoNotContainMissingScripts` 3개다. 미사일 테스트는 PlayMode에 진입해 검사하며 실제 화면의 전투 인수를 뜻하지 않는다.
 
 ## main 병합 후 회귀 검증
 
@@ -52,7 +56,7 @@ Initial 플레이어 UI의 조작 검증 목록은 [Player UI API](../player-ui-
 
 ## 미사일 타깃 예약 회귀 검증
 
-`MissileTargetReservationTests`는 PlayMode 테스트 어셈블리에서 예약 배타성, 같은 목표의 복수 발 예약, 소유권 이전, 중복 반환, 목표 파괴·비활성화와 Play 세션 초기화를 검사한다. `MissileReservationLifecycleTests`는 EditMode 목록에서 선택하며 각 테스트가 빈 씬에서 PlayMode에 진입해 실제 `TowerMissile` 컴포넌트의 폭발 시작·비활성화·파괴·초기화 실패·수명 종료를 검사한다. 테스트 종료 시 PlayMode를 빠져나온다. 실행 결과는 별도 확인한다.
+`MissileTargetReservationTests`는 PlayMode 테스트 어셈블리에서 예약 배타성, 같은 목표의 복수 발 예약, 소유권 이전, 중복 반환, 목표 파괴·비활성화와 Play 세션 초기화를 검사한다. `MissileReservationLifecycleTests`는 EditMode 목록에서 선택하며 각 테스트가 빈 씬에서 PlayMode에 진입해 실제 `FieldTurretMissile` 컴포넌트의 폭발 시작·비활성화·파괴·초기화 실패·수명 종료를 검사한다. 테스트 종료 시 PlayMode를 빠져나온다. 실행 결과는 별도 확인한다.
 
 2026-10-20 로컬 검증: Unity 6000.3.23f1 스크립트 컴파일 통과. `MissileTargetReservationTests` 7개 통과. `MissileReservationLifecycleTests`는 9개 통과 후 타이머 테스트의 대기를 실제 프레임 대기로 수정하고 해당 1개를 재실행해 통과했다. 최종적으로 신규 17개 항목을 분리 실행해 통과했으며 아래 실제 FieldTurretTest·Initial_Stage 전투 검증을 대신하지 않는다.
 

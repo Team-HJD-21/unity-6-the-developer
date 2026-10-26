@@ -1,6 +1,6 @@
 # 터렛 연동 가이드
 
-최종 갱신: 2026-10-24
+최종 갱신: 2026-10-26
 상태: Canon / Missile 구현 가이드. 제품 정책과 네트워크 계약은 별도 합의 대상.
 
 냉각·수동 조작·강화 제한은 main `8d08001a`에 병합된 PR #525까지 포함한다.
@@ -16,6 +16,7 @@
 | `CanonTurretLv1`~`Lv3` | `FieldCanonTurretLv1`~`Lv3` |
 | `MissileTurretLV1`~`LV3` | `FieldMissileTurretLV1`~`LV3` |
 | `LaserTurret` | `FieldLaserTurret` |
+| `TowerBullet` / `TowerMissile` | `FieldTurretBullet` / `FieldTurretMissile` |
 | `DefaultCanonTurret` / `DefaultMissileTurret` / `DefaultLaserTurret` | `DefaultFieldCanonTurret` / `DefaultFieldMissileTurret` / `DefaultFieldLaserTurret` |
 | `TeamHJD.Game.Turrets` 및 `.Contracts` / `.Tests` | `TeamHJD.Game.FieldTurrets` 및 `.Contracts` / `.Tests` |
 | `Assets/Scripts/Features/Turrets` | `Assets/Scripts/Features/FieldTurrets` |

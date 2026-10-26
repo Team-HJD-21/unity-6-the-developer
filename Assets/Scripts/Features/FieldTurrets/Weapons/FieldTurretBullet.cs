@@ -2,7 +2,8 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public class TowerBullet : MonoBehaviour
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "TowerBullet")]
+public class FieldTurretBullet : MonoBehaviour
 {
     [Header("Attributes")]
     [SerializeField] private float bulletSpeed; // 일정한 속도
@@ -16,7 +17,7 @@ public class TowerBullet : MonoBehaviour
     public void Initialize(Transform target, float damage)
     {
         if (_isInitialized)
-            throw new InvalidOperationException("TowerBullet has already been initialized.");
+            throw new InvalidOperationException("FieldTurretBullet has already been initialized.");
         if (target == null)
             throw new ArgumentNullException(nameof(target));
         if (damage < 0f)

@@ -134,7 +134,7 @@ public sealed class MissileReservationLifecycleTests
         Acquire();
     }
 
-    private TowerMissile MakeMissile(MissileTargetReservation reservation)
+    private FieldTurretMissile MakeMissile(MissileTargetReservation reservation)
     {
         var missile = MakeUninitializedMissile();
         missile.Initialize(reservation, 10);
@@ -142,10 +142,10 @@ public sealed class MissileReservationLifecycleTests
         return missile;
     }
 
-    private TowerMissile MakeUninitializedMissile()
+    private FieldTurretMissile MakeUninitializedMissile()
     {
         var gameObject = Track(new GameObject("Reservation test missile", typeof(Rigidbody2D), typeof(SpriteRenderer)));
-        var missile = gameObject.AddComponent<TowerMissile>();
+        var missile = gameObject.AddComponent<FieldTurretMissile>();
         SetField(missile, "rb", gameObject.GetComponent<Rigidbody2D>());
         return missile;
     }
@@ -163,12 +163,12 @@ public sealed class MissileReservationLifecycleTests
         return gameObject;
     }
 
-    private static void Invoke(TowerMissile missile, string method) =>
-        typeof(TowerMissile).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(missile, null);
+    private static void Invoke(FieldTurretMissile missile, string method) =>
+        typeof(FieldTurretMissile).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(missile, null);
 
-    private static void SetField(TowerMissile missile, string field, object value) =>
-        typeof(TowerMissile).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(missile, value);
+    private static void SetField(FieldTurretMissile missile, string field, object value) =>
+        typeof(FieldTurretMissile).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(missile, value);
 
-    private static T GetField<T>(TowerMissile missile, string field) =>
-        (T)typeof(TowerMissile).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(missile);
+    private static T GetField<T>(FieldTurretMissile missile, string field) =>
+        (T)typeof(FieldTurretMissile).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(missile);
 }
