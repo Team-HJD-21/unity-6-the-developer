@@ -10,13 +10,18 @@ public sealed class PlayerFieldNetworkIntegrationTests
     private SceneSetup[] _sceneSetup;
     private GameObject _beacon;
     [SetUp]
-    public void RememberScenes() => _sceneSetup = EditorSceneManager.GetSceneManagerSetup();
+    public void RememberScenes()
+    {
+        // EnterPlayMode의 도메인 재로드 뒤에는 Editor 전용 씬 조회를 반복하지 않습니다.
+        if (!Application.isPlaying) _sceneSetup = EditorSceneManager.GetSceneManagerSetup();
+    }
     [UnityTearDown]
     public IEnumerator RestoreScenes()
     {
         if (_beacon != null) Object.DestroyImmediate(_beacon);
         if (Application.isPlaying) yield return new ExitPlayMode();
-        EditorSceneManager.RestoreSceneManagerSetup(_sceneSetup);
+        if (_sceneSetup != null && _sceneSetup.Length > 0)
+            EditorSceneManager.RestoreSceneManagerSetup(_sceneSetup);
     }
     [UnityTest]
     [Explicit("Initial_Stage의 NGO Host를 실제로 실행하여 서버 적 연동을 확인할 때 실행")]
