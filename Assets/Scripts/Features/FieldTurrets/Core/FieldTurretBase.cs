@@ -701,7 +701,7 @@ namespace TeamHJD.Game.FieldTurrets
         {
             if (!IsInitialized || !isActiveAndEnabled || amount <= 0 || IsLocked || IsDestroyed ||
                 IsManualOperationBlocked) return false;
-            if (!_runtimeState.Repair(amount, MaxHealth)) return false;
+            if (!_runtimeState.TryRepair(amount, MaxHealth)) return false;
             FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
             return true;
         }

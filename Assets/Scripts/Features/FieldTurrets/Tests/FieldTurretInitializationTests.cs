@@ -91,13 +91,13 @@ namespace TeamHJD.Game.FieldTurrets.Tests
         {
             var destroyed = new FieldTurretRuntimeState();
             destroyed.Initialize(new FieldTurretInitializationData(_definition, 0));
-            Assert.That(destroyed.Repair(10, 100), Is.False);
+            Assert.That(destroyed.TryRepair(10, 100), Is.False);
             Assert.That(destroyed.CurrentHealth, Is.Zero);
             Assert.That(destroyed.IsDestroyed, Is.True);
             var dying = new FieldTurretRuntimeState();
             dying.Initialize(new FieldTurretInitializationData(_definition, 30));
             dying.ApplyDamage(30);
-            Assert.That(dying.Repair(10, 100), Is.False, "Health callbacks must not revive a zero-health target before MarkDestroyed.");
+            Assert.That(dying.TryRepair(10, 100), Is.False, "Health callbacks must not revive a zero-health target before MarkDestroyed.");
             var turret = MakeInactiveTurret();
             turret.PrepareInitialization(new FieldTurretInitializationData(_definition, 30, isLocked: true), new FakePower());
             turret.ConfigureForTest();

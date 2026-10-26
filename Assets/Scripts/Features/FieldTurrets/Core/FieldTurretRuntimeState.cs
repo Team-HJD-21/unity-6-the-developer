@@ -165,10 +165,9 @@ namespace TeamHJD.Game.FieldTurrets
             return previousHealth != _currentHealth;
         }
 
-        internal bool Repair(int amount, int maxHealth)
+        internal bool TryRepair(int amount, int maxHealth)
         {
-            // Both public repair APIs share fractional progress and full-health cleanup.
-            return Repair((double)amount, maxHealth) > 0;
+            return Repair((double)amount, maxHealth) > 0; // 같은 회복 처리로 위임하고 실제 체력 증가 여부를 반환한다.
         }
 
         internal void MarkDestroyed()

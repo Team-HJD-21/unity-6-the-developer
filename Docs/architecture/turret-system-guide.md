@@ -382,7 +382,7 @@ flowchart TD
 
 `FieldTurretBase.Repair(float healthPerSecond, float deltaTime)`는 파괴 전 잃은 체력을 회복한다. 플레이어 측에서 상호작용 가능한 무기·입력 유지·거리 조건을 검사한 뒤 매 갱신에 호출한다. 초당 회복량은 인자로 받으며 10 HP/초를 연동 예시로 사용한다. 터렛은 무기나 플레이어를 조회하지 않고, 호출을 멈추면 회복도 멈춘다. [호출 예시와 결과값](turrets/api-reference.md#플레이어의-지속-수리)
 
-main의 스패너 소비자는 `Repair(int amount)`로 정수 HP를 요청하며 실제 체력 증가 여부를 bool로 받는다. 아래 그림은 시간 기반 API 흐름이다. 정수 API도 같은 RuntimeState 회복 처리로 위임하므로 최대 체력 제한과 소수점 잔량 정리가 일치한다. 하나의 수리 동작에서는 두 API 중 하나를 사용한다.
+main의 스패너 소비자는 `Repair(int amount)`로 정수 HP를 요청하며 실제 체력 증가 여부를 bool로 받는다. 외부 API는 호출부 호환을 위해 유지한다. 내부 `FieldTurretRuntimeState.TryRepair(int amount, int maxHealth)`는 실제 수리를 시도하고 체력 증가 여부를 bool로 반환하며, 회복량을 반환하는 `Repair(double amount, int maxHealth)`에 위임한다. 아래 그림은 시간 기반 API 흐름이다. 두 경로가 같은 회복 처리를 사용하므로 최대 체력 제한과 소수점 잔량 정리가 일치한다. 하나의 수리 동작에서는 두 외부 API 중 하나를 사용한다.
 
 ```mermaid
 flowchart TD
