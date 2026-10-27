@@ -23,6 +23,8 @@ Unity에서 씬의 `Player Skill HUD`를 선택하거나 Prefab Mode로 열어
 상태에 따라 달라지는 슬롯 색상과 회수 안내 위치 오프셋도 각 View의 Inspector에서 편집한다.
 코드는 내용·활성 여부·쿨타임·포인터/대상 위치를 갱신하며 레이아웃과 폰트를 재구성하지 않는다.
 
+2026-10-27 회수 안내는 폭 100·높이 30, 글자 크기 14로 축소했다. `PlayerTurretRecoveryPromptView`는 가까운 회수 대상의 표시 여부를 HUD 갱신에서 결정하고, `Canvas.preWillRenderCanvases`에서 포탑 바닥의 최종 화면 좌표를 다시 계산한다. 추적 카메라가 LateUpdate에서 움직여도 포탑과 안내가 서로 다른 카메라 좌표를 쓰지 않도록 한다. 활성화할 때 이벤트를 구독하고 비활성화할 때 해제한다. `RecoveryPrompt_UsesFinalCameraPositionBeforeDrawing`은 HUD 갱신 후 카메라를 이동시키는 PlayMode 회귀 테스트다. 컴파일은 확인했으며 해당 PlayMode 테스트 실행은 남아 있다.
+
 ### 무기 선택창 편집
 
 `Player Skill HUD > Weapon Hotbar`를 선택해 하단 위치·크기를 조절한다. 자식 `1 Spanner`, `2 DefaultGun`, `3 CryoBlaster`, `4 Sniper`에는 Button, 배경, 아이콘, 무기 이름, 숫자 배지와 선택 표시가 이미 들어 있다. 각 RectTransform과 Image/TMP 속성을 직접 편집한다. 아이콘 원본은 `Assets/Art/UI/PlayerWeapons/`다. 별도 Canvas는 추가하지 않았다.

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 /// <summary>프리팹의 상태 View와 터렛 조작 Presenter를 씬 데이터에 연결합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster))]
+[DefaultExecutionOrder(150)]
 public sealed class InitialStagePlayerHUD : MonoBehaviour
 {
     private const string LocalPlayerId = "local-player";
@@ -135,7 +136,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
         if (!isActiveAndEnabled || Time.timeScale <= 0 ||
             player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
             _controller == null || !_controller.isActiveAndEnabled ||
-            (_playerSkills != null && _playerSkills.IsPlacingTurret))
+            GameInput.PrimaryPointerReservedForPlacement ||
+            (_playerSkills != null && (!_playerSkills.CanUse || _playerSkills.IsPlacingSkill)))
             return false;
 
         return _playerControl == null || _playerControl.CanAct;

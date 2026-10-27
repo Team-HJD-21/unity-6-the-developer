@@ -53,6 +53,7 @@ public sealed class PlayerBarrierSkill : PlayerSkillBase
     {
         Tick(Time.deltaTime);
         if (!IsPending) return;
+        GameInput.ReservePrimaryPointerForPlacement();
         if ((Controller != null && !Controller.Loadout.Contains(PlayerSkillId.EnergyBarrier)) || GameInput.SecondaryPointerWasPressedThisFrame)
         { CancelPlacement(); return; }
         _preview.Refresh(transform.position, ValidateConnection(_first, transform.position, out _));
@@ -69,6 +70,7 @@ public sealed class PlayerBarrierSkill : PlayerSkillBase
 
     protected override bool TryActivate()
     {
+        GameInput.ReservePrimaryPointerForPlacement();
         _deployed.RemoveAll(device => device == null || !device.IsAlive);
         if (_deployed.Count >= _maxCharges) return false;
         if (!IsPending)

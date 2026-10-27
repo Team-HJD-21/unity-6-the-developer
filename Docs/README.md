@@ -68,6 +68,8 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 
 플레이어 무기 전환과 스패너 공격·수리는 [Player Weapon API](architecture/player-weapon-api.md)를 참고한다.
 
+LMB 공격과 포탑 선택·설치·UI 클릭의 우선순위는 [Player Primary Input API](architecture/player-primary-input-api.md)를 참고한다.
+
 플레이어 8방향 대기·이동·공격·수리 프레임은 [Player Motion API](architecture/player-motion-api.md)를 참고한다.
 
 기존 모션을 유지하며 몸체와 총기·스패너를 나눈 표시 에셋과 편집 방법은 [Player Weapon Appearance API](architecture/player-weapon-appearance-api.md)를 참고한다.

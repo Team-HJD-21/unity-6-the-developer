@@ -439,4 +439,40 @@ public sealed class PlayerSkillRuntimeTests
     private bool DeployTurret() => _controller.TryUse(PlayerSkillId.PlayerTurret)
         && _player.GetComponent<PlayerTurretSkill>().TryConfirmPlacement(_player.transform.position + Vector3.down);
 
+    [UnityTest]
+    public IEnumerator RecoveryPrompt_UsesFinalCameraPositionBeforeDrawing()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.PlayerTurret), Is.True);
+        Assert.That(DeployTurret(), Is.True);
+        var prompt = (PlayerTurretRecoveryPromptView)new SerializedObject(_hud)
+            .FindProperty("_recovery").objectReferenceValue;
+        var cameraObject = new GameObject("Recovery prompt test camera", typeof(Camera));
+        try
+        {
+            var camera = cameraObject.GetComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 18;
+            camera.transform.position = _player.transform.position + Vector3.back * 10;
+            typeof(PlayerTurretRecoveryPromptView).GetField("_worldCamera",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(prompt, camera);
+            prompt.Refresh();
+            Assert.That(prompt.gameObject.activeSelf, Is.True);
+
+            // Simulate the follow camera moving after the HUD's LateUpdate.
+            camera.transform.position += new Vector3(1, .5f);
+            Canvas.ForceUpdateCanvases();
+            var turret = _controller.RecoverableTurret;
+            var bottom = turret.position;
+            bottom.y = turret.GetComponent<SpriteRenderer>().bounds.min.y;
+            var screen = camera.WorldToScreenPoint(bottom);
+            Assert.That(RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)_hud.transform,
+                screen, null, out var expected), Is.True);
+            Vector2 offset = new SerializedObject(prompt).FindProperty("_screenOffset").vector2Value;
+            Assert.That(Vector2.Distance(((RectTransform)prompt.transform).anchoredPosition, expected + offset),
+                Is.LessThan(.01f), "The prompt must use the same final camera position as the turret.");
+        }
+        finally { Object.DestroyImmediate(cameraObject); }
+        yield break;
+    }
+
 }

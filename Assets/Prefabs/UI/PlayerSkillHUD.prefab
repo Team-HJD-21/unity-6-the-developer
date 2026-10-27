@@ -3023,7 +3023,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 230, y: 60}
+  m_SizeDelta: {x: 100, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &10115
 CanvasRenderer:
@@ -3075,7 +3075,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d79670c9a7c24281bd6556bc126a1ea9, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTurretRecoveryPromptView
-  _screenOffset: {x: 0, y: -38}
+  _screenOffset: {x: 0, y: -22}
 --- !u!1 &10117
 GameObject:
   m_ObjectHideFlags: 0
@@ -3111,7 +3111,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 226, y: 56}
+  m_SizeDelta: {x: 98, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &10119
 CanvasRenderer:
@@ -3185,8 +3185,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -82, y: 0}
-  m_SizeDelta: {x: 48, y: 48}
+  m_AnchoredPosition: {x: -34, y: 0}
+  m_SizeDelta: {x: 24, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &10123
 CanvasRenderer:
@@ -3260,8 +3260,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 27, y: 0}
-  m_SizeDelta: {x: 150, y: 44}
+  m_AnchoredPosition: {x: 12, y: 0}
+  m_SizeDelta: {x: 66, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &10127
 CanvasRenderer:
@@ -3318,8 +3318,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 26
-  m_fontSizeBase: 26
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18

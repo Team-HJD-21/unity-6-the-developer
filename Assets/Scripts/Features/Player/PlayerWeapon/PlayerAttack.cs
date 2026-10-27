@@ -5,6 +5,7 @@ using UnityEngine.Serialization;
 /// <summary>활성 총구에서 무기별 탄환을 발사하고 실제 발사에 맞춰 효과와 재사용 시간을 갱신합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInputHandler))]
+[DefaultExecutionOrder(300)]
 public class PlayerAttack : MonoBehaviour
 {
     [Header("References")]
@@ -59,6 +60,7 @@ public class PlayerAttack : MonoBehaviour
     public event Action<WeaponType> WeaponChanged;
     public bool CanSelectWeapon => isActiveAndEnabled && Time.timeScale > 0 &&
         (_control == null || _control.CanAct) && (_skills == null || _skills.CanUse);
+    private bool CanAttack => CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill);
     private GameObject CurrentBulletPrefab => _currentWeapon == WeaponType.Sniper ? _sniperBulletPrefab : _bulletPrefab;
 
     private void Awake()
@@ -83,12 +85,23 @@ public class PlayerAttack : MonoBehaviour
         if (_input.RequestedWeaponSlot > 0) TrySelectWeaponSlot(_input.RequestedWeaponSlot);
         else if (_input.WeaponScrollStep != 0) SelectAdjacentWeapon(_input.WeaponScrollStep);
         else if (_input.WasWeaponSwitchPressed) SelectNextWeapon();
-        if (_input.IsAttackPressed) TryFire();
+    }
+
+    // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
+    private void LateUpdate()
+    {
+        if (_input == null) return;
+        if (_input.ResolvePrimaryAttack(CanAttack)) TryFire();
+    }
+
+    private void OnDisable()
+    {
+        if (_input != null) _input.CancelAttackGesture();
     }
 
     public bool TryFire()
     {
-        if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || Time.time < _nextShotTime) return false;
+        if (!CanAttack || Time.time < _nextShotTime) return false;
         if (_currentWeapon == WeaponType.Spanner) return TrySwingSpanner();
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 

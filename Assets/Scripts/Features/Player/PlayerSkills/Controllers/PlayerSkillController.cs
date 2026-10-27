@@ -25,6 +25,7 @@ public sealed class PlayerSkillController : MonoBehaviour
     public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
     public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingTurret && (CanPrepare || CanUse);
     public bool IsPlacingTurret => _turret != null && _turret.IsPlacing;
+    public bool IsPlacingSkill => IsPlacingTurret || (_barrier != null && _barrier.IsPending);
 
     private void Awake()
     {

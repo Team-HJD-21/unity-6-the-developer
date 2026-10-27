@@ -9,7 +9,7 @@
 - `Assets/Art/Sprites/Player/Motions/V2/SeparatedWeapons/CryoBlaster/`, `Sniper/`: 별도 Sprite. 32 PPU로 몸체와 크기를 맞춘다.
 - `Player.prefab`: `PlayerWeaponVisual._sniper`와 `PlayerAttack._sniperBulletPrefab` 연결.
 - `SniperBullet.prefab`: 탄속 70, 수명 1.2초. 피해 45와 간격 0.85초는 `PlayerAttack`의 Sniper 항목에서 편집한다.
-- 1 스패너 / 2 기본총 / 3 냉각총 / 4 스나이퍼. Tab·휠 아래는 다음, 휠 위는 이전 슬롯. 공격: 기존 Space.
+- 1 스패너 / 2 기본총 / 3 냉각총 / 4 스나이퍼. Tab·휠 아래는 다음, 휠 위는 이전 슬롯. 공격: LMB 유지.
 
 ### 스나이퍼 탄환 연출
 

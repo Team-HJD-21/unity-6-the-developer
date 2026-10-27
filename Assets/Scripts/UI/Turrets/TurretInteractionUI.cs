@@ -3,13 +3,13 @@ using TMPro;
 using TeamHJD.Game.Turrets;
 using TeamHJD.Game.Turrets.Contracts;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
 /// 터렛 선택과 개별 활성화 UI를 제어합니다.
 /// 등록·전력·활성화 규칙은 현행 터렛 시스템이 소유합니다.
 /// </summary>
+[DefaultExecutionOrder(150)]
 public sealed class TurretInteractionUI : MonoBehaviour
 {
     // Legacy 제거로 인해 로직 무효화: 구형 알림·대화 Manager 직렬화 의존.
@@ -73,17 +73,20 @@ public sealed class TurretInteractionUI : MonoBehaviour
 
     private void ProcessPointerInput()
     {
-        if (!GameInput.PrimaryPointerWasPressedThisFrame)
+        if (Time.timeScale <= 0 || !GameInput.PrimaryPointerWasPressedThisFrame ||
+            GameInput.PrimaryPointerWasConsumed || GameInput.PrimaryPointerReservedForPlacement)
         {
             return;
         }
 
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        if (GameInput.IsPointerOverUi())
         {
             return;
         }
 
-        Vector2 pointerWorldPosition = Camera.main.ScreenToWorldPoint(GameInput.PointerPosition);
+        var camera = Camera.main;
+        if (camera == null) return;
+        Vector2 pointerWorldPosition = camera.ScreenToWorldPoint(GameInput.PointerPosition);
         RaycastHit2D hit = Physics2D.Raycast(pointerWorldPosition, Vector2.zero);
         TurretBase clickedTurret = hit.collider != null
             ? hit.collider.GetComponentInParent<TurretBase>()
@@ -94,6 +97,8 @@ public sealed class TurretInteractionUI : MonoBehaviour
             ClearSelection();
             return;
         }
+
+        if (!GameInput.TryConsumePrimaryPointerPress()) return;
 
         if (_selectedTurret == clickedTurret)
         {

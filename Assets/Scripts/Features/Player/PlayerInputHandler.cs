@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 /// <summary>
 /// 플레이어 조작 입력(WASD, 조준, 공격, 폭탄, 스킬, 무기 교체 등) 수집 전담 컴포넌트
@@ -20,7 +19,7 @@ public class PlayerInputHandler : MonoBehaviour
     public Vector2 MouseWorldPosition { get; private set; }
     public bool HasAimTarget { get; private set; }
 
-    // [기본 사격 (Space)]
+    // [기본 공격 (LMB): UI·설치·포탑 선택 뒤 PlayerAttack이 최종 판정]
     public bool IsAttackPressed { get; private set; }
 
     // [E 슬롯 입력 — 선택된 스킬은 PlayerSkillController가 결정]
@@ -37,10 +36,13 @@ public class PlayerInputHandler : MonoBehaviour
     public int WeaponScrollStep { get; private set; }
 
     private Camera _mainCamera;
+    private PlayerSkillController _skills;
+    private readonly PlayerAttackGesture _attackGesture = new();
 
     private void Awake()
     {
         _mainCamera = Camera.main;
+        _skills = GetComponent<PlayerSkillController>();
         MouseWorldPosition = transform.position;
     }
 
@@ -65,8 +67,12 @@ public class PlayerInputHandler : MonoBehaviour
             }
         }
 
-        // 3. 공격 입력 (Space 연사 지속)
-        IsAttackPressed = GameInput.IsPressed(GameKey.Space);
+        // UI가 클릭으로 닫히거나 설치가 취소되기 전의 입력 문맥을 보존합니다.
+        IsAttackPressed = false;
+        if (GameInput.PrimaryPointerWasPressedThisFrame && GameInput.IsPointerOverUi())
+            GameInput.TryConsumePrimaryPointerPress();
+        if (_skills != null && _skills.IsPlacingSkill)
+            GameInput.ReservePrimaryPointerForPlacement();
 
         // 4. E 슬롯 입력 (단발)
         WasBombPressed = GameInput.WasPressedThisFrame(GameKey.E);
@@ -89,7 +95,25 @@ public class PlayerInputHandler : MonoBehaviour
         else if (GameInput.WasPressedThisFrame(GameKey.Digit4) || GameInput.WasPressedThisFrame(GameKey.Numpad4)) RequestedWeaponSlot = 4;
 
         bool usesDebugCamera = GameInput.IsPressed(GameKey.LeftShift) || GameInput.IsPressed(GameKey.RightShift);
-        bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        bool overUi = GameInput.ScrollY != 0 && GameInput.IsPointerOverUi();
         WeaponScrollStep = usesDebugCamera || overUi ? 0 : -(int)GameInput.ScrollY;
     }
+
+    public bool ResolvePrimaryAttack(bool canAttack)
+    {
+        bool blocked = !isActiveAndEnabled || !canAttack || GameInput.PrimaryPointerWasConsumed ||
+            GameInput.PrimaryPointerReservedForPlacement ||
+            (GameInput.PrimaryPointerIsPressed && GameInput.IsPointerOverUi());
+        IsAttackPressed = _attackGesture.Read(GameInput.PrimaryPointerIsPressed,
+            GameInput.PrimaryPointerWasPressedThisFrame, blocked);
+        return IsAttackPressed;
+    }
+
+    public void CancelAttackGesture()
+    {
+        _attackGesture.Reset();
+        IsAttackPressed = false;
+    }
+
+    private void OnDisable() => CancelAttackGesture();
 }

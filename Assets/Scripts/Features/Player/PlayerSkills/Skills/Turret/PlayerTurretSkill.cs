@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
@@ -29,7 +27,6 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     private PlayerInputHandler _input;
     private float _nextPreviewCheck;
     private int _placementStartFrame;
-    private readonly List<RaycastResult> _uiHits = new();
     private PlayerTurretPlacementResult _placementFeedback;
     private PlayerTurretInventory _inventory;
     private readonly HashSet<PlayerTurret> _deployed = new();
@@ -66,6 +63,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     }
     protected override bool TryActivate()
     {
+        GameInput.ReservePrimaryPointerForPlacement();
         if (IsPlacing) { CancelPlacement(); return true; }
         _preview = Instantiate(_previewPrefab, transform.position, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(_preview.gameObject, gameObject.scene);
@@ -79,6 +77,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     private void LateUpdate()
     {
         if (!IsPlacing) return;
+        GameInput.ReservePrimaryPointerForPlacement();
         if (!CanContinuePlacement() || GameInput.SecondaryPointerWasPressedThisFrame || GameInput.WasPressedThisFrame(GameKey.Escape))
         { CancelPlacement(); return; }
         if (_input == null || !_input.HasAimTarget) { _preview.SetVisible(false); return; }
@@ -90,24 +89,14 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
             _placementFeedback = EvaluatePlacement(position);
         }
         _preview.Refresh(position, _placementFeedback == PlayerTurretPlacementResult.Allowed);
-        if (Time.frameCount > _placementStartFrame && GameInput.PrimaryPointerWasPressedThisFrame && !IsPointerOverUi())
+        if (Time.frameCount > _placementStartFrame && !GameInput.IsPointerOverUi()
+            && GameInput.TryConsumePrimaryPointerPress())
             TryConfirmPlacement(position);
     }
 
     private bool CanContinuePlacement() => isActiveAndEnabled && Time.timeScale > 0f && IsReady
         && (ControlState == null || ControlState.CanAct)
         && (Controller == null || Controller.CanUse && Controller.Loadout.Contains(Id));
-
-    private bool IsPointerOverUi()
-    {
-        if (EventSystem.current == null) return false;
-        _uiHits.Clear();
-        var pointer = new PointerEventData(EventSystem.current) { position = GameInput.PointerPosition };
-        EventSystem.current.RaycastAll(pointer, _uiHits);
-        foreach (var hit in _uiHits)
-            if (hit.module is GraphicRaycaster) return true;
-        return false;
-    }
 
     /// <summary>커서까지의 거리와 관계없이 플레이어 주변 8칸 중 조준 방향의 한 칸을 반환합니다.</summary>
     public Vector3 GetPlacementPosition(Vector2 pointerPosition)
