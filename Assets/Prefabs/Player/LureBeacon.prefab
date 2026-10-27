@@ -10,6 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 400000}
   - component: {fileID: 11400000}
+  - component: {fileID: 11400001}
+  - component: {fileID: 933000001}
+  - component: {fileID: 933000010}
   m_Layer: 21
   m_Name: LureBeacon
   m_TagString: Untagged
@@ -50,6 +53,9 @@ MonoBehaviour:
   _secondEmitter: {fileID: 0}
   _visualScale: 2.5
   _membrane: {fileID: 0}
+  _blocker: {fileID: 0}
+  _bodyCollision: {fileID: 11400001}
+  _depth: {fileID: 933000001}
 --- !u!1 &101000
 GameObject:
   m_ObjectHideFlags: 0
@@ -60,6 +66,7 @@ GameObject:
   m_Component:
   - component: {fileID: 401000}
   - component: {fileID: 21201000}
+  - component: {fileID: 601000}
   m_Layer: 21
   m_Name: Beacon Body
   m_TagString: Untagged
@@ -141,3 +148,102 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &11400001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76e4b88067a54849bc52a40f648766f2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFieldBodyCollision
+  _bodies:
+  - {fileID: 601000}
+--- !u!60 &601000
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101000}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 262272
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 4294705023
+  m_LayerOverridePriority: 10
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: -0.207143, y: 0.235429}
+      - {x: 0.000000, y: 0.285429}
+      - {x: 0.214286, y: 0.235429}
+      - {x: 0.378571, y: 0.006857}
+      - {x: 0.328571, y: -0.064571}
+      - {x: 0.221429, y: -0.064571}
+      - {x: 0.128571, y: 0.006857}
+      - {x: -0.150000, y: 0.006857}
+      - {x: -0.242857, y: -0.064571}
+      - {x: -0.385714, y: -0.064571}
+      - {x: -0.410714, y: 0.006857}
+  m_UseDelaunayMesh: 0
+--- !u!210 &933000010
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 4
+  m_SortAtRoot: 1
+--- !u!114 &933000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0467a22d7d945348837e539c9c0b37a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillDepth
+  _parts:
+  - sorting: {fileID: 933000010}
+    ground: {fileID: 601000}

@@ -25,8 +25,15 @@ public sealed class PlayerBombRuntimeTests
     [UnityTest]
     public IEnumerator Detonation_HidesBodyAndTimer()
     {
+        var bodyCollider = _bomb.GetComponent<Collider2D>();
+        Assert.That(bodyCollider, Is.Not.Null);
+        Assert.That(bodyCollider.enabled, Is.True);
+        Assert.That(bodyCollider.isTrigger, Is.False);
+        Assert.That(_bomb.GetComponent<Rigidbody2D>().bodyType, Is.EqualTo(RigidbodyType2D.Static));
         Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.True);
         _explosion.Explode();
+        Assert.That(bodyCollider.enabled, Is.False, "The explosion effect must not leave an invisible obstacle.");
+        Assert.That(_bomb.GetComponent<PlayerFieldBodyCollision>().enabled, Is.False);
         Assert.That(_bomb.GetComponent<SpriteRenderer>().enabled, Is.False);
         Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.False);
         yield break;

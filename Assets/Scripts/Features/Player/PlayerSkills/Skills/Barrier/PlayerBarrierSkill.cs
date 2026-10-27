@@ -83,7 +83,7 @@ public sealed class PlayerBarrierSkill : PlayerSkillBase
         }
         if (!ValidateConnection(_first, transform.position, out _)) return false;
         var barrier = Instantiate(_prefab, (_first + transform.position) * .5f, Quaternion.identity);
-        barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, transform.position, _width, _health, _duration);
+        barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, transform.position, _width, _health, _duration, owner: transform);
         _deployed.Add(barrier);
         _charges.TryConsume();
         CancelPlacement();

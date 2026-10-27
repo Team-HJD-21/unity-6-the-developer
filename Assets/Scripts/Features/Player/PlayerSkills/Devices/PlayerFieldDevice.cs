@@ -12,10 +12,13 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
     [SerializeField] private SpriteRenderer _secondEmitter;
     [SerializeField] private LineRenderer _membrane;
     [SerializeField, Min(.1f)] private float _visualScale = 1;
+    [Header("Collision")]
+    [SerializeField] private BoxCollider2D _blocker;
+    [SerializeField] private PlayerFieldBodyCollision _bodyCollision;
+    [SerializeField] private PlayerSkillDepth _depth;
     private Vector2 _start, _end;
     private float _width, _maxHealth, _health, _remaining, _radius, _hitFlash;
     private bool _initialized;
-    private BoxCollider2D _blocker;
     private PlayerFieldDeviceVisual _visual;
     private readonly PlayerFieldEnemyScanner _scanner = new();
     public PlayerFieldDeviceKind Kind => _kind;
@@ -28,7 +31,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
     public Vector3 EmitterScale => _firstEmitter != null ? _firstEmitter.transform.localScale : Vector3.one;
     public float VisualScale => Mathf.Max(.1f, _visualScale);
     public void Initialize(PlayerFieldDeviceKind kind, Vector3 start, Vector3 end,
-        float width, float health, float duration, float radius = 0)
+        float width, float health, float duration, float radius = 0, Transform owner = null)
     {
         if (_initialized) return;
         _kind = kind; _start = start; _end = end;
@@ -41,15 +44,16 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
             transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(end.y - start.y, end.x - start.x) * Mathf.Rad2Deg);
             int layer = LayerMask.NameToLayer("PlayerFieldDevice");
             if (layer >= 0) gameObject.layer = layer;
-            _blocker = gameObject.AddComponent<BoxCollider2D>();
-            _blocker.size = new Vector2(Vector2.Distance(start, end), _width);
-            // 아군 탄환과 플레이어는 통과합니다. 이동을 직접 처리하는 적은 경로 교차 검사도 사용합니다.
-            int enemyLayer = LayerMask.NameToLayer("Enemy");
-            _blocker.excludeLayers = enemyLayer >= 0 ? ~(1 << enemyLayer) : ~0;
-            _blocker.layerOverridePriority = 10;
+            if (_blocker != null)
+            {
+                _blocker.size = new Vector2(Vector2.Distance(start, end), _width);
+                _blocker.enabled = true;
+            }
         }
         _visual = new PlayerFieldDeviceVisual(transform, _firstEmitter, _secondEmitter, _membrane, VisualScale);
         _visual.Initialize(kind, start, end, _width, _radius);
+        _bodyCollision?.AllowInitialExit();
+        _depth?.Bind(owner);
         _initialized = true;
         PlayerFieldDeviceRegistry.Register(this);
     }
@@ -77,8 +81,13 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
         gameObject.SetActive(false);
         Dispose(gameObject);
     }
-    public Vector2 ApproachPoint(Vector2 origin) => _kind == PlayerFieldDeviceKind.Barrier && _blocker != null ?
-        _blocker.ClosestPoint(origin) : (Vector2)transform.position;
+    public Vector2 ApproachPoint(Vector2 origin)
+    {
+        Vector2 point = _bodyCollision != null ? _bodyCollision.ClosestPoint(origin) : (Vector2)transform.position;
+        if (_kind != PlayerFieldDeviceKind.Barrier || _blocker == null) return point;
+        Vector2 membranePoint = _blocker.ClosestPoint(origin);
+        return (membranePoint - origin).sqrMagnitude < (point - origin).sqrMagnitude ? membranePoint : point;
+    }
     public bool Intersects(Vector2 origin, Vector2 goal, out float fraction) =>
         PlayerBarrierGeometry.Intersects(transform, _start, _end, _width, origin, goal, out fraction);
     public static PlayerFieldDevice Resolve(Vector2 origin, Vector2 originalGoal) => PlayerFieldDeviceRegistry.Resolve(origin, originalGoal);

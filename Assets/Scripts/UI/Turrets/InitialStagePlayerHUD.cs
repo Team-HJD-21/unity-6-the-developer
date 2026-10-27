@@ -35,6 +35,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour
     private bool _turretControlsReady;
     private bool _hasLocalActor;
 
+    public bool IsTurretPanelOpen => isActiveAndEnabled && turretView != null && turretView.isActiveAndEnabled;
+
     private void Awake()
     {
         _canvas = GetComponent<Canvas>();

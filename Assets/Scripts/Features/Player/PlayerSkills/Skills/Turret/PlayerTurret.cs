@@ -37,13 +37,18 @@ public class PlayerTurret : MonoBehaviour
     private PlayerTurretSkill _owner;
     private bool _recovered;
     private PlayerTurretHealth _health;
+    [SerializeField] private PlayerSkillDepth _depth;
     public PlayerTurretHealth Health => _health;
     private void Awake()
     {
         _health = GetComponent<PlayerTurretHealth>();
     }
 
-    public void AssignOwner(PlayerTurretSkill owner) => _owner = owner;
+    public void AssignOwner(PlayerTurretSkill owner)
+    {
+        _owner = owner;
+        _depth?.Bind(owner != null ? owner.transform : null);
+    }
 
     public bool TryRecover(PlayerTurretSkill owner)
     {

@@ -27,7 +27,7 @@ public sealed class PlayerBeaconSkill : PlayerSkillBase
     {
         if (_active != null) PlayerFieldDevice.Dispose(_active.gameObject);
         _active = Instantiate(_prefab, transform.position, Quaternion.identity);
-        _active.Initialize(PlayerFieldDeviceKind.Beacon, transform.position, transform.position, .3f, _health, _duration, _radius);
+        _active.Initialize(PlayerFieldDeviceKind.Beacon, transform.position, transform.position, .3f, _health, _duration, _radius, transform);
         _remainingCooldown = Cooldown;
         return true;
     }

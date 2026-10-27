@@ -1,0 +1,77 @@
+{
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "prompts": {
+    "Spanner": "Asset type: transparent game HUD equipment icon, displayed at only 92 by 46 pixels. Recreate as a complete standalone weapon, with no hands, character parts or occlusion. Match the supplied cryo and sniper references: clean stylized painted 2D sci-fi equipment, charcoal outer contour, ivory panels and gray metal, restrained highlights, simple readable silhouette. Flat side profile, horizontal long axis, entire object centered with generous transparent margin. No text, numbers, UI frame, floor, shadow, background or particles. Actual transparent alpha background. Input image 1 is the defective spanner icon to replace; image 2 and 3 are style references only, do not include guns. Draw ONE complete engineer's open-jaw wrench. Long substantial dark handle with ivory inset grip extending left, unmistakable broad open C-shaped metal jaw on right. Include the entire handle end and jaw, smoothly connect them. Nearly horizontal with a slight upward tilt, broad enough to read at small HUD size. Black, ivory and gray only, clear dark outline. No second tool.",
+    "DefaultGun": "Asset type: transparent game HUD equipment icon, displayed at only 92 by 46 pixels. Recreate as a complete standalone weapon, with no hands, character parts or occlusion. Match the supplied cryo and sniper references: clean stylized painted 2D sci-fi equipment, charcoal outer contour, ivory panels and gray metal, restrained highlights, simple readable silhouette. Flat side profile, horizontal long axis, entire object centered with generous transparent margin. No text, numbers, UI frame, floor, shadow, background or particles. Actual transparent alpha background. Input image 1 is the defective default gun icon to replace; image 2 and 3 are style references only. Draw ONE compact default sci-fi rifle/blaster facing right. A sturdy charcoal receiver, ivory top housing, short dark stock at left, full downward pistol grip and short silver muzzle/barrel at right. Keep the full gun contiguous, readable and proportionate, no cutouts caused by hands or character occlusion. Visually simpler and shorter than the reference sniper. Grayscale only, no glowing large energy tanks, no second gun."
+  },
+  "date": "2026-10-27",
+  "model": null,
+  "estimateUsd": null,
+  "finish": "HD",
+  "alpha": "native_alpha",
+  "canvas": [
+    128,
+    64
+  ],
+  "display_rect": [
+    92,
+    46
+  ],
+  "processing": "Alpha crop, premultiplied LANCZOS fit within 112x48, centered; no painted edits.",
+  "files": [
+    {
+      "name": "Spanner",
+      "source_size": [
+        1774,
+        887
+      ],
+      "source_alpha_bbox": [
+        77,
+        103,
+        1697,
+        782
+      ],
+      "source_sha256": "5ab521dc078054cc9dd1ba90b9991da94a15f9c712c85004ab01072703f0a46f",
+      "runtime": "Assets/Art/UI/PlayerWeapons/Spanner.png",
+      "runtime_sha256": "52f3dc5f98426265f678a646bdef3a1d8ab75fa1026c781b4b6a6de0f87fcc8b",
+      "runtime_alpha_bbox": [
+        8,
+        12,
+        120,
+        51
+      ],
+      "meta_unchanged": true
+    },
+    {
+      "name": "DefaultGun",
+      "source_size": [
+        1774,
+        887
+      ],
+      "source_alpha_bbox": [
+        76,
+        80,
+        1673,
+        847
+      ],
+      "source_sha256": "6f2371a889c27bc32a012fc9fb53b82a45d4041737015fa7cc9ce29e226fb578",
+      "runtime": "Assets/Art/UI/PlayerWeapons/DefaultGun.png",
+      "runtime_sha256": "2c22ead8b306096c9c6270b26c59d3fdab013e6ffe2e035bcf6538adc1989d19",
+      "runtime_alpha_bbox": [
+        17,
+        13,
+        114,
+        53
+      ],
+      "meta_unchanged": true
+    }
+  ],
+  "validation": {
+    "transparent_128x64": true,
+    "meta_unchanged": true,
+    "existing_hud_guid_references": true,
+    "cryo_sniper_unchanged": true,
+    "unity_play_verified": false
+  }
+}

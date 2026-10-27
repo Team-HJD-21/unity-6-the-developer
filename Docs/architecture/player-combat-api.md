@@ -88,50 +88,48 @@ Cryo 감속은 기존에도 현행 Enemy에 적용되지 않았으며 이번 수
 Initial 씬에서 정지·이동 사격 외형과 기존 무기 전환도 별도로 확인한다.
 테스트 코드 추가 자체가 실행 통과 기록은 아니다.
 
-## 수동 편집용 방향별 콜라이더 (2026-10-16)
+## 수동 편집용 8방향 콜라이더 (2026-10-27)
 
-Player 프리팹에 상하 공통/왼쪽/오른쪽 콜라이더를 역할별로 분리했다.
+Player 프리팹에서 몸 충돌과 탄환 피격을 각각 8방향으로 분리한다.
 
 ```
 Player
 ├─ Body Colliders              (Player 레이어)
-│  ├─ UpDown                   CapsuleCollider2D
-│  ├─ Left                     CapsuleCollider2D
-│  └─ Right                    CapsuleCollider2D
+│  └─ Down / Right / Up / Left / DownRight / UpRight / UpLeft / DownLeft
+│                             CapsuleCollider2D
 └─ PlayerBulletCollider        (PlayerBulletCollider 레이어)
-   ├─ UpDown                   PolygonCollider2D, Trigger
-   ├─ Left                     PolygonCollider2D, Trigger
-   └─ Right                    PolygonCollider2D, Trigger
+   └─ Down / Right / Up / Left / DownRight / UpRight / UpLeft / DownLeft
+                              PolygonCollider2D, Trigger
 ```
 
-`PlayerDirectionalColliders`는 위 여섯 참조를 받아 `SetFacing(PlayerAimFacing)`으로
-몸 충돌 하나와 탄환 피격 하나만 켠다. Up/Down은 공통 쌍을 사용하고 Left/Right는 각각
-독립 쌍을 사용한다. 미연결 시 경고하고 컴포넌트를 비활성화한다. PlayerVisual이 몸체·총기와
-동일한 바라보기 방향을 전달하며 Animator 유무와 관계없이 콜라이더 선택을 먼저 반영한다.
+`PlayerDirectionalColliders._directions`의 각 항목은 Facing·Body·Bullet을 연결한다.
+`SetFacing(PlayerAimFacing)`은 해당 방향의 몸 충돌 하나와 탄환 피격 하나만 켠다.
+누락·중복 방향/참조 또는 잘못된 Trigger 역할은 초기화 경고와 함께 선택 컴포넌트를 비활성화한다.
+`PlayerVisual`은 `PlayerWeaponRig.Facing`의 대각선을 그대로 전달한다. 구형 Animator bool만
+4방향으로 변환하며, 콜라이더는 이 변환 이전에 선택한다.
 
 런타임 선택은 Collider.enabled만 변경한다. Transform, Collider.offset, 크기, Polygon 점을
 생성하거나 덮어쓰지 않는다. Sprite에서 외곽을 자동 추출하지 않으므로 발자취를 포함하지
-않도록 사용자가 각 Polygon을 직접 편집할 수 있다. 초기 여섯 모양은 기존 몸/피격 모양을
-복제한 시작값이며, 방향별 위치와 모양은 수동 조정해야 한다.
+않도록 사용자가 각 Polygon을 직접 편집할 수 있다. 캡슐은 발밑, Polygon은 현재 8방향
+대기 스프라이트의 몸체 윤곽을 기준으로 작성했다. 무기·불꽃은 포함하지 않는다. 방향별 기준
+모양을 사용하므로 공격·이동 프레임마다 피격 외곽을 바꾸는 시스템은 아니다.
 
-기존 루트 Capsule을 Body Colliders/UpDown으로, 기존 Polygon을 PlayerBulletCollider/UpDown으로
-옮기면서 원래 Collider fileID는 유지했다. 콜라이더들은 자식이지만 기존 Player Rigidbody를
-공유한다. 탄환용 셋은 Trigger이며 Enemy 레이어를 제외하고, 몸 충돌 셋은 일반 Collider다.
-기존 Sprite Pivot, 총구와 몬스터 공격 거리 계산, 플레이어/몬스터 질량은 수정하지 않는다.
+기존 UpDown의 Collider fileID는 Down에 유지했다. 콜라이더들은 자식이지만 기존 Player
+Rigidbody를 공유한다. 탄환용 셋은 Trigger이며 Enemy 레이어를 제외하고, 몸 충돌 셋은 일반
+Collider다. Sprite Pivot·총구·질량·Rigidbody 설정은 이번 변경에서 수정하지 않는다.
 
 조정은 Play Mode 밖에서 Player.prefab을 열어 해당 자식을 선택하고 Transform 위치,
-Collider Offset/Size 또는 Edit Collider를 사용한다. Left/Right의 Collider는 기본 비활성이지만
-Inspector에서 수치를 편집할 수 있다. 미리보기를 위해 켰다면 UpDown만 활성인 초기 상태로
+Collider Offset/Size 또는 Edit Collider를 사용한다. Down 외의 Collider는 기본 비활성이지만
+Inspector에서 수치를 편집할 수 있다. 미리보기를 위해 켰다면 Down만 활성인 초기 상태로
 되돌리거나 플레이 시작 시 자동 선택되는 상태를 확인한다. Play Mode에서 변경한 값은 종료 시
 사라지므로 영구 조정은 프리팹 편집에서 진행한다.
 
 PlayerWeaponMigrationTests의 DirectionalColliders_SelectOnePairAndPreserveManualPositions는
 실제 프리팹의 방향별 선택, 활성 쌍 개수, 역할별 Trigger, Rigidbody 공유 및 수동 위치/offset
-유지를 검사한다. 컴파일 성공과 Unity 테스트 실행은 구분한다. 위치 조정 후 Scene에서 네 방향
+유지를 검사한다. 컴파일 성공과 Unity 테스트 실행은 구분한다. 위치 조정 후 Scene에서 여덟 방향
 전환, 벽/몬스터 접촉과 탄환 피격을 확인해야 하며 이것만으로 #514 해결을 확정하지 않는다.
 
 콜라이더 자식을 복제한 뒤 기존 객체를 삭제/교체하면 PlayerDirectionalColliders의 참조가
-None이 될 수 있다. Player 루트의 여섯 필드에 새 Collider 컴포넌트를 다시 연결해야 한다.
-하나라도 비면 초기화 경고 후 선택 컴포넌트가 비활성화된다. 이번에는 새로 복제한
-PlayerBulletCollider/Right를 Bullet Right에 다시 연결했다. 실행 중 생성된 Clone에서 이미
+None이 될 수 있다. Player 루트 Directions의 해당 항목에 새 Collider 컴포넌트를 다시 연결해야 한다.
+하나라도 비면 초기화 경고 후 선택 컴포넌트가 비활성화된다. 실행 중 생성된 Clone에서 이미
 비활성화된 경우 프리팹 연결을 저장하고 Play Mode를 재시작해 초기화를 다시 진행한다.

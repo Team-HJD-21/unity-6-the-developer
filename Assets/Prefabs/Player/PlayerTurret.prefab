@@ -44,6 +44,8 @@ GameObject:
   - component: {fileID: 1552290093040203522}
   - component: {fileID: 910202610090000001}
   - component: {fileID: 910222610090000002}
+  - component: {fileID: 933000001}
+  - component: {fileID: 933000010}
   m_Layer: 21
   m_Name: PlayerTurret
   m_TagString: Untagged
@@ -178,6 +180,7 @@ MonoBehaviour:
   fireRate: 0.3
   turretHead: {fileID: 4301739478787231800}
   enemyTag: Enemy
+  _depth: {fileID: 933000001}
 --- !u!114 &910202610090000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -333,3 +336,30 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 5.38828, y: 5.38828}
   m_EdgeRadius: 0
+--- !u!210 &933000010
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5037733788499361552}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 4
+  m_SortAtRoot: 1
+--- !u!114 &933000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5037733788499361552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0467a22d7d945348837e539c9c0b37a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillDepth
+  _parts:
+  - sorting: {fileID: 933000010}
+    ground: {fileID: 910222610090000002}
