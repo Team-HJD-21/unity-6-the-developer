@@ -14,9 +14,7 @@ namespace TeamHJD.Game.Editor
     {
         public static void BuildWindowsDevelopment()
         {
-            // 전용 네트워크 probe만 영화 재생을 건너뜁니다. 일반 Build Settings는 회사 스플래시로 시작합니다.
-            string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled &&
-                scene.path != "Assets/Scenes/CompanySplash.unity").Select(scene => scene.path).ToArray();
+            string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => scene.path).ToArray();
             if (scenes.Length == 0 || scenes[0] != "Assets/Scenes/Gameplay/Initial_Stage.unity")
                 throw new InvalidOperationException("The actual Initial_Stage must be the first enabled build Scene.");
             const string output = "Builds/CoreNetworkValidation/TheDeveloper.exe";
