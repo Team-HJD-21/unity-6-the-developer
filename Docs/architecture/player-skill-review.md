@@ -2,7 +2,7 @@
 
 수정일: 2026-10-22
 
-PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 Player 소스와 몬스터 원본은 변경하지 않는다. 기존 MonoBehaviour의 GUID와 직렬화 필드는 유지하므로 현재 프리팹 연결을 그대로 사용한다. 공통 스킬 베이스와 역할별 보조 클래스로 분리했다. 임시 포탑 체력 컴포넌트는 프리팹에 연결했다. 피격 표시는 기존 색상 틴트만 유지한다.
+PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 Player 소스와 몬스터 원본은 변경하지 않는다. 기존 MonoBehaviour의 GUID와 직렬화 필드는 유지하므로 현재 프리팹 연결을 그대로 사용한다. 공통 스킬 베이스와 역할별 보조 클래스로 분리했다. 플레이어 터렛 체력 컴포넌트는 프리팹에 연결했다. 피격 표시는 기존 색상 틴트만 유지한다.
 
 ## 역할
 
@@ -29,8 +29,8 @@ PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 P
 | `PlayerSkillDescriptions` | 스킬 표시 이름과 설명문 |
 | `PlayerSkillHudSceneBinding` | 씬 HUD와 같은 씬의 로컬 플레이어 연결 |
 | `PlayerSkillCardView` | 프리팹 스킬 카드의 선택·상태·포인터 안내 |
-| `PlayerSupportTurretTargeting`, `PlayerSupportTurretWeapon` | 임시 포탑 적 검색과 탄환 생성 |
-| `PlayerTurretPlacementRules` | 임시 포탑 바닥·충돌체의 지면 포함과 캐릭터·장애물·포탑 겹침 검사 |
+| `PlayerTurretTargeting`, `PlayerTurretWeapon` | 플레이어 터렛 적 검색과 탄환 생성 |
+| `PlayerTurretPlacementRules` | 플레이어 터렛 바닥·충돌체의 지면 포함과 캐릭터·장애물·포탑 겹침 검사 |
 | `PlayerTurretPlacementPreview` | 미리 제작한 반투명 프리팹의 위치·설치 가능 색상 갱신 |
 | `PlayerTurretPlacementResult` | 설치 성공과 지면 부족·포탑 겹침·장애물 등 실패 사유 enum |
 | `PlayerBombAreaDamage` | 범위 피해와 대상별 중복 피해 방지 |
@@ -39,7 +39,7 @@ PR #498 리뷰에 따라 스킬의 독립적인 책임을 분리했다. 기존 P
 
 네 스킬은 PlayerSkillBase를 상속하며 공통 사용 조건과 상태 조회를 제공한다. PlayerSkillController는 공통 베이스로 실행·UI 상태를 조회한다. PlayerControlState는 IPlayerMatchBinding을 통해 Scene 소유 Match의 단계를 전달받는다. Player V2의 GeneralManager·InGameManager 참조를 제거했다. 기존 씬의 GameOver 연결은 InGameManager가 PlayerInfo.onDeath를 구독하여 유지한다.
 
-임시 포탑은 체력 100이며 손상 비율에 비례하여 최대 30초 충전한다. 독립적인 PlayerTurretInventory가 설치 수량과 각 포탑 충전을 담당한다. 설치 간격 3초와 충전은 별도다. 입력과 수치 변경 안내는 [Player Input Guide](../team/player-input-guide.md)를 따른다.
+플레이어 터렛은 체력 100이며 손상 비율에 비례하여 최대 30초 충전한다. 독립적인 PlayerTurretInventory가 설치 수량과 각 포탑 충전을 담당한다. 설치 간격 3초와 충전은 별도다. 입력과 수치 변경 안내는 [Player Input Guide](../team/player-input-guide.md)를 따른다.
 
 ## 신규 몬스터 연동
 
@@ -71,7 +71,7 @@ Unity Test Runner에서 `PlayerFieldSkillTests`, `PlayerFieldTargetSelectionTest
 
 - 공개 팀 문서 사이트는 Cloudflare Access 로그인 화면으로 연결되어 본문을 확인할 수 없었다. 로컬 Docs와 실제 Core/Enemy 계약을 기준으로 반영했다.
 
-- 임시 포탑 재충전 규칙은 독립 실행 검증 17개가 통과했다. 초기 3개, 초과 설치 거부, 정상 회수 즉시 반환, 반피 15초, 파괴 30초, 병렬 충전, 중복 반환 거부, 잘못된 시간·체력 입력을 확인했다. 실행 환경의 구형 C# 컴파일러에 맞추어 검증용 복사본의 프로퍼티·초기화 문법만 변환했다.
+- 플레이어 터렛 재충전 규칙은 독립 실행 검증 17개가 통과했다. 초기 3개, 초과 설치 거부, 정상 회수 즉시 반환, 반피 15초, 파괴 30초, 병렬 충전, 중복 반환 거부, 잘못된 시간·체력 입력을 확인했다. 실행 환경의 구형 C# 컴파일러에 맞추어 검증용 복사본의 프로퍼티·초기화 문법만 변환했다.
 
 ## #512 임시포탑 설치 판정 (2026-10-16)
 
@@ -164,7 +164,7 @@ PlayerSkillHud는 Canvas 프리팹의 화면 하단 안내 영역에 빨간색 �
 
 ### 반투명 미리보기와 설치된 본체 (2026-10-22)
 
-- `Assets/Prefabs/Player/TemporaryTurretPreview.prefab`: 바닥·포신 SpriteRenderer와
+- `Assets/Prefabs/Player/PlayerTurretPreview.prefab`: 바닥·포신 SpriteRenderer와
   `PlayerTurretPlacementPreview`만 가진 시각 전용 프리팹. 충돌체·발사·체력·적 타깃 등록이 없다.
   위치는 플레이어 주변 8칸 중 마우스 방향을 따라가며 설치 가능하면 초록, 불가능하면 빨강,
   두 경우 모두 반투명이다.
@@ -174,8 +174,8 @@ PlayerSkillHud는 Canvas 프리팹의 화면 하단 안내 영역에 빨간색 �
   선택창 열기·다른 스킬 사용·행동 불가·장착 해제·플레이어 비활성화 때도 취소한다.
   UI 위 클릭은 설치에 사용하지 않는다. 설치 확정은 LateUpdate에서 처리하며
   `InitialStagePlayerHUD`는 설치 중 기존 포탑 선택을 막아 같은 클릭의 중복 처리를 피한다.
-- `TemporaryTurret.prefab`: 고정 바닥을 덮는 BoxCollider2D를 미리 배치했다.
-  크기·Offset은 프리팹에서 편집한다. `TemporaryTurretHealth`는 Player/Enemy의
+- `PlayerTurret.prefab`: 고정 바닥을 덮는 BoxCollider2D를 미리 배치했다.
+  크기·Offset은 프리팹에서 편집한다. `PlayerTurretHealth`는 Player/Enemy의
   includeLayers와 나머지 레이어 excludeLayers, 우선순위 10을 적용하여 전역 제외 설정보다 우선한다.
   플레이어의 탄환 피격 트리거와 탄환은 본체에 막히지 않는다.
 - 기존 체력 100, 손상 충전, 파괴 시 충돌 해제는 유지한다.

@@ -29,10 +29,10 @@ public sealed class PlayerSkillRuntimeTests
         _player.layer = LayerMask.NameToLayer("Player");
         _controller = _player.AddComponent<PlayerSkillController>();
         Assign(_player.GetComponent<PlayerBomb>(), "bombPrefab", "Assets/Prefabs/Player/bomb.prefab");
-        Assign(_player.GetComponent<PlayerTurretSkill>(), "turretPrefab", "Assets/Prefabs/Player/TemporaryTurret.prefab");
+        Assign(_player.GetComponent<PlayerTurretSkill>(), "turretPrefab", "Assets/Prefabs/Player/PlayerTurret.prefab");
         var turretData = new SerializedObject(_player.GetComponent<PlayerTurretSkill>());
         turretData.FindProperty("_previewPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/Prefabs/Player/TemporaryTurretPreview.prefab").GetComponent<PlayerTurretPlacementPreview>();
+            "Assets/Prefabs/Player/PlayerTurretPreview.prefab").GetComponent<PlayerTurretPlacementPreview>();
         _groundGrid = new GameObject("Skill test ground", typeof(Grid));
         _groundGrid.transform.position = _player.transform.position;
         var mapObject = new GameObject("Ground", typeof(Tilemap), typeof(TilemapCollider2D));
@@ -269,14 +269,14 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Tooltip_IsAvailableAfterPanelCloses()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret);
+        _controller.TrySelect(PlayerSkillId.PlayerTurret);
         _hud.Close(); _preparing = false;
         yield return null;
         var slot = _hud.transform.Find("Q Skill Slot").gameObject;
         ExecuteEvents.Execute(slot, new PointerEventData(EventSystem.current), ExecuteEvents.pointerEnterHandler);
         var tooltip = _hud.transform.Find("Skill Tooltip");
         Assert.That(tooltip.gameObject.activeSelf, Is.True);
-        Assert.That(tooltip.GetComponentInChildren<TMPro.TMP_Text>().text, Is.EqualTo("보조 포탑"));
+        Assert.That(tooltip.GetComponentInChildren<TMPro.TMP_Text>().text, Is.EqualTo("플레이어 터렛"));
         foreach (var graphic in tooltip.GetComponentsInChildren<Graphic>()) Assert.That(graphic.raycastTarget, Is.False);
         ExecuteEvents.Execute(slot, new PointerEventData(EventSystem.current), ExecuteEvents.pointerExitHandler);
         Assert.That(tooltip.gameObject.activeSelf, Is.False);
@@ -354,20 +354,20 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Turret_RecoveryDoesNotBypassInstallationCooldown()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret);
+        _controller.TrySelect(PlayerSkillId.PlayerTurret);
         var skill = _player.GetComponent<PlayerTurretSkill>();
         Assert.That(DeployTurret(), Is.True);
         Assert.That(skill.CurrentTurretCount, Is.EqualTo(2));
         Assert.That(skill.TryRecoverNearest(), Is.True);
         Assert.That(skill.CurrentTurretCount, Is.EqualTo(3));
-        Assert.That(_controller.TryUse(PlayerSkillId.TemporaryTurret), Is.False);
+        Assert.That(_controller.TryUse(PlayerSkillId.PlayerTurret), Is.False);
         yield break;
     }
 
     [UnityTest]
     public IEnumerator Turret_DamagedRecoveryRequiresRepair()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret);
+        _controller.TrySelect(PlayerSkillId.PlayerTurret);
         Assert.That(DeployTurret(), Is.True);
         var skill = _player.GetComponent<PlayerTurretSkill>();
         var health = skill.RecoverableTurret.Health;
@@ -387,7 +387,7 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Turret_DestroyedReturnsAfterThirtySeconds()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret);
+        _controller.TrySelect(PlayerSkillId.PlayerTurret);
         Assert.That(DeployTurret(), Is.True);
         var skill = _player.GetComponent<PlayerTurretSkill>();
         skill.RecoverableTurret.Health.TakeDamage(100);
@@ -401,7 +401,7 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Turret_CannotBeRecoveredOutsideRecoveryRange()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret); Assert.That(DeployTurret(), Is.True);
+        _controller.TrySelect(PlayerSkillId.PlayerTurret); Assert.That(DeployTurret(), Is.True);
         _player.transform.position += Vector3.right * 100;
         Assert.That(_player.GetComponent<PlayerTurretSkill>().TryRecoverNearest(), Is.False);
         yield break;
@@ -410,7 +410,7 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Turret_CannotBeRecoveredByAnotherOwner()
     {
-        _controller.TrySelect(PlayerSkillId.TemporaryTurret); Assert.That(DeployTurret(), Is.True);
+        _controller.TrySelect(PlayerSkillId.PlayerTurret); Assert.That(DeployTurret(), Is.True);
         var other = new GameObject("Other owner", typeof(PlayerTurretSkill));
         try
         {
@@ -423,8 +423,8 @@ public sealed class PlayerSkillRuntimeTests
     [UnityTest]
     public IEnumerator Turret_SelectionUiCancelsPreviewWithoutConsuming()
     {
-        Assert.That(_controller.TrySelect(PlayerSkillId.TemporaryTurret), Is.True);
-        Assert.That(_controller.TryUse(PlayerSkillId.TemporaryTurret), Is.True);
+        Assert.That(_controller.TrySelect(PlayerSkillId.PlayerTurret), Is.True);
+        Assert.That(_controller.TryUse(PlayerSkillId.PlayerTurret), Is.True);
         var skill = _player.GetComponent<PlayerTurretSkill>();
         Assert.That(_controller.IsPlacingTurret, Is.True);
         Assert.That(_controller.CanRecover, Is.False);
@@ -436,7 +436,7 @@ public sealed class PlayerSkillRuntimeTests
         Assert.That(skill.CurrentCooldownTimer, Is.Zero);
     }
 
-    private bool DeployTurret() => _controller.TryUse(PlayerSkillId.TemporaryTurret)
+    private bool DeployTurret() => _controller.TryUse(PlayerSkillId.PlayerTurret)
         && _player.GetComponent<PlayerTurretSkill>().TryConfirmPlacement(_player.transform.position + Vector3.down);
 
 }

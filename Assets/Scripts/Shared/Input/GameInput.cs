@@ -19,7 +19,15 @@ public enum GameKey
     LeftArrow,
     RightArrow,
     F,
-    Tab
+    Tab,
+    Digit1,
+    Digit2,
+    Digit3,
+    Digit4,
+    Numpad1,
+    Numpad2,
+    Numpad3,
+    Numpad4
 }
 
 public static class GameInput
@@ -90,6 +98,14 @@ public static class GameInput
             GameKey.F1 => keyboard.f1Key,
             GameKey.F => keyboard.fKey,
             GameKey.Tab => keyboard.tabKey,
+            GameKey.Digit1 => keyboard.digit1Key,
+            GameKey.Digit2 => keyboard.digit2Key,
+            GameKey.Digit3 => keyboard.digit3Key,
+            GameKey.Digit4 => keyboard.digit4Key,
+            GameKey.Numpad1 => keyboard.numpad1Key,
+            GameKey.Numpad2 => keyboard.numpad2Key,
+            GameKey.Numpad3 => keyboard.numpad3Key,
+            GameKey.Numpad4 => keyboard.numpad4Key,
             GameKey.W => keyboard.wKey,
             GameKey.A => keyboard.aKey,
             GameKey.S => keyboard.sKey,

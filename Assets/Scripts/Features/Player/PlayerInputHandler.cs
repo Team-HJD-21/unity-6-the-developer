@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// 플레이어 조작 입력(WASD, 조준, 공격, 폭탄, 스킬, 무기 교체 등) 수집 전담 컴포넌트
@@ -32,6 +33,8 @@ public class PlayerInputHandler : MonoBehaviour
 
     // [무기 교체 (Tab)]
     public bool WasWeaponSwitchPressed { get; private set; }
+    public int RequestedWeaponSlot { get; private set; }
+    public int WeaponScrollStep { get; private set; }
 
     private Camera _mainCamera;
 
@@ -74,5 +77,19 @@ public class PlayerInputHandler : MonoBehaviour
 
         // 6. 무기 교체 입력 (Tab 키 감지)
         WasWeaponSwitchPressed = GameInput.WasPressedThisFrame(GameKey.Tab);
+        ReadWeaponSelection();
+    }
+
+    private void ReadWeaponSelection()
+    {
+        RequestedWeaponSlot = 0;
+        if (GameInput.WasPressedThisFrame(GameKey.Digit1) || GameInput.WasPressedThisFrame(GameKey.Numpad1)) RequestedWeaponSlot = 1;
+        else if (GameInput.WasPressedThisFrame(GameKey.Digit2) || GameInput.WasPressedThisFrame(GameKey.Numpad2)) RequestedWeaponSlot = 2;
+        else if (GameInput.WasPressedThisFrame(GameKey.Digit3) || GameInput.WasPressedThisFrame(GameKey.Numpad3)) RequestedWeaponSlot = 3;
+        else if (GameInput.WasPressedThisFrame(GameKey.Digit4) || GameInput.WasPressedThisFrame(GameKey.Numpad4)) RequestedWeaponSlot = 4;
+
+        bool usesDebugCamera = GameInput.IsPressed(GameKey.LeftShift) || GameInput.IsPressed(GameKey.RightShift);
+        bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        WeaponScrollStep = usesDebugCamera || overUi ? 0 : -(int)GameInput.ScrollY;
     }
 }

@@ -115,7 +115,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
     public Sprite Icon(PlayerSkillId skill) => skill switch
     {
         PlayerSkillId.Bomb => _bombIcon,
-        PlayerSkillId.TemporaryTurret => _turretIcon,
+        PlayerSkillId.PlayerTurret => _turretIcon,
         PlayerSkillId.EnergyBarrier => _barrierIcon,
         PlayerSkillId.LureBeacon => _beaconIcon,
         _ => null

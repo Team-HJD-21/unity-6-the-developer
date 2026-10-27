@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
-/// <summary>임시 포탑 설치·회수와 손상 비율에 따른 재충전을 담당합니다.</summary>
+/// <summary>플레이어 터렛 설치·회수와 손상 비율에 따른 재충전을 담당합니다.</summary>
 public sealed class PlayerTurretSkill : PlayerSkillBase
 {
     private const float PreviewCheckInterval = .05f;
@@ -32,9 +32,9 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     private readonly List<RaycastResult> _uiHits = new();
     private PlayerTurretPlacementResult _placementFeedback;
     private PlayerTurretInventory _inventory;
-    private readonly HashSet<TemporaryTurret> _deployed = new();
-    public override PlayerSkillId Id => PlayerSkillId.TemporaryTurret;
-    public override bool HasPrefab => turretPrefab != null && turretPrefab.GetComponent<TemporaryTurret>() != null
+    private readonly HashSet<PlayerTurret> _deployed = new();
+    public override PlayerSkillId Id => PlayerSkillId.PlayerTurret;
+    public override bool HasPrefab => turretPrefab != null && turretPrefab.GetComponent<PlayerTurret>() != null
         && _previewPrefab != null && _previewPrefab.IsConfigured;
     public bool IsPlacing => _preview != null;
     public string PlacementHint => IsPlacing ? "왼쪽 클릭으로 설치 · 오른쪽 클릭 / Esc로 취소" : "";
@@ -48,7 +48,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     public override float RemainingCooldown => AvailableCount > 0 ? _installationRemaining : Mathf.Max(_installationRemaining, RepairRemaining);
     public override float CooldownDuration => AvailableCount > 0 || RepairRemaining <= _installationRemaining ? SkillCooldown : Mathf.Max(.1f, _maximumRepairSeconds);
     public override bool IsReady => HasPrefab && AvailableCount > 0 && _installationRemaining <= 0;
-    public TemporaryTurret RecoverableTurret => FindRecoverableTurret();
+    public PlayerTurret RecoverableTurret => FindRecoverableTurret();
     public PlayerTurretPlacementResult PlacementFeedback =>
         IsPlacing ? _placementFeedback : PlayerTurretPlacementResult.Allowed;
     protected override void Awake()
@@ -143,7 +143,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
         _preview.Refresh(position, _placementFeedback == PlayerTurretPlacementResult.Allowed);
         if (_placementFeedback != PlayerTurretPlacementResult.Allowed || !_inventory.TryDeploy()) return false;
 
-        var turret = Instantiate(turretPrefab, position, Quaternion.identity).GetComponent<TemporaryTurret>();
+        var turret = Instantiate(turretPrefab, position, Quaternion.identity).GetComponent<PlayerTurret>();
         SceneManager.MoveGameObjectToScene(turret.gameObject, gameObject.scene);
         turret.AssignOwner(this);
         _deployed.Add(turret);
@@ -169,11 +169,11 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
         var turret = FindRecoverableTurret();
         return turret != null && turret.TryRecover(this);
     }
-    private TemporaryTurret FindRecoverableTurret()
+    private PlayerTurret FindRecoverableTurret()
     {
         if (!isActiveAndEnabled || IsPlacing || (Controller != null && !Controller.CanRecover)) return null;
         float distanceLimit = recoveryRange * recoveryRange;
-        TemporaryTurret nearest = null;
+        PlayerTurret nearest = null;
         foreach (var turret in _deployed)
         {
             if (turret == null || !turret.isActiveAndEnabled || turret.Health == null || !turret.Health.IsAlive) continue;
@@ -184,7 +184,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
         }
         return nearest;
     }
-    internal bool ReleaseTurret(TemporaryTurret turret, float healthRatio)
+    internal bool ReleaseTurret(PlayerTurret turret, float healthRatio)
     {
         if (!_deployed.Remove(turret)) return false;
         _inventory.Return(healthRatio);

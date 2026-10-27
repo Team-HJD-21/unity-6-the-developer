@@ -49,6 +49,8 @@ public sealed class PlayerBulletRuntimeTests
         SetReference(anchor, "_weaponRig", rig);
         _attack = _shooter.AddComponent<PlayerAttack>();
         SetReference(_attack, "_bulletPrefab", _bulletPrefab);
+        SetReference(_attack, "_sniperBulletPrefab",
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/SniperBullet.prefab"));
         _shooter.SetActive(true);
     }
 
@@ -134,6 +136,25 @@ public sealed class PlayerBulletRuntimeTests
             Assert.That(angles[i], Is.EqualTo(-12.5f + 6.25f * i).Within(.001f));
         }
         yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Sniper_FiresOneFastRoundWithoutSpreadAndRespectsCooldown()
+    {
+        _attack.SelectNextWeapon();
+        _attack.SelectNextWeapon();
+        Assert.That(_attack.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
+        _shooterBody.linearVelocity = Vector2.right * 5f;
+        Assert.That(_attack.TryFire(), Is.True);
+        Assert.That(_attack.TryFire(), Is.False);
+        CaptureBullets();
+        Assert.That(_bullets.Count, Is.EqualTo(1));
+        var bullet = _bullets.Single();
+        Assert.That(Vector3.Distance(bullet.transform.position, _muzzle.position), Is.LessThan(.001f));
+        Assert.That(Vector2.Distance(bullet.GetComponent<Rigidbody2D>().linearVelocity, Vector2.down * 70f), Is.LessThan(.001f));
+        Assert.That(new SerializedObject(bullet).FindProperty("_damage").floatValue, Is.EqualTo(45f));
+        yield return new WaitForSeconds(.25f);
+        Assert.That(_attack.TryFire(), Is.False, "The slower sniper interval must not reuse the default gun interval.");
     }
 
     [UnityTest]

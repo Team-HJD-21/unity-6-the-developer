@@ -73,8 +73,7 @@ public sealed class PlayerWeaponMigrationTests
             var input = player.GetComponent<PlayerInputHandler>();
             input.enabled = false;
             var attack = player.GetComponent<PlayerAttack>();
-            attack.SelectNextWeapon();
-            attack.SelectNextWeapon();
+            Assert.That(attack.TrySelectWeaponSlot(1), Is.True);
             Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
             var motion = player.GetComponent<PlayerSpriteMotion>();
@@ -400,7 +399,9 @@ public sealed class PlayerWeaponMigrationTests
         }
         var rig = PlayerPrefab.GetComponentInChildren<PlayerWeaponRig>(true);
         var rigData = new SerializedObject(rig);
-        Assert.That(rigData.FindProperty("_bodyIncludesGunSprite").boolValue, Is.True);
+        Assert.That(rigData.FindProperty("_bodyIncludesGunSprite").boolValue, Is.False);
+        Assert.That(rigData.FindProperty("_separatedWeaponVisual").objectReferenceValue,
+            Is.EqualTo(PlayerPrefab.GetComponent<PlayerWeaponVisual>()));
         foreach (string direction in new[] { "down", "up", "left", "right" })
         {
             var muzzle = (Transform)rigData.FindProperty("_" + direction + "Muzzle").objectReferenceValue;
@@ -643,6 +644,8 @@ public sealed class PlayerWeaponMigrationTests
             Assert.That(spanner.gameObject.activeSelf, Is.False);
             attack.SelectNextWeapon();
             Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
+            attack.SelectNextWeapon();
+            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
             attack.SelectNextWeapon();
             Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             Assert.That(spanner.gameObject.activeSelf, Is.True);

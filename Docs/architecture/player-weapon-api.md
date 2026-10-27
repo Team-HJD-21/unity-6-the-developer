@@ -2,6 +2,8 @@
 
 수정일: 2026-10-24. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
 
+2026-10-25, Issue #554 작업에서는 전투·수리 계약을 유지하고 표시용 몸체·무기를 분리했습니다. Player 프리팹의 `PlayerWeaponVisual`과 무기별 외형 데이터 편집 방법은 [몸체·무기 분리 API](player-weapon-appearance-api.md)를 참고합니다. 기존 `PlayerSpanner`는 공격·수리 동작을 계속 담당합니다.
+
 ## 2026-10-24 수리 기획과 구현 경계
 
 아래 API 설명은 현재 스패너 타격 수리 구현의 기준이다. 10월 24일 수기의 키 유지 수리 상태, 스패너를 없애는 표현, 시간 비용·Interaction range와 복구 취소 후 게이지 유지 방향은 별도의 후속 설계이며 이번 main 코드로 구현·검증됐다고 보지 않는다. 키 지정·표시 범위·공격/이동/피격 전이는 미정이다. [회의 검토 기록](../planning/2026-10-24-regular-meeting.md)
@@ -10,19 +12,27 @@
 
 `Player.prefab`의 `PlayerAttack._spannerPrefab`에 `Assets/Prefabs/Player/PlayerSpanner.prefab`을 연결합니다.
 플레이어가 생성되면 스패너 인스턴스를 자식으로 한 번 생성하고, 장착 상태에 따라 활성화합니다.
-Tab은 산탄총 → 냉각총 → 스패너 → 산탄총 순서입니다. 공격은 기존 Space 입력을 사용합니다.
-스패너 프리팹이 없으면 기존 두 무기만 순환합니다.
+1번 스패너, 2번 기본총, 3번 냉각총, 4번 스나이퍼를 직접 선택합니다. 숫자패드와 하단 HUD 버튼도 같은 슬롯을 사용합니다. 최초 장착은 기본총입니다.
+Tab과 휠 아래는 다음 슬롯, 휠 위는 이전 슬롯으로 순환하며 장비가 없는 슬롯은 건너뜁니다. 공격은 기존 Space 입력을 사용합니다.
+UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카메라 속도 조절에는 Shift+휠을 사용합니다.
+
+2026-10-27 스나이퍼: 확산 없는 1발, 피해 45, 발사 간격 0.85초로 추가했습니다. 탄속 70과 수명 1.2초는 별도 `Assets/Prefabs/Player/SniperBullet.prefab`에 지정합니다.
+기본총·냉각총의 기존 산탄 수치와 스패너 공격·수리는 유지합니다. 냉각총과 스나이퍼는 몸체와 분리된 별도 무기 Sprite를 사용하며 총열 끝도 외형 데이터에 연결합니다.
 
 ## 스크립트별 역할
 
 | 스크립트 | 기능 / 호출 계약 |
 | --- | --- |
-| `PlayerAttack` | 입력, 무기 선택, 공통 공격 간격. `CurrentWeapon` 조회, `SelectNextWeapon()`으로 순환. `TryFire()`는 장착한 무기로 공격을 시도합니다. 스패너는 탄환과 총구 없이 공격합니다. |
+| `PlayerAttack` | 입력, 무기 선택, 공통 공격 간격. `CurrentWeapon` 조회, `TrySelectWeaponSlot(int)` 또는 `TrySelectWeapon(WeaponType)`으로 선택, `SelectAdjacentWeapon(int)`으로 앞뒤 순환합니다. `TryFire()`는 장착한 무기로 공격을 시도합니다. 스패너는 탄환과 총구 없이 공격합니다. |
+| `PlayerWeaponSlots` | 단축키와 HUD의 1~4 슬롯 매핑. 기존 `WeaponType` 직렬화 값은 유지합니다. |
+| `PlayerWeaponHud` / `PlayerWeaponSlotView` | 기존 씬 HUD 소유자에게 배치된 무기 버튼을 연결하고 선택·장비 유무를 표시합니다. UI 오브젝트를 생성하지 않습니다. |
 | `PlayerWeaponRig` | 기존 방향별 총기와 총구 관리. `SetRangedWeaponVisible(bool)`은 총기 표시만 제어하며 몸체 방향 계산은 계속합니다. |
 | `PlayerSpannerWeapon` | `Bind(Transform, PlayerInputHandler)`로 소유자와 조준 입력 연결. `TryAttack(Vector2)`은 유효한 방향과 쿨타임을 검사한 뒤 근접 판정과 휘두르기를 시작합니다. 반환 true는 공격 시도 성공이며 적중을 보장하지 않습니다. |
 | `PlayerSpannerView` | 프리팹의 SpriteRenderer 표시와 플레이어 기준 앞뒤 정렬만 제어합니다. 외형은 Sprite 에셋으로 편집하며 메쉬를 생성하지 않습니다. |
 | `PlayerSpannerRepair` | `CanRepair(owner, direction)`은 준비 동작을 고르기 위한 조회입니다. 타격 시 `TryRepair(owner, direction, out position)`으로 대상을 다시 검사하고 `TurretBase.Repair`를 호출합니다. 기존 bool 오버로드도 유지합니다. |
 | `PlayerSpannerTargeting` | 공격·수리의 월드 거리, 전방 각도, 같은 씬, 장애물 가림 검사를 공유합니다. 대상 자신의 콜라이더는 가림에서 제외합니다. |
+
+무기 선택 API는 `CanSelectWeapon`을 공통으로 검사합니다. 비활성·일시정지·조작 차단·스킬 선택 중 또는 장비가 없으면 false입니다. 같은 무기를 다시 선택하면 true지만 `WeaponChanged`는 발생하지 않습니다. 실제 전환에만 `WeaponChanged(WeaponType)`를 통지하며 기존 공격 대기시간은 유지합니다. `SelectNextWeapon()`은 다음 슬롯 선택을 위한 호환 메서드입니다. 전환 표시를 구독한 UI는 비활성화할 때 구독을 해제합니다.
 
 ## 스패너 수치와 판정
 
@@ -79,7 +89,7 @@ RuntimeState의 체력을 외부에서 직접 바꾸거나 Restore로 대체하�
 전체 Time.timeScale, 이동, 적 AI는 변경하지 않습니다. 다른 소유자의 코드는 이번 연출 변경에서 수정하지 않았습니다.
 세부 구성과 검증 한계는 [Player Motion API](player-motion-api.md)를 따른다.
 
-`PlayerWeaponMigrationTests.WeaponSwitch_CyclesSpannerAndRestoresDirectionalGun`은 실제 플레이어 프리팹을 생성해 세 무기의 순환, 총기 숨김과 복원, 무효 방향 및 연속 근접 공격 제한을 확인합니다.
+`PlayerWeaponMigrationTests.WeaponSwitch_CyclesSpannerAndRestoresDirectionalGun`은 실제 플레이어 프리팹을 생성해 네 무기의 순환, 총기 숨김과 복원, 무효 방향 및 연속 근접 공격 제한을 확인합니다.
 Unity Test Runner에서 실행할 테스트이며 작성만으로 통과를 의미하지 않습니다.
 실제 Host 플레이에서는 전방/후방 적, 벽 뒤 적, 여러 콜라이더를 가진 적, 방향별 장착 위치를 추가로 확인합니다.
 

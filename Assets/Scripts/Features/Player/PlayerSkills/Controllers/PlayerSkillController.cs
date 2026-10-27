@@ -97,8 +97,8 @@ public sealed class PlayerSkillController : MonoBehaviour
     public bool TryUse(PlayerSkillId id)
     {
         if (!CanUse || !Loadout.Contains(id)) return false;
-        if (id != PlayerSkillId.TemporaryTurret && _turret != null) _turret.CancelPlacement();
-        if (id == PlayerSkillId.TemporaryTurret && _barrier != null) _barrier.CancelPlacement();
+        if (id != PlayerSkillId.PlayerTurret && _turret != null) _turret.CancelPlacement();
+        if (id == PlayerSkillId.PlayerTurret && _barrier != null) _barrier.CancelPlacement();
         return FindSkill(id)?.TryUseSkill() ?? false;
     }
 

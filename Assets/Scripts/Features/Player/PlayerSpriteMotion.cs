@@ -15,6 +15,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     private PlayerWeaponRig _rig;
     private PlayerControlState _controls;
     private PlayerAttack _attack;
+    private PlayerSkillController _skills;
     private PlayerMotion _motion;
     private PlayerAimFacing _facing;
     private float _elapsed;
@@ -35,6 +36,8 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     public bool SupportsEightWayTools => _motions != null && _motions.HasEightWayTools;
     public bool SupportsDiagonalBackpedal => SupportsEightWayRanged && _motions.HasDiagonalBackpedal;
     public bool IsFiring => _ownsDisplay && _motion == PlayerMotion.Fire;
+    public bool IsPlayingDashAnimation => _ownsDisplay &&
+        (_motion == PlayerMotion.Dash || _motion == PlayerMotion.ToolDash);
     private bool IsAction => IsPlayingToolAction || _motion == PlayerMotion.Fire;
     private bool HasSpanner => _attack != null && _attack.CurrentWeapon == WeaponType.Spanner;
     private bool HasMovementInput => _input.MoveInput.sqrMagnitude > .001f &&
@@ -51,6 +54,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         _input = GetComponent<PlayerInputHandler>();
         _controls = GetComponent<PlayerControlState>();
         _attack = GetComponent<PlayerAttack>();
+        _skills = GetComponent<PlayerSkillController>();
         _rig = GetComponentInChildren<PlayerWeaponRig>(true);
     }
 
@@ -81,6 +85,19 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     public void PlayRangedShot()
     {
         if (_ownsDisplay && !HasSpanner) StartMotion(PlayerMotion.Fire);
+    }
+
+    /// <summary>짧은 부스트 모션을 재생합니다. 이동 속도와 무적 상태는 변경하지 않습니다.</summary>
+    public bool TryPlayDashAnimation()
+    {
+        if (!_ownsDisplay || !isActiveAndEnabled || !_motions.HasDashAnimations ||
+            Time.timeScale <= 0f || (_controls != null && !_controls.CanAct) ||
+            (_skills != null && !_skills.CanUse) || IsAction || IsPlayingDashAnimation)
+            return false;
+
+        StartMotion(HasSpanner ? PlayerMotion.ToolDash : PlayerMotion.Dash);
+        UpdateAnimatorState();
+        return true;
     }
 
     public void CancelToolAction()
@@ -128,6 +145,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         if (!_ownsDisplay) return;
         bool canAct = _controls == null || _controls.CanAct;
         if (!canAct) CancelToolAction();
+        if (!canAct && IsPlayingDashAnimation) StartMotion(PlayerMotion.Idle);
         if (_impactPauseRemaining > 0f)
         {
             float remaining = _impactPauseRemaining - Time.deltaTime;
@@ -135,7 +153,10 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
             EndImpactPause();
         }
         AnimationClip clip = CurrentClip;
-        if (!IsAction || _elapsed >= clip.length || (_motion == PlayerMotion.Fire && HasSpanner))
+        bool weaponChangedDuringDash = IsPlayingDashAnimation &&
+            ((_motion == PlayerMotion.ToolDash) != HasSpanner);
+        if ((!IsAction && !IsPlayingDashAnimation) || _elapsed >= clip.length ||
+            (_motion == PlayerMotion.Fire && HasSpanner) || weaponChangedDuringDash)
         {
             bool moving = HasMovementInput;
             PlayerMotion next = HasSpanner
@@ -163,7 +184,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         _hoveringAction = hoveringAction;
         _lateralLean = lateralLean;
         _elapsed = phase * CurrentClip.length;
-        float normalizedTime = IsAction ? Mathf.Clamp01(phase) : Mathf.Repeat(phase, 1f);
+        float normalizedTime = IsAction || IsPlayingDashAnimation ? Mathf.Clamp01(phase) : Mathf.Repeat(phase, 1f);
         _animator.Play(CurrentStateHash, 0, normalizedTime);
         _restart = false;
     }

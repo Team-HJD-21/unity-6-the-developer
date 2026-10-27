@@ -328,7 +328,7 @@ namespace TeamHJD.Game.Debugging
                 ? $"Move Speed: {cameraMoveSpeed:0.0}"
                 : $"Move Speed: {cameraMoveSpeed:0.0} / Zoom Size: {_mainCamera.orthographicSize:0.0}";
             GUILayout.Label(cameraStatus);
-            GUILayout.Label("Camera: WASD / Fast: Shift / Speed: Mouse Wheel");
+            GUILayout.Label("Camera: WASD / Fast: Shift / Speed: Shift + Mouse Wheel");
             GUILayout.Label("Zoom In: Q / Zoom Out: Space");
             GUILayout.Label("Add a Monster-layer target to the scene to test tracking and firing.");
             GUILayout.EndArea();
@@ -389,6 +389,7 @@ namespace TeamHJD.Game.Debugging
 
         private void AdjustCameraMoveSpeed()
         {
+            if (!GameInput.IsPressed(GameKey.LeftShift) && !GameInput.IsPressed(GameKey.RightShift)) return;
             float scrollInput = GameInput.ScrollY;
             if (Mathf.Approximately(scrollInput, 0f))
             {

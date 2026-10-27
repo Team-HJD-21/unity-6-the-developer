@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum PlayerFieldDeviceKind { Barrier, Beacon, TemporaryTurret }
+public enum PlayerFieldDeviceKind { Barrier, Beacon, PlayerTurret }
 
 /// <summary>장비의 체력과 수명을 관리하고 표현·검색·충돌 판정을 연결합니다.</summary>
 [DisallowMultipleComponent]
