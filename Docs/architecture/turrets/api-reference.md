@@ -4,13 +4,13 @@
 상태: 현재 Canon / Missile 공개 API. 명령용 호환 API는 컴포넌트 참조를 사용할 수 있다.
 
 이 문서의 최신 냉각·강화 제한 기준은 main `8d08001a`에 병합된 PR #525다.
-지속 수리 API는 현재 작업 브랜치의 추가 사항이며 플레이어 입력·실제 Stage 연결은 별도다.
+지속 수리 API는 PR #547로 main에 반영됐다. 플레이어 입력·실제 Stage 연결은 별도다.
 
 네임스페이스는 `TeamHJD.Game.FieldTurrets`다. 결과 타입과 터렛 종류는 `TeamHJD.Game.FieldTurrets.Contracts`에 있다. 소비자 asmdef에서 사용하는 어셈블리를 참조해야 한다.
 
 ## ID와 읽기 전용 조회
 
-Core 지역이 바인딩된 Scene은 `FieldTurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 D 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
+Core 지역이 바인딩된 Scene은 `FieldTurretController.Regions`를 읽기 원본으로 사용한다. 기존 UnlockZones/UnlockedZoneCount는 독립 황재동 테스트의 구역 뷰이며 Core 상태를 대신하지 않는다. 바인딩 중 ConfigureUnlockZones는 예외, UnlockThroughZone은 false로 이중 쓰기를 거부한다. 해금은 RegionSceneBinding.TryUnlockThroughZone, 모드/Grid 변경은 확인 후 ResetPolicy로 요청한다. [상세](../core-sprint-region-and-request-api.md)
 
 `FieldTurretInstanceRegistry`는 static 클래스다. 별도 씬 인스턴스를 만들지 않는다.
 

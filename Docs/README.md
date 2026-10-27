@@ -1,5 +1,7 @@
 # The Developer — Project Documentation
 
+최근 진행 공유: [10월 27일 주간 보고](planning/2026-10-27-weekly-progress.md) — Core 조작 검증 경로, Enemy 로직·네트워크 경계, Weather·환경 후보와 파트별 후속 목표. 구현 완료나 새 Sprint 확정이 아니다.
+
 수정일: 2026-10-24
 상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
 
