@@ -27,6 +27,8 @@ Unity에서 씬의 `Player Skill HUD`를 선택하거나 Prefab Mode로 열어
 
 ### 무기 선택창 편집
 
+2026-10-27 #565 대시 표시는 같은 Canvas의 `Dash Slot`에 배치했다. 하단 무기 선택창 오른쪽이며 Q/E 선택 카드에 포함하지 않는다. `PlayerDashHud`는 기존 로컬 HUD 소유자의 PlayerDash를 참조해 준비 상태·원형 쿨타임·남은 시간을 갱신한다. 위치·크기·키 글씨·배경·색은 프리팹에서 편집한다. 입력을 받는 버튼은 없고 Raycast Target은 꺼져 있다. [대시 API](player-dash-api.md)
+
 `Player Skill HUD > Weapon Hotbar`를 선택해 하단 위치·크기를 조절한다. 자식 `1 Spanner`, `2 DefaultGun`, `3 CryoBlaster`, `4 Sniper`에는 Button, 배경, 아이콘, 무기 이름, 숫자 배지와 선택 표시가 이미 들어 있다. 각 RectTransform과 Image/TMP 속성을 직접 편집한다. 아이콘 원본은 `Assets/Art/UI/PlayerWeapons/`다. 별도 Canvas는 추가하지 않았다.
 
 `PlayerWeaponHud`의 `_slots`는 1~4 순서로 연결한다. `PlayerWeaponSlotView`의 슬롯 번호와 같은 순서여야 한다. 선택된 슬롯의 테두리·밑줄은 청록색이며 색은 각 Slot View의 Inspector에서 바꾼다. 표시만 바꾸려면 키 번호나 PlayerAttack 설정을 수정할 필요가 없다.

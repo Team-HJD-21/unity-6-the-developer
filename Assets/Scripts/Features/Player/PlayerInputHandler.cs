@@ -29,6 +29,7 @@ public class PlayerInputHandler : MonoBehaviour
     public bool WasSkillQPressed { get; private set; }
 
     public bool WasRecoverPressed { get; private set; }
+    public bool WasDashPressed { get; private set; }
 
     // [무기 교체 (Tab)]
     public bool WasWeaponSwitchPressed { get; private set; }
@@ -80,6 +81,7 @@ public class PlayerInputHandler : MonoBehaviour
         // 5. Q 슬롯 입력 (단발)
         WasSkillQPressed = GameInput.WasPressedThisFrame(GameKey.Q);
         WasRecoverPressed = GameInput.WasPressedThisFrame(GameKey.F);
+        WasDashPressed = GameInput.WasPressedThisFrame(GameKey.Space);
 
         // 6. 무기 교체 입력 (Tab 키 감지)
         WasWeaponSwitchPressed = GameInput.WasPressedThisFrame(GameKey.Tab);

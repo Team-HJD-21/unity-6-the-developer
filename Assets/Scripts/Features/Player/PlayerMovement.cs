@@ -1,34 +1,24 @@
 using UnityEngine;
 
-/// <summary>
-/// Rigidbody2D 기반 순수 물리 이동 컴포넌트
-/// 
-/// [채택 이유 및 대안 비교]
-/// 1. Rigidbody2D.linearVelocity(속도 대입) vs Transform.position 누적:
-///    - 대안: transform.position += moveInput * speed * Time.deltaTime (레거시 Player.cs 방식).
-///    - 채택 이유: Transform을 강제로 옮기면 타일맵/콜라이더 벽면 충돌 시 캐릭터가 벽 속으로 파고들었다가
-///      밀려나는 미세 떨림(Jitter)이 발생합니다. 또한 물리 콜라이더 연산이 꼬이며, 향후 NetworkTransform 동기화 시 오차가 커집니다.
-///      반면 물리 속도를 제어하면 유니티 물리 엔진이 벽면 미끄러짐과 충돌 처리를 완벽하게 보장합니다.
-/// 
-/// 2. Rigidbody2D.AddForce vs linearVelocity:
-///    - 대안: AddForce (가속도 누적).
-///    - 채택 이유: 우주선 관성 비행이 아닌 탑다운 캐릭터 조작이므로, 키를 뗐을 때 즉시 멈추고
-///      눌렀을 때 즉시 목표 속도에 도달해야 하므로 velocity 직접 지정이 조작감에 가장 적합합니다.
-/// 
-/// 3. 조작 가능 여부는 PlayerControlState와 스킬 선택 상태에서 전달받습니다.
-///    매니저가 없는 독립 테스트 씬에서도 이동을 검증할 수 있습니다.
-/// </summary>
+/// <summary>일반 이동과 대시의 물리 속도를 한 곳에서 적용하고 조작 차단 시 즉시 정지합니다.</summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     [Tooltip("캐릭터 이동 속도")]
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField, Min(0)] private float moveSpeed = 5f;
 
     [Header("References")]
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private PlayerInputHandler inputHandler;
     private PlayerSkillController _skills;
+    private PlayerControlState _controls;
+    private PlayerDash _dash;
+
+    public float MoveSpeed => float.IsNaN(moveSpeed) || float.IsInfinity(moveSpeed) ? 0 : Mathf.Max(0, moveSpeed);
+    public bool CanAcceptInput => isActiveAndEnabled && CanMove && Time.timeScale > 0 && rb != null &&
+        inputHandler != null && inputHandler.isActiveAndEnabled &&
+        (_controls == null || _controls.CanAct) && (_skills == null || _skills.CanUse);
 
     // 대화 중이거나 사망 시 외부(매니저, UI, 컷씬 등)에서 이동을 멈출 수 있는 스위치
     public bool CanMove { get; set; } = true;
@@ -43,6 +33,8 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         _skills = GetComponent<PlayerSkillController>();
+        _controls = GetComponent<PlayerControlState>();
+        _dash = GetComponent<PlayerDash>();
         // 인스펙터 할당을 깜빡했을 때를 대비한 널 세이프 방어 코드
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (inputHandler == null) inputHandler = GetComponent<PlayerInputHandler>();
@@ -54,18 +46,22 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // 물리 이동은 프레임 레이트와 상관없이 일정한 물리 주기로 도는 FixedUpdate에서 처리
+    // 일시정지 중에는 FixedUpdate가 멈추므로 Update에서도 중단 상태를 정리합니다.
+    private void Update()
+    {
+        if (!CanAcceptInput) StopImmediately();
+    }
+
+    // 일반 이동과 대시가 서로 속도를 덮어쓰지 않도록 한 곳에서만 적용합니다.
     private void FixedUpdate()
     {
-        // 이동 불가 상태이거나 입력 컴포넌트가 없으면 즉시 정지
-        if (!CanMove || inputHandler == null || (_skills != null && !_skills.CanUse))
+        if (!CanAcceptInput)
         {
-            rb.linearVelocity = Vector2.zero;
+            StopImmediately();
             return;
         }
-
-        // 입력받은 정규화 방향 벡터 * 속도로 물리 속도 부여
-        rb.linearVelocity = inputHandler.MoveInput * moveSpeed;
+        rb.linearVelocity = _dash != null && _dash.TryGetVelocity(Time.fixedDeltaTime, out var dashVelocity)
+            ? dashVelocity : inputHandler.MoveInput * MoveSpeed;
     }
 
     /// <summary>
@@ -73,9 +69,12 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     public void StopImmediately()
     {
+        if (_dash != null) _dash.CancelDash();
         if (rb != null)
         {
             rb.linearVelocity = Vector2.zero;
         }
     }
+
+    private void OnDisable() => StopImmediately();
 }

@@ -329,7 +329,7 @@ namespace TeamHJD.Game.Debugging
                 : $"Move Speed: {cameraMoveSpeed:0.0} / Zoom Size: {_mainCamera.orthographicSize:0.0}";
             GUILayout.Label(cameraStatus);
             GUILayout.Label("Camera: WASD / Fast: Shift / Speed: Shift + Mouse Wheel");
-            GUILayout.Label("Zoom In: Q / Zoom Out: Space");
+            GUILayout.Label("Zoom In: PageUp / Zoom Out: PageDown");
             GUILayout.Label("Add a Monster-layer target to the scene to test tracking and firing.");
             GUILayout.EndArea();
             GUI.matrix = previousGuiMatrix;
@@ -442,8 +442,8 @@ namespace TeamHJD.Game.Debugging
             }
 
             float zoomDirection = 0f;
-            if (GameInput.IsPressed(GameKey.Q)) zoomDirection -= 1f;
-            if (GameInput.IsPressed(GameKey.Space)) zoomDirection += 1f;
+            if (GameInput.IsPressed(GameKey.PageUp)) zoomDirection -= 1f;
+            if (GameInput.IsPressed(GameKey.PageDown)) zoomDirection += 1f;
 
             _mainCamera.orthographicSize = Mathf.Clamp(
                 _mainCamera.orthographicSize + zoomDirection * cameraZoomSpeed * Time.unscaledDeltaTime,
