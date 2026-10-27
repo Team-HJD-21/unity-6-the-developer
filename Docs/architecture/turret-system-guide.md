@@ -5,7 +5,7 @@
 상태: Sprint 1 전환기 구현 가이드 / Canon·Missile 기준
 
 냉각·수동 조작·강화 제한은 main `8d08001a`에 병합된 PR #525를 기준으로 최신화했다.
-미사일 예약 토큰과 시간 기반 발사체 수명 처리는 현재 작업 브랜치의 변경 사항이며 병합·실제 Stage 검증과 구분한다.
+미사일 예약 토큰과 시간 기반 발사체 수명 처리는 PR #547로 main에 반영됐다. 문서에 기록한 로컬 테스트와 실제 Stage 인수는 구분한다.
 
 [문서 목차](../README.md) · [코드·아키텍처 명명 규칙](naming-and-architecture-conventions.md) · [System Re-architecture Charter](system-rearchitecture-charter.md) · [Sprint 1 Stage 1 PoC](../planning/SPRINT_1_STAGE_1_POC.md)
 
@@ -838,3 +838,7 @@ flowchart TD
     Recover --> Try
     Wait -->|없음| End[종료]
 ```
+
+## 2026-10-27 연동 후속
+
+터렛 조작은 Core/Match가 요청을 검증한 뒤 전달하는 방향으로 먼저 설계한다. 현재 로컬 수리·활성화 API 자체가 권한·거리·중복을 모두 검증하는 것은 아니다. 해금 구역 Core 연결 반영 후 검증, 해금됐지만 꺼진 터렛의 Enemy 타깃 여부 확인, 활성 터렛 파괴 시 일부 전력 반환과 레이저 후속은 남은 작업이다. 전력 비율·완료일·최종 서버 권한은 미정이다. [보고·담당·근거](../planning/2026-10-27-weekly-progress.md)

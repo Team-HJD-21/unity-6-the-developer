@@ -7,7 +7,7 @@
 
 ## FieldTurret 명칭
 
-맵에 배치된 터렛 시스템은 **FieldTurret**, 플레이어가 설치하는 보조 터렛은 기존 **TemporaryTurret / PlayerTurret**로 구분한다. FieldTurret 명칭 변경은 현재 작업 브랜치에 적용한 내용이다.
+맵에 배치된 터렛 시스템은 **FieldTurret**, 플레이어가 설치하는 보조 터렛은 기존 **TemporaryTurret / PlayerTurret**로 구분한다. FieldTurret 명칭 변경은 PR #547로 main에 반영됐다. 실제 화면·다중 클라이언트 인수와는 구분한다.
 
 | 이전 이름 | 현재 이름 |
 | --- | --- |

@@ -90,3 +90,7 @@ playerAdapter.Unbind();
 `IEncounterDebugCommandTarget.TryRequestCurrentEncounter(preset, max, source, out result)`의 성공 여부와 결과를 확인한다. 수동/반복 Debugger 요청은 테스트 명령이며 출시용 Director·스테이지 진행 규칙이 아니다. `IGameDiagnosticsSource`는 조회/사실 이벤트 계약이다. 구독자는 `DiagnosticEmitted`에서 해제하고, bounded 기록의 손실·N/A를 실제 0으로 바꾸지 않는다.
 
 `AppRoot.BattlefieldSnapshotChanged` 및 `CurrentBattlefieldSnapshot`은 `UNITY_EDITOR` 진단 경로다. 게임 Feature는 조립부가 주입한 session/provider를 사용한다. [Game Debugger 사용법](../tooling/game-debugger-guide.md)은 이 게임 계약과 도구 UI를 구분해 설명한다.
+
+## 2026-10-27 조작 요청 검증 방향
+
+Player 등 호출 파트 → Core/Match의 권한·매치 진행 상태 검증 → FieldTurret 명령 API를 우선 설계 방향으로 삼는다. 현재 로컬 API에 원격 검증이 이미 붙었다는 뜻은 아니다. 조회 API 이동, 상태의 최종 권한, 실패 응답·동기화 계약은 후속 합의다. Enemy는 실행 로직과 네트워크 전달 계층을 분리하는 중이며 양현석의 기반 권한 작업이 개별 객체 동기화를 모두 대신하지 않는다. [주간 보고](../planning/2026-10-27-weekly-progress.md)
