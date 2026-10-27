@@ -1,4 +1,4 @@
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 
 /// <summary>전방에서 수리 가능한 가장 가까운 일반 터렛 하나를 선택해 API로 회복합니다.</summary>
@@ -17,19 +17,19 @@ public sealed class PlayerSpannerRepair : MonoBehaviour
     public bool TryRepair(Transform owner, Vector2 direction, out Vector3 position)
     {
         position = default;
-        TurretBase turret = FindTarget(owner, direction);
+        FieldTurretBase turret = FindTarget(owner, direction);
         if (turret == null || !turret.Repair(_repairAmount)) return false;
         position = turret.transform.position;
         return true;
     }
 
-    private TurretBase FindTarget(Transform owner, Vector2 direction)
+    private FieldTurretBase FindTarget(Transform owner, Vector2 direction)
     {
         if (!isActiveAndEnabled || owner == null || _repairAmount <= 0 ||
             !PlayerAimUtility.IsValidDirection(direction)) return null;
-        TurretBase nearest = null;
+        FieldTurretBase nearest = null;
         float nearestDistance = float.PositiveInfinity;
-        foreach (TurretBase turret in TurretInstanceRegistry.RegisteredInstances.Values)
+        foreach (FieldTurretBase turret in FieldTurretInstanceRegistry.RegisteredInstances.Values)
         {
             if (turret == null || !turret.IsInitialized || !turret.isActiveAndEnabled || turret.IsDestroyed ||
                 turret.IsLocked || turret.IsManualOperationBlocked || turret.CurrentHealth <= 0 ||

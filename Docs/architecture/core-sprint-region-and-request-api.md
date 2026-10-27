@@ -10,7 +10,7 @@
 | `session.Regions.Snapshot` / `Changed` | 불변 확정 결과/변경 통지 |
 | `RegionSceneBinding.ResetPolicy(mode, true)` | 확인 후 새 Grid 세대로 Reset. 미확인 요청은 거부 |
 | `RegionSceneBinding.TryUnlockThroughZone(zone)` | 정적 해금의 Core 쓰기 경로 |
-| `TurretController.Regions` | HUD/Feature의 읽기 Port. 바인딩 없으면 null |
+| `FieldTurretController.Regions` | HUD/Feature의 읽기 Port. 바인딩 없으면 null |
 | `RegionGridReplica.Apply(frame, senderIsVerifiedServer)` | Client 읽기 모델. 실제 서버 검증은 전송 어댑터 책임 |
 
 정적·동적 모두 지역 Grid가 원본이다. 황재동의 별도 Grid 설정은 명시적 값 변환으로 연결한다. Battlefield의 Player/Enemy 밀도 셀과 같은 데이터라고 취급하지 않는다.

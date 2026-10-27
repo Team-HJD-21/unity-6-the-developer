@@ -124,7 +124,7 @@ Future PvP:           DedicatedServerAuthority -> GameSimulation
 ### Content definition (versioned, immutable per match)
 
 - `StageDefinition`, `WaveDefinition`, `SectorDefinition`, `WeatherDefinition`
-- `PlayerSkillDefinition`, `WeaponDefinition`, `TurretDefinition`, `ControlUnitDefinition`
+- `PlayerSkillDefinition`, `WeaponDefinition`, `FieldTurretDefinition`, `ControlUnitDefinition`
 - `EnemyArchetype`, `EnemyDifficultyProfile`, `AllyPlayerAgentProfile`
 - `RewardTable`, `ModeRulesDefinition`
 

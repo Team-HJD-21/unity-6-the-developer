@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 
 /// <summary>보조 포탑 전용 실탄. 플레이어 무기 효과와 독립적으로 적 한 명에게 피해를 적용합니다.</summary>
@@ -76,7 +76,7 @@ public sealed class TemporaryTurretProjectile : MonoBehaviour
         if (other.GetComponentInParent<PlayerInputHandler>() != null ||
             other.GetComponentInParent<TemporaryTurret>() != null ||
             other.GetComponentInParent<TemporaryTurretHealth>() != null ||
-            other.GetComponentInParent<TurretBase>() != null ||
+            other.GetComponentInParent<FieldTurretBase>() != null ||
             other.GetComponentInParent<PlayerFieldDevice>() != null ||
             other.CompareTag("Bullet") || other.CompareTag("Tower") || other.CompareTag("CU")) return true;
         // Legacy 제거로 인해 로직 무효화: 통과 조건의 구형 Monster 제외 검사.

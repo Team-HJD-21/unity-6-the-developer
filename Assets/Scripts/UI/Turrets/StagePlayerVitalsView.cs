@@ -1,5 +1,5 @@
 using System;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,7 +25,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     private PlayerInfo _player;
     private ControlUnitHealth _controlUnit;
-    private TurretController _controller;
+    private FieldTurretController _controller;
     private int _lastHealth = int.MinValue;
     private int _lastMaxHealth = int.MinValue;
     private int _lastPower = int.MinValue;
@@ -115,7 +115,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
         controlUnitHealthText.text = "—";
     }
 
-    public void BindPower(TurretController controller)
+    public void BindPower(FieldTurretController controller)
     {
         if (!ReferenceEquals(_controller, controller))
         {

@@ -420,11 +420,11 @@ namespace TeamHJD.Game.Editor
 
         private void AddTurretInputSourceToActiveScene()
         {
-            const string typeName = "TeamHJD.Game.Turrets.TurretBattlefieldInputSource";
+            const string typeName = "TeamHJD.Game.FieldTurrets.FieldTurretBattlefieldInputSource";
             Type componentType = FindLoadedType(typeName);
             if (componentType == null)
             {
-                _previewError = "TurretBattlefieldInputSource is not loaded yet. Wait for Unity script compilation and check the Console for TeamHJD.Game.Turrets errors.";
+                _previewError = "FieldTurretBattlefieldInputSource is not loaded yet. Wait for Unity script compilation and check the Console for TeamHJD.Game.FieldTurrets errors.";
                 return;
             }
 
