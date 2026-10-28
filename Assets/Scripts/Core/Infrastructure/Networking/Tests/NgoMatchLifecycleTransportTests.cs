@@ -61,6 +61,28 @@ namespace TeamHJD.Game.Infrastructure.Tests
             bytes = MatchLifecycleCodec.Encode(Descriptor()); Array.Resize(ref bytes, bytes.Length + 1);
             Assert.Throws<FormatException>(() => MatchLifecycleCodec.Decode(bytes, out _, out _, out _));
         }
+
+        private static MatchCompletion CompleteFor(MatchId match) => new MatchCompletion(
+            new MatchResult(match, MatchOutcome.Defeat, 3, new DateTimeOffset(2026, 10, 26, 0, 0, 0, TimeSpan.Zero)),
+            new RewardReceipt(match, MatchOutcome.Defeat, new[] { new CurrencyDelta(new CurrencyId("battery"), 5) }));
+
+        [Test]
+        public void CompletionCodecPreservesImmutableResultAndRejectsInvalidPayloadShape()
+        {
+            var descriptor = Descriptor(); var completion = CompleteFor(descriptor.Config.MatchId);
+            var signal = new MatchLifecycleSignal(descriptor.Config.MatchId, descriptor.DescriptorId, completion);
+            byte[] bytes = MatchLifecycleCodec.Encode(MatchLifecycleSignalKind.Completed, signal);
+            MatchLifecycleCodec.Decode(bytes, out _, out var kind, out var copy);
+            Assert.That(kind, Is.EqualTo(MatchLifecycleSignalKind.Completed));
+            Assert.That(copy.Completion.Result.CompletedAt, Is.EqualTo(completion.Result.CompletedAt));
+            Assert.That(copy.Completion.Result.CompletedWave, Is.EqualTo(3));
+            Assert.That(copy.Completion.RewardReceipt.CurrencyDeltas[0].Amount, Is.EqualTo(5));
+            Assert.Throws<ArgumentException>(() => MatchLifecycleCodec.Encode(MatchLifecycleSignalKind.Started, signal));
+            Assert.Throws<ArgumentException>(() => MatchLifecycleCodec.Encode(MatchLifecycleSignalKind.Completed,
+                new MatchLifecycleSignal(descriptor.Config.MatchId, descriptor.DescriptorId)));
+            Array.Resize(ref bytes, bytes.Length - 1);
+            Assert.Throws<FormatException>(() => MatchLifecycleCodec.Decode(bytes, out _, out _, out _));
+        }
         [Test]
         public void AssemblerAcceptsOutOfOrderDuplicateAndIsolatesSenderAndConflictingChunk()
         {
@@ -192,6 +214,13 @@ namespace TeamHJD.Game.Infrastructure.Tests
                 }
                 previousPreparation = _hostRegions.LastPublishedFrame;
                 IRegionGridSource expiredClientSource = _clientRegions.Source;
+                Assert.That(_host.TryPublishCompletion(CompleteFor(original.Config.MatchId)), Is.True);
+                deadline = Time.realtimeSinceStartup + 20;
+                while (_client.Completion == null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }
+                Assert.That(_client.Completion, Is.Not.Null, "Actual UTP must deliver completion before Match cleanup.");
+                Assert.That(_client.Completion.Result.Outcome, Is.EqualTo(MatchOutcome.Defeat));
+                Assert.That(_client.Completion.RewardReceipt.CurrencyDeltas[0].Amount, Is.EqualTo(5));
+                Assert.That(_client.IsGameplayRunning || _host.IsGameplayRunning, Is.False);
                 Assert.That(_host.TryEnd(), Is.True);
                 deadline = Time.realtimeSinceStartup + 20;
                 while (_client.Descriptor != null && Time.realtimeSinceStartup < deadline) { Pump(); yield return null; }

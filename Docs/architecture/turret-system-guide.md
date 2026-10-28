@@ -65,7 +65,7 @@ Canon과 Missile은 CU를 직접 찾지 않는다. 전력은 `FieldTurretControl
 
 `ControlUnitHealth`는 CU 체력, 피격, 접근 지점과 상태 이벤트만 담당한다. 최대 체력은 `ControlUnit.asset`의 `FieldTurretDefinition`에서 읽으며 `DataManager`의 CU 수치를 사용하지 않는다. CU와 `FieldTurretBase`는 모두 `IDamageableTarget`을 구현하므로 Enemy는 구체 타입이나 Registry를 확인하지 않고 같은 `ApplyDamage(int)` 계약으로 피해를 준다. Definition의 `FieldTurretRole.ControlUnit`은 CU를 무기 터렛과 구분한다.
 
-CU는 Enemy의 `TargetType.Turret` 후보에는 포함되지만 `FieldTurretBase`를 상속하거나 `FieldTurretInstanceRegistry`에 등록되지 않는다. 따라서 터렛 등록 수, 전력 예약, 자동 활성화, 개별 터렛 UI에는 포함되지 않는다. 터렛 전력은 `DataManager`와 CU 컴포넌트를 거치지 않고 `FieldTurretController`가 직접 소유한다. CU 파괴 시 `Destroyed` 이벤트를 한 번 발행한다. `HealthChanged`는 체력 변경을 전달한다. 레거시 `InGameManager`와 `AlertManager`를 조회하거나 호출하지 않는다. 현재 PoC 승패 정책은 패배 판정을 구현하지 않았으므로 파괴 이벤트를 게임 오버에 연결하는 소비자는 후속 연동 대상이다.
+CU는 Enemy의 `TargetType.Turret` 후보에는 포함되지만 `FieldTurretBase`를 상속하거나 `FieldTurretInstanceRegistry`에 등록되지 않는다. 따라서 터렛 등록 수, 전력 예약, 자동 활성화, 개별 터렛 UI에는 포함되지 않는다. 터렛 전력은 `DataManager`와 CU 컴포넌트를 거치지 않고 `FieldTurretController`가 직접 소유한다. CU 파괴 시 `Destroyed` 이벤트를 한 번 발행한다. `HealthChanged`는 체력 변경을 전달한다. 레거시 `InGameManager`와 `AlertManager`를 조회하거나 호출하지 않는다. 2026-10-26부터 `IControlUnitHealthSource`를 통해 MatchCoordinator가 실제 파괴 사실을 소비하고 StoryModeRules/MatchSession으로 단일 패배를 확정한다. Core는 CU HP를 다시 소유하지 않는다. 결과 UI/복귀·보스 승리는 별도 배치다.
 
 ```mermaid
 flowchart TD

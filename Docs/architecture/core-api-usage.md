@@ -81,6 +81,8 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 ## 현재 Network 경계
 
+2026-10-26: Match 진행은 `MatchCoordinator`가 실제 `IControlUnitHealthSource`를 구독하고, 같은 Session의 `IMatchProgressRules`에 `MatchProgressSnapshot`을 전달한다. CU HP writer는 Feature에 유지한다. 조립부가 `Start()`를 한 번 호출하고 게임 delta를 `Tick()`에 전달한다. 비동기 gameplay 작업은 `GameplayCancellation`을 사용하고, 네트워크 pump/진단의 unscaled 시계와 혼동하지 않는다. 완료/폐기는 토큰을 취소한다. 동일 outcome의 `Session.Complete` 재호출은 기존 불변 결과를 반환하며 결과/보상 제안을 다시 만들지 않는다. 구독/취소 관측 예외가 나더라도 결과와 다른 관측자의 처리는 보존한다.
+
 #442는 아직 미완료다. `LocalAuthority`는 Core 명령의 Match 상태·참가자만 확인하는 로컬 구현이지 NGO Server 또는 Steam 인증 구현이 아니다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
 
 `CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. 기존 진단의 요청 번호를 정식 `MatchRequestContext.RequestId` GUID와 혼동하지 않는다. 정식 요청 GUID는 발신자·의도와 함께 중복 실행을 막으며 재전송 때 유지한다. 실제 터렛 배치의 `SceneEntityIdentity` 제작 키와 `TurretMatchBinding` 대응표를 공용 명령/공간 입력에서 사용한다. 로컬 InstanceId·SDK NetworkObjectId는 이 논리 ID를 대신하지 않는다.

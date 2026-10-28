@@ -18,7 +18,7 @@ namespace TeamHJD.Game.Infrastructure
         public NgoMatchLifecycleTransport(NetworkManager manager)
         {
             _manager = manager;
-            _channel = new NgoMessageChannel(manager, "teamhjd.core.match.v1");
+            _channel = new NgoMessageChannel(manager, "teamhjd.core.match.v2");
             _channel.MessageReceived += OnMessage;
         }
         public bool TrySendDescriptor(ulong target, NetworkMatchDescriptor descriptor)

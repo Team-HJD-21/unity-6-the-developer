@@ -28,6 +28,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
+        private MatchCoordinator _coordinator;
+        public MatchCoordinator MatchCoordinator => _coordinator;
         private RegionSceneBinding _regionBinding;
         private TurretMatchBinding _turretBinding;
         private MatchPlayerActorScope _playerActors;
@@ -118,17 +120,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _turretBinding = GetComponent<TurretMatchBinding>();
-                _turretBinding?.BindMatch(matchId, () => HasCurrentMatch && (network == null || network.Phase == NetworkMatchPhase.Running));
+                _turretBinding?.BindMatch(matchId, () => HasCurrentMatch && _matchSession != null &&
+                    !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running &&
+                    (network == null || network.IsGameplayRunning));
                 MatchSession session = appMatchHost.StartMatch(
                     config,
                     initialState,
-                    new InitialStagePocModeRules(),
+                    new StoryModeRules(),
                     turretBattlefieldInput,
                     dynamicBattlefieldInput,
                     grid);
                 _matchHost = appMatchHost;
                 _ownsMatch = true;
                 _ownedMatchId = matchId;
+                _matchSession = session;
                 // D의 Match lease가 쓰기를 허용한 뒤, Core 지역 정책을 붙이기 전에 초기화합니다.
                 ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
                 _turretInputSource = turretInputSource;
@@ -151,7 +156,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 {
                     if (_regionBinding == null) throw new InvalidOperationException("Network Match requires a RegionSceneBinding.");
                     _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
-                        network.Descriptor.RegionMode, () => network.Phase == NetworkMatchPhase.Running, _turretBinding);
+                        network.Descriptor.RegionMode, () => network.IsGameplayRunning, _turretBinding);
                 }
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
@@ -173,6 +178,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _nextBattlefieldSampleTime = 0f;
                 cameraFollow.Bind(_playerActors.Actors[localPlayerId].transform);
                 session.Disposing += ReleaseMatchBindings;
+                var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
+                    .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitHealthSource>().Single();
+                _coordinator = new MatchCoordinator(session, controlUnitHealth,
+                    () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
+                _coordinator.Completed += OnMatchCompleted;
+                _coordinator.Start();
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
                     $"Initial_Stage Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
@@ -234,6 +245,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 region.ControlUnit.gameObject.scene != gameObject.scene || !region.ControlUnit.gameObject.activeInHierarchy)
                 throw new InvalidOperationException("Assign an active Scene CU and FieldTurretController before preparing the Match.");
             // 정의 생성은 읽기 전용입니다. CU의 유효 좌표·Grid 범위·Inspector 구역 수를 검사합니다.
+            var health = region.ControlUnit.GetComponents<MonoBehaviour>()
+                .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitHealthSource>().ToArray();
+            if (health.Length != 1 || health[0].MaxHealth <= 0)
+                throw new InvalidOperationException("Provide one configured, active CU health source before Match preparation.");
             region.Controller.CreateUnlockZoneDefinition(region.ControlUnit.position);
             return region;
         }
@@ -249,6 +264,21 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             else if (mode != RegionPolicyMode.Dynamic) throw new ArgumentOutOfRangeException(nameof(mode));
             // Dynamic은 임시 삼각형에서 점령 셀을 만들므로 정적 잠금으로 기존 활성 상태를 변경하지 않습니다.
+        }
+
+        private void OnMatchCompleted(MatchCompletion completion)
+        {
+            if (!HasCurrentMatch || completion.Result.MatchId != _ownedMatchId) return;
+            var errors = new List<Exception>();
+            RunCleanup(() =>
+            {
+                if (_networkBinding != null && !_networkBinding.Matches.TryPublishCompletion(completion))
+                    throw new InvalidOperationException("The current Host could not commit its final Match result.");
+            }, errors);
+            // 불변 결과를 보존/게시한 후 실제 Feature 작업을 닫습니다. 연결·Session은 결과 인수까지 유지합니다.
+            RunCleanup(() => ReleaseEncounterConsumer(completion.Result.MatchId), errors);
+            RunCleanup(() => _turretBinding?.StopMatchOperations(), errors);
+            if (errors.Count > 0) throw new AggregateException("Match completed; publication or Feature shutdown failed.", errors);
         }
 
         public void ComposeNetworkMatch(NetworkMatchCoordinator matches, bool isServer, ulong connectionId)
@@ -318,17 +348,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             MatchPlayerActorScope actors = _playerActors;
             RegionSceneBinding regions = _regionBinding;
             TurretMatchBinding turrets = _turretBinding;
+            MatchCoordinator coordinator = _coordinator;
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
             bool ownedMatch = _ownsMatch;
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
+            _coordinator = null;
             _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
             _ownedMatchId = default;
             _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
             _lastEntityCells.Clear();
             var errors = new List<Exception>();
+            RunCleanup(() => coordinator?.Dispose(), errors);
             RunCleanup(() => ReleaseLocalActorConsumers(matchId), errors);
             RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
             RunCleanup(() => actors?.Dispose(), errors);
@@ -437,8 +470,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void Update()
         {
+            _coordinator?.Tick(Time.deltaTime);
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
+            if (!_matchSession.IsGameplayRunning) return;
 
             _nextBattlefieldSampleTime = Time.unscaledTime + BattlefieldSampleInterval;
             var players = new List<PlayerSpatialInput>(_playerActors.Actors.Count);

@@ -72,6 +72,7 @@ namespace TeamHJD.Game.Application
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
             if (_matchTransport is INetworkMessagePump pump) pump.Pump();
+            NetworkMatches?.FlushPendingCompletion();
             NetworkRegions?.FlushPending();
             if (_regionTransport is INetworkMessagePump regionPump) regionPump.Pump();
             if (NetworkTurretCommands is INetworkMessagePump turretPump) turretPump.Pump();

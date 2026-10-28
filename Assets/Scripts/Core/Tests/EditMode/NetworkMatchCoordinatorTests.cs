@@ -137,5 +137,71 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(runtime.TryPrepare(Config(true), Grid(), RegionPolicyMode.Static, Bindings(true)), Is.False);
             Assert.That(runtime.Descriptor, Is.Null); Assert.That(runtime.CanStart, Is.False);
         }
+
+        private static MatchCompletion CompletionFor(MatchId match) => new MatchCompletion(
+            new MatchResult(match, MatchOutcome.Defeat, 3, new DateTimeOffset(2026, 10, 26, 0, 0, 0, TimeSpan.Zero)),
+            new RewardReceipt(match, MatchOutcome.Defeat, new[] { new CurrencyDelta(new CurrencyId("battery"), 5) }));
+
+        [Test]
+        public void OnlyCurrentHostCompletionClosesGameplayOnceAndSurvivesEndUntilNextPreparation()
+        {
+            var hc = new Channel { Id = 0 }; var cc = new Channel { Id = 42 }; hc.Other = cc; cc.Other = hc;
+            using var host = new NetworkMatchCoordinator(new Session(true, 0), hc);
+            using var client = new NetworkMatchCoordinator(new Session(false, 42), cc);
+            host.TryPrepare(Config(true), Grid(), RegionPolicyMode.Static, Bindings(true));
+            host.MarkLocalReady(); client.MarkLocalReady(); host.TryStart();
+            var completion = CompletionFor(host.Descriptor.Config.MatchId);
+            var signal = new MatchLifecycleSignal(completion.Result.MatchId, host.Descriptor.DescriptorId, completion);
+            int observed = 0; client.Completed += _ => observed++;
+            cc.InjectSignal(99, MatchLifecycleSignalKind.Completed, signal);
+            Assert.That(client.IsGameplayRunning, Is.True);
+            Assert.That(client.TryPublishCompletion(completion), Is.False);
+            Assert.That(host.TryPublishCompletion(CompletionFor(new MatchId("other"))), Is.False);
+            Assert.That(host.TryPublishCompletion(completion), Is.True);
+            Assert.That(host.TryPublishCompletion(completion), Is.True);
+            cc.InjectSignal(0, MatchLifecycleSignalKind.Completed, signal);
+            Assert.That(observed, Is.EqualTo(1));
+            Assert.That(host.IsGameplayRunning || client.IsGameplayRunning, Is.False);
+            Assert.That(client.Phase, Is.EqualTo(NetworkMatchPhase.Running), "The connection Match has not been disposed.");
+            Assert.That(host.TryEnd(), Is.True);
+            Assert.That(client.Completion, Is.SameAs(completion));
+            host.TryPrepare(Config(true), Grid(), RegionPolicyMode.Static, Bindings(true));
+            Assert.That(host.Completion, Is.Null); Assert.That(client.Completion, Is.Null);
+            cc.InjectSignal(0, MatchLifecycleSignalKind.Completed, signal);
+            Assert.That(client.Completion, Is.Null, "Previous preparation results cannot enter a new Match.");
+        }
+
+        [Test]
+        public void PendingResultIsRetriedBeforeOrderlyEndInsteadOfBeingDiscarded()
+        {
+            var hc = new Channel { Id = 0 }; var cc = new Channel { Id = 42 }; hc.Other = cc; cc.Other = hc;
+            using var host = new NetworkMatchCoordinator(new Session(true, 0), hc);
+            using var client = new NetworkMatchCoordinator(new Session(false, 42), cc);
+            host.TryPrepare(Config(true), Grid(), RegionPolicyMode.Static, Bindings(true));
+            host.MarkLocalReady(); client.MarkLocalReady(); host.TryStart();
+            hc.Fail = true;
+            host.TryPublishCompletion(CompletionFor(host.Descriptor.Config.MatchId));
+            Assert.That(host.IsGameplayRunning, Is.False);
+            Assert.That(host.HasPendingCompletion, Is.True);
+            Assert.That(host.TryEnd(), Is.False);
+            hc.Fail = false; host.FlushPendingCompletion();
+            Assert.That(host.HasPendingCompletion, Is.False);
+            Assert.That(client.Completion, Is.Not.Null);
+            Assert.That(host.TryEnd(), Is.True);
+        }
+
+        [Test]
+        public void CompletionObserverFailureCannotReopenGameplayOrSkipOtherObservers()
+        {
+            using var host = new NetworkMatchCoordinator(new Session(true, 0), new Channel { Id = 0 });
+            host.TryPrepare(Config(), Grid(), RegionPolicyMode.Static, Bindings()); host.MarkLocalReady(); host.TryStart();
+            int observed = 0;
+            host.Completed += _ => throw new InvalidOperationException("observer");
+            host.Completed += _ => observed++;
+            Assert.Throws<AggregateException>(() => host.TryPublishCompletion(CompletionFor(host.Descriptor.Config.MatchId)));
+            Assert.That(host.IsGameplayRunning, Is.False);
+            Assert.That(observed, Is.EqualTo(1));
+            Assert.That(host.Completion, Is.Not.Null);
+        }
     }
 }
