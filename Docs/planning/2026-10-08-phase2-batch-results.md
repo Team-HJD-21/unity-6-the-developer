@@ -29,7 +29,7 @@ flowchart LR
     S[InitialStageCompositionRoot] -->|ID 소유 확인| A[AppRoot / IAppMatchHost]
     A --> M[MatchSession / BattlefieldSpatialRuntime]
     M --> B[immutable snapshot]
-    S -->|유효할 때만 최신 snapshot 조회| E[IEncounterMatchConsumer: E]
+    S -->|유효할 때만 최신 snapshot 조회| E[IEncounterMatchConsumer: Enemy/Encounter]
     B --> D[BattlefieldDebugSession: Editor only]
     P[Edit Scene Turret 입력] --> C[Core topology/Grid builder]
     C -->|PREVIEW| D

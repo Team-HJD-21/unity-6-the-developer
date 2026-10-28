@@ -15,7 +15,7 @@ assignees: ""
 
 ## 담당과 작업 종류
 
-- 주 담당: A / B / C / D / E / 미정
+- 주 담당: Core·Player/UI·World/Weather·FieldTurret·Enemy/Encounter / 미정
 - [ ] 추가
 - [ ] 교체
 - [ ] 삭제

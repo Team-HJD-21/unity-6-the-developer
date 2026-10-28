@@ -71,7 +71,7 @@ playerAdapter.Unbind();
 
 정리 순서는 현재 composition의 Encounter unbind·Player actor 정리·소유 Match 종료를 따른다. 한 소비자의 Unbind 실패가 나머지 정리를 중단하지 않도록 한다. `MatchSession.Dispose`는 이벤트 버스와 공간 Runtime을 정리하고 재호출을 허용한다. 종료 뒤 변경·명령 메서드 호출은 `ObjectDisposedException`이다. `HudPresenter.Dispose()`는 자신이 가진 구독을 해제한다. 오래된 session/provider를 새 Match에 연결하지 않는다.
 
-Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 닫고, 여러 기능·actor·지역·D 자원 정리를 끝까지 시도한 뒤 오류를 합쳐 전달한다. `Dispose`/`TryEndMatch`가 정리 오류를 던졌다고 이전 입력이 여전히 유효한 것으로 해석하지 않는다. 설정 실패도 rollback하며 설정 오류와 해제 오류를 함께 보존한다. 해제 중 새 Match를 재바인딩하지 않는다. Unity actor/NGO 객체의 실제 파괴는 프레임 끝에 확정되므로 참조 해제와 GameObject 제거 시점을 구분한다.
+Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 닫고, 여러 기능·actor·지역·FieldTurret 자원 정리를 끝까지 시도한 뒤 오류를 합쳐 전달한다. `Dispose`/`TryEndMatch`가 정리 오류를 던졌다고 이전 입력이 여전히 유효한 것으로 해석하지 않는다. 설정 실패도 rollback하며 설정 오류와 해제 오류를 함께 보존한다. 해제 중 새 Match를 재바인딩하지 않는다. Unity actor/NGO 객체의 실제 파괴는 프레임 끝에 확정되므로 참조 해제와 GameObject 제거 시점을 구분한다.
 
 ## 비동기와 실패 처리
 
@@ -89,7 +89,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 `CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. 기존 진단의 요청 번호를 정식 `MatchRequestContext.RequestId` GUID와 혼동하지 않는다. 정식 요청 GUID는 발신자·의도와 함께 중복 실행을 막으며 재전송 때 유지한다. 실제 터렛 배치의 `SceneEntityIdentity` 제작 키와 `TurretMatchBinding` 대응표를 공용 명령/공간 입력에서 사용한다. 로컬 InstanceId·SDK NetworkObjectId는 이 논리 ID를 대신하지 않는다.
 
-터렛의 정식 요청/결과·실제 UTP 전송·Host 검증과 지역 전체 상태 복제는 [Core 스프린트 API](core-sprint-region-and-request-api.md)를 따른다. `TurretCommandGateway`는 Client 의도를 Host로 전달하고, 실제 연결 발신자를 검증한 서비스만 D 상태를 변경한다. 정식 Scene/HUD 입력·표시 연결과 실제 두 프로세스 검증은 수행했다. B의 실제 권위 원격 actor 생성/이동 상태 연결과 D의 실제 터렛 표현·전투 복제는 여전히 별도이므로 전체 협동 완성을 선언하지 않는다. 개발 actor fixture를 사용한 Core API 증거와 이 연계를 구분하며 Client 위치를 payload에 넣어 거리 검증을 우회하지 않는다.
+터렛의 정식 요청/결과·실제 UTP 전송·Host 검증과 지역 전체 상태 복제는 [Core 스프린트 API](core-sprint-region-and-request-api.md)를 따른다. `TurretCommandGateway`는 Client 의도를 Host로 전달하고, 실제 연결 발신자를 검증한 서비스만 FieldTurret 상태를 변경한다. 정식 Scene/HUD 입력·표시 연결과 실제 두 프로세스 검증은 수행했다. Player/UI의 실제 권위 원격 actor 생성/이동 상태 연결과 FieldTurret의 실제 터렛 표현·전투 복제는 여전히 별도이므로 전체 협동 완성을 선언하지 않는다. 개발 actor fixture를 사용한 Core API 증거와 이 연계를 구분하며 Client 위치를 payload에 넣어 거리 검증을 우회하지 않는다.
 
 ## PoC 요청과 Editor 경계
 
