@@ -64,7 +64,7 @@ public class EnemyAnimation : MonoBehaviour
 
     public void PlayAttackAnimation()
     {
-        if (_networkAnimator != null)
+        if (_networkAnimator != null && _networkAnimator.IsSpawned)
             _networkAnimator.PlayAttack();
         else
             animator.SetTrigger(AttackHash);
