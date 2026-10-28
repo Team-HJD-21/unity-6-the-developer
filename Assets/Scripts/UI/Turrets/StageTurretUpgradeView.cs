@@ -1,6 +1,6 @@
 using System;
 using TeamHJD.Game.Content;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,18 +9,18 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class StageTurretUpgradeView : MonoBehaviour
 {
-    [SerializeField] private TurretUpgradeDefinition[] lowPowerUpgrades;
-    [SerializeField] private TurretUpgradeDefinition[] highFirepowerUpgrades;
+    [SerializeField] private FieldTurretUpgradeDefinition[] lowPowerUpgrades;
+    [SerializeField] private FieldTurretUpgradeDefinition[] highFirepowerUpgrades;
     [SerializeField] private TMP_Text lowPowerText;
     [SerializeField] private TMP_Text highFirepowerText;
     [SerializeField] private Button lowPowerPlus;
     [SerializeField] private Button lowPowerMinus;
     [SerializeField] private Button highFirepowerPlus;
     [SerializeField] private Button highFirepowerMinus;
-    private TurretUpgradeDefinition _lowPower;
-    private TurretUpgradeDefinition _highFirepower;
+    private FieldTurretUpgradeDefinition _lowPower;
+    private FieldTurretUpgradeDefinition _highFirepower;
 
-    public event Action<TurretUpgradeDefinition, bool> ChangeRequested;
+    public event Action<FieldTurretUpgradeDefinition, bool> ChangeRequested;
     public bool IsConfigured => string.IsNullOrEmpty(MissingReferences);
     public string MissingReferences => StageUIReferenceValidation.Missing(
         (nameof(lowPowerText), lowPowerText != null), (nameof(highFirepowerText), highFirepowerText != null),
@@ -29,7 +29,7 @@ public sealed class StageTurretUpgradeView : MonoBehaviour
         (nameof(lowPowerUpgrades), HasDefinitions(lowPowerUpgrades)),
         (nameof(highFirepowerUpgrades), HasDefinitions(highFirepowerUpgrades)));
 
-    private static bool HasDefinitions(TurretUpgradeDefinition[] definitions) =>
+    private static bool HasDefinitions(FieldTurretUpgradeDefinition[] definitions) =>
         definitions != null && definitions.Length > 0 && Array.TrueForAll(definitions, value => value != null);
 
     private void OnValidate()
@@ -57,7 +57,7 @@ public sealed class StageTurretUpgradeView : MonoBehaviour
         _highFirepower = null;
     }
 
-    public void Show(TurretBase turret, bool canInteract)
+    public void Show(FieldTurretBase turret, bool canInteract)
     {
         _lowPower = FindCompatible(lowPowerUpgrades, turret);
         _highFirepower = FindCompatible(highFirepowerUpgrades, turret);
@@ -66,7 +66,7 @@ public sealed class StageTurretUpgradeView : MonoBehaviour
             highFirepowerPlus, highFirepowerMinus, canInteract);
     }
 
-    private static TurretUpgradeDefinition FindCompatible(TurretUpgradeDefinition[] upgrades, TurretBase turret)
+    private static FieldTurretUpgradeDefinition FindCompatible(FieldTurretUpgradeDefinition[] upgrades, FieldTurretBase turret)
     {
         if (turret.Definition == null) return null;
         foreach (var upgrade in upgrades)
@@ -74,13 +74,13 @@ public sealed class StageTurretUpgradeView : MonoBehaviour
         return null;
     }
 
-    private static void ShowBranch(TurretBase turret, TurretUpgradeDefinition upgrade, string name,
+    private static void ShowBranch(FieldTurretBase turret, FieldTurretUpgradeDefinition upgrade, string name,
         TMP_Text text, Button plus, Button minus, bool canInteract)
     {
         bool selected = upgrade != null && turret.RuntimeState.HasAppliedUpgrade(upgrade.Id);
         int level = selected ? turret.RuntimeState.UpgradeLevel : 0;
         text.text = upgrade == null ? $"{name}: unavailable" :
-            $"{name} {level}/{TurretRuntimeState.MaximumUpgradeLevel}";
+            $"{name} {level}/{FieldTurretRuntimeState.MaximumUpgradeLevel}";
         text.color = selected ? Color.cyan : Color.white;
         plus.interactable = canInteract && StageTurretInteractionRules.CanChangeUpgrade(turret, upgrade, true);
         minus.interactable = canInteract && StageTurretInteractionRules.CanChangeUpgrade(turret, upgrade, false);

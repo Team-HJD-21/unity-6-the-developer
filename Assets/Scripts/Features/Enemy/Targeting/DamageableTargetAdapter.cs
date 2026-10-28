@@ -1,5 +1,5 @@
-using TeamHJD.Game.Turrets;
-using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -13,7 +13,7 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
 
     private TargetableComponent _targetable;
     private IDamageableTarget _damageable;
-    private TurretBase _weaponTurret;
+    private FieldTurretBase _weaponTurret;
     private int _instanceId;
 
     private void Awake()
@@ -26,7 +26,7 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
 
     private void OnEnable()
     {
-        TurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
+        FieldTurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
         Synchronize();
     }
 
@@ -35,7 +35,7 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
 
     private void OnDisable()
     {
-        TurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
+        FieldTurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
         if (_targetable != null)
         {
             _targetable.enabled = false;
@@ -82,7 +82,7 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
             }
         }
 
-        _weaponTurret = _damageableSource as TurretBase;
+        _weaponTurret = _damageableSource as FieldTurretBase;
         if (_weaponTurret != null)
         {
             _instanceId = _weaponTurret.InstanceId;

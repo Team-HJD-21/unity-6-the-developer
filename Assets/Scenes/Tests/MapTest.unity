@@ -847462,7 +847462,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 769347541509622616, guid: be37de2e51322483b84200d2f7b02caf, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV1 (1)
+      value: FieldCanonTurret LV1 (1)
       objectReference: {fileID: 0}
     - target: {fileID: 1659131349136534652, guid: be37de2e51322483b84200d2f7b02caf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -851276,7 +851276,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 769347541509622616, guid: be37de2e51322483b84200d2f7b02caf, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV1
+      value: FieldCanonTurret LV1
       objectReference: {fileID: 0}
     - target: {fileID: 1659131349136534652, guid: be37de2e51322483b84200d2f7b02caf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -857645,7 +857645,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2671403332973467931, guid: ee5a6647744454db991baa74f5c0d422, type: 3}
       propertyPath: m_Name
-      value: CanonTurret LV2
+      value: FieldCanonTurret LV2
       objectReference: {fileID: 0}
     - target: {fileID: 5464355338928721752, guid: ee5a6647744454db991baa74f5c0d422, type: 3}
       propertyPath: m_LocalPosition.x
@@ -858131,7 +858131,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7051758743884136471, guid: 6d4e199667620441c81281e0eda5a6a6, type: 3}
       propertyPath: m_Name
-      value: MissileTurret LV1
+      value: FieldMissileTurret LV1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

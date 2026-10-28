@@ -11,6 +11,7 @@
 - Unity 버전 `6000.3.23f1`
 - `Force Text`와 `Visible Meta Files` 설정
 - 활성화된 Build Scene과 Scene `.meta`
+- Python 스크립트 테스트 (`.meta` 검증기와 contributors 집계·그래프, Python 3.12 + Pillow 12.3.0)
 - `Assets` 아래 모든 파일·폴더의 `.meta` 쌍
 - 대상 파일이 없는 고아 `.meta` (단, `folderAsset: yes`인 빈 폴더 메타는 허용)
 - `.gitmodules` 연결이 누락된 중첩 저장소 / 잘못된 submodule
@@ -54,9 +55,10 @@ Git은 빈 폴더를 저장하지 않는다. 로컬의 빈 TextMesh Pro 폴더�
 
 `.github/scripts/validate_meta.py`는 `folderAsset: yes`인 폴더 메타를 허용한다. 일반 Asset 파일 누락, `.meta` 누락, 부모 폴더 메타 누락, 파일/폴더 종류 불일치는 계속 실패한다. Asset이나 GUID를 삭제하거나 새로 생성할 필요가 없다.
 
-로컬에서도 동일한 검사를 실행할 수 있다 (Python 3 필요).
+로컬에서도 동일한 검사를 실행할 수 있다 (Python 3.12와 Pillow 필요).
 
 ```sh
+python -m pip install Pillow==12.3.0
 python -B -m unittest discover -s .github/scripts -p 'test_*.py' -v
 python -B .github/scripts/validate_meta.py
 ```
@@ -108,11 +110,15 @@ Unity Personal License 기준으로 다음 Secret을 등록한다.
 
 ## Discord 알림 점검과 contributors 예약
 
-- PR·Issue 알림은 저장소 Webhook, CI 실패 알림은 `DISCORD_WEBHOOK_URL`, contributors 이미지는 `DISCORD_CONTRIBUTORS_WEBHOOK`을 사용한다. 비공개 저장소의 contributors 조회에는 Actions의 읽기 전용 `GITHUB_TOKEN`을 사용한다.
+- PR·Issue 알림은 저장소 Webhook, CI 실패 알림은 `DISCORD_WEBHOOK_URL`, contributors 이미지는 `DISCORD_CONTRIBUTORS_WEBHOOK`을 사용한다. 비공개 저장소의 통계·리뷰 조회에는 `contents: read`, `pull-requests: read` 권한의 Actions `GITHUB_TOKEN`을 사용한다.
+- 개인 카드의 `Total … commits`, `Total … reviewed PRs`는 **전체 기간 누적**이다. 커밋은 기본 브랜치의 GitHub contributor 통계이며 merge/empty commit을 제외한다. 리뷰는 모든 PR(open/closed/merged)의 제출된 승인·변경 요청·코멘트 리뷰와 제출 후 dismissed된 리뷰를 포함한다. 같은 사람이 같은 PR에 여러 번 리뷰해도 1건이다. **자기 PR에 작성한 리뷰는 계정 ID 기준으로 제외**하며, ID가 없으면 대소문자를 구분하지 않는 로그인으로 비교한다. 미제출 `PENDING` 리뷰, 일반 PR 대화 댓글·단순 답글도 제외한다.
+- 모든 PR과 각 PR의 리뷰를 페이지별로 끝까지 조회한다. 표시 대상은 `hjd5031`, `yanggogi1423`, `verbalKJT`, `theFireFly-Night`, `COKINGDING` 5명으로 제한하며 대소문자를 구분하지 않는다. Codex·Copilot과 그 밖의 계정은 개인 카드와 상단 합계 그래프 모두에서 제외한다. 리뷰만 한 팀원도 0 commits 카드로 표시하며 커밋 수 내림차순으로 정렬한다. 리뷰 조회 실패 시 0건으로 가장해 전송하지 않고 Workflow를 실패 처리한다.
+- 상단과 개인별 그래프는 **최근 30일을 주 단위 쌍막대**로 표시한다. 파란색은 커밋, 보라색은 리뷰한 PR 수이며 두 막대는 같은 축을 사용한다. 각 막대 바로 아래에 같은 색의 수치를 표시하고 0도 생략하지 않는다. 날짜는 수치 아래에 별도 줄로 표시한다. 커밋 막대는 최근 30일과 겹치는 GitHub 주 전체이므로 경계 주의 이전 날짜도 포함할 수 있다. 리뷰 막대는 `submitted_at`이 최근 30일 안인 타인 PR만 포함하며, 같은 PR의 반복 리뷰는 해당 기간 첫 리뷰 주에 1회 표시한다. 예전에 리뷰했던 PR을 최근 다시 리뷰하면 누적 합계는 그대로이고 최근 막대에는 나타난다. 상단은 표시된 기여자별 값의 합계이므로 같은 PR을 여러 사람이 리뷰했다면 각 사람의 참여를 합산한다. 주 경계는 GitHub 통계와 동일한 UTC 일요일이다.
 - contributors 예약은 `Asia/Seoul` 기준 매일 00:00이다. GitHub Actions 예약은 혼잡 시 지연되거나 누락될 수 있으므로 정시 전달 보장으로 해석하지 않는다.
 - 수동 `Daily Discord contributors` 실행에서 `test_notification=true`를 선택하면 테스트 표식이 붙은 이미지가 전송되며 `@everyone`은 멘션하지 않는다.
 - 수동 `PR CI` 실행에서 `test_discord_notification=true`를 선택하면 실제 검사 결과와 함께 CI 알림 테스트가 전송된다. 고의로 검사 실패를 만들지 않는다. 기본값은 false로 기존 실패 시 알림 동작을 유지한다.
 - Discord 전송은 `wait=true` 응답의 메시지 ID로 수신 확인한다. 비밀 Webhook 주소나 전체 응답을 로그에 출력하지 않는다. CI 알림 전송 실패는 해당 알림 Job의 실패로 드러난다.
+- 발송 전에 `python -B -m unittest discover -s .github/scripts -p test_publish_contributors.py`로 집계 검사를 수행한다. 2026-10-26 로컬에서 자기 PR 제외·전체 누적/최근 막대 분리·중복/페이지·색상 등 16개 검사가 통과했고, 실제 저장소 전체 데이터를 조회해 누적 수치와 파란색·보라색 쌍막대 이미지 생성을 확인했다. 이는 새 Workflow의 Actions 실행이나 Discord 수신 검증을 뜻하지 않는다.
 
 ## 현재 Build 대상
 

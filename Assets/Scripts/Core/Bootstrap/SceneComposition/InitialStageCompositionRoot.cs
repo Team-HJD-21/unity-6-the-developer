@@ -52,6 +52,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (starts.Length == 0) throw new InvalidOperationException("Initial_Stage requires at least one active PlayerStart.");
             MatchCameraFollow cameraFollow = FindSceneCameraFollow();
             if (cameraFollow == null) throw new InvalidOperationException("Initial_Stage requires a MatchCameraFollow on its Main Camera.");
+            RegionSceneBinding regionBinding = ValidateRegionAuthoring();
 
             MatchId matchId = new MatchId(Guid.NewGuid().ToString("N"));
             var loadout = new PlayerLoadoutSnapshot(LocalPlayerId, new Dictionary<DefinitionId, int>());
@@ -103,6 +104,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matchHost = appMatchHost;
                 _ownsMatch = true;
                 _ownedMatchId = matchId;
+                _regionBinding = regionBinding;
+                // D의 초기 구역 적용은 Core 지역 정책이 연결되기 전에 명시적으로 한 번 수행합니다.
+                if (regionBinding.InitialMode == RegionPolicyMode.Static &&
+                    !regionBinding.Controller.ConfigureUnlockZones(regionBinding.ControlUnit.position))
+                    throw new InvalidOperationException("CU unlock-zone initialization could not apply every owned turret restriction.");
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
@@ -111,10 +117,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     new LocalPlayerActorSpawner(playerPrefab, actorParent),
                     starts);
                 _matchSession = session;
-                RegionSceneBinding[] regionBindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
-                    .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
-                if (regionBindings.Length > 1) throw new InvalidOperationException("Keep one RegionSceneBinding per Match scene.");
-                _regionBinding = regionBindings.FirstOrDefault();
                 _regionBinding?.BindMatch(session);
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
@@ -158,6 +160,24 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 }
                 throw;
             }
+        }
+
+        private RegionSceneBinding ValidateRegionAuthoring()
+        {
+            RegionSceneBinding[] regions = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
+                .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
+            if (regions.Length != 1)
+                throw new InvalidOperationException("Initial_Stage requires exactly one active RegionSceneBinding.");
+            RegionSceneBinding region = regions[0];
+            if (region.Controller == null || !region.Controller.isActiveAndEnabled ||
+                region.Controller.gameObject.scene != gameObject.scene || region.ControlUnit == null ||
+                !region.ControlUnit.gameObject.activeInHierarchy || region.ControlUnit.gameObject.scene != gameObject.scene)
+                throw new InvalidOperationException("Assign an active Scene CU and FieldTurretController before starting the Match.");
+            if (region.InitialMode != RegionPolicyMode.Static && region.InitialMode != RegionPolicyMode.Dynamic)
+                throw new ArgumentOutOfRangeException(nameof(region.InitialMode));
+            // 읽기 전용 정의로 CU 좌표·Grid 범위·Inspector 구역 수를 검사하며 상태는 변경하지 않습니다.
+            region.Controller.CreateUnlockZoneDefinition(region.ControlUnit.position);
+            return region;
         }
 
         private void OnDestroy()
