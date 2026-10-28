@@ -12,6 +12,8 @@
 
 이번 Core 배치의 결과·검증 수준·수동 확인 순서·Issue/PR 경계는 [5·6주차 인수 문서](planning/2026-10-26-core-sprint-handoff.md)를 먼저 읽는다. **2026-10-28부터 실제 작업 프로젝트 `D:/Dev/Unity/Unity_3D_CBC`의 `codex/core-sprint-20261026-integration` 브랜치에서 구현·검토한다.** 기존 Validation 폴더는 검증 이력 보존용이다. CU 초기화 #569는 main에 반영됐고, 나머지 Core 통합은 로컬 검토 대상이다.
 
+2026-10-28 PL이 현재 프로젝트의 요청된 수동 확인을 모두 수행하고 이상 없음을 보고했다. [수동 인수 기록](planning/2026-10-28-core-acceptance.md)은 그 범위·자동 증거·분할 PR 조건과 팀 Build/실제 Player 연계의 잔여를 구분한다. Network 전파 자료는 [Network Match 구조와 Feature 연결](architecture/network-match-api.md)을 따른다. 낮밤용 공용 서버 시계·예약 실행은 협의 중이며 아직 Runtime에 구현되지 않았다.
+
 운영 화면과 전환은 [ScreenManager](architecture/screen-management-api.md) / [SceneFlowController](architecture/scene-flow-api.md)를 따른다. 실제 CU 결과·재시작·우주선 복귀 버튼까지 연결했으며, 원격 Player/공동 Scene 이동과 외형 수동 인수는 별도다.
 
 2026-10-26 Core 후속을 최신 main에 통합하고 Match 운영 책임을 분리하는 배치를 시작했다. [Match 운영 책임과 수명 계약](architecture/match-management-responsibilities.md)은 Feature 상태 원본, MatchCoordinator / SceneFlowController / ScreenManager의 역할과 완료·입력·환경·추가 생성 계약을 설명한다. [이번 구현 기록](planning/2026-10-26-core-sprint-implementation.md)에서 CU 명시 초기화와 실제 Scene 검사 결과·다음 배치를 확인한다. 목표 구조와 실제 구현/검증 완료를 구분한다. 아래 10/15 검증은 당시 source의 증거다.
