@@ -13,7 +13,7 @@
 
 1. 준비 전에 CU/Controller가 현재 Scene에 있고 활성인지, 지역/터렛 바인딩이 같은 Controller를 쓰는지 검사한다. CU 좌표/Grid/Inspector 구역 수를 읽기 전용으로 검증한다.
 2. Host 조립은 터렛 Match lease와 Session을 먼저 만든다. 아직 Core RegionAccessPolicy를 붙이지 않은 시점에 `ConfigureUnlockZones(cuPosition)`를 명시적으로 호출한다.
-3. 정적 초기 구역은 1, 총 구역 수는 D Inspector 설정이다. false/예외는 조립 실패로 전달하고 기존 공통 rollback이 Match/actor/Feature 바인딩을 정리한다.
+3. 정적 초기 구역은 1, 총 구역 수는 FieldTurret Inspector 설정이다. false/예외는 조립 실패로 전달하고 기존 공통 rollback이 Match/actor/Feature 바인딩을 정리한다.
 4. Dynamic은 준비 검사를 공유하지만 정적 잠금을 적용하지 않는다. 임시 삼각형이 확정 셀을 계산하며, 이후 점령 갱신/모드 Reset은 RegionRuntime만 쓴다. Client는 Host snapshot을 연결한다.
 
 ## 이번 head 검증
@@ -50,7 +50,7 @@ Scene 검사는 Test Framework가 PlayMode로 진입해 실제 조립/API/객체
 
 B4 최초 검사 `b4-match.log`는 검사 코드의 HP 속성명/using 누락 2건으로 컴파일 실패했다. 수정 후 `b4-match-fixed.xml` 전체 26/26 통과했으며 실패 로그도 보존했다. 제품 예외를 무시하거나 검사를 제거해 통과시킨 것이 아니다.
 
-B5 실제 재로드 검사에서 B4의 결과 대기 경로를 보완했다. 완료 후 D 제어 lease를 정상 해제했는데 TurretCommandSceneScope.Pump가 이를 권한 손실 오류로 보고 Match를 종료했다. 이제 실행 중 gameplay에만 제어 lease를 요구하고, 완료 뒤에도 gateway/표시 전송 pump는 유지한다. CU 파괴 뒤 한 프레임을 실제로 기다리는 회귀를 추가했다. B4 PR에는 이 후속 수정도 함께 포함해야 한다.
+B5 실제 재로드 검사에서 B4의 결과 대기 경로를 보완했다. 완료 후 FieldTurret 제어 lease를 정상 해제했는데 TurretCommandSceneScope.Pump가 이를 권한 손실 오류로 보고 Match를 종료했다. 이제 실행 중 gameplay에만 제어 lease를 요구하고, 완료 뒤에도 gateway/표시 전송 pump는 유지한다. CU 파괴 뒤 한 프레임을 실제로 기다리는 회귀를 추가했다. B4 PR에는 이 후속 수정도 함께 포함해야 한다.
 
 B5 최초 컴파일 검사는 검사에서 내부 AppServices를 조회해 실패했다. 좁은 Scene/Input 공개 Port로 수정했다. 후속 Scene 검사에서 위 Pump 오류와 “Executor는 1개”라는 잘못된 검사 가정을 구분했다. 실제 main에는 같은 Scene의 제작 Executor가 두 개였고, 진단은 양쪽 `InScenePlaced/DestroyWithScene=true`를 확인했다. 최종 검사는 이전 객체 폐기·제작 개수/새 Scene·실제 새 Enemy 생성을 요구한다. 실패 로그/XML을 보존했으며 오류 무시나 Executor 임의 삭제는 하지 않았다.
 
