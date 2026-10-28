@@ -7,15 +7,22 @@ public sealed class PlayerFieldEnemyControlLease
     private readonly EnemyHealth _health;
     private readonly Rigidbody2D _body;
     private bool _wasEnabled;
+
     public bool IsHeld { get; private set; }
+
     public PlayerFieldEnemyControlLease(GameObject actor)
     {
         _driver = actor.GetComponent<EnemyNetworkController>();
         _health = actor.GetComponent<EnemyHealth>();
         _body = actor.GetComponent<Rigidbody2D>();
     }
-    public bool CanControl => _driver != null && _driver.IsSpawned && _driver.IsServer &&
-        (_driver.enabled || IsHeld) && _health != null && _health.IsSpawned && _health.CurrentHealth > 0;
+
+    // 서버·스폰 여부는 네트워크 드라이버에서, 생존 여부는 체력에서 확인합니다.
+    public bool CanControl =>
+        _driver != null && _driver.IsSpawned && _driver.IsServer &&
+        (_driver.enabled || IsHeld) &&
+        _health != null && _health.CurrentHealth > 0;
+
     public bool TryAcquire()
     {
         if (!CanControl) return false;
@@ -26,6 +33,7 @@ public sealed class PlayerFieldEnemyControlLease
         if (_body != null) _body.linearVelocity = Vector2.zero;
         return true;
     }
+
     public void Release()
     {
         if (!IsHeld) return;

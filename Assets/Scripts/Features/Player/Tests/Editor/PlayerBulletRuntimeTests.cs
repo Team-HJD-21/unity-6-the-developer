@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 public sealed class PlayerBulletRuntimeTests
@@ -187,12 +188,19 @@ public sealed class PlayerBulletRuntimeTests
     [Explicit("Initial_Stage의 실제 NGO Host에서 서버 적 피해를 확인할 때 실행")]
     public IEnumerator ServerEnemy_TakesDamageOnceFromTriggerProjectile()
     {
+        const string scenePath = "Assets/Scenes/Gameplay/Initial_Stage.unity";
+        // CLI의 빈 씬에서도 서버 적을 생성하고 SetUp의 탄환·발사대는 유지합니다.
+        if (!SceneManager.GetSceneByPath(scenePath).isLoaded)
+            yield return SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+
         EnemyHealth health = null;
         float deadline = Time.realtimeSinceStartup + 20f;
         while (health == null && Time.realtimeSinceStartup < deadline)
         {
-            health = Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None)
-                .FirstOrDefault(candidate => candidate.IsServer && candidate.IsSpawned && candidate.CurrentHealth > 1);
+            health = Object.FindObjectsByType<EnemyNetworkController>(FindObjectsSortMode.None)
+                .Where(driver => driver.IsServer && driver.IsSpawned)
+                .Select(driver => driver.GetComponent<EnemyHealth>())
+                .FirstOrDefault(candidate => candidate != null && candidate.CurrentHealth > 1);
             yield return null;
         }
         Assert.That(health, Is.Not.Null, "Initial_Stage의 실제 서버 스폰 적이 필요합니다.");
