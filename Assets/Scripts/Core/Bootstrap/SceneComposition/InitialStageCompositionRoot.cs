@@ -35,6 +35,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IMatchEnvironmentSource _environmentReplica;
         public MatchCoordinator MatchCoordinator => _coordinator;
         public IMatchEnvironmentSource EnvironmentSource => _matchSession?.Environment ?? _environmentReplica;
+        public double LastSpatialRefreshMilliseconds { get; private set; } = double.NaN;
+        public double LastTopologyRefreshMilliseconds { get; private set; } = double.NaN;
+        private static readonly Unity.Profiling.ProfilerMarker SpatialMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Battlefield.SampleAndPublish");
+        private static readonly Unity.Profiling.ProfilerMarker TopologyMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Battlefield.TopologyAndPublish");
         private RegionSceneBinding _regionBinding;
         private TurretMatchBinding _turretBinding;
         private MatchPlayerActorScope _playerActors;
@@ -148,6 +152,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
                 _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning));
+                session.InitializeSpawnSources(
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
+                    _coordinator.GameplayCancellation);
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
@@ -178,6 +185,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         throw new InvalidOperationException("The Stage Encounter consumer must support the explicit environment query port.");
                     environmentConsumer.BindEnvironment(matchId, () => HasCurrentMatch && _matchSession != null &&
                         _matchSession.IsGameplayRunning ? _matchSession.Environment?.Snapshot : null);
+                    if (!(_encounterConsumer is IEncounterSpawnContextConsumer spawnConsumer))
+                        throw new InvalidOperationException("Encounter must explicitly consume the current Match spawn scope.");
+                    spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _coordinator, config.RandomSeed, _coordinator.GameplayCancellation);
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
                     if (network != null)
@@ -226,6 +236,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (consumer == null || !consumer.isActiveAndEnabled || !(consumer is IAppOwnedEncounterMatchConsumer))
                 throw new ArgumentException("An active App-owned Encounter consumer is required.", nameof(consumer));
             _encounterConsumerBehaviour = consumer;
+            var configurations = FindSceneBehaviours().OfType<IEncounterSceneConfiguration>().ToArray();
+            if (configurations.Length != 1)
+                throw new InvalidOperationException("The Match Scene requires one explicit Encounter execution configuration.");
+            configurations[0].ConfigureEncounter((IEncounterMatchConsumer)consumer);
         }
 
         /// <summary>준비 응답 전에 양쪽 Scene의 슬롯·콘텐츠·필수 제작 연결을 검사합니다.</summary>
@@ -468,7 +482,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 try { consumer?.UnbindMatch(matchId); }
-                finally { (consumer as IEncounterEnvironmentConsumer)?.UnbindEnvironment(matchId); }
+                finally
+                {
+                    try { (consumer as IEncounterEnvironmentConsumer)?.UnbindEnvironment(matchId); }
+                    finally { (consumer as IEncounterSpawnContextConsumer)?.UnbindSpawnContext(matchId); }
+                }
             }
             catch (Exception exception)
             {
@@ -505,7 +523,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void OnTurretLayoutChanged()
         {
             if (!HasCurrentMatch || _turretInputSource == null) return;
-            _matchHost.UpdateBattlefieldTurretLayout(_turretInputSource.CaptureTurretLayout());
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                using (TopologyMarker.Auto()) _matchHost.UpdateBattlefieldTurretLayout(_turretInputSource.CaptureTurretLayout());
+            }
+            finally { LastTopologyRefreshMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000d / System.Diagnostics.Stopwatch.Frequency; }
         }
 
         private IBattlefieldEnemyPositionSource[] FindEnemyPositionSources()
@@ -523,6 +546,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (!_matchSession.IsGameplayRunning) return;
 
             _nextBattlefieldSampleTime = Time.unscaledTime + BattlefieldSampleInterval;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try { using (SpatialMarker.Auto()) RefreshDynamicInput(); }
+            finally { LastSpatialRefreshMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000d / System.Diagnostics.Stopwatch.Frequency; }
+        }
+
+        private void RefreshDynamicInput()
+        {
             var players = new List<PlayerSpatialInput>(_playerActors.Actors.Count);
             foreach (KeyValuePair<PlayerId, GameObject> actor in _playerActors.Actors)
             {

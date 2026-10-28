@@ -40,6 +40,10 @@ public sealed class CoreSceneFlowIntegrationTests
         var firstMatch = app.CurrentMatchId;
         var previousExecutors = Object.FindObjectsByType<EnemySpawnExecutor>(FindObjectsSortMode.None);
         int authoredExecutorCount = previousExecutors.Length;
+        var configuration = scene.GetComponent<EncounterSceneConfiguration>();
+        Assert.That(configuration, Is.Not.Null);
+        Assert.That(Object.FindAnyObjectByType<EnemyNetworkTestLauncher>().ExecutionTarget, Is.SameAs(configuration.SpawnExecutor),
+            "Production must use the authored executor rather than FindAnyObjectByType.");
         var player = Object.FindAnyObjectByType<PlayerControlState>();
         var menu = app.LocalInput.Acquire("test-menu");
         var popup = app.LocalInput.Acquire("test-popup");
@@ -68,6 +72,8 @@ public sealed class CoreSceneFlowIntegrationTests
         foreach (var executor in currentExecutors) Assert.That(executor.gameObject.scene.path, Is.EqualTo(Stage));
         Assert.That(Object.FindObjectsByType<Unity.Netcode.NetworkManager>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
         var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        Assert.That(launcher.ExecutionTarget, Is.SameAs(scene.GetComponent<EncounterSceneConfiguration>().SpawnExecutor),
+            "The persistent consumer must receive the reloaded Scene's authored executor.");
         deadline = Time.realtimeSinceStartup + 15;
         while (launcher.ActiveEnemyCount == 0 && Time.realtimeSinceStartup < deadline) yield return null;
         Assert.That(launcher.ActiveEnemyCount, Is.GreaterThan(0), "Reload must bind the new Scene executor and SpawnPoints.");

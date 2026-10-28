@@ -1,13 +1,18 @@
 # The Developer — Project Documentation
 
+수정일: 2026-10-28
+상태: 현행 PL 기준 / Core 5·6주차 구현·기술 검증 및 팀 인수 자료. 제품·팀 플레이 Gate와 구분한다.
+
 최근 진행 공유: [10월 27일 주간 보고](planning/2026-10-27-weekly-progress.md) — Core 조작 검증 경로, Enemy 로직·네트워크 경계, Weather·환경 후보와 파트별 후속 목표. 구현 완료나 새 Sprint 확정이 아니다.
 
-수정일: 2026-10-24
-상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
 ## 현재 기준
+
+이번 Core 배치의 결과·검증 수준·수동 확인 순서·Issue/PR 경계는 [5·6주차 인수 문서](planning/2026-10-26-core-sprint-handoff.md)를 먼저 읽는다. **2026-10-28부터 실제 작업 프로젝트 `D:/Dev/Unity/Unity_3D_CBC`의 `codex/core-sprint-20261026-integration` 브랜치에서 구현·검토한다.** 기존 Validation 폴더는 검증 이력 보존용이다. CU 초기화 #569는 main에 반영됐고, 나머지 Core 통합은 로컬 검토 대상이다.
+
+2026-10-28 PL이 현재 프로젝트의 요청된 수동 확인을 모두 수행하고 이상 없음을 보고했다. [수동 인수 기록](planning/2026-10-28-core-acceptance.md)은 그 범위·자동 증거·분할 PR 조건과 팀 Build/실제 Player 연계의 잔여를 구분한다. Network 전파 자료는 [Network Match 구조와 Feature 연결](architecture/network-match-api.md)을 따른다. 낮밤용 공용 서버 시계·예약 실행은 협의 중이며 아직 Runtime에 구현되지 않았다.
 
 운영 화면과 전환은 [ScreenManager](architecture/screen-management-api.md) / [SceneFlowController](architecture/scene-flow-api.md)를 따른다. 실제 CU 결과·재시작·우주선 복귀 버튼까지 연결했으며, 원격 Player/공동 Scene 이동과 외형 수동 인수는 별도다.
 
@@ -51,6 +56,8 @@
 김진태와 황재동의 담당 영역을 포함해 각 역할은 자신의 제품 영역과 관련 Task의 구현·검증·인수 기준을 끝까지 책임진다.
 
 ## 폴더 안내
+
+2026-10-26 Core 구현 진입점: [배치·검증 기록](planning/2026-10-26-core-sprint-implementation.md), [운영 책임](architecture/match-management-responsibilities.md), [Scene](architecture/scene-flow-api.md), [화면](architecture/screen-management-api.md), [환경](architecture/match-environment-api.md), [origin/source](architecture/encounter-spawn-origin-api.md). 구현 증거와 팀 통합 Gate를 구분하며 이전 날짜의 성공을 최신 head에 소급하지 않는다.
 
 새 문서의 배치·이동·보관 방법은 [Docs 정리 규칙](DOCS_ORGANIZATION_RULES.md)을 따른다.
 

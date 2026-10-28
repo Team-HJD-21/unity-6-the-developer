@@ -16,6 +16,7 @@ namespace TeamHJD.Game.Application
         private readonly BattlefieldSpatialRuntime _battlefield;
         private RegionRuntime _regions;
         private MatchEnvironmentRuntime _environment;
+        private EncounterSpawnSourceRegistry _spawnSources;
         private bool _isDisposed;
         private bool _isCompleting;
         public bool IsDisposed => _isDisposed;
@@ -29,6 +30,14 @@ namespace TeamHJD.Game.Application
         public IMatchEventStream Events => _eventBus;
         public IRegionGridSource Regions => _regions;
         public IMatchEnvironmentSource Environment => _environment;
+        public IEncounterSpawnSourceRegistry SpawnSources => _spawnSources;
+        public IEncounterSpawnSourceRegistry InitializeSpawnSources(Func<bool> mayWrite, System.Threading.CancellationToken gameplay)
+        {
+            ThrowIfDisposed();
+            if (_spawnSources != null) throw new InvalidOperationException("Spawn sources are already initialized.");
+            _spawnSources = new EncounterSpawnSourceRegistry(Config.MatchId, mayWrite, gameplay);
+            return _spawnSources;
+        }
 
         public IMatchEnvironmentSource InitializeEnvironment(IMatchClock clock, Func<bool> mayWrite)
         {
@@ -205,6 +214,7 @@ namespace TeamHJD.Game.Application
             DisposeOwned(_eventBus.Dispose, errors);
             DisposeOwned(_battlefield.Dispose, errors);
             if (_environment != null) DisposeOwned(_environment.Dispose, errors);
+            if (_spawnSources != null) DisposeOwned(_spawnSources.Dispose, errors);
             if (_regions != null) DisposeOwned(_regions.Dispose, errors);
             if (errors.Count > 0) throw new AggregateException("Match cleanup failed after releasing all owned resources.", errors);
         }

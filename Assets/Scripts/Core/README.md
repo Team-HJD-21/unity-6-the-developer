@@ -1,6 +1,18 @@
 # Core Foundation
 
+## 실행할 프로젝트와 메뉴
+
+현재 작업 프로젝트는 `D:/Dev/Unity/Unity_3D_CBC`이며 브랜치는 `codex/core-sprint-20261026-integration`입니다. 2026-10-28에 최신 main과 전체 Core 통합을 이 폴더에 반영했습니다. Validation 폴더는 과거 검증 이력이며 실행 프로젝트를 그쪽으로 바꾸지 않습니다.
+
+`Assets/Scenes/Gameplay/Initial_Stage.unity`에서 Play Mode를 시작하고 Game 화면을 클릭한 뒤 **Escape**를 누르면 운영 메뉴가 열립니다. `AppRoot.Update()`가 `AppScreenPresenter.Render()`를 호출하고, Escape 입력이 `ScreenManager.ShowMenu()` 또는 `Back()`으로 전달됩니다. 메뉴는 로컬 입력을 잠그며 공유 Match 시간을 정지하지 않습니다.
+
 ## 2026-10-26 Match 운영 연결
+
+새 API 문서: [환경 context](../../../Docs/architecture/match-environment-api.md) · [추가 생성 origin/source](../../../Docs/architecture/encounter-spawn-origin-api.md). Host의 실제 Weather → 불변 Match 환경 → Enemy 정책 소비를 연결했습니다. source가 없는 World 점/영역 요청과 동적 source도 기존 Enemy Planner/Executor를 사용하며, 지연·취소·공통 공간/사망 추적·Match 정리로 이어집니다. 실제 시간대 원본과 나무 AI/지면·공중 연출은 별도 Feature입니다.
+
+`EncounterSceneConfiguration`이 실제 EnemySpawnRoot를 제작 참조로 연결합니다. Scene 재로드 시 App의 persistent consumer에 새 참조를 전달하므로 여러 Executor 중 임의 선택하지 않습니다. Game Debugger Encounter에는 World origin/게임 시간 지연 요청을, Overview/Statistics에는 현재 환경과 요청에 쓰인 환경·origin/source를 추가했습니다.
+
+성능 관측은 Unity adapter의 `TeamHJD.Battlefield.SampleAndPublish`, `TopologyAndPublish`, `TeamHJD.Encounter.Plan`, `SpawnAndCommit` Profiler marker와 요청별 계획/생성 시간입니다. Domain/Application은 Unity에 의존하지 않습니다. 값이 없는 과거 기록은 N/A이며 Editor/headless 측정을 제품 frame-budget 보장으로 해석하지 않습니다.
 
 Scene 전환은 [SceneFlowController API](../../../Docs/architecture/scene-flow-api.md)를 따른다. Bootstrap은 실제 UnitySceneFlow를 사용하고 NGO 연결 뒤에는 단독 Host용 NGO Scene driver를 연결한다. 소유자별 입력 잠금은 Player의 사망/Match 상태와 별개이며 서로의 잠금을 풀지 않는다. 실제 Initial_Stage 재로드→새 Match/CU/Enemy→우주선 복귀를 검사했다. 결과/로딩 화면도 연결했으며 다중 참가자 Scene 이동 완료는 아니다.
 
@@ -407,7 +419,7 @@ BattlefieldSpatialSnapshot snapshot = session.Battlefield;
 - `AppRoot.StartMatch(..., staticInput, dynamicInput, gridConfiguration)`: Match 조립부가 초기 spatial inputs 및 Grid 설정을 전달하는 진입점. 반환된 `MatchSession`을 Encounter 등 필요한 소비자에게 명시적으로 넘깁니다.
 - `MatchSession.Battlefield`: Match가 소유한 최신 immutable snapshot 조회.
 - `MatchSession.UpdateBattlefieldParticipants(...)`: Player/Enemy 위치 갱신을 전달해 Grid만 다시 계산.
-- `IBattlefieldTurretInputSource` / `FieldTurretBattlefieldInputSource`: Edit Mode에서는 활성 Scene에 배치된 Turret 위치로 미리보기를 만들고, Play Mode에서는 해당 Scene의 배치·활성 Turret 중 파괴되지 않은 위치를 Core의 불변 공간 입력으로 투영합니다. 과열 등 일시 비작동 상태여도 배치 위치는 유지합니다. Play Mode 배치 변경은 layout이 실제로 달라질 때만 Match topology를 다시 계산합니다. Debug 창에서 Source 컴포넌트를 Scene에 추가해야 함.
+- `IBattlefieldTurretInputSource` / `TurretBattlefieldInputSource`: Edit Mode에서는 활성 Scene에 배치된 Turret 위치로 미리보기를 만들고, Play Mode에서는 해당 Scene의 배치·활성 Turret 중 파괴되지 않은 위치를 Core의 불변 공간 입력으로 투영합니다. 과열 등 일시 비작동 상태여도 배치 위치는 유지합니다. Play Mode 배치 변경은 layout이 실제로 달라질 때만 Match topology를 다시 계산합니다. Debug 창에서 Source 컴포넌트를 Scene에 추가해야 함.
 - `IBattlefieldEnemyPositionSource`: Scene 조립부가 Spawn된 Enemy의 위치 값만 받을 수 있는 계약. `EnemySpawnExecutor` 구현은 현재 executor가 배치된 Scene에서만 동작.
 - `MatchSession.UpdateBattlefieldTurretLayout(...)`: Turret layout 변경을 전달해 Territory와 Grid 모두 다시 계산.
 - `MatchSession.ReconfigureBattlefieldGrid(...)`: Origin/맵 크기/가로·세로 분할 변경을 Match 중 적용.
@@ -416,7 +428,7 @@ BattlefieldSpatialSnapshot snapshot = session.Battlefield;
 
 실제 팀 통합에서 열려 있는 연결 지점도 분명히 구분해야 합니다.
 
-1. **Turret → Core 입력 Adapter:** `FieldTurretBattlefieldInputSource`가 Scene의 활성 Turret 위치를 Core `TurretSpatialInput`으로 투영합니다. Edit Mode 미리보기는 활성 Turret 배치를 사용하고, Play Mode는 파괴되지 않은 배치 Turret을 사용합니다. 과열은 firing availability만 일시 중지하고 Battlefield 배치 입력에는 영향을 주지 않습니다. ID는 실행 중의 instance ID, 위치는 Unity world XY이며 Match Runtime에는 값 객체만 들어갑니다. Debug 창의 `Add Turret Battlefield Input Source to Active Scene`으로 해당 Scene에 컴포넌트를 추가해야 런타임 구독이 활성화됩니다. 이 ID는 Match-local 임시 값이며 저장/네트워크 식별자로 취급하지 않습니다.
+1. **Turret → Core 입력 Adapter:** `TurretBattlefieldInputSource`가 Scene의 활성 Turret 위치를 Core `TurretSpatialInput`으로 투영합니다. Edit Mode 미리보기는 활성 Turret 배치를 사용하고, Play Mode는 파괴되지 않은 배치 Turret을 사용합니다. 과열은 firing availability만 일시 중지하고 Battlefield 배치 입력에는 영향을 주지 않습니다. ID는 실행 중의 instance ID, 위치는 Unity world XY이며 Match Runtime에는 값 객체만 들어갑니다. Debug 창의 `Add Turret Battlefield Input Source to Active Scene`으로 해당 Scene에 컴포넌트를 추가해야 런타임 구독이 활성화됩니다. 이 ID는 Match-local 임시 값이며 저장/네트워크 식별자로 취급하지 않습니다.
 2. **Match 생성자 → 다른 Runtime Feature:** `AppRoot`는 현재 Match를 private하게 보유하고, `StartMatch` 반환값 외에 `CurrentMatch` 조회 API가 없습니다. 현재는 Match를 만든 조립자가 `MatchSession`을 필요한 Feature에 주입해야 합니다. 서로 독립된 Feature가 나중에 임의로 현재 Match를 조회해야 한다면, static 접근자를 추가하기보다 Match-scope composition/injection API를 별도로 열어야 합니다.
 3. **위치 입력 공급자/갱신 cadence:** Initial Stage composition은 실제 Player actor와 `IBattlefieldEnemyPositionSource` 구현에서 위치를 0.1초 간격으로 수집합니다. XY 좌표가 Grid cell을 바꾼 경우에만 새 immutable 입력으로 Grid snapshot을 갱신합니다. EnemySpawnExecutor는 Spawn된 NGO object의 ID/XY만 제공하도록 연결되어 있으며 사용자가 Play Mode에서 Enemy 점유 표시까지 확인했습니다. 이는 Match의 Player/Enemy 전투 상태 권위 연결이나 네트워크 갱신 모델 검증은 아닙니다.
 4. **Enemy/Encounter 소비:** Core는 `MatchSession.Battlefield` snapshot을 producer-side로 제공하고, Scene의 `IEncounterMatchConsumer`에 최신 조회 함수를 바인딩합니다. `EnemyNetworkTestLauncher`는 첫 자동 요청과 `IEncounterDebugCommandTarget` 수동 요청을 같은 `EncounterRuntime.TrySpawn(...)`에 전달합니다. Enemy 쪽 임시 공간 정책이 후보 셀·적 밀도·전선 거리를 사용합니다. Core의 전선/Grid 계산 자체가 Spawn을 명령하지는 않습니다.

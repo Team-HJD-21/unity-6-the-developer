@@ -4,7 +4,9 @@
 
 ## 지역 데이터와 실제 연결
 
-2026-10-26 초기화 연결: Scene 준비 검사는 CU·Controller 일치/활성·Grid 범위를 읽기 전용으로 확인한다. Host 조립은 D Match lease → MatchSession 시작 → `ConfigureUnlockZones(cuPosition)` → Core RegionAccessPolicy 연결 순서다. Inspector `unlockZoneCount`를 사용하며 false/예외를 무시하지 않고 조립을 rollback한다. Dynamic 시작은 설정을 검증하지만 정적 잠금을 적용하지 않는다. Client는 이 초기화를 실행하지 않고 Host의 지역 snapshot을 연결한다. 모드 Reset 이후 변경은 RegionRuntime 하나를 통해 쓰며 D의 구역 API를 다시 호출하지 않는다.
+2026-10-28 main 통합 후 초기화 연결: Scene 준비 검사는 CU·FieldTurretController 일치/활성·Grid 범위와 Inspector 구역 수를 읽기 전용으로 확인한다. Host 조립은 D Match lease → MatchSession 시작 → `ConfigureUnlockZones(cuPosition)` → Core RegionAccessPolicy 연결 순서다. 초기화 false/예외는 무시하지 않고 조립을 rollback한다. Dynamic 시작은 설정을 검증하지만 정적 잠금을 적용하지 않는다. Client는 이 초기화를 실행하지 않고 Host의 지역 snapshot을 연결한다. 모드 Reset 이후 변경은 RegionRuntime 하나를 통해 쓰며 D의 구역 API를 다시 호출하지 않는다.
+
+CU 명시 초기화만 최신 main에 독립 적용한 PR은 #569다. 해당 PR은 Host/Client 수명·공용 명령을 포함하지 않으며 #495 전체를 완료 처리하지 않는다. 이 통합 브랜치는 독립 PR의 의도를 포함하면서 기존 Host lease·Scene 준비·실패 정리 경계를 유지한다.
 
 | 진입점 | 역할 |
 | --- | --- |

@@ -96,7 +96,7 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 1. `Assets/Scripts/Core/Domain/Regions/RegionGridDefinition.cs`: 공간과 셀의 정적 소속. 점령 여부는 여기 없음.
 2. `RegionGridState.cs` / `RegionGridSnapshot.cs`: 셀 점령 변경과 불변 결과. Polygon을 보관하지 않음.
 3. `Assets/Scripts/Core/Application/Regions/RegionRuntime.cs`: Match/Grid 세대·revision 검증, 명시적 Reset, 변경 통지와 종료.
-4. `Assets/Scripts/Features/FieldTurrets/Core/FieldTurretRegionGridAdapter.cs`: 황재동의 별도 Grid 값을 Core 정의로 변환. 터렛 입력도 실제 값만 복사.
+4. `Assets/Scripts/Features/Turrets/Core/TurretRegionGridAdapter.cs`: 황재동의 별도 Grid 값을 Core 정의로 변환. 터렛 입력도 실제 값만 복사.
 5. `DynamicRegionCapturePolicy.cs` / `TriangleGridRasterizer.cs`: 임시 들로네 계산과 양의 교차 면적 셀 선택.
 6. `RegionAccessPolicy.cs`: Static은 Grid의 사용 가능 상태를 읽고 Dynamic은 지역 잠금을 적용하지 않음.
 7. `Assets/Scripts/Core/Bootstrap/SceneComposition/RegionSceneBinding.cs`: 실제 황재동 상태를 Match 소유 지역 Runtime에 연결. 정책 변경·활성 입력 갱신·정리 담당.
@@ -107,7 +107,7 @@ PR은 아직 생성하지 않는다. 기반 코드와 실제 Scene 사용 전환
 12. `RegionReplicationSession.cs` / `NgoRegionSnapshotTransport.cs`: Host 원본의 최신 전체 전송·Client 읽기 모델·종료.
 13. `ILocalPlayerActorConsumer.cs` / `InitialStagePlayerHUD.cs`: 실제 로컬 actor의 준비·주입·대기·해제. UI는 생성자가 아님.
 
-공간 정의에 재사용한 `BattlefieldGridConfiguration`은 좌표/분할 값만 가진 불변 타입이다. 지역 상태가 Battlefield의 Enemy/Player 점유 상태를 참조·변경하는 것은 아니다. 황재동의 `FieldTurretGridConfiguration`도 명시적 값 변환을 거쳐 사용한다.
+공간 정의에 재사용한 `BattlefieldGridConfiguration`은 좌표/분할 값만 가진 불변 타입이다. 지역 상태가 Battlefield의 Enemy/Player 점유 상태를 참조·변경하는 것은 아니다. 황재동의 `TurretGridConfiguration`도 명시적 값 변환을 거쳐 사용한다.
 
 ## 수명·사용 규약
 
@@ -253,7 +253,7 @@ Windows 검증 `NetworkPair/20261015T092844Z-ecaeb39a`: Host PID 42472 / Client 
 
 ON/OFF·CU 자동 활성화·레벨 승급/강등·정의 ID 기반 강화/강등을 지원한다. 전력·열·배치·프리팹 교체는 D에 남긴다. 같은 요청은 실패/거부도 기록해 재실행하지 않고 변경된 의도는 충돌로 거부한다. 자동 활성화의 Accepted는 작업 시작이며 모든 터렛의 활성화 완료가 아니다. 예외는 일부 부작용 가능성이 있어 ExecutionFailed로 확정한다.
 
-`FieldTurretController.BindMatchScope`는 Core가 임대한 제어 수명이다. 정식 Scene에서는 첫 Match 전·Client·Match 종료 후 직접 D 쓰기를 거부한다. 종료는 먼저 쓰기 권한과 자동 큐를 닫고 예약을 해제한다. 체력·강화·개별 열 상태를 초기화하거나 실제 D 개체를 파괴하지 않는다. 기존 D 단독 Scene에는 이 필수 수명을 임의로 강제하지 않는다.
+`TurretController.BindMatchScope`는 Core가 임대한 제어 수명이다. 정식 Scene에서는 첫 Match 전·Client·Match 종료 후 직접 D 쓰기를 거부한다. 종료는 먼저 쓰기 권한과 자동 큐를 닫고 예약을 해제한다. 체력·강화·개별 열 상태를 초기화하거나 실제 D 개체를 파괴하지 않는다. 기존 D 단독 Scene에는 이 필수 수명을 임의로 강제하지 않는다.
 
 검증 결과:
 

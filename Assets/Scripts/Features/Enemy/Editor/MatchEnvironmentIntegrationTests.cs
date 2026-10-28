@@ -75,6 +75,24 @@ public sealed class MatchEnvironmentIntegrationTests
         Assert.That(imported.SpawnDecisions[0].EnvironmentRevision, Is.EqualTo(changed.Revision));
         Assert.That(imported.SpawnDecisions[0].EnvironmentPolicy, Is.EqualTo("validation-rain-half"));
 
+        // 잘못된 실제 Feature 정책의 예외도 확정 결과로 기록하고 자동 재실행하지 않습니다.
+        int aliveBeforeFailure = launcher.ActiveEnemyCount;
+        rule.FindPropertyRelative("budgetScale").floatValue = float.NaN;
+        authoring.ApplyModifiedPropertiesWithoutUndo();
+        // Scene의 검증된 발행자는 기존 호환 진입점이 선택합니다.
+        Assert.That(launcher.TryRequestCurrentEncounter("Normal", 10, EncounterRequestSource.DebugWindow, out _), Is.False);
+        var failure = launcher.RecentDiagnostics.Last(item => item.Kind == GameDiagnosticKind.RequestFailed);
+        Assert.That(failure.IsExecutionCountUnknown, Is.True);
+        Assert.That(failure.Message, Does.Contain("ExecutionFailed"));
+        Assert.That(launcher.ActiveEnemyCount, Is.EqualTo(aliveBeforeFailure));
+        Assert.That(failure.WithoutSpawnDecision().IsExecutionCountUnknown, Is.True);
+        run.Events.Add(TeamHJD.Game.Editor.GameDebugEventEntry.Copy(failure));
+        var failureRoundTrip = TeamHJD.Game.Editor.GameDebugExport.FromJson(TeamHJD.Game.Editor.GameDebugExport.ToJson(run));
+        Assert.That(failureRoundTrip.Events[0].IsExecutionCountUnknown, Is.True);
+        Assert.That(TeamHJD.Game.Editor.GameDebugExport.EventsCsv(run), Does.Contain("execution_counts_known"));
+        rule.FindPropertyRelative("budgetScale").floatValue = .5f;
+        authoring.ApplyModifiedPropertiesWithoutUndo();
+
         // Client World 표현은 수신값만 적용하고 자체 Random/CountTick을 진행하지 않습니다.
         var view = new GameObject("validation-replica-weather").AddComponent<WeatherManager>();
         using (view.BindReplica(changed.MatchId))

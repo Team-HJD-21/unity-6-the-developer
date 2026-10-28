@@ -99,10 +99,14 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 `AppRoot.BattlefieldSnapshotChanged` 및 `CurrentBattlefieldSnapshot`은 `UNITY_EDITOR` 진단 경로다. 게임 Feature는 조립부가 주입한 session/provider를 사용한다. [Game Debugger 사용법](../tooling/game-debugger-guide.md)은 이 게임 계약과 도구 UI를 구분해 설명한다.
 
-## 2026-10-27 조작 요청 검증 방향
-
-Player 등 호출 파트 → Core/Match의 권한·매치 진행 상태 검증 → FieldTurret 명령 API를 우선 설계 방향으로 삼는다. 현재 로컬 API에 원격 검증이 이미 붙었다는 뜻은 아니다. 조회 API 이동, 상태의 최종 권한, 실패 응답·동기화 계약은 후속 합의다. Enemy는 실행 로직과 네트워크 전달 계층을 분리하는 중이며 양현석의 기반 권한 작업이 개별 객체 동기화를 모두 대신하지 않는다. [주간 보고](../planning/2026-10-27-weekly-progress.md)
-
 ## 환경 조회와 Encounter
 
 [Match 환경 API](match-environment-api.md)를 따른다. `AppRoot.CurrentEnvironment`는 불변 현재 값이다. World 쓰기/타이머는 Host Match lease에, Client는 replica에만 연결한다. 공통 Encounter 요청이 최신 Battlefield와 환경을 권위 측에서 조회하므로 호출자가 Client 날씨/좌표를 권위 상태로 제출하지 않는다. Debugger의 현재 환경과 각 요청의 사용 환경 revision을 구분한다.
+
+## 추가 생성과 source
+
+[origin/source API](encounter-spawn-origin-api.md)의 `IEncounterOriginRequestTarget` 또는 `IEncounterRequestService`를 조립부에서 주입받는다. `AtPoint`, `AtWorld`, `FromSource`를 구분하고 source lease의 등록 generation을 보존한다. 같은 요청 재전송은 GUID를 유지한다. 지연 등록은 실제 생성 성공이 아니며 현재 Match clock과 취소 수명을 따른다. 현재 지면/공중 실제 전이는 명시 미지원이다.
+
+## 2026-10-27 조작 요청 검증 방향
+
+Player 등 호출 파트 → Core/Match의 권한·매치 진행 상태 검증 → FieldTurret 명령 API를 우선 설계 방향으로 삼는다. 이는 회의 당시의 방향 기록이다. 이 통합 브랜치에는 명시적인 Host 요청 gateway와 Feature 실행 경계가 연결돼 있으며 실제 Player/Feature 전체 동기화와 구분한다. 조회 API 이동, 상태의 최종 권한, 실패 응답·동기화 계약은 후속 합의다. Enemy는 실행 로직과 네트워크 전달 계층을 분리하는 중이며 양현석의 기반 권한 작업이 개별 객체 동기화를 모두 대신하지 않는다. [주간 보고](../planning/2026-10-27-weekly-progress.md)

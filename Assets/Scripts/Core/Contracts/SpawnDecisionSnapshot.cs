@@ -22,12 +22,19 @@ namespace TeamHJD.Game.Contracts
         public string Outcome {get;}
         public MatchEnvironmentSnapshot Environment {get;}
         public string EnvironmentPolicy {get;}
+        public EncounterSpawnPlacement Placement {get;}
+        public double PlanningMilliseconds {get;}
+        public double SpawningMilliseconds {get;}
         public SpawnDecisionSnapshot(BattlefieldSpatialSnapshot battlefield, IEnumerable<Candidate> candidates,
             IEnumerable<Plan> plans, IEnumerable<Actual> actuals, string outcome,
             string policy = "Lowest cell enemy pressure → nearest frontline → ordinal point ID; complete preset sets only",
-            MatchEnvironmentSnapshot environment = null, string environmentPolicy = "")
+            MatchEnvironmentSnapshot environment = null, string environmentPolicy = "", EncounterSpawnPlacement placement = null,
+            double planningMilliseconds = double.NaN, double spawningMilliseconds = double.NaN)
         {
             Environment = environment; EnvironmentPolicy = environmentPolicy ?? "";
+            Placement = placement;
+            ValidateTiming(planningMilliseconds); ValidateTiming(spawningMilliseconds);
+            PlanningMilliseconds = planningMilliseconds; SpawningMilliseconds = spawningMilliseconds;
             Grid=battlefield.Grid.Configuration;
             Cells=Array.AsReadOnly(battlefield.Grid.OccupiedCells.Take(MaximumGeometry)
                 .Select(c=>new Cell(c.X,c.Y,c.PlayerCount,c.TurretCount,c.EnemyCount)).ToArray());
@@ -43,6 +50,10 @@ namespace TeamHJD.Game.Contracts
                 +Math.Max(0,battlefield.Grid.OccupiedCells.Count-MaximumGeometry)+Math.Max(0,battlefield.FrontlineEdges.Count-MaximumGeometry);
             Policy=policy;
             Outcome=outcome;
+        }
+        private static void ValidateTiming(double value)
+        {
+            if (double.IsInfinity(value) || value < 0) throw new ArgumentOutOfRangeException(nameof(value));
         }
         public sealed class Cell
         {

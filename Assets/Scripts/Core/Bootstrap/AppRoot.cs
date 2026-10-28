@@ -32,6 +32,7 @@ namespace TeamHJD.Game.Bootstrap
         public RegionReplicationSession NetworkRegions => Services?.NetworkRegions;
         public EnvironmentReplicationSession NetworkEnvironments => Services?.NetworkEnvironments;
         public MatchEnvironmentSnapshot CurrentEnvironment => Services?.NetworkEnvironments?.Source?.Snapshot ?? _currentMatch?.Environment?.Snapshot;
+        public IEncounterSpawnSourceRegistry CurrentSpawnSources => _currentMatch?.SpawnSources;
 
         public EnvironmentReplicationSession AttachEnvironmentTransport(IMatchEnvironmentTransport transport)
         { ThrowIfUnavailable(); return Services.AttachEnvironmentTransport(transport); }

@@ -94,6 +94,70 @@ public sealed class SpawnCompositionPlanner
         return TryBuildInstructions(request, points, battlefield, out instructions);
     }
 
+    /// <summary>명시 지점 또는 World 영역을 같은 공간 배분 정책과 분대 구성으로 계획합니다.</summary>
+    public bool TryPlanOrigin(SpawnRequest request, SpawnPointRegistry points, BattlefieldSpatialSnapshot battlefield,
+        MatchEnvironmentSnapshot environment, EncounterEnvironmentProfile profile, EncounterSpawnPlacement placement,
+        out IReadOnlyList<SpawnInstruction> instructions)
+    {
+        instructions = Array.Empty<SpawnInstruction>();
+        LastEnvironment = environment; LastEnvironmentPolicy = "neutral";
+        LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>();
+        if (battlefield == null || placement == null || (environment != null && environment.MatchId != battlefield.MatchId)) return false;
+        if (profile != null) { request = profile.Select(request, environment, out var rule); LastEnvironmentPolicy = rule; }
+        if (!TryReadPreset(request, out var preset, out int sets)) return false;
+        var candidates = new List<SpatialSpawnCandidate>();
+        var areas = new Dictionary<string, SpawnArea>(StringComparer.Ordinal);
+        bool authored = placement.Origin.Kind == SpawnOriginKind.AuthoredPoint;
+        if (authored)
+        {
+            if (points == null || !points.TryGetSpawnPoint(placement.Origin.PointId.Value, out var point) || !point.CanSpawnEnemies) return false;
+            candidates.Add(new SpatialSpawnCandidate(point.SpawnPointId, new BattlefieldPoint(point.Position.x, point.Position.y)));
+        }
+        else
+        {
+            var area = placement.Area; var grid = battlefield.Grid.Configuration;
+            double left = Math.Max(grid.MinimumX, area.Center.X - area.Width / 2), right = Math.Min(grid.MaximumX, area.Center.X + area.Width / 2);
+            double bottom = Math.Max(grid.MinimumY, area.Center.Y - area.Height / 2), top = Math.Min(grid.MaximumY, area.Center.Y + area.Height / 2);
+            if (right < left || top < bottom || left >= grid.MaximumX || bottom >= grid.MaximumY) return false;
+            int x0 = Math.Max(0, (int)Math.Floor((left - grid.MinimumX) / grid.CellWidth));
+            int x1 = Math.Min(grid.CellsX - 1, (int)Math.Floor((right - grid.MinimumX) / grid.CellWidth));
+            int y0 = Math.Max(0, (int)Math.Floor((bottom - grid.MinimumY) / grid.CellHeight));
+            int y1 = Math.Min(grid.CellsY - 1, (int)Math.Floor((top - grid.MinimumY) / grid.CellHeight));
+            if ((long)(x1 - x0 + 1) * (y1 - y0 + 1) > 4096) return false;
+            for (int y = y0; y <= y1; y++) for (int x = x0; x <= x1; x++)
+            {
+                double minX = Math.Max(left, grid.MinimumX + x * grid.CellWidth), maxX = Math.Min(right, grid.MinimumX + (x + 1) * grid.CellWidth);
+                double minY = Math.Max(bottom, grid.MinimumY + y * grid.CellHeight), maxY = Math.Min(top, grid.MinimumY + (y + 1) * grid.CellHeight);
+                if ((area.Width > 0 && maxX <= minX) || (area.Height > 0 && maxY <= minY)) continue;
+                string key = $"world-cell/{x}/{y}";
+                var clipped = new SpawnArea(new BattlefieldPoint((minX + maxX) / 2, (minY + maxY) / 2), maxX - minX, maxY - minY, area.VisualZ);
+                areas.Add(key, clipped); candidates.Add(new SpatialSpawnCandidate(key, clipped.Center));
+            }
+        }
+        var allocations = _spatialPolicy.Allocate(battlefield, candidates, sets, preset.TotalWeight, out var decisions);
+        LastCandidates = decisions;
+        var plans = new List<SpawnInstruction>();
+        foreach (var allocation in allocations)
+        {
+            if (allocation.Sets == 0) continue;
+            var entries = new List<EnemySpawnEntry>();
+            foreach (var entry in preset.Composition) entries.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight * allocation.Sets));
+            plans.Add(new SpawnInstruction(request.SquadOrder, authored ? allocation.SpawnPointId : "",
+                entries, authored ? placement : new EncounterSpawnPlacement(placement.Origin, areas[allocation.SpawnPointId])));
+        }
+        instructions = plans.AsReadOnly(); return plans.Count > 0;
+    }
+
+    private bool TryReadPreset(SpawnRequest request, out EnemySquadPreset preset, out int sets)
+    {
+        sets = 0; preset = null;
+        if (string.IsNullOrWhiteSpace(request.SquadOrder) || request.MaxCount <= 0 || !TryGetPreset(request.SquadOrder, out preset) ||
+            preset.Composition == null || preset.Composition.Count == 0 || preset.TotalWeight <= 0) return false;
+        foreach (var entry in preset.Composition)
+            if (entry == null || string.IsNullOrWhiteSpace(entry.EnemyId) || entry.Weight <= 0) return false;
+        sets = request.MaxCount / preset.TotalWeight; return sets > 0;
+    }
+
     /// <summary>
     /// 현재 적을 생성할 수 있는 모든 지점에 완전한 프리셋 세트를 배분한다.
     /// 점령된 지점은 배분 대상에서 제외되므로 요청의 생성 한도를 소비하지 않는다.

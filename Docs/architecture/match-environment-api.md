@@ -2,6 +2,8 @@
 
 현재 구현: B7 (2026-10-26). 날씨와 시간대는 독립 정보다. 환경 변경은 상태 변경이며 Spawn 명령이 아니다.
 
+2026-10-28 후속 상태: PL이 현재 후보의 요청 수동 확인을 마쳤다. C가 Weather를 수정 중이므로 이 문서 준비에서 Weather/CountTick Runtime은 변경하지 않는다. 낮밤용 공용 서버 시계·취소 가능한 타이머 등록은 별도 설계/협의 중이다. 현재 `IMatchClock`의 원본은 여전히 `MatchCoordinator.Tick(Time.deltaTime)`이며 NGO ServerTime 기반으로 바뀌었다고 해석하지 않는다.
+
 ## 소유권과 수명
 
 - World의 `Map.WeatherManager`가 현재 날씨와 예고를 결정한다. `CountTick`은 해당 Feature에 간격 진행만 요청한다.
