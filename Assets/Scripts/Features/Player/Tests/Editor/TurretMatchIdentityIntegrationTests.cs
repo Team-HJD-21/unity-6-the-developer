@@ -42,7 +42,7 @@ public sealed class TurretMatchIdentityIntegrationTests
             .Select(guid => AssetDatabase.LoadAssetAtPath<FieldTurretLevelUpgradeCatalog>(AssetDatabase.GUIDToAssetPath(guid))).First();
         FieldTurretBase original = null, nextPrefab = null;
         foreach (FieldTurretBase candidate in FieldTurretInstanceRegistry.GetAll())
-            if (controller.OwnsTurret(candidate) && !candidate.IsActivated && catalog.TryGetNext(candidate.Definition, out nextPrefab))
+            if (controller.OwnsTurret(candidate) && !candidate.IsLocked && !candidate.IsActivated && catalog.TryGetNext(candidate.Definition, out nextPrefab))
             { original = candidate; break; }
         Assert.That(original, Is.Not.Null);
         Assert.That(binding.TryResolveEntityId(original.InstanceId, out EntityId logicalId), Is.True);
