@@ -9,7 +9,13 @@ namespace TeamHJD.Game.Contracts
         public long Revision { get; }
         public EncounterRequestSource Source { get; }
         public string SquadOrder { get; }
-        public EncounterExecutionContext(MatchId matchId, long requestId, long revision, EncounterRequestSource source, string squadOrder = "")
-        { MatchId = matchId; RequestId = requestId; Revision = revision; Source = source; SquadOrder = squadOrder; }
+        public MatchEnvironmentSnapshot Environment { get; }
+        public EncounterExecutionContext(MatchId matchId, long requestId, long revision, EncounterRequestSource source, string squadOrder = "",
+            MatchEnvironmentSnapshot environment = null)
+        {
+            if (environment != null && environment.MatchId != matchId)
+                throw new System.ArgumentException("Environment must belong to the execution Match.", nameof(environment));
+            MatchId = matchId; RequestId = requestId; Revision = revision; Source = source; SquadOrder = squadOrder; Environment = environment;
+        }
     }
 }

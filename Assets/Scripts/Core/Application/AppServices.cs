@@ -23,6 +23,8 @@ namespace TeamHJD.Game.Application
         private IMatchLifecycleTransport _matchTransport;
         public RegionReplicationSession NetworkRegions { get; private set; }
         private IRegionSnapshotTransport _regionTransport;
+        public EnvironmentReplicationSession NetworkEnvironments { get; private set; }
+        private IMatchEnvironmentTransport _environmentTransport;
         public ITurretCommandTransport NetworkTurretCommands { get; private set; }
         public ITurretPresentationTransport NetworkTurretPresentation { get; private set; }
 
@@ -81,8 +83,21 @@ namespace TeamHJD.Game.Application
             NetworkMatches?.FlushPendingCompletion();
             NetworkRegions?.FlushPending();
             if (_regionTransport is INetworkMessagePump regionPump) regionPump.Pump();
+            NetworkEnvironments?.FlushPending();
+            if (_environmentTransport is INetworkMessagePump environmentPump) environmentPump.Pump();
             if (NetworkTurretCommands is INetworkMessagePump turretPump) turretPump.Pump();
             if (NetworkTurretPresentation is INetworkMessagePump presentationPump) presentationPump.Pump();
+        }
+
+        public EnvironmentReplicationSession AttachEnvironmentTransport(IMatchEnvironmentTransport transport)
+        {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (transport == null) throw new ArgumentNullException(nameof(transport));
+            if (NetworkMatches == null || NetworkEnvironments != null)
+                throw new InvalidOperationException("Attach one environment transport after the Match lifecycle transport.");
+            var environments = new EnvironmentReplicationSession(NetworkSession, NetworkMatches, transport);
+            _environmentTransport = transport; NetworkEnvironments = environments;
+            return environments;
         }
 
         /// <summary>접속 수명 동안 전송을 소유합니다. Match별 gateway/정책은 Scene 조립부가 소유합니다.</summary>
@@ -121,6 +136,9 @@ namespace TeamHJD.Game.Application
             NetworkRegions = null; _regionTransport = null;
             DisposeIfNeeded(regions, ref errors);
             DisposeIfNeeded(regionTransport, ref errors);
+            var environments = NetworkEnvironments; var environmentTransport = _environmentTransport;
+            NetworkEnvironments = null; _environmentTransport = null;
+            DisposeIfNeeded(environments, ref errors); DisposeIfNeeded(environmentTransport, ref errors);
             var turretTransport = NetworkTurretCommands; NetworkTurretCommands = null;
             DisposeIfNeeded(turretTransport, ref errors);
             var presentationTransport = NetworkTurretPresentation; NetworkTurretPresentation = null;

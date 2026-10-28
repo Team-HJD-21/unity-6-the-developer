@@ -18,9 +18,21 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IEnvironmentAwareEncounterExecutor, IEncounterRequestService, IEncounterEnvironmentConsumer
 {
     private const int TargetFrameRate = 120;
+    [SerializeField] private EncounterEnvironmentProfile environmentProfile;
+    private MatchId _environmentMatch;
+    private Func<MatchEnvironmentSnapshot> _environmentProvider;
+
+    public void BindEnvironment(MatchId match, Func<MatchEnvironmentSnapshot> current)
+    {
+        if (match.IsEmpty || _snapshotProvider != null || _environmentProvider != null)
+            throw new InvalidOperationException("Configure one environment query before binding the Encounter Match.");
+        _environmentMatch = match; _environmentProvider = current ?? throw new ArgumentNullException(nameof(current));
+    }
+    public void UnbindEnvironment(MatchId match)
+    { if (_environmentMatch == match) { _environmentProvider = null; _environmentMatch = default; } }
     private const float HostReadyTimeout = 10f;
 
     [SerializeField] private string initialSquadOrder = "Normal";
@@ -104,6 +116,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (authorityPlayerId.IsEmpty) throw new ArgumentException("An authority participant is required.", nameof(authorityPlayerId));
         if (snapshotProvider == null) throw new ArgumentNullException(nameof(snapshotProvider));
         if (_snapshotProvider != null) throw new InvalidOperationException("Encounter is already bound to a Match.");
+        if (_environmentProvider != null && _environmentMatch != matchId)
+            throw new InvalidOperationException("Environment and Encounter must belong to the same Match.");
 
         _boundMatchId = matchId;
         _authorityIssuer = authorityPlayerId;
@@ -111,7 +125,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         // 자동 Encounter는 Host 시스템 요청입니다. Client의 임의 적 생성 권한은 부여하지 않습니다.
         _requests = new EncounterRequestService(matchId, snapshotProvider,
             () => _networkManager != null && _networkManager.IsServer,
-            issuer => issuer == _authorityIssuer, this);
+            issuer => issuer == _authorityIssuer, this, environment: _environmentProvider);
         _gameStartTime = Time.timeAsDouble;
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
@@ -144,6 +158,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
                 _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
             _encounterRuntime = null;
             _snapshotProvider = null;
+            UnbindEnvironment(matchId);
             _boundMatchId = default;
         }
     }
@@ -371,14 +386,18 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     }
 
     EncounterRequestResult IEncounterExecutor.Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot, long executionSequence)
+        => Execute(request, snapshot, null, executionSequence);
+
+    public EncounterRequestResult Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot,
+        MatchEnvironmentSnapshot environment, long executionSequence)
     {
         _requestSequence = executionSequence;
         var context = new EncounterExecutionContext(_boundMatchId, executionSequence, snapshot.Revision,
-            request.Source, request.PresetId.Value);
+            request.Source, request.PresetId.Value, environment);
         Emit(GameDiagnosticKind.RequestStarted, context, message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, budget={request.MaximumEnemyCount}");
         EnsureEncounterRuntime();
         bool succeeded = _encounterRuntime.TrySpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
-            context, out string result, out EncounterExecutionSummary summary);
+            context, out string result, out EncounterExecutionSummary summary, environmentProfile);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
             spawnDecision: summary.SpawnDecision);
@@ -388,7 +407,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             ? EncounterRequestStatus.Spawned : summary.SpawnedCount > 0 ? EncounterRequestStatus.PartialSpawn :
             summary.ResultCode == "PlanRejected" ? EncounterRequestStatus.PlanRejected : EncounterRequestStatus.SpawnFailed;
         return new EncounterRequestResult(request.Context.RequestId, executionSequence, snapshot.Revision,
-            status, summary.PlannedCount, summary.SpawnedCount, result);
+            status, summary.PlannedCount, summary.SpawnedCount, result, environmentRevision: environment?.Revision ?? 0);
     }
 
     private void EnsureEncounterRuntime()
@@ -414,7 +433,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         var observation = new GameDiagnosticEvent(++_diagnosticSequence, _boundMatchId,
             context?.Revision ?? 0, context?.RequestId ?? 0, context?.Source ?? EncounterRequestSource.Unspecified,
             kind, GameSeconds, RealSeconds, enemyType, point, entity, planned, actual, message, context?.SquadOrder ?? "",spawnDecision,
-            hasDeathEvents: true);
+            hasDeathEvents: true, environment: context?.Environment);
         if (_diagnostics.Count >= 4096)
         {
             if(_diagnostics.Dequeue().SpawnDecision!=null)_retainedDecisionCount--;

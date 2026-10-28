@@ -15,6 +15,7 @@ namespace TeamHJD.Game.Application
         private readonly MatchEventBus _eventBus;
         private readonly BattlefieldSpatialRuntime _battlefield;
         private RegionRuntime _regions;
+        private MatchEnvironmentRuntime _environment;
         private bool _isDisposed;
         private bool _isCompleting;
         public bool IsDisposed => _isDisposed;
@@ -27,6 +28,22 @@ namespace TeamHJD.Game.Application
         public BattlefieldSpatialSnapshot Battlefield => _battlefield.Snapshot;
         public IMatchEventStream Events => _eventBus;
         public IRegionGridSource Regions => _regions;
+        public IMatchEnvironmentSource Environment => _environment;
+
+        public IMatchEnvironmentSource InitializeEnvironment(IMatchClock clock, Func<bool> mayWrite)
+        {
+            ThrowIfDisposed();
+            if (_environment != null) throw new InvalidOperationException("Environment is already initialized.");
+            _environment = new MatchEnvironmentRuntime(Config.MatchId, clock, mayWrite);
+            return _environment;
+        }
+
+        public bool UpdateEnvironment(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast)
+        {
+            ThrowIfDisposed();
+            if (_environment == null) throw new InvalidOperationException("Initialize environment before updating it.");
+            return _environment.TryUpdate(weather, timeOfDay, forecast);
+        }
 
         /// <summary>Scene 조립부가 실제 지역 정의를 한 번 연결합니다. RegionRuntime은 Match가 정리합니다.</summary>
         public IRegionGridSource InitializeRegions(RegionGridDefinition definition, RegionPolicyMode mode)
@@ -187,6 +204,7 @@ namespace TeamHJD.Game.Application
             DisposeOwned(() => _simulation.Dispose(State), errors);
             DisposeOwned(_eventBus.Dispose, errors);
             DisposeOwned(_battlefield.Dispose, errors);
+            if (_environment != null) DisposeOwned(_environment.Dispose, errors);
             if (_regions != null) DisposeOwned(_regions.Dispose, errors);
             if (errors.Count > 0) throw new AggregateException("Match cleanup failed after releasing all owned resources.", errors);
         }

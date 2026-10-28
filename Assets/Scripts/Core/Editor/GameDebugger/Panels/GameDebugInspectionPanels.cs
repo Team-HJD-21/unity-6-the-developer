@@ -41,6 +41,16 @@ namespace TeamHJD.Game.Editor
                     Tile("수집",run==null?"—":run.IsPartial?"PARTIAL":run.IsComplete?"ENDED":"LIVE","중간 수집/손실이 있으면 PARTIAL");
                 }
             }
+            var environment = BattlefieldDebugSession.AppRoot == null ? null : BattlefieldDebugSession.AppRoot.CurrentEnvironment;
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("Match 환경 · 현재", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Revision", environment == null ? "미제공" : $"r{environment.Revision} · {environment.GameSeconds:F1}s");
+                EditorGUILayout.LabelField("날씨 / 시간대", environment == null ? "미제공 / 미제공" :
+                    $"{(environment.HasWeather ? environment.WeatherId.Value : "미제공")} / {(environment.HasTimeOfDay ? environment.TimeOfDayId.Value : "미제공")}");
+                EditorGUILayout.LabelField("날씨 예고", environment == null || environment.Forecast.Count == 0 ? "미제공" :
+                    string.Join(" → ", environment.Forecast.Select(value => value.Value)), EditorStyles.wordWrappedLabel);
+            }
             view.IsConnectionsExpanded=EditorGUILayout.Foldout(view.IsConnectionsExpanded,"연결 및 수집 상태 · "+GameDebuggerSession.Warnings.Count+" warnings",true);
             if (view.IsConnectionsExpanded) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {

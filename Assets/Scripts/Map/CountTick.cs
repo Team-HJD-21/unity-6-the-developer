@@ -1,4 +1,5 @@
-using System.Collections;
+// Weather Feature의 현재 Match clock/권한에 따라 간격 진행을 요청합니다.
+// Host/Client·완료 판정과 Random은 WeatherManager의 lease가 소유합니다.
 using UnityEngine;
 
 namespace Map
@@ -12,18 +13,9 @@ namespace Map
         {
             _weatherManager = GetComponent<WeatherManager>();
         }
-        void Start()
+        void Update()
         {
-            StartCoroutine(StartWeather());
-        }
-
-        IEnumerator StartWeather()
-        {
-            while (true)
-            {
-                yield return new WaitForSeconds(weatherChangeTime);
-                _weatherManager.ChangeWeather();
-            }
+            if (_weatherManager != null) _weatherManager.TickWeather(weatherChangeTime, Time.deltaTime);
         }
     }
 }

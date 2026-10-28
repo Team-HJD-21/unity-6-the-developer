@@ -30,6 +30,11 @@ namespace TeamHJD.Game.Bootstrap
         public INetworkSession NetworkSession => Services?.NetworkSession;
         public NetworkMatchCoordinator NetworkMatches => Services?.NetworkMatches;
         public RegionReplicationSession NetworkRegions => Services?.NetworkRegions;
+        public EnvironmentReplicationSession NetworkEnvironments => Services?.NetworkEnvironments;
+        public MatchEnvironmentSnapshot CurrentEnvironment => Services?.NetworkEnvironments?.Source?.Snapshot ?? _currentMatch?.Environment?.Snapshot;
+
+        public EnvironmentReplicationSession AttachEnvironmentTransport(IMatchEnvironmentTransport transport)
+        { ThrowIfUnavailable(); return Services.AttachEnvironmentTransport(transport); }
         public ITurretCommandTransport NetworkTurretCommands => Services?.NetworkTurretCommands;
         public ITurretPresentationTransport NetworkTurretPresentation => Services?.NetworkTurretPresentation;
 

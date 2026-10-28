@@ -16,6 +16,8 @@ public sealed class SpawnCompositionPlanner
     private readonly EnemySquadPresetCatalog _catalog;
     private readonly SpawnPointSpatialPolicy _spatialPolicy = new SpawnPointSpatialPolicy();
     public IReadOnlyList<SpawnDecisionSnapshot.Candidate> LastCandidates { get; private set; } = Array.Empty<SpawnDecisionSnapshot.Candidate>();
+    public MatchEnvironmentSnapshot LastEnvironment { get; private set; }
+    public string LastEnvironmentPolicy { get; private set; } = "neutral";
 
     /// <summary>
     /// 분대 프리셋을 조회할 카탈로그가 로드되었는지 반환한다.
@@ -64,7 +66,7 @@ public sealed class SpawnCompositionPlanner
         SpawnPointRegistry spawnPoints,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
-        return TryBuildInstructions(request, spawnPoints, null, out instructions);
+        return TryPlan(request, spawnPoints, null, null, null, out instructions);
     }
 
     /// <summary>현재 Match의 공간 스냅샷으로 후보를 걸러 분대 세트를 배분합니다.</summary>
@@ -74,7 +76,22 @@ public sealed class SpawnCompositionPlanner
         BattlefieldSpatialSnapshot snapshot,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
-        return TryBuildInstructions(request, spawnPoints, snapshot, out instructions);
+        return TryPlan(request, spawnPoints, snapshot, null, null, out instructions);
+    }
+
+    /// <summary>권위 측 환경을 실제 Enemy 정책 데이터로 소비한 뒤 기존 공간 배분을 수행합니다.</summary>
+    public bool TryPlan(SpawnRequest request, SpawnPointRegistry points, BattlefieldSpatialSnapshot battlefield,
+        MatchEnvironmentSnapshot environment, EncounterEnvironmentProfile profile, out IReadOnlyList<SpawnInstruction> instructions)
+    {
+        LastEnvironment = environment; LastEnvironmentPolicy = "neutral";
+        if (environment != null && (battlefield == null || environment.MatchId != battlefield.MatchId))
+        { LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>(); instructions = Array.Empty<SpawnInstruction>(); return false; }
+        if (profile != null)
+        {
+            request = profile.Select(request, environment, out string policy);
+            LastEnvironmentPolicy = policy;
+        }
+        return TryBuildInstructions(request, points, battlefield, out instructions);
     }
 
     /// <summary>
