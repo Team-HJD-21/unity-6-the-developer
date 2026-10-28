@@ -1,11 +1,10 @@
 using System;
-using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
 /// 적의 체력을 관리하고 사망 시 알린다.
 /// </summary>
-public class EnemyHealth : NetworkBehaviour
+public class EnemyHealth : MonoBehaviour
 {
     [SerializeField] private int currentHealth;
     [SerializeField, Min(1)] private int maxHealth = 20;
