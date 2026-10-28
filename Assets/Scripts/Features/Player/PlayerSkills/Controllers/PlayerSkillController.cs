@@ -79,6 +79,15 @@ public sealed class PlayerSkillController : MonoBehaviour
     public string PlacementHint => IsPlacingTurret ? _turret.PlacementHint : BarrierPlacementHint;
     public PlayerTurretPlacementResult TurretPlacementFeedback =>
         _turret != null ? _turret.PlacementFeedback : PlayerTurretPlacementResult.Allowed;
+    public string PlacementFailure
+    {
+        get
+        {
+            if (IsPlacingTurret) return PlayerSkillDescriptions.TurretPlacementFailure(TurretPlacementFeedback);
+            if (IsPlacingSkill || _bomb == null || !Loadout.Contains(PlayerSkillId.Bomb)) return "";
+            return PlayerSkillDescriptions.BombPlacementFailure(_bomb.PlacementFeedback);
+        }
+    }
     public int BombCount => _bomb.CurrentBombCount;
     public int TurretCount => _turret.CurrentTurretCount;
     public Transform RecoverableTurret

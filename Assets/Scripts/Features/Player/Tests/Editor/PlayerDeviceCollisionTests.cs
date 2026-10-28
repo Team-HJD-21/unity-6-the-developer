@@ -89,6 +89,25 @@ public sealed class PlayerDeviceCollisionTests
     }
 
     [Test]
+    public void BombDepth_ChangesAtPlayerFeetWithoutMovingPhysics()
+    {
+        _player = Object.Instantiate(Prefab("Player"), _origin + Vector3.down * 3f, Quaternion.identity);
+        _player.GetComponent<PlayerDirectionalColliders>().SetFacing(PlayerAimFacing.Down);
+        _device = Object.Instantiate(Prefab("bomb"), _origin, Quaternion.identity);
+        Physics2D.SyncTransforms();
+        _device.GetComponent<PlayerBombExplosion>().BindOwner(_player.transform);
+        var sorting = _device.GetComponent<SortingGroup>();
+        int playerOrder = _player.GetComponent<SpriteRenderer>().sortingOrder;
+        Assert.That(sorting.sortingOrder, Is.EqualTo(playerOrder - 1));
+
+        _player.transform.position = _origin + Vector3.up * 3f;
+        Physics2D.SyncTransforms();
+        _device.GetComponent<PlayerSkillDepth>().Refresh();
+        Assert.That(sorting.sortingOrder, Is.EqualTo(playerOrder + 1));
+        Assert.That(_device.transform.position, Is.EqualTo(_origin));
+    }
+
+    [Test]
     public void BarrierEmitters_SortIndependentlyAtEachEndpoint()
     {
         _player = Object.Instantiate(Prefab("Player"), _origin, Quaternion.identity);

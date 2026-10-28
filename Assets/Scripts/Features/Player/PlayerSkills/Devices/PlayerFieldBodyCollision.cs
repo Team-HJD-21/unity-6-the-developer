@@ -8,6 +8,7 @@ public sealed class PlayerFieldBodyCollision : MonoBehaviour
     [SerializeField] private Collider2D[] _bodies;
     private readonly List<Collider2D[]> _exitingPlayers = new();
     private const float ExitClearance = .02f;
+    public IReadOnlyList<Collider2D> Bodies => _bodies;
 
     /// <summary>본체 위치 확정 후 한 번 호출합니다. 새로 접근하는 플레이어는 통과시키지 않습니다.</summary>
     public void AllowInitialExit()

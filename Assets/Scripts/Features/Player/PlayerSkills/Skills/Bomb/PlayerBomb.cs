@@ -10,6 +10,8 @@ public sealed class PlayerBomb : PlayerSkillBase
     [SerializeField] private float bombCooldown = 1f;
     private PlayerSkillCharges _charges;
     private float _remainingCooldown;
+    private PlayerBombPlacementResult _placementFeedback;
+    private float _feedbackUntil;
     public override PlayerSkillId Id => PlayerSkillId.Bomb;
     public override bool HasPrefab => bombPrefab != null;
     public override int AvailableCount => _charges != null ? _charges.Current : 0;
@@ -17,6 +19,8 @@ public sealed class PlayerBomb : PlayerSkillBase
     public int MaxBombCount => Mathf.Max(1, maxBombCount);
     public override float RemainingCooldown => _remainingCooldown;
     public override float CooldownDuration => Mathf.Max(.1f, bombCooldown);
+    public PlayerBombPlacementResult PlacementFeedback => Time.unscaledTime < _feedbackUntil
+        ? _placementFeedback : PlayerBombPlacementResult.Allowed;
     protected override void Awake()
     {
         base.Awake();
@@ -29,11 +33,17 @@ public sealed class PlayerBomb : PlayerSkillBase
     }
     protected override bool TryActivate()
     {
+        _placementFeedback = PlayerBombPlacementRules.Evaluate(bombPrefab, transform.position, gameObject);
+        _feedbackUntil = Time.unscaledTime + 2f;
+        if (_placementFeedback != PlayerBombPlacementResult.Allowed) return false;
         if (!_charges.TryConsume()) return false;
-        Instantiate(bombPrefab, transform.position, Quaternion.identity);
+        var bomb = Instantiate(bombPrefab, transform.position, Quaternion.identity);
+        if (bomb.TryGetComponent(out PlayerBombExplosion explosion)) explosion.BindOwner(transform);
         _remainingCooldown = CooldownDuration;
+        _feedbackUntil = 0;
         return true;
     }
+    private void OnDisable() => _feedbackUntil = 0;
     public void TryDropBomb() => TryUseSkill();
     // 기존 Scene 호출의 호환 진입점입니다. 현재 HUD는 스킬 상태를 직접 읽습니다.
     public void SyncBombUI() { }

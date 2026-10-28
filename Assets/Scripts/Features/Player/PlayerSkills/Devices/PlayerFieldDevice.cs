@@ -20,6 +20,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
     private float _width, _maxHealth, _health, _remaining, _radius, _hitFlash;
     private bool _initialized;
     private PlayerFieldDeviceVisual _visual;
+    private PlayerFieldTargetCollision _collision;
     private readonly PlayerFieldEnemyScanner _scanner = new();
     public PlayerFieldDeviceKind Kind => _kind;
     public float Health => _health;
@@ -53,6 +54,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
         _visual = new PlayerFieldDeviceVisual(transform, _firstEmitter, _secondEmitter, _membrane, VisualScale);
         _visual.Initialize(kind, start, end, _width, _radius);
         _bodyCollision?.AllowInitialExit();
+        _collision = new PlayerFieldTargetCollision(_blocker, _bodyCollision != null ? _bodyCollision.Bodies : null);
         _depth?.Bind(owner);
         _initialized = true;
         PlayerFieldDeviceRegistry.Register(this);
@@ -88,8 +90,18 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
         Vector2 membranePoint = _blocker.ClosestPoint(origin);
         return (membranePoint - origin).sqrMagnitude < (point - origin).sqrMagnitude ? membranePoint : point;
     }
-    public bool Intersects(Vector2 origin, Vector2 goal, out float fraction) =>
-        PlayerBarrierGeometry.Intersects(transform, _start, _end, _width, origin, goal, out fraction);
+    public bool TryGetContact(Collider2D body, out ColliderDistance2D contact)
+    {
+        contact = default;
+        return _collision != null && _collision.TryGetContact(body, out contact);
+    }
+    public bool Intersects(Vector2 origin, Vector2 goal, out float fraction, Collider2D body = null)
+    {
+        if (_collision != null && _collision.HasColliders)
+            return _collision.Intersects(origin, goal, out fraction, body);
+        // 콜라이더 없이 조립한 기존 테스트 장비의 선분 계약을 유지합니다.
+        return PlayerBarrierGeometry.Intersects(transform, _start, _end, _width, origin, goal, out fraction);
+    }
     public static PlayerFieldDevice Resolve(Vector2 origin, Vector2 originalGoal) => PlayerFieldDeviceRegistry.Resolve(origin, originalGoal);
     public static void Dispose(Object value)
     {

@@ -4,16 +4,20 @@ using UnityEngine;
 public sealed class PlayerFieldEnemyBehaviour
 {
     private float _nextAttack;
-    public bool Step(Transform actor, IPlayerFieldTarget device, float speed, float range,
+    public bool Step(Transform actor, Collider2D body, IPlayerFieldTarget device, float speed, float range,
         float damage, float cooldown, float now, float elapsed, out Vector2 direction, out bool moving)
     {
-        Vector2 delta = device.ApproachPoint(actor.position) - (Vector2)actor.position;
-        direction = delta.normalized;
-        moving = delta.magnitude > Mathf.Max(.1f, range);
+        direction = Vector2.zero;
+        moving = false;
+        if (!device.TryGetContact(body, out var contact)) return false;
+        // pointA는 적 몸통, pointB는 장비 표면입니다. normal은 B → A이므로 반대로 접근합니다.
+        direction = -contact.normal;
+        float attackRange = Mathf.Max(.1f, range);
+        moving = contact.distance > attackRange + .001f;
         if (moving)
         {
             float step = Mathf.Min(Mathf.Max(0, speed) * Mathf.Max(0, elapsed),
-                Mathf.Max(0, delta.magnitude - Mathf.Max(.1f, range)));
+                Mathf.Max(0, contact.distance - attackRange));
             actor.position += (Vector3)direction * step;
             return false;
         }

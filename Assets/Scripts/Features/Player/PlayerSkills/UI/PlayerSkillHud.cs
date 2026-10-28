@@ -168,7 +168,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
     private void RefreshPlacementFeedback()
     {
         if (Owner == null) return;
-        string failure = PlayerSkillDescriptions.TurretPlacementFailure(Owner.TurretPlacementFeedback);
+        string failure = Owner.PlacementFailure;
         bool showsFailure = _placementFailure != null && failure.Length > 0;
         if (_placementFailure != null)
         {

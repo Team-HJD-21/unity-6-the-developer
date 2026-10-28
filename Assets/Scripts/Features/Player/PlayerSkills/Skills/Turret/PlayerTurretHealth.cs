@@ -13,6 +13,7 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
     private bool _initialized;
     private SpriteRenderer[] _renderers;
     private Color[] _originalColors;
+    private PlayerFieldTargetCollision _collision;
     private readonly PlayerFieldEnemyScanner _scanner = new();
     public float Health => _health;
     public float MaxHealth => Mathf.Max(1, _maxHealth);
@@ -35,6 +36,7 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
         _blocker.includeLayers = _blockingLayers;
         _blocker.excludeLayers = ~_blockingLayers.value;
         _blocker.layerOverridePriority = 10;
+        _collision = new PlayerFieldTargetCollision(_blocker);
         _initialized = true;
     }
     private void OnEnable() { if (_initialized) PlayerFieldDeviceRegistry.Register(this); }
@@ -56,21 +58,15 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
         PlayerFieldDevice.Dispose(gameObject);
     }
     public Vector2 ApproachPoint(Vector2 origin) => _blocker != null ? _blocker.ClosestPoint(origin) : (Vector2)transform.position;
-    public bool Intersects(Vector2 origin, Vector2 goal, out float fraction)
+    public bool TryGetContact(Collider2D body, out ColliderDistance2D contact)
     {
-        fraction = 0f;
-        if (_blocker == null || !_blocker.enabled) return false;
-        // 정렬용 Z는 무시하고 실제 사각형 본체의 XY 경계에 접근하도록 합니다.
-        Bounds bounds = _blocker.bounds;
-        bounds.center = new Vector3(bounds.center.x, bounds.center.y, 0f);
-        bounds.size = new Vector3(bounds.size.x + .3f, bounds.size.y + .3f, 1f);
-        Vector3 start = new(origin.x, origin.y, 0f);
-        if (bounds.Contains(start)) return true;
-        Vector2 delta = goal - origin;
-        float distance = delta.magnitude;
-        if (distance <= .000001f || !bounds.IntersectRay(new Ray(start, delta / distance), out float hitDistance)) return false;
-        fraction = hitDistance / distance;
-        return fraction <= 1f;
+        contact = default;
+        return _collision != null && _collision.TryGetContact(body, out contact);
+    }
+    public bool Intersects(Vector2 origin, Vector2 goal, out float fraction, Collider2D body = null)
+    {
+        fraction = 0;
+        return _collision != null && _collision.Intersects(origin, goal, out fraction, body);
     }
     private void OnDisable() => PlayerFieldDeviceRegistry.Unregister(this);
     private void OnDestroy() => PlayerFieldDeviceRegistry.Unregister(this);

@@ -436,6 +436,62 @@ public sealed class PlayerSkillRuntimeTests
         Assert.That(skill.CurrentCooldownTimer, Is.Zero);
     }
 
+    [UnityTest]
+    public IEnumerator Bomb_EnemyOverlapPreservesInventoryCooldownAndShowsFailure()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.Bomb), Is.True);
+        var enemy = new GameObject("Bomb placement enemy", typeof(BoxCollider2D));
+        GameObject deployed = null;
+        try
+        {
+            enemy.layer = LayerMask.NameToLayer("Enemy");
+            enemy.transform.position = _player.transform.position;
+            var skill = _player.GetComponent<PlayerBomb>();
+            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.False);
+            Assert.That(skill.CurrentBombCount, Is.EqualTo(5));
+            Assert.That(skill.RemainingCooldown, Is.Zero);
+            Assert.That(skill.PlacementFeedback, Is.EqualTo(PlayerBombPlacementResult.OverlapsEnemy));
+            yield return null;
+            var failure = (TMPro.TMP_Text)new SerializedObject(_hud).FindProperty("_placementFailure").objectReferenceValue;
+            Assert.That(failure.gameObject.activeSelf, Is.True);
+            Assert.That(failure.text, Does.Contain("몬스터"));
+
+            enemy.transform.position += Vector3.right * 10;
+            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.True);
+            Assert.That(skill.CurrentBombCount, Is.EqualTo(4));
+            Assert.That(skill.RemainingCooldown, Is.EqualTo(skill.CooldownDuration));
+            Assert.That(skill.PlacementFeedback, Is.EqualTo(PlayerBombPlacementResult.Allowed));
+            foreach (var bomb in Object.FindObjectsByType<PlayerBombExplosion>(FindObjectsSortMode.None))
+                if (Vector3.Distance(bomb.transform.position, _player.transform.position) < .01f) deployed = bomb.gameObject;
+            Assert.That(deployed, Is.Not.Null);
+            Assert.That(deployed.GetComponent<UnityEngine.Rendering.SortingGroup>(), Is.Not.Null);
+        }
+        finally
+        {
+            Object.DestroyImmediate(enemy);
+            if (deployed != null) Object.DestroyImmediate(deployed);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator Bomb_ObstacleOverlapDoesNotConsumeInventoryOrCooldown()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.Bomb), Is.True);
+        var wall = new GameObject("Bomb placement wall", typeof(BoxCollider2D));
+        try
+        {
+            wall.transform.position = _player.transform.position;
+            wall.GetComponent<BoxCollider2D>().includeLayers = 1 << _player.layer;
+            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.False);
+            var skill = _player.GetComponent<PlayerBomb>();
+            Assert.That(skill.PlacementFeedback, Is.EqualTo(PlayerBombPlacementResult.BlockedByObstacle));
+            Assert.That(skill.CurrentBombCount, Is.EqualTo(5));
+            Assert.That(skill.RemainingCooldown, Is.Zero);
+        }
+        finally { Object.DestroyImmediate(wall); }
+        yield break;
+    }
+
     private bool DeployTurret() => _controller.TryUse(PlayerSkillId.PlayerTurret)
         && _player.GetComponent<PlayerTurretSkill>().TryConfirmPlacement(_player.transform.position + Vector3.down);
 

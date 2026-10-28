@@ -18,12 +18,15 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     [Header("Body Collision")]
     [SerializeField] private Collider2D _bodyCollider;
     [SerializeField] private PlayerFieldBodyCollision _bodyCollision;
+    [SerializeField] private PlayerSkillDepth _depth;
     private static readonly int ExplosionHash = Animator.StringToHash("isboom");
     private readonly PlayerBombAreaDamage _areaDamage = new();
     private float _elapsed;
     private bool _exploded;
     private bool _hasExplosionParameter;
     private PlayerTimeBombVisual _presentation;
+
+    public void BindOwner(Transform owner) => _depth?.Bind(owner);
 
     private void Awake()
     {
@@ -39,6 +42,7 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     {
         _elapsed = 0f;
         _exploded = false;
+        if (_depth != null) _depth.enabled = true;
         _areaDamage.Reset();
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, false);
         if (_bombVisual != null && _bombVisual != gameObject) _bombVisual.SetActive(true);
@@ -64,6 +68,8 @@ public sealed class PlayerBombExplosion : MonoBehaviour
         if (_exploded || !isActiveAndEnabled) return false;
         _exploded = true;
         _elapsed = Mathf.Max(_elapsed, _fuseSeconds);
+        // 접지 Collider를 끄면 bounds가 비므로 폭발 연출은 마지막 표시 순서를 유지합니다.
+        if (_depth != null) { _depth.Refresh(); _depth.enabled = false; }
         // 연출이 끝날 때까지 보이지 않는 본체가 길을 막지 않도록 즉시 해제합니다.
         if (_bodyCollision != null) _bodyCollision.enabled = false;
         if (_bodyCollider != null) _bodyCollider.enabled = false;
