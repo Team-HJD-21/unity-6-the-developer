@@ -69,7 +69,7 @@ sequenceDiagram
 
 ## 시간·환경·추가 생성
 
-- Match의 게임 시간 조회와 App의 unscaled 네트워크 pump/진단 시간을 분리한다. 현재 구현은 IMatchClock을 사용하며 새 공용 timer scheduler는 아직 없다. 10/28 사용자 요청에 따라 낮밤/날씨용 서버 시계 adapter·게임 시계·취소 가능한 예약 서비스를 후속 설계한다. 기존 App/Match 소유권을 사용하고 전역 Singleton·경쟁하는 두 번째 시간 writer를 만들지 않는다. 낮밤/날씨의 게임 정지·배속 추종은 확정이며 시간 수명과 C 이관 API는 협의 중이다.
+- Match의 게임 시간 조회와 App의 unscaled 네트워크 pump/진단 시간을 분리한다. 현재 구현은 IMatchClock을 사용하며 새 공용 timer scheduler는 아직 없다. 10/28 사용자 요청에 따라 낮밤/날씨용 서버 시계 adapter·게임 시계·취소 가능한 예약 서비스를 후속 설계한다. 기존 App/Match 소유권을 사용하고 전역 Singleton·경쟁하는 두 번째 시간 writer를 만들지 않는다. 낮밤/날씨의 게임 정지·배속 추종은 확정이며 시간 수명과 World/Weather 이관 API는 협의 중이다.
 - 날씨와 시간대는 독립 축이며 Host가 확정한 MatchId/revision을 가진 읽기 context다. 변경 사건 자체가 반드시 Spawn 명령은 아니다.
 - Encounter가 실제 계획에 사용한 환경/공간 revision과 원인을 결과에 남긴다. Seed만 기록해 결정론 replay를 보장하지 않는다.
 - 포인트 밖 생성은 origin/source 계약으로 실제 Enemy 경로에 연결한다. Core가 별도 Instantiate/Spawner/길찾기를 만들거나 가짜 SpawnPoint ID를 사용하지 않는다.

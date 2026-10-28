@@ -55,12 +55,12 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  Weather[C Weather/예고] --> Environment[Match 환경 snapshot]
+  Weather[World/Weather Weather/예고] --> Environment[Match 환경 snapshot]
   Source[동적 source / World origin] --> Request[공통 Encounter 요청]
   Grid[현재 Battlefield / Grid / 전선] --> Request
   Environment --> Request
-  Request --> Planner[E Planner / 환경·공간 정책]
-  Planner --> Executor[기존 E NGO Executor]
+  Request --> Planner[Enemy/Encounter Planner / 환경·공간 정책]
+  Planner --> Executor[기존 Enemy/Encounter NGO Executor]
   Executor --> Tracking[분대 / 생존·사망·제거 / 공간 입력]
   Request --> Debugger[Debugger / 요청 GUID·원인·사용 revision]
   Tracking --> Debugger
@@ -68,11 +68,11 @@ flowchart LR
 
 | 시나리오 | 직접 증거 | 확인 범위 |
 | --- | --- | --- |
-| S1 CU 실패/결과/복귀 | 최종 GPU EditMode, Windows 두 프로세스 | 실제 D 피해 API → 단일 결과·Host/Client 결과 화면 상태·gameplay 차단. Editor에서는 실제 결과 버튼으로 새 CU/Match 및 Hub 복귀까지 실행 |
-| S2 환경 소비 | 최종 GPU EditMode, SDK/Windows 환경 전달 | 실제 C Weather/예고 → Match snapshot → E 정책. 별도 검증 rain/0.5 규칙으로 한도 10에서 실제 5마리 생성. 시간대 원본 없음은 미제공 |
+| S1 CU 실패/결과/복귀 | 최종 GPU EditMode, Windows 두 프로세스 | 실제 FieldTurret 피해 API → 단일 결과·Host/Client 결과 화면 상태·gameplay 차단. Editor에서는 실제 결과 버튼으로 새 CU/Match 및 Hub 복귀까지 실행 |
+| S2 환경 소비 | 최종 GPU EditMode, SDK/Windows 환경 전달 | 실제 World/Weather Weather/예고 → Match snapshot → Enemy/Encounter 정책. 별도 검증 rain/0.5 규칙으로 한도 10에서 실제 5마리 생성. 시간대 원본 없음은 미제공 |
 | S3 포인트 밖 생성 | 최종 GPU EditMode 실제 Scene | 제작 SpawnPoint에서 떨어진 NavMesh의 점/영역/source 생성, 기존 추적/공간/사망, 게임 시간 지연·Pause·취소·부분1마리/replay추가0, CU 정리/재시작, JSON 보존 |
 
-S2의 정책 수치는 검증용이며 production 기본은 중립이다. S3 source는 검증용 논리 source이고 실제 Enemy 생성기는 E 구현이다. 나무를 심는 AI·공중/지면 연출·착지는 만들지 않았다. Windows 두 프로세스의 원격 상호작용 actor는 개발 fixture이며 B의 실제 Player 이동/전투 복제가 아니다.
+S2의 정책 수치는 검증용이며 production 기본은 중립이다. S3 source는 검증용 논리 source이고 실제 Enemy 생성기는 Enemy/Encounter 구현이다. 나무를 심는 AI·공중/지면 연출·착지는 만들지 않았다. Windows 두 프로세스의 원격 상호작용 actor는 개발 fixture이며 Player/UI의 실제 Player 이동/전투 복제가 아니다.
 
 ## 고정 후보의 검증 증거
 
@@ -114,7 +114,7 @@ S2의 정책 수치는 검증용이며 production 기본은 중립이다. S3 sou
 5. [환경 API](../architecture/match-environment-api.md). `MatchEnvironmentSceneScope`, `EnvironmentReplicationSession`, 실제 Weather와 Enemy 소비.
 6. [origin/source API](../architecture/encounter-spawn-origin-api.md). `EncounterRequestService.Submit`, source lease/generation, `SpawnCompositionPlanner.TryPlanOrigin`, 실제 Executor·지연 핸들.
 
-수동 화면 인수는 PL이 맡는다. 현재 프로젝트의 `Assets/Scenes/Gameplay/Initial_Stage.unity`와 [Game Debugger 가이드](../tooling/game-debugger-guide.md)를 기준으로 기존 HUD, 개인 메뉴/결과/로딩의 가독성·키보드/마우스·해상도 변화, World origin/지연·Statistics 객체 선택을 확인한다. CU 결과는 실제 전투 또는 D 피해 API로 재현할 수 있으며, 자동 검사는 실제 D API를 호출했다. Client의 실제 Player와 일반 멀티 조작은 B 연계 후 별도 인수한다.
+수동 화면 인수는 PL이 맡는다. 현재 프로젝트의 `Assets/Scenes/Gameplay/Initial_Stage.unity`와 [Game Debugger 가이드](../tooling/game-debugger-guide.md)를 기준으로 기존 HUD, 개인 메뉴/결과/로딩의 가독성·키보드/마우스·해상도 변화, World origin/지연·Statistics 객체 선택을 확인한다. CU 결과는 실제 전투 또는 FieldTurret 피해 API로 재현할 수 있으며, 자동 검사는 실제 FieldTurret API를 호출했다. Client의 실제 Player와 일반 멀티 조작은 Player/UI 연계 후 별도 인수한다.
 
 ## 서비스·소유권과 미결
 
@@ -123,10 +123,10 @@ S2의 정책 수치는 검증용이며 production 기본은 중립이다. S3 sou
 | Core AppServices | 실제 Scene flow, 화면/입력 수명, Network Match/지역/표시/환경 연결. AppServices는 내부 typed composition container |
 | Profile/Platform | FakeProfileService/FakePlatformService 유지. Backend 검증·binary 저장·Steam 인증/매칭·실제 보상 반영 완료가 아님 |
 | Content | Core ContentCatalog resource가 없으면 빈 FakeContentCatalog. 실제 Enemy/Turret Feature catalog와 혼동하지 않음 |
-| Player | B 이영빈: 실제 NetworkBehaviour·Host가 신뢰할 actor 등록/교체/Despawn 및 이동/전투. fixture로 대신 완료하지 않음 |
-| Turret/CU | D 황재동: 상태/전력·생성/교체/수리·실제 전투 복제. Core는 Match 임대/권한·지역 projection/명령 전달 |
-| Encounter/Enemy | E 조수빈: 실제 Planner/Executor/AI·배달/착지 전이와 source 콘텐츠. Core API는 새 공용 경계 |
-| World/Weather | C 김진태: 날씨/표현 유지, 실제 시간대 source·지형/행성 콘텐츠. 나무/공중 전이의 위치·연출은 E와 조율 |
+| Player | Player/UI 이영빈: 실제 NetworkBehaviour·Host가 신뢰할 actor 등록/교체/Despawn 및 이동/전투. fixture로 대신 완료하지 않음 |
+| Turret/CU | FieldTurret 황재동: 상태/전력·생성/교체/수리·실제 전투 복제. Core는 Match 임대/권한·지역 projection/명령 전달 |
+| Encounter/Enemy | Enemy/Encounter 조수빈: 실제 Planner/Executor/AI·배달/착지 전이와 source 콘텐츠. Core API는 새 공용 경계 |
+| World/Weather | World/Weather 김진태: 날씨/표현 유지, 실제 시간대 source·지형/행성 콘텐츠. 나무/공중 전이의 위치·연출은 Enemy/Encounter 파트와 조율 |
 | NGO Scene 이동 | 단독 Host의 결과→재시작/Hub는 구현. 다중 참가자 공동 이동·종료 ACK/준비·임시 Hub 전장 시간 정책은 미결 |
 | 최종 제품 | 승리/보스 게이트·수리 정책·최종 밸런스·Backend·Steam/Host Migration/PvP는 별도 Gate |
 
@@ -141,17 +141,17 @@ S2의 정책 수치는 검증용이며 production 기본은 중립이다. S3 sou
 | #388 / #389 | 이미 closed. 과거 수명/동결 이력으로 참고하며 새 완료로 세지 않음 |
 | #442 | Core Host/Client 설정·권한·최소 NetworkObject·터렛 요청/상태·결과/환경·정리 기술 증거 확보. 실제 Player 연계와 Core 기반 완료를 구분해 Owner 리뷰 후 종료 후보 |
 | #444 | 관리 책임·선택 서비스 구성/수명/실사용과 Fake 잔여 문서화. B4~B8 포함 후 종료 후보 |
-| #495 | 실제 D 연결·CU 명시 초기화·정적/동적·과열 점유·재진입 검증. A/D 계약 검토 후 종료 후보 |
-| #496 | 실제 게임/기존 UI/Scene/Debugger 공통 요청, E 실행·진단·중복/오류·정리 연결. E API 인수 후 종료 후보 |
+| #495 | 실제 FieldTurret 연결·CU 명시 초기화·정적/동적·과열 점유·재진입 검증. Core·FieldTurret 계약 검토 후 종료 후보 |
+| #496 | 실제 게임/기존 UI/Scene/Debugger 공통 요청, Enemy/Encounter 실행·진단·중복/오류·정리 연결. Enemy/Encounter API 인수 후 종료 후보 |
 | #555 | 실제 CU 사건·단일 완료·취소/중복/정리/같은 head 검증 확보. 종료 후보 |
 | #556 | 구현한 명시 전환·재시작/복귀·취소/실패/소유권 조건 확보. 단독 Host 범위와 미대체 임시 경로를 명시하고 종료 후보 |
-| #558 | Host/Client 확정 환경·실제 C/E 소비, 시간대 미제공·초기/과거/종료 검증 확보. 최종 날씨 효과와 분리해 종료 후보 |
+| #558 | Host/Client 확정 환경·실제 World/Weather·Enemy/Encounter 소비, 시간대 미제공·초기/과거/종료 검증 확보. 최종 날씨 효과와 분리해 종료 후보 |
 | #559 | 실제 포인트 밖 생성/추적·세대/취소/권한/중복/부분 결과와 전달 전이 한계 확보. 나무/공중 콘텐츠와 분리해 종료 후보 |
 | #557 | 자동 기술 검증과 10/28 PL의 요청 수동 UI 확인 완료. 해당 구현 전체·분리 head 검사·리뷰가 포함될 때 종료 후보 |
 | #528 | 로컬 HUD/요청과 PL 수동 확인 완료. 실제 Client actor/HUD 연계와 Owner 인수는 별도이며 완료 전 Closes 보류 |
-| #420 | 팀 공통 같은 Build 플레이·가설/관찰 기록이 남음. A Core 미구현 이슈가 아니고 원문의 미확정 승리 조건을 새 장애물로 추가하지 않음 |
+| #420 | 팀 공통 같은 Build 플레이·가설/관찰 기록이 남음. Core 미구현 이슈가 아니고 원문의 미확정 승리 조건을 새 장애물로 추가하지 않음 |
 | #560 | 이번 문서로 Gate/상태/Owner/다음 행동 제시. PL/관련 Owner의 최종 검토와 실제 main Gate는 인수 대기 |
-| #518 / #545 / #547 | E/D 소유 작업. 현재 배치로 종료/재배정하지 않음 |
+| #518 / #545 / #547 | Enemy/Encounter·FieldTurret 소유 작업. 현재 배치로 종료/재배정하지 않음 |
 
 ## PR 경계와 되돌리기
 
@@ -171,7 +171,7 @@ PR Template의 `type(area): short English summary`와 영역/담당/직접 확�
 
 기본은 이 선행 순서를 유지하는 stack이다. 독립 main 대상 PR로 임의 분리하면 계약 누락/중복 diff가 생길 수 있다. 실제 PR 분리 시 각 head의 컴파일·직접 영향 검사와 base를 확인하며, 현재 전체 후보의 녹색 결과를 모든 미생성 PR head의 검사로 복사하지 않는다.
 
-되돌리기는 종속 후속 → 선행 순서다. B4 취소/완료를 따로 되돌리고 B5/B6 UI를 유지하거나, 새 Contracts를 없애고 E 소비 코드를 유지하는 부분 revert는 하지 않는다. Source/Scene/Profile 원본을 강제로 초기화하는 복구를 추가하지 않았다.
+되돌리기는 종속 후속 → 선행 순서다. B4 취소/완료를 따로 되돌리고 B5/B6 UI를 유지하거나, 새 Contracts를 없애고 Enemy/Encounter 소비 코드를 유지하는 부분 revert는 하지 않는다. Source/Scene/Profile 원본을 강제로 초기화하는 복구를 추가하지 않았다.
 
 ## 다음 인수
 

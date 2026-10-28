@@ -23,7 +23,7 @@
 | 2. Encounter 수명·명령 | 자동 첫 요청을 `EnemyNetworkTestLauncher`의 임시 0.5초 정책에서 Match 소유 Encounter 시작/종료 경계로 옮긴다. Host/Server 권한, 요청 원인, 중복 plan 실행 거부, 실패/재시도, Scene 종료 시 해제를 명시한다. 반복 요청의 트리거·최소 간격은 조수빈과 합의 전까지 확정하지 않는다. | 조수빈이 Encounter와 Spawn adapter 소유([#459](https://github.com/Team-HJD-21/unity-6-the-developer/issues/459)); 양현석은 Core snapshot 공급/Scene composition 계약 검토. | 같은 Match에서 plan ID가 한 번만 실행되고 종료 후 구독/요청이 남지 않음. |
 | 3. 읽기 전용 결정 기록 | 조수빈이 후보 지점·선택/제외 이유, 사용한 `MatchId/Revision`, preset/budget, 지점별 planned/actual count, 권한·실패 이유를 불변 진단 값으로 제공한다. Editor가 같은 규칙을 재계산하지 않는다. | 조수빈이 데이터 의미/생성 시점, 양현석이 Contracts의 최소 진단 경계와 Editor 소비 방식 합의. | 화면의 선택 근거와 서버 계획·실행 로그가 같은 plan ID를 가리킴. |
 | 4. Map/지점 검증 | `SpawnPointId`, `AreaId`, 반경, 점령·통로·해금 상태 중 **실제 정책에 사용할 값만** 합의한다. 지역 해금이 아직 구현되지 않았다면 Unknown/Deferred로 표시한다. | 김진태·조수빈, 양현석은 Grid bounds/좌표 계약 검토. | 사용 가능·제외 지점과 Scene 좌표가 일치하고 Grid 밖 지점을 설명 가능. |
-| 5. Editor 진단 확장 | 아래 Scene 레이어·Overlay·Debug Window를 같은 read-only 데이터 소스로 묶는다. 게임 로직 계산은 Core/E에 남긴다. | 양현석 주도, 조수빈의 진단 계약 협조. | 창을 닫아도 레이어 표시 가능, Edit Preview와 Play Live를 구분, 팀 공유 캡처 재현 가능. |
+| 5. Editor 진단 확장 | 아래 Scene 레이어·Overlay·Debug Window를 같은 read-only 데이터 소스로 묶는다. 게임 로직 계산은 Core/Enemy/Encounter에 남긴다. | 양현석 주도, 조수빈의 진단 계약 협조. | 창을 닫아도 레이어 표시 가능, Edit Preview와 Play Live를 구분, 팀 공유 캡처 재현 가능. |
 
 ## 구현 전 감사: 빠진 연결과 위험
 

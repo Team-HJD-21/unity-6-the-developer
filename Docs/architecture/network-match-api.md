@@ -58,21 +58,21 @@ sequenceDiagram
 | NetworkObjectId | 실제 NGO 객체 수명. PlayerId/EntityId와 동일시하지 않음 |
 | RequestId | 명령의 GUID. 재전송과 충돌 구분 |
 
-터렛 요청은 `ITurretCommandRequester`를 주입받아 제출한다. Gateway가 SDK 실제 발신자를 참가자와 대조하고, Host가 Match/gameplay·거리·생존·상태를 확인한 뒤 D API를 실행한다. UI는 pending/거부/확정 결과를 표시한다. 지원 의도는 ON/OFF, CU 자동 활성화, 레벨 승급/강등, 세부 강화/강등이다. Repair/Restore는 아직 이 명령 집합에 없다.
+터렛 요청은 `ITurretCommandRequester`를 주입받아 제출한다. Gateway가 SDK 실제 발신자를 참가자와 대조하고, Host가 Match/gameplay·거리·생존·상태를 확인한 뒤 FieldTurret API를 실행한다. UI는 pending/거부/확정 결과를 표시한다. 지원 의도는 ON/OFF, CU 자동 활성화, 레벨 승급/강등, 세부 강화/강등이다. Repair/Restore는 아직 이 명령 집합에 없다.
 
-## B가 연결할 실제 Player
+## Player/UI 파트가 연결할 실제 Player
 
-`InitialStageNetworkBinding.RegisterAuthorityPlayerActor(matchId, playerId, actor)`는 **Host에 실제로 존재하는 actor**를 등록하고 `IDisposable`을 반환한다. 현재 Match 명령 scope가 준비된 후 등록한다. B의 서버 spawn·교체·despawn 경로에서 lease를 관리한다.
+`InitialStageNetworkBinding.RegisterAuthorityPlayerActor(matchId, playerId, actor)`는 **Host에 실제로 존재하는 actor**를 등록하고 `IDisposable`을 반환한다. 현재 Match 명령 scope가 준비된 후 등록한다. Player/UI의 서버 spawn·교체·despawn 경로에서 lease를 관리한다.
 
 ```csharp
-// B의 서버 actor 수명 코드에 주입된 binding을 사용합니다.
+// Player/UI의 서버 actor 수명 코드에 주입된 binding을 사용합니다.
 _interactionLease = binding.RegisterAuthorityPlayerActor(matchId, playerId, serverActor);
 // 교체/Despawn/소유 scope 해제 시:
 _interactionLease?.Dispose();
 _interactionLease = null;
 ```
 
-재등록 전 이전 lease를 해제하고 등록 실패를 숨기지 않는다. `IPlayerInteractionActor`에서 서버의 실제 위치·생존·조작 가능 상태를 읽는다. Client가 제출한 위치/생존 bool을 권위 자료로 등록하지 않는다. 현재 개발 검증 fixture와 B의 실제 NetworkBehaviour 연결은 구분한다.
+재등록 전 이전 lease를 해제하고 등록 실패를 숨기지 않는다. `IPlayerInteractionActor`에서 서버의 실제 위치·생존·조작 가능 상태를 읽는다. Client가 제출한 위치/생존 bool을 권위 자료로 등록하지 않는다. 현재 개발 검증 fixture와 Player/UI의 실제 NetworkBehaviour 연결은 구분한다.
 
 ## 완료·표시·정리
 
@@ -84,9 +84,9 @@ AppRoot.Update의 공통 pump는 Unity 주 스레드에서 전송/조율 작업�
 
 ## 현재 구현의 경계
 
-- 실제 Player 이동/전투 복제와 각 Feature의 NetworkBehaviour는 B/D/E 책임이다.
+- 실제 Player 이동/전투 복제와 각 Feature의 NetworkBehaviour는 Player/UI·FieldTurret·Enemy/Encounter 책임이다.
 - Steam 인증·초대·매칭, SOS·중도 참가·Host Migration·전체 공동 Scene 이동은 이번 기반 범위 밖이다.
 - NGO의 서버 시간 API가 존재해도 현재 `IMatchClock`이 이를 사용하도록 교체된 것은 아니다. 낮·밤/날씨용 시간 서비스는 협의 후 별도 변경한다.
 - SDK 두 인스턴스·개발 actor·이전 Windows fixture 성공과 최신 두 실행 파일의 실제 Player 게임 인수를 구분한다.
 
-주말 공유 시 B의 서버 actor 등록 시점, D/E 상태 writer와 표시 복제의 경계, 공동 Scene 정책의 후속 소유자를 확인한다. 현재 Runtime을 재설계한다고 발표하기 전에 실제 API와 후속 제안을 분리해 설명한다.
+주말 공유 시 Player/UI의 서버 actor 등록 시점, FieldTurret·Enemy/Encounter 상태 writer와 표시 복제의 경계, 공동 Scene 정책의 후속 소유자를 확인한다. 현재 Runtime을 재설계한다고 발표하기 전에 실제 API와 후속 제안을 분리해 설명한다.
