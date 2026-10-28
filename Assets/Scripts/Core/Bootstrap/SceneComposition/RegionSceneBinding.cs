@@ -26,6 +26,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private float _nextSample;
         private bool _dirty;
         private int _zoneCount;
+        public FieldTurretController Controller => _controller;
+        public Transform ControlUnit => _controlUnit;
+        public RegionPolicyMode InitialMode => _initialMode;
         public IRegionGridSource Source => _session != null && !_session.IsDisposed ? _source : null;
         public RegionCaptureEvaluation LastEvaluation { get; private set; }
         public bool HasWriteAuthority => _session != null && !_session.IsDisposed &&

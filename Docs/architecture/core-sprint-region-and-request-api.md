@@ -4,6 +4,10 @@
 
 ## 지역 데이터와 실제 연결
 
+2026-10-28 CU 초기화 연결: `InitialStageCompositionRoot`가 Match/Player 생성 전에 같은 Scene의 활성 CU·FieldTurretController·지역 바인딩과 CU Grid 범위/Inspector 구역 수를 읽기 전용으로 확인한다. Static에서는 Match 소유권을 확보한 뒤 `ConfigureUnlockZones(cuPosition)`를 명시 호출하고, 그 다음 `RegionSceneBinding.BindMatch`로 Core 지역 정책을 연결한다. 초기화 false/예외는 조립 실패로 전달해 기존 Match/actor/구독 정리 경로를 사용한다. Dynamic 진입에는 정적 거리 잠금을 적용하지 않는다. 이후 해금 갱신·모드 전환은 기존 RegionRuntime/ResetPolicy를 따르며 ConfigureUnlockZones를 다시 호출하지 않는다.
+
+이 변경은 현재 main의 Scene 조립에 대한 초기화 수정이다. 새로운 Host/Client 수명·공용 명령·화면/환경 서비스는 별도 Core 통합 범위이며, 이 수정만으로 #495 또는 전체 네트워크 연계를 완료 처리하지 않는다.
+
 | 진입점 | 역할 |
 | --- | --- |
 | `MatchSession.InitializeRegions(definition, mode)` | 한 번 생성. Match가 Runtime을 소유하며 조회 Port 반환 |
