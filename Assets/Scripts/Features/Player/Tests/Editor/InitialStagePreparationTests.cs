@@ -34,7 +34,13 @@ public sealed class InitialStagePreparationTests
     }
 
     [TearDown]
-    public void RestoreScenes() => EditorSceneManager.RestoreSceneManagerSetup(_setup);
+    public void RestoreScenes()
+    {
+        if (_setup.Length == 0)
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        else
+            EditorSceneManager.RestoreSceneManagerSetup(_setup);
+    }
 
     [Test]
     public void PreparationValidatesCuWithoutConfiguringFeatureOrCreatingMatch()
