@@ -182,7 +182,7 @@ PlayerSkillHud는 Canvas 프리팹의 화면 하단 안내 영역에 빨간색 �
   F 회수는 중심이 아닌 Collider 표면까지의 XY 거리 2.5를 사용한다. 큰 본체를 통과하지
   않아도 회수할 수 있으며, 정렬용 Z가 달라져도 회수 거리에 영향을 주지 않는다.
   기존 임시 몬스터 Adapter의 접근점은 Collider.ClosestPoint, 경로 교차는 본체 XY 경계로 맞췄다.
-  정렬 Z는 무시한다. 일반 `TurretBase` API 통합과 정식 몬스터 공격 계약 연결은 후속 작업이다.
+  정렬 Z는 무시한다. 일반 `FieldTurretBase` API 통합과 정식 몬스터 공격 계약 연결은 후속 작업이다.
   이번 변경은 해당 담당자의 원본 Turret/Enemy 코드를 수정하지 않는다.
 
 확인 범위: Runtime/Editor C# 컴파일과 프리팹 참조·구성 정적 검사.

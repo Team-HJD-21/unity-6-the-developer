@@ -2,7 +2,7 @@
 // 전력·대기시간·터렛 활성화 판단은 D의 Controller가 소유하며 View는 입력 의도만 보냅니다.
 using System;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,7 +24,7 @@ public sealed class StageControlUnitView : MonoBehaviour
     {
         if (autoActivationButton != null) autoActivationButton.onClick.RemoveListener(RequestAutoActivation);
     }
-    public void Refresh(TurretController controller, bool canInteractAtControlUnit)
+    public void Refresh(FieldTurretController controller, bool canInteractAtControlUnit)
     {
         if (!IsConfigured) return;
         RegionGridSnapshot snapshot = controller?.Regions?.Snapshot;

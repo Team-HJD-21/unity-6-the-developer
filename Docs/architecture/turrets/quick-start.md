@@ -16,7 +16,7 @@ UI는 ON 전에 잠금·파괴·냉각·자동 활성화 여부를 확인한다.
 ## 씬 준비
 
 1. 기존 Canon 또는 Missile Prefab을 배치한다. Definition과 발사 지점 및 투사체 참조를 유지한다.
-2. 씬에 `TurretController`를 배치하고 최대 전력을 설정한다.
+2. 씬에 `FieldTurretController`를 배치하고 최대 전력을 설정한다.
 3. 터렛 Inspector의 컨트롤러 참조에 해당 컨트롤러를 지정한다. Additive 씬에서 같은 예산을 쓰려면 같은 컨트롤러를 지정한다.
 4. 활성화 요청 결과와 등록된 스냅샷을 확인한다.
 
@@ -27,10 +27,10 @@ Canon과 Missile의 전력 공급에는 CU가 필수는 아니다. 기존 CU와 
 ## 조회 후 활성화
 
 ```csharp
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 
 // turretController는 Inspector 등에서 주입한 씬 컨트롤러다.
-foreach (var snapshot in TurretInstanceRegistry.GetAllSnapshots())
+foreach (var snapshot in FieldTurretInstanceRegistry.GetAllSnapshots())
 {
     if (snapshot.IsDestroyed || snapshot.IsLocked)
         continue;

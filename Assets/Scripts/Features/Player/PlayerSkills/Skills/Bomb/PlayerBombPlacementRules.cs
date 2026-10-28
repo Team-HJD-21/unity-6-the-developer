@@ -25,7 +25,7 @@ public static class PlayerBombPlacementRules
                 return PlayerBombPlacementResult.OverlapsEnemy;
             if (layer == LayerMask.NameToLayer("Player") || hit.GetComponentInParent<PlayerInfo>() != null ||
                 hit.GetComponentInParent<PlayerTurret>() != null ||
-                hit.GetComponentInParent<TeamHJD.Game.Turrets.TurretBase>() != null)
+                hit.GetComponentInParent<TeamHJD.Game.FieldTurrets.FieldTurretBase>() != null)
                 return PlayerBombPlacementResult.BlockedByObstacle;
 
             int ownerLayer = 1 << owner.layer;

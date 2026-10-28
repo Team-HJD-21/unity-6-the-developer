@@ -1,7 +1,7 @@
 using System.Collections;
 using TMPro;
-using TeamHJD.Game.Turrets;
-using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,7 +31,7 @@ public sealed class TurretInteractionUI : MonoBehaviour
     [SerializeField] private float shakeAmount = 1.03f;
 
     private Animator _animator;
-    private TurretBase _selectedTurret;
+    private FieldTurretBase _selectedTurret;
     private bool _isVisible;
     private Vector3 _menuOriginalPosition;
 
@@ -88,8 +88,8 @@ public sealed class TurretInteractionUI : MonoBehaviour
         if (camera == null) return;
         Vector2 pointerWorldPosition = camera.ScreenToWorldPoint(GameInput.PointerPosition);
         RaycastHit2D hit = Physics2D.Raycast(pointerWorldPosition, Vector2.zero);
-        TurretBase clickedTurret = hit.collider != null
-            ? hit.collider.GetComponentInParent<TurretBase>()
+        FieldTurretBase clickedTurret = hit.collider != null
+            ? hit.collider.GetComponentInParent<FieldTurretBase>()
             : null;
 
         if (clickedTurret == null)
@@ -196,16 +196,16 @@ public sealed class TurretInteractionUI : MonoBehaviour
             return;
         }
 
-        TurretActivationResult result = _selectedTurret.RequestActivation(!_selectedTurret.IsActivated);
+        FieldTurretActivationResult result = _selectedTurret.RequestActivation(!_selectedTurret.IsActivated);
         switch (result)
         {
-            case TurretActivationResult.InsufficientPower:
+            case FieldTurretActivationResult.InsufficientPower:
                 // Legacy 제거로 인해 로직 무효화: AlertManager 알림 연결.
                 // alertManager?.Show(1);
                 Debug.LogWarning("터렛 활성화 실패: 사용할 수 있는 전력이 부족합니다.", _selectedTurret);
                 break;
-            case TurretActivationResult.PowerSourceUnavailable:
-            case TurretActivationResult.InvalidPowerCost:
+            case FieldTurretActivationResult.PowerSourceUnavailable:
+            case FieldTurretActivationResult.InvalidPowerCost:
                 Debug.LogError($"Failed to change activation for {_selectedTurret.name}: {result}", _selectedTurret);
                 break;
         }
@@ -214,7 +214,7 @@ public sealed class TurretInteractionUI : MonoBehaviour
         RefreshTurretInfo();
     }
 
-    private static void UpdateMiniMapElement(TurretBase turret)
+    private static void UpdateMiniMapElement(FieldTurretBase turret)
     {
         foreach (Transform child in turret.GetComponentsInChildren<Transform>(true))
         {

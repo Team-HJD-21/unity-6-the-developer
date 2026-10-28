@@ -29,7 +29,7 @@ Persistent legacy objects (Main)
 
 Stage scene
   InGameManager ─┬─ Wave + Spawner + Dialogue + Pause + Reward + GameOver
-                 ├─ TurretController / ControlUnitHealth
+                 ├─ FieldTurretController / ControlUnitHealth
                  └─ Player / MonsterSpawner / UI
   TurretInteractionUI ── direct turret selection and activation UI
 ```
@@ -72,7 +72,7 @@ classDiagram
         +StartWave()
         +ListenMonsterDie()
     }
-    class TurretController
+    class FieldTurretController
     class TurretInteractionUI
     class PlayerInfo
     class ControlUnitHealth
@@ -90,8 +90,8 @@ classDiagram
     GeneralManager --> InGameManager : Find every FixedUpdate
     SceneController --> GameManager : static state
     InGameManager --> DataManager : progression/reward
-    InGameManager --> TurretController : activation command
-    TurretInteractionUI --> TurretController : TurretBase activation path
+    InGameManager --> FieldTurretController : activation command
+    TurretInteractionUI --> FieldTurretController : FieldTurretBase activation path
     PlayerInfo --> InGameManager : GameOver direct call
     ControlUnitHealth --> MatchEvents : HealthChanged / Destroyed
     UIPlayerHp --> PlayerInfo : UnityEvent/direct lookup
@@ -256,10 +256,10 @@ AppRoot (프로세스당 1개; composition root)
 | `DataManager` | `ContentCatalog`, `PlayerProfile`, `ProfileService` | 밸런스 정의, 계정 진행도, Backend Gateway와 Local Cache를 분리한다. |
 | `InGameManager` | `MatchSession`, `GameSimulation`, `StoryModeRules` | 웨이브·승패·보상을 Domain/Application으로 이식한다. UI/Animator는 Presenter로 이동한다. |
 | `PlayerInfo` | `PlayerState` + `PlayerSceneAdapter` | HP 원본은 State, MonoBehaviour는 피격/표현 Adapter가 된다. |
-| `ControlUnitHealth` | `ControlUnitState` + `ControlUnitSceneAdapter` | HP 원본을 State로 이동한다. 전력은 `TurretController` 경계에 유지한다. |
+| `ControlUnitHealth` | `ControlUnitState` + `ControlUnitSceneAdapter` | HP 원본을 State로 이동한다. 전력은 `FieldTurretController` 경계에 유지한다. |
 | `UIPlayerHp`, `UICUInfo` | `HudPresenter` + View | State/event 구독으로 갱신하고 Player/Manager 검색을 제거한다. |
 | `MonsterSpawner`, `Monster` | `SpawnerSceneAdapter`, `MonsterSceneAdapter` | spawn/death를 `GameCommand`/result로 보고한다. |
-| 제거된 `TowerManager` | `TurretController` + `TurretInteractionUI` | 활성화·전력 규칙과 선택 메뉴를 분리했다. 플레이어 건설 기능은 포함하지 않는다. |
+| 제거된 `TowerManager` | `FieldTurretController` + `TurretInteractionUI` | 활성화·전력 규칙과 선택 메뉴를 분리했다. 플레이어 건설 기능은 포함하지 않는다. |
 | `AudioManager` | `IAudioService` + `UnityAudioAdapter` | Game event를 표현하되, Domain에 직접 참조되지 않는다. |
 
 이 표는 상속 계보가 아니라 **책임의 이식 지도**다. 레거시 클래스를 새 이름으로 바꿔
@@ -386,7 +386,7 @@ FakeAudioService, FakeSceneLoader만 배치한다. Main, GeneralManager,
 
 - `GeneralManager`가 물리 프레임마다 `GameObject.Find`로 로컬 매니저와 UI를 찾는다.
 - `InGameManager`가 약 840줄로 다수 도메인 책임을 가진다.
-- `DataManager`의 CU 상점 수치는 현재 `ControlUnitHealth`와 `TurretController`가 소비하지 않는 레거시 데이터다.
+- `DataManager`의 CU 상점 수치는 현재 `ControlUnitHealth`와 `FieldTurretController`가 소비하지 않는 레거시 데이터다.
 - 미사일 기본 공격력은 초기 배열 `120`, 레벨 적용 기준값 `110`으로 불일치한다.
 - `PlayerInfo`는 변경 여부와 무관하게 매 FixedUpdate에 HP 이벤트를 발행한다.
 - 현재 EventBus/Global/Game 초안은 실행 흐름에 연결되지 않았다.

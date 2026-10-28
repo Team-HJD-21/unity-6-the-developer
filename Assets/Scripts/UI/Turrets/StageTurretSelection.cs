@@ -1,5 +1,5 @@
 using System;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,7 +9,7 @@ internal sealed class StageTurretSelection
     private readonly Scene _scene;
     private readonly Func<PlayerInfo> _getPlayer;
     private readonly Func<float> _getInteractionDistance;
-    private TurretBase _selected;
+    private FieldTurretBase _selected;
     public int SelectedId { get; private set; }
 
     public StageTurretSelection(Scene scene, Func<PlayerInfo> getPlayer,
@@ -20,7 +20,7 @@ internal sealed class StageTurretSelection
         _getInteractionDistance = getInteractionDistance;
     }
 
-    private bool IsWithinReach(TurretBase turret)
+    private bool IsWithinReach(FieldTurretBase turret)
     {
         PlayerInfo player = _getPlayer();
         float distance = _getInteractionDistance();
@@ -29,13 +29,13 @@ internal sealed class StageTurretSelection
             <= distance * distance;
     }
 
-    public bool CanSelect(TurretBase turret) => turret != null &&
+    public bool CanSelect(FieldTurretBase turret) => turret != null &&
         turret.gameObject.scene == _scene && turret.isActiveAndEnabled &&
-        TurretInstanceRegistry.TryGet(turret.InstanceId, out var registered) && registered == turret;
+        FieldTurretInstanceRegistry.TryGet(turret.InstanceId, out var registered) && registered == turret;
 
-    public bool CanInteractWith(TurretBase turret) => CanSelect(turret) && IsWithinReach(turret);
+    public bool CanInteractWith(FieldTurretBase turret) => CanSelect(turret) && IsWithinReach(turret);
 
-    public void ProcessInput(TurretController controller)
+    public void ProcessInput(FieldTurretController controller)
     {
         if (GameInput.WasPressedThisFrame(GameKey.Escape))
         {
@@ -47,7 +47,7 @@ internal sealed class StageTurretSelection
             GameInput.PrimaryPointerWasConsumed || GameInput.PrimaryPointerReservedForPlacement || GameInput.IsPointerOverUi())
             return;
 
-        TurretBase clickedTurret = FindClickedTurret();
+        FieldTurretBase clickedTurret = FindClickedTurret();
         // 이미 선택한 포탑이나 먼 포탑도 선택 클릭이므로 공격으로 넘기지 않습니다.
         if (clickedTurret != null && !GameInput.TryConsumePrimaryPointerPress()) return;
         if (_selected == clickedTurret) return;
@@ -58,7 +58,7 @@ internal sealed class StageTurretSelection
         if (_selected != null) _selected.ShowRange = true;
     }
 
-    private TurretBase FindClickedTurret()
+    private FieldTurretBase FindClickedTurret()
     {
         Camera camera = Camera.main;
         if (camera == null) return null;
@@ -68,11 +68,11 @@ internal sealed class StageTurretSelection
         if (!plane.Raycast(ray, out float distance)) return null;
 
         Vector2 point = ray.GetPoint(distance);
-        TurretBase nearest = null;
+        FieldTurretBase nearest = null;
         float nearestDistance = float.PositiveInfinity;
         foreach (Collider2D hit in Physics2D.OverlapPointAll(point))
         {
-            TurretBase candidate = hit.GetComponentInParent<TurretBase>();
+            FieldTurretBase candidate = hit.GetComponentInParent<FieldTurretBase>();
             if (!CanSelect(candidate)) continue;
 
             float distanceSquared = ((Vector2)candidate.transform.position - point).sqrMagnitude;
@@ -85,11 +85,11 @@ internal sealed class StageTurretSelection
         return nearest;
     }
 
-    public TurretBase Resolve()
+    public FieldTurretBase Resolve()
     {
         if (SelectedId == 0) return null;
 
-        if (!TurretInstanceRegistry.TryGet(SelectedId, out var current) || current == null ||
+        if (!FieldTurretInstanceRegistry.TryGet(SelectedId, out var current) || current == null ||
             !CanSelect(current))
         {
             Clear();

@@ -1,6 +1,6 @@
 using System;
 using TeamHJD.Game.Content;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.Domain;
 
 /// <summary>선택 ID를 유지하고 UI 입력을 기존 터렛 API에 전달합니다.</summary>
@@ -8,16 +8,16 @@ internal sealed class StageTurretPresenter : IDisposable
 {
     private readonly StageTurretSelection _selection;
     private readonly StageTurretControlView _view;
-    private readonly TurretLevelUpgradeCatalog _catalog;
+    private readonly FieldTurretLevelUpgradeCatalog _catalog;
     private readonly Func<bool> _canInteract;
-    private readonly Func<TurretController> _getController;
+    private readonly Func<FieldTurretController> _getController;
     private int _displayedId;
     private bool _displayedPermission;
     private bool _dirty = true;
     private bool _disposed;
 
     public StageTurretPresenter(StageTurretSelection selection, StageTurretControlView view,
-        TurretLevelUpgradeCatalog catalog, Func<bool> canInteract, Func<TurretController> getController)
+        FieldTurretLevelUpgradeCatalog catalog, Func<bool> canInteract, Func<FieldTurretController> getController)
     {
         _selection = selection;
         _view = view;
@@ -30,14 +30,14 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelDownRequested += LevelDown;
         _view.CloseRequested += Close;
         _view.Upgrades.ChangeRequested += ChangeUpgrade;
-        TurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
+        FieldTurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
     }
 
     public void Refresh(bool refreshDisplay = false)
     {
         if (_disposed) return;
 
-        TurretBase turret = _selection.Resolve();
+        FieldTurretBase turret = _selection.Resolve();
         bool withinReach = _selection.CanInteractWith(turret);
         bool canInteract = _canInteract() && withinReach;
         bool selectionChanged = _displayedId != _selection.SelectedId;
@@ -57,9 +57,9 @@ internal sealed class StageTurretPresenter : IDisposable
 
     private void Toggle()
     {
-        if (!CanRequest(out TurretBase turret)) return;
+        if (!CanRequest(out FieldTurretBase turret)) return;
         if (!StageTurretInteractionRules.CanToggle(turret)) return;
-        TurretController controller = _getController();
+        FieldTurretController controller = _getController();
         if (controller == null) return;
 
         // The ID-based controller API also rejects a turret using a different power source.
@@ -71,9 +71,9 @@ internal sealed class StageTurretPresenter : IDisposable
     private void LevelUp() => ChangeLevel(true);
     private void LevelDown() => ChangeLevel(false);
 
-    private void ChangeUpgrade(TurretUpgradeDefinition upgrade, bool increase)
+    private void ChangeUpgrade(FieldTurretUpgradeDefinition upgrade, bool increase)
     {
-        if (!CanRequest(out TurretBase turret)) return;
+        if (!CanRequest(out FieldTurretBase turret)) return;
         if (!StageTurretInteractionRules.CanChangeUpgrade(turret, upgrade, increase)) return;
         var result = increase ? turret.ApplyUpgrade(upgrade) : turret.DowngradeUpgrade(upgrade);
         _view.SetFeedback(StageTurretUIText.Upgrade(result));
@@ -82,10 +82,10 @@ internal sealed class StageTurretPresenter : IDisposable
 
     private void ChangeLevel(bool upgrade)
     {
-        if (!CanRequest(out TurretBase turret)) return;
+        if (!CanRequest(out FieldTurretBase turret)) return;
         if (!turret.CanModifyUpgrades) return;
 
-        TurretBase targetPrefab;
+        FieldTurretBase targetPrefab;
         bool found = upgrade
             ? _catalog.TryGetNext(turret.Definition, out targetPrefab)
             : _catalog.TryGetPrevious(turret.Definition, out targetPrefab);
@@ -105,7 +105,7 @@ internal sealed class StageTurretPresenter : IDisposable
         Refresh(true);
     }
 
-    private bool CanRequest(out TurretBase turret)
+    private bool CanRequest(out FieldTurretBase turret)
     {
         turret = null;
         if (_disposed || !_canInteract()) return false;
@@ -137,6 +137,6 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelDownRequested -= LevelDown;
         _view.CloseRequested -= Close;
         _view.Upgrades.ChangeRequested -= ChangeUpgrade;
-        TurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
+        FieldTurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
     }
 }

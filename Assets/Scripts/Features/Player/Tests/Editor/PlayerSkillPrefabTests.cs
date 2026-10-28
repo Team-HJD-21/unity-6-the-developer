@@ -45,8 +45,8 @@ public sealed class PlayerSkillPrefabTests
     public void PlayerTurret_DamageIsHalfOfLevelOneCannon()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
-        var definition = AssetDatabase.LoadAssetAtPath<TeamHJD.Game.Content.TurretDefinition>(
-            "Assets/Data/Turrets/CanonDefinition/Canon_Stage1_LV1.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<TeamHJD.Game.Content.FieldTurretDefinition>(
+            "Assets/Data/FieldTurrets/CanonDefinition/Canon_Stage1_LV1.asset");
         Assert.That(new SerializedObject(prefab.GetComponent<PlayerTurret>()).FindProperty("damagePerShot").floatValue,
             Is.EqualTo(definition.Damage * .5f).Within(.001f));
     }
@@ -110,7 +110,7 @@ public sealed class PlayerSkillPrefabTests
         var projectile = (GameObject)new SerializedObject(turret.GetComponent<PlayerTurret>()).FindProperty("bulletPrefab").objectReferenceValue;
         Assert.That(projectile.GetComponent<PlayerTurretProjectile>(), Is.Not.Null);
         Assert.That(projectile.GetComponent<PlayerBullet>(), Is.Null);
-        var cannon = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Turrets/Weapons/bullet.prefab");
+        var cannon = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/FieldTurrets/Weapons/bullet.prefab");
         Assert.That(projectile.GetComponent<SpriteRenderer>().sprite, Is.EqualTo(cannon.GetComponent<SpriteRenderer>().sprite));
     }
     [Test]

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -87,17 +87,17 @@ namespace TeamHJD.Game.Editor
         }
         private static void SubscribeTurrets()
         {
-            TurretInstanceRegistry.Destroyed -= OnTurretDestroyed;
-            TurretInstanceRegistry.Restored -= OnTurretRestored;
-            TurretInstanceRegistry.Destroyed += OnTurretDestroyed;
-            TurretInstanceRegistry.Restored += OnTurretRestored;
+            FieldTurretInstanceRegistry.Destroyed -= OnTurretDestroyed;
+            FieldTurretInstanceRegistry.Restored -= OnTurretRestored;
+            FieldTurretInstanceRegistry.Destroyed += OnTurretDestroyed;
+            FieldTurretInstanceRegistry.Restored += OnTurretRestored;
         }
         private static void Detach()
         {
             if (_source != null) _source.DiagnosticEmitted -= OnDiagnostic;
             _source = null;
-            TurretInstanceRegistry.Destroyed -= OnTurretDestroyed;
-            TurretInstanceRegistry.Restored -= OnTurretRestored;
+            FieldTurretInstanceRegistry.Destroyed -= OnTurretDestroyed;
+            FieldTurretInstanceRegistry.Restored -= OnTurretRestored;
         }
         private static void Update()
         {
@@ -156,7 +156,7 @@ namespace TeamHJD.Game.Editor
             var snapshot = BattlefieldDebugSession.Snapshot;
             if (snapshot == null || snapshot.MatchId.ToString() != run.MatchId) return;
             var turrets = GetSceneTurrets();
-            var controllers = UnityEngine.Object.FindObjectsByType<TurretController>(FindObjectsSortMode.None)
+            var controllers = UnityEngine.Object.FindObjectsByType<FieldTurretController>(FindObjectsSortMode.None)
                 .Where(item => item.isActiveAndEnabled && item.gameObject.scene == SceneManager.GetActiveScene()).ToArray();
             // GetSnapshot는 controller의 보류 전력까지 분리한 공식 조회 경로입니다.
             var budgets = controllers.Select(item => item.GetSnapshot()).ToArray();
@@ -187,11 +187,11 @@ namespace TeamHJD.Game.Editor
             if (oob) _warnings.Add("Grid 범위 밖 입력이 있습니다.");
             ValidateSpawnPoints(grid);
         }
-        public static IReadOnlyList<TurretSnapshot> GetSceneTurrets()
+        public static IReadOnlyList<FieldTurretSnapshot> GetSceneTurrets()
         {
             var scene = SceneManager.GetActiveScene();
-            return TurretInstanceRegistry.GetAllSnapshots().Where(item =>
-                TurretInstanceRegistry.TryGet(item.InstanceId, out var turret) && turret != null && turret.gameObject.scene == scene).ToArray();
+            return FieldTurretInstanceRegistry.GetAllSnapshots().Where(item =>
+                FieldTurretInstanceRegistry.TryGet(item.InstanceId, out var turret) && turret != null && turret.gameObject.scene == scene).ToArray();
         }
         private static void ValidateSpawnPoints(BattlefieldGridSnapshot grid)
         {
@@ -237,13 +237,13 @@ namespace TeamHJD.Game.Editor
             run.Markers.Add(new GameDebugMarker { GameSeconds = _source.GameSeconds, RealSeconds = _source.RealSeconds, Message = message, TurretId = turretId });
             Changed?.Invoke();
         }
-        private static void OnTurretDestroyed(TurretBase turret)
+        private static void OnTurretDestroyed(FieldTurretBase turret)
         {
             if (turret.gameObject.scene != SceneManager.GetActiveScene()) return;
             AddMarker("Turret destroyed: " + turret.name, turret.InstanceId);
             if (ShouldPauseOnTurretDestroyed) Pause("터렛 파괴: " + turret.name);
         }
-        private static void OnTurretRestored(TurretBase turret)
+        private static void OnTurretRestored(FieldTurretBase turret)
         {
             if (turret.gameObject.scene == SceneManager.GetActiveScene()) AddMarker("Turret restored: " + turret.name, turret.InstanceId);
         }
