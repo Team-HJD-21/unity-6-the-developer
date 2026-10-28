@@ -14,19 +14,19 @@
 
 지역 원본은 Match 소유 `RegionRuntime`의 Uniform Grid입니다. `RegionSceneBinding`이 정적 CU 구역을 연결하거나 동적 활성 터렛을 임시 삼각형으로 계산해 셀에 투영합니다. 동적 터렛에는 지역 잠금을 걸지 않으며 점령 회수로 나머지 터렛을 끄지 않습니다. Battlefield의 참가자 밀도 Grid와 지역 점령 Grid는 별개입니다.
 
-현재 Initial_Stage의 실제 모드 전환·점령 형성/회수, HUD의 CU 자동 활성화와 로컬 actor 주입은 검증했습니다. 정식 Encounter 요청은 타입 결과·최신 조회·중복 방지를 거쳐 E의 실제 Planner/Executor를 사용합니다. 실제 UTP 두 SDK 검사에 이어 **Windows 실행 파일 두 개**에서 같은 설정·지역 해시·최소 NetworkObject를 확인하고 정적→동적→회수→종료→재시작을 검증했습니다. Client는 권한 MatchSession을 만들지 않습니다. 추가한 터렛 명령 전송/정책/Scene gateway는 아래와 같으며, 이 최신 명령 조립을 포함한 Windows 재검사·Client HUD 조작·전체 전투 동기화는 아직 남아 있습니다.
+현재 Initial_Stage의 실제 모드 전환·점령 형성/회수, HUD의 CU 자동 활성화와 로컬 actor 주입은 검증했습니다. 정식 Encounter 요청은 타입 결과·최신 조회·중복 방지를 거쳐 Enemy/Encounter의 실제 Planner/Executor를 사용합니다. 실제 UTP 두 SDK 검사에 이어 **Windows 실행 파일 두 개**에서 같은 설정·지역 해시·최소 NetworkObject를 확인하고 정적→동적→회수→종료→재시작을 검증했습니다. Client는 권한 MatchSession을 만들지 않습니다. 추가한 터렛 명령 전송/정책/Scene gateway는 아래와 같으며, 이 최신 명령 조립을 포함한 Windows 재검사·Client HUD 조작·전체 전투 동기화는 아직 남아 있습니다.
 
 Initial_Stage의 SinglePlayerHost는 명시적인 연결→준비→시작 API를 호출합니다. Manual로 바꾸면 InitialStageCompositionRoot의 InitialStageNetworkBinding Inspector에서 단계를 나눠 실행할 수 있습니다. Host만 MatchSession을 소유하고 Client는 공유 설정/지역 읽기 모델과 자기 로컬 actor를 연결합니다. 상대 Player의 실제 이동/전투 복제는 아직 이 경로가 제공하지 않습니다. [실행 API와 정확한 책임 경계](../../../Docs/architecture/core-sprint-region-and-request-api.md#initial_stage-실행-api)를 확인하세요.
 
-터렛은 SceneEntityIdentity의 논리 ID와 D의 로컬 InstanceId를 분리합니다. TurretMatchBinding이 Match별 대응표를 만들고 D의 승급/강등 사실에서 ID만 이전합니다. 실제 D Factory·교체·삭제 및 Windows Host/Client의 제작 키 8개 일치를 검증했습니다. Battlefield 배치와 동적 지역 입력은 같은 논리 ID를 사용하되 서로 다른 상태를 나타냅니다.
+터렛은 SceneEntityIdentity의 논리 ID와 FieldTurret의 로컬 InstanceId를 분리합니다. TurretMatchBinding이 Match별 대응표를 만들고 FieldTurret의 승급/강등 사실에서 ID만 이전합니다. 실제 FieldTurret Factory·교체·삭제 및 Windows Host/Client의 제작 키 8개 일치를 검증했습니다. Battlefield 배치와 동적 지역 입력은 같은 논리 ID를 사용하되 서로 다른 상태를 나타냅니다.
 
-터렛 명령은 `TurretCommandRequest → TurretCommandGateway → TurretCommandService → TurretFeatureCommandExecutor → D API`로 연결합니다. 모든 참가자가 ON/OFF·CU 자동 활성화·승급·강화/강등을 요청하고 Host가 실제 연결 발신자·Match·최신 actor 위치/생존/조작·D 규칙을 검증합니다. 실제 NGO 왕복/재전송/위조 거부·재접속과 Initial_Stage의 거리 정책/명령·정리/재시작을 검사했습니다. `InitialStageNetworkBinding.TurretCommands`는 현재 Match의 입력 Port이며 접수와 서버 확정 결과는 다릅니다. 같은 요청은 GUID를 유지해 재전송합니다.
+터렛 명령은 `TurretCommandRequest → TurretCommandGateway → TurretCommandService → TurretFeatureCommandExecutor → FieldTurret API`로 연결합니다. 모든 참가자가 ON/OFF·CU 자동 활성화·승급·강화/강등을 요청하고 Host가 실제 연결 발신자·Match·최신 actor 위치/생존/조작·FieldTurret 규칙을 검증합니다. 실제 NGO 왕복/재전송/위조 거부·재접속과 Initial_Stage의 거리 정책/명령·정리/재시작을 검사했습니다. `InitialStageNetworkBinding.TurretCommands`는 현재 Match의 입력 Port이며 접수와 서버 확정 결과는 다릅니다. 같은 요청은 GUID를 유지해 재전송합니다.
 
-Host가 실제 소유하는 B actor는 `RegisterAuthorityPlayerActor`로 연결하고 반환 lease를 actor 수명에 맞춰 해제합니다. 원격 actor가 없으면 AuthorityActorUnavailable로 거부합니다. Client payload 좌표·PlayerStart로 거리 검증을 대신하지 않습니다. Match 종료는 D 자동 큐/예약을 해제하지만 체력·강화·열 상태의 전체 초기화는 수행하지 않습니다.
+Host가 실제 소유하는 Player/UI actor는 `RegisterAuthorityPlayerActor`로 연결하고 반환 lease를 actor 수명에 맞춰 해제합니다. 원격 actor가 없으면 AuthorityActorUnavailable로 거부합니다. Client payload 좌표·PlayerStart로 거리 검증을 대신하지 않습니다. Match 종료는 FieldTurret 자동 큐/예약을 해제하지만 체력·강화·열 상태의 전체 초기화는 수행하지 않습니다.
 
-기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 Host 확정 표시 source를 주입받습니다. D API를 직접 실행하는 정식 UI 경로는 제거했으며, Port가 대기/해제 상태면 로컬 D 쓰기로 되돌아가지 않습니다. `TurretPresentationSceneSource`가 D 원본을 읽어 표시 복사본을 만들고 Client에는 `TurretPresentationReplica` 읽기 모델을 둡니다. 서버 결과와 `ConfirmedCommandSequence`가 반영된 표시 상태를 모두 기다린 뒤 같은 대상의 입력을 다시 엽니다. 실제 버튼·응답 순서·부분 실패·재활성화·CU 가용성 검사를 통과했습니다.
+기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 Host 확정 표시 source를 주입받습니다. FieldTurret API를 직접 실행하는 정식 UI 경로는 제거했으며, Port가 대기/해제 상태면 로컬 FieldTurret 쓰기로 되돌아가지 않습니다. `TurretPresentationSceneSource`가 FieldTurret 원본을 읽어 표시 복사본을 만들고 Client에는 `TurretPresentationReplica` 읽기 모델을 둡니다. 서버 결과와 `ConfirmedCommandSequence`가 반영된 표시 상태를 모두 기다린 뒤 같은 대상의 입력을 다시 엽니다. 실제 버튼·응답 순서·부분 실패·재활성화·CU 가용성 검사를 통과했습니다.
 
-**표시 Frame의 Client 전송을 연결했습니다.** `TurretPresentationReplication`이 Host source와 Client replica를 연결하고, App이 별도 제한 채널을 소유합니다. 실제 UTP에서 최대 payload·최신 합치기·세대/충돌·재접속·Client 상태 주입 거부를 확인했습니다. Client는 수신 전 대기로 표시하며 로컬 D 초기값을 진짜처럼 보여주지 않습니다. 원격 B actor 및 D의 실제 표현/전투 복제와 이 표시 전송은 서로 다른 책임입니다. 최신 Windows 두 프로세스에서도 production Client 요청→Host 실제 D 처리, 전체 표시 Frame 해시 일치·종료/재시작·실행 중 Client 연결 해제를 확인했습니다. Host interaction actor는 명시적 개발 fixture이므로 B의 실제 원격 Player 복제까지 통과했다는 의미는 아닙니다. [이슈별 감사·직접 확인](../../../Docs/planning/2026-10-15-core-sprint-review-handoff.md)과 [HUD API](../../../Docs/architecture/player-ui-api.md#현재-hud-입력표시-흐름)를 참고하세요. PL 요청으로 수동 화면 인수는 PL에게 맡깁니다.
+**표시 Frame의 Client 전송을 연결했습니다.** `TurretPresentationReplication`이 Host source와 Client replica를 연결하고, App이 별도 제한 채널을 소유합니다. 실제 UTP에서 최대 payload·최신 합치기·세대/충돌·재접속·Client 상태 주입 거부를 확인했습니다. Client는 수신 전 대기로 표시하며 로컬 FieldTurret 초기값을 진짜처럼 보여주지 않습니다. 원격 Player/UI actor 및 FieldTurret의 실제 표현/전투 복제와 이 표시 전송은 서로 다른 책임입니다. 최신 Windows 두 프로세스에서도 production Client 요청→Host 실제 FieldTurret 처리, 전체 표시 Frame 해시 일치·종료/재시작·실행 중 Client 연결 해제를 확인했습니다. Host interaction actor는 명시적 개발 fixture이므로 Player/UI의 실제 원격 Player 복제까지 통과했다는 의미는 아닙니다. [이슈별 감사·직접 확인](../../../Docs/planning/2026-10-15-core-sprint-review-handoff.md)과 [HUD API](../../../Docs/architecture/player-ui-api.md#현재-hud-입력표시-흐름)를 참고하세요. PL 요청으로 수동 화면 인수는 PL에게 맡깁니다.
 
 AppRoot.Update는 App 소유 네트워크 큐를 게임시간 정지와 무관하게 Pump합니다. OnApplicationQuit/OnDestroy는 같은 Dispose를 호출하며, Editor의 AppPlayModeShutdown은 ExitingPlayMode에서 Scene 파괴 전 정리를 시작합니다. 자세한 단계·커밋·실패/수정 증거는 위 스프린트 기록을 확인하세요.
 
@@ -36,7 +36,7 @@ AppRoot.Update는 App 소유 네트워크 큐를 게임시간 정지와 무관�
 
 2026-10-09 이관 후 Core는 `Assets/Scripts/Core`, 실제 Grid asset은 `Assets/Data/Core`, 실행 Scene은 `Assets/Scenes/Gameplay/Initial_Stage.unity`입니다. namespace/asmdef/수명주기는 유지하고 Legacy 자동 Bootstrap·구형 Manager 실행 코드를 제거했습니다. [이동 대응·기능 제한](../../../Docs/architecture/asset-layout-and-migration.md) · [검증 기록](../../../Docs/planning/2026-10-09-asset-migration-results.md).
 
-최신 인수: PL이 실제 런타임을 확인하고 A의 공간 분석·Spawn 전달/분산·Game Debugger 기술 PoC를 승인했습니다. [마감과 Issue 판정](../../../Docs/planning/2026-10-08-poc-closeout-and-pr-handoff.md) · [팀 Core API 규약](../../../Docs/architecture/core-api-usage.md). 아래 날짜별 배치에서 남긴 미검증 기록은 당시 결과이며, 최신 인수와 구분합니다. 정식 승패·성장·2인 Network·공통 Windows Build를 모두 완료했다는 뜻은 아닙니다.
+최신 인수: PL이 실제 런타임을 확인하고 Core의 공간 분석·Spawn 전달/분산·Game Debugger 기술 PoC를 승인했습니다. [마감과 Issue 판정](../../../Docs/planning/2026-10-08-poc-closeout-and-pr-handoff.md) · [팀 Core API 규약](../../../Docs/architecture/core-api-usage.md). 아래 날짜별 배치에서 남긴 미검증 기록은 당시 결과이며, 최신 인수와 구분합니다. 정식 승패·성장·2인 Network·공통 Windows Build를 모두 완료했다는 뜻은 아닙니다.
 
 `IEncounterMatchConsumer`를 통한 Match 시작 바인딩, 최신 Battlefield snapshot 조회, Grid 점유·적 밀도·Frontline 거리 기반 SpawnPoint 배분, 첫 Encounter 자동 요청이 구현되어 있습니다. 분대 구성과 수량 `Normal`/10은 임시값입니다. 자동 요청은 기본 0.5초 실시간 지연 후 NGO Host/Executor 준비를 기다립니다. 기존 1차 검증 때는 터렛 0개였지만, 팀원의 #490 Scene 반영 후 최신 CLI 통합 검사에서는 삼각형 8개·외곽 6개와 네 source의 스폰 성공을 확인했습니다. 실제 전투/승패는 별도 Gate입니다. 반복 진행·공식 PlanId/중복 방지·지역 해금·최종 난이도는 [통합 준비표](../../../Docs/planning/2026-10-07-stage1-poc-integration-prep.md)의 후속 범위입니다.
 
@@ -67,7 +67,7 @@ Player prefab의 타깃 등록 누락은 별도 HOTFIX `dcb583d1`로 수정했�
 - 사용자가 `Initial_Stage` Play Mode에서 Request Encounter를 눌러 실제 생성 결과를 확인했습니다. PR #473에 해당 화면과 Unity CLI live Editor 진단이 기록되어 있습니다.
 - 이 검증은 Battlefield→Encounter 요청→Spawn의 테스트 경로를 확인한 것이며, 플레이어/터렛 전투, 적 사망, 전선 이동, 승패/종료까지 포함한 전체 PoC 한 판을 검증한 것은 아닙니다.
 - PR Repository checks는 통과했습니다. Unity EditMode 자동 테스트와 Windows Build는 해당 PR CI에서 실행되지 않았습니다. topology 테스트 코드는 존재하지만, 현재 Stage Scene의 실제 배치 터렛으로 삼각형/전선 결과를 확인한 증거는 별도입니다.
-- A/Core의 생산자·연결 구현은 대부분 완료 상태입니다. GitHub #443/#458의 잔여 확인 조건 및 팀 통합은 아래 이슈 판정 표와 YGDocs의 최신 마감 노트를 확인하세요.
+- Core의 생산자·연결 구현은 대부분 완료 상태입니다. GitHub #443/#458의 잔여 확인 조건 및 팀 통합은 아래 이슈 판정 표와 YGDocs의 최신 마감 노트를 확인하세요.
 
 ## 어셈블리와 의존성
 
@@ -346,7 +346,7 @@ sequenceDiagram
     participant R as BattlefieldSpatialRuntime
     participant T as TopologyBuilder
     participant G as GridBuilder
-    participant E as Encounter consumer (E-owned)
+    participant E as Encounter consumer (Enemy/Encounter 담당)
     C->>S: Create(config, initial spatial inputs)
     S->>R: Create Match-scoped runtime
     R->>T: Build(turret layout)
@@ -368,7 +368,7 @@ MatchState (authoritative state)
       ├─ Territory / Frontline snapshot (read-only)
       └─ Uniform Grid / raw occupancy
               ── Match bind/automatic first request or Editor debug request ──>
-          EncounterRuntime (E-owned prototype)
+          EncounterRuntime (Enemy/Encounter 담당 prototype)
               → SpawnPlan → Unity/Network Spawn Executor
 
 BattlefieldSpatial snapshot → Editor Debug Tool (visualization only)
@@ -423,10 +423,10 @@ BattlefieldSpatialSnapshot snapshot = session.Battlefield;
 
 ### Encounter에 연결할 때의 실제 호출 경계
 
-Core 쪽에서 Encounter에 넘길 데이터는 별도 복사본이나 새 singleton이 아니라 Match가 소유한 `MatchSession.Battlefield`입니다. Match를 시작한 조립자가 반환된 세션 참조를 보유하고, Encounter 평가 시점에 최신 snapshot을 읽어 E의 입력 API에 전달하는 방식이 현재 코드와 맞습니다.
+Core 쪽에서 Encounter에 넘길 데이터는 별도 복사본이나 새 singleton이 아니라 Match가 소유한 `MatchSession.Battlefield`입니다. Match를 시작한 조립자가 반환된 세션 참조를 보유하고, Encounter 평가 시점에 최신 snapshot을 읽어 Enemy/Encounter의 입력 API에 전달하는 방식이 현재 코드와 맞습니다.
 
 ```csharp
-// Match 조립부의 개념적 흐름. Encounter 입력 메서드는 E와 합의 후 연결합니다.
+// Match 조립부의 개념적 흐름. Encounter 입력 메서드는 Enemy/Encounter 파트와 합의 후 연결합니다.
 MatchSession match = appMatchHost.StartMatch(
     config, initialState, modeRules,
     turretInput, participantInput, gridConfiguration);
@@ -444,7 +444,7 @@ appMatchHost.TryEndMatch(match.Config.MatchId);
 - `MatchSession.Battlefield`는 Match 수명 중 explicit update가 끝날 때마다 새 revision을 가리킵니다. Scene은 App host 경유로 위치/배치를 갱신해 Editor 변경 통지도 같은 결과를 받습니다. Encounter 바인딩 해제 후 `TryEndMatch(ownedMatchId)`로 Core Match를 종료합니다. Encounter가 `MatchSession`을 Dispose하지 않습니다. 소비자 해제 예외가 Core 정리를 중단하지 않도록 보호합니다.
 - SpawnPoint 위치를 Grid에 조회하려면 Encounter/조립부가 SpawnPoint의 XY를 `BattlefieldPoint`로 투영하고 `snapshot.Grid.TryGetCellAt(...)`을 사용할 수 있습니다. 이는 raw cell occupancy 조회일 뿐이고, Spawn suitability 정책·Grid cell score를 뜻하지 않습니다.
 - Debug PoC 경로에는 `EncounterRuntime.TrySpawn(BattlefieldSpatialSnapshot, squadOrder, maxEnemyCount, out result)` 수신 API가 연결됐습니다. 현재는 유효한 Match snapshot인지 검사하고 MatchId/revision·공간 데이터 요약을 기록한 뒤 기존 planner/executor를 실행합니다. Grid/Frontline 기반 spawn 점수, SpawnPlan ID/idempotency 및 Encounter의 전체 Match 종료 lifecycle은 별도 Encounter 소유 범위입니다.
-- Encounter의 `Advance`/평가 cadence도 E 책임입니다. 권장 방향은 Match 시간 또는 권위 tick에서 저비용 상태/타이머를 진행하고, 이벤트나 별도 Decision Interval에서만 SpawnPlan을 평가하는 혼합형입니다. 매 렌더 프레임마다 Grid 전체를 재구축하거나 SpawnPlan을 재생성한다는 뜻은 아닙니다. 이번 Core 변경은 Encounter 시간 시스템을 새로 만들지 않습니다.
+- Encounter의 `Advance`/평가 cadence도 Enemy/Encounter 책임입니다. 권장 방향은 Match 시간 또는 권위 tick에서 저비용 상태/타이머를 진행하고, 이벤트나 별도 Decision Interval에서만 SpawnPlan을 평가하는 혼합형입니다. 매 렌더 프레임마다 Grid 전체를 재구축하거나 SpawnPlan을 재생성한다는 뜻은 아닙니다. 이번 Core 변경은 Encounter 시간 시스템을 새로 만들지 않습니다.
 
 ### main #463 Encounter 수신 검토 (2026-10-02)
 
@@ -452,7 +452,7 @@ appMatchHost.TryEndMatch(match.Config.MatchId);
 
 `Assets/Scripts/Features/Enemy/Spawning`에는 `EncounterRuntime`, `SpawnCompositionPlanner`, `SpawnInstruction`, `EnemySpawnExecutor`, `SpawnPoint` 경로가 추가됐습니다. 이는 기존 빈 상태가 아니라 **적을 실제 생성하는 첫 수직 프로토타입**이지만, 열린 #459 완료와 Battlefield 통합을 같은 것으로 보면 안 됩니다.
 
-| 현재 E 코드 | #459/Core와의 관계 |
+| 현재 Enemy/Encounter 코드 | #459/Core와의 관계 |
 |---|---|
 | `EncounterRuntime()` | `Object.FindAnyObjectByType<EnemySpawnExecutor>()`로 Scene에서 executor를 찾고, 기본 planner가 Resources 카탈로그를 로드합니다. Match에서 명시적으로 생성/폐기하는 수명과 주입 경계는 아직 없습니다. |
 | `Spawn()` / `TrySpawn(snapshot, ...)` | 기존 `Spawn()`은 매개변수 없이 planner/executor를 호출합니다. Debug 경로의 `TrySpawn`은 Battlefield snapshot을 인자로 받아 MatchId/revision과 공간 요약을 기록한 뒤 planner/executor를 호출합니다. 두 경로 모두 Match-scoped Encounter lifecycle/중복 실행 보장은 아직 없습니다. |
@@ -461,13 +461,13 @@ appMatchHost.TryEndMatch(match.Config.MatchId);
 | `EnemySpawnExecutor.Execute(...)` | NGO Server 검사, prefab/NetworkObject 검증, 지점 재검증, 서버 Spawn을 수행합니다. 생성된 Enemy ID/XY를 Core용 `IBattlefieldEnemyPositionSource`로 제공합니다. 현재 결과는 실제 Spawn 수를 반환하지만, 한 Plan의 idempotency 상태를 제공하지 않습니다. |
 | `SpawnPoint` | `AreaId`, 위치, 반경, `CanSpawnEnemies`를 제공합니다. Area와 Grid cell/Territory의 매핑은 아직 없습니다. |
 
-따라서 다음 연결은 Core가 Enemy에 의존하도록 만드는 것이 아니라, E/조립 계층에서 `MatchSession.Battlefield`를 명시적으로 Encounter 입력으로 전달하는 방향이어야 합니다. 현재 Enemy 스크립트에는 별도 asmdef가 없고 Core는 named asmdef이므로, Core Bootstrap asmdef에 Enemy/Encounter 참조를 추가하는 방식은 피합니다. 먼저 E와 snapshot 입력 signature·정책이 소비할 최소 필드·Match 생성/폐기 소유자를 맞춘 뒤, 실제 Scene composition에서 연결합니다. #459 acceptance와 원격 상태는 GitHub 이슈를 기준으로 확인합니다.
+따라서 다음 연결은 Core가 Enemy에 의존하도록 만드는 것이 아니라, Enemy/Encounter 또는 Scene 조립 계층에서 `MatchSession.Battlefield`를 명시적으로 Encounter 입력으로 전달하는 방향이어야 합니다. 현재 Enemy 스크립트에는 별도 asmdef가 없고 Core는 named asmdef이므로, Core Bootstrap asmdef에 Enemy/Encounter 참조를 추가하는 방식은 피합니다. 먼저 Enemy/Encounter 파트와 snapshot 입력 signature·정책이 소비할 최소 필드·Match 생성/폐기 소유자를 맞춘 뒤, 실제 Scene composition에서 연결합니다. #459 acceptance와 원격 상태는 GitHub 이슈를 기준으로 확인합니다.
 
 이 계산 코어에는 Legacy Manager나 Scene 객체 참조가 없습니다. 다만 Project Build Settings에 Legacy `Main`/Stage 씬이 남아 있고 해당 Manager는 기존 Scene/Prefab에서 사용 중입니다. #440 Legacy 목록화 및 Owner 검토가 미완료이고 #441은 승인 대상을 전제로 하므로, 이번 변경에서 Legacy 씬·스크립트를 일괄 제거하거나 비활성화하지 않았습니다. 신규 Core Runtime과 실제 게임 Scene을 혼합하지 않는 작업 경계는 확보했지만, Player 빌드에서 Legacy를 완전히 제거했다고 간주하면 안 됩니다.
 
 기존 #461/EnemySandbox 검증 기록은 당시의 AppBootstrap 실행 증거이며 Match 시작/종료 검증과는 구분합니다. 이번 `Initial_Stage` 검증에서는 Match 및 Player 생성·정리를 확인했습니다. Player prefab의 구형 스크립트가 `GeneralManager.Instance`를 통해 존재하지 않는 Legacy Manager를 생성하려던 경로는 `TryGetExistingInstance` 조회 API로 바꿔, Core Scene에서 Manager를 자동 생성하지 않고 안전하게 건너뛰도록 했습니다. Play Mode 재진입 후 `Player(Clone)` 1개, Legacy `GeneralManager`/`AudioManager` 0개, 신규 Console Error 0건을 확인했습니다. Player의 이동·공격이 실제로 가능한지는 별도 미검증입니다.
 
-현재 A/Core 구현 범위에는 Territory topology/frontline, Match-scope Uniform Grid, Grid 구성 Editor 진단 UI, `InitialStageCompositionRoot` 기반의 로컬 Match/Player spawn 및 teardown 경로가 포함됩니다. main #463의 Encounter→Spawn 초기 코드는 추가됐지만 #459의 Battlefield/Grid consumer handoff, 명시적 Plan 결과 및 end-to-end 통합은 미완료입니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 이번 Core 구현에 포함하지 않습니다.
+현재 Core 구현 범위에는 Territory topology/frontline, Match-scope Uniform Grid, Grid 구성 Editor 진단 UI, `InitialStageCompositionRoot` 기반의 로컬 Match/Player spawn 및 teardown 경로가 포함됩니다. main #463의 Encounter→Spawn 초기 코드는 추가됐지만 #459의 Battlefield/Grid consumer handoff, 명시적 Plan 결과 및 end-to-end 통합은 미완료입니다. Influence Map, Enemy density/우세 점수, 최종 spawn scoring/budget/difficulty는 이번 Core 구현에 포함하지 않습니다.
 
 ## Player Feature와 Core의 소유 경계 (2026-10-02)
 
@@ -515,15 +515,15 @@ PlayerInputHandler / Player Scene Components
 
 ### Stage 1 PoC 한 사이클의 현재 판정
 
-2026-10-08 PL의 실제 런타임 확인으로 A의 기술 PoC를 완료 인수했습니다. 현재 Battlefield/Uniform Grid producer, Initial_Stage 조립·Player 생성/정리, 최신 snapshot을 쓰는 첫 자동/일회/반복 Encounter 요청, 실제 NGO Spawn 및 셀 공유 service 기반 분산, Game Debugger/Scene 진단이 연결돼 있습니다. 정식 승패·결과 흐름은 이 인수 범위가 아니며 `MatchSimulation.Execute()`는 실제 전투 명령을 아직 처리하지 않습니다.
+2026-10-08 PL의 실제 런타임 확인으로 Core의 기술 PoC를 완료 인수했습니다. 현재 Battlefield/Uniform Grid producer, Initial_Stage 조립·Player 생성/정리, 최신 snapshot을 쓰는 첫 자동/일회/반복 Encounter 요청, 실제 NGO Spawn 및 셀 공유 service 기반 분산, Game Debugger/Scene 진단이 연결돼 있습니다. 정식 승패·결과 흐름은 이 인수 범위가 아니며 `MatchSimulation.Execute()`는 실제 전투 명령을 아직 처리하지 않습니다.
 
-최신 공간 정책 검사 24/24, 최종 집중 회귀 20/20, 실제 Scene 요청 검사 2/2 및 동적 Grid 재검사 1/1이 통과했습니다. 고정 입력 480마리에서 30/30셀을 사용했고 최신 동적 점유 240마리에서는 27/30셀을 사용했습니다. 이전의 타깃 없음 경고는 `dcb583d1` Player 타깃 HOTFIX와 실제 이동 회귀로 보완했습니다. HOTFIX는 임시로 제외/교체할 수 있지만 대체 타깃 연결 없이 제거하면 정지가 재발할 수 있습니다. 팀 공통 Windows Build·플레이 관찰과 E의 공식 Plan 중복 방지 인수는 여전히 별도입니다.
+최신 공간 정책 검사 24/24, 최종 집중 회귀 20/20, 실제 Scene 요청 검사 2/2 및 동적 Grid 재검사 1/1이 통과했습니다. 고정 입력 480마리에서 30/30셀을 사용했고 최신 동적 점유 240마리에서는 27/30셀을 사용했습니다. 이전의 타깃 없음 경고는 `dcb583d1` Player 타깃 HOTFIX와 실제 이동 회귀로 보완했습니다. HOTFIX는 임시로 제외/교체할 수 있지만 대체 타깃 연결 없이 제거하면 정지가 재발할 수 있습니다. 팀 공통 Windows Build·플레이 관찰과 Enemy/Encounter의 공식 Plan 중복 방지 인수는 여전히 별도입니다.
 
 최신 완료 범위·검사·Issue 판정은 팀 공유 [PoC 인수 기록](../../../Docs/planning/2026-10-08-poc-closeout-and-pr-handoff.md)에 정리합니다. 개인 YGDocs는 여전히 ignore 대상이며 PR의 필수 참고 자료로 사용하지 않습니다.
 
 ## 2026-10-08 2차 통합: Core 수명과 Editor 진단
 
-배치 결과·검증 파일·후속 Owner는 [2차 배치 결과](../../../Docs/planning/2026-10-08-phase2-batch-results.md)에 기록합니다. A 단독 범위 B0~B3를 구현했으며 E의 Encounter 수명/결정 기록(B4), 공동 진단 결합(B5), 실제 터렛 검증(Gate T)은 별개입니다.
+배치 결과·검증 파일·후속 Owner는 [2차 배치 결과](../../../Docs/planning/2026-10-08-phase2-batch-results.md)에 기록합니다. Core 단독 범위 B0~B3를 구현했으며 Enemy/Encounter의 Encounter 수명/결정 기록(B4), 공동 진단 결합(B5), 실제 터렛 검증(Gate T)은 별개입니다.
 
 ### 확인 순서와 사용법
 

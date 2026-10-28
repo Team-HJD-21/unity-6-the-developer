@@ -196,9 +196,9 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 ### Core 명령 연결 시 유의점 (2026-10-15)
 
-`PlayerControlState`는 `IPlayerInteractionActor`로 현재 actor의 XY·생존·CanAct를 제공한다. Host의 명령 검증은 이 Port를 실제 서버 actor에 연결해 사용한다. 원격 Client의 좌표/생존 payload를 그 대신 넣지 않는다. B의 서버 actor 생성/복제 경로에서 `InitialStageNetworkBinding.RegisterAuthorityPlayerActor(matchId, playerId, actor)`를 호출하고 반환 lease를 교체/Despawn에 해제한다. 현재 각 인스턴스에는 자기 로컬 actor만 생성되므로 이 API가 존재한다고 상대 이동 복제가 완료된 것은 아니다.
+`PlayerControlState`는 `IPlayerInteractionActor`로 현재 actor의 XY·생존·CanAct를 제공한다. Host의 명령 검증은 이 Port를 실제 서버 actor에 연결해 사용한다. 원격 Client의 좌표/생존 payload를 그 대신 넣지 않는다. Player/UI의 서버 actor 생성/복제 경로에서 `InitialStageNetworkBinding.RegisterAuthorityPlayerActor(matchId, playerId, actor)`를 호출하고 반환 lease를 교체/Despawn에 해제한다. 현재 각 인스턴스에는 자기 로컬 actor만 생성되므로 이 API가 존재한다고 상대 이동 복제가 완료된 것은 아니다.
 
-공용 터렛 ON/OFF·CU 자동 활성화·승급·강화/강등은 모든 참가자가 요청하고 Host가 검증하도록 확정했다. Core `TurretCommands` requester와 실제 D 명령 서비스는 Scene의 Match 시작/종료에 자동 조립한다. 기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 표시 source를 주입받아 사용한다. Client의 초기 로컬 D 값을 서버 확정 상태로 표시하지 않는다.
+공용 터렛 ON/OFF·CU 자동 활성화·승급·강화/강등은 모든 참가자가 요청하고 Host가 검증하도록 확정했다. Core `TurretCommands` requester와 실제 FieldTurret 명령 서비스는 Scene의 Match 시작/종료에 자동 조립한다. 기존 HUD 버튼은 `ITurretCommandConsumer`로 requester와 표시 source를 주입받아 사용한다. Client의 초기 로컬 FieldTurret 값을 서버 확정 상태로 표시하지 않는다.
 
 ### 현재 HUD 입력/표시 흐름
 
@@ -209,7 +209,7 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 `TrySelectTurret(entityId)`는 튜토리얼 등 명시적 선택에도 기존 Scene/거리 조건을 적용한다. `RetryPendingTurretCommand(entityId)`는 같은 GUID를 재전송하며 CU는 빈 ID로 지정한다. View/프리팹을 코드로 재생성하지 않는다.
 
-Host는 D 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **Host 표시·Client replica·실제 Frame 전송을 구현했다.** App이 접속 전송을 소유하고 Match별 replication이 source/replica를 연결한다. Client는 수신 전 대기 표시한다. 원격 D 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다. 실제 UTP/Scene과 Windows 두 프로세스의 전체 Frame 해시 검사는 통과했다. 후자는 Host interaction actor만 개발 fixture이며 B의 원격 Player 복제를 검증하지 않는다. 실제 원격 actor 연계와 PL 시각 인수는 [인계 안내](../planning/2026-10-15-core-sprint-review-handoff.md)를 따른다.
+Host는 FieldTurret 원본을 최대 0.1초 주기로 조회해 표시 복사본을 만든다. 전력·CU·자동 작업·레벨/강화·냉각을 포함하며, 내용이 같으면 새 revision을 만들지 않는다. **Host 표시·Client replica·실제 Frame 전송을 구현했다.** App이 접속 전송을 소유하고 Match별 replication이 source/replica를 연결한다. Client는 수신 전 대기 표시한다. 원격 FieldTurret 실제 생성/레벨 외형/공격 복제는 이 표시 복사본이 대신하지 않으며, Client의 오래된 로컬 사거리 원도 표시하지 않는다. 실제 UTP/Scene과 Windows 두 프로세스의 전체 Frame 해시 검사는 통과했다. 후자는 Host interaction actor만 개발 fixture이며 Player/UI의 원격 Player 복제를 검증하지 않는다. 실제 원격 actor 연계와 PL 시각 인수는 [인계 안내](../planning/2026-10-15-core-sprint-review-handoff.md)를 따른다.
 
 CU의 점령 수치는 모드뿐 아니라 표시 Frame의 RegionGridId/RegionRevision이 현재 지역 Snapshot과 일치할 때만 결합한다. 독립 채널이 서로 다른 시점의 상태를 전달하면 대기 안내를 표시한다.
 
