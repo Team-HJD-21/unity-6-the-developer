@@ -37,4 +37,6 @@
 
 현재 시간 기반은 `MatchCoordinator.Tick(Time.deltaTime)`과 `IMatchClock`이다. 낮·밤·날씨를 위한 공용 서버 시계와 타이머 등록 구조는 후속 설계이며, 기존 PR에서 이를 구현했다고 쓰지 않는다. 현재 Weather/Encounter 계약은 [환경 API](../architecture/match-environment-api.md), 관리 책임은 [운영 책임](../architecture/match-management-responsibilities.md)을 따른다.
 
+10/28 후속 설계에서 사용자가 확정한 정책은 두 가지다. 낮밤·날씨 시간은 Host 게임 정지·배속을 따른다. 환경 전환은 우선 다음 Encounter/SpawnPlan 조건만 바꾸며 전환 자체로 추가 스폰을 요청하지 않는다. SDK의 서버 시간과 게임 시간은 구분하고, 실제 clock/timer 구현과 Match/행성 시간 수명은 별도 협의/개발한다. 팀원이 수정 중인 Weather/CountTick Runtime은 이번 준비 작업에서 변경하지 않았다.
+
 사용자의 다음 공유 계획은 10/28 수요일 Weather, 10/31 토요일 GameManagement, 10/31~11/1 주말 Network다. ServerTick/시간 서비스는 김진태와 협의 예정이다. 이는 이번에 사용자가 보강한 계획이며 10/27 회의의 확정 발언으로 소급 기록하지 않는다. 문서 준비와 실제 통보·전파 완료도 구분한다.
