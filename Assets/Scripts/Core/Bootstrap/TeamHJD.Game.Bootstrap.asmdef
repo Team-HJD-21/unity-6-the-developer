@@ -11,8 +11,8 @@
     "TeamHJD.Game.Networking",
     "TeamHJD.Game.Infrastructure.Fakes",
     "TeamHJD.Game.Presentation",
-    "TeamHJD.Game.Turrets",
-    "TeamHJD.Game.Turrets.Contracts",
+    "TeamHJD.Game.FieldTurrets",
+    "TeamHJD.Game.FieldTurrets.Contracts",
     "Unity.Netcode.Runtime",
     "Unity.Collections"
   ],

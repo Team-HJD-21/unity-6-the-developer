@@ -1,5 +1,5 @@
 using System;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.Contracts;
 using TMPro;
 using UnityEngine;
@@ -85,7 +85,7 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (closeButton != null) closeButton.onClick.RemoveListener(RequestClose);
     }
 
-    public void Show(TurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown,
+    public void Show(FieldTurretBase turret, bool canInteract, bool canLevelUp, bool canLevelDown,
         bool dynamicRegions = false, bool withinReach = true)
     {
         if (turret == null)
@@ -164,7 +164,7 @@ public sealed class StageTurretControlView : MonoBehaviour
     }
 
 
-    private static string GetStatus(TurretBase turret)
+    private static string GetStatus(FieldTurretBase turret)
     {
         if (!turret.IsInitialized) return "Waiting for turret initialization";
         if (turret.IsManualOperationBlocked)

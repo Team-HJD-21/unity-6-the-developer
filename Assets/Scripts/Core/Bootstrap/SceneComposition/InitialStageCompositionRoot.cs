@@ -270,7 +270,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 throw new InvalidOperationException("Region and turret Match bindings must use the same active Scene controller.");
             if (!region.Controller.isActiveAndEnabled || region.ControlUnit == null ||
                 region.ControlUnit.gameObject.scene != gameObject.scene || !region.ControlUnit.gameObject.activeInHierarchy)
-                throw new InvalidOperationException("Assign an active Scene CU and TurretController before preparing the Match.");
+                throw new InvalidOperationException("Assign an active Scene CU and FieldTurretController before preparing the Match.");
             // 정의 생성은 읽기 전용입니다. CU의 유효 좌표·Grid 범위·Inspector 구역 수를 검사합니다.
             var health = region.ControlUnit.GetComponents<MonoBehaviour>()
                 .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitHealthSource>().ToArray();

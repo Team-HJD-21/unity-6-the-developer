@@ -5,7 +5,7 @@ using NUnit.Framework;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -68,7 +68,7 @@ public sealed class InitialStagePreparationTests
     [Test]
     public void DifferentControllerCannotBecomeASecondRegionWriter()
     {
-        var other = new GameObject("Invalid second controller").AddComponent<TurretController>();
+        var other = new GameObject("Invalid second controller").AddComponent<FieldTurretController>();
         var authoring = new SerializedObject(_regions);
         authoring.FindProperty("_controller").objectReferenceValue = other;
         authoring.ApplyModifiedPropertiesWithoutUndo();

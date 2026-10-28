@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Contracts;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEngine;
 
@@ -90,7 +90,7 @@ namespace TeamHJD.Game.Editor
                     using (new EditorGUILayout.HorizontalScope())
                     {
                         if (GUILayout.Button("#"+turret.InstanceId,EditorStyles.miniButton,GUILayout.Width(54)) &&
-                            TurretInstanceRegistry.TryGet(turret.InstanceId,out var component))
+                            FieldTurretInstanceRegistry.TryGet(turret.InstanceId,out var component))
                         { Selection.activeGameObject=component.gameObject; SceneView.lastActiveSceneView?.FrameSelected(); }
                         Cell($"{turret.DefinitionId}  {turret.CurrentHealth}/{turret.MaxHealth}",120);
                         Cell(turret.EffectivePower.ToString(),48);
@@ -175,7 +175,7 @@ namespace TeamHJD.Game.Editor
                         var marker=row.Marker;
                         Cell("Editor marker",145); Cell("—",65); Cell("Editor",105); Cell(marker.Message,170);
                         if (live && marker.TurretId>0 && GUILayout.Button("Frame",GUILayout.Width(50)) &&
-                            TurretInstanceRegistry.TryGet(marker.TurretId,out var turret))
+                            FieldTurretInstanceRegistry.TryGet(marker.TurretId,out var turret))
                         { Selection.activeGameObject=turret.gameObject; SceneView.lastActiveSceneView?.FrameSelected(); }
                     }
                 }

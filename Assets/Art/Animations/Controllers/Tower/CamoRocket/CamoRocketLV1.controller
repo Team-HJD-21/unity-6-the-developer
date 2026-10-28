@@ -91,7 +91,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MissileTurretLV1(Red)
+  m_Name: FieldMissileTurretLV1(Red)
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -144,7 +144,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MissileTurretLV1(Blue)
+  m_Name: FieldMissileTurretLV1(Blue)
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []

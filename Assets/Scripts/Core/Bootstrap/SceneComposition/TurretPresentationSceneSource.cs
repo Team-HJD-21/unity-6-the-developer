@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
@@ -14,7 +14,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly MatchId _matchId;
         private readonly Guid _descriptorId;
         private readonly TurretMatchBinding _binding;
-        private readonly TurretController _controller;
+        private readonly FieldTurretController _controller;
         private readonly Transform _controlUnit;
         private readonly IControlUnitVitals _controlVitals;
         private readonly MonoBehaviour _controlVitalsBehaviour;
@@ -53,7 +53,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var rows = new List<TurretPresentationSnapshot>();
             foreach (var registration in _binding.Registrations)
             {
-                if (!TurretInstanceRegistry.TryGet(registration.Handle, out var turret) || !_controller.OwnsTurret(turret) || turret.Definition == null) continue;
+                if (!FieldTurretInstanceRegistry.TryGet(registration.Handle, out var turret) || !_controller.OwnsTurret(turret) || turret.Definition == null) continue;
                 var flags = TurretPresentationFlags.None;
                 if (turret.IsInitialized) flags |= TurretPresentationFlags.Initialized;
                 if (turret.IsActivated) flags |= TurretPresentationFlags.Activated;

@@ -3,7 +3,7 @@
 최종 갱신: 2026-10-03
 상태: 조회 시점 복사본. 실시간으로 자동 갱신되는 참조가 아니다.
 
-## TurretSnapshot — 터렛 하나
+## FieldTurretSnapshot — 터렛 하나
 
 | 필드 | 의미 |
 | --- | --- |
@@ -16,14 +16,14 @@
 | `Range` | 보정 적용 외부 사거리 |
 | `SelectedUpgradeId` / `UpgradeLevel` | 선택한 세부 업그레이드 / 단계 |
 
-`IsActivated`가 true여도 과열 중이라면 작동하지 않을 수 있다. `Range`는 외부 사거리이며 최소 사거리 필드를 포함하지 않는다. 현재 스냅샷에는 `TurretKind`도 포함되지 않는다.
+`IsActivated`가 true여도 과열 중이라면 작동하지 않을 수 있다. `Range`는 외부 사거리이며 최소 사거리 필드를 포함하지 않는다. 현재 스냅샷에는 `FieldTurretKind`도 포함되지 않는다.
 
-## TurretControllerSnapshot — 전력과 집계
+## FieldTurretControllerSnapshot — 전력과 집계
 
 ```csharp
 var snapshot = turretController.GetSnapshot();
 int availablePower = snapshot.AvailablePower;
-int activeCanonCount = snapshot.GetActivatedCount(TurretKind.Canon);
+int activeCanonCount = snapshot.GetActivatedCount(FieldTurretKind.Canon);
 ```
 
 | 필드 | 의미 |
@@ -36,7 +36,7 @@ int activeCanonCount = snapshot.GetActivatedCount(TurretKind.Canon);
 | `ActivatedTurretCount` | 활성 상태인 비파괴 터렛 수 |
 | `OperationalTurretCount` | 작동 가능한 터렛 수 |
 | `ActivatedCountByType` | 종류별 활성 수의 읽기 전용 복사본 |
-| `GetActivatedCount(TurretKind)` | 해당 종류의 활성 수. 없으면 0 |
+| `GetActivatedCount(FieldTurretKind)` | 해당 종류의 활성 수. 없으면 0 |
 
 전력은 `MaximumPower = AvailablePower + ReservedPower + PendingRecoveryPower`로 구분한다. 끈 터렛의 전력이 즉시 가용 전력으로 전부 돌아오는 것은 아니다.
 

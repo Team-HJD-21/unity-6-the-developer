@@ -1,7 +1,10 @@
 # The Developer — Project Documentation
 
-수정일: 2026-10-26
+수정일: 2026-10-28
 상태: 현행 PL 기준 / Core 5·6주차 구현·기술 검증 및 팀 인수 자료. 제품·팀 플레이 Gate와 구분한다.
+
+최근 진행 공유: [10월 27일 주간 보고](planning/2026-10-27-weekly-progress.md) — Core 조작 검증 경로, Enemy 로직·네트워크 경계, Weather·환경 후보와 파트별 후속 목표. 구현 완료나 새 Sprint 확정이 아니다.
+
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 

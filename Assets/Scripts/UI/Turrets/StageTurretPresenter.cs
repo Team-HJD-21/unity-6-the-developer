@@ -2,7 +2,7 @@
 // 정식 Match는 Port 미연결/수신 대기를 로컬 D 호출로 우회하지 않습니다.
 using System;
 using TeamHJD.Game.Content;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 
@@ -11,9 +11,9 @@ internal sealed class StageTurretPresenter : IDisposable
 {
     private readonly StageTurretSelection _selection;
     private readonly StageTurretControlView _view;
-    private readonly TurretLevelUpgradeCatalog _catalog;
+    private readonly FieldTurretLevelUpgradeCatalog _catalog;
     private readonly Func<bool> _canInteract;
-    private readonly Func<TurretController> _getController;
+    private readonly Func<FieldTurretController> _getController;
     private readonly Func<StageTurretCommandBinding> _getCommands;
     private readonly Func<bool> _requiresCommands;
     private long _displayedRevision = -1;
@@ -24,7 +24,7 @@ internal sealed class StageTurretPresenter : IDisposable
     private bool _disposed;
 
     public StageTurretPresenter(StageTurretSelection selection, StageTurretControlView view,
-        TurretLevelUpgradeCatalog catalog, Func<bool> canInteract, Func<TurretController> getController,
+        FieldTurretLevelUpgradeCatalog catalog, Func<bool> canInteract, Func<FieldTurretController> getController,
         Func<StageTurretCommandBinding> getCommands = null, Func<bool> requiresCommands = null)
     {
         _selection = selection;
@@ -39,14 +39,14 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelDownRequested += LevelDown;
         _view.CloseRequested += Close;
         _view.Upgrades.ChangeRequested += ChangeUpgrade;
-        TurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
+        FieldTurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
     }
 
     public void Refresh(bool refreshDisplay = false)
     {
         if (_disposed) return;
 
-        TurretBase turret = _selection.Resolve();
+        FieldTurretBase turret = _selection.Resolve();
         bool withinReach = _selection.CanInteractWith(turret);
         bool canInteract = _canInteract() && withinReach;
         if (_requiresCommands()) { RefreshAuthority(turret, canInteract, refreshDisplay); return; }
@@ -67,7 +67,7 @@ internal sealed class StageTurretPresenter : IDisposable
 
     private void Toggle()
     {
-        if (!CanRequest(out TurretBase turret)) return;
+        if (!CanRequest(out FieldTurretBase turret)) return;
         if (_requiresCommands())
         {
             var state = ResolveSnapshot(turret);
@@ -75,7 +75,7 @@ internal sealed class StageTurretPresenter : IDisposable
             return;
         }
         if (!StageTurretInteractionRules.CanToggle(turret)) return;
-        TurretController controller = _getController();
+        FieldTurretController controller = _getController();
         if (controller == null) return;
 
         // The ID-based controller API also rejects a turret using a different power source.
@@ -87,9 +87,9 @@ internal sealed class StageTurretPresenter : IDisposable
     private void LevelUp() => ChangeLevel(true);
     private void LevelDown() => ChangeLevel(false);
 
-    private void ChangeUpgrade(TurretUpgradeDefinition upgrade, bool increase)
+    private void ChangeUpgrade(FieldTurretUpgradeDefinition upgrade, bool increase)
     {
-        if (!CanRequest(out TurretBase turret)) return;
+        if (!CanRequest(out FieldTurretBase turret)) return;
         if (_requiresCommands())
         {
             var state = ResolveSnapshot(turret);
@@ -105,7 +105,7 @@ internal sealed class StageTurretPresenter : IDisposable
 
     private void ChangeLevel(bool upgrade)
     {
-        if (!CanRequest(out TurretBase turret)) return;
+        if (!CanRequest(out FieldTurretBase turret)) return;
         if (_requiresCommands())
         {
             var state = ResolveSnapshot(turret);
@@ -114,7 +114,7 @@ internal sealed class StageTurretPresenter : IDisposable
         }
         if (!turret.CanModifyUpgrades) return;
 
-        TurretBase targetPrefab;
+        FieldTurretBase targetPrefab;
         bool found = upgrade
             ? _catalog.TryGetNext(turret.Definition, out targetPrefab)
             : _catalog.TryGetPrevious(turret.Definition, out targetPrefab);
@@ -134,7 +134,7 @@ internal sealed class StageTurretPresenter : IDisposable
         Refresh(true);
     }
 
-    private bool CanRequest(out TurretBase turret)
+    private bool CanRequest(out FieldTurretBase turret)
     {
         turret = null;
         if (_disposed || !_canInteract()) return false;
@@ -146,12 +146,12 @@ internal sealed class StageTurretPresenter : IDisposable
         return false;
     }
 
-    private TurretPresentationSnapshot ResolveSnapshot(TurretBase turret)
+    private TurretPresentationSnapshot ResolveSnapshot(FieldTurretBase turret)
     {
         var frame = _getCommands()?.Presentation.Snapshot;
         return turret != null && frame != null && turret.TryGetEntityId(out var id) && frame.TryGet(id, out var state) ? state : null;
     }
-    private void RefreshAuthority(TurretBase turret, bool canInteract, bool refreshDisplay)
+    private void RefreshAuthority(FieldTurretBase turret, bool canInteract, bool refreshDisplay)
     {
         if (turret == null) { _view.Hide(); _displayedId = 0; return; }
         var commands = _getCommands(); var frame = commands?.Presentation.Snapshot;
@@ -177,7 +177,7 @@ internal sealed class StageTurretPresenter : IDisposable
     }
     public void OnCommandResult(TurretCommandResult result)
     {
-        TurretBase turret = _selection.Resolve();
+        FieldTurretBase turret = _selection.Resolve();
         if (turret != null && turret.TryGetEntityId(out var id) && id == result.TargetId) _view.SetFeedback(StageTurretUIText.Command(result));
         Refresh(true);
     }
@@ -202,6 +202,6 @@ internal sealed class StageTurretPresenter : IDisposable
         _view.LevelDownRequested -= LevelDown;
         _view.CloseRequested -= Close;
         _view.Upgrades.ChangeRequested -= ChangeUpgrade;
-        TurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
+        FieldTurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
     }
 }

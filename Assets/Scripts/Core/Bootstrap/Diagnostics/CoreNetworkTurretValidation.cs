@@ -11,8 +11,8 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure;
 using TeamHJD.Game.Presentation.Scene;
-using TeamHJD.Game.Turrets;
-using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using EntityId = TeamHJD.Game.Domain.EntityId;
@@ -41,7 +41,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private ITurretCommandRequester _requester;
         private GameObject _fixture;
         private IDisposable _actorLease;
-        private TurretBase _target;
+        private FieldTurretBase _target;
         private Packet _challenge;
         private TurretCommandResult _result;
         private Guid _activationId;
@@ -111,7 +111,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (!_network.IsServer || _index != -1) throw new InvalidOperationException("Begin the turret probe once on Host.");
             _peer = peer;
             var entities = _binding.GetComponent<TurretMatchBinding>();
-            _target = TurretInstanceRegistry.GetAll().Where(t => entities.Controller.OwnsTurret(t) && t.IsInitialized &&
+            _target = FieldTurretInstanceRegistry.GetAll().Where(t => entities.Controller.OwnsTurret(t) && t.IsInitialized &&
                 !t.IsDestroyed && !t.IsLocked && !t.IsActivated && !t.IsCoolingDown && !t.IsManualOperationBlocked &&
                 t.EffectivePower <= entities.Controller.Budget.CurrentPower).OrderBy(t => t.EffectivePower).FirstOrDefault();
             if (_target == null || !entities.TryResolveEntityId(_target.InstanceId, out var id))

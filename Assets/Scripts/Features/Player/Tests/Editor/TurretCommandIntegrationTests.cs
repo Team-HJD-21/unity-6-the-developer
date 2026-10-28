@@ -11,8 +11,8 @@ using TeamHJD.Game.Application;
 using TeamHJD.Game.Presentation.Scene;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Editor;
-using TeamHJD.Game.Turrets;
-using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -32,11 +32,12 @@ public sealed class TurretCommandIntegrationTests
     public IEnumerator ActualDCommandsAreScopedIdempotentAndStoppedOnMatchEnd()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity");
-        NetworkSceneSetup.InstallOnActiveScene();
+        Assert.That(Object.FindAnyObjectByType<InitialStageNetworkBinding>(), Is.Not.Null,
+            "제작된 Scene의 네트워크 연결을 검증하며 테스트가 원본 Scene을 다시 저장하지 않습니다.");
         yield return new EnterPlayMode(); yield return null;
         var app = Object.FindAnyObjectByType<AppRoot>();
         var binding = Object.FindAnyObjectByType<TurretMatchBinding>();
-        var controller = Object.FindAnyObjectByType<TurretController>();
+        var controller = Object.FindAnyObjectByType<FieldTurretController>();
         Assert.That(controller.HasWriteAuthority, Is.True);
         Assert.That(app.NetworkMatches.TryResolveParticipant(app.NetworkSession.LocalConnectionId, out PlayerId issuer), Is.True);
         VerifyActualAuthorityActor(app.CurrentMatchId, issuer);
@@ -44,8 +45,8 @@ public sealed class TurretCommandIntegrationTests
         Assert.That(commands, Is.Not.Null);
         var networkBinding = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
         Assert.That(networkBinding.TurretCommands, Is.Not.Null);
-        var levels = AssetDatabase.LoadAssetAtPath<TurretLevelUpgradeCatalog>("Assets/Data/Turrets/TurretLevelUpgrade_Stage1.asset");
-        TurretBase turret = FindLevelCandidate(controller, levels);
+        var levels = AssetDatabase.LoadAssetAtPath<FieldTurretLevelUpgradeCatalog>("Assets/Data/FieldTurrets/FieldTurretLevelUpgrade_Stage1.asset");
+        FieldTurretBase turret = FindLevelCandidate(controller, levels);
         Assert.That(turret, Is.Not.Null);
         Assert.That(binding.TryResolveEntityId(turret.InstanceId, out EntityId target), Is.True);
         MatchId matchId = app.CurrentMatchId;
@@ -67,7 +68,7 @@ public sealed class TurretCommandIntegrationTests
             Is.EqualTo(TurretCommandStatus.Applied));
         turret = Resolve(binding, target);
         Assert.That(turret.Definition.Level, Is.EqualTo(initialLevel));
-        TurretUpgradeDefinition upgrade = FindCompatibleUpgrade(turret);
+        FieldTurretUpgradeDefinition upgrade = FindCompatibleUpgrade(turret);
         Assert.That(upgrade, Is.Not.Null);
         var specUp = Request(matchId, issuer, target, TurretCommandKind.ApplyUpgrade, upgrade: new DefinitionId(upgrade.Id));
         Assert.That(commands.Submit(specUp, issuer).Status, Is.EqualTo(TurretCommandStatus.Applied));
@@ -104,8 +105,12 @@ public sealed class TurretCommandIntegrationTests
         Assert.That(controller.IsAutoActivationRunning, Is.False);
         Assert.That(controller.Budget.ReservedPower, Is.Zero);
         Assert.That(controller.HasWriteAuthority, Is.False);
+        int healthAfterEnd = turret.CurrentHealth;
+        Assert.That(turret.Repair(10f, .1f), Is.EqualTo(FieldTurretRepairResult.Unauthorized));
+        Assert.That(turret.Repair(10), Is.False);
+        Assert.That(turret.CurrentHealth, Is.EqualTo(healthAfterEnd));
         Assert.That(controller.TryStartAutoActivation(), Is.False);
-        Assert.That(turret.RequestActivation(true), Is.EqualTo(TurretActivationResult.NotAuthoritative));
+        Assert.That(turret.RequestActivation(true), Is.EqualTo(FieldTurretActivationResult.NotAuthoritative));
         Assert.That(turret.ApplyDamage(1), Is.False);
         Assert.That(commands.Submit(turnOn, issuer).Status, Is.EqualTo(TurretCommandStatus.MatchUnavailable));
         yield return null;
@@ -136,22 +141,22 @@ public sealed class TurretCommandIntegrationTests
     private static TurretCommandRequest Request(MatchId matchId, PlayerId issuer, EntityId target, TurretCommandKind kind,
         bool on = false, DefinitionId upgrade = default)
         => new TurretCommandRequest(new MatchRequestContext(matchId, Guid.NewGuid(), issuer), kind, target, on, upgrade);
-    private static TurretBase FindLevelCandidate(TurretController controller, TurretLevelUpgradeCatalog levels)
+    private static FieldTurretBase FindLevelCandidate(FieldTurretController controller, FieldTurretLevelUpgradeCatalog levels)
     {
-        foreach (TurretBase candidate in TurretInstanceRegistry.GetAll())
+        foreach (FieldTurretBase candidate in FieldTurretInstanceRegistry.GetAll())
             if (controller.OwnsTurret(candidate) && !candidate.IsLocked && !candidate.IsActivated && levels.TryGetNext(candidate.Definition, out _)) return candidate;
         return null;
     }
-    private static TurretBase Resolve(TurretMatchBinding binding, EntityId id)
+    private static FieldTurretBase Resolve(TurretMatchBinding binding, EntityId id)
     {
         Assert.That(binding.TryResolveLocalId(id, out int localId), Is.True);
-        Assert.That(TurretInstanceRegistry.TryGet(localId, out var turret), Is.True); return turret;
+        Assert.That(FieldTurretInstanceRegistry.TryGet(localId, out var turret), Is.True); return turret;
     }
-    private static TurretUpgradeDefinition FindCompatibleUpgrade(TurretBase turret)
+    private static FieldTurretUpgradeDefinition FindCompatibleUpgrade(FieldTurretBase turret)
     {
-        foreach (string guid in AssetDatabase.FindAssets("t:TurretUpgradeDefinition", new[] { "Assets/Data/Turrets" }))
+        foreach (string guid in AssetDatabase.FindAssets("t:FieldTurretUpgradeDefinition", new[] { "Assets/Data/FieldTurrets" }))
         {
-            var upgrade = AssetDatabase.LoadAssetAtPath<TurretUpgradeDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            var upgrade = AssetDatabase.LoadAssetAtPath<FieldTurretUpgradeDefinition>(AssetDatabase.GUIDToAssetPath(guid));
             if (upgrade.IsCompatibleWith(turret.Definition.Id)) return upgrade;
         }
         return null;

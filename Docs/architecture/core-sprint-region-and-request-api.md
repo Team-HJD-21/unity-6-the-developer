@@ -12,7 +12,7 @@
 | `session.Regions.Snapshot` / `Changed` | 불변 확정 결과/변경 통지 |
 | `RegionSceneBinding.ResetPolicy(mode, true)` | 확인 후 새 Grid 세대로 Reset. 미확인 요청은 거부 |
 | `RegionSceneBinding.TryUnlockThroughZone(zone)` | 정적 해금의 Core 쓰기 경로 |
-| `TurretController.Regions` | HUD/Feature의 읽기 Port. 바인딩 없으면 null |
+| `FieldTurretController.Regions` | HUD/Feature의 읽기 Port. 바인딩 없으면 null |
 | `RegionGridReplica.Apply(frame, senderIsVerifiedServer)` | Client 읽기 모델. 실제 서버 검증은 전송 어댑터 책임 |
 | `AppRoot.AttachRegionSnapshotTransport(transport)` | App이 지역 조율/전송 수명을 소유하고 Update에서 latest pending·전송을 Pump |
 | `appRoot.NetworkRegions.BindHostSource(session.Regions)` | 실행 중 Host Match의 확정 지역 원본 연결 |

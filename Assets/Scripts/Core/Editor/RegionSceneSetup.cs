@@ -3,7 +3,7 @@
 using System;
 using System.Linq;
 using TeamHJD.Game.Bootstrap.SceneComposition;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -19,13 +19,13 @@ namespace TeamHJD.Game.Editor
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             var roots = UnityEngine.Object.FindObjectsByType<InitialStageCompositionRoot>(FindObjectsSortMode.None)
                 .Where(root => root.gameObject.scene == scene).ToArray();
-            var controllers = UnityEngine.Object.FindObjectsByType<TurretController>(FindObjectsSortMode.None)
+            var controllers = UnityEngine.Object.FindObjectsByType<FieldTurretController>(FindObjectsSortMode.None)
                 .Where(controller => controller.gameObject.scene == scene).ToArray();
             var units = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
                 .Where(component => component != null && component.gameObject.scene == scene &&
                     component.GetType().Name == "ControlUnitHealth").ToArray();
             if (roots.Length != 1 || controllers.Length != 1 || units.Length != 1)
-                throw new InvalidOperationException("Expected one active InitialStageCompositionRoot, TurretController and CU.");
+                throw new InvalidOperationException("Expected one active InitialStageCompositionRoot, FieldTurretController and CU.");
             RegionSceneBinding binding = roots[0].GetComponent<RegionSceneBinding>();
             if (binding == null) binding = Undo.AddComponent<RegionSceneBinding>(roots[0].gameObject);
             var serialized = new SerializedObject(binding);

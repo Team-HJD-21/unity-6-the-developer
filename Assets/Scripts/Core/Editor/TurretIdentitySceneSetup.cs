@@ -6,7 +6,7 @@ using System.Linq;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Presentation.Scene;
 using TeamHJD.Game.Content;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -20,23 +20,23 @@ namespace TeamHJD.Game.Editor
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Configure authored IDs outside Play Mode.");
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             var root = UnityEngine.Object.FindObjectsByType<InitialStageCompositionRoot>(FindObjectsSortMode.None).Single(item => item.gameObject.scene == scene);
-            var controller = UnityEngine.Object.FindObjectsByType<TurretController>(FindObjectsSortMode.None).Single(item => item.gameObject.scene == scene);
-            var source = UnityEngine.Object.FindObjectsByType<TurretBattlefieldInputSource>(FindObjectsSortMode.None).Single(item => item.gameObject.scene == scene);
+            var controller = UnityEngine.Object.FindObjectsByType<FieldTurretController>(FindObjectsSortMode.None).Single(item => item.gameObject.scene == scene);
+            var source = UnityEngine.Object.FindObjectsByType<FieldTurretBattlefieldInputSource>(FindObjectsSortMode.None).Single(item => item.gameObject.scene == scene);
             var binding = root.GetComponent<TurretMatchBinding>();
             if (binding == null) binding = Undo.AddComponent<TurretMatchBinding>(root.gameObject);
             var serialized = new SerializedObject(binding);
             serialized.FindProperty("_controller").objectReferenceValue = controller;
             serialized.FindProperty("_battlefieldSource").objectReferenceValue = source;
             serialized.FindProperty("_commandLevelCatalog").objectReferenceValue =
-                AssetDatabase.LoadAssetAtPath<TurretLevelUpgradeCatalog>("Assets/Data/Turrets/TurretLevelUpgrade_Stage1.asset");
-            var upgradeAssets = AssetDatabase.FindAssets("t:TurretUpgradeDefinition", new[] { "Assets/Data/Turrets" })
-                .Select(guid => AssetDatabase.LoadAssetAtPath<TurretUpgradeDefinition>(AssetDatabase.GUIDToAssetPath(guid)))
+                AssetDatabase.LoadAssetAtPath<FieldTurretLevelUpgradeCatalog>("Assets/Data/FieldTurrets/FieldTurretLevelUpgrade_Stage1.asset");
+            var upgradeAssets = AssetDatabase.FindAssets("t:FieldTurretUpgradeDefinition", new[] { "Assets/Data/FieldTurrets" })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<FieldTurretUpgradeDefinition>(AssetDatabase.GUIDToAssetPath(guid)))
                 .OrderBy(asset => asset.Id, StringComparer.Ordinal).ToArray();
             SerializedProperty upgrades = serialized.FindProperty("_commandUpgrades"); upgrades.arraySize = upgradeAssets.Length;
             for (int index = 0; index < upgradeAssets.Length; index++) upgrades.GetArrayElementAtIndex(index).objectReferenceValue = upgradeAssets[index];
             serialized.ApplyModifiedProperties();
             var ids = new HashSet<string>(StringComparer.Ordinal);
-            foreach (TurretBase turret in scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<TurretBase>(true)))
+            foreach (FieldTurretBase turret in scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<FieldTurretBase>(true)))
             {
                 var identity = turret.GetComponent<SceneEntityIdentity>();
                 if (identity == null) identity = Undo.AddComponent<SceneEntityIdentity>(turret.gameObject);

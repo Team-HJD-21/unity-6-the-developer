@@ -21,7 +21,7 @@ Tab은 산탄총 → 냉각총 → 스패너 → 산탄총 순서입니다. 공�
 | `PlayerWeaponRig` | 기존 방향별 총기와 총구 관리. `SetRangedWeaponVisible(bool)`은 총기 표시만 제어하며 몸체 방향 계산은 계속합니다. |
 | `PlayerSpannerWeapon` | `Bind(Transform, PlayerInputHandler)`로 소유자와 조준 입력 연결. `TryAttack(Vector2)`은 유효한 방향과 쿨타임을 검사한 뒤 근접 판정과 휘두르기를 시작합니다. 반환 true는 공격 시도 성공이며 적중을 보장하지 않습니다. |
 | `PlayerSpannerView` | 프리팹의 SpriteRenderer 표시와 플레이어 기준 앞뒤 정렬만 제어합니다. 외형은 Sprite 에셋으로 편집하며 메쉬를 생성하지 않습니다. |
-| `PlayerSpannerRepair` | `CanRepair(owner, direction)`은 준비 동작을 고르기 위한 조회입니다. 타격 시 `TryRepair(owner, direction, out position)`으로 대상을 다시 검사하고 `TurretBase.Repair`를 호출합니다. 기존 bool 오버로드도 유지합니다. |
+| `PlayerSpannerRepair` | `CanRepair(owner, direction)`은 준비 동작을 고르기 위한 조회입니다. 타격 시 `TryRepair(owner, direction, out position)`으로 대상을 다시 검사하고 `FieldTurretBase.Repair`를 호출합니다. 기존 bool 오버로드도 유지합니다. |
 | `PlayerSpannerTargeting` | 공격·수리의 월드 거리, 전방 각도, 같은 씬, 장애물 가림 검사를 공유합니다. 대상 자신의 콜라이더는 가림에서 제외합니다. |
 
 ## 스패너 수치와 판정
@@ -61,9 +61,9 @@ Tab은 산탄총 → 냉각총 → 스패너 → 산탄총 순서입니다. 공�
 앞쪽 100도·반경 3 안에서 가장 가까운 손상 터렛 하나를 10씩 회복합니다. 이 값은 PlayerSpanner 프리팹의 PlayerSpannerRepair에서 조정합니다.
 수리 준비 동작으로 시작한 타격은 적 공격을 함께 수행하지 않습니다. 타격 때 수리 대상이 사라지거나 조건을 벗어나면 수리하지 않습니다. 사거리와 방향은 플레이어 중심의 XY 기준입니다.
 벽 뒤, 다른 씬, 잠금·파괴·자동 활성화 진행 중인 터렛은 제외합니다. 활성 상태 또는 냉각 중인 살아 있는 터렛은 수리할 수 있습니다.
-일반 TurretBase 계열이 대상이며 임시포탑·CU는 이번 수리 대상에 포함하지 않습니다. 전력·재화 소비와 파괴 터렛 부활은 추가하지 않았습니다.
+일반 FieldTurretBase 계열이 대상이며 임시포탑·CU는 이번 수리 대상에 포함하지 않습니다. 전력·재화 소비와 파괴 터렛 부활은 추가하지 않았습니다.
 
-TurretBase.Repair(int amount)는 실제 회복이 있을 때 true를 반환하고 최대 체력을 넘지 않습니다.
+FieldTurretBase.Repair(int amount)는 실제 회복이 있을 때 true를 반환하고 최대 체력을 넘지 않습니다.
 상태 변경 후 기존 HealthChanged/SnapshotChanged를 통지하므로 터렛 선택 UI는 기존 구독 경로로 갱신됩니다.
 RuntimeState의 체력을 외부에서 직접 바꾸거나 Restore로 대체하지 않습니다. 기존 로컬 터렛 API 경로이며 별도 서버 요청/RPC는 구현하지 않았습니다.
 
@@ -83,7 +83,7 @@ RuntimeState의 체력을 외부에서 직접 바꾸거나 Restore로 대체하�
 Unity Test Runner에서 실행할 테스트이며 작성만으로 통과를 의미하지 않습니다.
 실제 Host 플레이에서는 전방/후방 적, 벽 뒤 적, 여러 콜라이더를 가진 적, 방향별 장착 위치를 추가로 확인합니다.
 
-수리는 `TurretInitializationTests.PartialRepairCapsHealthAndPreservesActivationAndReservation`에서 회복 상한·이벤트·활성화·전력 예약 유지를,
+수리는 `FieldTurretInitializationTests.PartialRepairCapsHealthAndPreservesActivationAndReservation`에서 회복 상한·이벤트·활성화·전력 예약 유지를,
 `RepairDoesNotReviveDestroyedOrUnlockLockedTurret`에서 파괴·체력 0·잠금 거부를 확인합니다.
 `PlayerWeaponMigrationTests.SpannerTargetingRejectsRearDistantAndBlockedTargets`는 벽·후방·거리 제한을 검사합니다.
 2026-10-17 코드 및 터렛 테스트 어셈블리 컴파일은 통과했습니다. Unity Test Runner 실행 및 실제 플레이에서의 수리 확인은 별도로 남아 있습니다.

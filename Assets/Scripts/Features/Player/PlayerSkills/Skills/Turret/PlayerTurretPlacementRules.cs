@@ -50,7 +50,7 @@ public static class PlayerTurretPlacementRules
 
             // 사거리 트리거는 제외하지만 실제 포탑 본체는 충돌 행렬과 관계없이 설치를 막습니다.
             if (hit.GetComponentInParent<TemporaryTurret>() != null ||
-                hit.GetComponentInParent<TeamHJD.Game.Turrets.TurretBase>() != null)
+                hit.GetComponentInParent<TeamHJD.Game.FieldTurrets.FieldTurretBase>() != null)
                 return PlayerTurretPlacementResult.OverlapsTurret;
             if ((hit.excludeLayers.value & (1 << player.layer)) != 0 ||
                 Physics2D.GetIgnoreLayerCollision(player.layer, layer)) continue;

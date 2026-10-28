@@ -4,7 +4,7 @@ using TeamHJD.Game.Presentation.Scene;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using System;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,14 +22,14 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
     [SerializeField] private StageTurretControlView turretView;
     [SerializeField] private StageControlUnitView controlUnitView;
     [Header("Turret Data")]
-    [SerializeField] private TurretLevelUpgradeCatalog levelCatalog;
+    [SerializeField] private FieldTurretLevelUpgradeCatalog levelCatalog;
     [SerializeField, Min(0.1f), Tooltip("포탑·CU 조작에 필요한 XY 거리입니다. 포탑 선택 거리에는 영향을 주지 않습니다.")]
     private float interactionDistance = 10f;
 
     private Canvas _canvas;
     private StageTurretSelection _selection;
     private StageTurretPresenter _presenter;
-    private TurretController _controller;
+    private FieldTurretController _controller;
     private PlayerInfo _player;
     private PlayerControlState _playerControl;
     private PlayerSkillController _playerSkills;
@@ -75,7 +75,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
     public bool TrySelectTurret(TeamHJD.Game.Domain.EntityId targetId)
     {
         if (!CanInteract() || _selection == null || targetId.IsEmpty) return false;
-        foreach (var turret in TurretInstanceRegistry.GetAll())
+        foreach (var turret in FieldTurretInstanceRegistry.GetAll())
         {
             if (!_controller.OwnsTurret(turret) || !turret.TryGetEntityId(out var id) || id != targetId) continue;
             bool selected = _selection.TrySelect(turret); _presenter?.Refresh(true); return selected;
@@ -291,7 +291,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
     {
         if (_waitingForMatch) return;
         if (_controller == null || !_controller.isActiveAndEnabled)
-            _controller = TurretController.FindForScene(gameObject.scene);
+            _controller = FieldTurretController.FindForScene(gameObject.scene);
         if (_vitalsReady) { if (_requiresCommands) vitalsView.UseAuthorityVitals(); else vitalsView.BindPower(_controller); }
 
         if (_player == null || !_player.isActiveAndEnabled || !_hasLocalActor)

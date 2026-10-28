@@ -23,7 +23,7 @@
 | --- | --- | --- |
 | Scene 조립부 | `IAppMatchHost.StartMatch(...)`로 세션을 만들고 필요한 Feature에 주입 | `AppServices`를 게임 서비스 검색기로 공개하거나 static Instance 사용 |
 | Player 입력 | `PlayerSceneAdapter.Bind(session)` → `Submit(GameCommand)` | 입력 코드에서 `MatchState`를 직접 변경하거나 명령 성공을 추정 |
-| Turret 입력 | `IBattlefieldTurretInputSource.CaptureTurretLayout()` → `UpdateBattlefieldTurretLayout(...)` | `TurretBase`·Transform을 Core snapshot에 보관 |
+| Turret 입력 | `IBattlefieldTurretInputSource.CaptureTurretLayout()` → `UpdateBattlefieldTurretLayout(...)` | `FieldTurretBase`·Transform을 Core snapshot에 보관 |
 | Player·Enemy 위치 | 조립부가 `BattlefieldDynamicSpatialInput` → `UpdateBattlefieldParticipants(...)` | 별도 전역 Grid 또는 두 번째 위치 권위 모델 생성 |
 | Encounter 소비자 | `IEncounterMatchConsumer.BindMatch(matchId, snapshotProvider)`로 최신 읽기 전용 공간 결과 수신 | Battlefield 분석 재구현, 과거 Match의 provider를 재사용 |
 | HUD·관측자 | `session.Events.Subscribe(...)`, `session.CreateSnapshot(sequence)` | 구독 인터페이스로 이벤트 발행 또는 상태 쓰기 |
@@ -106,3 +106,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 ## 추가 생성과 source
 
 [origin/source API](encounter-spawn-origin-api.md)의 `IEncounterOriginRequestTarget` 또는 `IEncounterRequestService`를 조립부에서 주입받는다. `AtPoint`, `AtWorld`, `FromSource`를 구분하고 source lease의 등록 generation을 보존한다. 같은 요청 재전송은 GUID를 유지한다. 지연 등록은 실제 생성 성공이 아니며 현재 Match clock과 취소 수명을 따른다. 현재 지면/공중 실제 전이는 명시 미지원이다.
+
+## 2026-10-27 조작 요청 검증 방향
+
+Player 등 호출 파트 → Core/Match의 권한·매치 진행 상태 검증 → FieldTurret 명령 API를 우선 설계 방향으로 삼는다. 이는 회의 당시의 방향 기록이다. 이 통합 브랜치에는 명시적인 Host 요청 gateway와 Feature 실행 경계가 연결돼 있으며 실제 Player/Feature 전체 동기화와 구분한다. 조회 API 이동, 상태의 최종 권한, 실패 응답·동기화 계약은 후속 합의다. Enemy는 실행 로직과 네트워크 전달 계층을 분리하는 중이며 양현석의 기반 권한 작업이 개별 객체 동기화를 모두 대신하지 않는다. [주간 보고](../planning/2026-10-27-weekly-progress.md)

@@ -8,7 +8,7 @@ using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Editor;
 using TeamHJD.Game.Presentation.Scene;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -33,22 +33,22 @@ public sealed class TurretMatchIdentityIntegrationTests
         yield return new EnterPlayMode(); yield return null;
         var app = Object.FindAnyObjectByType<AppRoot>();
         var binding = Object.FindAnyObjectByType<TurretMatchBinding>();
-        var controller = Object.FindAnyObjectByType<TurretController>();
-        var source = Object.FindAnyObjectByType<TurretBattlefieldInputSource>();
+        var controller = Object.FindAnyObjectByType<FieldTurretController>();
+        var source = Object.FindAnyObjectByType<FieldTurretBattlefieldInputSource>();
         Assert.That(binding.BoundMatchId, Is.EqualTo(app.CurrentMatchId));
         Assert.That(binding.Count, Is.GreaterThan(2));
         Assert.That(source.CaptureTurretLayout().Turrets.All(item => item.EntityId.Value.StartsWith("turret/")), Is.True);
-        var catalog = AssetDatabase.FindAssets("t:TurretLevelUpgradeCatalog")
-            .Select(guid => AssetDatabase.LoadAssetAtPath<TurretLevelUpgradeCatalog>(AssetDatabase.GUIDToAssetPath(guid))).First();
-        TurretBase original = null, nextPrefab = null;
-        foreach (TurretBase candidate in TurretInstanceRegistry.GetAll())
+        var catalog = AssetDatabase.FindAssets("t:FieldTurretLevelUpgradeCatalog")
+            .Select(guid => AssetDatabase.LoadAssetAtPath<FieldTurretLevelUpgradeCatalog>(AssetDatabase.GUIDToAssetPath(guid))).First();
+        FieldTurretBase original = null, nextPrefab = null;
+        foreach (FieldTurretBase candidate in FieldTurretInstanceRegistry.GetAll())
             if (controller.OwnsTurret(candidate) && !candidate.IsActivated && catalog.TryGetNext(candidate.Definition, out nextPrefab))
             { original = candidate; break; }
         Assert.That(original, Is.Not.Null);
         Assert.That(binding.TryResolveEntityId(original.InstanceId, out EntityId logicalId), Is.True);
         int initialCount = binding.Count;
         var counter = new Counter(); source.LayoutChanged += counter.OnChanged;
-        Assert.That(original.RequestLevelUpgrade(nextPrefab, out TurretBase upgraded), Is.EqualTo(TurretLevelUpgradeResult.Upgraded));
+        Assert.That(original.RequestLevelUpgrade(nextPrefab, out FieldTurretBase upgraded), Is.EqualTo(FieldTurretLevelUpgradeResult.Upgraded));
         Assert.That(binding.TryResolveLocalId(logicalId, out int localId), Is.True);
         Assert.That(localId, Is.EqualTo(upgraded.InstanceId));
         Assert.That(upgraded.GetComponent<SceneEntityIdentity>().EntityId, Is.EqualTo(logicalId));
@@ -56,8 +56,8 @@ public sealed class TurretMatchIdentityIntegrationTests
         yield return null;
         Assert.That(counter.Value, Is.Zero, "A level replacement must not publish an empty or differently identified spatial layout.");
         source.LayoutChanged -= counter.OnChanged;
-        Assert.That(catalog.TryGetPrevious(upgraded.Definition, out TurretBase previousPrefab), Is.True);
-        Assert.That(upgraded.RequestLevelDowngrade(previousPrefab, out TurretBase downgraded), Is.EqualTo(TurretLevelUpgradeResult.Downgraded));
+        Assert.That(catalog.TryGetPrevious(upgraded.Definition, out FieldTurretBase previousPrefab), Is.True);
+        Assert.That(upgraded.RequestLevelDowngrade(previousPrefab, out FieldTurretBase downgraded), Is.EqualTo(FieldTurretLevelUpgradeResult.Downgraded));
         Assert.That(downgraded.GetComponent<SceneEntityIdentity>().EntityId, Is.EqualTo(logicalId));
         Assert.That(binding.TryResolveEntityId(downgraded.InstanceId, out EntityId afterDowngrade), Is.True);
         Assert.That(afterDowngrade, Is.EqualTo(logicalId));
@@ -66,8 +66,8 @@ public sealed class TurretMatchIdentityIntegrationTests
         downgraded.gameObject.SetActive(true);
         Assert.That(binding.TryResolveLocalId(logicalId, out _), Is.True);
 
-        TurretBase created = TurretFactory.Create(previousPrefab,
-            TurretInitializationData.CreateDefault(previousPrefab.Definition, false, false), controller,
+        FieldTurretBase created = FieldTurretFactory.Create(previousPrefab,
+            FieldTurretInitializationData.CreateDefault(previousPrefab.Definition, false, false), controller,
             Vector3.zero, Quaternion.identity);
         Assert.That(binding.TryResolveEntityId(created.InstanceId, out _), Is.False);
         var runtimeId = new EntityId("turret/runtime-test");

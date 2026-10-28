@@ -6,7 +6,7 @@ using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -32,7 +32,7 @@ public sealed class StageTurretCommandHudTests
         var network = Object.FindAnyObjectByType<InitialStageNetworkBinding>();
         var hud = Object.FindAnyObjectByType<InitialStagePlayerHUD>();
         var player = Object.FindAnyObjectByType<PlayerInfo>();
-        var controller = Object.FindAnyObjectByType<TurretController>();
+        var controller = Object.FindAnyObjectByType<FieldTurretController>();
         var entities = Object.FindAnyObjectByType<TurretMatchBinding>();
         var regions = Object.FindAnyObjectByType<RegionSceneBinding>();
         var view = hud.GetComponentInChildren<StageTurretControlView>(true);
@@ -40,7 +40,7 @@ public sealed class StageTurretCommandHudTests
         hud.BindTurretCommands(hud.BoundMatchId, hud.BoundPlayerId, network.TurretCommands, network.TurretPresentation);
         Assert.That(network.TurretPresentation.Snapshot, Is.Not.Null);
         Assert.That(regions.ResetPolicy(RegionPolicyMode.Dynamic, true), Is.True);
-        TurretBase turret = FindInactive(controller, default);
+        FieldTurretBase turret = FindInactive(controller, default);
         Assert.That(turret.TryGetEntityId(out EntityId firstId), Is.True);
         player.transform.position = turret.transform.position;
         yield return new WaitForSecondsRealtime(.2f);
@@ -83,17 +83,17 @@ public sealed class StageTurretCommandHudTests
         app.EndCurrentMatch(); Assert.That(hud.HasTurretCommandBinding, Is.False);
         yield return new ExitPlayMode();
     }
-    private static TurretBase FindInactive(TurretController controller, EntityId exclude)
+    private static FieldTurretBase FindInactive(FieldTurretController controller, EntityId exclude)
     {
-        foreach (TurretBase turret in TurretInstanceRegistry.GetAll())
+        foreach (FieldTurretBase turret in FieldTurretInstanceRegistry.GetAll())
             if (controller.OwnsTurret(turret) && !turret.IsActivated && !turret.IsCoolingDown && turret.TryGetEntityId(out var id) && id != exclude && turret.Definition.Level == 1)
                 return turret;
         Assert.Fail("No inactive level-one test turret."); return null;
     }
-    private static TurretBase Resolve(TurretMatchBinding entities, EntityId id)
+    private static FieldTurretBase Resolve(TurretMatchBinding entities, EntityId id)
     {
         Assert.That(entities.TryResolveLocalId(id, out int localId), Is.True);
-        Assert.That(TurretInstanceRegistry.TryGet(localId, out var turret), Is.True); return turret;
+        Assert.That(FieldTurretInstanceRegistry.TryGet(localId, out var turret), Is.True); return turret;
     }
     private static Button ButtonOf(Object view, string property) => (Button)new SerializedObject(view).FindProperty(property).objectReferenceValue;
     private static void Click(Object view, string property)

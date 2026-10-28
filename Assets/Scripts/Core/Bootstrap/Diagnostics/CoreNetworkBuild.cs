@@ -13,8 +13,8 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure;
 using TeamHJD.Game.Presentation.Scene;
-using TeamHJD.Game.Turrets;
-using TeamHJD.Game.Turrets.Contracts;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -48,7 +48,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly List<string> _errors = new List<string>();
         private readonly HashSet<string> _sent = new HashSet<string>();
         private readonly HashSet<string> _seenMatches = new HashSet<string>();
-        private TurretBase[] _selected;
+        private FieldTurretBase[] _selected;
         private float _deadline, _finishAt;
         private int _dynamicCount;
         private long _dynamicRevision;
@@ -325,8 +325,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 }
                 else if (_step == "WaitDynamicAck" && packet.Phase == "Dynamic")
                 {
-                    var controller = TurretController.FindForScene(_binding.gameObject.scene);
-                    if (controller.RequestActivation(_selected[0].InstanceId, false) != TurretActivationResult.Deactivated)
+                    var controller = FieldTurretController.FindForScene(_binding.gameObject.scene);
+                    if (controller.RequestActivation(_selected[0].InstanceId, false) != FieldTurretActivationResult.Deactivated)
                         throw new InvalidOperationException("Turret OFF rejected.");
                     if (!_selected[1].IsActivated || !_selected[2].IsActivated)
                         throw new InvalidOperationException("Capture release disabled remaining turrets.");
@@ -384,8 +384,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
         private void ActivateTriangle()
         {
-            var controller = TurretController.FindForScene(_binding.gameObject.scene);
-            var turrets = Object.FindObjectsByType<TurretBase>(FindObjectsSortMode.None)
+            var controller = FieldTurretController.FindForScene(_binding.gameObject.scene);
+            var turrets = Object.FindObjectsByType<FieldTurretBase>(FindObjectsSortMode.None)
                 .Where(t => t.gameObject.scene == _binding.gameObject.scene && !t.IsDestroyed && t.isActiveAndEnabled &&
                     t.TryGetEntityId(out var id) && id != _turretProbe.TargetId)
                 .OrderBy(t => t.EffectivePower).ToArray();
@@ -401,7 +401,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     }
             if (_selected == null) throw new InvalidOperationException("The authored Scene has no affordable non-collinear turret triangle.");
             foreach (var turret in _selected)
-                if (controller.RequestActivation(turret.InstanceId, true) != TurretActivationResult.Activated)
+                if (controller.RequestActivation(turret.InstanceId, true) != FieldTurretActivationResult.Activated)
                     throw new InvalidOperationException("Authored turret activation rejected.");
         }
         private static string RegionHash(NetworkMatchDescriptor descriptor, RegionGridSnapshot snapshot)

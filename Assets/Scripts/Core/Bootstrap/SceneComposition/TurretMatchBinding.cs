@@ -7,7 +7,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Presentation.Scene;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
@@ -16,18 +16,18 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     [DisallowMultipleComponent]
     public sealed class TurretMatchBinding : MonoBehaviour, ITurretEntityRegistration
     {
-        [SerializeField] private TurretController _controller;
-        [SerializeField] private TurretBattlefieldInputSource _battlefieldSource;
-        [SerializeField] private TurretLevelUpgradeCatalog _commandLevelCatalog;
-        [SerializeField] private TurretUpgradeDefinition[] _commandUpgrades = Array.Empty<TurretUpgradeDefinition>();
+        [SerializeField] private FieldTurretController _controller;
+        [SerializeField] private FieldTurretBattlefieldInputSource _battlefieldSource;
+        [SerializeField] private FieldTurretLevelUpgradeCatalog _commandLevelCatalog;
+        [SerializeField] private FieldTurretUpgradeDefinition[] _commandUpgrades = Array.Empty<FieldTurretUpgradeDefinition>();
         private MatchEntityRegistry<int> _registry;
         private TurretCommandService _commands;
         private IDisposable _featureScope;
-        private readonly Dictionary<TurretBase, EntityRegistration<int>> _actors = new Dictionary<TurretBase, EntityRegistration<int>>();
+        private readonly Dictionary<FieldTurretBase, EntityRegistration<int>> _actors = new Dictionary<FieldTurretBase, EntityRegistration<int>>();
         public MatchId BoundMatchId => _registry?.MatchId ?? default;
         public int Count => _registry?.Count ?? 0;
         public ITurretCommandService Commands => _commands;
-        public TurretController Controller => _controller;
+        public FieldTurretController Controller => _controller;
         public IReadOnlyList<EntityRegistration<int>> Registrations => _registry?.CaptureRegistrations() ?? Array.Empty<EntityRegistration<int>>();
 
         public void BindCommands(Func<bool> isAuthority, Func<bool> isMatchRunning,
@@ -49,7 +49,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var registry = new MatchEntityRegistry<int>(matchId);
             try
             {
-                foreach (TurretBase turret in TurretInstanceRegistry.GetAll())
+                foreach (FieldTurretBase turret in FieldTurretInstanceRegistry.GetAll())
                 {
                     if (!_controller.OwnsTurret(turret)) continue;
                     if (!turret.TryGetEntityId(out EntityId id))
@@ -58,10 +58,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 }
                 _registry = registry;
                 _featureScope = _controller.BindMatchScope(matchId, mayWrite ?? (() => true));
-                TurretInstanceRegistry.Registered += OnRegistered;
-                TurretInstanceRegistry.Unregistered += OnUnregistered;
-                TurretInstanceRegistry.LevelUpgraded += OnLevelReplaced;
-                TurretInstanceRegistry.LevelDowngraded += OnLevelReplaced;
+                FieldTurretInstanceRegistry.Registered += OnRegistered;
+                FieldTurretInstanceRegistry.Unregistered += OnUnregistered;
+                FieldTurretInstanceRegistry.LevelUpgraded += OnLevelReplaced;
+                FieldTurretInstanceRegistry.LevelDowngraded += OnLevelReplaced;
                 _battlefieldSource.SetEntityIdResolver(this);
             }
             catch
@@ -76,7 +76,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             entityId = default;
             if (_registry == null || !_registry.TryGetByHandle(localInstanceId, out var registration) ||
-                !TurretInstanceRegistry.TryGet(localInstanceId, out var turret) || turret == null || !_actors.TryGetValue(turret, out var owner) ||
+                !FieldTurretInstanceRegistry.TryGet(localInstanceId, out var turret) || turret == null || !_actors.TryGetValue(turret, out var owner) ||
                 !ReferenceEquals(owner, registration)) return false;
             entityId = registration.EntityId; return true;
         }
@@ -93,7 +93,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             reason = string.Empty;
             if (_registry == null || matchId != BoundMatchId) { reason = "MatchUnavailable"; return false; }
-            if (entityId.IsEmpty || localInstanceId <= 0 || !TurretInstanceRegistry.TryGet(localInstanceId, out var turret) ||
+            if (entityId.IsEmpty || localInstanceId <= 0 || !FieldTurretInstanceRegistry.TryGet(localInstanceId, out var turret) ||
                 !_controller.OwnsTurret(turret)) { reason = "TargetUnavailable"; return false; }
             if (turret.TryGetEntityId(out var existingId) && existingId != entityId)
             { reason = "IdentityConflict"; return false; }
@@ -110,24 +110,24 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             return true;
         }
 
-        private void RegisterActor(TurretBase turret, EntityId entityId)
+        private void RegisterActor(FieldTurretBase turret, EntityId entityId)
         {
             EntityRegistration<int> registration = _registry.Register(entityId, turret.InstanceId);
             _actors[turret] = registration;
             _battlefieldSource.RefreshLayout();
         }
-        private void OnRegistered(TurretBase turret)
+        private void OnRegistered(FieldTurretBase turret)
         {
             if (_registry == null || !_controller.OwnsTurret(turret)) return;
             // D Factory는 생성 후 TryRegisterEntity로 권한 생성자가 정한 ID를 전달할 수 있습니다.
             if (turret.TryGetEntityId(out EntityId id)) RegisterActor(turret, id);
         }
-        private void OnUnregistered(TurretBase turret)
+        private void OnUnregistered(FieldTurretBase turret)
         {
             if (!_actors.TryGetValue(turret, out var registration)) return;
             _actors.Remove(turret); _registry?.Unregister(registration); _battlefieldSource.RefreshLayout();
         }
-        private void OnLevelReplaced(TurretBase previous, TurretBase current)
+        private void OnLevelReplaced(FieldTurretBase previous, FieldTurretBase current)
         {
             if (_registry == null || !_controller.OwnsTurret(previous) || !_controller.OwnsTurret(current)) return;
             if (!previous.TryGetEntityId(out EntityId id)) throw new InvalidOperationException("The replaced turret has no logical identity.");
@@ -138,10 +138,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_registry == null || matchId != BoundMatchId) return;
             _commands?.Dispose(); _commands = null;
-            TurretInstanceRegistry.Registered -= OnRegistered;
-            TurretInstanceRegistry.Unregistered -= OnUnregistered;
-            TurretInstanceRegistry.LevelUpgraded -= OnLevelReplaced;
-            TurretInstanceRegistry.LevelDowngraded -= OnLevelReplaced;
+            FieldTurretInstanceRegistry.Registered -= OnRegistered;
+            FieldTurretInstanceRegistry.Unregistered -= OnUnregistered;
+            FieldTurretInstanceRegistry.LevelUpgraded -= OnLevelReplaced;
+            FieldTurretInstanceRegistry.LevelDowngraded -= OnLevelReplaced;
             MatchEntityRegistry<int> registry = _registry;
             _registry = null; _actors.Clear();
             try { _featureScope?.Dispose(); }

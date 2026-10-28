@@ -12,7 +12,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure;
 using TeamHJD.Game.Presentation.Scene;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -187,6 +187,6 @@ public sealed class PlayerBindingCleanupTests
         Assert.That(network.TurretCommands, Is.Null); Assert.That(network.TurretPresentation, Is.Null);
         Assert.That(app.NetworkRegions.Source, Is.Null);
         Assert.That(Object.FindAnyObjectByType<TurretMatchBinding>().Count, Is.Zero);
-        Assert.That(Object.FindAnyObjectByType<TurretController>().HasWriteAuthority, Is.False);
+        Assert.That(Object.FindAnyObjectByType<FieldTurretController>().HasWriteAuthority, Is.False);
     }
 }

@@ -146336,7 +146336,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5943490037579875950, guid: 4a7219af0f7df8c4a93d6f1c6c6df205, type: 3}
       propertyPath: m_Name
-      value: MissileTurret LV1
+      value: FieldMissileTurret LV1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

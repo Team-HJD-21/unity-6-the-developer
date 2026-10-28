@@ -7,7 +7,7 @@ using System.Linq;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Turrets;
+using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 namespace TeamHJD.Game.Bootstrap.SceneComposition
@@ -103,7 +103,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private BattlefieldPoint? CaptureTurretPosition(EntityId id)
         {
             if (!IsAuthority() || !_turrets.TryResolveLocalId(id, out int localId) ||
-                !TurretInstanceRegistry.TryGet(localId, out var turret) || turret == null || !turret.isActiveAndEnabled) return null;
+                !FieldTurretInstanceRegistry.TryGet(localId, out var turret) || turret == null || !turret.isActiveAndEnabled) return null;
             Vector3 point = turret.transform.position;
             if (float.IsNaN(point.x) || float.IsInfinity(point.x) || float.IsNaN(point.y) || float.IsInfinity(point.y)) return null;
             return new BattlefieldPoint(point.x, point.y);
