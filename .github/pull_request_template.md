@@ -29,7 +29,7 @@
 
 ## 담당
 
-- 주 담당: A / B / C / D / E
+- 주 담당: Core·Player/UI·World/Weather·FieldTurret·Enemy/Encounter
 - 지원 담당:
 - 추가 검토 요청자(선택):
 
