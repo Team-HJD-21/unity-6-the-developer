@@ -26,6 +26,9 @@ Unity `6000.3.23f1`, 새 사본에서 공식 batch EditMode 실행. 원본 Edito
 | `b2-scene.xml` | 종료 0, 7/7 | 실제 Scene의 읽기 전용 준비, CU 누락/범위 밖·서로 다른 Controller 거부, Static→Dynamic 점령/회수, 실제 Host 시작·Enemy 생성·종료·연결 유지·새 Match 재시작 |
 | `b3-network.xml` | 종료 0, 19/19 | Host 최종 결과·변조/이전 준비 거부·단일 관측·backpressure 재시도·결과 보존, codec·실제 UTP 두 SDK 인스턴스의 결과 전달/재시작, 기존 터렛 명령/종료 |
 | `b4-match-fixed.xml` | 종료 0, 26/26 | 실제 Initial_Stage CU 파괴·Host 결과·Player/추가 생성 차단·Enemy/터렛 작업 정리, 중복/재진입·관측/취소 예외·기존 Scene/cleanup 회귀 |
+| `b5-scene-final.xml` | 종료 0, 10/10 | 실제 CU 완료 대기·새 Scene/CU/Match/Enemy 연결·Hub 복귀·이전 객체 폐기·입력 복구, 전환 취소/중복/실패·지연 driver 연결·App 정리 |
+| `b6-screens-fixed.xml` | 계약/종료 8개 통과, UI 사례 1개 실패 | stack·focus/back·중복/이전 결과·Presenter 실패/재진입·입력 정리. UI는 마지막 Hub EventSystem 검사 가정으로 실패 |
+| `b6-ui-flow-final.xml` | 종료 0, 1/1 | 실제 UGUI Resume·CU 결과·Restart·Loading·새 Match/CU·결과에서 Hub 복귀·Hub 메뉴/Resume |
 | `.meta` 검사 | 오류 0 | 실제 Assets 전체 파일/메타 짝 검사 |
 
 Scene 검사는 Test Framework가 PlayMode로 진입해 실제 조립/API/객체를 확인했다. 사람의 마우스 입력·해상도별 UI 외형·실제 원격 Player 이동 복제·전체 협동 완료를 의미하지 않는다. 이전 10/15 검증은 당시 source 증거로 별도 보존한다.
@@ -34,7 +37,8 @@ Scene 검사는 Test Framework가 PlayMode로 진입해 실제 조립/API/객체
 
 - B3 구현: Host 최종 결과의 Client 전달·gameplay gate, pending 재시도와 정상 종료 보류, 결과 보존을 연결했다. Lifecycle v2로 변경했으며 같은 Build가 필요하다. 한 프로세스 두 SDK 검사를 실제 원격 Player/두 실행 파일 검증으로 확대하지 않는다.
 - B4 구현: 실제 CU 파괴 → MatchCoordinator → StoryModeRules의 관측값 판단 → Session 단일 완료 → 취소·Host 결과 게시·실제 Enemy/터렛 작업 정리. 완료는 Session/연결 폐기와 구분한다. 기존 CU가 파괴된 Scene에서 단순 TryPrepare만 다시 호출하는 것은 초기 상태 복구가 아니다. 재시작은 다음 Scene/UI 배치에서 명시적 재로드로 연결한다.
-- B5/B6: SceneFlowController / ScreenManager의 실제 결과·로딩·전환, owner별 로컬 입력 잠금.
+- B5 구현: SceneFlowController / UnitySceneFlow / 단독 Host NgoSceneFlow의 실제 재로드·Hub 복귀와 owner별 입력 잠금. [Scene API](../architecture/scene-flow-api.md)의 범위·commit·다중 참가자 제한을 따른다.
+- B6 구현: ScreenManager의 실제 UGUI 결과/로딩/메뉴·Presenter/focus/back와 owner별 입력 수명. Session/Network 결과를 같은 불변 자료 경계에 연결하고 실제 버튼으로 S1 재시작/Hub 복귀를 확인했다. [화면 API](../architecture/screen-management-api.md) 참조. 사람의 외형/입력 인수와 다중 참가자 이동은 별도다.
 - B7/B8: 환경 context의 실제 Encounter 소비와 포인트 밖 origin/source의 실제 생성/추적.
 - B9: S1~S3 실행 수준별 인수. 실제 Player NetworkBehaviour는 이영빈, 터렛/수리·전력은 황재동, Encounter/생성·AI는 조수빈, World/환경 표현은 김진태가 소유한다.
 
@@ -43,3 +47,7 @@ Scene 검사는 Test Framework가 PlayMode로 진입해 실제 조립/API/객체
 B4 최초 검사 `b4-match.log`는 검사 코드의 HP 속성명/using 누락 2건으로 컴파일 실패했다. 수정 후 `b4-match-fixed.xml` 전체 26/26 통과했으며 실패 로그도 보존했다. 제품 예외를 무시하거나 검사를 제거해 통과시킨 것이 아니다.
 
 B5 실제 재로드 검사에서 B4의 결과 대기 경로를 보완했다. 완료 후 D 제어 lease를 정상 해제했는데 TurretCommandSceneScope.Pump가 이를 권한 손실 오류로 보고 Match를 종료했다. 이제 실행 중 gameplay에만 제어 lease를 요구하고, 완료 뒤에도 gateway/표시 전송 pump는 유지한다. CU 파괴 뒤 한 프레임을 실제로 기다리는 회귀를 추가했다. B4 PR에는 이 후속 수정도 함께 포함해야 한다.
+
+B5 최초 컴파일 검사는 검사에서 내부 AppServices를 조회해 실패했다. 좁은 Scene/Input 공개 Port로 수정했다. 후속 Scene 검사에서 위 Pump 오류와 “Executor는 1개”라는 잘못된 검사 가정을 구분했다. 실제 main에는 같은 Scene의 제작 Executor가 두 개였고, 진단은 양쪽 `InScenePlaced/DestroyWithScene=true`를 확인했다. 최종 검사는 이전 객체 폐기·제작 개수/새 Scene·실제 새 Enemy 생성을 요구한다. 실패 로그/XML을 보존했으며 오류 무시나 Executor 임의 삭제는 하지 않았다.
+
+B6 `b6-screens.log`는 Unity Application 이름 충돌과 interface에 없는 접속 목록 조회 2건으로 컴파일 실패했다. SDK 조회를 Bootstrap의 NGO 경계로 수정했다. 그 뒤 UI 경로는 모두 실행됐지만 “Hub에는 기본 EventSystem이 있다”는 마지막 가정으로 실패했다. 실제 Hub 메뉴 open 시 Scene 전용 fallback 생성·중복 없음·Resume를 확인하도록 검사했고 `b6-ui-flow-final.xml` 1/1 통과했다. 통과한 계약 8개를 불필요하게 다시 실행하지 않았으며 실패 로그를 보존했다. 기존 Presentation/UI 폴더 GUID도 유지했다.

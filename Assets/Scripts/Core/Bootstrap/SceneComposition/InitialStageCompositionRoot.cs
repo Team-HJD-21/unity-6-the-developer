@@ -150,6 +150,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matchSession = session;
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
                     consumer.BindLocalActor(matchId, localPlayerId, _playerActors.Actors[localPlayerId]);
+                BindLocalInput(_playerActors.Actors[localPlayerId]);
                 _regionBinding = regionBinding;
                 if (network == null) _regionBinding?.BindMatch(session, entityIds: _turretBinding);
                 else
@@ -301,6 +302,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     new LocalPlayerActorSpawner(playerPrefab, actorParent), FindPlayerStarts());
                 foreach (var consumer in _localActorConsumers)
                     consumer.BindLocalActor(_ownedMatchId, playerId, _playerActors.Actors[playerId]);
+                BindLocalInput(_playerActors.Actors[playerId]);
                 FindSceneCameraFollow().Bind(_playerActors.Actors[playerId].transform);
             }
             catch (Exception error)
@@ -316,6 +318,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _regionBinding = RegionBinding;
             _regionBinding.UnbindMatch();
             if (source != null) _regionBinding.BindReplica(source);
+        }
+
+        private void BindLocalInput(GameObject actor)
+        {
+            if (!(_matchHost is AppRoot app)) return;
+            foreach (var consumer in actor.GetComponents<MonoBehaviour>().OfType<ILocalInputConsumer>())
+                consumer.BindInputBlocker(app.Services.InputLocks);
         }
 
         public void ReleaseNetworkMatch(MatchId matchId)

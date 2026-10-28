@@ -50,6 +50,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (app == null || scene == null) throw new ArgumentNullException(app == null ? nameof(app) : nameof(scene));
             if (_manager == null) throw new InvalidOperationException("Assign the Scene NetworkManager.");
             _app = app; _scene = scene;
+            bool createdConnection = app.NetworkSession == null;
             if (app.NetworkSession == null)
             {
                 _session = new NgoNetworkSession(_manager);
@@ -83,7 +84,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _session.StateChanged += OnConnectionState;
             _session.PeerConnected += OnPeerConnected;
             EnsureTransports();
-            _entryPending = _session.State == NetworkConnectionState.Disconnected;
+            if (createdConnection)
+                app.SceneTransitions.SetSceneFlow(new NgoSceneFlow(_manager, app.Services.SceneFlow,
+                    () => app.NetworkMatches == null || app.NetworkMatches.Descriptor == null));
+            _entryPending = _session.State == NetworkConnectionState.Disconnected ||
+                (_entry == InitialStageNetworkEntry.SinglePlayerHost && _session.IsServer &&
+                 _session.ConnectedPeerIds.Count == 1 && _matches.Descriptor == null);
         }
 
         public bool TryStartHost()
@@ -283,7 +289,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 if (_entry == InitialStageNetworkEntry.Client) TryStartClient();
-                else if (_entry == InitialStageNetworkEntry.SinglePlayerHost && TryStartHost())
+                else if (_entry == InitialStageNetworkEntry.SinglePlayerHost && (_session.IsServer || TryStartHost()))
                 {
                     if (!TryPrepareMatch() || !TryStartMatch())
                         throw new InvalidOperationException("Single-player Host could not prepare/start its Match.");

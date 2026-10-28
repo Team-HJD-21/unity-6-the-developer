@@ -4,7 +4,8 @@
   "references": [
     "TeamHJD.Game.Application",
     "TeamHJD.Game.Contracts",
-    "TeamHJD.Game.Domain"
+    "TeamHJD.Game.Domain",
+    "Unity.ugui"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -77,9 +77,11 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 `IProfileService.LoadAsync(playerId, cancellationToken)`과 `SaveAsync(profile, cancellationToken)`은 취소 토큰을 명시적으로 받는다. 호출자가 자신의 Scene·화면·App 수명에 맞는 토큰을 소유하고 종료 때 취소한다. 취소 후 완료된 응답을 다른 사용자나 새 Match에 적용하지 않는다. `OperationCanceledException`은 취소 흐름으로, 다른 예외는 실패로 처리한다. 프로필이 없을 때 Load 결과의 null과 통신 실패를 동일시하지 않는다.
 
-현재 Bootstrap의 `FakeProfileService`, `FakePlatformService`, `FakeSceneFlow`는 개발용이며 실 Backend·저장·로그인을 보장하지 않는다. ContentCatalog 에셋이 없으면 Fake fallback을 쓴다. 전체 서비스 구현은 #444에서 선정한다.
+현재 Bootstrap의 `FakeProfileService`, `FakePlatformService`는 개발용이며 실 Backend·저장·로그인을 보장하지 않는다. ContentCatalog 에셋이 없으면 Fake fallback을 쓴다. Scene은 실제 UnitySceneFlow와 연결 시 NgoSceneFlow를 사용하며 [Scene API](scene-flow-api.md)의 수명/취소·Host 범위를 따른다. FakeSceneFlow는 검사 전용으로 남긴다. 전체 서비스 구현은 #444에서 선정한다.
 
 ## 현재 Network 경계
+
+로컬 운영 화면은 [ScreenManager API](screen-management-api.md)를 따른다. 실제 결과/로딩/메뉴와 Button 경로를 연결했고 기존 전투 HUD는 유지한다. 개인 메뉴는 로컬 입력만 차단하며 게임 시간이나 Host pause를 바꾸지 않는다. 화면 close로 Player 사망·다른 화면·전환 잠금을 해제하지 않는다.
 
 2026-10-26: Match 진행은 `MatchCoordinator`가 실제 `IControlUnitHealthSource`를 구독하고, 같은 Session의 `IMatchProgressRules`에 `MatchProgressSnapshot`을 전달한다. CU HP writer는 Feature에 유지한다. 조립부가 `Start()`를 한 번 호출하고 게임 delta를 `Tick()`에 전달한다. 비동기 gameplay 작업은 `GameplayCancellation`을 사용하고, 네트워크 pump/진단의 unscaled 시계와 혼동하지 않는다. 완료/폐기는 토큰을 취소한다. 동일 outcome의 `Session.Complete` 재호출은 기존 불변 결과를 반환하며 결과/보상 제안을 다시 만들지 않는다. 구독/취소 관측 예외가 나더라도 결과와 다른 관측자의 처리는 보존한다.
 
