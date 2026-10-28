@@ -17,6 +17,7 @@ namespace TeamHJD.Game.Application
         private bool _disposed;
         public NetworkMatchPhase Phase { get; private set; }
         public NetworkMatchDescriptor Descriptor { get; private set; }
+        public ulong AuthorityConnectionId => _serverConnectionId;
         public bool CanStart => !_disposed && _network.IsServer && Phase == NetworkMatchPhase.Preparing && _barrier != null && _barrier.CanStart;
         public event Action<NetworkMatchDescriptor> Preparing;
         public event Action<NetworkMatchDescriptor> Started;
