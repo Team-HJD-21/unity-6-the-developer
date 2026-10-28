@@ -1,5 +1,11 @@
 # Core Foundation
 
+## 실행할 프로젝트와 메뉴
+
+현재 작업 프로젝트는 `D:/Dev/Unity/Unity_3D_CBC`이며 브랜치는 `codex/core-sprint-20261026-integration`입니다. 2026-10-28에 최신 main과 전체 Core 통합을 이 폴더에 반영했습니다. Validation 폴더는 과거 검증 이력이며 실행 프로젝트를 그쪽으로 바꾸지 않습니다.
+
+`Assets/Scenes/Gameplay/Initial_Stage.unity`에서 Play Mode를 시작하고 Game 화면을 클릭한 뒤 **Escape**를 누르면 운영 메뉴가 열립니다. `AppRoot.Update()`가 `AppScreenPresenter.Render()`를 호출하고, Escape 입력이 `ScreenManager.ShowMenu()` 또는 `Back()`으로 전달됩니다. 메뉴는 로컬 입력을 잠그며 공유 Match 시간을 정지하지 않습니다.
+
 ## 2026-10-26 Match 운영 연결
 
 새 API 문서: [환경 context](../../../Docs/architecture/match-environment-api.md) · [추가 생성 origin/source](../../../Docs/architecture/encounter-spawn-origin-api.md). Host의 실제 Weather → 불변 Match 환경 → Enemy 정책 소비를 연결했습니다. source가 없는 World 점/영역 요청과 동적 source도 기존 Enemy Planner/Executor를 사용하며, 지연·취소·공통 공간/사망 추적·Match 정리로 이어집니다. 실제 시간대 원본과 나무 AI/지면·공중 연출은 별도 Feature입니다.

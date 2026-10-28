@@ -1,14 +1,20 @@
 # Core 5·6주차 구현 인수 — 2026-10-26
 
-상태: 로컬 Core 배치 B0~B9 기술 검증 완료, 팀/PR 인수 대기. 원격 PR 생성·push·병합·이슈 상태 변경은 하지 않았다.
+상태: 로컬 Core 배치 B0~B9 기술 검증 완료, 팀/PR 인수 대기. 아래 10/26 검증은 당시 커밋의 이력이다. 10/28에는 CU 초기화 PR #569가 main에 반영됐으며 전체 Core 통합은 로컬에 있다.
+
+## 현재 작업 프로젝트 — 2026-10-28 갱신
+
+실제 작업·수동 확인은 `D:/Dev/Unity/Unity_3D_CBC`의 `codex/core-sprint-20261026-integration`에서 한다. 최신 main `7802e0c6`을 포함하며 이전 통합 후보의 기능과 사용자 글꼴·개인 문서를 보존했다. Validation worktree는 과거 검증 이력으로 남기며 작업 프로젝트를 그쪽으로 바꾸지 않는다.
+
+이 프로젝트의 `Assets/Scenes/Gameplay/Initial_Stage.unity`를 실행한 뒤 Game 화면을 클릭하고 Escape를 누르면 운영 메뉴가 열린다. `AppRoot.Update → AppScreenPresenter.Render → ScreenManager.ShowMenu/Back` 경로다. 현재 원래 폴더에서도 이 구현을 사용할 수 있다.
 
 ## 검증 기준과 작업 위치
 
 - 기준 main: `1560df6c`. 2026-10-26 재조회에서도 추가 변경이 없었다.
 - 최종 검증 코드: `534961d06fb1554c3069f2468e1babea845a6cd3`. 이후 커밋은 Docs 인수 자료만 변경한다.
 - 구현 브랜치: `codex/core-sprint-20261026-integration`.
-- 구현/검증 프로젝트: `D:/Dev/Unity/Unity_3D_CBC/Validation/core-sprint-20261026`.
-- 원본 checkout의 사용자 폰트 수정과 YGDocs를 보존했다. 원본 checkout을 이 구현으로 바꾼 상태가 아니다. 검토 시 위 분리 프로젝트를 연다.
+- 현재 구현/검토 프로젝트: `D:/Dev/Unity/Unity_3D_CBC`. 10/26 검사 당시 프로젝트는 `Validation/core-sprint-20261026`이었다.
+- 사용자 폰트 수정과 YGDocs를 보존했다. 10/28에 실제 작업 폴더로 통합 브랜치를 옮겼으므로 위 현재 프로젝트를 연다.
 - Unity: `6000.3.23f1`. Packages/ProjectSettings는 기준 main과 차이가 없다.
 - 원격 main 병합 후의 결과나 배포 완료를 뜻하지 않는다. 병합 때 main이 바뀌면 직접 영향 범위를 다시 검증한다.
 
@@ -106,7 +112,7 @@ S2의 정책 수치는 검증용이며 production 기본은 중립이다. S3 sou
 5. [환경 API](../architecture/match-environment-api.md). `MatchEnvironmentSceneScope`, `EnvironmentReplicationSession`, 실제 Weather와 Enemy 소비.
 6. [origin/source API](../architecture/encounter-spawn-origin-api.md). `EncounterRequestService.Submit`, source lease/generation, `SpawnCompositionPlanner.TryPlanOrigin`, 실제 Executor·지연 핸들.
 
-수동 화면 인수는 PL이 맡는다. 위 분리 프로젝트의 `Assets/Scenes/Gameplay/Initial_Stage.unity`와 [Game Debugger 가이드](../tooling/game-debugger-guide.md)를 기준으로 기존 HUD, 개인 메뉴/결과/로딩의 가독성·키보드/마우스·해상도 변화, World origin/지연·Statistics 객체 선택을 확인한다. CU 결과는 실제 전투 또는 D 피해 API로 재현할 수 있으며, 자동 검사는 실제 D API를 호출했다. Client의 실제 Player와 일반 멀티 조작은 B 연계 후 별도 인수한다.
+수동 화면 인수는 PL이 맡는다. 현재 프로젝트의 `Assets/Scenes/Gameplay/Initial_Stage.unity`와 [Game Debugger 가이드](../tooling/game-debugger-guide.md)를 기준으로 기존 HUD, 개인 메뉴/결과/로딩의 가독성·키보드/마우스·해상도 변화, World origin/지연·Statistics 객체 선택을 확인한다. CU 결과는 실제 전투 또는 D 피해 API로 재현할 수 있으며, 자동 검사는 실제 D API를 호출했다. Client의 실제 Player와 일반 멀티 조작은 B 연계 후 별도 인수한다.
 
 ## 서비스·소유권과 미결
 
@@ -166,7 +172,7 @@ PR Template의 `type(area): short English summary`와 영역/담당/직접 확�
 
 ## 다음 인수
 
-1. PL이 이 분리 프로젝트에서 수동 UI/조작을 확인하고 위 Issue 후보와 범위를 검토한다.
+1. PL이 현재 작업 프로젝트에서 수동 UI/조작을 확인하고 위 Issue 후보와 범위를 검토한다.
 2. 승인 후 PR stack/검토 경계를 확정하고 해당 head 검사를 수행한다. 현재 원격 게시 권한 요청을 대신해 PR을 만들지 않는다.
 3. 리뷰·main 병합 후 실제 main/동일 팀 Build를 기준으로 #420/#560의 팀 관찰과 Owner별 잔여를 인수한다.
 

@@ -70,4 +70,4 @@ B7 최초 로그는 UI가 snapshot을 source처럼 조회한 컴파일 오류 1�
 - `b9-final-editmode.xml`: 최종 source의 관련 215/215 통과. 앞선 213개와 두 Explicit 경로를 같은 실행에서 확인했고, 실제 잘못된 Enemy 환경 규칙의 예외·수량 미확정 기록/직렬화도 포함한다.
 - 최종 Windows 후보/두 프로세스의 정확한 커밋·Build GUID·hash와 검증 파일은 인수 문서에서 확인한다. 개발 actor fixture와 실제 Player 복제, 자동 UI 상태 확인과 사람의 가독성/조작 인수는 구분한다.
 
-로컬 배치는 main에 자동 적용되지 않는다. 실제 B0~B9 구현은 `Validation/core-sprint-20261026`의 `codex/core-sprint-20261026-integration`에 있으며 원본 사용자 폰트 수정·YGDocs는 유지한다. 원격 push/PR/이슈 변경은 별도 승인 단계다.
+로컬 배치는 main에 자동 적용되지 않는다. 2026-10-28부터 실제 B0~B9 구현은 현재 프로젝트 `D:/Dev/Unity/Unity_3D_CBC`의 `codex/core-sprint-20261026-integration`에서 사용한다. 기존 Validation worktree는 검증 이력 보존용이며 작업 대상으로 전환하지 않는다. 사용자 폰트 수정·YGDocs를 유지하고 최신 main `7802e0c6`을 통합했다. CU 초기화 #569 외 전체 통합의 원격 게시·병합·이슈 종료는 별도다.
