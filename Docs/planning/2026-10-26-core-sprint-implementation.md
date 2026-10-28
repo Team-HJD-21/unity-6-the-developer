@@ -13,7 +13,7 @@
 
 1. 준비 전에 CU/Controller가 현재 Scene에 있고 활성인지, 지역/터렛 바인딩이 같은 Controller를 쓰는지 검사한다. CU 좌표/Grid/Inspector 구역 수를 읽기 전용으로 검증한다.
 2. Host 조립은 터렛 Match lease와 Session을 먼저 만든다. 아직 Core RegionAccessPolicy를 붙이지 않은 시점에 `ConfigureUnlockZones(cuPosition)`를 명시적으로 호출한다.
-3. 정적 초기 구역은 1, 총 구역 수는 D Inspector 설정이다. false/예외는 조립 실패로 전달하고 기존 공통 rollback이 Match/actor/Feature 바인딩을 정리한다.
+3. 정적 초기 구역은 1, 총 구역 수는 FieldTurret Inspector 설정이다. false/예외는 조립 실패로 전달하고 기존 공통 rollback이 Match/actor/Feature 바인딩을 정리한다.
 4. Dynamic은 준비 검사를 공유하지만 정적 잠금을 적용하지 않는다. 임시 삼각형이 확정 셀을 계산하며, 이후 점령 갱신/모드 Reset은 RegionRuntime만 쓴다. Client는 Host snapshot을 연결한다.
 
 ## 이번 head 검증
