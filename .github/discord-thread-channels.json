@@ -1,0 +1,13 @@
+{
+  "guild_id": "1547585693465976954",
+  "channels": {
+    "issue": "1547739804303757433",
+    "pr": "1553756393041960990",
+    "discussion": "1565218609754677338"
+  },
+  "legacy_hooks": [
+    {"id": 677402531, "remove_events": ["issues"]},
+    {"id": 686637273, "remove_events": ["pull_request", "pull_request_review"]},
+    {"id": 704587892, "remove_events": ["commit_comment", "discussion", "discussion_comment", "issue_comment", "pull_request_review_comment"]}
+  ]
+}

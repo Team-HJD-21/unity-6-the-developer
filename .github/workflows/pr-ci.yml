@@ -261,7 +261,7 @@ jobs:
   notify-discord:
     name: Discord failure notification
     needs: [repository-checks, unity-validation]
-    if: ${{ always() && (needs.repository-checks.result == 'failure' || needs.unity-validation.result == 'failure' || (github.event_name == 'workflow_dispatch' && inputs.test_discord_notification)) }}
+    if: ${{ always() && (vars.DISCORD_THREADS_ENABLED != 'true' || github.event_name != 'pull_request') && (needs.repository-checks.result == 'failure' || needs.unity-validation.result == 'failure' || (github.event_name == 'workflow_dispatch' && inputs.test_discord_notification)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
