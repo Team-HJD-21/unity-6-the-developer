@@ -24,6 +24,7 @@ GameObject:
   - component: {fileID: 5537959912745558319}
   - component: {fileID: 8339984783810717595}
   - component: {fileID: 5607287784877572849}
+  - component: {fileID: 5607287784877572850}
   - component: {fileID: 5607287784877572851}
   m_Layer: 7
   m_Name: Slime
@@ -140,7 +141,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 523127757
+  GlobalObjectIdHash: 2848244634
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -267,6 +268,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkController
   ShowTopMostFoldoutHeaderGroup: 1
+  enemyController: {fileID: 0}
+  enemyHealth: {fileID: 0}
 --- !u!114 &784396215047286331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -365,7 +368,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 283aebe7defcae547ac8cbb2d45c081a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  ShowTopMostFoldoutHeaderGroup: 1
   currentHealth: 0
   maxHealth: 20
 --- !u!114 &5271184540926039027
@@ -392,7 +394,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95e4629e7cbab8f43b1546a0afb62589, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
-  arrivalDistance: 0.4
+  arrivalDistance: 0.6
   rigidbody2D: {fileID: 0}
   moveSpeed: 1.5
 --- !u!114 &8339984783810717595
@@ -426,6 +428,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
   animator: {fileID: 0}
   animationReferenceSpeed: 2
+--- !u!114 &5607287784877572850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8c52885007943a6a5296f235571ec4b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDepthSorting
+  minDepth: 65
+  maxDepth: 70
 --- !u!114 &5607287784877572851
 MonoBehaviour:
   m_ObjectHideFlags: 0

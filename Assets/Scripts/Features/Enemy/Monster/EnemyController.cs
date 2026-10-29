@@ -32,13 +32,6 @@ public class EnemyController : MonoBehaviour
             enemyAnimation = GetComponent<EnemyAnimation>();
     }
 
-    private void LateUpdate()
-    {
-        Vector3 position = transform.position;
-        position.z = position.y;
-        transform.position = position;
-    }
-
     /// <summary>
     /// 타겟과의 거리에 따라 이동하거나 공격한다.
     /// </summary>
