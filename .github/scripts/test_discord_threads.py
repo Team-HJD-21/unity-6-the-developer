@@ -205,6 +205,22 @@ class ThreadTests(unittest.TestCase):
                 self.assertEqual({"parse": []}, data["allowed_mentions"])
                 self.assertTrue(data["enforce_nonce"])
 
+    def test_read_only_probe_uses_discord_archive_minimum_limit(self):
+        calls = []
+        def request(method, path, data=None):
+            calls.append(path)
+            if path == "/users/@me":
+                return {"id": "bot", "bot": True}
+            if path == "/channels/c":
+                return {"guild_id": "g", "type": 0}
+            if "threads/archived/public" in path:
+                from urllib.parse import urlsplit, parse_qs
+                self.assertGreaterEqual(int(parse_qs(urlsplit(path).query)["limit"][0]), 2)
+            return {"threads": []}
+        self.api.call = request
+        self.threads.check()
+        self.assertTrue(any("threads/archived/public" in path for path in calls))
+
     def test_channel_configuration_does_not_mix_topic_types(self):
         config = json.loads((Path(__file__).parents[1] / "discord-thread-channels.json").read_text())
         self.assertEqual(3, len(set(config["channels"].values())))
