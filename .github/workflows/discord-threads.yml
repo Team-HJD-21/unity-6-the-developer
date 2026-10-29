@@ -10,8 +10,6 @@ on:
     types: [submitted, edited, dismissed]
   pull_request_review_comment:
     types: [created, edited, deleted]
-  commit_comment:
-    types: [created]
   discussion:
   discussion_comment:
   workflow_run:

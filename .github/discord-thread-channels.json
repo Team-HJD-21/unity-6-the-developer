@@ -8,6 +8,6 @@
   "legacy_hooks": [
     {"id": 677402531, "remove_events": ["issues"]},
     {"id": 686637273, "remove_events": ["pull_request", "pull_request_review"]},
-    {"id": 704587892, "remove_events": ["commit_comment", "discussion", "discussion_comment", "issue_comment", "pull_request_review_comment"]}
+    {"id": 704587892, "remove_events": ["discussion", "discussion_comment", "issue_comment", "pull_request_review_comment"]}
   ]
 }

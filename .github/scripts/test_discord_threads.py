@@ -90,22 +90,10 @@ class RoutingTests(unittest.TestCase):
         self.assertNotEqual(m.route("discussion", event, Mock())[0].key,
                             m.route("issue_comment", event, Mock())[0].key)
 
-    def test_commit_comment_routes_all_associated_prs_and_never_an_issue(self):
-        event = payload()
-        event["comment"]["commit_id"] = "a" * 40
-        api = Mock()
-        api.pages.return_value = [{"number": n, "title": "PR", "base": {"repo": {"full_name": repo}}}
-                                 for n, repo in [(20, REPO), (12, REPO), (9, "elsewhere/repo"), (12, REPO)]]
-        topics = m.route("commit_comment", event, api)
-        self.assertEqual([12, 20], [t.number for t in topics])
-        self.assertTrue(all(t.kind == "pr" for t in topics))
-
-    def test_unassociated_commit_does_not_fall_back_to_discussion_channel(self):
-        event = payload()
-        event["comment"]["commit_id"] = "a" * 40
-        api = Mock()
-        api.pages.return_value = []
-        self.assertEqual([], m.route("commit_comment", event, api))
+    def test_commit_comments_are_not_handled_by_actions(self):
+        self.assertEqual([], m.route("commit_comment", payload(), Mock()))
+        config = json.loads((Path(__file__).parents[1] / "discord-thread-channels.json").read_text())
+        self.assertTrue(all("commit_comment" not in hook["remove_events"] for hook in config["legacy_hooks"]))
 
     def test_current_closed_state_comes_from_github_not_old_event(self):
         topic = m.topic_from(REPO, "pr", payload()["issue"])
@@ -228,6 +216,7 @@ class ThreadTests(unittest.TestCase):
         self.assertNotIn("\nconcurrency:", workflow)
         self.assertIn("DISCORD_THREADS_ENABLED == 'true'", workflow)
         self.assertIn("discussions: read", workflow)
+        self.assertNotIn("  commit_comment:", workflow)
 
 
 if __name__ == "__main__":
