@@ -174,7 +174,7 @@ class Threads:
                 raise ValueError(f"{kind} must be a text/announcement channel in the configured server.")
             # These reads check channel visibility/history without posting test messages.
             self.api.call("GET", f"/channels/{channel_id}/messages?limit=1")
-            self.api.call("GET", f"/channels/{channel_id}/threads/archived/public?limit=1")
+            self.api.call("GET", f"/channels/{channel_id}/threads/archived/public?limit=2")
         self.api.call("GET", f"/guilds/{self.guild}/threads/active")
 
     def messages(self, channel):
