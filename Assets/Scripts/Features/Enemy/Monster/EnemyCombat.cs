@@ -1,9 +1,9 @@
-using System;
 using UnityEngine;
 
 public class EnemyCombat : MonoBehaviour
 {
-    [SerializeField] private EnemyTargeting  enemyTargeting;
+    [SerializeField] private EnemyTargeting enemyTargeting;
+    [SerializeField] private EnemyAttack enemyAttack;
     
     [Header("공격 설정")]
     [SerializeField] private float attackRange = 0.4f;
@@ -17,6 +17,8 @@ public class EnemyCombat : MonoBehaviour
     {
         if (enemyTargeting == null)
             enemyTargeting = GetComponent<EnemyTargeting>();
+        if (enemyAttack == null)
+            enemyAttack = GetComponent<EnemyAttack>();
         
         // 공격 거리는 몬스터 몸통 콜라이더의 겉면부터 계산한다.
         foreach (Collider2D collider in GetComponents<Collider2D>())
@@ -59,28 +61,15 @@ public class EnemyCombat : MonoBehaviour
         if (Time.time < _nextAttackTime)
             return false;
 
-        _nextAttackTime = Time.time + attackCooldown;
-
-        if (enemyTargeting.Target == null)
-        {
+        if (enemyAttack == null || enemyTargeting.Target == null)
             return false;
-        }
-        
+
         TargetableComponent targetable = enemyTargeting.Target.GetComponent<TargetableComponent>();
-        if (targetable == null)
+        if (targetable == null || !targetable.CanBeTargeted ||
+            !enemyAttack.Execute(targetable, attackDamage))
             return false;
 
-        if (targetable.TargetType == TargetType.Turret)
-        {
-            targetable.TryApplyDamage(attackDamage);
-        }
-        else if (targetable.TargetType == TargetType.Player)
-        {
-            PlayerInfo player = enemyTargeting.Target.GetComponentInParent<PlayerInfo>();
-            if (player != null)
-                player.TakeDamage(attackDamage);
-        }
-
+        _nextAttackTime = Time.time + attackCooldown;
         return true;
     }
 }

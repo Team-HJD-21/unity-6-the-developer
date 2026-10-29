@@ -24,6 +24,7 @@ GameObject:
   - component: {fileID: 5537959912745558319}
   - component: {fileID: 8339984783810717595}
   - component: {fileID: 5607287784877572849}
+  - component: {fileID: 5607287784877572851}
   m_Layer: 7
   m_Name: Slime
   m_TagString: Enemy
@@ -407,6 +408,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   enemyTargeting: {fileID: 0}
+  enemyAttack: {fileID: 5607287784877572851}
   attackRange: 1
   attackCooldown: 1
   attackDamage: 5
@@ -424,3 +426,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
   animator: {fileID: 0}
   animationReferenceSpeed: 2
+--- !u!114 &5607287784877572851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3adf89055c5c4d90bdf209605937862d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCloseRangeAttack
