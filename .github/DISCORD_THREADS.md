@@ -8,11 +8,11 @@ GitHub Actions가 Discord Bot REST API를 호출한다. 별도 상시 서버나 
 |---|---|
 | 이슈 생성·수정·담당·라벨·상태 변경·일반 댓글 | 이슈 채널의 해당 Issue 스레드 |
 | PR 생성·수정·push 반영·담당·리뷰 요청·승인/변경 요청·일반/코드 댓글·답글·병합/종료 | PR 채널의 해당 PR 스레드 |
-| 커밋 댓글 | GitHub API가 연결한 PR 스레드. 여러 PR이면 각각 전달 |
+| 커밋 댓글 | 새 스레드 연동에서 제외. 기존 웹후크 알림 유지 |
 | PR CI 실패 | 해당 PR 스레드. main push와 수동 CI 테스트는 기존 CI 웹후크 유지 |
 | Discussion 생성·수정·상태/답변 변경·댓글/답글 | Discussion 채널의 해당 Discussion 스레드 |
 
-PR 일반 댓글은 GitHub의 `issue_comment` 이벤트로 오지만 `issue.pull_request`로 구분한다. 커밋에 연결된 PR이 없으면 다른 채널에 보내지 않고 Actions 기록에 남긴다. 나중에 PR이 생겼을 때 이전 커밋 댓글을 소급 재생하지 않는다.
+PR 일반 댓글은 GitHub의 `issue_comment` 이벤트로 오지만 `issue.pull_request`로 구분한다. `commit_comment`는 GitHub Actions 트리거가 아니므로 workflow에서 선언하지 않는다. 2026-10-29 사용자 결정으로 커밋 댓글의 PR 스레드 연동과 폴링은 제외한다. 기존 커밋 댓글 웹후크 이벤트는 전환 시 제거하지 않는다.
 
 닫힌 항목은 마지막 알림을 보낸 뒤 스레드를 보관한다. 이후 재개/늦은 댓글은 같은 스레드를 다시 사용한다. 수동으로 잠긴 스레드는 임의로 잠금을 풀거나 다른 스레드로 우회하지 않고 오류를 보고한다.
 

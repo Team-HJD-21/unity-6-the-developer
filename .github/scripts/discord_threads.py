@@ -133,14 +133,6 @@ def route(event, payload, github):
         return [topic_from(repo, "pr", payload["pull_request"])]
     if event in ("discussion", "discussion_comment"):
         return [topic_from(repo, "discussion", payload["discussion"])]
-    if event == "commit_comment":
-        sha = payload["comment"]["commit_id"]
-        if not re.fullmatch(r"[a-fA-F0-9]{40,64}", sha):
-            raise ValueError("Invalid commit ID.")
-        prs = github.pages(f"/repos/{repo}/commits/{sha}/pulls")
-        topics = {int(pr["number"]): topic_from(repo, "pr", pr) for pr in prs
-                  if pr.get("base", {}).get("repo", {}).get("full_name", "").lower() == repo.lower()}
-        return [topics[number] for number in sorted(topics)]
     return []
 
 
@@ -290,8 +282,6 @@ def make_embed(topic, event, payload):
     body = obj.get("body") or ""
     if event == "pull_request_review":
         body = f"리뷰 결과: {obj.get('state', 'unknown')}\n\n" + body
-    if event == "commit_comment":
-        body = f"커밋 `{obj.get('commit_id', '')[:12]}`의 댓글\n\n" + body
     if obj.get("path"):
         body = f"`{clip(obj['path'], 220)}:{obj.get('line') or obj.get('original_line') or ''}`\n\n" + body
     extras = []
