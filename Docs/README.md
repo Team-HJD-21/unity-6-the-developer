@@ -1,5 +1,7 @@
 # The Developer — Project Documentation
 
+최근 기획 검토: [10월 30일 기획 보강](planning/2026-10-30-planning-review.md) — 자동 활성화의 긍정 응답과 필드/우주선·성장·날씨 제안을 구분한 수기 기록. 세부 승인·구현은 미확정.
+
 최근 진행 공유: [10월 27일 주간 보고](planning/2026-10-27-weekly-progress.md) — Core 조작 검증 경로, Enemy 로직·네트워크 경계, Weather·환경 후보와 파트별 후속 목표. 구현 완료나 새 Sprint 확정이 아니다.
 
 수정일: 2026-10-24
