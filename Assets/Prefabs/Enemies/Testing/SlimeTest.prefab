@@ -8,10 +8,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 8339984783810717595, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
-      propertyPath: attackRange
-      value: 0.4
-      objectReference: {fileID: 0}
     - target: {fileID: 538675026402455080, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -54,11 +50,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1433018669385785169, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 1041489617
+      value: 3481536332
       objectReference: {fileID: 0}
     - target: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
       propertyPath: m_Name
       value: SlimeTest
+      objectReference: {fileID: 0}
+    - target: {fileID: 8339984783810717595, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
+      propertyPath: attackRange
+      value: 0.4
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 984415393098425011, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}

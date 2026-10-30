@@ -6,7 +6,6 @@ using UnityEngine;
 /// 네트워크에 스폰된 적의 행동을 서버에서 실행한다.
 /// 위치와 행동 결과는 서버가 결정하고 네트워크 동기화 컴포넌트가 클라이언트에 전달한다.
 /// </summary>
-[RequireComponent(typeof(EnemyController))]
 public class EnemyNetworkController : NetworkBehaviour
 {
     [SerializeField] private EnemyController enemyController;
