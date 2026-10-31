@@ -31,7 +31,7 @@ PrefabInstance:
     - target: {fileID: 2670870722600736654, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 7c41df0a93e355f4ba6d07af9d3181d2, type: 2}
+      objectReference: {fileID: 22100000, guid: 2b00620dc6f478c4a84fbcf7ad55d2f4, type: 2}
     - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: arrivalDistance
       value: 0.6
@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.z
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalPosition.x
