@@ -30,12 +30,20 @@ public class EnemyNetworkController : NetworkBehaviour
     }
 
     /// <summary>
-    /// 네트워크에 스폰된 서버 인스턴스에서만 적의 행동을 실행한다.
+    /// 서버 또는 명시적으로 켠 임시 로컬 테스트에서 적의 행동을 실행한다.
     /// </summary>
     private void FixedUpdate()
     {
-        if (!IsSpawned || !IsServer)
+        // TEMP: 로컬 테스트 제거 시 기존 IsSpawned / IsServer 검사로 복원한다.
+        if (IsNetworkRunning)
+        {
+            if (!IsSpawned || !IsServer)
+                return;
+        }
+        else if (!runOffline)
+        {
             return;
+        }
 
         enemyController.ExecuteBehavior();
     }
@@ -86,4 +94,29 @@ public class EnemyNetworkController : NetworkBehaviour
         Despawned?.Invoke(NetworkObjectId);
         base.OnNetworkDespawn();
     }
+
+    #region TEMP: 로컬 테스트 (검증 후 제거 가능)
+
+    [Header("임시 로컬 테스트 — 추후 제거 가능")]
+    [SerializeField, InspectorName("로컬 테스트 실행")]
+    [Tooltip("네트워크 없이 이동·애니메이션을 확인합니다. EnemyTestDriver와 동시에 켜지 마세요.")]
+    private bool runOffline;
+
+    [SerializeField, InspectorName("테스트 타깃")]
+    [Tooltip("테스트 씬의 타깃을 연결합니다. Play 시작 시 타깃과 이동 경로를 초기화합니다.")]
+    private Transform testTarget;
+
+    private bool IsNetworkRunning =>
+        Unity.Netcode.NetworkManager.Singleton != null &&
+        Unity.Netcode.NetworkManager.Singleton.IsListening;
+
+    private void Start()
+    {
+        if (!runOffline || IsNetworkRunning)
+            return;
+
+        enemyController.AssignTarget(testTarget);
+    }
+
+    #endregion
 }
