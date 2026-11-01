@@ -11,6 +11,8 @@
 
 ## 현재 기준
 
+공용 시계·예약 모듈의 제공 API와 Scene 이관 상태는 [Match 시간 API](architecture/match-time-api.md)를 따른다. 새 모듈을 만든 것을 기존 MatchCoordinator·Weather·우주선 정지 이관 완료로 해석하지 않는다.
+
 2026-11-02 PL이 [이번 주 전체 배치: 게임 사이클·Steam 설계·공용 시간·안전장치·Core 정리](planning/2026-11-02-core-sprint-scope.md)를 정리했다. SOS 2인 모두 우주선에 있을 때 필드 정지, 안전장치 복원 시 경험치·재화 기본 보존 및 재화 롤백 옵션, 저장 지점에서 재실행 복원을 기준으로 한다. 저장·복원 API와 이벤트 관찰·요청 책임을 분리하고 자동 호출 이벤트는 이번 범위에서 선택하지 않는다. 기존 Core 전체의 책임·의존성·수명 검토와 필요한 구조 정리, 파트별 API 문서·함수 설명 보강을 포함한 8단계로 준비했다. [함수 설명 규약](architecture/naming-and-architecture-conventions.md#공개-api와-함수-설명)을 함께 따른다. 구현 완료나 기존 PoC Gate 변경을 의미하지 않는다.
 
 이번 Core 배치의 결과·검증 수준·수동 확인 순서·Issue/PR 경계는 [5·6주차 인수 문서](planning/2026-10-26-core-sprint-handoff.md)를 먼저 읽는다. **2026-10-28부터 실제 작업 프로젝트 `D:/Dev/Unity/Unity_3D_CBC`의 `codex/core-sprint-20261026-integration` 브랜치에서 구현·검토한다.** 기존 Validation 폴더는 검증 이력 보존용이다. CU 초기화 #569는 main에 반영됐고, 나머지 Core 통합은 로컬 검토 대상이다.

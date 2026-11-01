@@ -182,3 +182,4 @@ Steam 조사는 다른 단계와 독립적으로 진행할 수 있다. 공개 AP
 | --- | --- | --- |
 | B0 main 병합 후 컴파일 | Unity 6000.3.23f1 실제 작업 프로젝트 batch compile 종료 0. 출발 source `6bef8edc`. 비공개 증거 `Docs/Local/Validation/Sprint20261102/B0/compile.log`. 기존 EnemyMovement 필드 숨김·우주선 미사용 상태 변수 경고는 이력으로 보존 | PlayMode·Host/Client 인수는 별도 |
 | B1 기존 공개 API 설명 1차 | 터렛 요청, Encounter 요청, Scene adapter, Host actor 등록, App 전송 pump의 호출자·결과·lease 설명 보강. 기존 6개 C# 파일은 주석을 제외한 내용이 동일함을 비교 | Core 전체 주석·책임 검토는 진행 중 |
+| B2 공용 모듈 | [공용 시간·예약 API](../architecture/match-time-api.md)의 clock/scheduler·SDK/Unity timestamp 어댑터 구현. Unity EditMode `MatchTimeTests` **10/10 통과**, 종료 0. 비공개 증거 `Docs/Local/Validation/Sprint20261102/B2-Time/results.xml` | Scene/MatchCoordinator·Weather·Game Debugger 실제 이관 및 네트워크/필드 정지 연결 |
