@@ -7,6 +7,7 @@ using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.Infrastructure;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -55,6 +56,10 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(Object.FindAnyObjectByType<AppRoot>().NetworkSession.IsServer, Is.True);
             yield return new WaitForSecondsRealtime(.15f);
             Assert.That(root.MatchTime.ElapsedSeconds, Is.EqualTo(pausedAt));
+            var anchor = Object.FindAnyObjectByType<NetworkMatchAnchor>();
+            Assert.That(anchor.TimeState.TryRead(out _, out var publishedTime), Is.True);
+            Assert.That(publishedTime.IsPaused, Is.True);
+            Assert.That(publishedTime.GameSecondsAtAnchor, Is.EqualTo(pausedAt));
             Assert.That(controller.AutoActivationCooldownRemaining, Is.EqualTo(cooldown).Within(.001f));
             Assert.That(body.position, Is.EqualTo(position));
             presence.Report(MatchPlayerLocation.Field);

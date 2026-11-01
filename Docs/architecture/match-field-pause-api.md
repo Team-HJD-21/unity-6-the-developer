@@ -1,6 +1,6 @@
 # Match 필드 정지와 참가자 출입
 
-갱신: 2026-11-02. 권위 Scene의 위치 등록·시계·필드 Feature 연결 구현. 실제 원격 Player 생성·Client의 출입 요청/시각 복제와 허브 왕복 인수는 별도 검증한다.
+갱신: 2026-11-02. 권위 Scene의 위치 등록·시계·필드 Feature 연결 구현. 시간 anchor·확정 위치 복제와 Client 읽기 바인딩도 연결했다. 실제 원격 Player 생성·Client 출입 요청과 허브 왕복 인수는 별도 검증한다.
 
 ## 규칙과 소유권
 
@@ -60,10 +60,10 @@ sequenceDiagram
 
 ## 확인 경로와 현재 한계
 
-Game Debugger의 **Overview → 필드 시간 · Host 권위**에서 공용 시계의 준비/정지·배속과 참가자별 Field/Spaceship을 읽는다. 실제 출입 이후 필드 상태가 바뀌는지 확인한다. 개인 메뉴와 Editor Pause로 우주선 출입을 대신하지 않는다.
+Game Debugger의 **Overview → 필드 시간 · Host 기준**에서 공용 시계의 준비/정지·배속과 참가자별 Field/Spaceship을 읽는다. 실제 출입 이후 필드 상태가 바뀌는지 확인한다. 개인 메뉴와 Editor Pause로 우주선 출입을 대신하지 않는다.
 
 초기 결합 검사 19/19가 통과했다. 생성물 종료 수명·Player 필드 효과 연결 후 확장 검사에서는 91개 중 84개가 통과했고 7개가 실패했다. 원인을 수정한 후 실패 범위와 실제 필드 정지를 포함한 10개 집중 검사가 모두 통과했다. 이를 한 번의 91/91 성공 실행으로 표시하지 않는다. 실제 원격 Player 생성·포털 왕복 검증을 대신하지 않는다.
 
 실패 원인은 Additive Player 소속, EditMode runner에서 일반 `WaitForSeconds`/`WaitForFixedUpdate`를 실제 대기로 가정한 fixture, private 비직렬화 필드의 SerializedObject 조회, 스폰 시작 전 서비스 이력을 0으로 가정한 비교식이었다. 생성 정책이나 제품 밸런스를 테스트 통과 목적으로 변경하지 않았다.
 
-남은 통합: Client의 읽기용 시간 anchor 복제, 실제 원격 Player 생성자/출입 명령 연결, Additive Hub의 다중 참가자 이동·왕복 검증. 위치 보고 API를 직접 호출한 Scene 검사는 포털 연출·실제 두 프로세스 플레이 검증을 대신하지 않는다.
+[시간 anchor·Client 필드 바인딩](match-time-api.md#client-읽기와-네트워크-전송)은 16개 집중 검사에서 확인했다. 참가자 정책과 공유 바인딩 수명을 분리해 FieldSimulationSceneScope를 재사용한다. 남은 통합: 실제 원격 Player 생성자/출입 명령 연결, Additive Hub의 다중 참가자 이동·왕복 검증. 위치 보고 API를 직접 호출한 Scene 검사는 포털 연출·실제 두 프로세스 플레이 검증을 대신하지 않는다.

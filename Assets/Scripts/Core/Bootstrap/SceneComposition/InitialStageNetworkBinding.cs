@@ -51,6 +51,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private RegionReplicationSession _regions;
         private EnvironmentReplicationSession _environments;
         private NetworkMatchAnchor _anchor;
+        private MatchTimeSceneReplication _timeReplication;
         private IRegionGridSource _anchorSource;
         private NetworkMatchDescriptor _anchorDescriptor;
         private bool _entryPending;
@@ -243,6 +244,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     SpawnAnchor(descriptor, _scene.RegionBinding.Source);
                 }
                 else if (_environments.Source != null) OnEnvironmentSource(_environments.Source);
+                _timeReplication = new MatchTimeSceneReplication(_manager, descriptor, _scene, _anchor);
+                _timeReplication.Pump();
             }
             catch (Exception error) { FailMatch(error); throw; }
         }
@@ -273,10 +276,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void ReleaseAnchor()
         {
-            if (_anchorSource != null) _anchorSource.Changed -= OnRegionChanged;
-            _anchorSource = null; _anchorDescriptor = null;
-            NetworkMatchAnchor anchor = _anchor; _anchor = null;
-            if (anchor != null && anchor.IsSpawned && anchor.IsServer) anchor.NetworkObject.Despawn(true);
+            var time = _timeReplication; _timeReplication = null;
+            try { time?.Dispose(); }
+            finally
+            {
+                if (_anchorSource != null) _anchorSource.Changed -= OnRegionChanged;
+                _anchorSource = null; _anchorDescriptor = null;
+                NetworkMatchAnchor anchor = _anchor; _anchor = null;
+                if (anchor != null && anchor.IsSpawned && anchor.IsServer) anchor.NetworkObject.Despawn(true);
+            }
         }
 
         private void OnEnded(MatchId matchId)
@@ -315,7 +323,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void Update()
         {
-            try { _turretCommands?.Pump(); }
+            try { _timeReplication?.Pump(); _turretCommands?.Pump(); }
             catch (Exception error) { FailMatch(error); Debug.LogException(error, this); return; }
             if (!_entryPending || _disposed || _app == null) return;
             _entryPending = false;

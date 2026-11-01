@@ -13,7 +13,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
     internal sealed class MatchFieldSceneScope : IDisposable
     {
-        private readonly List<IDisposable> _features = new();
+        private readonly FieldSimulationSceneScope _features;
         private readonly List<ActorLease> _actors = new();
         private bool _disposed;
         private readonly IMatchTime _time;
@@ -26,7 +26,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             Presence = new MatchPresenceService(config, authority, time.SetPaused);
             try
             {
-                foreach (var feature in features) _features.Add(feature.BindFieldSimulation(time.Clock, gameplay));
+                _features = new FieldSimulationSceneScope(features, time.Clock, gameplay);
                 foreach (var actor in actors) RegisterActor(actor.Key, actor.Value);
             }
             catch (Exception error)
@@ -51,9 +51,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             Presence.Dispose();
             var errors = new List<Exception>();
             foreach (var actor in new List<ActorLease>(_actors)) try { actor.Dispose(); } catch (Exception e) { errors.Add(e); }
-            for (int i = _features.Count - 1; i >= 0; i--)
-                try { _features[i].Dispose(); } catch (Exception e) { errors.Add(e); }
-            _actors.Clear(); _features.Clear();
+            try { _features?.Dispose(); } catch (Exception e) { errors.Add(e); }
+            _actors.Clear();
             if (errors.Count > 0) throw new AggregateException("Field bindings were released with errors.", errors);
         }
         private sealed class ActorLease : IDisposable

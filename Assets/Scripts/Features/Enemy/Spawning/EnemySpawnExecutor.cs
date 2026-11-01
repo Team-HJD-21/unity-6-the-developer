@@ -52,6 +52,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
     private IMatchTime _fieldTime;
     private CancellationToken _gameplay;
+    private readonly Dictionary<EnemyNetworkController, FieldSimulationActor> _simulationActors = new();
     /// <summary>Encounter의 Match 바인딩이 생성자에 공용 시계를 전달합니다. 기존 적과 이후 생성 적에 모두 적용합니다.</summary>
     public IDisposable BindFieldSimulation(IMatchTime time, CancellationToken gameplay)
     {
@@ -60,18 +61,32 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         _fieldTime = time; _gameplay = gameplay;
         try
         {
-            foreach (var enemy in _spawnedEnemies.Values)
-                if (enemy.NetworkObject != null) FieldSimulationActor.Attach(enemy.NetworkObject.gameObject, time, gameplay);
+            foreach (var actor in SpawnedEnemyRegistry.CaptureActors()) BindSimulationActor(actor);
+            SpawnedEnemyRegistry.Registered += BindSimulationActor;
+            SpawnedEnemyRegistry.Unregistered += UnbindSimulationActor;
             return new SimulationLease(this, time);
         }
         catch { ReleaseSimulation(time); throw; }
     }
+    private void BindSimulationActor(EnemyNetworkController actor)
+    {
+        if (_fieldTime == null || actor == null || !actor.IsSpawned || actor.NetworkManager != NetworkManager ||
+            actor.gameObject.scene != gameObject.scene || _simulationActors.ContainsKey(actor)) return;
+        _simulationActors.Add(actor, FieldSimulationActor.Attach(actor.gameObject, _fieldTime, _gameplay));
+    }
+    private void UnbindSimulationActor(EnemyNetworkController actor)
+    {
+        if (!_simulationActors.TryGetValue(actor, out var simulation)) return;
+        _simulationActors.Remove(actor); if (simulation != null) simulation.Unbind(_fieldTime);
+    }
     private void ReleaseSimulation(IMatchTime time)
     {
         if (!ReferenceEquals(_fieldTime, time)) return;
+        SpawnedEnemyRegistry.Registered -= BindSimulationActor;
+        SpawnedEnemyRegistry.Unregistered -= UnbindSimulationActor;
         _fieldTime = null; _gameplay = default;
-        foreach (var enemy in _spawnedEnemies.Values)
-            if (enemy.NetworkObject != null) enemy.NetworkObject.GetComponent<FieldSimulationActor>()?.Unbind(time);
+        foreach (var simulation in _simulationActors.Values) if (simulation != null) simulation.Unbind(time);
+        _simulationActors.Clear();
     }
     private sealed class SimulationLease : IDisposable
     {
@@ -364,6 +379,8 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                     spawnPosition,
                     world ? Quaternion.identity : spawnPoint.Rotation);
 
+                if (spawnedMonster.scene != gameObject.scene)
+                    UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(spawnedMonster, gameObject.scene);
                 EnemyController controller = spawnedMonster.GetComponent<EnemyController>();
                 // 네트워크 스폰 전에 분대 소속으로 지정해 개별 타깃 선택을 중지한다.
                 if (!squad.AddMember(controller))

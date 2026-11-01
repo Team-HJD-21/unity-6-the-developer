@@ -90,3 +90,8 @@ AppRoot.Update의 공통 pump는 Unity 주 스레드에서 전송/조율 작업�
 - SDK 두 인스턴스·개발 actor·이전 Windows fixture 성공과 최신 두 실행 파일의 실제 Player 게임 인수를 구분한다.
 
 주말 공유 시 Player/UI의 서버 actor 등록 시점, FieldTurret·Enemy/Encounter 상태 writer와 표시 복제의 경계, 공동 Scene 정책의 후속 소유자를 확인한다. 현재 Runtime을 재설계한다고 발표하기 전에 실제 API와 후속 제안을 분리해 설명한다.
+
+
+## 공용 시간·참가자 위치 읽기 (2026-11-02)
+
+서버 소유 `NetworkMatchAnchor`의 `NetworkMatchTimeState`로 정지·배속·epoch·revision·현재 준비 세대와 참가자의 우주선 위치를 복제한다. 기존 NGO 연결을 재사용하고 Client에 시계/위치 쓰기 권한을 주지 않는다. `MatchTimeSceneReplication`이 같은 SDK 서버 시각에서 읽기 시계를 계산해 Scene Feature에 연결한다. [현재 시간 API와 검증 수준](match-time-api.md#client-읽기와-네트워크-전송)을 따른다. 실제 원격 Player의 Spawn/출입 요청 구현과 구분한다.

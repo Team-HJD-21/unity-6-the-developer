@@ -48,7 +48,7 @@ namespace TeamHJD.Game.Editor
             var presence = _timeScene == null ? null : _timeScene.MatchPresence;
             if (matchTime != null) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("필드 시간 · Host 권위", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("필드 시간 · Host 기준", EditorStyles.boldLabel);
                 EditorGUILayout.LabelField("상태 / 배속", !matchTime.IsAvailable ? "시간 원본 미준비" :
                     $"{(matchTime.Snapshot.IsPaused ? "PAUSED" : "RUNNING")} / {matchTime.Snapshot.Rate:F2}×");
                 if (presence != null) foreach (var participant in presence.Locations)

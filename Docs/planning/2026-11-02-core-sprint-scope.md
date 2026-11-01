@@ -197,3 +197,12 @@ Steam 조사는 다른 단계와 독립적으로 진행할 수 있다. 공개 AP
 - 검증: `B2-FieldPause/results.xml` 초기 **19/19**; 생성물 수명/Player 효과 보강 뒤 `feature-lifetime/results.xml` **84/91**, 실패 7개; fixture/소속/시계 대기와 선행 스폰 이력 반영 후 `verified-waits/results.xml` **10/10**, Unity 종료0. 중간 fixture 인자 컴파일 실패·진단 실행도 보존한다. 서로 다른 실행을 하나의 91/91로 표시하지 않는다.
 - 실제 Initial_Stage 위치 보고에서 공용 시각·터렛 자동 활성화 쿨다운·필드 Rigidbody 정지/재개, Player Rigidbody/Host 유지, 완료 뒤 임시 생성물 정리를 확인했다. 적 스폰·이동, 실제 서버 적에 대한 Player 탄환 피해와 미사일 수명 검사를 함께 수행했다.
 - 남은 B2/B5 연결은 Client의 읽기 시간 anchor, 원격 Player 생성/출입 명령, 실제 Additive 포털 왕복·부팅 Hub 흐름이다. B4 저장/복원은 아직 미구현이며 자동 저장 사건은 선정하지 않는다. Steam SDK는 설치하지 않았다.
+
+
+### Host/Client 시간·필드 읽기 연결 (2026-11-02)
+
+- `MatchTimeReplica`, `NetworkMatchTimeState`, `MatchTimeSceneReplication`으로 기존 서버 소유 anchor의 시간·참가자 위치 복제를 연결했다. 다른 Match/준비 세대·과거 revision을 거부하며 Client는 시간/위치 보고 권한을 얻지 않는다.
+- `FieldSimulationSceneScope`로 권위/Client의 공통 Feature lease 수명을 분리했다. Client의 로컬 Player 무기 입력과 이후 생성 적의 물리/애니메이션도 같은 읽기 시계를 받는다. SpawnedEnemyRegistry의 구독자는 자신의 실제 NetworkManager/Scene 범위만 처리한다.
+- 실제 UTP Host/Client 두 SDK 인스턴스의 전송·정지·위치·새 epoch 복원과 연결 유지, 순수 replica/serializer/권한, 실제 Initial_Stage Host 정지를 **16/16**, Unity 종료0으로 확인했다. 초기 읽기 연결 검사는 별도 **7/7**이다. 증거: `B2-TimeReplica/results.xml`, `client-fields/results.xml`.
+- Additive 상태의 Enemy도 현재 활성 Hub가 아닌 Executor Scene에 생성되게 명시했다. 실제 서버 생성/Scene 소속/Player 탄환 피해 **1/1**, 종료0. 증거 `B2-TimeReplica/additive-enemy/results.xml`.
+- Game Debugger Overview와 API 문서를 갱신했다. 아직 실제 원격 Player 생성자/Client 포털 요청, 전체 Hub 왕복·프로세스 두 개 인수는 완료가 아니다. B4 저장/복원 작업을 이어 진행한다.

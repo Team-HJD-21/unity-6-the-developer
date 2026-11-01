@@ -10,7 +10,10 @@
     "TeamHJD.Game.Domain",
     "TeamHJD.Game.Infrastructure.Fakes",
     "TeamHJD.Game.Presentation",
-    "TeamHJD.Game.FieldTurrets"
+    "TeamHJD.Game.FieldTurrets",
+    "TeamHJD.Game.Networking",
+    "Unity.Collections",
+    "Unity.Netcode.Runtime"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

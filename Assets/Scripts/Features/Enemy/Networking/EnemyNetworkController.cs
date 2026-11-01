@@ -50,6 +50,7 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkSpawn()
     {
+        SpawnedEnemyRegistry.Register(this);
         if (!IsServer || !enemyHealth)
             return;
 
@@ -82,6 +83,7 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        SpawnedEnemyRegistry.Unregister(this);
         if (enemyHealth != null)
         {
             enemyHealth.Died -= OnHealthDied;

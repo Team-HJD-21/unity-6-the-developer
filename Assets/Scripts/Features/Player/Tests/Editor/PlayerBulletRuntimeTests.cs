@@ -219,6 +219,7 @@ public sealed class PlayerBulletRuntimeTests
             yield return null;
         }
         Assert.That(health, Is.Not.Null, "Initial_Stage의 실제 서버 스폰 적이 필요합니다.");
+        Assert.That(health.gameObject.scene, Is.EqualTo(SceneManager.GetSceneByPath(scenePath)), "Spawned enemies must belong to their Executor Match scene, even during Additive loading.");
         int initialHealth = health.CurrentHealth;
         health.transform.position = _muzzle.position + Vector3.down * 1.2f;
         Physics2D.SyncTransforms();

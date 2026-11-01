@@ -32,6 +32,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private MatchSession _matchSession;
         private MatchCoordinator _coordinator;
         private MatchTimeService _matchTime;
+        private IMatchTime _timeReplica;
+        private MatchFieldReplicaScope _replicaField;
         private MatchFieldSceneScope _fieldScope;
         /// <summary>권위 Match 참가자의 확정 위치입니다. Client 신고용 쓰기 API는 제공하지 않습니다.</summary>
         public MatchPresenceService MatchPresence => _fieldScope?.Presence;
@@ -43,8 +45,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IDisposable _environmentScope;
         private IMatchEnvironmentSource _environmentReplica;
         public MatchCoordinator MatchCoordinator => _coordinator;
-        /// <summary>현재 권위 Match에 주입된 공용 게임 시계입니다. Client 표현 시계는 별도 복제 경계에서 연결합니다.</summary>
-        public IMatchTime MatchTime => _matchTime?.Clock;
+        /// <summary>현재 Match의 읽기 시계입니다. Client는 첫 권위 anchor를 받기 전 null입니다.</summary>
+        public IMatchTime MatchTime => _matchTime?.Clock ?? _timeReplica;
         /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
         public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
         /// <summary>Game Debugger와 통합 검사가 조회하는 현재 권위 Match의 유효 예약 수입니다.</summary>
@@ -227,9 +229,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 session.Disposing += ReleaseMatchBindings;
                 _coordinator.Completed += OnMatchCompleted;
                 _coordinator.Start();
-                var fieldFeatures = FindSceneBehaviours().OfType<IFieldSimulationConsumer>().ToList();
-                if (_encounterConsumer is IFieldSimulationConsumer fieldConsumer && !fieldFeatures.Contains(fieldConsumer))
-                    fieldFeatures.Add(fieldConsumer);
+                var fieldFeatures = GetFieldSimulationConsumers();
                 _fieldScope = new MatchFieldSceneScope(config, _matchTime, _coordinator.GameplayCancellation,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
                     fieldFeatures, _playerActors.Actors);
@@ -365,6 +365,28 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
         }
 
+        /// <summary>네트워크 Scene 어댑터가 준비 세대를 검증한 Client 시계를 연결/해제합니다. 권위 시계는 교체하지 않습니다.</summary>
+        public void BindTimeReplica(IMatchTime source)
+        {
+            if (source != null && (_ownsMatch || _ownedMatchId.IsEmpty || source.Snapshot.MatchId != _ownedMatchId))
+                throw new InvalidOperationException("Bind a time replica only to its composed Client Match.");
+            if (ReferenceEquals(_timeReplica, source)) return;
+            var previous = _replicaField; _replicaField = null; _timeReplica = null;
+            previous?.Dispose();
+            if (source == null) return;
+            _replicaField = new MatchFieldReplicaScope(source, GetFieldSimulationConsumers(), _playerActors.Actors.Values.Single());
+            _timeReplica = source;
+        }
+        /// <summary>현재 descriptor의 로컬 슬롯 위치만 Client 필드 입력 경계에 반영합니다.</summary>
+        public void ApplyReplicaLocation(MatchPlayerLocation location) => _replicaField?.ApplyLocation(location);
+        private List<IFieldSimulationConsumer> GetFieldSimulationConsumers()
+        {
+            var features = FindSceneBehaviours().OfType<IFieldSimulationConsumer>().ToList();
+            var encounter = _encounterConsumer as IFieldSimulationConsumer ?? _encounterConsumerBehaviour as IFieldSimulationConsumer;
+            if (encounter != null && !features.Contains(encounter)) features.Add(encounter);
+            return features;
+        }
+
         public void BindRegionReplica(IRegionGridSource source)
         {
             _regionBinding = RegionBinding;
@@ -431,6 +453,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             MatchCoordinator coordinator = _coordinator;
             MatchTimeService time = _matchTime;
             MatchFieldSceneScope field = _fieldScope;
+            MatchFieldReplicaScope replicaField = _replicaField;
             IDisposable environment = _environmentScope;
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
@@ -438,8 +461,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
             _coordinator = null;
-            _matchTime = null;
-            _fieldScope = null;
+            _matchTime = null; _timeReplica = null;
+            _fieldScope = null; _replicaField = null;
             _environmentScope = null; _environmentReplica = null;
             _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
@@ -452,6 +475,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RunCleanup(() => ReleaseLocalActorConsumers(matchId), errors);
             RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
             RunCleanup(() => field?.Dispose(), errors);
+            RunCleanup(() => replicaField?.Dispose(), errors);
             RunCleanup(() => actors?.Dispose(), errors);
             RunCleanup(() => { if (regions != null) regions.UnbindMatch(); }, errors);
             RunCleanup(() => { if (turrets != null) turrets.UnbindMatch(matchId); }, errors);

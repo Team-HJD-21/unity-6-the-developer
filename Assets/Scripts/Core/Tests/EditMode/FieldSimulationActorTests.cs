@@ -16,6 +16,24 @@ namespace TeamHJD.Game.Tests.EditMode
         private sealed class Source : ITimestampSource
         { public double Now; public bool TryReadSeconds(out double seconds) { seconds = Now; return true; } }
         [Test]
+        public void ClientPresenceReadsClockAndHostLocationWithoutObtainingReportAuthority()
+        {
+            using var clock = new MatchClock(new MatchId("field"), new Source());
+            var actor = new GameObject("Client player");
+            try
+            {
+                var presence = actor.AddComponent<PlayerMatchPresence>(); presence.BindReplica(clock, default);
+                Assert.That(presence.CanReport, Is.False); Assert.That(presence.CanSimulateField, Is.True);
+                presence.ApplyReplicaLocation(clock, MatchPlayerLocation.Spaceship);
+                Assert.That(presence.CanSimulateField, Is.False);
+                Assert.Throws<InvalidOperationException>(() => presence.Report(MatchPlayerLocation.Field));
+                presence.ApplyReplicaLocation(clock, MatchPlayerLocation.Field);
+                clock.SetPaused(true); Assert.That(presence.CanSimulateField, Is.False);
+                presence.UnbindReplica(clock); Assert.That(presence.TimeSource, Is.Null);
+            }
+            finally { Object.DestroyImmediate(actor); }
+        }
+        [Test]
         public void PauseRestoresPhysicalAndAnimationStateWithoutEnablingDisabledComponents()
         {
             using var clock = new MatchClock(new MatchId("field"), new Source());

@@ -17,6 +17,7 @@ namespace TeamHJD.Game.Application
         public MatchId MatchId { get; }
         public IReadOnlyDictionary<PlayerId, MatchPlayerLocation> Locations { get; }
         public bool IsFieldPaused { get; private set; }
+        public long Revision { get; private set; }
 
         public MatchPresenceService(MatchConfig config, Func<bool> mayWrite, Action<bool> setPaused)
         {
@@ -52,6 +53,8 @@ namespace TeamHJD.Game.Application
             if (!Enum.IsDefined(typeof(MatchPlayerLocation), location)) throw new ArgumentOutOfRangeException(nameof(location));
             if (!_actors.TryGetValue(registration.PlayerId, out var current) || current != registration)
                 throw new InvalidOperationException("The presence actor is no longer registered.");
+            if (_locations[registration.PlayerId] == location) return;
+            Revision = checked(Revision + 1);
             _locations[registration.PlayerId] = location;
             Refresh();
         }
@@ -59,6 +62,7 @@ namespace TeamHJD.Game.Application
         {
             if (_disposed || !_actors.TryGetValue(registration.PlayerId, out var current) || current != registration) return;
             _actors.Remove(registration.PlayerId);
+            if (_locations[registration.PlayerId] != MatchPlayerLocation.Field) Revision = checked(Revision + 1);
             _locations[registration.PlayerId] = MatchPlayerLocation.Field;
             if (_mayWrite()) Refresh();
         }
