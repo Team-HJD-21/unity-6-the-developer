@@ -78,6 +78,14 @@ Player 원본 집중 4개와 실제 PlayMode 회복 재개 1개가 통과했다.
 
 실제 Player prefab의 발사·Additive Scene 귀속·복원된 탄환 위치/속도/수명·재사용 시간·백업 복구, 렌치의 지연 impact 이후 실제 EnemyHealth 단일 피해를 PlayMode 2개 검사로 확인했다. 시각용 Animator/Particle 재생 프레임을 결정론적으로 재연하는 계약은 아니며, 전투에 영향을 주는 남은 타격 시간과 생성물 상태를 보존한다. 전체 Scene의 다른 Enemy·터렛·스킬 상태까지 이 검사로 검증했다고 표시하지 않는다.
 
+### Player 스킬 원본 모델
+
+`PlayerSkillCharges.CaptureState/RestoreState`는 수량·남은 첫 충전 시간과 충전 정의를 보존한다. `PlayerTurretInventory.CaptureState/RestoreState`는 설치 수와 **모든** 개별 수리 시간을 보존한다. HUD에 표시하는 최단 수리 시간 하나로 전체 상태를 대체하지 않는다. 둘 다 정의가 다른 대상에는 적용하지 않으며, 불변 사본/범위를 검증한 다음 원본을 갱신한다. Inventory의 설치 actor 목록은 해당 스킬 writer가 별도 보존하고 수량과 대조해야 한다.
+
+`PlayerSkillLoadout.Restore(q, e)`는 두 선택을 검증하고 한 번에 반영한다. Q 없이 E만 선택하거나 같은 스킬을 두 슬롯에 배치하는 자료는 거부한다. 이 API는 장비 사용 비용이나 선택 동작을 재실행하지 않는다.
+
+모델 복원 4개와 기존 충전/수리 계산 16개, 총 20개 검사가 통과했다. 이 모델 API만으로 폭탄·장벽·비콘·임시 포탑을 실제 Scene에 복원한 것은 아니다. 각 스킬 writer와 설치물 연결을 이어 구현한다.
+
 Weather는 기존 날씨 가중치·큐 전환 규칙을 유지하고, Match 전용 난수만 상태를 저장할 수 있는 Unity Mathematics Random으로 바꿨다. 설치본은 1.3.3이며 v1 payload에 xorshift 상태를 명시한다. 같은 seed의 과거 System.Random 날씨 순서와는 달라지므로 이전 Debugger 기록의 seed만으로 동일 순서를 주장하지 않는다. 상태를 복원한 이후에는 예고와 다음 추첨 순서가 이어진다. 0 seed는 1로 정규화하고 저장된 0 상태는 손상으로 거부한다. 이 선택의 API 근거는 [Unity Mathematics Random](https://docs.unity3d.com/Packages/com.unity.mathematics@1.3/api/Unity.Mathematics.Random.html)이며 실제 설치 소스의 state/NextInt를 함께 확인했다.
 
 Weather 복원 4개, 기존 예약 연결 3개, 남은 첫 대기/반복 계약 2개, 총 9개 집중 검사가 통과했다. 예고·추첨의 후속 순서, 남은 시간·정지, 이전 예약 한 개로의 교체, Apply 전 실패의 백업 timer 재등록, 손상/미지원 schema 거부를 확인했다.

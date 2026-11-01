@@ -8,7 +8,7 @@
 | B1 | 일부 공개 API 설명·수명/책임 개선 | 전체 Core 재검토와 최종 디렉터리/호출 지도 |
 | B2 | 공용 시간·예약·Host/Client anchor·필드 정지 구현 및 집중 검사 | 실제 원격 Player 출입은 B5 게임 사이클과 연결 |
 | B3 | Weather 공용 시간/환경 연결, 예약·날씨 복원 검사 | 실제 낮밤 Feature는 현재 없음. Feature 규칙을 임의 작성하지 않음 |
-| B4 | 실제 binary IO, 실행/요청, 공간·CU·Weather writer와 물리 복원 기반 구현 | Player·터렛·Enemy 등 실제 writer, 영속 프로필, Scene 바인딩·재실행 통합 |
+| B4 | 실제 binary IO, 실행/요청, 공간·CU·Weather·Player 생존/무기/탄환 writer와 물리·스킬 모델 복원 기반 구현 | Player 스킬/설치물·터렛·Enemy writer, 영속 프로필, Scene 바인딩·재실행 통합 |
 | B5 | 기존 Scene/허브/UI 경로 조사 | 부팅·시작·허브·출격·결과/귀환과 체크포인트 재실행 연결 |
 | B6 | Steam 도입 조사·설계 문서 작성 | B7에서 최종 실제 API와 대조. SDK 도입은 이번 범위 아님 |
 | B7 | 변경별 검증·API 문서 누적 | 전체 정합성 검사, 팀 사용 문서, PL Core 이해·정리 단계 |
@@ -257,3 +257,12 @@ MatchTimeService에 owner별 AcquirePause lease를 추가했다. 참가자 정�
 ### B4 실제 Weather writer
 
 `WeatherManager.Checkpoint`에 실제 현재/예고 날씨·가중치/큐 설정·난수 state를, CountTick에 남은 전환 시간과 현재/설정 간격을 연결했다. 복원 뒤 취소된 timer를 다시 등록하기 위해 공용 scheduler에 첫 대기/반복 간격 분리 overload를 추가했다. Match RNG는 상태 저장 가능한 Unity Mathematics Random(설치 1.3.3)으로 이관했다. 가중치·전환 규칙은 유지하되 과거 System.Random의 동일 seed 순서와는 달라지는 점을 API 문서에 명시했다. 실제 Weather 복원·기존 예약·첫 대기 계약 **9/9**, Unity 종료0 (`B4-Weather/results.xml`). 실제 낮밤 Feature는 여전히 없으며 임의 규칙을 만들지 않는다. 전체 Scene 바인딩/나머지 Feature writer/영속 프로필/게임 사이클은 이어 진행한다.
+
+### Player 원본 복원 및 우주선 이동 보완
+
+- `b2fbddd5`: Player 이동의 잠금을 필드 공격 허용과 분리했다. 우주선 내부에서는 공격이 금지되고 필드 시계가 정지해도 이동한다. 사망 잠금과 현재 UI 잠금도 분리했다. 실제 PlayMode **1/1** (`B2-HubNavigation`).
+- `c662f376`: PlayerActorIdentity의 roster 슬롯, 로컬 생성자/Host 원격 actor 등록의 슬롯 지정, 실제 PlayerInfo의 HP·생존·배치/물리·회복 진행과 남은 시간·확정 위치 writer. 기본 계약과 실제 회복 재개 **5/5** (`B4-PlayerVitals`). 현재 maxHp는 현행 World 원본이며 XP/영속 성장 원본 구현을 대신하지 않는다.
+- `6f5378f7`: 선택 무기·재사용 시간, 미실행 렌치 타격/수리 의도와 남은 기한, 실제 소유 탄환의 피해·남은 수명·배치·속도를 복원한다. 발사자 Scene 귀속도 일치시켰다. 실제 PlayMode 탄환 복원/백업 복구와 렌치 단일 피해 **2/2** (`B4-PlayerWeapons`).
+- 스킬 충전·임시 포탑의 모든 개별 수리 시간·Q/E 선택 복원 모델을 추가했다. 새 복원 모델4개와 기존 수량 계산16개, 총 **20/20** (`B4-SkillModels`). 실제 설치물/폭탄/임시 포탑 Scene writer를 완료했다는 의미는 아니다.
+
+위 실행은 모두 Unity 종료0이다. Player 스킬/설치물·필드 터렛·Enemy·영속 프로필·전체 Scene 저장 수명/재실행과 B5 게임 사이클, B7 전체 검토·PL 이해 단계가 남아 있다. 자동 저장 상황은 선정하지 않았고 PR 발행도 하지 않았다.
