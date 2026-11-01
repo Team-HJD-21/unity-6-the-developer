@@ -1,6 +1,6 @@
 # Match 필드 정지와 참가자 출입
 
-> **현재 상태(2026-11-02): 타 파트 미승인 변경198경로를 제외하고 Core는 그대로 보존했습니다. 현재 Core 조립부에 Feature API 참조가 남아 컴파일 오류가 있으며 통합/PlayMode 완료 상태가 아닙니다.** [제외 범위·연결 공백](../planning/2026-11-02-feature-integration-hold.md)을 먼저 확인하세요. 아래 Feature 구현·검사 기록은 제외 전 실험 소스 기준입니다.
+> **현재 상태(2026-11-02): 타 파트 미승인 변경198경로는 제외했습니다. Core의 미연결 호출은 `CORE-FEATURE-HOLD` 표식과 원본을 남겨 임시 보류했고 Unity 컴파일은 통과했습니다. 해당 Feature 연결·통합/PlayMode는 완료 상태가 아닙니다.** [제외 범위·연결 공백](../planning/2026-11-02-feature-integration-hold.md)을 먼저 확인하세요. 아래 Feature 구현·검사 기록은 제외 전 실험 소스 기준입니다.
 
 갱신: 2026-11-02. 권위 Scene의 위치 등록·시계·필드 Feature 연결 구현. 시간 anchor·확정 위치 복제와 Client 읽기 바인딩도 연결했다. 실제 원격 Player 생성·Client 출입 요청과 허브 왕복 인수는 별도 검증한다.
 

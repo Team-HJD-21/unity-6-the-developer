@@ -29,6 +29,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
         public TurretCommandExecutionResult Execute(TurretCommandRequest request)
         {
+            // CORE-FEATURE-HOLD [TURRET-COMMAND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: OwnsTurret. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (request == null) throw new ArgumentNullException(nameof(request));
             if (_controller == null || !_controller.isActiveAndEnabled || !_mayExecute() ||
                 _entities.BoundMatchId.IsEmpty || request.Context.MatchId != _entities.BoundMatchId)
@@ -67,6 +70,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 ? turret.ApplyUpgrade(definition) : turret.DowngradeUpgrade(definition);
             return Result(upgradeResult == FieldTurretUpgradeResult.Applied || upgradeResult == FieldTurretUpgradeResult.Downgraded
                 ? TurretCommandStatus.Applied : TurretCommandStatus.FeatureRejected, upgradeResult.ToString());
+#endif
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            return Result(TurretCommandStatus.TargetUnavailable, "CORE-FEATURE-HOLD", "Turret Feature integration is on hold.");
         }
         private static TurretCommandExecutionResult Result(TurretCommandStatus status, string code, string reason = "")
             => new TurretCommandExecutionResult(status, code, reason);

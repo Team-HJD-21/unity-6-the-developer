@@ -40,10 +40,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _commands = new TurretCommandService(BoundMatchId, isAuthority, isMatchRunning, isParticipant, authorization, executor);
         }
 
-        private void Awake() { if (_controller != null) _controller.RequireMatchScope(); }
+        private void Awake()
+        {
+            // CORE-FEATURE-HOLD [TURRET-BIND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: RequireMatchScope. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
+            if (_controller != null) _controller.RequireMatchScope();
+#endif
+        }
 
         public void BindMatch(MatchId matchId, Func<bool> mayWrite = null)
         {
+            // CORE-FEATURE-HOLD [TURRET-BIND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: OwnsTurret / TryGetEntityId / BindMatchScope / SetEntityIdResolver. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (_registry != null) throw new InvalidOperationException("Turret identities are already bound to a Match.");
             if (_controller == null || _battlefieldSource == null) throw new InvalidOperationException("Assign D controller and Battlefield source.");
             var registry = new MatchEntityRegistry<int>(matchId);
@@ -70,6 +80,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 finally { _featureScope = null; registry.Dispose(); _actors.Clear(); _registry = null; }
                 throw;
             }
+#endif
+            throw new NotSupportedException("CORE-FEATURE-HOLD: turret Match binding is awaiting the Feature contract.");
         }
 
         public bool TryResolveEntityId(int localInstanceId, out EntityId entityId)
@@ -91,6 +103,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         public bool TryRegisterEntity(MatchId matchId, EntityId entityId, int localInstanceId, out string reason)
         {
+            // CORE-FEATURE-HOLD [TURRET-BIND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: OwnsTurret / TryGetEntityId. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             reason = string.Empty;
             if (_registry == null || matchId != BoundMatchId) { reason = "MatchUnavailable"; return false; }
             if (entityId.IsEmpty || localInstanceId <= 0 || !FieldTurretInstanceRegistry.TryGet(localInstanceId, out var turret) ||
@@ -108,31 +123,51 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             RegisterActor(turret, entityId);
             return true;
+#endif
+            reason = "CORE-FEATURE-HOLD";
+            return false;
         }
 
         private void RegisterActor(FieldTurretBase turret, EntityId entityId)
         {
+            // CORE-FEATURE-HOLD [TURRET-BIND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: RefreshLayout. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             EntityRegistration<int> registration = _registry.Register(entityId, turret.InstanceId);
             _actors[turret] = registration;
             _battlefieldSource.RefreshLayout();
+#endif
+            throw new NotSupportedException("CORE-FEATURE-HOLD: turret registration is awaiting the Feature contract.");
         }
         private void OnRegistered(FieldTurretBase turret)
         {
+            // CORE-FEATURE-HOLD [TURRET-BIND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: OwnsTurret / TryGetEntityId. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (_registry == null || !_controller.OwnsTurret(turret)) return;
             // D Factory는 생성 후 TryRegisterEntity로 권한 생성자가 정한 ID를 전달할 수 있습니다.
             if (turret.TryGetEntityId(out EntityId id)) RegisterActor(turret, id);
+#endif
         }
         private void OnUnregistered(FieldTurretBase turret)
         {
+            // CORE-FEATURE-HOLD [TURRET-BIND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: RefreshLayout. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (!_actors.TryGetValue(turret, out var registration)) return;
             _actors.Remove(turret); _registry?.Unregister(registration); _battlefieldSource.RefreshLayout();
+#endif
         }
         private void OnLevelReplaced(FieldTurretBase previous, FieldTurretBase current)
         {
+            // CORE-FEATURE-HOLD [TURRET-BIND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: OwnsTurret / TryGetEntityId. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (_registry == null || !_controller.OwnsTurret(previous) || !_controller.OwnsTurret(current)) return;
             if (!previous.TryGetEntityId(out EntityId id)) throw new InvalidOperationException("The replaced turret has no logical identity.");
             if (!TryRegisterEntity(BoundMatchId, id, current.InstanceId, out string reason))
                 throw new InvalidOperationException("Turret identity transfer failed: " + reason);
+#endif
         }
         public void UnbindMatch(MatchId matchId)
         {
@@ -148,8 +183,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             finally
             {
                 _featureScope = null;
+                // CORE-FEATURE-HOLD [TURRET-BIND]: resolver 해제 API도 원본과 함께 보류합니다.
+#if false // CORE-FEATURE-HOLD
                 try { if (_battlefieldSource != null) _battlefieldSource.SetEntityIdResolver(null); }
                 finally { registry.Dispose(); }
+#else
+                registry.Dispose();
+#endif
             }
         }
         /// <summary>완료 화면 동안 ID/읽기는 보존하고 D의 자동 활성화·발사·예약 작업을 정리합니다.</summary>

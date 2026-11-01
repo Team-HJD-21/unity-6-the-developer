@@ -1,6 +1,6 @@
 # The Developer — Project Documentation
 
-> **현재 Core 상태:** [타 파트 수정 제외·Core 보존 현황](planning/2026-11-02-feature-integration-hold.md)을 먼저 읽으세요. 타 파트198경로는 main 기준으로 복원했으며, Core 코드와 그 조립부의 미해결 API 참조는 남아 있습니다. 현재 컴파일/전체 통합이 완료된 상태가 아닙니다.
+> **현재 Core 상태:** [타 파트 수정 제외·Core 보존 현황](planning/2026-11-02-feature-integration-hold.md)을 먼저 읽으세요. 타 파트198경로는 main 기준으로 복원했습니다. Core 미연결 호출은 `CORE-FEATURE-HOLD`로 원본을 보존하며 임시 보류했고 Unity 컴파일은 통과했습니다. 해당 Feature 연결과 전체 통합은 보류 상태입니다.
 
 수정일: 2026-11-02
 상태: 현행 PL 기준 / 최신 기획·후속 회의와 Core 5·6주차 구현·기술 검증 및 인수 자료. 제품·팀 플레이 Gate와 구분한다.

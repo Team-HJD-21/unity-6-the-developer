@@ -108,6 +108,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
         public void Begin(ulong peer)
         {
+            // CORE-FEATURE-HOLD [TURRET-DIAGNOSTICS] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: OwnsTurret. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (!_network.IsServer || _index != -1) throw new InvalidOperationException("Begin the turret probe once on Host.");
             _peer = peer;
             var entities = _binding.GetComponent<TurretMatchBinding>();
@@ -125,6 +128,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _fixture.AddComponent<CoreNetworkValidationActor>();
             _actorLease = _binding.RegisterAuthorityPlayerActor(entities.BoundMatchId, player, _fixture);
             _activationId = Guid.NewGuid(); _index = 0; SendChallenge();
+#endif
+            throw new NotSupportedException("CORE-FEATURE-HOLD: authoritative turret diagnostics are on hold.");
         }
         private void SendChallenge()
         {

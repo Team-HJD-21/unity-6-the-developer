@@ -113,6 +113,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _controlTarget.TryCaptureInteractionPosition(out var point) ? point : (BattlefieldPoint?)null;
         public void Pump()
         {
+            // CORE-FEATURE-HOLD [TURRET-COMMAND] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: HasWriteAuthority. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (_disposed) return;
             if (_matches.IsGameplayRunning && _network.IsServer && (_controlUnit == null || _turrets == null ||
                 _turrets.Controller == null || !_turrets.Controller.isActiveAndEnabled || !_turrets.Controller.HasWriteAuthority))
@@ -121,6 +124,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             { _nextPresentationSample = Time.unscaledTime + .1f; _hostPresentation.Refresh(); }
             _gateway?.Pump();
             _presentationReplication?.Pump();
+#endif
+            if (_disposed) return;
+            throw new NotSupportedException("CORE-FEATURE-HOLD: turret command scope is awaiting the Feature authority contract.");
         }
         public void Dispose()
         {

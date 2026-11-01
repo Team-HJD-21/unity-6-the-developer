@@ -308,6 +308,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void ConfigureUnlockZones(RegionSceneBinding region, RegionPolicyMode mode)
         {
+            // CORE-FEATURE-HOLD [TURRET-INITIALIZATION] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: BoundMatchId / HasWriteAuthority. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             if (_turretBinding.Controller.BoundMatchId != _ownedMatchId || !_turretBinding.Controller.HasWriteAuthority)
                 throw new InvalidOperationException("CU initialization requires the current authoritative turret Match lease.");
             if (mode == RegionPolicyMode.Static)
@@ -317,6 +320,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             else if (mode != RegionPolicyMode.Dynamic) throw new ArgumentOutOfRangeException(nameof(mode));
             // Dynamic은 임시 삼각형에서 점령 셀을 만들므로 정적 잠금으로 기존 활성 상태를 변경하지 않습니다.
+#endif
+            throw new NotSupportedException("CORE-FEATURE-HOLD: authoritative turret initialization is awaiting the Feature contract.");
         }
 
         private void OnMatchCompleted(MatchCompletion completion)

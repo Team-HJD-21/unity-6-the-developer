@@ -1,6 +1,6 @@
 # Match 공용 시간·예약 API
 
-> **현재 상태(2026-11-02): 타 파트 미승인 변경198경로를 제외하고 Core는 그대로 보존했습니다. 현재 Core 조립부에 Feature API 참조가 남아 컴파일 오류가 있으며 통합/PlayMode 완료 상태가 아닙니다.** [제외 범위·연결 공백](../planning/2026-11-02-feature-integration-hold.md)을 먼저 확인하세요. 아래 Feature 구현·검사 기록은 제외 전 실험 소스 기준입니다.
+> **현재 상태(2026-11-02): 타 파트 미승인 변경198경로는 제외했습니다. Core의 미연결 호출은 `CORE-FEATURE-HOLD` 표식과 원본을 남겨 임시 보류했고 Unity 컴파일은 통과했습니다. 해당 Feature 연결·통합/PlayMode는 완료 상태가 아닙니다.** [제외 범위·연결 공백](../planning/2026-11-02-feature-integration-hold.md)을 먼저 확인하세요. 아래 Feature 구현·검사 기록은 제외 전 실험 소스 기준입니다.
 
 갱신: 2026-11-02. 공용 시계·예약, 권위 Scene/Weather, 참가자 필드 정지, Host/Client 시간 anchor와 Client 읽기 바인딩을 구현했다. 시간 복제/필드 집중 검사 16개와 별도의 Additive Enemy 검사 1개를 통과했다. 실제 낮밤 규칙과 원격 Player 출입/두 실행 파일 게임 사이클 인수는 별도다. [전체 배치](../planning/2026-11-02-core-sprint-scope.md)를 따른다.
 

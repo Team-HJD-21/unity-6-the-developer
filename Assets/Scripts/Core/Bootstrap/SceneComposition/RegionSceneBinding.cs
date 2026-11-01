@@ -106,8 +106,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             IReadOnlyList<int> cells;
             if (mode == RegionPolicyMode.Dynamic)
             {
+                // CORE-FEATURE-HOLD [REGION-CAPTURE]: 논리 ID를 받는 관측 API 합의 전 동적 전환을 거부합니다.
+#if false // CORE-FEATURE-HOLD
                 evaluation = _dynamicPolicy.Evaluate(definition, FieldTurretRegionGridAdapter.CaptureTurrets(_controller, _entityIds));
                 cells = evaluation.CellIndices;
+#else
+                return false;
+#endif
             }
             else if (mode == RegionPolicyMode.Static) cells = StaticCells(definition, 1);
             else throw new ArgumentOutOfRangeException(nameof(mode));
@@ -180,6 +185,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void RefreshDynamic(bool force)
         {
+            // CORE-FEATURE-HOLD [REGION-CAPTURE] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: CaptureTurrets(controller, entityIds). 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             IReadOnlyList<RegionTurretInput> inputs = FieldTurretRegionGridAdapter.CaptureTurrets(_controller, _entityIds);
             _dirty = false;
             if (!force && SameInputs(inputs, _lastInputs)) return;
@@ -190,6 +198,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 throw new InvalidOperationException("Region input no longer belongs to the current grid revision.");
             _lastInputs = inputs;
             LastEvaluation = evaluation;
+#endif
+            throw new NotSupportedException("CORE-FEATURE-HOLD: dynamic region capture is awaiting the turret identity contract.");
         }
 
         private static bool SameInputs(IReadOnlyList<RegionTurretInput> left, IReadOnlyList<RegionTurretInput> right)

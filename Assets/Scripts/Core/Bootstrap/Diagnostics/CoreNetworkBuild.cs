@@ -384,6 +384,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
         private void ActivateTriangle()
         {
+            // CORE-FEATURE-HOLD [TURRET-DIAGNOSTICS] 2026-11-02: 미승인 Feature 수정 제외로 연결 보류.
+            // 필요 API: TryGetEntityId. 계약 확정 후 아래 원본과 호출 경로를 함께 복구합니다.
+#if false // CORE-FEATURE-HOLD: 원본 구현 보존; 임시로 컴파일에서 제외
             var controller = FieldTurretController.FindForScene(_binding.gameObject.scene);
             var turrets = Object.FindObjectsByType<FieldTurretBase>(FindObjectsSortMode.None)
                 .Where(t => t.gameObject.scene == _binding.gameObject.scene && !t.IsDestroyed && t.isActiveAndEnabled &&
@@ -403,6 +406,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             foreach (var turret in _selected)
                 if (controller.RequestActivation(turret.InstanceId, true) != FieldTurretActivationResult.Activated)
                     throw new InvalidOperationException("Authored turret activation rejected.");
+#endif
+            throw new NotSupportedException("CORE-FEATURE-HOLD: triangle activation diagnostics are on hold.");
         }
         private static string RegionHash(NetworkMatchDescriptor descriptor, RegionGridSnapshot snapshot)
             => Hash(RegionReplicationCodec.Encode(new RegionReplicationFrame(descriptor.DescriptorId, 1, snapshot)));
