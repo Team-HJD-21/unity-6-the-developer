@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 /// <summary>폭탄의 지연 폭발과 단일 대상 중복 피해 방지, 폭발 연출의 수명을 관리합니다.</summary>
 [DisallowMultipleComponent]
-public sealed class PlayerBombExplosion : MonoBehaviour
+public sealed partial class PlayerBombExplosion : MonoBehaviour
 {
     [FormerlySerializedAs("bomb")]
     [SerializeField] private GameObject _bombVisual;
@@ -20,10 +20,12 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     private float _elapsed;
     private bool _exploded;
     private bool _hasExplosionParameter;
+    private bool _applyingExplosion;
     private PlayerTimeBombVisual _presentation;
 
     private void Awake()
     {
+        TeamHJD.Game.Presentation.Scene.CheckpointActorFactory.EnsureIdentity(gameObject);
         _presentation = GetComponent<PlayerTimeBombVisual>();
         if (_animator == null) _animator = GetComponent<Animator>();
         if (_animator != null && _animator.runtimeAnimatorController != null)
@@ -58,7 +60,9 @@ public sealed class PlayerBombExplosion : MonoBehaviour
         _elapsed = Mathf.Max(_elapsed, _fuseSeconds);
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, true);
         if (_presentation != null) _presentation.PlayExplosion(_radius, _effectSeconds);
-        _areaDamage.Apply(transform.position, _radius, _damage);
+        _applyingExplosion = true;
+        try { _areaDamage.Apply(transform.position, _radius, _damage); }
+        finally { _applyingExplosion = false; }
         return true;
     }
 }

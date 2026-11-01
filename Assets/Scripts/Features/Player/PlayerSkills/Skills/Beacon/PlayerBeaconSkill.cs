@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class PlayerBeaconSkill : PlayerSkillBase
+public sealed partial class PlayerBeaconSkill : PlayerSkillBase
 {
     [SerializeField] private PlayerFieldDevice _prefab;
     [SerializeField, Min(.1f)] private float _cooldown = 14;

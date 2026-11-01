@@ -6,8 +6,12 @@ using UnityEngine;
 
 public sealed partial class PlayerSpannerWeapon
 {
-    internal CheckpointState CaptureCheckpoint() => new(_pendingStrike, _repairIntent, _swingDirection, _swingRemaining,
-        Math.Max(0, _nextAttackTime - GameSeconds), _pendingStrike ? Math.Max(0, _impactAt - GameSeconds) : 0);
+    internal CheckpointState CaptureCheckpoint()
+    {
+        if (_applyingStrike) throw new InvalidOperationException("Capture after the complete strike, not inside a damage callback.");
+        return new CheckpointState(_pendingStrike, _repairIntent, _swingDirection, _swingRemaining,
+            Math.Max(0, _nextAttackTime - GameSeconds), _pendingStrike ? Math.Max(0, _impactAt - GameSeconds) : 0);
+    }
     internal void RestoreCheckpoint(CheckpointState state)
     {
         _pendingStrike = state.Pending; _repairIntent = state.Repair;

@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 /// <summary>임시 포탑 설치·회수와 손상 비율에 따른 재충전을 담당합니다.</summary>
-public sealed class PlayerTurretSkill : PlayerSkillBase
+public sealed partial class PlayerTurretSkill : PlayerSkillBase
 {
     private const float PreviewCheckInterval = .05f;
 
@@ -197,6 +197,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
 
     private void OnDestroy()
     {
+        RemoveProjectiles();
         CancelPlacement();
         foreach (var turret in _deployed)
         {

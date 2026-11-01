@@ -76,10 +76,15 @@ Factory의 ID 사전 검증과 저장 pose/소유 Scene 유지 집중 검사 2�
 | `Map.WeatherManager` / `world/weather` v1 | 실제 날씨·예고 큐·가중치/큐 설정·난수 진행 상태·현재 간격/설정 간격·다음 전환까지 남은 게임 초 | 권위 Match의 실제 timer가 있어야 캡처. 시간 epoch 교체로 취소된 예약을 남은 시간부터 다시 연결. Client·독립 Scene 상태는 저장하지 않음 |
 | `PlayerInfo` / `world/player/{slot}/actor` v1 | 실제 HP/max HP·생존·회복 진행과 남은 시간, world pose/scale·물리·CanMove·확정 우주선/필드 위치 | 같은 슬롯의 논리 Player ID 검증. 생존 잠금만 복원하고 현재 UI 잠금은 유지. 사망/피해 사건을 다시 발행하지 않음 |
 | `PlayerAttack` / `world/player/{slot}/weapon` v1 | 선택 무기·남은 재사용 시간, 렌치의 미실행 타격/수리 의도·방향·남은 impact/cooldown, 발사자가 소유한 살아 있는 탄환 | 실제 소유 탄환을 추적해 남은 수명·피해·색상/종류·배치·물리를 재구성. 이미 맞거나 종료될 탄환은 재발사하지 않음 |
+| `PlayerSkillController` / `world/player/{slot}/loadout` v1 | Q/E 선택 | 같은 Player와 실제 사용 가능한 스킬인지 사전 검증. 현재 메뉴·입력 잠금은 유지 |
+| `PlayerBomb` / `world/player/{slot}/skill/1` v1 | 실제 충전·재사용 시간, 소유 시한폭탄의 ID·위치·진행 시간·폭발 여부 | 이미 폭발한 장비를 복원할 때 범위 피해를 다시 적용하지 않음 |
+| `PlayerTurretSkill` / `world/player/{slot}/skill/2` v1 | 수량·모든 개별 수리 시간, 배치 미리보기, 실제 포탑의 ID·HP·방향·발사 진행, 비행 중 탄환 | 이전 owner를 해제한 뒤 교체해 파괴 통지로 수량이 다시 바뀌지 않게 함. 설치 수와 실제 저장 actor 수 대조 |
+| `PlayerBarrierSkill` / `world/player/{slot}/skill/3` v1 | 충전·첫 펄스의 위치/남은 대기, 실제 장벽들의 ID·HP·형상·수명·탐색 주기 | 첫 펄스 진행과 실제 충돌/표현을 재구성. 저장 위치에 장벽을 새 비용으로 설치하지 않음 |
+| `PlayerBeaconSkill` / `world/player/{slot}/skill/4` v1 | 재사용 시간, 실제 비콘의 ID·HP·반경·수명·탐색 주기 | 기존 활성 장비를 교체하고 같은 ID로 현재 대상 검색 Registry에 재등록 |
 
 공간 writer 5개 검사는 실제 Session의 비정방형 Grid·지역 소속/점유, 준비 중 무변경, 적용/백업 복구, 새 Match로의 논리값 이전, 형식 오류 거부, Transform 검증을 확인했다. CU 3개 검사는 실제 컴포넌트의 HP·위치와 알림, 정의 불일치 거부, 죽은 CU 캡처 거부를 확인했다. CU는 EditMode에서 초기화 본문을 명시 호출한 컴포넌트 검사이며 실제 PlayMode Scene 전체 복원을 대신하지 않는다.
 
-이 writer들은 전체 World 중 일부다. Player의 스킬·설치물·폭탄, 터렛·Enemy 등의 저장 계약과 Scene 수명 바인딩을 마친 뒤 완전한 저장 기능으로 노출한다. 현재 일부 writer만 등록해서 ‘게임 전체 저장 완료’ UI를 제공하지 않는다.
+이 writer들은 전체 World 중 일부다. 필드 터렛·Enemy 등의 저장 계약, 영속 프로필 및 Scene 수명 바인딩을 마친 뒤 완전한 저장 기능으로 노출한다. 현재 일부 writer만 등록해서 ‘게임 전체 저장 완료’ UI를 제공하지 않는다.
 
 Player의 저장 키는 `PlayerStart`/Host의 검증된 roster 순서와 논리 Player ID를 사용한다. 런타임 instance ID·SDK 접속 ID를 키로 저장하지 않는다. LocalPlayerActorSpawner는 생성 시 슬롯을 지정하고, 원격 Host actor 등록은 확정 Config의 Player 순서를 확인한다. PlayerActorIdentity.BindCheckpointSlot은 Scene 조립부의 등록 API이며, writer가 등록된 동안 슬롯을 임의 변경하면 안 된다.
 
@@ -97,7 +102,28 @@ Player 원본 집중 4개와 실제 PlayMode 회복 재개 1개가 통과했다.
 
 `PlayerSkillLoadout.Restore(q, e)`는 두 선택을 검증하고 한 번에 반영한다. Q 없이 E만 선택하거나 같은 스킬을 두 슬롯에 배치하는 자료는 거부한다. 이 API는 장비 사용 비용이나 선택 동작을 재실행하지 않는다.
 
-모델 복원 4개와 기존 충전/수리 계산 16개, 총 20개 검사가 통과했다. 이 모델 API만으로 폭탄·장벽·비콘·임시 포탑을 실제 Scene에 복원한 것은 아니다. 각 스킬 writer와 설치물 연결을 이어 구현한다.
+모델 복원 4개와 기존 충전/수리 계산 16개, 총 20개 검사가 통과했다. 이 모델 검사와 아래 실제 생성물 검사를 구분한다.
+
+### 실제 스킬 생성물 복원
+
+```mermaid
+flowchart LR
+    Service[CheckpointService] --> Base[PlayerSkillBase: 슬롯·권위·schema 검증]
+    Base --> Skill[각 스킬 writer: 실제 원본 캡처/검증/복원]
+    Skill --> Model[충전·수리·선택 모델]
+    Skill --> Factory[CheckpointActorFactory]
+    Factory --> Actor[폭탄·장벽·비콘·임시 포탑]
+    Actor --> Identity[SceneEntityIdentity: 저장 논리 ID]
+    Skill --> Binding[소유 Scene·시계·종료 수명 연결]
+```
+
+스킬의 `.Checkpoint.cs` partial은 해당 Feature의 원본에 직접 접근한다. Core에 별도의 HP/수량 writer를 복제하지 않는다. `PlayerSkillBase`가 공통 슬롯·Player ID·Host·버전 검증을 담당하고, 각 스킬은 실제 자료와 재구성 순서를 제공한다. 새 스킬도 저장 계약을 함께 구현해야 한다. 저장에 쓰는 스킬/장비/설치 결과 enum은 기존 수치를 유지해 명시했으며, 기존 값을 임의로 재배치하지 않는다.
+
+장벽·비콘·임시 포탑은 적의 목표가 될 수 있어 `IEntityIdentity`와 저장 논리 ID를 제공한다. 활성 장비 Registry는 같은 ID의 중복 등록을 거부한다. 스킬은 새 actor를 구성한 뒤 실제 상태를 적용하고 정지 시계에 연결한다. 이미 시작된 폭발의 피해를 재실행하거나, 포탑 교체를 새로운 회수/수리 사건으로 처리하지 않는다. 탐색 대상 캐시는 다시 구하되 다음 탐색까지 남은 시간은 보존한다. 임시 포탑은 매 Update에서 최근접 적을 재평가하므로 발사 경과·헤드 방향을 보존하고 이전 Unity target 참조는 재사용하지 않는다.
+
+폭탄의 범위 피해 또는 렌치의 여러 대상 타격 도중 호출된 캡처는 거부한다. 피해 callback 한가운데의 부분 World를 저장한 뒤 완료라고 표시하지 않는다. 전체 Scene의 요청을 안전한 게임 루프 경계에 조율하는 바인딩은 후속 구현이며, 이는 자동 저장 이벤트 선정과 별개다. 설치 미리보기는 유지하되 복원 버튼의 과거 입력을 설치 확정으로 재사용하지 않고 다음 프레임의 새 입력부터 처리한다.
+
+실제 Player prefab으로 스킬 PlayMode 6개가 통과했다: 폭탄 fuse/ID/수량과 후속 피해, 이미 폭발한 폭탄의 피해 중복 방지, 장벽/비콘 HP·ID·충전·첫 펄스, 임시 포탑/비행 탄환/수량 재구성 후 실제 피해, Q/E 선택과 UI 잠금, 범위 피해 중 캡처 거부다. 관련 무기 PlayMode 2개도 통과했다. Factory 집중 검사는 2개다. 확장 실행의 Editor Scene fixture 실패와 최종 pose 수정 검사를 별도 기록하며, 서로 다른 실행을 하나의 전체 Scene 인수 통과로 합치지 않는다.
 
 Weather는 기존 날씨 가중치·큐 전환 규칙을 유지하고, Match 전용 난수만 상태를 저장할 수 있는 Unity Mathematics Random으로 바꿨다. 설치본은 1.3.3이며 v1 payload에 xorshift 상태를 명시한다. 같은 seed의 과거 System.Random 날씨 순서와는 달라지므로 이전 Debugger 기록의 seed만으로 동일 순서를 주장하지 않는다. 상태를 복원한 이후에는 예고와 다음 추첨 순서가 이어진다. 0 seed는 1로 정규화하고 저장된 0 상태는 손상으로 거부한다. 이 선택의 API 근거는 [Unity Mathematics Random](https://docs.unity3d.com/Packages/com.unity.mathematics@1.3/api/Unity.Mathematics.Random.html)이며 실제 설치 소스의 state/NextInt를 함께 확인했다.
 

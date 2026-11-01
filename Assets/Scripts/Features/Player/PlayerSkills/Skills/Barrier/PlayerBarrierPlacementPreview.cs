@@ -9,10 +9,11 @@ public sealed class PlayerBarrierPlacementPreview
     private Material _previewMaterial;
     private LineRenderer _previewLine, _firstPulse, _secondPulse;
     private SpriteRenderer _secondEmitterPreview;
-    public PlayerBarrierPlacementPreview(PlayerFieldDevice prefab, Vector3 start, float width)
+    public PlayerBarrierPlacementPreview(PlayerFieldDevice prefab, Vector3 start, float width, UnityEngine.SceneManagement.Scene ownerScene)
     {
         _prefab = prefab; _first = start;
             _preview = new GameObject("Barrier Placement Preview");
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(_preview, ownerScene);
             _previewMaterial = new Material(Shader.Find("Sprites/Default"));
             _previewLine = PlayerFieldLineFactory.Line("Connection", _previewMaterial, width, Color.cyan, _preview.transform);
             _firstPulse = PlayerFieldLineFactory.Line("First Pulse", _previewMaterial, .07f, Color.cyan, _preview.transform);

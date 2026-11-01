@@ -1,10 +1,10 @@
 using UnityEngine;
 
-public enum PlayerFieldDeviceKind { Barrier, Beacon, TemporaryTurret }
+public enum PlayerFieldDeviceKind { Barrier = 0, Beacon = 1, TemporaryTurret = 2 }
 
 /// <summary>장비의 체력과 수명을 관리하고 표현·검색·충돌 판정을 연결합니다.</summary>
 [DisallowMultipleComponent]
-public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
+public sealed partial class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget, TeamHJD.Game.Contracts.IEntityIdentity
 {
     [SerializeField] private PlayerFieldDeviceKind _kind;
     [Header("Visuals")]
@@ -31,6 +31,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
         float width, float health, float duration, float radius = 0)
     {
         if (_initialized) return;
+        TeamHJD.Game.Presentation.Scene.CheckpointActorFactory.EnsureIdentity(gameObject);
         _kind = kind; _start = start; _end = end;
         _width = Mathf.Max(.1f, width);
         _health = _maxHealth = Mathf.Max(1, health);

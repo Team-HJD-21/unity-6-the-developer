@@ -38,6 +38,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     private double _impactAt;
     private bool _pendingStrike;
     private bool _repairIntent;
+    private bool _applyingStrike;
     public float AttackInterval => Mathf.Max(.05f, _attackInterval);
 
     public void Bind(Transform owner, PlayerInputHandler input)
@@ -86,7 +87,9 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
                 ShowImpact(point, true);
             return;
         }
-        ApplyMeleeDamage();
+        _applyingStrike = true;
+        try { ApplyMeleeDamage(); }
+        finally { _applyingStrike = false; }
     }
 
     private void ApplyMeleeDamage()

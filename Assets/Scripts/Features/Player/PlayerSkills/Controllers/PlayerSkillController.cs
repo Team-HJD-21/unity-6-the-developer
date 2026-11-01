@@ -7,7 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInputHandler), typeof(PlayerBomb), typeof(PlayerTurretSkill))]
 [RequireComponent(typeof(PlayerBarrierSkill), typeof(PlayerBeaconSkill))]
 [DefaultExecutionOrder(100)]
-public sealed class PlayerSkillController : MonoBehaviour
+public sealed partial class PlayerSkillController : MonoBehaviour
 {
     private PlayerInputHandler _input;
     private PlayerBomb _bomb;

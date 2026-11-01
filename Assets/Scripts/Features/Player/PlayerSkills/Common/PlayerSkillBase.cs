@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>스킬의 사용 조건·보유 상태·쿨타임과 입력 진입점을 통일합니다.</summary>
-public abstract class PlayerSkillBase : MonoBehaviour
+public abstract partial class PlayerSkillBase : MonoBehaviour
 {
     private PlayerSkillController _controller;
     private PlayerControlState _control;

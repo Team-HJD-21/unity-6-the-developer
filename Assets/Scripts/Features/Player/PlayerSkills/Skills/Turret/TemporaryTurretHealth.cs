@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>임시 포탑의 체력·적 충돌과 피격 틴트를 담당합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BoxCollider2D))]
-public sealed class TemporaryTurretHealth : MonoBehaviour, IPlayerFieldTarget
+public sealed partial class TemporaryTurretHealth : MonoBehaviour, IPlayerFieldTarget, TeamHJD.Game.Contracts.IEntityIdentity
 {
     [SerializeField, Min(1)] private float _maxHealth = 100;
     [SerializeField] private BoxCollider2D _blocker;
@@ -23,6 +23,7 @@ public sealed class TemporaryTurretHealth : MonoBehaviour, IPlayerFieldTarget
     public float Radius => _blocker != null ? ((Vector2)_blocker.bounds.extents).magnitude : 0f;
     private void Awake()
     {
+        TeamHJD.Game.Presentation.Scene.CheckpointActorFactory.EnsureIdentity(gameObject);
         _health = MaxHealth;
         _renderers = GetComponentsInChildren<SpriteRenderer>(true);
         _originalColors = new Color[_renderers.Length];
@@ -40,6 +41,7 @@ public sealed class TemporaryTurretHealth : MonoBehaviour, IPlayerFieldTarget
     private void OnEnable() { if (_initialized) PlayerFieldDeviceRegistry.Register(this); }
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         _scanner.Tick(transform.position, Radius + 2, Time.deltaTime);
         _hitRemaining = Mathf.Max(0, _hitRemaining - Time.deltaTime);
         for (int i = 0; i < _renderers.Length; i++)
@@ -51,6 +53,7 @@ public sealed class TemporaryTurretHealth : MonoBehaviour, IPlayerFieldTarget
         _health = Mathf.Max(0, _health - damage);
         _hitRemaining = .12f;
         if (_health > 0) return;
+        GetComponent<TemporaryTurret>()?.ReleaseDestroyedOwner();
         if (_blocker != null) _blocker.enabled = false;
         gameObject.SetActive(false);
         PlayerFieldDevice.Dispose(gameObject);

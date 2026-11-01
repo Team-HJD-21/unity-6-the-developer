@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class PlayerBarrierSkill : PlayerSkillBase
+public sealed partial class PlayerBarrierSkill : PlayerSkillBase
 {
     [Header("Barrier")]
     [SerializeField] private PlayerFieldDevice _prefab;
@@ -77,7 +77,7 @@ public sealed class PlayerBarrierSkill : PlayerSkillBase
             if (!IsClear(transform.position, transform.position)) return false;
             _first = transform.position;
             _pendingRemaining = Mathf.Max(.1f, _pendingSeconds);
-            _preview = new PlayerBarrierPlacementPreview(_prefab, _first, _width);
+            _preview = new PlayerBarrierPlacementPreview(_prefab, _first, _width, gameObject.scene);
             return true;
         }
         if (!ValidateConnection(_first, transform.position, out _)) return false;
