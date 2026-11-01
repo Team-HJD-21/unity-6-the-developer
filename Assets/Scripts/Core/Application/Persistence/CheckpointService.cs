@@ -140,6 +140,13 @@ namespace TeamHJD.Game.Application
                 cancellation.ThrowIfCancellationRequested(); RequireReady(capture: false);
                 started = true; _runtime.BeginRestore(data.GameSeconds);
                 foreach (var step in steps) { cancellation.ThrowIfCancellationRequested(); RequireReady(capture: false); step.Apply(); }
+                // 단순 적용 순서만으로는 뒤에 재생성될 다른 Feature의 과거 instance를 참조할 수 있습니다.
+                foreach (var step in steps)
+                {
+                    cancellation.ThrowIfCancellationRequested(); RequireReady(capture: false);
+                    if (step is ICheckpointReferenceRestoreStep references) references.ResolveReferences();
+                }
+                cancellation.ThrowIfCancellationRequested(); RequireReady(capture: false);
                 _runtime.FinishRestore(); result = Result(id, CheckpointOperationStatus.Restored, "Restored", data);
             }
             catch (Exception error)
@@ -151,7 +158,10 @@ namespace TeamHJD.Game.Application
                     Try(() => _runtime.BeginRestore(before.GameSeconds), rollbackErrors);
                     // 예약은 전역 시간 복원으로 취소됐으므로 아직 Apply하지 않은 Feature의 백업도 다시 연결합니다.
                     for (int i = steps.Count - 1; i >= 0; i--) Try(steps[i].Rollback, rollbackErrors);
-                    Try(_runtime.FinishRestore, rollbackErrors);
+                    // 역순 백업 복구가 끝나야 최종 대상 instance가 확정됩니다. 복구 중에는 취소를 다시 적용하지 않습니다.
+                    foreach (var step in steps)
+                        if (step is ICheckpointReferenceRestoreStep references) Try(references.ResolveRollbackReferences, rollbackErrors);
+                    if (rollbackErrors.Count == 0) Try(_runtime.FinishRestore, rollbackErrors);
                     if (rollbackErrors.Count > 0)
                     {
                         rollbackErrors.Insert(0, error); var failure = new AggregateException("Checkpoint rollback failed.", rollbackErrors);

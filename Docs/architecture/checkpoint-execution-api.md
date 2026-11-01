@@ -61,6 +61,30 @@ sequenceDiagram
 
 Factory의 ID 사전 검증과 저장 pose/소유 Scene 유지 집중 검사 2개가 통과했다. 다른 Hub가 활성화된 실제 생성물 복원은 별도의 Player 스킬 PlayMode 검사에서 확인한다. Factory가 모든 prefab의 게임 규칙을 자동 복원하는 것으로 해석하지 않는다.
 
+### Feature 사이의 대상 참조 복원
+
+탄환·미사일·AI가 다른 Feature의 실제 actor를 참조할 때는 적용 순서만으로 충분하지 않다. 나중에 재생성되는 적의 과거 Unity instance를 계속 가리킬 수 있기 때문이다. 이 경우 준비 단계는 `ICheckpointReferenceRestoreStep`을 제공한다. 기본 `CheckpointRestoreStep`도 `resolveReferences`와 `resolveRollbackReferences`를 쌍으로 받을 수 있다. 참조가 없는 기존 단계는 그대로 사용한다.
+
+```mermaid
+sequenceDiagram
+    participant S as CheckpointService
+    participant A as 터렛·탄환 writer
+    participant B as Enemy writer
+    participant R as Runtime
+    S->>A: Apply — 실제 상태/actor 재구성
+    S->>B: Apply — 실제 상태/actor 재구성
+    S->>A: ResolveReferences — 최종 논리 ID로 표적 연결
+    S->>B: ResolveReferences — 최종 논리 ID로 대상 연결
+    S->>R: FinishRestore — 파생 값/읽기 모델 게시
+```
+
+- 참조 연결은 모든 `Apply` 뒤, 완료 게시 전에 실행한다. Unity instance ID나 NetworkObjectId를 저장하지 않고 논리 ID로 현재 actor를 찾는다.
+- 적용/참조 연결이 실패하면 시간을 백업으로 돌리고 **모든** 단계의 `Rollback`을 역순 실행한다. 모든 백업 actor가 재구성된 뒤 `ResolveRollbackReferences`를 순서대로 실행한다. 취소된 요청도 이 백업 복구를 중간에 취소하지 않는다.
+- 백업 적용이나 참조 재연결이 실패하면 부분 상태를 `FinishRestore`로 게시하지 않고 Match를 Fault 처리한다. `Dispose`는 자료/lease 정리이며 대상 연결이나 게임 상태 변경에 사용하지 않는다.
+- 이 계약은 실행 순서를 보장한다. 저장 ID 전체의 중복/누락 사전 검증과 실제 Enemy·미사일의 참조 해석은 각 writer 및 Scene 조립부에서 구현해야 한다.
+
+새 참조 순서·역순 백업 후 재연결·백업 참조 실패·참조 단계 취소·해제 수명 5개와 기존 실행기 10개를 함께 검사해 15/15 통과, Unity 종료0을 확인했다 (`B4-ReferenceRestore`). 실제 Enemy/미사일 Scene 통합 검사와 구분한다.
+
 ## 검증과 남은 연결
 
 실행기 10개와 요청 관찰 5개 검사는 권위/준비 거부, 같은 프레임 캡처, 기본 경제 보존·재화 롤백, schema 사전 검증, 실패 보상·Fault, 중복/과거 요청, 해제 및 지연 IO를 확인했다. payload 3개 검사는 schema·길이·UTF-8·남은 바이트 검증을 확인했다. 저장소의 실제 IO 검사는 별도 8개다.

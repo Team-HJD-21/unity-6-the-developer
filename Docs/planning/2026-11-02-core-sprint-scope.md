@@ -280,3 +280,7 @@ Q/E 선택과 개별 스킬 writer를 실제 Player 원본에 연결했다. 폭�
 ### B4 필드 터렛 원본·전력 모델
 
 생성용 `FieldTurretInitializationData`에 복원 책임을 몰지 않고 개체 RuntimeState와 공용 PowerBudget의 불변 저장 값을 분리했다. 수리 소수점·강화 정의·전력 지연 반환 시간·기존 예약의 재연결을 보존하며 로컬 InstanceId를 복사하지 않는다. 잘못된 정의나 피해 확정 중간 캡처는 적용 전에 거부한다. PlayMode 6개 중5개 통과 후 강화 float 재계산 오검출을 보완해 해당1개 재검사 통과. 최초 EditMode0개는 제외한다. 실제 Scene writer·냉각/무기/탄환/표적 예약·자동 큐의 결합은 아직 진행할 부분이다. 자세한 API와 증거는 checkpoint-execution-api에 기록한다.
+
+### B4 재생성 뒤 대상 참조 연결
+
+실제 터렛 미사일이 적에 대해 대상 예약을 보유하므로 단순 writer 적용 순서로는 충분하지 않음을 확인했다. 실행기는 전체 Apply 후 대상 논리 ID 재연결, 전체 역순 Rollback 후 백업 대상 재연결을 지원한다. 백업 참조 실패는 부분 결과를 게시하지 않고 Fault한다. 기존 실행기10개+새 참조 계약5개=15/15, Unity 종료0 (`B4-ReferenceRestore`). 실제 Enemy/미사일 writer와 Scene 대상 해석은 후속 연결이며 계약 검사만으로 완료라고 하지 않는다.
