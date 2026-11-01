@@ -221,4 +221,8 @@ Steam 조사는 다른 단계와 독립적으로 진행할 수 있다. 공개 AP
 
 ### B4 실행 준비: 정지 소유권
 
-MatchTimeService에 owner별 AcquirePause lease를 추가했다. 참가자 정책/다른 lease와 독립적으로 해제되며 종료 후 재개하지 않는다. Preparing의 로딩 시간은 게임 초에 포함하지 않고 준비 중 복원도 진행 정지 상태를 유지한다. 1차22/22 후 준비 시간 보강에 대한 집중6/6, Unity 종료0 (`B4-PauseOwnership`). 실제 Feature 저장 실행기/복원 연결을 다음에 진행한다.
+MatchTimeService에 owner별 AcquirePause lease를 추가했다. 참가자 정책/다른 lease와 독립적으로 해제되며 종료 후 재개하지 않는다. Preparing의 로딩 시간은 게임 초에 포함하지 않고 준비 중 복원도 진행 정지 상태를 유지한다. 1차22/22 후 준비 시간 보강에 대한 집중6/6, Unity 종료0 (`B4-PauseOwnership`).
+
+### B4 실행·요청 경계
+
+[CheckpointService와 CheckpointTrigger](../architecture/checkpoint-execution-api.md)를 구현했다. 같은 프레임 캡처와 IO 분리, 대상/권위 검증, 사전 준비 후 적용, 실패 시 전체 백업 복구와 부분 상태 Fault, 기본 성장·재화 보존/명시 재화 롤백, Match/epoch/sequence 요청 관찰 및 해제를 포함한다. 실행기+payload 13/13, 실행기+관찰 15/15 집중 검사 결과를 보존했다 (`B4-Execution`). 같은 10개 실행기 검사를 두 번 더해 별개 28개 검사로 표시하지 않는다. 실제 Scene writer/프로필 영속성/재실행 게임 사이클은 아직 진행 중이다.

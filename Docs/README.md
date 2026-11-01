@@ -11,7 +11,7 @@
 
 ## 현재 기준
 
-[체크포인트 저장소 API](architecture/checkpoint-storage-api.md)는 버전 있는 바이너리 IO와 보존 정책 표현까지 구현했고 8개 검사를 통과했다. 실제 Scene 캡처·복원 실행기/재실행 흐름은 이어 연결하며 자동 저장·복원 사건은 선정하지 않는다.
+[체크포인트 저장소 API](architecture/checkpoint-storage-api.md)는 버전 있는 바이너리 IO를, [체크포인트 실행·요청 API](architecture/checkpoint-execution-api.md)는 권위·캡처·복원·실패 복구·이벤트 관찰을 설명한다. 각각 실제 IO 8개와 실행/관찰 계약 15개 검사를 통과했다. 실제 Scene writer와 재실행 흐름은 이어 연결하며 자동 저장·복원 사건은 선정하지 않는다.
 
 Runtime 검사를 작성·실행할 때는 [Unity 통합 검사 실행 기준](development/unity-runtime-test-guidelines.md)의 EditMode 대기·Scene 격리·판정 기준을 따른다.
 

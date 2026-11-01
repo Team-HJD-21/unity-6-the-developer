@@ -1,12 +1,12 @@
 # 체크포인트 바이너리 저장소 API
 
-갱신: 2026-11-02. **자료 형식·복원 정책 표현·실제 파일 저장소를 구현하고 8개 집중 검사를 통과했다.** 아직 App/Scene의 저장 실행기나 실제 Feature 캡처·복원에 연결한 상태는 아니다. 자동 저장·복원 사건은 선택하지 않는다.
+갱신: 2026-11-02. **자료 형식·복원 정책 표현·실제 파일 저장소를 구현하고 8개 집중 검사를 통과했다.** [저장·복원 실행기와 요청 관찰자](checkpoint-execution-api.md)도 구현했으며 실제 Scene Feature 통합은 진행 중이다. 자동 저장·복원 사건은 선택하지 않는다.
 
 ## 역할과 의존성
 
 ```mermaid
 flowchart LR
-    Caller[Checkpoint 실행 서비스: 다음 연결] --> Port[ICheckpointStore]
+    Caller[CheckpointService: 명시 실행] --> Port[ICheckpointStore]
     Data[CheckpointData / Feature section / 복원 정책] --> Caller
     Port --> Store[BinaryCheckpointStore]
     Store --> Codec[CheckpointBinaryCodec]
