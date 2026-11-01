@@ -27,6 +27,12 @@ public class MovingEnemyController : EnemyController
             return;
         }
 
+        if (enemyAbility.IsExecuting)
+        {
+            StopMoving();
+            return;
+        }
+
         if (enemyAbility.CheckCondition())
         {
             StopMoving();

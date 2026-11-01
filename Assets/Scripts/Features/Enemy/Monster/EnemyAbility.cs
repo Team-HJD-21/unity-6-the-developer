@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>
-/// 몬스터 능력의 발동 조건과 실행을 정의하고 공통 쿨타임을 관리한다.
+/// 능력의 공통 쿨타임과 실행 조건, 거리 판정을 제공한다.
 /// </summary>
 public abstract class EnemyAbility : MonoBehaviour
 {
@@ -10,10 +10,32 @@ public abstract class EnemyAbility : MonoBehaviour
     [FormerlySerializedAs("attackCooldown")]
     [SerializeField, Min(0f)] private float cooldown = 1f;
 
+    [Header("사거리 판정")]
+    [SerializeField] protected Collider2D _bodyCollider;
+
     private float _nextUseTime;
 
+    public virtual bool IsExecuting => false;
+
+    protected virtual void Awake()
+    {
+        // 명시적으로 연결한 콜라이더는 Trigger 여부와 관계없이 사용한다.
+        if (_bodyCollider != null)
+            return;
+
+        // 기존 근접 프리팹은 참조가 없으면 일반 몸통 콜라이더를 사용한다.
+        foreach (Collider2D collider in GetComponents<Collider2D>())
+        {
+            if (collider.isTrigger)
+                continue;
+
+            _bodyCollider = collider;
+            break;
+        }
+    }
+
     /// <summary>
-    /// 능력별 발동 조건을 확인한다. 쿨타임은 이 판정에 포함하지 않는다.
+    /// 능력별 발동 조건을 확인한다. 쿨타임은 포함하지 않는다.
     /// </summary>
     public abstract bool CheckCondition();
 
@@ -22,16 +44,54 @@ public abstract class EnemyAbility : MonoBehaviour
     /// </summary>
     public bool TryUse()
     {
-        if (!isActiveAndEnabled || Time.time < _nextUseTime ||
-            !CheckCondition() || !Activate())
+        if (!isActiveAndEnabled ||
+            IsExecuting ||
+            Time.time < _nextUseTime ||
+            !CheckCondition() ||
+            !Activate())
+        {
             return false;
+        }
 
         _nextUseTime = Time.time + cooldown;
         return true;
     }
 
-    /// <summary>
-    /// 피해 적용, 투사체 생성 등 능력의 발동에 성공하면 true를 반환한다.
-    /// </summary>
     protected abstract bool Activate();
+
+    /// <summary>
+    /// 자신의 몸통과 대상 콜라이더 사이의 간격이 지정 거리 이내인지 확인한다.
+    /// </summary>
+    protected bool IsInRange(
+        Collider2D[] targetColliders,
+        float range)
+    {
+        if (_bodyCollider == null ||
+            !_bodyCollider.enabled ||
+            !_bodyCollider.gameObject.activeInHierarchy ||
+            targetColliders == null ||
+            range < 0f)
+        {
+            return false;
+        }
+
+        foreach (Collider2D targetCollider in targetColliders)
+        {
+            if (targetCollider == null ||
+                !targetCollider.enabled ||
+                !targetCollider.gameObject.activeInHierarchy ||
+                targetCollider.isTrigger)
+            {
+                continue;
+            }
+
+            ColliderDistance2D distance =
+                _bodyCollider.Distance(targetCollider);
+
+            if (distance.isValid && distance.distance <= range)
+                return true;
+        }
+
+        return false;
+    }
 }
