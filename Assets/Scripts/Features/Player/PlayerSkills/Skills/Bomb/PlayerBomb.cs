@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>시한폭탄 설치와 보유 수량 충전을 담당합니다.</summary>
-public sealed partial class PlayerBomb : PlayerSkillBase
+public sealed class PlayerBomb : PlayerSkillBase
 {
     [Header("폭탄 기본 설정")]
     [SerializeField] private GameObject bombPrefab;
@@ -24,16 +24,13 @@ public sealed partial class PlayerBomb : PlayerSkillBase
     }
     private void Update()
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         _charges.Tick(Time.deltaTime);
         _remainingCooldown = Mathf.Max(0, _remainingCooldown - Time.deltaTime);
     }
     protected override bool TryActivate()
     {
         if (!_charges.TryConsume()) return false;
-        var bomb = Instantiate(bombPrefab, transform.position, Quaternion.identity);
-        PlayerFieldSimulationUtility.BindSpawned(bomb, this);
-        TrackBomb(bomb);
+        Instantiate(bombPrefab, transform.position, Quaternion.identity);
         _remainingCooldown = CooldownDuration;
         return true;
     }

@@ -52,16 +52,10 @@ internal sealed class StageTurretSelection
         FieldTurretBase clickedTurret = FindClickedTurret();
         if (_selected == clickedTurret) return;
 
-        if (clickedTurret == null) Clear();
-        else TrySelect(clickedTurret);
-    }
-
-    public bool TrySelect(FieldTurretBase turret)
-    {
-        if (!CanSelect(turret)) return false;
-        Clear(); _selected = turret; SelectedId = turret.InstanceId;
-        // Client의 실제 사거리 시각화는 D 표현 복제 연결 전까지 로컬 초기값으로 그리지 않습니다.
-        _selected.ShowRange = _selected.HasStateAuthority; return true;
+        Clear();
+        _selected = clickedTurret;
+        SelectedId = clickedTurret != null ? clickedTurret.InstanceId : 0;
+        if (_selected != null) _selected.ShowRange = true;
     }
 
     private bool IsPointerOverUi()
@@ -119,7 +113,7 @@ internal sealed class StageTurretSelection
             _selected = current;
         }
 
-        _selected.ShowRange = _selected.HasStateAuthority;
+        _selected.ShowRange = true;
         return _selected;
     }
 

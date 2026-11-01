@@ -6,13 +6,6 @@ public sealed class PlayerFieldEnemyScanner
 {
     private readonly HashSet<EnemyNetworkController> _seen = new();
     private float _remaining;
-    internal float CaptureCheckpoint() => Mathf.Max(0, _remaining);
-    internal void RestoreCheckpoint(float remaining)
-    {
-        if (!PlayerSkillCheckpointIO.Finite(remaining) || remaining < 0 || remaining > .2f)
-            throw new System.IO.InvalidDataException("Invalid saved field target scan delay.");
-        _remaining = remaining; _seen.Clear();
-    }
     public void Tick(Vector2 position, float radius, float elapsed)
     {
         _remaining -= Mathf.Max(0, elapsed);

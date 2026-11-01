@@ -2,9 +2,7 @@
 // 요청 context는 관측 상관관계에만 쓰며 생성 정책을 바꾸지 않습니다.
 
 using System.Collections.Generic;
-using TeamHJD.Game.Presentation.Scene;
 using System;
-using System.Threading;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using Unity.Netcode;
@@ -50,50 +48,6 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         }
     }
 
-    private IMatchTime _fieldTime;
-    private CancellationToken _gameplay;
-    private readonly Dictionary<EnemyNetworkController, FieldSimulationActor> _simulationActors = new();
-    /// <summary>Encounter의 Match 바인딩이 생성자에 공용 시계를 전달합니다. 기존 적과 이후 생성 적에 모두 적용합니다.</summary>
-    public IDisposable BindFieldSimulation(IMatchTime time, CancellationToken gameplay)
-    {
-        if (time == null) throw new ArgumentNullException(nameof(time));
-        if (_fieldTime != null) throw new InvalidOperationException("Enemy simulation is already bound.");
-        _fieldTime = time; _gameplay = gameplay;
-        try
-        {
-            foreach (var actor in SpawnedEnemyRegistry.CaptureActors()) BindSimulationActor(actor);
-            SpawnedEnemyRegistry.Registered += BindSimulationActor;
-            SpawnedEnemyRegistry.Unregistered += UnbindSimulationActor;
-            return new SimulationLease(this, time);
-        }
-        catch { ReleaseSimulation(time); throw; }
-    }
-    private void BindSimulationActor(EnemyNetworkController actor)
-    {
-        if (_fieldTime == null || actor == null || !actor.IsSpawned || actor.NetworkManager != NetworkManager ||
-            actor.gameObject.scene != gameObject.scene || _simulationActors.ContainsKey(actor)) return;
-        _simulationActors.Add(actor, FieldSimulationActor.Attach(actor.gameObject, _fieldTime, _gameplay));
-    }
-    private void UnbindSimulationActor(EnemyNetworkController actor)
-    {
-        if (!_simulationActors.TryGetValue(actor, out var simulation)) return;
-        _simulationActors.Remove(actor); if (simulation != null) simulation.Unbind(_fieldTime);
-    }
-    private void ReleaseSimulation(IMatchTime time)
-    {
-        if (!ReferenceEquals(_fieldTime, time)) return;
-        SpawnedEnemyRegistry.Registered -= BindSimulationActor;
-        SpawnedEnemyRegistry.Unregistered -= UnbindSimulationActor;
-        _fieldTime = null; _gameplay = default;
-        foreach (var simulation in _simulationActors.Values) if (simulation != null) simulation.Unbind(time);
-        _simulationActors.Clear();
-    }
-    private sealed class SimulationLease : IDisposable
-    {
-        private EnemySpawnExecutor _owner; private readonly IMatchTime _time;
-        public SimulationLease(EnemySpawnExecutor owner, IMatchTime time) { _owner = owner; _time = time; }
-        public void Dispose() { var owner = _owner; _owner = null; if (owner != null) owner.ReleaseSimulation(_time); }
-    }
     [SerializeField] private EnemyCatalog enemyList;
     private SpawnPointRegistry _spawnPointList = new();
     private readonly List<GameObject> _spawnSceneRoots = new();
@@ -109,29 +63,6 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             if (enemy.Context != null && enemy.Context.MatchId == matchId)
                 count++;
         return count;
-    }
-
-    /// <summary>App 연결은 유지한 채 이 Match가 생성한 적만 서버에서 정리합니다.</summary>
-    public int DespawnForMatch(MatchId matchId)
-    {
-        if (!IsServer || matchId.IsEmpty) return 0;
-        var selected = new List<ulong>();
-        foreach (KeyValuePair<ulong, TrackedEnemy> item in _spawnedEnemies)
-            if (item.Value.Context != null && item.Value.Context.MatchId == matchId) selected.Add(item.Key);
-        List<Exception> errors = null;
-        foreach (ulong id in selected)
-        {
-            try
-            {
-                if (_spawnedEnemies.TryGetValue(id, out TrackedEnemy enemy) &&
-                    enemy.NetworkObject != null && enemy.NetworkObject.IsSpawned)
-                    enemy.NetworkObject.Despawn(true);
-            }
-            catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
-            finally { UntrackEnemy(id); }
-        }
-        if (errors != null) throw new AggregateException("Match Enemy cleanup failed.", errors);
-        return selected.Count;
     }
 
     /// <summary>
@@ -217,7 +148,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     /// </summary>
     private void Update()
     {
-        if (!IsSpawned || !IsServer || (_fieldTime != null && (!_fieldTime.IsAvailable || _fieldTime.Snapshot.IsPaused)))
+        if (!IsSpawned || !IsServer)
             return;
 
         foreach (EnemySquad squad in _squads)
@@ -295,7 +226,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         => Execute(spawnInstruction, context, null);
 
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
-        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null, BattlefieldSpatialSnapshot battlefield = null)
+        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || spawnInstruction.Enemies == null ||
@@ -308,22 +239,17 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             return Fail("Enemy catalog / registry missing", observeFailure);
         }
 
-        bool world = spawnInstruction.Placement?.Area != null;
-        SpawnPoint spawnPoint = null;
-        if (world && (battlefield == null || context == null || !context.MatchSeed.HasValue ||
-            spawnInstruction.Placement.Origin.Delivery != SpawnDeliveryMode.Immediate))
-            return Fail("World placement requires the current Match snapshot/seed and a supported delivery adapter.", observeFailure);
-        // World origin은 제작 지점 조회를 거치지 않으며 같은 공통 생성/추적 경로를 사용합니다.
-        if (!world && !_spawnPointList.TryGetSpawnPoint(
+        // 명령 하나가 분대 하나이므로 모든 구성원이 공유할 스폰 지점을 한 번만 찾는다.
+        if (!_spawnPointList.TryGetSpawnPoint(
                 spawnInstruction.SpawnPointId,
-                out spawnPoint))
+                out SpawnPoint spawnPoint))
         {
             Debug.LogError($"SpawnPoint not found: {spawnInstruction.SpawnPointId}");
             return Fail("Spawn point missing at execution", observeFailure);
         }
 
         // 계획 이후 점령 상태가 바뀐 지점에서는 적을 생성하지 않는다.
-        if (!world && !spawnPoint.CanSpawnEnemies)
+        if (!spawnPoint.CanSpawnEnemies)
             return Fail("Spawn point disabled / captured after planning", observeFailure);
 
         // 생성 전에 모든 적 정의와 필수 컴포넌트를 확인해 일부 종류만 스폰되는 일을 막는다.
@@ -351,7 +277,6 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         }
 
         EnemySquad squad = new EnemySquad();
-        var positionRandom = world ? new System.Random(unchecked(context.MatchSeed.Value * 397 ^ context.RequestGuid.GetHashCode() ^ (int)context.RequestId)) : null;
         int spawnedCount = 0;
         for (int entryIndex = 0; entryIndex < spawnInstruction.Enemies.Count; entryIndex++)
         {
@@ -360,27 +285,16 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
             for (int i = 0; i < count; i++)
             {
-                if (context != null && context.SpawnCancellation.IsCancellationRequested)
-                { Fail("Match/source cancelled before the next enemy.", observeFailure); break; }
-                Vector3 spawnPosition;
-                if (world)
-                {
-                    if (!EnemySpawnPlacementPolicy.TryResolve(spawnInstruction.Placement.Area, battlefield, positionRandom, out spawnPosition, out string reason))
-                    { Fail(reason, observeFailure); continue; }
-                }
-                else
-                {
-                    Vector2 offset = Random.insideUnitCircle * spawnPoint.SpawnRadius;
-                    spawnPosition = spawnPoint.Position + new Vector3(offset.x, offset.y, 0f);
-                }
+                // 같은 위치에 겹쳐 생성될 가능성을 줄이도록 반지름 안에 위치를 분산한다.
+                Vector2 offset = Random.insideUnitCircle * spawnPoint.SpawnRadius;
+                Vector3 spawnPosition =
+                    spawnPoint.Position + new Vector3(offset.x, offset.y, 0f);
 
                 GameObject spawnedMonster = Instantiate(
                     enemy.Prefab,
                     spawnPosition,
-                    world ? Quaternion.identity : spawnPoint.Rotation);
+                    spawnPoint.Rotation);
 
-                if (spawnedMonster.scene != gameObject.scene)
-                    UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(spawnedMonster, gameObject.scene);
                 EnemyController controller = spawnedMonster.GetComponent<EnemyController>();
                 // 네트워크 스폰 전에 분대 소속으로 지정해 개별 타깃 선택을 중지한다.
                 if (!squad.AddMember(controller))
@@ -395,7 +309,6 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
                 EnemyNetworkController networkController =
                     spawnedMonster.GetComponent<EnemyNetworkController>();
-                if (_fieldTime != null) FieldSimulationActor.Attach(spawnedMonster, _fieldTime, _gameplay);
                 networkObject.Spawn();
                 _spawnedEnemies[networkObject.NetworkObjectId] =
                     new TrackedEnemy(networkObject, controller, networkController, squad,

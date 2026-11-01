@@ -14,26 +14,8 @@ namespace TeamHJD.Game.FieldTurrets
     public sealed class FieldTurretBattlefieldInputSource : MonoBehaviour, IBattlefieldTurretInputSource
     {
         private BattlefieldSpatialInput _lastPublishedInput;
-        private ITurretEntityIdResolver _entityIds;
-        private bool _dirty;
 
         public event Action LayoutChanged;
-
-        public void SetEntityIdResolver(ITurretEntityIdResolver entityIds)
-        {
-            _entityIds = entityIds;
-            _lastPublishedInput = null;
-            _dirty = true;
-        }
-
-        public void RefreshLayout() => _dirty = true;
-
-        private void LateUpdate()
-        {
-            if (!_dirty) return;
-            _dirty = false;
-            PublishIfChanged();
-        }
 
         private void OnEnable()
         {
@@ -63,14 +45,9 @@ namespace TeamHJD.Game.FieldTurrets
                 int instanceId = Application.isPlaying && turret.InstanceId > 0
                     ? turret.InstanceId
                     : turret.GetInstanceID();
-                DomainEntityId id;
-                if (Application.isPlaying && _entityIds != null)
-                {
-                    // 새 Feature 개체는 명시적으로 등록되기 전까지 Core 배치에 편입하지 않습니다.
-                    if (!_entityIds.TryResolveEntityId(instanceId, out id)) continue;
-                }
-                else if (!turret.TryGetEntityId(out id))
-                    id = new DomainEntityId(Application.isPlaying ? $"turret-{instanceId}" : $"preview-turret-{instanceId}");
+                var id = new DomainEntityId(Application.isPlaying
+                    ? $"turret-{instanceId}"
+                    : $"preview-turret-{instanceId}");
                 Vector3 position = turret.transform.position;
                 turrets.Add(new TurretSpatialInput(id, new BattlefieldPoint(position.x, position.y)));
             }
@@ -80,13 +57,6 @@ namespace TeamHJD.Game.FieldTurrets
         }
 
         private void OnTurretSnapshotChanged(int instanceId)
-        {
-            // 승급은 같은 프레임에 해제/등록/ID 이전을 수행합니다. 중간 빈 배치를 발행하지 않습니다.
-            if (_entityIds != null) { _dirty = true; return; }
-            PublishIfChanged();
-        }
-
-        private void PublishIfChanged()
         {
             BattlefieldSpatialInput nextInput = CaptureTurretLayout();
             if (HasSameLayout(_lastPublishedInput, nextInput)) return;

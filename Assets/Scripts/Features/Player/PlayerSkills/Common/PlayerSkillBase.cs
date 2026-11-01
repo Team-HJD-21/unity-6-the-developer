@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>스킬의 사용 조건·보유 상태·쿨타임과 입력 진입점을 통일합니다.</summary>
-public abstract partial class PlayerSkillBase : MonoBehaviour
+public abstract class PlayerSkillBase : MonoBehaviour
 {
     private PlayerSkillController _controller;
     private PlayerControlState _control;
@@ -16,7 +16,7 @@ public abstract partial class PlayerSkillBase : MonoBehaviour
     protected virtual void Awake() { _controller = GetComponent<PlayerSkillController>(); _control = GetComponent<PlayerControlState>(); }
     public bool TryUseSkill()
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this) || !isActiveAndEnabled || !IsReady) return false;
+        if (!isActiveAndEnabled || !IsReady) return false;
         if (Controller != null)
         {
             if (!Controller.CanUse || !Controller.Loadout.Contains(Id)) return false;

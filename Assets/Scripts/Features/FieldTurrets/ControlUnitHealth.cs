@@ -1,15 +1,11 @@
-// 제어 장치의 체력·피해 이벤트와 Host 명령 검증용 실제 상호작용 위치를 제공합니다.
-// 조작 요청·Player 인증·전력 소비를 이 컴포넌트가 대신 처리하지 않습니다.
 using System;
 using TeamHJD.Game.Content;
-using TeamHJD.Game.Contracts;
-using TeamHJD.Game.Domain;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
 using UnityEngine.Events;
 
 [DisallowMultipleComponent]
-public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitHealthSource
+public sealed class ControlUnitHealth : MonoBehaviour, IDamageableTarget
 {
     [Header("Definition")]
     [SerializeField] private FieldTurretDefinition _definition;
@@ -28,13 +24,6 @@ public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget
     public int CurrentHealth => _currentHealth;
     public int MaxHealth => _definition != null ? _definition.MaxHealth : 0;
     public bool IsDestroyed => _currentHealth <= 0;
-    public bool TryCaptureInteractionPosition(out BattlefieldPoint position)
-    {
-        position = default; Vector3 current = transform.position;
-        if (!isActiveAndEnabled || _definition == null || IsDestroyed ||
-            float.IsNaN(current.x) || float.IsInfinity(current.x) || float.IsNaN(current.y) || float.IsInfinity(current.y)) return false;
-        position = new BattlefieldPoint(current.x, current.y); return true;
-    }
 
     private void Awake()
     {

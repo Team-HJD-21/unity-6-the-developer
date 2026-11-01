@@ -3,9 +3,9 @@ using UnityEngine;
 /// <summary>장비까지의 이동과 장비 공격 간격만 처리합니다.</summary>
 public sealed class PlayerFieldEnemyBehaviour
 {
-    private double _nextAttack;
+    private float _nextAttack;
     public bool Step(Transform actor, IPlayerFieldTarget device, float speed, float range,
-        float damage, float cooldown, double now, float elapsed, out Vector2 direction, out bool moving)
+        float damage, float cooldown, float now, float elapsed, out Vector2 direction, out bool moving)
     {
         Vector2 delta = device.ApproachPoint(actor.position) - (Vector2)actor.position;
         direction = delta.normalized;

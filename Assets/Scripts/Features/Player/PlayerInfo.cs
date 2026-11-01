@@ -1,9 +1,12 @@
 // 플레이어의 체력, 피해, 회복과 사망 통지를 관리합니다.
 // 초기 체력은 Prefab 설정을 사용하며 구형 성장 Manager에는 의존하지 않습니다.
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public partial class PlayerInfo : MonoBehaviour
+public class PlayerInfo : MonoBehaviour
 {
     public int curHp;
     public int maxHp = 400;
@@ -11,11 +14,6 @@ public partial class PlayerInfo : MonoBehaviour
     public UnityEvent onDeath = new UnityEvent();
     public UnityEvent<int,int> onHpChange = new UnityEvent<int, int>();
     private bool _isDead;
-    private const double RecoveryInterval = 0.02;
-    private bool _isRecovering;
-    private double _nextRecoveryAt;
-    public bool IsDead => _isDead;
-    public bool IsRecovering => _isRecovering;
 
     private void Awake()
     {
@@ -39,8 +37,7 @@ public partial class PlayerInfo : MonoBehaviour
     {
         if (_isDead) return;
         _isDead = true;
-        _isRecovering = false;
-        GetComponent<PlayerControlState>()?.SetLifeBlocked(true);
+        GetComponent<PlayerControlState>()?.SetInputBlocked(true);
         GetComponent<PlayerMovement>()?.StopImmediately();
         GetComponent<PlayerSkillController>()?.CloseSelection();
         onDeath.Invoke();
@@ -49,7 +46,7 @@ public partial class PlayerInfo : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (_isDead || damage <= 0) return;
-        curHp = Mathf.Max(0, curHp - damage);
+        curHp -= damage;
         
         if (curHp <= 0)
         {
@@ -59,23 +56,23 @@ public partial class PlayerInfo : MonoBehaviour
 
     public void RecoverHp()
     {
-        if (_isDead || _isRecovering || !isActiveAndEnabled || curHp >= maxHp) return;
-        _isRecovering = true;
-        AdvanceRecovery();
+        StartCoroutine(RecoverCoroutine());
     }
 
-    private void Update()
+    private IEnumerator RecoverCoroutine()
     {
-        // 내부 정비는 필드 정지와 구분하고 기존처럼 scaled Unity 게임 시간을 따릅니다.
-        if (_isRecovering && !_isDead && Time.timeScale > 0 && Time.timeAsDouble >= _nextRecoveryAt) AdvanceRecovery();
-    }
+        while (true)
+        {
+            if (curHp >= maxHp)
+            {
+                curHp = maxHp;
+                yield break;
+            }
 
-    private void AdvanceRecovery()
-    {
-        if (curHp >= maxHp) { curHp = maxHp; _isRecovering = false; return; }
-        curHp = Mathf.Min(maxHp, curHp + 1);
-        _isRecovering = curHp < maxHp;
-        _nextRecoveryAt = Time.timeAsDouble + RecoveryInterval;
-        onHpChange.Invoke(curHp, maxHp);
+            curHp++;
+            onHpChange.Invoke(curHp, maxHp);
+            yield return new WaitForSeconds(0.02f);
+        }
     }
+    
 }

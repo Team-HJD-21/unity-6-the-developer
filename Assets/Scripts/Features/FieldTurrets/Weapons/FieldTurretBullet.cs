@@ -1,5 +1,4 @@
 using System;
-using TeamHJD.Game.Presentation.Scene;
 using System.Collections;
 using UnityEngine;
 
@@ -14,9 +13,6 @@ public class FieldTurretBullet : MonoBehaviour
     private Vector3 _direction;
     private bool _isInitialized;
     private bool _hasHit;
-    private FieldSimulationActor _simulation;
-    private double _expiresAt;
-    private double GameSeconds => (_simulation ??= GetComponent<FieldSimulationActor>())?.Seconds ?? Time.timeAsDouble;
 
     public void Initialize(Transform target, float damage)
     {
@@ -31,13 +27,12 @@ public class FieldTurretBullet : MonoBehaviour
         _bulletDamage = damage;
         _direction = (_target.position - transform.position).normalized; // 정규화된 방향 계산
         _isInitialized = true;
-        _expiresAt = GameSeconds + 3;
+        StartCoroutine(DestroyObjectIfNotHit());
     }
 
     private void Update()
     {
-        if (!_isInitialized || (_simulation != null && !_simulation.CanAdvance)) return;
-        if (GameSeconds >= _expiresAt) { Destroy(gameObject); return; }
+        if (!_isInitialized) return;
 
         if (_target == null)
         {
@@ -53,10 +48,16 @@ public class FieldTurretBullet : MonoBehaviour
         transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
     }
 
+    private IEnumerator DestroyObjectIfNotHit()
+    {
+        yield return new WaitForSeconds(3f);
+        Destroy(gameObject); // 일정 시간이 지나면 총알 파괴
+    }
+
     // 충돌 처리
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (!_isInitialized || _hasHit || (_simulation != null && !_simulation.CanAdvance))
+        if (!_isInitialized || _hasHit)
             return;
         _hasHit = true;
         EnemyHealth enemyHealth = collision.collider.GetComponentInParent<EnemyHealth>();

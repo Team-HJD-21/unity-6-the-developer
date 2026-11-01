@@ -36,10 +36,7 @@ public sealed class EncounterRequestIntegrationTests
         Assert.That(result.Status, Is.EqualTo(EncounterRequestStatus.Spawned), result.Reason);
         Assert.That(result.SpawnedCount, Is.EqualTo(10));
         int after = executor.SpawnedEnemyCount;
-        Assert.That(after - before, Is.EqualTo(10),
-            $"before={before}, after={after}, bound={launcher.ActiveEnemyCount}, " +
-            $"executors={Object.FindObjectsByType<EnemySpawnExecutor>(FindObjectsSortMode.None).Length}, " +
-            $"spawnedIds={string.Join(",", Object.FindObjectsByType<EnemyNetworkController>(FindObjectsSortMode.None).Select(item => item.NetworkObjectId))}");
+        Assert.That(after - before, Is.EqualTo(10));
         var replay = launcher.Submit(request, issuer);
         Assert.That(replay.IsReplay, Is.True);
         Assert.That(executor.SpawnedEnemyCount, Is.EqualTo(after));

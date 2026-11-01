@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEditor.SceneManagement;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -19,18 +17,6 @@ public sealed class PlayerBulletRuntimeTests
     private Transform _muzzle;
     private readonly List<PlayerBullet> _bullets = new();
     private readonly List<GameObject> _targets = new();
-
-    private SceneSetup[] _sceneSetup;
-    [SetUp]
-    public void IsolateScenes()
-    {
-        if (Application.isPlaying) return;
-        _sceneSetup = EditorSceneManager.GetSceneManagerSetup();
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-    }
-    private string BulletState(PlayerBullet bullet, Rigidbody2D target) => bullet == null ? "Projectile destroyed" :
-        $"bullet={bullet.transform.position}, velocity={bullet.GetComponent<Rigidbody2D>().linearVelocity}, target={target.position}, ignored={Physics2D.GetIgnoreLayerCollision(_bulletPrefab.layer, target.gameObject.layer)}";
-    private string FireState => $"time={Time.timeAsDouble:F4}, next={typeof(PlayerAttack).GetField("_nextShotTime", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(_attack)}, scale={Time.timeScale}, active={_attack.isActiveAndEnabled}";
 
     [UnitySetUp]
     public IEnumerator SetUp()
@@ -76,7 +62,6 @@ public sealed class PlayerBulletRuntimeTests
         _targets.Clear();
         if (_shooter != null) Object.DestroyImmediate(_shooter);
         if (Application.isPlaying) yield return new ExitPlayMode();
-        if (_sceneSetup != null && _sceneSetup.Length > 0) EditorSceneManager.RestoreSceneManagerSetup(_sceneSetup);
     }
 
     [UnityTest]
@@ -89,7 +74,7 @@ public sealed class PlayerBulletRuntimeTests
         foreach (Vector2 velocity in velocities)
         {
             _shooterBody.linearVelocity = velocity;
-            Assert.That(_attack.TryFire(), Is.True, FireState);
+            Assert.That(_attack.TryFire(), Is.True);
             CaptureBullets();
             Assert.That(_bullets.Count, Is.EqualTo(5));
             var bullet = _bullets.OrderBy(candidate => Vector2.Angle(Vector2.down,
@@ -102,20 +87,20 @@ public sealed class PlayerBulletRuntimeTests
 
             Vector2 startPosition = body.position;
             float startTime = Time.fixedTime;
-            while (Time.fixedTime <= startTime) yield return null;
+            yield return new WaitForFixedUpdate();
             float elapsed = Time.fixedTime - startTime;
             Vector2 expectedPosition = startPosition + Vector2.down * speed * elapsed;
             Assert.That(Vector2.Distance(body.position, expectedPosition), Is.LessThan(.02f));
             Assert.That(body.linearVelocity.magnitude, Is.EqualTo(speed).Within(.001f));
             ClearBullets();
-            yield return WaitGameSeconds(.21);
+            yield return new WaitForSeconds(.21f);
         }
     }
 
     [UnityTest]
     public IEnumerator DefaultGun_FiresFivePelletsFromMuzzleAndRespectsFireInterval()
     {
-        Assert.That(_attack.TryFire(), Is.True, FireState);
+        Assert.That(_attack.TryFire(), Is.True);
         Assert.That(_attack.TryFire(), Is.False);
         CaptureBullets();
         Assert.That(_bullets.Count, Is.EqualTo(5));
@@ -127,8 +112,8 @@ public sealed class PlayerBulletRuntimeTests
             Assert.That(angles[i], Is.EqualTo(-12.5f + 6.25f * i).Within(.001f));
         ClearBullets();
 
-        yield return WaitGameSeconds(.21);
-        Assert.That(_attack.TryFire(), Is.True, FireState);
+        yield return new WaitForSeconds(.21f);
+        Assert.That(_attack.TryFire(), Is.True);
         CaptureBullets();
         Assert.That(_bullets.Count, Is.EqualTo(5));
     }
@@ -139,7 +124,7 @@ public sealed class PlayerBulletRuntimeTests
         _attack.SelectNextWeapon();
         Assert.That(_attack.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
         _shooterBody.linearVelocity = Vector2.right * 5f;
-        Assert.That(_attack.TryFire(), Is.True, FireState);
+        Assert.That(_attack.TryFire(), Is.True);
         CaptureBullets();
         Assert.That(_bullets.Count, Is.EqualTo(5));
         var angles = _bullets.Select(bullet =>
@@ -175,8 +160,8 @@ public sealed class PlayerBulletRuntimeTests
         for (int shot = 0; shot < 5; shot++)
         {
             PlayerBullet bullet = SpawnBullet(1f);
-            yield return WaitUntilHitOrGameSeconds(bullet, .5);
-            Assert.That(bullet == null, Is.True, BulletState(bullet, target));
+            for (int step = 0; step < 20 && bullet != null; step++) yield return new WaitForFixedUpdate();
+            Assert.That(bullet == null, Is.True, "The projectile must register its hit before lifetime expiry.");
             Assert.That(target.linearVelocity.sqrMagnitude, Is.LessThan(.000001f));
             Assert.That(Vector2.Distance(target.position, startPosition), Is.LessThan(.002f));
         }
@@ -195,8 +180,8 @@ public sealed class PlayerBulletRuntimeTests
         target.gameObject.tag = "Untagged";
         target.bodyType = RigidbodyType2D.Static;
         bullet = SpawnBullet(1f);
-        yield return WaitUntilHitOrGameSeconds(bullet, .5);
-        Assert.That(bullet == null, Is.True, BulletState(bullet, target));
+        for (int step = 0; step < 20 && bullet != null; step++) yield return new WaitForFixedUpdate();
+        Assert.That(bullet == null, Is.True, "A trigger projectile must still stop at an obstacle.");
     }
 
     [UnityTest]
@@ -219,12 +204,11 @@ public sealed class PlayerBulletRuntimeTests
             yield return null;
         }
         Assert.That(health, Is.Not.Null, "Initial_Stage의 실제 서버 스폰 적이 필요합니다.");
-        Assert.That(health.gameObject.scene, Is.EqualTo(SceneManager.GetSceneByPath(scenePath)), "Spawned enemies must belong to their Executor Match scene, even during Additive loading.");
         int initialHealth = health.CurrentHealth;
         health.transform.position = _muzzle.position + Vector3.down * 1.2f;
         Physics2D.SyncTransforms();
         PlayerBullet bullet = SpawnBullet(1f);
-        yield return WaitUntilHitOrGameSeconds(bullet, .5);
+        for (int step = 0; step < 20 && bullet != null; step++) yield return new WaitForFixedUpdate();
         Assert.That(bullet == null, Is.True);
         Assert.That(health.CurrentHealth, Is.EqualTo(initialHealth - 1));
     }
@@ -266,18 +250,6 @@ public sealed class PlayerBulletRuntimeTests
         _bullets.Clear();
     }
 
-    // EditMode runner는 일반 YieldInstruction의 대기를 실행하지 않으므로 실제 시계를 확인합니다.
-    private static IEnumerator WaitGameSeconds(double seconds)
-    {
-        double until = Time.timeAsDouble + seconds, timeout = Time.realtimeSinceStartupAsDouble + 5;
-        while (Time.timeAsDouble < until && Time.realtimeSinceStartupAsDouble < timeout) yield return null;
-        Assert.That(Time.timeAsDouble, Is.GreaterThanOrEqualTo(until), "Game time did not advance before the real-time timeout.");
-    }
-    private static IEnumerator WaitUntilHitOrGameSeconds(PlayerBullet bullet, double seconds)
-    {
-        double until = Time.timeAsDouble + seconds, timeout = Time.realtimeSinceStartupAsDouble + 5;
-        while (bullet != null && Time.timeAsDouble < until && Time.realtimeSinceStartupAsDouble < timeout) yield return null;
-    }
     private static void SetReference(Object target, string field, Object value)
     {
         var data = new SerializedObject(target);

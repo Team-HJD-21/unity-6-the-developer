@@ -1,12 +1,11 @@
-// 설정된 속도로 이동하며 수명과 충돌 피해를 처리하는 Player 탄환입니다.
-using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+/// <summary>설정된 고정 속도로 이동하며 수명과 충돌 피해를 처리하는 플레이어 탄환입니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
-public sealed partial class PlayerBullet : MonoBehaviour
+public sealed class PlayerBullet : MonoBehaviour
 {
     [Header("References")]
     [FormerlySerializedAs("rb")]
@@ -26,9 +25,6 @@ public sealed partial class PlayerBullet : MonoBehaviour
     [FormerlySerializedAs("targetTag")]
     [SerializeField] private string _targetTag = "Enemy";
     private bool _hasHit;
-    private FieldSimulationActor _simulation;
-    private double _expiresAt = double.PositiveInfinity;
-    private double GameSeconds => (_simulation ??= GetComponent<FieldSimulationActor>())?.Seconds ?? Time.timeAsDouble;
     private PlayerProjectileView _view;
     private readonly List<Collider2D> _hitboxes = new();
 
@@ -68,7 +64,6 @@ public sealed partial class PlayerBullet : MonoBehaviour
             return false;
         }
         _damage = damage;
-        _launchColor = color; _cryogenic = cryogenic;
         _hasHit = false;
         if (_spriteRenderer != null) _spriteRenderer.color = color;
         if (_view != null) _view.Configure(cryogenic, color);
@@ -85,14 +80,9 @@ public sealed partial class PlayerBullet : MonoBehaviour
 #endif
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
-        _expiresAt = GameSeconds + _lifetime;
+        Destroy(gameObject, _lifetime);
     }
 
-    private void Update()
-    {
-        if (_simulation != null && !_simulation.CanAdvance) return;
-        if (GameSeconds >= _expiresAt) Destroy(gameObject);
-    }
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -104,7 +94,7 @@ public sealed partial class PlayerBullet : MonoBehaviour
 
     private void ProcessHit(GameObject target)
     {
-        if ((_simulation != null && !_simulation.CanAdvance) || _hasHit || target == null || target.CompareTag("Player") || target.CompareTag("Bullet")) return;
+        if (_hasHit || target == null || target.CompareTag("Player") || target.CompareTag("Bullet")) return;
         _hasHit = true;
         foreach (Collider2D hitbox in _hitboxes)
             if (hitbox != null) hitbox.enabled = false;

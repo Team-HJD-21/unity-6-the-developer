@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 /// <summary>임시 포탑 설치·회수와 손상 비율에 따른 재충전을 담당합니다.</summary>
-public sealed partial class PlayerTurretSkill : PlayerSkillBase
+public sealed class PlayerTurretSkill : PlayerSkillBase
 {
     private const float PreviewCheckInterval = .05f;
 
@@ -60,7 +60,6 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
     private void Update() => Tick(Time.deltaTime);
     public void Tick(float elapsed)
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _installationRemaining = Mathf.Max(0, _installationRemaining - elapsed);
         _inventory?.Tick(elapsed);
@@ -145,7 +144,6 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
         if (_placementFeedback != PlayerTurretPlacementResult.Allowed || !_inventory.TryDeploy()) return false;
 
         var turret = Instantiate(turretPrefab, position, Quaternion.identity).GetComponent<TemporaryTurret>();
-        PlayerFieldSimulationUtility.BindSpawned(turret.gameObject, this);
         SceneManager.MoveGameObjectToScene(turret.gameObject, gameObject.scene);
         turret.AssignOwner(this);
         _deployed.Add(turret);
@@ -197,7 +195,6 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
 
     private void OnDestroy()
     {
-        RemoveProjectiles();
         CancelPlacement();
         foreach (var turret in _deployed)
         {

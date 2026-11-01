@@ -24,39 +24,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         [SerializeField] private List<Transition> _transitions = new();
 
-        /// <summary>UI가 Host의 정의 ID를 로컬 콘텐츠로 해석합니다. 중복 ID는 임의 선택하지 않습니다.</summary>
-        public bool TryGetDefinition(string definitionId, out FieldTurretDefinition definition)
-        {
-            FieldTurretDefinition found = null; bool ambiguous = false;
-            void Consider(FieldTurretDefinition candidate)
-            {
-                if (candidate == null || candidate.Id != definitionId) return;
-                if (found != null && found != candidate) ambiguous = true;
-                else found = candidate;
-            }
-            foreach (Transition transition in _transitions)
-            { Consider(transition.Source); Consider(transition.SourceLevelPrefab?.Definition); Consider(transition.NextLevelPrefab?.Definition); }
-            definition = ambiguous ? null : found; return definition != null;
-        }
-
-        /// <summary>Feature의 복원 준비가 저장 정의 ID에 대응하는 제작 prefab을 해석합니다. 모호한 ID는 거부합니다.</summary>
-        public bool TryGetPrefab(string definitionId, out FieldTurretBase prefab)
-        {
-            FieldTurretBase found = null; bool ambiguous = false;
-            void Consider(FieldTurretBase candidate)
-            {
-                if (candidate == null || candidate.Definition == null || candidate.Definition.Id != definitionId) return;
-                if (found != null && found != candidate) ambiguous = true;
-                else found = candidate;
-            }
-            foreach (Transition transition in _transitions)
-            { Consider(transition.SourceLevelPrefab); Consider(transition.NextLevelPrefab); }
-            prefab = ambiguous ? null : found;
-            if (prefab == null || !TryGetDefinition(definitionId, out var definition) || prefab.Definition != definition)
-            { prefab = null; return false; }
-            return true;
-        }
-
         public bool TryGetNext(FieldTurretDefinition source, out FieldTurretBase nextLevelPrefab)
         {
             foreach (Transition transition in _transitions)

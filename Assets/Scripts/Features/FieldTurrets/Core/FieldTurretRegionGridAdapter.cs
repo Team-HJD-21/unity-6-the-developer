@@ -2,7 +2,6 @@
 // 잠금·전력·터렛을 변경하지 않는 읽기 어댑터이며 두 Grid의 셀 ID를 혼용하지 않습니다.
 using System;
 using System.Collections.Generic;
-using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
@@ -46,7 +45,7 @@ namespace TeamHJD.Game.FieldTurrets
         }
 
         /// <summary>같은 Scene/전력 공급자의 현재 상태만 복사합니다. ID는 현행 Match-local 등록 ID입니다.</summary>
-        public static IReadOnlyList<RegionTurretInput> CaptureTurrets(FieldTurretController controller, ITurretEntityIdResolver entityIds = null)
+        public static IReadOnlyList<RegionTurretInput> CaptureTurrets(FieldTurretController controller)
         {
             if (controller == null) throw new ArgumentNullException(nameof(controller));
             var inputs = new List<RegionTurretInput>();
@@ -55,13 +54,7 @@ namespace TeamHJD.Game.FieldTurrets
                 if (turret == null || !turret.isActiveAndEnabled ||
                     turret.gameObject.scene != controller.gameObject.scene || !turret.UsesPowerSource(controller))
                     continue;
-                EntityId entityId;
-                if (entityIds != null)
-                {
-                    if (!entityIds.TryResolveEntityId(turret.InstanceId, out entityId)) continue;
-                }
-                else if (!turret.TryGetEntityId(out entityId)) entityId = new EntityId($"turret-{turret.InstanceId}");
-                inputs.Add(new RegionTurretInput(entityId,
+                inputs.Add(new RegionTurretInput(new EntityId($"turret-{turret.InstanceId}"),
                     new BattlefieldPoint(turret.transform.position.x, turret.transform.position.y),
                     turret.IsActivated, turret.IsDestroyed));
             }

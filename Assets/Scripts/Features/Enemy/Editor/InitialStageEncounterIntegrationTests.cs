@@ -35,7 +35,6 @@ public sealed class InitialStageEncounterIntegrationTests
         var cellCounts = new System.Collections.Generic.Dictionary<string, int>();
         var pointCells = new System.Collections.Generic.Dictionary<string, string>();
         int requests = 0, actualCount = 0, maximumInitialEnemies = 0;
-        long minimumInitialLoad = long.MaxValue, maximumInitialLoad = 0;
         for (int i = 0; i < 48; i++)
         {
             bool succeeded = launcher.TryRequestEncounter(snapshot, "Normal", 10, EncounterRequestSource.DebugWindow, out string result);
@@ -49,10 +48,6 @@ public sealed class InitialStageEncounterIntegrationTests
                     pointCells.Add(c.Id, cell);
                     cellCounts[cell] = 0;
                     maximumInitialEnemies = System.Math.Max(maximumInitialEnemies, c.EnemyCount);
-                    // 자동 시작 요청의 이력도 부하입니다. 이번 반복의 생성 수만으로 그 선행 부하를 0으로 가정하지 않습니다.
-                    long initialLoad = c.CellService + c.EnemyCount;
-                    minimumInitialLoad = System.Math.Min(minimumInitialLoad, initialLoad);
-                    maximumInitialLoad = System.Math.Max(maximumInitialLoad, initialLoad);
                 }
                 Assert.That(cellCounts.Count, Is.GreaterThan(2), "다수의 Scene 스폰 셀로 회귀 현상을 검사해야 합니다.");
             }
@@ -80,7 +75,7 @@ public sealed class InitialStageEncounterIntegrationTests
         Debug.Log($"Spatial spawn live integration: requests=24, actual={liveActual}, used cells={liveCells.Count}/{cellCount}.");
         yield return new ExitPlayMode();
         Assert.That(usedCells, Is.EqualTo(cellCount), "반복 요청은 전선 거리에 관계없이 모든 적합 셀에 생성 기회를 제공해야 합니다.");
-        Assert.That(max - min, Is.LessThanOrEqualTo(maximumInitialLoad - minimumInitialLoad + 10), "복제 지점의 수가 셀별 생성 비중을 배수로 늘리면 안 됩니다.");
+        Assert.That(max - min, Is.LessThanOrEqualTo(maximumInitialEnemies + 10), "복제 지점의 수가 셀별 생성 비중을 배수로 늘리면 안 됩니다.");
         Assert.That(liveActual, Is.EqualTo(240));
         Assert.That(liveCells.Count, Is.GreaterThanOrEqualTo((int)System.Math.Ceiling(cellCount * 0.75)), "실시간 Grid 입력에서도 일부 가까운 스포너만 반복 선택하면 안 됩니다.");
     }
@@ -100,7 +95,7 @@ public sealed class InitialStageEncounterIntegrationTests
         bool serverStarted = false;
         while (Time.realtimeSinceStartup < deadline)
         {
-            EnemySpawnExecutor executor = launcher.ExecutionTarget;
+            EnemySpawnExecutor executor = Object.FindAnyObjectByType<EnemySpawnExecutor>();
             spawnedEnemies = executor != null ? executor.SpawnedEnemyCount : 0;
             serverStarted = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
             if (spawnedEnemies > 0) break;

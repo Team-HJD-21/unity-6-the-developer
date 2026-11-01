@@ -1,4 +1,3 @@
-using TeamHJD.Game.Presentation.Scene;
 // 스킬 준비 상태와 Q/E 입력을 연결합니다. Scene이 전투/준비 가능 여부를 명시적으로 전달합니다.
 using System;
 using UnityEngine;
@@ -7,7 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInputHandler), typeof(PlayerBomb), typeof(PlayerTurretSkill))]
 [RequireComponent(typeof(PlayerBarrierSkill), typeof(PlayerBeaconSkill))]
 [DefaultExecutionOrder(100)]
-public sealed partial class PlayerSkillController : MonoBehaviour
+public sealed class PlayerSkillController : MonoBehaviour
 {
     private PlayerInputHandler _input;
     private PlayerBomb _bomb;
@@ -23,9 +22,7 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     public PlayerSkillLoadout Loadout { get; } = new PlayerSkillLoadout();
     public bool IsSelectionOpen => _hud != null && _hud.IsOpen;
     public bool CanPrepare => isActiveAndEnabled && (_control == null || _control.CanPrepare) && (_control != null && _control.HasMatchBinding || _canPrepare == null || _canPrepare());
-    private PlayerMatchPresence _presence;
-    private bool CanUseField => (_presence ??= GetComponent<PlayerMatchPresence>())?.CanSimulateField ?? true;
-    public bool CanUse => CanUseField && isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
+    public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
     public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingTurret && (CanPrepare || CanUse);
     public bool IsPlacingTurret => _turret != null && _turret.IsPlacing;
 

@@ -1,5 +1,4 @@
 using System;
-using TeamHJD.Game.Presentation.Scene;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,7 +11,6 @@ public class EnemyNetworkController : NetworkBehaviour
 {
     [SerializeField] private EnemyController enemyController;
     [SerializeField] private EnemyHealth enemyHealth;
-    private FieldSimulationActor _simulation;
     public event Action<ulong> DeathConfirmed;
 
     /// <summary>
@@ -40,8 +38,6 @@ public class EnemyNetworkController : NetworkBehaviour
         if (!IsSpawned || !IsServer)
             return;
 
-        _simulation ??= GetComponent<FieldSimulationActor>();
-        if (_simulation != null && !_simulation.CanAdvance) return;
         enemyController.ExecuteBehavior();
     }
 
@@ -50,7 +46,6 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkSpawn()
     {
-        SpawnedEnemyRegistry.Register(this);
         if (!IsServer || !enemyHealth)
             return;
 
@@ -83,7 +78,6 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
-        SpawnedEnemyRegistry.Unregister(this);
         if (enemyHealth != null)
         {
             enemyHealth.Died -= OnHealthDied;

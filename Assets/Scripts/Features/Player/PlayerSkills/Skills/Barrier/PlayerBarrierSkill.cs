@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed partial class PlayerBarrierSkill : PlayerSkillBase
+public sealed class PlayerBarrierSkill : PlayerSkillBase
 {
     [Header("Barrier")]
     [SerializeField] private PlayerFieldDevice _prefab;
@@ -60,7 +60,6 @@ public sealed partial class PlayerBarrierSkill : PlayerSkillBase
 
     public void Tick(float elapsed)
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _charges?.Tick(elapsed);
         if (!IsPending) return;
@@ -77,12 +76,11 @@ public sealed partial class PlayerBarrierSkill : PlayerSkillBase
             if (!IsClear(transform.position, transform.position)) return false;
             _first = transform.position;
             _pendingRemaining = Mathf.Max(.1f, _pendingSeconds);
-            _preview = new PlayerBarrierPlacementPreview(_prefab, _first, _width, gameObject.scene);
+            _preview = new PlayerBarrierPlacementPreview(_prefab, _first, _width);
             return true;
         }
         if (!ValidateConnection(_first, transform.position, out _)) return false;
         var barrier = Instantiate(_prefab, (_first + transform.position) * .5f, Quaternion.identity);
-        PlayerFieldSimulationUtility.BindSpawned(barrier.gameObject, this);
         barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, transform.position, _width, _health, _duration);
         _deployed.Add(barrier);
         _charges.TryConsume();

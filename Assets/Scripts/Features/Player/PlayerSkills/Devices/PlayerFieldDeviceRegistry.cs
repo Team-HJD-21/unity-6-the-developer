@@ -8,15 +8,7 @@ public static class PlayerFieldDeviceRegistry
     public static bool HasActiveDevices => _active.Exists(device => device != null && device.IsAlive);
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void Reset() => _active.Clear();
-    public static void Register(IPlayerFieldTarget device)
-    {
-        if (device == null || _active.Contains(device)) return;
-        if (device is TeamHJD.Game.Contracts.IEntityIdentity identity && !identity.EntityId.IsEmpty)
-            foreach (var other in _active)
-                if (other != null && other.IsAlive && other is TeamHJD.Game.Contracts.IEntityIdentity existing && existing.EntityId == identity.EntityId)
-                    throw new System.InvalidOperationException("Two active Player field targets share a logical ID: " + identity.EntityId.Value);
-        _active.Add(device);
-    }
+    public static void Register(IPlayerFieldTarget device) { if (device != null && !_active.Contains(device)) _active.Add(device); }
     public static void Unregister(IPlayerFieldTarget device) => _active.Remove(device);
     public static PlayerFieldDevice Resolve(Vector2 origin, Vector2 originalGoal) => ResolveTarget(origin, originalGoal) as PlayerFieldDevice;
     public static IPlayerFieldTarget ResolveTarget(Vector2 origin, Vector2 originalGoal)

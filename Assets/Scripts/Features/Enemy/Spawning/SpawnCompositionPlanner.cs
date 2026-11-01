@@ -16,8 +16,6 @@ public sealed class SpawnCompositionPlanner
     private readonly EnemySquadPresetCatalog _catalog;
     private readonly SpawnPointSpatialPolicy _spatialPolicy = new SpawnPointSpatialPolicy();
     public IReadOnlyList<SpawnDecisionSnapshot.Candidate> LastCandidates { get; private set; } = Array.Empty<SpawnDecisionSnapshot.Candidate>();
-    public MatchEnvironmentSnapshot LastEnvironment { get; private set; }
-    public string LastEnvironmentPolicy { get; private set; } = "neutral";
 
     /// <summary>
     /// 분대 프리셋을 조회할 카탈로그가 로드되었는지 반환한다.
@@ -66,7 +64,7 @@ public sealed class SpawnCompositionPlanner
         SpawnPointRegistry spawnPoints,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
-        return TryPlan(request, spawnPoints, null, null, null, out instructions);
+        return TryBuildInstructions(request, spawnPoints, null, out instructions);
     }
 
     /// <summary>현재 Match의 공간 스냅샷으로 후보를 걸러 분대 세트를 배분합니다.</summary>
@@ -76,85 +74,7 @@ public sealed class SpawnCompositionPlanner
         BattlefieldSpatialSnapshot snapshot,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
-        return TryPlan(request, spawnPoints, snapshot, null, null, out instructions);
-    }
-
-    /// <summary>권위 측 환경을 실제 Enemy 정책 데이터로 소비한 뒤 기존 공간 배분을 수행합니다.</summary>
-    public bool TryPlan(SpawnRequest request, SpawnPointRegistry points, BattlefieldSpatialSnapshot battlefield,
-        MatchEnvironmentSnapshot environment, EncounterEnvironmentProfile profile, out IReadOnlyList<SpawnInstruction> instructions)
-    {
-        LastEnvironment = environment; LastEnvironmentPolicy = "neutral";
-        if (environment != null && (battlefield == null || environment.MatchId != battlefield.MatchId))
-        { LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>(); instructions = Array.Empty<SpawnInstruction>(); return false; }
-        if (profile != null)
-        {
-            request = profile.Select(request, environment, out string policy);
-            LastEnvironmentPolicy = policy;
-        }
-        return TryBuildInstructions(request, points, battlefield, out instructions);
-    }
-
-    /// <summary>명시 지점 또는 World 영역을 같은 공간 배분 정책과 분대 구성으로 계획합니다.</summary>
-    public bool TryPlanOrigin(SpawnRequest request, SpawnPointRegistry points, BattlefieldSpatialSnapshot battlefield,
-        MatchEnvironmentSnapshot environment, EncounterEnvironmentProfile profile, EncounterSpawnPlacement placement,
-        out IReadOnlyList<SpawnInstruction> instructions)
-    {
-        instructions = Array.Empty<SpawnInstruction>();
-        LastEnvironment = environment; LastEnvironmentPolicy = "neutral";
-        LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>();
-        if (battlefield == null || placement == null || (environment != null && environment.MatchId != battlefield.MatchId)) return false;
-        if (profile != null) { request = profile.Select(request, environment, out var rule); LastEnvironmentPolicy = rule; }
-        if (!TryReadPreset(request, out var preset, out int sets)) return false;
-        var candidates = new List<SpatialSpawnCandidate>();
-        var areas = new Dictionary<string, SpawnArea>(StringComparer.Ordinal);
-        bool authored = placement.Origin.Kind == SpawnOriginKind.AuthoredPoint;
-        if (authored)
-        {
-            if (points == null || !points.TryGetSpawnPoint(placement.Origin.PointId.Value, out var point) || !point.CanSpawnEnemies) return false;
-            candidates.Add(new SpatialSpawnCandidate(point.SpawnPointId, new BattlefieldPoint(point.Position.x, point.Position.y)));
-        }
-        else
-        {
-            var area = placement.Area; var grid = battlefield.Grid.Configuration;
-            double left = Math.Max(grid.MinimumX, area.Center.X - area.Width / 2), right = Math.Min(grid.MaximumX, area.Center.X + area.Width / 2);
-            double bottom = Math.Max(grid.MinimumY, area.Center.Y - area.Height / 2), top = Math.Min(grid.MaximumY, area.Center.Y + area.Height / 2);
-            // Grid의 최댓값은 마지막 셀에 속합니다. 별도 나눗셈은 점/선 요청에서 서로 다른 경계를 만들 수 있습니다.
-            if (right < left || top < bottom ||
-                !grid.TryMapPoint(new BattlefieldPoint(left, bottom), out int x0, out int y0) ||
-                !grid.TryMapPoint(new BattlefieldPoint(right, top), out int x1, out int y1)) return false;
-            if ((long)(x1 - x0 + 1) * (y1 - y0 + 1) > 4096) return false;
-            for (int y = y0; y <= y1; y++) for (int x = x0; x <= x1; x++)
-            {
-                double minX = Math.Max(left, grid.MinimumX + x * grid.CellWidth), maxX = Math.Min(right, grid.MinimumX + (x + 1) * grid.CellWidth);
-                double minY = Math.Max(bottom, grid.MinimumY + y * grid.CellHeight), maxY = Math.Min(top, grid.MinimumY + (y + 1) * grid.CellHeight);
-                if ((area.Width > 0 && maxX <= minX) || (area.Height > 0 && maxY <= minY)) continue;
-                string key = $"world-cell/{x}/{y}";
-                var clipped = new SpawnArea(new BattlefieldPoint((minX + maxX) / 2, (minY + maxY) / 2), maxX - minX, maxY - minY, area.VisualZ);
-                areas.Add(key, clipped); candidates.Add(new SpatialSpawnCandidate(key, clipped.Center));
-            }
-        }
-        var allocations = _spatialPolicy.Allocate(battlefield, candidates, sets, preset.TotalWeight, out var decisions);
-        LastCandidates = decisions;
-        var plans = new List<SpawnInstruction>();
-        foreach (var allocation in allocations)
-        {
-            if (allocation.Sets == 0) continue;
-            var entries = new List<EnemySpawnEntry>();
-            foreach (var entry in preset.Composition) entries.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight * allocation.Sets));
-            plans.Add(new SpawnInstruction(request.SquadOrder, authored ? allocation.SpawnPointId : "",
-                entries, authored ? placement : new EncounterSpawnPlacement(placement.Origin, areas[allocation.SpawnPointId])));
-        }
-        instructions = plans.AsReadOnly(); return plans.Count > 0;
-    }
-
-    private bool TryReadPreset(SpawnRequest request, out EnemySquadPreset preset, out int sets)
-    {
-        sets = 0; preset = null;
-        if (string.IsNullOrWhiteSpace(request.SquadOrder) || request.MaxCount <= 0 || !TryGetPreset(request.SquadOrder, out preset) ||
-            preset.Composition == null || preset.Composition.Count == 0 || preset.TotalWeight <= 0) return false;
-        foreach (var entry in preset.Composition)
-            if (entry == null || string.IsNullOrWhiteSpace(entry.EnemyId) || entry.Weight <= 0) return false;
-        sets = request.MaxCount / preset.TotalWeight; return sets > 0;
+        return TryBuildInstructions(request, spawnPoints, snapshot, out instructions);
     }
 
     /// <summary>

@@ -4,8 +4,7 @@
   "references": [
     "TeamHJD.Game.FieldTurrets.Contracts",
     "TeamHJD.Game.Contracts",
-    "TeamHJD.Game.Domain",
-    "TeamHJD.Game.Presentation"
+    "TeamHJD.Game.Domain"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

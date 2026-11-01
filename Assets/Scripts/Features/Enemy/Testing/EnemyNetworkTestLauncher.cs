@@ -1,6 +1,6 @@
 // Match가 시작되면 첫 Encounter를 자동으로 요청합니다.
 // 기존 네트워크 테스트 UI의 수동 요청도 같은 Encounter 경로로 전달합니다.
-// standalone 테스트 연결과 App 소유 연결을 구분하며 후자는 직접 개설·종료하지 않습니다.
+// 이 임시 테스트 Host의 수명은 Executor의 Scene에 한정하며 App 네트워크 서비스가 아닙니다.
 
 using System;
 using System.Collections;
@@ -18,167 +18,9 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IEncounterEnvironmentConsumer, IEncounterSpawnContextConsumer, IEncounterOriginRequestTarget, IFieldSimulationConsumer
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService
 {
     private const int TargetFrameRate = 120;
-    [SerializeField] private EncounterEnvironmentProfile environmentProfile;
-    private EnemySpawnExecutor _sceneExecutor;
-    private MatchId _spawnContextMatch;
-    private IEncounterSpawnSourceRegistry _spawnSources;
-    private IMatchClock _spawnClock;
-    private int? _spawnSeed;
-    private System.Threading.CancellationToken _spawnGameplay;
-    private sealed class PendingSpawn
-    {
-        public EncounterRequest Request;
-        public EncounterSpawnReservation Reservation;
-        public Coroutine Routine;
-        public double Delay;
-        public bool CancellationRecorded;
-    }
-    private readonly Dictionary<Guid, PendingSpawn> _pendingSpawns = new Dictionary<Guid, PendingSpawn>();
-    public int PendingSpawnRequests
-    {
-        get { int count = 0; foreach (var pending in _pendingSpawns.Values) if (pending.Reservation.IsPending) count++; return count; }
-    }
-    public EncounterRequestResult RequestOrigin(string preset, int maximum, EncounterRequestSource source, EncounterSpawnOrigin origin, Guid cause)
-    {
-        Guid id = Guid.NewGuid();
-        if (_boundMatchId.IsEmpty || _authorityIssuer.IsEmpty) return new EncounterRequestResult(id, 0, 0, EncounterRequestStatus.MatchUnavailable);
-        var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, id, _authorityIssuer), new DefinitionId(preset), maximum, source, origin, cause);
-        return Submit(request, _authorityIssuer);
-    }
-    public bool TryScheduleOrigin(string preset, int maximum, EncounterRequestSource source, EncounterSpawnOrigin origin, Guid cause,
-        double delayGameSeconds, out Guid requestId)
-    {
-        requestId = Guid.Empty;
-        if (_boundMatchId.IsEmpty || _authorityIssuer.IsEmpty) return false;
-        var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
-            new DefinitionId(preset), maximum, source, origin, cause);
-        if (!TryScheduleEncounter(request, delayGameSeconds, out var reservation)) return false;
-        requestId = reservation.RequestId; return true;
-    }
-    private EncounterExecutionContext ReservationContext(EncounterRequest request) => new EncounterExecutionContext(
-        request.Context.MatchId, 0, 0, request.Source, request.PresetId.Value, requestGuid: request.Context.RequestId,
-        causeEventId: request.CauseEventId, origin: request.Origin);
-    public bool TryScheduleEncounter(EncounterRequest request, double delayGameSeconds, out EncounterSpawnReservation reservation)
-    {
-        reservation = null;
-        if (request == null) throw new ArgumentNullException(nameof(request));
-        if (double.IsNaN(delayGameSeconds) || double.IsInfinity(delayGameSeconds) || delayGameSeconds < 0)
-            throw new ArgumentOutOfRangeException(nameof(delayGameSeconds));
-        if (!isActiveAndEnabled || _spawnClock == null || _requests == null || _networkManager == null || !_networkManager.IsServer ||
-            request.Context.MatchId != _boundMatchId || request.Context.IssuerId != _authorityIssuer || _spawnGameplay.IsCancellationRequested) return false;
-        if (_pendingSpawns.TryGetValue(request.Context.RequestId, out var previous))
-        {
-            if (previous.Request.GetPayloadKey() != request.GetPayloadKey() || previous.Delay != delayGameSeconds) return false;
-            reservation = previous.Reservation; return true;
-        }
-        if (_pendingSpawns.Count >= 64 || (request.Origin.Kind != SpawnOriginKind.Automatic && _spawnSources.Resolve(request.Origin) == null)) return false;
-        double due = _spawnClock.ElapsedSeconds + delayGameSeconds;
-        if (double.IsInfinity(due)) throw new ArgumentOutOfRangeException(nameof(delayGameSeconds));
-        reservation = new EncounterSpawnReservation(request.Context.RequestId, due);
-        var pending = new PendingSpawn { Request = request, Reservation = reservation, Delay = delayGameSeconds };
-        _pendingSpawns.Add(request.Context.RequestId, pending);
-        Emit(GameDiagnosticKind.RequestScheduled, ReservationContext(request), message: $"Pending until Match game time {due:F2}s; not an alive enemy.");
-        if (!reservation.IsPending)
-        { RecordReservationCancellation(pending); _pendingSpawns.Remove(request.Context.RequestId); return true; }
-        try { pending.Routine = StartCoroutine(RunScheduledEncounter(pending)); }
-        catch { _pendingSpawns.Remove(request.Context.RequestId); reservation.Cancel("Failed to start the Feature wait."); throw; }
-        return true;
-    }
-    private IEnumerator RunScheduledEncounter(PendingSpawn pending)
-    {
-        var token = pending.Request.Origin.Kind == SpawnOriginKind.DynamicSource
-            ? _spawnSources.GetSourceCancellation(pending.Request.Origin.Source) : _spawnGameplay;
-        using (token.Register(() => pending.Reservation.Cancel("Match/source released before execution.")))
-        try
-        {
-            while (pending.Reservation.IsPending && _spawnClock != null && _spawnClock.ElapsedSeconds < pending.Reservation.DueGameSeconds)
-                yield return null;
-            if (pending.Reservation.IsPending)
-                pending.Reservation.Complete(Submit(pending.Request, _authorityIssuer));
-        }
-        finally
-        {
-            RecordReservationCancellation(pending);
-            if (_pendingSpawns.TryGetValue(pending.Request.Context.RequestId, out var current) && ReferenceEquals(current, pending))
-                _pendingSpawns.Remove(pending.Request.Context.RequestId);
-        }
-    }
-    private void CancelScheduledEncounters()
-    {
-        foreach (var pending in new List<PendingSpawn>(_pendingSpawns.Values))
-        {
-            pending.Reservation.Cancel("Match spawn scope released.");
-            RecordReservationCancellation(pending);
-            if (pending.Routine != null) StopCoroutine(pending.Routine);
-        }
-        _pendingSpawns.Clear();
-    }
-    private void RecordReservationCancellation(PendingSpawn pending)
-    {
-        if (pending.CancellationRecorded || !pending.Reservation.IsCancelled || _boundMatchId != pending.Request.Context.MatchId) return;
-        pending.CancellationRecorded = true;
-        Emit(GameDiagnosticKind.RequestCancelled, ReservationContext(pending.Request), message: pending.Reservation.Reason);
-    }
-    public void BindSpawnContext(MatchId match, IEncounterSpawnSourceRegistry sources, IMatchClock clock, int seed,
-        System.Threading.CancellationToken gameplay)
-    {
-        if (match.IsEmpty || !_spawnContextMatch.IsEmpty || _snapshotProvider != null || gameplay.IsCancellationRequested)
-            throw new InvalidOperationException("Bind one active Match spawn scope before the consumer.");
-        _spawnSources = sources ?? throw new ArgumentNullException(nameof(sources));
-        _spawnClock = clock ?? throw new ArgumentNullException(nameof(clock));
-        _spawnContextMatch = match; _spawnSeed = seed; _spawnGameplay = gameplay;
-    }
-    public void UnbindSpawnContext(MatchId match)
-    {
-        if (_spawnContextMatch != match) return;
-        CancelScheduledEncounters();
-        _spawnContextMatch = default; _spawnSources = null; _spawnClock = null; _spawnSeed = null; _spawnGameplay = default;
-    }
-    /// <summary>Core의 필드 정지 시계를 실제 적 생성자에 연결합니다. Scene scope가 반환 lease를 소유합니다.</summary>
-    private IMatchTime _fieldTime;
-    private IDisposable _fieldSimulationLease;
-    public IDisposable BindFieldSimulation(IMatchTime time, System.Threading.CancellationToken gameplay)
-    {
-        if (_fieldTime != null) throw new InvalidOperationException("Encounter simulation is already bound.");
-        EnsureEncounterRuntime();
-        if (ExecutionTarget == null) throw new InvalidOperationException("The Encounter requires an enemy executor before simulation binding.");
-        _fieldSimulationLease = ExecutionTarget.BindFieldSimulation(time, gameplay); _fieldTime = time;
-        return new SimulationLease(this, time);
-    }
-    private sealed class SimulationLease : IDisposable
-    {
-        private EnemyNetworkTestLauncher _owner; private readonly IMatchTime _time;
-        public SimulationLease(EnemyNetworkTestLauncher owner, IMatchTime time) { _owner = owner; _time = time; }
-        public void Dispose()
-        {
-            var owner = _owner; _owner = null;
-            if (owner == null || !ReferenceEquals(owner._fieldTime, _time)) return;
-            var lease = owner._fieldSimulationLease; owner._fieldSimulationLease = null; owner._fieldTime = null; lease?.Dispose();
-        }
-    }
-    private bool FieldCanAdvance => _fieldTime == null || (_fieldTime.IsAvailable && !_fieldTime.Snapshot.IsPaused && _fieldTime.Snapshot.Rate > 0);
-    public EnemySpawnExecutor ExecutionTarget => _encounterRuntime?.Executor ?? _sceneExecutor;
-    public void ConfigureScene(EnemySpawnExecutor executor, EncounterEnvironmentProfile profile)
-    {
-        if (_snapshotProvider != null) throw new InvalidOperationException("Configure the Enemy Scene before binding a Match.");
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        if (_encounterRuntime?.Executor != null) _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = null; _sceneExecutor = executor; environmentProfile = profile;
-    }
-    private MatchId _environmentMatch;
-    private Func<MatchEnvironmentSnapshot> _environmentProvider;
-
-    public void BindEnvironment(MatchId match, Func<MatchEnvironmentSnapshot> current)
-    {
-        if (match.IsEmpty || _snapshotProvider != null || _environmentProvider != null)
-            throw new InvalidOperationException("Configure one environment query before binding the Encounter Match.");
-        _environmentMatch = match; _environmentProvider = current ?? throw new ArgumentNullException(nameof(current));
-    }
-    public void UnbindEnvironment(MatchId match)
-    { if (_environmentMatch == match) { _environmentProvider = null; _environmentMatch = default; } }
     private const float HostReadyTimeout = 10f;
 
     [SerializeField] private string initialSquadOrder = "Normal";
@@ -191,8 +33,6 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private Func<BattlefieldSpatialSnapshot> _snapshotProvider;
     private EncounterRequestService _requests;
     private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
-    private PlayerId _authorityIssuer = LocalIssuer;
-    private bool _appOwnedNetwork;
     private Coroutine _initialEncounterRoutine;
     private bool _initialEncounterPending;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
@@ -205,7 +45,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     public IReadOnlyList<GameDiagnosticEvent> RecentDiagnostics => _diagnostics.ToArray();
     public long DroppedDiagnosticCount { get; private set; }
     public MatchId BoundMatchId => _boundMatchId;
-    public double GameSeconds => _snapshotProvider == null ? 0d : _spawnClock?.ElapsedSeconds ?? Math.Max(0d, Time.timeAsDouble - _gameStartTime);
+    public double GameSeconds => _snapshotProvider == null ? 0d : Math.Max(0d, Time.timeAsDouble - _gameStartTime);
     public double RealSeconds => _snapshotProvider == null ? 0d : Math.Max(0d, Time.realtimeSinceStartupAsDouble - _realStartTime);
     public int ActiveEnemyCount => _encounterRuntime?.Executor != null ? _encounterRuntime.Executor.CountForMatch(_boundMatchId) : 0;
     public int UnattributedEnemyCount => _encounterRuntime?.Executor != null ? _encounterRuntime.Executor.SpawnedEnemyCount - ActiveEnemyCount : 0;
@@ -246,40 +86,22 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 
     /// <summary>Scene의 Match 수명에 묶인 첫 Encounter를 예약합니다.</summary>
     public void BindMatch(MatchId matchId, Func<BattlefieldSpatialSnapshot> snapshotProvider)
-        => BindAuthorityMatch(matchId, LocalIssuer, snapshotProvider);
-
-    public void UseAppNetworkOwnership()
-    {
-        if (_snapshotProvider != null && !_appOwnedNetwork)
-            throw new InvalidOperationException("Transfer connection ownership before binding a Match.");
-        _appOwnedNetwork = true;
-    }
-
-    public void BindAuthorityMatch(MatchId matchId, PlayerId authorityPlayerId,
-        Func<BattlefieldSpatialSnapshot> snapshotProvider)
     {
         if (matchId.IsEmpty) throw new ArgumentException("Encounter requires a Match ID.", nameof(matchId));
-        if (authorityPlayerId.IsEmpty) throw new ArgumentException("An authority participant is required.", nameof(authorityPlayerId));
         if (snapshotProvider == null) throw new ArgumentNullException(nameof(snapshotProvider));
         if (_snapshotProvider != null) throw new InvalidOperationException("Encounter is already bound to a Match.");
-        if (_environmentProvider != null && _environmentMatch != matchId)
-            throw new InvalidOperationException("Environment and Encounter must belong to the same Match.");
-        if (!_spawnContextMatch.IsEmpty && _spawnContextMatch != matchId)
-            throw new InvalidOperationException("Spawn sources and Encounter must belong to the same Match.");
 
         _boundMatchId = matchId;
-        _authorityIssuer = authorityPlayerId;
         _snapshotProvider = snapshotProvider;
-        // 자동 Encounter는 Host 시스템 요청입니다. Client의 임의 적 생성 권한은 부여하지 않습니다.
+        // 현재 로컬 Scene의 참가자 바인딩입니다. 네트워크 조립 시 실제 연결→참가자 대응으로 교체합니다.
         _requests = new EncounterRequestService(matchId, snapshotProvider,
             () => _networkManager != null && _networkManager.IsServer,
-            issuer => issuer == _authorityIssuer, this, environment: _environmentProvider,
-            resolveOrigin: origin => _spawnSources?.Resolve(origin));
+            issuer => issuer == LocalIssuer, this);
         _gameStartTime = Time.timeAsDouble;
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
         EnsureEncounterRuntime();
-        if (!_appOwnedNetwork) BindTestHostToExecutorScene();
+        BindTestHostToExecutorScene();
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
         _initialEncounterPending = true;
         if (_networkManager != null) StartInitialEncounterIfBound();
@@ -290,28 +112,18 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     {
         if (_snapshotProvider == null || _boundMatchId != matchId) return;
         CancelPendingInitialEncounter();
-        CancelScheduledEncounters();
         _requests?.Dispose();
         _requests = null;
-        try
-        {
-            if (_appOwnedNetwork) _encounterRuntime?.Executor?.DespawnForMatch(matchId);
-            // standalone 테스트만 연결을 닫습니다. App의 연결은 다음 Match에서도 유지됩니다.
-            else if (_encounterRuntime?.Executor != null &&
-                gameObject.scene == _encounterRuntime.Executor.gameObject.scene && _networkManager != null)
-                _networkManager.Shutdown();
-            Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Feature actors released");
-        }
-        finally
-        {
-            if (_encounterRuntime?.Executor != null)
-                _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-            _encounterRuntime = null;
-            _snapshotProvider = null;
-            UnbindEnvironment(matchId);
-            UnbindSpawnContext(matchId);
-            _boundMatchId = default;
-        }
+        // Scene 소유 임시 Host는 SDK 종료를 먼저 요청하고 Scene 파괴 시 정리를 완료합니다.
+        if (_encounterRuntime?.Executor != null &&
+            gameObject.scene == _encounterRuntime.Executor.gameObject.scene && _networkManager != null)
+            _networkManager.Shutdown();
+        Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Enemy despawn is Feature-owned");
+        if (_encounterRuntime?.Executor != null)
+            _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+        _encounterRuntime = null;
+        _snapshotProvider = null;
+        _boundMatchId = default;
     }
 
     private void OnDestroy()
@@ -353,7 +165,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (!_initialEncounterPending) yield break;
 
         // 임시 Scene 시작 정책만 연결을 명시적으로 엽니다. 개별 Spawn 요청은 연결을 열지 않습니다.
-        if (!_appOwnedNetwork && _networkManager != null && !_networkManager.IsListening) StartHost();
+        if (_networkManager != null && !_networkManager.IsListening) StartHost();
         if (!CanRequestEncounter(out string reason))
         {
             Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: reason);
@@ -391,7 +203,6 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     /// </summary>
     private void OnGUI()
     {
-        if (_appOwnedNetwork) return;
         // 네트워크 테스트 UI 영역을 생성한다.
         GUILayout.BeginArea(
             new Rect(20f, 20f, 240f, 180f),
@@ -469,7 +280,6 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     /// <summary>Debug Window가 현재 Match snapshot을 전달하고 Encounter 요청을 시작합니다.</summary>
     public bool CanRequestEncounter(out string reason)
     {
-        if (!FieldCanAdvance) { reason = "필드 정지 중에는 새 Encounter를 실행하지 않습니다."; return false; }
         if (_networkManager == null)
         {
             reason = "NetworkManager가 없습니다.";
@@ -516,18 +326,16 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (snapshot == null || _requests == null || snapshot.MatchId != _boundMatchId)
         {
             result = "현재 바인딩된 Match가 아닙니다.";
-            ReportRejectedRequest(source, squadOrder, result, Guid.NewGuid(), snapshot: snapshot);
             return false;
         }
         if (string.IsNullOrWhiteSpace(squadOrder) || squadOrder.Trim().Length > 128 || maxEnemyCount < 1 || !Enum.IsDefined(typeof(EncounterRequestSource), source))
         {
             result = "Preset·생성 예산·출처를 확인하세요.";
-            ReportRejectedRequest(source, squadOrder, result, Guid.NewGuid(), snapshot: snapshot);
             return false;
         }
-        var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
+        var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), LocalIssuer),
             new DefinitionId(squadOrder.Trim()), maxEnemyCount, source);
-        EncounterRequestResult response = Submit(request, _authorityIssuer);
+        EncounterRequestResult response = Submit(request, LocalIssuer);
         result = response.Reason;
         return response.HasSpawned;
     }
@@ -535,54 +343,19 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     public EncounterRequestResult Submit(EncounterRequest request, PlayerId verifiedIssuer)
     {
         if (request == null) throw new ArgumentNullException(nameof(request));
-        var response = _requests != null ? _requests.Submit(request, verifiedIssuer) :
+        return _requests != null ? _requests.Submit(request, verifiedIssuer) :
             new EncounterRequestResult(request.Context.RequestId, 0, 0, EncounterRequestStatus.MatchUnavailable);
-        if (!response.IsReplay && response.Status != EncounterRequestStatus.InProgress &&
-            response.Status != EncounterRequestStatus.Spawned && response.Status != EncounterRequestStatus.PartialSpawn &&
-            (response.ExecutionSequence == 0 || response.ExecutionSequence > _requestSequence || response.Status == EncounterRequestStatus.ExecutionFailed))
-        {
-            _requestSequence = Math.Max(_requestSequence, response.ExecutionSequence);
-            ReportRejectedRequest(request.Source, request.PresetId.Value, response.Status + ": " + response.Reason,
-                request.Context.RequestId, request.CauseEventId, request.Origin, response.ExecutionSequence, response.SnapshotRevision,
-                countsUnknown: !response.HasKnownExecutionCounts);
-        }
-        return response;
-    }
-    private void ReportRejectedRequest(EncounterRequestSource source, string preset, string reason, Guid request,
-        Guid cause = default, EncounterSpawnOrigin origin = null, long executionSequence = 0, long revision = 0,
-        BattlefieldSpatialSnapshot snapshot = null, bool countsUnknown = false)
-    {
-        // 실행 전 거부에는 가짜 실행 번호를 배정하지 않습니다. 닫힌 Match 기록도 다시 열지 않습니다.
-        if (_requests == null || _snapshotProvider == null || _boundMatchId.IsEmpty) return;
-        if (snapshot != null && snapshot.MatchId == _boundMatchId) revision = snapshot.Revision;
-        if (!Enum.IsDefined(typeof(EncounterRequestSource), source)) source = EncounterRequestSource.Unspecified;
-        var context = new EncounterExecutionContext(_boundMatchId, executionSequence, revision, source, preset ?? "",
-            requestGuid: request, causeEventId: cause, origin: origin);
-        Emit(GameDiagnosticKind.RequestFailed, context, message: reason, countsUnknown: countsUnknown);
     }
 
     EncounterRequestResult IEncounterExecutor.Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot, long executionSequence)
-        => Execute(request, snapshot, null, executionSequence);
-
-    public EncounterRequestResult Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot,
-        MatchEnvironmentSnapshot environment, long executionSequence)
-        => Execute(request, snapshot, environment, null, executionSequence);
-
-    public EncounterRequestResult Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot,
-        MatchEnvironmentSnapshot environment, EncounterSpawnPlacement placement, long executionSequence)
     {
-        if (!FieldCanAdvance) return new EncounterRequestResult(request.Context.RequestId, executionSequence,
-            snapshot.Revision, EncounterRequestStatus.NotReady, reason: "FieldPaused");
         _requestSequence = executionSequence;
-        var cancellation = request.Origin.Kind == SpawnOriginKind.DynamicSource
-            ? _spawnSources.GetSourceCancellation(request.Origin.Source) : _spawnGameplay;
         var context = new EncounterExecutionContext(_boundMatchId, executionSequence, snapshot.Revision,
-            request.Source, request.PresetId.Value, environment, request.Context.RequestId, request.CauseEventId,
-            placement, _spawnSeed, cancellation, request.Origin);
+            request.Source, request.PresetId.Value);
         Emit(GameDiagnosticKind.RequestStarted, context, message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, budget={request.MaximumEnemyCount}");
         EnsureEncounterRuntime();
         bool succeeded = _encounterRuntime.TrySpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
-            context, out string result, out EncounterExecutionSummary summary, environmentProfile);
+            context, out string result, out EncounterExecutionSummary summary);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
             spawnDecision: summary.SpawnDecision);
@@ -590,11 +363,9 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             CancelPendingInitialEncounter();
         EncounterRequestStatus status = summary.PlannedCount > 0 && summary.SpawnedCount == summary.PlannedCount
             ? EncounterRequestStatus.Spawned : summary.SpawnedCount > 0 ? EncounterRequestStatus.PartialSpawn :
-            summary.ResultCode == "UnsupportedDelivery" ? EncounterRequestStatus.UnsupportedDelivery :
-            summary.ResultCode == "OriginUnavailable" ? EncounterRequestStatus.OriginUnavailable :
             summary.ResultCode == "PlanRejected" ? EncounterRequestStatus.PlanRejected : EncounterRequestStatus.SpawnFailed;
         return new EncounterRequestResult(request.Context.RequestId, executionSequence, snapshot.Revision,
-            status, summary.PlannedCount, summary.SpawnedCount, result, environmentRevision: environment?.Revision ?? 0);
+            status, summary.PlannedCount, summary.SpawnedCount, result);
     }
 
     private void EnsureEncounterRuntime()
@@ -602,7 +373,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (_encounterRuntime != null && _encounterRuntime.HasExecutor) return;
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = _sceneExecutor != null ? new EncounterRuntime(_sceneExecutor) : new EncounterRuntime();
+        _encounterRuntime = new EncounterRuntime();
         if (_encounterRuntime.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved += OnEnemyLifecycleObserved;
     }
@@ -615,13 +386,12 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     }
 
     private void Emit(GameDiagnosticKind kind, EncounterExecutionContext context, int planned = 0, int actual = 0,
-        string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null,
-        bool countsUnknown = false)
+        string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null)
     {
         var observation = new GameDiagnosticEvent(++_diagnosticSequence, _boundMatchId,
             context?.Revision ?? 0, context?.RequestId ?? 0, context?.Source ?? EncounterRequestSource.Unspecified,
             kind, GameSeconds, RealSeconds, enemyType, point, entity, planned, actual, message, context?.SquadOrder ?? "",spawnDecision,
-            hasDeathEvents: true, environment: context?.Environment, executionContext: context, isExecutionCountUnknown: countsUnknown);
+            hasDeathEvents: true);
         if (_diagnostics.Count >= 4096)
         {
             if(_diagnostics.Dequeue().SpawnDecision!=null)_retainedDecisionCount--;

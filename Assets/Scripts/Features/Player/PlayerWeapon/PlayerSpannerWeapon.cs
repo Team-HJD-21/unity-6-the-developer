@@ -1,11 +1,10 @@
-// 렌치 타격을 예약하고 impact 시 실제 대상을 재검증해 피해·수리와 제작된 연출을 적용합니다.
-using TeamHJD.Game.Presentation.Scene;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>Schedules a wrench strike, validates targets at impact, and plays authored feedback.</summary>
 [DisallowMultipleComponent]
-public sealed partial class PlayerSpannerWeapon : MonoBehaviour
+public sealed class PlayerSpannerWeapon : MonoBehaviour
 {
     [SerializeField, Min(.1f)] private float _range = 2f;
     [SerializeField, Range(1f, 180f)] private float _arc = 100f;
@@ -30,15 +29,10 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     private PlayerControlState _controls;
     private Vector2 _swingDirection;
     private float _swingRemaining;
-    private double _nextAttackTime;
-    private PlayerMatchPresence _presence;
-    private PlayerMatchPresence Presence => _presence != null ? _presence :
-        _owner != null ? _presence = _owner.GetComponent<PlayerMatchPresence>() : null;
-    private double GameSeconds => Presence?.FieldSeconds ?? Time.timeAsDouble;
-    private double _impactAt;
+    private float _nextAttackTime;
+    private float _impactAt;
     private bool _pendingStrike;
     private bool _repairIntent;
-    private bool _applyingStrike;
     public float AttackInterval => Mathf.Max(.05f, _attackInterval);
 
     public void Bind(Transform owner, PlayerInputHandler input)
@@ -54,32 +48,30 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
 
     public bool TryAttack(Vector2 direction)
     {
-        if (Presence != null && !Presence.CanSimulateField) return false;
         if (!isActiveAndEnabled || _owner == null || (_controls != null && !_controls.CanAct) ||
-            !PlayerAimUtility.IsValidDirection(direction) || _pendingStrike || GameSeconds < _nextAttackTime)
+            !PlayerAimUtility.IsValidDirection(direction) || _pendingStrike || Time.time < _nextAttackTime)
             return false;
-        _nextAttackTime = GameSeconds + AttackInterval;
+        _nextAttackTime = Time.time + AttackInterval;
         _swingRemaining = Mathf.Max(.01f, _swingSeconds);
         _swingDirection = direction.normalized;
         _repairIntent = _repair != null && _repair.CanRepair(_owner, _swingDirection);
         bool animated = _motion != null && _motion.PlayToolAction(_repairIntent);
         float delay = animated ? _motion.ToolImpactDelay(_repairIntent) : _swingSeconds * .5f;
-        _impactAt = GameSeconds + Mathf.Max(0f, delay);
-        _nextAttackTime = System.Math.Max(_nextAttackTime, _impactAt);
+        _impactAt = Time.time + Mathf.Max(0f, delay);
+        _nextAttackTime = Mathf.Max(_nextAttackTime, _impactAt);
         _pendingStrike = true;
         return true;
     }
 
     private void Update()
     {
-        if (Presence != null && !Presence.CanSimulateField) return;
         if (!_pendingStrike) return;
         if (_owner == null || (_controls != null && !_controls.CanAct))
         {
             _pendingStrike = false;
             return;
         }
-        if (GameSeconds < _impactAt) return;
+        if (Time.time < _impactAt) return;
         _pendingStrike = false;
         if (_repairIntent)
         {
@@ -87,9 +79,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
                 ShowImpact(point, true);
             return;
         }
-        _applyingStrike = true;
-        try { ApplyMeleeDamage(); }
-        finally { _applyingStrike = false; }
+        ApplyMeleeDamage();
     }
 
     private void ApplyMeleeDamage()

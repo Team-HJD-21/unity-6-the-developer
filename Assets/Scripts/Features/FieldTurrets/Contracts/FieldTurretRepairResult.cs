@@ -12,7 +12,6 @@ namespace TeamHJD.Game.FieldTurrets.Contracts
         Destroyed,
         AutoActivationInProgress,
         InvalidRepairRate,
-        InvalidDeltaTime,
-        Unauthorized
+        InvalidDeltaTime
     }
 }

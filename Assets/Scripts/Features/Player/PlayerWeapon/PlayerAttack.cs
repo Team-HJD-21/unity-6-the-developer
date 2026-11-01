@@ -1,11 +1,10 @@
-// 활성 총구에서 무기별 탄환을 발사하고 발사에 맞춰 효과와 재사용 시간을 갱신합니다.
-using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+/// <summary>활성 총구에서 무기별 탄환을 발사하고 실제 발사에 맞춰 효과와 재사용 시간을 갱신합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInputHandler))]
-public partial class PlayerAttack : MonoBehaviour
+public class PlayerAttack : MonoBehaviour
 {
     [Header("References")]
     [FormerlySerializedAs("bulletPrefab")]
@@ -47,10 +46,7 @@ public partial class PlayerAttack : MonoBehaviour
     [SerializeField, Range(0f, 180f)] private float _cryoSpreadAngle = 25f;
     private PlayerSkillController _skills;
     private PlayerSpriteMotion _motion;
-    private double _nextShotTime;
-    private PlayerMatchPresence _presence;
-    private PlayerMatchPresence Presence => _presence ??= GetComponentInParent<PlayerMatchPresence>();
-    private double GameSeconds => Presence?.FieldSeconds ?? Time.timeAsDouble;
+    private float _nextShotTime;
     private bool _reportedConfigurationError;
     public WeaponType CurrentWeapon => _currentWeapon;
 
@@ -79,8 +75,7 @@ public partial class PlayerAttack : MonoBehaviour
 
     public bool TryFire()
     {
-        if (Presence != null && !Presence.CanSimulateField) return false;
-        if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || GameSeconds < _nextShotTime) return false;
+        if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || Time.time < _nextShotTime) return false;
         if (_currentWeapon == WeaponType.Spanner) return TrySwingSpanner();
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
@@ -93,7 +88,7 @@ public partial class PlayerAttack : MonoBehaviour
         if (!fired) return false;
 
         float interval = isCryo ? _cryoInterval : _defaultGunInterval;
-        _nextShotTime = GameSeconds + Mathf.Max(.01f, interval);
+        _nextShotTime = Time.time + Mathf.Max(.01f, interval);
         _weaponRig.ShowShotFlash(color);
         if (_motion != null) _motion.PlayRangedShot();
         return true;
@@ -131,8 +126,7 @@ public partial class PlayerAttack : MonoBehaviour
     private bool FireProjectile(Vector3 spawnPosition, Vector2 direction, Color color, float damage, bool cryogenic)
     {
         var bullet = Instantiate(_bulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
-        PlayerFieldSimulationUtility.BindSpawned(bullet.gameObject, this);
-        if (bullet.Initialize(color, damage, direction, cryogenic)) { TrackProjectile(bullet); return true; }
+        if (bullet.Initialize(color, damage, direction, cryogenic)) return true;
         Destroy(bullet.gameObject);
         return false;
     }
@@ -176,7 +170,7 @@ public partial class PlayerAttack : MonoBehaviour
     private bool TrySwingSpanner()
     {
         if (_spanner == null || !TryGetAimDirection(out Vector2 direction) || !_spanner.TryAttack(direction)) return false;
-        _nextShotTime = GameSeconds + _spanner.AttackInterval;
+        _nextShotTime = Time.time + _spanner.AttackInterval;
         return true;
     }
 }

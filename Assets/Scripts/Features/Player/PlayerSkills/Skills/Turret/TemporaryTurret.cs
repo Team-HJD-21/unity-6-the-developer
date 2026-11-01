@@ -4,7 +4,7 @@ using UnityEngine;
 /// 회수 가능한 보조 포탑의 적 탐색, 조준 회전 및 탄환 자동 발사를 담당합니다.
 /// </summary>
 [RequireComponent(typeof(TemporaryTurretHealth))]
-public partial class TemporaryTurret : MonoBehaviour
+public class TemporaryTurret : MonoBehaviour
 {
     [Header("Bullet Settings")]
     [Tooltip("보조 포탑 전용 실탄 프리팹 (TemporaryTurretProjectile 컴포넌트 포함)")]
@@ -66,7 +66,6 @@ public partial class TemporaryTurret : MonoBehaviour
 
     private void Update()
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         FindClosestTarget();
 
         if (targetEnemy != null)
@@ -104,15 +103,9 @@ public partial class TemporaryTurret : MonoBehaviour
     /// <summary>
     /// 설치된 캐논과 같은 외형의 전용 실탄을 실제 총구에서 발사합니다.
     /// </summary>
-    private void Shoot()
-    {
-        var bullet = PlayerSupportTurretWeapon.Fire(bulletPrefab, targetEnemy, firePoint, turretHead, damagePerShot, bulletColor);
-        if (bullet != null && _owner != null) _owner.TrackProjectile(bullet);
-    }
+    private void Shoot() => PlayerSupportTurretWeapon.Fire(bulletPrefab, targetEnemy, firePoint, turretHead, damagePerShot, bulletColor);
 
-    internal void ReleaseDestroyedOwner()
-    { var owner = _owner; _owner = null; if (owner != null) owner.ReleaseTurret(this, 0); }
-    private void OnDestroy() => ReleaseDestroyedOwner();
+    private void OnDestroy() { if (_owner != null) _owner.ReleaseTurret(this, 0); }
 
     private void OnDrawGizmosSelected()
     {

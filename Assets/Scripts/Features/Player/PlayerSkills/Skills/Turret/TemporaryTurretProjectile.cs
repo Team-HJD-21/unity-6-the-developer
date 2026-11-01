@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>보조 포탑 전용 실탄. 플레이어 무기 효과와 독립적으로 적 한 명에게 피해를 적용합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
-public sealed partial class TemporaryTurretProjectile : MonoBehaviour
+public sealed class TemporaryTurretProjectile : MonoBehaviour
 {
     [SerializeField, Min(.1f)] private float _speed = 70;
     [SerializeField, Min(.1f)] private float _lifetime = 3;
@@ -39,7 +39,6 @@ public sealed partial class TemporaryTurretProjectile : MonoBehaviour
 
     private void Update()
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (!_initialized) return;
         _remaining -= Time.deltaTime;
         if (_remaining <= 0) Retire();
@@ -50,7 +49,6 @@ public sealed partial class TemporaryTurretProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (!_initialized || _hit || _body == null) return;
         var velocity = _body.linearVelocity;
         if (!PlayerAimUtility.IsValidDirection(velocity)) return;
@@ -88,7 +86,7 @@ public sealed partial class TemporaryTurretProjectile : MonoBehaviour
 
     private void ProcessHit(Collider2D other)
     {
-        if (!PlayerFieldSimulationUtility.CanAdvance(this) || !_initialized || _hit || other == null) return;
+        if (!_initialized || _hit || other == null) return;
         if (IsPassThrough(other)) return;
         var health = other.GetComponentInParent<EnemyHealth>();
         // Legacy 제거로 인해 로직 무효화: 구형 Monster 피해 폴백.

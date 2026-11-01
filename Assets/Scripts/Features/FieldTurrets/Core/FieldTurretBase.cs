@@ -1,7 +1,4 @@
-// 터렛의 개체 상태·활성화·공격·교체 수명을 관리합니다.
-// 논리 ID는 별도 제작/생성 메타데이터에서 읽고 로컬 InstanceId와 구분합니다.
 using System.Collections;
-using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
@@ -9,7 +6,7 @@ using UnityEngine;
 namespace TeamHJD.Game.FieldTurrets
 {
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "TeamHJD.Game.Turrets", sourceAssembly: "TeamHJD.Game.Turrets", sourceClassName: "TurretBase")]
-    public abstract partial class FieldTurretBase : MonoBehaviour, IFieldTurretActivationRequester, IDamageableTarget
+    public abstract class FieldTurretBase : MonoBehaviour, IFieldTurretActivationRequester, IDamageableTarget
     {
         // Keep serialized field names unchanged so existing prefab values remain mapped.
         //제발 바꾸지 말아주세요요요요!
@@ -39,47 +36,23 @@ namespace TeamHJD.Game.FieldTurrets
         private FieldTurretInitializationData _initializationData;
         private bool _initialActivationPending;
         private Coroutine _initialActivationRoutine;
-        private double _coolingEndsAt;
+        private float _coolingEndsAt;
         private float _coolingDuration;
         private float _coolingInitialHeatRatio;
-        protected bool CanSimulate => _turretController == null || _turretController.CanSimulate;
-        protected double FieldSeconds => _turretController?.FieldSeconds ?? Time.timeAsDouble;
-        /// <summary>터렛의 생성자가 발사한 탄환에 같은 Match 시계를 전달합니다.</summary>
-        protected void BindProjectileSimulation(GameObject projectile)
-        {
-            if (_turretController?.FieldTimeSource != null)
-                TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(projectile, _turretController.FieldTimeSource,
-                    _turretController.GameplayCancellation, destroyOnCompletion: true);
-        }
-        internal void RebaseSimulationTime(double previous, double current)
-        { _coolingEndsAt = current + System.Math.Max(0, _coolingEndsAt - previous); }
         public bool IsInitialized => _activationController != null;
         // Shared by active overheat recovery and cooling after switching off.
         // IsActivated determines whether completion resumes attacks or only permits activation.
-        public bool IsCoolingDown => FieldSeconds < _coolingEndsAt;
-        public float CoolingDownRemaining => (float)System.Math.Max(0, _coolingEndsAt - FieldSeconds);
+        public bool IsCoolingDown => Time.time < _coolingEndsAt;
+        public float CoolingDownRemaining => Mathf.Max(0f, _coolingEndsAt - Time.time);
         public FieldTurretActivationResult? LastInitialActivationResult { get; private set; }
 
         public FieldTurretDefinition Definition => _definition;
         public virtual FieldTurretKind Kind => FieldTurretKind.Unknown;
         public FieldTurretRuntimeState RuntimeState => _runtimeState;
         public int InstanceId => _runtimeState.InstanceId;
-        public bool TryGetEntityId(out TeamHJD.Game.Domain.EntityId entityId)
-        {
-            entityId = default;
-            foreach (MonoBehaviour component in GetComponents<MonoBehaviour>())
-            {
-                if (!(component is IEntityIdentity identity) || identity.EntityId.IsEmpty) continue;
-                if (!entityId.IsEmpty && entityId != identity.EntityId)
-                    throw new System.InvalidOperationException("A turret has conflicting logical identities.");
-                entityId = identity.EntityId;
-            }
-            return !entityId.IsEmpty;
-        }
         public string DisplayName => _definition != null ? _definition.DisplayName : name;
         public bool IsActivated => _runtimeState.IsActivated;
-        public bool HasStateAuthority => !(_configuredPowerSource is FieldTurretController controller) || controller.HasWriteAuthority;
-        public bool IsOperational => HasStateAuthority && _runtimeState.IsOperational;
+        public bool IsOperational => _runtimeState.IsOperational;
         public bool IsDestroyed => _runtimeState.IsDestroyed;
         public bool IsLocked => _runtimeState.IsLocked;
         public int CurrentHealth => _runtimeState.CurrentHealth;
@@ -160,7 +133,6 @@ namespace TeamHJD.Game.FieldTurrets
                 throw new System.ArgumentNullException(nameof(powerSource));
             _initializationData = data;
             _configuredPowerSource = powerSource;
-            _turretController = powerSource as FieldTurretController;
         }
 
         internal bool UsesPowerSource(IFieldTurretPowerSource source) => ReferenceEquals(_configuredPowerSource, source);
@@ -188,7 +160,6 @@ namespace TeamHJD.Game.FieldTurrets
                 shouldStartActivated = _initializationData.ShouldActivate;
             }
             _configuredPowerSource = powerSource;
-            _turretController = powerSource as FieldTurretController;
             _runtimeState.SetActivated(false);
             _runtimeState.InitializeHealth(MaxHealth);
             _activationController = new FieldTurretActivationController(
@@ -270,7 +241,7 @@ namespace TeamHJD.Game.FieldTurrets
         // Retained for existing activation UI consumers.
         public bool IsManualActivationBlocked => IsManualOperationBlocked;
 
-        public bool CanModifyUpgrades => HasStateAuthority && IsInitialized && isActiveAndEnabled &&
+        public bool CanModifyUpgrades => IsInitialized && isActiveAndEnabled &&
             !IsManualOperationBlocked && !IsLocked && !IsDestroyed && !IsActivated && !IsCoolingDown;
 
         public bool CanRepair => IsInitialized && isActiveAndEnabled &&
@@ -285,7 +256,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         public FieldTurretActivationResult RequestActivation(bool shouldActivate)
         {
-            if (!HasStateAuthority) return FieldTurretActivationResult.NotAuthoritative;
             if (RejectManualOperation())
             {
                 return FieldTurretActivationResult.AutoActivationInProgress;
@@ -338,7 +308,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         public bool SetLocked(bool isLocked)
         {
-            if (!HasStateAuthority) return false;
             if (RejectManualOperation()) return false;
             if (!isLocked && _configuredPowerSource is FieldTurretController controller &&
                 !controller.CanUnlock(this)) return false;
@@ -384,7 +353,7 @@ namespace TeamHJD.Game.FieldTurrets
             {
                 _coolingDuration = Mathf.Max(0f, duration);
                 _coolingInitialHeatRatio = Mathf.Clamp01(initialHeatRatio);
-                _coolingEndsAt = FieldSeconds + _coolingDuration;
+                _coolingEndsAt = Time.time + _coolingDuration;
             }
 
             TimeTilFire = 0f;
@@ -395,7 +364,7 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected virtual void Update()
         {
-            if (CanSimulate && _coolingDuration > 0f) UpdateCooling();
+            if (_coolingDuration > 0f) UpdateCooling();
         }
 
         private void UpdateCooling()
@@ -444,12 +413,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected virtual void OnDisable()
         {
-            ReleaseMatchOperations();
-            FieldTurretInstanceRegistry.Unregister(this);
-        }
-
-        internal void ReleaseMatchOperations()
-        {
             CancelInitialActivation();
             if (_minimumRangeRenderer != null)
                 _minimumRangeRenderer.enabled = false;
@@ -471,14 +434,12 @@ namespace TeamHJD.Game.FieldTurrets
             }
 
             _runtimeState.SetTemporarilySuspended(false);
+            FieldTurretInstanceRegistry.Unregister(this);
         }
 
         private IEnumerator RequestInitialActivation()
         {
             yield return null;
-            // 필드 정지/준비 중에는 자동 시작 의도를 소비하지 않습니다. 비활성화 시 기존 취소 경로가 닫습니다.
-            while (_initialActivationPending && isActiveAndEnabled && (!CanSimulate || !HasStateAuthority))
-                yield return null;
             _initialActivationRoutine = null;
             if (!_initialActivationPending || !isActiveAndEnabled) yield break;
             _initialActivationPending = false;
@@ -495,7 +456,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         public void SetDamageBonus(int damageBonus)
         {
-            if (!HasStateAuthority) return;
             if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.SetDamageBonus(damageBonus);
             FieldTurretInstanceRegistry.NotifySnapshotChanged(this);
@@ -503,7 +463,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         public void AddDamageBonus(int damageBonus)
         {
-            if (!HasStateAuthority) return;
             if (RejectManualOperation() || !CanModifyUpgrades) return;
             _runtimeState.AddDamageBonus(damageBonus);
             FieldTurretInstanceRegistry.NotifySnapshotChanged(this);
@@ -521,7 +480,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         private FieldTurretUpgradeResult ChangeUpgradeLevel(FieldTurretUpgradeDefinition upgrade, int direction)
         {
-            if (!HasStateAuthority) return FieldTurretUpgradeResult.NotAuthoritative;
             if (RejectManualOperation())
                 return FieldTurretUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
@@ -610,7 +568,6 @@ namespace TeamHJD.Game.FieldTurrets
             FieldTurretBase targetLevelPrefab, int levelDelta, out FieldTurretBase changedTurret)
         {
             changedTurret = null;
-            if (!HasStateAuthority) return FieldTurretLevelUpgradeResult.NotAuthoritative;
             if (RejectManualOperation())
                 return FieldTurretLevelUpgradeResult.AutoActivationInProgress;
             if (IsLocked)
@@ -694,7 +651,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         public bool ApplyDamage(int damage)
         {
-            if (!HasStateAuthority) return false;
             if (IsLocked) return false;
             if (!_runtimeState.ApplyDamage(damage))
             {
@@ -720,7 +676,6 @@ namespace TeamHJD.Game.FieldTurrets
         /// </summary>
         public FieldTurretRepairResult Repair(float healthPerSecond, float deltaTime)
         {
-            if (!HasStateAuthority) return FieldTurretRepairResult.Unauthorized;
             if (float.IsNaN(healthPerSecond) || float.IsInfinity(healthPerSecond) || healthPerSecond <= 0f)
                 return FieldTurretRepairResult.InvalidRepairRate;
             if (float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime <= 0f)
@@ -744,7 +699,7 @@ namespace TeamHJD.Game.FieldTurrets
         /// <summary>살아 있는 터렛을 부분 수리합니다. 활성화·전력 예약·냉각 상태는 변경하지 않습니다.</summary>
         public bool Repair(int amount)
         {
-            if (!HasStateAuthority || !IsInitialized || !isActiveAndEnabled || amount <= 0 || IsLocked || IsDestroyed ||
+            if (!IsInitialized || !isActiveAndEnabled || amount <= 0 || IsLocked || IsDestroyed ||
                 IsManualOperationBlocked) return false;
             if (!_runtimeState.TryRepair(amount, MaxHealth)) return false;
             FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
@@ -753,7 +708,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         public bool Restore()
         {
-            if (!HasStateAuthority) return false;
             if (RejectManualOperation()) return false;
             if (IsLocked) return false;
             if (!_runtimeState.Restore(MaxHealth))

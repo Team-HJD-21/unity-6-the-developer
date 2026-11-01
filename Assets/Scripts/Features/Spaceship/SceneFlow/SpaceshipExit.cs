@@ -1,6 +1,3 @@
-// 우주선 출구의 문 연출 뒤 필드로 이동하고 Host의 참가자 위치를 갱신합니다.
-using TeamHJD.Game.Domain;
-using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -48,9 +45,6 @@ public class SpaceshipExit : MonoBehaviour
     private void TryExit(Collider2D other)
     {
         
-        if (isTransitioning) return;
-        var presence = other.GetComponentInParent<PlayerMatchPresence>();
-        if (presence != null && !presence.CanReport) return;
         Transform player = other.transform;
 
         Scene returnScene = SceneManager.GetSceneByName(returnSceneName);
@@ -73,11 +67,9 @@ public class SpaceshipExit : MonoBehaviour
         isTransitioning = true;
         Vector3 destination = GetSafeReturnPosition(returnTrigger, player);
         MovePlayer(player, destination);
-        presence?.Report(MatchPlayerLocation.Field);
         isTransitioning = false;
         
-        // SOS의 다른 참가자가 내부에 남아 있을 수 있으므로 출입 때 공용 허브를 내리지 않습니다.
-        // Hub Scene 해제는 게임 사이클 소유자가 참가자/Match 수명에 맞춰 수행합니다.
+        SceneManager.UnloadSceneAsync(originName);
     }
 
     private Vector3 GetSafeReturnPosition(Transform returnTrigger, Transform player)
@@ -138,6 +130,7 @@ public class SpaceshipExit : MonoBehaviour
     {
         if (collision.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
+        isTransitioning = true;
         // 이동
         TryExit(collision.collider);
     }

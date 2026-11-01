@@ -4,47 +4,15 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using TeamHJD.Game.Bootstrap.SceneComposition;
-using TeamHJD.Game.Application;
-using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEditor.SceneManagement;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
 public sealed class RegionSceneIntegrationTests
 {
-    [Test]
-    public void ClientBindingUsesReceivedGridWithoutCreatingLocalAuthority()
-    {
-        var owner = new GameObject("Client region binding");
-        var controller = owner.AddComponent<FieldTurretController>();
-        var binding = owner.AddComponent<RegionSceneBinding>();
-        var serialized = new SerializedObject(binding);
-        serialized.FindProperty("_controller").objectReferenceValue = controller;
-        serialized.ApplyModifiedPropertiesWithoutUndo();
-        var match = new MatchId("replica-match"); var descriptor = System.Guid.NewGuid();
-        using var replica = new RegionGridReplica(match, descriptor);
-        try
-        {
-            var snapshot = RegionGridSnapshot.FromCapturedCells(match, System.Guid.NewGuid(), 3, RegionPolicyMode.Dynamic,
-                new RegionGridDefinition(BattlefieldGridConfiguration.Default), new[] { 1, 2 });
-            replica.Apply(new RegionReplicationFrame(descriptor, 1, snapshot), true);
-            binding.BindReplica(replica);
-            Assert.That(binding.Source.Snapshot, Is.SameAs(snapshot));
-            Assert.That(controller.Regions, Is.SameAs(replica));
-            Assert.That(binding.HasWriteAuthority, Is.False);
-            Assert.That(binding.ResetPolicy(RegionPolicyMode.Static, true), Is.False);
-            Assert.That(binding.TryUnlockThroughZone(2), Is.False);
-            Assert.That(binding.LastEvaluation, Is.Null);
-            binding.UnbindMatch();
-            Assert.That(binding.Source, Is.Null);
-            Assert.That(controller.Regions, Is.Null);
-        }
-        finally { Object.DestroyImmediate(owner); }
-    }
     private SceneSetup[] _setup;
     [SetUp]
     public void RememberScenes()
@@ -75,8 +43,6 @@ public sealed class RegionSceneIntegrationTests
         Assert.That(binding.ResetPolicy(RegionPolicyMode.Dynamic, true), Is.True);
 
         var controller = Object.FindAnyObjectByType<FieldTurretController>();
-        Assert.That(controller.UnlockZones, Is.Not.Null, "Scene composition must explicitly configure D's CU zones before binding Core access.");
-        Assert.That(controller.UnlockedZoneCount, Is.EqualTo(1));
         var turrets = Object.FindObjectsByType<FieldTurretBase>(FindObjectsSortMode.None)
             .Where(turret => turret.isActiveAndEnabled && !turret.IsDestroyed)
             .OrderBy(turret => turret.EffectivePower).ToArray();

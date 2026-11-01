@@ -1,12 +1,11 @@
-// 개별 터렛의 활성·체력·강화·수리 상태 원본입니다. 전력 예약은 ActivationController가 소유합니다.
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace TeamHJD.Game.FieldTurrets
 {
     [Serializable]
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "TeamHJD.Game.Turrets", sourceAssembly: "TeamHJD.Game.Turrets", sourceClassName: "TurretRuntimeState")]
-    public sealed partial class FieldTurretRuntimeState
+    public sealed class FieldTurretRuntimeState
     {
         [SerializeField, Min(0)] private int _instanceId;
         [SerializeField] private bool _isActivated;

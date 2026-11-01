@@ -1,6 +1,5 @@
 using System;
 using TeamHJD.Game.FieldTurrets;
-using TeamHJD.Game.Contracts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -133,36 +132,6 @@ public sealed class StageTurretControlView : MonoBehaviour
         feedbackText.text = _withinReach ? _lastFeedback : StageTurretUIText.OutOfReach +
             (_lastFeedback.Length > 0 ? $" | {_lastFeedback}" : "");
     }
-    public void ShowWaitingForHost()
-    {
-        _withinReach = true;
-        if (!gameObject.activeSelf) gameObject.SetActive(true);
-        titleText.text = "Turret · Host state pending"; levelText.text = "Level —"; statsText.text = "—";
-        statusText.text = "Waiting for authoritative turret state"; upgradeRestrictionText.text = "Controls are unavailable until Host state arrives";
-        activationButton.interactable = levelUpButton.interactable = levelDownButton.interactable = false;
-        activationText.text = "Waiting"; activationText.color = unavailableColor; upgradeView.ShowSnapshot(null, false);
-    }
-    public void ShowSnapshot(TurretPresentationSnapshot turret, bool canInteract, bool canLevelUp, bool canLevelDown,
-        bool dynamicRegions, bool pending, bool withinReach = true)
-    {
-        if (turret == null) { ShowWaitingForHost(); return; }
-        if (!gameObject.activeSelf) gameObject.SetActive(true);
-        titleText.text = turret.DisplayName; levelText.text = $"Level {turret.Level}";
-        statsText.text = $"HP {turret.CurrentHealth}/{turret.MaxHealth}   Power {turret.Power}   Damage {turret.Damage}   Range {turret.Range:0.#}";
-        statusText.text = pending ? "Waiting for Host confirmation/state" : turret.IsManualOperationBlocked ? "Automatic activation - manual controls disabled" :
-            turret.IsDestroyed ? "Destroyed" : turret.IsLocked ? "Locked" : turret.IsCoolingDown ? $"Cooling down: {turret.CoolingRemaining:0.0}s" :
-            turret.IsOperational ? "Operational" : turret.IsActivated ? "Activated - Suspended" : "Inactive";
-        if (dynamicRegions) statusText.text += " | Dynamic capture: activate to form territory";
-        _withinReach = withinReach;
-        RefreshFeedback();
-        bool editable = canInteract && !pending && turret.CanModifyUpgrades;
-        activationButton.interactable = canInteract && !pending && StageTurretInteractionRules.CanToggle(turret);
-        levelUpButton.interactable = editable && canLevelUp; levelDownButton.interactable = editable && canLevelDown;
-        upgradeRestrictionText.text = StageTurretUIText.UpgradeRestriction(turret); upgradeView.ShowSnapshot(turret, canInteract && !pending);
-        activationText.text = turret.IsDestroyed ? "Destroyed" : turret.IsLocked ? "Locked" : turret.IsActivated ? "Deactivate" : "Activate";
-        activationText.color = !activationButton.interactable ? unavailableColor : turret.IsActivated ? deactivateColor : activateColor;
-    }
-
 
     private static string GetStatus(FieldTurretBase turret)
     {
