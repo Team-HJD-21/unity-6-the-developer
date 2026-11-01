@@ -87,3 +87,12 @@ flowchart LR
 처음 수신 전 0초를 정상 준비로 취급하지 않는다. anchor 소실·연결 준비 해제 시 마지막 값을 유지하고 IsAvailable을 닫는다. 같은 anchor에서 SDK 시각이 조금 뒤로 보정되면 표시 시간을 역행시키지 않으며, 새 권위 anchor는 정지/복원 보정을 위해 이전 표시보다 작은 게임 초를 확정할 수 있다. 체크포인트 복원은 새 epoch를 전달하며 옛 callback을 Client에 복원하지 않는다.
 
 검증 `B2-TimeReplica/client-fields/results.xml`: **16/16**, 실제 localhost UTP Host/Client SDK 두 인스턴스의 NetworkVariable 전달·정지·위치·복원 epoch와 연결 유지 포함. 별도 `additive-enemy/results.xml` **1/1**로 활성 Scene이 달라도 적이 Executor Scene에 귀속되어 실제 탄환 피해를 받는 것을 확인했다. 실제 두 게임 실행 파일의 Player 생성/포털 출입을 완료했다는 증거는 아니다.
+
+
+## 임시 정지 소유권과 준비 단계
+
+`MatchTimeService.AcquirePause(owner)`는 캡처·복원 조율부가 같은 메인 스레드에서 임대하고 해제하는 API다. 여러 lease와 참가자 정책의 정지는 OR로 합친다. 캡처 lease를 해제해도 전원 우주선 입장에 의한 정지나 다른 lease가 남아 있으면 계속 정지한다. 완료/폐기 뒤 늦게 해제한 lease가 Match를 재개하지 않는다. `PauseOwners`는 임시 소유자의 진단용 사본이며 참가자 정책과 별도다.
+
+Preparing 단계의 시계는 자동 정지하고 scheduler를 실행하지 않는다. 준비 중 `Restore(gameSeconds)`도 가능하지만 준비/복원 lease가 끝나기 전 진행하지 않는다. Running으로 진입할 때 현재 원본 시각에 기준을 잡아 로딩 시간을 게임 시간에 포함하지 않는다. Clock 제어와 유효 lease의 해제는 소유 스레드에서 수행한다.
+
+검증: `B4-PauseOwnership/results.xml`22/22 후 준비 시간 제외를 보강하고 `preparing-time/results.xml`6/6, 모두 Unity 종료0. 우주선 정책·중첩 lease·오래된 해제·잘못된 스레드, Preparing 복원, 실제 Initial_Stage 시간/필드 정지 경로를 포함한다. 저장 실행기 자체의 검증은 별도다.
