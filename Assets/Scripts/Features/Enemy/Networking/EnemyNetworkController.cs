@@ -10,6 +10,8 @@ public class EnemyNetworkController : NetworkBehaviour
 {
     [SerializeField] private EnemyController enemyController;
     [SerializeField] private EnemyHealth enemyHealth;
+    private EnemyExplosionAbility _explosionAbility;
+
     public event Action<ulong> DeathConfirmed;
 
     /// <summary>
@@ -27,6 +29,8 @@ public class EnemyNetworkController : NetworkBehaviour
             enemyController = GetComponent<EnemyController>();
         if (enemyHealth == null)
             enemyHealth = GetComponent<EnemyHealth>();
+
+        _explosionAbility = GetComponent<EnemyExplosionAbility>();
     }
 
     /// <summary>
@@ -58,6 +62,32 @@ public class EnemyNetworkController : NetworkBehaviour
 
         enemyHealth.Initialize();
         enemyHealth.Died += OnHealthDied;
+        SubscribeExplosionAbility();
+    }
+
+    private void SubscribeExplosionAbility()
+    {
+        if (_explosionAbility == null)
+            return;
+
+        _explosionAbility.RemovalRequested -= OnExplosionRemovalRequested;
+        _explosionAbility.RemovalRequested += OnExplosionRemovalRequested;
+    }
+
+    /// <summary>
+    /// 폭발 완료 후 일반 사망 기록을 발생시키지 않고 제거한다.
+    /// </summary>
+    private void OnExplosionRemovalRequested()
+    {
+        if (IsNetworkRunning)
+        {
+            if (IsSpawned && IsServer)
+                NetworkObject.Despawn();
+        }
+        else if (runOffline)
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnHealthDied(EnemyHealth health)
@@ -85,6 +115,9 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        if (_explosionAbility != null)
+            _explosionAbility.RemovalRequested -= OnExplosionRemovalRequested;
+
         if (enemyHealth != null)
         {
             enemyHealth.Died -= OnHealthDied;
@@ -115,6 +148,10 @@ public class EnemyNetworkController : NetworkBehaviour
         if (!runOffline || IsNetworkRunning)
             return;
 
+        if (enemyHealth != null)
+            enemyHealth.Initialize();
+
+        SubscribeExplosionAbility();
         enemyController.AssignTarget(testTarget);
     }
 
