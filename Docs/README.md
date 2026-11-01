@@ -11,6 +11,8 @@
 
 ## 현재 기준
 
+2026-11-02 PL이 [이번 주 게임 사이클·Steam 설계·공용 시간·안전장치 범위](planning/2026-11-02-core-sprint-scope.md)를 정리했다. SOS 2인 모두 우주선에 있을 때 필드 정지, 안전장치 복원 시 경험치·재화 기본 보존 및 재화 롤백 옵션, 저장 지점에서 재실행 복원을 기준으로 한다. 저장·복원 API와 이벤트 관찰·요청 책임을 분리하고 자동 호출 이벤트는 이번 범위에서 선택하지 않는다. 구현 완료나 기존 PoC Gate 변경을 의미하지 않는다.
+
 이번 Core 배치의 결과·검증 수준·수동 확인 순서·Issue/PR 경계는 [5·6주차 인수 문서](planning/2026-10-26-core-sprint-handoff.md)를 먼저 읽는다. **2026-10-28부터 실제 작업 프로젝트 `D:/Dev/Unity/Unity_3D_CBC`의 `codex/core-sprint-20261026-integration` 브랜치에서 구현·검토한다.** 기존 Validation 폴더는 검증 이력 보존용이다. CU 초기화 #569는 main에 반영됐고, 나머지 Core 통합은 로컬 검토 대상이다.
 
 2026-10-28 PL이 현재 프로젝트의 요청된 수동 확인을 모두 수행하고 이상 없음을 보고했다. [수동 인수 기록](planning/2026-10-28-core-acceptance.md)은 그 범위·자동 증거·분할 PR 조건과 팀 Build/실제 Player 연계의 잔여를 구분한다. Network 전파 자료는 [Network Match 구조와 Feature 연결](architecture/network-match-api.md)을 따른다. 낮밤용 공용 서버 시계·예약 실행은 협의 중이며 아직 Runtime에 구현되지 않았다.
