@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [DisallowMultipleComponent]
-public sealed class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitHealthSource
+public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitHealthSource
 {
     [Header("Definition")]
     [SerializeField] private FieldTurretDefinition _definition;
