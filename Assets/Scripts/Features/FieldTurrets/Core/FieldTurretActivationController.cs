@@ -1,3 +1,5 @@
+// 터렛 활성 상태와 공용 예산의 전력 예약을 연결합니다.
+// 체크포인트 적용은 예산 전체 복원과 함께 예약 소유권만 다시 연결하며 신규 소비를 만들지 않습니다.
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
 
@@ -10,6 +12,7 @@ namespace TeamHJD.Game.FieldTurrets
         private int _powerCost;
 
         private bool _hasPowerReservation;
+        internal int ReservedPower => _hasPowerReservation ? _powerCost : 0;
 
         public FieldTurretActivationController(
             FieldTurretRuntimeState runtimeState,
@@ -92,6 +95,18 @@ namespace TeamHJD.Game.FieldTurrets
         {
             _hasPowerReservation = _powerCost > 0;
             _runtimeState.SetActivated(true);
+        }
+
+        // 전체 Feature 복원은 기존 예약을 반환하지 않고 목표 예산으로 교체합니다.
+        internal void DetachReservationForCheckpoint() => _hasPowerReservation = false;
+
+        internal void RestoreReservation(int powerCost)
+        {
+            if (powerCost < 0) throw new System.ArgumentOutOfRangeException(nameof(powerCost));
+            if (_hasPowerReservation)
+                throw new System.InvalidOperationException("Detach the previous checkpoint reservation before restoring.");
+            _powerCost = powerCost;
+            _hasPowerReservation = _runtimeState.IsActivated && powerCost > 0;
         }
 
         private FieldTurretActivationResult Activate()

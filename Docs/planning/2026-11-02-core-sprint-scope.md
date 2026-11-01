@@ -8,7 +8,7 @@
 | B1 | 일부 공개 API 설명·수명/책임 개선 | 전체 Core 재검토와 최종 디렉터리/호출 지도 |
 | B2 | 공용 시간·예약·Host/Client anchor·필드 정지 구현 및 집중 검사 | 실제 원격 Player 출입은 B5 게임 사이클과 연결 |
 | B3 | Weather 공용 시간/환경 연결, 예약·날씨 복원 검사 | 실제 낮밤 Feature는 현재 없음. Feature 규칙을 임의 작성하지 않음 |
-| B4 | 실제 binary IO, 실행/요청, 공간·CU·Weather·Player 생존/무기/탄환/스킬/설치물 writer와 물리·수량 모델 복원 기반 구현 | 필드 터렛·Enemy writer, 영속 프로필, Scene 바인딩·재실행 통합 |
+| B4 | 실제 binary IO, 실행/요청, 공간·CU·Weather·Player 생존/무기/탄환/스킬/설치물 writer와 물리·수량·필드 터렛 상태 모델 복원 기반 구현 | 필드 터렛·Enemy writer, 영속 프로필, Scene 바인딩·재실행 통합 |
 | B5 | 기존 Scene/허브/UI 경로 조사 | 부팅·시작·허브·출격·결과/귀환과 체크포인트 재실행 연결 |
 | B6 | Steam 도입 조사·설계 문서 작성 | B7에서 최종 실제 API와 대조. SDK 도입은 이번 범위 아님 |
 | B7 | 변경별 검증·API 문서 누적 | 전체 정합성 검사, 팀 사용 문서, PL Core 이해·정리 단계 |
@@ -276,3 +276,7 @@ Q/E 선택과 개별 스킬 writer를 실제 Player 원본에 연결했다. 폭�
 검증 기록: 최초 EntityId 타입 충돌 컴파일 오류 수정 후 스킬4종 실행3/4에서 테스트 대상 Enemy의 충돌 레이어 불일치를 확인했다. 실제 Enemy 레이어를 쓴 후 4/4 통과했다. 사전 검증/선택/원자성 보강 실행은 스킬6 + 기존무기2의 PlayMode **8개 모두 통과**, Factory의 Editor 미저장 Scene fixture 1개 실패로 전체는 **9/10**이었다 (`B4-SkillActors/preflight-and-atomic-actions`). 해당 fixture 정리와 최종 pose 순서 보강 후 Factory 집중 **2/2**, Unity 종료0 (`factory-final-pose`). 다른 실행을 합쳐 전체 Scene 저장/재실행 완료라고 표시하지 않는다.
 
 현재 남은 B4는 필드 터렛·Enemy 원본, 영속 프로필과 경제 보존, Scene의 저장 수명/안전한 실행 시점/재실행 연결이다. Player 현재 XP 원본은 아직 없으며 임의 지급/성장 규칙을 만들지 않는다. B5 게임 사이클과 B7 전체 검토·PL 이해 단계도 계속 진행한다. PR 발행은 계속 금지다.
+
+### B4 필드 터렛 원본·전력 모델
+
+생성용 `FieldTurretInitializationData`에 복원 책임을 몰지 않고 개체 RuntimeState와 공용 PowerBudget의 불변 저장 값을 분리했다. 수리 소수점·강화 정의·전력 지연 반환 시간·기존 예약의 재연결을 보존하며 로컬 InstanceId를 복사하지 않는다. 잘못된 정의나 피해 확정 중간 캡처는 적용 전에 거부한다. PlayMode 6개 중5개 통과 후 강화 float 재계산 오검출을 보완해 해당1개 재검사 통과. 최초 EditMode0개는 제외한다. 실제 Scene writer·냉각/무기/탄환/표적 예약·자동 큐의 결합은 아직 진행할 부분이다. 자세한 API와 증거는 checkpoint-execution-api에 기록한다.

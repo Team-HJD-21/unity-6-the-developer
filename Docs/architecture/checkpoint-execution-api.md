@@ -129,6 +129,17 @@ Weather는 기존 날씨 가중치·큐 전환 규칙을 유지하고, Match 전
 
 Weather 복원 4개, 기존 예약 연결 3개, 남은 첫 대기/반복 계약 2개, 총 9개 집중 검사가 통과했다. 예고·추첨의 후속 순서, 남은 시간·정지, 이전 예약 한 개로의 교체, Apply 전 실패의 백업 timer 재등록, 손상/미지원 schema 거부를 확인했다.
 
+
+### 필드 터렛 상태 모델 — 아직 Scene writer 아님
+
+`FieldTurretRuntimeState.CaptureState(definition)`는 체력·파괴/활성/잠금/일시 중단·피해 보너스·강화 ID/레벨/계수·수리 소수점 진행량을 불변 값으로 복사한다. 로컬 `InstanceId`는 저장하거나 되돌리지 않는다. 복원 준비 때 `State.ValidateFor(definition, upgrade)`로 실제 콘텐츠 ID·최대 HP·강화 호환성과 계수를 확인한다. 피해 처리 중 HP만 0이고 파괴 확정 전인 부분 상태는 캡처를 거부한다.
+
+`FieldTurretPowerBudget.CaptureState()`는 총량·가용량·예약량·반환 대기량과 0.1초 반환 간격 중의 진행량을 보존한다. 내부 적용은 소비/반환 이벤트를 재실행하지 않고, 전체 터렛 상태와 예약 합계가 일치한 뒤 읽기 모델을 한 번 갱신한다. 활성 예약의 재연결도 새 전력을 차감하지 않는다. 이 적용 API들은 같은 Feature 내부로 제한해 Core/UI가 개별 예약을 임의 변경하지 못하게 했다.
+
+이 모델 접점만으로 필드 터렛 전체 저장이 완료된 것은 아니다. 실제 Scene 소유자가 정의별 prefab·논리 ID·냉각/발사 상태·살아 있는 탄환/미사일·표적 예약·자동 활성화 큐와 공용 예산을 함께 복원하는 writer가 이어져야 한다. Core는 D의 생성·강화·피해 로직을 대체하지 않는다.
+
+전력/원본 모델 PlayMode 검사 6개 중 5개 통과 후, 동일 강화 정의의 중간 float 계산 정밀도로 생긴 오검출을 실제 저장 값과 같은 32비트 비교로 보완했다. 실패했던 강화·수리·로컬 ID 검사만 다시 실행해 1개 통과, 두 PlayMode 실행의 Unity 종료 코드는 각각 2와 0이다. 최초 EditMode 실행은 assembly 분류 때문에 0개였으므로 성공 증거에 포함하지 않는다. 증거: `B4-FieldTurretModels/play`, `B4-FieldTurretModels/modifier-float`.
+
 ### 정지 중 물리 자료
 
 물리 Feature writer는 `FieldSimulationActor.CaptureBody` / `RestoreBody`를 사용한다. 정지 때문에 임시로 꺼진 `simulated` 값과 실제 복귀 예정 속도를 구분하고, 복원 중 바뀐 위치·속도를 재개 시 과거 값으로 덮어쓰지 않게 한다. `CheckpointRigidbody2DState`는 world XY 위치·각도·선속도·각속도·원래 simulated·수면 상태의 명시 바이너리 값이다. 어댑터가 없는 Player 등의 소유 Rigidbody는 값 자료의 직접 Capture/Apply를 사용할 수 있다. 물리체의 Z와 제작 계층은 Transform 자료로 별도 보존한다.
