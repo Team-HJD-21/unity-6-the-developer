@@ -48,6 +48,19 @@ sequenceDiagram
 
 관찰자 해제는 구독과 대기 요청 취소를 함께 처리한다. 해제 뒤 완료 이벤트를 호출하지 않는다. 잘못된 결과 구독자가 던진 예외는 다른 구독자를 막지 않고 `LastObserverError`에 남긴다. 원본 이벤트의 실제 게임 규칙은 향후 별도 연결한다.
 
+## 실제 actor의 재생성과 ID
+
+`CheckpointActorFactory`는 Scene 조립부/Feature writer가 저장 actor를 재생성할 때 사용하는 Unity 어댑터다. 스폰 수·난도·생성 시점이나 게임 상태는 소유하지 않는다. `ValidatePrefab(prefab, savedId)`로 ID 충돌을 준비 단계에서 확인하고, `Instantiate(prefab, ownerScene, pose, savedId)`로 실제 객체를 만든다.
+
+1. 비활성 staging 아래 prefab을 생성한다. 이때 저장된 `SceneEntityIdentity`를 먼저 지정한다.
+2. 소유 Scene의 루트로 옮기고 저장 pose를 적용한다. 부모 해제 뒤 최종 scale을 적용해 TRS 재계산의 반올림이 반복 복원에 누적되지 않게 한다.
+3. Unity가 활성화 시 실제 `Awake/OnEnable`을 실행한다. 원본 초기화는 `EnsureIdentity`에서 이미 지정된 저장 ID를 유지한다.
+4. Feature가 검증한 실제 HP·남은 시간·형상 등을 적용하고 같은 Match 시계/종료 수명에 연결한다. prefab의 기본 초기화가 저장 상태를 나중에 다시 덮어쓰지 않도록 한다.
+
+`Retire(actor)`는 명시적으로 전달한 이전 소유 개체를 먼저 비활성화하고 정상 파괴를 요청한다. Factory는 전역 검색이나 다른 Feature의 수량 변경을 하지 않는다. 소유자의 파괴 알림을 억제해야 하는 경우에는 Feature가 owner 연결을 먼저 해제한다. 설치물의 생성 시 GUID는 저장에 포함한 논리 ID이며, 네이티브 instance ID·NetworkObjectId·접속 ID와 구분한다.
+
+Factory의 ID 사전 검증과 저장 pose/소유 Scene 유지 집중 검사 2개가 통과했다. 다른 Hub가 활성화된 실제 생성물 복원은 별도의 Player 스킬 PlayMode 검사에서 확인한다. Factory가 모든 prefab의 게임 규칙을 자동 복원하는 것으로 해석하지 않는다.
+
 ## 검증과 남은 연결
 
 실행기 10개와 요청 관찰 5개 검사는 권위/준비 거부, 같은 프레임 캡처, 기본 경제 보존·재화 롤백, schema 사전 검증, 실패 보상·Fault, 중복/과거 요청, 해제 및 지연 IO를 확인했다. payload 3개 검사는 schema·길이·UTF-8·남은 바이트 검증을 확인했다. 저장소의 실제 IO 검사는 별도 8개다.
