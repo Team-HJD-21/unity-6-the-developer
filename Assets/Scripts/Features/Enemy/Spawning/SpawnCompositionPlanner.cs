@@ -118,11 +118,10 @@ public sealed class SpawnCompositionPlanner
             var area = placement.Area; var grid = battlefield.Grid.Configuration;
             double left = Math.Max(grid.MinimumX, area.Center.X - area.Width / 2), right = Math.Min(grid.MaximumX, area.Center.X + area.Width / 2);
             double bottom = Math.Max(grid.MinimumY, area.Center.Y - area.Height / 2), top = Math.Min(grid.MaximumY, area.Center.Y + area.Height / 2);
-            if (right < left || top < bottom || left >= grid.MaximumX || bottom >= grid.MaximumY) return false;
-            int x0 = Math.Max(0, (int)Math.Floor((left - grid.MinimumX) / grid.CellWidth));
-            int x1 = Math.Min(grid.CellsX - 1, (int)Math.Floor((right - grid.MinimumX) / grid.CellWidth));
-            int y0 = Math.Max(0, (int)Math.Floor((bottom - grid.MinimumY) / grid.CellHeight));
-            int y1 = Math.Min(grid.CellsY - 1, (int)Math.Floor((top - grid.MinimumY) / grid.CellHeight));
+            // Grid의 최댓값은 마지막 셀에 속합니다. 별도 나눗셈은 점/선 요청에서 서로 다른 경계를 만들 수 있습니다.
+            if (right < left || top < bottom ||
+                !grid.TryMapPoint(new BattlefieldPoint(left, bottom), out int x0, out int y0) ||
+                !grid.TryMapPoint(new BattlefieldPoint(right, top), out int x1, out int y1)) return false;
             if ((long)(x1 - x0 + 1) * (y1 - y0 + 1) > 4096) return false;
             for (int y = y0; y <= y1; y++) for (int x = x0; x <= x1; x++)
             {

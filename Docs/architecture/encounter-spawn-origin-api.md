@@ -69,3 +69,9 @@ Profiler의 `TeamHJD.Encounter.Plan` / `SpawnAndCommit`으로 계획 및 실제 
 최초 S3 두 번은 EnterPlayMode domain reload를 가로지르는 검사 coroutine의 captured-local closure가 복구되지 않아 실패했다. predicate/local function을 reload 뒤 호출하는 일반 helper로 옮겼다. 제품 예외를 무시하거나 source/공통 추적 검사를 제거하지 않았다. 실패 로그/XML은 보존한다. 사용자의 화면 조작·UI 외형 인수와 두 실행 파일 네트워크 인수는 별도다.
 
 Scene은 Unity API로 구성한 뒤 필요한 참조/필수 WeatherChangeEvent component만 보존했다. headless 저장이 만든 Canvas 크기/배율·기타 제작 값 변경은 원래 값으로 되돌렸다.
+
+## World 요청의 Grid 경계
+
+World 점/영역의 범위를 Grid와 교차시킨 뒤 `BattlefieldGridConfiguration.TryMapPoint`로 셀을 구한다. Grid의 Minimum과 Maximum을 포함하며, Maximum 좌표는 마지막 셀에 속한다. Planner에서 별도 floor 계산으로 최댓값을 거부하거나 셀 수 범위를 넘기는 규칙을 만들지 않는다. 폭이0인 선 요청도 이 경계 규칙을 따른다.
+
+양의 폭/높이를 가진 영역이 Grid와 선/점으로만 맞닿으면 해당 방향의 실제 면적이 없으므로 후보에서 제외한다. Grid 밖의 점은 계속 거부한다. 중심이 이동한 비정방형 Grid의 최대/최소 모서리·선·밖의 점·기존 누적 분산 11개 집중 검사를 통과했고 Unity 종료0을 확인했다 (`B7-WorldSpawnBounds`). 이전 최대 경계 리뷰는 이 구현으로 보완했으며 원격 PR/리뷰에는 아직 게시하지 않았다.
