@@ -4,6 +4,8 @@
 
 팀원이 Player·Turret·Enemy를 Core에 연결할 때 사용할 계약과 종료 책임을 정리한다. 명명 규칙은 [Convention](naming-and-architecture-conventions.md), 타입·실행 흐름은 [Core README](../../Assets/Scripts/Core/README.md)를 따른다. 아래의 공개 계약이 모두 출시용 게임 규칙을 구현했다는 뜻은 아니다.
 
+2026-11-02 보강 계획: [이번 주 전체 배치](../planning/2026-11-02-core-sprint-scope.md#9-함수-설명팀-문서-완료-기준)에서 기존 Core 연동 API 전체의 호출자·시점·결과·해제 책임을 점검하고 소스 XML 설명과 이 문서의 파트별 예제를 함께 보강한다. [함수 설명 규약](naming-and-architecture-conventions.md#공개-api와-함수-설명)을 따른다. 시간·안전장치의 예정 API와 현재 존재하는 API를 구분하며, 이 계획 추가가 구현·문서 전수 보강 완료를 의미하지 않는다.
+
 ## 호출 방향과 상태 소유권
 
 현재 지역/네트워크/정식 Encounter API는 [스프린트 API 보충](core-sprint-region-and-request-api.md)을 함께 확인한다. 기존 문자열 메서드는 정식 요청으로 변환하는 호환 진입점이며, 별도 생성 경로가 아니다.

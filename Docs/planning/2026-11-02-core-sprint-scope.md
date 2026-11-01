@@ -1,4 +1,4 @@
-# 2026-11-02 양현석 스프린트 — 게임 사이클·Steam 설계·공용 시간·안전장치
+# 2026-11-02 양현석 스프린트 — 게임 사이클·공용 시간·안전장치·Core 정리
 
 갱신: 2026-11-02 KST. 상태: PL 사용자 결정과 이번 주 작업 범위 / 설계·구현 준비. 아래 기능의 구현 완료를 의미하지 않는다.
 
@@ -12,6 +12,7 @@
 | Steam API | 사용자 식별·인증, 초대·로비·매칭, NGO 연결과 App 수명의 접점 조사 및 구현 설계 | 공식 자료와 선택 근거, Core/SDK 책임 및 단계별 도입 계획. SDK 선택이나 서비스 구현 완료를 선행 가정하지 않음 |
 | Weather·Time | 기존 전달 문서에 따라 Core 공용 게임 시계·취소 가능한 예약 API 제공 후 김진태의 Feature 연결 | NGO 서버 시각에서 게임 정지·배속을 반영하고 날씨·시간대·Encounter 조건이 동일한 게임 시간을 사용하는 경로 |
 | 저장·안전장치 | 체크포인트 캡처·저장·로드·복원 API, 재실행 후 저장 지점 복원 기반, 경험치·재화 보존 정책, 이벤트 관찰·요청 경계 | 실행 서비스와 이벤트 관찰자를 분리. 어떤 이벤트에 반응할지는 이번 범위에서 선택하지 않음 |
+| Core 전체 검토·정리·문서화 | 기존 Core 전체와 Feature 접점의 책임·의존성·수명·공개 API 검토, 필요한 구조 정리, 코드 주석과 팀 문서 보강 | 기존 코드와 신규 기능을 함께 설명하는 실제 구조도·호출 지도·읽는 순서. 초기 점검과 구현 후 전체 재검토 포함 |
 
 보스 상세는 최신 회의대로 기본 루프 통합 뒤 다룬다. 이번 주 저장 구현 추가는 과거 Stage 1 PoC의 완료 조건을 변경하지 않는다.
 
@@ -77,13 +78,24 @@ flowchart LR
 
 ## 6. 구현 배치·PR 검토 순서
 
-1. Core 공용 시계·scheduler와 허브 출입/필드 정지 계약을 구현한다.
-2. Weather/Time과 기존 예약·Game Debugger를 같은 게임 시간에 연결한다.
-3. 안전장치 자료·경제 복원 정책·바이너리 저장소와 실제 Feature 캡처/복원 경로를 구현한다.
-4. 허브의 진입·출격·결과 귀환을 게임 사이클로 연결하고 저장·복원 API의 주입 경계를 제공한다. 자동 저장·복원 이벤트 선정은 이 배치에 포함하지 않는다.
-5. Steam 도입 설계를 기존 App/Match/프로필·네트워크 경계와 대조한다.
+이번 주 스프린트와 추가 요청을 **하나의 전체 실행 배치**로 관리한다. 내부 실행은 8단계로 나누고, 각 단계 결과와 남은 항목을 이 문서에 기록한다. 현재 상태는 준비이며 구현 완료가 아니다.
 
-복구 가능한 커밋으로 나누고 위 기능별로 PR을 분리할 수 있도록 한다. 정확한 PR 수·Issue 대응은 구현 범위 확정 후 정리한다.
+| 단계 | 작업 | 완료 기준 | 예상 PR 묶음 |
+| --- | --- | --- | --- |
+| B0 | main 통합 후 기준선 확인·Core 전체 목록 및 API 호출자 조사 | 현재 소스/Scene/assembly 기준, 실제 문제·정리 후보·의도된 설계·미구현 경계 구분, 병합 후 컴파일 기준 확보 | PR1 준비 |
+| B1 | Core 책임·디렉터리·공개 API 정리와 기존 핵심 함수 설명 보강 | 필요한 분리만 적용, 호출 경로·소유권·시그니처 변경 영향 추적, 변경한 동작 회귀 확인 | PR1: Core 정리·기존 API 설명 |
+| B2 | 공용 게임 시계·scheduler·참가자 허브 상태와 필드 정지 | Host 권위, 게임/네트워크 시간 분리, 등록·취소·정지·배속·종료/재시작 계약 구현 | PR2: 공용 시간·Weather 연결 |
+| B3 | 김진태의 Weather/Time 연결 및 기존 예약·Game Debugger 시간 통일 | 새 서비스와 기존 writer 중복 제거, 실제 환경 snapshot/다음 Encounter 조건 소비 확인 | PR2 |
+| B4 | 안전장치 저장·복원 API·이벤트 관찰 경계·복원 정책·바이너리 저장소·Feature 연결 | 실제 캡처·디스크 쓰기/읽기·복원, 경제 보존/재화 롤백, 실행 세대·오류·취소 처리. 자동 호출 상황은 선택하지 않음 | PR3: 안전장치 기반 |
+| B5 | 부팅·우주선 메인 허브·출격·행성 플레이·결과/귀환의 게임 사이클 | 기존 App/Scene/Match/UI 경계를 사용해 왕복, 저장/복원 API 주입 지점 제공 | PR4: 게임 사이클 |
+| B6 | Steam 조사·도입 설계 | 공식 근거, SDK/인증/사용자·로비/초대·NGO·App 수명 경계, 도입 순서 문서 | PR5: Steam 설계 |
+| B7 | 전체 Core 재검토·팀 사용 문서·주석 최종 점검과 통합 인수 | 아래 전체 검토·문서 기준 충족, 남은 문제의 원인/범위/소유자 기록, 구현/검증 수준 구분 | 수정이 발생한 기능의 PR에 반영 |
+
+Steam 조사는 다른 단계와 독립적으로 진행할 수 있다. 공개 API·함수 설명은 각 단계에서 동작 변경과 함께 고치고 B7에서 전체를 다시 확인한다. 문서화를 마지막 단계에만 몰아두지 않는다.
+
+우선 현재 통합 브랜치에서 복구 가능한 커밋으로 전체 작업을 쌓고, **예상 5개 PR**로 분리할 수 있도록 파일/책임 경계를 유지한다. 구조 정리·동작 변경·문서만의 변경을 구분해 커밋한다. 실제 분리 범위는 의존성과 기존 선행 PR 반영 상태를 확인한 뒤 고정한다.
+
+11월 2일 확인 시 선행 Core PR #570~574는 모두 OPEN이다. #570·574는 CHANGES_REQUESTED, #572·573은 APPROVED, #571은 승인 판정이 없다. 승인은 병합 완료와 다르다. 이번 작업은 이 선행 변경에 의존하므로 기존 PR의 리뷰 보완·기준선 정리와 신규 스프린트 PR의 차이를 기록하고, 이미 발행한 구현을 신규 기능으로 중복 포함하지 않는다. 이 계획 작성으로 PR 수정·발행·병합을 수행하지 않았다.
 
 수동 인수는 Initial_Stage와 Game Debugger 기준으로 진행한다. 허브의 참가자 정지 정책과 날씨·예약 정지/재개를 확인한다. 저장은 명시적 API 호출로 캡처·영속 쓰기·읽기·복원, 경험치·재화 기본 유지 및 재화 롤백 옵션, 재실행 후 저장 자료 복원을 검증한다. 검증용 호출을 자동 저장 규칙으로 사용하지 않는다. 설계·코드 컴파일·수동 플레이 증거를 서로 대신하지 않는다.
 
@@ -93,3 +105,53 @@ flowchart LR
 - 현재 `codex/core-sprint-20261026-integration`에 merge commit `385f72c6`으로 반영했다. 기존 발행 PR의 커밋 이력을 재작성하지 않았다.
 - 충돌은 `EnemySpawnExecutor`의 World 공간 입력 인자·제작 지점 검사 조건을 보존하고 main의 최신 Enemy 변경을 합쳤다. Docs 목차는 양쪽 자료를 함께 유지했다.
 - 기존 사용자 폰트 수정과 `Validation/`을 보존했다. 병합 후 충돌·diff 정적 확인을 수행했으며 이번 동기화의 Unity 컴파일·PlayMode는 아직 실행하지 않았다.
+
+## 8. Core 전체 검토 범위와 초기 확인
+
+초기 조사 기준: 현재 작업 브랜치 `2be2136c`와 실제 `Assets/Scripts/Core`. C# 파일 352개 중 Editor 53개, Tests 경로 36개, Bootstrap 개발 진단 3개, 나머지 260개다. 파일 수는 정리 대상을 찾는 참고값이며, 분리·삭제는 책임·수명·호출 경로와 변경 이유를 기준으로 판단한다.
+
+13개 Core asmdef의 이름 기반 내부 참조 그래프에서는 순환을 찾지 못했다. Domain/Application/Contracts 소스의 직접 Unity/NGO 참조 검색에도 결과가 없었다. 이는 초기 정적 확인이며 Feature까지 포함한 의존성 감사나 Unity 컴파일 통과를 뜻하지 않는다.
+
+| 우선 확인 대상 | 실제 확인한 내용 | 배치에서 할 일 |
+| --- | --- | --- |
+| [InitialStageCompositionRoot](../../Assets/Scripts/Core/Bootstrap/SceneComposition/InitialStageCompositionRoot.cs) | 615줄. Host 조립·Client 연결, Player/HUD·환경·Encounter 연결, 공간 수집과 종료 정리 조율 | 조립 순서는 composition root에 유지하고 반복 갱신·하위 수명 책임의 집중을 검토. 기존 scope/binding 재사용 여부를 먼저 확인 |
+| [AppRoot](../../Assets/Scripts/Core/Bootstrap/AppRoot.cs) / [AppServices](../../Assets/Scripts/Core/Application/AppServices.cs) | AppRoot 370줄. App 서비스 조립/전달·Match·Scene/UI·전송 수명 관리가 이어짐 | 각 자원의 단일 소유자·attach/detach·초기화 rollback·Dispose 순서를 확인. 의미 없는 전달 클래스나 두 번째 서비스 검색기를 추가하지 않음 |
+| [공개 터렛 요청](../../Assets/Scripts/Core/Contracts/Turrets/ITurretCommandRequester.cs) | TrySubmit의 bool과 서버 결과 이벤트의 의미가 함수별 XML 설명에 없음. Host는 반환 전에 결과를 통지할 수 있음 | 실제 호출자가 접수/실행 성공을 혼동하지 않도록 함수 설명·예제·구독 순서 보강 |
+| [네트워크 Scene 바인딩](../../Assets/Scripts/Core/Bootstrap/SceneComposition/InitialStageNetworkBinding.cs) | actor 등록의 반환 lease와 호출 시점은 팀 문서에 있으나 함수 설명이 짧음. 주석에 이전 파트 문자 B가 남아 있음 | 누가 등록하는지, Host의 어떤 actor인지, 호출 가능한 시점과 누가 해제하는지를 설명. 담당 표기는 실제 파트명 사용 |
+| [EncounterRequestService](../../Assets/Scripts/Core/Application/Encounter/EncounterRequestService.cs) | 공개 요청 서비스와 인터페이스의 함수 설명이 부족하고 파일 설명에 이전 파트 문자 E가 남아 있음 | 검증된 발신자·현재 Match/환경 조회·중복 요청·확정 결과·해제 수명 설명 |
+| [MatchSimulation](../../Assets/Scripts/Core/Domain/Match/MatchSimulation.cs) / [AppBootstrap](../../Assets/Scripts/Core/Bootstrap/AppBootstrap.cs) | Execute는 NotHandled를 반환하는 경계, Bootstrap은 개발용 Profile/Platform Fake를 조립 | 의도된 미구현과 실제 제품 API를 구분. 현재 호출자/대체 경로를 확인한 뒤 보존·이관·삭제 판단 |
+| [Grid 경계](../../Assets/Scripts/Core/Domain/Battlefield/BattlefieldGridConfiguration.cs)와 [SpawnCompositionPlanner](../../Assets/Scripts/Features/Enemy/Spawning/SpawnCompositionPlanner.cs) | Core Grid는 Maximum 좌표를 마지막 셀에 포함하지만 World 원점 Planner는 left/bottom이 Maximum이면 거부함 | 기존 #574 리뷰와 연결해 점·선·양의 면적 영역의 경계 의미와 셀 인덱스를 함께 확인. 이 문서 작성으로 코드를 수정한 것은 아님 |
+| Editor/개발 진단과 Runtime | Game Debugger·Scene 시각화·개발 Build 검증이 Core 하위에 함께 존재. 개발 진단은 조건부 컴파일됨 | Editor 전용 참조·실제 빌드 포함·진단의 상태 쓰기 권한·경로/기능 이름을 확인 |
+| 문서·폴더 기준 | Convention의 기능 폴더 예시에 Turrets가 남아 있으나 실제 경로는 FieldTurrets | 실제 디렉터리·namespace·asmdef·API 이름과 문서의 대응 갱신 |
+
+위 표는 초기에 확인한 설명 부족과 검토 후보이며, 모든 후보를 버그나 확정 분리 대상으로 판정한 것은 아니다.
+
+전체 검토는 Bootstrap, Application, Contracts, Domain, Infrastructure, Content, Presentation, Editor, Tests 각각에 대해 수행한다. 실제 호출자는 Player/UI·FieldTurret·Enemy/Encounter·World/Weather·Spaceship·Scene 제작 경로까지 확인한다.
+
+- 각 상태의 writer·소유자, App/연결/Match/Scene/화면 수명, 초기화 실패 rollback, 구독·lease·취소 정리.
+- 중복 상태·중복 시계·중복 전송 pump·공개되지 않아도 되는 API·사용하지 않는 추상화·실제 호출 없는 코드. 외부 Feature/Scene/직렬화 참조까지 확인한 후 변경.
+- 요청/조회/사실 이벤트 구분, Host/Client 권위와 스레드 조건, 세대/revision·중복 실행·종료 후 늦은 콜백 처리.
+- Snapshot/Config/Profile/Definition의 역할, 실제 게임 상태와 표시용 projection의 차이, 저장 가능한 값과 Unity/NGO 실행 객체의 차이.
+- 반복 탐색·매 프레임 할당·공간 재계산과 기록 보존 상한. 프로파일 근거 없이 전부 이벤트화하거나 갱신 주기를 임의로 변경하지 않음.
+- asmdef 의존성·Editor/개발 코드 분리, Scene/Prefab/GUID/직렬화 필드와 기존 API 호출자의 이관 영향.
+
+폴더 이동·타입/필드 변경은 Unity `.meta`와 GUID·직렬화 참조를 보존하고 실제 소비자와 함께 처리한다. namespace·공개 메서드 명칭·네트워크/저장 형식 변경은 영향·대응 관계를 기록한다.
+
+## 9. 함수 설명·팀 문서 완료 기준
+
+주석 규약의 기준은 [Naming and Architecture Conventions](../architecture/naming-and-architecture-conventions.md#공개-api와-함수-설명)으로 둔다. API 설명은 **무엇을 하는가, 누가 언제 호출하는가, 반환/결과를 어떻게 해석하는가, 호출자가 무엇을 정리하는가**를 실제 코드에 맞춰 작성한다.
+
+| 문서 위치 | 이번 배치에서 유지할 내용 |
+| --- | --- |
+| [Docs README](../README.md) | 팀원이 찾아가는 기준 목차·현재 상태·읽는 순서 |
+| [Core README](../../Assets/Scripts/Core/README.md) | 실제 디렉터리, 부팅부터 허브/Match/종료/복원까지 함수 흐름, 클래스 읽는 순서와 용어 |
+| [Core API 사용 규약](../architecture/core-api-usage.md) | 파트별 API/주입 지점, 호출 전제·결과·예제·해제 책임. 구현된 API와 예정 API 구분 |
+| [운영 책임](../architecture/match-management-responsibilities.md) 및 기능별 API 문서 | App/Match/Scene/Feature 의존성·등록/해제·상태 writer, 시간·정지·저장/복원 접점과 Mermaid |
+| [명명·주석 규약](../architecture/naming-and-architecture-conventions.md) | 공개 API XML 설명, 짧은 역할 헤더와 내부 설명의 기준 |
+| 이 스프린트 문서 | 단계별 결과·커밋/PR·검증 증거·남은 기능 및 담당 경계 |
+
+기존 문서를 우선 보강한다. 시간/안전장치처럼 별도 기능 계약이 필요한 문서는 실제 구현에 맞춰 architecture 아래에 추가하고 위 목차에서 연결한다. 개인 조사·PL 메모는 Docs/Local 또는 YGDocs의 ignore를 유지한다. 배포된 기술 문서 사이트 반영은 문서 확정 후의 공유 작업으로 구분한다.
+
+공개 연동 API는 파트별 호출 지도와 실제 호출부를 대조해 누락을 확인한다. 비공개 함수도 흐름·분기 이유가 이해하기 어려운 곳은 간단히 설명하며, 단순 대입·명확한 getter를 반복 해설하지 않는다. 변경할 때 함수 설명과 코드·호출 예제를 함께 고친다.
+
+각 단계는 변경 범위에 맞는 컴파일·회귀 검사를 수행하고, 종료·취소·실패·Host/Client·저장 일관성 등 계약이 바뀌는 부분에 집중한다. 동일 전체 테스트를 매 커밋마다 반복하지 않는다. 마지막에는 신규 기능을 포함한 Core 전체 검토와 필요한 게임 사이클 인수를 수행한다. 팀원이 소스 주석·README·API 문서만으로 자신의 등록·요청·결과·해제 경로를 찾을 수 있어야 한다.

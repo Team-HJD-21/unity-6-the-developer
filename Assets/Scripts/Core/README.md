@@ -1,8 +1,10 @@
 # Core Foundation
 
+2026-11-02 [이번 주 전체 배치](../../../Docs/planning/2026-11-02-core-sprint-scope.md): 게임 사이클·Steam 설계·공용 시간·안전장치와 함께 Core 전체 구조 정리, 공개 API/함수 설명과 읽는 순서 보강을 준비했습니다. 아래는 현재 코드의 설명이며 예정된 시간·저장 API의 구현 완료를 의미하지 않습니다. 주석은 [함수 설명 규약](../../../Docs/architecture/naming-and-architecture-conventions.md#공개-api와-함수-설명)에 맞춰 실제 동작·호출자·시점·결과·해제 책임을 보강합니다.
+
 ## 실행할 프로젝트와 메뉴
 
-현재 작업 프로젝트는 `D:/Dev/Unity/Unity_3D_CBC`이며 브랜치는 `codex/core-sprint-20261026-integration`입니다. 2026-10-28에 최신 main과 전체 Core 통합을 이 폴더에 반영했습니다. Validation 폴더는 과거 검증 이력이며 실행 프로젝트를 그쪽으로 바꾸지 않습니다.
+현재 작업 프로젝트는 `D:/Dev/Unity/Unity_3D_CBC`이며 브랜치는 `codex/core-sprint-20261026-integration`입니다. 2026-10-28에 전체 Core 통합을 반영했고, 2026-11-02에는 main `5e39728c`를 추가 병합했습니다. Validation 폴더는 과거 검증 이력이며 실행 프로젝트를 그쪽으로 바꾸지 않습니다.
 
 `Assets/Scenes/Gameplay/Initial_Stage.unity`에서 Play Mode를 시작하고 Game 화면을 클릭한 뒤 **Escape**를 누르면 운영 메뉴가 열립니다. `AppRoot.Update()`가 `AppScreenPresenter.Render()`를 호출하고, Escape 입력이 `ScreenManager.ShowMenu()` 또는 `Back()`으로 전달됩니다. 메뉴는 로컬 입력을 잠그며 공유 Match 시간을 정지하지 않습니다.
 
