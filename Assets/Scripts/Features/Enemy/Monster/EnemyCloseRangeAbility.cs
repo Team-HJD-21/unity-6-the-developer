@@ -85,4 +85,30 @@ public sealed class EnemyCloseRangeAbility : EnemyAbility
         target = enemyTargeting.Target.GetComponent<TargetableComponent>();
         return target != null && target.CanBeTargeted;
     }
+
+    private void OnDrawGizmosSelected()
+    {
+        Collider2D bodyCollider = _bodyCollider;
+
+        if (bodyCollider == null)
+        {
+            foreach (Collider2D collider in GetComponents<Collider2D>())
+            {
+                if (!collider.isTrigger)
+                {
+                    bodyCollider = collider;
+                    break;
+                }
+            }
+        }
+
+        if (bodyCollider == null)
+            return;
+
+        Bounds bounds = bodyCollider.bounds;
+        float bodyRadius = Mathf.Max(bounds.extents.x, bounds.extents.y);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(bounds.center, bodyRadius + attackRange);
+    }
 }
