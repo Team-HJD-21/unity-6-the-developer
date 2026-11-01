@@ -14,3 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCatalog
   enemyDefinitions:
   - {fileID: 11400000, guid: 035ea90d43e0c894bb8558afc90d0cf4, type: 2}
+  - {fileID: 11400000, guid: fdea5cfaba166a64f91fd7f3ce26af3d, type: 2}
+  - {fileID: 11400000, guid: 5d564083216d5d2459f16f67eb7de3b4, type: 2}
+  - {fileID: 11400000, guid: 39b72940c009e0548a7c8c7084ae071b, type: 2}
+  - {fileID: 11400000, guid: 779241cb6ed202443b4be337c791217f, type: 2}
+  - {fileID: 11400000, guid: f7a8b4f6e51de224ab7fbf0b43f2b925, type: 2}
+  - {fileID: 11400000, guid: 386c5b303bfbd8249b2281bee885a355, type: 2}
+  - {fileID: 11400000, guid: 3b3b4d4040609e44f90e4131a10fd502, type: 2}
+  - {fileID: 11400000, guid: d0b46f9ad79204d4a9d61d87c2c0169e, type: 2}
+  - {fileID: 11400000, guid: 0007fe7afe1e3da4ba5e29fb0c520efc, type: 2}
+  - {fileID: 11400000, guid: a6c6a273586ee6e4f806c50118d68a57, type: 2}
