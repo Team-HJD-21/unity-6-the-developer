@@ -54,9 +54,14 @@ namespace TeamHJD.Game.Application
             => Add(delaySeconds, 0, callback, cancellation);
         /// <inheritdoc />
         public IDisposable ScheduleRepeating(double intervalSeconds, Action<MatchTimerTick> callback, CancellationToken cancellation = default)
+            => ScheduleRepeating(intervalSeconds, intervalSeconds, callback, cancellation);
+        /// <inheritdoc />
+        public IDisposable ScheduleRepeating(double firstDelaySeconds, double intervalSeconds,
+            Action<MatchTimerTick> callback, CancellationToken cancellation = default)
         {
-            if (intervalSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(intervalSeconds));
-            return Add(intervalSeconds, intervalSeconds, callback, cancellation);
+            if (double.IsNaN(intervalSeconds) || double.IsInfinity(intervalSeconds) || intervalSeconds <= 0)
+                throw new ArgumentOutOfRangeException(nameof(intervalSeconds));
+            return Add(firstDelaySeconds, intervalSeconds, callback, cancellation);
         }
         private IDisposable Add(double delay, double interval, Action<MatchTimerTick> callback, CancellationToken cancellation)
         {

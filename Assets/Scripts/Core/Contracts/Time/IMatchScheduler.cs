@@ -14,5 +14,9 @@ namespace TeamHJD.Game.Contracts
         /// <summary>지정한 양의 게임 초 간격으로 실행합니다. 첫 호출은 한 간격 뒤이며 밀린 회차는 한 통지로 합칩니다.</summary>
         /// <returns>Feature 해제 시 Dispose할 예약 lease입니다. 미실행 회차 수는 callback 인자로 전달합니다.</returns>
         IDisposable ScheduleRepeating(double intervalSeconds, Action<MatchTimerTick> callback, CancellationToken cancellation = default);
+        /// <summary>체크포인트를 복원하는 Feature가 남은 첫 대기 시간과 이후 반복 간격을 구분해 재등록합니다.</summary>
+        /// <remarks>첫 대기 0도 등록 중 즉시 실행하지 않습니다. 반환 lease의 취소·수명은 기존 반복 예약과 같습니다.</remarks>
+        IDisposable ScheduleRepeating(double firstDelaySeconds, double intervalSeconds,
+            Action<MatchTimerTick> callback, CancellationToken cancellation = default);
     }
 }

@@ -16,7 +16,7 @@ using UnityEngine.UI;
 namespace Map
 {
     [RequireComponent(typeof(WeatherChangeEvent))]
-    public class WeatherManager : MonoBehaviour, IMatchWeatherSource, IMatchScheduledEnvironmentFeature
+    public partial class WeatherManager : MonoBehaviour, IMatchWeatherSource, IMatchScheduledEnvironmentFeature
     {
         public enum Weather
         {
@@ -36,7 +36,7 @@ namespace Map
         private Queue<Weather> weatherQueue;
         private bool _requiresMatch;
         private WeatherScope _scope;
-        private System.Random _matchRandom;
+        private Unity.Mathematics.Random _matchRandom;
         private Weather _authoredWeather;
         private double _standaloneSeconds, _nextWeatherAt = double.NaN;
         public event Action Changed;
@@ -138,7 +138,7 @@ namespace Map
         {
             // SUNNY는 sunnyWeight칸, 다른 날씨는 각각 한 칸을 차지한다.
             int maximum = sunnyWeight + (int)Weather.WEATHER_MAX;
-            int roll = _matchRandom != null ? _matchRandom.Next(maximum) : UnityEngine.Random.Range(0, maximum);
+            int roll = _matchRandom.state != 0 ? _matchRandom.NextInt(maximum) : UnityEngine.Random.Range(0, maximum);
             Weather result = roll < sunnyWeight
                 ? Weather.SUNNY
                 : (Weather)(roll - sunnyWeight + 1);
@@ -148,7 +148,8 @@ namespace Map
         
         public void RequireMatchScope()
         {
-            if (weatherQueueSize < 1 || sunnyWeight < 1 || weatherQueueSize > MatchEnvironmentSnapshot.MaximumForecast)
+            if (weatherQueueSize < 1 || sunnyWeight < 1 || sunnyWeight > int.MaxValue - (int)Weather.WEATHER_MAX ||
+                weatherQueueSize > MatchEnvironmentSnapshot.MaximumForecast)
                 throw new InvalidOperationException("Weather forecast exceeds the Match environment contract limit.");
             _requiresMatch = true;
         }
@@ -162,7 +163,10 @@ namespace Map
             try
             {
                 currentWeather = _authoredWeather; weatherQueue = new Queue<Weather>();
-                _matchRandom = new System.Random(seed); _nextWeatherAt = double.NaN;
+                // 상태를 값으로 저장할 수 있는 Unity Mathematics RNG를 Match 전용으로 사용합니다.
+                uint randomSeed = unchecked((uint)seed);
+                _matchRandom = new Unity.Mathematics.Random(randomSeed == 0 ? 1u : randomSeed);
+                _nextWeatherAt = double.NaN;
                 FillWeather(); NotifyWeather(); return scope;
             }
             catch { scope.Dispose(); throw; }
@@ -180,7 +184,7 @@ namespace Map
                 if (!ReferenceEquals(_scope, scope)) throw new InvalidOperationException("Weather scope changed during initialization.");
                 CountTick tick = GetComponent<CountTick>();
                 if (tick == null) throw new InvalidOperationException("Scheduled Weather requires its authored CountTick interval component.");
-                _scope.TimerLease = tick.BindScheduler(scheduler, OnScheduledWeather, gameplay);
+                _scope.TimerLease = tick.BindScheduler(clock, scheduler, OnScheduledWeather, gameplay);
                 return scope;
             }
             catch { scope.Dispose(); throw; }
@@ -193,7 +197,7 @@ namespace Map
         {
             RequireMatchScope();
             var scope = BeginScope(match, false, null, () => false, default);
-            weatherQueue = new Queue<Weather>(); _matchRandom = null;
+            weatherQueue = new Queue<Weather>(); _matchRandom = default;
             return scope;
         }
 
@@ -260,7 +264,7 @@ namespace Map
             {
                 var owner = _owner; _owner = null;
                 if (owner != null && ReferenceEquals(owner._scope, this))
-                { owner._scope = null; owner._matchRandom = null; owner._nextWeatherAt = double.NaN; }
+                { owner._scope = null; owner._matchRandom = default; owner._nextWeatherAt = double.NaN; }
                 TimerLease?.Dispose(); TimerLease = null;
             }
         }

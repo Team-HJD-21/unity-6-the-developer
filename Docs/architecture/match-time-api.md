@@ -91,6 +91,8 @@ flowchart LR
 
 ## 임시 정지 소유권과 준비 단계
 
+체크포인트 Feature는 `ScheduleRepeating(firstDelaySeconds, intervalSeconds, callback, cancellation)`으로 남은 첫 대기와 이후 주기를 구분한다. 첫 대기 0도 등록 중 즉시 호출하지 않으며 다음 유효 Pump에서 실행한다. 복원 뒤 전체 간격부터 다시 기다리거나 과거 SDK 시각을 예약 기준으로 재사용하지 않는다. 해당 계약과 실제 Weather 연결 9개 집중 검사를 통과했다. [체크포인트 실행 API](checkpoint-execution-api.md)를 참고한다.
+
 `MatchTimeService.AcquirePause(owner)`는 캡처·복원 조율부가 같은 메인 스레드에서 임대하고 해제하는 API다. 여러 lease와 참가자 정책의 정지는 OR로 합친다. 캡처 lease를 해제해도 전원 우주선 입장에 의한 정지나 다른 lease가 남아 있으면 계속 정지한다. 완료/폐기 뒤 늦게 해제한 lease가 Match를 재개하지 않는다. `PauseOwners`는 임시 소유자의 진단용 사본이며 참가자 정책과 별도다.
 
 Preparing 단계의 시계는 자동 정지하고 scheduler를 실행하지 않는다. 준비 중 `Restore(gameSeconds)`도 가능하지만 준비/복원 lease가 끝나기 전 진행하지 않는다. Running으로 진입할 때 현재 원본 시각에 기준을 잡아 로딩 시간을 게임 시간에 포함하지 않는다. Clock 제어와 유효 lease의 해제는 소유 스레드에서 수행한다.

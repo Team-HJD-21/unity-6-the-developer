@@ -2,7 +2,7 @@
 
 현재 구현: B7 (2026-10-26). 날씨와 시간대는 독립 정보다. 환경 변경은 상태 변경이며 Spawn 명령이 아니다.
 
-2026-11-02 시간 기반 이관: 권위 Initial_Stage의 `IMatchClock`은 `MatchTimeService`의 공용 시계로 연결했다. 네트워크 Host는 NGO ServerTime을, standalone은 Unity double 실시간을 사용한다. 완료 후 예약 차단까지 실제 Scene에서 확인했다. 현재 WeatherManager는 `IMatchScheduledEnvironmentFeature`로 공용 scheduler를 받고 CountTick이 제작 간격을 등록한다. 정식 Match에서는 polling 호환 경로가 동시에 전이하지 않는다. Client 시각 복제·참가자 필드 정지는 후속이다. [시간 API와 실제 이관 범위](match-time-api.md)를 따른다.
+2026-11-02 시간 기반 이관: 권위 Initial_Stage의 `IMatchClock`은 `MatchTimeService`의 공용 시계로 연결했다. 네트워크 Host는 NGO ServerTime을, standalone은 Unity double 실시간을 사용한다. 완료 후 예약 차단까지 실제 Scene에서 확인했다. 현재 WeatherManager는 `IMatchScheduledEnvironmentFeature`로 공용 scheduler를 받고 CountTick이 제작 간격을 등록한다. 정식 Match에서는 polling 호환 경로가 동시에 전이하지 않는다. Client 시간 anchor와 참가자 필드 정지는 구현했으며, 실제 원격 Player 포털 출입의 게임 사이클 통합은 이어 진행한다. [시간 API와 실제 이관 범위](match-time-api.md)를 따른다.
 
 ## 소유권과 수명
 
@@ -34,3 +34,8 @@ Game Debugger Overview는 **현재** 환경, Statistics의 요청 상세는 **�
 - 실제 시간대 source는 현재 없다. 시간대 계약이 존재하는 것을 실제 주야 기능 완료로 표시하지 않는다.
 - 실제 날씨 전투 효과·최종 밸런스·나무/투하 생성 콘텐츠·두 실행 파일 Player 복제는 이 배치의 완료 주장이 아니다.
 - 재현 증거와 실제 UTP 검사 결과는 [배치 기록](../planning/2026-10-26-core-sprint-implementation.md)에 누적한다.
+
+
+## 체크포인트 원본 연결
+
+현재 Weather 원본은 `ICheckpointParticipant`도 구현한다. 현재/예고·추첨 state와 CountTick의 남은 게임 시간을 함께 저장하고 복원 세대에서 예약을 다시 연결한다. `CountTick.BindScheduler`에는 같은 Match의 읽기 clock과 scheduler를 함께 전달한다. 기존 가중치·전환 규칙은 유지하며 Match RNG의 동일 seed 순서는 System.Random 시절과 달라진다. 실제 Weather 복원과 관련 예약 9개 검사를 통과했으며 전체 Scene 저장 기능 연결은 진행 중이다. [체크포인트 실행 API](checkpoint-execution-api.md)의 범위·원본 writer·검증을 참고한다.
