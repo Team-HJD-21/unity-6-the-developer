@@ -46,7 +46,7 @@ namespace TeamHJD.Game.Presentation.Scene
                     SceneManager.MoveGameObjectToScene(actor, playerStart.gameObject.scene);
                 PlayerActorIdentity identity = actor.GetComponent<PlayerActorIdentity>();
                 if (identity == null) identity = actor.AddComponent<PlayerActorIdentity>();
-                identity.Bind(playerId);
+                identity.Bind(playerId, playerStart.SlotIndex);
                 _actors.Add(playerId, actor);
                 return actor;
             }

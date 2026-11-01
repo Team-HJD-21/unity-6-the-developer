@@ -61,10 +61,17 @@ sequenceDiagram
 | `MatchSpatialCheckpointParticipant` / `world/spatial` v1 | 현재 Battlefield Grid 중심·크기·분할·표시 Z, 지역 Grid 정의·정적 소속·정책 모드·점유 셀 | Scene 조립부가 Session과 `RegionSceneBinding.RestoreCheckpoint`를 주입. 이전 Match/Grid 세대 ID는 복사하지 않고 새 세대를 발행. 실제 actor 복원 뒤 삼각형·밀도를 재계산 |
 | `ControlUnitHealth` / `world/control-unit` v1 | CU 정의 ID·최대/현재 HP·world pose·local scale | 정의와 HP 범위를 준비 단계에서 확인. 실제 HP와 UI 알림을 적용하며 피해·파괴 사건은 다시 발행하지 않음 |
 | `Map.WeatherManager` / `world/weather` v1 | 실제 날씨·예고 큐·가중치/큐 설정·난수 진행 상태·현재 간격/설정 간격·다음 전환까지 남은 게임 초 | 권위 Match의 실제 timer가 있어야 캡처. 시간 epoch 교체로 취소된 예약을 남은 시간부터 다시 연결. Client·독립 Scene 상태는 저장하지 않음 |
+| `PlayerInfo` / `world/player/{slot}/actor` v1 | 실제 HP/max HP·생존·회복 진행과 남은 시간, world pose/scale·물리·CanMove·확정 우주선/필드 위치 | 같은 슬롯의 논리 Player ID 검증. 생존 잠금만 복원하고 현재 UI 잠금은 유지. 사망/피해 사건을 다시 발행하지 않음 |
 
 공간 writer 5개 검사는 실제 Session의 비정방형 Grid·지역 소속/점유, 준비 중 무변경, 적용/백업 복구, 새 Match로의 논리값 이전, 형식 오류 거부, Transform 검증을 확인했다. CU 3개 검사는 실제 컴포넌트의 HP·위치와 알림, 정의 불일치 거부, 죽은 CU 캡처 거부를 확인했다. CU는 EditMode에서 초기화 본문을 명시 호출한 컴포넌트 검사이며 실제 PlayMode Scene 전체 복원을 대신하지 않는다.
 
-이 writer들은 전체 World 중 일부다. Player·터렛·Enemy 등의 저장 계약과 Scene 수명 바인딩을 마친 뒤 완전한 저장 기능으로 노출한다. 현재 일부 writer만 등록해서 ‘게임 전체 저장 완료’ UI를 제공하지 않는다.
+이 writer들은 전체 World 중 일부다. Player의 무기·스킬·생성물, 터렛·Enemy 등의 저장 계약과 Scene 수명 바인딩을 마친 뒤 완전한 저장 기능으로 노출한다. 현재 일부 writer만 등록해서 ‘게임 전체 저장 완료’ UI를 제공하지 않는다.
+
+Player의 저장 키는 `PlayerStart`/Host의 검증된 roster 순서와 논리 Player ID를 사용한다. 런타임 instance ID·SDK 접속 ID를 키로 저장하지 않는다. LocalPlayerActorSpawner는 생성 시 슬롯을 지정하고, 원격 Host actor 등록은 확정 Config의 Player 순서를 확인한다. PlayerActorIdentity.BindCheckpointSlot은 Scene 조립부의 등록 API이며, writer가 등록된 동안 슬롯을 임의 변경하면 안 된다.
+
+PlayerInfo의 회복은 중복 코루틴 대신 명시적인 진행 상태와 남은 간격으로 관리한다. 기존과 같이 첫 HP를 즉시 회복하고 이후 프레임마다 최대 한 번 진행하며, 중복 요청은 겹쳐 실행하지 않고 사망 시 종료한다. 우주선 정비는 필드 정지와 구분해 scaled Unity 시간을 따르며 전체 TimeScale 0에서는 진행하지 않는다. 현재 maxHp는 현행 PlayerInfo의 World 원본으로 저장한다. 계정 성장에 따른 maxHp/XP 원본이 아직 없으므로 이 writer를 영속 성장 모듈 구현으로 표시하지 않는다. 향후 성장 원본과 계산 순서는 별도 Progression 경계에 연결해야 한다.
+
+Player 원본 집중 4개와 실제 PlayMode 회복 재개 1개가 통과했다. 무기·스킬·임시 개체 및 전체 Scene의 저장/재실행 복원은 이 검사 범위에 포함하지 않는다.
 
 Weather는 기존 날씨 가중치·큐 전환 규칙을 유지하고, Match 전용 난수만 상태를 저장할 수 있는 Unity Mathematics Random으로 바꿨다. 설치본은 1.3.3이며 v1 payload에 xorshift 상태를 명시한다. 같은 seed의 과거 System.Random 날씨 순서와는 달라지므로 이전 Debugger 기록의 seed만으로 동일 순서를 주장하지 않는다. 상태를 복원한 이후에는 예고와 다음 추첨 순서가 이어진다. 0 seed는 1로 정규화하고 저장된 0 상태는 손상으로 거부한다. 이 선택의 API 근거는 [Unity Mathematics Random](https://docs.unity3d.com/Packages/com.unity.mathematics@1.3/api/Unity.Mathematics.Random.html)이며 실제 설치 소스의 state/NextInt를 함께 확인했다.
 

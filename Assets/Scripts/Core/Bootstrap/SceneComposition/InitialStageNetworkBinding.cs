@@ -7,6 +7,7 @@ using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure;
+using TeamHJD.Game.Presentation.Scene;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -30,8 +31,24 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_turretCommands == null || _turretCommands.MatchId != matchId)
                 throw new InvalidOperationException("Register the actor against the current Match command scope.");
+            var config = _matches?.Descriptor?.Config;
+            if (actor == null || config == null || config.MatchId != matchId)
+                throw new InvalidOperationException("Register the actual actor in its prepared Match.");
+            int slot = -1;
+            for (int index = 0; index < config.Players.Count; index++)
+                if (config.Players[index].PlayerId == playerId) { slot = index; break; }
+            if (slot < 0) throw new InvalidOperationException("The actor is not a Match participant.");
+            var identity = actor.GetComponent<PlayerActorIdentity>();
+            if (identity != null && !identity.PlayerId.IsEmpty && identity.PlayerId != playerId)
+                throw new InvalidOperationException("The actor belongs to another logical Player.");
             var commands = _turretCommands.RegisterAuthorityActor(playerId, actor);
-            try { return new AuthorityActorLease(commands, _scene.RegisterAuthorityPresence(playerId, actor)); }
+            try
+            {
+                if (identity == null) identity = actor.AddComponent<PlayerActorIdentity>();
+                if (identity.PlayerId.IsEmpty) identity.Bind(playerId, slot);
+                else identity.BindCheckpointSlot(slot);
+                return new AuthorityActorLease(commands, _scene.RegisterAuthorityPresence(playerId, actor));
+            }
             catch { commands.Dispose(); throw; }
         }
         private sealed class AuthorityActorLease : IDisposable
