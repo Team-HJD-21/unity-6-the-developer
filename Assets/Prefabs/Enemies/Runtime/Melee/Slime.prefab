@@ -195,4 +195,4 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4053dc58dd85bf4390dc692d0f6fc94, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChaseEnemyController
+  m_EditorClassIdentifier: Assembly-CSharp::MovingEnemyController

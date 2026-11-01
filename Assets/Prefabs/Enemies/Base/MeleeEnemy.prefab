@@ -73,9 +73,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6725114028751190915, guid: 804b0215054b8e14bad8888930737c7a, type: 3}
       insertIndex: -1
       addedObject: {fileID: -5420480671651155543}
-    - targetCorrespondingSourceObject: {fileID: 6725114028751190915, guid: 804b0215054b8e14bad8888930737c7a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: -1824296131197547753}
   m_SourcePrefab: {fileID: 100100000, guid: 804b0215054b8e14bad8888930737c7a, type: 3}
 --- !u!114 &3909823127931652063 stripped
 MonoBehaviour:
@@ -115,11 +112,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4053dc58dd85bf4390dc692d0f6fc94, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChaseEnemyController
+  m_EditorClassIdentifier: Assembly-CSharp::MovingEnemyController
   enemyTargeting: {fileID: 4417510083731572509}
   enemyAnimation: {fileID: 3909823127931652063}
   enemyMovement: {fileID: 4521124683538281619}
-  enemyCombat: {fileID: -5420480671651155543}
+  enemyAbility: {fileID: -5420480671651155543}
 --- !u!114 &4521124683538281619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,24 +143,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5097b24e3659e6745b14e8017d5ba008, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCloseRangeAbility
   enemyTargeting: {fileID: 4417510083731572509}
-  enemyAttack: {fileID: -1824296131197547753}
   attackRange: 0.4
-  attackCooldown: 1
+  cooldown: 1
   attackDamage: 5
---- !u!114 &-1824296131197547753
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7224827417185167723}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3adf89055c5c4d90bdf209605937862d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyCloseRangeAttack
 --- !u!50 &7547272266176275135 stripped
 Rigidbody2D:
   m_CorrespondingSourceObject: {fileID: 5884680728418906199, guid: 804b0215054b8e14bad8888930737c7a, type: 3}

@@ -1,10 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// 이동형 몬스터가 공유하는 목적지 설정과 이동·애니메이션 제어를 제공한다.
-/// 이동할 시점과 구체적인 행동 흐름은 자식 클래스가 결정한다.
+/// 능력의 발동 조건에 따라 타깃으로 이동하거나 정지하고 능력을 사용한다.
+/// 실제 이동과 능력 효과는 각 컴포넌트에 맡긴다.
 /// </summary>
-public abstract class MovingEnemyController : EnemyController
+public class MovingEnemyController : EnemyController
 {
     [Header("이동")]
     [SerializeField] protected EnemyMovement enemyMovement;
@@ -14,6 +14,45 @@ public abstract class MovingEnemyController : EnemyController
         base.Awake();
         if (enemyMovement == null)
             enemyMovement = GetComponent<EnemyMovement>();
+    }
+
+    /// <summary>
+    /// 발동 조건을 충족하면 정지하고 능력을 시도하며, 충족하지 않으면 타깃으로 이동한다.
+    /// </summary>
+    public override void ExecuteBehavior()
+    {
+        if (enemyAbility == null || !enemyAbility.isActiveAndEnabled)
+        {
+            StopMoving();
+            return;
+        }
+
+        if (enemyAbility.CheckCondition())
+        {
+            StopMoving();
+
+            if (enemyTargeting.Target != null)
+            {
+                Vector2 abilityDirection =
+                    (Vector2)enemyTargeting.Target.position - (Vector2)transform.position;
+
+                if (abilityDirection.sqrMagnitude > 0.0001f)
+                    enemyAnimation.SetFacingDirection(abilityDirection);
+            }
+
+            TryUseAbility();
+            return;
+        }
+
+        if (enemyTargeting.Target == null ||
+            !enemyMovement.TryGetNextPathDirection(out Vector2 moveDirection))
+        {
+            StopMoving();
+            return;
+        }
+
+        enemyAnimation.SetFacingDirection(moveDirection);
+        MoveTowardsTarget(moveDirection);
     }
 
     /// <summary>
