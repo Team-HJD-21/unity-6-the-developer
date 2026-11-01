@@ -84,6 +84,9 @@ namespace TeamHJD.Game.Tests.EditMode
         [Test] public void InvalidSlotDuplicateSectionsAndMutableInputCannotEscapeTheContract()
         {
             Assert.Throws<ArgumentException>(() => new CheckpointSlot("../escape"));
+            Assert.Throws<ArgumentException>(() => new CheckpointSlot("CON"));
+            Assert.Throws<ArgumentException>(() => new CheckpointSlot("lpt1"));
+            Assert.That(new CheckpointSlot("Save_1").Equals(new CheckpointSlot("save_1")), Is.True);
             Assert.Throws<ArgumentException>(() => new BinaryCheckpointStore(_directory).LoadAsync(default));
             var bytes = new byte[] { 1 }; var section = new CheckpointSection("world", 1, CheckpointSectionKind.World, bytes);
             bytes[0] = 9; var copy = section.CopyPayload(); copy[0] = 8;

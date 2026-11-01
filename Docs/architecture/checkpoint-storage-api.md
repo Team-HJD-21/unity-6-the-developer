@@ -15,7 +15,7 @@ flowchart LR
 
 | 타입 | 책임 |
 | --- | --- |
-| `CheckpointSlot` | 경로와 구분한 슬롯 이름. ASCII 문자·숫자·`-`·`_`, 1~64자 |
+| `CheckpointSlot` | 경로와 구분한 슬롯 이름. ASCII 문자·숫자·`-`·`_`, 1~64자. 소문자로 정규화하며 Windows 장치 예약 이름을 거부 |
 | `CheckpointData` | 캡처 ID/UTC, 진단용 이전 Match ID, Stage·난이도·모드·seed·content version, 게임 초, 참가자 수, Feature 자료 |
 | `CheckpointSection` | 고유 키·Feature schema version·분류와 복사한 불변 payload. 해석은 해당 Feature writer가 담당 |
 | `CheckpointRestorePolicy` | World는 복원, 경험치 등 Progression은 현재 유지. Currency는 기본 유지하고 명시 옵션으로만 체크포인트 값 사용 |
