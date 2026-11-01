@@ -40,3 +40,10 @@ Single 교체/Unload는 시작 이후 되돌릴 수 있는 작업으로 표시�
 ## 제작 Scene 관찰
 
 최신 main Initial_Stage에는 `Encounter Debug Spawner`와 `EnemySpawnRoot` 두 Executor가 함께 제작돼 있다. B8의 `EncounterSceneConfiguration`은 EnemySpawnRoot prefab 인스턴스를 실제 실행 대상으로 명시 연결한다. 재로드 시 persistent consumer에 새 Scene 참조를 전달한다. 다른 제작 Executor는 삭제하지 않았으며 검사는 이전 객체 모두의 폐기·새 Scene 제작 개수/소유 Scene·명시 대상과 실제 생성까지 확인한다. [origin/source API](encounter-spawn-origin-api.md) 참조.
+
+
+## Additive Scene의 Player 소속 (2026-11-02)
+
+`LocalPlayerActorSpawner.Spawn`은 실제 `PlayerStart`의 Scene에 생성 actor를 귀속시킨다. 활성 Scene이 Hub여도 행성의 PlayerStart에서 생성한 Player는 행성 Scene에 속한다. 부모 Transform을 전달하면 부모도 같은 Scene이어야 하며 불일치는 생성 전에 거부한다. 이는 actor의 생성 소속이며, 진행 중 우주선에 들어갈 때 actor를 다른 Scene으로 이동시키는 정책은 아니다.
+
+실제 빈 Scene에서 Initial_Stage를 Additive 로드하는 탄환 통합 검사에서 기존 HUD의 actor 소속 불일치를 발견해 수정했다. 이후 서버 적 생성과 실제 탄환 피해까지 통과했다. 포털 이동·다중 참가자 Scene 교체 완료 검증과 구분한다.

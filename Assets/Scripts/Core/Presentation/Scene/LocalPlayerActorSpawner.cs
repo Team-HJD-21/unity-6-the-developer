@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace TeamHJD.Game.Presentation.Scene
 {
@@ -28,6 +29,8 @@ namespace TeamHJD.Game.Presentation.Scene
             if (playerId.IsEmpty) throw new ArgumentException("A spawned player requires a valid ID.", nameof(playerId));
             if (playerStart == null) throw new ArgumentNullException(nameof(playerStart));
             if (!playerStart.isActiveAndEnabled) throw new InvalidOperationException("PlayerStart must be active.");
+            if (_actorParent != null && _actorParent.gameObject.scene != playerStart.gameObject.scene)
+                throw new InvalidOperationException("The actor parent and PlayerStart must belong to the same Match scene.");
             if (_actors.ContainsKey(playerId)) throw new InvalidOperationException($"Player '{playerId}' is already spawned.");
 
             GameObject actor = UnityEngine.Object.Instantiate(
@@ -38,6 +41,9 @@ namespace TeamHJD.Game.Presentation.Scene
 
             try
             {
+                // Additive 출격에서도 활성 Hub Scene이 아닌 PlayerStart의 Match Scene에 귀속시킵니다.
+                if (actor.scene != playerStart.gameObject.scene)
+                    SceneManager.MoveGameObjectToScene(actor, playerStart.gameObject.scene);
                 PlayerActorIdentity identity = actor.GetComponent<PlayerActorIdentity>();
                 if (identity == null) identity = actor.AddComponent<PlayerActorIdentity>();
                 identity.Bind(playerId);
