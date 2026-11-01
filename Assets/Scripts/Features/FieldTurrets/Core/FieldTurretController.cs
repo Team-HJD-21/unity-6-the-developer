@@ -1,6 +1,8 @@
-// Scene의 터렛 전력·자동 활성화와 지역 사용 제한을 관리하는 D Feature 소유자입니다.
+// Scene의 터렛 전력·자동 활성화와 지역 사용 제한을 관리하는 필드 터렛 Feature 소유자입니다.
 // Core 조립부에는 실제 소유 개체를 확인하는 읽기 API를 제공합니다.
 using System;
+using System.Threading;
+using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using TeamHJD.Game.Contracts;
@@ -13,7 +15,7 @@ namespace TeamHJD.Game.FieldTurrets
     /// <summary>씬의 전력 예산을 소유하고 ID 기반 터렛 활성화 요청을 처리한다.</summary>
     [DisallowMultipleComponent]
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "TeamHJD.Game.Turrets", sourceAssembly: "TeamHJD.Game.Turrets", sourceClassName: "TurretController")]
-    public sealed class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource
+    public sealed class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource, IFieldSimulationConsumer
     {
         [SerializeField, Min(0)] private int maximumPower = 250;
         [Header("Unlock Grid")]
@@ -30,6 +32,63 @@ namespace TeamHJD.Game.FieldTurrets
         public FieldTurretUnlockZones UnlockZones => _unlockZones;
         public int UnlockedZoneCount => _unlockedZoneCount;
         private FieldTurretPowerBudget _budget;
+        private IMatchTime _fieldTime;
+        public CancellationToken GameplayCancellation { get; private set; }
+        private readonly Dictionary<FieldTurretBase, FieldSimulationActor> _simulationActors = new();
+        public IMatchTime FieldTimeSource => _fieldTime;
+        public double FieldSeconds => _fieldTime?.ElapsedSeconds ?? Time.timeAsDouble;
+        public bool CanSimulate => !GameplayCancellation.IsCancellationRequested && (_fieldTime == null || (_fieldTime.IsAvailable && !_fieldTime.Snapshot.IsPaused && _fieldTime.Snapshot.Rate > 0));
+
+        /// <summary>Core 조립부가 현재 Match 시계를 연결합니다. 교체/추가 터렛도 같은 시계를 받습니다.</summary>
+        public IDisposable BindFieldSimulation(IMatchTime time, CancellationToken gameplay)
+        {
+            if (time == null) throw new ArgumentNullException(nameof(time));
+            if (_fieldTime != null) throw new InvalidOperationException("Turret simulation is already bound.");
+            double previous = FieldSeconds;
+            _fieldTime = time; GameplayCancellation = gameplay;
+            _nextAutoActivationTime = FieldSeconds + Math.Max(0, _nextAutoActivationTime - previous);
+            try
+            {
+                foreach (var turret in FieldTurretInstanceRegistry.RegisteredInstances.Values)
+                    if (OwnsTurret(turret)) BindSimulationActor(turret, previous);
+                FieldTurretInstanceRegistry.Registered += OnSimulationActorRegistered;
+                FieldTurretInstanceRegistry.Unregistered += OnSimulationActorUnregistered;
+                return new SimulationLease(this, time);
+            }
+            catch { ReleaseSimulation(time); throw; }
+        }
+        private void BindSimulationActor(FieldTurretBase turret, double previous)
+        {
+            if (_simulationActors.ContainsKey(turret)) return;
+            turret.RebaseSimulationTime(previous, FieldSeconds);
+            _simulationActors.Add(turret, FieldSimulationActor.Attach(turret.gameObject, _fieldTime, GameplayCancellation));
+        }
+        private void OnSimulationActorRegistered(FieldTurretBase turret)
+        { if (_fieldTime != null && OwnsTurret(turret)) BindSimulationActor(turret, FieldSeconds); }
+        private void OnSimulationActorUnregistered(FieldTurretBase turret)
+        {
+            if (!_simulationActors.TryGetValue(turret, out var actor)) return;
+            _simulationActors.Remove(turret); if (actor != null) actor.Unbind(_fieldTime);
+        }
+        private void ReleaseSimulation(IMatchTime time)
+        {
+            if (!ReferenceEquals(_fieldTime, time)) return;
+            double previous = FieldSeconds;
+            FieldTurretInstanceRegistry.Registered -= OnSimulationActorRegistered;
+            FieldTurretInstanceRegistry.Unregistered -= OnSimulationActorUnregistered;
+            _fieldTime = null; GameplayCancellation = default;
+            _nextAutoActivationTime = FieldSeconds + Math.Max(0, _nextAutoActivationTime - previous);
+            foreach (var pair in _simulationActors)
+                if (pair.Key != null)
+                { pair.Key.RebaseSimulationTime(previous, FieldSeconds); if (pair.Value != null) pair.Value.Unbind(time); }
+            _simulationActors.Clear();
+        }
+        private sealed class SimulationLease : IDisposable
+        {
+            private FieldTurretController _owner; private readonly IMatchTime _time;
+            public SimulationLease(FieldTurretController owner, IMatchTime time) { _owner = owner; _time = time; }
+            public void Dispose() { var owner = _owner; _owner = null; if (owner != null) owner.ReleaseSimulation(_time); }
+        }
         private bool _requiresMatchScope;
         private MatchScope _matchScope;
         public MatchId BoundMatchId => _matchScope?.MatchId ?? default;
@@ -58,7 +117,7 @@ namespace TeamHJD.Game.FieldTurrets
         {
             if (matchId.IsEmpty) throw new ArgumentException("A Match ID is required.", nameof(matchId));
             if (hasAuthority == null) throw new ArgumentNullException(nameof(hasAuthority));
-            if (_matchScope != null) throw new InvalidOperationException("The D controller already has a Match owner.");
+            if (_matchScope != null) throw new InvalidOperationException("The field turret controller already has a Match owner.");
             _requiresMatchScope = true; _nextAutoActivationTime = 0;
             _matchScope = new MatchScope(this, matchId, hasAuthority);
             return _matchScope;
@@ -76,7 +135,7 @@ namespace TeamHJD.Game.FieldTurrets
                 try { turret.ReleaseMatchOperations(); }
                 catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
             }
-            if (errors != null) throw new AggregateException("D Match control cleanup failed.", errors);
+            if (errors != null) throw new AggregateException("Field turret Match control cleanup failed.", errors);
         }
         public FieldTurretPowerBudget Budget => _budget ??= new FieldTurretPowerBudget(Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;
@@ -102,16 +161,17 @@ namespace TeamHJD.Game.FieldTurrets
         }
         private void Update()
         {
-            Budget.Tick(Time.deltaTime);
+            if (!CanSimulate) return;
+            if (HasWriteAuthority) Budget.Tick(Time.deltaTime);
             if (HasWriteAuthority && IsAutoActivationRunning) AdvanceAutoActivation();
         }
 
         public const float AutoActivationCooldownSeconds = 60f;
-        private float _nextAutoActivationTime;
+        private double _nextAutoActivationTime;
         private readonly List<AutoActivationCandidate> _autoCandidates = new();
         private IReadOnlyList<AutoActivationCandidate> _autoCandidatesView;
         public bool IsAutoActivationRunning { get; private set; }
-        public float AutoActivationCooldownRemaining => Mathf.Max(0f, _nextAutoActivationTime - Time.time);
+        public float AutoActivationCooldownRemaining => (float)Math.Max(0, _nextAutoActivationTime - FieldSeconds);
         public IReadOnlyList<AutoActivationCandidate> AutoActivationCandidates =>
             _autoCandidatesView ??= _autoCandidates.AsReadOnly();
 
@@ -157,7 +217,7 @@ namespace TeamHJD.Game.FieldTurrets
                 return byScore != 0 ? byScore : left.InstanceId.CompareTo(right.InstanceId);
             });
 
-            _nextAutoActivationTime = Time.time + AutoActivationCooldownSeconds;
+            _nextAutoActivationTime = FieldSeconds + AutoActivationCooldownSeconds;
             IsAutoActivationRunning = true;
             foreach (FieldTurretBase turret in owned)
                 if (turret.IsActivated) turret.RequestSystemActivation(false);

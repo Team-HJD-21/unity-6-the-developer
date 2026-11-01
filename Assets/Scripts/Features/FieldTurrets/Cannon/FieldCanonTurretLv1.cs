@@ -25,6 +25,7 @@ public class FieldCanonTurretLv1 : DefaultFieldCanonTurret
     {
         animator.enabled = true; // 발사할 때 애니메이션 시작
         GameObject bulletObj = Instantiate(bulletPrefab, bulletSpawnPoint.position, Quaternion.identity);
+        BindProjectileSimulation(bulletObj);
         FieldTurretBullet fieldTurretBullet = bulletObj.GetComponent<FieldTurretBullet>();
         float randomX = bulletFirePoint.position.x + Random.Range(-0.5f, 0.5f);
         bulletFirePoint.position = new Vector3(randomX, bulletFirePoint.position.y,0f);

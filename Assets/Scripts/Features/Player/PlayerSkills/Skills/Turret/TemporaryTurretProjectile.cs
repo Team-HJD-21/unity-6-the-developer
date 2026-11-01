@@ -39,6 +39,7 @@ public sealed class TemporaryTurretProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (!_initialized) return;
         _remaining -= Time.deltaTime;
         if (_remaining <= 0) Retire();
@@ -49,6 +50,7 @@ public sealed class TemporaryTurretProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (!_initialized || _hit || _body == null) return;
         var velocity = _body.linearVelocity;
         if (!PlayerAimUtility.IsValidDirection(velocity)) return;
@@ -86,7 +88,7 @@ public sealed class TemporaryTurretProjectile : MonoBehaviour
 
     private void ProcessHit(Collider2D other)
     {
-        if (!_initialized || _hit || other == null) return;
+        if (!PlayerFieldSimulationUtility.CanAdvance(this) || !_initialized || _hit || other == null) return;
         if (IsPassThrough(other)) return;
         var health = other.GetComponentInParent<EnemyHealth>();
         // Legacy 제거로 인해 로직 무효화: 구형 Monster 피해 폴백.

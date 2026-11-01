@@ -30,6 +30,7 @@ public class FieldCanonTurretLv2 : DefaultFieldCanonTurret
         for (int i = 0; i < _bulletObj.Length; i++)
         {
             _bulletObj[i] = Instantiate(bulletPrefab, bulletSpawnPoint[i].position, Quaternion.identity);
+            BindProjectileSimulation(_bulletObj[i]);
             FieldTurretBullet fieldTurretBullet = _bulletObj[i].GetComponent<FieldTurretBullet>();
             float randomValue = Random.Range(-0.5f, 0.5f);
             bulletFireDirection[i].position = new Vector3(bulletFireDirection[i].position.x+randomValue, bulletFireDirection[i].position.y,0f);

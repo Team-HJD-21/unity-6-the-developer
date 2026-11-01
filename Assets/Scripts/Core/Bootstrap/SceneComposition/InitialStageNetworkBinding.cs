@@ -30,7 +30,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_turretCommands == null || _turretCommands.MatchId != matchId)
                 throw new InvalidOperationException("Register the actor against the current Match command scope.");
-            return _turretCommands.RegisterAuthorityActor(playerId, actor);
+            var commands = _turretCommands.RegisterAuthorityActor(playerId, actor);
+            try { return new AuthorityActorLease(commands, _scene.RegisterAuthorityPresence(playerId, actor)); }
+            catch { commands.Dispose(); throw; }
+        }
+        private sealed class AuthorityActorLease : IDisposable
+        {
+            private IDisposable _commands, _presence;
+            public AuthorityActorLease(IDisposable commands, IDisposable presence) { _commands = commands; _presence = presence; }
+            public void Dispose()
+            {
+                var commands = _commands; var presence = _presence; _commands = null; _presence = null;
+                try { presence?.Dispose(); } finally { commands?.Dispose(); }
+            }
         }
         private AppRoot _app;
         private InitialStageCompositionRoot _scene;

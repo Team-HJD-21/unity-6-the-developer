@@ -39,14 +39,25 @@ namespace TeamHJD.Game.FieldTurrets
         private FieldTurretInitializationData _initializationData;
         private bool _initialActivationPending;
         private Coroutine _initialActivationRoutine;
-        private float _coolingEndsAt;
+        private double _coolingEndsAt;
         private float _coolingDuration;
         private float _coolingInitialHeatRatio;
+        protected bool CanSimulate => _turretController == null || _turretController.CanSimulate;
+        protected double FieldSeconds => _turretController?.FieldSeconds ?? Time.timeAsDouble;
+        /// <summary>터렛의 생성자가 발사한 탄환에 같은 Match 시계를 전달합니다.</summary>
+        protected void BindProjectileSimulation(GameObject projectile)
+        {
+            if (_turretController?.FieldTimeSource != null)
+                TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(projectile, _turretController.FieldTimeSource,
+                    _turretController.GameplayCancellation, destroyOnCompletion: true);
+        }
+        internal void RebaseSimulationTime(double previous, double current)
+        { _coolingEndsAt = current + System.Math.Max(0, _coolingEndsAt - previous); }
         public bool IsInitialized => _activationController != null;
         // Shared by active overheat recovery and cooling after switching off.
         // IsActivated determines whether completion resumes attacks or only permits activation.
-        public bool IsCoolingDown => Time.time < _coolingEndsAt;
-        public float CoolingDownRemaining => Mathf.Max(0f, _coolingEndsAt - Time.time);
+        public bool IsCoolingDown => FieldSeconds < _coolingEndsAt;
+        public float CoolingDownRemaining => (float)System.Math.Max(0, _coolingEndsAt - FieldSeconds);
         public FieldTurretActivationResult? LastInitialActivationResult { get; private set; }
 
         public FieldTurretDefinition Definition => _definition;
@@ -371,7 +382,7 @@ namespace TeamHJD.Game.FieldTurrets
             {
                 _coolingDuration = Mathf.Max(0f, duration);
                 _coolingInitialHeatRatio = Mathf.Clamp01(initialHeatRatio);
-                _coolingEndsAt = Time.time + _coolingDuration;
+                _coolingEndsAt = FieldSeconds + _coolingDuration;
             }
 
             TimeTilFire = 0f;
@@ -382,7 +393,7 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected virtual void Update()
         {
-            if (_coolingDuration > 0f) UpdateCooling();
+            if (CanSimulate && _coolingDuration > 0f) UpdateCooling();
         }
 
         private void UpdateCooling()

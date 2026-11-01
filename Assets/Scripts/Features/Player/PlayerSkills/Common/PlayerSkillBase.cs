@@ -16,7 +16,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
     protected virtual void Awake() { _controller = GetComponent<PlayerSkillController>(); _control = GetComponent<PlayerControlState>(); }
     public bool TryUseSkill()
     {
-        if (!isActiveAndEnabled || !IsReady) return false;
+        if (!PlayerFieldSimulationUtility.CanAdvance(this) || !isActiveAndEnabled || !IsReady) return false;
         if (Controller != null)
         {
             if (!Controller.CanUse || !Controller.Loadout.Contains(Id)) return false;

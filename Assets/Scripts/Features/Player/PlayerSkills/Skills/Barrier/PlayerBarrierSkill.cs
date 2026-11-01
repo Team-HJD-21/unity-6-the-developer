@@ -60,6 +60,7 @@ public sealed class PlayerBarrierSkill : PlayerSkillBase
 
     public void Tick(float elapsed)
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _charges?.Tick(elapsed);
         if (!IsPending) return;
@@ -81,6 +82,7 @@ public sealed class PlayerBarrierSkill : PlayerSkillBase
         }
         if (!ValidateConnection(_first, transform.position, out _)) return false;
         var barrier = Instantiate(_prefab, (_first + transform.position) * .5f, Quaternion.identity);
+        PlayerFieldSimulationUtility.BindSpawned(barrier.gameObject, this);
         barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, transform.position, _width, _health, _duration);
         _deployed.Add(barrier);
         _charges.TryConsume();

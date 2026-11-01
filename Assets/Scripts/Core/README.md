@@ -1,5 +1,7 @@
 # Core Foundation
 
+11월 2일 공용 게임 시간은 [Match 시간 API](../../../Docs/architecture/match-time-api.md), 참가자 위치와 필드 Feature 정지 연결은 [필드 정지 API](../../../Docs/architecture/match-field-pause-api.md)를 따른다. 실제 원격 출입·Client 시간 복제는 구현/검증 수준을 별도로 확인한다.
+
 2026-11-02 [이번 주 전체 배치](../../../Docs/planning/2026-11-02-core-sprint-scope.md): 게임 사이클·Steam 설계·공용 시간·안전장치와 함께 Core 전체 구조 정리, 공개 API/함수 설명과 읽는 순서 보강을 준비했습니다. 아래는 현재 코드의 설명이며 예정된 시간·저장 API의 구현 완료를 의미하지 않습니다. 주석은 [함수 설명 규약](../../../Docs/architecture/naming-and-architecture-conventions.md#공개-api와-함수-설명)에 맞춰 실제 동작·호출자·시점·결과·해제 책임을 보강합니다.
 
 ## 실행할 프로젝트와 메뉴

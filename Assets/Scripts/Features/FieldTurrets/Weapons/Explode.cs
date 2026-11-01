@@ -1,4 +1,5 @@
 using System.Collections;
+using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -34,7 +35,9 @@ public class Explode : MonoBehaviour
 
     private IEnumerator DestroyExplosion()
     {
-        yield return new WaitForSeconds(0.8f);
+        var simulation = GetComponent<FieldSimulationActor>();
+        double end = (simulation?.Seconds ?? Time.timeAsDouble) + 0.8;
+        while ((simulation?.Seconds ?? Time.timeAsDouble) < end) yield return null;
         Destroy(gameObject);
     }
     // Update is called once per frame

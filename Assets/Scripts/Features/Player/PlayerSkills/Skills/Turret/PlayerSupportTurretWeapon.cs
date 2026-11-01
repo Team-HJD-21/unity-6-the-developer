@@ -13,6 +13,7 @@ public static class PlayerSupportTurretWeapon
         if (!PlayerAimUtility.IsValidDirection(dir)) return;
         GameObject bulletObj = Object.Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
+        PlayerFieldSimulationUtility.BindSpawned(bulletObj, firePoint);
         var bullet = bulletObj.GetComponent<TemporaryTurretProjectile>();
         if (!bullet.Initialize(dir, damagePerShot)) { PlayerFieldDevice.Dispose(bulletObj); return; }
         var renderer = bulletObj.GetComponent<SpriteRenderer>();

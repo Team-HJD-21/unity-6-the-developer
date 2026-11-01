@@ -1,3 +1,6 @@
+// 우주선 입구에서 목적지를 로드하고 Host가 이동을 확정한 뒤 참가자 위치를 보고합니다.
+using TeamHJD.Game.Domain;
+using TeamHJD.Game.Presentation.Scene;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,6 +20,9 @@ public class SpaceshipEnter : MonoBehaviour
         if (other.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
         
+        if (isTransitioning) return;
+        var presence = other.GetComponentInParent<PlayerMatchPresence>();
+        if (presence != null && !presence.CanReport) return;
         Transform player = other.transform;
 
         StartCoroutine(EnterSpaceship(player));
@@ -64,7 +70,11 @@ public class SpaceshipEnter : MonoBehaviour
             yield break;
         }
 
+        if (player == null) { isTransitioning = false; yield break; }
+        var presence = player.GetComponentInParent<PlayerMatchPresence>();
+        if (presence != null && !presence.CanReport) { isTransitioning = false; yield break; }
         MovePlayer(player, destination.position);
+        presence?.Report(MatchPlayerLocation.Spaceship);
         isTransitioning = false;
     }
 

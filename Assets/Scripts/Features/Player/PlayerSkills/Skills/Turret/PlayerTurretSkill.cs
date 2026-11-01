@@ -60,6 +60,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     private void Update() => Tick(Time.deltaTime);
     public void Tick(float elapsed)
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _installationRemaining = Mathf.Max(0, _installationRemaining - elapsed);
         _inventory?.Tick(elapsed);
@@ -144,6 +145,7 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
         if (_placementFeedback != PlayerTurretPlacementResult.Allowed || !_inventory.TryDeploy()) return false;
 
         var turret = Instantiate(turretPrefab, position, Quaternion.identity).GetComponent<TemporaryTurret>();
+        PlayerFieldSimulationUtility.BindSpawned(turret.gameObject, this);
         SceneManager.MoveGameObjectToScene(turret.gameObject, gameObject.scene);
         turret.AssignOwner(this);
         _deployed.Add(turret);

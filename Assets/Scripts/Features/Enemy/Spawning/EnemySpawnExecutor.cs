@@ -2,7 +2,9 @@
 // 요청 context는 관측 상관관계에만 쓰며 생성 정책을 바꾸지 않습니다.
 
 using System.Collections.Generic;
+using TeamHJD.Game.Presentation.Scene;
 using System;
+using System.Threading;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using Unity.Netcode;
@@ -48,6 +50,35 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         }
     }
 
+    private IMatchTime _fieldTime;
+    private CancellationToken _gameplay;
+    /// <summary>Encounter의 Match 바인딩이 생성자에 공용 시계를 전달합니다. 기존 적과 이후 생성 적에 모두 적용합니다.</summary>
+    public IDisposable BindFieldSimulation(IMatchTime time, CancellationToken gameplay)
+    {
+        if (time == null) throw new ArgumentNullException(nameof(time));
+        if (_fieldTime != null) throw new InvalidOperationException("Enemy simulation is already bound.");
+        _fieldTime = time; _gameplay = gameplay;
+        try
+        {
+            foreach (var enemy in _spawnedEnemies.Values)
+                if (enemy.NetworkObject != null) FieldSimulationActor.Attach(enemy.NetworkObject.gameObject, time, gameplay);
+            return new SimulationLease(this, time);
+        }
+        catch { ReleaseSimulation(time); throw; }
+    }
+    private void ReleaseSimulation(IMatchTime time)
+    {
+        if (!ReferenceEquals(_fieldTime, time)) return;
+        _fieldTime = null; _gameplay = default;
+        foreach (var enemy in _spawnedEnemies.Values)
+            if (enemy.NetworkObject != null) enemy.NetworkObject.GetComponent<FieldSimulationActor>()?.Unbind(time);
+    }
+    private sealed class SimulationLease : IDisposable
+    {
+        private EnemySpawnExecutor _owner; private readonly IMatchTime _time;
+        public SimulationLease(EnemySpawnExecutor owner, IMatchTime time) { _owner = owner; _time = time; }
+        public void Dispose() { var owner = _owner; _owner = null; if (owner != null) owner.ReleaseSimulation(_time); }
+    }
     [SerializeField] private EnemyCatalog enemyList;
     private SpawnPointRegistry _spawnPointList = new();
     private readonly List<GameObject> _spawnSceneRoots = new();
@@ -171,7 +202,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     /// </summary>
     private void Update()
     {
-        if (!IsSpawned || !IsServer)
+        if (!IsSpawned || !IsServer || (_fieldTime != null && (!_fieldTime.IsAvailable || _fieldTime.Snapshot.IsPaused)))
             return;
 
         foreach (EnemySquad squad in _squads)
@@ -347,6 +378,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
                 EnemyNetworkController networkController =
                     spawnedMonster.GetComponent<EnemyNetworkController>();
+                if (_fieldTime != null) FieldSimulationActor.Attach(spawnedMonster, _fieldTime, _gameplay);
                 networkObject.Spawn();
                 _spawnedEnemies[networkObject.NetworkObjectId] =
                     new TrackedEnemy(networkObject, controller, networkController, squad,

@@ -55,6 +55,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
     }
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (!_initialized) return;
         _remaining -= Time.deltaTime;
         _hitFlash = Mathf.Max(0, _hitFlash - Time.deltaTime);

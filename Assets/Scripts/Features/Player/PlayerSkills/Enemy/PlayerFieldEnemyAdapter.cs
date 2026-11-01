@@ -28,6 +28,7 @@ public sealed class PlayerFieldEnemyAdapter : MonoBehaviour
     // 기존 NetworkAnimator가 LateUpdate에서 게시하기 전에 표현을 갱신합니다.
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (!_control.CanControl || !PlayerFieldDevice.HasActiveDevices) { Release(); return; }
         if (!_control.IsHeld)
         {
@@ -47,7 +48,7 @@ public sealed class PlayerFieldEnemyAdapter : MonoBehaviour
         if (_device == null) { Release(); return; }
         bool attacked = _behaviour.Step(transform, _device,
             _measuredSpeed > 0 ? _measuredSpeed : _fallbackSpeed, _attackRange,
-            _fallbackDamage, _fallbackAttackCooldown, Time.time, Time.deltaTime, out var direction, out bool moving);
+            _fallbackDamage, _fallbackAttackCooldown, PlayerFieldSimulationUtility.Seconds(this), Time.deltaTime, out var direction, out bool moving);
         _animation.SetMovement(direction, moving);
         if (attacked) _animation.PlayAttack();
         _previousPosition = transform.position;

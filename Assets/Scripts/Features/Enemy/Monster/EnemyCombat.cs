@@ -1,4 +1,5 @@
 using UnityEngine;
+using TeamHJD.Game.Presentation.Scene;
 
 public class EnemyCombat : MonoBehaviour
 {
@@ -9,7 +10,9 @@ public class EnemyCombat : MonoBehaviour
     [SerializeField] private float attackRange = 0.4f;
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private int attackDamage = 5;
-    private float _nextAttackTime;
+    private double _nextAttackTime;
+    private FieldSimulationActor _simulation;
+    private double GameSeconds => (_simulation ??= GetComponent<FieldSimulationActor>())?.Seconds ?? Time.timeAsDouble;
     
     private Collider2D _bodyCollider;
 
@@ -57,8 +60,9 @@ public class EnemyCombat : MonoBehaviour
 
     public bool TryAttack()
     {
+        _simulation ??= GetComponent<FieldSimulationActor>();
         // 공격 쿨타임이 남아 있으면 이번 공격을 건너뛴다.
-        if (Time.time < _nextAttackTime)
+        if ((_simulation != null && !_simulation.CanAdvance) || GameSeconds < _nextAttackTime)
             return false;
 
         if (enemyAttack == null || enemyTargeting.Target == null)
@@ -69,7 +73,7 @@ public class EnemyCombat : MonoBehaviour
             !enemyAttack.Execute(targetable, attackDamage))
             return false;
 
-        _nextAttackTime = Time.time + attackCooldown;
+        _nextAttackTime = GameSeconds + attackCooldown;
         return true;
     }
 }

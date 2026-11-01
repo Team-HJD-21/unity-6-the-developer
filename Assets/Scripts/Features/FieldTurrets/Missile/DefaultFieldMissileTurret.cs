@@ -51,6 +51,7 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
     protected override void Update()
     {
         base.Update();
+        if (!CanSimulate) return;
         UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
@@ -160,6 +161,7 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
                     missilePrefab, spawnPoints[index].position, turretRotationPoint.rotation);
                 try
                 {
+                    BindProjectileSimulation(missileObject);
                     missileObject.GetComponent<FieldTurretMissile>().Initialize(reservation, Damage);
                 }
                 catch
@@ -261,7 +263,8 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
     protected IEnumerator ShootAnimation()
     {
         Animator.SetBool("isShoot",true);
-        yield return new WaitForSeconds(0.6f);
+        double end = FieldSeconds + 0.6;
+        while (FieldSeconds < end) yield return null;
         Animator.SetBool("isShoot",false);
     }
     protected override void OnActivationChanged(bool isActivated)

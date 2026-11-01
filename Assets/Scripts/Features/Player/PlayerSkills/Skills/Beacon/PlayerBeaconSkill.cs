@@ -20,6 +20,7 @@ public sealed class PlayerBeaconSkill : PlayerSkillBase
     private void Update() => Tick(Time.deltaTime);
     public void Tick(float elapsed)
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _remainingCooldown = Mathf.Max(0, _remainingCooldown - elapsed);
     }
@@ -27,6 +28,7 @@ public sealed class PlayerBeaconSkill : PlayerSkillBase
     {
         if (_active != null) PlayerFieldDevice.Dispose(_active.gameObject);
         _active = Instantiate(_prefab, transform.position, Quaternion.identity);
+        PlayerFieldSimulationUtility.BindSpawned(_active.gameObject, this);
         _active.Initialize(PlayerFieldDeviceKind.Beacon, transform.position, transform.position, .3f, _health, _duration, _radius);
         _remainingCooldown = Cooldown;
         return true;

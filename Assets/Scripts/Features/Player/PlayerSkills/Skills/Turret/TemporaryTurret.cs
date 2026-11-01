@@ -66,6 +66,7 @@ public class TemporaryTurret : MonoBehaviour
 
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         FindClosestTarget();
 
         if (targetEnemy != null)

@@ -18,6 +18,7 @@ public sealed class PlayerTimedEffect : MonoBehaviour
 
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         _elapsed += Time.deltaTime;
         if (_elapsed >= Mathf.Max(.01f, _lifetime)) Destroy(gameObject);
     }

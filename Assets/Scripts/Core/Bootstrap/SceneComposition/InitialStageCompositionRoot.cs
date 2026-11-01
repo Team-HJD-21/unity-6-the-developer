@@ -15,6 +15,7 @@ using UnityEngine;
 
 namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
+    [DefaultExecutionOrder(-300)]
     public sealed class InitialStageCompositionRoot : MonoBehaviour, ISceneCompositionRoot
     {
         private static readonly PlayerId LocalPlayerId = new PlayerId("local-player");
@@ -31,6 +32,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private MatchSession _matchSession;
         private MatchCoordinator _coordinator;
         private MatchTimeService _matchTime;
+        private MatchFieldSceneScope _fieldScope;
+        /// <summary>권위 Match 참가자의 확정 위치입니다. Client 신고용 쓰기 API는 제공하지 않습니다.</summary>
+        public MatchPresenceService MatchPresence => _fieldScope?.Presence;
+        /// <summary>Player 생성자가 Host에 만든 실제 원격 actor를 등록합니다. actor 제거 시 lease를 해제합니다.</summary>
+        public IDisposable RegisterAuthorityPresence(PlayerId player, GameObject actor)
+            => _fieldScope?.RegisterActor(player, actor) ?? throw new InvalidOperationException("No authority field scope exists.");
         private IMatchWeatherSource _weatherSource;
         private IMatchTimeOfDaySource _timeOfDaySource;
         private IDisposable _environmentScope;
@@ -220,6 +227,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 session.Disposing += ReleaseMatchBindings;
                 _coordinator.Completed += OnMatchCompleted;
                 _coordinator.Start();
+                var fieldFeatures = FindSceneBehaviours().OfType<IFieldSimulationConsumer>().ToList();
+                if (_encounterConsumer is IFieldSimulationConsumer fieldConsumer && !fieldFeatures.Contains(fieldConsumer))
+                    fieldFeatures.Add(fieldConsumer);
+                _fieldScope = new MatchFieldSceneScope(config, _matchTime, _coordinator.GameplayCancellation,
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
+                    fieldFeatures, _playerActors.Actors);
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
                     $"Initial_Stage Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
@@ -417,6 +430,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             TurretMatchBinding turrets = _turretBinding;
             MatchCoordinator coordinator = _coordinator;
             MatchTimeService time = _matchTime;
+            MatchFieldSceneScope field = _fieldScope;
             IDisposable environment = _environmentScope;
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
@@ -425,6 +439,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _matchSession = null;
             _coordinator = null;
             _matchTime = null;
+            _fieldScope = null;
             _environmentScope = null; _environmentReplica = null;
             _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
@@ -436,6 +451,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RunCleanup(() => environment?.Dispose(), errors);
             RunCleanup(() => ReleaseLocalActorConsumers(matchId), errors);
             RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
+            RunCleanup(() => field?.Dispose(), errors);
             RunCleanup(() => actors?.Dispose(), errors);
             RunCleanup(() => { if (regions != null) regions.UnbindMatch(); }, errors);
             RunCleanup(() => { if (turrets != null) turrets.UnbindMatch(matchId); }, errors);

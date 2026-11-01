@@ -44,6 +44,7 @@ public sealed class PlayerBombExplosion : MonoBehaviour
 
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         _elapsed += Time.deltaTime;
         if (!_exploded && _presentation != null) _presentation.UpdateFuse(_elapsed, _fuseSeconds, _radius);
         if (!_exploded && _elapsed >= _fuseSeconds) Explode();
@@ -52,7 +53,7 @@ public sealed class PlayerBombExplosion : MonoBehaviour
 
     public bool Explode()
     {
-        if (_exploded || !isActiveAndEnabled) return false;
+        if (!PlayerFieldSimulationUtility.CanAdvance(this) || _exploded || !isActiveAndEnabled) return false;
         _exploded = true;
         _elapsed = Mathf.Max(_elapsed, _fuseSeconds);
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, true);

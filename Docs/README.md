@@ -11,15 +11,17 @@
 
 ## 현재 기준
 
+Runtime 검사를 작성·실행할 때는 [Unity 통합 검사 실행 기준](development/unity-runtime-test-guidelines.md)의 EditMode 대기·Scene 격리·판정 기준을 따른다.
+
 Steam 관련 이번 주 조사·도입 설계는 [Steam API 접합 설계](architecture/steam-integration-design.md)에 정리했다. 현재 플랫폼/네트워크 경계와 인증·로비·실제 전송·SDK 수명을 구분한다. SDK 설치·실계정 연결은 후속이다.
 
-공용 시계·예약 모듈과 실제 권위 Scene/Weather 연결은 [Match 시간 API](architecture/match-time-api.md)를 따른다. Initial_Stage Host 시간 진행·예약 실행·완료 후 차단과 현재 Weather의 예약 이관을 확인했다. Client 시각 복제·실제 낮밤 Feature·참가자 우주선 정지는 후속이다.
+공용 시계·예약 모듈과 실제 권위 Scene/Weather 연결은 [Match 시간 API](architecture/match-time-api.md)를 따른다. Initial_Stage Host 시간 진행·예약 실행·완료 후 차단과 현재 Weather의 예약 이관을 확인했다. [필드 정지·참가자 위치 API](architecture/match-field-pause-api.md)를 연결했다. 초기 19개 통과, 확장 실행 84/91 통과 뒤 실패 범위를 수정·재검사한 10/10 통과를 각각 기록했다. Client 시각 복제·실제 낮밤 Feature·원격 출입 통합은 후속이다.
 
 2026-11-02 PL이 [이번 주 전체 배치: 게임 사이클·Steam 설계·공용 시간·안전장치·Core 정리](planning/2026-11-02-core-sprint-scope.md)를 정리했다. SOS 2인 모두 우주선에 있을 때 필드 정지, 안전장치 복원 시 경험치·재화 기본 보존 및 재화 롤백 옵션, 저장 지점에서 재실행 복원을 기준으로 한다. 저장·복원 API와 이벤트 관찰·요청 책임을 분리하고 자동 호출 이벤트는 이번 범위에서 선택하지 않는다. 기존 Core 전체의 책임·의존성·수명 검토와 필요한 구조 정리, 파트별 API 문서·함수 설명 보강을 포함한 8단계로 준비했다. [함수 설명 규약](architecture/naming-and-architecture-conventions.md#공개-api와-함수-설명)을 함께 따른다. 구현 완료나 기존 PoC Gate 변경을 의미하지 않는다.
 
 이번 Core 배치의 결과·검증 수준·수동 확인 순서·Issue/PR 경계는 [5·6주차 인수 문서](planning/2026-10-26-core-sprint-handoff.md)를 먼저 읽는다. **2026-10-28부터 실제 작업 프로젝트 `D:/Dev/Unity/Unity_3D_CBC`의 `codex/core-sprint-20261026-integration` 브랜치에서 구현·검토한다.** 기존 Validation 폴더는 검증 이력 보존용이다. CU 초기화 #569는 main에 반영됐고, 나머지 Core 통합은 로컬 검토 대상이다.
 
-2026-10-28 PL이 현재 프로젝트의 요청된 수동 확인을 모두 수행하고 이상 없음을 보고했다. [수동 인수 기록](planning/2026-10-28-core-acceptance.md)은 그 범위·자동 증거·분할 PR 조건과 팀 Build/실제 Player 연계의 잔여를 구분한다. Network 전파 자료는 [Network Match 구조와 Feature 연결](architecture/network-match-api.md)을 따른다. 낮밤용 공용 서버 시계·예약 실행은 협의 중이며 아직 Runtime에 구현되지 않았다.
+2026-10-28 PL이 현재 프로젝트의 요청된 수동 확인을 모두 수행하고 이상 없음을 보고했다. [수동 인수 기록](planning/2026-10-28-core-acceptance.md)은 그 범위·자동 증거·분할 PR 조건과 팀 Build/실제 Player 연계의 잔여를 구분한다. Network 전파 자료는 [Network Match 구조와 Feature 연결](architecture/network-match-api.md)을 따른다. 낮밤용 공용 시계·예약 Runtime은 11월 2일 구현했으며 위 시간 API를 따른다. 실제 낮밤 규칙/표현은 담당 Feature가 연결한다.
 
 운영 화면과 전환은 [ScreenManager](architecture/screen-management-api.md) / [SceneFlowController](architecture/scene-flow-api.md)를 따른다. 실제 CU 결과·재시작·우주선 복귀 버튼까지 연결했으며, 원격 Player/공동 Scene 이동과 외형 수동 인수는 별도다.
 

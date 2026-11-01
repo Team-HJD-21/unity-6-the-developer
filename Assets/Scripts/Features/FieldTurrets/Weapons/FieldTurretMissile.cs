@@ -1,3 +1,4 @@
+using TeamHJD.Game.Presentation.Scene;
 using System;
 using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
@@ -41,11 +42,13 @@ public class FieldTurretMissile : MonoBehaviour
     private string _missileSoundId; // MissileFlying SFX ID 저장
     private string _missileDetectId; // MissileDetect SFX ID 저장
     private bool _isInitialized;
+    private FieldSimulationActor _simulation;
+    private double GameSeconds => (_simulation ??= GetComponent<FieldSimulationActor>())?.Seconds ?? Time.timeAsDouble;
     private bool _isExploding;
     private bool _hasAppliedExplosion;
-    private float _homingStartsAt;
-    private float _expiresAt;
-    private float _explosionDamageAt;
+    private double _homingStartsAt;
+    private double _expiresAt;
+    private double _explosionDamageAt;
     
     public void Initialize(Transform target, float damage)
     {
@@ -87,8 +90,8 @@ public class FieldTurretMissile : MonoBehaviour
         _initialDirection = transform.up;
         _currentSpeed = initialSpeed;
         rb.linearVelocity = _initialDirection * _currentSpeed;
-        _homingStartsAt = Time.time + initialStraightTime;
-        _expiresAt = Time.time + 10f;
+        _homingStartsAt = GameSeconds + initialStraightTime;
+        _expiresAt = GameSeconds + 10f;
         _isInitialized = true;
 
         // MissileFlying SFX 재생 및 ID 저장
@@ -106,20 +109,20 @@ public class FieldTurretMissile : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (!_isInitialized) return;
+        if (!_isInitialized || (_simulation != null && !_simulation.CanAdvance)) return;
         if (_isExploding)
         {
-            if (!_hasAppliedExplosion && Time.time >= _explosionDamageAt)
+            if (!_hasAppliedExplosion && GameSeconds >= _explosionDamageAt)
                 ApplyExplosionDamage();
             return;
         }
-        if (Time.time >= _expiresAt)
+        if (GameSeconds >= _expiresAt)
         {
             BeginExplosion();
             return;
         }
 
-        _isHoming = Time.time >= _homingStartsAt;
+        _isHoming = GameSeconds >= _homingStartsAt;
         DrawTargetLineToTarget();
         SearchForNewTarget();
         AccelerateToTarget();
@@ -198,7 +201,7 @@ public class FieldTurretMissile : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (_isInitialized && isActiveAndEnabled)
+        if (_isInitialized && isActiveAndEnabled && (_simulation == null || _simulation.CanAdvance))
             BeginExplosion();
     }
 
@@ -209,7 +212,7 @@ public class FieldTurretMissile : MonoBehaviour
         _isExploding = true;
         // Release synchronously, before effects or delayed damage can be interrupted.
         ReleaseTargetReservation();
-        _explosionDamageAt = Time.time + 0.1f;
+        _explosionDamageAt = GameSeconds + 0.1f;
         rb.linearVelocity = Vector2.zero;
         if (_sr != null) _sr.enabled = false;
         if (minimapMissile != null) minimapMissile.enabled = false;
@@ -217,6 +220,7 @@ public class FieldTurretMissile : MonoBehaviour
         {
             Vector3 position = explosionPosition != null ? explosionPosition.position : transform.position;
             GameObject explosion = Instantiate(explodePrefab, position, Quaternion.identity);
+            if (_simulation?.TimeSource != null) FieldSimulationActor.Attach(explosion, _simulation.TimeSource, _simulation.GameplayCancellation, destroyOnCompletion: true);
             explosion.GetComponent<Explode>().TriggerExplosion();
         }
     }

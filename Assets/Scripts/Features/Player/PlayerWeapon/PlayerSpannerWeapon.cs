@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using TeamHJD.Game.Presentation.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -29,8 +30,12 @@ public sealed class PlayerSpannerWeapon : MonoBehaviour
     private PlayerControlState _controls;
     private Vector2 _swingDirection;
     private float _swingRemaining;
-    private float _nextAttackTime;
-    private float _impactAt;
+    private double _nextAttackTime;
+    private PlayerMatchPresence _presence;
+    private PlayerMatchPresence Presence => _presence != null ? _presence :
+        _owner != null ? _presence = _owner.GetComponent<PlayerMatchPresence>() : null;
+    private double GameSeconds => Presence?.FieldSeconds ?? Time.timeAsDouble;
+    private double _impactAt;
     private bool _pendingStrike;
     private bool _repairIntent;
     public float AttackInterval => Mathf.Max(.05f, _attackInterval);
@@ -48,30 +53,32 @@ public sealed class PlayerSpannerWeapon : MonoBehaviour
 
     public bool TryAttack(Vector2 direction)
     {
+        if (Presence != null && !Presence.CanSimulateField) return false;
         if (!isActiveAndEnabled || _owner == null || (_controls != null && !_controls.CanAct) ||
-            !PlayerAimUtility.IsValidDirection(direction) || _pendingStrike || Time.time < _nextAttackTime)
+            !PlayerAimUtility.IsValidDirection(direction) || _pendingStrike || GameSeconds < _nextAttackTime)
             return false;
-        _nextAttackTime = Time.time + AttackInterval;
+        _nextAttackTime = GameSeconds + AttackInterval;
         _swingRemaining = Mathf.Max(.01f, _swingSeconds);
         _swingDirection = direction.normalized;
         _repairIntent = _repair != null && _repair.CanRepair(_owner, _swingDirection);
         bool animated = _motion != null && _motion.PlayToolAction(_repairIntent);
         float delay = animated ? _motion.ToolImpactDelay(_repairIntent) : _swingSeconds * .5f;
-        _impactAt = Time.time + Mathf.Max(0f, delay);
-        _nextAttackTime = Mathf.Max(_nextAttackTime, _impactAt);
+        _impactAt = GameSeconds + Mathf.Max(0f, delay);
+        _nextAttackTime = System.Math.Max(_nextAttackTime, _impactAt);
         _pendingStrike = true;
         return true;
     }
 
     private void Update()
     {
+        if (Presence != null && !Presence.CanSimulateField) return;
         if (!_pendingStrike) return;
         if (_owner == null || (_controls != null && !_controls.CanAct))
         {
             _pendingStrike = false;
             return;
         }
-        if (Time.time < _impactAt) return;
+        if (GameSeconds < _impactAt) return;
         _pendingStrike = false;
         if (_repairIntent)
         {

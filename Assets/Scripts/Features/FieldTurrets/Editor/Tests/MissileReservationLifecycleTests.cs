@@ -112,7 +112,7 @@ public sealed class MissileReservationLifecycleTests
     {
         var missile = MakeMissile(Acquire());
         missile.StopAllCoroutines();
-        SetField(missile, "_expiresAt", Time.time - 1f);
+        SetField(missile, "_expiresAt", Time.timeAsDouble - 1);
         float deadline = Time.realtimeSinceStartup + 3f;
         while (!GetField<bool>(missile, "_isExploding") && Time.realtimeSinceStartup < deadline)
             yield return null;

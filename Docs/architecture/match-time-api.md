@@ -32,7 +32,7 @@ Domain/Application은 Unity·NGO에 의존하지 않는다. SDK 어댑터만 원
 
 `Restore(gameSeconds)`는 현재의 준비된 원본 시각을 기준으로 게임 초를 복원하고 새 epoch를 발행한다. scheduler는 이전 epoch 예약을 취소한다. Feature는 복원한 상태에 맞춰 다시 등록한다. 체크포인트에는 원본 NGO timestamp나 callback delegate를 저장하지 않는다.
 
-개인 메뉴는 공유 Match 시간을 변경하지 않는다. 우주선 정지는 Host의 참가자 판정에 연결하며 필드 정지 중에도 네트워크·허브 UI/이동은 계속해야 한다. 이 정책의 실제 Scene 연결은 후속 구현이다.
+개인 메뉴는 공유 Match 시간을 변경하지 않는다. 우주선 정지는 Host의 참가자 판정에 연결하며 필드 정지 중에도 네트워크·허브 UI/이동은 계속해야 한다. 권위 Scene의 위치 등록과 필드 Feature 연결은 [필드 정지 API](match-field-pause-api.md)를 따른다. Client 출입 요청/시각 복제는 별도 통합이다.
 
 현재 Weather는 `IMatchScheduledEnvironmentFeature.BindAuthority`로 공용 scheduler를 받고 CountTick이 제작 간격을 등록한다. 정식 바인딩 중에는 CountTick/WeatherManager의 polling 호환 경로가 동시에 진행하지 않는다. 기존 날씨 선택·seed·예고·셰이더 규칙은 유지했다. 실제 TimeOfDay source는 현재 없어 새 Feature가 같은 확장 계약을 사용할 수 있도록 제공한다.
 
@@ -62,4 +62,4 @@ weatherTimer.Dispose();
 
 ## 검증 상태
 
-`MatchTimeTests` 11개와 `MatchCoordinatorTests` 7개가 통과했다. 최초 결합 실행의 Scene fixture가 실패하여 수정한 뒤 `MatchTimeSceneTests` 1개만 별도 실행해 통과했다. 실제 Initial_Stage Host에서 시간 진행·예약 실행·완료 후 차단을 확인했으며 초기 실패 로그도 보존한다. 두 실행을 하나의 19/19 실행으로 표시하지 않는다. 참가자 우주선 필드 정지·Client 시각 복제·Weather 예약 이관 완료를 뜻하지 않는다.
+`MatchTimeTests` 11개와 `MatchCoordinatorTests` 7개가 통과했다. 최초 결합 실행의 Scene fixture가 실패하여 수정한 뒤 `MatchTimeSceneTests` 1개만 별도 실행해 통과했다. 실제 Initial_Stage Host에서 시간 진행·예약 실행·완료 후 차단을 확인했으며 초기 실패 로그도 보존한다. 두 실행을 하나의 19/19 실행으로 표시하지 않는다. 이 결과는 초기 시계 바인딩 검증이다. 후속 필드 정지 검증은 별도 문서를 따른다. Weather 예약 이관은 이후 전용 검사 3개와 Scene 검사로 확인했으며 Client 시각 복제는 아직 연결하지 않았다.

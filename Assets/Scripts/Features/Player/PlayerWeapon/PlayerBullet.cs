@@ -1,3 +1,4 @@
+using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -25,6 +26,9 @@ public sealed class PlayerBullet : MonoBehaviour
     [FormerlySerializedAs("targetTag")]
     [SerializeField] private string _targetTag = "Enemy";
     private bool _hasHit;
+    private FieldSimulationActor _simulation;
+    private double _expiresAt = double.PositiveInfinity;
+    private double GameSeconds => (_simulation ??= GetComponent<FieldSimulationActor>())?.Seconds ?? Time.timeAsDouble;
     private PlayerProjectileView _view;
     private readonly List<Collider2D> _hitboxes = new();
 
@@ -80,9 +84,14 @@ public sealed class PlayerBullet : MonoBehaviour
 #endif
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
-        Destroy(gameObject, _lifetime);
+        _expiresAt = GameSeconds + _lifetime;
     }
 
+    private void Update()
+    {
+        if (_simulation != null && !_simulation.CanAdvance) return;
+        if (GameSeconds >= _expiresAt) Destroy(gameObject);
+    }
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -94,7 +103,7 @@ public sealed class PlayerBullet : MonoBehaviour
 
     private void ProcessHit(GameObject target)
     {
-        if (_hasHit || target == null || target.CompareTag("Player") || target.CompareTag("Bullet")) return;
+        if ((_simulation != null && !_simulation.CanAdvance) || _hasHit || target == null || target.CompareTag("Player") || target.CompareTag("Bullet")) return;
         _hasHit = true;
         foreach (Collider2D hitbox in _hitboxes)
             if (hitbox != null) hitbox.enabled = false;

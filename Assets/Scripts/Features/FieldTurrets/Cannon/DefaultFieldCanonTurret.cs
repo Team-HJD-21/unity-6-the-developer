@@ -33,6 +33,7 @@ public abstract class DefaultFieldCanonTurret : FieldTurretBase
     protected override void Update()
     {
         base.Update();
+        if (!CanSimulate) return;
         UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }

@@ -1,3 +1,4 @@
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -46,7 +47,10 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField, Range(0f, 180f)] private float _cryoSpreadAngle = 25f;
     private PlayerSkillController _skills;
     private PlayerSpriteMotion _motion;
-    private float _nextShotTime;
+    private double _nextShotTime;
+    private PlayerMatchPresence _presence;
+    private PlayerMatchPresence Presence => _presence ??= GetComponentInParent<PlayerMatchPresence>();
+    private double GameSeconds => Presence?.FieldSeconds ?? Time.timeAsDouble;
     private bool _reportedConfigurationError;
     public WeaponType CurrentWeapon => _currentWeapon;
 
@@ -75,7 +79,8 @@ public class PlayerAttack : MonoBehaviour
 
     public bool TryFire()
     {
-        if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || Time.time < _nextShotTime) return false;
+        if (Presence != null && !Presence.CanSimulateField) return false;
+        if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || GameSeconds < _nextShotTime) return false;
         if (_currentWeapon == WeaponType.Spanner) return TrySwingSpanner();
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
@@ -88,7 +93,7 @@ public class PlayerAttack : MonoBehaviour
         if (!fired) return false;
 
         float interval = isCryo ? _cryoInterval : _defaultGunInterval;
-        _nextShotTime = Time.time + Mathf.Max(.01f, interval);
+        _nextShotTime = GameSeconds + Mathf.Max(.01f, interval);
         _weaponRig.ShowShotFlash(color);
         if (_motion != null) _motion.PlayRangedShot();
         return true;
@@ -126,6 +131,8 @@ public class PlayerAttack : MonoBehaviour
     private bool FireProjectile(Vector3 spawnPosition, Vector2 direction, Color color, float damage, bool cryogenic)
     {
         var bullet = Instantiate(_bulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
+        var presence = GetComponentInParent<PlayerMatchPresence>();
+        if (presence?.TimeSource != null) FieldSimulationActor.Attach(bullet.gameObject, presence.TimeSource, presence.GameplayCancellation, destroyOnCompletion: true);
         if (bullet.Initialize(color, damage, direction, cryogenic)) return true;
         Destroy(bullet.gameObject);
         return false;
@@ -170,7 +177,7 @@ public class PlayerAttack : MonoBehaviour
     private bool TrySwingSpanner()
     {
         if (_spanner == null || !TryGetAimDirection(out Vector2 direction) || !_spanner.TryAttack(direction)) return false;
-        _nextShotTime = Time.time + _spanner.AttackInterval;
+        _nextShotTime = GameSeconds + _spanner.AttackInterval;
         return true;
     }
 }

@@ -18,7 +18,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IEncounterEnvironmentConsumer, IEncounterSpawnContextConsumer, IEncounterOriginRequestTarget
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IEncounterEnvironmentConsumer, IEncounterSpawnContextConsumer, IEncounterOriginRequestTarget, IFieldSimulationConsumer
 {
     private const int TargetFrameRate = 120;
     [SerializeField] private EncounterEnvironmentProfile environmentProfile;
@@ -137,6 +137,29 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         CancelScheduledEncounters();
         _spawnContextMatch = default; _spawnSources = null; _spawnClock = null; _spawnSeed = null; _spawnGameplay = default;
     }
+    /// <summary>Core의 필드 정지 시계를 실제 적 생성자에 연결합니다. Scene scope가 반환 lease를 소유합니다.</summary>
+    private IMatchTime _fieldTime;
+    private IDisposable _fieldSimulationLease;
+    public IDisposable BindFieldSimulation(IMatchTime time, System.Threading.CancellationToken gameplay)
+    {
+        if (_fieldTime != null) throw new InvalidOperationException("Encounter simulation is already bound.");
+        EnsureEncounterRuntime();
+        if (ExecutionTarget == null) throw new InvalidOperationException("The Encounter requires an enemy executor before simulation binding.");
+        _fieldSimulationLease = ExecutionTarget.BindFieldSimulation(time, gameplay); _fieldTime = time;
+        return new SimulationLease(this, time);
+    }
+    private sealed class SimulationLease : IDisposable
+    {
+        private EnemyNetworkTestLauncher _owner; private readonly IMatchTime _time;
+        public SimulationLease(EnemyNetworkTestLauncher owner, IMatchTime time) { _owner = owner; _time = time; }
+        public void Dispose()
+        {
+            var owner = _owner; _owner = null;
+            if (owner == null || !ReferenceEquals(owner._fieldTime, _time)) return;
+            var lease = owner._fieldSimulationLease; owner._fieldSimulationLease = null; owner._fieldTime = null; lease?.Dispose();
+        }
+    }
+    private bool FieldCanAdvance => _fieldTime == null || (_fieldTime.IsAvailable && !_fieldTime.Snapshot.IsPaused && _fieldTime.Snapshot.Rate > 0);
     public EnemySpawnExecutor ExecutionTarget => _encounterRuntime?.Executor ?? _sceneExecutor;
     public void ConfigureScene(EnemySpawnExecutor executor, EncounterEnvironmentProfile profile)
     {
@@ -446,6 +469,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     /// <summary>Debug Window가 현재 Match snapshot을 전달하고 Encounter 요청을 시작합니다.</summary>
     public bool CanRequestEncounter(out string reason)
     {
+        if (!FieldCanAdvance) { reason = "필드 정지 중에는 새 Encounter를 실행하지 않습니다."; return false; }
         if (_networkManager == null)
         {
             reason = "NetworkManager가 없습니다.";
@@ -547,6 +571,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     public EncounterRequestResult Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot,
         MatchEnvironmentSnapshot environment, EncounterSpawnPlacement placement, long executionSequence)
     {
+        if (!FieldCanAdvance) return new EncounterRequestResult(request.Context.RequestId, executionSequence,
+            snapshot.Revision, EncounterRequestStatus.NotReady, reason: "FieldPaused");
         _requestSequence = executionSequence;
         var cancellation = request.Origin.Kind == SpawnOriginKind.DynamicSource
             ? _spawnSources.GetSourceCancellation(request.Origin.Source) : _spawnGameplay;

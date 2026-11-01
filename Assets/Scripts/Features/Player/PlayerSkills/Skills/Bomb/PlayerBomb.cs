@@ -24,13 +24,15 @@ public sealed class PlayerBomb : PlayerSkillBase
     }
     private void Update()
     {
+        if (!PlayerFieldSimulationUtility.CanAdvance(this)) return;
         _charges.Tick(Time.deltaTime);
         _remainingCooldown = Mathf.Max(0, _remainingCooldown - Time.deltaTime);
     }
     protected override bool TryActivate()
     {
         if (!_charges.TryConsume()) return false;
-        Instantiate(bombPrefab, transform.position, Quaternion.identity);
+        var bomb = Instantiate(bombPrefab, transform.position, Quaternion.identity);
+        PlayerFieldSimulationUtility.BindSpawned(bomb, this);
         _remainingCooldown = CooldownDuration;
         return true;
     }

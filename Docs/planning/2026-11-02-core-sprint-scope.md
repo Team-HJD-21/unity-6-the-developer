@@ -186,3 +186,14 @@ Steam 조사는 다른 단계와 독립적으로 진행할 수 있다. 공개 AP
 | B2 권위 Scene 시간 이관 | MatchTimeService 수명과 Host NGO timestamp 연결. 변경 후 시간/Match 순수 검사 **18개 통과**, Scene fixture 초기 실패 후 수정하여 실제 Play Mode **1/1 별도 통과**. 증거 `B2-Integration/fixed-namespace/results.xml`의 성공 18개와 `fixed-domain-closure/results.xml` | 참가자 출입 필드 정지·Client 시간 복제, Weather scheduler 이관. 순수/Scene 결과를 단일 실행 성공으로 합치지 않음 |
 | B3 현재 Weather 예약 | CountTick/WeatherManager의 Host 예약을 공용 scheduler에 연결. Weather 집중 검사 **3/3**, 별도 실행에서 실제 Initial_Stage 예약 등록·완료 차단 **1/1 확인**. 증거 `B3-Weather/fixed-fixture-reset/results.xml`, `B3-Weather/results.xml`의 Scene 성공 항목. 초기 fixture 누적 카운터 오류와 로그 보존 | 실제 TimeOfDay source·Client 시각 표현은 김진태 Feature/다음 연결 범위. 날씨 추첨·예고·효과 기획을 추가하지 않음 |
 | B6 Steam 조사·설계 | [Steam API 접합 설계](../architecture/steam-integration-design.md)에 Valve·wrapper·NGO community transport 원본을 근거로 플랫폼/Backend 인증·로비/실제 전송·App 수명·식별자·도입/검증 순서를 정리 | SDK/transport 최종 채택과 실계정·AppID/Backend 연동은 후속 구현. 이번 주 범위는 조사·설계이며 패키지는 설치하지 않음 |
+
+
+### 필드 정지 연결과 회귀 보완 (2026-11-02)
+
+- [필드 정지 API](../architecture/match-field-pause-api.md)의 `MatchPresenceService`/`MatchFieldSceneScope`/`PlayerMatchPresence`를 추가했다. Host의 실제 actor 위치 등록과 참가자 전원 우주선 판정을 공용 시계에 연결한다. 정지 중 Player 이동/UI와 연결은 유지한다.
+- Enemy 서버 행동·공격·장치 우회 AI, 터렛 전력 회복·냉각·자동 활성화·공격, Player/터렛 탄환·미사일·지연 타격·폭발·필드 설치물과 관련 쿨다운을 같은 정지에 연결했다. 필드 개체의 물리·Animator/Particle 진행을 보존/복구하고 임시 생성물은 gameplay 완료 취소로 정리한다.
+- Game Debugger Overview에 읽기 전용 필드 상태/배속/참가자 위치를 추가했다. Actor를 전역 검색해서 시간을 임의 선택하지 않고 생성자/소유자로부터 시계·취소를 명시적으로 전달한다.
+- Additive Scene에서 Player가 활성 Hub에 생성되어 HUD와 소속이 달라지는 오류를 고쳤다. 생성 소속은 PlayerStart의 Scene이며 잘못된 부모 Scene은 거부한다. 이 수정은 필드 정지와 별도 커밋으로 둔다.
+- 검증: `B2-FieldPause/results.xml` 초기 **19/19**; 생성물 수명/Player 효과 보강 뒤 `feature-lifetime/results.xml` **84/91**, 실패 7개; fixture/소속/시계 대기와 선행 스폰 이력 반영 후 `verified-waits/results.xml` **10/10**, Unity 종료0. 중간 fixture 인자 컴파일 실패·진단 실행도 보존한다. 서로 다른 실행을 하나의 91/91로 표시하지 않는다.
+- 실제 Initial_Stage 위치 보고에서 공용 시각·터렛 자동 활성화 쿨다운·필드 Rigidbody 정지/재개, Player Rigidbody/Host 유지, 완료 뒤 임시 생성물 정리를 확인했다. 적 스폰·이동, 실제 서버 적에 대한 Player 탄환 피해와 미사일 수명 검사를 함께 수행했다.
+- 남은 B2/B5 연결은 Client의 읽기 시간 anchor, 원격 Player 생성/출입 명령, 실제 Additive 포털 왕복·부팅 Hub 흐름이다. B4 저장/복원은 아직 미구현이며 자동 저장 사건은 선정하지 않는다. Steam SDK는 설치하지 않았다.

@@ -8,7 +8,9 @@
     "TeamHJD.Game.Content.Runtime",
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
-    "TeamHJD.Game.Infrastructure.Fakes"
+    "TeamHJD.Game.Infrastructure.Fakes",
+    "TeamHJD.Game.Presentation",
+    "TeamHJD.Game.FieldTurrets"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
