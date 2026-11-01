@@ -1,11 +1,11 @@
+// 렌치 타격을 예약하고 impact 시 실제 대상을 재검증해 피해·수리와 제작된 연출을 적용합니다.
 using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>Schedules a wrench strike, validates targets at impact, and plays authored feedback.</summary>
 [DisallowMultipleComponent]
-public sealed class PlayerSpannerWeapon : MonoBehaviour
+public sealed partial class PlayerSpannerWeapon : MonoBehaviour
 {
     [SerializeField, Min(.1f)] private float _range = 2f;
     [SerializeField, Range(1f, 180f)] private float _arc = 100f;

@@ -1,11 +1,11 @@
+// 활성 총구에서 무기별 탄환을 발사하고 발사에 맞춰 효과와 재사용 시간을 갱신합니다.
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-/// <summary>활성 총구에서 무기별 탄환을 발사하고 실제 발사에 맞춰 효과와 재사용 시간을 갱신합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInputHandler))]
-public class PlayerAttack : MonoBehaviour
+public partial class PlayerAttack : MonoBehaviour
 {
     [Header("References")]
     [FormerlySerializedAs("bulletPrefab")]
@@ -131,9 +131,8 @@ public class PlayerAttack : MonoBehaviour
     private bool FireProjectile(Vector3 spawnPosition, Vector2 direction, Color color, float damage, bool cryogenic)
     {
         var bullet = Instantiate(_bulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
-        var presence = GetComponentInParent<PlayerMatchPresence>();
-        if (presence?.TimeSource != null) FieldSimulationActor.Attach(bullet.gameObject, presence.TimeSource, presence.GameplayCancellation, destroyOnCompletion: true);
-        if (bullet.Initialize(color, damage, direction, cryogenic)) return true;
+        PlayerFieldSimulationUtility.BindSpawned(bullet.gameObject, this);
+        if (bullet.Initialize(color, damage, direction, cryogenic)) { TrackProjectile(bullet); return true; }
         Destroy(bullet.gameObject);
         return false;
     }

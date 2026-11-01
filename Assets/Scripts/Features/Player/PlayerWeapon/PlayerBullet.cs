@@ -1,12 +1,12 @@
+// 설정된 속도로 이동하며 수명과 충돌 피해를 처리하는 Player 탄환입니다.
 using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-/// <summary>설정된 고정 속도로 이동하며 수명과 충돌 피해를 처리하는 플레이어 탄환입니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
-public sealed class PlayerBullet : MonoBehaviour
+public sealed partial class PlayerBullet : MonoBehaviour
 {
     [Header("References")]
     [FormerlySerializedAs("rb")]
@@ -68,6 +68,7 @@ public sealed class PlayerBullet : MonoBehaviour
             return false;
         }
         _damage = damage;
+        _launchColor = color; _cryogenic = cryogenic;
         _hasHit = false;
         if (_spriteRenderer != null) _spriteRenderer.color = color;
         if (_view != null) _view.Configure(cryogenic, color);
