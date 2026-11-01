@@ -40,6 +40,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public IMatchTime MatchTime => _matchTime?.Clock;
         /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
         public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
+        /// <summary>Game Debugger와 통합 검사가 조회하는 현재 권위 Match의 유효 예약 수입니다.</summary>
+        public int PendingMatchTimers => _matchTime?.PendingTimers ?? 0;
         public IMatchEnvironmentSource EnvironmentSource => _matchSession?.Environment ?? _environmentReplica;
         public double LastSpatialRefreshMilliseconds { get; private set; } = double.NaN;
         public double LastTopologyRefreshMilliseconds { get; private set; } = double.NaN;
@@ -162,7 +164,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _coordinator = new MatchCoordinator(session, controlUnitHealth,
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning), _matchTime.Clock);
                 _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
-                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning));
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning), _matchTime.Scheduler);
                 session.InitializeSpawnSources(
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
                     _coordinator.GameplayCancellation);

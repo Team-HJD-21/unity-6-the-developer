@@ -11,7 +11,7 @@
 
 ## 현재 기준
 
-공용 시계·예약 모듈과 실제 권위 Scene 연결은 [Match 시간 API](architecture/match-time-api.md)를 따른다. Initial_Stage Host 시간 진행·예약 실행·완료 후 차단을 확인했다. Client 시각 복제·Weather 예약·참가자 우주선 정지는 후속이며 해당 모듈 제공만으로 완료를 선언하지 않는다.
+공용 시계·예약 모듈과 실제 권위 Scene/Weather 연결은 [Match 시간 API](architecture/match-time-api.md)를 따른다. Initial_Stage Host 시간 진행·예약 실행·완료 후 차단과 현재 Weather의 예약 이관을 확인했다. Client 시각 복제·실제 낮밤 Feature·참가자 우주선 정지는 후속이다.
 
 2026-11-02 PL이 [이번 주 전체 배치: 게임 사이클·Steam 설계·공용 시간·안전장치·Core 정리](planning/2026-11-02-core-sprint-scope.md)를 정리했다. SOS 2인 모두 우주선에 있을 때 필드 정지, 안전장치 복원 시 경험치·재화 기본 보존 및 재화 롤백 옵션, 저장 지점에서 재실행 복원을 기준으로 한다. 저장·복원 API와 이벤트 관찰·요청 책임을 분리하고 자동 호출 이벤트는 이번 범위에서 선택하지 않는다. 기존 Core 전체의 책임·의존성·수명 검토와 필요한 구조 정리, 파트별 API 문서·함수 설명 보강을 포함한 8단계로 준비했다. [함수 설명 규약](architecture/naming-and-architecture-conventions.md#공개-api와-함수-설명)을 함께 따른다. 구현 완료나 기존 PoC Gate 변경을 의미하지 않는다.
 

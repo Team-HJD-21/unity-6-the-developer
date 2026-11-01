@@ -16,7 +16,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly HashSet<IMatchEnvironmentFeature> _features;
         private bool _disposed;
         public MatchEnvironmentSceneScope(MatchSession session, MatchCoordinator coordinator,
-            IMatchWeatherSource weather, IMatchTimeOfDaySource time, Func<bool> mayWrite)
+            IMatchWeatherSource weather, IMatchTimeOfDaySource time, Func<bool> mayWrite, IMatchScheduler scheduler = null)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _weather = weather; _time = time; _features = Collect(weather, time);
@@ -24,7 +24,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 foreach (var feature in _features)
-                    _leases.Add(feature.BindAuthority(session.Config.MatchId, coordinator, session.Config.RandomSeed, mayWrite, coordinator.GameplayCancellation));
+                    _leases.Add(scheduler != null && feature is IMatchScheduledEnvironmentFeature scheduled
+                        ? scheduled.BindAuthority(session.Config.MatchId, coordinator, scheduler, session.Config.RandomSeed, mayWrite, coordinator.GameplayCancellation)
+                        : feature.BindAuthority(session.Config.MatchId, coordinator, session.Config.RandomSeed, mayWrite, coordinator.GameplayCancellation));
                 foreach (var feature in _features) feature.Changed += Publish;
                 session.Disposing += Dispose;
                 Publish();

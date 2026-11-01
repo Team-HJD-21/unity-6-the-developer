@@ -16,7 +16,7 @@ using UnityEngine.UI;
 namespace Map
 {
     [RequireComponent(typeof(WeatherChangeEvent))]
-    public class WeatherManager : MonoBehaviour, IMatchWeatherSource
+    public class WeatherManager : MonoBehaviour, IMatchWeatherSource, IMatchScheduledEnvironmentFeature
     {
         public enum Weather
         {
@@ -168,6 +168,27 @@ namespace Map
             catch { scope.Dispose(); throw; }
         }
 
+        /// <summary>Core 조립부가 공용 예약을 제공하면 CountTick의 제작 간격을 해당 수명에 연결합니다.</summary>
+        /// <returns>날씨 원본/seed와 예약을 함께 해제하는 Match lease입니다.</returns>
+        public IDisposable BindAuthority(MatchId match, IMatchClock clock, IMatchScheduler scheduler,
+            int seed, Func<bool> canWrite, CancellationToken gameplay)
+        {
+            if (scheduler == null) throw new ArgumentNullException(nameof(scheduler));
+            IDisposable scope = BindAuthority(match, clock, seed, canWrite, gameplay);
+            try
+            {
+                if (!ReferenceEquals(_scope, scope)) throw new InvalidOperationException("Weather scope changed during initialization.");
+                CountTick tick = GetComponent<CountTick>();
+                if (tick == null) throw new InvalidOperationException("Scheduled Weather requires its authored CountTick interval component.");
+                _scope.TimerLease = tick.BindScheduler(scheduler, OnScheduledWeather, gameplay);
+                return scope;
+            }
+            catch { scope.Dispose(); throw; }
+        }
+
+        private void OnScheduledWeather(MatchTimerTick tick)
+        { if (MayAdvance) ChangeWeather(); }
+
         public IDisposable BindReplica(MatchId match)
         {
             RequireMatchScope();
@@ -192,6 +213,7 @@ namespace Map
                 float.IsNaN(standaloneDelta) || float.IsInfinity(standaloneDelta) || standaloneDelta < 0)
                 throw new ArgumentOutOfRangeException(nameof(interval));
             if (!MayAdvance) return;
+            if (_scope?.TimerLease != null) return;
             _standaloneSeconds += _requiresMatch ? 0 : Math.Max(0, standaloneDelta);
             double seconds = _requiresMatch ? _scope.Clock.ElapsedSeconds : _standaloneSeconds;
             if (double.IsNaN(_nextWeatherAt)) _nextWeatherAt = seconds + Math.Max(.01f, interval);
@@ -231,6 +253,7 @@ namespace Map
             public readonly IMatchClock Clock;
             public readonly Func<bool> CanWrite;
             public readonly CancellationToken Gameplay;
+            public IDisposable TimerLease;
             public WeatherScope(WeatherManager owner, MatchId match, bool authority, IMatchClock clock, Func<bool> canWrite, CancellationToken gameplay)
             { _owner = owner; Match = match; Authority = authority; Clock = clock; CanWrite = canWrite; Gameplay = gameplay; }
             public void Dispose()
@@ -238,6 +261,7 @@ namespace Map
                 var owner = _owner; _owner = null;
                 if (owner != null && ReferenceEquals(owner._scope, this))
                 { owner._scope = null; owner._matchRandom = null; owner._nextWeatherAt = double.NaN; }
+                TimerLease?.Dispose(); TimerLease = null;
             }
         }
 

@@ -2,11 +2,12 @@
 
 현재 구현: B7 (2026-10-26). 날씨와 시간대는 독립 정보다. 환경 변경은 상태 변경이며 Spawn 명령이 아니다.
 
-2026-11-02 시간 기반 이관: 권위 Initial_Stage의 `IMatchClock`은 `MatchTimeService`의 공용 시계로 연결했다. 네트워크 Host는 NGO ServerTime을, standalone은 Unity double 실시간을 사용한다. 완료 후 예약 차단까지 실제 Scene에서 확인했다. 현재 CountTick/WeatherManager는 주입된 시계를 읽는 기존 polling 경로를 유지하며 신규 scheduler 등록·Client 시각 복제·참가자 필드 정지는 후속이다. [시간 API와 실제 이관 범위](match-time-api.md)를 따른다.
+2026-11-02 시간 기반 이관: 권위 Initial_Stage의 `IMatchClock`은 `MatchTimeService`의 공용 시계로 연결했다. 네트워크 Host는 NGO ServerTime을, standalone은 Unity double 실시간을 사용한다. 완료 후 예약 차단까지 실제 Scene에서 확인했다. 현재 WeatherManager는 `IMatchScheduledEnvironmentFeature`로 공용 scheduler를 받고 CountTick이 제작 간격을 등록한다. 정식 Match에서는 polling 호환 경로가 동시에 전이하지 않는다. Client 시각 복제·참가자 필드 정지는 후속이다. [시간 API와 실제 이관 범위](match-time-api.md)를 따른다.
 
 ## 소유권과 수명
 
 - World의 `Map.WeatherManager`가 현재 날씨와 예고를 결정한다. `CountTick`은 해당 Feature에 간격 진행만 요청한다.
+- scheduler를 제공한 Host 바인딩에서는 CountTick이 간격 예약을 등록하고 lease/취소 토큰으로 해제한다. 긴 프레임의 반복은 한 번으로 합친다. standalone·scheduler 없는 호환 바인딩만 기존 TickWeather 진행을 사용한다.
 - `InitialStageCompositionRoot`가 같은 Scene의 활성 `IMatchWeatherSource` / `IMatchTimeOfDaySource`를 각 1개 이하로 연결한다. 모호한 중복 source는 초기화 실패다.
 - `MatchEnvironmentSceneScope`가 Host의 Match clock·seed·gameplay 취소 lease를 연결한다. 완료 후에는 진행하지 않고 Session 폐기 시 구독과 lease를 정리한다.
 - `MatchEnvironmentRuntime`은 확정 정보를 불변 projection으로 보관한다. HP·날씨 효과·Enemy 알고리즘을 대신 소유하지 않는다.

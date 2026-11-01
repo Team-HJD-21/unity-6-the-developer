@@ -44,6 +44,7 @@ namespace TeamHJD.Game.Tests.EditMode
             while (scene.MatchTime == null && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(scene.MatchTime, Is.Not.Null);
             Assert.That(scene.MatchTime.IsAvailable, Is.True);
+            Assert.That(scene.PendingMatchTimers, Is.GreaterThanOrEqualTo(1), "The authored Weather interval must use the shared scheduler.");
             Assert.That(app.NetworkSession.IsServer, Is.True);
             double before = scene.MatchTime.ElapsedSeconds;
             var probe = new TimerProbe();
@@ -56,6 +57,7 @@ namespace TeamHJD.Game.Tests.EditMode
             timers.Schedule(10, _ => Assert.Fail("Completed gameplay must not run an old reservation."));
             app.CompleteCurrentMatch(MatchOutcome.Defeat, 1000);
             Assert.That(scene.MatchTime.Snapshot.IsPaused, Is.True);
+            Assert.That(scene.PendingMatchTimers, Is.Zero);
             AssertClosed(timers);
         }
 
