@@ -938265,6 +938265,7 @@ MonoBehaviour:
   _sunnyColor: {r: 0.9245283, g: 0.40557134, b: 0.40557134, a: 0.5176471}
   _rainColor: {r: 0.46742615, g: 0.6222011, b: 0.9811321, a: 0.8156863}
   _thunderColor: {r: 0.8938753, g: 0.9622642, b: 0.45843717, a: 0.7529412}
+  _shaderTests: {fileID: 0}
 --- !u!4 &1250254887
 Transform:
   m_ObjectHideFlags: 0

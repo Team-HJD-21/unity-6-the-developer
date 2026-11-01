@@ -133,3 +133,7 @@ GameCI 참고 문서:
 
 - https://game.ci/docs/github/test-runner/
 - https://game.ci/docs/github/builder/
+
+## 항목별 Discord 스레드 알림
+
+이슈·PR·Discussion과 댓글을 각각의 고정 스레드로 묶는 봇 알림 설정은 [DISCORD_THREADS.md](DISCORD_THREADS.md)를 따른다. 기본 비활성 상태이며 봇 준비·실제 전송 검사 후 전환한다. 기여자 그래프와 main/수동 CI 웹후크는 유지한다.
