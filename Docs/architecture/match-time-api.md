@@ -1,6 +1,6 @@
 # Match 공용 시간·예약 API
 
-갱신: 2026-11-02. 상태: 공용 모듈 구현·집중 검사 10/10 통과. **현재 Scene/MatchCoordinator·Weather 연결은 아직 이관 전**이다. 이 문서의 제공 모듈과 실제 게임 연결 상태를 구분한다. [전체 배치](../planning/2026-11-02-core-sprint-scope.md)를 따른다.
+갱신: 2026-11-02. 상태: 공용 모듈·권위 Scene 이관 구현. 순수 시간/Match 검사 18개와 실제 Initial_Stage Play Mode 1개를 별도 실행해 통과했다. **참가자 출입에 따른 필드 정지·Client 시간 복제·Weather 예약 이관은 후속**이다. [전체 배치](../planning/2026-11-02-core-sprint-scope.md)를 따른다.
 
 ## 역할과 호출 순서
 
@@ -12,6 +12,7 @@
 | `MatchClock` / `IMatchTime` | 권위 Match가 소유, Feature는 읽기 | 원본 timestamp와 anchor로 경과 초·정지·배속 계산 |
 | `MatchTimeSnapshot` | 네트워크 표현/진단 읽기 자료 | Match·epoch·revision·원본/게임 anchor·배속·준비 상태. 제어 변경 사이에는 같은 anchor 유지 |
 | `MatchScheduler` / `IMatchScheduler` | Match가 소유, Weather 등 Feature가 등록 | 게임 초 deadline의 단발/반복 실행·취소·처리 상한 |
+| `MatchTimeService` | Scene 조립부가 소유 | 현재 Match의 clock/scheduler와 완료·폐기 시 예약 차단을 함께 관리 |
 
 ```text
 권위 Match 조립 → timestamp source 주입 → MatchClock 생성 → MatchScheduler 생성
@@ -19,7 +20,9 @@
 해제: Feature 예약 lease/구독 해제 → scheduler.Dispose() → clock.Dispose()
 ```
 
-Domain/Application은 Unity·NGO에 의존하지 않는다. SDK 어댑터만 원본 시각을 읽는다. `IMatchClock`의 기존 조회 계약은 유지하며 이번 모듈을 주입하는 작업을 별도 연결 변경으로 수행한다.
+Domain/Application은 Unity·NGO에 의존하지 않는다. SDK 어댑터만 원본 시각을 읽는다. `InitialStageCompositionRoot`는 권위 Match에 `MatchTimeService`를 만들고, 네트워크 Match에는 `NgoTimestampSource`, standalone에는 `UnityTimestampSource`를 주입한다. `MatchCoordinator`의 IMatchClock은 이를 전달한다. Scene Update는 `MatchTimeService.Pump(Time.timeScale)`을 호출하며 정식 경로에서 deltaTime을 다시 누적하지 않는다.
+
+`InitialStageCompositionRoot.MatchTime` / `MatchTimers`는 조립부가 Feature에 주입할 읽기/예약 경계다. Feature가 Scene을 전역 검색하는 용도로 사용하지 않는다. Match 완료·폐기 시작에는 예약을 취소하고 추가 등록을 차단하며, 소비자 바인딩 해제 후 시간 서비스를 Dispose한다. 기존 `MatchCoordinator.Tick`은 시계를 주입하지 않은 독립 검사/호환 실행에서만 유효하다.
 
 ## 권위 시간과 준비·복원
 
@@ -57,4 +60,4 @@ weatherTimer.Dispose();
 
 ## 검증 상태
 
-`MatchTimeTests`는 timestamp 차이, 정지·배속, 준비 해제/재개, 원본 역행·복원, 반복 지연 합치기, 취소, 실행량 상한, callback 중 추가/정지/복원/해제, 잘못된 입력을 대상으로 한다. 실제 실행 결과는 전체 배치의 결과 기록에 누적한다. 현재 모듈 테스트가 NGO Host/Client·실제 우주선 필드 정지·Weather 이관 완료를 대신하지 않는다.
+`MatchTimeTests` 11개와 `MatchCoordinatorTests` 7개가 통과했다. 최초 결합 실행의 Scene fixture가 실패하여 수정한 뒤 `MatchTimeSceneTests` 1개만 별도 실행해 통과했다. 실제 Initial_Stage Host에서 시간 진행·예약 실행·완료 후 차단을 확인했으며 초기 실패 로그도 보존한다. 두 실행을 하나의 19/19 실행으로 표시하지 않는다. 참가자 우주선 필드 정지·Client 시각 복제·Weather 예약 이관 완료를 뜻하지 않는다.

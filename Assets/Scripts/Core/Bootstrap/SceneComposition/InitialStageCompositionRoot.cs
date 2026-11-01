@@ -9,6 +9,7 @@ using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Content.Authoring;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Infrastructure;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
@@ -29,11 +30,16 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
         private MatchCoordinator _coordinator;
+        private MatchTimeService _matchTime;
         private IMatchWeatherSource _weatherSource;
         private IMatchTimeOfDaySource _timeOfDaySource;
         private IDisposable _environmentScope;
         private IMatchEnvironmentSource _environmentReplica;
         public MatchCoordinator MatchCoordinator => _coordinator;
+        /// <summary>현재 권위 Match에 주입된 공용 게임 시계입니다. Client 표현 시계는 별도 복제 경계에서 연결합니다.</summary>
+        public IMatchTime MatchTime => _matchTime?.Clock;
+        /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
+        public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
         public IMatchEnvironmentSource EnvironmentSource => _matchSession?.Environment ?? _environmentReplica;
         public double LastSpatialRefreshMilliseconds { get; private set; } = double.NaN;
         public double LastTopologyRefreshMilliseconds { get; private set; } = double.NaN;
@@ -148,8 +154,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
                 var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
                     .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitHealthSource>().Single();
-                _coordinator = new MatchCoordinator(session, controlUnitHealth,
+                ITimestampSource timestamp = network == null ? (ITimestampSource)new UnityTimestampSource() :
+                    new NgoTimestampSource((_networkBinding.Connection as NgoNetworkSession)?.Manager ??
+                        throw new InvalidOperationException("The authority Match requires its composed NGO connection."));
+                _matchTime = new MatchTimeService(session, timestamp,
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
+                _coordinator = new MatchCoordinator(session, controlUnitHealth,
+                    () => HasCurrentMatch && (network == null || network.IsGameplayRunning), _matchTime.Clock);
                 _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning));
                 session.InitializeSpawnSources(
@@ -403,6 +414,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RegionSceneBinding regions = _regionBinding;
             TurretMatchBinding turrets = _turretBinding;
             MatchCoordinator coordinator = _coordinator;
+            MatchTimeService time = _matchTime;
             IDisposable environment = _environmentScope;
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
@@ -410,6 +422,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
             _coordinator = null;
+            _matchTime = null;
             _environmentScope = null; _environmentReplica = null;
             _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
@@ -425,6 +438,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RunCleanup(() => { if (regions != null) regions.UnbindMatch(); }, errors);
             RunCleanup(() => { if (turrets != null) turrets.UnbindMatch(matchId); }, errors);
             RunCleanup(() => { if (input != null) input.LayoutChanged -= OnTurretLayoutChanged; }, errors);
+            RunCleanup(() => time?.Dispose(), errors);
             if (endOwnedMatch && ownedMatch) RunCleanup(() => host?.TryEndMatch(matchId), errors);
             if (notifyNetworkEnd) RunCleanup(() => _networkBinding?.OnAuthorityMatchReleased(matchId), errors);
             if (errors.Count > 0) throw new AggregateException("Scene cleanup failed after all owned bindings were released.", errors);
@@ -540,7 +554,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void Update()
         {
-            _coordinator?.Tick(Time.deltaTime);
+            _matchTime?.Pump(Time.timeScale);
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
             if (!_matchSession.IsGameplayRunning) return;

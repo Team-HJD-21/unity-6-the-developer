@@ -33,17 +33,19 @@ namespace TeamHJD.Game.Application
         private readonly List<Entry> _work = new List<Entry>();
         private readonly List<Entry> _cancelledEntries = new List<Entry>();
         private readonly int _ownerThread, _capacity, _callbacksPerPump;
+        private readonly CancellationToken _lifetime;
         private Guid _epoch;
         private long _sequence;
         private bool _pumping, _disposed;
         public int PendingCount { get { CheckOwner(); Prune(); return _entries.Count; } }
 
-        public MatchScheduler(IMatchTime clock, int capacity = 4096, int callbacksPerPump = 64)
+        public MatchScheduler(IMatchTime clock, int capacity = 4096, int callbacksPerPump = 64, CancellationToken lifetime = default)
         {
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
             if (callbacksPerPump <= 0) throw new ArgumentOutOfRangeException(nameof(callbacksPerPump));
             _capacity = capacity; _callbacksPerPump = callbacksPerPump;
+            _lifetime = lifetime;
             _ownerThread = Thread.CurrentThread.ManagedThreadId; _epoch = clock.Snapshot.Epoch;
         }
 
@@ -59,6 +61,7 @@ namespace TeamHJD.Game.Application
         private IDisposable Add(double delay, double interval, Action<MatchTimerTick> callback, CancellationToken cancellation)
         {
             CheckOwner();
+            _lifetime.ThrowIfCancellationRequested();
             if (callback == null) throw new ArgumentNullException(nameof(callback));
             if (double.IsNaN(delay) || double.IsInfinity(delay) || delay < 0) throw new ArgumentOutOfRangeException(nameof(delay));
             cancellation.ThrowIfCancellationRequested(); Prune();
@@ -78,6 +81,7 @@ namespace TeamHJD.Game.Application
         {
             CheckOwner();
             if (_pumping) throw new InvalidOperationException("A Match scheduler cannot pump recursively.");
+            if (_lifetime.IsCancellationRequested) { CancelAll(); return; }
             Prune();
             if (!_clock.IsAvailable || _clock.Snapshot.IsPaused || _clock.Snapshot.Rate == 0) return;
             double now = _clock.ElapsedSeconds;
@@ -91,6 +95,7 @@ namespace TeamHJD.Game.Application
                 foreach (Entry entry in _work)
                 {
                     if (_disposed) break;
+                    if (_lifetime.IsCancellationRequested) { CancelAll(); break; }
                     if (_clock.Snapshot.Epoch != _epoch) { CancelAll(); _epoch = _clock.Snapshot.Epoch; break; }
                     if (!_clock.IsAvailable || _clock.Snapshot.IsPaused || _clock.Snapshot.Rate == 0) break;
                     if (entry.IsCancelled) { Remove(entry); continue; }
@@ -133,6 +138,8 @@ namespace TeamHJD.Game.Application
         private void Remove(Entry entry) { _queue.Remove(entry); _entries.Remove(entry); entry.Dispose(); }
         private void CancelAll()
         { foreach (Entry entry in _entries) entry.Dispose(); _entries.Clear(); _queue.Clear(); }
+        /// <summary>Match 소유자가 완료·중단 시 모든 예약을 취소합니다. callback 중 호출해도 뒤의 작업을 차단합니다.</summary>
+        public void CancelPending() { CheckOwner(); CancelAll(); }
         public void Dispose()
         {
             if (_disposed) return;

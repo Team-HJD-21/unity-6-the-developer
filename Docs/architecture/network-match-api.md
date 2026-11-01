@@ -86,7 +86,7 @@ AppRoot.Update의 공통 pump는 Unity 주 스레드에서 전송/조율 작업�
 
 - 실제 Player 이동/전투 복제와 각 Feature의 NetworkBehaviour는 Player/UI·FieldTurret·Enemy/Encounter 책임이다.
 - Steam 인증·초대·매칭, SOS·중도 참가·Host Migration·전체 공동 Scene 이동은 이번 기반 범위 밖이다.
-- NGO의 서버 시간 API가 존재해도 현재 `IMatchClock`이 이를 사용하도록 교체된 것은 아니다. 낮·밤/날씨용 시간 서비스는 협의 후 별도 변경한다.
+- 2026-11-02 권위 Initial_Stage의 공용 시계가 NGO ServerTime 기반으로 연결됐다. Client의 게임 시각 anchor 복제·참가자 출입 정지·Weather 예약 이관은 별도이며 [시간 API](match-time-api.md)의 구현 범위를 따른다.
 - SDK 두 인스턴스·개발 actor·이전 Windows fixture 성공과 최신 두 실행 파일의 실제 Player 게임 인수를 구분한다.
 
 주말 공유 시 Player/UI의 서버 actor 등록 시점, FieldTurret·Enemy/Encounter 상태 writer와 표시 복제의 경계, 공동 Scene 정책의 후속 소유자를 확인한다. 현재 Runtime을 재설계한다고 발표하기 전에 실제 API와 후속 제안을 분리해 설명한다.

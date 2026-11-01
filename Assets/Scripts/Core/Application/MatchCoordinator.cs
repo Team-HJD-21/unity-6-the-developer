@@ -1,6 +1,6 @@
 // 실제 Feature 사실을 모드 정책에 전달하고 한 Match의 단일 완료를 조율합니다.
 // 완료/폐기 때 gameplay 취소 토큰과 구독을 닫으며 Session 자체는 소유하지 않습니다.
-// 게임 시간은 Unity adapter가 전달하고 네트워크 연결·UI·HP 원본은 별도 소유자가 관리합니다.
+// 정식 게임 시간은 주입된 공용 시계에서 읽고 네트워크 연결·UI·HP 원본은 별도 소유자가 관리합니다.
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,6 +14,8 @@ namespace TeamHJD.Game.Application
         private readonly MatchSession _session;
         private readonly IControlUnitHealthSource _controlUnit;
         private readonly Func<bool> _isAuthority;
+        private readonly IMatchClock _clock;
+        private double _manualElapsed;
         private readonly CancellationTokenSource _gameplay = new CancellationTokenSource();
         private readonly CancellationToken _gameplayToken;
         private IDisposable _events;
@@ -21,17 +23,19 @@ namespace TeamHJD.Game.Application
         private long _sequence;
         public MatchId MatchId => _session.Config.MatchId;
         public MatchCompletion Completion => _session.Completion;
-        public double ElapsedSeconds { get; private set; }
+        public double ElapsedSeconds => _clock?.ElapsedSeconds ?? _manualElapsed;
         public CancellationToken GameplayCancellation => _gameplayToken;
         public bool IsGameplayRunning => _started && !_disposed && !_gameplayToken.IsCancellationRequested &&
             _session.IsGameplayRunning && _isAuthority();
         public event Action<MatchCompletion> Completed;
 
-        public MatchCoordinator(MatchSession session, IControlUnitHealthSource controlUnit, Func<bool> isAuthority)
+        public MatchCoordinator(MatchSession session, IControlUnitHealthSource controlUnit, Func<bool> isAuthority,
+            IMatchClock clock = null)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _controlUnit = controlUnit ?? throw new ArgumentNullException(nameof(controlUnit));
             _isAuthority = isAuthority ?? throw new ArgumentNullException(nameof(isAuthority));
+            _clock = clock;
             _gameplayToken = _gameplay.Token;
         }
 
@@ -47,14 +51,17 @@ namespace TeamHJD.Game.Application
             EvaluateProgress();
         }
 
+        /// <summary>공용 시계를 주입하지 않은 독립 검사/호환 실행에서만 게임 초를 수동 진행합니다.</summary>
+        /// <remarks>정식 Scene은 MatchTimeService를 Pump합니다. 주입된 시계와 이 누적 경로를 동시에 사용하지 않습니다.</remarks>
         public void Tick(double deltaSeconds)
         {
             if (double.IsNaN(deltaSeconds) || double.IsInfinity(deltaSeconds) || deltaSeconds < 0)
                 throw new ArgumentOutOfRangeException(nameof(deltaSeconds));
+            if (_clock != null) throw new InvalidOperationException("Pump the injected Match time service instead of accumulating a second clock.");
             if (!IsGameplayRunning) return;
             double next = ElapsedSeconds + deltaSeconds;
             if (double.IsInfinity(next)) throw new ArgumentOutOfRangeException(nameof(deltaSeconds));
-            ElapsedSeconds = next;
+            _manualElapsed = next;
         }
 
         public void EvaluateProgress()

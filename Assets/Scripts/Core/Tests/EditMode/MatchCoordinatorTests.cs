@@ -23,6 +23,11 @@ namespace TeamHJD.Game.Tests.EditMode
         {
             public Command() : base(Guid.NewGuid(), new PlayerId("host")) { }
         }
+        private sealed class Timestamp : ITimestampSource
+        {
+            public double Now;
+            public bool TryReadSeconds(out double seconds) { seconds = Now; return true; }
+        }
         private sealed class Rules : IModeRules, IMatchProgressRules
         {
             private readonly StoryModeRules _story = new StoryModeRules();
@@ -119,6 +124,35 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.Throws<ArgumentException>(() => session.EvaluateProgress(
                 new MatchProgressSnapshot(new MatchId("other"), 0, 100, 0)));
             Assert.That(session.Completion, Is.Null);
+        }
+
+        [Test]
+        public void InjectedTimeDrivesProgressAndCompletionCancelsAllTimers()
+        {
+            using var session = Session(new Rules()); var source = new Timestamp(); var cu = new Cu();
+            using var time = new MatchTimeService(session, source, () => true);
+            using var coordinator = new MatchCoordinator(session, cu, () => true, time.Clock);
+            coordinator.Start(); time.Pump(2);
+            source.Now = 4; time.Pump(2);
+            Assert.That(coordinator.ElapsedSeconds, Is.EqualTo(8));
+            Assert.Throws<InvalidOperationException>(() => coordinator.Tick(1));
+            time.Scheduler.Schedule(20, _ => Assert.Fail("A completed Match must not run old timers."));
+            cu.Destroy();
+            Assert.That(time.PendingTimers, Is.Zero); Assert.That(time.Clock.Snapshot.IsPaused, Is.True);
+            source.Now += 20; time.Pump(2); Assert.That(time.Clock.ElapsedSeconds, Is.EqualTo(8));
+            Assert.Throws<OperationCanceledException>(() => time.Scheduler.Schedule(0, _ => { }));
+        }
+
+        [Test]
+        public void SessionDisposingStopsTimersBeforeProviderResourcesAreDisposed()
+        {
+            var session = Session(new Rules()); var source = new Timestamp();
+            using var time = new MatchTimeService(session, source, () => true);
+            time.Scheduler.Schedule(0, _ => Assert.Fail("Disposing must cancel due work."));
+            session.Dispose();
+            Assert.That(time.Clock.Snapshot.IsPaused, Is.True); Assert.That(time.PendingTimers, Is.Zero);
+            Assert.Throws<OperationCanceledException>(() => time.Scheduler.Schedule(0, _ => { }));
+            Assert.DoesNotThrow(time.Dispose);
         }
     }
 }

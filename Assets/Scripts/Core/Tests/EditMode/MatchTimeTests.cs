@@ -138,5 +138,16 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.Throws<ArgumentOutOfRangeException>(() => scheduler.Schedule(1, _ => { }));
             Assert.That(scheduler.PendingCount, Is.Zero);
         }
+
+        [Test]
+        public void MatchLifetimeCancellationInsideCallbackStopsRemainingAndFutureWork()
+        {
+            var source = new Source(); using var clock = Clock(source); using var lifetime = new CancellationTokenSource();
+            using var scheduler = new MatchScheduler(clock, lifetime: lifetime.Token);
+            int calls = 0;
+            scheduler.Schedule(0, _ => lifetime.Cancel()); scheduler.Schedule(0, _ => calls++);
+            scheduler.Pump(); Assert.That(calls, Is.Zero); Assert.That(scheduler.PendingCount, Is.Zero);
+            Assert.Throws<OperationCanceledException>(() => scheduler.Schedule(0, _ => calls++));
+        }
     }
 }

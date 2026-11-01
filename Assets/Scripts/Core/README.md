@@ -4,6 +4,8 @@
 
 ## 실행할 프로젝트와 메뉴
 
+현재 권위 Scene의 시간은 [MatchTimeService와 clock/scheduler](../../../Docs/architecture/match-time-api.md)를 사용합니다. Host는 NGO 서버 시각을 읽고 MatchCoordinator는 이를 조회합니다. 실제 Scene의 시간·예약·완료 차단까지 확인했으며 우주선 참가자 정지·Client 시간 복제·Weather 예약 이관은 후속입니다.
+
 현재 작업 프로젝트는 `D:/Dev/Unity/Unity_3D_CBC`이며 브랜치는 `codex/core-sprint-20261026-integration`입니다. 2026-10-28에 전체 Core 통합을 반영했고, 2026-11-02에는 main `5e39728c`를 추가 병합했습니다. Validation 폴더는 과거 검증 이력이며 실행 프로젝트를 그쪽으로 바꾸지 않습니다.
 
 `Assets/Scenes/Gameplay/Initial_Stage.unity`에서 Play Mode를 시작하고 Game 화면을 클릭한 뒤 **Escape**를 누르면 운영 메뉴가 열립니다. `AppRoot.Update()`가 `AppScreenPresenter.Render()`를 호출하고, Escape 입력이 `ScreenManager.ShowMenu()` 또는 `Back()`으로 전달됩니다. 메뉴는 로컬 입력을 잠그며 공유 Match 시간을 정지하지 않습니다.

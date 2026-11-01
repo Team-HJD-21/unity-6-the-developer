@@ -85,7 +85,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 로컬 운영 화면은 [ScreenManager API](screen-management-api.md)를 따른다. 실제 결과/로딩/메뉴와 Button 경로를 연결했고 기존 전투 HUD는 유지한다. 개인 메뉴는 로컬 입력만 차단하며 게임 시간이나 Host pause를 바꾸지 않는다. 화면 close로 Player 사망·다른 화면·전환 잠금을 해제하지 않는다.
 
-2026-10-26: Match 진행은 `MatchCoordinator`가 실제 `IControlUnitHealthSource`를 구독하고, 같은 Session의 `IMatchProgressRules`에 `MatchProgressSnapshot`을 전달한다. CU HP writer는 Feature에 유지한다. 조립부가 `Start()`를 한 번 호출하고 게임 delta를 `Tick()`에 전달한다. 비동기 gameplay 작업은 `GameplayCancellation`을 사용하고, 네트워크 pump/진단의 unscaled 시계와 혼동하지 않는다. 완료/폐기는 토큰을 취소한다. 동일 outcome의 `Session.Complete` 재호출은 기존 불변 결과를 반환하며 결과/보상 제안을 다시 만들지 않는다. 구독/취소 관측 예외가 나더라도 결과와 다른 관측자의 처리는 보존한다.
+Match 진행은 `MatchCoordinator`가 실제 `IControlUnitHealthSource`를 구독하고, 같은 Session의 `IMatchProgressRules`에 `MatchProgressSnapshot`을 전달한다. CU HP writer는 Feature에 유지한다. 2026-11-02 권위 Scene은 `MatchTimeService`의 공용 시계를 주입하고 조립부가 해당 서비스를 Pump한다. `MatchCoordinator.Tick()` 수동 누적은 시계를 주입하지 않은 독립 검사/호환 경로에서만 사용한다. [공용 시간·예약 API](match-time-api.md)를 따른다. 비동기 gameplay 작업은 `GameplayCancellation`을 사용하고, 네트워크 pump/진단의 unscaled 시계와 혼동하지 않는다. 완료/폐기는 토큰을 취소한다. 동일 outcome의 `Session.Complete` 재호출은 기존 불변 결과를 반환하며 결과/보상 제안을 다시 만들지 않는다. 구독/취소 관측 예외가 나더라도 결과와 다른 관측자의 처리는 보존한다.
 
 #442는 아직 미완료다. `LocalAuthority`는 Core 명령의 Match 상태·참가자만 확인하는 로컬 구현이지 NGO Server 또는 Steam 인증 구현이 아니다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
 
