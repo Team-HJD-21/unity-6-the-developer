@@ -1,5 +1,6 @@
 // 현행 Player Prefab의 무기·총구 연결과 구형 컨트롤러 제거 상태를 검증합니다.
 using System.Linq;
+using System.Reflection;
 using System.Collections;
 using UnityEngine.TestTools;
 using NUnit.Framework;
@@ -651,16 +652,14 @@ public sealed class PlayerWeaponMigrationTests
                 Assert.That(((Transform)rigData.FindProperty(field).objectReferenceValue).gameObject.activeSelf, Is.False);
             Assert.That(spanner.TryAttack(Vector2.zero), Is.False);
             Assert.That(spanner.TryAttack(Vector2.down), Is.True);
-            var spannerData = new SerializedObject(spanner);
-            Assert.That(spannerData.FindProperty("_pendingStrike").boolValue, Is.True);
-            Assert.That(spannerData.FindProperty("_impactAt").floatValue, Is.GreaterThan(Time.time));
+            Assert.That((bool)typeof(PlayerSpannerWeapon).GetField("_pendingStrike", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spanner), Is.True);
+            Assert.That(System.Convert.ToDouble(typeof(PlayerSpannerWeapon).GetField("_impactAt", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spanner)), Is.GreaterThan(Time.timeAsDouble));
             Assert.That(player.GetComponent<PlayerSpriteMotion>().IsPlayingToolAction, Is.True);
             Assert.That(spanner.TryAttack(Vector2.down), Is.False, "Holding attack must respect the melee cooldown.");
             attack.SelectNextWeapon();
             Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.DefaultGun));
             Assert.That(spanner.gameObject.activeSelf, Is.False);
-            spannerData.Update();
-            Assert.That(spannerData.FindProperty("_pendingStrike").boolValue, Is.False,
+            Assert.That((bool)typeof(PlayerSpannerWeapon).GetField("_pendingStrike", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spanner), Is.False,
                 "Switching weapons must cancel a strike before it applies damage or repair.");
             Assert.That(player.GetComponent<PlayerSpriteMotion>().IsPlayingToolAction, Is.False);
             Assert.That(rig.ActiveGun.gameObject.activeSelf, Is.True);
