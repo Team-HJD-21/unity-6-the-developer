@@ -1,15 +1,15 @@
 using UnityEngine;
 
-public class EnemyCombat : MonoBehaviour
+/// <summary>
+/// 사거리 안의 플레이어나 터렛에 즉시 피해를 주는 근접 능력이다.
+/// </summary>
+public sealed class EnemyCloseRangeAbility : EnemyAbility
 {
     [SerializeField] private EnemyTargeting enemyTargeting;
-    [SerializeField] private EnemyAttack enemyAttack;
     
     [Header("공격 설정")]
     [SerializeField] private float attackRange = 0.4f;
-    [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private int attackDamage = 5;
-    private float _nextAttackTime;
     
     private Collider2D _bodyCollider;
 
@@ -17,8 +17,6 @@ public class EnemyCombat : MonoBehaviour
     {
         if (enemyTargeting == null)
             enemyTargeting = GetComponent<EnemyTargeting>();
-        if (enemyAttack == null)
-            enemyAttack = GetComponent<EnemyAttack>();
         
         // 공격 거리는 몬스터 몸통 콜라이더의 겉면부터 계산한다.
         foreach (Collider2D collider in GetComponents<Collider2D>())
@@ -32,10 +30,14 @@ public class EnemyCombat : MonoBehaviour
     }
     
     /// <summary>
-    /// 몬스터와 타겟의 활성 몸통 콜라이더 사이 거리가 공격 범위 안인지 확인한다.
+    /// 근접 공격에 필요한 타깃과 몸통 사이의 거리를 확인한다.
     /// </summary>
-    /// <returns>타겟이 공격 범위 안에 있으면 <see langword="true"/>.</returns>
-    public bool IsInAttackRange()
+    public override bool CheckCondition()
+    {
+        return attackDamage > 0 && TryGetTarget(out _) && IsInRange();
+    }
+
+    private bool IsInRange()
     {
         if (_bodyCollider == null || !_bodyCollider.enabled || enemyTargeting.TargetColliders == null)
             return false;
@@ -55,21 +57,32 @@ public class EnemyCombat : MonoBehaviour
         return false;
     }
 
-    public bool TryAttack()
+    protected override bool Activate()
     {
-        // 공격 쿨타임이 남아 있으면 이번 공격을 건너뛴다.
-        if (Time.time < _nextAttackTime)
+        if (!TryGetTarget(out TargetableComponent target))
             return false;
 
-        if (enemyAttack == null || enemyTargeting.Target == null)
+        if (target.TargetType == TargetType.Turret)
+            return target.TryApplyDamage(attackDamage);
+
+        if (target.TargetType != TargetType.Player)
             return false;
 
-        TargetableComponent targetable = enemyTargeting.Target.GetComponent<TargetableComponent>();
-        if (targetable == null || !targetable.CanBeTargeted ||
-            !enemyAttack.Execute(targetable, attackDamage))
+        PlayerInfo player = target.GetComponentInParent<PlayerInfo>();
+        if (player == null)
             return false;
 
-        _nextAttackTime = Time.time + attackCooldown;
+        player.TakeDamage(attackDamage);
         return true;
+    }
+
+    private bool TryGetTarget(out TargetableComponent target)
+    {
+        target = null;
+        if (enemyTargeting == null || enemyTargeting.Target == null)
+            return false;
+
+        target = enemyTargeting.Target.GetComponent<TargetableComponent>();
+        return target != null && target.CanBeTargeted;
     }
 }
