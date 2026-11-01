@@ -1,4 +1,4 @@
-// 현재 Match·실행 권한·참가자를 확인하고 최신 Snapshot을 E에 전달합니다.
+// 현재 Match·실행 권한·참가자를 확인하고 최신 Snapshot을 Enemy/Encounter에 전달합니다.
 // 같은 요청은 최대 한 번 실행하고 확정 결과를 재사용합니다. Unity 메인 스레드 소유입니다.
 using System;
 using TeamHJD.Game.Contracts;
@@ -33,6 +33,7 @@ namespace TeamHJD.Game.Application
             _resolveOrigin = resolveOrigin;
             _ledger = new MatchRequestLedger<EncounterRequestResult>(matchId, requestCapacity);
         }
+        /// <inheritdoc />
         public EncounterRequestResult Submit(EncounterRequest request, PlayerId verifiedIssuer)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));

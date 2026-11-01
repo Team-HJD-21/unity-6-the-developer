@@ -23,7 +23,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public ITurretCommandRequester TurretCommands => _turretCommands?.Requester;
         public ITurretPresentationSource TurretPresentation => _turretCommands?.Presentation;
 
-        /// <summary>Client가 보낸 좌표가 아니라 B의 실제 Host 측 actor만 등록합니다.</summary>
+        /// <summary>Player/UI의 서버 spawn·교체 경로가 현재 Match의 실제 Host 측 actor를 등록합니다.</summary>
+        /// <returns>호출자가 교체·despawn·Match 해제 시 Dispose할 등록 lease입니다. GameObject의 수명을 소유하지 않습니다.</returns>
+        /// <remarks>현재 Match의 명령 scope 조립 후 호출합니다. Client가 제출한 좌표를 actor의 권위 위치로 사용하지 않습니다.</remarks>
         public IDisposable RegisterAuthorityPlayerActor(MatchId matchId, PlayerId playerId, GameObject actor)
         {
             if (_turretCommands == null || _turretCommands.MatchId != matchId)

@@ -76,6 +76,8 @@ namespace TeamHJD.Game.Application
             return regions;
         }
 
+        /// <summary>AppRoot가 매 프레임 호출해 공용 전송·최종 결과·읽기 복제를 처리합니다.</summary>
+        /// <remarks>Unity 메인 스레드의 App 수명 작업입니다. 필드 게임 시간 정지 중에도 계속 호출합니다.</remarks>
         public void PumpNetwork()
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
