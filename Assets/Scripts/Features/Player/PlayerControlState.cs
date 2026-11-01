@@ -15,10 +15,10 @@ public sealed class PlayerControlState : MonoBehaviour, IPlayerMatchBinding, IPl
     [SerializeField] private bool _allowActionsDuringPreparation = true;
     private MatchSession _session;
     private NetworkMatchCoordinator _networkMatch;
-    private bool _wasBound, _uiBlocked;
+    private bool _wasBound, _uiBlocked, _lifeBlocked;
     private IInputBlocker _inputLocks;
     public bool HasMatchBinding => _wasBound;
-    public bool IsBlocked => !isActiveAndEnabled || _uiBlocked || (_inputLocks?.IsBlocked ?? false) || Time.timeScale <= 0;
+    public bool IsBlocked => !isActiveAndEnabled || _uiBlocked || _lifeBlocked || (_inputLocks?.IsBlocked ?? false) || Time.timeScale <= 0;
     private bool IsPreparing => _networkMatch != null
         ? _networkMatch.Phase == NetworkMatchPhase.Preparing
         : _session != null && !_session.IsDisposed && _session.State.Phase == MatchPhase.Preparing;
@@ -38,6 +38,8 @@ public sealed class PlayerControlState : MonoBehaviour, IPlayerMatchBinding, IPl
         return true;
     }
     public void SetInputBlocked(bool blocked) => _uiBlocked = blocked;
+    /// <summary>PlayerInfo의 사망·복원만 갱신하는 생존 잠금입니다. UI나 메뉴 잠금을 해제하지 않습니다.</summary>
+    internal void SetLifeBlocked(bool blocked) => _lifeBlocked = blocked;
     public void BindInputBlocker(IInputBlocker input) => _inputLocks = input ?? throw new System.ArgumentNullException(nameof(input));
     public void BindMatch(MatchSession session)
     {

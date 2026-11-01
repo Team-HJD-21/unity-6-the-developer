@@ -67,3 +67,8 @@ Game Debugger의 **Overview → 필드 시간 · Host 기준**에서 공용 시�
 실패 원인은 Additive Player 소속, EditMode runner에서 일반 `WaitForSeconds`/`WaitForFixedUpdate`를 실제 대기로 가정한 fixture, private 비직렬화 필드의 SerializedObject 조회, 스폰 시작 전 서비스 이력을 0으로 가정한 비교식이었다. 생성 정책이나 제품 밸런스를 테스트 통과 목적으로 변경하지 않았다.
 
 [시간 anchor·Client 필드 바인딩](match-time-api.md#client-읽기와-네트워크-전송)은 16개 집중 검사에서 확인했다. 참가자 정책과 공유 바인딩 수명을 분리해 FieldSimulationSceneScope를 재사용한다. 남은 통합: 실제 원격 Player 생성자/출입 명령 연결, Additive Hub의 다중 참가자 이동·왕복 검증. 위치 보고 API를 직접 호출한 Scene 검사는 포털 연출·실제 두 프로세스 플레이 검증을 대신하지 않는다.
+
+
+## 우주선 이동과 필드 공격의 구분
+
+PlayerMovement는 PlayerControlState의 조작 권한과 스킬 선택 UI 잠금을 따르고, PlayerSkillController.CanUse의 필드 공격 조건으로 이동을 잠그지 않는다. 우주선 안에서는 필드 공격이 금지되고 공용 필드 시계가 정지하더라도 내부 이동은 계속 가능하다. PlayerInfo의 사망 잠금도 UI 잠금과 분리해, 이후 생존 상태를 복원할 때 열린 메뉴의 잠금을 지우지 않게 했다. 실제 PlayMode의 내부 이동·공격 금지·UI 잠금·사망 정지 회귀 1/1을 통과했다 (B2-HubNavigation/results.xml, Unity 종료0).

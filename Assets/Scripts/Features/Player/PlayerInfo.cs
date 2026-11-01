@@ -37,7 +37,7 @@ public class PlayerInfo : MonoBehaviour
     {
         if (_isDead) return;
         _isDead = true;
-        GetComponent<PlayerControlState>()?.SetInputBlocked(true);
+        GetComponent<PlayerControlState>()?.SetLifeBlocked(true);
         GetComponent<PlayerMovement>()?.StopImmediately();
         GetComponent<PlayerSkillController>()?.CloseSelection();
         onDeath.Invoke();
