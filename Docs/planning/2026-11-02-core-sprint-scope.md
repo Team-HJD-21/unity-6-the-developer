@@ -206,3 +206,12 @@ Steam 조사는 다른 단계와 독립적으로 진행할 수 있다. 공개 AP
 - 실제 UTP Host/Client 두 SDK 인스턴스의 전송·정지·위치·새 epoch 복원과 연결 유지, 순수 replica/serializer/권한, 실제 Initial_Stage Host 정지를 **16/16**, Unity 종료0으로 확인했다. 초기 읽기 연결 검사는 별도 **7/7**이다. 증거: `B2-TimeReplica/results.xml`, `client-fields/results.xml`.
 - Additive 상태의 Enemy도 현재 활성 Hub가 아닌 Executor Scene에 생성되게 명시했다. 실제 서버 생성/Scene 소속/Player 탄환 피해 **1/1**, 종료0. 증거 `B2-TimeReplica/additive-enemy/results.xml`.
 - Game Debugger Overview와 API 문서를 갱신했다. 아직 실제 원격 Player 생성자/Client 포털 요청, 전체 Hub 왕복·프로세스 두 개 인수는 완료가 아니다. B4 저장/복원 작업을 이어 진행한다.
+
+
+### B4 저장소·자료 계약 (2026-11-02)
+
+- [체크포인트 저장소 API](../architecture/checkpoint-storage-api.md)의 불변 metadata/section·슬롯·복원 정책과 실제 BinaryCheckpointStore/codec를 구현했다. 파일/Feature 버전과 크기 제한, 손상 검사, 완성본 교체, 실패/취소의 기존 저장 보존을 포함한다.
+- 기본 정책은 World 복원·경험치/성장/현재 재화 유지이며 재화만 명시 rollback 옵션을 둔다. 이는 정책 자료이며 아직 실제 Feature 복원을 실행한 상태는 아니다.
+- 실제 IO 집중 검사 **8/8**, Unity 종료0. 증거 `B4-Store/io-continuations/results.xml`. 독립 저장소 인스턴스 재읽기와 잠긴 기존 파일 교체 실패 시 보존/임시 정리까지 포함한다. 최초 async fixture는 첫 쓰기 후 정체되어 자체 검사 PID를 확인·종료하고 로그를 남겼다. 순수 IO await의 컨텍스트 포획을 해제한 뒤 통과했다.
+- 실제 Test Framework는 **1.6.0**이다. 초기 접두 glob에서 Performance package 3.5.0을 잘못 선택한 표기를 수정했다. 제품 IO 코드를 테스트에 맞춰 바꾸지 않았다.
+- 다음은 저장 실행기/관찰 경계/실제 Feature writer/프로필 보존과 재실행 연결이다. 캡처/복원의 임시 정지는 우주선 정지와 소유권을 분리해야 한다. 자동 저장·복원 사건은 계속 미선정이다.
