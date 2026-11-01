@@ -46,6 +46,8 @@ namespace Map
         public static Action<Weather,Queue<Weather>> OnWeatherChange;
         
         private WeatherChangeEvent _weatherChangeEvent;
+
+        [SerializeField] private ShaderTests _shaderTests;
         
         void OnEnable()
         {
@@ -60,6 +62,13 @@ namespace Map
         void Awake()
         {
             _weatherChangeEvent = GetComponent<WeatherChangeEvent>();
+            if (_shaderTests == null || !_shaderTests.CompareTag("MainCamera"))
+            {
+                Camera mainCamera = Camera.main;
+                _shaderTests = mainCamera != null
+                    ? mainCamera.GetComponent<ShaderTests>()
+                    : null;
+            }
         }
         void Start()
         {
@@ -136,6 +145,16 @@ namespace Map
                     tmpweatherImage.color = _sunnyColor;
                     break;
             }
+        }
+        public void CallWeatherChange()
+        {
+            if (_shaderTests == null)
+            {
+                Debug.LogError("Main Camera에 ShaderTests 컴포넌트가 필요합니다.", this);
+                return;
+            }
+
+            _shaderTests.ChangeWeatherFlag();
         }
     }
 }
