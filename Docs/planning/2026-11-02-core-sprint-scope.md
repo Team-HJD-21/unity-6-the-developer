@@ -232,3 +232,5 @@ MatchTimeService에 owner별 AcquirePause lease를 추가했다. 참가자 정�
 ### B4 실제 공간·CU writer
 
 현재 Session의 Battlefield Grid 및 지역 정의/모드/점유를 `MatchSpatialCheckpointParticipant`로, 실제 CU HP/배치를 `ControlUnitHealth`의 별도 checkpoint partial 파일로 연결했다. `RegionSceneBinding.RestoreCheckpoint`는 최초 구역을 임의로 다시 해금하지 않고 저장 점유를 적용한다. 공통 Transform 자료는 유한 값·정규화 회전을 확인한다. 공간 5개 통과, CU 초기화 fixture 수정 후 해당 3개 통과, Unity 종료0 (`B4-SpatialCu/approved`, `B4-SpatialCu/cu-initialization`). 실제 전체 Scene 저장/복원·Player/터렛/Enemy/Weather writer는 이어 진행한다. 샌드박스 라이선스 대기로 중단한 최초 실행은 테스트 통과에 포함하지 않았다.
+
+물리 복원 기반: `CheckpointRigidbody2DState`와 `FieldSimulationActor.CaptureBody/RestoreBody`로 정지 전 simulated·속도·수면 상태와 복원 후 복귀 값을 분리한다. Transform과 물리 좌표가 달라 재개 때 예전 위치로 돌아가는 문제도 함께 수정했다. 집중 3/3 및 실제 PlayMode 1/1 통과, Unity 종료0 (`B4-Physics/pose-sync`, `B4-Physics/play-scene-setup`). 초기 실패와 fixture 오류는 보존하며 통과 수에 합치지 않는다.

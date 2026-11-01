@@ -15,7 +15,7 @@ namespace TeamHJD.Game.Presentation.Scene
         private CancellationToken _gameplay;
         private bool _destroyOnCompletion;
         private double _lastSeconds;
-        private readonly List<(Rigidbody2D body, bool simulated, Vector2 velocity, float angular)> _bodies = new();
+        private readonly List<(Rigidbody2D body, bool simulated, Vector2 velocity, float angular, bool sleeping)> _bodies = new();
         private readonly List<(Animator animator, float speed)> _animators = new();
         private bool _held;
         private readonly List<ParticleSystem> _particles = new();
@@ -61,7 +61,7 @@ namespace TeamHJD.Game.Presentation.Scene
             {
                 foreach (var body in GetComponentsInChildren<Rigidbody2D>(true))
                 {
-                    _bodies.Add((body, body.simulated, body.linearVelocity, body.angularVelocity));
+                    _bodies.Add((body, body.simulated, body.linearVelocity, body.angularVelocity, body.IsSleeping()));
                     body.simulated = false;
                 }
                 foreach (var particles in GetComponentsInChildren<ParticleSystem>(true))
@@ -75,10 +75,46 @@ namespace TeamHJD.Game.Presentation.Scene
         {
             foreach (var item in _bodies)
                 if (item.body != null)
-                { item.body.simulated = item.simulated; item.body.linearVelocity = item.velocity; item.body.angularVelocity = item.angular; }
+                {
+                    item.body.simulated = item.simulated; item.body.linearVelocity = item.velocity; item.body.angularVelocity = item.angular;
+                    if (item.sleeping) item.body.Sleep(); else item.body.WakeUp();
+                }
             foreach (var item in _animators) if (item.animator != null) item.animator.speed = item.speed;
             foreach (var particles in _particles) if (particles != null) particles.Play(false);
             _particles.Clear(); _bodies.Clear(); _animators.Clear(); _held = false;
+        }
+
+        /// <summary>Feature writer가 정지 중에도 실제 복귀 예정 속도와 simulated 상태를 캡처합니다.</summary>
+        public CheckpointRigidbody2DState CaptureBody(Rigidbody2D body)
+        {
+            RequireOwnedBody(body);
+            Synchronize();
+            foreach (var item in _bodies)
+                if (item.body == body)
+                    return new CheckpointRigidbody2DState(body.position, body.rotation,
+                        item.velocity, item.angular, item.simulated, item.sleeping);
+            return CheckpointRigidbody2DState.Capture(body);
+        }
+
+        /// <summary>정지된 캡처/복원 단계가 적용합니다. 재개 시 과거 보관 속도로 덮어쓰지 않도록 복귀 값도 갱신합니다.</summary>
+        public void RestoreBody(Rigidbody2D body, CheckpointRigidbody2DState state)
+        {
+            RequireOwnedBody(body);
+            Synchronize();
+            if (!_held) { state.Apply(body); return; }
+            int found = _bodies.FindIndex(item => item.body == body);
+            var entry = (body, state.Simulated, state.Velocity, state.AngularVelocity, state.Sleeping);
+            if (found >= 0) _bodies[found] = entry;
+            else _bodies.Add(entry);
+            state.ApplyPose(body);
+            body.linearVelocity = state.Velocity; body.angularVelocity = state.AngularVelocity;
+            body.simulated = false;
+        }
+
+        private void RequireOwnedBody(Rigidbody2D body)
+        {
+            if (body == null) throw new ArgumentNullException(nameof(body));
+            if (!body.transform.IsChildOf(transform)) throw new InvalidOperationException("The body belongs to a different field actor.");
         }
         /// <summary>Scene/Feature 소유자가 lease 종료 때 호출합니다. 다른 Match의 바인딩을 해제하지 않습니다.</summary>
         public void Unbind(IMatchTime time)

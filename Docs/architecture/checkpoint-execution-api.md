@@ -64,3 +64,9 @@ sequenceDiagram
 공간 writer 5개 검사는 실제 Session의 비정방형 Grid·지역 소속/점유, 준비 중 무변경, 적용/백업 복구, 새 Match로의 논리값 이전, 형식 오류 거부, Transform 검증을 확인했다. CU 3개 검사는 실제 컴포넌트의 HP·위치와 알림, 정의 불일치 거부, 죽은 CU 캡처 거부를 확인했다. CU는 EditMode에서 초기화 본문을 명시 호출한 컴포넌트 검사이며 실제 PlayMode Scene 전체 복원을 대신하지 않는다.
 
 이 두 writer는 전체 World 중 일부다. Player·터렛·Enemy·Weather 등의 저장 계약과 Scene 수명 바인딩을 마친 뒤 완전한 저장 기능으로 노출한다. 현재 일부 writer만 등록해서 ‘게임 전체 저장 완료’ UI를 제공하지 않는다.
+
+### 정지 중 물리 자료
+
+물리 Feature writer는 `FieldSimulationActor.CaptureBody` / `RestoreBody`를 사용한다. 정지 때문에 임시로 꺼진 `simulated` 값과 실제 복귀 예정 속도를 구분하고, 복원 중 바뀐 위치·속도를 재개 시 과거 값으로 덮어쓰지 않게 한다. `CheckpointRigidbody2DState`는 world XY 위치·각도·선속도·각속도·원래 simulated·수면 상태의 명시 바이너리 값이다. 어댑터가 없는 Player 등의 소유 Rigidbody는 값 자료의 직접 Capture/Apply를 사용할 수 있다. 물리체의 Z와 제작 계층은 Transform 자료로 별도 보존한다.
+
+복원 위치는 Rigidbody와 Transform 양쪽에 맞춘다. simulated=false의 물리체를 다시 켤 때 이전 Transform으로 되돌아가는 사례를 발견해 수정했다. 집중 3개 검사와 실제 PlayMode 물리 프레임의 정지→복원→재개 1개 검사를 통과했다. 임의 다른 actor의 Rigidbody는 거부한다. 충돌·AI·무기 전체 재생의 완료 증거는 아니다.
