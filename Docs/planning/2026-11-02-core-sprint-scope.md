@@ -8,7 +8,7 @@
 | B1 | 일부 공개 API 설명·수명/책임 개선 | 전체 Core 재검토와 최종 디렉터리/호출 지도 |
 | B2 | 공용 시간·예약·Host/Client anchor·필드 정지 구현 및 집중 검사 | 실제 원격 Player 출입은 B5 게임 사이클과 연결 |
 | B3 | Weather 공용 시간/환경 연결, 예약·날씨 복원 검사 | 실제 낮밤 Feature는 현재 없음. Feature 규칙을 임의 작성하지 않음 |
-| B4 | 실제 binary IO, 실행/요청, 공간·CU·Weather·Player 생존/무기/탄환/스킬/설치물 writer와 물리·수량·필드 터렛 상태 모델 복원 기반 구현 | 필드 터렛·Enemy writer, 영속 프로필, Scene 바인딩·재실행 통합 |
+| B4 | 실제 binary IO, 실행/요청, 공간·CU·Weather·Player 생존/무기/탄환/스킬/설치물 writer와 물리·수량·필드 터렛 공통 actor/CU 큐 복원 기반 구현 | 필드 터렛·Enemy writer, 영속 프로필, Scene 바인딩·재실행 통합 |
 | B5 | 기존 Scene/허브/UI 경로 조사 | 부팅·시작·허브·출격·결과/귀환과 체크포인트 재실행 연결 |
 | B6 | Steam 도입 조사·설계 문서 작성 | B7에서 최종 실제 API와 대조. SDK 도입은 이번 범위 아님 |
 | B7 | 변경별 검증·API 문서 누적 | 전체 정합성 검사, 팀 사용 문서, PL Core 이해·정리 단계 |
@@ -288,3 +288,9 @@ Q/E 선택과 개별 스킬 writer를 실제 Player 원본에 연결했다. 폭�
 ### B7 이전 World 스폰 경계 리뷰 보완
 
 Planner의 World 점/선 요청이 Grid 최댓값을 거부하던 불일치를 공용 `TryMapPoint`로 통일했다. 비교 연산자만 바꾸지 않고 마지막 셀 인덱스까지 같은 규칙을 사용한다. 양의 영역이 경계선에만 닿으면 계속 제외한다. 관련 경계·외부·분산11/11, Unity 종료0 (`B7-WorldSpawnBounds`). 원격 PR에는 게시하지 않았다.
+
+### B4 실제 필드 터렛 공통 수명·CU 큐
+
+D의 기존 Factory 경로에 저장 ID의 Awake 전 지정, 소유 Scene/명시 시계, 공통 냉각·발사 진행·헤드·최초 활성화 의도 복원을 연결했다. Controller는 실제 예약 합계와 예산을 대조하고 자동 활성화 후보를 논리 ID로 저장해 새 InstanceId로 다시 연결한다. 자동 시작은 필드 정지 중 대기한다. 실제 생성/큐/허브 Scene/무변경 거부/모호한 카탈로그 검사6/6, Unity 종료0 (`B4-TurretActors/content-import`). 최초 검사 컴파일 실패(Content using 누락)는 별도 보존. 종류별 무기/투사체·Enemy 참조와 aggregate writer/Scene 저장 연결은 아직 진행해야 한다.
+
+터렛 생성 경로 변경의 기존 동작은 관련 시작/취소/전력 부족/지역 잠금/중복 초기화7개를 별도 실행해7/7, Unity 종료0을 확인했다 (`B4-TurretActors/startup-regression`). 새6개 실행과 전체 Scene 인수 결과를 혼합하지 않는다.

@@ -164,6 +164,18 @@ Weather 복원 4개, 기존 예약 연결 3개, 남은 첫 대기/반복 계약 
 
 전력/원본 모델 PlayMode 검사 6개 중 5개 통과 후, 동일 강화 정의의 중간 float 계산 정밀도로 생긴 오검출을 실제 저장 값과 같은 32비트 비교로 보완했다. 실패했던 강화·수리·로컬 ID 검사만 다시 실행해 1개 통과, 두 PlayMode 실행의 Unity 종료 코드는 각각 2와 0이다. 최초 EditMode 실행은 assembly 분류 때문에 0개였으므로 성공 증거에 포함하지 않는다. 증거: `B4-FieldTurretModels/play`, `B4-FieldTurretModels/modifier-float`.
 
+### 필드 터렛 공통 actor·CU 큐 복원
+
+`FieldTurretBase.CaptureActorState()`는 실제 논리 ID·RuntimeState·world pose/local scale·헤드 방향·다음 발사 진행·냉각 남은 시간/전체 길이/최초 열 비율·최초 활성화 대기 의도를 보존한다. `ValidateActorState`는 준비 단계에서 콘텐츠와 헤드 제작 계층을 확인한다. 종류별 과열 누적·표적·비행 중 탄환/미사일은 이 공통 값에 섞지 않고 해당 전투 Feature에서 추가로 연결해야 한다.
+
+`FieldTurretController.CaptureControllerState()`는 공용 전력과 실제 소유 터렛의 예약 합계를 대조한다. 자동 활성화의 실행 여부·남은 재사용 시간·후보 순서/점수/적 수/완료 상태도 불변 값으로 복사한다. 후보의 저장 키는 논리 EntityId이며 로컬 InstanceId는 저장하지 않는다. 내부 적용은 재생성된 actor의 새로운 InstanceId를 찾아 큐에 연결한다. 미완료 후보가 없거나 예약 합계가 맞지 않으면 예산을 변경하기 전에 거부한다. 지역 원본은 기존 공간 writer가 소유한다.
+
+실제 생성자는 기존 D의 `FieldTurretFactory`를 사용한다. 복원 전용 내부 경로는 저장 ID와 초기 의존성을 Awake 전에 지정하고, 개별 상태·예약을 공용 예산과 함께 복원한다. 새로운 ON/OFF·강화·피해 명령을 실행하지 않는다. 저장한 actor의 부모가 있으면 같은 Scene의 활성 부모를 명시해 제작 계층과 local scale을 보존한다. 공급자와 부모 Scene이 다르면 거부한다. 새 Scene에서 부모를 어떻게 해석할지는 전체 writer의 준비 책임이다.
+
+일반 생성도 명시된 전력 공급자의 Scene과 Match 시계를 사용하도록 보완했다. 기존에는 공급자만 지정된 경우 터렛 내부 시계가 Unity 시간으로 남거나 활성 허브 Scene에 생성될 수 있었다. 자동 최초 활성화는 필드 정지/준비 중에 대기 의도를 소모하지 않고 재개 뒤 한 번 실행한다.
+
+공통 actor 재생성/냉각·수리·헤드·전력, 새 로컬 ID로의 자동 큐 재연결, 정지 중 최초 활성화 의도 복원, 다른 활성 허브가 있는 Scene/시계 소유권, 잘못된 예산/누락 후보의 무변경 거부, 모호한 prefab 카탈로그 거부 6개 PlayMode 검사에 통과했고 Unity 종료0을 확인했다 (`B4-TurretActors/content-import`). 최초 실행은 테스트의 Content import 누락으로 컴파일 단계에서 실패한 기록이며 보존했다. **종류별 전투·발사체 및 전체 Scene 저장/복원 완료 증거는 아직 아니다.** 기존 생성자/최초 활성화의 등록 순서·수동 OFF·비활성화·전력 부족·지역 잠금·Scene 직배치·중복 초기화 방지 7개도 별도 집중 실행에서 통과했다 (`B4-TurretActors/startup-regression`, Unity 종료0).
+
 ### 정지 중 물리 자료
 
 물리 Feature writer는 `FieldSimulationActor.CaptureBody` / `RestoreBody`를 사용한다. 정지 때문에 임시로 꺼진 `simulated` 값과 실제 복귀 예정 속도를 구분하고, 복원 중 바뀐 위치·속도를 재개 시 과거 값으로 덮어쓰지 않게 한다. `CheckpointRigidbody2DState`는 world XY 위치·각도·선속도·각속도·원래 simulated·수면 상태의 명시 바이너리 값이다. 어댑터가 없는 Player 등의 소유 Rigidbody는 값 자료의 직접 Capture/Apply를 사용할 수 있다. 물리체의 Z와 제작 계층은 Transform 자료로 별도 보존한다.

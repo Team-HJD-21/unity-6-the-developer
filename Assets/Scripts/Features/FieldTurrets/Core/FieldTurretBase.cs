@@ -9,7 +9,7 @@ using UnityEngine;
 namespace TeamHJD.Game.FieldTurrets
 {
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "TeamHJD.Game.Turrets", sourceAssembly: "TeamHJD.Game.Turrets", sourceClassName: "TurretBase")]
-    public abstract class FieldTurretBase : MonoBehaviour, IFieldTurretActivationRequester, IDamageableTarget
+    public abstract partial class FieldTurretBase : MonoBehaviour, IFieldTurretActivationRequester, IDamageableTarget
     {
         // Keep serialized field names unchanged so existing prefab values remain mapped.
         //제발 바꾸지 말아주세요요요요!
@@ -160,6 +160,7 @@ namespace TeamHJD.Game.FieldTurrets
                 throw new System.ArgumentNullException(nameof(powerSource));
             _initializationData = data;
             _configuredPowerSource = powerSource;
+            _turretController = powerSource as FieldTurretController;
         }
 
         internal bool UsesPowerSource(IFieldTurretPowerSource source) => ReferenceEquals(_configuredPowerSource, source);
@@ -187,6 +188,7 @@ namespace TeamHJD.Game.FieldTurrets
                 shouldStartActivated = _initializationData.ShouldActivate;
             }
             _configuredPowerSource = powerSource;
+            _turretController = powerSource as FieldTurretController;
             _runtimeState.SetActivated(false);
             _runtimeState.InitializeHealth(MaxHealth);
             _activationController = new FieldTurretActivationController(
@@ -474,6 +476,9 @@ namespace TeamHJD.Game.FieldTurrets
         private IEnumerator RequestInitialActivation()
         {
             yield return null;
+            // 필드 정지/준비 중에는 자동 시작 의도를 소비하지 않습니다. 비활성화 시 기존 취소 경로가 닫습니다.
+            while (_initialActivationPending && isActiveAndEnabled && (!CanSimulate || !HasStateAuthority))
+                yield return null;
             _initialActivationRoutine = null;
             if (!_initialActivationPending || !isActiveAndEnabled) yield break;
             _initialActivationPending = false;

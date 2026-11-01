@@ -15,7 +15,7 @@ namespace TeamHJD.Game.FieldTurrets
     /// <summary>씬의 전력 예산을 소유하고 ID 기반 터렛 활성화 요청을 처리한다.</summary>
     [DisallowMultipleComponent]
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "TeamHJD.Game.Turrets", sourceAssembly: "TeamHJD.Game.Turrets", sourceClassName: "TurretController")]
-    public sealed class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource, IFieldSimulationConsumer
+    public sealed partial class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource, IFieldSimulationConsumer
     {
         [SerializeField, Min(0)] private int maximumPower = 250;
         [Header("Unlock Grid")]
@@ -181,12 +181,14 @@ namespace TeamHJD.Game.FieldTurrets
         public sealed class AutoActivationCandidate
         {
             public int InstanceId { get; }
+            public TeamHJD.Game.Domain.EntityId EntityId { get; }
             public int EnemyCount { get; }
             public float Score { get; }
             internal bool Completed;
-            internal AutoActivationCandidate(int id, int enemyCount, float score)
+            internal AutoActivationCandidate(int id, int enemyCount, float score, TeamHJD.Game.Domain.EntityId entityId = default)
             {
                 InstanceId = id;
+                EntityId = entityId;
                 EnemyCount = enemyCount;
                 Score = score;
             }
@@ -209,7 +211,8 @@ namespace TeamHJD.Game.FieldTurrets
                 int count = turret.CountEnemiesInAttackRange();
                 float score = AutoActivationScoreProvider != null ? AutoActivationScoreProvider(turret, count) : count;
                 if (float.IsNaN(score) || float.IsInfinity(score)) score = count;
-                _autoCandidates.Add(new AutoActivationCandidate(turret.InstanceId, count, score));
+                turret.TryGetEntityId(out var entityId);
+                _autoCandidates.Add(new AutoActivationCandidate(turret.InstanceId, count, score, entityId));
             }
             _autoCandidates.Sort((left, right) =>
             {

@@ -39,6 +39,24 @@ namespace TeamHJD.Game.FieldTurrets
             definition = ambiguous ? null : found; return definition != null;
         }
 
+        /// <summary>Feature의 복원 준비가 저장 정의 ID에 대응하는 제작 prefab을 해석합니다. 모호한 ID는 거부합니다.</summary>
+        public bool TryGetPrefab(string definitionId, out FieldTurretBase prefab)
+        {
+            FieldTurretBase found = null; bool ambiguous = false;
+            void Consider(FieldTurretBase candidate)
+            {
+                if (candidate == null || candidate.Definition == null || candidate.Definition.Id != definitionId) return;
+                if (found != null && found != candidate) ambiguous = true;
+                else found = candidate;
+            }
+            foreach (Transition transition in _transitions)
+            { Consider(transition.SourceLevelPrefab); Consider(transition.NextLevelPrefab); }
+            prefab = ambiguous ? null : found;
+            if (prefab == null || !TryGetDefinition(definitionId, out var definition) || prefab.Definition != definition)
+            { prefab = null; return false; }
+            return true;
+        }
+
         public bool TryGetNext(FieldTurretDefinition source, out FieldTurretBase nextLevelPrefab)
         {
             foreach (Transition transition in _transitions)

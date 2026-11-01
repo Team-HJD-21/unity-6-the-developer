@@ -12,6 +12,8 @@ namespace TeamHJD.Game.FieldTurrets.Tests
         public bool ConfigureForTest() => ConfigureSceneActivation();
         public void SetCooldownAfterDeactivation(float seconds) => _cooldownAfterDeactivation = seconds;
         public void BeginCoolingForTest(float seconds) => BeginCooling(seconds);
+        public void SetFiringProgressForTest(float seconds) => TimeTilFire = seconds;
+        public float FiringProgressForTest => TimeTilFire;
 
         protected override void OnActivationChanged(bool isActivated)
         {
