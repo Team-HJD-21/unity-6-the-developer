@@ -1,5 +1,7 @@
 # Match 환경 API
 
+> **현재 상태(2026-11-02): 타 파트 미승인 변경198경로를 제외하고 Core는 그대로 보존했습니다. 현재 Core 조립부에 Feature API 참조가 남아 컴파일 오류가 있으며 통합/PlayMode 완료 상태가 아닙니다.** [제외 범위·연결 공백](../planning/2026-11-02-feature-integration-hold.md)을 먼저 확인하세요. 아래 Feature 구현·검사 기록은 제외 전 실험 소스 기준입니다.
+
 현재 구현: B7 (2026-10-26). 날씨와 시간대는 독립 정보다. 환경 변경은 상태 변경이며 Spawn 명령이 아니다.
 
 2026-11-02 시간 기반 이관: 권위 Initial_Stage의 `IMatchClock`은 `MatchTimeService`의 공용 시계로 연결했다. 네트워크 Host는 NGO ServerTime을, standalone은 Unity double 실시간을 사용한다. 완료 후 예약 차단까지 실제 Scene에서 확인했다. 현재 WeatherManager는 `IMatchScheduledEnvironmentFeature`로 공용 scheduler를 받고 CountTick이 제작 간격을 등록한다. 정식 Match에서는 polling 호환 경로가 동시에 전이하지 않는다. Client 시간 anchor와 참가자 필드 정지는 구현했으며, 실제 원격 Player 포털 출입의 게임 사이클 통합은 이어 진행한다. [시간 API와 실제 이관 범위](match-time-api.md)를 따른다.
