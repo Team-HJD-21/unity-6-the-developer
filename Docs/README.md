@@ -74,6 +74,12 @@ LMB 공격과 포탑 선택·설치·UI 클릭의 우선순위는 [Player Primar
 
 Space 대시, 미리 배치한 잔상과 하단 쿨타임 표시는 [Player Dash API](architecture/player-dash-api.md)를 참고한다.
 
+Player 클래스 이름과 책임 구분은 [Player 클래스 이름과 역할](architecture/player-class-responsibilities.md)을 참고한다.
+
+대각선 대기 호흡과 방향별 독립 스프라이트, 전체 그림 검토는 [Player 스프라이트 후속 검토](art/player-idle-breathing-and-sprite-review.md)를 참고한다.
+
+2026-10-30 독립 좌우 연결과 가방 하단 불꽃 보완은 [독립 좌우 자세와 제트팩 분사구](art/player-independent-facing-review.md)를 참고한다.
+
 플레이어 8방향 대기·이동·공격·수리 프레임은 [Player Motion API](architecture/player-motion-api.md)를 참고한다.
 
 기존 모션을 유지하며 몸체와 총기·스패너를 나눈 표시 에셋과 편집 방법은 [Player Weapon Appearance API](architecture/player-weapon-appearance-api.md)를 참고한다.

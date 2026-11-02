@@ -14,13 +14,13 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
     [SerializeField, Min(.1f)] private float _visualScale = 1;
     [Header("Collision")]
     [SerializeField] private BoxCollider2D _blocker;
-    [SerializeField] private PlayerFieldBodyCollision _bodyCollision;
-    [SerializeField] private PlayerSkillDepth _depth;
+    [SerializeField] private PlayerDeviceBodyCollision _bodyCollision;
+    [SerializeField] private PlayerDeviceSortingOrder _depth;
     private Vector2 _start, _end;
     private float _width, _maxHealth, _health, _remaining, _radius, _hitFlash;
     private bool _initialized;
     private PlayerFieldDeviceVisual _visual;
-    private PlayerFieldTargetCollision _collision;
+    private PlayerDeviceContactQuery _collision;
     private readonly PlayerFieldEnemyScanner _scanner = new();
     public PlayerFieldDeviceKind Kind => _kind;
     public float Health => _health;
@@ -54,7 +54,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
         _visual = new PlayerFieldDeviceVisual(transform, _firstEmitter, _secondEmitter, _membrane, VisualScale);
         _visual.Initialize(kind, start, end, _width, _radius);
         _bodyCollision?.AllowInitialExit();
-        _collision = new PlayerFieldTargetCollision(_blocker, _bodyCollision != null ? _bodyCollision.Bodies : null);
+        _collision = new PlayerDeviceContactQuery(_blocker, _bodyCollision != null ? _bodyCollision.Bodies : null);
         _depth?.Bind(owner);
         _initialized = true;
         PlayerFieldDeviceRegistry.Register(this);

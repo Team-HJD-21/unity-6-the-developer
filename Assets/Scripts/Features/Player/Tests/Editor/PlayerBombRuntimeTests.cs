@@ -34,7 +34,7 @@ public sealed class PlayerBombRuntimeTests
         Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.True);
         _explosion.Explode();
         Assert.That(bodyCollider.enabled, Is.False, "The explosion effect must not leave an invisible obstacle.");
-        Assert.That(_bomb.GetComponent<PlayerFieldBodyCollision>().enabled, Is.False);
+        Assert.That(_bomb.GetComponent<PlayerDeviceBodyCollision>().enabled, Is.False);
         Assert.That(_bomb.GetComponent<SpriteRenderer>().enabled, Is.False);
         Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.False);
         yield break;
@@ -67,7 +67,7 @@ public sealed class PlayerBombRuntimeTests
             var sorting = _bomb.GetComponent<SortingGroup>();
             Assert.That(sorting.sortingOrder, Is.EqualTo(105));
             Assert.That(_explosion.Explode(), Is.True);
-            Assert.That(_bomb.GetComponent<PlayerSkillDepth>().enabled, Is.False);
+            Assert.That(_bomb.GetComponent<PlayerDeviceSortingOrder>().enabled, Is.False);
             owner.transform.position += Vector3.down * 6;
             yield return null;
             Assert.That(sorting.sortingOrder, Is.EqualTo(105));

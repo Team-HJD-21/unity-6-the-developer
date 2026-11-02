@@ -1,5 +1,9 @@
 # 플레이어 무기별 스프라이트·이펙트 API
 
+2026-10-30 후속: 좌우 방향은 손과 무기의 위치를 유지하도록 별도 원본을 사용하며, `flipX`로 공유하지 않는다. 대각선 대기는 각 방향별 4프레임 호흡 루프를 사용한다. 다리·불꽃 검토는
+[독립 좌우 자세와 제트팩 분사구](../art/player-independent-facing-review.md)를 따른다.
+아래 기록 중 대각선 대기가 고정 한 장이라는 설명은 확장 전 상태다.
+
 수정일: 2026-10-23. 스패너 브랜치의 작업 중 변경이며 main 반영 전이다.
 
 2026-10-25, Issue #554 작업: 기존 8방향 모션을 유지하고 몸체와 무기 Sprite를 분리했다. 최신 표시 연결은 [몸체·무기 분리 API](player-weapon-appearance-api.md)를 따른다. 아래 날짜별 설명 중 몸체에 무기가 포함된다는 내용은 분리 전 기록이다.
@@ -60,7 +64,7 @@
 
 - `PlayerMotionSet`: 방향별 AnimationClip과 Controller 참조를 보관한다. `GetClip(PlayerMotion)`은 정지 버전, `GetClip(PlayerMotion, bool hovering)`은 이동 중 행동의 부유 버전, 세 번째 `PlayerLateralLean` 인자는 총기 이동/사격의 좌우 쏠림을 조회한다. Sprite 키·반복·재생 길이는 AnimationClip이 소유하며 별도 프레임 배열이나 `duration`을 저장하지 않는다.
 - `PlayerSpriteMotion`: 현재 무기와 이동 입력에 따라 Idle/Move 또는 ToolIdle/ToolMove를 선택한다. `PlayRangedShot()`은 Fire를, `PlayToolAction(repairing)`은 Attack/Repair를 시작한다. 이동 중에는 해당 행동의 Hover 상태를 사용한다. 방향이나 이동 여부만 바뀌면 진행 비율을 이어간다. 상태를 고를 뿐 피해량·콜라이더를 변경하지 않는다.
-- `PlayerVisual`: 조준 방향에 따른 기존 방향별 콜라이더 선택을 유지한다. `PlayerSpriteMotion.OwnsDisplay`가 true면 Sprite 반전은 AnimationClip에 맡긴다.
+- `PlayerVisual`: 조준 방향에 따른 기존 방향별 콜라이더 선택을 유지한다. `PlayerSpriteMotion.OwnsDisplay`가 true면 Sprite와 반전 값은 AnimationClip에 맡긴다. 현재 방향별 원본 클립은 `flipX=0`을 사용한다.
 - `PlayerWeaponRig`: `_bodyIncludesGunSprite`가 켜진 구성에서는 별도 총 SpriteRenderer를 숨긴다. 방향별 총구·발사 이펙트 오브젝트는 유지한다. 기존 그림과 새 몸체 속 총이 중복되지 않는다. `_usePoseMuzzles`가 켜진 Player 프리팹은 Weapon Rig 로컬 좌표의 `_firingMuzzles`, `_leftLeanMuzzles`, `_rightLeanMuzzles`에서 방향별 총구 위치를 편집한다. `RefreshPose`/`TryGetMuzzle`에서 현재 이동 입력에 맞춰 해당 총구 자식 Transform을 갱신한다. 이 옵션이 꺼진 구성은 기존 Transform 위치를 사용한다.
 - `PlayerSpannerWeapon`: 몸체가 무기 그림을 포함해 재생하는 동안 별도 장착 스패너 SpriteRenderer를 숨긴다. 수리 가능 여부로 준비 모션을 고르고, 타격 때 대상 조건을 다시 검사한다.
 - `PlayerProjectileView`: Warm/Cryo 비행 클립을 선택하고 명중 시 프리팹을 재생한다. 탄환 이동·피해는 `PlayerBullet`이 계속 담당한다.

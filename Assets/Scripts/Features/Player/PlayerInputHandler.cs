@@ -38,7 +38,7 @@ public class PlayerInputHandler : MonoBehaviour
 
     private Camera _mainCamera;
     private PlayerSkillController _skills;
-    private readonly PlayerAttackGesture _attackGesture = new();
+    private readonly PlayerAttackInputState _attackGesture = new();
 
     private void Awake()
     {

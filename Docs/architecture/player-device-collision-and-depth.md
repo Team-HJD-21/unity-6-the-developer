@@ -21,7 +21,7 @@ PolygonCollider2D를 미리 배치한다. 지면과 닿는 하단 받침을 기�
 Collider와 탈출 처리 컴포넌트를 끈다. 0.8초 폭발 연출이 남아 있어도 본체는 길을 막지 않는다.
 폭발 피해 반경 9, 점화 시간 2.1초와 피해량은 기존 값을 유지한다.
 
-2026-10-29에는 폭탄 프리팹에 SortingGroup과 `PlayerSkillDepth`를 미리 배치했다.
+2026-10-29에는 폭탄 프리팹에 SortingGroup과 `PlayerDeviceSortingOrder`를 미리 배치했다.
 설치 시 `PlayerBombExplosion.BindOwner`로 설치자를 연결해 방벽·비콘과 같은 발밑 기준으로
 앞뒤 순서를 갱신한다. 타이머와 폭발 자식도 같은 그룹에 속하며, 폭발 시에는 접지 Collider를
 끄기 전에 마지막 순서를 고정해 비어 있는 bounds 때문에 표시 순서가 바뀌지 않게 한다.
@@ -39,7 +39,7 @@ Collider도 제외한다. 몬스터 몸통은 전역 충돌 무시 여부와 관
 ## 설치 순간 겹침
 
 발밑에 설치하는 장비는 플레이어와 처음부터 겹칠 수 있다.
-`PlayerFieldBodyCollision.AllowInitialExit()`는 위치 확정 후 최초로 겹친 플레이어만 기록하고
+`PlayerDeviceBodyCollision.AllowInitialExit()`는 위치 확정 후 최초로 겹친 플레이어만 기록하고
 본체와의 충돌을 잠시 무시한다. 한 번 빠져나오면 충돌을 복구하고 다시 들어갈 수 없게 한다.
 새로 접근한 플레이어·몬스터에게는 이 예외를 주지 않는다.
 
@@ -52,7 +52,7 @@ Collider도 제외한다. 몬스터 몸통은 전역 충돌 무시 여부와 관
 
 ## 장비를 막는 적의 목표 선택과 공격 거리
 
-2026-10-28 후속 수정에서는 `PlayerFieldTargetCollision`이 방벽의 막과 양끝 본체를 함께
+2026-10-28 후속 수정에서는 `PlayerDeviceContactQuery`가 방벽의 막과 양끝 본체를 함께
 조회한다. 중심 선분만으로는 본체 옆에 걸리는 적을 놓칠 수 있으므로, 서버 장비 어댑터는
 캐시한 활성 비 Trigger 몸통 Collider의 형상으로 경로를 Cast한다. 처음 가로막는 장비를
 우선하며, 본체에 이미 접촉해 이동량이 0인 적도 물리 접촉 오차 안에서는 목표를 선택한다.
@@ -73,7 +73,7 @@ Cast의 시작 위치와 각도는 Rigidbody 루트 기준으로 전달해 자�
 
 ## 플레이어와 앞뒤 표시
 
-`PlayerSkillDepth`는 설치한 플레이어의 활성 발밑 캡슐 중심과 장비의 접지 Collider 중심 Y를 비교한다.
+`PlayerDeviceSortingOrder`는 설치한 플레이어의 활성 발밑 캡슐 중심과 장비의 접지 Collider 중심 Y를 비교한다.
 플레이어가 아래면 장비 SortingGroup을 플레이어보다 한 단계 뒤로, 위면 한 단계 앞으로 표시한다.
 Transform Z·Rigidbody·충돌 크기는 바꾸지 않는다.
 
@@ -88,7 +88,7 @@ Transform Z·Rigidbody·충돌 크기는 바꾸지 않는다.
 ## 포탑 조작창과 하단 HUD
 
 `InitialStagePlayerHUD.IsTurretPanelOpen`은 실제 포탑 View가 열렸는지 제공한다.
-기존 PlayerSkillHUD 프리팹에 배치한 `PlayerCombatHudLayout`이 같은 씬의 Stage HUD를 찾아
+기존 PlayerSkillHUD 프리팹에 배치한 `PlayerCombatHudSlideController`이 같은 씬의 Stage HUD를 찾아
 Weapon Hotbar와 Dash Slot의 RectTransform을 이동시킨다. 실행 중 UI 오브젝트를 생성하지 않는다.
 
 Inspector의 Visible Edge는 남길 가장자리 높이(기본 10 Canvas 단위), Slide Seconds는 이동 시간
@@ -102,7 +102,7 @@ Inspector의 Visible Edge는 남길 가장자리 높이(기본 10 Canvas 단위)
 - `PlayerWeaponMigrationTests`는 8방향의 활성 쌍과 수동 위치 보존을 검사한다.
 - `PlayerDeviceCollisionTests`는 본체 설정, 초기 탈출·방향 전환·재진입 차단, 접지 정렬,
   방벽 끝점별 정렬, HUD 접힘·복귀를 검사한다.
-- `PlayerFieldTargetCollisionTests`는 양끝 본체의 경로 차단, 몸통이 걸리는 경로, 자식 오프셋,
+- `PlayerDeviceContactQueryTests`는 양끝 본체의 경로 차단, 몸통이 걸리는 경로, 자식 오프셋,
   정지 상태의 접촉, 가까운 장비 우선순위와 공유 체력 제거를 검사한다.
 - `PlayerFieldEnemyTests`는 대각선·오프셋 몸통의 표면 사거리, 이동 후 공격, 공격 대기시간과
   Trigger·비활성 Collider 제외를 검사한다. 테스트 코드는 컴파일했으며 Unity 실행은 별도다.

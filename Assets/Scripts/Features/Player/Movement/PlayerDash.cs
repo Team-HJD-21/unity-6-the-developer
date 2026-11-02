@@ -3,23 +3,20 @@ using UnityEngine;
 /// <summary>Space 요청과 대시 방향을 관리합니다. Rigidbody 속도는 PlayerMovement만 변경합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerMovement), typeof(PlayerInputHandler))]
-[DefaultExecutionOrder(150)]
 public sealed class PlayerDash : MonoBehaviour
 {
     [SerializeField, Min(1)] private float _speedMultiplier = 2.5f;
     [SerializeField, Min(.01f)] private float _duration = .16f;
     [SerializeField, Min(0)] private float _cooldown = 1.2f;
-    private readonly PlayerDashState _state = new();
+    private readonly PlayerDashTimer _state = new();
     private PlayerMovement _movement;
     private PlayerInputHandler _input;
-    private PlayerSkillController _skills;
     private Vector2 _lastDirection = Vector2.down;
     private Vector2 _direction;
     private float _speed;
 
     public bool IsDashing => _state.IsDashing;
-    public bool CanUseInput => isActiveAndEnabled && _movement != null && _movement.CanAcceptInput &&
-        (_skills == null || !_skills.IsPlacingSkill);
+    public bool CanUseInput => isActiveAndEnabled && _movement != null && _movement.CanAcceptInput;
     public bool IsReady => CanUseInput && _state.IsReady;
     public float CooldownRemaining => _state.CooldownRemaining;
     public float CooldownProgress => _state.CooldownDuration > 0
@@ -29,9 +26,9 @@ public sealed class PlayerDash : MonoBehaviour
     {
         _movement = GetComponent<PlayerMovement>();
         _input = GetComponent<PlayerInputHandler>();
-        _skills = GetComponent<PlayerSkillController>();
     }
 
+    // PlayerInputHandler(-200)가 수집한 입력을 사용합니다. 설치 미리보기 중에도 대시할 수 있습니다.
     private void Update()
     {
         _state.TickCooldown(Time.deltaTime);

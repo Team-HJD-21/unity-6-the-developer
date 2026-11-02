@@ -60,7 +60,7 @@ public sealed class PlayerFieldEnemyAdapter : MonoBehaviour
     private Collider2D FindBody()
     {
         foreach (var collider in _bodyColliders)
-            if (PlayerFieldTargetCollision.IsBody(collider)) return collider;
+            if (PlayerDeviceContactQuery.IsBody(collider)) return collider;
         return null;
     }
     private void Release()

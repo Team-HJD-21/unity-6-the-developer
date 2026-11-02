@@ -74,8 +74,8 @@ MonoBehaviour:
     _localAngle: 0
     _sortingOffset: 1
   - _body: {fileID: 21300000, guid: da6072980ad6577385a0e74b93e6f4ba, type: 3}
-    _weapon: {fileID: 21300000, guid: c6c11bc0426b4783a8d30358a6c23215, type: 3}
-    _localPosition: {x: 0, y: 0}
+    _weapon: {fileID: 21300000, guid: ed4d3c7f856d4e55af784203bbb8412a, type: 3}
+    _localPosition: {x: 0.984375, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
   - _body: {fileID: 21300000, guid: 12e14554b7675930af7d9eb4d4789fc2, type: 3}
@@ -154,8 +154,8 @@ MonoBehaviour:
     _localAngle: 0
     _sortingOffset: 1
   - _body: {fileID: 21300000, guid: 4c5f039572c351cfa8d67927a2c21fd4, type: 3}
-    _weapon: {fileID: 21300000, guid: c0cdc01197c54476bd4a4340ce7a8557, type: 3}
-    _localPosition: {x: 0, y: 0}
+    _weapon: {fileID: 21300000, guid: c6b2ed2a07f344aab835d6a516391c70, type: 3}
+    _localPosition: {x: 0.953125, y: -0.546875}
     _localAngle: 0
     _sortingOffset: 1
   - _body: {fileID: 21300000, guid: 0a59b6b374935ec3bd01ea1dd656efb6, type: 3}
@@ -771,5 +771,85 @@ MonoBehaviour:
   - _body: {fileID: 21300000, guid: 5eb325869db05e4fbcbd316c369886c8, type: 3}
     _weapon: {fileID: 21300000, guid: 6bbd374ef3b942739fa1f4f53c03cc28, type: 3}
     _localPosition: {x: 1.046875, y: -0.359375}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: f70b27eba7d041e6ac0d4be9033aa1b3, type: 3}
+    _weapon: {fileID: 21300000, guid: 84a9b90316bc4ea99476668a58621a08, type: 3}
+    _localPosition: {x: -0.328125, y: -0.8125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: dae434e2747c4aaaae51946b8c018d7a, type: 3}
+    _weapon: {fileID: 21300000, guid: 84a9b90316bc4ea99476668a58621a08, type: 3}
+    _localPosition: {x: -0.328125, y: -0.8125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 3f1817d7e05049d187e0d1234ab272b7, type: 3}
+    _weapon: {fileID: 21300000, guid: 84a9b90316bc4ea99476668a58621a08, type: 3}
+    _localPosition: {x: -0.328125, y: -0.8125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: b9312a21b11e4d80b70eb8c8cbfff4b6, type: 3}
+    _weapon: {fileID: 21300000, guid: 84a9b90316bc4ea99476668a58621a08, type: 3}
+    _localPosition: {x: -0.328125, y: -0.8125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: d143bf01d1724a8b9fa0b5bd53944522, type: 3}
+    _weapon: {fileID: 21300000, guid: 0fc3d89f0c7242cf864ce9e00096e347, type: 3}
+    _localPosition: {x: 1.046875, y: -0.3125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: e0936d58091c4528a82e471d7d59db31, type: 3}
+    _weapon: {fileID: 21300000, guid: 0fc3d89f0c7242cf864ce9e00096e347, type: 3}
+    _localPosition: {x: 1.046875, y: -0.3125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 0eea45d9b98c4449ac9b7e958253fcbf, type: 3}
+    _weapon: {fileID: 21300000, guid: 0fc3d89f0c7242cf864ce9e00096e347, type: 3}
+    _localPosition: {x: 1.046875, y: -0.3125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: a7a5afb21e9e4df4b5d478efd2729c75, type: 3}
+    _weapon: {fileID: 21300000, guid: 0fc3d89f0c7242cf864ce9e00096e347, type: 3}
+    _localPosition: {x: 1.046875, y: -0.3125}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: d9fb2ec7a8204b29997ae900706ea803, type: 3}
+    _weapon: {fileID: 21300000, guid: 0e88699b00534db0808a82689e751715, type: 3}
+    _localPosition: {x: -0.84375, y: -0.390625}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 4c55dfad898445c9a93eb84cf47971ed, type: 3}
+    _weapon: {fileID: 21300000, guid: 0e88699b00534db0808a82689e751715, type: 3}
+    _localPosition: {x: -0.84375, y: -0.390625}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 0563d571479247209d1aedfe6d7aa155, type: 3}
+    _weapon: {fileID: 21300000, guid: 0e88699b00534db0808a82689e751715, type: 3}
+    _localPosition: {x: -0.84375, y: -0.390625}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 4c2e06828ca54c6198dcc8ff6eff6f48, type: 3}
+    _weapon: {fileID: 21300000, guid: 0e88699b00534db0808a82689e751715, type: 3}
+    _localPosition: {x: -0.84375, y: -0.390625}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: e80f96d18bb843e284f757473fc4ef4f, type: 3}
+    _weapon: {fileID: 21300000, guid: d71dca561f4846c988dcf2d9d819495f, type: 3}
+    _localPosition: {x: -0.96875, y: -0.484375}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 7aff96b98d494e759af78a37829e936e, type: 3}
+    _weapon: {fileID: 21300000, guid: d71dca561f4846c988dcf2d9d819495f, type: 3}
+    _localPosition: {x: -0.96875, y: -0.484375}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 1e6b75cde62041238d6c1948efeb5de1, type: 3}
+    _weapon: {fileID: 21300000, guid: d71dca561f4846c988dcf2d9d819495f, type: 3}
+    _localPosition: {x: -0.96875, y: -0.484375}
+    _localAngle: 0
+    _sortingOffset: 1
+  - _body: {fileID: 21300000, guid: 6d89b34db96b498197562dc1302e46ce, type: 3}
+    _weapon: {fileID: 21300000, guid: d71dca561f4846c988dcf2d9d819495f, type: 3}
+    _localPosition: {x: -0.96875, y: -0.484375}
     _localAngle: 0
     _sortingOffset: 1

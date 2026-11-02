@@ -13,7 +13,7 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
     private bool _initialized;
     private SpriteRenderer[] _renderers;
     private Color[] _originalColors;
-    private PlayerFieldTargetCollision _collision;
+    private PlayerDeviceContactQuery _collision;
     private readonly PlayerFieldEnemyScanner _scanner = new();
     public float Health => _health;
     public float MaxHealth => Mathf.Max(1, _maxHealth);
@@ -36,7 +36,7 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
         _blocker.includeLayers = _blockingLayers;
         _blocker.excludeLayers = ~_blockingLayers.value;
         _blocker.layerOverridePriority = 10;
-        _collision = new PlayerFieldTargetCollision(_blocker);
+        _collision = new PlayerDeviceContactQuery(_blocker);
         _initialized = true;
     }
     private void OnEnable() { if (_initialized) PlayerFieldDeviceRegistry.Register(this); }

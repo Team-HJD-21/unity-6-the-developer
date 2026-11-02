@@ -24,17 +24,34 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 | 스크립트 | 기능 / 호출 계약 |
 | --- | --- |
 | `PlayerAttack` | 입력, 무기 선택, 공통 공격 간격. `CurrentWeapon` 조회, `TrySelectWeaponSlot(int)` 또는 `TrySelectWeapon(WeaponType)`으로 선택, `SelectAdjacentWeapon(int)`으로 앞뒤 순환합니다. `TryFire()`는 장착한 무기로 공격을 시도합니다. 스패너는 탄환과 총구 없이 공격합니다. |
-| `PlayerWeaponSlots` | 단축키와 HUD의 1~4 슬롯 매핑. 기존 `WeaponType` 직렬화 값은 유지합니다. |
+| `PlayerWeaponSlotMapping` | 단축키와 HUD의 1~4 슬롯 매핑. 기존 `WeaponType` 직렬화 값은 유지합니다. |
 | `PlayerWeaponHud` / `PlayerWeaponSlotView` | 기존 씬 HUD 소유자에게 배치된 무기 버튼을 연결하고 선택·장비 유무를 표시합니다. UI 오브젝트를 생성하지 않습니다. |
 | `PlayerWeaponRig` | 기존 방향별 총기와 총구 관리. `SetRangedWeaponVisible(bool)`은 총기 표시만 제어하며 몸체 방향 계산은 계속합니다. |
 | `PlayerSpannerWeapon` | `Bind(Transform, PlayerInputHandler)`로 소유자와 조준 입력 연결. `TryAttack(Vector2)`은 유효한 방향과 쿨타임을 검사한 뒤 근접 판정과 휘두르기를 시작합니다. 반환 true는 공격 시도 성공이며 적중을 보장하지 않습니다. |
 | `PlayerSpannerView` | 프리팹의 SpriteRenderer 표시와 플레이어 기준 앞뒤 정렬만 제어합니다. 외형은 Sprite 에셋으로 편집하며 메쉬를 생성하지 않습니다. |
+| `PlayerSpannerSlash` | 제작된 초승달 Sprite/Animator 프리팹을 타격 순간의 플레이어 월드 위치·조준 방향·공격 반경에 맞춰 표시합니다. Collider와 피해 판정은 없습니다. |
 | `PlayerSpannerRepair` | `CanRepair(owner, direction)`은 준비 동작을 고르기 위한 조회입니다. 타격 시 `TryRepair(owner, direction, out position)`으로 대상을 다시 검사하고 `FieldTurretBase.Repair`를 호출합니다. 기존 bool 오버로드도 유지합니다. |
 | `PlayerSpannerTargeting` | 공격·수리의 월드 거리, 전방 각도, 같은 씬, 장애물 가림 검사를 공유합니다. 대상 자신의 콜라이더는 가림에서 제외합니다. |
 
 무기 선택 API는 `CanSelectWeapon`을 공통으로 검사합니다. 비활성·일시정지·조작 차단·스킬 선택 중 또는 장비가 없으면 false입니다. 같은 무기를 다시 선택하면 true지만 `WeaponChanged`는 발생하지 않습니다. 실제 전환에만 `WeaponChanged(WeaponType)`를 통지하며 기존 공격 대기시간은 유지합니다. `SelectNextWeapon()`은 다음 슬롯 선택을 위한 호환 메서드입니다. 전환 표시를 구독한 UI는 비활성화할 때 구독을 해제합니다.
 
+원거리 무기와 스패너를 오가는 실제 전환은 `PlayerSpriteMotion`도 `WeaponChanged`를 구독해 새 무기 계열의 몸체를 같은 프레임에 평가한다. 이때 현재 이동 입력에 맞는 대기·이동 자세를 고르고 기존 공격·대시 표시를 정리한다. 기본총·냉각총·스나이퍼 사이의 전환은 현재 모션과 재생 진행률을 유지한다. 차단되어 실패한 전환은 표시를 강제하지 않으며, Motion 비활성 시 구독을 해제한다. 이전 무기 그림을 임시로 표시하는 대체 경로는 사용하지 않는다.
+
 #564에서는 무기 선택을 Update에 두고 물리적 클릭에 따른 공격 시도를 LateUpdate로 옮겼습니다. UI·포탑 선택과 설치 처리가 먼저 클릭을 사용하며, 사용된 클릭은 발사로 이어지지 않습니다. `TryFire()`도 일시정지·조작 차단·스킬 선택과 설치 미리보기 상태를 검사합니다. 공격 수치와 기존 타격 예약·탄환 이동·피해 처리는 유지합니다. [클릭 입력 분리 API](player-primary-input-api.md)
+
+## 2026-10-31 원거리 탄환과 장애물 충돌
+
+기본총·냉각총의 `PlayerBullet.prefab`과 스나이퍼의 `SniperBullet.prefab`은 적뿐 아니라 벽·나무·포탑·CU·플레이어 설치물의 실제 본체 Collider에 닿으면 탄환을 제거하고, 해당 탄환에 이미 연결된 `PlayerProjectileView._impactPrefab`을 한 번 재생한다. 장애물에 피해를 주거나 물리 힘을 가하지 않는다. 스나이퍼는 기존 전용 명중 프리팹을 유지한다.
+
+전역 Bullet 충돌표는 바꾸지 않는다. 두 탄환 PolygonCollider2D의 `Include Layers`에 `Default`, `CU`, `Tower`, `Forest`를 추가한다. `Enemy`와 `PlayerFieldDevice`는 기존 충돌표를 사용한다. `Ground_1`은 포함하지 않고, Collider 또는 Rigidbody 소유자에 `Ground` 태그가 있는 경우에도 통과한다. `Player`·`Bullet` 태그의 자식 Collider와 적이 아닌 감지용 Trigger(포탑 사거리·상호작용 등)도 통과한다. 적 피격 Trigger는 기존 적중 대상으로 유지한다. Collider가 없는 장식은 탄환을 막지 않는다.
+
+`Initial_Stage`의 실제 지면 `Initial_Overworld_Base`는 `Default/Untagged`이므로 태그와 레이어만으로 제외할 수 없다. 기존 `PlayerTurretPlacementRules.FindGround(scene)`으로 찾은 지면 Tilemap의 Collider도 제외한다. 씬별 조회 결과를 공유하며 지면이 제거·비활성화되면 다시 찾고, 씬 언로드와 플레이 초기화 때 캐시를 비운다. 별도 `Environment_Obj`·`Environment_Base` 장애물 Tilemap은 제외하지 않는다.
+
+`PlayerBullet.FixedUpdate`는 프리팹 Collider의 레이어 설정으로 이번 물리 틱의 이동 경로를 Cast하고 가장 가까운 유효 본체에서 정지시킨다. 이 경로와 기존 `OnTriggerEnter2D`는 같은 적중 함수를 사용해 얇은 장애물 관통과 중복 이펙트를 방지한다. 적 피해는 기존 `EnemyHealth.TakeDamage`의 서버 권한을 따르며 새로운 공격 RPC는 추가하지 않는다.
+
+플레이어 설치물의 본체는 Player/Enemy만 접촉시키도록 `Exclude Layers`에 Bullet을 포함해 접촉을 차단하고 있다. 이 설정은 유지하며 탄환의 명시적 `ContactFilter2D` Cast로 본체를 조회한다. 접촉용 제외 설정과 조회 필터의 역할은 [Unity Rigidbody2D.Cast](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody2D.Cast.html)와 [Collider2D.excludeLayers](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Collider2D-excludeLayers.html)를 따른다.
+
+`PlayerBulletRuntimeTests`에는 기본·냉각·스나이퍼와 5개 본체 레이어의 얇은 장애물, 중복 Collider의 이펙트 1회, 지면·플레이어·탄환·감지 Trigger 통과, 적 Trigger 적중 회귀 검증을 추가했다. 실제 PlayerTurret/비콘/방벽/폭탄 프리팹의 명시적 Bullet 접촉 제외 설정과 체력 유지, Default/Untagged 지면과 별도 장애물 Tilemap의 구분도 검사한다. 테스트 작성과 컴파일은 실제 PlayMode 실행 통과를 의미하지 않으며 에디터에서 실행 확인이 필요하다.
 
 ## 스패너 수치와 판정
 
@@ -66,6 +83,12 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 `EnemyHealth.TakeDamage`의 기존 서버 권한 검사를 따르므로 실제 피해는 스폰된 서버 적에서 검증해야 합니다. 클라이언트 공격 RPC는 추가하지 않았습니다.
 물리 힘은 가하지 않습니다. 타격 시점에 한 번 조회하며 휘두르는 동안 연속 판정하지 않습니다.
 기존 원거리 탄환의 속도와 충돌 처리는 현재 main 동작을 유지합니다.
+
+2026-10-31: 일반 스패너 공격은 적중 여부와 관계없이 실제 타격 시점에 초승달 검기를 한 번 재생한다. `PlayerSpannerWeapon._slashPrefab`에 제작된 SpriteRenderer·Animator·`PlayerSpriteEffect` 프리팹을 연결한다. 검기는 타격 순간의 플레이어 중심과 예약된 조준 방향을 사용하고 공격 반경 `_range`에 맞춰 균일 확대한다. 플레이어가 이후 이동해도 손이나 몸을 따라가지 않는다. 수리 의도의 타격은 검기를 재생하지 않으며 기존 수리 파티클을 유지한다. 타격 전 무기 전환·비활성화·조작 차단으로 예약이 취소되면 검기도 생기지 않는다.
+
+`PlayerSpannerSlash._authoredRadius`는 Sprite 피벗에서 검기의 바깥쪽 끝까지의 로컬 거리다. `SpannerSlash.prefab`은 256×256 그림 4장, PPU 128, 공통 피벗 `(74,128)` 픽셀(정규화 `(0.2890625,0.5)`)을 사용한다. 네 프레임의 알파 32 이상인 픽셀로 측정한 바깥 반경 178픽셀을 기준으로 `_authoredRadius=1.390625`를 지정한다. 원본 그림·피벗 또는 Pixels Per Unit을 변경하면 함께 맞춘다. 검기는 기본 공격의 100도 부채꼴 안에 놓는 장식용 표시이며 실제 충돌 판정은 기존 코드를 따른다. `_arc`를 바꿀 때에는 그림도 함께 조정해야 한다. 수명은 프리팹 `PlayerSpriteEffect._duration` 0.18초로, 몸체와의 순서는 `_sortingOrderOffset`으로 편집한다. Collider·메쉬·런타임 그림을 추가하지 않으며 피해량·반경·재사용 시간·수리 API는 변경하지 않는다.
+
+`PlayerWeaponMigrationTests`에는 검기 프리팹 구성, 빗나간 공격의 타격 시점 1회 재생·조준 방향·월드 반경·정렬, 수리 의도와 취소된 타격의 검기 생략 검증을 추가했다. 실제 PlayMode 실행 확인은 별도로 남는다.
 
 ## 포탑 수리
 

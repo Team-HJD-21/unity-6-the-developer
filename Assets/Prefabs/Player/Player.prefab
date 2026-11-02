@@ -2674,6 +2674,7 @@ Transform:
   - {fileID: 930565111}
   - {fileID: 930565101}
   - {fileID: 9205936649}
+  - {fileID: 9506034001}
   - {fileID: 1429413951217043725}
   - {fileID: 132358397131132597}
   - {fileID: 3862206841887158358}
@@ -3095,6 +3096,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponVisual
   _body: {fileID: 2008014413884619221}
   _weapon: {fileID: 9226556425}
+  _foregroundHands: {fileID: 9506032121}
   _sortingGroup: {fileID: 920554210}
   _attack: {fileID: 4090183095164620409}
   _motion: {fileID: 910202610190000001}
@@ -3444,6 +3446,29 @@ SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 21200000, guid: 669e0a04824943149e1d2c5156370241, type: 3}
   m_PrefabInstance: {fileID: 9205541001}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &9506031001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5513808030836162447}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d8e7c06b90804df19128f0557141528a, type: 3}
+--- !u!4 &9506034001 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: d8e7c06b90804df19128f0557141528a, type: 3}
+  m_PrefabInstance: {fileID: 9506031001}
+  m_PrefabAsset: {fileID: 0}
+--- !u!212 &9506032121 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 21200000, guid: d8e7c06b90804df19128f0557141528a, type: 3}
+  m_PrefabInstance: {fileID: 9506031001}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &910202610210100001
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3542,7 +3567,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80e0e53d5f0f55b9be57ce8c171efeb6, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimage
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimageEffect
 --- !u!1001 &930565110
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3580,7 +3605,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80e0e53d5f0f55b9be57ce8c171efeb6, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimage
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimageEffect
 --- !u!1001 &930565120
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3618,7 +3643,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80e0e53d5f0f55b9be57ce8c171efeb6, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimage
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimageEffect
 --- !u!1001 &930565130
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3656,7 +3681,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80e0e53d5f0f55b9be57ce8c171efeb6, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimage
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimageEffect
 --- !u!114 &930565002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3668,7 +3693,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cd301e710b9c5a4ba874eb461e8b9e8d, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashTrail
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashAfterimageController
   _dash: {fileID: 930565001}
   _body: {fileID: 2008014413884619221}
   _weapon: {fileID: 9226556425}

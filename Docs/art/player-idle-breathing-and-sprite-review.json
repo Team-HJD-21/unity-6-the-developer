@@ -1,0 +1,3539 @@
+{
+  "date": "2026-10-29",
+  "author": "이영빈",
+  "art_source": "host_image + existing",
+  "route": "built-in image_gen and existing sprite palette processing",
+  "estimateUsd": null,
+  "initialSpritesInspected": 264,
+  "initialBodySprites": 244,
+  "initialFxSprites": 20,
+  "newIdleFrames": [
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_0.png",
+      "bodyGuid": "ccc5a571c76840a88b912b0128793d65",
+      "copyAppearanceFrom": "819efbac05254e0193412ccf899b490f",
+      "tool": false,
+      "sha256": "a89cb46d9ea4249c58b720596d292de81b8ed6b939c45a74011441001130f3b0"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_1.png",
+      "bodyGuid": "a61d47d486634d489dd7d174990532d4",
+      "copyAppearanceFrom": "819efbac05254e0193412ccf899b490f",
+      "tool": false,
+      "sha256": "d05499b9576290117a7d6066af1e80cb741c895a69ae653bb9a136e66c039acb"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_2.png",
+      "bodyGuid": "a406a25a050f473a87ca032f2d8d2b5a",
+      "copyAppearanceFrom": "819efbac05254e0193412ccf899b490f",
+      "tool": false,
+      "sha256": "2f505e9d972b12cbab04a72e7725406a8ad9ce05929b106ad71c75beaacdba60"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_3.png",
+      "bodyGuid": "daa759dfd47840d2a49874cf17d5a91e",
+      "copyAppearanceFrom": "819efbac05254e0193412ccf899b490f",
+      "tool": false,
+      "sha256": "273e9a3ede7a582dc434d9019424026aad85c9cb1d9ae33fddcdf8969a030fc5"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_0.png",
+      "bodyGuid": "fc6aca7578f341499617e7c40bc54a39",
+      "copyAppearanceFrom": "4b8206659cac4d139c29c860bdf1647b",
+      "tool": false,
+      "sha256": "5c8d36d026a3426048202f8c59cd08a5ca48c12418208322a688e0bb4820b058"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_1.png",
+      "bodyGuid": "97cda4f743e74567aa1398011887304c",
+      "copyAppearanceFrom": "4b8206659cac4d139c29c860bdf1647b",
+      "tool": false,
+      "sha256": "55896f5c436e833961691f6bc2ff25cc4ceee9c40d29b0990453ddf42c6e6b89"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_2.png",
+      "bodyGuid": "b4d528216bfb44f8b2113d33f52e53ec",
+      "copyAppearanceFrom": "4b8206659cac4d139c29c860bdf1647b",
+      "tool": false,
+      "sha256": "289720e5b81dca4f1d3de3468a6a123cacb30afe2abcc86f7a60e349d365967c"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_3.png",
+      "bodyGuid": "80688507ea354721ba6f56b64d7ce7d9",
+      "copyAppearanceFrom": "4b8206659cac4d139c29c860bdf1647b",
+      "tool": false,
+      "sha256": "b6a769fa57187ee09d9487bbd7a9bbf92ca86f2bf5ac91f2502b39eec34b20d4"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_0.png",
+      "bodyGuid": "f70b27eba7d041e6ac0d4be9033aa1b3",
+      "copyAppearanceFrom": "20e81679f6954983aea4d6f66d4c58be",
+      "tool": true,
+      "sha256": "b5e517d7e9c474067ed60b7c2481cc9a5deb221967b97f5a406669dc5b7f517d"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_1.png",
+      "bodyGuid": "dae434e2747c4aaaae51946b8c018d7a",
+      "copyAppearanceFrom": "20e81679f6954983aea4d6f66d4c58be",
+      "tool": true,
+      "sha256": "e19cd7b50f3e6b21279d5f9d3f636512f7d4a0eb0ad44a97286fe3cec813de09"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_2.png",
+      "bodyGuid": "3f1817d7e05049d187e0d1234ab272b7",
+      "copyAppearanceFrom": "20e81679f6954983aea4d6f66d4c58be",
+      "tool": true,
+      "sha256": "dfe779c5bcc56ee6e28030fcb5007f7e99c9104e47342cfd8eda1715b4eb9729"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_3.png",
+      "bodyGuid": "b9312a21b11e4d80b70eb8c8cbfff4b6",
+      "copyAppearanceFrom": "20e81679f6954983aea4d6f66d4c58be",
+      "tool": true,
+      "sha256": "bd95cd6179d3c27994d5eaff2c44e52b4c36947bedb9f9e3826500891d674549"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_0.png",
+      "bodyGuid": "d143bf01d1724a8b9fa0b5bd53944522",
+      "copyAppearanceFrom": "9a7783a00eaa496bbeef431e3f451391",
+      "tool": true,
+      "sha256": "55b60696d6d8099b8f7dabf45c6e066a44d43dccce4ab21cd649a836e727a5fe"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_1.png",
+      "bodyGuid": "e0936d58091c4528a82e471d7d59db31",
+      "copyAppearanceFrom": "9a7783a00eaa496bbeef431e3f451391",
+      "tool": true,
+      "sha256": "31002e41939226ba97396ca79f60dbc2aa00334a38359eb00e1338857ff70a13"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_2.png",
+      "bodyGuid": "0eea45d9b98c4449ac9b7e958253fcbf",
+      "copyAppearanceFrom": "9a7783a00eaa496bbeef431e3f451391",
+      "tool": true,
+      "sha256": "03facbaf63c98ef0d53d78960ad64bf2f610d48d15d21a87aed785fc13575774"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_3.png",
+      "bodyGuid": "a7a5afb21e9e4df4b5d478efd2729c75",
+      "copyAppearanceFrom": "9a7783a00eaa496bbeef431e3f451391",
+      "tool": true,
+      "sha256": "bcc33da887bfd33772f5937e8241498e964538ad470d3d91cdfc7a37acda1e82"
+    }
+  ],
+  "idleSources": [
+    {
+      "key": "ranged_down",
+      "prompt": "Edit the supplied approved game sprite into a subtle idle breathing cycle, preserving this EXACT astronaut character and pose. Asset: transparent sprite animation source, one 1024x1024 image containing a precise 2 by 2 grid of four equal 512x512 cells, no visible grid lines and no text. Each cell contains the exact same astronaut, same scale, same canvas registration, facing diagonally DOWN-RIGHT, same black visor, compact helmet, white/gray padded spacesuit and black outlined boots. The reference is the BODY ONLY layer; keep both hands and feet, leave the small empty grip between the hands ready for a separately rendered gun. Do NOT add any gun, tool, muzzle flash, floor, shadow or thruster flame. This is a very restrained idle, not walking: top-left rest, top-right subtle chest inhale and shoulders rise, bottom-left gentle peak inhale, bottom-right release toward rest. The head and torso can move at most the equivalent of ONE pixel in the original 160x160 source, hands and boots stay registered to the source exactly. Preserve anatomy, proportion, helmet size, leg length, palette, direction and the silhouette; avoid reinterpretation, extra limbs, head rotations, jumping, leg crossing or exaggerated squash/stretch. All four cells have the same character placement and generous equal transparent margins. Treat the supplied approved sprite as the master, faithfully replicate its clean small game-sprite style. Real transparent alpha background, no checkerboard painted into image.",
+      "reference": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_DownRight.png",
+      "motion": "Idle",
+      "facing": "DownRight",
+      "route": "host_image",
+      "estimateUsd": null,
+      "model": "not exposed by host tool",
+      "frames": [
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_0.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_1.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_2.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_DownRight_3.png"
+      ],
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IdleBreathing_ranged_down_Source.png",
+      "sourceSha256": "c612e726514d0ef02e2dc3d853eb406136649ca50cd0975f24650e6756806b58",
+      "oldBodyGuid": "819efbac05254e0193412ccf899b490f",
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_DownRight.anim"
+    },
+    {
+      "key": "ranged_up",
+      "prompt": "Create an extremely faithful subtle idle-breathing variation of the supplied approved astronaut body sprite. Deliver one transparent image as a 2x2 four-frame source sheet, four equal square cells with generous equal transparent margins, no labels and no grid lines. Same character facing UP-RIGHT, a back three-quarter view, keeping the backpack fully visible and the visor visible only on the right edge in EVERY cell. Preserve the body-only two-handed gun-holding pose of the reference, with empty grip space for a separate gun; do not draw a gun. Frame order: top-left neutral rest, top-right gentle inhale, bottom-left peak inhale, bottom-right soft release. This is tiny breathing, the equivalent of 1 pixel of shoulder/torso motion in the original 160px canvas. Feet stay planted in exactly the same place, hands stay fixed to preserve separate weapon alignment. Do not walk, hop, turn, wave, swing, crouch or grow. Faithfully preserve the compact round helmet size, head/body proportions, padded white and gray suit, black visor and gray outlines, black/gray/white palette of the reference and both complete legs/boots. The backpack and any hoses remain connected to the same torso points. No added gun, tool, flames, extra limbs, effects, ground or shadow. Real transparent alpha, no painted checkerboard. Keep identical scale and root registration across all four cells. Preserve the reference art style and silhouette; this is an animation edit of this character, NOT a redesign.",
+      "reference": "Assets/Art/Sprites/Player/Motions/V2/IdleEightWay/Idle_UpRight.png",
+      "motion": "Idle",
+      "facing": "UpRight",
+      "route": "host_image",
+      "estimateUsd": null,
+      "model": "not exposed by host tool",
+      "frames": [
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_0.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_1.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_2.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/Idle_UpRight_3.png"
+      ],
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IdleBreathing_ranged_up_Source.png",
+      "sourceSha256": "81f499642ce36e3980b5ad1d1cea2b01564e444921705d2a52cf93d3cb958c2b",
+      "oldBodyGuid": "4b8206659cac4d139c29c860bdf1647b",
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_UpRight.anim"
+    },
+    {
+      "key": "tool_down",
+      "prompt": "Create an extremely faithful subtle idle-breathing variation of the supplied approved astronaut body sprite. Deliver one transparent image as a 2x2 four-frame source sheet, four equal square cells with generous equal transparent margins, no labels and no grid lines. Same character facing DOWN-RIGHT, a front three-quarter view in EVERY cell. Preserve the exact relaxed spanner-holding body pose of the reference, hands and arms in precisely the same place; this is BODY ONLY, the spanner is a separate object, do not draw a spanner. Frame order: top-left neutral rest, top-right gentle inhale, bottom-left peak inhale, bottom-right soft release. This is tiny breathing, the equivalent of 1 pixel of shoulder/torso motion in the original 160px canvas. Feet stay planted in exactly the same place, hands stay fixed to preserve separate weapon alignment. Do not walk, hop, turn, wave, swing, crouch or grow. Faithfully preserve the compact round helmet size, head/body proportions, padded white and gray suit, black visor and gray outlines, black/gray/white palette of the reference and both complete legs/boots. The backpack and any hoses remain connected to the same torso points. No added gun, tool, flames, extra limbs, effects, ground or shadow. Real transparent alpha, no painted checkerboard. Keep identical scale and root registration across all four cells. Preserve the reference art style and silhouette; this is an animation edit of this character, NOT a redesign.",
+      "reference": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolIdle_DownRight.png",
+      "motion": "ToolIdle",
+      "facing": "DownRight",
+      "route": "host_image",
+      "estimateUsd": null,
+      "model": "not exposed by host tool",
+      "frames": [
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_0.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_1.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_2.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_DownRight_3.png"
+      ],
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IdleBreathing_tool_down_Source.png",
+      "sourceSha256": "d3e8a3e123fa9ae396e82ddf500e37d5918392d090231e371cb081d681043e1f",
+      "oldBodyGuid": "20e81679f6954983aea4d6f66d4c58be",
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_DownRight.anim"
+    },
+    {
+      "key": "tool_up",
+      "prompt": "Create an extremely faithful subtle idle-breathing variation of the supplied approved astronaut body sprite. Deliver one transparent image as a 2x2 four-frame source sheet, four equal square cells with generous equal transparent margins, no labels and no grid lines. Same character facing UP-RIGHT, a back three-quarter view, keeping the backpack fully visible and the visor visible only at the right edge in EVERY cell. Preserve the exact relaxed spanner-holding body pose of the reference, with its low relaxed right hand; this is BODY ONLY, the spanner is a separate object, do not draw a spanner. Frame order: top-left neutral rest, top-right gentle inhale, bottom-left peak inhale, bottom-right soft release. This is tiny breathing, the equivalent of 1 pixel of shoulder/torso motion in the original 160px canvas. Feet stay planted in exactly the same place, hands stay fixed to preserve separate weapon alignment. Do not walk, hop, turn, wave, swing, crouch or grow. Faithfully preserve the compact round helmet size, head/body proportions, padded white and gray suit, black visor and gray outlines, black/gray/white palette of the reference and both complete legs/boots. The backpack and any hoses remain connected to the same torso points. No added gun, tool, flames, extra limbs, effects, ground or shadow. Real transparent alpha, no painted checkerboard. Keep identical scale and root registration across all four cells. Preserve the reference art style and silhouette; this is an animation edit of this character, NOT a redesign.",
+      "reference": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolIdle_UpRight.png",
+      "motion": "ToolIdle",
+      "facing": "UpRight",
+      "route": "host_image",
+      "estimateUsd": null,
+      "model": "not exposed by host tool",
+      "frames": [
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_0.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_1.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_2.png",
+        "Assets/Art/Sprites/Player/Motions/V2/DiagonalIdle/ToolIdle_UpRight_3.png"
+      ],
+      "source": "Assets/Art/Sprites/Player/Motions/V2/Source/IdleBreathing_tool_up_Source.png",
+      "sourceSha256": "54311c4644a7fb4f4f017c878aed2825ca41eae2751308c99fc7a2f833557855",
+      "oldBodyGuid": "9a7783a00eaa496bbeef431e3f451391",
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_UpRight.anim"
+    }
+  ],
+  "mirroredClips": [
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Attack_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Fire_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Fire_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Fire_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Fire_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Fire_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Fire_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverAttack_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFire_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFire_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFire_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFire_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFire_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFire_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanBack_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanBack_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanBack_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanBack_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanLeft_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanRight_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanRight_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverFireLeanLeft_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/HoverRepair_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Idle_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Move_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Move_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Move_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Move_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Move_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Move_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanBack_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanBack_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanBack_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanBack_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanLeft_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanRight_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanRight_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/MoveLeanLeft_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/Repair_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/ToolIdle_UpRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_DownLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_DownRight.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_Left.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_Right.anim"
+    },
+    {
+      "clip": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_UpLeft.anim",
+      "source": "Assets/Art/Animations/Player/WeaponPosesV2/ToolMove_UpRight.anim"
+    }
+  ],
+  "repairs": [
+    {
+      "index": 16,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Backpedal/Backpedal_Left.png",
+      "clips": [
+        "HoverFireLeanRight_Left",
+        "MoveLeanRight_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        43,
+        34,
+        128,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "2887e3354a0945c168b5f058ee63fded463739d72c22ca9b45bfdbc393cfa3d8",
+      "restoredFrom": null,
+      "gasPixels": 473,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Backpedal/Backpedal_Left.png",
+      "beforeSha256": "7c06452e2384186759bf5edc414f80d830d3d89cb1f224df2f7c83a8caa8fe47"
+    },
+    {
+      "index": 17,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Backpedal/Backpedal_Right.png",
+      "clips": [
+        "HoverFireLeanLeft_Right",
+        "MoveLeanLeft_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        40,
+        34,
+        131,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "9207035306d991092bad840ba14a1d169cae8a19f033ae486ac5a1060248cacf",
+      "restoredFrom": null,
+      "gasPixels": 334,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Backpedal/Backpedal_Right.png",
+      "beforeSha256": "3198a7cae7bde1e977ce832428889ce31ffd54358651c93a7587548ef3027b7e"
+    },
+    {
+      "index": 18,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownLeft.png",
+      "clips": [
+        "HoverFireLeanBack_DownLeft",
+        "MoveLeanBack_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        28,
+        30,
+        118,
+        132
+      ],
+      "lowerBodyHoleAreas": [
+        7
+      ],
+      "sha256": "6f52cd6ef932776e5042abebee7cea1f34510a97c4013a8d9bbcda8c91308cd2",
+      "restoredFrom": null,
+      "gasPixels": 189,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownLeft.png",
+      "beforeSha256": "8054b50724fba3daaac83d1361d8170955888118e77f4c47d9503f652bc61f8a"
+    },
+    {
+      "index": 19,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownRight.png",
+      "clips": [
+        "HoverFireLeanBack_DownRight",
+        "MoveLeanBack_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        37,
+        132,
+        134
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "9367dfc2a406ba6ec9e195db51f6ab9e143de1dc3dd95b3a1bffee422a65e19f",
+      "restoredFrom": null,
+      "gasPixels": 184,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_DownRight.png",
+      "beforeSha256": "542c64df5837a99e54607bc42b1fb2611c138ef3432dabdcc99eca3c0c12f379"
+    },
+    {
+      "index": 20,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpLeft.png",
+      "clips": [
+        "HoverFireLeanBack_UpLeft",
+        "MoveLeanBack_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        27,
+        34,
+        115,
+        125
+      ],
+      "lowerBodyHoleAreas": [
+        43,
+        31,
+        12
+      ],
+      "sha256": "2d3526e0886b145dc0b199713d99c76479c4681bf0d666f5f25c98d6710af51d",
+      "restoredFrom": null,
+      "gasPixels": 375,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpLeft.png",
+      "beforeSha256": "f67945c99b2366b315ec8b0ac83e2c373e38b98986fc19077133ac434250bb11"
+    },
+    {
+      "index": 21,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpRight.png",
+      "clips": [
+        "HoverFireLeanBack_UpRight",
+        "MoveLeanBack_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        31,
+        136,
+        123
+      ],
+      "lowerBodyHoleAreas": [
+        17,
+        71,
+        9
+      ],
+      "sha256": "fed10303054fee3bb8e906eff28b301e17a69eea061292f569a1bbbee320a8e6",
+      "restoredFrom": null,
+      "gasPixels": 362,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/BackpedalEightWay/Backpedal_UpRight.png",
+      "beforeSha256": "be650d1bc7ff7d0b721b494535e5c8546c05df2cbd4cb2b7fb54bfb50f40c4cd"
+    },
+    {
+      "index": 58,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_0.png",
+      "clips": [
+        "HoverAttack_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        36,
+        34,
+        115,
+        135
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "99056185451ae00230d64bdf640518cd3b1c664941f3080cb62d87bfa04db792",
+      "restoredFrom": null,
+      "gasPixels": 84,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_0.png",
+      "beforeSha256": "9b9e0fa7948da9ec58de6e106143e6044f21a4f539dcaf1bf989c79699935c01"
+    },
+    {
+      "index": 59,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_1.png",
+      "clips": [
+        "HoverAttack_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        33,
+        107,
+        130
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "0ad8c296d1bc4adfd4f8f5a0d5ed6fff0f3eb2dc0f056615ea344431f5d83f38",
+      "restoredFrom": null,
+      "gasPixels": 220,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_1.png",
+      "beforeSha256": "474674cd7e4ef68c7aadefc5e5b9cdb39e007b529502cdc449a5a37f0568e737"
+    },
+    {
+      "index": 60,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_2.png",
+      "clips": [
+        "HoverAttack_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        46,
+        34,
+        109,
+        135
+      ],
+      "lowerBodyHoleAreas": [
+        18,
+        11
+      ],
+      "sha256": "6804e10e927f97482a2beb729339e644d15eccd1369563e7b7d820460903d3dc",
+      "restoredFrom": null,
+      "gasPixels": 265,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_2.png",
+      "beforeSha256": "304ec84b44e9a7960a67f5158d699572b93dc0f85d2971d9c5c1b355ce645919"
+    },
+    {
+      "index": 61,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_3.png",
+      "clips": [
+        "HoverAttack_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        36,
+        113,
+        138
+      ],
+      "lowerBodyHoleAreas": [
+        7
+      ],
+      "sha256": "6fa0a2c3bab7f4c1af6523e90dc57e29f1cc74db69cd26121ea096d5e07d38ab",
+      "restoredFrom": null,
+      "gasPixels": 91,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Down_3.png",
+      "beforeSha256": "52e1dfc312ca51371349afaf3624a6a4a2930a219208e3fdb4527b8f31d6a687"
+    },
+    {
+      "index": 62,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_0.png",
+      "clips": [
+        "HoverAttack_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        42,
+        31,
+        120,
+        132
+      ],
+      "lowerBodyHoleAreas": [
+        5,
+        8,
+        11
+      ],
+      "sha256": "053cfeea455a151e29063e068b34c60408badc14ee2dd0dd96703d7a797b3717",
+      "restoredFrom": null,
+      "gasPixels": 164,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_0.png",
+      "beforeSha256": "2a0f99444e8f5b113d8b4400babfdb463dea22f947dbbdbc0a712e4285c1d98a"
+    },
+    {
+      "index": 63,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_1.png",
+      "clips": [
+        "HoverAttack_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        19,
+        124,
+        130
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "4ae1e5b85a499a89afb5da32701e97444fe885f71c01c2c6b80fab1f5168b115",
+      "restoredFrom": null,
+      "gasPixels": 165,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_1.png",
+      "beforeSha256": "4c79baac6864106cd31c535d6467761334ba023178050fef230752f3302c8ceb"
+    },
+    {
+      "index": 64,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_2.png",
+      "clips": [
+        "HoverAttack_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        25,
+        31,
+        122,
+        130
+      ],
+      "lowerBodyHoleAreas": [
+        16
+      ],
+      "sha256": "828fd346e31abe9c2bf3abf7b5854940c492c0ba0f64908eb4c54e3374d4e6b2",
+      "restoredFrom": null,
+      "gasPixels": 162,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_2.png",
+      "beforeSha256": "b613454f6546a1e9035700f496f897420d04cf01f5189a59dc400ed46440ba7a"
+    },
+    {
+      "index": 65,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_3.png",
+      "clips": [
+        "HoverAttack_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        43,
+        33,
+        121,
+        134
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "0ec07b9dae60446f9f24671fd5d9b72393c66e00d9d642e91a5950992bfebc10",
+      "restoredFrom": null,
+      "gasPixels": 167,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Left_3.png",
+      "beforeSha256": "ba67acf28d83744003e6af31f35f44454f8b7dd8aafbb48927ae0d97f611eaff"
+    },
+    {
+      "index": 66,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_0.png",
+      "clips": [
+        "HoverAttack_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        35,
+        32,
+        126,
+        137
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "42e830138874d11153a91cf223bef7d442e84a54b02da72600664509c68ef860",
+      "restoredFrom": null,
+      "gasPixels": 162,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_0.png",
+      "beforeSha256": "db08f11011a65458a9fa84377aef134591a126e8f675f30d9c949720c603be7c"
+    },
+    {
+      "index": 67,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_1.png",
+      "clips": [
+        "HoverAttack_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        36,
+        20,
+        135,
+        134
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "558255cc0d09e806ca5293f8f61545bc4aea0b42d73b20a30a2dee6680528922",
+      "restoredFrom": null,
+      "gasPixels": 140,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_1.png",
+      "beforeSha256": "7c072f48d9addea1f2e76e947b94bc1c8306eaa91492aa48463cc6c659817471"
+    },
+    {
+      "index": 68,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_2.png",
+      "clips": [
+        "HoverAttack_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        31,
+        31,
+        122,
+        135
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "b2c5ba97384b39997c8e90b322ad92e560077a508996dde7c941c3985fe42635",
+      "restoredFrom": null,
+      "gasPixels": 150,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_2.png",
+      "beforeSha256": "89c7ac9eb1f6a9140a46076e0126099753e4b7d2930319be9639b9060693ba90"
+    },
+    {
+      "index": 69,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_3.png",
+      "clips": [
+        "HoverAttack_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        34,
+        35,
+        118,
+        139
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "40600845663be20f40309ce59245bb304f3357a1e763aa954edce34e634018f7",
+      "restoredFrom": null,
+      "gasPixels": 188,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Right_3.png",
+      "beforeSha256": "112e0496df29009be7c83b3ca07e7a0e0c02e50a1134c1aad024bea0dcdd2713"
+    },
+    {
+      "index": 70,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_0.png",
+      "clips": [
+        "HoverAttack_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        33,
+        117,
+        131
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "7dfd9c79a4652f632c1d753387525acc9869450c943ab8209d01f53ab9b46945",
+      "restoredFrom": null,
+      "gasPixels": 136,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_0.png",
+      "beforeSha256": "53de78a975bade506e16de0a1c9d2be218555c1f4205c8dc0a5efae817b115ea"
+    },
+    {
+      "index": 71,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_1.png",
+      "clips": [
+        "HoverAttack_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        30,
+        130,
+        128
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "d04cf3f8c57a82135b16840fd6bf92c0fa85a0b8f03d3feb95dfe09373761c38",
+      "restoredFrom": null,
+      "gasPixels": 257,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_1.png",
+      "beforeSha256": "d0de05cda2e465c3abd5c641d931f65c14ad8f1764e2cd70686dd89d8702b383"
+    },
+    {
+      "index": 72,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_2.png",
+      "clips": [
+        "HoverAttack_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        43,
+        33,
+        127,
+        131
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "6ebad505d427d4375e0c0ebd77ff7b3e520524ab3c1871173979c0d974264d52",
+      "restoredFrom": null,
+      "gasPixels": 242,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_2.png",
+      "beforeSha256": "8ed16647db9e06479ebe280a9f04c3c2754dd72787d958c8310c1ef32071319c"
+    },
+    {
+      "index": 73,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_3.png",
+      "clips": [
+        "HoverAttack_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        35,
+        131,
+        133
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "ece8f991490db40f9999b139be4ff45bdb40338faf0bd84948fe226a66279356",
+      "restoredFrom": null,
+      "gasPixels": 191,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_3.png",
+      "beforeSha256": "07c7dac5c94b17386341bf809fed439eb4ec9dec189a5a09f1e4c1a28ae8facb"
+    },
+    {
+      "index": 74,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_0.png",
+      "clips": [
+        "HoverFire_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        46,
+        33,
+        113,
+        125
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "9ee241d9fb0220a6301dfe45d6605c7b0ca0f8f7b8a2a0538cd105efee226bc6",
+      "restoredFrom": null,
+      "gasPixels": 531,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_0.png",
+      "beforeSha256": "0dede3ff52fac2938a4a1550a1b3d3ca38c0e4b63bfba3b5fb3d275da0749ba5"
+    },
+    {
+      "index": 75,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_1.png",
+      "clips": [
+        "HoverFire_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        31,
+        111,
+        123
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "6e2fcdb3a3422f07511aa2a4beb9d2fb57bd9fe3773196a96c0833b5c4a6a5d4",
+      "restoredFrom": null,
+      "gasPixels": 455,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_1.png",
+      "beforeSha256": "6532bb799bd03893091128e5b63c414eb25475978f9918119e491f6f4a9541d2"
+    },
+    {
+      "index": 76,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_2.png",
+      "clips": [
+        "HoverFire_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        33,
+        110,
+        126
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "ea6902d934b6dc13de3a0d06eb0507592bd2cbe3374157cafee01ed2a8a98945",
+      "restoredFrom": null,
+      "gasPixels": 445,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_2.png",
+      "beforeSha256": "7a8feaead6684038fb5e0cd2693623fea1059ad591ac3b1069de8894577e4fb5"
+    },
+    {
+      "index": 77,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_3.png",
+      "clips": [
+        "HoverFire_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        35,
+        110,
+        128
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "37ef8fc2c77d3753cf14af3a27bc9b710f285e1832d38767226248dd4bc50a8d",
+      "restoredFrom": null,
+      "gasPixels": 468,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Down_3.png",
+      "beforeSha256": "bb498246aca8f0350c8d8043d0ee3729ec8cbb618850a56542670013d219e7a7"
+    },
+    {
+      "index": 78,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_0.png",
+      "clips": [
+        "HoverFire_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        33,
+        116,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "20f4778c04805a4b90e3e935f0f42cd7341cd3edd1ec25d4c02aa0d6a323bac4",
+      "restoredFrom": null,
+      "gasPixels": 199,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_0.png",
+      "beforeSha256": "9dc775006147915dd7efd6cfa79c8afaab563a041b62871b77d7d04c4c0b799f"
+    },
+    {
+      "index": 79,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_1.png",
+      "clips": [
+        "HoverFire_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        32,
+        115,
+        118
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "7e9f8bb90b1927acea9c0f3f17fdbff35768652ec985324c85665d55226e9b32",
+      "restoredFrom": null,
+      "gasPixels": 213,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_1.png",
+      "beforeSha256": "efec41b0f8d56b4798659099cb591c02041a0c2b405a5407f0142838f4510a3b"
+    },
+    {
+      "index": 80,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_2.png",
+      "clips": [
+        "HoverFire_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        35,
+        117,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "0d880bd3a6495405b8d24504af655b772b0e4594e0171e79ac3a3257db809da0",
+      "restoredFrom": null,
+      "gasPixels": 226,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_2.png",
+      "beforeSha256": "494ce3672bb190925c2e0c2f4b9133c91a0640456743fe59d45ddaf60cbe01ba"
+    },
+    {
+      "index": 81,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_3.png",
+      "clips": [
+        "HoverFire_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        36,
+        115,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "8264dfa51a931a2c8035be870dd8cfad05aea25fdc1ffc7cb95576158c03307a",
+      "restoredFrom": null,
+      "gasPixels": 195,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Left_3.png",
+      "beforeSha256": "9ff98d83bb6c2e13e001cd17e6db5c39ff8231511fe1423d58d04a5fd8419117"
+    },
+    {
+      "index": 82,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_0.png",
+      "clips": [
+        "HoverFire_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        42,
+        35,
+        135,
+        120
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "4685ab72a403f1a6b091638f6e8be611a61b9319b371e59ac329e3bf215e18f6",
+      "restoredFrom": null,
+      "gasPixels": 225,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_0.png",
+      "beforeSha256": "4d0db4bc448a2a89a4cfa7aed6ebcce3f7cf8bc34054d6fc127c80785cff639f"
+    },
+    {
+      "index": 83,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_1.png",
+      "clips": [
+        "HoverFire_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        42,
+        32,
+        121,
+        116
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "53383b051678a450fa7dd32d5e0643f46530b2e21f56f26bb60b0c4476c0f060",
+      "restoredFrom": null,
+      "gasPixels": 221,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_1.png",
+      "beforeSha256": "f451d5c604a15978cddeac8ec4d1bc5bb9dc63e7cd11dd72e3c3c3f0d1aced99"
+    },
+    {
+      "index": 84,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_2.png",
+      "clips": [
+        "HoverFire_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        35,
+        116,
+        123
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "781050aeec87bdaf8162c04463da3570ee2df790a5903642965fba7f2d8790f9",
+      "restoredFrom": null,
+      "gasPixels": 481,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_2.png",
+      "beforeSha256": "1803bcfe1540df0fae243a26c0a88caa0ba19c7dd93850f9a73055c63ea2b9c0"
+    },
+    {
+      "index": 85,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_3.png",
+      "clips": [
+        "HoverFire_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        43,
+        37,
+        137,
+        125
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "90563ef3dd056e6be2cb727b3cc350d85dcfb25865185c4addaaf365d589b939",
+      "restoredFrom": null,
+      "gasPixels": 507,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Right_3.png",
+      "beforeSha256": "f0a5b12e0f743b0067489ac9a53a3559bd35f9cf654121fc535024cd79f55a54"
+    },
+    {
+      "index": 86,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_0.png",
+      "clips": [
+        "HoverFire_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        46,
+        35,
+        120,
+        123
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "df547717e3187534cd8f1482f8161fc0983571bfda6484d9aed73d971b11f9fd",
+      "restoredFrom": null,
+      "gasPixels": 589,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_0.png",
+      "beforeSha256": "661f0a014ed3173eb433a10bc09ec6fa5f7bd4096e93581a77d52f5ca3b147d3"
+    },
+    {
+      "index": 87,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_1.png",
+      "clips": [
+        "HoverFire_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        33,
+        118,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "93df39e3c500e881ef5de31136dd94fbeb8d96af5239af16d0575cf21ce82b85",
+      "restoredFrom": null,
+      "gasPixels": 605,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_1.png",
+      "beforeSha256": "a73ace13c31dbba3ab53a8dc06d93c678ddf63701e9a3bf2620271a525ef7194"
+    },
+    {
+      "index": 88,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_2.png",
+      "clips": [
+        "HoverFire_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        35,
+        121,
+        125
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "594aca3fcb0b41adb8f3cd88099c22c1db4f1b7dd9f13c66f064662a283a9ea2",
+      "restoredFrom": null,
+      "gasPixels": 636,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_2.png",
+      "beforeSha256": "c6660a1d719aacea687074224a92d8c969244aba3210859db93104cc1b5fca18"
+    },
+    {
+      "index": 89,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_3.png",
+      "clips": [
+        "HoverFire_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        37,
+        120,
+        126
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "d4cd8f692b47b352a913f20011bd1287bd849611899f56ca29afc077b0623983",
+      "restoredFrom": null,
+      "gasPixels": 581,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_3.png",
+      "beforeSha256": "75eb31d2573802e8b4bf8123d867d7a953c46dcde536e390a8ca28c20d3be3af"
+    },
+    {
+      "index": 90,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_0.png",
+      "clips": [
+        "HoverRepair_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        34,
+        115,
+        129
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "e30653990dd83d16a4ccfb2b74f3e8c2dce433610e9cfc704427cd374fb5bc45",
+      "restoredFrom": null,
+      "gasPixels": 213,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_0.png",
+      "beforeSha256": "b119b8a3211bb508b6f3a943a860d622ab01fb51c60cc2a71862a0f8eae34c08"
+    },
+    {
+      "index": 91,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_1.png",
+      "clips": [
+        "HoverRepair_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        30,
+        108,
+        124
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "18f01161e3f6f0f8bd0a995063a858b4990f143d9c9d2f00503f41b31ed8d4bc",
+      "restoredFrom": null,
+      "gasPixels": 271,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_1.png",
+      "beforeSha256": "49e1db7c3f5ea7979697af90ae01bfbeb57e04ad26989cb236a9ce3ead650872"
+    },
+    {
+      "index": 92,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_2.png",
+      "clips": [
+        "HoverRepair_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        35,
+        32,
+        120,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "61692a38f053e9d4e4f064e6f9817ba2fce278590972d073daa17e5f4f9098bd",
+      "restoredFrom": null,
+      "gasPixels": 276,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_2.png",
+      "beforeSha256": "00fe49ac0c9e15ff6d247108bea5416d8224d878666e76245e522ba6d2fa9f30"
+    },
+    {
+      "index": 93,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_3.png",
+      "clips": [
+        "HoverRepair_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        35,
+        115,
+        131
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "9f00224e8d9636ea8da8089aca019cf7e94712acf2e66b8625404c8a56b4e540",
+      "restoredFrom": null,
+      "gasPixels": 252,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Down_3.png",
+      "beforeSha256": "89ccf40231caf3d09f7926880e3dbc07f29d02f34d16c18313a493b74976177e"
+    },
+    {
+      "index": 94,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_0.png",
+      "clips": [
+        "HoverRepair_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        44,
+        30,
+        121,
+        127
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "1bc2d572d0a35dd0f962b86fa362098897cdffafa81d696d141e60f89a2502e5",
+      "restoredFrom": null,
+      "gasPixels": 266,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_0.png",
+      "beforeSha256": "04f78aa45e94e3587e8daa7a4fc856aab47d6c403bd8d4181d195c8eb48274ed"
+    },
+    {
+      "index": 95,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_1.png",
+      "clips": [
+        "HoverRepair_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        28,
+        122,
+        123
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "960163b2858deabc28e7a07937a8e9319055fd4bf2ac7f31b4cd61aabd2a55a5",
+      "restoredFrom": null,
+      "gasPixels": 233,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_1.png",
+      "beforeSha256": "e4d6aa08543fc9d4657fb1d61cc63345988a039267b4cd9608bfea125bd4d7e3"
+    },
+    {
+      "index": 96,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_2.png",
+      "clips": [
+        "HoverRepair_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        34,
+        30,
+        124,
+        125
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "7f010ed2ee12fefd5a54b4dbe88eeade635bec5a11cb6d3fb1580180a601f34c",
+      "restoredFrom": null,
+      "gasPixels": 250,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_2.png",
+      "beforeSha256": "33674288a4c00f59559f0a886d238241d2a74d3191638edb8137fce45f4bc169"
+    },
+    {
+      "index": 97,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_3.png",
+      "clips": [
+        "HoverRepair_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        43,
+        32,
+        119,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "f73db565a6344f5a0f24a3b5a9c2c73bff0825a5fdab8c2c9c7019cc7cad9e3a",
+      "restoredFrom": null,
+      "gasPixels": 242,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Left_3.png",
+      "beforeSha256": "323ec6c74aea0d9ff8a932e885e06d848973f5a2dbf8e5c51c596b5c39125b32"
+    },
+    {
+      "index": 98,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_0.png",
+      "clips": [
+        "HoverRepair_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        32,
+        119,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "94f4f2c5d3c93c0aa55dd8483871f1f3daec1b49935ecbd24795ad08389e3fe5",
+      "restoredFrom": null,
+      "gasPixels": 219,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_0.png",
+      "beforeSha256": "9e8c74b7da81770ba61a4c8360b88bd85635c171ceef360b50b6c4f57d3fb6ac"
+    },
+    {
+      "index": 99,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_1.png",
+      "clips": [
+        "HoverRepair_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        42,
+        31,
+        120,
+        126
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "8b81f8a327e7d646fb30255acd61ab7b0ff2c003acb4363f7ec0c2b58c21fbe4",
+      "restoredFrom": null,
+      "gasPixels": 207,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_1.png",
+      "beforeSha256": "019773039f24847914dd44abff010de3fe76963a08ce69cf536c875cdb5eff7f"
+    },
+    {
+      "index": 100,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_2.png",
+      "clips": [
+        "HoverRepair_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        33,
+        126,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "8bcc6901182661f500f59e503300fcc9552659810161fd364286bea77125a103",
+      "restoredFrom": null,
+      "gasPixels": 203,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_2.png",
+      "beforeSha256": "5419d856be77cfa096f473860708f683575cbcf59bb5477b1b31f0e4bbe7e264"
+    },
+    {
+      "index": 101,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_3.png",
+      "clips": [
+        "HoverRepair_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        33,
+        122,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "bbca60d73a778075bb011b41221aeb60b8310a878575412123b8886503ce974e",
+      "restoredFrom": null,
+      "gasPixels": 226,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Right_3.png",
+      "beforeSha256": "be0f698fa15d76ff7aa67a5593bc6fd93709e11e38bfcea2ab0534a90df6b163"
+    },
+    {
+      "index": 102,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_0.png",
+      "clips": [
+        "HoverRepair_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        33,
+        131,
+        131
+      ],
+      "lowerBodyHoleAreas": [
+        4,
+        6
+      ],
+      "sha256": "f2cd91fb0fe06a258b18ca45583c050e3489e39370ad22ce60d6743c561d0a38",
+      "restoredFrom": null,
+      "gasPixels": 272,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_0.png",
+      "beforeSha256": "038afd82f9750266e0a9c16060225a2ec6dcb442b948575466838b5d37c55dd8"
+    },
+    {
+      "index": 103,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_1.png",
+      "clips": [
+        "HoverRepair_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        31,
+        134,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "1a9f2888b29afe53f0c9d01fbb0c6cf0693393ae629f1fa7777aff5df40b66dd",
+      "restoredFrom": null,
+      "gasPixels": 297,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_1.png",
+      "beforeSha256": "10e7f58ca0c7dd4917785689d753922a1df9409ae8c5cfdd33f85fba13fca580"
+    },
+    {
+      "index": 104,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_2.png",
+      "clips": [
+        "HoverRepair_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        44,
+        33,
+        133,
+        131
+      ],
+      "lowerBodyHoleAreas": [
+        5
+      ],
+      "sha256": "438d6bc65fdfb177a1dcdfb779f2567c13012ee0df6e0060c5cbf666b56ea2b4",
+      "restoredFrom": null,
+      "gasPixels": 327,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_2.png",
+      "beforeSha256": "8374a418538e802c4f5945b9949b0813e041bb8a6667164b15b454145b3d6670"
+    },
+    {
+      "index": 105,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_3.png",
+      "clips": [
+        "HoverRepair_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        34,
+        129,
+        132
+      ],
+      "lowerBodyHoleAreas": [
+        8
+      ],
+      "sha256": "d6e05369ce46910be484b5c45a851afb80a16ec35b1ed952dabb15e63339fd0f",
+      "restoredFrom": null,
+      "gasPixels": 213,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_3.png",
+      "beforeSha256": "07e84a766b3e686f4c716086a9659030345b609b49a9342ed83ad2b0616f5e37"
+    },
+    {
+      "index": 126,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_0.png",
+      "clips": [
+        "Move_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        36,
+        112,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        34,
+        52,
+        41
+      ],
+      "sha256": "8740c87df3e1207ec32d23b954218629359e91f4da89b56b33803fa792a41792",
+      "restoredFrom": "host_image lower-body repair",
+      "gasPixels": 483,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_0.png",
+      "beforeSha256": "8d9897b4f78c945403de513cb35b0cd9f42a373bdf614b3fde368dd4dcfad306"
+    },
+    {
+      "index": 127,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_1.png",
+      "clips": [
+        "Move_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        46,
+        34,
+        113,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        16,
+        49,
+        31
+      ],
+      "sha256": "e6fa1537144dfeee59b4f7c81affd44949d5f5debc675782d9a372e12a4e8a0f",
+      "restoredFrom": "host_image lower-body repair",
+      "gasPixels": 498,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_1.png",
+      "beforeSha256": "67aed1a8cb87e1aa87369b6f77f409452bb1c4de85b9a677e1ec6565a9b43c7c"
+    },
+    {
+      "index": 128,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_2.png",
+      "clips": [
+        "Move_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        35,
+        111,
+        130
+      ],
+      "lowerBodyHoleAreas": [
+        35,
+        7,
+        42,
+        52,
+        6
+      ],
+      "sha256": "8d4306f295e87ca30914604e72e30df328c5ebe10d20cf560dff11d2f06d74ed",
+      "restoredFrom": "host_image lower-body repair",
+      "gasPixels": 496,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_2.png",
+      "beforeSha256": "813d28d2cad33716c44b85ece3dd6d2db62630fa29041ac9ceb2652fa51a72f4"
+    },
+    {
+      "index": 129,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_3.png",
+      "clips": [
+        "Move_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        37,
+        113,
+        132
+      ],
+      "lowerBodyHoleAreas": [
+        44,
+        43,
+        51
+      ],
+      "sha256": "7576690031b953f177019bac43a3c489dddb2f4b779e305e43df2c4c5f7589f4",
+      "restoredFrom": "host_image lower-body repair",
+      "gasPixels": 516,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Down_3.png",
+      "beforeSha256": "dde0d5ba4df8ac433633aa49ac3825dc89485a40040b27b090187bdf48403eb5"
+    },
+    {
+      "index": 130,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_0.png",
+      "clips": [
+        "Move_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        34,
+        118,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "308bf17b89bc145f7b9f40b498a46e86d63d099ce8788249228fa0fd38f682bb",
+      "restoredFrom": null,
+      "gasPixels": 126,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_0.png",
+      "beforeSha256": "c15b617960507ce7456b22432299137911809828d4cd9d7aa75b58b4931f29b9"
+    },
+    {
+      "index": 131,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_1.png",
+      "clips": [
+        "Move_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        32,
+        118,
+        126
+      ],
+      "lowerBodyHoleAreas": [
+        17
+      ],
+      "sha256": "044a2b5ca6d6d3a891e6830651c75b8561951300e1820de69a001589b4906a9a",
+      "restoredFrom": null,
+      "gasPixels": 116,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_1.png",
+      "beforeSha256": "b7715bdd0d93763f87e220b3e3c10bfce6c6bba75ae371ab23d6b6800bf81b00"
+    },
+    {
+      "index": 132,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_2.png",
+      "clips": [
+        "Move_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        33,
+        120,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        18
+      ],
+      "sha256": "146db1c88e30f56d88d9927f23e83bc0a28228dd7f1f9821d7291d0cdd9c8295",
+      "restoredFrom": null,
+      "gasPixels": 161,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_2.png",
+      "beforeSha256": "3b2fe10c1287c6c3cf6ea31e282ecfde26ef50833de4f0010f1729da992ec742"
+    },
+    {
+      "index": 133,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_3.png",
+      "clips": [
+        "Move_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        35,
+        119,
+        130
+      ],
+      "lowerBodyHoleAreas": [
+        13
+      ],
+      "sha256": "0488df4c8399738d2b3196de380eb4e4afa32cc263ad7601fb16d3cd07f3c292",
+      "restoredFrom": null,
+      "gasPixels": 152,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Left_3.png",
+      "beforeSha256": "271180f3a317ad847b6ae77810710bbb45e4948fe00f80e786e649492c411c6e"
+    },
+    {
+      "index": 134,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_0.png",
+      "clips": [
+        "Move_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        30,
+        138,
+        132
+      ],
+      "lowerBodyHoleAreas": [
+        30
+      ],
+      "sha256": "6fac9e6fd2c0d83ec5af00dc967816b45be2456e41e5d42926a01e5fc2fa700e",
+      "restoredFrom": null,
+      "gasPixels": 152,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_0.png",
+      "beforeSha256": "c0b823be541edd99b9d60fd2127e54a94768971232bf7633bc2c2008516feb93"
+    },
+    {
+      "index": 135,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_1.png",
+      "clips": [
+        "Move_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        28,
+        125,
+        130
+      ],
+      "lowerBodyHoleAreas": [
+        8,
+        7,
+        29
+      ],
+      "sha256": "f0924a0d2ad780743f807b9deaf5fe9edc03847a9285d746d04310d5982cf0c8",
+      "restoredFrom": null,
+      "gasPixels": 177,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_1.png",
+      "beforeSha256": "efa569a7c8f9e38d9c46af0f464c6fd8fe2d34ce090c2e15d8a71cb2a7eff9bc"
+    },
+    {
+      "index": 136,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_2.png",
+      "clips": [
+        "Move_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        31,
+        126,
+        136
+      ],
+      "lowerBodyHoleAreas": [
+        10,
+        30
+      ],
+      "sha256": "35d1031665b059f984344eb0cdf7b639bb4187d664bd133e0ce92c8b3e5af6fd",
+      "restoredFrom": null,
+      "gasPixels": 210,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_2.png",
+      "beforeSha256": "507a889dc2c6023aff2dd3211a1320e95d41792f113a33363a622fae03fdf21a"
+    },
+    {
+      "index": 137,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_3.png",
+      "clips": [
+        "Move_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        32,
+        125,
+        137
+      ],
+      "lowerBodyHoleAreas": [
+        33
+      ],
+      "sha256": "7d0a04a6eed3e7c8ea9e00851764b47e432b1503949f3a06455f03bed96feafd",
+      "restoredFrom": null,
+      "gasPixels": 199,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Right_3.png",
+      "beforeSha256": "eab55449800b05222302229977dc1327dd20775d5492f5bc6fdb10d95c7a5756"
+    },
+    {
+      "index": 138,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_0.png",
+      "clips": [
+        "Move_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        35,
+        110,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "e2a86edc5c5beaa81c795f2fefdb1111517b896ac3bd2aadfee77b803106a9e0",
+      "restoredFrom": null,
+      "gasPixels": 357,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_0.png",
+      "beforeSha256": "8083d72a304fa7067219876d7f7ec892eb292a642920e63b29207cbf2ae75763"
+    },
+    {
+      "index": 139,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_1.png",
+      "clips": [
+        "Move_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        34,
+        110,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        6
+      ],
+      "sha256": "2ce85c266b6ba0915f276dc94e705a86ecfb83d4e69f2249c7a0614fec982029",
+      "restoredFrom": null,
+      "gasPixels": 347,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_1.png",
+      "beforeSha256": "b1112fbc416fe7b49b5fc5821947a3914c5879d61e97981bfffc765b231a6cc9"
+    },
+    {
+      "index": 140,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_2.png",
+      "clips": [
+        "Move_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        35,
+        110,
+        128
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "21ce5a59548ec38b103947230731366edba13abf7fd97fd54b89a9c6235a7438",
+      "restoredFrom": null,
+      "gasPixels": 338,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_2.png",
+      "beforeSha256": "d77e431e247c99f678c519640f86d74913d102e461843751b1ca4b92728c843a"
+    },
+    {
+      "index": 141,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_3.png",
+      "clips": [
+        "Move_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        37,
+        109,
+        130
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "a6424bb77e4ab8a0cbd15889e154f7cfcd4741186ff437d1b1ac6a8a6b1e9c23",
+      "restoredFrom": null,
+      "gasPixels": 297,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_3.png",
+      "beforeSha256": "582ffee8cfb0086f09ece0b7b1d7a6c3a49a6a932ea24f57671f3fee71154922"
+    },
+    {
+      "index": 142,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanLeft/MoveLeanLeft_Down_1.png",
+      "clips": [
+        "HoverFireLeanLeft_Down",
+        "MoveLeanLeft_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        31,
+        118,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        10
+      ],
+      "sha256": "21b956f9e17a1a0a3ab68164160a34b8df581c6541235b9eb068d35cd25e6e03",
+      "restoredFrom": null,
+      "gasPixels": 223,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/MoveLeanLeft/MoveLeanLeft_Down_1.png",
+      "beforeSha256": "53731ed9f8662ad68f6701c2b2e7853927a66d4199cbb5a5977b76d46b6f40b0"
+    },
+    {
+      "index": 143,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanLeft/MoveLeanLeft_Left_1.png",
+      "clips": [
+        "HoverFireLeanLeft_Left",
+        "MoveLeanLeft_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        46,
+        32,
+        139,
+        127
+      ],
+      "lowerBodyHoleAreas": [
+        6
+      ],
+      "sha256": "8a315fac2ab8ffd581da251bdd39a2c9c1b582bc6520abf1311fca8806333a29",
+      "restoredFrom": null,
+      "gasPixels": 172,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/MoveLeanLeft/MoveLeanLeft_Left_1.png",
+      "beforeSha256": "dc80eed31d170c08e8c6a397e6234c5810516d3aa4d21d1ac5cb1335afaa117c"
+    },
+    {
+      "index": 144,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanLeft/MoveLeanLeft_Up_1.png",
+      "clips": [
+        "HoverFireLeanLeft_Up",
+        "MoveLeanLeft_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        50,
+        32,
+        120,
+        127
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "3c8a35799cea2a4a0d94423835a326390c2f3d5dde7c32c0f98b295d27f49505",
+      "restoredFrom": null,
+      "gasPixels": 240,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/MoveLeanLeft/MoveLeanLeft_Up_1.png",
+      "beforeSha256": "333cdd0ebf9bbe21c4fcce0a8f5122bca5303322cda476ffa3d42751d647b9fb"
+    },
+    {
+      "index": 145,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanRight/MoveLeanRight_Down_1.png",
+      "clips": [
+        "HoverFireLeanRight_Down",
+        "MoveLeanRight_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        42,
+        31,
+        116,
+        128
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "0780b4668178ecb2cd46e51fd68c4d3a6f287724f59c0078cecee9ea6dc76bef",
+      "restoredFrom": null,
+      "gasPixels": 278,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/MoveLeanRight/MoveLeanRight_Down_1.png",
+      "beforeSha256": "5c307f4f0a32865dd28ad2dc1569fa694b00ed4934cc75ffe1800fdb54c7ec62"
+    },
+    {
+      "index": 146,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanRight/MoveLeanRight_Right_1.png",
+      "clips": [
+        "HoverFireLeanRight_Right",
+        "MoveLeanRight_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        24,
+        33,
+        112,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "779e65bddb3184c6dd41d2e002bf917e2f700258a317c1b557954cdafe85628a",
+      "restoredFrom": null,
+      "gasPixels": 121,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/MoveLeanRight/MoveLeanRight_Right_1.png",
+      "beforeSha256": "0d1cb4c1ce182c7695c2cfabb6d00af45d6931f7e4fe7f13c6cfcb27d187561e"
+    },
+    {
+      "index": 147,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanRight/MoveLeanRight_Up_1.png",
+      "clips": [
+        "HoverFireLeanRight_Up",
+        "MoveLeanRight_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        33,
+        124,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        8
+      ],
+      "sha256": "3e069f41ed169e3ef8eb81944e6634a9905f0cc36f6d3a65d0693c38dc10f8b0",
+      "restoredFrom": null,
+      "gasPixels": 281,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/MoveLeanRight/MoveLeanRight_Up_1.png",
+      "beforeSha256": "28043dcab6cf71ae684b0256a4dbcceea8c494c674532deb552d87e6b09bc0e0"
+    },
+    {
+      "index": 156,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownLeft.png",
+      "clips": [
+        "HoverFire_DownLeft",
+        "Move_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        26,
+        124,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "d059977dbaeb92f8521204441e5a21555d72f5675dedff5b81b2b52d4abac8f6",
+      "restoredFrom": null,
+      "gasPixels": 176,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownLeft.png",
+      "beforeSha256": "abe3225392271851aa46cb9d625d25d357a34c57bf9e2304132910401ec084b4"
+    },
+    {
+      "index": 157,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownRight.png",
+      "clips": [
+        "HoverFire_DownRight",
+        "Move_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        33,
+        110,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "a955bf83c05b5bc00e156733d784176f0f2287d22871c50fbb2cc432bb1922d2",
+      "restoredFrom": null,
+      "gasPixels": 164,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_DownRight.png",
+      "beforeSha256": "585cefe098026b203efdba365ce3654563f91187373fd0151a72b24bbae37a8a"
+    },
+    {
+      "index": 158,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpLeft.png",
+      "clips": [
+        "HoverFire_UpLeft",
+        "Move_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        31,
+        31,
+        125,
+        127
+      ],
+      "lowerBodyHoleAreas": [
+        16,
+        10
+      ],
+      "sha256": "090a384925222abff98d7cbfc184f328369adae46e1154cc995207e403bc86ab",
+      "restoredFrom": null,
+      "gasPixels": 119,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpLeft.png",
+      "beforeSha256": "54b921b7932d70db71932014f46bc74b93e5f419bcb7a21a99ad1b21b17375ad"
+    },
+    {
+      "index": 159,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpRight.png",
+      "clips": [
+        "HoverFire_UpRight",
+        "Move_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        28,
+        125,
+        121
+      ],
+      "lowerBodyHoleAreas": [
+        6,
+        17,
+        12
+      ],
+      "sha256": "65d5323b526769e1d04344b35900eb7b0d0e5e120c517fb6f88ba41c9fbe4222",
+      "restoredFrom": null,
+      "gasPixels": 115,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpRight.png",
+      "beforeSha256": "73c262f1be07d6ca3acc5846403aabb81cf42975c40a6bb90ca24af48ce433c1"
+    },
+    {
+      "index": 188,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_DownLeft.png",
+      "clips": [
+        "HoverAttack_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        42,
+        33,
+        133,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "bef90673c4b9c1ce96c1c478a82cf4901ab585eff7aaffcee8c3d15b9f306d10",
+      "restoredFrom": null,
+      "gasPixels": 285,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_DownLeft.png",
+      "beforeSha256": "7b44ea16199da994ffc32bd6e919da4894dc0447190b493cb6c13bae2b466e91"
+    },
+    {
+      "index": 189,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_DownRight.png",
+      "clips": [
+        "HoverAttack_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        30,
+        38,
+        118,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "21bfe81f25d39f50fbbea70a7759dff5f6f61a4ab532a63e04e6b3b8d1337191",
+      "restoredFrom": null,
+      "gasPixels": 364,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_DownRight.png",
+      "beforeSha256": "2d592bb530682e28a940f70594bf609e4dcf1e339166415e50efdaa952f16da7"
+    },
+    {
+      "index": 190,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpLeft.png",
+      "clips": [
+        "HoverAttack_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        35,
+        37,
+        132,
+        127
+      ],
+      "lowerBodyHoleAreas": [
+        12
+      ],
+      "sha256": "a43fc4838ee2a2aa98ec74c7a44136cfe6cedc14ef7d6069736c6992c4692564",
+      "restoredFrom": null,
+      "gasPixels": 585,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpLeft.png",
+      "beforeSha256": "e79ba9d430a07d8d9863e30c682a5cc95525c80215e84cbb811084c59bb51d5c"
+    },
+    {
+      "index": 191,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpRight.png",
+      "clips": [
+        "HoverAttack_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        31,
+        33,
+        114,
+        121
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "632986e938e2e2f1aad5d5a0aa22da4c02d3fea67b09ca1dfce8e07b96be2051",
+      "restoredFrom": null,
+      "gasPixels": 342,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpRight.png",
+      "beforeSha256": "7e8d5baef693b098769a484c3fbbf09bfb1127d7772efa328341dc34660f33d8"
+    },
+    {
+      "index": 192,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_DownLeft.png",
+      "clips": [
+        "HoverAttack_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        54,
+        28,
+        126,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "11709998709c9c4ec36fba337403e2992fe85efbc5ec5e793dc89410ca4d9301",
+      "restoredFrom": null,
+      "gasPixels": 260,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_DownLeft.png",
+      "beforeSha256": "c30c81199de03740d8b9d28e3d31e50c7b92802190e0e851c4934f12c96769f2"
+    },
+    {
+      "index": 193,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_DownRight.png",
+      "clips": [
+        "HoverAttack_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        35,
+        37,
+        108,
+        122
+      ],
+      "lowerBodyHoleAreas": [
+        4,
+        6,
+        5
+      ],
+      "sha256": "23a8d2324a73e57a6c1b108123afd49d31d84b1ddcc161fce0f0ab9fafcc1f93",
+      "restoredFrom": null,
+      "gasPixels": 333,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_DownRight.png",
+      "beforeSha256": "e050d3c118d7ed2d0ece7d484f579f7a6d3da0a7069ad8af24e3ad184015f219"
+    },
+    {
+      "index": 194,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpLeft.png",
+      "clips": [
+        "HoverAttack_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        44,
+        30,
+        130,
+        128
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "1083e38ec6a92d1aae7630bc6278ecf5881b7ac7bf1a64fcc2893b1a606459db",
+      "restoredFrom": null,
+      "gasPixels": 525,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpLeft.png",
+      "beforeSha256": "3a95362232b8a8bdd2de459e98aaa1da710439f3426bec9ded27dccb611a3877"
+    },
+    {
+      "index": 195,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpRight.png",
+      "clips": [
+        "HoverAttack_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        31,
+        121,
+        121
+      ],
+      "lowerBodyHoleAreas": [
+        6
+      ],
+      "sha256": "5eb4e4c3b9602a4bf44939c220c109753b9f2e4122a472e3465de06aeee68cb6",
+      "restoredFrom": null,
+      "gasPixels": 466,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpRight.png",
+      "beforeSha256": "e1a4753ed0a63b0f47cda882bfe1270a1649d1a78875f884b60c70056cece055"
+    },
+    {
+      "index": 196,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_DownLeft.png",
+      "clips": [
+        "HoverAttack_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        30,
+        28,
+        115,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "c900c1d70320f397feb745b9af6d4ee4758df62b570420a615aa3e62df47f9a0",
+      "restoredFrom": null,
+      "gasPixels": 320,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_DownLeft.png",
+      "beforeSha256": "82adcaf3e7a8d32e93bd8f7b5e1bcb6994828c73857daff0a13d56e059a16ac1"
+    },
+    {
+      "index": 197,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_DownRight.png",
+      "clips": [
+        "HoverAttack_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        29,
+        35,
+        107,
+        122
+      ],
+      "lowerBodyHoleAreas": [
+        4,
+        13
+      ],
+      "sha256": "d64dc14c278021c1368218cc774ba92b545ef42fce5e264b130ad79e6bf42602",
+      "restoredFrom": null,
+      "gasPixels": 336,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_DownRight.png",
+      "beforeSha256": "10446a8e3812f23cf8b2bd62f1eccd6e8af3a840c589f0e22b2fe13dd73f7952"
+    },
+    {
+      "index": 198,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpLeft.png",
+      "clips": [
+        "HoverAttack_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        52,
+        36,
+        131,
+        127
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "4e8ce5fbce3614b5d7be59d3a9fe4497ad5b8a8ad95325fa37ad213609d6f976",
+      "restoredFrom": null,
+      "gasPixels": 414,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpLeft.png",
+      "beforeSha256": "e561db7f979114390ee69055f6aecfea81f717d70af59588c7ffb945169133d6"
+    },
+    {
+      "index": 199,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpRight.png",
+      "clips": [
+        "HoverAttack_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        31,
+        120,
+        121
+      ],
+      "lowerBodyHoleAreas": [
+        9
+      ],
+      "sha256": "16cf8d72ff31152a2eb8c01e0d39daf66740f5fc5251fe2445ec99becf69a815",
+      "restoredFrom": null,
+      "gasPixels": 224,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpRight.png",
+      "beforeSha256": "556ee5f6d1e3ea10797ad6d78e080f1673e3edcb2a03e088ffddde7c7bc53b8f"
+    },
+    {
+      "index": 200,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_DownLeft.png",
+      "clips": [
+        "HoverRepair_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        32,
+        129,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "2d9d6078c6a0d273f11529fcfa4fa318820d419ae74f705ad9f28d604a45bbdd",
+      "restoredFrom": null,
+      "gasPixels": 243,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_DownLeft.png",
+      "beforeSha256": "115c7aa2b9b81864fadb717aecfb137379bc748cd98b797c4bcb72a373dc8609"
+    },
+    {
+      "index": 201,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_DownRight.png",
+      "clips": [
+        "HoverRepair_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        38,
+        116,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "3edcfe33c1d76e9fbfa2bb79a076d0b547e60b421872b68071f166ab320bf113",
+      "restoredFrom": null,
+      "gasPixels": 265,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_DownRight.png",
+      "beforeSha256": "e3d68005f054ea183370cf33830026048393de48b9adb23a749f897cb13e991f"
+    },
+    {
+      "index": 202,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpLeft.png",
+      "clips": [
+        "HoverRepair_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        40,
+        38,
+        128,
+        127
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "864f6433a7946c4418e9fd00b09dab6cd220e3357f591cfd67e6e9dd4a77a7e6",
+      "restoredFrom": null,
+      "gasPixels": 420,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpLeft.png",
+      "beforeSha256": "318e13cb55e6bee9ce8cdf630b09eabb0ea10ff0bf3d3c337bd10705f441c023"
+    },
+    {
+      "index": 203,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpRight.png",
+      "clips": [
+        "HoverRepair_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        31,
+        115,
+        121
+      ],
+      "lowerBodyHoleAreas": [
+        6
+      ],
+      "sha256": "dd9bd4bd1395a649f836a69d3daabae8180091e0a9afffa095f3994717f3b0a4",
+      "restoredFrom": null,
+      "gasPixels": 369,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpRight.png",
+      "beforeSha256": "e06557c6715d372ea34698f0f399873afb2acf3f978c4e2860357bb32119a03b"
+    },
+    {
+      "index": 204,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_DownLeft.png",
+      "clips": [
+        "HoverRepair_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        54,
+        29,
+        126,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "143c7a958c3197974dd7cc70157a4580146ba3b3b0b283ecc3d75c613b2f0642",
+      "restoredFrom": null,
+      "gasPixels": 248,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_DownLeft.png",
+      "beforeSha256": "ebeeaae3bd5985f4e18178506e8c009fdb320b866f62d47792d3448f6d3cdb76"
+    },
+    {
+      "index": 205,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_DownRight.png",
+      "clips": [
+        "HoverRepair_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        37,
+        109,
+        122
+      ],
+      "lowerBodyHoleAreas": [
+        9
+      ],
+      "sha256": "72013b8ab30b042e90cec18f9d756e29de3ba0fd8804f29a35c7da9eb2426e20",
+      "restoredFrom": null,
+      "gasPixels": 305,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_DownRight.png",
+      "beforeSha256": "0f5e991af277428182e82bb96da9e32d69ba128b2bf7aa00754524532957c2e2"
+    },
+    {
+      "index": 206,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpLeft.png",
+      "clips": [
+        "HoverRepair_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        46,
+        34,
+        128,
+        127
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "36c9a0d9beebaaa7f32ad2eb9ac38ef2c0f946451f855851ba0d66c231b81c57",
+      "restoredFrom": null,
+      "gasPixels": 468,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpLeft.png",
+      "beforeSha256": "91b9b3e197b1ace7e7fcc3e706782acb31e1b269b80979db6ede3ef119c78a76"
+    },
+    {
+      "index": 207,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpRight.png",
+      "clips": [
+        "HoverRepair_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        44,
+        31,
+        113,
+        121
+      ],
+      "lowerBodyHoleAreas": [
+        9
+      ],
+      "sha256": "04315bdf8c8ffef0b8865aa17f54ae3ac25660d3920f5790bbe86838155c255e",
+      "restoredFrom": null,
+      "gasPixels": 329,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpRight.png",
+      "beforeSha256": "b4bfcb979f97e1aa0c6b1720afdd883c0c54763793b5565de7d7ec4331b95a5c"
+    },
+    {
+      "index": 208,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_DownLeft.png",
+      "clips": [
+        "HoverRepair_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        51,
+        30,
+        126,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "9af61e1cf48f565de97e1115306f7a62b2d20f79457639c494cff46a24b53957",
+      "restoredFrom": null,
+      "gasPixels": 244,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_DownLeft.png",
+      "beforeSha256": "ea5c0d33633647bc9353617fdeb93b0e198098f22554ebf9228591b604c40b45"
+    },
+    {
+      "index": 209,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_DownRight.png",
+      "clips": [
+        "HoverRepair_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        39,
+        111,
+        123
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "a36d1eba83e5b9c9703168affe2376762e1b7b898bb5cabe87c2cb633c331203",
+      "restoredFrom": null,
+      "gasPixels": 275,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_DownRight.png",
+      "beforeSha256": "866c45dc7263be08b247c30a82f13a65c864e2c65bf9800a2edfe2d891694122"
+    },
+    {
+      "index": 210,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpLeft.png",
+      "clips": [
+        "HoverRepair_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        45,
+        31,
+        124,
+        127
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "038b059742d7e5b8d64011fe9b3b63022b453de3c43948b0d9558a0660783e7c",
+      "restoredFrom": null,
+      "gasPixels": 427,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpLeft.png",
+      "beforeSha256": "61277644ca50c8ca5f1ecee4071616091fef575249cff0f7b9611ab5f3f39c7a"
+    },
+    {
+      "index": 211,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpRight.png",
+      "clips": [
+        "HoverRepair_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        43,
+        30,
+        119,
+        121
+      ],
+      "lowerBodyHoleAreas": [
+        4,
+        5
+      ],
+      "sha256": "e97cbe2b1e3b09a4c507fbd8c023ea3e239dcfba2e323ee0c553f509df61180f",
+      "restoredFrom": null,
+      "gasPixels": 322,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpRight.png",
+      "beforeSha256": "219d2474db58fd4727380d39e0068b8d4bae12050043ac188547ee3c5393b972"
+    },
+    {
+      "index": 228,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_DownLeft.png",
+      "clips": [
+        "HoverAttack_DownLeft",
+        "HoverRepair_DownLeft",
+        "ToolMove_DownLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        24,
+        120,
+        119
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "e3423d9faa9978a9da2393f7f4c33e6a1ad4e1581cf8fc34cec8fbe1876db5ee",
+      "restoredFrom": null,
+      "gasPixels": 315,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_DownLeft.png",
+      "beforeSha256": "8d8670c1be6c28107d7580e789326a84ae87999eb95e2cd9c4ffe0aa05fcc5bf"
+    },
+    {
+      "index": 229,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_DownRight.png",
+      "clips": [
+        "HoverAttack_DownRight",
+        "HoverRepair_DownRight",
+        "ToolMove_DownRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        41,
+        28,
+        110,
+        122
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "6ae780e0171e2771c7bbbb439833082f12a6882b882a222db0ef6651b99e592d",
+      "restoredFrom": null,
+      "gasPixels": 266,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_DownRight.png",
+      "beforeSha256": "53b1e9fe7f1e22ff0a35658e8088f390ba5a93104acc56cf8cceddc28b080500"
+    },
+    {
+      "index": 230,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpLeft.png",
+      "clips": [
+        "HoverAttack_UpLeft",
+        "HoverRepair_UpLeft",
+        "ToolMove_UpLeft"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        50,
+        34,
+        119,
+        127
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "77a4a53dc3ab19fee86d11abe95ce7d0e88802637db609206f41bccc00a14c33",
+      "restoredFrom": null,
+      "gasPixels": 320,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpLeft.png",
+      "beforeSha256": "08350edcabb6f3d93616cab5e5440a8cb0129c2d051d787c2568e0f1f44214b2"
+    },
+    {
+      "index": 231,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpRight.png",
+      "clips": [
+        "HoverAttack_UpRight",
+        "HoverRepair_UpRight",
+        "ToolMove_UpRight"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        42,
+        30,
+        113,
+        121
+      ],
+      "lowerBodyHoleAreas": [
+        6
+      ],
+      "sha256": "a55871e8d52869844636c0ee9eb9c5ddbe9722a0ff3ad7265f98df585bbfc372",
+      "restoredFrom": null,
+      "gasPixels": 319,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpRight.png",
+      "beforeSha256": "8e7ae260ed3539ac48cd44795dbdaefc86efc98f9205296e9f31d13a431919d7"
+    },
+    {
+      "index": 248,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_0.png",
+      "clips": [
+        "ToolMove_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        35,
+        113,
+        130
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "813ef59174316b2c240eb12e4d932cdf9fc3e0f1a2df0984e1cac08db7fbfd78",
+      "restoredFrom": null,
+      "gasPixels": 273,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_0.png",
+      "beforeSha256": "e2f82634d1195c7fdc61965e329dfba53cbb302a38be310426ad9a205ab4e5ab"
+    },
+    {
+      "index": 249,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_1.png",
+      "clips": [
+        "ToolMove_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        37,
+        33,
+        113,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "ba43da98896c94df3b53a98987f51af8af57497ff0814796f81089a1f887a96f",
+      "restoredFrom": null,
+      "gasPixels": 251,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_1.png",
+      "beforeSha256": "cb0614161d1ade15521d7abf7b68b37c907add1e9f3a8d3de072a3e79b4aa18e"
+    },
+    {
+      "index": 250,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_2.png",
+      "clips": [
+        "ToolMove_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        35,
+        115,
+        131
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "e2a2e2324b98edb29b25f3d87a30b991a6b9c6d2ef09e7fdd4760327780c10c1",
+      "restoredFrom": null,
+      "gasPixels": 295,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_2.png",
+      "beforeSha256": "952b18c4187a785ce5deb10955443a6a44362e3eea0fbe6ca873799e4b8710b0"
+    },
+    {
+      "index": 251,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_3.png",
+      "clips": [
+        "ToolMove_Down"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        38,
+        37,
+        113,
+        133
+      ],
+      "lowerBodyHoleAreas": [
+        4
+      ],
+      "sha256": "dda809ee70311a1ecaf463142b5439f48fea6b6f5ea6d4985072c540402af3e9",
+      "restoredFrom": null,
+      "gasPixels": 254,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Down_3.png",
+      "beforeSha256": "396ab31b88ce27f64ab2ad19b8ff7309568c5699f7f3794ab87c178963e4ec86"
+    },
+    {
+      "index": 252,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_0.png",
+      "clips": [
+        "ToolMove_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        47,
+        34,
+        120,
+        126
+      ],
+      "lowerBodyHoleAreas": [
+        4,
+        4
+      ],
+      "sha256": "52b6df93ce04db2c2f432b9ffcff7e10ceb36d26c38505ee17641d2ea9a5068a",
+      "restoredFrom": null,
+      "gasPixels": 204,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_0.png",
+      "beforeSha256": "ba8cdae40ebd3b781174f7458c56a7365a65820fd89852919f0acd3aaef4059e"
+    },
+    {
+      "index": 253,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_1.png",
+      "clips": [
+        "ToolMove_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        32,
+        120,
+        124
+      ],
+      "lowerBodyHoleAreas": [
+        23,
+        5
+      ],
+      "sha256": "5a134e3d4dc58a05b5677bcc1e4ff063b7583e63e018ee5710714db6469f1a31",
+      "restoredFrom": null,
+      "gasPixels": 209,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_1.png",
+      "beforeSha256": "3e3d3afecdf0ae4bef4d1947763f61fdda067536a77ec15d54f8ec0128cc82e5"
+    },
+    {
+      "index": 254,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_2.png",
+      "clips": [
+        "ToolMove_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        33,
+        120,
+        125
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "b4fddef33bd915b9498198c038c1e2e74bb395ca93372b0f3f88fb3059751bb5",
+      "restoredFrom": null,
+      "gasPixels": 197,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_2.png",
+      "beforeSha256": "90d03ee4b0790d07d7d1937563782640deb5cbb08655775752610b2b67978b5d"
+    },
+    {
+      "index": 255,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_3.png",
+      "clips": [
+        "ToolMove_Left"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        35,
+        119,
+        128
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "fd359bfbe80d51a1bb8f1b457c780bbc485d0361f18b412835c60bc526cfc1c6",
+      "restoredFrom": null,
+      "gasPixels": 174,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Left_3.png",
+      "beforeSha256": "51f6bdfd52aaed7a0488cdbeaec3973a68d2a7a9b761e0247e7427a2005d4dc7"
+    },
+    {
+      "index": 256,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_0.png",
+      "clips": [
+        "ToolMove_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        31,
+        123,
+        134
+      ],
+      "lowerBodyHoleAreas": [
+        26
+      ],
+      "sha256": "15f09e4e7a16560263ebba87e70963d6085c6fed1ab3ef5b0e0fdcb10fa9f973",
+      "restoredFrom": null,
+      "gasPixels": 233,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_0.png",
+      "beforeSha256": "cc0a0cf975dbb06efc3759423429ac76b70295f7749a68c4da92d087f2c11a28"
+    },
+    {
+      "index": 257,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_1.png",
+      "clips": [
+        "ToolMove_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        40,
+        28,
+        123,
+        130
+      ],
+      "lowerBodyHoleAreas": [
+        28
+      ],
+      "sha256": "f5c8400f5c015951c1571cfe7abc01dbea3483145254edde286c57e1ce9ced62",
+      "restoredFrom": null,
+      "gasPixels": 203,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_1.png",
+      "beforeSha256": "727e7c33160c28663c6299c99b313633304f936c9241eb8a2c2a4c95b125dcb0"
+    },
+    {
+      "index": 258,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_2.png",
+      "clips": [
+        "ToolMove_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        30,
+        124,
+        133
+      ],
+      "lowerBodyHoleAreas": [
+        22
+      ],
+      "sha256": "ce419cc0387c055e9f851f3b436410ed279c28fb8dd850d16a0ef4ae0ee9eebd",
+      "restoredFrom": null,
+      "gasPixels": 221,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_2.png",
+      "beforeSha256": "5bd37ee9fbdf72878ec908d2beef88426f9db53984e65f4619cbe7d951214744"
+    },
+    {
+      "index": 259,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_3.png",
+      "clips": [
+        "ToolMove_Right"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        39,
+        32,
+        124,
+        136
+      ],
+      "lowerBodyHoleAreas": [
+        18
+      ],
+      "sha256": "7bf717f29bfdfa5b8af711763c57a75fa748556e40afeaa2a4b5cc42e7568b74",
+      "restoredFrom": null,
+      "gasPixels": 213,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Right_3.png",
+      "beforeSha256": "2c90875fa992449cd9fa680b95c975ed300422ef36ebe13b7428a68919b1834d"
+    },
+    {
+      "index": 260,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_0.png",
+      "clips": [
+        "ToolMove_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        36,
+        120,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "4a429ee5a4617e5c182c3780af67bbc0f2b652efdf9a984599364ff10b1b1181",
+      "restoredFrom": null,
+      "gasPixels": 247,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_0.png",
+      "beforeSha256": "b3ebc3c84d9bbf7345d2cd69dc43b423c41deb0c2beb2dda6cf50b3576b5952e"
+    },
+    {
+      "index": 261,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_1.png",
+      "clips": [
+        "ToolMove_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        34,
+        120,
+        128
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "3dfc203b2fca0688b6510b4a16eddd833a4d2a49667cbccba1c1d215d9ad67ea",
+      "restoredFrom": null,
+      "gasPixels": 242,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_1.png",
+      "beforeSha256": "9f9109d0a745509226d0f1ff3ab953dbef8917bced3f8812f5cafa5e5744d808"
+    },
+    {
+      "index": 262,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_2.png",
+      "clips": [
+        "ToolMove_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        49,
+        35,
+        120,
+        129
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "319019443c379c46550e03e274dc155aa4afa41df44e675697f5e4d0f821c35d",
+      "restoredFrom": null,
+      "gasPixels": 233,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_2.png",
+      "beforeSha256": "58aa6a2f02250b40c99d443e56bcccc0c18475370014707a53035d14f4a71f33"
+    },
+    {
+      "index": 263,
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_3.png",
+      "clips": [
+        "ToolMove_Up"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "bounds": [
+        48,
+        38,
+        120,
+        131
+      ],
+      "lowerBodyHoleAreas": [],
+      "sha256": "6a04bd23c8f4ccfd3fcf9314edbfb77c55dabec17388a07ad30519e28cac0d17",
+      "restoredFrom": null,
+      "gasPixels": 199,
+      "alphaPreservedDuringPalette": true,
+      "staged": "Docs/Local/Review57520261029/sprite-repairs/staged/Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_3.png",
+      "beforeSha256": "3aaa1c764b86e397542b4417fb72e1321e563dc5fde11f1c64941f3d7860b3a3"
+    }
+  ],
+  "repairSource": {
+    "prompt": "Precise repair of this existing 2x2 sprite sheet, NOT a redesign. All FOUR sprites show the SAME white/gray astronaut facing DOWN toward the camera, hovering with a backpack. The current body layer has transparent holes and broken outlines inside the two upper legs below the hip, caused by removing a separate weapon. Repair ONLY the HIP-TO-KNEE-TO-BOOT anatomy: give each sprite TWO complete short legs, white padded thighs with clear dark contour lines, dark gray boots, connected naturally under the waist in the same close-legged hovering pose. Maintain the existing per-frame body position, height and pose. Keep the compact helmet, black visor, torso, arms and empty hand grip exactly as shown. The player uses a separate gun, so DO NOT add any gun, weapon, spanner, hose-like object between the legs, extra glove or hand, and DO NOT draw boots that look like detached flames. The existing white exhaust should come only from the lower BACKPACK on either side of the legs; recolor that exhaust very gently pale cyan with an icy white core, visibly different from the neutral gray/white leg armor. Preserve the 2x2 cell layout, equal cell dimensions, original body scale and framing and transparent margins. All cells same direction. No walking, no extra feet, no floor, no cast shadow, no text, no grid lines. Transparent alpha output. Match the original crisp small sprite style; this is an anatomical cleanup of the lower body only.",
+    "art_source": "host_image",
+    "route": "built-in image_gen",
+    "model": "not exposed by host tool",
+    "estimateUsd": null,
+    "source": "Assets/Art/Sprites/Player/Motions/V2/Source/MoveDown_LegRepair_Source.png",
+    "sourceSha256": "49f73e57784e38b3ba0e3b83d4744ff4366afb1a678a8979c8df5d6a9948acfb"
+  },
+  "unityPlayMode": "NOT_RUN",
+  "validation": {
+    "idleFrames": 16,
+    "mirroredClips": 38,
+    "appearanceLookup": "PASS",
+    "spritePivotsAndPixelSettings": "PASS",
+    "protectedHeadPixels": "PASS",
+    "palettePreservesAlpha": "PASS",
+    "repairedLegFrames": 4,
+    "unityPlayMode": "NOT_RUN",
+    "compilation": "PASS (Assembly-CSharp-Editor, current working tree)",
+    "unityMetaValidation": "PASS (0 errors)",
+    "unityEditModeTests": "NOT_RUN",
+    "legHoleAreas": [
+      {
+        "frame": 0,
+        "before": 129,
+        "after": 1
+      },
+      {
+        "frame": 1,
+        "before": 96,
+        "after": 0
+      },
+      {
+        "frame": 2,
+        "before": 148,
+        "after": 1
+      },
+      {
+        "frame": 3,
+        "before": 144,
+        "after": 0
+      }
+    ]
+  }
+}

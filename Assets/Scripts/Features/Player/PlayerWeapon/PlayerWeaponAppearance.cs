@@ -11,6 +11,7 @@ public sealed class PlayerWeaponAppearance : ScriptableObject
     {
         [SerializeField] private Sprite _body;
         [SerializeField] private Sprite _weapon;
+        [SerializeField] private Sprite _foregroundHands;
         [SerializeField] private Vector2 _localPosition;
         [SerializeField] private float _localAngle;
         [SerializeField] private int _sortingOffset = 1;
@@ -20,6 +21,7 @@ public sealed class PlayerWeaponAppearance : ScriptableObject
 
         public Sprite Body => _body;
         public Sprite Weapon => _weapon;
+        public Sprite ForegroundHands => _foregroundHands;
         public Vector2 LocalPosition => _localPosition;
         public float LocalAngle => _localAngle;
         public int SortingOffset => _sortingOffset;

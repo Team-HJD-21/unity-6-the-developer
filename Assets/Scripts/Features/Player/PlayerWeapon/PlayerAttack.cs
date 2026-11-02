@@ -186,7 +186,7 @@ public class PlayerAttack : MonoBehaviour
     };
 
     public bool TrySelectWeaponSlot(int slot) =>
-        PlayerWeaponSlots.TryGetWeapon(slot, out var weapon) && TrySelectWeapon(weapon);
+        PlayerWeaponSlotMapping.TryGetWeapon(slot, out var weapon) && TrySelectWeapon(weapon);
 
     public bool TrySelectWeapon(WeaponType weapon)
     {
@@ -203,13 +203,13 @@ public class PlayerAttack : MonoBehaviour
     public bool SelectAdjacentWeapon(int direction)
     {
         if (!CanSelectWeapon || direction == 0) return false;
-        int slot = PlayerWeaponSlots.GetSlot(_currentWeapon);
+        int slot = PlayerWeaponSlotMapping.GetSlot(_currentWeapon);
         int step = direction > 0 ? 1 : -1;
         if (slot == 0) slot = step > 0 ? 0 : 1;
-        for (int attempt = 0; attempt < PlayerWeaponSlots.Count; attempt++)
+        for (int attempt = 0; attempt < PlayerWeaponSlotMapping.Count; attempt++)
         {
-            slot = (slot - 1 + step + PlayerWeaponSlots.Count) % PlayerWeaponSlots.Count + 1;
-            if (PlayerWeaponSlots.TryGetWeapon(slot, out var candidate) && IsWeaponAvailable(candidate))
+            slot = (slot - 1 + step + PlayerWeaponSlotMapping.Count) % PlayerWeaponSlotMapping.Count + 1;
+            if (PlayerWeaponSlotMapping.TryGetWeapon(slot, out var candidate) && IsWeaponAvailable(candidate))
                 return TrySelectWeapon(candidate);
         }
         return false;

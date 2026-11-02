@@ -332,8 +332,8 @@ namespace TeamHJD.Game.Debugging
                 ? $"Move Speed: {cameraMoveSpeed:0.0}"
                 : $"Move Speed: {cameraMoveSpeed:0.0} / Zoom Size: {_mainCamera.orthographicSize:0.0}";
             DrawWrappedLabel(cameraStatus);
-            DrawWrappedLabel("Camera: WASD / Fast: Shift / Speed: Shift + Mouse Wheel");
-            DrawWrappedLabel("Zoom In: PageUp / Zoom Out: PageDown");
+            DrawWrappedLabel("Camera: WASD / Fast: Shift / Speed: Mouse Wheel");
+            DrawWrappedLabel("Zoom In: Q / Zoom Out: Space");
             DrawWrappedLabel("Turret window: drag its title / Close or Esc");
             GUILayout.EndScrollView();
             GUILayout.EndArea();
@@ -511,7 +511,6 @@ namespace TeamHJD.Game.Debugging
 
         private void AdjustCameraMoveSpeed()
         {
-            if (!GameInput.IsPressed(GameKey.LeftShift) && !GameInput.IsPressed(GameKey.RightShift)) return;
             float scrollInput = GameInput.ScrollY;
             if (Mathf.Approximately(scrollInput, 0f))
             {
@@ -564,8 +563,8 @@ namespace TeamHJD.Game.Debugging
             }
 
             float zoomDirection = 0f;
-            if (GameInput.IsPressed(GameKey.PageUp)) zoomDirection -= 1f;
-            if (GameInput.IsPressed(GameKey.PageDown)) zoomDirection += 1f;
+            if (GameInput.IsPressed(GameKey.Q)) zoomDirection -= 1f;
+            if (GameInput.IsPressed(GameKey.Space)) zoomDirection += 1f;
 
             _mainCamera.orthographicSize = Mathf.Clamp(
                 _mainCamera.orthographicSize + zoomDirection * cameraZoomSpeed * Time.unscaledDeltaTime,

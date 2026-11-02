@@ -6,9 +6,10 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(200)]
 public sealed class PlayerWeaponVisual : MonoBehaviour
 {
-    [Header("Owner and authored renderer")]
+    [Header("Owner and authored renderers")]
     [SerializeField] private SpriteRenderer _body;
     [SerializeField] private SpriteRenderer _weapon;
+    [SerializeField] private SpriteRenderer _foregroundHands;
     [SerializeField] private SortingGroup _sortingGroup;
     [SerializeField] private PlayerAttack _attack;
     [SerializeField] private PlayerSpriteMotion _motion;
@@ -20,13 +21,16 @@ public sealed class PlayerWeaponVisual : MonoBehaviour
     private Sprite _lastMissingFrame;
 
     public bool IsConfigured => _body != null && _weapon != null && _body != _weapon &&
+        _foregroundHands != null && _foregroundHands != _body && _foregroundHands != _weapon &&
         _body.transform == transform && _weapon.transform.parent == transform &&
+        _foregroundHands.transform.parent == transform &&
         _sortingGroup != null && _sortingGroup.transform == transform &&
         _attack != null && _attack.transform == transform && _motion != null && _motion.transform == transform &&
         _defaultGun != null && _defaultGun.IsConfigured &&
         _cryoBlaster != null && _cryoBlaster.IsConfigured && _spanner != null && _spanner.IsConfigured &&
         _sniper != null && _sniper.IsConfigured;
     public SpriteRenderer Renderer => _weapon;
+    public SpriteRenderer ForegroundHandsRenderer => _foregroundHands;
 
     private PlayerWeaponAppearance CurrentAppearance
     {
@@ -45,7 +49,7 @@ public sealed class PlayerWeaponVisual : MonoBehaviour
     private void Awake()
     {
         if (!IsConfigured)
-            Debug.LogWarning("[PlayerWeaponVisual] Connect the body, weapon renderer, sorting group and all weapon appearances.", this);
+            Debug.LogWarning("[PlayerWeaponVisual] Connect the body, weapon and foreground-hand renderers, sorting group and all weapon appearances.", this);
         Hide();
     }
 
@@ -103,11 +107,30 @@ public sealed class PlayerWeaponVisual : MonoBehaviour
         _sortingGroup.sortingLayerID = _body.sortingLayerID;
         _sortingGroup.sortingOrder = _body.sortingOrder;
         _weapon.enabled = true;
+        RefreshForegroundHands(frame.ForegroundHands);
+    }
+
+    private void RefreshForegroundHands(Sprite sprite)
+    {
+        // Hand cutouts share the body's complete canvas and stay at its origin.
+        // A separate authored layer lets fingers cover a front-facing weapon
+        // while rear-facing weapons remain behind the unmodified body sprite.
+        _foregroundHands.sprite = sprite;
+        _foregroundHands.transform.localPosition = Vector3.zero;
+        _foregroundHands.transform.localRotation = Quaternion.identity;
+        _foregroundHands.transform.localScale = Vector3.one;
+        _foregroundHands.flipX = _body.flipX;
+        _foregroundHands.flipY = _body.flipY;
+        _foregroundHands.color = _body.color;
+        _foregroundHands.sortingLayerID = _body.sortingLayerID;
+        _foregroundHands.sortingOrder = _body.sortingOrder + 2;
+        _foregroundHands.enabled = sprite != null;
     }
 
     private void Hide()
     {
         if (_weapon != null) _weapon.enabled = false;
+        if (_foregroundHands != null) _foregroundHands.enabled = false;
     }
 
     private void OnDisable() => Hide();

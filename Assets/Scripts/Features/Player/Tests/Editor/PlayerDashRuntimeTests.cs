@@ -119,8 +119,8 @@ public sealed class PlayerDashRuntimeTests
         var weapon = weaponObject.GetComponent<SpriteRenderer>();
         weapon.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Sprites/Player/Motions/V2/SeparatedWeapons/Idle/Idle_Right_0.png");
         weapon.flipX = true;
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerDashAfterimage.prefab");
-        var effect = Object.Instantiate(prefab, source.transform).GetComponent<PlayerDashAfterimage>();
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerDashAfterimageEffect.prefab");
+        var effect = Object.Instantiate(prefab, source.transform).GetComponent<PlayerDashAfterimageEffect>();
         try
         {
             var data = new SerializedObject(effect);
@@ -154,8 +154,8 @@ public sealed class PlayerDashRuntimeTests
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
         Assert.That(prefab.GetComponent<PlayerDash>(), Is.Not.Null);
-        Assert.That(prefab.GetComponent<PlayerDashTrail>().IsConfigured, Is.True);
-        Assert.That(prefab.GetComponentsInChildren<PlayerDashAfterimage>(true).Length, Is.EqualTo(4));
+        Assert.That(prefab.GetComponent<PlayerDashAfterimageController>().IsConfigured, Is.True);
+        Assert.That(prefab.GetComponentsInChildren<PlayerDashAfterimageEffect>(true).Length, Is.EqualTo(4));
         Assert.That(prefab.GetComponent<Rigidbody2D>().collisionDetectionMode, Is.EqualTo(CollisionDetectionMode2D.Continuous));
         var hud = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
         Assert.That(hud.GetComponentInChildren<PlayerDashHud>(true).IsConfigured, Is.True);

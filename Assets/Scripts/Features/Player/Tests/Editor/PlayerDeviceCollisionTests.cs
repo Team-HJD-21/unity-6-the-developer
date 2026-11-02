@@ -49,7 +49,7 @@ public sealed class PlayerDeviceCollisionTests
         var field = _device.GetComponent<PlayerFieldDevice>();
         field.Initialize(PlayerFieldDeviceKind.Beacon, _origin, _origin, .3f, 80f, 8f, 12f);
         var body = _device.GetComponentInChildren<PolygonCollider2D>();
-        var passage = _device.GetComponent<PlayerFieldBodyCollision>();
+        var passage = _device.GetComponent<PlayerDeviceBodyCollision>();
         Assert.That(Physics2D.GetIgnoreCollision(body, ActiveBody()), Is.True);
 
         selector.SetFacing(PlayerAimFacing.UpRight);
@@ -83,7 +83,7 @@ public sealed class PlayerDeviceCollisionTests
 
         _player.transform.position = _origin + Vector3.up * 3f;
         Physics2D.SyncTransforms();
-        _device.GetComponent<PlayerSkillDepth>().Refresh();
+        _device.GetComponent<PlayerDeviceSortingOrder>().Refresh();
         Assert.That(sorting.sortingOrder, Is.EqualTo(playerOrder + 1));
         Assert.That(_device.transform.position, Is.EqualTo(_origin));
     }
@@ -102,7 +102,7 @@ public sealed class PlayerDeviceCollisionTests
 
         _player.transform.position = _origin + Vector3.up * 3f;
         Physics2D.SyncTransforms();
-        _device.GetComponent<PlayerSkillDepth>().Refresh();
+        _device.GetComponent<PlayerDeviceSortingOrder>().Refresh();
         Assert.That(sorting.sortingOrder, Is.EqualTo(playerOrder + 1));
         Assert.That(_device.transform.position, Is.EqualTo(_origin));
     }
@@ -124,7 +124,7 @@ public sealed class PlayerDeviceCollisionTests
     public void CombatHud_FoldsToTenPixelEdgeAndReturnsToAuthoredPosition()
     {
         _hud = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab"));
-        var layout = _hud.GetComponent<PlayerCombatHudLayout>();
+        var layout = _hud.GetComponent<PlayerCombatHudSlideController>();
         Invoke(layout, "Awake");
         var data = new SerializedObject(layout);
         var weapons = (RectTransform)data.FindProperty("_weapons").objectReferenceValue;

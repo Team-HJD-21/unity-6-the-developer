@@ -14,738 +14,866 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponAppearance
   _frames:
   - _body: {fileID: 21300000, guid: df8008388d5742a687fa3aa83ab8293c, type: 3}
-    _weapon: {fileID: 21300000, guid: 4f929330a09753a593a51ea598d6b7b2, type: 3}
-    _localPosition: {x: -1.5, y: -0.03125}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.125, y: -0.375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.8415016862283715, y: -0.11730259132856435}
-    _shotMuzzleLocalPosition: {x: -2.8415016862283715, y: -0.11730259132856435}
+    _muzzleLocalPosition: {x: -1.984375, y: -0.046875}
+    _shotMuzzleLocalPosition: {x: -1.984375, y: -0.046875}
   - _body: {fileID: 21300000, guid: 09f42f200d1544dba18f94a6f7d9a79b, type: 3}
-    _weapon: {fileID: 21300000, guid: f128dbe67c0653f38060b9feb6151415, type: 3}
-    _localPosition: {x: 1.359375, y: -0.03125}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.03125, y: -0.40625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.7499965085995877, y: -0.09432210715669997}
-    _shotMuzzleLocalPosition: {x: 2.7499965085995877, y: -0.09432210715669997}
+    _muzzleLocalPosition: {x: 1.921875, y: -0.140625}
+    _shotMuzzleLocalPosition: {x: 1.921875, y: -0.140625}
   - _body: {fileID: 21300000, guid: e216cc812a77415d9238d241a01c6ef4, type: 3}
-    _weapon: {fileID: 21300000, guid: d0e50aaaabd6537f9bc5821d9ad24802, type: 3}
-    _localPosition: {x: -1.296875, y: -0.28125}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.1875, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.6497001937242564, y: -0.6205088914444028}
-    _shotMuzzleLocalPosition: {x: -2.6497001937242564, y: -0.6205088914444028}
+    _muzzleLocalPosition: {x: -1.609375, y: -1.234375}
+    _shotMuzzleLocalPosition: {x: -1.609375, y: -1.234375}
   - _body: {fileID: 21300000, guid: b900202c183c4db794594f3e2f12a328, type: 3}
-    _weapon: {fileID: 21300000, guid: 222de846a0ac506c9b89403fd5676ba8, type: 3}
-    _localPosition: {x: 1.46875, y: -0.265625}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: 0.15625, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.9307172604587803, y: -0.3733789877221554}
-    _shotMuzzleLocalPosition: {x: 2.9307172604587803, y: -0.3733789877221554}
+    _muzzleLocalPosition: {x: 1.453125, y: -1.109375}
+    _shotMuzzleLocalPosition: {x: 1.453125, y: -1.109375}
   - _body: {fileID: 21300000, guid: 7f68f19551ac4dbb81489f7dcae423ce, type: 3}
-    _weapon: {fileID: 21300000, guid: ca5e8bb36bee5eff9e61128aa57e78cd, type: 3}
-    _localPosition: {x: -1.34375, y: 0.40625}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.375, y: -0.21875}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.2783997820046418, y: 0.7504710925209745}
-    _shotMuzzleLocalPosition: {x: -2.2783997820046418, y: 0.7504710925209745}
+    _muzzleLocalPosition: {x: -1.734375, y: 0.703125}
+    _shotMuzzleLocalPosition: {x: -1.734375, y: 0.703125}
   - _body: {fileID: 21300000, guid: 5253fd5fbf814821aed597670a821ec3, type: 3}
-    _weapon: {fileID: 21300000, guid: cf82bc1ee126539599af68e2392ffef7, type: 3}
-    _localPosition: {x: 1.484375, y: 0.359375}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.3125, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.558710597049984, y: 0.6771605610258766}
-    _shotMuzzleLocalPosition: {x: 2.558710597049984, y: 0.6771605610258766}
+    _muzzleLocalPosition: {x: 1.578125, y: 0.828125}
+    _shotMuzzleLocalPosition: {x: 1.578125, y: 0.828125}
   - _body: {fileID: 21300000, guid: 6e864237fab55a10b260f290c208666a, type: 3}
-    _weapon: {fileID: 21300000, guid: d3d133b480645ae8a7a8a24e681f6be3, type: 3}
-    _localPosition: {x: 0.25, y: -0.46875}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.21875, y: -0.375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.234375, y: -1.453125}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: 5c60d803e5d45fcfac68b8a8e591df1f, type: 3}
-    _weapon: {fileID: 21300000, guid: 0daad734f21f5ca5be57f4f8e9579bc2, type: 3}
-    _localPosition: {x: 0.28125, y: -0.484375}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.1875, y: -0.40625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.9201502223311575, y: -1.0210610355350775}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.203125, y: -1.484375}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: 32bfc2d6925155a797db206874250438, type: 3}
-    _weapon: {fileID: 21300000, guid: 450a00d0c17c559485a008123be5dc90, type: 3}
-    _localPosition: {x: 0.21875, y: -0.46875}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.25, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.7876311884780547, y: -1.0243971818254884}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.265625, y: -1.515625}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: 21027228eb40579587b7b5d7f12f4843, type: 3}
-    _weapon: {fileID: 21300000, guid: 225cee99f7ea5aa3a7f40707f54281ee, type: 3}
-    _localPosition: {x: 0.296875, y: -0.46875}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.21875, y: -0.46875}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.8978377788021161, y: -1.0397609498797307}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.234375, y: -1.546875}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: f4e09eb599815187a287c1c1abc7aab8, type: 3}
-    _weapon: {fileID: 21300000, guid: 0e9a45390f585c41940b98188b39eb7d, type: 3}
-    _localPosition: {x: -1.5625, y: 0.046875}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.21875, y: -0.3125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.078125, y: 0.015625}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: c77222b4eb1659e89d1a79e6b1d5f247, type: 3}
-    _weapon: {fileID: 21300000, guid: 3d9c8e089392598c8e91e1394b72b472, type: 3}
-    _localPosition: {x: -1.453125, y: 0.09375}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.25, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.656158594032296, y: 0.15917591087036742}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.109375, y: 0.046875}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: 1c5da294e37b5d699a9ca508370648aa, type: 3}
-    _weapon: {fileID: 21300000, guid: eee4c99546ab5f21bd1d1367f0b295b3, type: 3}
-    _localPosition: {x: -1.4375, y: 0.09375}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.21875, y: -0.34375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.6196540868355433, y: 0.1754637575785889}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.078125, y: -0.015625}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: 2839a6090c99558494a8dc7edcac06a5, type: 3}
-    _weapon: {fileID: 21300000, guid: 600d13e054a557ea94b639e926a22067, type: 3}
-    _localPosition: {x: -1.46875, y: 0.109375}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.21875, y: -0.3125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.656225493591366, y: 0.1265155445375732}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.078125, y: 0.015625}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: 783e2d5c632e5e97902e3b79b7669df2, type: 3}
-    _weapon: {fileID: 21300000, guid: d3b27ea0448a50e693cffa85de5734a1, type: 3}
-    _localPosition: {x: 1.46875, y: 0.09375}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.21875, y: -0.34375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.109375, y: -0.078125}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: a5f26bb9d0c458199cc8c6341cac9c90, type: 3}
-    _weapon: {fileID: 21300000, guid: 856693cc57555fa8aca9b70cd18f43f2, type: 3}
-    _localPosition: {x: 1.40625, y: 0.125}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.1875, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.593716108247296, y: 0.09553219055241646}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.078125, y: -0.015625}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: baec916010a0536c9ebdec5d583cbf25, type: 3}
-    _weapon: {fileID: 21300000, guid: 50ffd5ec7b9e5d86b264bc7d1cb6e7a2, type: 3}
-    _localPosition: {x: 1.53125, y: 0.09375}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.1875, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.742166272978336, y: 0.12641052568020683}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.078125, y: -0.015625}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: ffb4b037896d54b7bced7f9b632451b2, type: 3}
-    _weapon: {fileID: 21300000, guid: be4da65bfc53502aa5b8129e20234a4f, type: 3}
-    _localPosition: {x: 1.5, y: 0.09375}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.21875, y: -0.3125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.6843677785982196, y: 0.036677227693526326}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.109375, y: -0.046875}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: 392cb214a47659c09f1a1135d50d3b47, type: 3}
-    _weapon: {fileID: 21300000, guid: a9e8a052ab4450baac7b670876847eb0, type: 3}
-    _localPosition: {x: 1.078125, y: 0.75}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.6875, y: -0.09375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.671875, y: 0.984375}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: c7af3a055b9c59d49d75d1cc6150480e, type: 3}
-    _weapon: {fileID: 21300000, guid: 7d03cae8f13e5725a479202955b58423, type: 3}
-    _localPosition: {x: 1.109375, y: 0.71875}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.65625, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.3642399019429474, y: 1.0056060170933483}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.640625, y: 1.015625}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: 0b7bef5c17285949830e7d1f309e00af, type: 3}
-    _weapon: {fileID: 21300000, guid: 3f41de5ef9365ab6acf7428de5d1b694, type: 3}
-    _localPosition: {x: 1.046875, y: 0.703125}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.6875, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.3052044793957673, y: 0.9832619173511299}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.671875, y: 1.015625}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: 965c6846ad8d5c24a4f7068dc4a26eb0, type: 3}
-    _weapon: {fileID: 21300000, guid: bbb6d57fe4375aecac7137bc5d85e728, type: 3}
-    _localPosition: {x: 1.078125, y: 0.71875}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.6875, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.3363412761388958, y: 1.0384794199609493}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.671875, y: 1.015625}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: c60bd856882a5d8fa550da08284befa0, type: 3}
-    _weapon: {fileID: 21300000, guid: f6d2be68615b589f8b2d7f288077f394, type: 3}
-    _localPosition: {x: 0.25, y: -0.484375}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.1875, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.203125, y: -1.515625}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: 8b5b84c1066a5d05a8c2409665b9aa45, type: 3}
-    _weapon: {fileID: 21300000, guid: 5ed04e7e974e5789b112b377972c1b72, type: 3}
-    _localPosition: {x: 0.265625, y: -0.421875}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.15625, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.827897173115657, y: -1.0196098794933883}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.171875, y: -1.515625}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: 3c361c077d205f60a7cdaf6e2661652b, type: 3}
-    _weapon: {fileID: 21300000, guid: b426a0ff444b53ff8432624c0a4b206c, type: 3}
-    _localPosition: {x: 0.21875, y: -0.46875}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.21875, y: -0.5}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.8085196260423242, y: -1.0343298663113591}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.234375, y: -1.578125}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: aa3fcd7f9a6653aab0c092697b70c3c5, type: 3}
-    _weapon: {fileID: 21300000, guid: 7165a5f1cec151b18c5298524dc401f6, type: 3}
-    _localPosition: {x: 0.25, y: -0.546875}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.1875, y: -0.59375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.8286242930486649, y: -1.1091912262028139}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.203125, y: -1.671875}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: 86c5bbb2516b5d689e24dc04807a4bdf, type: 3}
-    _weapon: {fileID: 21300000, guid: 98506075956052d2b78ee1223e5283b2, type: 3}
-    _localPosition: {x: -1.578125, y: 0.078125}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.3125, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.171875, y: 0.046875}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: 2a0b26c7c29b5646b81badf161291bd8, type: 3}
-    _weapon: {fileID: 21300000, guid: cf024c4900505047b4261a17eefd3fb4, type: 3}
-    _localPosition: {x: -1.484375, y: 0.125}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.25, y: -0.25}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.7447403084988626, y: 0.17406867057012176}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.109375, y: 0.078125}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: ed53d49fa34459708e34ff5f06f19a8d, type: 3}
-    _weapon: {fileID: 21300000, guid: 4e3afdeb632d5b57bcedd3dec80e49f4, type: 3}
-    _localPosition: {x: -1.5625, y: 0.0625}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.25, y: -0.46875}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.8072892098886433, y: 0.016104913433808488}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.109375, y: -0.140625}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: 1ad30620f2d952278b94b0f6b59e1050, type: 3}
-    _weapon: {fileID: 21300000, guid: 7524ceeddfd057daa8bb3c20a7dd646d, type: 3}
-    _localPosition: {x: -1.484375, y: 0.0}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.25, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.7405156806584383, y: 0.05319949020204584}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.109375, y: -0.109375}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: a3f42539892c5ed9b9ad1c3f844e1118, type: 3}
-    _weapon: {fileID: 21300000, guid: 936994cab13a5ae3ad80347677dfa506, type: 3}
-    _localPosition: {x: 1.546875, y: 0.046875}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.28125, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.171875, y: -0.015625}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: dcce43decf65503fbbc9435684160db9, type: 3}
-    _weapon: {fileID: 21300000, guid: a4b0a1017f93574884ff3453ef37392c, type: 3}
-    _localPosition: {x: 1.515625, y: 0.171875}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.21875, y: -0.1875}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.716492052050633, y: 0.18012660106770717}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.109375, y: 0.078125}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: d9957d73d5325b149bb7abb8acd81e9a, type: 3}
-    _weapon: {fileID: 21300000, guid: 1b287fb9918556f29c12f466ac9539bd, type: 3}
-    _localPosition: {x: 1.78125, y: 0.078125}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.25, y: -0.34375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 3.499850756121287, y: 0.23811255801212328}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.140625, y: -0.078125}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: 8acf8a3e11745a7388744b4824bc5d5b, type: 3}
-    _weapon: {fileID: 21300000, guid: 8ab7b24e7ef85d93a81115350de2b920, type: 3}
-    _localPosition: {x: 1.578125, y: -0.015625}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.25, y: -0.34375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.747604630460166, y: 0.08872986285542783}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.140625, y: -0.078125}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: 9b776838afb3592097d0449084e83f11, type: 3}
-    _weapon: {fileID: 21300000, guid: 1bb40f1e16bb5abcaee41b677d8d9029, type: 3}
-    _localPosition: {x: 1.046875, y: 0.703125}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.15625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _muzzleLocalPosition: {x: 0.734375, y: 0.921875}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: 23c9667be7785d918ab45f341951dcca, type: 3}
-    _weapon: {fileID: 21300000, guid: 736b7fd2b98b5865a44226987c47ec23, type: 3}
-    _localPosition: {x: 1.0, y: 0.71875}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.2366332827209314, y: 1.0786284102067225}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _muzzleLocalPosition: {x: 0.734375, y: 0.953125}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: 827cb1c9e7585ff6887a60e9f4c69e78, type: 3}
-    _weapon: {fileID: 21300000, guid: b07d0bdb23135fb9b3254a032523410b, type: 3}
-    _localPosition: {x: 1.0625, y: 0.671875}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.3015001315506742, y: 1.0143646575846197}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _muzzleLocalPosition: {x: 0.734375, y: 0.953125}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: 8d0dd92224235eb6a9f2b5ccc6b663d3, type: 3}
-    _weapon: {fileID: 21300000, guid: ecb8aaf5610c5be39f1e8d0a0aeb47a1, type: 3}
-    _localPosition: {x: 1.03125, y: 0.609375}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.71875, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.2615966738723516, y: 0.9678482926619365}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _muzzleLocalPosition: {x: 0.703125, y: 0.796875}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: c06202155e2c5a50b5362882de89829e, type: 3}
-    _weapon: {fileID: 21300000, guid: d62a97e7e3ad578ea8ae532dff0489cf, type: 3}
-    _localPosition: {x: -0.0625, y: -0.609375}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.40625, y: -0.09375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.07851115166323996, y: -1.4036442427665392}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.421875, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: b223d7ea97e15e57aee3ee07039f4a1a, type: 3}
-    _weapon: {fileID: 21300000, guid: 598e1b1b1d2c5a50a791c332e1d2ea10, type: 3}
-    _localPosition: {x: -0.078125, y: -0.59375}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.40625, y: -0.09375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.0717963035706708, y: -1.3077837602486087}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.421875, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: b2f7e6d2b46d508aabd012172d24e746, type: 3}
-    _weapon: {fileID: 21300000, guid: 5b29b2b69a1a5890b672136836a5799e, type: 3}
-    _localPosition: {x: -0.109375, y: -0.59375}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.40625, y: -0.09375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.1384114615825589, y: -1.3013392820222833}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.421875, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: ad901f5bda9f59218394155cf5c7223c, type: 3}
-    _weapon: {fileID: 21300000, guid: 792e97aeb0565df4a20afd9fa021adc0, type: 3}
-    _localPosition: {x: -0.0625, y: -0.578125}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.40625, y: -0.09375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.09007921388600604, y: -1.3057968547701266}
-    _shotMuzzleLocalPosition: {x: 0.7710185753730823, y: -1.0764386551473732}
+    _muzzleLocalPosition: {x: -0.421875, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -0.234375, y: -1.453125}
   - _body: {fileID: 21300000, guid: 024216e819975f01a53b501f8662b8a9, type: 3}
-    _weapon: {fileID: 21300000, guid: 838cb8ca1a4f56eeac6cb6fc38a3a822, type: 3}
-    _localPosition: {x: -1.6875, y: 0.046875}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.375, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.929659552104014, y: -0.12661843571506415}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.234375, y: 0.046875}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: 77f3df4d50f75e67866c0a925bb9fea2, type: 3}
-    _weapon: {fileID: 21300000, guid: ce7932d0ac7557af9b268ada924fe19d, type: 3}
-    _localPosition: {x: -1.6875, y: 0.03125}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.375, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.96354162195593, y: -0.10943974279528934}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.234375, y: 0.046875}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: 3b9054699f2850d18218e810b9f979a5, type: 3}
-    _weapon: {fileID: 21300000, guid: 784587dbf303559b83af057c609c0b88, type: 3}
-    _localPosition: {x: -1.625, y: -0.046875}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.375, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.901041621836538, y: -0.10943982917990747}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.234375, y: 0.046875}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: 9bb84e66402059589d01f2ce9aac1a7d, type: 3}
-    _weapon: {fileID: 21300000, guid: 442c206d773459df9ad0493de5472f08, type: 3}
-    _localPosition: {x: -1.609375, y: -0.03125}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.375, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.8732226566114414, y: -0.16516010614219612}
-    _shotMuzzleLocalPosition: {x: -2.8384079502526, y: 0.14416308334262862}
+    _muzzleLocalPosition: {x: -2.234375, y: 0.046875}
+    _shotMuzzleLocalPosition: {x: -2.078125, y: 0.015625}
   - _body: {fileID: 21300000, guid: 6dfe219b9e1b5444a214842243ac7a92, type: 3}
-    _weapon: {fileID: 21300000, guid: ad623ade252a5b3583a07b2893bd60bc, type: 3}
-    _localPosition: {x: 1.625, y: -0.09375}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.25, y: -0.25}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.9960082860784825, y: -0.028420699987566245}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.140625, y: 0.015625}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: 6f5fa8de1e76513a9b0e9fd349bb7578, type: 3}
-    _weapon: {fileID: 21300000, guid: 42f9d48378a250fcb8af226018f98383, type: 3}
-    _localPosition: {x: 1.671875, y: -0.09375}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.25, y: -0.25}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 3.027269046091737, y: -0.02860464355411807}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.140625, y: 0.015625}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: 98a0b10a995550049440f2fb310d84c8, type: 3}
-    _weapon: {fileID: 21300000, guid: 0254645e65a359e3a79646063e1ea76d, type: 3}
-    _localPosition: {x: 1.625, y: -0.09375}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.25, y: -0.25}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.9669749962498386, y: -0.053646453077002665}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.140625, y: 0.015625}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: 4feca1749b7a59a5bd9d68129a07610e, type: 3}
-    _weapon: {fileID: 21300000, guid: 3e338e1431f652d9ba66d98106a36f7a, type: 3}
-    _localPosition: {x: 1.625, y: -0.140625}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.25, y: -0.25}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.9374053583008903, y: -0.059522802955745746}
-    _shotMuzzleLocalPosition: {x: 2.687443350778615, y: 0.1273038349269382}
+    _muzzleLocalPosition: {x: 2.140625, y: 0.015625}
+    _shotMuzzleLocalPosition: {x: 2.109375, y: -0.078125}
   - _body: {fileID: 21300000, guid: c4329dcbc1475a9b92b53b687f88956e, type: 3}
-    _weapon: {fileID: 21300000, guid: 1c41a8c001275a429dd55315223c9d97, type: 3}
-    _localPosition: {x: 1.015625, y: 0.453125}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.8837103062904568, y: 0.6119921499930827}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.734375, y: 1.015625}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: aeec11e85d4e5f369ac28ef03a6ad9f3, type: 3}
-    _weapon: {fileID: 21300000, guid: 7258bcd59c2c5004b28183e2ab25bcc9, type: 3}
-    _localPosition: {x: 1.0, y: 0.484375}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.9291333179606918, y: 0.6867472750593802}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.734375, y: 1.015625}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: 579bdc886dca5084b05583f1e2414c12, type: 3}
-    _weapon: {fileID: 21300000, guid: 6872fde96db95e2ea52fadbad2883dcb, type: 3}
-    _localPosition: {x: 1.0, y: 0.4375}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.8501178370945262, y: 0.6386841888199739}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.734375, y: 1.015625}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: 9bcb996d3a5059178de995415b061cdb, type: 3}
-    _weapon: {fileID: 21300000, guid: 6ee1278558e956488b9ebeade0247fd2, type: 3}
-    _localPosition: {x: 1.0, y: 0.4375}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.8870633871954174, y: 0.6287059406319311}
-    _shotMuzzleLocalPosition: {x: 1.3571642769113117, y: 0.990156638784164}
+    _muzzleLocalPosition: {x: 0.734375, y: 1.015625}
+    _shotMuzzleLocalPosition: {x: 0.671875, y: 0.984375}
   - _body: {fileID: 21300000, guid: 61fd7847dd894d1daa7d63d54f318286, type: 3}
-    _weapon: {fileID: 21300000, guid: 1ff3b34baa8951f68672a3b1c27335e7, type: 3}
-    _localPosition: {x: -1.015625, y: -0.59375}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.15625, y: -0.375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.049760690365825, y: -1.170343237538014}
-    _shotMuzzleLocalPosition: {x: -2.049760690365825, y: -1.170343237538014}
+    _muzzleLocalPosition: {x: -1.578125, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}
   - _body: {fileID: 21300000, guid: 819efbac05254e0193412ccf899b490f, type: 3}
-    _weapon: {fileID: 21300000, guid: a5b3b0d077045d6fad9ef51c00e25ed1, type: 3}
-    _localPosition: {x: 0.921875, y: -0.734375}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.21875, y: -0.40625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.8315020190141933, y: -1.290331483528588}
-    _shotMuzzleLocalPosition: {x: 1.8315020190141933, y: -1.290331483528588}
+    _muzzleLocalPosition: {x: 1.078125, y: -1.078125}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.078125}
   - _body: {fileID: 21300000, guid: c1a2f9f74c6148b88843e760acb14566, type: 3}
-    _weapon: {fileID: 21300000, guid: 4e26188e30935f6c912517892dcadf02, type: 3}
-    _localPosition: {x: -1.328125, y: 0.3125}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.53125, y: -0.1875}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.0919727670410806, y: 0.714619893433249}
-    _shotMuzzleLocalPosition: {x: -2.0919727670410806, y: 0.714619893433249}
+    _muzzleLocalPosition: {x: -1.890625, y: 0.734375}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.734375}
   - _body: {fileID: 21300000, guid: 4b8206659cac4d139c29c860bdf1647b, type: 3}
-    _weapon: {fileID: 21300000, guid: 8bf92b27a85a5d67861cd9847b9729fe, type: 3}
-    _localPosition: {x: 1.40625, y: 0.390625}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.4375, y: -0.125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.131238132809197, y: 0.7537212503844994}
-    _shotMuzzleLocalPosition: {x: 2.131238132809197, y: 0.7537212503844994}
+    _muzzleLocalPosition: {x: 1.703125, y: 0.765625}
+    _shotMuzzleLocalPosition: {x: 1.703125, y: 0.765625}
   - _body: {fileID: 21300000, guid: 4f89b93f82965882a5ab7f254e30a4ea, type: 3}
-    _weapon: {fileID: 21300000, guid: 38df43356ac85265acd863acb8aa0703, type: 3}
-    _localPosition: {x: -0.046875, y: -1.0}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.5625, y: -0.5}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.004255056588353234, y: -2.061751870141321}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.578125, y: -1.578125}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: e102cd9a6152542dae5b1de366caecc1, type: 3}
-    _weapon: {fileID: 21300000, guid: 0fd870b5e2c75e8abe342c5719f365f9, type: 3}
-    _localPosition: {x: -0.109375, y: -0.859375}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.53125, y: -0.46875}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.07629072799361092, y: -1.8377373677855164}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.546875, y: -1.546875}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: 3e2f83706bdc5c90aa3ec6ec09ebe008, type: 3}
-    _weapon: {fileID: 21300000, guid: f79f7c3cfd06580faaf500e55c48fb75, type: 3}
-    _localPosition: {x: -0.0625, y: -0.96875}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.53125, y: -0.53125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.12350335759678233, y: -2.061946237211669}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.546875, y: -1.609375}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: 8308a9da584654858ee19cfdba8c5292, type: 3}
-    _weapon: {fileID: 21300000, guid: 882fd77769cd534c882d6aedfe598ea3, type: 3}
-    _localPosition: {x: -0.046875, y: -1.015625}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.53125, y: -0.5625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 0.0062024410620735715, y: -2.0295863707133526}
-    _shotMuzzleLocalPosition: {x: 0.7487903297348213, y: -1.069292481655796}
+    _muzzleLocalPosition: {x: -0.546875, y: -1.640625}
+    _shotMuzzleLocalPosition: {x: -0.203125, y: -1.515625}
   - _body: {fileID: 21300000, guid: 0d41c6b0e83c53c7b99df7c335f2b887, type: 3}
-    _weapon: {fileID: 21300000, guid: 97a9116672995982934a836ff89c633c, type: 3}
-    _localPosition: {x: -1.53125, y: -0.140625}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.4375, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.8072903145555106, y: -0.17151896827014035}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.296875, y: -0.109375}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: 9920d0c0ab3c59a09919dc0b7030b3a1, type: 3}
-    _weapon: {fileID: 21300000, guid: 38ad37b09ced53a781daf09e7453d281, type: 3}
-    _localPosition: {x: -1.515625, y: -0.03125}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.34375, y: -0.40625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.7790164838198965, y: -0.13428738494775017}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.203125, y: -0.078125}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: bab73187ad015223b200630c9f2ff452, type: 3}
-    _weapon: {fileID: 21300000, guid: 310dae428a72503f8ab17f6d5a11e75e, type: 3}
-    _localPosition: {x: -1.828125, y: -0.046875}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.34375, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -3.53124976767051, y: -0.17172741668223823}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.203125, y: -0.109375}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: b294c48bde045c0da645bb76f895bffc, type: 3}
-    _weapon: {fileID: 21300000, guid: cbd34830c02450dd894b189f4ef7b3b9, type: 3}
-    _localPosition: {x: -1.84375, y: -0.1875}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.375, y: -0.5}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -3.5312303152737123, y: -0.17051667176241558}
-    _shotMuzzleLocalPosition: {x: -2.8671253072271883, y: 0.12741385677083938}
+    _muzzleLocalPosition: {x: -2.234375, y: -0.171875}
+    _shotMuzzleLocalPosition: {x: -2.171875, y: 0.046875}
   - _body: {fileID: 21300000, guid: 0232700a3c0c53728ff802b4ec01d7c3, type: 3}
-    _weapon: {fileID: 21300000, guid: c8391053203d534e8e4bdfee189fd37e, type: 3}
-    _localPosition: {x: 1.84375, y: -0.171875}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.4375, y: -0.40625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 3.33982629442297, y: -0.28252912300011657}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.328125, y: -0.140625}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: 3bbbc81ad03f57b1aece7bfc3a3dc090, type: 3}
-    _weapon: {fileID: 21300000, guid: 48da1df3e33e51cfac789de52fdf5f32, type: 3}
-    _localPosition: {x: 1.78125, y: -0.109375}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.40625, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 3.239578230780359, y: -0.1881916200584297}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.296875, y: -0.171875}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: c678c8a51980528e81abaa546c49b00d, type: 3}
-    _weapon: {fileID: 21300000, guid: 85052df180a75bf0ba81d898adce5a4c, type: 3}
-    _localPosition: {x: 1.78125, y: -0.171875}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.4375, y: -0.5625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 3.247767241610223, y: -0.3216687917556267}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.328125, y: -0.296875}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: 7301a1f1f9515694bde0cf2702663bb8, type: 3}
-    _weapon: {fileID: 21300000, guid: 796c6e1b02f95dfcb52494e95cd3a8e0, type: 3}
-    _localPosition: {x: 1.78125, y: -0.28125}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.40625, y: -0.59375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 3.213532275019584, y: -0.36031328498388415}
-    _shotMuzzleLocalPosition: {x: 2.716483400222131, y: 0.08661841188761166}
+    _muzzleLocalPosition: {x: 2.296875, y: -0.328125}
+    _shotMuzzleLocalPosition: {x: 2.171875, y: -0.015625}
   - _body: {fileID: 21300000, guid: abfee56a99a551329f604e6087731fb5, type: 3}
-    _weapon: {fileID: 21300000, guid: d54441bd06d850f2b691089f721b6ee1, type: 3}
-    _localPosition: {x: 0, y: 0}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.21875}
     _localAngle: 0
     _sortingOffset: 1
-    _overrideMuzzle: 0
-    _muzzleLocalPosition: {x: 0, y: 0}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 0.734375, y: 0.859375}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: 86f8edfbb2045617a694e22f27753df7, type: 3}
-    _weapon: {fileID: 21300000, guid: 62fdeb2ead7e5e78bf69b6dc81be9117, type: 3}
-    _localPosition: {x: 0, y: 0}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.21875}
     _localAngle: 0
     _sortingOffset: 1
-    _overrideMuzzle: 0
-    _muzzleLocalPosition: {x: 0, y: 0}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 0.734375, y: 0.859375}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: c6abac3f864f5a85b961d50cc62b41aa, type: 3}
-    _weapon: {fileID: 21300000, guid: 423cfdba6b755667ba61590576863198, type: 3}
-    _localPosition: {x: 0, y: 0}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.75, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
-    _overrideMuzzle: 0
-    _muzzleLocalPosition: {x: 0, y: 0}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 0.734375, y: 0.796875}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: 5fa5ad482fa1501e985c0484b12a98a8, type: 3}
-    _weapon: {fileID: 21300000, guid: 191bd820e0685a8c823205c8f443d4ba, type: 3}
-    _localPosition: {x: 0, y: 0}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.78125, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
-    _overrideMuzzle: 0
-    _muzzleLocalPosition: {x: 0, y: 0}
-    _shotMuzzleLocalPosition: {x: 1.2898715847929294, y: 1.0218178734507157}
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 0.765625, y: 0.796875}
+    _shotMuzzleLocalPosition: {x: 0.734375, y: 0.921875}
   - _body: {fileID: 21300000, guid: aa9f7b1a026e5bf8bf6da1fee5837f06, type: 3}
-    _weapon: {fileID: 21300000, guid: 414e48887897532b986420f01127b7ba, type: 3}
-    _localPosition: {x: 0.015625, y: -0.5625}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.15625, y: -0.5}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.09186639192492141, y: -1.3449340274909352}
-    _shotMuzzleLocalPosition: {x: -0.09186639192492141, y: -1.3449340274909352}
+    _muzzleLocalPosition: {x: -0.171875, y: -1.578125}
+    _shotMuzzleLocalPosition: {x: -0.171875, y: -1.578125}
   - _body: {fileID: 21300000, guid: 4051f691d75a5ec0b64b31f6d8af057e, type: 3}
-    _weapon: {fileID: 21300000, guid: a180299406e857aa9878977ca5fc8761, type: 3}
-    _localPosition: {x: -1.6875, y: -0.015625}
+    _weapon: {fileID: 21300000, guid: 9dd834e7c0654199b9e79c8b86d36d47, type: 3}
+    _localPosition: {x: -0.03125, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -3.5311895872813333, y: -0.18987908442019874}
-    _shotMuzzleLocalPosition: {x: -3.5311895872813333, y: -0.18987908442019874}
+    _muzzleLocalPosition: {x: -1.890625, y: 0.046875}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.046875}
   - _body: {fileID: 21300000, guid: f416869bf72c5012868f1b1d6f4bda4e, type: 3}
-    _weapon: {fileID: 21300000, guid: 904fabb78c055bb6b66cfa54a76fed91, type: 3}
-    _localPosition: {x: 0.90625, y: 1.140625}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 0.9375, y: 0.0625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.122153140601867, y: 1.5451470345700113}
-    _shotMuzzleLocalPosition: {x: 1.122153140601867, y: 1.5451470345700113}
+    _muzzleLocalPosition: {x: 0.921875, y: 1.140625}
+    _shotMuzzleLocalPosition: {x: 0.921875, y: 1.140625}
   - _body: {fileID: 21300000, guid: 90b6e2d00028558e8350c8b93ee618d5, type: 3}
-    _weapon: {fileID: 21300000, guid: efa4c6777ae459ae8dba2d99fc0d6450, type: 3}
-    _localPosition: {x: -0.03125, y: -0.578125}
+    _weapon: {fileID: 21300000, guid: 48c498fbbab44675a42bf5a5b0391956, type: 3}
+    _localPosition: {x: -0.375, y: -0.375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -0.03889717966538919, y: -1.3367941636034812}
-    _shotMuzzleLocalPosition: {x: -0.03889717966538919, y: -1.3367941636034812}
+    _muzzleLocalPosition: {x: -0.390625, y: -1.453125}
+    _shotMuzzleLocalPosition: {x: -0.390625, y: -1.453125}
   - _body: {fileID: 21300000, guid: 6ffcbd0035fd5cabb731db81538682f0, type: 3}
-    _weapon: {fileID: 21300000, guid: 5aca9d145714571d9a1eb43bdc786daa, type: 3}
-    _localPosition: {x: 1.4375, y: -0.015625}
+    _weapon: {fileID: 21300000, guid: 6bf72bb2d75a4c618ee99e1a52b495fc, type: 3}
+    _localPosition: {x: 0.03125, y: -0.34375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.777862710142043, y: -0.24870185603727757}
-    _shotMuzzleLocalPosition: {x: 2.777862710142043, y: -0.24870185603727757}
+    _muzzleLocalPosition: {x: 1.921875, y: -0.078125}
+    _shotMuzzleLocalPosition: {x: 1.921875, y: -0.078125}
   - _body: {fileID: 21300000, guid: 75a509be69bb5a43957d32e87678a6b1, type: 3}
-    _weapon: {fileID: 21300000, guid: 8773822cd1405dbea11d79a6348e4386, type: 3}
-    _localPosition: {x: 1.15625, y: 1.125}
+    _weapon: {fileID: 21300000, guid: 2038d7b70e8e47af97740eb94c6f04b0, type: 3}
+    _localPosition: {x: 1.09375, y: -0.03125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.3095125803628322, y: 1.5980254155282958}
-    _shotMuzzleLocalPosition: {x: 1.3095125803628322, y: 1.5980254155282958}
+    _muzzleLocalPosition: {x: 1.078125, y: 1.046875}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: 1.046875}
   - _body: {fileID: 21300000, guid: 611a9cbc4618440db2cf5211f35d5435, type: 3}
-    _weapon: {fileID: 21300000, guid: e05d4fb3309e5f22971d86b2161ce115, type: 3}
-    _localPosition: {x: -0.890625, y: -0.546875}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.125, y: -0.34375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -1.7640020841207003, y: -1.2394502667313159}
-    _shotMuzzleLocalPosition: {x: -2.049760690365825, y: -1.170343237538014}
+    _muzzleLocalPosition: {x: -1.546875, y: -1.140625}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}
   - _body: {fileID: 21300000, guid: ff26031f7251461b83845841b08912d3, type: 3}
-    _weapon: {fileID: 21300000, guid: 09664e46eca75972b8d8aef4424cd474, type: 3}
-    _localPosition: {x: 0.84375, y: -0.734375}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.25, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.7675684964700986, y: -1.296939704408322}
-    _shotMuzzleLocalPosition: {x: 1.8315020190141933, y: -1.290331483528588}
+    _muzzleLocalPosition: {x: 1.046875, y: -1.109375}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.078125}
   - _body: {fileID: 21300000, guid: f612b72832c54bbdac54a001594c5c3c, type: 3}
-    _weapon: {fileID: 21300000, guid: 31440404328c5f589ee3a1ee45704dc9, type: 3}
-    _localPosition: {x: -1.0625, y: 0.359375}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.34375, y: -0.25}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -1.7629260664307453, y: 0.8385534335980664}
-    _shotMuzzleLocalPosition: {x: -2.0919727670410806, y: 0.714619893433249}
+    _muzzleLocalPosition: {x: -1.703125, y: 0.671875}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.734375}
   - _body: {fileID: 21300000, guid: 3c8fb7a6a09d40b1abc7f13a4df2c496, type: 3}
-    _weapon: {fileID: 21300000, guid: 09c1fbcb57dc5db7ad71760cb4824e59, type: 3}
-    _localPosition: {x: 1.25, y: 0.265625}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.375, y: -0.15625}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.9656757466976904, y: 0.5948211137311885}
-    _shotMuzzleLocalPosition: {x: 2.131238132809197, y: 0.7537212503844994}
+    _muzzleLocalPosition: {x: 1.640625, y: 0.734375}
+    _shotMuzzleLocalPosition: {x: 1.703125, y: 0.765625}
   - _body: {fileID: 21300000, guid: ff36188e31b24fc7a5c41caf781e8488, type: 3}
-    _weapon: {fileID: 21300000, guid: 3713bc9f849e517bac6b2a69b904e245, type: 3}
-    _localPosition: {x: -1.0, y: -0.546875}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.1875, y: -0.4375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -1.9813184887855981, y: -1.2140804725494476}
-    _shotMuzzleLocalPosition: {x: -2.049760690365825, y: -1.170343237538014}
+    _muzzleLocalPosition: {x: -1.609375, y: -1.234375}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}
   - _body: {fileID: 21300000, guid: 7583059685704d7b9e50009cd2e5e816, type: 3}
-    _weapon: {fileID: 21300000, guid: 9f9b3b4918c350418c77ca4ce4ed7f1d, type: 3}
-    _localPosition: {x: 0.828125, y: -0.71875}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.1875, y: -0.53125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.7372904667681484, y: -1.2327903452689455}
-    _shotMuzzleLocalPosition: {x: 1.8315020190141933, y: -1.290331483528588}
+    _muzzleLocalPosition: {x: 1.109375, y: -1.203125}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.078125}
   - _body: {fileID: 21300000, guid: 7b08a531babc4be2a284ba657b3b6a09, type: 3}
-    _weapon: {fileID: 21300000, guid: e041f3c3ff9f5472bf107b7f2561aa8f, type: 3}
-    _localPosition: {x: -1.3125, y: 0.390625}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.53125, y: -0.3125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.0846454980770455, y: 0.8291590345067257}
-    _shotMuzzleLocalPosition: {x: -2.0919727670410806, y: 0.714619893433249}
+    _muzzleLocalPosition: {x: -1.890625, y: 0.609375}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.734375}
   - _body: {fileID: 21300000, guid: 53e6961af50d40fcad534cfe17a440e0, type: 3}
-    _weapon: {fileID: 21300000, guid: 5f19937bba2258fa996cff47e0f2f170, type: 3}
-    _localPosition: {x: 1.234375, y: 0.328125}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.375, y: -0.28125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.9863611020760725, y: 0.6108292683125756}
-    _shotMuzzleLocalPosition: {x: 2.131238132809197, y: 0.7537212503844994}
+    _muzzleLocalPosition: {x: 1.640625, y: 0.609375}
+    _shotMuzzleLocalPosition: {x: 1.703125, y: 0.765625}
   - _body: {fileID: 21300000, guid: 86372e16bb464a5b953269ae5e9ec4e4, type: 3}
-    _weapon: {fileID: 21300000, guid: 81d101b4a71856cd97645603f1e05cf7, type: 3}
-    _localPosition: {x: -1.0625, y: -0.453125}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.15625, y: -0.375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.113543539379557, y: -1.0390071050927974}
-    _shotMuzzleLocalPosition: {x: -2.113543539379557, y: -1.0390071050927974}
+    _muzzleLocalPosition: {x: -1.578125, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}
   - _body: {fileID: 21300000, guid: d16206ecc44049f5b58ff00e928d80b5, type: 3}
-    _weapon: {fileID: 21300000, guid: f88dc9eeb7cb521587a81b39c4b0e99d, type: 3}
-    _localPosition: {x: 0.96875, y: -0.609375}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.21875, y: -0.375}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 1.9247568448985168, y: -1.1391000566344136}
-    _shotMuzzleLocalPosition: {x: 1.9247568448985168, y: -1.1391000566344136}
+    _muzzleLocalPosition: {x: 1.078125, y: -1.046875}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.046875}
   - _body: {fileID: 21300000, guid: 6d8b03639242422f95a5dac9fe63f309, type: 3}
-    _weapon: {fileID: 21300000, guid: 662e248bcb7d5a9887311c550b0c491c, type: 3}
-    _localPosition: {x: -1.625, y: 0.4375}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.34375, y: -0.1875}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: -2.812014144817032, y: 0.9617910475929445}
-    _shotMuzzleLocalPosition: {x: -2.812014144817032, y: 0.9617910475929445}
+    _muzzleLocalPosition: {x: -1.703125, y: 0.734375}
+    _shotMuzzleLocalPosition: {x: -1.703125, y: 0.734375}
   - _body: {fileID: 21300000, guid: 57551dc38b994cd1bca8cbf57cc5b346, type: 3}
-    _weapon: {fileID: 21300000, guid: bbfa9d5fa387504f8b67cea72c489bd7, type: 3}
-    _localPosition: {x: 1.546875, y: 0.484375}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.34375, y: -0.03125}
     _localAngle: 0
     _sortingOffset: 1
     _overrideMuzzle: 1
-    _muzzleLocalPosition: {x: 2.5294260513373494, y: 0.9610380032744188}
-    _shotMuzzleLocalPosition: {x: 2.5294260513373494, y: 0.9610380032744188}
+    _muzzleLocalPosition: {x: 1.609375, y: 0.859375}
+    _shotMuzzleLocalPosition: {x: 1.609375, y: 0.859375}
+  - _body: {fileID: 21300000, guid: ccc5a571c76840a88b912b0128793d65, type: 3}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.21875, y: -0.40625}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.078125, y: -1.078125}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.078125}
+  - _body: {fileID: 21300000, guid: a61d47d486634d489dd7d174990532d4, type: 3}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.21875, y: -0.40625}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.078125, y: -1.078125}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.078125}
+  - _body: {fileID: 21300000, guid: a406a25a050f473a87ca032f2d8d2b5a, type: 3}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.21875, y: -0.40625}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.078125, y: -1.078125}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.078125}
+  - _body: {fileID: 21300000, guid: daa759dfd47840d2a49874cf17d5a91e, type: 3}
+    _weapon: {fileID: 21300000, guid: 4450801c74a74660900c9ebfa6a0a821, type: 3}
+    _localPosition: {x: -0.21875, y: -0.40625}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.078125, y: -1.078125}
+    _shotMuzzleLocalPosition: {x: 1.078125, y: -1.078125}
+  - _body: {fileID: 21300000, guid: fc6aca7578f341499617e7c40bc54a39, type: 3}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.4375, y: -0.125}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.703125, y: 0.765625}
+    _shotMuzzleLocalPosition: {x: 1.703125, y: 0.765625}
+  - _body: {fileID: 21300000, guid: 97cda4f743e74567aa1398011887304c, type: 3}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.4375, y: -0.125}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.703125, y: 0.765625}
+    _shotMuzzleLocalPosition: {x: 1.703125, y: 0.765625}
+  - _body: {fileID: 21300000, guid: b4d528216bfb44f8b2113d33f52e53ec, type: 3}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.4375, y: -0.125}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.703125, y: 0.765625}
+    _shotMuzzleLocalPosition: {x: 1.703125, y: 0.765625}
+  - _body: {fileID: 21300000, guid: 80688507ea354721ba6f56b64d7ce7d9, type: 3}
+    _weapon: {fileID: 21300000, guid: 3641a550c9d348e29f109f69c36e9c1b, type: 3}
+    _localPosition: {x: 0.4375, y: -0.125}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: 1.703125, y: 0.765625}
+    _shotMuzzleLocalPosition: {x: 1.703125, y: 0.765625}
+  - _body: {fileID: 21300000, guid: 76f28044df5741099e72b752c2f53bb5, type: 3}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.53125, y: -0.1875}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.890625, y: 0.734375}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.734375}
+  - _body: {fileID: 21300000, guid: 975d5c5917054309bfe0bef714896abb, type: 3}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.53125, y: -0.1875}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.890625, y: 0.734375}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.734375}
+  - _body: {fileID: 21300000, guid: bc1a33d9d46b482e8079f9b6eb550b0b, type: 3}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.53125, y: -0.1875}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.890625, y: 0.734375}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.734375}
+  - _body: {fileID: 21300000, guid: 2df2c25867404db59c3e08373e435c29, type: 3}
+    _weapon: {fileID: 21300000, guid: 5f824e4b5f264d1fbe992c0eb3e8c4e2, type: 3}
+    _localPosition: {x: -0.53125, y: -0.1875}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.890625, y: 0.734375}
+    _shotMuzzleLocalPosition: {x: -1.890625, y: 0.734375}
+  - _body: {fileID: 21300000, guid: 3ecb2d54f8954348ae5dfcfce0edf71d, type: 3}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.15625, y: -0.375}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.578125, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}
+  - _body: {fileID: 21300000, guid: b8e6786a860841b4b4a8f14053ed87ee, type: 3}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.15625, y: -0.375}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.578125, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}
+  - _body: {fileID: 21300000, guid: 5438221499354f43ac38528254cd045b, type: 3}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.15625, y: -0.375}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.578125, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}
+  - _body: {fileID: 21300000, guid: 8e1ae05a478c40de8c2190d2411fb3b3, type: 3}
+    _weapon: {fileID: 21300000, guid: 1996980193fc43058c0d72fc933bb608, type: 3}
+    _localPosition: {x: -0.15625, y: -0.375}
+    _localAngle: 0
+    _sortingOffset: 1
+    _overrideMuzzle: 1
+    _muzzleLocalPosition: {x: -1.578125, y: -1.171875}
+    _shotMuzzleLocalPosition: {x: -1.578125, y: -1.171875}

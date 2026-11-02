@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class PlayerWeaponSlotView : MonoBehaviour
 {
-    [SerializeField, Range(1, PlayerWeaponSlots.Count)] private int _slotNumber = 1;
+    [SerializeField, Range(1, PlayerWeaponSlotMapping.Count)] private int _slotNumber = 1;
     [SerializeField] private Button _button;
     [SerializeField] private Image _border;
     [SerializeField] private Image _icon;
@@ -19,9 +19,9 @@ public sealed class PlayerWeaponSlotView : MonoBehaviour
     public int SlotNumber => _slotNumber;
     public WeaponType Weapon
     {
-        get { PlayerWeaponSlots.TryGetWeapon(_slotNumber, out var weapon); return weapon; }
+        get { PlayerWeaponSlotMapping.TryGetWeapon(_slotNumber, out var weapon); return weapon; }
     }
-    public bool IsConfigured => PlayerWeaponSlots.TryGetWeapon(_slotNumber, out _) &&
+    public bool IsConfigured => PlayerWeaponSlotMapping.TryGetWeapon(_slotNumber, out _) &&
         _button != null && _border != null && _icon != null && _icon.sprite != null && _selectedMarker != null;
 
     public void Bind(PlayerWeaponHud hud)

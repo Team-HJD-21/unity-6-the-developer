@@ -16,7 +16,7 @@ public sealed class PlayerWeaponHud : MonoBehaviour
     {
         get
         {
-            if (_skillHud == null || _group == null || _slots == null || _slots.Length != PlayerWeaponSlots.Count) return false;
+            if (_skillHud == null || _group == null || _slots == null || _slots.Length != PlayerWeaponSlotMapping.Count) return false;
             for (int i = 0; i < _slots.Length; i++)
                 if (_slots[i] == null || !_slots[i].IsConfigured || _slots[i].SlotNumber != i + 1) return false;
             return true;

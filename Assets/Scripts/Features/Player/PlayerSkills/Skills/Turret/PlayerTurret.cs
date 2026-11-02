@@ -37,7 +37,7 @@ public class PlayerTurret : MonoBehaviour
     private PlayerTurretSkill _owner;
     private bool _recovered;
     private PlayerTurretHealth _health;
-    [SerializeField] private PlayerSkillDepth _depth;
+    [SerializeField] private PlayerDeviceSortingOrder _depth;
     public PlayerTurretHealth Health => _health;
     private void Awake()
     {

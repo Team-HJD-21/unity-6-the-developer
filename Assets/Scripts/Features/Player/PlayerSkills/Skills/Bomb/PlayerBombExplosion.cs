@@ -17,8 +17,8 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     [SerializeField] private Animator _animator;
     [Header("Body Collision")]
     [SerializeField] private Collider2D _bodyCollider;
-    [SerializeField] private PlayerFieldBodyCollision _bodyCollision;
-    [SerializeField] private PlayerSkillDepth _depth;
+    [SerializeField] private PlayerDeviceBodyCollision _bodyCollision;
+    [SerializeField] private PlayerDeviceSortingOrder _depth;
     private static readonly int ExplosionHash = Animator.StringToHash("isboom");
     private readonly PlayerBombAreaDamage _areaDamage = new();
     private float _elapsed;

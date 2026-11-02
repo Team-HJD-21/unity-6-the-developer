@@ -359,7 +359,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f0467a22d7d945348837e539c9c0b37a, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillDepth
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDeviceSortingOrder
   _parts:
   - sorting: {fileID: 933000010}
     ground: {fileID: 910222610090000002}

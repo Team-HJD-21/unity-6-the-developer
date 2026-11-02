@@ -1,0 +1,3353 @@
+{
+  "author": "이영빈",
+  "date": "2026-10-31",
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "request": "Enlarge the small rear-facing and upper-diagonal jetpack plumes to match existing larger movement exhaust.",
+  "reference": [
+    "Move_Down_0",
+    "HoverFire_Down_0",
+    "ToolMove_Right_0",
+    "Move_Right_0"
+  ],
+  "constraints": [
+    "Edit existing twin exhaust only; retain exact backpack lower-corner nozzle roots and torso axis.",
+    "Retain independent left/right anatomy and separated weapon grips.",
+    "Native-alpha 4x4 atlases sliced on unchanged 160x160 engine grid; no procedural body-part painting."
+  ],
+  "sourceAtlases": [
+    {
+      "name": "RearUpViews",
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Source/FlameScale_RearUpViews_Source.png",
+      "sha256": "1710d007e7be5a6707413bde43119710c4702e5e5f0908ded8a75c83b0ed00d7"
+    },
+    {
+      "name": "RearDiagonals",
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Source/FlameScale_RearDiagonals_Source.png",
+      "sha256": "28262ddc12a6775079826816f3b092ab679546121e3f3d438e0cfbbcf2bbdc93"
+    },
+    {
+      "name": "RearOther",
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Source/FlameScale_RearOther_Source.png",
+      "sha256": "d8914c3ca4896802e4f9abe6a07d4c921d7ef0e3bb72919c9a2ee4fc2ddb6238"
+    }
+  ],
+  "frames": [
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_0.png",
+      "beforeSha256": "1cbfdfe06a103c4efcedda484130128a34045905ced04412a667d4482d687231",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "23f4537faaff9d9bb84602f284640a5f2dddf1c423f10899b8388135caa3c28e",
+      "beforeBounds": [
+        47,
+        33,
+        111,
+        129
+      ],
+      "afterBounds": [
+        46,
+        33,
+        112,
+        131
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 203,
+        "components": [
+          {
+            "area": 105,
+            "width": 8,
+            "height": 20,
+            "bounds": [
+              59,
+              103,
+              67,
+              123
+            ]
+          },
+          {
+            "area": 111,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              91,
+              103,
+              100,
+              123
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 550,
+        "components": [
+          {
+            "area": 285,
+            "width": 19,
+            "height": 30,
+            "bounds": [
+              52,
+              101,
+              71,
+              131
+            ]
+          },
+          {
+            "area": 273,
+            "width": 16,
+            "height": 30,
+            "bounds": [
+              90,
+              101,
+              106,
+              131
+            ]
+          }
+        ],
+        "maxWidth": 19,
+        "maxHeight": 30
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "c64cb89a8f51f43b4651847b58e2d7bd93020e834e2c8e12d37d5bd4e58c7a69"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_1.png",
+      "beforeSha256": "82adeab519e402984802df01cf3882c6331d1da3e814a68ea60a2a57853c675a",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "f0b6d39e5d21c745cc1d07b536a53279d8e05da02794e42c93e8fa692e90eca6",
+      "beforeBounds": [
+        47,
+        32,
+        112,
+        128
+      ],
+      "afterBounds": [
+        46,
+        33,
+        112,
+        131
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 209,
+        "components": [
+          {
+            "area": 108,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              59,
+              103,
+              68,
+              123
+            ]
+          },
+          {
+            "area": 115,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              91,
+              103,
+              100,
+              123
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 538,
+        "components": [
+          {
+            "area": 267,
+            "width": 16,
+            "height": 31,
+            "bounds": [
+              90,
+              100,
+              106,
+              131
+            ]
+          },
+          {
+            "area": 274,
+            "width": 16,
+            "height": 30,
+            "bounds": [
+              52,
+              101,
+              68,
+              131
+            ]
+          }
+        ],
+        "maxWidth": 16,
+        "maxHeight": 31
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "2efa7f0f51c2b8ddc68b95b718289a75d375dba8f7a16eb5b6301c1bcd7cd43c"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_2.png",
+      "beforeSha256": "7d1fe6e1eeb412629ab777b1ccb8f4c680fbf7104a0053e49b89596edc0482b2",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "4ca32aa9931f868942ac13abd741986a4579442d63719116dc2ec7ef14e5eb87",
+      "beforeBounds": [
+        48,
+        33,
+        112,
+        129
+      ],
+      "afterBounds": [
+        46,
+        34,
+        113,
+        132
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 206,
+        "components": [
+          {
+            "area": 109,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              59,
+              103,
+              68,
+              124
+            ]
+          },
+          {
+            "area": 105,
+            "width": 8,
+            "height": 21,
+            "bounds": [
+              92,
+              103,
+              100,
+              124
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 538,
+        "components": [
+          {
+            "area": 271,
+            "width": 16,
+            "height": 29,
+            "bounds": [
+              53,
+              102,
+              69,
+              131
+            ]
+          },
+          {
+            "area": 273,
+            "width": 17,
+            "height": 30,
+            "bounds": [
+              90,
+              102,
+              107,
+              132
+            ]
+          }
+        ],
+        "maxWidth": 17,
+        "maxHeight": 30
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "b6b27dcb41badc34c86db509388cd3bedcfb54b1e30ccadc0b6dec2c9141598b"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Move/Move_Up_3.png",
+      "beforeSha256": "94147e30cc228207c616fa72d8d92a2f99e04fa38dbeef8dfca8e217fb4bd3cc",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "fba7655ba7c853344d7e467d23b33ff668e35970005090016d2ffd75b78c6e26",
+      "beforeBounds": [
+        47,
+        35,
+        112,
+        131
+      ],
+      "afterBounds": [
+        47,
+        35,
+        113,
+        133
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 201,
+        "components": [
+          {
+            "area": 109,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              59,
+              105,
+              68,
+              126
+            ]
+          },
+          {
+            "area": 103,
+            "width": 8,
+            "height": 21,
+            "bounds": [
+              92,
+              105,
+              100,
+              126
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 536,
+        "components": [
+          {
+            "area": 270,
+            "width": 16,
+            "height": 29,
+            "bounds": [
+              54,
+              103,
+              70,
+              132
+            ]
+          },
+          {
+            "area": 274,
+            "width": 16,
+            "height": 30,
+            "bounds": [
+              91,
+              103,
+              107,
+              133
+            ]
+          }
+        ],
+        "maxWidth": 16,
+        "maxHeight": 30
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "92223adda9e50cb0b3d4d0d72c2a59103d7bac13cf081ff8ffc91badc5ebd4b6"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_0.png",
+      "beforeSha256": "77ddce451f1352befef4c30d70eb0a19d8bab20bb6e8fdff51de327dbfbb4160",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "74284b912db41f2abff6cc1770ae1742b774eecfdd96416bee7403d1d05cd7c7",
+      "beforeBounds": [
+        47,
+        33,
+        120,
+        130
+      ],
+      "afterBounds": [
+        46,
+        33,
+        122,
+        134
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 199,
+        "components": [
+          {
+            "area": 104,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              59,
+              104,
+              68,
+              125
+            ]
+          },
+          {
+            "area": 107,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              91,
+              104,
+              100,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 644,
+        "components": [
+          {
+            "area": 321,
+            "width": 17,
+            "height": 33,
+            "bounds": [
+              89,
+              101,
+              106,
+              134
+            ]
+          },
+          {
+            "area": 330,
+            "width": 20,
+            "height": 32,
+            "bounds": [
+              51,
+              102,
+              71,
+              134
+            ]
+          }
+        ],
+        "maxWidth": 20,
+        "maxHeight": 33
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "222508a31022c3c2826d996521a5b8f5f206e3a60a19889cf26ec38e42a7b438"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_1.png",
+      "beforeSha256": "b466e62c438cab4422282785f5aa558c0b13227c7fa6467f222ade16b3a9357a",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "c95c2b708f4ca0ba8461a6101e54300446c451fa119f83169804cf6f6c587609",
+      "beforeBounds": [
+        47,
+        32,
+        120,
+        129
+      ],
+      "afterBounds": [
+        46,
+        32,
+        123,
+        133
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 203,
+        "components": [
+          {
+            "area": 110,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              59,
+              103,
+              68,
+              124
+            ]
+          },
+          {
+            "area": 105,
+            "width": 8,
+            "height": 21,
+            "bounds": [
+              92,
+              103,
+              100,
+              124
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 634,
+        "components": [
+          {
+            "area": 317,
+            "width": 18,
+            "height": 31,
+            "bounds": [
+              51,
+              101,
+              69,
+              132
+            ]
+          },
+          {
+            "area": 319,
+            "width": 18,
+            "height": 32,
+            "bounds": [
+              89,
+              101,
+              107,
+              133
+            ]
+          }
+        ],
+        "maxWidth": 18,
+        "maxHeight": 32
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "396e51704a20f1c53aa163998e53e5a2b7995545144a343a992433f9f63563a2"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_2.png",
+      "beforeSha256": "fe46588c0ac38239ea38a32e9fc8711bd43c2de6ca03475926cf452a36e2ab8f",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "0def51788be5e73d07139ad21a541bc4b0d1ac4a577f67c8ffde18e2e0407b96",
+      "beforeBounds": [
+        47,
+        33,
+        121,
+        130
+      ],
+      "afterBounds": [
+        46,
+        33,
+        123,
+        135
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 206,
+        "components": [
+          {
+            "area": 109,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              59,
+              105,
+              68,
+              125
+            ]
+          },
+          {
+            "area": 108,
+            "width": 8,
+            "height": 20,
+            "bounds": [
+              92,
+              105,
+              100,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 642,
+        "components": [
+          {
+            "area": 324,
+            "width": 19,
+            "height": 31,
+            "bounds": [
+              52,
+              102,
+              71,
+              133
+            ]
+          },
+          {
+            "area": 324,
+            "width": 18,
+            "height": 33,
+            "bounds": [
+              90,
+              102,
+              108,
+              135
+            ]
+          }
+        ],
+        "maxWidth": 19,
+        "maxHeight": 33
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "9c12ffa84c692d5194399e557eb1a71d7c5382e08599454f12b4a364a420d6a2"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/ToolMove/ToolMove_Up_3.png",
+      "beforeSha256": "62396dd6a7caae2609640d7724dcec72bcd7038a6934d5aa18708c541a8ff546",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "71fecf251c9aaec1dfe478e0524244d615d54f4f4ff73e383418e8d4d7c1ad76",
+      "beforeBounds": [
+        47,
+        36,
+        119,
+        132
+      ],
+      "afterBounds": [
+        47,
+        35,
+        123,
+        137
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 206,
+        "components": [
+          {
+            "area": 107,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              59,
+              107,
+              68,
+              127
+            ]
+          },
+          {
+            "area": 106,
+            "width": 8,
+            "height": 20,
+            "bounds": [
+              92,
+              107,
+              100,
+              127
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 621,
+        "components": [
+          {
+            "area": 306,
+            "width": 17,
+            "height": 31,
+            "bounds": [
+              53,
+              104,
+              70,
+              135
+            ]
+          },
+          {
+            "area": 318,
+            "width": 18,
+            "height": 33,
+            "bounds": [
+              90,
+              104,
+              108,
+              137
+            ]
+          }
+        ],
+        "maxWidth": 18,
+        "maxHeight": 33
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "7e6e5391312fccf4d1af6c518f79d40ff15f60c56ba788d0be3179f8f4877484"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_0.png",
+      "beforeSha256": "cef66e44fd959990444183a377a3f97159a4b390129d176ff1730904bc4891e0",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "065e595fe9cab24bfbe780f5266db45108beae7427ab1e4204feeb04f9cdca01",
+      "beforeBounds": [
+        45,
+        33,
+        117,
+        132
+      ],
+      "afterBounds": [
+        44,
+        33,
+        117,
+        133
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 214,
+        "components": [
+          {
+            "area": 114,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              58,
+              103,
+              67,
+              124
+            ]
+          },
+          {
+            "area": 114,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              91,
+              103,
+              100,
+              124
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 626,
+        "components": [
+          {
+            "area": 317,
+            "width": 17,
+            "height": 31,
+            "bounds": [
+              51,
+              101,
+              68,
+              132
+            ]
+          },
+          {
+            "area": 318,
+            "width": 18,
+            "height": 32,
+            "bounds": [
+              90,
+              101,
+              108,
+              133
+            ]
+          }
+        ],
+        "maxWidth": 18,
+        "maxHeight": 32
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "9e38db0fa712dc0b4ea7c62846b8edc7ca397faa02cec7ef47a8f26fa6b0b57c"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_1.png",
+      "beforeSha256": "8ca552ff03465a20e4aa3a791ae512133ec4ef5e9b5e00de2c5a1a1352b2342f",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "5946200bf23dafc3c40edcaaa6f55a27cb6b17aca7674a054e09810e59e666fa",
+      "beforeBounds": [
+        47,
+        30,
+        130,
+        129
+      ],
+      "afterBounds": [
+        46,
+        31,
+        131,
+        130
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 200,
+        "components": [
+          {
+            "area": 106,
+            "width": 8,
+            "height": 20,
+            "bounds": [
+              62,
+              100,
+              70,
+              120
+            ]
+          },
+          {
+            "area": 107,
+            "width": 8,
+            "height": 21,
+            "bounds": [
+              93,
+              100,
+              101,
+              121
+            ]
+          }
+        ],
+        "maxWidth": 8,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 607,
+        "components": [
+          {
+            "area": 309,
+            "width": 17,
+            "height": 31,
+            "bounds": [
+              54,
+              98,
+              71,
+              129
+            ]
+          },
+          {
+            "area": 302,
+            "width": 17,
+            "height": 32,
+            "bounds": [
+              91,
+              98,
+              108,
+              130
+            ]
+          }
+        ],
+        "maxWidth": 17,
+        "maxHeight": 32
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "2574a4b0d3b84a982d940bf4ab002f4a17629bd6bf53187a8ae32912a9c98558"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_2.png",
+      "beforeSha256": "e409064e1c17ebddac89301ab2504f933d84909de168502ed5e8d5d70ba7b34d",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "6a48973f0aea31dbb996187ec951c4c375f434c97e4854021f3a53519d943c03",
+      "beforeBounds": [
+        47,
+        33,
+        126,
+        131
+      ],
+      "afterBounds": [
+        43,
+        34,
+        128,
+        133
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 218,
+        "components": [
+          {
+            "area": 102,
+            "width": 8,
+            "height": 21,
+            "bounds": [
+              51,
+              100,
+              59,
+              121
+            ]
+          },
+          {
+            "area": 120,
+            "width": 9,
+            "height": 22,
+            "bounds": [
+              79,
+              103,
+              88,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 22
+      },
+      "afterExhaust": {
+        "coloredPixels": 595,
+        "components": [
+          {
+            "area": 297,
+            "width": 17,
+            "height": 31,
+            "bounds": [
+              43,
+              98,
+              60,
+              129
+            ]
+          },
+          {
+            "area": 302,
+            "width": 20,
+            "height": 31,
+            "bounds": [
+              78,
+              102,
+              98,
+              133
+            ]
+          }
+        ],
+        "maxWidth": 20,
+        "maxHeight": 31
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "61120cf5a7b3239d28020fe5b6ae728caac42cbbcdbf7607b624d5d9c9d6d2f8"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverAttack/HoverAttack_Up_3.png",
+      "beforeSha256": "c8f3a72b349a7e5183c205ab1d9c6a1133613b8946915dc6f22a9bc13dbcf8a1",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "63e9f3c564805b71cd847aa64c4418e67017145558044bed34f8fde7cb4b6c70",
+      "beforeBounds": [
+        45,
+        35,
+        130,
+        133
+      ],
+      "afterBounds": [
+        45,
+        35,
+        130,
+        135
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 214,
+        "components": [
+          {
+            "area": 103,
+            "width": 8,
+            "height": 21,
+            "bounds": [
+              60,
+              106,
+              68,
+              127
+            ]
+          },
+          {
+            "area": 122,
+            "width": 10,
+            "height": 21,
+            "bounds": [
+              91,
+              106,
+              101,
+              127
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 599,
+        "components": [
+          {
+            "area": 305,
+            "width": 17,
+            "height": 31,
+            "bounds": [
+              53,
+              103,
+              70,
+              134
+            ]
+          },
+          {
+            "area": 301,
+            "width": 19,
+            "height": 31,
+            "bounds": [
+              91,
+              104,
+              110,
+              135
+            ]
+          }
+        ],
+        "maxWidth": 19,
+        "maxHeight": 31
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "55f6db74719f9056481a81bc28f7f99097d1f46a7f195f6de0a316815c33578a"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_0.png",
+      "beforeSha256": "46f1ba7efc38fc31b6036af0191931b278e4bfc7112229bd01b05a0cf89bf60a",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "e54d021453f68771978d9d7241dca680ccacee37e0beddd3fdca62c28709ebe3",
+      "beforeBounds": [
+        45,
+        33,
+        129,
+        131
+      ],
+      "afterBounds": [
+        44,
+        34,
+        129,
+        134
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 222,
+        "components": [
+          {
+            "area": 112,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              58,
+              104,
+              67,
+              125
+            ]
+          },
+          {
+            "area": 121,
+            "width": 10,
+            "height": 21,
+            "bounds": [
+              91,
+              104,
+              101,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 645,
+        "components": [
+          {
+            "area": 327,
+            "width": 17,
+            "height": 32,
+            "bounds": [
+              51,
+              102,
+              68,
+              134
+            ]
+          },
+          {
+            "area": 324,
+            "width": 18,
+            "height": 32,
+            "bounds": [
+              89,
+              102,
+              107,
+              134
+            ]
+          }
+        ],
+        "maxWidth": 18,
+        "maxHeight": 32
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "e3f8de93f426538c090a4a844042f2d473dca00c9b424e5b42586a5a04e94d82"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_1.png",
+      "beforeSha256": "c16c52b0a3a061a8aa562179d3f02fba79d10b7b68f1e68f035e3abec3c6fea8",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "710939e7837a07d2164dcf9e6ac738df931eb07cc79b836b52e337e707126afa",
+      "beforeBounds": [
+        48,
+        31,
+        133,
+        128
+      ],
+      "afterBounds": [
+        46,
+        32,
+        134,
+        132
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 215,
+        "components": [
+          {
+            "area": 107,
+            "width": 9,
+            "height": 22,
+            "bounds": [
+              56,
+              101,
+              65,
+              123
+            ]
+          },
+          {
+            "area": 113,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              88,
+              102,
+              97,
+              123
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 22
+      },
+      "afterExhaust": {
+        "coloredPixels": 614,
+        "components": [
+          {
+            "area": 307,
+            "width": 17,
+            "height": 32,
+            "bounds": [
+              51,
+              99,
+              68,
+              131
+            ]
+          },
+          {
+            "area": 310,
+            "width": 18,
+            "height": 32,
+            "bounds": [
+              87,
+              100,
+              105,
+              132
+            ]
+          }
+        ],
+        "maxWidth": 18,
+        "maxHeight": 32
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "5b9856b6e03ebf203b06b9e89d449e60fbb7a1b31d95fcd0e525216aadaf35f0"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_2.png",
+      "beforeSha256": "f83f879c99ac34d7323870f67808b9bbd587d3a696317866c6602f2930a7796c",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "e98288fe5abf169350f9bd866c6e9e195d6f4f3c8e21f0f068a49d048cd9f013",
+      "beforeBounds": [
+        44,
+        33,
+        132,
+        131
+      ],
+      "afterBounds": [
+        43,
+        34,
+        132,
+        134
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 211,
+        "components": [
+          {
+            "area": 105,
+            "width": 10,
+            "height": 21,
+            "bounds": [
+              55,
+              104,
+              65,
+              125
+            ]
+          },
+          {
+            "area": 111,
+            "width": 10,
+            "height": 22,
+            "bounds": [
+              86,
+              104,
+              96,
+              126
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 22
+      },
+      "afterExhaust": {
+        "coloredPixels": 588,
+        "components": [
+          {
+            "area": 297,
+            "width": 16,
+            "height": 31,
+            "bounds": [
+              50,
+              102,
+              66,
+              133
+            ]
+          },
+          {
+            "area": 294,
+            "width": 16,
+            "height": 32,
+            "bounds": [
+              86,
+              102,
+              102,
+              134
+            ]
+          }
+        ],
+        "maxWidth": 16,
+        "maxHeight": 32
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "27400568878cb1a8ec9082d2813438f36e8c4b77b267e705c8ccdae413a2fcae"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverRepair/HoverRepair_Up_3.png",
+      "beforeSha256": "36134a34a5fda589ca8d7b7864e317ebb922231de9cb0cd5f71ec0a9f53fc307",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearUpViews",
+      "sha256": "b1f752ffe1e099e8578eaa5d1edb2928e96e8bcaaf9007f01e181db9e9f31e5c",
+      "beforeBounds": [
+        45,
+        35,
+        129,
+        132
+      ],
+      "afterBounds": [
+        45,
+        36,
+        130,
+        135
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 209,
+        "components": [
+          {
+            "area": 108,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              59,
+              105,
+              68,
+              125
+            ]
+          },
+          {
+            "area": 113,
+            "width": 9,
+            "height": 21,
+            "bounds": [
+              92,
+              105,
+              101,
+              126
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 593,
+        "components": [
+          {
+            "area": 300,
+            "width": 17,
+            "height": 31,
+            "bounds": [
+              53,
+              103,
+              70,
+              134
+            ]
+          },
+          {
+            "area": 297,
+            "width": 20,
+            "height": 31,
+            "bounds": [
+              90,
+              104,
+              110,
+              135
+            ]
+          }
+        ],
+        "maxWidth": 20,
+        "maxHeight": 31
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "e6144bb8cfb6054d9bcd6ef05e8899d12191a36cbee38310370e3a2f71407f71"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpLeft.png",
+      "beforeSha256": "b9249972e3bec40d3114e0782347008cf285bcf9d2ad681084b5e3bc68f00b6d",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "6ad183ea45e25a1323a9b44fdfebf6dfbd9bbe75a847371920d1054308bfd5e2",
+      "beforeBounds": [
+        32,
+        30,
+        117,
+        127
+      ],
+      "afterBounds": [
+        32,
+        30,
+        122,
+        127
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 163,
+        "components": [
+          {
+            "area": 77,
+            "width": 10,
+            "height": 17,
+            "bounds": [
+              107,
+              89,
+              117,
+              106
+            ]
+          },
+          {
+            "area": 94,
+            "width": 12,
+            "height": 18,
+            "bounds": [
+              94,
+              97,
+              106,
+              115
+            ]
+          }
+        ],
+        "maxWidth": 12,
+        "maxHeight": 18
+      },
+      "afterExhaust": {
+        "coloredPixels": 423,
+        "components": [
+          {
+            "area": 427,
+            "width": 30,
+            "height": 37,
+            "bounds": [
+              92,
+              88,
+              122,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 30,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "525ad7b0fa6da9251a1e8df3e4a330af54936254a6719ee5ed1ad43b4996ea70"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/RangedEightWay/Move_UpRight.png",
+      "beforeSha256": "a7e236b9d917621e73527c86263cc852dfe19a1df3aa18c76a0c26db65bcfa6d",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "9e3adb2a08ffb00049e5b1d13a624e359dcb2efd9b541711df4e32ffb158ae62",
+      "beforeBounds": [
+        44,
+        27,
+        125,
+        121
+      ],
+      "afterBounds": [
+        40,
+        27,
+        125,
+        123
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 181,
+        "components": [
+          {
+            "area": 77,
+            "width": 11,
+            "height": 17,
+            "bounds": [
+              44,
+              86,
+              55,
+              103
+            ]
+          },
+          {
+            "area": 112,
+            "width": 11,
+            "height": 20,
+            "bounds": [
+              55,
+              93,
+              66,
+              113
+            ]
+          }
+        ],
+        "maxWidth": 11,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 437,
+        "components": [
+          {
+            "area": 440,
+            "width": 31,
+            "height": 37,
+            "bounds": [
+              40,
+              86,
+              71,
+              123
+            ]
+          },
+          {
+            "area": 4,
+            "width": 4,
+            "height": 4,
+            "bounds": [
+              72,
+              113,
+              76,
+              117
+            ]
+          }
+        ],
+        "maxWidth": 31,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "6a2e4a027b12b7be9ef0443c0a9e9591f36ad96c44b513353af3ac5537480260"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpLeft.png",
+      "beforeSha256": "dbf67fad1034dcb822ac6984f10970e50826d7dfc77b7dc4f8bc056baeeda703",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "48d354253db9159e5e281495473369dc8146c19aa63296f64ee66f231f4474a4",
+      "beforeBounds": [
+        36,
+        37,
+        122,
+        126
+      ],
+      "afterBounds": [
+        37,
+        37,
+        128,
+        129
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 162,
+        "components": [
+          {
+            "area": 76,
+            "width": 10,
+            "height": 20,
+            "bounds": [
+              112,
+              94,
+              122,
+              114
+            ]
+          },
+          {
+            "area": 94,
+            "width": 10,
+            "height": 20,
+            "bounds": [
+              98,
+              103,
+              108,
+              123
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 417,
+        "components": [
+          {
+            "area": 430,
+            "width": 33,
+            "height": 37,
+            "bounds": [
+              95,
+              92,
+              128,
+              129
+            ]
+          }
+        ],
+        "maxWidth": 33,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "2c16d78076a4d019551ca0f4f84760466cb491f8c35a23bc46d8433ee4b173c7"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackContact_UpRight.png",
+      "beforeSha256": "59567c636cba2b52d79eaee03c4eca7b841b3b37345293cb9e67736f33310a25",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "f1738a2a164c88ea2367cd9df09c0ea1bfde481d119545c5ab3a3aaf2fc77ea4",
+      "beforeBounds": [
+        44,
+        33,
+        114,
+        122
+      ],
+      "afterBounds": [
+        41,
+        33,
+        114,
+        125
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 176,
+        "components": [
+          {
+            "area": 76,
+            "width": 10,
+            "height": 18,
+            "bounds": [
+              44,
+              89,
+              54,
+              107
+            ]
+          },
+          {
+            "area": 107,
+            "width": 10,
+            "height": 19,
+            "bounds": [
+              59,
+              97,
+              69,
+              116
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 19
+      },
+      "afterExhaust": {
+        "coloredPixels": 444,
+        "components": [
+          {
+            "area": 454,
+            "width": 32,
+            "height": 37,
+            "bounds": [
+              41,
+              88,
+              73,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 32,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "fc9865ab538d42b7f4907a73a2b7b996f772acd77989dca8de63e2644851be41"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpLeft.png",
+      "beforeSha256": "5907fb6d63238d034302c6b1ae62b330f536105e46a910971cc58661fee2d6e8",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "b2ba99340892a761f383986579cc120ba4624c5117015039afac259b16d2f772",
+      "beforeBounds": [
+        45,
+        30,
+        121,
+        127
+      ],
+      "afterBounds": [
+        45,
+        30,
+        125,
+        127
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 174,
+        "components": [
+          {
+            "area": 87,
+            "width": 11,
+            "height": 20,
+            "bounds": [
+              110,
+              93,
+              121,
+              113
+            ]
+          },
+          {
+            "area": 93,
+            "width": 10,
+            "height": 21,
+            "bounds": [
+              95,
+              100,
+              105,
+              121
+            ]
+          }
+        ],
+        "maxWidth": 11,
+        "maxHeight": 21
+      },
+      "afterExhaust": {
+        "coloredPixels": 448,
+        "components": [
+          {
+            "area": 463,
+            "width": 33,
+            "height": 37,
+            "bounds": [
+              92,
+              90,
+              125,
+              127
+            ]
+          }
+        ],
+        "maxWidth": 33,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "8ffa576cd733a6dffe9b837e888a2122ef225abeeef9ab243134e4424598f664"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackRecover_UpRight.png",
+      "beforeSha256": "5f886842e3d1d9df4ab1c25e810af0377d7729b2c700640b6ffb5b69455eabd2",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "d06e61c9b07f71e73edc42e213299a70d96bee548ab156a69c4d49277ebf6498",
+      "beforeBounds": [
+        45,
+        31,
+        121,
+        122
+      ],
+      "afterBounds": [
+        41,
+        32,
+        121,
+        125
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 164,
+        "components": [
+          {
+            "area": 81,
+            "width": 11,
+            "height": 19,
+            "bounds": [
+              46,
+              90,
+              57,
+              109
+            ]
+          },
+          {
+            "area": 91,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              59,
+              98,
+              68,
+              118
+            ]
+          }
+        ],
+        "maxWidth": 11,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 466,
+        "components": [
+          {
+            "area": 471,
+            "width": 31,
+            "height": 38,
+            "bounds": [
+              41,
+              87,
+              72,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 31,
+        "maxHeight": 38
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "beb76551a14ab6cd865572b735005aa70ec37670359e288f44a318e1c00b8ad9"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpLeft.png",
+      "beforeSha256": "d8c173d78dd27d3ca02305fd1f94f940f164d7283c3f063751c3cc3491635147",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "7363fa876ff8a99d01224d7d21956e815b77705b3bb2600f6b65f0209b3b1084",
+      "beforeBounds": [
+        52,
+        36,
+        131,
+        127
+      ],
+      "afterBounds": [
+        53,
+        36,
+        130,
+        132
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 162,
+        "components": [
+          {
+            "area": 81,
+            "width": 10,
+            "height": 19,
+            "bounds": [
+              105,
+              98,
+              115,
+              117
+            ]
+          },
+          {
+            "area": 88,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              91,
+              105,
+              100,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 471,
+        "components": [
+          {
+            "area": 479,
+            "width": 35,
+            "height": 37,
+            "bounds": [
+              88,
+              95,
+              123,
+              132
+            ]
+          }
+        ],
+        "maxWidth": 35,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "def0b9f9a10ae5be64cf3b5682b0ad59c572fee6e29f3e1df9ae90cf25316813"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverAttackWindup_UpRight.png",
+      "beforeSha256": "871286a706aec6c830a30041e8e4084d0edae6ecb482d170bbc71067734a9b7e",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "de530924b721f9d562aee1cef14709c22f4f05dcf50e66e2285ca2ca08aaa2cd",
+      "beforeBounds": [
+        44,
+        31,
+        120,
+        122
+      ],
+      "afterBounds": [
+        41,
+        31,
+        120,
+        124
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 182,
+        "components": [
+          {
+            "area": 93,
+            "width": 9,
+            "height": 19,
+            "bounds": [
+              46,
+              88,
+              55,
+              107
+            ]
+          },
+          {
+            "area": 99,
+            "width": 9,
+            "height": 20,
+            "bounds": [
+              61,
+              96,
+              70,
+              116
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 495,
+        "components": [
+          {
+            "area": 509,
+            "width": 33,
+            "height": 37,
+            "bounds": [
+              41,
+              87,
+              74,
+              124
+            ]
+          }
+        ],
+        "maxWidth": 33,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "788dbde6e628c1a1f76b717f9474ac780ef2269c373b11c899fdc6233b34ae47"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpLeft.png",
+      "beforeSha256": "e5e360869f254957bb71c8e68d400789231b911725e5235c26316284e6259d53",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "783a5aebde6fbbf395084c9377ed52f94a5ab32ea9b7fedfd503dca0117efaa4",
+      "beforeBounds": [
+        41,
+        38,
+        121,
+        127
+      ],
+      "afterBounds": [
+        41,
+        39,
+        127,
+        131
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 154,
+        "components": [
+          {
+            "area": 77,
+            "width": 10,
+            "height": 19,
+            "bounds": [
+              111,
+              97,
+              121,
+              116
+            ]
+          },
+          {
+            "area": 84,
+            "width": 10,
+            "height": 19,
+            "bounds": [
+              98,
+              104,
+              108,
+              123
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 19
+      },
+      "afterExhaust": {
+        "coloredPixels": 419,
+        "components": [
+          {
+            "area": 423,
+            "width": 32,
+            "height": 36,
+            "bounds": [
+              95,
+              95,
+              127,
+              131
+            ]
+          }
+        ],
+        "maxWidth": 32,
+        "maxHeight": 36
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "a734f6b516c104b78cfcb08d788a92428bf1c9502b030081701f501ad10f7a60"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairContact_UpRight.png",
+      "beforeSha256": "9477105ea4fdaf2ca29a1ccc4e12bc9dc080a81a017014f782dc57148e77827f",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "ba641e1318444bb712ff0131768edfc9ec1dc0cf7fe58578d6e44832e7b6edda",
+      "beforeBounds": [
+        49,
+        31,
+        114,
+        123
+      ],
+      "afterBounds": [
+        44,
+        32,
+        114,
+        125
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 154,
+        "components": [
+          {
+            "area": 72,
+            "width": 9,
+            "height": 19,
+            "bounds": [
+              50,
+              90,
+              59,
+              109
+            ]
+          },
+          {
+            "area": 89,
+            "width": 10,
+            "height": 18,
+            "bounds": [
+              60,
+              97,
+              70,
+              115
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 19
+      },
+      "afterExhaust": {
+        "coloredPixels": 426,
+        "components": [
+          {
+            "area": 434,
+            "width": 31,
+            "height": 36,
+            "bounds": [
+              44,
+              89,
+              75,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 31,
+        "maxHeight": 36
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "4751d54865595dcabcaa54028cfec5793aced956ac8d17b03a515ea752459765"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpLeft.png",
+      "beforeSha256": "41801ea94c2e777a73b49946bbc11532fd604f62c64ab1d6c6e71b5e2eeeb57f",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "de1c564054458fc071ac08d28f731d324a15ddfc93c5cef05512483a9ab718ef",
+      "beforeBounds": [
+        53,
+        34,
+        122,
+        127
+      ],
+      "afterBounds": [
+        53,
+        34,
+        127,
+        129
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 164,
+        "components": [
+          {
+            "area": 88,
+            "width": 11,
+            "height": 20,
+            "bounds": [
+              111,
+              95,
+              122,
+              115
+            ]
+          },
+          {
+            "area": 83,
+            "width": 10,
+            "height": 20,
+            "bounds": [
+              99,
+              102,
+              109,
+              122
+            ]
+          }
+        ],
+        "maxWidth": 11,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 427,
+        "components": [
+          {
+            "area": 437,
+            "width": 33,
+            "height": 36,
+            "bounds": [
+              94,
+              93,
+              127,
+              129
+            ]
+          }
+        ],
+        "maxWidth": 33,
+        "maxHeight": 36
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "49982ba94e2b0237f6682c3efa99d1d17d336d31b11d38d55751e3b915496777"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairRecover_UpRight.png",
+      "beforeSha256": "26b4ebbfb428d448233f70f978f5d6f8ef6ea4a892577f2b8fc0d43490b5d790",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "924a788b6af23aee28144f702b50393d413bb5058bc8673353fd4a5905d4a5a9",
+      "beforeBounds": [
+        49,
+        31,
+        110,
+        123
+      ],
+      "afterBounds": [
+        44,
+        32,
+        110,
+        126
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 166,
+        "components": [
+          {
+            "area": 78,
+            "width": 11,
+            "height": 19,
+            "bounds": [
+              51,
+              90,
+              62,
+              109
+            ]
+          },
+          {
+            "area": 95,
+            "width": 10,
+            "height": 20,
+            "bounds": [
+              62,
+              98,
+              72,
+              118
+            ]
+          }
+        ],
+        "maxWidth": 11,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 456,
+        "components": [
+          {
+            "area": 464,
+            "width": 32,
+            "height": 36,
+            "bounds": [
+              44,
+              90,
+              76,
+              126
+            ]
+          }
+        ],
+        "maxWidth": 32,
+        "maxHeight": 36
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "565305ce91c49c218b26b842e5e6374ca47256ebe884fbc6ad07da747f6a1860"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpLeft.png",
+      "beforeSha256": "7c83aaba6cf8a73d4d971f8ac087f3f64d174d2113ff1d99c4425c765b7bde8a",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "7e38149e6e885c9565fee933fe37d9d8c60c124ed4e3857bc22a6bf1144db560",
+      "beforeBounds": [
+        46,
+        31,
+        118,
+        127
+      ],
+      "afterBounds": [
+        46,
+        32,
+        124,
+        130
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 154,
+        "components": [
+          {
+            "area": 86,
+            "width": 12,
+            "height": 20,
+            "bounds": [
+              106,
+              95,
+              118,
+              115
+            ]
+          },
+          {
+            "area": 79,
+            "width": 9,
+            "height": 19,
+            "bounds": [
+              95,
+              102,
+              104,
+              121
+            ]
+          }
+        ],
+        "maxWidth": 12,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 463,
+        "components": [
+          {
+            "area": 467,
+            "width": 33,
+            "height": 38,
+            "bounds": [
+              91,
+              92,
+              124,
+              130
+            ]
+          }
+        ],
+        "maxWidth": 33,
+        "maxHeight": 38
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "7f4b25ba1fe5fc73f1f432666c607c85b9d8abc798364e6ac928db5c76bf3c32"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/HoverRepairWindup_UpRight.png",
+      "beforeSha256": "a35ca89ef790f3328439880130fdf67e94f2524f9aa2ae2b2a5484a396059668",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "60384945eabca70a8540cc5ac135b43e8a2c3be6d591f81e21e903fa47857e6c",
+      "beforeBounds": [
+        48,
+        30,
+        112,
+        122
+      ],
+      "afterBounds": [
+        44,
+        31,
+        111,
+        125
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 163,
+        "components": [
+          {
+            "area": 77,
+            "width": 10,
+            "height": 18,
+            "bounds": [
+              50,
+              91,
+              60,
+              109
+            ]
+          },
+          {
+            "area": 95,
+            "width": 9,
+            "height": 19,
+            "bounds": [
+              61,
+              97,
+              70,
+              116
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 19
+      },
+      "afterExhaust": {
+        "coloredPixels": 443,
+        "components": [
+          {
+            "area": 450,
+            "width": 30,
+            "height": 36,
+            "bounds": [
+              44,
+              89,
+              74,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 30,
+        "maxHeight": 36
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "9b34ee3254185ccf155afb8c01ba551cfa98ed6cb8c62ed679dbc9e9b4926b54"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpLeft.png",
+      "beforeSha256": "21cdd15e8ea4ffb79830df3bbedfb4d9442cc5b4da6e7b60ce1da0dfa3faf974",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "65771ea8233523754dbc07e37e351a7b4d4c55777144fb1b835a6f47a91b3623",
+      "beforeBounds": [
+        51,
+        34,
+        114,
+        127
+      ],
+      "afterBounds": [
+        53,
+        35,
+        120,
+        130
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 156,
+        "components": [
+          {
+            "area": 83,
+            "width": 10,
+            "height": 19,
+            "bounds": [
+              104,
+              98,
+              114,
+              117
+            ]
+          },
+          {
+            "area": 83,
+            "width": 10,
+            "height": 18,
+            "bounds": [
+              91,
+              104,
+              101,
+              122
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 19
+      },
+      "afterExhaust": {
+        "coloredPixels": 412,
+        "components": [
+          {
+            "area": 423,
+            "width": 32,
+            "height": 35,
+            "bounds": [
+              88,
+              95,
+              120,
+              130
+            ]
+          }
+        ],
+        "maxWidth": 32,
+        "maxHeight": 35
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "bfdc7f681fcf118c713aa28c79d952f02953d99b354f6c6278109f1b8edbdbc6"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerEightWay/ToolMove_UpRight.png",
+      "beforeSha256": "077a8ac88f3383c22b43ab61fc62b56ff62ed488ffb049add301c7e5da16a92c",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearDiagonals",
+      "sha256": "07bee1ba859acb48363f5930260e586319888a7d1a36440f8e20cbc81d0f8004",
+      "beforeBounds": [
+        49,
+        30,
+        113,
+        122
+      ],
+      "afterBounds": [
+        45,
+        31,
+        114,
+        125
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 176,
+        "components": [
+          {
+            "area": 88,
+            "width": 11,
+            "height": 20,
+            "bounds": [
+              49,
+              89,
+              60,
+              109
+            ]
+          },
+          {
+            "area": 97,
+            "width": 10,
+            "height": 19,
+            "bounds": [
+              61,
+              97,
+              71,
+              116
+            ]
+          }
+        ],
+        "maxWidth": 11,
+        "maxHeight": 20
+      },
+      "afterExhaust": {
+        "coloredPixels": 453,
+        "components": [
+          {
+            "area": 461,
+            "width": 30,
+            "height": 36,
+            "bounds": [
+              45,
+              89,
+              75,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 30,
+        "maxHeight": 36
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "614b10d110e62156a4f7dc8cc5bf4a05901888e67331bb7fe57e96dffdc45947"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_0.png",
+      "beforeSha256": "aa7ee0aa126a09cae9fdaa7ac1848992709dd7074a2d9ab9eb6eae357b577882",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearOther",
+      "sha256": "a1a9c6fd6990c67571db758a6eef9aab4c09702680f68948c45f04b0dc8f1417",
+      "beforeBounds": [
+        54,
+        36,
+        119,
+        125
+      ],
+      "afterBounds": [
+        54,
+        38,
+        120,
+        135
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 215,
+        "components": [
+          {
+            "area": 118,
+            "width": 8,
+            "height": 24,
+            "bounds": [
+              90,
+              101,
+              98,
+              125
+            ]
+          },
+          {
+            "area": 109,
+            "width": 8,
+            "height": 23,
+            "bounds": [
+              63,
+              102,
+              71,
+              125
+            ]
+          }
+        ],
+        "maxWidth": 8,
+        "maxHeight": 24
+      },
+      "afterExhaust": {
+        "coloredPixels": 597,
+        "components": [
+          {
+            "area": 307,
+            "width": 17,
+            "height": 32,
+            "bounds": [
+              57,
+              103,
+              74,
+              135
+            ]
+          },
+          {
+            "area": 291,
+            "width": 17,
+            "height": 32,
+            "bounds": [
+              88,
+              103,
+              105,
+              135
+            ]
+          }
+        ],
+        "maxWidth": 17,
+        "maxHeight": 32
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "391ef8e0e36c5576dc3b8e534ed73e9e2e5aa26d3d2ed97eb571d12fdca70d2d"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_1.png",
+      "beforeSha256": "e86e1ac01298aeee9743859b192b7044110feebb4e0622090c386607380df84e",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearOther",
+      "sha256": "de8c5aead3dcf1e8bd899a8ad7b135f3b832eb27f94142865173f467be27b33b",
+      "beforeBounds": [
+        53,
+        34,
+        118,
+        120
+      ],
+      "afterBounds": [
+        54,
+        37,
+        121,
+        134
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 159,
+        "components": [
+          {
+            "area": 84,
+            "width": 7,
+            "height": 18,
+            "bounds": [
+              62,
+              100,
+              69,
+              118
+            ]
+          },
+          {
+            "area": 89,
+            "width": 8,
+            "height": 18,
+            "bounds": [
+              89,
+              100,
+              97,
+              118
+            ]
+          }
+        ],
+        "maxWidth": 8,
+        "maxHeight": 18
+      },
+      "afterExhaust": {
+        "coloredPixels": 563,
+        "components": [
+          {
+            "area": 281,
+            "width": 17,
+            "height": 33,
+            "bounds": [
+              88,
+              101,
+              105,
+              134
+            ]
+          },
+          {
+            "area": 288,
+            "width": 20,
+            "height": 31,
+            "bounds": [
+              57,
+              102,
+              77,
+              133
+            ]
+          }
+        ],
+        "maxWidth": 20,
+        "maxHeight": 33
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "487b74f5a38382b57c350fb135a9c52e4fef43bca6124af45de49d59837e5d01"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_2.png",
+      "beforeSha256": "46954552971069da28b9e250736d78640a6ecec01de7e772d7147edf19c7037f",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearOther",
+      "sha256": "c414ebf91da8d3a198d5ed0d120e3d9256c42f5dc22857333f3454b60d14065c",
+      "beforeBounds": [
+        54,
+        36,
+        121,
+        129
+      ],
+      "afterBounds": [
+        55,
+        38,
+        122,
+        137
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 278,
+        "components": [
+          {
+            "area": 143,
+            "width": 10,
+            "height": 28,
+            "bounds": [
+              62,
+              101,
+              72,
+              129
+            ]
+          },
+          {
+            "area": 143,
+            "width": 9,
+            "height": 28,
+            "bounds": [
+              90,
+              101,
+              99,
+              129
+            ]
+          }
+        ],
+        "maxWidth": 10,
+        "maxHeight": 28
+      },
+      "afterExhaust": {
+        "coloredPixels": 607,
+        "components": [
+          {
+            "area": 307,
+            "width": 17,
+            "height": 33,
+            "bounds": [
+              58,
+              104,
+              75,
+              137
+            ]
+          },
+          {
+            "area": 300,
+            "width": 17,
+            "height": 33,
+            "bounds": [
+              89,
+              104,
+              106,
+              137
+            ]
+          }
+        ],
+        "maxWidth": 17,
+        "maxHeight": 33
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "b1997ed5a8fac4aeb02913ab2344e4ae996050297005237736d191cc1114b0a6"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/HoverFire/HoverFire_Up_3.png",
+      "beforeSha256": "6d69bf31aef76d0033a717e8e99e63c68419bb8c7e9b415e8ab196075c6dde5a",
+      "registrationBefore": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "group": "RearOther",
+      "sha256": "62eee3dca909dc933fefbe2b0964451c5ff8778c82510bba157a72e41e2eee3d",
+      "beforeBounds": [
+        53,
+        38,
+        119,
+        126
+      ],
+      "afterBounds": [
+        53,
+        40,
+        120,
+        138
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 217,
+        "components": [
+          {
+            "area": 114,
+            "width": 9,
+            "height": 23,
+            "bounds": [
+              61,
+              103,
+              70,
+              126
+            ]
+          },
+          {
+            "area": 114,
+            "width": 8,
+            "height": 23,
+            "bounds": [
+              90,
+              103,
+              98,
+              126
+            ]
+          }
+        ],
+        "maxWidth": 9,
+        "maxHeight": 23
+      },
+      "afterExhaust": {
+        "coloredPixels": 594,
+        "components": [
+          {
+            "area": 299,
+            "width": 18,
+            "height": 33,
+            "bounds": [
+              56,
+              105,
+              74,
+              138
+            ]
+          },
+          {
+            "area": 292,
+            "width": 17,
+            "height": 33,
+            "bounds": [
+              87,
+              105,
+              104,
+              138
+            ]
+          }
+        ],
+        "maxWidth": 18,
+        "maxHeight": 33
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "ee785fc8fa22ece6cc8dc4e7e3d1b518c7a9b5d2e3afc4001c58fb5d66df7af4"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanLeft/MoveLeanLeft_Up_1.png",
+      "beforeSha256": "d312b8401cd62ee7af597530e5685f3e56f024ebc9e436968f16f05bb143b2ef",
+      "registrationBefore": {
+        "scale": 1.13,
+        "offset": [
+          -14,
+          -7
+        ]
+      },
+      "group": "RearOther",
+      "sha256": "fd472c010222f7f3581e9db9a9c0c2c24524fed252f129f4cca15a97f66b5e7d",
+      "beforeBounds": [
+        50,
+        33,
+        118,
+        126
+      ],
+      "afterBounds": [
+        50,
+        37,
+        120,
+        139
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 219,
+        "components": [
+          {
+            "area": 111,
+            "width": 14,
+            "height": 22,
+            "bounds": [
+              97,
+              93,
+              111,
+              115
+            ]
+          },
+          {
+            "area": 116,
+            "width": 14,
+            "height": 21,
+            "bounds": [
+              67,
+              100,
+              81,
+              121
+            ]
+          }
+        ],
+        "maxWidth": 14,
+        "maxHeight": 22
+      },
+      "afterExhaust": {
+        "coloredPixels": 746,
+        "components": [
+          {
+            "area": 385,
+            "width": 22,
+            "height": 36,
+            "bounds": [
+              94,
+              96,
+              116,
+              132
+            ]
+          },
+          {
+            "area": 369,
+            "width": 22,
+            "height": 36,
+            "bounds": [
+              65,
+              103,
+              87,
+              139
+            ]
+          }
+        ],
+        "maxWidth": 22,
+        "maxHeight": 36
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "112158493465f4c21666c875913c832381ef6cd8431fe4d1978be2f66a156f14"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/MoveLeanRight/MoveLeanRight_Up_1.png",
+      "beforeSha256": "66a34e3565d6727d3618916a92ffb10099ee7bea1494390bca5ce3ede00af8ec",
+      "registrationBefore": {
+        "scale": 1.13,
+        "offset": [
+          -6,
+          -7
+        ]
+      },
+      "group": "RearOther",
+      "sha256": "7f334d448e762156da463417e0e64192168b40468dfcecb2aa255acee46e9da7",
+      "beforeBounds": [
+        54,
+        33,
+        124,
+        126
+      ],
+      "afterBounds": [
+        50,
+        37,
+        128,
+        140
+      ],
+      "beforeExhaust": {
+        "coloredPixels": 225,
+        "components": [
+          {
+            "area": 119,
+            "width": 13,
+            "height": 23,
+            "bounds": [
+              55,
+              94,
+              68,
+              117
+            ]
+          },
+          {
+            "area": 111,
+            "width": 11,
+            "height": 21,
+            "bounds": [
+              85,
+              100,
+              96,
+              121
+            ]
+          }
+        ],
+        "maxWidth": 13,
+        "maxHeight": 23
+      },
+      "afterExhaust": {
+        "coloredPixels": 760,
+        "components": [
+          {
+            "area": 378,
+            "width": 20,
+            "height": 37,
+            "bounds": [
+              50,
+              96,
+              70,
+              133
+            ]
+          },
+          {
+            "area": 378,
+            "width": 21,
+            "height": 37,
+            "bounds": [
+              81,
+              103,
+              102,
+              140
+            ]
+          }
+        ],
+        "maxWidth": 21,
+        "maxHeight": 37
+      },
+      "registration": {
+        "scale": 1.0,
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "metaSha256": "d99f87a0e600bb62e2ca4f30eea5fed6fc770b2f92dcb0f96dd42da344965f06"
+    }
+  ],
+  "validation": {
+    "frameCount": 38,
+    "size": [
+      160,
+      160
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "ppu": 32,
+    "metaAndGuidPreserved": true,
+    "visualReview": "All 38 before/after pairs, nozzle roots, body axes and body/weapon proportions inspected.",
+    "playMode": "NOT_RUN",
+    "reviewedFrames": 38,
+    "all140CurrentHashes": "PASS",
+    "canvasAlphaPpuFilter": "PASS",
+    "preservedRuntimeMetadata": "PASS",
+    "sourceAtlases": 3,
+    "connections": "38 independent left clips; 32 appearance entries; 10 muzzle coordinates: PASS",
+    "unityMetaValidator": "0 errors",
+    "diffCheck": "PASS with Windows CRLF handling"
+  }
+}

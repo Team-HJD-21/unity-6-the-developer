@@ -14966,7 +14966,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 319b2b202a7f49db9ca4f4469ca4d205, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatHudLayout
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatHudSlideController
   _weapons: {fileID: 5000002}
   _dash: {fileID: 6000002}
   _weaponInput: {fileID: 5000005}

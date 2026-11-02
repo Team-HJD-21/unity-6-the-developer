@@ -28,6 +28,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     private bool _previousFlip;
     private float _impactPauseRemaining;
     private float _speedBeforePause;
+    private bool _usesToolPoses;
 
     public bool IsPlayingToolAction => _ownsDisplay &&
         (_motion == PlayerMotion.Attack || _motion == PlayerMotion.Repair);
@@ -71,8 +72,24 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         _animatorWasEnabled = _animator.enabled;
         _animator.enabled = true;
         _ownsDisplay = true;
-        StartMotion(PlayerMotion.Idle);
+        _usesToolPoses = HasSpanner;
+        if (_attack != null) _attack.WeaponChanged += OnWeaponChanged;
+        StartMotion(HasSpanner ? PlayerMotion.ToolIdle : PlayerMotion.Idle);
         UpdateAnimatorState();
+    }
+
+    private void OnWeaponChanged(WeaponType weapon)
+    {
+        bool tool = weapon == WeaponType.Spanner;
+        if (!_ownsDisplay || !isActiveAndEnabled || tool == _usesToolPoses) return;
+        _usesToolPoses = tool;
+        EndImpactPause();
+        StartMotion(tool
+            ? (HasMovementInput ? PlayerMotion.ToolMove : PlayerMotion.ToolIdle)
+            : (HasMovementInput ? PlayerMotion.Move : PlayerMotion.Idle));
+        // 무기 선택은 이 컴포넌트의 Update 뒤에도 발생합니다. 같은 프레임에 새 무기의 몸체를 평가합니다.
+        UpdateAnimatorState();
+        _animator.Update(0f);
     }
 
     public bool PlayToolAction(bool repairing)
@@ -204,6 +221,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_attack != null) _attack.WeaponChanged -= OnWeaponChanged;
         if (!_ownsDisplay) return;
         EndImpactPause();
         _ownsDisplay = false;

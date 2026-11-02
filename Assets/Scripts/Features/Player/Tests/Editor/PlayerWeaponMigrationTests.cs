@@ -676,6 +676,114 @@ public sealed class PlayerWeaponMigrationTests
         yield return new ExitPlayMode();
     }
     [Test]
+    public void SpannerSlashPrefab_UsesAuthoredSpritesWithoutPhysicsColliders()
+    {
+        var spanner = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerSpanner.prefab");
+        var slash = (PlayerSpannerSlash)new SerializedObject(spanner.GetComponent<PlayerSpannerWeapon>())
+            .FindProperty("_slashPrefab").objectReferenceValue;
+        Assert.That(slash, Is.Not.Null);
+        Assert.That(PrefabUtility.IsPartOfPrefabAsset(slash), Is.True);
+        Assert.That(slash.GetComponent<SpriteRenderer>().sprite, Is.Not.Null);
+        var animator = slash.GetComponent<Animator>();
+        Assert.That(animator.runtimeAnimatorController, Is.Not.Null);
+        Assert.That(animator.runtimeAnimatorController.animationClips.All(clip => !clip.isLooping), Is.True);
+        Assert.That(slash.GetComponent<PlayerSpriteEffect>(), Is.Not.Null);
+        Assert.That(slash.GetComponentsInChildren<Collider2D>(true), Is.Empty);
+    }
+
+    [UnityTest]
+    public IEnumerator SpannerMiss_PlaysSlashAtStrikeWithLockedAimAndWorldRange()
+    {
+        yield return new EnterPlayMode();
+        var owner = new GameObject("Spanner slash test owner", typeof(SpriteRenderer));
+        owner.transform.position = new Vector3(12000f, 12000f, 67f);
+        owner.transform.localScale = new Vector3(2f, 3f, 1f);
+        owner.GetComponent<SpriteRenderer>().sortingOrder = 37;
+        try
+        {
+            PlayerSpannerWeapon spanner = CreateSpannerForSlashTest(owner.transform);
+            Vector2 direction = new Vector2(-1f, 1f).normalized;
+            Assert.That(spanner.TryAttack(direction), Is.True);
+            Assert.That(spanner.TryAttack(Vector2.down), Is.False, "A repeated input during windup must not schedule another effect.");
+            Assert.That(FindTestSpannerSlashes(), Is.Empty, "Starting a windup must not create the strike effect.");
+            owner.transform.position += Vector3.left * .3f;
+            Vector3 strikeOrigin = owner.transform.position;
+            float deadline = Time.time + .3f;
+            while (FindTestSpannerSlashes().Length == 0 && Time.time < deadline) yield return null;
+            var effects = FindTestSpannerSlashes();
+            Assert.That(effects.Length, Is.EqualTo(1), "A missed attack still shows exactly one range slash at impact.");
+            var slash = effects[0];
+            Assert.That(Vector3.Distance(slash.transform.position, strikeOrigin), Is.LessThan(.001f));
+            Assert.That(Vector2.Distance(slash.transform.right, direction), Is.LessThan(.001f));
+            Assert.That(slash.transform.parent, Is.Null, "The effect must remain at the strike instead of following the hand.");
+            Assert.That(slash.gameObject.scene, Is.EqualTo(owner.scene));
+            float authoredRadius = new SerializedObject(slash).FindProperty("_authoredRadius").floatValue;
+            float range = new SerializedObject(spanner).FindProperty("_range").floatValue;
+            Assert.That(slash.transform.lossyScale.x * authoredRadius, Is.EqualTo(range).Within(.001f));
+            Assert.That(slash.transform.lossyScale.y, Is.EqualTo(slash.transform.lossyScale.x).Within(.001f));
+            var renderer = slash.GetComponent<SpriteRenderer>();
+            Assert.That(renderer.sortingLayerID, Is.EqualTo(owner.GetComponent<SpriteRenderer>().sortingLayerID));
+            Assert.That(renderer.sortingOrder, Is.GreaterThan(owner.GetComponent<SpriteRenderer>().sortingOrder));
+            owner.transform.position += Vector3.right * 3f;
+            yield return null;
+            Assert.That(Vector3.Distance(slash.transform.position, strikeOrigin), Is.LessThan(.001f));
+        }
+        finally
+        {
+            foreach (var slash in FindTestSpannerSlashes()) Object.DestroyImmediate(slash.gameObject);
+            Object.DestroyImmediate(owner);
+        }
+        yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
+    public IEnumerator RepairIntentAndCancelledSpannerStrikes_DoNotPlayAttackSlash()
+    {
+        yield return new EnterPlayMode();
+        var owner = new GameObject("Spanner slash exclusion test owner", typeof(SpriteRenderer));
+        owner.transform.position = new Vector3(12000f, 12000f, 67f);
+        try
+        {
+            foreach (bool repairIntent in new[] { true, false })
+            {
+                PlayerSpannerWeapon spanner = CreateSpannerForSlashTest(owner.transform);
+                Assert.That(spanner.TryAttack(Vector2.right), Is.True);
+                if (repairIntent)
+                {
+                    // 수리 대상 생성 없이 예약된 수리 분기 자체가 공격 검기를 생략하는지 확인합니다.
+                    typeof(PlayerSpannerWeapon).GetField("_repairIntent",
+                        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                        .SetValue(spanner, true);
+                }
+                else spanner.gameObject.SetActive(false);
+                yield return new WaitForSeconds(.16f);
+                Assert.That(FindTestSpannerSlashes(), Is.Empty,
+                    repairIntent ? "A repair strike must preserve its repair visuals without an attack slash." : "Cancelling windup must prevent its slash.");
+                Object.DestroyImmediate(spanner.gameObject);
+            }
+        }
+        finally
+        {
+            foreach (var slash in FindTestSpannerSlashes()) Object.DestroyImmediate(slash.gameObject);
+            Object.DestroyImmediate(owner);
+        }
+        yield return new ExitPlayMode();
+    }
+
+    private static PlayerSpannerWeapon CreateSpannerForSlashTest(Transform owner)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerSpanner.prefab");
+        var spanner = Object.Instantiate(prefab, owner).GetComponent<PlayerSpannerWeapon>();
+        Assert.That(new SerializedObject(spanner).FindProperty("_slashPrefab").objectReferenceValue, Is.Not.Null);
+        spanner.Bind(owner, null);
+        return spanner;
+    }
+
+    private static PlayerSpannerSlash[] FindTestSpannerSlashes() =>
+        Object.FindObjectsByType<PlayerSpannerSlash>(FindObjectsSortMode.None)
+            .Where(slash => Vector2.Distance(slash.transform.position, new Vector2(12000f, 12000f)) < 30f).ToArray();
+
+    [Test]
     public void SpannerTargetingRejectsRearDistantAndBlockedTargets()
     {
         var owner = new GameObject("Spanner owner");
