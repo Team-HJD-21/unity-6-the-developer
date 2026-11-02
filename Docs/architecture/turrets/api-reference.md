@@ -1,6 +1,6 @@
 # API 사용법
 
-최종 갱신: 2026-10-25
+최종 갱신: 2026-10-29
 상태: 현재 Canon / Missile 공개 API. 명령용 호환 API는 컴포넌트 참조를 사용할 수 있다.
 
 이 문서의 최신 냉각·강화 제한 기준은 main `8d08001a`에 병합된 PR #525다.
@@ -40,6 +40,8 @@ ID는 로컬 런타임 식별자다. Network ID나 저장 데이터 ID가 아니
 | `RequestActivation(int instanceId, bool shouldActivate)` | `FieldTurretActivationResult`. 해당 컨트롤러 소속 터렛에 요청 |
 | `GetSnapshot()` | 컨트롤러 전력과 터렛 집계 복사본 |
 | `TrySetMaximumPower(int)` | `bool`. 사용 중인 예약을 보존하며 용량 변경 |
+| `DestructionPowerReturnPercent` | 파괴 시 반환 비율(0~100), 기본 50 |
+| `TrySetDestructionPowerReturnPercent(float)` | `bool`. 유효한 반환 비율만 적용. 이미 파괴된 터렛은 재정산하지 않음 |
 
 없는 ID 또는 다른 전력 공급자를 사용하는 터렛의 활성화 요청은 `PowerSourceUnavailable`이다. `GetSnapshot()`은 전역 집계가 아니라 해당 컨트롤러를 사용하는 등록 터렛의 집계다.
 
@@ -81,7 +83,9 @@ UI는 `CanModifyUpgrades`로 승급·강등 및 세부 업그레이드 버튼을
 
 `IsManualOperationBlocked`는 해당 전력 공급자의 자동 활성화가 진행 중인지 나타낸다. 이때 개별 활성화, 세부/레벨 변경, `SetLocked`, `Repair`, `Restore`, 공격력 보너스 변경을 거부한다. 기존 `IsManualActivationBlocked`는 같은 값을 반환하는 호환 속성이다. bool API는 `false`, void 보너스 API는 미적용으로 처리하며 Console에 거부 로그를 남긴다. `Repair`는 매 프레임 호출할 수 있으므로 거부 로그 없이 결과값으로 알린다. 적의 `ApplyDamage`, 자동 처리 내부 활성화 및 게임 규칙의 구역 해금 호출은 계속 처리한다. 개발 UI에서 피해 주입·구역 변경 등 시스템 API를 수동으로 호출하는 버튼도 진행 중에는 비활성화한다.
 
-체력이 0이면 파괴되고 비활성화된다. Restore는 최대 체력과 비활성 상태로 복구한다. 복구 이후 활성화는 별도로 요청한다. Initial의 플레이어 UI에서 잠금과 해금을 직접 변경하지 않는다. 구역 해금은 Core의 게임 규칙이 관리한다.
+체력이 0이면 파괴되고 비활성화된다. ON 상태 파괴는 실제 예약 전력의 기본 50%만 정수 내림하여 반환 대기로 넘기고 나머지는 해당 터렛에 예약한다. `FieldTurretController.DestructionPowerReturnPercent`로 읽고 Inspector의 `Destruction Power Return Percent` 또는 `TrySetDestructionPowerReturnPercent(float percent)`로 0~100%를 설정한다. 잘못된 값은 false를 반환하고 설정을 유지한다. 다른 `IFieldTurretPowerSource` 주입 시에도 기본 50%다. `FieldTurretBase.ReservedPower`는 이 터렛이 소유한 예약량이다.
+
+파괴된 터렛의 ON/OFF는 모두 `Destroyed`다. 이미 OFF여서 예약이 없는 터렛은 파괴 시 추가 반환이 없다. 비활성화만으로 파괴 잔여 예약을 회수할 수 없으며 실제 객체 제거에서는 잔여분을 정리한다. Restore 성공은 잔여 예약도 반환 대기로 넘기고 최대 체력·OFF로 복구한다. 반환 대기는 0.1초마다 전력 1씩 회복한다. 복구 이후 활성화는 별도로 요청하며 설정 변경은 이미 파괴된 터렛을 다시 정산하지 않는다. Initial의 플레이어 UI에서 잠금과 해금을 직접 변경하지 않는다. 구역 해금은 Core의 게임 규칙이 관리한다.
 
 스패너가 사용하는 `Repair(int amount)`는 양수 회복량만 받으며 초기화 전·비활성 컴포넌트·잠금·파괴·자동 활성화 진행 중이면 false다. 정수 HP를 즉시 더하고 실제 체력이 증가했을 때만 true를 반환한다. 아래의 `Repair(float healthPerSecond, float deltaTime)`와 같은 체력 처리 경로를 사용하며, 어느 API로든 최대 체력에 도달하면 남은 소수점 회복량을 비운다. 한 수리 동작에서 두 API를 중복 호출하지 않는다.
 살아 있는 터렛의 체력만 회복하고 활성화, 전력 예약, 냉각 상태는 유지한다. 만피에서는 false이며 파괴 복구용 Restore와 구분한다.
@@ -138,7 +142,8 @@ if (FieldTurretInstanceRegistry.TryGet(targetTurretId, out var turret))
 | `CanRepair` | 현재 터렛 상태에서 지속 수리를 받을 수 있는지 확인한다. |
 | `RuntimeState.SelectedUpgradeId` / `UpgradeLevel` | 선택한 강화 분기와 0~5 단계를 읽는다. 외부에서 직접 변경하지 않는다. |
 
-OFF는 활성 과열 중에도 요청할 수 있다. ON은 꺼진 터렛의 냉각·잠금·파괴 또는
+OFF는 활성 과열 중에도 요청할 수 있다. 일반 OFF가 성공하면 즉시 비활성화하고 예약 전력을 반환 대기로 옮긴다. 전력 반환은 기존 0.1초당 1 회복 경로를 따르며 남은 과열의 냉각과 동시에 진행한다. 냉각 완료까지 반환을 미루지 않는다(2026-10-29 황재동 정정).
+ON은 꺼진 터렛의 냉각·잠금·파괴 또는
 자동 활성화 중에는 차단한다. 비활성 버튼의 사유는 별도 상태 텍스트나 툴팁에 표시한다.
 냉각 종료와 Transform 이동을 `SnapshotChanged` 이벤트만으로 감지한다고 가정하지 않는다.
 

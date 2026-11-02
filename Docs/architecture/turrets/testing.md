@@ -1,10 +1,20 @@
 # 검증과 제한 사항
 
-최종 갱신: 2026-10-26
+최종 갱신: 2026-10-29
 상태: 통합 시 확인할 항목. 체크리스트 자체가 테스트 통과 기록은 아니다.
 
 냉각·강화 제한의 코드 기준은 main `8d08001a`에 병합된 PR #525다.
 Initial 플레이어 UI의 조작 검증 목록은 [Player UI API](../player-ui-api.md#확인-순서)에 있다.
+
+## 파괴 전력 부분 반환 검증
+
+2026-10-29 로컬 구현·검증: 파괴 전력 반환 비율 기본 50%, 컨트롤러 Inspector 및 0~100% 설정 API를 추가했다. 미반환분은 파괴 터렛의 예약으로 유지하며 Restore 성공 후 기존 지연 반환 경로로 회수한다. 이 변경은 `task/545-field-turret-power-loss` 작업 트리 기준이며 main 반영을 뜻하지 않는다.
+
+Unity 6000.3.23f1 컴파일과 `TeamHJD.Game.FieldTurrets.Tests` PlayMode 94개가 통과했다. 이 중 신규 파괴 전력 17개는 0/25/50/100%·홀수 예약량 내림·잘못된 비율 거부·중복 피해/ON/OFF 차단·복구 후 재활성화·일반 OFF 후 파괴·다른 터렛 예약 보존·비활성화/실제 제거·자동 활성화·치명타 콜백 재진입을 검증했다. 나머지는 기존 초기화·수리·미사일 예약·지역 어댑터 회귀다. 실제 화면의 수동 조작·다중 클라이언트 검증은 수행하지 않았다.
+
+별도 EditMode 실행에서 `StageControlUnitHudTests` 2개, `RegionSceneIntegrationTests` 1개, `MissileReservationLifecycleTests` 10개도 통과했다. 미사일 수명 테스트는 내부적으로 PlayMode에 진입한다. 총 107개를 분리 실행했고 전체 Unity `.meta` 쌍 검사도 오류 0개였다. 실제 사용자의 화면 조작 인수와 네트워크 검증은 포함하지 않는다.
+
+FieldTurretTest에서는 전역 패널의 반환 비율·Reserved/Recovering과 개별 창의 Reserved Power를 확인한다. Inspector 비율을 바꾸고 ON → Destroy → Restore를 수행하면 부분 반환·잔여 예약·복구 후 잔여 반환을 비교할 수 있다. 설정 변경은 다음 파괴부터 적용한다.
 
 ## 발사체 이름 변경 검증
 
