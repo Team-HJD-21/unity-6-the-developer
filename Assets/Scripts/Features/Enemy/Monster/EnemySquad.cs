@@ -24,21 +24,23 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// 적을 구성원으로 등록하고 EnemyAIBrain의 개별 타깃 선택을 중지한다.
+    /// 적을 분대 구성원으로 등록하고 유효한 기존 타깃을 전달한다.
     /// </summary>
-    /// <param name="enemy">이번 생성 명령으로 만들어진 적.</param>
-    /// <returns>필수 컴포넌트가 있고 중복 등록되지 않았다면 true.</returns>
+    /// <param name="enemy">분대에 등록할 적.</param>
+    /// <returns>적이 유효하고 아직 등록되지 않았다면 true.</returns>
     public bool AddMember(EnemyController enemy)
     {
         if (enemy == null || _members.Contains(enemy))
             return false;
 
-        EnemyAIBrain brain = enemy.GetComponent<EnemyAIBrain>();
-        if (brain == null)
-            return false;
-
         _members.Add(enemy);
-        brain.AssignSquad(this);
+        
+        Transform targetTransform =
+            _target != null && _target.CanBeTargeted
+                ? _target.TargetTransform
+                : null;
+        
+        enemy.SetTargetAndDestination(targetTransform);
         return true;
     }
 
@@ -103,7 +105,7 @@ public class EnemySquad
             foreach (EnemyController enemy in _members)
             {
                 if (enemy != null)
-                    enemy.SetTarget(targetTransform);
+                    enemy.SetTargetAndDestination(targetTransform);
             }
         }
 

@@ -247,6 +247,8 @@ AppRoot (프로세스당 1개; composition root)
 
 ## 레거시 → 목표 대응표
 
+> 2026-10-26 보완: 아래 표는 과거 이식 목표다. 현재 Feature HP 원본을 Core에 중복 생성하지 않는 결정과 새 운영 책임은 [Match 운영 책임](match-management-responsibilities.md)을 따른다. `GameSimulation`은 현행 `MatchSimulation`과 구분되는 과거 명칭이다.
+
 | 레거시 클래스/책임 | 목표 클래스/계층 | 이식 방식 |
 | --- | --- | --- |
 | `GlobalBootstrap`, `Global` | `AppBootstrap`, `AppRoot` | 유지·정리. AppRoot는 조립만 하며 게임 규칙을 갖지 않는다. |

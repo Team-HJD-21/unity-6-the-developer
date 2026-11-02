@@ -15,7 +15,7 @@ assignees: ""
 
 ## 담당과 일정
 
-- 주 담당: A / B / C / D / E
+- 주 담당: Core·Player/UI·World/Weather·FieldTurret·Enemy/Encounter
 - 지원 담당:
 - Milestone: M0 / M1 / M2 / 이후
 - Priority: P0 / P1 / P2 / P3

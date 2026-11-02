@@ -1,0 +1,51 @@
+name: Discord topic threads
+run-name: "Discord topic threads · ${{ github.event_name }} · ${{ inputs.check_only && 'check' || 'delivery' }}"
+
+on:
+  issues:
+  issue_comment:
+  pull_request_target:
+    types: [opened, edited, closed, reopened, synchronize, converted_to_draft, ready_for_review, review_requested, review_request_removed, assigned, unassigned, labeled, unlabeled, locked, unlocked, milestoned, demilestoned, auto_merge_enabled, auto_merge_disabled]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  discussion:
+  discussion_comment:
+  workflow_run:
+    workflows: ["PR CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      check_only:
+        description: 'Validate bot/channel permissions without sending messages'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  discussions: read
+
+# No concurrency group: Actions replaces an older pending run even when
+# cancel-in-progress is false. Every comment needs its own delivery attempt.
+jobs:
+  notify:
+    if: ${{ vars.DISCORD_THREADS_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Route GitHub event into its Discord thread
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHECK_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.check_only && 'true' || 'false' }}
+        run: python -B .github/scripts/discord_threads.py
