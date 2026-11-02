@@ -80,6 +80,10 @@ PrefabInstance:
       propertyPath: collider2D
       value: 
       objectReference: {fileID: 8571751847622452072}
+    - target: {fileID: 7747097433762684323, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: projectileSpeed
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -123,7 +127,7 @@ CapsuleCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
