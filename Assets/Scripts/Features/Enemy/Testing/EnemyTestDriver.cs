@@ -18,7 +18,7 @@ public sealed class EnemyTestDriver : MonoBehaviour
     private void Start()
     {
         _target = currentTarget;
-        _controller.SetTarget(_target);
+        _controller.SetTargetAndDestination(_target);
     }
 
     private void Update()
@@ -28,7 +28,7 @@ public sealed class EnemyTestDriver : MonoBehaviour
 
         _switchedToNextTarget = true;
         _target = nextTarget;
-        _controller.SetTarget(_target);
+        _controller.SetTargetAndDestination(_target);
     }
 
     private void FixedUpdate()
