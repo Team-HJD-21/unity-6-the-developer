@@ -132,6 +132,9 @@ public sealed class PlayerBullet : MonoBehaviour
         target = null;
         isEnemy = false;
         if (hitbox == null || hitbox.attachedRigidbody == _body) return false;
+        // 경로 Cast는 물리 접촉 제외와 별개로 장벽을 찾습니다. 양끝 본체는 계속 적중시킵니다.
+        var device = hitbox.GetComponentInParent<PlayerFieldDevice>();
+        if (device != null && device.IsBarrierMembrane(hitbox)) return false;
         // Rigidbody 소유자를 사용하되 자식 Collider와 부모의 태그도 함께 확인합니다.
         target = hitbox.attachedRigidbody != null ? hitbox.attachedRigidbody.gameObject : hitbox.gameObject;
         if (hitbox.CompareTag("Ground") || target.CompareTag("Ground") || IsSceneGround(hitbox)) return false;

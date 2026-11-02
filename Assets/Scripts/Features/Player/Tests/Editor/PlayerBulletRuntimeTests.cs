@@ -293,6 +293,38 @@ public sealed class PlayerBulletRuntimeTests
     }
 
     [UnityTest]
+    public IEnumerator BarrierMembrane_PassesEveryGunWithoutImpact()
+    {
+        foreach (var variant in new[] { (name: "PlayerBullet", cryogenic: false),
+            (name: "PlayerBullet", cryogenic: true), (name: "SniperBullet", cryogenic: false) })
+        {
+            var devicePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/EnergyBarrier.prefab");
+            Vector3 center = _muzzle.position + Vector3.down * 2f;
+            var device = Object.Instantiate(devicePrefab);
+            _targets.Add(device);
+            var field = device.GetComponent<PlayerFieldDevice>();
+            field.Initialize(PlayerFieldDeviceKind.Barrier, center + Vector3.left * 3f,
+                center + Vector3.right * 3f, .3f, 100f, 20f);
+            var membrane = device.GetComponent<BoxCollider2D>();
+            var bulletPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Player/{variant.name}.prefab");
+            var bullet = Object.Instantiate(bulletPrefab, _muzzle.position, Quaternion.identity).GetComponent<PlayerBullet>();
+            _bullets.Add(bullet);
+            Physics2D.SyncTransforms();
+            Assert.That(bullet.Initialize(Color.white, 13f, Vector2.down, variant.cryogenic), Is.True);
+            // 접촉 콜백과 빠른 탄환의 경로 Cast가 모두 같은 통과 조건을 사용해야 합니다.
+            bullet.SendMessage("OnTriggerEnter2D", membrane);
+            for (int step = 0; step < 8 && bullet != null; step++) yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(bullet != null, Is.True, variant.name + " must pass the membrane.");
+            Assert.That(bullet.transform.position.y, Is.LessThan(membrane.bounds.min.y - .2f));
+            Assert.That(FindImpactEffects().Length, Is.Zero);
+            Assert.That(field.Health, Is.EqualTo(100f));
+            ClearBullets();
+            Object.DestroyImmediate(device);
+        }
+    }
+
+    [UnityTest]
     public IEnumerator AuthoredDeviceBodies_StopBulletsDespiteTheirContactExclusions()
     {
         foreach (string name in new[] { "PlayerTurret", "LureBeacon", "EnergyBarrier", "bomb" })
@@ -310,7 +342,8 @@ public sealed class PlayerBulletRuntimeTests
             }
             Physics2D.SyncTransforms();
             var body = device.GetComponentsInChildren<Collider2D>()
-                .First(collider => collider.isActiveAndEnabled && !collider.isTrigger);
+                .First(collider => collider.isActiveAndEnabled && !collider.isTrigger &&
+                    (fieldDevice == null || !fieldDevice.IsBarrierMembrane(collider)));
             int bulletLayer = 1 << _bulletPrefab.layer;
             Assert.That(body.excludeLayers.value & bulletLayer, Is.Not.Zero, name + " excludes physical bullet contact.");
             Assert.That(body.layerOverridePriority, Is.GreaterThan(_bulletPrefab.GetComponent<Collider2D>().layerOverridePriority));

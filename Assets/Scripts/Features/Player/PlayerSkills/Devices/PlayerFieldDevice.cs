@@ -31,6 +31,9 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
     public Sprite EmitterSprite => _firstEmitter != null ? _firstEmitter.sprite : null;
     public Vector3 EmitterScale => _firstEmitter != null ? _firstEmitter.transform.localScale : Vector3.one;
     public float VisualScale => Mathf.Max(.1f, _visualScale);
+    /// <summary>양끝 본체와 구분해 아군 탄환이 통과할 연결 장벽 Collider인지 확인합니다.</summary>
+    public bool IsBarrierMembrane(Collider2D collider) =>
+        _kind == PlayerFieldDeviceKind.Barrier && collider != null && collider == _blocker;
     public void Initialize(PlayerFieldDeviceKind kind, Vector3 start, Vector3 end,
         float width, float health, float duration, float radius = 0, Transform owner = null)
     {
