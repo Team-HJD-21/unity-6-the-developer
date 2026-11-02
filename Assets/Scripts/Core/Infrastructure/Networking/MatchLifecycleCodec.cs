@@ -4,16 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using static TeamHJD.Game.Infrastructure.NetworkWireValues;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 namespace TeamHJD.Game.Infrastructure
 {
     public static class MatchLifecycleCodec
     {
-        public const int MaximumMessageBytes = 4 * 1024 * 1024;
+        public const int MaximumMessageBytes = NetworkMessageLimits.MaximumMessageBytes;
         private const int Magic = 0x314D4A48;
-        private static readonly UTF8Encoding Utf8 = new UTF8Encoding(false, true);
         public static byte[] Encode(NetworkMatchDescriptor descriptor)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
@@ -40,18 +39,7 @@ namespace TeamHJD.Game.Infrastructure
                 }
             }
             writer.Write((int)descriptor.RegionMode);
-            BattlefieldGridConfiguration grid = descriptor.RegionGrid.Geometry;
-            writer.Write(grid.Origin.X); writer.Write(grid.Origin.Y); writer.Write(grid.OriginZ);
-            writer.Write(grid.MapWidth); writer.Write(grid.MapHeight); writer.Write(grid.CellsX); writer.Write(grid.CellsY);
-            var runs = new List<(int length, int region)>();
-            foreach (int region in descriptor.RegionGrid.RegionIds)
-            {
-                if (runs.Count > 0 && runs[runs.Count - 1].region == region)
-                { var last = runs[runs.Count - 1]; runs[runs.Count - 1] = (last.length + 1, region); }
-                else runs.Add((1, region));
-            }
-            writer.Write(runs.Count);
-            foreach (var run in runs) { writer.Write(run.length); writer.Write(run.region); }
+            WriteRegionDefinition(writer, descriptor.RegionGrid);
             return Finish(stream);
         }
         public static byte[] Encode(MatchLifecycleSignalKind kind, MatchLifecycleSignal signal)
@@ -94,21 +82,10 @@ namespace TeamHJD.Game.Infrastructure
                         players.Add(new PlayerLoadoutSnapshot(player, upgrades)); bindings.Add(new MatchParticipantBinding(connection, player, host));
                     }
                     var regionMode = (RegionPolicyMode)reader.ReadInt32();
-                    var origin = new BattlefieldPoint(reader.ReadDouble(), reader.ReadDouble());
-                    var grid = new BattlefieldGridConfiguration(origin, reader.ReadDouble(), reader.ReadDouble(),
-                        reader.ReadDouble(), reader.ReadInt32(), reader.ReadInt32());
-                    int runCount = ReadCount(reader, grid.TotalCellCount);
-                    var membership = new int[grid.TotalCellCount]; int offset = 0;
-                    for (int i = 0; i < runCount; i++)
-                    {
-                        int length = reader.ReadInt32(), region = reader.ReadInt32();
-                        if (length < 1 || region < 0 || length > membership.Length - offset) throw new FormatException("Invalid region run.");
-                        for (int cell = 0; cell < length; cell++) membership[offset++] = region;
-                    }
-                    if (offset != membership.Length) throw new FormatException("Incomplete region membership.");
+                    RegionGridDefinition definition = ReadRegionDefinition(reader);
                     descriptor = new NetworkMatchDescriptor(id, sequence,
                         new MatchConfig(match, mode, stage, difficulty, content, seed, players),
-                        regionMode, new RegionGridDefinition(grid, membership), bindings);
+                        regionMode, definition, bindings);
                 }
                 else if (tag >= 1 && tag <= 3)
                 {
@@ -126,29 +103,6 @@ namespace TeamHJD.Game.Infrastructure
             if (stream.Length > MaximumMessageBytes) throw new ArgumentException("Lifecycle payload exceeds the protocol limit.");
             return stream.ToArray();
         }
-        private static int ReadCount(BinaryReader reader, int maximum)
-        {
-            int count = reader.ReadInt32();
-            if (count < 0 || count > maximum) throw new FormatException("Invalid collection length.");
-            return count;
-        }
-        private static Guid ReadGuid(BinaryReader reader)
-        {
-            byte[] bytes = reader.ReadBytes(16);
-            if (bytes.Length != 16) throw new EndOfStreamException();
-            return new Guid(bytes);
-        }
-        private static void WriteText(BinaryWriter writer, string value, int maximumBytes = 1024)
-        {
-            byte[] bytes = Utf8.GetBytes(value ?? "");
-            if (bytes.Length > maximumBytes) throw new ArgumentException("Text exceeds the protocol limit.");
-            writer.Write((ushort)bytes.Length); writer.Write(bytes);
-        }
-        private static string ReadText(BinaryReader reader, int maximumBytes = 1024)
-        {
-            int count = reader.ReadUInt16(); if (count > maximumBytes) throw new FormatException("Text exceeds the protocol limit.");
-            byte[] bytes = reader.ReadBytes(count); if (bytes.Length != count) throw new EndOfStreamException();
-            return Utf8.GetString(bytes);
-        }
+
     }
 }
