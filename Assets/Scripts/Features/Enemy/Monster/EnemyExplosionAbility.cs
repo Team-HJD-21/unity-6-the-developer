@@ -12,9 +12,6 @@ public sealed class EnemyExplosionAbility : EnemyAbility
     [Header("참조")]
     [SerializeField] private EnemyTargeting enemyTargeting;
 
-    [Header("발동 설정")]
-    [SerializeField, Min(0f)] private float activationRange = 0.3f;
-
     [Header("폭발 설정")]
     [SerializeField, Min(1)] private int explosionDamage = 20;
     [SerializeField, Min(0.01f)] private float explosionRadius = 1f;

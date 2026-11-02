@@ -6,9 +6,7 @@ using UnityEngine;
 public sealed class EnemyCloseRangeAbility : EnemyAbility
 {
     [SerializeField] private EnemyTargeting enemyTargeting;
-    
     [Header("공격 설정")]
-    [SerializeField] private float attackRange = 0.4f;
     [SerializeField] private int attackDamage = 5;
     
 
@@ -25,7 +23,7 @@ public sealed class EnemyCloseRangeAbility : EnemyAbility
     {
         return attackDamage > 0 &&
                TryGetTarget(out _) &&
-               IsInRange(enemyTargeting.TargetColliders, attackRange);
+               IsInRange(enemyTargeting.TargetColliders, activationRange);
     }
 
     protected override bool Activate()
@@ -55,31 +53,5 @@ public sealed class EnemyCloseRangeAbility : EnemyAbility
 
         target = enemyTargeting.Target.GetComponent<TargetableComponent>();
         return target != null && target.CanBeTargeted;
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Collider2D bodyCollider = _bodyCollider;
-
-        if (bodyCollider == null)
-        {
-            foreach (Collider2D collider in GetComponents<Collider2D>())
-            {
-                if (!collider.isTrigger)
-                {
-                    bodyCollider = collider;
-                    break;
-                }
-            }
-        }
-
-        if (bodyCollider == null)
-            return;
-
-        Bounds bounds = bodyCollider.bounds;
-        float bodyRadius = Mathf.Max(bounds.extents.x, bounds.extents.y);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(bounds.center, bodyRadius + attackRange);
     }
 }
