@@ -39,6 +39,7 @@ namespace TeamHJD.Game.FieldTurrets
         private float _coolingEndsAt;
         private float _coolingDuration;
         private float _coolingInitialHeatRatio;
+        private bool _isResolvingDestruction;
         public bool IsInitialized => _activationController != null;
         // Shared by active overheat recovery and cooling after switching off.
         // IsActivated determines whether completion resumes attacks or only permits activation.
@@ -54,6 +55,7 @@ namespace TeamHJD.Game.FieldTurrets
         public bool IsActivated => _runtimeState.IsActivated;
         public bool IsOperational => _runtimeState.IsOperational;
         public bool IsDestroyed => _runtimeState.IsDestroyed;
+        public int ReservedPower => _activationController?.ReservedPower ?? 0;
         public bool IsLocked => _runtimeState.IsLocked;
         public int CurrentHealth => _runtimeState.CurrentHealth;
         public int MaxHealth => _definition != null ? _definition.MaxHealth : 0;
@@ -267,7 +269,7 @@ namespace TeamHJD.Game.FieldTurrets
         {
             // Any explicit request supersedes a queued startup intent.
             CancelInitialActivation();
-            if (shouldActivate && IsDestroyed)
+            if (IsDestroyed || _isResolvingDestruction)
             {
                 return FieldTurretActivationResult.Destroyed;
             }
@@ -435,6 +437,11 @@ namespace TeamHJD.Game.FieldTurrets
 
             _runtimeState.SetTemporarilySuspended(false);
             FieldTurretInstanceRegistry.Unregister(this);
+        }
+
+        protected virtual void OnDestroy()
+        {
+            _activationController?.ReleaseForRemoval();
         }
 
         private IEnumerator RequestInitialActivation()
@@ -657,16 +664,34 @@ namespace TeamHJD.Game.FieldTurrets
                 return false;
             }
 
-            FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
             if (CurrentHealth > 0)
             {
+                FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
                 return true;
             }
 
-            RequestSystemActivation(false);
-            _runtimeState.MarkDestroyed();
-            OnDestroyed();
-            FieldTurretInstanceRegistry.NotifyDestroyed(this);
+            bool wasActivated = IsActivated;
+            bool wasOperational = IsOperational;
+            _isResolvingDestruction = true;
+            try
+            {
+                CancelInitialActivation();
+                _runtimeState.MarkDestroyed();
+                float returnPercent = _configuredPowerSource is FieldTurretController controller
+                    ? controller.DestructionPowerReturnPercent
+                    : FieldTurretController.DefaultDestructionPowerReturnPercent;
+                _activationController?.HandleDestruction(returnPercent);
+                if (wasActivated) OnActivationChanged(false);
+                OnDestroyed();
+                if (wasActivated) FieldTurretInstanceRegistry.NotifyActivationChanged(this, false);
+                if (wasOperational) FieldTurretInstanceRegistry.NotifyOperationalStateChanged(this, false);
+                FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
+                FieldTurretInstanceRegistry.NotifyDestroyed(this);
+            }
+            finally
+            {
+                _isResolvingDestruction = false;
+            }
             return true;
         }
 
@@ -685,7 +710,6 @@ namespace TeamHJD.Game.FieldTurrets
             if (!IsInitialized) return FieldTurretRepairResult.NotInitialized;
             if (!isActiveAndEnabled) return FieldTurretRepairResult.Inactive;
             if (IsLocked) return FieldTurretRepairResult.Locked;
-            // HealthChanged is published before damage finalizes IsDestroyed.
             if (IsDestroyed || CurrentHealth <= 0) return FieldTurretRepairResult.Destroyed;
             if (CurrentHealth >= MaxHealth) return FieldTurretRepairResult.FullHealth;
 
@@ -708,6 +732,7 @@ namespace TeamHJD.Game.FieldTurrets
 
         public bool Restore()
         {
+            if (_isResolvingDestruction) return false;
             if (RejectManualOperation()) return false;
             if (IsLocked) return false;
             if (!_runtimeState.Restore(MaxHealth))
@@ -715,6 +740,7 @@ namespace TeamHJD.Game.FieldTurrets
                 return false;
             }
 
+            _activationController?.ReleaseAfterRestore();
             OnRestored();
             FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
             FieldTurretInstanceRegistry.NotifyRestored(this);
