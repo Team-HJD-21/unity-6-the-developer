@@ -1,3 +1,5 @@
+// Scene의 터렛 전력·자동 활성화와 지역 사용 제한을 관리하는 D Feature 소유자입니다.
+// Core 조립부에는 실제 소유 개체를 확인하는 읽기 API를 제공합니다.
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets.Contracts;
@@ -32,10 +34,60 @@ namespace TeamHJD.Game.FieldTurrets
         public FieldTurretUnlockZones UnlockZones => _unlockZones;
         public int UnlockedZoneCount => _unlockedZoneCount;
         private FieldTurretPowerBudget _budget;
+        private bool _requiresMatchScope;
+        private MatchScope _matchScope;
+        public MatchId BoundMatchId => _matchScope?.MatchId ?? default;
+        public bool HasWriteAuthority => !_requiresMatchScope ||
+            (_matchScope != null && isActiveAndEnabled && _matchScope.HasAuthority());
+        private sealed class MatchScope : IDisposable
+        {
+            private FieldTurretController _owner;
+            private readonly Func<bool> _authority;
+            public MatchId MatchId { get; }
+            public MatchScope(FieldTurretController owner, MatchId matchId, Func<bool> authority)
+            { _owner = owner; MatchId = matchId; _authority = authority; }
+            public bool HasAuthority() => _owner != null && _authority();
+            public void Dispose()
+            {
+                FieldTurretController owner = _owner; _owner = null;
+                if (owner != null) owner.ReleaseMatchScope(this);
+            }
+        }
+
+        /// <summary>Core가 조립하는 Scene은 첫 Match 전과 종료 후에도 직접 상태 변경을 허용하지 않습니다.</summary>
+        public void RequireMatchScope() => _requiresMatchScope = true;
+
+        /// <summary>Feature 제어 수명만 임대합니다. 실제 생성자·체력·강화·개별 열 상태를 재초기화하지 않습니다.</summary>
+        public IDisposable BindMatchScope(MatchId matchId, Func<bool> hasAuthority)
+        {
+            if (matchId.IsEmpty) throw new ArgumentException("A Match ID is required.", nameof(matchId));
+            if (hasAuthority == null) throw new ArgumentNullException(nameof(hasAuthority));
+            if (_matchScope != null) throw new InvalidOperationException("The D controller already has a Match owner.");
+            _requiresMatchScope = true; _nextAutoActivationTime = 0;
+            _matchScope = new MatchScope(this, matchId, hasAuthority);
+            return _matchScope;
+        }
+
+        private void ReleaseMatchScope(MatchScope scope)
+        {
+            if (!ReferenceEquals(_matchScope, scope)) return;
+            // 먼저 권한과 자동 큐를 닫아 정리 이벤트에서 새 작업이 재진입하지 않게 합니다.
+            _matchScope = null; IsAutoActivationRunning = false; _autoCandidates.Clear();
+            List<Exception> errors = null;
+            foreach (FieldTurretBase turret in new List<FieldTurretBase>(FieldTurretInstanceRegistry.RegisteredInstances.Values))
+            {
+                if (!OwnsTurret(turret)) continue;
+                try { turret.ReleaseMatchOperations(); }
+                catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            }
+            if (errors != null) throw new AggregateException("D Match control cleanup failed.", errors);
+        }
         public FieldTurretPowerBudget Budget => _budget ??= new FieldTurretPowerBudget(Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;
         public int MaximumPower => Budget.MaximumPower;
         public IRegionGridSource Regions => _regionAccess?.Regions;
+        public bool OwnsTurret(FieldTurretBase turret) => turret != null &&
+            turret.gameObject.scene == gameObject.scene && turret.UsesPowerSource(this);
         public event Action<int, int> PowerChanged
         {
             add => Budget.PowerChanged += value;
@@ -55,7 +107,7 @@ namespace TeamHJD.Game.FieldTurrets
         private void Update()
         {
             Budget.Tick(Time.deltaTime);
-            if (IsAutoActivationRunning) AdvanceAutoActivation();
+            if (HasWriteAuthority && IsAutoActivationRunning) AdvanceAutoActivation();
         }
 
         public const float AutoActivationCooldownSeconds = 60f;
@@ -87,7 +139,7 @@ namespace TeamHJD.Game.FieldTurrets
         /// <summary>CU interaction/button calls this once. No CU component is required.</summary>
         public bool TryStartAutoActivation()
         {
-            if (!isActiveAndEnabled || IsAutoActivationRunning || AutoActivationCooldownRemaining > 0f)
+            if (!HasWriteAuthority || !isActiveAndEnabled || IsAutoActivationRunning || AutoActivationCooldownRemaining > 0f)
                 return false;
 
             var owned = new List<FieldTurretBase>();
@@ -157,10 +209,12 @@ namespace TeamHJD.Game.FieldTurrets
             FieldTurretInstanceRegistry.Registered -= ApplyUnlockZoneToNewTurret;
             if (_regionAccess != null) _regionAccess.Regions.Changed -= OnRegionChanged;
             IsAutoActivationRunning = false;
+            _matchScope?.Dispose();
         }
 
         public bool TrySetMaximumPower(int power)
         {
+            if (!HasWriteAuthority) return false;
             if (!Budget.TrySetMaximumPower(power)) return false;
             maximumPower = power;
             return true;

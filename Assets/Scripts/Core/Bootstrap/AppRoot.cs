@@ -20,6 +20,21 @@ namespace TeamHJD.Game.Bootstrap
         public MatchId CurrentMatchId => _currentMatch == null ? default : _currentMatch.Config.MatchId;
         public INetworkSession NetworkSession => Services?.NetworkSession;
         public NetworkMatchCoordinator NetworkMatches => Services?.NetworkMatches;
+        public RegionReplicationSession NetworkRegions => Services?.NetworkRegions;
+        public ITurretCommandTransport NetworkTurretCommands => Services?.NetworkTurretCommands;
+        public ITurretPresentationTransport NetworkTurretPresentation => Services?.NetworkTurretPresentation;
+
+        public void AttachTurretPresentationTransport(ITurretPresentationTransport transport)
+        {
+            ThrowIfUnavailable();
+            Services.AttachTurretPresentationTransport(transport);
+        }
+
+        public void AttachTurretCommandTransport(ITurretCommandTransport transport)
+        {
+            ThrowIfUnavailable();
+            Services.AttachTurretCommandTransport(transport);
+        }
 
         public void AttachNetworkSession(INetworkSession session)
         {
@@ -31,6 +46,12 @@ namespace TeamHJD.Game.Bootstrap
         {
             ThrowIfUnavailable();
             return Services.AttachNetworkMatchTransport(transport);
+        }
+
+        public RegionReplicationSession AttachRegionSnapshotTransport(IRegionSnapshotTransport transport)
+        {
+            ThrowIfUnavailable();
+            return Services.AttachRegionSnapshotTransport(transport);
         }
 
         private void Update()
@@ -183,7 +204,10 @@ namespace TeamHJD.Game.Bootstrap
             }
         }
 
-        private void OnDestroy()
+        private void OnApplicationQuit() => DisposeSafely();
+        private void OnDestroy() => DisposeSafely();
+
+        private void DisposeSafely()
         {
             try { Dispose(); }
             catch (Exception exception) { Debug.LogException(exception, this); }

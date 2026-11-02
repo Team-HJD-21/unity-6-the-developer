@@ -36,7 +36,7 @@ namespace TeamHJD.Game.Application
                 if (frame.GridGeneration == GridGeneration)
                 {
                     if (next.GridId != _snapshot.GridId || next.Mode != _snapshot.Mode ||
-                        !SameDefinition(next.Definition, _snapshot.Definition)) return RegionReplicationStatus.ConflictingGrid;
+                        !next.Definition.HasSameDefinition(_snapshot.Definition)) return RegionReplicationStatus.ConflictingGrid;
                     if (next.Revision < _snapshot.Revision) return RegionReplicationStatus.StaleRevision;
                     if (next.Revision == _snapshot.Revision)
                     {
@@ -60,15 +60,6 @@ namespace TeamHJD.Game.Application
             finally { _notifying = false; }
             if (errors != null) throw new AggregateException("Replica state committed; observation failed.", errors);
             return RegionReplicationStatus.Applied;
-        }
-        private static bool SameDefinition(RegionGridDefinition a, RegionGridDefinition b)
-        {
-            if (ReferenceEquals(a, b)) return true;
-            var x = a.Geometry; var y = b.Geometry;
-            if (x.Origin != y.Origin || x.OriginZ != y.OriginZ || x.MapWidth != y.MapWidth ||
-                x.MapHeight != y.MapHeight || x.CellsX != y.CellsX || x.CellsY != y.CellsY) return false;
-            for (int i = 0; i < a.RegionIds.Count; i++) if (a.RegionIds[i] != b.RegionIds[i]) return false;
-            return true;
         }
         public void Dispose() { if (_disposed) return; _disposed = true; _snapshot = null; Changed = null; }
         private void ThrowIfDisposed() { if (_disposed) throw new ObjectDisposedException(nameof(RegionGridReplica)); }

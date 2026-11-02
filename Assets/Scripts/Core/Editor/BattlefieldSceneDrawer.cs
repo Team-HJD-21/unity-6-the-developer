@@ -93,7 +93,7 @@ namespace TeamHJD.Game.Editor
                 Handles.ArrowHandleCap(0, edge.Midpoint, Quaternion.LookRotation(edge.InwardNormal, Vector3.forward), length, EventType.Repaint);
             }
             Handles.color = Color.white;
-            Handles.Label(edge.Midpoint, $"{edge.Edge.First} ↔ {edge.Edge.Second}\n{edge.Length:F2} u · triangle {edge.TriangleIndex} · group {edge.ComponentIndex}");
+            Handles.Label(edge.Midpoint, $"{EntityLabelFormatter.Format(edge.Edge.First)} ↔ {EntityLabelFormatter.Format(edge.Edge.Second)}\n{edge.Length:F2} u · triangle {edge.TriangleIndex} · group {edge.ComponentIndex}");
         }
 
         private static void PickCell()
@@ -216,7 +216,7 @@ namespace TeamHJD.Game.Editor
             foreach (var vertex in BattlefieldDebugSession.Snapshot.Vertices)
             {
                 if (++count > 128) break;
-                Handles.Label(positions[vertex.EntityId], vertex.EntityId.ToString());
+                Handles.Label(positions[vertex.EntityId], EntityLabelFormatter.Format(vertex.EntityId));
             }
         }
 
