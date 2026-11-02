@@ -17,10 +17,15 @@ GameObject:
   - component: {fileID: -4820293985112137665}
   - component: {fileID: -8740136632330153983}
   - component: {fileID: 784396215047286331}
-  - component: {fileID: 984415393098425011}
   - component: {fileID: 3568187623676949036}
   - component: {fileID: 7071173705403751221}
   - component: {fileID: 1692933235676204002}
+  - component: {fileID: 5271184540926039027}
+  - component: {fileID: 5537959912745558319}
+  - component: {fileID: 8339984783810717595}
+  - component: {fileID: 5607287784877572849}
+  - component: {fileID: 5607287784877572850}
+  - component: {fileID: 5607287784877572851}
   m_Layer: 7
   m_Name: Slime
   m_TagString: Enemy
@@ -136,7 +141,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3481536332
+  GlobalObjectIdHash: 2848244634
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -246,14 +251,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6b71b327c7eb134787ef7d24c941dfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
-  animator: {fileID: 5135953631903945395}
-  rigidbody2D: {fileID: 0}
-  moveSpeed: 1.5
-  animationReferenceSpeed: 2
-  arrivalDistance: 0.4
-  attackRange: 1
-  attackCooldown: 1
-  attackDamage: 5
+  enemyTargeting: {fileID: 0}
+  enemyMovement: {fileID: 0}
+  enemyCombat: {fileID: 0}
+  enemyAnimation: {fileID: 0}
 --- !u!114 &-8740136632330153983
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -267,6 +268,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkController
   ShowTopMostFoldoutHeaderGroup: 1
+  enemyController: {fileID: 0}
+  enemyHealth: {fileID: 0}
 --- !u!114 &784396215047286331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -280,18 +283,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkAnimator
   ShowTopMostFoldoutHeaderGroup: 1
---- !u!114 &984415393098425011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3068615185566250658}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8196e77bc84ebe4faebb25d667ab2f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAIBrain
 --- !u!61 &3568187623676949036
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -377,6 +368,89 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 283aebe7defcae547ac8cbb2d45c081a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  ShowTopMostFoldoutHeaderGroup: 1
   currentHealth: 0
   maxHealth: 20
+--- !u!114 &5271184540926039027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
+--- !u!114 &5537959912745558319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e4629e7cbab8f43b1546a0afb62589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
+  arrivalDistance: 0.6
+  rigidbody2D: {fileID: 0}
+  moveSpeed: 1.5
+--- !u!114 &8339984783810717595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5097b24e3659e6745b14e8017d5ba008, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  enemyTargeting: {fileID: 0}
+  enemyAttack: {fileID: 5607287784877572851}
+  attackRange: 1
+  attackCooldown: 1
+  attackDamage: 5
+--- !u!114 &5607287784877572849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03171b78e5f780499d91a5ca81900ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
+  animator: {fileID: 0}
+  animationReferenceSpeed: 2
+--- !u!114 &5607287784877572850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8c52885007943a6a5296f235571ec4b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDepthSorting
+  minDepth: 65
+  maxDepth: 70
+--- !u!114 &5607287784877572851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068615185566250658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3adf89055c5c4d90bdf209605937862d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCloseRangeAttack

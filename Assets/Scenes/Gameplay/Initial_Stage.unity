@@ -938220,6 +938220,7 @@ GameObject:
   - component: {fileID: 1250254887}
   - component: {fileID: 1250254886}
   - component: {fileID: 1250254888}
+  - component: {fileID: 1250254889}
   m_Layer: 0
   m_Name: WeatherManager
   m_TagString: Untagged
@@ -938249,6 +938250,7 @@ MonoBehaviour:
   _sunnyColor: {r: 0.9245283, g: 0.40557134, b: 0.40557134, a: 0.5176471}
   _rainColor: {r: 0.46742615, g: 0.6222011, b: 0.9811321, a: 0.8156863}
   _thunderColor: {r: 0.8938753, g: 0.9622642, b: 0.45843717, a: 0.7529412}
+  _shaderTests: {fileID: 0}
 --- !u!4 &1250254887
 Transform:
   m_ObjectHideFlags: 0
@@ -938277,6 +938279,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountTick
   weatherChangeTime: 5
+--- !u!114 &1250254889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1250254885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d681a957a844bdea893b762e4b011cf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Map.WeatherChangeEvent
 --- !u!1001 &1264729469
 PrefabInstance:
   m_ObjectHideFlags: 0
