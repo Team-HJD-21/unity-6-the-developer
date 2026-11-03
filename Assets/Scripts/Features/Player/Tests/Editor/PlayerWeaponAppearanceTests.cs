@@ -455,7 +455,7 @@ public sealed class PlayerWeaponAppearanceTests
         {
             var input = player.GetComponent<PlayerInputHandler>();
             input.enabled = false;
-            var attack = player.GetComponent<PlayerAttack>();
+            var selection = player.GetComponent<PlayerWeaponSelection>();
             var visual = player.GetComponent<PlayerWeaponVisual>();
             var body = player.GetComponent<SpriteRenderer>();
             var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
@@ -472,7 +472,7 @@ public sealed class PlayerWeaponAppearanceTests
                 foreach (var choice in new[] { (weapon: WeaponType.Spanner, appearance: "SpannerAppearance"),
                     (weapon: WeaponType.DefaultGun, appearance: "DefaultGunAppearance") })
                 {
-                    Assert.That(attack.TrySelectWeapon(choice.weapon), Is.True);
+                    Assert.That(selection.TrySelectWeapon(choice.weapon), Is.True);
                     var appearance = AssetDatabase.LoadAssetAtPath<PlayerWeaponAppearance>(AppearanceFolder + choice.appearance + ".asset");
                     Assert.That(appearance.TryGetFrame(body.sprite, out var frame), Is.True,
                         "A successful switch must evaluate its body before the next Update: " + choice.weapon + " " + facing);
@@ -499,27 +499,27 @@ public sealed class PlayerWeaponAppearanceTests
         try
         {
             player.GetComponent<PlayerInputHandler>().enabled = false;
-            var attack = player.GetComponent<PlayerAttack>();
+            var selection = player.GetComponent<PlayerWeaponSelection>();
             var controls = player.GetComponent<PlayerControlState>();
             var motion = player.GetComponent<PlayerSpriteMotion>();
             var body = player.GetComponent<SpriteRenderer>();
             Sprite previousBody = body.sprite;
             Time.timeScale = 0f;
-            Assert.That(attack.TrySelectWeapon(WeaponType.Spanner), Is.False);
+            Assert.That(selection.TrySelectWeapon(WeaponType.Spanner), Is.False);
             Assert.That(body.sprite, Is.EqualTo(previousBody));
             Time.timeScale = previousScale;
             controls.SetInputBlocked(true);
-            Assert.That(attack.TrySelectWeapon(WeaponType.Spanner), Is.False);
+            Assert.That(selection.TrySelectWeapon(WeaponType.Spanner), Is.False);
             Assert.That(body.sprite, Is.EqualTo(previousBody));
             controls.SetInputBlocked(false);
-            attack.enabled = false;
-            Assert.That(attack.TrySelectWeapon(WeaponType.Spanner), Is.False);
+            selection.enabled = false;
+            Assert.That(selection.TrySelectWeapon(WeaponType.Spanner), Is.False);
             Assert.That(body.sprite, Is.EqualTo(previousBody));
-            attack.enabled = true;
+            selection.enabled = true;
 
             motion.enabled = false;
             previousBody = body.sprite;
-            Assert.That(attack.TrySelectWeapon(WeaponType.Spanner), Is.True);
+            Assert.That(selection.TrySelectWeapon(WeaponType.Spanner), Is.True);
             Assert.That(body.sprite, Is.EqualTo(previousBody), "Disabled motion must unsubscribe from successful weapon switches.");
             motion.enabled = true;
             player.GetComponent<Animator>().Update(0f);
@@ -539,7 +539,7 @@ public sealed class PlayerWeaponAppearanceTests
         try
         {
             player.GetComponent<PlayerInputHandler>().enabled = false;
-            var attack = player.GetComponent<PlayerAttack>();
+            var selection = player.GetComponent<PlayerWeaponSelection>();
             var motion = player.GetComponent<PlayerSpriteMotion>();
             var animator = player.GetComponent<Animator>();
             var body = player.GetComponent<SpriteRenderer>();
@@ -551,7 +551,7 @@ public sealed class PlayerWeaponAppearanceTests
             Sprite previousBody = body.sprite;
             foreach (WeaponType weapon in new[] { WeaponType.CryoBlaster, WeaponType.Sniper })
             {
-                Assert.That(attack.TrySelectWeapon(weapon), Is.True);
+                Assert.That(selection.TrySelectWeapon(weapon), Is.True);
                 var after = animator.GetCurrentAnimatorStateInfo(0);
                 Assert.That(after.fullPathHash, Is.EqualTo(state.fullPathHash));
                 Assert.That(after.normalizedTime, Is.EqualTo(state.normalizedTime).Within(.0001f));
@@ -574,7 +574,7 @@ public sealed class PlayerWeaponAppearanceTests
             player = Object.Instantiate(prefab, new Vector3(12000, 12000, 0), Quaternion.identity);
             var input = player.GetComponent<PlayerInputHandler>();
             input.enabled = false;
-            var attack = player.GetComponent<PlayerAttack>();
+            var selection = player.GetComponent<PlayerWeaponSelection>();
             var motion = player.GetComponent<PlayerSpriteMotion>();
             var animator = player.GetComponent<Animator>();
             var visual = player.GetComponent<PlayerWeaponVisual>();
@@ -587,8 +587,8 @@ public sealed class PlayerWeaponAppearanceTests
 
             for (int weapon = 0; weapon < 4; weapon++)
             {
-                bool tool = attack.CurrentWeapon == WeaponType.Spanner;
-                string property = attack.CurrentWeapon switch
+                bool tool = selection.CurrentWeapon == WeaponType.Spanner;
+                string property = selection.CurrentWeapon switch
                 {
                     WeaponType.Spanner => "_spanner",
                     WeaponType.CryoBlaster => "_cryoBlaster",
@@ -641,7 +641,7 @@ public sealed class PlayerWeaponAppearanceTests
                         Assert.That(Vector3.Distance(muzzle.position, expectedMuzzle), Is.LessThan(.001f));
                     }
                 }
-                attack.SelectNextWeapon();
+                selection.SelectNextWeapon();
             }
             body.enabled = false;
             visual.Refresh();

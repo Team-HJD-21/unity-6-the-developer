@@ -29,9 +29,17 @@ public static class PlayerTurretPlacementRules
 
     public static PlayerTurretPlacementResult Evaluate(GameObject prefab, Vector3 position, GameObject player, Tilemap ground)
     {
+        if (!TryGetFootprint(prefab, position, out Bounds footprint)) return PlayerTurretPlacementResult.InvalidFootprint;
+        return EvaluateFootprint(footprint, player, ground);
+    }
+
+    /// <summary>설치형 스킬이 공유하는 지면·캐릭터·장애물 점유 검사입니다.</summary>
+    public static PlayerTurretPlacementResult EvaluateFootprint(Bounds footprint, GameObject player, Tilemap ground)
+    {
         if (player == null || ground == null || !ground.isActiveAndEnabled ||
             ground.gameObject.scene != player.scene) return PlayerTurretPlacementResult.GroundUnavailable;
-        if (!TryGetFootprint(prefab, position, out Bounds footprint)) return PlayerTurretPlacementResult.InvalidFootprint;
+        if (!PlayerSkillPlacementUtility.IsFinite(footprint.center) || !PlayerSkillPlacementUtility.IsFinite(footprint.size)
+            || footprint.size.x <= 0 || footprint.size.y <= 0) return PlayerTurretPlacementResult.InvalidFootprint;
 
         footprint.Expand(new Vector3(Padding * 2f, Padding * 2f, 0f));
         if (!IsOnGround(ground, footprint)) return PlayerTurretPlacementResult.OutsideGround;
@@ -52,8 +60,9 @@ public static class PlayerTurretPlacementRules
             if (hit.GetComponentInParent<PlayerTurret>() != null ||
                 hit.GetComponentInParent<TeamHJD.Game.FieldTurrets.FieldTurretBase>() != null)
                 return PlayerTurretPlacementResult.OverlapsTurret;
-            if ((hit.excludeLayers.value & (1 << player.layer)) != 0 ||
-                Physics2D.GetIgnoreLayerCollision(player.layer, layer)) continue;
+            int playerMask = 1 << player.layer;
+            if ((hit.excludeLayers.value & playerMask) != 0 ||
+                (hit.includeLayers.value & playerMask) == 0 && Physics2D.GetIgnoreLayerCollision(player.layer, layer)) continue;
             return PlayerTurretPlacementResult.BlockedByObstacle;
         }
         return PlayerTurretPlacementResult.Allowed;
@@ -79,8 +88,10 @@ public static class PlayerTurretPlacementRules
         return true;
     }
 
-    private static bool IsOnGround(Tilemap ground, Bounds footprint)
+    public static bool IsOnGround(Tilemap ground, Bounds footprint)
     {
+        if (ground == null || !ground.isActiveAndEnabled || !PlayerSkillPlacementUtility.IsFinite(footprint.center)
+            || !PlayerSkillPlacementUtility.IsFinite(footprint.size)) return false;
         // 정렬용 플레이어 Z가 Tilemap 셀 Z에 섞이지 않도록 지면 평면에서 조회합니다.
         float z = ground.transform.position.z;
         Vector3Int min = ground.WorldToCell(new Vector3(footprint.min.x, footprint.min.y, z));

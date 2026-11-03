@@ -9,8 +9,8 @@ public sealed class PlayerWeaponHud : MonoBehaviour
     [SerializeField] private CanvasGroup _group;
     [SerializeField] private PlayerWeaponSlotView[] _slots;
     private PlayerSkillController _boundPlayer;
-    private PlayerAttack _owner;
-    public PlayerAttack Owner => _owner;
+    private PlayerWeaponSelection _owner;
+    public PlayerWeaponSelection Owner => _owner;
 
     public bool IsConfigured
     {
@@ -43,7 +43,7 @@ public sealed class PlayerWeaponHud : MonoBehaviour
         {
             UnbindOwner();
             _boundPlayer = player;
-            _owner = player != null ? player.GetComponent<PlayerAttack>() : null;
+            _owner = player != null ? player.GetComponent<PlayerWeaponSelection>() : null;
             if (_owner != null) _owner.WeaponChanged += OnWeaponChanged;
         }
         Refresh();

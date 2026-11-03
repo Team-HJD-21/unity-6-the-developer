@@ -17,7 +17,7 @@ public static class PlayerSkillDescriptions
         PlayerTurretPlacementResult.BlockedByObstacle => "장애물과 겹쳐 설치할 수 없습니다.",
         PlayerTurretPlacementResult.OverlapsPlayer => "플레이어와 겹쳐 설치할 수 없습니다.",
         PlayerTurretPlacementResult.OverlapsEnemy => "몬스터와 겹쳐 설치할 수 없습니다.",
-        _ => "이곳에는 포탑을 설치할 수 없습니다."
+        _ => "이곳에는 스킬을 설치할 수 없습니다."
     };
 
     public static string Name(PlayerSkillId skill) => skill switch
@@ -33,10 +33,10 @@ public static class PlayerSkillDescriptions
     {
         return (skill switch
         {
-            PlayerSkillId.Bomb => "발밑에 시한폭탄을 설치합니다.\n몬스터·장애물과 겹치면 설치 불가\n잠시 후 주변 적에게 범위 피해\n보유 수량: " + owner.BombCount,
+            PlayerSkillId.Bomb => "플레이어 주변 원 안의 커서 위치에 시한폭탄 설치\n왼쪽 클릭 확정 · 우클릭 / Esc / 같은 키로 취소\n캐릭터·장애물과 겹치면 설치 불가\n잠시 후 주변 적에게 범위 피해\n보유 수량: " + owner.BombCount,
             PlayerSkillId.PlayerTurret => "플레이어 주변 8칸 중 마우스 방향에 설치\n왼쪽 클릭 확정 · 플레이어 이동 시 후보도 이동\n우클릭 / Esc / 같은 스킬 키로 취소\n플레이어·몬스터와 겹치면 설치 불가\n본체 통과 불가 · 체력 100 · 최대 3개\n설치 간격 3초 · 근처에서 F키로 회수\n손상 비율에 따라 최대 30초 재충전",
-            PlayerSkillId.EnergyBarrier => "발밑에 펄스 설치 → 같은 키로 연결\n연결 거리 1~18 · 지형 통과 불가\n몬스터 이동 차단 · 아군 탄환 통과\n보유 3개 · 18초마다 1개 충전\n우클릭으로 미완성 펄스 취소",
-            PlayerSkillId.LureBeacon => "발밑에 주변 적을 유인하는 비콘 설치\n유인 반경 12 · 유지 8초\n체력 80 · 재사용 14초",
+            PlayerSkillId.EnergyBarrier => "플레이어 주변 반경 12 안에 첫 본체 설치\n두 번째는 첫 본체 중심 반경 13.5 안에서 클릭\n두 번째 설치 실패 시 첫 위치 유지 · 재시도 가능\n연결 거리 1~13.5 · 캐릭터·장애물 겹침 불가\n몬스터 이동 차단 · 아군 탄환 통과\n완성에만 1개 소모 · 18초마다 1개 충전\n우클릭 / Esc / 같은 키로 전체 취소",
+            PlayerSkillId.LureBeacon => "플레이어 주변 원 안의 커서 위치에 비콘 설치\n왼쪽 클릭 확정 · 우클릭 / Esc / 같은 키로 취소\n유인 반경 12 · 유지 8초\n체력 80 · 재사용 14초",
             _ => ""
         });
     }

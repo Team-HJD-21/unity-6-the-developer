@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum PlayerBombPlacementResult { Allowed, InvalidBody, OverlapsEnemy, BlockedByObstacle }
 
-/// <summary>설치자 발밑에 둘 폭탄 본체의 점유 공간을 검사합니다.</summary>
+/// <summary>폭탄 본체 후보 위치의 점유 공간을 검사합니다. 설치자 겹침·지면 검사는 공통 설치 흐름에서 보완합니다.</summary>
 public static class PlayerBombPlacementRules
 {
     private const float Clearance = .02f;

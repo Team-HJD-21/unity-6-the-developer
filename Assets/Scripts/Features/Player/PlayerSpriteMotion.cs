@@ -14,7 +14,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     private PlayerInputHandler _input;
     private PlayerWeaponRig _rig;
     private PlayerControlState _controls;
-    private PlayerAttack _attack;
+    private PlayerWeaponSelection _selection;
     private PlayerSkillController _skills;
     private PlayerMotion _motion;
     private PlayerAimFacing _facing;
@@ -40,7 +40,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     public bool IsPlayingDashAnimation => _ownsDisplay &&
         (_motion == PlayerMotion.Dash || _motion == PlayerMotion.ToolDash);
     private bool IsAction => IsPlayingToolAction || _motion == PlayerMotion.Fire;
-    private bool HasSpanner => _attack != null && _attack.CurrentWeapon == WeaponType.Spanner;
+    private bool HasSpanner => _selection != null && _selection.CurrentWeapon == WeaponType.Spanner;
     private bool HasMovementInput => _input.MoveInput.sqrMagnitude > .001f &&
         (_controls == null || _controls.CanAct);
     private AnimationClip CurrentClip => _motions.GetClip(_motion, _hoveringAction, _lateralLean).Animation(_facing);
@@ -54,7 +54,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         if (_animator == null) _animator = GetComponent<Animator>();
         _input = GetComponent<PlayerInputHandler>();
         _controls = GetComponent<PlayerControlState>();
-        _attack = GetComponent<PlayerAttack>();
+        _selection = GetComponent<PlayerWeaponSelection>();
         _skills = GetComponent<PlayerSkillController>();
         _rig = GetComponentInChildren<PlayerWeaponRig>(true);
     }
@@ -73,7 +73,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         _animator.enabled = true;
         _ownsDisplay = true;
         _usesToolPoses = HasSpanner;
-        if (_attack != null) _attack.WeaponChanged += OnWeaponChanged;
+        if (_selection != null) _selection.WeaponChanged += OnWeaponChanged;
         StartMotion(HasSpanner ? PlayerMotion.ToolIdle : PlayerMotion.Idle);
         UpdateAnimatorState();
     }
@@ -221,7 +221,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_attack != null) _attack.WeaponChanged -= OnWeaponChanged;
+        if (_selection != null) _selection.WeaponChanged -= OnWeaponChanged;
         if (!_ownsDisplay) return;
         EndImpactPause();
         _ownsDisplay = false;

@@ -27,6 +27,14 @@
 
 ## Unity 연결
 
+2026-11-04 리뷰 대응: `PlayerWeaponSelection`이 현재 무기·선택 입력·장착 참조와
+`WeaponChanged`를 소유한다. `PlayerAttack`은 선택된 장비로 공격하고 공격 대기시간을
+관리한다. HUD·몸체 모션·무기 외형은 선택 컴포넌트를 직접 참조하며, 선택 API를 공격
+컴포넌트에 중복 제공하지 않는다. Player 프리팹에 선택 컴포넌트를 미리 배치하고 기존
+시작 무기·탄환·스패너 참조를 이동했다. 이동 대상은 이 브랜치에서 사용하는
+`Assets/Prefabs/Player/Player.prefab`이며, 다른 PlayerAttack 에셋을 추가할 때도
+같은 선택 컴포넌트의 장비 참조를 작성해야 한다.
+
 스크립트와 `.meta`를 함께 이동해 기존 MonoScript GUID를 유지한다. 프리팹의
 컴포넌트 타입 표기와 코드·테스트·문서 참조를 함께 변경한다. 이름이 바뀐
 MonoBehaviour에는 이전 타입 이름을 `MovedFrom`으로 기록한다.

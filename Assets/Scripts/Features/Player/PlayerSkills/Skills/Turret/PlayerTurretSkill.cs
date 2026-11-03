@@ -101,13 +101,8 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
     /// <summary>커서까지의 거리와 관계없이 플레이어 주변 8칸 중 조준 방향의 한 칸을 반환합니다.</summary>
     public Vector3 GetPlacementPosition(Vector2 pointerPosition)
     {
-        Vector2 direction = pointerPosition - (Vector2)transform.position;
-        if (!PlayerAimUtility.IsValidDirection(direction))
-            direction = _input != null ? _input.AimDirection : Vector2.down;
-        float angle = Mathf.Atan2(direction.y, direction.x);
-        float snappedAngle = Mathf.Round(angle / (Mathf.PI / 4f)) * (Mathf.PI / 4f);
-        Vector3 cell = new(Mathf.RoundToInt(Mathf.Cos(snappedAngle)), Mathf.RoundToInt(Mathf.Sin(snappedAngle)), 0f);
-        return transform.position + cell * Mathf.Max(.1f, _placementCellSize);
+        return PlayerSkillPlacementUtility.GetPosition(transform.position, pointerPosition,
+            _input != null ? _input.AimDirection : Vector2.down, _placementCellSize);
     }
 
     private PlayerTurretPlacementResult EvaluatePlacement(Vector3 position)

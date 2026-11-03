@@ -11,7 +11,8 @@
 | UI | PlayerInputHandler.Update (-200) | 현재 포인터의 GraphicRaycaster 결과를 검사해 클릭을 소비한다. 클릭으로 UI가 닫히더라도 소비 기록은 그 프레임에 남는다. |
 | 스킬 시작·취소 | PlayerSkillController.Update (100), 각 설치 스킬 | 설치 문맥을 해당 프레임에 예약한다. Q/E와 LMB를 동시에 눌러도 포탑 선택·공격으로 넘기지 않는다. |
 | 포탑 선택 | InitialStagePlayerHUD / TurretInteractionUI.Update (150) | 설치 예약과 UI를 제외한다. 실제 포탑을 클릭했으면 거리·기존 선택 여부와 관계없이 클릭을 소비한다. 빈 지면은 소비하지 않는다. |
-| 설치 확정 | PlayerTurretSkill.LateUpdate (0) | UI에 사용하지 않은 새 클릭을 한 번 소비하고 위치를 재검사한다. 실패도 클릭을 소비하며 성공 때만 수량·쿨타임을 소모한다. |
+| 무기 선택 | PlayerWeaponSelection.Update (200) | 숫자키·휠·Tab을 읽고 선택 상태와 장착 외형을 갱신한다. HUD 버튼도 같은 선택 API를 호출하며 공격 대기시간은 변경하지 않는다. |
+| 설치 확정 | PlayerTurretSkill / PlayerPlacementSkillBase.LateUpdate (0) | UI에 사용하지 않은 새 클릭을 한 번 소비하고 위치를 재검사한다. 실패도 클릭을 소비하며 성공 때만 수량·쿨타임을 소모한다. 방벽은 두 번째 본체 연결 성공 때 소모한다. |
 | 공격 | PlayerAttack.LateUpdate (300) | 소비·예약·UI·조작 상태를 검사한 뒤 유효한 공격 제스처일 때 TryFire를 호출한다. |
 
 숫자는 DefaultExecutionOrder이며 같은 생명주기 안의 순서다. 모든 Update가 끝난 뒤 LateUpdate가 실행된다. 설치 스킬이나 공격 처리의 실행 순서를 변경할 때 이 우선순위를 함께 확인한다. 별도 스크립트의 무기 수치·스패너 타격 예약 처리는 기존 흐름을 따른다.
@@ -27,7 +28,7 @@
 | GameInput.IsPointerOverUi() | 현재 위치를 직접 RaycastAll로 검사하며 GraphicRaycaster만 UI로 취급 |
 | PlayerInputHandler.ResolvePrimaryAttack(bool canAttack) | 공격 단계에서 호출해 이번 프레임의 IsAttackPressed를 확정 |
 | PlayerInputHandler.CancelAttackGesture() | 활성 연사 상태를 해제. 비활성화 시 호출 |
-| PlayerSkillController.IsPlacingSkill | 플레이어 터렛 미리보기 또는 방벽의 두 번째 펄스 대기 상태 |
+| PlayerSkillController.IsPlacingSkill | 터렛·폭탄·비콘 미리보기 또는 방벽의 첫 번째·두 번째 본체 배치 상태 |
 
 GameInput의 기록은 로컬 마우스 한 개에 대한 프레임 상태이며 네트워크 전송 상태가 아니다. 씬의 기존 UI 이벤트는 원시 마우스 입력을 그대로 받는다. 소비 기록은 게임플레이에서 같은 클릭을 다시 사용하지 않기 위한 것이다. 정적 기록은 SubsystemRegistration에서 초기화한다.
 
@@ -37,7 +38,7 @@ PlayerAttackGesture는 새 누름으로만 연사를 시작한다. UI 진입·�
 
 - 기본총·냉각총·스나이퍼·스패너에 같은 클릭 우선순위를 적용한다. 포탑을 직접 클릭하면 스패너도 선택만 한다. 수리는 빈 지면에서 공격을 시작하고 유효한 전방 수리 대상에 조준할 수 있다.
 - 먼 포탑의 접근 안내와 가까운 포탑의 조작 조건은 기존 선택·Presenter 경로를 유지한다.
-- 방벽은 기존 Q/E 두 번째 펄스 확정과 우클릭 취소를 유지한다. 터렛 설치는 기존 우클릭·Esc 취소를 유지한다.
+- 설치형 스킬은 Q/E로 미리보기를 시작하고 LMB로 확정한다. 터렛은 기존 플레이어 중심 주변 8칸 중 마우스 방향을 선택한다. 폭탄·비콘은 플레이어 중심 반경 12, 방벽 첫 본체는 반경 12의 원 안에서 커서 위치에 설치한다. 방벽 첫 본체를 확정하면 원과 판정을 첫 위치 중심 반경 13.5로 고정하며 플레이어 이동에 따라 옮기지 않는다. 범위 밖 클릭은 소비하되 설치하지 않는다. 두 번째 설치 실패 시 사유를 표시하면서 첫 위치를 유지하며, 자동 만료 없이 재시도한다. 우클릭·Esc·같은 스킬 키로 취소하고 다른 스킬로 전환해도 기존 미리보기는 취소한다.
 - 무기 숫자키·휠·HUD 버튼과 씬·프리팹 배치는 유지한다. 새 UI 오브젝트를 런타임에 만들지 않는다.
 - 몬스터 내부 코드와 터렛 Core/API는 변경하지 않는다.
 

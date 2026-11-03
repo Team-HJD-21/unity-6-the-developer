@@ -15,6 +15,7 @@ public sealed class PlayerBulletRuntimeTests
     private GameObject _bulletPrefab;
     private Rigidbody2D _shooterBody;
     private PlayerAttack _attack;
+    private PlayerWeaponSelection _selection;
     private Transform _muzzle;
     private readonly List<PlayerBullet> _bullets = new();
     private readonly List<GameObject> _targets = new();
@@ -51,10 +52,11 @@ public sealed class PlayerBulletRuntimeTests
         var anchor = anchorObject.AddComponent<PlayerMuzzleAnchor>();
         SetReference(anchor, "_playerRoot", _shooter.transform);
         SetReference(anchor, "_weaponRig", rig);
-        _attack = _shooter.AddComponent<PlayerAttack>();
-        SetReference(_attack, "_bulletPrefab", _bulletPrefab);
-        SetReference(_attack, "_sniperBulletPrefab",
+        _selection = _shooter.AddComponent<PlayerWeaponSelection>();
+        SetReference(_selection, "_bulletPrefab", _bulletPrefab);
+        SetReference(_selection, "_sniperBulletPrefab",
             AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/SniperBullet.prefab"));
+        _attack = _shooter.AddComponent<PlayerAttack>();
         _shooter.SetActive(true);
     }
 
@@ -137,8 +139,8 @@ public sealed class PlayerBulletRuntimeTests
     [UnityTest]
     public IEnumerator CryoBlaster_PreservesMuzzlePositionPelletCountAndSpread()
     {
-        _attack.SelectNextWeapon();
-        Assert.That(_attack.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
+        _selection.SelectNextWeapon();
+        Assert.That(_selection.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
         _shooterBody.linearVelocity = Vector2.right * 5f;
         Assert.That(_attack.TryFire(), Is.True);
         CaptureBullets();
@@ -156,9 +158,9 @@ public sealed class PlayerBulletRuntimeTests
     [UnityTest]
     public IEnumerator Sniper_FiresOneFastRoundWithoutSpreadAndRespectsCooldown()
     {
-        _attack.SelectNextWeapon();
-        _attack.SelectNextWeapon();
-        Assert.That(_attack.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
+        _selection.SelectNextWeapon();
+        _selection.SelectNextWeapon();
+        Assert.That(_selection.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
         _shooterBody.linearVelocity = Vector2.right * 5f;
         Assert.That(_attack.TryFire(), Is.True);
         Assert.That(_attack.TryFire(), Is.False);

@@ -41,6 +41,38 @@ public sealed class PlayerSkillPrefabTests
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/" + name + ".prefab");
         Assert.That(prefab.GetComponent<PlayerFieldDevice>().EmitterSprite, Is.Not.Null);
     }
+    [TestCase("PlayerBombPreview", typeof(PlayerBomb))]
+    [TestCase("PlayerBeaconPreview", typeof(PlayerBeaconSkill))]
+    [TestCase("PlayerBarrierPreview", typeof(PlayerBarrierSkill))]
+    public void PlacementPreview_IsAuthoredVisualOnlyAndAssigned(string name, System.Type skillType)
+    {
+        var preview = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/" + name + ".prefab");
+        var view = preview.GetComponent<PlayerSkillPlacementPreview>();
+        Assert.That(view.IsConfigured, Is.True);
+        Assert.That(preview.GetComponentsInChildren<Collider2D>(true), Is.Empty);
+        Assert.That(preview.GetComponentsInChildren<Rigidbody2D>(true), Is.Empty);
+        Assert.That(preview.GetComponentsInChildren<MonoBehaviour>(true).Length, Is.EqualTo(1));
+        var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+        var data = new SerializedObject(player.GetComponent(skillType));
+        Assert.That(data.FindProperty("_previewPrefab").objectReferenceValue, Is.EqualTo(view));
+        Assert.That(data.FindProperty("_placementRadius").floatValue, Is.EqualTo(12));
+        var range = preview.transform.Find("Placement Range").GetComponent<LineRenderer>();
+        Assert.That(range.loop, Is.True);
+        Assert.That(range.useWorldSpace, Is.False);
+        Assert.That(range.positionCount, Is.EqualTo(64));
+        for (int i = 0; i < range.positionCount; i++)
+            Assert.That(range.GetPosition(i).magnitude, Is.EqualTo(1).Within(.0001f));
+        var skill = (PlayerPlacementSkillBase)player.GetComponent(skillType);
+        Vector2 pointer = (Vector2)player.transform.position + new Vector2(2.25f, 1.75f);
+        Assert.That(skill.GetPlacementPosition(pointer), Is.EqualTo(new Vector3(pointer.x, pointer.y, player.transform.position.z)));
+        if (skillType == typeof(PlayerBarrierSkill))
+        {
+            Assert.That(data.FindProperty("_maxDistance").floatValue, Is.EqualTo(13.5f));
+            Assert.That(preview.GetComponentsInChildren<SpriteRenderer>(true).Length, Is.EqualTo(2));
+            Assert.That(preview.GetComponentInChildren<LineRenderer>(true).useWorldSpace, Is.True);
+        }
+    }
+
     [Test]
     public void PlayerTurret_DamageIsHalfOfLevelOneCannon()
     {

@@ -31,6 +31,7 @@
 | `PlayerWeaponVisual` | Animator 평가 이후 LateUpdate에서 현재 몸체 프레임에 맞는 무기를 표시한다. 색상·뒤집기·Sorting Layer와 정렬 차이를 반영하고, `TryGetMuzzlePosition`으로 외형에 지정된 총구 좌표를 제공한다. |
 | `PlayerSpriteMotion` | 기존 행동·방향·진행률과 타격 멈칫을 선택한다. 무기 표시를 위해 행동을 다시 시작하지 않는다. |
 | `PlayerWeaponRig` | 기존 총구와 섬광을 선택한다. 외형에 총구가 지정되면 해당 좌표를 우선 사용하고, 없으면 기존 자세별 총구를 사용한다. 구형 방향별 총 Sprite를 숨기고 8방향 선택을 유지한다. |
+| `PlayerWeaponSelection` | 현재 무기와 장착 상태를 소유한다. 외형과 몸체 모션이 이 상태를 조회하고 변경 알림을 구독한다. |
 | `PlayerAttack`, `PlayerSpannerWeapon` | 기존 공격·수리 입력, 피해, 간격과 판정을 담당한다. |
 
 `PlayerWeaponAppearance.TryGetFrame(body, out frame)`은 알려진 몸체 프레임과 유효한 무기 Sprite가 있을 때 true다.

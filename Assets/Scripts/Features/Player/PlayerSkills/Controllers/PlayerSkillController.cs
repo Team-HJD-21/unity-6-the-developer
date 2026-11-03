@@ -23,9 +23,18 @@ public sealed class PlayerSkillController : MonoBehaviour
     public bool IsSelectionOpen => _hud != null && _hud.IsOpen;
     public bool CanPrepare => isActiveAndEnabled && (_control == null || _control.CanPrepare) && (_control != null && _control.HasMatchBinding || _canPrepare == null || _canPrepare());
     public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
-    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingTurret && (CanPrepare || CanUse);
+    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingSkill && (CanPrepare || CanUse);
     public bool IsPlacingTurret => _turret != null && _turret.IsPlacing;
-    public bool IsPlacingSkill => IsPlacingTurret || (_barrier != null && _barrier.IsPending);
+    public bool IsPlacingSkill => IsPlacingTurret || ActivePlacement != null;
+    private PlayerPlacementSkillBase ActivePlacement
+    {
+        get
+        {
+            foreach (var skill in _skills.Values)
+                if (skill is PlayerPlacementSkillBase placement && placement.IsPlacing) return placement;
+            return null;
+        }
+    }
 
     private void Awake()
     {
@@ -67,8 +76,7 @@ public sealed class PlayerSkillController : MonoBehaviour
     public void ClearSelection()
     {
         if (!CanPrepare) return;
-        if (_barrier != null) _barrier.CancelPlacement();
-        if (_turret != null) _turret.CancelPlacement();
+        CancelPlacements();
         Loadout.Clear();
     }
     private PlayerSkillBase FindSkill(PlayerSkillId id) => _skills.TryGetValue(id, out var skill) ? skill : null;
@@ -76,7 +84,7 @@ public sealed class PlayerSkillController : MonoBehaviour
     public int SkillCount(PlayerSkillId id) => FindSkill(id)?.AvailableCount ?? 0;
     public bool IsSkillReady(PlayerSkillId id) => FindSkill(id)?.IsReady ?? false;
     public string BarrierPlacementHint => _barrier != null ? _barrier.PlacementHint : "";
-    public string PlacementHint => IsPlacingTurret ? _turret.PlacementHint : BarrierPlacementHint;
+    public string PlacementHint => IsPlacingTurret ? _turret.PlacementHint : ActivePlacement?.PlacementHint ?? "";
     public PlayerTurretPlacementResult TurretPlacementFeedback =>
         _turret != null ? _turret.PlacementFeedback : PlayerTurretPlacementResult.Allowed;
     public string PlacementFailure
@@ -84,6 +92,7 @@ public sealed class PlayerSkillController : MonoBehaviour
         get
         {
             if (IsPlacingTurret) return PlayerSkillDescriptions.TurretPlacementFailure(TurretPlacementFeedback);
+            if (ActivePlacement != null) return ActivePlacement.PlacementFailure;
             if (IsPlacingSkill || _bomb == null || !Loadout.Contains(PlayerSkillId.Bomb)) return "";
             return PlayerSkillDescriptions.BombPlacementFailure(_bomb.PlacementFeedback);
         }
@@ -107,9 +116,17 @@ public sealed class PlayerSkillController : MonoBehaviour
     public bool TryUse(PlayerSkillId id)
     {
         if (!CanUse || !Loadout.Contains(id)) return false;
-        if (id != PlayerSkillId.PlayerTurret && _turret != null) _turret.CancelPlacement();
-        if (id == PlayerSkillId.PlayerTurret && _barrier != null) _barrier.CancelPlacement();
-        return FindSkill(id)?.TryUseSkill() ?? false;
+        var skill = FindSkill(id);
+        if (skill == null || !skill.IsReady) return false;
+        CancelPlacements(id);
+        return skill.TryUseSkill();
+    }
+
+    private void CancelPlacements(PlayerSkillId except = PlayerSkillId.None)
+    {
+        if (_turret != null && except != _turret.Id) _turret.CancelPlacement();
+        foreach (var skill in _skills.Values)
+            if (skill.Id != except && skill is PlayerPlacementSkillBase placement) placement.CancelPlacement();
     }
 
     private void Update()
@@ -123,7 +140,7 @@ public sealed class PlayerSkillController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_turret != null) _turret.CancelPlacement();
+        CancelPlacements();
         if (_hud != null) _hud.Unbind();
     }
 }

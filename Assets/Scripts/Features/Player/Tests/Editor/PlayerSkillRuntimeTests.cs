@@ -46,6 +46,9 @@ public sealed class PlayerSkillRuntimeTests
         turretData.ApplyModifiedPropertiesWithoutUndo();
         Assign(_player.GetComponent<PlayerBarrierSkill>(), "_prefab", "Assets/Prefabs/Player/EnergyBarrier.prefab", true);
         Assign(_player.GetComponent<PlayerBeaconSkill>(), "_prefab", "Assets/Prefabs/Player/LureBeacon.prefab", true);
+        BindPlacement(_player.GetComponent<PlayerBomb>(), "PlayerBombPreview", map);
+        BindPlacement(_player.GetComponent<PlayerBeaconSkill>(), "PlayerBeaconPreview", map);
+        BindPlacement(_player.GetComponent<PlayerBarrierSkill>(), "PlayerBarrierPreview", map);
         _controller.BindSceneState(() => _preparing, () => true);
         _player.SetActive(true); // Awake/OnEnable을 Unity가 한 번씩 실행합니다.
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
@@ -64,6 +67,16 @@ public sealed class PlayerSkillRuntimeTests
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         var data = new SerializedObject(component);
         data.FindProperty(field).objectReferenceValue = device ? (Object)prefab.GetComponent<PlayerFieldDevice>() : prefab;
+        data.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void BindPlacement(PlayerPlacementSkillBase skill, string preview, Tilemap ground)
+    {
+        var data = new SerializedObject(skill);
+        data.FindProperty("_previewPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/Player/" + preview + ".prefab").GetComponent<PlayerSkillPlacementPreview>();
+        data.FindProperty("_placementGround").objectReferenceValue = ground;
+        data.FindProperty("_placementRadius").floatValue = 12;
         data.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -289,6 +302,9 @@ public sealed class PlayerSkillRuntimeTests
         var skill = _player.GetComponent<PlayerBarrierSkill>();
         Assert.That(_controller.TryUse(PlayerSkillId.EnergyBarrier), Is.True);
         Assert.That(skill.IsPending, Is.True);
+        Assert.That(skill.HasFirstEmitter, Is.False);
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.right * 4), Is.True);
+        Assert.That(skill.HasFirstEmitter, Is.True);
         Assert.That(skill.Charges, Is.EqualTo(3));
         skill.CancelPlacement();
         Assert.That(skill.IsPending, Is.False);
@@ -301,10 +317,14 @@ public sealed class PlayerSkillRuntimeTests
     {
         _controller.TrySelect(PlayerSkillId.EnergyBarrier);
         _controller.TryUse(PlayerSkillId.EnergyBarrier);
-        _player.transform.position += Vector3.right * 7;
-        Assert.That(_controller.TryUse(PlayerSkillId.EnergyBarrier), Is.False);
         var skill = _player.GetComponent<PlayerBarrierSkill>();
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.right * 4), Is.True);
+        Vector3 first = skill.FirstEmitterPosition;
+        _player.transform.position += Vector3.right * 20;
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.right * 4), Is.False);
         Assert.That(skill.IsPending, Is.True);
+        Assert.That(skill.FirstEmitterPosition, Is.EqualTo(first));
+        Assert.That(_controller.PlacementFailure, Does.Contain("범위"));
         Assert.That(skill.Charges, Is.EqualTo(3));
         yield break;
     }
@@ -314,9 +334,9 @@ public sealed class PlayerSkillRuntimeTests
     {
         _controller.TrySelect(PlayerSkillId.EnergyBarrier);
         _controller.TryUse(PlayerSkillId.EnergyBarrier);
-        _player.transform.position += Vector3.right * 3;
-        Assert.That(_controller.TryUse(PlayerSkillId.EnergyBarrier), Is.True);
         var skill = _player.GetComponent<PlayerBarrierSkill>();
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.right * 4), Is.True);
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.up * 4), Is.True);
         Assert.That(skill.IsPending, Is.False);
         Assert.That(skill.Charges, Is.EqualTo(2));
         yield break;
@@ -326,27 +346,42 @@ public sealed class PlayerSkillRuntimeTests
     public IEnumerator Barrier_TerrainBlocksConnectionWithoutConsumingCharge()
     {
         _controller.TrySelect(PlayerSkillId.EnergyBarrier); _controller.TryUse(PlayerSkillId.EnergyBarrier);
+        var skill = _player.GetComponent<PlayerBarrierSkill>();
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.right * 4), Is.True);
+        Vector3 first = skill.FirstEmitterPosition;
         var obstacle = new GameObject("Impassable terrain", typeof(BoxCollider2D));
         try
         {
-            obstacle.transform.position = _player.transform.position + Vector3.right * 1.5f;
+            obstacle.transform.position = _player.transform.position + new Vector3(2, 2, 0);
             for (int layer = 0; layer < 32; layer++)
                 if (!Physics2D.GetIgnoreLayerCollision(_player.layer, layer)) { obstacle.layer = layer; break; }
-            _player.transform.position += Vector3.right * 3;
             Physics2D.SyncTransforms();
-            Assert.That(_controller.TryUse(PlayerSkillId.EnergyBarrier), Is.False);
-            Assert.That(_player.GetComponent<PlayerBarrierSkill>().Charges, Is.EqualTo(3));
+            Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.up * 4), Is.False);
+            Assert.That(skill.Charges, Is.EqualTo(3));
+            Assert.That(skill.HasFirstEmitter, Is.True);
+            Assert.That(skill.FirstEmitterPosition, Is.EqualTo(first));
+            Assert.That(_controller.PlacementFailure, Is.Not.Empty);
+            obstacle.transform.position += Vector3.right * 30;
+            Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.up * 4), Is.True);
+            Assert.That(skill.IsPending, Is.False);
+            Assert.That(skill.Charges, Is.EqualTo(2));
+            Assert.That(_controller.PlacementFailure, Is.Empty);
         }
         finally { Object.DestroyImmediate(obstacle); }
         yield break;
     }
 
     [UnityTest]
-    public IEnumerator Barrier_ExpiredPulseDoesNotConsumeCharge()
+    public IEnumerator Barrier_FirstPulseStaysFixedUntilExplicitCancellation()
     {
         _controller.TrySelect(PlayerSkillId.EnergyBarrier); _controller.TryUse(PlayerSkillId.EnergyBarrier);
-        var skill = _player.GetComponent<PlayerBarrierSkill>(); skill.Tick(15);
-        Assert.That(skill.IsPending, Is.False);
+        var skill = _player.GetComponent<PlayerBarrierSkill>();
+        Assert.That(skill.TryConfirmPlacement(_player.transform.position + Vector3.right * 4), Is.True);
+        Vector3 first = skill.FirstEmitterPosition;
+        skill.Tick(60);
+        _player.transform.position += Vector3.up;
+        Assert.That(skill.IsPending, Is.True);
+        Assert.That(skill.FirstEmitterPosition, Is.EqualTo(first));
         Assert.That(skill.Charges, Is.EqualTo(3));
         yield break;
     }
@@ -445,9 +480,12 @@ public sealed class PlayerSkillRuntimeTests
         try
         {
             enemy.layer = LayerMask.NameToLayer("Enemy");
-            enemy.transform.position = _player.transform.position;
             var skill = _player.GetComponent<PlayerBomb>();
-            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.False);
+            Vector3 pointer = _player.transform.position + Vector3.down;
+            Vector3 candidate = skill.GetPlacementPosition(pointer);
+            enemy.transform.position = candidate;
+            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.True);
+            Assert.That(skill.TryConfirmPlacement(pointer), Is.False);
             Assert.That(skill.CurrentBombCount, Is.EqualTo(5));
             Assert.That(skill.RemainingCooldown, Is.Zero);
             Assert.That(skill.PlacementFeedback, Is.EqualTo(PlayerBombPlacementResult.OverlapsEnemy));
@@ -457,12 +495,12 @@ public sealed class PlayerSkillRuntimeTests
             Assert.That(failure.text, Does.Contain("몬스터"));
 
             enemy.transform.position += Vector3.right * 10;
-            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.True);
+            Assert.That(skill.TryConfirmPlacement(pointer), Is.True);
             Assert.That(skill.CurrentBombCount, Is.EqualTo(4));
             Assert.That(skill.RemainingCooldown, Is.EqualTo(skill.CooldownDuration));
             Assert.That(skill.PlacementFeedback, Is.EqualTo(PlayerBombPlacementResult.Allowed));
             foreach (var bomb in Object.FindObjectsByType<PlayerBombExplosion>(FindObjectsSortMode.None))
-                if (Vector3.Distance(bomb.transform.position, _player.transform.position) < .01f) deployed = bomb.gameObject;
+                if (Vector3.Distance(bomb.transform.position, candidate) < .01f) deployed = bomb.gameObject;
             Assert.That(deployed, Is.Not.Null);
             Assert.That(deployed.GetComponent<UnityEngine.Rendering.SortingGroup>(), Is.Not.Null);
         }
@@ -480,15 +518,141 @@ public sealed class PlayerSkillRuntimeTests
         var wall = new GameObject("Bomb placement wall", typeof(BoxCollider2D));
         try
         {
-            wall.transform.position = _player.transform.position;
-            wall.GetComponent<BoxCollider2D>().includeLayers = 1 << _player.layer;
-            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.False);
             var skill = _player.GetComponent<PlayerBomb>();
+            Vector3 pointer = _player.transform.position + Vector3.down;
+            wall.transform.position = skill.GetPlacementPosition(pointer);
+            wall.GetComponent<BoxCollider2D>().includeLayers = 1 << _player.layer;
+            Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.True);
+            Assert.That(skill.TryConfirmPlacement(pointer), Is.False);
             Assert.That(skill.PlacementFeedback, Is.EqualTo(PlayerBombPlacementResult.BlockedByObstacle));
             Assert.That(skill.CurrentBombCount, Is.EqualTo(5));
             Assert.That(skill.RemainingCooldown, Is.Zero);
         }
         finally { Object.DestroyImmediate(wall); }
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Beacon_RangeFollowsPlayerAndRejectsOutsideCursorWithoutClamping()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.LureBeacon), Is.True);
+        var skill = _player.GetComponent<PlayerBeaconSkill>();
+        Assert.That(_controller.TryUse(PlayerSkillId.LureBeacon), Is.True);
+        PlayerSkillPlacementPreview preview = null;
+        foreach (var item in Object.FindObjectsByType<PlayerSkillPlacementPreview>(FindObjectsSortMode.None))
+            if (item.name.StartsWith("PlayerBeaconPreview")) preview = item;
+        Assert.That(preview, Is.Not.Null);
+        var range = preview.transform.Find("Placement Range");
+        Assert.That(range.position, Is.EqualTo(_player.transform.position));
+        Assert.That(range.localScale.x, Is.EqualTo(skill.PlacementRadius));
+        Vector3 outside = _player.transform.position + Vector3.right * (skill.PlacementRadius + .5f);
+        Assert.That(skill.GetPlacementPosition(outside), Is.EqualTo(outside));
+        Assert.That(skill.TryConfirmPlacement(outside), Is.False);
+        Assert.That(skill.IsPlacing, Is.True);
+        Assert.That(_controller.PlacementFailure, Does.Contain("범위"));
+        Assert.That(skill.RemainingCooldown, Is.Zero);
+        Assert.That(preview.transform.position, Is.EqualTo(outside));
+        Assert.That(range.position, Is.EqualTo(_player.transform.position), "The circle follows the player, not the candidate.");
+        _player.transform.position += Vector3.right;
+        yield return null;
+        Assert.That(range.position, Is.EqualTo(_player.transform.position));
+        Vector3 inside = _player.transform.position + new Vector3(2.25f, 1.75f, 0);
+        Assert.That(skill.TryConfirmPlacement(inside), Is.True);
+        bool found = false;
+        foreach (var device in Object.FindObjectsByType<PlayerFieldDevice>(FindObjectsSortMode.None))
+            if (device.Kind == PlayerFieldDeviceKind.Beacon && Vector3.Distance(device.Position, inside) < .001f) found = true;
+        Assert.That(found, Is.True, "Placement preserves the exact cursor coordinates.");
+    }
+
+    [UnityTest]
+    public IEnumerator Barrier_SecondRangeStaysOnFirstEmitterAfterPlayerMoves()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.EnergyBarrier), Is.True);
+        var skill = _player.GetComponent<PlayerBarrierSkill>();
+        Assert.That(_controller.TryUse(PlayerSkillId.EnergyBarrier), Is.True);
+        Vector3 first = _player.transform.position + Vector3.right * 4;
+        Assert.That(skill.TryConfirmPlacement(first), Is.True);
+        PlayerSkillPlacementPreview preview = null;
+        foreach (var item in Object.FindObjectsByType<PlayerSkillPlacementPreview>(FindObjectsSortMode.None))
+            if (item.name.StartsWith("PlayerBarrierPreview")) preview = item;
+        Assert.That(preview, Is.Not.Null);
+        var range = preview.transform.Find("Placement Range");
+        Assert.That(skill.PlacementCenter, Is.EqualTo(first));
+        Assert.That(skill.PlacementRadius, Is.EqualTo(13.5f));
+        Assert.That(range.position, Is.EqualTo(first), "The first click immediately relocates the circle.");
+        Assert.That(range.localScale.x, Is.EqualTo(13.5f));
+        Assert.That(skill.TryConfirmPlacement(first + Vector3.up * 13.6f), Is.False);
+        Assert.That(_controller.PlacementFailure, Does.Contain("범위"));
+        Assert.That(skill.FirstEmitterPosition, Is.EqualTo(first));
+        Assert.That(skill.HasFirstEmitter, Is.True);
+        Assert.That(skill.Charges, Is.EqualTo(3));
+        _player.transform.position += Vector3.right * 25;
+        yield return null;
+        Assert.That(range.position, Is.EqualTo(first));
+        Assert.That(range.localScale.x, Is.EqualTo(13.5f));
+        Assert.That(skill.PlacementCenter, Is.EqualTo(first));
+        Assert.That(skill.TryConfirmPlacement(first + Vector3.up * 4), Is.True,
+            "The second endpoint is measured from the first, even when the player is far away.");
+        Assert.That(skill.Charges, Is.EqualTo(2));
+        Assert.That(skill.IsPlacing, Is.False);
+        Assert.That(skill.PlacementCenter, Is.EqualTo(_player.transform.position));
+        Assert.That(skill.PlacementRadius, Is.EqualTo(12));
+    }
+
+    [UnityTest]
+    public IEnumerator SwitchingPlacementAndResettingLoadoutCancelEveryPreviewWithoutSpending()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.Bomb), Is.True);
+        Assert.That(_controller.TrySelect(PlayerSkillId.LureBeacon), Is.True);
+        var bomb = _player.GetComponent<PlayerBomb>();
+        var beacon = _player.GetComponent<PlayerBeaconSkill>();
+        Assert.That(_controller.TryUse(PlayerSkillId.Bomb), Is.True);
+        Assert.That(_controller.IsPlacingSkill, Is.True);
+        Assert.That(_controller.TryUse(PlayerSkillId.LureBeacon), Is.True);
+        Assert.That(bomb.IsPlacing, Is.False);
+        Assert.That(beacon.IsPlacing, Is.True);
+        Assert.That(bomb.CurrentBombCount, Is.EqualTo(5));
+        Assert.That(bomb.RemainingCooldown, Is.Zero);
+        Assert.That(_controller.CanRecover, Is.False);
+        _controller.ClearSelection();
+        Assert.That(_controller.IsPlacingSkill, Is.False);
+        Assert.That(beacon.RemainingCooldown, Is.Zero);
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Beacon_BlockedEndpointCanBeRetriedAndConsumesOnlyOnSuccess()
+    {
+        Assert.That(_controller.TrySelect(PlayerSkillId.LureBeacon), Is.True);
+        var skill = _player.GetComponent<PlayerBeaconSkill>();
+        Vector3 pointer = _player.transform.position + Vector3.down;
+        Vector3 position = skill.GetPlacementPosition(pointer);
+        var actor = new GameObject("Beacon occupied cell", typeof(BoxCollider2D));
+        PlayerFieldDevice deployed = null;
+        try
+        {
+            actor.layer = LayerMask.NameToLayer("Player");
+            actor.transform.position = position;
+            Assert.That(_controller.TryUse(PlayerSkillId.LureBeacon), Is.True);
+            Assert.That(skill.TryConfirmPlacement(pointer), Is.False);
+            Assert.That(_controller.PlacementFailure, Does.Contain("플레이어"));
+            Assert.That(skill.IsPlacing, Is.True);
+            Assert.That(skill.RemainingCooldown, Is.Zero);
+            actor.transform.position += Vector3.right * 30;
+            Assert.That(skill.TryConfirmPlacement(pointer), Is.True);
+            Assert.That(skill.IsPlacing, Is.False);
+            Assert.That(skill.RemainingCooldown, Is.EqualTo(skill.Cooldown));
+            foreach (var device in Object.FindObjectsByType<PlayerFieldDevice>(FindObjectsSortMode.None))
+                if (device.Kind == PlayerFieldDeviceKind.Beacon && Vector3.Distance(device.Position, position) < .01f) deployed = device;
+            Assert.That(deployed, Is.Not.Null);
+            Assert.That(deployed.gameObject.scene, Is.EqualTo(_player.scene));
+            Assert.That(skill.TryConfirmPlacement(pointer), Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor);
+            if (deployed != null) Object.DestroyImmediate(deployed.gameObject);
+        }
         yield break;
     }
 

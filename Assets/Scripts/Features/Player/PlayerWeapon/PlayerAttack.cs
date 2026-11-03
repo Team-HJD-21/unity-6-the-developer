@@ -1,27 +1,20 @@
-using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>활성 총구에서 무기별 탄환을 발사하고 실제 발사에 맞춰 효과와 재사용 시간을 갱신합니다.</summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(PlayerInputHandler))]
+[RequireComponent(typeof(PlayerInputHandler), typeof(PlayerWeaponSelection))]
 [DefaultExecutionOrder(300)]
 public class PlayerAttack : MonoBehaviour
 {
     [Header("References")]
-    [FormerlySerializedAs("bulletPrefab")]
-    [SerializeField] private GameObject _bulletPrefab;
-    [SerializeField] private GameObject _sniperBulletPrefab;
+    [SerializeField] private PlayerWeaponSelection _selection;
     [SerializeField] private PlayerMuzzleAnchor _muzzleAnchor;
     [SerializeField] private PlayerWeaponRig _weaponRig;
     [FormerlySerializedAs("inputHandler")]
     [SerializeField] private PlayerInputHandler _input;
-    [SerializeField] private PlayerSpannerWeapon _spannerPrefab;
-    private PlayerSpannerWeapon _spanner;
 
     [Header("Weapons")]
-    [FormerlySerializedAs("currentWeapon")]
-    [SerializeField] private WeaponType _currentWeapon = WeaponType.DefaultGun;
     [FormerlySerializedAs("weapon1Color")]
     [FormerlySerializedAs("_shotgunColor")]
     [SerializeField] private Color _defaultGunColor = new Color(1f, .5f, .1f);
@@ -53,38 +46,20 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField, Min(.01f)] private float _sniperInterval = .85f;
     private PlayerSkillController _skills;
     private PlayerSpriteMotion _motion;
-    private PlayerControlState _control;
     private float _nextShotTime;
     private bool _reportedConfigurationError;
-    public WeaponType CurrentWeapon => _currentWeapon;
-    public event Action<WeaponType> WeaponChanged;
-    public bool CanSelectWeapon => isActiveAndEnabled && Time.timeScale > 0 &&
-        (_control == null || _control.CanAct) && (_skills == null || _skills.CanUse);
-    private bool CanAttack => CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill);
-    private GameObject CurrentBulletPrefab => _currentWeapon == WeaponType.Sniper ? _sniperBulletPrefab : _bulletPrefab;
+    private bool CanAttack => isActiveAndEnabled && _selection != null && _selection.transform == transform &&
+        _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill);
+    private GameObject CurrentBulletPrefab => _selection != null ? _selection.CurrentBulletPrefab : null;
 
     private void Awake()
     {
         if (_input == null) _input = GetComponent<PlayerInputHandler>();
+        if (_selection == null) _selection = GetComponent<PlayerWeaponSelection>();
         if (_muzzleAnchor == null) _muzzleAnchor = GetComponentInChildren<PlayerMuzzleAnchor>(true);
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
         _skills = GetComponent<PlayerSkillController>();
         _motion = GetComponent<PlayerSpriteMotion>();
-        _control = GetComponent<PlayerControlState>();
-        if (_spannerPrefab != null)
-        {
-            _spanner = Instantiate(_spannerPrefab, transform);
-            _spanner.Bind(transform, _input);
-        }
-        RefreshWeaponVisual();
-    }
-
-    private void Update()
-    {
-        if (_input == null || !CanSelectWeapon) return;
-        if (_input.RequestedWeaponSlot > 0) TrySelectWeaponSlot(_input.RequestedWeaponSlot);
-        else if (_input.WeaponScrollStep != 0) SelectAdjacentWeapon(_input.WeaponScrollStep);
-        else if (_input.WasWeaponSwitchPressed) SelectNextWeapon();
     }
 
     // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
@@ -102,7 +77,7 @@ public class PlayerAttack : MonoBehaviour
     public bool TryFire()
     {
         if (!CanAttack || Time.time < _nextShotTime) return false;
-        if (_currentWeapon == WeaponType.Spanner) return TrySwingSpanner();
+        if (_selection.CurrentWeapon == WeaponType.Spanner) return TrySwingSpanner();
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
         var shot = GetShotSettings();
@@ -117,7 +92,7 @@ public class PlayerAttack : MonoBehaviour
     }
 
     private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
-        GetShotSettings() => _currentWeapon switch
+        GetShotSettings() => _selection.CurrentWeapon switch
         {
             WeaponType.CryoBlaster => (_cryoColor, _cryoDamage, _cryoInterval, _cryoPelletCount, _cryoSpreadAngle, true),
             WeaponType.Sniper => (_sniperColor, _sniperDamage, _sniperInterval, 1, 0f, false),
@@ -177,55 +152,11 @@ public class PlayerAttack : MonoBehaviour
         return fired;
     }
 
-    public bool IsWeaponAvailable(WeaponType weapon) => weapon switch
-    {
-        WeaponType.Spanner => _spanner != null,
-        WeaponType.DefaultGun or WeaponType.CryoBlaster => _bulletPrefab != null,
-        WeaponType.Sniper => _sniperBulletPrefab != null,
-        _ => false
-    };
-
-    public bool TrySelectWeaponSlot(int slot) =>
-        PlayerWeaponSlotMapping.TryGetWeapon(slot, out var weapon) && TrySelectWeapon(weapon);
-
-    public bool TrySelectWeapon(WeaponType weapon)
-    {
-        if (!CanSelectWeapon || !IsWeaponAvailable(weapon)) return false;
-        if (_currentWeapon == weapon) return true;
-        _currentWeapon = weapon;
-        RefreshWeaponVisual();
-        WeaponChanged?.Invoke(weapon);
-        return true;
-    }
-
-    public void SelectNextWeapon() => SelectAdjacentWeapon(1);
-
-    public bool SelectAdjacentWeapon(int direction)
-    {
-        if (!CanSelectWeapon || direction == 0) return false;
-        int slot = PlayerWeaponSlotMapping.GetSlot(_currentWeapon);
-        int step = direction > 0 ? 1 : -1;
-        if (slot == 0) slot = step > 0 ? 0 : 1;
-        for (int attempt = 0; attempt < PlayerWeaponSlotMapping.Count; attempt++)
-        {
-            slot = (slot - 1 + step + PlayerWeaponSlotMapping.Count) % PlayerWeaponSlotMapping.Count + 1;
-            if (PlayerWeaponSlotMapping.TryGetWeapon(slot, out var candidate) && IsWeaponAvailable(candidate))
-                return TrySelectWeapon(candidate);
-        }
-        return false;
-    }
-
-    private void RefreshWeaponVisual()
-    {
-        bool melee = _currentWeapon == WeaponType.Spanner && _spanner != null;
-        if (_weaponRig != null) _weaponRig.SetRangedWeaponVisible(!melee);
-        if (_spanner != null) _spanner.gameObject.SetActive(melee);
-    }
-
     private bool TrySwingSpanner()
     {
-        if (_spanner == null || !TryGetAimDirection(out Vector2 direction) || !_spanner.TryAttack(direction)) return false;
-        _nextShotTime = Time.time + _spanner.AttackInterval;
+        var spanner = _selection.Spanner;
+        if (spanner == null || !TryGetAimDirection(out Vector2 direction) || !spanner.TryAttack(direction)) return false;
+        _nextShotTime = Time.time + spanner.AttackInterval;
         return true;
     }
 }

@@ -72,9 +72,9 @@ public sealed class PlayerWeaponMigrationTests
             player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
             var input = player.GetComponent<PlayerInputHandler>();
             input.enabled = false;
-            var attack = player.GetComponent<PlayerAttack>();
-            Assert.That(attack.TrySelectWeaponSlot(1), Is.True);
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
+            var selection = player.GetComponent<PlayerWeaponSelection>();
+            Assert.That(selection.TrySelectWeaponSlot(1), Is.True);
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
             var motion = player.GetComponent<PlayerSpriteMotion>();
             var animator = player.GetComponent<Animator>();
@@ -640,18 +640,18 @@ public sealed class PlayerWeaponMigrationTests
         try
         {
             player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
-            PlayerAttack attack = player.GetComponent<PlayerAttack>();
+            var selection = player.GetComponent<PlayerWeaponSelection>();
             PlayerWeaponRig rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
             PlayerSpannerWeapon spanner = player.GetComponentInChildren<PlayerSpannerWeapon>(true);
             Assert.That(spanner, Is.Not.Null);
             Assert.That(spanner.GetComponent<PlayerSpannerRepair>(), Is.Not.Null);
             Assert.That(spanner.gameObject.activeSelf, Is.False);
-            attack.SelectNextWeapon();
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
-            attack.SelectNextWeapon();
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
-            attack.SelectNextWeapon();
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
+            selection.SelectNextWeapon();
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
+            selection.SelectNextWeapon();
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
+            selection.SelectNextWeapon();
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             Assert.That(spanner.gameObject.activeSelf, Is.True);
             var rigData = new SerializedObject(rig);
             foreach (string field in new[] { "_leftGun", "_rightGun", "_upGun", "_downGun" })
@@ -663,8 +663,8 @@ public sealed class PlayerWeaponMigrationTests
             Assert.That(spannerData.FindProperty("_impactAt").floatValue, Is.GreaterThan(Time.time));
             Assert.That(player.GetComponent<PlayerSpriteMotion>().IsPlayingToolAction, Is.True);
             Assert.That(spanner.TryAttack(Vector2.down), Is.False, "Holding attack must respect the melee cooldown.");
-            attack.SelectNextWeapon();
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.DefaultGun));
+            selection.SelectNextWeapon();
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.DefaultGun));
             Assert.That(spanner.gameObject.activeSelf, Is.False);
             spannerData.Update();
             Assert.That(spannerData.FindProperty("_pendingStrike").boolValue, Is.False,

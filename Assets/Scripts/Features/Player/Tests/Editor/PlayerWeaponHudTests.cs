@@ -49,50 +49,51 @@ public sealed class PlayerWeaponHudTests
             var skillHud = hudObject.GetComponent<PlayerSkillHud>();
             var weaponHud = hudObject.GetComponentInChildren<PlayerWeaponHud>();
             var attack = player.GetComponent<PlayerAttack>();
+            var selection = player.GetComponent<PlayerWeaponSelection>();
             Assert.That(skills.BindHud(skillHud), Is.True);
             int authoredObjectCount = hudObject.GetComponentsInChildren<Transform>(true).Length;
             yield return null;
-            Assert.That(weaponHud.Owner, Is.EqualTo(attack));
+            Assert.That(weaponHud.Owner, Is.EqualTo(selection));
 
             var slots = weaponHud.GetComponentsInChildren<PlayerWeaponSlotView>(true);
             slots[0].GetComponent<Button>().onClick.Invoke();
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             Assert.That(slots[0].transform.Find("Selected Marker").gameObject.activeSelf, Is.True);
 
-            Assert.That(attack.SelectAdjacentWeapon(-1), Is.True);
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
-            Assert.That(attack.SelectAdjacentWeapon(1), Is.True);
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
-            Assert.That(attack.TrySelectWeaponSlot(0), Is.False);
+            Assert.That(selection.SelectAdjacentWeapon(-1), Is.True);
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
+            Assert.That(selection.SelectAdjacentWeapon(1), Is.True);
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
+            Assert.That(selection.TrySelectWeaponSlot(0), Is.False);
 
             float nextShot = Time.time + 10;
             var cooldown = typeof(PlayerAttack).GetField("_nextShotTime",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             cooldown.SetValue(attack, nextShot);
-            Assert.That(attack.TrySelectWeaponSlot(2), Is.True);
+            Assert.That(selection.TrySelectWeaponSlot(2), Is.True);
             Assert.That((float)cooldown.GetValue(attack), Is.EqualTo(nextShot));
 
             var control = player.GetComponent<PlayerControlState>();
             control.SetInputBlocked(true);
             slots[0].GetComponent<Button>().onClick.Invoke();
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.DefaultGun));
-            Assert.That(attack.SelectAdjacentWeapon(1), Is.False);
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.DefaultGun));
+            Assert.That(selection.SelectAdjacentWeapon(1), Is.False);
             control.SetInputBlocked(false);
 
             skillHud.Open();
-            Assert.That(attack.TrySelectWeaponSlot(1), Is.False);
+            Assert.That(selection.TrySelectWeaponSlot(1), Is.False);
             skillHud.Close();
             Time.timeScale = 0;
-            Assert.That(attack.TrySelectWeaponSlot(1), Is.False);
+            Assert.That(selection.TrySelectWeaponSlot(1), Is.False);
             Time.timeScale = previousTimeScale;
 
             // Missing equipment is skipped rather than leaving an unusable slot equipped.
-            var data = new SerializedObject(attack);
+            var data = new SerializedObject(selection);
             data.FindProperty("_sniperBulletPrefab").objectReferenceValue = null;
             data.ApplyModifiedPropertiesWithoutUndo();
-            Assert.That(attack.TrySelectWeaponSlot(3), Is.True);
-            Assert.That(attack.SelectAdjacentWeapon(1), Is.True);
-            Assert.That(attack.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
+            Assert.That(selection.TrySelectWeaponSlot(3), Is.True);
+            Assert.That(selection.SelectAdjacentWeapon(1), Is.True);
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             yield return null;
             Assert.That(slots[3].GetComponent<Button>().interactable, Is.False);
             Assert.That(hudObject.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(authoredObjectCount));

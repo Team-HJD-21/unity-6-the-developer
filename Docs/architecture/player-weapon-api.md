@@ -1,6 +1,6 @@
 # 플레이어 무기 API
 
-수정일: 2026-10-24. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
+수정일: 2026-11-04. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
 
 2026-10-25, Issue #554 작업에서는 전투·수리 계약을 유지하고 표시용 몸체·무기를 분리했습니다. Player 프리팹의 `PlayerWeaponVisual`과 무기별 외형 데이터 편집 방법은 [몸체·무기 분리 API](player-weapon-appearance-api.md)를 참고합니다. 기존 `PlayerSpanner`는 공격·수리 동작을 계속 담당합니다.
 
@@ -10,7 +10,7 @@
 
 ## 장착과 입력
 
-`Player.prefab`의 `PlayerAttack._spannerPrefab`에 `Assets/Prefabs/Player/PlayerSpanner.prefab`을 연결합니다.
+`Player.prefab`에 미리 배치한 `PlayerWeaponSelection._spannerPrefab`에 `Assets/Prefabs/Player/PlayerSpanner.prefab`을 연결합니다.
 플레이어가 생성되면 스패너 인스턴스를 자식으로 한 번 생성하고, 장착 상태에 따라 활성화합니다.
 1번 스패너, 2번 기본총, 3번 냉각총, 4번 스나이퍼를 직접 선택합니다. 숫자패드와 하단 HUD 버튼도 같은 슬롯을 사용합니다. 최초 장착은 기본총입니다.
 Tab과 휠 아래는 다음 슬롯, 휠 위는 이전 슬롯으로 순환하며 장비가 없는 슬롯은 건너뜁니다. 공격은 LMB를 유지해 사용합니다. Space 공격 입력은 제거했습니다.
@@ -21,9 +21,17 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 ## 스크립트별 역할
 
+2026-11-04: 무기 선택 API와 `CurrentWeapon`·`WeaponChanged`를 `PlayerAttack`에서
+`PlayerWeaponSelection`으로 옮겼다. 호출부도 같은 플레이어의 선택 컴포넌트를 참조한다.
+`_currentWeapon`·기본/스나이퍼 탄환·스패너 프리팹은 선택 컴포넌트에서 편집하고,
+피해량·발사 간격·산탄 설정은 기존 `PlayerAttack`에서 편집한다.
+선택의 Update(200)는 입력(-200)·스킬 상태(100) 이후에 실행하고 공격의 LateUpdate(300)
+전에 장착 상태를 갱신한다. Unity PlayMode 실행 검증은 별도로 남는다.
+
 | 스크립트 | 기능 / 호출 계약 |
 | --- | --- |
-| `PlayerAttack` | 입력, 무기 선택, 공통 공격 간격. `CurrentWeapon` 조회, `TrySelectWeaponSlot(int)` 또는 `TrySelectWeapon(WeaponType)`으로 선택, `SelectAdjacentWeapon(int)`으로 앞뒤 순환합니다. `TryFire()`는 장착한 무기로 공격을 시도합니다. 스패너는 탄환과 총구 없이 공격합니다. |
+| `PlayerWeaponSelection` | 현재 무기·장비 참조와 숫자키·휠·Tab 선택을 소유합니다. `CurrentWeapon` 조회, `TrySelectWeaponSlot(int)` 또는 `TrySelectWeapon(WeaponType)`으로 선택, `SelectAdjacentWeapon(int)`으로 앞뒤 순환하며 실제 전환에만 `WeaponChanged`를 알립니다. 스패너 인스턴스와 총기 표시를 장착 상태에 맞춥니다. |
+| `PlayerAttack` | 선택된 무기의 공통 공격 간격·피해·탄환 생성을 관리합니다. `TryFire()`는 `PlayerWeaponSelection`의 현재 장비로 공격을 시도합니다. 스패너는 탄환과 총구 없이 공격합니다. |
 | `PlayerWeaponSlotMapping` | 단축키와 HUD의 1~4 슬롯 매핑. 기존 `WeaponType` 직렬화 값은 유지합니다. |
 | `PlayerWeaponHud` / `PlayerWeaponSlotView` | 기존 씬 HUD 소유자에게 배치된 무기 버튼을 연결하고 선택·장비 유무를 표시합니다. UI 오브젝트를 생성하지 않습니다. |
 | `PlayerWeaponRig` | 기존 방향별 총기와 총구 관리. `SetRangedWeaponVisible(bool)`은 총기 표시만 제어하며 몸체 방향 계산은 계속합니다. |

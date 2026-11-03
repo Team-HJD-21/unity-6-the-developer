@@ -11,7 +11,7 @@ public sealed class PlayerWeaponVisual : MonoBehaviour
     [SerializeField] private SpriteRenderer _weapon;
     [SerializeField] private SpriteRenderer _foregroundHands;
     [SerializeField] private SortingGroup _sortingGroup;
-    [SerializeField] private PlayerAttack _attack;
+    [SerializeField] private PlayerWeaponSelection _selection;
     [SerializeField] private PlayerSpriteMotion _motion;
     [Header("Replace appearances here to change the equipped weapon art")]
     [SerializeField] private PlayerWeaponAppearance _defaultGun;
@@ -25,7 +25,7 @@ public sealed class PlayerWeaponVisual : MonoBehaviour
         _body.transform == transform && _weapon.transform.parent == transform &&
         _foregroundHands.transform.parent == transform &&
         _sortingGroup != null && _sortingGroup.transform == transform &&
-        _attack != null && _attack.transform == transform && _motion != null && _motion.transform == transform &&
+        _selection != null && _selection.transform == transform && _motion != null && _motion.transform == transform &&
         _defaultGun != null && _defaultGun.IsConfigured &&
         _cryoBlaster != null && _cryoBlaster.IsConfigured && _spanner != null && _spanner.IsConfigured &&
         _sniper != null && _sniper.IsConfigured;
@@ -36,7 +36,7 @@ public sealed class PlayerWeaponVisual : MonoBehaviour
     {
         get
         {
-            switch (_attack.CurrentWeapon)
+            switch (_selection.CurrentWeapon)
             {
                 case WeaponType.CryoBlaster: return _cryoBlaster;
                 case WeaponType.Spanner: return _spanner;
