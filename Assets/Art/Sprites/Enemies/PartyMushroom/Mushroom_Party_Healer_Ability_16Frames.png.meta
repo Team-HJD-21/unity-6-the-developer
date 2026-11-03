@@ -1,0 +1,512 @@
+fileFormatVersion: 2
+guid: 7ff55c67ca1b4ac1aa394675eef6a88b
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Down_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1086
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d77e0dc09bd4b6e8192c48ef143231c
+      internalID: 21300000
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Down_1
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 1086
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f7737bd4b714f378d6ac3ef22eff07c
+      internalID: 21300001
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Down_2
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 1086
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e2528ebd821641b399c1cc7aeba2fb72
+      internalID: 21300002
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Down_3
+      rect:
+        serializedVersion: 2
+        x: 1086
+        y: 1086
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 13b55f5c40ff41e19d5b7a617751cb21
+      internalID: 21300003
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Up_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 724
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 238a699b69254d1387010f5c41084be4
+      internalID: 21300004
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Up_1
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 724
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9cff256b3f0d4efc94107b131a500b2c
+      internalID: 21300005
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Up_2
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 724
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 149546141fd14b9092295d4172b88650
+      internalID: 21300006
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Up_3
+      rect:
+        serializedVersion: 2
+        x: 1086
+        y: 724
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0af6b18ef4341b29c7c01fffcb5a787
+      internalID: 21300007
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Left_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 362
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b88a65e9ab84cf9b18f6562e62dbf78
+      internalID: 21300008
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Left_1
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 362
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aa25591bc92f42d395d8cff58fd22858
+      internalID: 21300009
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Left_2
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 362
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 80ee2b7bb69c49bcba0cec5df6af936c
+      internalID: 21300010
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Left_3
+      rect:
+        serializedVersion: 2
+        x: 1086
+        y: 362
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d4915204cdf482ebfe2eea1b52a441a
+      internalID: 21300011
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Right_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f12bf668f03f4828abf4618066590720
+      internalID: 21300012
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Right_1
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 0
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10eaf665184d47038f1955b67dbd5143
+      internalID: 21300013
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Right_2
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 0
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d93a19935adc4dc2af75a521267d6427
+      internalID: 21300014
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Healer_Ability_Right_3
+      rect:
+        serializedVersion: 2
+        x: 1086
+        y: 0
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b76bad2f52642c887ae7c372e4b6479
+      internalID: 21300015
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    outline: []
+    customData:
+    physicsShape: []
+    bones: []
+    spriteID: 28be163e534d468fac4d95cb3f94c8b4
+    internalID: 0
+    vertices: []
+    indices:
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      PartyMushroom_Healer_Ability_Down_0: 21300000
+      PartyMushroom_Healer_Ability_Down_1: 21300001
+      PartyMushroom_Healer_Ability_Down_2: 21300002
+      PartyMushroom_Healer_Ability_Down_3: 21300003
+      PartyMushroom_Healer_Ability_Up_0: 21300004
+      PartyMushroom_Healer_Ability_Up_1: 21300005
+      PartyMushroom_Healer_Ability_Up_2: 21300006
+      PartyMushroom_Healer_Ability_Up_3: 21300007
+      PartyMushroom_Healer_Ability_Left_0: 21300008
+      PartyMushroom_Healer_Ability_Left_1: 21300009
+      PartyMushroom_Healer_Ability_Left_2: 21300010
+      PartyMushroom_Healer_Ability_Left_3: 21300011
+      PartyMushroom_Healer_Ability_Right_0: 21300012
+      PartyMushroom_Healer_Ability_Right_1: 21300013
+      PartyMushroom_Healer_Ability_Right_2: 21300014
+      PartyMushroom_Healer_Ability_Right_3: 21300015
+  mipmapLimitGroupName:
+  pSDRemoveMatte: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:
+
