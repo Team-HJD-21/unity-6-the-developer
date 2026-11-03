@@ -11,6 +11,7 @@ namespace TeamHJD.Game.FieldTurrets.Contracts
         InsufficientPower,
         PowerSourceUnavailable,
         InvalidPowerCost,
-        AutoActivationInProgress
+        AutoActivationInProgress,
+        NotAuthoritative
     }
 }

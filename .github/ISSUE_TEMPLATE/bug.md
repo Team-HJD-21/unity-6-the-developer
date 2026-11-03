@@ -15,7 +15,7 @@ assignees: ""
 
 ## 담당과 심각도
 
-- 주 담당: A / B / C / D / E / 미정
+- 주 담당: Core·Player/UI·World/Weather·FieldTurret·Enemy/Encounter / 미정
 - 심각도: Blocker / Major / Minor
   - Blocker: Build 불가, Crash, Save 손상, 진행 불가
   - Major: 핵심 기능 오작동, 우회 방법은 있음

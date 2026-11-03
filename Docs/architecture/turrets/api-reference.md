@@ -33,6 +33,10 @@ if (FieldTurretInstanceRegistry.TryGetInstanceId(hit.transform, out int turretId
 
 ID는 로컬 런타임 식별자다. Network ID나 저장 데이터 ID가 아니다. 현재 프리팹 교체 방식의 승급과 강등에서는 기존 ID를 유지한다. 씬 제거 후 보관한 ID는 유효하지 않을 수 있다.
 
+정식 Core Scene은 `SceneEntityIdentity`의 배치 논리 ID를 별도로 가진다. `FieldTurretBase.TryGetEntityId(out EntityId)`는 이 메타데이터를 읽고 `FieldTurretController.OwnsTurret(turret)`는 해당 전력 소유자의 실제 개체인지 확인한다. Core의 `ITurretEntityIdResolver`가 현재 Match의 논리 ID↔로컬 InstanceId를 대응한다. InstanceId를 그대로 네트워크 요청에 넣지 않는다.
+
+FieldTurret Factory의 동적 생성 개체는 주입받은 `ITurretEntityRegistration.TryRegisterEntity(matchId, authorityAssignedEntityId, actor.InstanceId, out reason)`로 명시적으로 연결한다. Core는 실제 생성/삭제를 대신하지 않는다. 승급/강등의 실제 객체 교체는 기존 FieldTurret API를 사용하며 Core가 해당 사실에서 논리 ID 메타데이터를 이전한다. [제작·수명·배치 입력 규약](../core-sprint-region-and-request-api.md#터렛-논리-id와-실제-등록-연결)을 함께 확인한다.
+
 ## 컨트롤러 명령
 
 | API | 결과와 의미 |

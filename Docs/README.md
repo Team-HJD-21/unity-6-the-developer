@@ -11,13 +11,22 @@
 
 ## 현재 기준
 
+
+
+
+
+
 2026-11-01 사용자 확인: 10월 31일 회의의 **전원 크런치 모드 도입은 확정된 팀 공통 운영 결정**이다. 적용 대상 미확인이라는 기존 해석을 정정했다. 작업·휴식 기간 발언과 후속은 [회의 기록](planning/2026-10-31-regular-meeting.md)을 따른다.
 
 2026-10-30·31 후속을 우선 읽는다. 자동 활성화는 사거리 내 적 수 후 전력 1당 공격력 설명, 일시 OFF 후 순차 ON·부족 전력 예약 대기 방향이다. 일반 OFF는 즉시 비활성화·점진 전력 반환 시작과 냉각을 함께 다루며 즉시 전량 충전이 아니다. 우주선 입장 시 시간·몬스터·터렛 정지를 재확인했고, 점령에 따른 스폰 영향과 그룹화·이전 행성 재방문을 정리했다. 상세/미정과 근거는 [기획 보강](planning/2026-10-30-planning-review.md) · [정기회의](planning/2026-10-31-regular-meeting.md), 제품 기준은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 새 Sprint·Build/Gate 통과를 뜻하지 않는다.
 
+2026-10-26 Core 후속을 최신 main에 통합하고 Match 운영 책임을 분리하는 배치를 시작했다. [Match 운영 책임과 수명 계약](architecture/match-management-responsibilities.md)은 Feature 상태 원본, MatchCoordinator / SceneFlowController / ScreenManager의 역할과 완료·입력·환경·추가 생성 계약을 설명한다. [이번 구현 기록](planning/2026-10-26-core-sprint-implementation.md)에서 CU 명시 초기화와 실제 Scene 검사 결과·다음 배치를 확인한다. 목표 구조와 실제 구현/검증 완료를 구분한다. 아래 10/15 검증은 당시 source의 증거다.
+
 2026-10-24 회의는 수기와 완성된 자동 전사를 대조했다. 가동 준비 지연 없음, 당시 정지·전력 반환 검토, 일부 파괴 전력 예약과 키 유지 수리·복구 방향을 기록했다. 일반 OFF 순서는 위 10월 30일 후속을 우선한다. 후반의 경험치 유지·토큰/Blueprint 성장·터렛 레벨별 Minor Upgrade 상한, 분대 목표 유지와 전체 스폰량 조절 방향도 기록했다. 확률·시간·일정 세부와 구현·성능 검증은 별도다. [회의 검토 기록](planning/2026-10-24-regular-meeting.md)에서 확정 방향과 추가 확인 항목을 구분한다.
 
 2026-10-15 Core 통합 스프린트를 진행한다. 정적·동적 지역 모두 지역 Grid의 상태가 원본이며, 동적 삼각형은 점령 셀을 계산하는 임시 자료다. 동적 모드는 지역 잠금 없이 활성 터렛으로 점령을 갱신하고, 점령 회수로 나머지 터렛을 끄지 않는다. [배치·구현·검증 기록](planning/2026-10-15-core-sprint-implementation.md)에서 실제 구현과 미완료 통합을 구분한다.
+
+최신 Core 검증은 Windows Host/Client 두 프로세스의 명령·지역/HUD 상태·종료/재시작·실행 중 Client 연결 해제까지 수행했다. [이슈별 감사·직접 확인 안내](planning/2026-10-15-core-sprint-review-handoff.md)에서 개발 actor fixture의 한계와 Player/UI·FieldTurret·Enemy/Encounter 연계·PL 수동 인수를 구분한다. 이 결과로 전체 협동 완성이나 이슈 자동 종료를 선언하지 않는다.
 
 2026-10-10 회의에서는 팀이 M1과 M2 사이에 있다고 설명했으며, M1·M2 완료나 새 일정을 승인하지 않았다. 터렛 수리와 잠금 해금의 제품 방향 및 설치 판정, 지역 Grid와 저장 방식의 미결 사항은 [회의 검토 기록](planning/2026-10-10-regular-meeting.md)을 따른다.
 
