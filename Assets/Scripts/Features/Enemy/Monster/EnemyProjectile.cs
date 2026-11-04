@@ -92,6 +92,10 @@ public class EnemyProjectile : NetworkBehaviour
         ApplyDamage(target);
     }
 
+    protected virtual void PlayImpactEffect(Vector3 position)
+    {
+    }
+    
     protected void ApplyDamage(ITargetable target)
     {
         if (target == null || !target.CanBeTargeted)
@@ -141,6 +145,7 @@ public class EnemyProjectile : NetworkBehaviour
         // 물리 충돌은 LateUpdate보다 먼저 발생하므로 명중 FX의 깊이도 갱신한다.
         UpdateDepth();
         OnHit(target);
+        PlayImpactEffect(transform.position);
         Remove();
     }
 
