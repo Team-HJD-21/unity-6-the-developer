@@ -19,9 +19,25 @@ public class SpaceshipExit : MonoBehaviour
     private float returnPadding = 0.5f;
 
     private bool isTransitioning;
+    private static string pendingUnloadSceneName;
+    private static AsyncOperation pendingUnloadOperation;
 
     private Animator _animator;
     private BoxCollider2D _blockingCollider;
+
+    internal static AsyncOperation GetPendingUnload(string sceneName)
+    {
+        return pendingUnloadSceneName == sceneName && pendingUnloadOperation != null && !pendingUnloadOperation.isDone
+            ? pendingUnloadOperation
+            : null;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetPendingUnload()
+    {
+        pendingUnloadSceneName = null;
+        pendingUnloadOperation = null;
+    }
     
     private void Awake()
     {
@@ -51,6 +67,7 @@ public class SpaceshipExit : MonoBehaviour
         if (!returnScene.isLoaded)
         {
             Debug.LogError($"Return scene '{returnSceneName}' is not loaded.", this);
+            isTransitioning = false;
             return;
         }
 
@@ -61,15 +78,32 @@ public class SpaceshipExit : MonoBehaviour
                 $"Could not find '{returnTriggerName}' in scene '{returnSceneName}'.",
                 this
             );
+            isTransitioning = false;
             return;
         }
 
-        isTransitioning = true;
         Vector3 destination = GetSafeReturnPosition(returnTrigger, player);
         MovePlayer(player, destination);
-        isTransitioning = false;
-        
-        SceneManager.UnloadSceneAsync(originName);
+        player.GetComponentInParent<PlayerLocationState>()?.CheckLocation(false);
+
+        AsyncOperation unloadOperation = SceneManager.UnloadSceneAsync(originName);
+        if (unloadOperation == null)
+        {
+            Debug.LogError($"Failed to start unloading scene '{originName}'.", this);
+            isTransitioning = false;
+            return;
+        }
+
+        pendingUnloadSceneName = originName;
+        pendingUnloadOperation = unloadOperation;
+        unloadOperation.completed += completedOperation =>
+        {
+            if (pendingUnloadOperation != completedOperation)
+                return;
+
+            pendingUnloadSceneName = null;
+            pendingUnloadOperation = null;
+        };
     }
 
     private Vector3 GetSafeReturnPosition(Transform returnTrigger, Transform player)
@@ -128,7 +162,8 @@ public class SpaceshipExit : MonoBehaviour
     // 문이 열리고 BoxCollider가 활성화 된 후 충돌
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.layer != LayerMask.NameToLayer("Player"))
+        if (isTransitioning || GetPendingUnload(originName) != null ||
+            collision.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
         isTransitioning = true;
         // 이동
