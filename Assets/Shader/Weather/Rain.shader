@@ -1,5 +1,5 @@
 // 카메라가 그린 화면을 받아 비 오는 날의 색감과 화면 속 빗줄기를 합성한다.
-// ShaderTests.OnRenderImage의 Graphics.Blit이 이 셰이더를 사용하는 머티리얼을 실행한다.
+// WeatherShaderApply.OnRenderImage의 Graphics.Blit이 이 셰이더를 사용하는 머티리얼을 실행한다.
 Shader "Weather/Rain"
 {
     // 이 값들은 RainScreen 머티리얼의 Inspector에 표시되며 실행 중에도 변경할 수 있다.

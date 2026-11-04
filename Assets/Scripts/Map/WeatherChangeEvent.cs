@@ -7,5 +7,6 @@ namespace Map
     {
         public Action<WeatherManager.Weather> ChangeWeatherRain;
         public Action<WeatherManager.Weather> ChangeWeatherThunder;
+        public Action<WeatherManager.Weather> ChangeWeatherHitWave;
     }
 }
