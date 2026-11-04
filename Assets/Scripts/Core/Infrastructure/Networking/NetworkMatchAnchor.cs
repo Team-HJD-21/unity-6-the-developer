@@ -14,6 +14,18 @@ namespace TeamHJD.Game.Infrastructure
         private readonly NetworkVariable<NetworkMatchAnchorState> _state = new NetworkVariable<NetworkMatchAnchorState>(
             default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkMatchAnchorState State => _state.Value;
+        private readonly NetworkVariable<NetworkMatchTimeState> _time = new NetworkVariable<NetworkMatchTimeState>(
+            default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkMatchTimeState TimeState => _time.Value;
+        /// <summary>현재 서버 조립부가 정지·배속·복원으로 변경된 시간 기준을 게시합니다. SDK 시계는 변경하지 않습니다.</summary>
+        public void ApplyAuthorityTime(NetworkMatchDescriptor descriptor, MatchTimeSnapshot time, long presenceRevision = 0, byte spaceshipMask = 0)
+        {
+            if (!IsSpawned || !IsServer) throw new InvalidOperationException("Only the spawned server anchor may publish time.");
+            if (descriptor == null || time == null || time.MatchId != descriptor.Config.MatchId ||
+                State.MatchId.ToString() != time.MatchId.Value || State.DescriptorId.ToString() != descriptor.DescriptorId.ToString("N"))
+                throw new ArgumentException("Time must belong to this prepared anchor.");
+            _time.Value = NetworkMatchTimeState.From(descriptor.DescriptorId, time, presenceRevision, spaceshipMask);
+        }
         public TeamHJD.Game.Domain.EntityId LogicalEntityId => State.DescriptorId.IsEmpty ? default :
             new TeamHJD.Game.Domain.EntityId("match-anchor/" + State.DescriptorId.ToString());
 

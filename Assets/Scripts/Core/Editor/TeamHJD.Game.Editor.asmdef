@@ -10,7 +10,8 @@
     "TeamHJD.Game.Domain",
     "TeamHJD.Game.Presentation",
     "TeamHJD.Game.Networking",
-    "Unity.Netcode.Runtime"
+    "Unity.Netcode.Runtime",
+    "Unity.ugui"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

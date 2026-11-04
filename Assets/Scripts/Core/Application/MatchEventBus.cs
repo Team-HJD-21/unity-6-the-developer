@@ -25,7 +25,11 @@ namespace TeamHJD.Game.Application
             if (matchEvent == null) throw new ArgumentNullException(nameof(matchEvent));
             ThrowIfDisposed();
             var listeners = _listeners.ToArray();
-            foreach (var listener in listeners) listener(matchEvent);
+            List<Exception> errors = null;
+            foreach (var listener in listeners)
+                try { listener(matchEvent); }
+                catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            if (errors != null) throw new AggregateException("Match fact committed; some observers failed.", errors);
         }
 
         public void Dispose()

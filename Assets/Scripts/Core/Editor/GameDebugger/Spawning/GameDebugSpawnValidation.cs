@@ -18,6 +18,16 @@ namespace TeamHJD.Game.Editor
                     !Finite(d.GameSeconds)||!Finite(d.RealSeconds)||d.GameSeconds<0||d.RealSeconds<0||
                     d.Planned<0||d.Spawned<0||d.DroppedItems<0||d.DroppedActuals<0||d.DroppedActuals>d.DroppedItems||d.Grid==null) Invalid();
                 Text(d.Source);Text(d.Preset);Text(d.Policy);Text(d.Outcome);
+                if (d.EnvironmentRevision < 0 || !Finite(d.EnvironmentGameSeconds) || d.EnvironmentGameSeconds < 0) Invalid();
+                Text(d.WeatherId);Text(d.TimeOfDayId);Text(d.EnvironmentPolicy);
+                if (d.WeatherForecast == null) d.WeatherForecast = new List<string>();
+                Check(d.WeatherForecast, MatchEnvironmentSnapshot.MaximumForecast);
+                foreach (string weather in d.WeatherForecast) Text(weather);
+                Text(d.RequestGuid);Text(d.CauseEventId);Text(d.OriginKind);Text(d.SpawnSourceId);Text(d.SpawnSourceGeneration);Text(d.DeliveryMode);
+                if (d.HasResolvedArea && (!Finite(d.OriginX)||!Finite(d.OriginY)||!Finite(d.OriginZ)||!Finite(d.OriginWidth)||!Finite(d.OriginHeight)||
+                    d.OriginWidth<0||d.OriginHeight<0)) Invalid();
+                if ((d.HasPlanningTiming && (!Finite(d.PlanningMilliseconds)||d.PlanningMilliseconds<0)) ||
+                    (d.HasSpawningTiming && (!Finite(d.SpawningMilliseconds)||d.SpawningMilliseconds<0))) Invalid();
                 var g=d.Grid;
                 if(!Finite(g.CenterX)||!Finite(g.CenterY)||!Finite(g.Width)||!Finite(g.Height)||g.Width<=0||g.Height<=0||
                     g.CellsX<=0||g.CellsY<=0||(long)g.CellsX*g.CellsY>BattlefieldGridConfiguration.MaximumCellCount) Invalid();
