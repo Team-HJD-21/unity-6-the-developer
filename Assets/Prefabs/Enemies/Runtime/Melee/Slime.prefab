@@ -186,7 +186,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8944117523014349952, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 3877844183
+      value: 2728539591
       objectReference: {fileID: 0}
     - target: {fileID: 8944117523014349952, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: SceneMigrationSynchronization

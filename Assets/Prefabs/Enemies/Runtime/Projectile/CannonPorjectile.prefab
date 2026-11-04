@@ -17,9 +17,17 @@ PrefabInstance:
       value: CannonPorjectile
       objectReference: {fileID: 0}
     - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: m_Size.x
+      value: 0.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: m_Size.y
+      value: 0.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300006, guid: c852de6681634584ae54d93bae40f735, type: 3}
+      objectReference: {fileID: -447797690, guid: 06904e7f9734a2c40a2dd532be6f86b0, type: 3}
     - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
       propertyPath: m_WasSpriteAssigned
       value: 1
@@ -158,7 +166,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf9e27c3eab1a0144b192d104c6be53f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyExplosionProjectile
   ShowTopMostFoldoutHeaderGroup: 1
   projectileSpeed: 2
@@ -166,5 +174,7 @@ MonoBehaviour:
   collider2D: {fileID: 8571751847622452072}
   animator: {fileID: 3146376140421259721}
   lifetime: 5
-  explosionRadius: 1
+  minDepth: 65
+  maxDepth: 70
   explosionEffectPrefab: {fileID: 4893153554500465945, guid: 9fe41e96890e1c1458900985f4a47d89, type: 3}
+  explosionRadius: 2
