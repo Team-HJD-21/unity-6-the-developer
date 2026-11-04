@@ -14,7 +14,7 @@ public class SpaceshipEnter : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer != LayerMask.NameToLayer("Player"))
+        if (isTransitioning || other.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
         
         Transform player = other.transform;
@@ -32,6 +32,10 @@ public class SpaceshipEnter : MonoBehaviour
             isTransitioning = false;
             yield break;
         }
+
+        AsyncOperation pendingUnload = SpaceshipExit.GetPendingUnload(sceneToLoadName);
+        if (pendingUnload != null)
+            yield return pendingUnload;
 
         Scene spaceshipScene = SceneManager.GetSceneByName(sceneToLoadName);
         if (!spaceshipScene.isLoaded)
@@ -65,6 +69,7 @@ public class SpaceshipEnter : MonoBehaviour
         }
 
         MovePlayer(player, destination.position);
+        player.GetComponentInParent<PlayerLocationState>()?.CheckLocation(true);
         isTransitioning = false;
     }
 
@@ -84,7 +89,7 @@ public class SpaceshipEnter : MonoBehaviour
         return null;
     }
 
-    private static void MovePlayer(Transform player, Vector3 destination)
+    private void MovePlayer(Transform player, Vector3 destination)
     {
         Rigidbody2D body = player.gameObject.GetComponentInParent<Rigidbody2D>();
         if (body != null)
