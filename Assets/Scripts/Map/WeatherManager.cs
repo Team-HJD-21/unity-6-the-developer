@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Map;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,8 +18,7 @@ namespace Map
             RAIN,
             THUNDERSTORM,
             HEATWAVE,
-            WEATHER_MAX = HEATWAVE // Enum의 맨 마지막을 나타내는 열거형 변수
-            // WEATHER_MAX - SUNNY 로 날씨가 더 늘어나도 개수를 알 수 있음
+            WEATHER_COUNT = HEATWAVE + 1 // 날씨 종류의 전체 개수
         }
         
         [Header("===WeatherManagement===")]
@@ -109,7 +107,7 @@ namespace Map
         private Weather GetWeather()
         {
             // SUNNY는 sunnyWeight칸, 다른 날씨는 각각 한 칸을 차지한다.
-            int roll = UnityEngine.Random.Range(0, sunnyWeight + (int)Weather.WEATHER_MAX);
+            int roll = UnityEngine.Random.Range(0, sunnyWeight + (int)Weather.WEATHER_COUNT - 1);
             Weather result = roll < sunnyWeight
                 ? Weather.SUNNY
                 : (Weather)(roll - sunnyWeight + 1);
