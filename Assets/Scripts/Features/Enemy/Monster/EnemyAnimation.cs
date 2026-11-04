@@ -62,7 +62,10 @@ public class EnemyAnimation : MonoBehaviour
         animator.SetBool(IsMovingHash, false);
     }
 
-    public void PlayAttackAnimation()
+    /// <summary>
+    /// 기존 Animator의 Attack 슬롯으로 능력 발동 애니메이션을 재생한다.
+    /// </summary>
+    public void PlayAbilityAnimation()
     {
         if (_networkAnimator != null && _networkAnimator.IsSpawned)
             _networkAnimator.PlayAttack();

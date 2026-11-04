@@ -75,6 +75,8 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOL
 
 ## 읽는 순서
 
+Enemy 컨트롤러·능력 구조, 네트워크 행동 실행, 런타임 프리팹 추가 방법은 [Enemy 시스템 가이드](architecture/enemy-system-guide.md)를 참고한다.
+
 터렛을 사용하는 다른 영역은 [터렛 연동 가이드](architecture/turrets/index.md)에서 빠른 시작과 API 및 스냅샷을 따로 확인할 수 있다. 내부 실행 흐름은 기존 Turret System Guide의 Mermaid를 유지한다.
 
 플레이어 스킬의 책임 분리와 신규 네트워크 몬스터 연동·테스트 범위는 [Player skill review](architecture/player-skill-review.md)를 참고한다.
