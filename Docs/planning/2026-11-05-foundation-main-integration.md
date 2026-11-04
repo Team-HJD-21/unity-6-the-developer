@@ -27,6 +27,6 @@ Core Feature 계약과 실제 소비는 구분한다. Weather 시간/난수 소�
 - 수정 후 main의 Initial_Stage 제작 참조·실제 PlayMode App 생성/종료 검사 5/5 통과, 실패·제외 0, Unity 종료 0. 이전 선택 검사의 시간·저장·흐름/Startup 결과와 구분해서 보존한다.
 - 검사 소스 61개 경로의 검증 당시 내용을 비공개 폴더에 보관했다. 신규 검사 파일은 최종 diff에서 제외했고 기존 검사는 보존했다. 예외는 기존 AppShutdownTests의 SceneFlow stub 네 멤버를 확장된 계약에 맞춘 변경뿐이다. 새 테스트나 검증 조건은 추가하지 않았다.
 - 검사 소스 제외 후 Unity 최종 컴파일 오류 0, 종료 0. 이때 발견한 기존 SceneFlow stub의 누락을 위처럼 수정한 결과다.
-- 테스트 중 자동 변경된 폰트·Network prefab 목록·ShaderGraph 설정은 main 원본으로 되돌렸다. 최종 경로 검사는 커밋 전에 별도 확인한다.
+- 테스트 중 자동 변경된 폰트·Network prefab 목록·ShaderGraph 설정은 main 원본으로 되돌렸다. 최종 307개 변경 경로가 Core·새 Startup·공개 문서·Build Scene 등록 범위임을 확인했다. 전체 Asset .meta 검사 오류 0, Feature/기존 Scene/Prefab/Art/Packages diff 없음, 원래 작업 공간 status 일치를 확인했다.
 
 검증 로그/XML은 개인 `Docs/Local/Validation/FoundationSplit-20261105`에 보존한다. 이번 실행은 원격 Player/실제 Weather/전체 Mission 승패·저장 복원의 게임 인수를 대신하지 않는다.
