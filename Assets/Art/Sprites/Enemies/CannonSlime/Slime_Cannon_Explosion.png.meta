@@ -1,0 +1,561 @@
+fileFormatVersion: 2
+guid: 9c34789911727424fb10a862f22b4e10
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5505825524906861961
+    second: Slime_Cannon_Explosion_0
+  - first:
+      213: -3585507961059893219
+    second: Slime_Cannon_Explosion_1
+  - first:
+      213: -807364621282399269
+    second: Slime_Cannon_Explosion_2
+  - first:
+      213: -45694726689322117
+    second: Slime_Cannon_Explosion_3
+  - first:
+      213: 8944261367680247170
+    second: Slime_Cannon_Explosion_4
+  - first:
+      213: 5502013897340285227
+    second: Slime_Cannon_Explosion_5
+  - first:
+      213: -792236184773862025
+    second: Slime_Cannon_Explosion_6
+  - first:
+      213: -9018083234984557416
+    second: Slime_Cannon_Explosion_7
+  - first:
+      213: 4974002579182334528
+    second: Slime_Cannon_Explosion_8
+  - first:
+      213: -2238930979715146228
+    second: Slime_Cannon_Explosion_9
+  - first:
+      213: 1799478239906863435
+    second: Slime_Cannon_Explosion_10
+  - first:
+      213: -1382866956658939958
+    second: Slime_Cannon_Explosion_11
+  - first:
+      213: 7385348628748216453
+    second: Slime_Cannon_Explosion_12
+  - first:
+      213: 754590577967011737
+    second: Slime_Cannon_Explosion_13
+  - first:
+      213: -611466351784079963
+    second: Slime_Cannon_Explosion_14
+  - first:
+      213: 1641683270902730453
+    second: Slime_Cannon_Explosion_15
+  - first:
+      213: 8296194853837468646
+    second: Slime_Cannon_Explosion_16
+  - first:
+      213: 5022111662262057272
+    second: Slime_Cannon_Explosion_17
+  - first:
+      213: -3181430755696252765
+    second: Slime_Cannon_Explosion_18
+  - first:
+      213: 7262948773738075783
+    second: Slime_Cannon_Explosion_19
+  - first:
+      213: 1895855608837958395
+    second: Slime_Cannon_Explosion_20
+  - first:
+      213: 5069521739457878818
+    second: Slime_Cannon_Explosion_21
+  - first:
+      213: 4635336567676553639
+    second: Slime_Cannon_Explosion_22
+  - first:
+      213: -1457501132793844778
+    second: Slime_Cannon_Explosion_23
+  - first:
+      213: 6335072747383964968
+    second: Slime_Cannon_Explosion_24
+  - first:
+      213: -6466912418777295414
+    second: Slime_Cannon_Explosion_25
+  - first:
+      213: -5806793743110325580
+    second: Slime_Cannon_Explosion_26
+  - first:
+      213: 3739789035453091544
+    second: Slime_Cannon_Explosion_27
+  - first:
+      213: 5594578518289826844
+    second: Slime_Cannon_Explosion_28
+  - first:
+      213: -447218315590874334
+    second: Slime_Cannon_Explosion_29
+  - first:
+      213: 2422705901232428997
+    second: Slime_Cannon_Explosion_30
+  - first:
+      213: -5571266805666470975
+    second: Slime_Cannon_Explosion_31
+  - first:
+      213: 1423628031007377443
+    second: Slime_Cannon_Explosion_32
+  - first:
+      213: -6410335248192045341
+    second: Slime_Cannon_Explosion_33
+  - first:
+      213: 799451706260506810
+    second: Slime_Cannon_Explosion_34
+  - first:
+      213: 9195312303545254558
+    second: Slime_Cannon_Explosion_00
+  - first:
+      213: 4879134735014035013
+    second: Slime_Cannon_Explosion_01
+  - first:
+      213: 4291826006060738530
+    second: Slime_Cannon_Explosion_02
+  - first:
+      213: 155303199548123055
+    second: Slime_Cannon_Explosion_03
+  - first:
+      213: 6387692183637498806
+    second: Slime_Cannon_Explosion_04
+  - first:
+      213: 4253407962730513806
+    second: Slime_Cannon_Explosion_05
+  - first:
+      213: -342038725101052949
+    second: Slime_Cannon_Explosion_06
+  - first:
+      213: 5901409358331326009
+    second: Slime_Cannon_Explosion_07
+  - first:
+      213: 7141165910738515578
+    second: Slime_Cannon_Explosion_08
+  - first:
+      213: 34481078880491889
+    second: Slime_Cannon_Explosion_09
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e92089b32df4c9f70800000000000000
+      internalID: 9195312303545254558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_01
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54ef7c3d03b26b340800000000000000
+      internalID: 4879134735014035013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_02
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e7a8017301af8b30800000000000000
+      internalID: 4291826006060738530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_03
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa72c89ef6fb72200800000000000000
+      internalID: 155303199548123055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6bb90449234a5a850800000000000000
+      internalID: 6387692183637498806
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_05
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e85ce5fa104270b30800000000000000
+      internalID: 4253407962730513806
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_06
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: beb9cea7795d04bf0800000000000000
+      internalID: -342038725101052949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_07
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93e218d5b8406e150800000000000000
+      internalID: 5901409358331326009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_08
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a76b2bf6f848a1360800000000000000
+      internalID: 7141165910738515578
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_09
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 179d42acb508a7000800000000000000
+      internalID: 34481078880491889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_10
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4991b6dce709f810800000000000000
+      internalID: 1799478239906863435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slime_Cannon_Explosion_11
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac7e7b464d11fcce0800000000000000
+      internalID: -1382866956658939958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Slime_Cannon_Explosion_0: 5505825524906861961
+      Slime_Cannon_Explosion_00: 9195312303545254558
+      Slime_Cannon_Explosion_01: 4879134735014035013
+      Slime_Cannon_Explosion_02: 4291826006060738530
+      Slime_Cannon_Explosion_03: 155303199548123055
+      Slime_Cannon_Explosion_04: 6387692183637498806
+      Slime_Cannon_Explosion_05: 4253407962730513806
+      Slime_Cannon_Explosion_06: -342038725101052949
+      Slime_Cannon_Explosion_07: 5901409358331326009
+      Slime_Cannon_Explosion_08: 7141165910738515578
+      Slime_Cannon_Explosion_09: 34481078880491889
+      Slime_Cannon_Explosion_1: -3585507961059893219
+      Slime_Cannon_Explosion_10: 1799478239906863435
+      Slime_Cannon_Explosion_11: -1382866956658939958
+      Slime_Cannon_Explosion_12: 7385348628748216453
+      Slime_Cannon_Explosion_13: 754590577967011737
+      Slime_Cannon_Explosion_14: -611466351784079963
+      Slime_Cannon_Explosion_15: 1641683270902730453
+      Slime_Cannon_Explosion_16: 8296194853837468646
+      Slime_Cannon_Explosion_17: 5022111662262057272
+      Slime_Cannon_Explosion_18: -3181430755696252765
+      Slime_Cannon_Explosion_19: 7262948773738075783
+      Slime_Cannon_Explosion_2: -807364621282399269
+      Slime_Cannon_Explosion_20: 1895855608837958395
+      Slime_Cannon_Explosion_21: 5069521739457878818
+      Slime_Cannon_Explosion_22: 4635336567676553639
+      Slime_Cannon_Explosion_23: -1457501132793844778
+      Slime_Cannon_Explosion_24: 6335072747383964968
+      Slime_Cannon_Explosion_25: -6466912418777295414
+      Slime_Cannon_Explosion_26: -5806793743110325580
+      Slime_Cannon_Explosion_27: 3739789035453091544
+      Slime_Cannon_Explosion_28: 5594578518289826844
+      Slime_Cannon_Explosion_29: -447218315590874334
+      Slime_Cannon_Explosion_3: -45694726689322117
+      Slime_Cannon_Explosion_30: 2422705901232428997
+      Slime_Cannon_Explosion_31: -5571266805666470975
+      Slime_Cannon_Explosion_32: 1423628031007377443
+      Slime_Cannon_Explosion_33: -6410335248192045341
+      Slime_Cannon_Explosion_34: 799451706260506810
+      Slime_Cannon_Explosion_4: 8944261367680247170
+      Slime_Cannon_Explosion_5: 5502013897340285227
+      Slime_Cannon_Explosion_6: -792236184773862025
+      Slime_Cannon_Explosion_7: -9018083234984557416
+      Slime_Cannon_Explosion_8: 4974002579182334528
+      Slime_Cannon_Explosion_9: -2238930979715146228
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

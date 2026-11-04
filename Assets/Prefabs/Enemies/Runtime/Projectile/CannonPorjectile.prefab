@@ -84,14 +84,28 @@ PrefabInstance:
       propertyPath: projectileSpeed
       value: 2
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7747097433762684323, guid: 257198211f7bafa43b411764aa64b329, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 2222045718711525339, guid: 257198211f7bafa43b411764aa64b329, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8571751847622452072}
+    - targetCorrespondingSourceObject: {fileID: 2222045718711525339, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8068542522751106918}
   m_SourcePrefab: {fileID: 100100000, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+--- !u!95 &3146376140421259721 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5033335031575933077, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+  m_PrefabInstance: {fileID: 7958937954830651740}
+  m_PrefabAsset: {fileID: 0}
+--- !u!50 &7507828621392090982 stripped
+Rigidbody2D:
+  m_CorrespondingSourceObject: {fileID: 451197500948743738, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+  m_PrefabInstance: {fileID: 7958937954830651740}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8117062301446852231 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2222045718711525339, guid: 257198211f7bafa43b411764aa64b329, type: 3}
@@ -134,3 +148,23 @@ CapsuleCollider2D:
   m_Offset: {x: -0.0038391948, y: -0.030073833}
   m_Size: {x: 0.08452821, y: 0.14211646}
   m_Direction: 0
+--- !u!114 &8068542522751106918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8117062301446852231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf9e27c3eab1a0144b192d104c6be53f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyExplosionProjectile
+  ShowTopMostFoldoutHeaderGroup: 1
+  projectileSpeed: 2
+  rigidbody2D: {fileID: 7507828621392090982}
+  collider2D: {fileID: 8571751847622452072}
+  animator: {fileID: 3146376140421259721}
+  lifetime: 5
+  explosionRadius: 1
+  explosionEffectPrefab: {fileID: 4893153554500465945, guid: 9fe41e96890e1c1458900985f4a47d89, type: 3}

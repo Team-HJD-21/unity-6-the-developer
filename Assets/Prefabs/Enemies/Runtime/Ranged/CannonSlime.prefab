@@ -180,7 +180,7 @@ MonoBehaviour:
   _bodyCollider: {fileID: 8218690084528329544}
   activationRange: 3
   enemyTargeting: {fileID: 5413160109429877626}
-  projectilePrefab: {fileID: 428101411240004863, guid: 0b12f43bcb91e9b478352bc8f7bacdf0, type: 3}
+  projectilePrefab: {fileID: 8068542522751106918, guid: 0b12f43bcb91e9b478352bc8f7bacdf0, type: 3}
   projectileSpawner: {fileID: 4353397677597346955}
   attackDamage: 15
   fireOffset: 0.5
