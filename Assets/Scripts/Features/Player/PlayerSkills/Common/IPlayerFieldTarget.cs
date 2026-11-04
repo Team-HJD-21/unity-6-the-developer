@@ -8,6 +8,7 @@ public interface IPlayerFieldTarget
     Vector3 Position { get; }
     float Radius { get; }
     Vector2 ApproachPoint(Vector2 origin);
-    bool Intersects(Vector2 origin, Vector2 goal, out float fraction);
+    bool TryGetContact(Collider2D body, out ColliderDistance2D contact);
+    bool Intersects(Vector2 origin, Vector2 goal, out float fraction, Collider2D body = null);
     void TakeDamage(float damage);
 }

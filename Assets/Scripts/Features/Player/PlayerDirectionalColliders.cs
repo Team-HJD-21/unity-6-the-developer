@@ -1,28 +1,60 @@
+using System;
 using UnityEngine;
 
-/// <summary>수동으로 배치한 방향별 몸 충돌·탄환 피격 콜라이더를 선택합니다.</summary>
+/// <summary>프리팹에 배치한 몸 충돌·탄환 피격 콜라이더를 조준 방향에 맞게 선택합니다.</summary>
 [DisallowMultipleComponent]
 public sealed class PlayerDirectionalColliders : MonoBehaviour
 {
-    [Header("Body Collision")]
-    [SerializeField] private Collider2D _bodyUpDown;
-    [SerializeField] private Collider2D _bodyLeft;
-    [SerializeField] private Collider2D _bodyRight;
+    [Serializable]
+    private sealed class DirectionColliders
+    {
+        public PlayerAimFacing facing = PlayerAimFacing.Down;
+        public Collider2D body = null;
+        public Collider2D bullet = null;
+    }
 
-    [Header("Bullet Hitboxes")]
-    [SerializeField] private Collider2D _bulletUpDown;
-    [SerializeField] private Collider2D _bulletLeft;
-    [SerializeField] private Collider2D _bulletRight;
+    [SerializeField] private DirectionColliders[] _directions;
+    private int _activeFacing = -1;
 
-    private int _activeGroup = -1;
-    public bool IsConfigured => _bodyUpDown != null && _bodyLeft != null && _bodyRight != null &&
-        _bulletUpDown != null && _bulletLeft != null && _bulletRight != null;
+    public Vector2 GroundPosition
+    {
+        get
+        {
+            if (_directions != null)
+                foreach (var pair in _directions)
+                    if (pair != null && pair.body != null && pair.body.enabled)
+                        return pair.body.bounds.center;
+            return transform.position;
+        }
+    }
+
+    public bool IsConfigured
+    {
+        get
+        {
+            if (_directions == null || _directions.Length != 8) return false;
+            int seen = 0;
+            for (int i = 0; i < _directions.Length; i++)
+            {
+                var pair = _directions[i];
+                if (pair == null || pair.body == null || pair.bullet == null ||
+                    pair.body.isTrigger || !pair.bullet.isTrigger) return false;
+                int facing = (int)pair.facing;
+                if (facing < 0 || facing >= 8 || (seen & (1 << facing)) != 0) return false;
+                for (int previous = 0; previous < i; previous++)
+                    if (_directions[previous].body == pair.body ||
+                        _directions[previous].bullet == pair.bullet) return false;
+                seen |= 1 << facing;
+            }
+            return true;
+        }
+    }
 
     private void Awake()
     {
         if (!IsConfigured)
         {
-            Debug.LogWarning("Player directional colliders need all six collider references.", this);
+            Debug.LogWarning("Player directional colliders need one body and bullet collider per facing (8 pairs).", this);
             enabled = false;
             return;
         }
@@ -31,13 +63,14 @@ public sealed class PlayerDirectionalColliders : MonoBehaviour
 
     public void SetFacing(PlayerAimFacing facing)
     {
-        if (!isActiveAndEnabled || !IsConfigured) return;
-        int group = facing == PlayerAimFacing.Left ? 1 : facing == PlayerAimFacing.Right ? 2 : 0;
-        if (group == _activeGroup) return;
-        _activeGroup = group;
-
-        _bodyUpDown.enabled = _bulletUpDown.enabled = group == 0;
-        _bodyLeft.enabled = _bulletLeft.enabled = group == 1;
-        _bodyRight.enabled = _bulletRight.enabled = group == 2;
+        if (!isActiveAndEnabled || !IsConfigured || (int)facing < 0 || (int)facing >= 8 ||
+            _activeFacing == (int)facing) return;
+        _activeFacing = (int)facing;
+        foreach (var pair in _directions)
+        {
+            bool active = pair.facing == facing;
+            pair.body.enabled = active;
+            pair.bullet.enabled = active;
+        }
     }
 }

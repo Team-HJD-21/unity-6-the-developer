@@ -8,7 +8,7 @@
 [Player UI API](../player-ui-api.md)를 참고한다.
 
 UI는 ON 전에 잠금·파괴·냉각·자동 활성화 여부를 확인한다. 활성 과열 중에도 OFF는
-가능하지만 자동 활성화 진행 중에는 수동 OFF도 막힌다. `IsCoolingDown`과
+가능하지만 자동 활성화 진행 중에는 수동 OFF도 막힌다. 일반 OFF는 즉시 전력 반환을 시작하고 남은 과열을 동시에 냉각한다. `IsCoolingDown`과
 `CoolingDownRemaining`으로 남은 냉각 시간을 표시한다. 레벨과 세부 강화 버튼은
 `CanModifyUpgrades`가 true인 비활성·냉각 완료 상태에서 사용한다. 전력 예약과
 강화 값은 직접 변경하지 않고 API 요청 결과를 처리한다.

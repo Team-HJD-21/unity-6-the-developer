@@ -19,7 +19,7 @@ public class PlayerInputHandler : MonoBehaviour
     public Vector2 MouseWorldPosition { get; private set; }
     public bool HasAimTarget { get; private set; }
 
-    // [기본 사격 (Space)]
+    // [기본 공격 (LMB): UI·설치·포탑 선택 뒤 PlayerAttack이 최종 판정]
     public bool IsAttackPressed { get; private set; }
 
     // [E 슬롯 입력 — 선택된 스킬은 PlayerSkillController가 결정]
@@ -29,15 +29,21 @@ public class PlayerInputHandler : MonoBehaviour
     public bool WasSkillQPressed { get; private set; }
 
     public bool WasRecoverPressed { get; private set; }
+    public bool WasDashPressed { get; private set; }
 
     // [무기 교체 (Tab)]
     public bool WasWeaponSwitchPressed { get; private set; }
+    public int RequestedWeaponSlot { get; private set; }
+    public int WeaponScrollStep { get; private set; }
 
     private Camera _mainCamera;
+    private PlayerSkillController _skills;
+    private readonly PlayerAttackInputState _attackGesture = new();
 
     private void Awake()
     {
         _mainCamera = Camera.main;
+        _skills = GetComponent<PlayerSkillController>();
         MouseWorldPosition = transform.position;
     }
 
@@ -62,8 +68,12 @@ public class PlayerInputHandler : MonoBehaviour
             }
         }
 
-        // 3. 공격 입력 (Space 연사 지속)
-        IsAttackPressed = GameInput.IsPressed(GameKey.Space);
+        // UI가 클릭으로 닫히거나 설치가 취소되기 전의 입력 문맥을 보존합니다.
+        IsAttackPressed = false;
+        if (GameInput.PrimaryPointerWasPressedThisFrame && GameInput.IsPointerOverUi())
+            GameInput.TryConsumePrimaryPointerPress();
+        if (_skills != null && _skills.IsPlacingSkill)
+            GameInput.ReservePrimaryPointerForPlacement();
 
         // 4. E 슬롯 입력 (단발)
         WasBombPressed = GameInput.WasPressedThisFrame(GameKey.E);
@@ -71,8 +81,41 @@ public class PlayerInputHandler : MonoBehaviour
         // 5. Q 슬롯 입력 (단발)
         WasSkillQPressed = GameInput.WasPressedThisFrame(GameKey.Q);
         WasRecoverPressed = GameInput.WasPressedThisFrame(GameKey.F);
+        WasDashPressed = GameInput.WasPressedThisFrame(GameKey.Space);
 
         // 6. 무기 교체 입력 (Tab 키 감지)
         WasWeaponSwitchPressed = GameInput.WasPressedThisFrame(GameKey.Tab);
+        ReadWeaponSelection();
     }
+
+    private void ReadWeaponSelection()
+    {
+        RequestedWeaponSlot = 0;
+        if (GameInput.WasPressedThisFrame(GameKey.Digit1) || GameInput.WasPressedThisFrame(GameKey.Numpad1)) RequestedWeaponSlot = 1;
+        else if (GameInput.WasPressedThisFrame(GameKey.Digit2) || GameInput.WasPressedThisFrame(GameKey.Numpad2)) RequestedWeaponSlot = 2;
+        else if (GameInput.WasPressedThisFrame(GameKey.Digit3) || GameInput.WasPressedThisFrame(GameKey.Numpad3)) RequestedWeaponSlot = 3;
+        else if (GameInput.WasPressedThisFrame(GameKey.Digit4) || GameInput.WasPressedThisFrame(GameKey.Numpad4)) RequestedWeaponSlot = 4;
+
+        bool usesDebugCamera = GameInput.IsPressed(GameKey.LeftShift) || GameInput.IsPressed(GameKey.RightShift);
+        bool overUi = GameInput.ScrollY != 0 && GameInput.IsPointerOverUi();
+        WeaponScrollStep = usesDebugCamera || overUi ? 0 : -(int)GameInput.ScrollY;
+    }
+
+    public bool ResolvePrimaryAttack(bool canAttack)
+    {
+        bool blocked = !isActiveAndEnabled || !canAttack || GameInput.PrimaryPointerWasConsumed ||
+            GameInput.PrimaryPointerReservedForPlacement ||
+            (GameInput.PrimaryPointerIsPressed && GameInput.IsPointerOverUi());
+        IsAttackPressed = _attackGesture.Read(GameInput.PrimaryPointerIsPressed,
+            GameInput.PrimaryPointerWasPressedThisFrame, blocked);
+        return IsAttackPressed;
+    }
+
+    public void CancelAttackGesture()
+    {
+        _attackGesture.Reset();
+        IsAttackPressed = false;
+    }
+
+    private void OnDisable() => CancelAttackGesture();
 }

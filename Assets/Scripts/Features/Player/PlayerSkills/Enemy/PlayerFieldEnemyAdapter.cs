@@ -19,16 +19,20 @@ public sealed class PlayerFieldEnemyAdapter : MonoBehaviour
     private Vector3 _previousPosition;
     private Vector2 _lastDirection;
     private float _measuredSpeed;
+    private Collider2D[] _bodyColliders;
     private void Awake()
     {
         _control = new PlayerFieldEnemyControlLease(gameObject);
         _animation = new PlayerFieldEnemyAnimation(gameObject);
+        _bodyColliders = GetComponentsInChildren<Collider2D>(true);
         _previousPosition = transform.position;
     }
     // 기존 NetworkAnimator가 LateUpdate에서 게시하기 전에 표현을 갱신합니다.
     private void Update()
     {
         if (!_control.CanControl || !PlayerFieldDevice.HasActiveDevices) { Release(); return; }
+        Collider2D body = FindBody();
+        if (body == null) { Release(); return; }
         if (!_control.IsHeld)
         {
             Vector2 moved = transform.position - _previousPosition;
@@ -37,20 +41,27 @@ public sealed class PlayerFieldEnemyAdapter : MonoBehaviour
                 _measuredSpeed = moved.magnitude / Time.deltaTime;
                 _lastDirection = moved.normalized;
             }
-            _device = PlayerFieldDeviceRegistry.ResolveTarget(_previousPosition, (Vector2)transform.position + _lastDirection * .4f);
+            _device = PlayerFieldDeviceRegistry.ResolveTarget(_previousPosition,
+                (Vector2)transform.position + _lastDirection * .4f, body);
             if (_device == null || !_control.TryAcquire()) { _previousPosition = transform.position; return; }
             transform.position = _previousPosition;
         }
         else if (_device == null || !_device.IsAlive) { Release(); return; }
-        if (_device.Kind == PlayerFieldDeviceKind.Beacon) _device = _beaconBehaviour.Resolve(transform.position, _device);
+        if (_device.Kind == PlayerFieldDeviceKind.Beacon) _device = _beaconBehaviour.Resolve(transform.position, _device, body);
         else if (_device.Kind == PlayerFieldDeviceKind.Barrier) _device = _barrierBehaviour.Resolve(_device);
         if (_device == null) { Release(); return; }
-        bool attacked = _behaviour.Step(transform, _device,
+        bool attacked = _behaviour.Step(transform, body, _device,
             _measuredSpeed > 0 ? _measuredSpeed : _fallbackSpeed, _attackRange,
             _fallbackDamage, _fallbackAttackCooldown, Time.time, Time.deltaTime, out var direction, out bool moving);
         _animation.SetMovement(direction, moving);
         if (attacked) _animation.PlayAttack();
         _previousPosition = transform.position;
+    }
+    private Collider2D FindBody()
+    {
+        foreach (var collider in _bodyColliders)
+            if (PlayerDeviceContactQuery.IsBody(collider)) return collider;
+        return null;
     }
     private void Release()
     {
