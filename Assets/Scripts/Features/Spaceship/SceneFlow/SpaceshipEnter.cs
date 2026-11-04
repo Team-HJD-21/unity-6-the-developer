@@ -1,20 +1,23 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 public class SpaceshipEnter : MonoBehaviour
 {
     [SerializeField]
-    private string sceneToLoadName;
+    [FormerlySerializedAs("sceneToLoadName")]
+    private string _sceneToLoadName;
 
     [SerializeField]
-    private string destinationName = "Triangle";
+    [FormerlySerializedAs("destinationName")]
+    private string _destinationName = "Triangle";
 
-    private bool isTransitioning;
+    private bool _isTransitioning;
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (isTransitioning || other.gameObject.layer != LayerMask.NameToLayer("Player"))
+        if (_isTransitioning || other.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
         
         Transform player = other.transform;
@@ -24,53 +27,53 @@ public class SpaceshipEnter : MonoBehaviour
 
     private IEnumerator EnterSpaceship(Transform player)
     {
-        isTransitioning = true;
+        _isTransitioning = true;
 
-        if (string.IsNullOrWhiteSpace(sceneToLoadName))
+        if (string.IsNullOrWhiteSpace(_sceneToLoadName))
         {
             Debug.LogError("Spaceship scene name is not assigned.", this);
-            isTransitioning = false;
+            _isTransitioning = false;
             yield break;
         }
 
-        AsyncOperation pendingUnload = SpaceshipExit.GetPendingUnload(sceneToLoadName);
+        AsyncOperation pendingUnload = SpaceshipExit.GetPendingUnload(_sceneToLoadName);
         if (pendingUnload != null)
             yield return pendingUnload;
 
-        Scene spaceshipScene = SceneManager.GetSceneByName(sceneToLoadName);
+        Scene spaceshipScene = SceneManager.GetSceneByName(_sceneToLoadName);
         if (!spaceshipScene.isLoaded)
         {
             AsyncOperation loadOperation = SceneManager.LoadSceneAsync(
-                sceneToLoadName,
+                _sceneToLoadName,
                 LoadSceneMode.Additive
             );
 
             if (loadOperation == null)
             {
-                Debug.LogError($"Failed to start loading scene '{sceneToLoadName}'.", this);
-                isTransitioning = false;
+                Debug.LogError($"Failed to start loading scene '{_sceneToLoadName}'.", this);
+                _isTransitioning = false;
                 yield break;
             }
 
             yield return loadOperation;
-            spaceshipScene = SceneManager.GetSceneByName(sceneToLoadName);
+            spaceshipScene = SceneManager.GetSceneByName(_sceneToLoadName);
         }
         
         // 로드된 상태의 spaceship
-        Transform destination = FindTransformInScene(spaceshipScene, destinationName);
+        Transform destination = FindTransformInScene(spaceshipScene, _destinationName);
         if (destination == null)
         {
             Debug.LogError(
-                $"Could not find '{destinationName}' in scene '{sceneToLoadName}'.",
+                $"Could not find '{_destinationName}' in scene '{_sceneToLoadName}'.",
                 this
             );
-            isTransitioning = false;
+            _isTransitioning = false;
             yield break;
         }
 
         MovePlayer(player, destination.position);
         player.GetComponentInParent<PlayerLocationState>()?.CheckLocation(true);
-        isTransitioning = false;
+        _isTransitioning = false;
     }
 
     private static Transform FindTransformInScene(Scene scene, string objectName)
