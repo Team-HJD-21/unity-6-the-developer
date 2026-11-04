@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class PlayerBeaconSkill : PlayerSkillBase
+public sealed class PlayerBeaconSkill : PlayerPlacementSkillBase
 {
     [SerializeField] private PlayerFieldDevice _prefab;
     [SerializeField, Min(.1f)] private float _cooldown = 14;
@@ -11,7 +11,7 @@ public sealed class PlayerBeaconSkill : PlayerSkillBase
     private PlayerFieldDevice _active;
     private float _remainingCooldown;
     public override PlayerSkillId Id => PlayerSkillId.LureBeacon;
-    public override bool HasPrefab => _prefab != null;
+    public override bool HasPrefab => _prefab != null && HasPlacementPreview;
     public override int AvailableCount => CanDeploy ? 1 : 0;
     public float Cooldown => Mathf.Max(.1f, _cooldown);
     public override float CooldownDuration => Cooldown;
@@ -23,13 +23,22 @@ public sealed class PlayerBeaconSkill : PlayerSkillBase
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _remainingCooldown = Mathf.Max(0, _remainingCooldown - elapsed);
     }
-    protected override bool TryActivate()
+    protected override string GetPlacementFailure(Vector3 position)
     {
+        if (!PlayerSkillPlacementUtility.TryGetDeviceFootprint(_prefab, position, 0, out Bounds footprint))
+            return "비콘 본체 설정을 확인해 주세요.";
+        return PlayerSkillDescriptions.TurretPlacementFailure(EvaluateFootprint(footprint));
+    }
+
+    protected override bool TryPlace(Vector3 position, out bool complete)
+    {
+        complete = true;
         if (_active != null) PlayerFieldDevice.Dispose(_active.gameObject);
-        _active = Instantiate(_prefab, transform.position, Quaternion.identity);
-        _active.Initialize(PlayerFieldDeviceKind.Beacon, transform.position, transform.position, .3f, _health, _duration, _radius);
+        _active = Instantiate(_prefab, position, Quaternion.identity);
+        MoveToOwnerScene(_active.gameObject);
+        _active.Initialize(PlayerFieldDeviceKind.Beacon, position, position, .3f, _health, _duration, _radius, transform);
         _remainingCooldown = Cooldown;
         return true;
     }
-    private void OnDestroy() { if (_active != null) PlayerFieldDevice.Dispose(_active.gameObject); }
+    protected override void OnDestroy() { base.OnDestroy(); if (_active != null) PlayerFieldDevice.Dispose(_active.gameObject); }
 }

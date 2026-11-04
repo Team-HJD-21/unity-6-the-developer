@@ -59,6 +59,7 @@ MonoBehaviour:
   _view: {fileID: 1005}
   _repair: {fileID: 1006}
   _impactPrefab: {fileID: 729253548169537116, guid: c810536caafd331488d671436549396e, type: 3}
+  _slashPrefab: {fileID: 2007, guid: 64b0e52771a95518b71f94414443030d, type: 3}
   _impactPauseSeconds: 0.045
 --- !u!114 &1005
 MonoBehaviour:

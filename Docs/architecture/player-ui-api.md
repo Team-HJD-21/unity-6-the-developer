@@ -27,7 +27,9 @@ InitialStageCompositionRoot가 이 수명을 연결한다. standalone Feature Sc
 
 `Assets/Scenes/Gameplay/Initial_Stage.unity`에서
 `Assets/Prefabs/UI/InitialStagePlayerHUD.prefab`을 사용한다.
-원본 Stage 1과 `TurretInteractionUI`는 변경하지 않는다.
+원본 Stage 1 씬과 프리팹 배치는 유지한다. #564에서는 `TurretInteractionUI`의 클릭 처리에도 동일한 UI 검사·클릭 소비 계약을 적용했다.
+
+2026-10-27 #564: 포탑 선택 클릭은 LMB 공격에서 제외한다. 먼 포탑 또는 이미 선택한 포탑을 클릭해도 발사하지 않는다. UI·스킬 설치 중에는 포탑 선택을 처리하지 않으며, 기존 거리 안내와 조작 조건은 유지한다. [클릭 입력 분리 API](player-primary-input-api.md)
 
 상태 UI, 터렛 창, 텍스트, 버튼과 화살표는 모두 프리팹에 미리 배치되어 있다.
 런타임에 UI 오브젝트를 만들거나 이름으로 UI 참조를 찾지 않는다.

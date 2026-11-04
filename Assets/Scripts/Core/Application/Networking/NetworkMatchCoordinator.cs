@@ -15,13 +15,18 @@ namespace TeamHJD.Game.Application
         private long _preparationSequence;
         private bool _localReady;
         private bool _disposed;
+        private readonly HashSet<ulong> _completionPending = new HashSet<ulong>();
         public NetworkMatchPhase Phase { get; private set; }
         public NetworkMatchDescriptor Descriptor { get; private set; }
+        public MatchCompletion Completion { get; private set; }
+        public bool IsGameplayRunning => !_disposed && Descriptor != null && Phase == NetworkMatchPhase.Running && Completion == null;
+        public bool HasPendingCompletion => _completionPending.Count > 0;
         public ulong AuthorityConnectionId => _serverConnectionId;
         public bool CanStart => !_disposed && _network.IsServer && Phase == NetworkMatchPhase.Preparing && _barrier != null && _barrier.CanStart;
         public event Action<NetworkMatchDescriptor> Preparing;
         public event Action<NetworkMatchDescriptor> Started;
         public event Action<MatchId> Ended;
+        public event Action<MatchCompletion> Completed;
         public NetworkMatchCoordinator(INetworkSession network, IMatchLifecycleTransport transport, ulong serverConnectionId = 0)
         {
             _network = network ?? throw new ArgumentNullException(nameof(network));
@@ -47,6 +52,7 @@ namespace TeamHJD.Game.Application
             if (Descriptor != null) TryEnd();
             if (_disposed || Descriptor != null) return false;
             _preparationSequence = descriptor.PreparationSequence;
+            Completion = null;
             Descriptor = descriptor; _barrier = barrier; _localReady = false; Phase = NetworkMatchPhase.Preparing;
             foreach (MatchParticipantBinding binding in descriptor.Participants)
                 if (binding.ConnectionId != _network.LocalConnectionId && !_transport.TrySendDescriptor(binding.ConnectionId, descriptor))
@@ -87,9 +93,44 @@ namespace TeamHJD.Game.Application
         public bool TryEnd()
         {
             ThrowIfDisposed();
-            if (!_network.IsServer || Descriptor == null) return false;
+            if (!_network.IsServer || Descriptor == null || HasPendingCompletion) return false;
             EndAuthority();
             return true;
+        }
+
+        /// <summary>Host Session이 확정한 결과를 한 번 게시합니다. 연결과 결과 화면의 수명은 유지합니다.</summary>
+        public bool TryPublishCompletion(MatchCompletion completion)
+        {
+            ThrowIfDisposed();
+            if (completion == null) throw new ArgumentNullException(nameof(completion));
+            if (!_network.IsServer || Descriptor == null || Phase != NetworkMatchPhase.Running ||
+                completion.Result.MatchId != Descriptor.Config.MatchId) return false;
+            if (Completion != null) return ReferenceEquals(Completion, completion);
+            // 전송 불가능한 결과로 완료 gate를 먼저 닫지 않도록 계약 한계를 선행 검증합니다.
+            _ = new MatchLifecycleSignal(Descriptor.Config.MatchId, Descriptor.DescriptorId, completion);
+            Completion = completion;
+            foreach (MatchParticipantBinding binding in Descriptor.Participants)
+                if (binding.ConnectionId != _network.LocalConnectionId) _completionPending.Add(binding.ConnectionId);
+            List<Exception> errors = null;
+            try { FlushPendingCompletion(); } catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            try { Notify(Completed, completion); } catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            if (errors != null) throw new AggregateException("Final result committed; publication or observers failed.", errors);
+            return true;
+        }
+
+        /// <summary>App pump가 재시도합니다. 같은 순서 보존 채널에 결과가 접수되기 전 정상 종료를 보류합니다.</summary>
+        public void FlushPendingCompletion()
+        {
+            if (_disposed || Descriptor == null || Completion == null || !_network.IsServer) return;
+            var current = Descriptor;
+            var completion = Completion;
+            var signal = new MatchLifecycleSignal(current.Config.MatchId, current.DescriptorId, completion);
+            foreach (ulong connection in new List<ulong>(_completionPending))
+            {
+                if (!ReferenceEquals(Descriptor, current) || !ReferenceEquals(Completion, completion)) return;
+                if (_transport.TrySendSignal(connection, MatchLifecycleSignalKind.Completed, signal))
+                    _completionPending.Remove(connection);
+            }
         }
         private void EndAuthority()
         {
@@ -124,6 +165,7 @@ namespace TeamHJD.Game.Application
             }
             if (!localBound || !correctHost) return;
             Descriptor = descriptor; _preparationSequence = descriptor.PreparationSequence;
+            Completion = null;
             _localReady = false; Phase = NetworkMatchPhase.Preparing;
             Notify(Preparing, descriptor);
         }
@@ -139,13 +181,19 @@ namespace TeamHJD.Game.Application
             }
             if (sender != _serverConnectionId) return;
             if (kind == MatchLifecycleSignalKind.Ended) EndLocal();
+            else if (kind == MatchLifecycleSignalKind.Completed && Phase == NetworkMatchPhase.Running &&
+                Completion == null && signal.Completion != null)
+            {
+                Completion = signal.Completion;
+                Notify(Completed, Completion);
+            }
             else if (kind == MatchLifecycleSignalKind.Started && _localReady && Phase == NetworkMatchPhase.Preparing)
             { Phase = NetworkMatchPhase.Running; Notify(Started, Descriptor); }
         }
         private void OnPeerDisconnected(ulong connection)
         {
             if (_disposed || Descriptor == null || !TryResolveParticipant(connection, out _)) return;
-            if (_network.IsServer) TryEnd();
+            if (_network.IsServer) EndAuthority();
             else if (connection == _network.LocalConnectionId || connection == _serverConnectionId) EndLocal();
         }
         private void OnConnectionState(NetworkConnectionState state)
@@ -159,6 +207,7 @@ namespace TeamHJD.Game.Application
         {
             var current = Descriptor;
             Descriptor = null; _barrier = null; _localReady = false;
+            _completionPending.Clear();
             Phase = NetworkMatchPhase.Ended;
             if (current != null) Notify(Ended, current.Config.MatchId);
         }
@@ -183,7 +232,7 @@ namespace TeamHJD.Game.Application
             {
                 _transport.DescriptorReceived -= OnDescriptor; _transport.SignalReceived -= OnSignal;
                 _network.PeerDisconnected -= OnPeerDisconnected; _network.StateChanged -= OnConnectionState;
-                Preparing = null; Started = null; Ended = null; Phase = NetworkMatchPhase.Disposed;
+                Preparing = null; Started = null; Ended = null; Completed = null; Phase = NetworkMatchPhase.Disposed;
             }
         }
         private void ThrowIfDisposed() { if (_disposed) throw new ObjectDisposedException(nameof(NetworkMatchCoordinator)); }

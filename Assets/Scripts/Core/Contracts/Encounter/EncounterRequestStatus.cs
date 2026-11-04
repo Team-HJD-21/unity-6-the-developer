@@ -4,6 +4,7 @@ namespace TeamHJD.Game.Contracts
     public enum EncounterRequestStatus
     {
         Spawned, PartialSpawn, PlanRejected, SpawnFailed, Unauthorized, DifferentMatch,
-        MatchUnavailable, NotReady, InProgress, RequestConflict, CapacityExceeded, ExecutionFailed
+        MatchUnavailable, NotReady, InProgress, RequestConflict, CapacityExceeded, ExecutionFailed,
+        OriginUnavailable, UnsupportedOrigin, UnsupportedDelivery
     }
 }

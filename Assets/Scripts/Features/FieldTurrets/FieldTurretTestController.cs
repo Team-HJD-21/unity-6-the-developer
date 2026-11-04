@@ -269,6 +269,8 @@ namespace TeamHJD.Game.Debugging
             {
                 DrawWrappedLabel($"Turret Power: {_controllerSnapshot.AvailablePower} / {_controllerSnapshot.MaximumPower}");
                 DrawWrappedLabel($"Reserved: {_controllerSnapshot.ReservedPower} / Recovering: {_controllerSnapshot.PendingRecoveryPower}");
+                if (_turretController != null)
+                    DrawWrappedLabel($"Destruction Return: {_turretController.DestructionPowerReturnPercent:F1}% (Inspector)");
                 DrawWrappedLabel($"Controller Turrets: {_controllerSnapshot.RegisteredTurretCount} / " +
                     $"Activated: {_controllerSnapshot.ActivatedTurretCount} / Operational: {_controllerSnapshot.OperationalTurretCount}");
                 DrawWrappedLabel($"Activated Types: Canon {_controllerSnapshot.GetActivatedCount(FieldTurretKind.Canon)} / " +
@@ -583,6 +585,7 @@ namespace TeamHJD.Game.Debugging
                 $"{turret.name}  |  ID {turret.InstanceId}  |  LV {level}");
             DrawWrappedLabel($"Damage {damage}  |  Power {power}  |  " +
                 $"HP {turret.CurrentHealth}/{turret.MaxHealth}");
+            DrawWrappedLabel($"Reserved Power {turret.ReservedPower}");
             DrawWrappedLabel($"Attack Range {turret.MinimumRange:F1} ~ {turret.EffectiveRange:F1}");
             if (_turretController != null && _turretController.TryGetUnlockZone(turret, out int unlockZone))
                 DrawWrappedLabel($"Unlock Zone {unlockZone} / available through {_turretController.UnlockedZoneCount}");

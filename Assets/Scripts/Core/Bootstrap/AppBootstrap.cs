@@ -5,6 +5,8 @@ using TeamHJD.Game.Content.Runtime;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure.Fakes;
+using TeamHJD.Game.Infrastructure;
+using System.IO;
 using UnityEngine;
 
 namespace TeamHJD.Game.Bootstrap
@@ -61,8 +63,10 @@ namespace TeamHJD.Game.Bootstrap
                 new FakeProfileService(),
                 content,
                 new FakePlatformService(localUser),
-                new FakeSceneFlow(),
-                new LocalAuthority());
+                new UnitySceneFlow(),
+                new LocalAuthority(),
+                checkpointStore: new BinaryCheckpointStore(Path.Combine(UnityEngine.Application.persistentDataPath, "Checkpoints")),
+                checkpointPayloads: new BinaryCheckpointPayloadCodec());
         }
     }
 }

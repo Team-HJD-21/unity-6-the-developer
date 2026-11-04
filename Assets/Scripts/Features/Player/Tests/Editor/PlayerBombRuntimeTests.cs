@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.Rendering;
 
 public sealed class PlayerBombRuntimeTests
 {
@@ -25,8 +26,15 @@ public sealed class PlayerBombRuntimeTests
     [UnityTest]
     public IEnumerator Detonation_HidesBodyAndTimer()
     {
+        var bodyCollider = _bomb.GetComponent<Collider2D>();
+        Assert.That(bodyCollider, Is.Not.Null);
+        Assert.That(bodyCollider.enabled, Is.True);
+        Assert.That(bodyCollider.isTrigger, Is.False);
+        Assert.That(_bomb.GetComponent<Rigidbody2D>().bodyType, Is.EqualTo(RigidbodyType2D.Static));
         Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.True);
         _explosion.Explode();
+        Assert.That(bodyCollider.enabled, Is.False, "The explosion effect must not leave an invisible obstacle.");
+        Assert.That(_bomb.GetComponent<PlayerDeviceBodyCollision>().enabled, Is.False);
         Assert.That(_bomb.GetComponent<SpriteRenderer>().enabled, Is.False);
         Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.False);
         yield break;
@@ -45,6 +53,26 @@ public sealed class PlayerBombRuntimeTests
         Assert.That(_explosion.Explode(), Is.True);
         Assert.That(_explosion.Explode(), Is.False);
         yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Detonation_KeepsLastDepthAfterGroundColliderIsDisabled()
+    {
+        var owner = new GameObject("Bomb depth owner", typeof(SpriteRenderer));
+        try
+        {
+            owner.GetComponent<SpriteRenderer>().sortingOrder = 104;
+            owner.transform.position = _bomb.transform.position + Vector3.up * 3;
+            _explosion.BindOwner(owner.transform);
+            var sorting = _bomb.GetComponent<SortingGroup>();
+            Assert.That(sorting.sortingOrder, Is.EqualTo(105));
+            Assert.That(_explosion.Explode(), Is.True);
+            Assert.That(_bomb.GetComponent<PlayerDeviceSortingOrder>().enabled, Is.False);
+            owner.transform.position += Vector3.down * 6;
+            yield return null;
+            Assert.That(sorting.sortingOrder, Is.EqualTo(105));
+        }
+        finally { Object.DestroyImmediate(owner); }
     }
 
     [TestCase(.5f, 6f)]

@@ -9,11 +9,13 @@ using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Content.Authoring;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Infrastructure;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
+    [DefaultExecutionOrder(-300)]
     public sealed class InitialStageCompositionRoot : MonoBehaviour, ISceneCompositionRoot
     {
         private static readonly PlayerId LocalPlayerId = new PlayerId("local-player");
@@ -28,6 +30,38 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
+        private MatchCoordinator _coordinator;
+        private MatchTimeService _matchTime;
+        private IMatchTime _timeReplica;
+        private MatchFieldReplicaScope _replicaField;
+        private MatchFieldSceneScope _fieldScope;
+        private RandomConsumerScope _randomConsumers;
+        /// <summary>권위 Match의 범용 난수 흐름입니다. 초기화 전·Client·Match 해제 후에는 null입니다.</summary>
+        public IRandomStreams Random => _matchSession?.Random;
+        /// <summary>저장 조립부가 실제 Feature writer 목록에 함께 등록할 Core 난수 writer를 생성합니다.</summary>
+        public ICheckpointParticipant CreateRandomCheckpointParticipant() => _matchSession?.CreateRandomCheckpointParticipant() ??
+            throw new InvalidOperationException("No current authority Match exists.");
+        /// <summary>권위 Match 참가자의 확정 위치입니다. Client 신고용 쓰기 API는 제공하지 않습니다.</summary>
+        public MatchPresenceService MatchPresence => _fieldScope?.Presence;
+        /// <summary>Player 생성자가 Host에 만든 실제 원격 actor를 등록합니다. actor 제거 시 lease를 해제합니다.</summary>
+        public IDisposable RegisterAuthorityPresence(PlayerId player, GameObject actor)
+            => _fieldScope?.RegisterActor(player, actor) ?? throw new InvalidOperationException("No authority field scope exists.");
+        private IMatchWeatherSource _weatherSource;
+        private IMatchTimeOfDaySource _timeOfDaySource;
+        private IDisposable _environmentScope;
+        private IMatchEnvironmentSource _environmentReplica;
+        public MatchCoordinator MatchCoordinator => _coordinator;
+        /// <summary>현재 Match의 읽기 시계입니다. Client는 첫 권위 anchor를 받기 전 null입니다.</summary>
+        public IMatchTime MatchTime => _matchTime?.Clock ?? _timeReplica;
+        /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
+        public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
+        /// <summary>Game Debugger와 통합 검사가 조회하는 현재 권위 Match의 유효 예약 수입니다.</summary>
+        public int PendingMatchTimers => _matchTime?.PendingTimers ?? 0;
+        public IMatchEnvironmentSource EnvironmentSource => _matchSession?.Environment ?? _environmentReplica;
+        public double LastSpatialRefreshMilliseconds { get; private set; } = double.NaN;
+        public double LastTopologyRefreshMilliseconds { get; private set; } = double.NaN;
+        private static readonly Unity.Profiling.ProfilerMarker SpatialMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Battlefield.SampleAndPublish");
+        private static readonly Unity.Profiling.ProfilerMarker TopologyMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Battlefield.TopologyAndPublish");
         private RegionSceneBinding _regionBinding;
         private TurretMatchBinding _turretBinding;
         private MatchPlayerActorScope _playerActors;
@@ -48,6 +82,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_matchHost != null) throw new InvalidOperationException("Initial Stage has already been composed.");
             if (appMatchHost == null) throw new ArgumentNullException(nameof(appMatchHost));
+            PrepareEnvironmentSources();
             if (_networkBinding != null)
             {
                 if (!(appMatchHost is AppRoot app))
@@ -118,19 +153,39 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _turretBinding = GetComponent<TurretMatchBinding>();
-                _turretBinding?.BindMatch(matchId, () => HasCurrentMatch && (network == null || network.Phase == NetworkMatchPhase.Running));
+                _turretBinding?.BindMatch(matchId, () => HasCurrentMatch && _matchSession != null &&
+                    !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running &&
+                    (network == null || network.IsGameplayRunning));
                 MatchSession session = appMatchHost.StartMatch(
                     config,
                     initialState,
-                    new InitialStagePocModeRules(),
+                    new StoryModeRules(),
                     turretBattlefieldInput,
                     dynamicBattlefieldInput,
                     grid);
                 _matchHost = appMatchHost;
                 _ownsMatch = true;
                 _ownedMatchId = matchId;
+                _matchSession = session;
                 // D의 Match lease가 쓰기를 허용한 뒤, Core 지역 정책을 붙이기 전에 초기화합니다.
                 ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
+                var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
+                    .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitVitals>().Single();
+                ITimestampSource timestamp = network == null ? (ITimestampSource)new UnityTimestampSource() :
+                    new NgoTimestampSource((_networkBinding.Connection as NgoNetworkSession)?.Manager ??
+                        throw new InvalidOperationException("The authority Match requires its composed NGO connection."));
+                _matchTime = new MatchTimeService(session, timestamp,
+                    () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
+                _coordinator = new MatchCoordinator(session, controlUnitHealth,
+                    () => HasCurrentMatch && (network == null || network.IsGameplayRunning), _matchTime.Clock);
+                // Feature의 최초 날씨 선택 이전에 주입합니다. Client에는 난수 결정권을 제공하지 않습니다.
+                session.InitializeRandom(() => HasCurrentMatch && (network == null || _networkBinding.Connection.IsServer));
+                _randomConsumers = new RandomConsumerScope(session.Random, FindSceneBehaviours().OfType<IRandomConsumer>());
+                _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning), _matchTime.Scheduler);
+                session.InitializeSpawnSources(
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
+                    _coordinator.GameplayCancellation);
                 _turretInputSource = turretInputSource;
                 if (_turretInputSource != null)
                     _turretInputSource.LayoutChanged += OnTurretLayoutChanged;
@@ -145,17 +200,25 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _matchSession = session;
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
                     consumer.BindLocalActor(matchId, localPlayerId, _playerActors.Actors[localPlayerId]);
+                BindLocalInput(_playerActors.Actors[localPlayerId]);
                 _regionBinding = regionBinding;
                 if (network == null) _regionBinding?.BindMatch(session, entityIds: _turretBinding);
                 else
                 {
                     if (_regionBinding == null) throw new InvalidOperationException("Network Match requires a RegionSceneBinding.");
                     _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
-                        network.Descriptor.RegionMode, () => network.Phase == NetworkMatchPhase.Running, _turretBinding);
+                        network.Descriptor.RegionMode, () => network.IsGameplayRunning, _turretBinding);
                 }
                 _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
                 {
+                    // 새 환경·추가 스폰 계약은 Feature가 구현한 경우에만 연결합니다.
+                    // 현행 main consumer의 기존 Battlefield 스폰 경로는 계속 사용할 수 있습니다.
+                    if (_encounterConsumer is IEncounterEnvironmentConsumer environmentConsumer)
+                        environmentConsumer.BindEnvironment(matchId, () => HasCurrentMatch && _matchSession != null &&
+                            _matchSession.IsGameplayRunning ? _matchSession.Environment?.Snapshot : null);
+                    if (_encounterConsumer is IEncounterSpawnContextConsumer spawnConsumer)
+                        spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _coordinator, config.RandomSeed, _coordinator.GameplayCancellation);
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
                     if (network != null)
@@ -173,6 +236,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _nextBattlefieldSampleTime = 0f;
                 cameraFollow.Bind(_playerActors.Actors[localPlayerId].transform);
                 session.Disposing += ReleaseMatchBindings;
+                _coordinator.Completed += OnMatchCompleted;
+                _coordinator.Start();
+                var fieldFeatures = GetFieldSimulationConsumers();
+                _fieldScope = new MatchFieldSceneScope(config, _matchTime, _coordinator.GameplayCancellation,
+                    () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
+                    fieldFeatures, _playerActors.Actors);
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
                     $"Initial_Stage Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
@@ -202,6 +271,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (consumer == null || !consumer.isActiveAndEnabled || !(consumer is IAppOwnedEncounterMatchConsumer))
                 throw new ArgumentException("An active App-owned Encounter consumer is required.", nameof(consumer));
             _encounterConsumerBehaviour = consumer;
+            var configurations = FindSceneBehaviours().OfType<IEncounterSceneConfiguration>().ToArray();
+            if (configurations.Length > 1)
+                throw new InvalidOperationException("The Match Scene cannot have multiple Encounter execution configurations.");
+            // 현행 Enemy consumer는 자체 실행 대상을 구성합니다. Feature가 명시적 Scene 설정
+            // 계약을 도입하면 그 연결을 사용하며, 기존 App 소유권·Host 검증은 그대로 유지합니다.
+            if (configurations.Length == 1)
+                configurations[0].ConfigureEncounter((IEncounterMatchConsumer)consumer);
         }
 
         /// <summary>준비 응답 전에 양쪽 Scene의 슬롯·콘텐츠·필수 제작 연결을 검사합니다.</summary>
@@ -234,6 +310,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 region.ControlUnit.gameObject.scene != gameObject.scene || !region.ControlUnit.gameObject.activeInHierarchy)
                 throw new InvalidOperationException("Assign an active Scene CU and FieldTurretController before preparing the Match.");
             // 정의 생성은 읽기 전용입니다. CU의 유효 좌표·Grid 범위·Inspector 구역 수를 검사합니다.
+            var health = region.ControlUnit.GetComponents<MonoBehaviour>()
+                .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitVitals>().ToArray();
+            if (health.Length != 1 || health[0].MaxHealth <= 0)
+                throw new InvalidOperationException("Provide one configured, active CU vitals source before Match preparation.");
             region.Controller.CreateUnlockZoneDefinition(region.ControlUnit.position);
             return region;
         }
@@ -249,6 +329,21 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             else if (mode != RegionPolicyMode.Dynamic) throw new ArgumentOutOfRangeException(nameof(mode));
             // Dynamic은 임시 삼각형에서 점령 셀을 만들므로 정적 잠금으로 기존 활성 상태를 변경하지 않습니다.
+        }
+
+        private void OnMatchCompleted(MatchCompletion completion)
+        {
+            if (!HasCurrentMatch || completion.Result.MatchId != _ownedMatchId) return;
+            var errors = new List<Exception>();
+            RunCleanup(() =>
+            {
+                if (_networkBinding != null && !_networkBinding.Matches.TryPublishCompletion(completion))
+                    throw new InvalidOperationException("The current Host could not commit its final Match result.");
+            }, errors);
+            // 불변 결과를 보존/게시한 후 실제 Feature 작업을 닫습니다. 연결·Session은 결과 인수까지 유지합니다.
+            RunCleanup(() => ReleaseEncounterConsumer(completion.Result.MatchId), errors);
+            RunCleanup(() => _turretBinding?.StopMatchOperations(), errors);
+            if (errors.Count > 0) throw new AggregateException("Match completed; publication or Feature shutdown failed.", errors);
         }
 
         public void ComposeNetworkMatch(NetworkMatchCoordinator matches, bool isServer, ulong connectionId)
@@ -271,6 +366,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     new LocalPlayerActorSpawner(playerPrefab, actorParent), FindPlayerStarts());
                 foreach (var consumer in _localActorConsumers)
                     consumer.BindLocalActor(_ownedMatchId, playerId, _playerActors.Actors[playerId]);
+                BindLocalInput(_playerActors.Actors[playerId]);
                 FindSceneCameraFollow().Bind(_playerActors.Actors[playerId].transform);
             }
             catch (Exception error)
@@ -281,11 +377,59 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
         }
 
+        /// <summary>네트워크 Scene 어댑터가 준비 세대를 검증한 Client 시계를 연결/해제합니다. 권위 시계는 교체하지 않습니다.</summary>
+        public void BindTimeReplica(IMatchTime source)
+        {
+            if (source != null && (_ownsMatch || _ownedMatchId.IsEmpty || source.Snapshot.MatchId != _ownedMatchId))
+                throw new InvalidOperationException("Bind a time replica only to its composed Client Match.");
+            if (ReferenceEquals(_timeReplica, source)) return;
+            var previous = _replicaField; _replicaField = null; _timeReplica = null;
+            previous?.Dispose();
+            if (source == null) return;
+            _replicaField = new MatchFieldReplicaScope(source, GetFieldSimulationConsumers(), _playerActors.Actors.Values.Single());
+            _timeReplica = source;
+        }
+        /// <summary>현재 descriptor의 로컬 슬롯 위치만 Client 필드 입력 경계에 반영합니다.</summary>
+        public void ApplyReplicaLocation(MatchPlayerLocation location) => _replicaField?.ApplyLocation(location);
+        private List<IFieldSimulationConsumer> GetFieldSimulationConsumers()
+        {
+            var features = FindSceneBehaviours().OfType<IFieldSimulationConsumer>().ToList();
+            var encounter = _encounterConsumer as IFieldSimulationConsumer ?? _encounterConsumerBehaviour as IFieldSimulationConsumer;
+            if (encounter != null && !features.Contains(encounter)) features.Add(encounter);
+            return features;
+        }
+
         public void BindRegionReplica(IRegionGridSource source)
         {
             _regionBinding = RegionBinding;
             _regionBinding.UnbindMatch();
             if (source != null) _regionBinding.BindReplica(source);
+        }
+
+        public void BindEnvironmentReplica(IMatchEnvironmentSource source)
+        {
+            IDisposable previous = _environmentScope; _environmentScope = null; _environmentReplica = null;
+            previous?.Dispose();
+            if (source == null) return;
+            if (_ownsMatch || _ownedMatchId.IsEmpty) throw new InvalidOperationException("Bind environment replicas only to a composed Client Match.");
+            _environmentScope = new MatchEnvironmentReplicaBinding(_ownedMatchId, source, _weatherSource, _timeOfDaySource);
+            _environmentReplica = source;
+        }
+
+        private void PrepareEnvironmentSources()
+        {
+            var weather = FindSceneBehaviours().OfType<IMatchWeatherSource>().ToArray();
+            var time = FindSceneBehaviours().OfType<IMatchTimeOfDaySource>().ToArray();
+            if (weather.Length > 1 || time.Length > 1) throw new InvalidOperationException("Keep one authoritative weather/time source per Match Scene.");
+            _weatherSource = weather.FirstOrDefault(); _timeOfDaySource = time.FirstOrDefault();
+            foreach (var feature in MatchEnvironmentSceneScope.Collect(_weatherSource, _timeOfDaySource)) feature.RequireMatchScope();
+        }
+
+        private void BindLocalInput(GameObject actor)
+        {
+            if (!(_matchHost is AppRoot app)) return;
+            foreach (var consumer in actor.GetComponents<MonoBehaviour>().OfType<ILocalInputConsumer>())
+                consumer.BindInputBlocker(app.Services.InputLocks);
         }
 
         public void ReleaseNetworkMatch(MatchId matchId)
@@ -318,23 +462,40 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             MatchPlayerActorScope actors = _playerActors;
             RegionSceneBinding regions = _regionBinding;
             TurretMatchBinding turrets = _turretBinding;
+            MatchCoordinator coordinator = _coordinator;
+            MatchTimeService time = _matchTime;
+            MatchFieldSceneScope field = _fieldScope;
+            MatchFieldReplicaScope replicaField = _replicaField;
+            IDisposable environment = _environmentScope;
+            RandomConsumerScope randomConsumers = _randomConsumers;
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
             bool ownedMatch = _ownsMatch;
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
+            _coordinator = null;
+            _matchTime = null; _timeReplica = null;
+            _fieldScope = null; _replicaField = null;
+            _environmentScope = null; _environmentReplica = null;
+            _randomConsumers = null;
             _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
             _ownedMatchId = default;
             _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
             _lastEntityCells.Clear();
             var errors = new List<Exception>();
+            RunCleanup(() => coordinator?.Dispose(), errors);
+            RunCleanup(() => environment?.Dispose(), errors);
+            RunCleanup(() => randomConsumers?.Dispose(), errors);
             RunCleanup(() => ReleaseLocalActorConsumers(matchId), errors);
             RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
+            RunCleanup(() => field?.Dispose(), errors);
+            RunCleanup(() => replicaField?.Dispose(), errors);
             RunCleanup(() => actors?.Dispose(), errors);
             RunCleanup(() => { if (regions != null) regions.UnbindMatch(); }, errors);
             RunCleanup(() => { if (turrets != null) turrets.UnbindMatch(matchId); }, errors);
             RunCleanup(() => { if (input != null) input.LayoutChanged -= OnTurretLayoutChanged; }, errors);
+            RunCleanup(() => time?.Dispose(), errors);
             if (endOwnedMatch && ownedMatch) RunCleanup(() => host?.TryEndMatch(matchId), errors);
             if (notifyNetworkEnd) RunCleanup(() => _networkBinding?.OnAuthorityMatchReleased(matchId), errors);
             if (errors.Count > 0) throw new AggregateException("Scene cleanup failed after all owned bindings were released.", errors);
@@ -389,7 +550,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             IEncounterMatchConsumer consumer = _encounterConsumer;
             _encounterConsumer = null;
-            try { consumer?.UnbindMatch(matchId); }
+            try
+            {
+                try { consumer?.UnbindMatch(matchId); }
+                finally
+                {
+                    try { (consumer as IEncounterEnvironmentConsumer)?.UnbindEnvironment(matchId); }
+                    finally { (consumer as IEncounterSpawnContextConsumer)?.UnbindSpawnContext(matchId); }
+                }
+            }
             catch (Exception exception)
             {
                 // Feature 해제 실패가 Player/Core Match 정리를 중단해서는 안 됩니다.
@@ -425,7 +594,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void OnTurretLayoutChanged()
         {
             if (!HasCurrentMatch || _turretInputSource == null) return;
-            _matchHost.UpdateBattlefieldTurretLayout(_turretInputSource.CaptureTurretLayout());
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                using (TopologyMarker.Auto()) _matchHost.UpdateBattlefieldTurretLayout(_turretInputSource.CaptureTurretLayout());
+            }
+            finally { LastTopologyRefreshMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000d / System.Diagnostics.Stopwatch.Frequency; }
         }
 
         private IBattlefieldEnemyPositionSource[] FindEnemyPositionSources()
@@ -437,10 +611,21 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void Update()
         {
+            _matchTime?.Pump(Time.timeScale);
+            // main의 기존 CU 읽기 Port를 사용합니다. Feature가 새 파괴 이벤트 계약을 구현할 필요는 없습니다.
+            _coordinator?.EvaluateProgress();
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
+            if (!_matchSession.IsGameplayRunning) return;
 
             _nextBattlefieldSampleTime = Time.unscaledTime + BattlefieldSampleInterval;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try { using (SpatialMarker.Auto()) RefreshDynamicInput(); }
+            finally { LastSpatialRefreshMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000d / System.Diagnostics.Stopwatch.Frequency; }
+        }
+
+        private void RefreshDynamicInput()
+        {
             var players = new List<PlayerSpatialInput>(_playerActors.Actors.Count);
             foreach (KeyValuePair<PlayerId, GameObject> actor in _playerActors.Actors)
             {

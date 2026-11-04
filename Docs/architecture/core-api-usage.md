@@ -6,6 +6,12 @@
 
 ## 호출 방향과 상태 소유권
 
+2026-11-05 추가: [범용 Random API와 6개 파일의 교체 위치](core-random-api.md), [우주선 출입 보고 API](core-presence-report-api.md). 진태는 Core 난수를 주입받아 사용하고 Host의 실제 이동 완료 시 출입 결과를 보고한다. 난수 원본 보존과 전체 정지 판단은 Core가 소유한다. 기존 Feature 호출부 교체는 이번 변경에 포함하지 않았다.
+
+**Random을 새로 사용하거나 기존 호출을 바꾸는 파트는 [Random 사용법](core-random-api.md)을 반드시 먼저 확인한다.** 함수 이름뿐 아니라 어떤 서비스/이름의 source를 언제 주입받고 해제하는지까지 맞춘다. 문서에 도입 이유와 기본 추첨·확률·목록/가중치·셔플·원판 좌표·저장 연결 예제가 있다.
+
+Scene Feature의 등록은 `BindRandom`에서 `RandomBinding.Bind(streams, "weather", ref _random)`을 그대로 반환하면 된다. Core가 반환 바인딩을 해제하므로 파트별 IDisposable 클래스를 만들지 않는다. 새 부모 클래스도 필요 없다. 해제된 source는 null 대신 `IsAvailable == false`로 확인한다. 일반 계산 함수는 주입받은 `IRandomSource`를 매개변수로 전달받아 정적 함수로 사용할 수 있다. 직접 조립한 소비자의 반환값은 해당 조립부가 보관·해제한다.
+
 현재 지역/네트워크/정식 Encounter API는 [스프린트 API 보충](core-sprint-region-and-request-api.md)을 함께 확인한다. 기존 문자열 메서드는 정식 요청으로 변환하는 호환 진입점이며, 별도 생성 경로가 아니다.
 
 이전 `Global` 계열과의 대응은 책임을 이해하기 위한 것이며 상속·호환 계보가 아니다. 신규 구현은 해당 레거시를 호출하지 않는다.

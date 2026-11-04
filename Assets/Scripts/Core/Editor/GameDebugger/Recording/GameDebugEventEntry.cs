@@ -8,14 +8,21 @@ namespace TeamHJD.Game.Editor
     {
         public long Sequence, Revision, RequestId;
         public string MatchId, EnemyType, SpawnPointId, EntityId, Message, SquadOrder;
+        public string RequestGuid,CauseEventId,OriginKind,SpawnSourceId,SpawnSourceGeneration,DeliveryMode;
         public EncounterRequestSource Source;
         public GameDiagnosticKind Kind;
         public double GameSeconds, RealSeconds;
         public int PlannedCount, ActualCount;
+        public bool IsExecutionCountUnknown;
         public static GameDebugEventEntry Copy(GameDiagnosticEvent item) => new GameDebugEventEntry {
             Sequence=item.Sequence, MatchId=item.MatchId.ToString(), Revision=item.Revision, RequestId=item.RequestId,
             EnemyType=item.EnemyType, SpawnPointId=item.SpawnPointId, EntityId=item.EntityId, Message=item.Message,
             Source=item.Source, Kind=item.Kind, GameSeconds=item.GameSeconds, RealSeconds=item.RealSeconds,
-            PlannedCount=item.PlannedCount, ActualCount=item.ActualCount, SquadOrder=item.SquadOrder };
+            PlannedCount=item.PlannedCount, ActualCount=item.ActualCount, SquadOrder=item.SquadOrder,
+            IsExecutionCountUnknown=item.IsExecutionCountUnknown,
+            RequestGuid=item.ExecutionContext?.RequestGuid==Guid.Empty?null:item.ExecutionContext?.RequestGuid.ToString("N"),
+            CauseEventId=item.ExecutionContext?.CauseEventId==Guid.Empty?null:item.ExecutionContext?.CauseEventId.ToString("N"),
+            OriginKind=item.ExecutionContext?.Origin.Kind.ToString(),DeliveryMode=item.ExecutionContext?.Origin.Delivery.ToString(),
+            SpawnSourceId=item.ExecutionContext?.Origin.Source?.SourceId.Value,SpawnSourceGeneration=item.ExecutionContext?.Origin.Source?.Generation.ToString("N") };
     }
 }

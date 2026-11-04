@@ -4,8 +4,8 @@ using UnityEngine;
 
 public sealed class PlayerSkillSelectionTests
 {
-    [TestCase(PlayerSkillId.Bomb, PlayerSkillId.TemporaryTurret)]
-    [TestCase(PlayerSkillId.TemporaryTurret, PlayerSkillId.Bomb)]
+    [TestCase(PlayerSkillId.Bomb, PlayerSkillId.PlayerTurret)]
+    [TestCase(PlayerSkillId.PlayerTurret, PlayerSkillId.Bomb)]
     [TestCase(PlayerSkillId.EnergyBarrier, PlayerSkillId.LureBeacon)]
     public void SelectionOrder_AssignsQThenE(PlayerSkillId first, PlayerSkillId second)
     {

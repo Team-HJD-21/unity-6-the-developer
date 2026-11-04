@@ -649,7 +649,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/1aa728e7885542a6982f4c6f46f5b7f2
 --- !u!1 &141550348
@@ -17294,6 +17294,26 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741826
+  - first: {x: -41, y: -90, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 14
+      m_TileSpriteIndex: 28
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 65535
+      dummyAlignment: 0
+      m_AllTileFlags: 1073741825
+  - first: {x: -40, y: -90, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 15
+      m_TileSpriteIndex: 29
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 65535
+      dummyAlignment: 0
+      m_AllTileFlags: 1073741825
   - first: {x: -39, y: -90, z: 0}
     second:
       serializedVersion: 2
@@ -18964,6 +18984,26 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741826
+  - first: {x: -43, y: -89, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 14
+      m_TileSpriteIndex: 28
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 65535
+      dummyAlignment: 0
+      m_AllTileFlags: 1073741825
+  - first: {x: -42, y: -89, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 13
+      m_TileSpriteIndex: 27
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 65535
+      dummyAlignment: 0
+      m_AllTileFlags: 1073741825
   - first: {x: -41, y: -89, z: 0}
     second:
       serializedVersion: 2
@@ -20784,6 +20824,16 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741826
+  - first: {x: -44, y: -88, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 13
+      m_TileSpriteIndex: 27
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 65535
+      dummyAlignment: 0
+      m_AllTileFlags: 1073741825
   - first: {x: -43, y: -88, z: 0}
     second:
       serializedVersion: 2
@@ -488502,12 +488552,12 @@ Tilemap:
     m_Data: {fileID: 0}
   - m_RefCount: 0
     m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
+  - m_RefCount: 2
+    m_Data: {fileID: 11400000, guid: 7d204fcf6f7154711804d7342d9439c6, type: 2}
+  - m_RefCount: 2
+    m_Data: {fileID: 11400000, guid: d4e7f9340a0404ca691171874e23cdd5, type: 2}
+  - m_RefCount: 1
+    m_Data: {fileID: 11400000, guid: 93a244b1a12d748eca21c37f3401d104, type: 2}
   m_TileSpriteArray:
   - m_RefCount: 0
     m_Data: {fileID: 0}
@@ -488563,14 +488613,14 @@ Tilemap:
     m_Data: {fileID: 0}
   - m_RefCount: 0
     m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
+  - m_RefCount: 2
+    m_Data: {fileID: 664603519, guid: 2721a57ecf5f07d41bfd1a187268392e, type: 3}
+  - m_RefCount: 2
+    m_Data: {fileID: 898218615, guid: 2721a57ecf5f07d41bfd1a187268392e, type: 3}
+  - m_RefCount: 1
+    m_Data: {fileID: -579229534, guid: 2721a57ecf5f07d41bfd1a187268392e, type: 3}
   m_TileMatrixArray:
-  - m_RefCount: 48772
+  - m_RefCount: 48777
     m_Data:
       e00: 1
       e01: 0
@@ -488625,7 +488675,7 @@ Tilemap:
       e32: 0
       e33: 1
   m_TileColorArray:
-  - m_RefCount: 48772
+  - m_RefCount: 48777
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -490426,17 +490476,17 @@ CompositeCollider2D:
         Y: -890161280
       - X: -469838720
         Y: -870161280
-      - X: -430161280
+      - X: -440161280
         Y: -870161280
+      - X: -440161280
+        Y: -880161280
       - X: -430161280
         Y: -880161280
-      - X: -410161280
-        Y: -880161280
+      - X: -430161280
+        Y: -890161280
       - X: -410161280
         Y: -890161280
-      - X: -390161280
-        Y: -890161280
-      - X: -390161280
+      - X: -410161280
         Y: -900161280
       - X: -370161280
         Y: -900161280
@@ -491938,12 +491988,12 @@ CompositeCollider2D:
       - {x: -47.983845, y: -89.01613}
       - {x: -46.98387, y: -89.0161}
       - {x: -46.983845, y: -87.01613}
-      - {x: -43.01613, y: -87.01616}
-      - {x: -43.016098, y: -88.01613}
-      - {x: -41.01613, y: -88.01616}
-      - {x: -41.016098, y: -89.01613}
-      - {x: -39.01613, y: -89.01616}
-      - {x: -39.016098, y: -90.01613}
+      - {x: -44.01613, y: -87.01616}
+      - {x: -44.016098, y: -88.01613}
+      - {x: -43.01613, y: -88.01616}
+      - {x: -43.016098, y: -89.01613}
+      - {x: -41.01613, y: -89.01616}
+      - {x: -41.016098, y: -90.01613}
       - {x: -37.01613, y: -90.01616}
       - {x: -37.016098, y: -92.01613}
       - {x: -34.01613, y: -92.01616}
@@ -492547,6 +492597,8 @@ GameObject:
   - component: {fileID: 267169719}
   - component: {fileID: 267169718}
   - component: {fileID: 267169724}
+  - component: {fileID: 267169725}
+  - component: {fileID: 267169726}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -492601,7 +492653,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4190711
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -492641,6 +492693,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.MatchCameraFollow
   smoothTime: 0.15
+--- !u!114 &267169725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 267169717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4a16c0b244224960bfb392527e48d6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeatherShaderApply
+  sunnyMaterial: {fileID: 0}
+  rainMaterial: {fileID: 2100000, guid: 3843e0f7f87e4272bea53827783b5b45, type: 2}
+  thunderMaterial: {fileID: 2100000, guid: 0be3d2b3e87a4f91a7442575a6b88a02, type: 2}
+  heatWaveMaterial: {fileID: 2100000, guid: 0f13100fb4084e5e951126fee15e50a6, type: 2}
+  transitionMaterial: {fileID: 2100000, guid: 9b56927dcf944800b4700163788c9bd6, type: 2}
+  transitionDuration: 1.5
+--- !u!114 &267169726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 267169717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f701d349a70487994499587c17c3c6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeatherEffectBinding
 --- !u!1 &297159760
 GameObject:
   m_ObjectHideFlags: 0
@@ -493826,7 +493908,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/273e416095b74b94b328f70ee862eed4
 --- !u!1 &750224954
@@ -871227,7 +871309,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45392bf6c866474d8689fe370fedbee9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.PlayerStart
   slotIndex: 1
 --- !u!4 &765547578
@@ -937522,7 +937604,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a518c49703f37de4f99e89bc37b9f58, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.RegionSceneBinding
   _controller: {fileID: 393497335}
   _controlUnit: {fileID: 52902671}
@@ -937537,11 +937619,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74fd1e727ceb4ef2b24f3fa7e96cb337, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.InitialStageNetworkBinding
   _manager: {fileID: 1735068337}
   _matchAnchorPrefab: {fileID: 4380366090066215120, guid: 21b016e9a8ba90446b7c53c9cabf4676, type: 3}
   _entry: 1
+  _turretInteractionDistance: 10
 --- !u!114 &877435136
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -937552,7 +937635,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 539cb1bc453b4f01be74b4c14fc8ac6d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.TurretMatchBinding
   _controller: {fileID: 393497335}
   _battlefieldSource: {fileID: 1493643881}
@@ -937815,81 +937898,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
   m_PrefabInstance: {fileID: 983937173}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &984429165
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 984429166}
-  - component: {fileID: 984429168}
-  - component: {fileID: 984429167}
-  m_Layer: 5
-  m_Name: tmpWeatherImg
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &984429166
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 984429165}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2056049652}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -790, y: -427}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &984429167
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 984429165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &984429168
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 984429165}
-  m_CullTransparentMesh: 1
 --- !u!1001 &992367857
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -937958,6 +937966,24 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 992367859}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+--- !u!1 &992367858 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 992367857}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &992367859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 992367858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/2158abfbd60040c6a49d1ba368d932f2
 --- !u!1 &1128197840
 GameObject:
   m_ObjectHideFlags: 0
@@ -938095,24 +938121,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1128197840}
   m_CullTransparentMesh: 1
---- !u!1 &992367858 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
-  m_PrefabInstance: {fileID: 992367857}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &992367859
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 992367858}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
-  _entityId: turret/2158abfbd60040c6a49d1ba368d932f2
 --- !u!1 &1186160097
 GameObject:
   m_ObjectHideFlags: 0
@@ -938243,14 +938251,12 @@ MonoBehaviour:
   currentWeather: 0
   weatherQueueSize: 5
   sunnyWeight: 3
-  rainVFX: {fileID: 0}
-  sunVFX: {fileID: 0}
-  thunderVFX: {fileID: 0}
-  tmpweatherImage: {fileID: 984429167}
+  tmpweatherImage: {fileID: 0}
   _sunnyColor: {r: 0.9245283, g: 0.40557134, b: 0.40557134, a: 0.5176471}
   _rainColor: {r: 0.46742615, g: 0.6222011, b: 0.9811321, a: 0.8156863}
   _thunderColor: {r: 0.8938753, g: 0.9622642, b: 0.45843717, a: 0.7529412}
-  _shaderTests: {fileID: 0}
+  _heatWaveColor: {r: 1, g: 0.28, b: 0.38, a: 0.75}
+  _weatherShaderApply: {fileID: 267169725}
 --- !u!4 &1250254887
 Transform:
   m_ObjectHideFlags: 0
@@ -938273,7 +938279,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1250254885}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59e0b8da6aca84e52a9fcfc1ce1bfc5a, type: 3}
   m_Name: 
@@ -938289,7 +938295,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d681a957a844bdea893b762e4b011cf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Map.WeatherChangeEvent
 --- !u!1001 &1264729469
 PrefabInstance:
@@ -938374,7 +938380,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/83658a854f2c4f059f13ea7110ce181a
 --- !u!1 &1268668570
@@ -939277,7 +939283,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/cdc9f2fa066846978a0b27ec6fd976ef
 --- !u!1001 &1613032759
@@ -939903,7 +939909,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/94e7df3fcb384268bd2371548e89364f
 --- !u!1 &1912653131
@@ -940108,7 +940114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceshipEnter
   sceneToLoadName: SpaceShipGrayBox
-  destinationName: Triangle
+  destinationName: SpacshipEnter
 --- !u!58 &1978399371
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -961734,7 +961740,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/6d35c015d6b7428987ec5e1ea169b3e5
 --- !u!1001 &2000501900
@@ -961917,11 +961923,80 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1609201713903355411, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2540207338376922635, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4294307281
+      objectReference: {fileID: 0}
+    - target: {fileID: 2540207338376922635, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 5045001710354935131, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4294307281
+      objectReference: {fileID: 0}
+    - target: {fileID: 5045001710354935131, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 6432037099684133104, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4294307281
+      objectReference: {fileID: 0}
+    - target: {fileID: 6432037099684133104, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+--- !u!1001 &2000502100
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
 --- !u!1 &2027146951
 GameObject:
   m_ObjectHideFlags: 0
@@ -962064,7 +962139,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 984429166}
   - {fileID: 2061509691}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -962274,24 +962348,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 2120963521}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
---- !u!1001 &2000502100
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications: []
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
---- !u!224 &2000502101 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 1001, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
-  m_PrefabInstance: {fileID: 2000502100}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2120963520 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
@@ -962307,9 +962363,263 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/efab2d7e3d4b4a1182cbf96bedc3e36d
+--- !u!1001 &584970845
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1538709566}
+    m_Modifications:
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_Name
+      value: FieldCanonTurret LV1 - Damaged (Repair Test)
+      objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: _turretController
+      value:
+      objectReference: {fileID: 393497335}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 584970849}
+  m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+--- !u!114 &584970846 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 584970845}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584970848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1bd8bb9366149bab62297b29550d748, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+--- !u!4 &584970847 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 584970845}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &584970848 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 584970845}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &584970849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584970848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/17acebe734894195a6a289f73a2f0607
+--- !u!1001 &1361953240
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1538709566}
+    m_Modifications:
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_Name
+      value: FieldCanonTurret LV1 - Destroyed (Repair Test)
+      objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: _turretController
+      value:
+      objectReference: {fileID: 393497335}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1361953244}
+  m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+--- !u!114 &1361953241 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1361953240}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361953243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1bd8bb9366149bab62297b29550d748, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+--- !u!4 &1361953242 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1361953240}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1361953243 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1361953240}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1361953244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361953243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/c8856e6d3de54f59afab6eaac1ef0607
+--- !u!1 &1538709564
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1538709566}
+  - component: {fileID: 1538709565}
+  m_Layer: 0
+  m_Name: FieldTurret Repair Tests
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1538709565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1538709564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34bc7c6c777c4757a116360cc963f607, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.FieldTurrets.FieldTurretRepairTestSetup
+  _controller: {fileID: 393497335}
+  _destroyedTurret: {fileID: 1361953241}
+  _damagedTurret: {fileID: 584970846}
+  _damagedHealth: 50
+--- !u!4 &1538709566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1538709564}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1361953242}
+  - {fileID: 584970847}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -962339,5 +962649,6 @@ SceneRoots:
   - {fileID: 2000501900}
   - {fileID: 1250254887}
   - {fileID: 2056049652}
-  - {fileID: 2000502101}
+  - {fileID: 2000502100}
   - {fileID: 765547578}
+  - {fileID: 1538709566}

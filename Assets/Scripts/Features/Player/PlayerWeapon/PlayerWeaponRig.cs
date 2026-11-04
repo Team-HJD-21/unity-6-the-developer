@@ -100,6 +100,7 @@ public sealed class PlayerWeaponRig : MonoBehaviour
     [SerializeField] private PlayerInputHandler _input;
     [SerializeField] private Vector3 _mountLocalPosition;
     [SerializeField] private bool _bodyIncludesGunSprite;
+    [SerializeField] private PlayerWeaponVisual _separatedWeaponVisual;
 
     [Header("Directional Guns")]
     [FormerlySerializedAs("GunsideL"), FormerlySerializedAs("gunsideL")]
@@ -184,8 +185,9 @@ public sealed class PlayerWeaponRig : MonoBehaviour
     {
         if (!_initialized) return;
         transform.localPosition = _mountLocalPosition;
+        bool bodyOwnsGunVisual = _bodyIncludesGunSprite || HasSeparatedWeaponVisual;
         bool eightWay = _motion != null && (_showGuns
-            ? _bodyIncludesGunSprite && _motion.SupportsEightWayRanged
+            ? bodyOwnsGunVisual && _motion.SupportsEightWayRanged
             : _motion.OwnsDisplay && _motion.SupportsEightWayTools);
         Facing = _skills != null && !_skills.CanUse ? PlayerAimFacing.Down :
             (eightWay ? PlayerAimUtility.GetEightWayFacing(direction) : PlayerAimUtility.GetFacing(direction));
@@ -209,18 +211,24 @@ public sealed class PlayerWeaponRig : MonoBehaviour
         SetVisible(_downRightGun, _showGuns && _downRightGun == _activeGun);
         SetVisible(_upLeftGun, _showGuns && _upLeftGun == _activeGun);
         SetVisible(_upRightGun, _showGuns && _upRightGun == _activeGun);
-        SetGunSpriteVisible(_leftGun);
-        SetGunSpriteVisible(_rightGun);
-        SetGunSpriteVisible(_upGun);
-        SetGunSpriteVisible(_downGun);
-        SetGunSpriteVisible(_downLeftGun);
-        SetGunSpriteVisible(_downRightGun);
-        SetGunSpriteVisible(_upLeftGun);
-        SetGunSpriteVisible(_upRightGun);
+        SetGunSpriteVisible(_leftGun, !bodyOwnsGunVisual);
+        SetGunSpriteVisible(_rightGun, !bodyOwnsGunVisual);
+        SetGunSpriteVisible(_upGun, !bodyOwnsGunVisual);
+        SetGunSpriteVisible(_downGun, !bodyOwnsGunVisual);
+        SetGunSpriteVisible(_downLeftGun, !bodyOwnsGunVisual);
+        SetGunSpriteVisible(_downRightGun, !bodyOwnsGunVisual);
+        SetGunSpriteVisible(_upLeftGun, !bodyOwnsGunVisual);
+        SetGunSpriteVisible(_upRightGun, !bodyOwnsGunVisual);
     }
 
     private void UpdateMuzzlePosition(bool forShot = false)
     {
+        if (_activeMuzzle != null && _separatedWeaponVisual != null &&
+            _separatedWeaponVisual.TryGetMuzzlePosition(out Vector3 weaponMuzzle, forShot))
+        {
+            _activeMuzzle.position = weaponMuzzle;
+            return;
+        }
         if (!_usePoseMuzzles || _activeMuzzle == null) return;
         MuzzlePose pose = _firingMuzzles;
         bool moving = _input != null && _input.MoveInput.sqrMagnitude > .001f;
@@ -240,12 +248,14 @@ public sealed class PlayerWeaponRig : MonoBehaviour
         _activeMuzzle.position = transform.TransformPoint(new Vector3(position.x, position.y, 0));
     }
 
-    private void SetGunSpriteVisible(Transform gun)
+    private void SetGunSpriteVisible(Transform gun, bool visible)
     {
         if (gun == null) return;
         SpriteRenderer renderer = gun.GetComponent<SpriteRenderer>();
-        if (renderer != null) renderer.enabled = !_bodyIncludesGunSprite;
+        if (renderer != null) renderer.enabled = visible;
     }
+
+    private bool HasSeparatedWeaponVisual => _separatedWeaponVisual != null && _separatedWeaponVisual.IsConfigured;
 
     private void Select(Transform gun, Transform muzzle)
     {

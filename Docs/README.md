@@ -1,5 +1,11 @@
 # The Developer — Project Documentation
 
+Core 기반 main 통합 검토: [11월 5일 범위·현행 Feature 호환·검증 기록](planning/2026-11-05-foundation-main-integration.md) · [실제 호출·수명·API 지도](architecture/core-lifecycle-and-api-guide.md) · [Core 코드 안내](../Assets/Scripts/Core/README.md). 기존 회의록과 파트별 문서는 유지하며 이 통합으로 미연결 Feature의 완료를 선언하지 않는다.
+
+**Core 연동 전 필독:** [Random API 사용법](architecture/core-random-api.md)에서 도입 이유, Host/로컬 연출 구분, 주입·가중치 선택·저장 예제와 기존 6개 파일의 교체 위치를 확인한다. [우주선 출입 보고 API](architecture/core-presence-report-api.md)는 실제 Host 이동 후 Core에 결과를 보고하는 계약이다. Feature 호출부는 이 PR에서 교체하지 않았다.
+
+Random 등록·해제는 공용 정적 함수 `RandomBinding.Bind` 한 줄로 연결한다. [바로 사용하기](architecture/core-random-api.md#바로-사용하기--연결-한-줄-기존-함수-그대로)에서 완성된 컴포넌트 예제와 순수 함수 사용법을 확인한다. 별도 부모 클래스나 파트별 해제 클래스를 만들지 않는다.
+
 최근 기획·후속 검토: [10월 30일 기획 보강](planning/2026-10-30-planning-review.md) · [10월 31일 정기회의](planning/2026-10-31-regular-meeting.md) — 전체 전사·수기 대조로 자동 활성화·성장 방향을 보강하고 우주선 필드 정지, 점령/스폰·그룹화, 재방문·실패 보상과 후속 작업을 구분했다. 세부 설계·실제 구현·재미 검증은 별도다.
 
 최근 진행 공유: [11월 3일 주간 보고](planning/2026-11-03-weekly-progress.md) — 지원형 소환/회복 두 종 분리, 암살자 비탐지 우선 대상, 수리 검증용 터렛 배치와 파트별 후속. 분열 방벽은 실험 후보이며 구현·실행 검증 완료나 새 Sprint 확정이 아니다.
@@ -87,7 +93,19 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 
 플레이어 무기 전환과 스패너 공격·수리는 [Player Weapon API](architecture/player-weapon-api.md)를 참고한다.
 
-새 플레이어 4방향 대기·이동·공격·수리 프레임은 [Player Motion API](architecture/player-motion-api.md)를 참고한다.
+LMB 공격과 포탑 선택·설치·UI 클릭의 우선순위는 [Player Primary Input API](architecture/player-primary-input-api.md)를 참고한다.
+
+Space 대시, 미리 배치한 잔상과 하단 쿨타임 표시는 [Player Dash API](architecture/player-dash-api.md)를 참고한다.
+
+Player 클래스 이름과 책임 구분은 [Player 클래스 이름과 역할](architecture/player-class-responsibilities.md)을 참고한다.
+
+대각선 대기 호흡과 방향별 독립 스프라이트, 전체 그림 검토는 [Player 스프라이트 후속 검토](art/player-idle-breathing-and-sprite-review.md)를 참고한다.
+
+2026-10-30 독립 좌우 연결과 가방 하단 불꽃 보완은 [독립 좌우 자세와 제트팩 분사구](art/player-independent-facing-review.md)를 참고한다.
+
+플레이어 8방향 대기·이동·공격·수리 프레임은 [Player Motion API](architecture/player-motion-api.md)를 참고한다.
+
+기존 모션을 유지하며 몸체와 총기·스패너를 나눈 표시 에셋과 편집 방법은 [Player Weapon Appearance API](architecture/player-weapon-appearance-api.md)를 참고한다.
 
 플레이어 기본 무기·총구·탄환 초기화 계약과 이동속도 독립 사격은 [Player Combat API](architecture/player-combat-api.md)를 참고한다.
 

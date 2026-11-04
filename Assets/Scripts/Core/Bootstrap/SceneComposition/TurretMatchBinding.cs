@@ -152,6 +152,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 finally { registry.Dispose(); }
             }
         }
+        /// <summary>완료 화면 동안 ID/읽기는 보존하고 D의 자동 활성화·발사·예약 작업을 정리합니다.</summary>
+        public void StopMatchOperations()
+        {
+            IDisposable featureScope = _featureScope;
+            _featureScope = null;
+            featureScope?.Dispose();
+        }
         private void OnDestroy() => UnbindMatch(BoundMatchId);
     }
 }
