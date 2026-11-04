@@ -1,6 +1,7 @@
 // 실시간 핵심 수치는 계기 카드, 반복 기록은 선택 가능한 표와 상세 영역으로 표시합니다.
 // 목록 스크롤·접힘·선택은 영역별 상태로 유지하고 게임 상태는 변경하지 않습니다.
 using System;
+using TeamHJD.Game.Bootstrap.SceneComposition;
 using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Contracts;
@@ -12,8 +13,10 @@ namespace TeamHJD.Game.Editor
 {
     public static class GameDebugInspectionPanels
     {
+        private static InitialStageCompositionRoot _timeScene;
         public static void DrawOverview(GameDebugMonitorState view)
         {
+            GameDebugGameFlowPanel.Draw();
             var source=GameDebuggerSession.Source;
             var run=GameDebuggerSession.Current;
             var sample=run?.Samples.LastOrDefault();
@@ -30,7 +33,7 @@ namespace TeamHJD.Game.Editor
                 }
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    Tile("게임 시간",source==null?"—":source.GameSeconds.ToString("F1")+"s","Time.timeScale이 반영된 시간");
+                    Tile("게임 시간",source==null?"—":source.GameSeconds.ToString("F1")+"s","현재 Match의 공용 게임 시간: Host 정지·배속을 반영합니다.");
                     Tile("실제 시간",source==null?"—":source.RealSeconds.ToString("F1")+"s","Editor 정지와 clock 정책은 가이드 참고");
                     Tile("Snapshot",snapshot==null?"—":"r"+snapshot.Revision,"최신 snapshot revision");
                 }
@@ -40,6 +43,28 @@ namespace TeamHJD.Game.Editor
                     Tile("외곽 길이",sample==null?"—":sample.FrontlineLength.ToString("F1"),"기하 외곽 길이 (world)");
                     Tile("수집",run==null?"—":run.IsPartial?"PARTIAL":run.IsComplete?"ENDED":"LIVE","중간 수집/손실이 있으면 PARTIAL");
                 }
+            }
+            if (_timeScene == null) _timeScene = UnityEngine.Object.FindAnyObjectByType<InitialStageCompositionRoot>();
+            var matchTime = _timeScene == null ? null : _timeScene.MatchTime;
+            var presence = _timeScene == null ? null : _timeScene.MatchPresence;
+            if (matchTime != null) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("필드 시간 · Host 기준", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("상태 / 배속", !matchTime.IsAvailable ? "시간 원본 미준비" :
+                    $"{(matchTime.Snapshot.IsPaused ? "PAUSED" : "RUNNING")} / {matchTime.Snapshot.Rate:F2}×");
+                if (presence != null) foreach (var participant in presence.Locations)
+                    EditorGUILayout.LabelField(participant.Key.Value, participant.Value.ToString());
+                EditorGUILayout.LabelField("우주선 전원 입장 시 필드만 정지합니다. Editor Pause는 전체 Editor 실행을 정지합니다.", EditorStyles.wordWrappedMiniLabel);
+            }
+            var environment = BattlefieldDebugSession.AppRoot == null ? null : BattlefieldDebugSession.AppRoot.CurrentEnvironment;
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("Match 환경 · 현재", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Revision", environment == null ? "미제공" : $"r{environment.Revision} · {environment.GameSeconds:F1}s");
+                EditorGUILayout.LabelField("날씨 / 시간대", environment == null ? "미제공 / 미제공" :
+                    $"{(environment.HasWeather ? environment.WeatherId.Value : "미제공")} / {(environment.HasTimeOfDay ? environment.TimeOfDayId.Value : "미제공")}");
+                EditorGUILayout.LabelField("날씨 예고", environment == null || environment.Forecast.Count == 0 ? "미제공" :
+                    string.Join(" → ", environment.Forecast.Select(value => value.Value)), EditorStyles.wordWrappedLabel);
             }
             view.IsConnectionsExpanded=EditorGUILayout.Foldout(view.IsConnectionsExpanded,"연결 및 수집 상태 · "+GameDebuggerSession.Warnings.Count+" warnings",true);
             if (view.IsConnectionsExpanded) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
@@ -108,8 +133,8 @@ namespace TeamHJD.Game.Editor
                 {
                     Cell(item.GameSeconds.ToString("F1")+"s",54);
                     if (GUILayout.Button("#"+item.RequestId,EditorStyles.miniButton,GUILayout.Width(58))) view.SelectedRequestSequence=item.Sequence;
-                    Cell(item.Source.ToString(),105); Cell(item.SquadOrder,80); Cell(item.PlannedCount.ToString(),40);
-                    Cell(item.ActualCount.ToString(),40); Cell(item.Kind==GameDiagnosticKind.RequestFailed?"FAILED":"OK",60);
+                    Cell(item.Source.ToString(),105); Cell(item.SquadOrder,80); Cell(item.IsExecutionCountUnknown?"N/A":item.PlannedCount.ToString(),40);
+                    Cell(item.IsExecutionCountUnknown?"N/A":item.ActualCount.ToString(),40); Cell(item.Kind==GameDiagnosticKind.RequestFailed?"FAILED":"OK",60);
                 }
                 EditorGUILayout.EndScrollView();
                 var selected=entries.FirstOrDefault(e=>e.Sequence==view.SelectedRequestSequence);
@@ -118,7 +143,8 @@ namespace TeamHJD.Game.Editor
                 if (view.IsRequestDetailsExpanded) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     EditorGUILayout.LabelField("Match",selected.MatchId);
-                    EditorGUILayout.LabelField("계획 / 실제",selected.PlannedCount+" / "+selected.ActualCount);
+                    EditorGUILayout.LabelField("계획 / 실제",selected.IsExecutionCountUnknown?"N/A · 실행 중 예외로 수량 미확정":selected.PlannedCount+" / "+selected.ActualCount);
+                    DrawOriginDetails(selected);
                     EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(76));
                     EditorGUILayout.LabelField("공간 판단·분포는 Statistics > Spawn decisions에서 조회",EditorStyles.miniLabel);
                 }
@@ -173,9 +199,22 @@ namespace TeamHJD.Game.Editor
                 if (selected!=null)
                 {
                     view.IsEventDetailsExpanded=EditorGUILayout.Foldout(view.IsEventDetailsExpanded,"선택 이벤트 · "+selected.Kind,true);
-                    if (view.IsEventDetailsExpanded) EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(70));
+                    if (view.IsEventDetailsExpanded)
+                    {
+                        DrawOriginDetails(selected);
+                        EditorGUILayout.SelectableLabel(selected.Message ?? "",EditorStyles.wordWrappedLabel,GUILayout.Height(70));
+                    }
                 }
             }
+        }
+        private static void DrawOriginDetails(GameDebugEventEntry item)
+        {
+            if (string.IsNullOrEmpty(item.OriginKind)) return;
+            EditorGUILayout.LabelField("Origin / Delivery", item.OriginKind + " / " + item.DeliveryMode);
+            EditorGUILayout.LabelField("Request GUID", string.IsNullOrEmpty(item.RequestGuid) ? "미계측" : item.RequestGuid);
+            if (!string.IsNullOrEmpty(item.CauseEventId)) EditorGUILayout.LabelField("원인 사건", item.CauseEventId);
+            if (!string.IsNullOrEmpty(item.SpawnSourceId))
+                EditorGUILayout.LabelField("Source / Generation", item.SpawnSourceId + " / " + item.SpawnSourceGeneration);
         }
     }
 }

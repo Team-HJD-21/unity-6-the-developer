@@ -28,6 +28,7 @@ namespace TeamHJD.Game.Editor
         [SerializeField] private int _encounterMaxEnemyCount = 10;
         [SerializeField] private bool _showLayers=true, _showCell, _showAuthored, _showRuntime, _showSetup, _showNotes, _showLastCommand;
         [SerializeField] private Vector2 _cellContentsScroll;
+        [SerializeField] private EncounterOriginDebugControls _originControls = new EncounterOriginDebugControls();
         private string _encounterStatus;
         private bool _encounterRequestSucceeded;
         [NonSerialized] private bool _isAttached;
@@ -146,6 +147,7 @@ namespace TeamHJD.Game.Editor
                 }
             }
             EncounterRepeatDebugControls.Draw(this, _encounterSquadOrder, _encounterMaxEnemyCount, target);
+            _originControls.Draw(target as IEncounterOriginRequestTarget, ready, _encounterSquadOrder, _encounterMaxEnemyCount);
         }
 
         private IEncounterDebugCommandTarget FindEncounterCommandTarget()

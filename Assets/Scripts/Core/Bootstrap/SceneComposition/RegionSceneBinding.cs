@@ -129,6 +129,21 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             return true;
         }
 
+        /// <summary>체크포인트 실행기가 사전 검증한 Grid 정의·모드·점유 셀을 현재 Host에 적용합니다.</summary>
+        /// <remarks>정적 첫 구역을 다시 해금하지 않습니다. 동적 점유는 실제 터렛 복원이 끝난 뒤 다시 평가합니다.</remarks>
+        public void RestoreCheckpoint(RegionGridDefinition definition, RegionPolicyMode mode, int[] capturedCells)
+        {
+            if (!HasWriteAuthority) throw new InvalidOperationException("Only the current authority can restore regions.");
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            _session.ResetRegions(definition, mode, capturedCells);
+            _definition = definition;
+            _zoneCount = 0;
+            foreach (int id in definition.RegionIds) _zoneCount = Math.Max(_zoneCount, id);
+            LastEvaluation = null;
+            _lastInputs = null;
+            _dirty = true;
+        }
+
         private void ApplyStatic(int zone)
             => _session.UpdateRegionCapture(_source.Snapshot, StaticCells(_definition, zone), RegionCaptureUpdateMode.Replace);
 

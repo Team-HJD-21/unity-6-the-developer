@@ -13,6 +13,15 @@ namespace TeamHJD.Game.Infrastructure.Fakes
         private readonly HashSet<string> _loadedScenes = new HashSet<string>(StringComparer.Ordinal);
 
         public IReadOnlyCollection<string> LoadedScenes => new List<string>(_loadedScenes).AsReadOnly();
+        public bool CanLoad(string sceneKey) => !string.IsNullOrWhiteSpace(sceneKey);
+        public bool IsLoaded(string sceneKey) => _loadedScenes.Contains(sceneKey);
+        public float Progress => 1f;
+        public Task ReplaceAsync(string sceneKey, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!CanLoad(sceneKey)) throw new ArgumentException("A Scene key is required.", nameof(sceneKey));
+            _loadedScenes.Clear(); _loadedScenes.Add(sceneKey); return Task.CompletedTask;
+        }
 
         public Task LoadAsync(string sceneKey, CancellationToken cancellationToken)
         {

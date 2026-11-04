@@ -15,8 +15,14 @@ namespace TeamHJD.Game.Application
         private readonly MatchEventBus _eventBus;
         private readonly BattlefieldSpatialRuntime _battlefield;
         private RegionRuntime _regions;
+        private MatchEnvironmentRuntime _environment;
+        private EncounterSpawnSourceRegistry _spawnSources;
+        private RandomService _random;
         private bool _isDisposed;
+        private bool _isCompleting;
         public bool IsDisposed => _isDisposed;
+        public MatchCompletion Completion { get; private set; }
+        public bool IsGameplayRunning => !_isDisposed && State.Phase == MatchPhase.Running && Completion == null;
         public event Action Disposing;
 
         public MatchConfig Config { get; }
@@ -24,6 +30,50 @@ namespace TeamHJD.Game.Application
         public BattlefieldSpatialSnapshot Battlefield => _battlefield.Snapshot;
         public IMatchEventStream Events => _eventBus;
         public IRegionGridSource Regions => _regions;
+        public IMatchEnvironmentSource Environment => _environment;
+        public IEncounterSpawnSourceRegistry SpawnSources => _spawnSources;
+        /// <summary>조립된 권위 Match의 공용 난수입니다. Client와 조립 전에는 null입니다.</summary>
+        public IRandomStreams Random => _random;
+
+        /// <summary>Core Scene 조립부가 실제 Host 권한과 Match 수명에 난수 서비스를 한 번 연결합니다.</summary>
+        public IRandomStreams InitializeRandom(Func<bool> mayUse)
+        {
+            ThrowIfDisposed();
+            if (mayUse == null) throw new ArgumentNullException(nameof(mayUse));
+            if (_random != null) throw new InvalidOperationException("Random is already initialized.");
+            _random = new RandomService(Config.RandomSeed, () => !_isDisposed && Completion == null && mayUse());
+            return _random;
+        }
+
+        /// <summary>저장 조립부가 기존 writer 목록과 필수 목록에 core/random을 추가할 때 사용합니다.</summary>
+        public ICheckpointParticipant CreateRandomCheckpointParticipant()
+        {
+            ThrowIfDisposed();
+            return new RandomCheckpointParticipant(Config.MatchId, _random ??
+                throw new InvalidOperationException("Initialize the authority random service first."));
+        }
+        public IEncounterSpawnSourceRegistry InitializeSpawnSources(Func<bool> mayWrite, System.Threading.CancellationToken gameplay)
+        {
+            ThrowIfDisposed();
+            if (_spawnSources != null) throw new InvalidOperationException("Spawn sources are already initialized.");
+            _spawnSources = new EncounterSpawnSourceRegistry(Config.MatchId, mayWrite, gameplay);
+            return _spawnSources;
+        }
+
+        public IMatchEnvironmentSource InitializeEnvironment(IMatchClock clock, Func<bool> mayWrite)
+        {
+            ThrowIfDisposed();
+            if (_environment != null) throw new InvalidOperationException("Environment is already initialized.");
+            _environment = new MatchEnvironmentRuntime(Config.MatchId, clock, mayWrite);
+            return _environment;
+        }
+
+        public bool UpdateEnvironment(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast)
+        {
+            ThrowIfDisposed();
+            if (_environment == null) throw new InvalidOperationException("Initialize environment before updating it.");
+            return _environment.TryUpdate(weather, timeOfDay, forecast);
+        }
 
         /// <summary>Scene 조립부가 실제 지역 정의를 한 번 연결합니다. RegionRuntime은 Match가 정리합니다.</summary>
         public IRegionGridSource InitializeRegions(RegionGridDefinition definition, RegionPolicyMode mode)
@@ -101,6 +151,8 @@ namespace TeamHJD.Game.Application
         {
             ThrowIfDisposed();
             if (command == null) throw new ArgumentNullException(nameof(command));
+            if (Completion != null)
+                return new CommandSubmissionResult(CommandSubmissionStatus.Rejected, "MatchCompleted", null);
 
             var authorization = _authority.Authorize(command, State);
             if (!authorization.IsAuthorized)
@@ -125,15 +177,38 @@ namespace TeamHJD.Game.Application
         {
             ThrowIfDisposed();
             if (eventSequence < 0) throw new ArgumentOutOfRangeException(nameof(eventSequence));
-            var result = _modeRules.CreateResult(State, outcome);
-            if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
-            if (result.MatchId != State.MatchId) throw new InvalidOperationException("Mode rules returned a result for another match.");
-            var rewardReceipt = _modeRules.CreateRewardReceipt(result);
-            if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
-            var completion = new MatchCompletion(result, rewardReceipt);
-            _simulation.Complete(State, result);
-            _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, completion));
-            return completion;
+            if (Completion != null)
+            {
+                if (Completion.Result.Outcome != outcome) throw new InvalidOperationException("A different final outcome is already committed.");
+                return Completion;
+            }
+            if (_isCompleting || State.Phase != MatchPhase.Running)
+                throw new InvalidOperationException("Only a running Match can complete, without reentering completion.");
+            _isCompleting = true;
+            try
+            {
+                var result = _modeRules.CreateResult(State, outcome);
+                if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
+                if (result.MatchId != State.MatchId) throw new InvalidOperationException("Mode rules returned a result for another match.");
+                if (result.Outcome != outcome) throw new InvalidOperationException("Mode rules changed the requested final outcome.");
+                var rewardReceipt = _modeRules.CreateRewardReceipt(result);
+                if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
+                var completion = new MatchCompletion(result, rewardReceipt);
+                _simulation.Complete(State, result);
+                // 관측 실패/재진입에도 동일한 최종 결과를 반환하도록 먼저 보존합니다.
+                Completion = completion;
+                _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, completion));
+                return completion;
+            }
+            finally { _isCompleting = false; }
+        }
+
+        public MatchOutcome? EvaluateProgress(MatchProgressSnapshot progress)
+        {
+            ThrowIfDisposed();
+            if (progress == null || progress.MatchId != Config.MatchId)
+                throw new ArgumentException("Progress must belong to this Match.", nameof(progress));
+            return IsGameplayRunning && _modeRules is IMatchProgressRules rules ? rules.Evaluate(progress) : null;
         }
 
         public MatchSnapshot CreateSnapshot(long sequence)
@@ -159,6 +234,9 @@ namespace TeamHJD.Game.Application
             DisposeOwned(() => _simulation.Dispose(State), errors);
             DisposeOwned(_eventBus.Dispose, errors);
             DisposeOwned(_battlefield.Dispose, errors);
+            if (_environment != null) DisposeOwned(_environment.Dispose, errors);
+            if (_spawnSources != null) DisposeOwned(_spawnSources.Dispose, errors);
+            if (_random != null) DisposeOwned(_random.Dispose, errors);
             if (_regions != null) DisposeOwned(_regions.Dispose, errors);
             if (errors.Count > 0) throw new AggregateException("Match cleanup failed after releasing all owned resources.", errors);
         }
