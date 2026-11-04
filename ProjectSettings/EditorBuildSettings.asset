@@ -17,5 +17,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Tests/EnemyTest.unity
     guid: b24f5bb5ec4f1cb4c8e3ac5e3c64ecac
+  - enabled: 1
+    path: Assets/Scenes/Bootstrap/Startup.unity
+    guid: 3981683429a90dd48b31192d104bca91
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

@@ -1,5 +1,7 @@
 # The Developer — Project Documentation
 
+Core 기반 main 통합 검토: [11월 5일 범위·현행 Feature 호환·검증 기록](planning/2026-11-05-foundation-main-integration.md) · [실제 호출·수명·API 지도](architecture/core-lifecycle-and-api-guide.md) · [Core 코드 안내](../Assets/Scripts/Core/README.md). 기존 회의록과 파트별 문서는 유지하며 이 통합으로 미연결 Feature의 완료를 선언하지 않는다.
+
 최근 기획·후속 검토: [10월 30일 기획 보강](planning/2026-10-30-planning-review.md) · [10월 31일 정기회의](planning/2026-10-31-regular-meeting.md) — 전체 전사·수기 대조로 자동 활성화·성장 방향을 보강하고 우주선 필드 정지, 점령/스폰·그룹화, 재방문·실패 보상과 후속 작업을 구분했다. 세부 설계·실제 구현·재미 검증은 별도다.
 
 최근 진행 공유: [11월 3일 주간 보고](planning/2026-11-03-weekly-progress.md) — 지원형 소환/회복 두 종 분리, 암살자 비탐지 우선 대상, 수리 검증용 터렛 배치와 파트별 후속. 분열 방벽은 실험 후보이며 구현·실행 검증 완료나 새 Sprint 확정이 아니다.
