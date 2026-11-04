@@ -13,12 +13,12 @@ PrefabInstance:
       value: 1.8
       objectReference: {fileID: 0}
     - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: attackRange
-      value: 0.65
-      objectReference: {fileID: 0}
-    - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: attackDamage
       value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: activationRange
+      value: 0.65
       objectReference: {fileID: 0}
     - target: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x

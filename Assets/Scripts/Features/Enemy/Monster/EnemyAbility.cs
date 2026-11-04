@@ -12,6 +12,7 @@ public abstract class EnemyAbility : MonoBehaviour
 
     [Header("사거리 판정")]
     [SerializeField] protected Collider2D _bodyCollider;
+    [FormerlySerializedAs("attackRange")]
     [SerializeField] protected float activationRange = 0.4f;
 
     private float _nextUseTime;

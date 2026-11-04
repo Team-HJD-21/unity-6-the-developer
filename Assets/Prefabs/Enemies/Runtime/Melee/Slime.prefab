@@ -13,10 +13,6 @@ PrefabInstance:
       value: 1.1
       objectReference: {fileID: 0}
     - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: attackRange
-      value: 0.35
-      objectReference: {fileID: 0}
-    - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: attackDamage
       value: 10
       objectReference: {fileID: 0}
@@ -24,6 +20,10 @@ PrefabInstance:
       propertyPath: _bodyCollider
       value: 
       objectReference: {fileID: 2445133751425614224}
+    - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: activationRange
+      value: 0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 0.1573062
@@ -208,7 +208,7 @@ CapsuleCollider2D:
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &7401284964919904431 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: -4393384422548277744, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4829987614306498064, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
   m_PrefabInstance: {fileID: 2716010681605029567}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}

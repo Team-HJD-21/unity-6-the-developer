@@ -174,7 +174,7 @@ public sealed class EnemyAbilityTests
             Is.EqualTo(ability));
 
         var settings = new SerializedObject(ability);
-        Assert.That(settings.FindProperty("attackRange").floatValue, Is.EqualTo(expectedRange).Within(0.0001f));
+        Assert.That(settings.FindProperty("activationRange").floatValue, Is.EqualTo(expectedRange).Within(0.0001f));
         Assert.That(settings.FindProperty("cooldown").floatValue, Is.EqualTo(1f));
         Assert.That(settings.FindProperty("attackDamage").intValue, Is.EqualTo(5));
     }
