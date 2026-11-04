@@ -7,6 +7,25 @@
 - [시간/예약 API](../../../Docs/architecture/match-time-api.md) · [필드 정지](../../../Docs/architecture/match-field-pause-api.md)
 - [체크포인트 IO](../../../Docs/architecture/checkpoint-storage-api.md) · [저장/복원 실행](../../../Docs/architecture/checkpoint-execution-api.md)
 - [Steam 도입 설계](../../../Docs/architecture/steam-integration-design.md)
+- [범용 Random API·기존 교체 위치](../../../Docs/architecture/core-random-api.md) · [우주선 출입 보고 API](../../../Docs/architecture/core-presence-report-api.md) — Core 구현이며 Feature 호출부는 미변경.
+
+## Random을 사용하는 팀원은 먼저 확인
+
+[Random API 사용법](../../../Docs/architecture/core-random-api.md)의 첫 예제처럼 정적 헬퍼 한 줄로 연결한다. 새 부모 클래스·개별 해제 클래스는 필요 없다. Core가 반환값을 보관하고 Scene/Match 정리 때 해제한다. 날씨·스폰·공격은 Host Match, 로컬 HUD 효과는 App의 PresentationRandom을 사용한다.
+
+```csharp
+// 기존 IRandomConsumer 구현 컴포넌트의 필드와 메서드.
+// using System; using TeamHJD.Game.Application; using TeamHJD.Game.Contracts;
+private IRandomSource _random;
+
+public IDisposable BindRandom(IRandomStreams streams)
+    => RandomBinding.Bind(streams, "weather", ref _random);
+
+// Core가 연결한 이후 Feature 실행 시 호출한다.
+public bool RollSuccess(double chance) => _random.Chance(chance);
+```
+
+해제 후 참조는 남지만 `IsAvailable`이 false가 된다. 같은 필드의 재연결·순수 함수 전달·직접 조립 예제는 사용법을 따른다. 게임 난수는 Host에서만 사용하며 팀원 기능의 실제 호출부는 변경하지 않았다.
 
 ## 먼저 실행해 볼 것
 

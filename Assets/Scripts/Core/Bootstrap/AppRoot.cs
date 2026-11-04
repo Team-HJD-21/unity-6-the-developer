@@ -16,6 +16,8 @@ namespace TeamHJD.Game.Bootstrap
 {
     public sealed class AppRoot : MonoBehaviour, IAppMatchHost, IDisposable
     {
+        /// <summary>UI 조립부가 로컬 연출 소비자에게 주입하는 App 수명 난수입니다. 게임 판정에 사용하지 않습니다.</summary>
+        public IRandomStreams PresentationRandom => Services?.PresentationRandom;
         private readonly HashSet<int> _composedSceneHandles = new HashSet<int>();
         private MatchSession _currentMatch;
         private bool _isDisposed;

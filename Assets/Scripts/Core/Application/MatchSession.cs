@@ -17,6 +17,7 @@ namespace TeamHJD.Game.Application
         private RegionRuntime _regions;
         private MatchEnvironmentRuntime _environment;
         private EncounterSpawnSourceRegistry _spawnSources;
+        private RandomService _random;
         private bool _isDisposed;
         private bool _isCompleting;
         public bool IsDisposed => _isDisposed;
@@ -31,6 +32,26 @@ namespace TeamHJD.Game.Application
         public IRegionGridSource Regions => _regions;
         public IMatchEnvironmentSource Environment => _environment;
         public IEncounterSpawnSourceRegistry SpawnSources => _spawnSources;
+        /// <summary>조립된 권위 Match의 공용 난수입니다. Client와 조립 전에는 null입니다.</summary>
+        public IRandomStreams Random => _random;
+
+        /// <summary>Core Scene 조립부가 실제 Host 권한과 Match 수명에 난수 서비스를 한 번 연결합니다.</summary>
+        public IRandomStreams InitializeRandom(Func<bool> mayUse)
+        {
+            ThrowIfDisposed();
+            if (mayUse == null) throw new ArgumentNullException(nameof(mayUse));
+            if (_random != null) throw new InvalidOperationException("Random is already initialized.");
+            _random = new RandomService(Config.RandomSeed, () => !_isDisposed && Completion == null && mayUse());
+            return _random;
+        }
+
+        /// <summary>저장 조립부가 기존 writer 목록과 필수 목록에 core/random을 추가할 때 사용합니다.</summary>
+        public ICheckpointParticipant CreateRandomCheckpointParticipant()
+        {
+            ThrowIfDisposed();
+            return new RandomCheckpointParticipant(Config.MatchId, _random ??
+                throw new InvalidOperationException("Initialize the authority random service first."));
+        }
         public IEncounterSpawnSourceRegistry InitializeSpawnSources(Func<bool> mayWrite, System.Threading.CancellationToken gameplay)
         {
             ThrowIfDisposed();
@@ -215,6 +236,7 @@ namespace TeamHJD.Game.Application
             DisposeOwned(_battlefield.Dispose, errors);
             if (_environment != null) DisposeOwned(_environment.Dispose, errors);
             if (_spawnSources != null) DisposeOwned(_spawnSources.Dispose, errors);
+            if (_random != null) DisposeOwned(_random.Dispose, errors);
             if (_regions != null) DisposeOwned(_regions.Dispose, errors);
             if (errors.Count > 0) throw new AggregateException("Match cleanup failed after releasing all owned resources.", errors);
         }
