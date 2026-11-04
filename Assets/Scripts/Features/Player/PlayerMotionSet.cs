@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public enum PlayerMotion { Idle, Move, Attack, Repair, ToolIdle, ToolMove, Fire }
+public enum PlayerMotion { Idle, Move, Attack, Repair, ToolIdle, ToolMove, Fire, Dash, ToolDash }
 public enum PlayerLateralLean { Neutral = 0, Left = 1, Right = 2, Back = 3 }
 
 /// <summary>행동·방향에 맞는 AnimationClip을 연결합니다. 프레임과 재생 시간은 클립이 소유합니다.</summary>
@@ -61,6 +61,8 @@ public sealed class PlayerMotionSet : ScriptableObject
     [SerializeField] private Clip _hoverFireLeanRight = new Clip();
     [SerializeField] private Clip _moveBackpedal = new Clip();
     [SerializeField] private Clip _hoverFireBackpedal = new Clip();
+    [SerializeField] private Clip _dash = new Clip();
+    [SerializeField] private Clip _toolDash = new Clip();
     [SerializeField] private RuntimeAnimatorController _controller;
 
     public RuntimeAnimatorController Controller => _controller;
@@ -75,6 +77,8 @@ public sealed class PlayerMotionSet : ScriptableObject
         _hoverRepair != null && _hoverRepair.HasEightDirections;
     public bool HasDiagonalBackpedal => _moveBackpedal != null && _moveBackpedal.HasDiagonalDirections &&
         _hoverFireBackpedal != null && _hoverFireBackpedal.HasDiagonalDirections;
+    public bool HasDashAnimations => _dash != null && _dash.HasEightDirections &&
+        _toolDash != null && _toolDash.HasEightDirections;
 
     public bool IsConfigured => _idle != null && _move != null && _attack != null && _repair != null &&
         _idle.IsConfigured && _move.IsConfigured && _attack.IsConfigured && _repair.IsConfigured &&
@@ -126,6 +130,8 @@ public sealed class PlayerMotionSet : ScriptableObject
             case PlayerMotion.ToolIdle: return _toolIdle;
             case PlayerMotion.ToolMove: return _toolMove;
             case PlayerMotion.Fire: return _fire;
+            case PlayerMotion.Dash: return HasDashAnimations ? _dash : _move;
+            case PlayerMotion.ToolDash: return HasDashAnimations ? _toolDash : _toolMove;
             default: return _idle;
         }
     }

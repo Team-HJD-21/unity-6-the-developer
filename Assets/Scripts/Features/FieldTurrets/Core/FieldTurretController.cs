@@ -16,6 +16,10 @@ namespace TeamHJD.Game.FieldTurrets
     public sealed class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource
     {
         [SerializeField, Min(0)] private int maximumPower = 250;
+        public const float DefaultDestructionPowerReturnPercent = 50f;
+        [SerializeField, Range(0f, 100f)] private float destructionPowerReturnPercent = DefaultDestructionPowerReturnPercent;
+        public float DestructionPowerReturnPercent => IsValidReturnPercent(destructionPowerReturnPercent)
+            ? destructionPowerReturnPercent : DefaultDestructionPowerReturnPercent;
         [Header("Unlock Grid")]
         [SerializeField] private Vector2 unlockGridOrigin;
         [SerializeField] private float unlockGridOriginZ;
@@ -215,6 +219,16 @@ namespace TeamHJD.Game.FieldTurrets
             maximumPower = power;
             return true;
         }
+
+        public bool TrySetDestructionPowerReturnPercent(float percent)
+        {
+            if (!IsValidReturnPercent(percent)) return false;
+            destructionPowerReturnPercent = percent;
+            return true;
+        }
+
+        private static bool IsValidReturnPercent(float percent) =>
+            !float.IsNaN(percent) && !float.IsInfinity(percent) && percent >= 0f && percent <= 100f;
 
         public bool TryConsumePower(int power) => Budget.TryConsumePower(power);
         public bool TryChangeReservation(int previousPower, int newPower) => Budget.TryChangeReservation(previousPower, newPower);

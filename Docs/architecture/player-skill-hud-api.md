@@ -9,7 +9,8 @@
 이 프리팹을 씬 루트에 하나 배치해야 한다. Player 프리팹에는 HUD 참조나 HUD 자식이 없다.
 
 프리팹에는 Q/E 슬롯, 스킬 선택 카드 4개와 개발 중 카드 4개, Q/E 선택 미리보기,
-툴팁, F 키 회수 안내, 포탑/방벽 설치 안내와 설치 실패 안내가 들어 있다.
+툴팁, F 키 회수 안내, 모든 설치형 스킬의 설치 안내와 설치 실패 안내가 들어 있다.
+2026-10-27에는 기존 Canvas 자식 `Weapon Hotbar`에 무기 슬롯 4개를 미리 배치했다.
 실행 중 GameObject·UI 컴포넌트·쿨타임 Sprite를 만들지 않는다.
 `SkillCooldownMask.png`는 Radial360 쿨타임 표시를 위한 흰색 Sprite다.
 
@@ -21,6 +22,20 @@ Unity에서 씬의 `Player Skill HUD`를 선택하거나 Prefab Mode로 열어
 설치 실패 안내의 빨간색·Bold 설정, 기존 슬롯 위치와 선택창 배치는 유지한다.
 상태에 따라 달라지는 슬롯 색상과 회수 안내 위치 오프셋도 각 View의 Inspector에서 편집한다.
 코드는 내용·활성 여부·쿨타임·포인터/대상 위치를 갱신하며 레이아웃과 폰트를 재구성하지 않는다.
+
+2026-10-27 회수 안내는 폭 100·높이 30, 글자 크기 14로 축소했다. `PlayerTurretRecoveryPromptView`는 가까운 회수 대상의 표시 여부를 HUD 갱신에서 결정하고, `Canvas.preWillRenderCanvases`에서 포탑 바닥의 최종 화면 좌표를 다시 계산한다. 추적 카메라가 LateUpdate에서 움직여도 포탑과 안내가 서로 다른 카메라 좌표를 쓰지 않도록 한다. 활성화할 때 이벤트를 구독하고 비활성화할 때 해제한다. `RecoveryPrompt_UsesFinalCameraPositionBeforeDrawing`은 HUD 갱신 후 카메라를 이동시키는 PlayMode 회귀 테스트다. 컴파일은 확인했으며 해당 PlayMode 테스트 실행은 남아 있다.
+
+### 무기 선택창 편집
+
+2026-10-27 #565 대시 표시는 같은 Canvas의 `Dash Slot`에 배치했다. 하단 무기 선택창 오른쪽이며 Q/E 선택 카드에 포함하지 않는다. `PlayerDashHud`는 기존 로컬 HUD 소유자의 PlayerDash를 참조해 준비 상태·원형 쿨타임·남은 시간을 갱신한다. 위치·크기·키 글씨·배경·색은 프리팹에서 편집한다. 입력을 받는 버튼은 없고 Raycast Target은 꺼져 있다. [대시 API](player-dash-api.md)
+
+`Player Skill HUD > Weapon Hotbar`를 선택해 하단 위치·크기를 조절한다. 자식 `1 Spanner`, `2 DefaultGun`, `3 CryoBlaster`, `4 Sniper`에는 Button, 배경, 아이콘, 무기 이름, 숫자 배지와 선택 표시가 이미 들어 있다. 각 RectTransform과 Image/TMP 속성을 직접 편집한다. 아이콘 원본은 `Assets/Art/UI/PlayerWeapons/`다. 별도 Canvas는 추가하지 않았다.
+
+`PlayerWeaponHud`의 `_slots`는 1~4 순서로 연결한다. `PlayerWeaponSlotView`의 슬롯 번호와 같은 순서여야 한다. 선택된 슬롯의 테두리·밑줄은 청록색이며 색은 각 Slot View의 Inspector에서 바꾼다. 표시만 바꾸려면 키 번호나 PlayerAttack 설정을 수정할 필요가 없다.
+
+무기 HUD는 기존 `PlayerSkillHudSceneBinding`이 선택한 `PlayerSkillHud.Owner`를 따라가며 추가 플레이어 탐색을 하지 않는다. 소유자의 `PlayerWeaponSelection.WeaponChanged`를 구독하고 소유자 교체·비활성화 때 해제한다. 주인 없는 HUD는 숨기고, 조작 차단 시 버튼을 비활성화한다. 장비 참조가 없는 슬롯도 비활성화한다. 버튼·숫자키·휠은 모두 PlayerWeaponSelection의 같은 선택 API를 사용한다.
+
+`PlayerWeaponHudTests`는 프리팹의 슬롯·아이콘 연결과 Canvas 재사용, 버튼과 로컬 HUD 소유자 연결, 입력 차단, 앞뒤 순환, 장비 누락 및 공격 대기시간 유지를 검사한다. 런타임·Editor 컴파일과 에셋 정적 검증은 확인했으며 Unity Test Runner 및 실제 화면의 클릭·휠 동작 확인은 남아 있다.
 
 ## 스크립트별 책임
 
@@ -105,4 +120,4 @@ Unity Test Runner 실행 및 실제 화면·마우스 조작 확인은 별도로
 설치 가능 위치에서는 왼쪽 클릭/우클릭/Esc 안내를 표시한다. 미리보기 중 회수 안내는 숨긴다.
 선택창 진입 시 미리보기를 취소하며, 설치 전 취소는 수량과 쿨타임을 사용하지 않는다.
 포인터가 UI 위에 있으면 설치 확정하지 않는다.
-월드 미리보기는 Canvas가 아닌 별도 `TemporaryTurretPreview.prefab`으로 편집한다.
+월드 미리보기는 Canvas가 아닌 별도 `PlayerTurretPreview.prefab`으로 편집한다.

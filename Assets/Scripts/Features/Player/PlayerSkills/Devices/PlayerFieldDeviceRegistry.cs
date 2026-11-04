@@ -11,7 +11,7 @@ public static class PlayerFieldDeviceRegistry
     public static void Register(IPlayerFieldTarget device) { if (device != null && !_active.Contains(device)) _active.Add(device); }
     public static void Unregister(IPlayerFieldTarget device) => _active.Remove(device);
     public static PlayerFieldDevice Resolve(Vector2 origin, Vector2 originalGoal) => ResolveTarget(origin, originalGoal) as PlayerFieldDevice;
-    public static IPlayerFieldTarget ResolveTarget(Vector2 origin, Vector2 originalGoal)
+    public static IPlayerFieldTarget ResolveTarget(Vector2 origin, Vector2 originalGoal, Collider2D body = null)
     {
         IPlayerFieldTarget beacon = null;
         float nearest = float.PositiveInfinity;
@@ -29,7 +29,7 @@ public static class PlayerFieldDeviceRegistry
         foreach (var device in _active)
         {
             if (device == null || !device.IsAlive || device.Kind == PlayerFieldDeviceKind.Beacon) continue;
-            if (!device.Intersects(origin, goal, out float fraction) || fraction >= closestFraction) continue;
+            if (!device.Intersects(origin, goal, out float fraction, body) || fraction >= closestFraction) continue;
             wall = device;
             closestFraction = fraction;
         }

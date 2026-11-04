@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Slime
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: Slime
-  _prefab: {fileID: 3068615185566250658, guid: a778f0947e4857a4e8d2a72c509b0639, type: 3}
+  _prefab: {fileID: 4752013470548416468, guid: 3fa690f85741a6b4dbd0262c93b7dc81, type: 3}
   _spawnCost: 1

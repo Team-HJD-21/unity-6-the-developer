@@ -75,6 +75,8 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOL
 
 ## 읽는 순서
 
+Enemy 컨트롤러·능력 구조, 네트워크 행동 실행, 런타임 프리팹 추가 방법은 [Enemy 시스템 가이드](architecture/enemy-system-guide.md)를 참고한다.
+
 터렛을 사용하는 다른 영역은 [터렛 연동 가이드](architecture/turrets/index.md)에서 빠른 시작과 API 및 스냅샷을 따로 확인할 수 있다. 내부 실행 흐름은 기존 Turret System Guide의 Mermaid를 유지한다.
 
 플레이어 스킬의 책임 분리와 신규 네트워크 몬스터 연동·테스트 범위는 [Player skill review](architecture/player-skill-review.md)를 참고한다.
@@ -85,7 +87,19 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 
 플레이어 무기 전환과 스패너 공격·수리는 [Player Weapon API](architecture/player-weapon-api.md)를 참고한다.
 
-새 플레이어 4방향 대기·이동·공격·수리 프레임은 [Player Motion API](architecture/player-motion-api.md)를 참고한다.
+LMB 공격과 포탑 선택·설치·UI 클릭의 우선순위는 [Player Primary Input API](architecture/player-primary-input-api.md)를 참고한다.
+
+Space 대시, 미리 배치한 잔상과 하단 쿨타임 표시는 [Player Dash API](architecture/player-dash-api.md)를 참고한다.
+
+Player 클래스 이름과 책임 구분은 [Player 클래스 이름과 역할](architecture/player-class-responsibilities.md)을 참고한다.
+
+대각선 대기 호흡과 방향별 독립 스프라이트, 전체 그림 검토는 [Player 스프라이트 후속 검토](art/player-idle-breathing-and-sprite-review.md)를 참고한다.
+
+2026-10-30 독립 좌우 연결과 가방 하단 불꽃 보완은 [독립 좌우 자세와 제트팩 분사구](art/player-independent-facing-review.md)를 참고한다.
+
+플레이어 8방향 대기·이동·공격·수리 프레임은 [Player Motion API](architecture/player-motion-api.md)를 참고한다.
+
+기존 모션을 유지하며 몸체와 총기·스패너를 나눈 표시 에셋과 편집 방법은 [Player Weapon Appearance API](architecture/player-weapon-appearance-api.md)를 참고한다.
 
 플레이어 기본 무기·총구·탄환 초기화 계약과 이동속도 독립 사격은 [Player Combat API](architecture/player-combat-api.md)를 참고한다.
 

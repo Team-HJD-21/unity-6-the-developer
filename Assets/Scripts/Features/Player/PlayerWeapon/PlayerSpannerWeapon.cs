@@ -19,6 +19,7 @@ public sealed class PlayerSpannerWeapon : MonoBehaviour
     [SerializeField] private PlayerSpannerView _view;
     [SerializeField] private PlayerSpannerRepair _repair;
     [Header("Impact Feedback")]
+    [SerializeField] private PlayerSpannerSlash _slashPrefab;
     [SerializeField] private ParticleSystem _impactPrefab;
     [SerializeField, Range(0f, .1f)] private float _impactPauseSeconds = .045f;
     private readonly HashSet<EnemyHealth> _hit = new();
@@ -79,7 +80,16 @@ public sealed class PlayerSpannerWeapon : MonoBehaviour
                 ShowImpact(point, true);
             return;
         }
+        ShowAttackSlash();
         ApplyMeleeDamage();
+    }
+
+    private void ShowAttackSlash()
+    {
+        if (_slashPrefab == null) return;
+        PlayerSpannerSlash slash = Instantiate(_slashPrefab);
+        SceneManager.MoveGameObjectToScene(slash.gameObject, _owner.gameObject.scene);
+        if (!slash.Show(_owner, _swingDirection, Mathf.Max(.1f, _range))) Destroy(slash.gameObject);
     }
 
     private void ApplyMeleeDamage()

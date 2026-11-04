@@ -1,0 +1,182 @@
+{
+  "author": "이영빈",
+  "date": "2026-10-31",
+  "art_source": "host_image",
+  "route": "built-in image_gen",
+  "source": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerSlash_Source.png",
+  "size": [
+    256,
+    256
+  ],
+  "ppu": 128,
+  "pivotPixels": [
+    74,
+    128.0
+  ],
+  "pivotNormalized": [
+    0.2890625,
+    0.5
+  ],
+  "authoredRadius": 1.390625,
+  "visibleAlphaThreshold": 32,
+  "duration": 0.18,
+  "frames": [
+    {
+      "name": "SpannerSlash_0.png",
+      "sha256": "04ff9276b8316a102b1d9a410be324fd41476db97392038c13f87695e33867b9",
+      "bounds": [
+        184,
+        38,
+        249,
+        233
+      ],
+      "visibleAngle": [
+        -42.60297146994041,
+        38.784364100297346
+      ]
+    },
+    {
+      "name": "SpannerSlash_1.png",
+      "sha256": "3887075ee3584d6154a8aa39714815bb60d0853288f1ec5db147954db226b2a2",
+      "bounds": [
+        163,
+        37,
+        246,
+        235
+      ],
+      "visibleAngle": [
+        -49.398705354995535,
+        45.31654804727301
+      ]
+    },
+    {
+      "name": "SpannerSlash_2.png",
+      "sha256": "4c9250ddb3d9e0d060a115ef5f63952b8dc11ad7121757825c2b5a90b2d4ef1a",
+      "bounds": [
+        183,
+        35,
+        251,
+        226
+      ],
+      "visibleAngle": [
+        -40.85537625889571,
+        39.90788487550104
+      ]
+    },
+    {
+      "name": "SpannerSlash_3.png",
+      "sha256": "cfd5682d71323c4541600cca642d15f8c653181ae53fc965cc830fce9deccdd2",
+      "bounds": [
+        168,
+        35,
+        240,
+        227
+      ],
+      "visibleAngle": [
+        -44.7061780653493,
+        44.08089521628577
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash.meta",
+      "sha256": "0760f533d277ae056d3c44a122d5920010804daf10af5c796e2cf7c59922f1da"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_0.png",
+      "sha256": "04ff9276b8316a102b1d9a410be324fd41476db97392038c13f87695e33867b9"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_0.png.meta",
+      "sha256": "3b0d6f63662659114eb198ee3c2a51c82dc2af9ca4dc3212072d6db4da9e8cc2"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_1.png",
+      "sha256": "3887075ee3584d6154a8aa39714815bb60d0853288f1ec5db147954db226b2a2"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_1.png.meta",
+      "sha256": "9eef3d2f9694c541e7058941a1bb678b3147bc7bd51dd61c1ecca5d791bb3e9b"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_2.png",
+      "sha256": "4c9250ddb3d9e0d060a115ef5f63952b8dc11ad7121757825c2b5a90b2d4ef1a"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_2.png.meta",
+      "sha256": "30018edd3488b886cf4da4fa0eabc5ebdcf6c2e930d69e8052d6442d244f334f"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_3.png",
+      "sha256": "cfd5682d71323c4541600cca642d15f8c653181ae53fc965cc830fce9deccdd2"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/SpannerSlash/SpannerSlash_3.png.meta",
+      "sha256": "1081bcfdf96e6b556bfa60e40d90511cf1ceef7ddb6cfe5abc7a4ed459b3b9af"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerSlash_Source.png",
+      "sha256": "7b36d61d136f1d11169701057edcd6c308037174c56e0a1541c3596ff96c299a"
+    },
+    {
+      "path": "Assets/Art/Sprites/Player/Motions/V2/Source/SpannerSlash_Source.png.meta",
+      "sha256": "e38a9b12d38632e8f89e66ae5c7f68e7c4c7dc0be4857d9cb3ff09efe54c59c1"
+    },
+    {
+      "path": "Assets/Art/Animations/Player/Effects/SpannerSlash.anim",
+      "sha256": "3d8e46f63184113639b7ad105af415152d0dbc1868c6a61a3153a2880975dfed"
+    },
+    {
+      "path": "Assets/Art/Animations/Player/Effects/SpannerSlash.anim.meta",
+      "sha256": "3665e3749d2421065ad19530a62713230da37e0118e7d975702ede012af1a83a"
+    },
+    {
+      "path": "Assets/Art/Animations/Player/Effects/SpannerSlash.controller",
+      "sha256": "33acfa4a930517602e3e055157ee14cd55b106d297933dd1ba59674615d78121"
+    },
+    {
+      "path": "Assets/Art/Animations/Player/Effects/SpannerSlash.controller.meta",
+      "sha256": "87fa7f72cb74b4eb60b40d1f156295d2b8eaa55827a8a7e2e7e2607be3758004"
+    },
+    {
+      "path": "Assets/Prefabs/Player/VisualsV2/SpannerSlash.prefab",
+      "sha256": "c65c356cc8b47bc98158fa4020339b285204d5413340b4af86c4dd622b699319"
+    },
+    {
+      "path": "Assets/Prefabs/Player/VisualsV2/SpannerSlash.prefab.meta",
+      "sha256": "f399a5457d13caae5f92bcd4ff12c84eb97de89d9511dd41847b4f41f4cf7c3a"
+    },
+    {
+      "path": "Assets/Art/Animations/Player/Effects.meta",
+      "sha256": "49f87a5e76b272124cd8e683f7e49814bd830b949eebaa03ee9260bc4d18c553"
+    }
+  ],
+  "weaponPrefab": {
+    "path": "Assets/Prefabs/Player/PlayerSpanner.prefab",
+    "beforeSha256": "acb0904c01782f1a0868e2b07a60402e58062fd90ce12a38cdea3a7c8ce4b5c8",
+    "afterSha256": "112166b4b718f0eb020031f7eeec9535f383fe02498e9c3c8985c7fe4867d6b3"
+  },
+  "prefab": "Assets/Prefabs/Player/VisualsV2/SpannerSlash.prefab",
+  "spritePivotReason": "One shared engine pivot keeps the visible crescent inside the 100-degree attack sector; no painted pixels are relocated.",
+  "clipFolder": "Assets/Art/Animations/Player/Effects",
+  "prompts": {
+    "art_source": "host_image",
+    "route": "built-in image_gen",
+    "initialPrompt": "Use case: stylized-concept. Asset type: four-frame ONE-SHOT crescent melee sword-slash VFX sprite atlas for a small top-down 2D science-fiction game. No characters or weapons, ONLY the air slash trail. Native transparent background.\nMake a perfectly regular 2-column by 2-row 1024x1024 atlas, each 512x512 cell one phase, chronological reading order. Each cell shares the SAME invisible circle center at local (256,256) and the SAME radius 208 px. Face toward screen RIGHT. Draw a graceful narrow crescent of energy ONLY on the rightmost 100-degree arc of this invisible circle, from -50 degrees to +50 degrees about rightward. This is a curved arc, open toward the left, with sharp tapered points at top-right and bottom-right. The circle center and left two-thirds of each cell are EMPTY transparent space, since the character will stand at the circle center. Crescent outermost right boundary near local x464, endpoints around local (390,96) and (390,416); do not center the crescent itself inside the cell. Do not draw a full ring.\nFrame 1: a thin short leading arc beginning the strike. Frame 2: full bright crescent at radius208, crisp sharp white core, restrained pale icy cyan outer rim, slightly wider at rightmost middle, fine cyan trailing edge. Frame 3: same full arc, thinner and softer, beginning to fade; a very small secondary curved wisp inside the main arc is okay. Frame 4: dissipating thin residual arc, mostly translucent, same registered center and radius. Keep width modest (about24px at broadest in a512pxcell), not a giant broad magic swoosh. Clean painted game-sprite style, readable at small display size, minimal soft glow, semi-transparent edges, no aggressive neon or bloom, no starburst, no impact explosion, no circular spell, no gray shadow, no solid black/white/checkered background, no gridlines, letters, labels, borders or logos. Every phase stays within its own cell with at least32px edge margin. The two tips are sharply tapered. This is ONE coherent crescent slash animation, not four different designs.",
+    "acceptedEditPrompt": "Edit ONLY the angular extent of the four existing crescent sword slash sprites in this transparent 2x2 atlas. Preserve their pale white and icy cyan texture, thickness, phase progression and rightward facing. Each cell is640x640 and its circle center islocal(320,320). The current crescents extend too far upward/downward, like a half moon of140degrees. SHORTEN BOTH ENDS so each complete crescent covers ONLY100degrees of a circle, centered toward RIGHT: exactly50degrees above rightward and50degrees below rightward. Intended tips local(487,120) and(487,520); rightmost arc local(580,320). Therefore NOTHING visible may go above local y115, below local y525, or to the left of local x475 in any cell. Do NOT draw construction lines. The curve center remains(320,320), intentionally LEFT of the visible energy arc; large LEFT empty transparent area is correct. Cut back the crescent tips to those two specified positions while preserving the center of circle and the white/cyan swept blade style. All four cells retain the same fixed phase registration and circle radius260. Phase1 thin, phase2 bright fullest, phase3 thinning, phase4 faint residual. Both endpoints must taper to sharp points. Do not put straight lines or a filled sector inside. Do not change atlas dimensions1280x1280 or cell positions. Native transparent background, no labels, no grid, no checkerboard.",
+    "acceptedArtifact": "C:\\Users\\bmma1\\.codex\\generated_images\\01a11a0d-56ad-7d70-82ae-0959f35c9445\\exec-0520eaee-0392-4635-a44c-8de505cfb18d.png"
+  },
+  "validation": {
+    "visibleAngularExtent": "within +/-50 degrees at alpha>=32",
+    "visibleRadius": "<=178px",
+    "sharedCanvasPivotPpu": "PASS",
+    "noPhysicsOnEffect": true,
+    "fourFrameNonLoopWithAlphaFade": "PASS",
+    "prefabAnimatorSpriteScriptReferences": "PASS",
+    "weaponOriginalDataPreserved": "PASS",
+    "compile": "Editor project including new script: 0 errors, 5 pre-existing warnings",
+    "testRunner": "NOT_RUN",
+    "playMode": "NOT_RUN"
+  }
+}

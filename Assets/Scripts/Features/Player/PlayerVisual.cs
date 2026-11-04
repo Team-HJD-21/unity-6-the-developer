@@ -46,11 +46,10 @@ public class PlayerVisual : MonoBehaviour
 
     private void ApplyFacing(PlayerAimFacing facing)
     {
-        // Physical colliders keep their existing four-direction selection. The
-        // diagonal sprites and muzzle anchors only change the presentation.
+        if (_directionalColliders != null) _directionalColliders.SetFacing(facing);
+        // 구형 Animator의 bool 파라미터만 4방향으로 변환합니다.
         if (PlayerAimUtility.IsDiagonal(facing))
             facing = PlayerAimUtility.GetFacing(inputHandler != null ? inputHandler.AimDirection : Vector2.down);
-        if (_directionalColliders != null) _directionalColliders.SetFacing(facing);
         if (spriteRenderer != null && (_spriteMotion == null || !_spriteMotion.OwnsDisplay))
             spriteRenderer.flipX = facing == PlayerAimFacing.Right;
         if (animator == null || animator.runtimeAnimatorController == null) return;

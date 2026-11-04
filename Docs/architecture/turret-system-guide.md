@@ -43,7 +43,7 @@
 
 ## 2026-10-24 제품 방향과 현재 구현의 구분
 
-완성된 전사 대조 기준으로 켜기의 별도 준비 지연 없음, 정상 정지 전 남은 과열 자동 냉각·이후 전력 반환, 파괴 전력 일부 예약과 수동 끄기 금지 방향을 구분한다. 가동 시간 없음은 무제한 연속 사격이 아니다. Interaction range 내 Repair(일반 HP)와 Restore(HP 0 복구)의 비용은 시간이며, 취소 후 진행 유지·복구 중 파괴 상태 취급 방향을 기록했다. 무기 선택 대신 키 유지 수리 상태를 쓰되 스패너 모션은 유지할 수 있다. 수리 드론은 보류하며 정확한 비율·시간·입력·저장·네트워크 정책과 현재 코드 일치 여부는 미정·미검증이다. CU HP/EP 동시 성장·터렛 레벨별 Minor Upgrade 상한도 제품 방향이며 예시 상한을 현재 API 고정값으로 바꾸지 않는다.
+완성된 전사 대조 기준으로 켜기의 별도 준비 지연 없음, 정상 정지 전 남은 과열 자동 냉각·이후 전력 반환, 파괴 전력 일부 예약과 수동 끄기 금지 방향을 구분한다. **일반 OFF의 반환 시점은 2026-10-29 황재동 정정으로 대체한다. 즉시 비활성화·전력 반환을 시작하고 남은 과열도 동시에 냉각하는 기존 동작을 유지한다.** 가동 시간 없음은 무제한 연속 사격이 아니다. Interaction range 내 Repair(일반 HP)와 Restore(HP 0 복구)의 비용은 시간이며, 취소 후 진행 유지·복구 중 파괴 상태 취급 방향을 기록했다. 무기 선택 대신 키 유지 수리 상태를 쓰되 스패너 모션은 유지할 수 있다. 수리 드론은 보류하며 정확한 비율·시간·입력·저장·네트워크 정책과 현재 코드 일치 여부는 미정·미검증이다. CU HP/EP 동시 성장·터렛 레벨별 Minor Upgrade 상한도 제품 방향이며 예시 상한을 현재 API 고정값으로 바꾸지 않는다.
 
 이는 아래 API·상태 머신이 이미 그 규칙을 구현했다는 뜻이 아니다. 현재 스패너 타격 수리와 신규 시간 기반 수리 방향을 구분하고 후속 구현·실행 검증으로 확인한다. [Product Plan](../product/PROJECT_PLAN.md#41-power-budget) · [회의 검토 기록](../planning/2026-10-24-regular-meeting.md)
 
@@ -361,18 +361,23 @@ flowchart TD
 ```mermaid
 flowchart TD
     Hit["FieldTurretBase<br>ApplyDamage(damage)"] --> Reduce["RuntimeState.ApplyDamage()<br>현재 체력 감소"]
-    Reduce --> HealthEvent["Registry<br>HealthChanged"]
-    HealthEvent -->|체력 남음| Alive["기존 활성 상태 유지"]
-    HealthEvent -->|체력 0| Off["RequestActivation(false)<br>전력 반환"]
-    Off --> Destroyed["RuntimeState<br>MarkDestroyed()"]
-    Destroyed --> DestroyEvent["Registry<br>Destroyed"]
+    Reduce -->|체력 남음| Alive["기존 활성 상태 유지<br>HealthChanged"]
+    Reduce -->|체력 0| Destroyed["파괴 상태 확정<br>ON 해제"]
+    Destroyed --> Partial["실제 예약 전력 × 반환 비율<br>정수 내림하여 반환 대기"]
+    Partial --> Retained["나머지는 파괴 터렛 예약 유지"]
+    Retained --> DestroyEvent["Registry<br>Activation·Operational·Health·Destroyed 알림"]
     DestroyEvent --> Restore["FieldTurretBase<br>Restore()"]
     Restore --> Full["최대 체력·비활성 상태로 복구"]
-    Full --> RestoreEvent["Registry<br>HealthChanged·Restored"]
+    Full --> ReleaseRest["남은 예약 전력도 반환 대기로 이동"]
+    ReleaseRest --> RestoreEvent["Registry<br>HealthChanged·Restored"]
     RestoreEvent --> Manual["별도 RequestActivation(true)<br>필요"]
 ```
 
-위 흐름의 파괴 시 전량 반환은 **현재 코드의 전환기 동작**이며 확정된 제품 규칙이 아니다. 2026-09-26 회의와 9월 27일 정리에 따라, 터렛 API는 파괴 시 예약 전력의 **손실률(0~100%)**을 설정값으로 받을 수 있어야 한다. 반환량은 `예약 전력 × (1 - 손실률 / 100)`으로 계산할 수 있게 한다. 예를 들어 예약 전력 100에서 손실률 0%면 100, 50%면 50을 반환한다. 값의 실제 설정, 반환 여부와 시점, 점유율에 미치는 영향은 아직 결정하지 않았다. API 입력값을 열어두는 요구와 현재 코드에 이 동작이 구현되었다는 주장을 구분한다.
+2026-10-29 사용자 결정으로 파괴 시 **반환 비율은 기본 50%**다. Scene의 `FieldTurretController` Inspector에서 `Destruction Power Return Percent`를 0~100%로 바꾸거나 `TrySetDestructionPowerReturnPercent(percent)`를 호출한다. 런타임 API는 범위 밖·NaN·Infinity를 거부하고 기존 설정을 유지한다. 외부 전력 대역처럼 해당 컨트롤러를 사용하지 않는 터렛에도 기본 50%를 적용한다. 파괴 시점의 실제 예약 전력에 비율을 곱한 뒤 정수 내림한다. 예를 들어 예약 41, 반환 50%면 20이 반환 대기에 들어가고 21은 해당 파괴 터렛에 예약된다. 설정 변경은 이후 파괴부터 적용한다.
+
+미반환분은 영구 손실이나 최대 전력 감소가 아니라 **파괴 터렛에 묶인 예약**이다. `FieldTurretBase.ReservedPower`로 소유 예약량을 조회하며 컨트롤러의 `ReservedPower`에는 정상 활성 터렛과 파괴 터렛 예약이 함께 포함된다. 파괴 상태의 ON/OFF는 `Destroyed`로 거부하고 반복 피해·컴포넌트/오브젝트 비활성화로 잔여 예약이 풀리지 않는다. `Restore()`가 성공하면 나머지도 반환 대기로 옮기고 기존 최대 체력·OFF 규약으로 복구한다. 실제 GameObject 제거는 복구할 대상이 없어 남은 예약을 정리한다. 반환 전력은 모두 기존 `Tick`의 0.1초당 1 회복 경로를 따른다. 일반 OFF 후 이미 반환 대기 중인 터렛의 파괴에서는 추가 전력을 반환하지 않는다.
+
+치명타는 파괴 상태와 부분 반환을 확정한 뒤 상태·체력 이벤트를 발행한다. 파괴 알림 중 `Restore()`를 다시 호출하거나 OFF 요청으로 잔여 예약을 우회 회수할 수 없다. 과거 #545의 손실률 표현은 `100 - 반환 비율`과 구분하며, 이번 구현은 미반환분의 예약 유지와 복구 후 반환을 따른다. 일반 OFF는 즉시 전력 반환을 시작하고 냉각을 동시에 진행하는 기존 동작을 유지한다(2026-10-29 황재동 정정). 시간 기반 Restore 진행도, 점유·저장·네트워크 규약은 이번 변경에 포함하지 않는다.
 
 파괴된 터렛은 Registry에서 즉시 제거하지 않는다. 플레이어가 같은 인스턴스를 복구할 수
 있도록 등록 상태를 유지하되 Active/Operational 조회와 활성화 요청에서는 제외한다. Scene
@@ -501,7 +506,7 @@ flowchart TD
 
 Canon/Missile의 과열 냉각과 비활성화 후 냉각은 `FieldTurretBase.BeginCooling()` 및 `UpdateCooling()`으로 통합했다. `IsCoolingDown`은 두 경우 모두 냉각 여부를 나타내고, `CoolingDownRemaining`도 같은 타이머에서 남은 초를 제공한다. 별도 `_overheatCooldownRunning`과 `TotCoolTime`, 종류별 `OverHeat()`/`DeactivateProcess()`는 사용하지 않는다. 열 누적 기준은 각 터렛이 유지하고 `ApplyCoolingHeat()`로 공통 냉각 진행률을 적용한다.
 
-꺼질 때는 현재 열 비율에 비례한 냉각 시간이 적용된다. 이미 과열 냉각 중이면 끄더라도 기존 종료 시각을 유지해 남은 시간만 냉각한다. 냉각 중 꺼진 터렛의 켜기 요청은 `CoolingDown`으로 거부하고, 켜진 터렛은 예약 전력을 유지한 채 공격만 중지한다. 냉각 완료 시 켜져 있으면 공격을 재개하며, 꺼져 있으면 자동으로 켜지지 않는다. UI의 켜기 버튼은 `IsCoolingDown`을 차단 조건으로 사용할 수 있고, 끄기 버튼은 냉각 중에도 허용한다(자동 활성화 중의 수동 조작 차단은 별도다).
+일반 OFF는 즉시 `IsActivated`를 false로 바꾸고 예약 전력을 반환 대기로 옮긴다. 전력은 기존 `Tick`의 0.1초당 1 회복 경로로 반환하며, 남은 열의 냉각과 동시에 진행한다. 꺼질 때는 현재 열 비율에 비례한 냉각 시간이 적용된다. 이미 과열 냉각 중이면 끄더라도 기존 종료 시각을 유지해 남은 시간만 냉각한다. 냉각 중 꺼진 터렛의 켜기 요청은 `CoolingDown`으로 거부하고, 켜진 터렛은 예약 전력을 유지한 채 공격만 중지한다. 냉각 완료 시 켜져 있으면 공격을 재개하며, 꺼져 있으면 자동으로 켜지지 않는다. UI의 켜기 버튼은 `IsCoolingDown`을 차단 조건으로 사용할 수 있고, 끄기 버튼은 냉각 중에도 허용한다(자동 활성화 중의 수동 조작 차단은 별도다).
 
 ## 5. Prefab과 Definition 설정 방법
 
@@ -739,7 +744,7 @@ flowchart TD
 - [ ] 잠긴 터렛은 켜지지 않고 해금 후 수동으로 다시 켤 수 있다.
 - [ ] 비활성화하면 전력이 반환된다.
 - [ ] `Damage`로 현재 체력이 감소한다.
-- [ ] 현재 구현에서는 체력 0에서 파괴되고 예약 전력이 전량 반환된다. 향후 손실률 API 구현 시에는 0%·50%·100% 설정별 반환량을 별도로 검증한다.
+- [ ] ON 상태 파괴 시 기본 50%만 반환 대기로 이동하고 나머지는 예약된다. 반환 비율 0%·50%·100%, 홀수 예약량과 다른 활성 터렛의 예약 보존을 확인한다.
 - [ ] 파괴된 터렛은 활성화할 수 없다.
 - [ ] `Restore` 후 최대 체력·비활성 상태로 돌아오며 다시 활성화할 수 있다.
 - [ ] 파괴와 복구 시 Registry 이벤트가 한 번씩 발생한다.
@@ -780,7 +785,7 @@ flowchart TD
 | 컨트롤러 구성 | Canon/Missile은 씬별 컨트롤러를 조회하거나 생성 | Match Composition에서 명시적으로 주입 |
 | 등록부 | static 로컬 Registry | Match 수명주기의 조회 서비스로 이전 |
 | 전력 변경 | `IFieldTurretPowerSource`로 독립 `FieldTurretPowerBudget` 사용 | Command와 Authority 검증으로 분리 |
-| 파괴 시 예약 전력 | 현재는 전량 반환 | 손실률(0~100%)을 터렛 API 입력값으로 열고 반환량을 조정 가능하게 한다. 제품 기본값과 반환 정책은 미정 |
+| 파괴 시 예약 전력 | 기본 50% 반환·나머지 예약, Restore 성공 시 잔여분 반환. 컨트롤러 Inspector/API에서 0~100% 조정 | 시간 기반 복구·점유/저장/네트워크 연계 검증은 별도 |
 | Target 평가 | concrete 코드가 Physics와 활성 `EnemyController`를 조회하고 터렛 측 예약 토큰 사용 | AI/Combat 계약과 평가 모델 분리 |
 | Namespace | 일부 concrete 터렛이 전역 namespace | 이식 시 `Presentation` 경계로 정리 |
 | 네트워크 | 로컬 상태만 존재 | Host authoritative 상태와 Snapshot 추가 |
@@ -841,4 +846,4 @@ flowchart TD
 
 ## 2026-10-27 연동 후속
 
-터렛 조작은 Core/Match가 요청을 검증한 뒤 전달하는 방향으로 먼저 설계한다. 현재 로컬 수리·활성화 API 자체가 권한·거리·중복을 모두 검증하는 것은 아니다. 해금 구역 Core 연결 반영 후 검증, 해금됐지만 꺼진 터렛의 Enemy 타깃 여부 확인, 활성 터렛 파괴 시 일부 전력 반환과 레이저 후속은 남은 작업이다. 전력 비율·완료일·최종 서버 권한은 미정이다. [보고·담당·근거](../planning/2026-10-27-weekly-progress.md)
+터렛 조작은 Core/Match가 요청을 검증한 뒤 전달하는 방향으로 먼저 설계한다. 현재 로컬 수리·활성화 API 자체가 권한·거리·중복을 모두 검증하는 것은 아니다. 10월 27일에는 일부 반환이 후속 작업이었고, 10월 29일 사용자 결정으로 기본 50%·조정 API와 복구 후 잔여 반환을 구현했다. 해금 구역 Core 연결 반영 후 검증, 해금됐지만 꺼진 터렛의 Enemy 타깃 여부 확인과 레이저 후속은 별도다. 완료일·최종 서버 권한은 미정이다. [보고·담당·근거](../planning/2026-10-27-weekly-progress.md)

@@ -1,15 +1,18 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
-/// 지정된 타겟에 따라 몬스터의 이동과 공격 행동을 조율한다.
+/// 몬스터의 공통 참조와 타깃 지정 기능을 제공하고, 행동 실행은 자식 클래스에 맡긴다.
 /// </summary>
-public class EnemyController : MonoBehaviour
+public abstract class EnemyController : MonoBehaviour
 {
     [Header("참조")]
-    [SerializeField] private EnemyTargeting  enemyTargeting;
-    [SerializeField] private EnemyMovement enemyMovement;
-    [SerializeField] private EnemyCombat enemyCombat;
-    [SerializeField] private EnemyAnimation enemyAnimation;
+    [SerializeField] protected EnemyTargeting  enemyTargeting;
+    [SerializeField] protected EnemyAnimation enemyAnimation;
+
+    [Header("능력")]
+    [FormerlySerializedAs("enemyCombat")]
+    [SerializeField] protected EnemyAbility enemyAbility;
     
     /// <summary>
     /// 다른 미사일이 이미 이 적을 목표로 삼았는지 나타낸다.
@@ -18,94 +21,48 @@ public class EnemyController : MonoBehaviour
     public bool IsTargeted { get; set; }
     
     /// <summary>
-    /// 필요한 컴포넌트 참조를 초기화한다.
+    /// 자식 클래스가 공유하는 타깃·애니메이션·능력 참조를 초기화한다.
     /// </summary>
-    private void Awake()
+    protected virtual void Awake()
     {
         if (enemyTargeting == null)
             enemyTargeting = GetComponent<EnemyTargeting>();
-        if (enemyMovement == null)
-            enemyMovement = GetComponent<EnemyMovement>();
-        if (enemyCombat == null)
-            enemyCombat = GetComponent<EnemyCombat>();
         if (enemyAnimation == null)
             enemyAnimation = GetComponent<EnemyAnimation>();
+        if (enemyAbility == null)
+            enemyAbility = GetComponent<EnemyAbility>();
     }
 
     /// <summary>
-    /// 타겟과의 거리에 따라 이동하거나 공격한다.
+    /// 몬스터 유형에 맞는 행동을 실행한다.
     /// </summary>
-    public void ExecuteBehavior()
+    public abstract void ExecuteBehavior();
+
+    /// <summary>
+    /// 능력 발동에 성공하면 애니메이션을 재생한다.
+    /// </summary>
+    protected bool TryUseAbility()
     {
-        // 타겟이 없으면 이동을 멈추고 대기한다.
-        if (enemyTargeting.Target == null)
-        {
-            StopMoving();
-            return;
-        }
-        
-        // 공격 범위 안에서는 이동을 멈추고 공격을 시도한다.
-        if (enemyCombat.IsInAttackRange())
-        {
-            StopMoving();
+        if (enemyAbility == null || !enemyAbility.TryUse())
+            return false;
 
-            Vector2 attackDirection =
-                (Vector2)enemyTargeting.Target.position - (Vector2)transform.position;
-
-            if (attackDirection.sqrMagnitude > 0.0001f)
-                enemyAnimation.SetFacingDirection(attackDirection);
-
-            TryAttack();
-            return;
-        }
-        
-        if (!enemyMovement.TryGetNextPathDirection(out Vector2 moveDirection))
-        {
-            StopMoving();
-            return;
-        }
-
-        enemyAnimation.SetFacingDirection(moveDirection);
-        MoveTowardsTarget(moveDirection);
+        enemyAnimation.PlayAbilityAnimation();
+        return true;
     }
 
     /// <summary>
-    /// 몬스터가 추적할 타겟을 지정한다.
+    /// 타깃을 지정하고 자식 클래스의 후속 처리를 호출한다.
     /// </summary>
-    /// <param name="target">추적할 타겟의 Transform.</param>
-    public void SetTargetAndDestination(Transform target)
+    /// <param name="target">배정할 타깃. null이면 기존 타깃을 해제한다.</param>
+    public void AssignTarget(Transform target)
     {
         enemyTargeting.SetTarget(target);
-        enemyMovement.SetDestination(target);
-    }
-    
-    /// <summary>
-    /// 지정된 방향으로 이동하고 이동 애니메이션 속도를 갱신한다.
-    /// </summary>
-    /// <param name="moveDirection">정규화된 이동 방향.</param>
-    private void MoveTowardsTarget(Vector2 moveDirection)
-    {
-        enemyAnimation.PlayMovementAnimation(enemyMovement.MoveSpeed);
-        enemyMovement.Move(moveDirection);
+        OnTargetChanged(target);
     }
 
     /// <summary>
-    /// 몬스터 이동을 멈추고 대기 애니메이션으로 전환한다.
+    /// 타깃 지정 후 몬스터 유형에 필요한 후속 처리를 수행한다.
     /// </summary>
-    private void StopMoving()
-    {
-        enemyAnimation.StopMovementAnimation();
-        enemyMovement.Stop();
-    }
-    
-    /// <summary>
-    /// 전투 처리가 성공하면 공격 애니메이션을 재생한다.
-    /// </summary>
-    private void TryAttack()
-    {
-        if (!enemyCombat.TryAttack())
-            return;
-
-        enemyAnimation.PlayAttackAnimation();
-    }
+    /// <param name="target">배정된 타깃. 해제된 경우 null.</param>
+    protected abstract void OnTargetChanged(Transform target);
 }

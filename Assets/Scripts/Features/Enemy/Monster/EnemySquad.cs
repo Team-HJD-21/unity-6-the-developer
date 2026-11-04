@@ -40,7 +40,7 @@ public class EnemySquad
                 ? _target.TargetTransform
                 : null;
         
-        enemy.SetTargetAndDestination(targetTransform);
+        enemy.AssignTarget(targetTransform);
         return true;
     }
 
@@ -105,7 +105,7 @@ public class EnemySquad
             foreach (EnemyController enemy in _members)
             {
                 if (enemy != null)
-                    enemy.SetTargetAndDestination(targetTransform);
+                    enemy.AssignTarget(targetTransform);
             }
         }
 

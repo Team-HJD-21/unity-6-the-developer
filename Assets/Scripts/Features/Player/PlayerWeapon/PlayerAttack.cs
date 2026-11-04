@@ -3,22 +3,18 @@ using UnityEngine.Serialization;
 
 /// <summary>활성 총구에서 무기별 탄환을 발사하고 실제 발사에 맞춰 효과와 재사용 시간을 갱신합니다.</summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(PlayerInputHandler))]
+[RequireComponent(typeof(PlayerInputHandler), typeof(PlayerWeaponSelection))]
+[DefaultExecutionOrder(300)]
 public class PlayerAttack : MonoBehaviour
 {
     [Header("References")]
-    [FormerlySerializedAs("bulletPrefab")]
-    [SerializeField] private GameObject _bulletPrefab;
+    [SerializeField] private PlayerWeaponSelection _selection;
     [SerializeField] private PlayerMuzzleAnchor _muzzleAnchor;
     [SerializeField] private PlayerWeaponRig _weaponRig;
     [FormerlySerializedAs("inputHandler")]
     [SerializeField] private PlayerInputHandler _input;
-    [SerializeField] private PlayerSpannerWeapon _spannerPrefab;
-    private PlayerSpannerWeapon _spanner;
 
     [Header("Weapons")]
-    [FormerlySerializedAs("currentWeapon")]
-    [SerializeField] private WeaponType _currentWeapon = WeaponType.DefaultGun;
     [FormerlySerializedAs("weapon1Color")]
     [FormerlySerializedAs("_shotgunColor")]
     [SerializeField] private Color _defaultGunColor = new Color(1f, .5f, .1f);
@@ -44,61 +40,70 @@ public class PlayerAttack : MonoBehaviour
     [FormerlySerializedAs("spreadAngle")]
     [FormerlySerializedAs("_spreadAngle")]
     [SerializeField, Range(0f, 180f)] private float _cryoSpreadAngle = 25f;
+    [Header("Sniper")]
+    [SerializeField] private Color _sniperColor = new Color(.85f, .92f, 1f);
+    [SerializeField, Min(0f)] private float _sniperDamage = 45f;
+    [SerializeField, Min(.01f)] private float _sniperInterval = .85f;
     private PlayerSkillController _skills;
     private PlayerSpriteMotion _motion;
     private float _nextShotTime;
     private bool _reportedConfigurationError;
-    public WeaponType CurrentWeapon => _currentWeapon;
+    private bool CanAttack => isActiveAndEnabled && _selection != null && _selection.transform == transform &&
+        _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill);
+    private GameObject CurrentBulletPrefab => _selection != null ? _selection.CurrentBulletPrefab : null;
 
     private void Awake()
     {
         if (_input == null) _input = GetComponent<PlayerInputHandler>();
+        if (_selection == null) _selection = GetComponent<PlayerWeaponSelection>();
         if (_muzzleAnchor == null) _muzzleAnchor = GetComponentInChildren<PlayerMuzzleAnchor>(true);
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
         _skills = GetComponent<PlayerSkillController>();
         _motion = GetComponent<PlayerSpriteMotion>();
-        if (_spannerPrefab != null)
-        {
-            _spanner = Instantiate(_spannerPrefab, transform);
-            _spanner.Bind(transform, _input);
-        }
-        RefreshWeaponVisual();
     }
 
-    private void Update()
+    // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
+    private void LateUpdate()
     {
-        if (_input == null || (_skills != null && !_skills.CanUse)) return;
-        if (_input.WasWeaponSwitchPressed)
-            SelectNextWeapon();
-        if (_input.IsAttackPressed) TryFire();
+        if (_input == null) return;
+        if (_input.ResolvePrimaryAttack(CanAttack)) TryFire();
+    }
+
+    private void OnDisable()
+    {
+        if (_input != null) _input.CancelAttackGesture();
     }
 
     public bool TryFire()
     {
-        if (!isActiveAndEnabled || (_skills != null && !_skills.CanUse) || Time.time < _nextShotTime) return false;
-        if (_currentWeapon == WeaponType.Spanner) return TrySwingSpanner();
+        if (!CanAttack || Time.time < _nextShotTime) return false;
+        if (_selection.CurrentWeapon == WeaponType.Spanner) return TrySwingSpanner();
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
-        bool isCryo = _currentWeapon == WeaponType.CryoBlaster;
-        Color color = isCryo ? _cryoColor : _defaultGunColor;
-        float damage = Mathf.Max(0f, isCryo ? _cryoDamage : _defaultGunDamage);
-        int pelletCount = isCryo ? _cryoPelletCount : _defaultGunPelletCount;
-        float spreadAngle = isCryo ? _cryoSpreadAngle : _defaultGunSpreadAngle;
-        bool fired = FirePellets(muzzle.position, direction, color, damage, isCryo, pelletCount, spreadAngle);
+        var shot = GetShotSettings();
+        bool fired = FirePellets(muzzle.position, direction, shot.color, Mathf.Max(0f, shot.damage),
+            shot.cryogenic, shot.pelletCount, shot.spreadAngle);
         if (!fired) return false;
 
-        float interval = isCryo ? _cryoInterval : _defaultGunInterval;
-        _nextShotTime = Time.time + Mathf.Max(.01f, interval);
-        _weaponRig.ShowShotFlash(color);
+        _nextShotTime = Time.time + Mathf.Max(.01f, shot.interval);
+        _weaponRig.ShowShotFlash(shot.color);
         if (_motion != null) _motion.PlayRangedShot();
         return true;
     }
 
+    private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
+        GetShotSettings() => _selection.CurrentWeapon switch
+        {
+            WeaponType.CryoBlaster => (_cryoColor, _cryoDamage, _cryoInterval, _cryoPelletCount, _cryoSpreadAngle, true),
+            WeaponType.Sniper => (_sniperColor, _sniperDamage, _sniperInterval, 1, 0f, false),
+            _ => (_defaultGunColor, _defaultGunDamage, _defaultGunInterval, _defaultGunPelletCount, _defaultGunSpreadAngle, false)
+        };
+
     private bool TryGetMuzzle(out Transform muzzle)
     {
         muzzle = null;
-        if (_input == null || _input.transform != transform || _bulletPrefab == null ||
-            _bulletPrefab.GetComponent<PlayerBullet>() == null || _muzzleAnchor == null ||
+        if (_input == null || _input.transform != transform || CurrentBulletPrefab == null ||
+            CurrentBulletPrefab.GetComponent<PlayerBullet>() == null || _muzzleAnchor == null ||
             _weaponRig == null || _weaponRig.PlayerRoot != transform || _muzzleAnchor.WeaponRig != _weaponRig ||
             !_muzzleAnchor.TryGetMuzzle(out muzzle))
         {
@@ -125,7 +130,7 @@ public class PlayerAttack : MonoBehaviour
 
     private bool FireProjectile(Vector3 spawnPosition, Vector2 direction, Color color, float damage, bool cryogenic)
     {
-        var bullet = Instantiate(_bulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
+        var bullet = Instantiate(CurrentBulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
         if (bullet.Initialize(color, damage, direction, cryogenic)) return true;
         Destroy(bullet.gameObject);
         return false;
@@ -147,30 +152,11 @@ public class PlayerAttack : MonoBehaviour
         return fired;
     }
 
-    public void SelectNextWeapon()
-    {
-        switch (_currentWeapon)
-        {
-            case WeaponType.DefaultGun: _currentWeapon = WeaponType.CryoBlaster; break;
-            case WeaponType.CryoBlaster:
-                _currentWeapon = _spanner != null ? WeaponType.Spanner : WeaponType.DefaultGun;
-                break;
-            default: _currentWeapon = WeaponType.DefaultGun; break;
-        }
-        RefreshWeaponVisual();
-    }
-
-    private void RefreshWeaponVisual()
-    {
-        bool melee = _currentWeapon == WeaponType.Spanner && _spanner != null;
-        if (_weaponRig != null) _weaponRig.SetRangedWeaponVisible(!melee);
-        if (_spanner != null) _spanner.gameObject.SetActive(melee);
-    }
-
     private bool TrySwingSpanner()
     {
-        if (_spanner == null || !TryGetAimDirection(out Vector2 direction) || !_spanner.TryAttack(direction)) return false;
-        _nextShotTime = Time.time + _spanner.AttackInterval;
+        var spanner = _selection.Spanner;
+        if (spanner == null || !TryGetAimDirection(out Vector2 direction) || !spanner.TryAttack(direction)) return false;
+        _nextShotTime = Time.time + spanner.AttackInterval;
         return true;
     }
 }
