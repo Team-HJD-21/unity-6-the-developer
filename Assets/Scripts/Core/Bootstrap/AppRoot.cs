@@ -21,6 +21,25 @@ namespace TeamHJD.Game.Bootstrap
         private bool _isDisposed;
         private AppScreenPresenter _screenPresenter;
         private IDisposable _completionSubscription;
+        private readonly Dictionary<string, Exception> _compositionFailures = new(StringComparer.Ordinal);
+        public GameFlowController GameFlow { get; private set; }
+        internal bool IsCurrentMatchRunning => _currentMatch != null && !_currentMatch.IsDisposed && _currentMatch.IsGameplayRunning;
+        internal string GameFlowTravelRestriction => GetSceneTravelRestriction();
+        internal bool TryGetCompositionFailure(string sceneKey, out Exception error) => _compositionFailures.TryGetValue(sceneKey, out error);
+
+        /// <summary>Core 시작 Scene이 기존 시각 요소와 제작된 경로를 연결합니다. App 수명에 한 흐름만 구성합니다.</summary>
+        public GameFlowController ConfigureGameFlow(GameFlowRoutes routes)
+        {
+            ThrowIfUnavailable();
+            if (routes == null) throw new ArgumentNullException(nameof(routes));
+            if (GameFlow != null)
+            {
+                if (GameFlow.Routes.MainMenuScene != routes.MainMenuScene || GameFlow.Routes.SpaceshipScene != routes.SpaceshipScene)
+                    throw new InvalidOperationException("The App game-flow routes are already configured.");
+                return GameFlow;
+            }
+            return GameFlow = new GameFlowController(new AppGameFlowHost(this), routes);
+        }
 
         /// <summary>권위 Scene 조립부가 현재 Match의 저장 scope를 만듭니다. 반환 scope의 종료 책임은 호출자에게 있습니다.</summary>
         public MatchCheckpointScope CreateCheckpointScope(ICheckpointRuntime runtime, IEnumerable<ICheckpointParticipant> participants,
@@ -126,7 +145,7 @@ namespace TeamHJD.Game.Bootstrap
             Services = services ?? throw new ArgumentNullException(nameof(services));
             if (UnityEngine.Application.isPlaying)
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
-                    scene => ReplaceGameplaySceneAsync(scene), GetSceneTravelRestriction);
+                    NavigateFromScreenAsync, GetSceneTravelRestriction);
         }
 
         public MatchSession StartMatch(MatchConfig config, MatchState initialState, IModeRules modeRules)
@@ -271,6 +290,7 @@ namespace TeamHJD.Game.Bootstrap
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             _composedSceneHandles.Clear();
+            _compositionFailures.Clear();
             AppServices services = Services;
             if (services?.NetworkMatches != null)
             {
@@ -279,6 +299,8 @@ namespace TeamHJD.Game.Bootstrap
             }
             Services = null;
             var errors = new List<Exception>();
+            try { GameFlow?.Dispose(); GameFlow = null; }
+            catch (Exception exception) { errors.Add(exception); }
             try { EndCurrentMatch(); }
             catch (Exception exception) { errors.Add(exception); }
             try { services?.Dispose(); }
@@ -296,6 +318,7 @@ namespace TeamHJD.Game.Bootstrap
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            _compositionFailures.Remove(scene.path);
             if (mode == LoadSceneMode.Single && Services != null) Services.Screens.ResetContext();
             ComposeScene(scene);
         }
@@ -319,6 +342,22 @@ namespace TeamHJD.Game.Bootstrap
             await Services.SceneTransitions.ReplaceAsync(scenePath, token);
         }
 
+        // 기존 공용 메뉴/결과 버튼도 같은 App 흐름으로 전달해 Scene과 표시 위치가 어긋나지 않게 합니다.
+        private Task NavigateFromScreenAsync(string scenePath)
+        {
+            if (GameFlow == null) return ReplaceGameplaySceneAsync(scenePath);
+            if (scenePath == GameFlow.Routes.SpaceshipScene &&
+                (GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted))
+                return GameFlow.ReturnToSpaceshipAsync();
+            if (scenePath == GameFlow.Routes.MainMenuScene) return GameFlow.OpenMainMenuAsync();
+            if (scenePath == AppScreenPresenter.StageScene)
+            {
+                if (GameFlow.Phase == GameFlowPhase.Mission) return GameFlow.RestartMissionAsync();
+                if (GameFlow.Phase == GameFlowPhase.Spaceship) return GameFlow.LaunchMissionAsync(scenePath);
+            }
+            throw new InvalidOperationException("Use the configured game-flow action for this screen.");
+        }
+
         private string GetSceneTravelRestriction()
         {
             if (_isDisposed || Services == null) return "App is stopping.";
@@ -334,6 +373,7 @@ namespace TeamHJD.Game.Bootstrap
         private void OnSceneUnloaded(Scene scene)
         {
             _composedSceneHandles.Remove(scene.handle);
+            _compositionFailures.Remove(scene.path);
         }
 
         private void ComposeScene(Scene scene)
@@ -354,6 +394,7 @@ namespace TeamHJD.Game.Bootstrap
             if (compositionRoots.Count == 0) return;
             if (compositionRoots.Count > 1)
             {
+                _compositionFailures[scene.path] = new InvalidOperationException("A Mission Scene contains multiple active composition roots.");
                 Debug.LogError(
                     $"Scene '{scene.name}' has {compositionRoots.Count} active scene composition roots. " +
                     "Keep one composition root per scene to avoid duplicate Match ownership.");
@@ -367,6 +408,7 @@ namespace TeamHJD.Game.Bootstrap
             }
             catch (Exception exception)
             {
+                _compositionFailures[scene.path] = exception;
                 Debug.LogException(exception, compositionRoots[0] as MonoBehaviour);
             }
         }

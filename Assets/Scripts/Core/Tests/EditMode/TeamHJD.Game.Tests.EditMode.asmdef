@@ -14,7 +14,8 @@
     "TeamHJD.Game.FieldTurrets",
     "TeamHJD.Game.Networking",
     "Unity.Collections",
-    "Unity.Netcode.Runtime"
+    "Unity.Netcode.Runtime",
+    "Unity.ugui"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
