@@ -14,6 +14,8 @@
 
 App의 위치가 Mission이라고 NGO/Feature 전체 동기화가 끝난 것은 아니다. GameFlow는 실제 Match 조립을 확인하고 실패를 Faulted로 남긴다. MatchState의 기초 HP 필드가 실제 모든 Feature HP를 대신하지 않는다.
 
+Random 소비자는 기존 IRandomConsumer의 BindRandom에서 공용 정적 헬퍼 `RandomBinding.Bind(streams, "weather", ref _random)`의 반환값을 돌려준다. RandomConsumerScope가 Match 조립 실패·종료 시 이를 해제한다. 파트별 해제 클래스나 공통 부모 클래스를 만들지 않는다. 일반 계산 함수에는 IRandomSource만 전달한다. [완성된 사용 예제와 해제/재연결 규칙](core-random-api.md)을 따른다.
+
 ## 2. 생성과 종료의 한 쌍
 
 ```mermaid

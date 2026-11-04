@@ -49,3 +49,11 @@ PR 검수 보강은 별도 후속 커밋으로 묶는다. Random 도입 이유, 
 ### 정리 후 현재 구성 검증
 
 선행 기반 #615 위 API 최종 구성으로 Unity 6000.3.23f1 컴파일 오류 0, 기존 App 종료·Initial_Stage 제작/실제 PlayMode 검사 7/7 통과, 실패·제외 0, 종료 0. 임시 API 검사 63개의 이전 기록을 현재 다시 실행한 것으로 표시하지 않는다. API 추가분 41개 경로는 Core와 공개 문서로 한정하며 신규 테스트/Feature/Scene/Prefab/Packages 변경은 없다. 새 API 클래스 12개가 기존 검수 소스와 동일함을 대조했다.
+
+## 사용성 보강 — 공용 등록·해제 헬퍼
+
+- `RandomBinding.Bind(streams, "weather", ref _random)` 정적 함수로 연결한다. 반환값은 기존 IRandomConsumer에서 그대로 반환하며 Core가 해제한다. Feature별 IDisposable 클래스와 새 부모 클래스를 추가하지 않는다.
+- 해제는 해당 참조를 사용 불가 상태로 만든다. null 검사 대신 IsAvailable을 사용한다. 해제 후 같은 필드로 재연결할 수 있고 이전 lease의 중복 Dispose는 새 연결에 영향을 주지 않는다.
+- 일반 계산 함수는 IRandomSource 인자를 받아 정적으로 사용할 수 있다. 난수 원본·Host 권한·저장 형식·기존 분포 알고리즘은 바꾸지 않는다.
+- 팀원 Feature 소스는 수정하지 않았다. README·문서 목차·API 규약·Random 사용법의 긴 바인딩 예제를 공통 헬퍼와 실제 호출 예제로 정리했다. 사이트 문서에서도 PR 대기 등의 임시 안내를 제거하고 사용 조건을 설명한다.
+- Unity 선택 검증 10/10, 실패·제외 0, 종료 0. 문서 예제 8/8 컴파일 성공. 임시 검사 소스와 .meta는 검증 후 Assets에서 제거하고 개인 Docs/Local/Validation/RandomBinding-20261105에 보존했다. 기존 PR #613에 후속 커밋으로 반영하며 별도 PR을 만들지 않는다.

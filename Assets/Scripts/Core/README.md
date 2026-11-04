@@ -11,17 +11,21 @@
 
 ## Random을 사용하는 팀원은 먼저 확인
 
-[Random API 사용법](../../../Docs/architecture/core-random-api.md)의 도입 이유·주입 예제·교체 전 확인 사항을 읽는다. 날씨·스폰·공격은 Host Match의 이름별 source를, 로컬 HUD 효과는 App의 PresentationRandom을 사용한다. 난수의 원본 저장은 Core, 실제 날씨/개체 상태는 Feature가 맡는다.
+[Random API 사용법](../../../Docs/architecture/core-random-api.md)의 첫 예제처럼 정적 헬퍼 한 줄로 연결한다. 새 부모 클래스·개별 해제 클래스는 필요 없다. Core가 반환값을 보관하고 Scene/Match 정리 때 해제한다. 날씨·스폰·공격은 Host Match, 로컬 HUD 효과는 App의 PresentationRandom을 사용한다.
 
 ```csharp
-using TeamHJD.Game.Application;
-using TeamHJD.Game.Contracts;
+// 기존 IRandomConsumer 구현 컴포넌트의 필드와 메서드.
+// using System; using TeamHJD.Game.Application; using TeamHJD.Game.Contracts;
+private IRandomSource _random;
 
-// streams는 Core가 주입한 IRandomStreams.
-IRandomSource random = streams.GetStream("weather");
-int roll = random.NextInt(0, totalWeight);
-bool selected = random.Chance(0.25);
+public IDisposable BindRandom(IRandomStreams streams)
+    => RandomBinding.Bind(streams, "weather", ref _random);
+
+// Core가 연결한 이후 Feature 실행 시 호출한다.
+public bool RollSuccess(double chance) => _random.Chance(chance);
 ```
+
+해제 후 참조는 남지만 `IsAvailable`이 false가 된다. 같은 필드의 재연결·순수 함수 전달·직접 조립 예제는 사용법을 따른다. 게임 난수는 Host에서만 사용하며 팀원 기능의 실제 호출부는 변경하지 않았다.
 
 ## 먼저 실행해 볼 것
 
