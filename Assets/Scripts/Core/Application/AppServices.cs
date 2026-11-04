@@ -9,6 +9,9 @@ namespace TeamHJD.Game.Application
     public sealed class AppServices : IDisposable
     {
         private bool _isDisposed;
+        private readonly RandomService _presentationRandom;
+        /// <summary>HUD 흔들림 등 로컬 연출 전용 난수입니다. Match 판정/저장 흐름과 상태를 공유하지 않습니다.</summary>
+        public IRandomStreams PresentationRandom => _presentationRandom;
 
         public IProfileService Profiles { get; }
         public IContentCatalog Content { get; }
@@ -32,7 +35,7 @@ namespace TeamHJD.Game.Application
 
         public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority,
             INetworkSession networkSession = null, ICheckpointStore checkpointStore = null,
-            ICheckpointPayloadCodec checkpointPayloads = null)
+            ICheckpointPayloadCodec checkpointPayloads = null, int? presentationRandomSeed = null)
         {
             if ((checkpointStore == null) != (checkpointPayloads == null))
                 throw new ArgumentException("Provide checkpoint storage and payload codec together.");
@@ -47,6 +50,7 @@ namespace TeamHJD.Game.Application
             NetworkSession = networkSession;
             CheckpointStore = checkpointStore;
             CheckpointPayloads = checkpointPayloads;
+            _presentationRandom = new RandomService(presentationRandomSeed ?? System.Environment.TickCount, () => !_isDisposed);
         }
 
         /// <summary>Scene 조립부가 현재 Match runtime과 합의된 writer를 전달해 저장 scope를 생성합니다.</summary>
@@ -145,6 +149,7 @@ namespace TeamHJD.Game.Application
             List<Exception> errors = null;
             DisposeIfNeeded(SceneTransitions, ref errors);
             DisposeIfNeeded(Screens, ref errors);
+            DisposeIfNeeded(_presentationRandom, ref errors);
             var matches = NetworkMatches;
             var transport = _matchTransport;
             NetworkMatches = null;

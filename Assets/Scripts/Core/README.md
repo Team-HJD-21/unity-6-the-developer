@@ -7,6 +7,21 @@
 - [시간/예약 API](../../../Docs/architecture/match-time-api.md) · [필드 정지](../../../Docs/architecture/match-field-pause-api.md)
 - [체크포인트 IO](../../../Docs/architecture/checkpoint-storage-api.md) · [저장/복원 실행](../../../Docs/architecture/checkpoint-execution-api.md)
 - [Steam 도입 설계](../../../Docs/architecture/steam-integration-design.md)
+- [범용 Random API·기존 교체 위치](../../../Docs/architecture/core-random-api.md) · [우주선 출입 보고 API](../../../Docs/architecture/core-presence-report-api.md) — Core 구현이며 Feature 호출부는 미변경.
+
+## Random을 사용하는 팀원은 먼저 확인
+
+[Random API 사용법](../../../Docs/architecture/core-random-api.md)의 도입 이유·주입 예제·교체 전 확인 사항을 읽는다. 날씨·스폰·공격은 Host Match의 이름별 source를, 로컬 HUD 효과는 App의 PresentationRandom을 사용한다. 난수의 원본 저장은 Core, 실제 날씨/개체 상태는 Feature가 맡는다.
+
+```csharp
+using TeamHJD.Game.Application;
+using TeamHJD.Game.Contracts;
+
+// streams는 Core가 주입한 IRandomStreams.
+IRandomSource random = streams.GetStream("weather");
+int roll = random.NextInt(0, totalWeight);
+bool selected = random.Chance(0.25);
+```
 
 ## 먼저 실행해 볼 것
 

@@ -35,6 +35,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IMatchTime _timeReplica;
         private MatchFieldReplicaScope _replicaField;
         private MatchFieldSceneScope _fieldScope;
+        private RandomConsumerScope _randomConsumers;
+        /// <summary>권위 Match의 범용 난수 흐름입니다. 초기화 전·Client·Match 해제 후에는 null입니다.</summary>
+        public IRandomStreams Random => _matchSession?.Random;
+        /// <summary>저장 조립부가 실제 Feature writer 목록에 함께 등록할 Core 난수 writer를 생성합니다.</summary>
+        public ICheckpointParticipant CreateRandomCheckpointParticipant() => _matchSession?.CreateRandomCheckpointParticipant() ??
+            throw new InvalidOperationException("No current authority Match exists.");
         /// <summary>권위 Match 참가자의 확정 위치입니다. Client 신고용 쓰기 API는 제공하지 않습니다.</summary>
         public MatchPresenceService MatchPresence => _fieldScope?.Presence;
         /// <summary>Player 생성자가 Host에 만든 실제 원격 actor를 등록합니다. actor 제거 시 lease를 해제합니다.</summary>
@@ -172,6 +178,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
                 _coordinator = new MatchCoordinator(session, controlUnitHealth,
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning), _matchTime.Clock);
+                // Feature의 최초 날씨 선택 이전에 주입합니다. Client에는 난수 결정권을 제공하지 않습니다.
+                session.InitializeRandom(() => HasCurrentMatch && (network == null || _networkBinding.Connection.IsServer));
+                _randomConsumers = new RandomConsumerScope(session.Random, FindSceneBehaviours().OfType<IRandomConsumer>());
                 _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning), _matchTime.Scheduler);
                 session.InitializeSpawnSources(
@@ -458,6 +467,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             MatchFieldSceneScope field = _fieldScope;
             MatchFieldReplicaScope replicaField = _replicaField;
             IDisposable environment = _environmentScope;
+            RandomConsumerScope randomConsumers = _randomConsumers;
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
             bool ownedMatch = _ownsMatch;
@@ -467,6 +477,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _matchTime = null; _timeReplica = null;
             _fieldScope = null; _replicaField = null;
             _environmentScope = null; _environmentReplica = null;
+            _randomConsumers = null;
             _playerActors = null; _regionBinding = null; _turretBinding = null; _turretInputSource = null;
             _ownsMatch = false;
             _ownedMatchId = default;
@@ -475,6 +486,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var errors = new List<Exception>();
             RunCleanup(() => coordinator?.Dispose(), errors);
             RunCleanup(() => environment?.Dispose(), errors);
+            RunCleanup(() => randomConsumers?.Dispose(), errors);
             RunCleanup(() => ReleaseLocalActorConsumers(matchId), errors);
             RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
             RunCleanup(() => field?.Dispose(), errors);
