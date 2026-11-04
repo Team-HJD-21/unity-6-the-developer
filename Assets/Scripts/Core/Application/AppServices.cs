@@ -18,6 +18,8 @@ namespace TeamHJD.Game.Application
         public ScreenManager Screens { get; }
         public SceneFlowController SceneTransitions { get; }
         public MatchSessionFactory MatchSessions { get; }
+        public ICheckpointStore CheckpointStore { get; }
+        public ICheckpointPayloadCodec CheckpointPayloads { get; }
         public INetworkSession NetworkSession { get; private set; }
         public NetworkMatchCoordinator NetworkMatches { get; private set; }
         private IMatchLifecycleTransport _matchTransport;
@@ -29,8 +31,11 @@ namespace TeamHJD.Game.Application
         public ITurretPresentationTransport NetworkTurretPresentation { get; private set; }
 
         public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority,
-            INetworkSession networkSession = null)
+            INetworkSession networkSession = null, ICheckpointStore checkpointStore = null,
+            ICheckpointPayloadCodec checkpointPayloads = null)
         {
+            if ((checkpointStore == null) != (checkpointPayloads == null))
+                throw new ArgumentException("Provide checkpoint storage and payload codec together.");
             Profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
             Content = content ?? throw new ArgumentNullException(nameof(content));
             Platform = platform ?? throw new ArgumentNullException(nameof(platform));
@@ -40,6 +45,18 @@ namespace TeamHJD.Game.Application
             SceneTransitions = new SceneFlowController(SceneFlow, InputLocks);
             MatchSessions = new MatchSessionFactory(authority ?? throw new ArgumentNullException(nameof(authority)));
             NetworkSession = networkSession;
+            CheckpointStore = checkpointStore;
+            CheckpointPayloads = checkpointPayloads;
+        }
+
+        /// <summary>Scene 조립부가 현재 Match runtime과 합의된 writer를 전달해 저장 scope를 생성합니다.</summary>
+        /// <remarks>반환 scope는 호출자가 소유하며 Match 종료 때 Dispose합니다. App은 저장 파일 위치/IO 구현만 소유합니다.</remarks>
+        public MatchCheckpointScope CreateCheckpointScope(ICheckpointRuntime runtime,
+            IEnumerable<ICheckpointParticipant> participants, IEnumerable<string> requiredParticipantKeys)
+        {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(AppServices));
+            if (CheckpointStore == null) throw new InvalidOperationException("Checkpoint storage is not configured for this app.");
+            return new MatchCheckpointScope(runtime, CheckpointStore, CheckpointPayloads, participants, requiredParticipantKeys);
         }
 
         /// <summary>조립부가 실제 어댑터의 소유권을 App에 한 번 전달합니다. 연결 시작은 별도 API입니다.</summary>
@@ -150,6 +167,7 @@ namespace TeamHJD.Game.Application
             DisposeIfNeeded(Content, ref errors);
             DisposeIfNeeded(Platform, ref errors);
             DisposeIfNeeded(SceneFlow, ref errors);
+            DisposeIfNeeded(CheckpointStore, ref errors);
             DisposeIfNeeded(InputLocks, ref errors);
             INetworkSession network = NetworkSession;
             NetworkSession = null;

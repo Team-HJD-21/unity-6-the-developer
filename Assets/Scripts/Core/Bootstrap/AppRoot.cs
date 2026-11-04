@@ -22,6 +22,24 @@ namespace TeamHJD.Game.Bootstrap
         private AppScreenPresenter _screenPresenter;
         private IDisposable _completionSubscription;
 
+        /// <summary>권위 Scene 조립부가 현재 Match의 저장 scope를 만듭니다. 반환 scope의 종료 책임은 호출자에게 있습니다.</summary>
+        public MatchCheckpointScope CreateCheckpointScope(ICheckpointRuntime runtime, IEnumerable<ICheckpointParticipant> participants,
+            IEnumerable<string> requiredParticipantKeys)
+        {
+            ThrowIfUnavailable();
+            if (runtime == null || runtime.Config.MatchId != CurrentMatchId || !runtime.IsCurrent)
+                throw new InvalidOperationException("Create checkpoint bindings for the current Match only.");
+            return Services.CreateCheckpointScope(runtime, participants, requiredParticipantKeys);
+        }
+
+        /// <summary>게임 진입 호출자가 저장 메타데이터를 먼저 읽습니다. 새 Match 구성·Feature 복원이나 자동 로드를 수행하지 않습니다.</summary>
+        public Task<CheckpointData> ReadCheckpointAsync(CheckpointSlot slot, CancellationToken cancellation = default)
+        {
+            ThrowIfUnavailable();
+            if (Services.CheckpointStore == null) throw new InvalidOperationException("Checkpoint storage is not configured.");
+            return Services.CheckpointStore.LoadAsync(slot, cancellation);
+        }
+
         internal AppServices Services { get; private set; }
         public MatchId CurrentMatchId => _currentMatch == null ? default : _currentMatch.Config.MatchId;
         public SceneFlowController SceneTransitions { get { ThrowIfUnavailable(); return Services.SceneTransitions; } }

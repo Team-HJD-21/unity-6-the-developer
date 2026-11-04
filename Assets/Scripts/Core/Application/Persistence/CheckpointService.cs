@@ -20,6 +20,7 @@ namespace TeamHJD.Game.Application
         private readonly int _thread = Environment.CurrentManagedThreadId;
         private readonly CancellationTokenSource _lifetime = new();
         private readonly Dictionary<string, Binding> _participants = new(StringComparer.Ordinal);
+        private readonly string[] _requiredKeys;
         private long _registrationRevision;
         private int _busy;
         private bool _mutating, _disposed;
@@ -27,11 +28,21 @@ namespace TeamHJD.Game.Application
         public Guid Epoch => !_disposed && _runtime.IsCurrent && _runtime.Time.IsAvailable ? _runtime.Time.Snapshot.Epoch : Guid.Empty;
         public bool IsBusy => Volatile.Read(ref _busy) != 0;
         public int ParticipantCount => _participants.Count;
+        /// <summary>조립부가 요구했지만 아직 등록되지 않은 writer 키입니다. UI/진단은 이 목록으로 연결 대기를 설명합니다.</summary>
+        public IReadOnlyList<string> MissingParticipantKeys => Array.AsReadOnly(_requiredKeys.Where(key => !_participants.ContainsKey(key)).ToArray());
         public CheckpointService(ICheckpointRuntime runtime, ICheckpointStore store, ICheckpointPayloadCodec codec,
-            Func<DateTimeOffset> utcNow = null)
+            Func<DateTimeOffset> utcNow = null, IEnumerable<string> requiredParticipantKeys = null)
         {
             _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime)); _store = store ?? throw new ArgumentNullException(nameof(store));
             _codec = codec ?? throw new ArgumentNullException(nameof(codec)); _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
+            var keys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string key in requiredParticipantKeys ?? Array.Empty<string>())
+            {
+                _ = new CheckpointSection(key, 1, CheckpointSectionKind.World, Array.Empty<byte>());
+                if (!keys.Add(key) || keys.Count > CheckpointData.MaximumSections)
+                    throw new ArgumentException("Required checkpoint writer keys must be unique and bounded.", nameof(requiredParticipantKeys));
+            }
+            _requiredKeys = keys.OrderBy(key => key, StringComparer.Ordinal).ToArray();
         }
         /// <summary>Scene/Feature 조립부가 실제 원본을 등록합니다. 교체·해제 시 같은 메인 스레드에서 lease를 Dispose합니다.</summary>
         public IDisposable Register(ICheckpointParticipant participant)
@@ -205,6 +216,8 @@ namespace TeamHJD.Game.Application
             RequireThread();
             if (_disposed || !_runtime.IsCurrent || !_runtime.IsAuthority || _runtime.Lifetime.IsCancellationRequested ||
                 !(capture ? _runtime.CanCapture : _runtime.CanRestore)) throw new RequestRejectedException("CurrentAuthorityScopeUnavailable");
+            if (_requiredKeys.Any(key => !_participants.ContainsKey(key)))
+                throw new RequestRejectedException("RequiredFeatureWritersUnavailable");
             if (!_participants.Values.Any(binding => binding.Kind == CheckpointSectionKind.World))
                 throw new RequestRejectedException("ActualWorldWritersUnavailable");
         }
