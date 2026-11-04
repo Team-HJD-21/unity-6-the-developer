@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 /// <summary>씬 소속 터렛을 선택하며 선택한 터렛에만 사거리를 표시합니다.</summary>
@@ -11,7 +9,6 @@ internal sealed class StageTurretSelection
     private readonly Scene _scene;
     private readonly Func<PlayerInfo> _getPlayer;
     private readonly Func<float> _getInteractionDistance;
-    private readonly List<RaycastResult> _uiHits = new();
     private FieldTurretBase _selected;
     public int SelectedId { get; private set; }
 
@@ -46,10 +43,13 @@ internal sealed class StageTurretSelection
             return;
         }
 
-        if (controller == null || !GameInput.PrimaryPointerWasPressedThisFrame || IsPointerOverUi())
+        if (controller == null || !GameInput.PrimaryPointerWasPressedThisFrame ||
+            GameInput.PrimaryPointerWasConsumed || GameInput.PrimaryPointerReservedForPlacement || GameInput.IsPointerOverUi())
             return;
 
         FieldTurretBase clickedTurret = FindClickedTurret();
+        // 이미 선택한 포탑이나 먼 포탑도 선택 클릭이므로 공격으로 넘기지 않습니다.
+        if (clickedTurret != null && !GameInput.TryConsumePrimaryPointerPress()) return;
         if (_selected == clickedTurret) return;
 
         if (clickedTurret == null) Clear();
@@ -62,17 +62,6 @@ internal sealed class StageTurretSelection
         Clear(); _selected = turret; SelectedId = turret.InstanceId;
         // Client의 실제 사거리 시각화는 D 표현 복제 연결 전까지 로컬 초기값으로 그리지 않습니다.
         _selected.ShowRange = _selected.HasStateAuthority; return true;
-    }
-
-    private bool IsPointerOverUi()
-    {
-        EventSystem eventSystem = EventSystem.current;
-        if (eventSystem == null) return false;
-
-        _uiHits.Clear();
-        var pointer = new PointerEventData(eventSystem) { position = GameInput.PointerPosition };
-        eventSystem.RaycastAll(pointer, _uiHits);
-        return _uiHits.Count > 0;
     }
 
     private FieldTurretBase FindClickedTurret()

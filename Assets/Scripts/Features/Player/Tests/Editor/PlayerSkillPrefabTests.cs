@@ -41,32 +41,64 @@ public sealed class PlayerSkillPrefabTests
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/" + name + ".prefab");
         Assert.That(prefab.GetComponent<PlayerFieldDevice>().EmitterSprite, Is.Not.Null);
     }
-    [Test]
-    public void SupportTurret_DamageIsHalfOfLevelOneCannon()
+    [TestCase("PlayerBombPreview", typeof(PlayerBomb))]
+    [TestCase("PlayerBeaconPreview", typeof(PlayerBeaconSkill))]
+    [TestCase("PlayerBarrierPreview", typeof(PlayerBarrierSkill))]
+    public void PlacementPreview_IsAuthoredVisualOnlyAndAssigned(string name, System.Type skillType)
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
+        var preview = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/" + name + ".prefab");
+        var view = preview.GetComponent<PlayerSkillPlacementPreview>();
+        Assert.That(view.IsConfigured, Is.True);
+        Assert.That(preview.GetComponentsInChildren<Collider2D>(true), Is.Empty);
+        Assert.That(preview.GetComponentsInChildren<Rigidbody2D>(true), Is.Empty);
+        Assert.That(preview.GetComponentsInChildren<MonoBehaviour>(true).Length, Is.EqualTo(1));
+        var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+        var data = new SerializedObject(player.GetComponent(skillType));
+        Assert.That(data.FindProperty("_previewPrefab").objectReferenceValue, Is.EqualTo(view));
+        Assert.That(data.FindProperty("_placementRadius").floatValue, Is.EqualTo(12));
+        var range = preview.transform.Find("Placement Range").GetComponent<LineRenderer>();
+        Assert.That(range.loop, Is.True);
+        Assert.That(range.useWorldSpace, Is.False);
+        Assert.That(range.positionCount, Is.EqualTo(64));
+        for (int i = 0; i < range.positionCount; i++)
+            Assert.That(range.GetPosition(i).magnitude, Is.EqualTo(1).Within(.0001f));
+        var skill = (PlayerPlacementSkillBase)player.GetComponent(skillType);
+        Vector2 pointer = (Vector2)player.transform.position + new Vector2(2.25f, 1.75f);
+        Assert.That(skill.GetPlacementPosition(pointer), Is.EqualTo(new Vector3(pointer.x, pointer.y, player.transform.position.z)));
+        if (skillType == typeof(PlayerBarrierSkill))
+        {
+            Assert.That(data.FindProperty("_maxDistance").floatValue, Is.EqualTo(13.5f));
+            Assert.That(preview.GetComponentsInChildren<SpriteRenderer>(true).Length, Is.EqualTo(2));
+            Assert.That(preview.GetComponentInChildren<LineRenderer>(true).useWorldSpace, Is.True);
+        }
+    }
+
+    [Test]
+    public void PlayerTurret_DamageIsHalfOfLevelOneCannon()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
         var definition = AssetDatabase.LoadAssetAtPath<TeamHJD.Game.Content.FieldTurretDefinition>(
             "Assets/Data/FieldTurrets/CanonDefinition/Canon_Stage1_LV1.asset");
-        Assert.That(new SerializedObject(prefab.GetComponent<TemporaryTurret>()).FindProperty("damagePerShot").floatValue,
+        Assert.That(new SerializedObject(prefab.GetComponent<PlayerTurret>()).FindProperty("damagePerShot").floatValue,
             Is.EqualTo(definition.Damage * .5f).Within(.001f));
     }
     [Test]
-    public void SupportTurret_HasSerializedHealth()
+    public void PlayerTurret_HasSerializedHealth()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
-        Assert.That(prefab.GetComponent<TemporaryTurretHealth>(), Is.Not.Null);
-        Assert.That(prefab.GetComponent<TemporaryTurretHealth>().MaxHealth, Is.EqualTo(100).Within(.001f));
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
+        Assert.That(prefab.GetComponent<PlayerTurretHealth>(), Is.Not.Null);
+        Assert.That(prefab.GetComponent<PlayerTurretHealth>().MaxHealth, Is.EqualTo(100).Within(.001f));
     }
 
     [Test]
     public void SupportTurretPreview_IsVisualOnlyAndConnectedToPlayer()
     {
-        var preview = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurretPreview.prefab");
+        var preview = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurretPreview.prefab");
         Assert.That(preview.GetComponent<PlayerTurretPlacementPreview>().IsConfigured, Is.True);
         Assert.That(preview.GetComponentsInChildren<Collider2D>(true), Is.Empty);
         Assert.That(preview.GetComponentsInChildren<Rigidbody2D>(true), Is.Empty);
-        Assert.That(preview.GetComponent<TemporaryTurret>(), Is.Null);
-        Assert.That(preview.GetComponent<TemporaryTurretHealth>(), Is.Null);
+        Assert.That(preview.GetComponent<PlayerTurret>(), Is.Null);
+        Assert.That(preview.GetComponent<PlayerTurretHealth>(), Is.Null);
         var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
         Assert.That(player.GetComponent<PlayerTurretSkill>().HasPrefab, Is.True);
         var data = new SerializedObject(player.GetComponent<PlayerTurretSkill>());
@@ -75,9 +107,9 @@ public sealed class PlayerSkillPrefabTests
     }
 
     [Test]
-    public void SupportTurret_AuthoredBodyCoversBaseAndBlocksBothActorLayers()
+    public void PlayerTurret_AuthoredBodyCoversBaseAndBlocksBothActorLayers()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
         var body = prefab.GetComponent<BoxCollider2D>();
         Assert.That(body, Is.Not.Null);
         Assert.That(body.isTrigger, Is.False);
@@ -95,20 +127,20 @@ public sealed class PlayerSkillPrefabTests
         Assert.That(body.excludeLayers.value & (1 << LayerMask.NameToLayer("Bullet")), Is.Not.Zero);
     }
     [Test]
-    public void SupportTurret_MuzzleFollowsRotatingHead()
+    public void PlayerTurret_MuzzleFollowsRotatingHead()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
-        var data = new SerializedObject(prefab.GetComponent<TemporaryTurret>());
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
+        var data = new SerializedObject(prefab.GetComponent<PlayerTurret>());
         var head = (Transform)data.FindProperty("turretHead").objectReferenceValue;
         var muzzle = (Transform)data.FindProperty("firePoint").objectReferenceValue;
         Assert.That(muzzle.IsChildOf(head), Is.True);
     }
     [Test]
-    public void SupportTurret_UsesIndependentCannonProjectile()
+    public void PlayerTurret_UsesIndependentCannonProjectile()
     {
-        var turret = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
-        var projectile = (GameObject)new SerializedObject(turret.GetComponent<TemporaryTurret>()).FindProperty("bulletPrefab").objectReferenceValue;
-        Assert.That(projectile.GetComponent<TemporaryTurretProjectile>(), Is.Not.Null);
+        var turret = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
+        var projectile = (GameObject)new SerializedObject(turret.GetComponent<PlayerTurret>()).FindProperty("bulletPrefab").objectReferenceValue;
+        Assert.That(projectile.GetComponent<PlayerTurretProjectile>(), Is.Not.Null);
         Assert.That(projectile.GetComponent<PlayerBullet>(), Is.Null);
         var cannon = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/FieldTurrets/Weapons/bullet.prefab");
         Assert.That(projectile.GetComponent<SpriteRenderer>().sprite, Is.EqualTo(cannon.GetComponent<SpriteRenderer>().sprite));

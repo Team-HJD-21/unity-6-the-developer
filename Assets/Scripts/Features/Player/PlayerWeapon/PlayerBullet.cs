@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
+using UnityEngine.Tilemaps;
 
 /// <summary>설정된 고정 속도로 이동하며 수명과 충돌 피해를 처리하는 플레이어 탄환입니다.</summary>
 [DisallowMultipleComponent]
@@ -27,6 +29,20 @@ public sealed class PlayerBullet : MonoBehaviour
     private bool _hasHit;
     private PlayerProjectileView _view;
     private readonly List<Collider2D> _hitboxes = new();
+    private readonly List<RaycastHit2D> _flightHits = new(8);
+    private ContactFilter2D _hitFilter;
+    private Vector2 _flightDirection;
+    private static readonly Dictionary<int, Tilemap> SceneGrounds = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetSceneGroundCache()
+    {
+        SceneGrounds.Clear();
+        SceneManager.sceneUnloaded -= ForgetSceneGround;
+        SceneManager.sceneUnloaded += ForgetSceneGround;
+    }
+
+    private static void ForgetSceneGround(Scene scene) => SceneGrounds.Remove(scene.handle);
 
     private void Reset() => CacheReferences();
     private void Awake() => CacheReferences();
@@ -42,12 +58,18 @@ public sealed class PlayerBullet : MonoBehaviour
     private void ConfigureHitboxes()
     {
         _hitboxes.Clear();
+        int hitLayers = 0;
         foreach (Collider2D hitbox in GetComponentsInChildren<Collider2D>(true))
         {
             if (hitbox.attachedRigidbody != _body) continue;
             hitbox.isTrigger = true;
             _hitboxes.Add(hitbox);
+            int included = Physics2D.GetLayerCollisionMask(hitbox.gameObject.layer) |
+                hitbox.includeLayers.value | _body.includeLayers.value;
+            hitLayers |= included & ~(hitbox.excludeLayers.value | _body.excludeLayers.value);
         }
+        _hitFilter = new ContactFilter2D { useTriggers = true };
+        _hitFilter.SetLayerMask(hitLayers);
     }
 
     /// <summary>색상·피해량·월드 방향으로 초기화합니다. 발사자의 이동속도는 전달받지 않습니다.</summary>
@@ -73,6 +95,7 @@ public sealed class PlayerBullet : MonoBehaviour
 
     private void Launch(Vector2 direction)
     {
+        _flightDirection = direction;
 #if UNITY_6000_0_OR_NEWER
         _body.linearVelocity = direction * _speed;
 #else
@@ -85,20 +108,69 @@ public sealed class PlayerBullet : MonoBehaviour
 
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void FixedUpdate()
     {
-        // 기존 Collision2D와 같이 Rigidbody 소유자를 대상으로 처리해 자식 Collider의 태그 차이를 피합니다.
-        GameObject target = other.attachedRigidbody != null ? other.attachedRigidbody.gameObject : other.gameObject;
-        ProcessHit(target);
+        if (_hasHit || _flightDirection == Vector2.zero || _body == null) return;
+        // 빠른 Trigger 탄환은 한 물리 틱 안에 얇은 본체를 지나칠 수 있어 이동 경로를 먼저 검사합니다.
+        _body.Cast(_flightDirection, _hitFilter, _flightHits, _speed * Time.fixedDeltaTime);
+        RaycastHit2D nearest = default;
+        foreach (RaycastHit2D hit in _flightHits)
+        {
+            if (!TryGetHitTarget(hit.collider, out _, out _)) continue;
+            if (nearest.collider == null || hit.distance < nearest.distance) nearest = hit;
+        }
+        if (nearest.collider == null) return;
+        Vector2 stopPosition = _body.position + _flightDirection * nearest.distance;
+        transform.position = new Vector3(stopPosition.x, stopPosition.y, transform.position.z);
+        ProcessHit(nearest.collider);
     }
 
-    private void ProcessHit(GameObject target)
+    private void OnTriggerEnter2D(Collider2D other) => ProcessHit(other);
+
+    private bool TryGetHitTarget(Collider2D hitbox, out GameObject target, out bool isEnemy)
     {
-        if (_hasHit || target == null || target.CompareTag("Player") || target.CompareTag("Bullet")) return;
+        target = null;
+        isEnemy = false;
+        if (hitbox == null || hitbox.attachedRigidbody == _body) return false;
+        // 경로 Cast는 물리 접촉 제외와 별개로 장벽을 찾습니다. 양끝 본체는 계속 적중시킵니다.
+        var device = hitbox.GetComponentInParent<PlayerFieldDevice>();
+        if (device != null && device.IsBarrierMembrane(hitbox)) return false;
+        // Rigidbody 소유자를 사용하되 자식 Collider와 부모의 태그도 함께 확인합니다.
+        target = hitbox.attachedRigidbody != null ? hitbox.attachedRigidbody.gameObject : hitbox.gameObject;
+        if (hitbox.CompareTag("Ground") || target.CompareTag("Ground") || IsSceneGround(hitbox)) return false;
+        for (Transform ancestor = hitbox.transform; ancestor != null; ancestor = ancestor.parent)
+        {
+            if (ancestor.CompareTag("Player") || ancestor.CompareTag("Bullet")) return false;
+            isEnemy |= ancestor.CompareTag(_targetTag);
+        }
+        // 적 피격 Trigger는 유지하고 포탑 사거리·상호작용 등 감지용 Trigger는 통과합니다.
+        return isEnemy || !hitbox.isTrigger;
+    }
+
+    private static bool IsSceneGround(Collider2D hitbox)
+    {
+        if (!hitbox.TryGetComponent(out Tilemap map)) return false;
+        Scene scene = hitbox.gameObject.scene;
+        if (!SceneGrounds.TryGetValue(scene.handle, out Tilemap ground) || ground == null || !ground.isActiveAndEnabled)
+        {
+            // 실제 Initial_Stage의 지면은 Default/Untagged입니다. 기존 설치 판정과 같은 지면만 제외합니다.
+            ground = PlayerTurretPlacementRules.FindGround(scene);
+            if (ground != null) SceneGrounds[scene.handle] = ground;
+        }
+        return map == ground;
+    }
+
+    private void ProcessHit(Collider2D other)
+    {
+        if (_hasHit || !TryGetHitTarget(other, out GameObject target, out bool isEnemy)) return;
         _hasHit = true;
+#if UNITY_6000_0_OR_NEWER
+        _body.linearVelocity = Vector2.zero;
+#else
+        _body.velocity = Vector2.zero;
+#endif
         foreach (Collider2D hitbox in _hitboxes)
             if (hitbox != null) hitbox.enabled = false;
-        bool isEnemy = target.CompareTag(_targetTag) || target.transform.root.CompareTag(_targetTag);
         if (isEnemy)
         {
             var health = target.GetComponentInParent<EnemyHealth>();

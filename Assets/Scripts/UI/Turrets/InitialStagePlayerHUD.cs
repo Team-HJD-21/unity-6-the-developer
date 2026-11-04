@@ -11,6 +11,8 @@ using UnityEngine.UI;
 /// <summary>프리팹의 상태 View와 터렛 조작 Presenter를 씬 데이터에 연결합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster))]
+// PlayerSkillController(100)가 설치 상태를 정한 뒤 포탑 선택 클릭을 처리합니다.
+[DefaultExecutionOrder(150)]
 public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorConsumer, ITurretCommandConsumer
 {
     private const string StandaloneLocalPlayerId = "local-player";
@@ -137,6 +139,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
         if (controlUnitView != null) controlUnitView.Refresh(null, false);
     }
 
+    public bool IsTurretPanelOpen => isActiveAndEnabled && turretView != null && turretView.isActiveAndEnabled;
+
     private void Awake()
     {
         _canvas = GetComponent<Canvas>();
@@ -249,7 +253,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
         if (_waitingForMatch || !isActiveAndEnabled || Time.timeScale <= 0 ||
             player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
             _controller == null || !_controller.isActiveAndEnabled ||
-            (_playerSkills != null && _playerSkills.IsPlacingTurret))
+            GameInput.PrimaryPointerReservedForPlacement ||
+            (_playerSkills != null && (!_playerSkills.CanUse || _playerSkills.IsPlacingSkill)))
             return false;
 
         return _playerControl == null || _playerControl.CanAct;

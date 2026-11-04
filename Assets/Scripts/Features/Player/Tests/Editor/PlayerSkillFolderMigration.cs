@@ -25,7 +25,7 @@ public static class PlayerSkillFolderMigration
         MoveGroup("Skills/Bomb", "PlayerBomb PlayerBombExplosion PlayerBombAreaDamage PlayerTimeBombVisual");
         MoveGroup("Skills/Barrier", "PlayerBarrierSkill PlayerBarrierGeometry PlayerBarrierPlacementPreview PlayerBarrierPlacementRules PlayerBarrierEnemyBehaviour");
         MoveGroup("Skills/Beacon", "PlayerBeaconSkill PlayerBeaconEnemyBehaviour");
-        MoveGroup("Skills/Turret", "PlayerTurretSkill PlayerTurretInventory TemporaryTurret TemporaryTurretHealth TemporaryTurretProjectile PlayerSupportTurretTargeting PlayerSupportTurretWeapon");
+        MoveGroup("Skills/Turret", "PlayerTurretSkill PlayerTurretInventory PlayerTurret PlayerTurretHealth PlayerTurretProjectile PlayerTurretTargeting PlayerTurretWeapon");
 
         string source = Root + "/Editor";
         if (AssetDatabase.IsValidFolder(source))

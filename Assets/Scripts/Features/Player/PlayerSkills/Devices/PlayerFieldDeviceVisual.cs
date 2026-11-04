@@ -24,7 +24,6 @@ public sealed class PlayerFieldDeviceVisual
             _energy.startWidth = _energy.endWidth = width + .18f;
             _energy.startColor = _energy.endColor = new Color(color.r, color.g, color.b, .5f);
             PlayerFieldLineFactory.SetLine(_energy, start + Vector3.up * .3f, end + Vector3.up * .3f);
-            PlayerFieldLineFactory.SetLine(Line("Ground Edge", _material, .06f, Color.white), start, end);
             Pulse("First Pulse", start, color);
             Pulse("Second Pulse", end, color);
         }
@@ -63,7 +62,6 @@ public sealed class PlayerFieldDeviceVisual
     {
         var ring = Line(name, _material, .08f, color);
         PlayerFieldLineFactory.Circle(ring, position, .23f * VisualScale, 6);
-        PlayerFieldLineFactory.SetLine(Line(name + " Core", _material, .16f * VisualScale, Color.white), position, position + Vector3.up * (.2f * VisualScale));
     }
     private LineRenderer Line(string name, Material material, float width, Color color) => PlayerFieldLineFactory.Line(name, material, width, color, _root);
     public void Dispose() => PlayerFieldDevice.Dispose(_material);

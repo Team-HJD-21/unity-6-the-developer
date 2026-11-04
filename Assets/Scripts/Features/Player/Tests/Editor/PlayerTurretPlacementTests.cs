@@ -20,7 +20,7 @@ public sealed class PlayerTurretPlacementTests
     {
         yield return new EnterPlayMode();
         _scene = SceneManager.CreateScene("Turret placement test");
-        _prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/TemporaryTurret.prefab");
+        _prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
         _player = CreateObject("Player");
         _player.transform.position = _origin;
         _player.layer = LayerMask.NameToLayer("Player");
@@ -67,7 +67,7 @@ public sealed class PlayerTurretPlacementTests
     {
         GameObject existing = Object.Instantiate(_prefab, _origin + Vector3.forward * 50f, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(existing, _scene);
-        existing.GetComponent<TemporaryTurret>().enabled = false;
+        existing.GetComponent<PlayerTurret>().enabled = false;
         Physics2D.SyncTransforms();
         Assert.That(CanPlace(_origin), Is.False);
         Assert.That(Evaluate(_origin), Is.EqualTo(PlayerTurretPlacementResult.OverlapsTurret));
@@ -163,7 +163,7 @@ public sealed class PlayerTurretPlacementTests
         Assert.That(skill.TryConfirmPlacement(chosenPosition), Is.True);
         Assert.That(skill.AvailableCount, Is.EqualTo(2));
         int deployedCount = 0;
-        foreach (TemporaryTurret turret in Object.FindObjectsByType<TemporaryTurret>(FindObjectsSortMode.None))
+        foreach (PlayerTurret turret in Object.FindObjectsByType<PlayerTurret>(FindObjectsSortMode.None))
         {
             if (turret.gameObject.scene != _scene) continue;
             deployedCount++;
@@ -211,7 +211,7 @@ public sealed class PlayerTurretPlacementTests
         Assert.That(skill.TryUseSkill(), Is.True);
         Assert.That(skill.IsPlacing, Is.True);
         Assert.That(skill.AvailableCount, Is.EqualTo(3));
-        foreach (var turret in Object.FindObjectsByType<TemporaryTurret>(FindObjectsSortMode.None))
+        foreach (var turret in Object.FindObjectsByType<PlayerTurret>(FindObjectsSortMode.None))
             Assert.That(turret.gameObject.scene, Is.Not.EqualTo(_scene));
         Assert.That(CanPlace(_origin), Is.True, "The ghost must not block its own placement.");
         skill.CancelPlacement();
@@ -233,7 +233,7 @@ public sealed class PlayerTurretPlacementTests
         Assert.That(skill.GetPlacementPosition(pointer), Is.EqualTo(expected));
         Assert.That(skill.TryConfirmPlacement(pointer), Is.True);
         Assert.That(skill.IsPlacing, Is.False);
-        foreach (var turret in Object.FindObjectsByType<TemporaryTurret>(FindObjectsSortMode.None))
+        foreach (var turret in Object.FindObjectsByType<PlayerTurret>(FindObjectsSortMode.None))
             if (turret.gameObject.scene == _scene) Assert.That(turret.transform.position, Is.EqualTo(expected));
         Assert.That(skill.TryConfirmPlacement(pointer), Is.False);
         Assert.That(skill.AvailableCount, Is.EqualTo(2));
@@ -276,7 +276,7 @@ public sealed class PlayerTurretPlacementTests
     {
         GameObject turret = Object.Instantiate(_prefab, _origin, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(turret, _scene);
-        turret.GetComponent<TemporaryTurret>().enabled = false;
+        turret.GetComponent<PlayerTurret>().enabled = false;
         int deviceLayer = LayerMask.NameToLayer("PlayerFieldDevice");
         int playerLayer = LayerMask.NameToLayer("Player");
         int enemyLayer = LayerMask.NameToLayer("Enemy");
@@ -307,7 +307,7 @@ public sealed class PlayerTurretPlacementTests
             Assert.That(bodies[0].position.x, Is.LessThan(_origin.x - 2f));
             Assert.That(bodies[1].position.x, Is.GreaterThan(_origin.x + 2f));
             var collider = turret.GetComponent<BoxCollider2D>();
-            turret.GetComponent<TemporaryTurretHealth>().TakeDamage(100f);
+            turret.GetComponent<PlayerTurretHealth>().TakeDamage(100f);
             Assert.That(collider.enabled, Is.False, "Destroyed turrets must immediately release the occupied space.");
         }
         finally
@@ -330,7 +330,7 @@ public sealed class PlayerTurretPlacementTests
         data.FindProperty("turretPrefab").objectReferenceValue = _prefab;
         data.FindProperty("_placementGround").objectReferenceValue = _ground;
         data.FindProperty("_previewPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/Prefabs/Player/TemporaryTurretPreview.prefab").GetComponent<PlayerTurretPlacementPreview>();
+            "Assets/Prefabs/Player/PlayerTurretPreview.prefab").GetComponent<PlayerTurretPlacementPreview>();
         data.ApplyModifiedPropertiesWithoutUndo();
         return skill;
     }

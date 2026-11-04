@@ -10,15 +10,17 @@ public static class PlayerBarrierPlacementRules
         float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
         foreach (var hit in Physics2D.OverlapBoxAll((start + end) * .5f, size, angle, terrainLayers))
         {
-            // Legacy 제거로 인해 로직 무효화: 구형 Monster 설치 충돌 제외 검사.
-            // hit.GetComponentInParent<Monster>() != null
-            if (hit == null || hit.isTrigger || hit.GetComponentInParent<PlayerInputHandler>() != null ||
-                hit.GetComponentInParent<EnemyHealth>() != null) continue;
+            if (hit == null || hit.isTrigger || hit.gameObject.scene != player.scene) continue;
             int layer = hit.gameObject.layer;
-            if ((hit.excludeLayers.value & (1 << player.layer)) != 0) continue;
             if (layer == LayerMask.NameToLayer("Bullet") || layer == LayerMask.NameToLayer("PlayerBulletCollider") ||
                 layer == LayerMask.NameToLayer("EmenyBullet")) continue;
-            if (Physics2D.GetIgnoreLayerCollision(player.layer, layer)) continue;
+            if (layer == LayerMask.NameToLayer("Player") || layer == LayerMask.NameToLayer("Enemy") ||
+                hit.GetComponentInParent<PlayerInputHandler>() != null || hit.GetComponentInParent<EnemyHealth>() != null ||
+                hit.GetComponentInParent<PlayerTurret>() != null ||
+                hit.GetComponentInParent<TeamHJD.Game.FieldTurrets.FieldTurretBase>() != null) return false;
+            int mask = 1 << player.layer;
+            if ((hit.excludeLayers.value & mask) != 0) continue;
+            if ((hit.includeLayers.value & mask) == 0 && Physics2D.GetIgnoreLayerCollision(player.layer, layer)) continue;
             return false;
         }
         return true;
