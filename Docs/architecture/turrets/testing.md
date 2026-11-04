@@ -1,10 +1,29 @@
 # 검증과 제한 사항
 
-최종 갱신: 2026-10-29
+최종 갱신: 2026-11-05
 상태: 통합 시 확인할 항목. 체크리스트 자체가 테스트 통과 기록은 아니다.
 
 냉각·강화 제한의 코드 기준은 main `8d08001a`에 병합된 PR #525다.
 Initial 플레이어 UI의 조작 검증 목록은 [Player UI API](../player-ui-api.md#확인-순서)에 있다.
+
+## Initial_Stage 수리·복구 검증 배치
+
+`Initial_Stage`의 `FieldTurret Repair Tests` 아래에 Stage 1 Canon LV1 두 개를 배치했다. 플레이어 시작 위치 `(15.6, -15.9)` 근처이며 둘 다 처음에는 OFF 상태다.
+
+| Hierarchy 이름 | 위치 | 시작 상태 | 확인할 동작 |
+| --- | --- | --- | --- |
+| `FieldCanonTurret LV1 - Destroyed (Repair Test)` | `(12, -9, 1)` | HP 0/100, 파괴 | 일반 Repair는 거부하고 Restore 후 최대 체력·OFF로 복구 |
+| `FieldCanonTurret LV1 - Damaged (Repair Test)` | `(20, -9, 1)` | HP 50/100 | Player 수리로 체력이 증가하며 최대 체력을 넘지 않음 |
+
+`FieldTurretRepairTestSetup`은 비활성으로 제작된 두 프리팹에 `PrepareInitialization`으로 시작 상태를 전달한 뒤 Awake·등록을 진행한다. 각 터렛은 고유 Scene Entity ID를 가지며 기존 Scene 컨트롤러와 지역 정책에 참여한다. 손상 터렛의 시작 체력은 그룹의 `_damagedHealth`에서 조정한다. 그룹이나 터렛을 껐다 켜도 수리·복구 결과를 다시 초기화하지 않는다.
+
+`FieldTurretRepairTestSceneTests`는 실제 Scene의 PlayMode 진입 후 초기 체력·해금·등록·논리 ID와 Repair/Restore, 그룹 재활성화 시 상태 보존을 검사한다. Player의 키 유지·입력 해제·거리 이탈 및 수리 모션은 이영빈 담당 코드와 통합한 뒤 화면에서 별도로 확인한다.
+
+2026-11-05 로컬 검증: Unity 6000.3.23f1의 열린 편집기에서 위 연동 테스트 1개가 통과했다. 실제 Initial_Stage에 PlayMode로 진입해 두 Canon LV1의 시작 상태와 기존 컨트롤러 소속, 고유 ID 등록, Repair/Restore 후 체력·전력 유지, 그룹 재활성화 후 상태 보존을 확인했다. `.meta` 검사 오류 0개와 `git diff --check` 통과도 확인했다. Player 실제 입력·화면 인수 및 다중 클라이언트 동기화는 검증하지 않았다.
+
+2026-11-05 사용자 확인: 배치된 터렛의 정상 동작을 확인했다는 보고를 받았다. 구체적인 Player 입력 시나리오와 다중 클라이언트 검증 결과는 별도로 보고되지 않았다.
+
+2026-11-05 최신 main 재배치: `37aeb9e44`(날씨 연동 #611)를 작업 브랜치에 병합한 뒤 Unity CLI로 두 터렛을 다시 배치했다. main의 기존 Scene 오브젝트·컴포넌트 데이터는 모두 보존하고 테스트 그룹과 Scene 루트 참조만 추가했다. 날씨 전환 Material·시간과 Player 날씨 Binding을 확인했고, 최신 코드에서 위 연동 테스트 1개가 다시 통과했다. 이 재배치의 Player 직접 조작·다중 클라이언트 검증은 수행하지 않았다.
 
 ## 파괴 전력 부분 반환 검증
 
