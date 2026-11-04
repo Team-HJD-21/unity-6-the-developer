@@ -1,0 +1,14 @@
+{
+  "name": "TeamHJD.Game.Enemy.Contracts",
+  "rootNamespace": "TeamHJD.Game.Enemy.Contracts",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}

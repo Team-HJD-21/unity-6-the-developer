@@ -230,7 +230,8 @@ PrefabInstance:
       propertyPath: projectileSpeed
       value: 3.5
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7747097433762684323, guid: 257198211f7bafa43b411764aa64b329, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 4666856207976309227, guid: 257198211f7bafa43b411764aa64b329, type: 3}
@@ -240,6 +241,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2222045718711525339, guid: 257198211f7bafa43b411764aa64b329, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2450530720495810446}
+    - targetCorrespondingSourceObject: {fileID: 2222045718711525339, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4150352840543577102}
   m_SourcePrefab: {fileID: 100100000, guid: 257198211f7bafa43b411764aa64b329, type: 3}
 --- !u!4 &2121120947951616025 stripped
 Transform:
@@ -287,3 +291,31 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.13
+--- !u!114 &4150352840543577102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4863314149640289833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57efaa2c4b576d44c8b2e4330ca398e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArcaneOrbProjectile
+  ShowTopMostFoldoutHeaderGroup: 1
+  projectileSpeed: 3.5
+  rigidbody2D: {fileID: 6622900600400177096}
+  collider2D: {fileID: 2450530720495810446}
+  animator: {fileID: 1822982228780371541}
+  lifetime: 5
+  minDepth: 65
+  maxDepth: 70
+  explosionEffectPrefab: {fileID: 1074975871139786742, guid: 65cb6e8d10711d34f8ca80065099c339, type: 3}
+  slowMultiplier: 0.8
+  slowDuration: 2
+--- !u!50 &6622900600400177096 stripped
+Rigidbody2D:
+  m_CorrespondingSourceObject: {fileID: 451197500948743738, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+  m_PrefabInstance: {fileID: 6749695987185017330}
+  m_PrefabAsset: {fileID: 0}
