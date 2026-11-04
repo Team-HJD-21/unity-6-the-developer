@@ -62,3 +62,11 @@ Steamworks.NET의 Callback/CallResult는 해당 비동기 작업의 수명 동�
 실제 SOS/late join, Host Migration, 랜덤 매칭의 최종 정책, 친구·채팅 UI, 제재·재접속 전체를 단순 로비 연결로 완료했다고 표시하지 않는다. 로비 owner 변경을 게임 권위/상태의 자동 이전으로 사용하지 않는다.
 
 후속 SDK 구현 착수 전에 확인할 입력은 실제 AppID와 테스트 계정/소유권 준비, transport 후보 검증 결과, 운영 Backend 인증 엔드포인트다. 이번 조사·설계는 해당 계정 접근이나 패키지 설치를 수행하지 않았다. UI는 기존 HUD/우주선 콘솔·폰트 에셋을 사용하고 새 화면 구성이 필요한 경우 구체안을 PL에게 확인한다.
+
+## 2026-11-04 재검토
+
+SDK/Backend/transport 구현은 추가하지 않았습니다. 현재 신규 Startup→GameFlowController→AppGameFlowHost→AppRoot의 진입 경로에 플랫폼 준비/인증을 연결하는 방향으로 기존 설계를 유지합니다. 현재 Fake 플랫폼으로 우주선에 진입한 것을 온라인 인증 완료로 표시하지 않습니다.
+
+Valve 공식 문서에서 GetAuthTicketForWebApi의 응답 callback을 기다린 뒤 서버가 ticket을 검증하는 경로를 다시 확인했습니다. callback pump는 App 수명에서 수행하고 필드 정지와 분리합니다. 로비 구성과 실제 게임 접속/Match 준비도 별도 단계로 유지합니다. Steamworks.NET의 Callback/CallResult 참조 수명과 RunCallbacks 요구도 다시 확인했습니다.
+
+근거: [Valve 인증](https://partner.steamgames.com/doc/features/auth), [SDK callback/종료](https://partner.steamgames.com/doc/api/steam_api), [로비](https://partner.steamgames.com/doc/features/multiplayer/matchmaking), [wrapper callback](https://steamworks.github.io/gettingstarted/). SDK/transport 호환 실험과 실제 AppID/테스트 계정·운영 인증 엔드포인트는 실제 도입 단계의 입력이며 이번 조사 완료를 막는 미구현으로 혼동하지 않습니다.

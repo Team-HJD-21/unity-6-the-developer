@@ -13,7 +13,7 @@ PL 지시대로 미승인 타 파트 변경을 **현재 브랜치의 최신 tree
 - `f4450fd3` 제외 커밋 시점에는 `Assets/Scripts/Core` 아래940개 파일을 제외 직전과 **파일 hash까지 동일**하게 보존했다. 후속 주석 처리에서는 그중9개 파일의 원본을 보존하며 컴파일 제외 블록을 추가했다. App/Match/Scene 조립, 시간·예약·정지·네트워크·저장 계약/실행기 등의 Core 작업을 없애거나 main으로 돌리지 않았다.
 - 사용자 기존 폰트·DefinitionId·ShaderGraphSettings 수정도 hash가 같고 Validation 폴더는 건드리지 않았다.
 - 기존 구현 커밋 `b1a6bb30`은 제외 커밋의 부모로 남아 있고, 분리 stash10개도 그대로 있다. 변경 이력을 reset/rebase로 지우지 않았다.
-- 제품 구현 목표는 paused. PR·push·merge는 하지 않았다.
+- 2026-11-04 PL 지시로 Core 독립 범위만 재개했다. 타 파트 연결·stash 재적용은 계속 보류한다. [재개 결과](2026-11-04-core-resume-results.md).
 
 역할 기준은 [팀 역할](../team/TEAM_ROLE_OWNERSHIP.md)이다. PL은 Core Systems & UI Architect지만 Combat HUD 세부 구현은 Player 담당 범위이므로 `Assets/Scripts/UI/Turrets`의 이번 변경도 제외했다. 외부 Feature 코드에 다시 우회 구현을 추가하지 않는다.
 
@@ -75,6 +75,6 @@ rg -n "CORE-FEATURE-HOLD" Assets/Scripts/Core
 - 제외 경로·Core940개 및 사용자 파일 hash: `feature-exclusion/before.json`.
 - 실제 제외 검증·컴파일 결과: `feature-exclusion/verification.json`, `compile-errors.json`, `compile.log`.
 
-담당자 확인과 PL의 재개 지시 전에는 보관한 Feature 변경을 재적용하지 않는다. 컴파일 문제를 해결한다는 이유로 팀원 로직을 다시 수정하지 않는다. 다음 설계 논의에서는 Core의 직접 의존성도 함께 확인한다.
+Core 작업은 재개했지만 담당자 확인 없이 보관한 Feature 변경을 재적용하지 않는다. 컴파일 문제를 해결한다는 이유로 팀원 로직을 다시 수정하지 않는다. 다음 설계 논의에서는 Core의 직접 의존성도 함께 확인한다.
 
 후속 컴파일 증거: 로컬 `feature-hold-comments/compile-1.log`(테스트 참조1개 실패), `compile-2.log`·`compile-2.exit`(종료0·오류0). 원본9개 사본과 변경 목록은 같은 폴더 `original/`, `state.json`에 보존했다.

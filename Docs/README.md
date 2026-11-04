@@ -2,7 +2,7 @@
 
 > **현재 Core 상태:** [타 파트 수정 제외·Core 보존 현황](planning/2026-11-02-feature-integration-hold.md)을 먼저 읽으세요. 타 파트198경로는 main 기준으로 복원했습니다. Core 미연결 호출은 `CORE-FEATURE-HOLD`로 원본을 보존하며 임시 보류했고 Unity 컴파일은 통과했습니다. 해당 Feature 연결과 전체 통합은 보류 상태입니다.
 
-수정일: 2026-11-02
+수정일: 2026-11-04
 상태: 현행 PL 기준 / 최신 기획·후속 회의와 Core 5·6주차 구현·기술 검증 및 인수 자료. 제품·팀 플레이 Gate와 구분한다.
 
 최근 기획·후속 검토: [10월 30일 기획 보강](planning/2026-10-30-planning-review.md) · [10월 31일 정기회의](planning/2026-10-31-regular-meeting.md) — 전체 전사·수기 대조로 자동 활성화·성장 방향을 보강하고 우주선 필드 정지, 점령/스폰·그룹화, 재방문·실패 보상과 후속 작업을 구분했다. 세부 설계·실제 구현·재미 검증은 별도다.
@@ -12,6 +12,8 @@
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
 ## 현재 기준
+
+[11월 4일 Core 재개 결과](planning/2026-11-04-core-resume-results.md)와 [실제 함수·수명·연결 지도](architecture/core-lifecycle-and-api-guide.md)를 참고한다. 신규 시작→우주선 경로와 Core 저장 조립을 추가했고 최종 선택 검사73개를 통과했다. 실제 Mission/Feature 연결 대기는 결과 문서와 구분한다.
 
 [체크포인트 저장소 API](architecture/checkpoint-storage-api.md)는 버전 있는 바이너리 IO를, [체크포인트 실행·요청 API](architecture/checkpoint-execution-api.md)는 권위·캡처·복원·실패 복구·이벤트 관찰을 설명한다. 각각 실제 IO 8개와 실행/관찰 계약 15개 검사를 통과했다. 실제 Scene writer와 재실행 흐름은 이어 연결하며 자동 저장·복원 사건은 선정하지 않는다.
 

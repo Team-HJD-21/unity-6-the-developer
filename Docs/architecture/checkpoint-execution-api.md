@@ -183,3 +183,11 @@ Weather 복원 4개, 기존 예약 연결 3개, 남은 첫 대기/반복 계약 
 물리 Feature writer는 `FieldSimulationActor.CaptureBody` / `RestoreBody`를 사용한다. 정지 때문에 임시로 꺼진 `simulated` 값과 실제 복귀 예정 속도를 구분하고, 복원 중 바뀐 위치·속도를 재개 시 과거 값으로 덮어쓰지 않게 한다. `CheckpointRigidbody2DState`는 world XY 위치·각도·선속도·각속도·원래 simulated·수면 상태의 명시 바이너리 값이다. 어댑터가 없는 Player 등의 소유 Rigidbody는 값 자료의 직접 Capture/Apply를 사용할 수 있다. 물리체의 Z와 제작 계층은 Transform 자료로 별도 보존한다.
 
 복원 위치는 Rigidbody와 Transform 양쪽에 맞춘다. simulated=false의 물리체를 다시 켤 때 이전 Transform으로 되돌아가는 사례를 발견해 수정했다. 집중 3개 검사와 실제 PlayMode 물리 프레임의 정지→복원→재개 1개 검사를 통과했다. 임의 다른 actor의 Rigidbody는 거부한다. 충돌·AI·무기 전체 재생의 완료 증거는 아니다.
+
+## 2026-11-04 App·Match 조립 API
+
+AppBootstrap이 BinaryCheckpointStore와 BinaryCheckpointPayloadCodec을 AppServices에 주입합니다. Scene 조립부는 AppRoot.CreateCheckpointScope(runtime, participants, requiredParticipantKeys)로 MatchCheckpointScope를 만들고 종료 때 Dispose합니다. scope.Requests는 명시 요청만 전달하며 자동 발동 사건을 선택하지 않습니다.
+
+필수 키 목록은 콘텐츠 계약으로 명시하며 scope에서 빈 목록은 거부합니다. CheckpointService.MissingParticipantKeys는 미등록 키를 반환하고, 직접/Trigger 저장·복원은 RequiredFeatureWritersUnavailable로 거부됩니다. 따라서 현재 writer 일부만으로 전체 게임 저장이 준비됐다고 표시하지 않습니다. AppRoot.ReadCheckpointAsync는 재실행 전 metadata 읽기만 수행합니다.
+
+현재 Initial_Stage에는 전체 Feature writer와 복원 전후 취소/갱신 계약을 연결하지 않았습니다. participant를 어떤 순서로 조립하고 해제하는지는 [실제 수명/API 지도](core-lifecycle-and-api-guide.md)를 따릅니다.
