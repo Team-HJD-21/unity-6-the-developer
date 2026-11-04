@@ -160,7 +160,7 @@ Shader "Weather/Thunder1"
                     / max(2.0 * unity_OrthoParams.y, 0.0001);
                 float2 screenPoint = float2(input.uv.x * aspect, input.uv.y);
 
-                // ShaderTests가 번개 발생 시 월드 좌표로 정한 위치를 사용한다.
+                // WeatherShaderApply가 번개 발생 시 월드 좌표로 정한 위치를 사용한다.
                 int boltCount = 1 + (int)floor(HashNumber(eventIndex * 23.17
                     + 37.0) * 3.0);
                 [unroll] for (int boltIndex = 0; boltIndex < 3; boltIndex++)

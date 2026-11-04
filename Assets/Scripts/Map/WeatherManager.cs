@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Map;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,8 +17,8 @@ namespace Map
             SUNNY,
             RAIN,
             THUNDERSTORM,
-            WEATHER_MAX = THUNDERSTORM // Enum의 맨 마지막을 나타내는 열거형 변수
-            // WEATHER_MAX - SUNNY 로 날씨가 더 늘어나도 개수를 알 수 있음
+            HEATWAVE,
+            WEATHER_COUNT = HEATWAVE + 1 // 날씨 종류의 전체 개수
         }
         
         [Header("===WeatherManagement===")]
@@ -29,25 +28,20 @@ namespace Map
         [SerializeField, Min(1)] private int weatherQueueSize = 5;
         [SerializeField, Min(1)] private int sunnyWeight = 3;
         private Queue<Weather> weatherQueue;
-    
-        [Header("===Weather VFX===")]
-        // 각 날씨에서 사용할 Particle System => 미정
-        [SerializeField] private ParticleSystem rainVFX;
-        [SerializeField] private ParticleSystem sunVFX;
-        [SerializeField] private ParticleSystem thunderVFX;
         
         [Header("===Weather temporary Canvas ===")]
         [SerializeField] private Image tmpweatherImage;
         [SerializeField] private Color _sunnyColor;
         [SerializeField] private Color _rainColor;
         [SerializeField] private Color _thunderColor;
+        [SerializeField] private Color _heatWaveColor = new Color(1f, 0.28f, 0.38f, 0.75f);
     
         // 날씨 전환 시 일어날 이벤트 
         public static Action<Weather,Queue<Weather>> OnWeatherChange;
         
         private WeatherChangeEvent _weatherChangeEvent;
 
-        [SerializeField] private ShaderTests _shaderTests;
+        [SerializeField] private WeatherShaderApply _weatherShaderApply;
         
         void OnEnable()
         {
@@ -62,11 +56,11 @@ namespace Map
         void Awake()
         {
             _weatherChangeEvent = GetComponent<WeatherChangeEvent>();
-            if (_shaderTests == null || !_shaderTests.CompareTag("MainCamera"))
+            if (_weatherShaderApply == null || !_weatherShaderApply.CompareTag("MainCamera"))
             {
                 Camera mainCamera = Camera.main;
-                _shaderTests = mainCamera != null
-                    ? mainCamera.GetComponent<ShaderTests>()
+                _weatherShaderApply = mainCamera != null
+                    ? mainCamera.GetComponent<WeatherShaderApply>()
                     : null;
             }
         }
@@ -74,13 +68,7 @@ namespace Map
         {
             FillWeather();
             WeatherCanvasColorChange(currentWeather, weatherQueue);
-
-            if (rainVFX != null && sunVFX!=null && thunderVFX != null)
-            {
-                rainVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                thunderVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                sunVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            }
+            ApplyWeatherShader();
         }
 
         private void FillWeather()
@@ -106,13 +94,20 @@ namespace Map
             currentWeather = weatherQueue.Dequeue();
             Debug.Log($"현재 날씨: {currentWeather}, 뽑힌 후 큐: [{string.Join(", ", weatherQueue)}]");
             FillWeather();
+            ApplyWeatherShader();
             OnWeatherChange?.Invoke(currentWeather, weatherQueue);
+        }
+        
+        private void ApplyWeatherShader()
+        {
+            if (_weatherShaderApply != null)
+                _weatherShaderApply.ApplyWeather(currentWeather);
         }
 
         private Weather GetWeather()
         {
             // SUNNY는 sunnyWeight칸, 다른 날씨는 각각 한 칸을 차지한다.
-            int roll = UnityEngine.Random.Range(0, sunnyWeight + (int)Weather.WEATHER_MAX);
+            int roll = UnityEngine.Random.Range(0, sunnyWeight + (int)Weather.WEATHER_COUNT - 1);
             Weather result = roll < sunnyWeight
                 ? Weather.SUNNY
                 : (Weather)(roll - sunnyWeight + 1);
@@ -123,9 +118,6 @@ namespace Map
         // 날씨 변경 시 호출될 메소드 
         void WeatherCanvasColorChange(Weather curWeather, Queue<Weather> q)
         {
-            /*
-             * 날씨마다 로직을 여기서 변경 실행이 낫지 않을까
-             */
             if (tmpweatherImage == null)
             {
                 return;
@@ -141,6 +133,9 @@ namespace Map
                 case Weather.THUNDERSTORM:
                     tmpweatherImage.color = _thunderColor;
                     break;
+                case Weather.HEATWAVE:
+                    tmpweatherImage.color = _heatWaveColor;
+                    break;
                 default:
                     tmpweatherImage.color = _sunnyColor;
                     break;
@@ -148,13 +143,7 @@ namespace Map
         }
         public void CallWeatherChange()
         {
-            if (_shaderTests == null)
-            {
-                Debug.LogError("Main Camera에 ShaderTests 컴포넌트가 필요합니다.", this);
-                return;
-            }
-
-            _shaderTests.ChangeWeatherFlag();
+            ChangeWeather();
         }
     }
 }
