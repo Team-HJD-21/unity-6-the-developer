@@ -68,6 +68,9 @@ public class EnemyNetworkAnimator : NetworkBehaviour
     {
         if (!IsSpawned || !IsServer)
             return;
+
+        // 서버에서도 종료 Animation Event가 실행되도록 직접 재생한다.
+        _animator.SetTrigger(AttackHash);
         PlayAttackRpc(
             _animator.GetFloat(MoveXHash),
             _animator.GetFloat(MoveYHash));
@@ -79,6 +82,10 @@ public class EnemyNetworkAnimator : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
     private void PlayAttackRpc(float moveX, float moveY)
     {
+        // Host는 서버에서 이미 재생했으므로 중복 Trigger를 방지한다.
+        if (IsServer)
+            return;
+
         _animator.SetFloat(MoveXHash, moveX);
         _animator.SetFloat(MoveYHash, moveY);
         _animator.SetTrigger(AttackHash);

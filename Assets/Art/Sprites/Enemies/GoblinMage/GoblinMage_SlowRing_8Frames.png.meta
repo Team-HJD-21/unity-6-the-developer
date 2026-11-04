@@ -1,0 +1,376 @@
+fileFormatVersion: 2
+guid: 7851bc29d741a5843acd0b6c2ac6147b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4904789799031271021
+    second: GoblinMage_SlowRing_8Frames_0
+  - first:
+      213: 6759348603777321816
+    second: GoblinMage_SlowRing_8Frames_1
+  - first:
+      213: 259880169166639679
+    second: GoblinMage_SlowRing_8Frames_2
+  - first:
+      213: 6912309062834062574
+    second: GoblinMage_SlowRing_8Frames_3
+  - first:
+      213: 4320317287389571659
+    second: GoblinMage_SlowRing_8Frames_4
+  - first:
+      213: 5517966716325041874
+    second: GoblinMage_SlowRing_8Frames_5
+  - first:
+      213: 7311436876728582538
+    second: GoblinMage_SlowRing_8Frames_6
+  - first:
+      213: 7606652180689843000
+    second: GoblinMage_SlowRing_8Frames_7
+  - first:
+      213: -4665240250740873427
+    second: GoblinMage_SlowRing_8Frames_8
+  - first:
+      213: -6017469111538906597
+    second: GoblinMage_SlowRing_8Frames_9
+  - first:
+      213: -2157973928332922327
+    second: GoblinMage_SlowRing_8Frames_10
+  - first:
+      213: 3079750236931873591
+    second: GoblinMage_SlowRing_8Frames_11
+  - first:
+      213: 2913328697700087842
+    second: GoblinMage_SlowRing_8Frames_12
+  - first:
+      213: 3977412960646093574
+    second: GoblinMage_SlowRing_8Frames_13
+  - first:
+      213: 702833484305221609
+    second: GoblinMage_SlowRing_8Frames_14
+  - first:
+      213: -4770750302039242939
+    second: GoblinMage_SlowRing_8Frames_15
+  - first:
+      213: 6937598438035252312
+    second: GoblinMage_SlowRing_8Frames_16
+  - first:
+      213: -1013797991156544217
+    second: GoblinMage_SlowRing_8Frames_17
+  - first:
+      213: 7553192112029916309
+    second: GoblinMage_SlowRing_8Frames_18
+  - first:
+      213: 5340642202232249302
+    second: GoblinMage_SlowRing_8Frames_19
+  - first:
+      213: 5404855621003259713
+    second: GoblinMage_SlowRing_8Frames_20
+  - first:
+      213: 6488182631485418326
+    second: GoblinMage_SlowRing_8Frames_21
+  - first:
+      213: -1527413195314520619
+    second: GoblinMage_SlowRing_8Frames_22
+  - first:
+      213: 5030402935467136192
+    second: GoblinMage_SlowRing_8Frames_23
+  - first:
+      213: 1144568764589064882
+    second: GoblinMage_SlowRing_8Frames_24
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 64
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 38364d433f30fec438765a589c6c584a
+      internalID: 538300114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_01
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 64
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87018e7709078e94b9606bb5f188a3b5
+      internalID: 1240974408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_02
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 64
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ae5d581eeda3944f9b57a483ecab2c2
+      internalID: -1052352842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_03
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 64
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 81717edc62d7b5140aea367dcf49ccde
+      internalID: 166341394
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd772d91facafe74ab7415a777adaf27
+      internalID: -2020136395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_05
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 920c76cab6f3d764ca9fbcccfa26b7fe
+      internalID: -798293907
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_06
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3867493852045a84888dc7f45cca40e8
+      internalID: 1768140463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GoblinMage_SlowRing_07
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c845055eb7a8ec649b4cd4b6f26f93ab
+      internalID: 1938968373
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: eeb916eda5c6bda4e9954abfc1581354
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      GoblinMage_SlowRing_00: 538300114
+      GoblinMage_SlowRing_01: 1240974408
+      GoblinMage_SlowRing_02: -1052352842
+      GoblinMage_SlowRing_03: 166341394
+      GoblinMage_SlowRing_04: -2020136395
+      GoblinMage_SlowRing_05: -798293907
+      GoblinMage_SlowRing_06: 1768140463
+      GoblinMage_SlowRing_07: 1938968373
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

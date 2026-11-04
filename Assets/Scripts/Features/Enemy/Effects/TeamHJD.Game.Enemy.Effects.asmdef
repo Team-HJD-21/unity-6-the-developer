@@ -1,0 +1,14 @@
+{
+  "name": "TeamHJD.Game.Enemy.Effects",
+  "rootNamespace": "TeamHJD.Game.Enemy.Effects",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,680 @@
+fileFormatVersion: 2
+guid: 0b5233a01a1bfb945b8a528972fb51ca
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3151951837201188659
+    second: PartyMushroom_Idle_12Frames_Sample_0
+  - first:
+      213: 6169907377505790202
+    second: PartyMushroom_Idle_12Frames_Sample_1
+  - first:
+      213: 815600575983588396
+    second: PartyMushroom_Idle_12Frames_Sample_2
+  - first:
+      213: -1194168081280239913
+    second: PartyMushroom_Idle_12Frames_Sample_3
+  - first:
+      213: -2242513433473457418
+    second: PartyMushroom_Idle_12Frames_Sample_4
+  - first:
+      213: 1250568785647356529
+    second: PartyMushroom_Idle_12Frames_Sample_5
+  - first:
+      213: 8103539089666292289
+    second: PartyMushroom_Idle_12Frames_Sample_6
+  - first:
+      213: -7976996554709293357
+    second: PartyMushroom_Idle_12Frames_Sample_7
+  - first:
+      213: 5737527743440815648
+    second: PartyMushroom_Idle_12Frames_Sample_8
+  - first:
+      213: -7945456662546988824
+    second: PartyMushroom_Idle_12Frames_Sample_9
+  - first:
+      213: 8653027940060735834
+    second: PartyMushroom_Idle_12Frames_Sample_10
+  - first:
+      213: 1355558343722134271
+    second: PartyMushroom_Idle_12Frames_Sample_11
+  - first:
+      213: -4377025919345832925
+    second: PartyMushroom_Idle_12Frames_Sample_12
+  - first:
+      213: 2528402294594054102
+    second: PartyMushroom_Idle_12Frames_Sample_13
+  - first:
+      213: -2685703126267515523
+    second: PartyMushroom_Idle_12Frames_Sample_14
+  - first:
+      213: 1370844658884232928
+    second: PartyMushroom_Idle_12Frames_Sample_15
+  - first:
+      213: -5850404368017989548
+    second: PartyMushroom_Idle_12Frames_Sample_16
+  - first:
+      213: 4275734245415336690
+    second: PartyMushroom_Idle_12Frames_Sample_17
+  - first:
+      213: -3196480754395400096
+    second: PartyMushroom_Idle_12Frames_Sample_18
+  - first:
+      213: 6835172989707728710
+    second: PartyMushroom_Idle_12Frames_Sample_19
+  - first:
+      213: 7699320480621755293
+    second: PartyMushroom_Idle_12Frames_Sample_20
+  - first:
+      213: 2051866529629082575
+    second: PartyMushroom_Idle_12Frames_Sample_21
+  - first:
+      213: -8151646486145869432
+    second: PartyMushroom_Idle_12Frames_Sample_22
+  - first:
+      213: 2432027926963778545
+    second: PartyMushroom_Idle_12Frames_Sample_23
+  - first:
+      213: -8750699155453785650
+    second: PartyMushroom_Idle_12Frames_Sample_24
+  - first:
+      213: -430563827564634141
+    second: PartyMushroom_Idle_12Frames_Sample_25
+  - first:
+      213: -4149839491211840354
+    second: PartyMushroom_Idle_12Frames_Sample_26
+  - first:
+      213: 4315558536121046823
+    second: PartyMushroom_Idle_12Frames_Sample_27
+  - first:
+      213: 6327529857988793406
+    second: PartyMushroom_Idle_12Frames_Sample_28
+  - first:
+      213: 2511370647414145557
+    second: PartyMushroom_Idle_12Frames_Sample_29
+  - first:
+      213: 195339888987378820
+    second: PartyMushroom_Idle_12Frames_Sample_30
+  - first:
+      213: -7828995656222807292
+    second: PartyMushroom_Idle_12Frames_Sample_31
+  - first:
+      213: 8445886929439210094
+    second: PartyMushroom_Idle_12Frames_Sample_32
+  - first:
+      213: 1796097799226270537
+    second: PartyMushroom_Idle_12Frames_Sample_33
+  - first:
+      213: 7261659393437850152
+    second: PartyMushroom_Idle_12Frames_Sample_34
+  - first:
+      213: 8551178975356379883
+    second: PartyMushroom_Idle_12Frames_Sample_35
+  - first:
+      213: -849726114297791195
+    second: PartyMushroom_Idle_12Frames_Sample_36
+  - first:
+      213: 9132197709157573342
+    second: PartyMushroom_Idle_12Frames_Sample_37
+  - first:
+      213: 6578104410779546359
+    second: PartyMushroom_Idle_12Frames_Sample_38
+  - first:
+      213: -8985804625853681386
+    second: PartyMushroom_Idle_12Frames_Sample_39
+  - first:
+      213: 8116887594698330896
+    second: PartyMushroom_Idle_12Frames_Sample_40
+  - first:
+      213: -7286040612725126971
+    second: PartyMushroom_Idle_12Frames_Sample_41
+  - first:
+      213: 1424090419416375302
+    second: PartyMushroom_Idle_12Frames_Sample_42
+  - first:
+      213: 5107087401205727426
+    second: PartyMushroom_Idle_12Frames_Sample_43
+  - first:
+      213: -976266900522690544
+    second: PartyMushroom_Idle_12Frames_Sample_44
+  - first:
+      213: 6623006039000320649
+    second: PartyMushroom_Idle_12Frames_Sample_45
+  - first:
+      213: -3742047382479432066
+    second: PartyMushroom_Idle_12Frames_Sample_46
+  - first:
+      213: 5652258894325746122
+    second: PartyMushroom_Idle_12Frames_Sample_47
+  - first:
+      213: 1720596347177523163
+    second: PartyMushroom_Idle_12Frames_Sample_48
+  - first:
+      213: -6057526835416336236
+    second: PartyMushroom_Idle_12Frames_Sample_49
+  - first:
+      213: 369089083125588298
+    second: PartyMushroom_Idle_12Frames_Sample_50
+  - first:
+      213: 2686670926100852633
+    second: PartyMushroom_Idle_12Frames_Sample_51
+  - first:
+      213: -4320771718008701097
+    second: PartyMushroom_Idle_12Frames_Sample_52
+  - first:
+      213: 3985269441298392656
+    second: PartyMushroom_Idle_12Frames_Sample_53
+  - first:
+      213: -2183941759815661848
+    second: PartyMushroom_Idle_12Frames_Sample_54
+  - first:
+      213: 9111105661647635445
+    second: PartyMushroom_Idle_12Frames_Sample_55
+  - first:
+      213: 7126326641380297176
+    second: PartyMushroom_Idle_12Frames_Sample_56
+  - first:
+      213: -5845404164533193192
+    second: PartyMushroom_Idle_12Frames_Sample_57
+  - first:
+      213: -2357552849776574223
+    second: PartyMushroom_Idle_12Frames_Sample_58
+  - first:
+      213: 8341143314750630998
+    second: PartyMushroom_Idle_12Frames_Sample_59
+  - first:
+      213: -39824271168911868
+    second: PartyMushroom_Idle_12Frames_Sample_60
+  - first:
+      213: 1603660605439390326
+    second: PartyMushroom_Idle_12Frames_Sample_61
+  - first:
+      213: -8103525642162529796
+    second: PartyMushroom_Idle_12Frames_Sample_62
+  - first:
+      213: -1895944348299238026
+    second: PartyMushroom_Idle_12Frames_Sample_63
+  - first:
+      213: -6969719582897102313
+    second: PartyMushroom_Idle_12Frames_Sample_64
+  - first:
+      213: -3947059405830863373
+    second: PartyMushroom_Idle_12Frames_Sample_65
+  - first:
+      213: 8105399142456851188
+    second: PartyMushroom_Idle_12Frames_Sample_66
+  - first:
+      213: -4528536644513385951
+    second: PartyMushroom_Idle_12Frames_Sample_67
+  - first:
+      213: 7121050714849508689
+    second: PartyMushroom_Idle_12Frames_Sample_68
+  - first:
+      213: 4107633195429065767
+    second: PartyMushroom_Idle_12Frames_Sample_69
+  - first:
+      213: 6851563114619924214
+    second: PartyMushroom_Idle_12Frames_Sample_70
+  - first:
+      213: -2619638875172922691
+    second: PartyMushroom_Idle_12Frames_Sample_71
+  - first:
+      213: -3660605093381834733
+    second: PartyMushroom_Idle_12Frames_Sample_72
+  - first:
+      213: -8950560812022973682
+    second: PartyMushroom_Idle_12Frames_Sample_73
+  - first:
+      213: -2590869009333952193
+    second: PartyMushroom_Idle_12Frames_Sample_74
+  - first:
+      213: -7279419905654808185
+    second: PartyMushroom_Idle_12Frames_Sample_75
+  - first:
+      213: 7642390398801594872
+    second: PartyMushroom_Idle_12Frames_Sample_76
+  - first:
+      213: -2379189983835077591
+    second: PartyMushroom_Idle_12Frames_Sample_77
+  - first:
+      213: 5065547319676034382
+    second: PartyMushroom_Idle_12Frames_Sample_78
+  - first:
+      213: -1926101499822796880
+    second: PartyMushroom_Idle_12Frames_Sample_79
+  - first:
+      213: 6842190542742216807
+    second: PartyMushroom_Idle_12Frames_Sample_80
+  - first:
+      213: 542611819632395419
+    second: PartyMushroom_Idle_12Frames_Sample_81
+  - first:
+      213: -8350333512238446407
+    second: PartyMushroom_Idle_12Frames_Sample_82
+  - first:
+      213: 3051228215744176288
+    second: PartyMushroom_Idle_12Frames_Sample_83
+  - first:
+      213: -2428242092809044752
+    second: PartyMushroom_Idle_12Frames_Sample_84
+  - first:
+      213: 1467143617226947047
+    second: PartyMushroom_Idle_12Frames_Sample_85
+  - first:
+      213: 1112868379960237261
+    second: PartyMushroom_Idle_12Frames_Sample_86
+  - first:
+      213: -5684058995334997445
+    second: PartyMushroom_Idle_12Frames_Sample_87
+  - first:
+      213: -5659198257385348706
+    second: PartyMushroom_Idle_12Frames_Sample_88
+  - first:
+      213: 4672772947552265447
+    second: PartyMushroom_Idle_12Frames_Sample_89
+  - first:
+      213: 6374518198625810054
+    second: PartyMushroom_Idle_12Frames_Sample_90
+  - first:
+      213: 2001463819443210968
+    second: PartyMushroom_Idle_12Frames_Sample_91
+  - first:
+      213: 4294771466023314363
+    second: PartyMushroom_Idle_12Frames_Sample_92
+  - first:
+      213: 7326005592529242004
+    second: PartyMushroom_Idle_12Frames_Sample_93
+  - first:
+      213: -4842349461355681218
+    second: PartyMushroom_Idle_12Frames_Sample_94
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1086
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33744850f7bfdbb20800000000000000
+      internalID: 3151951837201188659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_1
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 1086
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af86b4df11aef9550800000000000000
+      internalID: 6169907377505790202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_2
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 1086
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c241b121768915b00800000000000000
+      internalID: 815600575983588396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_3
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 724
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d67e2105767d6fe0800000000000000
+      internalID: -1194168081280239913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_4
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 724
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f2e5c1e9edf0e0e0800000000000000
+      internalID: -2242513433473457418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_5
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 724
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17ac3bb4fa9ea5110800000000000000
+      internalID: 1250568785647356529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 362
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14a3d0f1edd857070800000000000000
+      internalID: 8103539089666292289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_7
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 362
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d6a90eb5e30c4190800000000000000
+      internalID: -7976996554709293357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_8
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 362
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0260dbc751bcf9f40800000000000000
+      internalID: 5737527743440815648
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_9
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e040a223411cb190800000000000000
+      internalID: -7945456662546988824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_10
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 0
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a59a9d6d01bb51870800000000000000
+      internalID: 8653027940060735834
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PartyMushroom_Idle_12Frames_Sample_11
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 0
+        width: 362
+        height: 362
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffaefdda129efc210800000000000000
+      internalID: 1355558343722134271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 91b5ad4582110a94b804934f2a10158a
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":4.0},"gridSpriteSize":{"x":362.0,"y":362.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      PartyMushroom_Idle_12Frames_Sample_0: 3151951837201188659
+      PartyMushroom_Idle_12Frames_Sample_1: 6169907377505790202
+      PartyMushroom_Idle_12Frames_Sample_10: 8653027940060735834
+      PartyMushroom_Idle_12Frames_Sample_11: 1355558343722134271
+      PartyMushroom_Idle_12Frames_Sample_2: 815600575983588396
+      PartyMushroom_Idle_12Frames_Sample_3: -1194168081280239913
+      PartyMushroom_Idle_12Frames_Sample_4: -2242513433473457418
+      PartyMushroom_Idle_12Frames_Sample_5: 1250568785647356529
+      PartyMushroom_Idle_12Frames_Sample_6: 8103539089666292289
+      PartyMushroom_Idle_12Frames_Sample_7: -7976996554709293357
+      PartyMushroom_Idle_12Frames_Sample_8: 5737527743440815648
+      PartyMushroom_Idle_12Frames_Sample_9: -7945456662546988824
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

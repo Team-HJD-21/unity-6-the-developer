@@ -1,0 +1,569 @@
+fileFormatVersion: 2
+guid: 8debd45c54cd7da469f21480ca4b31a4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3923220439399868146
+    second: Goblin_Mage_Impact_0
+  - first:
+      213: -6693567330735900535
+    second: Goblin_Mage_Impact_1
+  - first:
+      213: 2231126195219390303
+    second: Goblin_Mage_Impact_2
+  - first:
+      213: 5487778088238194672
+    second: Goblin_Mage_Impact_3
+  - first:
+      213: 1586610246614459410
+    second: Goblin_Mage_Impact_4
+  - first:
+      213: -6354479263257569
+    second: Goblin_Mage_Impact_5
+  - first:
+      213: -1307274981202828437
+    second: Goblin_Mage_Impact_6
+  - first:
+      213: 9037159108432544577
+    second: Goblin_Mage_Impact_7
+  - first:
+      213: -8775636643854835309
+    second: Goblin_Mage_Impact_8
+  - first:
+      213: -8357512369325481091
+    second: Goblin_Mage_Impact_9
+  - first:
+      213: -3816643844816263623
+    second: Goblin_Mage_Impact_10
+  - first:
+      213: 903579466511145579
+    second: Goblin_Mage_Impact_11
+  - first:
+      213: -2251094675070403819
+    second: Goblin_Mage_Impact_12
+  - first:
+      213: -9065802088935189646
+    second: Goblin_Mage_Impact_13
+  - first:
+      213: -7835665983077123655
+    second: Goblin_Mage_Impact_14
+  - first:
+      213: -2869382999628682963
+    second: Goblin_Mage_Impact_15
+  - first:
+      213: 6461669928278023632
+    second: Goblin_Mage_Impact_16
+  - first:
+      213: -7320238749814651567
+    second: Goblin_Mage_Impact_17
+  - first:
+      213: -4437699324092224972
+    second: Goblin_Mage_Impact_18
+  - first:
+      213: 7818030561531927229
+    second: Goblin_Mage_Impact_19
+  - first:
+      213: 3111710089601247621
+    second: Goblin_Mage_Impact_20
+  - first:
+      213: 6240302172492356469
+    second: Goblin_Mage_Impact_21
+  - first:
+      213: 2509928325497533482
+    second: Goblin_Mage_Impact_22
+  - first:
+      213: -6295733963620281644
+    second: Goblin_Mage_Impact_23
+  - first:
+      213: -2134448291222278963
+    second: Goblin_Mage_Impact_24
+  - first:
+      213: 5815380099748414268
+    second: Goblin_Mage_Impact_25
+  - first:
+      213: 717025475183427786
+    second: Goblin_Mage_Impact_26
+  - first:
+      213: 7167138385545156266
+    second: Goblin_Mage_Impact_27
+  - first:
+      213: -8985099060323189368
+    second: Goblin_Mage_Impact_28
+  - first:
+      213: -8140926549159358100
+    second: Goblin_Mage_Impact_29
+  - first:
+      213: 6296634241839814588
+    second: Goblin_Mage_Impact_30
+  - first:
+      213: -11497161545616996
+    second: Goblin_Mage_Impact_31
+  - first:
+      213: -9205483253539361593
+    second: Goblin_Mage_Impact_32
+  - first:
+      213: -8770220011408077608
+    second: Goblin_Mage_Impact_33
+  - first:
+      213: 5490227412320178076
+    second: Goblin_Mage_Impact_34
+  - first:
+      213: 6095059045363351126
+    second: Goblin_Mage_Impact_35
+  - first:
+      213: -256770936126662921
+    second: Goblin_Mage_Impact_36
+  - first:
+      213: 7660146897904210692
+    second: Goblin_Mage_Impact_00
+  - first:
+      213: 4977699559824845883
+    second: Goblin_Mage_Impact_01
+  - first:
+      213: -4668326697015156491
+    second: Goblin_Mage_Impact_02
+  - first:
+      213: -5206601862534505201
+    second: Goblin_Mage_Impact_03
+  - first:
+      213: -6183999590104765053
+    second: Goblin_Mage_Impact_04
+  - first:
+      213: 7729596820865040573
+    second: Goblin_Mage_Impact_05
+  - first:
+      213: 4436348691942441393
+    second: Goblin_Mage_Impact_06
+  - first:
+      213: -4331522305704216543
+    second: Goblin_Mage_Impact_07
+  - first:
+      213: -4497175979705271697
+    second: Goblin_Mage_Impact_08
+  - first:
+      213: 7716067591274821931
+    second: Goblin_Mage_Impact_09
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40314e8b40f4e4a60800000000000000
+      internalID: 7660146897904210692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_01
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3c6afd6067541540800000000000000
+      internalID: 4977699559824845883
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_02
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f060f85a95c63fb0800000000000000
+      internalID: -4668326697015156491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_03
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 256
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0d5eb8113f6eb7b0800000000000000
+      internalID: -5206601862534505201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38de4a413250e2aa0800000000000000
+      internalID: -6183999590104765053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_05
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db046acfa5b054b60800000000000000
+      internalID: 7729596820865040573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_06
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b18ffa61a3119d30800000000000000
+      internalID: 4436348691942441393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_07
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 128b1df896753e3c0800000000000000
+      internalID: -4331522305704216543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_08
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6a7f350642d691c0800000000000000
+      internalID: -4497175979705271697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_09
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b29f6d0c79af41b60800000000000000
+      internalID: 7716067591274821931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_10
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 936ab8305ae880bc0800000000000000
+      internalID: -3816643844816263623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Goblin_Mage_Impact_11
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6adbb7ccb82a8c00800000000000000
+      internalID: 903579466511145579
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Goblin_Mage_Impact_0: -3923220439399868146
+      Goblin_Mage_Impact_00: 7660146897904210692
+      Goblin_Mage_Impact_01: 4977699559824845883
+      Goblin_Mage_Impact_02: -4668326697015156491
+      Goblin_Mage_Impact_03: -5206601862534505201
+      Goblin_Mage_Impact_04: -6183999590104765053
+      Goblin_Mage_Impact_05: 7729596820865040573
+      Goblin_Mage_Impact_06: 4436348691942441393
+      Goblin_Mage_Impact_07: -4331522305704216543
+      Goblin_Mage_Impact_08: -4497175979705271697
+      Goblin_Mage_Impact_09: 7716067591274821931
+      Goblin_Mage_Impact_1: -6693567330735900535
+      Goblin_Mage_Impact_10: -3816643844816263623
+      Goblin_Mage_Impact_11: 903579466511145579
+      Goblin_Mage_Impact_12: -2251094675070403819
+      Goblin_Mage_Impact_13: -9065802088935189646
+      Goblin_Mage_Impact_14: -7835665983077123655
+      Goblin_Mage_Impact_15: -2869382999628682963
+      Goblin_Mage_Impact_16: 6461669928278023632
+      Goblin_Mage_Impact_17: -7320238749814651567
+      Goblin_Mage_Impact_18: -4437699324092224972
+      Goblin_Mage_Impact_19: 7818030561531927229
+      Goblin_Mage_Impact_2: 2231126195219390303
+      Goblin_Mage_Impact_20: 3111710089601247621
+      Goblin_Mage_Impact_21: 6240302172492356469
+      Goblin_Mage_Impact_22: 2509928325497533482
+      Goblin_Mage_Impact_23: -6295733963620281644
+      Goblin_Mage_Impact_24: -2134448291222278963
+      Goblin_Mage_Impact_25: 5815380099748414268
+      Goblin_Mage_Impact_26: 717025475183427786
+      Goblin_Mage_Impact_27: 7167138385545156266
+      Goblin_Mage_Impact_28: -8985099060323189368
+      Goblin_Mage_Impact_29: -8140926549159358100
+      Goblin_Mage_Impact_3: 5487778088238194672
+      Goblin_Mage_Impact_30: 6296634241839814588
+      Goblin_Mage_Impact_31: -11497161545616996
+      Goblin_Mage_Impact_32: -9205483253539361593
+      Goblin_Mage_Impact_33: -8770220011408077608
+      Goblin_Mage_Impact_34: 5490227412320178076
+      Goblin_Mage_Impact_35: 6095059045363351126
+      Goblin_Mage_Impact_36: -256770936126662921
+      Goblin_Mage_Impact_4: 1586610246614459410
+      Goblin_Mage_Impact_5: -6354479263257569
+      Goblin_Mage_Impact_6: -1307274981202828437
+      Goblin_Mage_Impact_7: 9037159108432544577
+      Goblin_Mage_Impact_8: -8775636643854835309
+      Goblin_Mage_Impact_9: -8357512369325481091
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
