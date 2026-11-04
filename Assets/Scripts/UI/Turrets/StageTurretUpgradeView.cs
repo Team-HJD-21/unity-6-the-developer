@@ -1,6 +1,7 @@
 using System;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.Contracts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -64,6 +65,28 @@ public sealed class StageTurretUpgradeView : MonoBehaviour
         ShowBranch(turret, _lowPower, "Low Power", lowPowerText, lowPowerPlus, lowPowerMinus, canInteract);
         ShowBranch(turret, _highFirepower, "High Firepower", highFirepowerText,
             highFirepowerPlus, highFirepowerMinus, canInteract);
+    }
+
+    public void ShowSnapshot(TurretPresentationSnapshot turret, bool canInteract)
+    {
+        _lowPower = turret == null ? null : FindCompatible(lowPowerUpgrades, turret.DefinitionId.Value);
+        _highFirepower = turret == null ? null : FindCompatible(highFirepowerUpgrades, turret.DefinitionId.Value);
+        ShowSnapshotBranch(turret, _lowPower, "Low Power", lowPowerText, lowPowerPlus, lowPowerMinus, canInteract);
+        ShowSnapshotBranch(turret, _highFirepower, "High Firepower", highFirepowerText, highFirepowerPlus, highFirepowerMinus, canInteract);
+    }
+    private static FieldTurretUpgradeDefinition FindCompatible(FieldTurretUpgradeDefinition[] definitions, string definitionId)
+    {
+        foreach (var upgrade in definitions) if (upgrade != null && upgrade.IsCompatibleWith(definitionId)) return upgrade;
+        return null;
+    }
+    private static void ShowSnapshotBranch(TurretPresentationSnapshot turret, FieldTurretUpgradeDefinition upgrade, string name,
+        TMP_Text text, Button plus, Button minus, bool canInteract)
+    {
+        bool selected = turret != null && upgrade != null && turret.SelectedUpgradeId.Value == upgrade.Id;
+        text.text = upgrade == null ? $"{name}: unavailable" : $"{name} {(selected ? turret.UpgradeLevel : 0)}/{FieldTurretRuntimeState.MaximumUpgradeLevel}";
+        text.color = selected ? Color.cyan : Color.white;
+        plus.interactable = canInteract && StageTurretInteractionRules.CanChangeUpgrade(turret, upgrade, true);
+        minus.interactable = canInteract && StageTurretInteractionRules.CanChangeUpgrade(turret, upgrade, false);
     }
 
     private static FieldTurretUpgradeDefinition FindCompatible(FieldTurretUpgradeDefinition[] upgrades, FieldTurretBase turret)

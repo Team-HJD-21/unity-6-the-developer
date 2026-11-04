@@ -24,6 +24,21 @@ namespace TeamHJD.Game.FieldTurrets
 
         [SerializeField] private List<Transition> _transitions = new();
 
+        /// <summary>UI가 Host의 정의 ID를 로컬 콘텐츠로 해석합니다. 중복 ID는 임의 선택하지 않습니다.</summary>
+        public bool TryGetDefinition(string definitionId, out FieldTurretDefinition definition)
+        {
+            FieldTurretDefinition found = null; bool ambiguous = false;
+            void Consider(FieldTurretDefinition candidate)
+            {
+                if (candidate == null || candidate.Id != definitionId) return;
+                if (found != null && found != candidate) ambiguous = true;
+                else found = candidate;
+            }
+            foreach (Transition transition in _transitions)
+            { Consider(transition.Source); Consider(transition.SourceLevelPrefab?.Definition); Consider(transition.NextLevelPrefab?.Definition); }
+            definition = ambiguous ? null : found; return definition != null;
+        }
+
         public bool TryGetNext(FieldTurretDefinition source, out FieldTurretBase nextLevelPrefab)
         {
             foreach (Transition transition in _transitions)

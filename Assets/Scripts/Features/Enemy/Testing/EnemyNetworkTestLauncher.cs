@@ -1,6 +1,6 @@
 // Match가 시작되면 첫 Encounter를 자동으로 요청합니다.
 // 기존 네트워크 테스트 UI의 수동 요청도 같은 Encounter 경로로 전달합니다.
-// 이 임시 테스트 Host의 수명은 Executor의 Scene에 한정하며 App 네트워크 서비스가 아닙니다.
+// standalone 테스트 연결과 App 소유 연결을 구분하며 후자는 직접 개설·종료하지 않습니다.
 
 using System;
 using System.Collections;
@@ -18,7 +18,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService
 {
     private const int TargetFrameRate = 120;
     private const float HostReadyTimeout = 10f;
@@ -33,6 +33,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private Func<BattlefieldSpatialSnapshot> _snapshotProvider;
     private EncounterRequestService _requests;
     private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
+    private PlayerId _authorityIssuer = LocalIssuer;
+    private bool _appOwnedNetwork;
     private Coroutine _initialEncounterRoutine;
     private bool _initialEncounterPending;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
@@ -86,22 +88,35 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 
     /// <summary>Scene의 Match 수명에 묶인 첫 Encounter를 예약합니다.</summary>
     public void BindMatch(MatchId matchId, Func<BattlefieldSpatialSnapshot> snapshotProvider)
+        => BindAuthorityMatch(matchId, LocalIssuer, snapshotProvider);
+
+    public void UseAppNetworkOwnership()
+    {
+        if (_snapshotProvider != null && !_appOwnedNetwork)
+            throw new InvalidOperationException("Transfer connection ownership before binding a Match.");
+        _appOwnedNetwork = true;
+    }
+
+    public void BindAuthorityMatch(MatchId matchId, PlayerId authorityPlayerId,
+        Func<BattlefieldSpatialSnapshot> snapshotProvider)
     {
         if (matchId.IsEmpty) throw new ArgumentException("Encounter requires a Match ID.", nameof(matchId));
+        if (authorityPlayerId.IsEmpty) throw new ArgumentException("An authority participant is required.", nameof(authorityPlayerId));
         if (snapshotProvider == null) throw new ArgumentNullException(nameof(snapshotProvider));
         if (_snapshotProvider != null) throw new InvalidOperationException("Encounter is already bound to a Match.");
 
         _boundMatchId = matchId;
+        _authorityIssuer = authorityPlayerId;
         _snapshotProvider = snapshotProvider;
-        // 현재 로컬 Scene의 참가자 바인딩입니다. 네트워크 조립 시 실제 연결→참가자 대응으로 교체합니다.
+        // 자동 Encounter는 Host 시스템 요청입니다. Client의 임의 적 생성 권한은 부여하지 않습니다.
         _requests = new EncounterRequestService(matchId, snapshotProvider,
             () => _networkManager != null && _networkManager.IsServer,
-            issuer => issuer == LocalIssuer, this);
+            issuer => issuer == _authorityIssuer, this);
         _gameStartTime = Time.timeAsDouble;
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
         EnsureEncounterRuntime();
-        BindTestHostToExecutorScene();
+        if (!_appOwnedNetwork) BindTestHostToExecutorScene();
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
         _initialEncounterPending = true;
         if (_networkManager != null) StartInitialEncounterIfBound();
@@ -114,16 +129,23 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         CancelPendingInitialEncounter();
         _requests?.Dispose();
         _requests = null;
-        // Scene 소유 임시 Host는 SDK 종료를 먼저 요청하고 Scene 파괴 시 정리를 완료합니다.
-        if (_encounterRuntime?.Executor != null &&
-            gameObject.scene == _encounterRuntime.Executor.gameObject.scene && _networkManager != null)
-            _networkManager.Shutdown();
-        Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Enemy despawn is Feature-owned");
-        if (_encounterRuntime?.Executor != null)
-            _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = null;
-        _snapshotProvider = null;
-        _boundMatchId = default;
+        try
+        {
+            if (_appOwnedNetwork) _encounterRuntime?.Executor?.DespawnForMatch(matchId);
+            // standalone 테스트만 연결을 닫습니다. App의 연결은 다음 Match에서도 유지됩니다.
+            else if (_encounterRuntime?.Executor != null &&
+                gameObject.scene == _encounterRuntime.Executor.gameObject.scene && _networkManager != null)
+                _networkManager.Shutdown();
+            Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Feature actors released");
+        }
+        finally
+        {
+            if (_encounterRuntime?.Executor != null)
+                _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+            _encounterRuntime = null;
+            _snapshotProvider = null;
+            _boundMatchId = default;
+        }
     }
 
     private void OnDestroy()
@@ -165,7 +187,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (!_initialEncounterPending) yield break;
 
         // 임시 Scene 시작 정책만 연결을 명시적으로 엽니다. 개별 Spawn 요청은 연결을 열지 않습니다.
-        if (_networkManager != null && !_networkManager.IsListening) StartHost();
+        if (!_appOwnedNetwork && _networkManager != null && !_networkManager.IsListening) StartHost();
         if (!CanRequestEncounter(out string reason))
         {
             Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: reason);
@@ -203,6 +225,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     /// </summary>
     private void OnGUI()
     {
+        if (_appOwnedNetwork) return;
         // 네트워크 테스트 UI 영역을 생성한다.
         GUILayout.BeginArea(
             new Rect(20f, 20f, 240f, 180f),
@@ -333,9 +356,9 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             result = "Preset·생성 예산·출처를 확인하세요.";
             return false;
         }
-        var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), LocalIssuer),
+        var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
             new DefinitionId(squadOrder.Trim()), maxEnemyCount, source);
-        EncounterRequestResult response = Submit(request, LocalIssuer);
+        EncounterRequestResult response = Submit(request, _authorityIssuer);
         result = response.Reason;
         return response.HasSpawned;
     }
