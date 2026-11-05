@@ -151,6 +151,9 @@ namespace TeamHJD.Game.FieldTurrets
                 throw new System.ArgumentNullException(nameof(powerSource));
             _initializationData = data;
             _configuredPowerSource = powerSource;
+            // 복원·Factory 생성도 전달받은 소유자의 공용 시간과 발사체 바인딩을 사용합니다.
+            if (powerSource is FieldTurretController controller)
+                _turretController = controller;
         }
 
         internal bool UsesPowerSource(IFieldTurretPowerSource source) => ReferenceEquals(_configuredPowerSource, source);
