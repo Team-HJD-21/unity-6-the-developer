@@ -12,13 +12,15 @@ namespace TeamHJD.Game.Domain
         public MatchId MatchId { get; }
         public long Revision { get; }
         public double GameSeconds { get; }
+        /// <summary>Core 시각의 실행 세대입니다. 저장 복원으로 시각이 되돌아가도 과거 패킷과 구분합니다.</summary>
+        public Guid Epoch { get; }
         public DefinitionId WeatherId { get; }
         public DefinitionId TimeOfDayId { get; }
         public bool HasWeather => !WeatherId.IsEmpty;
         public bool HasTimeOfDay => !TimeOfDayId.IsEmpty;
         public IReadOnlyList<DefinitionId> Forecast { get; }
         public MatchEnvironmentSnapshot(MatchId matchId, long revision, double gameSeconds,
-            DefinitionId weatherId, DefinitionId timeOfDayId, IEnumerable<DefinitionId> forecast = null)
+            DefinitionId weatherId, DefinitionId timeOfDayId, IEnumerable<DefinitionId> forecast = null, Guid epoch = default)
         {
             if (matchId.IsEmpty) throw new ArgumentException("A Match ID is required.", nameof(matchId));
             if (revision < 1) throw new ArgumentOutOfRangeException(nameof(revision));
@@ -35,6 +37,7 @@ namespace TeamHJD.Game.Domain
             }
             if (weatherId.IsEmpty && copy.Count > 0) throw new ArgumentException("Forecast requires a known weather source.", nameof(forecast));
             MatchId = matchId; Revision = revision; GameSeconds = gameSeconds;
+            Epoch = epoch;
             WeatherId = weatherId; TimeOfDayId = timeOfDayId; Forecast = new ReadOnlyCollection<DefinitionId>(copy);
         }
         private static void ValidateId(DefinitionId value)

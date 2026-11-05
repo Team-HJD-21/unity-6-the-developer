@@ -1,4 +1,5 @@
-// Domain 어셈블리 내부에서만 변경되는 Match 하나의 런타임 기준 상태입니다.
+// Match의 단계·확정 결과와 초기 Domain 자료를 보관합니다.
+// 실제 Player/CU HP·터렛 전력·Enemy 원본은 각 Feature가 소유하며 여기서 수정하지 않습니다.
 
 
 using System;
@@ -58,33 +59,29 @@ namespace TeamHJD.Game.Domain
             Result = result;
         }
 
-        internal void SetPhase(MatchPhase phase) => Phase = phase;
-        internal void SetControlUnit(ControlUnitState state) => ControlUnit = state ?? throw new ArgumentNullException(nameof(state));
-        internal void SetWave(WaveState state) => Wave = state ?? throw new ArgumentNullException(nameof(state));
-        internal void SetResult(MatchResult result) => Result = result;
+        /// <summary>MatchSession이 준비를 마친 뒤 호출합니다. 같은 상태를 두 번 시작하지 않습니다.</summary>
+        public void Start()
+        {
+            if (Phase != MatchPhase.Preparing) throw new InvalidOperationException("Only a preparing Match can start.");
+            Phase = MatchPhase.Running;
+        }
 
+        /// <summary>MatchSession이 모드 규칙으로 확정한 같은 Match의 결과를 적용합니다.</summary>
+        public void Complete(MatchResult result)
+        {
+            if (result == null) throw new ArgumentNullException(nameof(result));
+            if (result.MatchId != MatchId) throw new ArgumentException("The result belongs to another Match.", nameof(result));
+            if (Phase != MatchPhase.Running) throw new InvalidOperationException("Only a running Match can complete.");
+            Result = result;
+            Phase = MatchPhase.Completed;
+        }
+
+        /// <summary>Session 정리 끝에 단계만 닫습니다. Unity actor/Feature의 폐기는 해당 소유자가 담당합니다.</summary>
+        public void MarkDisposed() => Phase = MatchPhase.Disposed;
+
+        /// <summary>초기 Domain 자료와 Match 단계를 복사합니다. 실제 Feature HP/전력·공간은 각각의 읽기 계약을 사용합니다.</summary>
         public MatchSnapshot CreateSnapshot(long sequence) => new MatchSnapshot(
             MatchId, sequence, Phase, _players, ControlUnit, Wave, _turrets, _enemies, _sectors, Result);
-
-        internal void ReplacePlayer(PlayerState state)
-        {
-            if (state == null) throw new ArgumentNullException(nameof(state));
-            var index = _players.FindIndex(player => player.PlayerId == state.PlayerId);
-            if (index < 0) throw new InvalidOperationException($"Player '{state.PlayerId}' does not belong to match '{MatchId}'.");
-            _players[index] = state;
-        }
-
-        internal void ReplaceTurret(TurretState state) => ReplaceById(_turrets, state, turret => turret.EntityId);
-        internal void ReplaceEnemy(EnemyState state) => ReplaceById(_enemies, state, enemy => enemy.EntityId);
-
-        private static void ReplaceById<T>(List<T> values, T value, Func<T, EntityId> getId)
-        {
-            if (value == null) throw new ArgumentNullException(nameof(value));
-            var id = getId(value);
-            var index = values.FindIndex(item => getId(item) == id);
-            if (index < 0) throw new InvalidOperationException($"Entity '{id}' is not part of this match state.");
-            values[index] = value;
-        }
 
         private static void EnsureUnique<TValue, TId>(
             IEnumerable<TValue> values,
