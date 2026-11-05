@@ -64,7 +64,6 @@ namespace TeamHJD.Game.Bootstrap
                 content,
                 new FakePlatformService(localUser),
                 new UnitySceneFlow(),
-                new LocalAuthority(),
                 checkpointStore: new BinaryCheckpointStore(Path.Combine(UnityEngine.Application.persistentDataPath, "Checkpoints")),
                 checkpointPayloads: new BinaryCheckpointPayloadCodec());
         }

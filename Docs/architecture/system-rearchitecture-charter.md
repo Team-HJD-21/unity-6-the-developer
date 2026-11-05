@@ -1,5 +1,7 @@
 # System Re-architecture Charter
 
+> 이 문서는 초기 설계/마일스톤 이력이다. 범용 GameCommand·LocalAuthority·Simulation 및 Submit 구상은 현행 API가 아니며 제거됐다. 실제 호출 규칙은 [Core API 사용 규약](core-api-usage.md)을 따른다.
+
 작성일: 2026-09-07
 수정일: 2026-09-11
 상태: Core 경계와 레거시 교체 원칙의 Source of Truth
