@@ -330,6 +330,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void PrepareEnvironmentSources()
         {
             var weather = FindSceneBehaviours().OfType<IMatchWeatherSource>().ToArray();
+            // Weather 옆에 공용 낮밤 source를 한 번 확보합니다. 실제 날씨 선택/연출은 소유하지 않습니다.
+            if (weather.Length == 1 && !FindSceneBehaviours().OfType<IMatchTimeOfDaySource>().Any() && weather[0] is MonoBehaviour weatherComponent)
+                weatherComponent.gameObject.AddComponent<MatchDayNightCycle>();
             var time = FindSceneBehaviours().OfType<IMatchTimeOfDaySource>().ToArray();
             if (weather.Length > 1 || time.Length > 1) throw new InvalidOperationException("Keep one authoritative weather/time source per Match Scene.");
             _weatherSource = weather.FirstOrDefault(); _timeOfDaySource = time.FirstOrDefault();
