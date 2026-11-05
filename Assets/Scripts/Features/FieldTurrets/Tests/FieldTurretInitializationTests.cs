@@ -1,3 +1,5 @@
+// 터렛 Factory 초기화·전력·상태와 소유 Match 시간 연결을 검증합니다.
+// 복원 회귀는 실제 재생성 경로와 새 발사체의 정지·재개를 함께 확인합니다.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,7 +7,9 @@ using System.Reflection;
 using NUnit.Framework;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.FieldTurrets.Contracts;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
@@ -840,6 +844,84 @@ namespace TeamHJD.Game.FieldTurrets.Tests
                 Assert.Throws<InvalidOperationException>(() => controller.ConfigureUnlockZones(Vector2.zero));
             }
             finally { controller.SetRegionAccessPolicy(null); }
+        }
+
+        [Test]
+        public void OwnerClock_FactoryCoolingFollowsInjectedTimeAndPause()
+        {
+            var owner = Track(new GameObject("Clock Owner")).AddComponent<FieldTurretController>();
+            var clock = new OwnerClock();
+            using var binding = owner.BindFieldSimulation(clock, default);
+            var turret = (InitializationProbeFieldTurret)FieldTurretFactory.Create(MakeInactiveTurret(),
+                FieldTurretInitializationData.CreateDefault(_definition), owner, Vector3.zero, Quaternion.identity);
+            Track(turret.gameObject);
+            turret.BeginCoolingForTest(5f);
+            clock.Advance(2);
+            Assert.That(turret.CoolingDownRemaining, Is.EqualTo(3f).Within(.01f));
+            clock.Paused = true;
+            Assert.That(turret.CanSimulateForTest, Is.False);
+            clock.Advance(10);
+            Assert.That(turret.CoolingDownRemaining, Is.EqualTo(3f).Within(.01f));
+            clock.Paused = false;
+            clock.Advance(3);
+            Assert.That(turret.IsCoolingDown, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator OwnerClock_CheckpointRecreationKeepsCoolingAndNewProjectileBound()
+        {
+            var owner = Track(new GameObject("Restored Clock Owner")).AddComponent<FieldTurretController>();
+            var clock = new OwnerClock();
+            using var binding = owner.BindFieldSimulation(clock, default);
+            var prefab = MakeInactiveTurret();
+            var original = (InitializationProbeFieldTurret)FieldTurretFactory.Create(prefab,
+                FieldTurretInitializationData.CreateDefault(_definition), owner, Vector3.zero, Quaternion.identity);
+            Track(original.gameObject);
+            original.gameObject.AddComponent<SceneEntityIdentity>().Initialize(new TeamHJD.Game.Domain.EntityId("test/restored-clock-turret"));
+            // 저장 원본은 정상 배치된 Scene 터렛처럼 연결해 복원 경로의 누락만 분리해서 검사한다.
+            SetField(original, "_turretController", owner, typeof(FieldTurretBase));
+            original.BeginCoolingForTest(5f);
+            var saved = original.CaptureActorState();
+            Assert.That(saved.CoolingRemaining, Is.EqualTo(5d).Within(.01));
+            Object.DestroyImmediate(original.gameObject);
+
+            // 실제 복원 Factory를 통과한다. 테스트를 위해 내부 생성 API를 public으로 넓히지 않는다.
+            var factory = typeof(FieldTurretFactory).GetMethod("CreateForCheckpoint", BindingFlags.Static | BindingFlags.NonPublic);
+            var restored = (InitializationProbeFieldTurret)factory.Invoke(null, new object[] { prefab, saved, owner, null, null });
+            Track(restored.gameObject);
+            clock.Paused = true;
+            double unityStart = Time.timeAsDouble;
+            // PlayMode에서는 Unity 시간만 실제로 진행시켜 필드 정지와 구분한다. EditMode도 실행 가능하다.
+            do { yield return null; } while (UnityEngine.Application.isPlaying && Time.timeAsDouble < unityStart + .1);
+            Assert.That(restored.CoolingDownRemaining, Is.EqualTo(5f).Within(.01f));
+            Assert.That(restored.CanSimulateForTest, Is.False);
+
+            var projectile = Track(new GameObject("Restored Turret Projectile"));
+            var body = projectile.AddComponent<Rigidbody2D>();
+            restored.BindProjectileForTest(projectile);
+            var actor = projectile.GetComponent<FieldSimulationActor>();
+            Assert.That(actor, Is.Not.Null, "A restored turret must bind newly fired projectiles.");
+            Assert.That(actor.TimeSource, Is.SameAs(clock));
+            Assert.That(actor.CanAdvance, Is.False);
+            Assert.That(body.simulated, Is.False);
+
+            clock.Paused = false;
+            clock.Advance(2);
+            actor.Synchronize();
+            Assert.That(restored.CoolingDownRemaining, Is.EqualTo(3f).Within(.01f));
+            Assert.That(actor.CanAdvance, Is.True);
+            Assert.That(body.simulated, Is.True);
+        }
+
+        private sealed class OwnerClock : IMatchTime
+        {
+            private readonly Guid _epoch = Guid.NewGuid();
+            public double ElapsedSeconds { get; private set; } = 1000;
+            public bool Paused;
+            public bool IsAvailable => true;
+            public MatchTimeSnapshot Snapshot => new(new MatchId("turret-owner-clock"), _epoch, 0,
+                ElapsedSeconds, 0, 1, Paused, true);
+            public void Advance(double seconds) { if (!Paused) ElapsedSeconds += seconds; }
         }
 
         private FieldTurretBase CreateWithActivationIntent(FakePower power)

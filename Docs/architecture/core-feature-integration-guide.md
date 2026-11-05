@@ -52,6 +52,8 @@ sequenceDiagram
 
 Core는 Feature의 전투 클래스를 상속하는 새 Manager를 만들지 않는다. Scene 조립부가 계약으로 연결하고 반환된 lease를 정리한다. `partial` 파일은 같은 실제 클래스에서 시간/저장 책임을 읽기 쉽게 나눈 것이며 별도 상태 원본이 아니다.
 
+터렛 Factory 생성·저장 복원에서는 전달받은 Controller를 전력과 시간·발사체 소유자로 함께 연결한다. [초기화 순서와 #624 보완](turret-owner-time-initialization.md)을 참고한다.
+
 ## 연결할 때 쓸 함수
 
 ### 시간과 생성 자식
