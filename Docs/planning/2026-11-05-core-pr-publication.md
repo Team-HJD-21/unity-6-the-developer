@@ -2,6 +2,19 @@
 
 기준일: 2026-11-05. PL이 Startup/Initial_Stage 수동 확인7단계를 모두 확인했다고 승인했습니다. 사용자 영상은 게임 진입/우주선 왕복과 타이머/날씨 변경의 수동 근거이며 자동 검사 결과와 구분합니다.
 
+## 게시한 PR
+
+- [1/8 · #623](https://github.com/Team-HJD-21/unity-6-the-developer/pull/623) — refactor(core): establish scoped runtime and checkpoint contracts
+- [2/8 · #624](https://github.com/Team-HJD-21/unity-6-the-developer/pull/624) — feat(turrets): connect match time authority and actual state checkpoints
+- [3/8 · #625](https://github.com/Team-HJD-21/unity-6-the-developer/pull/625) — feat(player): integrate match controls damage slow effects and checkpoints
+- [4/8 · #626](https://github.com/Team-HJD-21/unity-6-the-developer/pull/626) — feat(encounter): integrate scoped spawning environment and enemy state
+- [5/8 · #627](https://github.com/Team-HJD-21/unity-6-the-developer/pull/627) — feat(core): compose checkpoints and synchronized match scene lifecycle
+- [6/8 · #628](https://github.com/Team-HJD-21/unity-6-the-developer/pull/628) — feat(core): drive weather with day-night time and in-game debug controls
+- [7/8 · #629](https://github.com/Team-HJD-21/unity-6-the-developer/pull/629) — feat(steam): integrate SDK identity and two-player lobby lifecycle
+- [8/8 · #630](https://github.com/Team-HJD-21/unity-6-the-developer/pull/630) — feat(core): complete spaceship travel presentation and acceptance documentation
+
+각 PR에는 관련 파트의 우선 리뷰어 한 명을 지정했다. 현재 비공개 저장소의 조직 Free 플랜에서는 복수 리뷰 요청이 유지되지 않으므로 추가 관련 담당자는 본문에 명시한다.
+
 ## 검토 순서
 
 1. 공용 runtime/체크포인트 계약·보조 객체
