@@ -17,7 +17,7 @@
 
 ## 구조도 함께 줄였다
 
-`MatchSimulation`은 실제 규칙 없이 상태 전이만 전달하던 객체여서 제거했다. Session은 State의 검증된 단계/결과에 직접 연결한다. 사용되지 않는 State 변경 함수와 빈 실행/이벤트 순회를 없앴다. 일반 GameCommand 호환 API는 실제 Feature 처리기가 아니라고 명확히 했다.
+`MatchSimulation`은 실제 규칙 없이 상태 전이만 전달하던 객체여서 제거했다. Session은 State의 검증된 단계/결과에 직접 연결한다. 사용되지 않는 State 변경 함수와 빈 실행/이벤트 순회를 없앴다. 일반 Submit 두 개와 전용 명령·결과·로컬 권한 타입13개를 제거하고 AppServices/Session Factory의 불필요한 권한 주입도 없앴다. PlayerSceneAdapter Bind/Unbind와 실제 Feature 요청/Host 검증은 유지한다.
 
 큰 Scene root는 초기 조립/Update/해제를 본 파일에, 네트워크 준비/Client 읽기 복제를 `.Networking.cs`, 공간 투영을 `.Spatial.cs`, 저장 scope를 `.Checkpoints.cs`에 둔다. 같은 컴포넌트/상태이며 새 Manager가 아니다. 투사체의 중복 시간 바인딩도 한 번으로 합쳤고 owner 생략 시 Spawner의 시계를 전달하도록 고쳤다. 일반 출격 취소와 저장 입장 취소가 서로 다른 정리 결과를 내던 문제도 실제 재현 후 같은 ID 검증 helper로 맞췄다.
 

@@ -169,4 +169,4 @@ App은 플랫폼/프로필·네트워크 연결·Scene 전환·저장소처럼 �
 
 ## 구조를 단순하게 정리한 부분
 
-`MatchSimulation` 중간 객체를 제거하고 Session이 State의 단계/확정 결과에 직접 연결된다. 실제 전투는 Feature/Host 경계에 있으며 일반 `Submit(GameCommand)`는 처리하지 않는다. 큰 Scene root는 진입/해제와 Update를 본 파일에, 네트워크 준비/읽기 복제를 `.Networking.cs`, 공간 투영을 `.Spatial.cs`, 저장 조립을 `.Checkpoints.cs`에 둔다. 별도 Manager나 상태 원본이 늘어난 것은 아니다. [삭제/유지 판단과 전후 구조](../../../Docs/architecture/core-structure-review-2026-11-05.md)를 함께 본다.
+`MatchSimulation` 중간 객체를 제거하고 Session이 State의 단계/확정 결과에 직접 연결된다. 실제 전투는 Feature/Host 경계에서 처리한다. 사용하지 않는 범용 Submit 두 개와 전용 명령/결과/로컬 권한 타입은 제거했다. PlayerSceneAdapter의 Bind/Unbind는 유지하며, 실제 요청은 터렛/Encounter 전용 API를 사용한다. 큰 Scene root는 진입/해제와 Update를 본 파일에, 네트워크 준비/읽기 복제를 `.Networking.cs`, 공간 투영을 `.Spatial.cs`, 저장 조립을 `.Checkpoints.cs`에 둔다. 별도 Manager나 상태 원본이 늘어난 것은 아니다. [삭제/유지 판단과 전후 구조](../../../Docs/architecture/core-structure-review-2026-11-05.md)를 함께 본다.
