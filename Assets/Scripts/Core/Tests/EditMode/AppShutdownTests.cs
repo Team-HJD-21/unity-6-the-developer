@@ -25,7 +25,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var network = new ProbeNetwork();
             var services = new AppServices(profiles, new FakeContentCatalog(),
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
-                scenes, new LocalAuthority(), network);
+                scenes, network);
             root.Initialize(services);
             var transport = new ProbeTransport();
             root.AttachNetworkMatchTransport(transport);

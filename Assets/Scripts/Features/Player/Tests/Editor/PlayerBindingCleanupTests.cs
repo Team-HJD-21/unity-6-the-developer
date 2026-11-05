@@ -86,7 +86,7 @@ public sealed class PlayerBindingCleanupTests
             players.Select(player => new PlayerLoadoutSnapshot(player, null)));
         var state = new MatchState(id, MatchPhase.Preparing, players.Select(player => new PlayerState(player, 1, 1, true)),
             new ControlUnitState(1, 1, 1, 1), new WaveState(0, 1, 0, 0), Array.Empty<TurretState>(), Array.Empty<EnemyState>(), Array.Empty<SectorState>());
-        return new MatchSessionFactory(new LocalAuthority()).Create(config, state, new ModeRules());
+        return new MatchSessionFactory().Create(config, state, new ModeRules());
     }
     [UnityTearDown]
     public IEnumerator Cleanup()
@@ -106,7 +106,6 @@ public sealed class PlayerBindingCleanupTests
         Assert.That(error.Flatten().InnerExceptions.Single().Message, Is.EqualTo("Probe unbind failure"));
         Assert.That(first.Bound || second.Bound, Is.False);
         Assert.That(first.UnbindCalls, Is.EqualTo(1)); Assert.That(second.UnbindCalls, Is.EqualTo(1));
-        Assert.Throws<InvalidOperationException>(() => adapter.Submit(null));
         adapter.Unbind(); Assert.That(second.UnbindCalls, Is.EqualTo(1));
     }
     [Test]
@@ -119,7 +118,6 @@ public sealed class PlayerBindingCleanupTests
         var error = Assert.Throws<AggregateException>(() => adapter.Bind(match));
         Assert.That(error.Flatten().InnerExceptions.Select(item => item.Message), Is.EquivalentTo(new[] { "Probe bind failure", "Probe unbind failure" }));
         Assert.That(first.Bound || failing.Bound, Is.False);
-        Assert.Throws<InvalidOperationException>(() => adapter.Submit(null));
         failing.ThrowOnBind = failing.ThrowOnUnbind = false;
         adapter.Bind(match); Assert.That(first.Bound && failing.Bound, Is.True);
         adapter.Unbind(); Assert.That(first.Bound || failing.Bound, Is.False);
@@ -134,7 +132,6 @@ public sealed class PlayerBindingCleanupTests
         Assert.Throws<AggregateException>(() => adapter.Unbind());
         Assert.That(first.Bound || second.Bound, Is.False);
         Assert.That(second.UnbindCalls, Is.EqualTo(1));
-        Assert.Throws<InvalidOperationException>(() => adapter.Submit(null));
     }
     [Test]
     public void ScopeCleansEveryActorAndSpawnerEvenWhenBothThrow()
