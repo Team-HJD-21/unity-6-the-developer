@@ -28,7 +28,7 @@ Scene Feature의 등록은 `BindRandom`에서 `RandomBinding.Bind(streams, "weat
 | 호출자 | 계약과 동작 | 호출자가 하지 않을 일 |
 | --- | --- | --- |
 | Scene 조립부 | `IAppMatchHost.StartMatch(...)`로 세션을 만들고 필요한 Feature에 주입 | `AppServices`를 게임 서비스 검색기로 공개하거나 static Instance 사용 |
-| Player 입력 | `PlayerSceneAdapter.Bind(session)` → `Submit(GameCommand)` | 입력 코드에서 `MatchState`를 직접 변경하거나 명령 성공을 추정 |
+| Player 수명/입력 | `PlayerSceneAdapter.Bind/BindNetworkMatch`로 Feature 권한·수명 연결. 실제 입력은 Player Feature/Host 경계 | 삭제된 범용 Submit을 호출하거나 MatchState의 초기 HP를 원본으로 간주 |
 | Turret 입력 | `IBattlefieldTurretInputSource.CaptureTurretLayout()` → `UpdateBattlefieldTurretLayout(...)` | `FieldTurretBase`·Transform을 Core snapshot에 보관 |
 | Player·Enemy 위치 | 조립부가 `BattlefieldDynamicSpatialInput` → `UpdateBattlefieldParticipants(...)` | 별도 전역 Grid 또는 두 번째 위치 권위 모델 생성 |
 | Encounter 소비자 | `IEncounterMatchConsumer.BindMatch(matchId, snapshotProvider)`로 최신 읽기 전용 공간 결과 수신 | Battlefield 분석 재구현, 과거 Match의 provider를 재사용 |
