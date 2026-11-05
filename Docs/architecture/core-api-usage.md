@@ -1,12 +1,12 @@
 # Core API 호출과 소유권 규약
 
-기준일: 2026-10-15 · 상태: 현재 작업 브랜치 기준 · 관련 Issue: #445, #442, #495, #496, #526–#528
+기준일: 2026-11-05 · 상태: 현재 작업 브랜치 기준 · 관련 Issue: #445, #442, #495, #496, #526–#528
 
 팀원이 Player·Turret·Enemy를 Core에 연결할 때 사용할 계약과 종료 책임을 정리한다. 명명 규칙은 [Convention](naming-and-architecture-conventions.md), 타입·실행 흐름은 [Core README](../../Assets/Scripts/Core/README.md)를 따른다. 아래의 공개 계약이 모두 출시용 게임 규칙을 구현했다는 뜻은 아니다.
 
 ## 호출 방향과 상태 소유권
 
-2026-11-05 추가: [범용 Random API와 6개 파일의 교체 위치](core-random-api.md), [우주선 출입 보고 API](core-presence-report-api.md). 진태는 Core 난수를 주입받아 사용하고 Host의 실제 이동 완료 시 출입 결과를 보고한다. 난수 원본 보존과 전체 정지 판단은 Core가 소유한다. 기존 Feature 호출부 교체는 이번 변경에 포함하지 않았다.
+2026-11-05 추가: [범용 Random API와 6개 파일의 교체 위치](core-random-api.md), [우주선 출입 보고 API](core-presence-report-api.md). 진태는 Core 난수를 주입받아 사용하고 Host의 실제 이동 완료 시 출입 결과를 보고한다. 난수 원본 보존과 전체 정지 판단은 Core가 소유한다. 현재 작업 브랜치는 Player·FieldTurret/CU·Enemy/Encounter의 실제 시간·난수·저장 호출을 연결했다. Weather의 난수 선택·예고 큐 writer·실제 포털/콘솔 연결은 김진태가 진행한다. [실제 연결 안내](core-feature-integration-guide.md)에서 해당 파일과 남은 경계를 확인한다.
 
 **Random을 새로 사용하거나 기존 호출을 바꾸는 파트는 [Random 사용법](core-random-api.md)을 반드시 먼저 확인한다.** 함수 이름뿐 아니라 어떤 서비스/이름의 source를 언제 주입받고 해제하는지까지 맞춘다. 문서에 도입 이유와 기본 추첨·확률·목록/가중치·셔플·원판 좌표·저장 연결 예제가 있다.
 
@@ -28,7 +28,7 @@ Scene Feature의 등록은 `BindRandom`에서 `RandomBinding.Bind(streams, "weat
 | 호출자 | 계약과 동작 | 호출자가 하지 않을 일 |
 | --- | --- | --- |
 | Scene 조립부 | `IAppMatchHost.StartMatch(...)`로 세션을 만들고 필요한 Feature에 주입 | `AppServices`를 게임 서비스 검색기로 공개하거나 static Instance 사용 |
-| Player 입력 | `PlayerSceneAdapter.Bind(session)` → `Submit(GameCommand)` | 입력 코드에서 `MatchState`를 직접 변경하거나 명령 성공을 추정 |
+| Player 수명/입력 | `PlayerSceneAdapter.Bind/BindNetworkMatch`로 Feature 권한·수명 연결. 실제 입력은 Player Feature/Host 경계 | 초기 `Submit(GameCommand)`를 실제 전투 처리기로 사용하거나 MatchState의 초기 HP를 원본으로 간주 |
 | Turret 입력 | `IBattlefieldTurretInputSource.CaptureTurretLayout()` → `UpdateBattlefieldTurretLayout(...)` | `FieldTurretBase`·Transform을 Core snapshot에 보관 |
 | Player·Enemy 위치 | 조립부가 `BattlefieldDynamicSpatialInput` → `UpdateBattlefieldParticipants(...)` | 별도 전역 Grid 또는 두 번째 위치 권위 모델 생성 |
 | Encounter 소비자 | `IEncounterMatchConsumer.BindMatch(matchId, snapshotProvider)`로 최신 읽기 전용 공간 결과 수신 | Battlefield 분석 재구현, 과거 Match의 provider를 재사용 |
@@ -38,7 +38,7 @@ Scene Feature의 등록은 `BindRandom`에서 `RandomBinding.Bind(streams, "weat
 
 ## Command와 Query와 Event
 
-- Command는 수행 의도다. `GameCommand`는 비어 있지 않은 `CommandId`, `IssuerId`를 가진다. `MatchSession.Submit`은 권한 확인 뒤 `CommandSubmissionResult`를 반환한다. `Accepted / Rejected / Unauthorized / NotHandled`를 구분한다. 현재 `MatchSimulation.Execute`는 실제 전투 명령을 처리하지 않으므로 `NotHandled`를 성공으로 표시하지 않는다.
+- Command는 수행 의도다. `GameCommand`는 비어 있지 않은 `CommandId`, `IssuerId`를 가진다. `MatchSession.Submit`은 권한 확인 뒤 `CommandSubmissionResult`를 반환한다. `Accepted / Rejected / Unauthorized / NotHandled`를 구분한다. 빈 중간 객체 `MatchSimulation`은 제거했다. 초기 `Submit(GameCommand)` 호환 창구는 `NotHandled / UseFeatureRequestApi`를 반환하며 실제 터렛/Encounter/Player 처리기로 사용하지 않는다.
 - Query는 조회다. `MatchSession.Battlefield`의 immutable 결과를 현재 평가 시점에 읽는다. `MatchId`와 `Revision`, Grid 설정을 함께 해석한다. 새 snapshot이 발행돼도 과거 snapshot이 자동 변경되지는 않는다.
 - Event는 이미 발생한 사실이다. `IMatchEventStream.Subscribe`가 돌려준 `IDisposable`을 구독자가 정리한다. 생성 요청 수와 실제 생성·사망·제거 수를 구분한다.
 
@@ -83,11 +83,11 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 `IProfileService.LoadAsync(playerId, cancellationToken)`과 `SaveAsync(profile, cancellationToken)`은 취소 토큰을 명시적으로 받는다. 호출자가 자신의 Scene·화면·App 수명에 맞는 토큰을 소유하고 종료 때 취소한다. 취소 후 완료된 응답을 다른 사용자나 새 Match에 적용하지 않는다. `OperationCanceledException`은 취소 흐름으로, 다른 예외는 실패로 처리한다. 프로필이 없을 때 Load 결과의 null과 통신 실패를 동일시하지 않는다.
 
-현재 Bootstrap의 `FakeProfileService`, `FakePlatformService`, `FakeSceneFlow`는 개발용이며 실 Backend·저장·로그인을 보장하지 않는다. ContentCatalog 에셋이 없으면 Fake fallback을 쓴다. 전체 서비스 구현은 #444에서 선정한다.
+Bootstrap은 실제 `UnitySceneFlow`와 `BinaryCheckpointStore`를 조립한다. 연결 중에는 `SceneFlowController`의 driver가 `NgoSceneFlow`로 바뀐다. `FakeProfileService`와 미제작 시의 `FakeContentCatalog`는 개발용이다. 플랫폼은 SteamAppSettings에서 실제 SteamPlatformService/개발 Fake를 명시 선택한다. 로컬 binary 체크포인트 저장이 실제 Steam 로그인·Backend·영속 경제 구현을 뜻하지 않는다.
 
 ## 현재 Network 경계
 
-#442는 아직 미완료다. `LocalAuthority`는 Core 명령의 Match 상태·참가자만 확인하는 로컬 구현이지 NGO Server 또는 Steam 인증 구현이 아니다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
+#442는 구현/실행 근거를 보강한 뒤 PL 인수·PR 반영과 대조한다. `LocalAuthority`는 Core 명령의 Match 상태·참가자만 확인하는 로컬 구현이지 NGO Server 또는 Steam 인증 구현이 아니다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
 
 `CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. 기존 진단의 요청 번호를 정식 `MatchRequestContext.RequestId` GUID와 혼동하지 않는다. 정식 요청 GUID는 발신자·의도와 함께 중복 실행을 막으며 재전송 때 유지한다. 실제 터렛 배치의 `SceneEntityIdentity` 제작 키와 `TurretMatchBinding` 대응표를 공용 명령/공간 입력에서 사용한다. 로컬 InstanceId·SDK NetworkObjectId는 이 논리 ID를 대신하지 않는다.
 
@@ -104,3 +104,5 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 ## 2026-10-27 조작 요청 검증 방향
 
 Player 등 호출 파트 → Core/Match의 권한·매치 진행 상태 검증 → FieldTurret 명령 API를 우선 설계 방향으로 삼는다. 현재 로컬 API에 원격 검증이 이미 붙었다는 뜻은 아니다. 조회 API 이동, 상태의 최종 권한, 실패 응답·동기화 계약은 후속 합의다. Enemy는 실행 로직과 네트워크 전달 계층을 분리하는 중이며 양현석의 기반 권한 작업이 개별 객체 동기화를 모두 대신하지 않는다. [주간 보고](../planning/2026-10-27-weekly-progress.md)
+
+낮밤의 확정 source와 실제 Steam 초기화/로비 호출은 [낮밤 API](day-night-api.md), [Steam 사용법](steam-api.md)을 따른다. 플랫폼 SDK는 App 수명으로 Pump/Dispose하고 Weather/Player가 개별 SDK 인스턴스를 만들지 않는다. 로비 ID·Steam 플랫폼 ID·NGO 연결 ID·Match 참가자 ID를 서로 대체하지 않는다.

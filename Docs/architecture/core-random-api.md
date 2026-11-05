@@ -1,5 +1,7 @@
 # 범용 Random API — 사용법과 기존 호출 교체 위치
 
+11월5일 실제 통합: 캐논 발사 오차는 `combat/field-turret`, Enemy 배치 추첨은 `encounter/placement` 흐름으로 연결했다. 아래 기존 교체 위치 표의 이 두 부분은 작업 브랜치에서 반영됐고 조준/분산 규칙은 그대로 유지했다. Weather 선택과 UI 흔들림은 담당 연결 대상이다. [실제 Feature 통합](core-feature-integration-guide.md).
+
 기준: 2026-11-05. Core만 변경한 구현이다. Weather·Enemy·터렛·HUD의 기존 난수 호출은 아직 교체하지 않았다.
 
 **Random을 사용하는 기능을 구현·교체하기 전에 이 문서의 주입 방법, 게임/연출 구분, 범위 규칙을 먼저 확인한다.** 함수 이름만 치환하면 Client의 독립 추첨이나 저장 상태 누락은 해결되지 않는다.
