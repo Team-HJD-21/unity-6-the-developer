@@ -5,6 +5,7 @@ using System.Threading;
 using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace TeamHJD.Game.Presentation.Scene
 {
@@ -19,6 +20,7 @@ namespace TeamHJD.Game.Presentation.Scene
         private readonly List<(Animator animator, float speed)> _animators = new();
         private bool _held;
         private readonly List<ParticleSystem> _particles = new();
+        private readonly List<(NavMeshAgent agent, bool stopped)> _agents = new();
         public IMatchTime TimeSource => _time;
         public CancellationToken GameplayCancellation => _gameplay;
         public bool CanAdvance => !_gameplay.IsCancellationRequested && (_time == null || (_time.IsAvailable && !_time.Snapshot.IsPaused && _time.Snapshot.Rate > 0));
@@ -55,7 +57,17 @@ namespace TeamHJD.Game.Presentation.Scene
         public void Synchronize()
         {
             bool hold = !CanAdvance;
-            if (hold == _held) return;
+            if (hold == _held)
+            {
+                if (hold)
+                {
+                    // NGO 초기화가 정지 이후 실행돼도 물리/Animator를 다시 켜지 못하게 합니다.
+                    foreach (var item in _bodies) if (item.body != null) item.body.simulated = false;
+                    foreach (var item in _animators) if (item.animator != null) item.animator.speed = 0;
+                    HoldNavigation();
+                }
+                return;
+            }
             _held = hold;
             if (hold)
             {
@@ -68,11 +80,21 @@ namespace TeamHJD.Game.Presentation.Scene
                     if (particles.isPlaying) { _particles.Add(particles); particles.Pause(false); }
                 foreach (var animator in GetComponentsInChildren<Animator>(true))
                 { _animators.Add((animator, animator.speed)); animator.speed = 0; }
+                foreach (var agent in GetComponentsInChildren<NavMeshAgent>(true))
+                {
+                    if (!agent.enabled) continue;
+                    _agents.Add((agent, agent.isOnNavMesh && agent.isStopped));
+                }
+                HoldNavigation();
             }
             else ReleaseHold();
         }
         private void ReleaseHold()
         {
+            foreach (var item in _agents)
+                if (item.agent != null && item.agent.enabled && item.agent.isOnNavMesh)
+                    item.agent.isStopped = item.stopped;
+            _agents.Clear();
             foreach (var item in _bodies)
                 if (item.body != null)
                 {
@@ -82,6 +104,13 @@ namespace TeamHJD.Game.Presentation.Scene
             foreach (var item in _animators) if (item.animator != null) item.animator.speed = item.speed;
             foreach (var particles in _particles) if (particles != null) particles.Play(false);
             _particles.Clear(); _bodies.Clear(); _animators.Clear(); _held = false;
+        }
+
+        private void HoldNavigation()
+        {
+            foreach (var item in _agents)
+                if (item.agent != null && item.agent.enabled && item.agent.isOnNavMesh)
+                    item.agent.isStopped = true;
         }
 
         /// <summary>Feature writer가 정지 중에도 실제 복귀 예정 속도와 simulated 상태를 캡처합니다.</summary>

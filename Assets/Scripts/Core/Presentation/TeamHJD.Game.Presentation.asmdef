@@ -5,7 +5,8 @@
     "TeamHJD.Game.Application",
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
-    "Unity.ugui"
+    "Unity.ugui",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

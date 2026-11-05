@@ -28,7 +28,7 @@ Scene Feature의 등록은 `BindRandom`에서 `RandomBinding.Bind(streams, "weat
 | 호출자 | 계약과 동작 | 호출자가 하지 않을 일 |
 | --- | --- | --- |
 | Scene 조립부 | `IAppMatchHost.StartMatch(...)`로 세션을 만들고 필요한 Feature에 주입 | `AppServices`를 게임 서비스 검색기로 공개하거나 static Instance 사용 |
-| Player 입력 | `PlayerSceneAdapter.Bind(session)` → `Submit(GameCommand)` | 입력 코드에서 `MatchState`를 직접 변경하거나 명령 성공을 추정 |
+| Player 수명/입력 | `PlayerSceneAdapter.Bind/BindNetworkMatch`로 Feature 권한·수명 연결. 실제 입력은 Player Feature/Host 경계 | 삭제된 범용 Submit을 호출하거나 MatchState의 초기 HP를 원본으로 간주 |
 | Turret 입력 | `IBattlefieldTurretInputSource.CaptureTurretLayout()` → `UpdateBattlefieldTurretLayout(...)` | `FieldTurretBase`·Transform을 Core snapshot에 보관 |
 | Player·Enemy 위치 | 조립부가 `BattlefieldDynamicSpatialInput` → `UpdateBattlefieldParticipants(...)` | 별도 전역 Grid 또는 두 번째 위치 권위 모델 생성 |
 | Encounter 소비자 | `IEncounterMatchConsumer.BindMatch(matchId, snapshotProvider)`로 최신 읽기 전용 공간 결과 수신 | Battlefield 분석 재구현, 과거 Match의 provider를 재사용 |
@@ -38,7 +38,7 @@ Scene Feature의 등록은 `BindRandom`에서 `RandomBinding.Bind(streams, "weat
 
 ## Command와 Query와 Event
 
-- Command는 수행 의도다. `GameCommand`는 비어 있지 않은 `CommandId`, `IssuerId`를 가진다. `MatchSession.Submit`은 권한 확인 뒤 `CommandSubmissionResult`를 반환한다. `Accepted / Rejected / Unauthorized / NotHandled`를 구분한다. 현재 `MatchSimulation.Execute`는 실제 전투 명령을 처리하지 않으므로 `NotHandled`를 성공으로 표시하지 않는다.
+- Command는 수행 의도다. 터렛은 `TurretCommandGateway/Service`, 스폰은 `EncounterRequestService`의 명시 요청/결과를 사용한다. 각 경계가 Match·실제 발신자·권한·중복을 검증한다. Player 이동/공격은 Player Feature/Host 경계에서 처리한다. 처리기가 없는 범용 Submit과 전용 타입은 제거했다.
 - Query는 조회다. `MatchSession.Battlefield`의 immutable 결과를 현재 평가 시점에 읽는다. `MatchId`와 `Revision`, Grid 설정을 함께 해석한다. 새 snapshot이 발행돼도 과거 snapshot이 자동 변경되지는 않는다.
 - Event는 이미 발생한 사실이다. `IMatchEventStream.Subscribe`가 돌려준 `IDisposable`을 구독자가 정리한다. 생성 요청 수와 실제 생성·사망·제거 수를 구분한다.
 
@@ -49,10 +49,9 @@ API에는 역할에 맞는 `Start / Bind / Unbind / Update / Reconfigure / Try /
 아래의 `session`, `playerAdapter`, `turretSource`, `encounterConsumer`는 조립부에서 전달받은 실제 객체다. 새 전역 탐색 경로를 만들기 위한 예가 아니다.
 
 ```csharp
-// Player: 입력 adapter가 Match의 명령 경계를 사용한다.
+// Player: 조립부가 Match 수명을 연결한다. 이동/공격 실행은 Player Feature의 책임이다.
 playerAdapter.Bind(session);
-CommandSubmissionResult result = playerAdapter.Submit(command);
-// result.Status를 확인한다. NotHandled는 아직 규칙이 없는 명령이다.
+// Scene/Match 종료 때 조립부가 playerAdapter.Unbind()를 호출한다.
 
 // Turret: 엔진 객체 대신 ID/XY 값으로 topology 입력을 갱신한다.
 session.UpdateBattlefieldTurretLayout(turretSource.CaptureTurretLayout());
@@ -87,9 +86,9 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 ## 현재 Network 경계
 
-#442는 아직 미완료다. `LocalAuthority`는 Core 명령의 Match 상태·참가자만 확인하는 로컬 구현이지 NGO Server 또는 Steam 인증 구현이 아니다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
+#442는 아직 미완료다. 범용 로컬 권한 객체는 제거했다. 실제 요청의 Host/참가자 검증은 NetworkMatchCoordinator와 각 Feature 요청 경계가 수행한다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
 
-`CommandId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. 기존 진단의 요청 번호를 정식 `MatchRequestContext.RequestId` GUID와 혼동하지 않는다. 정식 요청 GUID는 발신자·의도와 함께 중복 실행을 막으며 재전송 때 유지한다. 실제 터렛 배치의 `SceneEntityIdentity` 제작 키와 `TurretMatchBinding` 대응표를 공용 명령/공간 입력에서 사용한다. 로컬 InstanceId·SDK NetworkObjectId는 이 논리 ID를 대신하지 않는다.
+`MatchRequestContext.RequestId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. 기존 진단의 요청 번호를 정식 `MatchRequestContext.RequestId` GUID와 혼동하지 않는다. 정식 요청 GUID는 발신자·의도와 함께 중복 실행을 막으며 재전송 때 유지한다. 실제 터렛 배치의 `SceneEntityIdentity` 제작 키와 `TurretMatchBinding` 대응표를 공용 명령/공간 입력에서 사용한다. 로컬 InstanceId·SDK NetworkObjectId는 이 논리 ID를 대신하지 않는다.
 
 터렛의 정식 요청/결과·실제 UTP 전송·Host 검증과 지역 전체 상태 복제는 [Core 스프린트 API](core-sprint-region-and-request-api.md)를 따른다. `TurretCommandGateway`는 Client 의도를 Host로 전달하고, 실제 연결 발신자를 검증한 서비스만 FieldTurret 상태를 변경한다. 정식 Scene/HUD 입력·표시 연결과 실제 두 프로세스 검증은 수행했다. Player/UI의 실제 권위 원격 actor 생성/이동 상태 연결과 FieldTurret의 실제 터렛 표현·전투 복제는 여전히 별도이므로 전체 협동 완성을 선언하지 않는다. 개발 actor fixture를 사용한 Core API 증거와 이 연계를 구분하며 Client 위치를 payload에 넣어 거리 검증을 우회하지 않는다.
 
