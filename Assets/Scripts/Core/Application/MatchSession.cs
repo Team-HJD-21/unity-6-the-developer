@@ -9,9 +9,7 @@ namespace TeamHJD.Game.Application
 {
     public sealed class MatchSession : IDisposable
     {
-        private readonly MatchSimulation _simulation;
         private readonly IModeRules _modeRules;
-        private readonly IAuthority _authority;
         private readonly MatchEventBus _eventBus;
         private readonly BattlefieldSpatialRuntime _battlefield;
         private RegionRuntime _regions;
@@ -102,9 +100,7 @@ namespace TeamHJD.Game.Application
         internal MatchSession(
             MatchConfig config,
             MatchState state,
-            MatchSimulation simulation,
             IModeRules modeRules,
-            IAuthority authority,
             BattlefieldSpatialInput battlefieldInput,
             BattlefieldDynamicSpatialInput dynamicBattlefieldInput,
             BattlefieldGridConfiguration battlefieldGridConfiguration)
@@ -112,9 +108,7 @@ namespace TeamHJD.Game.Application
             Config = config ?? throw new ArgumentNullException(nameof(config));
             State = state ?? throw new ArgumentNullException(nameof(state));
             if (Config.MatchId != State.MatchId) throw new ArgumentException("Match config and initial state must belong to the same match.", nameof(state));
-            _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             _modeRules = modeRules ?? throw new ArgumentNullException(nameof(modeRules));
-            _authority = authority ?? throw new ArgumentNullException(nameof(authority));
             _battlefield = new BattlefieldSpatialRuntime(
                 State.MatchId,
                 battlefieldInput,
@@ -144,33 +138,7 @@ namespace TeamHJD.Game.Application
         public void Start()
         {
             ThrowIfDisposed();
-            _simulation.Start(State);
-        }
-
-        public CommandSubmissionResult Submit(GameCommand command)
-        {
-            ThrowIfDisposed();
-            if (command == null) throw new ArgumentNullException(nameof(command));
-            if (Completion != null)
-                return new CommandSubmissionResult(CommandSubmissionStatus.Rejected, "MatchCompleted", null);
-
-            var authorization = _authority.Authorize(command, State);
-            if (!authorization.IsAuthorized)
-                return new CommandSubmissionResult(CommandSubmissionStatus.Unauthorized, authorization.Reason, null);
-
-            var outcome = _simulation.Execute(State, command, _modeRules);
-            foreach (var matchEvent in outcome.Events)
-            {
-                if (matchEvent.MatchId != State.MatchId)
-                    throw new InvalidOperationException("Simulation emitted an event for another match.");
-                _eventBus.Publish(matchEvent);
-            }
-            var status = outcome.Status == SimulationStatus.NotHandled
-                ? CommandSubmissionStatus.NotHandled
-                : outcome.Status == SimulationStatus.Rejected
-                    ? CommandSubmissionStatus.Rejected
-                    : CommandSubmissionStatus.Accepted;
-            return new CommandSubmissionResult(status, string.Empty, outcome);
+            State.Start();
         }
 
         public MatchCompletion Complete(MatchOutcome outcome, long eventSequence)
@@ -194,7 +162,7 @@ namespace TeamHJD.Game.Application
                 var rewardReceipt = _modeRules.CreateRewardReceipt(result);
                 if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
                 var completion = new MatchCompletion(result, rewardReceipt);
-                _simulation.Complete(State, result);
+                State.Complete(result);
                 // 관측 실패/재진입에도 동일한 최종 결과를 반환하도록 먼저 보존합니다.
                 Completion = completion;
                 _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, completion));
@@ -231,7 +199,7 @@ namespace TeamHJD.Game.Application
                     try { handler(); }
                     catch (Exception exception) { errors.Add(exception); }
             }
-            DisposeOwned(() => _simulation.Dispose(State), errors);
+            DisposeOwned(() => State.MarkDisposed(), errors);
             DisposeOwned(_eventBus.Dispose, errors);
             DisposeOwned(_battlefield.Dispose, errors);
             if (_environment != null) DisposeOwned(_environment.Dispose, errors);
