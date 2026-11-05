@@ -1,4 +1,4 @@
-// Steam 2인 로비와 초대 API를 연결하고 취소된 늦은 응답의 로비를 정리합니다.
+// Steam 2인 로비와 초대 API를 연결하고, 취소된 요청도 SDK 응답 정리 후 다음 요청을 받습니다.
 // 로비 참가 이후 NGO transport/Match 시작은 별도의 연결 단계입니다.
 using System;
 using System.Collections.Generic;
@@ -49,11 +49,9 @@ namespace TeamHJD.Game.Infrastructure
             cancellation.ThrowIfCancellationRequested();
             if (CurrentLobby != null)
                 throw new InvalidOperationException("Leave the current lobby before creating/joining another.");
-            foreach (var call in _calls)
-                if (call.IsWaiting)
-                    throw new InvalidOperationException("A Steam lobby request is already running.");
-            if (_calls.Count >= 8)
-                throw new InvalidOperationException("Steam still has too many abandoned requests; wait for their callbacks.");
+            // Task 취소/시간 초과는 SDK 참가를 취소하지 않습니다. 이전 응답이 새 참가를 나가게 하지 않도록 직렬화합니다.
+            if (_calls.Count != 0)
+                throw new InvalidOperationException("A Steam lobby request is still awaiting its SDK callback/cleanup. Keep pumping callbacks before retrying.");
         }
 
         private Task<PlatformLobby> BeginCall<T>(SteamAPICall_t handle, Func<T, ulong> resolve, bool create, CancellationToken cancellation)
@@ -68,7 +66,7 @@ namespace TeamHJD.Game.Infrastructure
         public void LeaveLobby()
         {
             RequireReady();
-            // 진행 중 요청도 포기 처리합니다. 늦은 SDK 응답은 callback이 받아 해당 로비만 떠납니다.
+            // 진행 중 요청도 포기 처리합니다. 늦은 SDK 응답의 로비를 정리할 때까지 새 요청은 받지 않습니다.
             foreach (var call in _calls.ToArray())
                 call.Abandon();
             if (CurrentLobby == null)
@@ -125,8 +123,6 @@ namespace TeamHJD.Game.Infrastructure
 
         private interface ILobbyCall : IDisposable
         {
-            bool IsWaiting { get; }
-
             void CheckDeadline();
             void Abandon();
         }
@@ -142,7 +138,6 @@ namespace TeamHJD.Game.Infrastructure
             private readonly TaskCompletionSource<PlatformLobby> _result = new TaskCompletionSource<PlatformLobby>();
             private CallResult<T> _callback;
             public Task<PlatformLobby> Task => _result.Task;
-            public bool IsWaiting => !Task.IsCompleted;
 
             public LobbyCall(SteamPlatformService owner, SteamAPICall_t handle, Func<T, ulong> resolve, bool created, CancellationToken cancellation)
             {
@@ -165,6 +160,8 @@ namespace TeamHJD.Game.Infrastructure
             public void Abandon() => _result.TrySetCanceled();
             private void Complete(T value, bool ioFailure)
             {
+                PlatformLobby lobby = null;
+                Exception failure = null;
                 try
                 {
                     CheckDeadline();
@@ -177,12 +174,12 @@ namespace TeamHJD.Game.Infrastructure
                         return;
                     }
 
-                    _result.TrySetResult(_owner.AcceptLobby(id, _created));
+                    lobby = _owner.AcceptLobby(id, _created);
                 }
                 catch (Exception error)
                 {
                     _owner.LastError = error.Message;
-                    _result.TrySetException(error);
+                    failure = error;
                 }
                 finally
                 {
@@ -190,6 +187,12 @@ namespace TeamHJD.Game.Infrastructure
                     _callback = null;
                     _owner._calls.Remove(this);
                 }
+
+                // 완료를 기다리던 호출부가 즉시 나가기/재요청해도 SDK 대기 슬롯은 이미 정리된 상태여야 합니다.
+                if (failure != null)
+                    _result.TrySetException(failure);
+                else if (lobby != null)
+                    _result.TrySetResult(lobby);
             }
 
             public void Dispose()
