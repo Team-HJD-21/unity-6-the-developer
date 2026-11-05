@@ -937550,6 +937550,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 877435137}
   - component: {fileID: 877435132}
   - component: {fileID: 877435133}
   - component: {fileID: 877435134}
@@ -962652,3 +962653,30 @@ SceneRoots:
   - {fileID: 2000502100}
   - {fileID: 765547578}
   - {fileID: 1538709566}
+
+--- !u!114 &1836352305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1002043012098565792, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
+  m_PrefabInstance: {fileID: 1836352303}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
+
+--- !u!114 &877435137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
+  spawnExecutor: {fileID: 1836352305}
+  environmentProfile: {fileID: 0}
