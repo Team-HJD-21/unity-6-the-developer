@@ -58,6 +58,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 }
                 _registry = registry;
                 _featureScope = _controller.BindMatchScope(matchId, mayWrite ?? (() => true));
+                _controller.ConfigureCheckpointContent(_commandLevelCatalog, _commandUpgrades);
                 FieldTurretInstanceRegistry.Registered += OnRegistered;
                 FieldTurretInstanceRegistry.Unregistered += OnUnregistered;
                 FieldTurretInstanceRegistry.LevelUpgraded += OnLevelReplaced;
