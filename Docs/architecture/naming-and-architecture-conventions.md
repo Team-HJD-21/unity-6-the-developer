@@ -51,7 +51,7 @@
 | `Controller` | 입력 또는 화면 흐름 조정 | `SceneFlowController`, `InputController` | 전역 상태 저장 |
 | `Factory` | 복잡한 객체 생성 | `MatchSessionFactory` | 싱글턴 접근 래퍼 |
 | `Rules` | 모드별 규칙 차이 | `StoryModeRules`, `CoopModeRules` | Unity 화면 로직 |
-| `Authority` | Command 검증/실행 권한 | `LocalAuthority`, `HostAuthority` | 단순 네트워크 연결 |
+| `Authority` | Command 검증/실행 권한 | `ITurretCommandAuthorization`, `TurretInteractionAuthorization` | 단순 네트워크 연결 |
 | `Agent` | Command를 생성하는 행위자 | `HumanPlayerAgent`, `AllyPlayerAgent` | HP/인벤토리 상태 |
 
 ## 표준 핵심 이름
@@ -102,10 +102,8 @@ IPlatformService
   ├─ FakePlatformService
   └─ SteamPlatformService
 
-IAuthority
-  ├─ LocalAuthority
-  ├─ HostAuthority
-  └─ DedicatedServerAuthority
+ITurretCommandAuthorization
+  └─ TurretInteractionAuthorization
 ```
 
 Binary와 Backend를 같은 권한의 대체 Repository로 만들지 않는다. Backend가 최종 Profile을
