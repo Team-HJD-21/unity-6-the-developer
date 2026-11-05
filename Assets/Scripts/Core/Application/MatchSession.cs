@@ -9,7 +9,6 @@ namespace TeamHJD.Game.Application
 {
     public sealed class MatchSession : IDisposable
     {
-        private readonly MatchSimulation _simulation;
         private readonly IModeRules _modeRules;
         private readonly IAuthority _authority;
         private readonly MatchEventBus _eventBus;
@@ -102,7 +101,6 @@ namespace TeamHJD.Game.Application
         internal MatchSession(
             MatchConfig config,
             MatchState state,
-            MatchSimulation simulation,
             IModeRules modeRules,
             IAuthority authority,
             BattlefieldSpatialInput battlefieldInput,
@@ -112,7 +110,6 @@ namespace TeamHJD.Game.Application
             Config = config ?? throw new ArgumentNullException(nameof(config));
             State = state ?? throw new ArgumentNullException(nameof(state));
             if (Config.MatchId != State.MatchId) throw new ArgumentException("Match config and initial state must belong to the same match.", nameof(state));
-            _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             _modeRules = modeRules ?? throw new ArgumentNullException(nameof(modeRules));
             _authority = authority ?? throw new ArgumentNullException(nameof(authority));
             _battlefield = new BattlefieldSpatialRuntime(
@@ -144,9 +141,10 @@ namespace TeamHJD.Game.Application
         public void Start()
         {
             ThrowIfDisposed();
-            _simulation.Start(State);
+            State.Start();
         }
 
+        /// <summary>초기 일반 명령의 권한만 검사하는 호환 경계입니다. 실제 처리는 없으며 정식 Feature 요청 API를 사용합니다.</summary>
         public CommandSubmissionResult Submit(GameCommand command)
         {
             ThrowIfDisposed();
@@ -158,19 +156,10 @@ namespace TeamHJD.Game.Application
             if (!authorization.IsAuthorized)
                 return new CommandSubmissionResult(CommandSubmissionStatus.Unauthorized, authorization.Reason, null);
 
-            var outcome = _simulation.Execute(State, command, _modeRules);
-            foreach (var matchEvent in outcome.Events)
-            {
-                if (matchEvent.MatchId != State.MatchId)
-                    throw new InvalidOperationException("Simulation emitted an event for another match.");
-                _eventBus.Publish(matchEvent);
-            }
-            var status = outcome.Status == SimulationStatus.NotHandled
-                ? CommandSubmissionStatus.NotHandled
-                : outcome.Status == SimulationStatus.Rejected
-                    ? CommandSubmissionStatus.Rejected
-                    : CommandSubmissionStatus.Accepted;
-            return new CommandSubmissionResult(status, string.Empty, outcome);
+            // 이 일반 명령은 초기 확장 계약으로 남지만 실제 Feature 처리기가 아닙니다.
+            // 터렛/Encounter는 각 타입의 정식 요청 API, Player 전투는 실제 Feature/Host 경계를 사용합니다.
+            var outcome = new SimulationOutcome(SimulationStatus.NotHandled, Array.Empty<MatchEvent>());
+            return new CommandSubmissionResult(CommandSubmissionStatus.NotHandled, "UseFeatureRequestApi", outcome);
         }
 
         public MatchCompletion Complete(MatchOutcome outcome, long eventSequence)
@@ -194,7 +183,7 @@ namespace TeamHJD.Game.Application
                 var rewardReceipt = _modeRules.CreateRewardReceipt(result);
                 if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
                 var completion = new MatchCompletion(result, rewardReceipt);
-                _simulation.Complete(State, result);
+                State.Complete(result);
                 // 관측 실패/재진입에도 동일한 최종 결과를 반환하도록 먼저 보존합니다.
                 Completion = completion;
                 _eventBus.Publish(new MatchCompleted(State.MatchId, eventSequence, completion));
@@ -231,7 +220,7 @@ namespace TeamHJD.Game.Application
                     try { handler(); }
                     catch (Exception exception) { errors.Add(exception); }
             }
-            DisposeOwned(() => _simulation.Dispose(State), errors);
+            DisposeOwned(() => State.MarkDisposed(), errors);
             DisposeOwned(_eventBus.Dispose, errors);
             DisposeOwned(_battlefield.Dispose, errors);
             if (_environment != null) DisposeOwned(_environment.Dispose, errors);

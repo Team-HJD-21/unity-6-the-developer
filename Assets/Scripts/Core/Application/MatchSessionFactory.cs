@@ -38,7 +38,7 @@ namespace TeamHJD.Game.Application
             BattlefieldDynamicSpatialInput dynamicBattlefieldInput,
             BattlefieldGridConfiguration battlefieldGridConfiguration)
         {
-            return new MatchSession(config, initialState, new MatchSimulation(), modeRules, _authority,
+            return new MatchSession(config, initialState, modeRules, _authority,
                 battlefieldInput, dynamicBattlefieldInput, battlefieldGridConfiguration);
         }
     }

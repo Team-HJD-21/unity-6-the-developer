@@ -29,8 +29,8 @@ namespace TeamHJD.Game.Application
             {
                 if (next.Revision < Snapshot.Revision) return EnvironmentApplyStatus.Stale;
                 if (next.Revision == Snapshot.Revision)
-                    return next.HasSameValues(Snapshot) && next.GameSeconds == Snapshot.GameSeconds ? EnvironmentApplyStatus.Unchanged : EnvironmentApplyStatus.ConflictingRevision;
-                if (next.GameSeconds < Snapshot.GameSeconds) return EnvironmentApplyStatus.ClockReversed;
+                    return next.HasSameValues(Snapshot) && next.Epoch == Snapshot.Epoch && next.GameSeconds == Snapshot.GameSeconds ? EnvironmentApplyStatus.Unchanged : EnvironmentApplyStatus.ConflictingRevision;
+                if (next.Epoch == Snapshot.Epoch && next.GameSeconds < Snapshot.GameSeconds) return EnvironmentApplyStatus.ClockReversed;
             }
             Snapshot = next;
             var errors = new List<Exception>();

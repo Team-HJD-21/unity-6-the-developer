@@ -50,7 +50,7 @@ namespace TeamHJD.Game.Presentation.Scene
         {
             if (actor == null) throw new ArgumentNullException(nameof(actor));
             var component = actor.GetComponent<SceneEntityIdentity>() ?? actor.AddComponent<SceneEntityIdentity>();
-            if (component.EntityId.IsEmpty) component.Initialize(new EntityId("player-field/" + Guid.NewGuid().ToString("N")));
+            if (component.EntityId.IsEmpty) component.Initialize(new EntityId("entity/" + Guid.NewGuid().ToString("N")));
             return component.EntityId;
         }
 
