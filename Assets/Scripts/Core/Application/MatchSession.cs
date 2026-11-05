@@ -10,7 +10,6 @@ namespace TeamHJD.Game.Application
     public sealed class MatchSession : IDisposable
     {
         private readonly IModeRules _modeRules;
-        private readonly IAuthority _authority;
         private readonly MatchEventBus _eventBus;
         private readonly BattlefieldSpatialRuntime _battlefield;
         private RegionRuntime _regions;
@@ -102,7 +101,6 @@ namespace TeamHJD.Game.Application
             MatchConfig config,
             MatchState state,
             IModeRules modeRules,
-            IAuthority authority,
             BattlefieldSpatialInput battlefieldInput,
             BattlefieldDynamicSpatialInput dynamicBattlefieldInput,
             BattlefieldGridConfiguration battlefieldGridConfiguration)
@@ -111,7 +109,6 @@ namespace TeamHJD.Game.Application
             State = state ?? throw new ArgumentNullException(nameof(state));
             if (Config.MatchId != State.MatchId) throw new ArgumentException("Match config and initial state must belong to the same match.", nameof(state));
             _modeRules = modeRules ?? throw new ArgumentNullException(nameof(modeRules));
-            _authority = authority ?? throw new ArgumentNullException(nameof(authority));
             _battlefield = new BattlefieldSpatialRuntime(
                 State.MatchId,
                 battlefieldInput,
@@ -142,24 +139,6 @@ namespace TeamHJD.Game.Application
         {
             ThrowIfDisposed();
             State.Start();
-        }
-
-        /// <summary>초기 일반 명령의 권한만 검사하는 호환 경계입니다. 실제 처리는 없으며 정식 Feature 요청 API를 사용합니다.</summary>
-        public CommandSubmissionResult Submit(GameCommand command)
-        {
-            ThrowIfDisposed();
-            if (command == null) throw new ArgumentNullException(nameof(command));
-            if (Completion != null)
-                return new CommandSubmissionResult(CommandSubmissionStatus.Rejected, "MatchCompleted", null);
-
-            var authorization = _authority.Authorize(command, State);
-            if (!authorization.IsAuthorized)
-                return new CommandSubmissionResult(CommandSubmissionStatus.Unauthorized, authorization.Reason, null);
-
-            // 이 일반 명령은 초기 확장 계약으로 남지만 실제 Feature 처리기가 아닙니다.
-            // 터렛/Encounter는 각 타입의 정식 요청 API, Player 전투는 실제 Feature/Host 경계를 사용합니다.
-            var outcome = new SimulationOutcome(SimulationStatus.NotHandled, Array.Empty<MatchEvent>());
-            return new CommandSubmissionResult(CommandSubmissionStatus.NotHandled, "UseFeatureRequestApi", outcome);
         }
 
         public MatchCompletion Complete(MatchOutcome outcome, long eventSequence)
