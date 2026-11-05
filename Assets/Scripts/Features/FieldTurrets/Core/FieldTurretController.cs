@@ -1,4 +1,4 @@
-// Scene의 터렛 전력·자동 활성화와 지역 사용 제한을 관리하는 FieldTurret 소유자입니다.
+// Scene의 터렛 전력·자동 활성화와 지역 사용 제한을 관리하는 D Feature 소유자입니다.
 // Core 조립부에는 실제 소유 개체를 확인하는 읽기 API를 제공합니다.
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ namespace TeamHJD.Game.FieldTurrets
     /// <summary>씬의 전력 예산을 소유하고 ID 기반 터렛 활성화 요청을 처리한다.</summary>
     [DisallowMultipleComponent]
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "TeamHJD.Game.Turrets", sourceAssembly: "TeamHJD.Game.Turrets", sourceClassName: "TurretController")]
-    public sealed partial class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource
+    public sealed class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource
     {
         [SerializeField, Min(0)] private int maximumPower = 250;
         public const float DefaultDestructionPowerReturnPercent = 50f;
@@ -106,17 +106,16 @@ namespace TeamHJD.Game.FieldTurrets
         }
         private void Update()
         {
-            if (!HasWriteAuthority || !CanSimulate) return;
-            Budget.Tick(TeamHJD.Game.Presentation.Scene.FieldSimulationTime.ScaleDelta(_fieldTime, Time.deltaTime));
+            Budget.Tick(Time.deltaTime);
             if (HasWriteAuthority && IsAutoActivationRunning) AdvanceAutoActivation();
         }
 
         public const float AutoActivationCooldownSeconds = 60f;
-        private double _nextAutoActivationTime;
+        private float _nextAutoActivationTime;
         private readonly List<AutoActivationCandidate> _autoCandidates = new();
         private IReadOnlyList<AutoActivationCandidate> _autoCandidatesView;
         public bool IsAutoActivationRunning { get; private set; }
-        public float AutoActivationCooldownRemaining => (float)Math.Max(0, _nextAutoActivationTime - FieldSeconds);
+        public float AutoActivationCooldownRemaining => Mathf.Max(0f, _nextAutoActivationTime - Time.time);
         public IReadOnlyList<AutoActivationCandidate> AutoActivationCandidates =>
             _autoCandidatesView ??= _autoCandidates.AsReadOnly();
 
@@ -129,15 +128,13 @@ namespace TeamHJD.Game.FieldTurrets
             public int EnemyCount { get; }
             public float Score { get; }
             public float FirepowerEfficiency { get; }
-            public TeamHJD.Game.Domain.EntityId EntityId { get; }
             internal bool Completed;
-            internal AutoActivationCandidate(int id, int enemyCount, float score, float firepowerEfficiency, TeamHJD.Game.Domain.EntityId entityId = default)
+            internal AutoActivationCandidate(int id, int enemyCount, float score, float firepowerEfficiency)
             {
                 InstanceId = id;
                 EnemyCount = enemyCount;
                 Score = score;
                 FirepowerEfficiency = firepowerEfficiency;
-                EntityId = entityId;
             }
         }
 
@@ -159,8 +156,7 @@ namespace TeamHJD.Game.FieldTurrets
                 float score = AutoActivationScoreProvider != null ? AutoActivationScoreProvider(turret, count) : count;
                 if (float.IsNaN(score) || float.IsInfinity(score)) score = count;
                 float efficiency = turret.EffectivePower > 0 ? (float)turret.EffectiveDamage / turret.EffectivePower : 0f;
-                turret.TryGetEntityId(out var identity);
-                _autoCandidates.Add(new AutoActivationCandidate(turret.InstanceId, count, score, efficiency, identity));
+                _autoCandidates.Add(new AutoActivationCandidate(turret.InstanceId, count, score, efficiency));
             }
             _autoCandidates.Sort((left, right) =>
             {
@@ -170,7 +166,7 @@ namespace TeamHJD.Game.FieldTurrets
                 return byEfficiency != 0 ? byEfficiency : left.InstanceId.CompareTo(right.InstanceId);
             });
 
-            _nextAutoActivationTime = FieldSeconds + AutoActivationCooldownSeconds;
+            _nextAutoActivationTime = Time.time + AutoActivationCooldownSeconds;
             IsAutoActivationRunning = true;
             foreach (FieldTurretBase turret in owned)
                 if (turret.IsActivated) turret.RequestSystemActivation(false);

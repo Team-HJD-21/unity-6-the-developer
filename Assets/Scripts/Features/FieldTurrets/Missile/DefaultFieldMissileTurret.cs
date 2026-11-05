@@ -1,4 +1,3 @@
-// 기존 공격·과열 규칙을 유지하며 진행과 생성 자식을 공용 필드 시간에 연결합니다.
 using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
@@ -7,7 +6,7 @@ using UnityEngine;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "DefaultMissileTurret")]
 
-public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
+public abstract class DefaultFieldMissileTurret : FieldTurretBase
 {   
     public override FieldTurretKind Kind => FieldTurretKind.Missile;
     [SerializeField] protected GameObject missilePrefab;
@@ -52,7 +51,6 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
     protected override void Update()
     {
         base.Update();
-        if (!CanSimulateField) return;
         UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
@@ -85,7 +83,7 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         if (needsNewTargets)
         {
             ReleaseUnlaunchedTargets();
-            CurMissileCount = Mathf.Max(0f, CurMissileCount - TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this));
+            CurMissileCount = Mathf.Max(0f, CurMissileCount - Time.deltaTime);
             FindTarget();//(raycast 사용)
         }
     }
@@ -162,7 +160,6 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
                     missilePrefab, spawnPoints[index].position, turretRotationPoint.rotation);
                 try
                 {
-                    BindProjectileSimulation(missileObject);
                     missileObject.GetComponent<FieldTurretMissile>().Initialize(reservation, Damage);
                 }
                 catch
@@ -214,7 +211,7 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         else//적이 범위에 있음
         {
             
-            TimeTilFire += TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
+            TimeTilFire += Time.deltaTime;
             if (TimeTilFire >= 1f / FireRate)//적이 타워의 시야각에 있고 RPS만큼 발사
             {
                 FireSound();
@@ -264,8 +261,7 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
     protected IEnumerator ShootAnimation()
     {
         Animator.SetBool("isShoot",true);
-        double end = FieldSeconds + 0.6;
-        while (FieldSeconds < end) yield return null;
+        yield return new WaitForSeconds(0.6f);
         Animator.SetBool("isShoot",false);
     }
     protected override void OnActivationChanged(bool isActivated)

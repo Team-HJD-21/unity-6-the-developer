@@ -1,4 +1,3 @@
-// 터렛 승급/강등과 저장 복원에서 같은 콘텐츠 정의·제작 prefab을 조회합니다.
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Content;
@@ -38,25 +37,6 @@ namespace TeamHJD.Game.FieldTurrets
             foreach (Transition transition in _transitions)
             { Consider(transition.Source); Consider(transition.SourceLevelPrefab?.Definition); Consider(transition.NextLevelPrefab?.Definition); }
             definition = ambiguous ? null : found; return definition != null;
-        }
-
-        /// <summary>체크포인트가 저장 정의를 실제 제작 prefab으로 해석합니다. 같은 ID의 충돌은 거부합니다.</summary>
-        public bool TryGetPrefab(string definitionId, out FieldTurretBase prefab)
-        {
-            FieldTurretBase found = null; bool ambiguous = false;
-            foreach (var transition in _transitions)
-            {
-                Consider(transition.SourceLevelPrefab);
-                Consider(transition.NextLevelPrefab);
-            }
-            prefab = ambiguous ? null : found;
-            return prefab != null;
-            void Consider(FieldTurretBase candidate)
-            {
-                if (candidate == null || candidate.Definition == null || candidate.Definition.Id != definitionId) return;
-                if (found != null && found != candidate) ambiguous = true;
-                else found = candidate;
-            }
         }
 
         public bool TryGetNext(FieldTurretDefinition source, out FieldTurretBase nextLevelPrefab)

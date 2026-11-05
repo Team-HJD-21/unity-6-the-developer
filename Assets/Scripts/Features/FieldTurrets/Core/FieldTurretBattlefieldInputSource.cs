@@ -37,7 +37,7 @@ namespace TeamHJD.Game.FieldTurrets
 
         private void OnEnable()
         {
-            if (UnityEngine.Application.isPlaying)
+            if (Application.isPlaying)
                 FieldTurretInstanceRegistry.SnapshotChanged += OnTurretSnapshotChanged;
             _lastPublishedInput = CaptureTurretLayout();
         }
@@ -57,20 +57,20 @@ namespace TeamHJD.Game.FieldTurrets
                     continue;
                 // Operational includes transient suspension (for example, overheat cooldown).
                 // Battlefield membership follows placement, not firing availability.
-                if (UnityEngine.Application.isPlaying && turret.IsDestroyed)
+                if (Application.isPlaying && turret.IsDestroyed)
                     continue;
 
-                int instanceId = UnityEngine.Application.isPlaying && turret.InstanceId > 0
+                int instanceId = Application.isPlaying && turret.InstanceId > 0
                     ? turret.InstanceId
                     : turret.GetInstanceID();
                 DomainEntityId id;
-                if (UnityEngine.Application.isPlaying && _entityIds != null)
+                if (Application.isPlaying && _entityIds != null)
                 {
                     // 새 Feature 개체는 명시적으로 등록되기 전까지 Core 배치에 편입하지 않습니다.
                     if (!_entityIds.TryResolveEntityId(instanceId, out id)) continue;
                 }
                 else if (!turret.TryGetEntityId(out id))
-                    id = new DomainEntityId(UnityEngine.Application.isPlaying ? $"turret-{instanceId}" : $"preview-turret-{instanceId}");
+                    id = new DomainEntityId(Application.isPlaying ? $"turret-{instanceId}" : $"preview-turret-{instanceId}");
                 Vector3 position = turret.transform.position;
                 turrets.Add(new TurretSpatialInput(id, new BattlefieldPoint(position.x, position.y)));
             }

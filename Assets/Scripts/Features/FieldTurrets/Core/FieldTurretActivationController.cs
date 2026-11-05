@@ -1,4 +1,3 @@
-// 개별 터렛의 ON/OFF·파괴와 실제 전력 예약을 관리합니다.
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
 
@@ -121,20 +120,6 @@ namespace TeamHJD.Game.FieldTurrets
         {
             _reservedPower = _powerCost;
             _runtimeState.SetActivated(true);
-        }
-
-        // 전체 Feature 복원은 예산도 함께 교체하므로 기존 예약을 반환/소비하지 않습니다.
-        internal void DetachReservationForCheckpoint()
-        {
-            _reservedPower = 0;
-            _destructionSettled = false;
-        }
-
-        internal void RestoreReservation(int reservedPower)
-        {
-            if (reservedPower < 0) throw new System.ArgumentOutOfRangeException(nameof(reservedPower));
-            _reservedPower = reservedPower;
-            _destructionSettled = _runtimeState.IsDestroyed;
         }
 
         private FieldTurretActivationResult Activate()

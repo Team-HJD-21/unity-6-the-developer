@@ -1,4 +1,3 @@
-// 기존 공격·과열 규칙을 유지하며 진행과 생성 자식을 공용 필드 시간에 연결합니다.
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.FieldTurrets.Contracts;
@@ -6,7 +5,7 @@ using UnityEngine;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "DefaultCanonTurret")]
 
-public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
+public abstract class DefaultFieldCanonTurret : FieldTurretBase
 {   
     public override FieldTurretKind Kind => FieldTurretKind.Canon;
     [SerializeField] protected GameObject bulletPrefab;
@@ -34,7 +33,6 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
     protected override void Update()
     {
         base.Update();
-        if (!CanSimulateField) return;
         UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
@@ -55,7 +53,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
         {
             Target = null;
             TimeTilFire = 0f;
-            _fireTime -= TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
+            _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
             Animator.SetBool("isShoot", false);
             FindTarget();//(Overlap 사용)
@@ -76,7 +74,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
     {
         if (!CheckTargetIsInRange())//적이 범위에 없음
         {
-            _fireTime -= TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
+            _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
             Animator.SetBool("isShoot", false);
             Target = null;
@@ -84,7 +82,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
         }
         else//적이 범위에 있음
         {
-            TimeTilFire += TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
+            TimeTilFire += Time.deltaTime;
             if (TimeTilFire >= (1f / FireRate) && IsTargetInSight())//적이 타워의 시야각에 있고 RPS만큼 발사
             {
                 FireSound();
@@ -100,7 +98,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
 
         if (IsTargetInSight())//적이 사격 시야에 있음
         {
-            _fireTime += TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
+            _fireTime += Time.deltaTime;
             if (_fireTime >= OverHeatTime)//터렛 과열
             {
                 BeginCooling(CoolTime);
@@ -112,7 +110,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
         }
         else//적이 사격 시야에 없음
         {
-            _fireTime -= TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
+            _fireTime -= Time.deltaTime;
             if(_fireTime <= 0f) _fireTime = 0f;
             Animator.SetBool("isShoot", false);
         }

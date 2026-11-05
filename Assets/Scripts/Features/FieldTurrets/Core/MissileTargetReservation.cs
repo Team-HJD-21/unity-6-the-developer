@@ -1,4 +1,3 @@
-// 실제 미사일과 미발사 슬롯의 표적 claim을 관리하고 소유권을 이전·해제합니다.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -44,14 +43,6 @@ namespace TeamHJD.Game.FieldTurrets
             Reservations.Add(target, entry);
             reservation = new MissileTargetReservation(entry);
             return true;
-        }
-
-        /// <summary>Host 체크포인트 참조 단계 전용입니다. 저장에 있던 같은 표적의 다중 claim을 다시 연결합니다.</summary>
-        public static MissileTargetReservation RestoreCheckpointClaim(Transform target)
-        {
-            if (target == null || !target.gameObject.activeInHierarchy) throw new ArgumentException("A restored target is required.", nameof(target));
-            if (!Reservations.TryGetValue(target, out var entry)) Reservations.Add(target, entry = new Entry(target));
-            return new MissileTargetReservation(entry);
         }
 
         public MissileTargetReservation Retain()
