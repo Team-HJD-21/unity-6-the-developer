@@ -22,6 +22,13 @@ public sealed partial class PlayerBombExplosion
     {
         if (GetComponent<SceneEntityIdentity>().EntityId != state.Id) throw new InvalidOperationException("The restored bomb identity differs.");
         _elapsed = state.Elapsed; _exploded = state.Exploded; state.Pose.Apply(transform);
+        if (_exploded)
+        {
+            // 피해를 다시 적용하지 않고 정상 폭발 때의 깊이·충돌 해제 상태만 복원합니다.
+            if (_depth != null) { _depth.Refresh(); _depth.enabled = false; }
+            if (_bodyCollision != null) _bodyCollision.enabled = false;
+            if (_bodyCollider != null) _bodyCollider.enabled = false;
+        }
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, state.Exploded);
         if (_presentation != null)
         {
