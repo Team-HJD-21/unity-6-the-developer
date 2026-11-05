@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | MatchSession→MatchSimulation→MatchState | Simulation은 별도 상태도 실제 명령 처리도 없었다. 단계 변경을 전달하고 Execute는 항상 NotHandled였다. 게임 전체 시뮬레이션이 여기 있는 것처럼 읽혔다 | 중간 클래스/생성 의존을 제거하고 `MatchSession → MatchState.Start/Complete/MarkDisposed`로 직접 연결. 단계와 같은 Match 결과 검증은 State에 유지 |
 | 사용되지 않는 MatchState의 HP/개체 변경 함수 | SetControlUnit/SetWave/ReplacePlayer/ReplaceTurret/ReplaceEnemy와 generic ReplaceById의 실제 호출이 없었다. Feature 원본과 별개의 Core 전투 원본을 키우는 경로로 오해할 수 있었다 | 호출되지 않는 내부 변경 함수를 제거. 실제 HP·전력·전투는 Feature 원본, State는 단계/확정 결과와 기존 초기 자료를 보관 |
-| 일반 Submit의 오해 | 초기 GameCommand 계약은 실제 전투 처리기로 연결된 적이 없는데 팀 가이드는 Player 입력의 기본 길처럼 안내했다 | 공개 호환 경계는 유지하되 `NotHandled / UseFeatureRequestApi`를 명시. 팀 가이드는 실제 Player·터렛·Encounter 요청 경로로 수정. 빈 Simulation 실행/불가능한 이벤트 순회 제거 |
+| 일반 Submit의 오해 | 초기 GameCommand 계약은 실제 전투 처리기로 연결된 적이 없는데 팀 가이드는 Player 입력의 기본 길처럼 안내했다 | 호환용 Submit 두 개와 사용처가 사라진 명령/결과/로컬 권한 타입을 제거. 팀 가이드는 실제 Player·터렛·Encounter 요청 경로로 수정. 빈 Simulation 실행/불가능한 이벤트 순회 제거 |
 | EnemyProjectile 생성 시 시간 바인딩2회 | BindOwner 내부에서 이미 연결한 뒤 Spawner가 다시 연결했다. owner 생략 시에는 검사한 Spawner의 시계가 탄환에 전달되지 않았다 | 생성자 바인딩 한 번에서 시계/수명 정책까지 전달. owner 생략은 명시 Spawner를 생성자로 사용. Client의 NGO 파괴 소유권은 유지 |
 | 큰 InitialStageCompositionRoot 파일 | 초기 조립·Client 준비/읽기 복제·공간 투영이 한 파일에 섞여 실제 입장/해제 흐름을 따라가기 어려웠다 | 같은 컴포넌트의 `.Networking.cs`·`.Spatial.cs`에 관련 메서드13개를 본문 변경 없이 이동. 새 Manager/추가 객체·별도 상태를 만들지 않았고 기존 Scene GUID 유지 |
 | 진단 ID와 공간/저장 ID 불일치 | Spawn/사망 관측은 NGO 실행 ID, Grid/저장은 논리 ID를 사용해 같은 적을 바로 추적할 수 없었다 | 관측 EntityId를 SceneEntityIdentity로 일치시킴. NGO ID는 현재 실행 내부 추적에만 사용 |
@@ -41,7 +41,7 @@ flowchart LR
 
 ## 남겨 둔 호환 자료와 실제 한계
 
-- `GameCommand`, `SimulationOutcome`, 초기 Player/CU/Wave 등의 Domain 자료는 기존 공개 생성/조회 계약에 남아 있다. 현재 명령 처리나 실제 HP 원본으로 사용하지 않는다. `MatchSimulation`을 삭제했다고 실제 Feature 전투를 MatchState로 옮기지 않았다. 이 자료를 완전히 제거하려면 공개 초기화/snapshot 계약도 함께 바꾸는 별도 변경이어야 하며, 호출되지 않는 내부 변경 경로는 이번에 먼저 없앴다.
+- 초기 Player/CU/Wave Domain 자료는 기존 공개 초기화/snapshot 계약에 남아 있으며 실제 HP 원본이 아니다. 반면 범용 Submit 전용 명령6개·결과/상태4개·권한3개는 실제 호출자가 없어 제거했다. MatchSessionFactory와 AppServices에서도 해당 권한 생성자 주입을 없앴다. 실제 Feature 전투를 MatchState로 옮기거나 실제 Host 검증을 제거한 것은 아니다.
 - `FakeProfileService`/`FakePlatformService`와 비제작 콘텐츠 fallback은 실제 서비스가 아직 없다는 명시적 개발 구성이다. 이름만 바꿔 실제 Steam/Backend처럼 보이게 만들지 않는다. 실제 Scene/저장소는 Fake가 아니다.
 - 큰 조립부를 여러 서비스/추상 Factory로 다시 감싸는 작업은 하지 않았다. 이번 분리는 같은 클래스의 파일 탐색만 단순하게 한다. 새 public API는 주입 대상/호출 주체/해제 책임이 실제로 있을 때 추가한다.
 - Scene의 구형 Debug Spawner, 미지정 NGO prefab 경고, 제작 터렛의 중복 runtime ID 재배정 경고는 기존 제작 참조가 있다. 발견 순서로 실행기를 고르지 않도록 이미 명시 설정을 쓴다. 이를 무작정 지워 팀원의 제작 자료를 변경하지 않았다. 해당 경고를 오류0 검사와 혼동하지 않는다.
@@ -62,4 +62,4 @@ flowchart LR
 | 6 | `.Checkpoints.cs`의 `BindCheckpoints`, `AppRoot.ResumeCheckpointAsync` | Feature writer 등록, 슬롯→새 Match→복원과 실패/취소 경계 |
 | 7 | `OnMatchCompleted → ReleaseOwnedBindings`, `AppRoot.EndCurrentMatch` | 게임 작업 종료와 Scene/앱 수명을 구분하고 구독/actor를 누가 해제하는지 |
 
-`MatchSession.Submit`은 실제 Player/터렛/Enemy 기능을 찾아가는 입구가 아니다. 실제 관리 요청은 `TurretCommandGateway/Service`, 스폰 요청은 `EncounterRequestService`, Player 자체 이동/공격은 Feature 실행 코드에서 시작한다.
+범용 Submit은 MatchSession과 PlayerSceneAdapter에서 제거했다. PlayerSceneAdapter는 Feature의 Bind/BindNetworkMatch/Unbind 수명을 계속 연결한다. 실제 터렛 요청은 `TurretCommandGateway/Service`, 스폰 요청은 `EncounterRequestService`, Player 이동/공격은 Feature/Host 경계에서 처리한다.
