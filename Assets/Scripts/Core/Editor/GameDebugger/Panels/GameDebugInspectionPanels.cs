@@ -16,7 +16,7 @@ namespace TeamHJD.Game.Editor
         private static InitialStageCompositionRoot _timeScene;
         public static void DrawOverview(GameDebugMonitorState view)
         {
-            // Steam diagnostics are added by the SDK PR.
+            GameDebugPlatformPanel.Draw();
             GameDebugGameFlowPanel.Draw();
             var source=GameDebuggerSession.Source;
             var run=GameDebuggerSession.Current;
