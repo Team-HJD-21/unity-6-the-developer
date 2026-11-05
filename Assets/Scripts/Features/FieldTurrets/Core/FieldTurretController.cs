@@ -127,12 +127,14 @@ namespace TeamHJD.Game.FieldTurrets
             public int InstanceId { get; }
             public int EnemyCount { get; }
             public float Score { get; }
+            public float FirepowerEfficiency { get; }
             internal bool Completed;
-            internal AutoActivationCandidate(int id, int enemyCount, float score)
+            internal AutoActivationCandidate(int id, int enemyCount, float score, float firepowerEfficiency)
             {
                 InstanceId = id;
                 EnemyCount = enemyCount;
                 Score = score;
+                FirepowerEfficiency = firepowerEfficiency;
             }
         }
 
@@ -153,12 +155,15 @@ namespace TeamHJD.Game.FieldTurrets
                 int count = turret.CountEnemiesInAttackRange();
                 float score = AutoActivationScoreProvider != null ? AutoActivationScoreProvider(turret, count) : count;
                 if (float.IsNaN(score) || float.IsInfinity(score)) score = count;
-                _autoCandidates.Add(new AutoActivationCandidate(turret.InstanceId, count, score));
+                float efficiency = turret.EffectivePower > 0 ? (float)turret.EffectiveDamage / turret.EffectivePower : 0f;
+                _autoCandidates.Add(new AutoActivationCandidate(turret.InstanceId, count, score, efficiency));
             }
             _autoCandidates.Sort((left, right) =>
             {
                 int byScore = right.Score.CompareTo(left.Score);
-                return byScore != 0 ? byScore : left.InstanceId.CompareTo(right.InstanceId);
+                if (byScore != 0) return byScore;
+                int byEfficiency = right.FirepowerEfficiency.CompareTo(left.FirepowerEfficiency);
+                return byEfficiency != 0 ? byEfficiency : left.InstanceId.CompareTo(right.InstanceId);
             });
 
             _nextAutoActivationTime = Time.time + AutoActivationCooldownSeconds;
@@ -171,8 +176,6 @@ namespace TeamHJD.Game.FieldTurrets
 
         private void AdvanceAutoActivation()
         {
-            bool hasCoolingCandidate = false;
-            bool hasPowerPendingCandidate = false;
             foreach (AutoActivationCandidate candidate in _autoCandidates)
             {
                 if (candidate.Completed) continue;
@@ -189,19 +192,21 @@ namespace TeamHJD.Game.FieldTurrets
                     candidate.Completed = true;
                     continue;
                 }
+                if ((long)turret.EffectivePower > (long)Budget.CurrentPower + Budget.PendingRecovery)
+                {
+                    candidate.Completed = true; // 반환이 끝나도 켤 수 없는 후보만 제외한다.
+                    continue;
+                }
                 FieldTurretActivationResult result = turret.RequestSystemActivation(true);
                 if (result == FieldTurretActivationResult.CoolingDown)
                 {
-                    hasCoolingCandidate = true;
-                    continue;
+                    return; // 앞선 후보의 냉각이 끝나기 전에는 다음 후보를 켜지 않는다.
                 }
 
-                candidate.Completed = result != FieldTurretActivationResult.InsufficientPower;
-                if (!candidate.Completed) hasPowerPendingCandidate = true;
+                if (result == FieldTurretActivationResult.InsufficientPower) return;
+                candidate.Completed = true;
             }
-            if (!hasCoolingCandidate &&
-                (!hasPowerPendingCandidate || Budget.PendingRecovery == 0))
-                IsAutoActivationRunning = false;
+            IsAutoActivationRunning = false;
         }
 
         private void OnDisable()
