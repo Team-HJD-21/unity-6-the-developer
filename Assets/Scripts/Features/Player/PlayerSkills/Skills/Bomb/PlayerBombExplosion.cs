@@ -1,9 +1,11 @@
+// 설치된 폭탄의 실제 지연·피해·제거를 같은 필드 시간으로 처리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>폭탄의 지연 폭발과 단일 대상 중복 피해 방지, 폭발 연출의 수명을 관리합니다.</summary>
 [DisallowMultipleComponent]
-public sealed class PlayerBombExplosion : MonoBehaviour
+public sealed partial class PlayerBombExplosion : MonoBehaviour
 {
     [FormerlySerializedAs("bomb")]
     [SerializeField] private GameObject _bombVisual;
@@ -24,12 +26,14 @@ public sealed class PlayerBombExplosion : MonoBehaviour
     private float _elapsed;
     private bool _exploded;
     private bool _hasExplosionParameter;
+    private bool _applyingExplosion;
     private PlayerTimeBombVisual _presentation;
 
     public void BindOwner(Transform owner) => _depth?.Bind(owner);
 
     private void Awake()
     {
+        TeamHJD.Game.Presentation.Scene.CheckpointActorFactory.EnsureIdentity(gameObject);
         _presentation = GetComponent<PlayerTimeBombVisual>();
         if (_animator == null) _animator = GetComponent<Animator>();
         if (_animator != null && _animator.runtimeAnimatorController != null)
@@ -57,7 +61,8 @@ public sealed class PlayerBombExplosion : MonoBehaviour
 
     private void Update()
     {
-        _elapsed += Time.deltaTime;
+        if (!FieldSimulationTime.CanAdvance(this)) return;
+        _elapsed += FieldSimulationTime.DeltaTime(this);
         if (!_exploded && _presentation != null) _presentation.UpdateFuse(_elapsed, _fuseSeconds, _radius);
         if (!_exploded && _elapsed >= _fuseSeconds) Explode();
         if (_exploded && _elapsed >= _fuseSeconds + _effectSeconds) Destroy(gameObject);
@@ -65,7 +70,7 @@ public sealed class PlayerBombExplosion : MonoBehaviour
 
     public bool Explode()
     {
-        if (_exploded || !isActiveAndEnabled) return false;
+        if (!FieldSimulationTime.CanAdvance(this) || _exploded || !isActiveAndEnabled) return false;
         _exploded = true;
         _elapsed = Mathf.Max(_elapsed, _fuseSeconds);
         // 접지 Collider를 끄면 bounds가 비므로 폭발 연출은 마지막 표시 순서를 유지합니다.
@@ -75,7 +80,9 @@ public sealed class PlayerBombExplosion : MonoBehaviour
         if (_bodyCollider != null) _bodyCollider.enabled = false;
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, true);
         if (_presentation != null) _presentation.PlayExplosion(_radius, _effectSeconds);
-        _areaDamage.Apply(transform.position, _radius, _damage);
+        _applyingExplosion = true;
+        try { _areaDamage.Apply(transform.position, _radius, _damage); }
+        finally { _applyingExplosion = false; }
         return true;
     }
 }

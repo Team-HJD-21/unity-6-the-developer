@@ -1,11 +1,12 @@
+// 장치의 적 대상 효과를 실제 Enemy 원본에 연결하고 필드 정지 중 적용을 막습니다.
 using UnityEngine;
 
 /// <summary>장비까지의 이동과 장비 공격 간격만 처리합니다.</summary>
 public sealed class PlayerFieldEnemyBehaviour
 {
-    private float _nextAttack;
+    private double _nextAttack;
     public bool Step(Transform actor, Collider2D body, IPlayerFieldTarget device, float speed, float range,
-        float damage, float cooldown, float now, float elapsed, out Vector2 direction, out bool moving)
+        float damage, float cooldown, double now, float elapsed, out Vector2 direction, out bool moving)
     {
         direction = Vector2.zero;
         moving = false;
