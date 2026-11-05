@@ -1,5 +1,4 @@
 // Scene의 Player Feature에 실제 Match/네트워크 소유권을 연결하고 해제합니다.
-// 일반 명령 Submit은 초기 호환 창구이며 실제 이동/전투를 실행하는 API가 아닙니다.
 
 using System;
 using System.Collections.Generic;
@@ -52,13 +51,6 @@ namespace TeamHJD.Game.Presentation.Scene
             }
             catch (Exception error) { RollbackBinding(error); throw; }
             finally { _isBinding = false; }
-        }
-
-        /// <summary>기존 일반 명령의 호환 창구입니다. 실제 처리는 없으므로 새 기능은 전용 Feature/Host 요청 API를 사용합니다.</summary>
-        public CommandSubmissionResult Submit(GameCommand command)
-        {
-            if (_session == null) throw new InvalidOperationException("PlayerSceneAdapter is not bound to a match.");
-            return _session.Submit(command);
         }
 
         public void Unbind()

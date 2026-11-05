@@ -33,7 +33,7 @@ namespace TeamHJD.Game.Application
         public ITurretCommandTransport NetworkTurretCommands { get; private set; }
         public ITurretPresentationTransport NetworkTurretPresentation { get; private set; }
 
-        public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow, IAuthority authority,
+        public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow,
             INetworkSession networkSession = null, ICheckpointStore checkpointStore = null,
             ICheckpointPayloadCodec checkpointPayloads = null, int? presentationRandomSeed = null)
         {
@@ -46,7 +46,7 @@ namespace TeamHJD.Game.Application
             InputLocks = new InputLockService();
             Screens = new ScreenManager(InputLocks);
             SceneTransitions = new SceneFlowController(SceneFlow, InputLocks);
-            MatchSessions = new MatchSessionFactory(authority ?? throw new ArgumentNullException(nameof(authority)));
+            MatchSessions = new MatchSessionFactory();
             NetworkSession = networkSession;
             CheckpointStore = checkpointStore;
             CheckpointPayloads = checkpointPayloads;
