@@ -45,6 +45,7 @@ namespace TeamHJD.Game.Editor
                 }
             }
             if (_timeScene == null) _timeScene = UnityEngine.Object.FindAnyObjectByType<InitialStageCompositionRoot>();
+            GameDebugCheckpointPanel.Draw(_timeScene);
             var matchTime = _timeScene == null ? null : _timeScene.MatchTime;
             var presence = _timeScene == null ? null : _timeScene.MatchPresence;
             if (matchTime != null) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
