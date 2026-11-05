@@ -1,5 +1,7 @@
 # Milestones and Core Design
 
+> 이 문서는 초기 설계/마일스톤 이력이다. 범용 GameCommand·LocalAuthority·Simulation 및 Submit 구상은 현행 API가 아니며 제거됐다. 실제 호출 규칙은 [Core API 사용 규약](../architecture/core-api-usage.md)을 따른다.
+
 기준일: 2026-09-20
 상태: Milestone·Priority·기술 구현의 현행 기준 / Sprint 1 Stage 1 PoC 실행 중
 
