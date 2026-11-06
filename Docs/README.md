@@ -151,6 +151,7 @@ Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 �
 | Player 입력·설치 | [입력 계약](architecture/player-primary-input-api.md), [스킬](architecture/player-skill-review.md) |
 | 터렛 상태·전력·공개 API | [터렛 API](architecture/turrets/api-reference.md), [구조와 초안](architecture/turrets/index.md) |
 | Enemy 구조·생성 | [Enemy 가이드](architecture/enemy-system-guide.md) |
+| 날씨 변경·예고·화면 효과 | [날씨 시스템 설계와 API](architecture/weather-system-guide.md) |
 | 담당·진행 상태 | GitHub Issue/Project. [역할](team/TEAM_ROLE_OWNERSHIP.md)은 책임 기준 |
 | 실제 동작과 인수 | 해당 코드 버전과 실행/PL 인수 증거. 계획으로 완료를 추정하지 않음 |
 
