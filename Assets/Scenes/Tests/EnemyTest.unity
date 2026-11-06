@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 1452530}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -62, y: -27.8, z: 0}
+  m_LocalPosition: {x: -35.1, y: 18.9, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -431,6 +431,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
+--- !u!4 &52902671 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8472963676150703458, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
+  m_PrefabInstance: {fileID: 52902670}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &73397766
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -845,7 +850,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 187139614}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!1 &141550348
 GameObject:
@@ -493836,6 +493844,42 @@ MonoBehaviour:
   m_Area: 0
   m_IgnoreFromBuild: 0
   m_AffectedAgents: ffffffff
+--- !u!1 &162466680 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1264729469}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &162466687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 162466680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/0162b1711e31435aa0cc49b79862e75e
+--- !u!1 &187139607 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 134613466}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &187139614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 187139607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/340d593c9de64f9480b1e058efd7a2b2
 --- !u!1 &215766731
 GameObject:
   m_ObjectHideFlags: 0
@@ -494134,6 +494178,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.MatchCameraFollow
   smoothTime: 0.15
+--- !u!1 &292097374 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1885139232}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &292097381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 292097374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/9e89c60247734c91a3d53a2bb5694d3e
 --- !u!1 &297159760
 GameObject:
   m_ObjectHideFlags: 0
@@ -494959,6 +495021,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Turrets::TeamHJD.Game.Turrets.TurretController
   maximumPower: 100
+  destructionPowerReturnPercent: 50
   unlockGridOrigin: {x: 0, y: 0}
   unlockGridOriginZ: 0
   unlockGridMapWidth: 275
@@ -495302,7 +495365,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 976467375}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &750224954
 GameObject:
@@ -1268687,6 +1268753,24 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!1 &834688527 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 2000501889}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &834688533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 834688527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/902ccbc4a00a423180e4ec09b5be4ee7
 --- !u!1 &847507612
 GameObject:
   m_ObjectHideFlags: 0
@@ -1334690,6 +1334774,8 @@ GameObject:
   m_Component:
   - component: {fileID: 877435132}
   - component: {fileID: 877435133}
+  - component: {fileID: 877435134}
+  - component: {fileID: 877435136}
   m_Layer: 0
   m_Name: InitialStageCompositionRoot
   m_TagString: Untagged
@@ -1334729,6 +1334815,41 @@ MonoBehaviour:
   battlefieldGridSettings: {fileID: 11400000, guid: 414e8db3e6ce4f86ad48b9d060045120, type: 2}
   _encounterConsumerBehaviour: {fileID: 1735068340}
   _networkBinding: {fileID: 0}
+--- !u!114 &877435134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a518c49703f37de4f99e89bc37b9f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.RegionSceneBinding
+  _controller: {fileID: 393497335}
+  _controlUnit: {fileID: 52902671}
+  _initialMode: 0
+--- !u!114 &877435136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 539cb1bc453b4f01be74b4c14fc8ac6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.TurretMatchBinding
+  _controller: {fileID: 393497335}
+  _battlefieldSource: {fileID: 1493643881}
+  _commandLevelCatalog: {fileID: 11400000, guid: 248f482a7ee948478f1e0528ed60cf86, type: 2}
+  _commandUpgrades:
+  - {fileID: 11400000, guid: ed4eb21118c1461caba77c381399f6d1, type: 2}
+  - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
+  - {fileID: 11400000, guid: a710a35a5d3c49b794d2f387d53dce10, type: 2}
+  - {fileID: 11400000, guid: b28a795f5a364f249b632692a760317c, type: 2}
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -1334904,6 +1335025,24 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!1 &976467368 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 744781636}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &976467375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976467368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/0e3875aaac6b40fbae7f76d44b3099f4
 --- !u!1001 &983937173
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1335049,7 +1335188,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2000300580}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!1 &1051746015
 GameObject:
@@ -1335131,6 +1335273,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1058646410 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 2120963519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1058646417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1058646410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/23cb55e6935c424390043aa5dcc60d58
 --- !u!1 &1186160097
 GameObject:
   m_ObjectHideFlags: 0
@@ -1335351,7 +1335511,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 162466687}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1268668570
 GameObject:
@@ -1336411,7 +1336574,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1958312571}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1001 &1613032759
 PrefabInstance:
@@ -1336689,8 +1336855,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afee2fd02998d994f8f62eda64603f11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
-  initialSquadOrder: Normal
-  initialEnemyLimit: 10
+  initialSquadOrder: BlackWolf
+  initialEnemyLimit: 1
   initialEncounterDelay: 0.5
 --- !u!1 &1749657957
 GameObject:
@@ -1336877,6 +1337043,71 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!1001 &1792789426
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -39.08898
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 15.033605
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6127306109655348786, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: runOffline
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7542723251226543163, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: m_Name
+      value: BlackWolf
+      objectReference: {fileID: 0}
+    - target: {fileID: 8138426650611079632, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3397576142
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
 --- !u!1 &1804844892
 GameObject:
   m_ObjectHideFlags: 0
@@ -1337140,7 +1337371,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 292097381}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1912653131
 GameObject:
@@ -1337323,6 +1337557,24 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d02e9a746e9a18548aa12f1644174efe, type: 3}
+--- !u!1 &1958312564 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1603658788}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1958312571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1958312564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/3519525105ae48729ddeb977e1c177af
 --- !u!1 &1978399367
 GameObject:
   m_ObjectHideFlags: 0
@@ -1358985,6 +1359237,24 @@ MonoBehaviour:
   m_Area: 1
   m_IgnoreFromBuild: 0
   m_AffectedAgents: ffffffff
+--- !u!1 &2000300573 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 992367857}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2000300580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000300573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/b751286b695b4b9c9f196b18de8e697f
 --- !u!1001 &2000501889
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1359060,7 +1359330,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 834688533}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1001 &2018641262
 PrefabInstance:
@@ -1359250,7 +1359523,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1058646417}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -1359288,3 +1359564,4 @@ SceneRoots:
   - {fileID: 1953553424}
   - {fileID: 2018641262}
   - {fileID: 1381981632}
+  - {fileID: 1792789426}
