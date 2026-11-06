@@ -10,7 +10,12 @@ public class EnemyHealth : MonoBehaviour
     [SerializeField, Min(1)] private int maxHealth = 20;
     private bool _isDead;
     private bool _isActive;
-
+    public bool CanBeHealed =>
+        isActiveAndEnabled &&
+        _isActive &&
+        !_isDead &&
+        currentHealth < maxHealth;
+    
     /// <summary>
     /// 체력이 0이 되었을 때 한 번 발생한다.
     /// </summary>
@@ -47,6 +52,14 @@ public class EnemyHealth : MonoBehaviour
         {
             Die();
         }
+    }
+
+    public void Heal(int healAmount)
+    {
+        if (!CanBeHealed || healAmount <= 0)
+            return;
+        
+        currentHealth = Mathf.Clamp(currentHealth + healAmount, 0, maxHealth);
     }
 
     private void Die()

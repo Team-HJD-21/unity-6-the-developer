@@ -37,10 +37,14 @@ public class MovingEnemyController : EnemyController
         {
             StopMoving();
 
-            if (enemyTargeting.Target != null)
+            Transform facingTarget = enemyAbility.FacingTarget;
+            if (facingTarget == null)
+                facingTarget = enemyTargeting.Target;
+
+            if (facingTarget != null)
             {
                 Vector2 abilityDirection =
-                    (Vector2)enemyTargeting.Target.position - (Vector2)transform.position;
+                    (Vector2)facingTarget.position - (Vector2)transform.position;
 
                 if (abilityDirection.sqrMagnitude > 0.0001f)
                     enemyAnimation.SetFacingDirection(abilityDirection);
@@ -51,6 +55,7 @@ public class MovingEnemyController : EnemyController
         }
 
         if (enemyTargeting.Target == null ||
+            enemyAbility.IsInRange(enemyTargeting.TargetColliders) ||
             !enemyMovement.TryGetNextPathDirection(out Vector2 moveDirection))
         {
             StopMoving();

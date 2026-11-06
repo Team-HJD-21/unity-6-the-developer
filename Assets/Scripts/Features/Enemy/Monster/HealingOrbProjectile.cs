@@ -1,0 +1,54 @@
+using UnityEngine;
+
+/// <summary>선택한 아군을 추적하고 도착하면 체력을 회복한다.</summary>
+public class HealingOrbProjectile : EnemyProjectile
+{
+    [Header("이동")]
+    [SerializeField, Min(0.01f)] private float moveSpeed = 3f;
+    [SerializeField, Min(0.01f)] private float arrivalDistance = 0.1f;
+
+    
+    private EnemyHealth _target;
+    private int _healAmount;
+
+    public void Initialize(EnemyHealth target, int healAmount)
+    {
+        _target = target;
+        _healAmount = healAmount;
+        
+        BeginLifetime();
+    }
+
+    private void Update()
+    {
+        if (!CanSimulate)
+            return;
+        
+        if (_target == null ||
+            !_target.CanBeHealed ||
+            _healAmount <= 0)
+        {
+            Remove();
+            return;
+        }
+        
+        Vector2 targetPosition = _target.transform.position;
+
+        Vector2 nextPosition = Vector2.MoveTowards(
+            transform.position,
+            targetPosition,
+            moveSpeed * Time.deltaTime);
+
+        // 깊이 정렬에 사용하는 Z를 유지하고 XY 평면에서 추적한다.
+        Vector3 position = transform.position;
+        position.x = nextPosition.x;
+        position.y = nextPosition.y;
+        transform.position = position;
+
+        if ((targetPosition - nextPosition).sqrMagnitude > arrivalDistance * arrivalDistance)
+            return;
+
+        _target.Heal(_healAmount);
+        Remove();
+    }
+}

@@ -19,6 +19,11 @@ public abstract class EnemyAbility : MonoBehaviour
 
     public virtual bool IsExecuting => false;
 
+    /// <summary>
+    /// 능력 사용 시 바라볼 대상. 없으면 컨트롤러에 배정된 타깃을 사용한다.
+    /// </summary>
+    public virtual Transform FacingTarget => null;
+
     protected virtual void Awake()
     {
         // 명시적으로 연결한 콜라이더는 Trigger 여부와 관계없이 사용한다.
@@ -60,6 +65,14 @@ public abstract class EnemyAbility : MonoBehaviour
     }
 
     protected abstract bool Activate();
+
+    /// <summary>
+    /// 현재 능력의 범위 안에 대상 콜라이더가 있는지 확인한다.
+    /// </summary>
+    public bool IsInRange(Collider2D[] targetColliders)
+    {
+        return IsInRange(targetColliders, activationRange);
+    }
 
     /// <summary>
     /// 자신의 몸통과 대상 콜라이더 사이의 간격이 지정 거리 이내인지 확인한다.
