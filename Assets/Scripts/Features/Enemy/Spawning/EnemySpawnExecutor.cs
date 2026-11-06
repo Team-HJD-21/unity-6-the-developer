@@ -237,7 +237,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
     /// <summary>
     /// 서버에서 분대 생성 명령의 지점·수량·프리팹을 검증하고 적을 생성한다.
-    /// 구성원을 같은 분대에 등록한 뒤 네트워크에 스폰하고 공동 목표를 지정한다.
+    /// 적 정의의 분대 설정에 따라 등록한 뒤 네트워크에 스폰하고 목표를 지정한다.
     /// 계획 후 지점이 점령되어 생성할 수 없게 되었다면 명령을 실행하지 않는다.
     /// </summary>
     /// <param name="spawnInstruction">분대의 스폰 지점과 적별 수량이 담긴 명령.</param>
@@ -262,7 +262,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             return Fail("Enemy catalog / registry missing", observeFailure);
         }
 
-        // 명령 하나가 분대 하나이므로 모든 구성원이 공유할 스폰 지점을 한 번만 찾는다.
+        // 같은 생성 명령의 적들이 공유할 스폰 지점을 한 번만 찾는다.
         if (!_spawnPointList.TryGetSpawnPoint(
                 spawnInstruction.SpawnPointId,
                 out SpawnPoint spawnPoint))
@@ -299,7 +299,8 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             definitions.Add(enemy);
         }
 
-        EnemySquad squad = new EnemySquad();
+        Dictionary<EnemyTargetRule, EnemySquad> sharedSquads = new();
+        List<EnemySquad> createdSquads = new();
         int spawnedCount = 0;
         for (int entryIndex = 0; entryIndex < spawnInstruction.Enemies.Count; entryIndex++)
         {
@@ -319,8 +320,21 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                     spawnPoint.Rotation);
 
                 EnemyController controller = spawnedMonster.GetComponent<EnemyController>();
-                // 네트워크 스폰 전에 분대 소속으로 지정해 개별 타깃 선택을 중지한다.
-                if (!squad.AddMember(controller))
+                EnemySquad memberSquad;
+                if (enemy.SquadMode == EnemySquadMode.Individual)
+                {
+                    memberSquad = new EnemySquad(enemy.SquadMode, enemy.TargetRule);
+                    createdSquads.Add(memberSquad);
+                }
+                else if (!sharedSquads.TryGetValue(enemy.TargetRule, out memberSquad))
+                {
+                    // 공동 분대도 타깃 규칙이 같은 구성원끼리 묶는다.
+                    memberSquad = new EnemySquad(enemy.SquadMode, enemy.TargetRule);
+                    sharedSquads.Add(enemy.TargetRule, memberSquad);
+                    createdSquads.Add(memberSquad);
+                }
+
+                if (!memberSquad.AddMember(controller))
                 {
                     Debug.LogError($"Failed to register enemy in squad: {enemy.EnemyId}");
                     Fail("Failed to register squad member: " + enemy.EnemyId, observeFailure);
@@ -334,7 +348,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                     spawnedMonster.GetComponent<EnemyNetworkController>();
                 networkObject.Spawn();
                 _spawnedEnemies[networkObject.NetworkObjectId] =
-                    new TrackedEnemy(networkObject, controller, networkController, squad,
+                    new TrackedEnemy(networkObject, controller, networkController, memberSquad,
                         context, enemy.EnemyId, spawnInstruction.SpawnPointId);
                 networkController.Despawned += OnEnemyDespawned;
                 networkController.DeathConfirmed += OnEnemyDied;
@@ -357,16 +371,17 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
             }
         }
 
-        // 한 명도 생성되지 않았다면 빈 분대는 보관하지 않는다.
-        if (!squad.TryGetCenterPosition(out _))
-            return spawnedCount;
+        foreach (EnemySquad createdSquad in createdSquads)
+        {
+            if (createdSquad.IsEmpty)
+                continue;
 
-        // 모든 구성원이 모인 뒤 분대 중심에서 최초 공동 목표를 선택한다.
-        bool hasTarget = squad.SetTarget();
-        // 최초 후보가 없어도 분대를 보관해 이후 Update에서 다시 찾을 수 있게 한다.
-        _squads.Add(squad);
-        if (!hasTarget)
-            Debug.LogWarning($"No targetable Player or Turret found for squad at {spawnInstruction.SpawnPointId}.");
+            // 최초 후보가 없어도 보관해 이후 Update에서 다시 찾는다.
+            bool hasTarget = createdSquad.SetTarget();
+            _squads.Add(createdSquad);
+            if (!hasTarget)
+                Debug.LogWarning($"No eligible target found for squad at {spawnInstruction.SpawnPointId}.");
+        }
         return spawnedCount;
     }
 
