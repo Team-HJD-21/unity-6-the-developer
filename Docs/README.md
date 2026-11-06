@@ -1,4 +1,4 @@
-# The Developer — Project Documentation
+# The Developer 문서 안내
 
 최근 기획: [11월 6일 기획 보강 근거·후속](planning/2026-11-06-planning-review.md). 현행 우주선 출입·점유·안전장치 정책은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 아래 이전 회의 안내의 정지 정책은 당시 기록이며 현행을 대체하지 않는다.
 
@@ -142,34 +142,24 @@ Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 �
 
 ## Source of Truth
 
-| 질문 | 기준 문서 | 보조 문서 |
-| --- | --- | --- |
-| 무엇을 만들고 무엇을 미룰 것인가? | [Product Plan](product/PROJECT_PLAN.md) Decision Log | [System Charter](architecture/system-rearchitecture-charter.md) |
-| 레거시를 어떻게 교체하고 어떤 의존성을 허용하는가? | [System Charter](architecture/system-rearchitecture-charter.md) | [Naming](architecture/naming-and-architecture-conventions.md), [Architecture Notes](architecture/architecture-rebuild-notes.md) |
-| M0~M5에서 무엇을 언제 검증하는가? | [Milestones and Core Design](planning/milestones-and-core-design.md) | [Development Flow](planning/DEVELOPMENT_FLOW.md) |
-| 누가 무엇을 소유하는가? | [Team Role Ownership](team/TEAM_ROLE_OWNERSHIP.md) | [Team Workflow](team/TEAM_WORKFLOW.md) |
-| Sprint·Git·Review·Ready·Done은 어떻게 운영하는가? | [Team Workflow](team/TEAM_WORKFLOW.md) | [Development Flow](planning/DEVELOPMENT_FLOW.md) |
-| 현재 무엇을 하는가? | [Sprint 1 Stage 1 PoC](planning/SPRINT_1_STAGE_1_POC.md) | GitHub Issue/Project |
+| 질문 | 기준 |
+| --- | --- |
+| 게임 방향·범위·확정 제품 규칙 | [Product Plan](product/PROJECT_PLAN.md) |
+| 현재 목표·미정·검증할 항목 | [현재 실행 계획](planning/current-execution-plan.md) |
+| 장기 Milestone·기술 Gate | [Milestone](planning/milestones-and-core-design.md) |
+| 책임·수명과 공용 호출 | [Core API 지도](architecture/core-lifecycle-and-api-guide.md), [Match 책임](architecture/match-management-responsibilities.md), 각 영역 API |
+| Player 입력·설치 | [입력 계약](architecture/player-primary-input-api.md), [스킬](architecture/player-skill-review.md) |
+| 터렛 상태·전력·공개 API | [터렛 API](architecture/turrets/api-reference.md), [구조와 초안](architecture/turrets/index.md) |
+| Enemy 구조·생성 | [Enemy 가이드](architecture/enemy-system-guide.md) |
+| 담당·진행 상태 | GitHub Issue/Project. [역할](team/TEAM_ROLE_OWNERSHIP.md)은 책임 기준 |
+| 실제 동작과 인수 | 해당 코드 버전과 실행/PL 인수 증거. 계획으로 완료를 추정하지 않음 |
 
-충돌할 경우 위 표의 기준 문서가 우선한다. 기준을 변경할 때는 보조 문서와 현재 Backlog를 같은 PR에서 함께 갱신한다.
+## 찾기
 
-## 용어 구분
+- [공식 문서 검색](https://docs.teamhjd.com/docs/projects/the-developer/api-search): 선택한 프로젝트의 현행 문서만 검색한다.
+- [공식 아카이브 검색](https://docs.teamhjd.com/docs/projects/the-developer/archive-search): 사이트에 게시된 해당 프로젝트의 과거 문서만 별도로 검색한다.
+- [정리 규칙](DOCS_ORGANIZATION_RULES.md) · [개발 흐름](planning/DEVELOPMENT_FLOW.md) · [기술 명명](architecture/naming-and-architecture-conventions.md) · [에셋 구조](architecture/asset-layout-and-migration.md)
+- [도구 사용법](tooling/game-debugger-guide.md) · [Unity 검사 규칙](development/unity-runtime-test-guidelines.md)
+- [교체·보관 목차](archive/2026-11-05/index.md). 과거 문서의 당시 경로·테스트·미정은 현재 계약이 아니다.
 
-- `Product Vertical Slice`: Spaceship 준비부터 Planet 전투·귀환까지 플레이어가 경험하는 M2 검증판
-- `Architecture Slice`: M1에서 한 계약을 Domain부터 Test Scene까지 연결하는 작은 기술 단위
-- `P0`: 해당 Milestone의 통과를 막는 필수 작업
-- `P1`: Milestone의 핵심 결과를 완성하는 작업
-- `P2`: 품질·사용성·도구 개선 작업
-- `P3`: 현재 Milestone 밖의 아이디어 또는 Deferred 작업
-
-## 문서 변경 규칙
-
-- 게임 규칙·범위·Deferred 변경: [PROJECT_PLAN.md](product/PROJECT_PLAN.md) Decision Log
-- Core lifecycle·data contract·외부 SDK 경계 변경: System Charter와 Core Design
-- 역할·AI Owner 변경: Team Role Ownership과 Team Workflow
-- Milestone 또는 Priority 변경: Core Design, Development Flow, 현재 Sprint Backlog
-- 승인되지 않은 초안은 Source of Truth와 같은 표현을 사용하지 않는다.
-
-- [Player Input Guide](team/player-input-guide.md): Player V2 입력, Match 연결과 임시 포탑 체력·재충전 설정
-
-- [2026-10-30 기획 보강 검토](planning/2026-10-30-planning-review.md) · [2026-10-31 정기회의 검토](planning/2026-10-31-regular-meeting.md): 원본 전사/수기 대조와 결정·후속·미정 근거.
+현행 문서를 교체하기 전 버전은 보존하고 기존 링크는 보관 안내로 유지한다. 팀원 이름을 기술 식별자의 부분 문자열에 치환하지 않는다.

@@ -1,0 +1,176 @@
+> 보관 문서 · 2026-11-05 교체 전 스냅샷
+> 기준 커밋: `1a03e9a9164e5db94cbc8775162467d08cf63a3b`. 당시 설명·검증 근거이며 현행 실행 지시가 아니다.
+
+# Sprint 1 — Stage 1 PoC
+
+기준 회의: 2026-09-19 정기회의 · 2026-09-26 검토 방향 보충
+실행 기간: 2026-09-19 ~ 2026-10-02
+팀 플레이 테스트: 2026-10-02
+피드백 회의: 2026-10-03 진행 · PoC 결과 판정 보류
+상태: 실행 기준 / 양현석 기술 PoC 인수 완료 · 팀 공통 Build 기록 별도
+
+2026-10-08: PL이 양현석의 런타임 공간 분석·스폰 통합과 도구 동작을 직접 확인하고 기술 PoC를 인수했다. [최신 마감 기록](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-08-poc-closeout-and-pr-handoff.md)을 따른다. 아래의 팀 공동 플레이 가설·공통 Build 기준은 양현석 구현의 인수와 별도로 보존한다. 미정 승리 조건을 이번 구현의 완료 조건으로 추가하지 않는다.
+
+2026-10-10 회의에서는 팀 상태를 M1과 M2 사이로 설명했고, M1 완료나 M2 일정은 확정하지 않았다. 재미 검증은 남아 있다. [정기회의 검토 기록](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-10-regular-meeting.md)에는 터렛 수리·잠금 방향과 기술·일정 미정을 구분해 기록한다.
+
+2026-10-24 수기·후반 전사를 대조한 전력·Repair/Restore·키 유지 수리, 분대 목표 유지와 성장 방향은 후속 설계 입력이다. 가동 시간 없음을 무제한 사격으로, 스패너 수리 무기 조작 대체를 모션 전체 제거로 해석하지 않는다. 성장·재화 검토를 이번 PoC 완료 조건으로 추가하지 않고, 기존 time-box·재미 검증·구현 완료·실제 플레이 증거를 구분한다. 새 Sprint 번호나 종료일도 확정하지 않았다. [회의 검토 기록](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-24-regular-meeting.md)
+
+[문서 목차](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/README.md)
+
+> Sprint Goal: 최소 Graybox에서 전제 1(동적 전선)과 전제 2(지역 해금)가 각각 재미있는 전력·전선 선택을 만드는지 시험한다. 2026-10-02 통합 Build에서는 가능한 시제품의 플레이 감각과 기술 위험을 관찰한다. 두 안의 구현 순서·병행 범위와 최종 채택안은 미정이다.
+
+## Sprint 1 2주차 목표 — 마무리 주간 (2026-09-28 ~ 2026-10-02)
+
+> 이 절의 영역별 작업은 2026-09-28 현재 GitHub `Stage 1 PoC` 마일스톤의 열린 Issue를 모아 보여준다. 각 Issue가 실제 담당·진행 상태의 기준이며, 표는 새 담당 배정이나 완료 선언이 아니다. Sprint 1의 공통 목표는 전제 1(동적 전선)과 전제 2(지역 해금)의 재미를 시험하는 것이다. 둘 중 무엇을 먼저 또는 함께 구현할지는 정해지지 않았다.
+
+| 영역 | 2주차에 확인할 작업 | 담당 / Issue |
+| --- | --- | --- |
+| 공통 통합 | 10월 2일 같은 Build에서 전력 배분, 터렛·Enemy 전투, 거점·전선 변화를 플레이하고 관찰 결과를 기록한다. Issue에 적힌 임시 승패 조건은 최근 결정 문서에서 확정되지 않았으므로 확정 기준으로 취급하지 않는다. | 전체 팀 · [#420](https://github.com/Team-HJD-21/unity-6-the-developer/issues/420) |
+| Core·전선·도구 | Turret snapshot을 받아 점유 topology와 경계 데이터를 만들고 Scene View에서 관찰한다. 레거시 경로 제거는 Owner가 검토·승인한 항목에 한해 진행한다. | 양현석 · [#443](https://github.com/Team-HJD-21/unity-6-the-developer/issues/443), [#446](https://github.com/Team-HJD-21/unity-6-the-developer/issues/446), [#441](https://github.com/Team-HJD-21/unity-6-the-developer/issues/441) |
+| Player | 새 스킬 입력·쿨다운·기본 피드백을 구현하고 터렛 보조 수단으로 유효한지 확인한다. P2 품질 개선 Issue이므로 공통 PoC 통합 완료 조건과는 구분한다. | 이영빈 · [#452](https://github.com/Team-HJD-21/unity-6-the-developer/issues/452) |
+| Turret·전력 | AI·전선용 읽기 전용 snapshot, 해금·활성화 제한, 업그레이드와 Enemy 연동을 구현·검증하고 통합 담당자에게 결과를 전달한다. 파괴 전력 반환 여부와 비율은 미정이며 API 입력값만 열어둔다. | 황재동 · [#422](https://github.com/Team-HJD-21/unity-6-the-developer/issues/422), [#425](https://github.com/Team-HJD-21/unity-6-the-developer/issues/425), [#426](https://github.com/Team-HJD-21/unity-6-the-developer/issues/426), [#427](https://github.com/Team-HJD-21/unity-6-the-developer/issues/427), [#430](https://github.com/Team-HJD-21/unity-6-the-developer/issues/430), [#432](https://github.com/Team-HJD-21/unity-6-the-developer/issues/432) |
+| Enemy | Player·Turret·Stage 연동 및 네트워크 동작을 검증하고, 선행 오류를 정리한 뒤 Spawner 동작을 확인한다. 최종 Wave 구성이나 난이도 조정은 범위에 포함하지 않는다. | 조수빈 · [#394](https://github.com/Team-HJD-21/unity-6-the-developer/issues/394), [#395](https://github.com/Team-HJD-21/unity-6-the-developer/issues/395), [#403](https://github.com/Team-HJD-21/unity-6-the-developer/issues/403), [#437](https://github.com/Team-HJD-21/unity-6-the-developer/issues/437) |
+| World·Map | 현재 열린 Issue 중 김진태 담당 Stage 1 PoC 마일스톤 작업은 확인되지 않았다. 지도 시연 #450과 Stage 1 이식 #451은 M1로 등록되어 있으므로 이 표의 Stage 1 목표에 포함하지 않는다. Sprint 1에 포함할지 여부는 별도 분류가 필요하다. | 김진태 · [#450](https://github.com/Team-HJD-21/unity-6-the-developer/issues/450), [#451](https://github.com/Team-HJD-21/unity-6-the-developer/issues/451) |
+
+이 주차 목표는 **Sprint 1의 2주차**를 뜻하며 `Sprint 2`를 새로 정의하지 않는다. 주차는 마일스톤과 Issue 분류를 읽기 쉽게 묶은 것이고, Issue의 상태·담당자·완료 조건을 대신하지 않는다.
+## 1. 검증할 핵심 가설
+
+1. 직접 전투보다 터렛 중심 전선 운영이 게임의 고유한 재미로 작동한다.
+2. Player가 주 화력이 아니어도 수리·보조 공격·군중 제어로 충분히 개입한다고 느낀다.
+3. 모든 터렛을 켤 수 없는 전력 한도가 실제 전략 선택을 만든다.
+4. 전제 1에서 개별 터렛 운용에 따른 전선 전진·후퇴가 재미와 명확한 피드백을 만든다.
+5. 전제 2에서 지역 해금과 지역별 터렛 운용이 재미와 명확한 진척감을 만든다.
+6. Enemy가 Player만 추격하지 않고 약한 터렛 거점과 핵심 시설을 합리적으로 공격한다.
+
+## 2. 최소 플레이 흐름
+
+```text
+Spaceship에서 Stage 1으로 이동
+→ Player 이동·기본 공격, 미리 배치된 터렛 활성화, Enemy 전투 연결
+→ 전력 제약 아래 전제 1의 전선 변화 또는 전제 2의 지역 해금 시험
+→ 디버그 표시로 전선·진척을 관찰하고 재미·이해도 기록
+→ Player 사망은 디버그 부활 버튼 또는 무적으로 시험
+```
+
+## 3. 완료 기준
+
+- [ ] 최소 Graybox Map에서 Player가 출격할 수 있다.
+- [ ] 미리 배치된 터렛을 활성화하고 기본 전투에 사용할 수 있다.
+- [ ] 전력 한도 때문에 모든 터렛을 동시에 켤 수 없다.
+- [ ] 전제 1의 전선 변화와 전제 2의 지역 해금에 대해 각각 검증할 재미·이해도 질문을 정한다.
+- [ ] 10월 2일 통합 가능한 시제품에서 전선 변화 또는 지역 해금의 플레이 감각을 관찰하고 결과를 기록한다. 나머지 후보의 시험 순서·일정은 별도 결정한다.
+- [ ] Enemy가 목표를 선택하고 터렛 또는 핵심 시설을 공격한다.
+- [ ] Player가 약한 전선으로 이동해 전투에 개입할 수 있다.
+- [ ] Player 사망을 정식 패배 화면 없이 디버그 부활 버튼 또는 무적으로 시험한다.
+- [ ] 시험한 후보의 관찰 결과와 두 후보에 남은 기술 위험을 기록한다. 승리 판정과 결과·성장 흐름은 완료 조건이 아니다.
+- [ ] 2026-10-02에 전체 팀이 같은 Build로 통합 플레이 테스트를 수행한다.
+
+## 4. 역할과 결과물
+
+| 담당 | 핵심 역할 | 구체 결과물 |
+| --- | --- | --- |
+| 양현석 | PoC 범위·계약·통합 | Sprint 1 Issue, 인터페이스, 전제 1·2 관찰 기준과 Player 지원 행동, 통합 Build |
+| 이영빈 | Network-aware 조사와 Combat 지원 | Unity Netcode/RPC/동기화/권한 최소 가이드, 향후 전환 위험 목록 |
+| 김진태 | World·Mission·전선 확장 | 거점 확장 Graybox, 거점 확보·상실에 따른 전장 변화, 황재동/조수빈 데이터 연동 규격, Spaceship 레퍼런스 |
+| 황재동 | Turret System | 터렛 인스턴스 관리, 기존 코드 정리, 위치·활성·체력·화력·거리·위협도 제공, 파괴 시 전력 손실률 API 입력값 공개 |
+| 조수빈 | Enemy AI | 기존 점수 기반 몬스터 타깃 선택을 우선 시험한다. Region·분대 계층과 세부 점수 조정은 후속 설계·검증 대상으로 둔다 |
+
+## 5. 통합 순서
+
+```text
+황재동 · 터렛 상태·평가 데이터
+        ↓
+조수빈 · 목표 선택 AI와 공격 결과
+        ↓
+김진태 · 거점 확보·상실과 전선 확장
+        ↓
+양현석 · 전제 1·2 관찰·Player 지원·통합 Build
+        ↓
+전체 팀 · 2026-10-02 Playtest
+```
+
+이영빈의 Network-aware 조사는 위 통합을 막지 않는 병렬 작업이다. 실제 실시간 협동 구현은 이번 범위에 포함하지 않는다.
+
+## 6. 의도적으로 제외
+
+- 완성도 높은 Tilemap, 최종 Art와 UI polish
+- 모든 Planet, Enemy, Turret 제작
+- 실시간 협동 멀티플레이 완성
+- 최종 경제 Balance와 장기 성장 확정
+- Spaceship 꾸미기, Pet, Mini-game
+- 정확한 낮/밤 길이와 최종 환경 효과
+
+2026-09-26 회의에서는 동적 전선과 지역 해금을 우선 검토하고 기존 스테이지 방식을 뒤로 두었다. 9월 27일에는 Stage 1 PoC의 우선 목적을 두 후보의 재미 검증으로 명확히 했다. 두 우선 후보 가운데 최종안을 정하거나 병행 구현 범위·일정을 확정하지는 않았다. 회의에서 새 마감이나 Sprint 담당 재배정도 없었다. 보관된 [9월 22일 비교 문서](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/archive/2026-09-22-progression-options.md)와 [9월 26일 회의 근거](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/archive/2026-09-26-stage1-planning.md)를 참고한다.
+
+Stage 1에서는 정식 패배 화면 대신 디버그 부활 버튼 또는 무적 상태로 플레이어 사망을 시험한다. 몬스터는 기존 점수 기반 타깃 선택을 우선 시험한다. 이는 임시 PoC 동작이며 최종 승패·체크포인트·전선 규칙 확정이 아니다.
+
+## 7. 아직 결정하지 않은 항목
+
+9월 27일 기준으로 전제 1·2를 각각 재미 검증 대상으로 삼되, 실험 순서·같은 Build에서의 병행 범위·일정은 정하지 않았다. Product Vertical Slice의 연구·결과 성장·다음 Mission과 기존 웨이브 진행은 이번 PoC의 완료 조건이 아니다.
+
+- PoC 및 최종 승리 조건: 마지막 거점, Boss, 별도 목표 중 선택
+- 최종 패배 및 후속 처리: Player 사망과 Control Unit 파괴를 논의했으나 두 결과와 유지·초기화 범위는 미정
+- Player 공격 조작과 수리·보조 공격·군중 제어의 비중
+- 동적 전선·지역 해금 중 최종 진행 방식과 기존 스테이지 방식 재검토 여부
+- 전제 1·2의 순차 또는 병행 검토 방법과 일정
+- 터렛 단위와 region 단위 전선 계산 중 채택할 방식
+- 터렛 파괴 시 실제 전력 반환 여부·손실률과 점유율 처리. 손실률은 API 입력값으로 열어두고 수치는 미정
+- 터렛 Upgrade와 Spaceship Research의 역할 분담
+- PoC 한 판의 목표 시간과 낮/밤 주기
+- 다음 Planet 성장 이월과 이전 Planet 재방문 보상
+- PoC 코드를 프로덕션으로 이식할 범위
+
+2026-10-02 회의에서는 기존 점수 기반 몬스터 타깃 선택을 먼저 시험하는 방향으로 정리했다. 고정 경로안은 채택되지 않았다. 상위·분대·개체 AI 구조는 후속 설계 제안으로 남아 계층 수와 PoC 적용 범위가 미정이다. 전선의 형성·유지·시각적 인식 여부도 시험 결과가 아직 없다. 자세한 근거와 미확정 구분은 [10월 2일 AI 구조 검토](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-02-ai-architecture-review.md)를 참고한다.
+
+10월 3일 회의에서는 PoC 통합이 아직 완료되지 않았고 주말에 마무리해 전선 형성을 우선 확인할 계획이라고 보고했다. 몬스터 종류별 목표 특성과 분대 프리셋은 구체화할 설계 방향이며, 추격 판단의 단위·시점·확률은 미정이다. 실제 플레이 결과와 후속 설계 항목은 [10월 3일 PoC 후속 검토](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-03-poc-followup.md)에 구분해 기록했다.
+
+10월 5일 몬스터·맵 논의에서는 세 전선의 스폰 위치와 후반 보스 위치를 마련하는 계획, 루트의 스폰 포인트·ID 수집 구조를 설명했다. 우선 호출용 스크립트나 버튼에서 `Spawn`으로 **생성 여부**를 확인하고, 네트워크 매니저가 필요할 수 있는 이동 검증은 별도로 다룬다. 정확한 호출 계약·포인트 매핑과 실제 생성 성공은 확인되지 않았다. 이는 기존 완료 기준을 충족했다는 보고가 아니며, [스폰 연동 검토](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-05-monster-map-spawn-review.md)에 근거와 미정을 분리했다.
+
+2026-10-10 회의의 수리·잠금/해금 제품 방향은 Product Plan에 반영했다. 팀 공통 Build와 전제 1·2의 재미 확인은 별도이며, 해당 회의에서 새 Sprint 일정·담당 재배정·M1/M2 Gate 완료는 확정하지 않았다. 지역 Grid·해금 세부와 터렛 설치 판정은 [회의 검토 기록](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-10-regular-meeting.md)의 후속 항목으로 둔다.
+
+## 8. Issue와 PR 규칙
+
+- 모든 업무를 GitHub Issue로 만들고 담당자, 영역, 우선순위와 완료 조건을 기록한다.
+- PR에 관련 Issue와 테스트 결과를 남긴다.
+- 다른 사람의 Scene을 직접 수정하지 않는다.
+- 같은 Scene에 필요한 기능은 가능한 한 Prefab 또는 분리된 Adapter로 전달한다.
+- 막힌 내용은 오래 추측하지 않고 팀에 공유한다.
+
+## 9. Playtest 기록
+
+10월 5일 회의록까지 10월 2일 통합 Build의 완료·실행 및 전선 관찰 결과는 확인되지 않았다. 주말 마무리 계획과 생성 테스트 안내는 있으나 이 문서의 완료 항목은 실제 Build·테스트 증거를 확인한 뒤 체크한다.
+
+2026-10-02 Build/Commit, 참가자, 관찰 결과와 Blocker를 여기에 연결한다. 2026-10-03 회의에서 각 가설을 통과·수정·폐기로 판정하고 [PROJECT_PLAN.md](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/product/PROJECT_PLAN.md) Decision Log와 다음 Backlog를 갱신한다.
+
+## 10월 27일 중간 점검 후속
+
+기존 Sprint 1 안에서 Core 검증 경로·해금 연결, Enemy 재구조화, Weather 연계와 환경 후보 구체화를 진행한다. 담당·개인 목표·의존 사항은 [주간 보고](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-27-weekly-progress.md#파트별-후속-목표)에 모았다. 조수빈의 10/27 재구조화·10/28 문서 공유와 김진태의 10/31 후보 논의는 발언상 목표이며 완료·확정 납기가 아니다. 새 Sprint나 공통 Build/Gate 통과를 선언하지 않는다.
+
+## 10월 30·31일 후속 — 기본 루프 시험 우선
+
+[기획 보강](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-30-planning-review.md)과 [정기회의](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-31-regular-meeting.md)는 전체 전사·수기 대조를 마쳤다. 자동 활성화의 전력 대기, 우주선 입장 시 필드 정지, 점령/스폰 영향과 그룹화, 재방문 상태와 별도 실패 보상 제외를 제품 방향으로 반영한다. 실제 실행·Build·M1/M2 Gate 완료와는 구분한다. 보스 상세·호출/귀환 편의·날씨 효과 확대보다 핵심 루프 재미 검증을 우선한다.
+
+| 담당 | 회의에서 나온 다음 작업 | 의존·시점 |
+| --- | --- | --- |
+| 양현석 | Core/GameManagement 연결, 자료 폴더·형식 정리, UI와 스폰 계층 책임 확인 | 10월 30일의 토요일 업로드·다음 주 구조 목표는 계획이며 완료 아님 |
+| 황재동 | 터렛 성장 트리 구체화·프로퍼티/스킬 대응 자료 신규 작성 | 확정 마감 없음. 수치 변경 시 자료도 갱신 |
+| 조수빈 | 스포너 그룹화, 분대 프리셋, Encounter/SpawnPlanner 초안과 사망 표현 시험 | 기존 영역 식별자·계층 책임 확인, 본인 이번 작업 주기 목표 |
+| 김진태 | Core/Enemy 연동 후 첫 Stage 배치와 후방 터렛 역할 반복 시험 | 몬스터/이벤트 스폰 선행. 화요일 불확실, 금요일 기획회의 무렵 목표 |
+| 이영빈·양현석 | Player 자료 정리와 전투 UI·이동 편의 협의 | 별도 기능/시각·완료 미확정 |
+
+전제 1/2를 11월 안에 선택해야 한다는 목표는 시험 결과를 요구하는 후속이다. 새 Sprint 번호·공통 Build 마감이나 Gate 통과로 만들지 않는다. **전원 5명 크런치 모드 도입은 확정된 팀 공통 운영 결정**이다(2026-11-01 황재동 확인). 17일까지 집중 작업·18–23일 휴식이라는 회의 발언과 연결해 실행하며 구체 근무 시간·개인 불참·휴식 후 복귀일은 캘린더에서 조율한다. 전원 적용을 미정으로 두지 않는다. 인게임 도감은 등록 자료와 UI의 실제 완료 증거를 분리한다.
+
+## 11월 3일 7주차 중간 점검 후속
+
+기존 Sprint 1의 주간 점검이며 새 Sprint 번호·마감·Gate 통과가 아니다. 아래는 회의 당시 보고와 다음 작업이다. 실제 main 반영·Unity 검증과 구분한다. [상세 근거](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-11-03-weekly-progress.md)
+
+| 담당 | 후속 작업 | 의존·미정 |
+| --- | --- | --- |
+| 조수빈 | 지원형 소환/회복 두 종 구현, 회복 방식 시안 공유, Enemy Docs 갱신 | 안전 위치·치료 방식·일정 미정. 기존 몬스터 구현 보고는 실행 검증 아님 |
+| 황재동 | 파괴·체력 감소 터렛 각각 배치, 타기팅 가능 상태 연결 확인 | 이영빈 수리 검증 지원. 정확한 공통 API·상태별 계약 확인 필요 |
+| 이영빈 | Player 피해 수신 구조 공통화 검토, 기술 작업 우선 | 터렛 구조 확인 후 범위 협의. 스프라이트 분리는 지연 요인. 분열 방벽은 선택적 실험 |
+| 양현석 | 터렛 검증 지원 조율, Steam API 조사·설계, 부팅→메인→게임 한 사이클 | 한 사이클은 이번 주 목표이며 확정 납기 아님. Save는 시작했으나 미완성 보고 |
+| 김진태·양현석 | Core PR 이해·Weather/Time 연동 마무리 | 김진태는 당일~다음 날 착수 예상. 구현 완료일로 해석하지 않음 |
+| 김진태·조수빈 | Enemy·Level 문서 계속 갱신 | 관련 문서 공유·확인에 의존, 기한 미정 |
+
+파괴 전력 손실률 PR은 회의 당시 리뷰 대기 보고다. 이 문서로 완료·병합 처리하지 않는다. 수치 Sheet는 현재 게임값 정리본이며 최종 밸런스가 아니다.

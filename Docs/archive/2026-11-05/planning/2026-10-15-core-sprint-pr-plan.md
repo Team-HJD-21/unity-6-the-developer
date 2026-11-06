@@ -1,0 +1,77 @@
+> 보관 문서 · 2026-11-05 교체 전 스냅샷
+> 기준 커밋: `1a03e9a9164e5db94cbc8775162467d08cf63a3b`. 당시 설명·검증 근거이며 현행 실행 지시가 아니다.
+
+# Core 스프린트 — PR 분할 검토안
+
+기준: `1277de10` → 현재 `codex/core-sprint-network-regions`. [8개 개발 배치와 증거](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-15-core-sprint-implementation.md) · [이슈 감사/PL 확인](https://github.com/Team-HJD-21/unity-6-the-developer/blob/1a03e9a9164e5db94cbc8775162467d08cf63a3b/Docs/planning/2026-10-15-core-sprint-review-handoff.md)
+
+## 분리 원칙
+
+2026-10-16 갱신: PL이 직접 런타임 정상 동작을 확인하고 동적 지역 스크린샷을 제공했다. 목표 모드는 사용자 요청으로 중지했다. 아래 4개 경계를 유지한 PR 제목·본문을 `Docs/Local/PRPreparation/2026-10-16/01-core-foundation.md`부터 `04-hud-acceptance.md`까지 저장했다. 이 로컬 준비 파일과 원본 스크린샷 경로는 GitHub 첨부 URL이 아니며 제출 때 이미지를 업로드해야 한다. 브랜치 생성/push/PR 생성/병합은 아직 하지 않았다.
+
+원격 재확인: origin은 `Conquer-or-Be-Condemned/CBC`이고 main은 여전히 `1277de107b5165d1712cdb72e41f49a9f4790dd1`이다. 관련 이슈 6개는 OPEN이며 응답 URL은 이전 저장소 경로를 반환했다. 이번 작업 PR은 없고 별개 Player PR #529가 열려 있다. 다른 작업자 변경은 건드리지 않는다.
+
+후보 4의 현재 코드 경계는 `1115880d → 5d7c3cf2`, 78파일/9커밋이다. 이후 인수 기록 문서 수정만 추가한다. 제품 코드의 검증 head와 제출 시 문서 포함 최종 head를 구분한다. `git diff --check 1277de10..5d7c3cf2`는 오류 없이 통과했다. PL 확인은 끝났지만 팀원 계약 리뷰는 확인되지 않아 본문은 Relates to로 준비하며 이슈를 선제 종료하지 않는다.
+
+8개는 개발·검증 배치다. GitHub PR도 반드시 8개여야 한다는 의미는 아니다. 현재 시간순 커밋을 임의로 경로별 추출하지 않고, 실제 존재하는 커밋 경계로 아래 **4개 stacked PR 후보**를 제안한다. 아직 새 PR 브랜치/push/PR 생성은 하지 않았다.
+
+각 PR은 표의 직전 base를 필요로 한다. `main`에 모두 독립 적용 가능한 네 개의 완제품이라는 뜻이 아니다. 앞 PR 승인/병합 전에 뒤 PR을 먼저 배포하거나, 뒤 PR을 남긴 채 기반 PR만 되돌리는 방식을 안전하다고 보장하지 않는다. PR 수·최종 제목/범위는 PL 확인 후 확정한다.
+
+## 실제 커밋 경계
+
+| 후보 | base → head | 주된 리뷰 목적 | 변경 파일 / 커밋 수 |
+| --- | --- | --- | --- |
+| 1 | `1277de10` → `80ee8f06` | App/Match 정리·지역 원본/정책·FieldTurret 정적 어댑터·준비/요청/초기 전송 기반. 로컬 Enemy/Encounter 정식 경계·CU 연결 포함 | 169 / 18 |
+| 2 | `80ee8f06` → `7fe89c25` | 지역 실제 전송·Client 로컬 actor 수명·App 종료·정식 Initial_Stage 연결·최소 NetworkObject·두 실행 파일 기반 | 81 / 14 |
+| 3 | `7fe89c25` → `1115880d` | FieldTurret 논리 ID/등록·Match 제어 lease·6종 명령/Host 검증·실제 Scene gateway | 117 / 9 |
+| 4 | `1115880d` → 최종 검증 head | 기존 HUD의 정식 입력/표시·Host→Client Frame·지역 수신 시점 결합·정리 실패 후속 보완·최종 검증/인계 | 최종 head 확정 때 갱신 |
+
+Unity `.meta`가 파일 수에 포함된다. 하나의 public 타입을 한 파일로 나눈 계약/값 타입이 많다는 점을 리뷰 설명에 적는다. PR 1–3은 전체 기능 완료가 아니라 후속 통합의 기반이다. 중간 head의 컴파일/순수 계약 검사와 최종 head의 실제 Scene·Host/Client 검사를 구분한다.
+
+## 이슈 연결
+
+### 2026-10-16 제출 결정
+
+PL 직접 확인과 자동 검증을 합쳐 #442/#526/#527/#528은 마지막 통합 PR의 `Closes` 대상으로 정했다. 앞선 세 PR은 관련 이슈를 참조만 한다. #495는 Core·FieldTurret 계약 최종 확인, #496은 Enemy/Encounter 계약 확인 및 과거 생성 결과/추적 수 불일치 판단이 남아 `Refs`로 유지한다. 이슈 직접 종료는 하지 않는다. 아래 '여섯 이슈 인수 중'은 이전 후보 작성 시점 기록이다.
+
+stack 순서: `main` ← `codex/core-sprint-01-foundation` ← `codex/core-sprint-02-network` ← `codex/core-sprint-03-turret` ← `codex/core-sprint-04-hud`. 마지막 PR은 처음에는 기본 브랜치가 아닌 선행 브랜치를 대상으로 하므로 GitHub 자동 종료가 즉시 활성화되지 않을 수 있다. 선행 PR 병합 후 다음 PR의 base를 main으로 바꾸고 diff/검사를 확인한다. Closes는 최종 PR이 main으로 병합될 때 적용하며, squash로 선행 커밋 SHA가 바뀌면 후속을 재배치·검증해야 한다. 이 준비 작업에서는 병합하지 않는다.
+
+- 현재는 여섯 이슈 모두 검증/인수 중이므로 후보 본문은 `Refs`/`Relates to`로 연결한다. 직접 확인/팀원 계약 인수가 끝난 이슈만 실제 PR 생성 시 `Closes`로 바꾼다.
+- #442: 후보 1–4에 걸친다. 마지막 실제 연결/명령/정리 근거 없이 앞 기반 PR 하나로 닫지 않는다.
+- #495: 후보 1의 정적 어댑터, 2의 Match 연결, 3의 실제 FieldTurret 명령/식별자, 4의 입력/정리 보완을 함께 확인한다.
+- #496: 정식 요청은 주로 후보 1, 연결/Match 적 수명은 후보 2다. Enemy/Encounter 리뷰와 과거 수량 불일치 판정을 분리한다.
+- #526/#527: 지역 기반·동적 판정과 표시/실제 복제·수신 일치가 여러 후보에 걸친다. PL의 정책/표시 확인 전 자동 종료하지 않는다.
+- #528: 기존 HUD 보존·로컬 actor 주입을 거쳐 후보 4에서 정식 원격 입력/표시가 이어진다. 실제 버튼 자동 호출과 PL 마우스/가독성 인수를 혼동하지 않는다.
+
+## 제출 전 gate
+
+1. 최종 head의 정리 실패 회귀·기존 영향 사례·Windows 실제 두 프로세스 결과를 확보한다. 현재 상세 상태는 배치 기록이 정본이다.
+2. 후보 1–3의 실제 head를 분리 검증 사본에서 열어 전체 스크립트 컴파일과 해당 순수 계약 검사를 확인했다(아래 표). 이 결과는 최종 게임 동작 인수가 아니다. 원본 Editor는 조작하지 않았다.
+3. 최종 정리 후 각 PR base/head를 고정하고 `git diff base...head`의 범위를 재확인한다. 분할/rebase/cherry-pick으로 내용이 달라졌다면 기존 head 결과를 그대로 전용하지 않는다.
+4. PL 직접 확인과 Player/UI·FieldTurret·Enemy/Encounter 계약 리뷰의 결과/보류를 명시한다. 미확인 체크박스를 체크하지 않는다.
+5. 승인 후에만 원격 PR을 생성한다. 실제 GitHub Repository checks·Code Owner 승인·대화 해결은 PR 생성 후/병합 직전의 별도 gate다.
+
+### 중간 head의 실제 확인
+
+| head | Unity EditMode 결과 | 검사 범위 | 증거 |
+| --- | --- | --- | --- |
+| `80ee8f06` | 16/16 | 지역 원본/수명과 Enemy/Encounter 정식 요청 순수 계약 | `pr-prefix-1.xml` |
+| `7fe89c25` | 12/12 | 지역 replica와 Match 준비/시작/종료 조율의 순수 계약 | `pr-prefix-2.xml` |
+| `1115880d` | 15/15 | FieldTurret 명령 서비스/gateway·Host actor/거리 정책 | `pr-prefix-3.xml` |
+
+파일은 원본 `Docs/Local/Validation/CoreSprint20261015`에 보존했다. 실제 Unity가 각 커밋의 전체 스크립트를 컴파일한 후 지정한 검사만 실행했다. 최종 head의 Scene 버튼/실제 SDK·Windows 두 프로세스 증거는 별도 배치 기록을 따른다. 중간 head의 순수 테스트로 완전한 협동 게임이나 그 head의 Windows 빌드를 검증했다고 쓰지 않는다.
+
+## 템플릿 작성 규칙
+
+저장소 `.github/pull_request_template.md`를 그대로 기준으로 작성한다. 제목은 `type(area): short English summary`다. 담당 Core를 지원 담당에 중복 기입하지 않고 Player/UI(로컬 actor/HUD), FieldTurret(터렛 API/전력·지역), Enemy/Encounter(Encounter 경계)에 실제 변경 파일/계약만 검토 요청한다.
+
+`확인 결과 > 직접 확인`은 자동 Unity 실행과 PL 직접 조작을 구별해 서술한다. 아직 PL이 확인하지 않았다면 PlayMode 체크를 무조건 완료 처리하지 않고 자동 실행 결과를 별도 줄로 적는다. 실제 Windows 검증의 Host interaction actor fixture와 Player/UI 원격 Player 복제 제외도 반드시 함께 적는다. `CI`는 로컬 사전 검사와 GitHub 실행을 구분한다.
+
+스크린샷/영상은 이번 커밋에서 PL이 확인한 자료만 사용한다. 과거 PoC 자료를 현재 동적 지역/HUD 인수 증거로 붙이지 않는다. 별도 개발 검사 코드는 명시적 CLI 인자에서만 실행하며 유지 이유를 본문에 설명한다.
+
+## 되돌리기
+
+- 커밋 단위는 보존한다. 분할 준비를 이유로 원본 브랜치를 Force Push/전체 reset하지 않는다.
+- 의존 PR을 되돌릴 때는 뒤에서 앞으로 순서를 지키거나 함께 되돌릴 범위를 합의하고 재검증한다. 단일 파일만 옛 버전으로 덮어 계약 세대를 섞지 않는다.
+- `af61b298`은 비활성 레벨 교체 프리팹 활성화 2줄 수정이다. FieldTurret 파트가 다른 수정으로 대체했는지 확인 후 제외 여부를 결정한다. 제외하면 해당 승급 회귀를 다시 검사해야 한다.
+- 사용 중인 원본 worktree와 기존 `battlefield-validation`의 미커밋 변경은 보존한다. 이번 `core-sprint-validation`은 별도 검증 사본이며 그 안의 생성 파일을 PR에 포함하지 않는다.
