@@ -18,6 +18,8 @@ namespace TeamHJD.Game.Bootstrap
     {
         /// <summary>UI 조립부가 로컬 연출 소비자에게 주입하는 App 수명 난수입니다. 게임 판정에 사용하지 않습니다.</summary>
         public IRandomStreams PresentationRandom => Services?.PresentationRandom;
+        /// <summary>앱 화면/접속 흐름이 사용하는 플랫폼 Port입니다. SDK 구체 타입이나 AppServices 전체를 노출하지 않습니다.</summary>
+        public IPlatformService Platform => Services?.Platform;
         private readonly HashSet<int> _composedSceneHandles = new HashSet<int>();
         private MatchSession _currentMatch;
         private bool _isDisposed;
@@ -150,6 +152,7 @@ namespace TeamHJD.Game.Bootstrap
         {
             if (!_isDisposed && Services != null)
             {
+                (Services.Platform as IPlatformRuntime)?.Pump();
                 Services.PumpNetwork();
                 _screenPresenter?.Render();
             }
@@ -183,6 +186,7 @@ namespace TeamHJD.Game.Bootstrap
                 throw new InvalidOperationException("AppRoot has already been initialized.");
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
+            if (Services.Platform is IPlatformRuntime) InitializePlatform();
             if (UnityEngine.Application.isPlaying)
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
                     NavigateFromScreenAsync, GetSceneTravelRestriction);
@@ -458,10 +462,18 @@ namespace TeamHJD.Game.Bootstrap
             throw new InvalidOperationException("Use the configured game-flow action for this screen.");
         }
 
+        private async void InitializePlatform()
+        {
+            try { await Services.Platform.SignInAsync(CancellationToken.None); }
+            catch (Exception error) { Debug.LogWarning("플랫폼 초기화 실패: " + error.Message, this); }
+        }
+
         private string GetSceneTravelRestriction()
         {
             if (_isDisposed || Services == null)
                 return "App is stopping.";
+            if (Services.Platform is IPlatformRuntime platform && !platform.IsInitialized)
+                return "Steam 플랫폼이 준비되지 않았습니다. Game Debugger에서 초기화 상태를 확인하세요.";
             if (Services.SceneTransitions.IsTransitioning)
                 return "Scene transition in progress.";
             if (NetworkSession != null && NetworkSession.State == NetworkConnectionState.ConnectedClient)
