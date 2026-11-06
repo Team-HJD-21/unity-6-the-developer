@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPresetCatalog
   squadPresets:
   - {fileID: 11400000, guid: ca5f34c55663e3446b81af15cfa95374, type: 2}
+  - {fileID: 11400000, guid: de082f517d7d4191aec429868615a567, type: 2}
