@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System;
+using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using Unity.Netcode;
@@ -10,11 +11,12 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 /// <summary>
-/// Planner가 확정한 SpawnInstruction 하나를 서버에서 하나의 분대로 생성한다.
+/// Planner가 확정한 SpawnInstruction을 서버에서 생성하고 분대에 등록한다.
+/// 적 정의에 따라 공동 분대 또는 한 마리씩 독립 분대를 구성한다.
 /// 스폰 지점과 적 프리팹을 확인하고, 생성된 적을 분대에 등록한 뒤 NGO로 동기화한다.
 /// 생성 수와 프리셋 구성은 다시 결정하지 않는다.
 /// </summary>
-public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSource
+public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSource, IRandomConsumer
 {
     /// <summary>
     /// 생성된 적의 네트워크 객체와 분대 소속을 함께 보관한다.
@@ -54,7 +56,14 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
     private readonly List<SpawnPoint> _discoveredSpawnPoints = new();
     private readonly List<EnemySquad> _squads = new();
     private readonly Dictionary<ulong, TrackedEnemy> _spawnedEnemies = new();
+    private IRandomSource _summonRandom;
     public event Action<EnemyLifecycleObservation> LifecycleObserved;
+
+    /// <summary>코어가 소유한 바인딩을 생성될 소환형과 공유한다.</summary>
+    public IDisposable BindRandom(IRandomStreams random)
+    {
+        return RandomBinding.Bind(random, "enemy/summon-spawn", ref _summonRandom);
+    }
 
     public int CountForMatch(MatchId matchId)
     {
@@ -195,6 +204,7 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
 
         _squads.Clear();
         _spawnedEnemies.Clear();
+        _summonRandom = null;
         base.OnNetworkDespawn();
     }
 
@@ -296,6 +306,13 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                 return Fail("Enemy prefab missing required components: " + enemy.EnemyId, observeFailure);
             }
 
+            if (enemy.Prefab.TryGetComponent<EnemySummonSpawner>(out _) &&
+                (_summonRandom == null || !_summonRandom.IsAvailable))
+            {
+                Debug.LogError($"소환형에 전달할 코어 난수가 연결되지 않았습니다: {enemy.EnemyId}", this);
+                return Fail("Summon random source unavailable: " + enemy.EnemyId, observeFailure);
+            }
+
             definitions.Add(enemy);
         }
 
@@ -318,6 +335,9 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
                     enemy.Prefab,
                     spawnPosition,
                     spawnPoint.Rotation);
+
+                if (spawnedMonster.TryGetComponent<EnemySummonSpawner>(out var summonSpawner))
+                    summonSpawner.InitializeRandom(_summonRandom);
 
                 EnemyController controller = spawnedMonster.GetComponent<EnemyController>();
                 EnemySquad memberSquad;
