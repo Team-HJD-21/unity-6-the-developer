@@ -1,5 +1,7 @@
 # The Developer — Project Documentation
 
+최근 기획: [11월 6일 기획 보강 근거·후속](planning/2026-11-06-planning-review.md). 현행 우주선 출입·점유·안전장치 정책은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 아래 이전 회의 안내의 정지 정책은 당시 기록이며 현행을 대체하지 않는다.
+
 Core 기반 main 통합 검토: [11월 5일 범위·현행 Feature 호환·검증 기록](planning/2026-11-05-foundation-main-integration.md) · [실제 호출·수명·API 지도](architecture/core-lifecycle-and-api-guide.md) · [Core 코드 안내](../Assets/Scripts/Core/README.md). 기존 회의록과 파트별 문서는 유지하며 이 통합으로 미연결 Feature의 완료를 선언하지 않는다.
 
 **Core 연동 전 필독:** [Random API 사용법](architecture/core-random-api.md)에서 도입 이유, Host/로컬 연출 구분, 주입·가중치 선택·저장 예제와 기존 6개 파일의 교체 위치를 확인한다. [우주선 출입 보고 API](architecture/core-presence-report-api.md)는 실제 Host 이동 후 Core에 결과를 보고하는 계약이다. Feature 호출부는 이 PR에서 교체하지 않았다.
@@ -24,7 +26,7 @@ Random 등록·해제는 공용 정적 함수 `RandomBinding.Bind` 한 줄로 �
 
 2026-11-01 사용자 확인: 10월 31일 회의의 **전원 크런치 모드 도입은 확정된 팀 공통 운영 결정**이다. 적용 대상 미확인이라는 기존 해석을 정정했다. 작업·휴식 기간 발언과 후속은 [회의 기록](planning/2026-10-31-regular-meeting.md)을 따른다.
 
-2026-10-30·31 후속을 우선 읽는다. 자동 활성화는 사거리 내 적 수 후 전력 1당 공격력 설명, 일시 OFF 후 순차 ON·부족 전력 예약 대기 방향이다. 일반 OFF는 즉시 비활성화·점진 전력 반환 시작과 냉각을 함께 다루며 즉시 전량 충전이 아니다. 우주선 입장 시 시간·몬스터·터렛 정지를 재확인했고, 점령에 따른 스폰 영향과 그룹화·이전 행성 재방문을 정리했다. 상세/미정과 근거는 [기획 보강](planning/2026-10-30-planning-review.md) · [정기회의](planning/2026-10-31-regular-meeting.md), 제품 기준은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 새 Sprint·Build/Gate 통과를 뜻하지 않는다.
+현행 게임 규칙은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 회의별 설명은 당시 근거이며 11월 6일 후반 정정과 구분한다. 새 Sprint·Build/Gate 통과를 뜻하지 않는다.
 
 2026-10-26 Core 후속을 최신 main에 통합하고 Match 운영 책임을 분리하는 배치를 시작했다. [Match 운영 책임과 수명 계약](architecture/match-management-responsibilities.md)은 Feature 상태 원본, MatchCoordinator / SceneFlowController / ScreenManager의 역할과 완료·입력·환경·추가 생성 계약을 설명한다. [이번 구현 기록](planning/2026-10-26-core-sprint-implementation.md)에서 CU 명시 초기화와 실제 Scene 검사 결과·다음 배치를 확인한다. 목표 구조와 실제 구현/검증 완료를 구분한다. 아래 10/15 검증은 당시 source의 증거다.
 
