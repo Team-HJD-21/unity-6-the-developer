@@ -64,9 +64,6 @@ public class EnemyMovement : MonoBehaviour
 
     public void Stop()
     {
-        if (_isStopped)
-            return;
-
         rigidbody2D.linearVelocity = Vector2.zero;
         _isStopped = true;
     }
