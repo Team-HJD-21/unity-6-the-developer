@@ -1,3 +1,4 @@
+// 실제 날씨 선택·예고·표현을 소유합니다. Core 부분 파일은 예약과 환경 전달만 연결합니다.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +11,7 @@ using UnityEngine.UI;
 namespace Map
 {
     [RequireComponent(typeof(WeatherChangeEvent))]
-    public class WeatherManager : MonoBehaviour
+    public partial class WeatherManager : MonoBehaviour
     {
         public enum Weather
         {
@@ -66,6 +67,7 @@ namespace Map
         }
         void Start()
         {
+            if (!MayChangeCoreWeather) return;
             FillWeather();
             WeatherCanvasColorChange(currentWeather, weatherQueue);
             ApplyWeatherShader();
@@ -86,6 +88,7 @@ namespace Map
 
         public void ChangeWeather()
         {
+            if (!MayChangeCoreWeather) return;
             if (weatherQueue == null || weatherQueue.Count == 0)
             {
                 FillWeather();
@@ -95,6 +98,7 @@ namespace Map
             Debug.Log($"현재 날씨: {currentWeather}, 뽑힌 후 큐: [{string.Join(", ", weatherQueue)}]");
             FillWeather();
             ApplyWeatherShader();
+            PublishCoreWeather();
             OnWeatherChange?.Invoke(currentWeather, weatherQueue);
         }
         

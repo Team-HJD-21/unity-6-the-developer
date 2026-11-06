@@ -1,3 +1,4 @@
+// 근접 발동 조건을 확인하고 Player·터렛의 공통 피해 수신자에 서버 피해를 전달합니다.
 using UnityEngine;
 
 /// <summary>
@@ -31,18 +32,8 @@ public sealed class EnemyCloseRangeAbility : EnemyAbility
         if (!TryGetTarget(out TargetableComponent target))
             return false;
 
-        if (target.TargetType == TargetType.Turret)
-            return target.TryApplyDamage(attackDamage);
-
-        if (target.TargetType != TargetType.Player)
-            return false;
-
-        PlayerInfo player = target.GetComponentInParent<PlayerInfo>();
-        if (player == null)
-            return false;
-
-        player.TakeDamage(attackDamage);
-        return true;
+        // Player와 Turret 모두 실제 HP 원본의 동일한 피해 계약으로 전달합니다.
+        return target.TryApplyDamage(attackDamage);
     }
 
     private bool TryGetTarget(out TargetableComponent target)
