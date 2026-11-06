@@ -33,14 +33,15 @@
 - 지원 담당:
 - 추가 검토 요청자(선택):
 
-> `main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 승인 1명과 Code Owner 승인을 요구합니다. [CODEOWNERS](https://github.com/Team-HJD-21/unity-6-the-developer/blob/main/.github/CODEOWNERS)에 지정된 두 사람 중 한 명의 승인이 필요하며, PR 작성자는 자기 PR을 승인할 수 없습니다. 공용 계약·Scene·Save·Build·Network 변경은 해당 영역 담당자에게도 검토를 요청합니다.
+> 공용 계약·Scene·Save·Build·Network 변경은 해당 영역 담당자에게도 검토를 요청합니다.
 
 ## 핵심 변경 내용
 
 - 핵심 변경 1
 - 핵심 변경 2
 
-## 영향받는 항목
+<details>
+<summary>영향받는 항목</summary>
 
 - Scene:
 - Prefab:
@@ -50,7 +51,10 @@
 - Network / Authority:
 - 제외 범위 또는 후속 작업:
 
-## 확인 결과
+</details>
+
+<details>
+<summary>확인 결과</summary>
 
 ### 직접 확인
 
@@ -74,6 +78,8 @@
 
 `Repository checks`는 `.meta`, 프로젝트 구조, 생성 파일, 충돌 표시 등을 검사합니다. Unity 검증 Job은 설정에 따라 실행되며 현재 필수 Status Check가 아닙니다.
 
+</details>
+
 ## Screenshot / Video
 
 Gameplay, UI, Map, Spaceship, VFX 변경이면 가능하면 첨부합니다.
@@ -86,7 +92,8 @@ Gameplay, UI, Map, Spaceship, VFX 변경이면 가능하면 첨부합니다.
 - 예상되는 영향:
 - 문제가 생기면 되돌릴 범위:
 
-## 최종 체크
+<details>
+<summary>최종 체크</summary>
 
 - [ ] PR은 한 가지 목적에 집중한다.
 - [ ] PR 제목이 `type(area): short English summary` 형식이다 (`feat`, `fix`, `refactor`, `docs`, `test`, `ci`, `chore`, `perf` 등).
@@ -95,10 +102,12 @@ Gameplay, UI, Map, Spaceship, VFX 변경이면 가능하면 첨부합니다.
 - [ ] `Library`, `Temp`, `Logs`, `obj`, `.vs`, `UserSettings`를 포함하지 않았다.
 - [ ] 관련 문서나 Data 변경이 필요하면 함께 갱신했다.
 
+</details>
+
 ## 병합 전 확인
 
 - [ ] 필수 `Repository checks`가 통과했다.
-- [ ] Code Owner 한 명 이상이 승인했다. 새 검토 가능 커밋을 push했다면 다시 승인받았다.
+- [ ] 관련 담당자의 검토를 받았다. 검토 후 변경한 내용은 다시 확인받았다.
 - [ ] Review 대화를 모두 해결했다.
 
-> 위 세 항목은 PR 작성 시점이 아니라 **병합 직전** 확인합니다. GitHub Ruleset이 최종 병합 가능 여부를 판정합니다. 출처: [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087) · [CI 안내](https://github.com/Team-HJD-21/unity-6-the-developer/blob/main/.github/CI_SETUP.md).
+> 위 세 항목은 PR 작성 시점이 아니라 **병합 직전** 확인합니다. [CI 안내](https://github.com/Team-HJD-21/unity-6-the-developer/blob/main/.github/CI_SETUP.md).
