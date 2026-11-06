@@ -15,6 +15,18 @@ public static class EnemySquadTargetSelector
     /// <returns>공격 가능한 후보를 찾았다면 true.</returns>
     public static bool TrySelectNearestTarget(Vector3 origin, out ITargetable target)
     {
+        return TrySelectNearestTarget(origin, null, out target);
+    }
+
+    /// <summary>공격 가능한 플레이어만 후보로 삼아 가장 가까운 대상을 선택한다.</summary>
+    public static bool TrySelectNearestPlayer(Vector3 origin, out ITargetable target)
+    {
+        return TrySelectNearestTarget(origin, TargetType.Player, out target);
+    }
+
+    private static bool TrySelectNearestTarget(
+        Vector3 origin, TargetType? requiredType, out ITargetable target)
+    {
         target = null;
         float nearestDistanceSqr = float.PositiveInfinity;
 
@@ -27,6 +39,7 @@ public static class EnemySquadTargetSelector
             if (candidate == null || !candidate.CanBeTargeted ||
                 (candidate.TargetType != TargetType.Player &&
                  candidate.TargetType != TargetType.Turret) ||
+                (requiredType.HasValue && candidate.TargetType != requiredType.Value) ||
                 candidate.TargetTransform == null)
                 continue;
 
