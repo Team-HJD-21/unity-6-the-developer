@@ -17,7 +17,7 @@ namespace TeamHJD.Game.Infrastructure
         public event Action<ulong, EnvironmentReplicationFrame> FrameReceived;
         public NgoEnvironmentTransport(NetworkManager manager)
         {
-            _manager = manager; _channel = new NgoMessageChannel(manager, "teamhjd.core.environment.v1", 0);
+            _manager = manager; _channel = new NgoMessageChannel(manager, "teamhjd.core.environment.v2", 0);
             _channel.MessageReceived += OnMessage;
         }
         public bool TrySendFrame(ulong connection, EnvironmentReplicationFrame frame)

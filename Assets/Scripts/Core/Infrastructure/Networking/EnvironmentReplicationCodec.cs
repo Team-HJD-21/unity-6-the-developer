@@ -9,7 +9,7 @@ namespace TeamHJD.Game.Infrastructure
 {
     public static class EnvironmentReplicationCodec
     {
-        private const int Magic = 0x31454A48;
+        private const int Magic = 0x32454A48; // v2: Match 시간의 복원 세대를 포함합니다.
         public const int MaximumBytes = 16384;
         public static byte[] Encode(EnvironmentReplicationFrame frame)
         {
@@ -17,6 +17,7 @@ namespace TeamHJD.Game.Infrastructure
             using var stream = new MemoryStream(); using var writer = new BinaryWriter(stream, Utf8, true);
             var value = frame.Snapshot; writer.Write(Magic); writer.Write(frame.DescriptorId.ToByteArray());
             WriteText(writer, value.MatchId.Value); writer.Write(value.Revision); writer.Write(value.GameSeconds);
+            writer.Write(value.Epoch.ToByteArray());
             WriteText(writer, value.WeatherId.Value, MatchEnvironmentSnapshot.MaximumIdBytes);
             WriteText(writer, value.TimeOfDayId.Value, MatchEnvironmentSnapshot.MaximumIdBytes);
             writer.Write(value.Forecast.Count);
@@ -33,12 +34,15 @@ namespace TeamHJD.Game.Infrastructure
                 if (reader.ReadInt32() != Magic) throw new FormatException("Unknown environment protocol.");
                 var preparation = ReadGuid(reader); var match = new MatchId(ReadText(reader));
                 long revision = reader.ReadInt64(); double clock = reader.ReadDouble();
+                byte[] epochBytes = reader.ReadBytes(16);
+                if (epochBytes.Length != 16) throw new EndOfStreamException();
+                Guid epoch = new Guid(epochBytes);
                 DefinitionId weather = ReadId(reader), time = ReadId(reader);
                 int count = ReadCount(reader, MatchEnvironmentSnapshot.MaximumForecast);
                 var forecast = new DefinitionId[count];
                 for (int i = 0; i < count; i++) forecast[i] = ReadId(reader);
                 if (stream.Position != stream.Length) throw new FormatException("Unexpected trailing environment data.");
-                return new EnvironmentReplicationFrame(preparation, new MatchEnvironmentSnapshot(match, revision, clock, weather, time, forecast));
+                return new EnvironmentReplicationFrame(preparation, new MatchEnvironmentSnapshot(match, revision, clock, weather, time, forecast, epoch));
             }
             catch (Exception error) when (error is EndOfStreamException || error is ArgumentException || error is OverflowException)
             { throw new FormatException("Invalid environment payload.", error); }
