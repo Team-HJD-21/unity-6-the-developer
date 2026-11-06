@@ -1,6 +1,6 @@
 # Steam API 도입 조사와 Core 접합 설계
 
-조사일: 2026-11-02. 상태: 이번 주 조사·설계 산출물 / **Steam SDK·실계정 로그인·초대·인터넷 연결은 미구현**. 현재 Unity 6000.3.23f1, NGO 2.13.3 프로젝트를 기준으로 한다. [Network 계약](network-match-api.md), [전체 배치](../planning/2026-11-02-core-sprint-scope.md)를 함께 읽는다.
+조사일: 2026-11-02. 상태: 이번 주 조사·설계 산출물 / **후속으로 SDK 초기화·사용자·로비 API를 구현했다. 실제 계정/인터넷 접속 인수는 구분한다**. 현재 Unity 6000.3.23f1, NGO 2.13.3 프로젝트를 기준으로 한다. [Network 계약](network-match-api.md), [전체 배치](../planning/2026-11-02-core-sprint-scope.md)를 함께 읽는다.
 
 ## 권장 구성과 선택 근거
 
@@ -70,3 +70,13 @@ SDK/Backend/transport 구현은 추가하지 않았습니다. 현재 신규 Star
 Valve 공식 문서에서 GetAuthTicketForWebApi의 응답 callback을 기다린 뒤 서버가 ticket을 검증하는 경로를 다시 확인했습니다. callback pump는 App 수명에서 수행하고 필드 정지와 분리합니다. 로비 구성과 실제 게임 접속/Match 준비도 별도 단계로 유지합니다. Steamworks.NET의 Callback/CallResult 참조 수명과 RunCallbacks 요구도 다시 확인했습니다.
 
 근거: [Valve 인증](https://partner.steamgames.com/doc/features/auth), [SDK callback/종료](https://partner.steamgames.com/doc/api/steam_api), [로비](https://partner.steamgames.com/doc/features/multiplayer/matchmaking), [wrapper callback](https://steamworks.github.io/gettingstarted/). SDK/transport 호환 실험과 실제 AppID/테스트 계정·운영 인증 엔드포인트는 실제 도입 단계의 입력이며 이번 조사 완료를 막는 미구현으로 혼동하지 않습니다.
+
+## 2026-11-05 접점 재확인
+
+현재 Core는 같은 Build의 UTP Host/Client에서 공유 Scene 로드→전원 준비→새 Match 시작·귀환을 확인했다. 향후 Steam 접속 어댑터는 이 연결/준비/게임 수명을 유지하고 transport·플랫폼/계정 인증만 실제 제공자로 연결한다. loopback UTP 성공은 Steam 인터넷 접속 인수가 아니다.
+
+Valve의 [인증 문서](https://partner.steamgames.com/doc/features/auth), [멀티플레이 경계](https://partner.steamgames.com/doc/features/multiplayer), [SDR](https://partner.steamgames.com/doc/features/multiplayer/steamdatagramrelay), wrapper의 [Callback 수명](https://steamworks.github.io/gettingstarted/)과 [community SteamNetworkingSockets 원본](https://github.com/Unity-Technologies/multiplayer-community-contributions/tree/main/Transports/com.community.netcode.transport.steamnetworkingsockets)을 다시 확인했다. 로비 참가와 실제 게임 전송·검증된 계정은 별개이며 기존 설계를 유지한다. 후보 transport의 현재 프로젝트 호환성은 실제 도입 실험 전까지 보장하지 않는다. SDK 설치나 계정/키·인증 설정은 변경하지 않았다.
+
+## 11월5일 SDK 착수 후 변경
+
+고정 Steamworks.NET 의존성, App 소유 SteamPlatformService와 명시 개발/Steam 설정, 사용자 식별·친구 공개2인 로비/초대 API를 구현했다. [실제 설정/호출 방법](steam-api.md)을 따른다. 후보 AppID는4336820이며 실제 앱/계정 이용 권한 확인이 필요하다. SDK 초기화/로비는 자체 Backend 전체를 기다리지 않고 시험할 수 있다. 위 초기 조사 당시 미설치 설명은 당시 범위다. 실제 Steam NGO transport와 운영 Backend 인증은 여전히 후속이며, 로비 참가를 게임 접속 완료로 해석하지 않는다.

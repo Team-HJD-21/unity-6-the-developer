@@ -1,6 +1,12 @@
 # Match 공용 시간·예약 API
 
-> **현재 상태(2026-11-02): 타 파트 미승인 변경198경로는 제외했습니다. Core의 미연결 호출은 `CORE-FEATURE-HOLD` 표식과 원본을 남겨 임시 보류했고 Unity 컴파일은 통과했습니다. 해당 Feature 연결·통합/PlayMode는 완료 상태가 아닙니다.** [제외 범위·연결 공백](../planning/2026-11-02-feature-integration-hold.md)을 먼저 확인하세요. 아래 Feature 구현·검사 기록은 제외 전 실험 소스 기준입니다.
+11월5일 낮밤 후속: [낮300초/밤300초와 Weather 연결](day-night-api.md)을 구현했다. 실제 시간대 source·world/time-of-day 저장이 추가됐으며, 운영 Weather writer는 김진태 담당으로 유지한다. 아래 초기 단계에서 source가 없었다는 설명은 당시 기록이다.
+
+11월5일 후속: 실제 두 Windows 프로세스의 공유 Scene/Match 전환과 Client 시계·환경 세대, Player 감속/원거리 발사 상태 연결까지 확인했다. [최신 구현·검증/담당 경계](../planning/2026-11-05-core-completion-results.md)를 우선 보고, 아래 초기 검사 수치는 당시 증거로 읽는다. 실제 원격 Player 포털/Weather writer 완료와 구분한다.
+
+현재 실제 Feature 연결은 [통합 안내](core-feature-integration-guide.md)를 따른다. Player/터렛/적·탄환은 `FieldSimulationTime`을 사용하고 CountTick은 Core 예약을 사용한다. 필드 정지·우주선 이동 허용·재개를 실제 Scene에서 확인했다. 날씨 고유 writer와 포털 보고 호출은 진태 담당이다. 환경 복제는 시간 Epoch를 포함하는 v2로 바뀌었으므로 같은 빌드를 사용한다.
+
+
 
 갱신: 2026-11-02. 공용 시계·예약, 권위 Scene/Weather, 참가자 필드 정지, Host/Client 시간 anchor와 Client 읽기 바인딩을 구현했다. 시간 복제/필드 집중 검사 16개와 별도의 Additive Enemy 검사 1개를 통과했다. 실제 낮밤 규칙과 원격 Player 출입/두 실행 파일 게임 사이클 인수는 별도다. [전체 배치](../planning/2026-11-02-core-sprint-scope.md)를 따른다.
 

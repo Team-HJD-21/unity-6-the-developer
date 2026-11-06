@@ -1,6 +1,6 @@
 # Core 실제 호출·수명·API 읽기 지도
 
-갱신: 2026-11-05. 최신 main과 맞춘 [기반 통합 범위](../planning/2026-11-05-foundation-main-integration.md)를 우선 읽는다. 현행 터렛 권한/ID/해금과 CU 읽기 Port는 연결한다. Enemy의 기존 Battlefield 경로는 유지하며 새 환경·추가 스폰 Port는 구현한 consumer에만 연결한다. [11월 4일 기록](../planning/2026-11-04-core-resume-results.md)의 보류 상태·검증 결과는 당시 작업 공간의 기록이다. 이 문서의 전체 목표 그림이 실제 Feature 통합 완료를 뜻하지 않는다.
+갱신: 2026-11-05. 실제 Feature 연결과 최신 수동 검사는 [통합 안내](core-feature-integration-guide.md)를 따른다. 아래 설명은 `main 1a03e9a91` 이후 작업 브랜치 기준이다. 이전 HOLD/제외 문서는 당시 보관 기록이며 현재 코드에는 해당 보류 표식이 없다. Weather 고유 writer·미션 콘솔·원격 Client 출입 요청·Player 전체 NetworkBehaviour·제품 경제/Backend는 후속이다. Host 포털 왕복과 실제 Steam SDK/로비·낮밤은 구현했다. 현재 확인/전달 범위는 [최종 로컬 안내](../planning/2026-11-05-core-local-review.md)를 우선한다.
 
 ## 1. 같은 이름으로 묶지 않을 상태
 
@@ -30,8 +30,8 @@ flowchart TD
     Launch --> Scene[AppRoot.ComposeScene]
     Scene --> Init[InitialStageCompositionRoot.Compose]
     Init --> Gate{Feature 계약 준비?}
-    Gate -->|현재 HOLD 가능| Failure[조립 실패 기록 / GameFlow Faulted]
-    Gate -->|계약 복구 후| Session[AppRoot.StartMatch → MatchSession]
+    Gate -->|조립 실패| Failure[조립 실패 기록 / GameFlow Faulted]
+    Gate -->|연결 완료| Session[AppRoot.StartMatch → MatchSession]
     Session --> Owned[시간·지역·공간·환경·명령/읽기 scope]
     Owned --> Ports[실제 Feature 등록·구독]
     Ports --> End[완료/명시 귀환/Scene 해제]
@@ -76,19 +76,19 @@ sequenceDiagram
     F->>F: Phase = Spaceship / CurrentSceneKey 갱신
 ```
 
-Mission 출격은 위 순서 뒤 `WaitForMissionReadyAsync`를 추가한다. 파일만 로드되었거나 Network 준비만 시작한 상태를 입장 성공으로 반환하지 않는다. 조립 예외·해제·App 종료·준비 대기 시간 초과는 실패/취소로 전파된다. 현재 터렛 HOLD는 여기서 확인되는 미연결이다.
+Mission 출격은 위 순서 뒤 `WaitForMissionReadyAsync`를 추가한다. 파일만 로드되었거나 Network 준비만 시작한 상태를 입장 성공으로 반환하지 않는다. 조립 예외·해제·App 종료·준비 대기 시간 초과는 실패/취소로 전파된다. 현재 터렛 시간/원본과 명시 Encounter 생성기는 연결되어 있다.
 
 기존 공용 메뉴/결과 버튼은 `AppRoot.NavigateFromScreenAsync`를 거쳐 같은 GameFlow로 전달한다. 완전 재시작은 `RestartMissionAsync`, 결과 귀환은 `ReturnToSpaceshipAsync`다. 임시 우주선 방문은 필드를 종료하지 않는 별도 출입 계약이며 이 API를 재사용해 Match를 종료시키지 않는다.
 
 ## 4. 시간과 Weather 연결
 
-현재 권위 Scene의 생성 순서는 `MatchTimeService → MatchCoordinator → MatchEnvironmentSceneScope`다. 하지만 그 이전 터렛 바인딩이 HOLD여서 현재 Initial_Stage에서는 이 단계까지 도달하지 못할 수 있다.
+현재 권위 Scene의 생성 순서는 `MatchTimeService → MatchCoordinator → MatchEnvironmentSceneScope`다. 실제 Initial_Stage에서 이 경로로 자동 스폰·필드 정지와 재개를 확인했다.
 
 1. Timestamp adapter가 NGO 서버 시각 또는 개발용 Unity 단조 시각을 읽는다.
 2. MatchTimeService의 Clock은 anchor·배속·정지 정책으로 게임 초를 계산한다. 시간은 복원 시 새 epoch를 갖는다.
 3. 같은 서비스의 Scheduler가 기한에 도달한 예약을 실행한다. 종료/epoch 교체/호출자 취소로 과거 예약을 정리한다.
 4. MatchPresenceService는 Host 참가자의 위치 보고를 집계한다. 1명 또는 SOS 2명 모두 우주선에 있어야 필드 정지다.
-5. 김진태의 Weather/Time 구현이 `IMatchScheduledEnvironmentFeature.BindAuthority`로 예약을 등록하고 반환 lease로 정리한다. 실제 Feature가 없는 상태를 낮밤 완성으로 표시하지 않는다.
+5. Core가 연결한 CountTick/Weather 어댑터가 `IMatchScheduledEnvironmentFeature.BindAuthority`로 예약을 등록하고 반환 lease로 정리한다. 실제 Feature가 없는 상태를 낮밤 완성으로 표시하지 않는다.
 6. 환경 Changed는 Match의 읽기 snapshot을 바꾼다. 환경 변경 자체를 추가 Spawn 명령으로 바꾸지 않는다.
 
 게임 시간 정지는 네트워크 연결·메시지 pump·우주선/UI와 다르다. Enemy/터렛의 진행·물리/예약을 실제로 멈추는 부분은 각 Feature consumer가 제공해야 한다. Core가 해당 코드의 deltaTime/공격 루프를 몰래 교체하지 않는다.
@@ -135,7 +135,7 @@ sequenceDiagram
     S-->>C: 복원 결과 또는 백업 복구/실패
 ```
 
-`AppRoot.ReadCheckpointAsync`는 재실행 호출자가 메타데이터를 먼저 읽는 port다. 이 호출만으로 새 Match·Player·터렛·Enemy를 생성하지 않는다. 실제 Resume는 저장 metadata로 새 Match를 준비하고 합의된 writer를 등록한 뒤 Restore해야 한다. 현재 Load 버튼을 비활성화한 이유다.
+`AppRoot.ReadCheckpointAsync`는 메타데이터 읽기 port다. 새 `ResumeCheckpointAsync`가 저장 입력으로 새 1인 Mission 구성과 실제 writer 복원까지 조율한다. 현재 전체 저장/복원은 실제 Weather writer 누락으로 차단한다.
 
 기본 정책은 당시 World 복원, 경험치 등 Progression과 Currency는 현재 값 유지다. Currency는 요청 정책에 따라 체크포인트 값으로 되돌릴 수 있다. 현재 프로필 자료에 경험치/성장 원본 전체가 없어 Feature 계약을 통해 구현해야 한다.
 
@@ -143,11 +143,11 @@ sequenceDiagram
 
 | 담당 | Core가 제공하는 것 | 담당자가 제공/연결할 것 | 현재 상태 |
 | --- | --- | --- | --- |
-| Player/UI | 실제 권위 actor 등록 lease, 참가자 위치 보고, 공용 입력/화면 경계 | 실제 원격 actor·우주선 출입 사실·HP/무기/설치물 writer | 코드 변경 없이 대기 |
-| FieldTurret | Match ID/요청·권한/지역 Grid/읽기 snapshot 계약 | 실제 소유·ID·Match lease·관측 및 전력/actor writer | CORE-FEATURE-HOLD; 표식의 요구 API를 검토해야 함 |
-| Enemy/Encounter | 확정 공간/환경·source context와 요청 결과/수명 | 실제 Planner/Executor 소비·객체 추적·진행 정지·writer | 기존 PR 범위 및 담당자 실제 구현과 별도 인수 |
-| World/Weather | clock/scheduler, 환경 snapshot, GameFlow/Scene 전환 API | 실제 날씨·낮밤 규칙, 허브 PlayerStart/포털·콘솔 UX | 담당자와 연결 대기 |
-| Core | App 저장소·조율/규칙·DI·검증·문서 | 위 계약의 조립, 현재 원본과 문서의 일치 | 독립 범위 구현/검사 수행 |
+| Player/UI | 실제 권위 actor 등록 lease, 참가자 위치 보고, 공용 입력/화면 경계 | 실제 원격 actor·포털 출입 보고 | Host 시간·입력·HP/무기/설치물 writer 연결. 전체 NetworkBehaviour는 Player 후속 |
+| FieldTurret | Match ID/요청·권한/지역 Grid/읽기 snapshot 계약 | 실제 소유·ID·Match lease·관측 및 전력/actor writer | 실제 시간·HP/전력·종류별 전투·저장 원본 연결 |
+| Enemy/Encounter | 확정 공간/환경·source context와 요청 결과/수명 | 게임별 생성 규칙·전달 연출·동적 source 고유 원본 | 실제 Planner/Executor의 환경/origin·시간·writer 연결 |
+| World/Weather | clock/scheduler, 환경 snapshot, GameFlow/Scene 전환 API | 날씨 Random·실제 Weather writer, 허브 PlayerStart/포털·콘솔 UX | Core CountTick/환경 전달 연결. 진태 3번째 이후 후속 |
+| Core | App 저장소·조율/규칙·DI·검증·문서 | 위 계약의 조립, 현재 원본과 문서의 일치 | 실제 Scene 접점·own-world 반복 복원 검증. 제품 전체 인수는 후속 |
 
 11/3 회의의 소환형/회복형 분리·암살자 타깃·수리/피해 공통화·터렛 검증 지원 목록은 별도 담당자 작업/요청이다. 이번에 그 알고리즘이나 미정 API를 임의 추가하지 않았다. [최신 main 회의](https://github.com/Team-HJD-21/unity-6-the-developer/blob/bf3db829/Docs/planning/2026-11-03-weekly-progress.md)
 
@@ -157,6 +157,27 @@ Core C# 437개에는 Editor55개·Tests50개가 포함된다. 단순 파일 수�
 
 AppRoot는 Unity 수명·현재 Match·Scene 조립의 소유자다. GameFlow 절차는 Application으로, Unity 준비 확인은 AppGameFlowHost로, 시작 버튼은 Presenter로 분리했다. 체크포인트의 저장소/Match scope/실행/관찰도 각 수명으로 분리했다.
 
-여전히 Bootstrap의 터렛 구체 타입 의존과 HOLD가 있다. 이를 계층 수만 늘려 숨기거나 동일 동작의 임시 Manager로 대체하지 않았다. 다음 계약 합의 때 Feature가 공개한 최소 port로 축소해야 한다. 기존 AppScreenPresenter의 개발용 기본 폰트/화면은 신규 Startup의 복제 시각 요소와 구분하며 최종 공용 테마 인수도 남아 있다.
+Bootstrap의 터렛 구체 타입 참조는 실제 Feature 조립에 한정한다. 원본을 복제하는 별도 Manager는 추가하지 않았다. 공용 화면은 AppScreenStyle로 기존 NEXON OTF·HUD sprite를 재사용하며 최종 시각 인수는 수동 확인 대상이다.
 
-PL은 README의 읽는 순서→이 문서의 실제 함수 흐름→각 API 문서→보류표 순으로 확인한다. 이해가 어려운 함수명/소유권은 PR 이전 검토에서 보완한다.
+PL은 README의 읽는 순서→이 문서의 실제 함수 흐름→각 API 문서→최신 통합 안내/인수인계 순으로 확인한다. 이해가 어려운 함수명/소유권은 PR 이전 검토에서 보완한다.
+
+## 낮밤·Steam·시작 우주선 후속
+
+```mermaid
+flowchart TD
+    Boot[AppBootstrap] --> Select[SteamAppSettings: 개발 또는 Steam]
+    Select --> SDK[SteamPlatformService: SDK·사용자·로비]
+    SDK --> Pump[AppRoot.Update: 필드 정지와 별개 callback]
+    Start[기존 시작 버튼] --> Flow[GameFlow: Scene 로드와 게임 준비]
+    Flow --> Loading[LoadingScreenPresenter: 검은 배경과 하단 바]
+    Flow --> Hub[SpaceshipHubCompositionRoot]
+    Hub --> Local[Match 없는 로컬 Player와 카메라]
+    Flow --> Mission[InitialStageCompositionRoot]
+    Mission --> Cycle[MatchDayNightCycle: 낮300 / 밤300]
+    Cycle --> Weather[기존 Weather의 다음 날씨]
+    Weather --> Env[환경 snapshot → 다음 Encounter]
+```
+
+시작 우주선은 Scene에 있던 비활성 `Capsule`의 실내 배치점만 참조하며 그 임시 객체를 활성화하지 않는다. 실제 Player는 Stage와 같은 prefab에서 생성하고, `SpaceshipHubSettings`에서 표식·prefab·배율을 설정한다. 필드의 Additive 우주선 방문에는 이 actor/카메라를 중복 생성하지 않는다. 출격하면 허브 객체를 정리하고 기존 Mission PlayerStart에서 새 actor를 조립한다.
+
+Steam의 플랫폼 식별/로비는 실제 NGO 게임 transport·Backend 인증과 구분한다. [Steam 사용법](steam-api.md), [낮밤과 Weather 저장 변경](day-night-api.md), [운영 화면](screen-management-api.md)을 따른다.

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TeamHJD.Game.Application;
@@ -24,6 +25,7 @@ namespace TeamHJD.Game.Bootstrap
         private MatchSession _currentMatch;
         private bool _isDisposed;
         private AppScreenPresenter _screenPresenter;
+        private SpaceshipTravelService _spaceshipTravel;
         private IDisposable _completionSubscription;
         private readonly Dictionary<string, Exception> _compositionFailures = new(StringComparer.Ordinal);
         public GameFlowController GameFlow
@@ -186,10 +188,20 @@ namespace TeamHJD.Game.Bootstrap
                 throw new InvalidOperationException("AppRoot has already been initialized.");
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
+            _spaceshipTravel = new SpaceshipTravelService(this);
             if (Services.Platform is IPlatformRuntime) InitializePlatform();
             if (UnityEngine.Application.isPlaying)
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
-                    NavigateFromScreenAsync, GetSceneTravelRestriction);
+                    NavigateFromScreenAsync, GetSceneTravelRestriction,
+                    () => GameFlow?.IsTransitioning == true);
+        }
+
+        // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
+        internal Task FadeSpaceshipTravelAsync(Func<Task> move)
+        {
+            ThrowIfUnavailable();
+            if (_screenPresenter == null) throw new InvalidOperationException("Scene fade requires the App screen presenter.");
+            return _screenPresenter.FadeSceneAsync(move, destroyCancellationToken);
         }
 
         public MatchSession StartMatch(MatchConfig config, MatchState initialState, IModeRules modeRules)
@@ -472,6 +484,8 @@ namespace TeamHJD.Game.Bootstrap
         {
             if (_isDisposed || Services == null)
                 return "App is stopping.";
+            if (_spaceshipTravel?.IsTransitioning == true && !_spaceshipTravel.IsLaunchingMission)
+                return "우주선 출입 중입니다. 이동이 끝난 뒤 요청하세요.";
             if (Services.Platform is IPlatformRuntime platform && !platform.IsInitialized)
                 return "Steam 플랫폼이 준비되지 않았습니다. Game Debugger에서 초기화 상태를 확인하세요.";
             if (Services.SceneTransitions.IsTransitioning)
@@ -500,11 +514,22 @@ namespace TeamHJD.Game.Bootstrap
             if (_composedSceneHandles.Contains(scene.handle))
                 return;
 
+            // 시작 우주선은 필드에서 Player/카메라가 넘어오는 Additive 방문과 생성 조건이 다릅니다.
+            if (GameFlow != null && scene.path == GameFlow.Routes.SpaceshipScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
+                !scene.GetRootGameObjects().Any(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true) != null))
+            {
+                var hub = new GameObject("Core Starting Hub");
+                SceneManager.MoveGameObjectToScene(hub, scene);
+                hub.AddComponent<SceneComposition.SpaceshipHubCompositionRoot>();
+            }
+
             var compositionRoots = new List<ISceneCompositionRoot>();
             foreach (GameObject rootObject in scene.GetRootGameObjects())
             {
                 foreach (MonoBehaviour behaviour in rootObject.GetComponentsInChildren<MonoBehaviour>(true))
                 {
+                    if (behaviour is TeamHJD.Game.Presentation.Scene.ISpaceshipTravelConsumer travelConsumer)
+                        travelConsumer.BindSpaceshipTravel(_spaceshipTravel);
                     if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled)
                         compositionRoots.Add(compositionRoot);
                 }
