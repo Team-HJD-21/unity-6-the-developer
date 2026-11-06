@@ -3,13 +3,11 @@ using UnityEngine;
 /// <summary>
 /// 사거리 안의 플레이어나 터렛에 즉시 피해를 주는 근접 능력이다.
 /// </summary>
-public sealed class EnemyCloseRangeAbility : EnemyAbility
+public class EnemyCloseRangeAbility : EnemyAbility
 {
     [SerializeField] private EnemyTargeting enemyTargeting;
     [Header("공격 설정")]
     [SerializeField] private int attackDamage = 5;
-    
-
 
     protected override void Awake()
     {
@@ -31,6 +29,17 @@ public sealed class EnemyCloseRangeAbility : EnemyAbility
         if (!TryGetTarget(out TargetableComponent target))
             return false;
 
+        return ApplyDamage(target);
+    }
+
+    /// <summary>
+    /// 타깃 유형에 맞는 체력 시스템에 피해를 전달한다.
+    /// </summary>
+    protected bool ApplyDamage(TargetableComponent target)
+    {
+        if (target == null || !target.CanBeTargeted)
+            return false;
+
         if (target.TargetType == TargetType.Turret)
             return target.TryApplyDamage(attackDamage);
 
@@ -45,7 +54,7 @@ public sealed class EnemyCloseRangeAbility : EnemyAbility
         return true;
     }
 
-    private bool TryGetTarget(out TargetableComponent target)
+    protected bool TryGetTarget(out TargetableComponent target)
     {
         target = null;
         if (enemyTargeting == null || enemyTargeting.Target == null)
