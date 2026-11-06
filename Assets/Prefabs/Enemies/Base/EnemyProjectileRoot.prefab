@@ -229,7 +229,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 85b13489ba26df44f88702241bd6bd4f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectile
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDamageProjectile
   ShowTopMostFoldoutHeaderGroup: 1
   projectileSpeed: 1
   rigidbody2D: {fileID: 451197500948743738}

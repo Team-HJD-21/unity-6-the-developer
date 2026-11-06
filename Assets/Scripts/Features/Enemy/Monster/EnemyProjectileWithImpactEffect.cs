@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class EnemyProjectileWithImpactEffect : EnemyProjectile
+public class EnemyProjectileWithImpactEffect : EnemyDamageProjectile
 {
     [SerializeField] private GameObject explosionEffectPrefab;
     

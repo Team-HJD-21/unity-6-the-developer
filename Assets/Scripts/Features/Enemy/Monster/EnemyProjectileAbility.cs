@@ -4,7 +4,7 @@ public sealed class EnemyProjectileAbility : EnemyAbility
 {
     [Header("참조")]
     [SerializeField] private EnemyTargeting enemyTargeting;
-    [SerializeField] private EnemyProjectile projectilePrefab;
+    [SerializeField] private EnemyDamageProjectile projectilePrefab;
     [SerializeField] private EnemyProjectileSpawner projectileSpawner;
     
     [Header("공격 설정")]

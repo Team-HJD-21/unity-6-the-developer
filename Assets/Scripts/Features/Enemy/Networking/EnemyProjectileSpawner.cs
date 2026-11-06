@@ -5,7 +5,7 @@ using UnityEngine;
 public sealed class EnemyProjectileSpawner : NetworkBehaviour
 {
     public bool TrySpawn(
-        EnemyProjectile prefab,
+        EnemyDamageProjectile prefab,
         Vector3 position,
         Vector2 direction,
         int damage)
@@ -19,7 +19,7 @@ public sealed class EnemyProjectileSpawner : NetworkBehaviour
         if (networkRunning && (!IsSpawned || !IsServer))
             return false;
 
-        EnemyProjectile projectile =
+        EnemyDamageProjectile projectile =
             Instantiate(prefab, position, Quaternion.identity);
         
         projectile.Initialize(damage, direction);

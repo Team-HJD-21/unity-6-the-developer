@@ -10,7 +10,7 @@ public class ArcaneOrbProjectile : EnemyProjectileWithImpactEffect
     private float slowDuration = 2f;
     protected override void OnHit(ITargetable target)
     {
-        base.OnHit(target); // EnemyProjectile의 기본 피해
+        base.OnHit(target); // EnemyDamageProjectile의 기본 피해
         ApplySlow(target);
     }
 
@@ -27,4 +27,3 @@ public class ArcaneOrbProjectile : EnemyProjectileWithImpactEffect
         receiver?.ApplySlow(slowMultiplier, slowDuration);
     }
 }
-    
