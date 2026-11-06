@@ -1,4 +1,4 @@
-// Scene이 소유한 플레이어 입력을 현재 Match 명령 경계로 전달합니다.
+// Scene의 Player Feature에 실제 Match/네트워크 소유권을 연결하고 해제합니다.
 
 using System;
 using System.Collections.Generic;
@@ -51,12 +51,6 @@ namespace TeamHJD.Game.Presentation.Scene
             }
             catch (Exception error) { RollbackBinding(error); throw; }
             finally { _isBinding = false; }
-        }
-
-        public CommandSubmissionResult Submit(GameCommand command)
-        {
-            if (_session == null) throw new InvalidOperationException("PlayerSceneAdapter is not bound to a match.");
-            return _session.Submit(command);
         }
 
         public void Unbind()

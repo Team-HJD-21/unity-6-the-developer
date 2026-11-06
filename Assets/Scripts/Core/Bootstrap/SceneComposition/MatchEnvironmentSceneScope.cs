@@ -16,11 +16,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly HashSet<IMatchEnvironmentFeature> _features;
         private bool _disposed;
         public MatchEnvironmentSceneScope(MatchSession session, MatchCoordinator coordinator,
-            IMatchWeatherSource weather, IMatchTimeOfDaySource time, Func<bool> mayWrite, IMatchScheduler scheduler = null)
+            IMatchWeatherSource weather, IMatchTimeOfDaySource time, Func<bool> mayWrite, IMatchScheduler scheduler = null, IMatchClock clock = null)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _weather = weather; _time = time; _features = Collect(weather, time);
-            session.InitializeEnvironment(coordinator, () => !_disposed && session.IsGameplayRunning && mayWrite());
+            session.InitializeEnvironment(clock ?? coordinator, () => !_disposed && session.IsGameplayRunning && mayWrite());
             try
             {
                 foreach (var feature in _features)
@@ -38,6 +38,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 throw;
             }
         }
+        /// <summary>Scene 조립부가 Match 시작 직후 초기 날씨/예고를 확정합니다. 다음 날씨 사건까지 빈 환경을 두지 않습니다.</summary>
+        public void PublishCurrent() => Publish();
+
         private void Publish()
         {
             if (_disposed || _session.IsDisposed) return;

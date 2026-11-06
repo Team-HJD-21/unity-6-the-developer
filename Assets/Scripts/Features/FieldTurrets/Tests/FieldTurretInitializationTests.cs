@@ -708,6 +708,62 @@ namespace TeamHJD.Game.FieldTurrets.Tests
         }
 
         [Test]
+        public void AutoActivationWaitsForHigherPriorityInsteadOfStartingCheaperTurret()
+        {
+            var controller = Track(new GameObject("Ordered Auto Controller")).AddComponent<FieldTurretController>();
+            controller.TrySetMaximumPower(30);
+            var first = Track(FieldTurretFactory.Create(MakeInactiveTurret(),
+                FieldTurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<FieldTurretBase>();
+            var secondDefinition = Track(ScriptableObject.CreateInstance<FieldTurretDefinition>());
+            SetField(secondDefinition, "_id", "second");
+            SetField(secondDefinition, "_power", 10);
+            var secondPrefab = MakeInactiveTurret();
+            SetField(secondPrefab, "_definition", secondDefinition, typeof(FieldTurretBase));
+            var second = Track(FieldTurretFactory.Create(secondPrefab,
+                FieldTurretInitializationData.CreateDefault(secondDefinition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<FieldTurretBase>();
+            first.RequestActivation(true);
+            controller.AutoActivationScoreProvider = (candidate, count) => candidate == first ? 100f : 0f;
+            Assert.That(controller.TryStartAutoActivation(), Is.True);
+            Assert.That(second.IsActivated, Is.False, "Lower priority must wait even with ten power available");
+            Assert.That(controller.IsAutoActivationRunning, Is.True);
+            controller.Budget.Tick(2.1f);
+            InvokeControllerAdvance(controller);
+            Assert.That(first.IsActivated, Is.True);
+            Assert.That(second.IsActivated, Is.True);
+            Assert.That(controller.IsAutoActivationRunning, Is.False);
+        }
+
+        private static void InvokeControllerAdvance(FieldTurretController controller) =>
+            typeof(FieldTurretController).GetMethod("AdvanceAutoActivation", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(controller, null);
+
+        [Test]
+        public void AutoActivationTieUsesButtonTimeDamagePerPower()
+        {
+            var controller = Track(new GameObject("Efficiency Auto Controller")).AddComponent<FieldTurretController>();
+            controller.TrySetMaximumPower(20);
+            var first = Track(FieldTurretFactory.Create(MakeInactiveTurret(),
+                FieldTurretInitializationData.CreateDefault(_definition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<FieldTurretBase>();
+            var efficientDefinition = Track(ScriptableObject.CreateInstance<FieldTurretDefinition>());
+            SetField(efficientDefinition, "_id", "efficient");
+            SetField(efficientDefinition, "_power", 20);
+            SetField(efficientDefinition, "_damage", 80);
+            var prefab = MakeInactiveTurret();
+            SetField(prefab, "_definition", efficientDefinition, typeof(FieldTurretBase));
+            var efficient = Track(FieldTurretFactory.Create(prefab,
+                FieldTurretInitializationData.CreateDefault(efficientDefinition), controller,
+                Vector3.zero, Quaternion.identity).gameObject).GetComponent<FieldTurretBase>();
+            controller.TryStartAutoActivation();
+            Assert.That(controller.AutoActivationCandidates[0].InstanceId, Is.EqualTo(efficient.InstanceId));
+            Assert.That(efficient.IsActivated, Is.True);
+            Assert.That(first.IsActivated, Is.False);
+            Assert.That(controller.AutoActivationCandidates[0].FirepowerEfficiency, Is.EqualTo(4f));
+        }
+
+        [Test]
         public void AutoActivationSkipsUnaffordableCandidateAndExcludesLockedDestroyed()
         {
             var controller = Track(new GameObject("Auto Controller")).AddComponent<FieldTurretController>();

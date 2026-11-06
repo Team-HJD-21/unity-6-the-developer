@@ -81,7 +81,7 @@ namespace TeamHJD.Game.Tests.EditMode
             {
                 root.Initialize(new AppServices(new FakeProfileService(), new FakeContentCatalog(),
                     new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
-                    new FakeSceneFlow(), new LocalAuthority()));
+                    new FakeSceneFlow()));
                 var id = new MatchId("frontline-test");
                 root.StartMatch(new MatchConfig(id, MatchMode.Story, new StageId("test"),
                     new DefinitionId("test"), "test", 1, Array.Empty<PlayerLoadoutSnapshot>()),

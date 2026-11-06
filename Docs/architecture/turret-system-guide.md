@@ -821,11 +821,11 @@ flowchart TD
 - [`FieldTurretMissile.cs`](../../Assets/Scripts/Features/FieldTurrets/Weapons/FieldTurretMissile.cs)
 - [`MissileTargetReservation.cs`](../../Assets/Scripts/Features/FieldTurrets/Core/MissileTargetReservation.cs)
 
-## 자동 활성화 (2026-10-08)
+## 자동 활성화 (2026-11-05 회의 방향 반영)
 
 `FieldTurretController.TryStartAutoActivation()`은 같은 Scene·컨트롤러의 등록된 무기 터렛을 대상으로 한다. 잠금·파괴 후보를 제외하고 버튼 시점의 공격 가능 사거리 내 적 수를 저장한다. Missile 최소 사거리도 반영하고 동일 Rigidbody의 여러 Collider를 중복 집계하지 않는다. enemyMask에는 적 Collider만 포함해야 한다. Rigidbody 없는 적의 여러 Collider는 개별 집계될 수 있다.
 
-적 수 내림차순, 동점은 InstanceId 오름차순으로 고정한다. 현재 켜진 소속 터렛을 모두 끈 뒤 가용 전력으로 순서대로 활성화를 시도한다. 부족한 후보는 건너뛰고 전력 반환 중에는 다시 시도한다. 후보를 모두 처리했거나 반환 대기가 끝나 더 켤 수 없는 경우 종료한다. 진행 중 시스템에 의해 잠금·파괴·제거된 후보는 제외하고 새 후보를 추가하거나 순위를 재계산하지 않는다. 자동 활성화 중에는 `IsManualOperationBlocked`가 true이며 사용자 개별 활성화·세부 업그레이드·레벨 변경은 `AutoActivationInProgress`로 거부한다. 수동 잠금·해금과 복구는 false, 공격력 보너스 변경은 미적용으로 처리하고 Console 로그로 알린다. 기존 `IsManualActivationBlocked`도 같은 값을 반환한다. 종료 후 수동 조작을 다시 허용하되 업그레이드에는 비활성·냉각 완료 조건이 계속 적용된다. UI는 `CanModifyUpgrades`로 세부/레벨 버튼을 제어한다. 자동화 내부 요청, 적의 피격과 이에 따른 파괴·시스템 비활성화, 게임 규칙의 구역 해금은 계속 처리한다. FieldTurretTest의 수동 피해·구역 변경 버튼은 진행 중 차단한다.
+적 수 내림차순 → 공격력/전력량 내림차순 → InstanceId 오름차순으로 버튼 시점에 고정한다. 화력 동률 비교는 10월 30일 회의의 공격력 기준이며 `DpsPerPower`와 구분한다. 현재 켜진 소속 터렛을 모두 끈 뒤 순서대로 활성화를 시도한다. 차례가 된 후보가 냉각 중이거나 전력이 반환 중이면 그 후보를 기다린다. 현재 전력과 반환 예정량을 합쳐도 켤 수 없는 후보만 제외하고 다음을 시도해 영구 대기를 막는다. 후보를 모두 처리하면 종료한다. 진행 중 잠금·파괴·제거된 후보는 제외하고 새 후보를 추가하거나 순위를 재계산하지 않는다. 자동 활성화 중에는 `IsManualOperationBlocked`가 true이며 사용자 개별 활성화·세부 업그레이드·레벨 변경은 `AutoActivationInProgress`로 거부한다. 수동 잠금·해금과 복구는 false, 공격력 보너스 변경은 미적용으로 처리하고 Console 로그로 알린다. 기존 `IsManualActivationBlocked`도 같은 값을 반환한다. 종료 후 수동 조작을 다시 허용하되 업그레이드에는 비활성·냉각 완료 조건이 계속 적용된다. UI는 `CanModifyUpgrades`로 세부/레벨 버튼을 제어한다. 자동화 내부 요청, 적의 피격과 이에 따른 파괴·시스템 비활성화, 게임 규칙의 구역 해금은 계속 처리한다. FieldTurretTest의 수동 피해·구역 변경 버튼은 진행 중 차단한다.
 
 쿨타임은 요청 수락부터 게임 시간 60초이며 일시정지 동안 진행하지 않는다. 진행 중 재요청은 거부한다. 비활성화된 컨트롤러는 작업을 중단한다. `AutoActivationScoreProvider`는 이후 가중치 정책을 주입할 수 있는 경계이며 현재 기본 점수는 적 수다.
 
@@ -834,14 +834,19 @@ CU interaction의 UGUI Button에는 `FieldTurretAutoActivationButton`을 연결�
 ```mermaid
 flowchart TD
     Button[CU 버튼 요청] --> Capture[적 수 캡처 / 잠금·파괴 제외]
-    Capture --> Sort[적 수순 고정 목록]
+    Capture --> Sort[적 수 / 공격력÷전력량 순 고정 목록]
     Sort --> Off[현재 활성 터렛 전체 끄기]
     Off --> Try[가용 전력으로 순서대로 시도]
-    Try --> Skip[부족한 후보 건너뛰기]
-    Skip --> Wait{반환 대기와 미처리 후보 있음?}
-    Wait -->|있음| Recover[전력 회복]
+    Try --> Possible{반환이 끝나면 비용 충족 가능?}
+    Possible -->|불가능| Skip[해당 후보 제외 후 다음 후보]
+    Skip --> Try
+    Possible -->|가능| Wait{냉각 또는 전력 반환 대기?}
+    Wait -->|대기| Recover[현재 후보를 유지하고 회복]
     Recover --> Try
-    Wait -->|없음| End[종료]
+    Wait -->|준비 완료| Activate[활성화 후 다음 후보]
+    Activate --> More{미처리 후보 있음?}
+    More -->|있음| Try
+    More -->|없음| End[종료]
 ```
 
 ## 2026-10-27 연동 후속

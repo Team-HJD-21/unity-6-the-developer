@@ -23,7 +23,7 @@ namespace TeamHJD.Game.Tests.EditMode
             _root = _rootObject.AddComponent<AppRoot>();
             _root.Initialize(new AppServices(new FakeProfileService(), new FakeContentCatalog(),
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
-                new FakeSceneFlow(), new LocalAuthority()));
+                new FakeSceneFlow()));
         }
 
         [TearDown]

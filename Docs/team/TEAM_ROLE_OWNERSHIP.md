@@ -119,7 +119,7 @@
 | Ally Player Agent | 김진태 | 조수빈: runtime, 이영빈: Player Action, 황재동: profile, 양현석: authority |
 | Rival Player Agent | 김진태, Deferred | 조수빈/이영빈/황재동/양현석 |
 
-AI는 `GameCommand`를 생성하고 양현석의 Authority/Simulation이 검증·처리한다. EventBus는 로컬 전달 수단이지 Network 동기화 수단이 아니다.
+AI의 실행 의도는 각 Feature의 명시 요청 API로 전달한다. Core/Host는 Match·참가자·권한을 검증하고 실제 행동은 해당 Feature가 처리한다. 범용 GameCommand/Simulation 실행 경로는 사용하지 않는다. EventBus는 로컬 전달 수단이지 Network 동기화 수단이 아니다.
 
 2026-10-02 회의에서는 몬스터 개체 AI, SOS 아군 플레이어 AI, 향후 라이벌 플레이어 AI를 구분하고 공통 기능을 검토하자는 논의가 있었다. 이는 AI 상속 구조를 확정한 것이 아니다. 라이벌 정책·구현은 계속 Deferred이며, 김진태의 Player Agent 정책 소유와 조수빈의 공통 runtime 소유를 변경하지 않는다. 몬스터 타깃 판단을 상위·그룹·개체로 나누는 안도 제안 상태다. ([회의 검토 기록](../planning/2026-10-02-ai-architecture-review.md))
 
