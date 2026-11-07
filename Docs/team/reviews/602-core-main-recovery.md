@@ -2,7 +2,7 @@
 
 - PR: [#656 — fix(core): deliver reviewed runtime integration to main](https://github.com/Team-HJD-21/unity-6-the-developer/pull/656)
 - 관련 이슈: #602. 아래 후속 이슈는 이 PR로 닫지 않는다.
-- base: `main` (`9912b85bafec0075335329625ad9de50c5460b97`)
+- base: `main` (`ea3d7714bf234588424fba601758c98b172bfce8`)
 - head: `codex/core-main-recovery`
 - 복구 원본: `codex/core-08-spaceship-ui-20261105`, `5b87142ae9f209644175ffd726e35eb255ad33e7`
 - 목적: 중간 작업 브랜치에만 병합된 기존 구현을 최신 main으로 전달한다. 기존 리뷰 이력과 사용자 수동 인수·영상을 보존한다. 병합은 별도 승인 후 사람이 진행한다.
@@ -75,6 +75,7 @@ Unity 6000.3.23f1 격리 프로젝트에서 실행했다. 사용자 Editor·작�
 - `.meta` 대응·GUID 검사 오류 0, 충돌 표시 없음, 최신 main의 CI/CodeOwners/새 터렛 회귀 파일 보존 확인. Unity 생성 `.meta`의 기존 빈 필드 공백은 유지했다.
 - 실행 근거(로컬 제외 경로): `Docs/Local/Review/PrTargetAudit/validation/full-main-01.xml`, `autospawn-diagnosis-01.log`, `autospawn-final-01.xml`, `turret-owner-final-01.xml`. 자동 실행 결과와 기존 PL 수동 인수는 구분한다.
 - 이번 복구에서 새 Windows Build·실계정 Steam·2프로세스 플레이는 실행하지 않았다. 기존 수동 인수 소스를 유지하면서 main 충돌과 직접 영향 경계를 검사한 결과다.
+- 검증 뒤 게시 중 추가된 main #655도 반영했다. `9912b85ba → ea3d7714b`는 자동 리뷰 workflow/AGENTS 안내만 바뀌었고 Assets·Packages·ProjectSettings 차이는 없다. 이 문서·CI 변경 때문에 같은 Unity 실행을 반복하지 않았다.
 <!-- main-recovery-validation:end -->
 
 과거 근거: PL은 Startup/Initial_Stage 수동 확인을 완료했다고 승인했다. [게임 Flow·5:00 타이머·날씨 전환 영상](../../videos/core/2026-11-05-game-flow-day-night.mp4)과 [인수 기록](../../planning/2026-11-05-core-local-review.md)을 보존한다. 과거 최종 누적 코드의 Windows Build 성공·HUD/왕복 검사 11/11, Steam 취소 응답 대역 검사 12/12는 해당 시점의 결과다. 이번 main 통합 코드의 새 Build·실제 Steam 지연·2프로세스 검증으로 바꾸어 쓰지 않는다.
