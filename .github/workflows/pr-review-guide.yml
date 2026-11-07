@@ -129,7 +129,9 @@ jobs:
 
             const sha = current.head.sha;
             const commitUrl = `${current.html_url}/commits/${sha}`;
-            const body = `${marker}\n## PR 리뷰 가이드\n\n기준 커밋 [\`${sha.slice(0, 7)}\`](${commitUrl})\n\n${guide}`;
+            const noFindings = result.findings.length === 0 && current.base.sha === process.env.REVIEW_BASE_SHA;
+            const reviewResult = noFindings ? '\n\n**리뷰 결과** 검토 범위에서 지적할 결함을 발견하지 못했습니다.' : '';
+            const body = `${marker}\n## PR 리뷰 가이드\n\n기준 커밋 [\`${sha.slice(0, 7)}\`](${commitUrl})${reviewResult}\n\n${guide}`;
             if (existing) {
               await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
             } else {
