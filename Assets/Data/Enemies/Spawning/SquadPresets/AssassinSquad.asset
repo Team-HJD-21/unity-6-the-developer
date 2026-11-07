@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: AssassinSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: AssassinSquad
+  role: 7
+  selectionWeight: 1
   _composition:
   - _enemyId: BlackWolf
     _weight: 2

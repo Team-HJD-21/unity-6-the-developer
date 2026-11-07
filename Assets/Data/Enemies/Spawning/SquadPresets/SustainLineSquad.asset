@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: SustainLineSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: SustainLine
+  role: 4
+  selectionWeight: 2
   _composition:
   - _enemyId: Troll
     _weight: 1

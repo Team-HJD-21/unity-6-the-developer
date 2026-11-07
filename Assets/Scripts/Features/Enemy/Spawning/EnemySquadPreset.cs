@@ -2,6 +2,18 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum EnemySquadRole
+{
+    Patrol = 0,
+    Assault = 1,
+    Backline = 2,
+    Summon = 3,
+    Sustain = 4,
+    Elite = 5,
+    Balanced = 6,
+    Ambush = 7
+}
+
 /// <summary>
 /// 한 구성 세트에 포함할 적 종류와 상대적인 생성 수량을 정의한다.
 /// 예를 들어 가중치 1과 2는 한 세트마다 두 적을 각각 1마리와 2마리 생성한다는 뜻이다.
@@ -35,6 +47,14 @@ public sealed class EnemySquadPreset : ScriptableObject
 {
     [SerializeField] private string _squadOrder;
     [SerializeField] private List<EnemySquadCompositionEntry> _composition = new();
+
+    [Header("자동 편성")]
+    [SerializeField] private EnemySquadRole role;
+    [Tooltip("자동 선택의 기본 가중치입니다. 0이면 자동 선택에서 제외됩니다.")]
+    [SerializeField, Min(0)] private int selectionWeight = 1;
+
+    public EnemySquadRole Role => role;
+    public int SelectionWeight => selectionWeight;
 
     /// <summary>
     /// <see cref="SpawnRequest.SquadOrder"/>와 비교해 이 프리셋을 선택할 명령 값을 반환한다.
