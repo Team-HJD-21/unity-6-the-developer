@@ -58,6 +58,7 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
     {
         if (IsOperational)
         {
+            if (TryBeginOverheatCooling()) return;
             NoTargetInRange();//적이 타워 범위에 없을 때 탐색(raycast 사용)
             RotateTowardsTarget();//적 발견시 적을 향해 타워 돌리기
             FireRateController();//총알 객체화 후 발사 동작 수행
@@ -83,8 +84,9 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
         if (needsNewTargets)
         {
             ReleaseUnlaunchedTargets();
-            CurMissileCount = Mathf.Max(0f, CurMissileCount - Time.deltaTime);
             FindTarget();//(raycast 사용)
+            if (Targets[0] == null)
+                CurMissileCount = Mathf.Max(0f, CurMissileCount - Time.deltaTime); // 발사 후 타깃 교체는 냉각으로 세지 않는다.
         }
     }
     private void FindTarget()
@@ -146,10 +148,10 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
 
     protected void LaunchMissiles(Transform[] spawnPoints)
     {
+        if (IsCoolingDown) return;
+        bool launched = false;
         try
         {
-            RecordMissileLaunch();
-            StartCoroutine(ShootAnimation());
             for (int index = 0; index < spawnPoints.Length; index++)
             {
                 MissileTargetReservation reservation = _targetReservations?[index];
@@ -161,6 +163,11 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
                 try
                 {
                     missileObject.GetComponent<FieldTurretMissile>().Initialize(reservation, Damage);
+                    if (!launched)
+                    {
+                        launched = true;
+                        StartCoroutine(ShootAnimation());
+                    }
                 }
                 catch
                 {
@@ -171,8 +178,12 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
         }
         finally
         {
-            // Transferred handles are already invalid. Only unlaunched claims are released.
-            ReleaseUnlaunchedTargets();
+            ReleaseUnlaunchedTargets(); // 이미 발사체로 이전된 예약은 유지한다.
+            if (launched)
+            {
+                RecordMissileLaunch(); // 미사일 개수와 관계없이 일제 발사 한 번을 누적한다.
+                TryBeginOverheatCooling();
+            }
         }
     }
 
@@ -222,28 +233,22 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
     }
     private void OverHeatAnimationController()//설정시간 도달 시 과열(TowerIsActivatedNow에서 수행)
     {
-        GunRenderer.color = new Color(1f,(255f-255f* (CurMissileCount / OverHeatMissileCount))/255f,(255f-255f*
-            (CurMissileCount / OverHeatMissileCount))/255f);
-        if (IsTargetInSight())//적이 사격 시야에 있음
-        {
-            if (CurMissileCount >= OverHeatMissileCount)//터렛 과열
-            {
-                BeginCooling(CoolTime);
-            }
-        }
+        if (IsCoolingDown) return;
+        float heatRatio = Mathf.Clamp01(CurMissileCount / Mathf.Max(1, OverHeatMissileCount));
+        GunRenderer.color = new Color(1f, 1f - heatRatio, 1f - heatRatio);
+        TryBeginOverheatCooling();
+    }
+    private bool TryBeginOverheatCooling()
+    {
+        if (IsCoolingDown || CurMissileCount < OverHeatMissileCount) return false;
+        ReleaseUnlaunchedTargets(); // 냉각 중에는 새 적을 독점 예약하지 않는다.
+        StopAllCoroutines();
+        BeginCooling(CoolTime);
+        return true;
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
         return FieldTurretTargetingUtility.IsInAttackRange(turret, Targets[0], MinimumRange, Range);
-    }
-    private bool IsTargetInSight()//적이 시야각에 있는지 확인(FireRateController, OverHeatAnimationController에서 수행)
-    {
-        return FieldTurretTargetingUtility.IsInSight(
-            TurretRotationPoint,
-            turret.position,
-            Targets[0],
-            TargetingAngle);
-        
     }
     private void FireSound()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
     {
