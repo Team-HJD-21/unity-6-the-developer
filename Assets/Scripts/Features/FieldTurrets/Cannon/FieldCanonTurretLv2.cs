@@ -14,6 +14,7 @@ public class FieldCanonTurretLv2 : DefaultFieldCanonTurret
     [Header("References")]
     [SerializeField] private Transform[] bulletSpawnPoint;    //총알 스폰 지점
     [SerializeField] private Transform []bulletFireDirection;    //총 격발 방향
+    public override int ProjectilesPerShot => bulletSpawnPoint != null ? bulletSpawnPoint.Length : 0;
     
 
     private GameObject []_bulletObj;
@@ -32,8 +33,8 @@ public class FieldCanonTurretLv2 : DefaultFieldCanonTurret
             _bulletObj[i] = Instantiate(bulletPrefab, bulletSpawnPoint[i].position, Quaternion.identity);
             FieldTurretBullet fieldTurretBullet = _bulletObj[i].GetComponent<FieldTurretBullet>();
             float randomValue = Random.Range(-0.5f, 0.5f);
-            bulletFireDirection[i].position = new Vector3(bulletFireDirection[i].position.x+randomValue, bulletFireDirection[i].position.y,0f);
-            fieldTurretBullet.Initialize(bulletFireDirection[i], Damage);
+            Vector3 aimPosition = new Vector3(bulletFireDirection[i].position.x + randomValue, bulletFireDirection[i].position.y, 0f);
+            fieldTurretBullet.Initialize(bulletFireDirection[i], Damage, aimPosition);
             // Collider2D player = Physics2D.OverlapCircle(transform.position, 40, playerMask);
             // Debug.Log(player);
             // if (player != null)

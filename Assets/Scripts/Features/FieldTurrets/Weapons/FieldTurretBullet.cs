@@ -15,6 +15,9 @@ public class FieldTurretBullet : MonoBehaviour
     private bool _hasHit;
 
     public void Initialize(Transform target, float damage)
+        => Initialize(target, damage, target != null ? target.position : Vector3.zero);
+
+    public void Initialize(Transform target, float damage, Vector3 aimPosition)
     {
         if (_isInitialized)
             throw new InvalidOperationException("FieldTurretBullet has already been initialized.");
@@ -25,7 +28,7 @@ public class FieldTurretBullet : MonoBehaviour
 
         _target = target;
         _bulletDamage = damage;
-        _direction = (_target.position - transform.position).normalized; // 정규화된 방향 계산
+        _direction = (aimPosition - transform.position).normalized; // 기준점을 옮기지 않고 이번 탄환의 방향만 계산
         _isInitialized = true;
         StartCoroutine(DestroyObjectIfNotHit());
     }

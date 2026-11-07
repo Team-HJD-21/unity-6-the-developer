@@ -410,6 +410,8 @@ flowchart TD
 
 `IsOperational`이 `true`일 때만 각 터렛의 `Update()`가 탐색·회전·발사·과열 확인을 수행한다. 실제 탐색은 `FieldTurretTargetingUtility.CollectByDistance()`가 사거리 안의 `enemyMask` Collider를 거리순으로 모으는 방식이다.
 
+Canon의 산포는 매 발사마다 기준 조준점의 월드 X에 ±0.5를 더한 임시 위치로 계산한다. `bulletFirePoint`·`bulletFireDirection` Transform은 이동시키지 않아 연속 사격해도 조준점이 한쪽으로 누적 이동하지 않는다. 발사체의 기존 `Initialize(Transform, damage)` 호출도 유지한다.
+
 #### 최소 사거리와 내부 공격 금지 범위
 
 Canon과 Missile은 `FieldTurretBase.minimumRange` 안에 있는 몬스터를 새 타겟으로 선택하거나 발사하지 않는다. `[SerializeField, HideInInspector] private` 필드로 외부 코드에서 직접 변경할 수 없으며 일반 Inspector에도 표시하지 않는다. 읽기 전용 `MinimumRange`로 실제 clamp된 값을 조회한다. 원본과 PoC의 Stage 1~3 프리팹 모두 아래 월드 단위 반지름을 적용했다. 마지막 Canon 값은 사용자 목록 순서에 따라 LV3 값으로 해석했다.
@@ -490,9 +492,9 @@ Missile은 적 수가 부족하면 첫 Target을 두 번째 발사 슬롯에서�
 
 ```mermaid
 flowchart TD
-    Combat["Canon/Missile<br>Update()"] --> Check["OverHeatAnimationController()"]
-    Check -->|Canon: 시간 누적| CanonHeat["Definition<br>OverHeatTime 도달"]
-    Check -->|Missile: 발사 횟수| MissileHeat["Definition<br>OverHeatMissileCount 도달"]
+    Combat["Canon<br>Update()"] --> Check["OverHeatAnimationController()"]
+    Check -->|시간 누적| CanonHeat["Definition<br>OverHeatTime 도달"]
+    Salvo["Missile<br>실제 일제 발사 완료"] --> MissileHeat["TryBeginOverheatCooling()<br>OverHeatMissileCount 도달 판정"]
     CanonHeat --> Begin["FieldTurretBase.BeginCooling()<br>공통 냉각 시작"]
     MissileHeat --> Begin
     Off["수동 또는 시스템 비활성화<br>남은 열 비율"] --> Begin
@@ -502,7 +504,9 @@ flowchart TD
     Complete -->|false| Ready["꺼진 상태 유지<br>재활성화 허용"]
 ```
 
-과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile은 `Shoot()` 호출마다 카운트가 1씩 증가하므로 한 번에 여러 발을 쏴도 발사 1회로 센다. 과열 기준은 `OverHeatMissileCount`, 과열 후 냉각 시간은 `CoolTime`이 정한다.
+과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile은 실제로 한 발 이상 발사한 일제 사격마다 카운트가 1씩 증가하므로 한 번에 여러 발을 쏴도 발사 1회로 센다. 과열까지 1회가 남았다면 해당 묶음을 모두 발사한 직후 타깃·시야각과 무관하게 냉각에 진입한다. 유효한 예약이 없어 한 발도 발사하지 못하면 카운트를 올리지 않는다. 과열 기준은 `OverHeatMissileCount`, 과열 후 냉각 시간은 `CoolTime`이 정한다.
+
+냉각 시작 시 미발사 타깃 예약은 즉시 반환하며 이미 비행 중인 미사일의 예약은 유지한다. 발사 후 유효한 타깃을 다시 확보하는 과정에서는 열을 줄이지 않고, 탐색해도 타깃이 없을 때만 기존 자연 냉각을 적용한다.
 
 Canon/Missile의 과열 냉각과 비활성화 후 냉각은 `FieldTurretBase.BeginCooling()` 및 `UpdateCooling()`으로 통합했다. `IsCoolingDown`은 두 경우 모두 냉각 여부를 나타내고, `CoolingDownRemaining`도 같은 타이머에서 남은 초를 제공한다. 별도 `_overheatCooldownRunning`과 `TotCoolTime`, 종류별 `OverHeat()`/`DeactivateProcess()`는 사용하지 않는다. 열 누적 기준은 각 터렛이 유지하고 `ApplyCoolingHeat()`로 공통 냉각 진행률을 적용한다.
 
@@ -672,7 +676,7 @@ flowchart TD
     Targetable -->|"비활성 무기 터렛 또는 파괴"| Excluded["목표 후보에서 제외"]
 ```
 
-`FieldTurretBase.TheoreticalDps = EffectiveDamage × Definition.FireRate × ProjectilesPerShot`이며 `DpsPerPower = TheoreticalDps / EffectivePower`다. Missile은 발사구 수를 발사당 최대 미사일 수로 반영한다. 이는 연속 사격 이론값으로 과열·명중률·폭발 다중 피해는 포함하지 않는다. 전력 0은 효율 0으로 처리하며 CU도 0이다. Snapshot에도 동일 값을 제공한다. Adapter의 fake 값은 제거했다. Enemy의 기존 `FirepowerRatio` 이름은 호환을 위해 유지하지만 실제 값은 0~1로 제한하지 않는 DPS/전력이며 위협 가중치가 효율 단위에 곱해진다.
+`FieldTurretBase.TheoreticalDps = EffectiveDamage × Definition.FireRate × ProjectilesPerShot`이며 `DpsPerPower = TheoreticalDps / EffectivePower`다. Canon과 Missile 모두 발사구 수를 발사당 최대 발사체 수로 반영한다. Canon LV1·LV2·LV3의 기본 프리팹은 각각 1·2·3발이다. 이는 연속 사격 이론값으로 과열·명중률·폭발 다중 피해는 포함하지 않는다. 전력 0은 효율 0으로 처리하며 CU도 0이다. Snapshot에도 동일 값을 제공한다. Adapter의 fake 값은 제거했다. Enemy의 기존 `FirepowerRatio` 이름은 호환을 위해 유지하지만 실제 값은 0~1로 제한하지 않는 DPS/전력이며 위협 가중치가 효율 단위에 곱해진다.
 
 전선 시스템과 후속 AI 계약에 제공할 후보 데이터는 다음과 같다.
 
