@@ -1,3 +1,5 @@
+// 설치형 스킬의 공통 배치/입력 흐름과 생성 자식의 Match 소유권을 연결합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -31,14 +33,26 @@ public abstract class PlayerPlacementSkillBase : PlayerSkillBase
     {
         GameInput.ReservePrimaryPointerForPlacement();
         if (IsPlacing) { CancelPlacement(); return true; }
+        CreatePlacementPreview();
+        OnPlacementStarted();
+        return true;
+    }
+
+    private void CreatePlacementPreview()
+    {
         _preview = Instantiate(_previewPrefab, transform.position, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(_preview.gameObject, gameObject.scene);
         _preview.HideCandidate();
         _preview.RefreshRange(PlacementCenter, PlacementRadius);
         _startFrame = Time.frameCount;
         _nextCheck = 0;
-        OnPlacementStarted();
-        return true;
+    }
+
+    /// <summary>스킬 writer가 저장된 설치 의도를 복원합니다. 입력·수량 소비·배치 확정은 발생시키지 않습니다.</summary>
+    protected void RestorePlacementState(bool placing)
+    {
+        CancelPlacement();
+        if (placing) CreatePlacementPreview();
     }
 
     // UI 소비가 끝난 뒤 확정합니다. 설치 시작에 사용한 클릭은 다음 프레임까지 재사용하지 않습니다.
@@ -129,7 +143,7 @@ public abstract class PlayerPlacementSkillBase : PlayerSkillBase
         OnPlacementCancelled();
     }
 
-    protected void MoveToOwnerScene(GameObject placed) => SceneManager.MoveGameObjectToScene(placed, gameObject.scene);
+    protected void MoveToOwnerScene(GameObject placed) => FieldSimulationTime.BindSpawned(placed, this);
     protected virtual void OnDisable() => CancelPlacement();
     protected virtual void OnDestroy() => CancelPlacement();
 }

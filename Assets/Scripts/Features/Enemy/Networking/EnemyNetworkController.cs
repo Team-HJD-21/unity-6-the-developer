@@ -1,4 +1,8 @@
+// 서버가 적 행동을 실행하고 생성 시 전달받은 Match 시간/수명에 연결합니다.
+// Client는 같은 Match의 읽기 시계만 사용하며 HP·행동을 결정하지 않습니다.
 using System;
+using TeamHJD.Game.Presentation.Scene;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -6,7 +10,7 @@ using UnityEngine;
 /// 네트워크에 스폰된 적의 행동을 서버에서 실행한다.
 /// 위치와 행동 결과는 서버가 결정하고 네트워크 동기화 컴포넌트가 클라이언트에 전달한다.
 /// </summary>
-public class EnemyNetworkController : NetworkBehaviour
+public partial class EnemyNetworkController : NetworkBehaviour
 {
     [SerializeField] private EnemyController enemyController;
     [SerializeField] private EnemyHealth enemyHealth;
@@ -49,6 +53,8 @@ public class EnemyNetworkController : NetworkBehaviour
             return;
         }
 
+        var simulation = GetComponent<FieldSimulationActor>();
+        if (simulation != null && !simulation.CanAdvance) return;
         enemyController.ExecuteBehavior();
     }
 
@@ -57,6 +63,7 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkSpawn()
     {
+        NotifySpawned();
         if (!IsServer || !enemyHealth)
             return;
 
@@ -115,6 +122,7 @@ public class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        NotifyDespawned();
         if (_explosionAbility != null)
             _explosionAbility.RemovalRequested -= OnExplosionRemovalRequested;
 

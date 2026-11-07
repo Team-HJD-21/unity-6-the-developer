@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e117e8a4d4e94d7aa05cf100d505357a, type: 3}
+  m_Name: AppScreenStyle
+  m_EditorClassIdentifier:
+  font: {fileID: 12800000, guid: 6295335bcf589d5468ad4d96b24bd2db, type: 3}
+  panelSprite: {fileID: 21300000, guid: 6d71e4cf822c144e49e1a8e2b91106f5, type: 3}
+  buttonSprite: {fileID: 21300000, guid: 6422ec33433bc439fa22cfc085017164, type: 3}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  titleColor: {r: 1, g: 1, b: 1, a: 1}

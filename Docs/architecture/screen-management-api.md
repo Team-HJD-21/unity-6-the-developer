@@ -40,7 +40,7 @@ Restart / Return to spaceship 버튼 → `AppRoot.ReplaceGameplaySceneAsync` →
 - Escape는 개인 메뉴 open/Back이다. 공유 Match 시간과 TimeScale을 바꾸지 않는다. 메뉴가 열려도 적은 움직일 수 있다.
 - 화면·전환은 각자 입력 token을 소유한다. 닫기로 사망 상태/다른 화면/로딩 잠금을 false로 덮지 않는다.
 - Loading이 결과/메뉴보다 앞에 남는다. Additive만 취소하며 Single commit 뒤에는 기다림을 표시한다.
-- Unity는 실제 진행 비율, NGO 완료 대기는 indeterminate 문구를 표시한다. 임의 백분율을 만들지 않는다.
+- Unity는 실제 진행 비율, NGO 완료 대기는 이동하는 막대로 표시한다. 임의 백분율을 만들지 않는다.
 - 현재 Scene EventSystem을 사용한다. 없는 Scene에서는 화면 open 시 Scene 전용 fallback을 만들며 영구 중복을 만들지 않는다. 기존 Both 입력 설정을 유지한다.
 - 키보드 선택은 현재 화면 버튼 사이로 제한하고 유효한 선택만 복원한다.
 
@@ -53,3 +53,18 @@ Restart / Return to spaceship 버튼 → `AppRoot.ReplaceGameplaySceneAsync` →
 2026-10-28 실제 작업 프로젝트에서 PL이 요청된 메뉴·입력·결과/재시작·복귀를 포함한 수동 확인을 모두 수행하고 이상 없음을 보고했다. [수동 인수 기록](../planning/2026-10-28-core-acceptance.md)을 따른다. 이는 현재 로컬 후보의 인수이며 모든 지원 해상도·실제 원격 Player·공동 Scene 이동을 자동 인수한 기록은 아니다.
 
 `b6-screens-fixed.xml`의 계약/종료 8개 통과 뒤, UI 사례의 잘못된 “Hub에는 항상 EventSystem이 있다” 가정을 수정했다. `b6-ui-flow-final.xml` 1/1 통과: 실제 Resume → CU 결과 → Restart → Loading → 새 CU/Match → Hub 복귀 → Hub 메뉴/Resume를 Button.onClick으로 확인했다. 사람의 마우스/키보드 사용성·외형과 실제 원격 Player/공동 이동을 자동 인수한 것은 아니다. [배치 기록](../planning/2026-10-26-core-sprint-implementation.md) 참조.
+
+## 11월5일 로딩 화면 변경
+
+로딩은 `LoadingScreenPresenter`로 분리했다. **불투명 검은 배경 + “임시 로딩 화면” 안내 + 화면 아래 얇은 진행 바**를 표시한다. 기존 카드/제목/설명/Cancel 버튼은 로딩 화면에서 제거했고 메뉴/결과 화면은 기존 서식을 유지한다.
+
+`AppScreenPresenter`는 SceneFlowController뿐 아니라 GameFlow의 Mission 준비 완료까지 로딩을 유지한다. 실제 Unity Scene 진행률이 있으면 그 값을 사용하고, NGO 전원 로드/준비처럼 수치 진행률이 없는 구간은 이동하는 바를 표시한다. 가짜 퍼센트를 만들지 않는다. ScreenManager의 입력 잠금과 기존 취소/실패 정리 API는 유지한다. Esc는 프로젝트의 Input System 키 상태를 사용한다.
+
+실제 우주선 진입·키 입력·로딩 입력 차단/해제, 검은 화면/하단 바·버튼/텍스트 없음은 격리 GPU 검사로 확인했다. 시각 자료와 자동/수동 구분은 최신 배치 결과를 따른다.
+
+
+### 우주선 왕복 전환
+
+우주선↔Initial_Stage는 `SceneFadePresenter`가 담당합니다. 이 구간에서는 `Screen:Loading`, 문구, 진행 바를 만들지 않습니다. 0.3초 암전 → 최소 0.3초 실제 이동/준비 → 0.3초 복귀이며, 실제 Scene 준비가 길면 완전 암전을 유지합니다. Startup에서 우주선으로 처음 들어오는 일반 진입은 기존 임시 로딩 안내·진행 바를 유지합니다.
+
+`AppScreenPresenter`는 페이드가 보일 때 일반 로딩 표시와 Escape 메뉴 처리를 보류합니다. Core 이동 서비스가 전환 동안 입력 lease를 소유하고, 실제 이동/실패 복구는 화면이 완전히 검은 상태에서 끝냅니다. Camera는 `MatchCameraFollow.SnapToTarget()`으로 맞추고 평소 이동 추적은 유지합니다. [왕복 구조·설정·네트워크 경계](spaceship-travel-api.md)를 참고합니다.
