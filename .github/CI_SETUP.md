@@ -6,7 +6,7 @@
 2. `Unity EditMode test and Windows build`: Unity License 설정 후 실행
 
 `PR Review Guide`는 `PR CI`와 별도로 실행되며, 리뷰 준비 상태인 팀 저장소 PR에 한국어 리뷰 가이드를 게시한다. 초안은 리뷰 준비 상태로 전환할 때 처리한다.
-PR에 새 커밋을 올리면 기존 리뷰 가이드 댓글을 갱신한다.
+PR에 새 커밋을 올리면 기존 리뷰 가이드 댓글을 갱신하고 기준 커밋 링크도 바꾼다.
 
 ## 항상 실행되는 검사
 
