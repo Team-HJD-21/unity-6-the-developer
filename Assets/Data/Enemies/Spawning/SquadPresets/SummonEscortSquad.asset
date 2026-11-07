@@ -10,13 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30437a8f5d608ee4083dfd6b5e53a923, type: 3}
-  m_Name: SlimeSquad
+  m_Name: SummonEscortSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
-  _squadOrder: Normal
+  _squadOrder: SummonEscort
   _composition:
-  - _enemyId: Slime
+  - _enemyId: GreenGolem
+    _weight: 1
+  - _enemyId: GoblinWarrior
+    _weight: 1
+  - _enemyId: SpawnerMushroom
     _weight: 1
   - _enemyId: Slime
-    _weight: 2
-  - _enemyId: Slime
-    _weight: 2
+    _weight: 3

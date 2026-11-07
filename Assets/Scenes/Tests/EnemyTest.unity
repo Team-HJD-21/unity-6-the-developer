@@ -1336952,8 +1336952,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
   autoStartHost: 0
-  initialSquadOrder: BlackWolf
-  initialEnemyLimit: 1
+  initialSquadOrder: Normal
+  initialEnemyLimit: 10
   initialEncounterDelay: 0.5
 --- !u!1 &1749657957
 GameObject:
@@ -1337140,71 +1337140,6 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
---- !u!1001 &1792789426
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -39.08898
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 15.033605
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5986786481746535090, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6127306109655348786, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: runOffline
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7542723251226543163, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: m_Name
-      value: BlackWolf
-      objectReference: {fileID: 0}
-    - target: {fileID: 8138426650611079632, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-      propertyPath: GlobalObjectIdHash
-      value: 3397576142
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
 --- !u!1 &1804844892
 GameObject:
   m_ObjectHideFlags: 0
@@ -1359661,5 +1359596,4 @@ SceneRoots:
   - {fileID: 1953553424}
   - {fileID: 2018641262}
   - {fileID: 1381981632}
-  - {fileID: 1792789426}
   - {fileID: 1677933637}
