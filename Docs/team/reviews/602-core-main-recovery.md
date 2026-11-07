@@ -1,6 +1,6 @@
 # Core 구현의 main 전달 — 리뷰 안내
 
-- PR: 발행 전
+- PR: [#656 — fix(core): deliver reviewed runtime integration to main](https://github.com/Team-HJD-21/unity-6-the-developer/pull/656)
 - 관련 이슈: #602. 아래 후속 이슈는 이 PR로 닫지 않는다.
 - base: `main` (`9912b85bafec0075335329625ad9de50c5460b97`)
 - head: `codex/core-main-recovery`
