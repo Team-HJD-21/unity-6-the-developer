@@ -37,8 +37,12 @@
 
 ## 핵심 변경 내용
 
-- 핵심 변경 1
-- 핵심 변경 2
+- 코드 진입점:
+- 주요 실행·데이터 흐름과 관련 참조·의존성:
+- 먼저 볼 파일과 이유:
+- 생략해도 되는 파일과 이유(해당 시):
+
+문서·설정만 변경한 경우 적용되는 경로와 확인할 파일을 적어주세요.
 
 <details>
 <summary>영향받는 항목</summary>
@@ -106,8 +110,8 @@ Gameplay, UI, Map, Spaceship, VFX 변경이면 가능하면 첨부합니다.
 
 ## 병합 전 확인
 
-- [ ] 필수 `Repository checks`가 통과했다.
-- [ ] 관련 담당자의 검토를 받았다. 검토 후 변경한 내용은 다시 확인받았다.
+- [ ] 최신 `main` 기준으로 필수 `Repository checks`가 통과했다.
+- [ ] 현재 변경에 대해 쓰기 권한이 있는 리뷰어 2명의 유효한 승인을 받았다. 그중 최소 1명은 검토 가능한 변경을 마지막으로 푸시한 사람과 다르다.
 - [ ] Review 대화를 모두 해결했다.
 
-> 위 세 항목은 PR 작성 시점이 아니라 **병합 직전** 확인합니다. [CI 안내](https://github.com/Team-HJD-21/unity-6-the-developer/blob/main/.github/CI_SETUP.md).
+> 병합 직전에 확인합니다. 사람에게 귀속되지 않은 Copilot PR에는 추가 승인 1건이 필요합니다. [CI 안내](https://github.com/Team-HJD-21/unity-6-the-developer/blob/main/.github/CI_SETUP.md).

@@ -6,6 +6,7 @@
 
 - Unity 버전: [ProjectVersion.txt](ProjectSettings/ProjectVersion.txt)
 - 패키지와 의존성: [manifest.json](Packages/manifest.json), [packages-lock.json](Packages/packages-lock.json)
+- 현행 기준 문서: [Docs 문서 안내](Docs/README.md#source-of-truth). 담당과 협의 범위는 [팀 역할과 책임](Docs/team/TEAM_ROLE_OWNERSHIP.md)을 확인한다.
 - 구조·API·초기화·권한 설계: [Docs/architecture](Docs/architecture)
 - 계획과 의사결정 자료: [Docs/planning](Docs/planning). 제안과 확정 사항을 구분한다.
 - PR 작성 양식: [pull_request_template.md](.github/pull_request_template.md)
@@ -49,6 +50,8 @@
 - PR 작성자는 템플릿의 ‘핵심 변경 내용’에 코드 진입점, 주요 실행 경로, 우선 볼 파일을 적는다. 변경 의도를 확인하는 데 생략해도 되는 파일이 있다면 이유와 함께 적는다.
 - AI 리뷰는 PR 설명과 실제 변경 코드를 대조해 진입점에서 주요 호출과 데이터의 생산·전달·사용 지점까지 이어지는 흐름을 짧게 정리한다. 변경 동작에 영향을 주는 참조와 의존성에 집중하고, 세부 메서드 호출은 핵심 흐름을 이해하는 데 필요한 만큼만 설명한다.
 - AI 리뷰에는 먼저 볼 파일과 그 이유를 적고, 확인이 필요한 문제는 흐름 요약과 구분한다. GitHub에 게시하는 리뷰 본문과 인라인 코멘트는 한국어로 작성하고 파일·타입·메서드 이름은 코드 표기대로 유지한다.
+- PR이 새로 만들거나 악화한 구체적인 문제를 지적한다. 각 지적에는 발생 조건, 영향, 관련 변경 줄을 적는다. 기존 문제는 이번 변경과 관련이 있을 때 별도 참고로 구분한다.
+- AI는 변경된 테스트가 기대 동작과 주요 경계 조건을 검증하는지 확인한다. 구현 흐름 요약에는 실제 게임 코드의 진입점, 주요 호출, 참조 관계와 데이터 흐름만 포함한다. 테스트에서 발견한 문제는 구현 흐름과 분리해 해당 테스트 코드에 리뷰 코멘트로 남긴다.
 - 리뷰어는 AI가 정리한 흐름을 따라 관련 코드를 직접 확인한다. 특히 영향을 받는 호출부, 참조 연결, 데이터를 주고받는 경계를 확인한다.
 
 ## 문서와 결과 공유

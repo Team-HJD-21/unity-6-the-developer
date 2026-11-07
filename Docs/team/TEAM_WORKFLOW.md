@@ -128,17 +128,14 @@ Blocker: 필요한 결정·사람·선행 작업
 
 ### Review와 Approval
 
-- 2026-09-28 기준 `main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 PR, 승인 1명, Code Owner 승인, Review 대화 해결, 최신 `Repository checks` 통과를 요구한다. Ruleset 설정이 바뀌면 GitHub의 실제 설정을 우선 확인한다.
-- [CODEOWNERS](../../.github/CODEOWNERS)는 모든 파일에 `@hjd5031`과 `@yanggogi1423`를 지정한다. 둘 중 한 명의 승인이면 Code Owner 조건을 충족한다. PR 작성자는 자기 PR을 승인할 수 없다.
-- 새 검토 가능 커밋을 push하면 기존 승인이 해제되므로 다시 승인받는다. `Require approval of the most recent reviewable push`는 별도로 켜져 있지 않다.
-- 작은 독립 변경도 작성자 Self-review와 CI 성공만으로는 Merge할 수 없다. Code Owner 승인이 필요하다.
-- 다음 변경은 필수 Code Owner 승인과 별도로 관련 영역 Owner에게도 Review를 요청하고 의견을 해결한다.
+- `main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 PR, 쓰기 권한이 있는 리뷰어 2명의 유효한 승인, Review 대화 해결, 최신 `Repository checks` 통과를 요구한다. 세부 승인 조건은 [CI 안내](../../.github/CI_SETUP.md#ci가-실패해도-push가-되는-이유와-main-보호)를 따르며, 설정이 바뀌면 GitHub의 실제 규칙을 우선 확인한다.
+- 아래 변경은 병합 요건을 충족하는 것과 별도로, 변경이 영향을 주는 영역의 담당자에게도 검토를 요청하고 의견을 해결한다.
   - Core/공용 계약 또는 asmdef 의존성
   - Save/Profile/Economy schema
   - 공용 Scene/Prefab 구조
   - Build/CI/ProjectSettings
   - Network/Authority/Snapshot
-- Copilot 자동 리뷰는 사람 Code Owner 승인을 대신하지 않는다. 사람 협업자가 없는 Copilot PR에는 추가 승인 규칙이 적용될 수 있다.
+- Codex·Copilot의 자동 리뷰는 구현 흐름과 문제를 파악하는 데 참고한다. 병합에 필요한 사람의 승인과 필수 검사는 GitHub에서 확인한다.
 - Merge 책임은 PR 작성자와 해당 Feature Owner에게 있다. 조수빈이 모든 PR을 최종 승인하지 않는다.
 
 ## 7. Unity Asset 규칙
