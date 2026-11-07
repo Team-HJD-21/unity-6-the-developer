@@ -150,7 +150,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8944117523014349952, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 342289988
+      value: 3347930889
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
@@ -160,6 +160,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6073907430881206776}
+    - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4592527766516815806}
+    - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6908116440502637120}
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
 --- !u!114 &3576063234121525837 stripped
 MonoBehaviour:
@@ -195,6 +201,32 @@ MonoBehaviour:
   enemyTargeting: {fileID: 3576063234121525837}
   attackDamage: 12
   attackWindupDuration: 0.3
+--- !u!114 &4592527766516815806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7542723251226543163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f73ffce81605b7b43b49bbd294eef0cb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDetection
+--- !u!114 &6908116440502637120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7542723251226543163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70ca845af5a448c3a8483e85a49b8dfa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkDetection
+  ShowTopMostFoldoutHeaderGroup: 1
+  enemyDetection: {fileID: 4592527766516815806}
 --- !u!61 &7808456900892805509 stripped
 BoxCollider2D:
   m_CorrespondingSourceObject: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
