@@ -1,47 +1,17 @@
-using System;
-using TeamHJD.Game.Application;
-using TeamHJD.Game.Contracts;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// 소환형 몬스터가 요청한 적을 생성하고 타깃을 전달한다.
 /// </summary>
 [RequireComponent(typeof(NetworkObject))]
-public sealed class EnemySummonSpawner : NetworkBehaviour, IRandomConsumer
+public sealed class EnemySummonSpawner : NetworkBehaviour
 {
     [Header("소환 위치")]
-    [SerializeField, Min(0f)] private float spawnRadius = 1f;
-
-    private IRandomSource _random;
-
-    public IDisposable BindRandom(IRandomStreams random)
-    {
-        return RandomBinding.Bind(
-            random,
-            "enemy/summon-spawn",
-            ref _random);
-    }
-
-    /// <summary>생성 주체로부터 코어가 소유한 난수 참조를 전달받는다.</summary>
-    public void InitializeRandom(IRandomSource random)
-    {
-        if (random == null)
-            throw new ArgumentNullException(nameof(random));
-        if (!random.IsAvailable)
-            throw new InvalidOperationException("사용할 수 없는 코어 난수입니다.");
-        if (_random != null && _random.IsAvailable)
-            throw new InvalidOperationException("소환 난수가 이미 연결되어 있습니다.");
-
-        // 수명과 해제는 이 참조를 전달한 코어 바인딩이 관리한다.
-        _random = random;
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        _random = null;
-        base.OnNetworkDespawn();
-    }
+    [FormerlySerializedAs("spawnRadius")]
+    [SerializeField, Min(0f)] private float spawnDistance = 1f;
+    [SerializeField, Min(0f)] private float spawnSpacing = 0.5f;
 
     public int Spawn(
         EnemyDefinition definition,
@@ -53,12 +23,6 @@ public sealed class EnemySummonSpawner : NetworkBehaviour, IRandomConsumer
             definition.Prefab == null ||
             count <= 0)
         {
-            return 0;
-        }
-
-        if (_random == null || !_random.IsAvailable)
-        {
-            Debug.LogError("소환에 사용할 코어 난수가 연결되지 않았습니다.", this);
             return 0;
         }
 
@@ -76,20 +40,12 @@ public sealed class EnemySummonSpawner : NetworkBehaviour, IRandomConsumer
 
         for (int i = 0; i < count; i++)
         {
-            var point = _random.InsideUnitCircle();
-
-            Vector3 position = transform.position + new Vector3(
-                (float)point.X * spawnRadius,
-                (float)point.Y * spawnRadius,
-                0f);
+            Vector3 position = GetSpawnPosition(target, i, count);
 
             GameObject enemy = Instantiate(
                 prefab,
                 position,
                 Quaternion.identity);
-
-            if (enemy.TryGetComponent<EnemySummonSpawner>(out var summonSpawner))
-                summonSpawner.InitializeRandom(_random);
 
             NetworkObject networkObject = enemy.GetComponent<NetworkObject>();
             EnemyController controller = enemy.GetComponent<EnemyController>();
@@ -99,5 +55,23 @@ public sealed class EnemySummonSpawner : NetworkBehaviour, IRandomConsumer
         }
 
         return count;
+    }
+
+    /// <summary>타깃 방향의 정면에 생성하고 여러 마리는 좌우로 간격을 둔다.</summary>
+    private Vector3 GetSpawnPosition(Transform target, int index, int count)
+    {
+        Vector2 direction = target != null
+            ? (Vector2)target.position - (Vector2)transform.position
+            : Vector2.down;
+
+        if (direction.sqrMagnitude < 0.0001f)
+            direction = Vector2.down;
+
+        direction.Normalize();
+        Vector2 side = new Vector2(-direction.y, direction.x);
+        float sideOffset = (index - (count - 1) * 0.5f) * spawnSpacing;
+        Vector2 offset = direction * spawnDistance + side * sideOffset;
+
+        return transform.position + new Vector3(offset.x, offset.y, 0f);
     }
 }
