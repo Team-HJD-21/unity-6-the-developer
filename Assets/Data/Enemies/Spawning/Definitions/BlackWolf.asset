@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: BlackWolf
   _prefab: {fileID: 7542723251226543163, guid: f62a30c558191a34f951c8c2cc044061, type: 3}
-  _spawnCost: 1
+  _spawnCost: 3
   _squadMode: 1
   _targetRule: 1

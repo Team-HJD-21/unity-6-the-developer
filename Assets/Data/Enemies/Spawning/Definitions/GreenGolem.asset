@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: GreenGolem
   _prefab: {fileID: 8936760216067356573, guid: 03ce1027075c6fe488d13e8ca4d4a80a, type: 3}
-  _spawnCost: 1
+  _spawnCost: 4

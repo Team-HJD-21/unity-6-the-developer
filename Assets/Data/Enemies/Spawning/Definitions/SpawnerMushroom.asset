@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: SpawnerMushroom
   _prefab: {fileID: 1809723546443632911, guid: d969b6e6e026341438d5a4530932d459, type: 3}
-  _spawnCost: 1
+  _spawnCost: 4
   _squadMode: 0
   _targetRule: 0

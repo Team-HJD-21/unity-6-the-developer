@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: PartyMushroom
   _prefab: {fileID: 1302865599984180589, guid: 98bdb5a9ae7076a43a89a4de16785319, type: 3}
-  _spawnCost: 1
+  _spawnCost: 3
