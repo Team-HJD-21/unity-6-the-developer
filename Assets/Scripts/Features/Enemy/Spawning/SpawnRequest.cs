@@ -1,5 +1,5 @@
 /// <summary>
-/// Planner가 임시로 결정한 분대 명령과 전체 생성 상한을 내부 계획 단계에 전달한다.
+/// 분대 명령과 전체 생성 상한, 비용 예산을 내부 계획 단계에 전달한다.
 /// 실제 스폰 지점과 적 종류별 수량은 <see cref="SpawnCompositionPlanner"/>가 결정한다.
 /// </summary>
 public readonly struct SpawnRequest
@@ -15,14 +15,19 @@ public readonly struct SpawnRequest
     /// </summary>
     public int MaxCount { get; }
 
+    /// <summary>이번 요청에 사용할 스폰 비용 예산을 반환한다.</summary>
+    public int SpawnBudget { get; }
+
     /// <summary>
     /// 특정 지점을 지정하지 않고 Planner가 스폰 가능한 지점들에 예산을 나누도록 요청한다.
     /// </summary>
     /// <param name="squadOrder">적용할 분대 구성 프리셋의 명령 값.</param>
     /// <param name="maxCount">모든 지점에 허용하는 적의 총 상한. 정확한 생성 수는 아니다.</param>
-    public SpawnRequest(string squadOrder, int maxCount)
+    /// <param name="spawnBudget">모든 지점에 사용할 적의 총 생성 비용 예산.</param>
+    public SpawnRequest(string squadOrder, int maxCount, int spawnBudget)
     {
         SquadOrder = squadOrder;
         MaxCount = maxCount;
+        SpawnBudget = spawnBudget;
     }
 }

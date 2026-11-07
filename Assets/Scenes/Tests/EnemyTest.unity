@@ -1336953,7 +1336953,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
   autoStartHost: 0
   initialSquadOrder: Normal
-  initialEnemyLimit: 10
+  initialEnemyLimit: 500
+  spawnBudget: 3
   initialEncounterDelay: 0.5
 --- !u!1 &1749657957
 GameObject:

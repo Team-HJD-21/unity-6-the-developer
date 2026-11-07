@@ -12,48 +12,29 @@ using TeamHJD.Game.Contracts;
 /// </summary>
 public sealed class SpawnCompositionPlanner
 {
-    // 분대 프리셋과 상한은 임시값이며, 공간별 난이도·스폰율 조정은 후속 정책이다.
     private readonly EnemySquadPresetCatalog _catalog;
+    private readonly EnemyCatalog _enemyCatalog;
     private readonly SpawnPointSpatialPolicy _spatialPolicy = new SpawnPointSpatialPolicy();
     public IReadOnlyList<SpawnDecisionSnapshot.Candidate> LastCandidates { get; private set; } = Array.Empty<SpawnDecisionSnapshot.Candidate>();
 
     /// <summary>
-    /// 분대 프리셋을 조회할 카탈로그가 로드되었는지 반환한다.
+    /// 분대 프리셋과 몬스터 비용을 조회할 카탈로그가 준비되었는지 반환한다.
     /// </summary>
-    public bool HasCatalog => _catalog != null;
+    public bool HasCatalog => _catalog != null && _enemyCatalog != null;
 
     /// <summary>Executor가 실제로 생성한 적만 Match별 공간 배분 이력에 반영합니다.</summary>
     public void RecordExecuted(BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpawnDecisionSnapshot.Actual> actuals)
         => _spatialPolicy.RecordExecuted(snapshot, actuals);
 
     /// <summary>
-    /// 기본 카탈로그를 한 번 로드해 Planner를 만든다.
-    /// </summary>
-    public SpawnCompositionPlanner() : this(EnemySquadPresetCatalog.Load())
-    {
-    }
-
-    /// <summary>
-    /// Core 구성 계층이나 테스트에서 이미 로드한 카탈로그를 전달받는다.
+    /// 분대 구성과 몬스터 생성 비용을 조회할 카탈로그를 전달받는다.
     /// </summary>
     /// <param name="catalog">분대 명령으로 조회할 프리셋 카탈로그.</param>
-    public SpawnCompositionPlanner(EnemySquadPresetCatalog catalog)
+    /// <param name="enemyCatalog">몬스터 정의와 생성 비용을 조회할 카탈로그.</param>
+    public SpawnCompositionPlanner(EnemySquadPresetCatalog catalog, EnemyCatalog enemyCatalog)
     {
         _catalog = catalog;
-    }
-
-    /// <summary>
-    /// 현재 PoC 기준으로 분대 유형과 생성 상한을 정하고, 스폰 가능한 지점별 명령을 만든다.
-    /// Normal과 최대 10마리는 임시 판단값이며 실제 생성 수는 프리셋의 완전한 세트 수에 따라 결정된다.
-    /// </summary>
-    /// <param name="spawnPoints">현재 지점의 점령 상태를 조회할 레지스트리.</param>
-    /// <param name="instructions">스폰 지점별로 확정된 생성 명령 목록.</param>
-    /// <returns>적어도 한 지점에 한 구성 세트를 배정했으면 <see langword="true"/>, 아니면 <see langword="false"/>.</returns>
-    public bool TryPlan(
-        SpawnPointRegistry spawnPoints,
-        out IReadOnlyList<SpawnInstruction> instructions)
-    {
-        return TryPlan(new SpawnRequest("Normal", 10), spawnPoints, out instructions);
+        _enemyCatalog = enemyCatalog;
     }
 
     /// <summary>
@@ -80,9 +61,9 @@ public sealed class SpawnCompositionPlanner
     /// <summary>
     /// 현재 적을 생성할 수 있는 모든 지점에 완전한 프리셋 세트를 배분한다.
     /// 점령된 지점은 배분 대상에서 제외되므로 요청의 생성 한도를 소비하지 않는다.
-    /// 생성 한도보다 작은 프리셋 잔여 수량은 생성하지 않는다.
+    /// 비용 예산과 마릿수 상한을 모두 만족하는 완전한 프리셋 세트만 생성한다.
     /// </summary>
-    /// <param name="spawnRequest">분대 명령과 전체 생성 상한.</param>
+    /// <param name="spawnRequest">분대 명령과 전체 생성 상한, 비용 예산.</param>
     /// <param name="spawnPoints">현재 지점의 점령 상태를 조회할 레지스트리.</param>
     /// <param name="instructions">스폰 지점별로 확정된 생성 명령 목록.</param>
     /// <returns>적어도 한 지점에 한 구성 세트를 배정했으면 <see langword="true"/>, 아니면 <see langword="false"/>.</returns>
@@ -105,6 +86,8 @@ public sealed class SpawnCompositionPlanner
         if (spawnPoints == null ||
             string.IsNullOrWhiteSpace(spawnRequest.SquadOrder) ||
             spawnRequest.MaxCount <= 0 ||
+            spawnRequest.SpawnBudget <= 0 ||
+            !HasCatalog ||
             !TryGetPreset(spawnRequest.SquadOrder, out EnemySquadPreset squadPreset) ||
             squadPreset.Composition == null || squadPreset.Composition.Count == 0)
             return false;
@@ -121,8 +104,14 @@ public sealed class SpawnCompositionPlanner
                 return false;
         }
 
-        // 요청 상한을 프리셋 한 세트의 크기로 나눠 배정 가능한 완전한 세트 수를 구한다.
-        int totalSets = spawnRequest.MaxCount / totalWeight;
+        int presetCost = squadPreset.CalculateCost(_enemyCatalog);
+        if (presetCost <= 0)
+            return false;
+
+        // 비용과 마릿수 제한을 모두 만족하는 완전한 편성만 생성한다.
+        int setsByBudget = spawnRequest.SpawnBudget / presetCost;
+        int setsByCount = spawnRequest.MaxCount / totalWeight;
+        int totalSets = Math.Min(setsByBudget, setsByCount);
         IReadOnlyList<SpawnPoint> availablePoints = spawnPoints.GetAvailableSpawnPoints();
         if (totalSets == 0 || availablePoints.Count == 0)
             return false;

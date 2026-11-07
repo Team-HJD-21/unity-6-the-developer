@@ -19,7 +19,7 @@ namespace TeamHJD.Game.Domain
         private readonly EnemySpawnExecutor _spawnExecutor;
 
         /// <summary>
-        /// 분대 프리셋 카탈로그가 로드되어 계획을 세울 수 있는지 반환한다.
+        /// 분대 프리셋과 몬스터 카탈로그가 준비되어 계획을 세울 수 있는지 반환한다.
         /// </summary>
         public bool HasCatalog => _planner.HasCatalog;
 
@@ -35,15 +35,17 @@ namespace TeamHJD.Game.Domain
         /// </summary>
         public EncounterRuntime()
         {
-            _planner = new SpawnCompositionPlanner();
             _spawnExecutor = Object.FindAnyObjectByType<EnemySpawnExecutor>();
+            _planner = new SpawnCompositionPlanner(
+                EnemySquadPresetCatalog.Load(),
+                _spawnExecutor != null ? _spawnExecutor.Catalog : null);
         }
 
         /// <summary>
         /// Planner가 결정한 지점별 명령을 Executor에 전달해 적을 생성한다.
-        /// 임시 분대 유형과 생성 상한은 Planner가 결정한다.
+        /// 호출자가 전달한 분대 명령과 생성 상한, 비용 예산으로 계획한다.
         /// </summary>
-        public void Spawn()
+        public void Spawn(SpawnRequest request)
         {
             if (_spawnExecutor == null)
             {
@@ -51,7 +53,7 @@ namespace TeamHJD.Game.Domain
                 return;
             }
 
-            if (!_planner.TryPlan(_spawnExecutor.SpawnPointList,
+            if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList,
                     out IReadOnlyList<SpawnInstruction> instructions))
             {
                 Debug.LogWarning("No spawn plan: check the squad preset, budget, and available spawn points.");
@@ -67,15 +69,8 @@ namespace TeamHJD.Game.Domain
         /// Match 공간 snapshot을 Encounter 경계로 받아 요청한 PoC 분대를 계획하고 서버 Executor에 전달합니다.
         /// Grid의 점유·적 밀도와 Frontline 거리를 PoC 배치 정책에 적용합니다.
         /// </summary>
-        public bool TrySpawn(
-            BattlefieldSpatialSnapshot snapshot,
-            string squadOrder,
-            int maxEnemyCount,
-            out string result)
-            => TrySpawn(snapshot, squadOrder, maxEnemyCount, null, out result, out _);
-
         public bool TrySpawn(BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
-            EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
+            int spawnBudget, EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
         {
             summary = new EncounterExecutionSummary(0, 0, "Rejected");
             if (snapshot == null || snapshot.MatchId.IsEmpty)
@@ -96,17 +91,18 @@ namespace TeamHJD.Game.Domain
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(squadOrder) || maxEnemyCount <= 0)
+            if (string.IsNullOrWhiteSpace(squadOrder) || maxEnemyCount <= 0 || spawnBudget <= 0)
             {
-                result = "분대 명령과 최대 생성 수를 확인하세요.";
+                result = "분대 명령, 최대 생성 수와 스폰 비용 예산을 확인하세요.";
                 return false;
             }
 
-            var request = new SpawnRequest(squadOrder.Trim(), maxEnemyCount);
+            var request = new SpawnRequest(squadOrder.Trim(), maxEnemyCount, spawnBudget);
             if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot,
                     out IReadOnlyList<SpawnInstruction> instructions))
             {
-                result = $"SpawnPlan 생성 실패: preset '{request.SquadOrder}', budget {request.MaxCount}, " +
+                result = $"SpawnPlan 생성 실패: preset '{request.SquadOrder}', " +
+                         $"maxCount {request.MaxCount}, spawnBudget {request.SpawnBudget}, " +
                          $"available points {_spawnExecutor.SpawnPointList.GetAvailableSpawnPoints().Count}. " +
                          "Grid 밖 또는 Player/Turret 점유 셀의 SpawnPoint는 제외됩니다.";
                 summary = new EncounterExecutionSummary(0,0,"PlanRejected", new SpawnDecisionSnapshot(snapshot,

@@ -28,7 +28,10 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private bool autoStartHost = true;
 
     [SerializeField] private string initialSquadOrder = "Normal";
-    [SerializeField, Min(1)] private int initialEnemyLimit = 10;
+    [SerializeField, Min(1)] private int initialEnemyLimit = 500;
+
+    [Tooltip("예산 산출 정책 연결 전 사용하는 임시 스폰 비용 예산입니다.")]
+    [SerializeField, Min(1)] private int spawnBudget = 20;
     [SerializeField, Min(0f)] private float initialEncounterDelay = 0.5f;
 
     private NetworkManager _networkManager;
@@ -419,10 +422,12 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         _requestSequence = executionSequence;
         var context = new EncounterExecutionContext(_boundMatchId, executionSequence, snapshot.Revision,
             request.Source, request.PresetId.Value);
-        Emit(GameDiagnosticKind.RequestStarted, context, message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, budget={request.MaximumEnemyCount}");
+        Emit(GameDiagnosticKind.RequestStarted, context,
+            message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, " +
+                     $"maxCount={request.MaximumEnemyCount}, spawnBudget={spawnBudget}");
         EnsureEncounterRuntime();
         bool succeeded = _encounterRuntime.TrySpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
-            context, out string result, out EncounterExecutionSummary summary);
+            spawnBudget, context, out string result, out EncounterExecutionSummary summary);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
             spawnDecision: summary.SpawnDecision);

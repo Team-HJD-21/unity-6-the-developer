@@ -102,6 +102,9 @@ public class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPositionSou
         }
     }
 
+    /// <summary>스폰에 사용하는 몬스터 정의 카탈로그를 반환한다.</summary>
+    public EnemyCatalog Catalog => enemyList;
+
     /// <summary>현재 네트워크 서버 권한으로 실제 생성을 수행할 수 있는지 반환합니다.</summary>
     public bool CanSpawn => IsSpawned && IsServer;
 
