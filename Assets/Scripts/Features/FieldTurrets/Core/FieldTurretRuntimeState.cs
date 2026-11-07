@@ -27,7 +27,7 @@ namespace TeamHJD.Game.FieldTurrets
         public int InstanceId => _instanceId;
         public bool HasInstanceId => _instanceId > 0;
         public bool IsActivated => _isActivated;
-        public bool IsOperational => _isActivated && !_isTemporarilySuspended && !_isDestroyed && !_isLocked;
+        public bool IsOperational => !_isActivated && !_isTemporarilySuspended && !_isDestroyed && !_isLocked;
         public bool IsLocked => _isLocked;
         public bool IsTemporarilySuspended => _isTemporarilySuspended;
         public int CurrentHealth => _currentHealth;
