@@ -1,0 +1,129 @@
+name: PR Review Guide
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, ready_for_review, reopened, synchronize]
+
+permissions: {}
+
+concurrency:
+  group: pr-review-guide-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.id == github.event.repository.id
+    # codex-action drop-sudo fails on Ubuntu 26.04 (openai/codex-action#188).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      guide: ${{ steps.codex.outputs.final-message }}
+    steps:
+      # This workflow has a secret. Check out the trusted base only and read the PR as data.
+      - name: Prepare the PR diff as review input
+        id: prepare
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const fs = require('node:fs');
+            const eventPr = context.payload.pull_request;
+            const params = { ...context.repo, pull_number: eventPr.number };
+            const { data: current } = await github.rest.pulls.get(params);
+            if (current.state !== 'open' || current.draft || current.head.sha !== eventPr.head.sha) return;
+
+            const files = await github.paginate(github.rest.pulls.listFiles, { ...params, per_page: 100 });
+            const { data: after } = await github.rest.pulls.get(params);
+            if (after.head.sha !== current.head.sha || after.base.sha !== current.base.sha) return;
+
+            const changedPaths = files.map(file => `${file.status}: ${file.filename}`);
+            const sourceFirst = file => /\.(cs|asmdef|yml|yaml|py|js|ts|json|md)$/i.test(file.filename);
+            const ordered = [...files].sort((left, right) => Number(sourceFirst(right)) - Number(sourceFirst(left)));
+            let remaining = 80000;
+            const patches = [];
+            for (const file of ordered) {
+              if (!file.patch || file.filename.endsWith('.meta')) continue;
+              const header = `\n--- ${file.filename} (${file.status}) ---\n`;
+              const limit = Math.min(6000, remaining - header.length - 20);
+              if (limit <= 0) break;
+              const patch = file.patch.slice(0, limit);
+              const snippet = header + patch + (patch.length < file.patch.length ? '\n[patch excerpt]\n' : '\n');
+              patches.push(snippet);
+              remaining -= snippet.length;
+            }
+            const manifest = changedPaths.join('\n');
+            const input = [
+              `PR #${eventPr.number}, head ${current.head.sha}, changed files: ${current.changed_files}`,
+              `Title: ${current.title.slice(0, 500)}`,
+              `PR body excerpt:\n${(current.body || '').slice(0, 3000)}`,
+              `Changed paths (up to 16000 characters):\n${manifest.slice(0, 16000)}`,
+              `Available patch excerpts (some files or lines may be omitted):\n${patches.join('')}`,
+            ].join('\n\n');
+            fs.writeFileSync(`${process.env.RUNNER_TEMP}/pr-review-guide-input.md`, input, { mode: 0o600 });
+            core.setOutput('base_sha', current.base.sha);
+
+      - name: Check out the base for code context
+        if: steps.prepare.outputs.base_sha != ''
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ steps.prepare.outputs.base_sha }}
+          persist-credentials: false
+          sparse-checkout: |
+            /AGENTS.md
+            /.github/
+            /Assets/PoC/
+            /Assets/Scripts/
+            /Docs/
+            /Packages/
+            /ProjectSettings/
+          sparse-checkout-cone-mode: false
+
+      - name: Place review input in the workspace
+        if: steps.prepare.outputs.base_sha != ''
+        run: cp "$RUNNER_TEMP/pr-review-guide-input.md" "$GITHUB_WORKSPACE/pr-review-guide-input.md"
+
+      - name: Generate the Korean review guide
+        id: codex
+        if: steps.prepare.outputs.base_sha != ''
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ':read-only'
+          prompt-file: .github/prompts/pr-review-guide.md
+
+  publish:
+    needs: generate
+    if: needs.generate.outputs.guide != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Publish or update one guide comment
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          GUIDE: ${{ needs.generate.outputs.guide }}
+        with:
+          script: |
+            const eventPr = context.payload.pull_request;
+            const params = { ...context.repo, issue_number: eventPr.number };
+            const marker = '<!-- the-developer-pr-review-guide -->';
+            const guide = process.env.GUIDE.trim().replaceAll('@', '@\u200b');
+            if (!guide) return;
+
+            const comments = await github.paginate(github.rest.issues.listComments, { ...params, per_page: 100 });
+            const existing = comments.find(comment => comment.user?.login === 'github-actions[bot]' && comment.body?.startsWith(marker));
+            const { data: current } = await github.rest.pulls.get({ ...context.repo, pull_number: eventPr.number });
+            if (current.state !== 'open' || current.draft || current.head.sha !== eventPr.head.sha || current.head.repo?.id !== context.payload.repository.id) return;
+
+            const sha = current.head.sha;
+            const commitUrl = `${current.html_url}/commits/${sha}`;
+            const body = `${marker}\n## PR 리뷰 가이드\n\n기준 커밋 [\`${sha.slice(0, 7)}\`](${commitUrl})\n\n${guide}`;
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...params, body });
+            }
