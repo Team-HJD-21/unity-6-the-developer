@@ -5,6 +5,8 @@
 1. `Repository checks`: 별도 Secret 없이 항상 실행
 2. `Unity EditMode test and Windows build`: Unity License 설정 후 실행
 
+`PR Review Guide`는 `PR CI`와 별도로 실행되며, 리뷰 준비 상태인 팀 저장소 PR에 한국어 리뷰 가이드를 게시한다.
+
 ## 항상 실행되는 검사
 
 - Unity 프로젝트 필수 폴더와 파일
