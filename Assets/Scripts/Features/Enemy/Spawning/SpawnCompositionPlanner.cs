@@ -37,6 +37,32 @@ public sealed class SpawnCompositionPlanner
         _enemyCatalog = enemyCatalog;
     }
 
+    /// <summary>비용 예산과 마릿수 상한 안에서 생성 가능한 편성을 반환한다.</summary>
+    public IReadOnlyList<EnemySquadPreset> GetSpawnablePresets(int spawnBudget, int maxCount)
+    {
+        var candidates = new List<EnemySquadPreset>();
+
+        if (!HasCatalog || spawnBudget <= 0 || maxCount <= 0)
+            return candidates;
+
+        foreach (EnemySquadPreset preset in _catalog.Presets)
+        {
+            if (preset == null)
+                continue;
+
+            int count = preset.TotalWeight;
+            int cost = preset.CalculateCost(_enemyCatalog);
+
+            if (count > 0 && count <= maxCount &&
+                cost > 0 && cost <= spawnBudget)
+            {
+                candidates.Add(preset);
+            }
+        }
+
+        return candidates;
+    }
+
     /// <summary>
     /// 호출자가 지정한 PoC 분대 요청을 현재 스폰 지점 상태에 맞춰 계획합니다.
     /// </summary>

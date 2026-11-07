@@ -17,6 +17,9 @@ public sealed class EnemySquadPresetCatalog : ScriptableObject
 
     [SerializeField] private List<EnemySquadPreset> squadPresets = new();
 
+    /// <summary>등록된 분대 프리셋 목록을 반환한다.</summary>
+    public IReadOnlyList<EnemySquadPreset> Presets => squadPresets;
+
     /// <summary>
     /// <see cref="ResourcesPath"/>에 등록된 프리셋 카탈로그를 로드한다.
     /// </summary>
