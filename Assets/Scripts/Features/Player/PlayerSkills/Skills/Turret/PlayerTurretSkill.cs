@@ -1,10 +1,12 @@
+// Player 터렛의 선택·배치 의도와 실제 소유 생성물을 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 /// <summary>플레이어 터렛 설치·회수와 손상 비율에 따른 재충전을 담당합니다.</summary>
-public sealed class PlayerTurretSkill : PlayerSkillBase
+public sealed partial class PlayerTurretSkill : PlayerSkillBase
 {
     private const float PreviewCheckInterval = .05f;
 
@@ -54,9 +56,10 @@ public sealed class PlayerTurretSkill : PlayerSkillBase
         _inventory = new PlayerTurretInventory(MaxTurretCount, _maximumRepairSeconds);
         _input = GetComponent<PlayerInputHandler>();
     }
-    private void Update() => Tick(Time.deltaTime);
+    private void Update() => Tick(FieldSimulationTime.DeltaTime(this));
     public void Tick(float elapsed)
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _installationRemaining = Mathf.Max(0, _installationRemaining - elapsed);
         _inventory?.Tick(elapsed);

@@ -1,3 +1,5 @@
+// Player 장치가 사용하는 적 대상 계약을 실제 적 컴포넌트에 연결합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 /// <summary>서버 네트워크 적과 방벽·비콘을 연결합니다. 원래 목표와 몬스터 원본은 변경하지 않습니다.</summary>
@@ -30,6 +32,7 @@ public sealed class PlayerFieldEnemyAdapter : MonoBehaviour
     // 기존 NetworkAnimator가 LateUpdate에서 게시하기 전에 표현을 갱신합니다.
     private void Update()
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (!_control.CanControl || !PlayerFieldDevice.HasActiveDevices) { Release(); return; }
         Collider2D body = FindBody();
         if (body == null) { Release(); return; }
@@ -52,7 +55,7 @@ public sealed class PlayerFieldEnemyAdapter : MonoBehaviour
         if (_device == null) { Release(); return; }
         bool attacked = _behaviour.Step(transform, body, _device,
             _measuredSpeed > 0 ? _measuredSpeed : _fallbackSpeed, _attackRange,
-            _fallbackDamage, _fallbackAttackCooldown, Time.time, Time.deltaTime, out var direction, out bool moving);
+            _fallbackDamage, _fallbackAttackCooldown, FieldSimulationTime.Seconds(this), Time.deltaTime, out var direction, out bool moving);
         _animation.SetMovement(direction, moving);
         if (attacked) _animation.PlayAttack();
         _previousPosition = transform.position;

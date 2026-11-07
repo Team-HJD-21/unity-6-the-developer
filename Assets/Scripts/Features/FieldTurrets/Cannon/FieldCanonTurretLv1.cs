@@ -1,3 +1,4 @@
+// 발사 직후 생성 탄환에 현재 터렛의 Match 시간과 종료 수명을 전달합니다.
 using System.Collections;
 using System.Collections.Generic;
 using Tower;
@@ -19,15 +20,16 @@ public class FieldCanonTurretLv1 : DefaultFieldCanonTurret
     
     private void Start()
     {
-        GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
+        if (!WasCheckpointRestored) GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
     }
     override 
     protected void Shoot()//총알 객체화 후 목표로 발사(FireRateController에서 수행)
     {
         animator.enabled = true; // 발사할 때 애니메이션 시작
         GameObject bulletObj = Instantiate(bulletPrefab, bulletSpawnPoint.position, Quaternion.identity);
+        BindProjectileSimulation(bulletObj);
         FieldTurretBullet fieldTurretBullet = bulletObj.GetComponent<FieldTurretBullet>();
-        float randomX = bulletFirePoint.position.x + Random.Range(-0.5f, 0.5f);
+        float randomX = bulletFirePoint.position.x + NextScatterOffset(-0.5f, 0.5f);
         Vector3 aimPosition = new Vector3(randomX, bulletFirePoint.position.y, 0f);
         fieldTurretBullet.Initialize(bulletFirePoint, Damage, aimPosition);
         // Collider2D player = Physics2D.OverlapCircle(transform.position, 40, playerMask);

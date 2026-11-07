@@ -1,18 +1,20 @@
 {
-  "name": "TeamHJD.Game.FieldTurrets",
-  "rootNamespace": "TeamHJD.Game.FieldTurrets",
-  "references": [
-    "TeamHJD.Game.FieldTurrets.Contracts",
-    "TeamHJD.Game.Contracts",
-    "TeamHJD.Game.Domain"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "TeamHJD.Game.FieldTurrets",
+    "rootNamespace": "TeamHJD.Game.FieldTurrets",
+    "references": [
+        "TeamHJD.Game.FieldTurrets.Contracts",
+        "TeamHJD.Game.Contracts",
+        "TeamHJD.Game.Domain",
+        "TeamHJD.Game.Presentation",
+        "TeamHJD.Game.Application"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

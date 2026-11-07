@@ -1,10 +1,13 @@
+// 서버 탄환의 피해·절대 수명과 Client 표현을 관리합니다.
+// 생성자에게서 Match 시계를 상속받고 정지 중 충돌/수명 진행을 막습니다.
 using System;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using Unity.Netcode;
 using UnityEngine.Tilemaps;
 
-public class EnemyProjectile : NetworkBehaviour
+public partial class EnemyProjectile : NetworkBehaviour
 {
     private int _projectileDamage;
     [SerializeField] private float projectileSpeed = 1f;
@@ -20,6 +23,9 @@ public class EnemyProjectile : NetworkBehaviour
     private TilemapRenderer _groundRenderer;
     
     private bool _hasHit;
+    private double _expiresAt;
+    private readonly NetworkVariable<ulong> _ownerId = new(ulong.MaxValue);
+    private FieldSimulationActor _simulation;
     
     private Vector2 _direction;
     
@@ -43,6 +49,18 @@ public class EnemyProjectile : NetworkBehaviour
 
     private void LateUpdate()
     {
+        BindReplicatedOwner();
+        if (_simulation != null && _simulation.GameplayCancellation.IsCancellationRequested)
+        {
+            if (!IsSpawned || IsServer) Remove();
+            return;
+        }
+        if (!FieldSimulationTime.CanAdvance(this)) return;
+        if ((!IsSpawned || IsServer) && FieldSimulationTime.Seconds(this) >= _expiresAt)
+        {
+            Remove();
+            return;
+        }
         if (IsSpawned && !IsServer)
             return;
 
@@ -57,6 +75,8 @@ public class EnemyProjectile : NetworkBehaviour
             _directionState.Value = _direction;
 
         ApplyAnimationDirection(_directionState.Value);
+        BindReplicatedOwner();
+        _simulation?.Synchronize();
     }
     
     public void Initialize(int projectileDamage, Vector2 direction)
@@ -71,9 +91,42 @@ public class EnemyProjectile : NetworkBehaviour
         rigidbody2D.linearVelocity = _direction * projectileSpeed;
 
         ApplyAnimationDirection(_direction);
-        Invoke(nameof(Remove), lifetime);
+        _expiresAt = FieldSimulationTime.Seconds(this) + lifetime;
     }
     
+    /// <summary>Spawner가 Initialize 전에 호출합니다. NetworkObject ID는 현재 실행의 소유자 연결에만 사용합니다.</summary>
+    public void BindOwner(Component owner, bool destroyOnCompletion = false)
+    {
+        if (owner == null) return;
+        var enemy = owner.GetComponentInParent<EnemyNetworkController>();
+        if (enemy != null) { _checkpointExecutorId = enemy.SimulationOwnerId; _checkpointEnemyType = enemy.CheckpointEnemyType; }
+        FieldSimulationTime.BindSpawned(gameObject, owner, destroyOnCompletion);
+        _simulation = GetComponent<FieldSimulationActor>();
+        var source = owner.GetComponentInParent<NetworkObject>();
+        if (source != null && source.IsSpawned) _ownerId.Value = source.NetworkObjectId;
+    }
+
+    private void BindReplicatedOwner()
+    {
+        if (_simulation?.TimeSource != null || !IsSpawned || NetworkManager?.SpawnManager == null ||
+            !NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(_ownerId.Value, out var owner)) return;
+        if (owner.TryGetComponent<EnemySpawnExecutor>(out var executor))
+        {
+            _simulation = executor.BindCheckpointProjectile(gameObject);
+            return;
+        }
+        if (owner.GetComponent<FieldSimulationActor>()?.TimeSource == null) return;
+        FieldSimulationTime.BindSpawned(gameObject, owner, false);
+        _simulation = GetComponent<FieldSimulationActor>();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (_simulation?.TimeSource != null) _simulation.Unbind(_simulation.TimeSource);
+        _simulation = null;
+        base.OnNetworkDespawn();
+    }
+
     private void ApplyAnimationDirection(Vector2 direction)
     {
         Vector2 animationDirection;
@@ -106,27 +159,14 @@ public class EnemyProjectile : NetworkBehaviour
         if (targetTransform == null)
             return;
 
-        if (target.TargetType == TargetType.Player)
-        {
-            PlayerInfo player =
-                targetTransform.GetComponentInParent<PlayerInfo>();
-
-            if (player != null)
-                player.TakeDamage(_projectileDamage);
-        }
-        else if (target.TargetType == TargetType.Turret)
-        {
-            IDamageableTarget damageable =
-                targetTransform.GetComponentInParent<IDamageableTarget>();
-
-            if (damageable != null)
-                damageable.ApplyDamage(_projectileDamage);
-        }
+        // 피해 수신자의 원본 계약만 사용합니다. Player 전용 분기를 두지 않습니다.
+        IDamageableTarget damageable = targetTransform.GetComponentInParent<IDamageableTarget>();
+        damageable?.ApplyDamage(_projectileDamage);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (_hasHit || (IsSpawned && !IsServer))
+        if (_hasHit || (IsSpawned && !IsServer) || !FieldSimulationTime.CanAdvance(this))
             return;
 
         ITargetable target = other.GetComponentInParent<ITargetable>();
@@ -193,7 +233,6 @@ public class EnemyProjectile : NetworkBehaviour
             if (!IsServer)
                 return;
 
-            CancelInvoke(nameof(Remove));
             NetworkObject.Despawn();
         }
         else
