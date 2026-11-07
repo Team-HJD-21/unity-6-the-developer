@@ -36,7 +36,9 @@ jobs:
             const { data: current } = await github.rest.pulls.get(params);
             if (current.state !== 'open' || current.draft || current.head.sha !== eventPr.head.sha) return;
 
-            const files = await github.paginate(github.rest.pulls.listFiles, { ...params, per_page: 100 });
+            const files = (await github.paginate(github.rest.pulls.listFiles, { ...params, per_page: 100 }))
+              .filter(file => !file.filename.startsWith('Docs/archive/'));
+            if (!files.length) return;
             const { data: after } = await github.rest.pulls.get(params);
             if (after.head.sha !== current.head.sha || after.base.sha !== current.base.sha) return;
 
@@ -57,7 +59,7 @@ jobs:
             }
             const manifest = changedPaths.join('\n');
             const input = [
-              `PR #${eventPr.number}, head ${current.head.sha}, changed files: ${current.changed_files}`,
+              `PR #${eventPr.number}, head ${current.head.sha}, files in review scope: ${files.length}`,
               `Title: ${current.title.slice(0, 500)}`,
               `PR body excerpt:\n${(current.body || '').slice(0, 3000)}`,
               `Changed paths (up to 16000 characters):\n${manifest.slice(0, 16000)}`,
@@ -78,6 +80,7 @@ jobs:
             /Assets/PoC/
             /Assets/Scripts/
             /Docs/
+            !/Docs/archive/
             /Packages/
             /ProjectSettings/
           sparse-checkout-cone-mode: false
@@ -155,7 +158,9 @@ jobs:
               }
             }
 
-            const patches = new Map(files.map(file => [file.filename, file.patch ?? '']));
+            const patches = new Map(files
+              .filter(file => !file.filename.startsWith('Docs/archive/'))
+              .map(file => [file.filename, file.patch ?? '']));
             const addedLine = (patch, target) => {
               let line = 0;
               for (const row of patch.split('\n')) {
