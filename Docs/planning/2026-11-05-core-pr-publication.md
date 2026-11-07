@@ -1,4 +1,6 @@
-# Core 분리 PR 검토 순서와 PL 인수
+# Core 분리 PR 이력과 main 전달
+
+현재 main 전달 기준은 [#602 복구 PR 검토 문서](../team/reviews/602-core-main-recovery.md)를 따른다. 아래는 당시 분할 검토·수동 인수 이력이다. #623만 직접 main에 반영됐고 #624~#631은 중간 브랜치로 병합돼, 최신 main 위의 복구 PR 하나로 전달한다. 기존 리뷰와 영상은 보존하며 새 PR을 자동 병합하지 않는다.
 
 기준일: 2026-11-05. PL이 Startup/Initial_Stage 수동 확인7단계를 모두 확인했다고 승인했습니다. 사용자 영상은 게임 진입/우주선 왕복과 타이머/날씨 변경의 수동 근거이며 자동 검사 결과와 구분합니다.
 
@@ -13,7 +15,9 @@
 - [7/8 · #629](https://github.com/Team-HJD-21/unity-6-the-developer/pull/629) — feat(steam): integrate SDK identity and two-player lobby lifecycle
 - [8/8 · #630](https://github.com/Team-HJD-21/unity-6-the-developer/pull/630) — feat(core): complete spaceship travel presentation and acceptance documentation
 
-각 PR에는 관련 파트의 우선 리뷰어 한 명을 지정했다. 현재 비공개 저장소의 조직 Free 플랜에서는 복수 리뷰 요청이 유지되지 않으므로 추가 관련 담당자는 본문에 명시한다.
+- [가중 Random 문서 · #631](https://github.com/Team-HJD-21/unity-6-the-developer/pull/631) — docs(random): 가중 선택 사용법과 날씨 확률 예제
+
+당시 각 PR에는 관련 파트의 우선 리뷰어를 지정했다. 새 복구 PR의 승인·검사는 현재 main의 PR 템플릿과 GitHub 규칙을 따르며, 과거 게시 시점의 승인 수를 재사용하지 않는다.
 
 ## 검토 순서
 
@@ -26,7 +30,7 @@
 7. Steam SDK·사용자·2인 로비
 8. 시작 우주선/왕복·카메라·0.9초 전환과 전체 사용 문서
 
-각 PR의 base는 바로 앞 PR의 브랜치입니다. diff는 자기 묶음만 표시하며, main 반영은 선행 순서와 재대상 지정 후 검증/승인을 따릅니다. 모든 PR을 main 대상으로 한꺼번에 겹쳐 올리지 않습니다. PR을 자동 병합하지 않습니다.
+당시 PR의 base를 바로 앞 작업 브랜치로 연결했고, main 재대상 지정 전에 중간 브랜치로 병합되어 main 전달이 누락됐다. 이 방식을 다시 사용하지 않는다. 새 PR의 base는 `main`으로 명시하고 생성 직후 실제 base/head를 확인한다. 앞으로 분리할 때는 선행 PR이 main에 반영된 뒤 다음 PR을 최신 main 기준으로 준비한다.
 
 ## 후속 Issue
 

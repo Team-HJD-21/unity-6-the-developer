@@ -2,14 +2,14 @@
 
 최근 기획: [11월 6일 기획 보강 근거·후속](planning/2026-11-06-planning-review.md). 현행 우주선 출입·점유·안전장치 정책은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 아래 이전 회의 안내의 정지 정책은 당시 기록이며 현행을 대체하지 않는다.
 
-**현재 로컬 최종 안내:** [수동 확인7단계·구현 전체·남은 Core 작업·팀원 전달](planning/2026-11-05-core-local-review.md).
+**Core main 전달:** [복구 PR 검토 문서](team/reviews/602-core-main-recovery.md)에서 #624~#631의 기존 리뷰, 최신 main과의 통합 차이, 이번 검증과 남은 작업을 확인합니다. 기존 수동 인수 자료는 [확인7단계·구현 전체·팀원 전달](planning/2026-11-05-core-local-review.md)에 보존합니다.
 
 - 실제 수명/코드 읽기: [Core 지도](architecture/core-lifecycle-and-api-guide.md) · [Feature 통합](architecture/core-feature-integration-guide.md) · [구조 정리 판단](architecture/core-structure-review-2026-11-05.md).
 - 최신 플레이: [우주선 출격/왕복](architecture/spaceship-travel-api.md) · [낮밤5분](architecture/day-night-api.md) · [Day/Night·타이머·Reset](architecture/weather-debug-hud.md). 왕복은0.3초씩 총약0.9초이며 진행 바를 표시하지 않습니다.
 - 공용 API: [Random](architecture/core-random-api.md) · [가중 선택·비 50% 예제](architecture/random-weighted-selection.md) · [시간/예약](architecture/match-time-api.md) · [저장 실행](architecture/checkpoint-execution-api.md) · [네트워크](architecture/network-match-api.md) · [Steam](architecture/steam-api.md).
 - 구현/증거: [Core 결과](planning/2026-11-05-core-completion-results.md) · [낮밤/Steam 결과](planning/2026-11-05-day-night-steam-results.md) · [요구/Issue 대응](planning/2026-11-05-core-requirements-and-issue-map.md). 과거 시점의 한계는 최신 최종 안내와 구분해서 읽습니다.
 
-현재 구현은 분리 PR [#623](https://github.com/Team-HJD-21/unity-6-the-developer/pull/623)~[#630](https://github.com/Team-HJD-21/unity-6-the-developer/pull/630)로 게시했으며 아직 main에 병합하지 않았습니다. 실제 Weather writer가 없어 운영 전체 Save는 차단합니다. Host 포털 왕복과 실제 Steam SDK/로비는 구현됐고, Client 출입 요청·Steam 게임 transport·Backend·Player 원격 본체는 각각 다른 후속입니다. 팀원 전달 문서는 `Docs/Local/Review/CoreCompletion-2026-11-05/by-owner`의 공유 제외 파일을 직접 보냅니다.
+#623은 main에 반영됐지만 #624~#631은 중간 작업 브랜치에 병합됐습니다. 이를 최신 main 위의 복구 PR 하나로 전달하며, main 병합 여부는 위 검토 문서의 실제 PR 상태로 확인합니다. 실제 Weather writer가 없어 운영 전체 Save는 차단합니다. Host 포털 왕복과 Steam SDK/로비는 구현됐고, Client 출입 요청·Steam 게임 transport·Backend·Player 원격 본체는 각각 다른 후속입니다. 팀원 전달 문서는 `Docs/Local/Review/CoreCompletion-2026-11-05/by-owner`의 공유 제외 파일을 직접 보냅니다.
 
 최근 기획·후속 검토: [10월 30일 기획 보강](planning/2026-10-30-planning-review.md) · [10월 31일 정기회의](planning/2026-10-31-regular-meeting.md) — 전체 전사·수기 대조로 자동 활성화·성장 방향을 보강하고 우주선 필드 정지, 점령/스폰·그룹화, 재방문·실패 보상과 후속 작업을 구분했다. 세부 설계·실제 구현·재미 검증은 별도다.
 
