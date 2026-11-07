@@ -48,6 +48,32 @@ public sealed class EnemySquadPreset : ScriptableObject
     public IReadOnlyList<EnemySquadCompositionEntry> Composition => _composition;
 
     /// <summary>
+    /// 한 구성 세트의 몬스터별 생성 비용과 마릿수를 곱해 합산한다.
+    /// 카탈로그나 구성, 적 정의 또는 비용이 유효하지 않으면 0을 반환한다.
+    /// </summary>
+    public int CalculateCost(EnemyCatalog catalog)
+    {
+        if (catalog == null || _composition == null || _composition.Count == 0)
+            return 0;
+
+        int total = 0;
+        foreach (EnemySquadCompositionEntry entry in _composition)
+        {
+            if (entry == null || entry.Weight <= 0 ||
+                string.IsNullOrWhiteSpace(entry.EnemyId) ||
+                !catalog.TryGetDefinition(entry.EnemyId, out EnemyDefinition definition) ||
+                definition.SpawnCost <= 0)
+            {
+                return 0;
+            }
+
+            total += definition.SpawnCost * entry.Weight;
+        }
+
+        return total;
+    }
+
+    /// <summary>
     /// 한 구성 세트를 완성하는 데 필요한 최소 적 수를 반환한다.
     /// 구성 항목이 비어 있거나 가중치가 0 이하이면 계획을 중단할 수 있도록 0을 반환한다.
     /// </summary>
