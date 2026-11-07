@@ -23,6 +23,10 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private const int TargetFrameRate = 120;
     private const float HostReadyTimeout = 10f;
 
+    [SerializeField, InspectorName("자동 Host 시작")]
+    [Tooltip("끄면 Start Host / Start Client 버튼에서 실행 방식을 직접 선택합니다.")]
+    private bool autoStartHost = true;
+
     [SerializeField] private string initialSquadOrder = "Normal";
     [SerializeField, Min(1)] private int initialEnemyLimit = 10;
     [SerializeField, Min(0f)] private float initialEncounterDelay = 0.5f;
@@ -35,6 +39,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
     private PlayerId _authorityIssuer = LocalIssuer;
     private bool _appOwnedNetwork;
+    private Scene _testOwnerScene;
     private Coroutine _initialEncounterRoutine;
     private bool _initialEncounterPending;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
@@ -95,6 +100,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (_snapshotProvider != null && !_appOwnedNetwork)
             throw new InvalidOperationException("Transfer connection ownership before binding a Match.");
         _appOwnedNetwork = true;
+        SceneManager.sceneUnloaded -= OnTestOwnerSceneUnloaded;
+        _testOwnerScene = default;
     }
 
     public void BindAuthorityMatch(MatchId matchId, PlayerId authorityPlayerId,
@@ -116,7 +123,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
         EnsureEncounterRuntime();
-        if (!_appOwnedNetwork) BindTestHostToExecutorScene();
+        if (!_appOwnedNetwork && _encounterRuntime?.Executor != null)
+            BindTestHostLifetime(_encounterRuntime.Executor.gameObject.scene);
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
         _initialEncounterPending = true;
         if (_networkManager != null) StartInitialEncounterIfBound();
@@ -133,8 +141,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         {
             if (_appOwnedNetwork) _encounterRuntime?.Executor?.DespawnForMatch(matchId);
             // standalone 테스트만 연결을 닫습니다. App의 연결은 다음 Match에서도 유지됩니다.
-            else if (_encounterRuntime?.Executor != null &&
-                gameObject.scene == _encounterRuntime.Executor.gameObject.scene && _networkManager != null)
+            else if (_testOwnerScene.IsValid() && _networkManager != null)
                 _networkManager.Shutdown();
             Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Feature actors released");
         }
@@ -150,21 +157,35 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 
     private void OnDestroy()
     {
+        SceneManager.sceneUnloaded -= OnTestOwnerSceneUnloaded;
         if (_snapshotProvider != null) UnbindMatch(_boundMatchId);
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
     }
 
-    private void BindTestHostToExecutorScene()
+    private void BindTestHostLifetime(Scene owner)
     {
-        if (_encounterRuntime?.Executor == null) return;
-        Scene owner = _encounterRuntime.Executor.gameObject.scene;
-        if (!owner.IsValid() || !owner.isLoaded || gameObject.scene == owner) return;
-        // NGO의 OnEnable은 루트를 DDOL로 옮깁니다. 임시 Host를 Scene에 돌려놓아
-        // Scene 재진입 때 이전 소비자/연결이 남지 않도록 SDK의 종료 경로를 사용합니다.
+        if (!owner.IsValid() || !owner.isLoaded) return;
         if (transform.parent != null)
             throw new InvalidOperationException("Scene-owned test NetworkManager must be a root GameObject.");
-        SceneManager.MoveGameObjectToScene(gameObject, owner);
+
+        // NGO가 관리자 씬을 DDOL로 참조하므로 관리자는 이동하지 않고 소유 씬만 기록한다.
+        _testOwnerScene = owner;
+        SceneManager.sceneUnloaded -= OnTestOwnerSceneUnloaded;
+        SceneManager.sceneUnloaded += OnTestOwnerSceneUnloaded;
+    }
+
+    private void OnTestOwnerSceneUnloaded(Scene scene)
+    {
+        if (_appOwnedNetwork || scene.handle != _testOwnerScene.handle)
+            return;
+
+        SceneManager.sceneUnloaded -= OnTestOwnerSceneUnloaded;
+        _testOwnerScene = default;
+        if (_networkManager != null && _networkManager.IsListening)
+            _networkManager.Shutdown();
+
+        Destroy(gameObject);
     }
 
     private void StartInitialEncounterIfBound()
@@ -187,7 +208,30 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (!_initialEncounterPending) yield break;
 
         // 임시 Scene 시작 정책만 연결을 명시적으로 엽니다. 개별 Spawn 요청은 연결을 열지 않습니다.
-        if (!_appOwnedNetwork && _networkManager != null && !_networkManager.IsListening) StartHost();
+        if (!_appOwnedNetwork && _networkManager != null && !_networkManager.IsListening)
+        {
+            if (autoStartHost)
+                StartHost();
+            else
+            {
+                // 기존 시작 버튼에서 연결 방식을 선택할 때까지 기다린다.
+                while (_initialEncounterPending && !_networkManager.IsListening)
+                    yield return null;
+
+                if (!_initialEncounterPending)
+                    yield break;
+            }
+        }
+
+        // Client로 시작한 창은 서버의 스폰 결과를 수신한다.
+        if (!_appOwnedNetwork && _networkManager != null &&
+            _networkManager.IsListening && !_networkManager.IsServer)
+        {
+            _initialEncounterPending = false;
+            _initialEncounterRoutine = null;
+            yield break;
+        }
+
         if (!CanRequestEncounter(out string reason))
         {
             Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: reason);
