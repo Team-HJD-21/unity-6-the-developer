@@ -128,6 +128,14 @@ Blocker: 필요한 결정·사람·선행 작업
 
 ### Review와 Approval
 
+- 구현 PR 작성자는 진입점과 실행 흐름, 집중해서 검토할 파일, 생략해도 되는 파일을 Markdown으로 첨부하고 PR 설명에서 위치를 안내한다.
+- 리뷰어는 문서로 흐름을 파악한 뒤 실제 코드에서 주요 동작을 확인한다. 호출 관계를 따라갈 필요가 있으면 PR 브랜치를 로컬에서 열고 IDE 사용처 검색을 이용할 수 있다.
+- 양현석이 공통 Markdown 템플릿과 작성 프롬프트를 공유한다. 황재동의 Codex Review 흐름 안내는 별도 시험이다. [회의 근거](../archive/2026-11-07/regular-meeting.md)
+
+- 2026-09-28 기준 `main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 PR, 승인 1명, Code Owner 승인, Review 대화 해결, 최신 `Repository checks` 통과를 요구한다. Ruleset 설정이 바뀌면 GitHub의 실제 설정을 우선 확인한다.
+- 새 검토 가능 커밋을 push하면 기존 승인이 해제되므로 다시 승인받는다. `Require approval of the most recent reviewable push`는 별도로 켜져 있지 않다.
+- 작은 독립 변경도 작성자 Self-review와 CI 성공만으로는 Merge할 수 없다. Code Owner 승인이 필요하다.
+- 다음 변경은 필수 Code Owner 승인과 별도로 관련 영역 Owner에게도 Review를 요청하고 의견을 해결한다.
 - `main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 PR, 쓰기 권한이 있는 리뷰어 2명의 유효한 승인, Review 대화 해결, 최신 `Repository checks` 통과를 요구한다. 세부 승인 조건은 [CI 안내](../../.github/CI_SETUP.md#ci가-실패해도-push가-되는-이유와-main-보호)를 따르며, 설정이 바뀌면 GitHub의 실제 규칙을 우선 확인한다.
 - 아래 변경은 병합 요건을 충족하는 것과 별도로, 변경이 영향을 주는 영역의 담당자에게도 검토를 요청하고 의견을 해결한다.
   - Core/공용 계약 또는 asmdef 의존성

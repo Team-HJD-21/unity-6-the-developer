@@ -1,6 +1,6 @@
 # The Developer 문서 안내
 
-최근 기획: [11월 6일 기획 보강 근거·후속](planning/2026-11-06-planning-review.md). 현행 우주선 출입·점유·안전장치 정책은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 아래 이전 회의 안내의 정지 정책은 당시 기록이며 현행을 대체하지 않는다.
+최근 정기회의: [11월 7일 결정 근거](archive/2026-11-07/regular-meeting.md). 미션 HUD Alert와 Enemy 규칙은 [Product Plan](product/PROJECT_PLAN.md), PR 리뷰 흐름은 [팀 협업 규칙](team/TEAM_WORKFLOW.md#review와-approval), 담당별 후속은 [현재 실행 계획](planning/current-execution-plan.md)을 따른다.
 
 Core 기반 main 통합 검토: [11월 5일 범위·현행 Feature 호환·검증 기록](planning/2026-11-05-foundation-main-integration.md) · [실제 호출·수명·API 지도](architecture/core-lifecycle-and-api-guide.md) · [Core 코드 안내](../Assets/Scripts/Core/README.md). 기존 회의록과 파트별 문서는 유지하며 이 통합으로 미연결 Feature의 완료를 선언하지 않는다.
 
@@ -12,8 +12,8 @@ Random 등록·해제는 공용 정적 함수 `RandomBinding.Bind` 한 줄로 �
 
 최근 진행 공유: [11월 3일 주간 보고](planning/2026-11-03-weekly-progress.md) — 지원형 소환/회복 두 종 분리, 암살자 비탐지 우선 대상, 수리 검증용 터렛 배치와 파트별 후속. 분열 방벽은 실험 후보이며 구현·실행 검증 완료나 새 Sprint 확정이 아니다.
 
-수정일: 2026-11-03
-상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
+수정일: 2026-11-07
+상태: 현행 문서 안내 · 제품·실행·검증은 각 기준 문서에서 확인
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
