@@ -38,6 +38,11 @@ public sealed class EnemySummonSpawner : NetworkBehaviour
             return 0;
         }
 
+        EnemySquad sharedSquad = definition.SquadMode == EnemySquadMode.Shared
+            ? new EnemySquad(definition.SquadMode, definition.TargetRule, target)
+            : null;
+        int spawnedCount = 0;
+
         for (int i = 0; i < count; i++)
         {
             Vector3 position = GetSpawnPosition(target, i, count);
@@ -51,10 +56,19 @@ public sealed class EnemySummonSpawner : NetworkBehaviour
             EnemyController controller = enemy.GetComponent<EnemyController>();
 
             networkObject.Spawn();
-            controller.AssignTarget(target);
+            EnemySquad squad = sharedSquad ??
+                new EnemySquad(definition.SquadMode, definition.TargetRule, target);
+
+            if (!controller.JoinSquad(squad))
+            {
+                networkObject.Despawn();
+                continue;
+            }
+
+            spawnedCount++;
         }
 
-        return count;
+        return spawnedCount;
     }
 
     /// <summary>타깃 방향의 정면에 생성하고 여러 마리는 좌우로 간격을 둔다.</summary>

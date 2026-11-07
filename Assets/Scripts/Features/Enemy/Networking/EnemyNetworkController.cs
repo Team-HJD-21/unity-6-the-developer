@@ -49,6 +49,7 @@ public class EnemyNetworkController : NetworkBehaviour
             return;
         }
 
+        enemyController.RefreshTarget();
         enemyController.ExecuteBehavior();
     }
 
@@ -95,6 +96,17 @@ public class EnemyNetworkController : NetworkBehaviour
         if (health != enemyHealth || !IsServer)
             return;
 
+        // 고유 사망 반응이 실패해도 사망 기록과 네트워크 제거는 계속 처리한다.
+        try
+        {
+            if (enemyController != null)
+                enemyController.OnDeath();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+        }
+
         if (DeathConfirmed != null)
             foreach (Action<ulong> observer in DeathConfirmed.GetInvocationList())
                 try
@@ -123,6 +135,9 @@ public class EnemyNetworkController : NetworkBehaviour
             enemyHealth.Died -= OnHealthDied;
             enemyHealth.Deactivate();
         }
+
+        if (enemyController != null)
+            enemyController.LeaveSquad();
 
         Despawned?.Invoke(NetworkObjectId);
         base.OnNetworkDespawn();

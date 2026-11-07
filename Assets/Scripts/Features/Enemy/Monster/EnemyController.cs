@@ -13,6 +13,7 @@ public abstract class EnemyController : MonoBehaviour
     [Header("능력")]
     [FormerlySerializedAs("enemyCombat")]
     [SerializeField] protected EnemyAbility enemyAbility;
+    private EnemySquad _squad;
     
     /// <summary>
     /// 다른 미사일이 이미 이 적을 목표로 삼았는지 나타낸다.
@@ -37,6 +38,39 @@ public abstract class EnemyController : MonoBehaviour
     /// 몬스터 유형에 맞는 행동을 실행한다.
     /// </summary>
     public abstract void ExecuteBehavior();
+
+    /// <summary>몬스터를 독립적으로 유지되는 분대에 등록한다.</summary>
+    public bool JoinSquad(EnemySquad squad)
+    {
+        if (squad == null)
+            return false;
+        if (_squad == squad)
+            return true;
+
+        LeaveSquad();
+        if (!squad.AddMember(this))
+            return false;
+
+        _squad = squad;
+        return true;
+    }
+
+    /// <summary>분대 갱신을 요청하며 실제 검색은 대표 구성원만 실행한다.</summary>
+    public void RefreshTarget()
+    {
+        _squad?.RefreshTarget(this);
+    }
+
+    public void LeaveSquad()
+    {
+        _squad?.RemoveMember(this);
+        _squad = null;
+    }
+
+    /// <summary>체력으로 사망했을 때 네트워크 제거 전에 고유 반응을 실행한다.</summary>
+    public virtual void OnDeath()
+    {
+    }
 
     /// <summary>
     /// 능력 발동에 성공하면 애니메이션을 재생한다.

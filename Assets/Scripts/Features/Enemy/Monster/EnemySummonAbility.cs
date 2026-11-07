@@ -72,6 +72,26 @@ public class EnemySummonAbility : EnemyAbility
         _summonPending = false;
     }
 
+    /// <summary>파괴 시 쿨타임과 모션 대기 없이 추가 몬스터를 생성한다.</summary>
+    public void SummonOnDeath()
+    {
+        _isSummoning = false;
+        _summonPending = false;
+
+        if (summonSpawner == null ||
+            summonDefinition == null ||
+            summonDefinition.Prefab == null ||
+            deathSummonCount <= 0)
+        {
+            return;
+        }
+
+        summonSpawner.Spawn(
+            summonDefinition,
+            deathSummonCount,
+            enemyTargeting != null ? enemyTargeting.Target : null);
+    }
+
     private void OnDisable()
     {
         _isSummoning = false;

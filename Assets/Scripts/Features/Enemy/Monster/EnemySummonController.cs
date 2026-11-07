@@ -14,6 +14,7 @@ public sealed class EnemySummonController : MovingEnemyController
     [SerializeField] private Rigidbody2D rigidbody2D;
 
     private SummonState _state = SummonState.Mobile;
+    private bool _deathHandled;
 
     protected override void Awake()
     {
@@ -25,7 +26,7 @@ public sealed class EnemySummonController : MovingEnemyController
 
     public override void ExecuteBehavior()
     {
-        if (enemyAbility == null || !enemyAbility.isActiveAndEnabled)
+        if (_deathHandled || enemyAbility == null || !enemyAbility.isActiveAndEnabled)
         {
             StopMoving();
             return;
@@ -78,11 +79,27 @@ public sealed class EnemySummonController : MovingEnemyController
     /// <summary>변태가 끝나면 위치를 고정하고 소환 상태로 전환한다.</summary>
     public void OnTransformationAnimationFinished()
     {
-        if (_state != SummonState.Transforming)
+        if (_deathHandled || _state != SummonState.Transforming)
             return;
 
         rigidbody2D.linearVelocity = Vector2.zero;
         rigidbody2D.constraints |= RigidbodyConstraints2D.FreezePosition;
         _state = SummonState.Transformed;
+    }
+
+    public override void OnDeath()
+    {
+        if (_deathHandled)
+            return;
+
+        _deathHandled = true;
+        StopMoving();
+
+        if (_state != SummonState.Transformed)
+            return;
+
+        EnemySummonAbility summonAbility = enemyAbility as EnemySummonAbility;
+        if (summonAbility != null)
+            summonAbility.SummonOnDeath();
     }
 }

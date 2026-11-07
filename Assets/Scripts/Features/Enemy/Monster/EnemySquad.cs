@@ -7,10 +7,13 @@ using UnityEngine;
 /// </summary>
 public class EnemySquad
 {
+    private const float RetargetInterval = 0.5f;
+
     private readonly List<EnemyController> _members;
     private ITargetable _target;
     private readonly EnemySquadMode _squadMode;
     private readonly EnemyTargetRule _targetRule;
+    private float _nextSearchTime;
 
     /// <summary>
     /// 등록된 분대원이 모두 제거되었는지 반환한다.
@@ -25,11 +28,19 @@ public class EnemySquad
     }
 
     /// <summary>분대 구성 방식과 타깃 선택 규칙을 지정한다.</summary>
-    public EnemySquad(EnemySquadMode squadMode, EnemyTargetRule targetRule)
+    public EnemySquad(
+        EnemySquadMode squadMode,
+        EnemyTargetRule targetRule,
+        Transform initialTarget = null)
     {
         _members = new List<EnemyController>();
         _squadMode = squadMode;
         _targetRule = targetRule;
+
+        ITargetable target = initialTarget != null
+            ? initialTarget.GetComponent<ITargetable>()
+            : null;
+        _target = IsValidTarget(target) ? target : null;
     }
 
     /// <summary>
@@ -94,7 +105,7 @@ public class EnemySquad
     /// <summary>
     /// 현재 목표가 공격 가능하면 유지하고, 아니면 분대 중심에서 새 목표를 찾는다.
     /// 목표가 바뀐 경우에만 모든 구성원에게 새 목표 또는 null을 전달한다.
-    /// 후보가 없으면 목표를 비워 두고 다음 호출에서 다시 찾는다.
+    /// 후보가 없으면 목표를 비워 두고 분대 단위로 검색 간격을 둔다.
     /// </summary>
     /// <returns>선택되거나 유지된 공동 목표가 있으면 true.</returns>
     public bool SetTarget()
@@ -106,8 +117,9 @@ public class EnemySquad
         ITargetable previousTarget = _target;
         _target = null;
 
-        if (TryGetCenterPosition(out Vector3 center))
+        if (Time.time >= _nextSearchTime && TryGetCenterPosition(out Vector3 center))
         {
+            _nextSearchTime = Time.time + RetargetInterval;
             ITargetable nextTarget;
             bool found = _targetRule == EnemyTargetRule.PlayerOnly
                 ? EnemySquadTargetSelector.TrySelectNearestPlayer(center, out nextTarget)
@@ -129,6 +141,20 @@ public class EnemySquad
         }
 
         return _target != null;
+    }
+
+    /// <summary>활성 구성원 중 첫 번째 몬스터만 공동 타깃 갱신을 실행한다.</summary>
+    public void RefreshTarget(EnemyController requester)
+    {
+        foreach (EnemyController member in _members)
+        {
+            if (member == null || !member.isActiveAndEnabled)
+                continue;
+
+            if (member == requester)
+                SetTarget();
+            return;
+        }
     }
 
     private bool IsValidTarget(ITargetable target)
