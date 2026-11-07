@@ -54,6 +54,12 @@ public class MovingEnemyController : EnemyController
             return;
         }
 
+        MoveToTarget();
+    }
+
+    /// <summary>배정된 타깃으로 이동하고 범위에 도착하면 멈춘다.</summary>
+    protected void MoveToTarget()
+    {
         if (enemyTargeting.Target == null ||
             enemyAbility.IsInRange(enemyTargeting.TargetColliders) ||
             !enemyMovement.TryGetNextPathDirection(out Vector2 moveDirection))
