@@ -45,7 +45,7 @@ namespace TeamHJD.Game.Domain
         /// Planner가 결정한 지점별 명령을 Executor에 전달해 적을 생성한다.
         /// 호출자가 전달한 분대 명령과 생성 상한, 비용 예산으로 계획한다.
         /// </summary>
-        public void Spawn(SpawnRequest request)
+        public void RequestSpawn(SpawnRequest request)
         {
             if (_spawnExecutor == null)
             {
@@ -69,27 +69,11 @@ namespace TeamHJD.Game.Domain
         /// Match 공간 snapshot을 Encounter 경계로 받아 요청한 PoC 분대를 계획하고 서버 Executor에 전달합니다.
         /// Grid의 점유·적 밀도와 Frontline 거리를 PoC 배치 정책에 적용합니다.
         /// </summary>
-        public bool TrySpawn(BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
+        public bool RequestSpawn(BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
             int spawnBudget, EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
         {
             summary = new EncounterExecutionSummary(0, 0, "Rejected");
-            if (snapshot == null || snapshot.MatchId.IsEmpty)
-            {
-                result = "활성 Match Battlefield snapshot이 없습니다.";
-                return false;
-            }
-
-            if (_spawnExecutor == null)
-            {
-                result = "현재 Scene에서 EnemySpawnExecutor를 찾지 못했습니다.";
-                return false;
-            }
-
-            if (!_spawnExecutor.CanSpawn)
-            {
-                result = "Encounter 실행에는 NGO Host/Server가 필요합니다. NetworkManager 상태를 확인하세요.";
-                return false;
-            }
+            if (!ValidateExecution(snapshot, out result)) return false;
 
             if (string.IsNullOrWhiteSpace(squadOrder) || maxEnemyCount <= 0 || spawnBudget <= 0)
             {
@@ -111,6 +95,85 @@ namespace TeamHJD.Game.Domain
                 return false;
             }
 
+            return ExecutePlan(snapshot, instructions, context, SpawnPointSpatialPolicy.Description,
+                out result, out summary);
+        }
+
+        /// <summary>지점별 자동 편성 계획을 서버에서 실행한다. 외부의 고정 프리셋 요청과 구분되는 진입점이다.</summary>
+        public bool RequestSpawn(BattlefieldSpatialSnapshot snapshot, AutomaticSpawnRequest request,
+            SquadSelectionSettings settings, IRandomSource random, EncounterExecutionContext context,
+            out string result, out EncounterExecutionSummary summary)
+        {
+            summary = new EncounterExecutionSummary(0, 0, "Rejected");
+            if (!ValidateExecution(snapshot, out result)) return false;
+            if (request.SpawnBudget <= 0 || request.MaxCount <= 0 || settings == null || !settings.IsValid ||
+                random == null || !random.IsAvailable)
+            {
+                result = "자동 편성 예산·마릿수 상한·설정과 Core 권위 난수 주입을 확인하세요.";
+                return false;
+            }
+
+            // CU도 Turret 후보에 포함된다. 요청당 한 번만 씬의 후보를 조회한다.
+            TargetableComponent[] targets = Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
+            var candidates = new List<SpatialSpawnCandidate>();
+            var targetPositions = new Dictionary<string, BattlefieldPoint>();
+            foreach (SpawnPoint point in _spawnExecutor.SpawnPointList.GetAvailableSpawnPoints())
+            {
+                if (string.IsNullOrWhiteSpace(point.SpawnPointId) || targetPositions.ContainsKey(point.SpawnPointId))
+                    continue;
+                if (!EnemyTargetQuery.TryFindNearest(point.Position, targets, TargetType.Turret, out ITargetable target))
+                    continue;
+
+                Vector3 position = target.TargetTransform.position;
+                var targetPosition = new BattlefieldPoint(position.x, position.y);
+                if (!snapshot.Grid.TryGetCellAt(targetPosition, out _))
+                    continue;
+
+                candidates.Add(new SpatialSpawnCandidate(point.SpawnPointId,
+                    new BattlefieldPoint(point.Position.x, point.Position.y)));
+                targetPositions.Add(point.SpawnPointId, targetPosition);
+            }
+            if (!_planner.TryPlan(request, candidates, snapshot, targetPositions, settings, random, out var instructions))
+            {
+                result = $"자동 SpawnPlan 생성 실패: budget {request.SpawnBudget}, maxCount {request.MaxCount}. " +
+                         "카탈로그, 지점·지역 예산, 셀 수용량과 편성 비용을 확인하세요.";
+                summary = new EncounterExecutionSummary(0, 0, "PlanRejected",
+                    new SpawnDecisionSnapshot(snapshot, _planner.LastCandidates,
+                        System.Array.Empty<SpawnDecisionSnapshot.Plan>(), System.Array.Empty<SpawnDecisionSnapshot.Actual>(),
+                        result, SpawnPointSpatialPolicy.AutomaticDescription));
+                return false;
+            }
+            return ExecutePlan(snapshot, instructions, context, SpawnPointSpatialPolicy.AutomaticDescription,
+                out result, out summary);
+        }
+
+        private bool ValidateExecution(BattlefieldSpatialSnapshot snapshot, out string result)
+        {
+            if (snapshot == null || snapshot.MatchId.IsEmpty)
+            {
+                result = "활성 Match Battlefield snapshot이 없습니다.";
+                return false;
+            }
+
+            if (_spawnExecutor == null)
+            {
+                result = "현재 Scene에서 EnemySpawnExecutor를 찾지 못했습니다.";
+                return false;
+            }
+
+            if (!_spawnExecutor.CanSpawn)
+            {
+                result = "Encounter 실행에는 NGO Host/Server가 필요합니다. NetworkManager 상태를 확인하세요.";
+                return false;
+            }
+
+            result = null;
+            return true;
+        }
+
+        private bool ExecutePlan(BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpawnInstruction> instructions,
+            EncounterExecutionContext context, string policy, out string result, out EncounterExecutionSummary summary)
+        {
             var executionSummary = new StringBuilder();
             int spawnedCount = 0;
             int plannedCount = 0;
@@ -128,7 +191,7 @@ namespace TeamHJD.Game.Domain
                     plans.Add(new SpawnDecisionSnapshot.Plan(instruction.SpawnPointId,entry.EnemyId,entry.Count,failure));
                 spawnedCount += instructionSpawned;
                 if (executionSummary.Length > 0) executionSummary.Append(" | ");
-                executionSummary.Append(instruction.SpawnPointId).Append(": ");
+                executionSummary.Append(instruction.SquadOrder).Append(" @ ").Append(instruction.SpawnPointId).Append(": ");
                 for (int index = 0; index < instruction.Enemies.Count; index++)
                 {
                     if (index > 0) executionSummary.Append(", ");
@@ -148,7 +211,7 @@ namespace TeamHJD.Game.Domain
                 spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
                 new SpawnDecisionSnapshot(snapshot,_planner.LastCandidates,plans,actuals,
                     spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
-                    SpawnPointSpatialPolicy.Description));
+                    policy));
             return spawnedCount > 0;
         }
     }

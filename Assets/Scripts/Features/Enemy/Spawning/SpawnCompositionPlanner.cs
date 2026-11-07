@@ -63,6 +63,97 @@ public sealed class SpawnCompositionPlanner
         return candidates;
     }
 
+    /// <summary>지점별 상황으로 한 편성씩 선택하며 요청 전체와 선택적 예산 묶음의 잔액을 함께 차감한다.</summary>
+    public bool TryPlan(AutomaticSpawnRequest request,
+        IReadOnlyList<SpatialSpawnCandidate> spawnPoints, BattlefieldSpatialSnapshot snapshot,
+        IReadOnlyDictionary<string, BattlefieldPoint> targetPositions,
+        SquadSelectionSettings settings, IRandomSource random,
+        out IReadOnlyList<SpawnInstruction> instructions)
+    {
+        instructions = Array.Empty<SpawnInstruction>();
+        LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>();
+        if (!HasCatalog || request.SpawnBudget <= 0 || request.MaxCount <= 0 ||
+            snapshot?.Grid == null || spawnPoints == null || targetPositions == null || settings == null || !settings.IsValid ||
+            random == null || !random.IsAvailable)
+            return false;
+
+        // 비용은 요청마다 한 번만 읽고, 카탈로그 순서와 무관하게 동일한 난수 흐름을 사용한다.
+        var presets = new List<EnemySquadPreset>();
+        var costs = new Dictionary<EnemySquadPreset, int>();
+        var orders = new HashSet<string>(StringComparer.Ordinal);
+        foreach (EnemySquadPreset preset in GetSpawnablePresets(request.SpawnBudget, request.MaxCount))
+        {
+            if (string.IsNullOrWhiteSpace(preset.SquadOrder) || preset.SelectionWeight <= 0 ||
+                !Enum.IsDefined(typeof(EnemySquadRole), preset.Role) || !orders.Add(preset.SquadOrder))
+                continue;
+            presets.Add(preset);
+            costs.Add(preset, preset.CalculateCost(_enemyCatalog));
+        }
+        if (presets.Count == 0) return false;
+        presets.Sort((left, right) => StringComparer.Ordinal.Compare(left.SquadOrder, right.SquadOrder));
+
+        var allocationsByPoint = new Dictionary<string, SpawnBudgetAllocation>(StringComparer.Ordinal);
+        var allocationRemaining = new Dictionary<SpawnBudgetAllocation, int>();
+        if (request.BudgetAllocations != null)
+            foreach (SpawnBudgetAllocation allocation in request.BudgetAllocations)
+            {
+                allocationRemaining.Add(allocation, allocation.Budget);
+                foreach (string id in allocation.SpawnPointIds) allocationsByPoint.Add(id, allocation);
+            }
+
+        int remainingBudget = request.SpawnBudget;
+        int remainingCount = request.MaxCount;
+        int BudgetFor(SpatialSpawnCandidate point)
+        {
+            if (request.BudgetAllocations == null) return remainingBudget;
+            return allocationsByPoint.TryGetValue(point.Id, out SpawnBudgetAllocation allocation)
+                ? Math.Min(remainingBudget, allocationRemaining[allocation]) : 0;
+        }
+        int MinimumCountFor(SpatialSpawnCandidate point)
+        {
+            if (!targetPositions.TryGetValue(point.Id, out BattlefieldPoint targetPosition) ||
+                !snapshot.Grid.TryGetCellAt(targetPosition, out _))
+                return 0;
+            int budget = BudgetFor(point);
+            int minimum = int.MaxValue;
+            foreach (EnemySquadPreset preset in presets)
+                if (costs[preset] <= budget && preset.TotalWeight <= remainingCount)
+                    minimum = Math.Min(minimum, preset.TotalWeight);
+            return minimum == int.MaxValue ? 0 : minimum;
+        }
+
+        var session = _spatialPolicy.BeginPlanning(snapshot, spawnPoints, settings);
+        var planned = new List<SpawnInstruction>();
+        var affordable = new List<EnemySquadPreset>(presets.Count);
+        while (remainingBudget > 0 && remainingCount > 0 &&
+               session.TryGetNextPoint(MinimumCountFor, out SpatialSpawnCandidate point))
+        {
+            affordable.Clear();
+            int budget = BudgetFor(point);
+            foreach (EnemySquadPreset preset in presets)
+                if (costs[preset] <= budget && preset.TotalWeight <= remainingCount)
+                    affordable.Add(preset);
+
+            SpawnAreaContext area = session.GetAreaContext(point, targetPositions[point.Id]);
+            if (!SquadSelectionPolicy.TrySelect(affordable, area, settings, random, out EnemySquadPreset selected))
+                break;
+
+            var enemies = new List<EnemySpawnEntry>(selected.Composition.Count);
+            foreach (EnemySquadCompositionEntry entry in selected.Composition)
+                enemies.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight));
+            planned.Add(new SpawnInstruction(selected.SquadOrder, point.Id, enemies));
+
+            remainingBudget -= costs[selected];
+            remainingCount -= selected.TotalWeight;
+            if (request.BudgetAllocations != null)
+                allocationRemaining[allocationsByPoint[point.Id]] -= costs[selected];
+            session.Reserve(point, selected.TotalWeight);
+        }
+        LastCandidates = session.GetObservations();
+        instructions = planned.AsReadOnly();
+        return planned.Count > 0;
+    }
+
     /// <summary>
     /// 호출자가 지정한 PoC 분대 요청을 현재 스폰 지점 상태에 맞춰 계획합니다.
     /// </summary>

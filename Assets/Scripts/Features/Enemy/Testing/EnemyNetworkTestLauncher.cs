@@ -34,6 +34,10 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     [SerializeField, Min(1)] private int spawnBudget = 20;
     [SerializeField, Min(0f)] private float initialEncounterDelay = 0.5f;
 
+    [Header("자동 편성 규칙 — 자동 요청 연결 시 사용")]
+    [SerializeField] private SquadSelectionSettings selectionSettings = new();
+    public SquadSelectionSettings SelectionSettings => selectionSettings;
+
     private NetworkManager _networkManager;
     private EncounterRuntime _encounterRuntime;
     private MatchId _boundMatchId;
@@ -426,7 +430,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, " +
                      $"maxCount={request.MaximumEnemyCount}, spawnBudget={spawnBudget}");
         EnsureEncounterRuntime();
-        bool succeeded = _encounterRuntime.TrySpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
+        bool succeeded = _encounterRuntime.RequestSpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
             spawnBudget, context, out string result, out EncounterExecutionSummary summary);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,

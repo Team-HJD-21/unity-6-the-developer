@@ -27,32 +27,9 @@ public static class EnemySquadTargetSelector
     private static bool TrySelectNearestTarget(
         Vector3 origin, TargetType? requiredType, out ITargetable target)
     {
-        target = null;
-        float nearestDistanceSqr = float.PositiveInfinity;
-
-        // 이번 선택 시점에 존재하는 타깃만 조사한다.
         TargetableComponent[] candidates =
             Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
 
-        foreach (TargetableComponent candidate in candidates)
-        {
-            if (candidate == null || !candidate.CanBeTargeted ||
-                (candidate.TargetType != TargetType.Player &&
-                 candidate.TargetType != TargetType.Turret) ||
-                (requiredType.HasValue && candidate.TargetType != requiredType.Value) ||
-                candidate.TargetTransform == null)
-                continue;
-
-            // 2D 거리의 제곱을 비교해 가장 가까운 후보만 남긴다.
-            Vector2 offset = (Vector2)(candidate.TargetTransform.position - origin);
-            float distanceSqr = offset.sqrMagnitude;
-            if (distanceSqr >= nearestDistanceSqr)
-                continue;
-
-            nearestDistanceSqr = distanceSqr;
-            target = candidate;
-        }
-
-        return target != null;
+        return EnemyTargetQuery.TryFindNearest(origin, candidates, requiredType, out target);
     }
 }
