@@ -72,6 +72,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6310045781359598294, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: runOffline
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6310045781359598294, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: enemyController
+      value:
+      objectReference: {fileID: 6948396548883182506}
     - target: {fileID: 7652877528939522271, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: m_Name
       value: SpawnerMushroom
@@ -136,7 +144,8 @@ PrefabInstance:
       propertyPath: m_WasSpriteAssigned
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -3643317591569123420, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -146,6 +155,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7652877528939522271, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4081609373577414244}
+    - targetCorrespondingSourceObject: {fileID: 7652877528939522271, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6948396548883182506}
   m_SourcePrefab: {fileID: 100100000, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
 --- !u!50 &1577279771357076187 stripped
 Rigidbody2D:
@@ -170,7 +182,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySummonSpawner
   ShowTopMostFoldoutHeaderGroup: 1
-  spawnRadius: 1
+  spawnDistance: 1
+  spawnSpacing: 0.5
 --- !u!114 &4081609373577414244
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -183,16 +196,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08c968e3170cbd5498e2d3e70bc38803, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySummonAbility
-  cooldown: 1
+  cooldown: 5
   _bodyCollider: {fileID: 2156512843773975729}
-  activationRange: 0.4
+  activationRange: 5
   enemyTargeting: {fileID: 4616459822353301369}
   enemyHealth: {fileID: 5588999996125939549}
-  rigidbody2D: {fileID: 1577279771357076187}
   summonSpawner: {fileID: 8505148992444268718}
   summonDefinition: {fileID: 11400000, guid: 1e152c8e341e430459c939530b968f50, type: 2}
-  summonCount: 1
+  summonCount: 2
   deathSummonCount: 5
+--- !u!114 &6948396548883182506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809723546443632911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d0f5c362887c5641b252b65e123a905, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySummonController
+  enemyTargeting: {fileID: 4616459822353301369}
+  enemyAnimation: {fileID: 5412386465667940283}
+  enemyAbility: {fileID: 4081609373577414244}
+  enemyMovement: {fileID: 4891068941938543863}
+  rigidbody2D: {fileID: 1577279771357076187}
 --- !u!61 &2156512843773975729 stripped
 BoxCollider2D:
   m_CorrespondingSourceObject: {fileID: 7981626947373081953, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
@@ -209,6 +238,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
+--- !u!114 &4891068941938543863 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3515489568824358183, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+  m_PrefabInstance: {fileID: 8298188437113846224}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809723546443632911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e4629e7cbab8f43b1546a0afb62589, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
+--- !u!114 &5412386465667940283 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4050353147978729067, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+  m_PrefabInstance: {fileID: 8298188437113846224}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809723546443632911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03171b78e5f780499d91a5ca81900ca, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
 --- !u!114 &5588999996125939549 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4519656381998153357, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
