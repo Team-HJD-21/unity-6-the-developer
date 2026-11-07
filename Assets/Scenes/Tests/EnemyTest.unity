@@ -523,7 +523,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889074790280127636, guid: f0bc79a5aae72e94b896a562faf7a0e6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1617085793}
   m_SourcePrefab: {fileID: 100100000, guid: f0bc79a5aae72e94b896a562faf7a0e6, type: 3}
 --- !u!1001 &78163638
 PrefabInstance:
@@ -1335397,11 +1335400,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 200176264913341193, guid: 3b9ef0953af20bf4ab69add0e46887c2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -43.25
+      value: -67.1
       objectReference: {fileID: 0}
     - target: {fileID: 200176264913341193, guid: 3b9ef0953af20bf4ab69add0e46887c2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -23.25
+      value: 1.19
       objectReference: {fileID: 0}
     - target: {fileID: 200176264913341193, guid: 3b9ef0953af20bf4ab69add0e46887c2, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1335444,6 +1335447,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3b9ef0953af20bf4ab69add0e46887c2, type: 3}
+--- !u!4 &1253675336 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 200176264913341193, guid: 3b9ef0953af20bf4ab69add0e46887c2, type: 3}
+  m_PrefabInstance: {fileID: 1253675335}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1264729469
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1336657,6 +1336665,25 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
   m_PrefabInstance: {fileID: 1613032759}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1617085774 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889074790280127636, guid: f0bc79a5aae72e94b896a562faf7a0e6, type: 3}
+  m_PrefabInstance: {fileID: 73397766}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1617085793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1617085774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16d616d25fea4b328c0b4831271adca9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySquadTester
+  targetRule: 0
+  initialTarget: {fileID: 1253675336}
 --- !u!1 &1655896931
 GameObject:
   m_ObjectHideFlags: 0
@@ -1336736,6 +1336763,75 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!1001 &1677933637
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 90407086954908900, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1817703549
+      objectReference: {fileID: 0}
+    - target: {fileID: 1809723546443632911, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_Name
+      value: SpawnerMushroom
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -72.93881
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 7.214702
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2496429858012411782, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2646110376890508038, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: runOffline
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2646110376890508038, guid: d969b6e6e026341438d5a4530932d459, type: 3}
+      propertyPath: testTarget
+      value: 
+      objectReference: {fileID: 1253675336}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d969b6e6e026341438d5a4530932d459, type: 3}
 --- !u!1 &1735068336
 GameObject:
   m_ObjectHideFlags: 0
@@ -1336855,6 +1336951,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afee2fd02998d994f8f62eda64603f11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
+  autoStartHost: 0
   initialSquadOrder: BlackWolf
   initialEnemyLimit: 1
   initialEncounterDelay: 0.5
@@ -1359565,3 +1359662,4 @@ SceneRoots:
   - {fileID: 2018641262}
   - {fileID: 1381981632}
   - {fileID: 1792789426}
+  - {fileID: 1677933637}
