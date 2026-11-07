@@ -1,7 +1,7 @@
 # 날씨 시스템 설계와 API 사용법
 
-기준일: 2026-11-06  
-상태: `docs/weather-docs` 브랜치의 `bccaaccf` 시점 소스를 기준으로 한 사용 설명서. 다른 브랜치의 통합 구현이나 PR의 계획을 현재 동작으로 간주하지 않는다.
+기준일: 2026-11-08
+상태: 현재 작업 트리의 구현을 기준으로 한 사용 설명서. 다른 브랜치의 통합 구현이나 PR의 계획을 현재 동작으로 간주하지 않는다.
 
 이 문서는 날씨를 **언제 변경하는지**, **다음 날씨를 어떻게 선택하는지**, **결과를 화면과 다른 기능에 어떻게 전달하는지** 설명한다. 대상은 현재 작업 트리의 `WeatherManager`, `CountTick`, `WeatherShaderApply`, `PlayerWeatherEffectBinding`이다.
 
@@ -11,7 +11,7 @@
 
 | 구성 요소 | 책임 | 소스 |
 | --- | --- | --- |
-| `Map.WeatherManager` | 현재 날씨·예고 큐 관리, 다음 날씨 선택, 변경 알림, 셰이더 적용 요청 | [WeatherManager.cs](../../Assets/Scripts/Map/WeatherManager.cs) |
+| `Map.WeatherManager` | Match 난수 연결, 현재 날씨·예고 큐 관리, 낮/밤별 가중치 추첨, 변경 알림, 셰이더 적용 요청 | [WeatherManager.cs](../../Assets/Scripts/Map/WeatherManager.cs) |
 | `Map.CountTick` | 일정 간격을 기다린 뒤 `ChangeWeather()` 호출 | [CountTick.cs](../../Assets/Scripts/Map/CountTick.cs) |
 | `WeatherShaderApply` | 카메라에 날씨 Material 적용, 화면 전환 보간, 효과 표시/숨김 | [WeatherShaderApply.cs](../../Assets/Scripts/Map/WeatherShaderApply.cs) |
 | `PlayerWeatherEffectBinding` | 로컬 플레이어 위치 알림을 카메라 효과 표시 여부에 연결 | [PlayerWeatherEffectBinding.cs](../../Assets/Scripts/Map/PlayerWeatherEffectBinding.cs) |
@@ -20,7 +20,9 @@
 
 ```mermaid
 flowchart TD
-    Tick["CountTick · 간격 대기"] -->|ChangeWeather| Manager["WeatherManager · 현재 날씨 / 예고 큐"]
+    Random["Match Random · weather stream"] --> Manager["WeatherManager · 현재 날씨 / 예고 큐"]
+    DayNight["IMatchDayNightCycle · 현재 Phase"] --> Manager
+    Tick["CountTick · 간격 대기"] -->|ChangeWeather| Manager
     Manager -->|ApplyWeather| Shader["WeatherShaderApply · 카메라 화면 효과"]
     Manager -->|OnWeatherChange| Consumers["HUD / 사운드 / 게임 규칙 소비자"]
     Location["PlayerLocationState · 우주선 내부 여부"] --> Binding["PlayerWeatherEffectBinding · 로컬 플레이어 연결"]
@@ -35,8 +37,9 @@ flowchart TD
 
 1. `WeatherManager.Awake()`가 같은 GameObject의 `WeatherChangeEvent`를 가져온다. 지정된 셰이더 컴포넌트가 없거나 `MainCamera` 태그가 아니면 `Camera.main`에서 다시 찾는다.
 2. `OnEnable()`에서 임시 날씨 UI 갱신 함수를 정적 `OnWeatherChange`에 구독한다. `OnDisable()`에서 해제한다.
-3. `WeatherManager.Start()`가 예고 큐를 채우고 Inspector의 현재 날씨로 임시 UI와 카메라를 갱신한다. **시작 시 `OnWeatherChange`는 발생하지 않는다.**
-4. `CountTick.Awake()`가 같은 GameObject의 `WeatherManager`를 가져온다. `Start()`에서 반복 코루틴을 시작한다.
+3. Match 조립부의 `RandomConsumerScope`가 `IRandomConsumer.BindRandom()`을 호출하면 `WeatherManager`가 `"weather"` 전용 난수 스트림을 받고 예고 큐를 채운다. 난수 바인딩 전 `FillWeather()` 호출은 아무 작업도 하지 않는다.
+4. `WeatherManager.Start()`가 예고 큐 채우기를 시도하고 Inspector의 현재 날씨로 임시 UI와 카메라를 갱신한다. **시작 시 `OnWeatherChange`는 발생하지 않는다.**
+5. `CountTick.Awake()`가 같은 GameObject의 `WeatherManager`를 가져온다. `Start()`에서 반복 코루틴을 시작한다.
 
 현재 구현에서는 시작 날씨를 새로 뽑지 않는다. Inspector의 `currentWeather`를 사용하고, 앞으로 사용할 큐 항목을 추첨한다. 다른 컴포넌트의 `Start()`와 실행 순서는 별도로 보장되지 않으므로, 초기 구독자가 예고 큐까지 즉시 받을 수 있다고 가정하지 않는다.
 
@@ -44,11 +47,14 @@ flowchart TD
 
 `ChangeWeather()`는 다음 순서로 동작한다.
 
-1. 큐가 없거나 비어 있으면 목표 개수까지 채운다.
-2. 큐의 맨 앞 날씨를 꺼내 `currentWeather`로 설정한다.
-3. 큐를 다시 목표 개수까지 채운다.
-4. 카메라의 `ApplyWeather(currentWeather)`를 호출한다.
-5. `OnWeatherChange(currentWeather, weatherQueue)`로 현재 날씨와 **보충된 이후의 예고 큐**를 알린다.
+1. Match 난수 스트림을 사용할 수 없으면 변경하지 않고 반환한다.
+2. 현재 `IMatchDayNightCycle.Phase`를 읽는다. 같은 GameObject에 구현체가 없으면 `Day`로 처리한다.
+3. 이전에 큐를 채운 Phase와 현재 Phase가 다르면 기존 예고를 비운다.
+4. 해당 Phase의 가중치로 큐를 목표 개수까지 채운다.
+5. 큐의 맨 앞 날씨를 꺼내 `currentWeather`로 설정한다.
+6. 같은 Phase의 가중치로 큐를 다시 목표 개수까지 채운다.
+7. 카메라의 `ApplyWeather(currentWeather)`를 호출한다.
+8. `OnWeatherChange(currentWeather, weatherQueue)`로 현재 날씨와 **보충된 이후의 예고 큐**를 알린다.
 
 큐는 먼저 들어간 항목이 먼저 적용되는 FIFO 구조다. 같은 날씨가 연속으로 들어갈 수 있고, 현재와 같은 날씨가 나와도 변경 알림은 발생한다. 카메라는 같은 날씨를 재적용할 때 전환을 다시 시작하지 않는다.
 
@@ -64,14 +70,15 @@ flowchart TD
 | `Weather.HEATWAVE` | 폭염 (`3`) |
 | `Weather.WEATHER_COUNT` | 개수 표시용 값 (`4`). 실제 날씨로 사용하지 않음 |
 
-비공개 `GetWeather()`는 `UnityEngine.Random.Range`로 추첨한다. `SUNNY`는 `sunnyWeight`칸, 나머지 날씨는 각각 한 칸을 차지한다.
+비공개 `GetWeather(phase)`는 선택한 Phase의 `WeatherWeight[]`에서 전체 가중치를 더하고, Match의 `"weather"` 난수 스트림으로 `0` 이상 합계 미만의 정수를 한 번 뽑는다. 각 항목의 가중치를 순서대로 빼다가 음수가 되는 항목의 날씨를 반환한다. 가중치가 `0`인 항목은 선택되지 않는다.
 
 ```text
-맑음 확률 = sunnyWeight / (sunnyWeight + 3)
-비·뇌우·폭염 각각의 확률 = 1 / (sunnyWeight + 3)
+항목 확률 = 항목 weight / 같은 Phase의 전체 weight 합
 ```
 
-기본값 `sunnyWeight = 3`이면 맑음 50%, 나머지는 각각 약 16.67%다. 모든 날씨의 가중치를 별도로 지정하는 공개 API는 현재 없다. 설정을 바꿔도 이미 채운 큐 항목은 다시 추첨하지 않으며 이후 보충할 항목부터 반영된다.
+낮 기본값은 `SUNNY 5`, `RAIN 2`, `THUNDERSTORM 1`, `HEATWAVE 2`로 각각 50%, 20%, 10%, 20%다. 밤 기본값은 `SUNNY 6`, `RAIN 2`, `THUNDERSTORM 2`, `HEATWAVE 0`으로 각각 60%, 20%, 20%, 0%다. 전체 가중치 합이 0이면 오류를 남기고 `SUNNY`를 반환한다.
+
+낮/밤 Phase가 바뀌면 기존 큐 전체를 버리고 새 Phase의 가중치로 다시 채운다. 같은 Phase에서 Inspector 값을 바꿔도 이미 채운 항목은 유지되며 이후 보충 항목부터 반영된다. 현재 브랜치에는 `IMatchDayNightCycle`의 실제 구현체가 없으므로 별도 구현체를 같은 GameObject에 붙이지 않으면 항상 낮 가중치를 사용한다.
 
 ## 3. Scene 설정
 
@@ -87,7 +94,8 @@ flowchart TD
 | --- | --- | --- |
 | WeatherManager / `currentWeather` | `SUNNY` | 시작 날씨. 읽기는 `CurrentWeather` |
 | WeatherManager / `weatherQueueSize` | `5` | 예고 큐 목표 개수. 채울 때 최소 1 적용 |
-| WeatherManager / `sunnyWeight` | `3` | 맑음 가중치. Inspector 최소 1 |
+| WeatherManager / `_dayWeatherWeights` | 맑음 5·비 2·뇌우 1·폭염 2 | 낮에 사용하는 날씨별 가중치 목록 |
+| WeatherManager / `_nightWeatherWeights` | 맑음 6·비 2·뇌우 2·폭염 0 | 밤에 사용하는 날씨별 가중치 목록 |
 | WeatherManager / `tmpweatherImage`, 색상 필드 | 선택 사항 | 임시 UI Image 색상 표시. Image가 없으면 건너뜀 |
 | CountTick / `weatherChangeTime` | `5`초 | 자동 변경 간격. Inspector 최소 0.01 |
 | WeatherShaderApply / 날씨별 Material | 지정 필요 | 맑음·비·뇌우·폭염 화면 효과 |
@@ -96,7 +104,7 @@ flowchart TD
 
 이 표는 **필드의 코드 기본값**이다. 실제 Scene/Prefab에 저장된 값이 있으면 그 값이 사용된다. `CountTick`에는 `RequireComponent`나 누락 방어가 없으므로 같은 객체에 WeatherManager가 있는지 확인한다. 정적 알림에 발신자 정보가 없으므로 여러 WeatherManager를 동시에 활성화하는 구성을 피한다.
 
-현재 [Initial_Stage Scene](../../Assets/Scenes/Gameplay/Initial_Stage.unity)에는 같은 객체에 세 관리 컴포넌트가 배치돼 있고, 시작 맑음·큐 5개·맑음 가중치 3·변경 간격 5초로 저장돼 있다. MainCamera에는 두 화면 효과 컴포넌트가 연결돼 있다. 임시 UI Image와 맑음 Material은 미지정이며, 비·뇌우·폭염·전환 Material 및 1.5초 전환 시간이 지정돼 있다. Scene의 버튼은 `ChangeWeather()`를 호출한다. 이는 저장된 참조 확인 결과이며 실행 검증 결과는 아니다.
+현재 [Initial_Stage Scene](../../Assets/Scenes/Gameplay/Initial_Stage.unity)에는 같은 객체에 세 관리 컴포넌트가 배치돼 있고, Scene의 버튼은 `ChangeWeather()`를 호출한다. MainCamera에는 날씨 화면 효과 컴포넌트가 연결돼 있다. 새 가중치 배열은 코드 기본값을 가지며 Scene에서 별도 override한 값이 있으면 해당 값을 사용한다. 이는 저장된 참조 확인 결과이며 실행 검증 결과는 아니다.
 
 ## 4. 팀원용 API 사용법
 
@@ -178,7 +186,7 @@ weatherManager.ChangeWeather();
 
 이 호출은 **큐의 다음 날씨로 진행**한다. 원하는 날씨를 인자로 지정하는 함수는 아니다. `CallWeatherChange()`도 내부에서 같은 함수를 호출하며 Unity Button의 `OnClick` 같은 Inspector 연결에 사용할 수 있다.
 
-현재 공개 API에는 `SetWeather(RAIN)`, 예고 큐 교체, 런타임 가중치 setter, 타이머 Reset/Pause가 없다. 임의 추첨, 특정 날씨 강제 지정, 단순 화면 미리보기는 서로 다른 요구이므로 `ChangeWeather()`를 무조건 대신 사용하지 않는다. 자동 CountTick이 동작 중이면 수동 변경 뒤에도 원래 대기 종료 시 자동 변경이 이어진다.
+현재 공개 API에는 `SetWeather(RAIN)`, 예고 큐 교체, 런타임 가중치 setter, 타이머 Reset/Pause가 없다. 임의 추첨, 특정 날씨 강제 지정, 단순 화면 미리보기는 서로 다른 요구이므로 `ChangeWeather()`를 무조건 대신 사용하지 않는다. 자동 CountTick이 동작 중이면 수동 변경 뒤에도 원래 대기 종료 시 자동 변경이 이어진다. 난수 스트림이 바인딩되지 않았거나 현재 권한에서 사용할 수 없으면 `ChangeWeather()`는 아무 날씨도 소비하지 않는다.
 
 ### 4.4 카메라 효과만 바꾸거나 숨기기
 
@@ -213,19 +221,19 @@ weatherEffects.SetEffectsEnabled(true);  // 현재 보관 중인 날씨 효과 �
 
 ## 5. 현재 구현과 Core API의 관계
 
-현재 이 브랜치의 `WeatherManager`는 `IRandomConsumer`, `IMatchWeatherSource`, `ICheckpointParticipant`를 구현하지 않는다. `CountTick`도 공용 Match clock/scheduler나 낮밤 전환 이벤트를 사용하지 않는다. 따라서 **현재 두 컴포넌트를 Scene에 붙이는 것만으로 Host 전용 추첨, Client 복제, Match 정지, 저장/복원이 연결되지는 않는다.**
+현재 `WeatherManager`는 `IRandomConsumer`를 구현하고 Match 조립부가 제공하는 이름별 난수 스트림을 사용한다. 반면 `IMatchWeatherSource`와 `ICheckpointParticipant`는 구현하지 않는다. `CountTick`도 공용 Match clock/scheduler나 낮밤 전환 이벤트를 사용하지 않는다. 따라서 **난수 소비는 Match 범위에 연결되지만, 현재 날씨·예고의 Host 권위 발행, Client 복제, 저장/복원은 `WeatherManager`만으로 연결되지 않는다.**
 
 Core 환경·시간·난수 문서에는 별도 통합 단계의 설명이 포함돼 있다. 해당 계약이 존재하는 것과 현재 Map 구현에 연결된 것은 구분해야 한다.
 
 | 항목 | 이 문서 기준 구현 | Core 연동 시 확인할 경계 |
 | --- | --- | --- |
-| 날씨 추첨 | `UnityEngine.Random.Range` | 주입된 `IRandomSource`와 `IRandomConsumer` |
+| 날씨 추첨 | `IRandomConsumer`로 주입된 `"weather"` 스트림 | Host 권한 범위에서만 난수 사용 가능 |
 | 변경 시점 | `WaitForSeconds` 반복 | Match clock/scheduler 또는 낮밤 정상 진행 신호 |
 | 날씨 읽기 | `CurrentWeather`, 정적 Action | `IMatchWeatherSource`, 불변 환경 snapshot |
 | 권한/복제 | Manager 자체 검사 없음 | Host만 상태 결정, Client는 확정 snapshot 적용 |
 | 저장/복원 | 현재 Map 클래스에 구현 없음 | 현재 날씨·큐·타이머와 Core 난수 상태 각각 저장 |
 
-기존 가중치를 공용 `WeightedChoose`로 이관한다면 날씨 목록은 `[SUNNY, RAIN, THUNDERSTORM, HEATWAVE]`, 가중치는 `[sunnyWeight, 1d, 1d, 1d]`가 기존 비율에 대응한다. **현재 코드에 이미 적용된 호출은 아니다.** 난수 소비 방식이 달라질 수 있으므로 같은 seed에서 이전 추첨열까지 같다고 가정하지 않는다. 정확한 연결은 대상 브랜치의 Core 조립부와 함께 확인한다.
+외부 기능이 Core에서 확정된 현재 날씨만 필요하면 `IMatchEnvironmentSource.TryGetCurrentWeather(matchId, out weatherId)`를 사용한다. source·snapshot·날씨가 없거나 다른 Match의 snapshot이면 `false`와 빈 ID를 반환한다. 이 API는 `WeatherManager`나 셰이더를 직접 조회하지 않는다. 다만 현재 `WeatherManager`가 `IMatchWeatherSource`를 구현하지 않으므로 이 조회 API에 Map 날씨를 발행하는 writer 연결은 별도 범위다.
 
 참고 계약: [Random API](core-random-api.md), [Match 시간 API](match-time-api.md), [Match 환경 API](match-environment-api.md), [체크포인트 실행 API](checkpoint-execution-api.md).
 
@@ -233,10 +241,11 @@ Core 환경·시간·난수 문서에는 별도 통합 단계의 설명이 포�
 
 | 증상 | 확인할 내용 |
 | --- | --- |
-| 자동 변경이 안 됨 | CountTick과 WeatherManager가 같은 객체인지, 코루틴이 시작됐는지, GameObject 활성 상태와 `Time.timeScale` 확인 |
+| 자동 변경이 안 됨 | Match 난수 바인딩·사용 권한, CountTick과 WeatherManager가 같은 객체인지, 코루틴 시작 여부, GameObject 활성 상태와 `Time.timeScale` 확인 |
 | 시작 날씨 알림이 안 옴 | Start는 알림을 발생시키지 않음. 초기 현재 값은 `CurrentWeather`로 읽기 |
 | 예고가 달라지거나 사라짐 | 구독자가 원본 Queue를 수정하는지 확인 |
-| 같은 날씨가 계속 나옴 | 중복 허용 추첨임. `sunnyWeight`와 이미 채워진 큐 확인 |
+| 같은 날씨가 계속 나옴 | 중복 허용 추첨임. 현재 Phase의 `WeatherWeight[]`와 이미 채워진 큐 확인 |
+| 밤 가중치가 사용되지 않음 | 같은 GameObject의 `IMatchDayNightCycle` 구현체와 `Phase` 확인. 구현체가 없으면 `Day` fallback 사용 |
 | 내부 날씨는 바뀌는데 화면은 그대로 | 카메라 참조, MainCamera 태그, 날씨 Material, 효과 숨김 상태, 렌더 경로 확인 |
 | 우주선 안에서도 효과가 보임 | 로컬 actor 연결, actor의 PlayerLocationState, 실제 위치 변경 알림 확인 |
 | ChangeWeatherRain 등에 구독했는데 호출 안 됨 | WeatherChangeEvent의 필드는 현재 발행되지 않음. 실제 알림은 WeatherManager.OnWeatherChange |
@@ -245,4 +254,4 @@ Core 환경·시간·난수 문서에는 별도 통합 단계의 설명이 포�
 
 ## 7. 문서 확인 범위
 
-위 소스의 공개 멤버, 초기화 순서, 호출 지점과 데이터 소유권을 대조했다. 설명용 API 예제는 현재 선언에 맞춰 작성했다. 이번 문서 작성에서 Unity 컴파일·PlayMode·원격 Host/Client 실행·화면 효과 검증은 수행하지 않았다. 다른 브랜치에서 구조가 바뀌면 해당 소스를 확인해 기준 버전과 이 문서를 함께 갱신한다.
+위 소스의 공개 멤버, 초기화 순서, 호출 지점과 데이터 소유권을 대조했다. 설명용 API 예제는 현재 선언에 맞춰 작성했다. 이번 문서 갱신에서 Unity PlayMode·원격 Host/Client 실행·화면 효과 검증은 수행하지 않았다. 다른 브랜치에서 구조가 바뀌면 해당 소스를 확인해 기준 버전과 이 문서를 함께 갱신한다.
