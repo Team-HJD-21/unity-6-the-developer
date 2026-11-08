@@ -12,7 +12,7 @@ public sealed class SpawnPointSpatialPolicy
     public const string Description = "Grid cell service + current enemies + pending enemies → lower current pressure → point service → frontline distance → ordinal ID; actual spawns committed; complete sets only";
     private readonly SpawnDistributionHistory _history = new();
 
-    public const string AutomaticDescription = "Per-point context + weighted preset selection; shared request and allocation budgets; cell capacity and pending enemies; Core random; complete squads only";
+    public const string AutomaticDescription = "Target-cell budget allocation by population and player presence; per-point weighted preset selection; shared request and allocation budgets; cell capacity and pending enemies; Core random; complete squads only";
 
     public SpawnPointPlanningSession BeginPlanning(BattlefieldSpatialSnapshot snapshot,
         IReadOnlyList<SpatialSpawnCandidate> candidates, SquadSelectionSettings settings)

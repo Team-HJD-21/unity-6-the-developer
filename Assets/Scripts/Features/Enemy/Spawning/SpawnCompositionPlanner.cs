@@ -16,6 +16,7 @@ public sealed class SpawnCompositionPlanner
     private readonly EnemyCatalog _enemyCatalog;
     private readonly SpawnPointSpatialPolicy _spatialPolicy = new SpawnPointSpatialPolicy();
     public IReadOnlyList<SpawnDecisionSnapshot.Candidate> LastCandidates { get; private set; } = Array.Empty<SpawnDecisionSnapshot.Candidate>();
+    public IReadOnlyList<SpawnBudgetAllocation> LastBudgetAllocations { get; private set; } = Array.Empty<SpawnBudgetAllocation>();
 
     /// <summary>
     /// 분대 프리셋과 몬스터 비용을 조회할 카탈로그가 준비되었는지 반환한다.
@@ -76,6 +77,7 @@ public sealed class SpawnCompositionPlanner
     {
         instructions = Array.Empty<SpawnInstruction>();
         LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>();
+        LastBudgetAllocations = Array.Empty<SpawnBudgetAllocation>();
         if (!HasCatalog || request.SpawnBudget <= 0 || request.MaxCount <= 0 ||
             snapshot?.Grid == null || spawnPoints == null || targetPositions == null || targetAttackTypes == null ||
             totalEnemyCount < 0 ||
@@ -98,20 +100,33 @@ public sealed class SpawnCompositionPlanner
         if (presets.Count == 0) return false;
         presets.Sort((left, right) => StringComparer.Ordinal.Compare(left.SquadOrder, right.SquadOrder));
 
+        var session = _spatialPolicy.BeginPlanning(snapshot, spawnPoints, settings);
+        int MinimumCostForCapacity(int capacity)
+        {
+            int minimum = int.MaxValue;
+            foreach (EnemySquadPreset preset in presets)
+                if (preset.TotalWeight <= capacity)
+                    minimum = Math.Min(minimum, costs[preset]);
+            return minimum == int.MaxValue ? 0 : minimum;
+        }
+        IReadOnlyList<SpawnBudgetAllocation> allocations = request.BudgetAllocations
+            ?? SpawnBudgetPolicy.Allocate(request.SpawnBudget,
+                session.GetBudgetAreas(targetPositions, totalEnemyCount, playerPositions, MinimumCostForCapacity),
+                settings);
+        LastBudgetAllocations = allocations;
+
         var allocationsByPoint = new Dictionary<string, SpawnBudgetAllocation>(StringComparer.Ordinal);
         var allocationRemaining = new Dictionary<SpawnBudgetAllocation, int>();
-        if (request.BudgetAllocations != null)
-            foreach (SpawnBudgetAllocation allocation in request.BudgetAllocations)
-            {
-                allocationRemaining.Add(allocation, allocation.Budget);
-                foreach (string id in allocation.SpawnPointIds) allocationsByPoint.Add(id, allocation);
-            }
+        foreach (SpawnBudgetAllocation allocation in allocations)
+        {
+            allocationRemaining.Add(allocation, allocation.Budget);
+            foreach (string id in allocation.SpawnPointIds) allocationsByPoint.Add(id, allocation);
+        }
 
         int remainingBudget = request.SpawnBudget;
         int remainingCount = request.MaxCount;
         int BudgetFor(SpatialSpawnCandidate point)
         {
-            if (request.BudgetAllocations == null) return remainingBudget;
             return allocationsByPoint.TryGetValue(point.Id, out SpawnBudgetAllocation allocation)
                 ? Math.Min(remainingBudget, allocationRemaining[allocation]) : 0;
         }
@@ -128,7 +143,6 @@ public sealed class SpawnCompositionPlanner
             return minimum == int.MaxValue ? 0 : minimum;
         }
 
-        var session = _spatialPolicy.BeginPlanning(snapshot, spawnPoints, settings);
         var planned = new List<SpawnInstruction>();
         var affordable = new List<EnemySquadPreset>(presets.Count);
         while (remainingBudget > 0 && remainingCount > 0 &&
@@ -156,8 +170,7 @@ public sealed class SpawnCompositionPlanner
 
             remainingBudget -= costs[selected];
             remainingCount -= selected.TotalWeight;
-            if (request.BudgetAllocations != null)
-                allocationRemaining[allocationsByPoint[point.Id]] -= costs[selected];
+            allocationRemaining[allocationsByPoint[point.Id]] -= costs[selected];
             session.Reserve(point, selected.TotalWeight);
         }
         LastCandidates = session.GetObservations();
@@ -203,6 +216,7 @@ public sealed class SpawnCompositionPlanner
     {
         instructions = Array.Empty<SpawnInstruction>();
         var observations = new List<SpawnDecisionSnapshot.Candidate>();
+        LastBudgetAllocations = Array.Empty<SpawnBudgetAllocation>();
         LastCandidates = observations.AsReadOnly();
         if (spawnPoints != null)
             foreach (SpawnPoint point in spawnPoints.GetRegisteredSpawnPoints())

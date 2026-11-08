@@ -19,11 +19,17 @@ public sealed class SquadSelectionSettings
     [Min(1)] public int preferredMultiplier = 3;
     [Min(1)] public int maxEnemiesPerCell = 20;
 
+    [Header("예산 배분")]
+    [Min(1)] public int baseBudgetWeight = 1;
+    [Min(0)] public int sparseBudgetBonus = 1;
+    [Min(0)] public int playerBudgetBonus = 2;
+
     [Header("진단")]
     public bool logSelectionDecisions;
 
     public bool IsValid => nearbyCellRadius >= 0 && sparseEnemyPercentage >= 0f &&
-        sparseEnemyPercentage <= 100f && preferredMultiplier > 0 && maxEnemiesPerCell > 0;
+        sparseEnemyPercentage <= 100f && preferredMultiplier > 0 && maxEnemiesPerCell > 0 &&
+        baseBudgetWeight >= 1 && sparseBudgetBonus >= 0 && playerBudgetBonus >= 0;
 }
 
 /// <summary>상황에 맞는 편성의 비중을 높이고 Core 난수로 하나를 선택한다.</summary>

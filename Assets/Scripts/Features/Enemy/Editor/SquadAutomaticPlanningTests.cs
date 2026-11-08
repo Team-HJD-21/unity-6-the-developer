@@ -108,6 +108,47 @@ public sealed class SquadAutomaticPlanningTests
     }
 
     [Test]
+    public void AutomaticPlan_SameTargetCellSharesBudgetRegardlessOfSpawnPointCount()
+    {
+        var preset = Preset("three", 3);
+        var settings = new SquadSelectionSettings { nearbyCellRadius = 0, maxEnemiesPerCell = 50 };
+        int[] Run(bool addPoint)
+        {
+            var planner = Planner(preset);
+            var points = addPoint
+                ? new[] { Point("a", -7, 0), Point("a-copy", -6.5, 0), Point("b", 7, 0) }
+                : new[] { Point("a", -7, 0), Point("b", 7, 0) };
+            var targets = points.ToDictionary(p => p.Id, p => new BattlefieldPoint(p.Id == "b" ? 3 : -3, 0));
+            var attacks = points.ToDictionary(p => p.Id, p => TargetAttackType.None);
+            Assert.That(planner.TryPlan(new AutomaticSpawnRequest(30, 500), points, Snapshot(), targets,
+                attacks, 0, new[] { new BattlefieldPoint(-3, 0) }, settings, new FixedRandom(), out var plans), Is.True);
+            foreach (SpawnBudgetAllocation allocation in planner.LastBudgetAllocations)
+                Assert.That(plans.Where(p => allocation.SpawnPointIds.Contains(p.SpawnPointId)).Sum(Count),
+                    Is.LessThanOrEqualTo(allocation.Budget));
+            Assert.That(plans.Sum(Count), Is.LessThanOrEqualTo(30));
+            Assert.That(planner.LastBudgetAllocations.Count, Is.EqualTo(2));
+            return planner.LastBudgetAllocations.OrderBy(a => a.Id).Select(a => a.Budget).ToArray();
+        }
+        Assert.That(Run(true), Is.EqualTo(Run(false)));
+    }
+
+    [Test]
+    public void Session_BudgetAreasExcludeOccupiedAndFullCellsAndRespectCheapestFittingPreset()
+    {
+        var source = new BattlefieldDynamicSpatialInput(
+            new[] { new PlayerSpatialInput(new EntityId("blocking-player"), new BattlefieldPoint(-7, 0)) },
+            new[] { new EnemySpatialInput(new EntityId("existing"), new BattlefieldPoint(3, 0)) });
+        var points = new[] { Point("blocked", -7, 0), Point("full", 3, 0), Point("free", 7, 0) };
+        var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(null, source), points,
+            new SquadSelectionSettings { maxEnemiesPerCell = 1 });
+        var targets = points.ToDictionary(p => p.Id, p => new BattlefieldPoint(0, 0));
+        var areas = session.GetBudgetAreas(targets, 1, Array.Empty<BattlefieldPoint>(), capacity => capacity >= 1 ? 6 : 0);
+        Assert.That(areas.Count, Is.EqualTo(1));
+        Assert.That(areas[0].SpawnPointIds, Is.EqualTo(new[] { "free" }));
+        Assert.That(areas[0].MinimumCost, Is.EqualTo(6));
+    }
+
+    [Test]
     public void Session_TargetCountsExcludeSourceReservations()
     {
         var dynamicInput = new BattlefieldDynamicSpatialInput(Array.Empty<PlayerSpatialInput>(),

@@ -132,6 +132,49 @@ public sealed class SpawnPointPlanningSession
             ToCount(area.Enemies), totalEnemyCount, area.HasNearbyPlayer, attackType);
     }
 
+    /// <summary>생성 가능한 지점을 타깃 셀로 묶고 최소 편성 비용과 기존 생성 이력을 집계한다.</summary>
+    public IReadOnlyList<SpawnBudgetPolicy.Area> GetBudgetAreas(
+        IReadOnlyDictionary<string, BattlefieldPoint> targetPositions, int totalEnemyCount,
+        IReadOnlyList<BattlefieldPoint> playerPositions, Func<int, int> getMinimumCost)
+    {
+        var groups = new Dictionary<int, List<string>>();
+        var minimumCosts = new Dictionary<int, int>();
+        var previousCounts = new Dictionary<int, long>();
+        foreach (PointState point in _points)
+        {
+            if (!targetPositions.TryGetValue(point.Input.Id, out BattlefieldPoint target) ||
+                !_grid.TryGetCellAt(target, out BattlefieldGridCellSnapshot targetCell))
+                continue;
+
+            long capacity = (long)_cellLimit - point.Cell.EnemyCount - point.Cell.AssignedEnemies;
+            if (capacity <= 0) continue;
+            int minimumCost = getMinimumCost((int)capacity);
+            if (minimumCost <= 0) continue;
+
+            int key = targetCell.CellId;
+            if (!groups.TryGetValue(key, out List<string> ids))
+            {
+                groups.Add(key, ids = new List<string>());
+                minimumCosts.Add(key, minimumCost);
+                previousCounts.Add(key, 0);
+            }
+            ids.Add(point.Input.Id);
+            minimumCosts[key] = Math.Min(minimumCosts[key], minimumCost);
+            previousCounts[key] = checked(previousCounts[key] + point.Service);
+        }
+
+        var areas = new List<SpawnBudgetPolicy.Area>(groups.Count);
+        foreach (var group in groups)
+        {
+            SpatialSpawnCandidate first = _byId[group.Value[0]].Input;
+            SpawnAreaContext situation = GetAreaContext(first, targetPositions[first.Id],
+                totalEnemyCount, playerPositions);
+            areas.Add(new SpawnBudgetPolicy.Area($"target-cell-{group.Key}", group.Value,
+                situation, minimumCosts[group.Key], previousCounts[group.Key]));
+        }
+        return areas.AsReadOnly();
+    }
+
     /// <summary>같은 셀의 모든 지점과 주변 조사에 한 편성의 예정 수량을 반영한다.</summary>
     public void Reserve(SpatialSpawnCandidate point, int count)
     {

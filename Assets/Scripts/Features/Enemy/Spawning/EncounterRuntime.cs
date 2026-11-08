@@ -150,12 +150,27 @@ namespace TeamHJD.Game.Domain
                 targetAttackTypes.Add(point.SpawnPointId,
                     adapter != null ? adapter.AttackType : TargetAttackType.Unknown);
             }
-            if (!_planner.TryPlan(request, candidates, snapshot, targetPositions, targetAttackTypes, totalEnemyCount,
+            bool planned = _planner.TryPlan(request, candidates, snapshot, targetPositions, targetAttackTypes, totalEnemyCount,
                     playerPositions, settings, random, out var instructions,
                     settings.logSelectionDecisions
                         ? (pointId, area, presets, selected) => LogSquadSelection(snapshot, pointId,
                             targetNames[pointId], targetPositions[pointId], area, presets, selected, settings)
-                        : null))
+                        : null);
+            if (settings.logSelectionDecisions)
+            {
+                var budgets = new StringBuilder();
+                long allocated = 0;
+                foreach (SpawnBudgetAllocation allocation in _planner.LastBudgetAllocations)
+                {
+                    if (budgets.Length > 0) budgets.Append(" | ");
+                    budgets.Append(allocation.Id).Append(": ").Append(allocation.Budget)
+                        .Append(" (공유 지점 ").Append(allocation.SpawnPointIds.Count).Append(')');
+                    allocated += allocation.Budget;
+                }
+                Debug.Log($"[SpawnBudget] Match {snapshot.MatchId} r{snapshot.Revision}: " +
+                    $"전체 예산 {request.SpawnBudget}, 지역 예산 합계 {allocated}. {budgets}");
+            }
+            if (!planned)
             {
                 result = $"자동 SpawnPlan 생성 실패: budget {request.SpawnBudget}, maxCount {request.MaxCount}. " +
                          "카탈로그, 지점·지역 예산, 셀 수용량과 편성 비용을 확인하세요.";
