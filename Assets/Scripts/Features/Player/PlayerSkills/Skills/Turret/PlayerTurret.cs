@@ -1,10 +1,12 @@
+// Player가 배치한 소형 터렛의 실행·수명과 원본 상태를 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 /// <summary>
 /// 회수 가능한 플레이어 터렛의 적 탐색, 조준 회전 및 탄환 자동 발사를 담당합니다.
 /// </summary>
 [RequireComponent(typeof(PlayerTurretHealth))]
-public class PlayerTurret : MonoBehaviour
+public partial class PlayerTurret : MonoBehaviour
 {
     [Header("Bullet Settings")]
     [Tooltip("플레이어 터렛 전용 실탄 프리팹 (PlayerTurretProjectile 컴포넌트 포함)")]
@@ -71,13 +73,14 @@ public class PlayerTurret : MonoBehaviour
 
     private void Update()
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         FindClosestTarget();
 
         if (targetEnemy != null)
         {
             AimAtTarget();
 
-            fireTimer += Time.deltaTime;
+            fireTimer += FieldSimulationTime.DeltaTime(this);
             if (fireTimer >= fireRate)
             {
                 fireTimer = 0f;
@@ -108,9 +111,15 @@ public class PlayerTurret : MonoBehaviour
     /// <summary>
     /// 설치된 캐논과 같은 외형의 전용 실탄을 실제 총구에서 발사합니다.
     /// </summary>
-    private void Shoot() => PlayerTurretWeapon.Fire(bulletPrefab, targetEnemy, firePoint, turretHead, damagePerShot, bulletColor);
+    private void Shoot()
+    {
+        var bullet = PlayerTurretWeapon.Fire(bulletPrefab, targetEnemy, firePoint, turretHead, damagePerShot, bulletColor);
+        if (bullet != null && _owner != null) _owner.TrackProjectile(bullet);
+    }
 
-    private void OnDestroy() { if (_owner != null) _owner.ReleaseTurret(this, 0); }
+    internal void ReleaseDestroyedOwner()
+    { var owner = _owner; _owner = null; if (owner != null) owner.ReleaseTurret(this, 0); }
+    private void OnDestroy() => ReleaseDestroyedOwner();
 
     private void OnDrawGizmosSelected()
     {

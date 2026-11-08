@@ -1,3 +1,4 @@
+// 폭발 조건·범위 피해·애니메이션 종료 제거를 관리하고 공통 피해 계약을 사용합니다.
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets.Contracts;
@@ -7,7 +8,7 @@ using UnityEngine;
 /// 타깃이 발동 거리 안에 들어오면 범위 피해를 적용하고,
 /// 폭발 애니메이션 종료 후 자신의 제거를 요청한다.
 /// </summary>
-public sealed class EnemyExplosionAbility : EnemyAbility
+public sealed partial class EnemyExplosionAbility : EnemyAbility
 {
     [Header("참조")]
     [SerializeField] private EnemyTargeting enemyTargeting;
@@ -24,6 +25,7 @@ public sealed class EnemyExplosionAbility : EnemyAbility
 
     private bool _hasExploded;
     private bool _completionReported;
+    private bool _removalDeferred;
 
     public override bool IsExecuting => _hasExploded;
 
@@ -141,22 +143,9 @@ public sealed class EnemyExplosionAbility : EnemyAbility
         if (targetTransform == null)
             return;
 
-        if (target.TargetType == TargetType.Player)
-        {
-            PlayerInfo player =
-                targetTransform.GetComponentInParent<PlayerInfo>();
-
-            if (player != null)
-                player.TakeDamage(explosionDamage);
-
-            return;
-        }
-
-        IDamageableTarget damageable =
-            targetTransform.GetComponentInParent<IDamageableTarget>();
-
-        if (damageable != null)
-            damageable.ApplyDamage(explosionDamage);
+        // 피해 수신자의 원본 계약만 사용합니다. Player 전용 분기를 두지 않습니다.
+        IDamageableTarget damageable = targetTransform.GetComponentInParent<IDamageableTarget>();
+        damageable?.ApplyDamage(explosionDamage);
     }
 
     /// <summary>
@@ -164,11 +153,24 @@ public sealed class EnemyExplosionAbility : EnemyAbility
     /// </summary>
     public void OnExplosionAnimationFinished()
     {
-        if (!_hasExploded || _completionReported)
+        if (!_hasExploded || _completionReported || !isActiveAndEnabled || !HasAbilityAuthority)
             return;
 
+        if (!CanAdvanceAbility)
+        {
+            _removalDeferred = true;
+            return;
+        }
+
+        _removalDeferred = false;
         _completionReported = true;
         RemovalRequested?.Invoke();
+    }
+
+    private void Update()
+    {
+        if (_removalDeferred && CanAdvanceAbility)
+            OnExplosionAnimationFinished();
     }
 
     private Vector3 GetExplosionCenter()

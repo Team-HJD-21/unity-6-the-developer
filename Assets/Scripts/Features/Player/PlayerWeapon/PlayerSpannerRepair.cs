@@ -1,4 +1,7 @@
+// 렌치가 Host의 같은 Match 안에서 도달 가능한 실제 터렛에 수리를 적용합니다.
+// 수리 수치·타격 시점은 기존 Player 무기 원본을 사용하고 HUD 관리 명령과 구분합니다.
 using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 /// <summary>전방에서 수리 가능한 가장 가까운 일반 터렛 하나를 선택해 API로 회복합니다.</summary>
@@ -27,6 +30,8 @@ public sealed class PlayerSpannerRepair : MonoBehaviour
     {
         if (!isActiveAndEnabled || owner == null || _repairAmount <= 0 ||
             !PlayerAimUtility.IsValidDirection(direction)) return null;
+        var presence = owner.GetComponentInParent<PlayerMatchPresence>();
+        if (presence != null && (!presence.CanReport || !presence.CanSimulateField)) return null;
         FieldTurretBase nearest = null;
         float nearestDistance = float.PositiveInfinity;
         foreach (FieldTurretBase turret in FieldTurretInstanceRegistry.RegisteredInstances.Values)
@@ -34,6 +39,9 @@ public sealed class PlayerSpannerRepair : MonoBehaviour
             if (turret == null || !turret.IsInitialized || !turret.isActiveAndEnabled || turret.IsDestroyed ||
                 turret.IsLocked || turret.IsManualOperationBlocked || turret.CurrentHealth <= 0 ||
                 turret.CurrentHealth >= turret.MaxHealth) continue;
+            if (turret.gameObject.scene != owner.gameObject.scene || !turret.HasStateAuthority) continue;
+            var targetTime = turret.GetComponent<FieldSimulationActor>()?.TimeSource;
+            if (!ReferenceEquals(targetTime, presence?.TimeSource)) continue;
             Vector2 position = turret.transform.position;
             float distance = (position - (Vector2)owner.position).sqrMagnitude;
             if (distance >= nearestDistance || !PlayerSpannerTargeting.CanReach(owner, turret.transform,

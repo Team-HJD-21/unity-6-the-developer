@@ -18,7 +18,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService
+public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService
 {
     private const int TargetFrameRate = 120;
     private const float HostReadyTimeout = 10f;
@@ -37,6 +37,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private bool _appOwnedNetwork;
     private Coroutine _initialEncounterRoutine;
     private bool _initialEncounterPending;
+    private double _initialEncounterDue;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
     private int _retainedDecisionCount;
     private long _diagnosticSequence;
@@ -47,7 +48,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     public IReadOnlyList<GameDiagnosticEvent> RecentDiagnostics => _diagnostics.ToArray();
     public long DroppedDiagnosticCount { get; private set; }
     public MatchId BoundMatchId => _boundMatchId;
-    public double GameSeconds => _snapshotProvider == null ? 0d : Math.Max(0d, Time.timeAsDouble - _gameStartTime);
+    public double GameSeconds => _snapshotProvider == null ? 0d : _spawnClock?.ElapsedSeconds ?? Math.Max(0d, Time.timeAsDouble - _gameStartTime);
     public double RealSeconds => _snapshotProvider == null ? 0d : Math.Max(0d, Time.realtimeSinceStartupAsDouble - _realStartTime);
     public int ActiveEnemyCount => _encounterRuntime?.Executor != null ? _encounterRuntime.Executor.CountForMatch(_boundMatchId) : 0;
     public int UnattributedEnemyCount => _encounterRuntime?.Executor != null ? _encounterRuntime.Executor.SpawnedEnemyCount - ActiveEnemyCount : 0;
@@ -82,6 +83,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 
     private void OnDisable()
     {
+        CancelScheduledEncounters();
         if (_initialEncounterRoutine != null) StopCoroutine(_initialEncounterRoutine);
         _initialEncounterRoutine = null;
     }
@@ -104,6 +106,10 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (authorityPlayerId.IsEmpty) throw new ArgumentException("An authority participant is required.", nameof(authorityPlayerId));
         if (snapshotProvider == null) throw new ArgumentNullException(nameof(snapshotProvider));
         if (_snapshotProvider != null) throw new InvalidOperationException("Encounter is already bound to a Match.");
+        if (_environmentProvider != null && _environmentMatch != matchId)
+            throw new InvalidOperationException("Environment and Encounter must belong to the same Match.");
+        if (!_spawnContextMatch.IsEmpty && _spawnContextMatch != matchId)
+            throw new InvalidOperationException("Spawn sources and Encounter must belong to the same Match.");
 
         _boundMatchId = matchId;
         _authorityIssuer = authorityPlayerId;
@@ -111,7 +117,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         // 자동 Encounter는 Host 시스템 요청입니다. Client의 임의 적 생성 권한은 부여하지 않습니다.
         _requests = new EncounterRequestService(matchId, snapshotProvider,
             () => _networkManager != null && _networkManager.IsServer,
-            issuer => issuer == _authorityIssuer, this);
+            issuer => issuer == _authorityIssuer, this, environment: _environmentProvider,
+            resolveOrigin: origin => _spawnSources?.Resolve(origin));
         _gameStartTime = Time.timeAsDouble;
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
@@ -119,6 +126,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (!_appOwnedNetwork) BindTestHostToExecutorScene();
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
         _initialEncounterPending = true;
+        _initialEncounterDue = GameSeconds + Math.Max(0, initialEncounterDelay);
         if (_networkManager != null) StartInitialEncounterIfBound();
     }
 
@@ -127,6 +135,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     {
         if (_snapshotProvider == null || _boundMatchId != matchId) return;
         CancelPendingInitialEncounter();
+        CancelScheduledEncounters();
         _requests?.Dispose();
         _requests = null;
         try
@@ -144,6 +153,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
                 _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
             _encounterRuntime = null;
             _snapshotProvider = null;
+            UnbindEnvironment(matchId);
+            UnbindSpawnContext(matchId);
             _boundMatchId = default;
         }
     }
@@ -183,7 +194,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private IEnumerator RunInitialEncounter()
     {
         // Scene Awake와 첫 동적 Grid 샘플이 끝난 뒤 최신 Match snapshot을 읽는다.
-        yield return new WaitForSecondsRealtime(Mathf.Max(0f, initialEncounterDelay));
+        while (_initialEncounterPending && (!FieldCanAdvance || GameSeconds < _initialEncounterDue)) yield return null;
         if (!_initialEncounterPending) yield break;
 
         // 임시 Scene 시작 정책만 연결을 명시적으로 엽니다. 개별 Spawn 요청은 연결을 열지 않습니다.
@@ -303,6 +314,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     /// <summary>Debug Window가 현재 Match snapshot을 전달하고 Encounter 요청을 시작합니다.</summary>
     public bool CanRequestEncounter(out string reason)
     {
+        if (!FieldCanAdvance) { reason = "필드 정지 중에는 새 Encounter를 실행하지 않습니다."; return false; }
         if (_networkManager == null)
         {
             reason = "NetworkManager가 없습니다.";
@@ -349,11 +361,13 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (snapshot == null || _requests == null || snapshot.MatchId != _boundMatchId)
         {
             result = "현재 바인딩된 Match가 아닙니다.";
+            ReportRejectedRequest(source, squadOrder, result, Guid.NewGuid(), snapshot: snapshot);
             return false;
         }
         if (string.IsNullOrWhiteSpace(squadOrder) || squadOrder.Trim().Length > 128 || maxEnemyCount < 1 || !Enum.IsDefined(typeof(EncounterRequestSource), source))
         {
             result = "Preset·생성 예산·출처를 확인하세요.";
+            ReportRejectedRequest(source, squadOrder, result, Guid.NewGuid(), snapshot: snapshot);
             return false;
         }
         var request = new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
@@ -366,19 +380,54 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     public EncounterRequestResult Submit(EncounterRequest request, PlayerId verifiedIssuer)
     {
         if (request == null) throw new ArgumentNullException(nameof(request));
-        return _requests != null ? _requests.Submit(request, verifiedIssuer) :
+        var response = _requests != null ? _requests.Submit(request, verifiedIssuer) :
             new EncounterRequestResult(request.Context.RequestId, 0, 0, EncounterRequestStatus.MatchUnavailable);
+        if (!response.IsReplay && response.Status != EncounterRequestStatus.InProgress &&
+            response.Status != EncounterRequestStatus.Spawned && response.Status != EncounterRequestStatus.PartialSpawn &&
+            (response.ExecutionSequence == 0 || response.ExecutionSequence > _requestSequence || response.Status == EncounterRequestStatus.ExecutionFailed))
+        {
+            _requestSequence = Math.Max(_requestSequence, response.ExecutionSequence);
+            ReportRejectedRequest(request.Source, request.PresetId.Value, response.Status + ": " + response.Reason,
+                request.Context.RequestId, request.CauseEventId, request.Origin, response.ExecutionSequence, response.SnapshotRevision,
+                countsUnknown: !response.HasKnownExecutionCounts);
+        }
+        return response;
+    }
+    private void ReportRejectedRequest(EncounterRequestSource source, string preset, string reason, Guid request,
+        Guid cause = default, EncounterSpawnOrigin origin = null, long executionSequence = 0, long revision = 0,
+        BattlefieldSpatialSnapshot snapshot = null, bool countsUnknown = false)
+    {
+        // 실행 전 거부에는 가짜 실행 번호를 배정하지 않습니다. 닫힌 Match 기록도 다시 열지 않습니다.
+        if (_requests == null || _snapshotProvider == null || _boundMatchId.IsEmpty) return;
+        if (snapshot != null && snapshot.MatchId == _boundMatchId) revision = snapshot.Revision;
+        if (!Enum.IsDefined(typeof(EncounterRequestSource), source)) source = EncounterRequestSource.Unspecified;
+        var context = new EncounterExecutionContext(_boundMatchId, executionSequence, revision, source, preset ?? "",
+            requestGuid: request, causeEventId: cause, origin: origin);
+        Emit(GameDiagnosticKind.RequestFailed, context, message: reason, countsUnknown: countsUnknown);
     }
 
     EncounterRequestResult IEncounterExecutor.Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot, long executionSequence)
+        => Execute(request, snapshot, null, executionSequence);
+
+    public EncounterRequestResult Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot,
+        MatchEnvironmentSnapshot environment, long executionSequence)
+        => Execute(request, snapshot, environment, null, executionSequence);
+
+    public EncounterRequestResult Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot,
+        MatchEnvironmentSnapshot environment, EncounterSpawnPlacement placement, long executionSequence)
     {
+        if (!FieldCanAdvance) return new EncounterRequestResult(request.Context.RequestId, executionSequence,
+            snapshot.Revision, EncounterRequestStatus.NotReady, reason: "FieldPaused");
         _requestSequence = executionSequence;
+        var cancellation = request.Origin.Kind == SpawnOriginKind.DynamicSource
+            ? _spawnSources.GetSourceCancellation(request.Origin.Source) : _spawnGameplay;
         var context = new EncounterExecutionContext(_boundMatchId, executionSequence, snapshot.Revision,
-            request.Source, request.PresetId.Value);
+            request.Source, request.PresetId.Value, environment, request.Context.RequestId, request.CauseEventId,
+            placement, _spawnSeed, cancellation, request.Origin);
         Emit(GameDiagnosticKind.RequestStarted, context, message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, budget={request.MaximumEnemyCount}");
         EnsureEncounterRuntime();
         bool succeeded = _encounterRuntime.TrySpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
-            context, out string result, out EncounterExecutionSummary summary);
+            context, out string result, out EncounterExecutionSummary summary, environmentProfile);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
             spawnDecision: summary.SpawnDecision);
@@ -386,9 +435,11 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             CancelPendingInitialEncounter();
         EncounterRequestStatus status = summary.PlannedCount > 0 && summary.SpawnedCount == summary.PlannedCount
             ? EncounterRequestStatus.Spawned : summary.SpawnedCount > 0 ? EncounterRequestStatus.PartialSpawn :
+            summary.ResultCode == "UnsupportedDelivery" ? EncounterRequestStatus.UnsupportedDelivery :
+            summary.ResultCode == "OriginUnavailable" ? EncounterRequestStatus.OriginUnavailable :
             summary.ResultCode == "PlanRejected" ? EncounterRequestStatus.PlanRejected : EncounterRequestStatus.SpawnFailed;
         return new EncounterRequestResult(request.Context.RequestId, executionSequence, snapshot.Revision,
-            status, summary.PlannedCount, summary.SpawnedCount, result);
+            status, summary.PlannedCount, summary.SpawnedCount, result, environmentRevision: environment?.Revision ?? 0);
     }
 
     private void EnsureEncounterRuntime()
@@ -396,7 +447,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         if (_encounterRuntime != null && _encounterRuntime.HasExecutor) return;
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = new EncounterRuntime();
+        _encounterRuntime = _sceneExecutor != null ? new EncounterRuntime(_sceneExecutor) : new EncounterRuntime();
         if (_encounterRuntime.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved += OnEnemyLifecycleObserved;
     }
@@ -409,12 +460,13 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     }
 
     private void Emit(GameDiagnosticKind kind, EncounterExecutionContext context, int planned = 0, int actual = 0,
-        string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null)
+        string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null,
+        bool countsUnknown = false)
     {
         var observation = new GameDiagnosticEvent(++_diagnosticSequence, _boundMatchId,
             context?.Revision ?? 0, context?.RequestId ?? 0, context?.Source ?? EncounterRequestSource.Unspecified,
             kind, GameSeconds, RealSeconds, enemyType, point, entity, planned, actual, message, context?.SquadOrder ?? "",spawnDecision,
-            hasDeathEvents: true);
+            hasDeathEvents: true, environment: context?.Environment, executionContext: context, isExecutionCountUnknown: countsUnknown);
         if (_diagnostics.Count >= 4096)
         {
             if(_diagnostics.Dequeue().SpawnDecision!=null)_retainedDecisionCount--;

@@ -1,19 +1,22 @@
 # The Developer 문서 안내
 
-최근 기획: [11월 6일 기획 보강 근거·후속](planning/2026-11-06-planning-review.md). 현행 우주선 출입·점유·안전장치 정책은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 아래 이전 회의 안내의 정지 정책은 당시 기록이며 현행을 대체하지 않는다.
+최근 정기회의: [11월 7일 결정 근거](archive/2026-11-07/regular-meeting.md). 미션 HUD Alert와 Enemy 규칙은 [Product Plan](product/PROJECT_PLAN.md), PR 리뷰 흐름은 [팀 협업 규칙](team/TEAM_WORKFLOW.md#review와-approval), 담당별 후속은 [현재 실행 계획](planning/current-execution-plan.md)을 따른다.
 
-Core 기반 main 통합 검토: [11월 5일 범위·현행 Feature 호환·검증 기록](planning/2026-11-05-foundation-main-integration.md) · [실제 호출·수명·API 지도](architecture/core-lifecycle-and-api-guide.md) · [Core 코드 안내](../Assets/Scripts/Core/README.md). 기존 회의록과 파트별 문서는 유지하며 이 통합으로 미연결 Feature의 완료를 선언하지 않는다.
+**Core main 전달:** [복구 PR 검토 문서](team/reviews/602-core-main-recovery.md)에서 #624~#631의 기존 리뷰, 최신 main과의 통합 차이, 이번 검증과 남은 작업을 확인합니다. 기존 수동 인수 자료는 [확인7단계·구현 전체·팀원 전달](planning/2026-11-05-core-local-review.md)에 보존합니다.
 
-**Core 연동 전 필독:** [Random API 사용법](architecture/core-random-api.md)에서 도입 이유, Host/로컬 연출 구분, 주입·가중치 선택·저장 예제와 기존 6개 파일의 교체 위치를 확인한다. [우주선 출입 보고 API](architecture/core-presence-report-api.md)는 실제 Host 이동 후 Core에 결과를 보고하는 계약이다. Feature 호출부는 이 PR에서 교체하지 않았다.
+- 실제 수명/코드 읽기: [Core 지도](architecture/core-lifecycle-and-api-guide.md) · [Feature 통합](architecture/core-feature-integration-guide.md) · [구조 정리 판단](architecture/core-structure-review-2026-11-05.md).
+- 최신 플레이: [우주선 출격/왕복](architecture/spaceship-travel-api.md) · [낮밤5분](architecture/day-night-api.md) · [Day/Night·타이머·Reset](architecture/weather-debug-hud.md). 왕복은0.3초씩 총약0.9초이며 진행 바를 표시하지 않습니다.
+- 공용 API: [Random](architecture/core-random-api.md) · [가중 선택·비 50% 예제](architecture/random-weighted-selection.md) · [시간/예약](architecture/match-time-api.md) · [저장 실행](architecture/checkpoint-execution-api.md) · [네트워크](architecture/network-match-api.md) · [Steam](architecture/steam-api.md).
+- 구현/증거: [Core 결과](planning/2026-11-05-core-completion-results.md) · [낮밤/Steam 결과](planning/2026-11-05-day-night-steam-results.md) · [요구/Issue 대응](planning/2026-11-05-core-requirements-and-issue-map.md). 과거 시점의 한계는 최신 최종 안내와 구분해서 읽습니다.
 
-Random 등록·해제는 공용 정적 함수 `RandomBinding.Bind` 한 줄로 연결한다. [바로 사용하기](architecture/core-random-api.md#바로-사용하기--연결-한-줄-기존-함수-그대로)에서 완성된 컴포넌트 예제와 순수 함수 사용법을 확인한다. 별도 부모 클래스나 파트별 해제 클래스를 만들지 않는다.
+#623은 main에 반영됐지만 #624~#631은 중간 작업 브랜치에 병합됐습니다. 이를 최신 main 위의 복구 PR 하나로 전달하며, main 병합 여부는 위 검토 문서의 실제 PR 상태로 확인합니다. 실제 Weather writer가 없어 운영 전체 Save는 차단합니다. Host 포털 왕복과 Steam SDK/로비는 구현됐고, Client 출입 요청·Steam 게임 transport·Backend·Player 원격 본체는 각각 다른 후속입니다. 팀원 전달 문서는 `Docs/Local/Review/CoreCompletion-2026-11-05/by-owner`의 공유 제외 파일을 직접 보냅니다.
 
 최근 기획·후속 검토: [10월 30일 기획 보강](planning/2026-10-30-planning-review.md) · [10월 31일 정기회의](planning/2026-10-31-regular-meeting.md) — 전체 전사·수기 대조로 자동 활성화·성장 방향을 보강하고 우주선 필드 정지, 점령/스폰·그룹화, 재방문·실패 보상과 후속 작업을 구분했다. 세부 설계·실제 구현·재미 검증은 별도다.
 
 최근 진행 공유: [11월 3일 주간 보고](planning/2026-11-03-weekly-progress.md) — 지원형 소환/회복 두 종 분리, 암살자 비탐지 우선 대상, 수리 검증용 터렛 배치와 파트별 후속. 분열 방벽은 실험 후보이며 구현·실행 검증 완료나 새 Sprint 확정이 아니다.
 
-수정일: 2026-11-03
-상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
+수정일: 2026-11-07
+상태: 현행 문서 안내 · 제품·실행·검증은 각 기준 문서에서 확인
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 

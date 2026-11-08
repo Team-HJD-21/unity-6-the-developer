@@ -1,5 +1,7 @@
 # Match 환경 API
 
+11월5일 낮밤 후속: [낮300초/밤300초와 Weather 연결](day-night-api.md)을 구현했다. 실제 시간대 source·world/time-of-day 저장이 추가됐으며, 운영 Weather writer는 김진태 담당으로 유지한다. 아래 초기 단계에서 source가 없었다는 설명은 당시 기록이다.
+
 > **현재 상태(2026-11-02): 타 파트 미승인 변경198경로는 제외했습니다. Core의 미연결 호출은 `CORE-FEATURE-HOLD` 표식과 원본을 남겨 임시 보류했고 Unity 컴파일은 통과했습니다. 해당 Feature 연결·통합/PlayMode는 완료 상태가 아닙니다.** [제외 범위·연결 공백](../planning/2026-11-02-feature-integration-hold.md)을 먼저 확인하세요. 아래 Feature 구현·검사 기록은 제외 전 실험 소스 기준입니다.
 
 현재 구현: B7 (2026-10-26). 날씨와 시간대는 독립 정보다. 환경 변경은 상태 변경이며 Spawn 명령이 아니다.

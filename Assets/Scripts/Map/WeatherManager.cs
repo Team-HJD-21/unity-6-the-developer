@@ -1,3 +1,4 @@
+// 실제 날씨 선택·예고·표현을 소유합니다. Core 부분 파일은 예약과 환경 전달만 연결합니다.
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Application;
@@ -13,7 +14,7 @@ using UnityEngine.UI;
 namespace Map
 {
     [RequireComponent(typeof(WeatherChangeEvent))]
-    public class WeatherManager : MonoBehaviour, IRandomConsumer
+    public partial class WeatherManager : MonoBehaviour, IRandomConsumer
     {
         [Serializable]
         private struct WeatherWeight
@@ -99,6 +100,7 @@ namespace Map
         }
         void Start()
         {
+            if (!MayChangeCoreWeather) return;
             FillWeather();
             WeatherCanvasColorChange(currentWeather, weatherQueue);
             ApplyWeatherShader();
@@ -129,7 +131,7 @@ namespace Map
 
         public void ChangeWeather()
         {
-            if (_random == null || !_random.IsAvailable)
+            if (!MayChangeCoreWeather || _random == null || !_random.IsAvailable)
                 return;
 
             // 낮밤이 바뀌었다면 이전 시간대의 예고를 버리고 다시 추첨한다.
@@ -139,6 +141,7 @@ namespace Map
             Debug.Log($"현재 날씨: {currentWeather}, 뽑힌 후 큐: [{string.Join(", ", weatherQueue)}]");
             FillWeather();
             ApplyWeatherShader();
+            PublishCoreWeather();
             OnWeatherChange?.Invoke(currentWeather, weatherQueue);
         }
         
