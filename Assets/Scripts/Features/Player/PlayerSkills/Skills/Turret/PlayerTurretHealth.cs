@@ -1,9 +1,11 @@
+// Player 소형 터렛의 실제 체력과 제거 상태를 소유합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 /// <summary>플레이어 터렛의 체력·적 충돌과 피격 틴트를 담당합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BoxCollider2D))]
-public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
+public sealed partial class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget, TeamHJD.Game.Contracts.IEntityIdentity
 {
     [SerializeField, Min(1)] private float _maxHealth = 100;
     [SerializeField] private BoxCollider2D _blocker;
@@ -24,6 +26,7 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
     public float Radius => _blocker != null ? ((Vector2)_blocker.bounds.extents).magnitude : 0f;
     private void Awake()
     {
+        TeamHJD.Game.Presentation.Scene.CheckpointActorFactory.EnsureIdentity(gameObject);
         _health = MaxHealth;
         _renderers = GetComponentsInChildren<SpriteRenderer>(true);
         _originalColors = new Color[_renderers.Length];
@@ -42,8 +45,9 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
     private void OnEnable() { if (_initialized) PlayerFieldDeviceRegistry.Register(this); }
     private void Update()
     {
-        _scanner.Tick(transform.position, Radius + 2, Time.deltaTime);
-        _hitRemaining = Mathf.Max(0, _hitRemaining - Time.deltaTime);
+        if (!FieldSimulationTime.CanAdvance(this)) return;
+        _scanner.Tick(transform.position, Radius + 2, FieldSimulationTime.DeltaTime(this));
+        _hitRemaining = Mathf.Max(0, _hitRemaining - FieldSimulationTime.DeltaTime(this));
         for (int i = 0; i < _renderers.Length; i++)
             if (_renderers[i] != null) _renderers[i].color = _hitRemaining > 0 ? new Color(1, .6f, .6f) : _originalColors[i];
     }
@@ -53,6 +57,7 @@ public sealed class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarget
         _health = Mathf.Max(0, _health - damage);
         _hitRemaining = .12f;
         if (_health > 0) return;
+        GetComponent<PlayerTurret>()?.ReleaseDestroyedOwner();
         if (_blocker != null) _blocker.enabled = false;
         gameObject.SetActive(false);
         PlayerFieldDevice.Dispose(gameObject);

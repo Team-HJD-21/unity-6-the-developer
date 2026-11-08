@@ -119,6 +119,8 @@ Blocker: 필요한 결정·사람·선행 작업
 
 ### Pull Request
 
+- 새 PR의 병합 대상은 `main`으로 명시한다. 분할 PR도 중간 작업 브랜치로 연결하지 않는다. 선행 PR이 main에 반영되면 최신 main 기준으로 다음 PR을 준비한다. 예외는 PL이 명시적으로 요청한 경우에만 적용한다.
+- PR을 만든 직후 실제 base/head를 다시 확인한다. 다른 브랜치에 병합된 것을 main 반영 완료로 보고하지 않는다.
 - 하나의 PR은 하나의 목적만 갖는다.
 - Summary는 짧은 영어, Description은 주로 한국어로 작성한다.
 - 제목은 `type(area): short English summary` 형식을 사용한다. `type`은 변경 목적에 맞게 `feat`, `fix`, `refactor`, `docs`, `test`, `ci`, `chore`, `perf` 등을 선택한다.

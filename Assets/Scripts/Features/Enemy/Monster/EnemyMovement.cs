@@ -1,6 +1,7 @@
+// 적의 실제 경로와 이동·정지를 처리하며 체크포인트에서 waypoint 진행을 복구합니다.
 using UnityEngine;
 
-public class EnemyMovement : MonoBehaviour
+public partial class EnemyMovement : MonoBehaviour
 {
     [SerializeField] private float arrivalDistance = 0.4f;
     private Vector3[] _path;

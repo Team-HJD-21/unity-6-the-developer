@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+// 방벽의 첫 점·배치 중 의도와 실제 생성된 방벽을 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class PlayerBarrierSkill : PlayerPlacementSkillBase
+public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
 {
     [Header("Barrier")]
     [SerializeField] private PlayerFieldDevice _prefab;
@@ -44,9 +46,10 @@ public sealed class PlayerBarrierSkill : PlayerPlacementSkillBase
         _width = Mathf.Max(.1f, _width);
         _charges = new PlayerSkillCharges(_maxCharges, RechargeSeconds);
     }
-    private void Update() => Tick(Time.deltaTime);
+    private void Update() => Tick(FieldSimulationTime.DeltaTime(this));
     public void Tick(float elapsed)
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (elapsed <= 0 || !float.IsFinite(elapsed)) return;
         _charges?.Tick(elapsed);
     }

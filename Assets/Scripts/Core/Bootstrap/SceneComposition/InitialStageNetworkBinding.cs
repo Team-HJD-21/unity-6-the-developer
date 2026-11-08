@@ -3,6 +3,8 @@
 // 싱글 진입만 같은 명시 API를 순서대로 호출합니다. Feature 객체 복제는 각 담당의 책임입니다.
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
@@ -36,17 +38,25 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 throw new InvalidOperationException("Register the actual actor in its prepared Match.");
             int slot = -1;
             for (int index = 0; index < config.Players.Count; index++)
-                if (config.Players[index].PlayerId == playerId) { slot = index; break; }
-            if (slot < 0) throw new InvalidOperationException("The actor is not a Match participant.");
+                if (config.Players[index].PlayerId == playerId)
+                {
+                    slot = index;
+                    break;
+                }
+            if (slot < 0)
+                throw new InvalidOperationException("The actor is not a Match participant.");
             var identity = actor.GetComponent<PlayerActorIdentity>();
             if (identity != null && !identity.PlayerId.IsEmpty && identity.PlayerId != playerId)
                 throw new InvalidOperationException("The actor belongs to another logical Player.");
             var commands = _turretCommands.RegisterAuthorityActor(playerId, actor);
             try
             {
-                if (identity == null) identity = actor.AddComponent<PlayerActorIdentity>();
-                if (identity.PlayerId.IsEmpty) identity.Bind(playerId, slot);
-                else identity.BindCheckpointSlot(slot);
+                if (identity == null)
+                    identity = actor.AddComponent<PlayerActorIdentity>();
+                if (identity.PlayerId.IsEmpty)
+                    identity.Bind(playerId, slot);
+                else
+                    identity.BindCheckpointSlot(slot);
                 return new AuthorityActorLease(commands, _scene.RegisterAuthorityPresence(playerId, actor));
             }
             catch { commands.Dispose(); throw; }
@@ -54,11 +64,22 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private sealed class AuthorityActorLease : IDisposable
         {
             private IDisposable _commands, _presence;
-            public AuthorityActorLease(IDisposable commands, IDisposable presence) { _commands = commands; _presence = presence; }
+            public AuthorityActorLease(IDisposable commands, IDisposable presence)
+            {
+                _commands = commands;
+                _presence = presence;
+            }
             public void Dispose()
             {
-                var commands = _commands; var presence = _presence; _commands = null; _presence = null;
-                try { presence?.Dispose(); } finally { commands?.Dispose(); }
+                var commands = _commands;
+                var presence = _presence;
+                _commands = null;
+                _presence = null;
+                try
+                {
+                    presence?.Dispose();
+                }
+                finally { commands?.Dispose(); }
             }
         }
         private AppRoot _app;
@@ -79,10 +100,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         public void Initialize(AppRoot app, InitialStageCompositionRoot scene)
         {
-            if (_app != null) throw new InvalidOperationException("Network Scene is already initialized.");
-            if (app == null || scene == null) throw new ArgumentNullException(app == null ? nameof(app) : nameof(scene));
-            if (_manager == null) throw new InvalidOperationException("Assign the Scene NetworkManager.");
-            _app = app; _scene = scene;
+            if (_app != null)
+                throw new InvalidOperationException("Network Scene is already initialized.");
+            if (app == null || scene == null)
+                throw new ArgumentNullException(app == null ? nameof(app) : nameof(scene));
+            if (_manager == null)
+                throw new InvalidOperationException("Assign the Scene NetworkManager.");
+            _app = app;
+            _scene = scene;
             bool createdConnection = app.NetworkSession == null;
             if (app.NetworkSession == null)
             {
@@ -98,20 +123,24 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     // NGO Scene 동기화로 다시 제작된 이 Scene의 후보만 제거합니다.
                     // 임의의 전역 NetworkManager를 찾아 소유권을 빼앗지 않습니다.
                     NetworkManager duplicate = _manager;
-                    if (duplicate.IsListening) throw new InvalidOperationException("A second live Scene connection exists.");
+                    if (duplicate.IsListening)
+                        throw new InvalidOperationException("A second live Scene connection exists.");
                     duplicate.gameObject.SetActive(false);
                     Destroy(duplicate.gameObject);
                     _manager = _session.Manager;
                 }
             }
-            if (_manager == null) throw new InvalidOperationException("The App NetworkManager was destroyed.");
+            if (_manager == null)
+                throw new InvalidOperationException("The App NetworkManager was destroyed.");
             if (_matchAnchorPrefab == null || _matchAnchorPrefab.GetComponent<NetworkMatchAnchor>() == null ||
                 _matchAnchorPrefab.GetComponent<NetworkObject>() == null)
                 throw new InvalidOperationException("Assign the registered Match anchor prefab.");
-            if (!_manager.NetworkConfig.Prefabs.Contains(_matchAnchorPrefab)) _manager.AddNetworkPrefab(_matchAnchorPrefab);
+            if (!_manager.NetworkConfig.Prefabs.Contains(_matchAnchorPrefab))
+                _manager.AddNetworkPrefab(_matchAnchorPrefab);
             MonoBehaviour[] consumers = _manager.GetComponents<MonoBehaviour>()
                 .Where(behaviour => behaviour is IAppOwnedEncounterMatchConsumer && behaviour.isActiveAndEnabled).ToArray();
-            if (consumers.Length != 1) throw new InvalidOperationException("The App manager requires one explicit Encounter consumer.");
+            if (consumers.Length != 1)
+                throw new InvalidOperationException("The App manager requires one explicit Encounter consumer.");
             ((IAppOwnedEncounterMatchConsumer)consumers[0]).UseAppNetworkOwnership();
             _scene.SetNetworkEncounterConsumer(consumers[0]);
             _session.StateChanged += OnConnectionState;
@@ -136,7 +165,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         /// <summary>연결 전 진입 흐름을 선택합니다. 연결 중인 세션의 역할을 바꾸지 않습니다.</summary>
         public void ConfigureEntry(InitialStageNetworkEntry entry)
         {
-            if (!Enum.IsDefined(typeof(InitialStageNetworkEntry), entry)) throw new ArgumentOutOfRangeException(nameof(entry));
+            if (!Enum.IsDefined(typeof(InitialStageNetworkEntry), entry))
+                throw new ArgumentOutOfRangeException(nameof(entry));
             if (_session != null && _session.State != NetworkConnectionState.Disconnected)
                 throw new InvalidOperationException("Choose the entry flow before opening the connection.");
             _entry = entry;
@@ -155,10 +185,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             ThrowIfUnavailable();
             EnsureTransports();
-            if (!_session.IsServer || _matches == null || _matches.Phase == NetworkMatchPhase.Running) return false;
+            if (!_session.IsServer || _matches == null || _matches.Phase == NetworkMatchPhase.Running)
+                return false;
             ulong[] connections = _session.ConnectedPeerIds.OrderBy(id => id).ToArray();
-            if (connections.Length < 1 || connections.Length > 2 || !connections.Contains(_session.LocalConnectionId)) return false;
-            if (!connections.SequenceEqual(_manager.ConnectedClientsIds.OrderBy(id => id))) return false;
+            if (connections.Length < 1 || connections.Length > 2 || !connections.Contains(_session.LocalConnectionId))
+                return false;
+            if (!connections.SequenceEqual(_manager.ConnectedClientsIds.OrderBy(id => id)))
+                return false;
             var participants = connections.Select(id => new MatchParticipantBinding(id,
                 new PlayerId(id == _session.LocalConnectionId ? "local-player" : "peer-" + id),
                 id == _session.LocalConnectionId)).ToArray();
@@ -166,72 +199,142 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 participants.Length == 1 ? MatchMode.Story : MatchMode.Cooperative, new StageId("initial-stage"),
                 new DefinitionId("poc-default-difficulty"), "poc", 1,
                 participants.Select(binding => new PlayerLoadoutSnapshot(binding.PlayerId, null)));
+            config = _app.ConfigureCheckpointArrival(gameObject.scene.path, config);
             RegionSceneBinding region = _scene.RegionBinding;
-            if (region == null) throw new InvalidOperationException("The network Scene requires region authoring.");
+            if (region == null)
+                throw new InvalidOperationException("The network Scene requires region authoring.");
             RegionGridDefinition definition = region.CaptureInitialDefinition();
             _scene.ValidateNetworkPreparation(new NetworkMatchDescriptor(Guid.NewGuid(), 1, config,
                 region.InitialMode, definition, participants));
             return _matches.TryPrepare(config, definition, region.InitialMode, participants);
         }
 
-        public bool TryStartMatch() { ThrowIfUnavailable(); return _matches != null && _matches.TryStart(); }
-        public bool TryEndMatch() { ThrowIfUnavailable(); return _matches != null && _matches.TryEnd(); }
-        public void ShutdownConnection() { ThrowIfUnavailable(); _session.Shutdown(); }
+        /// <summary>Host의 명시 출격 흐름이 NGO 전체 Scene 로드 완료 후 호출합니다. 전원 준비가 끝나야 시작합니다.</summary>
+        internal async Task StartAfterSceneTravelAsync(CancellationToken cancellation)
+        {
+            ThrowIfUnavailable();
+            if (!_session.IsServer)
+                return;
+            _entryPending = false;
+            if (_matches?.IsGameplayRunning == true)
+                return;
+            if (_matches?.Phase != NetworkMatchPhase.Preparing && !TryPrepareMatch())
+                throw new InvalidOperationException("The current shared Scene could not prepare its fixed participants.");
+            var descriptor = _matches.Descriptor;
+            try
+            {
+                while (!_matches.CanStart)
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                    if (_disposed || !_session.IsServer || _matches.Descriptor != descriptor ||
+                        _matches.Phase != NetworkMatchPhase.Preparing)
+                        throw new InvalidOperationException("The prepared Match changed before shared readiness.");
+                    await Task.Yield();
+                }
+                cancellation.ThrowIfCancellationRequested();
+                if (!TryStartMatch())
+                    throw new InvalidOperationException("The prepared Host Match could not start.");
+            }
+            catch
+            {
+                if (!_disposed && _session.IsServer && _matches.Descriptor == descriptor)
+                    _matches.TryEnd();
+                throw;
+            }
+        }
+
+        public bool TryStartMatch()
+        {
+            ThrowIfUnavailable();
+            return _matches != null && _matches.TryStart();
+        }
+        public bool TryEndMatch()
+        {
+            ThrowIfUnavailable();
+            return _matches != null && _matches.TryEnd();
+        }
+        public void ShutdownConnection()
+        {
+            ThrowIfUnavailable();
+            _session.Shutdown();
+        }
 
         private void OnConnectionState(NetworkConnectionState state)
         {
             // App 종료 알림은 Port 재조립 신호가 아닙니다.
             if (state == NetworkConnectionState.Hosting || state == NetworkConnectionState.ConnectedClient ||
-                state == NetworkConnectionState.StartingClient) EnsureTransports();
+                state == NetworkConnectionState.StartingClient)
+                EnsureTransports();
         }
 
         private void EnsureTransports()
         {
-            if (_disposed || _app == null || _manager == null || !_manager.IsListening || _manager.CustomMessagingManager == null) return;
+            if (_disposed || _app == null || _manager == null || !_manager.IsListening || _manager.CustomMessagingManager == null)
+                return;
             if (_app.NetworkMatches == null)
             {
                 var transport = new NgoMatchLifecycleTransport(_manager);
-                try { _app.AttachNetworkMatchTransport(transport); }
+                try
+                {
+                    _app.AttachNetworkMatchTransport(transport);
+                }
                 catch { transport.Dispose(); throw; }
             }
             if (_app.NetworkRegions == null)
             {
                 var transport = new NgoRegionSnapshotTransport(_manager);
-                try { _app.AttachRegionSnapshotTransport(transport); }
+                try
+                {
+                    _app.AttachRegionSnapshotTransport(transport);
+                }
                 catch { transport.Dispose(); throw; }
             }
             if (_app.NetworkTurretCommands == null)
             {
                 var transport = new NgoTurretCommandTransport(_manager);
-                try { _app.AttachTurretCommandTransport(transport); }
+                try
+                {
+                    _app.AttachTurretCommandTransport(transport);
+                }
                 catch { transport.Dispose(); throw; }
             }
             if (_app.NetworkEnvironments == null)
             {
                 var transport = new NgoEnvironmentTransport(_manager);
-                try { _app.AttachEnvironmentTransport(transport); }
+                try
+                {
+                    _app.AttachEnvironmentTransport(transport);
+                }
                 catch { transport.Dispose(); throw; }
             }
             if (_app.NetworkTurretPresentation == null)
             {
                 var transport = new NgoTurretPresentationTransport(_manager);
-                try { _app.AttachTurretPresentationTransport(transport); }
+                try
+                {
+                    _app.AttachTurretPresentationTransport(transport);
+                }
                 catch { transport.Dispose(); throw; }
             }
-            if (ReferenceEquals(_matches, _app.NetworkMatches)) return;
-            _matches = _app.NetworkMatches; _regions = _app.NetworkRegions;
+            if (ReferenceEquals(_matches, _app.NetworkMatches))
+                return;
+            _matches = _app.NetworkMatches;
+            _regions = _app.NetworkRegions;
             _environments = _app.NetworkEnvironments;
             _matches.Preparing += OnPreparing;
             _matches.Started += OnStarted;
             _matches.Ended += OnEnded;
             _regions.SourceChanged += OnRegionSource;
             _environments.SourceChanged += OnEnvironmentSource;
-            if (_matches.Phase == NetworkMatchPhase.Preparing) OnPreparing(_matches.Descriptor);
+            if (_matches.Phase == NetworkMatchPhase.Preparing)
+                OnPreparing(_matches.Descriptor);
             else if (_matches.Phase == NetworkMatchPhase.Running)
             {
                 OnStarted(_matches.Descriptor);
-                if (!_session.IsServer && _regions.Source != null) OnRegionSource(_regions.Source);
-                if (!_session.IsServer && _environments.Source != null) OnEnvironmentSource(_environments.Source);
+                if (!_session.IsServer && _regions.Source != null)
+                    OnRegionSource(_regions.Source);
+                if (!_session.IsServer && _environments.Source != null)
+                    OnEnvironmentSource(_environments.Source);
             }
         }
 
@@ -250,7 +353,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _scene.ComposeNetworkMatch(_matches, _session.IsServer, _session.LocalConnectionId);
-                if (_turretCommands != null) throw new InvalidOperationException("Release the previous command scope first.");
+                if (_turretCommands != null)
+                    throw new InvalidOperationException("Release the previous command scope first.");
                 _turretCommands = new TurretCommandSceneScope(_matches, _session, _app.NetworkTurretCommands, _app.NetworkTurretPresentation,
                     _scene.GetComponent<TurretMatchBinding>(), _scene.RegionBinding.ControlUnit,
                     _scene.LocalPlayerActors, _turretInteractionDistance);
@@ -260,9 +364,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     _environments.BindHostSource(_scene.EnvironmentSource);
                     SpawnAnchor(descriptor, _scene.RegionBinding.Source);
                 }
-                else if (_environments.Source != null) OnEnvironmentSource(_environments.Source);
+                else if (_environments.Source != null)
+                    OnEnvironmentSource(_environments.Source);
                 _timeReplication = new MatchTimeSceneReplication(_manager, descriptor, _scene, _anchor);
                 _timeReplication.Pump();
+                _app.ObserveComposedNetworkMission(gameObject.scene.path);
             }
             catch (Exception error) { FailMatch(error); throw; }
         }
@@ -270,56 +376,81 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void FailMatch(Exception error)
         {
             LastFailure = error.Message;
-            if (_session.IsServer) _matches.TryEnd();
-            else _session.Shutdown();
+            _app?.RecordCompositionFailure(gameObject.scene.path, error);
+            if (_session?.IsServer == true)
+                _matches?.TryEnd();
+            else
+                _session?.Shutdown();
         }
 
         private void SpawnAnchor(NetworkMatchDescriptor descriptor, IRegionGridSource source)
         {
-            if (_anchor != null) throw new InvalidOperationException("The previous Match anchor is still alive.");
+            if (_anchor != null)
+                throw new InvalidOperationException("The previous Match anchor is still alive.");
             NetworkObject spawned = NetworkObject.InstantiateAndSpawn(_matchAnchorPrefab, _manager,
                 destroyWithScene: true, rotation: Quaternion.identity);
-            if (spawned == null) throw new InvalidOperationException("Match anchor spawn was rejected by NGO.");
+            if (spawned == null)
+                throw new InvalidOperationException("Match anchor spawn was rejected by NGO.");
             _anchor = spawned.GetComponent<NetworkMatchAnchor>();
-            _anchorDescriptor = descriptor; _anchorSource = source;
+            _anchorDescriptor = descriptor;
+            _anchorSource = source;
             _anchor.ApplyAuthorityState(descriptor, source.Snapshot);
             _anchorSource.Changed += OnRegionChanged;
         }
 
         private void OnRegionChanged(RegionGridSnapshot snapshot)
         {
-            if (_anchor != null && _anchor.IsSpawned) _anchor.ApplyAuthorityState(_anchorDescriptor, snapshot);
+            if (_anchor != null && _anchor.IsSpawned)
+                _anchor.ApplyAuthorityState(_anchorDescriptor, snapshot);
         }
 
         private void ReleaseAnchor()
         {
-            var time = _timeReplication; _timeReplication = null;
-            try { time?.Dispose(); }
+            var time = _timeReplication;
+            _timeReplication = null;
+            try
+            {
+                time?.Dispose();
+            }
             finally
             {
-                if (_anchorSource != null) _anchorSource.Changed -= OnRegionChanged;
-                _anchorSource = null; _anchorDescriptor = null;
-                NetworkMatchAnchor anchor = _anchor; _anchor = null;
-                if (anchor != null && anchor.IsSpawned && anchor.IsServer) anchor.NetworkObject.Despawn(true);
+                if (_anchorSource != null)
+                    _anchorSource.Changed -= OnRegionChanged;
+                _anchorSource = null;
+                _anchorDescriptor = null;
+                NetworkMatchAnchor anchor = _anchor;
+                _anchor = null;
+                if (anchor != null && anchor.IsSpawned && anchor.IsServer)
+                    anchor.NetworkObject.Despawn(true);
             }
         }
 
         private void OnEnded(MatchId matchId)
         {
-            try { ReleaseCommandScope(); }
+            try
+            {
+                ReleaseCommandScope();
+            }
             finally { try { ReleaseAnchor(); } finally { _scene.ReleaseNetworkMatch(matchId); } }
         }
         private void ReleaseCommandScope()
-        { TurretCommandSceneScope scope = _turretCommands; _turretCommands = null; scope?.Dispose(); }
+        {
+            TurretCommandSceneScope scope = _turretCommands;
+            _turretCommands = null;
+            scope?.Dispose();
+        }
         private void OnRegionSource(IRegionGridSource source)
         {
-            if (!_session.IsServer && _scene != null) _scene.BindRegionReplica(source);
+            if (!_session.IsServer && _scene != null)
+                _scene.BindRegionReplica(source);
         }
 
         private void OnEnvironmentSource(IMatchEnvironmentSource source)
         {
-            if (_session.IsServer || _scene == null) return;
-            if (source != null && _matches.Phase != NetworkMatchPhase.Running) return;
+            if (_session.IsServer || _scene == null)
+                return;
+            if (source != null && _matches.Phase != NetworkMatchPhase.Running)
+                return;
             _scene.BindEnvironmentReplica(source);
         }
 
@@ -331,7 +462,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void OnPeerConnected(ulong id)
         {
-            if (!_session.IsServer || id == _session.LocalConnectionId) return;
+            if (!_session.IsServer || id == _session.LocalConnectionId)
+                return;
             // SOS/도중 참가 정책이 없는 기반 단계에서는 고정 cohort 외 접속을 허용하지 않습니다.
             if (_manager.ConnectedClientsIds.Count > 2 ||
                 (_matches?.Descriptor != null && !_matches.TryResolveParticipant(id, out _)))
@@ -340,25 +472,33 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void Update()
         {
-            try { _timeReplication?.Pump(); _turretCommands?.Pump(); }
+            try
+            {
+                _timeReplication?.Pump();
+                _turretCommands?.Pump();
+            }
             catch (Exception error) { FailMatch(error); Debug.LogException(error, this); return; }
-            if (!_entryPending || _disposed || _app == null) return;
+            if (!_entryPending || _disposed || _app == null)
+                return;
             _entryPending = false;
             try
             {
-                if (_entry == InitialStageNetworkEntry.Client) TryStartClient();
+                if (_entry == InitialStageNetworkEntry.Client)
+                    TryStartClient();
                 else if (_entry == InitialStageNetworkEntry.SinglePlayerHost && (_session.IsServer || TryStartHost()))
                 {
                     if (!TryPrepareMatch() || !TryStartMatch())
                         throw new InvalidOperationException("Single-player Host could not prepare/start its Match.");
                 }
             }
-            catch (Exception error) { LastFailure = error.Message; Debug.LogException(error, this); }
+            catch (Exception error) { FailMatch(error); Debug.LogException(error, this); }
         }
 
         private void OnDestroy()
         {
-            if (_disposed) return; _disposed = true;
+            if (_disposed)
+                return;
+            _disposed = true;
             if (_session != null)
             {
                 _session.StateChanged -= OnConnectionState;
@@ -366,21 +506,32 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             if (_matches != null)
             {
-                _matches.Preparing -= OnPreparing; _matches.Started -= OnStarted; _matches.Ended -= OnEnded;
+                _matches.Preparing -= OnPreparing;
+                _matches.Started -= OnStarted;
+                _matches.Ended -= OnEnded;
             }
-            if (_regions != null) _regions.SourceChanged -= OnRegionSource;
-            if (_environments != null) _environments.SourceChanged -= OnEnvironmentSource;
-            try { ReleaseCommandScope(); }
+            if (_regions != null)
+                _regions.SourceChanged -= OnRegionSource;
+            if (_environments != null)
+                _environments.SourceChanged -= OnEnvironmentSource;
+            try
+            {
+                ReleaseCommandScope();
+            }
             finally
             {
-                try { ReleaseAnchor(); }
+                try
+                {
+                    ReleaseAnchor();
+                }
                 finally { if (_matches != null && _session.IsServer && _matches.Phase != NetworkMatchPhase.Disposed) _matches.TryEnd(); }
             }
         }
 
         private void ThrowIfUnavailable()
         {
-            if (_disposed || _app == null || _session == null) throw new InvalidOperationException("Initialize the network Scene first.");
+            if (_disposed || _app == null || _session == null)
+                throw new InvalidOperationException("Initialize the network Scene first.");
         }
     }
 }

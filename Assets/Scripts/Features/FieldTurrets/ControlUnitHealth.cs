@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [DisallowMultipleComponent]
-public sealed class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitVitals
+public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitVitals
 {
     [Header("Definition")]
     [SerializeField] private FieldTurretDefinition _definition;
@@ -52,6 +52,9 @@ public sealed class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IContr
             return;
         }
 
+        var identity = GetComponent<TeamHJD.Game.Presentation.Scene.SceneEntityIdentity>() ??
+            gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.SceneEntityIdentity>();
+        if (identity.EntityId.IsEmpty) identity.Initialize(new TeamHJD.Game.Domain.EntityId("world/control-unit"));
         _currentHealth = MaxHealth;
     }
 

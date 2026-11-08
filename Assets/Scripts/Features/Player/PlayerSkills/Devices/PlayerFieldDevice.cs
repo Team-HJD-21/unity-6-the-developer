@@ -1,10 +1,12 @@
+// Player 필드 장치의 실제 소유권·남은 수명·제거를 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
-public enum PlayerFieldDeviceKind { Barrier, Beacon, PlayerTurret }
+public enum PlayerFieldDeviceKind { Barrier = 0, Beacon = 1, PlayerTurret = 2 }
 
 /// <summary>장비의 체력과 수명을 관리하고 표현·검색·충돌 판정을 연결합니다.</summary>
 [DisallowMultipleComponent]
-public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
+public sealed partial class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget, TeamHJD.Game.Contracts.IEntityIdentity
 {
     [SerializeField] private PlayerFieldDeviceKind _kind;
     [Header("Visuals")]
@@ -38,6 +40,7 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
         float width, float health, float duration, float radius = 0, Transform owner = null)
     {
         if (_initialized) return;
+        TeamHJD.Game.Presentation.Scene.CheckpointActorFactory.EnsureIdentity(gameObject);
         _kind = kind; _start = start; _end = end;
         _width = Mathf.Max(.1f, width);
         _health = _maxHealth = Mathf.Max(1, health);
@@ -64,12 +67,13 @@ public sealed class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarget
     }
     private void Update()
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (!_initialized) return;
-        _remaining -= Time.deltaTime;
-        _hitFlash = Mathf.Max(0, _hitFlash - Time.deltaTime);
+        _remaining -= FieldSimulationTime.DeltaTime(this);
+        _hitFlash = Mathf.Max(0, _hitFlash - FieldSimulationTime.DeltaTime(this));
         if (_remaining <= 0) { Retire(); return; }
         float scanRadius = _kind == PlayerFieldDeviceKind.Beacon ? _radius + 1 : Vector2.Distance(_start, _end) * .5f + 2;
-        _scanner.Tick(transform.position, scanRadius, Time.deltaTime);
+        _scanner.Tick(transform.position, scanRadius, FieldSimulationTime.DeltaTime(this));
         _visual.Refresh(_kind, _health / _maxHealth, _hitFlash > 0, _radius);
     }
     public void TakeDamage(float damage)
