@@ -15,7 +15,7 @@ public sealed class SpawnPointPlanningSession
 
     private sealed class AreaBaseline
     {
-        public long Enemies, Turrets;
+        public long Enemies;
         public bool HasNearbyPlayer;
     }
 
@@ -127,12 +127,9 @@ public sealed class SpawnPointPlanningSession
             _targetAreas.Add(targetCell.CellId, area);
         }
 
-        bool hasFrontline = !double.IsInfinity(state.FrontlineDistanceSquared);
         return new SpawnAreaContext(
             ToCount(state.Cell.EnemyCount + state.Cell.AssignedEnemies),
-            ToCount(area.Enemies), ToCount(area.Turrets), hasFrontline,
-            hasFrontline ? Math.Sqrt(state.FrontlineDistanceSquared) : 0d, totalEnemyCount, area.HasNearbyPlayer,
-            attackType);
+            ToCount(area.Enemies), totalEnemyCount, area.HasNearbyPlayer, attackType);
     }
 
     /// <summary>같은 셀의 모든 지점과 주변 조사에 한 편성의 예정 수량을 반영한다.</summary>
@@ -203,7 +200,6 @@ public sealed class SpawnPointPlanningSession
             int key = cellY * width + cellX;
             BattlefieldGridCellSnapshot cell = grid.Cells[key];
             result.Enemies += cell.EnemyCount;
-            result.Turrets += cell.TurretCount;
         }
         foreach (BattlefieldPoint position in playerPositions)
         {

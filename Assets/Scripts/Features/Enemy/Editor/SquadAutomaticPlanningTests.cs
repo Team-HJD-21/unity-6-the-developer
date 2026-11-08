@@ -125,13 +125,12 @@ public sealed class SquadAutomaticPlanningTests
     }
 
     [Test]
-    public void Session_MissingFrontlineDoesNotApplyNearFrontlineBonus()
+    public void Session_WithoutFrontlineKeepsBalancedBaseWeight()
     {
         var point = Point("a", 0, 0);
         var settings = new SquadSelectionSettings();
         var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(), new[] { point }, settings);
         var area = session.GetAreaContext(point, point.Position, 0, Array.Empty<BattlefieldPoint>());
-        Assert.That(area.HasFrontline, Is.False);
         var preset = Preset("balanced", 2, EnemySquadRole.Balanced, 6);
         Assert.That(SquadSelectionPolicy.CalculateWeight(preset, area, settings), Is.EqualTo(6d));
     }
@@ -234,7 +233,7 @@ public sealed class SquadAutomaticPlanningTests
         int nearby, int total, float threshold, bool expectedSparse)
     {
         var settings = new SquadSelectionSettings { sparseEnemyPercentage = threshold };
-        var area = new SpawnAreaContext(0, nearby, 0, false, 0d, total, false, TargetAttackType.None);
+        var area = new SpawnAreaContext(0, nearby, total, false, TargetAttackType.None);
         var patrol = Preset("patrol", 2, EnemySquadRole.Patrol);
         var sustain = Preset("sustain", 2, EnemySquadRole.Sustain);
 
@@ -383,15 +382,13 @@ public sealed class SquadAutomaticPlanningTests
     [TestCase(EnemySquadRole.Elite, TargetAttackType.Area, 201, false, 1d)]
     [TestCase(EnemySquadRole.Balanced, TargetAttackType.Area, 200, false, 1d)]
     [TestCase(EnemySquadRole.Ambush, TargetAttackType.Unknown, 200, true, 3d)]
-    public void Policy_UsesAttackPatternPopulationAndPlayerInsteadOfGeometry(
+    public void Policy_UsesAttackPatternPopulationAndPlayer(
         EnemySquadRole role, TargetAttackType attackType, int nearby, bool player, double expectedWeight)
     {
         var preset = Preset("rule", 2, role);
         var settings = new SquadSelectionSettings();
-        var withoutFrontline = new SpawnAreaContext(0, nearby, 1, false, 0, 1000, player, attackType);
-        var withFrontline = new SpawnAreaContext(0, nearby, 100, true, 10000, 1000, player, attackType);
-        Assert.That(SquadSelectionPolicy.CalculateWeight(preset, withoutFrontline, settings), Is.EqualTo(expectedWeight));
-        Assert.That(SquadSelectionPolicy.CalculateWeight(preset, withFrontline, settings), Is.EqualTo(expectedWeight));
+        var area = new SpawnAreaContext(0, nearby, 1000, player, attackType);
+        Assert.That(SquadSelectionPolicy.CalculateWeight(preset, area, settings), Is.EqualTo(expectedWeight));
     }
 
     [Test]
