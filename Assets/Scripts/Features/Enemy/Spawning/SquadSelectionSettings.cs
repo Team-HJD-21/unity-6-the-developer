@@ -71,7 +71,7 @@ public static class SquadSelectionPolicy
                 preferred = near;
                 break;
             case EnemySquadRole.Ambush:
-                preferred = false;
+                preferred = area.HasNearbyPlayer;
                 break;
             default:
                 return 0d;

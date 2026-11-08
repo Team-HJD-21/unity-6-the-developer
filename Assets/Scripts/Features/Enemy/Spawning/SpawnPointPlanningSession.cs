@@ -16,6 +16,7 @@ public sealed class SpawnPointPlanningSession
     private sealed class AreaBaseline
     {
         public long Enemies, Turrets;
+        public bool HasNearbyPlayer;
     }
 
     private sealed class PointState
@@ -113,7 +114,7 @@ public sealed class SpawnPointPlanningSession
 
     /// <summary>선택한 타깃 주변의 현재 상황과 출현 셀의 예정 수를 반환한다.</summary>
     public SpawnAreaContext GetAreaContext(SpatialSpawnCandidate point, BattlefieldPoint targetPosition,
-        int totalEnemyCount)
+        int totalEnemyCount, IReadOnlyList<BattlefieldPoint> playerPositions)
     {
         PointState state = _byId[point.Id];
         if (!_grid.TryGetCellAt(targetPosition, out BattlefieldGridCellSnapshot targetCell))
@@ -121,7 +122,7 @@ public sealed class SpawnPointPlanningSession
 
         if (!_targetAreas.TryGetValue(targetCell.CellId, out AreaBaseline area))
         {
-            area = ReadArea(_grid, targetCell.X, targetCell.Y, _nearbyCellRadius);
+            area = ReadArea(_grid, targetCell.X, targetCell.Y, _nearbyCellRadius, playerPositions);
             _targetAreas.Add(targetCell.CellId, area);
         }
 
@@ -129,7 +130,7 @@ public sealed class SpawnPointPlanningSession
         return new SpawnAreaContext(
             ToCount(state.Cell.EnemyCount + state.Cell.AssignedEnemies),
             ToCount(area.Enemies), ToCount(area.Turrets), hasFrontline,
-            hasFrontline ? Math.Sqrt(state.FrontlineDistanceSquared) : 0d, totalEnemyCount);
+            hasFrontline ? Math.Sqrt(state.FrontlineDistanceSquared) : 0d, totalEnemyCount, area.HasNearbyPlayer);
     }
 
     /// <summary>같은 셀의 모든 지점과 주변 조사에 한 편성의 예정 수량을 반영한다.</summary>
@@ -184,7 +185,8 @@ public sealed class SpawnPointPlanningSession
         return order != 0 ? order : StringComparer.Ordinal.Compare(left.Input.Id, right.Input.Id);
     }
 
-    private static AreaBaseline ReadArea(BattlefieldGridSnapshot grid, int x, int y, int radius)
+    private static AreaBaseline ReadArea(BattlefieldGridSnapshot grid, int x, int y, int radius,
+        IReadOnlyList<BattlefieldPoint> playerPositions)
     {
         var result = new AreaBaseline();
         int width = grid.Configuration.CellsX;
@@ -200,6 +202,17 @@ public sealed class SpawnPointPlanningSession
             BattlefieldGridCellSnapshot cell = grid.Cells[key];
             result.Enemies += cell.EnemyCount;
             result.Turrets += cell.TurretCount;
+        }
+        foreach (BattlefieldPoint position in playerPositions)
+        {
+            if (!grid.TryGetCellAt(position, out BattlefieldGridCellSnapshot playerCell))
+                continue;
+            if (playerCell.X < minX || playerCell.X > maxX ||
+                playerCell.Y < minY || playerCell.Y > maxY)
+                continue;
+
+            result.HasNearbyPlayer = true;
+            break;
         }
         return result;
     }

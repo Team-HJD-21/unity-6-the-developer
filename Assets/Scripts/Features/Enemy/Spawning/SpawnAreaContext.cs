@@ -8,16 +8,18 @@ public readonly struct SpawnAreaContext
     public double NearbyEnemyPercentage =>
         TotalEnemyCount <= 0 ? 0d : (double)NearbyEnemyCount / TotalEnemyCount * 100d;
     public int NearbyTurretCount { get; }
+    public bool HasNearbyPlayer { get; }
     public bool HasFrontline { get; }
     public double FrontlineDistance { get; }
 
     public SpawnAreaContext(int cellEnemyCount, int nearbyEnemyCount, int nearbyTurretCount,
-        bool hasFrontline, double frontlineDistance, int totalEnemyCount)
+        bool hasFrontline, double frontlineDistance, int totalEnemyCount, bool hasNearbyPlayer)
     {
         CellEnemyCount = cellEnemyCount;
         NearbyEnemyCount = nearbyEnemyCount;
         TotalEnemyCount = totalEnemyCount;
         NearbyTurretCount = nearbyTurretCount;
+        HasNearbyPlayer = hasNearbyPlayer;
         HasFrontline = hasFrontline;
         FrontlineDistance = frontlineDistance;
     }

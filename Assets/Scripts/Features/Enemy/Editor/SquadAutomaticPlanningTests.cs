@@ -115,11 +115,11 @@ public sealed class SquadAutomaticPlanningTests
         var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(null, dynamicInput),
             new[] { a, b }, new SquadSelectionSettings());
         session.Reserve(a, 3);
-        Assert.That(session.GetAreaContext(b, b.Position, 1).CellEnemyCount, Is.EqualTo(1));
-        Assert.That(session.GetAreaContext(b, b.Position, 1).NearbyEnemyCount, Is.EqualTo(1));
+        Assert.That(session.GetAreaContext(b, b.Position, 1, Array.Empty<BattlefieldPoint>()).CellEnemyCount, Is.EqualTo(1));
+        Assert.That(session.GetAreaContext(b, b.Position, 1, Array.Empty<BattlefieldPoint>()).NearbyEnemyCount, Is.EqualTo(1));
         session.Reserve(b, 2);
-        Assert.That(session.GetAreaContext(a, b.Position, 1).CellEnemyCount, Is.EqualTo(3));
-        Assert.That(session.GetAreaContext(a, b.Position, 1).NearbyEnemyCount, Is.EqualTo(1));
+        Assert.That(session.GetAreaContext(a, b.Position, 1, Array.Empty<BattlefieldPoint>()).CellEnemyCount, Is.EqualTo(3));
+        Assert.That(session.GetAreaContext(a, b.Position, 1, Array.Empty<BattlefieldPoint>()).NearbyEnemyCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -128,7 +128,7 @@ public sealed class SquadAutomaticPlanningTests
         var point = Point("a", 0, 0);
         var settings = new SquadSelectionSettings();
         var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(), new[] { point }, settings);
-        var area = session.GetAreaContext(point, point.Position, 0);
+        var area = session.GetAreaContext(point, point.Position, 0, Array.Empty<BattlefieldPoint>());
         Assert.That(area.HasFrontline, Is.False);
         var preset = Preset("balanced", 2, EnemySquadRole.Balanced, 6);
         Assert.That(SquadSelectionPolicy.CalculateWeight(preset, area, settings), Is.EqualTo(6d));
@@ -182,11 +182,11 @@ public sealed class SquadAutomaticPlanningTests
         var planner = Planner(Preset("two", 2));
 
         Assert.That(planner.TryPlan(new AutomaticSpawnRequest(4, 4), new[] { point }, snapshot,
-            positions, 30, new SquadSelectionSettings(), new FixedRandom(), out var plans), Is.True);
+            positions, 30, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Sum(Count), Is.EqualTo(4));
         var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { point }, new SquadSelectionSettings());
-        Assert.That(session.GetAreaContext(point, target, 30).NearbyEnemyCount, Is.EqualTo(30));
-        Assert.That(session.GetAreaContext(point, target, 30).CellEnemyCount, Is.Zero);
+        Assert.That(session.GetAreaContext(point, target, 30, Array.Empty<BattlefieldPoint>()).NearbyEnemyCount, Is.EqualTo(30));
+        Assert.That(session.GetAreaContext(point, target, 30, Array.Empty<BattlefieldPoint>()).CellEnemyCount, Is.Zero);
     }
 
     [Test]
@@ -215,7 +215,7 @@ public sealed class SquadAutomaticPlanningTests
         var random = new FixedRandom();
         var planner = Planner(Preset("two", 2));
         Assert.That(planner.TryPlan(new AutomaticSpawnRequest(10, 10), new[] { Point("a", 0, 0) },
-            Snapshot(), new Dictionary<string, BattlefieldPoint>(), 0, new SquadSelectionSettings(), random, out var plans), Is.False);
+            Snapshot(), new Dictionary<string, BattlefieldPoint>(), 0, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), random, out var plans), Is.False);
         Assert.That(plans, Is.Empty);
         Assert.That(random.Calls, Is.Zero);
     }
@@ -232,7 +232,7 @@ public sealed class SquadAutomaticPlanningTests
         int nearby, int total, float threshold, bool expectedSparse)
     {
         var settings = new SquadSelectionSettings { sparseEnemyPercentage = threshold };
-        var area = new SpawnAreaContext(0, nearby, 0, false, 0d, total);
+        var area = new SpawnAreaContext(0, nearby, 0, false, 0d, total, false);
         var patrol = Preset("patrol", 2, EnemySquadRole.Patrol);
         var sustain = Preset("sustain", 2, EnemySquadRole.Sustain);
 
@@ -253,6 +253,87 @@ public sealed class SquadAutomaticPlanningTests
         Assert.That(new SquadSelectionSettings { sparseEnemyPercentage = threshold }.IsValid, Is.False);
     }
 
+    [TestCase(0, 0, true)]
+    [TestCase(-2, 0, true)]
+    [TestCase(3.9, 3.9, true)]
+    [TestCase(4, 0, false)]
+    [TestCase(-2.1, 0, false)]
+    [TestCase(100, 0, false)]
+    public void Session_PlayerPresenceUsesTheTargetNeighbourhood(double x, double y, bool expected)
+    {
+        var point = Point("spawn", -7, 0);
+        var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(), new[] { point }, new SquadSelectionSettings());
+        var area = session.GetAreaContext(point, new BattlefieldPoint(0, 0), 0,
+            new[] { new BattlefieldPoint(x, y) });
+        Assert.That(area.HasNearbyPlayer, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Session_OneNearbyPlayerIsEnoughAndTheTargetAreaIsCached()
+    {
+        var a = Point("a", -7, 0);
+        var b = Point("b", -6.5, 0);
+        var settings = new SquadSelectionSettings();
+        var snapshot = Snapshot();
+        var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { a, b }, settings);
+        var players = new CountingPlayerPositions(new BattlefieldPoint(8, 0), new BattlefieldPoint(1, 0), new BattlefieldPoint(9, 0));
+        var target = new BattlefieldPoint(0, 0);
+        Assert.That(session.GetAreaContext(a, target, 0, players).HasNearbyPlayer, Is.True);
+        Assert.That(players.Visits, Is.EqualTo(2));
+        Assert.That(session.GetAreaContext(b, target, 0, players).HasNearbyPlayer, Is.True);
+        Assert.That(players.Visits, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Session_RawGridPlayerPresenceDoesNotReplaceValidPlayerPositions()
+    {
+        var raw = new BattlefieldDynamicSpatialInput(
+            new[] { new PlayerSpatialInput(new EntityId("unavailable-player"), new BattlefieldPoint(0, 0)) },
+            Array.Empty<EnemySpatialInput>());
+        var point = Point("spawn", -7, 0);
+        var snapshot = Snapshot(null, raw);
+        var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { point }, new SquadSelectionSettings());
+        var area = session.GetAreaContext(point, new BattlefieldPoint(0, 0), 0, Array.Empty<BattlefieldPoint>());
+        Assert.That(area.HasNearbyPlayer, Is.False);
+    }
+
+    [TestCase(0, 1d)]
+    [TestCase(1, 3d)]
+    [TestCase(3, 3d)]
+    public void Plan_PlayerPresenceBoostsAmbushOnce(int playerCount, double expectedWeight)
+    {
+        var point = Point("spawn", -7, 0);
+        var snapshot = Snapshot();
+        var settings = new SquadSelectionSettings();
+        var players = Enumerable.Repeat(new BattlefieldPoint(0, 0), playerCount).ToArray();
+        var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { point }, settings);
+        var area = session.GetAreaContext(point, new BattlefieldPoint(0, 0), 0, players);
+        var ambush = Preset("ambush", 2, EnemySquadRole.Ambush);
+        Assert.That(SquadSelectionPolicy.CalculateWeight(ambush, area, settings), Is.EqualTo(expectedWeight));
+        Assert.That(Planner(ambush).TryPlan(new AutomaticSpawnRequest(2, 2), new[] { point }, snapshot,
+            new Dictionary<string, BattlefieldPoint> { [point.Id] = new BattlefieldPoint(0, 0) },
+            0, players, settings, new FixedRandom(), out var plans), Is.True);
+        Assert.That(plans.Sum(Count), Is.EqualTo(2));
+    }
+
+    private sealed class CountingPlayerPositions : IReadOnlyList<BattlefieldPoint>
+    {
+        private readonly BattlefieldPoint[] _positions;
+        public int Visits { get; private set; }
+        public int Count => _positions.Length;
+        public BattlefieldPoint this[int index] => _positions[index];
+        public CountingPlayerPositions(params BattlefieldPoint[] positions) => _positions = positions;
+        public IEnumerator<BattlefieldPoint> GetEnumerator()
+        {
+            foreach (var position in _positions)
+            {
+                Visits++;
+                yield return position;
+            }
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
     private TargetableComponent Target(string name, Vector3 position, TargetType type)
     {
         var go = new GameObject(name);
@@ -270,7 +351,7 @@ public sealed class SquadAutomaticPlanningTests
     {
         var positions = points.ToDictionary(point => point.Id, point => point.Position);
         int totalEnemyCount = snapshot.Grid.Cells.Sum(cell => cell.EnemyCount) + snapshot.Grid.OutOfBoundsEnemyIds.Count;
-        return planner.TryPlan(request, points, snapshot, positions, totalEnemyCount, settings, random, out plans);
+        return planner.TryPlan(request, points, snapshot, positions, totalEnemyCount, Array.Empty<BattlefieldPoint>(), settings, random, out plans);
     }
 
     private EnemySquadPreset Preset(string id, int count, EnemySquadRole role = EnemySquadRole.Patrol, int weight = 1)
