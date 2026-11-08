@@ -220,7 +220,7 @@ requiredKeys.Add(randomWriter.Key); // core/random
 | 담당/파일 | 현재 사용 위치와 목적 | 이후 교체 |
 | --- | --- | --- |
 | World/Weather · `Assets/Scripts/Map/WeatherManager.cs:115` | `GetWeather()`의 정수 추첨. sunnyWeight에 따른 날씨/예고 큐 선택 | Match `weather` 흐름의 `NextInt(0, sunnyWeight + (int)Weather.WEATHER_MAX)`. 기존 가중치 해석 유지 |
-| Enemy/Encounter · `Assets/Scripts/Features/Enemy/Spawning/EnemySpawnExecutor.cs:289` | 각 적을 SpawnPoint 반경의 원판 안에 분산. `Random.insideUnitCircle` | Host Match `enemy/spawn-position` 흐름의 `InsideUnitCircle()`을 Vector2/3로 변환. 기존 반경·스폰 지점 배분 유지 |
+| Enemy/Encounter · `Assets/Scripts/Features/Enemy/Encounter/Spawning/EnemySpawnExecutor.cs:289` | 각 적을 SpawnPoint 반경의 원판 안에 분산. `Random.insideUnitCircle` | Host Match `enemy/spawn-position` 흐름의 `InsideUnitCircle()`을 Vector2/3로 변환. 기존 반경·스폰 지점 배분 유지 |
 | FieldTurret · `Assets/Scripts/Features/FieldTurrets/Cannon/FieldCanonTurretLv1.cs:29` | `Shoot()`에서 발사 기준점 X에 -0.5~0.5 가산 | Match `combat/cannon` 흐름의 `NextFloat(-.5f, .5f)` |
 | FieldTurret · `Assets/Scripts/Features/FieldTurrets/Cannon/FieldCanonTurretLv2.cs:34` | `Shoot()` 루프에서 각 발사 방향 Transform X에 오차 가산 | 같은 API. 포탄마다 추첨하는 기존 호출 횟수/순서 확인 |
 | FieldTurret · `Assets/Scripts/Features/FieldTurrets/Cannon/FieldCanonTurretLv3.cs:31` | Lv2와 같은 발사 방향 오차 | 같은 API. 공유 흐름 또는 안정적 논리 ID별 흐름은 해당 파트와 결정 |

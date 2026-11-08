@@ -1,5 +1,9 @@
 # Encounter 생성 origin API
 
+수정일: 2026-11-08
+
+[Encounter 편성·예산](encounter-planning-guide.md) · [Enemy 콘텐츠·검증 범위](stage1-enemy-content-guide.md)
+
 현재 단계: B8 Core 경계와 기존 Enemy 생성 연결 구현·직접 검사 완료. 실제 나무 AI/지면·공중 연출은 별도 Feature다.
 
 ## 현재 구현
@@ -11,7 +15,7 @@
 - 같은 논리 ID를 다시 등록해도 새 generation을 받는다. 삭제 source 또는 이전 Match를 참조하는 늦은 요청은 새 source로 바뀌지 않는다.
 - 공통 `EncounterRequestService`는 명시적 origin을 지원하는 `IOriginAwareEncounterExecutor`와 권위 resolver를 요구한다. 없는 연결을 자동 지점 생성으로 대체하지 않고 UnsupportedOrigin/OriginUnavailable로 거부한다. resolver가 원래 의도를 교체하거나 수명 종료 후 실행할 수도 없다.
 - `EncounterSceneConfiguration`은 실제 Enemy 생성기를 제작 참조로 지정한다. 현재 Initial_Stage는 EnemySpawnRoot prefab 인스턴스를 사용한다. 기존 다른 제작 Executor는 제거하지 않았다. 재로드 뒤 App의 persistent consumer에 새 Scene 참조를 전달한다.
-- standalone `EncounterRuntime`의 자동 검색은 활성 Scene에 생성기가 정확히 하나일 때만 허용한다. 여러 개면 명시 연결이 필요하다.
+- `EncounterRuntime`은 `MatchId`, 명시적인 `EnemySpawnExecutor`, `EnemySquadPresetCatalog`, `EncounterBudgetSettings`를 받는 생성자로 만든다. Runtime 내부의 기본 생성자/씬 자동 검색 경로는 제거됐다. 씬 제작 연결은 `EncounterSceneConfiguration`과 런처가 담당하며, standalone 런처에는 기존 검색 fallback이 남아 있어 다중 실행기 씬은 명시적으로 연결한다.
 
 ## 조립과 호출
 
@@ -30,6 +34,14 @@ Host의 `MatchSession.InitializeSpawnSources`가 Match gameplay 취소 수명에
 - 동시 대기는 최대 64개다. 동일 GUID의 동일 payload/지연은 같은 핸들, 변경된 payload/지연은 거부한다. 실행 후 중복은 공통 요청 ledger가 막는다.
 - source 해제·Match 완료/정리·호출자 Cancel은 대기를 취소한다. 이미 생성된 적은 그대로 두며 Match의 기존 생성/정리 수명을 따른다.
 - reservation의 Result와 IsCancelled를 구분한다. 대기 등록 성공을 실제 생성 성공으로 해석하지 않는다.
+
+## #540 병합 후 편성·비용 경계
+
+현재 런처는 RegionSceneBinding의 최신 지역 Snapshot을 추가로 읽어 `EncounterRuntime.RequestSpawn()`에 전달한다. Runtime이 점유율 기반 전체 비용 예산을 산출하고, 명시 origin이면 `SpawnCompositionPlanner.TryPlanOrigin()`을 사용한다. 내부 고정 요청 타입은 `FixedPresetSpawnRequest`이며 지정된 Order·요청 마릿수·비용 예산을 보존한다. 옛 `SpawnRequest` 또는 Runtime의 기본 생성자를 새 호출부에 사용하지 않는다.
+
+환경 Profile은 기존처럼 고정 편성의 preset override와 요청 수량 배율을 적용한다. #540의 금액 예산은 그 요청에도 적용되며, World/명시 지점도 세트 비용과 요청 마릿수를 모두 만족해야 한다. 환경 조정용 `budgetScale` 필드가 현재 조절하는 것은 `MaxCount`라는 점에 주의한다. World origin이 상황별 편성을 자동 선택하는 경로는 아니다.
+
+`Core 서비스 → IOriginAwareEncounterExecutor → 런처 → Runtime.RequestSpawn → Planner.TryPlanOrigin → Executor.Execute`로 연결된다. 환경·원인 GUID·origin/source·seed·취소를 ExecutionContext에 유지한다. Core 응답의 ExecutionSequence와 런처 내부 진단 번호는 각각의 의미를 보존하며 Request GUID로 관련 사건을 연결한다. 소환사의 `EnemySummonSpawner`는 이 origin API와 별도 경로다.
 
 ## 실제 소비와 소유권
 
@@ -60,7 +72,9 @@ JSON과 events CSV는 새 상관관계를 보존한다. CSV 열은 뒤에 추가
 
 Profiler의 `TeamHJD.Encounter.Plan` / `SpawnAndCommit`으로 계획 및 실제 생성/서비스 이력 기록 구간을 관측한다. 요청별 계획/생성 시간은 Statistics/JSON에 보존하고 미실행 구간은 N/A다. `TeamHJD.Battlefield.SampleAndPublish` / `TopologyAndPublish`는 Unity 조립부의 공간 수집/발행 비용이다. Domain/Application에는 Unity 계측 의존성을 넣지 않았다.
 
-## 현재 검증
+## 검증 기록
+
+아래 B8 기록은 기존 origin 구현의 인수 근거다. #540 예산·요청 타입 통합 이후 전체 B8 인수를 다시 실행했다는 뜻은 아니다. 이번 통합 브랜치의 실행 범위와 남은 검사는 [#540 검증 기록](stage1-enemy-content-guide.md#검증과-남은-작업)으로 구분한다.
 
 `b8-origin-foundation.xml`: Unity 6000.3.23f1, 종료 0, 11/11. source 세대/취소·권위·origin 충돌/재전송 계약 4개, 기존 요청 회귀 6개, 실제 Initial_Stage 재시작/Hub 복귀 1개. 마지막 검사는 재로드 전후 제작된 실행 대상과 consumer 참조가 같은지 직접 확인한다. 포인트 밖 실제 생성 성공 증거로 확대하지 않는다.
 
