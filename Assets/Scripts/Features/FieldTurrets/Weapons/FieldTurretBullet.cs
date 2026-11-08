@@ -1,9 +1,10 @@
+// 기존 탄환 피해·방향을 유지하고 수명/이동을 소유 Match의 필드 시간으로 진행합니다.
 using System;
-using System.Collections;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "TowerBullet")]
-public class FieldTurretBullet : MonoBehaviour
+public partial class FieldTurretBullet : MonoBehaviour
 {
     [Header("Attributes")]
     [SerializeField] private float bulletSpeed; // 일정한 속도
@@ -13,6 +14,7 @@ public class FieldTurretBullet : MonoBehaviour
     private Vector3 _direction;
     private bool _isInitialized;
     private bool _hasHit;
+    private double _expiresAt;
 
     public void Initialize(Transform target, float damage)
         => Initialize(target, damage, target != null ? target.position : Vector3.zero);
@@ -30,12 +32,17 @@ public class FieldTurretBullet : MonoBehaviour
         _bulletDamage = damage;
         _direction = (aimPosition - transform.position).normalized; // 기준점을 옮기지 않고 이번 탄환의 방향만 계산
         _isInitialized = true;
-        StartCoroutine(DestroyObjectIfNotHit());
+        _expiresAt = FieldSimulationTime.Seconds(this) + 3;
     }
 
     private void Update()
     {
-        if (!_isInitialized) return;
+        if (!_isInitialized || !FieldSimulationTime.CanAdvance(this)) return;
+        if (FieldSimulationTime.Seconds(this) >= _expiresAt)
+        {
+            Destroy(gameObject);
+            return;
+        }
 
         if (_target == null)
         {
@@ -44,23 +51,17 @@ public class FieldTurretBullet : MonoBehaviour
         }
 
         // 일정한 속도로 총알 이동
-        transform.position += _direction * bulletSpeed * Time.deltaTime;
+        transform.position += _direction * bulletSpeed * FieldSimulationTime.DeltaTime(this);
 
         // 총알의 회전 방향 설정
         float angle = Mathf.Atan2(_direction.y, _direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
     }
 
-    private IEnumerator DestroyObjectIfNotHit()
-    {
-        yield return new WaitForSeconds(3f);
-        Destroy(gameObject); // 일정 시간이 지나면 총알 파괴
-    }
-
     // 충돌 처리
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (!_isInitialized || _hasHit)
+        if (!_isInitialized || _hasHit || !FieldSimulationTime.CanAdvance(this))
             return;
         _hasHit = true;
         EnemyHealth enemyHealth = collision.collider.GetComponentInParent<EnemyHealth>();

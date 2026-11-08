@@ -58,11 +58,17 @@ namespace TeamHJD.Game.Bootstrap
 
             var localUser = new PlatformUser(new PlayerId("local-player"), "Local Player");
 
+            var steam = Resources.Load<SteamAppSettings>(SteamAppSettings.ResourceKey);
+            bool useSteam = (steam != null && steam.UseSteam) || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-teamhjd-steam") >= 0;
+            IPlatformService platform = useSteam
+                ? new SteamPlatformService(steam != null ? steam.AppId : throw new System.InvalidOperationException("Configure the Steam AppID first."))
+                : new FakePlatformService(localUser);
+
             //  FakeProfileService()도 마찬가지로 PoC 단계에서 사용되는 임시 클래스입니다.
             return new AppServices(
                 new FakeProfileService(),
                 content,
-                new FakePlatformService(localUser),
+                platform,
                 new UnitySceneFlow(),
                 checkpointStore: new BinaryCheckpointStore(Path.Combine(UnityEngine.Application.persistentDataPath, "Checkpoints")),
                 checkpointPayloads: new BinaryCheckpointPayloadCodec());

@@ -9,7 +9,7 @@ using UnityEngine;
 namespace TeamHJD.Game.FieldTurrets
 {
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "TeamHJD.Game.Turrets", sourceAssembly: "TeamHJD.Game.Turrets", sourceClassName: "TurretBase")]
-    public abstract class FieldTurretBase : MonoBehaviour, IFieldTurretActivationRequester, IDamageableTarget
+    public abstract partial class FieldTurretBase : MonoBehaviour, IFieldTurretActivationRequester, IDamageableTarget
     {
         // Keep serialized field names unchanged so existing prefab values remain mapped.
         //제발 바꾸지 말아주세요요요요!
@@ -43,7 +43,7 @@ namespace TeamHJD.Game.FieldTurrets
         private FieldTurretInitializationData _initializationData;
         private bool _initialActivationPending;
         private Coroutine _initialActivationRoutine;
-        private float _coolingEndsAt;
+        private double _coolingEndsAt;
         private float _coolingDuration;
         private float _coolingInitialHeatRatio;
         private float _gunHeatStrength;
@@ -52,8 +52,8 @@ namespace TeamHJD.Game.FieldTurrets
         public bool IsInitialized => _activationController != null;
         // Shared by active overheat recovery and cooling after switching off.
         // IsActivated determines whether completion resumes attacks or only permits activation.
-        public bool IsCoolingDown => Time.time < _coolingEndsAt;
-        public float CoolingDownRemaining => Mathf.Max(0f, _coolingEndsAt - Time.time);
+        public bool IsCoolingDown => FieldSeconds < _coolingEndsAt;
+        public float CoolingDownRemaining => (float)System.Math.Max(0, _coolingEndsAt - FieldSeconds);
         public FieldTurretActivationResult? LastInitialActivationResult { get; private set; }
 
         public FieldTurretDefinition Definition => _definition;
@@ -157,6 +157,9 @@ namespace TeamHJD.Game.FieldTurrets
                 throw new System.ArgumentNullException(nameof(powerSource));
             _initializationData = data;
             _configuredPowerSource = powerSource;
+            // 복원·Factory 생성도 전달받은 소유자의 공용 시간과 발사체 바인딩을 사용합니다.
+            if (powerSource is FieldTurretController controller)
+                _turretController = controller;
         }
 
         internal bool UsesPowerSource(IFieldTurretPowerSource source) => ReferenceEquals(_configuredPowerSource, source);
@@ -379,7 +382,7 @@ namespace TeamHJD.Game.FieldTurrets
             {
                 _coolingDuration = Mathf.Max(0f, duration);
                 _coolingInitialHeatRatio = Mathf.Clamp01(initialHeatRatio);
-                _coolingEndsAt = Time.time + _coolingDuration;
+                _coolingEndsAt = FieldSeconds + _coolingDuration;
             }
 
             TimeTilFire = 0f;
@@ -390,6 +393,7 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected virtual void Update()
         {
+            if (!CanSimulateField) return;
             if (_coolingDuration > 0f) UpdateCooling();
         }
 
@@ -516,6 +520,9 @@ namespace TeamHJD.Game.FieldTurrets
         private IEnumerator RequestInitialActivation()
         {
             yield return null;
+            // 제작된 시작 의도를 준비/필드 정지 프레임에 실패로 소비하지 않습니다.
+            while (_initialActivationPending && isActiveAndEnabled && (!HasStateAuthority || !CanSimulateField))
+                yield return null;
             _initialActivationRoutine = null;
             if (!_initialActivationPending || !isActiveAndEnabled) yield break;
             _initialActivationPending = false;

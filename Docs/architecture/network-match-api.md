@@ -78,20 +78,28 @@ _interactionLease = null;
 
 `NetworkMatchCoordinator.IsGameplayRunning`이 공용 준입 상태다. 연결이 유지되어도 결과 확정 후에는 새 gameplay를 받지 않는다. 최종 결과와 지역/터렛/환경 전송은 각각 Match/준비 세대·revision을 확인한다. 결과를 전달하기 전에 Session/anchor를 없애지 않는다.
 
-`HasPendingCompletion` 동안 결과 송신을 처리한다. 이 값은 모든 Client의 제품 수준 UI 인수 ACK를 보장하지 않는다. Client 단독 Scene 교체와 다중 참가자의 공동 재시작/이동은 현재 명시적으로 제한한다. 관련 규칙은 [Scene API](scene-flow-api.md), [화면 API](screen-management-api.md)에 있다.
+`HasPendingCompletion` 동안 결과 송신을 처리한다. 이 값은 모든 Client의 제품 수준 UI 인수 ACK를 보장하지 않는다. Client 단독 Scene 결정은 거부한다. Host의 1~2인 공동 재시작/이동은 NGO 전체 로드 완료→전원 Feature 준비→명시 시작 경로로 연결했다. 관련 규칙은 [Scene API](scene-flow-api.md), [화면 API](screen-management-api.md)에 있다.
 
 AppRoot.Update의 공통 pump는 Unity 주 스레드에서 전송/조율 작업을 진행한다. NGO의 NetworkTickSystem은 SDK가 관리한다. 공통 pump, 게임 시간, 물리 FixedUpdate, 날씨 갱신 주기를 하나의 Tick으로 취급하지 않는다.
 
 ## 현재 구현의 경계
 
 - 실제 Player 이동/전투 복제와 각 Feature의 NetworkBehaviour는 Player/UI·FieldTurret·Enemy/Encounter 책임이다.
-- Steam 인증·초대·매칭, SOS·중도 참가·Host Migration·전체 공동 Scene 이동은 이번 기반 범위 밖이다.
-- 2026-11-02 권위 Initial_Stage의 공용 시계가 NGO ServerTime 기반으로 연결됐고 현재 Weather는 공용 예약을 사용한다. Client의 게임 시각 anchor 복제·참가자 출입 정지는 별도이며 [시간 API](match-time-api.md)의 구현 범위를 따른다.
+- Steam 인증·초대·매칭, SOS·중도 참가·Host Migration·제품 전체 협동 플레이는 이번 기반 범위 밖이다.
+- 권위 Initial_Stage는 NGO ServerTime 기반 공용 시계를 쓰고 Weather는 공용 예약을 사용한다. Client 시각 anchor 복제·참가자 위치에 따른 필드 정지도 연결했으며 실제 두 프로세스의 세대 교체를 확인했다. 실제 원격 Player의 포털/출입 요청은 담당 연결이 필요하다. [시간 API](match-time-api.md)의 계약을 따른다.
 - SDK 두 인스턴스·개발 actor·이전 Windows fixture 성공과 최신 두 실행 파일의 실제 Player 게임 인수를 구분한다.
 
-주말 공유 시 Player/UI의 서버 actor 등록 시점, FieldTurret·Enemy/Encounter 상태 writer와 표시 복제의 경계, 공동 Scene 정책의 후속 소유자를 확인한다. 현재 Runtime을 재설계한다고 발표하기 전에 실제 API와 후속 제안을 분리해 설명한다.
+공유 시 Player/UI의 서버 actor 등록 시점과 FieldTurret·Enemy/Encounter의 원본 writer/표시 복제 경계를 확인한다. 공동 Scene 이동은 Core가 구현했으며 실제 두 실행 파일의 세 Match·귀환 검사와 Player 전투 복제 인수를 구분한다. 현재 Runtime을 재설계한다고 발표하기 전에 실제 API와 후속 제안을 분리해 설명한다.
 
 
 ## 공용 시간·참가자 위치 읽기 (2026-11-02)
 
 서버 소유 `NetworkMatchAnchor`의 `NetworkMatchTimeState`로 정지·배속·epoch·revision·현재 준비 세대와 참가자의 우주선 위치를 복제한다. 기존 NGO 연결을 재사용하고 Client에 시계/위치 쓰기 권한을 주지 않는다. `MatchTimeSceneReplication`이 같은 SDK 서버 시각에서 읽기 시계를 계산해 Scene Feature에 연결한다. [현재 시간 API와 검증 수준](match-time-api.md#client-읽기와-네트워크-전송)을 따른다. 실제 원격 Player의 Spawn/출입 요청 구현과 구분한다.
+
+## 11월5일 공유 Scene 검증
+
+`NgoSceneFlow`는 고정 참가자 집합 전원의 NGO 완료를 기다린다. 로드 중 접속 집합 변경·미완료·timeout·Host 종료는 입장 성공으로 취급하지 않는다. NGO SDK의 완료 callback 내부에서 곧바로 다음 Scene 작업을 시작하지 않고 내부 정리 뒤 진행한다. 실시간 deadline도 별도로 둔다.
+
+`GameFlow.LaunchMissionAsync`의 Host 출격이 Scene 로드 이후 `StartAfterSceneTravelAsync`를 호출한다. 새 descriptor에 모든 참가자의 준비 응답이 모여야 `TryStartMatch`한다. 직접 Manual 경로는 여전히 TryPrepare→CanStart→TryStart 순서로 사용할 수 있다. Client는 같은 Scene의 실제 조립이 끝난 뒤 App 흐름을 Mission으로 반영한다.
+
+격리 Windows 같은 Build의 Host/Client에서 협동 Match3개(모두 새 ID), 공유 귀환2회, Client 시계·환경 Match 일치, AppRoot1개와 마지막 Enemy0개를 확인했다. 이 결과가 실제 원격 Player 생성·공격 입력 복제·Steam 인증을 보장하지 않는다.

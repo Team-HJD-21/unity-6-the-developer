@@ -1,7 +1,9 @@
+// 개별 스킬의 사용 조건·재사용 대기와 실제 진행 상태를 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 /// <summary>스킬의 사용 조건·보유 상태·쿨타임과 입력 진입점을 통일합니다.</summary>
-public abstract class PlayerSkillBase : MonoBehaviour
+public abstract partial class PlayerSkillBase : MonoBehaviour
 {
     private PlayerSkillController _controller;
     private PlayerControlState _control;
@@ -16,7 +18,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
     protected virtual void Awake() { _controller = GetComponent<PlayerSkillController>(); _control = GetComponent<PlayerControlState>(); }
     public bool TryUseSkill()
     {
-        if (!isActiveAndEnabled || !IsReady) return false;
+        if (!FieldSimulationTime.CanAdvance(this) || !isActiveAndEnabled || !IsReady) return false;
         if (Controller != null)
         {
             if (!Controller.CanUse || !Controller.Loadout.Contains(Id)) return false;

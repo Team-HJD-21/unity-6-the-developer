@@ -1,3 +1,5 @@
+// Player 탄환의 비행·충돌·남은 수명을 관리하고 소유자의 Match 종료에 정리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,7 +9,7 @@ using UnityEngine.Tilemaps;
 /// <summary>설정된 고정 속도로 이동하며 수명과 충돌 피해를 처리하는 플레이어 탄환입니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
-public sealed class PlayerBullet : MonoBehaviour
+public sealed partial class PlayerBullet : MonoBehaviour
 {
     [Header("References")]
     [FormerlySerializedAs("rb")]
@@ -27,6 +29,9 @@ public sealed class PlayerBullet : MonoBehaviour
     [FormerlySerializedAs("targetTag")]
     [SerializeField] private string _targetTag = "Enemy";
     private bool _hasHit;
+    private double _expiresAt;
+    private double GameSeconds => FieldSimulationTime.Seconds(this);
+    internal WeaponType SourceWeapon { get; set; } = WeaponType.DefaultGun;
     private PlayerProjectileView _view;
     private readonly List<Collider2D> _hitboxes = new();
     private readonly List<RaycastHit2D> _flightHits = new(8);
@@ -85,6 +90,8 @@ public sealed class PlayerBullet : MonoBehaviour
             Debug.LogWarning("[PlayerBullet] Rigidbody2D, attached Collider2D, finite direction, non-negative speed/damage and positive lifetime are required.", this);
             return false;
         }
+        _launchColor = color;
+        _cryogenic = cryogenic;
         _damage = damage;
         _hasHit = false;
         if (_spriteRenderer != null) _spriteRenderer.color = color;
@@ -103,13 +110,19 @@ public sealed class PlayerBullet : MonoBehaviour
 #endif
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
-        Destroy(gameObject, _lifetime);
+        _expiresAt = GameSeconds + _lifetime;
     }
 
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
+    private void Update()
+    {
+        if (FieldSimulationTime.CanAdvance(this) && GameSeconds >= _expiresAt) Destroy(gameObject);
+    }
+
     private void FixedUpdate()
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (_hasHit || _flightDirection == Vector2.zero || _body == null) return;
         // 빠른 Trigger 탄환은 한 물리 틱 안에 얇은 본체를 지나칠 수 있어 이동 경로를 먼저 검사합니다.
         _body.Cast(_flightDirection, _hitFilter, _flightHits, _speed * Time.fixedDeltaTime);
@@ -162,7 +175,7 @@ public sealed class PlayerBullet : MonoBehaviour
 
     private void ProcessHit(Collider2D other)
     {
-        if (_hasHit || !TryGetHitTarget(other, out GameObject target, out bool isEnemy)) return;
+        if (!FieldSimulationTime.CanAdvance(this) || _hasHit || !TryGetHitTarget(other, out GameObject target, out bool isEnemy)) return;
         _hasHit = true;
 #if UNITY_6000_0_OR_NEWER
         _body.linearVelocity = Vector2.zero;

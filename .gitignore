@@ -67,3 +67,12 @@ Desktop.ini
 # AI Assistant의 개인별 Editor 설정은 공유하지 않는다.
 /ProjectSettings/Packages/com.unity.ai.assistant/Settings.json
 /YGDocs/
+
+# Local Steam SDK development identity (never upload to a depot).
+steam_appid.txt
+
+# Local validation projects, downloaded SDK checkout, and generated players.
+/Validation/core-foundation-main-20261105/
+/Validation/core-network-player/
+/Validation/core-network-daynight-player/
+/Validation/steamworks-net-2025.165.0/

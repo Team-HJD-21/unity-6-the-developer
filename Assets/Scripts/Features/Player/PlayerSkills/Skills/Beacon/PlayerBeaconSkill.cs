@@ -1,7 +1,9 @@
+// 비콘 선택·설치와 생성된 효과 장치의 진행을 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class PlayerBeaconSkill : PlayerPlacementSkillBase
+public sealed partial class PlayerBeaconSkill : PlayerPlacementSkillBase
 {
     [SerializeField] private PlayerFieldDevice _prefab;
     [SerializeField, Min(.1f)] private float _cooldown = 14;
@@ -17,9 +19,10 @@ public sealed class PlayerBeaconSkill : PlayerPlacementSkillBase
     public override float CooldownDuration => Cooldown;
     public override float RemainingCooldown => _remainingCooldown;
     public bool CanDeploy => _remainingCooldown <= 0;
-    private void Update() => Tick(Time.deltaTime);
+    private void Update() => Tick(FieldSimulationTime.DeltaTime(this));
     public void Tick(float elapsed)
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
         _remainingCooldown = Mathf.Max(0, _remainingCooldown - elapsed);
     }

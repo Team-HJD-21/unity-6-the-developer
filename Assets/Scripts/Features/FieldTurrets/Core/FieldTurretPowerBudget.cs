@@ -1,10 +1,11 @@
+// 공용 전력의 사용·예약·지연 반환을 계산합니다. 저장 자료에는 아직 반환되지 않은 시간도 포함합니다.
 using System;
 using TeamHJD.Game.FieldTurrets.Contracts;
 
 namespace TeamHJD.Game.FieldTurrets
 {
     /// <summary>Unity와 CU에 의존하지 않는 전력 예약 및 지연 반환 모델.</summary>
-    public sealed class FieldTurretPowerBudget : IFieldTurretPowerSource
+    public sealed partial class FieldTurretPowerBudget : IFieldTurretPowerSource
     {
         private const double RecoveryInterval = 0.1;
         private double _recoveryElapsed;

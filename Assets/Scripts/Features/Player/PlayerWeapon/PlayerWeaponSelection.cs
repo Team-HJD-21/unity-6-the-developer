@@ -1,3 +1,4 @@
+// 기존 입력 우선순위를 유지하며 사용 가능한 무기의 선택 상태를 소유합니다.
 using System;
 using UnityEngine;
 
@@ -85,6 +86,18 @@ public sealed class PlayerWeaponSelection : MonoBehaviour
                 return TrySelectWeapon(candidate);
         }
         return false;
+    }
+
+    /// <summary>무기 writer가 탄환의 제작 종류를 해석합니다. 현재 선택을 변경하지 않습니다.</summary>
+    internal GameObject ResolveBulletPrefab(WeaponType weapon) => weapon == WeaponType.Sniper ? _sniperBulletPrefab : _bulletPrefab;
+
+    /// <summary>Host의 저장 복원만 사용합니다. 정지 중 입력 자격 검사를 우회하되 제작 무기 유효성을 검사합니다.</summary>
+    internal void RestoreWeapon(WeaponType weapon)
+    {
+        if (!IsWeaponAvailable(weapon)) throw new InvalidOperationException("The saved weapon is not authored on this Player.");
+        _currentWeapon = weapon;
+        RefreshEquippedObjects();
+        WeaponChanged?.Invoke(weapon);
     }
 
     private void RefreshEquippedObjects()

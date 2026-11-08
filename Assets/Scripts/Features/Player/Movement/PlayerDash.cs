@@ -1,9 +1,13 @@
+// Player의 대시 방향·남은 거리/쿨다운을 관리합니다.
+// 필드에서는 공용 시간을, 허브 이동에서는 로컬 이동 시간을 사용하며 Rigidbody는 Movement가 갱신합니다.
 using UnityEngine;
+using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Domain;
 
 /// <summary>Space 요청과 대시 방향을 관리합니다. Rigidbody 속도는 PlayerMovement만 변경합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerMovement), typeof(PlayerInputHandler))]
-public sealed class PlayerDash : MonoBehaviour
+public sealed partial class PlayerDash : MonoBehaviour
 {
     [SerializeField, Min(1)] private float _speedMultiplier = 2.5f;
     [SerializeField, Min(.01f)] private float _duration = .16f;
@@ -11,6 +15,7 @@ public sealed class PlayerDash : MonoBehaviour
     private readonly PlayerDashTimer _state = new();
     private PlayerMovement _movement;
     private PlayerInputHandler _input;
+    private PlayerControlState _controls;
     private Vector2 _lastDirection = Vector2.down;
     private Vector2 _direction;
     private float _speed;
@@ -26,12 +31,16 @@ public sealed class PlayerDash : MonoBehaviour
     {
         _movement = GetComponent<PlayerMovement>();
         _input = GetComponent<PlayerInputHandler>();
+        _controls = GetComponent<PlayerControlState>();
     }
 
     // PlayerInputHandler(-200)가 수집한 입력을 사용합니다. 설치 미리보기 중에도 대시할 수 있습니다.
     private void Update()
     {
-        _state.TickCooldown(Time.deltaTime);
+        var presence = GetComponent<PlayerMatchPresence>();
+        bool inHub = presence != null && presence.Location == MatchPlayerLocation.Spaceship;
+        _state.TickCooldown(inHub ? Time.deltaTime : FieldSimulationTime.DeltaTime(this));
+        if (_controls != null && _controls.IsFieldPaused && !_controls.IsBlocked) return;
         if (!CanUseInput)
         {
             if (IsDashing) _movement.StopImmediately();

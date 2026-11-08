@@ -1,5 +1,7 @@
+// 계획이 확정한 분대 구성·생성 지점 또는 World 영역을 실행기에 전달하는 불변 자료입니다.
 using System;
 using System.Collections.Generic;
+using TeamHJD.Game.Domain;
 
 /// <summary>
 /// 분대 생성 명령에 포함되는 적 한 종류와 확정된 생성 수를 나타낸다.
@@ -36,6 +38,7 @@ public readonly struct EnemySpawnEntry
 /// </summary>
 public readonly struct SpawnInstruction
 {
+    public EncounterSpawnPlacement Placement { get; }
     /// <summary>
     /// 이 분대에 적용된 프리셋의 명령 값을 반환한다.
     /// 이후 분대 행동을 연결할 때도 같은 명령을 참조할 수 있다.
@@ -63,10 +66,13 @@ public readonly struct SpawnInstruction
     public SpawnInstruction(
         string squadOrder,
         string spawnPointId,
-        IReadOnlyList<EnemySpawnEntry> enemies)
+        IReadOnlyList<EnemySpawnEntry> enemies, EncounterSpawnPlacement placement = null)
     {
         SquadOrder = squadOrder;
         SpawnPointId = spawnPointId;
+        if (placement?.Area != null && !string.IsNullOrEmpty(spawnPointId))
+            throw new ArgumentException("World origins cannot masquerade as authored point IDs.", nameof(spawnPointId));
+        Placement = placement;
 
         if (enemies == null)
             throw new ArgumentNullException(nameof(enemies));

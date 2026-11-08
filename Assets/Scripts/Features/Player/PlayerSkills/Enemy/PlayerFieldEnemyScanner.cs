@@ -1,3 +1,4 @@
+// Player 장치가 영향 줄 적을 찾습니다. 실행 여부는 같은 필드 시간으로 판단합니다.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +7,13 @@ public sealed class PlayerFieldEnemyScanner
 {
     private readonly HashSet<EnemyNetworkController> _seen = new();
     private float _remaining;
+    internal float CaptureCheckpoint() => Mathf.Max(0, _remaining);
+    internal void RestoreCheckpoint(float remaining)
+    {
+        if (!PlayerSkillCheckpointIO.Finite(remaining) || remaining < 0 || remaining > .2f)
+            throw new System.IO.InvalidDataException("Invalid saved field target scan delay.");
+        _remaining = remaining; _seen.Clear();
+    }
     public void Tick(Vector2 position, float radius, float elapsed)
     {
         _remaining -= Mathf.Max(0, elapsed);
