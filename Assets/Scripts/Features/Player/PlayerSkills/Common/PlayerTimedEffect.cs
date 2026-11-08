@@ -1,3 +1,5 @@
+// Player 장치 효과의 기한과 종료를 주입된 필드 시계로 처리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -18,7 +20,8 @@ public sealed class PlayerTimedEffect : MonoBehaviour
 
     private void Update()
     {
-        _elapsed += Time.deltaTime;
+        if (!FieldSimulationTime.CanAdvance(this)) return;
+        _elapsed += FieldSimulationTime.DeltaTime(this);
         if (_elapsed >= Mathf.Max(.01f, _lifetime)) Destroy(gameObject);
     }
 }

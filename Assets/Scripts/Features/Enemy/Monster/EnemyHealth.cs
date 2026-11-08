@@ -1,3 +1,4 @@
+// 적의 실제 체력과 피격 허용·사망 사건을 소유합니다. 복원은 사건 재실행 없이 적용합니다.
 using System;
 using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine;
@@ -5,7 +6,7 @@ using UnityEngine;
 /// <summary>
 /// 적의 체력을 관리하고 사망 시 알린다.
 /// </summary>
-public class EnemyHealth : MonoBehaviour, IAttackableEnemy
+public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
 {
     [SerializeField] private int currentHealth;
     [SerializeField, Min(1)] private int maxHealth = 20;
@@ -63,6 +64,9 @@ public class EnemyHealth : MonoBehaviour, IAttackableEnemy
     /// <summary>허용된 공격의 양수 피해를 적용하고, 사망 시 한 번 알린다.</summary>
     public bool TryTakeDamage(int damage, AttackSourceType source)
     {
+        var network = GetComponent<EnemyNetworkController>();
+        if (network != null && network.IsSpawned && !network.IsServer) return false;
+        if (!TeamHJD.Game.Presentation.Scene.FieldSimulationTime.CanAdvance(this)) return false;
         if (damage <= 0 || !CanBeAttackedBy(source))
             return false;
 

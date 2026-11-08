@@ -1,3 +1,4 @@
+// 한 스폰 명령의 분대원과 공동 목표를 소유합니다. 제거·복원 시 같은 소속을 유지합니다.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -108,6 +109,14 @@ public class EnemySquad
     /// 후보가 없으면 목표를 비워 두고 분대 단위로 검색 간격을 둔다.
     /// </summary>
     /// <returns>선택되거나 유지된 공동 목표가 있으면 true.</returns>
+    internal Transform CheckpointTarget => _target?.TargetTransform;
+    internal void RestoreCheckpointTarget(Transform target)
+    {
+        _target = target != null ? target.GetComponent<ITargetable>() : null;
+        if (target != null && _target == null) throw new System.InvalidOperationException("Saved squad target is not targetable.");
+        foreach (var member in _members) member.AssignTarget(target);
+    }
+
     public bool SetTarget()
     {
         if (IsValidTarget(_target))

@@ -1,10 +1,11 @@
+using TeamHJD.Game.Presentation.Scene;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>투사체의 실행 권한, 수명, 깊이 정렬과 제거를 관리한다.</summary>
 [RequireComponent(typeof(NetworkObject))]
-public abstract class EnemyProjectile : NetworkBehaviour
+public abstract partial class EnemyProjectile : NetworkBehaviour
 {
     [Header("수명")]
     [SerializeField, Min(0.01f)] private float lifetime = 5f;
@@ -14,9 +15,12 @@ public abstract class EnemyProjectile : NetworkBehaviour
     [SerializeField] private float maxDepth = 70f;
 
     private TilemapRenderer _groundRenderer;
-    private bool _isInitialized;
+    protected bool _isInitialized;
+    protected double _expiresAt;
+    protected readonly NetworkVariable<ulong> _ownerId = new(ulong.MaxValue);
+    protected FieldSimulationActor _simulation;
 
-    protected bool CanSimulate => _isInitialized && (!IsSpawned || IsServer);
+    protected bool CanSimulate => _isInitialized && (!IsSpawned || IsServer) && FieldSimulationTime.CanAdvance(this);
 
     protected virtual void Awake()
     {
@@ -25,21 +29,64 @@ public abstract class EnemyProjectile : NetworkBehaviour
 
     private void LateUpdate()
     {
-        if (CanSimulate)
-            UpdateDepth();
+        BindReplicatedOwner();
+        if (!_isInitialized) return;
+        if (_simulation != null && _simulation.GameplayCancellation.IsCancellationRequested)
+        {
+            Remove();
+            return;
+        }
+        if (!CanSimulate) return;
+        if (FieldSimulationTime.Seconds(this) >= _expiresAt)
+        {
+            Remove();
+            return;
+        }
+        UpdateDepth();
     }
 
     protected void BeginLifetime()
     {
         _isInitialized = true;
         UpdateDepth();
-        CancelInvoke(nameof(Remove));
-        Invoke(nameof(Remove), lifetime);
+        _expiresAt = FieldSimulationTime.Seconds(this) + lifetime;
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        BindReplicatedOwner();
+        _simulation?.Synchronize();
+    }
+
+    /// <summary>생성자의 Match 시계와 종료 수명을 공유한다.</summary>
+    public virtual void BindOwner(Component owner, bool destroyOnCompletion = false)
+    {
+        if (owner == null) return;
+        FieldSimulationTime.BindSpawned(gameObject, owner, destroyOnCompletion);
+        _simulation = GetComponent<FieldSimulationActor>();
+        var source = owner.GetComponentInParent<NetworkObject>();
+        if (source != null && source.IsSpawned) _ownerId.Value = source.NetworkObjectId;
+    }
+
+    private void BindReplicatedOwner()
+    {
+        if (_simulation?.TimeSource != null || !IsSpawned || NetworkManager?.SpawnManager == null ||
+            !NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(_ownerId.Value, out var owner)) return;
+        if (owner.TryGetComponent<EnemySpawnExecutor>(out var executor))
+        {
+            _simulation = executor.BindCheckpointProjectile(gameObject);
+            return;
+        }
+        if (owner.GetComponent<FieldSimulationActor>()?.TimeSource == null) return;
+        FieldSimulationTime.BindSpawned(gameObject, owner, false);
+        _simulation = GetComponent<FieldSimulationActor>();
     }
 
     public override void OnNetworkDespawn()
     {
-        CancelInvoke(nameof(Remove));
+        if (_simulation?.TimeSource != null) _simulation.Unbind(_simulation.TimeSource);
+        _simulation = null;
         _isInitialized = false;
         base.OnNetworkDespawn();
     }
@@ -86,7 +133,6 @@ public abstract class EnemyProjectile : NetworkBehaviour
         if (IsSpawned && !IsServer)
             return;
 
-        CancelInvoke(nameof(Remove));
         _isInitialized = false;
 
         if (IsSpawned)

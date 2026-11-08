@@ -15,17 +15,33 @@ namespace TeamHJD.Game.Application
         private readonly CancellationTokenSource _lifetime = new();
         private readonly TimeSpan _missionTimeout;
         private bool _disposed;
-        public GameFlowRoutes Routes { get; }
+        public GameFlowRoutes Routes
+        {
+            get;
+        }
         public GameFlowPhase Phase { get; private set; } = GameFlowPhase.Startup;
-        public string CurrentSceneKey { get; private set; }
-        public bool IsTransitioning { get; private set; }
-        public Exception LastFailure { get; private set; }
-        public Exception LastObserverError { get; private set; }
+        public string CurrentSceneKey
+        {
+            get; private set;
+        }
+        public bool IsTransitioning
+        {
+            get; private set;
+        }
+        public Exception LastFailure
+        {
+            get; private set;
+        }
+        public Exception LastObserverError
+        {
+            get; private set;
+        }
         public event Action Changed;
 
         public GameFlowController(IGameFlowHost host, GameFlowRoutes routes, TimeSpan? missionTimeout = null)
         {
-            _host = host ?? throw new ArgumentNullException(nameof(host)); Routes = routes ?? throw new ArgumentNullException(nameof(routes));
+            _host = host ?? throw new ArgumentNullException(nameof(host));
+            Routes = routes ?? throw new ArgumentNullException(nameof(routes));
             _missionTimeout = missionTimeout ?? TimeSpan.FromSeconds(30);
             if (_missionTimeout <= TimeSpan.Zero || _missionTimeout.TotalMilliseconds > int.MaxValue)
                 throw new ArgumentOutOfRangeException(nameof(missionTimeout));
@@ -37,14 +53,38 @@ namespace TeamHJD.Game.Application
             RequireAvailable();
             if (Phase != GameFlowPhase.Startup || IsTransitioning || !_host.IsLoaded(Routes.MainMenuScene))
                 throw new InvalidOperationException("Adopt only the loaded startup menu before travel.");
-            CurrentSceneKey = Routes.MainMenuScene; Phase = GameFlowPhase.MainMenu; Publish();
+            CurrentSceneKey = Routes.MainMenuScene;
+            Phase = GameFlowPhase.MainMenu;
+            Publish();
+        }
+
+        /// <summary>App의 NGO Scene/Match 관찰자가 Host가 확정한 실제 도착을 반영합니다. 새 로드나 접속을 요청하지 않습니다.</summary>
+        public void AdoptSynchronizedScene(string sceneKey, bool missionReady)
+        {
+            RequireAvailable();
+            if (IsTransitioning || !_host.IsLoaded(sceneKey))
+                throw new InvalidOperationException("Observe only a loaded, composed Scene outside a local transition.");
+            GameFlowPhase destination;
+            if (sceneKey == Routes.MainMenuScene)
+                destination = GameFlowPhase.MainMenu;
+            else if (sceneKey == Routes.SpaceshipScene)
+                destination = GameFlowPhase.Spaceship;
+            else if (missionReady)
+                destination = GameFlowPhase.Mission;
+            else
+                throw new InvalidOperationException("A Mission requires its actual local composition before adoption.");
+            CurrentSceneKey = sceneKey;
+            Phase = destination;
+            LastFailure = null;
+            Publish();
         }
 
         /// <summary>시작 버튼이 현재 MainMenu에서 호출합니다. 완료 시 우주선 Scene에 도착합니다.</summary>
         public Task EnterSpaceshipAsync(CancellationToken cancellation = default)
         {
             RequireAvailable();
-            if (Phase != GameFlowPhase.MainMenu) throw new InvalidOperationException("Enter the spaceship from the main menu.");
+            if (Phase != GameFlowPhase.MainMenu)
+                throw new InvalidOperationException("Enter the spaceship from the main menu.");
             return TravelAsync(Routes.SpaceshipScene, GameFlowPhase.Spaceship, cancellation);
         }
 
@@ -52,9 +92,19 @@ namespace TeamHJD.Game.Application
         public Task LaunchMissionAsync(string missionScene, CancellationToken cancellation = default)
         {
             RequireAvailable();
-            if (Phase != GameFlowPhase.Spaceship) throw new InvalidOperationException("Launch a mission from the spaceship.");
+            if (Phase != GameFlowPhase.Spaceship)
+                throw new InvalidOperationException("Launch a mission from the spaceship.");
             if (missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
                 throw new ArgumentException("Choose a gameplay Scene for the mission.", nameof(missionScene));
+            return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation);
+        }
+
+        /// <summary>App의 저장 복원 조율부가 메타데이터 검증 후 호출합니다. 실제 복원이 끝나야 Mission 입장 성공입니다.</summary>
+        public Task ResumeMissionAsync(string missionScene, CancellationToken cancellation = default)
+        {
+            RequireAvailable();
+            if (Phase == GameFlowPhase.Startup || missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
+                throw new InvalidOperationException("Resume a gameplay Scene after startup initialization.");
             return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation);
         }
 
@@ -71,7 +121,8 @@ namespace TeamHJD.Game.Application
         public Task RestartMissionAsync(CancellationToken cancellation = default)
         {
             RequireAvailable();
-            if (Phase != GameFlowPhase.Mission) throw new InvalidOperationException("Restart the current ready mission.");
+            if (Phase != GameFlowPhase.Mission)
+                throw new InvalidOperationException("Restart the current ready mission.");
             return TravelAsync(CurrentSceneKey, GameFlowPhase.Mission, cancellation);
         }
 
@@ -81,31 +132,40 @@ namespace TeamHJD.Game.Application
         private async Task TravelAsync(string sceneKey, GameFlowPhase destination, CancellationToken cancellation)
         {
             RequireAvailable();
-            if (IsTransitioning) throw new InvalidOperationException("A game-flow transition is already running.");
+            if (IsTransitioning)
+                throw new InvalidOperationException("A game-flow transition is already running.");
             cancellation.ThrowIfCancellationRequested();
-            if (!_host.CanLoad(sceneKey)) throw new ArgumentException("Enable the authored Scene in Build Settings.", nameof(sceneKey));
+            if (!_host.CanLoad(sceneKey))
+                throw new ArgumentException("Enable the authored Scene in Build Settings.", nameof(sceneKey));
             string restriction = _host.TravelRestriction;
-            if (!string.IsNullOrEmpty(restriction)) throw new InvalidOperationException(restriction);
+            if (!string.IsNullOrEmpty(restriction))
+                throw new InvalidOperationException(restriction);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellation, _lifetime.Token);
-            IsTransitioning = true; LastFailure = null; Publish();
+            IsTransitioning = true;
+            LastFailure = null;
+            Publish();
             try
             {
                 await _host.TravelAsync(sceneKey, linked.Token);
-                if (_disposed) throw new OperationCanceledException("The App stopped during travel.");
+                if (_disposed)
+                    throw new OperationCanceledException("The App stopped during travel.");
                 if (destination == GameFlowPhase.Mission)
                 {
                     using var ready = CancellationTokenSource.CreateLinkedTokenSource(linked.Token);
                     ready.CancelAfter(_missionTimeout);
                     await _host.WaitForMissionReadyAsync(sceneKey, ready.Token);
                 }
-                if (_disposed) throw new OperationCanceledException("The App stopped during arrival.");
-                CurrentSceneKey = sceneKey; Phase = destination;
+                if (_disposed)
+                    throw new OperationCanceledException("The App stopped during arrival.");
+                CurrentSceneKey = sceneKey;
+                Phase = destination;
             }
             catch (Exception error)
             {
                 if (!_disposed)
                 {
-                    LastFailure = error; CurrentSceneKey = _host.ActiveSceneKey;
+                    LastFailure = error;
+                    CurrentSceneKey = _host.ActiveSceneKey;
                     Phase = GameFlowPhase.Faulted;
                 }
                 throw;
@@ -115,15 +175,31 @@ namespace TeamHJD.Game.Application
 
         private void Publish()
         {
-            if (_disposed || Changed == null) return;
+            if (_disposed || Changed == null)
+                return;
             foreach (Action handler in Changed.GetInvocationList())
-                try { handler(); } catch (Exception error) { LastObserverError = error; }
+                try
+                {
+                    handler();
+                }
+                catch (Exception error) { LastObserverError = error; }
         }
-        private void RequireAvailable() { if (_disposed) throw new ObjectDisposedException(nameof(GameFlowController)); }
+        private void RequireAvailable()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(GameFlowController));
+        }
         public void Dispose()
         {
-            if (_disposed) return; _disposed = true; Changed = null;
-            try { _lifetime.Cancel(); } finally { _lifetime.Dispose(); }
+            if (_disposed)
+                return;
+            _disposed = true;
+            Changed = null;
+            try
+            {
+                _lifetime.Cancel();
+            }
+            finally { _lifetime.Dispose(); }
         }
     }
 }

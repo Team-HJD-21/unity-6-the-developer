@@ -37,7 +37,7 @@ public class HealingOrbProjectile : EnemyProjectile
         Vector2 nextPosition = Vector2.MoveTowards(
             transform.position,
             targetPosition,
-            moveSpeed * Time.deltaTime);
+            moveSpeed * TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this));
 
         // 깊이 정렬에 사용하는 Z를 유지하고 XY 평면에서 추적한다.
         Vector3 position = transform.position;

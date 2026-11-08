@@ -1,17 +1,22 @@
-# The Developer — Project Documentation
+# The Developer 문서 안내
 
-Core 기반 main 통합 검토: [11월 5일 범위·현행 Feature 호환·검증 기록](planning/2026-11-05-foundation-main-integration.md) · [실제 호출·수명·API 지도](architecture/core-lifecycle-and-api-guide.md) · [Core 코드 안내](../Assets/Scripts/Core/README.md). 기존 회의록과 파트별 문서는 유지하며 이 통합으로 미연결 Feature의 완료를 선언하지 않는다.
+최근 정기회의: [11월 7일 결정 근거](archive/2026-11-07/regular-meeting.md). 미션 HUD Alert와 Enemy 규칙은 [Product Plan](product/PROJECT_PLAN.md), PR 리뷰 흐름은 [팀 협업 규칙](team/TEAM_WORKFLOW.md#review와-approval), 담당별 후속은 [현재 실행 계획](planning/current-execution-plan.md)을 따른다.
 
-**Core 연동 전 필독:** [Random API 사용법](architecture/core-random-api.md)에서 도입 이유, Host/로컬 연출 구분, 주입·가중치 선택·저장 예제와 기존 6개 파일의 교체 위치를 확인한다. [우주선 출입 보고 API](architecture/core-presence-report-api.md)는 실제 Host 이동 후 Core에 결과를 보고하는 계약이다. Feature 호출부는 이 PR에서 교체하지 않았다.
+**Core main 전달:** [복구 PR 검토 문서](team/reviews/602-core-main-recovery.md)에서 #624~#631의 기존 리뷰, 최신 main과의 통합 차이, 이번 검증과 남은 작업을 확인합니다. 기존 수동 인수 자료는 [확인7단계·구현 전체·팀원 전달](planning/2026-11-05-core-local-review.md)에 보존합니다.
 
-Random 등록·해제는 공용 정적 함수 `RandomBinding.Bind` 한 줄로 연결한다. [바로 사용하기](architecture/core-random-api.md#바로-사용하기--연결-한-줄-기존-함수-그대로)에서 완성된 컴포넌트 예제와 순수 함수 사용법을 확인한다. 별도 부모 클래스나 파트별 해제 클래스를 만들지 않는다.
+- 실제 수명/코드 읽기: [Core 지도](architecture/core-lifecycle-and-api-guide.md) · [Feature 통합](architecture/core-feature-integration-guide.md) · [구조 정리 판단](architecture/core-structure-review-2026-11-05.md).
+- 최신 플레이: [우주선 출격/왕복](architecture/spaceship-travel-api.md) · [낮밤5분](architecture/day-night-api.md) · [Day/Night·타이머·Reset](architecture/weather-debug-hud.md). 왕복은0.3초씩 총약0.9초이며 진행 바를 표시하지 않습니다.
+- 공용 API: [Random](architecture/core-random-api.md) · [가중 선택·비 50% 예제](architecture/random-weighted-selection.md) · [시간/예약](architecture/match-time-api.md) · [저장 실행](architecture/checkpoint-execution-api.md) · [네트워크](architecture/network-match-api.md) · [Steam](architecture/steam-api.md).
+- 구현/증거: [Core 결과](planning/2026-11-05-core-completion-results.md) · [낮밤/Steam 결과](planning/2026-11-05-day-night-steam-results.md) · [요구/Issue 대응](planning/2026-11-05-core-requirements-and-issue-map.md). 과거 시점의 한계는 최신 최종 안내와 구분해서 읽습니다.
+
+#623은 main에 반영됐지만 #624~#631은 중간 작업 브랜치에 병합됐습니다. 이를 최신 main 위의 복구 PR 하나로 전달하며, main 병합 여부는 위 검토 문서의 실제 PR 상태로 확인합니다. 실제 Weather writer가 없어 운영 전체 Save는 차단합니다. Host 포털 왕복과 Steam SDK/로비는 구현됐고, Client 출입 요청·Steam 게임 transport·Backend·Player 원격 본체는 각각 다른 후속입니다. 팀원 전달 문서는 `Docs/Local/Review/CoreCompletion-2026-11-05/by-owner`의 공유 제외 파일을 직접 보냅니다.
 
 최근 기획·후속 검토: [10월 30일 기획 보강](planning/2026-10-30-planning-review.md) · [10월 31일 정기회의](planning/2026-10-31-regular-meeting.md) — 전체 전사·수기 대조로 자동 활성화·성장 방향을 보강하고 우주선 필드 정지, 점령/스폰·그룹화, 재방문·실패 보상과 후속 작업을 구분했다. 세부 설계·실제 구현·재미 검증은 별도다.
 
 최근 진행 공유: [11월 3일 주간 보고](planning/2026-11-03-weekly-progress.md) — 지원형 소환/회복 두 종 분리, 암살자 비탐지 우선 대상, 수리 검증용 터렛 배치와 파트별 후속. 분열 방벽은 실험 후보이며 구현·실행 검증 완료나 새 Sprint 확정이 아니다.
 
-수정일: 2026-11-03
-상태: 현행 PL 기준 / 몬스터 목표 배정·추적 우선 시험 방향 기록 · 실행 검증 미완료
+수정일: 2026-11-07
+상태: 현행 문서 안내 · 제품·실행·검증은 각 기준 문서에서 확인
 
 이 폴더는 Unity 6 기반 `The Developer`의 제품 기획, New Core 아키텍처, 역할, Milestone과 실행 규칙을 보관한다. 레거시 코드는 기능·수치·연출의 참고 자료이며 신규 기능의 기반으로 사용하지 않는다.
 
@@ -24,7 +29,7 @@ Random 등록·해제는 공용 정적 함수 `RandomBinding.Bind` 한 줄로 �
 
 2026-11-01 사용자 확인: 10월 31일 회의의 **전원 크런치 모드 도입은 확정된 팀 공통 운영 결정**이다. 적용 대상 미확인이라는 기존 해석을 정정했다. 작업·휴식 기간 발언과 후속은 [회의 기록](planning/2026-10-31-regular-meeting.md)을 따른다.
 
-2026-10-30·31 후속을 우선 읽는다. 자동 활성화는 사거리 내 적 수 후 전력 1당 공격력 설명, 일시 OFF 후 순차 ON·부족 전력 예약 대기 방향이다. 일반 OFF는 즉시 비활성화·점진 전력 반환 시작과 냉각을 함께 다루며 즉시 전량 충전이 아니다. 우주선 입장 시 시간·몬스터·터렛 정지를 재확인했고, 점령에 따른 스폰 영향과 그룹화·이전 행성 재방문을 정리했다. 상세/미정과 근거는 [기획 보강](planning/2026-10-30-planning-review.md) · [정기회의](planning/2026-10-31-regular-meeting.md), 제품 기준은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 새 Sprint·Build/Gate 통과를 뜻하지 않는다.
+현행 게임 규칙은 [Product Plan](product/PROJECT_PLAN.md)을 따른다. 회의별 설명은 당시 근거이며 11월 6일 후반 정정과 구분한다. 새 Sprint·Build/Gate 통과를 뜻하지 않는다.
 
 2026-10-26 Core 후속을 최신 main에 통합하고 Match 운영 책임을 분리하는 배치를 시작했다. [Match 운영 책임과 수명 계약](architecture/match-management-responsibilities.md)은 Feature 상태 원본, MatchCoordinator / SceneFlowController / ScreenManager의 역할과 완료·입력·환경·추가 생성 계약을 설명한다. [이번 구현 기록](planning/2026-10-26-core-sprint-implementation.md)에서 CU 명시 초기화와 실제 Scene 검사 결과·다음 배치를 확인한다. 목표 구조와 실제 구현/검증 완료를 구분한다. 아래 10/15 검증은 당시 source의 증거다.
 
@@ -140,34 +145,25 @@ Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 �
 
 ## Source of Truth
 
-| 질문 | 기준 문서 | 보조 문서 |
-| --- | --- | --- |
-| 무엇을 만들고 무엇을 미룰 것인가? | [Product Plan](product/PROJECT_PLAN.md) Decision Log | [System Charter](architecture/system-rearchitecture-charter.md) |
-| 레거시를 어떻게 교체하고 어떤 의존성을 허용하는가? | [System Charter](architecture/system-rearchitecture-charter.md) | [Naming](architecture/naming-and-architecture-conventions.md), [Architecture Notes](architecture/architecture-rebuild-notes.md) |
-| M0~M5에서 무엇을 언제 검증하는가? | [Milestones and Core Design](planning/milestones-and-core-design.md) | [Development Flow](planning/DEVELOPMENT_FLOW.md) |
-| 누가 무엇을 소유하는가? | [Team Role Ownership](team/TEAM_ROLE_OWNERSHIP.md) | [Team Workflow](team/TEAM_WORKFLOW.md) |
-| Sprint·Git·Review·Ready·Done은 어떻게 운영하는가? | [Team Workflow](team/TEAM_WORKFLOW.md) | [Development Flow](planning/DEVELOPMENT_FLOW.md) |
-| 현재 무엇을 하는가? | [Sprint 1 Stage 1 PoC](planning/SPRINT_1_STAGE_1_POC.md) | GitHub Issue/Project |
+| 질문 | 기준 |
+| --- | --- |
+| 게임 방향·범위·확정 제품 규칙 | [Product Plan](product/PROJECT_PLAN.md) |
+| 현재 목표·미정·검증할 항목 | [현재 실행 계획](planning/current-execution-plan.md) |
+| 장기 Milestone·기술 Gate | [Milestone](planning/milestones-and-core-design.md) |
+| 책임·수명과 공용 호출 | [Core API 지도](architecture/core-lifecycle-and-api-guide.md), [Match 책임](architecture/match-management-responsibilities.md), 각 영역 API |
+| Player 입력·설치 | [입력 계약](architecture/player-primary-input-api.md), [스킬](architecture/player-skill-review.md) |
+| 터렛 상태·전력·공개 API | [터렛 API](architecture/turrets/api-reference.md), [구조와 초안](architecture/turrets/index.md) |
+| Enemy 구조·생성 | [Enemy 가이드](architecture/enemy-system-guide.md) |
+| 날씨 변경·예고·화면 효과 | [날씨 시스템 설계와 API](architecture/weather-system-guide.md) |
+| 담당·진행 상태 | GitHub Issue/Project. [역할](team/TEAM_ROLE_OWNERSHIP.md)은 책임 기준 |
+| 실제 동작과 인수 | 해당 코드 버전과 실행/PL 인수 증거. 계획으로 완료를 추정하지 않음 |
 
-충돌할 경우 위 표의 기준 문서가 우선한다. 기준을 변경할 때는 보조 문서와 현재 Backlog를 같은 PR에서 함께 갱신한다.
+## 찾기
 
-## 용어 구분
+- [공식 문서 검색](https://docs.teamhjd.com/docs/projects/the-developer/api-search): 선택한 프로젝트의 현행 문서만 검색한다.
+- [공식 아카이브 검색](https://docs.teamhjd.com/docs/projects/the-developer/archive-search): 사이트에 게시된 해당 프로젝트의 과거 문서만 별도로 검색한다.
+- [정리 규칙](DOCS_ORGANIZATION_RULES.md) · [개발 흐름](planning/DEVELOPMENT_FLOW.md) · [기술 명명](architecture/naming-and-architecture-conventions.md) · [에셋 구조](architecture/asset-layout-and-migration.md)
+- [도구 사용법](tooling/game-debugger-guide.md) · [Unity 검사 규칙](development/unity-runtime-test-guidelines.md)
+- [교체·보관 목차](archive/2026-11-05/index.md). 과거 문서의 당시 경로·테스트·미정은 현재 계약이 아니다.
 
-- `Product Vertical Slice`: Spaceship 준비부터 Planet 전투·귀환까지 플레이어가 경험하는 M2 검증판
-- `Architecture Slice`: M1에서 한 계약을 Domain부터 Test Scene까지 연결하는 작은 기술 단위
-- `P0`: 해당 Milestone의 통과를 막는 필수 작업
-- `P1`: Milestone의 핵심 결과를 완성하는 작업
-- `P2`: 품질·사용성·도구 개선 작업
-- `P3`: 현재 Milestone 밖의 아이디어 또는 Deferred 작업
-
-## 문서 변경 규칙
-
-- 게임 규칙·범위·Deferred 변경: [PROJECT_PLAN.md](product/PROJECT_PLAN.md) Decision Log
-- Core lifecycle·data contract·외부 SDK 경계 변경: System Charter와 Core Design
-- 역할·AI Owner 변경: Team Role Ownership과 Team Workflow
-- Milestone 또는 Priority 변경: Core Design, Development Flow, 현재 Sprint Backlog
-- 승인되지 않은 초안은 Source of Truth와 같은 표현을 사용하지 않는다.
-
-- [Player Input Guide](team/player-input-guide.md): Player V2 입력, Match 연결과 임시 포탑 체력·재충전 설정
-
-- [2026-10-30 기획 보강 검토](planning/2026-10-30-planning-review.md) · [2026-10-31 정기회의 검토](planning/2026-10-31-regular-meeting.md): 원본 전사/수기 대조와 결정·후속·미정 근거.
+현행 문서를 교체하기 전 버전은 보존하고 기존 링크는 보관 안내로 유지한다. 팀원 이름을 기술 식별자의 부분 문자열에 치환하지 않는다.

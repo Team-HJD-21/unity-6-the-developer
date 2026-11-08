@@ -16,6 +16,7 @@ namespace TeamHJD.Game.Editor
         private static InitialStageCompositionRoot _timeScene;
         public static void DrawOverview(GameDebugMonitorState view)
         {
+            GameDebugPlatformPanel.Draw();
             GameDebugGameFlowPanel.Draw();
             var source=GameDebuggerSession.Source;
             var run=GameDebuggerSession.Current;
@@ -45,6 +46,7 @@ namespace TeamHJD.Game.Editor
                 }
             }
             if (_timeScene == null) _timeScene = UnityEngine.Object.FindAnyObjectByType<InitialStageCompositionRoot>();
+            GameDebugCheckpointPanel.Draw(_timeScene);
             var matchTime = _timeScene == null ? null : _timeScene.MatchTime;
             var presence = _timeScene == null ? null : _timeScene.MatchPresence;
             if (matchTime != null) using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
@@ -63,6 +65,12 @@ namespace TeamHJD.Game.Editor
                 EditorGUILayout.LabelField("Revision", environment == null ? "미제공" : $"r{environment.Revision} · {environment.GameSeconds:F1}s");
                 EditorGUILayout.LabelField("날씨 / 시간대", environment == null ? "미제공 / 미제공" :
                     $"{(environment.HasWeather ? environment.WeatherId.Value : "미제공")} / {(environment.HasTimeOfDay ? environment.TimeOfDayId.Value : "미제공")}");
+                var cycle = _timeScene == null ? null : _timeScene.GetComponentsInChildren<MatchDayNightCycle>().FirstOrDefault();
+                // 환경 source는 Scene 내 Weather 객체에 있으므로 같은 Scene에서만 찾습니다.
+                if (cycle == null && _timeScene != null)
+                    cycle = _timeScene.gameObject.scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MatchDayNightCycle>()).FirstOrDefault();
+                if (cycle != null)
+                    EditorGUILayout.LabelField("낮밤 전환까지", cycle.IsAuthority ? $"{cycle.RemainingSeconds:F1} 게임 초 · {cycle.Phase}" : $"{cycle.Phase} · Host 확정 상태");
                 EditorGUILayout.LabelField("날씨 예고", environment == null || environment.Forecast.Count == 0 ? "미제공" :
                     string.Join(" → ", environment.Forecast.Select(value => value.Value)), EditorStyles.wordWrappedLabel);
             }

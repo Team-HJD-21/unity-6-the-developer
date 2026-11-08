@@ -11,6 +11,9 @@ public sealed class SpawnPointSpatialPolicy
 {
     public const string Description = "Grid cell service + current enemies + pending enemies → lower current pressure → point service → frontline distance → ordinal ID; actual spawns committed; complete sets only";
     private readonly SpawnDistributionHistory _history = new();
+    internal SpawnDistributionHistory.State CaptureCheckpoint() => _history.CaptureCheckpoint();
+    internal void RestoreCheckpoint(SpawnDistributionHistory.State state, MatchId match) => _history.RestoreCheckpoint(state, match);
+
 
     public const string AutomaticDescription = "Target-cell budget allocation by population and player presence; per-point weighted preset selection; shared request and allocation budgets; cell capacity and pending enemies; Core random; complete squads only";
 
@@ -50,7 +53,7 @@ public sealed class SpawnPointSpatialPolicy
     public void RecordExecuted(BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpawnDecisionSnapshot.Actual> actuals)
     {
         if (!_history.Matches(snapshot) || actuals == null) return;
-        foreach (SpawnDecisionSnapshot.Actual actual in actuals) _history.RecordSpawn(actual.PointId);
+        foreach (SpawnDecisionSnapshot.Actual actual in actuals) _history.RecordSpawn(actual.PointId, actual.Position);
     }
 
     internal static double DistanceToFrontlineSquared(

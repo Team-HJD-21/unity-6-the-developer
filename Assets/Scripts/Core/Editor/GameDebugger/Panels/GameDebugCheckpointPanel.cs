@@ -1,0 +1,82 @@
+// Game Debugger에서 실제 Host 저장 API와 필수 writer 연결 상태를 확인합니다.
+// 자동 저장 조건이나 우회 캡처를 만들지 않고 Runtime과 같은 Save/Restore를 호출합니다.
+using System;
+using TeamHJD.Game.Application;
+using TeamHJD.Game.Bootstrap.SceneComposition;
+using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
+using UnityEditor;
+using UnityEngine;
+
+namespace TeamHJD.Game.Editor
+{
+    internal static class GameDebugCheckpointPanel
+    {
+        private static string _slot = "manual";
+        private static bool _restoreCurrency;
+        private static bool _pending;
+        private static CheckpointOperationResult _result;
+        private static CheckpointService _displayedService;
+        private static string _error;
+        private static Vector2 _scroll;
+
+        public static void Draw(InitialStageCompositionRoot scene)
+        {
+            if (scene == null || scene.Checkpoints == null) return;
+            var service = scene.Checkpoints;
+            if (!ReferenceEquals(_displayedService, service))
+            {
+                _displayedService = service;
+                _result = null;
+                _error = null;
+            }
+            using var box = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("CHECKPOINT · HOST", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("등록 원본 / 필수 누락", $"{service.ParticipantCount} / {service.MissingParticipantKeys.Count}");
+            if (service.MissingParticipantKeys.Count > 0)
+            {
+                EditorGUILayout.HelpBox("필수 Feature writer가 연결되어야 전체 저장/복원을 실행합니다. Fixture나 일부 원본만 저장한 성공으로 바꾸지 않습니다.", MessageType.Warning);
+                _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.Height(Mathf.Min(110, 22 * service.MissingParticipantKeys.Count)));
+                foreach (string key in service.MissingParticipantKeys) EditorGUILayout.LabelField(key, EditorStyles.miniLabel);
+                EditorGUILayout.EndScrollView();
+            }
+            _slot = EditorGUILayout.TextField("슬롯", _slot);
+            _restoreCurrency = EditorGUILayout.Toggle("재화도 체크포인트로 복원", _restoreCurrency);
+            EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. 자동 실행 사건은 등록하지 않았습니다.", EditorStyles.wordWrappedMiniLabel);
+            bool validSlot = TrySlot(out _);
+            using (new EditorGUI.DisabledScope(_pending || service.IsBusy || !validSlot || service.MissingParticipantKeys.Count > 0))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("명시 저장")) Execute(scene, false);
+                if (GUILayout.Button("명시 복원")) Execute(scene, true);
+            }
+            if (!validSlot) EditorGUILayout.HelpBox("슬롯은 영문·숫자·-·_를 사용합니다. 경로나 Windows 장치 이름은 허용하지 않습니다.", MessageType.Info);
+            if (_pending) EditorGUILayout.LabelField("처리 중…", EditorStyles.boldLabel);
+            if (_result != null) EditorGUILayout.HelpBox(_result.Status + " · " + _result.Reason,
+                _result.IsSuccess ? MessageType.Info : MessageType.Warning);
+            if (_error != null) EditorGUILayout.HelpBox(_error, MessageType.Error);
+        }
+
+        private static bool TrySlot(out CheckpointSlot slot)
+        {
+            try { slot = new CheckpointSlot(_slot); return true; }
+            catch (ArgumentException) { slot = default; return false; }
+        }
+
+        private static async void Execute(InitialStageCompositionRoot scene, bool restore)
+        {
+            if (_pending || !TrySlot(out var slot) || scene == null || scene.Checkpoints == null) return;
+            var service = scene.Checkpoints;
+            var policy = new CheckpointRestorePolicy(_restoreCurrency ? CurrencyRestorePolicy.RestoreCheckpoint : CurrencyRestorePolicy.PreserveCurrent);
+            _pending = true;
+            _error = null;
+            try
+            {
+                var result = restore ? await service.RestoreAsync(slot, policy) : await service.SaveAsync(slot);
+                if (scene != null && ReferenceEquals(scene.Checkpoints, service)) _result = result;
+            }
+            catch (Exception error) { if (ReferenceEquals(_displayedService, service)) _error = error.Message; }
+            finally { _pending = false; }
+        }
+    }
+}

@@ -12,6 +12,8 @@ namespace TeamHJD.Game.Editor
     internal static class GameDebugGameFlowPanel
     {
         private static AppRoot _app;
+        private static string _checkpointSlot = "manual";
+        private static string _checkpointMessage;
         private static string _mission = "Assets/Scenes/Gameplay/Initial_Stage.unity";
         public static void Draw()
         {
@@ -40,8 +42,19 @@ namespace TeamHJD.Game.Editor
                     Run(() => flow.ReturnToSpaceshipAsync());
                 if (flow.Phase != GameFlowPhase.MainMenu && GUILayout.Button("시작 화면으로")) Run(() => flow.OpenMainMenuAsync());
             }
+            _checkpointSlot = EditorGUILayout.TextField("Checkpoint slot", _checkpointSlot);
+            using (new EditorGUI.DisabledScope(flow.IsTransitioning || _app.IsResumingCheckpoint))
+                if (GUILayout.Button("저장 슬롯에서 새 Mission 복원")) Run(ResumeCheckpoint);
+            if (!string.IsNullOrEmpty(_checkpointMessage)) EditorGUILayout.HelpBox(_checkpointMessage, MessageType.Info);
+            EditorGUILayout.HelpBox("전체 Feature writer가 필요합니다. 현재 Weather writer는 담당자 연결 전이며, 자동 저장은 설정하지 않습니다.", MessageType.Info);
             if (flow.LastFailure != null) EditorGUILayout.HelpBox(flow.LastFailure.Message, MessageType.Warning);
         }
+        private static async Task ResumeCheckpoint()
+        {
+            var result = await _app.ResumeCheckpointAsync(new CheckpointSlot(_checkpointSlot), _mission);
+            _checkpointMessage = result.Status + " · " + result.Reason;
+        }
+
         private static async void Run(Func<Task> operation)
         {
             try { await operation(); }

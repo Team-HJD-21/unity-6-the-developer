@@ -64,7 +64,7 @@ sequenceDiagram
 - `ISceneFlow`는 실제 Unity 로더 adapter의 좁은 Port로 유지한다. 전환 취소가 Unity AsyncOperation 자체를 되감는다는 보장은 없으므로 로더의 실제 완료 후 소유한 Scene을 정리한다.
 - 필수 Scene 참조/ID/PlayerStart 슬롯/CU/Grid/NGO 등록은 준비 전에 읽기 전용으로 검사한다. 자동 Scene 수정·기본값 덮어쓰기는 별도 Editor 명령이다.
 - 입력 잠금은 소유자별 token/lease로 획득·해제한다. 화면 하나를 닫아 다른 화면·로딩·사망·완료 잠금을 해제하지 않는다. 기존 Player 입력 경계로 투영하고 새 static 전역 입력 상태를 만들지 않는다.
-- 개인 메뉴·UI 입력 차단·Debugger TimeScale·Host의 게임 pause는 별개다. 임시 Additive Hub 이동을 항상 Match 종료로 바꾸지 않는다. 전장 시간/재입장 제품 정책은 미결이다.
+- 개인 메뉴·UI 입력 차단·Debugger TimeScale·Host의 게임 pause는 별개다. 임시 Additive Hub 이동을 항상 Match 종료로 바꾸지 않는다. 확정 정책은 1인에서는 내부 진입 시 필드 정지, 협동에서는 전원이 내부일 때만 필드 정지다. 네트워크·UI·허브 이동은 계속된다. 실제 포털 성공 후 보고는 김진태가 연결한다.
 
 ## 시간·환경·추가 생성
 
@@ -80,10 +80,10 @@ sequenceDiagram
 | 예전 책임 | 현재/목표 대체 | 상태 |
 | --- | --- | --- |
 | 전역 부팅·영구 Manager | AppBootstrap / AppRoot / AppServices | 기존 기반 |
-| 게임 시작·승패·종료 | MatchSession + MatchCoordinator + IModeRules | Session 존재, Coordinator 실행 연결 예정 |
-| Scene 이동 | ISceneFlow + SceneFlowController + Unity adapter | Port/Fake 존재, 실제 흐름 예정 |
-| 화면/팝업·로딩·결과 | ScreenManager + Presenter/View | 기존 Combat HUD 유지, 운영 화면 예정 |
-| Player/CU HP·터렛 전력 | 실제 Feature | 유지, 별도 Core writer 없음 |
+| 게임 시작·승패·종료 | MatchSession + MatchCoordinator + IModeRules | 실제 CU 파괴→단일 패배 결과·취소·Feature 중지 연결. 미정 Boss 승리는 제외 |
+| Scene 이동 | ISceneFlow + SceneFlowController + Unity adapter | Unity/NGO 로더·공유 로드 완료·출격 준비 장벽 연결 |
+| 화면/팝업·로딩·결과 | ScreenManager + Presenter/View | 기존 HUD 유지, 메뉴/로딩/결과와 체크포인트 호출·기존 시각 에셋 연결 |
+| Player/CU HP·터렛 전력 | 실제 Feature | Feature 소유 원본과 해당 .Checkpoint writer. Core의 별도 HP 원본 없음 |
 | 프로필·재화·저장 | Profile/Backend/Local cache 경계 | Fake 존재, 이번 전체 구현 대상 아님 |
 | Audio·옵션·커서 | 표현 서비스/로컬 UI | 누락을 명시, 이번 전체 구현 대상 아님 |
 

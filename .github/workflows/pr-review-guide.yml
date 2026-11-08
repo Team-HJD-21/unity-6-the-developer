@@ -1,0 +1,204 @@
+name: PR Review Guide
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, ready_for_review, reopened, synchronize]
+
+permissions: {}
+
+concurrency:
+  group: pr-review-guide-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.id == github.event.repository.id
+    # codex-action drop-sudo fails on Ubuntu 26.04 (openai/codex-action#188).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      review: ${{ steps.codex.outputs.final-message }}
+      base_sha: ${{ steps.prepare.outputs.base_sha }}
+    steps:
+      # This workflow has a secret. Check out the trusted base only and read the PR as data.
+      - name: Prepare the PR diff as review input
+        id: prepare
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const fs = require('node:fs');
+            const eventPr = context.payload.pull_request;
+            const params = { ...context.repo, pull_number: eventPr.number };
+            const { data: current } = await github.rest.pulls.get(params);
+            if (current.state !== 'open' || current.draft || current.head.sha !== eventPr.head.sha) return;
+
+            const files = (await github.paginate(github.rest.pulls.listFiles, { ...params, per_page: 100 }))
+              .filter(file => !file.filename.startsWith('Docs/archive/'));
+            if (!files.length) return;
+            const { data: after } = await github.rest.pulls.get(params);
+            if (after.head.sha !== current.head.sha || after.base.sha !== current.base.sha) return;
+
+            const changedPaths = files.map(file => `${file.status}: ${file.filename}`);
+            const sourceFirst = file => /\.(cs|asmdef|yml|yaml|py|js|ts|json|md)$/i.test(file.filename);
+            const ordered = [...files].sort((left, right) => Number(sourceFirst(right)) - Number(sourceFirst(left)));
+            let remaining = 80000;
+            const patches = [];
+            for (const file of ordered) {
+              if (!file.patch || file.filename.endsWith('.meta')) continue;
+              const header = `\n--- ${file.filename} (${file.status}) ---\n`;
+              const limit = Math.min(6000, remaining - header.length - 20);
+              if (limit <= 0) break;
+              const patch = file.patch.slice(0, limit);
+              const snippet = header + patch + (patch.length < file.patch.length ? '\n[patch excerpt]\n' : '\n');
+              patches.push(snippet);
+              remaining -= snippet.length;
+            }
+            const manifest = changedPaths.join('\n');
+            const input = [
+              `PR #${eventPr.number}, head ${current.head.sha}, files in review scope: ${files.length}`,
+              `Title: ${current.title.slice(0, 500)}`,
+              `PR body excerpt:\n${(current.body || '').slice(0, 3000)}`,
+              `Changed paths (up to 16000 characters):\n${manifest.slice(0, 16000)}`,
+              `Available patch excerpts (some files or lines may be omitted):\n${patches.join('')}`,
+            ].join('\n\n');
+            fs.writeFileSync(`${process.env.RUNNER_TEMP}/pr-review-guide-input.md`, input, { mode: 0o600 });
+            core.setOutput('base_sha', current.base.sha);
+
+      - name: Check out the base for code context
+        if: steps.prepare.outputs.base_sha != ''
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ steps.prepare.outputs.base_sha }}
+          persist-credentials: false
+          sparse-checkout: |
+            /AGENTS.md
+            /.github/
+            /Assets/PoC/
+            /Assets/Scripts/
+            /Docs/
+            !/Docs/archive/
+            /Packages/
+            /ProjectSettings/
+          sparse-checkout-cone-mode: false
+
+      - name: Place review input in the workspace
+        if: steps.prepare.outputs.base_sha != ''
+        run: cp "$RUNNER_TEMP/pr-review-guide-input.md" "$GITHUB_WORKSPACE/pr-review-guide-input.md"
+
+      - name: Generate the Korean review guide
+        id: codex
+        if: steps.prepare.outputs.base_sha != ''
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ':read-only'
+          prompt-file: .github/prompts/pr-review-guide.md
+          output-schema-file: .github/prompts/pr-review-guide.schema.json
+
+  publish:
+    needs: generate
+    if: needs.generate.outputs.review != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Publish the guide and any new inline findings
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          REVIEW: ${{ needs.generate.outputs.review }}
+          REVIEW_BASE_SHA: ${{ needs.generate.outputs.base_sha }}
+        with:
+          script: |
+            const eventPr = context.payload.pull_request;
+            const params = { ...context.repo, issue_number: eventPr.number };
+            const marker = '<!-- the-developer-pr-review-guide -->';
+            const result = JSON.parse(process.env.REVIEW);
+            if (typeof result?.guide !== 'string' || !Array.isArray(result.findings)) throw new Error('Invalid review output');
+            const guide = result.guide.trim().replaceAll('@', '@\u200b');
+            if (!guide) return;
+
+            const comments = await github.paginate(github.rest.issues.listComments, { ...params, per_page: 100 });
+            const existing = comments.find(comment => comment.user?.login === 'github-actions[bot]' && comment.body?.startsWith(marker));
+            const { data: current } = await github.rest.pulls.get({ ...context.repo, pull_number: eventPr.number });
+            if (current.state !== 'open' || current.draft || current.head.sha !== eventPr.head.sha || current.head.repo?.id !== context.payload.repository.id) return;
+
+            const sha = current.head.sha;
+            const commitUrl = `${current.html_url}/commits/${sha}`;
+            const noFindings = result.findings.length === 0 && current.base.sha === process.env.REVIEW_BASE_SHA;
+            const reviewResult = noFindings ? '\n\n**리뷰 결과** 검토 범위에서 지적할 결함을 발견하지 못했습니다.' : '';
+            const body = `${marker}\n## PR 리뷰 가이드\n\n기준 커밋 [\`${sha.slice(0, 7)}\`](${commitUrl})${reviewResult}\n\n${guide}`;
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...params, body });
+            }
+
+            if (!result.findings.length || current.base.sha !== process.env.REVIEW_BASE_SHA) return;
+
+            const pull = { ...context.repo, pull_number: eventPr.number };
+            const [files, prior] = await Promise.all([
+              github.paginate(github.rest.pulls.listFiles, { ...pull, per_page: 100 }),
+              github.paginate(github.rest.pulls.listReviewComments, { ...pull, per_page: 100 }),
+            ]);
+            const { data: latest } = await github.rest.pulls.get(pull);
+            if (latest.state !== 'open' || latest.draft || latest.head.sha !== sha || latest.base.sha !== current.base.sha || latest.head.repo?.id !== context.payload.repository.id) return;
+
+            const crypto = require('node:crypto');
+            const digest = (...parts) => crypto.createHash('sha256').update(JSON.stringify(parts)).digest('hex');
+            const seen = new Set();
+            for (const comment of prior) {
+              if (comment.user?.login !== 'github-actions[bot]') continue;
+              const marker = /^<!-- the-developer-finding:([a-f0-9]{64}):([a-f0-9]{64}) -->/.exec(comment.body ?? '');
+              if (marker) {
+                seen.add(marker[1]);
+                seen.add(marker[2]);
+              }
+            }
+
+            const patches = new Map(files
+              .filter(file => !file.filename.startsWith('Docs/archive/'))
+              .map(file => [file.filename, file.patch ?? '']));
+            const addedLine = (patch, target) => {
+              let line = 0;
+              for (const row of patch.split('\n')) {
+                const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(row);
+                if (hunk) line = Number(hunk[1]);
+                else if (line > 0 && row.startsWith('+')) {
+                  if (line === target) return row.slice(1);
+                  line++;
+                } else if (line > 0 && row.startsWith(' ')) line++;
+              }
+            };
+            const commentsToPost = [];
+            for (const finding of result.findings.slice(0, 5)) {
+              if (!finding || typeof finding.path !== 'string' || !Number.isSafeInteger(finding.line) || finding.line < 1) continue;
+              if (typeof finding.key !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(finding.key) || finding.key.length > 120) continue;
+              const fields = [finding.title, finding.reproduction, finding.impact, finding.fix];
+              if (!fields.every(value => typeof value === 'string' && value.trim())) continue;
+              const lineText = addedLine(patches.get(finding.path) ?? '', finding.line);
+              if (lineText === undefined) continue;
+              const key = digest(finding.path, finding.key);
+              const anchor = digest(finding.path, lineText.trim(), finding.title.trim());
+              if (seen.has(key) || seen.has(anchor)) continue;
+
+              const [title, reproduction, impact, fix] = fields.map(value => value.trim().slice(0, 800).replace(/[<>@]/g, character => ({ '<': '&lt;', '>': '&gt;', '@': '@\u200b' })[character]));
+              const body = '<!-- the-developer-finding:' + key + ':' + anchor + ' -->\n'
+                + '**' + title + '**\n\n- **재현 조건** ' + reproduction + '\n- **영향** ' + impact + '\n- **수정 방향** ' + fix;
+              commentsToPost.push({ path: finding.path, line: finding.line, side: 'RIGHT', body });
+              seen.add(key);
+              seen.add(anchor);
+            }
+            if (!commentsToPost.length) return;
+
+            await github.rest.pulls.createReview({
+              ...pull,
+              commit_id: sha,
+              event: 'COMMENT',
+              body: '이번 변경에서 확인이 필요한 결함을 해당 줄에 남겼습니다.',
+              comments: commentsToPost,
+            });

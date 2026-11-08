@@ -1,9 +1,10 @@
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using Unity.Netcode;
 
 /// <summary>직선 이동과 충돌 피해를 처리하는 공격 투사체다.</summary>
-public class EnemyDamageProjectile : EnemyProjectile
+public partial class EnemyDamageProjectile : EnemyProjectile
 {
     private int _projectileDamage;
     [SerializeField] private float projectileSpeed = 1f;
@@ -42,6 +43,7 @@ public class EnemyDamageProjectile : EnemyProjectile
             _directionState.Value = _direction;
 
         ApplyAnimationDirection(_directionState.Value);
+        _simulation?.Synchronize();
     }
     
     public void Initialize(int projectileDamage, Vector2 direction)
@@ -89,22 +91,8 @@ public class EnemyDamageProjectile : EnemyProjectile
         if (targetTransform == null)
             return;
 
-        if (target.TargetType == TargetType.Player)
-        {
-            PlayerInfo player =
-                targetTransform.GetComponentInParent<PlayerInfo>();
-
-            if (player != null)
-                player.TakeDamage(_projectileDamage);
-        }
-        else if (target.TargetType == TargetType.Turret)
-        {
-            IDamageableTarget damageable =
-                targetTransform.GetComponentInParent<IDamageableTarget>();
-
-            if (damageable != null)
-                damageable.ApplyDamage(_projectileDamage);
-        }
+        IDamageableTarget damageable = targetTransform.GetComponentInParent<IDamageableTarget>();
+        damageable?.ApplyDamage(_projectileDamage);
     }
 
     private void OnTriggerEnter2D(Collider2D other)

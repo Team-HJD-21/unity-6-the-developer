@@ -1,3 +1,4 @@
+// 근접 발동 조건을 확인하고 Player·터렛의 공통 피해 수신자에 서버 피해를 전달합니다.
 using UnityEngine;
 
 /// <summary>
@@ -29,29 +30,14 @@ public class EnemyCloseRangeAbility : EnemyAbility
         if (!TryGetTarget(out TargetableComponent target))
             return false;
 
+        // Player와 Turret 모두 실제 HP 원본의 동일한 피해 계약으로 전달합니다.
         return ApplyDamage(target);
     }
 
-    /// <summary>
-    /// 타깃 유형에 맞는 체력 시스템에 피해를 전달한다.
-    /// </summary>
+    /// <summary>근접 공격과 파생 능력이 같은 피해 수신 계약을 사용한다.</summary>
     protected bool ApplyDamage(TargetableComponent target)
     {
-        if (target == null || !target.CanBeTargeted)
-            return false;
-
-        if (target.TargetType == TargetType.Turret)
-            return target.TryApplyDamage(attackDamage);
-
-        if (target.TargetType != TargetType.Player)
-            return false;
-
-        PlayerInfo player = target.GetComponentInParent<PlayerInfo>();
-        if (player == null)
-            return false;
-
-        player.TakeDamage(attackDamage);
-        return true;
+        return target != null && target.CanBeTargeted && target.TryApplyDamage(attackDamage);
     }
 
     protected bool TryGetTarget(out TargetableComponent target)

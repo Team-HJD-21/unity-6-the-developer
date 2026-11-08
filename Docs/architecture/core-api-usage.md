@@ -86,7 +86,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 ## 현재 Network 경계
 
-#442는 아직 미완료다. 범용 로컬 권한 객체는 제거했다. 실제 요청의 Host/참가자 검증은 NetworkMatchCoordinator와 각 Feature 요청 경계가 수행한다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
+#442의 기존 기반 범위는 #602의 main 최종 통합으로 이관했다. 범용 로컬 권한 객체는 제거했다. 실제 요청의 Host/참가자 검증은 NetworkMatchCoordinator와 각 Feature 요청 경계가 수행한다. Enemy의 `EnemySpawnExecutor`는 NGO Server에서 실제 NetworkObject를 생성하지만, 이것이 Player·Turret·Enemy 전체의 권한/복제/2인 종료 계약을 완성하지는 않는다.
 
 `MatchRequestContext.RequestId`, 진단 `RequestId`, `NetworkObjectId`는 서로 다른 용도다. 기존 진단의 요청 번호를 정식 `MatchRequestContext.RequestId` GUID와 혼동하지 않는다. 정식 요청 GUID는 발신자·의도와 함께 중복 실행을 막으며 재전송 때 유지한다. 실제 터렛 배치의 `SceneEntityIdentity` 제작 키와 `TurretMatchBinding` 대응표를 공용 명령/공간 입력에서 사용한다. 로컬 InstanceId·SDK NetworkObjectId는 이 논리 ID를 대신하지 않는다.
 

@@ -1,10 +1,12 @@
+// 적 능력의 발동 조건과 쿨다운을 관리합니다. Match에서는 주입된 필드 시계를 사용합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>
 /// 능력의 공통 쿨타임과 실행 조건, 거리 판정을 제공한다.
 /// </summary>
-public abstract class EnemyAbility : MonoBehaviour
+public abstract partial class EnemyAbility : MonoBehaviour
 {
     [Header("능력 설정")]
     [FormerlySerializedAs("attackCooldown")]
@@ -15,7 +17,7 @@ public abstract class EnemyAbility : MonoBehaviour
     [FormerlySerializedAs("attackRange")]
     [SerializeField] protected float activationRange = 0.4f;
 
-    private float _nextUseTime;
+    private double _nextUseTime;
 
     public virtual bool IsExecuting => false;
 
@@ -23,6 +25,19 @@ public abstract class EnemyAbility : MonoBehaviour
     /// 능력 사용 시 바라볼 대상. 없으면 컨트롤러에 배정된 타깃을 사용한다.
     /// </summary>
     public virtual Transform FacingTarget => null;
+
+    // 실제 NGO 개체의 능력은 서버만 실행합니다. 독립 Feature 시험은 기존 로컬 경로를 유지합니다.
+    protected bool HasAbilityAuthority
+    {
+        get
+        {
+            var actor = GetComponent<EnemyNetworkController>();
+            return actor == null || actor.NetworkManager == null || !actor.NetworkManager.IsListening ||
+                (actor.IsSpawned && actor.IsServer);
+        }
+    }
+
+    protected bool CanAdvanceAbility => isActiveAndEnabled && HasAbilityAuthority && FieldSimulationTime.CanAdvance(this);
 
     protected virtual void Awake()
     {
@@ -51,16 +66,16 @@ public abstract class EnemyAbility : MonoBehaviour
     /// </summary>
     public bool TryUse()
     {
-        if (!isActiveAndEnabled ||
+        if (!CanAdvanceAbility ||
             IsExecuting ||
-            Time.time < _nextUseTime ||
+            FieldSimulationTime.Seconds(this) < _nextUseTime ||
             !CheckCondition() ||
             !Activate())
         {
             return false;
         }
 
-        _nextUseTime = Time.time + cooldown;
+        _nextUseTime = FieldSimulationTime.Seconds(this) + cooldown;
         return true;
     }
 
@@ -109,7 +124,7 @@ public abstract class EnemyAbility : MonoBehaviour
 
         return false;
     }
-    
+
     private void OnDrawGizmosSelected()
     {
         Collider2D bodyCollider = _bodyCollider;

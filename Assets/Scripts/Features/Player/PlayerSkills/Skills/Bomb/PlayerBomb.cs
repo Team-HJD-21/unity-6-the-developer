@@ -1,7 +1,9 @@
+// 폭탄 배치 의도와 설치된 폭탄의 남은 진행을 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 /// <summary>시한폭탄 설치와 보유 수량 충전을 담당합니다.</summary>
-public sealed class PlayerBomb : PlayerPlacementSkillBase
+public sealed partial class PlayerBomb : PlayerPlacementSkillBase
 {
     [Header("폭탄 기본 설정")]
     [SerializeField] private GameObject bombPrefab;
@@ -28,8 +30,10 @@ public sealed class PlayerBomb : PlayerPlacementSkillBase
     }
     private void Update()
     {
-        _charges.Tick(Time.deltaTime);
-        _remainingCooldown = Mathf.Max(0, _remainingCooldown - Time.deltaTime);
+        float delta = FieldSimulationTime.DeltaTime(this);
+        if (delta <= 0) return;
+        _charges.Tick(delta);
+        _remainingCooldown = Mathf.Max(0, _remainingCooldown - delta);
     }
     protected override string GetPlacementFailure(Vector3 position)
     {
@@ -48,6 +52,7 @@ public sealed class PlayerBomb : PlayerPlacementSkillBase
         if (!_charges.TryConsume()) return false;
         var bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         MoveToOwnerScene(bomb);
+        TrackBomb(bomb);
         if (bomb.TryGetComponent(out PlayerBombExplosion explosion)) explosion.BindOwner(transform);
         _remainingCooldown = CooldownDuration;
         _feedbackUntil = 0;

@@ -1,3 +1,4 @@
+// 발사 직후 생성 탄환에 현재 터렛의 Match 시간과 종료 수명을 전달합니다.
 using System.Collections;
 using System.Collections.Generic;
 using Tower;
@@ -14,12 +15,13 @@ public class FieldCanonTurretLv3 : DefaultFieldCanonTurret
     [Header("References")]
     [SerializeField] private Transform []bulletSpawnPoint;       //총알 스폰 지점
     [SerializeField] private Transform []bulletFireDirection;    //총 격발 방향
+    public override int ProjectilesPerShot => bulletSpawnPoint != null ? bulletSpawnPoint.Length : 0;
 
     private GameObject []_bulletObj;
     private void Start()
     {
         _bulletObj = new GameObject[bulletSpawnPoint.Length];
-        GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
+        if (!WasCheckpointRestored) GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
     } 
     protected override void Shoot()//총알 객체화 후 목표로 발사(FireRateController에서 수행)
     {
@@ -27,10 +29,11 @@ public class FieldCanonTurretLv3 : DefaultFieldCanonTurret
         for (int i = 0; i < _bulletObj.Length; i++)
         {
             _bulletObj[i] = Instantiate(bulletPrefab, bulletSpawnPoint[i].position, Quaternion.identity);
+            BindProjectileSimulation(_bulletObj[i]);
             FieldTurretBullet fieldTurretBullet = _bulletObj[i].GetComponent<FieldTurretBullet>();
-            float randomValue = Random.Range(-0.5f, 0.5f);
-            bulletFireDirection[i].position = new Vector3(bulletFireDirection[i].position.x+randomValue, bulletFireDirection[i].position.y,0f);
-            fieldTurretBullet.Initialize(bulletFireDirection[i], Damage);
+            float randomValue = NextScatterOffset(-0.5f, 0.5f);
+            Vector3 aimPosition = new Vector3(bulletFireDirection[i].position.x + randomValue, bulletFireDirection[i].position.y, 0f);
+            fieldTurretBullet.Initialize(bulletFireDirection[i], Damage, aimPosition);
             
         }
     }
