@@ -76,6 +76,7 @@ namespace Map
         
         // Core가 주입하는 Match 전용 날씨 난수.
         private IRandomSource _random;
+        private bool CanDrawWeather => _random != null ? _random.IsAvailable : !_coreRequiresMatch;
 
         void OnEnable()
         {
@@ -108,7 +109,7 @@ namespace Map
 
         private void FillWeather()
         {
-            if (_random == null || !_random.IsAvailable)
+            if (!CanDrawWeather)
                 return;
 
             if (weatherQueue == null)
@@ -131,7 +132,7 @@ namespace Map
 
         public void ChangeWeather()
         {
-            if (!MayChangeCoreWeather || _random == null || !_random.IsAvailable)
+            if (!MayChangeCoreWeather || !CanDrawWeather)
                 return;
 
             // 낮밤이 바뀌었다면 이전 시간대의 예고를 버리고 다시 추첨한다.
@@ -174,7 +175,10 @@ namespace Map
                 return Weather.SUNNY;
             }
 
-            int selectedWeight = _random.NextInt(0, totalWeight);
+            // Match 밖의 독립 Scene만 Unity 난수로 추첨한다. Match에서는 주입된 스트림을 사용한다.
+            int selectedWeight = _random != null
+                ? _random.NextInt(0, totalWeight)
+                : UnityEngine.Random.Range(0, totalWeight);
             for (int i = 0; i < weatherWeights.Length; i++)
             {
                 selectedWeight -= Mathf.Max(0, weatherWeights[i].weight);
