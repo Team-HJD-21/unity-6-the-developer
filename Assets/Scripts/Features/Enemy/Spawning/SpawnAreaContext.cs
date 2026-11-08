@@ -9,17 +9,20 @@ public readonly struct SpawnAreaContext
         TotalEnemyCount <= 0 ? 0d : (double)NearbyEnemyCount / TotalEnemyCount * 100d;
     public int NearbyTurretCount { get; }
     public bool HasNearbyPlayer { get; }
+    public TargetAttackType AttackType { get; }
     public bool HasFrontline { get; }
     public double FrontlineDistance { get; }
 
     public SpawnAreaContext(int cellEnemyCount, int nearbyEnemyCount, int nearbyTurretCount,
-        bool hasFrontline, double frontlineDistance, int totalEnemyCount, bool hasNearbyPlayer)
+        bool hasFrontline, double frontlineDistance, int totalEnemyCount, bool hasNearbyPlayer,
+        TargetAttackType attackType = TargetAttackType.Unknown)
     {
         CellEnemyCount = cellEnemyCount;
         NearbyEnemyCount = nearbyEnemyCount;
         TotalEnemyCount = totalEnemyCount;
         NearbyTurretCount = nearbyTurretCount;
         HasNearbyPlayer = hasNearbyPlayer;
+        AttackType = attackType;
         HasFrontline = hasFrontline;
         FrontlineDistance = frontlineDistance;
     }

@@ -93,13 +93,15 @@ public sealed class SquadAutomaticPlanningTests
     public void AutomaticPlan_DifferentLocalSituationsSelectDifferentPresets()
     {
         var planner = Planner(Preset("elite", 2, EnemySquadRole.Elite), Preset("patrol", 2));
-        var turrets = new BattlefieldSpatialInput(new[]
+        var points = new[] { Point("left", -3, 0), Point("right", 7, 0) };
+        var positions = points.ToDictionary(point => point.Id, point => point.Position);
+        var attacks = new Dictionary<string, TargetAttackType>
         {
-            Turret("t1", -4.5, -1), Turret("t2", -4.5, 1), Turret("t3", -1, 1)
-        });
-        var settings = new SquadSelectionSettings { nearFrontlineDistance = 3, approachFrontlineDistance = 8 };
-        Assert.That(PlanAtPoints(planner, new AutomaticSpawnRequest(4, 4),
-            new[] { Point("left", -3, 0), Point("right", 7, 0) }, Snapshot(turrets), settings,
+            ["left"] = TargetAttackType.Area,
+            ["right"] = TargetAttackType.None
+        };
+        Assert.That(planner.TryPlan(new AutomaticSpawnRequest(4, 4), points, Snapshot(), positions,
+            attacks, 0, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(),
             new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Single(p => p.SpawnPointId == "left").SquadOrder, Is.EqualTo("elite"));
         Assert.That(plans.Single(p => p.SpawnPointId == "right").SquadOrder, Is.EqualTo("patrol"));
@@ -182,7 +184,7 @@ public sealed class SquadAutomaticPlanningTests
         var planner = Planner(Preset("two", 2));
 
         Assert.That(planner.TryPlan(new AutomaticSpawnRequest(4, 4), new[] { point }, snapshot,
-            positions, 30, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), new FixedRandom(), out var plans), Is.True);
+            positions, new Dictionary<string, TargetAttackType>(), 30, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Sum(Count), Is.EqualTo(4));
         var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { point }, new SquadSelectionSettings());
         Assert.That(session.GetAreaContext(point, target, 30, Array.Empty<BattlefieldPoint>()).NearbyEnemyCount, Is.EqualTo(30));
@@ -215,7 +217,7 @@ public sealed class SquadAutomaticPlanningTests
         var random = new FixedRandom();
         var planner = Planner(Preset("two", 2));
         Assert.That(planner.TryPlan(new AutomaticSpawnRequest(10, 10), new[] { Point("a", 0, 0) },
-            Snapshot(), new Dictionary<string, BattlefieldPoint>(), 0, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), random, out var plans), Is.False);
+            Snapshot(), new Dictionary<string, BattlefieldPoint>(), new Dictionary<string, TargetAttackType>(), 0, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), random, out var plans), Is.False);
         Assert.That(plans, Is.Empty);
         Assert.That(random.Calls, Is.Zero);
     }
@@ -232,7 +234,7 @@ public sealed class SquadAutomaticPlanningTests
         int nearby, int total, float threshold, bool expectedSparse)
     {
         var settings = new SquadSelectionSettings { sparseEnemyPercentage = threshold };
-        var area = new SpawnAreaContext(0, nearby, 0, false, 0d, total, false);
+        var area = new SpawnAreaContext(0, nearby, 0, false, 0d, total, false, TargetAttackType.None);
         var patrol = Preset("patrol", 2, EnemySquadRole.Patrol);
         var sustain = Preset("sustain", 2, EnemySquadRole.Sustain);
 
@@ -312,7 +314,7 @@ public sealed class SquadAutomaticPlanningTests
         Assert.That(SquadSelectionPolicy.CalculateWeight(ambush, area, settings), Is.EqualTo(expectedWeight));
         Assert.That(Planner(ambush).TryPlan(new AutomaticSpawnRequest(2, 2), new[] { point }, snapshot,
             new Dictionary<string, BattlefieldPoint> { [point.Id] = new BattlefieldPoint(0, 0) },
-            0, players, settings, new FixedRandom(), out var plans), Is.True);
+            new Dictionary<string, TargetAttackType>(), 0, players, settings, new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Sum(Count), Is.EqualTo(2));
     }
 
@@ -334,6 +336,76 @@ public sealed class SquadAutomaticPlanningTests
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
+    [TestCase(typeof(FieldCanonTurretLv1), TargetAttackType.SingleTarget)]
+    [TestCase(typeof(FieldMissileTurretLV1), TargetAttackType.Area)]
+    [TestCase(typeof(ControlUnitHealth), TargetAttackType.None)]
+    [TestCase(typeof(FieldLaserTurret), TargetAttackType.Unknown)]
+    public void Adapter_ClassifiesTheConnectedSource(Type sourceType, TargetAttackType expected)
+    {
+        var go = new GameObject("classification source");
+        go.SetActive(false);
+        _objects.Add(go);
+        var source = go.AddComponent(sourceType);
+        var adapter = go.AddComponent<DamageableTargetAdapter>();
+        var data = new SerializedObject(adapter);
+        data.FindProperty("_damageableSource").objectReferenceValue = source;
+        data.ApplyModifiedPropertiesWithoutUndo();
+        typeof(DamageableTargetAdapter).GetMethod("ResolveDamageable",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(adapter, null);
+
+        Assert.That(adapter.AttackType, Is.EqualTo(expected));
+        UnityEngine.Object.DestroyImmediate(source);
+        Assert.That(adapter.AttackType, Is.EqualTo(TargetAttackType.Unknown));
+    }
+
+    [Test]
+    public void Adapter_MissingSourceIsUnknownRatherThanAnUnarmedTarget()
+    {
+        var go = new GameObject("missing source");
+        go.SetActive(false);
+        _objects.Add(go);
+        Assert.That(go.AddComponent<DamageableTargetAdapter>().AttackType, Is.EqualTo(TargetAttackType.Unknown));
+    }
+
+    [TestCase(EnemySquadRole.Patrol, TargetAttackType.None, 200, false, 3d)]
+    [TestCase(EnemySquadRole.Patrol, TargetAttackType.None, 200, true, 1d)]
+    [TestCase(EnemySquadRole.Patrol, TargetAttackType.Unknown, 200, false, 1d)]
+    [TestCase(EnemySquadRole.Assault, TargetAttackType.SingleTarget, 200, false, 3d)]
+    [TestCase(EnemySquadRole.Assault, TargetAttackType.SingleTarget, 201, false, 1d)]
+    [TestCase(EnemySquadRole.Assault, TargetAttackType.Area, 200, false, 1d)]
+    [TestCase(EnemySquadRole.Backline, TargetAttackType.Area, 200, false, 3d)]
+    [TestCase(EnemySquadRole.Backline, TargetAttackType.SingleTarget, 200, false, 1d)]
+    [TestCase(EnemySquadRole.Summon, TargetAttackType.SingleTarget, 200, false, 3d)]
+    [TestCase(EnemySquadRole.Summon, TargetAttackType.Area, 200, false, 1d)]
+    [TestCase(EnemySquadRole.Sustain, TargetAttackType.Unknown, 201, false, 3d)]
+    [TestCase(EnemySquadRole.Sustain, TargetAttackType.Unknown, 200, false, 1d)]
+    [TestCase(EnemySquadRole.Elite, TargetAttackType.Area, 200, false, 3d)]
+    [TestCase(EnemySquadRole.Elite, TargetAttackType.Area, 201, false, 1d)]
+    [TestCase(EnemySquadRole.Balanced, TargetAttackType.Area, 200, false, 1d)]
+    [TestCase(EnemySquadRole.Ambush, TargetAttackType.Unknown, 200, true, 3d)]
+    public void Policy_UsesAttackPatternPopulationAndPlayerInsteadOfGeometry(
+        EnemySquadRole role, TargetAttackType attackType, int nearby, bool player, double expectedWeight)
+    {
+        var preset = Preset("rule", 2, role);
+        var settings = new SquadSelectionSettings();
+        var withoutFrontline = new SpawnAreaContext(0, nearby, 1, false, 0, 1000, player, attackType);
+        var withFrontline = new SpawnAreaContext(0, nearby, 100, true, 10000, 1000, player, attackType);
+        Assert.That(SquadSelectionPolicy.CalculateWeight(preset, withoutFrontline, settings), Is.EqualTo(expectedWeight));
+        Assert.That(SquadSelectionPolicy.CalculateWeight(preset, withFrontline, settings), Is.EqualTo(expectedWeight));
+    }
+
+    [Test]
+    public void Session_SharedTargetCellKeepsEachTargetsAttackType()
+    {
+        var point = Point("spawn", -7, 0);
+        var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(), new[] { point }, new SquadSelectionSettings());
+        var players = Array.Empty<BattlefieldPoint>();
+        var first = session.GetAreaContext(point, new BattlefieldPoint(0, 0), 0, players, TargetAttackType.SingleTarget);
+        var second = session.GetAreaContext(point, new BattlefieldPoint(1, 0), 0, players, TargetAttackType.Area);
+        Assert.That(first.AttackType, Is.EqualTo(TargetAttackType.SingleTarget));
+        Assert.That(second.AttackType, Is.EqualTo(TargetAttackType.Area));
+    }
+
     private TargetableComponent Target(string name, Vector3 position, TargetType type)
     {
         var go = new GameObject(name);
@@ -351,7 +423,8 @@ public sealed class SquadAutomaticPlanningTests
     {
         var positions = points.ToDictionary(point => point.Id, point => point.Position);
         int totalEnemyCount = snapshot.Grid.Cells.Sum(cell => cell.EnemyCount) + snapshot.Grid.OutOfBoundsEnemyIds.Count;
-        return planner.TryPlan(request, points, snapshot, positions, totalEnemyCount, Array.Empty<BattlefieldPoint>(), settings, random, out plans);
+        var attacks = points.ToDictionary(point => point.Id, point => TargetAttackType.None);
+        return planner.TryPlan(request, points, snapshot, positions, attacks, totalEnemyCount, Array.Empty<BattlefieldPoint>(), settings, random, out plans);
     }
 
     private EnemySquadPreset Preset(string id, int count, EnemySquadRole role = EnemySquadRole.Patrol, int weight = 1)

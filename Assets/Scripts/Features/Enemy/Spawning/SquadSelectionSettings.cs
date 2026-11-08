@@ -14,20 +14,13 @@ public sealed class SquadSelectionSettings
     [InspectorName("병력 적음 기준 (%)")]
     [Tooltip("전체 등록 몬스터 중 주변 몬스터의 비율이 이 값 이하면 적음으로 판단합니다.")]
     [Range(0f, 100f)] public float sparseEnemyPercentage = 20f;
-    [Min(1)] public int denseTurretCount = 3;
-    [Min(0f)] public float nearFrontlineDistance = 10f;
-    [Min(0f)] public float approachFrontlineDistance = 25f;
 
     [Header("선택과 배치")]
     [Min(1)] public int preferredMultiplier = 3;
     [Min(1)] public int maxEnemiesPerCell = 20;
 
     public bool IsValid => nearbyCellRadius >= 0 && sparseEnemyPercentage >= 0f &&
-        sparseEnemyPercentage <= 100f && denseTurretCount > 0 && preferredMultiplier > 0 &&
-        maxEnemiesPerCell > 0 && !float.IsNaN(nearFrontlineDistance) &&
-        !float.IsInfinity(nearFrontlineDistance) && nearFrontlineDistance >= 0f &&
-        !float.IsNaN(approachFrontlineDistance) && !float.IsInfinity(approachFrontlineDistance) &&
-        approachFrontlineDistance >= nearFrontlineDistance;
+        sparseEnemyPercentage <= 100f && preferredMultiplier > 0 && maxEnemiesPerCell > 0;
 }
 
 /// <summary>상황에 맞는 편성의 비중을 높이고 Core 난수로 하나를 선택한다.</summary>
@@ -39,36 +32,31 @@ public static class SquadSelectionPolicy
         if (preset == null || preset.SelectionWeight <= 0 || settings == null || !settings.IsValid)
             return 0d;
 
-        bool near = area.HasFrontline && area.FrontlineDistance <= settings.nearFrontlineDistance;
-        bool approaching = area.HasFrontline &&
-            area.FrontlineDistance > settings.nearFrontlineDistance &&
-            area.FrontlineDistance <= settings.approachFrontlineDistance;
-        bool denseTurrets = area.NearbyTurretCount >= settings.denseTurretCount;
         bool sparse = area.NearbyEnemyPercentage <= settings.sparseEnemyPercentage;
         bool crowded = !sparse;
         bool preferred;
         switch (preset.Role)
         {
             case EnemySquadRole.Patrol:
-                preferred = sparse && area.NearbyTurretCount == 0;
+                preferred = sparse && !area.HasNearbyPlayer && area.AttackType == TargetAttackType.None;
                 break;
             case EnemySquadRole.Assault:
-                preferred = near && !denseTurrets;
+                preferred = sparse && area.AttackType == TargetAttackType.SingleTarget;
                 break;
             case EnemySquadRole.Backline:
-                preferred = near && area.NearbyTurretCount > 0 && !denseTurrets;
+                preferred = sparse && area.AttackType == TargetAttackType.Area;
                 break;
             case EnemySquadRole.Summon:
-                preferred = approaching;
+                preferred = sparse && area.AttackType == TargetAttackType.SingleTarget;
                 break;
             case EnemySquadRole.Sustain:
                 preferred = crowded;
                 break;
             case EnemySquadRole.Elite:
-                preferred = near && denseTurrets;
+                preferred = sparse && area.AttackType == TargetAttackType.Area;
                 break;
             case EnemySquadRole.Balanced:
-                preferred = near;
+                preferred = false;
                 break;
             case EnemySquadRole.Ambush:
                 preferred = area.HasNearbyPlayer;

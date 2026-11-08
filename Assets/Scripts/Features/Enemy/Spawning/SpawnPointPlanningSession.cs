@@ -114,7 +114,8 @@ public sealed class SpawnPointPlanningSession
 
     /// <summary>선택한 타깃 주변의 현재 상황과 출현 셀의 예정 수를 반환한다.</summary>
     public SpawnAreaContext GetAreaContext(SpatialSpawnCandidate point, BattlefieldPoint targetPosition,
-        int totalEnemyCount, IReadOnlyList<BattlefieldPoint> playerPositions)
+        int totalEnemyCount, IReadOnlyList<BattlefieldPoint> playerPositions,
+        TargetAttackType attackType = TargetAttackType.Unknown)
     {
         PointState state = _byId[point.Id];
         if (!_grid.TryGetCellAt(targetPosition, out BattlefieldGridCellSnapshot targetCell))
@@ -130,7 +131,8 @@ public sealed class SpawnPointPlanningSession
         return new SpawnAreaContext(
             ToCount(state.Cell.EnemyCount + state.Cell.AssignedEnemies),
             ToCount(area.Enemies), ToCount(area.Turrets), hasFrontline,
-            hasFrontline ? Math.Sqrt(state.FrontlineDistanceSquared) : 0d, totalEnemyCount, area.HasNearbyPlayer);
+            hasFrontline ? Math.Sqrt(state.FrontlineDistanceSquared) : 0d, totalEnemyCount, area.HasNearbyPlayer,
+            attackType);
     }
 
     /// <summary>같은 셀의 모든 지점과 주변 조사에 한 편성의 예정 수량을 반영한다.</summary>

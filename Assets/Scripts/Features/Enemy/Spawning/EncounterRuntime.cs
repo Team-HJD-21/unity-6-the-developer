@@ -128,6 +128,7 @@ namespace TeamHJD.Game.Domain
             int totalEnemyCount = _spawnExecutor.CountForMatch(snapshot.MatchId);
             var candidates = new List<SpatialSpawnCandidate>();
             var targetPositions = new Dictionary<string, BattlefieldPoint>();
+            var targetAttackTypes = new Dictionary<string, TargetAttackType>();
             foreach (SpawnPoint point in _spawnExecutor.SpawnPointList.GetAvailableSpawnPoints())
             {
                 if (string.IsNullOrWhiteSpace(point.SpawnPointId) || targetPositions.ContainsKey(point.SpawnPointId))
@@ -143,8 +144,11 @@ namespace TeamHJD.Game.Domain
                 candidates.Add(new SpatialSpawnCandidate(point.SpawnPointId,
                     new BattlefieldPoint(point.Position.x, point.Position.y)));
                 targetPositions.Add(point.SpawnPointId, targetPosition);
+                DamageableTargetAdapter adapter = target.TargetTransform.GetComponent<DamageableTargetAdapter>();
+                targetAttackTypes.Add(point.SpawnPointId,
+                    adapter != null ? adapter.AttackType : TargetAttackType.Unknown);
             }
-            if (!_planner.TryPlan(request, candidates, snapshot, targetPositions, totalEnemyCount,
+            if (!_planner.TryPlan(request, candidates, snapshot, targetPositions, targetAttackTypes, totalEnemyCount,
                     playerPositions, settings, random, out var instructions))
             {
                 result = $"자동 SpawnPlan 생성 실패: budget {request.SpawnBudget}, maxCount {request.MaxCount}. " +

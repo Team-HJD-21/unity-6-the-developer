@@ -16,6 +16,29 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
     private FieldTurretBase _weaponTurret;
     private int _instanceId;
 
+    /// <summary>현재 연결된 대상의 공격 방식을 반환한다.</summary>
+    public TargetAttackType AttackType
+    {
+        get
+        {
+            if (_damageableSource == null)
+                return TargetAttackType.Unknown;
+            if (_damageableSource is ControlUnitHealth)
+                return TargetAttackType.None;
+            if (_weaponTurret == null)
+                return TargetAttackType.Unknown;
+
+            return _weaponTurret.Kind switch
+            {
+                FieldTurretKind.Canon => TargetAttackType.SingleTarget,
+                FieldTurretKind.Missile => TargetAttackType.Area,
+                FieldTurretKind.Laser => TargetAttackType.Unknown,
+                FieldTurretKind.Tesla => TargetAttackType.Unknown,
+                _ => TargetAttackType.Unknown
+            };
+        }
+    }
+
     private void Awake()
     {
         _targetable = GetComponent<TargetableComponent>();
