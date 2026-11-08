@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TeamHJD.Game.Domain;
 
 /// <summary>최소 편성 비용을 확보하고 타깃 주변 상황에 따라 지역 예산을 배분한다.</summary>
 public static class SpawnBudgetPolicy
@@ -35,6 +36,18 @@ public static class SpawnBudgetPolicy
         public long Weight;
         public int Budget;
         public decimal Fraction;
+    }
+
+    /// <summary>Core가 확정한 셀 점유율로 요청당 전체 예산을 계산한다.</summary>
+    public static int CalculateTotalBudget(RegionGridSnapshot region, int baseBudget, int maximumBudget)
+    {
+        if (region == null) throw new ArgumentNullException(nameof(region));
+        if (baseBudget < 1 || maximumBudget < baseBudget)
+            throw new ArgumentException("전체 스폰 예산 설정을 확인하세요.");
+
+        int totalCells = region.Definition.Geometry.TotalCellCount;
+        long additionalBudget = (long)(maximumBudget - baseBudget) * region.CapturedCellCount;
+        return baseBudget + (int)(additionalBudget / totalCells);
     }
 
     public static long CalculateWeight(SpawnAreaContext area, SquadSelectionSettings settings)

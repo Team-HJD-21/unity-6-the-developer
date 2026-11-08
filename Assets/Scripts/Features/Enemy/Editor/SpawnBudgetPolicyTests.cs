@@ -1,9 +1,52 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using TeamHJD.Game.Domain;
 
 public sealed class SpawnBudgetPolicyTests
 {
+    [TestCase(RegionPolicyMode.Static, 0, 20)]
+    [TestCase(RegionPolicyMode.Static, 1, 40)]
+    [TestCase(RegionPolicyMode.Static, 2, 60)]
+    [TestCase(RegionPolicyMode.Static, 3, 80)]
+    [TestCase(RegionPolicyMode.Static, 4, 100)]
+    [TestCase(RegionPolicyMode.Dynamic, 0, 20)]
+    [TestCase(RegionPolicyMode.Dynamic, 1, 40)]
+    [TestCase(RegionPolicyMode.Dynamic, 2, 60)]
+    [TestCase(RegionPolicyMode.Dynamic, 3, 80)]
+    [TestCase(RegionPolicyMode.Dynamic, 4, 100)]
+    public void TotalBudget_InterpolatesFromCapturedCells(RegionPolicyMode mode, int captured, int expected)
+    {
+        var region = Region(captured, mode);
+        int budget = SpawnBudgetPolicy.CalculateTotalBudget(region, 20, 100);
+        Assert.That(budget, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TotalBudget_FloorsFractionAndPreservesIntegerLimits()
+    {
+        var geometry = new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 3, 1, 3, 1);
+        var region = RegionGridSnapshot.FromCapturedCells(new MatchId("budget-test"), Guid.NewGuid(), 1,
+            RegionPolicyMode.Dynamic, new RegionGridDefinition(geometry), new[] { 0 });
+        Assert.That(SpawnBudgetPolicy.CalculateTotalBudget(region, 20, 100), Is.EqualTo(46));
+        Assert.That(SpawnBudgetPolicy.CalculateTotalBudget(Region(4), 1, int.MaxValue), Is.EqualTo(int.MaxValue));
+        Assert.That(SpawnBudgetPolicy.CalculateTotalBudget(Region(2, RegionPolicyMode.Static), 20, 20), Is.EqualTo(20));
+    }
+
+    [TestCase(0, 100)]
+    [TestCase(20, 19)]
+    public void TotalBudget_RejectsInvalidLimits(int minimum, int maximum)
+    {
+        Assert.Throws<ArgumentException>(() => SpawnBudgetPolicy.CalculateTotalBudget(Region(0), minimum, maximum));
+        Assert.Throws<ArgumentException>(() => SpawnBudgetPolicy.CalculateTotalBudget(Region(0, RegionPolicyMode.Static), minimum, maximum));
+    }
+
+    [Test]
+    public void TotalBudget_MissingSnapshotIsNotTreatedAsZeroCapture()
+    {
+        Assert.Throws<ArgumentNullException>(() => SpawnBudgetPolicy.CalculateTotalBudget(null, 20, 100));
+    }
+
     [TestCase(201, false, 1)]
     [TestCase(200, false, 2)]
     [TestCase(201, true, 3)]
@@ -91,4 +134,11 @@ public sealed class SpawnBudgetPolicyTests
     private static SpawnBudgetPolicy.Area Area(string id, bool sparse, bool player,
         int minimum = 4, long previous = 0, string[] ids = null)
         => new(id, ids ?? new[] { id }, new SpawnAreaContext(0, sparse ? 0 : 100, 100, player), minimum, previous);
+
+    private static RegionGridSnapshot Region(int captured, RegionPolicyMode mode = RegionPolicyMode.Dynamic)
+    {
+        var geometry = new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 2, 2, 2, 2);
+        return RegionGridSnapshot.FromCapturedCells(new MatchId("budget-test"), Guid.NewGuid(), 1,
+            mode, new RegionGridDefinition(geometry), Enumerable.Range(0, captured));
+    }
 }
