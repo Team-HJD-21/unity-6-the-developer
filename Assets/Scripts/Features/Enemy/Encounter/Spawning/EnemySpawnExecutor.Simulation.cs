@@ -6,6 +6,9 @@ using System.Threading;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Presentation.Scene;
 
+/// <summary>
+/// 생성 실행기와 추적 중인 적을 Match 시계 및 실행 권한에 연결한다.
+/// </summary>
 public partial class EnemySpawnExecutor : IFieldSimulationConsumer
 {
     private IMatchTime _fieldTime;

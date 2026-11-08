@@ -7,6 +7,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// 중복 감지 등록과 마지막 감지자 해제 시 상태 변화를 검사한다.
+/// </summary>
 public sealed class EnemyDetectionTests
 {
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;

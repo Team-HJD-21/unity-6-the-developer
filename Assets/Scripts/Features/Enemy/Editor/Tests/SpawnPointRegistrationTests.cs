@@ -8,6 +8,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// SpawnPoint 등록·해제와 제작 ID의 유효성을 검사한다.
+/// </summary>
 public sealed class SpawnPointRegistrationTests
 {
     private Scene _scene;

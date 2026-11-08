@@ -7,6 +7,9 @@ using System.Linq;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 
+/// <summary>
+/// 셀과 지점의 실제 생성 이력을 체크포인트에 저장하고 복원한다.
+/// </summary>
 public sealed partial class SpawnDistributionHistory
 {
     internal State CaptureCheckpoint() => new(_grid, new(_cells), new(_points, StringComparer.Ordinal), new(_pointCells, StringComparer.Ordinal));

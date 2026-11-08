@@ -72,6 +72,9 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     public bool CanBeTargeted =>
         isActiveAndEnabled && maxHealth > 0f && currentHealth > 0f;
 
+    /// <summary>
+    /// 연결된 피해 수신자로 피해를 전달하고 수신자가 없으면 적용하지 않는다.
+    /// </summary>
     public bool TryApplyDamage(int damage)
     {
         MonoBehaviour[] candidates = GetComponentsInParent<MonoBehaviour>(true);

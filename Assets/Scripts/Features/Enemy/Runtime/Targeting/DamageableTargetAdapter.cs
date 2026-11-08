@@ -65,6 +65,9 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 연결된 터렛의 상태가 바뀐 경우에만 Enemy 타깃 정보를 갱신한다.
+    /// </summary>
     private void OnSnapshotChanged(int instanceId)
     {
         if (_weaponTurret == null)
@@ -83,6 +86,9 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 제작 참조 또는 부모 계층에서 공통 피해 수신자를 찾고 터렛 정보를 연결한다.
+    /// </summary>
     private void ResolveDamageable()
     {
         if (_damageableSource is IDamageableTarget configured)
@@ -112,6 +118,9 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 실제 체력·파괴·활성 상태를 타깃 정보에 반영하고 공격 가능한 상태에서만 후보를 활성화한다.
+    /// </summary>
     private void Synchronize()
     {
         if (_targetable == null)

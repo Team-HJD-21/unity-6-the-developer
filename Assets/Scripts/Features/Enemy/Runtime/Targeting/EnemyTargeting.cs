@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// 배정된 타깃과 거리 판정에 사용할 대상 콜라이더를 보관한다.
+/// </summary>
 public class EnemyTargeting : MonoBehaviour
 {
     private Transform _target;

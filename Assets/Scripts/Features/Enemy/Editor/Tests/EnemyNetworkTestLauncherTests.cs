@@ -9,6 +9,9 @@ using Unity.Netcode;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
+/// <summary>
+/// 테스트런처의 Region 연결과 유효한 생성 요청 구성을 검사한다.
+/// </summary>
 public sealed class EnemyNetworkTestLauncherTests
 {
     private GameObject _root;

@@ -5,8 +5,14 @@ using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
 using UnityEngine.AI;
+/// <summary>
+/// 요청 영역 안에서 Grid 점유와 NavMesh 조건을 만족하는 생성 위치를 찾는다.
+/// </summary>
 public static class EnemySpawnPlacementPolicy
 {
+    /// <summary>
+    /// 요청 영역 안에서 제한된 횟수만 시도해 점유와 NavMesh 조건을 만족하는 위치를 찾는다.
+    /// </summary>
     public static bool TryResolve(SpawnArea area, BattlefieldSpatialSnapshot battlefield, IRandomSource random,
         out Vector3 position, out string reason)
     {

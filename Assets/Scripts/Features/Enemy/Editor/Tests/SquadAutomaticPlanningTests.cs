@@ -8,6 +8,9 @@ using UnityEditor;
 using UnityEngine;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
+/// <summary>
+/// 상황별 편성 선택과 공유 예산·수량·셀 수용량 제약을 검사한다.
+/// </summary>
 public sealed class SquadAutomaticPlanningTests
 {
     private readonly List<UnityEngine.Object> _objects = new();

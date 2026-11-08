@@ -2,6 +2,9 @@
 // 취소와 최종 요청 결과를 구분하며 실제 실행은 공통 Encounter 요청 서비스를 통합니다.
 using System;
 using TeamHJD.Game.Contracts;
+/// <summary>
+/// 지연 생성 요청의 대기·취소 상태와 최종 실행 결과를 보관한다.
+/// </summary>
 public sealed class EncounterSpawnReservation
 {
     public Guid RequestId { get; }
@@ -11,12 +14,18 @@ public sealed class EncounterSpawnReservation
     public string Reason { get; private set; } = "";
     public EncounterRequestResult Result { get; private set; }
     internal EncounterSpawnReservation(Guid id, double due) { RequestId = id; DueGameSeconds = due; }
+    /// <summary>
+    /// 아직 실행되지 않은 요청을 호출자 사유로 취소한다.
+    /// </summary>
     public void Cancel() => Cancel("Caller cancelled the pending request.");
     internal void Cancel(string reason)
     {
         if (!IsPending) return;
         IsPending = false; IsCancelled = true; Reason = reason;
     }
+    /// <summary>
+    /// 대기 중인 요청에 최종 실행 결과를 기록하고 대기를 종료한다.
+    /// </summary>
     internal void Complete(EncounterRequestResult result)
     {
         if (!IsPending) return;

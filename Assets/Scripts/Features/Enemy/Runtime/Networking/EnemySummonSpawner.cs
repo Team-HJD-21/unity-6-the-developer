@@ -13,6 +13,9 @@ public sealed class EnemySummonSpawner : NetworkBehaviour
     [SerializeField, Min(0f)] private float spawnDistance = 1f;
     [SerializeField, Min(0f)] private float spawnSpacing = 0.5f;
 
+    /// <summary>
+    /// 서버에서 소환 정의의 몬스터를 생성하고 분대 규칙에 맞게 등록한 실제 수를 반환한다.
+    /// </summary>
     public int Spawn(
         EnemyDefinition definition,
         int count,

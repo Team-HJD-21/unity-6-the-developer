@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// 소환 모션의 실행 상태를 관리하고 방출 이벤트와 사망 시 적을 소환한다.
+/// </summary>
 public class EnemySummonAbility : EnemyAbility
 {
     [Header("참조")]
@@ -29,6 +32,9 @@ public class EnemySummonAbility : EnemyAbility
             summonSpawner = GetComponent<EnemySummonSpawner>();
     }
 
+    /// <summary>
+    /// 생성기와 소환 정의가 준비되어 있는지 확인한다. 변태와 거리 판단은 컨트롤러가 담당한다.
+    /// </summary>
     public override bool CheckCondition()
     {
         return summonSpawner != null &&
@@ -37,6 +43,9 @@ public class EnemySummonAbility : EnemyAbility
                summonCount > 0;
     }
 
+    /// <summary>
+    /// 소환 실행을 잠그고 애니메이션 방출 이벤트에서 사용할 생성 요청을 예약한다.
+    /// </summary>
     protected override bool Activate()
     {
         _isSummoning = true;

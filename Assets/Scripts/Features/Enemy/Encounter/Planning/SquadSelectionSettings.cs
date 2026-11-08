@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
 
-/// <summary>지점 주변 조사 범위와 자동 편성 선택에 사용하는 조정값.</summary>
+/// <summary>기준 타깃 주변 조사와 상황별 편성 선택·지역 예산 배분에 사용하는 조정값.</summary>
 [Serializable]
 public sealed class SquadSelectionSettings
 {
@@ -35,6 +35,9 @@ public sealed class SquadSelectionSettings
 /// <summary>상황에 맞는 편성의 비중을 높이고 Core 난수로 하나를 선택한다.</summary>
 public static class SquadSelectionPolicy
 {
+    /// <summary>
+    /// 편성 역할이 현재 상황의 우대 조건을 만족하면 기본 선택 비중에 배율을 적용한다.
+    /// </summary>
     public static double CalculateWeight(EnemySquadPreset preset, SpawnAreaContext area,
         SquadSelectionSettings settings)
     {
@@ -75,9 +78,13 @@ public static class SquadSelectionPolicy
         }
 
         double weight = preset.SelectionWeight;
+        // 우대 조건이 맞지 않아도 기본 비중을 유지해 다른 편성이 선택될 수 있게 한다.
         return preferred ? weight * settings.preferredMultiplier : weight;
     }
 
+    /// <summary>
+    /// 출현 셀에 들어갈 수 있는 편성 중 상황별 비중에 따라 Core 난수로 하나를 선택한다.
+    /// </summary>
     public static bool TrySelect(IReadOnlyList<EnemySquadPreset> candidates, SpawnAreaContext area,
         SquadSelectionSettings settings, IRandomSource random, out EnemySquadPreset selected)
     {

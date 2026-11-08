@@ -1,4 +1,3 @@
-// 적 능력의 발동 조건과 쿨다운을 관리합니다. Match에서는 주입된 필드 시계를 사용합니다.
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -79,6 +78,9 @@ public abstract partial class EnemyAbility : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// 실제 능력을 실행하고 성공 여부를 반환한다. 성공 시에만 공통 쿨타임을 소비한다.
+    /// </summary>
     protected abstract bool Activate();
 
     /// <summary>

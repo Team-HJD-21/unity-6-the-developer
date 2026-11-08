@@ -8,6 +8,9 @@ using NUnit.Framework;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 
+/// <summary>
+/// 셀 점유와 생성 이력에 따른 편성 분산을 검사한다.
+/// </summary>
 public sealed class SpawnPointSpatialPolicyTests
 {
     private SpawnPointSpatialPolicy _policy = new SpawnPointSpatialPolicy();

@@ -5,6 +5,9 @@ using System.IO;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
+/// <summary>
+/// 공격 투사체의 위치·피해·방향·남은 수명을 저장하고 복원한다.
+/// </summary>
 public partial class EnemyDamageProjectile
 {
     private ulong _checkpointExecutorId = ulong.MaxValue;

@@ -3,6 +3,9 @@
 using System.IO;
 using UnityEngine;
 
+/// <summary>
+/// 이벤트 발사 공격의 진행 상태를 검사하고 복원한다.
+/// </summary>
 public sealed partial class EnemyProjectileAbility
 {
     internal AttackState CaptureAttackState() => new(fireOnAnimationEvent, _isExecuting, _shotPending,

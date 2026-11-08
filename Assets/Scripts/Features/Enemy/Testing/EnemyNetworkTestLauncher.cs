@@ -121,6 +121,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
     public void BindMatch(MatchId matchId, Func<BattlefieldSpatialSnapshot> snapshotProvider)
         => BindAuthorityMatch(matchId, LocalIssuer, snapshotProvider);
 
+    /// <summary>
+    /// App이 네트워크 시작과 Match 수명을 관리하도록 런처의 독립 실행 경로를 전환한다.
+    /// </summary>
     public void UseAppNetworkOwnership()
     {
         if (_snapshotProvider != null && !_appOwnedNetwork)
@@ -130,6 +133,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         _testOwnerScene = default;
     }
 
+    /// <summary>
+    /// Core에서 전달한 권위 Match와 최신 전장 조회 경로를 연결한다.
+    /// </summary>
     public void BindAuthorityMatch(MatchId matchId, PlayerId authorityPlayerId,
         Func<BattlefieldSpatialSnapshot> snapshotProvider)
     {
@@ -198,6 +204,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
     }
 
+    /// <summary>
+    /// 독립 시험용 Host의 수명을 시작한 씬의 수명과 연결한다.
+    /// </summary>
     private void BindTestHostLifetime(Scene owner)
     {
         if (!owner.IsValid() || !owner.isLoaded) return;
@@ -210,6 +219,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         SceneManager.sceneUnloaded += OnTestOwnerSceneUnloaded;
     }
 
+    /// <summary>
+    /// 시험 Host를 소유한 씬이 내려가면 해당 시험 실행의 정리를 요청한다.
+    /// </summary>
     private void OnTestOwnerSceneUnloaded(Scene scene)
     {
         if (_appOwnedNetwork || scene.handle != _testOwnerScene.handle)
@@ -236,6 +248,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         _initialEncounterRoutine = null;
     }
 
+    /// <summary>
+    /// Match와 씬 실행 구성이 준비될 때까지 기다린 뒤 초기 고정 편성을 한 번 요청한다.
+    /// </summary>
     private IEnumerator RunInitialEncounter()
     {
         // Scene Awake와 첫 동적 Grid 샘플이 끝난 뒤 최신 Match snapshot을 읽는다.
@@ -470,6 +485,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         return succeeded;
     }
 
+    /// <summary>
+    /// 현재 Region Binding에서 읽은 자료가 권위 Match에 속하는지 확인한다.
+    /// </summary>
     private bool TryReadRegion(out RegionGridSnapshot region, out string reason)
     {
         region = null;
@@ -500,6 +518,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         out string result)
         => TryRequestEncounter(snapshot, squadOrder, maxEnemyCount, EncounterRequestSource.DebugWindow, out result);
 
+    /// <summary>
+    /// 현재 Match의 최신 전장 자료로 지정된 편성 요청을 공통 서비스에 전달한다.
+    /// </summary>
     public bool TryRequestCurrentEncounter(string squadOrder, int maxEnemyCount,
         EncounterRequestSource source, out string result)
     {
@@ -531,6 +552,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         return response.HasSpawned;
     }
 
+    /// <summary>
+    /// 검증된 요청자를 공통 Encounter 서비스에 전달하고 요청 결과를 반환한다.
+    /// </summary>
     public EncounterRequestResult Submit(EncounterRequest request, PlayerId verifiedIssuer)
     {
         if (request == null) throw new ArgumentNullException(nameof(request));
@@ -547,6 +571,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         }
         return response;
     }
+    /// <summary>
+    /// 실행 전 거부된 요청을 실제 생성과 구분해 진단 자료로 전달한다.
+    /// </summary>
     private void ReportRejectedRequest(EncounterRequestSource source, string preset, string reason, Guid request,
         Guid cause = default, EncounterSpawnOrigin origin = null, long executionSequence = 0, long revision = 0,
         BattlefieldSpatialSnapshot snapshot = null, bool countsUnknown = false)
@@ -567,6 +594,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         MatchEnvironmentSnapshot environment, long executionSequence)
         => Execute(request, snapshot, environment, null, executionSequence);
 
+    /// <summary>
+    /// 검증된 Core 요청과 환경·배치 정보를 실행 Context로 묶어 Runtime에 전달하고 결과를 반환한다.
+    /// </summary>
     public EncounterRequestResult Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot,
         MatchEnvironmentSnapshot environment, EncounterSpawnPlacement placement, long executionSequence)
     {
@@ -604,6 +634,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
             status, summary.PlannedCount, summary.SpawnedCount, result, environmentRevision: environment?.Revision ?? 0);
     }
 
+    /// <summary>
+    /// 현재 Inspector 설정을 전달하고 준비된 Match의 실행기와 카탈로그로 Runtime을 구성한다.
+    /// </summary>
     private void EnsureEncounterRuntime()
     {
         // Inspector 설정은 유지하고 Runtime에 전달할 데이터만 갱신한다.
@@ -635,6 +668,9 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
             point: observation.SpawnPointId, entity: observation.EntityId, message: observation.Reason);
     }
 
+    /// <summary>
+    /// 요청 Context와 계획·실제 생성 결과를 공통 진단 사건으로 전달한다.
+    /// </summary>
     private void Emit(GameDiagnosticKind kind, EncounterExecutionContext context, int planned = 0, int actual = 0,
         string enemyType = "", string point = "", string entity = "", string message = "", SpawnDecisionSnapshot spawnDecision = null,
         bool countsUnknown = false)

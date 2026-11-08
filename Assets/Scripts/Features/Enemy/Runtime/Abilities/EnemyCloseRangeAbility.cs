@@ -18,6 +18,9 @@ public class EnemyCloseRangeAbility : EnemyAbility
             enemyTargeting = GetComponent<EnemyTargeting>();
     }
 
+    /// <summary>
+    /// 유효한 타깃의 콜라이더가 근접 범위 안에 있는지 확인한다.
+    /// </summary>
     public override bool CheckCondition()
     {
         return attackDamage > 0 &&
@@ -25,6 +28,9 @@ public class EnemyCloseRangeAbility : EnemyAbility
                IsInRange(enemyTargeting.TargetColliders, activationRange);
     }
 
+    /// <summary>
+    /// 현재 타깃에 공통 피해 수신 계약으로 근접 피해를 전달한다.
+    /// </summary>
     protected override bool Activate()
     {
         if (!TryGetTarget(out TargetableComponent target))
@@ -40,6 +46,9 @@ public class EnemyCloseRangeAbility : EnemyAbility
         return target != null && target.CanBeTargeted && target.TryApplyDamage(attackDamage);
     }
 
+    /// <summary>
+    /// 현재 배정된 타깃에서 공격 가능한 피해 수신 컴포넌트를 찾는다.
+    /// </summary>
     protected bool TryGetTarget(out TargetableComponent target)
     {
         target = null;

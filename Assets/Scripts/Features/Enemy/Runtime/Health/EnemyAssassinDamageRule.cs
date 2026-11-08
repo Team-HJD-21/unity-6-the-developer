@@ -12,6 +12,9 @@ public sealed class EnemyAssassinDamageRule : EnemyDamageRule
         _detection = GetComponent<EnemyDetection>();
     }
 
+    /// <summary>
+    /// 플레이어가 공격한 경우에만 현재 탐지 상태를 기준으로 피해를 허용한다.
+    /// </summary>
     public override bool CanBeAttackedBy(AttackSourceType source)
     {
         return source == AttackSourceType.Player &&

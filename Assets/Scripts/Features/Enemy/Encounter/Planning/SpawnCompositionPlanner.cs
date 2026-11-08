@@ -277,6 +277,9 @@ public sealed class SpawnCompositionPlanner
         instructions = plans.AsReadOnly(); return plans.Count > 0;
     }
 
+    /// <summary>
+    /// 고정 편성의 구성과 비용을 검사하고 예산·마릿수 안에 들어가는 완전한 세트 수를 구한다.
+    /// </summary>
     private bool TryReadPreset(FixedPresetSpawnRequest request, out EnemySquadPreset preset, out int sets)
     {
         sets = 0; preset = null;

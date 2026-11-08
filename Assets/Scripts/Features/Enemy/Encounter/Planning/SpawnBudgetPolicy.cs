@@ -50,6 +50,9 @@ public static class SpawnBudgetPolicy
         return baseBudget + (int)(additionalBudget / totalCells);
     }
 
+    /// <summary>
+    /// 지역 기본 비중에 병력 부족과 주변 플레이어 존재에 따른 추가 비중을 더한다.
+    /// </summary>
     public static long CalculateWeight(SpawnAreaContext area, SquadSelectionSettings settings)
     {
         long weight = settings.baseBudgetWeight;
@@ -80,6 +83,7 @@ public static class SpawnBudgetPolicy
 
         int remaining = totalBudget;
         var active = new List<AreaBudgetAllocation>();
+        // 한 편성도 만들지 못할 예산이 여러 지역에 흩어지지 않도록 최소 비용부터 확보한다.
         foreach (AreaBudgetAllocation allocation in candidates)
         {
             if (allocation.Area.MinimumCost > remaining) continue;
@@ -91,6 +95,7 @@ public static class SpawnBudgetPolicy
 
         long totalWeight = active.Sum(allocation => allocation.Weight);
         int distributed = 0;
+        // 최소 비용을 확보한 지역끼리 남은 예산을 상황별 비중에 따라 나눈다.
         foreach (AreaBudgetAllocation allocation in active)
         {
             decimal amount = (decimal)remaining * allocation.Weight / totalWeight;
@@ -101,6 +106,7 @@ public static class SpawnBudgetPolicy
         }
 
         int remainder = remaining - distributed;
+        // 정수 나눗셈에서 남은 비용은 소수 잔여량이 큰 지역부터 한 단위씩 배분한다.
         foreach (AreaBudgetAllocation allocation in active
                      .OrderByDescending(item => item.Fraction)
                      .ThenByDescending(item => item.Weight)

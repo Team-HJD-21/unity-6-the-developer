@@ -19,6 +19,9 @@ public sealed class EnemyNetworkDetection : NetworkBehaviour
             enemyDetection = GetComponent<EnemyDetection>();
     }
 
+    /// <summary>
+    /// 서버는 탐지 변화를 발행하고 클라이언트는 동기화된 현재 상태와 이후 변화를 반영한다.
+    /// </summary>
     public override void OnNetworkSpawn()
     {
         if (IsServer)
@@ -33,6 +36,9 @@ public sealed class EnemyNetworkDetection : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// 탐지 이벤트와 NetworkVariable 구독을 해제한다.
+    /// </summary>
     public override void OnNetworkDespawn()
     {
         enemyDetection.DetectionChanged -= OnDetectionChanged;

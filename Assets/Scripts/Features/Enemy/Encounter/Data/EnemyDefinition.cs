@@ -1,11 +1,17 @@
 using UnityEngine;
 
+/// <summary>
+/// 생성한 적이 공동 목표를 공유할지 한 마리씩 독립 분대로 행동할지 지정한다.
+/// </summary>
 public enum EnemySquadMode
 {
     Shared,
     Individual
 }
 
+/// <summary>
+/// 분대가 새 목표를 고를 때 허용할 타깃 종류를 지정한다.
+/// </summary>
 public enum EnemyTargetRule
 {
     PlayerOrTurret,

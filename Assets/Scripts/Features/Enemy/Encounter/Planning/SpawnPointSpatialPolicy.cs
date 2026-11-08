@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 
+/// <summary>
+/// 셀 부하와 지점별 생성 이력을 비교해 완전한 편성 세트를 분산한다.
+/// </summary>
 public sealed class SpawnPointSpatialPolicy
 {
     public const string Description = "Grid cell service + current enemies + pending enemies → lower current pressure → point service → frontline distance → ordinal ID; actual spawns committed; complete sets only";
@@ -17,6 +20,9 @@ public sealed class SpawnPointSpatialPolicy
 
     public const string AutomaticDescription = "Target-cell budget allocation by population and player presence; per-point weighted preset selection; shared request and allocation budgets; cell capacity and pending enemies; Core random; complete squads only";
 
+    /// <summary>
+    /// 한 요청 안에서 셀 용량과 예정 병력을 공유하는 계획 세션을 만든다.
+    /// </summary>
     public SpawnPointPlanningSession BeginPlanning(BattlefieldSpatialSnapshot snapshot,
         IReadOnlyList<SpatialSpawnCandidate> candidates, SquadSelectionSettings settings)
     {
@@ -25,11 +31,17 @@ public sealed class SpawnPointSpatialPolicy
         return new SpawnPointPlanningSession(snapshot, candidates, _history, settings);
     }
 
+    /// <summary>
+    /// 고정 크기의 완전한 편성 세트를 생성 부하가 낮은 지점부터 배분한다.
+    /// </summary>
     public IReadOnlyList<SpatialSpawnAllocation> Allocate(
         BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpatialSpawnCandidate> candidates,
         int totalSets, int enemiesPerSet)
         => Allocate(snapshot, candidates, totalSets, enemiesPerSet, out _);
 
+    /// <summary>
+    /// 고정 편성을 배분하고 각 후보의 채택·제외 상태를 진단 결과로 반환한다.
+    /// </summary>
     public IReadOnlyList<SpatialSpawnAllocation> Allocate(
         BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpatialSpawnCandidate> candidates,
         int totalSets, int enemiesPerSet, out IReadOnlyList<SpawnDecisionSnapshot.Candidate> observations)
@@ -56,6 +68,9 @@ public sealed class SpawnPointSpatialPolicy
         foreach (SpawnDecisionSnapshot.Actual actual in actuals) _history.RecordSpawn(actual.PointId, actual.Position);
     }
 
+    /// <summary>
+    /// 배치 동률 비교에 사용할 가장 가까운 전선 선분까지의 제곱 거리를 구한다.
+    /// </summary>
     internal static double DistanceToFrontlineSquared(
         BattlefieldPoint point,
         IReadOnlyList<BattlefieldEdge> edges,

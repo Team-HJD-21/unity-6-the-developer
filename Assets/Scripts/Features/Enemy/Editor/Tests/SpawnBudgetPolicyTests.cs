@@ -3,6 +3,9 @@ using System.Linq;
 using NUnit.Framework;
 using TeamHJD.Game.Domain;
 
+/// <summary>
+/// 점유율 기반 총예산과 지역별 분배의 합계·최소 비용 조건을 검사한다.
+/// </summary>
 public sealed class SpawnBudgetPolicyTests
 {
     [TestCase(RegionPolicyMode.Static, 0, 20)]

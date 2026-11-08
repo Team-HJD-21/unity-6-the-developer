@@ -12,6 +12,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
 
+/// <summary>
+/// 스테이지에서 생성한 적의 유효 타깃 이동과 타깃 부재 동작을 검사한다.
+/// </summary>
 public sealed class EnemyMovementHotfixTests
 {
     [Test]

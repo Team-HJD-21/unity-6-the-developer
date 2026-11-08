@@ -4,6 +4,9 @@ using System;
 using TeamHJD.Game.Domain;
 using Unity.Collections;
 
+/// <summary>
+/// 몬스터 행동을 Match의 실행 권한과 시계에 연결한다.
+/// </summary>
 public partial class EnemyNetworkController
 {
     private readonly Unity.Netcode.NetworkVariable<FixedString512Bytes> _simulationMatch = new();

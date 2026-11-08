@@ -1,4 +1,3 @@
-// 한 스폰 명령의 분대원과 공동 목표를 소유합니다. 제거·복원 시 같은 소속을 유지합니다.
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -103,13 +102,11 @@ public class EnemySquad
         return true;
     }
 
-    /// <summary>
-    /// 현재 목표가 공격 가능하면 유지하고, 아니면 분대 중심에서 새 목표를 찾는다.
-    /// 목표가 바뀐 경우에만 모든 구성원에게 새 목표 또는 null을 전달한다.
-    /// 후보가 없으면 목표를 비워 두고 분대 단위로 검색 간격을 둔다.
-    /// </summary>
-    /// <returns>선택되거나 유지된 공동 목표가 있으면 true.</returns>
     internal Transform CheckpointTarget => _target?.TargetTransform;
+
+    /// <summary>
+    /// 저장된 공동 목표를 다시 연결하고 구성원에게 전달한다.
+    /// </summary>
     internal void RestoreCheckpointTarget(Transform target)
     {
         _target = target != null ? target.GetComponent<ITargetable>() : null;
@@ -117,6 +114,12 @@ public class EnemySquad
         foreach (var member in _members) member.AssignTarget(target);
     }
 
+    /// <summary>
+    /// 현재 목표가 공격 가능하면 유지하고, 아니면 분대 중심에서 새 목표를 찾는다.
+    /// 목표가 바뀐 경우에만 모든 구성원에게 새 목표 또는 null을 전달한다.
+    /// 후보가 없으면 목표를 비워 두고 분대 단위로 검색 간격을 둔다.
+    /// </summary>
+    /// <returns>선택되거나 유지된 공동 목표가 있으면 true.</returns>
     public bool SetTarget()
     {
         if (IsValidTarget(_target))
@@ -166,6 +169,9 @@ public class EnemySquad
         }
     }
 
+    /// <summary>
+    /// Unity 오브젝트 수명과 타깃 유효성을 확인하고 분대의 PlayerOnly 규칙을 적용한다.
+    /// </summary>
     private bool IsValidTarget(ITargetable target)
     {
         if (target == null ||

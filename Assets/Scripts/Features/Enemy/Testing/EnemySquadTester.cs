@@ -13,6 +13,9 @@ public sealed class EnemySquadTester : MonoBehaviour
     [Tooltip("비워 두면 분대 중심에서 가장 가까운 유효 타깃을 찾습니다.")]
     [SerializeField] private Transform initialTarget;
 
+    /// <summary>
+    /// 로컬 타깃 초기화가 끝난 뒤 서버 또는 로컬 실행에서 자신을 1인 분대에 등록한다.
+    /// </summary>
     private IEnumerator Start()
     {
         // 각 몬스터의 Start에서 로컬 테스트 타깃 설정이 끝난 뒤 분대에 등록한다.

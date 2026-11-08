@@ -24,6 +24,9 @@ public sealed class EnemySummonController : MovingEnemyController
             rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
+    /// <summary>
+    /// 이동·변태 대기·위치 고정 상태에 따라 추적 또는 소환 능력을 실행한다.
+    /// </summary>
     public override void ExecuteBehavior()
     {
         if (_deathHandled || enemyAbility == null || !enemyAbility.isActiveAndEnabled)
@@ -57,6 +60,9 @@ public sealed class EnemySummonController : MovingEnemyController
         }
     }
 
+    /// <summary>
+    /// 유효한 타깃이 범위에 들어오면 소환 쿨타임을 소비하지 않고 변태를 시작한다.
+    /// </summary>
     private bool TryTransform()
     {
         if (enemyTargeting == null || enemyTargeting.Target == null)
@@ -87,6 +93,9 @@ public sealed class EnemySummonController : MovingEnemyController
         _state = SummonState.Transformed;
     }
 
+    /// <summary>
+    /// 중복 사망 처리를 막고 변태를 완료한 경우에만 사망 소환을 실행한다.
+    /// </summary>
     public override void OnDeath()
     {
         if (_deathHandled)

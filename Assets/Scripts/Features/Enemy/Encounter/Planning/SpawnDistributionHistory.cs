@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
 
+/// <summary>
+/// Match별 실제 생성 이력을 보관해 셀과 지점의 반복 생성 부하를 비교한다.
+/// </summary>
 public sealed partial class SpawnDistributionHistory
 {
     private MatchId _matchId;
@@ -21,6 +24,9 @@ public sealed partial class SpawnDistributionHistory
         _grid.MapWidth == snapshot.Grid.Configuration.MapWidth && _grid.MapHeight == snapshot.Grid.Configuration.MapHeight &&
         _grid.CellsX == snapshot.Grid.Configuration.CellsX && _grid.CellsY == snapshot.Grid.Configuration.CellsY;
 
+    /// <summary>
+    /// 현재 Match와 Grid에 맞게 이력을 준비하고 신규 지점의 기준 부하를 맞춘다.
+    /// </summary>
     public void Prepare(BattlefieldSpatialSnapshot snapshot, Dictionary<string, int> pointCells)
     {
         if (!Matches(snapshot))
@@ -52,6 +58,9 @@ public sealed partial class SpawnDistributionHistory
         _pointCells = new Dictionary<string, int>(pointCells, StringComparer.Ordinal);
     }
 
+    /// <summary>
+    /// 제작 지점에서 실제 생성한 한 마리를 해당 셀과 지점의 서비스 이력에 반영한다.
+    /// </summary>
     public void RecordSpawn(string pointId)
     {
         if (!_pointCells.TryGetValue(pointId, out int cell)) return;
@@ -59,6 +68,9 @@ public sealed partial class SpawnDistributionHistory
         _points[pointId] = checked(_points[pointId] + 1);
     }
 
+    /// <summary>
+    /// 제작 지점 ID가 없는 생성은 실제 월드 위치가 속한 셀에 기록한다.
+    /// </summary>
     public void RecordSpawn(string pointId, BattlefieldPoint actualPosition)
     {
         if (!string.IsNullOrEmpty(pointId)) { RecordSpawn(pointId); return; }

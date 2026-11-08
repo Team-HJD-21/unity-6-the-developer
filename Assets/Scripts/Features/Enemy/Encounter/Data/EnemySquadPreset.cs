@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 주변 상황에 따라 선택 비중을 높일 분대의 전투 역할을 구분한다.
+/// </summary>
 public enum EnemySquadRole
 {
     Patrol = 0,

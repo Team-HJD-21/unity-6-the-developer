@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace TeamHJD.Game.Enemies.Targeting
 {
+    /// <summary>
+    /// 플레이어 상태를 TargetableComponent의 타깃 유효성에 연결한다.
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerInfo), typeof(TargetableComponent))]
     public sealed class PlayerTargetableAdapter : MonoBehaviour

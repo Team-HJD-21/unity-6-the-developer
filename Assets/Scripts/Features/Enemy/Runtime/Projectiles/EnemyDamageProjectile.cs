@@ -34,6 +34,9 @@ public partial class EnemyDamageProjectile : EnemyProjectile
         rigidbody2D.simulated = false;
     }
 
+    /// <summary>
+    /// 서버에서 물리를 실행하고 동기화된 발사 방향을 애니메이션에 적용한다.
+    /// </summary>
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -46,6 +49,9 @@ public partial class EnemyDamageProjectile : EnemyProjectile
         _simulation?.Synchronize();
     }
     
+    /// <summary>
+    /// 피해량과 발사 방향을 설정하고 직선 이동 및 수명 계산을 시작한다.
+    /// </summary>
     public void Initialize(int projectileDamage, Vector2 direction)
     {
         _projectileDamage = projectileDamage;
@@ -59,6 +65,9 @@ public partial class EnemyDamageProjectile : EnemyProjectile
         BeginLifetime();
     }
     
+    /// <summary>
+    /// 연속적인 발사 방향에서 더 큰 축을 골라 상하좌우 애니메이션 방향을 적용한다.
+    /// </summary>
     private void ApplyAnimationDirection(Vector2 direction)
     {
         Vector2 animationDirection;
@@ -72,15 +81,24 @@ public partial class EnemyDamageProjectile : EnemyProjectile
         animator.SetFloat(YHash, animationDirection.y);
     }
 
+    /// <summary>
+    /// 직격 피해를 적용한다. 범위 피해나 추가 효과는 파생 투사체에서 확장한다.
+    /// </summary>
     protected virtual void OnHit(ITargetable target)
     {
         ApplyDamage(target);
     }
 
+    /// <summary>
+    /// 명중 위치에 필요한 효과를 파생 투사체에서 재생한다.
+    /// </summary>
     protected virtual void PlayImpactEffect(Vector3 position)
     {
     }
     
+    /// <summary>
+    /// 타깃의 공통 피해 수신자에 투사체 피해량을 전달한다.
+    /// </summary>
     protected void ApplyDamage(ITargetable target)
     {
         if (target == null || !target.CanBeTargeted)
@@ -95,6 +113,9 @@ public partial class EnemyDamageProjectile : EnemyProjectile
         damageable?.ApplyDamage(_projectileDamage);
     }
 
+    /// <summary>
+    /// 서버에서 유효한 Player·Turret 명중을 한 번만 처리한 뒤 효과를 재생하고 제거한다.
+    /// </summary>
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (_hasHit || !CanSimulate)

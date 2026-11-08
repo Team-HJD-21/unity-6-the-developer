@@ -55,6 +55,9 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
         };
     }
 
+    /// <summary>
+    /// 아직 폭발하지 않았고 유효한 Player·Turret이 몸통 기준 발동 범위 안에 있는지 확인한다.
+    /// </summary>
     public override bool CheckCondition()
     {
         if (_hasExploded ||
@@ -75,6 +78,9 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
             activationRange);
     }
 
+    /// <summary>
+    /// 폭발 상태를 고정하고 추가 피격을 차단한 뒤 범위 피해를 적용한다.
+    /// </summary>
     protected override bool Activate()
     {
         if (_hasExploded)
@@ -92,6 +98,9 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
         return true;
     }
 
+    /// <summary>
+    /// 몸통 중심 주변에서 Player·Turret을 찾아 대상별로 한 번만 피해를 준다.
+    /// </summary>
     private void ApplyExplosionDamage()
     {
         _overlapResults.Clear();
@@ -173,6 +182,9 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
             OnExplosionAnimationFinished();
     }
 
+    /// <summary>
+    /// 몸통 콜라이더의 중심을 폭발 위치로 사용하고 참조가 없으면 캡슐 또는 현재 위치를 사용한다.
+    /// </summary>
     private Vector3 GetExplosionCenter()
     {
         if (_bodyCollider != null)

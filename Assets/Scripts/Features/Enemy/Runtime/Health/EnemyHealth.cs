@@ -1,4 +1,3 @@
-// 적의 실제 체력과 피격 허용·사망 사건을 소유합니다. 복원은 사건 재실행 없이 적용합니다.
 using System;
 using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine;
@@ -38,6 +37,9 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
         _isActive = true;
     }
 
+    /// <summary>
+    /// 체력 변경 대상에서 제외해 제거·복원 중 추가 피격과 회복을 막는다.
+    /// </summary>
     public void Deactivate()
     {
         _isActive = false;
@@ -79,6 +81,9 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
         return true;
     }
 
+    /// <summary>
+    /// 회복 가능한 상태에서 양수 회복량을 적용하고 최대 체력을 넘지 않게 한다.
+    /// </summary>
     public void Heal(int healAmount)
     {
         if (!CanBeHealed || healAmount <= 0)
@@ -87,6 +92,9 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
         currentHealth = Mathf.Clamp(currentHealth + healAmount, 0, maxHealth);
     }
 
+    /// <summary>
+    /// 사망 상태를 확정하고 구독자별 예외를 분리해 사망 알림을 전달한다.
+    /// </summary>
     private void Die()
     {
         currentHealth = 0;

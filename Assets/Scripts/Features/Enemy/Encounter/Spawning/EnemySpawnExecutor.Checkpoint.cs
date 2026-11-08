@@ -11,6 +11,9 @@ using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
+/// <summary>
+/// 추적 중인 몬스터와 공격 투사체를 저장하고 정의 및 분대 참조를 복원한다.
+/// </summary>
 public partial class EnemySpawnExecutor
 {
     private ICheckpointParticipant _checkpointWriter;
@@ -34,6 +37,9 @@ public partial class EnemySpawnExecutor
             var state = _owner.CaptureWorld();
             return codec.Write(Key, Version, Kind, w => WriteWorld(w, state, codec));
         }
+        /// <summary>
+        /// 저장 데이터를 읽고 검증한 뒤 실제 적용과 되돌리기를 담당할 복원 단계를 준비한다.
+        /// </summary>
         public ICheckpointRestoreStep PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
         {
             _owner.RequireCheckpointMatch(context.Current.Config.MatchId);
@@ -61,6 +67,9 @@ public partial class EnemySpawnExecutor
                     yield return projectile;
     }
 
+    /// <summary>
+    /// 추적 중인 적과 공격 투사체, 분대 타깃 참조를 저장 자료로 모은다.
+    /// </summary>
     private SavedWorld CaptureWorld()
     {
         var groups = new Dictionary<EnemySquad, int>();
@@ -93,6 +102,9 @@ public partial class EnemySpawnExecutor
         => ResolveCheckpointEnemy(type).Prefab.GetComponent<EnemyProjectileAbility>()?.CheckpointProjectilePrefab ??
             throw new InvalidDataException("Enemy projectile content not found: " + type);
 
+    /// <summary>
+    /// 복원 전에 저장된 몬스터·투사체 정의와 상태의 유효성을 검사한다.
+    /// </summary>
     private void ValidateWorld(SavedWorld world)
     {
         var ids = new HashSet<EntityId>();
@@ -127,6 +139,9 @@ public partial class EnemySpawnExecutor
             _ = ResolveCheckpointProjectile(projectile.Type);
     }
 
+    /// <summary>
+    /// 현재 추적 개체를 정리하고 저장 자료에서 몬스터·투사체·분대를 복원한다.
+    /// </summary>
     private void ApplyWorld(SavedWorld world)
     {
         foreach (var projectile in CheckpointProjectiles().ToArray())
@@ -189,6 +204,9 @@ public partial class EnemySpawnExecutor
         _restoredEnemies.Clear();
     }
 
+    /// <summary>
+    /// 몬스터와 타깃·투사체 상태를 체크포인트 payload 형식으로 기록한다.
+    /// </summary>
     private static void WriteWorld(BinaryWriter w, SavedWorld state, ICheckpointPayloadCodec codec)
     {
         w.Write(state.Targets.Length);
@@ -211,6 +229,9 @@ public partial class EnemySpawnExecutor
         }
     }
 
+    /// <summary>
+    /// 체크포인트 버전에 맞춰 저장된 몬스터·타깃·투사체 자료를 읽는다.
+    /// </summary>
     private static SavedWorld ReadWorld(BinaryReader r, ICheckpointPayloadCodec codec, int version)
     {
         var targets = new string[codec.ReadCount(r, 16384)];

@@ -1,8 +1,14 @@
 using UnityEngine;
 using UnityEngine.AI;
 
+/// <summary>
+/// XY 평면의 시작점과 목표를 NavMesh에 투영해 완전한 경로를 구한다.
+/// </summary>
 public static class EnemyNavMeshPathfinder
 {
+    /// <summary>
+    /// 표현용 Z를 제외한 XY 위치에서 완전한 NavMesh 경로를 구한다.
+    /// </summary>
     public static bool TryCalculatePath(
         Vector3 start, Vector3 target, out Vector3[] corners)
     {

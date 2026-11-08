@@ -20,6 +20,9 @@ public sealed class EnemyDepthSorting : MonoBehaviour
         _groundRenderer = FindGroundRenderer();
     }
 
+    /// <summary>
+    /// 서버 또는 로컬 실행에서 지면의 Y 범위를 표현용 Z 범위로 변환한다.
+    /// </summary>
     private void LateUpdate()
     {
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.NetworkManager.IsServer)
@@ -38,6 +41,9 @@ public sealed class EnemyDepthSorting : MonoBehaviour
         transform.position = position;
     }
 
+    /// <summary>
+    /// 같은 씬의 활성 비트리거 TilemapCollider를 가진 지면 중 가장 넓은 Tilemap을 찾는다.
+    /// </summary>
     private TilemapRenderer FindGroundRenderer()
     {
         TilemapRenderer groundRenderer = null;

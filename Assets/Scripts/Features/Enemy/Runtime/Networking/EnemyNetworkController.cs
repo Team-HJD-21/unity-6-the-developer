@@ -73,6 +73,9 @@ public partial class EnemyNetworkController : NetworkBehaviour
         SubscribeExplosionAbility();
     }
 
+    /// <summary>
+    /// 폭발 종료에 따른 제거 요청을 중복 구독하지 않도록 연결한다.
+    /// </summary>
     private void SubscribeExplosionAbility()
     {
         if (_explosionAbility == null)
@@ -98,6 +101,9 @@ public partial class EnemyNetworkController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// 서버에서 고유 사망 반응과 사망 기록 알림을 처리한 뒤 네트워크 개체를 제거한다.
+    /// </summary>
     private void OnHealthDied(EnemyHealth health)
     {
         if (health != enemyHealth || !IsServer)
@@ -166,6 +172,9 @@ public partial class EnemyNetworkController : NetworkBehaviour
         Unity.Netcode.NetworkManager.Singleton != null &&
         Unity.Netcode.NetworkManager.Singleton.IsListening;
 
+    /// <summary>
+    /// 임시 로컬 실행을 켠 경우 체력과 폭발 제거 이벤트, 시험 타깃을 초기화한다.
+    /// </summary>
     private void Start()
     {
         if (!runOffline || IsNetworkRunning)

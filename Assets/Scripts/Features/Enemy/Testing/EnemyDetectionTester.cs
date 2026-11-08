@@ -56,6 +56,9 @@ public sealed class EnemyDetectionTester : MonoBehaviour
     [ContextMenu("감지 테스트/B 해제")]
     public void UnregisterB() => ChangeDetector(DetectorB, false, "B");
 
+    /// <summary>
+    /// 현재 실행 권한과 탐지 상태를 로그로 확인한다.
+    /// </summary>
     [ContextMenu("감지 테스트/현재 상태 출력")]
     public void PrintState()
     {
@@ -67,6 +70,9 @@ public sealed class EnemyDetectionTester : MonoBehaviour
         Application.isPlaying && _networkDetection != null &&
         _networkDetection.IsSpawned && _networkDetection.IsServer;
 
+    /// <summary>
+    /// 시험 실행 권한을 확인한 뒤 지정 감지자를 등록·해제하고 결과를 출력한다.
+    /// </summary>
     private void ChangeDetector(int detectorId, bool register, string label)
     {
         if (!CanChangeDetection)

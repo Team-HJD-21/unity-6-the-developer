@@ -61,6 +61,9 @@ public abstract class EnemyController : MonoBehaviour
         _squad?.RefreshTarget(this);
     }
 
+    /// <summary>
+    /// 현재 분대에서 자신을 해제하고 소속 참조를 비운다.
+    /// </summary>
     public void LeaveSquad()
     {
         _squad?.RemoveMember(this);

@@ -5,5 +5,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public abstract class EnemyDamageRule : MonoBehaviour
 {
+    /// <summary>
+    /// 몬스터별 규칙에 따라 해당 종류의 공격자가 피해를 줄 수 있는지 반환한다.
+    /// </summary>
     public abstract bool CanBeAttackedBy(AttackSourceType source);
 }

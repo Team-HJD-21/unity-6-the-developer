@@ -1,6 +1,8 @@
-// 원거리 적의 발동 조건과 탄환 생성 요청을 관리합니다.
 using UnityEngine;
 
+/// <summary>
+/// 타깃 방향으로 투사체를 발사하고 애니메이션 이벤트 발사를 지원한다.
+/// </summary>
 public sealed partial class EnemyProjectileAbility : EnemyAbility
 {
     [Header("참조")]
@@ -35,6 +37,9 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
             projectileSpawner = GetComponent<EnemyProjectileSpawner>();
     }
 
+    /// <summary>
+    /// 발사 구성이 유효하고 현재 타깃이 발동 범위 안에 있는지 확인한다.
+    /// </summary>
     public override bool CheckCondition()
     {
         return projectileSpawner != null &&
@@ -44,6 +49,9 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
                IsInRange(enemyTargeting.TargetColliders, activationRange);
     }
 
+    /// <summary>
+    /// 타깃 방향을 정해 즉시 발사하거나 공격 애니메이션의 발사 이벤트를 예약한다.
+    /// </summary>
     protected override bool Activate()
     {
         if (projectilePrefab == null ||
@@ -117,6 +125,9 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
         CancelPendingAttack();
     }
 
+    /// <summary>
+    /// 예약된 발사와 정지 중 지연된 이벤트를 비우고 다음 행동을 허용한다.
+    /// </summary>
     private void CancelPendingAttack()
     {
         _shotPending = false;
@@ -125,6 +136,9 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
         _finishEventDeferred = false;
     }
 
+    /// <summary>
+    /// 발사 방향으로 생성 위치를 보정한 뒤 생성기에 피해량과 생성 주체를 전달한다.
+    /// </summary>
     private bool FireProjectile(Vector2 direction)
     {
         if (!CanAdvanceAbility || projectilePrefab == null || projectileSpawner == null)

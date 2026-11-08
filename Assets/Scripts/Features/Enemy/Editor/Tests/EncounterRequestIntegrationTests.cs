@@ -10,6 +10,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
+/// <summary>
+/// 공통 Encounter 요청의 검증과 실행 결과 전달을 검사한다.
+/// </summary>
 public sealed class EncounterRequestIntegrationTests
 {
     [UnityTearDown]

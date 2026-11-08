@@ -1,5 +1,3 @@
-// 최신 Battlefield snapshot을 Spawn Planner에 전달하고 실행 결과를 보고합니다.
-// 실제 NGO 생성은 Scene의 EnemySpawnExecutor에 위임합니다.
 
 using System;
 using System.Collections.Generic;
@@ -225,6 +223,9 @@ namespace TeamHJD.Game.Domain
                 out result, out summary);
         }
 
+        /// <summary>
+        /// 동일한 Match의 자료와 예산 설정을 확인한 뒤 점유율 목표를 이번 요청 예산으로 변환한다.
+        /// </summary>
         private bool TryGetSpawnBudget(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
             EncounterExecutionContext context, bool logDecisions, out int budget, out string reason)
         {
@@ -258,6 +259,9 @@ namespace TeamHJD.Game.Domain
             return true;
         }
 
+        /// <summary>
+        /// 최초·Dynamic 요청은 목표를 즉시 적용하고 Static 증가는 요청당 설정된 폭으로 제한한다.
+        /// </summary>
         private int UpdateSpawnBudget(int targetBudget, RegionPolicyMode mode)
         {
             if (!_budgetInitialized || mode == RegionPolicyMode.Dynamic)
@@ -273,6 +277,9 @@ namespace TeamHJD.Game.Domain
             return _currentBudget;
         }
 
+        /// <summary>
+        /// 기준 타깃과 집계 상황, 후보 가중치와 선택 결과를 진단 로그로 출력한다.
+        /// </summary>
         private static void LogSquadSelection(BattlefieldSpatialSnapshot snapshot, string pointId,
             string targetName, BattlefieldPoint targetPosition, SpawnAreaContext area,
             IReadOnlyList<EnemySquadPreset> presets, EnemySquadPreset selected, SquadSelectionSettings settings)
@@ -308,6 +315,9 @@ namespace TeamHJD.Game.Domain
                 $"예산·마릿수 제한을 통과한 후보만 표시. 선택: {selected.SquadOrder}");
         }
 
+        /// <summary>
+        /// 요청의 Match와 서버 실행기 구성이 현재 Runtime에서 실행 가능한지 확인한다.
+        /// </summary>
         private bool ValidateExecution(BattlefieldSpatialSnapshot snapshot, out string result)
         {
             if (snapshot == null || snapshot.MatchId != _matchId)
@@ -332,6 +342,9 @@ namespace TeamHJD.Game.Domain
             return true;
         }
 
+        /// <summary>
+        /// 계획된 명령을 실행해 실제 생성 수를 집계하고 생성 이력과 진단 결과를 반환한다.
+        /// </summary>
         private bool ExecutePlan(BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpawnInstruction> instructions,
             EncounterExecutionContext context, string policy, out string result, out EncounterExecutionSummary summary, double planMilliseconds = 0d)
         {

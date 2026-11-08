@@ -6,6 +6,9 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
+/// <summary>
+/// 몬스터의 공통 상태를 저장하고 복원 후 타깃 참조를 다시 연결한다.
+/// </summary>
 public partial class EnemyNetworkController
 {
     internal string CheckpointEnemyType
@@ -13,6 +16,9 @@ public partial class EnemyNetworkController
         get; set;
     }
 
+    /// <summary>
+    /// 위치·물리·체력·능력·경로 상태를 모아 현재 몬스터의 체크포인트를 만든다.
+    /// </summary>
     internal State CaptureCheckpoint()
     {
         if (!IsSpawned || !IsServer || enemyHealth.CurrentHealth <= 0)
@@ -51,6 +57,9 @@ public partial class EnemyNetworkController
             ranged, _explosionAbility?.CheckpointRemovalPending ?? false);
     }
 
+    /// <summary>
+    /// 저장된 몬스터의 공통 상태를 적용하고 후속 참조 복원에 필요한 상태를 유지한다.
+    /// </summary>
     internal void RestoreCheckpoint(State state)
     {
         state.Pose.Apply(transform);

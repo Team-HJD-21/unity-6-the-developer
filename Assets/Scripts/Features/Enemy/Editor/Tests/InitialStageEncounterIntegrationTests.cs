@@ -12,6 +12,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
+/// <summary>
+/// Initial_Stage의 Encounter 시작과 생성·사망 기록 연결을 검사한다.
+/// </summary>
 public sealed class InitialStageEncounterIntegrationTests
 {
     [UnityTest]

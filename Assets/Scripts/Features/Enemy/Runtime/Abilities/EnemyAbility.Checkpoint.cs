@@ -4,6 +4,9 @@ using System;
 using System.IO;
 using TeamHJD.Game.Presentation.Scene;
 
+/// <summary>
+/// 저장된 남은 쿨타임을 현재 Match 시계 기준으로 복원한다.
+/// </summary>
 public abstract partial class EnemyAbility
 {
     internal double CheckpointCooldown => Math.Max(0, _nextUseTime - FieldSimulationTime.Seconds(this));

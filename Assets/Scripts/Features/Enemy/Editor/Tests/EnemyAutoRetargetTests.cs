@@ -4,6 +4,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// 분대의 타깃 유지·무효화 후 재검색과 타깃 규칙을 검사한다.
+/// </summary>
 public sealed class EnemyAutoRetargetTests
 {
     private Scene _scene;

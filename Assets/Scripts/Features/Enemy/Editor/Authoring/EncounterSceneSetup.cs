@@ -9,8 +9,14 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// 현재 씬에 제작된 Enemy 실행기를 Encounter 설정과 연결한다.
+/// </summary>
 public static class EncounterSceneSetup
 {
+    /// <summary>
+    /// 활성 씬에서 선택한 생성 실행기를 공용 씬 설정에 연결한다.
+    /// </summary>
     [MenuItem("Tools/TeamHJD/The Developer/Configure Encounter Scene")]
     public static void InstallOnActiveScene()
     {

@@ -60,6 +60,9 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     private readonly Dictionary<ulong, TrackedEnemy> _spawnedEnemies = new();
     public event Action<EnemyLifecycleObservation> LifecycleObserved;
 
+    /// <summary>
+    /// 이 실행기가 추적하는 해당 Match의 적 수를 반환한다. 별도 소환 경로는 포함하지 않는다.
+    /// </summary>
     public int CountForMatch(MatchId matchId)
     {
         int count = 0;
@@ -258,6 +261,9 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context)
         => Execute(spawnInstruction, context, null);
 
+    /// <summary>
+    /// 제작 지점 또는 명시 영역에서 명령을 실행하고 실제 생성·실패 결과를 관측자에게 전달한다.
+    /// </summary>
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
         Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null, BattlefieldSpatialSnapshot battlefield = null)
     {
@@ -424,6 +430,9 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
         return spawnedCount;
     }
 
+    /// <summary>
+    /// 추적 중인 적의 생명주기 사건을 구독자 예외가 실행을 막지 않도록 전달한다.
+    /// </summary>
     private void Observe(TrackedEnemy enemy, GameDiagnosticKind kind, string reason)
     {
         var observation = new EnemyLifecycleObservation(enemy.Context, kind, enemy.EnemyType, enemy.SpawnPointId,
@@ -442,6 +451,9 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
             }
     }
 
+    /// <summary>
+    /// 실행 실패 이유를 관측자에게 전달하고 생성 수 0을 반환한다.
+    /// </summary>
     private int Fail(string reason, Action<string> observer)
     {
         if (observer != null)

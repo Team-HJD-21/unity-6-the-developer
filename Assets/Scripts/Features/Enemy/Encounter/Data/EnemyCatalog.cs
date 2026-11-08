@@ -8,6 +8,9 @@ using UnityEngine;
 [CreateAssetMenu(
     fileName = "EnemyCatalog",
     menuName = "The Developer/Enemy/Catalog")]
+/// <summary>
+/// Enemy ID로 몬스터 Definition을 조회할 수 있는 카탈로그다.
+/// </summary>
 public sealed class EnemyCatalog : ScriptableObject
 {
     [SerializeField]

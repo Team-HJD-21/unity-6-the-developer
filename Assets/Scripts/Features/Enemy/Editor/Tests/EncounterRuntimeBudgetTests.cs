@@ -8,6 +8,9 @@ using Unity.Netcode;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
+/// <summary>
+/// Runtime의 점유율 예산과 Static 증가 상태 및 입력 검증을 검사한다.
+/// </summary>
 public sealed class EncounterRuntimeBudgetTests
 {
     private readonly MatchId _match = new("runtime-budget-test");

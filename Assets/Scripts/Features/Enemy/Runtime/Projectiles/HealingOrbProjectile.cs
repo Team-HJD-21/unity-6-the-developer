@@ -11,6 +11,9 @@ public class HealingOrbProjectile : EnemyProjectile
     private EnemyHealth _target;
     private int _healAmount;
 
+    /// <summary>
+    /// 추적할 아군과 회복량을 저장하고 구슬의 수명을 시작한다.
+    /// </summary>
     public void Initialize(EnemyHealth target, int healAmount)
     {
         _target = target;
@@ -19,6 +22,9 @@ public class HealingOrbProjectile : EnemyProjectile
         BeginLifetime();
     }
 
+    /// <summary>
+    /// 회복 대상을 XY 평면에서 추적하고 도착 시 한 번 회복한다. 대상이 무효화되면 제거한다.
+    /// </summary>
     private void Update()
     {
         if (!CanSimulate)

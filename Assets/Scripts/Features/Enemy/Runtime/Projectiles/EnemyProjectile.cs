@@ -27,6 +27,9 @@ public abstract partial class EnemyProjectile : NetworkBehaviour
         _groundRenderer = FindGroundRenderer();
     }
 
+    /// <summary>
+    /// 생성자의 수명 취소와 투사체 만료를 확인하고 실행 권한이 있으면 깊이를 갱신한다.
+    /// </summary>
     private void LateUpdate()
     {
         BindReplicatedOwner();
@@ -45,6 +48,9 @@ public abstract partial class EnemyProjectile : NetworkBehaviour
         UpdateDepth();
     }
 
+    /// <summary>
+    /// 초기화 완료를 표시하고 생성자에게 연결된 시계를 기준으로 만료 시점을 정한다.
+    /// </summary>
     protected void BeginLifetime()
     {
         _isInitialized = true;
@@ -69,6 +75,9 @@ public abstract partial class EnemyProjectile : NetworkBehaviour
         if (source != null && source.IsSpawned) _ownerId.Value = source.NetworkObjectId;
     }
 
+    /// <summary>
+    /// 동기화된 생성자 ID로 클라이언트에서도 같은 Match 시계와 수명 연결을 복구한다.
+    /// </summary>
     private void BindReplicatedOwner()
     {
         if (_simulation?.TimeSource != null || !IsSpawned || NetworkManager?.SpawnManager == null ||
@@ -91,6 +100,9 @@ public abstract partial class EnemyProjectile : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
+    /// <summary>
+    /// 현재 지면의 Y 범위를 기준으로 투사체의 표현용 Z를 정규화한다.
+    /// </summary>
     protected void UpdateDepth()
     {
         if (_groundRenderer == null)
@@ -104,6 +116,9 @@ public abstract partial class EnemyProjectile : NetworkBehaviour
         transform.position = position;
     }
 
+    /// <summary>
+    /// 같은 씬의 실제 지면 콜라이더를 가진 Tilemap 중 가장 넓은 렌더러를 찾는다.
+    /// </summary>
     private TilemapRenderer FindGroundRenderer()
     {
         TilemapRenderer groundRenderer = null;
@@ -128,6 +143,9 @@ public abstract partial class EnemyProjectile : NetworkBehaviour
         return groundRenderer;
     }
 
+    /// <summary>
+    /// 네트워크 개체는 서버에서 Despawn하고 로컬 개체는 파괴한다.
+    /// </summary>
     protected void Remove()
     {
         if (IsSpawned && !IsServer)

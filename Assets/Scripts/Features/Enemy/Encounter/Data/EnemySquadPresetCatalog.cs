@@ -8,6 +8,9 @@ using UnityEngine;
 [CreateAssetMenu(
     fileName = "EnemySquadPresetCatalog",
     menuName = "The Developer/Enemy/Squad Preset Catalog")]
+/// <summary>
+/// 분대 Order로 프리셋을 조회하고 편성 후보 목록을 제공한다.
+/// </summary>
 public sealed class EnemySquadPresetCatalog : ScriptableObject
 {
     /// <summary>

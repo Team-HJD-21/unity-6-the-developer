@@ -6,6 +6,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// 공통 능력의 조건·쿨타임·근접 피해와 기준 프리팹 설정을 검사한다.
+/// </summary>
 public sealed class EnemyAbilityTests
 {
     private Scene _scene;

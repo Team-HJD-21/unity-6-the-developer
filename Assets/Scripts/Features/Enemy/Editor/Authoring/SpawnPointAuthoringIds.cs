@@ -8,6 +8,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// 씬의 SpawnPoint ID를 검사하고 제작 중 중복된 ID를 정리한다.
+/// </summary>
 [InitializeOnLoad]
 public static class SpawnPointAuthoringIds
 {
@@ -28,6 +31,9 @@ public static class SpawnPointAuthoringIds
         EditorApplication.delayCall += NormalizeOpenScenes;
     }
 
+    /// <summary>
+    /// 에디터가 안정된 시점에 열린 씬의 제작 ID를 검사하고 사라진 지점 참조를 정리한다.
+    /// </summary>
     private static void NormalizeOpenScenes()
     {
         _pending = false;
@@ -40,6 +46,9 @@ public static class SpawnPointAuthoringIds
         KnownPoints.RemoveWhere(point => point == null);
     }
 
+    /// <summary>
+    /// 씬의 SpawnPoint 제작 ID를 정규화하고 변경한 수를 반환한다.
+    /// </summary>
     public static int NormalizeScene(Scene scene)
     {
         if (!scene.IsValid() || !scene.isLoaded || EditorApplication.isPlayingOrWillChangePlaymode ||
@@ -59,6 +68,9 @@ public static class SpawnPointAuthoringIds
         return changed;
     }
 
+    /// <summary>
+    /// 기존 고유 ID는 유지하고 비어 있거나 중복된 ID만 Undo 가능한 변경으로 교체한다.
+    /// </summary>
     private static int Normalize(SpawnPoint point, HashSet<string> ids)
     {
         var serialized = new SerializedObject(point);

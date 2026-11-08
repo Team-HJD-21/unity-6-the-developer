@@ -121,6 +121,7 @@ public sealed class SpawnPointPlanningSession
         if (!_grid.TryGetCellAt(targetPosition, out BattlefieldGridCellSnapshot targetCell))
             throw new ArgumentException("집계 대상이 Battlefield Grid 밖에 있습니다.", nameof(targetPosition));
 
+        // 같은 타깃 셀을 향하는 스폰 지점은 요청 안에서 주변 집계 결과를 재사용한다.
         if (!_targetAreas.TryGetValue(targetCell.CellId, out AreaBaseline area))
         {
             area = ReadArea(_grid, targetCell.X, targetCell.Y, _nearbyCellRadius, playerPositions);
@@ -175,7 +176,7 @@ public sealed class SpawnPointPlanningSession
         return areas.AsReadOnly();
     }
 
-    /// <summary>같은 셀의 모든 지점과 주변 조사에 한 편성의 예정 수량을 반영한다.</summary>
+    /// <summary>출현 셀을 공유하는 모든 지점의 용량 검사에 한 편성의 예정 수량을 반영한다.</summary>
     public void Reserve(SpatialSpawnCandidate point, int count)
     {
         PointState state = _byId[point.Id];
@@ -186,6 +187,9 @@ public sealed class SpawnPointPlanningSession
         state.Cell.AssignedEnemies += count;
     }
 
+    /// <summary>
+    /// 이번 계획에서 하나 이상의 편성 세트를 배정받은 지점과 세트 수를 반환한다.
+    /// </summary>
     public IReadOnlyList<SpatialSpawnAllocation> GetAllocations()
     {
         var allocations = new List<SpatialSpawnAllocation>();
@@ -195,6 +199,9 @@ public sealed class SpawnPointPlanningSession
         return allocations.AsReadOnly();
     }
 
+    /// <summary>
+    /// 배정 결과와 후보 제외 이유를 실행 전 진단 자료로 반환한다.
+    /// </summary>
     public IReadOnlyList<SpawnDecisionSnapshot.Candidate> GetObservations()
     {
         var result = new List<SpawnDecisionSnapshot.Candidate>(_rejected);
@@ -227,6 +234,9 @@ public sealed class SpawnPointPlanningSession
         return order != 0 ? order : StringComparer.Ordinal.Compare(left.Input.Id, right.Input.Id);
     }
 
+    /// <summary>
+    /// 타깃 셀 주변의 존재하는 셀만 읽어 병력을 합산하고 유효한 플레이어 위치의 포함 여부를 확인한다.
+    /// </summary>
     private static AreaBaseline ReadArea(BattlefieldGridSnapshot grid, int x, int y, int radius,
         IReadOnlyList<BattlefieldPoint> playerPositions)
     {

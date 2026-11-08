@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 자신을 제외한 회복 가능한 아군을 찾아 회복 구슬 생성을 요청한다.
+/// </summary>
 public class EnemyHealAbility : EnemyAbility 
 {
     [Header("참조")]
@@ -27,6 +30,9 @@ public class EnemyHealAbility : EnemyAbility
             projectileSpawner = GetComponent<EnemyProjectileSpawner>();
     }
 
+    /// <summary>
+    /// 회복 구슬을 생성할 수 있는지 확인하고 이번에 치료할 아군을 선택한다.
+    /// </summary>
     public override bool CheckCondition()
     {
         return projectilePrefab != null &&
@@ -35,6 +41,9 @@ public class EnemyHealAbility : EnemyAbility
                TryFindHealTarget(out _healTarget);
     }
 
+    /// <summary>
+    /// 선택한 아군이 여전히 회복 가능하면 회복 구슬 생성을 요청한다.
+    /// </summary>
     protected override bool Activate()
     {
         if (_healTarget == null ||
@@ -51,6 +60,9 @@ public class EnemyHealAbility : EnemyAbility
             healAmount);
     }
 
+    /// <summary>
+    /// 주변 후보 중 자신을 제외하고 실제 능력 범위에 있는 가장 가까운 회복 대상을 찾는다.
+    /// </summary>
     private bool TryFindHealTarget(out EnemyHealth target)
     {
         target = null;
@@ -69,6 +81,7 @@ public class EnemyHealAbility : EnemyAbility
         
         Bounds bounds = _bodyCollider.bounds;
         
+        // 원형 조회는 후보만 모으고, 실제 발동 범위는 아래 콜라이더 간격으로 다시 확인한다.
         float searchRadius = bounds.extents.magnitude + activationRange;
 
         Physics2D.OverlapCircle(

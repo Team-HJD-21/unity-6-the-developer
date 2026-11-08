@@ -4,6 +4,9 @@ using System;
 using TeamHJD.Game.Domain;
 using UnityEngine;
 
+/// <summary>
+/// 날씨와 시간 조건에 따라 고정 편성과 요청 마릿수를 조정한다.
+/// </summary>
 [CreateAssetMenu(fileName = "EncounterEnvironmentProfile", menuName = "The Developer/Enemy/Encounter Environment Profile")]
 public sealed class EncounterEnvironmentProfile : ScriptableObject
 {
@@ -16,6 +19,9 @@ public sealed class EncounterEnvironmentProfile : ScriptableObject
         public string presetOverride = "";
         [Range(0, 1)] public float budgetScale = 1;
     }
+    /// <summary>
+    /// 가장 구체적으로 일치하는 환경 규칙으로 편성과 마릿수를 조정하고 비용 예산은 유지한다.
+    /// </summary>
     [SerializeField] private Rule[] rules = Array.Empty<Rule>();
     public FixedPresetSpawnRequest Select(FixedPresetSpawnRequest original, MatchEnvironmentSnapshot environment, out string ruleId)
     {

@@ -5,6 +5,9 @@ using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEditor;
 using UnityEngine;
 
+/// <summary>
+/// 폭발 능력의 발동·범위 피해와 중복 적용 방지를 검사한다.
+/// </summary>
 public sealed class EnemyExplosionAbilityTests
 {
     private readonly List<GameObject> _objects = new();

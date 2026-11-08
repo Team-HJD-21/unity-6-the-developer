@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// 방향과 이동 모션을 갱신하고 로컬 또는 네트워크 경로로 능력 모션을 재생한다.
+/// </summary>
 [RequireComponent(typeof(Animator))]
 public class EnemyAnimation : MonoBehaviour
 {
@@ -48,6 +51,9 @@ public class EnemyAnimation : MonoBehaviour
         return new Vector2(0f, Mathf.Sign(direction.y));
     }
 
+    /// <summary>
+    /// 이동 모션을 켜고 실제 이동 속도에 맞춰 애니메이션 재생 속도를 보정한다.
+    /// </summary>
     public void PlayMovementAnimation(float moveSpeed)
     {
         // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
@@ -57,6 +63,9 @@ public class EnemyAnimation : MonoBehaviour
         animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
     }
 
+    /// <summary>
+    /// 바라보는 방향을 유지한 채 이동 모션을 끈다.
+    /// </summary>
     public void StopMovementAnimation()
     {
         animator.SetBool(IsMovingHash, false);

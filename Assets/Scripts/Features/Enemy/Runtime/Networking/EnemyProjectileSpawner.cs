@@ -1,11 +1,16 @@
-// 서버의 적 공격이 만든 탄환에 생성자의 Match 시간과 수명을 전달합니다.
 using TeamHJD.Game.Presentation.Scene;
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// 생성 권한을 확인하고 공격 투사체와 회복 구슬을 초기화해 네트워크에 등록한다.
+/// </summary>
 [RequireComponent(typeof(NetworkObject))]
 public sealed class EnemyProjectileSpawner : NetworkBehaviour
 {
+    /// <summary>
+    /// 공격 투사체에 방향·피해량과 생성자의 Match 수명을 연결한 뒤 네트워크에 등록한다.
+    /// </summary>
     public bool TrySpawn(
         EnemyDamageProjectile prefab,
         Vector3 position,
@@ -21,6 +26,9 @@ public sealed class EnemyProjectileSpawner : NetworkBehaviour
         return true;
     }
 
+    /// <summary>
+    /// 회복 대상과 회복량을 초기화한 구슬을 생성하고 네트워크에 등록한다.
+    /// </summary>
     public bool TrySpawn(
         HealingOrbProjectile prefab,
         Vector3 position,

@@ -4,6 +4,9 @@ using System.IO;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
 
+/// <summary>
+/// 저장된 경로와 경유점 진행도, 정지 상태를 복원한다.
+/// </summary>
 public partial class EnemyMovement
 {
     internal State CaptureCheckpoint() => new(_path == null ? null : (Vector3[])_path.Clone(), _currentPath, _isStopped);

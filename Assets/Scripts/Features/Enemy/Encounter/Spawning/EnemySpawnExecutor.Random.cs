@@ -4,6 +4,9 @@ using System;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 
+/// <summary>
+/// Core에서 받은 Match 난수 흐름을 생성 위치 계산에 연결한다.
+/// </summary>
 public partial class EnemySpawnExecutor : IRandomConsumer
 {
     private IRandomSource _spawnRandom;

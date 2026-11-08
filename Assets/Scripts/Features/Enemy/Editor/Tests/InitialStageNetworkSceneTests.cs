@@ -16,6 +16,9 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
+/// <summary>
+/// Initial_Stage의 네트워크 씬 연결과 제작 설정을 검사한다.
+/// </summary>
 public sealed class InitialStageNetworkSceneTests
 {
     [UnityTearDown]
