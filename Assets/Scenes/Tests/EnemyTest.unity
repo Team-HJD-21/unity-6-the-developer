@@ -223,6 +223,7 @@ GameObject:
   - component: {fileID: 19620793}
   - component: {fileID: 19620792}
   - component: {fileID: 19620794}
+  - component: {fileID: 19620795}
   m_Layer: 0
   m_Name: Encounter Debug Spawner
   m_TagString: Untagged
@@ -322,6 +323,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
   ShowTopMostFoldoutHeaderGroup: 1
   enemyList: {fileID: 11400000, guid: 88948902b3d6e24488d5e338c2ccff02, type: 2}
+--- !u!114 &19620795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 19620791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f13bcafcf3a4de79ba6e42cf98a1b0d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyTestRandomBinding
+  launcher: {fileID: 1735068340}
 --- !u!1001 &52902670
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1336954,8 +1336968,14 @@ MonoBehaviour:
   autoStartHost: 0
   initialSquadOrder: Normal
   initialEnemyLimit: 500
-  spawnBudget: 3
+  spawnBudget: 20
   initialEncounterDelay: 0.5
+  selectionSettings:
+    nearbyCellRadius: 1
+    sparseEnemyPercentage: 20
+    preferredMultiplier: 3
+    maxEnemiesPerCell: 50
+    logSelectionDecisions: 1
 --- !u!1 &1749657957
 GameObject:
   m_ObjectHideFlags: 0

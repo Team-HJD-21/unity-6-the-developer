@@ -1,5 +1,5 @@
 // Match가 시작되면 첫 Encounter를 자동으로 요청합니다.
-// 기존 네트워크 테스트 UI의 수동 요청도 같은 Encounter 경로로 전달합니다.
+// 테스트 UI는 현재 전장 상황으로 편성을 선택하는 Encounter 경로로 전달합니다.
 // standalone 테스트 연결과 App 소유 연결을 구분하며 후자는 직접 개설·종료하지 않습니다.
 
 using System;
@@ -18,7 +18,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService
+public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IEncounterExecutor, IEncounterRequestService, IRandomConsumer
 {
     private const int TargetFrameRate = 120;
     private const float HostReadyTimeout = 10f;
@@ -34,7 +34,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     [SerializeField, Min(1)] private int spawnBudget = 20;
     [SerializeField, Min(0f)] private float initialEncounterDelay = 0.5f;
 
-    [Header("자동 편성 규칙 — 자동 요청 연결 시 사용")]
+    [Header("편성 선택 규칙")]
     [SerializeField] private SquadSelectionSettings selectionSettings = new();
     public SquadSelectionSettings SelectionSettings => selectionSettings;
 
@@ -43,6 +43,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private MatchId _boundMatchId;
     private Func<BattlefieldSpatialSnapshot> _snapshotProvider;
     private EncounterRequestService _requests;
+    private IRandomSource _squadRandom;
     private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
     private PlayerId _authorityIssuer = LocalIssuer;
     private bool _appOwnedNetwork;
@@ -66,6 +67,12 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     public bool IsServer => _networkManager != null && _networkManager.IsServer;
     public bool IsClient => _networkManager != null && _networkManager.IsClient;
     public bool IsListening => _networkManager != null && _networkManager.IsListening;
+
+    /// <summary>편성 선택에 사용할 Match 난수를 연결한다.</summary>
+    public IDisposable BindRandom(IRandomStreams random)
+    {
+        return RandomBinding.Bind(random, "enemy/squad-selection", ref _squadRandom);
+    }
 
     /// <summary>
     /// 네트워크 관리자와 테스트 실행 환경을 초기화한다.
@@ -322,7 +329,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             // 점령 상태를 바꾼 뒤에도 같은 Host에서 다시 계획해 확인할 수 있다.
             if (GUILayout.Button("Plan & Spawn"))
             {
-                if (!TryRequestCurrentEncounter(GetInitialSquadOrder(), Mathf.Max(1, initialEnemyLimit), EncounterRequestSource.RuntimeUI, out string result))
+                if (!RequestSpawn(out string result))
                     Debug.LogWarning(result, this);
             }
         }
@@ -377,7 +384,64 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         return true;
     }
 
-    /// <summary>Host 권한을 확보한 뒤 Match 공간 snapshot과 테스트 요청을 EncounterRuntime에 전달합니다.</summary>
+    /// <summary>현재 전장 상황과 Inspector 예산으로 분대 생성을 요청한다.</summary>
+    public bool RequestSpawn(out string result)
+    {
+        if (!CanRequestEncounter(out result))
+            return false;
+
+        if (_snapshotProvider == null || _boundMatchId.IsEmpty)
+        {
+            result = "현재 연결된 Match가 없습니다.";
+            return false;
+        }
+
+        if (_squadRandom == null || !_squadRandom.IsAvailable)
+        {
+            result = "Core 편성 난수가 연결되지 않았거나 사용 불가능합니다.";
+            return false;
+        }
+
+        BattlefieldSpatialSnapshot snapshot;
+        try
+        {
+            snapshot = _snapshotProvider();
+        }
+        catch (ObjectDisposedException)
+        {
+            result = "종료된 Match에는 스폰을 요청할 수 없습니다.";
+            return false;
+        }
+
+        if (snapshot == null || snapshot.MatchId != _boundMatchId)
+        {
+            result = "현재 Match의 전장 정보가 아닙니다.";
+            return false;
+        }
+
+        var request = new AutomaticSpawnRequest(spawnBudget, initialEnemyLimit);
+        var context = new EncounterExecutionContext(
+            _boundMatchId, checked(++_requestSequence), snapshot.Revision,
+            EncounterRequestSource.RuntimeUI, requestGuid: Guid.NewGuid());
+
+        Emit(GameDiagnosticKind.RequestStarted, context,
+            message: $"maxCount={request.MaxCount}, budget={request.SpawnBudget}");
+
+        bool succeeded = _encounterRuntime.RequestSpawn(
+            snapshot, request, selectionSettings, _squadRandom, context,
+            out result, out EncounterExecutionSummary summary);
+
+        Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
+            planned: summary.PlannedCount, actual: summary.SpawnedCount,
+            message: summary.ResultCode + ": " + result, spawnDecision: summary.SpawnDecision);
+
+        if (succeeded)
+            CancelPendingInitialEncounter();
+
+        return succeeded;
+    }
+
+    /// <summary>Host 권한을 확보한 뒤 Match 공간 snapshot과 고정 프리셋 요청을 전달합니다.</summary>
     public bool TryRequestEncounter(
         BattlefieldSpatialSnapshot snapshot,
         string squadOrder,
@@ -423,9 +487,8 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 
     EncounterRequestResult IEncounterExecutor.Execute(EncounterRequest request, BattlefieldSpatialSnapshot snapshot, long executionSequence)
     {
-        _requestSequence = executionSequence;
-        var context = new EncounterExecutionContext(_boundMatchId, executionSequence, snapshot.Revision,
-            request.Source, request.PresetId.Value);
+        var context = new EncounterExecutionContext(_boundMatchId, checked(++_requestSequence), snapshot.Revision,
+            request.Source, request.PresetId.Value, requestGuid: request.Context.RequestId);
         Emit(GameDiagnosticKind.RequestStarted, context,
             message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, " +
                      $"maxCount={request.MaximumEnemyCount}, spawnBudget={spawnBudget}");

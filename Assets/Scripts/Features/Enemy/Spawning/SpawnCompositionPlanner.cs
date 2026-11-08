@@ -71,7 +71,8 @@ public sealed class SpawnCompositionPlanner
         int totalEnemyCount,
         IReadOnlyList<BattlefieldPoint> playerPositions,
         SquadSelectionSettings settings, IRandomSource random,
-        out IReadOnlyList<SpawnInstruction> instructions)
+        out IReadOnlyList<SpawnInstruction> instructions,
+        Action<string, SpawnAreaContext, IReadOnlyList<EnemySquadPreset>, EnemySquadPreset> onSelected = null)
     {
         instructions = Array.Empty<SpawnInstruction>();
         LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>();
@@ -145,6 +146,8 @@ public sealed class SpawnCompositionPlanner
                 point, targetPositions[point.Id], totalEnemyCount, playerPositions, attackType);
             if (!SquadSelectionPolicy.TrySelect(affordable, area, settings, random, out EnemySquadPreset selected))
                 break;
+
+            onSelected?.Invoke(point.Id, area, affordable, selected);
 
             var enemies = new List<EnemySpawnEntry>(selected.Composition.Count);
             foreach (EnemySquadCompositionEntry entry in selected.Composition)

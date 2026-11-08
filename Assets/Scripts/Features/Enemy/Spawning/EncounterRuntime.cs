@@ -129,6 +129,7 @@ namespace TeamHJD.Game.Domain
             var candidates = new List<SpatialSpawnCandidate>();
             var targetPositions = new Dictionary<string, BattlefieldPoint>();
             var targetAttackTypes = new Dictionary<string, TargetAttackType>();
+            var targetNames = settings.logSelectionDecisions ? new Dictionary<string, string>() : null;
             foreach (SpawnPoint point in _spawnExecutor.SpawnPointList.GetAvailableSpawnPoints())
             {
                 if (string.IsNullOrWhiteSpace(point.SpawnPointId) || targetPositions.ContainsKey(point.SpawnPointId))
@@ -144,12 +145,17 @@ namespace TeamHJD.Game.Domain
                 candidates.Add(new SpatialSpawnCandidate(point.SpawnPointId,
                     new BattlefieldPoint(point.Position.x, point.Position.y)));
                 targetPositions.Add(point.SpawnPointId, targetPosition);
+                targetNames?.Add(point.SpawnPointId, target.TargetTransform.name);
                 DamageableTargetAdapter adapter = target.TargetTransform.GetComponent<DamageableTargetAdapter>();
                 targetAttackTypes.Add(point.SpawnPointId,
                     adapter != null ? adapter.AttackType : TargetAttackType.Unknown);
             }
             if (!_planner.TryPlan(request, candidates, snapshot, targetPositions, targetAttackTypes, totalEnemyCount,
-                    playerPositions, settings, random, out var instructions))
+                    playerPositions, settings, random, out var instructions,
+                    settings.logSelectionDecisions
+                        ? (pointId, area, presets, selected) => LogSquadSelection(snapshot, pointId,
+                            targetNames[pointId], targetPositions[pointId], area, presets, selected, settings)
+                        : null))
             {
                 result = $"자동 SpawnPlan 생성 실패: budget {request.SpawnBudget}, maxCount {request.MaxCount}. " +
                          "카탈로그, 지점·지역 예산, 셀 수용량과 편성 비용을 확인하세요.";
@@ -161,6 +167,41 @@ namespace TeamHJD.Game.Domain
             }
             return ExecutePlan(snapshot, instructions, context, SpawnPointSpatialPolicy.AutomaticDescription,
                 out result, out summary);
+        }
+
+        private static void LogSquadSelection(BattlefieldSpatialSnapshot snapshot, string pointId,
+            string targetName, BattlefieldPoint targetPosition, SpawnAreaContext area,
+            IReadOnlyList<EnemySquadPreset> presets, EnemySquadPreset selected, SquadSelectionSettings settings)
+        {
+            int capacity = settings.maxEnemiesPerCell - area.CellEnemyCount;
+            double totalWeight = 0d;
+            foreach (EnemySquadPreset preset in presets)
+                if (preset.TotalWeight > 0 && preset.TotalWeight <= capacity)
+                    totalWeight += SquadSelectionPolicy.CalculateWeight(preset, area, settings);
+
+            var weights = new StringBuilder();
+            foreach (EnemySquadPreset preset in presets)
+            {
+                if (weights.Length > 0) weights.Append(" | ");
+                weights.Append(preset.SquadOrder);
+                if (preset.TotalWeight <= 0 || preset.TotalWeight > capacity)
+                {
+                    weights.Append(": 제외(셀 수용량)");
+                    continue;
+                }
+
+                double weight = SquadSelectionPolicy.CalculateWeight(preset, area, settings);
+                weights.Append($": {preset.SelectionWeight} → {weight:0.##} ({weight / totalWeight:P1})");
+            }
+
+            Debug.Log($"[SquadSelection] Match {snapshot.MatchId} r{snapshot.Revision} @ {pointId}\n" +
+                $"기준 타깃: {targetName} ({targetPosition.X:0.##}, {targetPosition.Y:0.##}), 공격 유형: {area.AttackType}\n" +
+                $"주변 병력: {area.NearbyEnemyCount}/{area.TotalEnemyCount} ({area.NearbyEnemyPercentage:0.##}%), " +
+                $"판정: {(area.NearbyEnemyPercentage <= settings.sparseEnemyPercentage ? "적음" : "많음")} " +
+                $"(기준 ≤ {settings.sparseEnemyPercentage:0.##}%), 주변 플레이어: {area.HasNearbyPlayer}, " +
+                $"출현 셀 잔여 수용량: {capacity}\n" +
+                $"후보 가중치(기본 → 최종 / 선택 확률): {weights}\n" +
+                $"예산·마릿수 제한을 통과한 후보만 표시. 선택: {selected.SquadOrder}");
         }
 
         private bool ValidateExecution(BattlefieldSpatialSnapshot snapshot, out string result)

@@ -19,6 +19,9 @@ public sealed class SquadSelectionSettings
     [Min(1)] public int preferredMultiplier = 3;
     [Min(1)] public int maxEnemiesPerCell = 20;
 
+    [Header("진단")]
+    public bool logSelectionDecisions;
+
     public bool IsValid => nearbyCellRadius >= 0 && sparseEnemyPercentage >= 0f &&
         sparseEnemyPercentage <= 100f && preferredMultiplier > 0 && maxEnemiesPerCell > 0;
 }
