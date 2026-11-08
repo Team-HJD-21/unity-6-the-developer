@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Application;
+using TeamHJD.Game.Bootstrap.SceneComposition;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -30,8 +31,14 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     [SerializeField] private string initialSquadOrder = "Normal";
     [SerializeField, Min(1)] private int initialEnemyLimit = 500;
 
-    [Tooltip("예산 산출 정책 연결 전 사용하는 임시 스폰 비용 예산입니다.")]
-    [SerializeField, Min(1)] private int spawnBudget = 20;
+    [Header("전체 스폰 예산")]
+    [SerializeField] private RegionSceneBinding regionBinding;
+    [Tooltip("점유율 0%일 때 사용하는 요청당 예산입니다.")]
+    [SerializeField, Min(1), InspectorName("기본 예산")] private int spawnBudget = 20;
+    [SerializeField, Min(1), InspectorName("최대 예산")] private int maximumSpawnBudget = 100;
+    [SerializeField, Min(1)]
+    [Tooltip("Static 모드에서 스폰 요청 1회당 증가할 수 있는 최대 예산")]
+    private int staticBudgetIncreasePerRequest = 5;
     [SerializeField, Min(0f)] private float initialEncounterDelay = 0.5f;
 
     [Header("편성 선택 규칙")]
@@ -44,6 +51,9 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     private Func<BattlefieldSpatialSnapshot> _snapshotProvider;
     private EncounterRequestService _requests;
     private IRandomSource _squadRandom;
+    private readonly EncounterBudgetSettings _runtimeBudgetSettings = new();
+    private EnemySpawnExecutor _spawnExecutor;
+    private EnemySquadPresetCatalog _squadCatalog;
     private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
     private PlayerId _authorityIssuer = LocalIssuer;
     private bool _appOwnedNetwork;
@@ -343,8 +353,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
     /// </summary>
     private void StartHost()
     {
-        EnsureEncounterRuntime();
-        if (!_encounterRuntime.HasExecutor || !_encounterRuntime.HasCatalog)
+        if (!ResolveSpawnSetup())
         {
             Debug.LogError("Spawner or squad preset catalog is missing for the spawn test.");
             return;
@@ -367,12 +376,12 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             return false;
         }
 
-        EnsureEncounterRuntime();
-        if (!_encounterRuntime.HasExecutor || !_encounterRuntime.HasCatalog)
+        if (!ResolveSpawnSetup())
         {
             reason = "EnemySpawnExecutor 또는 EnemySquadPresetCatalog가 없습니다.";
             return false;
         }
+        EnsureEncounterRuntime();
 
         if (!_networkManager.IsListening || !_networkManager.IsServer)
         {
@@ -384,7 +393,7 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
         return true;
     }
 
-    /// <summary>현재 전장 상황과 Inspector 예산으로 분대 생성을 요청한다.</summary>
+    /// <summary>현재 전장 상황과 지역 점유율로 산출한 예산으로 분대 생성을 요청한다.</summary>
     public bool RequestSpawn(out string result)
     {
         if (!CanRequestEncounter(out result))
@@ -419,16 +428,18 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             return false;
         }
 
-        var request = new AutomaticSpawnRequest(spawnBudget, initialEnemyLimit);
+        if (!TryReadRegion(out RegionGridSnapshot region, out result))
+            return false;
+
         var context = new EncounterExecutionContext(
             _boundMatchId, checked(++_requestSequence), snapshot.Revision,
             EncounterRequestSource.RuntimeUI, requestGuid: Guid.NewGuid());
 
         Emit(GameDiagnosticKind.RequestStarted, context,
-            message: $"maxCount={request.MaxCount}, budget={request.SpawnBudget}");
+            message: $"maxCount={initialEnemyLimit}");
 
         bool succeeded = _encounterRuntime.RequestSpawn(
-            snapshot, request, selectionSettings, _squadRandom, context,
+            snapshot, region, initialEnemyLimit, selectionSettings, _squadRandom, context,
             out result, out EncounterExecutionSummary summary);
 
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
@@ -439,6 +450,28 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             CancelPendingInitialEncounter();
 
         return succeeded;
+    }
+
+    private bool TryReadRegion(out RegionGridSnapshot region, out string reason)
+    {
+        region = null;
+        try
+        {
+            region = regionBinding != null ? regionBinding.Source?.Snapshot : null;
+        }
+        catch (ObjectDisposedException)
+        {
+            reason = "지역 정보의 Match가 종료되었습니다.";
+            return false;
+        }
+
+        if (region == null)
+        {
+            reason = "현재 Match의 지역 정보가 연결되지 않았습니다.";
+            return false;
+        }
+        reason = null;
+        return true;
     }
 
     /// <summary>Host 권한을 확보한 뒤 Match 공간 snapshot과 고정 프리셋 요청을 전달합니다.</summary>
@@ -491,10 +524,17 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
             request.Source, request.PresetId.Value, requestGuid: request.Context.RequestId);
         Emit(GameDiagnosticKind.RequestStarted, context,
             message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, " +
-                     $"maxCount={request.MaximumEnemyCount}, spawnBudget={spawnBudget}");
+                     $"maxCount={request.MaximumEnemyCount}, baseBudget={spawnBudget}");
         EnsureEncounterRuntime();
-        bool succeeded = _encounterRuntime.RequestSpawn(snapshot, request.PresetId.Value, request.MaximumEnemyCount,
-            spawnBudget, context, out string result, out EncounterExecutionSummary summary);
+        if (!TryReadRegion(out RegionGridSnapshot region, out string reason) || _encounterRuntime == null)
+        {
+            if (_encounterRuntime == null) reason = "현재 Match의 Enemy 실행 구성이 준비되지 않았습니다.";
+            Emit(GameDiagnosticKind.RequestFailed, context, message: reason);
+            return new EncounterRequestResult(request.Context.RequestId, executionSequence, snapshot.Revision,
+                EncounterRequestStatus.NotReady, reason: reason);
+        }
+        bool succeeded = _encounterRuntime.RequestSpawn(snapshot, region, request.PresetId.Value, request.MaximumEnemyCount,
+            context, out string result, out EncounterExecutionSummary summary, selectionSettings.logSelectionDecisions);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
             spawnDecision: summary.SpawnDecision);
@@ -509,12 +549,25 @@ public sealed class EnemyNetworkTestLauncher : MonoBehaviour, IEncounterDebugCom
 
     private void EnsureEncounterRuntime()
     {
+        // Inspector 설정은 유지하고 Runtime에 전달할 데이터만 갱신한다.
+        _runtimeBudgetSettings.baseBudget = spawnBudget;
+        _runtimeBudgetSettings.maximumBudget = maximumSpawnBudget;
+        _runtimeBudgetSettings.staticIncreasePerRequest = staticBudgetIncreasePerRequest;
+        if (_boundMatchId.IsEmpty || _snapshotProvider == null) return;
         if (_encounterRuntime != null && _encounterRuntime.HasExecutor) return;
+        if (!ResolveSpawnSetup()) return;
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = new EncounterRuntime();
+        _encounterRuntime = new EncounterRuntime(_boundMatchId, _spawnExecutor, _squadCatalog, _runtimeBudgetSettings);
         if (_encounterRuntime.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved += OnEnemyLifecycleObserved;
+    }
+
+    private bool ResolveSpawnSetup()
+    {
+        if (_spawnExecutor == null) _spawnExecutor = UnityEngine.Object.FindAnyObjectByType<EnemySpawnExecutor>();
+        if (_squadCatalog == null) _squadCatalog = EnemySquadPresetCatalog.Load();
+        return _spawnExecutor != null && _spawnExecutor.Catalog != null && _squadCatalog != null;
     }
 
     private void OnEnemyLifecycleObserved(EnemyLifecycleObservation observation)

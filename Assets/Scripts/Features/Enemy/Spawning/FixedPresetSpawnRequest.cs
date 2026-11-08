@@ -2,7 +2,7 @@
 /// 분대 명령과 전체 생성 상한, 비용 예산을 내부 계획 단계에 전달한다.
 /// 실제 스폰 지점과 적 종류별 수량은 <see cref="SpawnCompositionPlanner"/>가 결정한다.
 /// </summary>
-public readonly struct SpawnRequest
+public readonly struct FixedPresetSpawnRequest
 {
     /// <summary>
     /// 사용할 <see cref="EnemySquadPreset"/>을 찾는 분대 명령 값을 반환한다.
@@ -24,7 +24,7 @@ public readonly struct SpawnRequest
     /// <param name="squadOrder">적용할 분대 구성 프리셋의 명령 값.</param>
     /// <param name="maxCount">모든 지점에 허용하는 적의 총 상한. 정확한 생성 수는 아니다.</param>
     /// <param name="spawnBudget">모든 지점에 사용할 적의 총 생성 비용 예산.</param>
-    public SpawnRequest(string squadOrder, int maxCount, int spawnBudget)
+    public FixedPresetSpawnRequest(string squadOrder, int maxCount, int spawnBudget)
     {
         SquadOrder = squadOrder;
         MaxCount = maxCount;

@@ -57,7 +57,7 @@ public sealed class EnemySquadPreset : ScriptableObject
     public int SelectionWeight => selectionWeight;
 
     /// <summary>
-    /// <see cref="SpawnRequest.SquadOrder"/>와 비교해 이 프리셋을 선택할 명령 값을 반환한다.
+    /// <see cref="FixedPresetSpawnRequest.SquadOrder"/>와 비교해 이 프리셋을 선택할 명령 값을 반환한다.
     /// </summary>
     public string SquadOrder => _squadOrder;
 

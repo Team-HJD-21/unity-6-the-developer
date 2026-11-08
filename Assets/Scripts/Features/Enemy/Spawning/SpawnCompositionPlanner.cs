@@ -65,7 +65,7 @@ public sealed class SpawnCompositionPlanner
     }
 
     /// <summary>지점별 상황으로 한 편성씩 선택하며 요청 전체와 선택적 예산 묶음의 잔액을 함께 차감한다.</summary>
-    public bool TryPlan(AutomaticSpawnRequest request,
+    public bool TryPlan(AreaSpawnPlanRequest request,
         IReadOnlyList<SpatialSpawnCandidate> spawnPoints, BattlefieldSpatialSnapshot snapshot,
         IReadOnlyDictionary<string, BattlefieldPoint> targetPositions,
         IReadOnlyDictionary<string, TargetAttackType> targetAttackTypes,
@@ -182,7 +182,7 @@ public sealed class SpawnCompositionPlanner
     /// 호출자가 지정한 PoC 분대 요청을 현재 스폰 지점 상태에 맞춰 계획합니다.
     /// </summary>
     public bool TryPlan(
-        SpawnRequest request,
+        FixedPresetSpawnRequest request,
         SpawnPointRegistry spawnPoints,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
@@ -191,7 +191,7 @@ public sealed class SpawnCompositionPlanner
 
     /// <summary>현재 Match의 공간 스냅샷으로 후보를 걸러 분대 세트를 배분합니다.</summary>
     public bool TryPlan(
-        SpawnRequest request,
+        FixedPresetSpawnRequest request,
         SpawnPointRegistry spawnPoints,
         BattlefieldSpatialSnapshot snapshot,
         out IReadOnlyList<SpawnInstruction> instructions)
@@ -209,7 +209,7 @@ public sealed class SpawnCompositionPlanner
     /// <param name="instructions">스폰 지점별로 확정된 생성 명령 목록.</param>
     /// <returns>적어도 한 지점에 한 구성 세트를 배정했으면 <see langword="true"/>, 아니면 <see langword="false"/>.</returns>
     private bool TryBuildInstructions(
-        SpawnRequest spawnRequest,
+        FixedPresetSpawnRequest spawnRequest,
         SpawnPointRegistry spawnPoints,
         BattlefieldSpatialSnapshot snapshot,
         out IReadOnlyList<SpawnInstruction> instructions)

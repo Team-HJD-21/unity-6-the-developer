@@ -37,7 +37,7 @@ public sealed class SquadAutomaticPlanningTests
     {
         var planner = Planner(Preset("three", 3));
         var points = new[] { Point("a", -7, 0), Point("b", -6.5, 0), Point("c", 7, 0) };
-        var request = new AutomaticSpawnRequest(10, 500, new[]
+        var request = new AreaSpawnPlanRequest(10, 500, new[]
         {
             new SpawnBudgetAllocation("west", 4, new[] { "a", "b" }),
             new SpawnBudgetAllocation("east", 9, new[] { "c" })
@@ -54,7 +54,7 @@ public sealed class SquadAutomaticPlanningTests
     public void AutomaticPlan_CountLimitDoesNotProducePartialSquads()
     {
         var planner = Planner(Preset("three", 3));
-        Assert.That(PlanAtPoints(planner, new AutomaticSpawnRequest(100, 5),
+        Assert.That(PlanAtPoints(planner, new AreaSpawnPlanRequest(100, 5),
             new[] { Point("a", -3, 0), Point("b", 3, 0) }, Snapshot(), new SquadSelectionSettings(),
             new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Sum(Count), Is.EqualTo(3));
@@ -65,7 +65,7 @@ public sealed class SquadAutomaticPlanningTests
     {
         var planner = Planner(Preset("two", 2), Preset("three", 3));
         var settings = new SquadSelectionSettings { maxEnemiesPerCell = 5 };
-        Assert.That(PlanAtPoints(planner, new AutomaticSpawnRequest(100, 500),
+        Assert.That(PlanAtPoints(planner, new AreaSpawnPlanRequest(100, 500),
             new[] { Point("a", -7, 0), Point("b", -6.5, 0) }, Snapshot(), settings,
             new FixedRandom(), out var plans), Is.True);
         int count = plans.Sum(Count);
@@ -78,7 +78,7 @@ public sealed class SquadAutomaticPlanningTests
     public void AutomaticPlan_ExhaustedRegionDoesNotBlockAnotherRegion()
     {
         var planner = Planner(Preset("three", 3));
-        var request = new AutomaticSpawnRequest(100, 500, new[]
+        var request = new AreaSpawnPlanRequest(100, 500, new[]
         {
             new SpawnBudgetAllocation("empty", 1, new[] { "a" }),
             new SpawnBudgetAllocation("funded", 6, new[] { "b" })
@@ -100,7 +100,7 @@ public sealed class SquadAutomaticPlanningTests
             ["left"] = TargetAttackType.Area,
             ["right"] = TargetAttackType.None
         };
-        Assert.That(planner.TryPlan(new AutomaticSpawnRequest(4, 4), points, Snapshot(), positions,
+        Assert.That(planner.TryPlan(new AreaSpawnPlanRequest(4, 4), points, Snapshot(), positions,
             attacks, 0, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(),
             new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Single(p => p.SpawnPointId == "left").SquadOrder, Is.EqualTo("elite"));
@@ -120,7 +120,7 @@ public sealed class SquadAutomaticPlanningTests
                 : new[] { Point("a", -7, 0), Point("b", 7, 0) };
             var targets = points.ToDictionary(p => p.Id, p => new BattlefieldPoint(p.Id == "b" ? 3 : -3, 0));
             var attacks = points.ToDictionary(p => p.Id, p => TargetAttackType.None);
-            Assert.That(planner.TryPlan(new AutomaticSpawnRequest(30, 500), points, Snapshot(), targets,
+            Assert.That(planner.TryPlan(new AreaSpawnPlanRequest(30, 500), points, Snapshot(), targets,
                 attacks, 0, new[] { new BattlefieldPoint(-3, 0) }, settings, new FixedRandom(), out var plans), Is.True);
             foreach (SpawnBudgetAllocation allocation in planner.LastBudgetAllocations)
                 Assert.That(plans.Where(p => allocation.SpawnPointIds.Contains(p.SpawnPointId)).Sum(Count),
@@ -180,7 +180,7 @@ public sealed class SquadAutomaticPlanningTests
     public void AutomaticPlan_UnavailableAuthorityRandomDoesNotPlanOrConsumeRandom()
     {
         var random = new FixedRandom { IsAvailable = false };
-        Assert.That(PlanAtPoints(Planner(Preset("two", 2)), new AutomaticSpawnRequest(10, 10),
+        Assert.That(PlanAtPoints(Planner(Preset("two", 2)), new AreaSpawnPlanRequest(10, 10),
             new[] { Point("a", 0, 0) }, Snapshot(), new SquadSelectionSettings(), random, out var plans), Is.False);
         Assert.That(plans, Is.Empty);
         Assert.That(random.Calls, Is.Zero);
@@ -189,14 +189,14 @@ public sealed class SquadAutomaticPlanningTests
     [Test]
     public void AutomaticPlan_UnfundedPointsAndZeroWeightPresetsAreExcluded()
     {
-        var request = new AutomaticSpawnRequest(20, 20,
+        var request = new AreaSpawnPlanRequest(20, 20,
             new[] { new SpawnBudgetAllocation("other", 20, new[] { "not-in-map" }) });
         var random = new FixedRandom();
         var planner = Planner(Preset("two", 2));
         Assert.That(PlanAtPoints(planner, request, new[] { Point("a", 0, 0) }, Snapshot(),
             new SquadSelectionSettings(), random, out _), Is.False);
         planner = Planner(Preset("disabled", 2, EnemySquadRole.Patrol, 0));
-        Assert.That(PlanAtPoints(planner, new AutomaticSpawnRequest(20, 20), new[] { Point("a", 0, 0) },
+        Assert.That(PlanAtPoints(planner, new AreaSpawnPlanRequest(20, 20), new[] { Point("a", 0, 0) },
             Snapshot(), new SquadSelectionSettings(), random, out _), Is.False);
         Assert.That(random.Calls, Is.Zero);
     }
@@ -204,7 +204,7 @@ public sealed class SquadAutomaticPlanningTests
     [Test]
     public void BudgetAllocations_RejectDoubleFundingTheSamePoint()
     {
-        Assert.Throws<ArgumentException>(() => new AutomaticSpawnRequest(20, 20, new[]
+        Assert.Throws<ArgumentException>(() => new AreaSpawnPlanRequest(20, 20, new[]
         {
             new SpawnBudgetAllocation("one", 10, new[] { "a" }),
             new SpawnBudgetAllocation("two", 10, new[] { "a" })
@@ -223,7 +223,7 @@ public sealed class SquadAutomaticPlanningTests
         var positions = new Dictionary<string, BattlefieldPoint> { [point.Id] = target };
         var planner = Planner(Preset("two", 2));
 
-        Assert.That(planner.TryPlan(new AutomaticSpawnRequest(4, 4), new[] { point }, snapshot,
+        Assert.That(planner.TryPlan(new AreaSpawnPlanRequest(4, 4), new[] { point }, snapshot,
             positions, new Dictionary<string, TargetAttackType>(), 30, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Sum(Count), Is.EqualTo(4));
         var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { point }, new SquadSelectionSettings());
@@ -256,7 +256,7 @@ public sealed class SquadAutomaticPlanningTests
     {
         var random = new FixedRandom();
         var planner = Planner(Preset("two", 2));
-        Assert.That(planner.TryPlan(new AutomaticSpawnRequest(10, 10), new[] { Point("a", 0, 0) },
+        Assert.That(planner.TryPlan(new AreaSpawnPlanRequest(10, 10), new[] { Point("a", 0, 0) },
             Snapshot(), new Dictionary<string, BattlefieldPoint>(), new Dictionary<string, TargetAttackType>(), 0, Array.Empty<BattlefieldPoint>(), new SquadSelectionSettings(), random, out var plans), Is.False);
         Assert.That(plans, Is.Empty);
         Assert.That(random.Calls, Is.Zero);
@@ -352,7 +352,7 @@ public sealed class SquadAutomaticPlanningTests
         var area = session.GetAreaContext(point, new BattlefieldPoint(0, 0), 0, players);
         var ambush = Preset("ambush", 2, EnemySquadRole.Ambush);
         Assert.That(SquadSelectionPolicy.CalculateWeight(ambush, area, settings), Is.EqualTo(expectedWeight));
-        Assert.That(Planner(ambush).TryPlan(new AutomaticSpawnRequest(2, 2), new[] { point }, snapshot,
+        Assert.That(Planner(ambush).TryPlan(new AreaSpawnPlanRequest(2, 2), new[] { point }, snapshot,
             new Dictionary<string, BattlefieldPoint> { [point.Id] = new BattlefieldPoint(0, 0) },
             new Dictionary<string, TargetAttackType>(), 0, players, settings, new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Sum(Count), Is.EqualTo(2));
@@ -455,7 +455,7 @@ public sealed class SquadAutomaticPlanningTests
         return target;
     }
 
-    private static bool PlanAtPoints(SpawnCompositionPlanner planner, AutomaticSpawnRequest request,
+    private static bool PlanAtPoints(SpawnCompositionPlanner planner, AreaSpawnPlanRequest request,
         IReadOnlyList<SpatialSpawnCandidate> points, BattlefieldSpatialSnapshot snapshot,
         SquadSelectionSettings settings, IRandomSource random, out IReadOnlyList<SpawnInstruction> plans)
     {

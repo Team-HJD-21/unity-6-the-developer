@@ -28,14 +28,14 @@ public sealed class SpawnBudgetAllocation
 }
 
 /// <summary>특정 편성을 지정하지 않는 자동 계획의 요청 상한과 선택적 지역 예산.</summary>
-public readonly struct AutomaticSpawnRequest
+public readonly struct AreaSpawnPlanRequest
 {
     public int SpawnBudget { get; }
     public int MaxCount { get; }
     /// <summary>null이면 요청 전체 예산만 적용한다. 지정하면 등록된 지점에만 해당 묶음 예산을 적용한다.</summary>
     public IReadOnlyList<SpawnBudgetAllocation> BudgetAllocations { get; }
 
-    public AutomaticSpawnRequest(int spawnBudget, int maxCount,
+    public AreaSpawnPlanRequest(int spawnBudget, int maxCount,
         IReadOnlyList<SpawnBudgetAllocation> budgetAllocations = null)
     {
         SpawnBudget = spawnBudget;

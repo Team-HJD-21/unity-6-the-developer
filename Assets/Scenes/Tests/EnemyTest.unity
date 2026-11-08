@@ -1336968,13 +1336968,18 @@ MonoBehaviour:
   autoStartHost: 0
   initialSquadOrder: Normal
   initialEnemyLimit: 500
+  regionBinding: {fileID: 877435134}
   spawnBudget: 20
+  maximumSpawnBudget: 100
   initialEncounterDelay: 0.5
   selectionSettings:
     nearbyCellRadius: 1
     sparseEnemyPercentage: 20
     preferredMultiplier: 3
     maxEnemiesPerCell: 50
+    baseBudgetWeight: 1
+    sparseBudgetBonus: 1
+    playerBudgetBonus: 2
     logSelectionDecisions: 1
 --- !u!1 &1749657957
 GameObject:

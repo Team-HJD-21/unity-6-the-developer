@@ -1,11 +1,13 @@
 // 최신 Battlefield snapshot을 Spawn Planner에 전달하고 실행 결과를 보고합니다.
 // 실제 NGO 생성은 Scene의 EnemySpawnExecutor에 위임합니다.
 
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace TeamHJD.Game.Domain
 {
@@ -17,6 +19,10 @@ namespace TeamHJD.Game.Domain
     {
         private readonly SpawnCompositionPlanner _planner;
         private readonly EnemySpawnExecutor _spawnExecutor;
+        private readonly MatchId _matchId;
+        private readonly EncounterBudgetSettings _budgetSettings;
+        private bool _budgetInitialized;
+        private int _currentBudget;
 
         /// <summary>
         /// 분대 프리셋과 몬스터 카탈로그가 준비되어 계획을 세울 수 있는지 반환한다.
@@ -24,64 +30,73 @@ namespace TeamHJD.Game.Domain
         public bool HasCatalog => _planner.HasCatalog;
 
         /// <summary>
-        /// 게임 시작 시 씬에서 Executor를 찾았는지 반환한다.
+        /// 전달받은 Executor가 유효한지 반환한다.
         /// </summary>
         public bool HasExecutor => _spawnExecutor != null;
         public bool CanExecute => _spawnExecutor != null && _spawnExecutor.CanSpawn;
         public EnemySpawnExecutor Executor => _spawnExecutor;
         
         /// <summary>
-        /// 기본 Planner를 준비하고 현재 씬의 Executor를 한 번 찾아 보관한다.
+        /// Match별 실행기와 설정으로 Planner를 준비한다. 생성과 수명은 호출자가 관리한다.
         /// </summary>
-        public EncounterRuntime()
+        public EncounterRuntime(MatchId matchId, EnemySpawnExecutor executor,
+            EnemySquadPresetCatalog catalog, EncounterBudgetSettings budgetSettings)
         {
-            _spawnExecutor = Object.FindAnyObjectByType<EnemySpawnExecutor>();
-            _planner = new SpawnCompositionPlanner(
-                EnemySquadPresetCatalog.Load(),
-                _spawnExecutor != null ? _spawnExecutor.Catalog : null);
+            if (matchId.IsEmpty) throw new ArgumentException("Match ID가 필요합니다.", nameof(matchId));
+            if (executor == null) throw new ArgumentNullException(nameof(executor));
+            _matchId = matchId;
+            _spawnExecutor = executor;
+            _budgetSettings = budgetSettings ?? throw new ArgumentNullException(nameof(budgetSettings));
+            _planner = new SpawnCompositionPlanner(catalog, executor.Catalog);
         }
 
-        /// <summary>
-        /// Planner가 결정한 지점별 명령을 Executor에 전달해 적을 생성한다.
-        /// 호출자가 전달한 분대 명령과 생성 상한, 비용 예산으로 계획한다.
-        /// </summary>
-        public void RequestSpawn(SpawnRequest request)
+        /// <summary>최신 Core 자료로 예산을 계산하고 상황별 편성을 계획해 생성한다.</summary>
+        public bool RequestSpawn(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
+            int maximumEnemyCount, SquadSelectionSettings settings, IRandomSource random,
+            EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
         {
-            if (_spawnExecutor == null)
+            summary = new EncounterExecutionSummary(0, 0, "Rejected");
+            if (!ValidateExecution(battlefield, out result)) return false;
+            if (maximumEnemyCount <= 0 || settings == null || !settings.IsValid ||
+                random == null || !random.IsAvailable)
             {
-                Debug.LogError("Enemy spawn executor was not found.");
-                return;
+                result = "생성 상한·편성 설정·Core 난수를 확인하세요.";
+                return false;
             }
+            if (!TryGetSpawnBudget(battlefield, region, context, settings.logSelectionDecisions,
+                    out int budget, out result)) return false;
 
-            if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList,
-                    out IReadOnlyList<SpawnInstruction> instructions))
+            return PlanAreaSpawn(battlefield, new AreaSpawnPlanRequest(budget, maximumEnemyCount),
+                settings, random, context, out result, out summary);
+        }
+
+        /// <summary>같은 Match 예산으로 지정된 프리셋을 계획해 생성한다.</summary>
+        public bool RequestSpawn(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
+            string squadOrder, int maximumEnemyCount, EncounterExecutionContext context,
+            out string result, out EncounterExecutionSummary summary, bool logBudgetDecisions = false)
+        {
+            summary = new EncounterExecutionSummary(0, 0, "Rejected");
+            if (!ValidateExecution(battlefield, out result)) return false;
+            if (string.IsNullOrWhiteSpace(squadOrder) || maximumEnemyCount <= 0)
             {
-                Debug.LogWarning("No spawn plan: check the squad preset, budget, and available spawn points.");
-                return;
+                result = "분대 명령과 생성 상한을 확인하세요.";
+                return false;
             }
+            if (!TryGetSpawnBudget(battlefield, region, context, logBudgetDecisions,
+                    out int budget, out result)) return false;
 
-            // Planner는 여러 지점의 명령을 반환할 수 있으므로 각각 실행한다.
-            foreach (SpawnInstruction instruction in instructions)
-                _spawnExecutor.Execute(instruction);
+            return PlanFixedSpawn(battlefield, squadOrder, maximumEnemyCount, budget, context,
+                out result, out summary);
         }
 
         /// <summary>
         /// Match 공간 snapshot을 Encounter 경계로 받아 요청한 PoC 분대를 계획하고 서버 Executor에 전달합니다.
         /// Grid의 점유·적 밀도와 Frontline 거리를 PoC 배치 정책에 적용합니다.
         /// </summary>
-        public bool RequestSpawn(BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
+        private bool PlanFixedSpawn(BattlefieldSpatialSnapshot snapshot, string squadOrder, int maxEnemyCount,
             int spawnBudget, EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
         {
-            summary = new EncounterExecutionSummary(0, 0, "Rejected");
-            if (!ValidateExecution(snapshot, out result)) return false;
-
-            if (string.IsNullOrWhiteSpace(squadOrder) || maxEnemyCount <= 0 || spawnBudget <= 0)
-            {
-                result = "분대 명령, 최대 생성 수와 스폰 비용 예산을 확인하세요.";
-                return false;
-            }
-
-            var request = new SpawnRequest(squadOrder.Trim(), maxEnemyCount, spawnBudget);
+            var request = new FixedPresetSpawnRequest(squadOrder.Trim(), maxEnemyCount, spawnBudget);
             if (!_planner.TryPlan(request, _spawnExecutor.SpawnPointList, snapshot,
                     out IReadOnlyList<SpawnInstruction> instructions))
             {
@@ -99,20 +114,11 @@ namespace TeamHJD.Game.Domain
                 out result, out summary);
         }
 
-        /// <summary>지점별 자동 편성 계획을 서버에서 실행한다. 외부의 고정 프리셋 요청과 구분되는 진입점이다.</summary>
-        public bool RequestSpawn(BattlefieldSpatialSnapshot snapshot, AutomaticSpawnRequest request,
+        /// <summary>확정된 요청 예산 안에서 지점별 편성을 계획하고 실행한다.</summary>
+        private bool PlanAreaSpawn(BattlefieldSpatialSnapshot snapshot, AreaSpawnPlanRequest request,
             SquadSelectionSettings settings, IRandomSource random, EncounterExecutionContext context,
             out string result, out EncounterExecutionSummary summary)
         {
-            summary = new EncounterExecutionSummary(0, 0, "Rejected");
-            if (!ValidateExecution(snapshot, out result)) return false;
-            if (request.SpawnBudget <= 0 || request.MaxCount <= 0 || settings == null || !settings.IsValid ||
-                random == null || !random.IsAvailable)
-            {
-                result = "자동 편성 예산·마릿수 상한·설정과 Core 권위 난수 주입을 확인하세요.";
-                return false;
-            }
-
             // CU도 Turret 후보에 포함된다. 요청당 한 번만 씬의 후보를 조회한다.
             TargetableComponent[] targets = Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
             var playerPositions = new List<BattlefieldPoint>();
@@ -184,6 +190,54 @@ namespace TeamHJD.Game.Domain
                 out result, out summary);
         }
 
+        private bool TryGetSpawnBudget(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
+            EncounterExecutionContext context, bool logDecisions, out int budget, out string reason)
+        {
+            budget = 0;
+            if (battlefield == null || battlefield.MatchId != _matchId ||
+                region == null || region.MatchId != _matchId ||
+                context == null || context.MatchId != _matchId)
+            {
+                reason = "동일한 Match의 전장·지역 정보와 요청이 필요합니다.";
+                return false;
+            }
+            if (_budgetSettings.baseBudget < 1 ||
+                _budgetSettings.maximumBudget < _budgetSettings.baseBudget ||
+                (region.Mode == RegionPolicyMode.Static && _budgetSettings.staticIncreasePerRequest < 1))
+            {
+                reason = "Encounter 예산 설정을 확인하세요.";
+                return false;
+            }
+
+            int targetBudget = SpawnBudgetPolicy.CalculateTotalBudget(
+                region, _budgetSettings.baseBudget, _budgetSettings.maximumBudget);
+            budget = UpdateSpawnBudget(targetBudget, region.Mode);
+            if (logDecisions)
+            {
+                double ratio = (double)region.CapturedCellCount / region.Definition.Geometry.TotalCellCount;
+                Debug.Log($"[EncounterBudget] Match {_matchId} region r{region.Revision}, mode={region.Mode}: " +
+                    $"점유 셀 {region.CapturedCellCount}/{region.Definition.Geometry.TotalCellCount} ({ratio:P1}), " +
+                    $"목표 예산 {targetBudget}, 적용 예산 {budget}");
+            }
+            reason = null;
+            return true;
+        }
+
+        private int UpdateSpawnBudget(int targetBudget, RegionPolicyMode mode)
+        {
+            if (!_budgetInitialized || mode == RegionPolicyMode.Dynamic)
+            {
+                _budgetInitialized = true;
+                _currentBudget = targetBudget;
+                return _currentBudget;
+            }
+
+            _currentBudget = (int)Math.Min(
+                (long)_currentBudget + _budgetSettings.staticIncreasePerRequest,
+                targetBudget);
+            return _currentBudget;
+        }
+
         private static void LogSquadSelection(BattlefieldSpatialSnapshot snapshot, string pointId,
             string targetName, BattlefieldPoint targetPosition, SpawnAreaContext area,
             IReadOnlyList<EnemySquadPreset> presets, EnemySquadPreset selected, SquadSelectionSettings settings)
@@ -221,9 +275,9 @@ namespace TeamHJD.Game.Domain
 
         private bool ValidateExecution(BattlefieldSpatialSnapshot snapshot, out string result)
         {
-            if (snapshot == null || snapshot.MatchId.IsEmpty)
+            if (snapshot == null || snapshot.MatchId != _matchId)
             {
-                result = "활성 Match Battlefield snapshot이 없습니다.";
+                result = "현재 Runtime의 Match에 해당하는 Battlefield snapshot이 필요합니다.";
                 return false;
             }
 
