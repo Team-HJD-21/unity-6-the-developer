@@ -234,8 +234,7 @@ public abstract class DefaultFieldMissileTurret : FieldTurretBase
     private void OverHeatAnimationController()//설정시간 도달 시 과열(TowerIsActivatedNow에서 수행)
     {
         if (IsCoolingDown) return;
-        float heatRatio = Mathf.Clamp01(CurMissileCount / Mathf.Max(1, OverHeatMissileCount));
-        GunRenderer.color = new Color(1f, 1f - heatRatio, 1f - heatRatio);
+        SetGunHeatTint(CurMissileCount / Mathf.Max(1, OverHeatMissileCount));
         TryBeginOverheatCooling();
     }
     private bool TryBeginOverheatCooling()

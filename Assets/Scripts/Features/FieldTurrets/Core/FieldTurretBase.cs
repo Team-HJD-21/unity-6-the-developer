@@ -23,6 +23,10 @@ namespace TeamHJD.Game.FieldTurrets
         [SerializeField] protected SpriteRenderer rangeRenderer;
         [SerializeField] protected Transform rangeTransform;
 
+        [Header("Heat Wave")]
+        [SerializeField] private Material heatWaveMaterial;
+        [SerializeField, Min(1f)] private float heatWaveScale = 1.1f;
+
         // Authored per prefab. Hidden from the normal Inspector and read-only to callers.
         [SerializeField, HideInInspector] private float minimumRange = 3f;
 
@@ -42,6 +46,8 @@ namespace TeamHJD.Game.FieldTurrets
         private float _coolingEndsAt;
         private float _coolingDuration;
         private float _coolingInitialHeatRatio;
+        private float _gunHeatStrength;
+        private SpriteRenderer _gunHeatWave;
         private bool _isResolvingDestruction;
         public bool IsInitialized => _activationController != null;
         // Shared by active overheat recovery and cooling after switching off.
@@ -82,7 +88,7 @@ namespace TeamHJD.Game.FieldTurrets
             ? 0
             : _runtimeState.GetEffectivePower(_definition.Power);
         public virtual int ProjectilesPerShot => 1;
-        public float TheoreticalDps => _definition == null ? 0f : EffectiveDamage * _definition.FireRate * ProjectilesPerShot;
+        public virtual float TheoreticalDps => _definition == null ? 0f : EffectiveDamage * _definition.FireRate * ProjectilesPerShot;
         public float DpsPerPower => EffectivePower > 0 ? TheoreticalDps / EffectivePower : 0f;
         public float EffectiveRange => _definition == null
             ? 0f
@@ -394,8 +400,7 @@ namespace TeamHJD.Game.FieldTurrets
                 ? _coolingInitialHeatRatio * remaining / _coolingDuration
                 : 0f;
             ApplyCoolingHeat(heatRatio);
-            if (GunRenderer != null)
-                GunRenderer.color = new Color(1f, 1f - heatRatio, 1f - heatRatio);
+            SetGunHeatTint(heatRatio);
             if (remaining > 0f) return;
 
             _coolingEndsAt = 0f;
@@ -406,6 +411,46 @@ namespace TeamHJD.Game.FieldTurrets
         }
 
         protected virtual void ApplyCoolingHeat(float heatRatio) { }
+
+        protected void SetGunHeatTint(float heatRatio)
+        {
+            _gunHeatStrength = Mathf.Clamp01(heatRatio);
+            if (GunRenderer != null)
+                GunRenderer.color = Color.Lerp(Color.white, new Color(1f, 0.25f, 0.25f), _gunHeatStrength);
+        }
+
+        protected virtual void LateUpdate()
+        {
+            SpriteRenderer source = GunRenderer;
+            if (_gunHeatStrength <= 0f || IsLocked || IsDestroyed || heatWaveMaterial == null || source == null ||
+                !source.enabled || !source.gameObject.activeInHierarchy || source.forceRenderingOff || source.sprite == null)
+            {
+                if (_gunHeatWave != null) _gunHeatWave.enabled = false;
+                return;
+            }
+
+            if (_gunHeatWave == null)
+            {
+                var overlay = new GameObject("Heat Wave") { layer = source.gameObject.layer };
+                overlay.transform.SetParent(source.transform, false);
+                _gunHeatWave = overlay.AddComponent<SpriteRenderer>();
+                _gunHeatWave.sharedMaterial = heatWaveMaterial;
+            }
+
+            float scale = Mathf.Max(1f, heatWaveScale);
+            Vector3 center = source.sprite.bounds.center;
+            center.x *= source.flipX ? -1f : 1f;
+            center.y *= source.flipY ? -1f : 1f;
+            _gunHeatWave.transform.localPosition = center * (1f - scale);
+            _gunHeatWave.transform.localScale = new Vector3(scale, scale, 1f);
+            _gunHeatWave.sprite = source.sprite;
+            _gunHeatWave.flipX = source.flipX;
+            _gunHeatWave.flipY = source.flipY;
+            _gunHeatWave.sortingLayerID = source.sortingLayerID;
+            _gunHeatWave.sortingOrder = source.sortingOrder + 1;
+            _gunHeatWave.color = new Color(1f, 1f, 1f, _gunHeatStrength);
+            _gunHeatWave.enabled = true;
+        }
 
         protected virtual void OnActivationChanged(bool isActivated)
         {
@@ -433,6 +478,7 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected virtual void OnDisable()
         {
+            if (_gunHeatWave != null) _gunHeatWave.enabled = false;
             ReleaseMatchOperations();
             FieldTurretInstanceRegistry.Unregister(this);
         }

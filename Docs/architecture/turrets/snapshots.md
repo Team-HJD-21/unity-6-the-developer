@@ -40,7 +40,7 @@ int activeCanonCount = snapshot.GetActivatedCount(FieldTurretKind.Canon);
 
 전력은 `MaximumPower = AvailablePower + ReservedPower + PendingRecoveryPower`로 구분한다. 끈 터렛의 전력이 즉시 가용 전력으로 전부 돌아오는 것은 아니다.
 
-Legacy Laser는 같은 예산을 소비할 수 있지만 Registry 집계 대상은 아니다. 따라서 예약 전력과 집계된 터렛의 요구 전력 합계가 반드시 같지는 않다. 종류 enum에 Laser와 Tesla가 있다는 것만으로 이식 완료를 뜻하지 않는다.
+Stage 1 Laser는 다른 필드 터렛과 같은 Registry 및 전력 예산에 포함된다. Laser의 이론 DPS는 빔에 계속 맞는 적 한 마리를 기준으로, 빔당 틱 피해 합계를 조준·발사·빔 접힘·재전개 대기 시간의 합으로 나눈 값이다. 조준 시간에는 얇은 빔이 길어지는 시간이 포함된다. 추가 탐색 시간과 과열 냉각은 계산에서 제외한다.
 
 ## 보관과 갱신
 

@@ -36,6 +36,7 @@ public abstract class DefaultFieldCanonTurret : FieldTurretBase
         UpdateRangeVisibility();
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
+
     private void TowerIsActivatedNow()//사용자에 의해 타워가 가동 됐다면 역할 수행(Update에서 수행)
     {
         if (IsOperational)
@@ -94,7 +95,7 @@ public abstract class DefaultFieldCanonTurret : FieldTurretBase
     }
     private void OverHeatAnimationController()//설정시간 도달 시 과열(TowerIsActivatedNow에서 수행)
     {
-        GunRenderer.color = new Color(1f, 1-(_fireTime / OverHeatTime),1-(_fireTime / OverHeatTime));
+        SetGunHeatTint(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
 
         if (IsTargetInSight())//적이 사격 시야에 있음
         {

@@ -402,7 +402,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3846909918072837578}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -859,6 +859,8 @@ MonoBehaviour:
     m_Bits: 262144
   animator: {fileID: 7825342509523406801}
   gunRenderer: {fileID: 3423592564341140463}
+  heatWaveMaterial: {fileID: 2100000, guid: 2ed732e016d54b5bb1a6c9de690bb7c7, type: 2}
+  heatWaveScale: 1.1
   rangeRenderer: {fileID: 7592123090567658909}
   rangeTransform: {fileID: 4616769300326080906}
   _definition: {fileID: 11400000, guid: 7dccbefee3974bf283a170cd7bd34f02, type: 2}
