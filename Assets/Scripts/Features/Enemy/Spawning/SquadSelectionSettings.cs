@@ -11,8 +11,9 @@ public sealed class SquadSelectionSettings
     [Min(0)] public int nearbyCellRadius = 1;
 
     [Header("상황 판단")]
-    [Min(0)] public int sparseEnemyCount = 5;
-    [Min(1)] public int supportEnemyCount = 6;
+    [InspectorName("병력 적음 기준 (%)")]
+    [Tooltip("전체 등록 몬스터 중 주변 몬스터의 비율이 이 값 이하면 적음으로 판단합니다.")]
+    [Range(0f, 100f)] public float sparseEnemyPercentage = 20f;
     [Min(1)] public int denseTurretCount = 3;
     [Min(0f)] public float nearFrontlineDistance = 10f;
     [Min(0f)] public float approachFrontlineDistance = 25f;
@@ -21,8 +22,8 @@ public sealed class SquadSelectionSettings
     [Min(1)] public int preferredMultiplier = 3;
     [Min(1)] public int maxEnemiesPerCell = 20;
 
-    public bool IsValid => nearbyCellRadius >= 0 && sparseEnemyCount >= 0 &&
-        supportEnemyCount > 0 && denseTurretCount > 0 && preferredMultiplier > 0 &&
+    public bool IsValid => nearbyCellRadius >= 0 && sparseEnemyPercentage >= 0f &&
+        sparseEnemyPercentage <= 100f && denseTurretCount > 0 && preferredMultiplier > 0 &&
         maxEnemiesPerCell > 0 && !float.IsNaN(nearFrontlineDistance) &&
         !float.IsInfinity(nearFrontlineDistance) && nearFrontlineDistance >= 0f &&
         !float.IsNaN(approachFrontlineDistance) && !float.IsInfinity(approachFrontlineDistance) &&
@@ -43,11 +44,13 @@ public static class SquadSelectionPolicy
             area.FrontlineDistance > settings.nearFrontlineDistance &&
             area.FrontlineDistance <= settings.approachFrontlineDistance;
         bool denseTurrets = area.NearbyTurretCount >= settings.denseTurretCount;
+        bool sparse = area.NearbyEnemyPercentage <= settings.sparseEnemyPercentage;
+        bool crowded = !sparse;
         bool preferred;
         switch (preset.Role)
         {
             case EnemySquadRole.Patrol:
-                preferred = area.NearbyEnemyCount <= settings.sparseEnemyCount && area.NearbyTurretCount == 0;
+                preferred = sparse && area.NearbyTurretCount == 0;
                 break;
             case EnemySquadRole.Assault:
                 preferred = near && !denseTurrets;
@@ -59,7 +62,7 @@ public static class SquadSelectionPolicy
                 preferred = approaching;
                 break;
             case EnemySquadRole.Sustain:
-                preferred = area.NearbyEnemyCount >= settings.supportEnemyCount;
+                preferred = crowded;
                 break;
             case EnemySquadRole.Elite:
                 preferred = near && denseTurrets;

@@ -67,13 +67,15 @@ public sealed class SpawnCompositionPlanner
     public bool TryPlan(AutomaticSpawnRequest request,
         IReadOnlyList<SpatialSpawnCandidate> spawnPoints, BattlefieldSpatialSnapshot snapshot,
         IReadOnlyDictionary<string, BattlefieldPoint> targetPositions,
+        int totalEnemyCount,
         SquadSelectionSettings settings, IRandomSource random,
         out IReadOnlyList<SpawnInstruction> instructions)
     {
         instructions = Array.Empty<SpawnInstruction>();
         LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>();
         if (!HasCatalog || request.SpawnBudget <= 0 || request.MaxCount <= 0 ||
-            snapshot?.Grid == null || spawnPoints == null || targetPositions == null || settings == null || !settings.IsValid ||
+            snapshot?.Grid == null || spawnPoints == null || targetPositions == null || totalEnemyCount < 0 ||
+            settings == null || !settings.IsValid ||
             random == null || !random.IsAvailable)
             return false;
 
@@ -134,7 +136,7 @@ public sealed class SpawnCompositionPlanner
                 if (costs[preset] <= budget && preset.TotalWeight <= remainingCount)
                     affordable.Add(preset);
 
-            SpawnAreaContext area = session.GetAreaContext(point, targetPositions[point.Id]);
+            SpawnAreaContext area = session.GetAreaContext(point, targetPositions[point.Id], totalEnemyCount);
             if (!SquadSelectionPolicy.TrySelect(affordable, area, settings, random, out EnemySquadPreset selected))
                 break;
 

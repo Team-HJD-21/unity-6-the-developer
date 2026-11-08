@@ -115,11 +115,11 @@ public sealed class SquadAutomaticPlanningTests
         var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(null, dynamicInput),
             new[] { a, b }, new SquadSelectionSettings());
         session.Reserve(a, 3);
-        Assert.That(session.GetAreaContext(b, b.Position).CellEnemyCount, Is.EqualTo(1));
-        Assert.That(session.GetAreaContext(b, b.Position).NearbyEnemyCount, Is.EqualTo(1));
+        Assert.That(session.GetAreaContext(b, b.Position, 1).CellEnemyCount, Is.EqualTo(1));
+        Assert.That(session.GetAreaContext(b, b.Position, 1).NearbyEnemyCount, Is.EqualTo(1));
         session.Reserve(b, 2);
-        Assert.That(session.GetAreaContext(a, b.Position).CellEnemyCount, Is.EqualTo(3));
-        Assert.That(session.GetAreaContext(a, b.Position).NearbyEnemyCount, Is.EqualTo(1));
+        Assert.That(session.GetAreaContext(a, b.Position, 1).CellEnemyCount, Is.EqualTo(3));
+        Assert.That(session.GetAreaContext(a, b.Position, 1).NearbyEnemyCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -128,7 +128,7 @@ public sealed class SquadAutomaticPlanningTests
         var point = Point("a", 0, 0);
         var settings = new SquadSelectionSettings();
         var session = new SpawnPointSpatialPolicy().BeginPlanning(Snapshot(), new[] { point }, settings);
-        var area = session.GetAreaContext(point, point.Position);
+        var area = session.GetAreaContext(point, point.Position, 0);
         Assert.That(area.HasFrontline, Is.False);
         var preset = Preset("balanced", 2, EnemySquadRole.Balanced, 6);
         Assert.That(SquadSelectionPolicy.CalculateWeight(preset, area, settings), Is.EqualTo(6d));
@@ -182,11 +182,11 @@ public sealed class SquadAutomaticPlanningTests
         var planner = Planner(Preset("two", 2));
 
         Assert.That(planner.TryPlan(new AutomaticSpawnRequest(4, 4), new[] { point }, snapshot,
-            positions, new SquadSelectionSettings(), new FixedRandom(), out var plans), Is.True);
+            positions, 30, new SquadSelectionSettings(), new FixedRandom(), out var plans), Is.True);
         Assert.That(plans.Sum(Count), Is.EqualTo(4));
         var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { point }, new SquadSelectionSettings());
-        Assert.That(session.GetAreaContext(point, target).NearbyEnemyCount, Is.EqualTo(30));
-        Assert.That(session.GetAreaContext(point, target).CellEnemyCount, Is.Zero);
+        Assert.That(session.GetAreaContext(point, target, 30).NearbyEnemyCount, Is.EqualTo(30));
+        Assert.That(session.GetAreaContext(point, target, 30).CellEnemyCount, Is.Zero);
     }
 
     [Test]
@@ -215,9 +215,42 @@ public sealed class SquadAutomaticPlanningTests
         var random = new FixedRandom();
         var planner = Planner(Preset("two", 2));
         Assert.That(planner.TryPlan(new AutomaticSpawnRequest(10, 10), new[] { Point("a", 0, 0) },
-            Snapshot(), new Dictionary<string, BattlefieldPoint>(), new SquadSelectionSettings(), random, out var plans), Is.False);
+            Snapshot(), new Dictionary<string, BattlefieldPoint>(), 0, new SquadSelectionSettings(), random, out var plans), Is.False);
         Assert.That(plans, Is.Empty);
         Assert.That(random.Calls, Is.Zero);
+    }
+
+    [TestCase(200, 1000, 20f, true)]
+    [TestCase(201, 1000, 20f, false)]
+    [TestCase(300, 1000, 30f, true)]
+    [TestCase(301, 1000, 30f, false)]
+    [TestCase(0, 0, 20f, true)]
+    [TestCase(0, 1000, 0f, true)]
+    [TestCase(1, 1000, 0f, false)]
+    [TestCase(1000, 1000, 100f, true)]
+    public void PercentageThreshold_SelectsSparseOrCrowdedWeight(
+        int nearby, int total, float threshold, bool expectedSparse)
+    {
+        var settings = new SquadSelectionSettings { sparseEnemyPercentage = threshold };
+        var area = new SpawnAreaContext(0, nearby, 0, false, 0d, total);
+        var patrol = Preset("patrol", 2, EnemySquadRole.Patrol);
+        var sustain = Preset("sustain", 2, EnemySquadRole.Sustain);
+
+        Assert.That(SquadSelectionPolicy.CalculateWeight(patrol, area, settings),
+            Is.EqualTo(expectedSparse ? 3d : 1d));
+        Assert.That(SquadSelectionPolicy.CalculateWeight(sustain, area, settings),
+            Is.EqualTo(expectedSparse ? 1d : 3d));
+        Assert.That(area.NearbyEnemyPercentage,
+            Is.EqualTo(total == 0 ? 0d : (double)nearby / total * 100d));
+    }
+
+    [TestCase(-1f)]
+    [TestCase(101f)]
+    [TestCase(float.NaN)]
+    [TestCase(float.PositiveInfinity)]
+    public void PercentageThreshold_RejectsInvalidSettings(float threshold)
+    {
+        Assert.That(new SquadSelectionSettings { sparseEnemyPercentage = threshold }.IsValid, Is.False);
     }
 
     private TargetableComponent Target(string name, Vector3 position, TargetType type)
@@ -236,7 +269,8 @@ public sealed class SquadAutomaticPlanningTests
         SquadSelectionSettings settings, IRandomSource random, out IReadOnlyList<SpawnInstruction> plans)
     {
         var positions = points.ToDictionary(point => point.Id, point => point.Position);
-        return planner.TryPlan(request, points, snapshot, positions, settings, random, out plans);
+        int totalEnemyCount = snapshot.Grid.Cells.Sum(cell => cell.EnemyCount) + snapshot.Grid.OutOfBoundsEnemyIds.Count;
+        return planner.TryPlan(request, points, snapshot, positions, totalEnemyCount, settings, random, out plans);
     }
 
     private EnemySquadPreset Preset(string id, int count, EnemySquadRole role = EnemySquadRole.Patrol, int weight = 1)

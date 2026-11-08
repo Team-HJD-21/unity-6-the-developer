@@ -115,6 +115,7 @@ namespace TeamHJD.Game.Domain
 
             // CU도 Turret 후보에 포함된다. 요청당 한 번만 씬의 후보를 조회한다.
             TargetableComponent[] targets = Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
+            int totalEnemyCount = _spawnExecutor.CountForMatch(snapshot.MatchId);
             var candidates = new List<SpatialSpawnCandidate>();
             var targetPositions = new Dictionary<string, BattlefieldPoint>();
             foreach (SpawnPoint point in _spawnExecutor.SpawnPointList.GetAvailableSpawnPoints())
@@ -133,7 +134,8 @@ namespace TeamHJD.Game.Domain
                     new BattlefieldPoint(point.Position.x, point.Position.y)));
                 targetPositions.Add(point.SpawnPointId, targetPosition);
             }
-            if (!_planner.TryPlan(request, candidates, snapshot, targetPositions, settings, random, out var instructions))
+            if (!_planner.TryPlan(request, candidates, snapshot, targetPositions, totalEnemyCount,
+                    settings, random, out var instructions))
             {
                 result = $"자동 SpawnPlan 생성 실패: budget {request.SpawnBudget}, maxCount {request.MaxCount}. " +
                          "카탈로그, 지점·지역 예산, 셀 수용량과 편성 비용을 확인하세요.";
