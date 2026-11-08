@@ -12,11 +12,21 @@ namespace TeamHJD.Game.Presentation.Scene
 
         private Transform _target;
         private Vector3 _velocity;
+        public Transform Target => _target;
 
         public void Bind(Transform target)
         {
             _target = target;
             _velocity = Vector3.zero;
+            SnapToTarget();
+        }
+
+        /// <summary>생성·포털 순간이동 직후 호출합니다. 평소 추적은 유지하고 이동 구간의 카메라 비행만 제거합니다.</summary>
+        public void SnapToTarget()
+        {
+            if (_target == null) return;
+            _velocity = Vector3.zero;
+            transform.position = new Vector3(_target.position.x, _target.position.y, transform.position.z);
         }
 
         private void LateUpdate()

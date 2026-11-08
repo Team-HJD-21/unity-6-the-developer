@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 1452530}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.6, y: -15.9, z: 0}
+  m_LocalPosition: {x: -18.97000, y: -83.36000, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -871321,7 +871321,7 @@ Transform:
   m_GameObject: {fileID: 765547576}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 17.6, y: -15.9, z: 0}
+  m_LocalPosition: {x: -15.97000, y: -83.36000, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -937550,6 +937550,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 877435137}
   - component: {fileID: 877435132}
   - component: {fileID: 877435133}
   - component: {fileID: 877435134}
@@ -938229,6 +938230,7 @@ GameObject:
   - component: {fileID: 1250254886}
   - component: {fileID: 1250254888}
   - component: {fileID: 1250254889}
+  - component: {fileID: 2035505101}
   m_Layer: 0
   m_Name: WeatherManager
   m_TagString: Untagged
@@ -940114,7 +940116,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceshipEnter
   sceneToLoadName: SpaceShipGrayBox
-  destinationName: SpacshipEnter
+  destinationName: Capsule
 --- !u!58 &1978399371
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -962620,6 +962622,20 @@ Transform:
   - {fileID: 584970847}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2035505101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1250254885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5cdee90df4d4b70afded73b73b6f7c7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.UI.WeatherDebugHud
+  weatherSource: {fileID: 1250254886}
+  weatherButton: {fileID: 2061509692}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -962652,3 +962668,30 @@ SceneRoots:
   - {fileID: 2000502100}
   - {fileID: 765547578}
   - {fileID: 1538709566}
+
+--- !u!114 &1836352305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1002043012098565792, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
+  m_PrefabInstance: {fileID: 1836352303}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
+
+--- !u!114 &877435137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
+  spawnExecutor: {fileID: 1836352305}
+  environmentProfile: {fileID: 0}

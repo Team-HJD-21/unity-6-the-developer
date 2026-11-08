@@ -1,5 +1,8 @@
 # Game Debugger 사용·연동 가이드
 
+11월5일 추가: Overview의 **APP · GAME FLOW**에서 시작/허브/출격/귀환과 저장 슬롯의 새 Mission 복원을 호출한다. **Checkpoint**에서는 등록/필수/누락 writer와 명시 Save/Restore를 확인한다. 현재 Weather writer 누락으로 전체 저장은 비활성이다. [실제 Feature 통합·수동 확인 순서](../architecture/core-feature-integration-guide.md)를 함께 본다. 자동 저장 사건을 추가한 것은 아니다.
+
+
 기준일: 2026-10-08 · 상태: 기존 집중 검사 54/54·Scene 통합 1/1 성공, 후속 사용성 검사 40/40·관측 보완 검사 31/31 성공(검사 범위 중복 포함) · 화면 조작·영상 인수 확인 별도
 
 [배치 계획](../planning/2026-10-08-game-debugger-batch-plan.md) · [구현 결과·검증](../planning/2026-10-08-game-debugger-batch-results.md) · [Core README](../../Assets/Scripts/Core/README.md)
@@ -186,3 +189,11 @@ Battlefield 패널의 **지역 Grid · 점령 원본**에서 Static/Dynamic 모�
 [Unity Profiler의 선택 구간→상세 패널](https://docs.unity.com/en-us/engine/6000.0/manual/analysis/profiler/window-navigating)과 [Unreal Insights의 그래프 탐색/축 조정](https://dev.epicgames.com/documentation/unreal-engine/using-the-timing-panel-in-unreal-insights-for-unreal-engine?lang=en-US)을 참고하여 공용 toolbar, 접힘 설정, 선택 가능한 표/상세, 축 탐색과 최신 추적을 적용했다. 엔진 성능 지표를 모방하지 않고 실제 게임 관측 사실에 적용한 사용성 설계다.
 
 자동 통합 검사는 충돌 adapter 메서드를 직접 호출했다. 독립 Statistics 창의 GUI 렌더링/레이아웃 검사는 통과했다. 물리 `OnCollisionEnter2D`, 실제 Game UI 클릭, 다중 Client 동기화, 그래프 시각 인수·dock layout·영상은 별도 시각/조작 확인이다. 전체 전투·지역 해금·승패 한 사이클 완료를 이번 도구 배치 완료와 동일시하지 않는다.
+
+## 11월5일 추가 — Steam과 낮밤
+
+Overview의 **PLATFORM · STEAM**에서 Steam 설정 에셋을 선택하고 Use Steam/AppID를 설정한다. 새 Play에서 실제 초기화 상태·사용자와 실패 이유를 확인한다. 친구 공개2인 로비 생성/ID 참가/초대 Overlay/나가기 API를 제공하며 로비 참가가 NGO 게임 접속을 시작하지는 않는다. [Steam 사용법](../architecture/steam-api.md)을 따른다.
+
+**Match 환경 · 현재**는 day/night와 Host의 다음 전환까지 남은 게임 초를 표시한다. 기본은 낮300/밤300초이며 정지/배속은 공용 필드 시계를 따른다. [낮밤 API](../architecture/day-night-api.md)에서 Weather/저장 연결과 기존 CountTick의 차이를 확인한다.
+
+APP · GAME FLOW의 시작/출격/귀환은 검은 배경·하단 바의 로딩 화면을 사용한다. 자동 확인을 마친 항목과 PL 최소 확인은 [최신 결과](../planning/2026-11-05-day-night-steam-results.md)에 정리했다.

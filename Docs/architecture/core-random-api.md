@@ -1,6 +1,8 @@
 # 범용 Random API — 사용법과 기존 호출 교체 위치
 
-기준: 2026-11-05. Core만 변경한 구현이다. Weather·Enemy·터렛·HUD의 기존 난수 호출은 아직 교체하지 않았다.
+기준: 2026-11-05. 범용 난수 함수·주입·권한·저장 상태의 사용법이다. 실제 Feature 연결은 [Feature 통합](core-feature-integration-guide.md)을 함께 확인한다.
+
+**비 50%처럼 항목마다 빈도가 달라야 하면 [가중 Random 선택 예제](random-weighted-selection.md)를 먼저 확인한다.** `WeightedChoose`와 `WeightedIndex`는 이미 제공하며, 두 가지 성공/실패 판정에는 `Chance(0.5)`를 사용한다.
 
 **Random을 사용하는 기능을 구현·교체하기 전에 이 문서의 주입 방법, 게임/연출 구분, 범위 규칙을 먼저 확인한다.** 함수 이름만 치환하면 Client의 독립 추첨이나 저장 상태 누락은 해결되지 않는다.
 
@@ -211,9 +213,9 @@ requiredKeys.Add(randomWriter.Key); // core/random
 
 정해진 자동 저장 사건은 추가하지 않았다. PCG32는 게임용 의사 난수이며 인증 토큰/백엔드 보상 검증용 난수가 아니다. 전체 AI/물리의 결정적 리플레이를 제공한다는 의미도 아니다.
 
-## 기존 프로젝트 교체 목록 — 이번에는 수정하지 않음
+## 기존 호출부 위치와 연결 참고
 
-검색 범위: `Assets`의 C# 실행 소스. 테스트·Editor·외부 플러그인을 분리했다. 현재 기능 소스에서 직접 난수를 소비하는 곳은 **6개 파일, 7개 호출부**다.
+아래는 최초 API 도입 시 조사한 **6개 파일, 7개 호출부**의 위치/목적이다. 이후 캐논은 `combat/field-turret`, Enemy 배치는 `encounter/placement`로 연결했다. 표의 과거 줄 번호·이름을 현행 구현 상태로 읽지 않고 [실제 Feature 통합](core-feature-integration-guide.md)과 현재 소스를 함께 확인한다. Weather의 난수·예고 큐 정책은 World/Weather 담당 범위로 남는다.
 
 | 담당/파일 | 현재 사용 위치와 목적 | 이후 교체 |
 | --- | --- | --- |

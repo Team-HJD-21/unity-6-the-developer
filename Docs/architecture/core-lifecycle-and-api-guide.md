@@ -76,7 +76,7 @@ sequenceDiagram
     F->>F: Phase = Spaceship / CurrentSceneKey 갱신
 ```
 
-Mission 출격은 위 순서 뒤 `WaitForMissionReadyAsync`를 추가한다. 파일만 로드되었거나 Network 준비만 시작한 상태를 입장 성공으로 반환하지 않는다. 조립 예외·해제·App 종료·준비 대기 시간 초과는 실패/취소로 전파된다. 현재 터렛 HOLD는 여기서 확인되는 미연결이다.
+Mission 출격은 위 순서 뒤 `WaitForMissionReadyAsync`를 추가한다. 파일만 로드되었거나 Network 준비만 시작한 상태를 입장 성공으로 반환하지 않는다. 조립 예외·해제·App 종료·준비 대기 시간 초과는 실패/취소로 전파된다. 과거 HOLD 설명은 당시 기록이다. 현재 터렛 시간/원본과 명시 Encounter 생성기는 연결되어 있다. 나머지 선택적 consumer의 미구현 경계는 11/5 통합 기록을 따른다.
 
 기존 공용 메뉴/결과 버튼은 `AppRoot.NavigateFromScreenAsync`를 거쳐 같은 GameFlow로 전달한다. 완전 재시작은 `RestartMissionAsync`, 결과 귀환은 `ReturnToSpaceshipAsync`다. 임시 우주선 방문은 필드를 종료하지 않는 별도 출입 계약이며 이 API를 재사용해 Match를 종료시키지 않는다.
 

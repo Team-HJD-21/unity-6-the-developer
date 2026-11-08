@@ -1,3 +1,5 @@
+// Player 소형 터렛 탄환의 이동·피해·남은 수명을 관리합니다.
+using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
@@ -5,7 +7,7 @@ using UnityEngine;
 /// <summary>플레이어 터렛 전용 실탄. 플레이어 무기 효과와 독립적으로 적 한 명에게 피해를 적용합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
-public sealed class PlayerTurretProjectile : MonoBehaviour
+public sealed partial class PlayerTurretProjectile : MonoBehaviour
 {
     [SerializeField, Min(.1f)] private float _speed = 70;
     [SerializeField, Min(.1f)] private float _lifetime = 3;
@@ -39,8 +41,9 @@ public sealed class PlayerTurretProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (!_initialized) return;
-        _remaining -= Time.deltaTime;
+        _remaining -= FieldSimulationTime.DeltaTime(this);
         if (_remaining <= 0) Retire();
     }
 
@@ -49,6 +52,7 @@ public sealed class PlayerTurretProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!FieldSimulationTime.CanAdvance(this)) return;
         if (!_initialized || _hit || _body == null) return;
         var velocity = _body.linearVelocity;
         if (!PlayerAimUtility.IsValidDirection(velocity)) return;
@@ -59,7 +63,7 @@ public sealed class PlayerTurretProjectile : MonoBehaviour
             layerMask = Physics2D.GetLayerCollisionMask(gameObject.layer)
         };
         _castResults.Clear();
-        _body.Cast(velocity.normalized, filter, _castResults, velocity.magnitude * Time.fixedDeltaTime);
+        _body.Cast(velocity.normalized, filter, _castResults, velocity.magnitude * FieldSimulationTime.FixedDeltaTime(this));
         RaycastHit2D nearest = default;
         float distance = float.PositiveInfinity;
         foreach (var hit in _castResults)
@@ -86,7 +90,7 @@ public sealed class PlayerTurretProjectile : MonoBehaviour
 
     private void ProcessHit(Collider2D other)
     {
-        if (!_initialized || _hit || other == null) return;
+        if (!FieldSimulationTime.CanAdvance(this) || !_initialized || _hit || other == null) return;
         if (IsPassThrough(other)) return;
         var health = other.GetComponentInParent<EnemyHealth>();
         // Legacy 제거로 인해 로직 무효화: 구형 Monster 피해 폴백.

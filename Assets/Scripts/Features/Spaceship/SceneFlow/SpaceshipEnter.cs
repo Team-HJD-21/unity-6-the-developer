@@ -1,100 +1,40 @@
-using System.Collections;
+// 필드 출입구의 Player 접촉을 Core 우주선 이동 API에 전달합니다.
+// Scene 로드·로딩 화면·위치 보고·카메라 전환은 Core가 소유합니다.
+using System;
+using System.Threading.Tasks;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
-public class SpaceshipEnter : MonoBehaviour
+public class SpaceshipEnter : MonoBehaviour, ISpaceshipTravelConsumer
 {
-    [SerializeField]
-    private string sceneToLoadName;
-
-    [SerializeField]
-    private string destinationName = "Triangle";
-
+    [SerializeField] private string sceneToLoadName;
+    [SerializeField] private string destinationName = "Capsule";
     private bool isTransitioning;
+    private ISpaceshipTravel _travel;
 
-    private void OnTriggerEnter2D(Collider2D other)
+    public void BindSpaceshipTravel(ISpaceshipTravel travel) => _travel = travel;
+
+    private async void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer != LayerMask.NameToLayer("Player"))
-            return;
-        
-        Transform player = other.transform;
-
-        StartCoroutine(EnterSpaceship(player));
+        if (other.GetComponentInParent<PlayerActorIdentity>() == null || isTransitioning || _travel?.IsTransitioning == true) return;
+        try { await EnterAsync(other); }
+        catch (Exception error) { if (this != null) Debug.LogException(error, this); }
     }
 
-    private IEnumerator EnterSpaceship(Transform player)
+    /// <summary>필드의 Player가 접촉했을 때 호출합니다. 중복 충돌은 같은 이동을 다시 시작하지 않습니다.</summary>
+    public async Task EnterAsync(Collider2D other)
     {
+        if (isTransitioning || _travel?.IsTransitioning == true) return;
+        if (_travel == null) throw new InvalidOperationException("Core 우주선 이동 API가 연결되지 않았습니다.");
         isTransitioning = true;
-
-        if (string.IsNullOrWhiteSpace(sceneToLoadName))
+        try
         {
-            Debug.LogError("Spaceship scene name is not assigned.", this);
-            isTransitioning = false;
-            yield break;
+            // 현행 Player의 몸체 Collider는 자식의 PlayerBody 레이어에 있습니다.
+            var identity = other.GetComponentInParent<PlayerActorIdentity>();
+            if (identity == null) throw new ArgumentException("Core Player actor가 아닙니다.", nameof(other));
+            Transform player = identity.transform;
+            await _travel.EnterAsync(player, GetComponent<Collider2D>(), sceneToLoadName, destinationName);
         }
-
-        Scene spaceshipScene = SceneManager.GetSceneByName(sceneToLoadName);
-        if (!spaceshipScene.isLoaded)
-        {
-            AsyncOperation loadOperation = SceneManager.LoadSceneAsync(
-                sceneToLoadName,
-                LoadSceneMode.Additive
-            );
-
-            if (loadOperation == null)
-            {
-                Debug.LogError($"Failed to start loading scene '{sceneToLoadName}'.", this);
-                isTransitioning = false;
-                yield break;
-            }
-
-            yield return loadOperation;
-            spaceshipScene = SceneManager.GetSceneByName(sceneToLoadName);
-        }
-        
-        // 로드된 상태의 spaceship
-        Transform destination = FindTransformInScene(spaceshipScene, destinationName);
-        if (destination == null)
-        {
-            Debug.LogError(
-                $"Could not find '{destinationName}' in scene '{sceneToLoadName}'.",
-                this
-            );
-            isTransitioning = false;
-            yield break;
-        }
-
-        MovePlayer(player, destination.position);
-        isTransitioning = false;
-    }
-
-    private static Transform FindTransformInScene(Scene scene, string objectName)
-    {
-        foreach (GameObject root in scene.GetRootGameObjects())
-        {
-            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
-            {
-                if (child.name == objectName)
-                {
-                    return child;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static void MovePlayer(Transform player, Vector3 destination)
-    {
-        Rigidbody2D body = player.gameObject.GetComponentInParent<Rigidbody2D>();
-        if (body != null)
-        {
-            body.linearVelocity = Vector2.zero;
-            body.angularVelocity = 0f;
-            body.position = destination;
-            return;
-        }
-
-        player.transform.position = destination;
+        finally { if (this != null) isTransitioning = false; }
     }
 }

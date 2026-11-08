@@ -137,7 +137,7 @@ AI의 실행 의도는 각 Feature의 명시 요청 API로 전달한다. Core/Ho
 
 ## 6. Review 조합
 
-아래 표는 영역 간 품질 검토 조합이다. GitHub의 필수 Code Owner 승인과 별개로 영향이 큰 변경에 적용한다.
+아래 표는 영향이 큰 변경에서 검토를 요청할 영역 담당자를 정하는 데 사용한다. GitHub의 병합 요건은 [팀 워크플로](TEAM_WORKFLOW.md#review와-approval)에서 확인한다.
 
 | 작성자 | 기본 검토자 | 주요 검토 관점 |
 | --- | --- | --- |
@@ -147,7 +147,7 @@ AI의 실행 의도는 각 Feature의 명시 요청 API로 전달한다. Core/Ho
 | 황재동 | 양현석 또는 조수빈 | State/Reward 계약과 Enemy 난이도가 맞는가 |
 | 조수빈 | 양현석 또는 황재동 | Authority와 Balance Data를 우회하지 않는가 |
 
-2026-09-28 기준 `main`의 [활성 Ruleset](https://github.com/Team-HJD-21/unity-6-the-developer/rules/23734087)은 승인 1명과 Code Owner 승인을 요구한다. 따라서 작은 독립 변경도 Self-review와 CI만으로 Merge할 수 없다. 공용 계약, Save/Profile, Scene 구조, Build 설정, Network 변경은 필수 승인과 별도로 표의 영역 검토자에게 Review를 요청하고 의견을 해결한 뒤 Merge한다.
+공용 계약, Save/Profile, Scene 구조, Build 설정, Network 변경은 표를 참고해 관련 영역 담당자에게 검토를 요청하고 의견을 해결한 뒤 병합한다.
 
 ## Sprint 1 Stage 1 PoC 역할 초점
 
