@@ -7,8 +7,8 @@ using UnityEngine;
 public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
 {
     private readonly List<Collider2D> _targetCandidates = new();
-    private Transform _target;
-    private float _fireTime;
+    protected Transform Target { get; set; }
+    protected float FireTime { get; set; }
 
     public override FieldTurretKind Kind => FieldTurretKind.Laser;
     public override int ProjectilesPerShot => 0;
@@ -61,27 +61,27 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
             return;
 
         Vector3 origin = turret.position;
-        if (!FieldTurretTargetingUtility.IsInAttackRange(turret, _target, MinimumRange, Range) ||
-            !_target.gameObject.activeInHierarchy)
+        if (!FieldTurretTargetingUtility.IsInAttackRange(turret, Target, MinimumRange, Range) ||
+            !Target.gameObject.activeInHierarchy)
         {
             if (!RetractBeam(Time.deltaTime))
                 return;
             FieldTurretTargetingUtility.CollectByDistance(origin, Range, EnemyMask, _targetCandidates, MinimumRange);
-            _target = _targetCandidates.Count > 0 ? _targetCandidates[0].transform : null;
+            Target = _targetCandidates.Count > 0 ? _targetCandidates[0].transform : null;
             TimeTilFire = 0f;
         }
 
-        if (!FieldTurretTargetingUtility.IsInSight(TurretRotationPoint, origin, _target, TargetingAngle))
+        if (!FieldTurretTargetingUtility.IsInSight(TurretRotationPoint, origin, Target, TargetingAngle))
         {
             TimeTilFire = 0f;
             if (!RetractBeam(Time.deltaTime))
                 return;
         }
 
-        if (_target != null)
-            FieldTurretTargetingUtility.RotateTowards(TurretRotationPoint, origin, _target.position, RotationSpeed);
+        if (Target != null)
+            FieldTurretTargetingUtility.RotateTowards(TurretRotationPoint, origin, Target.position, RotationSpeed);
 
-        bool inSight = FieldTurretTargetingUtility.IsInSight(TurretRotationPoint, origin, _target, TargetingAngle);
+        bool inSight = FieldTurretTargetingUtility.IsInSight(TurretRotationPoint, origin, Target, TargetingAngle);
         if (!inSight || !CanExtendBeam)
         {
             TimeTilFire = 0f;
@@ -92,7 +92,7 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
         TimeTilFire += Time.deltaTime;
         if (beamReady && TimeTilFire >= 1f / FireRate)
         {
-            _target = null;
+            Target = null;
             TimeTilFire = 0f;
             Shoot();
         }
@@ -101,11 +101,11 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
     private void UpdateHeat(bool firing)
     {
         float overHeatTime = Definition.OverHeatTime;
-        _fireTime = Mathf.Clamp(_fireTime + (firing ? Time.deltaTime : -Time.deltaTime), 0f, overHeatTime);
-        float heatRatio = overHeatTime > 0f ? _fireTime / overHeatTime : 0f;
+        FireTime = Mathf.Clamp(FireTime + (firing ? Time.deltaTime : -Time.deltaTime), 0f, overHeatTime);
+        float heatRatio = overHeatTime > 0f ? FireTime / overHeatTime : 0f;
         SetGunHeatTint(heatRatio);
 
-        if (firing && overHeatTime > 0f && _fireTime >= overHeatTime)
+        if (firing && overHeatTime > 0f && FireTime >= overHeatTime)
         {
             ClearAttack();
             BeginCooling(Definition.CoolTime);
@@ -113,7 +113,7 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
     }
 
     protected override void ApplyCoolingHeat(float heatRatio)
-        => _fireTime = heatRatio * Definition.OverHeatTime;
+        => FireTime = heatRatio * Definition.OverHeatTime;
 
     protected override void OnActivationChanged(bool isActivated)
     {
@@ -124,7 +124,7 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
 
         ClearAttack();
         float overHeatTime = Definition.OverHeatTime;
-        float heatRatio = overHeatTime > 0f ? Mathf.Clamp01(_fireTime / overHeatTime) : 0f;
+        float heatRatio = overHeatTime > 0f ? Mathf.Clamp01(FireTime / overHeatTime) : 0f;
         BeginCooling(heatRatio * Definition.CoolTime, heatRatio);
     }
 
@@ -140,7 +140,7 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
     private void ClearAttack()
     {
         StopFiring();
-        _target = null;
+        Target = null;
         TimeTilFire = 0f;
     }
 

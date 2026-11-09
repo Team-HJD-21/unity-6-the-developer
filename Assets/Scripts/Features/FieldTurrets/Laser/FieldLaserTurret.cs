@@ -6,7 +6,7 @@ using UnityEditor;
 #endif
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "LaserTurret")]
-public class FieldLaserTurret : DefaultFieldLaserTurret
+public partial class FieldLaserTurret : DefaultFieldLaserTurret
 {
     private const float NativeBeamWidth = 0.8f; // 원본 빔의 발광 영역은 5 PPU 기준 4픽셀.
     private const float ThinWidthRatio = 0.15f;
