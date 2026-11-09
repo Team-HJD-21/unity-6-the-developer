@@ -1,0 +1,29 @@
+%% 4종 터렛 / 설계 제안 / 입력 조건은 모두 AND
+flowchart TB
+    START["Missile 전용<br/>Stage 클리어로 구간 개방"]
+    G1["시작 시<br/>성장 구간 1<br/>기초 상한 1"]
+    START --> G1
+    G3["Stage 2 최초 클리어<br/>성장 구간 3<br/>기초 상한 3 · 중급 상한 1<br/>Missile Lv2 승급 자격"]
+    START --> G3
+    G6["Stage 5 최초 클리어<br/>성장 구간 6<br/>최종 연구 상한 2"]
+    START --> G6
+    MIS_R["MIS_R · Missile 선회 장치<br/>최종 최대 3단계<br/>발사대 회전 속도 +10%씩<br/>단계당 1 토큰"]
+    G1 --> MIS_R
+    MIS_F["MIS_F · Missile 발사 제어<br/>최종 최대 3단계<br/>발사 빈도 +5%씩<br/>단계당 2 토큰"]
+    G3 --> MIS_F
+    MIS_R -. "1단계 이상" .-> MIS_F
+    MIS_H["MIS_H · Missile 발사 여유<br/>최종 최대 3단계<br/>과열 기준 발사 수 +1발씩<br/>단계당 2 토큰"]
+    G3 --> MIS_H
+    MIS_R -. "1단계 이상" .-> MIS_H
+    MIS_C["MIS_C · Missile 냉각 회로<br/>최종 최대 2단계<br/>냉각 시간 -5%씩<br/>단계당 3 토큰"]
+    G6 --> MIS_C
+    MIS_H -. "2단계 이상" .-> MIS_C
+    classDef gate fill:#E4EDF7,stroke:#496681,color:#142535,stroke-width:2px;
+    classDef cu fill:#EDF1E7,stroke:#717E51,color:#29331C;
+    classDef common fill:#F1F1F1,stroke:#777777,color:#222222;
+    classDef canon fill:#F7E6DD,stroke:#996347,color:#402719;
+    classDef missile fill:#E4EDF7,stroke:#58769A,color:#1C3049;
+    classDef tesla fill:#EEE6F6,stroke:#80609B,color:#342042;
+    classDef laser fill:#E2F2E9,stroke:#4D7D65,color:#1B3929;
+    class START,G1,G3,G6 gate;
+    class MIS_R,MIS_F,MIS_H,MIS_C missile;

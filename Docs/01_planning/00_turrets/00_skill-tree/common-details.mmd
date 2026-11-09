@@ -1,0 +1,23 @@
+%% 4종 터렛 / 설계 제안 / 입력 조건은 모두 AND
+flowchart TB
+    START["공통 연구<br/>Stage 클리어로 구간 개방"]
+    G1["시작 시<br/>성장 구간 1<br/>기초 상한 1"]
+    START --> G1
+    G3["Stage 2 최초 클리어<br/>성장 구간 3<br/>기초 상한 3 · 중급 상한 1"]
+    START --> G3
+    ALL_D["ALL_D · 공통 화력 연구<br/>최종 최대 3단계<br/>공격력 +5%씩<br/>단계당 1 토큰"]
+    G1 --> ALL_D
+    ALL_H["ALL_H · 공통 프레임 연구<br/>최종 최대 3단계<br/>최대 체력 +10%씩<br/>단계당 1 토큰"]
+    G1 --> ALL_H
+    ALL_R["ALL_R · 공통 탐지 연구<br/>최종 최대 2단계<br/>최대 공격 사거리 +5%씩<br/>단계당 2 토큰"]
+    G3 --> ALL_R
+    ALL_D -. "1단계 이상" .-> ALL_R
+    classDef gate fill:#E4EDF7,stroke:#496681,color:#142535,stroke-width:2px;
+    classDef cu fill:#EDF1E7,stroke:#717E51,color:#29331C;
+    classDef common fill:#F1F1F1,stroke:#777777,color:#222222;
+    classDef canon fill:#F7E6DD,stroke:#996347,color:#402719;
+    classDef missile fill:#E4EDF7,stroke:#58769A,color:#1C3049;
+    classDef tesla fill:#EEE6F6,stroke:#80609B,color:#342042;
+    classDef laser fill:#E2F2E9,stroke:#4D7D65,color:#1B3929;
+    class START,G1,G3 gate;
+    class ALL_D,ALL_H,ALL_R common;

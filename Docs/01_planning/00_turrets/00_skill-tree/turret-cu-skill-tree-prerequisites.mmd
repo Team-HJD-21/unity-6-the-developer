@@ -1,0 +1,107 @@
+%% 4종 터렛 / 설계 제안 / 입력 조건은 모두 AND
+flowchart TB
+    START["Stage 클리어로 구간 개방<br/>시작 시 Canon · Missile Lv1"]
+    G1["시작 시<br/>성장 구간 1<br/>기초 상한 1"]
+    START --> G1
+    G2["Stage 1 최초 클리어<br/>성장 구간 2<br/>기초 상한 2"]
+    START --> G2
+    G3["Stage 2 최초 클리어<br/>성장 구간 3<br/>기초 상한 3 · 중급 상한 1<br/>Canon · Missile Lv2 승급 자격"]
+    START --> G3
+    G4["Stage 3 최초 클리어<br/>성장 구간 4<br/>중급 상한 2"]
+    START --> G4
+    G5["Stage 4 최초 클리어<br/>성장 구간 5<br/>중급 최종 상한<br/>Canon · Missile Lv3 승급 자격"]
+    START --> G5
+    G6["Stage 5 최초 클리어<br/>성장 구간 6<br/>최종 연구 상한 2"]
+    START --> G6
+    LAS1["Stage 3부터 · Laser Lv1 첫 등장"]
+    G3 --> LAS1
+    LAS2["Stage 4부터 · Laser Lv2 승급 자격<br/>최대 Lv2"]
+    G4 --> LAS2
+    TES1["Stage 5부터 · Tesla Lv1 첫 등장"]
+    G5 --> TES1
+    TES2["Stage 6부터 · Tesla Lv2 승급 자격<br/>최대 Lv2"]
+    G6 --> TES2
+    CU_C1["CU_C1 · 보조 축전기<br/>최종 최대 1단계<br/>총 전력량 +10%<br/>단계당 2 토큰"]
+    G1 --> CU_C1
+    CU_E1["CU_E1 · 전력 정류<br/>최종 최대 1단계<br/>활성화 전력 소모 -5%<br/>단계당 2 토큰"]
+    G2 --> CU_E1
+    CU_C1 -. "1단계 이상" .-> CU_E1
+    CU_C2["CU_C2 · 대용량 축전기<br/>최종 최대 1단계<br/>총 전력량 +20% 추가<br/>단계당 3 토큰"]
+    G4 --> CU_C2
+    CU_E1 -. "1단계 이상" .-> CU_C2
+    CU_E2["CU_E2 · 고효율 전력망<br/>최종 최대 1단계<br/>전력 소모 -10% 추가<br/>단계당 3 토큰"]
+    G5 --> CU_E2
+    CU_C2 -. "1단계 이상" .-> CU_E2
+    CU_H1["CU_H1 · CU 장갑 I<br/>최종 최대 1단계<br/>CU 최대 체력 +10%<br/>단계당 1 토큰"]
+    G1 --> CU_H1
+    CU_H2["CU_H2 · CU 장갑 II<br/>최종 최대 1단계<br/>CU 최대 체력 +15% 추가<br/>단계당 2 토큰"]
+    G3 --> CU_H2
+    CU_H1 -. "1단계 이상" .-> CU_H2
+    CU_H3["CU_H3 · CU 장갑 III<br/>최종 최대 1단계<br/>CU 최대 체력 +25% 추가<br/>단계당 3 토큰"]
+    G6 --> CU_H3
+    CU_H2 -. "1단계 이상" .-> CU_H3
+    ALL_D["ALL_D · 공통 화력 연구<br/>최종 최대 3단계<br/>공격력 +5%씩<br/>단계당 1 토큰"]
+    G1 --> ALL_D
+    ALL_H["ALL_H · 공통 프레임 연구<br/>최종 최대 3단계<br/>최대 체력 +10%씩<br/>단계당 1 토큰"]
+    G1 --> ALL_H
+    ALL_R["ALL_R · 공통 탐지 연구<br/>최종 최대 2단계<br/>최대 공격 사거리 +5%씩<br/>단계당 2 토큰"]
+    G3 --> ALL_R
+    ALL_D -. "1단계 이상" .-> ALL_R
+    CAN_R["CAN_R · Canon 구동부<br/>최종 최대 3단계<br/>회전 속도 +10%씩<br/>단계당 1 토큰"]
+    G1 --> CAN_R
+    CAN_F["CAN_F · Canon 급탄 장치<br/>최종 최대 3단계<br/>RPS +5%씩<br/>단계당 2 토큰"]
+    G3 --> CAN_F
+    CAN_R -. "1단계 이상" .-> CAN_F
+    CAN_H["CAN_H · Canon 방열 코어<br/>최종 최대 3단계<br/>과열 도달 사격 시간 +10%씩<br/>단계당 2 토큰"]
+    G3 --> CAN_H
+    CAN_R -. "1단계 이상" .-> CAN_H
+    CAN_C["CAN_C · Canon 순환 냉각<br/>최종 최대 2단계<br/>냉각 시간 -5%씩<br/>단계당 3 토큰"]
+    G6 --> CAN_C
+    CAN_H -. "2단계 이상" .-> CAN_C
+    MIS_R["MIS_R · Missile 선회 장치<br/>최종 최대 3단계<br/>발사대 회전 속도 +10%씩<br/>단계당 1 토큰"]
+    G1 --> MIS_R
+    MIS_F["MIS_F · Missile 발사 제어<br/>최종 최대 3단계<br/>발사 빈도 +5%씩<br/>단계당 2 토큰"]
+    G3 --> MIS_F
+    MIS_R -. "1단계 이상" .-> MIS_F
+    MIS_H["MIS_H · Missile 발사 여유<br/>최종 최대 3단계<br/>과열 기준 발사 수 +1발씩<br/>단계당 2 토큰"]
+    G3 --> MIS_H
+    MIS_R -. "1단계 이상" .-> MIS_H
+    MIS_C["MIS_C · Missile 냉각 회로<br/>최종 최대 2단계<br/>냉각 시간 -5%씩<br/>단계당 3 토큰"]
+    G6 --> MIS_C
+    MIS_H -. "2단계 이상" .-> MIS_C
+    TES_D["TES_D · Tesla 방전 출력<br/>최종 최대 3단계<br/>첫 대상 기준 공격력 +5%씩<br/>단계당 1 토큰"]
+    TES1 --> TES_D
+    TES_N["TES_N · Tesla 연쇄 분기<br/>최종 최대 2단계<br/>추가 연쇄 대상 +1명씩<br/>단계당 2 토큰"]
+    G6 --> TES_N
+    TES_D -. "1단계 이상" .-> TES_N
+    TES_A["TES_A · Tesla 전도 안정화<br/>최종 최대 3단계<br/>연쇄당 피해 감소율 -5%p씩<br/>단계당 2 토큰"]
+    G6 --> TES_A
+    TES_D -. "1단계 이상" .-> TES_A
+    TES_R["TES_R · Tesla 연쇄 확장<br/>최종 최대 2단계<br/>대상 사이 연쇄 거리 +10%씩<br/>단계당 3 토큰"]
+    G6 --> TES_R
+    TES_N -. "2단계 이상" .-> TES_R
+    LAS_D["LAS_D · Laser 출력 렌즈<br/>최종 최대 3단계<br/>기본 초당 피해 +5%씩<br/>단계당 1 토큰"]
+    LAS1 --> LAS_D
+    LAS_T["LAS_T · Laser 집속 가속<br/>최종 최대 3단계<br/>집중 완료 시간 -10%씩<br/>단계당 2 토큰"]
+    G4 --> LAS_T
+    LAS_D -. "1단계 이상" .-> LAS_T
+    LAS_B["LAS_B · Laser 집중 증폭<br/>최종 최대 3단계<br/>최대 집중 피해 보너스 +5%p씩<br/>단계당 2 토큰"]
+    G4 --> LAS_B
+    LAS_D -. "1단계 이상" .-> LAS_B
+    LAS_K["LAS_K · Laser 집중 관성<br/>최종 최대 2단계<br/>짧은 차폐 시 집중 유지 시간 +0.15초씩<br/>단계당 3 토큰"]
+    G6 --> LAS_K
+    LAS_T -. "2단계 이상" .-> LAS_K
+    classDef gate fill:#E4EDF7,stroke:#496681,color:#142535,stroke-width:2px;
+    classDef cu fill:#EDF1E7,stroke:#717E51,color:#29331C;
+    classDef common fill:#F1F1F1,stroke:#777777,color:#222222;
+    classDef canon fill:#F7E6DD,stroke:#996347,color:#402719;
+    classDef missile fill:#E4EDF7,stroke:#58769A,color:#1C3049;
+    classDef tesla fill:#EEE6F6,stroke:#80609B,color:#342042;
+    classDef laser fill:#E2F2E9,stroke:#4D7D65,color:#1B3929;
+    class START,G1,G2,G3,G4,G5,G6 gate;
+    class CU_C1,CU_E1,CU_C2,CU_E2,CU_H1,CU_H2,CU_H3 cu;
+    class ALL_D,ALL_H,ALL_R common;
+    class CAN_R,CAN_F,CAN_H,CAN_C canon;
+    class MIS_R,MIS_F,MIS_H,MIS_C missile;
+    class TES1,TES2,TES_D,TES_N,TES_A,TES_R tesla;
+    class LAS1,LAS2,LAS_D,LAS_T,LAS_B,LAS_K laser;
