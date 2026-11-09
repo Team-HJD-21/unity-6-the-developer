@@ -26,6 +26,14 @@ namespace TeamHJD.Game.FieldTurrets
             Vector3 originPosition,
             Vector3 targetPosition,
             float rotationSpeed)
+            => RotateTowards(rotationPoint, originPosition, targetPosition, rotationSpeed, Time.deltaTime);
+
+        public static void RotateTowards(
+            Transform rotationPoint,
+            Vector3 originPosition,
+            Vector3 targetPosition,
+            float rotationSpeed,
+            float deltaTime)
         {
             float angle = Mathf.Atan2(
                 targetPosition.y - originPosition.y,
@@ -34,7 +42,7 @@ namespace TeamHJD.Game.FieldTurrets
             rotationPoint.rotation = Quaternion.RotateTowards(
                 rotationPoint.rotation,
                 targetRotation,
-                rotationSpeed * Time.deltaTime);
+                rotationSpeed * deltaTime);
         }
 
         public static bool IsInRange(Transform origin, Transform target, float range)

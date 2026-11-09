@@ -35,7 +35,7 @@
 
 다음 항목은 이 문서의 현재 적용 범위가 아니다.
 
-- Laser Turret 이식
+- Laser 전용 승급 경로
 - 파괴 연출과 복구 비용·시간의 최종 게임 규칙
 - 승급 비용·시간과 Spaceship Research 연동
 - NGO를 통한 `InstanceId`와 상태 동기화
@@ -117,7 +117,7 @@ Definition 값을 실행 중 상태 저장소처럼 직접 수정하지 않는�
 
 파일: [`FieldTurretDefinition.cs`](../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretDefinition.cs)
 
-Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. 현재 18개 Canon/Missile Definition이 존재한다.
+Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. Canon/Missile 정의 18개와 Stage 1 Laser 정의 1개가 있다.
 
 | 필드 | 의미 | 작성 규칙 |
 | --- | --- | --- |
@@ -257,7 +257,7 @@ Assembly와 namespace는 `TeamHJD.Game.*` 표기를 사용한다. 새 reference�
 
 종류는 레벨과 Stage에 관계없이 `FieldTurretBase.Kind`로 구분한다. Canon과 Missile의 공통 구현체가 각각 `Canon`과 `Missile`을 제공하며 나머지 공통 터렛의 기본값은 `Unknown`이다. 사전에는 `Unknown`, `Canon`, `Missile`, `Laser`, `Tesla`가 0부터 포함된다. `GetActivatedCount(FieldTurretKind)`는 해당 종류가 없으면 0을 반환한다. 사전은 내부 원본을 복사해서 ReadOnlyDictionary로 감싸므로 호출자가 값을 수정하거나 이후 집계가 기존 스냅샷을 바꿀 수 없다.
 
-집계 기준은 Scene 이름이나 전체 Registry가 아니라 **같은 전력 공급자를 사용하는지**다. 다른 씬에 있어도 명시적으로 같은 컨트롤러에 연결되면 포함되고 같은 씬에 있어도 다른 컨트롤러면 제외된다. 기존 Laser는 아직 FieldTurretBase와 Registry를 사용하지 않으므로 개수에는 포함되지 않는다. 호환 CU API로 소비한 Laser 전력은 전체 예산에는 포함되므로 ReservedPower가 등록 터렛 전력 합계와 항상 같지는 않다. Laser와 Tesla의 enum 값이 있다는 사실은 공통 구조 이식이 완료됐다는 뜻이 아니다.
+집계는 **같은 전력 공급자를 사용하는 등록 터렛**을 기준으로 한다. 다른 씬에 있어도 명시적으로 같은 컨트롤러에 연결되면 포함되고 같은 씬에 있어도 다른 컨트롤러면 제외된다. Stage 1 Laser도 같은 기준으로 집계한다.
 
 ```csharp
 FieldTurretControllerSnapshot snapshot = controller.GetSnapshot();
@@ -303,7 +303,11 @@ Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드�
 
 ## 4. 실행 흐름
 
-아래 흐름도는 **현재 Canon/Missile 구현의 실제 호출 경로**다. 상자는 클래스의 메서드 또는 변경되는 상태를 뜻한다. 실패 조건과 생략된 연출은 본문에서 따로 설명한다. Laser는 아직 이 경로를 사용하지 않는다.
+아래 흐름도는 **현재 Canon/Missile 구현의 실제 호출 경로**다. 상자는 클래스의 메서드 또는 변경되는 상태를 뜻한다. 실패 조건과 생략된 연출은 본문에서 따로 설명한다. Stage 1 Laser도 공통 활성화·전력·냉각 경로를 사용한다.
+
+Canon·Missile·Laser의 과열 아지랑이는 `GunRenderer`의 현재 스프라이트를 중앙 기준으로 1.1배 확대하고, 그 윤곽 안에 보이는 포신과 주변 화면을 굴절시킨다. 열이 쌓이기 시작할 때부터 강해지고, 열이 0%가 되면 사라진다. 프리팹의 `Heat Wave Scale`로 윤곽 크기, 공용 머티리얼의 `Distortion (pixels)`로 최대 굴절 강도를 조절한다.
+
+Laser는 사거리 안의 적을 향해 회전하고, 포신이 조준 허용각에 들어오면 얇은 빔을 포구에서 사거리 끝까지 펼친다. 발사 순간 빔이 굵어지고 포구 위치와 방향이 고정된다. 발사가 끝나거나 터렛을 끄면 빔이 얇아지면서 동시에 포구 쪽으로 짧아진다. 조준하던 적을 놓쳤을 때도 빔이 포구로 돌아온 뒤에 다시 회전한다. 빔이 완전히 접히면 `Beam Restart Delay`가 지난 뒤에 다시 펼칠 수 있다. 피해는 발사 중에만 적용하며, 포구부터 사거리 경계까지 회전된 박스로 적을 조회한다. 같은 적의 여러 Collider는 틱마다 한 번만 집계한다. Stage 1의 초기 설정은 폭 0.8 유닛, 발사 3초, 피해 간격 0.25초, 빔 길이 전환 0.2초, 폭 축소 0.1초, 재전개 대기 0.3초다. 폭·시간·간격은 프리팹의 Laser Settings, 틱당 피해량과 조준 시간에 사용하는 발사율은 Definition에서 조절한다.
 
 ### 4.1 생성과 등록
 
@@ -795,7 +799,7 @@ flowchart TD
 | 네트워크 | 로컬 상태만 존재 | Host authoritative 상태와 Snapshot 추가 |
 | AI 화력 평가 | Stage 1 Adapter에서 `FirepowerRatio = 0.5` 임시 사용 | 조수빈과 계산식·갱신 시점을 확정 |
 | 레벨 승급 | Stage 1 카탈로그와 테스트 UI만 연결 | 제품 UI, 다른 Stage 경로, 비용·시간 및 참조 갱신 정책 검증 |
-| Laser | 기존 독립 구조 유지 | 별도 Issue에서 행동 확인 후 이식 |
+| Laser | Stage 1 프리팹의 공통 생명주기, 고정 방향 관통 빔 및 주기 피해 | 레이저 전용 승급 경로 |
 
 이 항목을 해결할 때 한 번에 전체 시스템을 다시 쓰지 않는다. observable behavior를 먼저 기록하고, 테스트 가능한 작은 Architecture Slice로 교체한다.
 

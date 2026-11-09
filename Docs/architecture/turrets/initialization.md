@@ -32,7 +32,7 @@ var initial = new FieldTurretInitializationData(
 
 ## 수명주기를 별도로 조립하는 소비자
 
-새 비활성 인스턴스에 `PrepareInitialization(data, source)`를 한 번 호출한 다음 활성화할 수 있다. 이미 초기화됐거나 활성 상태인 터렛에는 적용할 수 없다. 기본 경로는 `FieldTurretFactory.Create`이며, 구체 터렛의 `Awake`는 반드시 `ConfigureSceneActivation()`을 호출해야 한다. 현재 Canon/Missile은 이 계약을 따른다. 기존 Laser는 이 경로를 지원하지 않는다.
+새 비활성 인스턴스에 `PrepareInitialization(data, source)`를 한 번 호출한 다음 활성화할 수 있다. 이미 초기화됐거나 활성 상태인 터렛에는 적용할 수 없다. 기본 경로는 `FieldTurretFactory.Create`이며, 구체 터렛의 `Awake`는 반드시 `ConfigureSceneActivation()`을 호출해야 한다. Canon, Missile, Stage 1 Laser는 이 계약을 따른다.
 
 ## 다른 복원 동작과의 구분
 

@@ -20,5 +20,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Tests/EnemyTest.unity
     guid: b24f5bb5ec4f1cb4c8e3ac5e3c64ecac
+  - enabled: 1
+    path: Assets/Scenes/Tests/InitialStageTurretTest.unity
+    guid: 9f01a7cef96343745bd934dad5e97af5
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

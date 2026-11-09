@@ -26,7 +26,10 @@ namespace TeamHJD.Game.FieldTurrets
                 _coolingEndsAt = current + System.Math.Max(0, _coolingEndsAt - previous);
             else
                 _coolingEndsAt = current;
+            OnSimulationTimeRebased(previous, current);
         }
+
+        protected virtual void OnSimulationTimeRebased(double previous, double current) { }
 
         /// <summary>기존 무기가 Instantiate 직후 호출해 탄환의 물리·수명·종료를 같은 Match에 묶습니다.</summary>
         protected virtual void BindProjectileSimulation(GameObject projectile)
