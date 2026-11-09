@@ -86,7 +86,7 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](tooling/UNITY_TOOL
 
 ## 읽는 순서
 
-Enemy 컨트롤러·능력 구조, 네트워크 행동 실행, 런타임 프리팹 추가 방법은 [Enemy 시스템 가이드](architecture/enemy-system-guide.md)를 참고한다.
+Enemy 컨트롤러·능력 상속, 네트워크 행동·피격 계약은 [Enemy 시스템 가이드](architecture/enemy-system-guide.md), #540 몬스터·Variant·등록·검증/후속 작업은 [Stage 1 Enemy 콘텐츠](architecture/stage1-enemy-content-guide.md)를 참고한다. 스폰 요청부터 점유율 예산·지역 배분·상황별 편성 선택까지는 [Encounter 편성·예산 가이드](architecture/encounter-planning-guide.md)를 따른다. Game Debugger의 지정 Order 요청과 런처의 상황별 선택 요청을 구분한다.
 
 터렛을 사용하는 다른 영역은 [터렛 연동 가이드](architecture/turrets/index.md)에서 빠른 시작과 API 및 스냅샷을 따로 확인할 수 있다. 내부 실행 흐름은 기존 Turret System Guide의 Mermaid를 유지한다.
 
@@ -153,7 +153,7 @@ Issue를 작성할 때는 [ISSUE_LABEL_GUIDE.md](team/ISSUE_LABEL_GUIDE.md)를 �
 | 책임·수명과 공용 호출 | [Core API 지도](architecture/core-lifecycle-and-api-guide.md), [Match 책임](architecture/match-management-responsibilities.md), 각 영역 API |
 | Player 입력·설치 | [입력 계약](architecture/player-primary-input-api.md), [스킬](architecture/player-skill-review.md) |
 | 터렛 상태·전력·공개 API | [터렛 API](architecture/turrets/api-reference.md), [구조와 초안](architecture/turrets/index.md) |
-| Enemy 구조·생성 | [Enemy 가이드](architecture/enemy-system-guide.md) |
+| Enemy 구조·생성 | [Enemy 가이드](architecture/enemy-system-guide.md) · [Stage 1 콘텐츠](architecture/stage1-enemy-content-guide.md) · [Encounter 편성·예산](architecture/encounter-planning-guide.md) |
 | 날씨 변경·예고·화면 효과 | [날씨 시스템 설계와 API](architecture/weather-system-guide.md) |
 | 담당·진행 상태 | GitHub Issue/Project. [역할](team/TEAM_ROLE_OWNERSHIP.md)은 책임 기준 |
 | 실제 동작과 인수 | 해당 코드 버전과 실행/PL 인수 증거. 계획으로 완료를 추정하지 않음 |

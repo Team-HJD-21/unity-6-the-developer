@@ -1,0 +1,324 @@
+fileFormatVersion: 2
+guid: 996887a9533d57045bed0d25c07adf3e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5643904187080911261
+    second: Mushroom_Party_Heal_FX_6Frames_0
+  - first:
+      213: 9005441071495815424
+    second: Mushroom_Party_Heal_FX_6Frames_1
+  - first:
+      213: 8602737909953426721
+    second: Mushroom_Party_Heal_FX_6Frames_2
+  - first:
+      213: -3296236038366913429
+    second: Mushroom_Party_Heal_FX_6Frames_3
+  - first:
+      213: -8452788276808540349
+    second: Mushroom_Party_Heal_FX_6Frames_4
+  - first:
+      213: 7670848994703990876
+    second: Mushroom_Party_Heal_FX_6Frames_5
+  - first:
+      213: -4979070285500523487
+    second: Mushroom_Party_Heal_FX_6Frames_6
+  - first:
+      213: 7633202367508749988
+    second: Mushroom_Party_Heal_FX_6Frames_7
+  - first:
+      213: 4923893824483422591
+    second: Mushroom_Party_Heal_FX_6Frames_8
+  - first:
+      213: 7943179962362245297
+    second: Mushroom_Party_Heal_FX_6Frames_9
+  - first:
+      213: 6479295749552422355
+    second: Mushroom_Party_Heal_FX_6Frames_10
+  - first:
+      213: -3907721021033797377
+    second: Mushroom_Party_Heal_FX_6Frames_11
+  - first:
+      213: -8718774598453547871
+    second: Mushroom_Party_Heal_FX_6Frames_12
+  - first:
+      213: 7754804889375122766
+    second: Mushroom_Party_Heal_FX_6Frames_13
+  - first:
+      213: 8351679188926080005
+    second: Mushroom_Party_Heal_FX_6Frames_14
+  - first:
+      213: -7891451758417104043
+    second: Mushroom_Party_Heal_FX_6Frames_15
+  - first:
+      213: -3578485212891332176
+    second: Mushroom_Party_Heal_FX_6Frames_16
+  - first:
+      213: -300324863525423036
+    second: Mushroom_Party_Heal_FX_6Frames_17
+  - first:
+      213: 1749802621744230064
+    second: Mushroom_Party_Heal_FX_6Frames_18
+  - first:
+      213: 3664414885615395127
+    second: Mushroom_Party_Heal_FX_6Frames_19
+  - first:
+      213: 4548894610081657710
+    second: Mushroom_Party_Heal_FX_6Frames_20
+  - first:
+      213: 2181686287715566901
+    second: Mushroom_Party_Heal_FX_6Frames_21
+  - first:
+      213: -4914362026335175536
+    second: Mushroom_Party_Heal_FX_6Frames_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 200
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Mushroom_Party_Heal_FX_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ce1a673618b5aa4894fc670fddbac2a
+      internalID: 1399765881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mushroom_Party_Heal_FX_01
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 680bd8c7d87b93043a9553a2c84cba86
+      internalID: -1365457928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mushroom_Party_Heal_FX_02
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 75403e393266d6d419fbf0e9616a93ce
+      internalID: -1148882445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mushroom_Party_Heal_FX_03
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 528f412aab17ecc40b32ddd249108882
+      internalID: 35805559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mushroom_Party_Heal_FX_04
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8e125ed490efb64bb06192b16e39091
+      internalID: -1982298260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mushroom_Party_Heal_FX_05
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61d65d7bb5d427d4fbb5c0ec54530fe9
+      internalID: -2034223645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 8de2bb9fde1b1e043bbbda866805c92c
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Mushroom_Party_Heal_FX_00: 1399765881
+      Mushroom_Party_Heal_FX_01: -1365457928
+      Mushroom_Party_Heal_FX_02: -1148882445
+      Mushroom_Party_Heal_FX_03: 35805559
+      Mushroom_Party_Heal_FX_04: -1982298260
+      Mushroom_Party_Heal_FX_05: -2034223645
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

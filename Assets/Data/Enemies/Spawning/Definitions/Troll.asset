@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: Troll
   _prefab: {fileID: 653549370876711409, guid: e019d21426bda3d4c93ab6c03f67e537, type: 3}
-  _spawnCost: 1
+  _spawnCost: 3
