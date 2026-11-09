@@ -3496,6 +3496,8 @@ GameObject:
   - component: {fileID: 930565001}
   - component: {fileID: 930565002}
   - component: {fileID: 9391100}
+  - component: {fileID: 9401100}
+  - component: {fileID: 9411100}
   m_Layer: 18
   m_Name: Player
   m_TagString: Player
@@ -4612,3 +4614,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTurretRepair
   _repairRange: 3
   _maximumHealthFractionPerSecond: 0.1
+--- !u!114 &9401100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 062811e29a4d4aed969d3ade751a39ce, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponAmmo
+  _defaultGunCapacity: 15
+  _cryoCapacity: 15
+  _sniperCapacity: 5
+  _defaultGunReloadSeconds: 1.5
+  _cryoReloadSeconds: 1.5
+  _sniperReloadSeconds: 1.5
+--- !u!114 &9411100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b23dea863b64e998f511d7e4369e0b0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerExperience
+  _firstLevelExperience: 100
+  _experienceIncreasePerLevel: 0
+  _maximumLevel: 100

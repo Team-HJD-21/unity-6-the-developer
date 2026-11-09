@@ -65,6 +65,25 @@ public sealed class PlayerTurretRepairTests
         }
     }
 
+    [Test]
+    public void RepairReservesRUntilReleaseEvenWhenCompleted()
+    {
+        CreateTurret(99);
+        Tick(true, 1f);
+        Assert.That(_repair.IsRepairing, Is.False);
+        Assert.That(_repair.ConsumesRepairInput, Is.True);
+        Tick(false, 0f);
+        Assert.That(_repair.ConsumesRepairInput, Is.False);
+    }
+
+    [Test]
+    public void PressingRAwayFromTurretsLeavesInputForReload()
+    {
+        Tick(true, .1f);
+        Assert.That(_repair.RequiresRelease, Is.True);
+        Assert.That(_repair.ConsumesRepairInput, Is.False);
+    }
+
     [TestCase(100, 30)]
     [TestCase(100, 60)]
     [TestCase(200, 120)]

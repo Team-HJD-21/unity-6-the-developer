@@ -37,6 +37,8 @@ public sealed class PlayerTurretRepair : MonoBehaviour
         ? PlayerTurretRestoreProgress.GetProgress(Target)
         : Target.MaxHealth > 0 ? Mathf.Clamp01((float)Target.CurrentHealth / Target.MaxHealth) : 0f;
     public bool RequiresRelease => _waitingForRelease;
+    /// <summary>이번 R 누름을 수리에 사용했으면 놓을 때까지 재장전으로 재사용하지 않습니다.</summary>
+    public bool ConsumesRepairInput { get; private set; }
     public bool CanRepair => CanInteract && !_moving && !_waitingForRelease &&
         IsEligible(Target) && (Target.IsDestroyed || Target.CanRepair);
     private Vector2 InteractionPosition => _colliders != null && _colliders.isActiveAndEnabled
@@ -86,7 +88,7 @@ public sealed class PlayerTurretRepair : MonoBehaviour
             (position - _lastPosition).sqrMagnitude > .000001f;
         _lastPosition = position;
 
-        if (!held) _waitingForRelease = false;
+        if (!held) { _waitingForRelease = false; ConsumesRepairInput = false; }
         if (!CanInteract)
         {
             StopRepair(held);
@@ -99,6 +101,8 @@ public sealed class PlayerTurretRepair : MonoBehaviour
             _heldTarget.IsDestroyed != _restoringHeldTarget ||
             (!_heldTarget.IsDestroyed && !_heldTarget.CanRepair))) StopRepair(held);
         Target = _heldTarget != null ? _heldTarget : FindNearest();
+        if (held && IsEligible(Target) && (Target.IsDestroyed || Target.CanRepair))
+            ConsumesRepairInput = true;
 
         if (!held)
         {
@@ -194,5 +198,6 @@ public sealed class PlayerTurretRepair : MonoBehaviour
     {
         StopRepair(true);
         Target = null;
+        ConsumesRepairInput = false;
     }
 }

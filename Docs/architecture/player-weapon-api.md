@@ -1,6 +1,6 @@
 # 플레이어 무기 API
 
-수정일: 2026-11-04. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
+수정일: 2026-11-09. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
 
 2026-10-25, Issue #554 작업에서는 전투·수리 계약을 유지하고 표시용 몸체·무기를 분리했습니다. Player 프리팹의 `PlayerWeaponVisual`과 무기별 외형 데이터 편집 방법은 [몸체·무기 분리 API](player-weapon-appearance-api.md)를 참고합니다. 기존 `PlayerSpanner`는 공격·수리 동작을 계속 담당합니다.
 
@@ -32,6 +32,8 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 | --- | --- |
 | `PlayerWeaponSelection` | 현재 무기·장비 참조와 숫자키·휠·Tab 선택을 소유합니다. `CurrentWeapon` 조회, `TrySelectWeaponSlot(int)` 또는 `TrySelectWeapon(WeaponType)`으로 선택, `SelectAdjacentWeapon(int)`으로 앞뒤 순환하며 실제 전환에만 `WeaponChanged`를 알립니다. 스패너 인스턴스와 총기 표시를 장착 상태에 맞춥니다. |
 | `PlayerAttack` | 선택된 무기의 공통 공격 간격·피해·탄환 생성을 관리합니다. `TryFire()`는 `PlayerWeaponSelection`의 현재 장비로 공격을 시도합니다. 스패너는 탄환과 총구 없이 공격합니다. |
+| `PlayerWeaponAmmo` / `PlayerWeaponAmmoState` | 총기별 탄창과 수동 재장전 상태를 보관합니다. 수리 R 입력을 우선하고, 실제 발사 성공 한 번에 한 발을 소비합니다. |
+| `PlayerWeaponAmmoView` | 기존 Hotbar 왼쪽에 미리 배치한 잔탄·Reload 문구와 회전 화살표를 로컬 Player에 연결합니다. |
 | `PlayerWeaponSlotMapping` | 단축키와 HUD의 1~4 슬롯 매핑. 기존 `WeaponType` 직렬화 값은 유지합니다. |
 | `PlayerWeaponHud` / `PlayerWeaponSlotView` | 기존 씬 HUD 소유자에게 배치된 무기 버튼을 연결하고 선택·장비 유무를 표시합니다. UI 오브젝트를 생성하지 않습니다. |
 | `PlayerWeaponRig` | 기존 방향별 총기와 총구 관리. `SetRangedWeaponVisible(bool)`은 총기 표시만 제어하며 몸체 방향 계산은 계속합니다. |
@@ -116,9 +118,23 @@ RuntimeState의 체력을 외부에서 직접 바꾸지 않습니다. 살아 있
 
 파괴 복구 진행률은 `PlayerTurretRestoreProgress`가 터렛 객체별로 공유하므로, 이동·키 해제·다른 대상으로 전환 후 돌아와도 같은 진행률에서 이어갑니다. 복구 완료·새 파괴·등록 해제·Match 시계 또는 epoch 변경 시 지웁니다. 이는 현재 세션의 메모리 상태이며 체크포인트 저장/복원과 네트워크 복제는 추가하지 않았습니다. 동시 작업자는 동일 진행률에 각 작업 시간을 더합니다.
 
-편집 위치: `Player.prefab`의 `PlayerTurretRepair._repairRange`, `_maximumHealthFractionPerSecond`. 안내는 `PlayerSkillHUD.prefab`에 미리 배치된 `Field Turret R Repair Prompt`를 `PlayerTurretRepairPromptView`가 터렛 하단에 투영합니다. 키보드 안내이므로 UI Raycast로 LMB를 소비하지 않습니다. R은 이 수리에 먼저 사용하며, 탄창 재장전 추가 시 가까운 수리 대상과 재장전의 입력 우선순위를 별도로 정해야 합니다.
+편집 위치: `Player.prefab`의 `PlayerTurretRepair._repairRange`, `_maximumHealthFractionPerSecond`. 안내는 `PlayerSkillHUD.prefab`에 미리 배치된 `Field Turret R Repair Prompt`를 `PlayerTurretRepairPromptView`가 터렛 하단에 투영합니다. 키보드 안내이므로 UI Raycast로 LMB를 소비하지 않습니다. R은 가까운 수리·복구 대상이 있으면 수리에 먼저 사용합니다. `ConsumesRepairInput`은 해당 R 누름을 놓을 때까지 유지하므로 수리 완료·이동 취소 후 같은 입력으로 재장전하지 않습니다.
 
-실행 순서: 입력 수집 Update(-200), 스킬 Update(100), 무기 선택 Update(200) 다음 수리 Update(250)가 조건과 이동 취소를 확정합니다. 모든 Update 이후의 공격 LateUpdate(300)는 확정된 수리 상태로 공격을 차단합니다. 화면 위치는 카메라의 최종 위치를 반영하도록 Canvas 렌더 직전에도 갱신합니다.
+실행 순서: 입력 수집 Update(-200), 스킬 Update(100), 무기 선택 Update(200) 다음 수리 Update(250)가 조건과 이동 취소를 확정합니다. 재장전 Update(275)는 수리가 소비한 R을 제외하고 탄창 상태를 확정합니다. 모든 Update 이후의 공격 LateUpdate(300)는 확정된 수리·재장전·잔탄 상태로 공격을 차단합니다. 화면 위치는 카메라의 최종 위치를 반영하도록 Canvas 렌더 직전에도 갱신합니다.
+
+## 2026-11-09 탄창과 재장전
+
+스패너는 `∞`, 기본총·냉각총은 `15/15`, 스나이퍼는 `5/5`로 시작합니다. 분모는 예비 탄약 수가 아닌 탄창 최대치입니다. 예비 탄약은 무제한이며, 마지막 발을 쏘면 자동 재장전을 시작합니다. 빈 총으로 전환하거나 수리·설치가 끝났을 때도 현재 총이 비었으면 자동 재장전합니다. 산탄도 실제 발사 한 번에 한 발만 소비하고 탄환 생성 실패는 소비하지 않습니다.
+
+수리·복구할 터렛이 가까이 없으면 R을 눌러 재장전합니다. 만탄창·스패너에서는 시작하지 않습니다. 우선 모든 총기의 재장전 시간은 1.5초이며 `Player.prefab`의 `PlayerWeaponAmmo`에서 용량과 시간을 총기별로 조절합니다. 재장전 중에는 탄수 표시를 숨기고 그 공간에 `Reload` 문구와 회전하는 두 화살표를 표시합니다. 실제 발사는 막지만 LMB 유지 입력은 보존해 재장전 완료 후 사격을 이어갑니다. 이동·대시는 허용하며 무기 변경·설치 진입·메뉴/사망 입력 잠금·수리 시작·컴포넌트 비활성화는 재장전을 취소합니다. 취소 시 잔탄을 보존하고 다음 재장전은 처음부터 시작합니다. 무기를 바꿔도 각 총의 잔탄은 유지합니다.
+
+`PlayerWeaponAmmo`는 `FieldSimulationTime.Seconds`의 경과를 사용합니다. Core 필드 정지 중에는 남은 재장전 시간이 흐르지 않습니다. Host 바인딩이 있으면 `PlayerMatchPresence.CanReport`를 따릅니다. 신규 공격/재장전 RPC나 원격 Player 복제는 추가하지 않았습니다.
+
+UI는 `PlayerSkillHUD.prefab / Weapon Hotbar / Weapon Ammo`에 배치했습니다. 무기 1번 슬롯 왼쪽에 있고 터렛 조작 패널을 열어 Hotbar를 내릴 때 같이 내려갑니다. 무기 행은 기존처럼 하단에서 18px 띄우고 520×102 사각 배경으로 슬롯들을 묶습니다. 탄약 패널과 사각 배경 사이의 간격은 오른쪽 SPACE 슬롯과 같은 16px입니다. 전체 배경은 반투명 흰색(Alpha 0.35), 개별 패널은 Alpha 0.65, 문구는 어두운 색을 사용합니다. 선택 슬롯은 청록색으로 구분합니다. 숫자·문구·화살표의 모든 Graphic은 Raycast를 받지 않습니다. 재장전 화살표는 `Assets/Art/UI/PlayerReloadIcon.png`의 연결된 두 원형 화살표를 Image 하나로 표시·회전하며 런타임 UI 생성은 하지 않습니다.
+
+기존 `PlayerAttack.Checkpoint`의 `/weapon` 스키마는 v2로 올려 세 탄창의 잔탄과 진행 중 재장전의 무기·남은 시간·전체 시간을 함께 복원합니다. 기존 v1 또는 탄창 컴포넌트 없이 저장한 데이터는 탄창을 가득 채우고 재장전하지 않는 상태로 마이그레이션합니다. 복원 실패 롤백도 잔탄과 재장전 상태를 되돌립니다.
+
+검증 범위: 실제 탄창 상태 코드를 사용하는 순수 C# 테스트 9개(소진·독립 유지·재장전 차단/완료/취소·정지 시간·저장 왕복·잘못된 저장 거부)가 통과했고, Runtime/Editor C# 컴파일 오류는 0개입니다. 프리팹의 신규 fileID 중복·참조·부모/자식 연결·Raycast 제외도 정적으로 검사했습니다. 프리팹 참조·수리 R 예약의 Unity 회귀 테스트는 추가·컴파일했으며 실행 통과로 간주하지 않습니다. 실제 Unity 화면 배치와 R 입력/필드 정지 연동은 에디터 플레이 확인이 필요합니다.
 
 ## 검증
 

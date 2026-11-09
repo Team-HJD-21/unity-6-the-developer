@@ -49,6 +49,7 @@ public partial class PlayerAttack : MonoBehaviour
     private PlayerSkillController _skills;
     private PlayerSpriteMotion _motion;
     private PlayerTurretRepair _repair;
+    private PlayerWeaponAmmo _ammo;
     private double _nextShotTime;
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     private PlayerMatchPresence Presence => GetComponent<PlayerMatchPresence>();
@@ -67,6 +68,7 @@ public partial class PlayerAttack : MonoBehaviour
         _skills = GetComponent<PlayerSkillController>();
         _motion = GetComponent<PlayerSpriteMotion>();
         _repair = GetComponent<PlayerTurretRepair>();
+        _ammo = GetComponent<PlayerWeaponAmmo>();
     }
 
     // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
@@ -84,6 +86,8 @@ public partial class PlayerAttack : MonoBehaviour
     public bool TryFire()
     {
         if (!FieldSimulationTime.CanAdvance(this) || !CanAttack || GameSeconds < _nextShotTime) return false;
+        // 재장전은 실제 발사만 막습니다. LMB 유지 입력은 보존해 완료 뒤 사격을 이어갑니다.
+        if (_ammo != null && !_ammo.CanFire(_selection.CurrentWeapon)) return false;
         if (_selection.CurrentWeapon == WeaponType.Spanner) return TrySwingSpanner();
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
@@ -91,6 +95,9 @@ public partial class PlayerAttack : MonoBehaviour
         bool fired = FirePellets(muzzle.position, direction, shot.color, Mathf.Max(0f, shot.damage),
             shot.cryogenic, shot.pelletCount, shot.spreadAngle);
         if (!fired) return false;
+
+        // 한 번의 산탄 발사도 탄창에서는 한 발입니다. 생성 실패는 소비하지 않습니다.
+        if (_ammo != null) _ammo.TryConsumeRound(_selection.CurrentWeapon);
 
         _nextShotTime = GameSeconds + Mathf.Max(.01f, shot.interval);
         _weaponRig.ShowShotFlash(shot.color);

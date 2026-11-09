@@ -9,6 +9,10 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 [문서 목차](../README.md) · [터렛 API](turrets/api-reference.md)
 
+## 2026-11-09 Player 성장 표시 추가
+
+`InitialStagePlayerHUD.prefab`에 `PlayerExperienceView`와 레벨·XP 텍스트, 경험치 채움 오브젝트를 미리 배치했다. 기존 HP 아래 사다리꼴의 빈 영역을 XP 바로 사용한다. 기존 `StagePlayerVitalsView`에 바인딩된 로컬 Player의 `PlayerExperience`를 구독하며, actor 교체·UI 비활성화 시 구독을 해제한다. HP 프레임 스프라이트와 체력 계산은 유지한다. [성장 규칙·보상/저장 연결·검증 범위](player-experience-api.md).
+
 ## 10월 15일 CU·지역 표시 추가
 
 `StageControlUnitView`를 기존 HUD 프리팹 우측 하단에 추가했다. 정적/동적 정책과 점령 셀 수를 `FieldTurretController.Regions`에서 읽는다. Dynamic은 지역 잠금이 없고 활성화로 점령한다는 안내를 표시한다. 터렛 선택창에도 동적 점령 안내를 표시한다.

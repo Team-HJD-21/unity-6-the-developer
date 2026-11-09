@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 313562943765616117}
   - component: {fileID: 1104968200444958007}
   - component: {fileID: 6198833735092945433}
+  - component: {fileID: 9411200}
   m_Layer: 7
   m_Name: EnemyRoot
   m_TagString: Enemy
@@ -390,3 +391,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDepthSorting
   minDepth: 65
   maxDepth: 70
+--- !u!114 &9411200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6725114028751190915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae80d55a9c1f4268b034455b244bf551, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerEnemyExperienceReward
+  _experienceReward: 10
