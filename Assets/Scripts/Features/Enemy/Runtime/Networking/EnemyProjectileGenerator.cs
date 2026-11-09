@@ -6,7 +6,7 @@ using UnityEngine;
 /// 생성 권한을 확인하고 공격 투사체와 회복 구슬을 초기화해 네트워크에 등록한다.
 /// </summary>
 [RequireComponent(typeof(NetworkObject))]
-public sealed class EnemyProjectileSpawner : NetworkBehaviour
+public sealed class EnemyProjectileGenerator : NetworkBehaviour
 {
     /// <summary>
     /// 공격 투사체에 방향·피해량과 생성자의 Match 수명을 연결한 뒤 네트워크에 등록한다.

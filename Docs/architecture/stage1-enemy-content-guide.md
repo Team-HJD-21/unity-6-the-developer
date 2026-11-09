@@ -49,7 +49,7 @@ PartyMushroom은 `EnemyHealAbility`에서 자신의 몸통을 기준으로 주�
 
 변태는 소환 `TryUse()`와 분리돼 소환 쿨타임을 소비하지 않는다. `OnTransformationAnimationFinished()`에서 Rigidbody 위치를 고정한 뒤 최초 소환부터 시도한다. 이후에는 공통 쿨타임마다 모션을 시작하고, `OnSummonAnimationEvent()`에서 생성하며, `OnSummonAnimationFinished()`에서 실행 잠금을 푼다.
 
-현재 소환 Definition은 BomberSlime을 사용한다. 정면 타깃 방향으로 `spawnDistance`만큼 떨어져 생성하고, 여러 마리는 `spawnSpacing`으로 좌우 분산한다. 소환은 `EnemySummonSpawner`가 처리하며 일반 `EnemySpawnExecutor`나 SquadPreset을 재사용하지 않는다. 생성한 적은 Definition의 분대/타깃 규칙으로 독립적인 분대에 등록해 재검색할 수 있다.
+현재 소환 Definition은 BomberSlime을 사용한다. 정면 타깃 방향으로 `spawnDistance`만큼 떨어져 생성하고, 여러 마리는 `spawnSpacing`으로 좌우 분산한다. 소환은 `EnemySummonGenerator`가 처리하며 일반 `EnemySpawnExecutor`나 SquadPreset을 재사용하지 않는다. 생성한 적은 Definition의 분대/타깃 규칙으로 독립적인 분대에 등록해 재검색할 수 있다.
 
 변태 완료 상태에서 체력으로 죽었을 때 `OnDeath()`가 `SummonOnDeath()`를 실행한다. 추가 수량은 `deathSummonCount`이며 코드 기본값 5는 조정 가능한 값이다. 일반 소환은 파괴될 때까지 쿨타임마다 이어진다. 소환된 Bomber는 소환사가 죽어도 같이 제거하지 않는다.
 

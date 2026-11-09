@@ -8,7 +8,7 @@ public class EnemyHealAbility : EnemyAbility
 {
     [Header("참조")]
     [SerializeField] private HealingOrbProjectile projectilePrefab;
-    [SerializeField] private EnemyProjectileSpawner projectileSpawner;
+    [SerializeField] private EnemyProjectileGenerator projectileSpawner;
     
     [Header("회복 설정")]
     [SerializeField, Min(1)] private int healAmount = 10;
@@ -27,7 +27,7 @@ public class EnemyHealAbility : EnemyAbility
         _selfHealth = GetComponent<EnemyHealth>();
         
         if (projectileSpawner == null)
-            projectileSpawner = GetComponent<EnemyProjectileSpawner>();
+            projectileSpawner = GetComponent<EnemyProjectileGenerator>();
     }
 
     /// <summary>

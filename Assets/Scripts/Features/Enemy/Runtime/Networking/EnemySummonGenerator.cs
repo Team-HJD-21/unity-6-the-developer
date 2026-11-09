@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 /// 소환형 몬스터가 요청한 적을 생성하고 타깃을 전달한다.
 /// </summary>
 [RequireComponent(typeof(NetworkObject))]
-public sealed class EnemySummonSpawner : NetworkBehaviour
+public sealed class EnemySummonGenerator : NetworkBehaviour
 {
     [Header("소환 위치")]
     [FormerlySerializedAs("spawnRadius")]

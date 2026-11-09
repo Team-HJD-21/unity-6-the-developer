@@ -9,7 +9,7 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
     [SerializeField] private EnemyTargeting enemyTargeting;
     [SerializeField] private EnemyDamageProjectile projectilePrefab;
     internal EnemyDamageProjectile CheckpointProjectilePrefab => projectilePrefab;
-    [SerializeField] private EnemyProjectileSpawner projectileSpawner;
+    [SerializeField] private EnemyProjectileGenerator projectileSpawner;
 
     [Header("공격 설정")]
     [SerializeField, Min(1)] private int attackDamage = 5;
@@ -34,7 +34,7 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
         if (enemyTargeting == null)
             enemyTargeting = GetComponent<EnemyTargeting>();
         if (projectileSpawner == null)
-            projectileSpawner = GetComponent<EnemyProjectileSpawner>();
+            projectileSpawner = GetComponent<EnemyProjectileGenerator>();
     }
 
     /// <summary>

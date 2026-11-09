@@ -8,7 +8,7 @@ public class EnemySummonAbility : EnemyAbility
     [Header("참조")]
     [SerializeField] private EnemyTargeting enemyTargeting;
     [SerializeField] private EnemyHealth enemyHealth;
-    [SerializeField] private EnemySummonSpawner summonSpawner;
+    [SerializeField] private EnemySummonGenerator summonSpawner;
     [SerializeField] private EnemyDefinition summonDefinition;
 
     [Header("소환 설정")]
@@ -29,7 +29,7 @@ public class EnemySummonAbility : EnemyAbility
         if (enemyHealth == null)
             enemyHealth = GetComponent<EnemyHealth>();
         if (summonSpawner == null)
-            summonSpawner = GetComponent<EnemySummonSpawner>();
+            summonSpawner = GetComponent<EnemySummonGenerator>();
     }
 
     /// <summary>

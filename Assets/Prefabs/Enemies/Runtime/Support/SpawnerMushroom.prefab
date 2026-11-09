@@ -180,7 +180,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 91139ace269a408a8d087ea25e0b8171, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemySummonSpawner
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySummonGenerator
   ShowTopMostFoldoutHeaderGroup: 1
   spawnDistance: 1
   spawnSpacing: 0.5

@@ -41,7 +41,7 @@ Host의 `MatchSession.InitializeSpawnSources`가 Match gameplay 취소 수명에
 
 환경 Profile은 기존처럼 고정 편성의 preset override와 요청 수량 배율을 적용한다. #540의 금액 예산은 그 요청에도 적용되며, World/명시 지점도 세트 비용과 요청 마릿수를 모두 만족해야 한다. 환경 조정용 `budgetScale` 필드가 현재 조절하는 것은 `MaxCount`라는 점에 주의한다. World origin이 상황별 편성을 자동 선택하는 경로는 아니다.
 
-`Core 서비스 → IOriginAwareEncounterExecutor → 런처 → Runtime.RequestSpawn → Planner.TryPlanOrigin → Executor.Execute`로 연결된다. 환경·원인 GUID·origin/source·seed·취소를 ExecutionContext에 유지한다. Core 응답의 ExecutionSequence와 런처 내부 진단 번호는 각각의 의미를 보존하며 Request GUID로 관련 사건을 연결한다. 소환사의 `EnemySummonSpawner`는 이 origin API와 별도 경로다.
+`Core 서비스 → IOriginAwareEncounterExecutor → 런처 → Runtime.RequestSpawn → Planner.TryPlanOrigin → Executor.Execute`로 연결된다. 환경·원인 GUID·origin/source·seed·취소를 ExecutionContext에 유지한다. Core 응답의 ExecutionSequence와 런처 내부 진단 번호는 각각의 의미를 보존하며 Request GUID로 관련 사건을 연결한다. 소환사의 `EnemySummonGenerator`는 이 origin API와 별도 경로다.
 
 ## 실제 소비와 소유권
 
