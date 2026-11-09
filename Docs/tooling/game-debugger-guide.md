@@ -22,7 +22,7 @@
 1. `Initial_Stage`를 열고 Scene 변경을 저장한다. 별도 Battlefield Debug 창을 찾지 말고 `Tools > TeamHJD > Game Debugger`를 연다.
 2. 상단 `Monitor ×4`로 Overview / Battlefield / Encounter / Statistics를 동시에 표시한다. 좁으면 `Encounter + Stats` 또는 `Battlefield + Stats`를 사용한다.
 3. Play를 누른다. Overview에 활성 Match와 **SERVER**, 생존 수/게임 시간/수집 상태가 나타나는지 확인한다. 첫 자동 Encounter가 이미 생성됐을 수 있으므로 시작부터 0마리라고 가정하지 않는다.
-4. Encounter에서 `Squad Preset Order`와 `Max Enemy Count`를 지정하고 `Request Encounter from Current Match Snapshot`을 누른다. 이 수량은 **한 요청의 전체 예산**이며 지점별 수량/생존 상한이 아니다.
+4. Encounter에서 `Squad Preset Order`와 `Max Enemy Count`를 지정하고 `Request Encounter from Current Match Snapshot`을 누른다. 입력한 Order의 **고정 편성**을 요청하며 이 수량은 **요청당 생성 마릿수 상한**이다. #540의 비용 예산은 Runtime이 지역 점유율로 별도 산출한다. 상황별 다른 편성 선택을 시험할 때는 Enemy 런처의 `Plan & Spawn`을 사용한다. [요청 경로와 예산](../architecture/encounter-planning-guide.md)
 5. Statistics는 기본 `Time series`로 요청·실제 생성·사망 추이를 보여 준다. `View`를 `Spawn decisions / distribution`으로 바꾸면 **왜 이 지점/종류/수량으로 생성됐는지** 후보와 실제 결과를 확인한다.
 6. Scene View로 이동해 Gizmos를 켜고 Battlefield의 `Scene layers`를 켠다. `Frame Grid`로 전장을 맞춘 뒤 Grid/외곽과 실제 객체 배치를 비교한다.
 7. 이상을 찾으면 요청을 고정하고 `Copy request evidence` 또는 `Copy context`로 자료를 남긴다. 종료/재시작 전에 기록을 보관하려면 Capture / Compare에서 JSON을 Export한다.

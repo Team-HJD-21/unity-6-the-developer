@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: PlantLeafer
   _prefab: {fileID: 3879416110993396605, guid: bace93ea30d733b4ea8a60df56223502, type: 3}
-  _spawnCost: 1
+  _spawnCost: 2

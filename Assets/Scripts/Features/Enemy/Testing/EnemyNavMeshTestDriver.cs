@@ -13,6 +13,9 @@ public sealed class EnemyNavMeshTestDriver : MonoBehaviour
     private Vector3[] _corners;
     private int _nextCorner;
 
+    /// <summary>
+    /// 시작점과 시험 목표를 NavMesh에 투영하고 완전한 경로일 때만 이동을 준비한다.
+    /// </summary>
     private void Start()
     {
         if (target == null)
@@ -47,6 +50,9 @@ public sealed class EnemyNavMeshTestDriver : MonoBehaviour
         Debug.Log($"NavMesh 경로 발견: {_corners.Length}개 지점", this);
     }
 
+    /// <summary>
+    /// 시험 경로의 다음 경유점으로 이동하고 도착하면 다음 지점으로 넘어간다.
+    /// </summary>
     private void Update()
     {
         if (_corners == null || _nextCorner >= _corners.Length)
