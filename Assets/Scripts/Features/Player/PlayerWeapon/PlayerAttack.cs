@@ -48,12 +48,14 @@ public partial class PlayerAttack : MonoBehaviour
     [SerializeField, Min(.01f)] private float _sniperInterval = .85f;
     private PlayerSkillController _skills;
     private PlayerSpriteMotion _motion;
+    private PlayerTurretRepair _repair;
     private double _nextShotTime;
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     private PlayerMatchPresence Presence => GetComponent<PlayerMatchPresence>();
     private bool _reportedConfigurationError;
     private bool CanAttack => isActiveAndEnabled && _selection != null && _selection.transform == transform &&
-        _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill);
+        _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill) &&
+        (_repair == null || !_repair.IsRepairing);
     private GameObject CurrentBulletPrefab => _selection != null ? _selection.CurrentBulletPrefab : null;
 
     private void Awake()
@@ -64,6 +66,7 @@ public partial class PlayerAttack : MonoBehaviour
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
         _skills = GetComponent<PlayerSkillController>();
         _motion = GetComponent<PlayerSpriteMotion>();
+        _repair = GetComponent<PlayerTurretRepair>();
     }
 
     // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.

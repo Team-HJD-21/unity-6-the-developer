@@ -136,6 +136,7 @@ public sealed class PlayerWeaponRig : MonoBehaviour
     [SerializeField] private MuzzlePose _backpedalMuzzles = new MuzzlePose();
     private PlayerSkillController _skills;
     private PlayerSpriteMotion _motion;
+    private PlayerTurretRepair _repair;
     private Transform _activeGun;
     private Transform _activeMuzzle;
     private PlayerMuzzleFlash _activeFlash;
@@ -172,6 +173,7 @@ public sealed class PlayerWeaponRig : MonoBehaviour
         if (_input == null || _input.transform != _playerRoot) _input = _playerRoot.GetComponent<PlayerInputHandler>();
         _skills = _playerRoot.GetComponent<PlayerSkillController>();
         _motion = _playerRoot.GetComponent<PlayerSpriteMotion>();
+        _repair = _playerRoot.GetComponent<PlayerTurretRepair>();
         if (transform.parent != _playerRoot) transform.SetParent(_playerRoot, false);
         transform.localPosition = _mountLocalPosition;
         transform.localRotation = Quaternion.identity;
@@ -184,6 +186,7 @@ public sealed class PlayerWeaponRig : MonoBehaviour
     public void RefreshPose(Vector2 direction)
     {
         if (!_initialized) return;
+        if (_repair != null && _repair.TryGetFacingDirection(out Vector2 repairDirection)) direction = repairDirection;
         transform.localPosition = _mountLocalPosition;
         bool bodyOwnsGunVisual = _bodyIncludesGunSprite || HasSeparatedWeaponVisual;
         bool eightWay = _motion != null && (_showGuns

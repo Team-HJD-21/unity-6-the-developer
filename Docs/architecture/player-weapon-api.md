@@ -38,8 +38,10 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 | `PlayerSpannerWeapon` | `Bind(Transform, PlayerInputHandler)`로 소유자와 조준 입력 연결. `TryAttack(Vector2)`은 유효한 방향과 쿨타임을 검사한 뒤 근접 판정과 휘두르기를 시작합니다. 반환 true는 공격 시도 성공이며 적중을 보장하지 않습니다. |
 | `PlayerSpannerView` | 프리팹의 SpriteRenderer 표시와 플레이어 기준 앞뒤 정렬만 제어합니다. 외형은 Sprite 에셋으로 편집하며 메쉬를 생성하지 않습니다. |
 | `PlayerSpannerSlash` | 제작된 초승달 Sprite/Animator 프리팹을 타격 순간의 플레이어 월드 위치·조준 방향·공격 반경에 맞춰 표시합니다. Collider와 피해 판정은 없습니다. |
-| `PlayerSpannerRepair` | `CanRepair(owner, direction)`은 준비 동작을 고르기 위한 조회입니다. 타격 시 `TryRepair(owner, direction, out position)`으로 대상을 다시 검사하고 `FieldTurretBase.Repair`를 호출합니다. 기존 bool 오버로드도 유지합니다. |
-| `PlayerSpannerTargeting` | 공격·수리의 월드 거리, 전방 각도, 같은 씬, 장애물 가림 검사를 공유합니다. 대상 자신의 콜라이더는 가림에서 제외합니다. |
+| `PlayerTurretRepair` | 가까운 일반 필드 터렛 하나를 선택해 R 유지 동안 최대 체력의 10%/초를 회복합니다. HP 0은 별도 진행률을 초당 10%씩 채워 완료 때 Restore합니다. 이동·거리 이탈·조작 차단 시 취소하며 R을 놓고 다시 눌러야 재개합니다. |
+| `PlayerTurretRestoreProgress` | 실제 터렛마다 복구 진행률을 공유합니다. 중단해도 유지하고, 100%에서만 기존 Restore API를 호출합니다. 복구·새 파괴·등록 해제·Match 시계/epoch 변경 시 이전 진행률을 지웁니다. |
+| `PlayerSpannerRepair` | 이전 타격 수리 경로입니다. `PlayerTurretRepair`가 있는 현재 Player 프리팹에서는 LMB 수리를 사용하지 않습니다. 이전 구성과 저장 자료 호환을 위해 API는 유지합니다. |
+| `PlayerSpannerTargeting` | 공격·수리의 월드 거리, 전방 각도, 같은 씬, 장애물 가림 검사를 공유합니다. 대상 자신의 콜라이더는 가림에서 제외합니다. 선택 인자 `interactionOrigin`으로 R 수리는 발 위치를 전달하며 기본 근접 공격은 기존 원점을 사용합니다. |
 
 무기 선택 API는 `CanSelectWeapon`을 공통으로 검사합니다. 비활성·일시정지·조작 차단·스킬 선택 중 또는 장비가 없으면 false입니다. 같은 무기를 다시 선택하면 true지만 `WeaponChanged`는 발생하지 않습니다. 실제 전환에만 `WeaponChanged(WeaponType)`를 통지하며 기존 공격 대기시간은 유지합니다. `SelectNextWeapon()`은 다음 슬롯 선택을 위한 호환 메서드입니다. 전환 표시를 구독한 UI는 비활성화할 때 구독을 해제합니다.
 
@@ -100,15 +102,23 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 ## 포탑 수리
 
-스패너를 장착한 상태에서 일반 터렛을 향해 기존 공격 입력을 누릅니다. 공격 버튼을 유지하면 0.6초 간격으로 시도합니다.
-앞쪽 100도·반경 3 안에서 가장 가까운 손상 터렛 하나를 10씩 회복합니다. 이 값은 PlayerSpanner 프리팹의 PlayerSpannerRepair에서 조정합니다.
-수리 준비 동작으로 시작한 타격은 적 공격을 함께 수행하지 않습니다. 타격 때 수리 대상이 사라지거나 조건을 벗어나면 수리하지 않습니다. 사거리와 방향은 플레이어 중심의 XY 기준입니다.
-벽 뒤, 다른 씬, 잠금·파괴·자동 활성화 진행 중인 터렛은 제외합니다. 활성 상태 또는 냉각 중인 살아 있는 터렛은 수리할 수 있습니다.
-일반 FieldTurretBase 계열이 대상이며 임시포탑·CU는 이번 수리 대상에 포함하지 않습니다. 전력·재화 소비와 파괴 터렛 부활은 추가하지 않았습니다.
+2026-11-09: 현재 Player 프리팹의 수리·파괴 복구는 `PlayerTurretRepair`가 담당합니다. 발 위치 기준 XY 반경 3 안의 가장 가까운 손상 또는 파괴 터렛 아래에 R 안내와 진행 막대를 표시합니다. 원점은 `PlayerDirectionalColliders.GroundPosition`이며 거리·가림 검사·작업 방향에 공통으로 사용합니다. 방향별 콜라이더가 없는 구성만 루트 위치를 사용합니다. 기존 캐릭터 중심 원점은 몸 콜라이더의 아래쪽 오프셋 때문에 포탑 위에서 접근하면 범위를 벗어날 수 있어 수정했습니다. 살아 있는 터렛은 R 유지 동안 최대 체력의 10%/초를 연속 회복합니다. 최대 체력 100은 초당 10, 200은 초당 20입니다. 무기 선택과 마우스 방향은 수리 조건이 아닙니다.
+HP 0인 터렛은 실제 HP·파괴 상태를 유지하면서 별도 복구 진행률을 초당 10%씩 채웁니다. 약 10게임초 후 100%에 도달한 시점에 기존 `Restore()`를 한 번 호출해 최대 체력·OFF 상태로 복구합니다. 완료 전에는 가동할 수 없고, 완료 후에는 기존 켜기 요청이 필요합니다. 복구 막대는 주황색, 살아 있는 터렛의 체력 막대는 초록색입니다. 안내와 막대는 HUD 프리팹에 배치합니다.
+수리·복구 중에는 선택된 무기를 유지한 채 기존 스패너 일반 공격 자세와 외형을 반복 표시하고 실제 공격을 막습니다. 모션만 반복하며 적 타격·검기 판정은 호출하지 않습니다. 현재 Player 프리팹의 LMB 스패너 공격은 체력을 회복하지 않습니다.
+작업 중 `TryGetFacingDirection(out direction)`은 발 위치에서 현재 작업 터렛을 향한 표시 방향을 제공합니다. `PlayerWeaponRig`와 `PlayerSpriteMotion`이 이를 같은 8방향 기준으로 사용합니다. 시작·종료 프레임에는 Rig와 Animator를 즉시 평가하며, 종료 후에는 마우스 방향으로 돌아갑니다. `PlayerInputHandler.AimDirection` 원본은 변경하지 않습니다.
+키 해제는 즉시 중단합니다. 이동 입력·실제 XY 위치 변화·Rigidbody2D 이동, 거리 이탈, 메뉴·사망·필드 정지·설치 미리보기, 대상 비활성화·파괴 등으로 취소되면 R을 놓고 다시 눌러야 합니다. 멈추거나 범위로 돌아와도 누른 키로 자동 재개하지 않습니다. 수리 대상을 키 유지 중 고정하며, 완전히 수리한 뒤 다른 터렛으로 자동 전환하지 않습니다.
+벽 뒤, 다른 씬, 잠금·자동 활성화 진행 중인 터렛은 제외합니다. 활성 상태 또는 냉각 중인 살아 있는 터렛은 수리할 수 있습니다. 일반 수리 도중 파괴되면 해당 입력을 취소하며 R을 다시 눌러야 복구를 시작합니다.
+일반 FieldTurretBase 계열이 대상이며 임시포탑·CU는 이번 수리 대상에 포함하지 않습니다. 별도 재화 소비는 없습니다. 복구 완료의 전력 정산은 기존 Restore API에 맡깁니다.
 
-FieldTurretBase.Repair(int amount)는 실제 회복이 있을 때 true를 반환하고 최대 체력을 넘지 않습니다.
+`FieldTurretBase.Repair(MaxHealth × 0.1f, deltaTime)`의 시간 기반 API를 사용합니다. 소수 회복량은 터렛 API가 누적하고 최대 체력에서 제한합니다. `deltaTime`은 공통 `FieldSimulationTime`에서 받으며 정지 중에는 회복하지 않습니다. 같은 씬·같은 Match 시계·상태 권한이 있는 터렛만 대상으로 삼습니다.
 상태 변경 후 기존 HealthChanged/SnapshotChanged를 통지하므로 터렛 선택 UI는 기존 구독 경로로 갱신됩니다.
-RuntimeState의 체력을 외부에서 직접 바꾸거나 Restore로 대체하지 않습니다. 기존 로컬 터렛 API 경로이며 별도 서버 요청/RPC는 구현하지 않았습니다.
+RuntimeState의 체력을 외부에서 직접 바꾸지 않습니다. 살아 있는 터렛 수리는 Repair, 파괴 복구 완료는 Restore로 구분합니다. 기존 터렛 API와 권한을 사용하며 별도 Client 요청/RPC는 구현하지 않았습니다.
+
+파괴 복구 진행률은 `PlayerTurretRestoreProgress`가 터렛 객체별로 공유하므로, 이동·키 해제·다른 대상으로 전환 후 돌아와도 같은 진행률에서 이어갑니다. 복구 완료·새 파괴·등록 해제·Match 시계 또는 epoch 변경 시 지웁니다. 이는 현재 세션의 메모리 상태이며 체크포인트 저장/복원과 네트워크 복제는 추가하지 않았습니다. 동시 작업자는 동일 진행률에 각 작업 시간을 더합니다.
+
+편집 위치: `Player.prefab`의 `PlayerTurretRepair._repairRange`, `_maximumHealthFractionPerSecond`. 안내는 `PlayerSkillHUD.prefab`에 미리 배치된 `Field Turret R Repair Prompt`를 `PlayerTurretRepairPromptView`가 터렛 하단에 투영합니다. 키보드 안내이므로 UI Raycast로 LMB를 소비하지 않습니다. R은 이 수리에 먼저 사용하며, 탄창 재장전 추가 시 가까운 수리 대상과 재장전의 입력 우선순위를 별도로 정해야 합니다.
+
+실행 순서: 입력 수집 Update(-200), 스킬 Update(100), 무기 선택 Update(200) 다음 수리 Update(250)가 조건과 이동 취소를 확정합니다. 모든 Update 이후의 공격 LateUpdate(300)는 확정된 수리 상태로 공격을 차단합니다. 화면 위치는 카메라의 최종 위치를 반영하도록 Canvas 렌더 직전에도 갱신합니다.
 
 ## 검증
 

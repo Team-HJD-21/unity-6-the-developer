@@ -32,7 +32,8 @@ public enum GameKey
     Numpad3,
     Numpad4,
     PageUp,
-    PageDown
+    PageDown,
+    R
 }
 
 public static class GameInput
@@ -147,6 +148,7 @@ public static class GameInput
             GameKey.E => keyboard.eKey,
             GameKey.F1 => keyboard.f1Key,
             GameKey.F => keyboard.fKey,
+            GameKey.R => keyboard.rKey,
             GameKey.Tab => keyboard.tabKey,
             GameKey.Digit1 => keyboard.digit1Key,
             GameKey.Digit2 => keyboard.digit2Key,

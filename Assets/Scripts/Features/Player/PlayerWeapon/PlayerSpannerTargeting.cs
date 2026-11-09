@@ -4,18 +4,19 @@ using UnityEngine;
 public static class PlayerSpannerTargeting
 {
     public static bool CanReach(Transform owner, Transform target, Vector2 point,
-        Vector2 direction, float range, float arc)
+        Vector2 direction, float range, float arc, Vector2? interactionOrigin = null)
     {
         if (owner == null || target == null || owner.gameObject.scene != target.gameObject.scene ||
             !PlayerAimUtility.IsValidDirection(direction) || float.IsNaN(range) || float.IsInfinity(range) ||
             range <= 0f || float.IsNaN(arc) || float.IsInfinity(arc)) return false;
-        Vector2 delta = point - (Vector2)owner.position;
+        Vector2 origin = interactionOrigin ?? (Vector2)owner.position;
+        Vector2 delta = point - origin;
         if (float.IsNaN(delta.x) || float.IsNaN(delta.y) || float.IsInfinity(delta.x) || float.IsInfinity(delta.y) ||
             delta.sqrMagnitude > range * range) return false;
         if (delta.sqrMagnitude <= .0001f) return true;
         if (Vector2.Angle(direction, delta) > Mathf.Clamp(arc, 1f, 180f) * .5f) return false;
 
-        foreach (RaycastHit2D hit in Physics2D.RaycastAll(owner.position, delta.normalized, delta.magnitude))
+        foreach (RaycastHit2D hit in Physics2D.RaycastAll(origin, delta.normalized, delta.magnitude))
         {
             Collider2D obstacle = hit.collider;
             if (obstacle == null || obstacle.isTrigger || obstacle.gameObject.scene != owner.gameObject.scene ||
