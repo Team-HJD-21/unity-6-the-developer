@@ -192,7 +192,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cecc12b40b2b84a4ab964f8b1ccd216e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileSpawner
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileGenerator
   ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &4844412801262750434 stripped
 MonoBehaviour:

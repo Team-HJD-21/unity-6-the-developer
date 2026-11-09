@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: MushroomTreant
   _prefab: {fileID: 5336646090019512257, guid: b8514c06e51212c4bbaca01051c93c4d, type: 3}
-  _spawnCost: 1
+  _spawnCost: 2

@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: CannonSlime
   _prefab: {fileID: 1302367355014481164, guid: b6b8cc862fe013b4ebac3962879e963d, type: 3}
-  _spawnCost: 1
+  _spawnCost: 3

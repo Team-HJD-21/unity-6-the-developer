@@ -817,7 +817,7 @@ flowchart TD
 - [`FieldTurretLevelUpgradeCatalog.cs`](../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretLevelUpgradeCatalog.cs)
 - [`TurretLevelUpgrade_Stage1.asset`](../../Assets/Data/FieldTurrets/FieldTurretLevelUpgrade_Stage1.asset)
 - [`IDamageableTarget.cs`](../../Assets/Scripts/Features/FieldTurrets/Contracts/IDamageableTarget.cs)
-- [`DamageableTargetAdapter.cs`](../../Assets/Scripts/Features/Enemy/Targeting/DamageableTargetAdapter.cs)
+- [`DamageableTargetAdapter.cs`](../../Assets/Scripts/Features/Enemy/Runtime/Targeting/DamageableTargetAdapter.cs)
 - [`ControlUnit.asset`](../../Assets/Data/FieldTurrets/ControlUnit.asset)
 - [`FieldTurretTestController.cs`](../../Assets/Scripts/Features/FieldTurrets/FieldTurretTestController.cs)
 - [`FieldTurretInstanceRegistry.cs`](../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretInstanceRegistry.cs)

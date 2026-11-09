@@ -13,4 +13,11 @@ MonoBehaviour:
   m_Name: EnemySquadPresetCatalog
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPresetCatalog
   squadPresets:
-  - {fileID: 11400000, guid: ca5f34c55663e3446b81af15cfa95374, type: 2}
+  - {fileID: 11400000, guid: 612e4e52552e4b079a0d3f4b04236133, type: 2}
+  - {fileID: 11400000, guid: 611227bd54f74a98a3567a481012fbea, type: 2}
+  - {fileID: 11400000, guid: f4dba86f817441eb924e70e12dee48ae, type: 2}
+  - {fileID: 11400000, guid: 8c723dde792547fa93b14480fb260f8b, type: 2}
+  - {fileID: 11400000, guid: 59c6819bad2e44b0999a843556c0314b, type: 2}
+  - {fileID: 11400000, guid: 4c46b4ac556e4117b10e5d114e79bf16, type: 2}
+  - {fileID: 11400000, guid: 2968ba73733d4501932d79405e7a40a4, type: 2}
+  - {fileID: 11400000, guid: 1af5e23c796d49c08d312577186019e1, type: 2}

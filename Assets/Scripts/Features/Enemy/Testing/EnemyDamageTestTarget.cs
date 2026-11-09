@@ -33,6 +33,9 @@ public sealed class EnemyDamageTestTarget : MonoBehaviour, IDamageableTarget
         ResetHealth();
     }
 
+    /// <summary>
+    /// 시험 피해를 체력에 반영해 적의 피해 전달 경로를 확인한다.
+    /// </summary>
     public bool ApplyDamage(int damage)
     {
         if (!isActiveAndEnabled || IsDestroyed || damage <= 0)
@@ -46,6 +49,9 @@ public sealed class EnemyDamageTestTarget : MonoBehaviour, IDamageableTarget
         return true;
     }
 
+    /// <summary>
+    /// 반복 시험을 위해 대상 체력을 초기 상태로 되돌린다.
+    /// </summary>
     [ContextMenu("Reset Health And Hit Count")]
     public void ResetHealth()
     {
