@@ -1,6 +1,15 @@
 # Spatial Spawn Distribution
 
-2026-10-08 · 스폰 편중 수정 설계 · 적용 대상: Battlefield snapshot을 사용하는 Encounter 요청.
+수정일: 2026-11-08
+상태: 기존 공간 분산 정책과 #540 상황별 편성 연결 참고. 적용 대상은 Battlefield snapshot을 사용하는 Encounter 요청이다.
+
+[Enemy 시스템](enemy-system-guide.md) · [Encounter 편성·예산](encounter-planning-guide.md)
+
+## #540에서 추가된 단계
+
+고정 편성은 지정된 세트를 아래 공간 정책으로 분산한다. 상황별 선택은 Runtime이 스폰 지점별 최근접 유효 Turret을 고른 뒤, **그 타깃 셀 주변**의 병력/Player/공격 유형을 보고 지역 예산과 편성을 선택한다. 출현 셀의 현재·예정 병력은 아래 분산/수용량 검사에 사용한다.
+
+타깃 셀별 예산 그룹과 출현 셀별 공간 공유는 서로 다르다. 같은 타깃 셀을 향하는 여러 지점은 지역 예산을 공유하고, 같은 출현 셀의 여러 지점은 수용량·서비스 부하를 공유한다. 조건·비용·가중치·Static/Dynamic 예산은 [Encounter 가이드](encounter-planning-guide.md)를 기준으로 읽는다.
 
 ## 목표와 경계
 

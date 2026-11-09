@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: GoblinWarrior
   _prefab: {fileID: 2514154219878428219, guid: 6945963725c857a458e48b988bd90375, type: 3}
-  _spawnCost: 1
+  _spawnCost: 2

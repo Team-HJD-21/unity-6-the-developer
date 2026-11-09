@@ -52,6 +52,9 @@ namespace TeamHJD.Game.Enemy.Effects
             ClearVisuals();
         }
 
+        /// <summary>
+        /// 감속 고리를 준비하고 이동 잔상 생성 간격을 초기화한다.
+        /// </summary>
         private void BeginVisuals()
         {
             _previousPosition = EffectPosition;
@@ -66,6 +69,9 @@ namespace TeamHJD.Game.Enemy.Effects
             }
         }
 
+        /// <summary>
+        /// 고리를 대상에 맞춰 이동시키고 실제 XY 이동이 있을 때만 잔상을 남긴다.
+        /// </summary>
         private void LateUpdate()
         {
             if (!_isSlowActive)
