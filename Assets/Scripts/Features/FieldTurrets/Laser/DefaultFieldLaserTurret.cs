@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.FieldTurrets.Contracts;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "DefaultLaserTurret")]
@@ -39,32 +40,35 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
     protected override void Update()
     {
         base.Update();
+        if (!CanSimulateField) return;
+
+        float deltaTime = FieldSimulationTime.DeltaTime(this);
         UpdateRangeVisibility();
 
         if (!IsOperational || IsCoolingDown)
         {
             ClearAttack();
-            RetractBeam(Time.deltaTime);
+            RetractBeam(deltaTime);
             return;
         }
 
         if (IsBeamPlaying)
         {
-            UpdateHeat(true);
+            UpdateHeat(true, deltaTime);
             if (IsBeamPlaying)
                 UpdateBeam();
             return;
         }
 
-        UpdateHeat(false);
-        if (IsBeamRetracting && !RetractBeam(Time.deltaTime))
+        UpdateHeat(false, deltaTime);
+        if (IsBeamRetracting && !RetractBeam(deltaTime))
             return;
 
         Vector3 origin = turret.position;
         if (!FieldTurretTargetingUtility.IsInAttackRange(turret, Target, MinimumRange, Range) ||
             !Target.gameObject.activeInHierarchy)
         {
-            if (!RetractBeam(Time.deltaTime))
+            if (!RetractBeam(deltaTime))
                 return;
             FieldTurretTargetingUtility.CollectByDistance(origin, Range, EnemyMask, _targetCandidates, MinimumRange);
             Target = _targetCandidates.Count > 0 ? _targetCandidates[0].transform : null;
@@ -74,12 +78,12 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
         if (!FieldTurretTargetingUtility.IsInSight(TurretRotationPoint, origin, Target, TargetingAngle))
         {
             TimeTilFire = 0f;
-            if (!RetractBeam(Time.deltaTime))
+            if (!RetractBeam(deltaTime))
                 return;
         }
 
         if (Target != null)
-            FieldTurretTargetingUtility.RotateTowards(TurretRotationPoint, origin, Target.position, RotationSpeed);
+            FieldTurretTargetingUtility.RotateTowards(TurretRotationPoint, origin, Target.position, RotationSpeed, deltaTime);
 
         bool inSight = FieldTurretTargetingUtility.IsInSight(TurretRotationPoint, origin, Target, TargetingAngle);
         if (!inSight || !CanExtendBeam)
@@ -88,8 +92,8 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
             return;
         }
 
-        bool beamReady = ExtendBeam(Time.deltaTime);
-        TimeTilFire += Time.deltaTime;
+        bool beamReady = ExtendBeam(deltaTime);
+        TimeTilFire += deltaTime;
         if (beamReady && TimeTilFire >= 1f / FireRate)
         {
             Target = null;
@@ -98,10 +102,10 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
         }
     }
 
-    private void UpdateHeat(bool firing)
+    private void UpdateHeat(bool firing, float deltaTime)
     {
         float overHeatTime = Definition.OverHeatTime;
-        FireTime = Mathf.Clamp(FireTime + (firing ? Time.deltaTime : -Time.deltaTime), 0f, overHeatTime);
+        FireTime = Mathf.Clamp(FireTime + (firing ? deltaTime : -deltaTime), 0f, overHeatTime);
         float heatRatio = overHeatTime > 0f ? FireTime / overHeatTime : 0f;
         SetGunHeatTint(heatRatio);
 

@@ -60,8 +60,11 @@ public sealed class FieldLaserCheckpointTests
         BeamField("_beamLength").SetValue(original, 5f);
         BeamField("_visibleLengthRatio").SetValue(original, 1f);
         BeamField("_visibleWidthRatio").SetValue(original, 1f);
-        BeamField("_beamEndsAt").SetValue(original, Time.time + 2f);
-        BeamField("_nextDamageAt").SetValue(original, Time.time + 0.2f);
+        BeamField("_beamEndsAt").SetValue(original, Time.timeAsDouble + 0.2d);
+        BeamField("_nextDamageAt").SetValue(original, Time.timeAsDouble + 0.05d);
+        var clock = new FieldClock(matchId) { Paused = true };
+        using var simulation = controller.BindFieldSimulation(clock, default);
+        Assert.That(Deadline(original, "_beamEndsAt") - clock.ElapsedSeconds, Is.EqualTo(0.2d).Within(0.001d));
         var section = participant.Capture(context, codec);
         var data = new CheckpointData(Guid.NewGuid(), DateTimeOffset.UtcNow, matchId, config.StageId,
             config.DifficultyProfileId, MatchMode.Story, 1, "test", 0, 1, new[] { section });
@@ -75,10 +78,48 @@ public sealed class FieldLaserCheckpointTests
         Assert.That(restored.TryGetEntityId(out var restoredId) && restoredId == actorId, Is.True);
         Assert.That(BeamField("_isBeamPlaying").GetValue(restored), Is.True);
         Assert.That(BeamField("_beamDirection").GetValue(restored), Is.EqualTo(Vector2.right));
-        Assert.That((float)BeamField("_beamEndsAt").GetValue(restored) - Time.time, Is.EqualTo(2f).Within(0.001f));
-        Assert.That((float)BeamField("_nextDamageAt").GetValue(restored) - Time.time, Is.EqualTo(0.2f).Within(0.001f));
+        double endsAt = Deadline(restored, "_beamEndsAt");
+        double damageAt = Deadline(restored, "_nextDamageAt");
+        Assert.That(endsAt - clock.ElapsedSeconds, Is.EqualTo(0.2d).Within(0.001d));
+        Assert.That(damageAt - clock.ElapsedSeconds, Is.EqualTo(0.05d).Within(0.001d));
+
+        double unityStart = Time.timeAsDouble;
+        while (Time.timeAsDouble - unityStart < 0.3d)
+            yield return null;
+        restored.SendMessage("Update");
+        Assert.That(BeamField("_isBeamPlaying").GetValue(restored), Is.True);
+        Assert.That(Deadline(restored, "_nextDamageAt"), Is.EqualTo(damageAt));
+        var heat = typeof(DefaultFieldLaserTurret).GetProperty("FireTime", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(heat.GetValue(restored), Is.EqualTo(0f));
+
+        clock.Paused = false;
+        clock.ElapsedSeconds = damageAt;
+        Assert.That(controller.CanSimulate, Is.True);
+        Assert.That(restored.IsOperational && !restored.IsCoolingDown, Is.True);
+        restored.SendMessage("Update");
+        Assert.That(BeamField("_isBeamPlaying").GetValue(restored), Is.True);
+        Assert.That(Deadline(restored, "_nextDamageAt"), Is.GreaterThan(damageAt));
+
+        clock.ElapsedSeconds = endsAt;
+        restored.SendMessage("Update");
+        Assert.That(BeamField("_isBeamPlaying").GetValue(restored), Is.False);
     }
+
+    private static double Deadline(FieldLaserTurret turret, string name)
+        => (double)BeamField(name).GetValue(turret);
 
     private static FieldInfo BeamField(string name)
         => typeof(FieldLaserTurret).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+
+    private sealed class FieldClock : IMatchTime
+    {
+        private readonly MatchId _matchId;
+        private readonly Guid _epoch = Guid.NewGuid();
+
+        public FieldClock(MatchId matchId) => _matchId = matchId;
+        public double ElapsedSeconds { get; set; } = 1000d;
+        public bool Paused { get; set; }
+        public bool IsAvailable => true;
+        public MatchTimeSnapshot Snapshot => new(_matchId, _epoch, 0, ElapsedSeconds, 0, 1, Paused, true);
+    }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
@@ -12,7 +13,7 @@ public partial class FieldLaserTurret : IFieldTurretCombatCheckpoint
 
     CheckpointSection IFieldTurretCombatCheckpoint.CaptureCombat(ICheckpointPayloadCodec codec)
     {
-        float now = Time.time;
+        double now = FieldSeconds;
         Transform target = Target != null && Target.gameObject.activeInHierarchy ? Target : null;
         return codec.Write(CombatCheckpointKey, 1, CheckpointSectionKind.World, writer =>
         {
@@ -28,9 +29,9 @@ public partial class FieldLaserTurret : IFieldTurretCombatCheckpoint
             writer.Write(_beamLength);
             writer.Write(_visibleLengthRatio);
             writer.Write(_visibleWidthRatio);
-            writer.Write(_isBeamPlaying ? Mathf.Max(0f, _beamEndsAt - now) : 0f);
-            writer.Write(_isBeamPlaying ? _nextDamageAt - now : 0f); // 이미 도래한 틱의 간격도 유지한다.
-            writer.Write(Mathf.Max(0f, _nextBeamExtensionAt - now));
+            writer.Write(_isBeamPlaying ? (float)Math.Max(0d, _beamEndsAt - now) : 0f);
+            writer.Write(_isBeamPlaying ? (float)(_nextDamageAt - now) : 0f); // 이미 도래한 틱의 간격도 유지한다.
+            writer.Write((float)Math.Max(0d, _nextBeamExtensionAt - now));
         });
     }
 
@@ -89,7 +90,7 @@ public partial class FieldLaserTurret : IFieldTurretCombatCheckpoint
     void IFieldTurretCombatCheckpoint.RestoreCombat(CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         var state = ReadCombat(section, codec);
-        float now = Time.time;
+        double now = FieldSeconds;
         FireTime = state.Heat;
         _restoredTarget = state.Target;
         _beamOrigin = state.Origin;

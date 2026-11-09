@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,16 +28,16 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
     private Vector2 _beamDirection;
     private float _beamLength;
     private float _beamAngle;
-    private float _beamEndsAt;
-    private float _nextDamageAt;
-    private float _nextBeamExtensionAt;
+    private double _beamEndsAt;
+    private double _nextDamageAt;
+    private double _nextBeamExtensionAt;
     private bool _isBeamPlaying;
     private bool _isBeamRetracting;
     private float _visibleLengthRatio;
     private float _visibleWidthRatio = ThinWidthRatio;
     protected override bool IsBeamPlaying => _isBeamPlaying;
     protected override bool IsBeamRetracting => _isBeamRetracting;
-    protected override bool CanExtendBeam => Time.time >= _nextBeamExtensionAt;
+    protected override bool CanExtendBeam => FieldSeconds >= _nextBeamExtensionAt;
     private float DamageInterval => Mathf.Max(0.02f, damageInterval);
     private float BeamDuration => Mathf.Max(0.01f, beamDuration);
     private float LengthTransition => Mathf.Max(0.01f, beamLengthTransition);
@@ -57,8 +58,9 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
         }
 
         _beamAngle = Vector2.SignedAngle(Vector2.up, _beamDirection);
-        _beamEndsAt = Time.time + BeamDuration;
-        _nextDamageAt = Time.time + DamageInterval;
+        double now = FieldSeconds;
+        _beamEndsAt = now + BeamDuration;
+        _nextDamageAt = now + DamageInterval;
         _isBeamPlaying = true;
         _visibleLengthRatio = 1f;
         _visibleWidthRatio = 1f;
@@ -72,16 +74,17 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
 
     protected override void UpdateBeam()
     {
-        if (Time.time >= _beamEndsAt)
+        double now = FieldSeconds;
+        if (now >= _beamEndsAt)
         {
             StopFiring();
             return;
         }
 
-        if (Time.time >= _nextDamageAt)
+        if (now >= _nextDamageAt)
         {
             float interval = DamageInterval;
-            _nextDamageAt += (Mathf.Floor((Time.time - _nextDamageAt) / interval) + 1f) * interval;
+            _nextDamageAt += (Math.Floor((now - _nextDamageAt) / interval) + 1) * interval;
             ApplyBeamDamage();
         }
     }
@@ -113,7 +116,7 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
             return false;
 
         HideBeam();
-        _nextBeamExtensionAt = Time.time + RestartDelay;
+        _nextBeamExtensionAt = FieldSeconds + RestartDelay;
         return true;
     }
 
@@ -123,6 +126,17 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
             Animator.SetBool("isShoot", false);
         _isBeamPlaying = false;
         _isBeamRetracting = _visibleLengthRatio > 0f;
+    }
+
+    protected override void OnSimulationTimeRebased(double previous, double current)
+    {
+        if (_isBeamPlaying)
+        {
+            _beamEndsAt = current + (_beamEndsAt - previous);
+            _nextDamageAt = current + (_nextDamageAt - previous);
+        }
+
+        _nextBeamExtensionAt = current + Math.Max(0d, _nextBeamExtensionAt - previous);
     }
 
     protected override void HideBeam()
