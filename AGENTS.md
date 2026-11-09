@@ -6,9 +6,9 @@
 
 - Unity 버전: [ProjectVersion.txt](ProjectSettings/ProjectVersion.txt)
 - 패키지와 의존성: [manifest.json](Packages/manifest.json), [packages-lock.json](Packages/packages-lock.json)
-- 현행 기준 문서: [Docs 문서 안내](Docs/README.md#source-of-truth). 담당과 협의 범위는 [팀 역할과 책임](Docs/team/TEAM_ROLE_OWNERSHIP.md)을 확인한다.
-- 구조·API·초기화·권한 설계: [Docs/architecture](Docs/architecture)
-- 계획과 의사결정 자료: [Docs/planning](Docs/planning). 제안과 확정 사항을 구분한다.
+- 현행 기준 문서: [Docs 문서 안내](Docs/README.md#source-of-truth). 담당과 협의 범위는 [팀 역할과 책임](Docs/03_team/TEAM_ROLE_OWNERSHIP.md)을 확인한다.
+- 구조·API·초기화·권한 설계: [Docs/architecture](Docs/02_architecture)
+- 계획과 의사결정 자료: [Docs/planning](Docs/01_planning). 제안과 확정 사항을 구분한다.
 - PR 작성 양식: [pull_request_template.md](.github/pull_request_template.md)
 - 실제 CI 검사와 실행 조건: [pr-ci.yml](.github/workflows/pr-ci.yml)
 - CI 설정 참고: [CI_SETUP.md](.github/CI_SETUP.md). 설명과 실제 설정이 다르면 차이를 확인하고 보고한다.

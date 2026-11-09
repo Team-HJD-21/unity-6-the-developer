@@ -1,37 +1,37 @@
 # Core 사용 안내
 
 
-**지금 확인/전달할 최종본:** [Startup/Initial_Stage 수동 확인7단계·전체 구현·남은 Core 작업](../../../Docs/planning/2026-11-05-core-local-review.md).
+**지금 확인/전달할 최종본:** [Startup/Initial_Stage 수동 확인7단계·전체 구현·남은 Core 작업](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md).
 
 
-**인게임 날씨 디버그:** [Day/Night·5분 타이머·Reset 사용법](../../../Docs/architecture/weather-debug-hud.md). 우주선 페이드는 현재 0.3초씩 총 약 0.9초입니다.
+**인게임 날씨 디버그:** [Day/Night·5분 타이머·Reset 사용법](../../../Docs/02_architecture/09_world/weather-debug-hud.md). 우주선 페이드는 현재 0.3초씩 총 약 0.9초입니다.
 
 
-**우주선 전환 최신 수정:** [동일 카메라·0.9초 페이드·첫 출격 위치](../../../Docs/planning/2026-11-05-spaceship-fade-results.md). 우주선↔필드에서는 진행 바를 표시하지 않습니다.
+**우주선 전환 최신 수정:** [동일 카메라·0.9초 페이드·첫 출격 위치](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-spaceship-fade-results.md). 우주선↔필드에서는 진행 바를 표시하지 않습니다.
 
 
-**우주선 첫 출격·왕복 패치:** [이동 경로·로딩·카메라 처리](../../../Docs/architecture/spaceship-travel-api.md).
+**우주선 첫 출격·왕복 패치:** [이동 경로·로딩·카메라 처리](../../../Docs/02_architecture/03_scene-flow/spaceship-travel-api.md).
 
-**이번 추가 구현·자동 확인 결과:** [최종 결과와 최소 확인 목록](../../../Docs/planning/2026-11-05-day-night-steam-results.md)
+**이번 추가 구현·자동 확인 결과:** [최종 결과와 최소 확인 목록](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-day-night-steam-results.md)
 
-**낮밤·Steam·시작 우주선 후속:** [배치와 담당 경계](../../../Docs/planning/2026-11-05-day-night-and-steam-batches.md) · [낮밤 API](../../../Docs/architecture/day-night-api.md) · [Steam 사용법](../../../Docs/architecture/steam-api.md). 기존 완료 보고 이후 추가 승인한 구현이다.
+**낮밤·Steam·시작 우주선 후속:** [배치와 담당 경계](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-day-night-and-steam-batches.md) · [낮밤 API](../../../Docs/02_architecture/09_world/day-night-api.md) · [Steam 사용법](../../../Docs/02_architecture/04_networking/steam-api.md). 기존 완료 보고 이후 추가 승인한 구현이다.
 
-**이번 목표 결과·수동 확인:** [최종 정리](../../../Docs/planning/2026-11-05-core-completion-results.md)
+**이번 목표 결과·수동 확인:** [최종 정리](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-core-completion-results.md)
 
-**현재 상태:** [요구·Issue 대응과 남은 담당 경계](../../../Docs/planning/2026-11-05-core-requirements-and-issue-map.md). 감속·원거리 공격 상태·새 Match 파일 복원·2인 Scene 전환 누락을 보완했습니다. 제품 전체 저장은 실제 Weather writer가 필요하며 PL 수동 인수·PR 전입니다.
+**현재 상태:** [요구·Issue 대응과 남은 담당 경계](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-core-requirements-and-issue-map.md). 감속·원거리 공격 상태·새 Match 파일 복원·2인 Scene 전환 누락을 보완했습니다. 제품 전체 저장은 실제 Weather writer가 필요하며 PL 수동 인수·PR 전입니다.
 
-갱신: 2026-11-05. 최신 main의 Feature·기존 Scene·Prefab을 유지한 Core 기반 통합 브랜치다. main에 이미 반영된 터렛 권한/ID/관측 계약을 사용하도록 Core 연결을 복구했다. CU는 기존 IControlUnitVitals를 그대로 읽으며 Feature에 새 인터페이스 구현을 강제하지 않는다. [기반 분리와 검증 기록](../../../Docs/planning/2026-11-05-foundation-main-integration.md)을 현재 기준으로 읽는다.
+갱신: 2026-11-05. 최신 main의 Feature·기존 Scene·Prefab을 유지한 Core 기반 통합 브랜치다. main에 이미 반영된 터렛 권한/ID/관측 계약을 사용하도록 Core 연결을 복구했다. CU는 기존 IControlUnitVitals를 그대로 읽으며 Feature에 새 인터페이스 구현을 강제하지 않는다. [기반 분리와 검증 기록](../../../Docs/99_archive/planning-links/2026-11-05-foundation-main-integration.md)을 현재 기준으로 읽는다.
 
-- [이번 요구·Issue 대응](../../../Docs/planning/2026-11-05-core-requirements-and-issue-map.md) · [잔여 보완 배치 결과](../../../Docs/planning/2026-11-05-core-completion-batches.md)
-- [실제 함수 호출·수명·Feature 연결 지도](../../../Docs/architecture/core-lifecycle-and-api-guide.md)
-- [시간/예약 API](../../../Docs/architecture/match-time-api.md) · [필드 정지](../../../Docs/architecture/match-field-pause-api.md)
-- [체크포인트 IO](../../../Docs/architecture/checkpoint-storage-api.md) · [저장/복원 실행](../../../Docs/architecture/checkpoint-execution-api.md)
-- [Steam 도입 설계](../../../Docs/architecture/steam-integration-design.md)
-- [범용 Random API·기존 교체 위치](../../../Docs/architecture/core-random-api.md) · [우주선 출입 보고 API](../../../Docs/architecture/core-presence-report-api.md) — 실제 연결과 진태 담당 후속은 [Feature 통합 안내](../../../Docs/architecture/core-feature-integration-guide.md) 참고.
+- [이번 요구·Issue 대응](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-core-requirements-and-issue-map.md) · [잔여 보완 배치 결과](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-core-completion-batches.md)
+- [실제 함수 호출·수명·Feature 연결 지도](../../../Docs/02_architecture/01_core/core-lifecycle-and-api-guide.md)
+- [시간/예약 API](../../../Docs/02_architecture/02_match/match-time-api.md) · [필드 정지](../../../Docs/02_architecture/02_match/match-field-pause-api.md)
+- [체크포인트 IO](../../../Docs/02_architecture/05_checkpoints/checkpoint-storage-api.md) · [저장/복원 실행](../../../Docs/02_architecture/05_checkpoints/checkpoint-execution-api.md)
+- [Steam 도입 설계](../../../Docs/02_architecture/04_networking/steam-integration-design.md)
+- [범용 Random API·기존 교체 위치](../../../Docs/02_architecture/01_core/core-random-api.md) · [우주선 출입 보고 API](../../../Docs/02_architecture/01_core/core-presence-report-api.md) — 실제 연결과 진태 담당 후속은 [Feature 통합 안내](../../../Docs/02_architecture/01_core/core-feature-integration-guide.md) 참고.
 
 ## Random을 사용하는 팀원은 먼저 확인
 
-[Random API 사용법](../../../Docs/architecture/core-random-api.md)의 첫 예제처럼 정적 헬퍼 한 줄로 연결한다. 새 부모 클래스·개별 해제 클래스는 필요 없다. Core가 반환값을 보관하고 Scene/Match 정리 때 해제한다. 날씨·스폰·공격은 Host Match, 로컬 HUD 효과는 App의 PresentationRandom을 사용한다.
+[Random API 사용법](../../../Docs/02_architecture/01_core/core-random-api.md)의 첫 예제처럼 정적 헬퍼 한 줄로 연결한다. 새 부모 클래스·개별 해제 클래스는 필요 없다. Core가 반환값을 보관하고 Scene/Match 정리 때 해제한다. 날씨·스폰·공격은 Host Match, 로컬 HUD 효과는 App의 PresentationRandom을 사용한다.
 
 ```csharp
 // 기존 IRandomConsumer 구현 컴포넌트의 필드와 메서드.
@@ -49,7 +49,7 @@ public bool RollSuccess(double chance) => _random.Chance(chance);
 
 ## 먼저 실행해 볼 것
 
-이번 변경의 수동 확인은 [최신7단계](../../../Docs/planning/2026-11-05-core-local-review.md#2-pl이-직접-확인할-것--7단계)를 따른다. 현재 브랜치는 PR 전이며 기존 HOLD 상태와 혼동하지 않는다.
+이번 변경의 수동 확인은 [최신7단계](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md#2-pl이-직접-확인할-것--7단계)를 따른다. 현재 브랜치는 PR 전이며 기존 HOLD 상태와 혼동하지 않는다.
 
 
 1. Unity 메뉴 `Tools > TeamHJD > The Developer > Open Core Startup Scene`을 선택한다. 경로는 `Assets/Scenes/Bootstrap/Startup.unity`다.
@@ -155,7 +155,7 @@ App은 플랫폼/프로필·네트워크 연결·Scene 전환·저장소처럼 �
 
 ## 현재 한계와 팀 연결
 
-최신 실제 상태는 [Feature 통합 안내](../../../Docs/architecture/core-feature-integration-guide.md)를 기준으로 한다. Player/터렛/Enemy 시간·입력·저장 원본을 연결했고, Weather 환경/예약은 Core 연결을 마쳤다. 실제 Weather writer·날씨 Random·포털/콘솔은 김진태 담당이다. 전체 Save는 해당 writer 누락 시 비활성이다. 재실행 호출은 `AppRoot.ResumeCheckpointAsync`이며 1인 Story부터 지원한다.
+최신 실제 상태는 [Feature 통합 안내](../../../Docs/02_architecture/01_core/core-feature-integration-guide.md)를 기준으로 한다. Player/터렛/Enemy 시간·입력·저장 원본을 연결했고, Weather 환경/예약은 Core 연결을 마쳤다. 실제 Weather writer·날씨 Random·포털/콘솔은 김진태 담당이다. 전체 Save는 해당 writer 누락 시 비활성이다. 재실행 호출은 `AppRoot.ResumeCheckpointAsync`이며 1인 Story부터 지원한다.
 
 
 - 터렛 Match 권위/ID/관측: main의 승인된 API로 Core 소비자를 연결했다. 터렛 생성·전력·공격 규칙은 변경하지 않는다.
@@ -165,8 +165,8 @@ App은 플랫폼/프로필·네트워크 연결·Scene 전환·저장소처럼 �
 - Steam 플랫폼은 설정에 따라 실제 SDK/개발 구현을 선택한다. Backend·실제 프로필 인증은 후속이며 Profile은 개발 Fake다. 계정·성장 원본과 체크포인트를 분리한다.
 - 최신 main `1a03e9a91`은 통합했다. 격리 Windows Build/두 프로세스의 공유 Scene·시계/환경 흐름을 확인했으며, 실제 원격 Player 전투와 제품 전체 승패·운영 Weather 저장·팀 통합 Build 인수는 별도다.
 
-과거 작업 공간의 제외/보류 이력은 [HOLD 목록](../../../Docs/planning/2026-11-02-feature-integration-hold.md)에 보존한다. 이 이력을 최신 main의 승인된 계약까지 미구현이라는 뜻으로 해석하지 않는다. 기반 통합 당시 범위와 검증은 [main 통합 기록](../../../Docs/planning/2026-11-05-foundation-main-integration.md)을 따른다.
+과거 작업 공간의 제외/보류 이력은 [HOLD 목록](../../../Docs/99_archive/planning-links/2026-11-02-feature-integration-hold.md)에 보존한다. 이 이력을 최신 main의 승인된 계약까지 미구현이라는 뜻으로 해석하지 않는다. 기반 통합 당시 범위와 검증은 [main 통합 기록](../../../Docs/99_archive/planning-links/2026-11-05-foundation-main-integration.md)을 따른다.
 
 ## 구조를 단순하게 정리한 부분
 
-`MatchSimulation` 중간 객체를 제거하고 Session이 State의 단계/확정 결과에 직접 연결된다. 실제 전투는 Feature/Host 경계에서 처리한다. 사용하지 않는 범용 Submit 두 개와 전용 명령/결과/로컬 권한 타입은 제거했다. PlayerSceneAdapter의 Bind/Unbind는 유지하며, 실제 요청은 터렛/Encounter 전용 API를 사용한다. 큰 Scene root는 진입/해제와 Update를 본 파일에, 네트워크 준비/읽기 복제를 `.Networking.cs`, 공간 투영을 `.Spatial.cs`, 저장 조립을 `.Checkpoints.cs`에 둔다. 별도 Manager나 상태 원본이 늘어난 것은 아니다. [삭제/유지 판단과 전후 구조](../../../Docs/architecture/core-structure-review-2026-11-05.md)를 함께 본다.
+`MatchSimulation` 중간 객체를 제거하고 Session이 State의 단계/확정 결과에 직접 연결된다. 실제 전투는 Feature/Host 경계에서 처리한다. 사용하지 않는 범용 Submit 두 개와 전용 명령/결과/로컬 권한 타입은 제거했다. PlayerSceneAdapter의 Bind/Unbind는 유지하며, 실제 요청은 터렛/Encounter 전용 API를 사용한다. 큰 Scene root는 진입/해제와 Update를 본 파일에, 네트워크 준비/읽기 복제를 `.Networking.cs`, 공간 투영을 `.Spatial.cs`, 저장 조립을 `.Checkpoints.cs`에 둔다. 별도 Manager나 상태 원본이 늘어난 것은 아니다. [삭제/유지 판단과 전후 구조](../../../Docs/02_architecture/01_core/core-structure-review-2026-11-05.md)를 함께 본다.
