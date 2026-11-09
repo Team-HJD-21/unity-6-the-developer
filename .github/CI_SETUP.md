@@ -82,6 +82,12 @@ Actions는 push/PR 이벤트를 받은 **뒤에** 실행된다. 작업 브랜치
 
 공식 안내: [보호 브랜치와 필수 상태 검사](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
 
+## AI 인라인 리뷰 답글
+
+같은 저장소에서 `main`을 대상으로 연 PR의 AI 지적에 저장소 쓰기 권한이 있는 팀원이 답글을 달면, [PR Review Reply](workflows/pr-review-reply.yml)가 같은 스레드에 한국어로 응답한다. 이미 제출한 답글을 수정하면 새 응답은 생성되지 않는다.
+
+기존 `OPENAI_API_KEY`를 사용한다. 지적 본문, 해당 줄 주변 diff 일부, 최근 답글 최대 4개, 새 답글로 입력을 구성해 `gpt-5.4-mini`를 한 번 호출한다. 응답은 최대 400 출력 토큰이며 실제 사용량은 Actions 로그에 기록된다.
+
 ## 실제 Unity Test와 Windows Build 켜기
 
 GitHub 저장소에서 다음 위치로 이동한다.
