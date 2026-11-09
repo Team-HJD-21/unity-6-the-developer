@@ -26,7 +26,8 @@ public sealed class PlayerExperienceView : MonoBehaviour
     private void OnEnable() => Refresh();
     private void Refresh()
     {
-        if (_levelText != null) _levelText.text = _experience != null ? $"Lv.{_experience.Level}" : "Lv.—";
+        // LV 표제는 프리팹에 고정 배치하고 숫자만 갱신합니다.
+        if (_levelText != null) _levelText.text = _experience != null ? _experience.Level.ToString("00") : "—";
         if (_experienceText != null) _experienceText.text = _experience == null ? "XP —" : _experience.IsMaximumLevel
             ? "XP MAX" : $"XP {_experience.ExperienceInLevel}/{_experience.RequiredExperience}";
         if (_experienceClip != null) _experienceClip.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,

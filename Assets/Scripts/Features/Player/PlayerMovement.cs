@@ -17,8 +17,10 @@ public class PlayerMovement : MonoBehaviour
     private PlayerControlState _controls;
     private PlayerDash _dash;
     private PlayerSlowEffects _slowEffects;
+    private PlayerBaseStats _baseStats;
 
-    public float MoveSpeed => float.IsNaN(moveSpeed) || float.IsInfinity(moveSpeed) ? 0 : Mathf.Max(0, moveSpeed);
+    public float BaseMoveSpeed => float.IsNaN(moveSpeed) || float.IsInfinity(moveSpeed) ? 0 : Mathf.Max(0, moveSpeed);
+    public float MoveSpeed => BaseMoveSpeed * (_baseStats != null ? _baseStats.MovementMultiplier : 1);
     public bool CanAcceptInput => isActiveAndEnabled && CanMove && Time.timeScale > 0 && rb != null &&
         inputHandler != null && inputHandler.isActiveAndEnabled &&
         (_controls == null || _controls.CanMove);
@@ -37,6 +39,7 @@ public class PlayerMovement : MonoBehaviour
     {
         _controls = GetComponent<PlayerControlState>();
         _dash = GetComponent<PlayerDash>();
+        _baseStats = GetComponent<PlayerBaseStats>();
         // 기존 제작 prefab도 같은 감속 수신/저장 원본을 빠짐없이 갖게 합니다.
         _slowEffects = GetComponent<PlayerSlowEffects>() ?? gameObject.AddComponent<PlayerSlowEffects>();
         // 인스펙터 할당을 깜빡했을 때를 대비한 널 세이프 방어 코드

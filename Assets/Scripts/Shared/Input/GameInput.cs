@@ -33,7 +33,8 @@ public enum GameKey
     Numpad4,
     PageUp,
     PageDown,
-    R
+    R,
+    I
 }
 
 public static class GameInput
@@ -129,6 +130,7 @@ public static class GameInput
 
     public static bool WasPressedThisFrame(GameKey key)
     {
+        if (key == GameKey.Escape) return TeamHJD.Game.Presentation.UIEscapeInput.WasPressedThisFrame;
         var control = GetControl(key);
         return control?.wasPressedThisFrame ?? false;
     }
@@ -149,6 +151,7 @@ public static class GameInput
             GameKey.F1 => keyboard.f1Key,
             GameKey.F => keyboard.fKey,
             GameKey.R => keyboard.rKey,
+            GameKey.I => keyboard.iKey,
             GameKey.Tab => keyboard.tabKey,
             GameKey.Digit1 => keyboard.digit1Key,
             GameKey.Digit2 => keyboard.digit2Key,

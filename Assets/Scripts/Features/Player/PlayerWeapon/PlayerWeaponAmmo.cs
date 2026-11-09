@@ -35,6 +35,13 @@ public sealed class PlayerWeaponAmmo : MonoBehaviour
     public int CurrentCapacity => _selection != null ? GetCapacity(_selection.CurrentWeapon) : 0;
     public int GetRounds(WeaponType weapon) => State.GetRounds(weapon);
     public int GetCapacity(WeaponType weapon) => State.GetCapacity(weapon);
+    public float GetReloadDuration(WeaponType weapon) => weapon switch
+    {
+        WeaponType.Spanner => 0,
+        WeaponType.CryoBlaster => _cryoReloadSeconds,
+        WeaponType.Sniper => _sniperReloadSeconds,
+        _ => _defaultGunReloadSeconds
+    };
     public bool CanFire(WeaponType weapon) => isActiveAndEnabled && State.CanFire(weapon);
     internal bool TryConsumeRound(WeaponType weapon)
     {
@@ -92,12 +99,7 @@ public sealed class PlayerWeaponAmmo : MonoBehaviour
     public bool TryReload()
     {
         if (!CanOperate) return false;
-        float duration = _selection.CurrentWeapon switch
-        {
-            WeaponType.CryoBlaster => _cryoReloadSeconds,
-            WeaponType.Sniper => _sniperReloadSeconds,
-            _ => _defaultGunReloadSeconds
-        };
+        float duration = GetReloadDuration(_selection.CurrentWeapon);
         if (!State.TryStartReload(_selection.CurrentWeapon, duration)) return false;
         _lastReloadTime = GameSeconds;
         return true;

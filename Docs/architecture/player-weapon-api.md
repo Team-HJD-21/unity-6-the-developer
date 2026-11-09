@@ -1,6 +1,10 @@
 # 플레이어 무기 API
 
-수정일: 2026-11-09. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
+수정일: 2026-11-10. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
+
+## 상태창의 장착 무기 조회
+
+`PlayerAttack.TryGetCurrentWeaponStats(out PlayerWeaponStats)`는 실제 공격 설정에서 피해량·공격 간격·투사체 개수·탄속·최대 사거리를 읽습니다. 피해량은 산탄 전체 합계가 아닌 탄환 한 발 또는 근접 타격 한 번 기준입니다. `PlayerWeaponAmmo.GetReloadDuration(weapon)`은 실제 재장전과 UI가 공통으로 사용하는 시간 조회입니다. [I 상태창과 무기 화살표 동작](player-ui-api.md#2026-11-10-플레이어-상태창)을 참고합니다. 새로운 선택 상태나 별도 UI 밸런스 데이터는 만들지 않습니다.
 
 2026-10-25, Issue #554 작업에서는 전투·수리 계약을 유지하고 표시용 몸체·무기를 분리했습니다. Player 프리팹의 `PlayerWeaponVisual`과 무기별 외형 데이터 편집 방법은 [몸체·무기 분리 API](player-weapon-appearance-api.md)를 참고합니다. 기존 `PlayerSpanner`는 공격·수리 동작을 계속 담당합니다.
 

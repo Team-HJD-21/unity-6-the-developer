@@ -1,6 +1,6 @@
 # Initial Stage Player HUD API
 
-최종 갱신: 2026-10-15
+최종 갱신: 2026-11-10
 상태: 프리팹 기반 UI 구현. 최종 PlayMode 외형·조작 확인은 별도.
 
 API 기준: main `8d08001a`의 PR #525 냉각·수동 조작 제한 계약이다.
@@ -8,6 +8,44 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 `InitialStagePlayerHUD`, UI 약어는 `UI`로 표기를 통일한다.
 
 [문서 목차](../README.md) · [터렛 API](turrets/api-reference.md)
+
+## 2026-11-10 플레이어 상태창
+
+`InitialStagePlayerHUD.prefab`의 `Player Status Panel`은 처음에는 비활성화되어 있다. 루트의 `PlayerStatusPanel`이 I로 열기/닫기, ESC와 X 버튼으로 닫기를 처리한다. 배경·텍스트·게이지·버튼·보상 스크롤 행은 프리팹에 미리 배치하며 런타임에 생성하지 않는다. 화면 중앙의 네 구역 구성으로 기존 화면 가장자리 체력/경험치 HUD 위치는 유지한다.
+
+- 왼쪽 위: `PlayerStatusCharacterPreview`가 현재 몸체·무기·앞손 Sprite를 제작된 세 Image에 복사한다. 몸체 pivot과 무기 상대 위치·레이어를 따라가며 카메라·RenderTexture·별도 Player 객체는 생성하지 않는다. 뒤에는 주변 패널과 구분되는 240×240 청회색 사각형 Image를 배치했다. 대시 상태도 표시한다.
+- 왼쪽 아래: 레벨/XP/HP와 플레이어 공통 공격력 배율·이동속도·치명률, 남은 스탯 포인트 및 `+` 투자/`-` 회수 버튼이다. 이동속도는 성장과 현재 감속을 반영한다. [기본 스탯/보상 규칙](player-base-stats-api.md)을 사용한다.
+- 오른쪽 위: 좌우 화살표는 기존 `PlayerWeaponSelection.SelectAdjacentWeapon()`을 호출하여 **실제 장착 무기**를 순환한다. 기존 하단 슬롯의 Sprite를 무기 이미지에 재사용하고 탄창도 표시한다. 숫자키/휠 교체도 같은 표시를 갱신한다. 기존 선택 자격을 유지하므로 전투 입력이 제한되는 허브 등에서는 화살표를 비활성화한다. 교체로 탄약을 초기화하지 않는다.
+- 오른쪽 아래: `PlayerLevelRewardsView`의 ScrollRect·Scrollbar·RectMask2D와 제작된 8개 `PlayerLevelRewardRow`를 재사용하여 최대 레벨까지 나열한다. 2레벨부터 각 행에 `미달성` / `보상받기` / `수령 완료`를 표시한다. 레벨을 달성해도 자동 지급하지 않으며 버튼이 PlayerBaseStats 원본에 수령을 요청한다. 보상 내용은 현재 스탯 포인트 +1이며 다른 재화 종류 지급은 후속이다.
+- 무기 수치는 `PlayerAttack.TryGetCurrentWeaponStats(out PlayerWeaponStats)`로 실제 발사/스패너 설정을 조회한다. 피해량은 기본 스탯 배율을 적용한 탄환 한 발 또는 근접 타격 한 번 기준이며 치명타는 제외한다. 산탄 개수는 따로 표시한다. 공격 간격, 탄속, 최대 사거리, 재장전 시간을 함께 보여준다. 원거리 최대 사거리는 탄속×수명으로, 장애물 충돌 전의 이론값이다. 스패너는 근접 범위를 사용하고 탄속/재장전은 해당 없음으로 표시한다.
+- 재장전 시간은 실제 재장전도 사용하는 `PlayerWeaponAmmo.GetReloadDuration()`에서, 탄속/수명은 `PlayerBullet.FlightSpeed/FlightLifetime`, 근접 수치는 `PlayerSpannerWeapon.AttackDamage/AttackRange/AttackInterval`에서 읽는다. UI에 별도 밸런스 수치를 저장하지 않는다.
+- 스킬 해금 포인트·연구 토큰·인게임 재화는 값 `-`인 표시 자리다. 프로필 재화 조회·저장·보상 처리는 추가하지 않았다. 해당 `Currency Value` TMP를 Core와 추후 연결한다. 무기 강화는 추후 추가 문구만 표시한다.
+
+옆의 `PlayerProgressionDebugPanel`은 에디터/개발 빌드에서만 활성화된다. `XP +10`, `XP +100`, `다음 레벨`, `투자 전체 회수` 버튼을 배치했다. 기존 XP/스탯 공개 API의 권한·필드 정지·중복 수령 검사를 우회하지 않는다. 투자 전체 회수는 경험치와 보상 수령 기록을 지우지 않는다. 일반 출시 빌드에서는 패널을 숨기고 작업 함수도 실행을 거부한다.
+
+플레이어는 `StagePlayerVitalsView.Player`만 사용한다. 다른 Player를 검색해서 대체하지 않으며 로컬 actor 교체/해제·비활성화 시 패널을 닫고 참조를 갱신한다. Core 메뉴·생존 상태 등 기존 입력 잠금이 있으면 상태창을 열지 않고, 열린 패널도 닫는다. 텍스트 입력 중에는 I를 상태창 단축키로 처리하지 않는다.
+
+`PlayerCombatHudSlideController`는 포탑 조작창 또는 상태창이 열리면 기존 하단 무기·탄약·대시 UI를 같은 애니메이션으로 아래에 접어 10px 가장자리만 남긴다. 둘 중 하나라도 열려 있으면 접힌 상태를 유지하고, 모두 닫혀야 제작 위치로 돌아온다. 접힌 무기 슬롯의 클릭 차단도 기존 처리를 사용한다.
+
+### 스킬 트리 UI 틀
+
+네 섹터 Image의 색을 `(0.065, 0.125, 0.16)`으로 올렸다. 기존보다 밝고 캐릭터 미리보기 사각형 `(0.1, 0.18, 0.23)`보다 어두워 각 영역을 구분한다. 무기 하단 안내와 레벨 보상 제목 사이 우측 `(530, 50)`에 `스킬 트리` 버튼을 프리팹으로 배치했다.
+
+`PlayerSkillTreePanel`은 버튼 클릭 시 오른쪽 무기/보상 영역을 감추고 같은 자리의 스킬 회로 화면을 연다. 140×140 정사각형 8개와 직각 연결선·접점은 모두 Image/TMP 오브젝트다. 앞 네 칸에는 현재 Q/E 카탈로그 순서인 **시한폭탄 → 플레이어 터렛 → 방벽 투사기 → 유도 비콘**의 이름·기존 HUD 아이콘·설명을 표시한다. 이름과 설명은 `PlayerSkillDescriptions`, 아이콘과 표시 대상 `PlayerSkillId`는 제작된 카드 참조를 사용한다. 나머지 네 칸은 `추가 예정`이다. 이 순서는 임시이며 Dash는 별도 이동 능력이므로 이 목록에 포함하지 않는다.
+
+높이 1840인 Content를 세로 ScrollRect/Scrollbar/RectMask2D로 위에서 아래까지 스크롤한다. 런타임에 노드·선·버튼을 만들지 않는다. 스킬 트리와 레벨 보상 목록의 Scrollbar Handle은 `sizeDelta = (0, 0)`으로 두어 Unity Scrollbar가 계산한 anchor 크기만 사용한다. 여기에 고정 높이를 더하면 맨 아래에서 손잡이가 트랙 밖으로 길게 튀어나온다.
+
+`< 스테이터스` 버튼 또는 ESC는 스킬 트리만 닫고 원래 무기/보상 영역으로 복귀한다. 스킬 화면이 열린 상태의 I 또는 전체 상태창 X는 상태창 전체를 닫는다. 다시 스킬 화면을 열면 맨 위에서 시작한다. 트리가 열려 있는 동안에도 상위 상태창은 열려 있으므로 하단 무기/탄약/대시 UI의 접힘을 유지한다.
+
+이번 스킬 트리 범위는 UI 표시/이동만이다. 표시용 스킬 ID는 연결했지만 선택·사용 가능 여부를 변경하지 않는다. 잠금 상태/Unlock 라벨/포인트 소비/레벨별 스킬 해금 보상/저장/RPC는 추가하지 않았다. 기존 Q/E 스킬 선택창과 동작도 변경하지 않았다. 포인트 수량과 잠금 해제 정책이 확정된 뒤 별도 연결한다. 포털 설치 스킬은 이번 UI에 포함하지 않으며 후속 작업이다.
+
+### ESC 실행 순서와 Core 접점
+
+`PlayerStatusPanel.Update`는 실행 순서 -300으로 `AppRoot.Update`(기본 0)보다 먼저 실행한다. 열린 상태창의 ESC만 `TeamHJD.Game.Presentation.UIEscapeInput.TryConsume()`으로 그 프레임에 소비한다. `AppScreenPresenter.Render`와 `GameInput.WasPressedThisFrame(Escape)`는 같은 소비 여부를 확인하므로 상태창을 닫는 ESC가 메뉴 열기/설치 취소/포탑 선택 해제까지 이어지지 않는다. 패널이 닫혀 있으면 소비하지 않으며 다음 ESC는 기존 Core 메뉴로 전달된다. Core가 Update에서 ESC를 처리하므로 이 검사를 LateUpdate로 옮기면 이미 메뉴가 열린 뒤가 된다.
+
+이 변경의 Core 범위는 ESC 조회 연결과 소비 헬퍼뿐이다. 메뉴의 화면 수명·정지/입력 잠금 정책은 기존 경로를 사용한다. X 및 무기 화살표 클릭도 기존 `GameInput.TryConsumePrimaryPointerPress()`로 소비한다.
+
+검증은 런타임/Editor 코드 컴파일과 프리팹 직렬화 참조·기존 HUD 보존 검사로 구분한다. `PlayerStatusPanelTests`에 I/ESC/X, 무기 교체와 탄창 유지, actor 교체, 기존 입력 잠금 보존 회귀 테스트를 추가했다. Unity 자동 테스트 실행 및 실제 Game View 조작·해상도별 외형 확인은 별도다.
 
 ## 2026-11-09 Player 성장 표시 추가
 

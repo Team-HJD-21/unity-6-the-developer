@@ -39,7 +39,10 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     private double _impactAt;
     private bool _pendingStrike;
     private bool _repairIntent;
+    private PlayerBaseStats _baseStats;
     public float AttackInterval => Mathf.Max(.05f, _attackInterval);
+    public int AttackDamage => Mathf.Max(0, _damage);
+    public float AttackRange => Mathf.Max(.1f, _range);
 
     public void Bind(Transform owner, PlayerInputHandler input)
     {
@@ -49,6 +52,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         _motion = owner != null ? owner.GetComponent<PlayerSpriteMotion>() : null;
         _controls = owner != null ? owner.GetComponent<PlayerControlState>() : null;
         _heldRepair = owner != null ? owner.GetComponent<PlayerTurretRepair>() : null;
+        _baseStats = owner != null ? owner.GetComponent<PlayerBaseStats>() : null;
         if (_view == null) _view = GetComponentInChildren<PlayerSpannerView>(true);
         if (_repair == null) _repair = GetComponent<PlayerSpannerRepair>();
     }
@@ -105,6 +109,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     {
         _hit.Clear();
         bool feedbackShown = false;
+        int damage = _baseStats != null ? Mathf.RoundToInt(_baseStats.ResolveWeaponDamage(_damage)) : Mathf.Max(0, _damage);
         // Query again at the strike: moving away or stepping behind a wall must avoid the hit.
         foreach (Collider2D collider in Physics2D.OverlapCircleAll(_owner.position, Mathf.Max(.1f, _range)))
         {
@@ -115,7 +120,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
             if (!PlayerSpannerTargeting.CanReach(_owner, enemy.transform, point, _swingDirection, _range, _arc)) continue;
             _hit.Add(enemy);
             int previousHealth = enemy.CurrentHealth;
-            enemy.TakeDamage(Mathf.Max(0, _damage));
+            enemy.TakeDamage(damage);
             // A client-side rejected request must not appear to be a confirmed hit.
             if (!feedbackShown && enemy.CurrentHealth < previousHealth)
             {

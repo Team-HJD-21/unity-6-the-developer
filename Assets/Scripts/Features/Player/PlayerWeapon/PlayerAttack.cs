@@ -50,6 +50,7 @@ public partial class PlayerAttack : MonoBehaviour
     private PlayerSpriteMotion _motion;
     private PlayerTurretRepair _repair;
     private PlayerWeaponAmmo _ammo;
+    private PlayerBaseStats _baseStats;
     private double _nextShotTime;
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     private PlayerMatchPresence Presence => GetComponent<PlayerMatchPresence>();
@@ -69,6 +70,7 @@ public partial class PlayerAttack : MonoBehaviour
         _motion = GetComponent<PlayerSpriteMotion>();
         _repair = GetComponent<PlayerTurretRepair>();
         _ammo = GetComponent<PlayerWeaponAmmo>();
+        _baseStats = GetComponent<PlayerBaseStats>();
     }
 
     // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
@@ -144,6 +146,7 @@ public partial class PlayerAttack : MonoBehaviour
 
     private bool FireProjectile(Vector3 spawnPosition, Vector2 direction, Color color, float damage, bool cryogenic)
     {
+        if (_baseStats != null) damage = _baseStats.ResolveWeaponDamage(damage);
         var bullet = Instantiate(CurrentBulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
         FieldSimulationTime.BindSpawned(bullet.gameObject, this);
         bullet.SourceWeapon = _selection.CurrentWeapon;

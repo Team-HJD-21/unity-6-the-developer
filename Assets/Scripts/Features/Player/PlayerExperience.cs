@@ -32,6 +32,10 @@ public sealed partial class PlayerExperience : MonoBehaviour, IPlayerMatchBindin
     public long RequiredExperience => State.RequiredExperience;
     public float Progress => State.Progress;
     public bool IsMaximumLevel => State.IsMaximumLevel;
+    public int MaximumLevel => State.MaximumLevel;
+    public bool CanGrantExperience => isActiveAndEnabled && (!_matchBound || _authority) && HasCurrentMatch &&
+        FieldSimulationTime.CanAdvance(this);
+    public long RemainingToNextLevel => IsMaximumLevel ? 0 : RequiredExperience - ExperienceInLevel;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ClearRegistry() => ActivePlayers.Clear();
@@ -41,8 +45,7 @@ public sealed partial class PlayerExperience : MonoBehaviour, IPlayerMatchBindin
 
     public bool AddExperience(int amount)
     {
-        if (!isActiveAndEnabled || (_matchBound && !_authority) || !HasCurrentMatch ||
-            !FieldSimulationTime.CanAdvance(this)) return false;
+        if (!CanGrantExperience) return false;
         return ApplyExperience(amount);
     }
 
