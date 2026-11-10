@@ -69,7 +69,6 @@ namespace Map
             foreach (var id in snapshot.Forecast) forecast.Enqueue(FromCoreId(id));
             currentWeather = selected;
             weatherQueue = forecast;
-            WeatherCanvasColorChange(selected, forecast);
             ApplyWeatherShader();
         }
 
