@@ -10,6 +10,8 @@ namespace TeamHJD.Game.Contracts
         event Action PhaseAdvanced;
         DayNightPhase Phase { get; }
 
+        double DaySeconds { get; }
+        double NightSeconds { get; }
         double RemainingSeconds { get; }
     }
 }

@@ -18,6 +18,7 @@ namespace TeamHJD.Game.UI
         private IMatchDayNightDebugControl _debug;
         private TMP_Text _timer, _phase;
         private Button _reset;
+        private Button _advance;
         private string _originalLabel;
         private Color _originalColor;
         private Vector2 _originalAnchorMin, _originalAnchorMax, _originalPosition;
@@ -64,6 +65,13 @@ namespace TeamHJD.Game.UI
             _reset.onClick = new Button.ButtonClickedEvent();
             _reset.onClick.AddListener(ResetTimerAndWeather);
             _reset.GetComponentInChildren<TMP_Text>().text = "Reset";
+            _advance = Instantiate(weatherButton, anchor.parent);
+            _advance.name = "Day Night Advance";
+            Place((RectTransform)_advance.transform, anchor, 0, anchor.rect.height);
+            ((RectTransform)_advance.transform).anchoredPosition += Vector2.right * (anchor.rect.width + 12);
+            _advance.onClick = new Button.ButtonClickedEvent();
+            _advance.onClick.AddListener(AdvanceDayNight);
+            _advance.GetComponentInChildren<TMP_Text>().text = "Day/Night";
             Refresh();
         }
 
@@ -90,6 +98,7 @@ namespace TeamHJD.Game.UI
                 _timer.text = seconds < 0 ? "--:--" : $"{seconds / 60}:{seconds % 60:00}";
             }
             _reset.interactable = _debug?.CanRestartCurrentPhase == true;
+            _advance.interactable = _debug?.CanRestartCurrentPhase == true;
         }
 
         /// <summary>Host 디버그 버튼 전용입니다. 현재 낮밤은 유지하고 5분을 다시 시작하며 기존 날씨 큐를 한 번 진행합니다.</summary>
@@ -98,6 +107,11 @@ namespace TeamHJD.Game.UI
             if (_debug?.TryRestartCurrentPhase() != true) return;
             weatherButton.onClick.Invoke();
             Refresh();
+        }
+
+        public void AdvanceDayNight()
+        {
+            if (_debug?.TryAdvancePhase() == true) Refresh();
         }
 
         private static void Place(RectTransform rect, RectTransform anchor, float offsetY, float height)
@@ -125,6 +139,11 @@ namespace TeamHJD.Game.UI
             {
                 _reset.onClick.RemoveListener(ResetTimerAndWeather);
                 Destroy(_reset.gameObject);
+            }
+            if (_advance != null)
+            {
+                _advance.onClick.RemoveListener(AdvanceDayNight);
+                Destroy(_advance.gameObject);
             }
         }
     }

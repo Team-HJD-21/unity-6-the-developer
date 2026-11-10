@@ -7,5 +7,7 @@ namespace TeamHJD.Game.Contracts
         bool CanRestartCurrentPhase { get; }
         /// <summary>현재 Day/Night를 유지하고 해당 구간의 남은 시간을 처음으로 돌립니다. Client/종료된 Match는 거부합니다.</summary>
         bool TryRestartCurrentPhase();
+        /// <summary>Host 디버그에서 다음 Day/Night 구간으로 즉시 진행합니다.</summary>
+        bool TryAdvancePhase();
     }
 }
