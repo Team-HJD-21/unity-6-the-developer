@@ -12,7 +12,7 @@ namespace Map
         [SerializeField] private WeatherManager _weatherManager;
         private IMatchDayNightCycle _dayNightCycle;
         
-        [FormerlySerializedAs("_nightMaterial")]
+        [FormerlySerializedAs("_daynightMaterial")]
         [SerializeField] private Material _dayNightMaterial;
         private Material _runtimeDayNightMaterial;
 
