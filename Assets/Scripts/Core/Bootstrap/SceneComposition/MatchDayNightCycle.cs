@@ -14,9 +14,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         IMatchDayNightDebugControl
     {
         [SerializeField, Min(.01f)]
-        private double daySeconds = 10;
+        private double daySeconds = 300;
         [SerializeField, Min(.01f)]
-        private double nightSeconds = 10;
+        private double nightSeconds = 300;
         // Apply에서 참조용
         public double DaySeconds => daySeconds;
         public double NightSeconds => nightSeconds;
