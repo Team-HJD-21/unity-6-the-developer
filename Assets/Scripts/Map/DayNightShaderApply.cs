@@ -11,8 +11,8 @@ namespace Map
         [SerializeField] private WeatherManager _weatherManager;
         private IMatchDayNightCycle _dayNightCycle;
         
-        [SerializeField] private Material _nightMaterial;
-        private Material _runtimeNightMaterial;
+        [SerializeField] private Material _dayNightMaterial;
+        private Material _runtimeDayNightMaterial;
 
         public bool IsNight { get; private set; }
 
@@ -49,15 +49,15 @@ namespace Map
 
         private void OnDestroy()
         {
-            if (_runtimeNightMaterial != null) Destroy(_runtimeNightMaterial);
+            if (_runtimeDayNightMaterial != null) Destroy(_runtimeDayNightMaterial);
         }
 
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
-            if (_dayNightCycle != null && _nightMaterial != null)
+            if (_dayNightCycle != null && _dayNightMaterial != null)
             {
-                if (_runtimeNightMaterial == null)
-                    _runtimeNightMaterial = new Material(_nightMaterial);
+                if (_runtimeDayNightMaterial == null)
+                    _runtimeDayNightMaterial = new Material(_dayNightMaterial);
                 double remaining = _dayNightCycle.RemainingSeconds;
                 double dayDuration = _dayNightCycle.DaySeconds;
                 double nightDuration = _dayNightCycle.NightSeconds;
@@ -80,8 +80,8 @@ namespace Map
                     }
                     blend = Mathf.Clamp01(blend);
                 }
-                _runtimeNightMaterial.SetFloat(EffectBlendId, blend);
-                Graphics.Blit(source, destination, _runtimeNightMaterial);
+                _runtimeDayNightMaterial.SetFloat(EffectBlendId, blend);
+                Graphics.Blit(source, destination, _runtimeDayNightMaterial);
             }
             else
                 Graphics.Blit(source, destination);
