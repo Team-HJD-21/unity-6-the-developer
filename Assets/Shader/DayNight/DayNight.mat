@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Night
+  m_Name: DayNight
   m_Shader: {fileID: 4800000, guid: 9e35d068a2d94d7da6acf1e73bb08784, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
