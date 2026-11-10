@@ -939817,9 +939817,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
   environmentProfile: {fileID: 0}
+  autoStartHost: 1
   initialSquadOrder: Normal
   initialEnemyLimit: 10
+  regionBinding: {fileID: 877435134}
+  spawnBudget: 20
+  maximumSpawnBudget: 100
+  staticBudgetIncreasePerRequest: 5
   initialEncounterDelay: 0.5
+  selectionSettings:
+    nearbyCellRadius: 1
+    sparseEnemyPercentage: 20
+    preferredMultiplier: 3
+    maxEnemiesPerCell: 20
+    baseBudgetWeight: 1
+    sparseBudgetBonus: 1
+    playerBudgetBonus: 2
+    logSelectionDecisions: 1
 --- !u!1 &1749657957
 GameObject:
   m_ObjectHideFlags: 0

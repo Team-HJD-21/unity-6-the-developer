@@ -61,6 +61,9 @@ namespace TeamHJD.Game.Debugging
         private FieldTurretController _turretController;
         private FieldTurretControllerSnapshot _controllerSnapshot;
         private Camera _mainCamera;
+        private float _initialCameraMoveSpeed;
+        private float CurrentZoomSpeed =>
+            cameraZoomSpeed * (Mathf.Max(minimumCameraMoveSpeed, cameraMoveSpeed) / _initialCameraMoveSpeed);
         private Vector2 _scrollPosition;
         private Vector2 _turretScrollPosition;
         private bool _isPanelVisible = true;
@@ -72,6 +75,7 @@ namespace TeamHJD.Game.Debugging
 
         private void Start()
         {
+            _initialCameraMoveSpeed = Mathf.Max(0.1f, minimumCameraMoveSpeed, cameraMoveSpeed);
             ConfigureTestUnlockZones();
             RefreshReferences();
             _mainCamera = Camera.main;
@@ -251,6 +255,7 @@ namespace TeamHJD.Game.Debugging
             }
             GUILayout.EndHorizontal();
 
+            showUnlockZones = GUILayout.Toggle(showUnlockZones, "Show Unlock Grid");
             _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
             DrawWrappedLabel("Click a turret in the map to open its controls.");
             GUILayout.BeginHorizontal();
@@ -290,7 +295,8 @@ namespace TeamHJD.Game.Debugging
                 if (autoController.UnlockZones != null)
                 {
                     DrawWrappedLabel($"Unlock Zones: {autoController.UnlockedZoneCount} / {autoController.UnlockZones.ZoneCount} (cell steps from CU)");
-                    DrawWrappedLabel("Game view overlay: green = unlocked, red = locked; number = zone");
+                    if (showUnlockZones)
+                        DrawWrappedLabel("Game view overlay: green = unlocked, red = locked; number = zone");
                     GUI.enabled = !autoController.IsAutoActivationRunning;
                     if (GUILayout.Button("Unlock Next Zone") &&
                         autoController.UnlockedZoneCount < autoController.UnlockZones.ZoneCount)
@@ -332,9 +338,9 @@ namespace TeamHJD.Game.Debugging
                 $"Operational {FieldTurretInstanceRegistry.GetOperationalSnapshots().Count}");
             string cameraStatus = _mainCamera == null
                 ? $"Move Speed: {cameraMoveSpeed:0.0}"
-                : $"Move Speed: {cameraMoveSpeed:0.0} / Zoom Size: {_mainCamera.orthographicSize:0.0}";
+                : $"Move Speed: {cameraMoveSpeed:0.0} / Zoom Speed: {CurrentZoomSpeed:0.0} / Zoom Size: {_mainCamera.orthographicSize:0.0}";
             DrawWrappedLabel(cameraStatus);
-            DrawWrappedLabel("Camera: WASD / Fast: Shift / Speed: Mouse Wheel");
+            DrawWrappedLabel("Camera: WASD / Fast: Shift / Move & Zoom Speed: Mouse Wheel");
             DrawWrappedLabel("Zoom In: Q / Zoom Out: Space");
             DrawWrappedLabel("Turret window: drag its title / Close or Esc");
             GUILayout.EndScrollView();
@@ -569,7 +575,7 @@ namespace TeamHJD.Game.Debugging
             if (GameInput.IsPressed(GameKey.Space)) zoomDirection += 1f;
 
             _mainCamera.orthographicSize = Mathf.Clamp(
-                _mainCamera.orthographicSize + zoomDirection * cameraZoomSpeed * Time.unscaledDeltaTime,
+                _mainCamera.orthographicSize + zoomDirection * CurrentZoomSpeed * Time.unscaledDeltaTime,
                 minimumOrthographicSize,
                 maximumOrthographicSize);
         }

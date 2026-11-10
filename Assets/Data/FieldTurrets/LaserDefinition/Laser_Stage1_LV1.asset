@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 642a658f044b468089a5fbfc7257c466, type: 3}
+  m_Name: Laser_Stage1_LV1
+  m_EditorClassIdentifier: TeamHJD.Game.FieldTurrets::TeamHJD.Game.Content.FieldTurretDefinition
+  _id: laser_stage1_lv1
+  _displayName: Laser Turret LV.1
+  _role: 0
+  _level: 1
+  _damage: 12
+  _range: 90
+  _rotationSpeed: 200
+  _targetingAngle: 10
+  _fireRate: 1
+  _maxHealth: 100
+  _power: 80
+  _overHeatTime: 20
+  _overHeatMissileCount: 0
+  _coolTime: 10

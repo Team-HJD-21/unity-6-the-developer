@@ -1,0 +1,55 @@
+# 스냅샷
+
+최종 갱신: 2026-10-03
+상태: 조회 시점 복사본. 실시간으로 자동 갱신되는 참조가 아니다.
+
+## FieldTurretSnapshot — 터렛 하나
+
+| 필드 | 의미 |
+| --- | --- |
+| `InstanceId` / `DefinitionId` | 런타임 ID / 정의 ID |
+| `Position` | 월드 위치 |
+| `IsActivated` / `IsOperational` | 켜진 상태 / 실제 작동 가능 상태 |
+| `IsDestroyed` / `IsLocked` | 파괴 / 잠금 상태 |
+| `CurrentHealth` / `MaxHealth` | 현재 / 최대 체력 |
+| `EffectiveDamage` / `EffectivePower` | 보정 적용 공격력 / 요구 전력 |
+| `Range` | 보정 적용 외부 사거리 |
+| `SelectedUpgradeId` / `UpgradeLevel` | 선택한 세부 업그레이드 / 단계 |
+
+`IsActivated`가 true여도 과열 중이라면 작동하지 않을 수 있다. `Range`는 외부 사거리이며 최소 사거리 필드를 포함하지 않는다. 현재 스냅샷에는 `FieldTurretKind`도 포함되지 않는다.
+
+## FieldTurretControllerSnapshot — 전력과 집계
+
+```csharp
+var snapshot = turretController.GetSnapshot();
+int availablePower = snapshot.AvailablePower;
+int activeCanonCount = snapshot.GetActivatedCount(FieldTurretKind.Canon);
+```
+
+| 필드 | 의미 |
+| --- | --- |
+| `MaximumPower` | 최대 전력 |
+| `AvailablePower` | 지금 예약할 수 있는 전력 |
+| `ReservedPower` | 사용 중인 예약 전력 |
+| `PendingRecoveryPower` | 반환을 기다리는 전력 |
+| `RegisteredTurretCount` | 해당 컨트롤러를 사용하는 등록 터렛 수 |
+| `ActivatedTurretCount` | 활성 상태인 비파괴 터렛 수 |
+| `OperationalTurretCount` | 작동 가능한 터렛 수 |
+| `ActivatedCountByType` | 종류별 활성 수의 읽기 전용 복사본 |
+| `GetActivatedCount(FieldTurretKind)` | 해당 종류의 활성 수. 없으면 0 |
+
+전력은 `MaximumPower = AvailablePower + ReservedPower + PendingRecoveryPower`로 구분한다. 끈 터렛의 전력이 즉시 가용 전력으로 전부 돌아오는 것은 아니다.
+
+Stage 1 Laser는 다른 필드 터렛과 같은 Registry 및 전력 예산에 포함된다. Laser의 이론 DPS는 빔에 계속 맞는 적 한 마리를 기준으로, 빔당 틱 피해 합계를 조준·발사·빔 접힘·재전개 대기 시간의 합으로 나눈 값이다. 조준 시간에는 얇은 빔이 길어지는 시간이 포함된다. 추가 탐색 시간과 과열 냉각은 계산에서 제외한다.
+
+## 보관과 갱신
+
+Match 체크포인트는 조회용 스냅샷과 별도로 Laser의 열, 표적, 빔 방향·전개·수축 상태와 남은 발사·재전개 시간을 저장한다. 복원 직후에는 피해를 다시 적용하지 않으며, 저장된 다음 피해 틱부터 발사가 이어진다. 체크포인트에서 복원하려면 Match의 터렛 카탈로그에 해당 Laser Definition과 프리팹이 등록되어 있어야 한다.
+
+Laser의 조준·빔 전개·수축과 열 누적은 필드 시계를 따른다. 필드가 정지하면 빔 종료·피해 틱·재전개까지의 남은 시간도 멈추고, 재개하거나 체크포인트를 복원하면 같은 필드 시간 기준으로 이어진다.
+
+스냅샷은 조회 당시의 값이다. 최신 값이 필요할 때 다시 조회한다. 매 프레임 전체 목록을 반복 복사하기보다 소비자의 갱신 주기에 맞게 조회하거나 변경 이벤트로 캐시를 무효화한다. 모든 소비자가 동일한 갱신 주기를 써야 한다는 뜻은 아니다.
+
+### 화력 효율
+
+`TheoreticalDps`는 유효 공격력 × 초당 발사 횟수 × 발사당 최대 탄환 수다. `DpsPerPower`는 이 값을 활성화 전력 `EffectivePower`로 나눈 값이며 전력 0이면 0이다. 업그레이드 후 유효 공격력과 전력 변경을 반영한다. 과열과 명중률 및 폭발 다중 피해는 계산에 포함하지 않는다.

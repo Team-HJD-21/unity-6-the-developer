@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: GoblinMage
   _prefab: {fileID: 1889074790280127636, guid: f0bc79a5aae72e94b896a562faf7a0e6, type: 3}
-  _spawnCost: 1
+  _spawnCost: 3

@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: Treant
   _prefab: {fileID: 8210154580784555683, guid: 8c1ed1dd3cfb0934f8d29e00417eb712, type: 3}
-  _spawnCost: 1
+  _spawnCost: 3

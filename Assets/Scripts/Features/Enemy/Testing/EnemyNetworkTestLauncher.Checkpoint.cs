@@ -9,6 +9,9 @@ using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 
+/// <summary>
+/// 초기 Encounter와 지연 요청, 분산 이력의 저장·복원 연결을 제공한다.
+/// </summary>
 public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, ICheckpointParticipantProvider
 {
     string ICheckpointParticipant.Key => "world/encounter";
@@ -43,6 +46,9 @@ public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, I
             throw new InvalidOperationException("Bind the authority Encounter before checkpoint operations.");
     }
 
+    /// <summary>
+    /// 초기 요청과 대기 중인 예약의 남은 시간, 생성 분산 이력을 저장한다.
+    /// </summary>
     private SavedEncounter CaptureEncounter()
     {
         var requests = _pendingSpawns.Values.Where(p => p.Reservation.IsPending).Select(p =>
@@ -56,6 +62,9 @@ public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, I
             _encounterRuntime.CaptureCheckpoint());
     }
 
+    /// <summary>
+    /// 저장된 요청 대기 상태와 분산 이력을 현재 Match에 다시 연결한다.
+    /// </summary>
     private void ApplyEncounter(SavedEncounter saved)
     {
         CancelPendingInitialEncounter(); CancelScheduledEncounters();
@@ -70,6 +79,9 @@ public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, I
         }
     }
 
+    /// <summary>
+    /// Encounter의 초기 요청·예약·분산 이력을 저장 payload에 기록한다.
+    /// </summary>
     private static void WriteEncounter(BinaryWriter w, SavedEncounter saved, ICheckpointPayloadCodec codec)
     {
         w.Write(saved.InitialPending); w.Write(saved.InitialRemaining); saved.History.Write(w, codec);
@@ -87,6 +99,9 @@ public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, I
         }
     }
 
+    /// <summary>
+    /// 저장 payload에서 Encounter의 요청 대기 상태와 분산 이력을 읽는다.
+    /// </summary>
     private static SavedEncounter ReadEncounter(BinaryReader r, ICheckpointPayloadCodec codec)
     {
         bool initial = r.ReadBoolean(); double remaining = r.ReadDouble();
