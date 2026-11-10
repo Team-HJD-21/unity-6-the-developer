@@ -9,32 +9,43 @@
 
 | 위치 | 넣을 문서 | 예시 |
 | --- | --- | --- |
-| `product/` | 게임 정체성, 플레이 경험, 제품 범위와 결정 기록 | [Product Plan](product/PROJECT_PLAN.md) |
-| `architecture/` | Core 경계, 코드·계약 명명, 레거시 이식 참고 | [System Charter](architecture/system-rearchitecture-charter.md) |
-| `planning/` | Milestone, 개발 흐름, 현재 Sprint 계획과 아직 진행 중인 검토 기록 | [Sprint 1 PoC](planning/SPRINT_1_STAGE_1_POC.md) |
-| `team/` | 담당 영역, 협업 절차, Issue 분류·Review 규칙 | [Team Workflow](team/TEAM_WORKFLOW.md) |
-| `tooling/` | 팀 공통 Unity·CLI 설치, 패키지 복원과 환경 오류 해결 절차 | [Unity Tooling Setup](tooling/UNITY_TOOLING_SETUP.md) |
-| `archive/` | 현행 기준에 반영을 마친 회의 요약, 종료된 Sprint, 모집 자료와 레거시 분석 | [9월 26일 회의 요약](archive/2026-09-26-stage1-planning.md) |
+| `00_product/` | 게임 정체성, 플레이 경험, 제품 범위와 결정 기록 | [Product Plan](00_product/PROJECT_PLAN.md) |
+| `01_planning/` | Milestone, 개발 흐름, 현재 Sprint 계획과 아직 진행 중인 검토 기록 | [Sprint 1 PoC](01_planning/SPRINT_1_STAGE_1_POC.md) |
+| `01_planning/01_meetings/YYYY/MM/` | 정기·비정기 회의 요약과 회의에서 공유한 주간 진행 기록 | [11월 6일 기획 보강회의](01_planning/01_meetings/2026/11/2026-11-06-planning-review.md) |
+| `01_planning/02_implementation-records/YYYY/MM/` | 구현 배치, 통합·검증 결과, PR 전달·수동 인수 기록 | [11월 5일 Core 통합 결과](01_planning/02_implementation-records/2026/11/2026-11-05-core-feature-integration-results.md) |
+| `02_architecture/` | Core 경계, 코드·계약 명명, 레거시 이식 참고 | [System Charter](02_architecture/00_foundations/system-rearchitecture-charter.md) |
+| `03_team/` | 담당 영역, 협업 절차, Issue 분류·Review 규칙 | [Team Workflow](03_team/TEAM_WORKFLOW.md) |
+| `04_development/` | 개발·런타임 검증 지침 | [Unity 런타임 테스트](04_development/unity-runtime-test-guidelines.md) |
+| `05_tooling/` | 팀 공통 Unity·CLI 설치, 패키지 복원과 환경 오류 해결 절차 | [Unity Tooling Setup](05_tooling/UNITY_TOOLING_SETUP.md) |
+| `94_art/` | 아트 검토 문서와 미리보기 | [플레이어 스프라이트 검토](https://github.com/Team-HJD-21/unity-6-the-developer/blob/6ed4f15650965830dda1139b0a1b4b3baa0e1f78/Docs/art/player-idle-breathing-and-sprite-review.md) |
+| `95_licenses/`, `96_images/`, `97_screenshots/`, `98_videos/` | 라이선스, 문서 이미지, 스크린샷, 영상 | [PCG 라이선스](95_licenses/pcg32-LICENSE.txt) |
+| `99_archive/` | 현행 기준에 반영을 마친 회의 요약, 종료된 Sprint, 모집 자료와 레거시 분석 | [9월 26일 회의 요약](99_archive/2026-09-26-stage1-planning.md) |
+| `99_archive/planning-links/` | 보관된 비회의 계획·구현 기록의 안내 | [Stage 1 PoC 통합 준비표 안내](99_archive/planning-links/2026-10-07-stage1-poc-integration-prep.md) |
 | `Local/` | 개인 메모와 승인 전 초안. Git에서 무시하며 팀 기준으로 사용하지 않음 | 로컬 전용 |
 
 `Docs/` 최상위에는 탐색용 [README.md](README.md)와 이 정리 규칙을 둔다. 새 문서는 목적에 맞는 하위 폴더에 배치한다.
+
+공유 폴더는 계층마다 `NN_주제` 형식을 사용한다. 현행 자료는 `00`부터 중요도 순으로 번호를 붙이고, 후순위·보관 자료는 `99`부터 내려오며 번호를 배정한다. 날짜를 담는 연·월 폴더와 `99_archive/` 아래의 날짜·주제 폴더에는 중요도 번호를 붙이지 않는다. 아카이브 날짜 폴더는 `YYYY-MM-DD`를 그대로 쓴다.
 
 ## 2. 새 문서를 만들 때
 
 1. 먼저 [README.md](README.md)에서 같은 주제를 다루는 기준 문서가 있는지 찾는다. 내용이 겹치면 새 파일보다 기존 기준 문서 수정을 우선한다.
 2. 문서 첫머리에 제목, 기준일 또는 수정일, 상태를 적는다. 초안·현행 기준·참고 자료·과거 기록을 구분한다.
 3. 파일명은 내용을 알 수 있게 짓고, 새 문서는 영문 `kebab-case.md`를 기본으로 한다. 이미 사용 중인 대문자 파일명은 정리만을 위해 변경하지 않는다.
-4. 다른 문서를 인용할 때는 파일명만 적지 말고 상대경로 Markdown 링크를 사용한다. `Docs/` 최상위에서의 예: [역할 기준](team/TEAM_ROLE_OWNERSHIP.md). 하위 폴더의 문서에서는 필요에 따라 `../`로 상위 폴더를 가리킨다.
+4. 다른 문서를 인용할 때는 파일명만 적지 말고 상대경로 Markdown 링크를 사용한다. `Docs/` 최상위에서의 예: [역할 기준](03_team/TEAM_ROLE_OWNERSHIP.md). 하위 폴더의 문서에서는 필요에 따라 `../`로 상위 폴더를 가리킨다.
 5. 팀원이 찾아야 할 새 문서는 [README.md](README.md)의 폴더 안내 또는 읽는 순서에 추가한다.
 
 ## 3. 내용의 기준을 유지할 때
 
 - 같은 결정은 한 기준 문서에서 관리하고, 다른 문서는 그 문서로 연결한다. 충돌 시 [Source of Truth 표](README.md#source-of-truth)의 기준 문서가 우선한다.
 - 회의록 원본은 회의록 저장소에 보존한다. Docs에는 추적할 필요가 있는 회의별 결정·검토 요약만 날짜별로 남기고, 확정된 결정과 현재 Sprint에 영향을 주는 내용은 각각 Product Plan과 실행 문서에 반영한다. 제안·예시·미결정 항목은 확정 규칙으로 옮기지 않는다.
-- 회의 요약의 유효한 결정·담당·일정·미결정 항목을 현행 기준 문서에 모두 반영한 뒤에는 그 요약을 `archive/`로 옮긴다. 아직 실행 기준으로 쓰거나 옮기지 않은 결정이 있다면 `planning/`에 두고 먼저 기준 문서와 Backlog를 정리한다. Archive의 내용은 결정의 근거이지 현재 실행 지시가 아니다.
+- `01_planning`에 두는 회의 기록은 회의 개최일을 기준으로 `01_meetings/YYYY/MM/`에 넣는다. 연도는 네 자리, 월은 두 자리로 표기하며 날짜 폴더에는 중요도 번호를 붙이지 않는다. 새 파일은 `YYYY-MM-DD-주제.md`로 작성한다. 정기·비정기 회의와 회의 기반 주간 보고에 적용하며, 보관 원문으로 연결하는 회의 안내도 같은 위치에 둔다.
+- `01_planning/` 바로 아래에는 현행 실행 계획·개발 흐름·마일스톤·스프린트처럼 팀이 바로 찾아야 할 기준 문서만 둔다. 날짜가 붙는 구현 배치·통합 결과·검증·인수 기록은 기록일 기준으로 `02_implementation-records/YYYY/MM/`에 두고, 파일명은 `YYYY-MM-DD-주제.md`로 작성한다.
+- 비회의 계획·구현 기록을 보관하고 원문 링크 안내가 필요하면 `99_archive/planning-links/`에 둔다. 안내에는 보관 원문과 관련 현행 기준을 연결한다.
+- 회의 요약의 유효한 결정·담당·일정·미결정 항목을 현행 기준 문서에 모두 반영한 뒤에는 그 요약을 `99_archive/`로 옮긴다. 아직 실행 기준으로 쓰거나 옮기지 않은 결정이 있다면 `01_planning/`에 두고 먼저 기준 문서와 Backlog를 정리한다. Archive의 내용은 결정의 근거이지 현재 실행 지시가 아니다.
 - 이전 회의 기록이 새로운 결정으로 대체되어도 원문을 삭제하거나 과거 결론을 소급 수정하지 않는다. 현재 기준과의 관계를 상태나 후속 문서 링크로 표시한다.
-- 게임 범위·Core 계약·역할·Milestone을 바꾸면 해당 기준 문서와 영향을 받는 계획·Backlog를 함께 갱신한다. 자세한 협업 절차는 [Team Workflow](team/TEAM_WORKFLOW.md)를 따른다.
-- `archive/` 문서를 다시 현재 기준처럼 고치지 않는다. 필요하면 현행 기준 문서에 결정을 반영하고, 과거 문서에는 현재 문서로 가는 안내만 둔다.
+- 게임 범위·Core 계약·역할·Milestone을 바꾸면 해당 기준 문서와 영향을 받는 계획·Backlog를 함께 갱신한다. 자세한 협업 절차는 [Team Workflow](03_team/TEAM_WORKFLOW.md)를 따른다.
+- `99_archive/` 문서를 다시 현재 기준처럼 고치지 않는다. 필요하면 현행 기준 문서에 결정을 반영하고, 과거 문서에는 현재 문서로 가는 안내만 둔다.
 - `Local/`은 원격에 올라가지 않는다. 팀에 공유할 내용은 검토한 뒤 적절한 폴더로 옮기고 README에서 연결한다. 비밀키·토큰은 로컬 문서에도 기록하지 않는다.
 
 ## 팀원 표기와 기술 용어를 구분할 때
@@ -47,7 +58,7 @@
 
 - 원본 내용을 보존하면서 파일을 이동한다. 이름과 경로를 동시에 바꿔야 한다면 한 번에 한 주제씩 처리한다.
 - 문서 내부 링크, [Docs 목차](README.md), 저장소 최상단 README 등 옛 경로를 참조하는 곳을 같은 변경에서 갱신한다. 외부에 공유한 직접 링크도 확인한다.
-- `archive/`로 옮긴 문서에는 과거 기록임을 표시하고, 있다면 현재 실행 문서로 연결한다. 별도 요청 없이 삭제하지 않는다.
+- `99_archive/`로 옮긴 문서에는 과거 기록임을 표시하고, 있다면 현재 실행 문서로 연결한다. 별도 요청 없이 삭제하지 않는다.
 - 변경 후 상대경로 링크가 실제 파일을 가리키는지 검사한다. Git에서 이동이 삭제·신규 파일로 표시될 수 있으므로 커밋 전 변경 범위를 확인한다.
 
 이 규칙은 폴더와 링크의 관리 기준이며, 기존 문서의 제품·기술 결정을 새로 정의하지 않는다.

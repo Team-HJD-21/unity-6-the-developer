@@ -1,0 +1,33 @@
+%% 4종 터렛 / 설계 제안 / 입력 조건은 모두 AND
+flowchart TB
+    START["Laser 전용<br/>Stage 클리어로 구간 개방"]
+    G3["Stage 2 최초 클리어"]
+    START --> G3
+    G4["Stage 3 최초 클리어"]
+    START --> G4
+    G6["Stage 5 최초 클리어<br/>최종 연구 개방"]
+    START --> G6
+    LAS1["Stage 3부터 · Laser Lv1 첫 등장"]
+    G3 --> LAS1
+    LAS2["Stage 4부터 · Laser Lv2 승급 자격<br/>최대 Lv2"]
+    G4 --> LAS2
+    LAS_D["LAS_D · Laser 출력 렌즈<br/>최종 최대 3단계<br/>기본 초당 피해 +5%씩<br/>단계당 1 토큰"]
+    LAS1 --> LAS_D
+    LAS_T["LAS_T · Laser 집속 가속<br/>최종 최대 3단계<br/>집중 완료 시간 -10%씩<br/>단계당 2 토큰"]
+    G4 --> LAS_T
+    LAS_D -. "1단계 이상" .-> LAS_T
+    LAS_B["LAS_B · Laser 집중 증폭<br/>최종 최대 3단계<br/>최대 집중 피해 보너스 +5%p씩<br/>단계당 2 토큰"]
+    G4 --> LAS_B
+    LAS_D -. "1단계 이상" .-> LAS_B
+    LAS_K["LAS_K · Laser 집중 관성<br/>최종 최대 2단계<br/>짧은 차폐 시 집중 유지 시간 +0.15초씩<br/>단계당 3 토큰"]
+    G6 --> LAS_K
+    LAS_T -. "2단계 이상" .-> LAS_K
+    classDef gate fill:#E4EDF7,stroke:#496681,color:#142535,stroke-width:2px;
+    classDef cu fill:#EDF1E7,stroke:#717E51,color:#29331C;
+    classDef common fill:#F1F1F1,stroke:#777777,color:#222222;
+    classDef canon fill:#F7E6DD,stroke:#996347,color:#402719;
+    classDef missile fill:#E4EDF7,stroke:#58769A,color:#1C3049;
+    classDef tesla fill:#EEE6F6,stroke:#80609B,color:#342042;
+    classDef laser fill:#E2F2E9,stroke:#4D7D65,color:#1B3929;
+    class START,G3,G4,G6 gate;
+    class LAS1,LAS2,LAS_D,LAS_T,LAS_B,LAS_K laser;

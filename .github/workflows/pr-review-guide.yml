@@ -37,7 +37,7 @@ jobs:
             if (current.state !== 'open' || current.draft || current.head.sha !== eventPr.head.sha) return;
 
             const files = (await github.paginate(github.rest.pulls.listFiles, { ...params, per_page: 100 }))
-              .filter(file => !file.filename.startsWith('Docs/archive/'));
+              .filter(file => !/^Docs\/(?:99_)?archive\//.test(file.filename));
             if (!files.length) return;
             const { data: after } = await github.rest.pulls.get(params);
             if (after.head.sha !== current.head.sha || after.base.sha !== current.base.sha) return;
@@ -81,6 +81,7 @@ jobs:
             /Assets/Scripts/
             /Docs/
             !/Docs/archive/
+            !/Docs/99_archive/
             /Packages/
             /ProjectSettings/
           sparse-checkout-cone-mode: false
@@ -162,7 +163,7 @@ jobs:
             }
 
             const patches = new Map(files
-              .filter(file => !file.filename.startsWith('Docs/archive/'))
+              .filter(file => !/^Docs\/(?:99_)?archive\//.test(file.filename))
               .map(file => [file.filename, file.patch ?? '']));
             const addedLine = (patch, target) => {
               let line = 0;
