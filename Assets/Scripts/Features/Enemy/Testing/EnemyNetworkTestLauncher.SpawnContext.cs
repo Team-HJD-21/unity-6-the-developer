@@ -9,6 +9,9 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
 
+/// <summary>
+/// Core의 환경·생성 source·Match 시계와 지연 요청을 연결한다.
+/// </summary>
 public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentConsumer, IEncounterSpawnContextConsumer, IEncounterOriginRequestTarget
 {
     [SerializeField] private EncounterEnvironmentProfile environmentProfile;
@@ -53,6 +56,9 @@ public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentCons
     private EncounterExecutionContext ReservationContext(EncounterRequest request) => new EncounterExecutionContext(
         request.Context.MatchId, 0, 0, request.Source, request.PresetId.Value, requestGuid: request.Context.RequestId,
         causeEventId: request.CauseEventId, origin: request.Origin);
+    /// <summary>
+    /// Match 게임 시간 기준으로 요청을 예약하고 취소·결과 조회용 핸들을 반환한다.
+    /// </summary>
     public bool TryScheduleEncounter(EncounterRequest request, double delayGameSeconds, out EncounterSpawnReservation reservation)
     {
         reservation = null;
@@ -79,6 +85,9 @@ public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentCons
         catch { _pendingSpawns.Remove(request.Context.RequestId); reservation.Cancel("Failed to start the Feature wait."); throw; }
         return true;
     }
+    /// <summary>
+    /// Match 시계의 예약 시점까지 기다리고 취소되지 않은 요청을 공통 서비스에 제출한다.
+    /// </summary>
     private IEnumerator RunScheduledEncounter(PendingSpawn pending)
     {
         var token = pending.Request.Origin.Kind == SpawnOriginKind.DynamicSource
@@ -124,6 +133,9 @@ public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentCons
         _spawnClock = clock ?? throw new ArgumentNullException(nameof(clock));
         _spawnContextMatch = match; _spawnSeed = seed; _spawnGameplay = gameplay;
     }
+    /// <summary>
+    /// 해당 Match의 지연 요청과 source·시계 연결을 해제한다.
+    /// </summary>
     public void UnbindSpawnContext(MatchId match)
     {
         if (_spawnContextMatch != match) return;
@@ -133,12 +145,21 @@ public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentCons
     private bool FieldCanAdvance => _spawnClock is not IMatchTime time ||
         (time.IsAvailable && !time.Snapshot.IsPaused && time.Snapshot.Rate > 0);
     public EnemySpawnExecutor ExecutionTarget => _encounterRuntime?.Executor ?? _sceneExecutor;
+    /// <summary>
+    /// 씬에서 지정한 실행기와 환경 설정을 현재 연결부의 제작 참조로 사용한다.
+    /// </summary>
     public void ConfigureScene(EnemySpawnExecutor executor, EncounterEnvironmentProfile profile)
     {
         if (_snapshotProvider != null) throw new InvalidOperationException("Configure the Enemy Scene before binding a Match.");
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         if (_encounterRuntime?.Executor != null) _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = null; _sceneExecutor = executor; environmentProfile = profile;
+        _encounterRuntime = null; _sceneExecutor = executor; _spawnExecutor = executor; environmentProfile = profile;
+        regionBinding = null;
+        foreach (var root in executor.gameObject.scene.GetRootGameObjects())
+        {
+            regionBinding = root.GetComponentInChildren<TeamHJD.Game.Bootstrap.SceneComposition.RegionSceneBinding>(true);
+            if (regionBinding != null) break;
+        }
     }
     private MatchId _environmentMatch;
     private Func<MatchEnvironmentSnapshot> _environmentProvider;
@@ -150,6 +171,9 @@ public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentCons
             throw new InvalidOperationException("Configure one environment query before binding the Encounter Match.");
         _environmentMatch = match; _environmentProvider = current ?? throw new ArgumentNullException(nameof(current));
     }
+    /// <summary>
+    /// 현재 Match와 일치하는 환경 자료의 연결을 해제한다.
+    /// </summary>
     public void UnbindEnvironment(MatchId match)
     { if (_environmentMatch == match) { _environmentProvider = null; _environmentMatch = default; } }
 }

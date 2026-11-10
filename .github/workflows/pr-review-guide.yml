@@ -37,7 +37,7 @@ jobs:
             if (current.state !== 'open' || current.draft || current.head.sha !== eventPr.head.sha) return;
 
             const files = (await github.paginate(github.rest.pulls.listFiles, { ...params, per_page: 100 }))
-              .filter(file => !file.filename.startsWith('Docs/archive/'));
+              .filter(file => !/^Docs\/(?:99_)?archive\//.test(file.filename));
             if (!files.length) return;
             const { data: after } = await github.rest.pulls.get(params);
             if (after.head.sha !== current.head.sha || after.base.sha !== current.base.sha) return;
@@ -81,6 +81,7 @@ jobs:
             /Assets/Scripts/
             /Docs/
             !/Docs/archive/
+            !/Docs/99_archive/
             /Packages/
             /ProjectSettings/
           sparse-checkout-cone-mode: false
@@ -118,9 +119,10 @@ jobs:
             const params = { ...context.repo, issue_number: eventPr.number };
             const marker = '<!-- the-developer-pr-review-guide -->';
             const result = JSON.parse(process.env.REVIEW);
-            if (typeof result?.guide !== 'string' || !Array.isArray(result.findings)) throw new Error('Invalid review output');
+            if (typeof result?.summary !== 'string' || typeof result.guide !== 'string' || !Array.isArray(result.findings)) throw new Error('Invalid review output');
+            const summary = result.summary.trim().replace(/\s+/g, ' ').replaceAll('@', '@\u200b');
             const guide = result.guide.trim().replaceAll('@', '@\u200b');
-            if (!guide) return;
+            if (!summary || !guide) return;
 
             const comments = await github.paginate(github.rest.issues.listComments, { ...params, per_page: 100 });
             const existing = comments.find(comment => comment.user?.login === 'github-actions[bot]' && comment.body?.startsWith(marker));
@@ -131,7 +133,7 @@ jobs:
             const commitUrl = `${current.html_url}/commits/${sha}`;
             const noFindings = result.findings.length === 0 && current.base.sha === process.env.REVIEW_BASE_SHA;
             const reviewResult = noFindings ? '\n\n**리뷰 결과** 검토 범위에서 지적할 결함을 발견하지 못했습니다.' : '';
-            const body = `${marker}\n## PR 리뷰 가이드\n\n기준 커밋 [\`${sha.slice(0, 7)}\`](${commitUrl})${reviewResult}\n\n${guide}`;
+            const body = `${marker}\n## PR 리뷰 가이드\n\n**PR 요약**\n\n${summary}\n\n기준 커밋 [\`${sha.slice(0, 7)}\`](${commitUrl})${reviewResult}\n\n${guide}`;
             if (existing) {
               await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
             } else {
@@ -161,7 +163,7 @@ jobs:
             }
 
             const patches = new Map(files
-              .filter(file => !file.filename.startsWith('Docs/archive/'))
+              .filter(file => !/^Docs\/(?:99_)?archive\//.test(file.filename))
               .map(file => [file.filename, file.patch ?? '']));
             const addedLine = (patch, target) => {
               let line = 0;

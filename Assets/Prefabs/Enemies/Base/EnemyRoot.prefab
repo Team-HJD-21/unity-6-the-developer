@@ -389,6 +389,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8c52885007943a6a5296f235571ec4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDepthSorting
+  footCollider: {fileID: 6459414658828482109}
   minDepth: 65
   maxDepth: 70
 --- !u!114 &9411200

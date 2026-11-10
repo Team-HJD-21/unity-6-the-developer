@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _enemyId: BattleTroll
   _prefab: {fileID: 57143907019190441, guid: b6c817da46de97d43a7e18aa7bdf5283, type: 3}
-  _spawnCost: 1
+  _spawnCost: 4
