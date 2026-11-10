@@ -1,0 +1,63 @@
+%% 성장 구간 순서. 선행 연구는 구간 조건과 함께 충족해야 한다.
+flowchart LR
+    subgraph P1["성장 구간 1"]
+        direction TB
+        stage1["Stage 1 시작"]:::stage
+        debut1["<b>터렛 첫 등장</b><br/>Canon · Missile Lv1"]:::debut
+        cap1["<b>연구 상한</b><br/>기초 연구 최대 1단계"]:::cap
+        research1["<b>새로 열리는 연구</b><br/><br/>보조 축전기<br/><br/>CU 장갑 I<br/><br/>공통 화력 연구<br/><br/>공통 프레임 연구<br/><br/>Canon 구동부<br/><br/>Missile 선회 장치"]:::research
+        stage1 ~~~ debut1 ~~~ cap1 ~~~ research1
+    end
+    subgraph P2["성장 구간 2"]
+        direction TB
+        stage2["Stage 1 최초 클리어"]:::stage
+        cap2["<b>연구 상한</b><br/>기초 연구 최대 2단계"]:::cap
+        research2["<b>새로 열리는 연구</b><br/><br/>전력 정류<br/><small>선행 · 보조 축전기 1단계 이상</small>"]:::research
+        stage2 ~~~ cap2 ~~~ research2
+    end
+    subgraph P3["성장 구간 3"]
+        direction TB
+        stage3["Stage 2 최초 클리어"]:::stage
+        debut3["<b>터렛 첫 등장</b><br/>Stage 3 진입 · Laser Lv1"]:::debut
+        promotion3["<b>승급 자격</b><br/>Canon · Missile Lv2"]:::promotion
+        cap3["<b>연구 상한</b><br/>기초 연구 최종 상한<br/>중급 연구 최대 1단계"]:::cap
+        research3["<b>새로 열리는 연구</b><br/><br/>Laser 출력 렌즈<br/><br/>CU 장갑 II<br/><small>선행 · CU 장갑 I 1단계 이상</small><br/><br/>공통 탐지 연구<br/><small>선행 · 공통 화력 1단계 이상</small><br/><br/>Canon 급탄 장치<br/><small>선행 · Canon 구동부 1단계 이상</small><br/><br/>Canon 방열 코어<br/><small>선행 · Canon 구동부 1단계 이상</small><br/><br/>Missile 발사 제어<br/><small>선행 · Missile 선회 장치 1단계 이상</small><br/><br/>Missile 발사 여유<br/><small>선행 · Missile 선회 장치 1단계 이상</small>"]:::research
+        stage3 ~~~ debut3 ~~~ promotion3 ~~~ cap3 ~~~ research3
+    end
+    subgraph P4["성장 구간 4"]
+        direction TB
+        stage4["Stage 3 최초 클리어"]:::stage
+        promotion4["<b>승급 자격</b><br/>Laser Lv2 · 최종 Lv"]:::promotion
+        cap4["<b>연구 상한</b><br/>중급 연구 최대 2단계"]:::cap
+        research4["<b>새로 열리는 연구</b><br/><br/>대용량 축전기<br/><small>선행 · 전력 정류 1단계 이상</small><br/><br/>Laser 집속 가속<br/><small>선행 · Laser 출력 렌즈 1단계 이상</small><br/><br/>Laser 집중 증폭<br/><small>선행 · Laser 출력 렌즈 1단계 이상</small>"]:::research
+        stage4 ~~~ promotion4 ~~~ cap4 ~~~ research4
+    end
+    subgraph P5["성장 구간 5"]
+        direction TB
+        stage5["Stage 4 최초 클리어"]:::stage
+        debut5["<b>터렛 첫 등장</b><br/>Stage 5 진입 · Tesla Lv1"]:::debut
+        promotion5["<b>승급 자격</b><br/>Canon · Missile Lv3"]:::promotion
+        cap5["<b>연구 상한</b><br/>중급 연구 최종 상한"]:::cap
+        research5["<b>새로 열리는 연구</b><br/><br/>Tesla 방전 출력<br/><br/>고효율 전력망<br/><small>선행 · 대용량 축전기 1단계 이상</small>"]:::research
+        stage5 ~~~ debut5 ~~~ promotion5 ~~~ cap5 ~~~ research5
+    end
+    subgraph P6["성장 구간 6"]
+        direction TB
+        stage6["Stage 5 최초 클리어"]:::stage
+        promotion6["<b>승급 자격</b><br/>Tesla Lv2 · 최종 Lv"]:::promotion
+        cap6["<b>연구 상한</b><br/>최종 연구 개방 · 최대 2단계"]:::cap
+        research6["<b>새로 열리는 연구</b><br/><br/>CU 장갑 III<br/><small>선행 · CU 장갑 II 1단계 이상</small><br/><br/>Canon 순환 냉각<br/><small>선행 · Canon 방열 코어 2단계 이상</small><br/><br/>Missile 냉각 회로<br/><small>선행 · Missile 발사 여유 2단계 이상</small><br/><br/>Tesla 연쇄 분기<br/><small>선행 · Tesla 방전 출력 1단계 이상</small><br/><br/>Tesla 전도 안정화<br/><small>선행 · Tesla 방전 출력 1단계 이상</small><br/><br/>Tesla 연쇄 확장<br/><small>선행 · Tesla 연쇄 분기 2단계 이상</small><br/><br/>Laser 집중 관성<br/><small>선행 · Laser 집속 가속 2단계 이상</small>"]:::research
+        stage6 ~~~ promotion6 ~~~ cap6 ~~~ research6
+    end
+    P1 --> P2 --> P3 --> P4 --> P5 --> P6
+    classDef stage fill:#E4EDF7,stroke:#496681,color:#142535,stroke-width:2px;
+    classDef debut fill:#D9EFDF,stroke:#43825B,color:#183D28,stroke-width:2px;
+    classDef promotion fill:#FFF0DA,stroke:#A66C36,color:#52331A;
+    classDef cap fill:#EAF0F6,stroke:#7790A9,color:#263B53;
+    classDef research fill:#FFFFFF,stroke:#B5BCCA,color:#243043;
+    style P1 fill:#F7F8FA,stroke:#C3CAD4
+    style P2 fill:#F7F8FA,stroke:#C3CAD4
+    style P3 fill:#EFF8F1,stroke:#68A37C,stroke-width:2px
+    style P4 fill:#F7F8FA,stroke:#C3CAD4
+    style P5 fill:#EFF8F1,stroke:#68A37C,stroke-width:2px
+    style P6 fill:#F7F8FA,stroke:#C3CAD4
