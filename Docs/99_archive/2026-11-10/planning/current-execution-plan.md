@@ -1,4 +1,5 @@
 > 교체 전 기록. 기준 커밋 `6ed4f15650965830dda1139b0a1b4b3baa0e1f78`, 원본 `Docs/planning/current-execution-plan.md`. 본문은 보존하고 상대 링크는 기준 커밋에 고정했다.
+> 담당 정정: 스폰 연계는 Core 주도, Enemy 협업이다. [현행 실행 계획](../../../01_planning/current-execution-plan.md)을 참고한다.
 
 # 현재 실행 계획 — Stage 1 검증
 
