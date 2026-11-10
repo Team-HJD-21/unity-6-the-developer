@@ -1,6 +1,7 @@
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Map
 {
@@ -11,6 +12,7 @@ namespace Map
         [SerializeField] private WeatherManager _weatherManager;
         private IMatchDayNightCycle _dayNightCycle;
         
+        [FormerlySerializedAs("_nightMaterial")]
         [SerializeField] private Material _dayNightMaterial;
         private Material _runtimeDayNightMaterial;
 
