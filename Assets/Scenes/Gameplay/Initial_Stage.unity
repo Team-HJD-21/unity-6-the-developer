@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 1452530}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -18.97000, y: -83.36000, z: 0}
+  m_LocalPosition: {x: -18.97, y: -83.36, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -492599,6 +492599,7 @@ GameObject:
   - component: {fileID: 267169724}
   - component: {fileID: 267169725}
   - component: {fileID: 267169726}
+  - component: {fileID: 267169727}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -492705,12 +492706,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4a16c0b244224960bfb392527e48d6b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeatherShaderApply
-  sunnyMaterial: {fileID: 0}
-  rainMaterial: {fileID: 2100000, guid: 3843e0f7f87e4272bea53827783b5b45, type: 2}
-  thunderMaterial: {fileID: 2100000, guid: 0be3d2b3e87a4f91a7442575a6b88a02, type: 2}
-  heatWaveMaterial: {fileID: 2100000, guid: 0f13100fb4084e5e951126fee15e50a6, type: 2}
-  transitionMaterial: {fileID: 2100000, guid: 9b56927dcf944800b4700163788c9bd6, type: 2}
-  transitionDuration: 1.5
+  _sunnyMaterial: {fileID: 0}
+  _rainMaterial: {fileID: 2100000, guid: 3843e0f7f87e4272bea53827783b5b45, type: 2}
+  _thunderMaterial: {fileID: 2100000, guid: 0be3d2b3e87a4f91a7442575a6b88a02, type: 2}
+  _heatWaveMaterial: {fileID: 2100000, guid: 0f13100fb4084e5e951126fee15e50a6, type: 2}
+  _transitionMaterial: {fileID: 2100000, guid: 9b56927dcf944800b4700163788c9bd6, type: 2}
+  _transitionDuration: 1.5
 --- !u!114 &267169726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -492723,6 +492724,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f701d349a70487994499587c17c3c6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeatherEffectBinding
+--- !u!114 &267169727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 267169717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6df207e26e848978941b13dd1ddde61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Map.DayNightShaderApply
+  _weatherManager: {fileID: 1250254886}
+  _nightMaterial: {fileID: 2100000, guid: b3a6fa38abc7d40a489c8623c141a440, type: 2}
 --- !u!1 &297159760
 GameObject:
   m_ObjectHideFlags: 0
@@ -493531,6 +493546,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.FieldTurrets::TeamHJD.Game.FieldTurrets.FieldTurretController
   maximumPower: 100
+  destructionPowerReturnPercent: 50
   unlockGridOrigin: {x: 0, y: 0}
   unlockGridOriginZ: 0
   unlockGridMapWidth: 275
@@ -493729,6 +493745,108 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!1001 &584970845
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1538709566}
+    m_Modifications:
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_Name
+      value: FieldCanonTurret LV1 - Damaged (Repair Test)
+      objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: _turretController
+      value: 
+      objectReference: {fileID: 393497335}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 584970849}
+  m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+--- !u!114 &584970846 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 584970845}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584970848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1bd8bb9366149bab62297b29550d748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &584970847 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 584970845}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &584970848 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 584970845}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &584970849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584970848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/17acebe734894195a6a289f73a2f0607
 --- !u!1 &630859052
 GameObject:
   m_ObjectHideFlags: 0
@@ -871321,7 +871439,7 @@ Transform:
   m_GameObject: {fileID: 765547576}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15.97000, y: -83.36000, z: 0}
+  m_LocalPosition: {x: -15.97, y: -83.36, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -937550,8 +937668,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 877435137}
   - component: {fileID: 877435132}
+  - component: {fileID: 877435137}
   - component: {fileID: 877435133}
   - component: {fileID: 877435134}
   - component: {fileID: 877435135}
@@ -937646,6 +937764,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
   - {fileID: 11400000, guid: a710a35a5d3c49b794d2f387d53dce10, type: 2}
   - {fileID: 11400000, guid: b28a795f5a364f249b632692a760317c, type: 2}
+--- !u!114 &877435137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
+  spawnExecutor: {fileID: 1836352305}
+  environmentProfile: {fileID: 0}
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -938229,7 +938361,6 @@ GameObject:
   - component: {fileID: 1250254887}
   - component: {fileID: 1250254886}
   - component: {fileID: 1250254888}
-  - component: {fileID: 1250254889}
   - component: {fileID: 2035505101}
   m_Layer: 0
   m_Name: WeatherManager
@@ -938252,12 +938383,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeatherManager
   currentWeather: 0
   weatherQueueSize: 5
-  sunnyWeight: 3
-  tmpweatherImage: {fileID: 0}
-  _sunnyColor: {r: 0.9245283, g: 0.40557134, b: 0.40557134, a: 0.5176471}
-  _rainColor: {r: 0.46742615, g: 0.6222011, b: 0.9811321, a: 0.8156863}
-  _thunderColor: {r: 0.8938753, g: 0.9622642, b: 0.45843717, a: 0.7529412}
-  _heatWaveColor: {r: 1, g: 0.28, b: 0.38, a: 0.75}
+  _dayWeatherWeights:
+  - weather: 0
+    weight: 5
+  - weather: 1
+    weight: 2
+  - weather: 2
+    weight: 1
+  - weather: 3
+    weight: 2
+  _nightWeatherWeights:
+  - weather: 0
+    weight: 6
+  - weather: 1
+    weight: 2
+  - weather: 2
+    weight: 2
+  - weather: 3
+    weight: 0
   _weatherShaderApply: {fileID: 267169725}
 --- !u!4 &1250254887
 Transform:
@@ -938287,18 +938430,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountTick
   weatherChangeTime: 5
---- !u!114 &1250254889
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1250254885}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d681a957a844bdea893b762e4b011cf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Map.WeatherChangeEvent
 --- !u!1001 &1264729469
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -938718,6 +938849,108 @@ Transform:
   - {fileID: 1478748303}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1361953240
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1538709566}
+    m_Modifications:
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_Name
+      value: FieldCanonTurret LV1 - Destroyed (Repair Test)
+      objectReference: {fileID: 0}
+    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: _turretController
+      value: 
+      objectReference: {fileID: 393497335}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1361953244}
+  m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+--- !u!114 &1361953241 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1361953240}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361953243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1bd8bb9366149bab62297b29550d748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1361953242 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1361953240}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1361953243 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1361953240}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1361953244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361953243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
+  _entityId: turret/c8856e6d3de54f59afab6eaac1ef0607
 --- !u!1 &1394819179
 GameObject:
   m_ObjectHideFlags: 0
@@ -939198,6 +939431,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1538709564
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1538709566}
+  - component: {fileID: 1538709565}
+  m_Layer: 0
+  m_Name: FieldTurret Repair Tests
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1538709565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1538709564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34bc7c6c777c4757a116360cc963f607, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.FieldTurrets.FieldTurretRepairTestSetup
+  _controller: {fileID: 393497335}
+  _destroyedTurret: {fileID: 1361953241}
+  _damagedTurret: {fileID: 584970846}
+  _damagedHealth: 50
+--- !u!4 &1538709566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1538709564}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1361953242}
+  - {fileID: 584970847}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1603658788
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -939533,6 +939816,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afee2fd02998d994f8f62eda64603f11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
+  environmentProfile: {fileID: 0}
   initialSquadOrder: Normal
   initialEnemyLimit: 10
   initialEncounterDelay: 0.5
@@ -939828,6 +940112,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2697276060320991427, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
   m_PrefabInstance: {fileID: 1836352303}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1836352305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1002043012098565792, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
+  m_PrefabInstance: {fileID: 1836352303}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
 --- !u!1001 &1885139232
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -961879,43 +962174,43 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 106.95853
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 53.479263
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -55
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 257.94058
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 235.92882
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -84
       objectReference: {fileID: 0}
     - target: {fileID: 2128984783, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
@@ -962047,6 +962342,20 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!114 &2035505101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1250254885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5cdee90df4d4b70afded73b73b6f7c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.UI.WeatherDebugHud
+  weatherSource: {fileID: 1250254886}
+  weatherButton: {fileID: 2061509692}
 --- !u!1 &2056049648
 GameObject:
   m_ObjectHideFlags: 0
@@ -962368,274 +962677,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/efab2d7e3d4b4a1182cbf96bedc3e36d
---- !u!1001 &584970845
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1538709566}
-    m_Modifications:
-    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_Name
-      value: FieldCanonTurret LV1 - Damaged (Repair Test)
-      objectReference: {fileID: 0}
-    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: _turretController
-      value:
-      objectReference: {fileID: 393497335}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -9
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 584970849}
-  m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
---- !u!114 &584970846 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-  m_PrefabInstance: {fileID: 584970845}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 584970848}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1bd8bb9366149bab62297b29550d748, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
---- !u!4 &584970847 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-  m_PrefabInstance: {fileID: 584970845}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &584970848 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-  m_PrefabInstance: {fileID: 584970845}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &584970849
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 584970848}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
-  _entityId: turret/17acebe734894195a6a289f73a2f0607
---- !u!1001 &1361953240
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1538709566}
-    m_Modifications:
-    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_Name
-      value: FieldCanonTurret LV1 - Destroyed (Repair Test)
-      objectReference: {fileID: 0}
-    - target: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: _turretController
-      value:
-      objectReference: {fileID: 393497335}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -9
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1361953244}
-  m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
---- !u!114 &1361953241 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-  m_PrefabInstance: {fileID: 1361953240}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1361953243}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1bd8bb9366149bab62297b29550d748, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
---- !u!4 &1361953242 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-  m_PrefabInstance: {fileID: 1361953240}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1361953243 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
-  m_PrefabInstance: {fileID: 1361953240}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1361953244
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1361953243}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce38539529db4b4c9b5cc65ace30fb16, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
-  _entityId: turret/c8856e6d3de54f59afab6eaac1ef0607
---- !u!1 &1538709564
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1538709566}
-  - component: {fileID: 1538709565}
-  m_Layer: 0
-  m_Name: FieldTurret Repair Tests
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1538709565
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1538709564}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34bc7c6c777c4757a116360cc963f607, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.FieldTurrets.FieldTurretRepairTestSetup
-  _controller: {fileID: 393497335}
-  _destroyedTurret: {fileID: 1361953241}
-  _damagedTurret: {fileID: 584970846}
-  _damagedHealth: 50
---- !u!4 &1538709566
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1538709564}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1361953242}
-  - {fileID: 584970847}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2035505101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1250254885}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b5cdee90df4d4b70afded73b73b6f7c7, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.UI.WeatherDebugHud
-  weatherSource: {fileID: 1250254886}
-  weatherButton: {fileID: 2061509692}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -962668,30 +962709,3 @@ SceneRoots:
   - {fileID: 2000502100}
   - {fileID: 765547578}
   - {fileID: 1538709566}
-
---- !u!114 &1836352305 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1002043012098565792, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
-  m_PrefabInstance: {fileID: 1836352303}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
-
---- !u!114 &877435137
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 877435131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
-  spawnExecutor: {fileID: 1836352305}
-  environmentProfile: {fileID: 0}
