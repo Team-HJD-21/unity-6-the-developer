@@ -100,13 +100,13 @@ public sealed class EnemyAbilityTests
         references.ApplyModifiedPropertiesWithoutUndo();
 
         Assert.That(enemy.GetComponent<EnemyTargeting>().Target, Is.Null);
-        movement.Move(Vector2.right);
         controller.ExecuteBehavior();
+        _scene.GetPhysicsScene2D().Simulate(Time.fixedDeltaTime);
         Assert.That(ability.Activations, Is.EqualTo(1));
         Assert.That(body.linearVelocity, Is.EqualTo(Vector2.zero));
 
-        movement.Move(Vector2.right);
         controller.ExecuteBehavior();
+        _scene.GetPhysicsScene2D().Simulate(Time.fixedDeltaTime);
         Assert.That(ability.Activations, Is.EqualTo(1));
         Assert.That(body.linearVelocity, Is.EqualTo(Vector2.zero));
 
@@ -117,6 +117,7 @@ public sealed class EnemyAbilityTests
         typeof(EnemyMovement).GetField("_path", BindingFlags.Instance | BindingFlags.NonPublic)
             .SetValue(movement, new[] { target.transform.position });
         controller.ExecuteBehavior();
+        _scene.GetPhysicsScene2D().Simulate(Time.fixedDeltaTime);
         Assert.That(body.linearVelocity.x, Is.GreaterThan(0f));
         Assert.That(ability.Activations, Is.EqualTo(1));
     }

@@ -83,12 +83,11 @@ public class MovingEnemyController : EnemyController
     }
 
     /// <summary>
-    /// 몬스터 이동을 멈추고 대기 애니메이션으로 전환한다.
+    /// 이동 힘을 추가하지 않는 분기에서 이동 애니메이션을 중단한다.
     /// </summary>
     protected void StopMoving()
     {
         enemyAnimation.StopMovementAnimation();
-        enemyMovement.Stop();
     }
 
     /// <summary>

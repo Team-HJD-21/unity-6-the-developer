@@ -46,7 +46,7 @@ flowchart TD
     Squad -->|AssignTarget| Controller[EnemyController]
     Network[EnemyNetworkController: 서버 FixedUpdate] -->|RefreshTarget / ExecuteBehavior| Controller
     Controller --> Target[EnemyTargeting: 목표·콜라이더]
-    Controller --> Move[EnemyMovement: 경로·이동·정지]
+    Controller --> Move[EnemyMovement: 경로·이동 힘]
     Controller --> Ability[EnemyAbility: 발동·쿨타임]
     Controller --> Anim[EnemyAnimation: 방향·모션]
     Anim --> Sync[EnemyNetworkAnimator: 상태·공격 동기화]
@@ -85,7 +85,7 @@ classDiagram
 | `MovingEnemyController` | 실행 중 능력은 정지 대기. 발동 조건을 충족하면 능력을 시도하고, 아니면 목표로 이동 |
 | `EnemySummonController` | 이동 → 변태 → 위치 고정 상태 전이. 변태 완료 후 소환 능력 실행 |
 | `EnemyTargeting` | 목표 Transform과 대상 Collider 목록·유효성 관리 |
-| `EnemyMovement` | NavMesh 경로 요청, waypoint 방향, Rigidbody2D 이동·정지 |
+| `EnemyMovement` | NavMesh 경로 요청, waypoint 방향, Rigidbody2D 이동 힘 적용 |
 | `EnemyAbility` | `CheckCondition`, `Activate`, 쿨타임, 실행 권한, 공통 Collider 거리 검사·기즈모 |
 | `EnemyAnimation` | 네 방향 선택, 이동 속도 파라미터, 능력 모션 재생 |
 | `EnemyNetworkController` | 서버 행동 실행, Match 시간·수명 연결, 체력 사망 및 폭발 제거 처리 |
@@ -106,7 +106,9 @@ classDiagram
 
 재검색은 **타깃 교체**다. 움직이는 같은 플레이어의 위치를 주기적으로 다시 경로 계산하는 기능과 다르다. 현재 `AssignTarget()`에서 `SetDestination()`을 호출하며, 이동 타깃 지속 추적·경로 갱신 스케줄러는 후속 작업이다. 감지 반경에 들어온 플레이어 우선 전환·타깃별 공격인원 포화도도 이 분대 코드의 구현 완료 항목이 아니다.
 
-이동은 XY NavMesh 경로를 구하고 Rigidbody2D의 `linearVelocity`를 지정한다. `Stop()`은 속도를 0으로 만든다. AddForce 전환은 별도 이슈다. `CheckCondition()`은 쿨타임과 독립적이므로, 사거리에 도착한 적은 쿨타임 중에도 정지한다.
+이동은 XY NavMesh 경로를 구하고 서버의 FixedUpdate에서 `AddForce`로 가속한다. `moveSpeed`는 이동 방향의 목표 속도, `moveAcceleration`은 최대 이동 가속도다. 목표 속도에 도달하면 이동 힘을 더하지 않으며 외부에서 밀린 속도를 강제로 잘라내지 않는다. 사거리에서는 컨트롤러가 `Move()`를 호출하지 않아 이동 힘이 추가되지 않으며, 다른 적의 충돌에는 밀릴 수 있다. 남은 속도는 EnemyRoot의 Rigidbody2D `Linear Damping`으로 줄인다(초기 조정값 5). 실제 이동 속도와 정지 거리는 감쇠 및 충돌의 영향을 받는다. `CheckCondition()`은 쿨타임과 독립적이므로, 사거리에 도착한 적은 쿨타임 중에도 이동 입력을 멈춘다. 변태를 완료한 소환형은 기존대로 위치를 고정한다.
+
+이동에 사용하지 않던 정지 플래그와 `EnemyMovement.Stop()`은 제거했다. 체크포인트는 경로와 경유점 진행도를 복원한다. 기존 저장 데이터와의 바이트 배열 형식을 유지하기 위해 과거 정지 플래그 자리는 쓰기 시 `false`로 채우고 읽기 시 소비한 뒤 버린다.
 
 ## 능력·투사체·애니메이션
 
