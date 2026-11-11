@@ -1,3 +1,5 @@
+// XY NavMesh에서 완전한 이동 경로를 구합니다.
+// 성공은 반환값과 경로로 전달하고, 실패 원인만 Console에 남깁니다.
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -38,7 +40,6 @@ public static class EnemyNavMeshPathfinder
         }
         
         corners = path.corners;
-        Debug.Log($"NavMesh 경로 발견: {corners.Length}개 지점");
         return true;
     }
 }

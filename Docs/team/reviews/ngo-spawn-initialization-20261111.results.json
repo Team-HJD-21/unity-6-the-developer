@@ -1,0 +1,75 @@
+{
+  "base": "ba553257c1c617eee48f33da4bbdb61a775ebcf0",
+  "unity": "6000.3.23f1",
+  "ngo": "2.13.3",
+  "tests": [
+    {
+      "artifact": "identity-runtime.xml",
+      "result": "Passed",
+      "total": "2",
+      "passed": "2",
+      "failed": "0",
+      "cases": [
+        {
+          "name": "EnemySimulationSpawnTests.ActualHostAndClientObserveIdentityOnFirstSpawnAndRespawn",
+          "result": "Passed",
+          "output": "UTP host/client: first identity notifications correct for two spawn cycles; initialization warnings=0."
+        },
+        {
+          "name": "EnemySimulationSpawnTests.PreparingUnspawnedEnemyDoesNotWriteNetworkVariablesOrWarn",
+          "result": "Passed",
+          "output": "Saving results to: C:/Users/c/AppData/LocalLow/Team HJD/The Developer\\TestResults.xml"
+        }
+      ]
+    },
+    {
+      "artifact": "stage-entries.xml",
+      "result": "Passed",
+      "total": "2",
+      "passed": "2",
+      "failed": "0",
+      "cases": [
+        {
+          "name": "EnemySpawnRuntimeTests.InitialStageFreshSessionKeepsBindingsAndDiagnostics",
+          "result": "Passed",
+          "output": "[EncounterBudget] Match 5a0d866b0a44438ca7a24dd408e838d8 region r1, mode=Static: 점유 셀 41/256 (16.0 %), 목표 예산 32, 적용 예산 32\nInitial_Stage match=5a0d866b0a44438ca7a24dd408e838d8; bound enemies=18; completed requests=2; recorded actuals=18; unwanted request logs=0."
+        },
+        {
+          "name": "EnemySpawnRuntimeTests.InitialStageSpawnKeepsBindingsDiagnosticsAndQuietSuccessLogs",
+          "result": "Passed",
+          "output": "[EncounterBudget] Match 4ded94d3f6da401b9093b9222fa8ef48 region r1, mode=Static: 점유 셀 41/256 (16.0 %), 목표 예산 32, 적용 예산 32\nInitial_Stage match=4ded94d3f6da401b9093b9222fa8ef48; bound enemies=18; completed requests=2; recorded actuals=18; unwanted request logs=0.\nSaving results to: C:/Users/c/AppData/LocalLow/Team HJD/The Developer\\TestResults.xml"
+        }
+      ]
+    }
+  ],
+  "repository_tests": {
+    "total": 50,
+    "failures": 0,
+    "errors": 0
+  },
+  "limits": [
+    "UTP endpoints are in one Editor process, not two builds or Steam accounts.",
+    "No full pooling/physics/AI performance claim; no full production checkpoint acceptance."
+  ],
+  "identity-runtime-editor.log": {
+    "initialization_warning_lines": 0,
+    "path_success_lines": 0,
+    "managed_exception_lines": 0
+  },
+  "stage-entries-editor.log": {
+    "initialization_warning_lines": 0,
+    "path_success_lines": 0,
+    "managed_exception_lines": 0
+  },
+  "tested_source_sha256_lf_utf8": {
+    "Assets/Scripts/Features/Enemy/Runtime/Networking/EnemyNetworkController.Simulation.cs": "691ee317207d46a9373d588fdc3008d172265e98aed6879ab8545cd1901e026c",
+    "Assets/Scripts/Features/Enemy/Runtime/Movement/EnemyNavMeshPathfinder.cs": "24912b179ac1737ea068a070f6e4d150c97ef09a4864b4a0cacf62a9711f6339",
+    "Assets/Scripts/Features/Enemy/Encounter/EncounterRuntime.cs": "5f1cce0199c7933a43f427bfe8543c74b3fa95f36276ce59d76cc03f1794520c",
+    "Assets/Scripts/Features/Enemy/Editor/Tests/EnemySimulationSpawnTests.cs": "895317e0e74585150d67f3812c35edd4f4cf65384df7c1bff315800004a9737a",
+    "Assets/Scripts/Features/Enemy/Editor/Tests/EnemySpawnRuntimeTests.cs": "2a6b41f4b08679f69751d2596b439994f1449b885038e077491a1a85c915f3d2"
+  },
+  "note": "Source hashes normalize CRLF to LF and use UTF-8; local raw logs/XML are retained separately. Failed harness attempts are not counted as passes.",
+  "pr_number": 691,
+  "pr_url": "https://github.com/Team-HJD-21/unity-6-the-developer/pull/691",
+  "tested_code_commit": "1f4467d881dea9e2387e2751a01f19f9e153286f"
+}
