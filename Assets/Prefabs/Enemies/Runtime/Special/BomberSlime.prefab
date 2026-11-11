@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -4393384422548277744, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: enemyAbility
-      value:
+      value: 
       objectReference: {fileID: 4897135241100580137}
     - target: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
@@ -26,7 +26,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.y
-      value: -0.10636427
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 2670870722600736654, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Controller
@@ -39,6 +39,10 @@ PrefabInstance:
     - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: moveSpeed
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4829987614306498064, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: enemyAbility
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
@@ -102,7 +106,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.y
-      value: -0.15379731
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_SpriteTilingProperty.pivot.x
@@ -110,7 +114,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_SpriteTilingProperty.pivot.y
-      value: 0.5
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_SpriteTilingProperty.newSize.x
@@ -165,12 +169,12 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4897135241100580137}
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
---- !u!1 &8566673142912740356 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+--- !u!70 &1656965079684577856 stripped
+CapsuleCollider2D:
+  m_CorrespondingSourceObject: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
   m_PrefabInstance: {fileID: 1342443860078511471}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4839027153082150476 stripped
+--- !u!114 &3454110900219576946 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4417510083731572509, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
   m_PrefabInstance: {fileID: 1342443860078511471}
@@ -179,11 +183,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
---- !u!70 &1907751471621035050 stripped
-CapsuleCollider2D:
-  m_CorrespondingSourceObject: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+--- !u!1 &8566673142912740356 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
   m_PrefabInstance: {fileID: 1342443860078511471}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &4897135241100580137
@@ -196,11 +200,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a9e0c3f5fec031d4898b0fdae06e912f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyExplosionAbility
   cooldown: 0.1
-  _bodyCollider: {fileID: 1907751471621035050}
-  enemyTargeting: {fileID: 4839027153082150476}
+  _bodyCollider: {fileID: 1656965079684577856}
   activationRange: 0.3
+  enemyTargeting: {fileID: 3454110900219576946}
   explosionDamage: 20
   explosionRadius: 1
