@@ -1,0 +1,171 @@
+{
+  "date": "2026-11-11",
+  "base_main": "0d7aa0a21103a6a1f38ef1b45e4a115cdd43bc61",
+  "unity": "6000.3.23f1",
+  "ngo": "2.13.3",
+  "editor_and_play": {
+    "xml": "camera-complete.xml",
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "editor_cases": 11,
+    "actual_scene_play_cases": 2,
+    "sha256": "b37ed4278adb7dd7c9b51bd191c6008c6fd114fdafe5ac9107f111b2eb1d8583",
+    "cases": [
+      {
+        "name": "InitialStageCutsceneKeepsOutputAndWeatherThenRestoresPlayer",
+        "result": "Passed"
+      },
+      {
+        "name": "StartupHubStageAndReturnKeepOneOwnedOutput",
+        "result": "Passed"
+      },
+      {
+        "name": "DestroyedTemporaryTargetReturnsToPlayerWithoutRequiringLeaseDisposal",
+        "result": "Passed"
+      },
+      {
+        "name": "FailedViewObserverDoesNotStrandAnUnreturnedLease",
+        "result": "Passed"
+      },
+      {
+        "name": "ImmediateViewRestoresSameCameraDepthAndPlayerFraming",
+        "result": "Passed"
+      },
+      {
+        "name": "InvalidRequestsDoNotCreateAnOverride",
+        "result": "Passed"
+      },
+      {
+        "name": "LostPlayerClearsTemporaryViews",
+        "result": "Passed"
+      },
+      {
+        "name": "NestedAndOutOfOrderLeasesRestoreOnlyLiveSelections(True)",
+        "result": "Passed"
+      },
+      {
+        "name": "NestedAndOutOfOrderLeasesRestoreOnlyLiveSelections(False)",
+        "result": "Passed"
+      },
+      {
+        "name": "OldLeaseCannotChangeReplacementActorOrItsNewView",
+        "result": "Passed"
+      },
+      {
+        "name": "OwnedOutputsSelectOneListenerAndRestorePreviousOnRemoval",
+        "result": "Passed"
+      },
+      {
+        "name": "RebindAfterStaticResetRegistersAgainWithoutAnExtraOwnershipFlag",
+        "result": "Passed"
+      },
+      {
+        "name": "RebindingAnExistingOutputPromotesItAndPreservesFallbackOrder",
+        "result": "Passed"
+      }
+    ]
+  },
+  "native_pair": {
+    "success": true,
+    "run": "20261111T124847Z-afc34b49",
+    "port": 57328,
+    "hostPid": 36660,
+    "clientPid": 32272,
+    "hostExit": 0,
+    "clientExit": 0,
+    "build": "b7572f052e12484da3daed1bf5d1b6df",
+    "runtimeErrorSignatures": 0,
+    "computeBufferShutdownWarnings": 2,
+    "requiredPhases": [
+      "Static",
+      "ClockPaused",
+      "ClockRate",
+      "ClockReset",
+      "Dynamic",
+      "Release",
+      "Ended",
+      "Restart",
+      "FinalEnded",
+      "Disconnect",
+      "Disconnected"
+    ],
+    "turretChecks": [
+      "On:Applied:Activated",
+      "Replay:Applied:Activated",
+      "Off:Applied:Deactivated",
+      "Far:Unauthorized:OutOfInteractionRange",
+      "NoActor:Unauthorized:AuthorityActorUnavailable",
+      "ForeignMatch:DifferentMatch:",
+      "ForgedIssuer:Unauthorized:"
+    ],
+    "turretFixtureScope": "Development-only Host interaction actor fixture; production Client gateway/Host authorization/D executor/HUD transport. Not B remote actor replication.",
+    "scope": "Actual Initial_Stage; loopback; full HUD-frame hashes; active cohort disconnect. No full Player/Turret combat replication or GUI acceptance"
+  },
+  "client_local_camera_checks": [
+    {
+      "phase": "Static",
+      "match": "dee603c795764068808d69c605b8cd1a",
+      "local_camera_verified": true
+    },
+    {
+      "phase": "ClockPaused",
+      "match": "dee603c795764068808d69c605b8cd1a",
+      "local_camera_verified": true
+    },
+    {
+      "phase": "ClockRate",
+      "match": "dee603c795764068808d69c605b8cd1a",
+      "local_camera_verified": true
+    },
+    {
+      "phase": "ClockReset",
+      "match": "dee603c795764068808d69c605b8cd1a",
+      "local_camera_verified": true
+    },
+    {
+      "phase": "Dynamic",
+      "match": "dee603c795764068808d69c605b8cd1a",
+      "local_camera_verified": true
+    },
+    {
+      "phase": "Release",
+      "match": "dee603c795764068808d69c605b8cd1a",
+      "local_camera_verified": true
+    },
+    {
+      "phase": "Restart",
+      "match": "fedc5a98454f46fcbf2c9f919194a69e",
+      "local_camera_verified": true
+    },
+    {
+      "phase": "Disconnect",
+      "match": "f784828e6f7c4ca0b5499411a5e4715b",
+      "local_camera_verified": true
+    }
+  ],
+  "native_evidence_sha256": {
+    "client.json": "bbcfcf0cd5f9f227c637b05df7ed15227a15ad5400921159d9cce459f05b7efc",
+    "client.log": "79204b98be782761727ee7779e85a1dff37708e2ed2a47597fbcadd7c0d6a0b6",
+    "host.json": "de354cb1afa4b8f78f927cba90acd5f25a4cdf2d3729bea8d98a45d9db7c165f",
+    "host.log": "f0bb466e71c78aa32a7ddb6481ea2407701d56e08de40edc87f438adb292d96f",
+    "verified.json": "e043991bcbcd19447469d9e131ca8c148d17f9f764a2262eebb576733298f25f"
+  },
+  "source_sha256_lf": {
+    "Assets/Scripts/Core/Bootstrap/Diagnostics/CoreNetworkBuild.cs": "9010abe57fbf038a2cd69a4e840fc0a9fc42406d5cdfecc93bfb812bfd67c303",
+    "Assets/Scripts/Core/Bootstrap/SceneComposition/InitialStageCompositionRoot.cs": "e9209dafd995263fa299164ad83b178d15c02a68a3efd8a5db254380ae561571",
+    "Assets/Scripts/Core/Presentation/Scene/CameraManager.cs": "c645f506446193094cb4511ee7391beaccbeee5e2c4a4339b530b59613190571",
+    "Assets/Scripts/Core/Presentation/Scene/MatchCameraFollow.cs": "4c38851131a0c4357b8f1a8a094cc69b439af8da079849e52e55af5b7483b5ba",
+    "Assets/Scripts/Core/Tests/EditMode/CameraManagerRuntimeTests.cs": "06786a8105568f5f8ed4d3a3ca5e05ec025e99e726387fe668119a29de2bf0d5",
+    "Assets/Scripts/Core/Tests/EditMode/CameraManagerTests.cs": "2572e5a86a59c24a7e3f6905be36a2c4d576bc5b42e6c6919fba2856c7f18104",
+    "Assets/Scripts/Core/Tests/EditMode/TeamHJD.Game.Tests.EditMode.asmdef": "34ee0560eb88935a96acf577cbbd45c066232b5a7dd803f7cc56f0941560223e"
+  },
+  "limits": [
+    "Actual GPU Editor/Play scene traversal, not visual art/input-feel acceptance.",
+    "No World/Player/HUD source or Scene/Prefab edits.",
+    "Known existing PlayerLocationState/turret runtime-ID warnings; teammate follow-up.",
+    "Two expected observer exceptions explicitly verified in Editor test; native runtime error signatures zero.",
+    "Two known ComputeBuffer shutdown warnings remain.",
+    "No Steam transport or full remote Player combat replication acceptance."
+  ]
+}

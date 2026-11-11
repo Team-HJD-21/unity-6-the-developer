@@ -1,6 +1,6 @@
 # 아키텍처 문서
 
-최종 갱신일 2026-11-10
+최종 갱신일 2026-11-11
 상태 · 문서 탐색용 목차
 
 ## 공통 아키텍처와 규칙
@@ -30,6 +30,7 @@
 
 ## 씬 전환과 우주선 이동
 
+- [로컬 CameraManager: 컷씬 시점·블렌드·복귀 사용법](03_scene-flow/camera-manager-api.md)
 - [scene-flow-api](03_scene-flow/scene-flow-api.md)
 - [screen-management-api](03_scene-flow/screen-management-api.md)
 - [spaceship-travel-api](03_scene-flow/spaceship-travel-api.md)

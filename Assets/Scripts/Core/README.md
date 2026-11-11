@@ -1,6 +1,8 @@
 # Core 사용 안내
 
 
+**2026-11-11 추가:** [Client 낮밤 잔여시간](../../../Docs/02_architecture/09_world/day-night-api.md)과 [로컬 CameraManager·컷씬 사용법](../../../Docs/02_architecture/03_scene-flow/camera-manager-api.md)을 참고하세요. 카메라는 같은 출력 객체를 유지하며 `PushView`의 반환 lease로 복귀합니다. 아래 11월 5일 검증/PR 전 표기는 당시 기록이고, 최신 완료 범위는 각 리뷰 문서에서 구분합니다.
+
 **지금 확인/전달할 최종본:** [Startup/Initial_Stage 수동 확인7단계·전체 구현·남은 Core 작업](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md).
 
 
