@@ -1,4 +1,5 @@
-// Match Scene에서 카메라가 현재 Player actor를 부드럽게 따라가도록 합니다.
+// 현재 로컬 Player actor의 XY 위치를 부드럽게 추적합니다.
+// 임시 시점 선택/블렌딩은 CameraManager에 양보하고 기존 Bind/Snap 호출을 유지합니다.
 
 using UnityEngine;
 
@@ -12,12 +13,21 @@ namespace TeamHJD.Game.Presentation.Scene
 
         private Transform _target;
         private Vector3 _velocity;
+        private CameraManager _manager;
         public Transform Target => _target;
+        public CameraManager Manager => _manager;
+
+        private void Awake()
+        {
+            _manager = GetComponent<CameraManager>() ?? gameObject.AddComponent<CameraManager>();
+            _manager.Attach(this);
+        }
 
         public void Bind(Transform target)
         {
             _target = target;
             _velocity = Vector3.zero;
+            _manager.RebindPlayer();
             SnapToTarget();
         }
 
@@ -26,12 +36,13 @@ namespace TeamHJD.Game.Presentation.Scene
         {
             if (_target == null) return;
             _velocity = Vector3.zero;
+            if (_manager.ControlsTransform) { _manager.SnapToCurrentView(); return; }
             transform.position = new Vector3(_target.position.x, _target.position.y, transform.position.z);
         }
 
         private void LateUpdate()
         {
-            if (_target == null) return;
+            if (_target == null || _manager.ControlsTransform || CameraManager.Current != _manager) return;
 
             Vector3 targetPosition = new Vector3(
                 _target.position.x,
