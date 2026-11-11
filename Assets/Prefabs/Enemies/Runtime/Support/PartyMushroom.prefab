@@ -108,6 +108,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 22100000, guid: 26cd31d1bcfa5ea40a0d7dba4b960b7a, type: 2}
+    - target: {fileID: 7330067467131533009, guid: e3b54ce28b78a7a47b0301da1a1326c4, type: 3}
+      propertyPath: m_Radius
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 8389194018421224393, guid: e3b54ce28b78a7a47b0301da1a1326c4, type: 3}
       propertyPath: m_Size.x
       value: 1.1816564
