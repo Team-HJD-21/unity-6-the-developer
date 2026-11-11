@@ -196,6 +196,7 @@ public sealed class EnemyExplosionTargetProbe : MonoBehaviour, ITargetable, IDam
     public bool Available = true;
     public Transform TargetTransform => transform;
     public TargetType TargetType => global::TargetType.Turret;
+    public int MaxAttackers => 10;
     public float HealthRatio => CurrentHealth / (float)MaxHealth;
     public float FirepowerRatio => 0f;
     public bool CanBeTargeted => Available && !IsDestroyed;

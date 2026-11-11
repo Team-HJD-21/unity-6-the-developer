@@ -16,6 +16,9 @@ public interface ITargetable
     /// </summary>
     TargetType TargetType { get; }
 
+    /// <summary>이 타깃에 배정할 수 있는 최대 적 인원을 반환한다.</summary>
+    int MaxAttackers { get; }
+
     /// <summary>
     /// 현재 체력 비율을 0에서 1 사이로 반환한다.
     /// </summary>

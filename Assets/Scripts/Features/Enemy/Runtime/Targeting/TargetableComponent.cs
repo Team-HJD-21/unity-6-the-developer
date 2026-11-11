@@ -10,6 +10,9 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     [Header("타깃 설정")]
     [SerializeField] private TargetType targetType;
 
+    [Header("공격 인원 제한")]
+    [SerializeField, Min(1)] private int maxAttackers = 10;
+
     [Header("체력")]
     [SerializeField] private float maxHealth;
     [SerializeField] private float currentHealth;
@@ -22,6 +25,9 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     /// 점수 계산에 사용할 타깃 종류를 반환한다.
     /// </summary>
     public TargetType TargetType => targetType;
+
+    /// <summary>이 타깃에 배정할 수 있는 최대 적 인원을 반환한다.</summary>
+    public int MaxAttackers => maxAttackers;
 
     /// <summary>
     /// 점수 계산에 사용할 타깃 종류를 지정한다.
