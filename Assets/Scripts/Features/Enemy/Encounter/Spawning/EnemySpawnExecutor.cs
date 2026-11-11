@@ -376,7 +376,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                     createdSquads.Add(memberSquad);
                 }
 
-                if (!memberSquad.AddMember(controller))
+                if (!controller.JoinSquad(memberSquad))
                 {
                     Debug.LogError($"Failed to register enemy in squad: {enemy.EnemyId}");
                     Fail("Failed to register squad member: " + enemy.EnemyId, observeFailure);

@@ -155,6 +155,30 @@ public class EnemySquad
         return _target != null;
     }
 
+    /// <summary>구성원이 감지한 플레이어를 분대 공동 목표로 선택한다.</summary>
+    public bool TryPrioritizePlayer(EnemyController requester, ITargetable player)
+    {
+        if (!_members.Contains(requester) ||
+            !IsValidTarget(player) ||
+            player.TargetType != TargetType.Player)
+        {
+            return false;
+        }
+
+        // 이미 선택한 플레이어는 유효한 동안 유지한다.
+        if (IsValidTarget(_target) && _target.TargetType == TargetType.Player)
+            return false;
+
+        _target = player;
+        foreach (EnemyController member in _members)
+        {
+            if (member != null)
+                member.AssignTarget(player.TargetTransform);
+        }
+
+        return true;
+    }
+
     /// <summary>활성 구성원 중 첫 번째 몬스터만 공동 타깃 갱신을 실행한다.</summary>
     public void RefreshTarget(EnemyController requester)
     {

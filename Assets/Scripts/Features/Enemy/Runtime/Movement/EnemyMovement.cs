@@ -15,6 +15,7 @@ public partial class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float moveAcceleration = 10f;
     
     public float MoveSpeed => moveSpeed;
+    public bool HasPath => _path != null && _currentPath < _path.Length;
 
     private void Awake()
     {
@@ -23,19 +24,30 @@ public partial class EnemyMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// 기존 경로 진행을 비우고 지정한 타깃의 현재 위치까지 경로를 계산한다.
+    /// 타깃 변경 시 이전 경로를 비우고 새 경로를 계산한다.
     /// </summary>
     public void SetDestination(Transform target)
     {
         _path = null;
         _currentPath = 0;
-        
+        TryUpdatePath(target);
+    }
+
+    /// <summary>계산에 성공한 경우에만 기존 경로를 교체한다.</summary>
+    public bool TryUpdatePath(Transform target)
+    {
         if (target == null)
-            return;
-        
-        Vector3 startLocation = this.transform.position;
-        Vector3 arriveLocation = target.position;
-        EnemyNavMeshPathfinder.TryCalculatePath(startLocation, arriveLocation, out _path);
+            return false;
+
+        if (!EnemyNavMeshPathfinder.TryCalculatePath(
+                transform.position, target.position, out Vector3[] newPath))
+        {
+            return false;
+        }
+
+        _path = newPath;
+        _currentPath = 0;
+        return true;
     }
     
     /// <summary>

@@ -38,7 +38,6 @@ public static class EnemyNavMeshPathfinder
         }
         
         corners = path.corners;
-        Debug.Log($"NavMesh 경로 발견: {corners.Length}개 지점");
         return true;
     }
 }

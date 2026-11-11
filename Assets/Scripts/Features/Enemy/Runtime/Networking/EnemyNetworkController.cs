@@ -24,6 +24,30 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public event Action<ulong> Despawned;
 
+    /// <summary>서버 또는 로컬 테스트에서 현재 행동을 실행할 수 있는지 반환한다.</summary>
+    public bool CanExecuteBehavior
+    {
+        get
+        {
+            if (!isActiveAndEnabled)
+                return false;
+
+            // TEMP: 로컬 테스트 제거 시 기존 IsSpawned / IsServer 검사로 복원한다.
+            if (IsNetworkRunning)
+            {
+                if (!IsSpawned || !IsServer)
+                    return false;
+            }
+            else if (!runOffline)
+            {
+                return false;
+            }
+
+            var simulation = GetComponent<FieldSimulationActor>();
+            return simulation == null || simulation.CanAdvance;
+        }
+    }
+
     /// <summary>
     /// 적의 행동을 실행할 컨트롤러를 가져온다.
     /// </summary>
@@ -42,19 +66,9 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     private void FixedUpdate()
     {
-        // TEMP: 로컬 테스트 제거 시 기존 IsSpawned / IsServer 검사로 복원한다.
-        if (IsNetworkRunning)
-        {
-            if (!IsSpawned || !IsServer)
-                return;
-        }
-        else if (!runOffline)
-        {
+        if (!CanExecuteBehavior)
             return;
-        }
 
-        var simulation = GetComponent<FieldSimulationActor>();
-        if (simulation != null && !simulation.CanAdvance) return;
         enemyController.RefreshTarget();
         enemyController.ExecuteBehavior();
     }

@@ -14,6 +14,7 @@ public abstract class EnemyController : MonoBehaviour
     [FormerlySerializedAs("enemyCombat")]
     [SerializeField] protected EnemyAbility enemyAbility;
     private EnemySquad _squad;
+    private EnemyNetworkController _networkController;
     
     /// <summary>
     /// 다른 미사일이 이미 이 적을 목표로 삼았는지 나타낸다.
@@ -32,6 +33,8 @@ public abstract class EnemyController : MonoBehaviour
             enemyAnimation = GetComponent<EnemyAnimation>();
         if (enemyAbility == null)
             enemyAbility = GetComponent<EnemyAbility>();
+
+        _networkController = GetComponent<EnemyNetworkController>();
     }
 
     /// <summary>
@@ -59,6 +62,19 @@ public abstract class EnemyController : MonoBehaviour
     public void RefreshTarget()
     {
         _squad?.RefreshTarget(this);
+    }
+
+    /// <summary>행동 실행 권한이 있을 때 감지한 플레이어를 분대에 전달한다.</summary>
+    public void NotifyPlayerDetected(ITargetable player)
+    {
+        if (!isActiveAndEnabled ||
+            _networkController == null ||
+            !_networkController.CanExecuteBehavior)
+        {
+            return;
+        }
+
+        _squad?.TryPrioritizePlayer(this, player);
     }
 
     /// <summary>
