@@ -33,6 +33,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             public string EnvironmentHash,Weather,TimeOfDay,CompletionHash,ResultScreen;
             public long EnvironmentRevision;
             public double DayNightRemaining, MatchGameSeconds, GameRate;
+            public bool LocalCameraVerified;
         }
         [Serializable] private sealed class Result
         {
@@ -179,6 +180,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _binding.GetComponent<TurretMatchBinding>().Count == 0 &&
                 Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length == 0 &&
                 Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length == 0 &&
+                (CameraManager.Current == null || (CameraManager.Current.ActiveTarget == null && !CameraManager.Current.HasOverride)) &&
                 objectsClean;
         }
 
@@ -246,6 +248,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var actors = Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None);
             if (!_binding.Matches.TryResolveParticipant(_session.LocalConnectionId, out PlayerId player) ||
                 actors.Length != 1 || actors[0].PlayerId != player) return;
+            var localCamera = CameraManager.Current;
+            if (localCamera == null || localCamera.ActiveTarget != actors[0].transform ||
+                localCamera.OutputCamera != Camera.main)
+                throw new InvalidOperationException("Client camera does not belong to its local player/output.");
             _firstMatch ??= snapshot.MatchId.Value; _lastMatch = snapshot.MatchId.Value;
             _seenMatches.Add(_lastMatch);
             _lastDescriptor = descriptor.DescriptorId.ToString("N");
@@ -275,6 +281,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 TurretIdentityHash = TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>()),
                 EnvironmentRevision = environment.Revision,Weather = environment.WeatherId.Value,TimeOfDay = environment.TimeOfDayId.Value,
                 DayNightRemaining = cycle.RemainingSeconds, MatchGameSeconds = matchTime.ElapsedSeconds, GameRate = matchTime.Snapshot.Rate,
+                LocalCameraVerified = true,
                 EnvironmentHash = Hash(EnvironmentReplicationCodec.Encode(new EnvironmentReplicationFrame(descriptor.DescriptorId, environment)))
             });
         }
@@ -402,7 +409,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var descriptor = _binding.Matches.Descriptor;
             var region = _binding.GetComponent<RegionSceneBinding>().Source.Snapshot;
             var anchor = Object.FindAnyObjectByType<NetworkMatchAnchor>();
-            if (packet.Match != descriptor.Config.MatchId.Value || packet.Descriptor != descriptor.DescriptorId.ToString("N") ||
+            if (!packet.LocalCameraVerified || packet.Match != descriptor.Config.MatchId.Value || packet.Descriptor != descriptor.DescriptorId.ToString("N") ||
                 packet.DescriptorHash != Hash(MatchLifecycleCodec.Encode(descriptor)) ||
                 packet.RegionHash != RegionHash(descriptor, region) || packet.Anchor != anchor.NetworkObjectId ||
                 packet.TurretIdentityHash != TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>()) ||
