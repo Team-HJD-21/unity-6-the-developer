@@ -28,6 +28,7 @@ namespace TeamHJD.Game.Bootstrap
         public async Task EnterAsync(Transform player, Collider2D entrance, string spaceshipScene, string destinationMarker)
         {
             RequireIdle(player);
+            var lifetime = _app.destroyCancellationToken;
             if (_app.CurrentMatchId.IsEmpty)
                 throw new InvalidOperationException("우주선 임시 방문은 진행 중 Match에서만 가능합니다.");
             var presence = RequirePresence(player);
@@ -44,7 +45,7 @@ namespace TeamHJD.Game.Bootstrap
                 {
                     try
                     {
-                        await _localScenes.LoadAsync(key, _app.destroyCancellationToken);
+                        await _localScenes.LoadAsync(key, lifetime);
                         Transform destination = FindMarker(SceneManager.GetSceneByPath(key), destinationMarker);
                         _returnPosition = SafeReturnPosition(entrance, player, .5f);
                         _fieldScene = player.gameObject.scene.path;
@@ -53,7 +54,7 @@ namespace TeamHJD.Game.Bootstrap
                         Report(presence, MatchPlayerLocation.Spaceship);
                         _visitor = player;
                     }
-                    catch
+                    catch when (!lifetime.IsCancellationRequested)
                     {
                         // 실패 복구도 암전 안에서 끝내 카메라가 원위치로 날아가는 장면을 노출하지 않습니다.
                         if (player != null)
@@ -63,17 +64,20 @@ namespace TeamHJD.Game.Bootstrap
                         }
                         _visitor = null;
                         if (ownedScene && _app != null && _localScenes.IsLoaded(key))
-                            await _localScenes.UnloadAsync(key, _app.destroyCancellationToken);
+                            await _localScenes.UnloadAsync(key, lifetime);
                         throw;
                     }
                 });
             }
+            // App 종료/Play 종료는 정상 수명 취소입니다. async 충돌 호출부에 오류로 전파하지 않습니다.
+            catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
             finally { IsTransitioning = false; }
         }
 
         public async Task ExitAsync(Transform player, string fieldScene, string returnMarker, float padding)
         {
             RequireIdle(player);
+            var lifetime = _app.destroyCancellationToken;
             string key = ResolveScene(fieldScene);
             using var input = _app.LocalInput.Acquire("SpaceshipTravel");
             IsTransitioning = true;
@@ -87,7 +91,7 @@ namespace TeamHJD.Game.Bootstrap
                         if (_app.GameFlow == null)
                             throw new InvalidOperationException("Startup에서 구성한 게임 진입 경로가 필요합니다.");
                         IsLaunchingMission = true;
-                        try { await _app.GameFlow.LaunchMissionAsync(key, _app.destroyCancellationToken); }
+                        try { await _app.GameFlow.LaunchMissionAsync(key, lifetime); }
                         finally { IsLaunchingMission = false; }
                     }
                     else
@@ -103,10 +107,11 @@ namespace TeamHJD.Game.Bootstrap
                         Report(presence, MatchPlayerLocation.Field);
                         _visitor = null;
                         if (!HasOtherVisitor(player) && !string.IsNullOrEmpty(_spaceshipScene))
-                            await _localScenes.UnloadAsync(_spaceshipScene, _app.destroyCancellationToken);
+                            await _localScenes.UnloadAsync(_spaceshipScene, lifetime);
                     }
                 });
             }
+            catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
             finally { IsTransitioning = false; }
         }
 
