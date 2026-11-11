@@ -98,7 +98,9 @@ classDiagram
 
 ## 타깃·분대·이동
 
-목표 선택은 `EnemySquad`가 담당한다. 유효한 목표는 유지하고, 없거나 공격 불가능해졌을 때 분대 중심에서 가장 가까운 유효 후보를 찾는다. 검색 간격은 현재 0.5초다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결하며, 대표 활성 구성원의 `RefreshTarget()` 요청으로 분대 단위 검색을 한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
+`ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.ChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.
+
+목표 선택은 `EnemySquad`가 담당한다. 배정된 목표가 있으면 주기적으로 `CanBeTargeted`를 검사하거나 구성원을 순회하지 않는다. 타깃 불가 이벤트를 받으면 기존 목표와 구독을 해제하고 분대 중심에서 가장 가까운 유효 후보를 즉시 한 번 검색한다. 후보가 없을 때만 기존 행동 갱신 경로의 대표 활성 구성원이 `RefreshTarget()`으로 0.5초마다 재시도하며 새 Update나 코루틴을 추가하지 않는다. 여러 분대가 같은 목표를 잃으면 해당 이벤트 시점에 각 분대의 검색이 발생하며 프레임별 검색량을 분산하는 스케줄러는 아니다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
 
 `EnemyDefinition.SquadMode`는 공동 분대/개별 분대, `TargetRule`은 PlayerOrTurret/PlayerOnly를 선택한다. 일반 스폰도 타깃 규칙이 다른 구성원은 같은 분대에 섞지 않는다. BlackWolf는 개별 PlayerOnly 분대다.
 

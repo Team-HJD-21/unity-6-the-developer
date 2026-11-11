@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using TeamHJD.Game.FieldTurrets.Contracts;
 
@@ -16,6 +17,33 @@ public class TargetableComponent : MonoBehaviour, ITargetable
 
     [Header("화력")]
     [SerializeField, Min(0f)] private float firepowerEfficiency;
+
+    private bool _wasTargetable;
+
+    /// <summary>타깃 가능한 상태에서 불가능한 상태로 전환되면 발생한다.</summary>
+    public event Action<ITargetable> TargetabilityLost;
+
+    private void OnEnable()
+    {
+        RefreshTargetability();
+    }
+
+    private void OnDisable()
+    {
+        RefreshTargetability();
+    }
+
+    /// <summary>타깃 불가 상태로 전환되었을 때 한 번 알린다.</summary>
+    private void RefreshTargetability()
+    {
+        bool canBeTargeted = CanBeTargeted;
+        bool lostTargetability = _wasTargetable && !canBeTargeted;
+
+        _wasTargetable = canBeTargeted;
+
+        if (lostTargetability)
+            TargetabilityLost?.Invoke(this);
+    }
 
 
     /// <summary>
@@ -47,6 +75,7 @@ public class TargetableComponent : MonoBehaviour, ITargetable
         // 최대 체력을 먼저 보정한 뒤 현재 체력을 유효 범위로 제한한다.
         this.maxHealth = Mathf.Max(0f, maxHealth);
         this.currentHealth = Mathf.Clamp(currentHealth, 0f, this.maxHealth);
+        RefreshTargetability();
     }
 
     /// <summary>
