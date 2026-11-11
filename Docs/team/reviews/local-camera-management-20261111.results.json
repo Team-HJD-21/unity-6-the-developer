@@ -167,5 +167,7 @@
     "Two expected observer exceptions explicitly verified in Editor test; native runtime error signatures zero.",
     "Two known ComputeBuffer shutdown warnings remain.",
     "No Steam transport or full remote Player combat replication acceptance."
-  ]
+  ],
+  "pr": 694,
+  "validated_code_commit": "93daef45cdc2e00e72177ce259e99ea779181f3c"
 }

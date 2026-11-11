@@ -1,6 +1,7 @@
 # 로컬 카메라 관리와 임시 시점 전환
 
-PR: 생성 후 실제 번호를 기록합니다.
+PR: [#694](https://github.com/Team-HJD-21/unity-6-the-developer/pull/694)
+검증 코드 기준: `93daef45cdc2e00e72177ce259e99ea779181f3c`. 아래 PR 번호 보완은 Runtime 소스를 바꾸지 않습니다.
 작성: 2026-11-11 · Core / 양현석 · 기준 main `0d7aa0a21103a6a1f38ef1b45e4a115cdd43bc61`
 관련: Refs #637. 실제 Player/Weather 소비자의 최종 인수까지 대신 완료했다고 처리하지 않습니다.
 

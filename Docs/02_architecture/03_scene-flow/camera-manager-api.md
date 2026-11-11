@@ -21,7 +21,7 @@ public sealed class LocalShotExample : MonoBehaviour
     {
         EndShot();
         CameraManager camera = CameraManager.Current;
-        if (camera == null) return; // Player/허브 카메라가 아직 조립되지 않음
+        if (camera == null || camera.ActiveTarget == null) return; // Player/허브 대상 미준비
         _view = camera.PushView(shotMarker, blendSeconds: .3f, orthographicSize: 14f);
     }
 
