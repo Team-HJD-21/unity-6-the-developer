@@ -1,4 +1,5 @@
-
+// Match 공간 자료로 편성 계획을 요청하고 실제 생성 결과를 진단 자료로 반환합니다.
+// 정상 요청은 호출자·Game Debugger가 관찰하며 실패·선택 진단은 기존 정책을 유지합니다.
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -386,7 +387,6 @@ namespace TeamHJD.Game.Domain
                      $"{snapshot.Grid.OccupiedCells.Count} occupied cells; " +
                      $"{instructions.Count} plan(s), {spawnedCount} spawned. {executionSummary} " +
                      $"Environment r{context?.Environment?.Revision ?? 0}, policy={_planner.LastEnvironmentPolicy}";
-            Debug.Log(result);
             summary = new EncounterExecutionSummary(plannedCount, spawnedCount,
                 spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
                 new SpawnDecisionSnapshot(snapshot,_planner.LastCandidates,plans,actuals,
