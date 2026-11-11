@@ -68,5 +68,8 @@
     "Assets/Scripts/Features/Enemy/Editor/Tests/EnemySimulationSpawnTests.cs": "895317e0e74585150d67f3812c35edd4f4cf65384df7c1bff315800004a9737a",
     "Assets/Scripts/Features/Enemy/Editor/Tests/EnemySpawnRuntimeTests.cs": "2a6b41f4b08679f69751d2596b439994f1449b885038e077491a1a85c915f3d2"
   },
-  "note": "Source hashes normalize CRLF to LF and use UTF-8; local raw logs/XML are retained separately. Failed harness attempts are not counted as passes."
+  "note": "Source hashes normalize CRLF to LF and use UTF-8; local raw logs/XML are retained separately. Failed harness attempts are not counted as passes.",
+  "pr_number": 691,
+  "pr_url": "https://github.com/Team-HJD-21/unity-6-the-developer/pull/691",
+  "tested_code_commit": "1f4467d881dea9e2387e2751a01f19f9e153286f"
 }

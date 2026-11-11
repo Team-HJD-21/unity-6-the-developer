@@ -1,6 +1,6 @@
 # Enemy 생성 귀속 초기화 경고와 정상 로그 정리
 
-PR: 발행 전  
+PR: [#691](https://github.com/Team-HJD-21/unity-6-the-developer/pull/691)  
 작성일: 2026-11-11 · 담당: Core / 양현석  
 기준 main: `ba553257c1c617eee48f33da4bbdb61a775ebcf0`
 
@@ -31,7 +31,7 @@ NGO 2.13.3 패키지에서 `InternalOnNetworkSpawn → InitializeVariables → O
 
 ## 확인 결과
 
-Unity 6000.3.23f1 / NGO 2.13.3, 위 main에서 분리한 최종 작업 트리로 검사했다. 코드 커밋 후에는 검사한 소스 해시와 동일한지 대조한다. 문서 번호 보완만으로 Runtime 검사를 반복하지 않는다.
+Unity 6000.3.23f1 / NGO 2.13.3, 코드 커밋 `1f4467d881dea9e2387e2751a01f19f9e153286f`와 동일한 작업 트리로 검사했고 커밋 후 소스 해시를 대조했다. 문서 번호 보완만으로 Runtime 검사를 반복하지 않는다.
 
 | 검사 | 실제 결과 |
 | --- | --- |
