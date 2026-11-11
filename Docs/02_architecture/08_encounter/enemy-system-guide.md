@@ -98,7 +98,7 @@ classDiagram
 
 ## 타깃·분대·이동
 
-`ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.ChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.
+`ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.TryChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.
 
 목표 선택은 `EnemySquad`가 담당한다. 배정된 목표가 있으면 주기적으로 `CanBeTargeted`를 검사하거나 구성원을 순회하지 않는다. 타깃 불가 이벤트를 받으면 기존 목표와 구독을 해제하고 분대 중심에서 가장 가까운 유효 후보를 즉시 한 번 검색한다. 후보가 없을 때만 기존 행동 갱신 경로의 대표 활성 구성원이 `RefreshTarget()`으로 0.5초마다 재시도하며 새 Update나 코루틴을 추가하지 않는다. 여러 분대가 같은 목표를 잃으면 해당 이벤트 시점에 각 분대의 검색이 발생하며 프레임별 검색량을 분산하는 스케줄러는 아니다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
 
@@ -110,7 +110,9 @@ classDiagram
 
 첫 반복 갱신 시점은 몬스터 InstanceID로 엇갈리게 배치하며 새 타깃의 첫 계산을 지연하지 않는다. 이는 프레임당 계산 수 제한이나 결정적인 재실행을 보장하는 스케줄러가 아니다. 타깃별 공격인원 포화도와 별도 경로 계산 스케줄러는 후속 작업이다.
 
-`TargetableComponent`의 `Max Attackers`는 타깃별 최대 배정 인원 설정이며 `ITargetable.MaxAttackers`로 조회한다. 초기값 10은 임시 값이고 플레이어·터렛·CU마다 조절할 수 있다. 현재 배정 인원은 실행 중 값인 `AssignedAttackerCount`로 조회한다. `TryAssignAttackers(count)`는 타깃이 유효하고 요청 인원이 양수이며 남은 인원 안에 들어갈 때만 배정 수를 늘린다. `UnassignAttackers(count)`는 양수만 해제하고 결과를 0 이상으로 제한한다. 주기 집계나 비활성화 시 자동 초기화는 하지 않으며, 호출자가 자신이 배정한 인원을 관리하고 반환해야 한다. 현재는 배정·해제 API까지 제공하며 분대의 실제 호출, 포화 타깃 제외, 소환 적 예외와 저장 복원 연결은 아직 적용하지 않았다.
+`TargetableComponent`의 `Max Attackers`는 타깃별 최대 배정 인원 설정이며 `ITargetable.MaxAttackers`로 조회한다. 초기값 10은 임시 값이고 플레이어·터렛·CU마다 조절할 수 있다. 현재 배정 인원은 실행 중 값인 `AssignedAttackerCount`로 조회한다. `TryAssignAttackers(count)`는 타깃이 유효하고 요청 인원이 양수이며 남은 인원 안에 들어갈 때만 배정 수를 늘린다. `UnassignAttackers(count)`는 양수만 해제하고 결과를 0 이상으로 제한한다. 배정 인원은 주기적으로 집계하거나 비활성화 시 자동 초기화하지 않는다. 호출자는 자신이 배정한 인원을 관리하고 반환해야 한다.
+
+`EnemySquad.SetTarget()`은 검색 시점에 활성 `TargetableComponent` 후보를 조회하고 타깃 규칙으로 결정한 유형과 `_members.Count`를 `TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector.TryFindNearest()`에 직접 전달한다. 조회 시 분대 전체 인원을 받을 수 없는 후보는 제외한다. Encounter의 편성 판단용 타깃 조회는 같은 메서드의 기본 인원 값 0을 사용해 이 제한을 적용하지 않는다. 호출부에서는 Legacy의 동명 클래스와 구분하도록 `RuntimeTargetSelector` 별칭을 사용한다. 분대는 별도 인원 카운터 없이 구성원 전체를 같은 타깃에 배정한다. `TryChangeTarget()`은 새 타깃에 `_members.Count`만큼 배정할 수 있을 때 이전 배정과 구독을 반환하고 목표를 바꾼다. 타깃 불가 이벤트에서는 이전 목표와 배정을 먼저 해제한 뒤 재검색하며, 후보가 없으면 목표 없이 재시도한다. 감지한 플레이어로 우선 전환할 때는 해당 플레이어에 분대 전체를 배정할 수 없는 경우 기존 유효 타깃을 유지한다. 구성원 합류는 목록 추가 전에 한 명을 배정하고, 실패하면 기존 구성원 수로 배정을 반환한 뒤 합류시켜 재검색하게 한다. 구성원 제거는 실제 목록 제거에 성공했을 때 한 명만 반환한다. 저장 복원은 같은 타깃이면 중복 배정하지 않고, 다른 타깃으로 복원할 때 이전 배정을 먼저 반환하며 수용 불가이면 목표를 비운다. 저장 형식은 변경하지 않는다. 소환 봄버의 인원 제한 제외는 아직 연결하지 않았다.
 
 배정 API는 Test Runner의 EditMode에서 `EnemyTargetAttackerLimitTests`를 선택해 실행한다. 별도 Preview Scene에서 최대 인원을 10으로 설정하고 배정 한계·해제 후 재배정·0 및 음수 인원·과도한 인원·체력 0 및 비활성 상태·체력 회복 후 배정을 검사한다. 분대의 실제 배정이나 네트워크 동작을 검증하는 테스트는 아니다.
 

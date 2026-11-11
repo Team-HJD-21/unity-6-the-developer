@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
 
 /// <summary>
 /// 함께 행동하는 적의 소속과 공동 목표를 보관한다.
@@ -40,7 +41,7 @@ public class EnemySquad
         ITargetable target = initialTarget != null
             ? initialTarget.GetComponent<ITargetable>()
             : null;
-        ChangeTarget(IsValidTarget(target) ? target : null);
+        TryChangeTarget(IsValidTarget(target) ? target : null);
     }
 
     /// <summary>
@@ -56,14 +57,18 @@ public class EnemySquad
         if (_squadMode == EnemySquadMode.Individual && !IsEmpty)
             return false;
 
+        if (_target != null)
+        {
+            if (!IsValidTarget(_target) || !_target.TryAssignAttackers(1))
+            {
+                // 목록을 늘리기 전에 기존 구성원 수만큼 배정을 반환한다.
+                TryChangeTarget(null);
+                _nextSearchTime = 0f;
+            }
+        }
+
         _members.Add(enemy);
-        
-        Transform targetTransform =
-            IsValidTarget(_target)
-                ? _target.TargetTransform
-                : null;
-        
-        enemy.AssignTarget(targetTransform);
+        enemy.AssignTarget(_target?.TargetTransform);
         return true;
     }
 
@@ -76,8 +81,10 @@ public class EnemySquad
         if (!_members.Remove(enemy))
             return;
 
+        _target?.UnassignAttackers(1);
+
         if (IsEmpty)
-            ChangeTarget(null);
+            TryChangeTarget(null);
     }
 
     /// <summary>
@@ -123,7 +130,14 @@ public class EnemySquad
                 "Saved squad target is not targetable.");
         }
 
-        ChangeTarget(IsValidTarget(restoredTarget) ? restoredTarget : null);
+        ITargetable nextTarget = IsValidTarget(restoredTarget) ? restoredTarget : null;
+
+        if (!ReferenceEquals(_target, nextTarget))
+        {
+            TryChangeTarget(null);
+            TryChangeTarget(nextTarget);
+        }
+
         _nextSearchTime = 0f;
     }
 
@@ -145,16 +159,20 @@ public class EnemySquad
         if (!TryGetCenterPosition(out Vector3 center))
             return false;
 
-        ITargetable nextTarget;
-        bool found = _targetRule == EnemyTargetRule.PlayerOnly
-            ? EnemySquadTargetSelector.TrySelectNearestPlayer(center, out nextTarget)
-            : EnemySquadTargetSelector.TrySelectNearestTarget(center, out nextTarget);
+        TargetType? requiredType = _targetRule == EnemyTargetRule.PlayerOnly
+            ? TargetType.Player
+            : null;
+
+        TargetableComponent[] candidates =
+            Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
+
+        bool found = RuntimeTargetSelector.TryFindNearest(
+            center, candidates, requiredType, out ITargetable nextTarget, _members.Count);
 
         if (!found)
             return false;
 
-        ChangeTarget(nextTarget);
-        return true;
+        return TryChangeTarget(nextTarget);
     }
 
     /// <summary>구성원이 감지한 플레이어를 분대 공동 목표로 선택한다.</summary>
@@ -165,14 +183,14 @@ public class EnemySquad
             return false;
 
         if (!_members.Contains(requester) ||
-            !IsValidTarget(player) ||
+            player == null ||
             player.TargetType != TargetType.Player)
         {
             return false;
         }
 
-        ChangeTarget(player);
-        return true;
+        // 플레이어로 우선 전환할 때는 배정 실패 시 기존 유효 타깃을 유지한다.
+        return TryChangeTarget(player);
     }
 
     /// <summary>목표가 없고 재검색 시점일 때 대표 활성 구성원만 검색한다.</summary>
@@ -192,14 +210,29 @@ public class EnemySquad
         }
     }
 
-    /// <summary>타깃과 이벤트 구독을 변경하고 구성원에게 전달한다.</summary>
-    private void ChangeTarget(ITargetable target)
+    /// <summary>새 타깃에 분대 인원을 배정하고 기존 배정을 반환한다.</summary>
+    private bool TryChangeTarget(ITargetable target)
     {
         if (ReferenceEquals(_target, target))
-            return;
+            return true;
+
+        int count = _members.Count;
+
+        if (target != null)
+        {
+            if (!IsValidTarget(target))
+                return false;
+
+            // 생성자에서는 구성원이 없으므로 실제 배정은 합류 시 처리한다.
+            if (count > 0 && !target.TryAssignAttackers(count))
+                return false;
+        }
 
         if (!ReferenceEquals(_target, null))
+        {
             _target.TargetabilityLost -= OnTargetabilityLost;
+            _target.UnassignAttackers(count);
+        }
 
         _target = target;
 
@@ -213,6 +246,8 @@ public class EnemySquad
             if (member != null)
                 member.AssignTarget(targetTransform);
         }
+
+        return true;
     }
 
     /// <summary>현재 타깃을 해제하고 즉시 새 타깃을 찾는다.</summary>
@@ -221,7 +256,8 @@ public class EnemySquad
         if (!ReferenceEquals(_target, target))
             return;
 
-        ChangeTarget(null);
+        // 공격 불가능한 기존 타깃과 배정을 먼저 해제한 뒤 새 후보를 찾는다.
+        TryChangeTarget(null);
 
         _nextSearchTime = 0f;
         SetTarget();

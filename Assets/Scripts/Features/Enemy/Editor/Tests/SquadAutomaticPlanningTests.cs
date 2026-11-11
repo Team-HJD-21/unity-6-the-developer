@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEditor;
@@ -235,7 +236,30 @@ public sealed class SquadAutomaticPlanningTests
     }
 
     [Test]
-    public void TargetQuery_TreatsCuAsTurretAndExcludesPlayersAndUnavailableTurrets()
+    public void TargetSelector_SkipsInsufficientCapacityButPlanningCanIgnoreTheLimit()
+    {
+        var nearest = Target("near turret", Vector3.right, TargetType.Turret);
+        var farther = Target("far turret", Vector3.right * 2f, TargetType.Turret);
+        var candidates = new[] { nearest, farther };
+        Assert.That(nearest.TryAssignAttackers(nearest.MaxAttackers - 1), Is.True);
+
+        Assert.That(RuntimeTargetSelector.TryFindNearest(
+            Vector3.zero, candidates, TargetType.Turret, out var selected, 2), Is.True);
+        Assert.That(selected, Is.SameAs(farther));
+
+        // 편성 판단용 조회는 인원을 전달하지 않아 가장 가까운 터렛을 유지한다.
+        Assert.That(RuntimeTargetSelector.TryFindNearest(
+            Vector3.zero, candidates, TargetType.Turret, out selected), Is.True);
+        Assert.That(selected, Is.SameAs(nearest));
+
+        Assert.That(farther.TryAssignAttackers(farther.MaxAttackers), Is.True);
+        Assert.That(RuntimeTargetSelector.TryFindNearest(
+            Vector3.zero, candidates, TargetType.Turret, out selected, 2), Is.False);
+        Assert.That(selected, Is.Null);
+    }
+
+    [Test]
+    public void TargetSelector_TreatsCuAsTurretAndExcludesPlayersAndUnavailableTurrets()
     {
         var player = Target("player", new Vector3(0.1f, 0, 0), TargetType.Player);
         var unavailable = Target("inactive turret", new Vector3(0.2f, 0, 0), TargetType.Turret);
@@ -244,13 +268,13 @@ public sealed class SquadAutomaticPlanningTests
         var fartherTurret = Target("turret", new Vector3(2, 0, 0), TargetType.Turret);
         var candidates = new[] { player, unavailable, fartherTurret, cu };
 
-        Assert.That(EnemyTargetQuery.TryFindNearest(Vector3.zero, candidates, TargetType.Turret, out var selected), Is.True);
+        Assert.That(RuntimeTargetSelector.TryFindNearest(Vector3.zero, candidates, TargetType.Turret, out var selected), Is.True);
         Assert.That(selected, Is.SameAs(cu));
         cu.SetHealth(0, 10);
-        Assert.That(EnemyTargetQuery.TryFindNearest(Vector3.zero, candidates, TargetType.Turret, out selected), Is.True);
+        Assert.That(RuntimeTargetSelector.TryFindNearest(Vector3.zero, candidates, TargetType.Turret, out selected), Is.True);
         Assert.That(selected, Is.SameAs(fartherTurret));
         fartherTurret.SetHealth(0, 10);
-        Assert.That(EnemyTargetQuery.TryFindNearest(Vector3.zero, candidates, TargetType.Turret, out selected), Is.False);
+        Assert.That(RuntimeTargetSelector.TryFindNearest(Vector3.zero, candidates, TargetType.Turret, out selected), Is.False);
         Assert.That(selected, Is.Null);
     }
 

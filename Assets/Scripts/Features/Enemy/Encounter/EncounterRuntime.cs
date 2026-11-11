@@ -7,6 +7,7 @@ using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
 
 namespace TeamHJD.Game.Domain
 {
@@ -174,7 +175,7 @@ namespace TeamHJD.Game.Domain
             {
                 if (string.IsNullOrWhiteSpace(point.SpawnPointId) || targetPositions.ContainsKey(point.SpawnPointId))
                     continue;
-                if (!EnemyTargetQuery.TryFindNearest(point.Position, targets, TargetType.Turret, out ITargetable target))
+                if (!RuntimeTargetSelector.TryFindNearest(point.Position, targets, TargetType.Turret, out ITargetable target))
                     continue;
 
                 Vector3 position = target.TargetTransform.position;
