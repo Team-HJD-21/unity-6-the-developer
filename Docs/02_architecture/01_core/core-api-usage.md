@@ -6,6 +6,8 @@
 
 ## 호출 방향과 상태 소유권
 
+2026-11-11 추가: 로컬 컷씬은 [CameraManager 사용법](../03_scene-flow/camera-manager-api.md)의 `PushView`와 반환 lease를 사용합니다. 기존 출력 Camera를 보존하며 Weather/입력 소스를 임의 교체하지 않습니다. Client 낮밤 표시는 [공용 구간 기준](../09_world/day-night-api.md)을 사용하고 개인 타이머를 추가하지 않습니다.
+
 2026-11-05 추가: [범용 Random API와 6개 파일의 교체 위치](core-random-api.md), [우주선 출입 보고 API](core-presence-report-api.md). 진태는 Core 난수를 주입받아 사용하고 Host의 실제 이동 완료 시 출입 결과를 보고한다. 난수 원본 보존과 전체 정지 판단은 Core가 소유한다. 기존 Feature 호출부 교체는 이번 변경에 포함하지 않았다.
 
 **Random을 새로 사용하거나 기존 호출을 바꾸는 파트는 [Random 사용법](core-random-api.md)을 반드시 먼저 확인한다.** 함수 이름뿐 아니라 어떤 서비스/이름의 source를 언제 주입받고 해제하는지까지 맞춘다. 문서에 도입 이유와 기본 추첨·확률·목록/가중치·셔플·원판 좌표·저장 연결 예제가 있다.
