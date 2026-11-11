@@ -1,6 +1,6 @@
 {
   "date": "2026-11-11",
-  "base_main": "06b2c9aa6a166422bd4468a22434fd182c2140ed",
+  "base_main": "f6a8c22c0ee840500ebabd6891dd3ccec3c9c790",
   "unity": "6000.3.23f1",
   "ngo": "2.13.3",
   "tests": [
@@ -19,22 +19,22 @@
       "sha256": "126e2719e6e96db9d864ded09ec855799406f251c7ded46a06d5f521f4db81b6"
     },
     {
-      "file": "stage-editor.xml",
+      "file": "stage-main-final.xml",
       "total": 1,
       "passed": 1,
       "failed": 0,
-      "sha256": "d024e28cd202b95d321c99ea436f63d4ddfb344fd18bb8ab684832765f50dcac"
+      "sha256": "6e3ffb727a28092bcca4b9564020453f4fa537315c401160e09063988923dfc2"
     }
   ],
   "native_pair": {
     "success": true,
-    "run": "20261111T121437Z-20e7e83b",
-    "port": 62742,
-    "hostPid": 10772,
-    "clientPid": 50144,
+    "run": "20261111T122319Z-da465d7b",
+    "port": 60990,
+    "hostPid": 46564,
+    "clientPid": 32908,
     "hostExit": 0,
     "clientExit": 0,
-    "build": "3168bdafc97140189bcd744f111948f8",
+    "build": "987bde6064e44fb2826bafff96bf9edc",
     "runtimeErrorSignatures": 0,
     "computeBufferShutdownWarnings": 2,
     "requiredPhases": [
@@ -65,52 +65,52 @@
   "client_samples": [
     {
       "Phase": "Static",
-      "Match": "52782b0bd81b43d9be108dacd040da31",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
       "TimeOfDay": "day",
-      "DayNightRemaining": 299.9479770796063,
-      "MatchGameSeconds": 0.05202292039369549,
+      "DayNightRemaining": 299.9635010420873,
+      "MatchGameSeconds": 0.03649895791274793,
       "GameRate": 1.0,
       "EnvironmentRevision": 2
     },
     {
       "Phase": "ClockPaused",
-      "Match": "52782b0bd81b43d9be108dacd040da31",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
       "TimeOfDay": "day",
-      "DayNightRemaining": 299.7761874619126,
-      "MatchGameSeconds": 0.2238125380873679,
+      "DayNightRemaining": 299.7755487914849,
+      "MatchGameSeconds": 0.2244512085150927,
       "GameRate": 0.0,
       "EnvironmentRevision": 2
     },
     {
       "Phase": "ClockRate",
-      "Match": "52782b0bd81b43d9be108dacd040da31",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
       "TimeOfDay": "day",
-      "DayNightRemaining": 299.7761874619126,
-      "MatchGameSeconds": 0.2238125380873679,
+      "DayNightRemaining": 299.7755487914849,
+      "MatchGameSeconds": 0.2244512085150927,
       "GameRate": 2.0,
       "EnvironmentRevision": 2
     },
     {
       "Phase": "ClockReset",
-      "Match": "52782b0bd81b43d9be108dacd040da31",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
       "TimeOfDay": "day",
-      "DayNightRemaining": 299.98350105207413,
-      "MatchGameSeconds": 0.290479762647301,
+      "DayNightRemaining": 299.9835004638322,
+      "MatchGameSeconds": 0.29111941992305224,
       "GameRate": 1.0,
       "EnvironmentRevision": 3
     },
     {
       "Phase": "Dynamic",
-      "Match": "52782b0bd81b43d9be108dacd040da31",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
       "TimeOfDay": "night",
-      "DayNightRemaining": 299.9971122694823,
-      "MatchGameSeconds": 0.6435314512004457,
+      "DayNightRemaining": 299.9995477064016,
+      "MatchGameSeconds": 0.649757038525616,
       "GameRate": 1.0,
       "EnvironmentRevision": 4
     },
     {
       "Phase": "Restart",
-      "Match": "df275a5172464682b33cbc558aab07bb",
+      "Match": "e69cdff2aced4bae9d7e30c95735d57d",
       "TimeOfDay": "day",
       "DayNightRemaining": 300.0,
       "MatchGameSeconds": 0.0,
@@ -119,11 +119,11 @@
     }
   ],
   "native_evidence_sha256": {
-    "client.json": "d9ddac8a141377b655582e9257a2f3d5a3e384d436c13e372b5138f76530a04e",
-    "client.log": "0993b0cf430d5b640fa18450f55b4e7346022032208eb12ab9c0c65661df28af",
-    "host.json": "334daa2742f87f9b19ee8ffa87bb3c3eaf33131d0c8ee8690f8de7916b983c57",
-    "host.log": "31f6e423a47fcb537096e2b8514a1377447f9f9d0061a37ceb6d78d67eced124",
-    "verified.json": "c39bc707a2540622feb297e27b23184eb62bfdec946e76d55c589702c9c36df6"
+    "client.json": "f4c55cdd49926d20c59fcd844885f20d16f7638ec9b984b611a1c94ce68a7957",
+    "client.log": "251f109eeed205a1b722df4dfb5cc425e29e255e82b5d2e40b7696078b0e102f",
+    "host.json": "69dbe90221a748043bb047886858482fba1ace1a061380b4ff6d7134fccc035f",
+    "host.log": "394dd395816c3b3a88a4b627ccb01843d4c65f9e2576496c856bc53d688fbd91",
+    "verified.json": "670cabbef357d314f3fbea0e149e55c24749e0e232e1e153d3cc39fadd50cd0d"
   },
   "source_sha256_lf": {
     "Assets/Scripts/Core/Application/Environment/MatchEnvironmentRuntime.cs": "f25cc126dd2fe9c25fb53fdfe8a82a50b7fccc29b14991e0d6801d73657d5e52",
