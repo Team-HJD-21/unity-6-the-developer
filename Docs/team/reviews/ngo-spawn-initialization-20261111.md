@@ -1,7 +1,7 @@
 # Enemy 생성 귀속 초기화 경고와 정상 로그 정리
 
-PR: [#691](https://github.com/Team-HJD-21/unity-6-the-developer/pull/691)  
-작성일: 2026-11-11 · 담당: Core / 양현석  
+PR: [#691](https://github.com/Team-HJD-21/unity-6-the-developer/pull/691)
+작성일: 2026-11-11 · 담당: Core / 양현석
 기준 main: `ba553257c1c617eee48f33da4bbdb61a775ebcf0`
 
 ## 목적과 수정 범위
