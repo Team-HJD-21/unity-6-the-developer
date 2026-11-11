@@ -59,9 +59,12 @@ public class EnemySquad
 
         if (_target != null)
         {
-            if (!IsValidTarget(_target) || !_target.TryAssignAttackers(1))
+            bool cannotAssign = !IsValidTarget(_target) ||
+                (enemy.IsIncludedInAttackerLimit && !_target.TryAssignAttackers(1));
+
+            if (cannotAssign)
             {
-                // 목록을 늘리기 전에 기존 구성원 수만큼 배정을 반환한다.
+                // 목록을 늘리기 전에 기존 집계 대상의 배정을 반환한다.
                 TryChangeTarget(null);
                 _nextSearchTime = 0f;
             }
@@ -78,10 +81,11 @@ public class EnemySquad
     /// <param name="enemy">제거할 적의 행동 컴포넌트.</param>
     public void RemoveMember(EnemyController enemy)
     {
-        if (!_members.Remove(enemy))
+        if (ReferenceEquals(enemy, null) || !_members.Remove(enemy))
             return;
 
-        _target?.UnassignAttackers(1);
+        if (enemy.IsIncludedInAttackerLimit)
+            _target?.UnassignAttackers(1);
 
         if (IsEmpty)
             TryChangeTarget(null);
@@ -167,7 +171,7 @@ public class EnemySquad
             Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
 
         bool found = RuntimeTargetSelector.TryFindNearest(
-            center, candidates, requiredType, out ITargetable nextTarget, _members.Count);
+            center, candidates, requiredType, out ITargetable nextTarget, GetAttackerCount());
 
         if (!found)
             return false;
@@ -210,13 +214,27 @@ public class EnemySquad
         }
     }
 
-    /// <summary>새 타깃에 분대 인원을 배정하고 기존 배정을 반환한다.</summary>
+    /// <summary>공격 인원 제한에 포함되는 현재 구성원 수를 반환한다.</summary>
+    private int GetAttackerCount()
+    {
+        int count = 0;
+
+        foreach (EnemyController member in _members)
+        {
+            if (member != null && member.IsIncludedInAttackerLimit)
+                count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>새 타깃에 집계 대상 인원을 배정하고 기존 배정을 반환한다.</summary>
     private bool TryChangeTarget(ITargetable target)
     {
         if (ReferenceEquals(_target, target))
             return true;
 
-        int count = _members.Count;
+        int count = GetAttackerCount();
 
         if (target != null)
         {

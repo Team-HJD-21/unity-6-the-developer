@@ -20,6 +20,9 @@ public abstract class EnemyController : MonoBehaviour
     /// 미사일 시스템은 중복 목표 배정을 막기 위해 이 값을 확인하고 설정한다.
     /// </summary>
     public bool IsTargeted { get; set; }
+
+    /// <summary>이 몬스터를 타깃별 공격 인원 제한에 포함할지 반환한다.</summary>
+    public bool IsIncludedInAttackerLimit { get; private set; } = true;
     
     /// <summary>
     /// 자식 클래스가 공유하는 타깃·애니메이션·능력 참조를 초기화한다.
@@ -39,15 +42,15 @@ public abstract class EnemyController : MonoBehaviour
     /// </summary>
     public abstract void ExecuteBehavior();
 
-    /// <summary>몬스터를 독립적으로 유지되는 분대에 등록한다.</summary>
-    public bool JoinSquad(EnemySquad squad)
+    /// <summary>최초 분대 등록 시 공격 인원 집계 설정을 적용한다.</summary>
+    public bool JoinSquad(EnemySquad squad, bool isIncludedInAttackerLimit = true)
     {
         if (squad == null)
             return false;
-        if (_squad == squad)
-            return true;
+        if (_squad != null)
+            return _squad == squad;
 
-        LeaveSquad();
+        IsIncludedInAttackerLimit = isIncludedInAttackerLimit;
         if (!squad.AddMember(this))
             return false;
 

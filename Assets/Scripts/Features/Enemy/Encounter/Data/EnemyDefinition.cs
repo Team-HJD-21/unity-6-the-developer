@@ -32,6 +32,9 @@ public sealed class EnemyDefinition : ScriptableObject
     [SerializeField] private EnemySquadMode _squadMode;
     [SerializeField] private EnemyTargetRule _targetRule;
 
+    [Header("공격 인원 제한")]
+    [SerializeField] private bool _isIncludedInAttackerLimit = true;
+
     /// <summary>
     /// 적 정의를 식별하는 고유 값을 반환한다.
     /// </summary>
@@ -52,4 +55,7 @@ public sealed class EnemyDefinition : ScriptableObject
 
     /// <summary>분대가 선택할 수 있는 타깃 유형을 반환한다.</summary>
     public EnemyTargetRule TargetRule => _targetRule;
+
+    /// <summary>이 몬스터를 타깃별 공격 인원 제한에 포함할지 반환한다.</summary>
+    public bool IsIncludedInAttackerLimit => _isIncludedInAttackerLimit;
 }

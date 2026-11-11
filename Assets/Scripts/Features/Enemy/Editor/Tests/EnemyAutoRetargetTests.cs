@@ -179,6 +179,131 @@ public sealed class EnemyAutoRetargetTests
     }
 
     [Test]
+    public void ExcludedMembers_JoinFullTargetWithoutChangingItsAssignments()
+    {
+        TargetableComponent target = CreateTarget("FullTarget", 1f);
+        Assert.That(target.TryAssignAttackers(10), Is.True);
+        var first = CreateEnemy();
+        var second = CreateEnemy();
+        var squad = new EnemySquad(EnemySquadMode.Shared,
+            EnemyTargetRule.PlayerOrTurret, target.transform);
+
+        Assert.That(first.JoinSquad(squad, false), Is.True);
+        Assert.That(second.JoinSquad(squad, false), Is.True);
+        Assert.That(first.AssignedTarget, Is.SameAs(target.transform));
+        Assert.That(second.AssignedTarget, Is.SameAs(target.transform));
+        Assert.That(target.AssignedAttackerCount, Is.EqualTo(10));
+
+        first.LeaveSquad();
+        second.LeaveSquad();
+        Assert.That(target.AssignedAttackerCount, Is.EqualTo(10));
+    }
+
+    [Test]
+    public void MixedSquad_TransfersOnlyIncludedMembersAndSharesTargetWithExcludedMembers()
+    {
+        TargetableComponent turret = CreateTarget("Turret", 1f);
+        TargetableComponent player = CreateTarget("Player", 2f);
+        player.SetTargetType(TargetType.Player);
+        Assert.That(player.TryAssignAttackers(8), Is.True);
+        var first = CreateEnemy();
+        var excluded = CreateEnemy();
+        var second = CreateEnemy();
+        var squad = new EnemySquad(EnemySquadMode.Shared,
+            EnemyTargetRule.PlayerOrTurret, turret.transform);
+        Assert.That(first.JoinSquad(squad), Is.True);
+        Assert.That(excluded.JoinSquad(squad, false), Is.True);
+        Assert.That(second.JoinSquad(squad), Is.True);
+        Assert.That(turret.AssignedAttackerCount, Is.EqualTo(2));
+
+        Assert.That(squad.TryPrioritizePlayer(first, player), Is.True);
+        Assert.That(turret.AssignedAttackerCount, Is.Zero);
+        Assert.That(player.AssignedAttackerCount, Is.EqualTo(10));
+        Assert.That(first.AssignedTarget, Is.SameAs(player.transform));
+        Assert.That(excluded.AssignedTarget, Is.SameAs(player.transform));
+        Assert.That(second.AssignedTarget, Is.SameAs(player.transform));
+
+        excluded.LeaveSquad();
+        Assert.That(player.AssignedAttackerCount, Is.EqualTo(10));
+        first.LeaveSquad();
+        second.LeaveSquad();
+        Assert.That(player.AssignedAttackerCount, Is.EqualTo(8));
+    }
+
+    [Test]
+    public void ExcludedSquad_SearchesAndRetargetsWithoutCapacityRestriction()
+    {
+        TargetableComponent first = CreateTarget("NearestFullTarget", 1f);
+        TargetableComponent second = CreateTarget("NextFullTarget", 2f);
+        Assert.That(first.TryAssignAttackers(10), Is.True);
+        Assert.That(second.TryAssignAttackers(10), Is.True);
+        var member = CreateEnemy();
+        var squad = new EnemySquad(EnemySquadMode.Shared, EnemyTargetRule.PlayerOrTurret);
+        Assert.That(member.JoinSquad(squad, false), Is.True);
+
+        Assert.That(squad.SetTarget(), Is.True);
+        Assert.That(member.AssignedTarget, Is.SameAs(first.transform));
+        Assert.That(first.AssignedAttackerCount, Is.EqualTo(10));
+
+        first.SetHealth(0, 100);
+        Assert.That(member.AssignedTarget, Is.SameAs(second.transform));
+        Assert.That(first.AssignedAttackerCount, Is.EqualTo(10));
+        Assert.That(second.AssignedAttackerCount, Is.EqualTo(10));
+        member.LeaveSquad();
+        Assert.That(second.AssignedAttackerCount, Is.EqualTo(10));
+    }
+
+    [Test]
+    public void MixedSquad_RestoreUsesOnlyIncludedMembersWithoutDoubleAssignment()
+    {
+        TargetableComponent current = CreateTarget("Current", 1f);
+        TargetableComponent replacement = CreateTarget("Replacement", 2f);
+        Assert.That(replacement.TryAssignAttackers(9), Is.True);
+        var included = CreateEnemy();
+        var excluded = CreateEnemy();
+        var squad = new EnemySquad(EnemySquadMode.Shared,
+            EnemyTargetRule.PlayerOrTurret, current.transform);
+        Assert.That(included.JoinSquad(squad), Is.True);
+        Assert.That(excluded.JoinSquad(squad, false), Is.True);
+
+        MethodInfo restore = typeof(EnemySquad).GetMethod(
+            "RestoreCheckpointTarget", BindingFlags.Instance | BindingFlags.NonPublic);
+        restore.Invoke(squad, new object[] { replacement.transform });
+        restore.Invoke(squad, new object[] { replacement.transform });
+        Assert.That(current.AssignedAttackerCount, Is.Zero);
+        Assert.That(replacement.AssignedAttackerCount, Is.EqualTo(10));
+        Assert.That(included.AssignedTarget, Is.SameAs(replacement.transform));
+        Assert.That(excluded.AssignedTarget, Is.SameAs(replacement.transform));
+
+        excluded.LeaveSquad();
+        included.LeaveSquad();
+        Assert.That(replacement.AssignedAttackerCount, Is.EqualTo(9));
+    }
+
+    [Test]
+    public void RegisteredMember_RejectsAnotherSquadAndKeepsOriginalInclusionSetting()
+    {
+        TargetableComponent firstTarget = CreateTarget("FirstTarget", 1f);
+        TargetableComponent secondTarget = CreateTarget("SecondTarget", 2f);
+        var member = CreateEnemy();
+        var firstSquad = new EnemySquad(EnemySquadMode.Shared,
+            EnemyTargetRule.PlayerOrTurret, firstTarget.transform);
+        var secondSquad = new EnemySquad(EnemySquadMode.Shared,
+            EnemyTargetRule.PlayerOrTurret, secondTarget.transform);
+        Assert.That(member.JoinSquad(firstSquad), Is.True);
+
+        Assert.That(member.JoinSquad(firstSquad, false), Is.True);
+        Assert.That(member.JoinSquad(secondSquad, false), Is.False);
+        Assert.That(member.IsIncludedInAttackerLimit, Is.True);
+        Assert.That(member.AssignedTarget, Is.SameAs(firstTarget.transform));
+        Assert.That(firstTarget.AssignedAttackerCount, Is.EqualTo(1));
+        Assert.That(secondTarget.AssignedAttackerCount, Is.Zero);
+
+        member.LeaveSquad();
+        Assert.That(firstTarget.AssignedAttackerCount, Is.Zero);
+    }
+
+    [Test]
     public void RestoreTarget_DoesNotDoubleAssignAndClearsWhenReplacementIsFull()
     {
         TargetableComponent current = CreateTarget("Current", 1f);

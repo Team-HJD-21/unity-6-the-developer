@@ -62,7 +62,7 @@ public sealed class EnemySummonGenerator : NetworkBehaviour
             EnemySquad squad = sharedSquad ??
                 new EnemySquad(definition.SquadMode, definition.TargetRule, target);
 
-            if (!controller.JoinSquad(squad))
+            if (!controller.JoinSquad(squad, definition.IsIncludedInAttackerLimit))
             {
                 networkObject.Despawn();
                 continue;

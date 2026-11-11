@@ -34,6 +34,28 @@ public sealed class EnemyTargetAttackerLimitTests
     }
 
     [Test]
+    public void Definition_DefaultIncludesAttackersAndBomberAssetIsExcluded()
+    {
+        var definition = ScriptableObject.CreateInstance<EnemyDefinition>();
+        try
+        {
+            Assert.That(definition.IsIncludedInAttackerLimit, Is.True);
+            var slime = AssetDatabase.LoadAssetAtPath<EnemyDefinition>(
+                "Assets/Data/Enemies/Spawning/Definitions/Slime.asset");
+            Assert.That(slime, Is.Not.Null);
+            Assert.That(slime.IsIncludedInAttackerLimit, Is.True);
+            var bomber = AssetDatabase.LoadAssetAtPath<EnemyDefinition>(
+                "Assets/Data/Enemies/Spawning/Definitions/BomberSlime.asset");
+            Assert.That(bomber, Is.Not.Null);
+            Assert.That(bomber.IsIncludedInAttackerLimit, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(definition);
+        }
+    }
+
+    [Test]
     public void Assignments_RespectLimitAndReuseReleasedCapacity()
     {
         Assert.That(_target.AssignedAttackerCount, Is.Zero);
