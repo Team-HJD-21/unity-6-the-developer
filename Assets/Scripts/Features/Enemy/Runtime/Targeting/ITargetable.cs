@@ -23,6 +23,15 @@ public interface ITargetable
     /// <summary>이 타깃에 배정할 수 있는 최대 적 인원을 반환한다.</summary>
     int MaxAttackers { get; }
 
+    /// <summary>현재 이 타깃에 배정된 적 인원.</summary>
+    int AssignedAttackerCount { get; }
+
+    /// <summary>수용 가능한 경우 요청한 인원을 배정한다.</summary>
+    bool TryAssignAttackers(int count);
+
+    /// <summary>기존에 배정된 인원을 해제한다.</summary>
+    void UnassignAttackers(int count);
+
     /// <summary>
     /// 현재 체력 비율을 0에서 1 사이로 반환한다.
     /// </summary>

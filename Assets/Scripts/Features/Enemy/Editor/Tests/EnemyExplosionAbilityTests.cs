@@ -199,12 +199,33 @@ public sealed class EnemyExplosionTargetProbe : MonoBehaviour, ITargetable, IDam
     public Transform TargetTransform => transform;
     public TargetType TargetType => global::TargetType.Turret;
     public int MaxAttackers => 10;
+    public int AssignedAttackerCount { get; private set; }
     public float HealthRatio => CurrentHealth / (float)MaxHealth;
     public float FirepowerRatio => 0f;
     public bool CanBeTargeted => Available && !IsDestroyed;
     public int CurrentHealth { get; private set; } = 100;
     public int MaxHealth => 100;
     public bool IsDestroyed => CurrentHealth <= 0;
+
+    public bool TryAssignAttackers(int count)
+    {
+        if (!CanBeTargeted || count <= 0 ||
+            count > MaxAttackers - AssignedAttackerCount)
+        {
+            return false;
+        }
+
+        AssignedAttackerCount += count;
+        return true;
+    }
+
+    public void UnassignAttackers(int count)
+    {
+        if (count <= 0)
+            return;
+
+        AssignedAttackerCount = Mathf.Max(0, AssignedAttackerCount - count);
+    }
 
     public bool ApplyDamage(int damage)
     {

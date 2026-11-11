@@ -22,6 +22,7 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     [SerializeField, Min(0f)] private float firepowerEfficiency;
 
     private bool _wasTargetable;
+    private int _assignedAttackerCount;
 
     /// <summary>타깃 가능한 상태에서 불가능한 상태로 전환되면 발생한다.</summary>
     public event Action<ITargetable> TargetabilityLost;
@@ -56,6 +57,34 @@ public class TargetableComponent : MonoBehaviour, ITargetable
 
     /// <summary>이 타깃에 배정할 수 있는 최대 적 인원을 반환한다.</summary>
     public int MaxAttackers => maxAttackers;
+
+    /// <summary>현재 이 타깃에 배정된 적 인원.</summary>
+    public int AssignedAttackerCount => _assignedAttackerCount;
+
+    /// <summary>최대 공격 인원을 넘지 않으면 요청한 인원을 배정한다.</summary>
+    public bool TryAssignAttackers(int count)
+    {
+        if (!CanBeTargeted || count <= 0)
+            return false;
+
+        int remaining = MaxAttackers - _assignedAttackerCount;
+
+        if (count > remaining)
+            return false;
+
+        _assignedAttackerCount += count;
+        return true;
+    }
+
+    /// <summary>분대가 반환한 배정 인원을 해제한다.</summary>
+    public void UnassignAttackers(int count)
+    {
+        if (count <= 0)
+            return;
+
+        _assignedAttackerCount =
+            Mathf.Max(0, _assignedAttackerCount - count);
+    }
 
     /// <summary>
     /// 점수 계산에 사용할 타깃 종류를 지정한다.
