@@ -87,9 +87,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (ReferenceEquals(_timeReplica, source)) return;
             var previous = _replicaField; _replicaField = null; _timeReplica = null;
             previous?.Dispose();
+            (_timeOfDaySource as MatchDayNightCycle)?.SetReplicaClock(null);
             if (source == null) return;
             _replicaField = new MatchFieldReplicaScope(source, GetFieldSimulationConsumers(), _playerActors.Actors.Values.Single());
             _timeReplica = source;
+            (_timeOfDaySource as MatchDayNightCycle)?.SetReplicaClock(source);
         }
         /// <summary>현재 descriptor의 로컬 슬롯 위치만 Client 필드 입력 경계에 반영합니다.</summary>
         public void ApplyReplicaLocation(MatchPlayerLocation location) => _replicaField?.ApplyLocation(location);
@@ -109,6 +111,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_ownsMatch || _ownedMatchId.IsEmpty) throw new InvalidOperationException("Bind environment replicas only to a composed Client Match.");
             _environmentScope = new MatchEnvironmentReplicaBinding(_ownedMatchId, source, _weatherSource, _timeOfDaySource);
             _environmentReplica = source;
+            (_timeOfDaySource as MatchDayNightCycle)?.SetReplicaClock(_timeReplica);
         }
 
         public void ReleaseNetworkMatch(MatchId matchId)

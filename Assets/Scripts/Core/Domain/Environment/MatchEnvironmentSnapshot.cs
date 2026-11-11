@@ -19,14 +19,24 @@ namespace TeamHJD.Game.Domain
         public bool HasWeather => !WeatherId.IsEmpty;
         public bool HasTimeOfDay => !TimeOfDayId.IsEmpty;
         public IReadOnlyList<DefinitionId> Forecast { get; }
+        /// <summary>현재 확정된 낮밤 구간의 시작 시각·길이입니다. 없으면 Client 잔여시간은 미제공입니다.</summary>
+        public DayNightCycle PhaseAnchor { get; }
         public MatchEnvironmentSnapshot(MatchId matchId, long revision, double gameSeconds,
             DefinitionId weatherId, DefinitionId timeOfDayId, IEnumerable<DefinitionId> forecast = null, Guid epoch = default)
+            : this(matchId, revision, gameSeconds, weatherId, timeOfDayId, forecast, epoch, null) { }
+
+        public MatchEnvironmentSnapshot(MatchId matchId, long revision, double gameSeconds,
+            DefinitionId weatherId, DefinitionId timeOfDayId, IEnumerable<DefinitionId> forecast, Guid epoch,
+            DayNightCycle phaseAnchor)
         {
             if (matchId.IsEmpty) throw new ArgumentException("A Match ID is required.", nameof(matchId));
             if (revision < 1) throw new ArgumentOutOfRangeException(nameof(revision));
             if (double.IsNaN(gameSeconds) || double.IsInfinity(gameSeconds) || gameSeconds < 0)
                 throw new ArgumentOutOfRangeException(nameof(gameSeconds));
             ValidateId(weatherId); ValidateId(timeOfDayId);
+            if (phaseAnchor != null && (phaseAnchor.EpochSeconds > gameSeconds ||
+                timeOfDayId.Value != (phaseAnchor.InitialPhase == DayNightPhase.Day ? "day" : "night")))
+                throw new ArgumentException("The phase anchor must describe the published phase and cannot start in the future.", nameof(phaseAnchor));
             var copy = new List<DefinitionId>();
             if (forecast != null) foreach (DefinitionId value in forecast)
             {
@@ -38,6 +48,7 @@ namespace TeamHJD.Game.Domain
             if (weatherId.IsEmpty && copy.Count > 0) throw new ArgumentException("Forecast requires a known weather source.", nameof(forecast));
             MatchId = matchId; Revision = revision; GameSeconds = gameSeconds;
             Epoch = epoch;
+            PhaseAnchor = phaseAnchor;
             WeatherId = weatherId; TimeOfDayId = timeOfDayId; Forecast = new ReadOnlyCollection<DefinitionId>(copy);
         }
         private static void ValidateId(DefinitionId value)
@@ -48,9 +59,14 @@ namespace TeamHJD.Game.Domain
         public bool HasSameValues(MatchEnvironmentSnapshot other)
         {
             if (other == null || MatchId != other.MatchId || WeatherId != other.WeatherId ||
-                TimeOfDayId != other.TimeOfDayId || Forecast.Count != other.Forecast.Count) return false;
+                TimeOfDayId != other.TimeOfDayId || Forecast.Count != other.Forecast.Count ||
+                !HasSamePhaseAnchor(PhaseAnchor, other.PhaseAnchor)) return false;
             for (int i = 0; i < Forecast.Count; i++) if (Forecast[i] != other.Forecast[i]) return false;
             return true;
         }
+        private static bool HasSamePhaseAnchor(DayNightCycle left, DayNightCycle right) =>
+            ReferenceEquals(left, right) || (left != null && right != null &&
+                left.EpochSeconds == right.EpochSeconds && left.InitialPhase == right.InitialPhase &&
+                left.DaySeconds == right.DaySeconds && left.NightSeconds == right.NightSeconds);
     }
 }

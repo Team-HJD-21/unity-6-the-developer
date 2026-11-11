@@ -18,8 +18,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField, Min(.01f)]
         private double nightSeconds = 300;
         // Apply에서 참조용
-        public double DaySeconds => daySeconds;
-        public double NightSeconds => nightSeconds;
+        public double DaySeconds => _replicaPhaseAnchor?.DaySeconds ?? daySeconds;
+        public double NightSeconds => _replicaPhaseAnchor?.NightSeconds ?? nightSeconds;
         private DayNightCycle _cycle;
         private IMatchClock _clock;
         private IMatchScheduler _scheduler;
@@ -34,7 +34,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public DayNightPhase Phase { get; private set; }
         public DefinitionId TimeOfDayId => !_bound ? default : new DefinitionId(Phase == DayNightPhase.Day ? "day" : "night");
         public bool IsAuthority => _bound && _authority;
-        public double RemainingSeconds => IsAuthority ? _cycle.GetRemainingSeconds(_clock.ElapsedSeconds) : double.NaN;
+        public double RemainingSeconds => IsAuthority ? _cycle.GetRemainingSeconds(_clock.ElapsedSeconds) : ReadReplicaRemainingSeconds();
         public bool CanRestartCurrentPhase => MayAdvance;
 
         /// <summary>Host 디버그 HUD가 사용합니다. 현재 구간을 재시작하고 기존 경계 예약을 교체하며, 날씨 자체는 선택하지 않습니다.</summary>
@@ -94,22 +94,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 Release();
                 throw;
             }
-        }
-
-        public IDisposable BindReplica(MatchId match)
-        {
-            Begin(match, false);
-            return new Scope(this);
-        }
-
-        public void ApplyReplica(MatchEnvironmentSnapshot snapshot)
-        {
-            if (!_bound || _authority || snapshot == null || snapshot.MatchId != _match || !snapshot.HasTimeOfDay)
-                return;
-            if (snapshot.TimeOfDayId.Value != "day" && snapshot.TimeOfDayId.Value != "night")
-                throw new ArgumentException("Unknown day/night phase.", nameof(snapshot));
-            Phase = snapshot.TimeOfDayId.Value == "day" ? DayNightPhase.Day : DayNightPhase.Night;
-            Changed?.Invoke();
         }
 
         private void Begin(MatchId match, bool authority)
@@ -187,6 +171,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _scheduler = null;
             _mayWrite = null;
             _gameplay = default;
+            _cycle = null;
+            ClearReplicaState();
         }
 
         private void OnDestroy() => Release();
