@@ -61,6 +61,15 @@ public abstract class EnemyController : MonoBehaviour
         _squad?.RefreshTarget(this);
     }
 
+    /// <summary>감지한 플레이어를 소속 분대에 전달한다.</summary>
+    public void NotifyPlayerDetected(ITargetable player)
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        _squad?.TryPrioritizePlayer(this, player);
+    }
+
     /// <summary>
     /// 현재 분대에서 자신을 해제하고 소속 참조를 비운다.
     /// </summary>

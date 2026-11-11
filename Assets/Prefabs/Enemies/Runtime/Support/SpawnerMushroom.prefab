@@ -20,6 +20,10 @@ PrefabInstance:
       propertyPath: m_Size.y
       value: 2.3
       objectReference: {fileID: 0}
+    - target: {fileID: 2017026277251349379, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: m_Radius
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 3127489444987983418, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: m_Controller
       value: 
@@ -78,7 +82,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6310045781359598294, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: enemyController
-      value:
+      value: 
       objectReference: {fileID: 6948396548883182506}
     - target: {fileID: 7652877528939522271, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: m_Name
@@ -215,12 +219,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d0f5c362887c5641b252b65e123a905, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySummonController
   enemyTargeting: {fileID: 4616459822353301369}
   enemyAnimation: {fileID: 5412386465667940283}
   enemyAbility: {fileID: 4081609373577414244}
   enemyMovement: {fileID: 4891068941938543863}
+  nearPathRefreshInterval: 0.25
+  farPathRefreshInterval: 1
+  minimumTargetMovement: 0.2
   rigidbody2D: {fileID: 1577279771357076187}
 --- !u!61 &2156512843773975729 stripped
 BoxCollider2D:
@@ -247,7 +254,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95e4629e7cbab8f43b1546a0afb62589, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
 --- !u!114 &5412386465667940283 stripped
 MonoBehaviour:
@@ -258,7 +265,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c03171b78e5f780499d91a5ca81900ca, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
 --- !u!114 &5588999996125939549 stripped
 MonoBehaviour:

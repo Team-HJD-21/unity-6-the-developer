@@ -171,7 +171,7 @@ public partial class EnemySpawnExecutor
             network.CheckpointEnemyType = saved.Type;
             network.SetSimulationMatch(_fieldTime.Snapshot.MatchId, NetworkObjectId);
             var squad = _squads[saved.Group];
-            squad.AddMember(controller);
+            controller.JoinSquad(squad);
             var ngo = actor.GetComponent<Unity.Netcode.NetworkObject>();
             ngo.Spawn();
             network.RestoreCheckpoint(saved.State);
