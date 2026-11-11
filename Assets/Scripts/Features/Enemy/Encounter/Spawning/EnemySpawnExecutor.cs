@@ -179,19 +179,6 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     }
 
     /// <summary>
-    /// 서버에서 생성된 각 분대의 목표를 갱신한다.
-    /// 유효한 목표가 유지되는 분대는 후보 검색 없이 넘어간다.
-    /// </summary>
-    private void Update()
-    {
-        if (!IsSpawned || !IsServer || !CanSimulateField)
-            return;
-
-        foreach (EnemySquad squad in _squads)
-            squad.SetTarget();
-    }
-
-    /// <summary>
     /// Executor의 네트워크 수명이 끝나면 보관 중인 분대 참조를 비운다.
     /// </summary>
     public override void OnNetworkDespawn()

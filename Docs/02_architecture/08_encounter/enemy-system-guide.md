@@ -98,7 +98,7 @@ classDiagram
 
 ## 타깃·분대·이동
 
-목표 선택은 `EnemySquad`가 담당한다. 유효한 목표는 유지하고, 없거나 공격 불가능해졌을 때 분대 중심에서 가장 가까운 유효 후보를 찾는다. 검색 간격은 현재 0.5초다. 일반 Executor가 등록한 분대는 Executor에서 갱신하고, `JoinSquad`로 등록된 소환 적·테스트 적은 대표 활성 구성원의 `RefreshTarget()` 요청으로 분대 단위 검색을 한다.
+목표 선택은 `EnemySquad`가 담당한다. 유효한 목표는 유지하고, 없거나 공격 불가능해졌을 때 분대 중심에서 가장 가까운 유효 후보를 찾는다. 검색 간격은 현재 0.5초다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결하며, 대표 활성 구성원의 `RefreshTarget()` 요청으로 분대 단위 검색을 한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
 
 `EnemyDefinition.SquadMode`는 공동 분대/개별 분대, `TargetRule`은 PlayerOrTurret/PlayerOnly를 선택한다. 일반 스폰도 타깃 규칙이 다른 구성원은 같은 분대에 섞지 않는다. BlackWolf는 개별 PlayerOnly 분대다.
 
@@ -108,7 +108,7 @@ classDiagram
 
 첫 반복 갱신 시점은 몬스터 InstanceID로 엇갈리게 배치하며 새 타깃의 첫 계산을 지연하지 않는다. 이는 프레임당 계산 수 제한이나 결정적인 재실행을 보장하는 스케줄러가 아니다. 타깃별 공격인원 포화도와 별도 경로 계산 스케줄러는 후속 작업이다.
 
-`EnemyPlayerSensor`는 개체별 CircleCollider2D Trigger의 진입 이벤트로 플레이어를 전달한다. 이미 겹친 상태의 분대 합류나 기존 타깃 무효화는 Stay 이벤트로 보완한다. `EnemyController.NotifyPlayerDetected()`는 `EnemyNetworkController.CanExecuteBehavior`로 서버/명시적 로컬 테스트 및 시뮬레이션 진행 권한을 검사한 뒤 분대에 전달한다. `EnemySquad.TryPrioritizePlayer()`는 검색 주기를 기다리지 않고 플레이어로 전환하며, 기존 플레이어가 유효하면 유지한다. 범위 이탈만으로 타깃을 해제하지 않는다.
+`EnemyPlayerSensor`는 개체별 CircleCollider2D Trigger의 진입 이벤트로 플레이어를 전달한다. 이미 겹친 상태의 분대 합류나 기존 타깃 무효화는 Stay 이벤트로 보완한다. 센서는 `EnemyNetworkController.CanExecuteBehavior`로 서버/명시적 로컬 테스트 및 시뮬레이션 진행 권한을 검사한 뒤 `EnemyController.NotifyPlayerDetected()`에 전달한다. 공통 컨트롤러는 네트워크 컴포넌트를 직접 참조하지 않고 소속 분대에 전달한다. `EnemySquad.TryPrioritizePlayer()`는 검색 주기를 기다리지 않고 플레이어로 전환하며, 기존 플레이어가 유효하면 유지한다. 범위 이탈만으로 타깃을 해제하지 않는다.
 
 센서는 EnemyRoot의 자식으로 배치했다. 센서 자식의 EnemySensor 레이어 적용, 위치·반경과 몬스터별 스케일에 따른 실제 범위는 프리팹 조정 단계에서 확인한다. 감지 접촉은 EnemySensor와 Player 사이로 제한하며 최종 플레이어 종류 검사는 분대에서 수행한다. 현재 타깃과의 접촉 여부만 확인하므로 다른 플레이어가 센서 안에 있다는 이유로 빠른 경로 갱신을 적용하지 않는다. 공격 측의 Cast/Overlap 검색은 별도로 EnemySensor를 제외해야 한다. 힐의 최종 사거리 검사는 기존대로 Trigger를 제외한다. Host/Client 플레이 검증은 아직 완료하지 않았다.
 

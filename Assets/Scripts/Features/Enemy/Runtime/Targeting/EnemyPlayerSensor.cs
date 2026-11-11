@@ -7,6 +7,7 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
 {
     [SerializeField] private EnemyController enemyController;
     private CircleCollider2D _sensorCollider;
+    private EnemyNetworkController _networkController;
 
     private void Reset()
     {
@@ -17,6 +18,7 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
     private void Awake()
     {
         _sensorCollider = GetComponent<CircleCollider2D>();
+        _networkController = GetComponentInParent<EnemyNetworkController>();
 
         if (enemyController == null)
             enemyController = GetComponentInParent<EnemyController>();
@@ -62,7 +64,9 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
 
     private void NotifyPlayer(Collider2D other)
     {
-        if (enemyController == null)
+        if (enemyController == null ||
+            _networkController == null ||
+            !_networkController.CanExecuteBehavior)
             return;
 
         ITargetable player = other.GetComponentInParent<ITargetable>();
