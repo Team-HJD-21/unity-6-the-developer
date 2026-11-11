@@ -59,6 +59,13 @@ try {
         if ($clientProcess.HasExited -and !(Test-Path -LiteralPath (Join-Path $runDirectory 'client.json'))) {
             throw 'Client exited without verification evidence.'
         }
+        foreach ($role in @('host', 'client')) {
+            $resultPath = Join-Path $runDirectory ($role + '.json')
+            if (Test-Path -LiteralPath $resultPath) {
+                $endpoint = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
+                if (!$endpoint.Success) { throw "$role verification failed: $($endpoint.Error)" }
+            }
+        }
         Start-Sleep -Seconds 1
     }
     $hostProcess.Refresh(); $clientProcess.Refresh()
@@ -69,7 +76,7 @@ try {
     if ($hostProcess.ExitCode -ne 0 -or $clientProcess.ExitCode -ne 0 -or !$hostResult.Success -or !$clientResult.Success) {
         throw "Endpoint verification failed. Host=$($hostResult.Error); Client=$($clientResult.Error)"
     }
-    $required = @('Static', 'Dynamic', 'Release', 'Ended', 'Restart', 'FinalEnded', 'Disconnect', 'Disconnected')
+    $required = @('Static', 'ClockPaused', 'ClockRate', 'ClockReset', 'Dynamic', 'Release', 'Ended', 'Restart', 'FinalEnded', 'Disconnect', 'Disconnected')
     foreach ($result in @($hostResult, $clientResult)) {
         foreach ($phase in $required) {
             if ($phase -notin $result.Observations.Phase) { throw "Missing phase $phase in $($result.Role)." }

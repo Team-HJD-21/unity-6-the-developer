@@ -66,11 +66,16 @@ namespace TeamHJD.Game.Application
             return _environment;
         }
 
-        public bool UpdateEnvironment(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast)
+        public bool UpdateEnvironment(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast) =>
+            UpdateEnvironment(weather, timeOfDay, forecast, null);
+
+        /// <summary>Scene의 권위 환경 projection이 실제 source와 현재 낮밤 구간 기준을 함께 전달합니다.</summary>
+        public bool UpdateEnvironment(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast,
+            DayNightCycle phaseAnchor)
         {
             ThrowIfDisposed();
             if (_environment == null) throw new InvalidOperationException("Initialize environment before updating it.");
-            return _environment.TryUpdate(weather, timeOfDay, forecast);
+            return _environment.TryUpdate(weather, timeOfDay, forecast, phaseAnchor);
         }
 
         /// <summary>Scene 조립부가 실제 지역 정의를 한 번 연결합니다. RegionRuntime은 Match가 정리합니다.</summary>

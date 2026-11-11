@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -6,6 +7,9 @@ using UnityEngine;
 /// </summary>
 public interface ITargetable
 {
+    /// <summary>타깃 가능한 상태에서 불가능한 상태로 전환되면 발생한다.</summary>
+    event Action<ITargetable> TargetabilityLost;
+
     /// <summary>
     /// AI가 바라보거나 이동할 위치를 반환한다.
     /// </summary>

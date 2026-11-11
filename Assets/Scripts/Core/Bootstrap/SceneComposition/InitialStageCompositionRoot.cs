@@ -399,6 +399,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RunCleanup(() => ReleaseEncounterConsumer(matchId), errors);
             RunCleanup(() => field?.Dispose(), errors);
             RunCleanup(() => replicaField?.Dispose(), errors);
+            RunCleanup(() => FindSceneCameraFollow()?.Bind(null), errors);
             RunCleanup(() => actors?.Dispose(), errors);
             RunCleanup(() => { if (regions != null) regions.UnbindMatch(); }, errors);
             RunCleanup(() => { if (turrets != null) turrets.UnbindMatch(matchId); }, errors);

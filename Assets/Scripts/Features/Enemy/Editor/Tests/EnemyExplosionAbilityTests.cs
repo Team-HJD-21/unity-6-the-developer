@@ -193,6 +193,8 @@ public sealed class EnemyExplosionAbilityTests
 
 public sealed class EnemyExplosionTargetProbe : MonoBehaviour, ITargetable, IDamageableTarget
 {
+    public event System.Action<ITargetable> TargetabilityLost;
+
     public bool Available = true;
     public Transform TargetTransform => transform;
     public TargetType TargetType => global::TargetType.Turret;
