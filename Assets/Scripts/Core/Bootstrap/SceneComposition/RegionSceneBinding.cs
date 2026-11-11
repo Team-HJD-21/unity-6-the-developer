@@ -1,4 +1,4 @@
-// Scene의 D 터렛을 Match 소유 지역 Grid에 연결합니다.
+// Scene의 터렛/CU를 Match 소유 지역 Grid에 연결합니다.
 // 정적 정책은 구역을 적용하고 동적 정책은 잠금 없이 활성 터렛의 점령만 갱신합니다.
 // 이 컴포넌트는 지역 상태를 별도 소유하지 않고 Match 종료 전에 구독과 정책을 해제합니다.
 using System;
@@ -12,7 +12,7 @@ using UnityEngine;
 namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
     [DisallowMultipleComponent]
-    public sealed class RegionSceneBinding : MonoBehaviour
+    public sealed partial class RegionSceneBinding : MonoBehaviour
     {
         [SerializeField] private FieldTurretController _controller;
         [SerializeField] private Transform _controlUnit;
@@ -23,12 +23,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private RegionGridDefinition _definition;
         private readonly DynamicRegionCapturePolicy _dynamicPolicy = new DynamicRegionCapturePolicy();
         private IReadOnlyList<RegionTurretInput> _lastInputs;
+        private BattlefieldPoint? _lastControlUnitPosition;
+        private int[] _dynamicInitialCells;
         private Func<bool> _mayWrite;
         private float _nextSample;
         private bool _dirty;
         private int _zoneCount;
         public IRegionGridSource Source => _session == null || !_session.IsDisposed ? _source : null;
         public RegionCaptureEvaluation LastEvaluation { get; private set; }
+        public string LastDynamicError { get; private set; }
         public bool HasWriteAuthority => _session != null && !_session.IsDisposed &&
             (_session.State.Phase == MatchPhase.Preparing || _session.State.Phase == MatchPhase.Running) &&
             _mayWrite != null && _mayWrite();
@@ -81,6 +84,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _session = null;
             _source = null;
             _lastInputs = null;
+            _lastControlUnitPosition = null;
+            _dynamicInitialCells = null;
+            LastDynamicError = null;
             _mayWrite = null;
             _entityIds = null;
             LastEvaluation = null;
@@ -106,17 +112,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             IReadOnlyList<int> cells;
             if (mode == RegionPolicyMode.Dynamic)
             {
-                evaluation = _dynamicPolicy.Evaluate(definition, FieldTurretRegionGridAdapter.CaptureTurrets(_controller, _entityIds));
+                evaluation = EvaluateDynamic(definition, null);
                 cells = evaluation.CellIndices;
             }
             else if (mode == RegionPolicyMode.Static) cells = StaticCells(definition, 1);
             else throw new ArgumentOutOfRangeException(nameof(mode));
             // 새 정의와 초기 결과를 한 번에 발행합니다. 빈 정적 중간 상태로 터렛을 모두 끄지 않습니다.
+            _dynamicInitialCells = null;
             _session.ResetRegions(definition, mode, cells);
             _definition = definition;
             _zoneCount = zoneCount;
             LastEvaluation = evaluation;
             _lastInputs = null;
+            _lastControlUnitPosition = null;
+            LastDynamicError = null;
             _dirty = true;
             return true;
         }
@@ -141,6 +150,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             foreach (int id in definition.RegionIds) _zoneCount = Math.Max(_zoneCount, id);
             LastEvaluation = null;
             _lastInputs = null;
+            _lastControlUnitPosition = null;
             _dirty = true;
         }
 
@@ -175,21 +185,36 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _session.State.Phase != MatchPhase.Running) return;
             if (!_dirty && Time.unscaledTime < _nextSample) return;
             _nextSample = Time.unscaledTime + 0.1f;
-            RefreshDynamic(false);
+            try { RefreshDynamic(_dirty); }
+            catch (Exception error) when (error is ArgumentException || error is InvalidOperationException)
+            {
+                if (LastDynamicError != error.Message)
+                    Debug.LogError("동적 지역 설정을 확인하세요: " + error.Message, this);
+                LastDynamicError = error.Message;
+                _dirty = false;
+            }
         }
 
         private void RefreshDynamic(bool force)
         {
             IReadOnlyList<RegionTurretInput> inputs = FieldTurretRegionGridAdapter.CaptureTurrets(_controller, _entityIds);
+            BattlefieldPoint controlUnit = ControlUnitPosition();
             _dirty = false;
-            if (!force && SameInputs(inputs, _lastInputs)) return;
+            if (!force && SameInputs(inputs, _lastInputs) && _lastControlUnitPosition == controlUnit)
+            {
+                LastDynamicError = null;
+                return;
+            }
             RegionGridSnapshot basis = _source.Snapshot;
-            RegionCaptureEvaluation evaluation = _dynamicPolicy.Evaluate(_definition, inputs);
+            RegionCaptureEvaluation evaluation = _dynamicPolicy.EvaluateConnected(_definition, inputs,
+                controlUnit, _dynamicInitialCells);
             RegionUpdateStatus result = _session.UpdateRegionCapture(basis, evaluation.CellIndices, RegionCaptureUpdateMode.Replace);
             if (result != RegionUpdateStatus.Applied && result != RegionUpdateStatus.Unchanged)
                 throw new InvalidOperationException("Region input no longer belongs to the current grid revision.");
             _lastInputs = inputs;
+            _lastControlUnitPosition = controlUnit;
             LastEvaluation = evaluation;
+            LastDynamicError = null;
         }
 
         private static bool SameInputs(IReadOnlyList<RegionTurretInput> left, IReadOnlyList<RegionTurretInput> right)

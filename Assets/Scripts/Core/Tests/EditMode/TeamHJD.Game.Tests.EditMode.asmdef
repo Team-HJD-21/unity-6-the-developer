@@ -10,7 +10,8 @@
     "TeamHJD.Game.Domain",
     "TeamHJD.Game.Infrastructure.Fakes",
     "TeamHJD.Game.Infrastructure",
-    "TeamHJD.Game.Presentation"
+    "TeamHJD.Game.Presentation",
+    "TeamHJD.Game.FieldTurrets"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

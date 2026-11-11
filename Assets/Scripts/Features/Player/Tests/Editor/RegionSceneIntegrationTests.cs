@@ -94,21 +94,45 @@ public sealed class RegionSceneIntegrationTests
                         selected = new[] { turrets[a], turrets[b], turrets[c] };
                 }
         Assert.That(selected, Is.Not.Null, "Actual authored power must permit three non-collinear turrets.");
+        long beforeRevision = binding.Source.Snapshot.Revision;
+        var beforeEvaluation = binding.LastEvaluation;
         foreach (FieldTurretBase turret in selected)
             Assert.That(turret.RequestActivation(true), Is.EqualTo(FieldTurretActivationResult.Activated));
 
         float deadline = Time.realtimeSinceStartup + 3;
-        while (binding.Source.Snapshot.CapturedCellCount == 0 && Time.realtimeSinceStartup < deadline) yield return null;
+        // CU seed는 처음부터 존재합니다. 셀 집합이 같아 revision이 유지되는 경우에는 새 기하 평가도 확인합니다.
+        while (binding.Source.Snapshot.Revision == beforeRevision && object.ReferenceEquals(binding.LastEvaluation, beforeEvaluation) &&
+               Time.realtimeSinceStartup < deadline) yield return null;
+        Assert.That(binding.LastEvaluation, Is.Not.SameAs(beforeEvaluation));
         Assert.That(binding.Source.Snapshot.CapturedCellCount, Is.GreaterThan(0));
-        Assert.That(binding.LastEvaluation.Geometry.Triangles.Count, Is.EqualTo(1));
+        Assert.That(binding.LastEvaluation.Geometry.Vertices.Any(vertex => vertex.EntityId.Value == DynamicRegionCapturePolicy.ControlUnitNodeId), Is.True);
+        Assert.That(binding.LastEvaluation.Geometry.Triangles.Count, Is.GreaterThan(0));
+        Vector3 cuPosition = binding.ControlUnit.position;
+        Assert.That(binding.Source.Snapshot.TryIsCapturedAt(new BattlefieldPoint(cuPosition.x, cuPosition.y), out bool cuCaptured), Is.True);
+        Assert.That(cuCaptured, Is.True);
+        beforeRevision = binding.Source.Snapshot.Revision;
+        beforeEvaluation = binding.LastEvaluation;
         Assert.That(selected[0].RequestActivation(false), Is.EqualTo(FieldTurretActivationResult.Deactivated));
         deadline = Time.realtimeSinceStartup + 3;
-        while (binding.Source.Snapshot.CapturedCellCount != 0 && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.That(binding.Source.Snapshot.CapturedCellCount, Is.Zero);
+        while (binding.Source.Snapshot.Revision == beforeRevision && object.ReferenceEquals(binding.LastEvaluation, beforeEvaluation) &&
+               Time.realtimeSinceStartup < deadline) yield return null;
+        Assert.That(binding.LastEvaluation, Is.Not.SameAs(beforeEvaluation));
+        Assert.That(binding.Source.Snapshot.CapturedCellCount, Is.GreaterThanOrEqualTo(1));
+        Vector2 fromCuA = selected[1].transform.position - cuPosition;
+        Vector2 fromCuB = selected[2].transform.position - cuPosition;
+        if (Mathf.Abs(fromCuA.x * fromCuB.y - fromCuA.y * fromCuB.x) > .001f)
+            Assert.That(binding.LastEvaluation.Geometry.Triangles.Count, Is.GreaterThan(0));
         Assert.That(selected[1].IsActivated, Is.True);
         Assert.That(selected[2].IsActivated, Is.True);
         Assert.That(selected[1].IsLocked || selected[2].IsLocked, Is.False);
         Assert.That(controller.GetSnapshot().ReservedPower, Is.EqualTo(selected[1].EffectivePower + selected[2].EffectivePower));
+        beforeEvaluation = binding.LastEvaluation;
+        Assert.That(selected[1].RequestActivation(false), Is.EqualTo(FieldTurretActivationResult.Deactivated));
+        Assert.That(selected[2].RequestActivation(false), Is.EqualTo(FieldTurretActivationResult.Deactivated));
+        deadline = Time.realtimeSinceStartup + 3;
+        while (object.ReferenceEquals(binding.LastEvaluation, beforeEvaluation) && Time.realtimeSinceStartup < deadline) yield return null;
+        Assert.That(binding.Source.Snapshot.CapturedCellCount, Is.EqualTo(1));
+        Assert.That(binding.LastEvaluation.Geometry.Triangles.Count, Is.Zero);
         Assert.That(binding.ResetPolicy(RegionPolicyMode.Static, true), Is.True);
         Assert.That(binding.Source.Snapshot.Mode, Is.EqualTo(RegionPolicyMode.Static));
         yield return new ExitPlayMode();

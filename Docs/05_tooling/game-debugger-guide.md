@@ -1,5 +1,7 @@
 # Game Debugger 사용·연동 가이드
 
+11월 12일 추가: **Battlefield → 지역 Grid · 점령 원본 → 동적 시작 영역 · Host 설정**에서 동적 점유의 시작 셀을 편집할 수 있다. 아래 [CU 시작 영역 확인](#cu-시작-영역-확인)을 참고한다.
+
 11월5일 추가: Overview의 **APP · GAME FLOW**에서 시작/허브/출격/귀환과 저장 슬롯의 새 Mission 복원을 호출한다. **Checkpoint**에서는 등록/필수/누락 writer와 명시 Save/Restore를 확인한다. 현재 Weather writer 누락으로 전체 저장은 비활성이다. [실제 Feature 통합·수동 확인 순서](../02_architecture/01_core/core-feature-integration-guide.md)를 함께 본다. 자동 저장 사건을 추가한 것은 아니다.
 
 
@@ -104,6 +106,16 @@ Capture / Compare에서 Commit/Build 라벨을 입력하고 `Stamp build/commit 
 - Match·기록 수집·Imported 기록 슬롯·시간 도구·Scene 표시 옵션/셀 선택·조건부 정지의 무장 상태는 **공유**한다. 여러 Battlefield 영역에서 명령을 실행하더라도 같은 활성 Match/에셋에 적용된다. 분할은 별도 Match나 별도 Scene 시뮬레이션이 아니다.
 
 기능 상태는 `GameDebuggerPaneState`, 영역 UI는 `GameDebuggerPane`, 창 배치·공용 toolbar는 `GameDebuggerWindow`가 담당한다. 레이아웃 전환은 UI 구독만 재구성하고 공용 Collector/Recorder를 다시 만들거나 Encounter 요청을 발행하지 않는다. 좁은 dock에서는 Single/상하 배치가 편리하며, 4분할은 넓은 창을 권장한다.
+
+## CU 시작 영역 확인
+
+1. `Initial_Stage`에서 Host Match를 시작하고 Battlefield의 **지역 정책**을 `Dynamic`으로 바꾼다. Reset 확인창을 승인해야 적용된다. 기본은 CU가 있는 셀 하나이며 정적 거리 잠금은 적용하지 않는다.
+2. **Scene 점령 Grid**를 켠다. **임시 판정 삼각형**은 계산에 쓴 기하를 보는 옵션이다. 실제 점유 원본은 Grid 셀이다. CU도 위치 정점으로 참여하므로 CU와 터렛 두 개가 비공선이면 삼각형을 만들 수 있다.
+3. **동적 시작 영역 · Host 설정**을 펼친다. 빈 목록은 CU 1셀 기본값이다. `셀 추가`는 CU 셀 좌표로 행을 만든다. X/Y는 월드 좌표가 아닌 현재 지역 Grid의 셀 인덱스다. CU 셀을 포함하고 상하좌우로 연결되게 편집한다. 32행마다 페이지를 나눈다.
+4. **시작 셀 적용 / 점유 Reset**을 누르고 확인한다. 편집만으로 게임 상태가 바뀌지는 않는다. 범위 밖·CU 미포함·대각선만 연결된 목록은 거부하고 기존 설정과 점유를 유지한다. **CU 1셀 기본값**도 목록을 비울 뿐이므로 적용 버튼을 눌러야 한다.
+5. **CU 시작 / 연결 제외 셀**을 확인한다. 시작 영역과 활성 터렛의 투영 후보를 합친 뒤 CU에서 상하좌우로 연결되지 않은 후보는 제외한다. 터렛 OFF/파괴 후에도 CU 시작 영역은 남고 다른 터렛의 활성·전력 예약은 유지한다. 과열을 OFF로 취급하지 않는다.
+
+모드 변경과 **CU 지역 Grid 설정 다시 읽기 / Reset**은 명시 시작 셀을 지우고 기본값으로 돌아간다. Client에서는 설정을 바꾸지 못하며 Host의 확정 점유만 표시한다. 런타임 편집은 Scene/Prefab에 저장되지 않는다. 시작 설정의 Checkpoint writer는 추가됐지만 실제 Weather writer 등 필수 원본이 없으면 전체 Save는 계속 차단된다. 물·이동 불가 셀 마스크와 일반 Enemy 스폰 제한은 이번 도구의 완료 범위가 아니다. [API·저장 호환성](../02_architecture/01_core/core-sprint-region-and-request-api.md#cu-시작-영역-설정과-저장)을 함께 참고한다.
 
 ## 창 구성과 데이터의 뜻
 

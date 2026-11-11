@@ -1,0 +1,581 @@
+{
+  "date": "2026-11-12",
+  "baseMain": "88bc2c58ec8f1ba78016120f80240d109e555297",
+  "unityVersion": "6000.3.23f1",
+  "runs": [
+    {
+      "evidence": "domain-tests-result.json",
+      "sha256": "0b58a6971fd7ee7fac28644af66176e2eb0abd7a193eb5fe624d5d24a40da994",
+      "status": "completed",
+      "summary": {
+        "total": 14,
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "tests": [
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.CuAndTwoActiveTurretsExpandAndOffReturnsOnlyTheSeed",
+          "Status": "Passed",
+          "Duration": 0.0303441,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.EmptyLayoutKeepsOneCuCellWithoutInventingTriangle",
+          "Status": "Passed",
+          "Duration": 0.00162,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.ExplicitStartAreaMustIncludeCuAndBeConnected",
+          "Status": "Passed",
+          "Duration": 0.0013063,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.FourWayConnectivityExcludesDiagonalAndDoesNotWrapRows",
+          "Status": "Passed",
+          "Duration": 0.0002983,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.InvalidCuAndStartCellAreRejectedBeforeAnyResult",
+          "Status": "Passed",
+          "Duration": 0.0004666,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.MaximumGridEdgeUsesLastCellAndInputOrderDoesNotChangeResult",
+          "Status": "Passed",
+          "Duration": 0.0014228,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.ReservedCuIdentityCannotCollideWithTurretInput",
+          "Status": "Passed",
+          "Duration": 0.000343,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Policy_CollinearAndDuplicatePositionsAreSafeAndDeterministic",
+          "Status": "Passed",
+          "Duration": 0.0013629,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Policy_FourCornersCoverGridWithoutDoubleCountingSharedTriangleEdges",
+          "Status": "Passed",
+          "Duration": 0.0017891,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Policy_OffAndDestroyedInputsDoNotCreateArea",
+          "Status": "Passed",
+          "Duration": 0.0003753,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Rasterizer_CenteredNonSquareCellsAreMappedInWorldXY",
+          "Status": "Passed",
+          "Duration": 0.00024,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Rasterizer_ClipsOutsideTriangleAndHandlesZeroArea",
+          "Status": "Passed",
+          "Duration": 0.000474,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Rasterizer_OnlyPositiveAreaCells_NoLineOrPointContacts",
+          "Status": "Passed",
+          "Duration": 0.002207,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Recapture_ReleasesGridButDoesNotDeactivateRemainingTurrets",
+          "Status": "Passed",
+          "Duration": 0.0029312,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    {
+      "evidence": "binding-tests-result.json",
+      "sha256": "fbc941f857e7b6eebd5d74adb008a05e52fb2ad46cf1c6e4774b939ebb790af3",
+      "status": "completed",
+      "summary": {
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "tests": [
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.BindStartsWithRealCuCellAndFollowsCuPosition",
+          "Status": "Passed",
+          "Duration": 0.049288,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.CorruptCheckpointSettingsAreRejectedDuringPrepare",
+          "Status": "Passed",
+          "Duration": 0.0104546,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.ExplicitStartCellsAreNormalizedCopiedAndCreateNewGridGeneration",
+          "Status": "Passed",
+          "Duration": 0.00892,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.InvalidStartAreaAndUnauthorizedChangesPreserveCurrentState",
+          "Status": "Passed",
+          "Duration": 0.0021622,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.SessionDisposalReleasesTheSettingsWriterAndRegionSource",
+          "Status": "Passed",
+          "Duration": 0.0019832,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.StartSettingsRestoreAndRollbackDoNotLeakTheNewerOverride",
+          "Status": "Passed",
+          "Duration": 0.0028436,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    {
+      "evidence": "runtime-ui-and-cancel-result.json",
+      "sha256": "d4ed3e289ad6b5ae36fdcb4ef5cdfa7ae779a192319d77a9f7d066d4a70b0c37",
+      "status": "completed",
+      "summary": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "tests": [
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionRuntimeTests.InitialStageUsesCuSeedAndRegistersItsCheckpointWriter",
+          "Status": "Passed",
+          "Duration": 14.7257727,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    {
+      "evidence": "region-regression-result-final.json",
+      "sha256": "e05f6a455098c757637304bc681bdc4d2ce8886942102a0f1fe54efd3bf5b707",
+      "status": "completed",
+      "summary": {
+        "total": 48,
+        "passed": 47,
+        "failed": 1,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "tests": [
+        {
+          "FullName": "RegionSceneIntegrationTests.InitialStage_StaticToDynamicCaptureAndReleaseKeepsRemainingTurretsActive",
+          "Status": "Failed",
+          "Duration": 10.6357554,
+          "Message": "  Expected: 1\r\n  But was:  0\r\n",
+          "StackTrace": "at RegionSceneIntegrationTests+<InitialStage_StaticToDynamicCaptureAndReleaseKeepsRemainingTurretsActive>d__4.MoveNext () [0x0042a] in D:\\Dev\\Unity\\Unity_3D_CBC\\Assets\\Scripts\\Features\\Player\\Tests\\Editor\\RegionSceneIntegrationTests.cs:103\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "SquadAutomaticPlanningTests.AutomaticPlan_ExhaustedRegionDoesNotBlockAnotherRegion",
+          "Status": "Passed",
+          "Duration": 0.0182119,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "SquadAutomaticPlanningTests.AutomaticPlan_SharesRequestBudgetAndRegionalBudgetAcrossPoints",
+          "Status": "Passed",
+          "Duration": 0.0018591,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.AppMatchOwnershipTests.DisposingListenerFailure_DoesNotSkipRegionOrOtherFeatureCleanup",
+          "Status": "Passed",
+          "Duration": 0.0037669,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.CuAndTwoActiveTurretsExpandAndOffReturnsOnlyTheSeed",
+          "Status": "Passed",
+          "Duration": 0.0017342,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.EmptyLayoutKeepsOneCuCellWithoutInventingTriangle",
+          "Status": "Passed",
+          "Duration": 0.0007525,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.ExplicitStartAreaMustIncludeCuAndBeConnected",
+          "Status": "Passed",
+          "Duration": 0.0004096,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.FourWayConnectivityExcludesDiagonalAndDoesNotWrapRows",
+          "Status": "Passed",
+          "Duration": 0.0001613,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.InvalidCuAndStartCellAreRejectedBeforeAnyResult",
+          "Status": "Passed",
+          "Duration": 0.0002914,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.MaximumGridEdgeUsesLastCellAndInputOrderDoesNotChangeResult",
+          "Status": "Passed",
+          "Duration": 0.0009669,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.ConnectedDynamicRegionCaptureTests.ReservedCuIdentityCannotCollideWithTurretInput",
+          "Status": "Passed",
+          "Duration": 0.0001768,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.BindStartsWithRealCuCellAndFollowsCuPosition",
+          "Status": "Passed",
+          "Duration": 0.0022962,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.CorruptCheckpointSettingsAreRejectedDuringPrepare",
+          "Status": "Passed",
+          "Duration": 0.0042842,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.ExplicitStartCellsAreNormalizedCopiedAndCreateNewGridGeneration",
+          "Status": "Passed",
+          "Duration": 0.0035547,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.InvalidStartAreaAndUnauthorizedChangesPreserveCurrentState",
+          "Status": "Passed",
+          "Duration": 0.0014141,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.SessionDisposalReleasesTheSettingsWriterAndRegionSource",
+          "Status": "Passed",
+          "Duration": 0.0012502,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionBindingTests.StartSettingsRestoreAndRollbackDoNotLeakTheNewerOverride",
+          "Status": "Passed",
+          "Duration": 0.0020487,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Policy_CollinearAndDuplicatePositionsAreSafeAndDeterministic",
+          "Status": "Passed",
+          "Duration": 0.0009747,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Policy_FourCornersCoverGridWithoutDoubleCountingSharedTriangleEdges",
+          "Status": "Passed",
+          "Duration": 0.0009089,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Policy_OffAndDestroyedInputsDoNotCreateArea",
+          "Status": "Passed",
+          "Duration": 0.0002346,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Rasterizer_CenteredNonSquareCellsAreMappedInWorldXY",
+          "Status": "Passed",
+          "Duration": 0.0001528,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Rasterizer_ClipsOutsideTriangleAndHandlesZeroArea",
+          "Status": "Passed",
+          "Duration": 0.0002784,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Rasterizer_OnlyPositiveAreaCells_NoLineOrPointContacts",
+          "Status": "Passed",
+          "Duration": 0.0002769,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.DynamicRegionCaptureTests.Recapture_ReleasesGridButDoesNotDeactivateRemainingTurrets",
+          "Status": "Passed",
+          "Duration": 0.0004013,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridReplicaTests.FullSnapshotIsImmutable_AndDuplicateRevisionDoesNotNotifyAgain",
+          "Status": "Passed",
+          "Duration": 0.001666,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridReplicaTests.ObserverFailureDoesNotRollbackOrSkipOthers_AndDisposeIsFinal",
+          "Status": "Passed",
+          "Duration": 0.0007909,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridReplicaTests.RejectsUnauthorizedOtherMatchAndPreviousPreparation",
+          "Status": "Passed",
+          "Duration": 0.0004191,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridReplicaTests.ResetGenerationRejectsPreviousGridEvenWithHigherRevision",
+          "Status": "Passed",
+          "Duration": 0.0003716,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridReplicaTests.RestoreValidatesBoundsAndGeneration",
+          "Status": "Passed",
+          "Duration": 0.0003569,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridReplicaTests.SameGridRejectsOldRevisionAndUnresetDefinitionChange",
+          "Status": "Passed",
+          "Duration": 0.000265,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Definition_CopiesMembership_AndMapsCenteredNonSquareGrid",
+          "Status": "Passed",
+          "Duration": 0.0004348,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Definition_RejectsIncompleteNegativeAndOversizedMembership",
+          "Status": "Passed",
+          "Duration": 0.0005125,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Runtime_DisposeInsideObserverStillCompletesNotification",
+          "Status": "Passed",
+          "Duration": 0.0004726,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Runtime_NoOpDoesNotNotify_AndDisposalIsIdempotent",
+          "Status": "Passed",
+          "Duration": 0.0002926,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Runtime_ObserverFailureDoesNotRollbackOrSkipOtherObservers",
+          "Status": "Passed",
+          "Duration": 0.0010898,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Runtime_ReentrantMutationIsRejectedAfterFirstCommit",
+          "Status": "Passed",
+          "Duration": 0.0006083,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Runtime_RejectsOtherMatchOtherGridAndOldRevision",
+          "Status": "Passed",
+          "Duration": 0.0004073,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.Runtime_ResetIsExplicitAndInvalidatesOldGeneration",
+          "Status": "Passed",
+          "Duration": 0.0006235,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.State_AppliesAtomically_AndPreservesOldSnapshot",
+          "Status": "Passed",
+          "Duration": 0.0009064,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TeamHJD.Game.Tests.EditMode.RegionGridRuntimeTests.State_UnionAndReplacementHaveExplicitDifferentSemantics",
+          "Status": "Passed",
+          "Duration": 0.000377,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    {
+      "evidence": "approved-integration-test-status-raw.json",
+      "sha256": "7fd41835f69ee5f3b730915ca8b83fa285339c91f2993a899d2bf7fd10d0b235",
+      "status": "completed",
+      "summary": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "tests": [
+        {
+          "FullName": "RegionSceneIntegrationTests.InitialStage_StaticToDynamicCaptureAndReleaseKeepsRemainingTurretsActive",
+          "Status": "Passed",
+          "Duration": 13.7005451,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    }
+  ],
+  "interpretation": "Runs overlap. Regression originally passed 47/48; the single approved test update then passed 1/1. This is not a single 48/48 run.",
+  "notVerified": [
+    "two actual clients with new CU policy",
+    "complete world Save/Restore",
+    "Windows Build",
+    "terrain capturable mask",
+    "Enemy spawn territory filtering"
+  ],
+  "sourceSha256": [
+    {
+      "path": "Assets/Scripts/Core/Bootstrap/SceneComposition/InitialStageCompositionRoot.Checkpoints.cs",
+      "sha256": "6c2a2d2989a2885ec06bef553388ec8077016f2593f98bb23f8226ed66015d04"
+    },
+    {
+      "path": "Assets/Scripts/Core/Bootstrap/SceneComposition/RegionSceneBinding.Checkpoint.cs",
+      "sha256": "823a810252b9bb9b154a7d19b2271498569474aad3e3617db0e859f88b06da76"
+    },
+    {
+      "path": "Assets/Scripts/Core/Bootstrap/SceneComposition/RegionSceneBinding.Dynamic.cs",
+      "sha256": "719be90fcac04ba7ffd18cd95514fb45d8e2eb95e3866611c1bf95e2ecfb19f2"
+    },
+    {
+      "path": "Assets/Scripts/Core/Bootstrap/SceneComposition/RegionSceneBinding.cs",
+      "sha256": "1d8b52da42d77ff51236a7e98cafcf23cade60451bd63df0ecd3f8b1b6b54de4"
+    },
+    {
+      "path": "Assets/Scripts/Core/Bootstrap/SpaceshipTravelService.cs",
+      "sha256": "2c31b582eed26a1916f5a807ef98fbf29d27df2fa69a84ca4fdf1a05345b4f3a"
+    },
+    {
+      "path": "Assets/Scripts/Core/Domain/Regions/DynamicRegionCapturePolicy.cs",
+      "sha256": "a31028abdbb92004e0ec232479ddd36598b3fc471e285878a00d51d4cdcbcb55"
+    },
+    {
+      "path": "Assets/Scripts/Core/Domain/Regions/RegionCaptureEvaluation.cs",
+      "sha256": "93dd0169a91b9b04530cd9756a07e4a75194c1d34e0d5abf1e0538d6585663a9"
+    },
+    {
+      "path": "Assets/Scripts/Core/Domain/Regions/RegionGridConnectivity.cs",
+      "sha256": "87a70b171461c52fcb670b8ec51b41179a12813a51b18453cc2005642eb80498"
+    },
+    {
+      "path": "Assets/Scripts/Core/Editor/GameDebugger/Controls/RegionDebugControls.cs",
+      "sha256": "5eb157bc926c5cbbee8ded639b445de38d53c0c336b488e944eaec5aaff9aa93"
+    },
+    {
+      "path": "Assets/Scripts/Core/Presentation/UI/SceneFadePresenter.cs",
+      "sha256": "e7d869e4412d32543fe3fa6994740634289151ab5d3a2c479fd0eefbb0bd16bf"
+    },
+    {
+      "path": "Assets/Scripts/Core/Tests/EditMode/ConnectedDynamicRegionCaptureTests.cs",
+      "sha256": "30f79cf75b509e38ae0a963878b166a4ef7a031ee8038aa8127c90a009d33e0e"
+    },
+    {
+      "path": "Assets/Scripts/Core/Tests/EditMode/DynamicRegionBindingTests.cs",
+      "sha256": "5d85e1754c2b75b0b8345b8b2daee03e913977189bab2bcd31e9028f42b9995d"
+    },
+    {
+      "path": "Assets/Scripts/Core/Tests/EditMode/DynamicRegionRuntimeTests.cs",
+      "sha256": "11b1d4ebd81009a7a81905111364be9d06a1811f9c220666715392dd146c6922"
+    },
+    {
+      "path": "Assets/Scripts/Core/Tests/EditMode/TeamHJD.Game.Tests.EditMode.asmdef",
+      "sha256": "2cb3ede8d8664d3603209e7781ffb8fdc0477d16389f4278359437f9e536cdd2"
+    },
+    {
+      "path": "Assets/Scripts/Features/Player/Tests/Editor/RegionSceneIntegrationTests.cs",
+      "sha256": "ba66af1d49849c1c6234b5d9434c71f8704e311504d4a9b125b0e1d90c879305"
+    }
+  ]
+}

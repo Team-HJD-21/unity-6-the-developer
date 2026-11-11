@@ -58,7 +58,7 @@ namespace TeamHJD.Game.Presentation
             finally
             {
                 IsVisible = false;
-                if (!_disposed)
+                if (!_disposed && _group != null && _overlay != null)
                 {
                     _group.alpha = 0;
                     _overlay.SetActive(false);
