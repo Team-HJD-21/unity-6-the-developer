@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 9161000}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3471,8 +3471,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 950000100}
   - component: {fileID: 5513808030836162447}
+  - component: {fileID: 950000100}
   - component: {fileID: 2008014413884619221}
   - component: {fileID: 6538483365708020521}
   - component: {fileID: 4704063242810534}
@@ -3533,6 +3533,19 @@ Transform:
   - {fileID: 910202610210099400}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &950000100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 743ef04718f243d4bb764ca5cddebc83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerExperienceView
+  _settings: {fileID: 11400000, guid: 38eff6a82ad74d28933871eb7e3c50f2, type: 2}
 --- !u!212 &2008014413884619221
 SpriteRenderer:
   serializedVersion: 2
@@ -3578,9 +3591,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: c06202155e2c5a50b5362882de89829e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3591,7 +3604,7 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_SpriteSortPoint: 0
+  m_SpriteSortPoint: 1
 --- !u!114 &6538483365708020521
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3985,9 +3998,9 @@ SortingGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5369298898549314971}
   m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
 --- !u!114 &930565001
@@ -4027,6 +4040,53 @@ MonoBehaviour:
   - {fileID: 937082698}
   _interval: 0.045
   _minimumDistance: 0.15
+--- !u!114 &9391100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b79bbd170914aa3a7be61b640e1bf99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerTurretRepair
+  _repairRange: 3
+  _maximumHealthFractionPerSecond: 0.1
+--- !u!114 &9401100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 062811e29a4d4aed969d3ade751a39ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponAmmo
+  _defaultGunCapacity: 15
+  _cryoCapacity: 15
+  _sniperCapacity: 5
+  _defaultGunReloadSeconds: 1.5
+  _cryoReloadSeconds: 1.5
+  _sniperReloadSeconds: 1.5
+--- !u!114 &9411100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b23dea863b64e998f511d7e4369e0b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerExperience
+  _firstLevelExperience: 100
+  _experienceIncreasePerLevel: 0
+  _maximumLevel: 100
 --- !u!1 &5971586974638979900
 GameObject:
   m_ObjectHideFlags: 0
@@ -4052,7 +4112,7 @@ Transform:
   m_GameObject: {fileID: 5971586974638979900}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4439,7 +4499,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 669e0a04824943149e1d2c5156370241, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.578125
+      value: 0.652
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 669e0a04824943149e1d2c5156370241, type: 3}
       propertyPath: m_LocalPosition.z
@@ -4591,6 +4651,10 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1004, guid: 72b020b789d14473a82e71a9d782d16e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4601,63 +4665,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1001, guid: 72b020b789d14473a82e71a9d782d16e, type: 3}
   m_PrefabInstance: {fileID: 910202610210100001}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &9391100
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5369298898549314971}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b79bbd170914aa3a7be61b640e1bf99, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerTurretRepair
-  _repairRange: 3
-  _maximumHealthFractionPerSecond: 0.1
---- !u!114 &9401100
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5369298898549314971}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 062811e29a4d4aed969d3ade751a39ce, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponAmmo
-  _defaultGunCapacity: 15
-  _cryoCapacity: 15
-  _sniperCapacity: 5
-  _defaultGunReloadSeconds: 1.5
-  _cryoReloadSeconds: 1.5
-  _sniperReloadSeconds: 1.5
---- !u!114 &9411100
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5369298898549314971}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b23dea863b64e998f511d7e4369e0b0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerExperience
-  _firstLevelExperience: 100
-  _experienceIncreasePerLevel: 0
-  _maximumLevel: 100
---- !u!114 &950000100
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5369298898549314971}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 743ef04718f243d4bb764ca5cddebc83, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerExperienceView
-  _settings: {fileID: 11400000, guid: 38eff6a82ad74d28933871eb7e3c50f2, type: 2}

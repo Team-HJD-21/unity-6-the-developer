@@ -256,7 +256,8 @@ public sealed class PlayerWeaponAppearanceTests
         {
             Assert.That(appearance.TryGetFrame(body, out var frame), Is.True, clip.name);
             Assert.That(body.rect.size, Is.EqualTo(new Vector2(160f, 160f)), body.name);
-            Assert.That(body.pivot, Is.EqualTo(new Vector2(80f, 80f)), body.name);
+            Vector2 expectedPivot = Vector2.Scale(body.rect.size, new Vector2(.5f, .26f));
+            Assert.That(body.pivot, Is.EqualTo(expectedPivot), body.name);
             Assert.That(frame.Weapon.pixelsPerUnit, Is.EqualTo(body.pixelsPerUnit), frame.Weapon.name);
             if (!checkedWeapons.Add(frame.Weapon)) continue;
             Assert.That(frame.Weapon.rect.size, Is.EqualTo(body.rect.size),
