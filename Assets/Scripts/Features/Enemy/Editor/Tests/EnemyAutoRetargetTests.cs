@@ -49,7 +49,7 @@ public sealed class EnemyAutoRetargetTests
     }
 
     [Test]
-    public void SharedSquad_OnlyRepresentativeReassignsAllMembers()
+    public void SharedSquad_TargetabilityLossImmediatelyReassignsAllMembers()
     {
         TargetableComponent first = CreateTarget("First", 4f);
         TargetableComponent second = CreateTarget("Second", 1f);
@@ -65,25 +65,22 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(leader.TargetChanges, Is.EqualTo(1));
 
         first.SetHealth(0, 100);
-        follower.RefreshTarget();
-        Assert.That(follower.AssignedTarget, Is.EqualTo(first.transform), "대표가 아닌 구성원은 검색하지 않는다.");
-
-        leader.RefreshTarget();
-        Assert.That(leader.AssignedTarget, Is.EqualTo(second.transform));
+        Assert.That(leader.AssignedTarget, Is.EqualTo(second.transform), "타깃 불가 이벤트에서 즉시 재검색한다.");
         Assert.That(follower.AssignedTarget, Is.EqualTo(second.transform));
 
-        Object.DestroyImmediate(second.gameObject);
-        SetSearchTime(squad, 0f);
+        int targetChanges = leader.TargetChanges;
+        follower.RefreshTarget();
         leader.RefreshTarget();
+        Assert.That(leader.TargetChanges, Is.EqualTo(targetChanges), "타깃이 있으면 반복 갱신으로 재배정하지 않는다.");
+
+        Object.DestroyImmediate(second.gameObject);
         Assert.That(leader.AssignedTarget, Is.EqualTo(third.transform));
         Assert.That(follower.AssignedTarget, Is.EqualTo(third.transform));
 
         leader.LeaveSquad();
-        third.SetHealth(0, 100);
         TargetableComponent fourth = CreateTarget("Fourth", 3f);
-        SetSearchTime(squad, 0f);
-        follower.RefreshTarget();
-        Assert.That(follower.AssignedTarget, Is.EqualTo(fourth.transform), "대표가 제거되면 남은 구성원이 갱신한다.");
+        third.SetHealth(0, 100);
+        Assert.That(follower.AssignedTarget, Is.EqualTo(fourth.transform), "구성원 제거 후에도 남은 분대에 이벤트를 전달한다.");
 
         follower.LeaveSquad();
         Assert.That(squad.IsEmpty, Is.True);

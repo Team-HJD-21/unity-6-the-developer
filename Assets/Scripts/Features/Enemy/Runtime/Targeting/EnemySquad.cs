@@ -40,7 +40,7 @@ public class EnemySquad
         ITargetable target = initialTarget != null
             ? initialTarget.GetComponent<ITargetable>()
             : null;
-        _target = IsValidTarget(target) ? target : null;
+        ChangeTarget(IsValidTarget(target) ? target : null);
     }
 
     /// <summary>
@@ -73,7 +73,11 @@ public class EnemySquad
     /// <param name="enemy">제거할 적의 행동 컴포넌트.</param>
     public void RemoveMember(EnemyController enemy)
     {
-        _members.Remove(enemy);
+        if (!_members.Remove(enemy))
+            return;
+
+        if (IsEmpty)
+            ChangeTarget(null);
     }
 
     /// <summary>
@@ -109,55 +113,57 @@ public class EnemySquad
     /// </summary>
     internal void RestoreCheckpointTarget(Transform target)
     {
-        _target = target != null ? target.GetComponent<ITargetable>() : null;
-        if (target != null && _target == null) throw new System.InvalidOperationException("Saved squad target is not targetable.");
-        foreach (var member in _members) member.AssignTarget(target);
+        ITargetable restoredTarget = target != null
+            ? target.GetComponent<ITargetable>()
+            : null;
+
+        if (target != null && restoredTarget == null)
+        {
+            throw new System.InvalidOperationException(
+                "Saved squad target is not targetable.");
+        }
+
+        ChangeTarget(IsValidTarget(restoredTarget) ? restoredTarget : null);
+        _nextSearchTime = 0f;
     }
 
     /// <summary>
-    /// 현재 목표가 공격 가능하면 유지하고, 아니면 분대 중심에서 새 목표를 찾는다.
-    /// 목표가 바뀐 경우에만 모든 구성원에게 새 목표 또는 null을 전달한다.
-    /// 후보가 없으면 목표를 비워 두고 분대 단위로 검색 간격을 둔다.
+    /// 배정된 목표는 유지하고, 목표가 없을 때 분대 중심에서 새 목표를 찾는다.
+    /// 타깃 불가 전환은 이벤트로 처리하며 후보가 없을 때만 검색 간격을 둔다.
     /// </summary>
     /// <returns>선택되거나 유지된 공동 목표가 있으면 true.</returns>
     public bool SetTarget()
     {
-        if (IsValidTarget(_target))
+        if (_target != null)
             return true;
 
-        // 기존 목표가 없거나 공격 불가능할 때만 후보를 다시 검색한다.
-        ITargetable previousTarget = _target;
-        _target = null;
+        if (Time.time < _nextSearchTime)
+            return false;
 
-        if (Time.time >= _nextSearchTime && TryGetCenterPosition(out Vector3 center))
-        {
-            _nextSearchTime = Time.time + RetargetInterval;
-            ITargetable nextTarget;
-            bool found = _targetRule == EnemyTargetRule.PlayerOnly
-                ? EnemySquadTargetSelector.TrySelectNearestPlayer(center, out nextTarget)
-                : EnemySquadTargetSelector.TrySelectNearestTarget(center, out nextTarget);
+        _nextSearchTime = Time.time + RetargetInterval;
 
-            if (found)
-                _target = nextTarget;
-        }
+        if (!TryGetCenterPosition(out Vector3 center))
+            return false;
 
-        // 목표가 바뀐 경우에만 구성원에게 새 목표(또는 null)를 전달한다.
-        if (!ReferenceEquals(previousTarget, _target))
-        {
-            Transform targetTransform = _target?.TargetTransform;
-            foreach (EnemyController enemy in _members)
-            {
-                if (enemy != null)
-                    enemy.AssignTarget(targetTransform);
-            }
-        }
+        ITargetable nextTarget;
+        bool found = _targetRule == EnemyTargetRule.PlayerOnly
+            ? EnemySquadTargetSelector.TrySelectNearestPlayer(center, out nextTarget)
+            : EnemySquadTargetSelector.TrySelectNearestTarget(center, out nextTarget);
 
-        return _target != null;
+        if (!found)
+            return false;
+
+        ChangeTarget(nextTarget);
+        return true;
     }
 
     /// <summary>구성원이 감지한 플레이어를 분대 공동 목표로 선택한다.</summary>
     public bool TryPrioritizePlayer(EnemyController requester, ITargetable player)
     {
+        // 이미 선택한 플레이어는 타깃 불가 이벤트가 발생할 때까지 유지한다.
+        if (_target != null && _target.TargetType == TargetType.Player)
+            return false;
+
         if (!_members.Contains(requester) ||
             !IsValidTarget(player) ||
             player.TargetType != TargetType.Player)
@@ -165,23 +171,16 @@ public class EnemySquad
             return false;
         }
 
-        // 이미 선택한 플레이어는 유효한 동안 유지한다.
-        if (IsValidTarget(_target) && _target.TargetType == TargetType.Player)
-            return false;
-
-        _target = player;
-        foreach (EnemyController member in _members)
-        {
-            if (member != null)
-                member.AssignTarget(player.TargetTransform);
-        }
-
+        ChangeTarget(player);
         return true;
     }
 
-    /// <summary>활성 구성원 중 첫 번째 몬스터만 공동 타깃 갱신을 실행한다.</summary>
+    /// <summary>목표가 없고 재검색 시점일 때 대표 활성 구성원만 검색한다.</summary>
     public void RefreshTarget(EnemyController requester)
     {
+        if (_target != null || Time.time < _nextSearchTime)
+            return;
+
         foreach (EnemyController member in _members)
         {
             if (member == null || !member.isActiveAndEnabled)
@@ -191,6 +190,41 @@ public class EnemySquad
                 SetTarget();
             return;
         }
+    }
+
+    /// <summary>타깃과 이벤트 구독을 변경하고 구성원에게 전달한다.</summary>
+    private void ChangeTarget(ITargetable target)
+    {
+        if (ReferenceEquals(_target, target))
+            return;
+
+        if (!ReferenceEquals(_target, null))
+            _target.TargetabilityLost -= OnTargetabilityLost;
+
+        _target = target;
+
+        if (!ReferenceEquals(_target, null))
+            _target.TargetabilityLost += OnTargetabilityLost;
+
+        Transform targetTransform = _target?.TargetTransform;
+
+        foreach (EnemyController member in _members)
+        {
+            if (member != null)
+                member.AssignTarget(targetTransform);
+        }
+    }
+
+    /// <summary>현재 타깃을 해제하고 즉시 새 타깃을 찾는다.</summary>
+    private void OnTargetabilityLost(ITargetable target)
+    {
+        if (!ReferenceEquals(_target, target))
+            return;
+
+        ChangeTarget(null);
+
+        _nextSearchTime = 0f;
+        SetTarget();
     }
 
     /// <summary>
