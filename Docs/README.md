@@ -1,6 +1,6 @@
 # The Developer 문서 안내
 
-**11/12 Core 후속 결정:** [지역·스폰·보스·협동 복구 배치](01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md). 정적 확보/상실·CU 시작 셀·33/66% 중간보스·100% 최종 전이·협동 구조를 사용자 승인 정책으로 기록했다. 구현·통합 QA 전이며 완료된 #691/#693/#694와 다음 배치를 구분한다.
+**11/12 Core 후속 결정:** [지역·스폰·보스·협동 복구 배치](01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md). 정적 확보/상실·CU 시작 셀·33/66% 중간보스·100% 최종 전이·협동 구조를 사용자 승인 정책으로 기록했다. 이 중 **CU 시작 셀·동적 4방향 점유 연결·Host 설정은 로컬 구현/QA 완료**이며 [결과·검증 경계](01_planning/02_implementation-records/2026/11/2026-11-12-cu-connected-regions-results.md)와 [코드 검토 순서](03_team/00_reviews/cu-connected-regions-20261112.md)를 참고한다. 나머지 배치와 실제 2인·전체 저장 인수는 별도다.
 
 최근 정기회의: [11월 7일 결정 근거](99_archive/2026-11-07/regular-meeting.md). 미션 HUD Alert와 Enemy 규칙은 [Product Plan](00_product/PROJECT_PLAN.md), PR 리뷰 흐름은 [팀 협업 규칙](03_team/TEAM_WORKFLOW.md#review와-approval), 담당별 후속은 [현재 실행 계획](01_planning/current-execution-plan.md)을 따른다.
 
