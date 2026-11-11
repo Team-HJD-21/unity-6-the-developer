@@ -45,7 +45,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_disposed || _session.IsDisposed) return;
             _session.UpdateEnvironment(_weather?.WeatherId ?? default, _time?.TimeOfDayId ?? default,
-                _weather?.Forecast ?? Array.Empty<DefinitionId>());
+                _weather?.Forecast ?? Array.Empty<DefinitionId>(), (_time as MatchDayNightCycle)?.CapturePhaseAnchor());
         }
         internal static HashSet<IMatchEnvironmentFeature> Collect(IMatchWeatherSource weather, IMatchTimeOfDaySource time)
         {

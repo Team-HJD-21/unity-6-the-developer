@@ -22,12 +22,17 @@ namespace TeamHJD.Game.Application
             _epoch = (clock as IMatchTime)?.Snapshot.Epoch ?? Guid.Empty;
             _snapshot = new MatchEnvironmentSnapshot(match, 1, clock.ElapsedSeconds, default, default, epoch: _epoch);
         }
-        public bool TryUpdate(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast)
+        public bool TryUpdate(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast) =>
+            TryUpdate(weather, timeOfDay, forecast, null);
+
+        /// <summary>Host 환경 source가 바뀔 때 호출합니다. 같은 단계의 Reset도 구간 기준이 달라지면 게시합니다.</summary>
+        public bool TryUpdate(DefinitionId weather, DefinitionId timeOfDay, IEnumerable<DefinitionId> forecast,
+            DayNightCycle phaseAnchor)
         {
             if (_disposed || !_mayWrite()) return false;
             Guid epoch = (_clock as IMatchTime)?.Snapshot.Epoch ?? Guid.Empty;
             var next = new MatchEnvironmentSnapshot(_snapshot.MatchId, checked(_snapshot.Revision + 1),
-                _clock.ElapsedSeconds, weather, timeOfDay, forecast, epoch);
+                _clock.ElapsedSeconds, weather, timeOfDay, forecast, epoch, phaseAnchor);
             bool restored = epoch != _epoch;
             if (_snapshot.HasSameValues(next) && !restored) return false;
             if (!restored && next.GameSeconds < _snapshot.GameSeconds) throw new InvalidOperationException("Match clock cannot move backwards inside one execution epoch.");

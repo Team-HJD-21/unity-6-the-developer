@@ -1,0 +1,155 @@
+{
+  "date": "2026-11-11",
+  "base_main": "f6a8c22c0ee840500ebabd6891dd3ccec3c9c790",
+  "unity": "6000.3.23f1",
+  "ngo": "2.13.3",
+  "tests": [
+    {
+      "file": "replica-complete-final.xml",
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "sha256": "44ecc171069f3408770b750a35f8c699f5ff986b72e9ffd217d1ee73a77541ea"
+    },
+    {
+      "file": "codec.xml",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "sha256": "126e2719e6e96db9d864ded09ec855799406f251c7ded46a06d5f521f4db81b6"
+    },
+    {
+      "file": "stage-main-final.xml",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "sha256": "6e3ffb727a28092bcca4b9564020453f4fa537315c401160e09063988923dfc2"
+    }
+  ],
+  "native_pair": {
+    "success": true,
+    "run": "20261111T122319Z-da465d7b",
+    "port": 60990,
+    "hostPid": 46564,
+    "clientPid": 32908,
+    "hostExit": 0,
+    "clientExit": 0,
+    "build": "987bde6064e44fb2826bafff96bf9edc",
+    "runtimeErrorSignatures": 0,
+    "computeBufferShutdownWarnings": 2,
+    "requiredPhases": [
+      "Static",
+      "ClockPaused",
+      "ClockRate",
+      "ClockReset",
+      "Dynamic",
+      "Release",
+      "Ended",
+      "Restart",
+      "FinalEnded",
+      "Disconnect",
+      "Disconnected"
+    ],
+    "turretChecks": [
+      "On:Applied:Activated",
+      "Replay:Applied:Activated",
+      "Off:Applied:Deactivated",
+      "Far:Unauthorized:OutOfInteractionRange",
+      "NoActor:Unauthorized:AuthorityActorUnavailable",
+      "ForeignMatch:DifferentMatch:",
+      "ForgedIssuer:Unauthorized:"
+    ],
+    "turretFixtureScope": "Development-only Host interaction actor fixture; production Client gateway/Host authorization/D executor/HUD transport. Not B remote actor replication.",
+    "scope": "Actual Initial_Stage; loopback; full HUD-frame hashes; active cohort disconnect. No full Player/Turret combat replication or GUI acceptance"
+  },
+  "client_samples": [
+    {
+      "Phase": "Static",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
+      "TimeOfDay": "day",
+      "DayNightRemaining": 299.9635010420873,
+      "MatchGameSeconds": 0.03649895791274793,
+      "GameRate": 1.0,
+      "EnvironmentRevision": 2
+    },
+    {
+      "Phase": "ClockPaused",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
+      "TimeOfDay": "day",
+      "DayNightRemaining": 299.7755487914849,
+      "MatchGameSeconds": 0.2244512085150927,
+      "GameRate": 0.0,
+      "EnvironmentRevision": 2
+    },
+    {
+      "Phase": "ClockRate",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
+      "TimeOfDay": "day",
+      "DayNightRemaining": 299.7755487914849,
+      "MatchGameSeconds": 0.2244512085150927,
+      "GameRate": 2.0,
+      "EnvironmentRevision": 2
+    },
+    {
+      "Phase": "ClockReset",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
+      "TimeOfDay": "day",
+      "DayNightRemaining": 299.9835004638322,
+      "MatchGameSeconds": 0.29111941992305224,
+      "GameRate": 1.0,
+      "EnvironmentRevision": 3
+    },
+    {
+      "Phase": "Dynamic",
+      "Match": "070c5bf2a03c440b94d119b65535420a",
+      "TimeOfDay": "night",
+      "DayNightRemaining": 299.9995477064016,
+      "MatchGameSeconds": 0.649757038525616,
+      "GameRate": 1.0,
+      "EnvironmentRevision": 4
+    },
+    {
+      "Phase": "Restart",
+      "Match": "e69cdff2aced4bae9d7e30c95735d57d",
+      "TimeOfDay": "day",
+      "DayNightRemaining": 300.0,
+      "MatchGameSeconds": 0.0,
+      "GameRate": 1.0,
+      "EnvironmentRevision": 2
+    }
+  ],
+  "native_evidence_sha256": {
+    "client.json": "f4c55cdd49926d20c59fcd844885f20d16f7638ec9b984b611a1c94ce68a7957",
+    "client.log": "251f109eeed205a1b722df4dfb5cc425e29e255e82b5d2e40b7696078b0e102f",
+    "host.json": "69dbe90221a748043bb047886858482fba1ace1a061380b4ff6d7134fccc035f",
+    "host.log": "394dd395816c3b3a88a4b627ccb01843d4c65f9e2576496c856bc53d688fbd91",
+    "verified.json": "670cabbef357d314f3fbea0e149e55c24749e0e232e1e153d3cc39fadd50cd0d"
+  },
+  "source_sha256_lf": {
+    "Assets/Scripts/Core/Application/Environment/MatchEnvironmentRuntime.cs": "f25cc126dd2fe9c25fb53fdfe8a82a50b7fccc29b14991e0d6801d73657d5e52",
+    "Assets/Scripts/Core/Application/MatchSession.cs": "9fc3387ff18b18ae85c695386fb3babb0fee2406aee30fb29b73fca2228dd6e5",
+    "Assets/Scripts/Core/Bootstrap/Diagnostics/CoreNetworkBuild.cs": "2fd51444d9f334dd12d98cc96934c302bcec05a6fb7721991555315dcff824f6",
+    "Assets/Scripts/Core/Bootstrap/SceneComposition/InitialStageCompositionRoot.Networking.cs": "7169b4ceb97910cd5741c8f6feffb34c30e30635bb05c252ed23e0c713fbe4a6",
+    "Assets/Scripts/Core/Bootstrap/SceneComposition/MatchDayNightCycle.Replica.cs": "5d23fa0763de02ad3fdd16dacc44e74dd4b0bf28a47b87017909d795a301373b",
+    "Assets/Scripts/Core/Bootstrap/SceneComposition/MatchDayNightCycle.cs": "f01516d71f5982b5500d86da1d9106439483b8b217dd7a4c36e6c5b889c6f7b3",
+    "Assets/Scripts/Core/Bootstrap/SceneComposition/MatchEnvironmentSceneScope.cs": "a93a6ccbf29634bce48a366f37ae364c31fcb0fbedeaf52aa873e69208c59d26",
+    "Assets/Scripts/Core/Contracts/Environment/IMatchDayNightCycle.cs": "04699dfcb5e1bc7f28a38d81cf48091bb94ad609c84b4aad9e972ccee7d0107c",
+    "Assets/Scripts/Core/Domain/Environment/MatchEnvironmentSnapshot.cs": "67f19de0a8ec49b0be4fc9b5b55c98f92e4a6766723b42d8b1d539aa3824f2eb",
+    "Assets/Scripts/Core/Editor/CoreNetworkBuildPipeline.cs": "9fa8f82b3f391b8bf0d9b24170ee70f86a9b737a164d7eec2ac666372d1e3bfe",
+    "Assets/Scripts/Core/Infrastructure/Networking/EnvironmentReplicationCodec.cs": "8d65a14c5775ccb40a883c2b50acef4695b78d7c117b6b1a6140f11158698c49",
+    "Assets/Scripts/Core/Infrastructure/Networking/Tests/DayNightPhaseCodecTests.cs": "c83a327cd9f1c77be452e4d2d9cad8c2c6f42ce2534e4e0ae5fa6e2d4dfba8e4",
+    "Assets/Scripts/Core/Tests/EditMode/DayNightReplicaTests.cs": "0f2012e5c9c3cf8ffc35c2d89c40f8e3e09484ff4305a795f2f0e8a2f32ac013",
+    "Assets/Scripts/Core/Tests/EditMode/TeamHJD.Game.Tests.EditMode.asmdef": "9cdc049d2041f1bf8d063be92e8dd1b41476ce9dce4a9652c3565a567b78cf78",
+    "tools/Test-CoreNetworkPair.ps1": "79548b0562dc0ec06e45c01e7ce51d6e7eb05566846c4b4555193e878a190ca9"
+  },
+  "clock_difference_guard_game_seconds": 1,
+  "maximum_observed_clock_difference": null,
+  "limits": [
+    "Loopback, same Build; not Steam transport or internet-latency guarantee.",
+    "Two legacy ComputeBuffer shutdown warnings; not fixed in this PR.",
+    "Native night transition uses authority debug API; natural boundary checked by real Core source test.",
+    "No Weather/Player/Enemy/Scene/Prefab edits."
+  ],
+  "pr": 693,
+  "validated_code_commit": "9b5fcce540b9907825a7e6da2a13fcc55cbebd17"
+}

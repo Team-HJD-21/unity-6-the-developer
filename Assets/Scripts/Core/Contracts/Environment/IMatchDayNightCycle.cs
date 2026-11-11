@@ -12,6 +12,7 @@ namespace TeamHJD.Game.Contracts
 
         double DaySeconds { get; }
         double NightSeconds { get; }
+        /// <summary>HUD가 읽는 남은 게임 초입니다. Client는 권위 구간·같은 세대 시계 수신 전 NaN이며 자체 전환하지 않습니다.</summary>
         double RemainingSeconds { get; }
     }
 }

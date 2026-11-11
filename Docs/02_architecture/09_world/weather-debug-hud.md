@@ -14,8 +14,8 @@
 - **Reset은 현재 Day/Night를 유지**하고 그 구간을 5분부터 다시 시작합니다. 같은 요청에서 기존 날씨 변경 버튼의 명령을 한 번 실행합니다.
 - 타이머가 표시된 기존 버튼 자체를 누르면 이전처럼 날씨만 변경합니다. 타이머 재시작까지 하려면 아래 Reset을 누릅니다.
 - 날씨는 기존 예고 큐의 다음 항목으로 진행합니다. 큐에 같은 날씨가 연속으로 있으면 화면의 날씨 종류는 같을 수 있습니다. 이를 피하려고 진태님 추첨/가중치/큐 규칙을 바꾸지는 않았습니다.
-- 필드 시간의 정지·배속을 따릅니다. 우주선 안에서 필드 시간이 멈추면 카운트다운도 멈춥니다. Reset은 공용 Match 경과 시각이나 다른 Feature의 타이머를 초기화하지 않습니다.
-- Host 권한이 없거나 Match가 종료되면 Reset은 비활성화됩니다. 현재 Client 환경 복제는 낮밤 단계만 제공하므로 남은 시간이 제공되지 않는 Client는 `--:--`를 표시합니다. Client 권위 요청 RPC를 추가한 기능은 아닙니다.
+- Core 공용 게임 시간의 정지·배속을 따릅니다. 우주선의 필드 전용 정지와 구분하며 Reset은 공용 Match 경과 시각이나 다른 Feature의 타이머를 초기화하지 않습니다.
+- Host 권한이 없거나 Match가 종료되면 Reset은 비활성화됩니다. Client는 Host의 구간 기준과 공용 시계 수신 뒤 남은 시간을 표시합니다. 미수신·다른 복원 세대는 `--:--`입니다. Client 권위 요청 RPC를 추가한 기능은 아닙니다.
 
 ## 연결 구조
 
@@ -61,3 +61,5 @@ flowchart LR
 [좌측 하단의 실제 Day·5분 타이머·Reset 렌더](https://github.com/Team-HJD-21/unity-6-the-developer/blob/6ed4f15650965830dda1139b0a1b4b3baa0e1f78/Docs/images/core/2026-11-05-weather-debug-hud.png)
 
 Windows Standalone도 `native-build-weather-hud.log`에서 **Build Success / 종료 0**을 확인했습니다. PR/push/merge는 하지 않았습니다.
+
+위 검증 목록은 11월 5일 당시 기록입니다. 11월 11일 Client 시간 기준 보강의 검증과 전송 호환 범위는 [낮밤 API](day-night-api.md#client의-남은-시간--2026-11-11) 및 [리뷰 문서](../../team/reviews/client-day-night-anchor-20261111.md)를 따릅니다. 기존 HUD 디자인·버튼·Scene은 이번에 수정하지 않았습니다.
