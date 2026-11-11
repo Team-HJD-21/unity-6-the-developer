@@ -1,6 +1,6 @@
 # CU 동적 점유 변경 검토
 
-기준일: 2026-11-12. PR: 아직 생성하지 않음. 기준 main: `88bc2c58e`. 이 문서는 실제 변경과 검증 범위를 요약한다. PR을 생성할 때 번호·링크를 이곳에도 기록한다.
+기준일: 2026-11-12. PR: [#701](https://github.com/Team-HJD-21/unity-6-the-developer/pull/701), `feature/core → main`. 생성 직후 실제 base/head를 다시 조회했다. 기준 main: `88bc2c58e`. 이 문서는 실제 변경과 검증 범위를 요약한다. CI와 병합 상태는 PR의 실제 결과를 확인한다.
 
 먼저 [구현 결과의 코드 읽기 순서와 QA](../../01_planning/02_implementation-records/2026/11/2026-11-12-cu-connected-regions-results.md)를 따라 보면 된다. 사용법은 [지역 API](../../02_architecture/01_core/core-sprint-region-and-request-api.md#cu-시작-영역-설정과-저장)와 [Game Debugger](../../05_tooling/game-debugger-guide.md#cu-시작-영역-확인)에 있다.
 

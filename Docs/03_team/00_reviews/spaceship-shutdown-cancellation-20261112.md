@@ -1,6 +1,6 @@
 # 포털 이동 중 App 종료 취소 처리
 
-기준일: 2026-11-12. 상태: Core HOTFIX 구현·로컬 Play 검사 완료. PR은 아직 생성하지 않았다.
+기준일: 2026-11-12. 상태: Core HOTFIX 구현·로컬 Play 검사 완료. [PR #701](https://github.com/Team-HJD-21/unity-6-the-developer/pull/701)에 별도 커밋 `b58353bfd`로 포함한다.
 
 실제 Initial_Stage 검사에서 Player가 포털에 접촉해 우주선 진입을 시작한 순간 Play가 종료되면 다음 경로로 `OperationCanceledException`이 전파됐다.
 
