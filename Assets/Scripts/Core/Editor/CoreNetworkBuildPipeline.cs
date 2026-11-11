@@ -15,8 +15,11 @@ namespace TeamHJD.Game.Editor
         public static void BuildWindowsDevelopment()
         {
             string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => scene.path).ToArray();
-            if (scenes.Length == 0 || scenes[0] != "Assets/Scenes/Gameplay/Initial_Stage.unity")
-                throw new InvalidOperationException("The actual Initial_Stage must be the first enabled build Scene.");
+            const string stage = "Assets/Scenes/Gameplay/Initial_Stage.unity";
+            if (!scenes.Contains(stage))
+                throw new InvalidOperationException("The actual Initial_Stage must be enabled for network validation.");
+            // 검증 빌드만 실제 Stage에서 시작합니다. 제품의 Startup 순서/Build Settings는 변경하지 않습니다.
+            scenes = new[] { stage }.Concat(scenes.Where(scene => scene != stage)).ToArray();
             const string output = "Builds/CoreNetworkValidation/TheDeveloper.exe";
             Directory.CreateDirectory(Path.GetDirectoryName(output));
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions

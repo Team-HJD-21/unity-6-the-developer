@@ -32,6 +32,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             public int Seed, Captured, Mode, ActorCount; public long Revision, PresentationRevision; public ulong Anchor;
             public string EnvironmentHash,Weather,TimeOfDay,CompletionHash,ResultScreen;
             public long EnvironmentRevision;
+            public double DayNightRemaining, MatchGameSeconds, GameRate;
         }
         [Serializable] private sealed class Result
         {
@@ -53,6 +54,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private int _dynamicCount;
         private long _dynamicRevision;
         private ulong _firstAnchor;
+        private long _rateEnvironmentRevision;
         private bool _terminal;
         private string _environmentDescriptor;
         private readonly Dictionary<long, string> _environmentHashes = new Dictionary<long, string>();
@@ -155,6 +157,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     if (!_binding.GetComponent<RegionSceneBinding>().ResetPolicy(RegionPolicyMode.Dynamic, true))
                         throw new InvalidOperationException("The authoritative region policy reset was rejected.");
                     ActivateTriangle(); Move("WaitDynamicAck");
+                    var dayNight = SceneDayNight();
+                    if (dayNight == null || !dayNight.TryAdvancePhase())
+                        throw new InvalidOperationException("Host could not advance the actual day/night source.");
                 }
             }
             catch (Exception error) { Fail(error.ToString()); }
@@ -185,13 +190,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (descriptor == null)
             {
                 if (_binding.Matches.Phase != NetworkMatchPhase.Ended || string.IsNullOrEmpty(_lastMatch)) return;
+                var spawnManager = _session.Manager.SpawnManager;
+                if (spawnManager == null && _session.State != NetworkConnectionState.Disconnected) return;
                 if (Object.FindObjectsByType<NetworkMatchAnchor>(FindObjectsSortMode.None).Length != 0 ||
                     Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length != 0 ||
                     app.NetworkRegions.Source != null || !app.CurrentMatchId.IsEmpty ||
                     app.NetworkEnvironments.Source != null ||
                     _binding.TurretCommands != null || _binding.TurretPresentation != null ||
                     _binding.GetComponent<TurretMatchBinding>().Count != 0 ||
-                    _session.Manager.SpawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true)) return;
+                    (spawnManager != null && spawnManager.SpawnedObjectsList.Any(item => item != null && item.IsSceneObject != true))) return;
                 string phase = _lastMatch == _firstMatch ? "Ended" : "FinalEnded";
                 SendOnce(new Probe { Phase = phase, Match = _lastMatch, Descriptor = _lastDescriptor });
                 return;
@@ -210,6 +217,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             var environment = app.CurrentEnvironment;
             if (environment == null || environment.MatchId != descriptor.Config.MatchId) return;
+            var cycle = SceneDayNight();
+            var matchTime = _binding.GetComponent<InitialStageCompositionRoot>().MatchTime;
+            if (cycle == null || matchTime == null || !matchTime.IsAvailable || !double.IsFinite(cycle.RemainingSeconds)) return;
             var weatherSources = _binding.gameObject.scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<MonoBehaviour>())
                 .OfType<IMatchWeatherSource>().ToArray();
             if (weatherSources.Length != 1 || weatherSources[0].WeatherId != environment.WeatherId ||
@@ -243,6 +253,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _dynamicCount == 0 ? (snapshot.CapturedCellCount > 0 ? "Dynamic" : null) :
                 snapshot.Revision > _dynamicRevision && snapshot.CapturedCellCount < _dynamicCount ? "Release" : null;
             if (phaseName == null) return;
+            if (_firstMatch == _lastMatch && snapshot.Mode == RegionPolicyMode.Static)
+            {
+                if (_sent.Contains(_lastMatch + "/Static") && matchTime.Snapshot.Rate == 0) phaseName = "ClockPaused";
+                else if (_sent.Contains(_lastMatch + "/ClockPaused") && matchTime.Snapshot.Rate == 2) phaseName = "ClockRate";
+                else if (_sent.Contains(_lastMatch + "/ClockRate") && matchTime.Snapshot.Rate == 1 &&
+                    environment.Revision > _rateEnvironmentRevision) phaseName = "ClockReset";
+            }
+            if (phaseName == "ClockRate") _rateEnvironmentRevision = environment.Revision;
+            if ((phaseName == "Dynamic" || phaseName == "Release") && cycle.Phase != DayNightPhase.Night) return;
             if (phaseName == "Dynamic") { _dynamicCount = snapshot.CapturedCellCount; _dynamicRevision = snapshot.Revision; }
             SendOnce(new Probe
             {
@@ -255,6 +274,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 PresentationHash = CoreNetworkTurretValidation.Hash(presentation), PresentationRevision = presentation.Revision,
                 TurretIdentityHash = TurretIdentityHash(_binding.GetComponent<TurretMatchBinding>()),
                 EnvironmentRevision = environment.Revision,Weather = environment.WeatherId.Value,TimeOfDay = environment.TimeOfDayId.Value,
+                DayNightRemaining = cycle.RemainingSeconds, MatchGameSeconds = matchTime.ElapsedSeconds, GameRate = matchTime.Snapshot.Rate,
                 EnvironmentHash = Hash(EnvironmentReplicationCodec.Encode(new EnvironmentReplicationFrame(descriptor.DescriptorId, environment)))
             });
         }
@@ -290,7 +310,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 {
                     var app = Object.FindAnyObjectByType<AppRoot>();
                     var completion = _binding.Matches.Completion;
-                    if (completion == null || app.Screens.Top?.Kind != ScreenKind.MatchResult ||
+                    if (completion == null || completion.Result.Outcome != MatchOutcome.Defeat || app.Screens.Top?.Kind != ScreenKind.MatchResult ||
                         packet.ResultScreen != ScreenKind.MatchResult.ToString() || _binding.Matches.IsGameplayRunning ||
                         packet.Match != completion.Result.MatchId.Value ||
                         packet.CompletionHash != Hash(MatchLifecycleCodec.Encode(MatchLifecycleSignalKind.Completed,
@@ -321,6 +341,27 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (_step == "WaitStaticAck" && packet.Phase == "Static")
                 {
                     _firstAnchor = packet.Anchor;
+                    Time.timeScale = 0;
+                    Move("WaitClockPauseAck");
+                }
+                else if (_step == "WaitClockPauseAck" && packet.Phase == "ClockPaused")
+                {
+                    if (packet.GameRate != 0) throw new InvalidOperationException("Client did not observe the paused game rate.");
+                    Time.timeScale = 2;
+                    Move("WaitClockRateAck");
+                }
+                else if (_step == "WaitClockRateAck" && packet.Phase == "ClockRate")
+                {
+                    if (packet.GameRate != 2) throw new InvalidOperationException("Client did not observe the doubled game rate.");
+                    Time.timeScale = 1;
+                    if (!SceneDayNight().TryRestartCurrentPhase())
+                        throw new InvalidOperationException("Host could not restart the current day/night phase.");
+                    Move("WaitClockResetAck");
+                }
+                else if (_step == "WaitClockResetAck" && packet.Phase == "ClockReset")
+                {
+                    if (packet.TimeOfDay != "day" || packet.DayNightRemaining < SceneDayNight().DaySeconds - 1)
+                        throw new InvalidOperationException("Client did not observe the same-phase day/night reset.");
                     _turretProbe.Begin(sender); Move("WaitTurretCommands");
                 }
                 else if (_step == "WaitDynamicAck" && packet.Phase == "Dynamic")
@@ -345,11 +386,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 {
                     _lastMatch = packet.Match;
                     var target = _binding.GetComponent<RegionSceneBinding>().ControlUnit.GetComponents<MonoBehaviour>()
-                        .OfType<IDamageableTarget>().Single(item => item is IControlUnitHealthSource);
+                        .OfType<IDamageableTarget>().Single(item => item is IControlUnitVitals);
                     if (!target.ApplyDamage(target.CurrentHealth))
                         throw new InvalidOperationException("The authored CU rejected the validation damage.");
-                    if (_binding.Matches.Completion?.Result.Outcome != MatchOutcome.Defeat)
-                        throw new InvalidOperationException("Actual CU destruction did not commit the authoritative defeat.");
+                    // 기존 CU는 읽기 계약을 제공하고 Scene Update가 완료를 판정합니다.
+                    // 여기서 동기 완료를 강제하지 않고 Client 결과 응답에서 Host 결과와 함께 검증합니다.
                     Move("WaitCompletionAck");
                 }
                 else throw new InvalidOperationException("Unexpected phase " + packet.Phase + " in " + _step);
@@ -371,6 +412,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_environmentDescriptor != descriptor.DescriptorId.ToString("N") ||
                 !_environmentHashes.TryGetValue(packet.EnvironmentRevision, out string environmentHash) || packet.EnvironmentHash != environmentHash)
                 throw new InvalidOperationException("Client confirmed an unknown/different authoritative environment frame.");
+            var currentTime = _binding.GetComponent<InitialStageCompositionRoot>().MatchTime;
+            if (!double.IsFinite(packet.DayNightRemaining) || packet.DayNightRemaining < 0 ||
+                !double.IsFinite(packet.MatchGameSeconds) || Math.Abs(packet.MatchGameSeconds - currentTime.ElapsedSeconds) > 1)
+                throw new InvalidOperationException("Client day/night is unavailable or differs from the authority game clock by over one second.");
         }
         private void RememberEnvironment()
         {
@@ -382,6 +427,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _environmentHashes[snapshot.Revision] = Hash(EnvironmentReplicationCodec.Encode(new EnvironmentReplicationFrame(descriptor.DescriptorId, snapshot)));
             if (_environmentHashes.Count > 64) _environmentHashes.Remove(_environmentHashes.Keys.Min());
         }
+        private MatchDayNightCycle SceneDayNight() => _binding.gameObject.scene.GetRootGameObjects()
+            .SelectMany(item => item.GetComponentsInChildren<MatchDayNightCycle>()).SingleOrDefault();
+
         private void ActivateTriangle()
         {
             var controller = FieldTurretController.FindForScene(_binding.gameObject.scene);
