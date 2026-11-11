@@ -165,13 +165,15 @@ public partial class EnemySpawnExecutor
         }
         foreach (var saved in world.Enemies)
         {
-            var actor = CheckpointActorFactory.Instantiate(ResolveCheckpointEnemy(saved.Type).Prefab, gameObject.scene, saved.State.Pose, saved.Id);
+            // 저장 형식에 집계 플래그를 추가하지 않고 복원할 적의 Definition에서 다시 읽는다.
+            EnemyDefinition definition = ResolveCheckpointEnemy(saved.Type);
+            var actor = CheckpointActorFactory.Instantiate(definition.Prefab, gameObject.scene, saved.State.Pose, saved.Id);
             var network = actor.GetComponent<EnemyNetworkController>();
             var controller = actor.GetComponent<EnemyController>();
             network.CheckpointEnemyType = saved.Type;
             network.SetSimulationMatch(_fieldTime.Snapshot.MatchId, NetworkObjectId);
             var squad = _squads[saved.Group];
-            controller.JoinSquad(squad);
+            controller.JoinSquad(squad, definition.IsIncludedInAttackerLimit);
             var ngo = actor.GetComponent<Unity.Netcode.NetworkObject>();
             ngo.Spawn();
             network.RestoreCheckpoint(saved.State);

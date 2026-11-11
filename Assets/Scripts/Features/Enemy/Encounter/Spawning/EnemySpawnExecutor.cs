@@ -363,7 +363,8 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                     createdSquads.Add(memberSquad);
                 }
 
-                if (!controller.JoinSquad(memberSquad))
+                // 공동 타깃은 공유하고 공격 인원 포함 여부는 몬스터별 Definition을 따른다.
+                if (!controller.JoinSquad(memberSquad, enemy.IsIncludedInAttackerLimit))
                 {
                     Debug.LogError($"Failed to register enemy in squad: {enemy.EnemyId}");
                     Fail("Failed to register squad member: " + enemy.EnemyId, observeFailure);

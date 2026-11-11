@@ -20,6 +20,9 @@ public abstract class EnemyController : MonoBehaviour
     /// 미사일 시스템은 중복 목표 배정을 막기 위해 이 값을 확인하고 설정한다.
     /// </summary>
     public bool IsTargeted { get; set; }
+
+    /// <summary>Definition에서 최초 등록 시 전달받은 공격 인원 집계 여부를 반환한다.</summary>
+    public bool IsIncludedInAttackerLimit { get; private set; } = true;
     
     /// <summary>
     /// 자식 클래스가 공유하는 타깃·애니메이션·능력 참조를 초기화한다.
@@ -39,15 +42,19 @@ public abstract class EnemyController : MonoBehaviour
     /// </summary>
     public abstract void ExecuteBehavior();
 
-    /// <summary>몬스터를 독립적으로 유지되는 분대에 등록한다.</summary>
-    public bool JoinSquad(EnemySquad squad)
+    /// <summary>최초 분대 등록 시 공격 인원 집계 설정을 적용한다.</summary>
+    /// <param name="squad">소속될 분대. 이미 다른 분대에 소속되어 있으면 등록하지 않는다.</param>
+    /// <param name="isIncludedInAttackerLimit">이 몬스터를 타깃별 인원에 포함할지 여부.</param>
+    /// <returns>등록에 성공했거나 이미 같은 분대이면 true.</returns>
+    public bool JoinSquad(EnemySquad squad, bool isIncludedInAttackerLimit = true)
     {
         if (squad == null)
             return false;
-        if (_squad == squad)
-            return true;
+        // 소속 중에는 분대와 집계 설정을 바꾸지 않아 기존 배정과 불일치하지 않게 한다.
+        if (_squad != null)
+            return _squad == squad;
 
-        LeaveSquad();
+        IsIncludedInAttackerLimit = isIncludedInAttackerLimit;
         if (!squad.AddMember(this))
             return false;
 
@@ -71,7 +78,7 @@ public abstract class EnemyController : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 분대에서 자신을 해제하고 소속 참조를 비운다.
+    /// 현재 분대의 구성원과 배정 인원을 정리하고 소속 참조를 비운다.
     /// </summary>
     public void LeaveSquad()
     {

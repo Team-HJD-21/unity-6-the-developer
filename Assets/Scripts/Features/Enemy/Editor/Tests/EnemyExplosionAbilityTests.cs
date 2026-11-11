@@ -191,6 +191,7 @@ public sealed class EnemyExplosionAbilityTests
     }
 }
 
+/// <summary>폭발 피해 테스트에서 타깃 정보와 배정 인원 계약을 제공하는 시험용 대상이다.</summary>
 public sealed class EnemyExplosionTargetProbe : MonoBehaviour, ITargetable, IDamageableTarget
 {
     public event System.Action<ITargetable> TargetabilityLost;
@@ -198,12 +199,36 @@ public sealed class EnemyExplosionTargetProbe : MonoBehaviour, ITargetable, IDam
     public bool Available = true;
     public Transform TargetTransform => transform;
     public TargetType TargetType => global::TargetType.Turret;
+    public int MaxAttackers => 10;
+    public int AssignedAttackerCount { get; private set; }
     public float HealthRatio => CurrentHealth / (float)MaxHealth;
     public float FirepowerRatio => 0f;
     public bool CanBeTargeted => Available && !IsDestroyed;
     public int CurrentHealth { get; private set; } = 100;
     public int MaxHealth => 100;
     public bool IsDestroyed => CurrentHealth <= 0;
+
+    /// <summary>테스트용 타깃의 한도 안에서 요청 인원 전체를 배정한다.</summary>
+    public bool TryAssignAttackers(int count)
+    {
+        if (!CanBeTargeted || count <= 0 ||
+            count > MaxAttackers - AssignedAttackerCount)
+        {
+            return false;
+        }
+
+        AssignedAttackerCount += count;
+        return true;
+    }
+
+    /// <summary>테스트 호출자가 배정했던 인원을 반환한다.</summary>
+    public void UnassignAttackers(int count)
+    {
+        if (count <= 0)
+            return;
+
+        AssignedAttackerCount = Mathf.Max(0, AssignedAttackerCount - count);
+    }
 
     public bool ApplyDamage(int damage)
     {

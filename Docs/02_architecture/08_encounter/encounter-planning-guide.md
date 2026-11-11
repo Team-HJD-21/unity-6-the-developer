@@ -67,7 +67,7 @@ Core의 `EncounterRequest.PresetId`는 현재 필수다. Game Debugger의 고정
 
 ## 상황별 계획의 기준 타깃과 조사 범위
 
-각 사용 가능한 스폰 지점에서 `EnemyTargetQuery.TryFindNearest(..., TargetType.Turret)`를 호출한다. `CanBeTargeted`가 참이고 Transform이 유효한 후보만 선택한다. CU도 어댑터에서 Turret으로 분류하므로 이 최근접 후보에 함께 들어간다. 일반 터렛 우선 후 CU fallback 순서를 따로 강제하지 않는다.
+각 사용 가능한 스폰 지점에서 `EnemyTargetSelector.TryFindNearest(..., TargetType.Turret)`를 호출한다. `CanBeTargeted`가 참이고 Transform이 유효한 후보만 선택한다. CU도 어댑터에서 Turret으로 분류하므로 이 최근접 후보에 함께 들어간다. 일반 터렛 우선 후 CU fallback 순서를 따로 강제하지 않는다.
 
 외곽 전선 상위 3개, 타깃 포화도, 위험도 점수로 기준 타깃을 고르지 않는다. 유효한 타깃 또는 Grid 안 타깃 위치가 없는 스폰 지점은 이 계획에서 제외된다.
 

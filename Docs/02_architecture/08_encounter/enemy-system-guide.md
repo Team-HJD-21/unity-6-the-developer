@@ -98,7 +98,7 @@ classDiagram
 
 ## 타깃·분대·이동
 
-`ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.ChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.
+`ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.TryChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.
 
 목표 선택은 `EnemySquad`가 담당한다. 배정된 목표가 있으면 주기적으로 `CanBeTargeted`를 검사하거나 구성원을 순회하지 않는다. 타깃 불가 이벤트를 받으면 기존 목표와 구독을 해제하고 분대 중심에서 가장 가까운 유효 후보를 즉시 한 번 검색한다. 후보가 없을 때만 기존 행동 갱신 경로의 대표 활성 구성원이 `RefreshTarget()`으로 0.5초마다 재시도하며 새 Update나 코루틴을 추가하지 않는다. 여러 분대가 같은 목표를 잃으면 해당 이벤트 시점에 각 분대의 검색이 발생하며 프레임별 검색량을 분산하는 스케줄러는 아니다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
 
@@ -108,7 +108,17 @@ classDiagram
 
 재검색은 **타깃 교체**다. `AssignTarget()`은 `SetDestination()`으로 이전 경로를 비우고 새 타깃의 첫 경로를 즉시 계산한다. 같은 플레이어를 추적하는 동안에는 `MovingEnemyController`가 이동 중에만 경로를 갱신한다. 센서와 현재 타깃 콜라이더가 접촉하면 짧은 주기, 밖이면 긴 주기를 적용한다. 인스펙터 초기값은 범위 안 0.25초, 밖 1초, 타깃 최소 이동 거리 0.2이며 밸런스 확정값이 아니다. 경로가 없으면 이동량과 관계없이 재시도한다. 같은 타깃의 갱신 실패는 기존 경로를 유지한다. 실제 게임 실행에서는 기존 FieldSimulationTime을 사용한다.
 
-첫 반복 갱신 시점은 몬스터 InstanceID로 엇갈리게 배치하며 새 타깃의 첫 계산을 지연하지 않는다. 이는 프레임당 계산 수 제한이나 결정적인 재실행을 보장하는 스케줄러가 아니다. 타깃별 공격인원 포화도와 별도 경로 계산 스케줄러는 후속 작업이다.
+첫 반복 갱신 시점은 몬스터 InstanceID로 엇갈리게 배치하며 새 타깃의 첫 계산을 지연하지 않는다. 이는 프레임당 계산 수 제한이나 결정적인 재실행을 보장하는 스케줄러가 아니다. 타깃별 공격 인원 제한은 아래 배정 API와 분대 연결을 사용하며 별도 경로 계산 스케줄러는 후속 작업이다.
+
+`TargetableComponent`의 `Max Attackers`는 타깃별 최대 배정 인원 설정이며 `ITargetable.MaxAttackers`로 조회한다. 초기값 10은 임시 값이고 플레이어·터렛·CU마다 조절할 수 있다. 현재 배정 인원은 실행 중 값인 `AssignedAttackerCount`로 조회한다. `TryAssignAttackers(count)`는 타깃이 유효하고 요청 인원이 양수이며 남은 인원 안에 들어갈 때만 배정 수를 늘린다. `UnassignAttackers(count)`는 양수만 해제하고 결과를 0 이상으로 제한한다. 배정 인원은 주기적으로 집계하거나 비활성화 시 자동 초기화하지 않는다. 호출자는 자신이 배정한 인원을 관리하고 반환해야 한다.
+
+`EnemyDefinition.IsIncludedInAttackerLimit`은 몬스터별 공격 인원 집계 설정이며 기본값은 true다. `BomberSlime` Definition만 false로 설정한다. 일반 스폰·소환 생성·저장 복원은 Definition의 값을 `EnemyController.JoinSquad()`에 전달한다. 설정은 최초 등록 시 적용하고 소속 중에는 바꾸지 않는다. 같은 분대의 중복 등록은 그대로 유지하고 다른 분대로의 자동 이동은 거부한다. `LeaveSquad()`는 사망·Despawn 시 소속과 배정을 정리하는 데 사용한다. 인자를 생략하는 테스트용 등록은 기본값 true를 사용한다.
+
+`EnemySquad.SetTarget()`은 검색 시점에 활성 `TargetableComponent` 후보를 조회하고 타깃 유형과 `GetAttackerCount()`로 계산한 집계 대상 수를 `TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector.TryFindNearest()`에 전달한다. 제외 대상도 같은 분대와 타깃을 공유하지만 배정 수에는 반영하지 않는다. 봄버만 있는 분대는 집계 인원이 0이므로 유효한 포화 타깃도 선택할 수 있다. Encounter의 편성 판단용 타깃 조회도 기본 인원 값 0으로 인원 제한을 적용하지 않는다. 호출부에서는 Legacy의 동명 클래스와 구분하도록 `RuntimeTargetSelector` 별칭을 사용한다.
+
+분대는 별도 누적 카운터 없이 검색·타깃 변경 시에만 집계 대상 구성원을 계산한다. `TryChangeTarget()`은 새 타깃에 집계 대상 수만큼 배정할 수 있을 때 이전 배정과 구독을 반환하고 전체 구성원의 목표를 바꾼다. 타깃 불가 이벤트에서는 이전 목표와 배정을 먼저 해제한 뒤 재검색하며 후보가 없으면 목표 없이 재시도한다. 감지한 플레이어로 우선 전환할 때는 집계 대상 수를 수용할 수 없으면 기존 유효 타깃을 유지한다. 합류·제거 시에는 해당 몬스터가 집계 대상인 경우에만 한 명을 추가·반환한다. 합류 인원을 수용하지 못하면 목록 추가 전에 기존 집계 대상의 배정을 반환하고 전체 분대가 재검색한다. 저장 복원은 같은 타깃에 중복 배정하지 않고 다른 타깃으로 교체할 때 이전 배정부터 반환한다. 집계 설정은 Definition에서 다시 읽으며 저장 형식은 변경하지 않는다.
+
+배정 API는 Test Runner의 EditMode에서 `EnemyTargetAttackerLimitTests`를 선택해 실행한다. 별도 Preview Scene에서 최대 인원을 10으로 설정하고 배정 한계·해제 후 재배정·0 및 음수 인원·과도한 인원·체력 0 및 비활성 상태·체력 회복 후 배정을 검사한다. 분대의 실제 배정이나 네트워크 동작을 검증하는 테스트는 아니다.
 
 `EnemyPlayerSensor`는 개체별 CircleCollider2D Trigger의 진입 이벤트로 플레이어를 전달한다. 이미 겹친 상태의 분대 합류나 기존 타깃 무효화는 Stay 이벤트로 보완한다. 센서는 `EnemyNetworkController.CanExecuteBehavior`로 서버/명시적 로컬 테스트 및 시뮬레이션 진행 권한을 검사한 뒤 `EnemyController.NotifyPlayerDetected()`에 전달한다. 공통 컨트롤러는 네트워크 컴포넌트를 직접 참조하지 않고 소속 분대에 전달한다. `EnemySquad.TryPrioritizePlayer()`는 검색 주기를 기다리지 않고 플레이어로 전환하며, 기존 플레이어가 유효하면 유지한다. 범위 이탈만으로 타깃을 해제하지 않는다.
 
