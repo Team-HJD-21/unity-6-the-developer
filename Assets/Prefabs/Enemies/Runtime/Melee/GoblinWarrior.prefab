@@ -34,7 +34,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.y
-      value: -0.02084372
+      value: 0.13
       objectReference: {fileID: 0}
     - target: {fileID: 2670870722600736654, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Controller
@@ -106,7 +106,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.y
-      value: -0.12802868
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_SpriteTilingProperty.pivot.x
