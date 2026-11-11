@@ -12,6 +12,7 @@
 
 ## Core와 난수
 
+- [Core API 구현 현황과 남은 연결](01_core/core-implementation-status.md)
 - [core-api-usage](01_core/core-api-usage.md)
 - [core-feature-integration-guide](01_core/core-feature-integration-guide.md)
 - [core-lifecycle-and-api-guide](01_core/core-lifecycle-and-api-guide.md)
