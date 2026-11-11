@@ -23,6 +23,8 @@
 
 날씨만 필요한 외부 기능은 `IMatchEnvironmentSource.TryGetCurrentWeather(matchId, out weatherId)`를 사용한다. 현재 source가 없거나 snapshot에 날씨가 없거나 다른 Match의 값이면 `false`와 빈 ID를 반환한다. 결과는 Core의 확정 `WeatherId`이며 `WeatherManager` 인스턴스나 셰이더를 조회하지 않는다. EnemySpawn은 계획할 요청의 환경 snapshot을 한 번 읽고, 날씨 변경에 즉시 반응해야 하는 Turret은 `Changed`를 구독한 뒤 값을 다시 읽으며 수명 종료 시 구독을 해제한다. `Changed`는 시간대만 바뀌어도 발생할 수 있으므로 소비자가 이전 날씨와 비교한다. Host 게임 규칙은 권위 source를, Client 화면 표현은 복제 source를 사용한다.
 
+낮밤 상태만 필요한 기능은 `IMatchEnvironmentSource.TryGetCurrentDayPhase(matchId, out phase)`를 사용한다. source·snapshot·시간대가 없거나 다른 Match의 값 또는 알 수 없는 시간대 ID이면 `false`를 반환한다. 성공하면 확정된 `day`/`night` ID를 `DayNightPhase`로 변환한다. 변경에 반응하려면 source의 `Changed`를 구독하고 다시 조회한 뒤 이전 Phase와 비교하며, 수명 종료 시 구독을 해제한다.
+
 `IEncounterEnvironmentConsumer.BindEnvironment`를 먼저 연결하고 공통 `EncounterRequestService.Submit`을 사용한다. 서비스는 권위 측의 현재 Battlefield와 환경을 한 번 조회하고 같은 Match인지 확인한 뒤 `IEnvironmentAwareEncounterExecutor`로 전달한다. 재전송은 기존 결과와 사용 환경 revision을 재사용한다.
 
 Enemy의 `SpawnCompositionPlanner`가 선택적인 `EncounterEnvironmentProfile`을 소비한다. 규칙은 weather/time 필터, preset override와 0~1 budget scale로 구성한다. 가장 구체적인 일치 규칙을 선택하고 같은 구체성이면 제작 순서가 우선이다. 요청 예산을 초과하지 않으며 기존 공간 배분·완전 preset 단위 정책을 유지한다. Profile 미지정은 중립이다. 최종 규칙·수치는 Enemy/밸런스 담당이 제작한다.

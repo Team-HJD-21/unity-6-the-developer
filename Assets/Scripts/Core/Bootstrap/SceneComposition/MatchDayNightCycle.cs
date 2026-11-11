@@ -17,6 +17,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private double daySeconds = 300;
         [SerializeField, Min(.01f)]
         private double nightSeconds = 300;
+        // Apply에서 참조용
+        public double DaySeconds => daySeconds;
+        public double NightSeconds => nightSeconds;
         private DayNightCycle _cycle;
         private IMatchClock _clock;
         private IMatchScheduler _scheduler;
@@ -43,6 +46,25 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             ApplyCurrentTime(false);
             ScheduleNext();
             Changed?.Invoke();
+            return true;
+        }
+        // Host 디버그 HUD가 사용 -> 낮밤 전환
+        public bool TryAdvancePhase()
+        {
+            if (!MayAdvance) return false;
+            double now = _clock.ElapsedSeconds;
+            DayNightPhase next = Phase == DayNightPhase.Day ? DayNightPhase.Night : DayNightPhase.Day;
+            _cycle = new DayNightCycle(_cycle.DaySeconds, _cycle.NightSeconds, now, next);
+            ApplyCurrentTime(false);
+            ScheduleNext();
+            try
+            {
+                PhaseAdvanced?.Invoke();
+            }
+            finally
+            {
+                Changed?.Invoke();
+            }
             return true;
         }
 

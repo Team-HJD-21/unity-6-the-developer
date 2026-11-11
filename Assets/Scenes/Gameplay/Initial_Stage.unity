@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 1452530}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -18.97000, y: -83.36000, z: 0}
+  m_LocalPosition: {x: -18.97, y: -83.36, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -492599,6 +492599,7 @@ GameObject:
   - component: {fileID: 267169724}
   - component: {fileID: 267169725}
   - component: {fileID: 267169726}
+  - component: {fileID: 267169727}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -492723,6 +492724,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f701d349a70487994499587c17c3c6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeatherEffectBinding
+--- !u!114 &267169727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 267169717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6df207e26e848978941b13dd1ddde61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Map.DayNightShaderApply
+  _weatherManager: {fileID: 1250254886}
+  _nightMaterial: {fileID: 2100000, guid: b3a6fa38abc7d40a489c8623c141a440, type: 2}
 --- !u!1 &297159760
 GameObject:
   m_ObjectHideFlags: 0
@@ -871424,7 +871439,7 @@ Transform:
   m_GameObject: {fileID: 765547576}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15.97000, y: -83.36000, z: 0}
+  m_LocalPosition: {x: -15.97, y: -83.36, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -937653,8 +937668,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 877435137}
   - component: {fileID: 877435132}
+  - component: {fileID: 877435137}
   - component: {fileID: 877435133}
   - component: {fileID: 877435134}
   - component: {fileID: 877435135}
@@ -937749,6 +937764,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
   - {fileID: 11400000, guid: a710a35a5d3c49b794d2f387d53dce10, type: 2}
   - {fileID: 11400000, guid: b28a795f5a364f249b632692a760317c, type: 2}
+--- !u!114 &877435137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
+  spawnExecutor: {fileID: 1836352305}
+  environmentProfile: {fileID: 0}
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -938332,7 +938361,6 @@ GameObject:
   - component: {fileID: 1250254887}
   - component: {fileID: 1250254886}
   - component: {fileID: 1250254888}
-  - component: {fileID: 1250254889}
   - component: {fileID: 2035505101}
   m_Layer: 0
   m_Name: WeatherManager
@@ -938355,12 +938383,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeatherManager
   currentWeather: 0
   weatherQueueSize: 5
-  sunnyWeight: 3
-  tmpweatherImage: {fileID: 0}
-  _sunnyColor: {r: 0.9245283, g: 0.40557134, b: 0.40557134, a: 0.5176471}
-  _rainColor: {r: 0.46742615, g: 0.6222011, b: 0.9811321, a: 0.8156863}
-  _thunderColor: {r: 0.8938753, g: 0.9622642, b: 0.45843717, a: 0.7529412}
-  _heatWaveColor: {r: 1, g: 0.28, b: 0.38, a: 0.75}
+  _dayWeatherWeights:
+  - weather: 0
+    weight: 5
+  - weather: 1
+    weight: 2
+  - weather: 2
+    weight: 1
+  - weather: 3
+    weight: 2
+  _nightWeatherWeights:
+  - weather: 0
+    weight: 6
+  - weather: 1
+    weight: 2
+  - weather: 2
+    weight: 2
+  - weather: 3
+    weight: 0
   _weatherShaderApply: {fileID: 267169725}
 --- !u!4 &1250254887
 Transform:
@@ -938390,18 +938430,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountTick
   weatherChangeTime: 5
---- !u!114 &1250254889
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1250254885}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d681a957a844bdea893b762e4b011cf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Map.WeatherChangeEvent
 --- !u!1001 &1264729469
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -939788,6 +939816,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afee2fd02998d994f8f62eda64603f11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
+  environmentProfile: {fileID: 0}
   autoStartHost: 1
   initialSquadOrder: Normal
   initialEnemyLimit: 10
@@ -940097,6 +940126,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2697276060320991427, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
   m_PrefabInstance: {fileID: 1836352303}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1836352305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1002043012098565792, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
+  m_PrefabInstance: {fileID: 1836352303}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
 --- !u!1001 &1885139232
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -962148,43 +962188,43 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 106.95853
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 53.479263
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -55
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 257.94058
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 235.92882
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -84
       objectReference: {fileID: 0}
     - target: {fileID: 2128984783, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
@@ -962316,6 +962356,20 @@ MonoBehaviour:
   areaId: Debug
   spawnRadius: 1
   canSpawnEnemies: 1
+--- !u!114 &2035505101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1250254885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5cdee90df4d4b70afded73b73b6f7c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.UI.WeatherDebugHud
+  weatherSource: {fileID: 1250254886}
+  weatherButton: {fileID: 2061509692}
 --- !u!1 &2056049648
 GameObject:
   m_ObjectHideFlags: 0
@@ -962669,30 +962723,3 @@ SceneRoots:
   - {fileID: 2000502100}
   - {fileID: 765547578}
   - {fileID: 1538709566}
-
---- !u!114 &1836352305 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1002043012098565792, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
-  m_PrefabInstance: {fileID: 1836352303}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f97bb141d9bc1d64fb0d90424a15cbdc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
-
---- !u!114 &877435137
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 877435131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
-  spawnExecutor: {fileID: 1836352305}
-  environmentProfile: {fileID: 0}

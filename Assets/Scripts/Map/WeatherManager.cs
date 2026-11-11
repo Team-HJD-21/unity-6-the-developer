@@ -5,7 +5,6 @@ using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
-using UnityEngine.UI;
 
 /*
  * WeatherManager는 날씨를 정의하고 변경하는 역할만 가지는게 옳다고 생각합니다.
@@ -13,7 +12,6 @@ using UnityEngine.UI;
  */
 namespace Map
 {
-    [RequireComponent(typeof(WeatherChangeEvent))]
     public partial class WeatherManager : MonoBehaviour, IRandomConsumer
     {
         [Serializable]
@@ -60,37 +58,14 @@ namespace Map
             new WeatherWeight { weather = Weather.HEATWAVE, weight = 0 }
         };
         
-        [Header("===Weather temporary Canvas ===")]
-        [SerializeField] private Image tmpweatherImage;
-        [SerializeField] private Color _sunnyColor;
-        [SerializeField] private Color _rainColor;
-        [SerializeField] private Color _thunderColor;
-        [SerializeField] private Color _heatWaveColor = new Color(1f, 0.28f, 0.38f, 0.75f);
-    
-        // 날씨 전환 시 일어날 이벤트 
-        public static Action<Weather,Queue<Weather>> OnWeatherChange;
-        
-        private WeatherChangeEvent _weatherChangeEvent;
-
         [SerializeField] private WeatherShaderApply _weatherShaderApply;
         
         // Core가 주입하는 Match 전용 날씨 난수.
         private IRandomSource _random;
         private bool CanDrawWeather => _random != null ? _random.IsAvailable : !_coreRequiresMatch;
 
-        void OnEnable()
-        {
-            OnWeatherChange += WeatherCanvasColorChange;
-        }
-
-        void OnDisable()
-        {
-            OnWeatherChange -= WeatherCanvasColorChange;
-        }
-
         void Awake()
         {
-            _weatherChangeEvent = GetComponent<WeatherChangeEvent>();
             if (_weatherShaderApply == null || !_weatherShaderApply.CompareTag("MainCamera"))
             {
                 Camera mainCamera = Camera.main;
@@ -103,7 +78,6 @@ namespace Map
         {
             if (!MayChangeCoreWeather) return;
             FillWeather();
-            WeatherCanvasColorChange(currentWeather, weatherQueue);
             ApplyWeatherShader();
         }
 
@@ -116,7 +90,7 @@ namespace Map
             {
                 weatherQueue = new Queue<Weather>();
             }
-
+            // 낮밤 별도 날씨
             DayNightPhase phase = GetDayNightPhase();
             if (_queuedPhase != phase)
             {
@@ -143,7 +117,6 @@ namespace Map
             FillWeather();
             ApplyWeatherShader();
             PublishCoreWeather();
-            OnWeatherChange?.Invoke(currentWeather, weatherQueue);
         }
         
         private void ApplyWeatherShader()
@@ -187,33 +160,6 @@ namespace Map
             }
 
             return Weather.SUNNY;
-        }
-        
-        // 날씨 변경 시 호출될 메소드 
-        void WeatherCanvasColorChange(Weather curWeather, Queue<Weather> q)
-        {
-            if (tmpweatherImage == null)
-            {
-                return;
-            }
-            switch (curWeather)
-            {
-                case Weather.SUNNY:
-                    tmpweatherImage.color = _sunnyColor;
-                    break;
-                case Weather.RAIN:
-                    tmpweatherImage.color = _rainColor;
-                    break;
-                case Weather.THUNDERSTORM:
-                    tmpweatherImage.color = _thunderColor;
-                    break;
-                case Weather.HEATWAVE:
-                    tmpweatherImage.color = _heatWaveColor;
-                    break;
-                default:
-                    tmpweatherImage.color = _sunnyColor;
-                    break;
-            }
         }
         public void CallWeatherChange()
         {
