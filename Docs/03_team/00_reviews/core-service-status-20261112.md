@@ -1,6 +1,6 @@
 # Core 서비스 구현 현황 문서 검토
 
-작성일: 2026-11-12. PR: 생성 후 번호 기록. 코드 대조 기준: main `2cbc4542b`.
+작성일: 2026-11-12. PR: [#702](https://github.com/Team-HJD-21/unity-6-the-developer/pull/702), `feature/core → main`. 코드 대조 기준: main `2cbc4542b`.
 
 변경은 문서뿐이다. [Core 구현 현황](../../02_architecture/01_core/core-implementation-status.md)에 실제 사용할 수 있는 서비스와 남은 소비자 연결을 적고 문서 목차·실행 계획에서 연결한다.
 
