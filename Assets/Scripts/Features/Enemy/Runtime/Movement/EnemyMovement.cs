@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 계산한 경로를 따라 Rigidbody2D를 이동시키고 정지 상태를 관리한다.
+/// 계산한 경로를 따라 Rigidbody2D에 이동 힘을 적용한다.
 /// </summary>
 public partial class EnemyMovement : MonoBehaviour
 {
@@ -11,8 +11,8 @@ public partial class EnemyMovement : MonoBehaviour
 
     [Header("이동 설정")]
     [SerializeField] private Rigidbody2D rigidbody2D;
-    [SerializeField] private float moveSpeed = 1.5f;
-    private bool _isStopped = true;
+    [SerializeField, Min(0f)] private float moveSpeed = 1.5f;
+    [SerializeField, Min(0f)] private float moveAcceleration = 10f;
     
     public float MoveSpeed => moveSpeed;
 
@@ -64,25 +64,19 @@ public partial class EnemyMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// 전달받은 방향으로 이동 속도를 적용한다. 경로 계산은 별도로 수행한다.
+    /// 이동 방향의 속도가 목표보다 느릴 때 이동 힘을 더한다.
     /// </summary>
     public void Move(Vector2 moveDirection)
     {
-        
-        // 위치를 직접 바꾸지 않고 Rigidbody2D의 이동 속도를 지정한다.
-        _isStopped = false;
-        rigidbody2D.linearVelocity = moveDirection * moveSpeed;
+        Vector2 direction = moveDirection.normalized;
+        float forwardSpeed = Vector2.Dot(rigidbody2D.linearVelocity, direction);
+        float acceleration = Mathf.Min(moveAcceleration,
+            Mathf.Max(0f, moveSpeed - forwardSpeed) / Time.fixedDeltaTime);
+
+        // 외부에서 밀린 속도는 잘라내지 않고, 스스로 더하는 이동 힘만 제한한다.
+        rigidbody2D.AddForce(direction * acceleration * rigidbody2D.mass, ForceMode2D.Force);
     }
 
-    /// <summary>
-    /// 이동 속도를 즉시 0으로 만들고 정지 상태를 기록한다.
-    /// </summary>
-    public void Stop()
-    {
-        rigidbody2D.linearVelocity = Vector2.zero;
-        _isStopped = true;
-    }
-    
     /// <summary>
     /// 저장된 경로의 경유점과 연결선을 현재 표현 깊이에서 표시한다.
     /// </summary>
