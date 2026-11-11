@@ -11,6 +11,8 @@ public partial class EnemyNetworkController
 {
     private readonly Unity.Netcode.NetworkVariable<FixedString512Bytes> _simulationMatch = new();
     private readonly Unity.Netcode.NetworkVariable<ulong> _simulationOwner = new(ulong.MaxValue);
+    private FixedString512Bytes _pendingSimulationMatch;
+    private ulong _pendingSimulationOwner = ulong.MaxValue;
     internal static event Action<EnemyNetworkController> SpawnedInMatch;
     internal static event Action<EnemyNetworkController> RemovedFromMatch;
     internal string SimulationMatchId => _simulationMatch.Value.ToString();
@@ -23,15 +25,30 @@ public partial class EnemyNetworkController
         RemovedFromMatch = null;
     }
 
-    /// <summary>서버 Executor가 NetworkObject.Spawn 이전에 설정합니다. Client가 Match를 선택할 수 없습니다.</summary>
+    /// <summary>
+    /// 서버 Executor가 Spawn 전에 귀속 자료를 준비합니다. NGO 변수는 초기화 후 반영하며 Client는 수정할 수 없습니다.
+    /// </summary>
     internal void SetSimulationMatch(MatchId match, ulong executorId)
     {
         if (IsSpawned) throw new InvalidOperationException("Assign Match before network spawn.");
-        _simulationMatch.Value = new FixedString512Bytes(match.Value ?? string.Empty);
-        _simulationOwner.Value = executorId;
+        _pendingSimulationMatch = new FixedString512Bytes(match.Value ?? string.Empty);
+        _pendingSimulationOwner = executorId;
     }
 
-    private void NotifySpawned() => Notify(SpawnedInMatch);
+    private void NotifySpawned()
+    {
+        // NGO는 변수 초기화 후 OnNetworkSpawn을 호출하고, 이후 최초 Spawn 패킷을 만듭니다.
+        // 귀속 값을 먼저 확정해야 Host 구독자와 Client의 최초 통지가 같은 값을 읽습니다.
+        if (IsServer)
+        {
+            _simulationMatch.Value = _pendingSimulationMatch;
+            _simulationOwner.Value = _pendingSimulationOwner;
+            _pendingSimulationMatch = default;
+            _pendingSimulationOwner = ulong.MaxValue;
+        }
+
+        Notify(SpawnedInMatch);
+    }
     private void NotifyDespawned() => Notify(RemovedFromMatch);
 
     private void Notify(Action<EnemyNetworkController> observers)
