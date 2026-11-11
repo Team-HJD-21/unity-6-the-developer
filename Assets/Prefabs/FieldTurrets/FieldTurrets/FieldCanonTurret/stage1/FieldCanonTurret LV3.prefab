@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 4884463332126975843}
   - component: {fileID: 4623217508369570199}
   - component: {fileID: 7475151955675498957}
+  - component: {fileID: 3539040927660320105}
   m_Layer: 0
   m_Name: FieldCanonTurret LV3
   m_TagString: Tower
@@ -52,6 +53,19 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!210 &3539040927660320105
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523344167771255339}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!4 &3034277396969673731
 Transform:
   m_ObjectHideFlags: 0
@@ -673,7 +687,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 909743035, guid: 62a887ecbd33b46639b3b027aa213415, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -849,7 +863,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 89ffcac9029ab334f8c3d8281f92b009, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

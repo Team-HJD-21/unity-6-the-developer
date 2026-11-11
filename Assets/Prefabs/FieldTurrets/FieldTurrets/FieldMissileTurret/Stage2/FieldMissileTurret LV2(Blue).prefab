@@ -357,7 +357,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: -233492785, guid: 9dbffe77eba1b4b5eb1b5b75f893b342, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -465,6 +465,7 @@ GameObject:
   - component: {fileID: 3469234538060691382}
   - component: {fileID: 5148363670888551460}
   - component: {fileID: 9197290522854575835}
+  - component: {fileID: 9000000000000000210}
   m_Layer: 0
   m_Name: FieldMissileTurret LV2(Blue)
   m_TagString: Tower
@@ -472,6 +473,19 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!210 &9000000000000000210
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7668437437624091310}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!4 &5642652467903808473
 Transform:
   m_ObjectHideFlags: 0
@@ -728,7 +742,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 89ffcac9029ab334f8c3d8281f92b009, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
