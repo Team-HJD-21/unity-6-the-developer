@@ -1,6 +1,7 @@
 # Client 낮밤 잔여시간 연결
 
-PR: 생성 후 실제 번호를 기록합니다.
+PR: [#693](https://github.com/Team-HJD-21/unity-6-the-developer/pull/693)
+검증 코드 기준: `9b5fcce540b9907825a7e6da2a13fcc55cbebd17`. 아래 PR 번호 보완은 Runtime 소스를 바꾸지 않습니다.
 작성: 2026-11-11 · Core / 양현석 · 기준 main `f6a8c22c0ee840500ebabd6891dd3ccec3c9c790`
 
 ## 왜 바꿨나

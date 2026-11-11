@@ -149,5 +149,7 @@
     "Two legacy ComputeBuffer shutdown warnings; not fixed in this PR.",
     "Native night transition uses authority debug API; natural boundary checked by real Core source test.",
     "No Weather/Player/Enemy/Scene/Prefab edits."
-  ]
+  ],
+  "pr": 693,
+  "validated_code_commit": "9b5fcce540b9907825a7e6da2a13fcc55cbebd17"
 }
