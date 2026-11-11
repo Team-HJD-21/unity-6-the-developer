@@ -32,6 +32,8 @@ public sealed partial class PlayerBullet : MonoBehaviour
     private double _expiresAt;
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     internal WeaponType SourceWeapon { get; set; } = WeaponType.DefaultGun;
+    public float FlightSpeed => _speed;
+    public float FlightLifetime => _lifetime;
     private PlayerProjectileView _view;
     private readonly List<Collider2D> _hitboxes = new();
     private readonly List<RaycastHit2D> _flightHits = new(8);

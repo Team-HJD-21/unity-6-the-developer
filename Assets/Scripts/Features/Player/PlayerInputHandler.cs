@@ -30,6 +30,8 @@ public class PlayerInputHandler : MonoBehaviour
 
     public bool WasRecoverPressed { get; private set; }
     public bool WasDashPressed { get; private set; }
+    public bool IsRepairPressed { get; private set; }
+    public bool WasReloadPressed { get; private set; }
 
     // [무기 교체 (Tab)]
     public bool WasWeaponSwitchPressed { get; private set; }
@@ -82,6 +84,8 @@ public class PlayerInputHandler : MonoBehaviour
         WasSkillQPressed = GameInput.WasPressedThisFrame(GameKey.Q);
         WasRecoverPressed = GameInput.WasPressedThisFrame(GameKey.F);
         WasDashPressed = GameInput.WasPressedThisFrame(GameKey.Space);
+        IsRepairPressed = GameInput.IsPressed(GameKey.R);
+        WasReloadPressed = GameInput.WasPressedThisFrame(GameKey.R);
 
         // 6. 무기 교체 입력 (Tab 키 감지)
         WasWeaponSwitchPressed = GameInput.WasPressedThisFrame(GameKey.Tab);
@@ -117,5 +121,10 @@ public class PlayerInputHandler : MonoBehaviour
         IsAttackPressed = false;
     }
 
-    private void OnDisable() => CancelAttackGesture();
+    private void OnDisable()
+    {
+        CancelAttackGesture();
+        IsRepairPressed = false;
+        WasReloadPressed = false;
+    }
 }

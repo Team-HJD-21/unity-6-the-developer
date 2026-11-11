@@ -16,6 +16,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     private PlayerControlState _controls;
     private PlayerWeaponSelection _selection;
     private PlayerSkillController _skills;
+    private PlayerTurretRepair _repair;
     private PlayerMotion _motion;
     private PlayerAimFacing _facing;
     private float _elapsed;
@@ -29,6 +30,8 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     private float _impactPauseRemaining;
     private float _speedBeforePause;
     private bool _usesToolPoses;
+    private bool _heldRepair;
+    public bool IsHoldingRepair => _heldRepair;
 
     public bool IsPlayingToolAction => _ownsDisplay &&
         (_motion == PlayerMotion.Attack || _motion == PlayerMotion.Repair);
@@ -40,7 +43,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     public bool IsPlayingDashAnimation => _ownsDisplay &&
         (_motion == PlayerMotion.Dash || _motion == PlayerMotion.ToolDash);
     private bool IsAction => IsPlayingToolAction || _motion == PlayerMotion.Fire;
-    private bool HasSpanner => _selection != null && _selection.CurrentWeapon == WeaponType.Spanner;
+    private bool HasSpanner => _heldRepair || (_selection != null && _selection.CurrentWeapon == WeaponType.Spanner);
     private bool HasMovementInput => _input.MoveInput.sqrMagnitude > .001f &&
         (_controls == null || _controls.CanAct);
     private AnimationClip CurrentClip => _motions.GetClip(_motion, _hoveringAction, _lateralLean).Animation(_facing);
@@ -56,6 +59,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         _controls = GetComponent<PlayerControlState>();
         _selection = GetComponent<PlayerWeaponSelection>();
         _skills = GetComponent<PlayerSkillController>();
+        _repair = GetComponent<PlayerTurretRepair>();
         _rig = GetComponentInChildren<PlayerWeaponRig>(true);
     }
 
@@ -80,7 +84,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
 
     private void OnWeaponChanged(WeaponType weapon)
     {
-        bool tool = weapon == WeaponType.Spanner;
+        bool tool = _heldRepair || weapon == WeaponType.Spanner;
         if (!_ownsDisplay || !isActiveAndEnabled || tool == _usesToolPoses) return;
         _usesToolPoses = tool;
         EndImpactPause();
@@ -97,6 +101,21 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         if (!_ownsDisplay || !isActiveAndEnabled) return false;
         StartMotion(repairing ? PlayerMotion.Repair : PlayerMotion.Attack);
         return true;
+    }
+
+    /// <summary>무기 선택·실제 공격 판정 없이 일반 스패너 공격 자세를 반복합니다.</summary>
+    public void SetHeldRepair(bool repairing)
+    {
+        if (_heldRepair == repairing) return;
+        _heldRepair = repairing;
+        if (!_ownsDisplay || !isActiveAndEnabled) return;
+        _usesToolPoses = HasSpanner;
+        EndImpactPause();
+        StartMotion(repairing ? PlayerMotion.Attack : HasSpanner
+            ? (HasMovementInput ? PlayerMotion.ToolMove : PlayerMotion.ToolIdle)
+            : (HasMovementInput ? PlayerMotion.Move : PlayerMotion.Idle));
+        UpdateAnimatorState();
+        _animator.Update(0f);
     }
 
     public void PlayRangedShot()
@@ -170,6 +189,13 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
             EndImpactPause();
         }
         AnimationClip clip = CurrentClip;
+        if (_heldRepair && canAct)
+        {
+            if (_motion != PlayerMotion.Attack || _elapsed >= clip.length) StartMotion(PlayerMotion.Attack);
+            UpdateAnimatorState();
+            _elapsed += Time.deltaTime;
+            return;
+        }
         bool weaponChangedDuringDash = IsPlayingDashAnimation &&
             ((_motion == PlayerMotion.ToolDash) != HasSpanner);
         if ((!IsAction && !IsPlayingDashAnimation) || _elapsed >= clip.length ||
@@ -187,10 +213,14 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
 
     private void UpdateAnimatorState()
     {
-        PlayerAimFacing facing = _rig != null ? _rig.Facing : PlayerAimUtility.GetFacing(_input.AimDirection);
         bool supportsEightDirections = HasSpanner ? SupportsEightWayTools : SupportsEightWayRanged;
+        Vector2 lookDirection = _input.AimDirection;
+        bool repairFacing = _heldRepair && _repair != null && _repair.TryGetFacingDirection(out lookDirection);
+        PlayerAimFacing facing = repairFacing
+            ? (supportsEightDirections ? PlayerAimUtility.GetEightWayFacing(lookDirection) : PlayerAimUtility.GetFacing(lookDirection))
+            : _rig != null ? _rig.Facing : PlayerAimUtility.GetFacing(_input.AimDirection);
         if (PlayerAimUtility.IsDiagonal(facing) && !supportsEightDirections)
-            facing = PlayerAimUtility.GetFacing(_input.AimDirection);
+            facing = PlayerAimUtility.GetFacing(repairFacing ? lookDirection : _input.AimDirection);
         bool hoveringAction = IsAction && HasMovementInput;
         PlayerLateralLean lateralLean = GetMovementLean(facing);
         if (!_restart && facing == _facing && hoveringAction == _hoveringAction && lateralLean == _lateralLean) return;

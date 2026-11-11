@@ -36,6 +36,7 @@ public sealed class PlayerWeaponVisual : MonoBehaviour
     {
         get
         {
+            if (_motion != null && _motion.IsHoldingRepair) return _spanner;
             switch (_selection.CurrentWeapon)
             {
                 case WeaponType.CryoBlaster: return _cryoBlaster;

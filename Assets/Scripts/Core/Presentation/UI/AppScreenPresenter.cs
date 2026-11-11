@@ -73,7 +73,7 @@ namespace TeamHJD.Game.Presentation
             {
                 long loading = _loadingId; _loadingId = 0; _screens.Close(loading);
             }
-            if (!_sceneFade.IsVisible && Keyboard.current?.escapeKey.wasPressedThisFrame == true)
+            if (!_sceneFade.IsVisible && UIEscapeInput.WasPressedThisFrame)
             {
                 if (_screens.Top == null) _screens.ShowMenu();
                 else _screens.Back();

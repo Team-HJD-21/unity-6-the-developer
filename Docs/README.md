@@ -105,6 +105,8 @@ Initial 씬의 플레이어 체력·전력 표시와 터렛 선택·레벨 변�
 
 플레이어 무기 전환과 스패너 공격·수리는 [Player Weapon API](02_architecture/06_player/player-weapon-api.md)를 참고한다.
 
+플레이어 기본 스탯 투자·회수, 레벨 달성 보상 수령과 개발용 XP 버튼은 [Player 기본 스탯·레벨 보상 API](02_architecture/06_player/player-base-stats-api.md)를 참고한다. 프로필 저장·원격 Client 요청/결과 복제는 후속 Core 연결 범위다.
+
 LMB 공격과 포탑 선택·설치·UI 클릭의 우선순위는 [Player Primary Input API](02_architecture/06_player/player-primary-input-api.md)를 참고한다.
 
 Space 대시, 미리 배치한 잔상과 하단 쿨타임 표시는 [Player Dash API](02_architecture/06_player/player-dash-api.md)를 참고한다.

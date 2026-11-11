@@ -29,6 +29,16 @@ public static class PlayerSkillDescriptions
         _ => "미선택"
     };
 
+    /// <summary>스킬 트리의 짧은 표시 설명입니다. 실시간 수량·재사용 시간은 기존 선택 UI에서 표시합니다.</summary>
+    public static string Summary(PlayerSkillId skill) => skill switch
+    {
+        PlayerSkillId.Bomb => "설치 후 잠시 뒤 폭발하여\n주변 적에게 범위 피해를 줍니다.",
+        PlayerSkillId.PlayerTurret => "플레이어 주변 8방향에 설치해\n접근하는 적을 자동 공격합니다.",
+        PlayerSkillId.EnergyBarrier => "두 본체를 연결해 장벽을 만듭니다.\n적의 이동을 막고 아군 탄환은 통과합니다.",
+        PlayerSkillId.LureBeacon => "주변 적을 끌어들이는\n유도 비콘을 설치합니다.",
+        _ => ""
+    };
+
     public static string Description(PlayerSkillId skill, PlayerSkillController owner)
     {
         return (skill switch

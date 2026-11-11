@@ -16,7 +16,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     private readonly HashSet<PlayerBullet> _projectiles = new();
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ?? throw new InvalidOperationException("Bind the Player actor before weapon checkpoints.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/weapon";
-    int ICheckpointParticipant.Version => 1;
+    int ICheckpointParticipant.Version => 2;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 220;
 
@@ -38,20 +38,23 @@ public partial class PlayerAttack : ICheckpointParticipant
     CheckpointSection ICheckpointParticipant.Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context); SavedWeapon state = CaptureWeapon();
-        return codec.Write(((ICheckpointParticipant)this).Key, 1, CheckpointSectionKind.World, writer =>
+        return codec.Write(((ICheckpointParticipant)this).Key, 2, CheckpointSectionKind.World, writer =>
         {
             codec.WriteText(writer, CheckpointIdentity.PlayerId.Value);
             writer.Write((int)state.Weapon); writer.Write(state.ShotRemaining);
             writer.Write(state.Spanner != null); state.Spanner?.Write(writer);
             writer.Write(state.Projectiles.Length);
             foreach (var bullet in state.Projectiles) bullet.Write(writer);
+            writer.Write(state.Ammo != null); state.Ammo?.Write(writer);
         });
     }
 
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context.Current);
-        SavedWeapon target = codec.Read(section, 1, reader =>
+        if (section.Version != 1 && section.Version != 2)
+            throw new NotSupportedException("Unsupported Player weapon checkpoint version: " + section.Version);
+        SavedWeapon target = codec.Read(section, section.Version, reader =>
         {
             if (codec.ReadText(reader) != CheckpointIdentity.PlayerId.Value) throw new InvalidDataException("The weapon belongs to another logical Player.");
             var weapon = (WeaponType)reader.ReadInt32(); double remaining = reader.ReadDouble();
@@ -59,12 +62,19 @@ public partial class PlayerAttack : ICheckpointParticipant
             int count = codec.ReadCount(reader, MaximumSavedProjectiles);
             var projectiles = new PlayerBullet.CheckpointState[count];
             for (int i = 0; i < count; i++) projectiles[i] = PlayerBullet.CheckpointState.Read(reader);
+            var ammo = section.Version >= 2 && reader.ReadBoolean()
+                ? PlayerWeaponAmmoState.CheckpointState.Read(reader) : null;
             if (!_selection.IsWeaponAvailable(weapon) || !Enum.IsDefined(typeof(WeaponType), weapon) || double.IsNaN(remaining) || double.IsInfinity(remaining) || remaining < 0 ||
                 (spanner != null) != (_selection.Spanner != null) || (spanner?.Pending == true && weapon != WeaponType.Spanner) ||
                 (weapon == WeaponType.Spanner && spanner == null)) throw new InvalidDataException("The saved weapon state does not match this Player configuration.");
             if (projectiles.Any(saved => !HasCheckpointPrefab(saved.SourceWeapon)))
                 throw new InvalidDataException("The saved Player projectiles require the configured bullet prefab.");
-            return new SavedWeapon(weapon, remaining, spanner, projectiles);
+            if (ammo != null)
+            {
+                if (_ammo == null) throw new InvalidDataException("Saved magazines require PlayerWeaponAmmo.");
+                _ammo.ValidateCheckpoint(ammo, weapon);
+            }
+            return new SavedWeapon(weapon, remaining, spanner, projectiles, ammo);
         });
         SavedWeapon backup = CaptureWeapon();
         return new CheckpointRestoreStep(() => ApplyWeapon(target), () => ApplyWeapon(backup));
@@ -89,13 +99,15 @@ public partial class PlayerAttack : ICheckpointParticipant
         }
         if (_projectiles.Count > MaximumSavedProjectiles) throw new InvalidOperationException("The owned projectile snapshot exceeds its storage limit.");
         return new SavedWeapon(_selection.CurrentWeapon, Math.Max(0, _nextShotTime - GameSeconds), _selection.Spanner != null ? _selection.Spanner.CaptureCheckpoint() : null,
-            _projectiles.Select(bullet => bullet.CaptureCheckpoint()).ToArray());
+            _projectiles.Select(bullet => bullet.CaptureCheckpoint()).ToArray(), _ammo != null ? _ammo.CaptureCheckpoint() : null);
     }
 
     private void ApplyWeapon(SavedWeapon state)
     {
         RemoveProjectiles();
         _selection.RestoreWeapon(state.Weapon);
+        // 무기 변경 알림의 재장전 취소 뒤에 탄창과 남은 재장전 시간을 적용합니다.
+        if (_ammo != null) _ammo.RestoreCheckpoint(state.Ammo);
         _nextShotTime = GameSeconds + state.ShotRemaining;
         if (_selection.Spanner != null) _selection.Spanner.RestoreCheckpoint(state.Spanner);
         foreach (var saved in state.Projectiles)
@@ -124,7 +136,9 @@ public partial class PlayerAttack : ICheckpointParticipant
         public readonly double ShotRemaining;
         public readonly PlayerSpannerWeapon.CheckpointState Spanner;
         public readonly PlayerBullet.CheckpointState[] Projectiles;
-        public SavedWeapon(WeaponType weapon, double remaining, PlayerSpannerWeapon.CheckpointState spanner, PlayerBullet.CheckpointState[] projectiles)
-        { Weapon = weapon; ShotRemaining = remaining; Spanner = spanner; Projectiles = projectiles; }
+        public readonly PlayerWeaponAmmoState.CheckpointState Ammo;
+        public SavedWeapon(WeaponType weapon, double remaining, PlayerSpannerWeapon.CheckpointState spanner,
+            PlayerBullet.CheckpointState[] projectiles, PlayerWeaponAmmoState.CheckpointState ammo)
+        { Weapon = weapon; ShotRemaining = remaining; Spanner = spanner; Projectiles = projectiles; Ammo = ammo; }
     }
 }

@@ -30,6 +30,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     private PlayerWeaponRig _rig;
     private PlayerSpriteMotion _motion;
     private PlayerControlState _controls;
+    private PlayerTurretRepair _heldRepair;
     private Vector2 _swingDirection;
     private float _swingRemaining;
     private double _nextAttackTime;
@@ -38,7 +39,10 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     private double _impactAt;
     private bool _pendingStrike;
     private bool _repairIntent;
+    private PlayerBaseStats _baseStats;
     public float AttackInterval => Mathf.Max(.05f, _attackInterval);
+    public int AttackDamage => Mathf.Max(0, _damage);
+    public float AttackRange => Mathf.Max(.1f, _range);
 
     public void Bind(Transform owner, PlayerInputHandler input)
     {
@@ -47,6 +51,8 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         _rig = owner != null ? owner.GetComponentInChildren<PlayerWeaponRig>(true) : null;
         _motion = owner != null ? owner.GetComponent<PlayerSpriteMotion>() : null;
         _controls = owner != null ? owner.GetComponent<PlayerControlState>() : null;
+        _heldRepair = owner != null ? owner.GetComponent<PlayerTurretRepair>() : null;
+        _baseStats = owner != null ? owner.GetComponent<PlayerBaseStats>() : null;
         if (_view == null) _view = GetComponentInChildren<PlayerSpannerView>(true);
         if (_repair == null) _repair = GetComponent<PlayerSpannerRepair>();
     }
@@ -54,12 +60,14 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     public bool TryAttack(Vector2 direction)
     {
         if (!isActiveAndEnabled || _owner == null || (_controls != null && !_controls.CanAct) ||
+            (_heldRepair != null && _heldRepair.IsRepairing) ||
             !PlayerAimUtility.IsValidDirection(direction) || _pendingStrike || GameSeconds < _nextAttackTime)
             return false;
         _nextAttackTime = GameSeconds + AttackInterval;
         _swingRemaining = Mathf.Max(.01f, _swingSeconds);
         _swingDirection = direction.normalized;
-        _repairIntent = _repair != null && _repair.CanRepair(_owner, _swingDirection);
+        // R 상호작용을 가진 플레이어는 LMB 타격으로 체력을 회복하지 않습니다.
+        _repairIntent = _heldRepair == null && _repair != null && _repair.CanRepair(_owner, _swingDirection);
         bool animated = _motion != null && _motion.PlayToolAction(_repairIntent);
         float delay = animated ? _motion.ToolImpactDelay(_repairIntent) : _swingSeconds * .5f;
         _impactAt = GameSeconds + Mathf.Max(0f, delay);
@@ -80,7 +88,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         _pendingStrike = false;
         if (_repairIntent)
         {
-            if (_repair != null && _repair.TryRepair(_owner, _swingDirection, out Vector3 point))
+            if (_heldRepair == null && _repair != null && _repair.TryRepair(_owner, _swingDirection, out Vector3 point))
                 ShowImpact(point, true);
             return;
         }
@@ -101,6 +109,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     {
         _hit.Clear();
         bool feedbackShown = false;
+        int damage = _baseStats != null ? Mathf.RoundToInt(_baseStats.ResolveWeaponDamage(_damage)) : Mathf.Max(0, _damage);
         // Query again at the strike: moving away or stepping behind a wall must avoid the hit.
         foreach (Collider2D collider in Physics2D.OverlapCircleAll(_owner.position, Mathf.Max(.1f, _range)))
         {
@@ -111,7 +120,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
             if (!PlayerSpannerTargeting.CanReach(_owner, enemy.transform, point, _swingDirection, _range, _arc)) continue;
             _hit.Add(enemy);
             int previousHealth = enemy.CurrentHealth;
-            enemy.TakeDamage(Mathf.Max(0, _damage));
+            enemy.TakeDamage(damage);
             // A client-side rejected request must not appear to be a confirmed hit.
             if (!feedbackShown && enemy.CurrentHealth < previousHealth)
             {
@@ -175,11 +184,16 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         }
     }
 
-    private void OnDisable()
+    public void CancelPendingAttack()
     {
         _pendingStrike = false;
         _swingRemaining = 0f;
         if (_motion != null) _motion.CancelToolAction();
+    }
+
+    private void OnDisable()
+    {
+        CancelPendingAttack();
         if (_view != null) _view.SetVisible(true);
     }
 }

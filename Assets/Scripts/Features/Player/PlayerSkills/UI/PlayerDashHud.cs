@@ -41,7 +41,7 @@ public sealed class PlayerDashHud : MonoBehaviour
         if (_displayedTenths != tenths)
         {
             _displayedTenths = tenths;
-            _status.text = tenths > 0 ? $"{tenths / 10f:0.0}s" : "대시";
+            _status.text = tenths > 0 ? $"{tenths / 10f:0.0}s" : "SPACE";
         }
     }
 

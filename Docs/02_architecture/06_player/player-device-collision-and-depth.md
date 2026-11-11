@@ -95,7 +95,8 @@ Transform Z·Rigidbody·충돌 크기는 바꾸지 않는다.
 
 `InitialStagePlayerHUD.IsTurretPanelOpen`은 실제 포탑 View가 열렸는지 제공한다.
 기존 PlayerSkillHUD 프리팹에 배치한 `PlayerCombatHudSlideController`이 같은 씬의 Stage HUD를 찾아
-Weapon Hotbar와 Dash Slot의 RectTransform을 이동시킨다. 실행 중 UI 오브젝트를 생성하지 않는다.
+포탑 View 또는 PlayerStatusPanel이 열려 있으면 Weapon Hotbar(자식 탄약 UI 포함)와 Dash Slot의 RectTransform을 이동시킨다.
+둘 중 하나라도 열려 있으면 접힌 상태를 유지하고 모두 닫혀야 복귀한다. 실행 중 UI 오브젝트를 생성하지 않는다.
 
 Inspector의 Visible Edge는 남길 가장자리 높이(기본 10 Canvas 단위), Slide Seconds는 이동 시간
 (기본 0.16초)이다. 각 RectTransform 높이·Pivot으로 접힌 위치를 계산하고, unscaledDeltaTime을
