@@ -238,6 +238,7 @@ public sealed class SquadAutomaticPlanningTests
     [Test]
     public void TargetSelector_SkipsInsufficientCapacityButPlanningCanIgnoreTheLimit()
     {
+        // 실제 분대 검색은 수용 인원을 검사하고 Encounter의 기준 타깃 조회는 검사하지 않는다.
         var nearest = Target("near turret", Vector3.right, TargetType.Turret);
         var farther = Target("far turret", Vector3.right * 2f, TargetType.Turret);
         var candidates = new[] { nearest, farther };
@@ -261,6 +262,7 @@ public sealed class SquadAutomaticPlanningTests
     [Test]
     public void TargetSelector_TreatsCuAsTurretAndExcludesPlayersAndUnavailableTurrets()
     {
+        // CU도 Turret으로 조회하며 정렬용 Z 높이는 최근접 판정에 영향을 주지 않는다.
         var player = Target("player", new Vector3(0.1f, 0, 0), TargetType.Player);
         var unavailable = Target("inactive turret", new Vector3(0.2f, 0, 0), TargetType.Turret);
         unavailable.enabled = false;

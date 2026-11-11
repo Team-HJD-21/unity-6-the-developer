@@ -56,6 +56,7 @@ public sealed class EnemyDefinition : ScriptableObject
     /// <summary>분대가 선택할 수 있는 타깃 유형을 반환한다.</summary>
     public EnemyTargetRule TargetRule => _targetRule;
 
-    /// <summary>이 몬스터를 타깃별 공격 인원 제한에 포함할지 반환한다.</summary>
+    /// <summary>최초 분대 등록 때 전달할 공격 인원 집계 여부를 반환한다.</summary>
+    /// <remarks>false인 몬스터도 분대의 공동 목표와 재검색 흐름을 유지한다.</remarks>
     public bool IsIncludedInAttackerLimit => _isIncludedInAttackerLimit;
 }

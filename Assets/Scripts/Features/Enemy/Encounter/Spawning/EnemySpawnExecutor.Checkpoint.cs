@@ -165,6 +165,7 @@ public partial class EnemySpawnExecutor
         }
         foreach (var saved in world.Enemies)
         {
+            // 저장 형식에 집계 플래그를 추가하지 않고 복원할 적의 Definition에서 다시 읽는다.
             EnemyDefinition definition = ResolveCheckpointEnemy(saved.Type);
             var actor = CheckpointActorFactory.Instantiate(definition.Prefab, gameObject.scene, saved.State.Pose, saved.Id);
             var network = actor.GetComponent<EnemyNetworkController>();

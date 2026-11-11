@@ -12,6 +12,7 @@ public sealed class EnemyAutoRetargetTests
     private readonly List<(TargetableComponent Target, int Count)> _occupiedTargets = new();
     private Vector3 _origin;
 
+    /// <summary>현재 씬의 타깃과 테스트 후보를 분리하고 임시 생성 위치를 준비한다.</summary>
     [SetUp]
     public void SetUp()
     {
@@ -29,6 +30,7 @@ public sealed class EnemyAutoRetargetTests
         _origin = new Vector3(maxX + 1000f, 0f, 0f);
     }
 
+    /// <summary>분대 배정과 임시 오브젝트를 정리하고 기존 타깃의 인원을 되돌린다.</summary>
     [TearDown]
     public void TearDown()
     {
@@ -50,6 +52,7 @@ public sealed class EnemyAutoRetargetTests
         _occupiedTargets.Clear();
     }
 
+    /// <summary>분대 미등록 몬스터는 외부에서 지정한 목표를 임의로 재검색하지 않는다.</summary>
     [Test]
     public void UnboundController_DoesNotOverrideExternallyAssignedTarget()
     {
@@ -64,6 +67,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(controller.TargetChanges, Is.EqualTo(1));
     }
 
+    /// <summary>타깃 불가 이벤트에서 전체 구성원의 목표와 배정 인원이 함께 전환된다.</summary>
     [Test]
     public void SharedSquad_TargetabilityLossImmediatelyReassignsAllMembers()
     {
@@ -111,6 +115,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(fourth.AssignedAttackerCount, Is.Zero);
     }
 
+    /// <summary>플레이어가 포화 상태면 터렛을 유지하고 여유가 생기면 분대 전체를 전환한다.</summary>
     [Test]
     public void PlayerPriority_WhenFullKeepsTurretAndTransfersOnlyWhenWholeSquadFits()
     {
@@ -148,6 +153,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(player.AssignedAttackerCount, Is.EqualTo(8));
     }
 
+    /// <summary>합류 인원을 수용하지 못하면 이전 배정을 정확히 반환하고 공동 목표를 다시 찾는다.</summary>
     [Test]
     public void NewMember_WhenTargetCannotFit_ClearsPreviousAssignmentsBeforeJoining()
     {
@@ -178,6 +184,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(fullTarget.AssignedAttackerCount, Is.EqualTo(9));
     }
 
+    /// <summary>집계 제외 구성원은 포화 타깃에 합류하거나 제거되어도 기존 인원을 바꾸지 않는다.</summary>
     [Test]
     public void ExcludedMembers_JoinFullTargetWithoutChangingItsAssignments()
     {
@@ -199,6 +206,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(target.AssignedAttackerCount, Is.EqualTo(10));
     }
 
+    /// <summary>혼합 분대는 집계 대상만 배정하고 제외 구성원에게도 같은 목표를 전달한다.</summary>
     [Test]
     public void MixedSquad_TransfersOnlyIncludedMembersAndSharesTargetWithExcludedMembers()
     {
@@ -230,6 +238,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(player.AssignedAttackerCount, Is.EqualTo(8));
     }
 
+    /// <summary>집계 제외 분대도 포화 타깃을 검색하고 목표를 잃으면 다시 선택한다.</summary>
     [Test]
     public void ExcludedSquad_SearchesAndRetargetsWithoutCapacityRestriction()
     {
@@ -253,6 +262,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(second.AssignedAttackerCount, Is.EqualTo(10));
     }
 
+    /// <summary>혼합 분대 복원은 집계 대상만 반영하고 같은 목표의 반복 복원은 중복 배정하지 않는다.</summary>
     [Test]
     public void MixedSquad_RestoreUsesOnlyIncludedMembersWithoutDoubleAssignment()
     {
@@ -280,6 +290,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(replacement.AssignedAttackerCount, Is.EqualTo(9));
     }
 
+    /// <summary>소속 중인 몬스터는 다른 분대로 자동 이동하거나 집계 설정을 바꾸지 않는다.</summary>
     [Test]
     public void RegisteredMember_RejectsAnotherSquadAndKeepsOriginalInclusionSetting()
     {
@@ -303,6 +314,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(firstTarget.AssignedAttackerCount, Is.Zero);
     }
 
+    /// <summary>복원 대상이 같으면 배정을 유지하고 새 대상이 포화이면 이전 배정을 해제한다.</summary>
     [Test]
     public void RestoreTarget_DoesNotDoubleAssignAndClearsWhenReplacementIsFull()
     {
@@ -326,6 +338,7 @@ public sealed class EnemyAutoRetargetTests
         member.LeaveSquad();
     }
 
+    /// <summary>후보가 없으면 전체 목적지를 비우고 분대 대표만 공유된 간격으로 재시도한다.</summary>
     [Test]
     public void RetryDelay_IsSharedAndClearsEveryMembersDestination()
     {
@@ -357,6 +370,7 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(follower.AssignedTarget, Is.EqualTo(replacement.transform));
     }
 
+    /// <summary>PlayerOnly 분대는 초기 터렛 목표를 받지 않고 플레이어만 선택한다.</summary>
     [Test]
     public void PlayerOnlySquad_RejectsInheritedTurretAndChoosesPlayer()
     {
@@ -400,6 +414,7 @@ public sealed class EnemyAutoRetargetTests
         return gameObject;
     }
 
+    /// <summary>EditMode에서 비활성 상태와 해당 생명주기 콜백을 함께 재현한다.</summary>
     private static void DisableTarget(TargetableComponent target)
     {
         target.enabled = false;
@@ -416,6 +431,7 @@ public sealed class EnemyAutoRetargetTests
     }
 }
 
+/// <summary>실제 이동 대신 분대가 전달한 목표와 변경 횟수를 기록하는 시험용 컨트롤러다.</summary>
 public sealed class EnemyAutoRetargetTestController : EnemyController
 {
     public Transform AssignedTarget { get; private set; }

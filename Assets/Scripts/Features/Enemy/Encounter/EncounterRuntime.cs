@@ -175,6 +175,7 @@ namespace TeamHJD.Game.Domain
             {
                 if (string.IsNullOrWhiteSpace(point.SpawnPointId) || targetPositions.ContainsKey(point.SpawnPointId))
                     continue;
+                // 편성 판단용 기준 터렛 조회이므로 공격 인원을 전달하지 않아 포화도는 검사하지 않는다.
                 if (!RuntimeTargetSelector.TryFindNearest(point.Position, targets, TargetType.Turret, out ITargetable target))
                     continue;
 

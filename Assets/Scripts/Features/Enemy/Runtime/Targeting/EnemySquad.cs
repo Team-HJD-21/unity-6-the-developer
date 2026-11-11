@@ -5,6 +5,7 @@ using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector
 /// <summary>
 /// 함께 행동하는 적의 소속과 공동 목표를 보관한다.
 /// 목표 선택은 분대 단위로 수행하고, 구성원에게 같은 목표 Transform을 전달한다.
+/// 집계 제외 구성원도 목표를 공유하며 공격 인원에는 포함하지 않는다.
 /// </summary>
 public class EnemySquad
 {
@@ -45,10 +46,10 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// 적을 분대 구성원으로 등록하고 유효한 기존 타깃을 전달한다.
+    /// 구성원을 등록하고 집계 대상이면 기존 타깃에 한 명을 추가 배정한다.
     /// </summary>
     /// <param name="enemy">분대에 등록할 적.</param>
-    /// <returns>적이 유효하고 아직 등록되지 않았다면 true.</returns>
+    /// <returns>유효한 적이 분대 구성 규칙에 따라 등록되었으면 true.</returns>
     public bool AddMember(EnemyController enemy)
     {
         if (enemy == null || _members.Contains(enemy))
@@ -76,7 +77,7 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// 네트워크에서 제거된 적을 분대원 목록에서 해제한다.
+    /// 실제 제거된 구성원이 집계 대상이면 한 명을 반환하고 목록에서 해제한다.
     /// </summary>
     /// <param name="enemy">제거할 적의 행동 컴포넌트.</param>
     public void RemoveMember(EnemyController enemy)
@@ -84,6 +85,7 @@ public class EnemySquad
         if (ReferenceEquals(enemy, null) || !_members.Remove(enemy))
             return;
 
+        // 목록에서 제거된 경우에만 반환해 중복 제거 요청의 이중 차감을 막는다.
         if (enemy.IsIncludedInAttackerLimit)
             _target?.UnassignAttackers(1);
 
@@ -120,7 +122,7 @@ public class EnemySquad
     internal Transform CheckpointTarget => _target?.TargetTransform;
 
     /// <summary>
-    /// 저장된 공동 목표를 다시 연결하고 구성원에게 전달한다.
+    /// 저장된 목표를 다시 연결한다. 다른 목표이면 기존 배정부터 반환한다.
     /// </summary>
     internal void RestoreCheckpointTarget(Transform target)
     {
@@ -138,6 +140,7 @@ public class EnemySquad
 
         if (!ReferenceEquals(_target, nextTarget))
         {
+            // 복원 대상이 포화 상태이면 이전 목표로 돌아가지 않고 재검색을 기다린다.
             TryChangeTarget(null);
             TryChangeTarget(nextTarget);
         }
@@ -179,7 +182,10 @@ public class EnemySquad
         return TryChangeTarget(nextTarget);
     }
 
-    /// <summary>구성원이 감지한 플레이어를 분대 공동 목표로 선택한다.</summary>
+    /// <summary>플레이어 우선 전환 규칙을 확인하고 공통 타깃 변경을 요청한다.</summary>
+    /// <param name="requester">플레이어를 감지한 현재 분대원.</param>
+    /// <param name="player">감지 영역에서 전달받은 플레이어 후보.</param>
+    /// <returns>플레이어로 전환했으면 true. 이미 플레이어를 추적 중이면 false.</returns>
     public bool TryPrioritizePlayer(EnemyController requester, ITargetable player)
     {
         // 이미 선택한 플레이어는 타깃 불가 이벤트가 발생할 때까지 유지한다.
@@ -214,7 +220,7 @@ public class EnemySquad
         }
     }
 
-    /// <summary>공격 인원 제한에 포함되는 현재 구성원 수를 반환한다.</summary>
+    /// <summary>검색·타깃 변경 시에만 집계 대상 구성원 수를 계산한다.</summary>
     private int GetAttackerCount()
     {
         int count = 0;
@@ -229,6 +235,8 @@ public class EnemySquad
     }
 
     /// <summary>새 타깃에 집계 대상 인원을 배정하고 기존 배정을 반환한다.</summary>
+    /// <param name="target">새 목표. null이면 기존 목표와 배정을 해제한다.</param>
+    /// <returns>타깃 변경 또는 해제에 성공했으면 true.</returns>
     private bool TryChangeTarget(ITargetable target)
     {
         if (ReferenceEquals(_target, target))
@@ -241,7 +249,8 @@ public class EnemySquad
             if (!IsValidTarget(target))
                 return false;
 
-            // 생성자에서는 구성원이 없으므로 실제 배정은 합류 시 처리한다.
+            // 새 배정을 먼저 확보해 플레이어 우선 전환 실패 시 기존 배정을 유지한다.
+            // 구성원이 없는 초기 상태와 집계 제외 분대는 인원 배정 호출을 생략한다.
             if (count > 0 && !target.TryAssignAttackers(count))
                 return false;
         }
