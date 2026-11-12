@@ -12,7 +12,7 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     [SerializeField] private TargetType targetType;
 
     [Header("공격 인원 제한")]
-    [SerializeField, Min(1)] private int maxAttackers = 10;
+    [SerializeField, Min(1)] private int maxAttackers = 50;
 
     [Header("체력")]
     [SerializeField] private float maxHealth;
