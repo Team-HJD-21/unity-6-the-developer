@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4740070668336259652}
   - component: {fileID: 5580854289540234990}
-  m_Layer: 15
+  m_Layer: 2
   m_Name: Range
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -103,7 +103,8 @@ GameObject:
   - component: {fileID: 8468082416169240966}
   - component: {fileID: 3811583347813844510}
   - component: {fileID: 7352672687375525476}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000221}
+  m_Layer: 2
   m_Name: Laser
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -151,7 +152,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 677f3a5e56634d6584503c1d730c46a6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -252,6 +253,19 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.8066826, y: 6.4}
   m_EdgeRadius: 0
+--- !u!210 &9000000000000000221
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004982938625862956}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &1199206978149225722
 GameObject:
   m_ObjectHideFlags: 0
@@ -263,7 +277,8 @@ GameObject:
   - component: {fileID: 2713701752157166313}
   - component: {fileID: 1169451186622568849}
   - component: {fileID: 7890943425173693943}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000220}
+  m_Layer: 13
   m_Name: LaserTurretBody
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -366,6 +381,19 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!210 &9000000000000000220
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1199206978149225722}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 2
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &2409787765537477521
 GameObject:
   m_ObjectHideFlags: 0
@@ -375,7 +403,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7839135193246447311}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: RoationPoint(laser)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -415,7 +443,7 @@ GameObject:
   - component: {fileID: 1881848214719084371}
   - component: {fileID: 1881848214719084372}
   - component: {fileID: 9000000000000000210}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FieldLaserTurret(Green)
   m_TagString: Tower
   m_Icon: {fileID: 0}
@@ -449,7 +477,7 @@ CircleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4391514400459548345}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -527,10 +555,10 @@ MonoBehaviour:
     m_Bits: 262144
   animator: {fileID: 7890943425173693943}
   gunRenderer: {fileID: 1169451186622568849}
-  heatWaveMaterial: {fileID: 2100000, guid: 2ed732e016d54b5bb1a6c9de690bb7c7, type: 2}
-  heatWaveScale: 1.1
   rangeRenderer: {fileID: 5580854289540234990}
   rangeTransform: {fileID: 4740070668336259652}
+  heatWaveMaterial: {fileID: 2100000, guid: 2ed732e016d54b5bb1a6c9de690bb7c7, type: 2}
+  heatWaveScale: 1.1
   minimumRange: 3
   _definition: {fileID: 11400000, guid: 26240dbd46ef4f5d849e1863f1e9eb93, type: 2}
   _runtimeState:
@@ -573,9 +601,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetType: 1
+  maxAttackers: 10
   maxHealth: 0
   currentHealth: 0
   firepowerEfficiency: 0
+--- !u!210 &9000000000000000210
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4391514400459548345}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &6424260597546471728
 GameObject:
   m_ObjectHideFlags: 0
@@ -586,7 +628,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2361066371409406944}
   - component: {fileID: 1427469008856081048}
-  m_Layer: 11
+  m_Layer: 2
   m_Name: MiniMapLT
   m_TagString: MapElement
   m_Icon: {fileID: 0}
@@ -679,7 +721,7 @@ GameObject:
   - component: {fileID: 6310550066737809830}
   - component: {fileID: 6972111793082303585}
   - component: {fileID: 2539432041391064708}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -853,7 +895,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7068409649004022153}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FirePointLaserTurret
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -884,7 +926,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 578045086433749139}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: LaserSpawnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -906,16 +948,3 @@ Transform:
   m_Children: []
   m_Father: {fileID: 16670985353749246}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!210 &9000000000000000210
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4391514400459548345}
-  m_Enabled: 1
-  m_SortingLayerID: -880326001
-  m_SortingLayer: 1
-  m_SortingOrder: 0
-  m_SortAtRoot: 0
-  m_Sort3DAs2D: 0

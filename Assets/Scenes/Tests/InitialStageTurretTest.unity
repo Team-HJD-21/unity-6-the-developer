@@ -492786,7 +492786,7 @@ GameObject:
   - component: {fileID: 300471857}
   m_Layer: 0
   m_Name: Environment_Obj
-  m_TagString: Untagged
+  m_TagString: FieldTurretBulletObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -940311,7 +940311,7 @@ GameObject:
   - component: {fileID: 1992265210}
   m_Layer: 0
   m_Name: Environment_Base
-  m_TagString: Untagged
+  m_TagString: FieldTurretBulletObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -946546,43 +946546,43 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 106.95853
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 53.479263
       objectReference: {fileID: 0}
     - target: {fileID: 1450801202, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -55
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 257.94058
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 235.92882
       objectReference: {fileID: 0}
     - target: {fileID: 1500346220, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -84
       objectReference: {fileID: 0}
     - target: {fileID: 2128984783, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_SizeDelta.x

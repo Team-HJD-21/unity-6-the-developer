@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4623217508369570199}
   - component: {fileID: 5267864021491188732}
   - component: {fileID: 4493592829174281455}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FieldCanonTurret LV1
   m_TagString: Tower
   m_Icon: {fileID: 0}
@@ -213,7 +213,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 701655428692059149}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -337,7 +337,8 @@ GameObject:
   - component: {fileID: 5542065184297001204}
   - component: {fileID: 9039057381650263844}
   - component: {fileID: 3979715056174189905}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000220}
+  m_Layer: 13
   m_Name: Gun1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -449,7 +450,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 286097789958134540}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: RotationPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -483,7 +484,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3577476696653598682}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -516,7 +517,7 @@ GameObject:
   - component: {fileID: 9166569530540480678}
   - component: {fileID: 400746095531740046}
   - component: {fileID: 1414287679336441884}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -634,7 +635,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1935032444102061095}
   - component: {fileID: 15490981806211254}
-  m_Layer: 15
+  m_Layer: 2
   m_Name: Circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -715,3 +716,16 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!210 &9000000000000000220
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5792964633695615367}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0

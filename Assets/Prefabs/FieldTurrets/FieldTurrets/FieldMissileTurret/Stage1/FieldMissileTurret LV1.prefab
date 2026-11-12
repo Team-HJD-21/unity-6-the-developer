@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1184328089168039883}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPoint(missile)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2555617473442766694}
   - component: {fileID: 3011182328866196828}
-  m_Layer: 15
+  m_Layer: 2
   m_Name: Circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -131,7 +131,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2603067881122175868}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: RotationPoint(missile)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -165,7 +165,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7471881801630609731}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPoint(missile) (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -198,7 +198,7 @@ GameObject:
   - component: {fileID: 6313614467778715645}
   - component: {fileID: 93078733577045702}
   - component: {fileID: 6272906769541489171}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -374,7 +374,8 @@ GameObject:
   - component: {fileID: 9010769029179053462}
   - component: {fileID: 3197493857056620786}
   - component: {fileID: 5313065893742346819}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000220}
+  m_Layer: 13
   m_Name: Launcher
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -492,7 +493,7 @@ GameObject:
   - component: {fileID: 4623217508369570199}
   - component: {fileID: 8053436404149014645}
   - component: {fileID: 9000000000000000210}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FieldMissileTurret LV1
   m_TagString: Tower
   m_Icon: {fileID: 0}
@@ -714,4 +715,17 @@ SortingGroup:
   m_SortingLayer: 1
   m_SortingOrder: 0
   m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
+--- !u!210 &9000000000000000220
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6937147702315278971}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
   m_Sort3DAs2D: 0

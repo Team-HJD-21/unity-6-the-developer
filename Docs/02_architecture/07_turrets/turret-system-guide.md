@@ -84,7 +84,9 @@ flowchart TD
 
 `Assets/Prefabs/FieldTurrets/FieldTurrets`의 Canon과 Missile 프리팹은 큰 `CircleCollider2D`를 제거하고 Base 자식의 활성 `PolygonCollider2D`를 최상위 터렛 오브젝트로 옮겼다. Canon의 좌표는 그대로 사용하며 Missile은 Base의 1.3배 스케일을 Polygon 꼭짓점에 반영해서 기존 2D 충돌 모양과 크기를 유지한다. 사거리 표시용 Circle의 SpriteRenderer는 유지한다. 이 문단은 기존 충돌 구성 변경을 설명한다. 이번 FieldTurret 명칭 변경에서는 프리팹 이름·경로만 바꾸고 충돌 설정과 GUID는 유지한다.
 
-Enemy의 `EnemyTargetSelector`는 Collider2D에서 자신과 부모의 `TargetableComponent`를 찾아 대상을 수집한다. PolygonCollider가 있는 최상위 터렛의 Layer가 Enemy 탐색 마스크에 포함되어야 하며 TargetableComponent가 있어야 한다. 삭제 후 탐색 거리 판정은 큰 원이 아니라 몸체 PolygonCollider 기준이다. 승급 대상이 원본 프리팹을 참조한다면 교체 후 원본의 CircleCollider가 다시 생길 수 있으므로 PoC 승급 경로도 확인한다. 아래 Mermaid의 공격과 상태 변경 흐름은 그대로 유지한다.
+현재 필드 터렛 프리팹에서 몸체와 사거리 표시는 `Ignore Raycast` 레이어를, 포신과 발사대는 `Turret` 레이어를 사용한다. 기존 미니맵 표시는 `MiniMap`을 사용한다. 본편 HUD의 `StageTurretSelection`은 `Physics2D.AllLayers`로 몸체 콜라이더를 찾은 뒤 부모의 `FieldTurretBase`를 확인한다.
+
+현재 Enemy 타깃 선정은 등록된 `TargetableComponent`의 상태를 사용한다. 근접 공격의 사거리 판정은 대상의 활성 비트리거 콜라이더까지의 거리를 사용하며, 원거리 투사체의 피격은 Physics 2D 충돌 설정을 따른다.
 
 터렛 데이터는 다음 세 종류로 나눈다.
 
@@ -307,7 +309,7 @@ Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드�
 
 Canon·Missile·Laser의 과열 아지랑이는 `GunRenderer`의 현재 스프라이트를 중앙 기준으로 1.1배 확대하고, 그 윤곽 안에 보이는 포신과 주변 화면을 굴절시킨다. 열이 쌓이기 시작할 때부터 강해지고, 열이 0%가 되면 사라진다. 프리팹의 `Heat Wave Scale`로 윤곽 크기, 공용 머티리얼의 `Distortion (pixels)`로 최대 굴절 강도를 조절한다.
 
-Laser는 사거리 안의 적을 향해 회전하고, 포신이 조준 허용각에 들어오면 얇은 빔을 포구에서 사거리 끝까지 펼친다. 발사 순간 빔이 굵어지고 포구 위치와 방향이 고정된다. 발사가 끝나거나 터렛을 끄면 빔이 얇아지면서 동시에 포구 쪽으로 짧아진다. 조준하던 적을 놓쳤을 때도 빔이 포구로 돌아온 뒤에 다시 회전한다. 빔이 완전히 접히면 `Beam Restart Delay`가 지난 뒤에 다시 펼칠 수 있다. 피해는 발사 중에만 적용하며, 포구부터 사거리 경계까지 회전된 박스로 적을 조회한다. 같은 적의 여러 Collider는 틱마다 한 번만 집계한다. Stage 1의 초기 설정은 폭 0.8 유닛, 발사 3초, 피해 간격 0.25초, 빔 길이 전환 0.2초, 폭 축소 0.1초, 재전개 대기 0.3초다. 폭·시간·간격은 프리팹의 Laser Settings, 틱당 피해량과 조준 시간에 사용하는 발사율은 Definition에서 조절한다.
+Laser는 사거리 안의 적을 향해 회전하고, 포신이 조준 허용각에 들어오면 얇은 빔을 포구에서 사거리 끝까지 펼친다. 발사 순간 빔이 굵어지고 포구 위치와 방향이 고정된다. 빔 스프라이트는 길이 방향으로 늘어나며, 전용 재질이 포구에서 끝까지 알파를 낮춘다. 시각적 페이드는 사거리와 피해 판정에 영향을 주지 않는다. 발사가 끝나거나 터렛을 끄면 빔이 얇아지면서 동시에 포구 쪽으로 짧아진다. 조준하던 적을 놓쳤을 때도 빔이 포구로 돌아온 뒤에 다시 회전한다. 빔이 완전히 접히면 `Beam Restart Delay`가 지난 뒤에 다시 펼칠 수 있다. 피해는 발사 중에만 적용하며, 포구부터 사거리 경계까지 회전된 박스로 적을 조회한다. 같은 적의 여러 Collider는 틱마다 한 번만 집계한다. Stage 1의 초기 설정은 폭 0.8 유닛, 발사 3초, 피해 간격 0.25초, 빔 길이 전환 0.2초, 폭 축소 0.1초, 재전개 대기 0.3초다. 폭·시간·간격은 프리팹의 Laser Settings, 틱당 피해량과 조준 시간에 사용하는 발사율은 Definition에서 조절한다.
 
 ### 4.1 생성과 등록
 
@@ -453,6 +455,8 @@ flowchart TD
 ```
 
 Canon 포신은 Target을 향해 돌지만, **발사된 `FieldTurretBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TakeDamage()`는 서버에서 Network Spawn된 적에 대해서만 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
+
+캐논 탄환은 이동 구간에서 탄환 콜라이더 모양으로 검사한다. 캐논 탄환을 막을 지형의 활성 비트리거 Collider2D 오브젝트에는 `FieldTurretBulletObstacle` 태그를 지정한다. 현재 `Default`와 `Forest` 물리 레이어의 지형을 검사하며, `Initial_Stage`와 `InitialStageTurretTest`의 나무·기물 타일맵에 태그가 지정되어 있다. 바닥은 태그 없이 둔다.
 
 #### Missile: 복수 대상을 지정하고 유도·범위 피해
 

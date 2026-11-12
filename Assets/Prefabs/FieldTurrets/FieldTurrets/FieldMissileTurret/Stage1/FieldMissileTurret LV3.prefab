@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7050622116671054782}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV3(missile)3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2322290571048158256}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV3(missile) (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -71,7 +71,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8278562866422010545}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV3(missile) (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ GameObject:
   - component: {fileID: 5062658997050410965}
   - component: {fileID: 2252540933489353521}
   - component: {fileID: 3589839501828889409}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -278,7 +278,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8143876653453497869}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV3(missile)1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -309,7 +309,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 259624671159686732}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV3(missile)6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -340,7 +340,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8558570235137596836}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV3(missile) (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -372,7 +372,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4616769300326080906}
   - component: {fileID: 7592123090567658909}
-  m_Layer: 15
+  m_Layer: 2
   m_Name: Circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -462,7 +462,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7664016224277478848}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV3(missile)4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -493,7 +493,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2395404624971044036}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV3(missile)2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -524,7 +524,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 858969232775871051}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: RotationPoint(missile)LV3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -568,7 +568,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4785346028907279752}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV3(missile) (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -599,7 +599,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5653386092189873409}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV3(missile)5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -632,7 +632,8 @@ GameObject:
   - component: {fileID: 5912227433580138926}
   - component: {fileID: 3423592564341140463}
   - component: {fileID: 7825342509523406801}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000220}
+  m_Layer: 13
   m_Name: LauncherLV3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -744,7 +745,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4572509706669706079}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV3(missile) (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -782,7 +783,7 @@ GameObject:
   - component: {fileID: 4623217508369570199}
   - component: {fileID: 6446245178119645345}
   - component: {fileID: 9000000000000000210}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FieldMissileTurret LV3
   m_TagString: Tower
   m_Icon: {fileID: 0}
@@ -1034,7 +1035,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5033632121571247187}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV3(missile)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1068,4 +1069,17 @@ SortingGroup:
   m_SortingLayer: 1
   m_SortingOrder: 0
   m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
+--- !u!210 &9000000000000000220
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6874511608088806639}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
   m_Sort3DAs2D: 0

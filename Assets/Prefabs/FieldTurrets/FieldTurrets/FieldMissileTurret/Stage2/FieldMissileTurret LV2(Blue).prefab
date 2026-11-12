@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3590231242685675704}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV2(missile)2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2333844838973036701}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV2(missile) (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -71,7 +71,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8247165301914294841}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV2(missile)4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -102,7 +102,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8111740851686251457}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV2(missile)3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -134,7 +134,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1257971736238878355}
   - component: {fileID: 3901330275991765378}
-  m_Layer: 15
+  m_Layer: 2
   m_Name: Circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -224,7 +224,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3738974294831536823}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV2(missile) (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -255,7 +255,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7822217542014231685}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV2(missile)1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -288,7 +288,8 @@ GameObject:
   - component: {fileID: 3396364099802156824}
   - component: {fileID: 2175146551687495156}
   - component: {fileID: 1610464386219993359}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000220}
+  m_Layer: 13
   m_Name: LauncherLV2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -400,7 +401,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5693288934300119009}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV2(missile)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -431,7 +432,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3028729527259506226}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPointLV2(missile) (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -466,7 +467,7 @@ GameObject:
   - component: {fileID: 5148363670888551460}
   - component: {fileID: 9197290522854575835}
   - component: {fileID: 9000000000000000210}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FieldMissileTurret LV2(Blue)
   m_TagString: Tower
   m_Icon: {fileID: 0}
@@ -660,7 +661,7 @@ GameObject:
   - component: {fileID: 1345737416630060233}
   - component: {fileID: 5745992959705320571}
   - component: {fileID: 5178695054680581640}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -834,7 +835,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3913239604884711467}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: RotationPoint(missile)LV2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -877,4 +878,17 @@ SortingGroup:
   m_SortingLayer: 1
   m_SortingOrder: 0
   m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
+--- !u!210 &9000000000000000220
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4105827643333218261}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
   m_Sort3DAs2D: 0

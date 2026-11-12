@@ -492802,7 +492802,7 @@ GameObject:
   - component: {fileID: 300471856}
   m_Layer: 0
   m_Name: Environment_Obj
-  m_TagString: Untagged
+  m_TagString: FieldTurretBulletObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -940478,7 +940478,7 @@ GameObject:
   - component: {fileID: 1992265209}
   m_Layer: 0
   m_Name: Environment_Base
-  m_TagString: Untagged
+  m_TagString: FieldTurretBulletObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

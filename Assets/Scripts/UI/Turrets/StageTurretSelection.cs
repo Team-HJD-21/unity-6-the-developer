@@ -76,7 +76,7 @@ internal sealed class StageTurretSelection
         Vector2 point = ray.GetPoint(distance);
         FieldTurretBase nearest = null;
         float nearestDistance = float.PositiveInfinity;
-        foreach (Collider2D hit in Physics2D.OverlapPointAll(point))
+        foreach (Collider2D hit in Physics2D.OverlapPointAll(point, Physics2D.AllLayers))
         {
             FieldTurretBase candidate = hit.GetComponentInParent<FieldTurretBase>();
             if (!CanSelect(candidate)) continue;
