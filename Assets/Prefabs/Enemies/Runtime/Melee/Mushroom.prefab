@@ -15,7 +15,7 @@ PrefabInstance:
     - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: _bodyCollider
       value: 
-      objectReference: {fileID: 1188990277301299251}
+      objectReference: {fileID: 8389194018421224393}
     - target: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 0.26
@@ -173,8 +173,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
---- !u!61 &1188990277301299251 stripped
-BoxCollider2D:
-  m_CorrespondingSourceObject: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+--- !u!70 &8389194018421224393 stripped
+CapsuleCollider2D:
+  m_CorrespondingSourceObject: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
   m_PrefabInstance: {fileID: 8084962853261741286}
   m_PrefabAsset: {fileID: 0}

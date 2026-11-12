@@ -44,8 +44,8 @@ TagManager:
   - PocInteractArea
   - PlayerFieldDevice
   - EnemySensor
-  - 
-  - 
+  - EnemyHitBox
+  - EnemyCollisionBox
   - 
   - 
   - 

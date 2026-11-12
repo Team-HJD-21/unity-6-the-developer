@@ -17,10 +17,6 @@ PrefabInstance:
       value: 10
       objectReference: {fileID: 0}
     - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: _bodyCollider
-      value: 
-      objectReference: {fileID: 2445133751425614224}
-    - target: {fileID: -5420480671651155543, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: activationRange
       value: 0.35
       objectReference: {fileID: 0}
@@ -172,6 +168,22 @@ PrefabInstance:
       propertyPath: m_CollisionDetection
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.x
+      value: 0.13955048
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.y
+      value: 0.049586594
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.00007966161
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.0013491362
+      objectReference: {fileID: 0}
     - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 0.16
@@ -213,11 +225,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
---- !u!70 &2445133751425614224 stripped
-CapsuleCollider2D:
-  m_CorrespondingSourceObject: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-  m_PrefabInstance: {fileID: 2716010681605029567}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &7401284964919904431 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4829987614306498064, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}

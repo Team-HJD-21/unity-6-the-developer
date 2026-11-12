@@ -36,9 +36,6 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
 
     protected override void Awake()
     {
-        if (_bodyCollider == null)
-            _bodyCollider = GetComponent<CapsuleCollider2D>();
-
         base.Awake();
 
         if (enemyTargeting == null)
@@ -187,13 +184,11 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
     /// </summary>
     private Vector3 GetExplosionCenter()
     {
-        if (_bodyCollider != null)
-            return _bodyCollider.bounds.center;
+        Collider2D bodyCollider =
+            _bodyCollider != null ? _bodyCollider : FindBodyCollider();
 
-        // Awake 전의 Scene 뷰에서도 캡슐 기준의 폭발 중심을 표시한다.
-        CapsuleCollider2D capsule = GetComponent<CapsuleCollider2D>();
-        if (capsule != null)
-            return capsule.bounds.center;
+        if (bodyCollider != null)
+            return bodyCollider.bounds.center;
 
         return transform.position;
     }

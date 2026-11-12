@@ -112,7 +112,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCloseRangeAbility
   cooldown: 1
-  _bodyCollider: {fileID: 0}
+  _bodyCollider: {fileID: 7934924057311380628}
   activationRange: 0.4
   enemyTargeting: {fileID: 4417510083731572509}
   attackDamage: 5
+--- !u!60 &7934924057311380628 stripped
+PolygonCollider2D:
+  m_CorrespondingSourceObject: {fileID: 6947161632953746720, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+  m_PrefabInstance: {fileID: 1042519340379881908}
+  m_PrefabAsset: {fileID: 0}

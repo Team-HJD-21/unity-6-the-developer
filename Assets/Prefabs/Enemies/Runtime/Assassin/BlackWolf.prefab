@@ -136,6 +136,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: BlackWolf
       objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.x
+      value: 0.19602075
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.y
+      value: 0.09994494
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.02415352
+      objectReference: {fileID: 0}
     - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 1.28
@@ -199,6 +215,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
+--- !u!60 &7129233356702362052 stripped
+PolygonCollider2D:
+  m_CorrespondingSourceObject: {fileID: 7934924057311380628, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+  m_PrefabInstance: {fileID: 931854335210630480}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7542723251226543163 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
@@ -217,7 +238,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAssassinAbility
   cooldown: 1
-  _bodyCollider: {fileID: 7808456900892805509}
+  _bodyCollider: {fileID: 7129233356702362052}
   activationRange: 0.5
   enemyTargeting: {fileID: 3576063234121525837}
   attackDamage: 12
@@ -287,13 +308,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStealthVisual
   spriteRenderer: {fileID: 8680322642003066561}
   enemyDetection: {fileID: 4592527766516815806}
-  revealDuration: 0.1
-  stealthDuration: 0.3
---- !u!61 &7808456900892805509 stripped
-BoxCollider2D:
-  m_CorrespondingSourceObject: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-  m_PrefabInstance: {fileID: 931854335210630480}
-  m_PrefabAsset: {fileID: 0}
+  revealDuration: 1
+  stealthDuration: 2
+  detectedStealthAmount: 0.7
+  undetectedStealthAmount: 0.95
 --- !u!212 &8680322642003066561 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
