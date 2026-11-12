@@ -5961,7 +5961,7 @@ PrefabInstance:
     - target: {fileID: 5217983604423362671, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
       propertyPath: turretController
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 393497335}
     - target: {fileID: 5217983604423362671, guid: eaad88a3b81b9044bac85fc69fa313d1, type: 3}
       propertyPath: onCUHpChange.m_PersistentCalls.m_Calls.Array.size
       value: 0
@@ -523360,7 +523360,7 @@ PrefabInstance:
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 393497335}
     - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 20
@@ -1124390,7 +1124390,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a518c49703f37de4f99e89bc37b9f58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.RegionSceneBinding
-  _controller: {fileID: 0}
+  _controller: {fileID: 393497335}
   _controlUnit: {fileID: 52902671}
   _initialMode: 0
 --- !u!114 &877435135
@@ -1124421,7 +1124421,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 539cb1bc453b4f01be74b4c14fc8ac6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.TurretMatchBinding
-  _controller: {fileID: 0}
+  _controller: {fileID: 393497335}
   _battlefieldSource: {fileID: 1493643881}
   _commandLevelCatalog: {fileID: 11400000, guid: 248f482a7ee948478f1e0528ed60cf86, type: 2}
   _commandUpgrades:
@@ -1125857,7 +1125857,7 @@ PrefabInstance:
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 393497335}
     - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 12
@@ -1126327,7 +1126327,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34bc7c6c777c4757a116360cc963f607, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.FieldTurrets.FieldTurretRepairTestSetup
-  _controller: {fileID: 0}
+  _controller: {fileID: 393497335}
   _destroyedTurret: {fileID: 1361953241}
   _damagedTurret: {fileID: 584970846}
   _damagedHealth: 50
