@@ -20,6 +20,7 @@ TagManager:
   - Forest
   - CUBoundary
   - Bullet
+  - FieldTurretBulletObstacle
   layers:
   - Default
   - TransparentFX
@@ -34,9 +35,9 @@ TagManager:
   - 
   - MiniMap
   - CU
-  - Tower
+  - Turret
   - Forest
-  - TowerRange
+  - 
   - EmenyBullet
   - Camera
   - Player
@@ -44,7 +45,7 @@ TagManager:
   - PocInteractArea
   - PlayerFieldDevice
   - EnemySensor
-  - 
+  - TurretBase
   - 
   - 
   - 

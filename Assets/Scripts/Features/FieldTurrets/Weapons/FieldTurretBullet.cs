@@ -1,13 +1,16 @@
 // 기존 탄환 피해·방향을 유지하고 수명/이동을 소유 Match의 필드 시간으로 진행합니다.
 using System;
+using System.Collections.Generic;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "TowerBullet")]
 public partial class FieldTurretBullet : MonoBehaviour
 {
     [Header("Attributes")]
     [SerializeField] private float bulletSpeed; // 일정한 속도
+    [SerializeField] private PlayerSpriteEffect _impactPrefab;
     private float _bulletDamage; // 총알 피해량
     private Transform _target;
 
@@ -15,6 +18,18 @@ public partial class FieldTurretBullet : MonoBehaviour
     private bool _isInitialized;
     private bool _hasHit;
     private double _expiresAt;
+    private Collider2D _hitbox;
+    private ContactFilter2D _flightFilter;
+    private int _enemyLayer;
+    private readonly List<RaycastHit2D> _flightHits = new(4);
+
+    private void Awake()
+    {
+        _hitbox = GetComponent<Collider2D>();
+        _enemyLayer = LayerMask.NameToLayer("Enemy");
+        _flightFilter = new ContactFilter2D { useTriggers = false };
+        _flightFilter.SetLayerMask(LayerMask.GetMask("Default", "Forest", "Enemy"));
+    }
 
     public void Initialize(Transform target, float damage)
         => Initialize(target, damage, target != null ? target.position : Vector3.zero);
@@ -37,7 +52,7 @@ public partial class FieldTurretBullet : MonoBehaviour
 
     private void Update()
     {
-        if (!_isInitialized || !FieldSimulationTime.CanAdvance(this)) return;
+        if (!_isInitialized || _hasHit || !FieldSimulationTime.CanAdvance(this)) return;
         if (FieldSimulationTime.Seconds(this) >= _expiresAt)
         {
             Destroy(gameObject);
@@ -50,12 +65,34 @@ public partial class FieldTurretBullet : MonoBehaviour
             return;
         }
 
-        // 일정한 속도로 총알 이동
-        transform.position += _direction * bulletSpeed * FieldSimulationTime.DeltaTime(this);
-
-        // 총알의 회전 방향 설정
+        Vector3 step = _direction * bulletSpeed * FieldSimulationTime.DeltaTime(this);
         float angle = Mathf.Atan2(_direction.y, _direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+        if (TryHitFlightPath(step, angle)) return;
+
+        transform.position += step;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+    }
+
+    private bool TryHitFlightPath(Vector2 step, float angle)
+    {
+        float distance = step.magnitude;
+        if (_hitbox == null || _hitbox.attachedRigidbody == null || distance <= 0f) return false;
+
+        _hitbox.Cast(transform.position, angle, step / distance, _flightFilter, _flightHits, distance); // 빠른 탄환이 장애물을 건너뛰지 않도록 이동 전 검사
+        foreach (RaycastHit2D hit in _flightHits)
+        {
+            Collider2D collider = hit.collider;
+            if (collider == null || collider.gameObject.scene != gameObject.scene) continue;
+
+            bool blocksBullet = collider.CompareTag("FieldTurretBulletObstacle");
+            EnemyHealth enemy = collider.gameObject.layer == _enemyLayer ? collider.GetComponentInParent<EnemyHealth>() : null;
+            if (!blocksBullet && enemy == null) continue;
+
+            Hit(enemy, hit.point);
+            return true;
+        }
+
+        return false;
     }
 
     // 충돌 처리
@@ -63,11 +100,22 @@ public partial class FieldTurretBullet : MonoBehaviour
     {
         if (!_isInitialized || _hasHit || !FieldSimulationTime.CanAdvance(this))
             return;
+        Vector2 impactPoint = collision.contactCount > 0 ? collision.GetContact(0).point : (Vector2)transform.position;
+        Hit(collision.collider.GetComponentInParent<EnemyHealth>(), impactPoint);
+    }
+
+    private void Hit(EnemyHealth enemy, Vector2 impactPoint)
+    {
         _hasHit = true;
-        EnemyHealth enemyHealth = collision.collider.GetComponentInParent<EnemyHealth>();
-        if (enemyHealth != null)
+        if (enemy != null)
+            enemy.TakeDamage(Mathf.RoundToInt(_bulletDamage));
+
+        if (_impactPrefab != null)
         {
-            enemyHealth.TakeDamage(Mathf.RoundToInt(_bulletDamage));
+            var position = new Vector3(impactPoint.x, impactPoint.y, transform.position.z);
+            var effect = Instantiate(_impactPrefab, position, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(effect.gameObject, gameObject.scene);
+            effect.SetTint(new Color(1f, .5f, .1f), GetComponent<SpriteRenderer>());
         }
 
         Destroy(gameObject); // 충돌 시 총알 파괴

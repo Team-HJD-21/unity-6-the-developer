@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6225538281299658309}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: RotationPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,7 +46,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3858989689895090832}
   - component: {fileID: 548673198802090129}
-  m_Layer: 15
+  m_Layer: 2
   m_Name: Circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -131,9 +131,8 @@ GameObject:
   - component: {fileID: 5464355338928721752}
   - component: {fileID: 513411788051588595}
   - component: {fileID: 2005959199367518327}
-  - component: {fileID: 4293368211855404971}
   - component: {fileID: 9000000000000000210}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FieldCanonTurret LV2(Blue)
   m_TagString: Tower
   m_Icon: {fileID: 0}
@@ -236,7 +235,8 @@ GameObject:
   - component: {fileID: 4074862728304549148}
   - component: {fileID: 8829399613561908817}
   - component: {fileID: 4942308883632473229}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000220}
+  m_Layer: 13
   m_Name: GunMk2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -340,7 +340,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8114438275941198764}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: BulletDirection1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -371,7 +371,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7494783488605504760}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: BulletDirection2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -486,7 +486,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 557329986926289527}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPoint1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -519,7 +519,8 @@ GameObject:
   - component: {fileID: 4600547851376489353}
   - component: {fileID: 6446563921028651021}
   - component: {fileID: 7676641155484821910}
-  m_Layer: 0
+  - component: {fileID: 4293368211855404971}
+  m_Layer: 23
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -626,7 +627,7 @@ PolygonCollider2D:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2671403332973467931}
+  m_GameObject: {fileID: 5953131541502353962}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -684,7 +685,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7518158755673416553}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPoint2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -718,4 +719,17 @@ SortingGroup:
   m_SortingLayer: 1
   m_SortingOrder: 0
   m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
+--- !u!210 &9000000000000000220
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3080671825398847970}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 3
+  m_SortAtRoot: 1
   m_Sort3DAs2D: 0
