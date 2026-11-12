@@ -201,8 +201,11 @@ public partial class FieldTurretMissile : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (_isInitialized && isActiveAndEnabled && FieldSimulationTime.CanAdvance(this))
-            BeginExplosion();
+        if (!_isInitialized || !isActiveAndEnabled || !FieldSimulationTime.CanAdvance(this)) return;
+        Collider2D collider = other.collider;
+        if (!FieldTurretTargetingUtility.IsEnemyHitBox(collider) && collider.GetComponentInParent<EnemyHealth>() != null) return;
+
+        BeginExplosion();
     }
 
     private void BeginExplosion()
@@ -241,7 +244,7 @@ public partial class FieldTurretMissile : MonoBehaviour
         }
         try
         {
-            Collider2D[] monsters = Physics2D.OverlapCircleAll(rb.position, explosionRange);
+            Collider2D[] monsters = Physics2D.OverlapCircleAll(rb.position, explosionRange, FieldTurretTargetingUtility.EnemyHitBoxMask);
             HashSet<EnemyHealth> damagedEnemies = new();
             foreach (Collider2D candidate in monsters)
             {

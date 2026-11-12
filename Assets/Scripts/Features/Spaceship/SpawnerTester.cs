@@ -11,8 +11,7 @@ public sealed class SpawnerTester : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision.gameObject.layer != LayerMask.NameToLayer("Player"))
-            return;
+        if (collision.collider.gameObject.layer != LayerMask.NameToLayer("PlayerFeetBox")) return;
         
         if (!TryRequestEncounter(out string result)) Debug.LogWarning(result, this);
     }

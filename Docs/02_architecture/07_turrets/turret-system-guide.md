@@ -441,10 +441,10 @@ FieldTurretTest의 `Attack Range`에서 최소와 최대 사거리를 읽기 전
 
 ```mermaid
 flowchart TD
-    Update["DefaultFieldCanonTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
+    Update["DefaultFieldCanonTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindNearestVisibleTarget()"]
     Search --> Collect["FieldTurretTargetingUtility<br>CollectByDistance()"]
-    Collect --> RangeCheck["IsInAttackRange()<br>내부 범위 후보 제외"]
-    RangeCheck --> Target["가장 가까운 유효 Target 선택"]
+    Collect --> RangeCheck["CanSeeTarget()<br>사거리·지형 가림 확인"]
+    RangeCheck --> Target["가장 가까운 보이는 Target 선택"]
     Target --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>조준각·발사 간격 확인"]
     Fire --> Shoot["FieldCanonTurretLv1~3<br>Shoot()"]
@@ -461,6 +461,10 @@ Canon 포신은 Target을 향해 돌지만, **발사된 `FieldTurretBullet`은 �
 
 캐논 탄환은 이동 구간에서 탄환 콜라이더 모양으로 검사한다. 캐논 탄환을 막을 지형의 활성 비트리거 Collider2D 오브젝트에는 `FieldTurretBulletObstacle` 태그를 지정한다. 현재 `Default`와 `Forest` 물리 레이어의 지형을 검사하며, `Initial_Stage`와 `InitialStageTurretTest`의 나무·기물 타일맵에 태그가 지정되어 있다. 바닥은 태그 없이 둔다.
 
+Canon·Missile·Laser의 새 표적 탐색과 자동 활성화용 적 수 집계는 `EnemyFeetBox` 콜라이더를 사용한다. 발사된 미사일의 재탐색도 같은 레이어를 조회한다. 캐논 탄환·미사일 폭발·레이저 빔은 `EnemyHitBox`에 닿았을 때 부모 `EnemyHealth`로 피해를 전달한다.
+
+Canon·Missile·Laser는 포신을 돌리기 전에 터렛 중심부터 목표 위치까지 같은 씬의 지형과 구조물을 `PhysicsScene2D.Linecast()`로 검사한다. 태그가 지정된 지형과 `CU`·`TurretBase` 레이어의 비트리거 콜라이더가 시야를 막으며, 자기 프리팹의 콜라이더는 검사에서 제외한다. 조준 중인 적이 가려지면 표적을 해제하고, 보이는 적이 있을 때만 포신을 돌린다. Missile은 가려진 적의 미발사 예약을 반환한다. 자동 활성화 순위는 버튼 시점의 사거리 내 적 수를 사용한다. 이미 발사된 미사일과 재생 중인 레이저 빔은 각 발사체와 빔의 규칙을 따른다.
+
 캐논 탄환은 적이나 장애물에 닿으면 플레이어 기본탄과 공유하는 `ProjectileImpact`를 접촉 지점에서 한 번 재생한다. 효과는 탄환과 같은 씬의 Sorting Layer에서 탄환보다 한 단계 앞에 그려진다.
 
 #### Missile: 복수 대상을 지정하고 유도·범위 피해
@@ -470,14 +474,14 @@ flowchart TD
     Update["DefaultFieldMissileTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
     Search --> Collect["FieldTurretTargetingUtility<br>CollectByDistance()"]
     Collect --> RangeCheck["IsInAttackRange()<br>내부 범위 후보 제외"]
-    RangeCheck --> Filter["활성 EnemyController 조회<br>MissileTargetReservation.TryAcquire()"]
+    RangeCheck --> Filter["활성 EnemyController·지형 가림 확인<br>MissileTargetReservation.TryAcquire()"]
     Filter --> Targets["발사구별 예약 토큰과 Targets 지정<br>같은 목표의 추가 발은 Retain()"]
     Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>발사 간격 확인"]
     Fire --> Shoot["FieldMissileTurretLV1~3<br>Shoot()"]
     Shoot --> Init["LaunchMissiles()<br>FieldTurretMissile.Initialize(예약, Damage)"]
     Init --> Transfer["Transfer()로 미사일에 소유권 이전<br>터렛 슬롯 정리는 이전된 예약에 영향 없음"]
-    Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약 토큰만 Dispose()"]
+    Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈·지형 가림"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약 토큰만 Dispose()"]
     Release --> Search
     Transfer --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
     Straight -->|목표 소실·비활성화| Retarget["SearchForNewTarget()<br>기존 토큰 반환 후 새 목표 예약"]
@@ -499,7 +503,7 @@ Missile은 적 수가 부족하면 첫 Target을 두 번째 발사 슬롯에서�
 
 미사일의 최초 탐색과 비행 중 재탐색은 Collider와 그 부모의 활성 `EnemyController`를 기준으로 한다. 최초 탐색은 EnemyController Transform의 최소 및 최대 사거리도 검사한다. 선택된 EnemyController의 Transform을 기존 유도 이동이 추적한다. 같은 Enemy의 여러 Collider가 최초 탐색 슬롯에 중복 등록되지 않도록 한다. 비행 중 재탐색은 기존 300 단위 탐색 반경을 유지하며 터렛의 최소 사거리를 다시 적용하지 않는다.
 
-폭발 피해는 Collider의 부모까지 `EnemyHealth`를 조회하고 동일 적은 한 번만 피해를 적용한다. 기존 Enemy Tag 대신 EnemyHealth 존재 여부를 피해 대상으로 사용한다. 충돌 및 수명 종료가 겹쳐도 동일 미사일의 폭발 처리는 한 번만 수행한다. 발사체 이동과 서버 전용 피해 API를 연결한 PoC이며 터렛 및 발사체 전체의 네트워크 동기화나 권한 구조를 완성한 것은 아니다. Host에서 Network Spawn된 적을 대상으로 추적과 HP 감소 및 사망 Despawn을 검증해야 한다. 기존 Monster만 있는 적은 더 이상 이 피해 API로 체력이 감소하지 않는다.
+폭발 피해는 범위에 겹치는 `EnemyHitBox`의 부모 `EnemyHealth`에 전달하고, 동일 적은 한 번만 피해를 적용한다. 충돌 및 수명 종료가 겹쳐도 동일 미사일의 폭발 처리는 한 번만 수행한다. 발사체 이동과 서버 전용 피해 API를 연결한 PoC이며 터렛 및 발사체 전체의 네트워크 동기화나 권한 구조를 완성한 것은 아니다. Host에서 Network Spawn된 적을 대상으로 추적과 HP 감소 및 사망 Despawn을 검증해야 한다. 기존 Monster만 있는 적은 더 이상 이 피해 API로 체력이 감소하지 않는다.
 
 ### 4.5 과열과 냉각
 

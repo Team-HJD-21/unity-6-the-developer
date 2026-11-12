@@ -61,7 +61,7 @@ MonoBehaviour:
   turretRotationPoint: {fileID: 286097789958134540}
   enemyMask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 16777216
   animator: {fileID: 3979715056174189905}
   bulletPrefab: {fileID: 5527518119625726090, guid: d0057dbd42a011741ab2aad087820a10, type: 3}
   heatWaveMaterial: {fileID: 2100000, guid: 2ed732e016d54b5bb1a6c9de690bb7c7, type: 2}
@@ -399,7 +399,7 @@ GameObject:
   - component: {fileID: 400746095531740046}
   - component: {fileID: 1414287679336441884}
   - component: {fileID: 5267864021491188732}
-  m_Layer: 23
+  m_Layer: 25
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -107,7 +107,7 @@ PlayerTurretSkill의 Inspector `Placement Ground`를 지정하면 그 Tilemap을
 현재 축에 정렬된 XY Tilemap과 고정된 임시포탑 바닥을 기준으로 한다. 외형을 교체할 때는
 루트 SpriteRenderer에 바닥 Sprite를 유지해야 한다. 지면 타일이 있어도 벽 Collider와
 겹치면 거부한다. 2026-10-22부터 설치자 자신·다른 플레이어·몬스터의 실제 몸 Collider도
-설치를 막는다. 설치자 하위 몸, PlayerInfo를 가진 부모, Player 레이어는 플레이어로,
+설치를 막는다. 설치자 하위 몸, `PlayerInfo`를 가진 부모, `PlayerFeetBox` 레이어는 플레이어로,
 EnemyHealth를 가진 부모 또는 Enemy 레이어는 몬스터로 분류한다. 자식 Collider의 태그에
 의존하지 않으며 캐릭터 점유 판정은 충돌 행렬·excludeLayers와 관계없이 적용한다.
 트리거(탄환 피격·공격·탐지·사거리 표시 포함)와 탄환 레이어는 계속 제외한다.

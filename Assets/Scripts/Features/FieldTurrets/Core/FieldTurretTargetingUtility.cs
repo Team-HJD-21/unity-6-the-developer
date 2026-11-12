@@ -1,10 +1,45 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace TeamHJD.Game.FieldTurrets
 {
     public static class FieldTurretTargetingUtility
     {
+        public const string TerrainObstacleTag = "FieldTurretBulletObstacle";
+        public static readonly int TerrainObstacleMask = LayerMask.GetMask("Default", "Forest");
+        public static readonly int EnemyHitBoxMask = LayerMask.GetMask("EnemyHitBox");
+
+        private static readonly int StructureSightObstacleMask = LayerMask.GetMask("CU", "TurretBase");
+        private static readonly ContactFilter2D SightFilter = new()
+        {
+            useLayerMask = true,
+            layerMask = TerrainObstacleMask | StructureSightObstacleMask,
+            useTriggers = false
+        };
+        private static readonly List<RaycastHit2D> SightHits = new();
+
+        internal static bool HasClearLineOfSight(Vector2 origin, Vector2 target, Transform observer)
+        {
+            Scene scene = observer.gameObject.scene;
+            int hitCount = scene.GetPhysicsScene2D().Linecast(origin, target, SightFilter, SightHits);
+            for (int index = 0; index < hitCount; index++)
+            {
+                Collider2D obstacle = SightHits[index].collider;
+                if (obstacle == null || obstacle.gameObject.scene != scene || obstacle.transform.IsChildOf(observer))
+                    continue;
+
+                int layer = 1 << obstacle.gameObject.layer;
+                if ((StructureSightObstacleMask & layer) != 0 || obstacle.CompareTag(TerrainObstacleTag))
+                    return false;
+            }
+
+            return true;
+        }
+
+        public static bool IsEnemyHitBox(Collider2D collider)
+            => (EnemyHitBoxMask & (1 << collider.gameObject.layer)) != 0;
+
         public static void CollectByDistance(
             Vector2 origin,
             float range,

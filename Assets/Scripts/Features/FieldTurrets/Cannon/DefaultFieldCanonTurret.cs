@@ -43,7 +43,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
     {
         if (IsOperational)
         {
-            NoTargetInRange();//적이 타워 범위에 없을 때 탐색(raycast 사용)
+            NoTargetInRange(); // 기존 표적의 사거리와 가림을 확인하고 필요하면 다시 탐색
             RotateTowardsTarget();//적 발견시 적을 향해 타워 돌리기
             FireRateController();//총알 객체화 후 발사 동작 수행
             OverHeatAnimationController();//설정시간 도달 시 과열
@@ -52,14 +52,13 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
 
     private void NoTargetInRange()//적이 타워 범위에 없을 때 탐색(TowerIsActivatedNow에서 수행)
     {
-        if (!CheckTargetIsInRange())
+        if (!CanSeeTarget(Target))
         {
-            Target = null;
             TimeTilFire = 0f;
             _fireTime -= TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
             if(_fireTime <= 0f) _fireTime = 0f;
             Animator.SetBool("isShoot", false);
-            FindTarget();//(Overlap 사용)
+            Target = FindNearestVisibleTarget(_targetCandidates);
         }
     }
     private void RotateTowardsTarget()//적향해 타워 z축 회전(TowerIsActivatedNow에서 수행)
@@ -117,19 +116,6 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
             if(_fireTime <= 0f) _fireTime = 0f;
             Animator.SetBool("isShoot", false);
         }
-    }
-    private void FindTarget()//raycast를 이용한 적 타워 반경 접근 확인 후 배열 추가(NoTargetInRange에서 적을 찾기위해 수행)
-    {
-        
-        FieldTurretTargetingUtility.CollectByDistance(
-            turret.position,
-            Range,
-            EnemyMask,
-            _targetCandidates,
-            MinimumRange);
-        Target = _targetCandidates.Count == 0
-            ? null
-            : _targetCandidates[0].transform;
     }
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
