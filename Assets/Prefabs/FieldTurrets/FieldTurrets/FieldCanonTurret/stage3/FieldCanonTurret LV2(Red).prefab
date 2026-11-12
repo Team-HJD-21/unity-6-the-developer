@@ -187,7 +187,7 @@ MonoBehaviour:
   - {fileID: 7494783488605504760}
   enemyMask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 16777216
   animator: {fileID: 4942308883632473229}
   gunRenderer: {fileID: 8829399613561908817}
   bulletPrefab: {fileID: 5527518119625726090, guid: d0057dbd42a011741ab2aad087820a10, type: 3}
@@ -520,7 +520,7 @@ GameObject:
   - component: {fileID: 6446563921028651021}
   - component: {fileID: 7676641155484821910}
   - component: {fileID: 4293368211855404971}
-  m_Layer: 23
+  m_Layer: 25
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}

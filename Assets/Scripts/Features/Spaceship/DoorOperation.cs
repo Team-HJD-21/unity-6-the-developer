@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CircleCollider2D))]
@@ -5,6 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class DoorOperation : MonoBehaviour
 {
+    private readonly HashSet<Collider2D> _nearPlayers = new();
     private Animator _animator;
     private BoxCollider2D _blockingCollider;
 
@@ -16,17 +18,19 @@ public class DoorOperation : MonoBehaviour
     
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (other.gameObject.layer != LayerMask.NameToLayer("Player"))
-            return;
-        
-        _animator.SetBool("nearPlayer", true);
+        if (!isActiveAndEnabled || other.isTrigger || other.gameObject.layer != LayerMask.NameToLayer("PlayerFeetBox")) return;
+        if (_nearPlayers.Add(other) && _nearPlayers.Count == 1) _animator.SetBool("nearPlayer", true);
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.gameObject.layer != LayerMask.NameToLayer("Player"))
-            return;
-        _animator.SetBool("nearPlayer", false);
+        if (_nearPlayers.Remove(other) && _nearPlayers.Count == 0) _animator.SetBool("nearPlayer", false);
+    }
+
+    private void OnDisable()
+    {
+        _nearPlayers.Clear();
+        if (_animator != null && _animator.isActiveAndEnabled) _animator.SetBool("nearPlayer", false);
     }
     
     // 애니메이션 이벤트로 처리할 함수들

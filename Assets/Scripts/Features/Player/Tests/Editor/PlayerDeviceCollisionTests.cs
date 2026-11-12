@@ -27,7 +27,7 @@ public sealed class PlayerDeviceCollisionTests
         _device = Object.Instantiate(Prefab(name));
         var bodies = _device.GetComponentsInChildren<PolygonCollider2D>();
         Assert.That(bodies.Length, Is.EqualTo(expectedBodies));
-        int allowed = (1 << LayerMask.NameToLayer("Player")) | (1 << LayerMask.NameToLayer("Enemy"));
+        int allowed = LayerMask.GetMask("PlayerFeetBox", "Enemy");
         foreach (var body in bodies)
         {
             Assert.That(body.enabled, Is.True);

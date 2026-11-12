@@ -38,18 +38,16 @@ TagManager:
   - Turret
   - Forest
   - 
-  - EmenyBullet
+  - EnemyProjectile
   - Camera
-  - Player
-  - PlayerBulletCollider
+  - PlayerFeetBox
+  - PlayerHitBox
   - PocInteractArea
   - PlayerFieldDevice
   - EnemySensor
   - EnemyHitBox
-  - EnemyCollisionBox
+  - EnemyFeetBox
   - TurretBase
-  - 
-  - 
   - 
   - 
   - 
