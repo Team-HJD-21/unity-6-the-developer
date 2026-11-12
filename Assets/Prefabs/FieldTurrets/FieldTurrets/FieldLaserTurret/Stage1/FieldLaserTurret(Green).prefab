@@ -278,6 +278,7 @@ GameObject:
   - component: {fileID: 1169451186622568849}
   - component: {fileID: 7890943425173693943}
   - component: {fileID: 9000000000000000220}
+  - component: {fileID: 3823189088727766970}
   m_Layer: 13
   m_Name: LaserTurretBody
   m_TagString: Untagged
@@ -391,9 +392,92 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: -880326001
   m_SortingLayer: 1
-  m_SortingOrder: 2
+  m_SortingOrder: 3
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
+--- !u!60 &3823189088727766970
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1199206978149225722}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.47}
+    oldSize: {x: 12.8, y: 12.8}
+    newSize: {x: 12.8, y: 12.8}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 1.1, y: -2.616}
+      - {x: 1.6, y: -1.616}
+      - {x: 1.9, y: -1.316}
+      - {x: 1.9, y: -0.916}
+      - {x: 2.2, y: -0.41599998}
+      - {x: 2.2, y: 0.78400004}
+      - {x: 2.1000001, y: 0.884}
+      - {x: 2.1000001, y: 1.184}
+      - {x: 1.9, y: 1.584}
+      - {x: 1.9, y: 2.084}
+      - {x: 1.6, y: 2.384}
+      - {x: 1.3000001, y: 2.484}
+      - {x: 1.3000001, y: 4.184}
+      - {x: 1.1, y: 4.3840003}
+      - {x: 1.1, y: 4.784}
+      - {x: 0.90000004, y: 4.984}
+      - {x: -0.90000004, y: 4.984}
+      - {x: -1.1, y: 4.784}
+      - {x: -1.1, y: 4.3840003}
+      - {x: -1.3000001, y: 4.184}
+      - {x: -1.3000001, y: 2.484}
+      - {x: -1.4, y: 2.384}
+      - {x: -1.6, y: 2.384}
+      - {x: -1.9, y: 2.084}
+      - {x: -1.9, y: 1.584}
+      - {x: -2, y: 1.4840001}
+      - {x: -2.1000001, y: 0.884}
+      - {x: -2.2, y: 0.78400004}
+      - {x: -2.2, y: -0.41599998}
+      - {x: -1.9, y: -0.916}
+      - {x: -1.9, y: -1.316}
+      - {x: -1.6, y: -1.616}
+      - {x: -1.4, y: -2.116}
+      - {x: -1.2, y: -2.316}
+      - {x: -1, y: -2.716}
+      - {x: 1, y: -2.716}
+  m_UseDelaunayMesh: 0
 --- !u!1 &2409787765537477521
 GameObject:
   m_ObjectHideFlags: 0
@@ -721,7 +805,7 @@ GameObject:
   - component: {fileID: 6310550066737809830}
   - component: {fileID: 6972111793082303585}
   - component: {fileID: 2539432041391064708}
-  m_Layer: 2
+  m_Layer: 23
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}

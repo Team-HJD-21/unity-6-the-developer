@@ -104,7 +104,8 @@ GameObject:
   - component: {fileID: 5062658997050410965}
   - component: {fileID: 2252540933489353521}
   - component: {fileID: 3589839501828889409}
-  m_Layer: 2
+  - component: {fileID: 6446245178119645345}
+  m_Layer: 23
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -218,7 +219,7 @@ PolygonCollider2D:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7841013048737065956}
+  m_GameObject: {fileID: 3146545803244062979}
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
@@ -258,16 +259,16 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 2.73722059, y: 3.33519771}
-      - {x: -2.86, y: 3.328}
-      - {x: -3.328, y: 2.86}
-      - {x: -3.328, y: -2.86}
-      - {x: -2.86, y: -3.328}
-      - {x: 2.80120334, y: -3.338907}
-      - {x: 3.0919083, y: -3.09190804}
-      - {x: 3.3739706, y: -2.77654728}
-      - {x: 3.31157593, y: 2.78188924}
-      - {x: 3.07616881, y: 3.0446897}
+    - - {x: 2.1055543, y: 2.5655367}
+      - {x: -2.2, y: 2.56}
+      - {x: -2.56, y: 2.2}
+      - {x: -2.56, y: -2.2}
+      - {x: -2.2, y: -2.56}
+      - {x: 2.1547718, y: -2.56839}
+      - {x: 2.378391, y: -2.3783908}
+      - {x: 2.595362, y: -2.1358056}
+      - {x: 2.5473661, y: 2.1399148}
+      - {x: 2.3662837, y: 2.342069}
   m_UseDelaunayMesh: 0
 --- !u!1 &3347179976562753113
 GameObject:
@@ -778,7 +779,6 @@ GameObject:
   - component: {fileID: 7382555984001617204}
   - component: {fileID: 8835418960737341895}
   - component: {fileID: 1963368194955897969}
-  - component: {fileID: 6446245178119645345}
   - component: {fileID: 9000000000000000210}
   m_Layer: 2
   m_Name: FieldMissileTurret LV3(Blue)
@@ -1025,6 +1025,6 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: -880326001
   m_SortingLayer: 1
-  m_SortingOrder: 1
+  m_SortingOrder: 3
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0

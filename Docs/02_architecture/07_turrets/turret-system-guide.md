@@ -82,9 +82,11 @@ flowchart TD
 
 ### PoC 프리팹의 몸체 콜라이더
 
-`Assets/Prefabs/FieldTurrets/FieldTurrets`의 Canon과 Missile 프리팹은 큰 `CircleCollider2D`를 제거하고 Base 자식의 활성 `PolygonCollider2D`를 최상위 터렛 오브젝트로 옮겼다. Canon의 좌표는 그대로 사용하며 Missile은 Base의 1.3배 스케일을 Polygon 꼭짓점에 반영해서 기존 2D 충돌 모양과 크기를 유지한다. 사거리 표시용 Circle의 SpriteRenderer는 유지한다. 이 문단은 기존 충돌 구성 변경을 설명한다. 이번 FieldTurret 명칭 변경에서는 프리팹 이름·경로만 바꾸고 충돌 설정과 GUID는 유지한다.
+`Assets/Prefabs/FieldTurrets/FieldTurrets`의 Canon·Missile·Laser 프리팹은 `Base` 자식에 몸체용 `PolygonCollider2D`를 둔다. Canon은 루트와 `Base`의 XY 좌표계가 같아 기존 꼭짓점을 그대로 사용한다. Missile은 `Base`의 1.3배 XY 스케일을 역으로 적용한 로컬 꼭짓점을 사용해 2D 월드 공간의 충돌 윤곽과 크기를 유지한다.
 
-현재 필드 터렛 프리팹에서 몸체와 사거리 표시는 `Ignore Raycast` 레이어를, 포신과 발사대는 `Turret` 레이어를 사용한다. 기존 미니맵 표시는 `MiniMap`을 사용한다. 본편 HUD의 `StageTurretSelection`은 `Physics2D.AllLayers`로 몸체 콜라이더를 찾은 뒤 부모의 `FieldTurretBase`를 확인한다.
+필드 터렛 프리팹의 `Base` 자식은 `TurretBase` 레이어를 사용한다. 최상위 오브젝트와 사거리 표시는 `Ignore Raycast` 레이어를, 포신과 발사대는 `Turret` 레이어를 사용한다. 기존 미니맵 표시는 `MiniMap`을 사용한다. 본편 HUD의 `StageTurretSelection`은 `Physics2D.AllLayers`로 몸체 콜라이더를 찾은 뒤 부모의 `FieldTurretBase`를 확인한다.
+
+`Entities` Sorting Layer에서 필드 터렛의 루트 그룹(`Base`)은 Order 0, `PlayerBullet`·`SniperBullet`·`PlayerTurretProjectile`·`bullet`·`Missile`의 비행 스프라이트는 Order 1, 포신과 발사대의 루트 정렬 그룹은 Order 3을 사용한다. 플레이어 탄환의 명중 효과는 탄환보다 한 단계 앞인 Order 2에 표시된다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
 
 현재 Enemy 타깃 선정은 등록된 `TargetableComponent`의 상태를 사용한다. 근접 공격의 사거리 판정은 대상의 활성 비트리거 콜라이더까지의 거리를 사용하며, 원거리 투사체의 피격은 Physics 2D 충돌 설정을 따른다.
 

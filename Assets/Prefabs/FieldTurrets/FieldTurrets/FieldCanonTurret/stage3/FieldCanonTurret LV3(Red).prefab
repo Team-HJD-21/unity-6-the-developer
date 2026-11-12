@@ -42,7 +42,6 @@ GameObject:
   - component: {fileID: 3034277396969673731}
   - component: {fileID: 4743552121227763710}
   - component: {fileID: 2509806962712916137}
-  - component: {fileID: 7475151955675498957}
   - component: {fileID: 9000000000000000210}
   m_Layer: 2
   m_Name: FieldCanonTurret LV3(Red)
@@ -639,7 +638,8 @@ GameObject:
   - component: {fileID: 6878764182865440683}
   - component: {fileID: 4748539974678478453}
   - component: {fileID: 6148614192815721406}
-  m_Layer: 2
+  - component: {fileID: 7475151955675498957}
+  m_Layer: 23
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -753,7 +753,7 @@ PolygonCollider2D:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 523344167771255339}
+  m_GameObject: {fileID: 8012606242757556498}
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
@@ -827,6 +827,6 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: -880326001
   m_SortingLayer: 1
-  m_SortingOrder: 1
+  m_SortingOrder: 3
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
