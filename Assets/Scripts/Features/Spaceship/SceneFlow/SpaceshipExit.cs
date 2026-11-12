@@ -20,6 +20,7 @@ public class SpaceshipExit : MonoBehaviour, ISpaceshipTravelConsumer
     private BoxCollider2D _blockingCollider;
     private ISpaceshipTravel _travel;
     private readonly HashSet<Collider2D> _nearPlayer = new();
+    
 
     public void BindSpaceshipTravel(ISpaceshipTravel travel) => _travel = travel;
 
