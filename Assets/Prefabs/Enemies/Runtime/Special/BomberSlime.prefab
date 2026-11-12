@@ -140,6 +140,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: BomberSlime
       objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.x
+      value: 0.16082317
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.y
+      value: 0.04018262
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.x
+      value: 0.00019909441
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.0063441093
+      objectReference: {fileID: 0}
     - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 5.12
@@ -169,11 +185,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4897135241100580137}
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
---- !u!70 &1656965079684577856 stripped
-CapsuleCollider2D:
-  m_CorrespondingSourceObject: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-  m_PrefabInstance: {fileID: 1342443860078511471}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3454110900219576946 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4417510083731572509, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
@@ -203,8 +214,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyExplosionAbility
   cooldown: 0.1
-  _bodyCollider: {fileID: 1656965079684577856}
+  _bodyCollider: {fileID: 8989135342126580219}
   activationRange: 0.3
   enemyTargeting: {fileID: 3454110900219576946}
   explosionDamage: 20
   explosionRadius: 1
+--- !u!60 &8989135342126580219 stripped
+PolygonCollider2D:
+  m_CorrespondingSourceObject: {fileID: 7934924057311380628, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+  m_PrefabInstance: {fileID: 1342443860078511471}
+  m_PrefabAsset: {fileID: 0}

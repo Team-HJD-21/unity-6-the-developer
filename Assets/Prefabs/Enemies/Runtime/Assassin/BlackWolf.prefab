@@ -136,6 +136,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: BlackWolf
       objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.x
+      value: 0.19602075
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.y
+      value: 0.09994494
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.02415352
+      objectReference: {fileID: 0}
+    - target: {fileID: 7934924057311380628, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 1.28
@@ -156,6 +176,10 @@ PrefabInstance:
       propertyPath: m_WasSpriteAssigned
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e57c6e31232725a4088ae4ff51961c1d, type: 2}
     - target: {fileID: 8944117523014349952, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 342289988
@@ -180,6 +204,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8095137201846823201}
+    - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7120489268976177164}
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
 --- !u!114 &3576063234121525837 stripped
 MonoBehaviour:
@@ -192,6 +219,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
+--- !u!60 &7129233356702362052 stripped
+PolygonCollider2D:
+  m_CorrespondingSourceObject: {fileID: 7934924057311380628, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+  m_PrefabInstance: {fileID: 931854335210630480}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7542723251226543163 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
@@ -210,7 +242,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAssassinAbility
   cooldown: 1
-  _bodyCollider: {fileID: 7808456900892805509}
+  _bodyCollider: {fileID: 7129233356702362052}
   activationRange: 0.5
   enemyTargeting: {fileID: 3576063234121525837}
   attackDamage: 12
@@ -266,8 +298,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2956277fb10478a890af8606d1cfc86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAssassinDamageRule
---- !u!61 &7808456900892805509 stripped
-BoxCollider2D:
-  m_CorrespondingSourceObject: {fileID: 6968100766545011925, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+--- !u!114 &7120489268976177164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7542723251226543163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4953794650ac496449ae677f7c841f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStealthVisual
+  spriteRenderer: {fileID: 8680322642003066561}
+  enemyDetection: {fileID: 4592527766516815806}
+  revealDuration: 1
+  stealthDuration: 2
+  detectedStealthAmount: 0.7
+  undetectedStealthAmount: 0.95
+--- !u!212 &8680322642003066561 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
   m_PrefabInstance: {fileID: 931854335210630480}
   m_PrefabAsset: {fileID: 0}
