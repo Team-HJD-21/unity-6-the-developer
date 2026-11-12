@@ -59,7 +59,7 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 기본총·냉각총의 `PlayerBullet.prefab`과 스나이퍼의 `SniperBullet.prefab`은 적뿐 아니라 벽·나무·포탑·CU·플레이어 설치물의 실제 본체 Collider에 닿으면 탄환을 제거하고, 해당 탄환에 이미 연결된 `PlayerProjectileView._impactPrefab`을 한 번 재생한다. 장애물에 피해를 주거나 물리 힘을 가하지 않는다. 스나이퍼는 기존 전용 명중 프리팹을 유지한다.
 
-전역 Bullet 충돌표는 바꾸지 않는다. 두 탄환 PolygonCollider2D의 `Include Layers`에 `Default`, `CU`, `Tower`, `Forest`를 추가한다. `Enemy`와 `PlayerFieldDevice`는 기존 충돌표를 사용한다. `Ground_1`은 포함하지 않고, Collider 또는 Rigidbody 소유자에 `Ground` 태그가 있는 경우에도 통과한다. `Player`·`Bullet` 태그의 자식 Collider와 적이 아닌 감지용 Trigger(포탑 사거리·상호작용 등)도 통과한다. 적 피격 Trigger는 기존 적중 대상으로 유지한다. Collider가 없는 장식은 탄환을 막지 않는다.
+전역 Bullet 충돌표는 바꾸지 않는다. 두 탄환 PolygonCollider2D의 `Include Layers`에 `Default`, `CU`, `Turret`, `Forest`를 추가한다. `Enemy`와 `PlayerFieldDevice`는 기존 충돌표를 사용한다. `Ground_1`은 포함하지 않고, Collider 또는 Rigidbody 소유자에 `Ground` 태그가 있는 경우에도 통과한다. `Player`·`Bullet` 태그의 자식 Collider와 적이 아닌 감지용 Trigger(포탑 사거리·상호작용 등)도 통과한다. 적 피격 Trigger는 기존 적중 대상으로 유지한다. Collider가 없는 장식은 탄환을 막지 않는다.
 
 `Initial_Stage`의 실제 지면 `Initial_Overworld_Base`는 `Default/Untagged`이므로 태그와 레이어만으로 제외할 수 없다. 기존 `PlayerTurretPlacementRules.FindGround(scene)`으로 찾은 지면 Tilemap의 Collider도 제외한다. 씬별 조회 결과를 공유하며 지면이 제거·비활성화되면 다시 찾고, 씬 언로드와 플레이 초기화 때 캐시를 비운다. 별도 `Environment_Obj`·`Environment_Base` 장애물 Tilemap은 제외하지 않는다.
 

@@ -492653,7 +492653,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4190711
+    m_Bits: 12579319
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -492786,7 +492786,7 @@ GameObject:
   - component: {fileID: 300471857}
   m_Layer: 0
   m_Name: Environment_Obj
-  m_TagString: Untagged
+  m_TagString: FieldTurretBulletObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -940311,7 +940311,7 @@ GameObject:
   - component: {fileID: 1992265210}
   m_Layer: 0
   m_Name: Environment_Base
-  m_TagString: Untagged
+  m_TagString: FieldTurretBulletObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

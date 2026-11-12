@@ -11,9 +11,8 @@ GameObject:
   - component: {fileID: 1659131349136534652}
   - component: {fileID: 909354653455416701}
   - component: {fileID: 896279948231493691}
-  - component: {fileID: 5267864021491188732}
   - component: {fileID: 9000000000000000210}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FieldCanonTurret LV1(Red)
   m_TagString: Tower
   m_Icon: {fileID: 0}
@@ -110,7 +109,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 701655428692059149}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: TargetPointLV1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -227,7 +226,8 @@ GameObject:
   - component: {fileID: 5542065184297001204}
   - component: {fileID: 9039057381650263844}
   - component: {fileID: 3979715056174189905}
-  m_Layer: 0
+  - component: {fileID: 9000000000000000220}
+  m_Layer: 13
   m_Name: Gun1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -331,7 +331,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 286097789958134540}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: RotationPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -365,7 +365,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3577476696653598682}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FiringPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -398,7 +398,8 @@ GameObject:
   - component: {fileID: 9166569530540480678}
   - component: {fileID: 400746095531740046}
   - component: {fileID: 1414287679336441884}
-  m_Layer: 0
+  - component: {fileID: 5267864021491188732}
+  m_Layer: 23
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -505,7 +506,7 @@ PolygonCollider2D:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 769347541509622616}
+  m_GameObject: {fileID: 8345819450356093735}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -564,7 +565,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3735823970655440404}
   - component: {fileID: 5496085443188878580}
-  m_Layer: 15
+  m_Layer: 2
   m_Name: Circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -650,4 +651,17 @@ SortingGroup:
   m_SortingLayer: 1
   m_SortingOrder: 0
   m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
+--- !u!210 &9000000000000000220
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5792964633695615367}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 3
+  m_SortAtRoot: 1
   m_Sort3DAs2D: 0

@@ -227,7 +227,7 @@ public sealed class PlayerBulletRuntimeTests
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         var hitbox = prefab.GetComponent<Collider2D>();
-        foreach (string layer in new[] { "Default", "CU", "Tower", "Forest" })
+        foreach (string layer in new[] { "Default", "CU", "Turret", "Forest" })
             Assert.That(hitbox.includeLayers.value & (1 << LayerMask.NameToLayer(layer)), Is.Not.Zero, layer);
         Assert.That(hitbox.includeLayers.value & (1 << LayerMask.NameToLayer("Ground_1")), Is.Zero);
         Assert.That(hitbox.isTrigger, Is.True, "Bullets must not push bodies through contact impulses.");
@@ -242,7 +242,7 @@ public sealed class PlayerBulletRuntimeTests
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Player/{variant.name}.prefab");
             var expectedImpact = new SerializedObject(prefab.GetComponent<PlayerProjectileView>())
                 .FindProperty("_impactPrefab").objectReferenceValue;
-            foreach (string layer in new[] { "Default", "CU", "Tower", "Forest", "PlayerFieldDevice" })
+            foreach (string layer in new[] { "Default", "CU", "Turret", "Forest", "PlayerFieldDevice" })
             {
                 var obstacle = CreateWorldObstacle(layer, "Untagged", false);
                 // 중복 접촉도 명중 이펙트 한 번으로 합쳐져야 합니다.
@@ -273,7 +273,7 @@ public sealed class PlayerBulletRuntimeTests
         CreateWorldObstacle("Default", "Ground", false);
         CreateWorldObstacle("Default", "Player", false);
         CreateWorldObstacle("Default", "Bullet", false);
-        CreateWorldObstacle("TowerRange", "Untagged", true);
+        CreateWorldObstacle("Turret", "Untagged", true);
         CreateWorldObstacle("PocInteractArea", "Untagged", true);
         Physics2D.SyncTransforms();
         PlayerBullet bullet = SpawnBullet(1f);

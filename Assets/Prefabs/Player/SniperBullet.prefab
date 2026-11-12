@@ -77,9 +77,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: -1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 576607ae21835c1697fa97b839e59a0c, type: 3}
   m_Color: {r: 0.9, g: 0.95, b: 1, a: 0.32}
@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 5823638767377678441}
   - component: {fileID: 910202610210000020}
   - component: {fileID: 910202610210000021}
+  - component: {fileID: 910202610210000022}
   m_Layer: 8
   m_Name: SniperBullet
   m_TagString: Bullet
@@ -174,9 +175,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 3155b1626824566085e4d495cd99dc58, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -324,3 +325,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _impactPrefab: {fileID: 1472180882990465003, guid: ccdb0ce1fb0c538c86e2c66b34926e26, type: 3}
+--- !u!210 &910202610210000022
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5527518119625726090}
+  m_Enabled: 1
+  m_SortingLayerID: -880326001
+  m_SortingLayer: 1
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0

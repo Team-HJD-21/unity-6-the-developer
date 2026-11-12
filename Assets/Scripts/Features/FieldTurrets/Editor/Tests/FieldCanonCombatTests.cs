@@ -96,6 +96,39 @@ public sealed class FieldCanonCombatTests
         Assert.That(Vector3.Distance(direction, target.transform.position.normalized), Is.LessThan(0.0001f));
     }
 
+    [Test]
+    public void FlightCastPlaysSharedImpactAtObstacleContact()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/FieldTurrets/Weapons/bullet.prefab");
+        var playerBullet = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerBullet.prefab");
+        var playerImpact = new SerializedObject(playerBullet.GetComponent<PlayerProjectileView>())
+            .FindProperty("_impactPrefab").objectReferenceValue;
+        Assert.That(playerImpact, Is.Not.Null);
+        Assert.That(new SerializedObject(prefab.GetComponent<FieldTurretBullet>())
+            .FindProperty("_impactPrefab").objectReferenceValue, Is.EqualTo(playerImpact));
+
+        var wall = Track(new GameObject("Cannon bullet obstacle"));
+        wall.tag = "FieldTurretBulletObstacle";
+        wall.transform.position = Vector3.right * 3f;
+        var wallCollider = wall.AddComponent<BoxCollider2D>();
+        var bulletObject = Track(Object.Instantiate(prefab, new Vector3(0f, 0f, 2f), Quaternion.identity));
+        var bullet = bulletObject.GetComponent<FieldTurretBullet>();
+        bullet.Initialize(wall.transform, 10f);
+        Physics2D.SyncTransforms();
+
+        var cast = typeof(FieldTurretBullet).GetMethod("TryHitFlightPath", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(cast.Invoke(bullet, new object[] { Vector2.right * 5f, 0f }), Is.True);
+        var impact = Track(Object.FindObjectsByType<PlayerSpriteEffect>(FindObjectsSortMode.None).Single().gameObject);
+        Assert.That(impact.scene, Is.EqualTo(bulletObject.scene));
+        Assert.That(impact.transform.position.x,
+            Is.EqualTo(wallCollider.bounds.min.x).Within(Physics2D.defaultContactOffset));
+        Assert.That(impact.transform.position.z, Is.EqualTo(2f));
+        var bulletRenderer = bulletObject.GetComponent<SpriteRenderer>();
+        var impactRenderer = impact.GetComponent<SpriteRenderer>();
+        Assert.That(impactRenderer.sortingLayerID, Is.EqualTo(bulletRenderer.sortingLayerID));
+        Assert.That(impactRenderer.sortingOrder, Is.EqualTo(bulletRenderer.sortingOrder + 1));
+    }
+
     private static Transform[] GetTransforms(DefaultFieldCanonTurret turret, string fieldName)
     {
         object value = turret.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(turret);
