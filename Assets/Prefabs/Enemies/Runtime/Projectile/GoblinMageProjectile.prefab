@@ -158,13 +158,33 @@ PrefabInstance:
       propertyPath: m_CollisionDetection
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 900752739775798925, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 508321626
+      objectReference: {fileID: 0}
     - target: {fileID: 2222045718711525339, guid: 257198211f7bafa43b411764aa64b329, type: 3}
       propertyPath: m_Name
       value: GoblinMageProjectile
       objectReference: {fileID: 0}
     - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: m_Size.x
+      value: 1.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: m_Size.y
+      value: 1.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 6484635530726100424, guid: 02ac407200e59474ebc168046c56f50e, type: 3}
+    - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910147088418355115, guid: 257198211f7bafa43b411764aa64b329, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4666856207976309227, guid: 257198211f7bafa43b411764aa64b329, type: 3}
       propertyPath: m_LocalScale.x
@@ -304,13 +324,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcaneOrbProjectile
   ShowTopMostFoldoutHeaderGroup: 1
+  lifetime: 5
+  minDepth: 65
+  maxDepth: 70
   projectileSpeed: 3.5
   rigidbody2D: {fileID: 6622900600400177096}
   collider2D: {fileID: 2450530720495810446}
   animator: {fileID: 1822982228780371541}
-  lifetime: 5
-  minDepth: 65
-  maxDepth: 70
   explosionEffectPrefab: {fileID: 1074975871139786742, guid: 65cb6e8d10711d34f8ca80065099c339, type: 3}
   slowMultiplier: 0.8
   slowDuration: 2
