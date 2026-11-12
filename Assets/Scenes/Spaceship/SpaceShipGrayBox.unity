@@ -393,8 +393,7 @@ PrefabInstance:
       propertyPath: m_SortingOrder
       value: 7
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 1225093662660725953, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -424,7 +423,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0191edb22369f47af920068be5075bfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceshipExit
-  returnSceneName: Initial_Stage
+  returnSceneName: Stage1
   originName: SpaceShipGrayBox
   returnTriggerName: exit
   returnPadding: 0.5
@@ -978,13 +977,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 791615047}
   m_SourcePrefab: {fileID: 100100000, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
 --- !u!4 &791615045 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1633647226807212968, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
   m_PrefabInstance: {fileID: 791615044}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &791615046 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+  m_PrefabInstance: {fileID: 791615044}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &791615047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 791615046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f374dcfe3923a41e5803a88d116bf23d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorOperation
 --- !u!4 &837999663 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1633647226807212968, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
@@ -1297,13 +1316,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1282669456}
   m_SourcePrefab: {fileID: 100100000, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
 --- !u!4 &1282669454 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1633647226807212968, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
   m_PrefabInstance: {fileID: 1282669453}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1282669455 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+  m_PrefabInstance: {fileID: 1282669453}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1282669456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1282669455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f374dcfe3923a41e5803a88d116bf23d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorOperation
 --- !u!1 &1324444788
 GameObject:
   m_ObjectHideFlags: 0
@@ -14026,13 +14065,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1491274977}
   m_SourcePrefab: {fileID: 100100000, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
 --- !u!4 &1491274975 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1633647226807212968, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
   m_PrefabInstance: {fileID: 1491274974}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1491274976 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+  m_PrefabInstance: {fileID: 1491274974}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1491274977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1491274976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f374dcfe3923a41e5803a88d116bf23d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorOperation
 --- !u!1 &1494457575
 GameObject:
   m_ObjectHideFlags: 0
@@ -15113,55 +15172,61 @@ Tilemap:
     second:
       serializedVersion: 2
       m_AnimatedSprites:
+      - {fileID: 0}
       - {fileID: 8561165561696189262, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
       - {fileID: 7069052982767505695, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
-      m_AnimationSpeed: 1
-      m_AnimationTimeOffset: 0
+      m_AnimationSpeed: 2.8382347
+      m_AnimationTimeOffset: 2
       m_Flags: 0
   - first: {x: 286, y: 315, z: 0}
     second:
       serializedVersion: 2
       m_AnimatedSprites:
+      - {fileID: 0}
       - {fileID: 8561165561696189262, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
       - {fileID: 7069052982767505695, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
-      m_AnimationSpeed: 1
-      m_AnimationTimeOffset: 0
+      m_AnimationSpeed: 1.37023
+      m_AnimationTimeOffset: 2
       m_Flags: 0
   - first: {x: 313, y: 317, z: 0}
     second:
       serializedVersion: 2
       m_AnimatedSprites:
+      - {fileID: 0}
       - {fileID: 8561165561696189262, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
       - {fileID: 7069052982767505695, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
-      m_AnimationSpeed: 1
-      m_AnimationTimeOffset: 0
+      m_AnimationSpeed: 1.1848795
+      m_AnimationTimeOffset: 2
       m_Flags: 0
   - first: {x: 313, y: 324, z: 0}
     second:
       serializedVersion: 2
       m_AnimatedSprites:
+      - {fileID: 0}
       - {fileID: 8561165561696189262, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
       - {fileID: 7069052982767505695, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
-      m_AnimationSpeed: 1
-      m_AnimationTimeOffset: 0
+      m_AnimationSpeed: 2.7293835
+      m_AnimationTimeOffset: 2
       m_Flags: 0
   - first: {x: 286, y: 326, z: 0}
     second:
       serializedVersion: 2
       m_AnimatedSprites:
+      - {fileID: 0}
       - {fileID: 8561165561696189262, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
       - {fileID: 7069052982767505695, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
-      m_AnimationSpeed: 1
-      m_AnimationTimeOffset: 0
+      m_AnimationSpeed: 1.1371903
+      m_AnimationTimeOffset: 2
       m_Flags: 0
   - first: {x: 286, y: 333, z: 0}
     second:
       serializedVersion: 2
       m_AnimatedSprites:
+      - {fileID: 0}
       - {fileID: 8561165561696189262, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
       - {fileID: 7069052982767505695, guid: 6ddfe0d3a7eaa45f292cc1dc567b3e30, type: 3}
-      m_AnimationSpeed: 1
-      m_AnimationTimeOffset: 0
+      m_AnimationSpeed: 1.8703797
+      m_AnimationTimeOffset: 2
       m_Flags: 0
   m_TileAssetArray:
   - m_RefCount: 78
@@ -62780,8 +62845,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2914670816175973090}
   m_SourcePrefab: {fileID: 100100000, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+--- !u!1 &2914670816175973089 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6763948363702064713, guid: 30033e0aa302d4c9ab783d46fb9d324d, type: 3}
+  m_PrefabInstance: {fileID: 2914670816175973088}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2914670816175973090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2914670816175973089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f374dcfe3923a41e5803a88d116bf23d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorOperation
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
