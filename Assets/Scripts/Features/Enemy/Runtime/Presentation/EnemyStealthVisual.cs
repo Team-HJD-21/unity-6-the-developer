@@ -15,13 +15,15 @@ public sealed class EnemyStealthVisual : MonoBehaviour
     [SerializeField, Min(0f)] private float stealthDuration = 2f;
     
     [SerializeField, Range(0f, 1f)]
-    private float detectedStealthAmount = 0.7f;
+    private float detectedStealthAmount = 0.6f;
     [SerializeField, Range(0f, 1f)]
     private float undetectedStealthAmount = 0.95f;
     
     private MaterialPropertyBlock _propertyBlock;
     private float _currentStealthAmount;
     private float _targetStealthAmount;
+    private float _transitionStartAmount;
+    private float _transitionElapsed;
 
     private void Awake()
     {
@@ -40,6 +42,8 @@ public sealed class EnemyStealthVisual : MonoBehaviour
 
         _currentStealthAmount = enemyDetection.IsDetected ? detectedStealthAmount : undetectedStealthAmount;
         _targetStealthAmount = _currentStealthAmount;
+        _transitionStartAmount = _currentStealthAmount;
+        _transitionElapsed = 0f;
         ApplyStealthAmount();
     }
 
@@ -53,7 +57,7 @@ public sealed class EnemyStealthVisual : MonoBehaviour
         if (Mathf.Approximately(_currentStealthAmount, _targetStealthAmount))
             return;
 
-        float duration = _targetStealthAmount < _currentStealthAmount
+        float duration = _targetStealthAmount < _transitionStartAmount
             ? revealDuration
             : stealthDuration;
 
@@ -63,10 +67,13 @@ public sealed class EnemyStealthVisual : MonoBehaviour
         }
         else
         {
-            _currentStealthAmount = Mathf.MoveTowards(
-                _currentStealthAmount,
+            _transitionElapsed += Time.deltaTime;
+
+            float progress = Mathf.Clamp01(_transitionElapsed / duration);
+            _currentStealthAmount = Mathf.Lerp(
+                _transitionStartAmount,
                 _targetStealthAmount,
-                Time.deltaTime / duration);
+                progress);
         }
 
         ApplyStealthAmount();
@@ -74,7 +81,9 @@ public sealed class EnemyStealthVisual : MonoBehaviour
 
     private void OnDetectionChanged(bool isDetected)
     {
+        _transitionStartAmount = _currentStealthAmount;
         _targetStealthAmount = isDetected ? detectedStealthAmount : undetectedStealthAmount;
+        _transitionElapsed = 0f;
     }
 
     private void ApplyStealthAmount()
