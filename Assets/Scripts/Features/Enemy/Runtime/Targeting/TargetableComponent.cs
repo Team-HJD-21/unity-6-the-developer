@@ -4,12 +4,15 @@ using TeamHJD.Game.FieldTurrets.Contracts;
 
 /// <summary>
 /// 플레이어와 터렛을 <see cref="ITargetable"/>로 연결하는 타깃 상태 컴포넌트다.
-/// 타깃 유형과 체력, 화력 상태를 점수 계산에 사용할 수 있는 형태로 제공한다.
+/// 타깃 유형과 체력·화력 상태, 분대가 배정한 공격 인원을 제공한다.
 /// </summary>
 public class TargetableComponent : MonoBehaviour, ITargetable
 {
     [Header("타깃 설정")]
     [SerializeField] private TargetType targetType;
+
+    [Header("공격 인원 제한")]
+    [SerializeField, Min(1)] private int maxAttackers = 10;
 
     [Header("체력")]
     [SerializeField] private float maxHealth;
@@ -19,6 +22,8 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     [SerializeField, Min(0f)] private float firepowerEfficiency;
 
     private bool _wasTargetable;
+    // 사거리 안에 도착한 수가 아니라 분대가 목표로 배정한 집계 대상의 합이다.
+    private int _assignedAttackerCount;
 
     /// <summary>타깃 가능한 상태에서 불가능한 상태로 전환되면 발생한다.</summary>
     public event Action<ITargetable> TargetabilityLost;
@@ -47,12 +52,47 @@ public class TargetableComponent : MonoBehaviour, ITargetable
 
 
     /// <summary>
-    /// 점수 계산에 사용할 타깃 종류를 반환한다.
+    /// 플레이어 또는 터렛으로 구분하는 타깃 종류를 반환한다.
     /// </summary>
     public TargetType TargetType => targetType;
 
+    /// <summary>이 타깃에 배정할 수 있는 최대 적 인원을 반환한다.</summary>
+    public int MaxAttackers => maxAttackers;
+
+    /// <summary>이동 중인 적을 포함해 이 타깃에 배정된 전체 집계 인원을 반환한다.</summary>
+    public int AssignedAttackerCount => _assignedAttackerCount;
+
+    /// <summary>최대 공격 인원을 넘지 않으면 요청한 인원을 배정한다.</summary>
+    /// <param name="count">새로 배정할 양수 인원.</param>
+    /// <returns>요청 인원 전체를 배정했으면 true. 실패하면 현재 인원을 유지한다.</returns>
+    public bool TryAssignAttackers(int count)
+    {
+        if (!CanBeTargeted || count <= 0)
+            return false;
+
+        int remaining = MaxAttackers - _assignedAttackerCount;
+
+        if (count > remaining)
+            return false;
+
+        _assignedAttackerCount += count;
+        return true;
+    }
+
+    /// <summary>분대가 반환한 배정 인원을 해제한다.</summary>
+    /// <param name="count">해당 분대가 이전에 배정했던 인원 중 반환할 수.</param>
+    public void UnassignAttackers(int count)
+    {
+        if (count <= 0)
+            return;
+
+        // 타깃이 불가능해진 뒤에도 분대가 기존 배정을 반환할 수 있다.
+        _assignedAttackerCount =
+            Mathf.Max(0, _assignedAttackerCount - count);
+    }
+
     /// <summary>
-    /// 점수 계산에 사용할 타깃 종류를 지정한다.
+    /// 어댑터가 연결하는 실제 대상의 타깃 종류를 지정한다.
     /// </summary>
     /// <param name="type">설정할 타깃 종류.</param>
     public void SetTargetType(TargetType type)

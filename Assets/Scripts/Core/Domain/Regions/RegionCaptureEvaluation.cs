@@ -11,14 +11,19 @@ namespace TeamHJD.Game.Domain
         public IReadOnlyList<int> CellIndices { get; }
         public BattlefieldSpatialSnapshot Geometry { get; }
         public int DuplicatePositionCount { get; }
+        public int InitialCellCount { get; }
+        public int DisconnectedCellCount { get; }
 
         internal RegionCaptureEvaluation(RegionGridDefinition definition, List<int> cells,
-            BattlefieldSpatialSnapshot geometry, int duplicatePositionCount)
+            BattlefieldSpatialSnapshot geometry, int duplicatePositionCount,
+            int initialCellCount = 0, int disconnectedCellCount = 0)
         {
             Definition = definition;
             CellIndices = new ReadOnlyCollection<int>(new List<int>(cells));
             Geometry = geometry;
             DuplicatePositionCount = duplicatePositionCount;
+            InitialCellCount = initialCellCount;
+            DisconnectedCellCount = disconnectedCellCount;
         }
     }
 }

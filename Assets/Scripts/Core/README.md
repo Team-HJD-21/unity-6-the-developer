@@ -1,5 +1,7 @@
 # Core 사용 안내
 
+**2026-11-12 추가:** [CU 시작 셀·동적 점유 연결 결과](../../../Docs/01_planning/02_implementation-records/2026/11/2026-11-12-cu-connected-regions-results.md)와 [호출 API](../../../Docs/02_architecture/01_core/core-sprint-region-and-request-api.md#cu-시작-영역-설정과-저장)를 참고하세요. 실제 점유는 CU에서 4방향으로 연결된 지역 Grid 셀이며, Host의 시작 셀 편집은 Game Debugger에서 명시 Reset으로 적용합니다. 전체 전장 저장·Enemy 스폰 제한 완료와 구분합니다.
+
 
 **2026-11-11 추가:** [Client 낮밤 잔여시간](../../../Docs/02_architecture/09_world/day-night-api.md)과 [로컬 CameraManager·컷씬 사용법](../../../Docs/02_architecture/03_scene-flow/camera-manager-api.md)을 참고하세요. 카메라는 같은 출력 객체를 유지하며 `PushView`의 반환 lease로 복귀합니다. 아래 11월 5일 검증/PR 전 표기는 당시 기록이고, 최신 완료 범위는 각 리뷰 문서에서 구분합니다.
 

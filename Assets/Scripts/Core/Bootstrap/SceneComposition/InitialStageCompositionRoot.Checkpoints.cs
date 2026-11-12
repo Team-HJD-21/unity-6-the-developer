@@ -32,7 +32,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             MatchId match = session.Config.MatchId;
             var required = new HashSet<string>(StringComparer.Ordinal)
             {
-                "core/random", "world/spatial", "world/control-unit", "world/field-turrets", "world/enemies", "world/encounter"
+                "core/random", "world/spatial", "world/region-start", "world/control-unit", "world/field-turrets", "world/enemies", "world/encounter"
             };
             if (_weatherSource != null)
                 required.Add("world/weather");
@@ -95,6 +95,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void FinishCheckpointRestore()
         {
+            _regionBinding.RefreshDynamicAfterRestore();
             _restoringCheckpoint = false;
             OnTurretLayoutChanged();
             RefreshDynamicInput();

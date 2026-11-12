@@ -19,7 +19,7 @@
 | UI와 Scene | 기존 View/Asset, `ScreenManager`, `SceneFlowController` | 로컬 메뉴, 결과/로딩, App 게임 이동. Match 임시 정지와 Scene 교체를 구분 |
 | 저장 | 각 Feature의 `.Checkpoint.cs` | 같은 프레임 캡처, binary IO, 준비→적용→참조 연결, 실패 복구, 필수 writer 누락 검사 |
 
-`MatchState`의 기초 Player/CU 수치가 실제 Feature HP를 대체하지 않는다. HUD·피해·저장은 해당 Feature 원본을 읽는다. Player 사망을 어떤 실패/부활 정책으로 처리할지는 별도 기획이다.
+`MatchState`의 기초 Player/CU 수치가 실제 Feature HP를 대체하지 않는다. HUD·피해·저장은 해당 Feature 원본을 읽는다. Player 사망은 [11/12 확정 배치](../../01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md)의 협동 구조·공용 예산·안전장치 정책을 따른다. 기존 상호작용 입력 3초/HP 30%와 팀 공용 60초는 승인한 시험값이다. Player 구조 성공 API와 실제 상태/입력/저장 연결은 아직 구현·통보·검증 대상이며 기존 코드가 이미 제공하는 기능으로 해석하지 않는다.
 
 ## 생성부터 종료까지
 

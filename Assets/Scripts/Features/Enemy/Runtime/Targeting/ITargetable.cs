@@ -20,6 +20,21 @@ public interface ITargetable
     /// </summary>
     TargetType TargetType { get; }
 
+    /// <summary>이동 중인 적을 포함해 이 타깃에 배정할 수 있는 최대 집계 인원을 반환한다.</summary>
+    int MaxAttackers { get; }
+
+    /// <summary>모든 분대가 이 타깃에 배정한 집계 대상 인원의 합을 반환한다.</summary>
+    int AssignedAttackerCount { get; }
+
+    /// <summary>수용 가능한 경우 요청한 인원을 배정한다.</summary>
+    /// <param name="count">추가할 양수 인원. 제외 대상은 이 호출에서 집계하지 않는다.</param>
+    /// <returns>타깃이 유효하고 요청한 인원 전체를 배정했으면 true.</returns>
+    bool TryAssignAttackers(int count);
+
+    /// <summary>기존에 배정된 인원을 해제한다.</summary>
+    /// <param name="count">호출자가 이전에 배정했던 인원 중 반환할 수.</param>
+    void UnassignAttackers(int count);
+
     /// <summary>
     /// 현재 체력 비율을 0에서 1 사이로 반환한다.
     /// </summary>

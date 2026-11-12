@@ -16,6 +16,10 @@ public sealed class EnemySummonGenerator : NetworkBehaviour
     /// <summary>
     /// 서버에서 소환 정의의 몬스터를 생성하고 분대 규칙에 맞게 등록한 실제 수를 반환한다.
     /// </summary>
+    /// <param name="definition">생성 프리팹과 분대·집계 설정을 제공하는 정의.</param>
+    /// <param name="count">요청한 소환 수.</param>
+    /// <param name="target">생성 직후 분대가 공유할 초기 타깃.</param>
+    /// <returns>네트워크 생성과 분대 등록에 성공한 수.</returns>
     public int Spawn(
         EnemyDefinition definition,
         int count,
@@ -62,7 +66,8 @@ public sealed class EnemySummonGenerator : NetworkBehaviour
             EnemySquad squad = sharedSquad ??
                 new EnemySquad(definition.SquadMode, definition.TargetRule, target);
 
-            if (!controller.JoinSquad(squad))
+            // 봄버의 집계 제외 설정도 Definition에서 전달하며 분대 등록은 유지한다.
+            if (!controller.JoinSquad(squad, definition.IsIncludedInAttackerLimit))
             {
                 networkObject.Despawn();
                 continue;

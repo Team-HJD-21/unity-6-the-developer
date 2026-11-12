@@ -17,3 +17,4 @@ MonoBehaviour:
   _spawnCost: 1
   _squadMode: 0
   _targetRule: 0
+  _isIncludedInAttackerLimit: 0

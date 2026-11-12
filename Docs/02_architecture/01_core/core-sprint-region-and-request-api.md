@@ -2,6 +2,8 @@
 
 기준: 2026-10-15 작업 브랜치. [배치/증거/잔여](../../99_archive/planning-links/2026-10-15-core-sprint-implementation.md) · [공통 규약](core-api-usage.md)
 
+**11/12 Core 전용 보강:** Dynamic은 CU 위치를 노드로 포함하고 CU 1셀 기본 시작 영역에서 4방향으로 연결된 투영 셀만 점유한다. 아래 새 API는 Core 내부 구현이며 Enemy 일반 스폰 차단·정적 60초 확보/상실·실제 보스/협동 구조를 구현했다는 뜻은 아니다. 그 연결은 [확정 배치](../../01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md)의 승인 범위를 따른다.
+
 ## 지역 데이터와 실제 연결
 
 2026-10-26 초기화 연결: Scene 준비 검사는 CU·Controller 일치/활성·Grid 범위를 읽기 전용으로 확인한다. Host 조립은 FieldTurret Match lease → MatchSession 시작 → `ConfigureUnlockZones(cuPosition)` → Core RegionAccessPolicy 연결 순서다. Inspector `unlockZoneCount`를 사용하며 false/예외를 무시하지 않고 조립을 rollback한다. Dynamic 시작은 설정을 검증하지만 정적 잠금을 적용하지 않는다. Client는 이 초기화를 실행하지 않고 Host의 지역 snapshot을 연결한다. 모드 Reset 이후 변경은 RegionRuntime 하나를 통해 쓰며 FieldTurret의 구역 API를 다시 호출하지 않는다.
@@ -11,6 +13,9 @@
 | `MatchSession.InitializeRegions(definition, mode)` | 한 번 생성. Match가 Runtime을 소유하며 조회 Port 반환 |
 | `session.Regions.Snapshot` / `Changed` | 불변 확정 결과/변경 통지 |
 | `RegionSceneBinding.ResetPolicy(mode, true)` | 확인 후 새 Grid 세대로 Reset. 미확인 요청은 거부 |
+| `binding.TrySetDynamicStartCells(cells, true, out error)` | Host Dynamic에서 명시 시작 셀을 적용하고 새 Grid 세대로 점유 Reset. null/빈 목록은 CU 1셀 기본값 |
+| `binding.CaptureDynamicStartCells()` | 현재 override의 방어적 복사. 빈 배열은 자동 CU 기본값 |
+| `binding.LastDynamicError` / `LastEvaluation` | 설정 오류·CU 시작 셀 수·연결 제외 셀 수·임시 기하 진단 |
 | `RegionSceneBinding.TryUnlockThroughZone(zone)` | 정적 해금의 Core 쓰기 경로 |
 | `FieldTurretController.Regions` | HUD/Feature의 읽기 Port. 바인딩 없으면 null |
 | `RegionGridReplica.Apply(frame, senderIsVerifiedServer)` | Client 읽기 모델. 실제 서버 검증은 전송 어댑터 책임 |
@@ -24,9 +29,13 @@
 ```mermaid
 flowchart LR
   S[정적 CU 구역] --> R[Match 지역 Grid]
-  T[활성·비파괴 터렛] --> G[임시 들로네 삼각형]
+  CU[CU 위치 노드] --> G[임시 들로네 삼각형]
+  T[활성·비파괴 터렛] --> G
   G --> C[양의 면적으로 겹치는 셀]
-  C --> R
+  CU --> Seed[CU 1셀 또는 명시 시작 셀]
+  C --> Connected[시작 거점과 4방향 연결]
+  Seed --> Connected
+  Connected --> R
   R --> D[황재동 지역 접근]
   R --> H[HUD]
   R --> E[Editor 표시]
@@ -34,6 +43,25 @@ flowchart LR
 ```
 
 위 S와 T 경로는 선택한 모드 하나만 실행한다. Dynamic은 지역 잠금 없이 활성화로 점령한다. OFF·파괴 시 현재 입력으로 다시 계산해 점령을 회수하지만 남은 터렛의 활성/전력 예약은 유지한다. 과열은 OFF가 아니므로 점을 제거하지 않는다. 삼각형 자체는 정확한 점유영역이 아니며 최종 결과는 셀 집합이다.
+
+### CU 시작 영역 설정과 저장
+
+CU는 위치만 제공하며 터렛의 HP/전력/활성 원본을 공유하지 않는다. 기본은 CU 셀 하나이고 CU+활성 터렛 2개가 서로 다른 비공선 위치이면 삼각형을 만들 수 있다. 명시 시작 셀은 현재 Grid의 `y * CellsX + x` 인덱스이며 CU 셀을 포함하고 상하좌우로 연결돼야 한다. 범위 밖 CU/셀·단절 시작 영역은 거부하고 기존 점유를 임의로 이동시키지 않는다. 물·이동 불가 마스크는 이후 P1/Level 대상 셀 계약이 필요하며 현재 기하 Grid 검사를 통행 가능 판정으로 취급하지 않는다.
+
+```csharp
+// 현재 Host의 Dynamic Match에서 맵/도구가 명시 시작 영역을 적용하는 예시입니다.
+var definition = binding.Source.Snapshot.Definition;
+int first = definition.GetCellIndex(cuCellX, cuCellY);
+int neighbor = definition.GetCellIndex(cuCellX + 1, cuCellY); // 실제 Grid 안의 4방향 인접 셀을 사용
+if (!binding.TrySetDynamicStartCells(new[] { first, neighbor }, true, out string error))
+    Debug.LogWarning(error);
+```
+
+Game Debugger의 **Battlefield → 지역 Grid → 동적 시작 영역 · Host 설정**에서 X/Y 목록을 편집하고 명시 Reset으로 적용한다. 빈 목록은 CU 1셀 기본값이다. 초안 편집 중에는 실제 점유를 바꾸지 않는다. Client는 Host가 보낸 결과만 표시한다. 정책/Grid Reset은 override를 지우고 새 정의의 CU 기본 셀에서 다시 시작하며, `TrySetDynamicStartCells`는 해당 설정으로 새 Grid 세대를 만든다.
+
+설정은 `world/region-start` v1 writer로 저장하며 기존 `world/spatial` v1 형식은 바꾸지 않는다. 시작 설정→공간 정의→실제 actor 순서로 복원한 뒤 `InitialStageCompositionRoot.FinishCheckpointRestore`가 `RefreshDynamicAfterRestore()`를 호출해 최종 점유를 재계산한다. 이 공개 함수는 복원 조립용이며 일반 Feature가 매 프레임 호출하는 API가 아니다.
+
+새 Scene 조립은 `world/region-start`를 필수 저장 참여자로 요구한다. 해당 section이 없는 옛 checkpoint는 상태 적용 전에 거부하며 조용히 기본값으로 대체하지 않는다. 실제 Weather writer 등 다른 필수 원본이 없다면 전체 저장은 여전히 차단된다. 시작 설정 writer 자체의 왕복 확인을 전체 전장 Save 완료로 표시하지 않는다.
 
 GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revision은 같은 Grid 안의 변경 순서다. MatchDescriptorId는 같은 Match ID라도 다른 준비 시도와 분리한다. Client 모델은 이전 준비·이전 Grid 세대·과거 revision 및 동일 revision의 상충 결과를 거부한다. 실제 NGO/UTP의 초기·변경·Reset·종료/재시작 검사와 Windows 두 실행 파일의 Initial_Stage 지역 수신·정적/동적 점령·회수·재시작 검사를 통과했다. 원격 Feature 명령과 전체 협동 전투 완료를 뜻하지 않는다.
 

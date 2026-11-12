@@ -7,6 +7,7 @@ using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
 
 namespace TeamHJD.Game.Domain
 {
@@ -174,7 +175,8 @@ namespace TeamHJD.Game.Domain
             {
                 if (string.IsNullOrWhiteSpace(point.SpawnPointId) || targetPositions.ContainsKey(point.SpawnPointId))
                     continue;
-                if (!EnemyTargetQuery.TryFindNearest(point.Position, targets, TargetType.Turret, out ITargetable target))
+                // 편성 판단용 기준 터렛 조회이므로 공격 인원을 전달하지 않아 포화도는 검사하지 않는다.
+                if (!RuntimeTargetSelector.TryFindNearest(point.Position, targets, TargetType.Turret, out ITargetable target))
                     continue;
 
                 Vector3 position = target.TargetTransform.position;
