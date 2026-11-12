@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d1514134bc4fbd41bb739b1b9a49231, type: 3}
+  m_Script: {fileID: 11500000, guid: a0e766ed96314dfb87983f68912b48d4, type: 3}
   m_Name: intail_Stage_WEdge
-  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.RuleTile
+  m_EditorClassIdentifier: Assembly-CSharp::Stage1WaterEdgeRuleTile
   m_DefaultSprite: {fileID: 1724526460, guid: 2721a57ecf5f07d41bfd1a187268392e, type: 3}
   m_DefaultGameObject: {fileID: 0}
   m_DefaultColliderType: 1
