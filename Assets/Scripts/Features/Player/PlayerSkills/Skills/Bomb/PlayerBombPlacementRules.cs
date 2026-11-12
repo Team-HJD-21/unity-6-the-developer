@@ -23,7 +23,7 @@ public static class PlayerBombPlacementRules
             // 몬스터는 플레이어와의 충돌 행렬에 관계없이 설치 공간을 점유합니다.
             if (layer == LayerMask.NameToLayer("Enemy") || hit.GetComponentInParent<EnemyHealth>() != null)
                 return PlayerBombPlacementResult.OverlapsEnemy;
-            if (layer == LayerMask.NameToLayer("PlayerFeetBox") || hit.GetComponentInParent<PlayerInfo>() != null ||
+            if (layer == LayerMask.NameToLayer("Player") || hit.GetComponentInParent<PlayerInfo>() != null ||
                 hit.GetComponentInParent<PlayerTurret>() != null ||
                 hit.GetComponentInParent<TeamHJD.Game.FieldTurrets.FieldTurretBase>() != null)
                 return PlayerBombPlacementResult.BlockedByObstacle;
@@ -58,7 +58,7 @@ public static class PlayerBombPlacementRules
     }
 
     private static bool IsBulletLayer(int layer) => layer == LayerMask.NameToLayer("Bullet")
-        || layer == LayerMask.NameToLayer("EmenyBullet") || layer == LayerMask.NameToLayer("PlayerHitBox");
+        || layer == LayerMask.NameToLayer("EmenyBullet") || layer == LayerMask.NameToLayer("PlayerBulletCollider");
 
     private static bool IsFinite(Vector3 value) =>
         float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);

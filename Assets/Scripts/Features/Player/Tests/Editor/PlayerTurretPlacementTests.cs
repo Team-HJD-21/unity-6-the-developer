@@ -23,7 +23,7 @@ public sealed class PlayerTurretPlacementTests
         _prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
         _player = CreateObject("Player");
         _player.transform.position = _origin;
-        _player.layer = LayerMask.NameToLayer("PlayerFeetBox");
+        _player.layer = LayerMask.NameToLayer("Player");
 
         GameObject grid = CreateObject("Ground grid");
         grid.transform.position = _origin;
@@ -99,7 +99,7 @@ public sealed class PlayerTurretPlacementTests
         Assert.That(CanPlace(_origin), Is.True);
     }
 
-    [TestCase("PlayerFeetBox", PlayerTurretPlacementResult.OverlapsPlayer)]
+    [TestCase("Player", PlayerTurretPlacementResult.OverlapsPlayer)]
     [TestCase("Enemy", PlayerTurretPlacementResult.OverlapsEnemy)]
     public void ActorChildBodyBlocksPlacement_RegardlessOfCollisionMatrix(string layer, PlayerTurretPlacementResult expected)
     {
@@ -119,8 +119,8 @@ public sealed class PlayerTurretPlacementTests
 
     [TestCase("Bullet")]
     [TestCase("EmenyBullet")]
-    [TestCase("PlayerHitBox")]
-    public void ProjectileAndHitBoxLayersDoNotBlockPlacement(string layer)
+    [TestCase("PlayerBulletCollider")]
+    public void BulletLayersDoNotBlockPlacement(string layer)
     {
         GameObject bullet = CreateObject("Nonblocking projectile");
         bullet.layer = LayerMask.NameToLayer(layer);
@@ -130,7 +130,7 @@ public sealed class PlayerTurretPlacementTests
         Assert.That(CanPlace(_origin), Is.True);
     }
 
-    [TestCase("PlayerFeetBox", PlayerTurretPlacementResult.OverlapsPlayer)]
+    [TestCase("Player", PlayerTurretPlacementResult.OverlapsPlayer)]
     [TestCase("Enemy", PlayerTurretPlacementResult.OverlapsEnemy)]
     public void OccupiedPlacementPreservesInventoryAndCooldown_AndCanSucceedAfterActorMoves(string layer, PlayerTurretPlacementResult expected)
     {
@@ -140,7 +140,7 @@ public sealed class PlayerTurretPlacementTests
         Assert.That(skill.TryConfirmPlacement(_origin), Is.False);
         Assert.That(skill.IsPlacing, Is.True);
         Assert.That(skill.PlacementFeedback, Is.EqualTo(expected));
-        Assert.That(PlayerSkillDescriptions.TurretPlacementFailure(expected), Does.Contain(layer == "PlayerFeetBox" ? "플레이어" : "몬스터"));
+        Assert.That(PlayerSkillDescriptions.TurretPlacementFailure(expected), Does.Contain(layer == "Player" ? "플레이어" : "몬스터"));
         Assert.That(skill.AvailableCount, Is.EqualTo(3));
         Assert.That(skill.CurrentCooldownTimer, Is.Zero);
         actor.transform.position += Vector3.right * 8f;
@@ -278,7 +278,7 @@ public sealed class PlayerTurretPlacementTests
         SceneManager.MoveGameObjectToScene(turret, _scene);
         turret.GetComponent<PlayerTurret>().enabled = false;
         int deviceLayer = LayerMask.NameToLayer("PlayerFieldDevice");
-        int playerLayer = LayerMask.NameToLayer("PlayerFeetBox");
+        int playerLayer = LayerMask.NameToLayer("Player");
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         bool ignoredPlayer = Physics2D.GetIgnoreLayerCollision(deviceLayer, playerLayer);
         bool ignoredEnemy = Physics2D.GetIgnoreLayerCollision(deviceLayer, enemyLayer);
@@ -340,7 +340,7 @@ public sealed class PlayerTurretPlacementTests
         GameObject actor = CreateObject("Occupying " + layer);
         actor.transform.position = position;
         actor.layer = LayerMask.NameToLayer(layer);
-        if (layer == "PlayerFeetBox") actor.AddComponent<PlayerInfo>().enabled = false;
+        if (layer == "Player") actor.AddComponent<PlayerInfo>().enabled = false;
         else
         {
             actor.AddComponent<Unity.Netcode.NetworkObject>();

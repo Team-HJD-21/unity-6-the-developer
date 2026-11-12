@@ -22,7 +22,7 @@ public sealed class PlayerDashRuntimeTests
         _keyboard = InputSystem.AddDevice<Keyboard>();
         _player = new GameObject("Dash test player");
         _player.SetActive(false);
-        _player.layer = LayerMask.NameToLayer("PlayerFeetBox");
+        _player.layer = LayerMask.NameToLayer("Player");
         _player.transform.position = new Vector3(14000, 14000);
         _body = _player.AddComponent<Rigidbody2D>();
         _body.gravityScale = 0;

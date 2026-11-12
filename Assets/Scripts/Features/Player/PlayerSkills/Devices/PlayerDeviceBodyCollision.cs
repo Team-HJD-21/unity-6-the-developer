@@ -16,16 +16,16 @@ public sealed class PlayerDeviceBodyCollision : MonoBehaviour
     {
         RestoreCollisions();
         if (_bodies == null) return;
-        int feetMask = LayerMask.GetMask("PlayerFeetBox");
-        if (feetMask == 0) return;
+        int playerLayer = LayerMask.NameToLayer("Player");
+        if (playerLayer < 0) return;
         Physics2D.SyncTransforms();
         var players = new HashSet<PlayerInputHandler>();
         foreach (var body in _bodies)
         {
             if (body == null || !body.isActiveAndEnabled) continue;
-            foreach (var hit in Physics2D.OverlapBoxAll(body.bounds.center, body.bounds.size, 0f, feetMask))
+            foreach (var hit in Physics2D.OverlapBoxAll(body.bounds.center, body.bounds.size, 0f, 1 << playerLayer))
             {
-                if (!IsPlayerBody(hit) || !body.Distance(hit).isOverlapped) continue;
+                if (hit.isTrigger || !body.Distance(hit).isOverlapped) continue;
                 var player = hit.GetComponentInParent<PlayerInputHandler>();
                 if (player != null) players.Add(player);
             }
@@ -77,8 +77,7 @@ public sealed class PlayerDeviceBodyCollision : MonoBehaviour
         }
     }
 
-    private static bool IsPlayerBody(Collider2D collider) => collider != null && !collider.isTrigger &&
-        collider.gameObject.layer == LayerMask.NameToLayer("PlayerFeetBox");
+    private static bool IsPlayerBody(Collider2D collider) => collider != null && !collider.isTrigger;
 
     public Vector2 ClosestPoint(Vector2 origin)
     {

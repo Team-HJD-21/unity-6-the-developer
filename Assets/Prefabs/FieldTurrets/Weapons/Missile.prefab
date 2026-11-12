@@ -384,7 +384,7 @@ MonoBehaviour:
   rb: {fileID: 5152064728928936489}
   enemyMask:
     serializedVersion: 2
-    m_Bits: 16777216
+    m_Bits: 128
   animator: {fileID: 7265750388774410434}
   explodePrefab: {fileID: 1969113204059454481, guid: 8f3d988447fc37041919473ba266a7e2, type: 3}
   explosionPosition: {fileID: 1343882165474493921}

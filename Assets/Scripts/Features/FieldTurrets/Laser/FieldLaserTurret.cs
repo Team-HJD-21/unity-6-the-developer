@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -199,7 +198,7 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
             return;
 
         var filter = new ContactFilter2D { useTriggers = Physics2D.queriesHitTriggers };
-        filter.SetLayerMask(FieldTurretTargetingUtility.EnemyHitBoxMask);
+        filter.SetLayerMask(EnemyMask);
         Vector2 center = (Vector2)_beamOrigin + _beamDirection * (_beamLength * 0.5f);
         Physics2D.OverlapBox(center, new Vector2(beamWidth, _beamLength), _beamAngle, filter, _hits);
         _damagedEnemies.Clear();

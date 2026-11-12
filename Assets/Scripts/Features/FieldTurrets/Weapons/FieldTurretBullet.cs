@@ -1,7 +1,6 @@
 // 기존 탄환 피해·방향을 유지하고 수명/이동을 소유 Match의 필드 시간으로 진행합니다.
 using System;
 using System.Collections.Generic;
-using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -21,13 +20,15 @@ public partial class FieldTurretBullet : MonoBehaviour
     private double _expiresAt;
     private Collider2D _hitbox;
     private ContactFilter2D _flightFilter;
+    private int _enemyLayer;
     private readonly List<RaycastHit2D> _flightHits = new(4);
 
     private void Awake()
     {
         _hitbox = GetComponent<Collider2D>();
-        _flightFilter = new ContactFilter2D { useTriggers = true };
-        _flightFilter.SetLayerMask(FieldTurretTargetingUtility.TerrainObstacleMask | FieldTurretTargetingUtility.EnemyHitBoxMask);
+        _enemyLayer = LayerMask.NameToLayer("Enemy");
+        _flightFilter = new ContactFilter2D { useTriggers = false };
+        _flightFilter.SetLayerMask(LayerMask.GetMask("Default", "Forest", "Enemy"));
     }
 
     public void Initialize(Transform target, float damage)
@@ -83,8 +84,8 @@ public partial class FieldTurretBullet : MonoBehaviour
             Collider2D collider = hit.collider;
             if (collider == null || collider.gameObject.scene != gameObject.scene) continue;
 
-            bool blocksBullet = !collider.isTrigger && collider.CompareTag(FieldTurretTargetingUtility.TerrainObstacleTag);
-            EnemyHealth enemy = FieldTurretTargetingUtility.IsEnemyHitBox(collider) ? collider.GetComponentInParent<EnemyHealth>() : null;
+            bool blocksBullet = collider.CompareTag("FieldTurretBulletObstacle");
+            EnemyHealth enemy = collider.gameObject.layer == _enemyLayer ? collider.GetComponentInParent<EnemyHealth>() : null;
             if (!blocksBullet && enemy == null) continue;
 
             Hit(enemy, hit.point);
@@ -99,12 +100,8 @@ public partial class FieldTurretBullet : MonoBehaviour
     {
         if (!_isInitialized || _hasHit || !FieldSimulationTime.CanAdvance(this))
             return;
-        Collider2D collider = collision.collider;
-        EnemyHealth enemy = collider.GetComponentInParent<EnemyHealth>();
-        if (enemy != null && !FieldTurretTargetingUtility.IsEnemyHitBox(collider)) return;
-
         Vector2 impactPoint = collision.contactCount > 0 ? collision.GetContact(0).point : (Vector2)transform.position;
-        Hit(enemy, impactPoint);
+        Hit(collision.collider.GetComponentInParent<EnemyHealth>(), impactPoint);
     }
 
     private void Hit(EnemyHealth enemy, Vector2 impactPoint)

@@ -1,7 +1,6 @@
 // 터렛의 개체 상태·활성화·공격·교체 수명을 관리합니다.
 // 논리 ID는 별도 제작/생성 메타데이터에서 읽고 로컬 InstanceId와 구분합니다.
 using System.Collections;
-using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.FieldTurrets.Contracts;
@@ -102,7 +101,7 @@ namespace TeamHJD.Game.FieldTurrets
         protected virtual bool UsesMinimumRange => false;
 
         protected Transform TurretRotationPoint => turretRotationPoint;
-        protected LayerMask EnemyDetectionMask => enemyMask;
+        protected LayerMask EnemyMask => enemyMask;
         protected Animator Animator => animator;
         protected SpriteRenderer GunRenderer => gunRenderer;
         protected SpriteRenderer RangeRenderer => rangeRenderer;
@@ -118,37 +117,17 @@ namespace TeamHJD.Game.FieldTurrets
         protected int Damage => EffectiveDamage;
         protected float TimeTilFire;
 
-        protected bool CanSeeTarget(Transform target)
-        {
-            return target != null && target.gameObject.activeInHierarchy &&
-                   FieldTurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range) &&
-                   FieldTurretTargetingUtility.HasClearLineOfSight(turret.position, target.position, transform);
-        }
-
-        protected Transform FindNearestVisibleTarget(List<Collider2D> candidates)
-        {
-            FieldTurretTargetingUtility.CollectByDistance(turret.position, Range, EnemyDetectionMask, candidates, MinimumRange);
-            foreach (Collider2D candidate in candidates)
-            {
-                Transform target = candidate.attachedRigidbody != null ? candidate.attachedRigidbody.transform : candidate.transform;
-                if (CanSeeTarget(target))
-                    return target;
-            }
-
-            return null;
-        }
-
         /// <summary>버튼 요청 시점에만 호출한다. 동일 Rigidbody의 여러 Collider는 한 적으로 센다.</summary>
         public int CountEnemiesInAttackRange()
         {
             Vector2 origin = turret != null ? turret.position : transform.position;
-            Collider2D[] hits = Physics2D.OverlapCircleAll(origin, EffectiveRange, EnemyDetectionMask);
+            Collider2D[] hits = Physics2D.OverlapCircleAll(origin, EffectiveRange, enemyMask);
             var enemies = new System.Collections.Generic.HashSet<int>();
             foreach (Collider2D hit in hits)
             {
                 if (hit == null || !hit.gameObject.activeInHierarchy) continue;
                 Transform target = hit.attachedRigidbody != null ? hit.attachedRigidbody.transform : hit.transform;
-                if (FieldTurretTargetingUtility.IsInAttackRange(origin, hit.transform.position, MinimumRange, EffectiveRange))
+                if (FieldTurretTargetingUtility.IsInAttackRange(origin, target.position, MinimumRange, EffectiveRange))
                     enemies.Add(target.GetInstanceID());
             }
             return enemies.Count;

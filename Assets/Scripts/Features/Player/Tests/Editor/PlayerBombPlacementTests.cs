@@ -14,7 +14,7 @@ public sealed class PlayerBombPlacementTests
     public void CreateScenario()
     {
         _prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/bomb.prefab");
-        _owner = Body("Owner", "PlayerFeetBox").gameObject;
+        _owner = Body("Owner", "Player").gameObject;
     }
 
     [TearDown]
@@ -28,7 +28,7 @@ public sealed class PlayerBombPlacementTests
     [Test]
     public void InstallerAndItsDirectionalBodies_DoNotBlockFootPlacement()
     {
-        var child = Body("Directional body", "PlayerFeetBox");
+        var child = Body("Directional body", "Player");
         child.transform.SetParent(_owner.transform, false);
         Assert.That(Evaluate(), Is.EqualTo(PlayerBombPlacementResult.Allowed));
     }
@@ -80,8 +80,8 @@ public sealed class PlayerBombPlacementTests
 
     [TestCase("Bullet")]
     [TestCase("EmenyBullet")]
-    [TestCase("PlayerHitBox")]
-    public void ProjectilesAndHitBoxes_DoNotBlockPlacement(string layer)
+    [TestCase("PlayerBulletCollider")]
+    public void Projectiles_DoNotBlockPlacement(string layer)
     {
         Body("Projectile", layer);
         Assert.That(Evaluate(), Is.EqualTo(PlayerBombPlacementResult.Allowed));

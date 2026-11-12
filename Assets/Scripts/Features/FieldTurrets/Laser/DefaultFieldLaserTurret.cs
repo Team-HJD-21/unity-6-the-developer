@@ -65,13 +65,14 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
             return;
 
         Vector3 origin = turret.position;
-        if (!CanSeeTarget(Target))
+        if (!FieldTurretTargetingUtility.IsInAttackRange(turret, Target, MinimumRange, Range) ||
+            !Target.gameObject.activeInHierarchy)
         {
-            Target = null;
-            TimeTilFire = 0f;
             if (!RetractBeam(deltaTime))
                 return;
-            Target = FindNearestVisibleTarget(_targetCandidates);
+            FieldTurretTargetingUtility.CollectByDistance(origin, Range, EnemyMask, _targetCandidates, MinimumRange);
+            Target = _targetCandidates.Count > 0 ? _targetCandidates[0].transform : null;
+            TimeTilFire = 0f;
         }
 
         if (!FieldTurretTargetingUtility.IsInSight(TurretRotationPoint, origin, Target, TargetingAngle))

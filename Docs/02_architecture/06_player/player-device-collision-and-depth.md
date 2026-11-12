@@ -8,7 +8,7 @@
 PolygonCollider2D를 미리 배치한다. 지면과 닿는 하단 받침을 기준으로 작성했으며, 위로 솟은
 기둥·안테나 전체를 이동 장애물로 사용하지 않는다. Prefab Mode에서 Edit Collider로 조정한다.
 
-본체는 `PlayerFeetBox`·`Enemy` 레이어를 포함하고 나머지를 제외한다. 탄환 피격용 `PlayerHitBox`와
+본체는 Player·Enemy 레이어를 포함하고 나머지를 제외한다. 탄환 피격용 PlayerBulletCollider와
 장비 본체의 물리 충돌은 별개다. 새 탄환 피해 API는 추가하지 않는다.
 
 방벽의 `_blocker`는 프리팹 루트에 미리 배치한 BoxCollider2D다. 초기화에서는 두 설치점 사이의
@@ -22,7 +22,7 @@ PolygonCollider2D를 미리 배치한다. 지면과 닿는 하단 받침을 기�
 접촉 설정으로 통과한다. 몬스터 경로 차단과 방벽 체력·수명은 변경하지 않는다.
 
 2026-10-28에는 `bomb.prefab`에도 본체 하단의 PolygonCollider2D와 동일한 초기 탈출 처리를
-추가했다. 시한폭탄 본체도 `PlayerFeetBox`·`Enemy`만 막으며 Rigidbody2D는 Static으로 고정한다.
+추가했다. 시한폭탄 본체도 Player·Enemy만 막으며 Rigidbody2D는 Static으로 고정한다.
 `PlayerBombExplosion`은 점화 시 본체 충돌을 켜고 초기 겹침을 처리하며, 폭발하는 순간
 Collider와 탈출 처리 컴포넌트를 끈다. 0.8초 폭발 연출이 남아 있어도 본체는 길을 막지 않는다.
 폭발 피해 반경 9, 점화 시간 2.1초와 피해량은 기존 값을 유지한다.
@@ -45,7 +45,7 @@ Collider도 제외한다. 몬스터 몸통은 전역 충돌 무시 여부와 관
 ## 설치 순간 겹침
 
 발밑에 설치하는 장비는 플레이어와 처음부터 겹칠 수 있다.
-`PlayerDeviceBodyCollision.AllowInitialExit()`는 위치 확정 후 `PlayerFeetBox`가 겹친 플레이어만 기록하고
+`PlayerDeviceBodyCollision.AllowInitialExit()`는 위치 확정 후 최초로 겹친 플레이어만 기록하고
 본체와의 충돌을 잠시 무시한다. 한 번 빠져나오면 충돌을 복구하고 다시 들어갈 수 없게 한다.
 새로 접근한 플레이어·몬스터에게는 이 예외를 주지 않는다.
 

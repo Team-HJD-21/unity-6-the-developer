@@ -199,7 +199,7 @@ GameObject:
   - component: {fileID: 93078733577045702}
   - component: {fileID: 6272906769541489171}
   - component: {fileID: 8053436404149014645}
-  m_Layer: 25
+  m_Layer: 23
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -533,7 +533,7 @@ MonoBehaviour:
   turretRotationPoint: {fileID: 2603067881122175868}
   enemyMask:
     serializedVersion: 2
-    m_Bits: 16777216
+    m_Bits: 128
   playerMask:
     serializedVersion: 2
     m_Bits: 262144

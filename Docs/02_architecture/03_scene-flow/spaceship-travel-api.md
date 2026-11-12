@@ -32,7 +32,6 @@ flowchart TD
 | --- | --- |
 | `SpaceshipEnter.cs` | 기존 필드 트리거. Player 접촉을 `EnterAsync` 요청으로 전달 |
 | `SpaceshipExit.cs` | 기존 문 애니메이션·문 Collider 유지. 충돌을 `ExitAsync` 요청으로 전달 |
-| `DoorOperation.cs` | 우주선 내부 자동문. `PlayerFeetBox`가 감지 트리거에 닿으면 열림 |
 | `ISpaceshipTravel` / `ISpaceshipTravelConsumer` | Unity 출입문과 Core 사이의 작은 이동 계약. AppRoot가 Scene 로드 때 주입 |
 | `SpaceshipTravelService.cs` | 첫 출격/임시 방문 구분, 이동 입력 잠금, Additive 로드·정리, 위치 보고, 카메라 즉시 정렬 |
 | `MatchCameraFollow.cs` | 최초 Bind와 포털 이동 때 `SnapToTarget()`. 평소 이동의 SmoothDamp는 유지 |

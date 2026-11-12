@@ -61,7 +61,7 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         if (IsOperational)
         {
             if (TryBeginOverheatCooling()) return;
-            NoTargetInRange(); // 기존 표적의 사거리와 가림을 확인하고 필요하면 다시 탐색
+            NoTargetInRange();//적이 타워 범위에 없을 때 탐색(raycast 사용)
             RotateTowardsTarget();//적 발견시 적을 향해 타워 돌리기
             FireRateController();//총알 객체화 후 발사 동작 수행
             OverHeatAnimationController();//설정시간 도달 시 과열
@@ -77,15 +77,16 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         foreach (Transform target in Targets)
         {
             if (target != null &&
-                (!target.TryGetComponent(out EnemyController enemy) || !enemy.isActiveAndEnabled ||
-                 !CanSeeTarget(target)))
+                (!target.gameObject.activeInHierarchy ||
+                 !target.TryGetComponent(out EnemyController enemy) || !enemy.isActiveAndEnabled ||
+                 !FieldTurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range)))
                 needsNewTargets = true;
         }
 
         if (needsNewTargets)
         {
             ReleaseUnlaunchedTargets();
-            FindTarget();
+            FindTarget();//(raycast 사용)
             if (Targets[0] == null)
                 CurMissileCount = Mathf.Max(0f, CurMissileCount - TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this)); // 발사 후 타깃 교체는 냉각으로 세지 않는다.
         }
@@ -96,7 +97,7 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         FieldTurretTargetingUtility.CollectByDistance(
             turret.position,
             Range,
-            EnemyDetectionMask,
+            EnemyMask,
             _targetCandidates,
             MinimumRange);
 
@@ -109,7 +110,8 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
                 continue;
 
             EnemyController enemy = candidate.GetComponentInParent<EnemyController>();
-            if (enemy == null || !enemy.isActiveAndEnabled || !CanSeeTarget(enemy.transform))
+            if (enemy == null || !enemy.isActiveAndEnabled ||
+                !FieldTurretTargetingUtility.IsInAttackRange(turret, enemy.transform, MinimumRange, Range))
                 continue;
 
             bool alreadySelected = false;

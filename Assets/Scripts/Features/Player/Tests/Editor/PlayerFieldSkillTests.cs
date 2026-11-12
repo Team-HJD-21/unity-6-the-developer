@@ -57,9 +57,9 @@ public sealed class PlayerFieldSkillTests
         Assert.That(blocker.size.y, Is.EqualTo(.3f).Within(.001f));
         Assert.That(blocker.size.x, Is.EqualTo(Vector3.Distance(_start, End)).Within(.001f));
     }
-    [TestCase("PlayerFeetBox", true)]
+    [TestCase("Player", true)]
     [TestCase("Bullet", true)]
-    [TestCase("PlayerHitBox", true)]
+    [TestCase("PlayerBulletCollider", true)]
     [TestCase("Enemy", false)]
     public void Collision_OnlyBlocksEnemies(string layerName, bool passes)
     {

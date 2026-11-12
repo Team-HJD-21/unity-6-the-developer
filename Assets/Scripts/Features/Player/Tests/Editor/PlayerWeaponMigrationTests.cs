@@ -791,7 +791,7 @@ public sealed class PlayerWeaponMigrationTests
         var wall = new GameObject("Wall", typeof(BoxCollider2D));
         try
         {
-            owner.layer = LayerMask.NameToLayer("PlayerFeetBox");
+            owner.layer = LayerMask.NameToLayer("Player");
             owner.transform.position = new Vector3(12000, 12000);
             target.transform.position = owner.transform.position + Vector3.right * 2;
             wall.transform.position = owner.transform.position + Vector3.right;

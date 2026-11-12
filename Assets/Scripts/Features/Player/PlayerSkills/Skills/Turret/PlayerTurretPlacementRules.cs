@@ -52,7 +52,7 @@ public static class PlayerTurretPlacementRules
 
             // 캐릭터가 점유한 공간은 물리 충돌 행렬과 관계없이 설치를 막습니다.
             if (hit.transform.IsChildOf(player.transform) || hit.GetComponentInParent<PlayerInfo>() != null ||
-                layer == LayerMask.NameToLayer("PlayerFeetBox")) return PlayerTurretPlacementResult.OverlapsPlayer;
+                layer == LayerMask.NameToLayer("Player")) return PlayerTurretPlacementResult.OverlapsPlayer;
             if (hit.GetComponentInParent<EnemyHealth>() != null || layer == LayerMask.NameToLayer("Enemy"))
                 return PlayerTurretPlacementResult.OverlapsEnemy;
 
@@ -104,7 +104,7 @@ public static class PlayerTurretPlacementRules
     }
 
     private static bool IsBulletLayer(int layer) => layer == LayerMask.NameToLayer("Bullet")
-        || layer == LayerMask.NameToLayer("EmenyBullet") || layer == LayerMask.NameToLayer("PlayerHitBox");
+        || layer == LayerMask.NameToLayer("EmenyBullet") || layer == LayerMask.NameToLayer("PlayerBulletCollider");
 
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 }

@@ -26,7 +26,7 @@ public sealed class PlayerSkillRuntimeTests
         _player = new GameObject("Skill runtime test player");
         _player.SetActive(false);
         _player.transform.position = new Vector3(10000, 10000, 0);
-        _player.layer = LayerMask.NameToLayer("PlayerFeetBox");
+        _player.layer = LayerMask.NameToLayer("Player");
         _controller = _player.AddComponent<PlayerSkillController>();
         Assign(_player.GetComponent<PlayerBomb>(), "bombPrefab", "Assets/Prefabs/Player/bomb.prefab");
         Assign(_player.GetComponent<PlayerTurretSkill>(), "turretPrefab", "Assets/Prefabs/Player/PlayerTurret.prefab");
@@ -631,7 +631,7 @@ public sealed class PlayerSkillRuntimeTests
         PlayerFieldDevice deployed = null;
         try
         {
-            actor.layer = LayerMask.NameToLayer("PlayerFeetBox");
+            actor.layer = LayerMask.NameToLayer("Player");
             actor.transform.position = position;
             Assert.That(_controller.TryUse(PlayerSkillId.LureBeacon), Is.True);
             Assert.That(skill.TryConfirmPlacement(pointer), Is.False);
