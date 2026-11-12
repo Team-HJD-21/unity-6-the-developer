@@ -56,6 +56,22 @@ PrefabInstance:
       propertyPath: m_SpriteTilingProperty.adaptiveTilingThreshold
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Size.x
+      value: 0.15978406
+      objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Size.y
+      value: 0.03971159
+      objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Offset.x
+      value: 0.00030157715
+      objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.006061698
+      objectReference: {fileID: 0}
     - target: {fileID: 1225859128533475759, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
       propertyPath: m_Size.x
       value: 1.28
@@ -177,7 +193,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileAbility
   cooldown: 2
-  _bodyCollider: {fileID: 8218690084528329544}
+  _bodyCollider: {fileID: 1751844282057631987}
   activationRange: 3
   enemyTargeting: {fileID: 5413160109429877626}
   projectilePrefab: {fileID: 8068542522751106918, guid: 0b12f43bcb91e9b478352bc8f7bacdf0, type: 3}
@@ -198,6 +214,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileGenerator
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!60 &1751844282057631987 stripped
+PolygonCollider2D:
+  m_CorrespondingSourceObject: {fileID: 830224621556676266, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+  m_PrefabInstance: {fileID: 1426024742983507545}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &5413160109429877626 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6401068086863263011, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
@@ -209,8 +230,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
---- !u!70 &8218690084528329544 stripped
-CapsuleCollider2D:
-  m_CorrespondingSourceObject: {fileID: 7045009586610572561, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
-  m_PrefabInstance: {fileID: 1426024742983507545}
-  m_PrefabAsset: {fileID: 0}

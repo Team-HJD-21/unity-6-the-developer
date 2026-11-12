@@ -44,15 +44,33 @@ public abstract partial class EnemyAbility : MonoBehaviour
         if (_bodyCollider != null)
             return;
 
-        // 기존 근접 프리팹은 참조가 없으면 일반 몸통 콜라이더를 사용한다.
+        _bodyCollider = FindBodyCollider();
+    }
+
+    /// <summary>
+    /// Inspector 참조가 없으면 HitBox 자식의 콜라이더를 찾고,
+    /// 구형 프리팹을 위해 루트의 비-Trigger 콜라이더도 확인한다.
+    /// </summary>
+    protected Collider2D FindBodyCollider()
+    {
+        Transform hitBox = transform.Find("HitBox");
+        if (hitBox != null &&
+            hitBox.TryGetComponent(out Collider2D hitBoxCollider) &&
+            !hitBoxCollider.isTrigger)
+        {
+            return hitBoxCollider;
+        }
+
+        // 구형 프리팹은 루트에 몸통 콜라이더를 가지고 있다.
         foreach (Collider2D collider in GetComponents<Collider2D>())
         {
             if (collider.isTrigger)
                 continue;
 
-            _bodyCollider = collider;
-            break;
+            return collider;
         }
+
+        return null;
     }
 
     /// <summary>
@@ -129,19 +147,8 @@ public abstract partial class EnemyAbility : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        Collider2D bodyCollider = _bodyCollider;
-
-        if (bodyCollider == null)
-        {
-            foreach (Collider2D collider in GetComponents<Collider2D>())
-            {
-                if (!collider.isTrigger)
-                {
-                    bodyCollider = collider;
-                    break;
-                }
-            }
-        }
+        Collider2D bodyCollider =
+            _bodyCollider != null ? _bodyCollider : FindBodyCollider();
 
         if (bodyCollider == null)
             return;

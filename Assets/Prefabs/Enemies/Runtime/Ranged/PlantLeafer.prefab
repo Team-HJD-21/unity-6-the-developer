@@ -52,6 +52,22 @@ PrefabInstance:
       propertyPath: m_SpriteTilingProperty.adaptiveTilingThreshold
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Size.x
+      value: 0.04958996
+      objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Size.y
+      value: 0.066602245
+      objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.0049278215
+      objectReference: {fileID: 0}
+    - target: {fileID: 630983560506085158, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.021668646
+      objectReference: {fileID: 0}
     - target: {fileID: 1225859128533475759, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
       propertyPath: m_Size.x
       value: 1.28
@@ -173,7 +189,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileAbility
   cooldown: 1.5
-  _bodyCollider: {fileID: 6181792221173531961}
+  _bodyCollider: {fileID: 4578834003915472514}
   activationRange: 3
   enemyTargeting: {fileID: 7844122815088672011}
   projectilePrefab: {fileID: 5320638949139885090, guid: cb943102adc587c4a88b281fdb9a629b, type: 3}
@@ -194,9 +210,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileGenerator
   ShowTopMostFoldoutHeaderGroup: 1
---- !u!70 &6181792221173531961 stripped
-CapsuleCollider2D:
-  m_CorrespondingSourceObject: {fileID: 7045009586610572561, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+--- !u!60 &4578834003915472514 stripped
+PolygonCollider2D:
+  m_CorrespondingSourceObject: {fileID: 830224621556676266, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
   m_PrefabInstance: {fileID: 3751152836326934568}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &7844122815088672011 stripped
