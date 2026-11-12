@@ -3,12 +3,14 @@ using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "TowerBullet")]
 public partial class FieldTurretBullet : MonoBehaviour
 {
     [Header("Attributes")]
     [SerializeField] private float bulletSpeed; // 일정한 속도
+    [SerializeField] private PlayerSpriteEffect _impactPrefab;
     private float _bulletDamage; // 총알 피해량
     private Transform _target;
 
@@ -86,7 +88,7 @@ public partial class FieldTurretBullet : MonoBehaviour
             EnemyHealth enemy = collider.gameObject.layer == _enemyLayer ? collider.GetComponentInParent<EnemyHealth>() : null;
             if (!blocksBullet && enemy == null) continue;
 
-            Hit(enemy);
+            Hit(enemy, hit.point);
             return true;
         }
 
@@ -98,14 +100,23 @@ public partial class FieldTurretBullet : MonoBehaviour
     {
         if (!_isInitialized || _hasHit || !FieldSimulationTime.CanAdvance(this))
             return;
-        Hit(collision.collider.GetComponentInParent<EnemyHealth>());
+        Vector2 impactPoint = collision.contactCount > 0 ? collision.GetContact(0).point : (Vector2)transform.position;
+        Hit(collision.collider.GetComponentInParent<EnemyHealth>(), impactPoint);
     }
 
-    private void Hit(EnemyHealth enemy)
+    private void Hit(EnemyHealth enemy, Vector2 impactPoint)
     {
         _hasHit = true;
         if (enemy != null)
             enemy.TakeDamage(Mathf.RoundToInt(_bulletDamage));
+
+        if (_impactPrefab != null)
+        {
+            var position = new Vector3(impactPoint.x, impactPoint.y, transform.position.z);
+            var effect = Instantiate(_impactPrefab, position, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(effect.gameObject, gameObject.scene);
+            effect.SetTint(new Color(1f, .5f, .1f), GetComponent<SpriteRenderer>());
+        }
 
         Destroy(gameObject); // 충돌 시 총알 파괴
     }
