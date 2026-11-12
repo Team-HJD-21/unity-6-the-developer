@@ -46,14 +46,14 @@ TextureImporter:
   spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
-  alignment: 0
-  spritePivot: {x: 0.5, y: 0.5}
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0.7615063}
   spritePixelsToUnits: 40
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
-  spriteTessellationDetail: -1
+  spriteTessellationDetail: 0.131
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
@@ -124,10 +124,42 @@ TextureImporter:
     sprites: []
     outline: []
     customData: 
-    physicsShape: []
+    physicsShape:
+    - - {x: 191, y: 46}
+      - {x: 209, y: 64}
+      - {x: 209, y: 192}
+      - {x: 190, y: 214}
+      - {x: 199, y: 221}
+      - {x: 199, y: 297}
+      - {x: 195, y: 306}
+      - {x: 176, y: 324}
+      - {x: 167, y: 328}
+      - {x: -135, y: 328}
+      - {x: -156, y: 314}
+      - {x: -175, y: 293}
+      - {x: -175, y: 265}
+      - {x: -182, y: 273}
+      - {x: -208, y: 274}
+      - {x: -208, y: 264}
+      - {x: -217, y: 262}
+      - {x: -207, y: 241}
+      - {x: -216, y: 230}
+      - {x: -207, y: 223}
+      - {x: -197, y: 209}
+      - {x: -211, y: 193}
+      - {x: -211, y: 61}
+      - {x: -208, y: 61}
+      - {x: -208, y: 52}
+      - {x: -202, y: 52}
+      - {x: -184, y: 37}
+      - {x: -118, y: 37}
+      - {x: -118, y: 40}
+      - {x: -25, y: 40}
+      - {x: -25, y: 37}
+      - {x: 179, y: 37}
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
