@@ -9,8 +9,8 @@ public sealed partial class PlayerTurretHealth : MonoBehaviour, IPlayerFieldTarg
 {
     [SerializeField, Min(1)] private float _maxHealth = 100;
     [SerializeField] private BoxCollider2D _blocker;
-    [Tooltip("설치된 본체가 막을 레이어: Player / Enemy")]
-    [SerializeField] private LayerMask _blockingLayers = (1 << 18) | (1 << 7);
+    [Tooltip("설치된 본체가 막을 레이어: PlayerFeetBox / EnemyFeetBox")]
+    [SerializeField] private LayerMask _blockingLayers = (1 << 18) | (1 << 24);
     private float _health, _hitRemaining;
     private bool _initialized;
     private SpriteRenderer[] _renderers;

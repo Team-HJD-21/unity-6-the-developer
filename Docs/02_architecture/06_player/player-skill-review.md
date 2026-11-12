@@ -185,7 +185,7 @@ PlayerSkillHud는 Canvas 프리팹의 화면 하단 안내 영역에 빨간색 �
   UI 위 클릭은 설치에 사용하지 않는다. 설치 확정은 LateUpdate에서 처리하며
   `InitialStagePlayerHUD`는 설치 중 기존 포탑 선택을 막아 같은 클릭의 중복 처리를 피한다.
 - `PlayerTurret.prefab`: 고정 바닥을 덮는 BoxCollider2D를 미리 배치했다.
-  크기·Offset은 프리팹에서 편집한다. `PlayerTurretHealth`는 Player/Enemy의
+  크기·Offset은 프리팹에서 편집한다. `PlayerTurretHealth`는 `PlayerFeetBox`·`EnemyFeetBox`의
   includeLayers와 나머지 레이어 excludeLayers, 우선순위 10을 적용하여 전역 제외 설정보다 우선한다.
   플레이어의 탄환 피격 트리거와 탄환은 본체에 막히지 않는다.
 - 기존 체력 100, 손상 충전, 파괴 시 충돌 해제는 유지한다.

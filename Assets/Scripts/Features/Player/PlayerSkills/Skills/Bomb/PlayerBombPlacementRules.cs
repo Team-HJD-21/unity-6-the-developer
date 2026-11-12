@@ -58,7 +58,7 @@ public static class PlayerBombPlacementRules
     }
 
     private static bool IsBulletLayer(int layer) => layer == LayerMask.NameToLayer("Bullet")
-        || layer == LayerMask.NameToLayer("EmenyBullet") || layer == LayerMask.NameToLayer("PlayerHitBox");
+        || layer == LayerMask.NameToLayer("EnemyProjectile") || layer == LayerMask.NameToLayer("PlayerHitBox");
 
     private static bool IsFinite(Vector3 value) =>
         float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);

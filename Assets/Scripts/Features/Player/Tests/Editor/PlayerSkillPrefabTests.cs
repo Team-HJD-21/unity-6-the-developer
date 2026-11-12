@@ -118,7 +118,7 @@ public sealed class PlayerSkillPrefabTests
         Assert.That(body.offset.x + body.size.x * .5f, Is.GreaterThanOrEqualTo(visual.max.x - .001f));
         Assert.That(body.offset.y - body.size.y * .5f, Is.LessThanOrEqualTo(visual.min.y + .001f));
         Assert.That(body.offset.y + body.size.y * .5f, Is.GreaterThanOrEqualTo(visual.max.y - .001f));
-        foreach (string layer in new[] { "PlayerFeetBox", "Enemy" })
+        foreach (string layer in new[] { "PlayerFeetBox", "EnemyFeetBox" })
         {
             int bit = 1 << LayerMask.NameToLayer(layer);
             Assert.That(body.includeLayers.value & bit, Is.Not.Zero);
