@@ -30,6 +30,23 @@ namespace TeamHJD.Game.Tests.EditMode
         private IDisposable _binding;
         private int _advanced;
 
+        [Test]
+        public void ReenableDiscardsIncompleteAuthorityBindingAndAllowsTheCurrentMatch()
+        {
+            _binding.Dispose();
+            _go.SetActive(false);
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            // 재로드 중 delegate/시계가 사라지고 플래그만 남았던 실제 OnEnable 실패 조건입니다.
+            typeof(MatchDayNightCycle).GetField("_bound", flags).SetValue(_cycle, true);
+            typeof(MatchDayNightCycle).GetField("_authority", flags).SetValue(_cycle, true);
+            _go.SetActive(true);
+            // 일반 MonoBehaviour의 Player 콜백은 EditMode에서 자동 실행되지 않습니다.
+            typeof(MatchDayNightCycle).GetMethod("OnEnable", flags).Invoke(_cycle, null);
+            Assert.That(_cycle.IsAuthority, Is.False);
+            using var current = _cycle.BindAuthority(_match, _host, 1, () => true, default);
+            Assert.That(_cycle.CanRestartCurrentPhase, Is.True);
+        }
+
         [SetUp]
         public void SetUp()
         {

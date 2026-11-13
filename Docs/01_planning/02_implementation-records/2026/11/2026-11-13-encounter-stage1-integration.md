@@ -70,3 +70,9 @@ Stage1의 초기 고정 편성은 생성됐지만 자동 편성은 난수 미주
 - Enemy 담당자 변경 파일: `EnemySummonGenerator.cs`는 직접 Instantiate 대신 생성기 위임, `EnemySpawnExecutor`의 Creation/Summons partial은 공통 생성과 소환 문맥, `EncounterSceneBinding.Summons`는 독립 진단 요청입니다. AI·공격·스탯·소환 프리셋은 유지했습니다. 사망 소환은 부모 HP0 이후 호출되므로 제거 전 추적 소속으로 검증합니다.
 - 실제 Stage1 검증: 일반 초기9개/정규 편성6개, 소환3/3, 실제 BomberSlime2개, 변태 완료 상태에서 실제 피해→사망 소환5/5. 시계·저장 원본·위치26개 일치, Match 정리26→0. 변태 완료 상태는 시험 준비로 설정했으며 자연 애니메이션 전체 재생과는 구분합니다. Editor 컴파일 통과, 바인딩6/6, 현재 Console error0, Play 종료.
 - 전체 저장/복원과 지속 생산·지역 전투 확보는 아직 후속 배치입니다. B2 완료가 전체 Stage1 완료를 뜻하지 않습니다.
+
+## 별도 보완 — 낮밤 연결의 재로드 수명
+
+- 반복 Play 검사 중 `MatchDayNightCycle.OnEnable → MayAdvance → _mayWrite()`에서 NullReferenceException을 확인했습니다. `_bound/_authority`만 남고 시계·판정 delegate가 없는 부분 바인딩을 다시 사용하려던 경로입니다. 스크립트 재로드가 가능한 Editor에서 런타임 소유권 플래그가 직렬화되지 않도록 표시하고, OnEnable에서 불완전한 연결을 해제합니다.
+- 현재 연결이 완성되기 전에는 `MayAdvance`와 남은 시간 조회가 null 참조를 사용하지 않습니다. 기존 정상 Host/Client 시계·정지·배속·Weather 전환 규칙은 변경하지 않았습니다. 김진태 담당 Weather 선택/효과 본체는 수정하지 않았습니다.
+- `DayNightReplicaTests`8/8을 확인했습니다. 새 회귀 검사는 불완전한 소유권 상태→OnEnable→새 Match 재바인딩을 검사합니다. EditMode에서는 MonoBehaviour의 Player 콜백을 명시 호출합니다. 앞선 실패/이전 DLL 결과와 실제 최신 통과 기록은 로컬 실행 기록에 구분해 보존했습니다. 수정 후 실제 Stage1 재진입과 낮밤 진행도 확인했습니다.
