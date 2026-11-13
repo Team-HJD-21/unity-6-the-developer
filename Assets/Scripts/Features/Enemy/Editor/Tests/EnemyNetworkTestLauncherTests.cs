@@ -6,7 +6,9 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using Unity.Netcode;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 /// <summary>
@@ -137,6 +139,50 @@ public sealed class EnemyNetworkTestLauncherTests
         {
             Object.DestroyImmediate(squads);
             Object.DestroyImmediate(enemies);
+        }
+    }
+
+    [Test]
+    public void RegionGroups_InitializeWhenCurrentMatchRegionBecomesAvailable()
+    {
+        var scene = EditorSceneManager.NewPreviewScene();
+        SceneManager.MoveGameObjectToScene(_root, scene);
+        var enemies = ScriptableObject.CreateInstance<EnemyCatalog>();
+        var squads = ScriptableObject.CreateInstance<EnemySquadPresetCatalog>();
+        var match = new MatchId("region-groups");
+        try
+        {
+            _root.AddComponent<NetworkObject>();
+            var executor = _root.AddComponent<EnemySpawnExecutor>();
+            _root.AddComponent<SpawnPoint>();
+            typeof(EnemySpawnExecutor).GetField("enemyList", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(executor, enemies);
+            Set("_spawnExecutor", executor);
+            Set("_squadCatalog", squads);
+            _launcher.UseAppNetworkOwnership();
+            _launcher.BindAuthorityMatch(match, new PlayerId("test"), () => null);
+
+            var registry = executor.SpawnPointList;
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.False);
+            var definition = new RegionGridDefinition(BattlefieldGridConfiguration.Default,
+                Enumerable.Repeat(7, BattlefieldGridConfiguration.Default.TotalCellCount));
+            var source = BindRegion(RegionGridSnapshot.FromCapturedCells(new MatchId("other"),
+                Guid.NewGuid(), 0, RegionPolicyMode.Static, definition, Array.Empty<int>()));
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Static, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.True);
+            Assert.That(registry.SetRegionSpawnEnabled(7, true), Is.True);
+        }
+        finally
+        {
+            _launcher.UnbindMatch(match);
+            Object.DestroyImmediate(squads);
+            Object.DestroyImmediate(enemies);
+            EditorSceneManager.ClosePreviewScene(scene);
         }
     }
 
