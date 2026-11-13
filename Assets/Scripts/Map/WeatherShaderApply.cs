@@ -32,8 +32,6 @@ public class WeatherShaderApply : MonoBehaviour
     private float _transitionStartTime;
     private bool _hasInitialWeather;
     private bool _effectsEnabled = true;
-    private static readonly int _nextTexId = Shader.PropertyToID("_NextTex");
-    private static readonly int _blendId = Shader.PropertyToID("_Blend");
 
     private void Awake()
     {
@@ -78,44 +76,38 @@ public class WeatherShaderApply : MonoBehaviour
         _transitionStartTime = Time.time;
     }
 
-    private void OnRenderImage(RenderTexture source, RenderTexture destination)
+    internal bool TryGetRenderMaterials(out Material previous, out Material current,
+        out Material transition, out float blend)
     {
-        if (!_effectsEnabled)
-        {
-            Graphics.Blit(source, destination);
-            return;
-        }
+        previous = null;
+        current = null;
+        transition = null;
+        blend = 0f;
+        if (!_effectsEnabled || _weatherCamera == null)
+            return false;
 
-        Material currentMaterial = GetWeatherMaterial(_currentWeather);
-        // 경과 시간 / 전환 시간으로 0~1 진행률을 구한다.
+        current = PrepareWeatherMaterial(_currentWeather);
         float progress = _transitionDuration > 0f
             ? (Time.time - _transitionStartTime) / _transitionDuration : 1f;
-
         if (_previousWeather == _currentWeather || progress >= 1f || _transitionMaterial == null)
         {
             _previousWeather = _currentWeather;
-            RenderWeather(source, destination, currentMaterial, _currentWeather);
-            return;
+            return current != null;
         }
 
-        // 전환 중에는 이전·현재 날씨를 각각 별도 화면에 그린다.
-        RenderTexture previousFrame = RenderTexture.GetTemporary(source.descriptor);
-        RenderTexture nextFrame = RenderTexture.GetTemporary(source.descriptor);
-        try
-        {
-            RenderWeather(source, previousFrame, GetWeatherMaterial(_previousWeather), _previousWeather);
-            RenderWeather(source, nextFrame, currentMaterial, _currentWeather);
-            // SmoothStep으로 진행률 양끝을 부드럽게 만든 뒤 두 화면을 섞는다.
-            _transitionMaterial.SetTexture(_nextTexId, nextFrame);
-            _transitionMaterial.SetFloat(_blendId, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress)));
-            Graphics.Blit(previousFrame, destination, _transitionMaterial);
-        }
-        finally
-        {
-            // 프레임마다 빌린 임시 화면을 반환한다.
-            RenderTexture.ReleaseTemporary(previousFrame);
-            RenderTexture.ReleaseTemporary(nextFrame);
-        }
+        previous = PrepareWeatherMaterial(_previousWeather);
+        transition = _transitionMaterial;
+        blend = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress));
+        return previous != null || current != null;
+    }
+
+    private Material PrepareWeatherMaterial(WeatherManager.Weather weather)
+    {
+        Material material = GetWeatherMaterial(weather);
+        if (material != null && weather == WeatherManager.Weather.THUNDERSTORM)
+            UpdateStrikeRoots(material);
+
+        return material;
     }
 
     private Material GetWeatherMaterial(WeatherManager.Weather weather)
@@ -127,21 +119,6 @@ public class WeatherShaderApply : MonoBehaviour
             WeatherManager.Weather.HEATWAVE => _heatWaveMaterial,
             _ => _sunnyMaterial
         };
-    }
-
-    private void RenderWeather(RenderTexture source, RenderTexture destination, Material material,
-        WeatherManager.Weather weather)
-    {
-        if (material == null)
-        {
-            Graphics.Blit(source, destination);
-            return;
-        }
-
-        if (weather == WeatherManager.Weather.THUNDERSTORM)
-            UpdateStrikeRoots(material);
-
-        Graphics.Blit(source, destination, material);
     }
 
     private void UpdateStrikeRoots(Material currentMaterial)

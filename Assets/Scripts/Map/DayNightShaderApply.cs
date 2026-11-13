@@ -54,7 +54,7 @@ namespace Map
             if (_runtimeDayNightMaterial != null) Destroy(_runtimeDayNightMaterial);
         }
 
-        private void OnRenderImage(RenderTexture source, RenderTexture destination)
+        internal Material GetRenderMaterial()
         {
             if (_dayNightCycle != null && _dayNightMaterial != null)
             {
@@ -83,10 +83,10 @@ namespace Map
                     blend = Mathf.Clamp01(blend);
                 }
                 _runtimeDayNightMaterial.SetFloat(EffectBlendId, blend);
-                Graphics.Blit(source, destination, _runtimeDayNightMaterial);
+                return _runtimeDayNightMaterial;
             }
-            else
-                Graphics.Blit(source, destination);
+
+            return null;
         }
     }
 }

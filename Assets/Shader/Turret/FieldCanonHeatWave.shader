@@ -18,7 +18,6 @@ Shader "FieldTurrets/CanonHeatWave"
         ZWrite Off
         Blend SrcAlpha OneMinusSrcAlpha
 
-        GrabPass { "_FieldCanonHeatScene" }
 
         Pass
         {
@@ -28,15 +27,14 @@ Shader "FieldTurrets/CanonHeatWave"
             #pragma multi_compile _ ETC1_EXTERNAL_ALPHA
             #include "UnitySprites.cginc"
 
-            sampler2D _FieldCanonHeatScene;
+            sampler2D _CameraSortingLayerTexture;
             float _DistortionPixels;
 
             struct heat_v2f
             {
                 float4 vertex : SV_POSITION;
                 float2 texcoord : TEXCOORD0;
-                float4 grabPosition : TEXCOORD1;
-                float2 worldPosition : TEXCOORD2;
+                float2 worldPosition : TEXCOORD1;
                 fixed4 color : COLOR;
             };
 
@@ -46,7 +44,6 @@ Shader "FieldTurrets/CanonHeatWave"
                 heat_v2f output;
                 output.vertex = sprite.vertex;
                 output.texcoord = sprite.texcoord;
-                output.grabPosition = ComputeGrabScreenPos(sprite.vertex);
                 output.worldPosition = mul(unity_ObjectToWorld, UnityFlipSprite(input.vertex.xyz, _Flip)).xy;
                 output.color = sprite.color;
                 return output;
@@ -62,9 +59,9 @@ Shader "FieldTurrets/CanonHeatWave"
                 float wave = sin(pos.y * 2.8 - time * 7.0 + sin(pos.x * 1.7 + time * 1.2) * 0.7);
                 float detail = sin(pos.y * 5.9 - time * 4.7 + pos.x * 2.4);
                 float2 distortion = float2(wave + detail * 0.35, detail * 0.35);
-                float2 screenUv = input.grabPosition.xy / input.grabPosition.w;
+                float2 screenUv = input.vertex.xy / _ScreenParams.xy;
                 screenUv += distortion * (_DistortionPixels * input.color.a) / _ScreenParams.xy;
-                fixed3 refracted = tex2D(_FieldCanonHeatScene, saturate(screenUv)).rgb;
+                fixed3 refracted = tex2D(_CameraSortingLayerTexture, saturate(screenUv)).rgb;
                 return fixed4(refracted, mask * input.color.a * 0.8);
             }
             ENDCG

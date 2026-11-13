@@ -1,12 +1,10 @@
 // 카메라가 그린 화면을 받아 비 오는 날의 색감과 화면 속 빗줄기를 합성한다.
-// WeatherShaderApply.OnRenderImage의 Graphics.Blit이 이 셰이더를 사용하는 머티리얼을 실행한다.
+// StageCameraEffectsFeature가 WeatherShaderApply에서 받은 머티리얼로 렌더링한다.
 Shader "Weather/Rain"
 {
     // 이 값들은 RainScreen 머티리얼의 Inspector에 표시되며 실행 중에도 변경할 수 있다.
     Properties
     {
-        // Graphics.Blit이 전달하는 원본 화면이다. 화면 효과이므로 타일링/오프셋 UI는 숨긴다.
-        [NoScaleOffset] _MainTex ("Screen", 2D) = "white" {}
         // 비가 올 때 적용할 푸른 색감, 전체 효과 강도, 어두워지는 정도, 채도 감소량.
         _RainTint ("Rain Tint", Color) = (0.72, 0.82, 0.95, 1)
         _RainStrength ("Rain Strength", Range(0, 2)) = 2
@@ -34,39 +32,15 @@ Shader "Weather/Rain"
         // 이 Pass 한 번으로 원본 화면을 읽고 색감·빗줄기·가장자리 음영을 합성한다.
         Pass
         {
-            CGPROGRAM
+            HLSLPROGRAM
             // 정점 단계는 vert, 픽셀 색 계산 단계는 frag 함수에서 시작한다.
-            #pragma vertex vert
+            #pragma vertex Vert
             #pragma fragment frag
 
             // 좌표 변환 함수와 Unity의 _Time, _ScreenParams 같은 공통 값을 사용한다.
-            #include "UnityCG.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            // 화면을 덮는 사각형의 정점 위치와 텍스처 좌표(UV)를 받는다.
-            struct appdata
-            {
-                float4 vertex : POSITION; // 사각형 정점의 위치
-                float2 uv : TEXCOORD0;    // 원본 화면에서 읽을 위치(0~1)
-            };
-
-            // 정점 단계가 픽셀 단계로 넘겨줄 값이다.
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;       // 화면 샘플링과 빗줄기 계산에 사용
-                float4 vertex : SV_POSITION; // GPU가 화면에 그릴 위치
-            };
-
-            // 정점을 화면 좌표로 옮기고 UV를 그대로 다음 단계에 전달한다.
-            v2f vert (appdata v)
-            {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;
-                return o;
-            }
-
-            // Properties에 선언한 머티리얼 값을 GPU 코드에서도 읽을 수 있게 선언한다.
-            sampler2D _MainTex;
             half4 _RainTint;
             half4 _StreakColor;
             half _RainStrength;
@@ -147,10 +121,15 @@ Shader "Weather/Rain"
             }
 
             // 화면의 각 픽셀에 대해 최종 색을 계산한다.
-            half4 frag (v2f i) : SV_Target
+            half4 frag(Varyings i) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                float2 effectUV = i.texcoord;
+                #if UNITY_UV_STARTS_AT_TOP
+                    effectUV.y = 1.0 - effectUV.y;
+                #endif
                 // 카메라가 그린 원래 색을 읽는다. saturate는 강도를 0~1로 제한한다.
-                half4 col = tex2D(_MainTex, i.uv);
+                half4 col = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, i.texcoord);
                 half strength = saturate(_RainStrength);
                 // RGB로 밝기를 구하고 원래 색과 섞어 채도를 낮춘다.
                 half luminance = dot(col.rgb, half3(0.2126, 0.7152, 0.0722));
@@ -164,7 +143,7 @@ Shader "Weather/Rain"
                 // 직교 카메라의 픽셀을 월드 XY에 대응시켜 격자를 지면에 고정한다.
                 // 카메라가 움직여도 같은 월드 위치의 빗줄기·파문은 같은 격자에 남는다.
                 float2 worldPosition = _WorldSpaceCameraPos.xy
-                    + (i.uv - 0.5) * (2.0 * unity_OrthoParams.y)
+                    + (effectUV - 0.5) * (2.0 * unity_OrthoParams.y)
                     * float2(aspect, 1.0);
                 float2 worldGridPoint = worldPosition / max(_PatternWorldHeight, 0.001);
                 // 가까운 빗줄기는 굵고 빠르게, 먼 빗줄기는 촘촘하고 약하게 그린다.
@@ -183,13 +162,13 @@ Shader "Weather/Rain"
 
                 // 화면 중앙에서는 0, 모서리 쪽에서는 1에 가까운 값을 만든다.
                 // 이 값으로 모서리만 약하게 어둡게 한다.
-                float2 fromCenter = i.uv * 2.0 - 1.0;
+                float2 fromCenter = effectUV * 2.0 - 1.0;
                 half edge = saturate(dot(fromCenter, fromCenter) * 0.5);
                 col.rgb *= 1.0 - edge * _EdgeDarkness * strength;
                 // RGB만 바꿨으므로 원본 화면의 알파 값은 유지된다.
                 return col;
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }
