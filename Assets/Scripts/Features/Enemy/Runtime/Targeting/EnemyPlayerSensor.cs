@@ -8,6 +8,7 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
     [SerializeField] private EnemyController enemyController;
     private CircleCollider2D _sensorCollider;
     private EnemyNetworkController _networkController;
+    private EnemyTargeting _enemyTargeting;
 
     private void Reset()
     {
@@ -19,6 +20,7 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
     {
         _sensorCollider = GetComponent<CircleCollider2D>();
         _networkController = GetComponentInParent<EnemyNetworkController>();
+        _enemyTargeting = GetComponentInParent<EnemyTargeting>();
 
         if (enemyController == null)
             enemyController = GetComponentInParent<EnemyController>();
@@ -64,11 +66,24 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
 
     private void NotifyPlayer(Collider2D other)
     {
+        TargetableComponent currentTarget = _enemyTargeting != null
+            ? _enemyTargeting.TargetComponent
+            : null;
+        
+        // 이미 플레이어를 추적 중이면 반복 검색과 전달을 생략한다.
+        if (currentTarget != null &&
+            currentTarget.TargetType == TargetType.Player)
+        {
+            return;
+        }
+        
         if (enemyController == null ||
             _networkController == null ||
             !_networkController.CanExecuteBehavior)
+        {
             return;
-
+        }
+        
         ITargetable player = other.GetComponentInParent<ITargetable>();
         if (player == null ||
             !player.CanBeTargeted ||

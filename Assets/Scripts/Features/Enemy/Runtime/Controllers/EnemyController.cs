@@ -110,7 +110,7 @@ public abstract class EnemyController : MonoBehaviour
     public void AssignTarget(Transform target)
     {
         enemyTargeting.SetTarget(target);
-        OnTargetChanged(target);
+        OnTargetChanged(enemyTargeting.Target);
     }
 
     /// <summary>

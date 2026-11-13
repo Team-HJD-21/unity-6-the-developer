@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
+using Unity.Profiling;
 
 /// <summary>
 /// 함께 행동하는 적의 소속과 공동 목표를 보관한다.
@@ -9,7 +10,7 @@ using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector
 /// </summary>
 public class EnemySquad
 {
-    private const float RetargetInterval = 0.5f;
+    private const float RetargetInterval = 1.0f;
 
     private readonly List<EnemyController> _members;
     private ITargetable _target;
@@ -22,6 +23,13 @@ public class EnemySquad
     /// </summary>
     public bool IsEmpty => _members.Count == 0;
 
+    // 프로파일링
+    private static readonly ProfilerMarker SelectTargetMarker =
+        new("TeamHJD.Enemy.SelectTarget");
+
+    private static readonly ProfilerMarker AssignTargetMarker =
+        new("TeamHJD.Enemy.AssignSquadTarget");
+    
     /// <summary>
     /// 생성 직후 적을 등록할 빈 분대를 만든다.
     /// </summary>
@@ -173,13 +181,34 @@ public class EnemySquad
         TargetableComponent[] candidates =
             Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
 
-        bool found = RuntimeTargetSelector.TryFindNearest(
-            center, candidates, requiredType, out ITargetable nextTarget, GetAttackerCount());
+        // bool found = RuntimeTargetSelector.TryFindNearest(
+        //     center, candidates, requiredType, out ITargetable nextTarget, GetAttackerCount());
+        //
+        // if (!found)
+        //     return false;
+        //
+        // return TryChangeTarget(nextTarget);
+        
+        bool found;
+        ITargetable nextTarget;
+
+        using (SelectTargetMarker.Auto())
+        {
+            found = RuntimeTargetSelector.TryFindNearest(
+                center,
+                candidates,
+                requiredType,
+                out nextTarget,
+                GetAttackerCount());
+        }
 
         if (!found)
             return false;
 
-        return TryChangeTarget(nextTarget);
+        using (AssignTargetMarker.Auto())
+        {
+            return TryChangeTarget(nextTarget);
+        }
     }
 
     /// <summary>플레이어 우선 전환 규칙을 확인하고 공통 타깃 변경을 요청한다.</summary>

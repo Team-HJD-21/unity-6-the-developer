@@ -55,10 +55,12 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
     protected override bool Activate()
     {
         if (projectilePrefab == null ||
-            !TryGetTarget(out TargetableComponent target))
+            !TryGetTarget(out TargetableComponent target) ||
+            !target.CanBeTargeted)
         {
             return false;
         }
+        
 
         Vector2 direction =
             ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
@@ -156,13 +158,10 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
 
     private bool TryGetTarget(out TargetableComponent target)
     {
-        target = null;
+        target = enemyTargeting != null
+            ? enemyTargeting.TargetComponent
+            : null;
 
-        if (enemyTargeting == null || enemyTargeting.Target == null)
-            return false;
-
-        target = enemyTargeting.Target.GetComponent<TargetableComponent>();
-
-        return target != null && target.CanBeTargeted;
+        return target != null;
     }
 }

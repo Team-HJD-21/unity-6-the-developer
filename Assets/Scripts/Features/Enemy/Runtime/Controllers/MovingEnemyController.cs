@@ -1,5 +1,6 @@
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
+using Unity.Profiling;
 
 /// <summary>
 /// 능력의 발동 조건에 따라 타깃으로 이동하거나 정지하고 능력을 사용한다.
@@ -21,6 +22,10 @@ public class MovingEnemyController : EnemyController
     private double _nextPathRefreshTime;
     private float _pathRefreshPhase;
 
+    //프로파일링
+    private static readonly ProfilerMarker CheckConditionMarker =
+        new("TeamHJD.Enemy.CheckCondition");
+    
     protected override void Awake()
     {
         base.Awake();
@@ -50,7 +55,30 @@ public class MovingEnemyController : EnemyController
             return;
         }
 
-        if (enemyAbility.CheckCondition())
+        // if (enemyAbility.CheckCondition())
+        // {
+        //     StopMoving();
+        //
+        //     Transform facingTarget = enemyAbility.FacingTarget;
+        //     if (facingTarget == null)
+        //         facingTarget = enemyTargeting.Target;
+        //
+        //     if (facingTarget != null)
+        //     {
+        //         Vector2 abilityDirection =
+        //             (Vector2)facingTarget.position - (Vector2)transform.position;
+        //
+        //         if (abilityDirection.sqrMagnitude > 0.0001f)
+        //             enemyAnimation.SetFacingDirection(abilityDirection);
+        //     }
+        bool conditionMet;
+
+        using (CheckConditionMarker.Auto())
+        {
+            conditionMet = enemyAbility.CheckCondition();
+        }
+
+        if (conditionMet)
         {
             StopMoving();
 

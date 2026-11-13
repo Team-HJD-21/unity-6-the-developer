@@ -51,11 +51,10 @@ public class EnemyCloseRangeAbility : EnemyAbility
     /// </summary>
     protected bool TryGetTarget(out TargetableComponent target)
     {
-        target = null;
-        if (enemyTargeting == null || enemyTargeting.Target == null)
-            return false;
+        target = enemyTargeting != null
+            ? enemyTargeting.TargetComponent
+            : null;
 
-        target = enemyTargeting.Target.GetComponent<TargetableComponent>();
-        return target != null && target.CanBeTargeted;
+        return target != null;
     }
 }
