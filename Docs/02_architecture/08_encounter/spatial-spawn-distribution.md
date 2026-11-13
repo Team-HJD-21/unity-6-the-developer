@@ -42,11 +42,11 @@ flowchart LR
 
 `SpawnPointRegistry.Initialize(points)`로 지점을 등록한 뒤, Match의 최초 `RegionGridSnapshot`이 준비되면 `InitializeRegionGroups(regionSnapshot)`을 한 번 호출한다. 각 지점의 XY 좌표를 Region Grid 셀로 변환하고, 같은 `Definition.RegionIds[cellIndex]`를 가진 지점끼리 묶는다. Grid 밖과 Region ID 0은 그룹에서 제외하고, 비활성 지점은 그룹에 포함한다. `SpawnPoint.AreaId`는 이 그룹의 기준으로 사용하지 않는다.
 
-Core가 점령 상태를 판단한 뒤 `SetRegionSpawnEnabled(regionId, enabled)`를 호출하면 해당 그룹의 모든 지점에 스폰 허용 상태를 적용한다. 그룹이 없으면 `false`를 반환한다. 지점의 GameObject를 끄는 동작은 아니며, 기존 Planner/Executor의 `CanSpawnEnemies` 검사로 생성을 제한한다.
+Core가 점령 상태를 판단한 뒤 `SetRegionSpawnEnabled(regionId, enabled)`를 호출하면 해당 그룹의 모든 지점에 Region 스폰 허용 상태를 적용한다. 그룹이 없으면 `false`를 반환한다. 지점의 GameObject와 개별 스폰 설정은 유지하며, 기존 Planner/Executor의 `CanSpawnEnemies` 검사로 생성을 제한한다. Region을 켜도 개별적으로 차단된 지점은 스폰 불가 상태를 유지한다.
 
-`EnemyNetworkTestLauncher`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 읽고 최초 한 번 그룹을 초기화한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화하고, Match 종료 시 초기화 기록을 해제한다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
+`EnemyNetworkTestLauncher`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 Registry에 전달한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화한다. Registry가 초기화 상태를 소유하며, 같은 Region 정의를 다시 전달하면 재구성하지 않는다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
 
-그룹 조회 시 초기화하는 경로는 없다. 초기화 이후 등록 지점 목록이나 Region 정의가 바뀌면 `InitializeRegionGroups()`를 다시 호출해야 한다. Core의 점령 판단과 `SetRegionSpawnEnabled()` 호출은 아직 연결되지 않았으며, 점령에 따른 자동 차단은 후속 연결 사항이다.
+그룹 조회는 초기화된 목록만 반환한다. 등록 지점 목록이 바뀌면 Registry가 보관한 Region 정의로 즉시 재구성하고, 새로운 Region 정의가 전달되면 해당 정의로 재구성한다. Region별 허용 상태는 재구성 시 새 지점에도 적용하며, 지점이 일시적으로 모두 사라져도 같은 Match 안에서는 보존한다. 새 Runtime을 구성하거나 Match가 종료되면 `ResetRegionGroups()`로 Region 제한과 그룹을 해제한다. 개별 지점의 설정은 유지한다. Core의 점령 판단과 `SetRegionSpawnEnabled()` 호출은 아직 연결되지 않았으며, 점령에 따른 자동 차단은 후속 연결 사항이다.
 
 ### Region 그룹 수동 확인
 

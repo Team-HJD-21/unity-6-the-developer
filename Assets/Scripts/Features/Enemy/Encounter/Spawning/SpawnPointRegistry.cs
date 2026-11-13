@@ -24,6 +24,10 @@ namespace TeamHJD.Game.Domain
 
         private readonly List<SpawnPoint> spawnPoints = new();
         private IReadOnlyList<RegionGroup> regionGroups = Array.Empty<RegionGroup>();
+        private readonly Dictionary<int, bool> regionSpawnStates = new();
+        private RegionGridDefinition regionDefinition;
+
+        public bool IsRegionGroupsInitialized => regionDefinition != null;
 
         public IReadOnlyList<SpawnPoint> GetRegisteredSpawnPoints() => spawnPoints.AsReadOnly();
 
@@ -36,18 +40,41 @@ namespace TeamHJD.Game.Domain
             if (regionSnapshot == null)
                 throw new ArgumentNullException(nameof(regionSnapshot));
 
+            if (ReferenceEquals(regionDefinition, regionSnapshot.Definition))
+                return;
+
+            regionDefinition = regionSnapshot.Definition;
+            RebuildRegionGroups();
+        }
+
+        /// <summary>Match 종료 시 Region 제어 상태를 해제하고 개별 지점 설정은 유지한다.</summary>
+        public void ResetRegionGroups()
+        {
+            foreach (SpawnPoint point in spawnPoints)
+                if (point != null)
+                    point.SetRegionSpawnEnabled(true);
+
+            regionDefinition = null;
+            regionGroups = Array.Empty<RegionGroup>();
+            regionSpawnStates.Clear();
+        }
+
+        private void RebuildRegionGroups()
+        {
             var groups = new SortedDictionary<int, List<SpawnPoint>>();
             foreach (SpawnPoint spawnPoint in spawnPoints)
             {
                 if (spawnPoint == null)
                     continue;
 
+                // Region 정의가 바뀌어 그룹에서 제외된 지점에 이전 제한을 남기지 않는다.
+                spawnPoint.SetRegionSpawnEnabled(true);
                 var position = spawnPoint.Position;
                 var point = new BattlefieldPoint(position.x, position.y);
-                if (!regionSnapshot.Definition.TryGetCellIndex(point, out int cellIndex))
+                if (!regionDefinition.TryGetCellIndex(point, out int cellIndex))
                     continue;
 
-                int regionId = regionSnapshot.Definition.RegionIds[cellIndex];
+                int regionId = regionDefinition.RegionIds[cellIndex];
                 if (regionId == 0)
                     continue;
 
@@ -58,6 +85,8 @@ namespace TeamHJD.Game.Domain
                 }
 
                 points.Add(spawnPoint);
+                if (regionSpawnStates.TryGetValue(regionId, out bool enabled))
+                    spawnPoint.SetRegionSpawnEnabled(enabled);
             }
 
             var result = new List<RegionGroup>(groups.Count);
@@ -76,10 +105,11 @@ namespace TeamHJD.Game.Domain
                 if (group.RegionId != regionId)
                     continue;
 
+                regionSpawnStates[regionId] = enabled;
                 foreach (SpawnPoint point in group.SpawnPoints)
                 {
                     if (point != null)
-                        point.SetEnemySpawnEnabled(enabled);
+                        point.SetRegionSpawnEnabled(enabled);
                 }
 
                 return true;
@@ -91,7 +121,7 @@ namespace TeamHJD.Game.Domain
         /// <summary>
         /// Executor가 같은 Scene에서 찾은 스폰 지점으로 등록 목록을 교체한다.
         /// 점령 상태에 관계없이 모두 보관하며, 사용 가능 여부는 조회 시 확인한다.
-        /// 지점 목록이 바뀌면 Region 그룹을 다시 초기화해야 한다.
+        /// 지점 목록이 바뀌면 기존 Region 정의로 그룹과 허용 상태를 다시 적용한다.
         /// </summary>
         /// <param name="points">등록할 스폰 지점 목록.</param>
         public void Initialize(IEnumerable<SpawnPoint> points)
@@ -112,9 +142,14 @@ namespace TeamHJD.Game.Domain
             if (HasSameSpawnPoints(nextSpawnPoints))
                 return;
 
+            foreach (SpawnPoint point in spawnPoints)
+                if (point != null)
+                    point.SetRegionSpawnEnabled(true);
+
             spawnPoints.Clear();
             spawnPoints.AddRange(nextSpawnPoints);
-            regionGroups = Array.Empty<RegionGroup>();
+            if (IsRegionGroupsInitialized)
+                RebuildRegionGroups();
         }
 
         private bool HasSameSpawnPoints(IReadOnlyList<SpawnPoint> other)

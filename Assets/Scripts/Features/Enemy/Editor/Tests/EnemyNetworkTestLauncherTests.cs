@@ -175,7 +175,48 @@ public sealed class EnemyNetworkTestLauncherTests
                 RegionPolicyMode.Static, definition, Array.Empty<int>());
             Assert.That(ReadRegion(out _, out _), Is.True);
             Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.True);
+
+            // 같은 Match에서 등록 목록이 바뀌어도 그룹과 차단 상태를 유지한다.
+            var addedObject = new GameObject("Added spawn point");
+            SceneManager.MoveGameObjectToScene(addedObject, scene);
+            var addedPoint = addedObject.AddComponent<SpawnPoint>();
+            Assert.That(executor.SpawnPointList, Is.SameAs(registry));
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(registry.GetRegionGroups().Single().SpawnPoints.Count, Is.EqualTo(2));
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+            Assert.That(ReadRegion(out _, out _), Is.True);
+
             Assert.That(registry.SetRegionSpawnEnabled(7, true), Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            Object.DestroyImmediate(_root.GetComponent<SpawnPoint>());
+            Assert.That(executor.SpawnPointList.GetRegionGroups().Single().SpawnPoints.Count, Is.EqualTo(1));
+
+            // 마지막 지점이 사라져도 Region의 차단 설정을 보존한다.
+            registry.SetRegionSpawnEnabled(7, false);
+            Object.DestroyImmediate(addedPoint);
+            Assert.That(executor.SpawnPointList.GetRegionGroups(), Is.Empty);
+            addedPoint = addedObject.AddComponent<SpawnPoint>();
+            Assert.That(executor.SpawnPointList.GetRegionGroups().Count, Is.EqualTo(1));
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            // 새 Match에서는 이전 Region 제한을 넘기지 않는다.
+            _launcher.UnbindMatch(match);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.False);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            match = new MatchId("next-region-groups");
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Static, definition, Array.Empty<int>());
+            _launcher.BindAuthorityMatch(match, new PlayerId("test"), () => null);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+
+            // Region 허용은 개별 지점에 설정된 차단을 덮어쓰지 않는다.
+            addedPoint.SetEnemySpawnEnabled(false);
+            registry.SetRegionSpawnEnabled(7, false);
+            registry.SetRegionSpawnEnabled(7, true);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+            registry.ResetRegionGroups();
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
         }
         finally
         {
