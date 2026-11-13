@@ -10,18 +10,20 @@ public sealed class PlayerSpannerSlash : MonoBehaviour
     [SerializeField] private int _sortingOrderOffset = 2;
 
     /// <summary>타격 순간의 월드 위치에 고정합니다. 이후 플레이어 이동이나 손 위치를 따라가지 않습니다.</summary>
-    public bool Show(Transform owner, Vector2 direction, float range)
+    public bool Show(Transform owner, Vector2 direction, float range, Vector2? strikeOrigin = null, bool mirrored = false)
     {
         if (owner == null || !PlayerAimUtility.IsValidDirection(direction) ||
             !IsPositiveFinite(range) || !IsPositiveFinite(_authoredRadius)) return false;
-        transform.position = owner.position;
+        Vector2 origin = strikeOrigin ?? (Vector2)owner.position;
+        transform.position = new Vector3(origin.x, origin.y, owner.position.z);
         transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
         float scale = range / _authoredRadius;
         transform.localScale = new Vector3(scale, scale, 1f);
+        var renderer = GetComponent<SpriteRenderer>();
+        renderer.flipY = mirrored;
         var ownerRenderer = owner.GetComponent<SpriteRenderer>();
         if (ownerRenderer != null)
         {
-            var renderer = GetComponent<SpriteRenderer>();
             renderer.sortingLayerID = ownerRenderer.sortingLayerID;
             renderer.sortingOrder = ownerRenderer.sortingOrder + _sortingOrderOffset;
         }

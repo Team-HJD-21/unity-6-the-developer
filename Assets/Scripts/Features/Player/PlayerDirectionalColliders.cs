@@ -11,6 +11,7 @@ public sealed class PlayerDirectionalColliders : MonoBehaviour
         public PlayerAimFacing facing = PlayerAimFacing.Down;
         public Collider2D body = null;
         public Collider2D bullet = null;
+        public Collider2D solidBody = null;
     }
 
     [SerializeField] private DirectionColliders[] _directions;
@@ -32,13 +33,15 @@ public sealed class PlayerDirectionalColliders : MonoBehaviour
     {
         get
         {
-            if (_directions == null || _directions.Length != 8) return false;
+            if (_directions == null || (_directions.Length != 2 && _directions.Length != 8)) return false;
             int seen = 0;
             for (int i = 0; i < _directions.Length; i++)
             {
                 var pair = _directions[i];
                 if (pair == null || pair.body == null || pair.bullet == null ||
                     pair.body.isTrigger || !pair.bullet.isTrigger) return false;
+                if (pair.solidBody != null && (pair.solidBody.isTrigger ||
+                    pair.solidBody == pair.body || pair.solidBody == pair.bullet)) return false;
                 int facing = (int)pair.facing;
                 if (facing < 0 || facing >= 8 || (seen & (1 << facing)) != 0) return false;
                 for (int previous = 0; previous < i; previous++)
@@ -46,7 +49,8 @@ public sealed class PlayerDirectionalColliders : MonoBehaviour
                         _directions[previous].bullet == pair.bullet) return false;
                 seen |= 1 << facing;
             }
-            return true;
+            return _directions.Length == 8 || seen ==
+                ((1 << (int)PlayerAimFacing.Left) | (1 << (int)PlayerAimFacing.Right));
         }
     }
 
@@ -54,23 +58,29 @@ public sealed class PlayerDirectionalColliders : MonoBehaviour
     {
         if (!IsConfigured)
         {
-            Debug.LogWarning("Player directional colliders need one body and bullet collider per facing (8 pairs).", this);
+            Debug.LogWarning("Player directional colliders need Left/Right pairs or all eight facing pairs.", this);
             enabled = false;
             return;
         }
-        SetFacing(PlayerAimFacing.Down);
+        SetFacing(_directions.Length == 2 ? PlayerAimFacing.Left : PlayerAimFacing.Down);
     }
 
     public void SetFacing(PlayerAimFacing facing)
     {
         if (!isActiveAndEnabled || !IsConfigured || (int)facing < 0 || (int)facing >= 8 ||
             _activeFacing == (int)facing) return;
+        bool hasFacing = false;
+        foreach (var pair in _directions)
+            if (pair.facing == facing) { hasFacing = true; break; }
+        // A vertical request must not disable both colliders on a horizontal-only actor.
+        if (!hasFacing) return;
         _activeFacing = (int)facing;
         foreach (var pair in _directions)
         {
             bool active = pair.facing == facing;
             pair.body.enabled = active;
             pair.bullet.enabled = active;
+            if (pair.solidBody != null) pair.solidBody.enabled = active;
         }
     }
 }
