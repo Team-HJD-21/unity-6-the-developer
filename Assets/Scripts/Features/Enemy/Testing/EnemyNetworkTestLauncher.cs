@@ -512,9 +512,18 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
 
         // Registry가 지점 갱신을 처리하고, 새 Region 정의가 오면 그룹을 재구성한다.
         if (_encounterRuntime?.Executor != null &&
-            region.MatchId == _boundMatchId && region.Mode == RegionPolicyMode.Static)
+            region.MatchId == _boundMatchId)
         {
-            _encounterRuntime.Executor.SpawnPointList.InitializeRegionGroups(region);
+            var registry = _encounterRuntime.Executor.SpawnPointList;
+            if (region.Mode == RegionPolicyMode.Static)
+            {
+                registry.InitializeRegionGroups(region);
+            }
+            else if (registry.IsRegionGroupsInitialized)
+            {
+                // Dynamic 전환 시 이전 Static Region의 그룹과 제한을 해제한다.
+                registry.ResetRegionGroups();
+            }
         }
 
         reason = null;

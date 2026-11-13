@@ -217,6 +217,37 @@ public sealed class EnemyNetworkTestLauncherTests
             Assert.That(addedPoint.CanSpawnEnemies, Is.False);
             registry.ResetRegionGroups();
             Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            // Dynamic 전환은 Region 제한만 해제하고 개별 지점의 차단은 보존한다.
+            var disabledObject = new GameObject("Individually disabled point");
+            SceneManager.MoveGameObjectToScene(disabledObject, scene);
+            var disabledPoint = disabledObject.AddComponent<SpawnPoint>();
+            disabledPoint.SetEnemySpawnEnabled(false);
+            addedPoint.SetEnemySpawnEnabled(true);
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(new MatchId("other"),
+                Guid.NewGuid(), 0, RegionPolicyMode.Dynamic, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Dynamic, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.False);
+            Assert.That(registry.GetRegionGroups(), Is.Empty);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            Assert.That(disabledPoint.CanSpawnEnemies, Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Static, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            Assert.That(disabledPoint.CanSpawnEnemies, Is.False);
         }
         finally
         {

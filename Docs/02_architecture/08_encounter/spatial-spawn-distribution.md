@@ -46,6 +46,8 @@ Core가 점령 상태를 판단한 뒤 `SetRegionSpawnEnabled(regionId, enabled)
 
 `EnemyNetworkTestLauncher`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 Registry에 전달한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화한다. Registry가 초기화 상태를 소유하며, 같은 Region 정의를 다시 전달하면 재구성하지 않는다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
 
+현재 Match의 정책이 Dynamic으로 전환된 Snapshot을 읽으면 기존 Static Region 그룹과 제한을 해제한다. 개별 지점의 스폰 설정은 유지하며, 다른 Match의 Snapshot으로 현재 그룹을 해제하지 않는다. 이후 Static으로 돌아오면 전달받은 정의로 그룹을 새로 구성한다.
+
 그룹 조회는 초기화된 목록만 반환한다. 등록 지점 목록이 바뀌면 Registry가 보관한 Region 정의로 즉시 재구성하고, 새로운 Region 정의가 전달되면 해당 정의로 재구성한다. Region별 허용 상태는 재구성 시 새 지점에도 적용하며, 지점이 일시적으로 모두 사라져도 같은 Match 안에서는 보존한다. 새 Runtime을 구성하거나 Match가 종료되면 `ResetRegionGroups()`로 Region 제한과 그룹을 해제한다. 개별 지점의 설정은 유지한다. Core의 점령 판단과 `SetRegionSpawnEnabled()` 호출은 아직 연결되지 않았으며, 점령에 따른 자동 차단은 후속 연결 사항이다.
 
 ### Region 그룹 수동 확인
