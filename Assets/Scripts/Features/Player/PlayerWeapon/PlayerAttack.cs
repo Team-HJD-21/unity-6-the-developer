@@ -27,7 +27,7 @@ public partial class PlayerAttack : MonoBehaviour
     [FormerlySerializedAs("_shotgunInterval")]
     [SerializeField, Min(.01f)] private float _defaultGunInterval = .2f;
     [Header("Default Gun Spread")]
-    [SerializeField, Range(1, 32)] private int _defaultGunPelletCount = 5;
+    [SerializeField, Range(1, 32)] private int _defaultGunPelletCount = 1;
     [SerializeField, Range(0f, 180f)] private float _defaultGunSpreadAngle = 25f;
     [FormerlySerializedAs("weapon2Color")]
     [SerializeField] private Color _cryoColor = new Color(.2f, .8f, 1f);
@@ -38,7 +38,7 @@ public partial class PlayerAttack : MonoBehaviour
     [Header("Cryo Spread")]
     [FormerlySerializedAs("pelletCount")]
     [FormerlySerializedAs("_pelletCount")]
-    [SerializeField, Range(1, 32)] private int _cryoPelletCount = 5;
+    [SerializeField, Range(1, 32)] private int _cryoPelletCount = 3;
     [FormerlySerializedAs("spreadAngle")]
     [FormerlySerializedAs("_spreadAngle")]
     [SerializeField, Range(0f, 180f)] private float _cryoSpreadAngle = 25f;
@@ -140,6 +140,7 @@ public partial class PlayerAttack : MonoBehaviour
     {
         direction = Vector2.zero;
         if (_input == null) return false;
+        if (_weaponRig != null && _weaponRig.TryGetContinuousAimDirection(out direction)) return true;
         direction = _input.HasAimTarget ? _input.MouseWorldPosition - (Vector2)transform.position : _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = _input.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) return false;

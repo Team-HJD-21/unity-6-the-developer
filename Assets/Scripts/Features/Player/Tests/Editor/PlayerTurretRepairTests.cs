@@ -343,6 +343,42 @@ public sealed class PlayerTurretRepairTests
         Assert.That(_repair.Target, Is.Null);
     }
 
+    [Test]
+    public void RepairPromptTracksCameraOutputReplacementAndUnsubscribesWhenDisabled()
+    {
+        var root = Track(new GameObject("Repair prompt camera test"));
+        root.SetActive(false);
+        var view = root.AddComponent<PlayerTurretRepairPromptView>();
+        var cameras = new List<MatchCameraFollow>();
+        Invoke(view, "OnEnable");
+        try
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                var output = Track(new GameObject("Repair prompt output " + i));
+                var camera = output.AddComponent<Camera>();
+                var follow = output.AddComponent<MatchCameraFollow>();
+                if (follow.Manager == null) Invoke(follow, "Awake");
+                if (follow.Manager.OutputCamera == null) Invoke(follow.Manager, "Awake");
+                cameras.Add(follow);
+                follow.Bind(_repair.transform);
+                Assert.That(typeof(PlayerTurretRepairPromptView).GetField("_worldCamera",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view), Is.SameAs(camera));
+            }
+
+            Invoke(view, "OnDisable");
+            cameras[0].Bind(_repair.transform);
+            Assert.That(typeof(PlayerTurretRepairPromptView).GetField("_worldCamera",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view), Is.Null,
+                "A disabled prompt must not retain camera output subscriptions.");
+        }
+        finally
+        {
+            Invoke(view, "OnDisable");
+            for (int i = cameras.Count - 1; i >= 0; i--) Invoke(cameras[i].Manager, "OnDisable");
+        }
+    }
+
     [TestCase(3.2f)]
     [TestCase(-1.4f)]
     public void RepairRangeUsesFeetFromEitherSideOfTheTurret(float rootHeight)

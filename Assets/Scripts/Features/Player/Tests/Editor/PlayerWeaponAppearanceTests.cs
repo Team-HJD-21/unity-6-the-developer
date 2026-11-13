@@ -452,6 +452,7 @@ public sealed class PlayerWeaponAppearanceTests
         yield return new EnterPlayMode();
         var player = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPath),
             new Vector3(12000f, 12000f, 0f), Quaternion.identity);
+        PlayerPresentationTestMode.UseAuthoredPoses(player);
         try
         {
             var input = player.GetComponent<PlayerInputHandler>();
@@ -496,6 +497,7 @@ public sealed class PlayerWeaponAppearanceTests
         yield return new EnterPlayMode();
         var player = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPath),
             new Vector3(12000f, 12000f, 0f), Quaternion.identity);
+        PlayerPresentationTestMode.UseAuthoredPoses(player);
         float previousScale = Time.timeScale;
         try
         {
@@ -537,6 +539,7 @@ public sealed class PlayerWeaponAppearanceTests
         yield return new EnterPlayMode();
         var player = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPath),
             new Vector3(12000f, 12000f, 0f), Quaternion.identity);
+        PlayerPresentationTestMode.UseAuthoredPoses(player);
         try
         {
             player.GetComponent<PlayerInputHandler>().enabled = false;
@@ -573,6 +576,7 @@ public sealed class PlayerWeaponAppearanceTests
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPath);
             player = Object.Instantiate(prefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            PlayerPresentationTestMode.UseAuthoredPoses(player);
             var input = player.GetComponent<PlayerInputHandler>();
             input.enabled = false;
             var selection = player.GetComponent<PlayerWeaponSelection>();

@@ -135,6 +135,7 @@ public sealed class PlayerWeaponRig : MonoBehaviour
     [SerializeField] private MuzzlePose _moveMuzzles = new MuzzlePose();
     [SerializeField] private MuzzlePose _backpedalMuzzles = new MuzzlePose();
     private PlayerSkillController _skills;
+    private PlayerControlState _controls;
     private PlayerSpriteMotion _motion;
     private PlayerTurretRepair _repair;
     private Transform _activeGun;
@@ -172,6 +173,7 @@ public sealed class PlayerWeaponRig : MonoBehaviour
         }
         if (_input == null || _input.transform != _playerRoot) _input = _playerRoot.GetComponent<PlayerInputHandler>();
         _skills = _playerRoot.GetComponent<PlayerSkillController>();
+        _controls = _playerRoot.GetComponent<PlayerControlState>();
         _motion = _playerRoot.GetComponent<PlayerSpriteMotion>();
         _repair = _playerRoot.GetComponent<PlayerTurretRepair>();
         if (transform.parent != _playerRoot) transform.SetParent(_playerRoot, false);
@@ -192,9 +194,15 @@ public sealed class PlayerWeaponRig : MonoBehaviour
         bool eightWay = _motion != null && (_showGuns
             ? bodyOwnsGunVisual && _motion.SupportsEightWayRanged
             : _motion.OwnsDisplay && _motion.SupportsEightWayTools);
-        Facing = _skills != null && !_skills.CanUse ? PlayerAimFacing.Down :
+        // 우주선의 전투 제한이 몸체·무기의 방향까지 고정하지 않도록 이동 가능 여부로 표시를 판단합니다.
+        bool canFace = _controls != null ? _controls.CanMove : _skills == null || _skills.CanUse;
+        Facing = !canFace || (_skills != null && _skills.IsSelectionOpen) ? PlayerAimFacing.Down :
             (eightWay ? PlayerAimUtility.GetEightWayFacing(direction) : PlayerAimUtility.GetFacing(direction));
-        switch (Facing)
+        // One continuous gun/flash avoids switching effect objects as the mouse
+        // crosses the legacy eight-direction boundaries.
+        if (_separatedWeaponVisual != null && _separatedWeaponVisual.UsesContinuousAim)
+            Select(_rightGun, _rightMuzzle);
+        else switch (Facing)
         {
             case PlayerAimFacing.DownLeft: Select(_downLeftGun, _downLeftMuzzle); break;
             case PlayerAimFacing.DownRight: Select(_downRightGun, _downRightMuzzle); break;
@@ -230,6 +238,8 @@ public sealed class PlayerWeaponRig : MonoBehaviour
             _separatedWeaponVisual.TryGetMuzzlePosition(out Vector3 weaponMuzzle, forShot))
         {
             _activeMuzzle.position = weaponMuzzle;
+            if (_separatedWeaponVisual.UsesContinuousAim)
+                _activeMuzzle.rotation = _separatedWeaponVisual.Renderer.transform.rotation;
             return;
         }
         if (!_usePoseMuzzles || _activeMuzzle == null) return;
@@ -283,6 +293,23 @@ public sealed class PlayerWeaponRig : MonoBehaviour
         return isActiveAndEnabled && muzzle != null && muzzle.gameObject.activeInHierarchy;
     }
 
-    public void ShowShotFlash() { if (_activeFlash != null) _activeFlash.Show(); }
-    public void ShowShotFlash(Color tint) { if (_activeFlash != null) _activeFlash.Show(tint); }
+    public bool TryGetContinuousAimDirection(out Vector2 direction)
+    {
+        direction = Vector2.zero;
+        return _separatedWeaponVisual != null && _separatedWeaponVisual.TryGetContinuousAimDirection(out direction);
+    }
+
+    public void ShowShotFlash()
+    {
+        if (_separatedWeaponVisual != null && _separatedWeaponVisual.UsesContinuousAim) ShowShotFlash(Color.white);
+        else if (_activeFlash != null) _activeFlash.Show();
+    }
+    public void ShowShotFlash(Color tint)
+    {
+        if (_separatedWeaponVisual != null && _separatedWeaponVisual.UsesContinuousAim)
+        {
+            if (TryGetMuzzle(out var muzzle) && _activeFlash != null) _activeFlash.Show(tint, muzzle.rotation);
+        }
+        else if (_activeFlash != null) _activeFlash.Show(tint);
+    }
 }
