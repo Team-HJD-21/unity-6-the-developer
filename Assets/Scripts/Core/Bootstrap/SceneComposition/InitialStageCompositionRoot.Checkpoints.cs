@@ -46,6 +46,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 required.Add(prefix + "/loadout");
                 required.Add(prefix + "/movement-effects");
             }
+            required.Add("world/campaign");
             var participants = FindSceneBehaviours().OfType<ICheckpointParticipant>().ToList();
             if (_encounterConsumer is ICheckpointParticipantProvider provider)
                 foreach (var writer in provider.GetCheckpointParticipants())
@@ -58,6 +59,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             required.Add("world/field-time");
             participants.Add(new FieldTimeCheckpointParticipant(_matchTime.FieldClock));
+            participants.Add(new CampaignCheckpointParticipant(app.CampaignSlot));
             participants.Add(session.CreateRandomCheckpointParticipant());
             participants.Add(new MatchSpatialCheckpointParticipant(session, _regionBinding.RestoreCheckpoint));
             var runtime = new MatchCheckpointRuntime(session, _matchTime,
@@ -108,6 +110,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RefreshDynamicInput();
             (_environmentScope as MatchEnvironmentSceneScope)?.PublishCurrent();
             _nextBattlefieldSampleTime = 0;
+            PublishGrowthRestoreWarnings();
         }
 
         private void ReleaseCheckpoints()

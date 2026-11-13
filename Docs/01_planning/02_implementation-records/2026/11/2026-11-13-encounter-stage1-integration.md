@@ -182,3 +182,18 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 초기 testName 대신 빈 필터 인자를 사용한 실행은 Total0/실패이므로 검사 통과에 합산하지 않았다. 준비 테스트의 C# var 복수 선언2곳은 private 사전 compiler에서 잡아 적용 전에 수정했다. 최종6개 통과만 기준이다.
 - 7008→7121 새 Console 오류0·compileFailedfalse. 현재 전체 월드 Gate는 여전히 world/weather만 누락이다.
 - Host 공용 터렛/CU 성장·과거 월드 HP비율/전력 재검증은 B5b다. 실제 스킬 강화/재화 소비 원본이 없는 항목은 완료라고 쓰지 않는다. 개인 영속화가 전체 스테이지/온라인 저장 완료는 아니다.
+
+
+## B5b — Host 공용 성장·캠페인·월드 접합
+
+- FieldTurretController.Growth가 실제 제작 Definition(승급), 강화/단계·DamageBonus·CU 용량만 별도로 기록한다. 기존 업그레이드·레벨 교체·용량 사건을 구독하고 ON/OFF·피해는 성장 쓰기로 세지 않는다. 기존 OFF/냉각 조건 유지.
+- 공용 귀속은 Host+CampaignSlot+Stage. world/campaign에 식별자를 저장하고 AppRoot의 이어하기가 성장 로드보다 먼저 선택한다. 새 캠페인 API는 활성 Match 중 거절. 옛 필수 ID 누락 파일은 명시 이관 오류이며 삭제/가짜 기본값 복원하지 않는다.
+- 기존 Defense Persistence Prepare에서 최신 성장과 과거 전투 상태를 합친다. 현재 정상 ON을 우선, 나머지는 기존 CU 후보/논리 ID 순서. 부족한 대상만 OFF/사유를 표시하며 현재 강화·용량을 되감거나 전력 초과/환급하지 않는다. Player/CU HP도 현재 최대치에 과거 비율을 적용한다.
+- 자동6/6: HP 최대치 변경/최소1/파괴/잘못된 범위, 캠페인 참조 검증. 실제 Unity 컴파일 정상.
+- 실제 Stage_1 AutoActivation으로 초기2개(각15) 가동. 과거 world/field-turrets를 직접 캡처한 뒤 한 대상 OFF→HighFirepower1(비용17), CU 용량15로 변경. 개별 writer Prepare/Apply/참조 연결에서 강화1/비용17 유지, 해당 대상만 OFF, 정상 다른15 대상 ON·예약15·가용0, 부족 사유1개. 전체 Weather 포함 복원과 구분.
+- 같은 실제 대상을 HP50/100에서 제작 API로 canon_stage1_lv2로 승급. 과거 lv1 월드를 적용해도 lv2/강화1/HP50/100 유지. 실제 제작 MaxHP가 lv1/lv2 모두100이므로 이 실행을 다른 MaxHP의 실제 승급 증거로 쓰지 않는다(비율 변경은 자동 검사).
+- Play 완전 종료→재진입에서 lv2/강화1·CU 용량100·터렛12개·개인/공용scope2 확인. HP/ON은 성장 저장 항목이 아니므로 Scene 새 월드의 HP100/100·OFF로 시작했다. 전체 월드 이어하기 성공으로 쓰지 않는다. world/weather writer만 여전히 누락.
+- 근거: b5b-runtime-baseline.json, b5b-runtime-upgrade-world-restore.json, b5b-runtime-level-ratio.json, b5b-runtime-reload.json, b5b-restore-tests.json. QA 성장 파일은 증거 복사 후 시험 전 원본 상태로 정확히 복구했다. 다른 슬롯·Scene은 보존.
+- 처음 UTF8 결과를 출력할 때 cp949가 em dash를 출력하지 못했다. RPC 자체는 이미 성공했으므로 같은 강화/복원을 반복하지 않고 저장된 JSON을 파싱해 증거를 확인했다. 기존 공통 문제 해결 기록에 따라 python -X utf8을 사용했다. 시스템 코드페이지는 바꾸지 않았다.
+- Debugger에 실제 성장 원본 키·요청/디스크 revision·대기/오류를 추가했다. 창 열기 RPC1회가5000ms timeout이었으나 뒤의 읽기에서 expandedtrue/창실재/성장scope2·컴파일정상을 확인했다. timeout package stack은 b5b-monitor-errors.json에 보존했다. 이1건을 게임 기능 예외0과 섞어 지우지 않았다.
+- B6 구조/안전장치·B7 보스 진행·B8 원격 통합·B9 전체검수는 계속 진행한다. 실제 Weather writer와 Boss 콘텐츠는 여전히 외부 연결이 필요하다.

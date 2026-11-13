@@ -35,6 +35,7 @@ namespace TeamHJD.Game.Application
             string id = BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(owner))).Replace("-", "").ToLowerInvariant();
             return new CheckpointSlot("growth-" + id.Substring(0, 48));
         }
+        public IReadOnlyList<string> SourceKeys { get; }
         public CheckpointSlot Slot => _slot;
         public long IssuedRevision => Interlocked.Read(ref _issued);
         public long SavedRevision => Interlocked.Read(ref _saved);
@@ -55,6 +56,7 @@ namespace TeamHJD.Game.Application
             if (_owners.Length == 0 || _owners.Any(x => x == null || x.Kind == CheckpointSectionKind.World) ||
                 _owners.Select(x => x.PersistenceKey).Distinct(StringComparer.Ordinal).Count() != _owners.Length)
                 throw new ArgumentException("Provide unique growth/currency sources, not world writers.", nameof(owners));
+            SourceKeys = Array.AsReadOnly(_owners.Select(x => x.PersistenceKey).ToArray());
             foreach (var owner in _owners)
                 _ = new CheckpointSection(owner.PersistenceKey, owner.Version, owner.Kind, Array.Empty<byte>());
         }

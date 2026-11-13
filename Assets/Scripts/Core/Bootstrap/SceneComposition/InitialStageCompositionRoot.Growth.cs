@@ -14,7 +14,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly HashSet<GrowthSaveService> _reportedGrowthErrors = new();
         public IReadOnlyList<GrowthSaveService> GrowthSaves => _growthSaves.AsReadOnly();
 
-        private void BindGrowthSaves()
+        private void BindGrowthSaves(TeamHJD.Game.Domain.PlayerId authorityPlayer)
         {
             if (_matchHost is not AppRoot app || app.Services.CheckpointStore == null) return;
             var session = _matchSession; var time = _matchTime;
@@ -28,6 +28,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 try { scope.Load(); _growthSaves.Add(scope); }
                 catch { scope.Dispose(); throw; }
             }
+            var shared = new GrowthSaveService(app.Services.CheckpointStore, app.Services.CheckpointPayloads,
+                GrowthSaveService.SlotForOwner("field/" + authorityPlayer.Value + "/" + app.CampaignSlot.Value + "/" + session.Config.StageId.Value),
+                () => new CheckpointCaptureContext(session.Config, time.Clock.ElapsedSeconds, time.Clock.Snapshot.Epoch),
+                new[] { _turretBinding.Controller.CreateGrowthParticipant() });
+            try { shared.Load(); _growthSaves.Add(shared); }
+            catch { shared.Dispose(); throw; }
+        }
+
+        private void PublishGrowthRestoreWarnings()
+        {
+            var warnings = _turretBinding?.Controller?.GrowthRestoreWarnings;
+            if (warnings != null && warnings.Count > 0)
+                GameAlerts.Show(string.Join("\n", warnings.Take(3)), AlertTone.Info, "growth/power-restored-off");
         }
 
         private void PumpGrowthSaves()

@@ -260,7 +260,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _fieldScope = new MatchFieldSceneScope(config, _matchTime, _coordinator.GameplayCancellation,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
                     fieldFeatures, _playerActors.Actors);
-                BindGrowthSaves();
+                _restoringCheckpoint = true;
+                try { BindGrowthSaves(localPlayerId); }
+                finally { _restoringCheckpoint = false; }
+                OnTurretLayoutChanged();
+                PublishGrowthRestoreWarnings();
                 BindCheckpoints();
                 if (appMatchHost is AppRoot restoringApp) restoringApp.ApplyCheckpointArrival(this);
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;

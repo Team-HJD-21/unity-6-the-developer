@@ -19,6 +19,7 @@ namespace TeamHJD.Game.Editor
         private static CheckpointService _displayedService;
         private static string _error;
         private static Vector2 _scroll;
+        private static bool _growthExpanded;
 
         public static void Draw(InitialStageCompositionRoot scene)
         {
@@ -39,6 +40,18 @@ namespace TeamHJD.Game.Editor
                 _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.Height(Mathf.Min(110, 22 * service.MissingParticipantKeys.Count)));
                 foreach (string key in service.MissingParticipantKeys) EditorGUILayout.LabelField(key, EditorStyles.miniLabel);
                 EditorGUILayout.EndScrollView();
+            }
+            _growthExpanded = EditorGUILayout.Foldout(_growthExpanded, "개인 / Host 성장 저장 · " + scene.GrowthSaves.Count, true);
+            if (_growthExpanded)
+            {
+                foreach (var growth in scene.GrowthSaves)
+                {
+                    using var growthBox = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                    EditorGUILayout.LabelField(string.Join(" / ", growth.SourceKeys), EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("요청 / 디스크 완료", growth.IssuedRevision + " / " + growth.SavedRevision);
+                    EditorGUILayout.LabelField("상태", growth.LastError != null ? "실패" : growth.HasPendingChanges ? "저장 대기" : "동기화됨");
+                    if (growth.LastError != null) EditorGUILayout.HelpBox(growth.LastError.Message, MessageType.Error);
+                }
             }
             _slot = EditorGUILayout.TextField("슬롯", _slot);
             _restoreCurrency = EditorGUILayout.Toggle("재화도 체크포인트로 복원", _restoreCurrency);

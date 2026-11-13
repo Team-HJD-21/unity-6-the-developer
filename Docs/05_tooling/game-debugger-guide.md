@@ -227,3 +227,8 @@ Stage_1의 정식 Match는 Game Debugger 없이도 자동 생산한다. Encounte
 Encounter 패널의 최근 점유 추세는 Field 기준 관측 시간·순증·확장 횟수다. 정적 확보 한 번, 복원, 첫 CU는 연속 확장이 아니다. additionalSpawnSettings를 열면 다음 자동 계획의 관측/비중/예고/쿨다운을 조절할 수 있다. 원격 예고 연결 전에는1인 Host에서만 내부 정책이 동작한다.
 
 Timeline/Statistics의 `SituationEvent`에서 RequestScheduled는 예고·준비 편성이며 아직 actual0이다. 같은 원인 요청과 World 영역을 확인하고, 이후 RequestCompleted의 계획/실제를 대조한다. 주황 원은 실제 출현 예정 영역을 둘러싼 표시다. 정규 적과 별도 예산을 더한 것이 아니며 중간 보스/Enemy 스킬 소환과 구분한다. JSON·CSV에는 원인 ID와 영역 XY/크기도 포함된다.
+
+
+### 개인 / Host 성장 저장 상태
+
+Overview의 CHECKPOINT 아래 ‘개인 / Host 성장 저장’을 펼친다. experience/base-stats는 개인, field-turrets는 Host 캠페인/Stage 성장이다. 요청 revision과 디스크 완료 revision이 같아야 해당 쓰기가 끝난 상태이며, 대기 XP는 기본2초 합치기다. 오류는 실패로 표시한다. 아래 월드 저장/복원 버튼은 필수 writer가 모두 있어야 사용할 수 있고, 성장 저장 성공과 전체 월드 성공은 별개다. 전력 부족으로 과거 ON이 OFF 복원된 사유는 기존 Alert와 Controller.GrowthRestoreWarnings에서 확인한다.
