@@ -21,6 +21,8 @@ public sealed class PlayerControlState : MonoBehaviour, IPlayerMatchBinding, IPl
     private PlayerMatchPresence _presence;
     private PlayerMatchPresence Presence => _presence != null ? _presence : (_presence = GetComponent<PlayerMatchPresence>());
     public bool HasMatchBinding => _wasBound;
+    /// <summary>시작 허브와 Match 진행 중 우주선 방문을 같은 표시 상태로 조회합니다.</summary>
+    public bool IsInSpaceship => _hubOnly || (Presence != null && Presence.Location == MatchPlayerLocation.Spaceship);
     public bool IsFieldPaused => Presence != null && Presence.Location == MatchPlayerLocation.Field &&
         !Presence.GameplayCancellation.IsCancellationRequested && !Presence.CanSimulateField;
     public bool IsBlocked => !isActiveAndEnabled || _uiBlocked || _lifeBlocked ||

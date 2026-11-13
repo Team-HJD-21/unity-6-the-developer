@@ -2,7 +2,6 @@ Shader "Weather/TransitionBlend"
 {
     Properties
     {
-        [NoScaleOffset] _MainTex ("Previous Weather", 2D) = "white" {}
         [NoScaleOffset] _NextTex ("Next Weather", 2D) = "white" {}
         _Blend ("Blend", Range(0, 1)) = 0
     }
@@ -13,42 +12,23 @@ Shader "Weather/TransitionBlend"
 
         Pass
         {
-            CGPROGRAM
-            #pragma vertex vert
+            HLSLPROGRAM
+            #pragma vertex Vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-            };
-
-            v2f vert(appdata input)
-            {
-                v2f output;
-                output.vertex = UnityObjectToClipPos(input.vertex);
-                output.uv = input.uv;
-                return output;
-            }
-
-            sampler2D _MainTex;
-            sampler2D _NextTex;
+            TEXTURE2D_X(_NextTex);
             half _Blend;
 
-            half4 frag(v2f input) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                half4 previous = tex2D(_MainTex, input.uv);
-                half4 next = tex2D(_NextTex, input.uv);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                half4 previous = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
+                half4 next = SAMPLE_TEXTURE2D_X(_NextTex, sampler_LinearClamp, input.texcoord);
                 return lerp(previous, next, saturate(_Blend));
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }

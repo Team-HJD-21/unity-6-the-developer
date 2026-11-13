@@ -1,14 +1,193 @@
 // 현행 Player Prefab의 무기·총구 연결과 구형 컨트롤러 제거 상태를 검증합니다.
 using System.Linq;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.TestTools;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+using TeamHJD.Game.Presentation.Scene;
 
 public sealed class PlayerWeaponMigrationTests
 {
     private GameObject PlayerPrefab => AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+
+    [UnityTest]
+    public IEnumerator SpaceshipMouseOrientationUsesTheCurrentCameraAfterOutputReplacement()
+    {
+        yield return new EnterPlayMode();
+        var objects = new List<GameObject>();
+        Mouse mouse = null;
+        Keyboard keyboard = null;
+        try
+        {
+            mouse = InputSystem.AddDevice<Mouse>();
+            keyboard = InputSystem.AddDevice<Keyboard>();
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            InputSystem.Update();
+            foreach (bool visitingMatch in new[] { false, true })
+            {
+                var focus = new GameObject("Previous camera target");
+                objects.Add(focus);
+                focus.transform.position = new Vector3(12060, 12060, 0);
+                var previous = CreateCamera("Previous output", focus.transform);
+                var player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+                objects.Add(player);
+                player.GetComponent<PlayerMovement>().enabled = false;
+                Assert.That(player.GetComponent<PlayerWeaponSelection>().TrySelectWeaponSlot(2), Is.True);
+                var controls = player.GetComponent<PlayerControlState>();
+                if (visitingMatch)
+                {
+                    var presence = player.GetComponent<PlayerMatchPresence>() ?? player.AddComponent<PlayerMatchPresence>();
+                    var time = new PausedSpaceshipTestTime();
+                    presence.BindReplica(time, default);
+                    presence.ApplyReplicaLocation(time, TeamHJD.Game.Domain.MatchPlayerLocation.Spaceship);
+                }
+                else controls.BindHub(new TeamHJD.Game.Application.InputLockService());
+
+                var current = CreateCamera("Spaceship output", player.transform);
+                Assert.That(previous.GetComponent<Camera>().enabled, Is.False);
+                Assert.That(previous.gameObject.activeInHierarchy, Is.True,
+                    "The old camera survives output replacement, so a non-null cache can still be stale.");
+                Assert.That(controls.CanMove, Is.True);
+                Assert.That(controls.CanAct, Is.False);
+                var input = player.GetComponent<PlayerInputHandler>();
+                var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
+                var animator = player.GetComponent<Animator>();
+                foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+                {
+                    Vector2 direction = PlayerAimUtility.GetFacingDirection(facing);
+                    Vector3 target = player.transform.position + (Vector3)(direction * 5f);
+                    Vector2 screen = current.GetComponent<Camera>().WorldToScreenPoint(target);
+                    InputSystem.QueueStateEvent(mouse, new MouseState { position = screen });
+                    InputSystem.Update();
+                    yield return null;
+                    Assert.That(input.HasAimTarget, Is.True);
+                    Assert.That(Vector2.Distance(input.MouseWorldPosition, target), Is.LessThan(.02f),
+                        $"visit={visitingMatch}, facing={facing}: use the displayed spaceship camera.");
+                    Assert.That(Vector2.Dot(input.AimDirection, direction), Is.GreaterThan(.99f));
+                    Assert.That(rig.Facing, Is.EqualTo(facing));
+                    Assert.That(animator.GetCurrentAnimatorStateInfo(0).IsName("Base Layer.Idle_" + facing), Is.True);
+                    Assert.That(player.GetComponent<PlayerAttack>().TryFire(), Is.False);
+                }
+                controls.SetInputBlocked(true);
+                yield return null;
+                Assert.That(rig.Facing, Is.EqualTo(PlayerAimFacing.Down));
+                Object.DestroyImmediate(player);
+                Object.DestroyImmediate(current.gameObject);
+                Object.DestroyImmediate(previous.gameObject);
+                Object.DestroyImmediate(focus);
+            }
+        }
+        finally
+        {
+            for (int i = objects.Count - 1; i >= 0; i--)
+                if (objects[i] != null) Object.DestroyImmediate(objects[i]);
+            if (mouse != null) InputSystem.RemoveDevice(mouse);
+            if (keyboard != null) InputSystem.RemoveDevice(keyboard);
+        }
+        yield return new ExitPlayMode();
+
+        MatchCameraFollow CreateCamera(string name, Transform target)
+        {
+            var root = new GameObject(name);
+            objects.Add(root);
+            root.tag = "MainCamera";
+            root.transform.position = target.position + Vector3.back * 10f;
+            var camera = root.AddComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 18f;
+            camera.cullingMask = 0;
+            var follow = root.AddComponent<MatchCameraFollow>();
+            follow.Bind(target);
+            return follow;
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator HubAndSpaceshipVisit_KeepMovingAndTurningWhileCombatIsBlocked()
+    {
+        yield return new EnterPlayMode();
+        GameObject player = null;
+        float previousScale = Time.timeScale;
+        try
+        {
+            Time.timeScale = 1f;
+            foreach (bool visitingMatch in new[] { false, true })
+            foreach (int slot in new[] { 1, 2 })
+            {
+                player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+                var controls = player.GetComponent<PlayerControlState>();
+                var input = player.GetComponent<PlayerInputHandler>();
+                input.enabled = false;
+                Assert.That(player.GetComponent<PlayerWeaponSelection>().TrySelectWeaponSlot(slot), Is.True);
+                var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
+                var motion = player.GetComponent<PlayerSpriteMotion>();
+                var animator = player.GetComponent<Animator>();
+                var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+                var update = typeof(PlayerSpriteMotion).GetMethod("Update", flags);
+                var pose = typeof(PlayerSpriteMotion).GetField("_motion", flags);
+                var setMove = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.MoveInput)).GetSetMethod(true);
+                var setAim = typeof(PlayerInputHandler).GetProperty(nameof(PlayerInputHandler.AimDirection)).GetSetMethod(true);
+                if (visitingMatch)
+                {
+                    var presence = player.GetComponent<TeamHJD.Game.Presentation.Scene.PlayerMatchPresence>() ??
+                        player.AddComponent<TeamHJD.Game.Presentation.Scene.PlayerMatchPresence>();
+                    var pausedTime = new PausedSpaceshipTestTime();
+                    presence.BindReplica(pausedTime, default);
+                    Assert.That(controls.CanMove, Is.False, "A Player still in the paused field must remain blocked.");
+                    presence.ApplyReplicaLocation(pausedTime, TeamHJD.Game.Domain.MatchPlayerLocation.Spaceship);
+                }
+                else controls.BindHub(new TeamHJD.Game.Application.InputLockService());
+
+                Assert.That(controls.CanMove, Is.True);
+                Assert.That(controls.CanAct, Is.False);
+                Assert.That(player.GetComponent<PlayerSkillController>().CanUse, Is.False);
+                Assert.That(player.GetComponent<PlayerAttack>().TryFire(), Is.False);
+                foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+                {
+                    Vector2 direction = PlayerAimUtility.GetFacingDirection(facing);
+                    setMove.Invoke(input, new object[] { direction });
+                    setAim.Invoke(input, new object[] { direction });
+                    rig.RefreshPose(direction);
+                    update.Invoke(motion, null);
+                    animator.Update(0f);
+                    Assert.That(pose.GetValue(motion), Is.EqualTo(slot == 1 ? PlayerMotion.ToolMove : PlayerMotion.Move));
+                    Assert.That(rig.Facing, Is.EqualTo(facing), $"visit={visitingMatch}, slot={slot}");
+                    float before = animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+                    animator.Update(.1f);
+                    Assert.That(animator.GetCurrentAnimatorStateInfo(0).normalizedTime, Is.GreaterThan(before));
+                }
+                setMove.Invoke(input, new object[] { Vector2.zero });
+                update.Invoke(motion, null);
+                Assert.That(pose.GetValue(motion), Is.EqualTo(slot == 1 ? PlayerMotion.ToolIdle : PlayerMotion.Idle));
+                controls.SetInputBlocked(true);
+                setMove.Invoke(input, new object[] { Vector2.right });
+                rig.RefreshPose(Vector2.right);
+                update.Invoke(motion, null);
+                Assert.That(pose.GetValue(motion), Is.EqualTo(slot == 1 ? PlayerMotion.ToolIdle : PlayerMotion.Idle));
+                Assert.That(rig.Facing, Is.EqualTo(PlayerAimFacing.Down));
+                Object.DestroyImmediate(player);
+                player = null;
+            }
+        }
+        finally
+        {
+            if (player != null) Object.DestroyImmediate(player);
+            Time.timeScale = previousScale;
+        }
+        yield return new ExitPlayMode();
+    }
+
+    private sealed class PausedSpaceshipTestTime : TeamHJD.Game.Contracts.IMatchTime
+    {
+        public double ElapsedSeconds => 10;
+        public bool IsAvailable => true;
+        public TeamHJD.Game.Domain.MatchTimeSnapshot Snapshot { get; } = new(
+            new TeamHJD.Game.Domain.MatchId("spaceship-motion-test"), System.Guid.NewGuid(), 1, 10, 10, 1, true, true);
+    }
 
     [Test]
     public void EightWaySpannerClips_HaveAuthoredImpactRecoveryAndMatchingStates()
@@ -148,6 +327,7 @@ public sealed class PlayerWeaponMigrationTests
         try
         {
             player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            PlayerPresentationTestMode.UseAuthoredPoses(player);
             var input = player.GetComponent<PlayerInputHandler>();
             input.enabled = false;
             var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
@@ -294,6 +474,7 @@ public sealed class PlayerWeaponMigrationTests
         try
         {
             player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            PlayerPresentationTestMode.UseAuthoredPoses(player);
             var input = player.GetComponent<PlayerInputHandler>();
             input.enabled = false;
             var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
@@ -471,6 +652,7 @@ public sealed class PlayerWeaponMigrationTests
         try
         {
             player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            PlayerPresentationTestMode.UseAuthoredPoses(player);
             var motion = player.GetComponent<PlayerSpriteMotion>();
             var input = player.GetComponent<PlayerInputHandler>();
             var animator = player.GetComponent<Animator>();
@@ -556,6 +738,7 @@ public sealed class PlayerWeaponMigrationTests
         try
         {
             player = Object.Instantiate(PlayerPrefab, new Vector3(12000, 12000, 0), Quaternion.identity);
+            PlayerPresentationTestMode.UseAuthoredPoses(player);
             var input = player.GetComponent<PlayerInputHandler>();
             var rig = player.GetComponentInChildren<PlayerWeaponRig>(true);
             var motion = player.GetComponent<PlayerSpriteMotion>();
@@ -602,27 +785,30 @@ public sealed class PlayerWeaponMigrationTests
             Assert.That(selector.IsConfigured, Is.True);
             var data = new SerializedObject(selector);
             var directions = data.FindProperty("_directions");
-            Assert.That(directions.arraySize, Is.EqualTo(8));
+            Assert.That(directions.arraySize, Is.EqualTo(2));
+            var facings = Enumerable.Range(0, directions.arraySize).Select(i =>
+                (PlayerAimFacing)directions.GetArrayElementAtIndex(i).FindPropertyRelative("facing").intValue).ToArray();
+            CollectionAssert.AreEquivalent(new[] { PlayerAimFacing.Left, PlayerAimFacing.Right }, facings);
             Collider2D[] colliders = Enumerable.Range(0, directions.arraySize).SelectMany(i =>
             {
                 var pair = directions.GetArrayElementAtIndex(i);
-                Assert.That(pair.FindPropertyRelative("facing").intValue, Is.EqualTo(i));
                 return new[] { (Collider2D)pair.FindPropertyRelative("body").objectReferenceValue,
-                    (Collider2D)pair.FindPropertyRelative("bullet").objectReferenceValue };
+                    (Collider2D)pair.FindPropertyRelative("bullet").objectReferenceValue,
+                    (Collider2D)pair.FindPropertyRelative("solidBody").objectReferenceValue };
             }).ToArray();
-            Assert.That(colliders.Distinct().Count(), Is.EqualTo(16));
+            Assert.That(colliders.Distinct().Count(), Is.EqualTo(6));
 
             colliders[1].transform.localPosition = new Vector3(-.3f, .2f, 0f);
             colliders[2].transform.localPosition = new Vector3(.4f, -.1f, 0f);
             Vector3[] positions = colliders.Select(collider => collider.transform.localPosition).ToArray();
             Vector2[] offsets = colliders.Select(collider => collider.offset).ToArray();
-            foreach (PlayerAimFacing facing in System.Enum.GetValues(typeof(PlayerAimFacing)))
+            foreach (PlayerAimFacing facing in facings)
             {
                 selector.SetFacing(facing);
                 for (int i = 0; i < colliders.Length; i++)
                 {
-                    Assert.That(colliders[i].enabled, Is.EqualTo(i / 2 == (int)facing));
-                    Assert.That(colliders[i].isTrigger, Is.EqualTo(i % 2 == 1));
+                    Assert.That(colliders[i].enabled, Is.EqualTo(facings[i / 3] == facing));
+                    Assert.That(colliders[i].isTrigger, Is.EqualTo(i % 3 == 1));
                     Assert.That(colliders[i].attachedRigidbody, Is.EqualTo(player.GetComponent<Rigidbody2D>()));
                     Assert.That(colliders[i].transform.localPosition, Is.EqualTo(positions[i]));
                     Assert.That(colliders[i].offset, Is.EqualTo(offsets[i]));

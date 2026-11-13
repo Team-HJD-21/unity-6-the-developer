@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 /// <summary>기존 발사점 참조를 실제 활성 총구에 맞춥니다. 총구가 없으면 몸에서 사격하지 않습니다.</summary>
 [DisallowMultipleComponent]
-[DefaultExecutionOrder(-50)]
+[DefaultExecutionOrder(290)]
 public sealed class PlayerMuzzleAnchor : MonoBehaviour
 {
     [FormerlySerializedAs("playerpoint")]
@@ -26,7 +26,7 @@ public sealed class PlayerMuzzleAnchor : MonoBehaviour
         muzzle = null;
         if (!isActiveAndEnabled || _weaponRig == null || _weaponRig.PlayerRoot != _playerRoot ||
             !_weaponRig.TryGetMuzzle(out muzzle, forShot)) return false;
-        transform.position = muzzle.position;
+        transform.SetPositionAndRotation(muzzle.position, muzzle.rotation);
         return true;
     }
 

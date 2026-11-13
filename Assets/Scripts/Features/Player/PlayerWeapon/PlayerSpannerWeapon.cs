@@ -40,9 +40,28 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     private bool _pendingStrike;
     private bool _repairIntent;
     private PlayerBaseStats _baseStats;
+    private PlayerWeaponVisual _weaponVisual;
     public float AttackInterval => Mathf.Max(.05f, _attackInterval);
     public int AttackDamage => Mathf.Max(0, _damage);
-    public float AttackRange => Mathf.Max(.1f, _range);
+    public float AttackArc => Mathf.Clamp(_arc, 1f, 180f);
+    public float AttackRange { get { GetStrikeGeometry(out _, out var range, out _); return range; } }
+
+    public bool TryGetSwingDirection(out Vector2 direction)
+    {
+        direction = _swingDirection;
+        return isActiveAndEnabled && PlayerAimUtility.IsValidDirection(direction) &&
+            (_pendingStrike || _swingRemaining > 0f ||
+                (_motion != null && _motion.IsPlayingToolAction && !_motion.IsHoldingRepair));
+    }
+
+    private void GetStrikeGeometry(out Vector2 origin, out float range, out float minimumForward)
+    {
+        Vector2 direction = PlayerAimUtility.IsValidDirection(_swingDirection) ? _swingDirection : Vector2.right;
+        if (_weaponVisual != null && _weaponVisual.TryGetSpannerStrikeGeometry(direction, out origin, out range, out minimumForward)) return;
+        origin = _owner != null ? (Vector2)_owner.position : (Vector2)transform.position;
+        range = Mathf.Max(.1f, _range);
+        minimumForward = 0f;
+    }
 
     public void Bind(Transform owner, PlayerInputHandler input)
     {
@@ -53,6 +72,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         _controls = owner != null ? owner.GetComponent<PlayerControlState>() : null;
         _heldRepair = owner != null ? owner.GetComponent<PlayerTurretRepair>() : null;
         _baseStats = owner != null ? owner.GetComponent<PlayerBaseStats>() : null;
+        _weaponVisual = owner != null ? owner.GetComponent<PlayerWeaponVisual>() : null;
         if (_view == null) _view = GetComponentInChildren<PlayerSpannerView>(true);
         if (_repair == null) _repair = GetComponent<PlayerSpannerRepair>();
     }
@@ -102,7 +122,10 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         if (_slashPrefab == null) return;
         PlayerSpannerSlash slash = Instantiate(_slashPrefab);
         SceneManager.MoveGameObjectToScene(slash.gameObject, _owner.gameObject.scene);
-        if (!slash.Show(_owner, _swingDirection, Mathf.Max(.1f, _range))) Destroy(slash.gameObject);
+        GetStrikeGeometry(out var origin, out var range, out _);
+        bool mirrored = _weaponVisual != null && _weaponVisual.UsesContinuousAim &&
+            _owner.InverseTransformDirection(_swingDirection).x < 0f;
+        if (!slash.Show(_owner, _swingDirection, range, origin, mirrored)) Destroy(slash.gameObject);
     }
 
     private void ApplyMeleeDamage()
@@ -110,14 +133,19 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         _hit.Clear();
         bool feedbackShown = false;
         int damage = _baseStats != null ? Mathf.RoundToInt(_baseStats.ResolveWeaponDamage(_damage)) : Mathf.Max(0, _damage);
+        GetStrikeGeometry(out var origin, out var range, out var minimumForward);
         // Query again at the strike: moving away or stepping behind a wall must avoid the hit.
-        foreach (Collider2D collider in Physics2D.OverlapCircleAll(_owner.position, Mathf.Max(.1f, _range)))
+        foreach (Collider2D collider in Physics2D.OverlapCircleAll(origin, range))
         {
+            if (collider.isTrigger) continue;
             EnemyHealth enemy = collider.GetComponentInParent<EnemyHealth>();
             if (enemy == null || enemy.gameObject.scene != _owner.gameObject.scene ||
                 enemy.CurrentHealth <= 0 || _hit.Contains(enemy)) continue;
-            Vector2 point = collider.ClosestPoint(_owner.position);
-            if (!PlayerSpannerTargeting.CanReach(_owner, enemy.transform, point, _swingDirection, _range, _arc)) continue;
+            Vector2 point = collider.ClosestPoint(origin + _swingDirection * minimumForward);
+            // The crescent and its damage start outside the body, rather than
+            // expanding a filled cone through the character as the effect grows.
+            if (Vector2.Dot(point - origin, _swingDirection) < minimumForward) continue;
+            if (!PlayerSpannerTargeting.CanReach(_owner, enemy.transform, point, _swingDirection, range, AttackArc, origin)) continue;
             _hit.Add(enemy);
             int previousHealth = enemy.CurrentHealth;
             enemy.TakeDamage(damage);

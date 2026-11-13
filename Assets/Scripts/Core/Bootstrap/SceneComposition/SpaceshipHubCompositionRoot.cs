@@ -51,7 +51,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 startObject.transform.SetParent(transform);
                 startObject.transform.position = markers[0].position;
                 var start = startObject.AddComponent<PlayerStart>();
-                _spawner = new LocalPlayerActorSpawner(settings.playerPrefab, transform);
+                _spawner = new LocalPlayerActorSpawner(settings.playerPrefab, transform, app.PresentationRandom);
                 Player = _spawner.Spawn(new PlayerId("hub-local-player"), start);
                 foreach (var component in Player.GetComponents<MonoBehaviour>())
                 {

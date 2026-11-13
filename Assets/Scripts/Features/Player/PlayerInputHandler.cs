@@ -1,4 +1,5 @@
 using UnityEngine;
+using TeamHJD.Game.Presentation.Scene;
 
 /// <summary>
 /// 플레이어 조작 입력(WASD, 조준, 공격, 폭탄, 스킬, 무기 교체 등) 수집 전담 컴포넌트
@@ -44,9 +45,27 @@ public class PlayerInputHandler : MonoBehaviour
 
     private void Awake()
     {
-        _mainCamera = Camera.main;
+        _mainCamera = FindAimCamera();
         _skills = GetComponent<PlayerSkillController>();
         MouseWorldPosition = transform.position;
+    }
+
+    private void OnEnable()
+    {
+        CameraManager.OutputChanged += OnCameraOutputChanged;
+        _mainCamera = FindAimCamera();
+    }
+
+    private static Camera FindAimCamera()
+    {
+        var output = CameraManager.Current != null ? CameraManager.Current.OutputCamera : null;
+        return output != null && output.isActiveAndEnabled ? output : Camera.main;
+    }
+
+    private void OnCameraOutputChanged(Camera camera)
+    {
+        _mainCamera = camera;
+        HasAimTarget = false;
     }
 
     private void Update()
@@ -56,8 +75,10 @@ public class PlayerInputHandler : MonoBehaviour
 
         // 2. 마우스 조준 방향 및 월드 좌표
         HasAimTarget = false;
-        if (_mainCamera == null) _mainCamera = Camera.main;
-        if (_mainCamera != null)
+        // 우주선 전환 후에도 살아 있는 이전 카메라로 커서 좌표를 투영하지 않습니다.
+        if (_mainCamera == null || !_mainCamera.isActiveAndEnabled || !_mainCamera.CompareTag("MainCamera"))
+            _mainCamera = FindAimCamera();
+        if (_mainCamera != null && _mainCamera.isActiveAndEnabled)
         {
             var aimPlane = new Plane(Vector3.forward, transform.position);
             Ray pointerRay = _mainCamera.ScreenPointToRay(GameInput.PointerPosition);
@@ -123,6 +144,9 @@ public class PlayerInputHandler : MonoBehaviour
 
     private void OnDisable()
     {
+        CameraManager.OutputChanged -= OnCameraOutputChanged;
+        _mainCamera = null;
+        HasAimTarget = false;
         CancelAttackGesture();
         IsRepairPressed = false;
         WasReloadPressed = false;

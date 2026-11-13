@@ -1,9 +1,8 @@
-// Built-in Render Pipeline의 OnRenderImage/Graphics.Blit에서 사용하는 화면 효과.
+// URP 2D의 StageCameraEffectsFeature에서 실행하는 화면 효과.
 Shader "Weather/HeatWave"
 {
     Properties
     {
-        [NoScaleOffset] _MainTex ("Screen", 2D) = "white" {}
         _HeatTint ("Heat Tint", Color) = (1, 0.28, 0.38, 1)
         _HeatTintStrength ("Heat Tint Strength", Range(0, 1)) = 0.55
         _LightBrightness ("Light Brightness", Range(0, 3)) = 1.2
@@ -19,32 +18,12 @@ Shader "Weather/HeatWave"
 
         Pass
         {
-            CGPROGRAM
-            #pragma vertex vert
+            HLSLPROGRAM
+            #pragma vertex Vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-            };
-
-            v2f vert(appdata input)
-            {
-                v2f output;
-                output.vertex = UnityObjectToClipPos(input.vertex);
-                output.uv = input.uv;
-                return output;
-            }
-
-            sampler2D _MainTex;
             half4 _HeatTint;
             half _HeatTintStrength;
             half _LightBrightness;
@@ -53,9 +32,16 @@ Shader "Weather/HeatWave"
             half _ScreenHazeStrength;
             float _ScreenHazeLength;
 
-            half4 frag(v2f input) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                float2 uv = input.uv;
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float yDirection = 1.0;
+                float2 effectUV = input.texcoord;
+                #if UNITY_UV_STARTS_AT_TOP
+                    effectUV.y = 1.0 - effectUV.y;
+                    yDirection = -1.0;
+                #endif
+                float2 uv = effectUV;
                 float aspect = _ScreenParams.x / _ScreenParams.y;
                 float2 lightPosition = float2(1.0, 1.0);
                 float2 fromLight = float2((uv.x - lightPosition.x) * aspect,
@@ -87,7 +73,7 @@ Shader "Weather/HeatWave"
                     globalDetail * _ScreenHazeStrength * 0.0015
                         + globalWave * lightHazeMask * _LightHazeStrength * 0.002);
 
-                half4 color = tex2D(_MainTex, saturate(uv + distortion));
+                half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, saturate(input.texcoord + distortion * float2(1.0, yDirection)));
                 // 원본 장면의 명암을 남기면서 전체 화면을 선홍색으로 물들인다.
                 color.rgb = lerp(color.rgb,
                     color.rgb * lerp(half3(1, 1, 1), _HeatTint.rgb, 0.45)
@@ -100,7 +86,7 @@ Shader "Weather/HeatWave"
                     * _LightBrightness * (core * 0.85 + halo * 0.26);
                 return color;
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }

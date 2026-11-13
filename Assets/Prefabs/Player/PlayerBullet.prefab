@@ -157,11 +157,11 @@ PolygonCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.05, y: 0.18}
   m_SpriteTilingProperty:
-    border: {x: 0.5, y: 0.6, z: 0.5, w: 0.6}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.6, y: 1.6}
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5162409, y: 0.25921094}
+    oldSize: {x: 0.75, y: 0.75}
     newSize: {x: 0.46, y: 0.19}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -169,14 +169,14 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: -0.21256691, y: 0.08846259}
+    - - {x: -0.14089122, y: 0.07370582}
       - {x: -0.21692517, y: -0.00048613548}
-      - {x: -0.21692514, y: -0.091731295}
+      - {x: -0.16843864, y: -0.064325884}
       - {x: 0.07199445, y: -0.090547696}
-      - {x: 0.14750685, y: -0.05250684}
-      - {x: 0.21147732, y: -0.016283453}
-      - {x: 0.22128345, y: 0.0030147526}
-      - {x: 0.16077869, y: 0.04108595}
+      - {x: 0.14750685, y: -0.052506834}
+      - {x: 0.1566665, y: -0.037364528}
+      - {x: 0.17068885, y: -0.0012014657}
+      - {x: 0.16077869, y: 0.04108596}
       - {x: 0.05116332, y: 0.09173128}
   m_UseDelaunayMesh: 0
 --- !u!114 &5823638767377678441
@@ -191,10 +191,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4804cc54a6fe41988b65e715fe1ab955, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rb: {fileID: 8235949267977876978}
-  bulletSpeed: 45
-  bulletDamage: 13
-  lifeTime: 1.3333334
+  _body: {fileID: 8235949267977876978}
+  _spriteRenderer: {fileID: 0}
+  _speed: 45
+  _lifetime: 1.3333334
+  _damage: 13
+  _targetTag: Enemy
 --- !u!95 &910202610210000020
 Animator:
   serializedVersion: 7

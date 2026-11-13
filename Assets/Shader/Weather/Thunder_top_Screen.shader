@@ -4,7 +4,6 @@ Shader "Weather/Thunder"
 {
     Properties
     {
-        [NoScaleOffset] _MainTex ("Screen", 2D) = "white" {}
         _RainTint ("Rain Tint", Color) = (0.72, 0.82, 0.95, 1)
         _RainStrength ("Rain Strength", Range(0, 1)) = 1
         _Darkness ("Darkness", Range(0, 1)) = 0.12
@@ -25,32 +24,12 @@ Shader "Weather/Thunder"
 
         Pass
         {
-            CGPROGRAM
-            #pragma vertex vert
+            HLSLPROGRAM
+            #pragma vertex Vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-            };
-
-            v2f vert(appdata input)
-            {
-                v2f output;
-                output.vertex = UnityObjectToClipPos(input.vertex);
-                output.uv = input.uv;
-                return output;
-            }
-
-            sampler2D _MainTex;
             half4 _RainTint;
             half4 _LightningColor;
             half _RainStrength;
@@ -121,9 +100,14 @@ Shader "Weather/Thunder"
                 return nearest;
             }
 
-            half4 frag(v2f input) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                half4 color = tex2D(_MainTex, input.uv);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float2 effectUV = input.texcoord;
+                #if UNITY_UV_STARTS_AT_TOP
+                    effectUV.y = 1.0 - effectUV.y;
+                #endif
+                half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
                 half strength = saturate(_RainStrength);
 
                 // Rain.shader와 같은 차가운 색감과 채도 감소만 적용한다.
@@ -133,7 +117,7 @@ Shader "Weather/Thunder"
                 color.rgb = lerp(color.rgb, rainy, strength);
 
                 float aspect = _ScreenParams.x / _ScreenParams.y;
-                float2 fromCenter = input.uv * 2.0 - 1.0;
+                float2 fromCenter = effectUV * 2.0 - 1.0;
                 half edge = saturate(dot(fromCenter, fromCenter) * 0.5);
                 color.rgb *= 1.0 - edge * _EdgeDarkness * strength;
 
@@ -158,7 +142,7 @@ Shader "Weather/Thunder"
                 // 플레이어 높이를 화면 비율로 바꾸고 번개 크기 배율을 적용한다.
                 float playerScreenHeight = _PlayerWorldHeight
                     / max(2.0 * unity_OrthoParams.y, 0.0001);
-                float2 screenPoint = float2(input.uv.x * aspect, input.uv.y);
+                float2 screenPoint = float2(effectUV.x * aspect, effectUV.y);
 
                 // WeatherShaderApply가 번개 발생 시 월드 좌표로 정한 위치를 사용한다.
                 int boltCount = 1 + (int)floor(HashNumber(eventIndex * 23.17
@@ -198,7 +182,7 @@ Shader "Weather/Thunder"
                 color.rgb += _LightningColor.rgb * flash * 0.04;
                 return color;
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }
