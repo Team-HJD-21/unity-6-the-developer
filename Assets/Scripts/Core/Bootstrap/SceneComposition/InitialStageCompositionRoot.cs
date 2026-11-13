@@ -260,6 +260,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _fieldScope = new MatchFieldSceneScope(config, _matchTime, _coordinator.GameplayCancellation,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
                     fieldFeatures, _playerActors.Actors);
+                BindGrowthSaves();
                 BindCheckpoints();
                 if (appMatchHost is AppRoot restoringApp) restoringApp.ApplyCheckpointArrival(this);
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
@@ -406,6 +407,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
             _lastEntityCells.Clear();
             var errors = new List<Exception>();
+            RunCleanup(ReleaseGrowthSaves, errors);
             RunCleanup(ReleaseCheckpoints, errors);
             RunCleanup(() => coordinator?.Dispose(), errors);
             RunCleanup(() => environment?.Dispose(), errors);
@@ -518,6 +520,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void Update()
         {
             _matchTime?.Pump(Time.timeScale);
+            PumpGrowthSaves();
             if (_restoringCheckpoint) return;
             // main의 기존 CU 읽기 Port를 사용합니다. Feature가 새 파괴 이벤트 계약을 구현할 필요는 없습니다.
             _coordinator?.EvaluateProgress();

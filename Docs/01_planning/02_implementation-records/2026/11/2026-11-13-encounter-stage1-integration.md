@@ -170,3 +170,15 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 
 
 자동 검사19개 통과. 실제 Stage_1에서 권위 점유를30→70셀로 두 번 주입한 경계 시험으로 일반6 + 예고3을 확인했다. 예고 중 개별 checkpoint apply/rollback은 생존15·대기1·예산25를 유지했고, Field 재개 뒤 Source SituationEvent 계획3/실제3·생존18·대기0·예산25로 끝났다. 자연 전체 스테이지 플레이나 Weather 포함 전체 저장의 성공을 의미하지 않는다. Scene View 주황 예고를 native PNG로 확인했고 정상 Stop 뒤 새 오류0·컴파일 정상이다.
+
+
+## B5a — 개인 성장 영속화
+
+- IGrowthCheckpointParticipant와 GrowthSaveService로 실제 PlayerExperience/PlayerBaseStats 원본을 개인 저장에 연결했다. UI는 기존 API를 유지한다. identity의 논리 Player ID로 파일을 나누고 roster 순서를 PersistenceKey에 사용하지 않는다.
+- XP 기본2초 합치기, 레벨업·보상·투자/환불은 관련 두 원본을 즉시 한 캡처로 저장한다. 불변 자료만 순서대로 기존 BinaryCheckpointStore에 제출한다. 월드 복귀/정상 Match 해제는 Flush하며 디스크 실패를 숨기지 않는다. 손상 파일을 기본값으로 덮지 않는다.
+- 서비스 자동 검사 최종6/6: 합치기/중요 변경 묶음, roster 변경, 디스크 실패·명시 재시도, 손상 보존, 적용 실패 원복, 지연 쓰기 역전 방지. 실제 Unity 컴파일 오류0.
+- 실제 Stage_1의 기존 Player API로 XP0→100/레벨2, 보상 수령true, 공격1투자true, 사용 가능 포인트0을 확인했다. 저장 issued3/saved3/errornull. Play 완전 종료→재진입한 새 actor에서도 XP100/레벨2/공격1/보상수령true/포인트0이었다. b5a-actual-save.json, b5a-actual-reload.json에 원본을 보존했다.
+- QA에서는 정규 생산 lease만 임시 종료하고 Player/CU 보호를 사용했다. 시험 전 growth 파일0을 확인했고, Stop 뒤 생성한 정확한1개 파일을 증거로 복사한 뒤 제거해 기존 사용자 성장 상태로 복구했다. 다른 Checkpoint 파일·Scene은 변경하지 않았다.
+- 초기 testName 대신 빈 필터 인자를 사용한 실행은 Total0/실패이므로 검사 통과에 합산하지 않았다. 준비 테스트의 C# var 복수 선언2곳은 private 사전 compiler에서 잡아 적용 전에 수정했다. 최종6개 통과만 기준이다.
+- 7008→7121 새 Console 오류0·compileFailedfalse. 현재 전체 월드 Gate는 여전히 world/weather만 누락이다.
+- Host 공용 터렛/CU 성장·과거 월드 HP비율/전력 재검증은 B5b다. 실제 스킬 강화/재화 소비 원본이 없는 항목은 완료라고 쓰지 않는다. 개인 영속화가 전체 스테이지/온라인 저장 완료는 아니다.

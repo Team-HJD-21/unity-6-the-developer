@@ -64,7 +64,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 () => HasCurrentMatch && _matchSession == session,
                 () => coordinator.IsGameplayRunning,
                 coordinator.GameplayCancellation,
-                () => _restoringCheckpoint = true,
+                () => { FlushGrowthSaves(); _restoringCheckpoint = true; },
                 FinishCheckpointRestore,
                 error =>
                 {
