@@ -1,3 +1,4 @@
+using TeamHJD.Game.Enemies.Encounter;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -14,17 +15,17 @@ using Object = UnityEngine.Object;
 /// <summary>
 /// 테스트런처의 Region 연결과 유효한 생성 요청 구성을 검사한다.
 /// </summary>
-public sealed class EnemyNetworkTestLauncherTests
+public sealed class EncounterSceneBindingTests
 {
     private GameObject _root;
-    private EnemyNetworkTestLauncher _launcher;
+    private EncounterSceneBinding _launcher;
 
     [SetUp]
     public void SetUp()
     {
         _root = new GameObject("Launcher test");
         _root.SetActive(false);
-        _launcher = _root.AddComponent<EnemyNetworkTestLauncher>();
+        _launcher = _root.AddComponent<EncounterSceneBinding>();
     }
 
     [TearDown]
@@ -113,26 +114,26 @@ public sealed class EnemyNetworkTestLauncherTests
                 .SetValue(executor, enemies);
             Set("_spawnExecutor", executor);
             Set("_squadCatalog", squads);
-            typeof(EnemyNetworkTestLauncher).GetMethod("EnsureEncounterRuntime", BindingFlags.Instance | BindingFlags.NonPublic)
+            typeof(EncounterSceneBinding).GetMethod("EnsurePipeline", BindingFlags.Instance | BindingFlags.NonPublic)
                 .Invoke(_launcher, null);
-            Assert.That(Get<EncounterRuntime>("_encounterRuntime"), Is.Null);
+            Assert.That(Get<EncounterPipeline>("_pipeline"), Is.Null);
 
             _launcher.UseAppNetworkOwnership();
             var firstMatch = new MatchId("first");
             _launcher.BindAuthorityMatch(firstMatch, new PlayerId("test"), () => null);
-            var first = Get<EncounterRuntime>("_encounterRuntime");
+            var first = Get<EncounterPipeline>("_pipeline");
             Assert.That(first, Is.Not.Null);
             Assert.That(first.Executor, Is.SameAs(executor));
             Set("spawnBudget", 30);
-            typeof(EnemyNetworkTestLauncher).GetMethod("EnsureEncounterRuntime", BindingFlags.Instance | BindingFlags.NonPublic)
+            typeof(EncounterSceneBinding).GetMethod("EnsurePipeline", BindingFlags.Instance | BindingFlags.NonPublic)
                 .Invoke(_launcher, null);
             Assert.That(Get<EncounterBudgetSettings>("_runtimeBudgetSettings").baseBudget, Is.EqualTo(30));
             _launcher.UnbindMatch(firstMatch);
-            Assert.That(Get<EncounterRuntime>("_encounterRuntime"), Is.Null);
+            Assert.That(Get<EncounterPipeline>("_pipeline"), Is.Null);
 
             var secondMatch = new MatchId("second");
             _launcher.BindAuthorityMatch(secondMatch, new PlayerId("test"), () => null);
-            Assert.That(Get<EncounterRuntime>("_encounterRuntime"), Is.Not.SameAs(first));
+            Assert.That(Get<EncounterPipeline>("_pipeline"), Is.Not.SameAs(first));
             _launcher.UnbindMatch(secondMatch);
         }
         finally
@@ -261,7 +262,7 @@ public sealed class EnemyNetworkTestLauncherTests
     private bool ReadRegion(out RegionGridSnapshot region, out string reason)
     {
         object[] arguments = { null, null };
-        bool success = (bool)typeof(EnemyNetworkTestLauncher)
+        bool success = (bool)typeof(EncounterSceneBinding)
             .GetMethod("TryReadRegion", BindingFlags.Instance | BindingFlags.NonPublic)
             .Invoke(_launcher, arguments);
         region = (RegionGridSnapshot)arguments[0];
@@ -302,7 +303,7 @@ public sealed class EnemyNetworkTestLauncherTests
 
     private T Get<T>(string name) => (T)Field(name).GetValue(_launcher);
     private void Set(string name, object value) => Field(name).SetValue(_launcher, value);
-    private static FieldInfo Field(string name) => typeof(EnemyNetworkTestLauncher)
+    private static FieldInfo Field(string name) => typeof(EncounterSceneBinding)
         .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
 
     private sealed class TestStreams : IRandomStreams, IRandomSource

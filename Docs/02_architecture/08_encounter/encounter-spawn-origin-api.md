@@ -15,7 +15,7 @@
 - 같은 논리 ID를 다시 등록해도 새 generation을 받는다. 삭제 source 또는 이전 Match를 참조하는 늦은 요청은 새 source로 바뀌지 않는다.
 - 공통 `EncounterRequestService`는 명시적 origin을 지원하는 `IOriginAwareEncounterExecutor`와 권위 resolver를 요구한다. 없는 연결을 자동 지점 생성으로 대체하지 않고 UnsupportedOrigin/OriginUnavailable로 거부한다. resolver가 원래 의도를 교체하거나 수명 종료 후 실행할 수도 없다.
 - `EncounterSceneConfiguration`은 실제 Enemy 생성기를 제작 참조로 지정한다. 현재 Initial_Stage는 EnemySpawnRoot prefab 인스턴스를 사용한다. 기존 다른 제작 Executor는 제거하지 않았다. 재로드 뒤 App의 persistent consumer에 새 Scene 참조를 전달한다.
-- `EncounterRuntime`은 `MatchId`, 명시적인 `EnemySpawnExecutor`, `EnemySquadPresetCatalog`, `EncounterBudgetSettings`를 받는 생성자로 만든다. Runtime 내부의 기본 생성자/씬 자동 검색 경로는 제거됐다. 씬 제작 연결은 `EncounterSceneConfiguration`과 런처가 담당하며, standalone 런처에는 기존 검색 fallback이 남아 있어 다중 실행기 씬은 명시적으로 연결한다.
+- `EncounterPipeline`은 `MatchId`, 명시적인 `EnemySpawnExecutor`, `EnemySquadPresetCatalog`, `EncounterBudgetSettings`를 받는 생성자로 만든다. Runtime 내부의 기본 생성자/씬 자동 검색 경로는 제거됐다. 씬 제작 연결은 `EncounterSceneConfiguration`과 런처가 담당하며, standalone 런처에는 기존 검색 fallback이 남아 있어 다중 실행기 씬은 명시적으로 연결한다.
 
 ## 조립과 호출
 
@@ -37,7 +37,7 @@ Host의 `MatchSession.InitializeSpawnSources`가 Match gameplay 취소 수명에
 
 ## #540 병합 후 편성·비용 경계
 
-현재 런처는 RegionSceneBinding의 최신 지역 Snapshot을 추가로 읽어 `EncounterRuntime.RequestSpawn()`에 전달한다. Runtime이 점유율 기반 전체 비용 예산을 산출하고, 명시 origin이면 `SpawnCompositionPlanner.TryPlanOrigin()`을 사용한다. 내부 고정 요청 타입은 `FixedPresetSpawnRequest`이며 지정된 Order·요청 마릿수·비용 예산을 보존한다. 옛 `SpawnRequest` 또는 Runtime의 기본 생성자를 새 호출부에 사용하지 않는다.
+현재 런처는 RegionSceneBinding의 최신 지역 Snapshot을 추가로 읽어 `EncounterPipeline.RequestSpawn()`에 전달한다. Runtime이 점유율 기반 전체 비용 예산을 산출하고, 명시 origin이면 `SpawnCompositionPlanner.TryPlanOrigin()`을 사용한다. 내부 고정 요청 타입은 `FixedPresetSpawnRequest`이며 지정된 Order·요청 마릿수·비용 예산을 보존한다. 옛 `SpawnRequest` 또는 Runtime의 기본 생성자를 새 호출부에 사용하지 않는다.
 
 환경 Profile은 기존처럼 고정 편성의 preset override와 요청 수량 배율을 적용한다. #540의 금액 예산은 그 요청에도 적용되며, World/명시 지점도 세트 비용과 요청 마릿수를 모두 만족해야 한다. 환경 조정용 `budgetScale` 필드가 현재 조절하는 것은 `MaxCount`라는 점에 주의한다. World origin이 상황별 편성을 자동 선택하는 경로는 아니다.
 

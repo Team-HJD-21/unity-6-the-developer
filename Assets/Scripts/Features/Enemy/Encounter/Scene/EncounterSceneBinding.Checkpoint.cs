@@ -12,7 +12,7 @@ using TeamHJD.Game.Domain;
 /// <summary>
 /// 초기 Encounter와 지연 요청, 분산 이력의 저장·복원 연결을 제공한다.
 /// </summary>
-public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, ICheckpointParticipantProvider
+public sealed partial class EncounterSceneBinding : ICheckpointParticipant, ICheckpointParticipantProvider
 {
     string ICheckpointParticipant.Key => "world/encounter";
     int ICheckpointParticipant.Version => 1;
@@ -42,7 +42,7 @@ public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, I
 
     private void RequireCheckpointMatch(MatchId match)
     {
-        if (_boundMatchId != match || !IsServer || _spawnClock == null || _encounterRuntime == null)
+        if (_boundMatchId != match || !IsServer || _spawnClock == null || _pipeline == null)
             throw new InvalidOperationException("Bind the authority Encounter before checkpoint operations.");
     }
 
@@ -59,7 +59,7 @@ public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, I
                 p.Request.CauseEventId, Math.Max(0, p.Reservation.DueGameSeconds - GameSeconds));
         }).ToArray();
         return new SavedEncounter(_initialEncounterPending, Math.Max(0, _initialEncounterDue - GameSeconds), requests,
-            _encounterRuntime.CaptureCheckpoint());
+            _pipeline.CaptureCheckpoint());
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public sealed partial class EnemyNetworkTestLauncher : ICheckpointParticipant, I
     private void ApplyEncounter(SavedEncounter saved)
     {
         CancelPendingInitialEncounter(); CancelScheduledEncounters();
-        _encounterRuntime.RestoreCheckpoint(saved.History, _boundMatchId);
+        _pipeline.RestoreCheckpoint(saved.History, _boundMatchId);
         _initialEncounterPending = saved.InitialPending; _initialEncounterDue = GameSeconds + saved.InitialRemaining;
         if (_initialEncounterPending) StartInitialEncounterIfBound();
         foreach (var pending in saved.Pending)

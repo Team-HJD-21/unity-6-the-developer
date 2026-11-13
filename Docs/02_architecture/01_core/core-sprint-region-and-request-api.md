@@ -85,7 +85,7 @@ Battlefield의 배치 입력과 동적 지역의 활성 터렛 입력은 같은 
 
 ## 정식 Encounter 요청
 
-`EncounterRequestService`는 양현석의 조율, `IEncounterExecutor` 구현은 조수빈의 실제 계획/생성 경계다. 기존 `EnemyNetworkTestLauncher`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.
+`EncounterRequestService`는 양현석의 조율, `IEncounterExecutor` 구현은 조수빈의 실제 계획/생성 경계다. 기존 `EncounterSceneBinding`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.
 
 ```csharp
 var context = new MatchRequestContext(matchId, requestId, issuerId);

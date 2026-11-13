@@ -12,7 +12,7 @@ using UnityEngine;
 /// <summary>
 /// Core의 환경·생성 source·Match 시계와 지연 요청을 연결한다.
 /// </summary>
-public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentConsumer, IEncounterSpawnContextConsumer, IEncounterOriginRequestTarget
+public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsumer, IEncounterSpawnContextConsumer, IEncounterOriginRequestTarget
 {
     [SerializeField] private EncounterEnvironmentProfile environmentProfile;
     private EnemySpawnExecutor _sceneExecutor;
@@ -144,7 +144,7 @@ public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentCons
     }
     private bool FieldCanAdvance => _spawnClock is not IMatchTime time ||
         (time.IsAvailable && !time.Snapshot.IsPaused && time.Snapshot.Rate > 0);
-    public EnemySpawnExecutor ExecutionTarget => _encounterRuntime?.Executor ?? _sceneExecutor;
+    public EnemySpawnExecutor ExecutionTarget => _pipeline?.Executor ?? _sceneExecutor;
     /// <summary>
     /// 씬에서 지정한 실행기와 환경 설정을 현재 연결부의 제작 참조로 사용한다.
     /// </summary>
@@ -152,8 +152,8 @@ public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentCons
     {
         if (_snapshotProvider != null) throw new InvalidOperationException("Configure the Enemy Scene before binding a Match.");
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        if (_encounterRuntime?.Executor != null) _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _encounterRuntime = null; _sceneExecutor = executor; _spawnExecutor = executor; environmentProfile = profile;
+        if (_pipeline?.Executor != null) _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+        _pipeline = null; _sceneExecutor = executor; _spawnExecutor = executor; environmentProfile = profile;
         regionBinding = null;
         foreach (var root in executor.gameObject.scene.GetRootGameObjects())
         {

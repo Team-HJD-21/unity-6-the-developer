@@ -163,12 +163,12 @@ Timeline에서 요청 실패, 터렛 파괴, Grid OOB를 각각 무장한다. �
 
 ```mermaid
 flowchart LR
-  AUTO[MatchStart] --> L[EnemyNetworkTestLauncher]
+  AUTO[MatchStart] --> L[EncounterSceneBinding]
   UI[RuntimeUI] --> L
   SCENE[SpawnerTester / SceneCollision] --> L
   WINDOW[GameDebugger / DebugWindow] --> L
   CORE[AppRoot current Battlefield snapshot] --> L
-  L --> R[EncounterRuntime / existing Planner]
+  L --> R[EncounterPipeline / existing Planner]
   R --> E[EnemySpawnExecutor / server]
   E -->|successful spawn / death / removal| L
   L -->|IGameDiagnosticsSource| SESSION[GameDebuggerSession]

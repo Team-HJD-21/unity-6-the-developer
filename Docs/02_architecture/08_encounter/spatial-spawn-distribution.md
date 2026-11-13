@@ -33,7 +33,7 @@ flowchart LR
   Actual --> Diagnostics
 ```
 
-- `EnemyNetworkTestLauncher`의 Match Bind/Unbind가 `EncounterRuntime`을 생성/해제한다.
+- `EncounterSceneBinding`의 Match Bind/Unbind가 `EncounterPipeline`을 생성/해제한다.
 - Runtime의 Planner 한 개가 Policy와 History를 소유한다. 정적 서비스나 Editor 기록에 의존하지 않는다.
 - 다른 Match ID 또는 XY Grid 설정 변경(중심·폭·높이·셀 수)이면 이력을 초기화한다. 표시용 Z 변경, revision/전선 모양 변경만으로 이력을 지우지 않는다.
 - 제거·비활성·공간 제외된 후보는 이력에서 정리한다. 새로 추가/재활성된 셀은 현재 적합 셀의 최소 service부터 시작한다. 같은 셀의 신규 지점도 해당 셀의 기존 지점 최소 service부터 시작한다. 과거 미참여 기간을 보상하는 catch-up 스폰은 하지 않는다.
@@ -44,7 +44,7 @@ flowchart LR
 
 Core가 점령 상태를 판단한 뒤 `SetRegionSpawnEnabled(regionId, enabled)`를 호출하면 해당 그룹의 모든 지점에 Region 스폰 허용 상태를 적용한다. 그룹이 없으면 `false`를 반환한다. 지점의 GameObject와 개별 스폰 설정은 유지하며, 기존 Planner/Executor의 `CanSpawnEnemies` 검사로 생성을 제한한다. Region을 켜도 개별적으로 차단된 지점은 스폰 불가 상태를 유지한다.
 
-`EnemyNetworkTestLauncher`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 Registry에 전달한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화한다. Registry가 초기화 상태를 소유하며, 같은 Region 정의를 다시 전달하면 재구성하지 않는다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
+`EncounterSceneBinding`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 Registry에 전달한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화한다. Registry가 초기화 상태를 소유하며, 같은 Region 정의를 다시 전달하면 재구성하지 않는다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
 
 현재 Match의 정책이 Dynamic으로 전환된 Snapshot을 읽으면 기존 Static Region 그룹과 제한을 해제한다. 개별 지점의 스폰 설정은 유지하며, 다른 Match의 Snapshot으로 현재 그룹을 해제하지 않는다. 이후 Static으로 돌아오면 전달받은 정의로 그룹을 새로 구성한다.
 

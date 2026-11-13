@@ -174,7 +174,7 @@ namespace TeamHJD.Game.Editor
             Type networkObjectType = FindLoadedComponentType("Unity.Netcode.NetworkObject");
             Type executorType = FindLoadedComponentType("EnemySpawnExecutor");
             Type spawnPointType = FindLoadedComponentType("SpawnPoint");
-            Type launcherType = FindLoadedComponentType("EnemyNetworkTestLauncher");
+            Type launcherType = FindLoadedComponentType("EncounterSceneBinding");
             if (networkManagerType == null || unityTransportType == null || networkObjectType == null ||
                 executorType == null || spawnPointType == null || launcherType == null)
             {

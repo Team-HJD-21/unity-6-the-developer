@@ -1,3 +1,4 @@
+using TeamHJD.Game.Enemies.Encounter;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -11,13 +12,13 @@ using Object = UnityEngine.Object;
 /// <summary>
 /// Runtime의 점유율 예산과 Static 증가 상태 및 입력 검증을 검사한다.
 /// </summary>
-public sealed class EncounterRuntimeBudgetTests
+public sealed class EncounterPlannerBudgetTests
 {
     private readonly MatchId _match = new("runtime-budget-test");
     private GameObject _root;
     private EnemySpawnExecutor _executor;
     private EncounterBudgetSettings _settings;
-    private EncounterRuntime _runtime;
+    private EncounterPipeline _runtime;
     private BattlefieldSpatialSnapshot _battlefield;
     private EncounterExecutionContext _context;
 
@@ -29,7 +30,7 @@ public sealed class EncounterRuntimeBudgetTests
         _root.AddComponent<NetworkObject>();
         _executor = _root.AddComponent<EnemySpawnExecutor>();
         _settings = new EncounterBudgetSettings();
-        _runtime = new EncounterRuntime(_match, _executor, null, _settings);
+        _runtime = new EncounterPipeline(_match, _executor, null, _settings);
         _battlefield = Battlefield(_match);
         _context = new EncounterExecutionContext(_match, 1, _battlefield.Revision, EncounterRequestSource.RuntimeUI);
     }
@@ -75,7 +76,7 @@ public sealed class EncounterRuntimeBudgetTests
     {
         AssertBudget(Region(0), 20);
         AssertBudget(Region(4), 25);
-        var second = new EncounterRuntime(_match, _executor, null, _settings);
+        var second = new EncounterPipeline(_match, _executor, null, _settings);
         Assert.That(ReadBudget(second, _battlefield, Region(4), _context, out int fresh, out _), Is.True);
         Assert.That(fresh, Is.EqualTo(100));
 
@@ -110,10 +111,10 @@ public sealed class EncounterRuntimeBudgetTests
     public void PublicRequests_RejectNonServerWithoutAdvancingBudgetOrConsumingRandom()
     {
         var random = new UnexpectedRandom();
-        Assert.That(_runtime.RequestSpawn(_battlefield, Region(4), 10, new SquadSelectionSettings(), random,
+        Assert.That(_runtime.SpawnRequest(_battlefield, Region(4), 10, new SquadSelectionSettings(), random,
             _context, out _, out var automatic), Is.False);
         Assert.That(automatic.SpawnedCount, Is.Zero);
-        Assert.That(_runtime.RequestSpawn(_battlefield, Region(4), "Normal", 10,
+        Assert.That(_runtime.SpawnRequest(_battlefield, Region(4), "Normal", 10,
             _context, out _, out var fixedPreset), Is.False);
         Assert.That(fixedPreset.SpawnedCount, Is.Zero);
         AssertBudget(Region(0), 20);
@@ -123,9 +124,9 @@ public sealed class EncounterRuntimeBudgetTests
     public void Constructor_UsesExplicitExecutorAndRejectsIncompleteDependencies()
     {
         Assert.That(_runtime.Executor, Is.SameAs(_executor));
-        Assert.Throws<ArgumentException>(() => new EncounterRuntime(default, _executor, null, _settings));
-        Assert.Throws<ArgumentNullException>(() => new EncounterRuntime(_match, null, null, _settings));
-        Assert.Throws<ArgumentNullException>(() => new EncounterRuntime(_match, _executor, null, null));
+        Assert.Throws<ArgumentException>(() => new EncounterPipeline(default, _executor, null, _settings));
+        Assert.Throws<ArgumentNullException>(() => new EncounterPipeline(_match, null, null, _settings));
+        Assert.Throws<ArgumentNullException>(() => new EncounterPipeline(_match, _executor, null, null));
     }
 
     private void AssertBudget(RegionGridSnapshot region, int expected)
@@ -134,12 +135,14 @@ public sealed class EncounterRuntimeBudgetTests
         Assert.That(budget, Is.EqualTo(expected));
     }
 
-    private static bool ReadBudget(EncounterRuntime runtime, BattlefieldSpatialSnapshot battlefield,
+    private static bool ReadBudget(EncounterPipeline runtime, BattlefieldSpatialSnapshot battlefield,
         RegionGridSnapshot region, EncounterExecutionContext context, out int budget, out string reason)
     {
         object[] arguments = { battlefield, region, context, false, 0, null };
-        bool success = (bool)typeof(EncounterRuntime).GetMethod("TryGetSpawnBudget", BindingFlags.Instance | BindingFlags.NonPublic)
-            .Invoke(runtime, arguments);
+        var planner = (EncounterPlanner)typeof(EncounterPipeline).GetField("_planner", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(runtime);
+        bool success = planner.TryDetermineBudget(battlefield, region, context, false, out int value, out string message);
+        arguments[4] = value;
+        arguments[5] = message;
         budget = (int)arguments[4];
         reason = (string)arguments[5];
         return success;

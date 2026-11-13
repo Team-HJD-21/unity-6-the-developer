@@ -182,7 +182,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning), _matchTime.Clock);
                 // Feature의 최초 날씨 선택 이전에 주입합니다. Client에는 난수 결정권을 제공하지 않습니다.
                 session.InitializeRandom(() => HasCurrentMatch && (network == null || _networkBinding.Connection.IsServer));
-                _randomConsumers = new RandomConsumerScope(session.Random, FindSceneBehaviours().OfType<IRandomConsumer>());
+                // 영속 Encounter는 DDOL Scene에 있어 Scene 조회에서 빠지므로 동일 수명에 명시적으로 포함합니다.
+                _encounterConsumer = ResolveEncounterConsumer();
+                var randomConsumers = FindSceneBehaviours().OfType<IRandomConsumer>().ToList();
+                if (_encounterConsumer is IRandomConsumer encounterRandom) randomConsumers.Add(encounterRandom);
+                _randomConsumers = new RandomConsumerScope(session.Random, randomConsumers);
                 _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning), _matchTime.Scheduler, _matchTime.Clock);
                 session.InitializeSpawnSources(
@@ -211,7 +215,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
                         network.Descriptor.RegionMode, () => network.IsGameplayRunning, _turretBinding);
                 }
-                _encounterConsumer = ResolveEncounterConsumer();
                 if (_encounterConsumer != null)
                 {
                     // 새 환경·추가 스폰 계약은 Feature가 구현한 경우에만 연결합니다.

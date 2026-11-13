@@ -98,7 +98,7 @@ Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSli
 | 종류 | 확인한 범위와 결과 |
 | --- | --- |
 | 정적/컴파일 | 병합 충돌 12개 해결, Unity 6000.3.23f1 컴파일 오류 0, Initial_Stage 중복 fileID 없음, Region Binding 유지 |
-| 편성/예산 | SquadAutomaticPlanningTests 60, SpawnBudgetPolicyTests 25, EncounterRuntimeBudgetTests 10, EnemyNetworkTestLauncherTests 5, SpawnPointSpatialPolicyTests 12: 112건 통과 |
+| 편성/예산 | SquadAutomaticPlanningTests 60, SpawnBudgetPolicyTests 25, EncounterPipelineBudgetTests 10, EncounterSceneBindingTests 5, SpawnPointSpatialPolicyTests 12: 112건 통과 |
 | 능력/탐지 | EnemyAbilityTests 10건 중 7건 통과, EnemyDetectionTests 4건 통과. 전체 집계 126건 중 123건 통과 |
 | 남은 테스트 불일치 | 기존 EnemyAbilityTests 3건은 삭제된 Runtime/Slime·SlimeTest 경로와 현재 0.35인 Slime 사거리에 옛 1.0 기대값을 사용함. 테스트를 통과시키려고 프리팹 수치를 되돌리지 않았음 |
 | 수동 확인 | 작업자가 개발 과정에서 근접/발사체 피해, 폭발 FX, 회복 구슬, 소환, 탐지 상태/Host 동작을 확인했고 병합 후에도 정상 동작한다고 보고함. 자동 통합 테스트 통과나 모든 몬스터·조건의 망라 확인과 구분 |

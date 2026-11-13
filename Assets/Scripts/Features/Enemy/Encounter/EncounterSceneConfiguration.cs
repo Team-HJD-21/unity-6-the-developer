@@ -18,7 +18,7 @@ public sealed class EncounterSceneConfiguration : MonoBehaviour, IEncounterScene
     {
         if (spawnExecutor == null || !spawnExecutor.isActiveAndEnabled || spawnExecutor.gameObject.scene != gameObject.scene)
             throw new InvalidOperationException("Assign one active Enemy executor owned by this Scene.");
-        if (!(consumer is EnemyNetworkTestLauncher launcher))
+        if (!(consumer is EncounterSceneBinding launcher))
             throw new ArgumentException("The current Enemy consumer does not support this configuration.", nameof(consumer));
         launcher.ConfigureScene(spawnExecutor, environmentProfile);
     }

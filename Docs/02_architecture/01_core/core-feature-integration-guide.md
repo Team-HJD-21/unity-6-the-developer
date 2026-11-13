@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | Player 이동·행동 | `PlayerControlState`, Movement, Skill, Weapon | 로컬 화면 입력 잠금과 생존 잠금을 분리. 필드 정지 중 우주선 이동은 허용하고 공격·회복·필드 스킬은 정지 |
 | 터렛·CU | `FieldTurretController`, Base, 종류별 무기, `ControlUnitHealth` | Host 명령 검증·Match 수명·공용 시간·저장. 전력·과열·수리·자동 큐 규칙은 Feature 원본 유지 |
-| 적·스폰 | `EnemySpawnExecutor`, `EnemyNetworkController`, `EncounterRuntime` | 현재 Match/생성기 소유권과 시간 주입, 최신 Grid·전선·환경·origin 전달, 종료 정리 |
+| 적·스폰 | `EnemySpawnExecutor`, `EnemyNetworkController`, `EncounterPipeline` | 현재 Match/생성기 소유권과 시간 주입, 최신 Grid·전선·환경·origin 전달, 종료 정리 |
 | 날씨 전환 | `CountTick`, `WeatherManager` | 공용 예약과 환경 발행. **날씨 선택/Random 교체·예고 큐·Weather writer는 김진태 담당** |
 | UI와 Scene | 기존 View/Asset, `ScreenManager`, `SceneFlowController` | 로컬 메뉴, 결과/로딩, App 게임 이동. Match 임시 정지와 Scene 교체를 구분 |
 | 저장 | 각 Feature의 `.Checkpoint.cs` | 같은 프레임 캡처, binary IO, 준비→적용→참조 연결, 실패 복구, 필수 writer 누락 검사 |
