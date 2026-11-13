@@ -153,12 +153,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_0
       rect:
         serializedVersion: 2
-        x: 181
-        y: 118
-        width: 892
-        height: 1033
+        x: 0
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -175,12 +175,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_1
       rect:
         serializedVersion: 2
-        x: 1435
-        y: 118
-        width: 892
-        height: 1033
+        x: 1254
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -197,12 +197,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_2
       rect:
         serializedVersion: 2
-        x: 2689
-        y: 118
-        width: 892
-        height: 1033
+        x: 2508
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -219,12 +219,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_3
       rect:
         serializedVersion: 2
-        x: 3943
-        y: 118
-        width: 892
-        height: 1033
+        x: 3762
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -241,12 +241,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_4
       rect:
         serializedVersion: 2
-        x: 5197
-        y: 118
-        width: 892
-        height: 1033
+        x: 5016
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -263,12 +263,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_5
       rect:
         serializedVersion: 2
-        x: 6451
-        y: 118
-        width: 892
-        height: 1033
+        x: 6270
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -285,12 +285,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_6
       rect:
         serializedVersion: 2
-        x: 7705
-        y: 118
-        width: 892
-        height: 1033
+        x: 7524
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -307,12 +307,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_7
       rect:
         serializedVersion: 2
-        x: 8959
-        y: 118
-        width: 892
-        height: 1033
+        x: 8778
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -329,12 +329,12 @@ TextureImporter:
       name: Spaceship_Door_Opening_sheet_8
       rect:
         serializedVersion: 2
-        x: 10213
-        y: 118
-        width: 892
-        height: 1033
+        x: 10032
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -351,7 +351,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: e2f28ba974681324bbaf772efff941c8
     internalID: 0
     vertices: []
     indices: 
@@ -359,7 +359,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":9.0,"y":1.0},"gridSpriteSize":{"x":1254.0,"y":1254.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Spaceship_Door_Opening_sheet_0: 7331277233506095057
       Spaceship_Door_Opening_sheet_1: 9200140671711926618
