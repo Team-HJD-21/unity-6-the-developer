@@ -14,6 +14,8 @@
 
 ## 장착과 입력
 
+2026-11-12 발사 수: 한 번 발사할 때 기본총은 1발, 냉각총은 3발, 스나이퍼는 1발을 생성합니다. 냉각총의 전체 퍼짐각은 25도이며 기본총은 1발이라 조준 방향으로 곧게 발사합니다. 탄창에서는 발사 한 번에 한 발을 소비합니다.
+
 `Player.prefab`에 미리 배치한 `PlayerWeaponSelection._spannerPrefab`에 `Assets/Prefabs/Player/PlayerSpanner.prefab`을 연결합니다.
 플레이어가 생성되면 스패너 인스턴스를 자식으로 한 번 생성하고, 장착 상태에 따라 활성화합니다.
 1번 스패너, 2번 기본총, 3번 냉각총, 4번 스나이퍼를 직접 선택합니다. 숫자패드와 하단 HUD 버튼도 같은 슬롯을 사용합니다. 최초 장착은 기본총입니다.
@@ -22,6 +24,18 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 2026-10-27 스나이퍼: 확산 없는 1발, 피해 45, 발사 간격 0.85초로 추가했습니다. 탄속 70과 수명 1.2초는 별도 `Assets/Prefabs/Player/SniperBullet.prefab`에 지정합니다.
 기본총·냉각총의 기존 산탄 수치와 스패너 공격·수리는 유지합니다. 냉각총과 스나이퍼는 몸체와 분리된 별도 무기 Sprite를 사용하며 총열 끝도 외형 데이터에 연결합니다.
+
+## 2026-11-12 암살자 감지 Trigger
+
+`Player.prefab / Assassin Detection Range`에 별도 CircleCollider2D Trigger와 `PlayerEnemyDetector`를 배치합니다. 반경은 조정용 임시값입니다. Collider의 로컬 radius 3.75는 현재 Player 배율 0.8에서 월드 반경 3이며, 중심은 발밑에 가까운 로컬 (0, 0.2)입니다. Inspector의 CircleCollider2D에서 조절합니다.
+
+진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. Enemy 레이어의 실제 몸체 Collider에서 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
+
+감지 Collider는 Player 레이어를 사용하며 Collider별 exclude 설정으로 Enemy 본체에만 접촉을 허용합니다. 적 탄환과 EnemySensor 레이어의 적 감지 Trigger는 제외하므로 새 범위가 플레이어의 피격 범위나 몬스터의 플레이어 탐지 범위로 쓰이지 않습니다. Enemy 근접 공격 거리 검사도 Trigger를 제외합니다. 전역 Layer Collision Matrix는 변경하지 않습니다. 벽 차폐·은신 시각 효과·감지 업그레이드는 이번 연결에 포함하지 않습니다.
+
+네트워크 Client와 보고권 없는 Player replica는 탐지 원본을 쓰지 않습니다. 서버의 적 상태는 기존 `EnemyNetworkDetection`이 복제합니다. 같은 Scene/Match만 감지하고 Match 정지 중에는 기존 감지를 유지합니다. 입력 메뉴 잠금은 수동 감지 해제 조건으로 사용하지 않습니다. 독립 로컬 시험은 Player/Enemy가 모두 Match 밖인 경우에 허용합니다. 실제 Host/Client 전송 검증과 감지 반경의 밸런스 확정은 별도입니다. Enemy 측의 탐지·피격 계약은 [Enemy 시스템 가이드](../08_encounter/enemy-system-guide.md)를 참고합니다.
+
+검증: Unity CLI 컴파일 오류 0개, EditMode `PlayerEnemyDetectorTests` 12개와 `PlayerContinuousAimTests` 19개를 통과했습니다. 분리된 EditMode Physics2D Scene에 실제 Player·BlackWolf 프리팹을 배치해 접근 시 감지·플레이어 공격 허용, 이탈 시 감지 해제, 터렛 공격 불허를 확인했습니다. 실제 게임 Scene의 PlayMode 및 Host/Client 통신은 미검증입니다.
 
 ## 스크립트별 역할
 
@@ -55,6 +69,10 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 #564에서는 무기 선택을 Update에 두고 물리적 클릭에 따른 공격 시도를 LateUpdate로 옮겼습니다. UI·포탑 선택과 설치 처리가 먼저 클릭을 사용하며, 사용된 클릭은 발사로 이어지지 않습니다. `TryFire()`도 일시정지·조작 차단·스킬 선택과 설치 미리보기 상태를 검사합니다. 공격 수치와 기존 타격 예약·탄환 이동·피해 처리는 유지합니다. [클릭 입력 분리 API](player-primary-input-api.md)
 
+## 2026-11-13 플레이어 탄환 그림 정렬
+
+기본·냉각탄의 `PlayerBullet`과 스나이퍼의 `SniperBullet`은 기존 PolygonCollider2D의 중심에 비행 스프라이트 본체를 맞춘다. `Warm`, `Cryo`, `Sniper` 각 4프레임의 Sprite 피벗을 보정하며 PNG·PPU·GUID와 콜라이더 형상·오프셋은 유지한다. 스나이퍼 잔광의 높이도 본체 중심선에 맞춘다. 이 비행 스프라이트의 참조는 플레이어 탄환 프리팹과 비행 클립에 한정되며 Enemy·FieldTurret 투사체는 수정하지 않는다.
+
 ## 2026-10-31 원거리 탄환과 장애물 충돌
 
 기본총·냉각총의 `PlayerBullet.prefab`과 스나이퍼의 `SniperBullet.prefab`은 적뿐 아니라 벽·나무·포탑·CU·플레이어 설치물의 실제 본체 Collider에 닿으면 탄환을 제거하고, 해당 탄환에 이미 연결된 `PlayerProjectileView._impactPrefab`을 한 번 재생한다. 장애물에 피해를 주거나 물리 힘을 가하지 않는다. 스나이퍼는 기존 전용 명중 프리팹을 유지한다.
@@ -75,7 +93,7 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 | 필드 | 초기값 | 의미 |
 | --- | --- | --- |
-| `_range` | 2 | 플레이어 중심에서 월드 반경 |
+| `_range` | 2 | 연속 조준 외형이 없는 구성에서 사용하는 플레이어 중심 월드 반경 |
 | `_arc` | 100 | 조준 방향 기준 전체 타격 각도 |
 | `_damage` | 20 | 적에게 주는 피해 |
 | `_attackInterval` | 0.6초 | 공격 간격 |
@@ -106,6 +124,14 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 `PlayerWeaponMigrationTests`에는 검기 프리팹 구성, 빗나간 공격의 타격 시점 1회 재생·조준 방향·월드 반경·정렬, 수리 의도와 취소된 타격의 검기 생략 검증을 추가했다. 실제 PlayMode 실행 확인은 별도로 남는다.
 
+2026-11-13 현재 연속 조준 Player에서는 위의 구형 원점·반경 대신 `PlayerWeaponVisual.TryGetSpannerStrikeGeometry`를 사용합니다. `_aimSpanner.grip`부터 끝점 `_aimSpanner.muzzle`까지 표시된 길이에 `_spannerAttackScale`(1.6)을 곱해 기본 공격 판정·검기를 확대합니다. 현재 길이 3.87·grip.x 0.5·끝점.x 0.91·Player 배율 0.8에서 기존 약 1.27인 반경은 약 2.03입니다. 스패너 외형 크기나 공격 배율을 바꾸면 판정·검기·상태창 사거리도 함께 바뀝니다. 해당 외형이 없는 구성은 기존 `_range`를 유지합니다.
+
+확대된 검기가 몸 안쪽을 덮지 않도록 몸체 Sprite의 실제 메시 윤곽을 조준 방향에 투영해 배치합니다. 프레임별 메시를 캐싱하고 현재 flip·Transform을 반영하며, 검기의 가장 안쪽 보이는 지점이 몸 바깥에서 `_spannerBodyClearance`(로컬 0.12)만큼 떨어지도록 손잡이 기준 가상 원점을 조정합니다. 기존 검기 4프레임의 첫 알파 픽셀은 피벗보다 전방 89픽셀이고 바깥 반경은 178픽셀이므로 안쪽 전방 경계는 반경의 0.5입니다. 검기 그림·피벗·반경을 교체하면 이 비율도 함께 맞춥니다. 효과 Transform 자체는 가상 원점에 있지만 보이는 픽셀은 몸체 밖에 있습니다.
+
+`PlayerSpannerWeapon`은 타격 순간 같은 원점·반경으로 몸체 Collider를 조회하고 안쪽 전방 경계·100도 전방·벽 검사를 적용합니다. 몸 안쪽 구역과 적 감지용 Trigger는 피해 대상에서 제외하며 한 적의 여러 Collider는 한 번만 처리합니다. Collider의 검사 점은 전방 경계에서 가장 가까운 점으로 구해 큰 적이 경계와 겹쳐도 타격할 수 있습니다. 검기는 같은 가상 원점과 반경에 고정하고 왼쪽 조준 시 세로로 뒤집어 휘두르는 방향을 맞춥니다. 연속 조준 스패너의 전반부 회전은 -50도에서 +50도까지, 후반부는 원래 각도로 돌아옵니다. 예약된 공격 방향은 동작이 끝나거나 취소될 때까지 유지합니다. 피해량·공격 간격과 R 수리 범위는 유지합니다.
+
+검증: EditMode `PlayerContinuousAimTests` 33개 통과. 8방향 × 몸체 5프레임에서 확대된 검기의 안쪽 전방 경계가 몸체 메시 밖인지 확인하고, 실제 전방 피해·몸 안쪽/거리/각도 밖 제외·Trigger 제외·중복 피격 방지·예약 조준 취소를 확인했습니다. 별도 임시 Unity 장면에서 타격 시점의 8방향 표시를 렌더링해 확인했으며 실제 PlayMode 입력 재생·Host/Client 통신 검증은 미실행입니다.
+
 ## 포탑 수리
 
 2026-11-09: 현재 Player 프리팹의 수리·파괴 복구는 `PlayerTurretRepair`가 담당합니다. 발 위치 기준 XY 반경 3 안의 가장 가까운 손상 또는 파괴 터렛 아래에 R 안내와 진행 막대를 표시합니다. 원점은 `PlayerDirectionalColliders.GroundPosition`이며 거리·가림 검사·작업 방향에 공통으로 사용합니다. 방향별 콜라이더가 없는 구성만 루트 위치를 사용합니다. 기존 캐릭터 중심 원점은 몸 콜라이더의 아래쪽 오프셋 때문에 포탑 위에서 접근하면 범위를 벗어날 수 있어 수정했습니다. 살아 있는 터렛은 R 유지 동안 최대 체력의 10%/초를 연속 회복합니다. 최대 체력 100은 초당 10, 200은 초당 20입니다. 무기 선택과 마우스 방향은 수리 조건이 아닙니다.
@@ -122,9 +148,27 @@ RuntimeState의 체력을 외부에서 직접 바꾸지 않습니다. 살아 있
 
 파괴 복구 진행률은 `PlayerTurretRestoreProgress`가 터렛 객체별로 공유하므로, 이동·키 해제·다른 대상으로 전환 후 돌아와도 같은 진행률에서 이어갑니다. 복구 완료·새 파괴·등록 해제·Match 시계 또는 epoch 변경 시 지웁니다. 이는 현재 세션의 메모리 상태이며 체크포인트 저장/복원과 네트워크 복제는 추가하지 않았습니다. 동시 작업자는 동일 진행률에 각 작업 시간을 더합니다.
 
-편집 위치: `Player.prefab`의 `PlayerTurretRepair._repairRange`, `_maximumHealthFractionPerSecond`. 안내는 `PlayerSkillHUD.prefab`에 미리 배치된 `Field Turret R Repair Prompt`를 `PlayerTurretRepairPromptView`가 터렛 하단에 투영합니다. 키보드 안내이므로 UI Raycast로 LMB를 소비하지 않습니다. R은 가까운 수리·복구 대상이 있으면 수리에 먼저 사용합니다. `ConsumesRepairInput`은 해당 R 누름을 놓을 때까지 유지하므로 수리 완료·이동 취소 후 같은 입력으로 재장전하지 않습니다.
+편집 위치: `Player.prefab`의 `PlayerTurretRepair._repairRange`, `_maximumHealthFractionPerSecond`. 안내는 `PlayerSkillHUD.prefab`에 미리 배치된 `Field Turret R Repair Prompt`를 `PlayerTurretRepairPromptView`가 터렛 몸체 SpriteRenderer의 bounds 중앙에 투영합니다. 배경·테두리는 숨기며 `GravityBold8 SDF` 픽셀 폰트로 `R` 하나만 표시하고, 수리·복구 진행 상태는 아래 게이지로 나타냅니다. 위치 미세 조정은 `_screenOffset`(기본 0)으로 합니다. 키보드 안내이므로 UI Raycast로 LMB를 소비하지 않습니다. R은 가까운 수리·복구 대상이 있으면 수리에 먼저 사용합니다. `ConsumesRepairInput`은 해당 R 누름을 놓을 때까지 유지하므로 수리 완료·이동 취소 후 같은 입력으로 재장전하지 않습니다.
+
+수리·복구 중에는 `PlayerWeaponVisual.RefreshRepairSorting`이 무기 자식의 전용 `SortingGroup`을 켜고 `sortAtRoot`로 플레이어 그룹에서 독립 정렬합니다. 플레이어·대상 터렛의 유효 SortingGroup과 터렛 자식 중 `sortAtRoot`로 따로 정렬되는 포신·부품의 현재 레이어·순서를 비교해 가장 앞인 값보다 한 단계 위에 스패너를 표시합니다. 부품 참조는 수리 대상 변경 시 수집하고 활성 여부와 정렬 값은 표시 갱신 때 읽습니다. 따라서 터렛 몸체와 분리된 포신 사이에 스패너가 끼지 않으며, 타격 불꽃도 스패너보다 위에 표시합니다. 몸체 정렬은 유지하고, 수리 종료·취소 또는 무기 표시 해제 시 전용 그룹을 꺼 기존 정렬로 돌아갑니다. 분리된 포신의 정렬 변경·불꽃·종료 복원을 검사하는 상하좌우 4개를 포함해 `PlayerContinuousAimTests` EditMode 35개가 통과했습니다. 실제 Player·터렛 프리팹의 4방향 수리 타격을 분리된 Unity Preview Scene에서 렌더링했으며, 실제 PlayMode R 입력은 별도 확인이 필요합니다.
+
+2026-11-13 수리 타격 불꽃: `PlayerSpriteMotion.HeldRepairImpactSequence`는 R 유지 동작이 매 주기 50% 타격 지점을 지날 때 증가합니다. `PlayerWeaponVisual.RefreshRepairImpact`가 새 타격을 한 번 소비하고 현재 표시된 스패너 끝에 `SpannerRepairImpact.prefab`을 재생합니다. 수리 동작은 들어 올린 상태에서 포탑 방향으로 내려친 뒤 다시 들어 올리며, 일반 공격의 궤적은 별도로 유지합니다. 수리·복구가 유효하고 필드 시간이 진행될 때만 재생하며, 해제·취소 뒤 도착한 타격 번호는 효과 없이 소비합니다.
+
+수리 전용 프리팹은 흰색·노란색의 짧은 늘인 입자 12개를 한 번 방출합니다. 입자 수명은 0.08~0.18초이며 종료 시 `ParticleSystemStopAction.Destroy`로 정리합니다. 효과는 타격 순간의 월드 위치에 남고, 수리 스패너·대상 터렛 위에 보이도록 정렬합니다. 편집 위치는 `PlayerWeaponVisual._repairImpactPrefab`과 해당 프리팹의 Main/Emission/Renderer 모듈입니다. 기존 HP 회복·복구는 R 수리 흐름을 따릅니다. 실제 프리팹을 사용한 분리된 Unity 장면에서 4방향과 파티클 시뮬레이션을 확인했습니다. 실제 PlayMode R 입력과 Host/Client 통신 검증은 미실행입니다.
+
+수리 불꽃의 프리팹 전체 배율은 3입니다. Local scaling으로 입자 크기와 퍼지는 범위를 기존의 약 3배로 확대했으며, 분리된 Unity 장면의 4방향 파티클 렌더링으로 확인했습니다.
+
+연출 난수는 [Core Random 규칙](../01_core/core-random-api.md)에 따라 App의 `PresentationRandom`을 사용합니다. Host/Client의 InitialStage 및 시작 우주선 조립부가 `LocalPlayerActorSpawner`의 선택 인자 `presentationRandom`으로 전달하고, 생성자가 `IPlayerPresentationRandomBinding.BindPresentationRandom`을 호출합니다. `PlayerWeaponVisual`은 `RandomBinding.Bind`로 `vfx/player-repair-impact` 흐름을 한 번 연결해 actor 수명의 lease를 소유하며 `OnDestroy`/명시적 해제에서 정리합니다. Match 게임 난수 수집용 `IRandomConsumer`에는 등록하지 않습니다.
+
+`SpannerRepairImpact.prefab`의 자동 시드는 꺼져 있습니다. 유효한 타격마다 주입된 source의 `NextInt(1, int.MaxValue)` 한 번으로 ParticleSystem 시드를 정한 뒤 재생합니다. source 미연결·해제·사용 불가 상태에서는 해당 불꽃을 생략하고 자동 난수나 임의 고정 시드로 대체하지 않습니다. App 연출 난수는 게임 체크포인트 대상이 아닙니다. EditMode `PlayerContinuousAimTests` 35개에서 준비·타격·반복·해제, 끝점·정렬·프리팹 설정과 실제 생성자의 주입·타격당 시드 소비·바인딩 해제·미연결 시 생략을 확인했습니다.
+
+2026-11-12: `PlayerTurretRepairPromptView`는 HUD Owner가 바뀔 때만 `PlayerTurretRepair`를 다시 조회합니다. 카메라 참조는 캐싱하며 `CameraManager.OutputChanged`로 로컬 출력 교체를 반영합니다. 최초 연결이나 캐시 무효화 시 현재 출력 카메라를 사용하고, Manager 없는 구성은 `Camera.main`으로 연결합니다. 비활성화 시 구독과 캐시를 해제합니다. 터렛의 화면 위치 계산은 카메라 이동에 맞춰 계속 수행합니다.
 
 실행 순서: 입력 수집 Update(-200), 스킬 Update(100), 무기 선택 Update(200) 다음 수리 Update(250)가 조건과 이동 취소를 확정합니다. 재장전 Update(275)는 수리가 소비한 R을 제외하고 탄창 상태를 확정합니다. 모든 Update 이후의 공격 LateUpdate(300)는 확정된 수리·재장전·잔탄 상태로 공격을 차단합니다. 화면 위치는 카메라의 최종 위치를 반영하도록 Canvas 렌더 직전에도 갱신합니다.
+
+## 2026-11-12 자유 조준 표시
+
+현재 Player는 `PlayerWeaponVisual.ContinuousAim`이 계산한 손잡이 기준 마우스 방향을 `PlayerWeaponRig.TryGetContinuousAimDirection`으로 전달한다. `PlayerAttack`은 이 방향을 우선 사용하고, `TryGetMuzzle`은 회전된 Sprite의 실제 총구 위치를 받는다. 기존 자세 방식은 이전 방향·총구 조회를 유지한다. 네 무기의 표시 설정과 검증 범위는 [몸체·무기 분리 API](player-weapon-appearance-api.md#2026-11-12-space-man-몸체와-자유-조준)를 참고한다.
 
 ## 2026-11-09 탄창과 재장전
 
@@ -137,6 +181,8 @@ RuntimeState의 체력을 외부에서 직접 바꾸지 않습니다. 살아 있
 UI는 `PlayerSkillHUD.prefab / Weapon Hotbar / Weapon Ammo`에 배치했습니다. 무기 1번 슬롯 왼쪽에 있고 터렛 조작 패널을 열어 Hotbar를 내릴 때 같이 내려갑니다. 무기 행은 기존처럼 하단에서 18px 띄우고 520×102 사각 배경으로 슬롯들을 묶습니다. 탄약 패널과 사각 배경 사이의 간격은 오른쪽 SPACE 슬롯과 같은 16px입니다. 전체 배경은 반투명 흰색(Alpha 0.35), 개별 패널은 Alpha 0.65, 문구는 어두운 색을 사용합니다. 선택 슬롯은 청록색으로 구분합니다. 숫자·문구·화살표의 모든 Graphic은 Raycast를 받지 않습니다. 재장전 화살표는 `Assets/Art/UI/PlayerReloadIcon.png`의 연결된 두 원형 화살표를 Image 하나로 표시·회전하며 런타임 UI 생성은 하지 않습니다.
 
 기존 `PlayerAttack.Checkpoint`의 `/weapon` 스키마는 v2로 올려 세 탄창의 잔탄과 진행 중 재장전의 무기·남은 시간·전체 시간을 함께 복원합니다. 기존 v1 또는 탄창 컴포넌트 없이 저장한 데이터는 탄창을 가득 채우고 재장전하지 않는 상태로 마이그레이션합니다. 복원 실패 롤백도 잔탄과 재장전 상태를 되돌립니다.
+
+2026-11-12: `PlayerWeaponAmmoState.Checkpoint.cs`에 같은 partial 타입의 Capture/Validate/Restore, `CheckpointState`와 바이너리 직렬화를 분리합니다. 기존 필드 순서·저장 버전·호출 API는 유지합니다.
 
 검증 범위: 실제 탄창 상태 코드를 사용하는 순수 C# 테스트 9개(소진·독립 유지·재장전 차단/완료/취소·정지 시간·저장 왕복·잘못된 저장 거부)가 통과했고, Runtime/Editor C# 컴파일 오류는 0개입니다. 프리팹의 신규 fileID 중복·참조·부모/자식 연결·Raycast 제외도 정적으로 검사했습니다. 프리팹 참조·수리 R 예약의 Unity 회귀 테스트는 추가·컴파일했으며 실행 통과로 간주하지 않습니다. 실제 Unity 화면 배치와 R 입력/필드 정지 연동은 에디터 플레이 확인이 필요합니다.
 

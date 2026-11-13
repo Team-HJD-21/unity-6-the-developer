@@ -65,7 +65,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     .OfType<ILocalPlayerActorConsumer>().ToArray();
                 foreach (var consumer in _localActorConsumers) consumer.PrepareLocalActor(_ownedMatchId, playerId);
                 _playerActors = MatchPlayerActorScope.SpawnLocalPlayer(matches, connectionId,
-                    new LocalPlayerActorSpawner(playerPrefab, actorParent), FindPlayerStarts());
+                    new LocalPlayerActorSpawner(playerPrefab, actorParent,
+                        (_matchHost as AppRoot)?.PresentationRandom), FindPlayerStarts());
                 foreach (var consumer in _localActorConsumers)
                     consumer.BindLocalActor(_ownedMatchId, playerId, _playerActors.Actors[playerId]);
                 BindLocalInput(_playerActors.Actors[playerId]);

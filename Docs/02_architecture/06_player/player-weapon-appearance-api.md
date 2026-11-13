@@ -1,5 +1,24 @@
 # 플레이어 몸체와 무기 스프라이트 분리
 
+## 2026-11-12 Space Man 몸체와 자유 조준
+
+현재 `Player.prefab`은 `PlayerSpriteMotion._useSpaceManBody`와 `PlayerWeaponVisual._continuousAim`을 켠다. 아래의 Canonical 8방향 연결 설명은 두 옵션을 모두 끈 기존 표시 방식에 해당한다.
+
+- 몸체는 원본 `Indicators/space man.png`의 옆모습 5프레임에서 파생한 `SpaceManBody/Side_*`만 사용한다. 원본 시트와 GUID는 보존하며, 파생 프레임은 160×160, 32 PPU, Point, 피벗 (0.5, 0.26)이다. 왼쪽 옆모습을 반전해 오른쪽을 표시한다. 위·아래를 조준해도 앞·뒤 모습으로 바뀌지 않으며, 정확한 수직 조준에서는 마지막 좌우 방향을 유지한다.
+- `PlayerSpriteMotion.SpaceMan`은 Animator 평가 뒤 몸체 Sprite만 교체한다. 대기는 5 FPS, 이동은 10 FPS이며 기존 Animator의 공격·수리 진행률과 타격 멈칫을 유지한다. 물리 루트나 콜라이더를 애니메이션으로 움직이지 않는다.
+- `PlayerWeaponVisual.ContinuousAim`은 기존 네 무기 아이콘을 별도 Sprite로 표시한다. 무기는 몸체보다 그룹 내부 정렬 순서가 1 높아 손 앞에 보이며, 기존 전경 손 레이어는 끈다. 왼쪽을 겨눌 때는 무기 자체를 세로 반전해 조준경이 아래로 뒤집히지 않게 한다.
+- 조준은 플레이어 로컬 `_aimMount` (0, 0.8)의 월드 위치에서 마우스를 향한다. 회전 기준점은 그 방향으로 `_aimRadius` 0.35만큼 떨어진 곳에 고정한다. 무기별 `length`, `grip`, `muzzle`로 크기와 회전 기준점·총구를 편집한다. `grip`과 `muzzle`은 Sprite rect의 정규화 좌표다. 큰 무기 비율의 참고 이미지에 맞춰 기존 15% 확대 상태에서 네 무기를 약 1.6배 더 키웠다. 현재 `length`는 기본총 4.05, 냉각총 3.5, 스나이퍼 4.65, 스패너 3.87이며 `grip.x`를 0.5로 맞춰 무기 중간에서 회전한다. 두 점의 Y를 같게 유지하면 총열과 탄환이 같은 마우스 직선을 따른다.
+- `PlayerAttack` → `PlayerWeaponRig` → `PlayerWeaponVisual`이 같은 조준 방향과 회전된 실제 총구를 사용한다. 첫 발과 무기 전환 시에도 표시 갱신을 먼저 수행하며 총구 섬광도 같은 각도로 표시한다. 탄창·피해·발사 간격·권한 규칙은 기존 경로를 유지한다.
+- 세 총의 총구는 PNG의 실제 총열 끝에 맞춘다. `PlayerWeaponRig`은 자유 조준 중 같은 총구·섬광 오브젝트를 유지하며, `PlayerMuzzleAnchor`(LateUpdate 290)가 FirePoint 위치·회전을 맞추고 `PlayerMuzzleFlash`(295)가 표시 중인 섬광을 따라 붙인다. `Flash_0..3`의 GUID는 보존하고 피벗을 분사 시작점 (0.25, 0.5)로 통일했다.
+- 그림자는 기존 `PlayerGroundShadow`를 사용하며 옆모습 발밑 (왼쪽 기준 로컬 X 0.28125, Y 0.10625)에 둔다. `PlayerSpriteMotion.SpaceMan`이 Animator 평가 후 이전 자세의 그림자 위치·스케일 키를 덮어쓴다. 그림자 자식의 기존 오프셋은 보존하며, 타원은 1.4×0.5 배율로 몸체 뒤에 표시한다.
+- `Player.prefab`의 충돌·피격 구성은 Left/Right 두 방향만 둔다. 각 방향의 발밑 캡슐은 1.25×0.5이며, 피격 Trigger와 기존 비 Trigger 본체는 옆모습 5프레임의 연결된 몸체 외곽을 합친 고정 Polygon을 사용한다. 떨어진 추진 불꽃과 별도 무기는 이 외곽에서 제외한다. `PlayerDirectionalColliders`가 발밑·피격·비 Trigger 본체를 함께 전환하며 Layer·Trigger·Rigidbody 설정과 암살자 감지 범위는 보존한다. 상하·대각선 Collider 자식은 현재 프리팹에서 제거한다. 다른 프리팹의 기존 8방향 구성은 계속 지원한다. `GroundPosition`을 사용하는 설치물 정렬도 새 발밑 중심을 받는다.
+- 자유 조준에서 사용하지 않는 일곱 방향 Gun·Muzzle·Flash 자식은 현재 Player 프리팹에서 제거한다. 기존 Right Gun의 총구·섬광 하나를 자유 조준용으로 유지한다. 모션 시간·스패너 행동에 사용하는 Animator와 MotionSet, 스크립트에서 참조하는 표시 컴포넌트는 유지한다.
+- 스패너 공격과 R 유지 수리에는 기존 행동 진행률에 맞춘 무기 회전을 적용한다. 우주선에서도 `CanMove`가 허용되면 몸체는 마우스의 좌우를 따른다. `PlayerControlState.IsInSpaceship`이 시작 허브 바인딩 또는 `PlayerMatchPresence.Location == Spaceship`을 확인하며, 우주선에서는 별도 무기·전경 손을 숨기고 외형의 총구 좌표를 제공하지 않는다. 필드 복귀 시 선택된 무기를 다시 표시한다. 필드의 입력 잠금이나 스킬 선택 중에는 몸체의 마지막 좌우 방향을 유지하고 무기는 아래쪽 중립 자세를 사용한다.
+
+검증(2026-11-13): 최종 프리팹으로 `PlayerContinuousAimTests` EditMode 35개와 `DirectionalColliders_SelectOnePairAndPreserveManualPositions` 1개가 통과했다. Unity Preview Camera로 좌우 각 5프레임의 몸체·발밑 충돌·피격 외곽을 렌더링해 정렬을 확인했다. 정적 검사에서 중복 fileID, 누락된 내부 참조, 삭제한 자식을 가리키는 외부 참조는 없었다. 별도로 실행한 `PlayerEnemyDetectorTests` 12개는 현행 설정에 없는 이전 레이어명 `Player`·`EmenyBullet`을 사용해 실패했다. 감지 컴포넌트·범위·충돌 설정은 이번 정리에서 보존했으며 해당 테스트의 레이어명 갱신은 포함하지 않았다. 실제 PlayMode의 이동·사격·수리·벽 충돌 조작감 검수는 미실행이다.
+
+## 기존 8방향 자세 방식
+
 2026-11-01 현재 기준: 오른손은 화면 오른쪽이 아니라 캐릭터의 해부학적 오른손이다. 총기는 오른손이 방아쇠, 왼손이 앞쪽 지지 손이다. 몸체와 팔은 좌우별 Sprite를 사용하고 클립의 `flipX`는 0으로 둔다.
 
 기본총·냉각총·스나이퍼는 `SeparatedWeapons/Canonical/{무기}/{방향}.png`의 독립 8방향 완성 그림을 사용한다. 각 무기의 108개 몸체 연결은 이 8개 그림을 공유한다. 자세별 그림 조각을 다시 추출하거나 크기를 변경하지 않고, 실제 오른손 위치에 손잡이를 맞춘다. 대기 4프레임은 같은 무기·위치·각도를 유지한다. 총열 끝과 첫 발 총구도 새 그림에 맞춰 지정했다.

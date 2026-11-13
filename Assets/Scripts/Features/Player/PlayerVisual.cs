@@ -10,6 +10,7 @@ public class PlayerVisual : MonoBehaviour
     [SerializeField] private PlayerWeaponRig _weaponRig;
     [SerializeField] private PlayerDirectionalColliders _directionalColliders;
     private PlayerSkillController _skills;
+    private PlayerControlState _controls;
     private PlayerSpriteMotion _spriteMotion;
     private bool _hasSide, _hasIdle, _hasUp;
     private static readonly int IsSideHash = Animator.StringToHash("isSide");
@@ -24,6 +25,7 @@ public class PlayerVisual : MonoBehaviour
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
         if (_directionalColliders == null) _directionalColliders = GetComponent<PlayerDirectionalColliders>();
         _skills = GetComponent<PlayerSkillController>();
+        _controls = GetComponent<PlayerControlState>();
         _spriteMotion = GetComponent<PlayerSpriteMotion>();
         if (animator != null && animator.runtimeAnimatorController != null)
             foreach (var parameter in animator.parameters)
@@ -38,15 +40,19 @@ public class PlayerVisual : MonoBehaviour
 
     private void Update()
     {
+        // Rig 없는 기존 구성도 우주선의 이동 허용과 전투 금지를 구분합니다.
+        bool canFace = _controls != null ? _controls.CanMove : _skills == null || _skills.CanUse;
         var facing = _weaponRig != null ? _weaponRig.Facing :
-            (_skills != null && !_skills.CanUse ? PlayerAimFacing.Down :
+            (!canFace || (_skills != null && _skills.IsSelectionOpen) ? PlayerAimFacing.Down :
             PlayerAimUtility.GetFacing(inputHandler != null ? inputHandler.AimDirection : Vector2.down));
         ApplyFacing(facing);
     }
 
     private void ApplyFacing(PlayerAimFacing facing)
     {
-        if (_directionalColliders != null) _directionalColliders.SetFacing(facing);
+        if (_directionalColliders != null)
+            _directionalColliders.SetFacing(_spriteMotion != null && _spriteMotion.UsesSpaceManBody
+                ? _spriteMotion.SpaceManFacing : facing);
         // 구형 Animator의 bool 파라미터만 4방향으로 변환합니다.
         if (PlayerAimUtility.IsDiagonal(facing))
             facing = PlayerAimUtility.GetFacing(inputHandler != null ? inputHandler.AimDirection : Vector2.down);
