@@ -23,7 +23,7 @@ namespace TeamHJD.Game.Domain
             for (int i = 0; i < snapshot.Definition.RegionIds.Count; i++)
             {
                 int region = snapshot.Definition.RegionIds[i];
-                if (region == 0) continue;
+                if (region == 0 || !snapshot.Definition.CapturableCells[i]) continue;
                 _capturedRegions.Add(region);
                 if (!snapshot.CapturedCells[i]) incomplete.Add(region);
             }
@@ -41,6 +41,7 @@ namespace TeamHJD.Game.Domain
             RequireNonNegativeFinite(spawnRadius, nameof(spawnRadius));
             var definition = _snapshot.Definition;
             if (!definition.TryGetCellIndex(position, out int cell)) return "OutsideGrid";
+            if (!definition.CapturableCells[cell]) return "NonWalkableCell";
             if (IsRegionCaptured(definition.RegionIds[cell])) return "CapturedRegion";
             if (_snapshot.CapturedCellCount == 0) return string.Empty;
 

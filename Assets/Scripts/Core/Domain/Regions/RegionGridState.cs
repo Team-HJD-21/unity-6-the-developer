@@ -10,14 +10,14 @@ namespace TeamHJD.Game.Domain
         public RegionGridSnapshot Snapshot { get; private set; }
 
         public RegionGridState(MatchId matchId, Guid gridId, RegionGridDefinition definition,
-            RegionPolicyMode mode = RegionPolicyMode.Static)
+            RegionPolicyMode mode = RegionPolicyMode.Static, IEnumerable<int> unlockedRegionIds = null)
         {
             if (matchId.IsEmpty) throw new ArgumentException("A match id is required.", nameof(matchId));
             if (gridId == Guid.Empty) throw new ArgumentException("A grid id is required.", nameof(gridId));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (!Enum.IsDefined(typeof(RegionPolicyMode), mode)) throw new ArgumentOutOfRangeException(nameof(mode));
             Snapshot = new RegionGridSnapshot(matchId, gridId, 0, mode, definition,
-                new bool[definition.Geometry.TotalCellCount]);
+                new bool[definition.Geometry.TotalCellCount], unlockedRegionIds);
         }
 
         public bool Apply(IEnumerable<int> capturedCellIndices, RegionCaptureUpdateMode updateMode)
@@ -35,6 +35,8 @@ namespace TeamHJD.Game.Domain
             {
                 if (index < 0 || index >= next.Length)
                     throw new ArgumentOutOfRangeException(nameof(capturedCellIndices), "A cell is outside this grid.");
+                if (!previous.Definition.CapturableCells[index])
+                    throw new ArgumentException("A non-capturable cell cannot be captured.", nameof(capturedCellIndices));
                 next[index] = true;
             }
 
@@ -45,8 +47,23 @@ namespace TeamHJD.Game.Domain
 
             long revision = checked(previous.Revision + 1);
             Snapshot = new RegionGridSnapshot(previous.MatchId, previous.GridId, revision,
-                previous.Mode, previous.Definition, next);
+                previous.Mode, previous.Definition, next, previous.UnlockedRegionIds);
             return true;
         }
+        /// <summary>정적 구역을 열 뿐 점유 셀은 늘리지 않습니다. 같은 revision에서 원자적으로 확정합니다.</summary>
+        public bool UnlockThrough(int regionId)
+        {
+            if (regionId < 1) throw new ArgumentOutOfRangeException(nameof(regionId));
+            if (Snapshot.Mode != RegionPolicyMode.Static) return false;
+            var unlocked = new SortedSet<int>(Snapshot.UnlockedRegionIds);
+            foreach (int id in Snapshot.Definition.RegionIds) if (id > 0 && id <= regionId) unlocked.Add(id);
+            if (unlocked.Count == Snapshot.UnlockedRegionIds.Count) return false;
+            var cells = new bool[Snapshot.CapturedCells.Count];
+            for (int i = 0; i < cells.Length; i++) cells[i] = Snapshot.CapturedCells[i];
+            Snapshot = new RegionGridSnapshot(Snapshot.MatchId, Snapshot.GridId, checked(Snapshot.Revision + 1),
+                Snapshot.Mode, Snapshot.Definition, cells, unlocked);
+            return true;
+        }
+
     }
 }

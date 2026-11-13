@@ -12,7 +12,7 @@ namespace TeamHJD.Game.Infrastructure
     public static class MatchLifecycleCodec
     {
         public const int MaximumMessageBytes = NetworkMessageLimits.MaximumMessageBytes;
-        private const int Magic = 0x324D4A48;
+        private const int Magic = 0x334D4A48;
         public static byte[] Encode(NetworkMatchDescriptor descriptor)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));

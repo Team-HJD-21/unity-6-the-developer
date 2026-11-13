@@ -2,6 +2,7 @@
 using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine.SceneManagement;
 
 /// <summary>렌치 타격을 Match 시간으로 예약하고 명중 순간 대상을 검증해 제작된 피드백을 재생합니다.</summary>
@@ -120,7 +121,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
             if (!PlayerSpannerTargeting.CanReach(_owner, enemy.transform, point, _swingDirection, _range, _arc)) continue;
             _hit.Add(enemy);
             int previousHealth = enemy.CurrentHealth;
-            enemy.TakeDamage(damage);
+            enemy.TryTakeDamage(damage, AttackSourceType.Player);
             // A client-side rejected request must not appear to be a confirmed hit.
             if (!feedbackShown && enemy.CurrentHealth < previousHealth)
             {

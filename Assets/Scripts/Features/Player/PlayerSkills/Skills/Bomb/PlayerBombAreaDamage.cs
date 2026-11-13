@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 
 /// <summary>폭발 범위의 적에게 대상당 한 번만 피해를 적용합니다.</summary>
 public sealed class PlayerBombAreaDamage
@@ -16,7 +17,7 @@ public sealed class PlayerBombAreaDamage
             var health = hit.GetComponentInParent<EnemyHealth>();
             if (health != null)
             {
-                if (health.CurrentHealth > 0 && _hitEnemies.Add(health)) health.TakeDamage(Mathf.RoundToInt(Mathf.Max(0f, damage)));
+                if (health.CurrentHealth > 0 && _hitEnemies.Add(health)) health.TryTakeDamage(Mathf.RoundToInt(Mathf.Max(0f, damage)), AttackSourceType.Player);
                 continue;
             }
             // Legacy 제거로 인해 로직 무효화: 구형 Monster 피해 폴백.

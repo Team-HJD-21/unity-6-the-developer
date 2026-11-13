@@ -209,3 +209,9 @@ Overview의 **PLATFORM · STEAM**에서 Steam 설정 에셋을 선택하고 Use 
 **Match 환경 · 현재**는 day/night와 Host의 다음 전환까지 남은 게임 초를 표시한다. 기본은 낮300/밤300초이며 정지/배속은 공용 필드 시계를 따른다. [낮밤 API](../02_architecture/09_world/day-night-api.md)에서 Weather/저장 연결과 기존 CountTick의 차이를 확인한다.
 
 APP · GAME FLOW의 시작/출격/귀환은 검은 배경·하단 바의 로딩 화면을 사용한다. 자동 확인을 마친 항목과 PL 최소 확인은 [최신 결과](../01_planning/02_implementation-records/2026/11/2026-11-05-day-night-steam-results.md)에 정리했다.
+
+## 정적 확보와 장시간 연결 검사
+
+현재 메뉴는 `Tools → TeamHJD → Game Debugger`다. Battlefield의 지역 Grid 패널에서 유효 지형 기준 점유율, 별도의 해금 목록, 구역별 확보 초·실제 팀 피해·생존 참가자/적·정지 이유를 확인한다. 펼친 ‘확보 시험값’은 현재 Host Match에만 적용한다. 기본 규칙과 데이터의 의미는 [정적 확보 API](../02_architecture/02_match/static-region-capture.md)를 먼저 확인한다.
+
+‘검증용 Player / CU 피해 보호’는 Play 중 현재 Host 객체에만 붙이는 개발 표식이다. 이동·전투·시계는 계속 진행하고 일반 Release에서는 무효다. Scene/Prefab에 저장하지 않으며 Play 종료로 해제된다. 보호·배속·짧게 바꾼 확보 시간 등 시험 조건을 캡처 기록에 명시한다. 이 결과를 정상 난이도·사망/안전장치 통과로 보고하지 않는다.

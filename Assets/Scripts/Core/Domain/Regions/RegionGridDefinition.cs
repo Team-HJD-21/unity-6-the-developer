@@ -10,8 +10,11 @@ namespace TeamHJD.Game.Domain
     {
         public BattlefieldGridConfiguration Geometry { get; }
         public IReadOnlyList<int> RegionIds { get; }
+        public IReadOnlyList<bool> CapturableCells { get; }
+        public int CapturableCellCount { get; }
 
-        public RegionGridDefinition(BattlefieldGridConfiguration geometry, IEnumerable<int> regionIds = null)
+        public RegionGridDefinition(BattlefieldGridConfiguration geometry, IEnumerable<int> regionIds = null,
+            IEnumerable<bool> capturableCells = null)
         {
             Geometry = geometry ?? throw new ArgumentNullException(nameof(geometry));
             var values = new List<int>(geometry.TotalCellCount);
@@ -33,6 +36,22 @@ namespace TeamHJD.Game.Domain
             }
             // 0은 아직 정적 지역에 속하지 않은 셀입니다. 동적 점령도 같은 셀을 사용합니다.
             RegionIds = new ReadOnlyCollection<int>(values);
+            var mask = new List<bool>(geometry.TotalCellCount);
+            if (capturableCells == null)
+                for (int i = 0; i < geometry.TotalCellCount; i++) mask.Add(true);
+            else
+                foreach (bool eligibleCell in capturableCells)
+                {
+                    if (mask.Count == geometry.TotalCellCount)
+                        throw new ArgumentException("The eligible mask exceeds the grid.", nameof(capturableCells));
+                    mask.Add(eligibleCell);
+                }
+            if (mask.Count != geometry.TotalCellCount)
+                throw new ArgumentException("The eligible mask must match the grid.", nameof(capturableCells));
+            int eligible = 0;
+            foreach (bool cell in mask) if (cell) eligible++;
+            CapturableCells = new ReadOnlyCollection<bool>(mask);
+            CapturableCellCount = eligible;
         }
 
         public int GetCellIndex(int x, int y)
@@ -49,7 +68,7 @@ namespace TeamHJD.Game.Domain
             var a = Geometry; var b = other.Geometry;
             if (a.Origin != b.Origin || a.OriginZ != b.OriginZ || a.MapWidth != b.MapWidth ||
                 a.MapHeight != b.MapHeight || a.CellsX != b.CellsX || a.CellsY != b.CellsY) return false;
-            for (int i = 0; i < RegionIds.Count; i++) if (RegionIds[i] != other.RegionIds[i]) return false;
+            for (int i = 0; i < RegionIds.Count; i++) if (RegionIds[i] != other.RegionIds[i] || CapturableCells[i] != other.CapturableCells[i]) return false;
             return true;
         }
 

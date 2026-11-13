@@ -45,6 +45,8 @@ public partial class EnemySpawnExecutor
                 new TrackedEnemy(network, controller, simulation, squad, context, definition.EnemyId, pointId));
             simulation.Despawned += OnEnemyDespawned;
             simulation.DeathConfirmed += OnEnemyDied;
+            var health = actor.GetComponent<EnemyHealth>();
+            if (health != null) health.DamageApplied += OnEnemyDamaged;
             if (observeSpawn != null)
                 try
                 {

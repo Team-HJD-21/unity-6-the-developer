@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,6 +16,8 @@ namespace TeamHJD.Game.Editor
         public static bool DrawCapturedCells = true;
         public static bool DrawInputTriangles;
         private static bool _showStartCells;
+        private static bool _showCaptureSettings;
+        private static Vector2 _captureScroll;
         private static readonly List<Vector2Int> _startDraft = new List<Vector2Int>();
         private static Vector2 _startScroll;
         private static Guid _draftGrid;
@@ -43,7 +46,7 @@ namespace TeamHJD.Game.Editor
                     return;
                 }
                 RegionGridSnapshot snapshot = binding.Source.Snapshot;
-                EditorGUILayout.LabelField("점령 셀", snapshot.CapturedCellCount + " / " + snapshot.CapturedCells.Count);
+                EditorGUILayout.LabelField("점령 셀", snapshot.CapturedCellCount + " / " + snapshot.Definition.CapturableCellCount + " · " + snapshot.CaptureRatio.ToString("P1"));
                 EditorGUILayout.LabelField("Grid revision", snapshot.Revision.ToString());
                 using (new EditorGUI.DisabledGroupScope(!binding.HasWriteAuthority))
                 {
@@ -54,16 +57,17 @@ namespace TeamHJD.Game.Editor
                         binding.ResetPolicy(snapshot.Mode, true);
                     if (snapshot.Mode == RegionPolicyMode.Static)
                     {
-                        int highest = 0;
-                        for (int index = 0; index < snapshot.CapturedCells.Count; index++)
-                            if (snapshot.CapturedCells[index]) highest = Mathf.Max(highest, snapshot.Definition.RegionIds[index]);
-                        if (GUILayout.Button("다음 정적 구역 해금")) binding.TryUnlockThroughZone(highest + 1);
+                        int highest = snapshot.UnlockedRegionIds.Count == 0 ? 0 : snapshot.UnlockedRegionIds.Max();
+                        EditorGUILayout.LabelField("해금 구역", string.Join(", ", snapshot.UnlockedRegionIds));
+                        if (GUILayout.Button("다음 정적 구역 해금 (점유 완료 아님)")) binding.TryUnlockThroughZone(highest + 1);
                     }
                 }
                 EditorGUILayout.HelpBox(snapshot.Mode == RegionPolicyMode.Dynamic
                     ? "CU 시작 셀에서 상하좌우로 연결된 투영 셀을 점령합니다. OFF/파괴 후에는 CU 시작 셀과 남은 연결만 유지하며 전력/냉각은 그대로 둡니다."
-                    : "기존 CU 거리 구역을 지역 Grid로 적용합니다. 아래 Battlefield Grid는 참가자 밀도용이며 지역 점령과 다른 데이터입니다.",
+                    : "CU 거리 구역은 해금만 합니다. 전투 성과·생존 참가자·적 압력으로 확보하며 확보 완료 시 다음 구역이 열립니다. 물/이동 불가 셀은 진행률에서 제외합니다.",
                     MessageType.None);
+                DrawValidationProtection(binding);
+                if (snapshot.Mode == RegionPolicyMode.Static) DrawStaticCapture(binding);
                 DrawCapturedCells = EditorGUILayout.Toggle("Scene 점령 Grid", DrawCapturedCells);
                 DrawInputTriangles = EditorGUILayout.Toggle("임시 판정 삼각형", DrawInputTriangles);
                 if (snapshot.Mode == RegionPolicyMode.Dynamic)
@@ -81,6 +85,74 @@ namespace TeamHJD.Game.Editor
                 }
             }
         }
+
+        private static void DrawValidationProtection(RegionSceneBinding binding)
+        {
+            var targets = new List<GameObject>();
+            var root = binding.GetComponent<InitialStageCompositionRoot>();
+            if (root?.LocalPlayerActors != null) targets.AddRange(root.LocalPlayerActors.Values.Where(actor => actor != null));
+            if (binding.ControlUnit != null) targets.Add(binding.ControlUnit.gameObject);
+            bool protectedNow = targets.Count > 0 && targets.All(actor => DebugDamageProtection.IsProtected(actor.transform));
+            using (new EditorGUI.DisabledGroupScope(!EditorApplication.isPlaying || !binding.HasWriteAuthority))
+            {
+                bool requested = EditorGUILayout.Toggle("검증용 Player / CU 피해 보호", protectedNow);
+                if (requested != protectedNow)
+                    foreach (var actor in targets)
+                    {
+                        var marker = actor.GetComponent<DebugDamageProtection>();
+                        if (requested) (marker != null ? marker : actor.AddComponent<DebugDamageProtection>()).enabled = true;
+                        else if (marker != null) { marker.enabled = false; UnityEngine.Object.Destroy(marker); }
+                    }
+            }
+            if (protectedNow) EditorGUILayout.HelpBox("개발 검증용 피해 보호 중입니다. 피해/승패 검증과 구분하세요. Play 종료 시 해제됩니다.", MessageType.Warning);
+        }
+
+        private static void DrawStaticCapture(RegionSceneBinding binding)
+        {
+            EditorGUILayout.LabelField("정적 확보 · 실제 전투 관측", EditorStyles.boldLabel);
+            var settings = binding.CaptureSettings;
+            using (var scroll = new EditorGUILayout.ScrollViewScope(_captureScroll, GUILayout.MaxHeight(220)))
+            {
+                _captureScroll = scroll.scrollPosition;
+                foreach (var state in binding.StaticCaptureProgress)
+                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    {
+                        EditorGUILayout.LabelField($"구역 {state.RegionId} · {CaptureReason(state.Reason)}", EditorStyles.boldLabel);
+                        Rect rect = GUILayoutUtility.GetRect(0, 18, GUILayout.ExpandWidth(true));
+                        EditorGUI.ProgressBar(rect, (float)(state.HoldSeconds / settings.HoldSeconds),
+                            $"확보 {state.HoldSeconds:F1} / {settings.HoldSeconds:F0} 초");
+                        EditorGUILayout.LabelField($"팀 피해 {state.TeamDamage:F0}/{settings.MinimumTeamDamage:F0} · 생존 아군 {state.LivingParticipants} / 적 {state.LivingEnemies}", EditorStyles.miniLabel);
+                        EditorGUILayout.LabelField($"이탈 {state.AbsenceSeconds:F1}s · 적 우세 {state.SuperioritySeconds:F1}s", EditorStyles.miniLabel);
+                    }
+            }
+            _showCaptureSettings = EditorGUILayout.Foldout(_showCaptureSettings, "확보 시험값 / 현재 Match 적용", true);
+            if (!_showCaptureSettings) return;
+            using (new EditorGUI.DisabledGroupScope(!binding.HasWriteAuthority))
+            {
+                EditorGUI.BeginChangeCheck();
+                float hold = EditorGUILayout.FloatField("확보 유지 (게임 초)", (float)settings.HoldSeconds);
+                float abandon = EditorGUILayout.FloatField("이탈 유예 (게임 초)", (float)settings.AbandonSeconds);
+                float loss = EditorGUILayout.FloatField("연속 적 우세 / 상실 (초)", (float)settings.LossSeconds);
+                float damage = EditorGUILayout.FloatField("최소 팀 피해", (float)settings.MinimumTeamDamage);
+                int pressure = EditorGUILayout.IntField("참가자당 허용 적 수", settings.EnemiesPerParticipant);
+                if (EditorGUI.EndChangeCheck())
+                    try { binding.ConfigureCapture(new StaticRegionCaptureSettings(hold, abandon, loss, damage, pressure)); }
+                    catch (ArgumentException error) { Debug.LogWarning("확보 시험값을 적용하지 않았습니다: " + error.Message); }
+            }
+        }
+
+        private static string CaptureReason(StaticRegionCaptureReason reason) => reason switch
+        {
+            StaticRegionCaptureReason.Locked => "미해금",
+            StaticRegionCaptureReason.NoParticipant => "참가자 없음 · 일시정지",
+            StaticRegionCaptureReason.NeedsCombat => "전투 성과 필요",
+            StaticRegionCaptureReason.EnemyPressure => "적 우세 · 일시정지",
+            StaticRegionCaptureReason.Holding => "확보 유지 중",
+            StaticRegionCaptureReason.Secured => "확보 완료",
+            StaticRegionCaptureReason.Lost => "확보 상실 · 해금 유지",
+            StaticRegionCaptureReason.Abandoned => "이탈 유예 종료 · 시도 초기화",
+            _ => reason.ToString()
+        };
 
         private static void DrawStartCells(RegionSceneBinding binding, RegionGridSnapshot snapshot)
         {

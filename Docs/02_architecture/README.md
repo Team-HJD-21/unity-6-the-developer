@@ -1,6 +1,6 @@
 # 아키텍처 문서
 
-최종 갱신일 2026-11-11
+최종 갱신일 2026-11-14
 상태 · 문서 탐색용 목차
 
 ## 공통 아키텍처와 규칙
@@ -20,6 +20,7 @@
 - [core-presence-report-api](01_core/core-presence-report-api.md)
 - [core-random-api](01_core/core-random-api.md)
 - [core-sprint-region-and-request-api](01_core/core-sprint-region-and-request-api.md)
+- [정적 지역 확보·해금·스폰 제한](02_match/static-region-capture.md)
 - [core-structure-review-2026-11-05](01_core/core-structure-review-2026-11-05.md)
 - [random-weighted-selection](01_core/random-weighted-selection.md)
 

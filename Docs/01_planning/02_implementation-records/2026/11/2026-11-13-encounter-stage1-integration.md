@@ -82,3 +82,51 @@ Stage1의 초기 고정 편성은 생성됐지만 자동 편성은 난수 미주
 - `DebugDamageProtection`은 선택한 Player/CU에 런타임에 붙이는 표식입니다. `FieldSimulationTime.CanReceiveDamage`를 거치는 두 체력 원본만 보호하며 이동·공격·시간은 계속 진행됩니다. 일반 Release에서는 보호가 동작하지 않습니다. Scene/Prefab이나 체크포인트에 추가하지 않았습니다.
 - PlayerInfo와 ControlUnitHealth의 피해 직전 검사만 공용 함수로 연결했습니다. 피해량·회복·사망 규칙은 유지합니다. 기본 상태에서는 기존대로 피해를 받고, 검증 중 명시적으로 표식을 붙였을 때만 무적입니다.
 - 범위/자식/비보호 대상/시뮬레이션 진행 검사1/1, 실제 Stage1에서 PlayerHP400→400·Player/CU ApplyDamage=false를 확인했습니다. 보호 없는 첫 장시간 검사에서는 실제 Player 사망도 확인했으며, 보호한 결과를 정상 난이도·승패 검증으로 보고하지 않습니다. Game Debugger의 명시 토글은 지역 통합 변경에 함께 추가합니다.
+
+## B3 — 정적 확보·해금·지형·스폰을 함께 연결
+
+[실제 API/규칙](../../../../02_architecture/02_match/static-region-capture.md)을 기준으로 읽습니다. 이 배치는 Host Stage1 연결이며 전체 승패/보스·성장 저장·원격 Player 인수 완료는 아닙니다.
+
+### 먼저 볼 파일과 흐름
+
+- `InitialStageCompositionRoot.RefreshDynamicInput`: 실제 생존 Player/Enemy 위치를 표본화하고, 같은 셀에 머물러도 지역 타이머를 갱신합니다. Spawn에는 실제 IMatchTime을 주입해 정지를 확인할 수 있게 했습니다.
+- `EnemyHealth.DamageApplied` → `EnemySpawnExecutor.Combat`의 `IEnemyCombatSource` → `RegionSceneBinding.Static`: 실제 피해만 팀 성과로 전달합니다. 오버킬·출처 불명·단순 제거는 성과가 아닙니다.
+- `StaticRegionCapture`: 60초 확보, 이탈 유예180초, 연속 적 우세30초를 절대 게임 시각으로 판단합니다. 새 조건이 처음 확인된 순간에 이전 미확인 시간을 소급 누적하지 않습니다.
+- `RegionGridDefinition/State/Snapshot`: 지형 마스크·정적 해금·확정 점유를 구분합니다. 외부 진행 조회는 불변 `StaticRegionCaptureSnapshot`이며 실제 판정기를 노출하지 않습니다.
+- `RegionSceneBinding`: 첫 구역 해금/CU1셀, 확보 후 다음 구역 자동 해금, 상실 후 해금 유지와 점유 회수, 진행·공간 저장 연결을 조립합니다.
+- `RegionSpawnPolicy`/Registry와 Executor: 같은 Region 그룹을 할당 전에 제외하고 반경+여유 거리도 검사합니다. 개체마다 최신 점유를 확인하되 같은 불변 표본은 재계산하지 않습니다. 부분 생성은 재실행하지 않습니다.
+- `world/spatial`/`world/region-start` v2, Match wire v3/Region wire v2: 새 의미를 저장·복제에 함께 반영했습니다. 이전 Windows 두 실행 파일 검증은 새 wire 인수가 아닙니다.
+
+### 실제 확인
+
+| 항목 | 결과 | 범위 |
+| --- | --- | --- |
+| 자동 검사 | 최신 고유61개 통과 | Edit53 + Play8. 이전 실패·0개 실행·중복 실행은 합산하지 않음 |
+| Stage1 시작 | CU1 / 유효201 / 전체256, 해금[1] | 실제 기본16×16, 실제 NavMesh |
+| 팀 성과 | Unknown 피해 뒤 성과0, Player/Turret 피해 집계 | 실제 Health 호출. 물리 입력 전체 전투를 대신하지 않음 |
+| 확보/해금 | 첫 구역51셀, 51/201, 해금[1,2], Controller 표시2 | 보호/위치 이동/확보2초라는 명시 시험값 |
+| 스폰 제한 | Region1 할당0, 실제12/12 모두 점유 밖 | 실제 Planner→NGO 실행 |
+| 상실 | 적3 대 참가자1로 점유51→CU1, 해금[1,2] 유지 | 연속 적 우세 시험값2초. 그룹 재사용, 수동 OFF 유지 |
+| 생성 도중 변화 | 계획3/실제1로 중단 | 첫 개체 뒤 권위 점유를 주입한 경계 검사 |
+| 전체 점유 | 실제201/201에서 일반 요청 거부, 생존4→4 | 권위 상태 주입. Stage 승리 인수 아님 |
+| 저장/복원 | 공간·진행 v2 메모리 왕복51/[1,2]/확보2초, rollback1/[1] | 디스크·성장·모든 actor 전체 복원 아님 |
+| 이전 저장 | v1 해금166셀→해금[1,2], 점유CU1, 유효201 | 합성 v1 payload를 실제 writer로 이관 |
+| 최종 표본 | 불변 DTO, 실제 첫 구역51셀·해금[1,2] 재확인 | 최종 시각 누적/표본 구현 사용 |
+
+첫 비보호 장시간 시험에서는 Player가 실제 사망했습니다. 이후 표식으로 Player/CU만 보호해 데이터 연결 검사를 수행했습니다. 정상 난이도·패배·재미 평가 통과로 표시하지 않습니다. 기본60/180/30초 경계는 자동 검사, Scene 연결은2초 시험값으로 구분합니다.
+
+검사 중 Core 낮밤 OnEnable의 불완전 바인딩을 발견해 별도 커밋 `94e95d49c`로 보완했습니다. 개발용 피해 보호는 `6dcf8499a`로 분리했습니다. 그 밖의 실패 기록과 재검사 원본은 로컬 실행 기록에 보존했습니다.
+
+### 팀원 코드에 반영한 접합
+
+- Enemy: 생성기의 실제 피해 통지 구독/해제·복원 재구독, EnemyHealth의 실제 피해 사건. 공격 가능 규칙·AI·스탯·편성은 수정하지 않았습니다.
+- Player: PlayerBullet/Spanner/Bomb의 출처는 Player, 설치 터렛 탄환의 출처는 Turret로 명시했습니다. 공격/피해량을 다시 계산하지 않습니다. 기존 출처별 EnemyDamageRule도 실제 공격자를 읽게 되므로 암살자 등의 기존 규칙과 접점이 생깁니다. 해당 규칙 본체나 드론 판정을 이번에 변경하지 않았습니다.
+- Defense: 탄환/레이저에 Turret 출처, Controller의 정적 해금 표시를 Core 원본에 연결했습니다. 전력·강화·자동 활성화 규칙은 그대로입니다.
+- World/Weather: Weather 선택·효과 본체를 수정하지 않았고 Core 시계 연결/수명만 보완했습니다.
+- HUD/Audio: 기존 UI·입력·Camera·Audio 변경을 보존했습니다. 진행률의 유효 분모 API를 UI 제작기 세션에 전달했으며 해당 세션에서 Header/CU 표시에 연결합니다.
+
+### 남은 범위 / 주의
+
+Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복제 인수와 구분합니다. 현재 지형 투영은 활성 XY NavMesh 기준이며 여러 전장의 NavMesh를 동시에 활성화하는 경우의 Scene 지형 공급은 별도 검토가 필요합니다. 전체 저장·복원, 지속 자동 생산, 사건/보스/승패는 다음 배치입니다.
+
+최종 실행에서 Game Debugger의 현재 메뉴를 열고 OnGUI 예외는 관측하지 않았습니다. 이전 메뉴 경로를 잘못 호출한 QA 명령 오류1건은 숨기거나 지우지 않았습니다. 앞선 중단 Play 종료 중 NGO `NetworkObject.OnNetworkBehaviourDestroyed → NetworkManagerOwner` null 예외도1회 관측했으며, 이후 최종 종료에서는 재발하지 않았습니다. 이를 해결 완료로 위장하지 않고 최종 네트워크 정리 검사에서 추적합니다.

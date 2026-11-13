@@ -3,6 +3,7 @@ using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 
 /// <summary>플레이어 터렛 전용 실탄. 플레이어 무기 효과와 독립적으로 적 한 명에게 피해를 적용합니다.</summary>
 [DisallowMultipleComponent]
@@ -95,7 +96,7 @@ public sealed partial class PlayerTurretProjectile : MonoBehaviour
         var health = other.GetComponentInParent<EnemyHealth>();
         // Legacy 제거로 인해 로직 무효화: 구형 Monster 피해 폴백.
         // var monster = other.GetComponentInParent<Monster>();
-        if (health != null) health.TakeDamage(Mathf.RoundToInt(_damage));
+        if (health != null) health.TryTakeDamage(Mathf.RoundToInt(_damage), AttackSourceType.Turret);
         // else if (monster != null && !monster.isDead) monster.TakeDamage(_damage);
         else if (other.isTrigger) return; // 탐색·상호작용 영역은 통과합니다.
         Retire();

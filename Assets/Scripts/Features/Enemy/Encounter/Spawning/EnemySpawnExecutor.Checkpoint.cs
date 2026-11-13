@@ -182,6 +182,8 @@ public partial class EnemySpawnExecutor
             _spawnedEnemies.Add(ngo.NetworkObjectId, new TrackedEnemy(ngo, controller, network, squad, context, saved.Type, saved.Point));
             network.Despawned += OnEnemyDespawned;
             network.DeathConfirmed += OnEnemyDied;
+            var health = actor.GetComponent<EnemyHealth>();
+            if (health != null) health.DamageApplied += OnEnemyDamaged;
             _restoredEnemies.Add((network, saved.State));
         }
         foreach (var saved in world.Projectiles)

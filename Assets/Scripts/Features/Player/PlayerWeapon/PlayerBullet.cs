@@ -2,6 +2,7 @@
 using TeamHJD.Game.Presentation.Scene;
 using System.Collections.Generic;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
@@ -189,7 +190,7 @@ public sealed partial class PlayerBullet : MonoBehaviour
         if (isEnemy)
         {
             var health = target.GetComponentInParent<EnemyHealth>();
-            if (health != null) health.TakeDamage(Mathf.RoundToInt(_damage));
+            if (health != null) health.TryTakeDamage(Mathf.RoundToInt(_damage), AttackSourceType.Player);
         }
         if (_view != null) _view.ShowImpact();
         Destroy(gameObject);

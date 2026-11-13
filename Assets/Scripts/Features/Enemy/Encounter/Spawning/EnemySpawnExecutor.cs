@@ -191,6 +191,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
         foreach (TrackedEnemy enemy in _spawnedEnemies.Values)
         {
             Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Executor shutdown");
+            if (enemy.Health != null) enemy.Health.DamageApplied -= OnEnemyDamaged;
             if (enemy.NetworkController != null)
             {
                 enemy.NetworkController.Despawned -= OnEnemyDespawned;
@@ -228,6 +229,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
             return;
 
         _spawnedEnemies.Remove(networkObjectId);
+        if (enemy.Health != null) enemy.Health.DamageApplied -= OnEnemyDamaged;
         Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Despawn / untracked (not a kill)");
         if (enemy.NetworkController != null)
         {
@@ -257,7 +259,8 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     /// 제작 지점 또는 명시 영역에서 명령을 실행하고 실제 생성·실패 결과를 관측자에게 전달한다.
     /// </summary>
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
-        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null, BattlefieldSpatialSnapshot battlefield = null)
+        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null, BattlefieldSpatialSnapshot battlefield = null,
+        Func<RegionGridSnapshot> currentRegion = null, double captureMargin = 0)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || !CanSimulateField || spawnInstruction.Enemies == null ||
@@ -317,6 +320,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
 
         if (_spawnRandom != null && !_spawnRandom.IsAvailable)
             return Fail("The Match random binding is no longer available.", observeFailure);
+        RegionGridSnapshot checkedRegion = null;
         int spawnedCount = 0;
         for (int entryIndex = 0; entryIndex < spawnInstruction.Enemies.Count; entryIndex++)
         {
@@ -330,6 +334,19 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                     Fail("Match/source cancelled before the next enemy.", observeFailure);
                     break;
                 }
+                if (currentRegion != null && context != null)
+                {
+                    var latest = currentRegion();
+                    if (latest == null || latest.MatchId != context.MatchId)
+                    { Fail("Current Match region is unavailable before the next enemy.", observeFailure); break; }
+                    if (!ReferenceEquals(latest, checkedRegion))
+                    {
+                        _spawnPointList.ApplyRegionSnapshot(latest, captureMargin);
+                        checkedRegion = latest;
+                    }
+                }
+                if (!world && !spawnPoint.CanSpawnEnemies)
+                { Fail(spawnPoint.SpawnExclusionReason, observeFailure); break; }
                 Vector3 spawnPosition;
                 if (world)
                 {

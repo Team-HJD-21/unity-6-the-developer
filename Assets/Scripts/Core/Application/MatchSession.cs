@@ -95,11 +95,20 @@ namespace TeamHJD.Game.Application
             return _regions.TryApply(basis, cells, updateMode);
         }
 
-        public void ResetRegions(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells)
+        /// <summary>권한을 가진 Scene 조립부가 정적 구역을 엽니다. 확보 진행/점유 셀은 바꾸지 않습니다.</summary>
+        public RegionUpdateStatus UnlockRegionsThrough(RegionGridSnapshot basis, int zone)
         {
             ThrowIfDisposed();
             if (_regions == null) throw new InvalidOperationException("Regions are not initialized.");
-            _regions.Reset(definition, mode, initialCells);
+            return _regions.TryUnlockThrough(basis, zone);
+        }
+
+        public void ResetRegions(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells,
+            IEnumerable<int> unlockedRegionIds = null)
+        {
+            ThrowIfDisposed();
+            if (_regions == null) throw new InvalidOperationException("Regions are not initialized.");
+            _regions.Reset(definition, mode, initialCells, unlockedRegionIds);
         }
 
         internal MatchSession(

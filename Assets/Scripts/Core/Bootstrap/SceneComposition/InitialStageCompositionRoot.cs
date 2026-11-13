@@ -215,6 +215,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
                         network.Descriptor.RegionMode, () => network.IsGameplayRunning, _turretBinding);
                 }
+                _regionBinding.BindCombatSources(FindSceneBehaviours().OfType<IEnemyCombatSource>());
                 if (_encounterConsumer != null)
                 {
                     // 새 환경·추가 스폰 계약은 Feature가 구현한 경우에만 연결합니다.
@@ -223,7 +224,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         environmentConsumer.BindEnvironment(matchId, () => HasCurrentMatch && _matchSession != null &&
                             _matchSession.IsGameplayRunning ? _matchSession.Environment?.Snapshot : null);
                     if (_encounterConsumer is IEncounterSpawnContextConsumer spawnConsumer)
-                        spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _coordinator, config.RandomSeed, _coordinator.GameplayCancellation);
+                        spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _matchTime.Clock, config.RandomSeed, _coordinator.GameplayCancellation);
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
                     if (network != null)
