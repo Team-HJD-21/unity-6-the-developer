@@ -46,7 +46,8 @@ public sealed class PlayerTurretRepairPromptView : MonoBehaviour
             _baseRenderer = target != null ? target.GetComponent<SpriteRenderer>() : null;
         }
         _worldCamera = Camera.main;
-        bool visible = target != null && _worldCamera != null && !_hud.IsOpen;
+        bool visible = target != null && _worldCamera != null && !_hud.IsOpen &&
+            (turret.CurrentHealth < turret.MaxHealth || _repair.IsRepairing);
         _panel.gameObject.SetActive(visible);
         if (!visible) return;
 
@@ -57,8 +58,7 @@ public sealed class PlayerTurretRepairPromptView : MonoBehaviour
         float progress = _repair.Progress;
         _progressFill.rectTransform.anchorMax = new Vector2(progress, 1f);
         _progressFill.color = restoring ? new Color(1f, .72f, .3f) : new Color(.35f, 1f, .65f);
-        if (!restoring && turret.CurrentHealth >= turret.MaxHealth) _label.text = "체력 가득";
-        else if (_repair.IsRepairing)
+        if (_repair.IsRepairing)
             _label.SetText(restoring ? "복구 중 {0}%" : "수리 중 {0}%", Mathf.FloorToInt(100f * progress));
         else _label.text = _repair.RequiresRelease ? "R 다시 누르기" : restoring ? "누르고 복구" : "누르고 수리";
         RefreshPosition();

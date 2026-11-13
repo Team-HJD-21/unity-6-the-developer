@@ -20,6 +20,10 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     private readonly System.Collections.Generic.Dictionary<PlayerSkillId, PlayerSkillBase> _skills = new();
 
     public PlayerSkillLoadout Loadout { get; } = new PlayerSkillLoadout();
+    public event Action<int, PlayerSkillId, bool> SlotUseAttempted;
+    public event Action<string> PlacementRejected;
+    internal void NotifyPlacementRejected(string reason)
+    { PlacementRejected?.Invoke(string.IsNullOrEmpty(reason) ? "이 위치에 설치할 수 없습니다." : reason); }
     public bool IsSelectionOpen => _hud != null && _hud.IsOpen;
     public bool CanPrepare => isActiveAndEnabled && (_control == null || _control.CanPrepare) && (_control != null && _control.HasMatchBinding || _canPrepare == null || _canPrepare());
     public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
@@ -73,6 +77,14 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     public void CloseSelection() { if (_hud != null) _hud.Close(); }
 
     public bool TrySelect(PlayerSkillId skill) => CanPrepare && IsAvailable(skill) && Loadout.TrySelect(skill);
+    /// <summary>HUD 드롭 확정 경로입니다. 원본 준비 권한과 설정을 검사하고 기존 설치 의도를 정리한 뒤 장착합니다.</summary>
+    public bool TryEquip(int slot, PlayerSkillId skill)
+    {
+        if (!CanPrepare || !IsAvailable(skill) || slot < 0 || slot > 1 ||
+            (slot == 0 ? Loadout.Q : Loadout.E) == skill) return false;
+        CancelPlacements();
+        return Loadout.TryEquip(slot, skill);
+    }
     public void ClearSelection()
     {
         if (!CanPrepare) return;
@@ -122,6 +134,16 @@ public sealed partial class PlayerSkillController : MonoBehaviour
         return skill.TryUseSkill();
     }
 
+    /// <summary>Q/E 입력 경로. 비전투/메뉴 잠금은 사용 요청으로 송출하지 않습니다.</summary>
+    public bool TryUseSlot(int slot)
+    {
+        if (slot < 0 || slot > 1 || !CanUse) return false;
+        PlayerSkillId id = slot == 0 ? Loadout.Q : Loadout.E;
+        bool accepted = TryUse(id);
+        SlotUseAttempted?.Invoke(slot, id, accepted);
+        return accepted;
+    }
+
     private void CancelPlacements(PlayerSkillId except = PlayerSkillId.None)
     {
         if (_turret != null && except != _turret.Id) _turret.CancelPlacement();
@@ -134,8 +156,8 @@ public sealed partial class PlayerSkillController : MonoBehaviour
         if (_input == null) return;
         if (_input.WasRecoverPressed && CanRecover) _turret.TryRecoverNearest();
         if (!CanUse) return;
-        if (_input.WasSkillQPressed) TryUse(Loadout.Q);
-        if (_input.WasBombPressed) TryUse(Loadout.E);
+        if (_input.WasSkillQPressed) TryUseSlot(0);
+        if (_input.WasBombPressed) TryUseSlot(1);
     }
 
     private void OnDisable()

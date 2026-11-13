@@ -24,6 +24,7 @@ namespace TeamHJD.Game.Bootstrap
         private readonly HashSet<int> _composedSceneHandles = new HashSet<int>();
         private MatchSession _currentMatch;
         private bool _isDisposed;
+        public bool IsInitialized => !_isDisposed && Services != null;
         private AppScreenPresenter _screenPresenter;
         private SpaceshipTravelService _spaceshipTravel;
         private IDisposable _completionSubscription;
@@ -180,6 +181,8 @@ namespace TeamHJD.Game.Bootstrap
         public MatchConfig CurrentMatchConfig => _currentMatch?.Config;
 #endif
 
+        public UiDisplaySettings DisplaySettings { get; private set; }
+
         public void Initialize(AppServices services)
         {
             if (_isDisposed)
@@ -188,12 +191,16 @@ namespace TeamHJD.Game.Bootstrap
                 throw new InvalidOperationException("AppRoot has already been initialized.");
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
+            DisplaySettings = new UiDisplaySettings();
             _spaceshipTravel = new SpaceshipTravelService(this);
             if (Services.Platform is IPlatformRuntime) InitializePlatform();
             if (UnityEngine.Application.isPlaying)
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
                     NavigateFromScreenAsync, GetSceneTravelRestriction,
-                    () => GameFlow?.IsTransitioning == true);
+                    () => GameFlow?.IsTransitioning == true, DisplaySettings,
+                    () => GameFlow == null ? !CurrentMatchId.IsEmpty :
+                        GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted,
+                    Services.Alerts);
         }
 
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
@@ -514,8 +521,9 @@ namespace TeamHJD.Game.Bootstrap
             if (_composedSceneHandles.Contains(scene.handle))
                 return;
 
-            // 시작 우주선은 필드에서 Player/카메라가 넘어오는 Additive 방문과 생성 조건이 다릅니다.
-            if (GameFlow != null && scene.path == GameFlow.Routes.SpaceshipScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
+            // 직접 Scene 실행의 메뉴 귀환도 기존 Hub 조립을 사용합니다. 진행 Match의 Additive 방문은 제외합니다.
+            string hubScene = GameFlow?.Routes.SpaceshipScene ?? AppScreenPresenter.HubScene;
+            if (scene.path == hubScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
                 !scene.GetRootGameObjects().Any(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true) != null))
             {
                 var hub = new GameObject("Core Starting Hub");
@@ -530,6 +538,8 @@ namespace TeamHJD.Game.Bootstrap
                 {
                     if (behaviour is TeamHJD.Game.Presentation.Scene.ISpaceshipTravelConsumer travelConsumer)
                         travelConsumer.BindSpaceshipTravel(_spaceshipTravel);
+                    if (behaviour is TeamHJD.Game.Presentation.Scene.IUiDisplaySettingsConsumer displayConsumer)
+                        displayConsumer.BindUiDisplaySettings(DisplaySettings);
                     if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled)
                         compositionRoots.Add(compositionRoot);
                 }

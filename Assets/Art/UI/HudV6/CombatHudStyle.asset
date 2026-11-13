@@ -1,0 +1,179 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9405b7b9ec0d44f784ed75b05af77609, type: 3}
+  m_Name: CombatHudStyle
+  m_EditorClassIdentifier: Assembly-CSharp::CombatHudStyle
+  Sprites:
+  - Id: panel_surface
+    Sprite: {fileID: 21300000, guid: 86ebd2614e0875b4daefe7293a07a0b3, type: 3}
+  - Id: panel_edge_idle
+    Sprite: {fileID: 21300000, guid: b8c73d4310599b4479eceac3e049068d, type: 3}
+  - Id: panel_edge_hover
+    Sprite: {fileID: 21300000, guid: bbc7afe235cedc74f877a2f30c3dd2cb, type: 3}
+  - Id: panel_edge_selected
+    Sprite: {fileID: 21300000, guid: 0f58c6b9ddda8a24e8dc46778438cd26, type: 3}
+  - Id: panel_edge_disabled
+    Sprite: {fileID: 21300000, guid: 43a7467046c80fe48bb79a614ca5335d, type: 3}
+  - Id: button_surface
+    Sprite: {fileID: 21300000, guid: 08d384fa67efd0040bf50d5f160305cc, type: 3}
+  - Id: button_edge_idle
+    Sprite: {fileID: 21300000, guid: d527ea213dad0a14dbc50a95285b1f2e, type: 3}
+  - Id: button_edge_hover
+    Sprite: {fileID: 21300000, guid: 4b7078b9fe8d4744cadff91cf782df13, type: 3}
+  - Id: button_edge_selected
+    Sprite: {fileID: 21300000, guid: 98344c3215538a44fad7ba7154a42b0a, type: 3}
+  - Id: button_edge_disabled
+    Sprite: {fileID: 21300000, guid: b3432f987529ab043996a3483eb9275c, type: 3}
+  - Id: weapon_surface
+    Sprite: {fileID: 21300000, guid: f5ac678e85557c64eb6eeaeeaf06e858, type: 3}
+  - Id: weapon_edge_idle
+    Sprite: {fileID: 21300000, guid: f842ed2cc43309047affb7eee554ca6d, type: 3}
+  - Id: weapon_edge_hover
+    Sprite: {fileID: 21300000, guid: b679c5f69ba71534b85a91586ca87761, type: 3}
+  - Id: weapon_edge_selected
+    Sprite: {fileID: 21300000, guid: c7b69e2ed0a6d414886f18253fcc8817, type: 3}
+  - Id: weapon_edge_disabled
+    Sprite: {fileID: 21300000, guid: bfb90e61e27353046a199d1208e847f0, type: 3}
+  - Id: skill_surface
+    Sprite: {fileID: 21300000, guid: 80d6f733240c6a046b6e3e17dfdffae7, type: 3}
+  - Id: skill_edge_idle
+    Sprite: {fileID: 21300000, guid: a4be54af4a6c9904998a05b4d81525e8, type: 3}
+  - Id: skill_edge_hover
+    Sprite: {fileID: 21300000, guid: 7d5f82b1e84079146a381885a9906b9b, type: 3}
+  - Id: skill_edge_selected
+    Sprite: {fileID: 21300000, guid: e1d4bd9eebe0ac24d91e2cf591d57abd, type: 3}
+  - Id: skill_edge_disabled
+    Sprite: {fileID: 21300000, guid: 752756f27d64ecc4097b42a23a222a05, type: 3}
+  - Id: effect_surface
+    Sprite: {fileID: 21300000, guid: df779b7dea7b3e54382e3e96e853c526, type: 3}
+  - Id: effect_edge_idle
+    Sprite: {fileID: 21300000, guid: f72e7dd1d5db1654bbb0e2c09e89569b, type: 3}
+  - Id: effect_edge_hover
+    Sprite: {fileID: 21300000, guid: f470091dfb79c3745991f95d5970b64d, type: 3}
+  - Id: effect_edge_selected
+    Sprite: {fileID: 21300000, guid: cd9aa7ae6f7e0af43aaf6354735e6c91, type: 3}
+  - Id: effect_edge_disabled
+    Sprite: {fileID: 21300000, guid: cb65df4b035994343ae4c889e5fc45c8, type: 3}
+  - Id: meter_track
+    Sprite: {fileID: 21300000, guid: b18220cb76d879f47b50b23284694134, type: 3}
+  - Id: meter_fill
+    Sprite: {fileID: 21300000, guid: 3f4614c2d7a0ccf459d8dc2931ecdf7d, type: 3}
+  - Id: boss_track
+    Sprite: {fileID: 21300000, guid: 1a56729d9e14b604dbff66df1db52513, type: 3}
+  - Id: fill_white
+    Sprite: {fileID: 21300000, guid: 0e582a36f833cb748b0ab1ea1f808a93, type: 2}
+  - Id: owner_player
+    Sprite: {fileID: 21300000, guid: dcf5cc11285fc434ab329e7e115162d6, type: 3}
+  - Id: owner_cu
+    Sprite: {fileID: 21300000, guid: 39e2b4f40b13dd84c99f3bed64ee49d5, type: 3}
+  - Id: stat_health
+    Sprite: {fileID: 21300000, guid: d8140cac9098fbb419ff20298d086289, type: 3}
+  - Id: stat_power
+    Sprite: {fileID: 21300000, guid: 744ef2593cac1ef41ba9d52c4ce1bc93, type: 3}
+  - Id: stat_xp
+    Sprite: {fileID: 21300000, guid: c5d5322e8bba70541a6b71ea4aaf7e39, type: 3}
+  - Id: ammo_cartridge
+    Sprite: {fileID: 21300000, guid: b8139f2b56705594da21b0a718d310a1, type: 3}
+  - Id: ammo_empty
+    Sprite: {fileID: 21300000, guid: fd8ad898dd08bf742b1da480e91bc90d, type: 3}
+  - Id: reload_arrow
+    Sprite: {fileID: 21300000, guid: 8cb9e7af164d87d4b9c9116145ff88d2, type: 3}
+  - Id: drag_cancel
+    Sprite: {fileID: 21300000, guid: f265bab0ca684bc4ba415576dec5be02, type: 3}
+  - Id: pin
+    Sprite: {fileID: 21300000, guid: b015568ce1188964b873dbd9cf25c367, type: 3}
+  - Id: equipped_needle_long
+    Sprite: {fileID: 21300000, guid: 1c13f842e036fe84482b6b580c048917, type: 3}
+  - Id: tooltip_tail
+    Sprite: {fileID: 21300000, guid: fd7b3037bad2f094687de16a3a484e15, type: 3}
+  - Id: action_confirm
+    Sprite: {fileID: 21300000, guid: adedcb8379d834e4bb346bd63c19eacf, type: 3}
+  - Id: action_dash
+    Sprite: {fileID: 21300000, guid: 985f64aee78ff094e852dfa50ad83a64, type: 3}
+  - Id: effect_slow
+    Sprite: {fileID: 21300000, guid: 80ba2b5cfaf346141be290babd9904a9, type: 3}
+  - Id: picker_wedge_0_surface
+    Sprite: {fileID: 21300000, guid: d707e264cee1a554a993471847618245, type: 3}
+  - Id: picker_wedge_0_mask
+    Sprite: {fileID: 21300000, guid: 6367f9ff22a303d449e943bebda91c85, type: 3}
+  - Id: picker_wedge_0_edge_idle
+    Sprite: {fileID: 21300000, guid: 57b430a9a6135d242aa07c57270dfdb2, type: 3}
+  - Id: picker_wedge_0_edge_hover
+    Sprite: {fileID: 21300000, guid: 259fca9e224f17a44b2430b211ddb897, type: 3}
+  - Id: picker_wedge_1_surface
+    Sprite: {fileID: 21300000, guid: 773d6c162e551314aa82e60c339a8d05, type: 3}
+  - Id: picker_wedge_1_mask
+    Sprite: {fileID: 21300000, guid: 1ffeda98863d666458435829ce2e4411, type: 3}
+  - Id: picker_wedge_1_edge_idle
+    Sprite: {fileID: 21300000, guid: 1ec2b1ebaacdaf5408d0f043e58bfe5a, type: 3}
+  - Id: picker_wedge_1_edge_hover
+    Sprite: {fileID: 21300000, guid: 142e63861c55bbb4b81dc2a12ff91961, type: 3}
+  - Id: picker_wedge_2_surface
+    Sprite: {fileID: 21300000, guid: dfbffdb284a49f34f82f9aee369a2c4f, type: 3}
+  - Id: picker_wedge_2_mask
+    Sprite: {fileID: 21300000, guid: b8801c087b9aa84408c6c20ac0e928f5, type: 3}
+  - Id: picker_wedge_2_edge_idle
+    Sprite: {fileID: 21300000, guid: 6f8182fd87c8abe468547604288fcdae, type: 3}
+  - Id: picker_wedge_2_edge_hover
+    Sprite: {fileID: 21300000, guid: ec9b41db998de9b4cb9275e763be50a8, type: 3}
+  - Id: picker_wedge_3_surface
+    Sprite: {fileID: 21300000, guid: 06af490632fb0934b8c054d518e88fdf, type: 3}
+  - Id: picker_wedge_3_mask
+    Sprite: {fileID: 21300000, guid: ac5680e5dd66b724ba2e52c50c114aa8, type: 3}
+  - Id: picker_wedge_3_edge_idle
+    Sprite: {fileID: 21300000, guid: d0ccf57123a64194bbe725e76324a725, type: 3}
+  - Id: picker_wedge_3_edge_hover
+    Sprite: {fileID: 21300000, guid: 3ab798d8c0a50a94e906d8d24b1964d6, type: 3}
+  - Id: picker_rail
+    Sprite: {fileID: 21300000, guid: dda1ec463fb22b941ba8c9e4ecdc07c5, type: 3}
+  - Id: picker_inner_surface
+    Sprite: {fileID: 21300000, guid: 9ef3806dd6ebf0744be36ea3ac33a977, type: 3}
+  - Id: drop_global_horizontal_idle
+    Sprite: {fileID: 21300000, guid: 90b522b9345c52046a4b586a71d67185, type: 3}
+  - Id: drop_global_horizontal_hover
+    Sprite: {fileID: 21300000, guid: a10e96f4b0271f64caa7df92177e44e2, type: 3}
+  - Id: label_territory_ko
+    Sprite: {fileID: 21300000, guid: c3bf95a28a2e76546b35880f5d092246, type: 3}
+  - Id: weapon_spanner
+    Sprite: {fileID: 21300000, guid: 5638e76e8b5842949bf0ac54258124f2, type: 2}
+  - Id: weapon_default
+    Sprite: {fileID: 21300000, guid: f50b87778adeb334fb050d6bdf04b8ed, type: 2}
+  - Id: weapon_cryo
+    Sprite: {fileID: 21300000, guid: ca056c0a5dbe86b46b4071af4b4896bd, type: 2}
+  - Id: weapon_sniper
+    Sprite: {fileID: 21300000, guid: cad69510610e91f4181676f95a4e660f, type: 2}
+  - Id: skill_bomb
+    Sprite: {fileID: 21300000, guid: aa38113a20db92b42b8f2f56472897cf, type: 2}
+  - Id: skill_turret_base
+    Sprite: {fileID: 21300000, guid: f1c836b9b178e834db16bb6711947e1d, type: 2}
+  - Id: skill_turret_head
+    Sprite: {fileID: 21300000, guid: 4abaebb7fc4053041855c06cf7021a89, type: 2}
+  - Id: skill_barrier
+    Sprite: {fileID: 21300000, guid: 3970552b4ad114841aeb5bb58c3ea372, type: 2}
+  - Id: skill_beacon
+    Sprite: {fileID: 21300000, guid: f4eb0e1cd5ec78f46895f76469941234, type: 2}
+  - Id: drag_disk_base
+    Sprite: {fileID: 21300000, guid: 0fbc3678fc669674a8fc4ec55617882e, type: 3}
+  HeaderFont: {fileID: 11400000, guid: 3739164d2b75c084eb84a11172cc2ce8, type: 2}
+  LabelFont: {fileID: 11400000, guid: 4356f820aacffd74da6b043603f598fc, type: 2}
+  BodyFont: {fileID: 11400000, guid: f425d3be4914f4a4280a6e0b49f79db8, type: 2}
+  Text: {r: 0.933, g: 0.918, b: 0.859, a: 1}
+  Accent: {r: 0.839, g: 0.749, b: 0.486, a: 1}
+  Health: {r: 0.839, g: 0.365, b: 0.314, a: 1}
+  Power: {r: 0.839, g: 0.706, b: 0.373, a: 1}
+  Cancel: {r: 0.831, g: 0.482, b: 0.408, a: 1}
+  SlideSeconds: 0.22
+  HoverSeconds: 0.12
+  EquipSeconds: 0.24
+  AutoHideSeconds: 2.5
+  AmmoHideSeconds: 1.8
+  PickerLeaveSeconds: 0.24

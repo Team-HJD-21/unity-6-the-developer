@@ -1,16 +1,12 @@
-// 실제 UGUI 운영 화면을 만들고 ScreenManager의 focus·폐기와 연결합니다.
-// 전투 HUD는 유지하며 결과는 불변 자료, 로딩은 실제 Scene 상태를 표시합니다.
-// 프레임 호출은 AppRoot가 담당하고 임의의 전역 UI/입력 Singleton을 만들지 않습니다.
+// 운영 화면의 수명/입력/게임 흐름을 연결합니다. 외형과 계층은 제작된 프리팹이 소유합니다.
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using UnityEngine.InputSystem;
 
 namespace TeamHJD.Game.Presentation
 {
@@ -22,45 +18,62 @@ namespace TeamHJD.Game.Presentation
         private readonly SceneFlowController _scenes;
         private readonly Func<string, Task> _replace;
         private readonly Func<string> _travelRestriction;
-        private readonly Dictionary<long, IScreenPresenter> _views = new Dictionary<long, IScreenPresenter>();
         private readonly Func<bool> _isGameFlowTransitioning;
-        private readonly GameObject _root;
-        private readonly Font _font;
+        private readonly Func<bool> _canReturnToHub;
+        private readonly Dictionary<long, IScreenPresenter> _views = new();
+        private readonly AppScreenCanvasView _canvas;
         private readonly AppScreenStyle _style;
         private readonly SceneFadePresenter _sceneFade;
+        private readonly UiDisplaySettings _display;
+        private readonly AlertService _alerts;
+        private readonly IDisposable _alertBinding;
+        private readonly bool _ownsAlerts;
         private long _loadingId;
         private bool _disposed, _actionPending;
         private string _actionFailure;
+
         public AppScreenPresenter(Transform parent, ScreenManager screens, SceneFlowController scenes,
-            Func<string, Task> replace, Func<string> travelRestriction, Func<bool> isGameFlowTransitioning = null)
+            Func<string, Task> replace, Func<string> travelRestriction, Func<bool> isGameFlowTransitioning = null,
+            UiDisplaySettings display = null, Func<bool> canReturnToHub = null, AlertService alerts = null)
         {
-            _isGameFlowTransitioning = isGameFlowTransitioning ?? (() => false);
             _screens = screens ?? throw new ArgumentNullException(nameof(screens));
             _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
             _replace = replace ?? throw new ArgumentNullException(nameof(replace));
             _travelRestriction = travelRestriction ?? throw new ArgumentNullException(nameof(travelRestriction));
-            _root = new GameObject("App Screens", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            _root.transform.SetParent(parent, false);
-            var canvas = _root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 10000;
-            var scale = _root.GetComponent<CanvasScaler>(); scale.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scale.referenceResolution = new Vector2(1280, 720); scale.matchWidthOrHeight = .5f;
+            _isGameFlowTransitioning = isGameFlowTransitioning ?? (() => false);
+            _canReturnToHub = canReturnToHub ?? (() => true);
+            _display = display ?? new UiDisplaySettings();
             _style = Resources.Load<AppScreenStyle>("Core/AppScreenStyle");
-            _font = _style != null && _style.Font != null ? _style.Font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (_style == null || !_style.HasAuthoredViews)
+                throw new InvalidOperationException("Configure the authored common UI prefabs in Core/AppScreenStyle.");
+            _canvas = UnityEngine.Object.Instantiate(_style.CanvasPrefab, parent, false);
+            _canvas.name = "App Screens";
             _screens.SetPresenterFactory(Create);
-            _sceneFade = new SceneFadePresenter(_root.transform);
+            _sceneFade = new SceneFadePresenter(_canvas.TravelFade);
+            _alerts = alerts ?? new AlertService();
+            _ownsAlerts = alerts == null;
+            _alertBinding = GameAlerts.Bind(_alerts);
         }
 
-        /// <summary>우주선 출입 조율부 전용 암전입니다. 일반 Startup 로딩의 진행 표시와 구분합니다.</summary>
-        public Task FadeSceneAsync(Func<Task> move, CancellationToken cancellation) => _sceneFade.RunAsync(move, cancellation);
+        public Task FadeSceneAsync(Func<Task> move, CancellationToken cancellation)
+        {
+            _alerts.Tick(Time.unscaledTimeAsDouble, _canvas.Alerts.DisplaySeconds, suppressed: true);
+            _canvas.Alerts.Hide();
+            return _sceneFade.RunAsync(move, cancellation);
+        }
         private IScreenPresenter Create(ScreenState state)
         {
             EnsureEventSystem();
-            IScreenPresenter view = state.Kind == ScreenKind.Loading
-                ? new LoadingScreenPresenter(_root.transform,
-                    () => _scenes.IsTransitioning ? _scenes.Progress : float.NaN, () => _views.Remove(state.Id), _font)
-                : new View(this, state);
-            _views.Add(state.Id, view);
-            return view;
+            IScreenPresenter view;
+            if (state.Kind == ScreenKind.Loading)
+                view = new LoadingScreenPresenter(_canvas.Screens,
+                    () => _scenes.IsTransitioning ? _scenes.Progress : float.NaN,
+                    () => _views.Remove(state.Id), authored: _style.LoadingPrefab);
+            else if (state.Kind == ScreenKind.Settings)
+                view = new SettingsScreenPresenter(_canvas.Screens, _style.SettingsPrefab, _display,
+                    () => _screens.Close(state.Id), () => _views.Remove(state.Id));
+            else view = new View(this, state);
+            _views.Add(state.Id, view); return view;
         }
         public void Render()
         {
@@ -83,13 +96,18 @@ namespace TeamHJD.Game.Presentation
                 if (view is LoadingScreenPresenter loading) loading.Refresh();
                 else if (view is View panel) panel.Refresh();
             }
+            // 개인 메뉴/설정의 결과는 읽게 두고, Scene 전환/결과 화면에는 묵은 알림을 남기지 않습니다.
+            bool covered = _sceneFade.IsVisible || _scenes.IsTransitioning || _isGameFlowTransitioning() || _actionPending ||
+                _screens.Top?.Kind == ScreenKind.Loading || _screens.Top?.Kind == ScreenKind.MatchResult;
+            _alerts.Tick(Time.unscaledTimeAsDouble, _canvas.Alerts.DisplaySeconds, covered);
+            _canvas.Alerts.Render(_alerts);
             _sceneFade.KeepOnTop();
         }
-        private static void EnsureEventSystem()
+        internal static void EnsureEventSystem()
         {
             if (EventSystem.current != null) return;
-            // 현재 Scene에만 둡니다. 다음 Scene의 제작 EventSystem과 영구 중복되지 않습니다.
-            new GameObject("Core UI EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            // Scene에 UI가 없는 격리 경로만 준비합니다. 제품 Scene에는 제작된 입력 모듈을 사용합니다.
+            new GameObject("Core UI EventSystem", typeof(EventSystem), typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
         }
         private async void Travel(string scene)
         {
@@ -101,148 +119,107 @@ namespace TeamHJD.Game.Presentation
                 await _replace(scene);
             }
             catch (OperationCanceledException) { }
-            catch (Exception error) { _actionFailure = error.Message; }
+            catch (Exception error) { _actionFailure = "이동하지 못했습니다. 다시 시도해 주세요."; Debug.LogException(error); }
             finally
             {
                 _actionPending = false;
                 if (!_disposed && !_scenes.IsTransitioning && _loadingId != 0)
-                {
-                    long loading = _loadingId; _loadingId = 0; _screens.Close(loading);
-                }
+                { long loading = _loadingId; _loadingId = 0; _screens.Close(loading); }
             }
         }
         public void Dispose()
         {
             if (_disposed) return; _disposed = true;
-            _sceneFade.Dispose();
-            // View의 소유자는 ScreenManager입니다. 조립부가 Screens를 먼저 닫은 뒤 Canvas를 해제합니다.
-            UnityEngine.Object.Destroy(_root);
+            _alertBinding.Dispose();
+            _alerts.Clear();
+            if (_ownsAlerts) _alerts.Dispose();
+            _sceneFade.Dispose(); UnityEngine.Object.Destroy(_canvas.gameObject);
         }
 
         private sealed class View : IScreenPresenter
         {
-            private static readonly Color PanelColor = new Color(.075f, .09f, .12f, .98f);
-            private static readonly Color Accent = new Color(.22f, .72f, .86f, 1);
             private readonly AppScreenPresenter _owner;
             private readonly ScreenState _state;
-            private readonly GameObject _overlay;
-            private readonly Text _body, _status;
-            private readonly Button _primary, _secondary;
+            private readonly AppPanelView _view;
             private GameObject _previousSelection;
+            private GameObject _lastSelection;
             private bool _disposed;
             public View(AppScreenPresenter owner, ScreenState state)
             {
                 _owner = owner; _state = state;
-                _overlay = new GameObject("Screen:" + state.Kind, typeof(RectTransform), typeof(Image));
-                _overlay.transform.SetParent(owner._root.transform, false);
-                Stretch((RectTransform)_overlay.transform);
-                _overlay.GetComponent<Image>().color = new Color(0, 0, 0, .7f);
-                try
+                _previousSelection = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+                bool menu = state.Kind == ScreenKind.Menu;
+                _view = UnityEngine.Object.Instantiate(menu ? owner._style.MenuPrefab : owner._style.ResultPrefab, owner._canvas.Screens, false);
+                _view.name = "Screen:" + state.Kind;
+                if (menu)
                 {
-                    var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
-                    panel.transform.SetParent(_overlay.transform, false);
-                    var rect = (RectTransform)panel.transform;
-                    rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
-                    rect.sizeDelta = new Vector2(480, 410);
-                    ApplyImage(panel.GetComponent<Image>(), owner._style?.PanelSprite, PanelColor);
-                    var title = Label(panel.transform, "Title", 30, 30, 420, 45, 29);
-                    title.color = owner._style != null ? owner._style.TitleColor : Accent;
-                    title.text = state.Kind == ScreenKind.Menu ? "MENU" :
-                        state.Completion.Result.Outcome == TeamHJD.Game.Domain.MatchOutcome.Victory ? "VICTORY" : "MATCH COMPLETE";
-                    _body = Label(panel.transform, "Details", 30, 94, 420, 115, 18);
-                    _status = Label(panel.transform, "Status", 30, 220, 420, 64, 15);
-                    _status.color = new Color(.78f, .82f, .88f, 1);
-                    _primary = Button(panel.transform, "Primary", 30, 310, 200, 48,
-                        state.Kind == ScreenKind.Menu ? "Resume" : "Restart");
-                    _secondary = Button(panel.transform, "Secondary", 250, 310, 200, 48, "Return to spaceship");
-                    if (state.Kind == ScreenKind.Menu) _primary.onClick.AddListener(() => owner._screens.Close(state.Id));
-                    else _primary.onClick.AddListener(() => owner.Travel(StageScene));
-                    _secondary.onClick.AddListener(() => owner.Travel(HubScene));
-                    _secondary.gameObject.SetActive(state.Kind == ScreenKind.MatchResult);
-                    var primaryNavigation = new Navigation { mode = Navigation.Mode.Explicit };
-                    if (_secondary.gameObject.activeSelf)
-                    { primaryNavigation.selectOnRight = _secondary; primaryNavigation.selectOnDown = _secondary; }
-                    _primary.navigation = primaryNavigation;
-                    _secondary.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = _primary, selectOnUp = _primary };
-                    Refresh();
-                }
-                catch { UnityEngine.Object.Destroy(_overlay); throw; }
-            }
-            public void Refresh()
-            {
-                if (_disposed) return;
-                if (_state.Kind == ScreenKind.Menu)
-                {
-                    _body.text = "Local controls are locked while this menu is open.\nThe shared Match keeps running.";
-                    _status.text = "Escape / Resume to return. Gameplay authority is unchanged.";
+                    _view.Primary.onClick.AddListener(Resume);
+                    _view.Settings.onClick.AddListener(Settings);
+                    _view.Secondary.onClick.AddListener(ReturnToHub);
                 }
                 else
                 {
-                    var result = _state.Completion.Result;
-                    _body.text = $"Outcome  {result.Outcome}\nCompleted wave  {result.CompletedWave}\nMatch  {result.MatchId.Value}";
-                    string restriction = _owner._travelRestriction();
-                    _primary.interactable = _secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
-                    _status.text = _owner._actionFailure ?? (string.IsNullOrEmpty(restriction) ?
-                        "Result preserved. Rewards require the profile/backend policy." : restriction);
+                    _view.Primary.onClick.AddListener(Restart);
+                    _view.Secondary.onClick.AddListener(ReturnToHub);
                 }
+                Refresh();
+            }
+            private void Resume() => _owner._screens.Close(_state.Id);
+            private void Settings() => _owner._screens.ShowSettings();
+            private void Restart() => _owner.Travel(StageScene);
+            private void ReturnToHub() => _owner.Travel(HubScene);
+            public void Refresh()
+            {
+                if (_disposed) return;
+                string restriction = _owner._travelRestriction();
+                if (_state.Kind == ScreenKind.Menu)
+                {
+                    _view.SetSecondaryVisible(_owner._canReturnToHub());
+                    _view.Secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
+                    _view.Status.text = _owner._actionFailure ?? "";
+                    _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);
+                    return;
+                }
+                var result = _state.Completion.Result;
+                bool victory = result.Outcome == TeamHJD.Game.Domain.MatchOutcome.Victory;
+                _view.Title.text = victory ? "VICTORY" : "MATCH COMPLETE";
+                _view.Body.text = $"{(victory ? "승리" : "패배")}\n완료 웨이브  {result.CompletedWave}";
+                _view.Primary.interactable = _view.Secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
+                _view.Status.text = _owner._actionFailure ?? (!string.IsNullOrEmpty(restriction) ? "결과를 확인하고 있습니다." : "");
+                _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);
             }
             public void SetFocused(bool focused)
             {
                 if (_disposed) return;
+                if (!focused && EventSystem.current != null)
+                {
+                    var selected = EventSystem.current.currentSelectedGameObject;
+                    if (selected != null && selected.transform.IsChildOf(_view.transform)) _lastSelection = selected;
+                }
+                _view.SetFocused(focused);
                 if (focused)
                 {
                     EnsureEventSystem();
-                    _previousSelection = EventSystem.current.currentSelectedGameObject;
-                    _overlay.SetActive(true);
-                    EventSystem.current.SetSelectedGameObject(_primary.interactable ? _primary.gameObject : null);
+                    var selectable = _lastSelection != null ? _lastSelection.GetComponent<UnityEngine.UI.Selectable>() : null;
+                    EventSystem.current.SetSelectedGameObject(selectable != null && selectable.IsActive() && selectable.IsInteractable()
+                        ? _lastSelection : _view.Primary.interactable ? _view.Primary.gameObject : null);
                 }
-                else
-                {
-                    _overlay.SetActive(false);
-                    if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null &&
-                        EventSystem.current.currentSelectedGameObject.transform.IsChildOf(_overlay.transform))
-                        EventSystem.current.SetSelectedGameObject(null);
-                }
+                else ClearSelection(false);
+            }
+            private void ClearSelection(bool restore)
+            {
+                if (EventSystem.current == null || EventSystem.current.currentSelectedGameObject == null ||
+                    !EventSystem.current.currentSelectedGameObject.transform.IsChildOf(_view.transform)) return;
+                EventSystem.current.SetSelectedGameObject(restore && _previousSelection != null && _previousSelection.activeInHierarchy ? _previousSelection : null);
             }
             public void Dispose()
             {
                 if (_disposed) return; _disposed = true;
-                _primary.onClick.RemoveAllListeners(); _secondary.onClick.RemoveAllListeners();
-                if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null &&
-                    EventSystem.current.currentSelectedGameObject.transform.IsChildOf(_overlay.transform))
-                    EventSystem.current.SetSelectedGameObject(_previousSelection != null && _previousSelection.activeInHierarchy ? _previousSelection : null);
-                _owner._views.Remove(_state.Id); UnityEngine.Object.Destroy(_overlay);
+                _view.Primary.onClick.RemoveListener(Resume); _view.Primary.onClick.RemoveListener(Restart);
+                if (_view.Secondary != null) _view.Secondary.onClick.RemoveListener(ReturnToHub);
+                if (_view.Settings != null) _view.Settings.onClick.RemoveListener(Settings);
+                ClearSelection(true); _owner._views.Remove(_state.Id); _view.CloseAndDestroy();
             }
-            private Text Label(Transform parent, string name, float x, float y, float width, float height, int size)
-            {
-                var text = new GameObject(name, typeof(RectTransform), typeof(Text)); text.transform.SetParent(parent, false);
-                Position((RectTransform)text.transform, x, y, width, height);
-                var label = text.GetComponent<Text>(); label.font = _owner._font; label.fontSize = size;
-                label.color = _owner._style != null ? _owner._style.TextColor : Color.white; label.raycastTarget = false;
-                return label;
-            }
-            private Button Button(Transform parent, string name, float x, float y, float width, float height, string title)
-            {
-                var button = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-                button.transform.SetParent(parent, false); Position((RectTransform)button.transform, x, y, width, height);
-                ApplyImage(button.GetComponent<Image>(), _owner._style?.ButtonSprite, new Color(.12f, .25f, .32f, 1));
-                var text = Label(button.transform, "Label", 0, 0, width, height, 16); text.text = title; text.alignment = TextAnchor.MiddleCenter;
-                return button.GetComponent<Button>();
-            }
-            private static void ApplyImage(Image image, Sprite sprite, Color fallback)
-            {
-                image.sprite = sprite;
-                image.color = sprite != null ? Color.white : fallback;
-                image.type = sprite != null && sprite.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
-            }
-
-            private static void Position(RectTransform rect, float x, float y, float width, float height)
-            {
-                rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0, 1);
-                rect.anchoredPosition = new Vector2(x, -y); rect.sizeDelta = new Vector2(width, height);
-            }
-            private static void Stretch(RectTransform rect)
-            { rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero; }
         }
     }
 }

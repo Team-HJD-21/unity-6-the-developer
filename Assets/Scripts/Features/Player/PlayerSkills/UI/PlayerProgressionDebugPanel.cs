@@ -30,7 +30,7 @@ public sealed class PlayerProgressionDebugPanel : MonoBehaviour
         _owner = player;
         _experience = player != null ? player.GetComponent<PlayerExperience>() : null;
         _stats = player != null ? player.GetComponent<PlayerBaseStats>() : null;
-        if (_feedback != null) _feedback.text = "에디터 / 개발 빌드 전용\n현재 로컬 Player · Host 권한 필요";
+        if (_feedback != null) _feedback.text = string.Empty;
     }
     private void OnEnable()
     {
@@ -63,12 +63,12 @@ public sealed class PlayerProgressionDebugPanel : MonoBehaviour
     {
         GameInput.TryConsumePrimaryPointerPress();
         bool applied = IsAvailable && _experience != null && _experience.AddExperience(amount);
-        _feedback.text = applied ? $"XP +{amount}\n달성 보상은 직접 수령" : "XP 지급 불가\n권한·필드 정지·최대 레벨 확인";
+        _feedback.text = applied ? $"XP +{amount}" : "XP 지급 불가";
     }
     private void RefundAll()
     {
         GameInput.TryConsumePrimaryPointerPress();
         bool applied = IsAvailable && _stats != null && _stats.TryResetInvestments();
-        _feedback.text = applied ? "투자 포인트 전체 회수\n보상 수령 기록은 유지" : "회수할 투자 없음 / 권한 확인";
+        _feedback.text = applied ? "투자 포인트 회수" : "회수할 투자 없음";
     }
 }

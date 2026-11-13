@@ -1,13 +1,25 @@
 # Initial Stage Player HUD API
 
-최종 갱신: 2026-11-10
-상태: 프리팹 기반 UI 구현. 최종 PlayMode 외형·조작 확인은 별도.
+최종 갱신: 2026-11-12
+상태: HUD v6와 공통 프레임 적용, Editor의 실제 Scene·단계별 입력·시각 확인 완료. [검증 범위·한계](../../94_art/ui-validation-2026-11-12.md)에서 자동 검사와 직접 입력 관측을 구분한다.
 
 API 기준: main `8d08001a`의 PR #525 냉각·수동 조작 제한 계약이다.
 PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 `InitialStagePlayerHUD`, UI 약어는 `UI`로 표기를 통일한다.
 
 [문서 목차](../../README.md) · [터렛 API](../07_turrets/api-reference.md)
+
+## 2026-11-12 HUD v6
+
+현재 전투 표시 기준은 [공통 UI 규칙](../../94_art/common-ui-rules.md)이다. 아래 날짜별 기록의 기존 HP/XP·관리 버튼 배치보다 이 절이 우선한다. `Player Status Panel`과 터렛 조작창·스킬 트리는 기존 기능을 유지한다.
+
+`StagePlayerVitalsView`가 같은 로컬 actor와 CU의 실제 값을 새 `CombatVitalsGroup`으로 전달한다. Player HP는 좌측 헬멧, CU HP/전력은 우측 릴레이 심볼로 구분한다. 각 그룹은 독립적으로 자동 숨김·가장자리 접근·실제 값 변경·클릭 고정을 처리한다. 호버한 바 위에서만 정수 현재/최대 값을 표시한다. 소유자 대기·해제 또는 CU 데이터 부재 시 표시를 지운다. 상시 레벨·XP는 감추며 실제 XP 획득만 월드 팝업으로 표시한다.
+
+`CombatHudHeader`는 같은 씬의 실제 낮밤 시계와 현재 감속 효과를 표시한다. 점유율은 유효 분모가 없는 현재 `--%`이며 `SetConfirmedOccupancy(captured, eligible)`는 실제 분모를 주입할 후속 접점이다. 보스 표시는 `CombatBossView.Bind(EnemyHealth, name)`의 실제 보스 소스가 있을 때만 사용한다. 일반 적을 보스로 지정하지 않으며 현재는 숨긴다.
+
+`CombatHudDebugPanel`은 로컬 actor가 있고 Core 개인 Menu가 최상위일 때만 우측에 나타난다. `WeatherDebugHud.CanChangePhase`를 따르며 기존 `ResetTimerAndWeather`/`AdvanceDayNight`로 요청한다. 기존 관리 버튼의 표시만 숨긴다. 자동 활성화는 해당 Menu의 정확한 ID만 닫고 한 프레임 뒤 `InitialStagePlayerHUD.TryRequestAutoActivation()`을 호출한다. 생존·다른 입력 잠금·CU 거리·Host 명령 Port 검사는 원본 경로를 유지한다. `true`는 요청 제출을 뜻하며 Host 확정은 `AutoActivationFeedback` 이벤트로 별도 표시한다. 공유 월드를 정지하거나 다른 입력 lease를 해제하지 않는다.
+
+씬/프리팹 GUID와 로컬 actor 주입 수명을 유지하며 자동 테스트와 직접 조작 검증을 구분한다. 제작 도구는 `HudV6AssetImport`/`HudV6PrefabSetup`, 실행 조정값은 `CombatHudStyle.asset`이다.
 
 ## 2026-11-10 플레이어 상태창
 
@@ -26,6 +38,10 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 플레이어는 `StagePlayerVitalsView.Player`만 사용한다. 다른 Player를 검색해서 대체하지 않으며 로컬 actor 교체/해제·비활성화 시 패널을 닫고 참조를 갱신한다. Core 메뉴·생존 상태 등 기존 입력 잠금이 있으면 상태창을 열지 않고, 열린 패널도 닫는다. 텍스트 입력 중에는 I를 상태창 단축키로 처리하지 않는다.
 
 `PlayerCombatHudSlideController`는 포탑 조작창 또는 상태창이 열리면 기존 하단 무기·탄약·대시 UI를 같은 애니메이션으로 아래에 접어 10px 가장자리만 남긴다. 둘 중 하나라도 열려 있으면 접힌 상태를 유지하고, 모두 닫혀야 제작 위치로 돌아온다. 접힌 무기 슬롯의 클릭 차단도 기존 처리를 사용한다.
+
+전투 탄약은 `CombatPlayerIndicators`가 현재 `PlayerWeaponHud.Owner`의 `PlayerWeaponAmmo`를 읽어 표시한다. 무기 패널 오른쪽의 제작된 `AmmoRoot` 안에 있으며 Player 월드 좌표나 조준 방향으로 움직이지 않는다. 무기 부모의 배율과 접힘을 상속하므로 `CombatHudScaleBinding`에서 탄약을 별도로 다시 축소하지 않는다. 유한 탄창은 현재/최대 숫자만 표시하며 실탄/빈 탄환 이미지는 사용하지 않는다. 재장전 중에는 수량 아래에 작은 회전 화살표를 표시한다. 무기 패널 전체 배경이 UI raycast를 차단하며 필드 커서도 같은 패널 경계를 따른다.
+
+감소 피드백은 `PlayerAttack.ShotFired`의 실제 성공 이벤트에만 연결한다. 수량이 짧게 밝아지며 작게 확대·복귀하고 탄약 영역에 작은 반동을 준다. `ShotFeedbackSeconds`는 Inspector에서 조정한다. 무기 변경으로 수량이 작아지거나 actor를 새로 연결해도 발사 효과를 만들지 않는다. actor 교체/비활성화 때 발사·무기 변경·XP 이벤트를 해제하며 현재 무기와 탄약의 원본 상태는 변경하지 않는다. XP는 계속 Player 주변 World Space 팝업이다.
 
 ### 스킬 트리 UI 틀
 

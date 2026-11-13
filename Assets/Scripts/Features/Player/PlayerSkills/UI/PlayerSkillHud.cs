@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TeamHJD.Game.Application;
 
 /// <summary>씬이 소유한 스킬 UI에 연결된 플레이어의 상태를 표시합니다.</summary>
 [DisallowMultipleComponent]
@@ -21,10 +22,16 @@ public sealed class PlayerSkillHud : MonoBehaviour
     [SerializeField] private Sprite _turretIcon;
     [SerializeField] private Sprite _barrierIcon;
     [SerializeField] private Sprite _beaconIcon;
+    [Header("Approved combat presentation")]
+    [SerializeField] private CombatSkillPicker _combatPicker;
     private Canvas _canvas;
     private GraphicRaycaster _raycaster;
+    private CombatHudScaleBinding _scaleBinding;
+    public float DisplayScale => _scaleBinding != null ? _scaleBinding.CurrentScale : 1;
     public PlayerSkillController Owner { get; private set; }
-    public bool IsOpen => Owner != null && _panel != null && _panel.IsOpen;
+    public bool IsFieldVisible => CombatHudContext.IsFieldActor(Owner);
+    public bool IsOpen => Owner != null && (_combatPicker != null ? _combatPicker.IsOpen : _panel != null && _panel.IsOpen);
+    public CombatSkillPicker CombatPicker => _combatPicker;
     public bool IsConfigured => _qSlot != null && _qSlot.IsConfigured
         && _eSlot != null && _eSlot.IsConfigured && _panel != null && _panel.IsConfigured;
     public bool IsFullyConfigured => IsConfigured && HasTooltip && _recovery != null
@@ -34,6 +41,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
 
     private void Awake()
     {
+        _scaleBinding = GetComponent<CombatHudScaleBinding>();
         SetVisible(false);
         if (!IsConfigured) Debug.LogError("Player Skill HUD needs configured Q/E slots and a selection panel.", this);
         else WarnAboutOptionalReferences();
@@ -65,10 +73,13 @@ public sealed class PlayerSkillHud : MonoBehaviour
         _qSlot.Bind(this);
         _eSlot.Bind(this);
         _panel.Bind(this);
+        if (_combatPicker != null) _combatPicker.Bind(this);
         if (_tooltip != null) _tooltip.Bind(HasTooltip ? this : null);
         if (_recovery != null) _recovery.Bind(this);
         Owner.Loadout.Changed += OnLoadoutChanged;
-        SetVisible(true);
+        Owner.SlotUseAttempted += OnSlotUseAttempted;
+        Owner.PlacementRejected += OnPlacementRejected;
+        SetVisible(IsFieldVisible);
         OnLoadoutChanged();
         RefreshPlacementFeedback();
         return true;
@@ -77,11 +88,17 @@ public sealed class PlayerSkillHud : MonoBehaviour
     public void Unbind()
     {
         var previousOwner = Owner;
-        if (previousOwner != null) previousOwner.Loadout.Changed -= OnLoadoutChanged;
+        if (previousOwner != null)
+        {
+            previousOwner.Loadout.Changed -= OnLoadoutChanged;
+            previousOwner.SlotUseAttempted -= OnSlotUseAttempted;
+            previousOwner.PlacementRejected -= OnPlacementRejected;
+        }
         Owner = null;
         if (_qSlot != null) _qSlot.Unbind();
         if (_eSlot != null) _eSlot.Unbind();
         if (_panel != null) _panel.Unbind();
+        if (_combatPicker != null) _combatPicker.Unbind();
         if (_tooltip != null) _tooltip.Bind(null);
         if (_recovery != null) _recovery.Bind(null);
         if (_placementHint != null) _placementHint.gameObject.SetActive(false);
@@ -92,9 +109,10 @@ public sealed class PlayerSkillHud : MonoBehaviour
 
     public void Open()
     {
-        if (Owner == null || !Owner.CanPrepare) return;
+        if (Owner == null || !IsFieldVisible || !Owner.CanPrepare) return;
         if (_tooltip != null) _tooltip.Hide();
-        _panel.SetOpen(true);
+        if (_combatPicker != null) _combatPicker.Open();
+        else _panel.SetOpen(true);
         OnLoadoutChanged();
         RefreshPlacementFeedback();
         if (_recovery != null) _recovery.Refresh();
@@ -104,6 +122,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
     {
         if (_tooltip != null) _tooltip.Hide();
         if (_panel != null) _panel.SetOpen(false);
+        if (_combatPicker != null) _combatPicker.Close();
     }
 
     public void Select(PlayerSkillId skill)
@@ -137,6 +156,13 @@ public sealed class PlayerSkillHud : MonoBehaviour
             if (Owner != null) Unbind();
             return;
         }
+        SetVisible(IsFieldVisible);
+        if (!IsFieldVisible)
+        {
+            if (IsOpen) Close();
+            if (_tooltip != null) _tooltip.Hide();
+            return;
+        }
         if (IsOpen && (!Owner.CanPrepare || GameInput.WasPressedThisFrame(GameKey.Escape))) Close();
         RefreshSlots();
         if (IsOpen) _panel.RefreshCooldowns();
@@ -165,6 +191,14 @@ public sealed class PlayerSkillHud : MonoBehaviour
         _eSlot.Refresh();
     }
 
+    private void OnSlotUseAttempted(int slot, PlayerSkillId skill, bool accepted)
+    {
+        if (IsFieldVisible && skill == PlayerSkillId.None)
+            GameAlerts.Show($"{(slot == 0 ? "Q" : "E")} 슬롯에 스킬이 없습니다.", key: "skill/unassigned/" + slot);
+    }
+    private void OnPlacementRejected(string reason)
+    { if (IsFieldVisible) GameAlerts.Show(reason, key: "skill/placement-rejected"); }
+
     private void RefreshPlacementFeedback()
     {
         if (Owner == null) return;
@@ -173,12 +207,13 @@ public sealed class PlayerSkillHud : MonoBehaviour
         if (_placementFailure != null)
         {
             _placementFailure.text = failure;
-            _placementFailure.gameObject.SetActive(!IsOpen && showsFailure);
+            // Preview validity belongs to the world preview. Only a rejected confirmation emits an Alert.
+            _placementFailure.gameObject.SetActive(false);
         }
         if (_placementHint != null)
         {
             _placementHint.text = Owner.PlacementHint;
-            _placementHint.gameObject.SetActive(!IsOpen && !showsFailure && _placementHint.text.Length > 0);
+            _placementHint.gameObject.SetActive(_combatPicker == null && !IsOpen && !showsFailure && _placementHint.text.Length > 0);
         }
     }
 

@@ -57,7 +57,7 @@ public sealed class PlayerCombatHudSlideController : MonoBehaviour
     {
         if (!_initialized) return;
         _fold = Mathf.MoveTowards(_fold, panelOpen ? 1f : 0f, Mathf.Max(0f, elapsed) / Mathf.Max(.01f, _slideSeconds));
-        float progress = Mathf.SmoothStep(0f, 1f, _fold);
+        float progress = CombatHudMotion.Sigmoid(_fold);
         Slide(_weapons, _weaponHome, progress);
         Slide(_dash, _dashHome, progress);
         // PlayerWeaponHud가 매 프레임 원래 선택 가능 여부를 갱신한 뒤, 접힌 슬롯의 클릭만 차단합니다.
@@ -70,7 +70,7 @@ public sealed class PlayerCombatHudSlideController : MonoBehaviour
 
     private void Slide(RectTransform rect, Vector2 home, float progress)
     {
-        float hiddenY = _visibleEdge - rect.rect.height * (1f - rect.pivot.y);
+        float hiddenY = _visibleEdge - rect.rect.height * rect.localScale.y * (1f - rect.pivot.y);
         rect.anchoredPosition = Vector2.Lerp(home, new Vector2(home.x, hiddenY), progress);
     }
 

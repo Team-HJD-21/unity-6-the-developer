@@ -10,7 +10,7 @@ internal static class StageTurretUIText
     public static string Command(TurretCommandResult result)
     {
         if (result.Status == TurretCommandStatus.Accepted) return "Automatic activation accepted by Host.";
-        if (result.Status == TurretCommandStatus.Applied) return "Applied by Host.";
+        if (result.Status == TurretCommandStatus.Applied) return "Applied.";
         if (result.Status == TurretCommandStatus.Unchanged) return "Already in the requested state.";
         if (result.Status == TurretCommandStatus.ExecutionFailed) return "Host execution failed. Inspect the updated state before retrying.";
         return result.FeatureCode switch
@@ -31,7 +31,7 @@ internal static class StageTurretUIText
         if (turret.IsLocked) return "Upgrades: zone locked";
         if (turret.IsCoolingDown) return $"Upgrades: cooling down ({turret.CoolingRemaining:0.0}s)";
         if (turret.IsActivated) return "Upgrades: deactivate the turret first";
-        return turret.UpgradeLevel == 0 ? "Choose one upgrade branch" : "Reduce the selected branch to 0 to switch";
+        return turret.UpgradeLevel == 0 ? "" : "Reduce the selected branch to 0 to switch";
     }
     public static string WithCooling(string message, FieldTurretBase turret) => turret.IsCoolingDown
         ? $"{message} | Cooling {turret.CoolingDownRemaining:0.0}s"
@@ -48,7 +48,7 @@ internal static class StageTurretUIText
         if (turret.IsCoolingDown) return $"Upgrades: cooling down ({turret.CoolingDownRemaining:0.0}s)";
         if (turret.IsActivated) return "Upgrades: deactivate the turret first";
         return turret.RuntimeState.UpgradeLevel == 0
-            ? "Choose one upgrade branch" : "Reduce the selected branch to 0 to switch";
+            ? "" : "Reduce the selected branch to 0 to switch";
     }
 
     public static string Activation(FieldTurretActivationResult result) => result switch

@@ -91,7 +91,11 @@ public abstract class PlayerPlacementSkillBase : PlayerSkillBase
         EvaluateCandidate(position);
         _preview.Refresh(position, PlacementFailure.Length == 0, PlacementAnchor);
         _preview.RefreshRange(PlacementCenter, PlacementRadius);
-        if (PlacementFailure.Length > 0 || !TryPlace(position, out bool complete)) return false;
+        if (PlacementFailure.Length > 0 || !TryPlace(position, out bool complete))
+        {
+            if (Controller != null) Controller.NotifyPlacementRejected(PlacementFailure);
+            return false;
+        }
         if (complete) CancelPlacement();
         else
         {

@@ -32,11 +32,20 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
     private int _lastPower = int.MinValue;
     private int _lastMaxPower = int.MinValue;
     private int _lastPendingPower = int.MinValue;
+    [Header("Approved combat HUD")]
+    [SerializeField] private CombatVitalsGroup combatPlayer;
+    [SerializeField] private CombatVitalsGroup combatControlUnit;
 
     public PlayerInfo Player => _player;
     public bool HasPlayer => _player != null && _player.isActiveAndEnabled;
     public bool HasControlUnit => _controlUnit != null && _controlUnit.isActiveAndEnabled;
     public ControlUnitHealth ControlUnit => _controlUnit;
+    private void LateUpdate()
+    {
+        bool visible = CombatHudContext.IsFieldActor(_player);
+        if (combatPlayer != null) combatPlayer.SetContextVisible(visible);
+        if (combatControlUnit != null) combatControlUnit.SetContextVisible(visible);
+    }
     public bool IsConfigured => string.IsNullOrEmpty(MissingReferences);
     public string MissingReferences => StageUIReferenceValidation.Missing(
         (nameof(healthCells), healthCells != null && healthCells.Length > 0 &&
@@ -101,6 +110,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     public void ShowWaitingForSources()
     {
+        if (combatControlUnit != null) combatControlUnit.Clear();
         _lastHealth = _lastMaxHealth = int.MinValue;
         ShowPlayerHealth(0, 0);
         ShowControlUnitUnavailable();
@@ -112,6 +122,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     private void ShowControlUnitUnavailable()
     {
+        if (combatControlUnit != null) combatControlUnit.SetPrimary(0, 0);
         controlUnitFill.fillAmount = 0;
         controlUnitHealthText.text = "—";
     }
@@ -133,6 +144,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
     {
         if (_controller == null)
         {
+            if (combatControlUnit != null) combatControlUnit.SetSecondary(0, 0);
             powerFill.fillAmount = 0;
             powerPercentText.text = "—";
             powerDetailsText.text = "Waiting for power source";
@@ -158,7 +170,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
     }
     public void RefreshAuthority(TurretControllerPresentationSnapshot state)
     {
-        if (state == null) { ShowControlUnitUnavailable(); RefreshPower(); return; }
+        if (state == null) { if (combatControlUnit != null) combatControlUnit.Clear(); ShowControlUnitUnavailable(); RefreshPower(); return; }
         if (state.IsControlUnitAvailable) ShowControlUnitHealth(state.ControlUnitHealth, state.ControlUnitMaxHealth);
         else ShowControlUnitUnavailable();
         ShowPower(state.AvailablePower, state.MaximumPower, state.PendingRecoveryPower);
@@ -169,6 +181,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
         _lastPower = available;
         _lastMaxPower = maximum;
         _lastPendingPower = pending;
+        if (combatControlUnit != null) combatControlUnit.SetSecondary(available, maximum);
         float ratio = maximum > 0 ? Mathf.Clamp01((float)available / maximum) : 0;
         powerFill.fillAmount = ratio;
         powerPercentText.text = $"{Mathf.RoundToInt(ratio * 100)}%";
@@ -177,6 +190,8 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     public void Unbind()
     {
+        if (combatPlayer != null) combatPlayer.Clear();
+        if (combatControlUnit != null) combatControlUnit.Clear();
         if (_player != null) _player.onHpChange.RemoveListener(ShowPlayerHealth);
         if (_controlUnit != null) _controlUnit.HealthChanged -= ShowControlUnitHealth;
         if (_controller != null) _controller.PowerChanged -= OnPowerChanged;
@@ -193,6 +208,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
         if (_lastHealth == current && _lastMaxHealth == maximum) return;
         _lastHealth = current;
         _lastMaxHealth = maximum;
+        if (combatPlayer != null) combatPlayer.SetPrimary(current, maximum);
 
         float ratio = maximum > 0 ? Mathf.Clamp01((float)current / maximum) : 0;
         for (int i = 0; i < healthCells.Length; i++)
@@ -207,6 +223,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     private void ShowControlUnitHealth(int current, int maximum)
     {
+        if (combatControlUnit != null) combatControlUnit.SetPrimary(current, maximum);
         float ratio = maximum > 0 ? Mathf.Clamp01((float)current / maximum) : 0;
         controlUnitFill.fillAmount = ratio;
         controlUnitHealthText.text = $"{Mathf.RoundToInt(ratio * 100)}%";

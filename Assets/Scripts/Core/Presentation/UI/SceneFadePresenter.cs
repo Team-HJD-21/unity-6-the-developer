@@ -17,6 +17,13 @@ namespace TeamHJD.Game.Presentation
         private bool _disposed;
         public bool IsVisible { get; private set; }
 
+        /// <summary>제품 경로는 편집 가능한 App Canvas 프리팹의 암전 참조를 사용합니다.</summary>
+        public SceneFadePresenter(CanvasGroup authored)
+        {
+            _group = authored != null ? authored : throw new ArgumentNullException(nameof(authored));
+            _overlay = authored.gameObject; _group.alpha = 0; _overlay.SetActive(false);
+        }
+
         public SceneFadePresenter(Transform parent)
         {
             _overlay = new GameObject("Scene Travel Fade", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));

@@ -24,6 +24,8 @@ public sealed partial class PlayerExperience : MonoBehaviour, IPlayerMatchBindin
         Mathf.Max(1, _firstLevelExperience), Mathf.Max(0, _experienceIncreasePerLevel), Mathf.Clamp(_maximumLevel, 2, 1000));
 
     public event Action Changed;
+    /// <summary>원본에 실제 획득량이 적용된 뒤 통지합니다. 저장 복원/단순 Refresh는 획득 팝업을 만들지 않습니다.</summary>
+    public event Action<int> ExperienceGranted;
     /// <summary>여러 레벨 상승도 이전/이후 레벨로 알립니다. 후속 성장 보상은 호출부에서 판단합니다.</summary>
     public event Action<int, int> LevelChanged;
     public int Level => State.Level;
@@ -59,6 +61,7 @@ public sealed partial class PlayerExperience : MonoBehaviour, IPlayerMatchBindin
         if (!State.AddExperience(amount)) return false;
         Changed?.Invoke();
         if (previousLevel != Level) LevelChanged?.Invoke(previousLevel, Level);
+        ExperienceGranted?.Invoke(amount);
         return true;
     }
 
