@@ -197,3 +197,16 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 처음 UTF8 결과를 출력할 때 cp949가 em dash를 출력하지 못했다. RPC 자체는 이미 성공했으므로 같은 강화/복원을 반복하지 않고 저장된 JSON을 파싱해 증거를 확인했다. 기존 공통 문제 해결 기록에 따라 python -X utf8을 사용했다. 시스템 코드페이지는 바꾸지 않았다.
 - Debugger에 실제 성장 원본 키·요청/디스크 revision·대기/오류를 추가했다. 창 열기 RPC1회가5000ms timeout이었으나 뒤의 읽기에서 expandedtrue/창실재/성장scope2·컴파일정상을 확인했다. timeout package stack은 b5b-monitor-errors.json에 보존했다. 이1건을 게임 기능 예외0과 섞어 지우지 않았다.
 - B6 구조/안전장치·B7 보스 진행·B8 원격 통합·B9 전체검수는 계속 진행한다. 실제 Weather writer와 Boss 콘텐츠는 여전히 외부 연결이 필요하다.
+
+
+## B6a — 구조·안전장치의 규칙과 실제 Player 생명 port
+
+- MissionRecoveryLedger는 Mission 실행 ID·팀 구조 잔여60초·사용 안전장치0~3·동일 실패 ID·종료 상태·마지막 유효 체크포인트 링크를 가진다. 월드 rollback용 source가 아니며 명시 새 Mission만 초기화한다. 동일 기술 실패 재시도는 또 차감하지 않고,4번째 실패는 실행 종료로 남긴다.
+- MatchRecovery가 roster의 실제 Host 생존/위치 원본을 모두 확보한 뒤 관측한다. 구조자 생존·상호작용·거리3/입력 heartbeat·3초유지/HP30%를 검증한다. 여러 다운 대상을 동시에 기다려도 팀 예산은 게임초당1초다. CU 패배는 소유자가 먼저 평가하도록 계약했다.
+- MissionRecoveryParticipant는 비환급 기록을 성장 저장에 연결하는 실제 codec/구독 어댑터다. 다음 B6b에서 Host scope/실패 이동에 등록한다. PlayerInfo.Rescue는 실제 생명·HP·입력 잠금만 적용하고 일반 checkpoint 복원을 구조 API로 사용하지 않는다.
+- 자동11개 통과: 유지/해제/거리/입력만료·팀 공유예산·중복실패·3회차감/종료·미등록원본·시각rewind9, 저장왕복/구독해제2. 재실행은 중복 합산하지 않는다.
+- 첫 실제 Play에서 새 rescue port가 기존 IPlayerInteractionActor를 상속해 단일 상호작용 원본 검증과 충돌했다. 기존 검증을 느슨하게 하지 않고 TryCaptureRescue라는 독립 port로 분리했다. 최종 자동9개 재실행 및 실제 Scene 조립 정상.
+- 실제 Host Player에 HP0/사망을 적용하고 실제 Match 공용 시각으로3.015417초 유지했다. HP120/400·aliveTrue·blockedFalse·팀잔여56.984583·안전장치사용0. Field 적만 보류한 검수이며 실제 Player1명 + 시험용 아군 port1개다. 실제2인 NGO/물리 F입력 검증은 아니다.
+- 앞선 검수용 Editor callback에 Action 대신 CallbackFunction이 필요해 첫 스크립트는 실행 전 컴파일 실패했다. 수정 뒤 Player를 내렸지만 새 main의 유실된 문 AnimationEvent 오류가 ErrorPause를 걸어 결과가 끝나지 않았다. 이 실행을 성공으로 쓰지 않았다. 별도271f24881 문 이벤트 수정 후 새 Play/공용시각으로 최종 성공했다.
+- b6a-actual-player-revived.json, b6a-after-callback-status.json, b6a-recovery-tests-final.json, b6a-persistence-tests.json, b6a-actual-final-errors.json이 근거다. 마지막 구간7402→7409 새 오류0. 이전 실제 실패와 stack은 보존했다. callback은 스스로 해제했고 최종 Play Stop으로 위치·Field 보류가 복구됐다.
+- 현재 Root가 자동으로 Player 전멸→월드 복귀를 호출하거나 실제 F입력/원격 gateway를 연결한 상태는 아니다. 이 실제 게임 조립·비환급 기록의 Host scope 등록은 B6b에서 이어서 수행한다. B6 전체 완료로 쓰지 않는다.

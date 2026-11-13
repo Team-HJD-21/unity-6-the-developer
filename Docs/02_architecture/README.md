@@ -90,3 +90,5 @@
 - [weather-system-guide](09_world/weather-system-guide.md)
 
 - [개인 성장 저장과 월드 복귀 구분](01_core/growth-save-api.md)
+
+- [Player 구조와 Mission 복귀](02_match/match-recovery-api.md)
