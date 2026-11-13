@@ -89,3 +89,11 @@ Scene은 Unity API로 구성한 뒤 필요한 참조/필수 WeatherChangeEvent c
 World 점/영역의 범위를 Grid와 교차시킨 뒤 `BattlefieldGridConfiguration.TryMapPoint`로 셀을 구한다. Grid의 Minimum과 Maximum을 포함하며, Maximum 좌표는 마지막 셀에 속한다. Planner에서 별도 floor 계산으로 최댓값을 거부하거나 셀 수 범위를 넘기는 규칙을 만들지 않는다. 폭이0인 선 요청도 이 경계 규칙을 따른다.
 
 양의 폭/높이를 가진 영역이 Grid와 선/점으로만 맞닿으면 해당 방향의 실제 면적이 없으므로 후보에서 제외한다. Grid 밖의 점은 계속 거부한다. 중심이 이동한 비정방형 Grid의 최대/최소 모서리·선·밖의 점·기존 누적 분산 11개 집중 검사를 통과했고 Unity 종료0을 확인했다 (`B7-WorldSpawnBounds`). 이전 최대 경계 리뷰는 이 구현으로 보완했으며 원격 PR/리뷰에는 아직 게시하지 않았다.
+
+## Enemy 스킬 소환
+
+Enemy 스킬은 기존 `EnemySummonGenerator.Spawn(definition, count, target)`을 호출합니다. 종류·수량·타깃·정면/좌우 간격은 Enemy가 결정하고, 공통 생성기는 그 결과를 다시 편성하거나 정규 생산 예산에서 차감하지 않습니다.
+
+실제 생성은 부모의 `SimulationOwnerId`로 현재 Match의 `EnemySpawnExecutor`를 찾아 `SpawnSummoned` → `TrySpawnActor`로 진행합니다. 정의는 해당 실행기의 Catalog와 같아야 합니다. 이 경로가 분대·Scene·NGO·안정 ID·Match 시계·생존/사망·Grid 위치·체크포인트 원본을 연결합니다. Match/부모 소속이 없거나 취소된 요청을 별도 Instantiate로 대체하지 않습니다.
+
+진단에서는 `EnemySkill` source와 독립 요청 번호로 확인합니다. 소환 수를 부모 Encounter의 실제 생성 수에 더하지 않습니다. Health0 이후 호출하는 사망 소환도 부모가 Despawn되기 전에는 유효합니다. 현재 소환 위치는 요청 지점0.5월드 단위 안의 XY NavMesh를 확인하며, 유효 표면이 없으면 실제 생성 실패로 기록합니다. 비행 전용 출현은 별도 이동/배치 계약이 필요합니다.

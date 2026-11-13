@@ -61,3 +61,12 @@ Stage1의 초기 고정 편성은 생성됐지만 자동 편성은 난수 미주
 공통 소환/적 생명주기, 실제 전투 기반 정적 확보/해금과 저장·복제, 지속 생산/환경·시간, 성장 저장/월드 복원, 구조·실패, 33/66/100 진행 및 실제 콘텐츠 통합이 남아 있다. Game Debugger의 기존 진단 경계를 사용하고, 실행하지 않은 검증을 완료로 기재하지 않는다.
 
 개인 실행 로그·명령 원본은 `Docs/Local/Execution/EncounterStage1-20261113/`에 공유 제외로 보존한다. 팀 공유 문서는 확인한 결과와 사용법을 이곳 및 관련 API 문서에 반영한다.
+
+## B2 — 소환도 같은 Match의 적입니다
+
+- 일반 Pipeline과 `EnemySummonGenerator.Spawn`은 `EnemySpawnExecutor.TrySpawnActor`에서 분대·NGO·안정 ID·시계·생명주기 등록을 공유합니다. Enemy가 정한 종류·수량·초기 타깃과 좌우 간격은 그대로이며 정규 생산 예산을 다시 뽑지 않습니다.
+- 소환에는 `EncounterRequestSource.EnemySkill`과 독립 요청 번호가 붙습니다. 살아있는 적 수·Grid 위치·사망/제거·기존 체크포인트 원본에 포함되고 Match 종료 시 함께 정리됩니다.
+- 일반 SpawnPoint도 실제 반경 안의 XY NavMesh 위치를 최대16회 확인합니다. 유효 위치가 없으면 실패 이유를 남기며 수중이나 임의 다른 지점으로 대체하지 않습니다.
+- Enemy 담당자 변경 파일: `EnemySummonGenerator.cs`는 직접 Instantiate 대신 생성기 위임, `EnemySpawnExecutor`의 Creation/Summons partial은 공통 생성과 소환 문맥, `EncounterSceneBinding.Summons`는 독립 진단 요청입니다. AI·공격·스탯·소환 프리셋은 유지했습니다. 사망 소환은 부모 HP0 이후 호출되므로 제거 전 추적 소속으로 검증합니다.
+- 실제 Stage1 검증: 일반 초기9개/정규 편성6개, 소환3/3, 실제 BomberSlime2개, 변태 완료 상태에서 실제 피해→사망 소환5/5. 시계·저장 원본·위치26개 일치, Match 정리26→0. 변태 완료 상태는 시험 준비로 설정했으며 자연 애니메이션 전체 재생과는 구분합니다. Editor 컴파일 통과, 바인딩6/6, 현재 Console error0, Play 종료.
+- 전체 저장/복원과 지속 생산·지역 전투 확보는 아직 후속 배치입니다. B2 완료가 전체 Stage1 완료를 뜻하지 않습니다.

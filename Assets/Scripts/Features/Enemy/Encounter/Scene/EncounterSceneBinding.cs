@@ -187,6 +187,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
             if (_pipeline?.Executor != null)
             {
                 _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+                if (ReferenceEquals(_pipeline.Executor.SummonRequests, this)) _pipeline.Executor.SummonRequests = null;
                 _pipeline.Executor.SpawnPointList.ResetRegionGroups();
             }
             _pipeline = null;
@@ -509,13 +510,19 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         if (_pipeline != null && _pipeline.HasExecutor) return;
         if (!ResolveSpawnSetup()) return;
         if (_pipeline?.Executor != null)
+        {
             _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+            if (ReferenceEquals(_pipeline.Executor.SummonRequests, this)) _pipeline.Executor.SummonRequests = null;
+        }
         _pipeline = new EncounterPipeline(_boundMatchId, _spawnExecutor, _squadCatalog, _runtimeBudgetSettings,
             () => regionBinding?.Source?.Snapshot);
         _pipeline.Executor?.SpawnPointList.ResetRegionGroups();
         TryReadRegion(out _, out _);
         if (_pipeline.Executor != null)
+        {
             _pipeline.Executor.LifecycleObserved += OnEnemyLifecycleObserved;
+            _pipeline.Executor.SummonRequests = this;
+        }
     }
 
     internal bool ResolveSpawnSetup()

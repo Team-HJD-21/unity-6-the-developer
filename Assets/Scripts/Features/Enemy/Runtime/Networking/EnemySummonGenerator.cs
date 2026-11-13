@@ -1,3 +1,5 @@
+// Enemy 스킬이 정한 소환 위치·수량·타깃을 유지하며 Match 공통 생성기에 요청합니다.
+// 직접 Instantiate하지 않으므로 소환 적도 위치·사망·통계·저장·종료 정리에 포함됩니다.
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -33,50 +35,18 @@ public sealed class EnemySummonGenerator : NetworkBehaviour
             return 0;
         }
 
-        GameObject prefab = definition.Prefab;
-
-        if (!prefab.TryGetComponent<NetworkObject>(out _) ||
-            !prefab.TryGetComponent<EnemyController>(out _) ||
-            !prefab.TryGetComponent<EnemyNetworkController>(out _))
+        // 부모를 생성한 실행기가 소환도 등록합니다. 종류·수량·배치 의도는 이 스킬이 그대로 정합니다.
+        var parent = GetComponent<EnemyNetworkController>();
+        if (parent == null || NetworkManager?.SpawnManager == null ||
+            !NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(parent.SimulationOwnerId, out var owner) ||
+            !owner.TryGetComponent<EnemySpawnExecutor>(out var executor))
         {
-            Debug.LogError(
-                $"소환 프리팹의 필수 컴포넌트가 없습니다: {definition.EnemyId}",
-                this);
+            Debug.LogWarning("소환 부모의 Match 생성기를 찾지 못했습니다. 소환은 실행하지 않습니다.", this);
             return 0;
         }
-
-        EnemySquad sharedSquad = definition.SquadMode == EnemySquadMode.Shared
-            ? new EnemySquad(definition.SquadMode, definition.TargetRule, target)
-            : null;
-        int spawnedCount = 0;
-
-        for (int i = 0; i < count; i++)
-        {
-            Vector3 position = GetSpawnPosition(target, i, count);
-
-            GameObject enemy = Instantiate(
-                prefab,
-                position,
-                Quaternion.identity);
-
-            NetworkObject networkObject = enemy.GetComponent<NetworkObject>();
-            EnemyController controller = enemy.GetComponent<EnemyController>();
-
-            networkObject.Spawn();
-            EnemySquad squad = sharedSquad ??
-                new EnemySquad(definition.SquadMode, definition.TargetRule, target);
-
-            // 봄버의 집계 제외 설정도 Definition에서 전달하며 분대 등록은 유지한다.
-            if (!controller.JoinSquad(squad, definition.IsIncludedInAttackerLimit))
-            {
-                networkObject.Despawn();
-                continue;
-            }
-
-            spawnedCount++;
-        }
-
-        return spawnedCount;
+        var positions = new Vector3[count];
+        for (int i = 0; i < count; i++) positions[i] = GetSpawnPosition(target, i, count);
+        return executor.SpawnSummoned(parent, definition, positions, target);
     }
 
     /// <summary>타깃 방향의 정면에 생성하고 여러 마리는 좌우로 간격을 둔다.</summary>
