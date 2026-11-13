@@ -1,6 +1,6 @@
 # Spatial Spawn Distribution
 
-수정일: 2026-11-08
+수정일: 2026-11-13
 상태: 기존 공간 분산 정책과 #540 상황별 편성 연결 참고. 적용 대상은 Battlefield snapshot을 사용하는 Encounter 요청이다.
 
 [Enemy 시스템](enemy-system-guide.md) · [Encounter 편성·예산](encounter-planning-guide.md)
@@ -37,6 +37,29 @@ flowchart LR
 - Runtime의 Planner 한 개가 Policy와 History를 소유한다. 정적 서비스나 Editor 기록에 의존하지 않는다.
 - 다른 Match ID 또는 XY Grid 설정 변경(중심·폭·높이·셀 수)이면 이력을 초기화한다. 표시용 Z 변경, revision/전선 모양 변경만으로 이력을 지우지 않는다.
 - 제거·비활성·공간 제외된 후보는 이력에서 정리한다. 새로 추가/재활성된 셀은 현재 적합 셀의 최소 service부터 시작한다. 같은 셀의 신규 지점도 해당 셀의 기존 지점 최소 service부터 시작한다. 과거 미참여 기간을 보상하는 catch-up 스폰은 하지 않는다.
+
+## 정적 Region별 스폰 허용 API
+
+`SpawnPointRegistry.Initialize(points)`로 지점을 등록한 뒤, Match의 최초 `RegionGridSnapshot`이 준비되면 `InitializeRegionGroups(regionSnapshot)`을 한 번 호출한다. 각 지점의 XY 좌표를 Region Grid 셀로 변환하고, 같은 `Definition.RegionIds[cellIndex]`를 가진 지점끼리 묶는다. Grid 밖과 Region ID 0은 그룹에서 제외하고, 비활성 지점은 그룹에 포함한다. `SpawnPoint.AreaId`는 이 그룹의 기준으로 사용하지 않는다.
+
+Core가 점령 상태를 판단한 뒤 `SetRegionSpawnEnabled(regionId, enabled)`를 호출하면 해당 그룹의 모든 지점에 Region 스폰 허용 상태를 적용한다. 그룹이 없으면 `false`를 반환한다. 지점의 GameObject와 개별 스폰 설정은 유지하며, 기존 Planner/Executor의 `CanSpawnEnemies` 검사로 생성을 제한한다. Region을 켜도 개별적으로 차단된 지점은 스폰 불가 상태를 유지한다.
+
+`EnemyNetworkTestLauncher`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 Registry에 전달한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화한다. Registry가 초기화 상태를 소유하며, 같은 Region 정의를 다시 전달하면 재구성하지 않는다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
+
+현재 Match의 정책이 Dynamic으로 전환된 Snapshot을 읽으면 기존 Static Region 그룹과 제한을 해제한다. 개별 지점의 스폰 설정은 유지하며, 다른 Match의 Snapshot으로 현재 그룹을 해제하지 않는다. 이후 Static으로 돌아오면 전달받은 정의로 그룹을 새로 구성한다.
+
+그룹 조회는 초기화된 목록만 반환한다. 등록 지점 목록이 바뀌면 Registry가 보관한 Region 정의로 즉시 재구성하고, 새로운 Region 정의가 전달되면 해당 정의로 재구성한다. Region별 허용 상태는 재구성 시 새 지점에도 적용하며, 지점이 일시적으로 모두 사라져도 같은 Match 안에서는 보존한다. 새 Runtime을 구성하거나 Match가 종료되면 `ResetRegionGroups()`로 Region 제한과 그룹을 해제한다. 개별 지점의 설정은 유지한다. Core의 점령 판단과 `SetRegionSpawnEnabled()` 호출은 아직 연결되지 않았으며, 점령에 따른 자동 차단은 후속 연결 사항이다.
+
+### Region 그룹 수동 확인
+
+1. `EnemySpawnExecutor`가 있는 오브젝트에 테스트용 `EnemySpawnRegionTester`를 추가한다. 같은 오브젝트면 Executor 참조는 자동으로 연결된다.
+2. Static 모드에서 Host를 시작하고 기존 스폰 버튼으로 첫 요청을 실행한다.
+3. 테스터 컴포넌트의 메뉴에서 `Region 테스트/전체 그룹 상태 출력`을 실행한다. Console에서 Region ID·소속 지점 ID·스폰 가능 수를 확인한다.
+4. Inspector의 `Region Id`에 확인한 그룹 ID를 넣고 `선택 Region 스폰 끄기`를 실행한다. 해당 그룹만 스폰 가능 수가 0인지 확인한다.
+5. 기존 스폰 버튼으로 다시 요청해 차단된 그룹의 지점에서 새 몬스터가 생성되지 않는지 확인한다. 기존에 생성된 몬스터는 제거되지 않는다.
+6. `선택 Region 스폰 켜기`를 실행하고 지점이 다시 후보가 되는지 확인한다. 활성화만으로 즉시 생성되지는 않으며, 편성·예산·공간 정책을 통과해야 한다.
+
+테스터는 `GetRegionGroups()`로 초기화된 그룹만 조회하며, 점령 상태를 판단하거나 그룹을 대신 초기화하지 않는다. 상태 변경은 Host/Server에서만 허용한다.
 
 ## 배정 규칙
 

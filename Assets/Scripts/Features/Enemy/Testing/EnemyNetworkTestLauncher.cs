@@ -187,7 +187,10 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         finally
         {
             if (_encounterRuntime?.Executor != null)
+            {
                 _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
+                _encounterRuntime.Executor.SpawnPointList.ResetRegionGroups();
+            }
             _encounterRuntime = null;
             _snapshotProvider = null;
             UnbindEnvironment(matchId);
@@ -506,6 +509,23 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
             reason = "현재 Match의 지역 정보가 연결되지 않았습니다.";
             return false;
         }
+
+        // Registry가 지점 갱신을 처리하고, 새 Region 정의가 오면 그룹을 재구성한다.
+        if (_encounterRuntime?.Executor != null &&
+            region.MatchId == _boundMatchId)
+        {
+            var registry = _encounterRuntime.Executor.SpawnPointList;
+            if (region.Mode == RegionPolicyMode.Static)
+            {
+                registry.InitializeRegionGroups(region);
+            }
+            else if (registry.IsRegionGroupsInitialized)
+            {
+                // Dynamic 전환 시 이전 Static Region의 그룹과 제한을 해제한다.
+                registry.ResetRegionGroups();
+            }
+        }
+
         reason = null;
         return true;
     }
@@ -649,6 +669,8 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
         if (_encounterRuntime?.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
         _encounterRuntime = new EncounterRuntime(_boundMatchId, _spawnExecutor, _squadCatalog, _runtimeBudgetSettings);
+        _encounterRuntime.Executor?.SpawnPointList.ResetRegionGroups();
+        TryReadRegion(out _, out _);
         if (_encounterRuntime.Executor != null)
             _encounterRuntime.Executor.LifecycleObserved += OnEnemyLifecycleObserved;
     }
