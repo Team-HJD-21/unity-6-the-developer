@@ -17,6 +17,7 @@ namespace TeamHJD.Game.Presentation
 
         public void Bind(GameFlowController flow)
         {
+            GameAudioManager.RouteMusic(Intro); GameAudioManager.RouteMusic(Ambient);
             Unbind(); _flow = flow;
             if (_flow == null) return;
             _flow.Changed += Render; Render();

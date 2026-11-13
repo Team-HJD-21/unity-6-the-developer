@@ -10,6 +10,7 @@ public class EnemyAnimation : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private float animationReferenceSpeed = 2f;
     private EnemyNetworkAnimator _networkAnimator;
+    public TeamHJD.Game.Presentation.GameAudioCue AbilitySound;
     
     private static readonly int MoveXHash = Animator.StringToHash("MoveX");
     private static readonly int MoveYHash = Animator.StringToHash("MoveY");
@@ -79,6 +80,11 @@ public class EnemyAnimation : MonoBehaviour
         if (_networkAnimator != null && _networkAnimator.IsSpawned)
             _networkAnimator.PlayAttack();
         else
+        {
             animator.SetTrigger(AttackHash);
+            PlayAbilitySound();
+        }
     }
+    /// <summary>기존 로컬/수신 애니메이션 경로에서 한 번 호출합니다. 공간 처리는 표준 AudioSource가 담당합니다.</summary>
+    public void PlayAbilitySound() => TeamHJD.Game.Presentation.GameAudioManager.Play(AbilitySound, this);
 }

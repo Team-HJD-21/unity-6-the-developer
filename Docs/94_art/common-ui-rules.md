@@ -93,6 +93,8 @@ HUD와 공통 화면의 CanvasScaler는 1920×1080 기준 `Scale With Screen Siz
 
 슬라이더는 즉시 미리보기를 제공한다. 적용은 로컬 `PlayerPrefs`의 `CBC.UI.HudScale`에 저장하고, 취소·Escape는 창을 열기 전 값으로 복원한다. 기본값 버튼도 적용 전까지는 미리보기다. Match 저장 형식이나 게임 판정에는 영향을 주지 않는다.
 
+설정창 아래에는 **전체·음악·효과음** 음량을 같은 슬라이더 규칙으로 배치한다. 범위는 0~100%, 기본값은 100%다. 즉시 미리듣고 적용 때만 저장하며 취소·Escape는 열기 전 음량으로 복원한다. 레이블·수치·기본값/취소/적용 외의 반복 안내 문장은 추가하지 않는다. [오디오 출력·에셋 규칙](../02_architecture/01_core/game-audio-api.md)을 따른다.
+
 ## 공통 화면과 Editor 편집
 
 `Assets/Prefabs/UI/Common`의 프리팹을 직접 편집한다. 실행 중에는 제작된 프리팹을 인스턴스화하고 Inspector에 연결한 참조를 사용한다.
@@ -102,7 +104,7 @@ HUD와 공통 화면의 CanvasScaler는 1920×1080 기준 `Scale With Screen Siz
 | `AppScreenCanvas` | 운영 화면 정렬, Screen Stack, 전체 화면 암전 |
 | `CommonButton` / `MenuTextButton` | 공통 버튼과 메인 텍스트 버튼, Hover·선택 피드백 |
 | `MenuScreen` / `ResultScreen` | 개인 메뉴와 실제 결과·재시작/복귀 |
-| `SettingsScreen` | HUD 슬라이더, 실제 배율 미리보기, 기본값/취소/적용 |
+| `SettingsScreen` | HUD 크기·배율 미리보기, 전체/음악/효과음 음량, 기본값/취소/적용 |
 | `LoadingScreen` | 조작 정보, 실제 진행률 또는 수치 없는 이동 막대 |
 | `StartupControls` | 메인 시작/설정/종료 버튼 |
 

@@ -37,6 +37,10 @@ PrefabInstance:
       value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 3909823127931652063, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: AbilitySound
+      value: 
+      objectReference: {fileID: 11400000, guid: 9f871ce56599bc64fbd32967a4d6d278, type: 2}
+    - target: {fileID: 3909823127931652063, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: animationReferenceSpeed
       value: 5
       objectReference: {fileID: 0}

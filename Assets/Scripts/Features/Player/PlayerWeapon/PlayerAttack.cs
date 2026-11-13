@@ -107,6 +107,7 @@ public partial class PlayerAttack : MonoBehaviour
         _weaponRig.ShowShotFlash(shot.color);
         if (_motion != null) _motion.PlayRangedShot();
         ShotFired?.Invoke(_selection.CurrentWeapon);
+        TeamHJD.Game.Presentation.GameAudioManager.Play(TeamHJD.Game.Presentation.GameSound.PlayerShot, this);
         return true;
     }
 

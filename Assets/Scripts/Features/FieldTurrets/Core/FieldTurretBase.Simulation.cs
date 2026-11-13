@@ -34,6 +34,9 @@ namespace TeamHJD.Game.FieldTurrets
         /// <summary>기존 무기가 Instantiate 직후 호출해 탄환의 물리·수명·종료를 같은 Match에 묶습니다.</summary>
         protected virtual void BindProjectileSimulation(GameObject projectile)
         {
+            if (projectile != null && (Kind == Contracts.FieldTurretKind.Canon || Kind == Contracts.FieldTurretKind.Missile))
+                TeamHJD.Game.Presentation.GameAudioManager.Play(Kind == Contracts.FieldTurretKind.Missile
+                    ? TeamHJD.Game.Presentation.GameSound.MissileLaunch : TeamHJD.Game.Presentation.GameSound.TurretShot, this);
             if (_turretController?.FieldTimeSource != null)
                 FieldSimulationTime.BindSpawned(projectile, this);
         }

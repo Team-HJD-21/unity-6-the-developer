@@ -1,6 +1,8 @@
 # The Developer 문서 안내
 
-**11/12 Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료, 공용 AudioManager는 미구현이다. 코드 존재·실제 Scene 연결·실행 검증 범위를 나눠 적었다.
+**Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료다. 11/13 로컬 작업에는 Unity 기본 오디오를 사용하는 [GameAudioManager·믹서·설정과 연결 방법](02_architecture/01_core/game-audio-api.md)이 추가됐다. main 반영 여부, 실제 Scene 연결과 실행 검증 범위를 구분한다.
+
+**11/13 오디오 작업 인계:** [구현·검증 결과와 추후 PR의 Docs 반영 사항](01_planning/02_implementation-records/2026/11/2026-11-13-game-audio-handoff.md). 핵심 구현 완료·최종 검증 대기이며, 실제 전투 Scene·원격 Client·음원 콘텐츠 후속을 구분한다.
 
 **11/12 Core 후속 결정:** [지역·스폰·보스·협동 복구 배치](01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md). 정적 확보/상실·CU 시작 셀·33/66% 중간보스·100% 최종 전이·협동 구조를 사용자 승인 정책으로 기록했다. 이 중 **CU 시작 셀·동적 4방향 점유 연결·Host 설정은 로컬 구현/QA 완료**이며 [결과·검증 경계](01_planning/02_implementation-records/2026/11/2026-11-12-cu-connected-regions-results.md)와 [코드 검토 순서](03_team/00_reviews/cu-connected-regions-20261112.md)를 참고한다. 나머지 배치와 실제 2인·전체 저장 인수는 별도다.
 

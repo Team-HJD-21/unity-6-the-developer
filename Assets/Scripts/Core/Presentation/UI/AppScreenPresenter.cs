@@ -25,6 +25,7 @@ namespace TeamHJD.Game.Presentation
         private readonly AppScreenStyle _style;
         private readonly SceneFadePresenter _sceneFade;
         private readonly UiDisplaySettings _display;
+        private readonly GameAudioSettings _audio;
         private readonly AlertService _alerts;
         private readonly IDisposable _alertBinding;
         private readonly bool _ownsAlerts;
@@ -34,7 +35,7 @@ namespace TeamHJD.Game.Presentation
 
         public AppScreenPresenter(Transform parent, ScreenManager screens, SceneFlowController scenes,
             Func<string, Task> replace, Func<string> travelRestriction, Func<bool> isGameFlowTransitioning = null,
-            UiDisplaySettings display = null, Func<bool> canReturnToHub = null, AlertService alerts = null)
+            UiDisplaySettings display = null, Func<bool> canReturnToHub = null, AlertService alerts = null, GameAudioSettings audio = null)
         {
             _screens = screens ?? throw new ArgumentNullException(nameof(screens));
             _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
@@ -43,6 +44,7 @@ namespace TeamHJD.Game.Presentation
             _isGameFlowTransitioning = isGameFlowTransitioning ?? (() => false);
             _canReturnToHub = canReturnToHub ?? (() => true);
             _display = display ?? new UiDisplaySettings();
+            _audio = audio ?? new GameAudioSettings();
             _style = Resources.Load<AppScreenStyle>("Core/AppScreenStyle");
             if (_style == null || !_style.HasAuthoredViews)
                 throw new InvalidOperationException("Configure the authored common UI prefabs in Core/AppScreenStyle.");
@@ -71,7 +73,7 @@ namespace TeamHJD.Game.Presentation
                     () => _views.Remove(state.Id), authored: _style.LoadingPrefab);
             else if (state.Kind == ScreenKind.Settings)
                 view = new SettingsScreenPresenter(_canvas.Screens, _style.SettingsPrefab, _display,
-                    () => _screens.Close(state.Id), () => _views.Remove(state.Id));
+                    () => _screens.Close(state.Id), () => _views.Remove(state.Id), _audio);
             else view = new View(this, state);
             _views.Add(state.Id, view); return view;
         }

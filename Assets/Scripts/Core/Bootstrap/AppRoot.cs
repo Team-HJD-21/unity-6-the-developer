@@ -182,6 +182,8 @@ namespace TeamHJD.Game.Bootstrap
 #endif
 
         public UiDisplaySettings DisplaySettings { get; private set; }
+        public GameAudioSettings AudioSettings { get; private set; }
+        public GameAudioManager Audio { get; private set; }
 
         public void Initialize(AppServices services)
         {
@@ -192,6 +194,16 @@ namespace TeamHJD.Game.Bootstrap
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
             DisplaySettings = new UiDisplaySettings();
+            AudioSettings = new GameAudioSettings();
+            if (UnityEngine.Application.isPlaying)
+            {
+                var audioConfig = Resources.Load<GameAudioConfiguration>("Core/GameAudioConfiguration");
+                if (audioConfig != null)
+                {
+                    var audioObject = new GameObject("Game Audio"); audioObject.transform.SetParent(transform, false);
+                    Audio = audioObject.AddComponent<GameAudioManager>(); Audio.Initialize(audioConfig, AudioSettings);
+                }
+            }
             _spaceshipTravel = new SpaceshipTravelService(this);
             if (Services.Platform is IPlatformRuntime) InitializePlatform();
             if (UnityEngine.Application.isPlaying)
@@ -200,7 +212,7 @@ namespace TeamHJD.Game.Bootstrap
                     () => GameFlow?.IsTransitioning == true, DisplaySettings,
                     () => GameFlow == null ? !CurrentMatchId.IsEmpty :
                         GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted,
-                    Services.Alerts);
+                    Services.Alerts, AudioSettings);
         }
 
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
@@ -378,6 +390,8 @@ namespace TeamHJD.Game.Bootstrap
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             _composedSceneHandles.Clear();
             _compositionFailures.Clear();
+            if (Audio != null) Audio.Shutdown();
+            Audio = null;
             AppServices services = Services;
             if (services?.NetworkMatches != null)
             {

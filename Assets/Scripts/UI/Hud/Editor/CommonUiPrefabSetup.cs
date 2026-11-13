@@ -149,6 +149,8 @@ public static class CommonUiPrefabSetup
         view.Primary = view.Apply; view.Secondary = view.Back; view.Settings = null; view.Body = view.Status = null;
         Navigate(view.HudScale, view.Defaults, view.Back, view.Apply);
         HudUiReviewSetup.ApplySettingsPreview(root.gameObject, S);
+        if (AssetDatabase.LoadAssetAtPath<GameAudioConfiguration>(GameAudioSetup.ConfigPath) != null)
+            GameAudioSetup.ApplySettings(view);
     }
     private static void BuildLoading(RectTransform root)
     {
