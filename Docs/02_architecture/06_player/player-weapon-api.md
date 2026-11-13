@@ -170,6 +170,8 @@ RuntimeState의 체력을 외부에서 직접 바꾸지 않습니다. 살아 있
 
 현재 Player는 `PlayerWeaponVisual.ContinuousAim`이 계산한 손잡이 기준 마우스 방향을 `PlayerWeaponRig.TryGetContinuousAimDirection`으로 전달한다. `PlayerAttack`은 이 방향을 우선 사용하고, `TryGetMuzzle`은 회전된 Sprite의 실제 총구 위치를 받는다. 기존 자세 방식은 이전 방향·총구 조회를 유지한다. 네 무기의 표시 설정과 검증 범위는 [몸체·무기 분리 API](player-weapon-appearance-api.md#2026-11-12-space-man-몸체와-자유-조준)를 참고한다.
 
+2026-11-13 스패너 피격 대상: `PlayerSpannerWeapon.ApplyMeleeDamage`는 `EnemyHitBox` 레이어만 Overlap 검색한다. `ContactFilter2D.useTriggers`로 피격용 Trigger를 포함하며 `EnemySensor`와 `EnemyFeetBox`는 피해 후보에 넣지 않는다. 현재 프로젝트처럼 Physics2D의 `Queries Hit Triggers`가 켜져 있어야 Trigger 피격을 검색할 수 있으며, 공격 코드에서 이 전역 설정을 변경하지 않는다. 실제 HitBox의 `ClosestPoint`로 전방·사거리·장애물을 확인하고 부모 `EnemyHealth`마다 타격당 한 번만 피해를 적용한다. 감지 센서가 플레이어를 포함해도 사거리 밖·뒤쪽·벽 뒤의 HitBox는 피해를 받지 않는다. 감지 컴포넌트와 적 피해 권한 경로는 기존 동작을 유지한다.
+
 ## 2026-11-09 탄창과 재장전
 
 스패너는 `∞`, 기본총·냉각총은 `15/15`, 스나이퍼는 `5/5`로 시작합니다. 분모는 예비 탄약 수가 아닌 탄창 최대치입니다. 예비 탄약은 무제한이며, 마지막 발을 쏘면 자동 재장전을 시작합니다. 빈 총으로 전환하거나 수리·설치가 끝났을 때도 현재 총이 비었으면 자동 재장전합니다. 산탄도 실제 발사 한 번에 한 발만 소비하고 탄환 생성 실패는 소비하지 않습니다.

@@ -36,6 +36,18 @@ public sealed partial class PlayerWeaponVisual
     private PlayerTurretRepair _aimRepair;
 
     public bool UsesContinuousAim => _continuousAim;
+    // The authored mount is for the left-facing body. Mirror its offset about
+    // the fixed foot anchor together with the body, without moving the actor.
+    private Vector2 AimMount
+    {
+        get
+        {
+            Vector2 mount = _aimMount;
+            if (_motion != null && _motion.UsesSpaceManBody && _body != null && _body.flipX)
+                mount.x = -mount.x;
+            return mount;
+        }
+    }
     private bool IsContinuousAimConfigured => _aimDefaultGun != null && _aimDefaultGun.IsConfigured &&
         _aimCryoBlaster != null && _aimCryoBlaster.IsConfigured &&
         _aimSniper != null && _aimSniper.IsConfigured && _aimSpanner != null && _aimSpanner.IsConfigured;
@@ -60,6 +72,9 @@ public sealed partial class PlayerWeaponVisual
     {
         direction = Vector2.down;
         if (!_continuousAim || !isActiveAndEnabled || !IsConfigured || _aimInput == null) return false;
+        // Shots can query the mount before body LateUpdate. Resolve its flip
+        // first so that this frame's projectile and displayed muzzle agree.
+        _motion.RefreshSpaceManBody();
         bool canFace = (_aimControls == null || _aimControls.CanMove) &&
             (_aimSkills == null || !_aimSkills.IsSelectionOpen);
         if (!canFace) return true;
@@ -69,7 +84,7 @@ public sealed partial class PlayerWeaponVisual
             _selection.Spanner.TryGetSwingDirection(out var swing))
             direction = swing;
         else if (_aimInput.HasAimTarget)
-            direction = _aimInput.MouseWorldPosition - (Vector2)transform.TransformPoint(_aimMount);
+            direction = _aimInput.MouseWorldPosition - (Vector2)transform.TransformPoint(AimMount);
         else direction = _aimInput.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = _aimInput.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = Vector2.down;
@@ -96,7 +111,7 @@ public sealed partial class PlayerWeaponVisual
             _body == null || _body.sprite == null || !PlayerAimUtility.IsValidDirection(worldDirection)) return false;
         worldDirection.Normalize();
         Vector2 direction = transform.InverseTransformDirection(worldDirection).normalized;
-        origin = transform.TransformPoint(_aimMount + direction * _aimRadius);
+        origin = transform.TransformPoint(AimMount + direction * _aimRadius);
         Vector2 head = SpritePoint(_aimSpanner.sprite, _aimSpanner.muzzle, direction.x < 0f);
         Vector2 grip = SpritePoint(_aimSpanner.sprite, _aimSpanner.grip, direction.x < 0f);
         var rotation = Quaternion.FromToRotation(Vector3.right, direction);
@@ -151,7 +166,7 @@ public sealed partial class PlayerWeaponVisual
         var rotation = Quaternion.Euler(0f, 0f, angle);
         float scale = art.length / art.sprite.bounds.size.x;
         Vector3 grip = SpritePoint(art.sprite, art.grip, flipped) * scale;
-        Vector3 mount = _aimMount + direction * _aimRadius;
+        Vector3 mount = AimMount + direction * _aimRadius;
         _weapon.sprite = art.sprite;
         _weapon.transform.localScale = new Vector3(scale, scale, 1f);
         _weapon.transform.localRotation = rotation;
