@@ -23,10 +23,6 @@ Shader "TheDeveloper/Enemy/AssassinStealth"
             "PreviewType" = "Plane"
         }
 
-        GrabPass
-        {
-            "_AssassinBackground"
-        }
 
         Cull Off
         ZWrite Off
@@ -42,7 +38,7 @@ Shader "TheDeveloper/Enemy/AssassinStealth"
             #pragma multi_compile _ PIXELSNAP_ON
             #include "UnitySprites.cginc"
 
-            sampler2D _AssassinBackground;
+            sampler2D _CameraSortingLayerTexture;
             float _DistortionStrength;
             float _DistortionScale;
             float _DistortionRadiusPixels;
@@ -52,8 +48,7 @@ Shader "TheDeveloper/Enemy/AssassinStealth"
                 float4 vertex : SV_POSITION;
                 fixed4 color : COLOR;
                 float2 texcoord : TEXCOORD0;
-                float4 grabPosition : TEXCOORD1;
-                float2 worldPosition : TEXCOORD2;
+                float2 worldPosition : TEXCOORD1;
             };
 
             assassin_v2f AssassinVert(appdata_t IN)
@@ -64,7 +59,6 @@ Shader "TheDeveloper/Enemy/AssassinStealth"
                 OUT.vertex = sprite.vertex;
                 OUT.color = sprite.color;
                 OUT.texcoord = sprite.texcoord;
-                OUT.grabPosition = ComputeGrabScreenPos(sprite.vertex);
                 OUT.worldPosition = mul(
                     unity_ObjectToWorld,
                     UnityFlipSprite(IN.vertex, _Flip)).xy;
@@ -103,16 +97,10 @@ Shader "TheDeveloper/Enemy/AssassinStealth"
                     _DistortionRadiusPixels / max(distancePixels, 0.0001));
                 float2 offset = offsetPixels / _ScreenParams.xy;
 
-                float4 grabPosition = IN.grabPosition;
-                grabPosition.xy += offset * grabPosition.w;
-
-                fixed4 backgroundColor =
-                    tex2Dproj(
-                        _AssassinBackground,
-                        UNITY_PROJ_COORD(grabPosition));
-
+                float2 screenUV = IN.vertex.xy / _ScreenParams.xy;
+                fixed3 backgroundColor = tex2D(_CameraSortingLayerTexture, saturate(screenUV + offset)).rgb;
                 fixed amount = saturate(_StealthAmount);
-                fixed4 color = lerp(spriteColor, backgroundColor, amount);
+                fixed4 color = lerp(spriteColor, fixed4(backgroundColor, spriteColor.a), amount);
 
                 // 스프라이트 모양의 알파 영역은 유지한다.
                 color.a = spriteColor.a;

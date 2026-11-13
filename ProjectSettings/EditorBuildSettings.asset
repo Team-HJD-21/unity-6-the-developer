@@ -24,7 +24,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Tests/InitialStageTurretTest.unity
     guid: 9f01a7cef96343745bd934dad5e97af5
   - enabled: 1
-    path: Assets/Scenes/Gameplay/Stage1.unity
+    path: Assets/Scenes/Gameplay/Stage_1.unity
     guid: 989d0493a9c9c42a4b922084947d1caa
   - enabled: 1
     path: Assets/Scenes/Presentation/Credits.unity
