@@ -23,6 +23,18 @@ namespace TeamHJD.Game.UI
         private Color _originalColor;
         private Vector2 _originalAnchorMin, _originalAnchorMax, _originalPosition;
         private int _lastSeconds = int.MinValue;
+        public bool CanChangePhase => _debug?.CanRestartCurrentPhase == true;
+
+        /// <summary>새 HUD가 Esc 패널을 제공할 때 기존 명령을 보존하고 평상시 디버그 표시만 숨깁니다.</summary>
+        public void SuppressLegacyControls()
+        {
+            if (weatherButton != null)
+                foreach (var graphic in weatherButton.GetComponentsInChildren<Graphic>(true))
+                { graphic.enabled = false; graphic.raycastTarget = false; }
+            if (_phase != null) _phase.gameObject.SetActive(false);
+            if (_reset != null) _reset.gameObject.SetActive(false);
+            if (_advance != null) _advance.gameObject.SetActive(false);
+        }
 
         private void Start()
         {

@@ -87,7 +87,7 @@
 - [`03_team/`](03_team/) — 담당 영역, 협업 절차, 이슈 분류
 - [`04_development/`](04_development/) — 개발·런타임 검증 지침
 - [`05_tooling/`](05_tooling/) — Unity·CLI 설치와 디버깅 도구
-- `94_art/` — 아트 검토 자료
+- `94_art/` — 아트 검토 자료 · [승인된 공통 UI 규칙 / HUD v6](94_art/common-ui-rules.md) · [Credits 컷신 제작·편집 지점](94_art/credits-cinematic.md)
 - [`95_licenses/`](95_licenses/), `96_images/`, `97_screenshots/`, `98_videos/` — 라이선스와 참고 자료
 - [`99_archive/`](99_archive/) — 현행 기준에 반영한 회의 요약, 종료된 스프린트, 레거시 기록
   - [계획·구현 보관 안내](99_archive/planning-links/) — 보관 원문과 현행 기준으로 연결

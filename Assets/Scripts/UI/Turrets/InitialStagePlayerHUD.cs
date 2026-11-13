@@ -50,6 +50,9 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
     public MatchId BoundMatchId => _boundMatchId;
     public PlayerId BoundPlayerId => _boundPlayerId;
     public bool HasTurretCommandBinding => _commands != null;
+    public bool HasLocalActor => _hasLocalActor && _player != null && _player.isActiveAndEnabled;
+    public bool HasFieldActor => HasLocalActor && CombatHudContext.IsFieldActor(_player);
+    public event Action<string> AutoActivationFeedback;
 
     public void BindTurretCommands(MatchId matchId, PlayerId playerId, ITurretCommandRequester requester, ITurretPresentationSource presentation)
     {
@@ -96,6 +99,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
         if (result.Kind == TurretCommandKind.StartAutoActivation)
         {
             if (controlUnitView != null) controlUnitView.SetFeedback(StageTurretUIText.Command(result));
+            AutoActivationFeedback?.Invoke(result.WasAccepted ? "자동 활성화가 시작되었습니다." : "자동 활성화 요청이 거절되었습니다.");
         }
         else _presenter?.OnCommandResult(result);
     }
@@ -275,21 +279,37 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
             Vector2.Distance(_player.transform.position, cu.transform.position) <= interactionDistance;
     }
 
-    private void RequestAutoActivation()
+    private void RequestAutoActivation() => TryRequestAutoActivation();
+
+    /// <summary>메뉴는 자신의 입력 lease를 정상 해제한 뒤 호출합니다. 기존 거리/생존/명령 권한 검사를 그대로 사용합니다.</summary>
+    public bool TryRequestAutoActivation()
     {
-        if (!CanInteractAtControlUnit() || _controller == null) return;
+        if (!CanInteractAtControlUnit() || _controller == null || controlUnitView == null)
+        {
+            AutoActivationFeedback?.Invoke("현재는 요청할 수 없습니다. CU와의 거리와 플레이어 상태를 확인하세요.");
+            return false;
+        }
         if (_requiresCommands)
         {
             controlUnitView.SetFeedback("Waiting for Host confirmation/state...");
-            if (_commands == null || !_commands.TrySubmit(TurretCommandKind.StartAutoActivation))
+            bool submitted = _commands != null && _commands.TrySubmit(TurretCommandKind.StartAutoActivation);
+            if (!submitted)
+            {
                 controlUnitView.SetFeedback("Request unavailable or already pending.");
+                AutoActivationFeedback?.Invoke("요청을 보낼 수 없거나 이미 처리 중입니다.");
+            }
+            else if (_commands != null && _commands.HasPending(default))
+                // Host는 동기 확정할 수 있습니다. 이미 표시한 최종 응답을 '요청 중'으로 덮지 않습니다.
+                AutoActivationFeedback?.Invoke("자동 활성화를 요청했습니다.");
             controlUnitView.RefreshAuthority(_commands?.Presentation.Snapshot?.Controller, _controller.Regions?.Snapshot,
                 CanInteractAtControlUnit(), _commands != null && _commands.HasPending(default));
-            return;
+            return submitted;
         }
         bool started = _controller.TryStartAutoActivation();
         controlUnitView.SetFeedback(started ? "Automatic activation started." : "Automatic activation is unavailable.");
         controlUnitView.Refresh(_controller, CanInteractAtControlUnit());
+        AutoActivationFeedback?.Invoke(started ? "자동 활성화가 시작되었습니다." : "지금은 자동 활성화를 시작할 수 없습니다.");
+        return started;
     }
 
     private void BindSceneSources()

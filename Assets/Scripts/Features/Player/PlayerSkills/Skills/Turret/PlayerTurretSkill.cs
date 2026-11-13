@@ -128,7 +128,11 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
         Vector3 position = GetPlacementPosition(pointerPosition);
         _placementFeedback = EvaluatePlacement(position);
         _preview.Refresh(position, _placementFeedback == PlayerTurretPlacementResult.Allowed);
-        if (_placementFeedback != PlayerTurretPlacementResult.Allowed || !_inventory.TryDeploy()) return false;
+        if (_placementFeedback != PlayerTurretPlacementResult.Allowed || !_inventory.TryDeploy())
+        {
+            if (Controller != null) Controller.NotifyPlacementRejected(PlayerSkillDescriptions.TurretPlacementFailure(_placementFeedback));
+            return false;
+        }
 
         var turret = Instantiate(turretPrefab, position, Quaternion.identity).GetComponent<PlayerTurret>();
         SceneManager.MoveGameObjectToScene(turret.gameObject, gameObject.scene);

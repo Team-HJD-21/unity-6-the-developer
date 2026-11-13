@@ -55,6 +55,8 @@ public partial class PlayerAttack : MonoBehaviour
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     private PlayerMatchPresence Presence => GetComponent<PlayerMatchPresence>();
     private bool _reportedConfigurationError;
+    /// <summary>실제 탄환 생성에 성공한 한 발입니다. 산탄의 각 pellet이나 막힌 입력에는 발생하지 않습니다.</summary>
+    public event System.Action<WeaponType> ShotFired;
     private bool CanAttack => isActiveAndEnabled && _selection != null && _selection.transform == transform &&
         _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill) &&
         (_repair == null || !_repair.IsRepairing);
@@ -104,6 +106,7 @@ public partial class PlayerAttack : MonoBehaviour
         _nextShotTime = GameSeconds + Mathf.Max(.01f, shot.interval);
         _weaponRig.ShowShotFlash(shot.color);
         if (_motion != null) _motion.PlayRangedShot();
+        ShotFired?.Invoke(_selection.CurrentWeapon);
         return true;
     }
 

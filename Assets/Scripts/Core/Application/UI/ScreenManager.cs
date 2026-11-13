@@ -53,6 +53,12 @@ namespace TeamHJD.Game.Application
             return Find(ScreenKind.Menu) ?? Open(ScreenKind.Menu);
         }
         public ScreenState ShowLoading() { ThrowIfUnavailable(); return Find(ScreenKind.Loading) ?? Open(ScreenKind.Loading); }
+        public ScreenState ShowSettings()
+        {
+            ThrowIfUnavailable();
+            if (Top != null && Top.Kind != ScreenKind.Menu && Top.Kind != ScreenKind.Settings) return null;
+            return Find(ScreenKind.Settings) ?? Open(ScreenKind.Settings);
+        }
         public bool ShowResult(MatchCompletion completion)
         {
             ThrowIfUnavailable();

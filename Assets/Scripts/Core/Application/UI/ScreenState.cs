@@ -8,7 +8,7 @@ namespace TeamHJD.Game.Application
         public long Id { get; }
         public ScreenKind Kind { get; }
         public MatchCompletion Completion { get; }
-        public bool CanGoBack => Kind == ScreenKind.Menu;
+        public bool CanGoBack => Kind == ScreenKind.Menu || Kind == ScreenKind.Settings;
         internal ScreenState(long id, ScreenKind kind, MatchCompletion completion = null)
         { Id = id; Kind = kind; Completion = completion; }
     }

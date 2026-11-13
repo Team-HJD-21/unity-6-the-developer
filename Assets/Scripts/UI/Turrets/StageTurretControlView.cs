@@ -33,6 +33,8 @@ public sealed class StageTurretControlView : MonoBehaviour
 
     private string _lastFeedback = "";
     private bool _withinReach = true;
+    private float _feedbackUntil;
+    private Image[] _levelUpGlyphs, _levelDownGlyphs;
 
     public event Action ToggleRequested;
     public event Action LevelUpRequested;
@@ -72,6 +74,10 @@ public sealed class StageTurretControlView : MonoBehaviour
         }
 
         activationButton.onClick.AddListener(RequestToggle);
+        _levelUpGlyphs = Array.FindAll(levelUpButton.GetComponentsInChildren<Image>(true), i => i.name.EndsWith("Stroke", StringComparison.Ordinal));
+        _levelDownGlyphs = Array.FindAll(levelDownButton.GetComponentsInChildren<Image>(true), i => i.name.EndsWith("Stroke", StringComparison.Ordinal));
+        var feedback = activationButton.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>();
+        if (feedback != null) feedback.PreserveLabelColor = true;
         levelUpButton.onClick.AddListener(RequestLevelUp);
         levelDownButton.onClick.AddListener(RequestLevelDown);
         closeButton.onClick.AddListener(RequestClose);
@@ -99,8 +105,7 @@ public sealed class StageTurretControlView : MonoBehaviour
         titleText.text = turret.DisplayName;
         levelText.text = $"Level {turret.Definition?.Level ?? 0}";
         statsText.text = $"HP {turret.CurrentHealth}/{turret.MaxHealth}   Power {turret.EffectivePower}   Damage {turret.EffectiveDamage}   Range {turret.EffectiveRange:0.#}";
-        statusText.text = GetStatus(turret);
-        if (dynamicRegions) statusText.text += " | Dynamic capture: activate to form territory";
+        SetText(statusText, GetStatus(turret));
         _withinReach = withinReach;
         RefreshFeedback();
 
@@ -108,7 +113,8 @@ public sealed class StageTurretControlView : MonoBehaviour
         activationButton.interactable = canInteract && StageTurretInteractionRules.CanToggle(turret);
         levelUpButton.interactable = editable && canLevelUp;
         levelDownButton.interactable = editable && canLevelDown;
-        upgradeRestrictionText.text = StageTurretUIText.UpgradeRestriction(turret);
+        RefreshLevelGlyphs();
+        SetText(upgradeRestrictionText, StageTurretUIText.UpgradeRestriction(turret));
         upgradeView.Show(turret, canInteract);
 
         activationText.text = turret.IsDestroyed ? "Destroyed" :
@@ -124,22 +130,29 @@ public sealed class StageTurretControlView : MonoBehaviour
 
     public void SetFeedback(string message)
     {
-        _lastFeedback = message ?? "";
+        // 대기/거리 상태는 패널에 남기고, 실제 조작 결과는 공통 Alert 한 곳에서 표시합니다.
+        _lastFeedback = StageTurretAlertFeedback.IsPending(message) ? message : "";
+        _feedbackUntil = _lastFeedback.Length > 0 ? float.PositiveInfinity : 0;
+        StageTurretAlertFeedback.Show(message);
         RefreshFeedback();
     }
 
     private void RefreshFeedback()
     {
-        feedbackText.text = _withinReach ? _lastFeedback : StageTurretUIText.OutOfReach +
-            (_lastFeedback.Length > 0 ? $" | {_lastFeedback}" : "");
+        string recent = Time.unscaledTime < _feedbackUntil ? _lastFeedback : "";
+        SetText(feedbackText, _withinReach ? recent : StageTurretUIText.OutOfReach +
+            (recent.Length > 0 ? $" | {recent}" : ""));
     }
+    private void LateUpdate() { if (feedbackText != null) RefreshFeedback(); }
+    private static void SetText(TMP_Text text, string value) { text.text = value; text.enabled = value.Length > 0; }
     public void ShowWaitingForHost()
     {
         _withinReach = true;
         if (!gameObject.activeSelf) gameObject.SetActive(true);
-        titleText.text = "Turret · Host state pending"; levelText.text = "Level —"; statsText.text = "—";
-        statusText.text = "Waiting for authoritative turret state"; upgradeRestrictionText.text = "Controls are unavailable until Host state arrives";
+        titleText.text = "Turret"; levelText.text = "Level —"; statsText.text = "—";
+        SetText(statusText, "Waiting for state"); SetText(upgradeRestrictionText, "");
         activationButton.interactable = levelUpButton.interactable = levelDownButton.interactable = false;
+        RefreshLevelGlyphs();
         activationText.text = "Waiting"; activationText.color = unavailableColor; upgradeView.ShowSnapshot(null, false);
     }
     public void ShowSnapshot(TurretPresentationSnapshot turret, bool canInteract, bool canLevelUp, bool canLevelDown,
@@ -149,16 +162,16 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (!gameObject.activeSelf) gameObject.SetActive(true);
         titleText.text = turret.DisplayName; levelText.text = $"Level {turret.Level}";
         statsText.text = $"HP {turret.CurrentHealth}/{turret.MaxHealth}   Power {turret.Power}   Damage {turret.Damage}   Range {turret.Range:0.#}";
-        statusText.text = pending ? "Waiting for Host confirmation/state" : turret.IsManualOperationBlocked ? "Automatic activation - manual controls disabled" :
+        SetText(statusText, pending ? "Processing" : turret.IsManualOperationBlocked ? "Automatic activation - manual controls disabled" :
             turret.IsDestroyed ? "Destroyed" : turret.IsLocked ? "Locked" : turret.IsCoolingDown ? $"Cooling down: {turret.CoolingRemaining:0.0}s" :
-            turret.IsOperational ? "Operational" : turret.IsActivated ? "Activated - Suspended" : "Inactive";
-        if (dynamicRegions) statusText.text += " | Dynamic capture: activate to form territory";
+            turret.IsOperational ? "" : turret.IsActivated ? "Activated - Suspended" : "");
         _withinReach = withinReach;
         RefreshFeedback();
         bool editable = canInteract && !pending && turret.CanModifyUpgrades;
         activationButton.interactable = canInteract && !pending && StageTurretInteractionRules.CanToggle(turret);
         levelUpButton.interactable = editable && canLevelUp; levelDownButton.interactable = editable && canLevelDown;
-        upgradeRestrictionText.text = StageTurretUIText.UpgradeRestriction(turret); upgradeView.ShowSnapshot(turret, canInteract && !pending);
+        RefreshLevelGlyphs();
+        SetText(upgradeRestrictionText, StageTurretUIText.UpgradeRestriction(turret)); upgradeView.ShowSnapshot(turret, canInteract && !pending);
         activationText.text = turret.IsDestroyed ? "Destroyed" : turret.IsLocked ? "Locked" : turret.IsActivated ? "Deactivate" : "Activate";
         activationText.color = !activationButton.interactable ? unavailableColor : turret.IsActivated ? deactivateColor : activateColor;
     }
@@ -172,9 +185,14 @@ public sealed class StageTurretControlView : MonoBehaviour
         if (turret.IsDestroyed) return "Destroyed";
         if (turret.IsLocked) return "Locked";
         if (turret.IsCoolingDown) return $"Cooling down: {turret.CoolingDownRemaining:0.0}s";
-        if (turret.IsOperational) return "Operational";
+        if (turret.IsOperational) return "";
         if (turret.IsActivated) return "Activated - Suspended";
-        return "Inactive";
+        return "";
+    }
+    private void RefreshLevelGlyphs()
+    {
+        if (_levelUpGlyphs != null) foreach (var image in _levelUpGlyphs) image.color = levelUpButton.interactable ? Color.white : unavailableColor;
+        if (_levelDownGlyphs != null) foreach (var image in _levelDownGlyphs) image.color = levelDownButton.interactable ? Color.white : unavailableColor;
     }
 
     private void RequestToggle() => ToggleRequested?.Invoke();

@@ -19,6 +19,7 @@ public sealed partial class PlayerDash : MonoBehaviour
     private Vector2 _lastDirection = Vector2.down;
     private Vector2 _direction;
     private float _speed;
+    public event System.Action<bool> DashInputAttempted;
 
     public bool IsDashing => _state.IsDashing;
     public bool CanUseInput => isActiveAndEnabled && _movement != null && _movement.CanAcceptInput;
@@ -47,7 +48,11 @@ public sealed partial class PlayerDash : MonoBehaviour
             return;
         }
         if (PlayerAimUtility.IsValidDirection(_input.MoveInput)) _lastDirection = _input.MoveInput.normalized;
-        if (_input.WasDashPressed) TryDash();
+        if (_input.WasDashPressed)
+        {
+            bool accepted = TryDash();
+            DashInputAttempted?.Invoke(accepted);
+        }
     }
 
     public bool TryDash()

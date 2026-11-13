@@ -15,6 +15,8 @@ public sealed class PlayerSkillSlotView : MonoBehaviour, IPointerEnterHandler, I
     [SerializeField] private Image _cooldown;
     [SerializeField] private GameObject _empty;
     [SerializeField] private TMP_Text _status;
+    [SerializeField] private CombatHudArt _combatArt;
+    [SerializeField] private CombatSkillSlotFeedback _inputFeedback;
     [Header("State Colors")]
     [SerializeField] private Color _readyColor = new(.35f, .95f, 1);
     [SerializeField] private Color _unreadyColor = new(.2f, .5f, .55f);
@@ -23,6 +25,7 @@ public sealed class PlayerSkillSlotView : MonoBehaviour, IPointerEnterHandler, I
     [SerializeField] private Color _cooldownColor = new(.28f, .3f, .32f, .85f);
     [SerializeField, Range(0, 1)] private float _partialChargeAlpha = .35f;
     private PlayerSkillHud _hud;
+    private PlayerSkillController _inputOwner;
     private PlayerSkillId _displayedSkill;
     private int _displayedCount = -1;
     public bool IsConfigured => _button != null && _border != null && _icon != null
@@ -35,15 +38,21 @@ public sealed class PlayerSkillSlotView : MonoBehaviour, IPointerEnterHandler, I
         Unbind();
         _hud = hud;
         _displayedCount = -1;
+        _inputOwner = _hud.Owner;
+        if (_inputOwner != null) _inputOwner.SlotUseAttempted += OnUseAttempted;
         if (_opensSelection) _button.onClick.AddListener(OpenSelection);
     }
     public void Unbind()
     {
+        if (_inputOwner != null) _inputOwner.SlotUseAttempted -= OnUseAttempted;
+        _inputOwner = null;
         if (_hud != null) _hud.HideTooltip(this);
         if (_button != null) _button.onClick.RemoveListener(OpenSelection);
         _hud = null;
     }
     private void OpenSelection() => _hud?.Open();
+    private void OnUseAttempted(int slot, PlayerSkillId skill, bool accepted)
+    { if (slot == _slotIndex && _inputFeedback != null) _inputFeedback.Press(accepted); }
 
     public void Refresh()
     {
@@ -53,8 +62,12 @@ public sealed class PlayerSkillSlotView : MonoBehaviour, IPointerEnterHandler, I
         bool assigned = skill != PlayerSkillId.None;
         int count = owner.SkillCount(skill);
         _empty.SetActive(!assigned);
-        _icon.sprite = _hud.Icon(skill);
-        _icon.enabled = assigned && _icon.sprite != null;
+        if (_combatArt != null) _combatArt.Show(skill);
+        else
+        {
+            _icon.sprite = _hud.Icon(skill);
+            _icon.enabled = assigned && _icon.sprite != null;
+        }
         _border.color = !assigned ? _emptyColor : owner.IsSkillReady(skill) ? _readyColor : _unreadyColor;
         _icon.color = count > 0 ? Color.white : _depletedIconColor;
         _cooldown.enabled = assigned && owner.RemainingCooldown(skill) > 0;

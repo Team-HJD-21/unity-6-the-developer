@@ -6,7 +6,8 @@
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
     "Unity.ugui",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

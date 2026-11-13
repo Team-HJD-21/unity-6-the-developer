@@ -1,11 +1,16 @@
 // 이전 Scene 소유자가 새 Match를 종료하지 못하는지와 공간 갱신 통지를 검증합니다.
 using System;
+using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Bootstrap;
+using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure.Fakes;
+using TeamHJD.Game.Presentation;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
@@ -89,6 +94,36 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(_root.CurrentMatchId.IsEmpty, Is.True);
             Assert.Throws<ObjectDisposedException>(() => { _ = regions.Snapshot; });
         }
+
+        [Test]
+        public void ActiveMatchHubVisitDoesNotCreateAnotherPlayerOrCamera()
+        {
+            var match = Start("hub-visit");
+            var scene = EditorSceneManager.OpenPreviewScene(AppScreenPresenter.HubScene);
+            try
+            {
+                Compose(scene);
+                Assert.That(scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpaceshipHubCompositionRoot>()), Is.Empty);
+                Assert.That(_root.CurrentMatchId, Is.EqualTo(match.Config.MatchId));
+            }
+            finally { EditorSceneManager.ClosePreviewScene(scene); }
+        }
+
+        [Test]
+        public void ConfiguredHubRouteTakesPrecedenceOverTheStandaloneDefault()
+        {
+            _root.ConfigureGameFlow(new GameFlowRoutes("startup", "another-hub"));
+            var scene = EditorSceneManager.OpenPreviewScene(AppScreenPresenter.HubScene);
+            try
+            {
+                Compose(scene);
+                Assert.That(scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpaceshipHubCompositionRoot>()), Is.Empty);
+            }
+            finally { EditorSceneManager.ClosePreviewScene(scene); }
+        }
+
+        private void Compose(UnityEngine.SceneManagement.Scene scene)
+            => typeof(AppRoot).GetMethod("ComposeScene", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(_root, new object[] { scene });
 
         private MatchSession Start(string id)
         {

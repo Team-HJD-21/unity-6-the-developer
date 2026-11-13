@@ -1,6 +1,27 @@
 # Player Skill HUD 씬 연결
 
-갱신: 2026-10-22. 프리팹·씬 연결과 런타임 소유자 연결을 분리했다.
+갱신: 2026-11-12. HUD v6 적용과 Editor의 실제 Scene·단계별 입력·애니메이션 관찰을 완료했다. 범위와 제한은 [검증 기록](../../94_art/ui-validation-2026-11-12.md)을 따른다.
+
+## HUD v6 표시와 장착
+
+공통 외형·상태 규칙은 [공통 UI 규칙](../../94_art/common-ui-rules.md)을 따른다. 기존 씬 바인더와 로컬 소유자 판정을 유지하며 `PlayerSkillHUD.prefab`의 선택 표시를 `CombatSkillPicker`에 연결했다. 아래의 기존 카드·패널은 호환용 참조로 남지만 v6에서는 반원 선택창을 사용한다. 이전 배치·청록색 강조·남은 초 표시에 대한 설명보다 이 절의 규칙이 우선한다.
+
+- 하단 Q/E/SPACE에 접근하면 화면 아래에 붙은 네 구획 반원이 나온다. 드래그 전 호버는 위에 설명 하나, 드래그 중에는 큰 디스크 아래에 설명 하나를 표시한다.
+- `PlayerSkillController.TryEquip(int slot, PlayerSkillId skill)`은 0=Q, 1=E에 장착한다. 새 스킬은 대상 슬롯만 교체하며, 반대 슬롯의 스킬을 가져오면 두 슬롯을 교환한다. 같은 슬롯·잘못된 슬롯/ID·준비 불가 상태는 `false`이며 변경 이벤트와 성공 표시가 없다. Space는 대상이 아니다.
+- `PlayerSkillLoadout.TryEquip`은 위 교체 규칙과 중복 방지를 담당한다. `Restore`는 E만 있는 정상 상태도 복원하며 같은 스킬의 Q/E 중복은 거부한다. 체크포인트 바이너리 형식은 바꾸지 않았다.
+- `PlayerSkillController.TryUseSlot(int slot)`은 실제 Q/E 입력 진입점이다. 잘못된 슬롯·입력 잠금·선택창 열림은 시도 이벤트 없이 거부한다. 허용된 입력만 `TryUse` 후 `SlotUseAttempted(slot, skill, accepted)`를 한 번 송출한다. 기존 `TryUse(PlayerSkillId)` 직접 호출의 동작은 유지한다.
+- 슬롯 View는 위 이벤트로 짧은 눌림을 표시한다. `PlayerSkillHud`는 미배정 슬롯일 때만 [공통 Alert](../03_scene-flow/common-alert-api.md)에 `skill/unassigned/0`, `skill/unassigned/1`을 보낸다. 소유자 교체·해제 때 구독을 정리한다. 알림은 App의 표시 서비스에 연결되며, App 초기화 전이나 종료 후에는 임시 Canvas를 만들지 않는다.
+- 설치형 스킬과 PlayerTurret은 실제 `TryConfirmPlacement` 거부 때 `PlacementRejected`를 송출한다. 미리보기의 실패 상태 갱신은 알림을 보내지 않는다. 이전 `_placementFailure` 라벨은 참조 호환용으로 남기고 숨긴다. 확정 실패는 `skill/placement-rejected` 하나로 중복 억제한다.
+- v6의 긴 설치 조작 안내도 숨긴다. 월드 미리보기와 범위는 유지한다. `CombatHudAlertLayout`이 기본 슬롯/반원의 실제 화면 높이를 `AlertStripView.SetScreenBottomClearance`에 전달하며, 텍스트 알림과 설명/디스크가 실제로 겹칠 때만 추가 여유를 확보한다. HUD 해제/우주선 방문 때 이 임시 경계를 해제한다.
+- Q/E/SPACE의 쿨타임은 카드 전체 크기의 Filled 이미지와 카드 윤곽 Mask를 사용한다. 입력 피드백은 실제 사용 시도에만 반응하며, 슬롯을 클릭해 선택창을 여는 행동을 스킬 발동으로 표시하지 않는다. SPACE는 실제 Dash 입력 결과를 별도 이벤트로 읽는다.
+- 드롭 영역은 화면 중앙을 기준으로 가로 거리에 따라 양끝으로 옅어진다. 대상 호버 시 장착 예고, 영역 밖에서는 취소 배지를 표시한다. 실제 장착 API가 성공한 뒤에만 디스크 확인 효과와 닫힘을 실행한다. 취소는 기존 장착을 보존한다.
+- `CombatSkillPicker.IsOpen`에는 닫힘 애니메이션이 끝나기 전 구간도 포함된다. 이 동안 기존 전투 입력 제한을 유지한다. ESC는 선택창이 먼저 소비하며 포커스/일시정지 전환은 드래그를 취소한다.
+- `CombatWeaponStack`은 기존 네 버튼 전체의 CanvasGroup 알파와 위치·회전을 갱신한다. 선택 슬롯을 마지막 sibling으로 옮기므로 런타임 자식 순서는 슬롯 번호가 아니다. `PlayerWeaponHud._slots`의 직렬화 순서와 각 `SlotNumber`는 1~4를 유지한다.
+- 대시는 고정 `SPACE`와 Filled 쿨타임으로 표시한다. 남은 초는 표시하지 않는다. `CombatPlayerIndicators`는 기존 owner의 실제 탄약·조준·재장전 상태를 읽으며, XP는 `PlayerExperience.ExperienceGranted` 이벤트에만 반응한다. 저장 복원은 획득 팝업을 발생시키지 않는다.
+
+v6 UI 계층은 Editor에서 제작한다. XP 팝업은 별도 World Space 프리팹 네 인스턴스를 풀링하며 Player HUD 내부 Canvas를 늘리지 않는다. 원본 무기/스킬 이미지와 기존 프리팹 GUID를 보존하고 본문 SDF만 HUD 전용으로 분리했다.
+
+우주선 내부에서는 `IsFieldVisible`이 `false`이며 Canvas/GraphicRaycaster를 숨긴다. actor는 해제하지 않는다. 드래그·선택 설명·월드 XP 팝업도 정리하고, Field 복귀 후 같은 owner의 최신 상태를 다시 표시한다. 판정은 `PlayerMatchPresence.Location`을 읽는 `CombatHudContext`이며 이동 권한이나 위치 원본을 변경하지 않는다.
 
 ## 배치와 편집
 
@@ -19,7 +40,7 @@ Unity에서 씬의 `Player Skill HUD`를 선택하거나 Prefab Mode로 열어
 편집할 때 잠시 켜고 완료 후 다시 끈다. Canvas는 편집 중 켜져 있다.
 실행 시에는 소유자를 연결할 때까지 Canvas와 GraphicRaycaster를 숨긴다.
 
-설치 실패 안내의 빨간색·Bold 설정, 기존 슬롯 위치와 선택창 배치는 유지한다.
+설치 실패 안내의 빨간색·Bold 설정은 유지한다. 슬롯 위치와 선택창은 위 v6 배치가 우선한다.
 상태에 따라 달라지는 슬롯 색상과 회수 안내 위치 오프셋도 각 View의 Inspector에서 편집한다.
 코드는 내용·활성 여부·쿨타임·포인터/대상 위치를 갱신하며 레이아웃과 폰트를 재구성하지 않는다.
 
@@ -116,7 +137,7 @@ Unity Test Runner 실행 및 실제 화면·마우스 조작 확인은 별도로
 
 `PlayerSkillController.IsPlacingTurret`는 현재 설치 미리보기 여부이며,
 `PlacementHint`는 포탑 또는 방벽 안내를 반환한다. `BarrierPlacementHint`는 기존 호출을 위해 유지한다.
-포탑이 설치 불가 위치에 있으면 `TurretPlacementFeedback`의 실패 사유를 빨간 볼드체로 먼저 표시한다.
+포탑의 설치 불가 위치는 월드 미리보기 색으로 표시하고, 실제 확정이 거부되면 `TurretPlacementFeedback`의 실패 사유를 공통 Alert로 표시한다. 미리보기 이동만으로 반복 송출하지 않는다.
 설치 가능 위치에서는 왼쪽 클릭/우클릭/Esc 안내를 표시한다. 미리보기 중 회수 안내는 숨긴다.
 선택창 진입 시 미리보기를 취소하며, 설치 전 취소는 수량과 쿨타임을 사용하지 않는다.
 포인터가 UI 위에 있으면 설치 확정하지 않는다.

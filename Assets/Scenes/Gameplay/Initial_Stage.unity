@@ -947741,6 +947741,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 1835109873277876996, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
+      objectReference: {fileID: 0}
     - target: {fileID: 2540207338376922635, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4294307281

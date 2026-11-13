@@ -1,0 +1,808 @@
+{
+  "assets": [
+    {
+      "id": "panel_surface",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "panel_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "panel_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "panel_edge_selected",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "panel_edge_disabled",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "button_surface",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "button_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "button_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "button_edge_selected",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "button_edge_disabled",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "weapon_surface",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "weapon_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "weapon_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "weapon_edge_selected",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "weapon_edge_disabled",
+      "source": "",
+      "border_lbrt": [
+        16,
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "id": "skill_surface",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "skill_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "skill_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "skill_edge_selected",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "skill_edge_disabled",
+      "source": "",
+      "border_lbrt": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    {
+      "id": "effect_surface",
+      "source": "",
+      "border_lbrt": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "effect_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "effect_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "effect_edge_selected",
+      "source": "",
+      "border_lbrt": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "effect_edge_disabled",
+      "source": "",
+      "border_lbrt": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "meter_track",
+      "source": "",
+      "border_lbrt": [
+        9,
+        12,
+        9,
+        12
+      ]
+    },
+    {
+      "id": "meter_fill",
+      "source": "",
+      "border_lbrt": [
+        5,
+        8,
+        5,
+        8
+      ]
+    },
+    {
+      "id": "boss_track",
+      "source": "",
+      "border_lbrt": [
+        12,
+        8,
+        12,
+        8
+      ]
+    },
+    {
+      "id": "fill_white",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "owner_player",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "owner_cu",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "stat_health",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "stat_power",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "stat_xp",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "ammo_cartridge",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "ammo_empty",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "reload_arrow",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "drag_cancel",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "pin",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "equipped_needle_long",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "tooltip_tail",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "action_confirm",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "action_dash",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "effect_slow",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_0_surface",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_0_mask",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_0_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_0_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_1_surface",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_1_mask",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_1_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_1_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_2_surface",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_2_mask",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_2_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_2_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_3_surface",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_3_mask",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_3_edge_idle",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_wedge_3_edge_hover",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_rail",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "picker_inner_surface",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "drop_global_horizontal_idle",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "drop_global_horizontal_hover",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "label_territory_ko",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "weapon_spanner",
+      "source": "Assets/Art/UI/PlayerWeapons/Spanner.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        8,
+        14,
+        120,
+        49
+      ]
+    },
+    {
+      "id": "weapon_default",
+      "source": "Assets/Art/UI/PlayerWeapons/DefaultGun.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        19,
+        15,
+        112,
+        50
+      ]
+    },
+    {
+      "id": "weapon_cryo",
+      "source": "Assets/Art/UI/PlayerWeapons/CryoBlaster.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        13,
+        8,
+        114,
+        56
+      ]
+    },
+    {
+      "id": "weapon_sniper",
+      "source": "Assets/Art/UI/PlayerWeapons/Sniper.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        10,
+        12,
+        118,
+        51
+      ]
+    },
+    {
+      "id": "skill_bomb",
+      "source": "Assets/Art/Sprites/Player/Skills/TimeBombSprite.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        61,
+        202,
+        1193,
+        1078
+      ]
+    },
+    {
+      "id": "skill_turret_base",
+      "source": "Assets/Art/Sprites/Player/Skills/SupportTurretBaseV2.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        42,
+        46,
+        1212,
+        1192
+      ]
+    },
+    {
+      "id": "skill_turret_head",
+      "source": "Assets/Art/Sprites/Player/Skills/SupportTurretHead.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        181,
+        136,
+        1439,
+        891
+      ]
+    },
+    {
+      "id": "skill_barrier",
+      "source": "Assets/Art/Sprites/Player/Skills/BarrierEmitterSprite.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        245,
+        93,
+        1010,
+        1193
+      ]
+    },
+    {
+      "id": "skill_beacon",
+      "source": "Assets/Art/Sprites/Player/Skills/LureBeaconSprite.png",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "optical_content_bbox": [
+        56,
+        127,
+        1198,
+        1155
+      ]
+    },
+    {
+      "id": "drag_disk_base",
+      "source": "",
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

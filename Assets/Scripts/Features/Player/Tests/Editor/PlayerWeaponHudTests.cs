@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -18,7 +19,7 @@ public sealed class PlayerWeaponHudTests
         Assert.That(hud, Is.Not.Null);
         Assert.That(hud.IsConfigured, Is.True);
         Assert.That(prefab.GetComponentsInChildren<Canvas>(true).Length, Is.EqualTo(1));
-        var slots = hud.GetComponentsInChildren<PlayerWeaponSlotView>(true);
+        var slots = hud.GetComponentsInChildren<PlayerWeaponSlotView>(true).OrderBy(slot => slot.SlotNumber).ToArray();
         Assert.That(slots.Length, Is.EqualTo(4));
         Assert.That(slots[0].Weapon, Is.EqualTo(WeaponType.Spanner));
         Assert.That(slots[1].Weapon, Is.EqualTo(WeaponType.DefaultGun));
@@ -51,14 +52,20 @@ public sealed class PlayerWeaponHudTests
             var attack = player.GetComponent<PlayerAttack>();
             var selection = player.GetComponent<PlayerWeaponSelection>();
             Assert.That(skills.BindHud(skillHud), Is.True);
-            int authoredObjectCount = hudObject.GetComponentsInChildren<Transform>(true).Length;
-            yield return null;
+            // TMP는 새 atlas의 문자가 처음 보일 때 자체 SubMeshUI를 만듭니다. 제작 UI 계층과 구분합니다.
+            var authoredObjects = hudObject.GetComponentsInChildren<Transform>(true)
+                .Where(t => t.GetComponent<TMPro.TMP_SubMeshUI>() == null).ToArray();
+            // 소유자는 LateUpdate에서 연결됩니다. 테스트 코루틴의 재개 시점과 프레임 순서에 의존하지 않습니다.
+            float ownerDeadline = Time.realtimeSinceStartup + 1;
+            while (weaponHud.Owner != selection && Time.realtimeSinceStartup < ownerDeadline) yield return null;
             Assert.That(weaponHud.Owner, Is.EqualTo(selection));
 
-            var slots = weaponHud.GetComponentsInChildren<PlayerWeaponSlotView>(true);
+            // 선택 카드가 앞에 그려지도록 sibling을 옮겨도 슬롯 번호/버튼 계약은 유지합니다.
+            var slots = weaponHud.GetComponentsInChildren<PlayerWeaponSlotView>(true).OrderBy(slot => slot.SlotNumber).ToArray();
             slots[0].GetComponent<Button>().onClick.Invoke();
             Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
-            Assert.That(slots[0].transform.Find("Selected Marker").gameObject.activeSelf, Is.True);
+            var marker = (GameObject)new SerializedObject(slots[0]).FindProperty("_selectedMarker").objectReferenceValue;
+            Assert.That(marker.activeSelf, Is.True);
 
             Assert.That(selection.SelectAdjacentWeapon(-1), Is.True);
             Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
@@ -71,7 +78,7 @@ public sealed class PlayerWeaponHudTests
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             cooldown.SetValue(attack, nextShot);
             Assert.That(selection.TrySelectWeaponSlot(2), Is.True);
-            Assert.That((float)cooldown.GetValue(attack), Is.EqualTo(nextShot));
+            Assert.That(System.Convert.ToDouble(cooldown.GetValue(attack)), Is.EqualTo(nextShot));
 
             var control = player.GetComponent<PlayerControlState>();
             control.SetInputBlocked(true);
@@ -86,6 +93,10 @@ public sealed class PlayerWeaponHudTests
             Time.timeScale = 0;
             Assert.That(selection.TrySelectWeaponSlot(1), Is.False);
             Time.timeScale = previousTimeScale;
+            // 닫히는 반원의 표시/입력 차단이 끝난 뒤 다음 장비 선택을 허용합니다.
+            float closeDeadline = Time.realtimeSinceStartup + 1;
+            while (skillHud.IsOpen && Time.realtimeSinceStartup < closeDeadline) yield return null;
+            Assert.That(skillHud.IsOpen, Is.False);
 
             // Missing equipment is skipped rather than leaving an unusable slot equipped.
             var data = new SerializedObject(selection);
@@ -96,7 +107,10 @@ public sealed class PlayerWeaponHudTests
             Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             yield return null;
             Assert.That(slots[3].GetComponent<Button>().interactable, Is.False);
-            Assert.That(hudObject.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(authoredObjectCount));
+            var currentObjects = hudObject.GetComponentsInChildren<Transform>(true)
+                .Where(t => t.GetComponent<TMPro.TMP_SubMeshUI>() == null).ToArray();
+            CollectionAssert.AreEquivalent(authoredObjects, currentObjects,
+                "Weapon changes must preserve the authored UI objects; only TMP's own font submeshes are excluded.");
 
             skillHud.Unbind();
             yield return null;

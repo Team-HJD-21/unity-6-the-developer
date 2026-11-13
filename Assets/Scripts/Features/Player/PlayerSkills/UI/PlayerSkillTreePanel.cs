@@ -53,8 +53,8 @@ public sealed class PlayerSkillTreePanel : MonoBehaviour
         foreach (var card in _cards)
         {
             bool assigned = card.Skill != PlayerSkillId.None;
-            card.Title.text = assigned ? PlayerSkillDescriptions.Name(card.Skill) : "추가 예정";
-            card.Summary.text = assigned ? PlayerSkillDescriptions.Summary(card.Skill) : "새로운 스킬이 추가될 자리입니다.";
+            card.Title.text = assigned ? PlayerSkillDescriptions.Name(card.Skill) : string.Empty;
+            card.Summary.text = assigned ? PlayerSkillDescriptions.Summary(card.Skill) : string.Empty;
             card.Icon.enabled = assigned && card.Icon.sprite != null;
         }
         foreach (var section in _statusSections) section.SetActive(false);

@@ -10,11 +10,11 @@ public sealed class PlayerDashHud : MonoBehaviour
     [SerializeField] private CanvasGroup _group;
     [SerializeField] private Image _cooldownFill;
     [SerializeField] private TMP_Text _status;
+    [SerializeField] private CombatSkillSlotFeedback _inputFeedback;
     [SerializeField] private Color _readyColor = new(.35f, .95f, 1f);
     [SerializeField] private Color _blockedColor = new(.55f, .63f, .66f);
     private PlayerSkillController _boundPlayer;
     private PlayerDash _dash;
-    private int _displayedTenths = -1;
     public PlayerDash Owner => _dash;
     public bool IsConfigured => _skillHud != null && _group != null && _cooldownFill != null && _status != null;
 
@@ -28,27 +28,26 @@ public sealed class PlayerDashHud : MonoBehaviour
         if (!IsConfigured) return;
         if (_boundPlayer != _skillHud.Owner)
         {
+            if (_dash != null) _dash.DashInputAttempted -= OnDashInput;
             _boundPlayer = _skillHud.Owner;
             _dash = _boundPlayer != null ? _boundPlayer.GetComponent<PlayerDash>() : null;
-            _displayedTenths = -1;
+            if (_dash != null) _dash.DashInputAttempted += OnDashInput;
         }
         bool visible = _dash != null && _dash.isActiveAndEnabled;
         _group.alpha = visible ? 1 : 0;
         if (!visible) return;
         _cooldownFill.fillAmount = _dash.CooldownProgress;
         _status.color = _dash.IsReady ? _readyColor : _blockedColor;
-        int tenths = Mathf.CeilToInt(_dash.CooldownRemaining * 10);
-        if (_displayedTenths != tenths)
-        {
-            _displayedTenths = tenths;
-            _status.text = tenths > 0 ? $"{tenths / 10f:0.0}s" : "SPACE";
-        }
+        // SPACE는 고정 키입니다. 쿨타임은 Filled 이미지로만 나타내며 초 카운트다운을 덧붙이지 않습니다.
+        if (_status.text != "SPACE") _status.text = "SPACE";
     }
 
     private void OnDisable()
     {
+        if (_dash != null) _dash.DashInputAttempted -= OnDashInput;
         _boundPlayer = null;
         _dash = null;
         if (_group != null) _group.alpha = 0;
     }
+    private void OnDashInput(bool accepted) { if (_inputFeedback != null) _inputFeedback.Press(accepted); }
 }

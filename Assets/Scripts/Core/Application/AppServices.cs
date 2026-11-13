@@ -19,6 +19,7 @@ namespace TeamHJD.Game.Application
         public ISceneFlow SceneFlow { get; }
         public InputLockService InputLocks { get; }
         public ScreenManager Screens { get; }
+        public AlertService Alerts { get; }
         public SceneFlowController SceneTransitions { get; }
         public MatchSessionFactory MatchSessions { get; }
         public ICheckpointStore CheckpointStore { get; }
@@ -45,6 +46,7 @@ namespace TeamHJD.Game.Application
             SceneFlow = sceneFlow ?? throw new ArgumentNullException(nameof(sceneFlow));
             InputLocks = new InputLockService();
             Screens = new ScreenManager(InputLocks);
+            Alerts = new AlertService();
             SceneTransitions = new SceneFlowController(SceneFlow, InputLocks);
             MatchSessions = new MatchSessionFactory();
             NetworkSession = networkSession;
@@ -149,6 +151,7 @@ namespace TeamHJD.Game.Application
             List<Exception> errors = null;
             DisposeIfNeeded(SceneTransitions, ref errors);
             DisposeIfNeeded(Screens, ref errors);
+            DisposeIfNeeded(Alerts, ref errors);
             DisposeIfNeeded(_presentationRandom, ref errors);
             var matches = NetworkMatches;
             var transport = _matchTransport;

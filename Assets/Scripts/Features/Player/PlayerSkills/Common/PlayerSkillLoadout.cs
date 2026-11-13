@@ -1,4 +1,4 @@
-// 선택 순서대로 Q/E 슬롯에 스킬을 배정하는 Player Feature의 실행 중 준비 데이터입니다.
+// Q/E 준비 데이터를 소유합니다. 기존 순차 선택과 명시적 슬롯 교체/교환을 함께 제공합니다.
 using System;
 
 public enum PlayerSkillId { None = 0, Bomb = 1, PlayerTurret = 2, EnergyBarrier = 3, LureBeacon = 4 }
@@ -21,6 +21,26 @@ public sealed class PlayerSkillLoadout
         return true;
     }
 
+    /// <summary>0=Q, 1=E. 다른 슬롯의 스킬은 교환하고 새 스킬은 대상만 교체합니다. 같은 슬롯은 변경하지 않습니다.</summary>
+    public bool TryEquip(int slot, PlayerSkillId skill)
+    {
+        if (slot < 0 || slot > 1 || (int)skill < (int)PlayerSkillId.Bomb || (int)skill > (int)PlayerSkillId.LureBeacon) return false;
+        var current = slot == 0 ? Q : E;
+        if (current == skill) return false;
+        if (slot == 0)
+        {
+            if (E == skill) E = current;
+            Q = skill;
+        }
+        else
+        {
+            if (Q == skill) Q = current;
+            E = skill;
+        }
+        Changed?.Invoke();
+        return true;
+    }
+
     public void Clear()
     {
         if (Q == PlayerSkillId.None && E == PlayerSkillId.None) return;
@@ -32,7 +52,7 @@ public sealed class PlayerSkillLoadout
     public void Restore(PlayerSkillId q, PlayerSkillId e)
     {
         if (!Enum.IsDefined(typeof(PlayerSkillId), q) || !Enum.IsDefined(typeof(PlayerSkillId), e) ||
-            (q == PlayerSkillId.None && e != PlayerSkillId.None) || (q != PlayerSkillId.None && q == e))
+            (q != PlayerSkillId.None && q == e))
             throw new ArgumentException("Invalid saved Q/E skill selection.");
         if (Q == q && E == e) return;
         Q = q; E = e; Changed?.Invoke();

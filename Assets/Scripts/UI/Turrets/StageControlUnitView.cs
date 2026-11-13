@@ -40,7 +40,11 @@ public sealed class StageControlUnitView : MonoBehaviour
             !canInteractAtControlUnit ? "Approach the CU to auto activate" : "CU auto activation is ready";
         autoActivationButton.interactable = controller != null && canInteractAtControlUnit && !running && remaining <= 0;
     }
-    public void SetFeedback(string message) { if (feedbackText != null) feedbackText.text = message; }
+    public void SetFeedback(string message)
+    {
+        if (feedbackText != null) feedbackText.text = StageTurretAlertFeedback.IsPending(message) ? message : "";
+        StageTurretAlertFeedback.Show(message);
+    }
     public void RefreshAuthority(TurretControllerPresentationSnapshot controller, RegionGridSnapshot region,
         bool canInteractAtControlUnit, bool pending)
     {

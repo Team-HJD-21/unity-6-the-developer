@@ -63,7 +63,7 @@ public sealed class StageTurretUpgradeView : MonoBehaviour
         _lowPower = FindCompatible(lowPowerUpgrades, turret);
         _highFirepower = FindCompatible(highFirepowerUpgrades, turret);
         ShowBranch(turret, _lowPower, "Low Power", lowPowerText, lowPowerPlus, lowPowerMinus, canInteract);
-        ShowBranch(turret, _highFirepower, "High Firepower", highFirepowerText,
+        ShowBranch(turret, _highFirepower, "Firepower", highFirepowerText,
             highFirepowerPlus, highFirepowerMinus, canInteract);
     }
 
@@ -72,7 +72,7 @@ public sealed class StageTurretUpgradeView : MonoBehaviour
         _lowPower = turret == null ? null : FindCompatible(lowPowerUpgrades, turret.DefinitionId.Value);
         _highFirepower = turret == null ? null : FindCompatible(highFirepowerUpgrades, turret.DefinitionId.Value);
         ShowSnapshotBranch(turret, _lowPower, "Low Power", lowPowerText, lowPowerPlus, lowPowerMinus, canInteract);
-        ShowSnapshotBranch(turret, _highFirepower, "High Firepower", highFirepowerText, highFirepowerPlus, highFirepowerMinus, canInteract);
+        ShowSnapshotBranch(turret, _highFirepower, "Firepower", highFirepowerText, highFirepowerPlus, highFirepowerMinus, canInteract);
     }
     private static FieldTurretUpgradeDefinition FindCompatible(FieldTurretUpgradeDefinition[] definitions, string definitionId)
     {
