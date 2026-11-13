@@ -44,6 +44,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     [Header("편성 선택 규칙")]
     [SerializeField] private SquadSelectionSettings selectionSettings = new();
     public SquadSelectionSettings SelectionSettings => selectionSettings;
+    [SerializeField] private EncounterAdditionalSpawnSettings additionalSpawns = new EncounterAdditionalSpawnSettings();
 
     private NetworkManager _networkManager;
     private EncounterPipeline _pipeline;
@@ -59,6 +60,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     private bool _appOwnedNetwork;
     private EnemyNetworkTestLauncher _standalone;
     private Coroutine _initialEncounterRoutine;
+    private bool _started;
     private bool _initialEncounterPending;
     private bool _matchOwnsProduction;
     private double _initialEncounterDue;
@@ -102,12 +104,18 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
 
     private void Start()
     {
+        _started = true;
+        EnsureStandaloneConnection();
         StartInitialEncounterIfBound();
     }
 
     private void OnEnable()
     {
-        if (_networkManager != null) StartInitialEncounterIfBound();
+        if (_networkManager != null)
+        {
+            if (_started) EnsureStandaloneConnection();
+            StartInitialEncounterIfBound();
+        }
     }
 
     private void OnDisable()
@@ -164,7 +172,11 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
         _initialEncounterPending = !_matchOwnsProduction;
         _initialEncounterDue = GameSeconds + Math.Max(0, initialEncounterDelay);
-        if (_networkManager != null) StartInitialEncounterIfBound();
+        if (_networkManager != null)
+        {
+            if (_started) EnsureStandaloneConnection();
+            StartInitialEncounterIfBound();
+        }
     }
 
     /// <summary>Match 종료 시 자동 요청과 이전 snapshot 조회 경로를 해제합니다.</summary>
@@ -213,6 +225,14 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         if (_snapshotProvider != null) throw new InvalidOperationException("Select the production owner before binding a Match.");
         _matchOwnsProduction = true;
         CancelPendingInitialEncounter();
+    }
+
+    // 독립 시험의 연결 개설과 정규 생산 소유권은 다릅니다. 첫 요청을 꺼도 기존 Host 시험은 유지합니다.
+    private void EnsureStandaloneConnection()
+    {
+        if (!_matchOwnsProduction || _appOwnedNetwork || !autoStartHost || _snapshotProvider == null ||
+            !isActiveAndEnabled || _networkManager == null || _networkManager.IsListening) return;
+        _standalone.StartHost();
     }
 
     private void StartInitialEncounterIfBound()
@@ -473,7 +493,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
             ? _spawnSources.GetSourceCancellation(request.Origin.Source) : _spawnGameplay;
         var context = new EncounterExecutionContext(_boundMatchId, checked(++_requestSequence), snapshot.Revision,
             request.Source, request.PresetId.Value, environment, request.Context.RequestId, request.CauseEventId,
-            placement, _spawnSeed, cancellation, request.Origin);
+            placement, _spawnSeed, cancellation, request.Origin, _captureTrend?.Invoke() ?? default);
         Emit(GameDiagnosticKind.RequestStarted, context,
             message: $"request={request.Context.RequestId:N}, preset={request.PresetId}, " +
                      $"maxCount={request.MaximumEnemyCount}, baseBudget={spawnBudget}");
@@ -487,7 +507,10 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         }
         string result;
         EncounterExecutionSummary summary;
-        bool succeeded = request.UsesAutomaticComposition
+        bool prepared = _pendingSpawns.TryGetValue(request.Context.RequestId, out var pending) && pending.Prepared != null;
+        bool succeeded = prepared
+            ? _pipeline.ExecutePrepared(snapshot, region, pending.Prepared, context, out result, out summary)
+            : request.UsesAutomaticComposition
             ? _pipeline.SpawnRequest(snapshot, region, request.MaximumEnemyCount, selectionSettings,
                 _squadRandom, context, out result, out summary, environmentProfile)
             : _pipeline.SpawnRequest(snapshot, region, request.PresetId.Value, request.MaximumEnemyCount,
@@ -500,6 +523,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         EncounterRequestStatus status = summary.PlannedCount > 0 && summary.SpawnedCount == summary.PlannedCount
             ? EncounterRequestStatus.Spawned : summary.SpawnedCount > 0 ? EncounterRequestStatus.PartialSpawn :
             summary.ResultCode == "UnsupportedDelivery" ? EncounterRequestStatus.UnsupportedDelivery :
+            summary.ResultCode == "UnsupportedOrigin" ? EncounterRequestStatus.UnsupportedOrigin :
             summary.ResultCode == "OriginUnavailable" ? EncounterRequestStatus.OriginUnavailable :
             summary.ResultCode == "PlanRejected" ? EncounterRequestStatus.PlanRejected : EncounterRequestStatus.SpawnFailed;
         return new EncounterRequestResult(request.Context.RequestId, executionSequence, snapshot.Revision,
@@ -515,6 +539,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         _runtimeBudgetSettings.baseBudget = spawnBudget;
         _runtimeBudgetSettings.maximumBudget = maximumSpawnBudget;
         _runtimeBudgetSettings.staticIncreasePerRequest = staticBudgetIncreasePerRequest;
+        _runtimeBudgetSettings.additionalSpawns = additionalSpawns;
         if (_boundMatchId.IsEmpty || _snapshotProvider == null) return;
         if (_pipeline != null && _pipeline.HasExecutor) return;
         if (!ResolveSpawnSetup()) return;
@@ -524,7 +549,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
             if (ReferenceEquals(_pipeline.Executor.SummonRequests, this)) _pipeline.Executor.SummonRequests = null;
         }
         _pipeline = new EncounterPipeline(_boundMatchId, _spawnExecutor, _squadCatalog, _runtimeBudgetSettings,
-            () => regionBinding?.Source?.Snapshot);
+            () => regionBinding?.Source?.Snapshot, this);
         _pipeline.Executor?.SpawnPointList.ResetRegionGroups();
         TryReadRegion(out _, out _);
         if (_pipeline.Executor != null)

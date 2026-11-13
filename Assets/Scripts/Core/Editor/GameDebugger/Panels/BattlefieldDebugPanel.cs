@@ -124,6 +124,8 @@ namespace TeamHJD.Game.Editor
                     EditorGUILayout.LabelField("Match 정규 생산", production.IsRunning ? "RUNNING" : "STOPPED", EditorStyles.boldLabel);
                     EditorGUILayout.LabelField("다음 요청 / 간격", $"{production.RemainingSeconds:F1} / {production.IntervalSeconds:F1} 게임 초");
                     EditorGUILayout.LabelField("요청 회차 / 마지막 결과", $"{production.AttemptedRequests} / {production.LastResult?.Status.ToString() ?? "대기"}");
+                    if (scene.CaptureTrend.HasHistory)
+                        EditorGUILayout.LabelField("관측 기간 / 점유 순변화", $"{scene.CaptureTrend.ObservedSeconds:F0}초 / {scene.CaptureTrend.NetRatio:P1} · 증가 {scene.CaptureTrend.PositiveChanges}회");
                     if (scene.FieldTime != null)
                         EditorGUILayout.LabelField("공용 / Field 시각", $"{scene.MatchTime.ElapsedSeconds:F1} / {scene.FieldTime.ElapsedSeconds:F1}초 · {(scene.FieldTime.Snapshot.IsPaused ? "Field 보류" : "진행")}");
                 }
@@ -162,6 +164,20 @@ namespace TeamHJD.Game.Editor
             }
             EncounterRepeatDebugControls.Draw(this, _encounterSquadOrder, _encounterMaxEnemyCount, target);
             _originControls.Draw(target as IEncounterOriginRequestTarget, ready, _encounterSquadOrder, _encounterMaxEnemyCount);
+            if (target is UnityEngine.Object owner && target is IGameDiagnosticsSource diagnostics && diagnostics.IsServer)
+            {
+                var serialized = new SerializedObject(owner);
+                var policy = serialized.FindProperty("additionalSpawns");
+                if (policy != null)
+                {
+                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    {
+                        EditorGUILayout.PropertyField(policy, new GUIContent("상황 기반 추가 출현 · 현재 Match"), true);
+                        if (serialized.ApplyModifiedPropertiesWithoutUndo())
+                            EditorGUILayout.HelpBox("다음 자동 계획부터 적용됩니다. 이미 예고된 편성·시간은 바꾸지 않습니다.", MessageType.Info);
+                    }
+                }
+            }
         }
 
         private IEncounterDebugCommandTarget FindEncounterCommandTarget()

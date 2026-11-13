@@ -10,6 +10,7 @@ namespace TeamHJD.Game.Application
     public sealed class RegionRuntime : IRegionGridSource, IDisposable
     {
         private RegionGridState _state;
+        internal RegionCaptureHistory CaptureHistory { get; } = new RegionCaptureHistory();
         private bool _isDisposed;
         private bool _isNotifying;
         public event Action<RegionGridSnapshot> Changed;
@@ -49,6 +50,7 @@ namespace TeamHJD.Game.Application
             var next = new RegionGridState(_state.Snapshot.MatchId, Guid.NewGuid(), definition, mode, unlockedRegionIds);
             if (initialCells != null) next.Apply(initialCells, RegionCaptureUpdateMode.Replace);
             _state = next;
+            CaptureHistory.Clear();
             Notify();
         }
 

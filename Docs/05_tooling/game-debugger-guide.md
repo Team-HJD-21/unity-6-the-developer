@@ -220,3 +220,10 @@ APP · GAME FLOW의 시작/출격/귀환은 검은 배경·하단 바의 로딩 
 ### 정규 생산 확인 (2026-11-14)
 
 Stage_1의 정식 Match는 Game Debugger 없이도 자동 생산한다. Encounter 상단의 **Match 정규 생산** 박스에서 다음 요청/간격(게임 초), 요청 회차/마지막 결과, 공용/Field 시각을 확인한다. Statistics의 `MatchProduction` Source가 실제 정규 요청이다. 아래 수동/연속 버튼은 추가 검수 요청이며 자동 생산을 시작하는 버튼이 아니다. 기본값·권한·저장/제약은 [정규 생산 API](../02_architecture/08_encounter/encounter-production-api.md)를 따른다.
+
+
+### 점유 확장과 내부 추가 출현 확인
+
+Encounter 패널의 최근 점유 추세는 Field 기준 관측 시간·순증·확장 횟수다. 정적 확보 한 번, 복원, 첫 CU는 연속 확장이 아니다. additionalSpawnSettings를 열면 다음 자동 계획의 관측/비중/예고/쿨다운을 조절할 수 있다. 원격 예고 연결 전에는1인 Host에서만 내부 정책이 동작한다.
+
+Timeline/Statistics의 `SituationEvent`에서 RequestScheduled는 예고·준비 편성이며 아직 actual0이다. 같은 원인 요청과 World 영역을 확인하고, 이후 RequestCompleted의 계획/실제를 대조한다. 주황 원은 실제 출현 예정 영역을 둘러싼 표시다. 정규 적과 별도 예산을 더한 것이 아니며 중간 보스/Enemy 스킬 소환과 구분한다. JSON·CSV에는 원인 ID와 영역 XY/크기도 포함된다.

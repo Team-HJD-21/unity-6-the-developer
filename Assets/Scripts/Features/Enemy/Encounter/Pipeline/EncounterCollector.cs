@@ -13,7 +13,7 @@ namespace TeamHJD.Game.Enemies.Encounter
 
         public EncounterCollector(EnemySpawnExecutor executor) => _executor = executor;
 
-        public EncounterCollection Collect(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region, double margin)
+        public EncounterCollection Collect(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region, double margin, bool collectInternalAreas = false, double playerDistance = 8)
         {
             if (region == null || region.MatchId != battlefield.MatchId)
                 throw new ArgumentException("Collect the current Match's region snapshot.", nameof(region));
@@ -24,7 +24,8 @@ namespace TeamHJD.Game.Enemies.Encounter
             TargetableComponent[] targets = UnityEngine.Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None)
                 .Where(target => target != null && target.gameObject.scene == scene).ToArray();
             return new EncounterCollection(battlefield, region, points, targets,
-                _executor.CountForMatch(battlefield.MatchId));
+                _executor.CountForMatch(battlefield.MatchId), collectInternalAreas
+                    ? EncounterInternalAreaCollector.Collect(battlefield, region, targets, playerDistance) : null);
         }
     }
 }

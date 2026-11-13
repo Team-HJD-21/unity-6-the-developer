@@ -2,6 +2,7 @@
 // 생성 위치/분대 규칙은 Planner, 실제 NGO 생성은 Scene의 Executor가 담당합니다.
 // 예약은 게임 절대 시각을 기다리며 Match/source 종료에 취소됩니다.
 using System;
+using TeamHJD.Game.Enemies.Encounter;
 using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Application;
@@ -20,6 +21,7 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
     private IEncounterSpawnSourceRegistry _spawnSources;
     private IMatchClock _spawnClock;
     private int? _spawnSeed;
+    private Func<RegionCaptureTrend> _captureTrend;
     private System.Threading.CancellationToken _spawnGameplay;
     private sealed class PendingSpawn
     {
@@ -28,6 +30,9 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
         public Coroutine Routine;
         public double Delay;
         public bool CancellationRecorded;
+        public EncounterDeferredSpawn Prepared;
+        public EncounterWarningView Warning;
+        public Guid GridId;
     }
     private readonly Dictionary<Guid, PendingSpawn> _pendingSpawns = new Dictionary<Guid, PendingSpawn>();
     public int PendingSpawnRequests
@@ -60,6 +65,10 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
     /// Match 게임 시간 기준으로 요청을 예약하고 취소·결과 조회용 핸들을 반환한다.
     /// </summary>
     public bool TryScheduleEncounter(EncounterRequest request, double delayGameSeconds, out EncounterSpawnReservation reservation)
+        => TryScheduleEncounterCore(request, delayGameSeconds, out reservation, null);
+
+    private bool TryScheduleEncounterCore(EncounterRequest request, double delayGameSeconds,
+        out EncounterSpawnReservation reservation, EncounterDeferredSpawn prepared)
     {
         reservation = null;
         if (request == null) throw new ArgumentNullException(nameof(request));
@@ -72,17 +81,27 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
             if (previous.Request.GetPayloadKey() != request.GetPayloadKey() || previous.Delay != delayGameSeconds) return false;
             reservation = previous.Reservation; return true;
         }
+        if (prepared != null && !CanShowInternalWarning) return false;
         if (_pendingSpawns.Count >= 64 || (request.Origin.Kind != SpawnOriginKind.Automatic && _spawnSources.Resolve(request.Origin) == null)) return false;
         double due = _spawnClock.ElapsedSeconds + delayGameSeconds;
         if (double.IsInfinity(due)) throw new ArgumentOutOfRangeException(nameof(delayGameSeconds));
         reservation = new EncounterSpawnReservation(request.Context.RequestId, due);
-        var pending = new PendingSpawn { Request = request, Reservation = reservation, Delay = delayGameSeconds };
+        var pending = new PendingSpawn { Request = request, Reservation = reservation, Delay = delayGameSeconds, Prepared = prepared };
+        if (prepared != null)
+        {
+            pending.GridId = regionBinding.Source.Snapshot.GridId;
+            pending.Warning = EncounterWarningView.Create(_warningSprite, prepared.Instruction.Placement.Area,
+                _spawnClock, ExecutionTarget.gameObject.scene);
+        }
         _pendingSpawns.Add(request.Context.RequestId, pending);
-        Emit(GameDiagnosticKind.RequestScheduled, ReservationContext(request), message: $"Pending until Match game time {due:F2}s; not an alive enemy.");
+        Emit(GameDiagnosticKind.RequestScheduled, ReservationContext(request),
+            planned: prepared == null ? 0 : request.MaximumEnemyCount, spawnDecision: CapturePreparedDecision(pending),
+            message: prepared == null ? $"Pending until Field game time {due:F2}s; not an alive enemy."
+                : $"내부 추가 출현 예고 → Field {due:F2}s / {prepared.Reason}. 아직 생존 적에 포함하지 않습니다.");
         if (!reservation.IsPending)
-        { RecordReservationCancellation(pending); _pendingSpawns.Remove(request.Context.RequestId); return true; }
+        { RecordReservationCancellation(pending); ReleaseWarning(pending); _pendingSpawns.Remove(request.Context.RequestId); return true; }
         try { pending.Routine = StartCoroutine(RunScheduledEncounter(pending)); }
-        catch { _pendingSpawns.Remove(request.Context.RequestId); reservation.Cancel("Failed to start the Feature wait."); throw; }
+        catch { _pendingSpawns.Remove(request.Context.RequestId); ReleaseWarning(pending); reservation.Cancel("Failed to start the Feature wait."); throw; }
         return true;
     }
     /// <summary>
@@ -96,13 +115,18 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
             try
             {
                 while (pending.Reservation.IsPending && _spawnClock != null && (!FieldCanAdvance || _spawnClock.ElapsedSeconds < pending.Reservation.DueGameSeconds))
+                {
+                    if (pending.Prepared != null && regionBinding?.Source?.Snapshot.GridId != pending.GridId)
+                        pending.Reservation.Cancel("Region Grid changed during the warning.");
                     yield return null;
+                }
                 if (pending.Reservation.IsPending)
                     pending.Reservation.Complete(Submit(pending.Request, _authorityIssuer));
             }
             finally
             {
                 RecordReservationCancellation(pending);
+                ReleaseWarning(pending);
                 if (_pendingSpawns.TryGetValue(pending.Request.Context.RequestId, out var current) && ReferenceEquals(current, pending))
                     _pendingSpawns.Remove(pending.Request.Context.RequestId);
             }
@@ -114,6 +138,7 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
             pending.Reservation.Cancel("Match spawn scope released.");
             RecordReservationCancellation(pending);
             if (pending.Routine != null) StopCoroutine(pending.Routine);
+            ReleaseWarning(pending);
         }
         _pendingSpawns.Clear();
     }
@@ -125,13 +150,13 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
     }
     /// <summary>Core가 BindMatch 전에 source registry·공용 시계·seed·종료 토큰을 연결합니다.</summary>
     public void BindSpawnContext(MatchId match, IEncounterSpawnSourceRegistry sources, IMatchClock clock, int seed,
-        System.Threading.CancellationToken gameplay)
+        System.Threading.CancellationToken gameplay, Func<RegionCaptureTrend> captureTrend = null)
     {
         if (match.IsEmpty || !_spawnContextMatch.IsEmpty || _snapshotProvider != null || gameplay.IsCancellationRequested)
             throw new InvalidOperationException("Bind one active Match spawn scope before the consumer.");
         _spawnSources = sources ?? throw new ArgumentNullException(nameof(sources));
         _spawnClock = clock ?? throw new ArgumentNullException(nameof(clock));
-        _spawnContextMatch = match; _spawnSeed = seed; _spawnGameplay = gameplay;
+        _spawnContextMatch = match; _spawnSeed = seed; _spawnGameplay = gameplay; _captureTrend = captureTrend;
     }
     /// <summary>
     /// 해당 Match의 지연 요청과 source·시계 연결을 해제한다.
@@ -140,7 +165,7 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
     {
         if (_spawnContextMatch != match) return;
         CancelScheduledEncounters();
-        _spawnContextMatch = default; _spawnSources = null; _spawnClock = null; _spawnSeed = null; _spawnGameplay = default;
+        _spawnContextMatch = default; _spawnSources = null; _spawnClock = null; _spawnSeed = null; _spawnGameplay = default; _captureTrend = null;
     }
     private bool FieldCanAdvance => _spawnClock is not IMatchTime time ||
         (time.IsAvailable && !time.Snapshot.IsPaused && time.Snapshot.Rate > 0);
@@ -148,12 +173,12 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
     /// <summary>
     /// 씬에서 지정한 실행기와 환경 설정을 현재 연결부의 제작 참조로 사용한다.
     /// </summary>
-    public void ConfigureScene(EnemySpawnExecutor executor, EncounterEnvironmentProfile profile)
+    public void ConfigureScene(EnemySpawnExecutor executor, EncounterEnvironmentProfile profile, Sprite warningSprite = null)
     {
         if (_snapshotProvider != null) throw new InvalidOperationException("Configure the Enemy Scene before binding a Match.");
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         if (_pipeline?.Executor != null) _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-        _pipeline = null; _sceneExecutor = executor; _spawnExecutor = executor; environmentProfile = profile;
+        _pipeline = null; _sceneExecutor = executor; _spawnExecutor = executor; environmentProfile = profile; _warningSprite = warningSprite;
         regionBinding = null;
         foreach (var root in executor.gameObject.scene.GetRootGameObjects())
         {

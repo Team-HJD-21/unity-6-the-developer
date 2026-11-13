@@ -14,9 +14,10 @@ namespace TeamHJD.Game.Enemies.Encounter
         public string Policy { get; }
         public string EnvironmentPolicy { get; }
         public double PlanningMilliseconds { get; }
+        public EncounterDeferredSpawn Deferred { get; }
 
         public EncounterPlan(BattlefieldSpatialSnapshot battlefield, IReadOnlyList<SpawnInstruction> instructions,
-            IReadOnlyList<SpawnDecisionSnapshot.Candidate> candidates, string policy, string environmentPolicy, double milliseconds)
+            IReadOnlyList<SpawnDecisionSnapshot.Candidate> candidates, string policy, string environmentPolicy, double milliseconds, EncounterDeferredSpawn deferred = null)
         {
             Battlefield = battlefield;
             Instructions = instructions;
@@ -24,6 +25,7 @@ namespace TeamHJD.Game.Enemies.Encounter
             Policy = policy;
             EnvironmentPolicy = environmentPolicy;
             PlanningMilliseconds = milliseconds;
+            Deferred = deferred;
         }
     }
 }

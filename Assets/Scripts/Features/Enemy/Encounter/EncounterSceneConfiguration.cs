@@ -10,6 +10,7 @@ public sealed class EncounterSceneConfiguration : MonoBehaviour, IEncounterScene
 {
     [SerializeField] private EnemySpawnExecutor spawnExecutor;
     [SerializeField] private EncounterEnvironmentProfile environmentProfile;
+    [SerializeField] private Sprite additionalSpawnWarning;
     public EnemySpawnExecutor SpawnExecutor => spawnExecutor;
     /// <summary>
     /// 현재 씬의 제작 참조를 이를 소비할 수 있는 Encounter 연결부에 전달한다.
@@ -20,6 +21,6 @@ public sealed class EncounterSceneConfiguration : MonoBehaviour, IEncounterScene
             throw new InvalidOperationException("Assign one active Enemy executor owned by this Scene.");
         if (!(consumer is EncounterSceneBinding launcher))
             throw new ArgumentException("The current Enemy consumer does not support this configuration.", nameof(consumer));
-        launcher.ConfigureScene(spawnExecutor, environmentProfile);
+        launcher.ConfigureScene(spawnExecutor, environmentProfile, additionalSpawnWarning);
     }
 }

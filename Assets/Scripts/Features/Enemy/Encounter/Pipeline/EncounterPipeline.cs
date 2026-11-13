@@ -16,8 +16,11 @@ namespace TeamHJD.Game.Enemies.Encounter
         private readonly EncounterProcessor _processor = new EncounterProcessor();
         private readonly EncounterPlanner _planner;
         private readonly EncounterExecutorStep _execution;
+        private static readonly Unity.Profiling.ProfilerMarker CollectMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Encounter.Collect");
         private static readonly Unity.Profiling.ProfilerMarker PlanMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Encounter.Plan");
         private double _capturedSpawnMargin;
+        private readonly IEncounterDeferredSpawnSink _deferred;
+        private readonly EncounterBudgetSettings _settings;
 
         public bool HasCatalog => _planner.HasCatalog;
         public bool HasExecutor => _executor != null;
@@ -34,15 +37,24 @@ namespace TeamHJD.Game.Enemies.Encounter
             }
         }
         internal int CapturedBudget => _planner.CapturedBudget;
+        internal double AdditionalCooldownRemaining(double now) => _planner.AdditionalCooldownRemaining(now);
+        internal void RestoreAdditionalCooldown(double now, double remaining, Guid epoch, Guid grid)
+            => _planner.RestoreAdditionalCooldown(now, remaining, epoch, grid);
         internal void RestoreBudget(int budget) => _planner.RestoreBudget(budget);
         internal SpawnDistributionHistory.State CaptureCheckpoint() => _planner.CaptureCheckpoint();
         internal void RestoreCheckpoint(SpawnDistributionHistory.State state, MatchId match) => _planner.RestoreCheckpoint(state, match);
 
         public EncounterPipeline(MatchId matchId, EnemySpawnExecutor executor, EnemySquadPresetCatalog squads,
             EncounterBudgetSettings settings, Func<RegionGridSnapshot> currentRegion = null)
+            : this(matchId, executor, squads, settings, currentRegion, null) { }
+
+        internal EncounterPipeline(MatchId matchId, EnemySpawnExecutor executor, EnemySquadPresetCatalog squads,
+            EncounterBudgetSettings settings, Func<RegionGridSnapshot> currentRegion, IEncounterDeferredSpawnSink deferred)
         {
             if (matchId.IsEmpty) throw new ArgumentException("A Match ID is required.", nameof(matchId));
             _matchId = matchId;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _deferred = deferred;
             _executor = executor != null ? executor : throw new ArgumentNullException(nameof(executor));
             _collector = new EncounterCollector(executor);
             _planner = new EncounterPlanner(matchId, squads, executor.Catalog, settings);
@@ -65,6 +77,27 @@ namespace TeamHJD.Game.Enemies.Encounter
                 new SquadSelectionSettings { logSelectionDecisions = logBudgetDecisions }, null,
                 context, environmentProfile, out result, out summary);
 
+        internal bool ExecutePrepared(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
+            EncounterDeferredSpawn deferred, EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
+        {
+            summary = new EncounterExecutionSummary(0, 0, "Rejected");
+            result = "Prepared Encounter Match/authority is unavailable.";
+            if (!CanExecute || battlefield == null || battlefield.MatchId != _matchId || region == null ||
+                region.MatchId != _matchId || deferred == null || context.SpawnCancellation.IsCancellationRequested) return false;
+            if (_planner.Cost(deferred.Instruction) != deferred.Cost)
+            {
+                result = "Prepared composition cost changed after its warning.";
+                summary = new EncounterExecutionSummary(0, 0, "PlanRejected");
+                return false;
+            }
+            var collected = _collector.Collect(battlefield, region, CapturedSpawnMargin);
+            var plan = new EncounterPlan(battlefield, new[] { deferred.Instruction }, Array.Empty<SpawnDecisionSnapshot.Candidate>(),
+                "공통 예산 내부 출현 / " + deferred.Reason, "prepared", 0);
+            IReadOnlyList<SpawnDecisionSnapshot.Actual> actuals = Array.Empty<SpawnDecisionSnapshot.Actual>();
+            try { return _execution.Execute(collected, plan, context, CapturedSpawnMargin, out result, out summary, out actuals); }
+            finally { _planner.RecordExecuted(battlefield, actuals); }
+        }
+
         private bool Run(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region, string preset, int maximum,
             SquadSelectionSettings settings, IRandomSource random, EncounterExecutionContext context,
             EncounterEnvironmentProfile environmentProfile, out string result, out EncounterExecutionSummary summary)
@@ -83,6 +116,12 @@ namespace TeamHJD.Game.Enemies.Encounter
                 summary = new EncounterExecutionSummary(0, 0, "OriginUnavailable");
                 return false;
             }
+            if (preset == null && context.Placement != null)
+            {
+                result = "Automatic composition currently requires automatic origins; explicit areas require a fixed or prepared composition.";
+                summary = new EncounterExecutionSummary(0, 0, "UnsupportedOrigin");
+                return false;
+            }
             if (context.Placement != null && context.Placement.Origin.Delivery != SpawnDeliveryMode.Immediate)
             {
                 result = "The requested delivery requires an Enemy delivery adapter.";
@@ -90,13 +129,18 @@ namespace TeamHJD.Game.Enemies.Encounter
                 return false;
             }
 
-            EncounterCollection collected = _collector.Collect(battlefield, region, CapturedSpawnMargin);
+            bool canDefer = preset == null && _deferred?.CanShowWarning == true;
+            bool collectInternal = canDefer && _planner.ShouldCollectAdditional(region, context.CaptureTrend);
+            EncounterCollection collected;
+            using (CollectMarker.Auto())
+                collected = _collector.Collect(battlefield, region, CapturedSpawnMargin,
+                    collectInternal, _settings.additionalSpawns?.minimumPlayerDistance ?? 8);
             EncounterSituation situation = _processor.Process(collected);
             EncounterPlan plan;
             bool planned;
             using (PlanMarker.Auto())
                 planned = _planner.TryPlan(situation, preset, maximum, settings, random, context,
-                    environmentProfile, out plan, out result);
+                    environmentProfile, out plan, out result, canDefer);
             if (!planned)
             {
                 summary = new EncounterExecutionSummary(0, 0, "PlanRejected", plan == null ? null :
@@ -107,7 +151,21 @@ namespace TeamHJD.Game.Enemies.Encounter
             }
 
             IReadOnlyList<SpawnDecisionSnapshot.Actual> actuals = Array.Empty<SpawnDecisionSnapshot.Actual>();
-            try { return _execution.Execute(collected, plan, context, CapturedSpawnMargin, out result, out summary, out actuals); }
+            try
+            {
+                bool spawned = _execution.Execute(collected, plan, context, CapturedSpawnMargin, out result, out summary, out actuals);
+                if (plan.Deferred != null)
+                {
+                    bool queued = spawned && _deferred.TrySchedulePrepared(plan.Deferred, context);
+                    if (queued)
+                    {
+                        _planner.RecordAdditionalQueued(context, region);
+                        result += " / 추가 출현 예고: " + plan.Deferred.Reason;
+                    }
+                    else result += " / 내부 추가 출현은 예약되지 않았습니다. 자동 재생성하지 않습니다.";
+                }
+                return spawned;
+            }
             finally { _planner.RecordExecuted(battlefield, actuals); }
         }
     }

@@ -17,18 +17,19 @@ namespace TeamHJD.Game.Contracts
         public EncounterSpawnPlacement Placement { get; }
         public EncounterSpawnOrigin Origin { get; }
         public int? MatchSeed { get; }
+        public RegionCaptureTrend CaptureTrend { get; }
         public CancellationToken SpawnCancellation { get; }
         public EncounterExecutionContext(MatchId matchId, long requestId, long revision, EncounterRequestSource source, string squadOrder = "",
             MatchEnvironmentSnapshot environment = null, Guid requestGuid = default, Guid causeEventId = default,
             EncounterSpawnPlacement placement = null, int? matchSeed = null, CancellationToken spawnCancellation = default,
-            EncounterSpawnOrigin origin = null)
+            EncounterSpawnOrigin origin = null, RegionCaptureTrend captureTrend = default)
         {
             if (environment != null && environment.MatchId != matchId)
                 throw new System.ArgumentException("Environment must belong to the execution Match.", nameof(environment));
             MatchId = matchId; RequestId = requestId; Revision = revision; Source = source; SquadOrder = squadOrder; Environment = environment;
             RequestGuid = requestGuid; CauseEventId = causeEventId; Placement = placement;
             Origin = origin ?? placement?.Origin ?? EncounterSpawnOrigin.Automatic;
-            MatchSeed = matchSeed; SpawnCancellation = spawnCancellation;
+            MatchSeed = matchSeed; SpawnCancellation = spawnCancellation; CaptureTrend = captureTrend;
         }
     }
 }

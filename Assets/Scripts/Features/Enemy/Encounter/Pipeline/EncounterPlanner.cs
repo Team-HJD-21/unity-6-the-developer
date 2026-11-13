@@ -15,6 +15,8 @@ namespace TeamHJD.Game.Enemies.Encounter
         private readonly MatchId _matchId;
         private readonly EncounterBudgetSettings _budgetSettings;
         private readonly SpawnCompositionPlanner _composition;
+        private readonly EncounterAdditionalSpawnPolicy _additional = new EncounterAdditionalSpawnPolicy();
+        private readonly EnemyCatalog _enemies;
         private bool _budgetInitialized;
         private int _currentBudget;
         public bool HasCatalog => _composition.HasCatalog;
@@ -35,12 +37,13 @@ namespace TeamHJD.Game.Enemies.Encounter
             _matchId = matchId;
             _budgetSettings = settings ?? throw new ArgumentNullException(nameof(settings));
             _composition = new SpawnCompositionPlanner(squads, enemies);
+            _enemies = enemies;
         }
 
         /// <summary>Pipeline 전용 계획 Step입니다. 예산 결정 뒤 기존 분배·선택 정책이 명령을 구성합니다.</summary>
         internal bool TryPlan(EncounterSituation situation, string fixedPreset, int maximumCount,
             SquadSelectionSettings settings, IRandomSource random, EncounterExecutionContext context,
-            EncounterEnvironmentProfile environmentProfile, out EncounterPlan plan, out string reason)
+            EncounterEnvironmentProfile environmentProfile, out EncounterPlan plan, out string reason, bool allowDeferred = false)
         {
             var collection = situation.Collection;
             var snapshot = collection.Battlefield;
@@ -71,13 +74,41 @@ namespace TeamHJD.Game.Enemies.Encounter
                     : _composition.TryPlanOrigin(request, collection.Points, snapshot, context.Environment,
                         environmentProfile, context.Placement, out instructions);
             }
+            EncounterDeferredSpawn deferred = null;
+            if (planned && automatic && allowDeferred)
+            {
+                deferred = _additional.Select(instructions, collection.InternalAreas, collection.Region, context.CaptureTrend,
+                    _budgetSettings.additionalSpawns, budget, Cost, out var regular, out string additionalReason);
+                instructions = regular;
+                policy += " / " + additionalReason;
+            }
             timer.Stop();
             var observations = situation.ExcludedPoints.Concat(_composition.LastCandidates)
                 .GroupBy(candidate => candidate.Id, StringComparer.Ordinal).Select(group => group.First()).ToArray();
             plan = new EncounterPlan(snapshot, instructions, observations, policy,
-                _composition.LastEnvironmentPolicy, timer.Elapsed.TotalMilliseconds);
+                _composition.LastEnvironmentPolicy, timer.Elapsed.TotalMilliseconds, deferred);
             reason = planned ? null : "No spawn plan satisfies eligible regions, spatial limits, composition and budget.";
             return planned;
+        }
+
+        internal bool ShouldCollectAdditional(RegionGridSnapshot region, RegionCaptureTrend trend)
+            => _additional.CanPlan(region, trend, _budgetSettings.additionalSpawns, out _);
+        internal double AdditionalCooldownRemaining(double now) => _additional.Remaining(now);
+        internal void RestoreAdditionalCooldown(double now, double remaining, Guid epoch, Guid grid)
+            => _additional.Restore(now, remaining, epoch, grid);
+        internal void RecordAdditionalQueued(EncounterExecutionContext context, RegionGridSnapshot region)
+            => _additional.RecordQueued(context.CaptureTrend, region, _budgetSettings.additionalSpawns.cooldownSeconds);
+
+        internal int Cost(SpawnInstruction instruction)
+        {
+            long total = 0;
+            foreach (var entry in instruction.Enemies)
+            {
+                if (_enemies == null || !_enemies.TryGetDefinition(entry.EnemyId, out var definition) || definition.SpawnCost < 1) return 0;
+                total += (long)definition.SpawnCost * entry.Count;
+                if (total > int.MaxValue) return int.MaxValue;
+            }
+            return (int)total;
         }
 
         public bool TryDetermineBudget(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,

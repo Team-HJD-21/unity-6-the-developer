@@ -158,3 +158,15 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 뒤늦은 시각 Snapshot anchor 보완을 Play 종료 전에 적용한 절차 오류가 있었다. 즉시 Stop/clean Edit Mode로 복귀했고 최종 소스의 Field시각5/rollback1과 실제 정규 생산/Field 보류를 다시 검증했다. 앞선 기록은 삭제하지 않았다.
 
 이 범위에는 기존 Enemy 이동/공격/스탯/실제 프리셋 재설계가 없다. `EncounterSceneBinding`·환경 profile·자동 Planner·checkpoint 연결만 바뀌며 Core가 생성 타이밍을 소유한다. 실제 날씨별 편성 데이터가 없으면 기존대로 neutral이다. 공통 예산을 나누는 상황 기반 추가 출현·예고·점유 추세, 원격 Client Field 보류, 33/66/100 사건/보스는 아직 후속 범위다. B4 전체/Stage1 전체 완료로 읽지 않는다.
+
+
+## B4b — 점유 추세와 공통 예산 내 예고 출현
+
+- RegionRuntime 옆의 RegionCaptureHistory가 최근120 Field초/최대64 변경 표본만 보관한다. 첫 CU/복원/Grid·Epoch 변경은 성장이 아니며 단일 정적 구역 증가 한 번으로는 추가 출현하지 않는다.
+- Collector→Processor→Planner의 기존 정상 편성을 만든 뒤, 정책이 허용하면 이미 선택된 완성 편성 하나를 총예산의 최대50% 내에서 점유 내부로 옮긴다. 새 예산·난수 재편성·추가 적 복제는 없다. 기본 순증15%/변경2회/관측30초/쿨다운90초/예고3초/Player거리8은 Inspector에서 조절한다.
+- 실제 점유 외곽 근처의 비어 있는 점유 셀 안 NavMesh 영역을 고른다. 기존 RangeCircleSmooth Sprite로 주황 월드 예고를 그리며 GameAlerts도 한 번 보고한다. 원격 예고 전송이 없어 현재 1인 Host만 이 정책을 사용하며 멀티에서는 일반 계획을 유지한다.
+- 준비 편성은 Source SituationEvent·원인 요청 ID·영역·비용을 잠근 채 공통 요청 서비스로 제출한다. 실행 시 Host/취소/현재 배치·동일 비용을 다시 검사한다. Field 보류 동안 deadline/표시가 멈추며 Grid 교체·Match 종료에는 제거한다. 자동 편성에 명시 World origin을 넘기는 조합은 조용히 무시하지 않고 UnsupportedOrigin으로 거절한다.
+- world/encounter v3에 추가 정책 남은 쿨다운·준비 편성/영역·원인·예고를 넣었고 v1/v2 읽기를 유지했다. 복원은 새 요청 ID로 하나의 예약만 만들며 Alert는 재생하지 않는다. 전체 저장의 weather writer 누락을 우회하지 않았다.
+
+
+자동 검사19개 통과. 실제 Stage_1에서 권위 점유를30→70셀로 두 번 주입한 경계 시험으로 일반6 + 예고3을 확인했다. 예고 중 개별 checkpoint apply/rollback은 생존15·대기1·예산25를 유지했고, Field 재개 뒤 Source SituationEvent 계획3/실제3·생존18·대기0·예산25로 끝났다. 자연 전체 스테이지 플레이나 Weather 포함 전체 저장의 성공을 의미하지 않는다. Scene View 주황 예고를 native PNG로 확인했고 정상 Stop 뒤 새 오류0·컴파일 정상이다.

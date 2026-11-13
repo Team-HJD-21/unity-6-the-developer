@@ -40,7 +40,7 @@ Core의 단계 소유자는 `MatchTimeService.SetFieldHeld(bool)`로 기존 Fiel
 
 자동 편성도 `EncounterEnvironmentProfile`을 읽는다. 기존 `budgetScale`은 이름과 달리 **마릿수 상한의 배율**이며 비용 예산을 추가로 곱하지 않는다. `presetOverride`가 있으면 그 편성 안에서 비용·수량·수용량을 검사한다. 일치 규칙/프로필이 없으면 중립이다. 이 연결만으로 실제 날씨별 가중치나 새로운 편성 데이터를 만들지는 않는다.
 
-- `world/encounter` v2: 기존 실제 생성 분산 이력 + 현재 예산 증가 단계 + 대기 요청의 자동/고정 편성 구분. v1은 읽되 예산 상태는 미초기화로 이관한다.
+- `world/encounter` v3: 실제 생성 분산 이력·현재 예산 증가 단계·대기 요청의 자동/고정 편성 구분에 추가 출현 쿨다운·준비 편성/비용/영역·원인·예고를 저장한다. v1/v2 읽기를 유지하며 v1 예산은 미초기화로 이관한다.
 - `world/encounter-production` v1: 다음 요청까지 남은 Field 게임 초와 요청 회차. 복원 후 새 실행 세대에 하나의 예약을 등록한다.
 - `world/field-time` v1: Field 경과 시각과 보류 상태. actor·예약보다 먼저 적용하며, 실패 rollback도 Field 시각을 먼저 원복한다.
 
@@ -50,6 +50,19 @@ Core의 단계 소유자는 `MatchTimeService.SetFieldHeld(bool)`로 기존 Fiel
 
 `Tools → TeamHJD → Game Debugger`의 Encounter 패널에 Match 정규 생산 상태, 다음 요청/간격, 회차/마지막 결과, 공용/Field 시각을 표시한다. Statistics/요청 표의 `MatchProduction` 계획/실제 수량을 함께 확인한다. Debugger 버튼은 추가 수동 요청이며 정규 생산의 시작 버튼이 아니다.
 
-이번 단계는 **지속 생산·자동 환경 조건·Field 시각과 저장 경계**를 연결했다. 확장 추세에 따른 공통 예산 내 추가 출현/내부 예고, 33·66·100% 사건과 실제 Boss 콘텐츠 연결은 후속 배치이며 완료로 표시하지 않는다.
+이번 단계는 **지속 생산·자동 환경 조건·Field 시각·공통 예산 내 추가 출현과 저장 경계**를 연결했다. 33·66·100% 사건과 실제 Boss 콘텐츠 연결은 후속 배치다.
 
 검사 조건과 실제 관측은 [통합 실행 기록](../../01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 따른다.
+
+
+## 점유 확장에 따른 추가 출현
+
+`RegionRuntime`이 소유한 최근120 Field초/최대64개 변경 이력을 Collector에 전달한다. 첫 CU·복원·Grid 교체는 성장 사건이 아니며 기본으로 순증15%·확장2회·관측30초를 만족해야 한다. 단 한 번의 정적 구역 확보로 반복 출현하지 않는다.
+
+Planner의 마지막 정책이 이미 편성된 완성 분대 하나를 **같은 총예산의 최대50% 내에서** 점유 내부 영역으로 옮긴다. 나머지 정상 편성을 최소 하나 유지한다. 비용을 새로 더하거나 Enemy 스킬 소환의 편성을 바꾸지 않는다. 영역은 점유 외곽 인접 셀·NavMesh·빈 Player/Turret 셀·Player 거리8을 검사한다. 후보가 없으면 정상 계획을 유지한다.
+
+`EncounterSceneBinding` Inspector의 additionalSpawnSettings에서 순증·관측·비중·90초 쿨다운·3초 예고를 조절한다. 현재 예약의 잠긴 편성을 재선정하지 않으며 다음 자동 요청부터 적용한다. 실행 환경 Snapshot은 새로 읽되 Enemy 종류/수량·비용은 예고한 그대로다.
+
+점유 내부에는 기존 주황 원 Sprite를 그린다. 예고는 Source `SituationEvent`와 부모 요청 ID로 Statistics/Timeline에 기록되며, 예정 수량은 실제 생성·생존으로 세지 않는다. Field 보류/복원은 남은 대기를 보존하고 Grid 교체/종료는 예약과 표시를 제거한다. 재개 후 공통 요청 서비스→Executor가 최신 권한/배치를 확인한다. 자동 편성에 명시 origin을 붙이는 조합은 `UnsupportedOrigin`이며 고정 또는 준비 편성을 사용한다.
+
+**현재 원격 예고 전송이 없어 내부 추가 출현은1인 Host만 지원한다.** 멀티에서는 예고 없는 내부 생성을 하지 않고 일반 계획을 유지한다. Ground/Air 연출도 별도 adapter 없이는 Unsupported다.

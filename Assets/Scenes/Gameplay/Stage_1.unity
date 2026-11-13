@@ -1124143,6 +1124143,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
   spawnExecutor: {fileID: 1836352305}
   environmentProfile: {fileID: 0}
+  additionalSpawnWarning: {fileID: 1912597012450007017, guid: 238fc1c055e54191a1c4e522e27a22a8, type: 3}
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0

@@ -8,4 +8,5 @@ public sealed class EncounterBudgetSettings
     [Min(1)] public int baseBudget = 20;
     [Min(1)] public int maximumBudget = 100;
     [Min(1)] public int staticIncreasePerRequest = 5;
+    public EncounterAdditionalSpawnSettings additionalSpawns = new EncounterAdditionalSpawnSettings();
 }

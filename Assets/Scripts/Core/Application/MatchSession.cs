@@ -87,6 +87,15 @@ namespace TeamHJD.Game.Application
             return _regions;
         }
 
+        /// <summary>공간 갱신/Encounter 수집이 호출합니다. 현재 점유를 변경하지 않고 최근 변화만 읽습니다.</summary>
+        public RegionCaptureTrend ObserveRegionCapture(Guid epoch, double fieldSeconds)
+        {
+            ThrowIfDisposed();
+            if (_regions == null) return default;
+            return _regions.CaptureHistory.Observe(_regions.Snapshot, epoch, fieldSeconds);
+        }
+        public RegionCaptureTrend CaptureTrend => _regions?.CaptureHistory.Current ?? default;
+
         public RegionUpdateStatus UpdateRegionCapture(RegionGridSnapshot basis, IEnumerable<int> cells,
             RegionCaptureUpdateMode updateMode)
         {
