@@ -8,24 +8,26 @@
 PolygonCollider2D를 미리 배치한다. 지면과 닿는 하단 받침을 기준으로 작성했으며, 위로 솟은
 기둥·안테나 전체를 이동 장애물로 사용하지 않는다. Prefab Mode에서 Edit Collider로 조정한다.
 
-본체는 `PlayerFeetBox`·`Enemy` 레이어를 포함하고 나머지를 제외한다. 탄환 피격용 `PlayerHitBox`와
+본체는 `PlayerFeetBox`·`EnemyFeetBox` 레이어를 포함하고 나머지를 제외한다. 탄환 피격용 `PlayerHitBox`와
 장비 본체의 물리 충돌은 별개다. 새 탄환 피해 API는 추가하지 않는다.
 
 방벽의 `_blocker`는 프리팹 루트에 미리 배치한 BoxCollider2D다. 초기화에서는 두 설치점 사이의
-길이·폭을 적용하고 활성화한다. 기존처럼 Enemy만 막으며 플레이어와 아군 탄환은 통과한다.
+길이·폭을 적용하고 활성화한다. `EnemyFeetBox`만 막으며 플레이어와 아군 탄환은 통과한다.
 본체 콜라이더와 막 콜라이더를 실행 중 AddComponent로 생성하지 않는다.
 
 2026-11-03: 플레이어 탄환의 경로 Cast와 Trigger 적중 판정에서도 `PlayerFieldDevice.IsBarrierMembrane`
 으로 연결 장벽만 제외한다. 물리 접촉 제외 설정만으로는 명시적인 Cast가 장벽을 장애물로
 판정하는 것을 막지 못하므로 별도로 구분한다. 양끝 본체에 대한 기존 탄환 적중·이펙트는 유지한다.
-플레이어 포탑 탄환은 기존 설치물 통과 조건을 사용하고, 맵 포탑 탄환은 장벽의 Enemy 전용
+플레이어 포탑 탄환은 기존 설치물 통과 조건을 사용하고, 맵 포탑 탄환은 장벽의 `EnemyFeetBox` 전용
 접촉 설정으로 통과한다. 몬스터 경로 차단과 방벽 체력·수명은 변경하지 않는다.
 
 2026-10-28에는 `bomb.prefab`에도 본체 하단의 PolygonCollider2D와 동일한 초기 탈출 처리를
-추가했다. 시한폭탄 본체도 `PlayerFeetBox`·`Enemy`만 막으며 Rigidbody2D는 Static으로 고정한다.
+추가했다. 시한폭탄 본체도 `PlayerFeetBox`·`EnemyFeetBox`만 막으며 Rigidbody2D는 Static으로 고정한다.
 `PlayerBombExplosion`은 점화 시 본체 충돌을 켜고 초기 겹침을 처리하며, 폭발하는 순간
 Collider와 탈출 처리 컴포넌트를 끈다. 0.8초 폭발 연출이 남아 있어도 본체는 길을 막지 않는다.
 폭발 피해 반경 9, 점화 시간 2.1초와 피해량은 기존 값을 유지한다.
+설치형 터렛 본체도 `PlayerFeetBox`와 `EnemyFeetBox`를 막는다. `PlayerTurretHealth.Awake()`에서
+프리팹의 `_blockingLayers`를 Collider에 적용한다.
 
 2026-10-29에는 폭탄 프리팹에 SortingGroup과 `PlayerDeviceSortingOrder`를 미리 배치했다.
 설치 시 `PlayerBombExplosion.BindOwner`로 설치자를 연결해 방벽·비콘과 같은 발밑 기준으로

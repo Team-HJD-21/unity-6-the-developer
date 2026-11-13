@@ -118,7 +118,7 @@ public sealed class PlayerTurretPlacementTests
     }
 
     [TestCase("Bullet")]
-    [TestCase("EmenyBullet")]
+    [TestCase("EnemyProjectile")]
     [TestCase("PlayerHitBox")]
     public void ProjectileAndHitBoxLayersDoNotBlockPlacement(string layer)
     {
@@ -279,7 +279,7 @@ public sealed class PlayerTurretPlacementTests
         turret.GetComponent<PlayerTurret>().enabled = false;
         int deviceLayer = LayerMask.NameToLayer("PlayerFieldDevice");
         int playerLayer = LayerMask.NameToLayer("PlayerFeetBox");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int enemyLayer = LayerMask.NameToLayer("EnemyFeetBox");
         bool ignoredPlayer = Physics2D.GetIgnoreLayerCollision(deviceLayer, playerLayer);
         bool ignoredEnemy = Physics2D.GetIgnoreLayerCollision(deviceLayer, enemyLayer);
         try

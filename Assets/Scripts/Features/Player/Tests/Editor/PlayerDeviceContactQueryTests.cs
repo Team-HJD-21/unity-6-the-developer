@@ -108,7 +108,7 @@ public sealed class PlayerDeviceContactQueryTests
         Assert.That(behaviour.Step(body.transform, body, _barrier, 1, .4f, 5, 1, 1.1f, .1f, out _, out _), Is.True);
         Assert.That(_barrier.Health, Is.EqualTo(290));
         _barrier.TakeDamage(290);
-        Assert.That(_barrier == null, Is.True);
+        Assert.That(_barrier.IsAlive, Is.False);
         Assert.That(PlayerFieldDeviceRegistry.ResolveTarget(_origin + Vector3.left, _origin + Vector3.right * 5), Is.Null);
     }
 
@@ -126,7 +126,7 @@ public sealed class PlayerDeviceContactQueryTests
     {
         var actor = new GameObject("Enemy Body", typeof(Rigidbody2D), typeof(BoxCollider2D));
         _objects.Add(actor);
-        actor.layer = LayerMask.NameToLayer("Enemy");
+        actor.layer = LayerMask.NameToLayer("EnemyFeetBox");
         actor.transform.position = position;
         actor.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
         var body = actor.GetComponent<BoxCollider2D>();

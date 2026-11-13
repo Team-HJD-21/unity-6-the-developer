@@ -104,7 +104,7 @@ public static class PlayerTurretPlacementRules
     }
 
     private static bool IsBulletLayer(int layer) => layer == LayerMask.NameToLayer("Bullet")
-        || layer == LayerMask.NameToLayer("EmenyBullet") || layer == LayerMask.NameToLayer("PlayerHitBox");
+        || layer == LayerMask.NameToLayer("EnemyProjectile") || layer == LayerMask.NameToLayer("PlayerHitBox");
 
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 }

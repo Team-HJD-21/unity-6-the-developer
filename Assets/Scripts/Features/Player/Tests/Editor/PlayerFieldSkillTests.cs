@@ -60,7 +60,8 @@ public sealed class PlayerFieldSkillTests
     [TestCase("PlayerFeetBox", true)]
     [TestCase("Bullet", true)]
     [TestCase("PlayerHitBox", true)]
-    [TestCase("Enemy", false)]
+    [TestCase("EnemyHitBox", true)]
+    [TestCase("EnemyFeetBox", false)]
     public void Collision_OnlyBlocksEnemies(string layerName, bool passes)
     {
         int layer = LayerMask.NameToLayer(layerName);

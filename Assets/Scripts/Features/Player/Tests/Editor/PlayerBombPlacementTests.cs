@@ -79,7 +79,7 @@ public sealed class PlayerBombPlacementTests
     }
 
     [TestCase("Bullet")]
-    [TestCase("EmenyBullet")]
+    [TestCase("EnemyProjectile")]
     [TestCase("PlayerHitBox")]
     public void ProjectilesAndHitBoxes_DoNotBlockPlacement(string layer)
     {

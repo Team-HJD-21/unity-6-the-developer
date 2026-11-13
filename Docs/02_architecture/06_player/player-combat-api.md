@@ -95,10 +95,10 @@ Player 프리팹에서 몸 충돌과 탄환 피격을 각각 8방향으로 분�
 
 ```
 Player
-├─ Body Colliders              (Player 레이어)
+├─ Body Colliders              (PlayerFeetBox 레이어)
 │  └─ Down / Right / Up / Left / DownRight / UpRight / UpLeft / DownLeft
 │                             CapsuleCollider2D
-└─ PlayerBulletCollider        (PlayerBulletCollider 레이어)
+└─ PlayerBulletCollider        (PlayerHitBox 레이어)
    └─ Down / Right / Up / Left / DownRight / UpRight / UpLeft / DownLeft
                               PolygonCollider2D, Trigger
 ```
@@ -116,8 +116,8 @@ Player
 모양을 사용하므로 공격·이동 프레임마다 피격 외곽을 바꾸는 시스템은 아니다.
 
 기존 UpDown의 Collider fileID는 Down에 유지했다. 콜라이더들은 자식이지만 기존 Player
-Rigidbody를 공유한다. 탄환용 셋은 Trigger이며 Enemy 레이어를 제외하고, 몸 충돌 셋은 일반
-Collider다. Sprite Pivot·총구·질량·Rigidbody 설정은 이번 변경에서 수정하지 않는다.
+Rigidbody를 공유한다. 적 탄환(`EnemyProjectile`)은 Trigger인 `PlayerHitBox`에 닿고, 몬스터 발(`EnemyFeetBox`)은
+일반 Collider인 `PlayerFeetBox`와 접촉한다. Sprite Pivot·총구·질량·Rigidbody 설정은 이번 변경에서 수정하지 않는다.
 
 조정은 Play Mode 밖에서 Player.prefab을 열어 해당 자식을 선택하고 Transform 위치,
 Collider Offset/Size 또는 Edit Collider를 사용한다. Down 외의 Collider는 기본 비활성이지만

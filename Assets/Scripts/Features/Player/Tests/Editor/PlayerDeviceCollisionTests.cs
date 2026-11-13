@@ -1,9 +1,12 @@
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 
 public sealed class PlayerDeviceCollisionTests
 {
@@ -27,7 +30,7 @@ public sealed class PlayerDeviceCollisionTests
         _device = Object.Instantiate(Prefab(name));
         var bodies = _device.GetComponentsInChildren<PolygonCollider2D>();
         Assert.That(bodies.Length, Is.EqualTo(expectedBodies));
-        int allowed = LayerMask.GetMask("PlayerFeetBox", "Enemy");
+        int allowed = LayerMask.GetMask("PlayerFeetBox", "EnemyFeetBox");
         foreach (var body in bodies)
         {
             Assert.That(body.enabled, Is.True);
@@ -39,16 +42,73 @@ public sealed class PlayerDeviceCollisionTests
         }
     }
 
+
+    [UnityTest]
+    public IEnumerator InstalledDevice_BlocksEnemyFeet([Values("EnergyBarrier", "LureBeacon", "bomb", "PlayerTurret")] string name)
+    {
+        yield return new EnterPlayMode();
+        var scene = SceneManager.CreateScene("Device collision test", new CreateSceneParameters(LocalPhysicsMode.Physics2D));
+        GameObject enemy = null;
+        try
+        {
+            _device = Object.Instantiate(Prefab(name));
+            SceneManager.MoveGameObjectToScene(_device, scene);
+            if (_device.TryGetComponent(out PlayerFieldDevice field))
+            {
+                if (name == "EnergyBarrier")
+                    field.Initialize(PlayerFieldDeviceKind.Barrier, Vector3.left * 4f, Vector3.right * 4f, .3f, 300f, 8f);
+                else
+                    field.Initialize(PlayerFieldDeviceKind.Beacon, Vector3.zero, Vector3.zero, .3f, 80f, 8f);
+            }
+            else if (_device.TryGetComponent(out PlayerTurret turret))
+                turret.enabled = false;
+
+            enemy = new GameObject("Enemy Feet");
+            SceneManager.MoveGameObjectToScene(enemy, scene);
+            enemy.layer = LayerMask.NameToLayer("EnemyFeetBox");
+            var feet = enemy.AddComponent<BoxCollider2D>();
+            feet.size = Vector2.one * .2f;
+            var body = enemy.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+            var blocker = name == "EnergyBarrier" ? _device.GetComponent<BoxCollider2D>() :
+                _device.GetComponentsInChildren<Collider2D>().Single(c => c.enabled && !c.isTrigger);
+            Assert.That(blocker.enabled, Is.True);
+            Vector2 center = blocker.bounds.center;
+            body.position = center + Vector2.down * (blocker.bounds.extents.y + .5f);
+            Physics2D.SyncTransforms();
+            var physics = scene.GetPhysicsScene2D();
+            for (int step = 0; step < 25; step++)
+            {
+                body.linearVelocity = Vector2.up * 4f;
+                physics.Simulate(.02f);
+            }
+
+            Assert.That(feet.IsTouching(blocker), Is.True, name);
+            Assert.That(body.position.y, Is.LessThan(center.y), name);
+        }
+        finally
+        {
+            if (enemy != null) Object.DestroyImmediate(enemy);
+            if (_device != null) Object.DestroyImmediate(_device);
+            SceneManager.UnloadSceneAsync(scene);
+        }
+        yield return new ExitPlayMode();
+    }
+
     [Test]
     public void InitialOverlap_AllowsExitAcrossFacingChangeThenRestoresCollision()
     {
         _player = Object.Instantiate(Prefab("Player"), _origin + Vector3.up * .8f, Quaternion.identity);
         var selector = _player.GetComponent<PlayerDirectionalColliders>();
         selector.SetFacing(PlayerAimFacing.Down);
-        _device = Object.Instantiate(Prefab("LureBeacon"));
+        _device = Object.Instantiate(Prefab("LureBeacon"), _origin, Quaternion.identity);
         var field = _device.GetComponent<PlayerFieldDevice>();
-        field.Initialize(PlayerFieldDeviceKind.Beacon, _origin, _origin, .3f, 80f, 8f, 12f);
         var body = _device.GetComponentInChildren<PolygonCollider2D>();
+        Physics2D.SyncTransforms();
+        _player.transform.position += body.bounds.center - ActiveBody().bounds.center;
+        field.Initialize(PlayerFieldDeviceKind.Beacon, _origin, _origin, .3f, 80f, 8f, 12f);
         var passage = _device.GetComponent<PlayerDeviceBodyCollision>();
         Assert.That(Physics2D.GetIgnoreCollision(body, ActiveBody()), Is.True);
 

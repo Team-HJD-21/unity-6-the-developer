@@ -175,10 +175,10 @@ PolygonCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 262272
+    m_Bits: 17039360
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 4294705023
+    m_Bits: 4277927935
   m_LayerOverridePriority: 10
   m_ForceSendLayers:
     serializedVersion: 2

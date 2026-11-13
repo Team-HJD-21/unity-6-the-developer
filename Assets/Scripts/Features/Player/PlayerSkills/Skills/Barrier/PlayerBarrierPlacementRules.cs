@@ -13,7 +13,7 @@ public static class PlayerBarrierPlacementRules
             if (hit == null || hit.isTrigger || hit.gameObject.scene != player.scene) continue;
             int layer = hit.gameObject.layer;
             if (layer == LayerMask.NameToLayer("Bullet") || layer == LayerMask.NameToLayer("PlayerHitBox") ||
-                layer == LayerMask.NameToLayer("EmenyBullet")) continue;
+                layer == LayerMask.NameToLayer("EnemyProjectile")) continue;
             if (layer == LayerMask.NameToLayer("PlayerFeetBox") || layer == LayerMask.NameToLayer("Enemy") ||
                 hit.GetComponentInParent<PlayerInputHandler>() != null || hit.GetComponentInParent<EnemyHealth>() != null ||
                 hit.GetComponentInParent<PlayerTurret>() != null ||
