@@ -423,7 +423,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0191edb22369f47af920068be5075bfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceshipExit
-  returnSceneName: Stage1
+  returnSceneName: Assets/Scenes/Gameplay/Stage_1.unity
   originName: SpaceShipGrayBox
   returnTriggerName: exit
   returnPadding: 0.5
@@ -15331,7 +15331,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0191edb22369f47af920068be5075bfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceshipExit
-  returnSceneName: Initial_Stage
+  returnSceneName: Assets/Scenes/Gameplay/Stage_1.unity
   originName: SpaceShipGrayBox
   returnTriggerName: exit
   returnPadding: 0.5

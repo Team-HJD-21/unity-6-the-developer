@@ -12,7 +12,8 @@ namespace TeamHJD.Game.Presentation
 {
     public sealed class AppScreenPresenter : IDisposable
     {
-        public const string StageScene = "Assets/Scenes/Gameplay/Initial_Stage.unity";
+        /// <summary>출격·재시작이 공통으로 사용하는 실제 Stage 1의 Build Settings 경로입니다.</summary>
+        public const string StageScene = "Assets/Scenes/Gameplay/Stage_1.unity";
         public const string HubScene = "Assets/Scenes/Spaceship/SpaceShipGrayBox.unity";
         private readonly ScreenManager _screens;
         private readonly SceneFlowController _scenes;
