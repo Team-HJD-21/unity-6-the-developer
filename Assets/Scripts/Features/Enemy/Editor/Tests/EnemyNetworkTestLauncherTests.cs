@@ -6,7 +6,9 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using Unity.Netcode;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 /// <summary>
@@ -137,6 +139,122 @@ public sealed class EnemyNetworkTestLauncherTests
         {
             Object.DestroyImmediate(squads);
             Object.DestroyImmediate(enemies);
+        }
+    }
+
+    [Test]
+    public void RegionGroups_InitializeWhenCurrentMatchRegionBecomesAvailable()
+    {
+        var scene = EditorSceneManager.NewPreviewScene();
+        SceneManager.MoveGameObjectToScene(_root, scene);
+        var enemies = ScriptableObject.CreateInstance<EnemyCatalog>();
+        var squads = ScriptableObject.CreateInstance<EnemySquadPresetCatalog>();
+        var match = new MatchId("region-groups");
+        try
+        {
+            _root.AddComponent<NetworkObject>();
+            var executor = _root.AddComponent<EnemySpawnExecutor>();
+            _root.AddComponent<SpawnPoint>();
+            typeof(EnemySpawnExecutor).GetField("enemyList", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(executor, enemies);
+            Set("_spawnExecutor", executor);
+            Set("_squadCatalog", squads);
+            _launcher.UseAppNetworkOwnership();
+            _launcher.BindAuthorityMatch(match, new PlayerId("test"), () => null);
+
+            var registry = executor.SpawnPointList;
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.False);
+            var definition = new RegionGridDefinition(BattlefieldGridConfiguration.Default,
+                Enumerable.Repeat(7, BattlefieldGridConfiguration.Default.TotalCellCount));
+            var source = BindRegion(RegionGridSnapshot.FromCapturedCells(new MatchId("other"),
+                Guid.NewGuid(), 0, RegionPolicyMode.Static, definition, Array.Empty<int>()));
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Static, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.True);
+
+            // 같은 Match에서 등록 목록이 바뀌어도 그룹과 차단 상태를 유지한다.
+            var addedObject = new GameObject("Added spawn point");
+            SceneManager.MoveGameObjectToScene(addedObject, scene);
+            var addedPoint = addedObject.AddComponent<SpawnPoint>();
+            Assert.That(executor.SpawnPointList, Is.SameAs(registry));
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(registry.GetRegionGroups().Single().SpawnPoints.Count, Is.EqualTo(2));
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+            Assert.That(ReadRegion(out _, out _), Is.True);
+
+            Assert.That(registry.SetRegionSpawnEnabled(7, true), Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            Object.DestroyImmediate(_root.GetComponent<SpawnPoint>());
+            Assert.That(executor.SpawnPointList.GetRegionGroups().Single().SpawnPoints.Count, Is.EqualTo(1));
+
+            // 마지막 지점이 사라져도 Region의 차단 설정을 보존한다.
+            registry.SetRegionSpawnEnabled(7, false);
+            Object.DestroyImmediate(addedPoint);
+            Assert.That(executor.SpawnPointList.GetRegionGroups(), Is.Empty);
+            addedPoint = addedObject.AddComponent<SpawnPoint>();
+            Assert.That(executor.SpawnPointList.GetRegionGroups().Count, Is.EqualTo(1));
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            // 새 Match에서는 이전 Region 제한을 넘기지 않는다.
+            _launcher.UnbindMatch(match);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.False);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            match = new MatchId("next-region-groups");
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Static, definition, Array.Empty<int>());
+            _launcher.BindAuthorityMatch(match, new PlayerId("test"), () => null);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+
+            // Region 허용은 개별 지점에 설정된 차단을 덮어쓰지 않는다.
+            addedPoint.SetEnemySpawnEnabled(false);
+            registry.SetRegionSpawnEnabled(7, false);
+            registry.SetRegionSpawnEnabled(7, true);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+            registry.ResetRegionGroups();
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            // Dynamic 전환은 Region 제한만 해제하고 개별 지점의 차단은 보존한다.
+            var disabledObject = new GameObject("Individually disabled point");
+            SceneManager.MoveGameObjectToScene(disabledObject, scene);
+            var disabledPoint = disabledObject.AddComponent<SpawnPoint>();
+            disabledPoint.SetEnemySpawnEnabled(false);
+            addedPoint.SetEnemySpawnEnabled(true);
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.SetRegionSpawnEnabled(7, false), Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(new MatchId("other"),
+                Guid.NewGuid(), 0, RegionPolicyMode.Dynamic, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Dynamic, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.False);
+            Assert.That(registry.GetRegionGroups(), Is.Empty);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            Assert.That(disabledPoint.CanSpawnEnemies, Is.False);
+
+            source.Snapshot = RegionGridSnapshot.FromCapturedCells(match, Guid.NewGuid(), 0,
+                RegionPolicyMode.Static, definition, Array.Empty<int>());
+            Assert.That(ReadRegion(out _, out _), Is.True);
+            Assert.That(registry.IsRegionGroupsInitialized, Is.True);
+            Assert.That(addedPoint.CanSpawnEnemies, Is.True);
+            Assert.That(disabledPoint.CanSpawnEnemies, Is.False);
+        }
+        finally
+        {
+            _launcher.UnbindMatch(match);
+            Object.DestroyImmediate(squads);
+            Object.DestroyImmediate(enemies);
+            EditorSceneManager.ClosePreviewScene(scene);
         }
     }
 
