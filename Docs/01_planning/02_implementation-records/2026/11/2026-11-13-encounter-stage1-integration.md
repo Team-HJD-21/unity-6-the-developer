@@ -76,3 +76,9 @@ Stage1의 초기 고정 편성은 생성됐지만 자동 편성은 난수 미주
 - 반복 Play 검사 중 `MatchDayNightCycle.OnEnable → MayAdvance → _mayWrite()`에서 NullReferenceException을 확인했습니다. `_bound/_authority`만 남고 시계·판정 delegate가 없는 부분 바인딩을 다시 사용하려던 경로입니다. 스크립트 재로드가 가능한 Editor에서 런타임 소유권 플래그가 직렬화되지 않도록 표시하고, OnEnable에서 불완전한 연결을 해제합니다.
 - 현재 연결이 완성되기 전에는 `MayAdvance`와 남은 시간 조회가 null 참조를 사용하지 않습니다. 기존 정상 Host/Client 시계·정지·배속·Weather 전환 규칙은 변경하지 않았습니다. 김진태 담당 Weather 선택/효과 본체는 수정하지 않았습니다.
 - `DayNightReplicaTests`8/8을 확인했습니다. 새 회귀 검사는 불완전한 소유권 상태→OnEnable→새 Match 재바인딩을 검사합니다. EditMode에서는 MonoBehaviour의 Player 콜백을 명시 호출합니다. 앞선 실패/이전 DLL 결과와 실제 최신 통과 기록은 로컬 실행 기록에 구분해 보존했습니다. 수정 후 실제 Stage1 재진입과 낮밤 진행도 확인했습니다.
+
+## 개발 검증용 피해 보호
+
+- `DebugDamageProtection`은 선택한 Player/CU에 런타임에 붙이는 표식입니다. `FieldSimulationTime.CanReceiveDamage`를 거치는 두 체력 원본만 보호하며 이동·공격·시간은 계속 진행됩니다. 일반 Release에서는 보호가 동작하지 않습니다. Scene/Prefab이나 체크포인트에 추가하지 않았습니다.
+- PlayerInfo와 ControlUnitHealth의 피해 직전 검사만 공용 함수로 연결했습니다. 피해량·회복·사망 규칙은 유지합니다. 기본 상태에서는 기존대로 피해를 받고, 검증 중 명시적으로 표식을 붙였을 때만 무적입니다.
+- 범위/자식/비보호 대상/시뮬레이션 진행 검사1/1, 실제 Stage1에서 PlayerHP400→400·Player/CU ApplyDamage=false를 확인했습니다. 보호 없는 첫 장시간 검사에서는 실제 Player 사망도 확인했으며, 보호한 결과를 정상 난이도·승패 검증으로 보고하지 않습니다. Game Debugger의 명시 토글은 지역 통합 변경에 함께 추가합니다.

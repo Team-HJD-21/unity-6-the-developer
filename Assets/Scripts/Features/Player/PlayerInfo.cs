@@ -74,7 +74,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     /// <summary>서버 전투가 터렛과 동일한 피해 계약으로 호출합니다. Client 원본 변경은 거부합니다.</summary>
     public bool ApplyDamage(int damage)
     {
-        if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanAdvance(this)) return false;
+        if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanReceiveDamage(this)) return false;
         curHp = (int)Math.Max(0L, (long)curHp - damage);
         if (curHp <= 0) Die();
         return true;

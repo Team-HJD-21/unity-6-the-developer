@@ -74,3 +74,9 @@ Game Debugger의 **Overview → 필드 시간 · Host 기준**에서 공용 시�
 ## 우주선 이동과 필드 공격의 구분
 
 PlayerMovement는 PlayerControlState의 조작 권한과 스킬 선택 UI 잠금을 따르고, PlayerSkillController.CanUse의 필드 공격 조건으로 이동을 잠그지 않는다. 우주선 안에서는 필드 공격이 금지되고 공용 필드 시계가 정지하더라도 내부 이동은 계속 가능하다. PlayerInfo의 사망 잠금도 UI 잠금과 분리해, 이후 생존 상태를 복원할 때 열린 메뉴의 잠금을 지우지 않게 했다. 실제 PlayMode의 내부 이동·공격 금지·UI 잠금·사망 정지 회귀 1/1을 통과했다 (B2-HubNavigation/results.xml, Unity 종료0).
+
+## 통합 검사 중 피해 보호
+
+개발 중 장시간 관측이 필요하면 Player/CU의 런타임 객체에 `DebugDamageProtection`을 붙입니다. `FieldSimulationTime.CanReceiveDamage(owner)`는 공용 시간의 정지 상태와 이 표식을 확인합니다. 현재 연결된 원본은 `PlayerInfo.ApplyDamage`와 `ControlUnitHealth.ApplyDamage`입니다. Enemy 체력에 자동 적용되는 전역 무적 옵션은 아닙니다.
+
+표식은 이동·공격·시계를 정지시키지 않습니다. 비활성화/제거하면 정상 피해로 돌아가며 일반 Release에서는 무효입니다. Scene/Prefab에 저장하지 말고, 보호 사용 여부를 계측 기록에 남기세요. 보호한 결과로 정상 전투·패배·난이도 통과를 주장하지 않습니다.
