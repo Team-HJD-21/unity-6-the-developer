@@ -14,7 +14,7 @@ namespace TeamHJD.Game.Editor
         private static AppRoot _app;
         private static string _checkpointSlot = "manual";
         private static string _checkpointMessage;
-        private static string _mission = "Assets/Scenes/Gameplay/Initial_Stage.unity";
+        private static string _mission = "Assets/Scenes/Gameplay/Stage_1.unity";
         public static void Draw()
         {
             using var box = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
@@ -25,6 +25,10 @@ namespace TeamHJD.Game.Editor
                 return;
             }
             if (_app == null) _app = UnityEngine.Object.FindAnyObjectByType<AppRoot>();
+            if (_app != null && _app.LastMissionRecoveryError != null)
+                EditorGUILayout.HelpBox(_app.LastMissionRecoveryError, MessageType.Error);
+            if (_app != null && _app.CanRetryMissionRecovery && GUILayout.Button("Mission 복귀 입장 재시도 · 추가 차감 없음"))
+                Run(() => _app.RetryPendingMissionRecoveryAsync());
             var flow = _app == null ? null : _app.GameFlow;
             if (flow == null)
             {

@@ -59,7 +59,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             }
             required.Add("world/field-time");
             participants.Add(new FieldTimeCheckpointParticipant(_matchTime.FieldClock));
-            participants.Add(new CampaignCheckpointParticipant(app.CampaignSlot));
+            participants.Add(new CampaignCheckpointParticipant(app.CampaignSlot, _recoveryLedger.RunId));
             participants.Add(session.CreateRandomCheckpointParticipant());
             participants.Add(new MatchSpatialCheckpointParticipant(session, _regionBinding.RestoreCheckpoint));
             var runtime = new MatchCheckpointRuntime(session, _matchTime,
@@ -75,7 +75,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     Debug.LogException(error, this);
                     if (!app.TryEndMatch(match))
                         throw new InvalidOperationException("The faulted Match could not be released.", error);
-                });
+                }, () => Recovery?.IsRecoveryPending != true);
             _checkpointScope = app.CreateCheckpointScope(runtime, participants, required);
         }
 
@@ -90,6 +90,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var leases = new List<IDisposable> { _fieldScope.RegisterActor(player, actor) };
             try
             {
+                leases.Add(RegisterRescueActor(player, actor, false));
                 if (_checkpointScope != null)
                     foreach (var writer in actor.GetComponentsInChildren<MonoBehaviour>(true).OfType<ICheckpointParticipant>())
                         leases.Add(_checkpointScope.Register(writer));
@@ -111,6 +112,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             (_environmentScope as MatchEnvironmentSceneScope)?.PublishCurrent();
             _nextBattlefieldSampleTime = 0;
             PublishGrowthRestoreWarnings();
+            Recovery?.OnWorldRestored();
         }
 
         private void ReleaseCheckpoints()

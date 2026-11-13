@@ -21,6 +21,7 @@ namespace TeamHJD.Game.Application
         private bool _waiting, _disposed, _failed;
         public event Action<Guid, bool, string> Failure;
         public event Action<PlayerId, PlayerId> Rescued;
+        public string LastRescueFailure { get; private set; }
         public bool IsRecoveryPending => _failed;
         public bool IsReady => !_disposed && !_failed && _available() && !_ledger.IsEnded && _actors.Count == _roster.Count;
         public int RegisteredPlayers => _actors.Count;
@@ -118,7 +119,13 @@ namespace TeamHJD.Game.Application
                     continue;
                 }
                 if (now - hold.Started < _holdSeconds) continue;
-                if (!_actors[hold.Target].TryRevive(_healthRatio)) continue;
+                if (!_actors[hold.Target].TryRevive(_healthRatio))
+                {
+                    LastRescueFailure = "ActorRejectedRevive";
+                    _holds.Remove(pair.Key);
+                    continue;
+                }
+                LastRescueFailure = null;
                 _holds.Remove(pair.Key);
                 _ledger.FlushChanges();
                 Rescued?.Invoke(pair.Key, hold.Target);
@@ -145,10 +152,26 @@ namespace TeamHJD.Game.Application
             Failure?.Invoke(failure, allowed, reason);
         }
 
+        /// <summary>새 Scene이 같은 실행의 미완료 복귀를 인수할 때만 호출합니다. 추가 차감/실패 이벤트는 없습니다.</summary>
+        public void AdoptPendingRecovery(Guid failure)
+        {
+            if (_disposed || failure == Guid.Empty || _ledger.PendingFailure != failure)
+                throw new InvalidOperationException("No matching pending recovery exists.");
+            _failed = true;
+            OnWorldRestored();
+        }
+        /// <summary>시간/actor 복원 뒤 옛 입력 채널만 버립니다. 구조 잔여와 안전장치는 변경하지 않습니다.</summary>
+        public void OnWorldRestored()
+        {
+            _holds.Clear(); _waiting = false; _lastTime = _clock.ElapsedSeconds;
+        }
         /// <summary>실제 월드 복귀 성공 뒤에만 호출합니다. 기술 실패에는 같은 차감을 유지합니다.</summary>
         public void CompleteRecovery(Guid failure)
         {
             if (_disposed || !_failed || !_available()) throw new InvalidOperationException("No current recovery is pending.");
+            foreach (var player in _roster)
+                if (!Read(player, out var actor) || !actor.IsAlive)
+                    throw new InvalidOperationException("Every actual participant must be alive after recovery.");
             _ledger.CompleteRecovery(failure);
             _failed = false; _waiting = false; _lastTime = _clock.ElapsedSeconds;
             _holds.Clear();
@@ -156,7 +179,6 @@ namespace TeamHJD.Game.Application
         public void Dispose()
         {
             if (_disposed) return;
-            if (_waiting) _ledger.FlushChanges();
             _disposed = true;
             _holds.Clear(); _actors.Clear(); Failure = null; Rescued = null;
         }

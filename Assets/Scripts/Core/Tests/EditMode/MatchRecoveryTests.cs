@@ -104,5 +104,34 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(ledger.RescueSeconds, Is.EqualTo(20));
             clock.Now = 30; recovery.Pump(); Assert.That(recovery.IsRecoveryPending, Is.True); Assert.That(ledger.SafetyUses, Is.EqualTo(1));
         }
+
+        [Test]
+        public void ReplacementSceneAdoptsOnePendingFailureAndRejectsADeadRestoredActor()
+        {
+            var ledger = new MissionRecoveryLedger(); var failure = Guid.NewGuid();
+            ledger.SpendRescueTime(15); ledger.TryBeginFailure(failure);
+            var clock = new Clock(); var player = new Actor { Alive = false };
+            using var recovery = Create(ledger, clock, A); recovery.Register(A, player);
+            recovery.AdoptPendingRecovery(failure);
+            Assert.Throws<InvalidOperationException>(() => recovery.CompleteRecovery(failure));
+            Assert.That(ledger.PendingFailure, Is.EqualTo(failure));
+            Assert.That(ledger.SafetyUses, Is.EqualTo(1));
+            player.Alive = true; recovery.CompleteRecovery(failure);
+            Assert.That(ledger.RescueSeconds, Is.EqualTo(45));
+            Assert.That(ledger.SafetyUses, Is.EqualTo(1));
+            Assert.That(ledger.PendingFailure, Is.EqualTo(Guid.Empty));
+        }
+
+        [Test]
+        public void DisposalDoesNotCaptureAWaitingLedgerAfterFeatureAuthorityClosed()
+        {
+            var ledger = new MissionRecoveryLedger(); var clock = new Clock();
+            var recovery = Create(ledger, clock, A, B);
+            recovery.Register(A, new Actor()); recovery.Register(B, new Actor { Alive = false });
+            recovery.Pump(); clock.Now = 1; recovery.Pump();
+            int captures = 0; ledger.CriticalChanged += () => captures++;
+            recovery.Dispose();
+            Assert.That(captures, Is.Zero, "Scene/App must Flush before closing authority, not from Dispose callbacks.");
+        }
     }
 }

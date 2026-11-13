@@ -96,6 +96,7 @@ namespace TeamHJD.Game.Application
                 throw new InvalidOperationException("Launch a mission from the spaceship.");
             if (missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
                 throw new ArgumentException("Choose a gameplay Scene for the mission.", nameof(missionScene));
+            _host.PrepareMission(MissionEntryKind.NewMission);
             return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation);
         }
 
@@ -105,6 +106,7 @@ namespace TeamHJD.Game.Application
             RequireAvailable();
             if (Phase == GameFlowPhase.Startup || missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
                 throw new InvalidOperationException("Resume a gameplay Scene after startup initialization.");
+            _host.PrepareMission(MissionEntryKind.Resume);
             return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation);
         }
 
@@ -123,7 +125,19 @@ namespace TeamHJD.Game.Application
             RequireAvailable();
             if (Phase != GameFlowPhase.Mission)
                 throw new InvalidOperationException("Restart the current ready mission.");
+            _host.PrepareMission(MissionEntryKind.NewMission);
             return TravelAsync(CurrentSceneKey, GameFlowPhase.Mission, cancellation);
+        }
+
+        /// <summary>안전장치/기술 재시도 조율부가 같은 Mission 실행을 이어갑니다. 명시 새 게임과 달리 자원을 초기화하지 않습니다.</summary>
+        public Task RetryMissionAsync(string missionScene, CancellationToken cancellation = default)
+        {
+            RequireAvailable();
+            if ((Phase != GameFlowPhase.Mission && Phase != GameFlowPhase.Faulted) ||
+                missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
+                throw new InvalidOperationException("Retry the current Mission after entry or a failed arrival.");
+            _host.PrepareMission(MissionEntryKind.Retry);
+            return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation);
         }
 
         /// <summary>앱 내 시작 화면 복귀 호출자가 사용합니다. 실제 종료/전환 권한은 Host port가 검사합니다.</summary>

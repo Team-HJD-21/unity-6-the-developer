@@ -355,6 +355,7 @@ namespace TeamHJD.Game.Bootstrap
             _completionSubscription?.Dispose();
             _completionSubscription = null;
             var endingMatch = _currentMatch;
+            Exception growthSaveError = FlushMissionGrowthBeforeEnd();
             _currentMatch = null;
             try
             {
@@ -366,6 +367,7 @@ namespace TeamHJD.Game.Bootstrap
                 PublishBattlefieldSnapshot(null);
 #endif
             }
+            if (growthSaveError != null) throw new InvalidOperationException("Mission growth could not be flushed before shutdown.", growthSaveError);
         }
 
         private void OnApplicationQuit() => DisposeSafely();

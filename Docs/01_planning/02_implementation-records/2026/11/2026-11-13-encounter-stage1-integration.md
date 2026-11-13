@@ -210,3 +210,21 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 앞선 검수용 Editor callback에 Action 대신 CallbackFunction이 필요해 첫 스크립트는 실행 전 컴파일 실패했다. 수정 뒤 Player를 내렸지만 새 main의 유실된 문 AnimationEvent 오류가 ErrorPause를 걸어 결과가 끝나지 않았다. 이 실행을 성공으로 쓰지 않았다. 별도271f24881 문 이벤트 수정 후 새 Play/공용시각으로 최종 성공했다.
 - b6a-actual-player-revived.json, b6a-after-callback-status.json, b6a-recovery-tests-final.json, b6a-persistence-tests.json, b6a-actual-final-errors.json이 근거다. 마지막 구간7402→7409 새 오류0. 이전 실제 실패와 stack은 보존했다. callback은 스스로 해제했고 최종 Play Stop으로 위치·Field 보류가 복구됐다.
 - 현재 Root가 자동으로 Player 전멸→월드 복귀를 호출하거나 실제 F입력/원격 gateway를 연결한 상태는 아니다. 이 실제 게임 조립·비환급 기록의 Host scope 등록은 B6b에서 이어서 수행한다. B6 전체 완료로 쓰지 않는다.
+
+
+## B6b — 실제 Host 복귀 조립 (2026-11-14)
+
+- MatchCoordinator가 MatchRecovery를 소유하고 Root가 CU 패배 평가 뒤 Pump한다. 실제 local Player는 F 유지 입력을 전달하고 자기 회복과 구조 입력을 중복 소비하지 않는다. 원격 실제 actor는 기존 RegisterAuthorityPlayerActor 경계에 rescue 등록을 함께 연결한다. 원격 입력 RPC/생명 복제까지 검증한 것은 아니다.
+- 개인·터렛 성장 파일 schema는 그대로 유지하고, Host/campaign/Stage별 별도 recovery 슬롯에 실행 ID·팀 잔여·안전장치·마지막 유효 저장을 보존한다. 대기 시간은 1초 병합, 실패/완료/종료는 즉시 또는 Flush다. 하드 크래시에는 마지막 성공한 파일이 기준이다.
+- 새 Mission / 같은 판 Retry / Resume를 구분한다. Campaign 월드 section v2에 실행 ID를 추가해 다른 실행의 월드를 잘못 이어가지 못하게 한다. v1은 명시 migration 없이 거부하며 파일을 덮지 않는다.
+- 실제 저장 완료만 마지막 체크포인트로 기록한다. 전멸 중 새 캡처는 금지한다. 유효 저장이 있으면 기존 전체 writer 복원, 없으면 App 소유 Task로 Stage를 다시 열어 최신 성장·같은 실행/차감을 인수한다. 전환 실패는 추가 차감 없이 재시도 API/Debugger에서 확인한다.
+- 자동: MatchRecoveryTests 11/11, MissionRecoveryPersistenceTests 2/2, GrowthWorldRestoreTests 6/6. 추가 실제 Scene 조립 컴파일 정상.
+- 실제 Stage_1에서 HP400→0 피해로 1~3회 복귀: Player/Match 인스턴스 변경, 실행 4e1257d5 유지, 사용1/2/3, HP400, 오류 없음. 4번째는 새 Player 없이 HP0·IsEndedtrue·Defeat, 사용3 유지. b6b-after-first-recovery.json / b6b-safety-cycle-result.json. 오류 cursor7577→7597 신규0.
+- QA 후 기존 checkpoint33개 목록/내용 해시를 정확히 복구했다. 세 개의 알려진 growth 슬롯만 보존/복구했으며 Scene은 dirtyfalse다. 관련 파일은 b6b-save-before/after와 b6b-save-cleanup.json.
+- 실제 전체 월드 복원은 world/weather writer 누락으로 미통과다. 물리 F/실제 원격2인 구조·실패 입장 재시도 전체·CU동시파괴 우선순위 실제 재현은 남아있다. 이를 자동 규칙/1인 재진입 성공과 섞지 않는다.
+
+## UI Iteration5 통합 검사
+
+- UI 준비본8개+신규Camera partial/meta, 실제Scene marker2참조와 terrain-only bake를 별도 UI 변경으로 보존했다. Iteration5b zoom-out 중심 보간 수정은 baseline2개가 정확히 일치한 뒤 적용했다.
+- 처음 Stage HUD6개 중2개는 옛 Initial_Stage에 NavMesh가 없어 실패했다. 테스트의 Scene 경로2개만 현행 Stage_1로 옮겼다. 실제 재검사6/6 (71.63초), Tactical8/8은 직전 근거다. UI Source/Asset은 Core 커밋에 섞지 않는다.
+- 동기 run_tests는 RPC30초 timeout 뒤에도 계속 실행됐다. 실패 XML을 읽고 async 실행+완료 결과를 별도 확인했다. stale Temp 결과를 최신 결과로 쓰지 않았다.

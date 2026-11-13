@@ -27,6 +27,8 @@ namespace TeamHJD.Game.Application
         public MatchId MatchId => _runtime.Config.MatchId;
         public Guid Epoch => !_disposed && _runtime.IsCurrent && _runtime.Time.IsAvailable ? _runtime.Time.Snapshot.Epoch : Guid.Empty;
         public bool IsBusy => Volatile.Read(ref _busy) != 0;
+        public CheckpointSlot LastSavedSlot { get; private set; }
+        public CheckpointData LastSavedData { get; private set; }
         public int ParticipantCount => _participants.Count;
         /// <summary>조립부가 요구했지만 아직 등록되지 않은 writer 키입니다. UI/진단은 이 목록으로 연결 대기를 설명합니다.</summary>
         public IReadOnlyList<string> MissingParticipantKeys => Array.AsReadOnly(_requiredKeys.Where(key => !_participants.ContainsKey(key)).ToArray());
@@ -91,6 +93,7 @@ namespace TeamHJD.Game.Application
                     finally { _mutating = false; }
                 }
                 await _store.SaveAsync(slot, data, linked.Token);
+                LastSavedSlot = slot; LastSavedData = data;
                 return Result(id, CheckpointOperationStatus.Saved, "Saved", data, epoch: epoch);
             }
             catch (Exception error) { return Failure(id, error, data, epoch); }

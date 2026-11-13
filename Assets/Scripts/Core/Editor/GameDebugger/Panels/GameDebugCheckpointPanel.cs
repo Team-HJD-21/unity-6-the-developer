@@ -53,6 +53,18 @@ namespace TeamHJD.Game.Editor
                     if (growth.LastError != null) EditorGUILayout.HelpBox(growth.LastError.Message, MessageType.Error);
                 }
             }
+            if (scene.Recovery != null)
+            {
+                using var recoveryBox = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                var ledger = scene.Recovery.Ledger;
+                EditorGUILayout.LabelField("구조 / 안전장치", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("실제 Player 원본", scene.Recovery.RegisteredPlayers + " / " + scene.Recovery.RequiredPlayers);
+                EditorGUILayout.LabelField("팀 구조 잔여 / 사용", ledger.RescueSeconds.ToString("F1") + "초 / " + ledger.SafetyUses + " / 3");
+                EditorGUILayout.LabelField("실행", ledger.RunId.ToString("N"), EditorStyles.miniLabel);
+                if (scene.RecoveryError != null) EditorGUILayout.HelpBox(scene.RecoveryError, MessageType.Error);
+                using (new EditorGUI.DisabledScope(scene.IsRecovering || !scene.Recovery.IsRecoveryPending))
+                    if (GUILayout.Button("같은 복귀 재시도 · 추가 차감 없음")) _ = scene.RetryRecoveryAsync();
+            }
             _slot = EditorGUILayout.TextField("슬롯", _slot);
             _restoreCurrency = EditorGUILayout.Toggle("재화도 체크포인트로 복원", _restoreCurrency);
             EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. 자동 실행 사건은 등록하지 않았습니다.", EditorStyles.wordWrappedMiniLabel);

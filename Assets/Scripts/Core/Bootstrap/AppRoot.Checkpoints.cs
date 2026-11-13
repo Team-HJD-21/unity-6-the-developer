@@ -89,6 +89,7 @@ namespace TeamHJD.Game.Bootstrap
                 throw new InvalidOperationException("The chosen Mission, participants or content version do not match the checkpoint.");
             // 새 actor가 만들어지기 전에 해당 월드가 참조하는 최신 Host 성장 슬롯을 선택합니다.
             _campaignSlot = TeamHJD.Game.Application.CampaignCheckpointParticipant.Read(saved, Services.CheckpointPayloads);
+            ExpectCheckpointRun(TeamHJD.Game.Application.CampaignCheckpointParticipant.ReadRun(saved, Services.CheckpointPayloads));
             arrival.TargetMatchId = authored.MatchId;
             return new MatchConfig(authored.MatchId, saved.Mode, saved.StageId, saved.DifficultyProfileId,
                 saved.ContentVersion, saved.RandomSeed, authored.Players);

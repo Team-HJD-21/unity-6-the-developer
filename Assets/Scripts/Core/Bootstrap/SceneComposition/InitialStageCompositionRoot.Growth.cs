@@ -34,6 +34,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 new[] { _turretBinding.Controller.CreateGrowthParticipant() });
             try { shared.Load(); _growthSaves.Add(shared); }
             catch { shared.Dispose(); throw; }
+            // 구조/안전장치는 성장 파일 schema에 섞지 않습니다. 이전 성장 저장의 source 집합을 그대로 보존합니다.
+            var recovery = new GrowthSaveService(app.Services.CheckpointStore, app.Services.CheckpointPayloads,
+                GrowthSaveService.SlotForOwner("recovery/" + authorityPlayer.Value + "/" + app.CampaignSlot.Value + "/" + session.Config.StageId.Value),
+                () => new CheckpointCaptureContext(session.Config, time.Clock.ElapsedSeconds, time.Clock.Snapshot.Epoch),
+                new[] { new MissionRecoveryParticipant(_recoveryLedger) }, 1);
+            try
+            {
+                recovery.Load(); _growthSaves.Add(recovery);
+                app.BindMissionRecovery(this, _recoveryLedger);
+                // 초기 실행 ID도 디스크에 확정해야 저장 없는 복귀가 같은 실행을 인수할 수 있습니다.
+                _recoveryLedger.FlushChanges(); recovery.Flush();
+            }
+            catch { if (!_growthSaves.Contains(recovery)) recovery.Dispose(); throw; }
         }
 
         private void PublishGrowthRestoreWarnings()

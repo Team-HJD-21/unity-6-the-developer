@@ -3,6 +3,7 @@
 // 정식 게임 시간은 주입된 공용 시계에서 읽고 네트워크 연결·UI·HP 원본은 별도 소유자가 관리합니다.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
@@ -22,6 +23,7 @@ namespace TeamHJD.Game.Application
         private IDisposable _events;
         private bool _started, _disposed, _evaluating, _completionObserved;
         private long _sequence;
+        public MatchRecovery Recovery { get; private set; }
         public MatchEncounterProduction EncounterProduction { get; private set; }
         public MatchId MatchId => _session.Config.MatchId;
         public MatchCompletion Completion => _session.Completion;
@@ -52,6 +54,23 @@ namespace TeamHJD.Game.Application
                 throw new InvalidOperationException("Configure one production owner before Match start.");
             EncounterProduction = new MatchEncounterProduction(MatchId, issuer, requests, scheduler, productionClock,
                 () => IsGameplayRunning && canProduce(), settings, _gameplayToken);
+        }
+
+        /// <summary>Scene이 시작 전에 실제 roster/공용 시각에 생존 조율부를 붙입니다.</summary>
+        public void ConfigureRecovery(MissionRecoveryLedger ledger, MissionRecoverySettings settings)
+        {
+            if (_started || _disposed || Recovery != null || _clock == null)
+                throw new InvalidOperationException("Configure one recovery owner before Match start.");
+            Recovery = new MatchRecovery(ledger, _clock, () => IsGameplayRunning,
+                _session.Config.Players.Select(player => player.PlayerId), settings);
+        }
+
+        /// <summary>모드/Stage 소유자가 확정한 승패를 한 번만 완료합니다. 비환급 기록은 쓰기 권한이 닫히기 전에 확정합니다.</summary>
+        public void CompleteMatch(MatchOutcome outcome)
+        {
+            if (!IsGameplayRunning) throw new InvalidOperationException("Complete only the current authority Match.");
+            Recovery?.Ledger.EndMission();
+            _session.Complete(outcome, checked(++_sequence));
         }
 
         public void Start()
@@ -90,7 +109,7 @@ namespace TeamHJD.Game.Application
                 var progress = new MatchProgressSnapshot(MatchId, _controlUnit.CurrentHealth,
                     _controlUnit.MaxHealth, ElapsedSeconds);
                 MatchOutcome? outcome = _session.EvaluateProgress(progress);
-                if (outcome.HasValue) _session.Complete(outcome.Value, checked(++_sequence));
+                if (outcome.HasValue) CompleteMatch(outcome.Value);
             }
             finally { _evaluating = false; }
         }
@@ -101,6 +120,7 @@ namespace TeamHJD.Game.Application
             if (!(fact is MatchCompleted completed) || completed.MatchId != MatchId || _completionObserved) return;
             _completionObserved = true;
             var errors = new List<Exception>();
+            TryCleanup(() => Recovery?.Dispose(), errors);
             TryCleanup(() => EncounterProduction?.Dispose(), errors);
             TryCleanup(_gameplay.Cancel, errors);
             Action<MatchCompletion> handlers = Completed;
@@ -120,6 +140,7 @@ namespace TeamHJD.Game.Application
             _events?.Dispose(); _events = null;
             Completed = null;
             var errors = new List<Exception>();
+            TryCleanup(() => Recovery?.Dispose(), errors);
             TryCleanup(() => EncounterProduction?.Dispose(), errors);
             TryCleanup(_gameplay.Cancel, errors);
             TryCleanup(_gameplay.Dispose, errors);

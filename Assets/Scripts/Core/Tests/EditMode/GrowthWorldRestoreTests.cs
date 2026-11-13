@@ -23,13 +23,14 @@ namespace TeamHJD.Game.Tests.EditMode
         [Test]
         public void CampaignReferenceIsValidatedBeforeRestoringItsWorld()
         {
-            var codec=new BinaryCheckpointPayloadCodec();var writer=new CampaignCheckpointParticipant(new CheckpointSlot("campaign-a"));
+            var codec=new BinaryCheckpointPayloadCodec();var run=Guid.NewGuid();var writer=new CampaignCheckpointParticipant(new CheckpointSlot("campaign-a"),run);
             var c=new MatchConfig(new MatchId("growth"),MatchMode.Story,new StageId("stage-1"),new DefinitionId("normal"),"v1",1,
                 new[]{new PlayerLoadoutSnapshot(new PlayerId("host"),null)});
             var capture=new CheckpointCaptureContext(c,10,Guid.NewGuid());var section=writer.Capture(capture,codec);
             var data=new CheckpointData(Guid.NewGuid(),DateTimeOffset.UtcNow,c.MatchId,c.StageId,c.DifficultyProfileId,c.Mode,1,"v1",10,1,new[]{section});
             Assert.That(CampaignCheckpointParticipant.Read(data,codec),Is.EqualTo(new CheckpointSlot("campaign-a")));
-            var other=new CampaignCheckpointParticipant(new CheckpointSlot("campaign-b"));
+            Assert.That(CampaignCheckpointParticipant.ReadRun(data,codec),Is.EqualTo(run));
+            var other=new CampaignCheckpointParticipant(new CheckpointSlot("campaign-b"),run);
             Assert.Throws<InvalidDataException>(()=>other.PrepareRestore(new CheckpointRestoreContext(capture,data,CheckpointRestorePolicy.Default),section,codec));
         }
     }

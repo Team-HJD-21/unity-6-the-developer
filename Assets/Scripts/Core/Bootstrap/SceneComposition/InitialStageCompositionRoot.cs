@@ -184,6 +184,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
                 _coordinator = new MatchCoordinator(session, controlUnitHealth,
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning), _matchTime.Clock);
+                _recoveryLedger = new MissionRecoveryLedger();
+                _coordinator.ConfigureRecovery(_recoveryLedger, rescueSettings);
                 // Feature의 최초 날씨 선택 이전에 주입합니다. Client에는 난수 결정권을 제공하지 않습니다.
                 session.InitializeRandom(() => HasCurrentMatch && (network == null || _networkBinding.Connection.IsServer));
                 // 영속 Encounter는 DDOL Scene에 있어 Scene 조회에서 빠지므로 동일 수명에 명시적으로 포함합니다.
@@ -212,6 +214,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
                     consumer.BindLocalActor(matchId, localPlayerId, _playerActors.Actors[localPlayerId]);
                 BindLocalInput(_playerActors.Actors[localPlayerId]);
+                BindRecoveryActors(localPlayerId);
                 _regionBinding = regionBinding;
                 if (network == null) _regionBinding?.BindMatch(session, entityIds: _turretBinding);
                 else
@@ -267,6 +270,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 PublishGrowthRestoreWarnings();
                 BindCheckpoints();
                 if (appMatchHost is AppRoot restoringApp) restoringApp.ApplyCheckpointArrival(this);
+                FinishRecoveryArrival();
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
                     $"Initial_Stage Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
@@ -398,6 +402,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
             bool ownedMatch = _ownsMatch;
+            var errors = new List<Exception>();
+            RunCleanup(FlushGrowthSaves, errors);
+            RunCleanup(ReleaseRecovery, errors);
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
             _coordinator = null;
@@ -410,7 +417,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _ownedMatchId = default;
             _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
             _lastEntityCells.Clear();
-            var errors = new List<Exception>();
             RunCleanup(ReleaseGrowthSaves, errors);
             RunCleanup(ReleaseCheckpoints, errors);
             RunCleanup(() => coordinator?.Dispose(), errors);
@@ -528,6 +534,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_restoringCheckpoint) return;
             // main의 기존 CU 읽기 Port를 사용합니다. Feature가 새 파괴 이벤트 계약을 구현할 필요는 없습니다.
             _coordinator?.EvaluateProgress();
+            PumpRecovery();
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
             if (!_matchSession.IsGameplayRunning) return;

@@ -38,6 +38,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
 
     private void FixedUpdate()
     {
+        PumpRescueInput();
         AdvanceRecovery();
         onHpChange.Invoke(curHp, maxHp);
         if (curHp <= 0) Die();
@@ -82,7 +83,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
 
     public void RecoverHp()
     {
-        if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp) return;
+        if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp || HasHeldRescueTarget) return;
         _recovering = true;
         _nextRecoveryAt = FieldSimulationTime.Seconds(this);
         AdvanceRecovery();
@@ -102,6 +103,6 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         _healthAuthority = false;
     }
 
-    public void UnbindMatch() { _healthAuthority = false; _recovering = false; }
+    public void UnbindMatch() { UnbindRescue(); _healthAuthority = false; _recovering = false; }
     public void UnbindNetworkMatch() => UnbindMatch();
 }

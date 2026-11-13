@@ -2,9 +2,34 @@
 // 구조 자격/유지 시간/팀 예산은 Core가 검증하며 여기서는 HP·생명 잠금 원본만 적용합니다.
 using System;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
 using UnityEngine;
-public partial class PlayerInfo : IPlayerRescueActor
+public partial class PlayerInfo : IPlayerRescueActor, IPlayerRescueConsumer
 {
+    private PlayerId _rescuePlayer;
+    private IPlayerRescueService _rescueRequests;
+    private bool HasHeldRescueTarget => _rescueRequests?.IsReady == true && GameInput.IsPressed(GameKey.F) &&
+        _rescueRequests.TryFindTarget(_rescuePlayer, out _);
+
+    public void BindRescue(PlayerId player, IPlayerRescueService service)
+    {
+        if (player.IsEmpty || service == null) throw new ArgumentException("Bind the current local rescue requester.");
+        UnbindRescue(); _rescuePlayer = player; _rescueRequests = service;
+    }
+    public void UnbindRescue()
+    {
+        _rescueRequests?.SetRescueHeld(_rescuePlayer, default, false);
+        _rescueRequests = null; _rescuePlayer = default;
+    }
+    private void PumpRescueInput()
+    {
+        if (_rescueRequests == null) return;
+        PlayerId target = default;
+        bool held = GameInput.IsPressed(GameKey.F) && _rescueRequests.TryFindTarget(_rescuePlayer, out target);
+        if (held) _rescueRequests.SetRescueHeld(_rescuePlayer, target, true);
+        else _rescueRequests.SetRescueHeld(_rescuePlayer, default, false);
+    }
+
     bool IPlayerRescueActor.TryCaptureRescue(out PlayerInteractionSnapshot snapshot)
     {
         snapshot = default;
