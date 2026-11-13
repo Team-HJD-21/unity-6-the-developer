@@ -36,6 +36,22 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: 0.05
       objectReference: {fileID: 0}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 75566274, guid: 01b07693b2a12904fa4e5ba18a1e706e, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: -114595293, guid: 01b07693b2a12904fa4e5ba18a1e706e, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: -1104942121, guid: 01b07693b2a12904fa4e5ba18a1e706e, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: -1073312670, guid: 01b07693b2a12904fa4e5ba18a1e706e, type: 3}
     - target: {fileID: 2670870722600736654, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Controller
       value: 
@@ -166,7 +182,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7547272266176275135, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_CollisionDetection
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x

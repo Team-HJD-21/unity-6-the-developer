@@ -36,6 +36,22 @@ PrefabInstance:
       propertyPath: m_Direction
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 7090961533628377361, guid: 267c9918f3a80df4ea1bc103759a29a4, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 6669919693539511650, guid: 267c9918f3a80df4ea1bc103759a29a4, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: -263843237380989794, guid: 267c9918f3a80df4ea1bc103759a29a4, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: -9050867185319284182, guid: 267c9918f3a80df4ea1bc103759a29a4, type: 3}
     - target: {fileID: 2670870722600736654, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Controller
       value: 

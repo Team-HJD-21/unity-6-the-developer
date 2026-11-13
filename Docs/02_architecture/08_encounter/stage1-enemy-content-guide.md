@@ -1,6 +1,6 @@
 # Stage 1 Enemy 콘텐츠와 등록 가이드
 
-수정일: 2026-11-08
+수정일: 2026-11-14
 상태: #540 통합 브랜치의 현재 에셋·구현·검증 기록. 수치는 밸런스 초안이다.
 
 [문서 목차](../../README.md) · [시스템 구조](enemy-system-guide.md) · [Encounter 편성·예산](encounter-planning-guide.md)
@@ -81,6 +81,16 @@ BlackWolf의 Definition은 `Individual + PlayerOnly`다. 여러 탐지자가 등
 Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSlime, InfectiousMushroom, Mushroom, MushroomTreant, PlantLeafer, Treant는 등록돼 있으나 위 8개 편성에 포함되지 않는다. Bomber는 소환형 전용이다. 해당 몬스터도 시험하려면 고유 동작 시험 또는 편성 데이터 구성이 필요하다.
 
 ## 새 몬스터 추가 순서
+
+### 방향별 피격 윤곽 설정
+
+`SpritePhysicsShapeSync`는 Animator의 `MoveX`·`MoveY`를 읽고 `downSprite`, `upSprite`, `leftSprite`, `rightSprite` 중 하나를 대표 윤곽으로 사용한다. 런타임 Variant마다 해당 몬스터의 각 방향 Idle 스프라이트를 연결하고, `targetCollider`에는 자식 HitBox의 PolygonCollider2D를 연결한다. 각 대표 스프라이트에는 Physics Shape가 필요하다. Animator 파라미터 이름이 다르면 `directionXParameter`·`directionYParameter`도 맞춘다.
+
+방향이나 형태의 대표 스프라이트가 바뀔 때만 콜라이더 경로를 갱신한다. 같은 방향의 걷기·공격 프레임별 세부 윤곽은 따라가지 않는다. 방향 값이 모두 0이면 마지막 방향을 유지하며, 최초에는 아래쪽 윤곽을 사용한다.
+
+SpawnerMushroom은 `fixedShapeSprite`에 시설 Idle 스프라이트를 연결하고, Animator의 `FacilityIdle`·`FacilitySpawn` State Tag를 `FixedShape`로 지정한다. 변태 중에는 이동형 윤곽을 유지하며 시설 상태에 진입하면 고정 윤곽으로 바뀐다. 일반 몬스터는 `fixedShapeSprite`를 비워 둔다. 이 설정은 각 인스턴스에 실제 적용된 Animator 상태를 따르며, 별도의 네트워크 상태를 추가하지 않는다.
+
+### 제작·등록
 
 1. [Base 프리팹](../../../Assets/Prefabs/Enemies/Base)에서 행동에 맞는 Variant를 만들고 `Runtime/<유형>/`에 둔다. 고유 능력이 필요할 때 Ability를 추가하고, 행동 전이가 다를 때 Controller를 확장한다.
 2. SpriteRenderer, Collider 크기·offset, Rigidbody2D, Animator Controller/Override와 방향별 클립을 맞춘다. `activationRange` 기즈모로 접촉 거리와 효과 반경을 따로 확인한다.

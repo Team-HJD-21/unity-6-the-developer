@@ -20,6 +20,26 @@ PrefabInstance:
       propertyPath: m_Size.y
       value: 2.3
       objectReference: {fileID: 0}
+    - target: {fileID: 1729915336937123853, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 21300003, guid: bc0ad5af35bd4b7297773c4b2d5aab9c, type: 3}
+    - target: {fileID: 1729915336937123853, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bc0ad5af35bd4b7297773c4b2d5aab9c, type: 3}
+    - target: {fileID: 1729915336937123853, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 21300006, guid: bc0ad5af35bd4b7297773c4b2d5aab9c, type: 3}
+    - target: {fileID: 1729915336937123853, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: 21300009, guid: bc0ad5af35bd4b7297773c4b2d5aab9c, type: 3}
+    - target: {fileID: 1729915336937123853, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: fixedShapeSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: a6218bdffbaf4819802df57f29e9684f, type: 3}
     - target: {fileID: 2017026277251349379, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: m_Radius
       value: 10

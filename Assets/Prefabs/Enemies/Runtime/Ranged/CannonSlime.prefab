@@ -164,6 +164,22 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: 0.05
       objectReference: {fileID: 0}
+    - target: {fileID: 8353384023202349959, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 1575485210, guid: 22fe147a80e25ce4ea4cd56887f24db0, type: 3}
+    - target: {fileID: 8353384023202349959, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 2055263372, guid: 22fe147a80e25ce4ea4cd56887f24db0, type: 3}
+    - target: {fileID: 8353384023202349959, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: -990669262, guid: 22fe147a80e25ce4ea4cd56887f24db0, type: 3}
+    - target: {fileID: 8353384023202349959, guid: e7707c6ceda775c49bbfbc1820d9d7e3, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: -1196222663, guid: 22fe147a80e25ce4ea4cd56887f24db0, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

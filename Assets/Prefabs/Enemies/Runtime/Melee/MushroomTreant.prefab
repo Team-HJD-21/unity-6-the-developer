@@ -36,6 +36,22 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: 0.22
       objectReference: {fileID: 0}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: -2003480849, guid: 135113e6a060c664e9423fb877d577e5, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 1427714193, guid: 135113e6a060c664e9423fb877d577e5, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: -2085691652, guid: 135113e6a060c664e9423fb877d577e5, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: -2090431095, guid: 135113e6a060c664e9423fb877d577e5, type: 3}
     - target: {fileID: 2670870722600736654, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Controller
       value: 

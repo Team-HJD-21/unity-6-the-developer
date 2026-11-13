@@ -405,8 +405,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 399aae68a45abf243aa472a14f39c85a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpritePhysicsShapeSync
-  spriteRenderer: {fileID: 5588956371519963513}
+  animator: {fileID: 2019599550783505766}
   targetCollider: {fileID: 6271643675480675964}
+  directionXParameter: MoveX
+  directionYParameter: MoveY
+  downSprite: {fileID: 0}
+  upSprite: {fileID: 0}
+  leftSprite: {fileID: 0}
+  rightSprite: {fileID: 0}
+  fixedShapeSprite: {fileID: 0}
+  fixedShapeTag: FixedShape
 --- !u!1 &8551494416428237628
 GameObject:
   m_ObjectHideFlags: 0
@@ -552,7 +560,7 @@ BoxCollider2D:
     m_Bits: 4294967295
   m_CallbackLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_CompositeOperation: 0

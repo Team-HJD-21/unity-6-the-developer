@@ -128,6 +128,22 @@ PrefabInstance:
       propertyPath: m_Radius
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 7369489764914265439, guid: e3b54ce28b78a7a47b0301da1a1326c4, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: -1194168081280239913, guid: 0b5233a01a1bfb945b8a528972fb51ca, type: 3}
+    - target: {fileID: 7369489764914265439, guid: e3b54ce28b78a7a47b0301da1a1326c4, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 3151951837201188659, guid: 0b5233a01a1bfb945b8a528972fb51ca, type: 3}
+    - target: {fileID: 7369489764914265439, guid: e3b54ce28b78a7a47b0301da1a1326c4, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 8103539089666292289, guid: 0b5233a01a1bfb945b8a528972fb51ca, type: 3}
+    - target: {fileID: 7369489764914265439, guid: e3b54ce28b78a7a47b0301da1a1326c4, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: -7945456662546988824, guid: 0b5233a01a1bfb945b8a528972fb51ca, type: 3}
     - target: {fileID: 8389194018421224393, guid: e3b54ce28b78a7a47b0301da1a1326c4, type: 3}
       propertyPath: m_Size.x
       value: 1.1816564
