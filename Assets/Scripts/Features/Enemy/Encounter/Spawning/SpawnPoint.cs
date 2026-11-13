@@ -23,6 +23,7 @@ public class SpawnPoint : MonoBehaviour
 
     [Header("점령 상태")]
     [SerializeField] private bool canSpawnEnemies = true;
+    private bool _regionSpawnEnabled = true;
 
     /// <summary>
     /// 스폰 지점을 식별하는 고유 값을 반환한다.
@@ -67,7 +68,10 @@ public class SpawnPoint : MonoBehaviour
     /// <summary>
     /// 이 지점이 활성화되어 있고 적에게 점령되어 스폰 후보가 될 수 있는지 반환한다.
     /// </summary>
-    public bool CanSpawnEnemies => isActiveAndEnabled && canSpawnEnemies;
+    public bool CanSpawnEnemies => isActiveAndEnabled && canSpawnEnemies && _regionSpawnEnabled;
+
+    /// <summary>개별 지점 설정을 보존하면서 Region 단위의 스폰 허용 상태를 적용한다.</summary>
+    internal void SetRegionSpawnEnabled(bool enabled) => _regionSpawnEnabled = enabled;
 
     /// <summary>
     /// 점령 상태가 바뀌면 서버의 점령 관리자가 적 스폰 가능 여부를 갱신한다.
