@@ -201,7 +201,7 @@ weatherEffects.SetEffectsEnabled(true);  // 현재 보관 중인 날씨 효과 �
 
 `ApplyWeather`는 카메라 표현만 바꾼다. WeatherManager의 상태·큐·알림을 갱신하지 않으므로 실제 날씨 변경 용도로 사용하지 않는다. 다음 Manager 갱신 시 화면은 Manager의 날씨로 다시 적용된다.
 
-첫 적용은 즉시 반영하고 이후 서로 다른 날씨 사이를 보간한다. 효과를 다시 켜면 맑음 화면에서 현재 날씨로 전환한다. 해당 날씨 Material이 없으면 원본 화면을 그대로 출력한다. 컴포넌트는 `OnRenderImage`와 `Graphics.Blit`을 사용하므로 다른 렌더 파이프라인으로 이전할 때 이 경로가 지원되는지 별도 확인해야 한다.
+첫 적용은 즉시 반영하고 이후 서로 다른 날씨 사이를 보간한다. 효과를 다시 켜면 맑음 화면에서 현재 날씨로 전환한다. 해당 날씨 Material이 없으면 원본 화면을 그대로 출력한다. URP 2D의 [StageCameraEffectsFeature](../../../Assets/Scripts/Map/StageCameraEffectsFeature.cs)가 카메라에 연결된 날씨 효과를 Render Graph 패스로 그린다. 같은 카메라에 DayNightShaderApply가 연결되어 있으면 날씨 합성 후 낮밤 효과를 적용한다.
 
 `MainCamera` 태그가 아닌 객체에 붙이면 `Awake()`에서 해당 Camera와 컴포넌트를 비활성화한다. 뇌우의 번개 위치 계산은 카메라의 `orthographicSize`를 사용한다. 이 번개는 화면 연출이며 피격·데미지 판정 API가 아니다.
 

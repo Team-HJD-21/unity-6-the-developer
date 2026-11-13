@@ -1,5 +1,13 @@
 # 플레이어 무기별 스프라이트·이펙트 API
 
+2026-11-12 자유 조준 표시: 현재 Player는 기존 `space man` 시트에서 파생한 옆모습 5프레임을 좌우 반전한 몸체와 마우스를 따라 연속 회전하는 별도 무기를 사용한다. `PlayerSpriteMotion.SpaceMan`은 기존 Animator의 행동 타이밍을 유지하고 표시 Sprite만 교체한다. 원본·설정·총구 연결과 검증 범위는 [몸체·무기 분리 API](player-weapon-appearance-api.md#2026-11-12-space-man-몸체와-자유-조준)를 따른다. 아래 V2 8방향 자세 설명은 기존 표시 방식의 기록이다.
+
+2026-11-12 일반 이동 표시: `Player.prefab`의 Rigidbody2D Interpolate를 활성화했다. `PlayerMovement.FixedUpdate`는 기존 `linearVelocity` 적용을 유지한다. 물리 위치 갱신 사이의 렌더 위치를 보간해 카메라가 추적하는 Player 표시의 계단 현상을 줄인다. 이동 속도·대시·충돌·전역 Fixed Timestep·카메라 API는 변경하지 않는다. 프레임 지연이나 다른 렌더 원인까지 해결됐다는 뜻은 아니며 실제 Game View의 끊김 체감은 별도로 확인한다.
+
+2026-11-12: `PlayerSpriteMotion`의 이동 자세와 `PlayerWeaponRig`의 방향 표시는 `PlayerControlState.CanMove`를 따른다. 시작 허브와 진행 중 우주선 방문에서 전투가 막혀도 이동·방향 전환 애니메이션은 동작한다. 메뉴·사망·필드 정지로 이동이 막히면 이동 자세도 멈춘다. Rig 없는 `PlayerVisual`도 같은 기준을 사용하며, 공격·수리·스킬의 기존 사용 조건과 최신 main의 피벗·Y 정렬은 유지한다.
+
+우주선 마우스 방향: `PlayerInputHandler`는 `CameraManager.OutputChanged`를 구독해 현재 로컬 출력 카메라로 커서의 월드 좌표를 계산한다. 최초 연결·재활성화 시 현재 출력을 찾고, 비활성/파괴/태그 변경된 카메라는 다시 연결한다. 출력 교체 시 이전 조준 유효 상태를 비우고 비활성화 시 구독을 해제한다. Manager 없는 구성은 `Camera.main`을 사용한다. 카메라를 직접 움직이거나 새 카메라를 만들지 않는다. `SpaceshipMouseOrientationUsesTheCurrentCameraAfterOutputReplacement`는 실제 마우스 입력으로 허브와 우주선 방문의 8방향 Idle·전투 차단을 확인한다.
+
 2026-10-30 후속: 좌우 방향은 손과 무기의 위치를 유지하도록 별도 원본을 사용하며, `flipX`로 공유하지 않는다. 대각선 대기는 각 방향별 4프레임 호흡 루프를 사용한다. 다리·불꽃 검토는
 [독립 좌우 자세와 제트팩 분사구](https://github.com/Team-HJD-21/unity-6-the-developer/blob/6ed4f15650965830dda1139b0a1b4b3baa0e1f78/Docs/art/player-independent-facing-review.md)를 따른다.
 아래 기록 중 대각선 대기가 고정 한 장이라는 설명은 확장 전 상태다.

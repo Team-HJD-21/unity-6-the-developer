@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(SpriteRenderer), typeof(PlayerInputHandler), typeof(Animator))]
 [DefaultExecutionOrder(100)]
-public sealed class PlayerSpriteMotion : MonoBehaviour
+public sealed partial class PlayerSpriteMotion : MonoBehaviour
 {
     [SerializeField] private PlayerMotionSet _motions;
     [SerializeField] private SpriteRenderer _renderer;
@@ -32,6 +32,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
     private bool _usesToolPoses;
     private bool _heldRepair;
     public bool IsHoldingRepair => _heldRepair;
+    public uint HeldRepairImpactSequence { get; private set; }
 
     public bool IsPlayingToolAction => _ownsDisplay &&
         (_motion == PlayerMotion.Attack || _motion == PlayerMotion.Repair);
@@ -44,8 +45,9 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         (_motion == PlayerMotion.Dash || _motion == PlayerMotion.ToolDash);
     private bool IsAction => IsPlayingToolAction || _motion == PlayerMotion.Fire;
     private bool HasSpanner => _heldRepair || (_selection != null && _selection.CurrentWeapon == WeaponType.Spanner);
+    // 우주선은 전투(CanAct)가 막혀도 이동(CanMove)은 허용합니다. 이동 자세도 같은 기준을 따릅니다.
     private bool HasMovementInput => _input.MoveInput.sqrMagnitude > .001f &&
-        (_controls == null || _controls.CanAct);
+        (_controls == null || _controls.CanMove);
     private AnimationClip CurrentClip => _motions.GetClip(_motion, _hoveringAction, _lateralLean).Animation(_facing);
     private string LeanSuffix => _lateralLean == PlayerLateralLean.Neutral ? "" : $"Lean{_lateralLean}";
     private int CurrentStateHash => Animator.StringToHash(
@@ -60,6 +62,9 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         _selection = GetComponent<PlayerWeaponSelection>();
         _skills = GetComponent<PlayerSkillController>();
         _repair = GetComponent<PlayerTurretRepair>();
+        _spaceManColliders = GetComponent<PlayerDirectionalColliders>();
+        if (_spaceManShadow != null)
+            _spaceManShadowRenderer = _spaceManShadow.GetComponentInChildren<SpriteRenderer>(true);
         _rig = GetComponentInChildren<PlayerWeaponRig>(true);
     }
 
@@ -80,6 +85,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         if (_selection != null) _selection.WeaponChanged += OnWeaponChanged;
         StartMotion(HasSpanner ? PlayerMotion.ToolIdle : PlayerMotion.Idle);
         UpdateAnimatorState();
+        if (UsesSpaceManBody) RefreshSpaceManBody();
     }
 
     private void OnWeaponChanged(WeaponType weapon)
@@ -193,7 +199,7 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         {
             if (_motion != PlayerMotion.Attack || _elapsed >= clip.length) StartMotion(PlayerMotion.Attack);
             UpdateAnimatorState();
-            _elapsed += Time.deltaTime;
+            AdvanceHeldRepairTime(Time.deltaTime);
             return;
         }
         bool weaponChangedDuringDash = IsPlayingDashAnimation &&
@@ -209,6 +215,15 @@ public sealed class PlayerSpriteMotion : MonoBehaviour
         }
         UpdateAnimatorState();
         _elapsed += Time.deltaTime;
+    }
+
+    private void AdvanceHeldRepairTime(float seconds)
+    {
+        float impact = CurrentClip.length * .5f;
+        float previous = _elapsed;
+        _elapsed += seconds;
+        if (previous < impact && _elapsed >= impact)
+            HeldRepairImpactSequence = unchecked(HeldRepairImpactSequence + 1);
     }
 
     private void UpdateAnimatorState()

@@ -200,7 +200,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     .OfType<ILocalPlayerActorConsumer>().ToArray();
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
                     consumer.PrepareLocalActor(matchId, localPlayerId);
-                var spawner = new LocalPlayerActorSpawner(playerPrefab, actorParent);
+                var spawner = new LocalPlayerActorSpawner(playerPrefab, actorParent,
+                    (appMatchHost as AppRoot)?.PresentationRandom);
                 _playerActors = network == null ? MatchPlayerActorScope.SpawnPlayers(session, spawner, starts) :
                     MatchPlayerActorScope.SpawnLocalPlayer(network, connectionId, spawner, starts, session);
                 _matchSession = session;

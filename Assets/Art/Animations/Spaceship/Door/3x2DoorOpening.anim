@@ -22,11 +22,11 @@ AnimationClip:
     curve:
     - time: 0
       value: {fileID: 3266491649733978045, guid: 933d0b01bdf642d6bde2dcc322e01d91, type: 3}
-    - time: 0.2
+    - time: 0.1
       value: {fileID: 9086517314558115372, guid: 933d0b01bdf642d6bde2dcc322e01d91, type: 3}
-    - time: 0.4
+    - time: 0.2
       value: {fileID: 1532504815616380808, guid: 933d0b01bdf642d6bde2dcc322e01d91, type: 3}
-    - time: 0.6
+    - time: 0.3
       value: {fileID: -1990131622009824055, guid: 933d0b01bdf642d6bde2dcc322e01d91, type: 3}
     attribute: m_Sprite
     path: 
@@ -59,7 +59,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.70000005
+    m_StopTime: 0.4
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -79,7 +79,7 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.5
+  - time: 0.2
     functionName: ActivateDoorCollider
     data: 
     objectReferenceParameter: {fileID: 0}

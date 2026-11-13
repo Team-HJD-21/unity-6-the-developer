@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,15 +13,18 @@ namespace TeamHJD.Game.Presentation.Scene
     {
         private readonly GameObject _playerPrefab;
         private readonly Transform _actorParent;
+        private readonly IRandomStreams _presentationRandom;
         private readonly Dictionary<PlayerId, GameObject> _actors = new Dictionary<PlayerId, GameObject>();
         private bool _isDisposed;
 
-        public LocalPlayerActorSpawner(GameObject playerPrefab, Transform actorParent = null)
+        public LocalPlayerActorSpawner(GameObject playerPrefab, Transform actorParent = null,
+            IRandomStreams presentationRandom = null)
         {
             _playerPrefab = playerPrefab != null
                 ? playerPrefab
                 : throw new ArgumentNullException(nameof(playerPrefab));
             _actorParent = actorParent;
+            _presentationRandom = presentationRandom;
         }
 
         public GameObject Spawn(PlayerId playerId, PlayerStart playerStart)
@@ -47,6 +51,10 @@ namespace TeamHJD.Game.Presentation.Scene
                 PlayerActorIdentity identity = actor.GetComponent<PlayerActorIdentity>();
                 if (identity == null) identity = actor.AddComponent<PlayerActorIdentity>();
                 identity.Bind(playerId, playerStart.SlotIndex);
+                if (_presentationRandom != null)
+                    foreach (var component in actor.GetComponents<MonoBehaviour>())
+                        if (component is IPlayerPresentationRandomBinding binding)
+                            binding.BindPresentationRandom(_presentationRandom);
                 _actors.Add(playerId, actor);
                 return actor;
             }
