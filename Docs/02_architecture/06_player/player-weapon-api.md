@@ -27,15 +27,17 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 ## 2026-11-12 암살자 감지 Trigger
 
-`Player.prefab / Assassin Detection Range`에 별도 CircleCollider2D Trigger와 `PlayerEnemyDetector`를 배치합니다. 반경은 조정용 임시값입니다. Collider의 로컬 radius 3.75는 현재 Player 배율 0.8에서 월드 반경 3이며, 중심은 발밑에 가까운 로컬 (0, 0.2)입니다. Inspector의 CircleCollider2D에서 조절합니다.
+`Player.prefab`의 `PlayerEnemyDetector` 자식에 별도 CircleCollider2D Trigger를 배치합니다. 반경은 조정용 임시값입니다. Collider의 로컬 radius 3.75는 현재 Player 배율 0.8에서 월드 반경 3이며, 중심은 발밑에 가까운 로컬 (0, 0.2)입니다. Inspector의 CircleCollider2D에서 조절합니다.
 
-진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. Enemy 레이어의 실제 몸체 Collider에서 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
+진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. 2026-11-13부터 `useTriggers = true`와 `EnemyHitBox` 레이어 마스크로 실제 피격 Trigger를 조회합니다. 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
 
-감지 Collider는 Player 레이어를 사용하며 Collider별 exclude 설정으로 Enemy 본체에만 접촉을 허용합니다. 적 탄환과 EnemySensor 레이어의 적 감지 Trigger는 제외하므로 새 범위가 플레이어의 피격 범위나 몬스터의 플레이어 탐지 범위로 쓰이지 않습니다. Enemy 근접 공격 거리 검사도 Trigger를 제외합니다. 전역 Layer Collision Matrix는 변경하지 않습니다. 벽 차폐·은신 시각 효과·감지 업그레이드는 이번 연결에 포함하지 않습니다.
+감지 Collider는 `PlayerFeetBox` 레이어를 사용하며 Collider별 exclude 설정으로 `EnemyHitBox`에만 접촉을 허용합니다. 적 탄환과 `EnemySensor` 레이어의 감지 Trigger는 제외하므로 새 범위가 플레이어의 피격 범위나 몬스터의 플레이어 탐지 범위로 쓰이지 않습니다. Enemy 근접 공격 거리 검사도 Trigger를 제외합니다. 전역 Layer Collision Matrix는 변경하지 않습니다. 벽 차폐·감지 업그레이드는 이번 연결에 포함하지 않습니다. 은신 표시는 기존 `EnemyStealthVisual`이 `EnemyDetection.DetectionChanged`를 받아 처리합니다.
+
+플레이어 탄환(`PlayerBullet`, 냉각·스나이퍼 포함), 스패너(`PlayerSpannerWeapon`), 폭탄(`PlayerBombAreaDamage`)은 `EnemyHealth.TryTakeDamage(damage, AttackSourceType.Player)`를 호출합니다. `EnemyAssassinDamageRule`은 감지된 동안의 직접 Player 공격만 허용합니다. `PlayerTurretProjectile`은 기존 출처를 유지하므로 감지된 암살자에게도 피해를 주지 않습니다.
 
 네트워크 Client와 보고권 없는 Player replica는 탐지 원본을 쓰지 않습니다. 서버의 적 상태는 기존 `EnemyNetworkDetection`이 복제합니다. 같은 Scene/Match만 감지하고 Match 정지 중에는 기존 감지를 유지합니다. 입력 메뉴 잠금은 수동 감지 해제 조건으로 사용하지 않습니다. 독립 로컬 시험은 Player/Enemy가 모두 Match 밖인 경우에 허용합니다. 실제 Host/Client 전송 검증과 감지 반경의 밸런스 확정은 별도입니다. Enemy 측의 탐지·피격 계약은 [Enemy 시스템 가이드](../08_encounter/enemy-system-guide.md)를 참고합니다.
 
-검증: Unity CLI 컴파일 오류 0개, EditMode `PlayerEnemyDetectorTests` 12개와 `PlayerContinuousAimTests` 19개를 통과했습니다. 분리된 EditMode Physics2D Scene에 실제 Player·BlackWolf 프리팹을 배치해 접근 시 감지·플레이어 공격 허용, 이탈 시 감지 해제, 터렛 공격 불허를 확인했습니다. 실제 게임 Scene의 PlayMode 및 Host/Client 통신은 미검증입니다.
+검증은 `PlayerEnemyDetectorTests`에서 실제 BlackWolf의 Trigger 감지·은신 표시 목표값·범위 이탈·복수 감지자·센서 제외·권한을 확인합니다. `PlayerAssassinAttackRuntimeTests`는 Play Mode에 BlackWolf와 `EnemySquadTester`를 임시 생성하고 기본/냉각 탄환·스패너·폭탄의 피해 및 터렛 피해 거부를 확인합니다. 고정된 시험 배치이며 사람의 실제 조작과 Host/Client 통신 검증을 대신하지 않습니다.
 
 ## 스크립트별 역할
 

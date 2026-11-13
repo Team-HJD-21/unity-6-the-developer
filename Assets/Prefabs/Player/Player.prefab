@@ -431,7 +431,7 @@ CircleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 4294967167
+    m_Bits: 4286578687
   m_LayerOverridePriority: 1
   m_ForceSendLayers:
     serializedVersion: 2
@@ -467,7 +467,7 @@ MonoBehaviour:
   _range: {fileID: 9411302}
   _enemyLayers:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 8388608
 --- !u!1 &812003010
 GameObject:
   m_ObjectHideFlags: 0

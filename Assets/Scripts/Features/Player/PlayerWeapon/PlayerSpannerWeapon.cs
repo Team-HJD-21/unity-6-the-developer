@@ -1,5 +1,6 @@
 // 렌치의 입력·예정 타격·수리 실행을 공용 시간과 Player 행동 조건에 연결합니다.
 using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Enemy.Contracts;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -153,7 +154,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
             if (!PlayerSpannerTargeting.CanReach(_owner, enemy.transform, point, _swingDirection, range, AttackArc, origin)) continue;
             _hit.Add(enemy);
             int previousHealth = enemy.CurrentHealth;
-            enemy.TakeDamage(damage);
+            enemy.TryTakeDamage(damage, AttackSourceType.Player);
             // A client-side rejected request must not appear to be a confirmed hit.
             if (!feedbackShown && enemy.CurrentHealth < previousHealth)
             {

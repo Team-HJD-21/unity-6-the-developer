@@ -1,5 +1,6 @@
 // Player 탄환의 비행·충돌·남은 수명을 관리하고 소유자의 Match 종료에 정리합니다.
 using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Enemy.Contracts;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -189,7 +190,7 @@ public sealed partial class PlayerBullet : MonoBehaviour
         if (isEnemy)
         {
             var health = target.GetComponentInParent<EnemyHealth>();
-            if (health != null) health.TakeDamage(Mathf.RoundToInt(_damage));
+            if (health != null) health.TryTakeDamage(Mathf.RoundToInt(_damage), AttackSourceType.Player);
         }
         if (_view != null) _view.ShowImpact();
         Destroy(gameObject);
