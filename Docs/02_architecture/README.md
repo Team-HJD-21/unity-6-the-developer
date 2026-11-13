@@ -77,6 +77,7 @@
 ## Enemy와 Encounter
 
 - [encounter-planning-guide](08_encounter/encounter-planning-guide.md)
+- [Match 정규 생산·Field 시간·저장 API](08_encounter/encounter-production-api.md)
 - [encounter-spawn-origin-api](08_encounter/encounter-spawn-origin-api.md)
 - [enemy-system-guide](08_encounter/enemy-system-guide.md)
 - [spatial-spawn-distribution](08_encounter/spatial-spawn-distribution.md)

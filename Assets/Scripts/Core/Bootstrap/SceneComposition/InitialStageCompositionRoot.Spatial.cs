@@ -59,8 +59,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     if (captured[index] != null) enemies.Add(captured[index]);
             }
 
-            if (_matchTime?.Clock != null && !_matchTime.Clock.Snapshot.IsPaused)
-                _regionBinding?.TickStaticCapture(_matchTime.Clock.ElapsedSeconds, players, enemies);
+            if (_matchTime?.FieldClock != null && !_matchTime.FieldClock.Snapshot.IsPaused)
+                _regionBinding?.TickStaticCapture(_matchTime.FieldClock.ElapsedSeconds, players, enemies);
             var nextInput = new BattlefieldDynamicSpatialInput(players, enemies);
             Dictionary<TeamHJD.Game.Domain.EntityId, int> nextCells = GetOccupiedCellByEntity(nextInput);
             if (HaveSameCellOccupancy(_lastEntityCells, nextCells)) return;

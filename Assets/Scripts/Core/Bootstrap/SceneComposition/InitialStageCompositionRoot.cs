@@ -31,6 +31,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
         private MatchCoordinator _coordinator;
+        [SerializeField] private EncounterProductionSettings encounterProduction = new EncounterProductionSettings();
         private MatchTimeService _matchTime;
         private IMatchTime _timeReplica;
         private MatchFieldReplicaScope _replicaField;
@@ -53,6 +54,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public MatchCoordinator MatchCoordinator => _coordinator;
         /// <summary>현재 Match의 읽기 시계입니다. Client는 첫 권위 anchor를 받기 전 null입니다.</summary>
         public IMatchTime MatchTime => _matchTime?.Clock ?? _timeReplica;
+        /// <summary>기존 Field의 냉각·이동·생산이 읽는 권위 시각입니다. Player/낮밤의 공용 MatchTime과 구분합니다.</summary>
+        public IMatchTime FieldTime => _matchTime?.FieldClock;
         /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
         public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
         /// <summary>Game Debugger와 통합 검사가 조회하는 현재 권위 Match의 유효 예약 수입니다.</summary>
@@ -225,9 +228,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         environmentConsumer.BindEnvironment(matchId, () => HasCurrentMatch && _matchSession != null &&
                             _matchSession.IsGameplayRunning ? _matchSession.Environment?.Snapshot : null);
                     if (_encounterConsumer is IEncounterSpawnContextConsumer spawnConsumer)
-                        spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _matchTime.Clock, config.RandomSeed, _coordinator.GameplayCancellation);
+                        spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _matchTime.FieldClock, config.RandomSeed, _coordinator.GameplayCancellation);
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
+                    if (_encounterConsumer is IEncounterProductionConsumer productionConsumer)
+                        productionConsumer.UseMatchProduction();
                     if (network != null)
                     {
                         if (!(_encounterConsumer is IAppOwnedEncounterMatchConsumer managed))
@@ -236,6 +241,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         managed.BindAuthorityMatch(matchId, localPlayerId, latest);
                     }
                     else _encounterConsumer.BindMatch(matchId, latest);
+                    if (_encounterConsumer is IEncounterRequestService requestService)
+                        _coordinator.ConfigureEncounterProduction(localPlayerId, requestService, _matchTime.FieldScheduler, _matchTime.FieldClock,
+                            encounterProduction, () => !_restoringCheckpoint);
                 }
                 else
                     Debug.LogWarning("Initial_Stage has no IEncounterMatchConsumer; automatic Encounter is unavailable.", this);

@@ -22,6 +22,7 @@ namespace TeamHJD.Game.Application
         private IDisposable _events;
         private bool _started, _disposed, _evaluating, _completionObserved;
         private long _sequence;
+        public MatchEncounterProduction EncounterProduction { get; private set; }
         public MatchId MatchId => _session.Config.MatchId;
         public MatchCompletion Completion => _session.Completion;
         public double ElapsedSeconds => _clock?.ElapsedSeconds ?? _manualElapsed;
@@ -43,6 +44,16 @@ namespace TeamHJD.Game.Application
             _gameplayToken = _gameplay.Token;
         }
 
+        /// <summary>Scene 조립부가 공통 요청 서비스를 연결합니다. 시작 뒤에는 Coordinator만 정규 생산을 소유합니다.</summary>
+        public void ConfigureEncounterProduction(PlayerId issuer, IEncounterRequestService requests,
+            IMatchScheduler scheduler, IMatchClock productionClock, EncounterProductionSettings settings, Func<bool> canProduce)
+        {
+            if (_started || _disposed || EncounterProduction != null || _clock == null)
+                throw new InvalidOperationException("Configure one production owner before Match start.");
+            EncounterProduction = new MatchEncounterProduction(MatchId, issuer, requests, scheduler, productionClock,
+                () => IsGameplayRunning && canProduce(), settings, _gameplayToken);
+        }
+
         public void Start()
         {
             if (_disposed) throw new ObjectDisposedException(nameof(MatchCoordinator));
@@ -54,6 +65,7 @@ namespace TeamHJD.Game.Application
             _session.Disposing += Dispose;
             _events = _session.Events.Subscribe(OnMatchEvent);
             EvaluateProgress();
+            if (IsGameplayRunning) EncounterProduction?.Start();
         }
 
         /// <summary>공용 시계를 주입하지 않은 독립 검사/호환 실행에서만 게임 초를 수동 진행합니다.</summary>
@@ -89,6 +101,7 @@ namespace TeamHJD.Game.Application
             if (!(fact is MatchCompleted completed) || completed.MatchId != MatchId || _completionObserved) return;
             _completionObserved = true;
             var errors = new List<Exception>();
+            TryCleanup(() => EncounterProduction?.Dispose(), errors);
             TryCleanup(_gameplay.Cancel, errors);
             Action<MatchCompletion> handlers = Completed;
             if (handlers != null)
@@ -107,6 +120,7 @@ namespace TeamHJD.Game.Application
             _events?.Dispose(); _events = null;
             Completed = null;
             var errors = new List<Exception>();
+            TryCleanup(() => EncounterProduction?.Dispose(), errors);
             TryCleanup(_gameplay.Cancel, errors);
             TryCleanup(_gameplay.Dispose, errors);
             if (errors.Count > 0) throw new AggregateException("Match coordinator cleanup failed.", errors);

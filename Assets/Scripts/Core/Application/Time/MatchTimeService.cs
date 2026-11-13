@@ -15,6 +15,9 @@ namespace TeamHJD.Game.Application
         private readonly Func<bool> _isAuthority;
         private readonly MatchClock _clock;
         private readonly MatchScheduler _scheduler;
+        private readonly MatchScheduler _fieldScheduler;
+        public FieldSimulationClock FieldClock { get; }
+        public IMatchScheduler FieldScheduler => _fieldScheduler;
         private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
         private IDisposable _events;
         private readonly int _ownerThread = System.Environment.CurrentManagedThreadId;
@@ -23,7 +26,7 @@ namespace TeamHJD.Game.Application
         private bool _stopped, _disposed;
         public IMatchTime Clock => _clock;
         public IMatchScheduler Scheduler => _scheduler;
-        public int PendingTimers => _stopped || _disposed ? 0 : _scheduler.PendingCount;
+        public int PendingTimers => _stopped || _disposed ? 0 : _scheduler.PendingCount + _fieldScheduler.PendingCount;
         public bool IsGameplayRunning => !_stopped && !_disposed && _session.IsGameplayRunning && _isAuthority();
         /// <summary>진단용 현재 임시 정지 소유자 사본입니다. 참가자 정책 정지와 구분합니다.</summary>
         public IReadOnlyList<string> PauseOwners
@@ -39,6 +42,8 @@ namespace TeamHJD.Game.Application
                 if (!_clock.IsAvailable) throw new InvalidOperationException("The Match timestamp source must be ready before composition.");
                 if (session.State.Phase == MatchPhase.Preparing) _clock.SetPaused(true);
                 _scheduler = new MatchScheduler(_clock, lifetime: _lifetime.Token);
+                FieldClock = new FieldSimulationClock(_clock);
+                _fieldScheduler = new MatchScheduler(FieldClock, lifetime: _lifetime.Token);
                 _events = session.Events.Subscribe(fact => { if (fact is MatchCompleted) Stop(); });
                 session.Disposing += Stop;
             }
@@ -46,7 +51,7 @@ namespace TeamHJD.Game.Application
             {
                 var errors = new List<Exception>();
                 Cleanup(() => _events?.Dispose(), errors); Cleanup(() => _scheduler?.Dispose(), errors);
-                Cleanup(() => _clock?.Dispose(), errors); Cleanup(_lifetime.Dispose, errors);
+                Cleanup(() => _fieldScheduler?.Dispose(), errors); Cleanup(() => _clock?.Dispose(), errors); Cleanup(_lifetime.Dispose, errors);
                 if (errors.Count > 0) { errors.Insert(0, initializationError); throw new AggregateException(errors); }
                 throw;
             }
@@ -62,12 +67,14 @@ namespace TeamHJD.Game.Application
             if (!IsGameplayRunning) { Stop(); return; }
             ApplyPause();
             if (_clock.Snapshot.Rate != rate) _clock.SetRate(rate);
-            _clock.Pump(); _scheduler.Pump();
+            _clock.Pump(); _scheduler.Pump(); _fieldScheduler.Pump();
         }
 
         /// <summary>권위의 필드 정지 정책이 호출합니다. 개인 메뉴/Client의 로컬 시간 변경은 이 경계로 보내지 않습니다.</summary>
         public void SetPaused(bool paused)
         { RequireAuthority(); _policyPaused = paused; ApplyPause(); }
+        /// <summary>단계 전환 소유자가 기존 Field만 보류합니다. Player·보스·낮밤 공용 시간은 계속 진행합니다.</summary>
+        public void SetFieldHeld(bool held) { RequireAuthority(allowPreparing: true); FieldClock.SetHeld(held); }
         /// <summary>캡처·복원 조율부가 메인 스레드에서 임시 정지를 임대합니다. 해제해도 다른 소유자/우주선 정지는 유지합니다.</summary>
         /// <remarks>준비 중 복원도 허용합니다. 반환 lease는 같은 소유 스레드에서 Dispose하며 완료/폐기 후 해제는 재개하지 않습니다.</remarks>
         public IDisposable AcquirePause(string owner)
@@ -99,7 +106,7 @@ namespace TeamHJD.Game.Application
         }
         /// <summary>저장 복원 조율부가 현재 Match의 게임 초를 복원하고 과거 예약을 취소합니다.</summary>
         public void Restore(double gameSeconds)
-        { RequireAuthority(allowPreparing: true); _clock.Restore(gameSeconds); _scheduler.CancelPending(); ApplyPause(); }
+        { RequireAuthority(allowPreparing: true); _clock.Restore(gameSeconds); _scheduler.CancelPending(); _fieldScheduler.CancelPending(); ApplyPause(); }
 
         private void Stop()
         {
@@ -108,7 +115,7 @@ namespace TeamHJD.Game.Application
             _stopped = true;
             _pauses.Clear();
             var errors = new List<Exception>();
-            Cleanup(_lifetime.Cancel, errors); Cleanup(_scheduler.CancelPending, errors);
+            Cleanup(_lifetime.Cancel, errors); Cleanup(_scheduler.CancelPending, errors); Cleanup(_fieldScheduler.CancelPending, errors);
             Cleanup(() => _clock.SetPaused(true), errors);
             if (errors.Count > 0) throw new AggregateException("Match time stopped; cleanup errors occurred.", errors);
         }
@@ -131,7 +138,7 @@ namespace TeamHJD.Game.Application
             var errors = new List<Exception>();
             Cleanup(Stop, errors); _disposed = true;
             Cleanup(() => _events?.Dispose(), errors); _events = null;
-            Cleanup(_scheduler.Dispose, errors); Cleanup(_clock.Dispose, errors); Cleanup(_lifetime.Dispose, errors);
+            Cleanup(_scheduler.Dispose, errors); Cleanup(_fieldScheduler.Dispose, errors); Cleanup(_clock.Dispose, errors); Cleanup(_lifetime.Dispose, errors);
             if (errors.Count > 0) throw new AggregateException("Match time disposal failed after all resources were released.", errors);
         }
         private static void Cleanup(Action cleanup, List<Exception> errors)

@@ -215,3 +215,8 @@ APP · GAME FLOW의 시작/출격/귀환은 검은 배경·하단 바의 로딩 
 현재 메뉴는 `Tools → TeamHJD → Game Debugger`다. Battlefield의 지역 Grid 패널에서 유효 지형 기준 점유율, 별도의 해금 목록, 구역별 확보 초·실제 팀 피해·생존 참가자/적·정지 이유를 확인한다. 펼친 ‘확보 시험값’은 현재 Host Match에만 적용한다. 기본 규칙과 데이터의 의미는 [정적 확보 API](../02_architecture/02_match/static-region-capture.md)를 먼저 확인한다.
 
 ‘검증용 Player / CU 피해 보호’는 Play 중 현재 Host 객체에만 붙이는 개발 표식이다. 이동·전투·시계는 계속 진행하고 일반 Release에서는 무효다. Scene/Prefab에 저장하지 않으며 Play 종료로 해제된다. 보호·배속·짧게 바꾼 확보 시간 등 시험 조건을 캡처 기록에 명시한다. 이 결과를 정상 난이도·사망/안전장치 통과로 보고하지 않는다.
+
+
+### 정규 생산 확인 (2026-11-14)
+
+Stage_1의 정식 Match는 Game Debugger 없이도 자동 생산한다. Encounter 상단의 **Match 정규 생산** 박스에서 다음 요청/간격(게임 초), 요청 회차/마지막 결과, 공용/Field 시각을 확인한다. Statistics의 `MatchProduction` Source가 실제 정규 요청이다. 아래 수동/연속 버튼은 추가 검수 요청이며 자동 생산을 시작하는 버튼이 아니다. 기본값·권한·저장/제약은 [정규 생산 API](../02_architecture/08_encounter/encounter-production-api.md)를 따른다.

@@ -18,6 +18,12 @@ namespace TeamHJD.Game.Enemies.Encounter
         private bool _budgetInitialized;
         private int _currentBudget;
         public bool HasCatalog => _composition.HasCatalog;
+        internal int CapturedBudget => _budgetInitialized ? _currentBudget : 0;
+        internal void RestoreBudget(int budget)
+        {
+            if (budget < 0) throw new ArgumentOutOfRangeException(nameof(budget));
+            _budgetInitialized = budget > 0; _currentBudget = budget;
+        }
         internal SpawnDistributionHistory.State CaptureCheckpoint() => _composition.CaptureCheckpoint();
         internal void RestoreCheckpoint(SpawnDistributionHistory.State state, MatchId match) => _composition.RestoreCheckpoint(state, match);
         internal void RecordExecuted(BattlefieldSpatialSnapshot snapshot, IReadOnlyList<SpawnDecisionSnapshot.Actual> actuals)
@@ -55,7 +61,7 @@ namespace TeamHJD.Game.Enemies.Encounter
                     settings.logSelectionDecisions
                         ? (point, area, presets, selected) => LogSquadSelection(snapshot, point,
                             situation.TargetNames[point], situation.TargetPositions[point], area, presets, selected, settings)
-                        : null);
+                        : null, context.Environment, environmentProfile);
             }
             else
             {

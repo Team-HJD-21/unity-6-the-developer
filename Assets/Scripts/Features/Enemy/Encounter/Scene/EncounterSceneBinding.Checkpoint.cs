@@ -15,7 +15,7 @@ using TeamHJD.Game.Domain;
 public sealed partial class EncounterSceneBinding : ICheckpointParticipant, ICheckpointParticipantProvider
 {
     string ICheckpointParticipant.Key => "world/encounter";
-    int ICheckpointParticipant.Version => 1;
+    int ICheckpointParticipant.Version => 2;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 300;
 
@@ -29,13 +29,14 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     {
         RequireCheckpointMatch(context.Config.MatchId);
         var saved = CaptureEncounter();
-        return codec.Write("world/encounter", 1, CheckpointSectionKind.World, w => WriteEncounter(w, saved, codec));
+        return codec.Write("world/encounter", 2, CheckpointSectionKind.World, w => WriteEncounter(w, saved, codec));
     }
 
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointMatch(context.Current.Config.MatchId);
-        var target = codec.Read(section, 1, r => ReadEncounter(r, codec));
+        if (section.Version is not (1 or 2)) throw new InvalidDataException("Unsupported Encounter checkpoint version.");
+        var target = codec.Read(section, section.Version, r => ReadEncounter(r, codec, section.Version));
         var backup = CaptureEncounter();
         return new CheckpointRestoreStep(() => ApplyEncounter(target), () => ApplyEncounter(backup));
     }
@@ -56,10 +57,10 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
             if (p.Request.Origin.Kind == SpawnOriginKind.DynamicSource)
                 throw new NotSupportedException("A pending dynamic source requires its Feature checkpoint writer and generation rebinding.");
             return new SavedPending(p.Request.PresetId.Value, p.Request.MaximumEnemyCount, p.Request.Source, p.Request.Origin,
-                p.Request.CauseEventId, Math.Max(0, p.Reservation.DueGameSeconds - GameSeconds));
+                p.Request.CauseEventId, Math.Max(0, p.Reservation.DueGameSeconds - GameSeconds), p.Request.UsesAutomaticComposition);
         }).ToArray();
         return new SavedEncounter(_initialEncounterPending, Math.Max(0, _initialEncounterDue - GameSeconds), requests,
-            _pipeline.CaptureCheckpoint());
+            _pipeline.CaptureCheckpoint(), _pipeline.CapturedBudget);
     }
 
     /// <summary>
@@ -69,12 +70,18 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     {
         CancelPendingInitialEncounter(); CancelScheduledEncounters();
         _pipeline.RestoreCheckpoint(saved.History, _boundMatchId);
+        _pipeline.RestoreBudget(saved.Budget);
         _initialEncounterPending = saved.InitialPending; _initialEncounterDue = GameSeconds + saved.InitialRemaining;
         if (_initialEncounterPending) StartInitialEncounterIfBound();
         foreach (var pending in saved.Pending)
         {
             // 복원 뒤에는 새 실행 의도입니다. 과거에 이미 소비된 요청 ID를 재사용하지 않습니다.
-            if (!TryScheduleOrigin(pending.Preset, pending.Maximum, pending.Source, pending.Origin, pending.Cause, pending.Remaining, out _))
+            var request = pending.Automatic
+                ? EncounterRequest.Automatic(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
+                    pending.Maximum, pending.Source, pending.Origin, pending.Cause)
+                : new EncounterRequest(new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
+                    new DefinitionId(pending.Preset), pending.Maximum, pending.Source, pending.Origin, pending.Cause);
+            if (!TryScheduleEncounter(request, pending.Remaining, out _))
                 throw new InvalidOperationException("Could not restore a scheduled Encounter request.");
         }
     }
@@ -84,11 +91,11 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     /// </summary>
     private static void WriteEncounter(BinaryWriter w, SavedEncounter saved, ICheckpointPayloadCodec codec)
     {
-        w.Write(saved.InitialPending); w.Write(saved.InitialRemaining); saved.History.Write(w, codec);
+        w.Write(saved.InitialPending); w.Write(saved.InitialRemaining); saved.History.Write(w, codec); w.Write(saved.Budget);
         w.Write(saved.Pending.Length);
         foreach (var p in saved.Pending)
         {
-            codec.WriteText(w, p.Preset); w.Write(p.Maximum); w.Write((int)p.Source); w.Write(p.Cause.ToByteArray()); w.Write(p.Remaining);
+            w.Write(p.Automatic); codec.WriteText(w, p.Preset); w.Write(p.Maximum); w.Write((int)p.Source); w.Write(p.Cause.ToByteArray()); w.Write(p.Remaining);
             w.Write((int)p.Origin.Kind); w.Write((int)p.Origin.Delivery);
             if (p.Origin.Kind == SpawnOriginKind.AuthoredPoint) codec.WriteText(w, p.Origin.PointId.Value);
             else if (p.Origin.Area != null)
@@ -102,14 +109,17 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     /// <summary>
     /// 저장 payload에서 Encounter의 요청 대기 상태와 분산 이력을 읽는다.
     /// </summary>
-    private static SavedEncounter ReadEncounter(BinaryReader r, ICheckpointPayloadCodec codec)
+    private static SavedEncounter ReadEncounter(BinaryReader r, ICheckpointPayloadCodec codec, int version)
     {
         bool initial = r.ReadBoolean(); double remaining = r.ReadDouble();
         if (!double.IsFinite(remaining) || remaining < 0) throw new InvalidDataException("Invalid initial Encounter delay.");
         var history = SpawnDistributionHistory.State.Read(r, codec);
+        int budget = version >= 2 ? r.ReadInt32() : 0;
+        if (budget < 0) throw new InvalidDataException("Invalid Encounter budget state.");
         var pending = new SavedPending[codec.ReadCount(r, 64)];
         for (int i = 0; i < pending.Length; i++)
         {
+            bool automatic = version >= 2 && r.ReadBoolean();
             string preset = codec.ReadText(r); int maximum = r.ReadInt32(); var source = (EncounterRequestSource)r.ReadInt32();
             byte[] cause = r.ReadBytes(16); if (cause.Length != 16) throw new EndOfStreamException();
             double delay = r.ReadDouble(); var kind = (SpawnOriginKind)r.ReadInt32(); var delivery = (SpawnDeliveryMode)r.ReadInt32();
@@ -121,26 +131,26 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
                     r.ReadDouble(), r.ReadDouble(), r.ReadDouble()), delivery),
                 _ => throw new InvalidDataException("Unsupported saved Encounter origin.")
             };
-            if (origin.Kind != kind || string.IsNullOrWhiteSpace(preset) || preset.Length > 128 || maximum < 1 ||
+            if (origin.Kind != kind || (!automatic && string.IsNullOrWhiteSpace(preset)) || preset.Length > 128 || maximum < 1 ||
                 !Enum.IsDefined(typeof(EncounterRequestSource), source) || !double.IsFinite(delay) || delay < 0)
                 throw new InvalidDataException("Invalid scheduled Encounter request.");
-            pending[i] = new SavedPending(preset, maximum, source, origin, new Guid(cause), delay);
+            pending[i] = new SavedPending(preset, maximum, source, origin, new Guid(cause), delay, automatic);
         }
-        return new SavedEncounter(initial, remaining, pending, history);
+        return new SavedEncounter(initial, remaining, pending, history, budget);
     }
 
     private sealed class SavedEncounter
     {
-        public readonly bool InitialPending; public readonly double InitialRemaining;
+        public readonly bool InitialPending; public readonly double InitialRemaining; public readonly int Budget;
         public readonly SavedPending[] Pending; public readonly SpawnDistributionHistory.State History;
-        public SavedEncounter(bool initial, double remaining, SavedPending[] pending, SpawnDistributionHistory.State history)
-        { InitialPending = initial; InitialRemaining = remaining; Pending = pending; History = history; }
+        public SavedEncounter(bool initial, double remaining, SavedPending[] pending, SpawnDistributionHistory.State history, int budget)
+        { InitialPending = initial; InitialRemaining = remaining; Pending = pending; History = history; Budget = budget; }
     }
     private sealed class SavedPending
     {
-        public readonly string Preset; public readonly int Maximum; public readonly EncounterRequestSource Source;
+        public readonly bool Automatic; public readonly string Preset; public readonly int Maximum; public readonly EncounterRequestSource Source;
         public readonly EncounterSpawnOrigin Origin; public readonly Guid Cause; public readonly double Remaining;
-        public SavedPending(string preset, int maximum, EncounterRequestSource source, EncounterSpawnOrigin origin, Guid cause, double remaining)
-        { Preset = preset; Maximum = maximum; Source = source; Origin = origin; Cause = cause; Remaining = remaining; }
+        public SavedPending(string preset, int maximum, EncounterRequestSource source, EncounterSpawnOrigin origin, Guid cause, double remaining, bool automatic)
+        { Preset = preset; Maximum = maximum; Source = source; Origin = origin; Cause = cause; Remaining = remaining; Automatic = automatic; }
     }
 }

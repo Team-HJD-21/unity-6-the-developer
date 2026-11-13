@@ -51,6 +51,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 foreach (var writer in provider.GetCheckpointParticipants())
                     if (!participants.Contains(writer))
                         participants.Add(writer);
+            if (coordinator.EncounterProduction != null)
+            {
+                required.Add("world/encounter-production");
+                participants.Add(new EncounterProductionCheckpointParticipant(match, coordinator.EncounterProduction));
+            }
+            required.Add("world/field-time");
+            participants.Add(new FieldTimeCheckpointParticipant(_matchTime.FieldClock));
             participants.Add(session.CreateRandomCheckpointParticipant());
             participants.Add(new MatchSpatialCheckpointParticipant(session, _regionBinding.RestoreCheckpoint));
             var runtime = new MatchCheckpointRuntime(session, _matchTime,

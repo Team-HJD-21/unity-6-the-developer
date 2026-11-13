@@ -130,3 +130,31 @@ Stage1의 초기 고정 편성은 생성됐지만 자동 편성은 난수 미주
 Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복제 인수와 구분합니다. 현재 지형 투영은 활성 XY NavMesh 기준이며 여러 전장의 NavMesh를 동시에 활성화하는 경우의 Scene 지형 공급은 별도 검토가 필요합니다. 전체 저장·복원, 지속 자동 생산, 사건/보스/승패는 다음 배치입니다.
 
 최종 실행에서 Game Debugger의 현재 메뉴를 열고 OnGUI 예외는 관측하지 않았습니다. 이전 메뉴 경로를 잘못 호출한 QA 명령 오류1건은 숨기거나 지우지 않았습니다. 앞선 중단 Play 종료 중 NGO `NetworkObject.OnNetworkBehaviourDestroyed → NetworkManagerOwner` null 예외도1회 관측했으며, 이후 최종 종료에서는 재발하지 않았습니다. 이를 해결 완료로 위장하지 않고 최종 네트워크 정리 검사에서 추적합니다.
+
+
+## B4a — Match 정규 생산과 Field 시간 (11/14)
+
+진입점은 `InitialStageCompositionRoot → MatchCoordinator.Start → MatchEncounterProduction → IMatchScheduler → IEncounterRequestService.Submit → EncounterPipeline`이다. Scene의 첫 자동 요청은 정식 Match에서 억제하여 생산 소유자를 하나로 만들었다. 기본 첫0.5초/간격15초/요청상한500이며, 실제 비용·공간·편성에 따라 생성한다. 기존 비용 증가/분산 정책은 유지한다. 자세한 사용법은 [정규 생산 API](../../../../02_architecture/08_encounter/encounter-production-api.md)에서 확인한다.
+
+먼저 볼 파일:
+
+1. `Core/Application/Encounter/MatchEncounterProduction.cs`: 한 예약·현재 실행 시각부터 다음 예약·권위 요청·수명·복원.
+2. `Features/Enemy/Encounter/Pipeline/EncounterPlanner.cs`, `Planning/SpawnCompositionPlanner.cs`: 자동 편성도 실제 환경 규칙을 사용. 기존 마릿수 배율을 비용 배율로 바꾸지 않았다.
+3. `Core/Application/Time/FieldSimulationClock.cs`, `MatchTimeService.cs`: 공용 시간과 기존 Field의 보류 시각 분리. Player는 공용 시간, Field Enemy/터렛/투사체/정규 생산/확보는 투영 시각.
+4. `Core/Application/Persistence/{FieldTimeCheckpointParticipant,EncounterProductionCheckpointParticipant,CheckpointService}.cs`: 남은 대기/Field 시각의 저장과 시간 선행 rollback. `world/encounter`v2는 예산 증가 단계와 자동 대기 구분도 저장한다.
+
+| 구분 | 확인 내용 | 결과/제한 |
+| --- | --- | --- |
+| 준비/실제 컴파일 | main #719 URP2D 통합·새 소스 | 실제 URP 활성/오류0, Sprite-Lit 기본 셰이더 유효 |
+| 자동 검사 | 생산6·Field시각5·복원실패1·예산11·자동편성62 | 고유85개 통과. 먼저 단독 실행한 환경1/구버전시각4와 재실행은 중복 합산하지 않음 |
+| 실제 Stage_1 정규 생산 | Debugger 버튼 없이 첫3회 | 매회 계획12/실제12, 첫 임시 Coroutine pendingfalse |
+| 실제 Field 보류 | 공용20.1088초 진행 | Field0초/요청5→5/다음대기2.9786초 유지, 적59마리 최대이동0, Controller시각동일. Player공용시각은 계속 진행 |
+| 보류 해제 | 같은 Match 다음 예약 | 요청8회까지 정상 진행, 밀린 회차 폭주 없음 |
+| CU 자동 활성화 | 새 Match에서 실제 Host gateway 제출 | AutoActivationStarted·후보2, 실제 터렛가동true 확인. 검수용 Player CU 보호/근접 warp 조건 |
+| Encounter 개별 저장 | 실제world/encounter v2,2537bytes | Prepare/Apply/Rollback 왕복. 전체 월드 복원 검증과 다름 |
+| 전체 저장 Gate | 실제writer 목록 | world/weather 누락 유지. 가짜 writer로 우회하지 않음 |
+| 오류 | 새 Play~정상 Stop Console | Runtime error0. URP 첫 import 중 missing include/type/Renderer2D 기본재료 임시예외는 별도 rawlog로 보존 |
+
+뒤늦은 시각 Snapshot anchor 보완을 Play 종료 전에 적용한 절차 오류가 있었다. 즉시 Stop/clean Edit Mode로 복귀했고 최종 소스의 Field시각5/rollback1과 실제 정규 생산/Field 보류를 다시 검증했다. 앞선 기록은 삭제하지 않았다.
+
+이 범위에는 기존 Enemy 이동/공격/스탯/실제 프리셋 재설계가 없다. `EncounterSceneBinding`·환경 profile·자동 Planner·checkpoint 연결만 바뀌며 Core가 생성 타이밍을 소유한다. 실제 날씨별 편성 데이터가 없으면 기존대로 neutral이다. 공통 예산을 나누는 상황 기반 추가 출현·예고·점유 추세, 원격 Client Field 보류, 33/66/100 사건/보스는 아직 후속 범위다. B4 전체/Stage1 전체 완료로 읽지 않는다.

@@ -26,7 +26,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             Presence = new MatchPresenceService(config, authority, time.SetPaused);
             try
             {
-                _features = new FieldSimulationSceneScope(features, time.Clock, gameplay);
+                _features = new FieldSimulationSceneScope(features, time.FieldClock, gameplay);
                 foreach (var actor in actors) RegisterActor(actor.Key, actor.Value);
             }
             catch (Exception error)

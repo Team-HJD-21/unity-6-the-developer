@@ -72,6 +72,20 @@ public sealed class EncounterPlannerBudgetTests
     }
 
     [Test]
+    public void RestoredStaticBudget_ContinuesItsPreviousStepInsteadOfJumpingToTheCurrentCaptureTarget()
+    {
+        AssertBudget(Region(0), 20);
+        AssertBudget(Region(4), 25);
+        object planner = typeof(EncounterPipeline).GetField("_planner", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(_runtime);
+        var budgetProperty = typeof(EncounterPlanner).GetProperty("CapturedBudget", BindingFlags.Instance | BindingFlags.NonPublic);
+        var restore = typeof(EncounterPlanner).GetMethod("RestoreBudget", BindingFlags.Instance | BindingFlags.NonPublic);
+        int saved = (int)budgetProperty.GetValue(planner);
+        AssertBudget(Region(4), 30);
+        restore.Invoke(planner, new object[] { saved });
+        AssertBudget(Region(4), 30);
+    }
+
+    [Test]
     public void RuntimeInstances_DoNotShareBudgetAndRequireMatchingInputs()
     {
         AssertBudget(Region(0), 20);

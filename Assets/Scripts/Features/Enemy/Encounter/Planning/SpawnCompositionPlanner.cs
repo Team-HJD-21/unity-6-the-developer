@@ -79,13 +79,21 @@ public sealed class SpawnCompositionPlanner
         IReadOnlyList<BattlefieldPoint> playerPositions,
         SquadSelectionSettings settings, IRandomSource random,
         out IReadOnlyList<SpawnInstruction> instructions,
-        Action<string, SpawnAreaContext, IReadOnlyList<EnemySquadPreset>, EnemySquadPreset> onSelected = null)
+        Action<string, SpawnAreaContext, IReadOnlyList<EnemySquadPreset>, EnemySquadPreset> onSelected = null,
+        MatchEnvironmentSnapshot environment = null, EncounterEnvironmentProfile environmentProfile = null)
     {
         instructions = Array.Empty<SpawnInstruction>();
         LastCandidates = Array.Empty<SpawnDecisionSnapshot.Candidate>();
         LastBudgetAllocations = Array.Empty<SpawnBudgetAllocation>();
-        LastEnvironment = null;
+        LastEnvironment = environment;
         LastEnvironmentPolicy = "neutral";
+        string requiredPreset = null;
+        if (environment != null && (snapshot == null || environment.MatchId != snapshot.MatchId)) return false;
+        if (environmentProfile != null)
+        {
+            request = environmentProfile.Select(request, environment, out requiredPreset, out string policy);
+            LastEnvironmentPolicy = policy;
+        }
         if (!HasCatalog || request.SpawnBudget <= 0 || request.MaxCount <= 0 ||
             snapshot?.Grid == null || spawnPoints == null || targetPositions == null || targetAttackTypes == null ||
             totalEnemyCount < 0 ||
@@ -99,6 +107,7 @@ public sealed class SpawnCompositionPlanner
         var orders = new HashSet<string>(StringComparer.Ordinal);
         foreach (EnemySquadPreset preset in GetSpawnablePresets(request.SpawnBudget, request.MaxCount))
         {
+            if (!string.IsNullOrWhiteSpace(requiredPreset) && preset.SquadOrder != requiredPreset) continue;
             if (string.IsNullOrWhiteSpace(preset.SquadOrder) || preset.SelectionWeight <= 0 ||
                 !Enum.IsDefined(typeof(EnemySquadRole), preset.Role) || !orders.Add(preset.SquadOrder))
                 continue;

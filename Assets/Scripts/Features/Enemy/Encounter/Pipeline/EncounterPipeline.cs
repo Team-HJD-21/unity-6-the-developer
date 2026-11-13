@@ -33,6 +33,8 @@ namespace TeamHJD.Game.Enemies.Encounter
                 _capturedSpawnMargin = value;
             }
         }
+        internal int CapturedBudget => _planner.CapturedBudget;
+        internal void RestoreBudget(int budget) => _planner.RestoreBudget(budget);
         internal SpawnDistributionHistory.State CaptureCheckpoint() => _planner.CaptureCheckpoint();
         internal void RestoreCheckpoint(SpawnDistributionHistory.State state, MatchId match) => _planner.RestoreCheckpoint(state, match);
 
@@ -50,8 +52,9 @@ namespace TeamHJD.Game.Enemies.Encounter
         /// <summary>Core 요청 서비스가 승인한 자동 편성 요청을 현재 전장·공용 난수로 처리합니다.</summary>
         public bool SpawnRequest(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
             int maximumEnemyCount, SquadSelectionSettings settings, IRandomSource random,
-            EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
-            => Run(battlefield, region, null, maximumEnemyCount, settings, random, context, null, out result, out summary);
+            EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary,
+            EncounterEnvironmentProfile environmentProfile = null)
+            => Run(battlefield, region, null, maximumEnemyCount, settings, random, context, environmentProfile, out result, out summary);
 
         /// <summary>지정 편성의 게임 사건·디버그 요청을 같은 네 Step으로 처리합니다.</summary>
         public bool SpawnRequest(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,

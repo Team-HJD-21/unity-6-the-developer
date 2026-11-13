@@ -16,11 +16,11 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 현재 Scene의 Match 바인딩과 검증된 요청을 EncounterPipeline에 전달한다.
-/// 첫 자동 요청은 Stage 1의 임시 정책이며 이후 진행 이벤트 계약으로 교체할 수 있다.
+/// 정식 생산은 Core MatchCoordinator가 소유하고 독립 시험 Scene만 첫 자동 요청을 사용한다.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IRandomConsumer
+public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IRandomConsumer, IEncounterProductionConsumer
 {
     private const float HostReadyTimeout = 10f;
 
@@ -60,6 +60,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     private EnemyNetworkTestLauncher _standalone;
     private Coroutine _initialEncounterRoutine;
     private bool _initialEncounterPending;
+    private bool _matchOwnsProduction;
     private double _initialEncounterDue;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
     private int _retainedDecisionCount;
@@ -161,7 +162,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         if (!_appOwnedNetwork && _pipeline?.Executor != null)
             _standalone.BindOwner(_pipeline.Executor.gameObject.scene);
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
-        _initialEncounterPending = true;
+        _initialEncounterPending = !_matchOwnsProduction;
         _initialEncounterDue = GameSeconds + Math.Max(0, initialEncounterDelay);
         if (_networkManager != null) StartInitialEncounterIfBound();
     }
@@ -206,9 +207,17 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
             _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
     }
 
+    /// <inheritdoc />
+    public void UseMatchProduction()
+    {
+        if (_snapshotProvider != null) throw new InvalidOperationException("Select the production owner before binding a Match.");
+        _matchOwnsProduction = true;
+        CancelPendingInitialEncounter();
+    }
+
     private void StartInitialEncounterIfBound()
     {
-        if (!_initialEncounterPending || _initialEncounterRoutine != null || !isActiveAndEnabled) return;
+        if (_matchOwnsProduction || !_initialEncounterPending || _initialEncounterRoutine != null || !isActiveAndEnabled) return;
         _initialEncounterRoutine = StartCoroutine(RunInitialEncounter());
     }
 
@@ -480,7 +489,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         EncounterExecutionSummary summary;
         bool succeeded = request.UsesAutomaticComposition
             ? _pipeline.SpawnRequest(snapshot, region, request.MaximumEnemyCount, selectionSettings,
-                _squadRandom, context, out result, out summary)
+                _squadRandom, context, out result, out summary, environmentProfile)
             : _pipeline.SpawnRequest(snapshot, region, request.PresetId.Value, request.MaximumEnemyCount,
                 context, out result, out summary, selectionSettings.logSelectionDecisions, environmentProfile);
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
