@@ -7,6 +7,40 @@ using EntityId = TeamHJD.Game.Domain.EntityId;
 
 public sealed class TacticalPresentationTests
 {
+    [Test]
+    public void TransitionEaseSlowsBothEndsWithoutReversingOrOvershooting()
+    {
+        Assert.That(TacticalModeEffect.TransitionEase(-1),Is.Zero);
+        Assert.That(TacticalModeEffect.TransitionEase(2),Is.EqualTo(1));
+        Assert.That(TacticalModeEffect.TransitionEase(.5f),Is.EqualTo(.5f).Within(.00001f));
+        Assert.That(TacticalModeEffect.TransitionEase(.1f),Is.LessThan(.02f));
+        Assert.That(TacticalModeEffect.TransitionEase(.9f),Is.GreaterThan(.98f));
+        float previous=0;
+        for(int i=0;i<=100;i++)
+        {
+            float next=TacticalModeEffect.TransitionEase(i/100f);
+            Assert.That(next,Is.InRange(previous,1f));previous=next;
+        }
+    }
+    [Test]
+    public void ResettingTheEffectReleasesOnlyItsOwnHudSuppression()
+    {
+        var root=new GameObject("Transition lifetime test");
+        var effect=root.AddComponent<TacticalModeEffect>();
+        var other=TeamHJD.Game.Presentation.HudPresentationVisibility.Suppress();
+        try
+        {
+            effect.SetOpen(true);effect.SetOpen(false);
+            effect.Reset(false);
+            Assert.That(TeamHJD.Game.Presentation.HudPresentationVisibility.IsSuppressed,Is.True);
+            other.Dispose();other.Dispose();
+            Assert.That(TeamHJD.Game.Presentation.HudPresentationVisibility.IsSuppressed,Is.False);
+            effect.SetOpen(true);effect.Reset(false);
+            Assert.That(TeamHJD.Game.Presentation.HudPresentationVisibility.IsSuppressed,Is.False);
+        }
+        finally{other.Dispose();UnityEngine.Object.DestroyImmediate(root);}
+        Assert.That(TeamHJD.Game.Presentation.HudPresentationVisibility.IsSuppressed,Is.False);
+    }
     private static TurretPresentationSnapshot Row(TurretPresentationFlags flags,double cooling=0)
         => new(new EntityId("t"),new DefinitionId("canon"),"캐논",new BattlefieldPoint(0,0),1,10,10,1,10,12,cooling,default,0,flags);
     private const TurretPresentationFlags Ready=TurretPresentationFlags.Initialized;

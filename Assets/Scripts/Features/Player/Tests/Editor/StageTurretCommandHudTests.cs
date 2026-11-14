@@ -8,6 +8,8 @@ using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.Presentation;
+using TeamHJD.Game.Application;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -18,11 +20,177 @@ using EntityId = TeamHJD.Game.Domain.EntityId;
 using Object = UnityEngine.Object;
 public sealed class StageTurretCommandHudTests
 {
+    private readonly System.Collections.Generic.List<UnityEngine.InputSystem.InputDevice> _mutedPointers=new();
+    private UnityEngine.InputSystem.Mouse _fixturePointer;
+    private UnityEngine.Events.UnityAction<UnityEngine.SceneManagement.Scene,UnityEngine.SceneManagement.LoadSceneMode> _entrySetup;
     [UnityTearDown]
     public IEnumerator Cleanup()
     {
+        if(_entrySetup!=null)UnityEngine.SceneManagement.SceneManager.sceneLoaded-=_entrySetup;
+        _entrySetup=null;
+        if(_fixturePointer!=null && _fixturePointer.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(_fixturePointer);
+        foreach(var device in _mutedPointers)if(device.added && !device.enabled)UnityEngine.InputSystem.InputSystem.EnableDevice(device);
+        _mutedPointers.Clear();_fixturePointer=null;
         var app = Object.FindAnyObjectByType<AppRoot>(); if (app != null) app.EndCurrentMatch();
         if (Application.isPlaying) yield return new ExitPlayMode();
+    }
+    [UnityTest]
+    public IEnumerator FieldEntryBlocksMapButtonMAndDirectOpenUntilTheHudScanFinishes()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        // Scene 준비가 느린 Editor에서도 입력 검수 전에 연출이 끝나지 않게 런타임 인스턴스만 대기시킵니다.
+        _entrySetup=(scene,mode)=>
+        {
+            foreach(var entry in Object.FindObjectsByType<CombatHudIntro>(FindObjectsSortMode.None))
+            {
+                if(entry.gameObject.scene!=scene)continue;
+                entry.enabled=false;entry.MessageFadeSeconds=entry.MessageHoldSeconds=0;
+                entry.MessageEraseSeconds=.1f;entry.Duration=2;
+            }
+        };
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded+=_entrySetup;
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit(false);
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded-=_entrySetup;_entrySetup=null;
+        var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>();var t=hud.Tactical;
+        var intro=hud.GetComponent<CombatHudIntro>();var control=hud.LocalPlayer.GetComponent<PlayerControlState>();
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        var keyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+        void Key(bool held)=>UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,
+            held?new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.M):new UnityEngine.InputSystem.LowLevel.KeyboardState());
+        try
+        {
+            Assert.That(intro.Completed,Is.False,"미완료 진입 연출의 실제 입력을 검사해야 합니다.");
+            Assert.That(t.IsHudEntryComplete,Is.False);Assert.That(t.View.ToggleMap.gameObject.activeSelf,Is.False);
+            t.View.ToggleMap.onClick.Invoke();Assert.That(t.Open(),Is.False);
+            Key(true);yield return new WaitForSecondsRealtime(.05f);Key(false);yield return new WaitForSecondsRealtime(.05f);
+            Assert.That(t.IsOpen||t.IsTransitioning,Is.False);Assert.That(control.IsInTacticalView,Is.False);
+            Assert.That(control.CanMove,Is.True,"지도만 막고 전장 진입 연출이 게임 조작을 잠그지는 않습니다.");
+            foreach(var entry in Object.FindObjectsByType<CombatHudIntro>(FindObjectsSortMode.None))entry.enabled=true;
+            float deadline=Time.realtimeSinceStartup+intro.AnnouncementSeconds+intro.Duration+3;
+            while(intro.Progress<=0 && !intro.Completed && Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(intro.Completed,Is.False,"HUD scan 도중에도 지도 입력을 막아야 합니다.");
+            Assert.That(t.Open(),Is.False);
+            while(!intro.Completed && Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(intro.Completed,Is.True);yield return new WaitForSecondsRealtime(.1f);
+            Assert.That(t.View.ToggleMap.gameObject.activeSelf,Is.True,
+                $"field={hud.HasFieldActor}, entry={t.IsHudEntryComplete}, open={t.IsOpen}, HP={hud.LocalPlayer.curHp}, commands={control.CanIssueTurretCommands}, blocked={control.IsBlocked}, screen={Object.FindAnyObjectByType<AppRoot>().Screens.Top?.Kind}");
+            Key(true);yield return new WaitForSecondsRealtime(.05f);Key(false);yield return new WaitForSecondsRealtime(.05f);
+            Assert.That(t.IsOpen,Is.True,"연출 뒤에는 동일한 M 입력이 실제 지도를 열어야 합니다.");
+            yield return FinishTransition(t);t.Close();yield return FinishTransition(t);
+        }
+        finally{if(keyboard.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);}
+    }
+    [UnityTest]
+    public IEnumerator MapMarkersStayBelowCombatHudAndDoNotStealItsClicks()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>();var t=hud.Tactical;
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        var skills=Object.FindObjectsByType<PlayerSkillHud>(FindObjectsSortMode.None).Single(s=>s.Owner!=null && s.Owner.gameObject==hud.LocalPlayer.gameObject);
+        Assert.That(t.View.Canvas.overrideSorting,Is.True,"전술 Canvas가 부모 체력 HUD의 순서를 상속하지 않아야 합니다.");
+        Assert.That(t.View.Canvas.sortingOrder,Is.LessThan(skills.GetComponent<Canvas>().sortingOrder));
+        Assert.That(t.View.Canvas.sortingOrder,Is.LessThan(hud.GetComponent<Canvas>().sortingOrder));
+        Assert.That(t.Open(),Is.True);
+        Assert.That(t.View.ModeEffect.GetComponent<Canvas>().sortingOrder,Is.GreaterThan(hud.GetComponent<Canvas>().sortingOrder));
+        yield return FinishTransition(t);yield return new WaitForSecondsRealtime(.06f);
+        foreach(var graphic in t.View.TurretGlyphs.Cast<Graphic>().Concat(t.View.EnemyIcons).Append(t.View.WorldGraphic).Append(t.View.PlayerMarker).Append(t.View.ControlMarker))
+            Assert.That(graphic.canvas.sortingOrder,Is.LessThan(skills.GetComponent<Canvas>().sortingOrder),graphic.name);
+        var events=UnityEngine.EventSystems.EventSystem.current;
+        var hits=new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+        void Raycast(RectTransform rect)
+        {
+            hits.Clear();var position=RectTransformUtility.WorldToScreenPoint(null,rect.TransformPoint(rect.rect.center));
+            events.RaycastAll(new UnityEngine.EventSystems.PointerEventData(events){position=position},hits);
+        }
+        var bar=Object.FindObjectsByType<CombatVitalsGroup>(FindObjectsSortMode.None).First(v=>!v.RightEdge).Primary;
+        Raycast((RectTransform)bar.transform);
+        Assert.That(hits.Count,Is.GreaterThan(0));
+        Assert.That(hits[0].gameObject.GetComponentInParent<CombatVitalsBar>(),Is.SameAs(bar),"지도가 체력바의 호버/고정 클릭을 가로채면 안 됩니다.");
+        Raycast((RectTransform)t.View.Close.transform);
+        Assert.That(hits.Count,Is.GreaterThan(0));
+        Assert.That(hits[0].gameObject.GetComponentInParent<Button>(),Is.SameAs(t.View.Close),"지도 버튼은 같은 지도 표식보다 위에서 조작돼야 합니다.");
+        t.Close();yield return FinishTransition(t);
+        Assert.That(HudPresentationVisibility.IsSuppressed,Is.False);
+    }
+    [UnityTest]
+    public IEnumerator MapTransitionsHideAllHudLayersThenRestoreTheirExistingState()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>();var t=hud.Tactical;
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        var skills=Object.FindObjectsByType<PlayerSkillHud>(FindObjectsSortMode.None).Single(s=>s.Owner!=null && s.Owner.gameObject==hud.LocalPlayer.gameObject);
+        var vitals=Object.FindObjectsByType<CombatVitalsGroup>(FindObjectsSortMode.None);
+        var pins=vitals.Select(v=>v.IsPinned).ToArray();
+        var alert=Object.FindAnyObjectByType<AlertStripView>();
+        var popup=Object.FindObjectsByType<CombatExperiencePopup>(FindObjectsInactive.Include,FindObjectsSortMode.None).First();
+        GameAlerts.Show("지도 전환 표시 검수",TeamHJD.Game.Application.AlertTone.Info);
+        popup.Show(hud.LocalPlayer.transform,t.OutputCamera,10);
+        yield return new WaitForSecondsRealtime(.16f);
+        Assert.That(alert.Group.alpha,Is.GreaterThan(0));Assert.That(popup.Group.alpha,Is.GreaterThan(0));
+        Assert.That(vitals.Length,Is.EqualTo(2));
+        for(int direction=0;direction<2;direction++)
+        {
+            popup.Show(hud.LocalPlayer.transform,t.OutputCamera,10);
+            if(direction==0)Assert.That(t.Open(),Is.True);else t.Close();
+            Assert.That(HudPresentationVisibility.IsSuppressed,Is.True);
+            int samples=0;float deadline=Time.realtimeSinceStartup+2;
+            while(t.IsTransitioning && Time.realtimeSinceStartup<deadline)
+            {
+                // EditMode runner의 coroutine 재개 시점과 LateUpdate의 표시 반영을 구분합니다.
+                yield return new WaitForSecondsRealtime(.03f);
+                if(!t.IsTransitioning)break;
+                samples++;
+                Assert.That(skills.GetComponent<Canvas>().enabled,Is.False,$"HUD canvas: frame={Time.frameCount}, suppressed={HudPresentationVisibility.IsSuppressed}, direction={direction}");
+                Assert.That(skills.GetComponent<GraphicRaycaster>().enabled,Is.False);
+                Assert.That(skills.AreCombatControlsVisible,Is.False);
+                foreach(var v in vitals){Assert.That(v.Group.alpha,Is.Zero);Assert.That(v.Pin.activeSelf,Is.False);}
+                Assert.That(alert.Group.alpha,Is.Zero);Assert.That(popup.Group.alpha,Is.Zero);
+                Assert.That(t.View.CommandGroup.alpha,Is.Zero);Assert.That(t.View.ToggleMap.gameObject.activeSelf,Is.False);
+                Assert.That(t.View.FieldStatusGroup.alpha,Is.Zero);Assert.That(t.View.Goal.gameObject.activeSelf,Is.False);
+                Assert.That(t.View.Tooltip.gameObject.activeSelf||t.View.Prompt.gameObject.activeSelf,Is.False);
+                foreach(var cursor in Object.FindObjectsByType<CombatFieldCursor>(FindObjectsSortMode.None))Assert.That(cursor.IsAiming,Is.False);
+                Assert.That(t.View.ModeEffect.Surface.enabled,Is.True,"전환 육각막 자체를 숨기지 않습니다.");
+            }
+            Assert.That(samples,Is.GreaterThan(1));Assert.That(t.IsTransitioning,Is.False);
+            yield return new WaitForSecondsRealtime(.03f);
+            Assert.That(HudPresentationVisibility.IsSuppressed,Is.False);
+            Assert.That(skills.GetComponent<Canvas>().enabled,Is.True);
+            for(int i=0;i<vitals.Length;i++){Assert.That(vitals[i].IsPinned,Is.EqualTo(pins[i]));Assert.That(vitals[i].Group.alpha,Is.GreaterThan(0));}
+            Assert.That(alert.Group.alpha,Is.GreaterThan(0),"HUD 숨김은 알림 큐를 비우지 않습니다.");
+            Assert.That(t.View.CommandGroup.alpha,Is.EqualTo(direction==0?1:0));
+        }
+    }
+    [UnityTest]
+    public IEnumerator ClosingMapFillsFromTheRimBeforeReleasingCameraThenFadesTheMembrane()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>();var t=hud.Tactical;
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Assert.That(t.Open(),Is.True);yield return FinishTransition(t);
+        var effect=t.View.ModeEffect;var camera=TeamHJD.Game.Presentation.Scene.CameraManager.Current;var mapTarget=camera.ActiveTarget;
+        t.Close();Assert.That(effect.Cover,Is.EqualTo(1));Assert.That(effect.Reveal,Is.EqualTo(1));
+        float previous=1;bool inward=false;float deadline=Time.realtimeSinceStartup+2;
+        while(t.IsTransitioning && Time.realtimeSinceStartup<deadline)
+        {
+            if(effect.Reveal>0)
+            {
+                Assert.That(effect.Reveal,Is.LessThanOrEqualTo(previous+.0001f));previous=effect.Reveal;
+                if(effect.Reveal<.95f)inward=true;
+                Assert.That(camera.ActiveTarget,Is.SameAs(mapTarget),"중앙이 완전히 채워지기 전에 카메라를 돌리지 않습니다.");
+            }
+            Assert.That(t.View.CommandGroup.alpha,Is.Zero);yield return null;
+        }
+        Assert.That(inward,Is.True);Assert.That(t.IsTransitioning,Is.False);
+        Assert.That(camera.ActiveTarget,Is.Not.SameAs(mapTarget));Assert.That(effect.Surface.enabled,Is.False);
+        yield return new WaitForSecondsRealtime(.06f);
+        Assert.That(hud.LocalPlayer.GetComponent<PlayerControlState>().CanMove,Is.True);
     }
     [UnityTest]
     public IEnumerator MapLocksNearbyUnoccupiedTurretsUntilTheirCellIsCaptured()
@@ -70,9 +238,13 @@ public sealed class StageTurretCommandHudTests
         t.Close();yield return new WaitForSecondsRealtime(.04f);
         Assert.That(t.Open(),Is.True,"닫는 도중 재요청은 현재 막에서 이어집니다.");
         yield return FinishTransition(t);Assert.That(t.IsOpen,Is.True);
-        control.SetInputBlocked(true);yield return null;yield return null;
-        Assert.That(t.IsOpen||t.IsTransitioning,Is.False);Assert.That(t.View.ModeEffect.Surface.enabled,Is.False);
-        control.SetInputBlocked(false);yield return new WaitForSecondsRealtime(.06f);
+        using(var blocked=Object.FindAnyObjectByType<AppRoot>().LocalInput.Acquire("Tactical test menu"))
+        {
+            float closeDeadline=Time.realtimeSinceStartup+.5f;
+            while((t.IsOpen || t.IsTransitioning) && Time.realtimeSinceStartup<closeDeadline)yield return null;
+            Assert.That(t.IsOpen||t.IsTransitioning,Is.False);Assert.That(t.View.ModeEffect.Surface.enabled,Is.False);
+        }
+        yield return new WaitForSecondsRealtime(.06f);
         Assert.That(control.CanMove,Is.True,$"종료 프레임 뒤 이동 복구: tactical={control.IsInTacticalView}, blocked={control.IsBlocked}, act={control.CanAct}, frame={Time.frameCount}");
         yield return new ExitPlayMode();
     }
@@ -597,8 +769,13 @@ public sealed class StageTurretCommandHudTests
             snapshot.Definition.RegionIds.Where(x=>x>0).Distinct().ToArray());
     }
 
-    private static IEnumerator EnterFieldThroughTheSpaceshipExit()
+    private IEnumerator EnterFieldThroughTheSpaceshipExit(bool waitForHud = true)
     {
+        // OS 포인터가 스킬 도크 위에 남아 있어도 Scene 검사의 준비 UI를 열지 않도록 격리합니다.
+        foreach(var device in UnityEngine.InputSystem.InputSystem.devices.OfType<UnityEngine.InputSystem.Pointer>().ToArray())
+            if(device.enabled){_mutedPointers.Add(device);UnityEngine.InputSystem.InputSystem.DisableDevice(device);}
+        _fixturePointer=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Mouse>();
+        _fixturePointer.MakeCurrent();
         var vitals = Object.FindAnyObjectByType<StagePlayerVitalsView>();
         float deadline = Time.realtimeSinceStartup + 4;
         while ((vitals.Player == null || Object.FindAnyObjectByType<SpaceshipExit>() == null) && Time.realtimeSinceStartup < deadline)
@@ -622,10 +799,18 @@ public sealed class StageTurretCommandHudTests
         }
         Assert.That(presence.Location, Is.EqualTo(MatchPlayerLocation.Field));
         // 앞선 검사/에디터의 포인터가 하단 스킬 열기 영역에 남으면 준비 UI가 정상적으로 조작을 막습니다.
-        var mouse = UnityEngine.InputSystem.Mouse.current;
+        var mouse = _fixturePointer;
         if (mouse != null) UnityEngine.InputSystem.InputSystem.QueueDeltaStateEvent(mouse.position, new Vector2(Screen.width * .5f, Screen.height * .8f));
+        vitals.Player.GetComponent<PlayerSkillController>()?.CloseSelection();
         yield return new WaitForSecondsRealtime(.4f);
         Assert.That(Object.FindAnyObjectByType<PlayerSkillHud>().IsOpen, Is.False);
+        if(waitForHud)
+        {
+            var intro=Object.FindAnyObjectByType<InitialStagePlayerHUD>().GetComponent<CombatHudIntro>();
+            deadline=Time.realtimeSinceStartup+6;
+            while(!intro.Completed && Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(intro.Completed,Is.True,"전술 조작 검사는 HUD 진입 연출이 완료된 뒤 시작합니다.");
+        }
     }
     private static FieldTurretBase FindInactive(FieldTurretController controller, EntityId exclude)
     {

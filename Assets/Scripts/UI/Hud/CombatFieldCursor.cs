@@ -51,7 +51,7 @@ public sealed class CombatFieldCursor : MonoBehaviour
         var window = UnityEditor.EditorWindow.mouseOverWindow;
         focused &= window != null && window.GetType().Name == "GameView";
 #endif
-        bool field = focused && inside && Hud.IsFieldVisible && Hud.Owner != null && Hud.Owner.CanUse &&
+        bool field = !HudPresentationVisibility.IsSuppressed && focused && inside && Hud.IsFieldVisible && Hud.Owner != null && Hud.Owner.CanUse &&
             !Hud.Owner.IsPlacingSkill && !Hud.IsOpen && (_app == null || !_app.LocalInput.IsBlocked) && !HasOverlay();
         if (field && (Time.unscaledTime >= _nextUiCheck || position != _lastPointer))
         {
