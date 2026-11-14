@@ -456,12 +456,12 @@ flowchart TD
     Init --> Move["FieldTurretBullet.Update()<br>정해진 방향으로 직진"]
     Move --> Collision["이동 구간 Cast 또는<br>OnCollisionEnter2D()"]
     Collision --> Hit["FieldTurretBullet.Hit()<br>명중 처리"]
-    Hit -->|적 명중| Damage["EnemyHealth.TakeDamage(int)<br>서버에서 피해 확정"]
+    Hit -->|적 명중| Damage["EnemyHealth.TryTakeDamage(int, Turret)<br>서버에서 피해 확정"]
     Hit --> Impact["접촉 위치에 ProjectileImpact 재생<br>탄환 제거"]
     Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
-Canon 포신은 Target을 향해 돌지만, **발사된 `FieldTurretBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TakeDamage()`는 서버에서 Network Spawn된 적에 대해서만 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
+Canon 포신은 Target을 향해 돌지만, **발사된 `FieldTurretBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TryTakeDamage(..., AttackSourceType.Turret)`는 서버에서 Network Spawn된 적의 공격 허용 여부를 확인하고 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
 
 캐논 탄환은 이동 구간에서 탄환 콜라이더 모양으로 검사한다. 캐논 탄환을 막을 지형의 활성 비트리거 Collider2D 오브젝트에는 `FieldTurretBulletObstacle` 태그를 지정한다. 현재 `Default`와 `Forest` 물리 레이어의 지형을 검사하며, `Stage_1`과 `InitialStageTurretTest`의 나무·기물 타일맵에 태그가 지정되어 있다. 바닥은 태그 없이 둔다.
 
