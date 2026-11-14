@@ -28,6 +28,10 @@ flowchart TD
 
 공용 `SpaceshipTravelService`는68행 수준의 출격/제한 경계로 줄였다. 옛 임시 방문의 Scene 로드·순간이동·복귀 위치 계산·방문자 추적은 제거했다. 필드 외부 정비·상호작용 UI가 이 변경만으로 구현된 것은 아니다.
 
+## 우주선 내부 벽 표시
+
+[SpaceShipGrayBox](../../../Assets/Scenes/Spaceship/SpaceShipGrayBox.unity)의 `UnderWall`은 [UnderWallFadeOnPlayerOverlap](../../../Assets/Scripts/Features/Spaceship/UnderWallFadeOnPlayerOverlap.cs)으로 상위 Tilemap의 알파를 조절한다. 부모에 `PlayerActorIdentity`가 있는 콜라이더가 Trigger에 들어오면 1초 동안 알파를 0.6으로 낮춘다. 마지막 플레이어 콜라이더가 나가면 1초 동안 1로 돌아오고, 컴포넌트가 비활성화되면 즉시 1로 복원한다. 문 출입과 Match 이동은 위 `ISpaceshipTravel` 경로를 사용한다.
+
 ## 검증 범위
 
 실제 Startup→우주선→실제 SpaceshipExit 호출→Stage_1을 실행해 Hub/Stage 각각 Player1·활성 Camera1, Stage 새 actor·Mission 준비를 확인했다. 실제 필드 출입구 API 호출은 위치·Match·Scene 수를 유지했다. CU 파괴로 Defeat를 확정한 뒤 명시 허브 귀환을 실행해 Match없음/새 허브 actor1·Camera1을 확인했다.

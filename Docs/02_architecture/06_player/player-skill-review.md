@@ -104,6 +104,8 @@ PlayerTurretSkill의 Inspector `Placement Ground`를 지정하면 그 Tilemap을
 자동 선택은 현행 씬 구조를 위한 기본값이다. 다른 맵에서 Collider가 있는 더 큰 배경 레이어를
 추가한다면 명시적으로 지면을 지정해야 한다. Core Grid나 터렛 해금 구역을 지형 판정으로 사용하지 않는다.
 
+[Stage_1](../../../Assets/Scenes/Gameplay/Stage_1.unity)의 [TilemapOuterBoundary](../../../Assets/Scripts/Map/TilemapOuterBoundary.cs)는 `Initial_Overworld_Base` 위의 TilemapCollider2D와 CompositeCollider2D(`Merge / Outlines`)에서 외곽을 읽는다. 타일 변경이나 Undo·Redo 후 `Grid / MapBoundary`의 EdgeCollider2D를 자동 갱신하고 내부 구멍은 제외한다. Scene을 저장할 때 대기 중인 갱신을 적용한다. 바닥 타일맵은 지면 조회에 쓰며, 경계 충돌은 `MapBoundary`가 담당한다. 외곽 편집 후 안쪽 구멍·해안 이동·NavMesh 베이크는 각각 확인한다.
+
 현재 축에 정렬된 XY Tilemap과 고정된 임시포탑 바닥을 기준으로 한다. 외형을 교체할 때는
 루트 SpriteRenderer에 바닥 Sprite를 유지해야 한다. 지면 타일이 있어도 벽 Collider와
 겹치면 거부한다. 2026-10-22부터 설치자 자신·다른 플레이어·몬스터의 실제 몸 Collider도
