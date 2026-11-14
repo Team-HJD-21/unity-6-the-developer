@@ -231,8 +231,8 @@ public sealed class PlayerContinuousAimTests
             Input("AimDirection", startRight ? Vector2.right : Vector2.left);
             _motion.RefreshSpaceManBody();
             Physics2D.SyncTransforms();
-            var foot = _player.transform.Find("Body Colliders/" + (startRight ? "Right" : "Left"))
-                .GetComponent<CapsuleCollider2D>();
+            var foot = _player.GetComponentsInChildren<CapsuleCollider2D>(true)
+                .Single(collider => collider.name == (startRight ? "Right" : "Left"));
             var wall = new GameObject("Foot-level forest obstacle");
             UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(wall, scene);
             wall.layer = LayerMask.NameToLayer("Forest");

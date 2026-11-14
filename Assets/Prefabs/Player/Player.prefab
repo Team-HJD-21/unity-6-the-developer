@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9161001}
   m_Layer: 18
-  m_Name: Body Colliders
+  m_Name: BodyColliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -394,7 +394,7 @@ GameObject:
   - component: {fileID: 9411302}
   - component: {fileID: 9411303}
   m_Layer: 18
-  m_Name: Assassin Detection Range
+  m_Name: AssassinDetectionRange
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -461,7 +461,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a93b424e7c0348c09304b60ae077f949, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerEnemyDetector
   _owner: {fileID: 5513808030836162447}
   _range: {fileID: 9411302}
@@ -733,7 +733,7 @@ GameObject:
   - component: {fileID: 3862206841887158358}
   - component: {fileID: 1602775552470066737}
   m_Layer: 0
-  m_Name: Weapon Rig
+  m_Name: WeaponRig
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1187,7 +1187,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 801cbec5e28d49d6a5ffdf41c4a04972, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMuzzleAnchor
   _playerRoot: {fileID: 5513808030836162447}
   _weaponRig: {fileID: 1602775552470066737}
@@ -1817,7 +1817,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 062811e29a4d4aed969d3ade751a39ce, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponAmmo
   _defaultGunCapacity: 15
   _cryoCapacity: 15
@@ -1835,7 +1835,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b23dea863b64e998f511d7e4369e0b0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerExperience
   _firstLevelExperience: 100
   _experienceIncreasePerLevel: 0
@@ -1850,7 +1850,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d018a419f03644e997cf3f111e81de7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLocationState
 --- !u!1 &5971586974638979900
 GameObject:
@@ -1895,7 +1895,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 100000, guid: 09de80ca464f5d9abb5ef26f4c121a47, type: 3}
       propertyPath: m_Name
-      value: Dash Afterimage 1
+      value: DashAfterimage 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1928,7 +1928,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 100000, guid: 09de80ca464f5d9abb5ef26f4c121a47, type: 3}
       propertyPath: m_Name
-      value: Dash Afterimage 2
+      value: DashAfterimage 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1961,7 +1961,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 100000, guid: 09de80ca464f5d9abb5ef26f4c121a47, type: 3}
       propertyPath: m_Name
-      value: Dash Afterimage 3
+      value: DashAfterimage 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1994,7 +1994,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 100000, guid: 09de80ca464f5d9abb5ef26f4c121a47, type: 3}
       propertyPath: m_Name
-      value: Dash Afterimage 4
+      value: DashAfterimage 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
