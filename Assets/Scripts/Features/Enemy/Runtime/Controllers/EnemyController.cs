@@ -27,6 +27,9 @@ public abstract class EnemyController : MonoBehaviour
     /// <summary>분대의 타깃 재검색 갱신을 담당하는 구성원인지 반환한다.</summary>
     public bool IsSquadRepresentative { get; internal set; }
 
+    /// <summary>분대의 거리 검사에서 재조회 없이 사용할 개체별 플레이어 감지 센서다.</summary>
+    internal EnemyPlayerSensor PlayerSensor { get; private set; }
+
     protected virtual void OnEnable()
     {
         _squad?.RefreshRepresentative();
@@ -49,6 +52,7 @@ public abstract class EnemyController : MonoBehaviour
             enemyAnimation = GetComponent<EnemyAnimation>();
         if (enemyAbility == null)
             enemyAbility = GetComponent<EnemyAbility>();
+        PlayerSensor = GetComponentInChildren<EnemyPlayerSensor>(true);
     }
 
     /// <summary>

@@ -29,7 +29,12 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
     }
 
     /// <summary>현재 선택한 타깃의 위치가 감지 영역 안인지 확인한다.</summary>
-    public bool IsTargetInside(Transform target)
+    public bool IsTargetInside(Transform target) => IsTargetInside(target, 1f);
+
+    /// <summary>플레이어가 감지 반경의 1.5배인 어그로 유지 범위 안에 있는지 확인한다.</summary>
+    public bool IsTargetInsideAggroRange(Transform target) => IsTargetInside(target, 2f);
+
+    private bool IsTargetInside(Transform target, float radiusMultiplier)
     {
         if (!isActiveAndEnabled || _sensorCollider == null || target == null)
             return false;
@@ -37,7 +42,7 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
         GetDetectionArea(out Vector2 center, out float radiusSquared);
         Vector2 difference = (Vector2)target.position - center;
 
-        return difference.sqrMagnitude <= radiusSquared;
+        return difference.sqrMagnitude <= radiusSquared * radiusMultiplier * radiusMultiplier;
     }
 
     private void OnTriggerEnter2D(Collider2D other) => NotifyPlayer(other);

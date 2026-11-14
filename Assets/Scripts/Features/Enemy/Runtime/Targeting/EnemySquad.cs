@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
 using Unity.Profiling;
+using TeamHJD.Game.Presentation.Scene;
 
 /// <summary>
 /// 함께 행동하는 적의 소속과 공동 목표를 보관한다.
@@ -11,12 +12,14 @@ using Unity.Profiling;
 public class EnemySquad
 {
     private const float RetargetInterval = 1.0f;
+    private const double AggroCheckInterval = 0.2d;
 
     private readonly List<EnemyController> _members;
     private ITargetable _target;
     private readonly EnemySquadMode _squadMode;
     private readonly EnemyTargetRule _targetRule;
     private float _nextSearchTime;
+    private double _nextAggroCheckTime;
     private EnemyController _representative;
 
     /// <summary>
@@ -230,7 +233,7 @@ public class EnemySquad
     /// <returns>플레이어로 전환했으면 true. 이미 플레이어를 추적 중이면 false.</returns>
     public bool TryPrioritizePlayer(EnemyController requester, ITargetable player)
     {
-        // 이미 선택한 플레이어는 타깃 불가 이벤트가 발생할 때까지 유지한다.
+        // 선택한 플레이어는 유지한다. 일반 분대의 거리 이탈은 대표의 갱신에서 처리한다.
         if (_target != null && _target.TargetType == TargetType.Player)
             return false;
 
@@ -268,17 +271,59 @@ public class EnemySquad
         }
     }
 
-    /// <summary>대표 구성원이 목표가 없을 때 재검색을 요청한다.</summary>
+    /// <summary>대표 구성원이 플레이어 어그로의 거리 해제와 목표가 없을 때의 재검색을 처리한다.</summary>
     public void RefreshTarget(EnemyController requester)
     {
-        if (!ReferenceEquals(_representative, requester) ||
-            _target != null ||
-            Time.time < _nextSearchTime)
+        if (!ReferenceEquals(_representative, requester))
+            return;
+
+        if (_target != null)
         {
+            // 일반 분대만 거리로 어그로를 해제한다. 암살자는 플레이어 추적을 유지한다.
+            if (_targetRule != EnemyTargetRule.PlayerOrTurret || _target.TargetType != TargetType.Player)
+                return;
+
+            double now = FieldSimulationTime.Seconds(requester);
+            if (now < _nextAggroCheckTime)
+                return;
+
+            _nextAggroCheckTime = now + AggroCheckInterval;
+            if (!IsPlayerOutsideAggroRange())
+                return;
+
+            // 이전 플레이어의 배정을 반환한 뒤 검색 대기 없이 가장 가까운 시설을 선택한다.
+            TryChangeTarget(null);
+            _nextSearchTime = 0f;
+            SetTarget();
             return;
         }
 
-        SetTarget();
+        if (Time.time >= _nextSearchTime)
+            SetTarget();
+    }
+
+    /// <summary>확인 가능한 모든 활성 구성원의 어그로 유지 범위를 플레이어가 벗어났는지 반환한다.</summary>
+    private bool IsPlayerOutsideAggroRange()
+    {
+        Transform targetTransform = _target.TargetTransform;
+        bool hasSensor = false;
+
+        foreach (EnemyController member in _members)
+        {
+            if (member == null || !member.isActiveAndEnabled)
+                continue;
+
+            EnemyPlayerSensor sensor = member.PlayerSensor;
+            if (sensor == null || !sensor.isActiveAndEnabled)
+                continue;
+
+            hasSensor = true;
+            if (sensor.IsTargetInsideAggroRange(targetTransform))
+                return false;
+        }
+
+        // 센서가 없는 직접 배치·시험 개체는 거리 기준을 알 수 없으므로 임의로 해제하지 않는다.
+        return hasSensor;
     }
 
     /// <summary>검색·타깃 변경 시에만 집계 대상 구성원 수를 계산한다.</summary>
@@ -323,6 +368,7 @@ public class EnemySquad
         }
 
         _target = target;
+        _nextAggroCheckTime = 0d;
 
         if (!ReferenceEquals(_target, null))
             _target.TargetabilityLost += OnTargetabilityLost;
