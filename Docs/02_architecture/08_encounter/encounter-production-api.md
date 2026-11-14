@@ -50,7 +50,7 @@ Core의 단계 소유자는 `MatchTimeService.SetFieldHeld(bool)`로 기존 Fiel
 
 `Tools → TeamHJD → Game Debugger`의 Encounter 패널에 Match 정규 생산 상태, 다음 요청/간격, 회차/마지막 결과, 공용/Field 시각을 표시한다. Statistics/요청 표의 `MatchProduction` 계획/실제 수량을 함께 확인한다. Debugger 버튼은 추가 수동 요청이며 정규 생산의 시작 버튼이 아니다.
 
-이번 단계는 **지속 생산·자동 환경 조건·Field 시각·공통 예산 내 추가 출현과 저장 경계**를 연결했다. 33·66·100% 진행 규칙·저장/실제 사망 전달은 [Stage 진행 API](../02_match/stage-progression-api.md)에 연결했다. 실제 Boss 콘텐츠/생성 서비스·최종 Scene은 아직 미연결이다.
+이번 단계는 **지속 생산·자동 환경 조건·Field 시각·공통 예산 내 추가 출현과 저장 경계**를 연결했다. 33·66·100%의 진행 사실·저장/실제 사망 전달은 [Stage 진행 API](../02_match/stage-progression-api.md)를 따른다. Field 생성 서비스와 명시적인 Scene 준비 API는 구현했으며, 실제 Boss 콘텐츠/진입로·Boss Scene/연출은 미지정이다. 사용자 확정에 따라 최종 Scene 자동 진입·자동 승리·별도 결과 저장은 연결하지 않는다.
 
 검사 조건과 실제 관측은 [통합 실행 기록](../../01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 따른다.
 

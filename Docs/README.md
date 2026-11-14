@@ -2,6 +2,8 @@
 
 **11/13–14 Encounter/Stage1 로컬 구현:** [현재 Core 실행 지도](02_architecture/01_core/core-runtime-map.md)와 [통합 기록](01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 확인한다. [11/14 범위 정정](01_planning/02_implementation-records/2026/11/2026-11-14-explicit-stage-transition-scope.md)에 따라 자동 최종 진입·승리·결과 저장 연결은 제외하고 명시 API만 유지한다. 실제 보스전/결과 설계·확정 콘텐츠·Weather 필수 writer·원격 Player 인수는 남아 있다. 전체 Stage1 완료나 main 반영으로 해석하지 않는다.
 
+배치별 구현 근거와 실제 Scene의 미지정 원본은 [11/14 준비 상태·남은 접합](01_planning/02_implementation-records/2026/11/2026-11-14-encounter-stage1-readiness.md)에 모았다. API/개별 Feature 검수와 전체 게임 인수를 구분한다.
+
 **Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료다. 11/13 로컬 작업에는 Unity 기본 오디오를 사용하는 [GameAudioManager·믹서·설정과 연결 방법](02_architecture/01_core/game-audio-api.md)이 추가됐다. main 반영 여부, 실제 Scene 연결과 실행 검증 범위를 구분한다.
 
 **11/13 오디오 작업 인계:** [구현·검증 결과와 추후 PR의 Docs 반영 사항](01_planning/02_implementation-records/2026/11/2026-11-13-game-audio-handoff.md). 핵심 구현 완료·최종 검증 대기이며, 실제 전투 Scene·원격 Client·음원 콘텐츠 후속을 구분한다.
