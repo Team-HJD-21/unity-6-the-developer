@@ -1,6 +1,6 @@
 # Encounter·Stage1 Core와 전술 UI 통합 검토
 
-기준일: 2026-11-14. PR: **생성 전**. 대상은 `feature/core → main`이다. 최신 main `b529a02d3`(#724 Player, #725 Enemy)을 병합해 전달한다. 생성 직후 실제 PR 번호와 링크를 기록한다.
+기준일: 2026-11-14. PR: [#726](https://github.com/Team-HJD-21/unity-6-the-developer/pull/726). 대상은 `feature/core → main`이다. 최신 main `b529a02d3`(#724 Player, #725 Enemy)을 병합해 전달한다. PR 본문에서 이 검토 문서를 함께 연결한다.
 
 ## 이번에 들어가는 것
 
@@ -124,6 +124,12 @@ flowchart TD
 - Field 경계 검사는 5개 통과(3×3 점유 마스크 512개 포함), 실제 GPU 색/오브젝트 가림과 native 지도 열기·닫기, Field/지도 경계 좌표 일치를 확인했다. OFF 터렛 복원 표현은 2개 통과했다. 개별 검사를 전체 프로젝트/Standalone 통과로 합산하지 않는다.
 - 원격 선택 RPC, 전체 Weather 저장·복원, 실제 두 Client와 Standalone, 최종 보스 자연 플레이 인수는 남아 있다. 새 MatchResult 사유 payload는 새 reader의 이전 payload 읽기를 검증했으며 혼합 Build 호환을 보장하지 않는다.
 - 포함하지 않는 기존 변경: staged Python 캐시 8개, TMP 동적 atlas/Examples, NetworkMatchAnchor·HealOrb 직렬화 Hash, Renderer PostProcessData 자동 변경. 해당 로컬 내용은 삭제하지 않고 보존한다.
+
+## 최신 main 병합 확인
+
+`b529a02d3`(#724 Player·#725 Enemy)을 병합했다. 충돌 7곳에서는 Player 피격 피드백·관통 처리·Enemy Animator 캐시와 기존 Core 피해 보호/오디오·전술 HUD 연결을 함께 보존했다. HUD YAML은 안정된 fileID 단위로 병합해 `PlayerHitFeedback`와 `TacticalCommandController`를 모두 유지했다. 삭제한 임시 필드 방문 정책을 옛 문서로 되살리지 않았다.
+
+병합된 소스로 Unity **6000.3.23f1 batchmode 실제 스크립트 컴파일·assembly reload 완료**, 프로세스 종료 코드0을 확인했다. 재부팅 준비를 위해 Editor는 자동 종료했다. 이것은 병합 후 PlayMode·전체 Windows Build 검수와 구분한다. 같은 시점 Python 저장소 검사 **50/50**, 전체 Unity `.meta` 검사 **0오류**다. 최초 Python 검사는 sandbox 임시 폴더 권한 때문에 실패했으며, 기존 진단에 따라 이번 프로세스의 임시 폴더만 ignored 프로젝트 경로로 지정해 다시 통과했다. 원본은 `Docs/Local/Review/CoreUiIntegration-20261114/Publish`에 보존한다.
 
 ## 전술 화면 예시
 
