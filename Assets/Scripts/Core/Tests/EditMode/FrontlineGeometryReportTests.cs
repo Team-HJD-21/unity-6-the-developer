@@ -85,9 +85,7 @@ namespace TeamHJD.Game.Tests.EditMode
                 var id = new MatchId("frontline-test");
                 root.StartMatch(new MatchConfig(id, MatchMode.Story, new StageId("test"),
                     new DefinitionId("test"), "test", 1, Array.Empty<PlayerLoadoutSnapshot>()),
-                    new MatchState(id, MatchPhase.Preparing, Array.Empty<PlayerState>(),
-                        new ControlUnitState(1, 1, 1, 1), new WaveState(0, 1, 0, 0),
-                        Array.Empty<TurretState>(), Array.Empty<EnemyState>(), Array.Empty<SectorState>()), new TestModeRules(),
+                    new MatchState(id, MatchPhase.Preparing), new TestModeRules(),
                     new BattlefieldSpatialInput(new[] { Point("a", 0, 0), Point("b", 2, 0), Point("c", 0, 2) }));
                 BattlefieldDebugSession.Bind(root);
                 FrontlineInspectionSession.Select(new BattlefieldEdge(new EntityId("a"), new EntityId("b")));

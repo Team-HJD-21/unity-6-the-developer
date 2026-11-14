@@ -94,3 +94,5 @@
 - [Player 구조와 Mission 복귀](02_match/match-recovery-api.md)
 
 - [Stage 점유·33/66% 사건·최종 보스 연결](02_match/stage-progression-api.md)
+
+- [Core 실행 지도·상태 원본·읽는 순서](01_core/core-runtime-map.md)

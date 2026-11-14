@@ -129,15 +129,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 new[] { loadout });
             if (network == null && appMatchHost is AppRoot appArrival)
                 config = appArrival.ConfigureCheckpointArrival(gameObject.scene.path, config);
-            var initialState = new MatchState(
-                matchId,
-                MatchPhase.Preparing,
-                config.Players.Select(player => new PlayerState(player.PlayerId, 400, 400, true)),
-                new ControlUnitState(1500, 1500, 250, 250),
-                new WaveState(0, 1, 0, 0),
-                Array.Empty<TurretState>(),
-                Array.Empty<EnemyState>(),
-                Array.Empty<SectorState>());
+            var initialState = new MatchState(matchId, MatchPhase.Preparing);
 
             PlayerStart firstStart = starts.Single(start => start.SlotIndex == localSlot);
             IBattlefieldTurretInputSource turretInputSource = FindTurretInputSource();

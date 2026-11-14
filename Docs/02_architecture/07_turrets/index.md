@@ -23,7 +23,7 @@
 | `Assets/Prefabs/Turrets` / `Assets/Data/Turrets` | `Assets/Prefabs/FieldTurrets` / `Assets/Data/FieldTurrets` |
 | `TurretTest.unity` | `FieldTurretTest.unity` |
 
-활성화·체력·수리·승급·해금 API의 동작과 Definition ID, 직렬화된 필드 이름, 레이어·태그는 유지한다. 스크립트·프리팹·데이터의 `.meta` GUID를 유지하고 Unity 객체 및 런타임 상태 타입에 `MovedFrom` 정보를 추가했다. 외부 소비자는 새 타입·네임스페이스·경로를 사용한다. Core의 `TurretState`, `TurretSpatialInput`, `IBattlefieldTurretInputSource`, Enemy의 `TargetType.Turret` 같은 공용 계약과 플레이어 터렛 타입은 이번 변경에서 이름을 유지한다.
+활성화·체력·수리·승급·해금 API의 동작과 Definition ID, 직렬화된 필드 이름, 레이어·태그는 유지한다. 스크립트·프리팹·데이터의 `.meta` GUID를 유지하고 Unity 객체 및 런타임 상태 타입에 `MovedFrom` 정보를 추가했다. 외부 소비자는 새 타입·네임스페이스·경로를 사용한다. Core의 `TurretSpatialInput`, `IBattlefieldTurretInputSource`, Enemy의 `TargetType.Turret` 같은 공용 계약과 플레이어 터렛 타입은 이번 변경에서 이름을 유지한다.
 
 다른 영역에서 터렛을 사용한다면 내부 구현부터 읽을 필요는 없다. 필요한 작업에 맞는 문서부터 확인한다.
 
@@ -112,3 +112,5 @@ Enemy는 기존 `TargetableComponent.CanBeTargeted`를 읽는다. 이 속성은 
 - 전력 반환·냉각·과열·60초 쿨타임을 정지할지, 복귀 시 어떻게 재개할지.
 - 멀티플레이에서 한 명의 진입과 전원 진입을 다르게 처리할지, Core가 보낼 진입/복귀 이벤트와 권한 주체.
 - 수리·복구 진행량 및 저장 처리, 복귀 직후 재검증 범위.
+
+11/14 후속 Core 정리에서 초기 복사본 `TurretState`는 제거했다. 실제 터렛 상태는 이 Feature와 Host 확정 표시 frame을 읽는다.

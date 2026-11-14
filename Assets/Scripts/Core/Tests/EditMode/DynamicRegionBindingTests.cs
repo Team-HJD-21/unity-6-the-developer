@@ -43,9 +43,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var match = new MatchId(Guid.NewGuid().ToString("N"));
             var config = new MatchConfig(match, MatchMode.Story, new StageId("stage"),
                 new DefinitionId("normal"), "region-qa", 1, Array.Empty<PlayerLoadoutSnapshot>());
-            var state = new MatchState(match, MatchPhase.Preparing, Array.Empty<PlayerState>(),
-                new ControlUnitState(100, 100, 100, 100), new WaveState(0, 0, 0, 0),
-                Array.Empty<TurretState>(), Array.Empty<EnemyState>(), Array.Empty<SectorState>());
+            var state = new MatchState(match, MatchPhase.Preparing);
             _session = new MatchSessionFactory().Create(config, state, new StoryModeRules());
             _authority = true;
             var definition = new RegionGridDefinition(new BattlefieldGridConfiguration(new BattlefieldPoint(2, 2), 0, 4, 4, 4, 4));

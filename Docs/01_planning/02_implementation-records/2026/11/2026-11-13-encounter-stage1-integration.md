@@ -268,3 +268,12 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 같은 실제 실행에서 CU 파괴→Defeat→명시 ReturnToSpaceshipAsync: Spaceship/Match없음/actor1/camera1. b9a-defeat-to-hub-result.json. 실제 키보드나 물리 문 연출 인수로 확대하지 않는다.
 - 관측 스크립트의 첫 PlayerActorIdentity namespace 누락은 실행 전 거절됐고 수정 후 실행했다. 제품 컴파일 오류는 아니다. 원본 실패도 b9a-observer-before-namespace-fix.json으로 보존했다.
 - Stage Progress의 알려진 대기 이유는 Debugger에서 한국어 안내로 보여주며 원본 진단 키/실제 미연결 상태는 유지했다.
+
+
+## B9b — 실제 원본과 중복되던 Core 상태 제거 (2026-11-14)
+
+- MatchState는 MatchId/Phase/Result, MatchSnapshot은 여기에 Sequence를 더한 수명주기 읽기로 정리했다. 참가자 생성은 MatchConfig.Players를 읽는다. 실제 HP/전력/적/지역 원본과 연결되지 않은 초기 상태 타입6개·발행/소비 없는 사건5개 및 meta를 삭제했다. World 빈 폴더도 제거했다. 실제 Feature 저장 writer와 PlayerSceneAdapter.Bind/Unbind는 유지했다.
+- 자동 검사는 AppMatchOwnership6, DynamicRegionBinding6, BattlefieldEditorDiagnostics3, FrontlineGeometryReport7, PlayerBindingCleanup6으로 고유28개 통과했다. Player 검사는 옛 Initial_Stage 대신 실제 Stage_1을 열고 NGO/actor 준비를 기다리도록 수정했다. 이전 Scene/한 프레임 가정의 실패 결과도 남겼다.
+- 실제 Stage_1에서 Config 참가자1/실제 actor1, MatchState 공개 속성3개, 정규 생산 계획12/실제 생성12, 실제 HUD AutoActivation 호출 뒤 활성 터렛2개, Player HP400/CU HP1500/Running을 관측했다. Player·CU 보호와 CU 근처 위치 조정은 시험 중에만 적용하고 Play Stop으로 해제했다. b9b-live-model-smoke-fixed-result.json이 근거다.
+- 첫 관측 스크립트는 사용하지 않는 Debug Spawner의 Executor를 골랐고 CU와 먼 위치에서 활성화를 요청해 성공을 놓쳤다. 이후 모든 Executor의 해당 Match 수를 합산하고 실제 CU 거리·준비 장벽을 확인했다. 최초 결과를 제품 실패 또는 성공으로 바꾸지 않고 b9b-smoke-zero-diagnostics.json/b9b-observer-live-recheck.json에 남겼다.
+- core-runtime-map.md에 엔진 진입→Scene 조립→Coordinator→실제 Feature 원본과 읽기 순서를 정리했다. MatchResult.CompletedWave는 현재 항상0이지만 네트워크 codec/UI 사용이 있어 이번 삭제에 포함하지 않았다. 실제 Weather 전체 복원·Boss 콘텐츠·원격 Player 인수 대기는 유지한다.

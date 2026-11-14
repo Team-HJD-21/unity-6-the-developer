@@ -19,7 +19,7 @@ namespace TeamHJD.Game.Domain
         public MatchResult CreateResult(MatchState state, MatchOutcome outcome)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
-            return new MatchResult(state.MatchId, outcome, state.Wave.CurrentIndex, _utcNow());
+            return new MatchResult(state.MatchId, outcome, 0, _utcNow());
         }
         public RewardReceipt CreateRewardReceipt(MatchResult result)
         {
