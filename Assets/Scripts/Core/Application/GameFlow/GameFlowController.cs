@@ -96,7 +96,7 @@ namespace TeamHJD.Game.Application
                 throw new InvalidOperationException("Launch a mission from the spaceship.");
             if (missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
                 throw new ArgumentException("Choose a gameplay Scene for the mission.", nameof(missionScene));
-            return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation);
+            return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation, MissionEntryKind.NewMission);
         }
 
         /// <summary>App의 저장 복원 조율부가 메타데이터 검증 후 호출합니다. 실제 복원이 끝나야 Mission 입장 성공입니다.</summary>
@@ -105,7 +105,7 @@ namespace TeamHJD.Game.Application
             RequireAvailable();
             if (Phase == GameFlowPhase.Startup || missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
                 throw new InvalidOperationException("Resume a gameplay Scene after startup initialization.");
-            return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation);
+            return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation, MissionEntryKind.Resume);
         }
 
         /// <summary>결과 화면/명시 포기 호출자가 Match를 종료하고 허브로 귀환합니다. 진행 중 임시 허브 방문과 다릅니다.</summary>
@@ -123,13 +123,23 @@ namespace TeamHJD.Game.Application
             RequireAvailable();
             if (Phase != GameFlowPhase.Mission)
                 throw new InvalidOperationException("Restart the current ready mission.");
-            return TravelAsync(CurrentSceneKey, GameFlowPhase.Mission, cancellation);
+            return TravelAsync(CurrentSceneKey, GameFlowPhase.Mission, cancellation, MissionEntryKind.NewMission);
+        }
+
+        /// <summary>안전장치/기술 재시도 조율부가 같은 Mission 실행을 이어갑니다. 명시 새 게임과 달리 자원을 초기화하지 않습니다.</summary>
+        public Task RetryMissionAsync(string missionScene, CancellationToken cancellation = default)
+        {
+            RequireAvailable();
+            if ((Phase != GameFlowPhase.Mission && Phase != GameFlowPhase.Faulted) ||
+                missionScene == Routes.MainMenuScene || missionScene == Routes.SpaceshipScene)
+                throw new InvalidOperationException("Retry the current Mission after entry or a failed arrival.");
+            return TravelAsync(missionScene, GameFlowPhase.Mission, cancellation, MissionEntryKind.Retry);
         }
 
         /// <summary>앱 내 시작 화면 복귀 호출자가 사용합니다. 실제 종료/전환 권한은 Host port가 검사합니다.</summary>
         public Task OpenMainMenuAsync(CancellationToken cancellation = default) => TravelAsync(Routes.MainMenuScene, GameFlowPhase.MainMenu, cancellation);
 
-        private async Task TravelAsync(string sceneKey, GameFlowPhase destination, CancellationToken cancellation)
+        private async Task TravelAsync(string sceneKey, GameFlowPhase destination, CancellationToken cancellation, MissionEntryKind? entry = null)
         {
             RequireAvailable();
             if (IsTransitioning)
@@ -146,6 +156,7 @@ namespace TeamHJD.Game.Application
             Publish();
             try
             {
+                if (entry.HasValue) _host.PrepareMission(entry.Value);
                 await _host.TravelAsync(sceneKey, linked.Token);
                 if (_disposed)
                     throw new OperationCanceledException("The App stopped during travel.");

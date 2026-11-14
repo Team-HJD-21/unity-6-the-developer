@@ -40,6 +40,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
 
     private void FixedUpdate()
     {
+        PumpRescueInput();
         AdvanceRecovery();
         onHpChange.Invoke(curHp, maxHp);
         if (curHp <= 0) Die();
@@ -76,7 +77,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     /// <summary>서버 전투가 터렛과 동일한 피해 계약으로 호출합니다. Client 원본 변경은 거부합니다.</summary>
     public bool ApplyDamage(int damage)
     {
-        if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanAdvance(this)) return false;
+        if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanReceiveDamage(this)) return false;
         int previousHealth = curHp;
         curHp = (int)Math.Max(0L, (long)curHp - damage);
         int applied = previousHealth - curHp;
@@ -89,7 +90,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
 
     public void RecoverHp()
     {
-        if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp) return;
+        if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp || HasHeldRescueTarget) return;
         _recovering = true;
         _nextRecoveryAt = FieldSimulationTime.Seconds(this);
         AdvanceRecovery();
@@ -109,6 +110,6 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         _healthAuthority = false;
     }
 
-    public void UnbindMatch() { _healthAuthority = false; _recovering = false; }
+    public void UnbindMatch() { UnbindRescue(); _healthAuthority = false; _recovering = false; }
     public void UnbindNetworkMatch() => UnbindMatch();
 }

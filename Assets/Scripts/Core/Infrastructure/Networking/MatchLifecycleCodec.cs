@@ -12,7 +12,7 @@ namespace TeamHJD.Game.Infrastructure
     public static class MatchLifecycleCodec
     {
         public const int MaximumMessageBytes = NetworkMessageLimits.MaximumMessageBytes;
-        private const int Magic = 0x324D4A48;
+        private const int Magic = 0x334D4A48;
         public static byte[] Encode(NetworkMatchDescriptor descriptor)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
@@ -123,6 +123,8 @@ namespace TeamHJD.Game.Infrastructure
                 WriteText(writer, delta.CurrencyId.Value);
                 writer.Write(delta.Amount);
             }
+            // Optional tail: old completions decode with an unspecified reason; new peers keep the Host reason.
+            writer.Write((int)completion.Result.EndReason);
         }
 
         private static MatchCompletion ReadCompletion(BinaryReader reader, MatchId match)
@@ -134,7 +136,8 @@ namespace TeamHJD.Game.Infrastructure
             var deltas = new CurrencyDelta[count];
             for (int i = 0; i < count; i++)
                 deltas[i] = new CurrencyDelta(new CurrencyId(ReadText(reader)), reader.ReadInt64());
-            return new MatchCompletion(new MatchResult(match, outcome, wave, completedAt),
+            var reason = reader.BaseStream.Position == reader.BaseStream.Length ? MatchEndReason.None : (MatchEndReason)reader.ReadInt32();
+            return new MatchCompletion(new MatchResult(match, outcome, wave, completedAt, reason),
                 new RewardReceipt(match, outcome, deltas));
         }
 

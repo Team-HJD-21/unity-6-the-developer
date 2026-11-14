@@ -163,12 +163,12 @@ Timeline에서 요청 실패, 터렛 파괴, Grid OOB를 각각 무장한다. �
 
 ```mermaid
 flowchart LR
-  AUTO[MatchStart] --> L[EnemyNetworkTestLauncher]
+  AUTO[MatchStart] --> L[EncounterSceneBinding]
   UI[RuntimeUI] --> L
   SCENE[SpawnerTester / SceneCollision] --> L
   WINDOW[GameDebugger / DebugWindow] --> L
   CORE[AppRoot current Battlefield snapshot] --> L
-  L --> R[EncounterRuntime / existing Planner]
+  L --> R[EncounterPipeline / existing Planner]
   R --> E[EnemySpawnExecutor / server]
   E -->|successful spawn / death / removal| L
   L -->|IGameDiagnosticsSource| SESSION[GameDebuggerSession]
@@ -209,3 +209,26 @@ Overview의 **PLATFORM · STEAM**에서 Steam 설정 에셋을 선택하고 Use 
 **Match 환경 · 현재**는 day/night와 Host의 다음 전환까지 남은 게임 초를 표시한다. 기본은 낮300/밤300초이며 정지/배속은 공용 필드 시계를 따른다. [낮밤 API](../02_architecture/09_world/day-night-api.md)에서 Weather/저장 연결과 기존 CountTick의 차이를 확인한다.
 
 APP · GAME FLOW의 시작/출격/귀환은 검은 배경·하단 바의 로딩 화면을 사용한다. 자동 확인을 마친 항목과 PL 최소 확인은 [최신 결과](../01_planning/02_implementation-records/2026/11/2026-11-05-day-night-steam-results.md)에 정리했다.
+
+## 정적 확보와 장시간 연결 검사
+
+현재 메뉴는 `Tools → TeamHJD → Game Debugger`다. Battlefield의 지역 Grid 패널에서 유효 지형 기준 점유율, 별도의 해금 목록, 구역별 확보 초·실제 팀 피해·생존 참가자/적·정지 이유를 확인한다. 펼친 ‘확보 시험값’은 현재 Host Match에만 적용한다. 기본 규칙과 데이터의 의미는 [정적 확보 API](../02_architecture/02_match/static-region-capture.md)를 먼저 확인한다.
+
+‘검증용 Player / CU 피해 보호’는 Play 중 현재 Host 객체에만 붙이는 개발 표식이다. 이동·전투·시계는 계속 진행하고 일반 Release에서는 무효다. Scene/Prefab에 저장하지 않으며 Play 종료로 해제된다. 보호·배속·짧게 바꾼 확보 시간 등 시험 조건을 캡처 기록에 명시한다. 이 결과를 정상 난이도·사망/안전장치 통과로 보고하지 않는다.
+
+
+### 정규 생산 확인 (2026-11-14)
+
+Stage_1의 정식 Match는 Game Debugger 없이도 자동 생산한다. Encounter 상단의 **Match 정규 생산** 박스에서 다음 요청/간격(게임 초), 요청 회차/마지막 결과, 공용/Field 시각을 확인한다. Statistics의 `MatchProduction` Source가 실제 정규 요청이다. 아래 수동/연속 버튼은 추가 검수 요청이며 자동 생산을 시작하는 버튼이 아니다. 기본값·권한·저장/제약은 [정규 생산 API](../02_architecture/08_encounter/encounter-production-api.md)를 따른다.
+
+
+### 점유 확장과 내부 추가 출현 확인
+
+Encounter 패널의 최근 점유 추세는 Field 기준 관측 시간·순증·확장 횟수다. 정적 확보 한 번, 복원, 첫 CU는 연속 확장이 아니다. additionalSpawnSettings를 열면 다음 자동 계획의 관측/비중/예고/쿨다운을 조절할 수 있다. 원격 예고 연결 전에는1인 Host에서만 내부 정책이 동작한다.
+
+Timeline/Statistics의 `SituationEvent`에서 RequestScheduled는 예고·준비 편성이며 아직 actual0이다. 같은 원인 요청과 World 영역을 확인하고, 이후 RequestCompleted의 계획/실제를 대조한다. 주황 원은 실제 출현 예정 영역을 둘러싼 표시다. 정규 적과 별도 예산을 더한 것이 아니며 중간 보스/Enemy 스킬 소환과 구분한다. JSON·CSV에는 원인 ID와 영역 XY/크기도 포함된다.
+
+
+### 개인 / Host 성장 저장 상태
+
+Overview의 CHECKPOINT 아래 ‘개인 / Host 성장 저장’을 펼친다. experience/base-stats는 개인, field-turrets는 Host 캠페인/Stage 성장이다. 요청 revision과 디스크 완료 revision이 같아야 해당 쓰기가 끝난 상태이며, 대기 XP는 기본2초 합치기다. 오류는 실패로 표시한다. 아래 월드 저장/복원 버튼은 필수 writer가 모두 있어야 사용할 수 있고, 성장 저장 성공과 전체 월드 성공은 별개다. 전력 부족으로 과거 ON이 OFF 복원된 사유는 기존 Alert와 Controller.GrowthRestoreWarnings에서 확인한다.

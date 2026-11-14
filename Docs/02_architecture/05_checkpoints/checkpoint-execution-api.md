@@ -6,7 +6,7 @@
 
 ## 책임과 호출 순서
 
-`CheckpointService`는 저장/복원을 실행하고, `ICheckpointStore`는 불변 binary 자료의 IO를 맡는다. `ICheckpointParticipant`는 실제 Feature 원본을 캡처·검증·적용한다. `CheckpointRequestChannel`과 `CheckpointTrigger`는 외부 관찰자의 요청을 실행기에 연결한다. **언제 자동 저장할지는 구현하지 않았다.**
+`CheckpointService`는 저장/복원을 실행하고, `ICheckpointStore`는 불변 binary 자료의 IO를 맡는다. `ICheckpointParticipant`는 실제 Feature 원본을 캡처·검증·적용한다. `CheckpointRequestChannel`과 `CheckpointTrigger`는 외부 관찰자의 요청을 실행기에 연결한다. 실행기 자체는 자동 저장 시점을 결정하지 않는다. 현재 Stage의 등장 전·실제 처치 후 요청은 별도 [StageCheckpointGate](../02_match/stage-progression-api.md#등장-전처치-후-자동-저장)가 담당한다. 필수 Weather writer 연결 전에는 이 요청도 전체 저장을 거부한다.
 
 ```mermaid
 sequenceDiagram

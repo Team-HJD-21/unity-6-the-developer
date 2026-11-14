@@ -147,7 +147,7 @@ flowchart TD
 
 `Catalog`는 플레이어 상태가 아닌 콘텐츠 정의 목록이다. App은 여러 Match에서 같은 정의를 읽을 수 있도록 카탈로그를 가진다. 어떤 Match를 시작할지는 이후 요청/설정이 선택한다.
 
-`Snapshot`은 어느 순간의 읽기 자료다. 실제 CU/Player/터렛 HP를 소유하는 Feature와 `MatchState`의 기초 상태를 혼동하지 않는다. 현재 Domain MatchState만 저장해서 전체 전투를 되돌릴 수는 없다.
+`MatchState`는 단계·확정 결과만 갖고, 참가자 원본은 `MatchConfig.Players`다. `MatchSnapshot`은 이 수명주기 값의 시점 복사본이며 HP/전투 상태나 저장 자료가 아니다. Player/CU/터렛·Enemy 상태는 실제 Feature 읽기 port, 전체 월드 복귀는 `CheckpointService`와 각 Feature writer를 사용한다.
 
 ## 왜 GameManager 하나 대신 App/Match 수명을 구분하는가
 
@@ -174,3 +174,6 @@ App은 플랫폼/프로필·네트워크 연결·Scene 전환·저장소처럼 �
 ## 구조를 단순하게 정리한 부분
 
 `MatchSimulation` 중간 객체를 제거하고 Session이 State의 단계/확정 결과에 직접 연결된다. 실제 전투는 Feature/Host 경계에서 처리한다. 사용하지 않는 범용 Submit 두 개와 전용 명령/결과/로컬 권한 타입은 제거했다. PlayerSceneAdapter의 Bind/Unbind는 유지하며, 실제 요청은 터렛/Encounter 전용 API를 사용한다. 큰 Scene root는 진입/해제와 Update를 본 파일에, 네트워크 준비/읽기 복제를 `.Networking.cs`, 공간 투영을 `.Spatial.cs`, 저장 조립을 `.Checkpoints.cs`에 둔다. 별도 Manager나 상태 원본이 늘어난 것은 아니다. [삭제/유지 판단과 전후 구조](../../../Docs/02_architecture/01_core/core-structure-review-2026-11-05.md)를 함께 본다.
+
+
+현재 실행을 처음 읽을 때는 [Core 실행 지도](../../../Docs/02_architecture/01_core/core-runtime-map.md)를 먼저 본다. 초기 상태 복사본과 실제 Feature 원본을 구분하고, 준비/운영/생성/저장·복귀의 호출 순서를 설명한다.

@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e93bd5132b65864d91942658fcfda85, type: 3}
+  m_Name: TacticalHudStyle
+  m_EditorClassIdentifier: Assembly-CSharp::TacticalHudStyle
+  Common: {fileID: 11400000, guid: 6fb698c845a419e408c3046d432e76ae, type: 2}
+  ViewPrefab: {fileID: 3530878250725260126, guid: ada8f58d9fd825c4aac92e4a6a475ca7, type: 3}
+  LowPower:
+  - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
+  - {fileID: 11400000, guid: b28a795f5a364f249b632692a760317c, type: 2}
+  Firepower:
+  - {fileID: 11400000, guid: ed4eb21118c1461caba77c381399f6d1, type: 2}
+  - {fileID: 11400000, guid: a710a35a5d3c49b794d2f387d53dce10, type: 2}
+  CannonGlyph: {fileID: 21300000, guid: 2605cafdc85e81046a026082b4e5b183, type: 2}
+  MissileGlyph: {fileID: 21300000, guid: af9eddbcef7f34e4e891d496801a0b50, type: 2}
+  EnemyGlyph: {fileID: 21300000, guid: 7abfc11f888029b419d78ed7d500782b, type: 2}
+  GoalGlyph: {fileID: 21300000, guid: 705714ecd6900304ca9f9cb65f780c28, type: 2}
+  PowerGlyph: {fileID: 21300000, guid: 0ff86c5a2fe555e4d8941addb86998b0, type: 2}
+  UpgradeGlyph: {fileID: 21300000, guid: 061c4ed9a5ee88243848c53b9c364af7, type: 2}
+  SelectionGlyph: {fileID: 21300000, guid: aab8a00834e765447984c34f1085084a, type: 2}
+  AutomaticGlyph: {fileID: 21300000, guid: 28b6fa3a56e3e1d4fbf872f8775cc651, type: 2}
+  TurretArt:
+  - DefinitionId: canon_stage1_lv1
+    Detail: {fileID: 21300000, guid: 0a8e75af5552ab142be0c0d983c3ffcb, type: 3}
+  - DefinitionId: canon_stage1_lv2
+    Detail: {fileID: 21300000, guid: f55d6e0eab5487848b83fd1ad1ca69b2, type: 3}
+  - DefinitionId: canon_stage1_lv3
+    Detail: {fileID: 21300000, guid: 6b7a41be132ba1545b7d938a10ef4c6d, type: 3}
+  - DefinitionId: laser_stage1_lv1
+    Detail: {fileID: 21300000, guid: 8b6a560f38a2c25439cef926f2925296, type: 3}
+  - DefinitionId: missile_stage1_lv1
+    Detail: {fileID: 21300000, guid: 9bace27ca48126144b168275864356fc, type: 3}
+  - DefinitionId: missile_stage1_lv2
+    Detail: {fileID: 21300000, guid: b8950c115e59e254b96ec228391b4194, type: 3}
+  - DefinitionId: missile_stage1_lv3
+    Detail: {fileID: 21300000, guid: 86f40d06f12e9cd4683f65d55d6e2ecf, type: 3}
+  OverviewTerrain: {fileID: 2800000, guid: 922002b6c5901f341aad5e3b9802b39d, type: 3}
+  TerrainScene: Assets/Scenes/Gameplay/Stage_1.unity
+  TerrainBounds:
+    serializedVersion: 2
+    x: -138
+    y: -120
+    width: 276
+    height: 240
+  GlyphEnterZoom: 2.5
+  GlyphLeaveZoom: 2.2
+  GlyphSize: 32
+  EntryZoom: 2.2
+  MaximumZoom: 8
+  MinimumZoom: 0.7
+  ZoomStep: 1.2
+  CameraMoveSeconds: 0.18
+  CameraZoomSeconds: 0.16
+  PanSpeed: 1.1
+  ShotQuietSeconds: 2
+  HoverDelay: 0.22
+  HitHoldSeconds: 5
+  MinimumMapSpan: 80
+  MaximumEnemyGroups: 24
+  Active: {r: 0.48, g: 0.68, b: 0.39, a: 1}
+  Inactive: {r: 0.62, g: 0.65, b: 0.61, a: 1}
+  Territory: {r: 0.72, g: 0.75, b: 0.67, a: 0.55}
+  Enemy: {r: 0.84, g: 0.38, b: 0.31, a: 1}
+  Frontline: {r: 0.73, g: 0.85, b: 0.84, a: 0.92}
+  CapturedFill: {r: 0.44, g: 0.65, b: 0.41, a: 0.18}
+  CapturingFill: {r: 0.91, g: 0.68, b: 0.3, a: 0.22}
+  AvailableFill: {r: 0.68, g: 0.73, b: 0.66, a: 0.07}
+  UnoccupiedFill: {r: 0.07, g: 0.09, b: 0.09, a: 0.25}

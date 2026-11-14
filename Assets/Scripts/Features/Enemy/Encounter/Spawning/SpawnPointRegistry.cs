@@ -26,6 +26,8 @@ namespace TeamHJD.Game.Domain
         private IReadOnlyList<RegionGroup> regionGroups = Array.Empty<RegionGroup>();
         private readonly Dictionary<int, bool> regionSpawnStates = new();
         private RegionGridDefinition regionDefinition;
+        private RegionGridSnapshot captureSnapshot;
+        private double captureMargin;
 
         public bool IsRegionGroupsInitialized => regionDefinition != null;
 
@@ -52,11 +54,15 @@ namespace TeamHJD.Game.Domain
         {
             foreach (SpawnPoint point in spawnPoints)
                 if (point != null)
+                {
                     point.SetRegionSpawnEnabled(true);
+                    point.SetCaptureExclusion(string.Empty);
+                }
 
             regionDefinition = null;
             regionGroups = Array.Empty<RegionGroup>();
             regionSpawnStates.Clear();
+            captureSnapshot = null;
         }
 
         private void RebuildRegionGroups()
@@ -144,12 +150,44 @@ namespace TeamHJD.Game.Domain
 
             foreach (SpawnPoint point in spawnPoints)
                 if (point != null)
+                {
                     point.SetRegionSpawnEnabled(true);
+                    point.SetCaptureExclusion(string.Empty);
+                }
 
             spawnPoints.Clear();
             spawnPoints.AddRange(nextSpawnPoints);
             if (IsRegionGroupsInitialized)
                 RebuildRegionGroups();
+            if (captureSnapshot != null)
+                RefreshCaptureRestrictions();
+        }
+
+        /// <summary>Collector/Executor가 확정한 지역으로 일반 스폰 후보를 갱신합니다. 수동 설정은 보존합니다.</summary>
+        public void ApplyRegionSnapshot(RegionGridSnapshot snapshot, double margin = 0)
+        {
+            if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+            if (double.IsNaN(margin) || double.IsInfinity(margin) || margin < 0)
+                throw new ArgumentOutOfRangeException(nameof(margin));
+            if (snapshot.Mode == RegionPolicyMode.Static) InitializeRegionGroups(snapshot);
+            else if (IsRegionGroupsInitialized) ResetRegionGroups();
+            captureSnapshot = snapshot;
+            captureMargin = margin;
+            RefreshCaptureRestrictions();
+        }
+
+        private void RefreshCaptureRestrictions()
+        {
+            var policy = new RegionSpawnPolicy(captureSnapshot, captureMargin);
+            foreach (RegionGroup group in regionGroups)
+                SetRegionSpawnEnabled(group.RegionId, !policy.IsRegionCaptured(group.RegionId));
+            foreach (SpawnPoint point in spawnPoints)
+                if (point != null)
+                {
+                    var position = point.Position;
+                    point.SetCaptureExclusion(policy.GetExclusionReason(
+                        new BattlefieldPoint(position.x, position.y), point.SpawnRadius));
+                }
         }
 
         private bool HasSameSpawnPoints(IReadOnlyList<SpawnPoint> other)

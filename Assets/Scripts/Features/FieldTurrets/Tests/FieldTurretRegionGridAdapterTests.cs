@@ -20,13 +20,14 @@ namespace TeamHJD.Game.FieldTurrets.Tests
             var state = new RegionGridState(new MatchId("test"), Guid.NewGuid(), definition);
             for (int unlocked = 0; unlocked <= zones.ZoneCount; unlocked++)
             {
-                state.Apply(FieldTurretRegionGridAdapter.GetUnlockedCells(zones, unlocked), RegionCaptureUpdateMode.Replace);
+                if (unlocked > 0) state.UnlockThrough(unlocked);
                 for (int y = 0; y < cellsY; y++)
                     for (int x = 0; x < cellsX; x++)
                     {
                         int index = definition.GetCellIndex(x, y);
                         Assert.That(definition.RegionIds[index], Is.EqualTo(zones.GetZoneForCell(x, y)));
-                        Assert.That(state.Snapshot.IsCaptured(x, y), Is.EqualTo(zones.GetZoneForCell(x, y) <= unlocked));
+                        Assert.That(state.Snapshot.IsRegionUnlocked(definition.RegionIds[index]), Is.EqualTo(zones.GetZoneForCell(x, y) <= unlocked));
+                        Assert.That(state.Snapshot.IsCaptured(x, y), Is.False, "해금은 점유 완료가 아닙니다.");
                     }
             }
             Assert.That(definition.Geometry.Origin, Is.EqualTo(new BattlefieldPoint(12, -9)));

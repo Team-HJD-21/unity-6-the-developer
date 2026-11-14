@@ -1,0 +1,1001 @@
+fileFormatVersion: 2
+guid: 732d6db8f91eb624f84214503fc0d666
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2315961257596363659
+    second: TacticalSymbols-v1_0
+  - first:
+      213: 3693019986211762807
+    second: TacticalSymbols-v1_1
+  - first:
+      213: -4988030307134193914
+    second: TacticalSymbols-v1_2
+  - first:
+      213: 3530950194230263586
+    second: TacticalSymbols-v1_3
+  - first:
+      213: -1102873227362048953
+    second: TacticalSymbols-v1_4
+  - first:
+      213: -5917435772440428839
+    second: TacticalSymbols-v1_5
+  - first:
+      213: 345108897555995822
+    second: TacticalSymbols-v1_6
+  - first:
+      213: -2710737675156657352
+    second: TacticalSymbols-v1_7
+  - first:
+      213: 7236897331261310512
+    second: TacticalSymbols-v1_8
+  - first:
+      213: 289464117285732320
+    second: TacticalSymbols-v1_9
+  - first:
+      213: -2649510341724247800
+    second: TacticalSymbols-v1_10
+  - first:
+      213: -1319252377414461757
+    second: TacticalSymbols-v1_11
+  - first:
+      213: 9158760842530709963
+    second: TacticalSymbols-v1_12
+  - first:
+      213: -3851034160537781397
+    second: TacticalSymbols-v1_13
+  - first:
+      213: -7334533601477109392
+    second: TacticalSymbols-v1_14
+  - first:
+      213: 4268764267318804650
+    second: TacticalSymbols-v1_15
+  - first:
+      213: 3905598465514000609
+    second: TacticalSymbols-v1_16
+  - first:
+      213: -8509278786675635005
+    second: TacticalSymbols-v1_17
+  - first:
+      213: 8387183506910984419
+    second: TacticalSymbols-v1_18
+  - first:
+      213: 2845543577332286180
+    second: TacticalSymbols-v1_19
+  - first:
+      213: 8812058486075119550
+    second: TacticalSymbols-v1_20
+  - first:
+      213: -9090660715499764479
+    second: TacticalSymbols-v1_21
+  - first:
+      213: -1642707551259178121
+    second: TacticalSymbols-v1_22
+  - first:
+      213: 5963767264428839341
+    second: TacticalSymbols-v1_23
+  - first:
+      213: -7407641029801719864
+    second: TacticalSymbols-v1_24
+  - first:
+      213: 5325986101730435476
+    second: TacticalSymbols-v1_25
+  - first:
+      213: 3810656519384457380
+    second: TacticalSymbols-v1_26
+  - first:
+      213: 3734569046503741227
+    second: TacticalSymbols-v1_27
+  - first:
+      213: 3812806975199949982
+    second: TacticalSymbols-v1_28
+  - first:
+      213: 3848817885888597005
+    second: TacticalSymbols-v1_29
+  - first:
+      213: -2516389419863188228
+    second: TacticalSymbols-v1_30
+  - first:
+      213: -7700806791203188970
+    second: TacticalSymbols-v1_31
+  - first:
+      213: -3508862901043906291
+    second: TacticalSymbols-v1_32
+  - first:
+      213: 4310907405077979849
+    second: TacticalSymbols-v1_33
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_0
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 1123
+        width: 17
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8329984e72f32020800000000000000
+      internalID: 2315961257596363659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_1
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 1140
+        width: 25
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 772f19a6c1e304330800000000000000
+      internalID: 3693019986211762807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_2
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 1157
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60f32660dd4f6cab0800000000000000
+      internalID: -4988030307134193914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_3
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 1140
+        width: 67
+        height: 80
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22ff0be6e74700130800000000000000
+      internalID: 3530950194230263586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_4
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 1140
+        width: 35
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 744ebca94aec1b0f0800000000000000
+      internalID: -1102873227362048953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_5
+      rect:
+        serializedVersion: 2
+        x: 611
+        y: 475
+        width: 628
+        height: 725
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9debf72548b01eda0800000000000000
+      internalID: -5917435772440428839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 471
+        width: 487
+        height: 654
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eacd6afb6b21ac400800000000000000
+      internalID: 345108897555995822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_7
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 1096
+        width: 35
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83be4015276816ad0800000000000000
+      internalID: -2710737675156657352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_8
+      rect:
+        serializedVersion: 2
+        x: 551
+        y: 964
+        width: 86
+        height: 93
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0368dc1b7cf9e6460800000000000000
+      internalID: 7236897331261310512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_9
+      rect:
+        serializedVersion: 2
+        x: 610
+        y: 891
+        width: 18
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0efb90eb412640400800000000000000
+      internalID: 289464117285732320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_10
+      rect:
+        serializedVersion: 2
+        x: 253
+        y: 658
+        width: 19
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8096dc4c16c0b3bd0800000000000000
+      internalID: -2649510341724247800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_11
+      rect:
+        serializedVersion: 2
+        x: 977
+        y: 658
+        width: 21
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c61f13d3f211bde0800000000000000
+      internalID: -1319252377414461757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_12
+      rect:
+        serializedVersion: 2
+        x: 370
+        y: 628
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc1ecc906747a1f70800000000000000
+      internalID: 9158760842530709963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_13
+      rect:
+        serializedVersion: 2
+        x: 1085
+        y: 617
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6b304ba5d06e8ac0800000000000000
+      internalID: -3851034160537781397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_14
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 570
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0795acaac80863a90800000000000000
+      internalID: -7334533601477109392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_15
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 562
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa00b67fb72bd3b30800000000000000
+      internalID: 4268764267318804650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_16
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 570
+        width: 13
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e0d5449c19733630800000000000000
+      internalID: 3905598465514000609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_17
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 554
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cc8e611708f8e980800000000000000
+      internalID: -8509278786675635005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_18
+      rect:
+        serializedVersion: 2
+        x: 295
+        y: 510
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e8b17b56f2456470800000000000000
+      internalID: 8387183506910984419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_19
+      rect:
+        serializedVersion: 2
+        x: 906
+        y: 505
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e209c7aec66d7720800000000000000
+      internalID: 2845543577332286180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_20
+      rect:
+        serializedVersion: 2
+        x: 916
+        y: 509
+        width: 14
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb7597a3188ba4a70800000000000000
+      internalID: 8812058486075119550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_21
+      rect:
+        serializedVersion: 2
+        x: 973
+        y: 497
+        width: 23
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 105c90f5e3c77d180800000000000000
+      internalID: -9090660715499764479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_22
+      rect:
+        serializedVersion: 2
+        x: 961
+        y: 499
+        width: 13
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77b48518f2ee339e0800000000000000
+      internalID: -1642707551259178121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_23
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 0
+        width: 491
+        height: 437
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da15267cabe83c250800000000000000
+      internalID: 5963767264428839341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_24
+      rect:
+        serializedVersion: 2
+        x: 623
+        y: 168
+        width: 73
+        height: 73
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c74f031bb5c23990800000000000000
+      internalID: -7407641029801719864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_25
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 208
+        width: 44
+        height: 81
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4916f482424b9e940800000000000000
+      internalID: 5325986101730435476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_26
+      rect:
+        serializedVersion: 2
+        x: 788
+        y: 15
+        width: 405
+        height: 477
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a0efe62aeb22e430800000000000000
+      internalID: 3810656519384457380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_27
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 120
+        width: 14
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b27560ed2cad3d330800000000000000
+      internalID: 3734569046503741227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_28
+      rect:
+        serializedVersion: 2
+        x: 1077
+        y: 129
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e94bce92ebfc9e430800000000000000
+      internalID: 3812806975199949982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_29
+      rect:
+        serializedVersion: 2
+        x: 1083
+        y: 130
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0c4f8da97fb96530800000000000000
+      internalID: 3848817885888597005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_30
+      rect:
+        serializedVersion: 2
+        x: 466
+        y: 87
+        width: 27
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cfcd080b72df31dd0800000000000000
+      internalID: -2516389419863188228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_31
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 85
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61f0b66260d312590800000000000000
+      internalID: -7700806791203188970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_32
+      rect:
+        serializedVersion: 2
+        x: 818
+        y: 60
+        width: 21
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d093bb148c30e4fc0800000000000000
+      internalID: -3508862901043906291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalSymbols-v1_33
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 59
+        width: 21
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c2264bd17b63db30800000000000000
+      internalID: 4310907405077979849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TacticalSymbols-v1_0: 2315961257596363659
+      TacticalSymbols-v1_1: 3693019986211762807
+      TacticalSymbols-v1_10: -2649510341724247800
+      TacticalSymbols-v1_11: -1319252377414461757
+      TacticalSymbols-v1_12: 9158760842530709963
+      TacticalSymbols-v1_13: -3851034160537781397
+      TacticalSymbols-v1_14: -7334533601477109392
+      TacticalSymbols-v1_15: 4268764267318804650
+      TacticalSymbols-v1_16: 3905598465514000609
+      TacticalSymbols-v1_17: -8509278786675635005
+      TacticalSymbols-v1_18: 8387183506910984419
+      TacticalSymbols-v1_19: 2845543577332286180
+      TacticalSymbols-v1_2: -4988030307134193914
+      TacticalSymbols-v1_20: 8812058486075119550
+      TacticalSymbols-v1_21: -9090660715499764479
+      TacticalSymbols-v1_22: -1642707551259178121
+      TacticalSymbols-v1_23: 5963767264428839341
+      TacticalSymbols-v1_24: -7407641029801719864
+      TacticalSymbols-v1_25: 5325986101730435476
+      TacticalSymbols-v1_26: 3810656519384457380
+      TacticalSymbols-v1_27: 3734569046503741227
+      TacticalSymbols-v1_28: 3812806975199949982
+      TacticalSymbols-v1_29: 3848817885888597005
+      TacticalSymbols-v1_3: 3530950194230263586
+      TacticalSymbols-v1_30: -2516389419863188228
+      TacticalSymbols-v1_31: -7700806791203188970
+      TacticalSymbols-v1_32: -3508862901043906291
+      TacticalSymbols-v1_33: 4310907405077979849
+      TacticalSymbols-v1_4: -1102873227362048953
+      TacticalSymbols-v1_5: -5917435772440428839
+      TacticalSymbols-v1_6: 345108897555995822
+      TacticalSymbols-v1_7: -2710737675156657352
+      TacticalSymbols-v1_8: 7236897331261310512
+      TacticalSymbols-v1_9: 289464117285732320
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

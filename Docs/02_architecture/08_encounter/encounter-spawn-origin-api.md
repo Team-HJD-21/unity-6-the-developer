@@ -15,7 +15,7 @@
 - 같은 논리 ID를 다시 등록해도 새 generation을 받는다. 삭제 source 또는 이전 Match를 참조하는 늦은 요청은 새 source로 바뀌지 않는다.
 - 공통 `EncounterRequestService`는 명시적 origin을 지원하는 `IOriginAwareEncounterExecutor`와 권위 resolver를 요구한다. 없는 연결을 자동 지점 생성으로 대체하지 않고 UnsupportedOrigin/OriginUnavailable로 거부한다. resolver가 원래 의도를 교체하거나 수명 종료 후 실행할 수도 없다.
 - `EncounterSceneConfiguration`은 실제 Enemy 생성기를 제작 참조로 지정한다. 현재 Initial_Stage는 EnemySpawnRoot prefab 인스턴스를 사용한다. 기존 다른 제작 Executor는 제거하지 않았다. 재로드 뒤 App의 persistent consumer에 새 Scene 참조를 전달한다.
-- `EncounterRuntime`은 `MatchId`, 명시적인 `EnemySpawnExecutor`, `EnemySquadPresetCatalog`, `EncounterBudgetSettings`를 받는 생성자로 만든다. Runtime 내부의 기본 생성자/씬 자동 검색 경로는 제거됐다. 씬 제작 연결은 `EncounterSceneConfiguration`과 런처가 담당하며, standalone 런처에는 기존 검색 fallback이 남아 있어 다중 실행기 씬은 명시적으로 연결한다.
+- `EncounterPipeline`은 `MatchId`, 명시적인 `EnemySpawnExecutor`, `EnemySquadPresetCatalog`, `EncounterBudgetSettings`를 받는 생성자로 만든다. Runtime 내부의 기본 생성자/씬 자동 검색 경로는 제거됐다. 씬 제작 연결은 `EncounterSceneConfiguration`과 런처가 담당하며, standalone 런처에는 기존 검색 fallback이 남아 있어 다중 실행기 씬은 명시적으로 연결한다.
 
 ## 조립과 호출
 
@@ -37,7 +37,7 @@ Host의 `MatchSession.InitializeSpawnSources`가 Match gameplay 취소 수명에
 
 ## #540 병합 후 편성·비용 경계
 
-현재 런처는 RegionSceneBinding의 최신 지역 Snapshot을 추가로 읽어 `EncounterRuntime.RequestSpawn()`에 전달한다. Runtime이 점유율 기반 전체 비용 예산을 산출하고, 명시 origin이면 `SpawnCompositionPlanner.TryPlanOrigin()`을 사용한다. 내부 고정 요청 타입은 `FixedPresetSpawnRequest`이며 지정된 Order·요청 마릿수·비용 예산을 보존한다. 옛 `SpawnRequest` 또는 Runtime의 기본 생성자를 새 호출부에 사용하지 않는다.
+현재 런처는 RegionSceneBinding의 최신 지역 Snapshot을 추가로 읽어 `EncounterPipeline.RequestSpawn()`에 전달한다. Runtime이 점유율 기반 전체 비용 예산을 산출하고, 명시 origin이면 `SpawnCompositionPlanner.TryPlanOrigin()`을 사용한다. 내부 고정 요청 타입은 `FixedPresetSpawnRequest`이며 지정된 Order·요청 마릿수·비용 예산을 보존한다. 옛 `SpawnRequest` 또는 Runtime의 기본 생성자를 새 호출부에 사용하지 않는다.
 
 환경 Profile은 기존처럼 고정 편성의 preset override와 요청 수량 배율을 적용한다. #540의 금액 예산은 그 요청에도 적용되며, World/명시 지점도 세트 비용과 요청 마릿수를 모두 만족해야 한다. 환경 조정용 `budgetScale` 필드가 현재 조절하는 것은 `MaxCount`라는 점에 주의한다. World origin이 상황별 편성을 자동 선택하는 경로는 아니다.
 
@@ -89,3 +89,11 @@ Scene은 Unity API로 구성한 뒤 필요한 참조/필수 WeatherChangeEvent c
 World 점/영역의 범위를 Grid와 교차시킨 뒤 `BattlefieldGridConfiguration.TryMapPoint`로 셀을 구한다. Grid의 Minimum과 Maximum을 포함하며, Maximum 좌표는 마지막 셀에 속한다. Planner에서 별도 floor 계산으로 최댓값을 거부하거나 셀 수 범위를 넘기는 규칙을 만들지 않는다. 폭이0인 선 요청도 이 경계 규칙을 따른다.
 
 양의 폭/높이를 가진 영역이 Grid와 선/점으로만 맞닿으면 해당 방향의 실제 면적이 없으므로 후보에서 제외한다. Grid 밖의 점은 계속 거부한다. 중심이 이동한 비정방형 Grid의 최대/최소 모서리·선·밖의 점·기존 누적 분산 11개 집중 검사를 통과했고 Unity 종료0을 확인했다 (`B7-WorldSpawnBounds`). 이전 최대 경계 리뷰는 이 구현으로 보완했으며 원격 PR/리뷰에는 아직 게시하지 않았다.
+
+## Enemy 스킬 소환
+
+Enemy 스킬은 기존 `EnemySummonGenerator.Spawn(definition, count, target)`을 호출합니다. 종류·수량·타깃·정면/좌우 간격은 Enemy가 결정하고, 공통 생성기는 그 결과를 다시 편성하거나 정규 생산 예산에서 차감하지 않습니다.
+
+실제 생성은 부모의 `SimulationOwnerId`로 현재 Match의 `EnemySpawnExecutor`를 찾아 `SpawnSummoned` → `TrySpawnActor`로 진행합니다. 정의는 해당 실행기의 Catalog와 같아야 합니다. 이 경로가 분대·Scene·NGO·안정 ID·Match 시계·생존/사망·Grid 위치·체크포인트 원본을 연결합니다. Match/부모 소속이 없거나 취소된 요청을 별도 Instantiate로 대체하지 않습니다.
+
+진단에서는 `EnemySkill` source와 독립 요청 번호로 확인합니다. 소환 수를 부모 Encounter의 실제 생성 수에 더하지 않습니다. Health0 이후 호출하는 사망 소환도 부모가 Despawn되기 전에는 유효합니다. 현재 소환 위치는 요청 지점0.5월드 단위 안의 XY NavMesh를 확인하며, 유효 표면이 없으면 실제 생성 실패로 기록합니다. 비행 전용 출현은 별도 이동/배치 계약이 필요합니다.

@@ -17,6 +17,22 @@ namespace TeamHJD.Game.Infrastructure.Tests
                     definition, new[] { 0, x * y - 1 }));
         }
         [Test]
+        public void RoundTripKeepsEligibleMaskAndUnlockSeparateFromCapture()
+        {
+            var geometry = new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 2, 2, 2, 2);
+            var definition = new RegionGridDefinition(geometry, new[] { 1, 1, 2, 2 }, new[] { true, false, true, true });
+            var snapshot = RegionGridSnapshot.FromCapturedCells(new MatchId("static"), Guid.NewGuid(), 4,
+                RegionPolicyMode.Static, definition, new[] { 0 }, new[] { 1, 2 });
+            var frame = new RegionReplicationFrame(Guid.NewGuid(), 1, snapshot);
+            var copy = RegionReplicationCodec.Decode(RegionReplicationCodec.Encode(frame)).Snapshot;
+            Assert.That(copy.UnlockedRegionIds, Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(copy.Definition.CapturableCells, Is.EqualTo(definition.CapturableCells));
+            Assert.That(copy.CapturedCellCount, Is.EqualTo(1));
+            Assert.That(copy.CaptureRatio, Is.EqualTo(1d / 3));
+            Assert.That(copy.CapturedCells[2], Is.False);
+        }
+
+        [Test]
         public void RoundTripPreservesFullDefinitionCaptureAndEpoch()
         {
             var frame = Frame(); var copy = RegionReplicationCodec.Decode(RegionReplicationCodec.Encode(frame));

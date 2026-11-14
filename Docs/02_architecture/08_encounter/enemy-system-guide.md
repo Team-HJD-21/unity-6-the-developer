@@ -26,7 +26,7 @@ Features/Enemy/
 │  ├─ Data/                # Definition·Catalog·편성 데이터
 │  ├─ Planning/            # 편성 선택·공간 분배·예산
 │  ├─ Spawning/             # 스폰 실행·지점 등록·배치
-│  └─ EncounterRuntime.cs  # Encounter 진입점
+│  └─ EncounterPipeline.cs  # Encounter 진입점
 ├─ Editor/
 │  ├─ Authoring/           # Scene 및 SpawnPoint 제작 도구
 │  └─ Tests/               # EditMode 테스트
@@ -54,7 +54,7 @@ flowchart TD
     Network -->|고유 OnDeath → DeathConfirmed → Despawn| Removed[생성 주체의 추적·분대 정리]
 ```
 
-단일 플레이도 Host로 실행하는 현재 게임 흐름을 따른다. 로컬/네트워크 Driver와 운영 프리팹을 별도로 완성한 구조가 아니다. Core 연결은 여전히 `EnemyNetworkTestLauncher`가 기존 계약을 구현해 담당한다. 운영용 연결 컴포넌트 분리는 후속 작업이다.
+단일 플레이도 Host로 실행하는 현재 게임 흐름을 따른다. 로컬/네트워크 Driver와 운영 프리팹을 별도로 완성한 구조가 아니다. Core 연결은 여전히 `EncounterSceneBinding`가 기존 계약을 구현해 담당한다. 운영용 연결 컴포넌트 분리는 후속 작업이다.
 
 ## 스크립트와 프리팹 상속
 
@@ -174,6 +174,6 @@ Host/Client 검증에서는 로컬 실행 플래그를 끄고 실제 NetworkObje
 
 서버의 일반 생성/Checkpoint 재생성은 `SetSimulationMatch → NetworkObject.Spawn` 순서를 유지한다. `SetSimulationMatch`는 Match ID와 Executor ID를 일반 필드에 준비한다. NGO가 NetworkVariable을 초기화한 뒤 `OnNetworkSpawn → NotifySpawned`에서 서버가 두 값을 반영하고, 그 다음 Match 시간 등록 구독자에게 알린다. Client는 최초 Spawn 패킷의 값을 읽고 덮어쓰지 않는다. 이미 Spawn된 적의 귀속 변경은 거절한다.
 
-`EnemyNavMeshPathfinder`는 경로 성공을 반환값/경로로 전달한다. 개체별 성공 로그와 `EncounterRuntime.ExecutePlan`의 장문 정상 결과 복사 로그는 출력하지 않는다. NavMesh 실패 경고/오류, 요청 반환 문자열과 구조화된 SpawnPlan/Actual·통계·Timeline은 유지한다. 편성/예산의 선택적 진단은 기존 설정을 따른다.
+`EnemyNavMeshPathfinder`는 경로 성공을 반환값/경로로 전달한다. 개체별 성공 로그와 `EncounterPipeline.ExecutePlan`의 장문 정상 결과 복사 로그는 출력하지 않는다. NavMesh 실패 경고/오류, 요청 반환 문자열과 구조화된 SpawnPlan/Actual·통계·Timeline은 유지한다. 편성/예산의 선택적 진단은 기존 설정을 따른다.
 
 이 초기화/로그 수정은 물리·AI 최적화나 실제 Enemy Pool 구현을 포함하지 않는다. 검증 범위와 코드 읽는 순서는 [PR 설명 문서](../../team/reviews/ngo-spawn-initialization-20261111.md)를 따른다.

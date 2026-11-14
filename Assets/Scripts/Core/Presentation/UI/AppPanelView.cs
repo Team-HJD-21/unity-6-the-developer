@@ -10,11 +10,19 @@ namespace TeamHJD.Game.Presentation
         public CanvasGroup Group;
         public RectTransform Panel;
         public TMP_Text Title, Body, Status;
-        public Button Primary, Secondary, Settings;
+        public Button Primary, Secondary, Settings, MainMenu;
+        public TMP_Text SafetyCount;
+        public Image OutcomeAccent;
+        public Color DefeatColor = new(.831f, .482f, .408f, 1);
+        public Color VictoryColor = new(.839f, .749f, .486f, 1);
+        public void SetSafetyUses(int remaining)
+        {
+            if (SafetyCount != null) SafetyCount.text = $"남은 안전장치  {remaining} / 3";
+        }
         [Min(.01f)] public float TransitionSeconds = .18f;
         [Min(0)] public float SecondaryRowHeight;
         private Vector2 _home;
-        private Vector2 _fullSize, _statusHome;
+        private Vector2 _fullSize, _statusHome, _mainHome;
         private float _value, _from, _target, _elapsed;
         private bool _initialized, _closing;
         private bool _secondarySet, _secondaryVisible;
@@ -25,6 +33,7 @@ namespace TeamHJD.Game.Presentation
             if (_initialized) return;
             _home = Panel.anchoredPosition; _fullSize = Panel.sizeDelta;
             if (Status != null) _statusHome = Status.rectTransform.anchoredPosition;
+            if (MainMenu != null) _mainHome = ((RectTransform)MainMenu.transform).anchoredPosition;
             _initialized = true;
         }
         public void SetSecondaryVisible(bool visible)
@@ -38,8 +47,14 @@ namespace TeamHJD.Game.Presentation
             if (Status != null) Status.rectTransform.anchoredPosition = _statusHome + Vector2.up * removed;
             if (Settings != null)
             {
-                var primary = Primary.navigation; primary.selectOnUp = visible ? Secondary : Settings; Primary.navigation = primary;
-                var settings = Settings.navigation; settings.selectOnDown = visible ? Secondary : Primary; Settings.navigation = settings;
+                var primary = Primary.navigation; primary.selectOnUp = MainMenu != null ? MainMenu : visible ? Secondary : Settings; Primary.navigation = primary;
+                var settings = Settings.navigation; settings.selectOnDown = visible ? Secondary : MainMenu != null ? MainMenu : Primary; Settings.navigation = settings;
+                if (MainMenu != null)
+                {
+                    var main = MainMenu.navigation; main.selectOnUp = visible ? Secondary : Settings; MainMenu.navigation = main;
+                    var rect = (RectTransform)MainMenu.transform;
+                    rect.anchoredPosition = _mainHome + Vector2.up * removed;
+                }
             }
         }
         public void SetFocused(bool focused)

@@ -6,6 +6,7 @@ Shader "The Developer/UI/HudBootReveal"
         _Color ("Tint", Color) = (1,1,1,1)
         _Reveal ("Reveal", Range(0,1)) = 1
         _ScanOnly ("Scan only", Float) = 0
+        _ScanWidth ("Scan width in local UV", Range(0.0001,0.1)) = 0.0012
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -31,7 +32,7 @@ Shader "The Developer/UI/HudBootReveal"
             #include "UnityUI.cginc"
             struct appdata { float4 vertex : POSITION; fixed4 color : COLOR; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct v2f { float4 vertex : SV_POSITION; fixed4 color : COLOR; float2 uv : TEXCOORD0; float4 world : TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
-            fixed4 _Color; float4 _ClipRect; float _Reveal, _ScanOnly;
+            fixed4 _Color; float4 _ClipRect; float _Reveal, _ScanOnly, _ScanWidth;
             v2f vert(appdata v)
             {
                 v2f o; UNITY_SETUP_INSTANCE_ID(v); UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
@@ -41,7 +42,11 @@ Shader "The Developer/UI/HudBootReveal"
             {
                 clip(_Reveal - i.uv.y - .00001);
                 fixed4 c = _ScanOnly > .5 ? i.color : fixed4(1,1,1,1);
-                if (_ScanOnly > .5) c.a *= saturate(1 - abs(i.uv.y - (_Reveal - .0012)) / .0012);
+                if (_ScanOnly > .5)
+                {
+                    float width = max(_ScanWidth, fwidth(i.uv.y));
+                    c.a *= saturate(1 - abs(i.uv.y - (_Reveal - width * .6)) / width);
+                }
                 #ifdef UNITY_UI_CLIP_RECT
                     c.a *= UnityGet2DClipping(i.world.xy, _ClipRect);
                 #endif

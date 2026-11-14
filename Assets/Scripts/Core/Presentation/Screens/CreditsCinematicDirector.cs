@@ -40,6 +40,9 @@ namespace TeamHJD.Game.Presentation
         private void Start() { if (AutoPlay) Play(); else EvaluateAt(0, true); }
         public void Play()
         {
+            GameAudioManager.RouteMusic(Music); GameAudioManager.RouteCinematic(FlightAudio);
+            foreach (var chapter in Chapters)
+                if (chapter != null) foreach (var cue in chapter.Sounds) GameAudioManager.RouteCinematic(cue.Source);
             TimePosition = 0; IsPlaying = true; EvaluateAt(0, true);
             if (Music != null) { Music.volume = 0; Music.Play(); }
         }

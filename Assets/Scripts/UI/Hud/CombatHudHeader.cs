@@ -9,6 +9,12 @@ public sealed class CombatHudHeader : MonoBehaviour
     public PlayerSkillHud PlayerHud;
     public TMP_Text ClockLabel, OccupancyLabel, SlowCount, SlowDescription;
     public CanvasGroup SlowGroup;
+    public GameObject OccupancyTitle, OccupancyDivider;
+    public RectTransform HeaderBackplate;
+    private bool _hasConfirmedOccupancy;
+    private InitialStagePlayerHUD _regionSource;
+    private float _nextRegionSearch;
+    private int _lastCaptured=int.MinValue,_lastEligible=int.MinValue;
     private IMatchDayNightCycle _clock;
     private MonoBehaviour _clockObject;
     private float _nextClockSearch;
@@ -21,12 +27,31 @@ public sealed class CombatHudHeader : MonoBehaviour
     public bool IsTimeWarning { get; private set; }
     public void SetConfirmedOccupancy(int capturedEligibleCells, int eligibleCells)
     {
-        OccupancyLabel.text = eligibleCells <= 0 || capturedEligibleCells < 0 || capturedEligibleCells > eligibleCells ? "--%" :
-            $"{Mathf.RoundToInt(100f * capturedEligibleCells / eligibleCells)}%";
+        bool confirmed=eligibleCells>0 && capturedEligibleCells>=0 && capturedEligibleCells<=eligibleCells;
+        if(_hasConfirmedOccupancy==confirmed && _lastCaptured==capturedEligibleCells && _lastEligible==eligibleCells)return;
+        _lastCaptured=capturedEligibleCells;_lastEligible=eligibleCells;_hasConfirmedOccupancy=confirmed;
+        double percent=confirmed?100.0*capturedEligibleCells/eligibleCells:0;
+        OccupancyLabel.text = !confirmed?"":percent>0 && percent<.1?"<0.1%":percent>0 && percent<1?
+            percent.ToString("0.0",System.Globalization.CultureInfo.InvariantCulture)+"%":$"{Mathf.RoundToInt((float)percent)}%";
+        ApplyOccupancyLayout();
+    }
+    private void ApplyOccupancyLayout()
+    {
+        OccupancyLabel.gameObject.SetActive(_hasConfirmedOccupancy);
+        if(OccupancyTitle!=null)OccupancyTitle.SetActive(_hasConfirmedOccupancy);
+        if(OccupancyDivider!=null)OccupancyDivider.SetActive(_hasConfirmedOccupancy);
+        ClockLabel.rectTransform.anchoredPosition = new Vector2(_hasConfirmedOccupancy ? -88 : 0,-28);
+        OccupancyLabel.rectTransform.sizeDelta=new Vector2(132,40);
+        OccupancyLabel.rectTransform.anchoredPosition=new Vector2(174,-28);
+        OccupancyLabel.enableAutoSizing=true;OccupancyLabel.fontSizeMin=20;OccupancyLabel.fontSizeMax=24;
+        OccupancyLabel.textWrappingMode=TextWrappingModes.NoWrap;
+        ((RectTransform)transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,_hasConfirmedOccupancy?520:300);
+        if(HeaderBackplate!=null)HeaderBackplate.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,_hasConfirmedOccupancy?520:300);
     }
     private void OnEnable()
     {
-        OccupancyLabel.text = "--%"; ClockLabel.text = "-- --:--";
+        _hasConfirmedOccupancy=false;_lastCaptured=_lastEligible=int.MinValue;_regionSource=null;_nextRegionSearch=0;
+        OccupancyLabel.text = ""; ClockLabel.text = "-- --:--"; ApplyOccupancyLayout();
         _lastSeconds = int.MinValue; _lastPhase = null; _warningAt = float.NegativeInfinity;
         ApplyClock(-1, "--");
     }
@@ -46,13 +71,30 @@ public sealed class CombatHudHeader : MonoBehaviour
         if (_owner != PlayerHud.Owner)
         {
             _owner = PlayerHud.Owner; _slow = _owner != null ? _owner.GetComponent<PlayerSlowEffects>() : null;
+            _regionSource=null;
             _slowVisibility.Snap(0);
         }
+        RefreshConfirmedOccupancy();
         int count = _slow != null && _slow.isActiveAndEnabled ? _slow.ActiveEffectCount : 0;
         _slowVisibility.Set(count > 0 ? 1 : 0, Style.SlideSeconds);
         SlowGroup.alpha = _slowVisibility.Tick(Time.unscaledDeltaTime); SlowGroup.blocksRaycasts = count > 0;
         SlowCount.text = count > 1 ? count.ToString() : "";
         SlowDescription.text = count > 0 ? $"이동 속도 {Mathf.RoundToInt(_slow.SpeedMultiplier * 100)}%" : "";
+    }
+    private void RefreshConfirmedOccupancy()
+    {
+        if(_regionSource==null && _owner!=null && Time.unscaledTime>=_nextRegionSearch)
+        {
+            _nextRegionSearch=Time.unscaledTime+.5f;
+            foreach(var source in FindObjectsByType<InitialStagePlayerHUD>(FindObjectsSortMode.None))
+                if(source.gameObject.scene==gameObject.scene && source.LocalPlayer!=null && source.LocalPlayer.gameObject==_owner.gameObject)
+                {_regionSource=source;break;}
+        }
+        var tactical=_regionSource!=null && _regionSource.isActiveAndEnabled?_regionSource.Tactical:null;
+        var regions=tactical!=null && tactical.isActiveAndEnabled?tactical.Regions:null;
+        if(regions!=null && (!_regionSource.RequiresCommands || regions.MatchId==_regionSource.BoundMatchId))
+            SetConfirmedOccupancy(regions.CapturedCellCount,regions.Definition.CapturableCellCount);
+        else SetConfirmedOccupancy(-1,0);
     }
     private void ApplyClock(int seconds, string phase)
     {
@@ -67,5 +109,5 @@ public sealed class CombatHudHeader : MonoBehaviour
         float pulse = 1 - Mathf.SmoothStep(0, 1, Mathf.Clamp01((Time.unscaledTime - _warningAt) / .32f));
         ClockLabel.rectTransform.localScale = Vector3.one * (1 + (IsTimeWarning ? .12f * pulse : 0));
     }
-    private void OnDisable() { _owner = null; _slow = null; _clock = null; _clockObject = null; }
+    private void OnDisable() { _owner = null; _slow = null; _clock = null; _clockObject = null; _regionSource=null; }
 }

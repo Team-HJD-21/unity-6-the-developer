@@ -43,7 +43,7 @@ public sealed class CombatPlayerIndicators : MonoBehaviour
     {
         if (_owner != WeaponHud.Owner) Bind(WeaponHud.Owner);
         if (_owner == null || _ammo == null) { AmmoGroup.alpha = 0; return; }
-        if (!SkillHud.IsFieldVisible)
+        if (!SkillHud.AreCombatControlsVisible)
         {
             AmmoGroup.alpha = 0; ReloadRoot.SetActive(false); ClearShotFeedback();
             foreach (var popup in _popups) if (popup.gameObject.activeSelf) popup.gameObject.SetActive(false);
@@ -72,7 +72,7 @@ public sealed class CombatPlayerIndicators : MonoBehaviour
     }
     private void Fired(WeaponType weapon)
     {
-        if (_ammo == null || _ammo.IsInfinite || !SkillHud.IsFieldVisible || weapon != _owner.CurrentWeapon) return;
+        if (_ammo == null || _ammo.IsInfinite || !SkillHud.AreCombatControlsVisible || weapon != _owner.CurrentWeapon) return;
         _shotAt = Time.unscaledTime;
     }
     private void ChangedWeapon(WeaponType _) { _lastRounds = _lastCapacity = -1; ClearShotFeedback(); }
@@ -100,7 +100,7 @@ public sealed class CombatPlayerIndicators : MonoBehaviour
     private void Gained(int amount)
     {
         if (_camera == null) _camera = Camera.main;
-        if (_owner == null || !SkillHud.IsFieldVisible || amount <= 0 || _camera == null) return;
+        if (_owner == null || !SkillHud.AreCombatControlsVisible || amount <= 0 || _camera == null) return;
         _popups[_nextPopup].Show(_owner.transform, _camera, amount, GetComponentInParent<Canvas>().scaleFactor * SkillHud.DisplayScale);
         _nextPopup = (_nextPopup + 1) % _popups.Length;
     }

@@ -54,13 +54,15 @@ MonoBehaviour:
   Message: {fileID: 2643702717825738058}
   InfoColor: {r: 0.839, g: 0.749, b: 0.486, a: 1}
   SuccessColor: {r: 0.36, g: 0.8, b: 0.48, a: 1}
-  ErrorColor: {r: 0.88, g: 0.31, b: 0.27, a: 1}
+  ErrorColor: {r: 0.98, g: 0.72, b: 0.66, a: 1}
   DisplaySeconds: 2.2
   EnterSeconds: 0.12
   ExitSeconds: 0.18
   DefaultBottom: 166
   ClearanceGap: 12
   TopPadding: 16
+  MinimumScreenScale: 0.8
+  MinimumScreenWidth: 800
 --- !u!225 &8684011978898661815
 CanvasGroup:
   m_ObjectHideFlags: 0

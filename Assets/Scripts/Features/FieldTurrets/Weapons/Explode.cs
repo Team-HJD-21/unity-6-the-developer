@@ -11,13 +11,7 @@ public class Explode : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // Debug.Log("ExplodeisCalled");
-        Collider2D hits = Physics2D.OverlapCircle(transform.position, 50, layerMask);
-        if (hits != null)
-        {
-            float distance = Vector2.Distance(transform.position, hits.transform.position);
-            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.PlayerMine, distance, 50);
-        }
+        TeamHJD.Game.Presentation.GameAudioManager.Play(TeamHJD.Game.Presentation.GameSound.Explosion, this);
 
         _animator = GetComponent<Animator>();
         StartCoroutine(DestroyExplosion());

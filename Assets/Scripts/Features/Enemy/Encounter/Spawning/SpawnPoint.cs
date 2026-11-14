@@ -24,6 +24,7 @@ public class SpawnPoint : MonoBehaviour
     [Header("점령 상태")]
     [SerializeField] private bool canSpawnEnemies = true;
     private bool _regionSpawnEnabled = true;
+    private string _captureExclusionReason = string.Empty;
 
     /// <summary>
     /// 스폰 지점을 식별하는 고유 값을 반환한다.
@@ -68,10 +69,19 @@ public class SpawnPoint : MonoBehaviour
     /// <summary>
     /// 이 지점이 활성화되어 있고 적에게 점령되어 스폰 후보가 될 수 있는지 반환한다.
     /// </summary>
-    public bool CanSpawnEnemies => isActiveAndEnabled && canSpawnEnemies && _regionSpawnEnabled;
+    public bool CanSpawnEnemies => isActiveAndEnabled && canSpawnEnemies && _regionSpawnEnabled && _captureExclusionReason.Length == 0;
 
     /// <summary>개별 지점 설정을 보존하면서 Region 단위의 스폰 허용 상태를 적용한다.</summary>
     internal void SetRegionSpawnEnabled(bool enabled) => _regionSpawnEnabled = enabled;
+
+    /// <summary>Collector/Executor가 최신 점유로 계산한 제한입니다. 지점의 수동 설정은 변경하지 않습니다.</summary>
+    internal void SetCaptureExclusion(string reason) => _captureExclusionReason = reason ?? string.Empty;
+
+    /// <summary>Game Debugger의 후보 제외 근거입니다. 실제 점유 상태를 이 문자열로 판단하지 않습니다.</summary>
+    public string SpawnExclusionReason => !isActiveAndEnabled ? "InactivePoint" :
+        !canSpawnEnemies ? "ManuallyDisabled" : _captureExclusionReason.Length > 0 ? _captureExclusionReason :
+        !_regionSpawnEnabled ? "RegionDisabled" : string.Empty;
+
 
     /// <summary>
     /// 점령 상태가 바뀌면 서버의 점령 관리자가 적 스폰 가능 여부를 갱신한다.

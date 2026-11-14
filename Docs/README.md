@@ -1,6 +1,14 @@
 # The Developer 문서 안내
 
-**11/12 Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료, 공용 AudioManager는 미구현이다. 코드 존재·실제 Scene 연결·실행 검증 범위를 나눠 적었다.
+**11/14 Core·UI 통합 PR 준비:** [검토 순서·실제 데이터 흐름·검증 경계](03_team/00_reviews/core-ui-integration-20261114.md). `feature/core`에 최신 main #722와 전술 HUD·공용 UI·OST 변경을 함께 포함했다. 원격 PR은 생성 전이며 전체 Stage1 완료를 뜻하지 않는다. [UI 구현·사용법과 남은 실제 입력 인수](01_planning/02_implementation-records/2026/11/2026-11-13-tactical-command-view.md)를 함께 확인한다.
+
+**11/13–14 Encounter/Stage1 로컬 구현:** [현재 Core 실행 지도](02_architecture/01_core/core-runtime-map.md)와 [통합 기록](01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 확인한다. [11/14 범위 정정](01_planning/02_implementation-records/2026/11/2026-11-14-explicit-stage-transition-scope.md)에 따라 자동 최종 진입·승리·결과 저장 연결은 제외하고 명시 API만 유지한다. 실제 보스전/결과 설계·확정 콘텐츠·Weather 필수 writer·원격 Player 인수는 남아 있다. 전체 Stage1 완료나 main 반영으로 해석하지 않는다.
+
+배치별 구현 근거와 실제 Scene의 미지정 원본은 [11/14 준비 상태·남은 접합](01_planning/02_implementation-records/2026/11/2026-11-14-encounter-stage1-readiness.md)에 모았다. API/개별 Feature 검수와 전체 게임 인수를 구분한다.
+
+**Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료다. 11/13 로컬 작업에는 Unity 기본 오디오를 사용하는 [GameAudioManager·믹서·설정과 연결 방법](02_architecture/01_core/game-audio-api.md)이 추가됐다. main 반영 여부, 실제 Scene 연결과 실행 검증 범위를 구분한다.
+
+**11/13 오디오 작업 인계:** [구현·검증 결과와 추후 PR의 Docs 반영 사항](01_planning/02_implementation-records/2026/11/2026-11-13-game-audio-handoff.md). 핵심 구현 완료·최종 검증 대기이며, 실제 전투 Scene·원격 Client·음원 콘텐츠 후속을 구분한다.
 
 **11/12 Core 후속 결정:** [지역·스폰·보스·협동 복구 배치](01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md). 정적 확보/상실·CU 시작 셀·33/66% 중간보스·100% 최종 전이·협동 구조를 사용자 승인 정책으로 기록했다. 이 중 **CU 시작 셀·동적 4방향 점유 연결·Host 설정은 로컬 구현/QA 완료**이며 [결과·검증 경계](01_planning/02_implementation-records/2026/11/2026-11-12-cu-connected-regions-results.md)와 [코드 검토 순서](03_team/00_reviews/cu-connected-regions-20261112.md)를 참고한다. 나머지 배치와 실제 2인·전체 저장 인수는 별도다.
 
@@ -11,7 +19,7 @@
 **Core main 전달:** [복구 PR 검토 문서](03_team/00_reviews/602-core-main-recovery.md)에서 #624~#631의 기존 리뷰, 최신 main과의 통합 차이, 이번 검증과 남은 작업을 확인합니다. 기존 수동 인수 자료는 [확인7단계·구현 전체·팀원 전달](01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md)에 보존합니다.
 
 - 실제 수명/코드 읽기: [Core 지도](02_architecture/01_core/core-lifecycle-and-api-guide.md) · [Feature 통합](02_architecture/01_core/core-feature-integration-guide.md) · [구조 정리 판단](02_architecture/01_core/core-structure-review-2026-11-05.md).
-- 최신 플레이: [우주선 출격/왕복](02_architecture/03_scene-flow/spaceship-travel-api.md) · [낮밤5분](02_architecture/09_world/day-night-api.md) · [Day/Night·타이머·Reset](02_architecture/09_world/weather-debug-hud.md). 왕복은0.3초씩 총약0.9초이며 진행 바를 표시하지 않습니다.
+- 최신 플레이: [우주선 출격/허브 귀환](02_architecture/03_scene-flow/spaceship-travel-api.md) · [낮밤5분](02_architecture/09_world/day-night-api.md) · [Day/Night·타이머·Reset](02_architecture/09_world/weather-debug-hud.md). 현재 전투 중 임시 허브 자유 방문은 제공하지 않는다. 출격 전환은0.3초씩 총약0.9초이며 진행 바를 표시하지 않는다.
 - 공용 API: [Random](02_architecture/01_core/core-random-api.md) · [가중 선택·비 50% 예제](02_architecture/01_core/random-weighted-selection.md) · [시간/예약](02_architecture/02_match/match-time-api.md) · [저장 실행](02_architecture/05_checkpoints/checkpoint-execution-api.md) · [네트워크](02_architecture/04_networking/network-match-api.md) · [Steam](02_architecture/04_networking/steam-api.md).
 - 구현/증거: [Core 결과](01_planning/02_implementation-records/2026/11/2026-11-05-core-completion-results.md) · [낮밤/Steam 결과](01_planning/02_implementation-records/2026/11/2026-11-05-day-night-steam-results.md) · [요구/Issue 대응](01_planning/02_implementation-records/2026/11/2026-11-05-core-requirements-and-issue-map.md). 과거 시점의 한계는 최신 최종 안내와 구분해서 읽습니다.
 

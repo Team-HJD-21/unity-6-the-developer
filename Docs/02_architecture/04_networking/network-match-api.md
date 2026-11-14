@@ -103,3 +103,10 @@ AppRoot.Update의 공통 pump는 Unity 주 스레드에서 전송/조율 작업�
 `GameFlow.LaunchMissionAsync`의 Host 출격이 Scene 로드 이후 `StartAfterSceneTravelAsync`를 호출한다. 새 descriptor에 모든 참가자의 준비 응답이 모여야 `TryStartMatch`한다. 직접 Manual 경로는 여전히 TryPrepare→CanStart→TryStart 순서로 사용할 수 있다. Client는 같은 Scene의 실제 조립이 끝난 뒤 App 흐름을 Mission으로 반영한다.
 
 격리 Windows 같은 Build의 Host/Client에서 협동 Match3개(모두 새 ID), 공유 귀환2회, Client 시계·환경 Match 일치, AppRoot1개와 마지막 Enemy0개를 확인했다. 이 결과가 실제 원격 Player 생성·공격 입력 복제·Steam 인증을 보장하지 않는다.
+
+
+## 2026-11-14 통합 변경 — 두 시간 anchor
+
+Stage 진행에서 기존 Field만 보류할 때에도 Client Player·낮밤 공용 시간은 계속 간다. `NetworkMatchAnchor.TimeState`/`FieldTimeState`와 `InitialStageCompositionRoot.BindTimeReplica(common, field)`로 분리했다. 각각 Host만 쓰며 Client는 일치하는 준비 세대·epoch의 쌍을 받은 뒤 바인딩한다. [공용/Field 시간 API](../02_match/match-time-api.md)를 참고한다.
+
+추가 NetworkVariable로 전송 배치가 달라져 Core 소유 연결의 NGO ProtocolVersion을1로 올렸다. `NgoNetworkSession`이 새 Host/Client를 시작하기 전에 설정하고, 이미 실행 중인 외부 연결은 변경하지 않는다. 이전 실행 파일과 혼용하지 않는다. 실제 UTP SDK2개에서 Core 연결 시작·실제 Prefab의 두 NetworkVariable 전달·Field만 정지/재개를 확인했다. 실제2인 Player/Steam Build 인수는 별도다.

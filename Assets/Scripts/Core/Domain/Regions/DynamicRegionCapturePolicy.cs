@@ -2,6 +2,7 @@
 // 결과를 계산할 뿐 터렛을 켜거나 잠그지 않으며, 점령 확정은 Runtime 소유자에게 맡깁니다.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TeamHJD.Game.Domain
 {
@@ -42,7 +43,7 @@ namespace TeamHJD.Game.Domain
             foreach (BattlefieldTriangle triangle in geometry.Triangles)
                 foreach (int cell in _rasterizer.Rasterize(vertices[triangle.VertexA], vertices[triangle.VertexB],
                              vertices[triangle.VertexC], definition.Geometry))
-                    captured.Add(cell);
+                    if (definition.CapturableCells[cell]) captured.Add(cell);
             var sorted = new List<int>(captured);
             sorted.Sort();
             return new RegionCaptureEvaluation(definition, sorted, geometry, duplicates);
@@ -60,6 +61,10 @@ namespace TeamHJD.Game.Domain
             if (!definition.TryGetCellIndex(controlUnitPosition, out int start))
                 throw new ArgumentException("CU must be inside the region grid.", nameof(controlUnitPosition));
             var initial = initialCells == null ? new HashSet<int> { start } : new HashSet<int>(initialCells);
+            if (initial.Any(cell => cell < 0 || cell >= definition.CapturableCells.Count))
+                throw new ArgumentOutOfRangeException(nameof(initialCells));
+            if (initial.Any(cell => !definition.CapturableCells[cell]))
+                throw new ArgumentException("Initial cells must be capturable land.", nameof(initialCells));
             if (!initial.Contains(start))
                 throw new ArgumentException("Initial cells must include the CU cell.", nameof(initialCells));
             if (RegionGridConnectivity.RetainConnected(definition, initial, start).Count != initial.Count)

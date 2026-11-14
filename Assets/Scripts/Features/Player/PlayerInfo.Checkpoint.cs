@@ -56,7 +56,10 @@ public partial class PlayerInfo : ICheckpointParticipant
                 throw new InvalidDataException("The target Player dash configuration differs from the saved actor.");
             if (presence && GetComponent<PlayerMatchPresence>()?.CanReport != true)
                 throw new InvalidOperationException("Bind Host presence before restoring the Player location.");
-            return new SavedPlayer(health, maximum, dead, recovering, remaining, location, presence, canMove, pose, body, dash);
+            // 성장으로 최대 체력이 바뀌어도 과거 전투 비율만 복원합니다. 사망 상태는 유지합니다.
+            int currentMaximum = maxHp;
+            health = dead ? 0 : Math.Max(1, Math.Min(currentMaximum, (int)Math.Ceiling(health * (double)currentMaximum / maximum)));
+            return new SavedPlayer(health, currentMaximum, dead, recovering, remaining, location, presence, canMove, pose, body, dash);
         });
         SavedPlayer backup = CapturePlayerState();
         return new CheckpointRestoreStep(() => ApplyPlayerState(target), () => ApplyPlayerState(backup));

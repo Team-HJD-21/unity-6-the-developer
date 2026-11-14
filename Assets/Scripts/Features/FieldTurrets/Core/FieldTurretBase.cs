@@ -344,6 +344,8 @@ namespace TeamHJD.Game.FieldTurrets
                 FieldTurretActivationResult.Deactivated)
             {
                 OnActivationChanged(shouldActivate);
+                TeamHJD.Game.Presentation.GameAudioManager.Play(shouldActivate ? TeamHJD.Game.Presentation.GameSound.TurretOn
+                    : TeamHJD.Game.Presentation.GameSound.TurretOff, this);
                 FieldTurretInstanceRegistry.NotifyActivationChanged(this, shouldActivate);
 
                 if (wasOperational != IsOperational)

@@ -1,4 +1,4 @@
-// Initial_Stage에서 Match·Player를 조립하고 Encounter에 공간 조회 경로를 연결합니다.
+// 현재 Stage Scene에서 Match·Player를 조립하고 Encounter에 공간 조회 경로를 연결합니다.
 // Scene 수명에 맞춰 actor와 Match, Encounter 바인딩을 정리합니다.
 
 using System;
@@ -31,6 +31,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IAppMatchHost _matchHost;
         private MatchSession _matchSession;
         private MatchCoordinator _coordinator;
+        [SerializeField] private EncounterProductionSettings encounterProduction = new EncounterProductionSettings();
         private MatchTimeService _matchTime;
         private IMatchTime _timeReplica;
         private MatchFieldReplicaScope _replicaField;
@@ -50,9 +51,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IMatchTimeOfDaySource _timeOfDaySource;
         private IDisposable _environmentScope;
         private IMatchEnvironmentSource _environmentReplica;
+        private IMatchTime _fieldTimeReplica;
         public MatchCoordinator MatchCoordinator => _coordinator;
         /// <summary>현재 Match의 읽기 시계입니다. Client는 첫 권위 anchor를 받기 전 null입니다.</summary>
         public IMatchTime MatchTime => _matchTime?.Clock ?? _timeReplica;
+        /// <summary>기존 Field의 냉각·이동·생산이 읽는 권위 시각입니다. Player/낮밤의 공용 MatchTime과 구분합니다.</summary>
+        public IMatchTime FieldTime => _matchTime?.FieldClock ?? _fieldTimeReplica;
+        public RegionCaptureTrend CaptureTrend => _matchSession?.CaptureTrend ?? default;
+        /// <summary>같은 Scene의 전술 UI가 읽는 권위 전선입니다. Client 미수신을 빈 권위 결과로 위장하지 않습니다.</summary>
+        public BattlefieldSpatialSnapshot TacticalBattlefield => HasCurrentMatch ? _matchSession?.Battlefield : null;
         /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
         public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
         /// <summary>Game Debugger와 통합 검사가 조회하는 현재 권위 Match의 유효 예약 수입니다.</summary>
@@ -124,15 +131,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 new[] { loadout });
             if (network == null && appMatchHost is AppRoot appArrival)
                 config = appArrival.ConfigureCheckpointArrival(gameObject.scene.path, config);
-            var initialState = new MatchState(
-                matchId,
-                MatchPhase.Preparing,
-                config.Players.Select(player => new PlayerState(player.PlayerId, 400, 400, true)),
-                new ControlUnitState(1500, 1500, 250, 250),
-                new WaveState(0, 1, 0, 0),
-                Array.Empty<TurretState>(),
-                Array.Empty<EnemyState>(),
-                Array.Empty<SectorState>());
+            var initialState = new MatchState(matchId, MatchPhase.Preparing);
 
             PlayerStart firstStart = starts.Single(start => start.SlotIndex == localSlot);
             IBattlefieldTurretInputSource turretInputSource = FindTurretInputSource();
@@ -180,9 +179,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning));
                 _coordinator = new MatchCoordinator(session, controlUnitHealth,
                     () => HasCurrentMatch && (network == null || network.IsGameplayRunning), _matchTime.Clock);
+                _recoveryLedger = new MissionRecoveryLedger();
+                _coordinator.ConfigureRecovery(_recoveryLedger, rescueSettings);
                 // Feature의 최초 날씨 선택 이전에 주입합니다. Client에는 난수 결정권을 제공하지 않습니다.
                 session.InitializeRandom(() => HasCurrentMatch && (network == null || _networkBinding.Connection.IsServer));
-                _randomConsumers = new RandomConsumerScope(session.Random, FindSceneBehaviours().OfType<IRandomConsumer>());
+                // 영속 Encounter는 DDOL Scene에 있어 Scene 조회에서 빠지므로 동일 수명에 명시적으로 포함합니다.
+                _encounterConsumer = ResolveEncounterConsumer();
+                var randomConsumers = FindSceneBehaviours().OfType<IRandomConsumer>().ToList();
+                if (_encounterConsumer is IRandomConsumer encounterRandom) randomConsumers.Add(encounterRandom);
+                _randomConsumers = new RandomConsumerScope(session.Random, randomConsumers);
                 _environmentScope = new MatchEnvironmentSceneScope(session, _coordinator, _weatherSource, _timeOfDaySource,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning), _matchTime.Scheduler, _matchTime.Clock);
                 session.InitializeSpawnSources(
@@ -204,6 +209,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 foreach (ILocalPlayerActorConsumer consumer in _localActorConsumers)
                     consumer.BindLocalActor(matchId, localPlayerId, _playerActors.Actors[localPlayerId]);
                 BindLocalInput(_playerActors.Actors[localPlayerId]);
+                BindRecoveryActors(localPlayerId);
                 _regionBinding = regionBinding;
                 if (network == null) _regionBinding?.BindMatch(session, entityIds: _turretBinding);
                 else
@@ -212,7 +218,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     _regionBinding.BindMatch(session, network.Descriptor.RegionGrid,
                         network.Descriptor.RegionMode, () => network.IsGameplayRunning, _turretBinding);
                 }
-                _encounterConsumer = ResolveEncounterConsumer();
+                _regionBinding.BindCombatSources(FindSceneBehaviours().OfType<IEnemyCombatSource>());
                 if (_encounterConsumer != null)
                 {
                     // 새 환경·추가 스폰 계약은 Feature가 구현한 경우에만 연결합니다.
@@ -221,9 +227,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         environmentConsumer.BindEnvironment(matchId, () => HasCurrentMatch && _matchSession != null &&
                             _matchSession.IsGameplayRunning ? _matchSession.Environment?.Snapshot : null);
                     if (_encounterConsumer is IEncounterSpawnContextConsumer spawnConsumer)
-                        spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _coordinator, config.RandomSeed, _coordinator.GameplayCancellation);
+                        spawnConsumer.BindSpawnContext(matchId, session.SpawnSources, _matchTime.FieldClock, config.RandomSeed, _coordinator.GameplayCancellation,
+                            () => session.ObserveRegionCapture(_matchTime.FieldClock.Snapshot.Epoch, _matchTime.FieldClock.ElapsedSeconds));
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
+                    if (_encounterConsumer is IEncounterProductionConsumer productionConsumer)
+                        productionConsumer.UseMatchProduction();
                     if (network != null)
                     {
                         if (!(_encounterConsumer is IAppOwnedEncounterMatchConsumer managed))
@@ -232,6 +241,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         managed.BindAuthorityMatch(matchId, localPlayerId, latest);
                     }
                     else _encounterConsumer.BindMatch(matchId, latest);
+                    if (_encounterConsumer is IEncounterRequestService requestService)
+                        _coordinator.ConfigureEncounterProduction(localPlayerId, requestService, _matchTime.FieldScheduler, _matchTime.FieldClock,
+                            encounterProduction, () => !_restoringCheckpoint);
                 }
                 else
                     Debug.LogWarning("Initial_Stage has no IEncounterMatchConsumer; automatic Encounter is unavailable.", this);
@@ -246,8 +258,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _fieldScope = new MatchFieldSceneScope(config, _matchTime, _coordinator.GameplayCancellation,
                     () => HasCurrentMatch && session.IsGameplayRunning && (network == null || network.IsGameplayRunning),
                     fieldFeatures, _playerActors.Actors);
+                _restoringCheckpoint = true;
+                try { BindGrowthSaves(localPlayerId); }
+                finally { _restoringCheckpoint = false; }
+                OnTurretLayoutChanged();
+                PublishGrowthRestoreWarnings();
+                BindStageProgression();
                 BindCheckpoints();
                 if (appMatchHost is AppRoot restoringApp) restoringApp.ApplyCheckpointArrival(this);
+                FinishRecoveryArrival();
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
                     $"Initial_Stage Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
@@ -379,10 +398,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             IBattlefieldTurretInputSource input = _turretInputSource;
             IAppMatchHost host = _matchHost;
             bool ownedMatch = _ownsMatch;
+            var errors = new List<Exception>();
+            RunCleanup(FlushGrowthSaves, errors);
+            RunCleanup(ReleaseStageCombatSources, errors);
+            RunCleanup(ReleaseRecovery, errors);
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
             _coordinator = null;
-            _matchTime = null; _timeReplica = null;
+            _matchTime = null; _timeReplica = null; _fieldTimeReplica = null;
             _fieldScope = null; _replicaField = null;
             _environmentScope = null; _environmentReplica = null;
             _randomConsumers = null;
@@ -391,7 +414,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _ownedMatchId = default;
             _enemyPositionSources = Array.Empty<IBattlefieldEnemyPositionSource>();
             _lastEntityCells.Clear();
-            var errors = new List<Exception>();
+            RunCleanup(ReleaseGrowthSaves, errors);
             RunCleanup(ReleaseCheckpoints, errors);
             RunCleanup(() => coordinator?.Dispose(), errors);
             RunCleanup(() => environment?.Dispose(), errors);
@@ -504,9 +527,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private void Update()
         {
             _matchTime?.Pump(Time.timeScale);
+            PumpGrowthSaves();
             if (_restoringCheckpoint) return;
             // main의 기존 CU 읽기 Port를 사용합니다. Feature가 새 파괴 이벤트 계약을 구현할 필요는 없습니다.
             _coordinator?.EvaluateProgress();
+            PumpRecovery();
+            PumpFinalBossTransition();
+            if (Recovery?.IsRecoveryPending != true) _stageCheckpoints?.Pump();
+            _coordinator?.StageProgression?.Pump(_matchSession?.Regions?.Snapshot);
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
             if (!_matchSession.IsGameplayRunning) return;

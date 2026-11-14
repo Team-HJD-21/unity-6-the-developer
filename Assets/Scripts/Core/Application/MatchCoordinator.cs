@@ -3,6 +3,7 @@
 // 정식 게임 시간은 주입된 공용 시계에서 읽고 네트워크 연결·UI·HP 원본은 별도 소유자가 관리합니다.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
@@ -22,6 +23,9 @@ namespace TeamHJD.Game.Application
         private IDisposable _events;
         private bool _started, _disposed, _evaluating, _completionObserved;
         private long _sequence;
+        public MatchRecovery Recovery { get; private set; }
+        public StageProgression StageProgression { get; private set; }
+        public MatchEncounterProduction EncounterProduction { get; private set; }
         public MatchId MatchId => _session.Config.MatchId;
         public MatchCompletion Completion => _session.Completion;
         public double ElapsedSeconds => _clock?.ElapsedSeconds ?? _manualElapsed;
@@ -43,6 +47,42 @@ namespace TeamHJD.Game.Application
             _gameplayToken = _gameplay.Token;
         }
 
+        /// <summary>Scene 조립부가 공통 요청 서비스를 연결합니다. 시작 뒤에는 Coordinator만 정규 생산을 소유합니다.</summary>
+        public void ConfigureEncounterProduction(PlayerId issuer, IEncounterRequestService requests,
+            IMatchScheduler scheduler, IMatchClock productionClock, EncounterProductionSettings settings, Func<bool> canProduce)
+        {
+            if (_started || _disposed || EncounterProduction != null || _clock == null)
+                throw new InvalidOperationException("Configure one production owner before Match start.");
+            EncounterProduction = new MatchEncounterProduction(MatchId, issuer, requests, scheduler, productionClock,
+                () => IsGameplayRunning && canProduce(), settings, _gameplayToken);
+        }
+
+        /// <summary>Scene이 시작 전에 실제 roster/공용 시각에 생존 조율부를 붙입니다.</summary>
+        public void ConfigureRecovery(MissionRecoveryLedger ledger, MissionRecoverySettings settings)
+        {
+            if (_started || _disposed || Recovery != null || _clock == null)
+                throw new InvalidOperationException("Configure one recovery owner before Match start.");
+            Recovery = new MatchRecovery(ledger, _clock, () => IsGameplayRunning,
+                _session.Config.Players.Select(player => player.PlayerId), settings);
+        }
+
+        /// <summary>Scene이 영속 실행 ID를 읽은 뒤 실제 Field 사건 원본을 연결합니다. 콘텐츠 미연결은 Snapshot에 남깁니다.</summary>
+        public void ConfigureStageProgression(Guid run, IMatchClock fieldClock, IFieldBossSpawnService spawns)
+        {
+            if (_disposed || StageProgression != null) throw new InvalidOperationException("Configure Stage progression once.");
+            StageProgression = new StageProgression(MatchId, run, fieldClock,
+                () => IsGameplayRunning && Recovery?.IsRecoveryPending != true, spawns);
+            // 진행/사망 사실만 제공합니다. 최종 승리 정책이 확정되기 전에는 자동으로 Match를 완료하지 않습니다.
+        }
+
+        /// <summary>모드/Stage 소유자가 확정한 승패를 한 번만 완료합니다. 비환급 기록은 쓰기 권한이 닫히기 전에 확정합니다.</summary>
+        public void CompleteMatch(MatchOutcome outcome, MatchEndReason reason = MatchEndReason.None)
+        {
+            if (!IsGameplayRunning) throw new InvalidOperationException("Complete only the current authority Match.");
+            Recovery?.Ledger.EndMission();
+            _session.Complete(outcome, checked(++_sequence), reason);
+        }
+
         public void Start()
         {
             if (_disposed) throw new ObjectDisposedException(nameof(MatchCoordinator));
@@ -54,6 +94,7 @@ namespace TeamHJD.Game.Application
             _session.Disposing += Dispose;
             _events = _session.Events.Subscribe(OnMatchEvent);
             EvaluateProgress();
+            if (IsGameplayRunning) EncounterProduction?.Start();
         }
 
         /// <summary>공용 시계를 주입하지 않은 독립 검사/호환 실행에서만 게임 초를 수동 진행합니다.</summary>
@@ -78,7 +119,8 @@ namespace TeamHJD.Game.Application
                 var progress = new MatchProgressSnapshot(MatchId, _controlUnit.CurrentHealth,
                     _controlUnit.MaxHealth, ElapsedSeconds);
                 MatchOutcome? outcome = _session.EvaluateProgress(progress);
-                if (outcome.HasValue) _session.Complete(outcome.Value, checked(++_sequence));
+                if (outcome.HasValue) CompleteMatch(outcome.Value, outcome == MatchOutcome.Defeat && _controlUnit.CurrentHealth == 0
+                    ? MatchEndReason.ControlUnitDestroyed : MatchEndReason.None);
             }
             finally { _evaluating = false; }
         }
@@ -89,6 +131,8 @@ namespace TeamHJD.Game.Application
             if (!(fact is MatchCompleted completed) || completed.MatchId != MatchId || _completionObserved) return;
             _completionObserved = true;
             var errors = new List<Exception>();
+            TryCleanup(() => Recovery?.Dispose(), errors);
+            TryCleanup(() => EncounterProduction?.Dispose(), errors);
             TryCleanup(_gameplay.Cancel, errors);
             Action<MatchCompletion> handlers = Completed;
             if (handlers != null)
@@ -107,6 +151,8 @@ namespace TeamHJD.Game.Application
             _events?.Dispose(); _events = null;
             Completed = null;
             var errors = new List<Exception>();
+            TryCleanup(() => Recovery?.Dispose(), errors);
+            TryCleanup(() => EncounterProduction?.Dispose(), errors);
             TryCleanup(_gameplay.Cancel, errors);
             TryCleanup(_gameplay.Dispose, errors);
             if (errors.Count > 0) throw new AggregateException("Match coordinator cleanup failed.", errors);

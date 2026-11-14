@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b34a623c2b283f247b32a29b3112ee96, type: 3}
+  m_Name: GameAudioConfiguration
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.GameAudioConfiguration
+  Mixer: {fileID: 24100000, guid: 725e0cde0819d1c4898fccae3c858235, type: 2}
+  MusicOutput: {fileID: -4235304903784085534, guid: 725e0cde0819d1c4898fccae3c858235, type: 2}
+  CinematicOutput: {fileID: -1087567734226990013, guid: 725e0cde0819d1c4898fccae3c858235, type: 2}
+  VoicePrefab: {fileID: 3861305597327150917, guid: 13ab119c21127994b824683b0eebac3a, type: 3}
+  GameplayMusic: {fileID: 11400000, guid: 5d655e35c3856a341a1775ef95ae46dd, type: 2}
+  Cues:
+  - {fileID: 11400000, guid: 4b690099ce4d2c4468715f430ce76df3, type: 2}
+  - {fileID: 11400000, guid: cda4dbf4aca038b4a833f58e97bab3a4, type: 2}
+  - {fileID: 11400000, guid: dc99d674f2405bc4090f522114271d12, type: 2}
+  - {fileID: 11400000, guid: 16036d302a081aa4cb3891c868a644b8, type: 2}
+  - {fileID: 11400000, guid: 46fd7db9a66dd894eb69927fbabd14bc, type: 2}
+  - {fileID: 11400000, guid: 7bd3e45d7d716cf41bb58ae23c4ef44c, type: 2}
+  - {fileID: 11400000, guid: 9f871ce56599bc64fbd32967a4d6d278, type: 2}
+  PoolSize: 24
+  ReservedUIVoices: 2
+  MasterParameter: MasterVolume
+  MusicParameter: MusicVolume
+  EffectsParameter: EffectsVolume

@@ -44,7 +44,12 @@ namespace TeamHJD.Game.FieldTurrets
             var target = codec.Read(section, 1, reader => ReadWorld(reader, codec));
             ValidateWorld(target, codec);
             var backup = CaptureWorld(codec);
-            return new CheckpointRestoreStep(() => ApplyWorld(target, codec), () => ApplyWorld(backup, codec),
+            // 최신 강화/용량은 유지하고 과거 위치·전투 상태만 복원합니다.
+            target = MergeGrowth(target, CaptureGrowth(), MaximumPower, out var warnings);
+            ValidateWorld(target, codec);
+            var previousWarnings = _growthRestoreWarnings;
+            return new CheckpointRestoreStep(() => { ApplyWorld(target, codec); _growthRestoreWarnings = warnings; },
+                () => { ApplyWorld(backup, codec); _growthRestoreWarnings = previousWarnings; },
                 resolveReferences: ResolveWorldReferences, resolveRollbackReferences: ResolveWorldReferences);
         }
 

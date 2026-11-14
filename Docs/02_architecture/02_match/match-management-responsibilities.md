@@ -29,7 +29,7 @@
 | 확정 점령 셀 | Match의 RegionRuntime | 같은 Grid/revision의 읽기 snapshot |
 | 최종 Match 결과 | Host의 MatchSession 완료 경로 | actor 참조 없는 불변 결과 |
 
-과거 `architecture-rebuild-notes`의 “HP 원본을 MatchState로 이동”은 당시 목표 제안이다. 현재 Feature의 실제 HP와 별도로 독립적인 Core HP writer를 만들지 않는다. MatchState의 기존 초기값을 실제 CU/Player 현재 HP로 간주해 승패를 판단하지 않는다. 새로운 모드 판단 입력은 Feature의 검증된 사실/읽기 자료다.
+과거 `architecture-rebuild-notes`의 “HP 원본을 MatchState로 이동”은 당시 목표 제안이다. 현재 Feature의 실제 HP와 별도로 독립적인 Core HP writer를 만들지 않는다. 초기값만 들어 있던 Core Player/CU/적/터렛/웨이브/지역 복사본은 제거했다. MatchState/MatchSnapshot은 단계·확정 결과만 담고, 참가자는 MatchConfig.Players를 사용한다. 새로운 모드 판단 입력은 Feature의 검증된 사실/읽기 자료다.
 
 ## 준비·실행·완료·연결 종료
 
@@ -88,3 +88,6 @@ sequenceDiagram
 | Audio·옵션·커서 | 표현 서비스/로컬 UI | 누락을 명시, 이번 전체 구현 대상 아님 |
 
 추적: #444 / #495 / #555 / #556 / #557 / #558 / #559 / #560. 실제 Player 네트워크 통합, OFF 터렛의 타깃 가능 상태와 최신 수리 정책, CU 연결성 기반 최종 제품 점유, 보스 게이트/복귀·저장은 담당자/제품 결정과 대조한다. 이 계획으로 자동 완료 처리하지 않는다.
+
+
+11/14 현재 실제 실행 순서와 원본 지도는 [Core 실행 지도](../01_core/core-runtime-map.md)를 참고한다. 위 표의 과거 목표 항목과 현재 실제 검증 상태를 구분한다.

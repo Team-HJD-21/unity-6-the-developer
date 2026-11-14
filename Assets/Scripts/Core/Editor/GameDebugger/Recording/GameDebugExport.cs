@@ -19,7 +19,9 @@ namespace TeamHJD.Game.Editor
                 run.Events.Count > GameDebugRecorder.MaximumEvents || run.Samples.Count > GameDebugRecorder.MaximumSamples || run.Markers.Count > 512)
                 throw new ArgumentException("지원하지 않는 schema 또는 크기/식별자입니다.");
             foreach (var item in run.Events)
-                if (item == null || item.MatchId != run.MatchId || !Finite(item.GameSeconds) || !Finite(item.RealSeconds) || item.GameSeconds<0 || item.RealSeconds<0 || item.PlannedCount<0 || item.ActualCount<0)
+                if (item == null || item.MatchId != run.MatchId || !Finite(item.GameSeconds) || !Finite(item.RealSeconds) || item.GameSeconds<0 || item.RealSeconds<0 || item.PlannedCount<0 || item.ActualCount<0 ||
+                    (item.HasOriginArea && (!Finite(item.OriginX) || !Finite(item.OriginY) || !Finite(item.OriginWidth) ||
+                        !Finite(item.OriginHeight) || item.OriginWidth < 0 || item.OriginHeight < 0)))
                     throw new ArgumentException("이벤트 ID/시간/수량이 잘못되었습니다.");
             foreach (var item in run.Samples)
                 if (item == null || !Finite(item.GameSeconds) || !Finite(item.RealSeconds) || item.GameSeconds<0 || item.RealSeconds<0 || !Finite(item.TerritoryArea) || !Finite(item.FrontlineLength))
@@ -42,14 +44,16 @@ namespace TeamHJD.Game.Editor
         private static string Number(double value) => value.ToString("R", CultureInfo.InvariantCulture);
         public static string EventsCsv(GameDebugRun run)
         {
-            var text = new StringBuilder("match_id,sequence,request_id,revision,source,kind,game_seconds,real_seconds,preset,enemy_type,spawn_point,entity_id,planned,actual,message,request_guid,cause_event_id,origin,spawn_source_id,source_generation,delivery,execution_counts_known\n");
+            var text = new StringBuilder("match_id,sequence,request_id,revision,source,kind,game_seconds,real_seconds,preset,enemy_type,spawn_point,entity_id,planned,actual,message,request_guid,cause_event_id,origin,spawn_source_id,source_generation,delivery,execution_counts_known,origin_x,origin_y,origin_width,origin_height\n");
             foreach (var item in run.Events)
                 text.AppendLine(string.Join(",", CsvCell(run.MatchId), item.Sequence, item.RequestId, item.Revision, item.Source, item.Kind,
                     Number(item.GameSeconds), Number(item.RealSeconds), CsvCell(item.SquadOrder), CsvCell(item.EnemyType), CsvCell(item.SpawnPointId),
                     CsvCell(item.EntityId), item.IsExecutionCountUnknown?"":item.PlannedCount.ToString(CultureInfo.InvariantCulture),
                     item.IsExecutionCountUnknown?"":item.ActualCount.ToString(CultureInfo.InvariantCulture), CsvCell(item.Message),
                     CsvCell(item.RequestGuid),CsvCell(item.CauseEventId),CsvCell(item.OriginKind),CsvCell(item.SpawnSourceId),
-                    CsvCell(item.SpawnSourceGeneration),CsvCell(item.DeliveryMode),item.IsExecutionCountUnknown?"false":"true"));
+                    CsvCell(item.SpawnSourceGeneration),CsvCell(item.DeliveryMode),item.IsExecutionCountUnknown?"false":"true",
+                    item.HasOriginArea ? Number(item.OriginX) : "", item.HasOriginArea ? Number(item.OriginY) : "",
+                    item.HasOriginArea ? Number(item.OriginWidth) : "", item.HasOriginArea ? Number(item.OriginHeight) : ""));
             return text.ToString();
         }
         public static string SamplesCsv(GameDebugRun run)

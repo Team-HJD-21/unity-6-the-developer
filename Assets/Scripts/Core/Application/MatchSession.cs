@@ -87,6 +87,15 @@ namespace TeamHJD.Game.Application
             return _regions;
         }
 
+        /// <summary>공간 갱신/Encounter 수집이 호출합니다. 현재 점유를 변경하지 않고 최근 변화만 읽습니다.</summary>
+        public RegionCaptureTrend ObserveRegionCapture(Guid epoch, double fieldSeconds)
+        {
+            ThrowIfDisposed();
+            if (_regions == null) return default;
+            return _regions.CaptureHistory.Observe(_regions.Snapshot, epoch, fieldSeconds);
+        }
+        public RegionCaptureTrend CaptureTrend => _regions?.CaptureHistory.Current ?? default;
+
         public RegionUpdateStatus UpdateRegionCapture(RegionGridSnapshot basis, IEnumerable<int> cells,
             RegionCaptureUpdateMode updateMode)
         {
@@ -95,11 +104,20 @@ namespace TeamHJD.Game.Application
             return _regions.TryApply(basis, cells, updateMode);
         }
 
-        public void ResetRegions(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells)
+        /// <summary>권한을 가진 Scene 조립부가 정적 구역을 엽니다. 확보 진행/점유 셀은 바꾸지 않습니다.</summary>
+        public RegionUpdateStatus UnlockRegionsThrough(RegionGridSnapshot basis, int zone)
         {
             ThrowIfDisposed();
             if (_regions == null) throw new InvalidOperationException("Regions are not initialized.");
-            _regions.Reset(definition, mode, initialCells);
+            return _regions.TryUnlockThrough(basis, zone);
+        }
+
+        public void ResetRegions(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells,
+            IEnumerable<int> unlockedRegionIds = null)
+        {
+            ThrowIfDisposed();
+            if (_regions == null) throw new InvalidOperationException("Regions are not initialized.");
+            _regions.Reset(definition, mode, initialCells, unlockedRegionIds);
         }
 
         internal MatchSession(
@@ -146,7 +164,7 @@ namespace TeamHJD.Game.Application
             State.Start();
         }
 
-        public MatchCompletion Complete(MatchOutcome outcome, long eventSequence)
+        public MatchCompletion Complete(MatchOutcome outcome, long eventSequence, MatchEndReason reason = MatchEndReason.None)
         {
             ThrowIfDisposed();
             if (eventSequence < 0) throw new ArgumentOutOfRangeException(nameof(eventSequence));
@@ -164,6 +182,8 @@ namespace TeamHJD.Game.Application
                 if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
                 if (result.MatchId != State.MatchId) throw new InvalidOperationException("Mode rules returned a result for another match.");
                 if (result.Outcome != outcome) throw new InvalidOperationException("Mode rules changed the requested final outcome.");
+                if (reason != MatchEndReason.None)
+                    result = new MatchResult(result.MatchId, result.Outcome, result.CompletedWave, result.CompletedAt, reason);
                 var rewardReceipt = _modeRules.CreateRewardReceipt(result);
                 if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
                 var completion = new MatchCompletion(result, rewardReceipt);

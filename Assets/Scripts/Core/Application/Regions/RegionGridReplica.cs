@@ -42,6 +42,11 @@ namespace TeamHJD.Game.Application
                     {
                         for (int i = 0; i < next.CapturedCells.Count; i++)
                             if (next.CapturedCells[i] != _snapshot.CapturedCells[i]) return RegionReplicationStatus.ConflictingRevision;
+                        if (next.UnlockedRegionIds.Count != _snapshot.UnlockedRegionIds.Count)
+                            return RegionReplicationStatus.ConflictingRevision;
+                        for (int i = 0; i < next.UnlockedRegionIds.Count; i++)
+                            if (next.UnlockedRegionIds[i] != _snapshot.UnlockedRegionIds[i])
+                                return RegionReplicationStatus.ConflictingRevision;
                         return RegionReplicationStatus.Unchanged;
                     }
                 }

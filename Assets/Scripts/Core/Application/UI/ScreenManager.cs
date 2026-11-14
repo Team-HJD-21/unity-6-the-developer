@@ -69,6 +69,12 @@ namespace TeamHJD.Game.Application
             if (Find(ScreenKind.MatchResult) == null) Open(ScreenKind.MatchResult, completion);
             return true;
         }
+        public ScreenState ShowRecovery()
+        {
+            ThrowIfUnavailable();
+            if (BoundMatchId.IsEmpty || LastCompletion != null) return null;
+            return Find(ScreenKind.MissionRecovery) ?? Open(ScreenKind.MissionRecovery);
+        }
         public bool Back() { ThrowIfUnavailable(); return Top != null && Top.CanGoBack && Close(Top.Id); }
         public bool Close(long id)
         {

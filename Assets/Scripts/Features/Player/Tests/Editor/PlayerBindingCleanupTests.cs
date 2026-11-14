@@ -1,5 +1,5 @@
 // Player 기능의 설정/해제 실패가 다른 기능·actor·Scene 자원 정리를 막지 않는지 검사합니다.
-// 순수 제어 흐름 검사와 실제 Initial_Stage 종료 검사를 구분합니다.
+// 순수 제어 흐름 검사와 실제 Stage_1 종료 검사를 구분합니다.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -84,8 +84,7 @@ public sealed class PlayerBindingCleanupTests
         var players = Enumerable.Range(0, playerCount).Select(i => new PlayerId("cleanup-player-" + i)).ToArray();
         var config = new MatchConfig(id, MatchMode.Cooperative, new StageId("test"), new DefinitionId("test"), "test", 1,
             players.Select(player => new PlayerLoadoutSnapshot(player, null)));
-        var state = new MatchState(id, MatchPhase.Preparing, players.Select(player => new PlayerState(player, 1, 1, true)),
-            new ControlUnitState(1, 1, 1, 1), new WaveState(0, 1, 0, 0), Array.Empty<TurretState>(), Array.Empty<EnemyState>(), Array.Empty<SectorState>());
+        var state = new MatchState(id, MatchPhase.Preparing);
         return new MatchSessionFactory().Create(config, state, new ModeRules());
     }
     [UnityTearDown]
@@ -157,8 +156,14 @@ public sealed class PlayerBindingCleanupTests
     [UnityTest]
     public IEnumerator ActualSceneStillReleasesTurretsRegionsAndActorsAfterPlayerCallbackFails()
     {
-        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity");
-        yield return new EnterPlayMode(); yield return null;
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();
+        float prepareDeadline = Time.realtimeSinceStartup + 10;
+        while ((Object.FindAnyObjectByType<PlayerActorIdentity>() == null ||
+            Object.FindAnyObjectByType<InitialStageNetworkBinding>()?.Matches?.IsGameplayRunning != true) &&
+            Time.realtimeSinceStartup < prepareDeadline) yield return null;
+        Assert.That(Object.FindAnyObjectByType<PlayerActorIdentity>(), Is.Not.Null, "실제 NGO 준비와 Player 생성 완료를 기다립니다.");
+        Assert.That(Object.FindAnyObjectByType<InitialStageNetworkBinding>().Matches.IsGameplayRunning, Is.True);
         AssertSceneFailureCleanup();
         int frames = 0;
         float deadline = Time.realtimeSinceStartup + 2f;

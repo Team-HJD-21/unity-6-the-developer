@@ -30,7 +30,7 @@ public sealed class PlayerTurretRecoveryPromptView : MonoBehaviour
             _baseRenderer = turret != null ? turret.GetComponent<SpriteRenderer>() : null;
         }
         if (_worldCamera == null) _worldCamera = Camera.main;
-        bool visible = turret != null && _worldCamera != null && !_hud.IsOpen;
+        bool visible = turret != null && _worldCamera != null && !_hud.IsOpen && _hud.AreCombatControlsVisible;
         gameObject.SetActive(visible);
         if (!visible) return;
         RefreshPosition();

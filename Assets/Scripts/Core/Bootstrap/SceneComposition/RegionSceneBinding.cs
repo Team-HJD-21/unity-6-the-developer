@@ -17,6 +17,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private FieldTurretController _controller;
         [SerializeField] private Transform _controlUnit;
         [SerializeField] private RegionPolicyMode _initialMode = RegionPolicyMode.Static;
+        [Tooltip("점유율 분모에서 제외할 월드 XY 사각 영역. Field 사건 진입로 등이며 적용에는 명시적 Grid 재설정이 필요합니다.")]
+        [SerializeField] private Bounds[] _captureExcludedAreas = Array.Empty<Bounds>();
         private MatchSession _session;
         private IRegionGridSource _source;
         private ITurretEntityIdResolver _entityIds;
@@ -66,7 +68,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 if (HasWriteAuthority)
                 {
-                    if (mode == RegionPolicyMode.Static) ApplyStatic(1);
+                    if (mode == RegionPolicyMode.Static) InitializeStaticCapture();
                     else RefreshDynamic(true);
                 }
                 _controller.SetRegionAccessPolicy(new RegionAccessPolicy(_source));
@@ -81,6 +83,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_source == null && _session == null) return;
             if (_session != null) _session.Disposing -= UnbindMatch;
             FieldTurretInstanceRegistry.SnapshotChanged -= OnTurretChanged;
+            ReleaseCombatSources();
+            _staticCapture.Clear();
             _session = null;
             _source = null;
             _lastInputs = null;
@@ -115,11 +119,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 evaluation = EvaluateDynamic(definition, null);
                 cells = evaluation.CellIndices;
             }
-            else if (mode == RegionPolicyMode.Static) cells = StaticCells(definition, 1);
+            else if (mode == RegionPolicyMode.Static) cells = InitialControlUnitCells(definition);
             else throw new ArgumentOutOfRangeException(nameof(mode));
             // 새 정의와 초기 결과를 한 번에 발행합니다. 빈 정적 중간 상태로 터렛을 모두 끄지 않습니다.
             _dynamicInitialCells = null;
-            _session.ResetRegions(definition, mode, cells);
+            _session.ResetRegions(definition, mode, cells, mode == RegionPolicyMode.Static ? new[] { 1 } : null);
+            ResetStaticCapture(definition);
             _definition = definition;
             _zoneCount = zoneCount;
             LastEvaluation = evaluation;
@@ -134,17 +139,24 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (!HasWriteAuthority || _source.Snapshot.Mode != RegionPolicyMode.Static || zone < 1 || zone > _zoneCount)
                 return false;
-            _session.UpdateRegionCapture(_source.Snapshot, StaticCells(_definition, zone), RegionCaptureUpdateMode.Union);
+            _session.UnlockRegionsThrough(_source.Snapshot, zone);
             return true;
         }
 
         /// <summary>체크포인트 실행기가 사전 검증한 Grid 정의·모드·점유 셀을 현재 Host에 적용합니다.</summary>
         /// <remarks>정적 첫 구역을 다시 해금하지 않습니다. 동적 점유는 실제 터렛 복원이 끝난 뒤 다시 평가합니다.</remarks>
-        public void RestoreCheckpoint(RegionGridDefinition definition, RegionPolicyMode mode, int[] capturedCells)
+        public void RestoreCheckpoint(RegionGridDefinition definition, RegionPolicyMode mode, int[] capturedCells, int[] unlockedRegions)
         {
             if (!HasWriteAuthority) throw new InvalidOperationException("Only the current authority can restore regions.");
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            _session.ResetRegions(definition, mode, capturedCells);
+            if (mode == RegionPolicyMode.Static)
+            {
+                var cells = new HashSet<int>(capturedCells);
+                foreach (int cell in InitialControlUnitCells(definition)) cells.Add(cell);
+                capturedCells = new List<int>(cells).ToArray();
+            }
+            _session.ResetRegions(definition, mode, capturedCells, unlockedRegions);
+            ResetStaticCapture(definition);
             _definition = definition;
             _zoneCount = 0;
             foreach (int id in definition.RegionIds) _zoneCount = Math.Max(_zoneCount, id);
@@ -154,27 +166,16 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _dirty = true;
         }
 
-        private void ApplyStatic(int zone)
-            => _session.UpdateRegionCapture(_source.Snapshot, StaticCells(_definition, zone), RegionCaptureUpdateMode.Replace);
-
         private RegionGridDefinition CreateDefinition(RegionPolicyMode mode, out int zoneCount)
         {
             if (_controller == null) throw new InvalidOperationException("Assign FieldTurretController to RegionSceneBinding.");
             zoneCount = 0;
             if (mode == RegionPolicyMode.Dynamic)
-                return FieldTurretRegionGridAdapter.CreateDefinition(_controller.CreateUnlockGridConfiguration());
+                return WithWalkableMask(FieldTurretRegionGridAdapter.CreateDefinition(_controller.CreateUnlockGridConfiguration()));
             if (_controlUnit == null) throw new InvalidOperationException("Static regions require a CU Transform.");
             FieldTurretUnlockZones zones = _controller.CreateUnlockZoneDefinition(_controlUnit.position);
             zoneCount = zones.ZoneCount;
-            return FieldTurretRegionGridAdapter.CreateDefinition(zones);
-        }
-
-        private static IReadOnlyList<int> StaticCells(RegionGridDefinition definition, int zone)
-        {
-            var cells = new List<int>();
-            for (int index = 0; index < definition.RegionIds.Count; index++)
-                if (definition.RegionIds[index] > 0 && definition.RegionIds[index] <= zone) cells.Add(index);
-            return cells.AsReadOnly();
+            return WithWalkableMask(FieldTurretRegionGridAdapter.CreateDefinition(zones));
         }
 
         private void OnTurretChanged(int instanceId) => _dirty = true;

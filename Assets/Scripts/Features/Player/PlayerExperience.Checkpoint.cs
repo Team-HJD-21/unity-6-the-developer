@@ -5,8 +5,11 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Presentation.Scene;
 
-public sealed partial class PlayerExperience : ICheckpointParticipant
+public sealed partial class PlayerExperience : IGrowthCheckpointParticipant
 {
+    string IGrowthCheckpointParticipant.PersistenceKey => "experience";
+    public event Action<GrowthSaveUrgency> GrowthChanged;
+
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ??
         throw new InvalidOperationException("Bind the Player identity before saving experience.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/experience";

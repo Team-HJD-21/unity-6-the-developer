@@ -48,6 +48,10 @@ namespace TeamHJD.Game.Infrastructure
             }
             writer.Write(runs.Count);
             foreach (var run in runs) { writer.Write(run.length); writer.Write(run.region); }
+            var mask = new byte[(grid.TotalCellCount + 7) / 8];
+            for (int i = 0; i < grid.TotalCellCount; i++)
+                if (definition.CapturableCells[i]) mask[i / 8] |= (byte)(1 << (i % 8));
+            writer.Write(mask);
         }
         internal static RegionGridDefinition ReadRegionDefinition(BinaryReader reader)
         {
@@ -63,7 +67,14 @@ namespace TeamHJD.Game.Infrastructure
                 for (int cell = 0; cell < length; cell++) membership[offset++] = region;
             }
             if (offset != membership.Length) throw new FormatException("Incomplete region membership.");
-            return new RegionGridDefinition(grid, membership);
+            int maskBytes = (grid.TotalCellCount + 7) / 8;
+            byte[] mask = reader.ReadBytes(maskBytes);
+            if (mask.Length != maskBytes) throw new EndOfStreamException();
+            int remainder = grid.TotalCellCount % 8;
+            if (remainder != 0 && (mask[maskBytes - 1] >> remainder) != 0) throw new FormatException("Eligible bits exceed the grid.");
+            var eligible = new bool[grid.TotalCellCount];
+            for (int i = 0; i < eligible.Length; i++) eligible[i] = (mask[i / 8] & (1 << (i % 8))) != 0;
+            return new RegionGridDefinition(grid, membership, eligible);
         }
     }
 }

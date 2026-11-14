@@ -157,6 +157,7 @@ namespace TeamHJD.Game.Bootstrap
             {
                 (Services.Platform as IPlatformRuntime)?.Pump();
                 Services.PumpNetwork();
+                RenderGameplaySoundtrack();
                 _screenPresenter?.Render();
             }
         }
@@ -182,6 +183,8 @@ namespace TeamHJD.Game.Bootstrap
 #endif
 
         public UiDisplaySettings DisplaySettings { get; private set; }
+        public GameAudioSettings AudioSettings { get; private set; }
+        public GameAudioManager Audio { get; private set; }
 
         public void Initialize(AppServices services)
         {
@@ -192,15 +195,28 @@ namespace TeamHJD.Game.Bootstrap
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
             DisplaySettings = new UiDisplaySettings();
+            AudioSettings = new GameAudioSettings();
+            if (UnityEngine.Application.isPlaying)
+            {
+                var audioConfig = Resources.Load<GameAudioConfiguration>("Core/GameAudioConfiguration");
+                if (audioConfig != null)
+                {
+                    var audioObject = new GameObject("Game Audio"); audioObject.transform.SetParent(transform, false);
+                    Audio = audioObject.AddComponent<GameAudioManager>(); Audio.Initialize(audioConfig, AudioSettings);
+                }
+            }
             _spaceshipTravel = new SpaceshipTravelService(this);
             if (Services.Platform is IPlatformRuntime) InitializePlatform();
             if (UnityEngine.Application.isPlaying)
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
                     NavigateFromScreenAsync, GetSceneTravelRestriction,
                     () => GameFlow?.IsTransitioning == true, DisplaySettings,
-                    () => GameFlow == null ? !CurrentMatchId.IsEmpty :
+                    () => GameFlow == null ? !CurrentMatchId.IsEmpty || LastMissionRecoveryError != null :
                         GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted,
-                    Services.Alerts);
+                    Services.Alerts, AudioSettings,
+                    () => LastMissionRecoveryError, RetryPendingMissionRecoveryAsync,
+                    () => _activeMission?.Recovery,
+                    () => GameFlow?.Routes.MainMenuScene ?? "Assets/Scenes/Bootstrap/Startup.unity", UseMissionSafetyAsync);
         }
 
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
@@ -343,6 +359,7 @@ namespace TeamHJD.Game.Bootstrap
             _completionSubscription?.Dispose();
             _completionSubscription = null;
             var endingMatch = _currentMatch;
+            Exception growthSaveError = FlushMissionGrowthBeforeEnd();
             _currentMatch = null;
             try
             {
@@ -354,6 +371,7 @@ namespace TeamHJD.Game.Bootstrap
                 PublishBattlefieldSnapshot(null);
 #endif
             }
+            if (growthSaveError != null) throw new InvalidOperationException("Mission growth could not be flushed before shutdown.", growthSaveError);
         }
 
         private void OnApplicationQuit() => DisposeSafely();
@@ -378,6 +396,8 @@ namespace TeamHJD.Game.Bootstrap
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             _composedSceneHandles.Clear();
             _compositionFailures.Clear();
+            if (Audio != null) Audio.Shutdown();
+            Audio = null;
             AppServices services = Services;
             if (services?.NetworkMatches != null)
             {
@@ -462,23 +482,40 @@ namespace TeamHJD.Game.Bootstrap
         }
 
         // 기존 공용 메뉴/결과 버튼도 같은 App 흐름으로 전달해 Scene과 표시 위치가 어긋나지 않게 합니다.
-        private Task NavigateFromScreenAsync(string scenePath)
+        private async Task NavigateFromScreenAsync(string scenePath)
         {
             if (GameFlow == null)
-                return ReplaceGameplaySceneAsync(scenePath);
+            {
+                if (scenePath == AppScreenPresenter.HubScene) await ReturnToHubFromScreenAsync();
+                else
+                {
+                    if (scenePath == AppScreenPresenter.StageScene) PrepareMissionEntry(MissionEntryKind.NewMission);
+                    await ReplaceGameplaySceneAsync(scenePath);
+                    if (scenePath == "Assets/Scenes/Bootstrap/Startup.unity") CompleteMissionRecovery();
+                }
+                return;
+            }
             if (scenePath == GameFlow.Routes.SpaceshipScene &&
                 (GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted))
-                return GameFlow.ReturnToSpaceshipAsync();
+            { await ReturnToHubFromScreenAsync(); return; }
             if (scenePath == GameFlow.Routes.MainMenuScene)
-                return GameFlow.OpenMainMenuAsync();
+            { await GameFlow.OpenMainMenuAsync(); CompleteMissionRecovery(); return; }
             if (scenePath == AppScreenPresenter.StageScene)
             {
                 if (GameFlow.Phase == GameFlowPhase.Mission)
-                    return GameFlow.RestartMissionAsync();
+                { await GameFlow.RestartMissionAsync(); return; }
                 if (GameFlow.Phase == GameFlowPhase.Spaceship)
-                    return GameFlow.LaunchMissionAsync(scenePath);
+                { await GameFlow.LaunchMissionAsync(scenePath); return; }
             }
             throw new InvalidOperationException("Use the configured game-flow action for this screen.");
+        }
+
+        private async Task ReturnToHubFromScreenAsync()
+        {
+            if (GameFlow != null) await GameFlow.ReturnToSpaceshipAsync();
+            else await ReplaceGameplaySceneAsync(AppScreenPresenter.HubScene);
+            // 허브 도착에 성공한 명시 귀환만 이전 복귀 오류를 닫습니다. 실패한 이동은 재시도 의도를 보존합니다.
+            CompleteMissionRecovery();
         }
 
         private async void InitializePlatform()

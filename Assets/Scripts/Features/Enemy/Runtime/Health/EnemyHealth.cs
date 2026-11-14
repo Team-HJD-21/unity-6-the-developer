@@ -23,6 +23,9 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
     /// </summary>
     public event Action<EnemyHealth> Died;
 
+    /// <summary>권한·공격 규칙을 통과해 실제 줄어든 HP입니다. 사망/Despawn보다 먼저 전달합니다.</summary>
+    public event Action<EnemyHealth, int, AttackSourceType> DamageApplied;
+
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
 
@@ -72,11 +75,16 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
         if (damage <= 0 || !CanBeAttackedBy(source))
             return false;
 
-        currentHealth -= damage;
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        int actual = Math.Min(damage, currentHealth);
+        currentHealth -= actual;
+        bool died = currentHealth == 0;
+        // 피해 관측자가 재진입해도 HP0 대상은 다시 공격/회복되지 않습니다.
+        if (died) _isDead = true;
+        if (DamageApplied != null)
+            foreach (Action<EnemyHealth, int, AttackSourceType> observer in DamageApplied.GetInvocationList())
+                try { observer(this, actual, source); }
+                catch (Exception error) { Debug.LogException(error, this); }
+        if (died) Die();
 
         return true;
     }

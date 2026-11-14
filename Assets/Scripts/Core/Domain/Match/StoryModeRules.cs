@@ -1,5 +1,5 @@
 // 스토리 Match의 실제 CU 파괴를 패배로 판단하고 불변 결과를 만듭니다.
-// 보스 게이트·승리/저장·보상 수치는 미정이며 임의 정책을 추가하지 않습니다.
+// 명시적으로 확정된 승패의 결과/보상 형식을 제공하며 보스 사망을 자동 승리로 판정하지 않습니다.
 using System;
 
 namespace TeamHJD.Game.Domain
@@ -19,7 +19,7 @@ namespace TeamHJD.Game.Domain
         public MatchResult CreateResult(MatchState state, MatchOutcome outcome)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
-            return new MatchResult(state.MatchId, outcome, state.Wave.CurrentIndex, _utcNow());
+            return new MatchResult(state.MatchId, outcome, 0, _utcNow());
         }
         public RewardReceipt CreateRewardReceipt(MatchResult result)
         {

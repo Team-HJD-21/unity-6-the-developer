@@ -32,7 +32,18 @@ namespace TeamHJD.Game.FieldTurrets
         private IRegionAccessPolicy _regionAccess;
         private int _unlockedZoneCount;
         public FieldTurretUnlockZones UnlockZones => _unlockZones;
-        public int UnlockedZoneCount => _unlockedZoneCount;
+        /// <summary>Core 정책이 연결된 정적 Match는 확정 해금을 읽습니다. 독립 Feature 시험은 기존 값을 사용합니다.</summary>
+        public int UnlockedZoneCount
+        {
+            get
+            {
+                var snapshot = _regionAccess?.Regions.Snapshot;
+                if (snapshot?.Mode != RegionPolicyMode.Static) return _unlockedZoneCount;
+                int highest = 0;
+                foreach (int id in snapshot.UnlockedRegionIds) highest = Math.Max(highest, id);
+                return highest;
+            }
+        }
         private FieldTurretPowerBudget _budget;
         private bool _requiresMatchScope;
         private MatchScope _matchScope;

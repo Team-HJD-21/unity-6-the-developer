@@ -2,7 +2,7 @@
 
 기준: 2026-10-15 작업 브랜치. [배치/증거/잔여](../../99_archive/planning-links/2026-10-15-core-sprint-implementation.md) · [공통 규약](core-api-usage.md)
 
-**11/12 Core 전용 보강:** Dynamic은 CU 위치를 노드로 포함하고 CU 1셀 기본 시작 영역에서 4방향으로 연결된 투영 셀만 점유한다. 아래 새 API는 Core 내부 구현이며 Enemy 일반 스폰 차단·정적 60초 확보/상실·실제 보스/협동 구조를 구현했다는 뜻은 아니다. 그 연결은 [확정 배치](../../01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md)의 승인 범위를 따른다.
+**11/14 실제 연결:** 정적 해금과 전투 확보를 분리하고 유효 지형 마스크·확보/상실·Region 그룹 스폰 제외·저장/복제를 연결했다. [정적 지역 확보 API](../02_match/static-region-capture.md)에서 규칙·진입점·검증 범위를 확인한다. 기존 Dynamic CU 노드/연결 셀 규칙은 유지한다. 전체 성장/월드 복원·보스·원격 협동 인수는 별도 진행이다.
 
 ## 지역 데이터와 실제 연결
 
@@ -59,11 +59,11 @@ if (!binding.TrySetDynamicStartCells(new[] { first, neighbor }, true, out string
 
 Game Debugger의 **Battlefield → 지역 Grid → 동적 시작 영역 · Host 설정**에서 X/Y 목록을 편집하고 명시 Reset으로 적용한다. 빈 목록은 CU 1셀 기본값이다. 초안 편집 중에는 실제 점유를 바꾸지 않는다. Client는 Host가 보낸 결과만 표시한다. 정책/Grid Reset은 override를 지우고 새 정의의 CU 기본 셀에서 다시 시작하며, `TrySetDynamicStartCells`는 해당 설정으로 새 Grid 세대를 만든다.
 
-설정은 `world/region-start` v1 writer로 저장하며 기존 `world/spatial` v1 형식은 바꾸지 않는다. 시작 설정→공간 정의→실제 actor 순서로 복원한 뒤 `InitialStageCompositionRoot.FinishCheckpointRestore`가 `RefreshDynamicAfterRestore()`를 호출해 최종 점유를 재계산한다. 이 공개 함수는 복원 조립용이며 일반 Feature가 매 프레임 호출하는 API가 아니다.
+설정과 정적 확보 진행은 `world/region-start` v2, 공간 마스크·해금·점유는 `world/spatial` v2로 저장한다. v1 정적 해금 셀은 전투 확보로 재해석하지 않으며 이관 조건은 정적 확보 API를 따른다. 시작 설정→공간 정의→실제 actor 순서로 복원한 뒤 `InitialStageCompositionRoot.FinishCheckpointRestore`가 `RefreshDynamicAfterRestore()`를 호출해 최종 점유를 재계산한다. 이 공개 함수는 복원 조립용이며 일반 Feature가 매 프레임 호출하는 API가 아니다.
 
 새 Scene 조립은 `world/region-start`를 필수 저장 참여자로 요구한다. 해당 section이 없는 옛 checkpoint는 상태 적용 전에 거부하며 조용히 기본값으로 대체하지 않는다. 실제 Weather writer 등 다른 필수 원본이 없다면 전체 저장은 여전히 차단된다. 시작 설정 writer 자체의 왕복 확인을 전체 전장 Save 완료로 표시하지 않는다.
 
-GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revision은 같은 Grid 안의 변경 순서다. MatchDescriptorId는 같은 Match ID라도 다른 준비 시도와 분리한다. Client 모델은 이전 준비·이전 Grid 세대·과거 revision 및 동일 revision의 상충 결과를 거부한다. 실제 NGO/UTP의 초기·변경·Reset·종료/재시작 검사와 Windows 두 실행 파일의 Initial_Stage 지역 수신·정적/동적 점령·회수·재시작 검사를 통과했다. 원격 Feature 명령과 전체 협동 전투 완료를 뜻하지 않는다.
+GridId는 Reset 동등성, GridGeneration은 복제에서의 Reset 순서, revision은 같은 Grid 안의 변경 순서다. MatchDescriptorId는 같은 Match ID라도 다른 준비 시도와 분리한다. Client 모델은 이전 준비·이전 Grid 세대·과거 revision 및 동일 revision의 상충 결과를 거부한다. 이전 wire 형식에서는 NGO/UTP 및 Windows 두 실행 파일의 Initial_Stage 초기·변경·Reset·종료/재시작을 검사했다. 이번 마스크/해금 분리 형식은 wire 자동 검사와 실제 Host Stage1 연결까지 확인했으며, 새 형식의 두 실행 파일 인수나 전체 협동 전투 완료를 뜻하지 않는다.
 
 지역은 전체 Snapshot으로 전송한다. 소속은 RLE, 점령은 bitset이며 Client에서 삼각형을 복원하지 않는다. 큐에 아직 보내지 않은 전체 상태는 최신 상태로 합친다. 미접수 전송은 다음 App Pump에서 재시도하며 구식 변경량을 무제한 쌓지 않는다. 이미 전송 중인 메시지는 바꾸지 않는다. 이 처리와 달리 준비/시작/종료는 순서를 유지하고 합치지 않는다.
 
@@ -85,7 +85,7 @@ Battlefield의 배치 입력과 동적 지역의 활성 터렛 입력은 같은 
 
 ## 정식 Encounter 요청
 
-`EncounterRequestService`는 양현석의 조율, `IEncounterExecutor` 구현은 조수빈의 실제 계획/생성 경계다. 기존 `EnemyNetworkTestLauncher`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.
+`EncounterRequestService`는 양현석의 조율, `IEncounterExecutor` 구현은 조수빈의 실제 계획/생성 경계다. 기존 `EncounterSceneBinding`의 게임 시작·UI·Scene·Debugger 메서드는 이 경계로 변환한다.
 
 ```csharp
 var context = new MatchRequestContext(matchId, requestId, issuerId);

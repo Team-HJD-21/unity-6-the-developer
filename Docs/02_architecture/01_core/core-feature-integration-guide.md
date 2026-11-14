@@ -1,8 +1,8 @@
 # Core와 실제 Feature 연결 안내
 
-**현재 수동 확인·미구현·전달 기준:** [최종 로컬 안내](../../01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md). 실제 낮밤·Steam SDK·Host 포털/페이드와 HUD는 후속 구현으로 들어왔다. 아래 계약/초기 검증 기록의 시점을 현재 미구현으로 오해하지 않는다.
+**현재 읽는 기준:** [Core 실행 지도](core-runtime-map.md)와 [11/14 준비 상태·남은 접합](../../01_planning/02_implementation-records/2026/11/2026-11-14-encounter-stage1-readiness.md)을 먼저 본다. 아래에는11/5의 계약/검증 이력이 포함되어 있다. 이전 [로컬 안내](../../01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md)를 현재 구현 전체의 완료/미완 목록으로 사용하지 않는다.
 
-> **최신 상태:** 누락 보완과 구조 정리, 검증·외부 의존은 [최종 정리](../../01_planning/02_implementation-records/2026/11/2026-11-05-core-completion-results.md)를 먼저 확인합니다. 실제 Weather writer/제품 Player 통합·PL 인수와 Core 자동 검증은 구분합니다.
+> **11/14 범위:** 승패·보스·결과는 명시 연결 API까지만 유지한다. 자동 최종 진입/승리·결과 저장은 제외했고 실제 보스전/제품 화면은 미완이다. 실제 Weather writer·원격 Player와 Core 자체 검증을 구분한다. [11/5 정리](../../01_planning/02_implementation-records/2026/11/2026-11-05-core-completion-results.md)는 당시 기록이다.
 
 기준: 2026-11-05, `main 1a03e9a91` 이후 `codex/core-feature-integration-20261105`. 이 문서는 해당 작업 브랜치의 실제 코드를 설명한다. 아직 PR·배포한 상태는 아니다. 이전 HOLD 기록은 당시 보관 기록으로 유지한다.
 
@@ -12,14 +12,14 @@
 
 | 기능 | 실제 원본 | Core가 연결하는 부분 |
 | --- | --- | --- |
-| Player 이동·행동 | `PlayerControlState`, Movement, Skill, Weapon | 로컬 화면 입력 잠금과 생존 잠금을 분리. 필드 정지 중 우주선 이동은 허용하고 공격·회복·필드 스킬은 정지 |
+| Player 이동·행동 | `PlayerControlState`, Movement, Skill, Weapon | 로컬 화면 입력 잠금과 생존 잠금을 분리. 현재 전투 중 임시 허브 자유 출입은 제공하지 않으며 출격·명시 귀환은 GameFlow를 사용 |
 | 터렛·CU | `FieldTurretController`, Base, 종류별 무기, `ControlUnitHealth` | Host 명령 검증·Match 수명·공용 시간·저장. 전력·과열·수리·자동 큐 규칙은 Feature 원본 유지 |
-| 적·스폰 | `EnemySpawnExecutor`, `EnemyNetworkController`, `EncounterRuntime` | 현재 Match/생성기 소유권과 시간 주입, 최신 Grid·전선·환경·origin 전달, 종료 정리 |
+| 적·스폰 | `EnemySpawnExecutor`, `EnemyNetworkController`, `EncounterPipeline` | 현재 Match/생성기 소유권과 시간 주입, 최신 Grid·전선·환경·origin 전달, 종료 정리 |
 | 날씨 전환 | `CountTick`, `WeatherManager` | 공용 예약과 환경 발행. **날씨 선택/Random 교체·예고 큐·Weather writer는 김진태 담당** |
 | UI와 Scene | 기존 View/Asset, `ScreenManager`, `SceneFlowController` | 로컬 메뉴, 결과/로딩, App 게임 이동. Match 임시 정지와 Scene 교체를 구분 |
 | 저장 | 각 Feature의 `.Checkpoint.cs` | 같은 프레임 캡처, binary IO, 준비→적용→참조 연결, 실패 복구, 필수 writer 누락 검사 |
 
-`MatchState`의 기초 Player/CU 수치가 실제 Feature HP를 대체하지 않는다. HUD·피해·저장은 해당 Feature 원본을 읽는다. Player 사망은 [11/12 확정 배치](../../01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md)의 협동 구조·공용 예산·안전장치 정책을 따른다. 기존 상호작용 입력 3초/HP 30%와 팀 공용 60초는 승인한 시험값이다. Player 구조 성공 API와 실제 상태/입력/저장 연결은 아직 구현·통보·검증 대상이며 기존 코드가 이미 제공하는 기능으로 해석하지 않는다.
+`MatchState`의 기초 Player/CU 수치가 실제 Feature HP를 대체하지 않는다. HUD·피해·저장은 해당 Feature 원본을 읽는다. Player 사망/구조는 [11/12 배치](../../01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md)의 공용 예산·안전장치와 연결했다. 입력 유지3초/HP30%·팀 공용60초는 시험값이다. `PlayerInfo.Rescue`가 `IPlayerRescueActor`의 실제 상태/복귀와 `IPlayerRescueService`의 조회·유지 요청을 연결하며 현 입력은 F다. 1인 실제 사망/재시도 경로는 검수했지만 실제 두 참가자의 원격 입력·권위 actor가 준비된 것은 아니다. 별도 최종 사망/결과 화면을 제작했다는 뜻도 아니다.
 
 ## 생성부터 종료까지
 

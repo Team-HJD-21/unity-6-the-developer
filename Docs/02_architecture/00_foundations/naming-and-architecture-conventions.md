@@ -34,13 +34,13 @@
 
 | 이름 | 언제 쓰는가 | 예시 | 피해야 할 용도 |
 | --- | --- | --- | --- |
-| `State` | 변경되는 현재 상태 모델 | `MatchState`, `PlayerState` | ScriptableObject 원본 데이터 |
-| `Definition` | 밸런스/콘텐츠 원본 정의 | `EnemyDefinition`, `WaveDefinition` | 런타임 mutable 값 |
+| `State` | 변경되는 현재 상태 모델 | `MatchState` | ScriptableObject 원본 데이터 |
+| `Definition` | 밸런스/콘텐츠 원본 정의 | `EnemyDefinition` | 런타임 mutable 값 |
 | `Config` | 시작 후 불변인 실행 설정 | `MatchConfig`, `LoadoutConfig` | 사용자 저장 원본 |
 | `Profile` | 계정 단위 진행도/소유 데이터 | `PlayerProfile` | 한 판의 HP/웨이브 |
-| `Snapshot` | 특정 시점의 직렬화 가능한 복사본 | `MatchSnapshot`, `ProfileSnapshot` | 실시간 mutable 객체 |
-| `Command` | 권한 시스템에 요청하는 의도 | `StartWaveCommand`, `FireCommand` | UI 이벤트/결과 통지 |
-| `Event` | 이미 발생한 사실 | `WaveStarted`, `PlayerHealthChanged` | 상태를 바꾸라는 요청 |
+| `Snapshot` | 특정 시점의 읽기 복사본 | `MatchSnapshot`, `ProfileSnapshot` | 실시간 mutable 객체 |
+| `Command` | 권한 시스템에 요청하는 의도 | `TurretCommandRequest` | UI 이벤트/결과 통지 |
+| `Event` | 이미 발생한 사실 | `MatchCompleted` | 상태를 바꾸라는 요청 |
 | `Result` | Use Case/매치의 확정 결과 | `MatchResult`, `RewardReceipt` | 현재 상태 모델 |
 | `System` | 반복 가능한 게임 규칙 계산 | `WaveSystem`, `RewardSystem` | 씬/UI/SDK 조립 |
 | `Service` | 외부 또는 앱 수준 기능 | `ProfileService`, `LobbyService` | 모든 책임을 가진 Manager |

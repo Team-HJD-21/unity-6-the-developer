@@ -34,6 +34,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
         public readonly string EnemyType;
         public readonly string SpawnPointId;
         public readonly string EntityId;
+        public readonly EnemyHealth Health;
 
         public TrackedEnemy(
             NetworkObject networkObject,
@@ -49,6 +50,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
             EnemyType = enemyType;
             SpawnPointId = spawnPointId;
             EntityId = networkObject.GetComponent<SceneEntityIdentity>().EntityId.Value;
+            Health = networkObject.GetComponent<EnemyHealth>();
         }
     }
 
@@ -61,13 +63,14 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     public event Action<EnemyLifecycleObservation> LifecycleObserved;
 
     /// <summary>
-    /// 이 실행기가 추적하는 해당 Match의 적 수를 반환한다. 별도 소환 경로는 포함하지 않는다.
+    /// 이 실행기가 추적하는 해당 Match의 적 수를 반환한다. 소환 적도 같은 생성 기록에 포함한다.
     /// </summary>
     public int CountForMatch(MatchId matchId)
     {
         int count = 0;
         foreach (TrackedEnemy enemy in _spawnedEnemies.Values)
-            if (enemy.Context != null && enemy.Context.MatchId == matchId)
+            if (enemy.Context != null && enemy.Context.MatchId == matchId &&
+                (enemy.Health == null || enemy.Health.CurrentHealth > 0))
                 count++;
         return count;
     }
@@ -135,6 +138,8 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                 staleIds.Add(enemy.Key);
                 continue;
             }
+            // 사망 연출 객체는 저장/제거까지 추적하지만 살아있는 적 밀도에는 넣지 않습니다.
+            if (enemy.Value.Health != null && enemy.Value.Health.CurrentHealth <= 0) continue;
 
             Vector3 position = networkObject.transform.position;
             positions.Add(new EnemySpatialInput(
@@ -186,6 +191,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
         foreach (TrackedEnemy enemy in _spawnedEnemies.Values)
         {
             Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Executor shutdown");
+            if (enemy.Health != null) enemy.Health.DamageApplied -= OnEnemyDamaged;
             if (enemy.NetworkController != null)
             {
                 enemy.NetworkController.Despawned -= OnEnemyDespawned;
@@ -210,7 +216,10 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     private void OnEnemyDied(ulong networkObjectId)
     {
         if (_spawnedEnemies.TryGetValue(networkObjectId, out TrackedEnemy enemy))
+        {
+            ReportConfirmedDeath(enemy);
             Observe(enemy, GameDiagnosticKind.EnemyDied, "EnemyHealth confirmed death");
+        }
     }
 
     /// <summary>
@@ -223,6 +232,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
             return;
 
         _spawnedEnemies.Remove(networkObjectId);
+        if (enemy.Health != null) enemy.Health.DamageApplied -= OnEnemyDamaged;
         Observe(enemy, GameDiagnosticKind.EnemyRemoved, "Despawn / untracked (not a kill)");
         if (enemy.NetworkController != null)
         {
@@ -252,7 +262,8 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     /// 제작 지점 또는 명시 영역에서 명령을 실행하고 실제 생성·실패 결과를 관측자에게 전달한다.
     /// </summary>
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
-        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null, BattlefieldSpatialSnapshot battlefield = null)
+        Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null, BattlefieldSpatialSnapshot battlefield = null,
+        Func<RegionGridSnapshot> currentRegion = null, double captureMargin = 0)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || !CanSimulateField || spawnInstruction.Enemies == null ||
@@ -312,6 +323,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
 
         if (_spawnRandom != null && !_spawnRandom.IsAvailable)
             return Fail("The Match random binding is no longer available.", observeFailure);
+        RegionGridSnapshot checkedRegion = null;
         int spawnedCount = 0;
         for (int entryIndex = 0; entryIndex < spawnInstruction.Enemies.Count; entryIndex++)
         {
@@ -325,6 +337,19 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                     Fail("Match/source cancelled before the next enemy.", observeFailure);
                     break;
                 }
+                if (currentRegion != null && context != null)
+                {
+                    var latest = currentRegion();
+                    if (latest == null || latest.MatchId != context.MatchId)
+                    { Fail("Current Match region is unavailable before the next enemy.", observeFailure); break; }
+                    if (!ReferenceEquals(latest, checkedRegion))
+                    {
+                        _spawnPointList.ApplyRegionSnapshot(latest, captureMargin);
+                        checkedRegion = latest;
+                    }
+                }
+                if (!world && !spawnPoint.CanSpawnEnemies)
+                { Fail(spawnPoint.SpawnExclusionReason, observeFailure); break; }
                 Vector3 spawnPosition;
                 if (world)
                 {
@@ -336,19 +361,14 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                 }
                 else
                 {
-                    var sample = _spawnRandom?.InsideUnitCircle();
-                    Vector2 offset = (sample.HasValue ? new Vector2((float)sample.Value.X, (float)sample.Value.Y) : Random.insideUnitCircle) * spawnPoint.SpawnRadius;
-                    spawnPosition = spawnPoint.Position + new Vector3(offset.x, offset.y, 0f);
+                    if (!EnemySpawnPlacementPolicy.TryResolvePoint(spawnPoint, _spawnRandom, battlefield,
+                            out spawnPosition, out string reason))
+                    {
+                        Fail(reason, observeFailure);
+                        continue;
+                    }
                 }
 
-                GameObject spawnedMonster = Instantiate(
-                    enemy.Prefab,
-                    spawnPosition,
-                    world ? Quaternion.identity : spawnPoint.Rotation);
-
-                if (spawnedMonster.scene != gameObject.scene)
-                    UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(spawnedMonster, gameObject.scene);
-                EnemyController controller = spawnedMonster.GetComponent<EnemyController>();
                 EnemySquad memberSquad;
                 if (enemy.SquadMode == EnemySquadMode.Individual)
                 {
@@ -363,43 +383,9 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                     createdSquads.Add(memberSquad);
                 }
 
-                // 공동 타깃은 공유하고 공격 인원 포함 여부는 몬스터별 Definition을 따른다.
-                if (!controller.JoinSquad(memberSquad, enemy.IsIncludedInAttackerLimit))
-                {
-                    Debug.LogError($"Failed to register enemy in squad: {enemy.EnemyId}");
-                    Fail("Failed to register squad member: " + enemy.EnemyId, observeFailure);
-                    Destroy(spawnedMonster);
+                if (!TrySpawnActor(enemy, spawnPosition, world ? Quaternion.identity : spawnPoint.Rotation,
+                        memberSquad, context, spawnInstruction.SpawnPointId, observeSpawn, observeFailure))
                     continue;
-                }
-
-                // 생성된 적을 NGO에 등록해 클라이언트에도 나타나게 한다.
-                NetworkObject networkObject = spawnedMonster.GetComponent<NetworkObject>();
-                EnemyNetworkController networkController =
-                    spawnedMonster.GetComponent<EnemyNetworkController>();
-                CheckpointActorFactory.EnsureIdentity(spawnedMonster);
-                networkController.CheckpointEnemyType = enemy.EnemyId;
-                networkController.SetSimulationMatch(context?.MatchId ?? _fieldTime?.Snapshot.MatchId ?? default, NetworkObjectId);
-                networkObject.Spawn();
-                _spawnedEnemies[networkObject.NetworkObjectId] =
-                    new TrackedEnemy(networkObject, controller, networkController, memberSquad,
-                        context, enemy.EnemyId, spawnInstruction.SpawnPointId);
-                networkController.Despawned += OnEnemyDespawned;
-                networkController.DeathConfirmed += OnEnemyDied;
-                if (observeSpawn != null)
-                    try
-                    {
-                        observeSpawn(new SpawnDecisionSnapshot.Actual(spawnInstruction.SpawnPointId, enemy.EnemyId,
-                            networkObject.GetComponent<SceneEntityIdentity>().EntityId.Value,
-                            new BattlefieldPoint(networkObject.transform.position.x,
-                                networkObject.transform.position.y)));
-                    }
-                    catch (Exception exception)
-                    {
-                        Debug.LogException(exception, this);
-                    }
-
-                Observe(_spawnedEnemies[networkObject.NetworkObjectId], GameDiagnosticKind.EnemySpawned,
-                    "Network spawn succeeded");
                 spawnedCount++;
             }
         }

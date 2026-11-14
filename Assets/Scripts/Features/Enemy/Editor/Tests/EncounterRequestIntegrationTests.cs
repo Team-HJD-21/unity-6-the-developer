@@ -25,7 +25,7 @@ public sealed class EncounterRequestIntegrationTests
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity", OpenSceneMode.Single);
         yield return new EnterPlayMode();
-        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        var launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
         float deadline = Time.realtimeSinceStartup + 20;
         while (!launcher.RecentDiagnostics.Any(item => item.Kind == GameDiagnosticKind.RequestCompleted) &&
             Time.realtimeSinceStartup < deadline) yield return null;
