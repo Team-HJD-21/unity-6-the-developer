@@ -51,11 +51,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private IMatchTimeOfDaySource _timeOfDaySource;
         private IDisposable _environmentScope;
         private IMatchEnvironmentSource _environmentReplica;
+        private IMatchTime _fieldTimeReplica;
         public MatchCoordinator MatchCoordinator => _coordinator;
         /// <summary>현재 Match의 읽기 시계입니다. Client는 첫 권위 anchor를 받기 전 null입니다.</summary>
         public IMatchTime MatchTime => _matchTime?.Clock ?? _timeReplica;
         /// <summary>기존 Field의 냉각·이동·생산이 읽는 권위 시각입니다. Player/낮밤의 공용 MatchTime과 구분합니다.</summary>
-        public IMatchTime FieldTime => _matchTime?.FieldClock;
+        public IMatchTime FieldTime => _matchTime?.FieldClock ?? _fieldTimeReplica;
         public RegionCaptureTrend CaptureTrend => _matchSession?.CaptureTrend ?? default;
         /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
         public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
@@ -409,7 +410,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;
             _coordinator = null;
-            _matchTime = null; _timeReplica = null;
+            _matchTime = null; _timeReplica = null; _fieldTimeReplica = null;
             _fieldScope = null; _replicaField = null;
             _environmentScope = null; _environmentReplica = null;
             _randomConsumers = null;

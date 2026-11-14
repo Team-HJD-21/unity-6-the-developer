@@ -15,6 +15,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly NetworkMatchDescriptor _descriptor;
         private readonly InitialStageCompositionRoot _scene;
         private readonly MatchTimeReplica _replica;
+        private readonly MatchTimeReplica _fieldReplica;
         private NetworkMatchAnchor _anchor;
         private bool _published, _disposed;
         private long _presenceRevision = -1;
@@ -24,25 +25,34 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _manager = manager != null ? manager : throw new ArgumentNullException(nameof(manager));
             _descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
             _scene = scene != null ? scene : throw new ArgumentNullException(nameof(scene)); _anchor = authorityAnchor;
-            if (!manager.IsServer) _replica = new MatchTimeReplica(descriptor.Config.MatchId, descriptor.DescriptorId, new NgoTimestampSource(manager));
+            if (!manager.IsServer)
+            {
+                var timestamp = new NgoTimestampSource(manager);
+                _replica = new MatchTimeReplica(descriptor.Config.MatchId, descriptor.DescriptorId, timestamp);
+                _fieldReplica = new MatchTimeReplica(descriptor.Config.MatchId, descriptor.DescriptorId, timestamp);
+            }
         }
         public void Pump()
         {
             if (_disposed) return;
             if (_manager == null || !_manager.IsListening || _manager.ShutdownInProgress)
-            { _replica?.Pump(false); return; }
+            { _replica?.Pump(false); _fieldReplica?.Pump(false); return; }
             if (_manager.IsServer)
             {
                 var time = _scene.MatchTime;
-                if (_anchor == null || !_anchor.IsSpawned || time == null) return;
+                var field = _scene.FieldTime;
+                if (_anchor == null || !_anchor.IsSpawned || time == null || field == null) return;
                 var presence = _scene.MatchPresence;
-                if (_anchor.TimeState.Revision != time.Snapshot.Revision || _anchor.TimeState.PresenceRevision != (presence?.Revision ?? 0))
+                if (_anchor.TimeState.MatchId.IsEmpty || _anchor.FieldTimeState.MatchId.IsEmpty ||
+                    _anchor.TimeState.Revision != time.Snapshot.Revision ||
+                    _anchor.FieldTimeState.Revision != field.Snapshot.Revision ||
+                    _anchor.TimeState.PresenceRevision != (presence?.Revision ?? 0))
                 {
                     byte mask = 0;
                     for (int i = 0; i < _descriptor.Config.Players.Count; i++)
                         if (presence != null && presence.Locations.TryGetValue(_descriptor.Config.Players[i].PlayerId, out var location) &&
                             location == TeamHJD.Game.Domain.MatchPlayerLocation.Spaceship) mask |= (byte)(1 << i);
-                    _anchor.ApplyAuthorityTime(_descriptor, time.Snapshot, presence?.Revision ?? 0, mask);
+                    _anchor.ApplyAuthorityTime(_descriptor, time.Snapshot, field.Snapshot, presence?.Revision ?? 0, mask);
                 }
                 return;
             }
@@ -51,16 +61,22 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     .FirstOrDefault(item => item != null && item.State.DescriptorId.ToString() == _descriptor.DescriptorId.ToString("N") &&
                         item.State.MatchId.ToString() == _descriptor.Config.MatchId.Value);
             bool hasAnchor = _anchor != null && _anchor.IsSpawned;
-            bool valid = hasAnchor;
-            if (hasAnchor && (!_replica.HasSnapshot || _anchor.TimeState.Revision > _replica.Snapshot.Revision ||
-                _anchor.TimeState.PresenceRevision > _presenceRevision))
+            TeamHJD.Game.Domain.MatchTimeSnapshot commonTime = null, fieldTime = null;
+            Guid descriptor = default, fieldDescriptor = default;
+            bool valid = hasAnchor && _anchor.TimeState.TryRead(out descriptor, out commonTime) &&
+                _anchor.FieldTimeState.TryRead(out fieldDescriptor, out fieldTime) &&
+                descriptor == _descriptor.DescriptorId && fieldDescriptor == descriptor &&
+                commonTime.MatchId == _descriptor.Config.MatchId && fieldTime.MatchId == commonTime.MatchId &&
+                commonTime.Epoch == fieldTime.Epoch && commonTime.Rate == fieldTime.Rate &&
+                commonTime.IsAvailable == fieldTime.IsAvailable && (!commonTime.IsPaused || fieldTime.IsPaused);
+            if (valid)
             {
-                valid = _anchor.TimeState.TryRead(out Guid descriptor, out var snapshot) &&
-                    descriptor == _descriptor.DescriptorId && snapshot.MatchId == _descriptor.Config.MatchId;
-                if (valid) _replica.TryApply(descriptor, snapshot, fromAuthority: true);
+                _replica.TryApply(_descriptor.DescriptorId, commonTime, fromAuthority: true);
+                _fieldReplica.TryApply(_descriptor.DescriptorId, fieldTime, fromAuthority: true);
             }
-            _replica.Pump(valid);
-            if (!_published && _replica.HasSnapshot) { _scene.BindTimeReplica(_replica); _published = true; }
+            _replica.Pump(valid); _fieldReplica.Pump(valid);
+            if (!_published && valid && _replica.HasSnapshot && _fieldReplica.HasSnapshot)
+            { _scene.BindTimeReplica(_replica, _fieldReplica); _published = true; }
             if (_published && valid && _anchor.TimeState.PresenceRevision > _presenceRevision)
             {
                 _presenceRevision = _anchor.TimeState.PresenceRevision;
@@ -72,8 +88,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public void Dispose()
         {
             if (_disposed) return; _disposed = true;
-            try { if (_published && _scene != null) _scene.BindTimeReplica(null); }
-            finally { _replica?.Dispose(); _anchor = null; }
+            try { if (_published && _scene != null) _scene.BindTimeReplica(null, null); }
+            finally { _replica?.Dispose(); _fieldReplica?.Dispose(); _anchor = null; }
         }
     }
 }

@@ -85,12 +85,16 @@ flowchart LR
     Presence[Host 참가자 위치·revision] --> Anchor
     Anchor --> Replica[MatchTimeReplica / Client 읽기]
     ClientSDK[Client NGO ServerTime] --> Replica
-    Replica --> Feature[Client 필드 표현·수명·무기 입력 경계]
+    Clock --> Field[FieldSimulationClock / Field 보류 구간 차감]
+    Field --> Anchor
+    Anchor --> FieldReplica[MatchTimeReplica / Field 전용 읽기]
+    Replica --> Player[Client Player / 낮밤]
+    FieldReplica --> Feature[Client 필드 표현 / 수명 / 냉각]
 ```
 
 매 프레임 경과 초를 보내지 않는다. Host는 정지·배속·복원·준비 상태가 바뀐 anchor나 참가자 위치 revision이 바뀔 때만 기존 anchor의 상태를 갱신한다. Client는 현재 Match/준비 세대와 증가하는 revision을 확인한다. 위치는 descriptor의 Player 슬롯 순서에 대한 우주선 bit mask이며 SDK ClientId를 영속 저장 자료로 사용하지 않는다.
 
-`InitialStageCompositionRoot.MatchTime`은 Client의 첫 유효 수신 전 null이다. 이후 `MatchFieldReplicaScope`가 같은 읽기 시계를 필드 Feature와 로컬 Player에 전달한다. 로컬 Player는 보고권을 얻지 않으며 내부 위치에서도 필드 공격을 실행하지 않는다. `SpawnedEnemyRegistry`는 이후 NGO로 생성된 Client 적도 해당 NetworkManager/Scene의 시계에 연결한다. 이 등록은 적 생성 정책이나 전역 시간 조회를 소유하지 않는다.
+`InitialStageCompositionRoot.MatchTime`은 Client의 첫 유효 수신 전 null이다. 이후 `MatchFieldReplicaScope`가 공용·Field 두 읽기 시계를 분리해서 전달한다. 로컬 Player/낮밤은 공용 시계, 기존 Field Feature는 Field 전용 시계를 사용한다. 로컬 Player는 보고권을 얻지 않으며 내부 위치에서도 필드 공격을 실행하지 않는다. `SpawnedEnemyRegistry`는 이후 NGO로 생성된 Client 적도 해당 NetworkManager/Scene의 시계에 연결한다. 이 등록은 적 생성 정책이나 전역 시간 조회를 소유하지 않는다.
 
 처음 수신 전 0초를 정상 준비로 취급하지 않는다. anchor 소실·연결 준비 해제 시 마지막 값을 유지하고 IsAvailable을 닫는다. 같은 anchor에서 SDK 시각이 조금 뒤로 보정되면 표시 시간을 역행시키지 않으며, 새 권위 anchor는 정지/복원 보정을 위해 이전 표시보다 작은 게임 초를 확정할 수 있다. 체크포인트 복원은 새 epoch를 전달하며 옛 callback을 Client에 복원하지 않는다.
 
@@ -106,3 +110,14 @@ flowchart LR
 Preparing 단계의 시계는 자동 정지하고 scheduler를 실행하지 않는다. 준비 중 `Restore(gameSeconds)`도 가능하지만 준비/복원 lease가 끝나기 전 진행하지 않는다. Running으로 진입할 때 현재 원본 시각에 기준을 잡아 로딩 시간을 게임 시간에 포함하지 않는다. Clock 제어와 유효 lease의 해제는 소유 스레드에서 수행한다.
 
 검증: `B4-PauseOwnership/results.xml`22/22 후 준비 시간 제외를 보강하고 `preparing-time/results.xml`6/6, 모두 Unity 종료0. 우주선 정책·중첩 lease·오래된 해제·잘못된 스레드, Preparing 복원, 실제 Initial_Stage 시간/필드 정지 경로를 포함한다. 저장 실행기 자체의 검증은 별도다.
+
+
+## 11/14 — Field 보류의 Client 전송 보완
+
+Host는 기존 NetworkMatchAnchor에 `TimeState`와 `FieldTimeState`를 함께 게시한다. 값이 계속 증가하는 초를 매 프레임 보내지 않으며 각 anchor revision·위치가 변경될 때만 갱신한다. 추가 시간 NetworkVariable은 기존 `NetworkMatchTimeState` 표현을 재사용한다. Client는 Match/descriptor/epoch·배속·가용성의 일치와 공용 정지 중 Field 정지를 확인하고, 둘이 유효하기 전까지 읽기 가용성을 닫는다.
+
+`BindTimeReplica(common, field)`가 두 원본을 명시적으로 받는다. 처음 수신 전 null이며 `InitialStageCompositionRoot.FieldTime`은 Client에서 Field replica다. 공용 시간만 Field에 연결하는 옛 호출은 사용하지 않는다. Field의 epoch가 바뀌어도 revision을 초기화하지 않아 과거 anchor로 오인하지 않는다.
+
+Anchor의 NetworkVariable 배치가 바뀌었으므로 Core가 시작하는 NGO 연결은 `NgoNetworkSession.CoreProtocolVersion = 1`을 사용한다. 이미 외부에서 시작한 연결은 소유권을 가져오거나 설정을 바꾸지 않는다. 이전 Build와 섞지 말고 팀 모두 같은 Build를 사용한다.
+
+검증: Field 시각/배속/복원 투영 PlayMode3/3, FieldSimulationClock EditMode6/6, 실제 Anchor Prefab+localhost UTP Host/Client SDK 두 인스턴스1/1(프로토콜1 포함). 실제 Stage_1 Host에서는 공용1.202초 진행/Field0초, TimeState.Pausedfalse/FieldTimeState.Pausedtrue와 해제 후Field false를 관측했다. 이는 실제 두 Build/Steam·원격 Player 생성/이동 인수를 뜻하지 않는다.

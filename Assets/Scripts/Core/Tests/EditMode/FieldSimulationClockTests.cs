@@ -72,5 +72,17 @@ namespace TeamHJD.Game.Tests.EditMode
             common.Epoch = Guid.NewGuid(); common.Now = 3;
             Assert.That(field.ElapsedSeconds, Is.EqualTo(3)); Assert.That(field.IsHeld, Is.False);
         }
+
+        [Test]
+        public void WorldEpochChangeNeverPublishesAnOlderFieldRevision()
+        {
+            var common = new Clock { Now = 10 }; var field = new FieldSimulationClock(common);
+            for (int i = 0; i < 10; i++) { field.SetHeld(true); field.SetHeld(false); }
+            long before = field.Snapshot.Revision;
+            common.Epoch = Guid.NewGuid(); common.Now = 3;
+            Assert.That(field.Snapshot.Revision, Is.GreaterThan(before));
+            before = field.Snapshot.Revision; field.Restore(1, true);
+            Assert.That(field.Snapshot.Revision, Is.GreaterThan(before));
+        }
     }
 }

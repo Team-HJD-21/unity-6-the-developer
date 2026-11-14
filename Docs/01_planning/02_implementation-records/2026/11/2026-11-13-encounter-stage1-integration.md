@@ -237,3 +237,14 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - StageProgressionTests6/6:100% 동시통과 순서·실패66 동일ID 재시도/33중복금지·콘텐츠누락·현재점유와최종죽음·상실후미취소·world왕복/rollback. 실제 Scene은 Player1/기본CU1셀/정상진행·연결대기명시를 확인했다. b7a-progression-tests.json / b7a-live-stage-status.json.
 - EnemyCatalog19종(개별ID는 b7a-enemy-content-audit.json), 확정 중간보스 Definition 지정 없음, Assets/Scenes 내 실제 Boss Scene 없음. 과거 Reference Boss를 실제로 대체하지 않았다. 따라서 B7 전체/보스 실제 생성·B8 Boss Scene/연출/사망 통합은 미완이다. 생성 포트 구현과 점유 밖 진입 위치를 제작 자료와 함께 연결해야 한다.
 - B6b 추가: 같은 호출에서 Player/CU HP를 모두0으로 만든 실제 검수에서 Defeat·안전장치0·구조60초를 확인했다(b6b-simultaneous-defeat-result.json). UI 카메라 관측은743행/중간중심59/이탈0이며 CSV/Hmc 파일을 UI에 인계했다. 새 Mission 실행 기록의 같은 payload 중복쓰기1회를 제거했다.
+
+
+## B8a — 공용/Field Client 시각 분리와 실제 전송 (2026-11-14)
+
+- 코드 대조에서 Client의 MatchFieldReplicaScope가 Player와 Field에 같은 공용 시계를 쓰는 경로를 확인했다. Host Field 보류가 Client Field 표현에 전달되지 않을 가능성을 실제 접합 문제로 분리했다. 기존 anchor에 FieldTimeState를 추가하고 Player/낮밤은 common, 필드는 Field replica에 바인딩한다.
+- 수신 쌍의 Match/descriptor/epoch·rate·availability와 공용pause→Fieldpause를 검증한다. 쌍이 준비되지 않으면 둘의 IsAvailable을 닫는다. FieldClock epoch 변경 때 revision이 감소하지 않도록 보강했다.
+- wire 배치 변경으로 Core 소유 NGO 시작은 ProtocolVersion1이다. 외부에서 이미 실행한 연결은 바꾸지 않는다. 기존 Anchor Prefab·NetworkObject GUID와 UI의 Prefab 미커밋 변경은 보존했다.
+- FieldTimeReplicationTests Play3/3, FieldSimulationClockTests Edit6/6. 첫 Editor 모드 조회는0개였고 이를 통과로 쓰지 않았다. Networking.Tests asmdef의 실제 PlayMode에서3개를 확인했다.
+- 실제 Prefab+localhost UTP SDK2개에서 CoreProtocolVersion1·공용/Field NetworkVariable 전달·공용unpaused/Fieldpaused·Field만 revision14→15재개를 확인했다. NetworkFieldAnchorTests1/1. 실제2프로세스 Player/Steam 인수는 아니다.
+- 실제 Stage_1 Host공용1.202269초/Field0초,서버시간anchorcommonpausedfalse/Fieldpausedtrue,해제후Fieldpausedfalse. b8a-live-anchor-held/resumed.json. commonGameSeconds0은 경과가 아니라 과거 공용 anchor값으로 보존된 정상 상태다.
+- 검수 종료는 Playfalse/Scene clean이며 사용한 저장3슬롯만 백업·복구해 기존33개 checkpoint 해시 일치를 유지했다. 추가 출현 원격 경고와 실제 원격 구조 입력/생명은 아직 후속이다.

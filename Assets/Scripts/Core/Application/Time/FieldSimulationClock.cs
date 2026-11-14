@@ -62,7 +62,8 @@ namespace TeamHJD.Game.Application
             Guid epoch = _source.Snapshot.Epoch;
             if (_epoch == epoch) return;
             // Field writer가 뒤이어 저장 상태를 적용합니다. 이전 실행 세대의 offset은 전달하지 않습니다.
-            _epoch = epoch; _offset = 0; _heldAt = 0; _held = false; _revision = 0;
+            _epoch = epoch; _offset = 0; _heldAt = 0; _held = false;
+            _revision = checked(_revision + 1); // Client가 복원 전 anchor보다 오래된 revision으로 거부하지 않게 합니다.
         }
     }
 }

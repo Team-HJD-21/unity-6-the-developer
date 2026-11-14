@@ -17,14 +17,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly FieldSimulationSceneScope _features;
         private readonly PlayerMatchPresence _actor;
         private bool _disposed;
-        public MatchFieldReplicaScope(IMatchTime time, IEnumerable<IFieldSimulationConsumer> features, GameObject actor)
+        public MatchFieldReplicaScope(IMatchTime time, IMatchTime fieldTime, IEnumerable<IFieldSimulationConsumer> features, GameObject actor)
         {
             _time = time;
             try
             {
                 _actor = actor.GetComponent<PlayerMatchPresence>() ?? actor.AddComponent<PlayerMatchPresence>();
                 _actor.BindReplica(time, _gameplay.Token);
-                _features = new FieldSimulationSceneScope(features, time, _gameplay.Token);
+                _features = new FieldSimulationSceneScope(features, fieldTime, _gameplay.Token);
             }
             catch (Exception error)
             { try { Dispose(); } catch (Exception cleanup) { throw new AggregateException(error, cleanup); } throw; }
