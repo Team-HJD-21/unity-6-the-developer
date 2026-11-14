@@ -82,6 +82,40 @@ public sealed class StageTurretCommandHudTests
         finally{if(keyboard.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);}
     }
     [UnityTest]
+    public IEnumerator MapMarkersStayBelowCombatHudAndDoNotStealItsClicks()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>();var t=hud.Tactical;
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        var skills=Object.FindObjectsByType<PlayerSkillHud>(FindObjectsSortMode.None).Single(s=>s.Owner!=null && s.Owner.gameObject==hud.LocalPlayer.gameObject);
+        Assert.That(t.View.Canvas.overrideSorting,Is.True,"전술 Canvas가 부모 체력 HUD의 순서를 상속하지 않아야 합니다.");
+        Assert.That(t.View.Canvas.sortingOrder,Is.LessThan(skills.GetComponent<Canvas>().sortingOrder));
+        Assert.That(t.View.Canvas.sortingOrder,Is.LessThan(hud.GetComponent<Canvas>().sortingOrder));
+        Assert.That(t.Open(),Is.True);
+        Assert.That(t.View.ModeEffect.GetComponent<Canvas>().sortingOrder,Is.GreaterThan(hud.GetComponent<Canvas>().sortingOrder));
+        yield return FinishTransition(t);yield return new WaitForSecondsRealtime(.06f);
+        foreach(var graphic in t.View.TurretGlyphs.Cast<Graphic>().Concat(t.View.EnemyIcons).Append(t.View.WorldGraphic).Append(t.View.PlayerMarker).Append(t.View.ControlMarker))
+            Assert.That(graphic.canvas.sortingOrder,Is.LessThan(skills.GetComponent<Canvas>().sortingOrder),graphic.name);
+        var events=UnityEngine.EventSystems.EventSystem.current;
+        var hits=new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+        void Raycast(RectTransform rect)
+        {
+            hits.Clear();var position=RectTransformUtility.WorldToScreenPoint(null,rect.TransformPoint(rect.rect.center));
+            events.RaycastAll(new UnityEngine.EventSystems.PointerEventData(events){position=position},hits);
+        }
+        var bar=Object.FindObjectsByType<CombatVitalsGroup>(FindObjectsSortMode.None).First(v=>!v.RightEdge).Primary;
+        Raycast((RectTransform)bar.transform);
+        Assert.That(hits.Count,Is.GreaterThan(0));
+        Assert.That(hits[0].gameObject.GetComponentInParent<CombatVitalsBar>(),Is.SameAs(bar),"지도가 체력바의 호버/고정 클릭을 가로채면 안 됩니다.");
+        Raycast((RectTransform)t.View.Close.transform);
+        Assert.That(hits.Count,Is.GreaterThan(0));
+        Assert.That(hits[0].gameObject.GetComponentInParent<Button>(),Is.SameAs(t.View.Close),"지도 버튼은 같은 지도 표식보다 위에서 조작돼야 합니다.");
+        t.Close();yield return FinishTransition(t);
+        Assert.That(HudPresentationVisibility.IsSuppressed,Is.False);
+    }
+    [UnityTest]
     public IEnumerator MapTransitionsHideAllHudLayersThenRestoreTheirExistingState()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");

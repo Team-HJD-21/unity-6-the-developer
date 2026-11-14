@@ -81,7 +81,7 @@ public static class TacticalHudSetup
         var root = Rect("Tactical HUD", null, Vector2.zero, Vector2.zero, new Vector2(.5f,.5f));
         try
         {
-            var canvas = root.gameObject.AddComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.overrideSorting = true; canvas.sortingOrder = 600;
+            var canvas = root.gameObject.AddComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.overrideSorting = true; canvas.sortingOrder = TacticalHudView.SortingOrder;
             var scaler = root.gameObject.AddComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920,1080); scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             root.gameObject.AddComponent<GraphicRaycaster>();
