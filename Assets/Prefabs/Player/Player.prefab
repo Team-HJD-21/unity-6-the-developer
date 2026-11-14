@@ -450,7 +450,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 3.75
+  m_Radius: 5.625
 --- !u!114 &9411303
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1229,6 +1229,7 @@ GameObject:
   - component: {fileID: 9411100}
   - component: {fileID: 6331831438514071}
   - component: {fileID: 110202611140000001}
+  - component: {fileID: 4425750444266434605}
   m_Layer: 18
   m_Name: Player
   m_TagString: Player
@@ -1852,6 +1853,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d018a419f03644e997cf3f111e81de7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLocationState
+--- !u!114 &4425750444266434605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369298898549314971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94c017dfacb94e4f933021e637398de9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerArmory
+  _settings: {fileID: 11400000, guid: fa5590402c6b12049a6806be31f04545, type: 2}
 --- !u!1 &5971586974638979900
 GameObject:
   m_ObjectHideFlags: 0

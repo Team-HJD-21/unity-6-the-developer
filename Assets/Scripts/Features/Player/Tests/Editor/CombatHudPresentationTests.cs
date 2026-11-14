@@ -201,6 +201,8 @@ public sealed class CombatHudPresentationTests
         Assert.That(attack.TryFire(), Is.False, "A second request during shot cooldown is not another shot.");
         yield return Until(() => magazine.DisplayedRounds == 14);
         Assert.That(magazine.RoundCount.text, Does.StartWith("14<size="));
+        // 이 탄약 표시 fixture는 기본총·스나이퍼 장착 상태를 사용합니다.
+        _player.GetComponent<PlayerArmory>().State.Equip(1, WeaponType.Sniper);
         Assert.That(selection.TrySelectWeapon(WeaponType.Sniper), Is.True);
         Assert.That(magazine.ShotPulse, Is.Zero, "Switching 14→5 rounds must not simulate firing.");
         yield return Until(() => magazine.DisplayedRounds == 5);

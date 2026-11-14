@@ -1,5 +1,7 @@
 # 플레이어 무기 API
 
+무기고 장착·강화·토큰과 단계별 스나이퍼 적중 한도는 [플레이어 무기고](player-armory-api.md)를 함께 확인합니다. 무기고가 연결된 Player는 스패너와 장착한 두 총만 전환할 수 있습니다.
+
 수정일: 2026-11-14. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
 
 ## 상태창의 장착 무기 조회
@@ -46,7 +48,7 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 ## 2026-11-12 암살자 감지 Trigger
 
-`Player.prefab`의 `PlayerEnemyDetector` 자식에 별도 CircleCollider2D Trigger를 배치합니다. 반경은 조정용 임시값입니다. Collider의 로컬 radius 3.75는 현재 Player 배율 0.8에서 월드 반경 3이며, 중심은 발밑에 가까운 로컬 (0, 0.2)입니다. Inspector의 CircleCollider2D에서 조절합니다.
+`Player.prefab`의 `PlayerEnemyDetector` 자식에 별도 CircleCollider2D Trigger를 배치합니다. 반경은 조정용 임시값입니다. 2026-11-15에 탐지 반경을 1.5배로 확대하여, Collider의 로컬 radius 5.625는 현재 Player 배율 0.8에서 월드 반경 4.5입니다. 중심은 발밑에 가까운 로컬 (0, 0.2)이며 Inspector의 CircleCollider2D에서 조절합니다.
 
 진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. 2026-11-13부터 `useTriggers = true`와 `EnemyHitBox` 레이어 마스크로 실제 피격 Trigger를 조회합니다. 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
 
@@ -57,6 +59,8 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 네트워크 Client와 보고권 없는 Player replica는 탐지 원본을 쓰지 않습니다. 서버의 적 상태는 기존 `EnemyNetworkDetection`이 복제합니다. 같은 Scene/Match만 감지하고 Match 정지 중에는 기존 감지를 유지합니다. 입력 메뉴 잠금은 수동 감지 해제 조건으로 사용하지 않습니다. 독립 로컬 시험은 Player/Enemy가 모두 Match 밖인 경우에 허용합니다. 실제 Host/Client 전송 검증과 감지 반경의 밸런스 확정은 별도입니다. Enemy 측의 탐지·피격 계약은 [Enemy 시스템 가이드](../08_encounter/enemy-system-guide.md)를 참고합니다.
 
 검증은 `PlayerEnemyDetectorTests`에서 실제 BlackWolf의 Trigger 감지·은신 표시 목표값·범위 이탈·복수 감지자·센서 제외·권한을 확인합니다. `PlayerAssassinAttackRuntimeTests`는 Play Mode에 BlackWolf와 `EnemySquadTester`를 임시 생성하고 기본/냉각 탄환·스패너·폭탄의 피해 및 터렛 피해 거부를 확인합니다. 고정된 시험 배치이며 사람의 실제 조작과 Host/Client 통신 검증을 대신하지 않습니다.
+
+2026-11-15: 실제 Player 생성 경로에서는 `Awake` 이후 `PlayerMatchPresence`가 추가될 수 있습니다. 감지기는 초기 참조가 비어 있으면 소유자에서 다시 조회하여 같은 Match 여부와 보고권·우주선 이동 상태를 검사합니다. 초기 `null`을 계속 사용해 같은 Match의 암살자를 제외하던 경우를 수정했으며, 늦게 연결되는 Host/Client presence 회귀 테스트를 추가했습니다.
 
 ## 스크립트별 역할
 

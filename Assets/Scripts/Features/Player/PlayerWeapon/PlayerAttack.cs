@@ -45,6 +45,7 @@ public partial class PlayerAttack : MonoBehaviour
     private PlayerTurretRepair _repair;
     private PlayerWeaponAmmo _ammo;
     private PlayerBaseStats _baseStats;
+    private PlayerArmory _armory;
     private double _nextShotTime;
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     private PlayerMatchPresence Presence => GetComponent<PlayerMatchPresence>();
@@ -52,6 +53,7 @@ public partial class PlayerAttack : MonoBehaviour
     /// <summary>탄환 발사 또는 냉기 피해 틱에 성공하면 발생합니다. 막힌 입력에는 발생하지 않습니다.</summary>
     public event System.Action<WeaponType> ShotFired;
     private bool CanAttack => isActiveAndEnabled && _selection != null && _selection.transform == transform &&
+        _selection.IsWeaponAvailable(_selection.CurrentWeapon) &&
         _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill) &&
         (_repair == null || !_repair.IsRepairing);
     private GameObject CurrentBulletPrefab => _selection != null ? _selection.CurrentBulletPrefab : null;
@@ -68,6 +70,7 @@ public partial class PlayerAttack : MonoBehaviour
         _repair = GetComponent<PlayerTurretRepair>();
         _ammo = GetComponent<PlayerWeaponAmmo>();
         _baseStats = GetComponent<PlayerBaseStats>();
+        _armory = GetComponent<PlayerArmory>();
     }
 
     // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
@@ -119,7 +122,21 @@ public partial class PlayerAttack : MonoBehaviour
     }
 
     private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
-        GetShotSettings() => _selection.CurrentWeapon switch
+        GetShotSettings() => GetShotSettings(_selection.CurrentWeapon);
+
+    private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
+        GetShotSettings(WeaponType weapon, int level = 0)
+    {
+        var shot = GetBaseShotSettings(weapon);
+        if (_armory == null || !_armory.IsConfigured) return shot;
+        int actualLevel = level > 0 ? level : _armory.Level(weapon);
+        shot.damage *= _armory.DamageMultiplier(weapon, actualLevel);
+        if (weapon == WeaponType.DefaultGun) shot.pelletCount = _armory.Settings.PelletCount(actualLevel);
+        return shot;
+    }
+
+    private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
+        GetBaseShotSettings(WeaponType weapon) => weapon switch
         {
             WeaponType.CryoBlaster => (_cryoColor, _cryoDamage, _cryoInterval, 0, 0f, true),
             WeaponType.Sniper => (_sniperColor, _sniperDamage, _sniperInterval, 1, 0f, false),
@@ -162,6 +179,8 @@ public partial class PlayerAttack : MonoBehaviour
         var bullet = Instantiate(CurrentBulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
         FieldSimulationTime.BindSpawned(bullet.gameObject, this);
         bullet.SourceWeapon = _selection.CurrentWeapon;
+        if (_selection.CurrentWeapon == WeaponType.Sniper && _armory != null && _armory.IsConfigured)
+            bullet.ConfigurePenetration(_armory.Settings.SniperTargets(_armory.Level(WeaponType.Sniper)));
         if (bullet.Initialize(color, damage, direction, cryogenic)) { TrackProjectile(bullet); return true; }
         Destroy(bullet.gameObject);
         return false;

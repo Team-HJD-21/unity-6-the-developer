@@ -20,6 +20,7 @@ public sealed class PlayerWeaponSelection : MonoBehaviour
     private PlayerSpannerWeapon _spanner;
     private PlayerControlState _control;
     private PlayerSkillController _skills;
+    private PlayerArmory _armory;
 
     public WeaponType CurrentWeapon => _currentWeapon;
     public event Action<WeaponType> WeaponChanged;
@@ -34,12 +35,13 @@ public sealed class PlayerWeaponSelection : MonoBehaviour
         if (_weaponRig == null) _weaponRig = GetComponentInChildren<PlayerWeaponRig>(true);
         _control = GetComponent<PlayerControlState>();
         _skills = GetComponent<PlayerSkillController>();
+        _armory = GetComponent<PlayerArmory>();
         if (_spannerPrefab != null)
         {
             _spanner = Instantiate(_spannerPrefab, transform);
             _spanner.Bind(transform, _input);
         }
-        RefreshEquippedObjects();
+        RefreshLoadout();
     }
 
     private void Update()
@@ -50,7 +52,10 @@ public sealed class PlayerWeaponSelection : MonoBehaviour
         else if (_input.WasWeaponSwitchPressed) SelectNextWeapon();
     }
 
-    public bool IsWeaponAvailable(WeaponType weapon) => weapon switch
+    public bool IsWeaponAvailable(WeaponType weapon) => IsWeaponAuthored(weapon) &&
+        (_armory == null || _armory.State.IsEquipped(weapon));
+
+    public bool IsWeaponAuthored(WeaponType weapon) => weapon switch
     {
         WeaponType.Spanner => _spanner != null,
         WeaponType.DefaultGun or WeaponType.CryoBlaster => _bulletPrefab != null,
@@ -72,6 +77,14 @@ public sealed class PlayerWeaponSelection : MonoBehaviour
     }
 
     public void SelectNextWeapon() => SelectAdjacentWeapon(1);
+
+    internal void RefreshLoadout()
+    {
+        if (!IsWeaponAvailable(_currentWeapon)) _currentWeapon = IsWeaponAvailable(WeaponType.Spanner)
+            ? WeaponType.Spanner : _armory.State.First;
+        RefreshEquippedObjects();
+        WeaponChanged?.Invoke(_currentWeapon);
+    }
 
     public bool SelectAdjacentWeapon(int direction)
     {

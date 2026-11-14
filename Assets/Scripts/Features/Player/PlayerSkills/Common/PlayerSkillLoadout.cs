@@ -1,7 +1,7 @@
 // Q/E 준비 데이터를 소유합니다. 기존 순차 선택과 명시적 슬롯 교체/교환을 함께 제공합니다.
 using System;
 
-public enum PlayerSkillId { None = 0, Bomb = 1, PlayerTurret = 2, EnergyBarrier = 3, LureBeacon = 4 }
+public enum PlayerSkillId { None = 0, Bomb = 1, PlayerTurret = 2, EnergyBarrier = 3, LureBeacon = 4, Portal = 5 }
 
 public sealed class PlayerSkillLoadout
 {

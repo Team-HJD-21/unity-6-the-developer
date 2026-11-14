@@ -53,7 +53,7 @@ public sealed class PlayerEnemyDetectorTests
         var circle = detector.GetComponent<CircleCollider2D>();
         Assert.That(circle.isTrigger, Is.True);
         Assert.That(circle.attachedRigidbody, Is.EqualTo(prefab.GetComponent<Rigidbody2D>()));
-        Assert.That(circle.radius * detector.transform.lossyScale.x, Is.EqualTo(3).Within(.001f));
+        Assert.That(circle.radius * detector.transform.lossyScale.x, Is.EqualTo(4.5f).Within(.001f));
         Assert.That(detector.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("PlayerFeetBox")));
         Assert.That(circle.excludeLayers.value & LayerMask.GetMask("EnemyHitBox"), Is.Zero);
         Assert.That(circle.excludeLayers.value & (1 << 16), Is.Not.Zero, "Enemy projectiles must not hit the detection range.");
@@ -203,20 +203,41 @@ public sealed class PlayerEnemyDetectorTests
         Step(detector); Assert.That(target.IsDetected, Is.False);
     }
 
+    [Test]
+    public void PresenceAddedAfterDetectorAwakeUsesHostMatchAndReleasesDetectionOnShipEntry()
+    {
+        var detector = Detector(Vector2.zero, false); var target = Enemy(Vector2.right);
+        var clock = new Clock(); BindHost(detector, clock);
+        FieldSimulationActor.Attach(target.gameObject, clock);
+        Step(detector); Assert.That(target.IsDetected, Is.True, "Core adds presence after prefab Awake.");
+        detector.transform.parent.GetComponent<PlayerMatchPresence>().Report(MatchPlayerLocation.Spaceship);
+        Step(detector); Assert.That(target.IsDetected, Is.False);
+    }
+
+    [Test]
+    public void ReplicaPresenceAddedAfterDetectorAwakeCannotWriteDetection()
+    {
+        var detector = Detector(Vector2.zero, false); var target = Enemy(Vector2.right);
+        detector.transform.parent.gameObject.AddComponent<PlayerMatchPresence>().BindReplica(new Clock(), default);
+        Step(detector); Assert.That(target.IsDetected, Is.False);
+    }
+
     private void BindHost(PlayerEnemyDetector detector, Clock clock)
     {
         var player = new PlayerId("detector-owner");
         var config = new MatchConfig(clock.Snapshot.MatchId, MatchMode.Cooperative, new StageId("stage"),
             new DefinitionId("difficulty"), "test", 1, new[] { new PlayerLoadoutSnapshot(player, null) });
         var service = new MatchPresenceService(config, () => true, _ => { }); _services.Add(service);
-        detector.transform.parent.GetComponent<PlayerMatchPresence>().Bind(service.RegisterActor(player), clock, default);
+        var owner = detector.transform.parent.gameObject;
+        var presence = owner.GetComponent<PlayerMatchPresence>() ?? owner.AddComponent<PlayerMatchPresence>();
+        presence.Bind(service.RegisterActor(player), clock, default);
     }
-    private PlayerEnemyDetector Detector(Vector2 position)
+    private PlayerEnemyDetector Detector(Vector2 position, bool presenceBeforeAwake = true)
     {
         var owner = Root("Player", position); owner.AddComponent<Rigidbody2D>().gravityScale = 0;
         owner.layer = LayerMask.NameToLayer("PlayerFeetBox");
         var health = owner.AddComponent<PlayerInfo>(); Invoke(health, "Awake");
-        owner.AddComponent<PlayerMatchPresence>();
+        if (presenceBeforeAwake) owner.AddComponent<PlayerMatchPresence>();
         var go = new GameObject("Assassin Detection Range"); go.transform.SetParent(owner.transform, false);
         go.layer = LayerMask.NameToLayer("PlayerFeetBox");
         var circle = go.AddComponent<CircleCollider2D>(); circle.isTrigger = true; circle.radius = 3;

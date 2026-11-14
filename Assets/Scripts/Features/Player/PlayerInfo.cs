@@ -41,6 +41,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     private void FixedUpdate()
     {
         AdvanceRecovery();
+        AdvanceAutomaticRecovery();
         onHpChange.Invoke(curHp, maxHp);
         if (curHp <= 0) Die();
     }
@@ -62,6 +63,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         if (_isDead) return;
         _isDead = true;
         _recovering = false;
+        ClearAutomaticRecovery();
         GetComponent<PlayerControlState>()?.SetLifeBlocked(true);
         GetComponent<PlayerMovement>()?.StopImmediately();
         GetComponent<PlayerSkillController>()?.CloseSelection();
@@ -80,6 +82,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         int previousHealth = curHp;
         curHp = (int)Math.Max(0L, (long)curHp - damage);
         int applied = previousHealth - curHp;
+        if (applied > 0) ScheduleAutomaticRecovery();
         if (applied > 0 && Damaged != null)
             foreach (Action<int> observer in Damaged.GetInvocationList())
                 try { observer(applied); } catch (Exception error) { Debug.LogException(error); }
@@ -90,6 +93,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     public void RecoverHp()
     {
         if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp) return;
+        ClearAutomaticRecovery();
         _recovering = true;
         _nextRecoveryAt = FieldSimulationTime.Seconds(this);
         AdvanceRecovery();
@@ -109,6 +113,6 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         _healthAuthority = false;
     }
 
-    public void UnbindMatch() { _healthAuthority = false; _recovering = false; }
+    public void UnbindMatch() { _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); }
     public void UnbindNetworkMatch() => UnbindMatch();
 }

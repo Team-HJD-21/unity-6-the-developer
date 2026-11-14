@@ -1825,6 +1825,7 @@ GameObject:
   m_Component:
   - component: {fileID: 302797546}
   - component: {fileID: 302797545}
+  - component: {fileID: 844100000000000001}
   m_Layer: 0
   m_Name: WeaponChoice
   m_TagString: Untagged
@@ -14997,3 +14998,17 @@ SceneRoots:
   - {fileID: 1518862120}
   - {fileID: 1427728675}
   - {fileID: 302797546}
+--- !u!114 &844100000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302797544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fdddad1211941f8b321fda3a01b3efd, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _viewPrefab: {fileID: 3975401268829510238, guid: 2b4aa19d928bec647907ad6ce5ba0db3, type: 3}
+  _interactionRange: 3
