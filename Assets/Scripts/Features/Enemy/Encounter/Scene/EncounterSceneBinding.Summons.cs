@@ -7,7 +7,7 @@ public sealed partial class EncounterSceneBinding : IEnemySummonRequests
 {
     EncounterExecutionContext IEnemySummonRequests.BeginSummon(EncounterExecutionContext parent, string enemyId, int count)
     {
-        if (_requests == null || _networkManager == null || !_networkManager.IsServer || !FieldCanAdvance ||
+        if (_requests == null || !IsServer || !FieldCanAdvance ||
             _spawnGameplay.IsCancellationRequested || parent.MatchId != _boundMatchId)
             return null;
         var snapshot = _snapshotProvider?.Invoke();

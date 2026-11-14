@@ -16,6 +16,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
     public sealed partial class InitialStageCompositionRoot
     {
+        // Scene에 직접 연결된 소비자는 네트워크 관리자와 다른 객체에 배치할 수 있습니다.
+        internal MonoBehaviour AuthoredEncounterConsumer => _encounterConsumerBehaviour;
 
         public void SetNetworkEncounterConsumer(MonoBehaviour consumer)
         {

@@ -21,6 +21,7 @@ public sealed class EncounterRuntimeSeparationTests
     private EncounterSceneBinding _binding;
     private EnemyCatalog _enemies;
     private EnemySquadPresetCatalog _squads;
+    private NetworkStatus _network;
 
     [SetUp]
     public void SetUp()
@@ -36,7 +37,8 @@ public sealed class EncounterRuntimeSeparationTests
         _squads = ScriptableObject.CreateInstance<EnemySquadPresetCatalog>();
         typeof(EnemySpawnExecutor).GetField("enemyList", BindingFlags.Instance | BindingFlags.NonPublic)
             .SetValue(executor, _enemies);
-        Set("_networkManager", _root.GetComponent<NetworkManager>());
+        _network = new NetworkStatus();
+        _binding.SetNetworkConnection(_network);
         Set("_spawnExecutor", executor);
         Set("_squadCatalog", _squads);
     }
@@ -74,11 +76,11 @@ public sealed class EncounterRuntimeSeparationTests
     {
         var match = new MatchId("ownership-boundary");
         _binding.BindMatch(match, () => null);
-        Assert.Throws<InvalidOperationException>(() => _binding.UseAppNetworkOwnership());
+        Assert.Throws<InvalidOperationException>(() => _binding.UseAppNetworkOwnership(_network));
         _binding.UnbindMatch(match);
-        _binding.UseAppNetworkOwnership();
+        _binding.UseAppNetworkOwnership(_network);
         _binding.BindAuthorityMatch(match, new PlayerId("host"), () => null);
-        _binding.UseAppNetworkOwnership();
+        _binding.UseAppNetworkOwnership(_network);
         _binding.UnbindMatch(match);
         Assert.That(_binding.IsAppNetworkOwned, Is.True);
         Assert.That(_binding.IsListening, Is.False);
@@ -92,8 +94,40 @@ public sealed class EncounterRuntimeSeparationTests
             .Any(field => field.FieldType.Name == "EnemyNetworkTestLauncher"), Is.False);
         Assert.That(typeof(EncounterSceneBinding).GetMethod("OnGUI", flags), Is.Null);
         Assert.That(typeof(EncounterSceneBinding).GetMethod("Start", flags), Is.Null);
+        Assert.That(typeof(EncounterSceneBinding).GetMethod("Awake", flags), Is.Null);
         Assert.That(_root.GetComponent<EnemyNetworkTestControls>(), Is.Null,
             "테스트 조작은 사용자가 명시적으로 추가했을 때만 존재해야 합니다.");
+    }
+
+    [Test]
+    public void NetworkStatus_IsInjectedWithoutAddingANetworkManagerAndRemainsLive()
+    {
+        Assert.That(_root.GetComponent<NetworkManager>(), Is.Null,
+            "정식 Encounter를 추가해도 SDK 관리자가 같은 객체에 자동 추가되면 안 됩니다.");
+        _network.IsListening = true;
+        _network.IsServer = true;
+        _network.IsClient = true;
+        Assert.That(_binding.IsListening && _binding.IsServer && _binding.IsClient, Is.True);
+        _network.IsListening = false;
+        _network.IsServer = false;
+        _network.IsClient = false;
+        Assert.That(_binding.IsListening || _binding.IsServer || _binding.IsClient, Is.False);
+    }
+
+    [Test]
+    public void BoundConnection_CannotBeReplacedAndOnlyAppCanRebindAfterRelease()
+    {
+        var match = new MatchId("network-state-generation");
+        var replacement = new NetworkStatus();
+        _binding.UseAppNetworkOwnership(_network);
+        _binding.BindAuthorityMatch(match, new PlayerId("host"), () => null);
+        Assert.Throws<InvalidOperationException>(() => _binding.SetNetworkConnection(replacement));
+        Assert.Throws<InvalidOperationException>(() => _binding.UseAppNetworkOwnership(replacement));
+        _binding.UnbindMatch(match);
+        Assert.Throws<InvalidOperationException>(() => _binding.SetNetworkConnection(replacement));
+        _binding.UseAppNetworkOwnership(replacement);
+        replacement.IsListening = true;
+        Assert.That(_binding.IsListening, Is.True);
     }
 
     [Test]
@@ -127,4 +161,12 @@ public sealed class EncounterRuntimeSeparationTests
 
     private void Set(string name, object value) => typeof(EncounterSceneBinding)
         .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(_binding, value);
+    private sealed class NetworkStatus : INetworkConnectionStatus
+    {
+        public bool IsListening { get; set; }
+        public bool IsServer { get; set; }
+        public bool IsClient { get; set; }
+        public bool IsHost { get; set; }
+        public int ConnectedClientCount { get; set; }
+    }
 }

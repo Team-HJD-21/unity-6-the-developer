@@ -9,7 +9,6 @@ using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Bootstrap.SceneComposition;
-using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -18,7 +17,6 @@ using UnityEngine.Serialization;
 /// 연결 개설·자동 생산·테스트 UI를 직접 시작하지 않는 정식 Scene 어댑터다.
 /// </summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(NetworkManager))]
 public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IRandomConsumer
 {
     [SerializeField, Min(1), FormerlySerializedAs("initialEnemyLimit")]
@@ -39,7 +37,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     public SquadSelectionSettings SelectionSettings => selectionSettings;
     [SerializeField] private EncounterAdditionalSpawnSettings additionalSpawns = new EncounterAdditionalSpawnSettings();
 
-    private NetworkManager _networkManager;
+    private INetworkConnectionStatus _network;
     private EncounterPipeline _pipeline;
     private MatchId _boundMatchId;
     private Func<BattlefieldSpatialSnapshot> _snapshotProvider;
@@ -67,18 +65,15 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     public int UnattributedEnemyCount => _pipeline?.Executor != null ? _pipeline.Executor.SpawnedEnemyCount - ActiveEnemyCount : 0;
     /// <summary>명시 테스트 도구가 App의 연결 소유권을 침범하지 않도록 조회합니다.</summary>
     public bool IsAppNetworkOwned => _appOwnedNetwork;
-    public bool IsServer => _networkManager != null && _networkManager.IsServer;
-    public bool IsClient => _networkManager != null && _networkManager.IsClient;
-    public bool IsListening => _networkManager != null && _networkManager.IsListening;
+    public bool IsServer => _network != null && _network.IsServer;
+    public bool IsClient => _network != null && _network.IsClient;
+    public bool IsListening => _network != null && _network.IsListening;
 
     /// <summary>편성 선택에 사용할 Match 난수를 연결한다.</summary>
     public IDisposable BindRandom(IRandomStreams random)
     {
         return RandomBinding.Bind(random, "enemy/squad-selection", ref _squadRandom);
     }
-
-    /// <summary>현재 객체에 제작된 NetworkManager 참조만 읽습니다. 연결을 시작하지 않습니다.</summary>
-    private void Awake() => _networkManager = GetComponent<NetworkManager>();
 
     private void OnDisable() => CancelScheduledEncounters();
 
@@ -89,11 +84,24 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     /// <summary>
     /// Core 조립부가 연결 소유권을 명시합니다. 이 어댑터는 연결을 열거나 닫지 않습니다.
     /// </summary>
-    public void UseAppNetworkOwnership()
+    public void UseAppNetworkOwnership(INetworkConnectionStatus connection)
     {
-        if (_snapshotProvider != null && !_appOwnedNetwork)
+        if (connection == null) throw new ArgumentNullException(nameof(connection));
+        if (_snapshotProvider != null && (!_appOwnedNetwork || !ReferenceEquals(_network, connection)))
             throw new InvalidOperationException("Transfer connection ownership before binding a Match.");
+        _network = connection;
         _appOwnedNetwork = true;
+    }
+
+    /// <summary>조립부 또는 명시 시험 도구가 읽기 상태만 전달합니다. 연결의 생성·종료·Dispose는 하지 않습니다.</summary>
+    public void SetNetworkConnection(INetworkConnectionStatus connection)
+    {
+        if (connection == null) throw new ArgumentNullException(nameof(connection));
+        if (_snapshotProvider != null && !ReferenceEquals(_network, connection))
+            throw new InvalidOperationException("Unbind the Match before replacing its network connection.");
+        if (_appOwnedNetwork && !ReferenceEquals(_network, connection))
+            throw new InvalidOperationException("The App-owned connection cannot be replaced by a Scene or test tool.");
+        _network = connection;
     }
 
     /// <summary>
@@ -116,7 +124,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         _snapshotProvider = snapshotProvider;
         // 자동 Encounter는 Host 시스템 요청입니다. Client의 임의 적 생성 권한은 부여하지 않습니다.
         _requests = new EncounterRequestService(matchId, snapshotProvider,
-            () => _networkManager != null && _networkManager.IsServer,
+            () => IsServer,
             issuer => issuer == _authorityIssuer, this, environment: _environmentProvider,
             resolveOrigin: origin => _spawnSources?.Resolve(origin));
         _gameStartTime = Time.timeAsDouble;
@@ -166,9 +174,9 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     public bool CanRequestEncounter(out string reason)
     {
         if (!FieldCanAdvance) { reason = "필드 정지 중에는 새 Encounter를 실행하지 않습니다."; return false; }
-        if (_networkManager == null)
+        if (_network == null)
         {
-            reason = "NetworkManager가 없습니다.";
+            reason = "Core 네트워크 상태가 연결되지 않았습니다.";
             return false;
         }
 
@@ -179,7 +187,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         }
         EnsurePipeline();
 
-        if (!_networkManager.IsListening || !_networkManager.IsServer)
+        if (!IsListening || !IsServer)
         {
             reason = "Host/Server를 명시적으로 시작한 뒤 Encounter를 요청하세요.";
             return false;

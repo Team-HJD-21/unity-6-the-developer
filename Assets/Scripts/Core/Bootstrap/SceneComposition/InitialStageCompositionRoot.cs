@@ -235,7 +235,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     {
                         if (!(_encounterConsumer is IAppOwnedEncounterMatchConsumer managed))
                             throw new InvalidOperationException("Network Encounter consumer must support App connection ownership.");
-                        managed.UseAppNetworkOwnership();
+                        managed.UseAppNetworkOwnership(_networkBinding.ConnectionStatus);
                         managed.BindAuthorityMatch(matchId, localPlayerId, latest);
                     }
                     else _encounterConsumer.BindMatch(matchId, latest);

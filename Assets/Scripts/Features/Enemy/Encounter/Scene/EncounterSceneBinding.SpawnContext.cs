@@ -74,7 +74,7 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
         if (request == null) throw new ArgumentNullException(nameof(request));
         if (double.IsNaN(delayGameSeconds) || double.IsInfinity(delayGameSeconds) || delayGameSeconds < 0)
             throw new ArgumentOutOfRangeException(nameof(delayGameSeconds));
-        if (!isActiveAndEnabled || _spawnClock == null || _requests == null || _networkManager == null || !_networkManager.IsServer ||
+        if (!isActiveAndEnabled || _spawnClock == null || _requests == null || !IsServer ||
             request.Context.MatchId != _boundMatchId || request.Context.IssuerId != _authorityIssuer || _spawnGameplay.IsCancellationRequested) return false;
         if (_pendingSpawns.TryGetValue(request.Context.RequestId, out var previous))
         {
