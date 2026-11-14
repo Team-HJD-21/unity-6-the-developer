@@ -72,13 +72,7 @@ namespace TeamHJD.Game.Application
             if (_disposed || StageProgression != null) throw new InvalidOperationException("Configure Stage progression once.");
             StageProgression = new StageProgression(MatchId, run, fieldClock,
                 () => IsGameplayRunning && Recovery?.IsRecoveryPending != true, spawns);
-            StageProgression.Victory += CompleteStageVictory;
-        }
-        private void CompleteStageVictory()
-        {
-            // HP의 파괴 사실이 Update 관측보다 먼저 도착해도 이미 0인 CU의 패배를 승리가 추월하지 않습니다.
-            EvaluateProgress();
-            if (IsGameplayRunning) CompleteMatch(MatchOutcome.Victory);
+            // 진행/사망 사실만 제공합니다. 최종 승리 정책이 확정되기 전에는 자동으로 Match를 완료하지 않습니다.
         }
 
         /// <summary>모드/Stage 소유자가 확정한 승패를 한 번만 완료합니다. 비환급 기록은 쓰기 권한이 닫히기 전에 확정합니다.</summary>
@@ -150,7 +144,6 @@ namespace TeamHJD.Game.Application
         {
             if (_disposed) return;
             _disposed = true;
-            if (StageProgression != null) StageProgression.Victory -= CompleteStageVictory;
             if (_destructionEvents != null)
                 _destructionEvents.Destroyed -= EvaluateProgress;
             _session.Disposing -= Dispose;

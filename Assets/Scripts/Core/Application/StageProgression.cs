@@ -20,6 +20,7 @@ namespace TeamHJD.Game.Application
         private EntityId _first, _second, _final;
         private bool _firstDead, _secondDead, _finalDead;
         private string _pending;
+        /// <summary>등록된 최종 개체의 사망 알림입니다. 기존 API 이름이며 Coordinator의 자동 승리/결과 처리에는 연결하지 않습니다.</summary>
         public event Action Victory;
         public event Action<int> FieldBossDefeated;
         public StageProgressSnapshot Snapshot => new(_match, _run, _current, _highest, _first, _second, _final,

@@ -74,7 +74,7 @@ namespace TeamHJD.Game.Editor
                 EditorGUILayout.LabelField("점유 / 최고 도달", stage.CaptureRatio.ToString("P1") + " / " + stage.HighestCaptureRatio.ToString("P1"));
                 EditorGUILayout.LabelField("33% / 66% 생성", (stage.FirstFieldBoss.IsEmpty ? "미확인" : stage.FirstFieldBoss.Value) + " / " +
                     (stage.SecondFieldBoss.IsEmpty ? "미확인" : stage.SecondFieldBoss.Value));
-                EditorGUILayout.LabelField("최종 진입 조건", stage.CanEnterFinalBattle ? "준비됨 · 실제 Boss Scene 연결 필요" : "미충족");
+                EditorGUILayout.LabelField("최종 진입 API 조건", stage.CanEnterFinalBattle ? "충족 · 자동 이동 없음" : "미충족 · 자동 이동 없음");
                 if (stage.PendingReason != null) EditorGUILayout.HelpBox(stage.PendingReason switch
                 {
                     "FieldBossContentNotConnected" => "33%·66% Field 중간보스의 실제 생성 원본이 연결되지 않았습니다.",
@@ -84,13 +84,9 @@ namespace TeamHJD.Game.Editor
             }
             if (scene.FinalBossTransitionPending)
                 EditorGUILayout.HelpBox("최종 진입 준비 중 · 공용 시간/로컬 입력을 보류하고 실제 Scene·도착·연출 완료를 기다립니다.", MessageType.Info);
-            if (scene.FinalBattleEntryAttempts > 0)
-                EditorGUILayout.LabelField("최종 진입 시도", scene.FinalBattleEntryAttempts.ToString());
             if (scene.FinalBossTransitionError != null)
             {
                 EditorGUILayout.HelpBox(scene.FinalBossTransitionError, MessageType.Error);
-                using (new EditorGUI.DisabledScope(scene.FinalBattleFlowBusy || scene.FinalBossTransitionPending))
-                    if (GUILayout.Button("원인 해결 후 최종 Scene 진입 재시도")) scene.RetryFinalBattleScene();
             }
             if (scene.PendingStageCheckpoints.Count > 0)
             {

@@ -1,4 +1,4 @@
-// 100%·두 Field 생성 확인 뒤 Core가 실제 Boss Scene 전환을 한 번 시작하고 실패를 정리합니다.
+// 정책 소유자가 명시적으로 요청한 Boss Scene 준비와 실패 원복을 조율하는 연결 API입니다.
 // 콘텐츠 준비는 지정 driver가 맡고 Core는 현재 Match/도착 명단/실제 Scene 개체·사망 원본을 확인합니다.
 using System;
 using System.Collections.Generic;
@@ -20,8 +20,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private MonoBehaviour _finalBattleSceneDriver;
         [SerializeField, Min(1)] private float _finalBattlePreparationTimeout = 120;
         private Task _finalBattleFlow;
-        private Guid _finalBattleAttemptEpoch;
-        private bool _finalBattleAttempted;
         private FinalSceneOperation _finalSceneOperation;
         // 비동기 완료가 늦게 도착해도 다음 Match의 필드/객체 목록을 정리하지 않도록 시도별 실제 참조를 보존합니다.
         private sealed class FinalSceneOperation
@@ -35,34 +33,23 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
         public IReadOnlyDictionary<PlayerId, GameObject> AuthorityActors => _playerActors?.Actors;
         public bool FinalBattleFlowBusy => _finalBattleFlow != null && !_finalBattleFlow.IsCompleted;
-        /// <summary>현재 Match의 읽기 진단입니다. 미연결·저장 거부를 포함한 자동 진입 시도 횟수이며 월드 저장 원본은 아닙니다.</summary>
-        public long FinalBattleEntryAttempts { get; private set; }
         private bool AllowsFieldCheckpointWorld => _finalSceneOperation?.TransactionStarted != true && _finalBossTransition?.IsPrepared != true;
 
-        private void PumpFinalBattleScene()
+        /// <summary>실제 진행 정책이 정해진 뒤 Host 소유자가 호출할 연결 API입니다. Update/점유 변경은 자동 호출하지 않습니다.</summary>
+        /// <remarks>실제 저장·Scene·도착·보스·연출을 기다립니다. 호출자는 Task 실패를 처리해야 하며 재호출도 명시적으로 결정합니다.</remarks>
+        public Task EnterFinalBattleSceneAsync(MatchId match, CancellationToken cancellation = default)
         {
-            if (!HasCurrentMatch || _matchTime == null || _coordinator?.IsGameplayRunning != true) return;
-            var epoch = _matchTime.Clock.Snapshot.Epoch;
-            if (_finalBattleAttemptEpoch != epoch) { _finalBattleAttemptEpoch = epoch; _finalBattleAttempted = false; }
-            if (_coordinator.StageProgression?.Snapshot.CanEnterFinalBattle != true)
-            {
-                if (!FinalBattleFlowBusy && !FinalBossTransitionPending) _finalBattleAttempted = false;
-                return;
-            }
-            if (_finalBattleAttempted || FinalBattleFlowBusy || FinalBossTransitionPending || !CanPrepareFinalBattle()) return;
-            _finalBattleAttempted = true;
-            FinalBattleEntryAttempts = checked(FinalBattleEntryAttempts + 1);
-            _finalBattleFlow = RunFinalBattleSceneAsync();
+            cancellation.ThrowIfCancellationRequested();
+            if (match != _ownedMatchId || !CanPrepareFinalBattle())
+                throw new InvalidOperationException("현재 Host의 준비된 Stage에서만 명시적으로 요청할 수 있습니다.");
+            if (FinalBattleFlowBusy || FinalBossTransitionPending)
+                throw new InvalidOperationException("최종 Scene 준비가 이미 진행 중입니다.");
+            FinalBossTransitionError = null;
+            _finalBattleFlow = RunFinalBattleSceneAsync(cancellation);
+            return _finalBattleFlow;
         }
 
-        /// <summary>원인/제작 설정을 해결한 UI가 호출합니다. 새 전환 범위로 다음 Update에서 재시도하며 사건/안전장치를 소비하지 않습니다.</summary>
-        public void RetryFinalBattleScene()
-        {
-            if (!HasCurrentMatch || FinalBattleFlowBusy || FinalBossTransitionPending) return;
-            FinalBossTransitionError = null; _finalBattleAttempted = false;
-        }
-
-        private async Task RunFinalBattleSceneAsync()
+        private async Task RunFinalBattleSceneAsync(CancellationToken cancellation)
         {
             var app = _matchHost as AppRoot;
             var match = _ownedMatchId;
@@ -70,12 +57,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 if (app == null || _finalBattleSceneDriver == null || !_finalBattleSceneDriver.isActiveAndEnabled ||
                     _finalBattleSceneDriver.gameObject.scene != gameObject.scene || !(_finalBattleSceneDriver is IFinalBattleSceneDriver driver))
-                { FinalBossTransitionError = "실제 IFinalBattleSceneDriver가 지정되지 않았습니다."; return; }
+                    throw new InvalidOperationException("실제 IFinalBattleSceneDriver가 지정되지 않았습니다.");
                 string path = driver.ScenePath;
                 if (path == gameObject.scene.path || !app.Services.SceneFlow.CanLoad(path))
-                { FinalBossTransitionError = "실제 Boss Scene 경로를 Build Settings에 등록해야 합니다."; return; }
+                    throw new InvalidOperationException("실제 Boss Scene 경로를 Build Settings에 등록해야 합니다.");
                 if (_finalSceneOperation != null) await ReleaseFinalBattleSceneAsync(_finalSceneOperation);
-                using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(Math.Max(1, _finalBattlePreparationTimeout)));
+                using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+                deadline.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, _finalBattlePreparationTimeout)));
                 using var transition = await PrepareFinalBossTransitionAsync(match, deadline.Token);
                 var operation = new FinalSceneOperation { App = app, Driver = driver, OwnsScene = !app.Services.SceneFlow.IsLoaded(path), TransactionStarted = true };
                 foreach (var actor in AuthorityActors.Values) operation.Actors.Add(new FinalBattleActorSnapshot(actor));
@@ -116,6 +104,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             catch (Exception error)
             {
                 if (this != null && HasCurrentMatch && _ownedMatchId == match) FinalBossTransitionError = error.Message;
+                throw;
             }
         }
 
@@ -147,7 +136,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (!FinalBattleFlowBusy) _finalBossTransition?.Dispose();
             else _finalBossTransition?.CancelPreparation();
-            if (FinalBattleFlowBusy) await _finalBattleFlow;
+            if (FinalBattleFlowBusy)
+                try { await _finalBattleFlow; }
+                catch (OperationCanceledException) { /* 복귀가 취소한 준비의 원복은 위 Task에서 완료합니다. */ }
             if (_finalSceneOperation != null) await ReleaseFinalBattleSceneAsync(_finalSceneOperation);
         }
 
@@ -167,8 +158,6 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             var operation = _finalSceneOperation;
             _finalSceneOperation = null;
-            _finalBattleAttemptEpoch = Guid.Empty; _finalBattleAttempted = false;
-            FinalBattleEntryAttempts = 0;
             if (operation == null) return;
             var errors = new List<Exception>();
             RunCleanup(operation.Driver.StopMatch, errors);

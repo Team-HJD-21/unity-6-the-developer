@@ -1,6 +1,6 @@
 # The Developer 문서 안내
 
-**11/13–14 Encounter/Stage1 로컬 구현:** [현재 Core 실행 지도](02_architecture/01_core/core-runtime-map.md)에서 실제 진입·원본·운영 흐름을, [통합 기록](01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)에서 기능별 검증과 미연결 범위를 확인한다. 지정 Field 사건 생성 서비스와 저장 선행 경계는 구현했으나, 확정 보스 제작값·Weather 전체 writer·최종 Scene 전환·실제 원격 Player 인수는 남아 있다. 이 로컬 결과를 main 반영이나 Stage1 전체 완료로 해석하지 않는다.
+**11/13–14 Encounter/Stage1 로컬 구현:** [현재 Core 실행 지도](02_architecture/01_core/core-runtime-map.md)와 [통합 기록](01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 확인한다. [11/14 범위 정정](01_planning/02_implementation-records/2026/11/2026-11-14-explicit-stage-transition-scope.md)에 따라 자동 최종 진입·승리·결과 저장 연결은 제외하고 명시 API만 유지한다. 실제 보스전/결과 설계·확정 콘텐츠·Weather 필수 writer·원격 Player 인수는 남아 있다. 전체 Stage1 완료나 main 반영으로 해석하지 않는다.
 
 **Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료다. 11/13 로컬 작업에는 Unity 기본 오디오를 사용하는 [GameAudioManager·믹서·설정과 연결 방법](02_architecture/01_core/game-audio-api.md)이 추가됐다. main 반영 여부, 실제 Scene 연결과 실행 검증 범위를 구분한다.
 

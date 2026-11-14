@@ -1,4 +1,4 @@
-// 점유 임계값의 실제 생성 확인·중복 방지·최종 승리·월드 복원 경계를 검사합니다.
+// 점유 임계값의 생성 확인·중복 방지·사망 사실과 명시 완료·월드 복원 경계를 검사합니다.
 // 시험용 spawn port이며 실제 Boss 콘텐츠/Scene 인수를 대신하지 않습니다.
 using System;
 using System.Collections.Generic;
@@ -115,7 +115,7 @@ namespace TeamHJD.Game.Tests.EditMode
         }
 
         [Test]
-        public void FinalDeathCannotOvertakeAnAlreadyDestroyedControlUnitBeforeItsUpdateObservation()
+        public void FinalEnemyDeathRemainsAFactUntilExplicitPolicyCompletesMatch()
         {
             foreach (bool destroyed in new[] { false, true })
             {
@@ -136,6 +136,17 @@ namespace TeamHJD.Game.Tests.EditMode
                 if (destroyed) cu.CurrentHealth = 0;
                 stage.ObserveEnemyDeath(final);
                 stage.ObserveEnemyDeath(final);
+                Assert.That(stage.Snapshot.FinalBossDefeated, Is.True);
+                Assert.That(session.Completion, Is.Null);
+                Assert.That(completions, Is.EqualTo(0));
+                coordinator.EvaluateProgress();
+                if (!destroyed)
+                {
+                    Assert.That(session.IsGameplayRunning, Is.True);
+                    Assert.That(session.Completion, Is.Null);
+                    // 실제 정책 소유자가 정해졌을 때 사용할 명시 완료 API는 유지합니다.
+                    coordinator.CompleteMatch(MatchOutcome.Victory);
+                }
                 Assert.That(session.Completion.Result.Outcome, Is.EqualTo(destroyed ? MatchOutcome.Defeat : MatchOutcome.Victory));
                 Assert.That(completions, Is.EqualTo(1));
             }

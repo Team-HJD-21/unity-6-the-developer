@@ -1,5 +1,5 @@
 // 스토리 Match의 실제 CU 파괴를 패배로 판단하고 불변 결과를 만듭니다.
-// 보스 진행의 승리 확정은 StageProgression·MatchCoordinator가 전달하며 여기서는 결과와 보상 형식을 만듭니다.
+// 명시적으로 확정된 승패의 결과/보상 형식을 제공하며 보스 사망을 자동 승리로 판정하지 않습니다.
 using System;
 
 namespace TeamHJD.Game.Domain
