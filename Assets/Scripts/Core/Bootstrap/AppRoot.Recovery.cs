@@ -16,14 +16,19 @@ namespace TeamHJD.Game.Bootstrap
         private string _recoveryScene;
         private CheckpointSlot _recoveryCheckpoint;
         private Guid _recoveryCheckpointId;
-        private bool _retryingRecovery;
+        private Guid _recoveryAttempt;
+        /// <summary>현재 복귀 시도의 기술 오류입니다. 사용자 화면은 짧게 안내하고 원문은 진단/인계에 사용합니다.</summary>
         public string LastMissionRecoveryError { get; private set; }
-        public bool CanRetryMissionRecovery => !_retryingRecovery && _activeMission == null &&
-            !string.IsNullOrEmpty(_recoveryScene) && _expectedRecoveryFailure != Guid.Empty;
+        /// <summary>같은 실패를 재시도할 수 있는지 표시합니다. 실제 저장 유효성은 실행할 때 다시 검사합니다.</summary>
+        public bool CanRetryMissionRecovery => _recoveryAttempt == Guid.Empty &&
+            (_activeMission != null
+                ? !_activeMission.IsRecovering && _activeMission.Recovery?.IsRecoveryPending == true
+                : !string.IsNullOrEmpty(_recoveryScene) && _expectedRecoveryFailure != Guid.Empty);
 
         internal void PrepareMissionEntry(MissionEntryKind entry)
         {
             _missionEntry = entry;
+            if (entry != MissionEntryKind.Retry) _recoveryAttempt = Guid.Empty;
             if (entry == MissionEntryKind.NewMission)
             {
                 _expectedMissionRun = Guid.Empty; _expectedRecoveryFailure = Guid.Empty;
@@ -70,7 +75,8 @@ namespace TeamHJD.Game.Bootstrap
             if (run == Guid.Empty || failure == Guid.Empty) throw new ArgumentException("Retry only an identified failure.");
             _expectedMissionRun = run; _expectedRecoveryFailure = failure; _recoveryScene = scene;
             PrepareMissionEntry(MissionEntryKind.Retry);
-            _retryingRecovery = true; LastMissionRecoveryError = null;
+            Guid attempt = _recoveryAttempt = Guid.NewGuid();
+            LastMissionRecoveryError = null;
             CheckpointArrival arrival = null;
             using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
             lifetime.CancelAfter(TimeSpan.FromSeconds(30));
@@ -81,6 +87,8 @@ namespace TeamHJD.Game.Bootstrap
                 {
                     if (_checkpointArrival != null) throw new InvalidOperationException("Another checkpoint arrival is still active.");
                     var data = await ReadCheckpointAsync(_recoveryCheckpoint, lifetime.Token);
+                    if (_recoveryAttempt != attempt || _expectedMissionRun != run || _expectedRecoveryFailure != failure)
+                        throw new OperationCanceledException("A newer Mission entry superseded this recovery.");
                     if (data == null || data.CheckpointId != _recoveryCheckpointId)
                         throw new InvalidOperationException("The committed safety checkpoint is missing or was replaced.");
                     arrival = new CheckpointArrival(data, scene, CheckpointRestorePolicy.Default, lifetime.Token);
@@ -97,18 +105,29 @@ namespace TeamHJD.Game.Bootstrap
                     throw new InvalidOperationException("The replacement Mission did not complete its recovery arrival.");
                 CompleteMissionRecovery();
             }
-            catch (Exception error) { LastMissionRecoveryError = error.Message; throw; }
+            catch (Exception error)
+            {
+                // 이전 IO가 늦게 실패해도 그 사이 시작한 새 Mission의 UI를 덮지 않습니다.
+                ReportMissionRecoveryError(failure, error);
+                throw;
+            }
             finally
             {
                 if (arrival != null && ReferenceEquals(_checkpointArrival, arrival)) _checkpointArrival = null;
-                _retryingRecovery = false;
+                if (_recoveryAttempt == attempt) _recoveryAttempt = Guid.Empty;
             }
         }
-        /// <summary>실패 UI/Debugger가 Scene 조립 실패 후 사용합니다. 이미 지출한 같은 실패를 재시도하며 새 실행을 만들지 않습니다.</summary>
-        public Task RetryPendingMissionRecoveryAsync()
+        /// <summary>실패 UI/Debugger의 공통 진입점입니다. Scene이 살아 있거나 닫혔어도 같은 실패를 추가 차감 없이 재시도합니다.</summary>
+        public async Task RetryPendingMissionRecoveryAsync()
         {
             if (!CanRetryMissionRecovery) throw new InvalidOperationException("No failed Mission recovery arrival can be retried.");
-            return RetryMissionForRecoveryAsync(_recoveryScene, _expectedMissionRun, _expectedRecoveryFailure);
+            if (_activeMission != null)
+            {
+                await _activeMission.RetryRecoveryAsync();
+                if (LastMissionRecoveryError != null)
+                    throw new InvalidOperationException(LastMissionRecoveryError);
+            }
+            else await RetryMissionForRecoveryAsync(_recoveryScene, _expectedMissionRun, _expectedRecoveryFailure);
         }
         private Exception FlushMissionGrowthBeforeEnd()
         {

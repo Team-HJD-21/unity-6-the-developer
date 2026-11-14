@@ -21,6 +21,8 @@ namespace TeamHJD.Game.Presentation
         private readonly Func<string> _travelRestriction;
         private readonly Func<bool> _isGameFlowTransitioning;
         private readonly Func<bool> _canReturnToHub;
+        private readonly Func<string> _recoveryError;
+        private readonly Func<Task> _retryRecovery;
         private readonly Dictionary<long, IScreenPresenter> _views = new();
         private readonly AppScreenCanvasView _canvas;
         private readonly AppScreenStyle _style;
@@ -36,7 +38,8 @@ namespace TeamHJD.Game.Presentation
 
         public AppScreenPresenter(Transform parent, ScreenManager screens, SceneFlowController scenes,
             Func<string, Task> replace, Func<string> travelRestriction, Func<bool> isGameFlowTransitioning = null,
-            UiDisplaySettings display = null, Func<bool> canReturnToHub = null, AlertService alerts = null, GameAudioSettings audio = null)
+            UiDisplaySettings display = null, Func<bool> canReturnToHub = null, AlertService alerts = null, GameAudioSettings audio = null,
+            Func<string> recoveryError = null, Func<Task> retryRecovery = null)
         {
             _screens = screens ?? throw new ArgumentNullException(nameof(screens));
             _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
@@ -44,6 +47,8 @@ namespace TeamHJD.Game.Presentation
             _travelRestriction = travelRestriction ?? throw new ArgumentNullException(nameof(travelRestriction));
             _isGameFlowTransitioning = isGameFlowTransitioning ?? (() => false);
             _canReturnToHub = canReturnToHub ?? (() => true);
+            _recoveryError = recoveryError;
+            _retryRecovery = retryRecovery;
             _display = display ?? new UiDisplaySettings();
             _audio = audio ?? new GameAudioSettings();
             _style = Resources.Load<AppScreenStyle>("Core/AppScreenStyle");
@@ -81,6 +86,9 @@ namespace TeamHJD.Game.Presentation
         public void Render()
         {
             if (_disposed) return;
+            // 빌드에서도 기술 실패를 재시도할 수 있게 기존 메뉴를 엽니다. 별도 전투 결과/새 게임으로 바꾸지 않습니다.
+            if (HasRecoveryFailure && !_actionPending && !_scenes.IsTransitioning && !_isGameFlowTransitioning() && _screens.Top == null)
+                _screens.ShowMenu();
             if (!_sceneFade.IsVisible && (_scenes.IsTransitioning || _isGameFlowTransitioning() || _actionPending))
             {
                 if (_loadingId == 0) _loadingId = _screens.ShowLoading().Id;
@@ -92,7 +100,7 @@ namespace TeamHJD.Game.Presentation
             if (!_sceneFade.IsVisible && UIEscapeInput.WasPressedThisFrame)
             {
                 if (_screens.Top == null) _screens.ShowMenu();
-                else _screens.Back();
+                else if (_screens.Top.Kind != ScreenKind.Menu || !HasRecoveryFailure) _screens.Back();
             }
             foreach (var view in _views.Values)
             {
@@ -101,7 +109,7 @@ namespace TeamHJD.Game.Presentation
             }
             // 개인 메뉴/설정의 결과는 읽게 두고, Scene 전환/결과 화면에는 묵은 알림을 남기지 않습니다.
             bool covered = _sceneFade.IsVisible || _scenes.IsTransitioning || _isGameFlowTransitioning() || _actionPending ||
-                _screens.Top?.Kind == ScreenKind.Loading || _screens.Top?.Kind == ScreenKind.MatchResult;
+                _screens.Top?.Kind == ScreenKind.Loading || _screens.Top?.Kind == ScreenKind.MatchResult || HasRecoveryFailure;
             _alerts.Tick(Time.unscaledTimeAsDouble, _canvas.Alerts.DisplaySeconds, covered);
             _canvas.Alerts.Render(_alerts);
             _sceneFade.KeepOnTop();
@@ -130,6 +138,27 @@ namespace TeamHJD.Game.Presentation
                 { long loading = _loadingId; _loadingId = 0; _screens.Close(loading); }
             }
         }
+
+        private bool HasRecoveryFailure => !string.IsNullOrEmpty(_recoveryError?.Invoke());
+
+        private async void RetryRecovery(long menuId)
+        {
+            if (_disposed || _actionPending || _retryRecovery == null) return;
+            _actionFailure = null;
+            _actionPending = true;
+            try
+            {
+                await _retryRecovery();
+                if (!_disposed && !HasRecoveryFailure) _screens.Close(menuId);
+            }
+            catch (Exception)
+            {
+                // 원본 예외는 App/Scene이 보존합니다. 메뉴에는 짧은 안내만 표시합니다.
+                if (!_disposed && HasRecoveryFailure)
+                    _actionFailure = "복귀하지 못했습니다. 저장 파일을 확인한 뒤 다시 시도해 주세요.";
+            }
+            finally { _actionPending = false; }
+        }
         public void Dispose()
         {
             if (_disposed) return; _disposed = true;
@@ -146,6 +175,8 @@ namespace TeamHJD.Game.Presentation
             private readonly AppPanelView _view;
             private GameObject _previousSelection;
             private GameObject _lastSelection;
+            private readonly string _menuTitle, _menuPrimary;
+            private readonly TMPro.TMP_Text _primaryLabel;
             private bool _disposed;
             public View(AppScreenPresenter owner, ScreenState state)
             {
@@ -154,8 +185,11 @@ namespace TeamHJD.Game.Presentation
                 bool menu = state.Kind == ScreenKind.Menu;
                 _view = UnityEngine.Object.Instantiate(menu ? owner._style.MenuPrefab : owner._style.ResultPrefab, owner._canvas.Screens, false);
                 _view.name = "Screen:" + state.Kind;
+                _primaryLabel = _view.Primary.GetComponentInChildren<TMPro.TMP_Text>(true);
                 if (menu)
                 {
+                    _menuTitle = _view.Title.text;
+                    _menuPrimary = _primaryLabel.text;
                     _view.Primary.onClick.AddListener(Resume);
                     _view.Settings.onClick.AddListener(Settings);
                     _view.Secondary.onClick.AddListener(ReturnToHub);
@@ -167,7 +201,11 @@ namespace TeamHJD.Game.Presentation
                 }
                 Refresh();
             }
-            private void Resume() => _owner._screens.Close(_state.Id);
+            private void Resume()
+            {
+                if (_owner.HasRecoveryFailure) _owner.RetryRecovery(_state.Id);
+                else _owner._screens.Close(_state.Id);
+            }
             private void Settings() => _owner._screens.ShowSettings();
             private void Restart() => _owner.Travel(StageScene);
             private void ReturnToHub() => _owner.Travel(HubScene);
@@ -177,9 +215,13 @@ namespace TeamHJD.Game.Presentation
                 string restriction = _owner._travelRestriction();
                 if (_state.Kind == ScreenKind.Menu)
                 {
+                    bool recovering = _owner.HasRecoveryFailure;
+                    _view.Title.text = recovering ? "복귀 오류" : _menuTitle;
+                    _primaryLabel.text = recovering ? "같은 복귀 재시도" : _menuPrimary;
+                    _view.Primary.interactable = !_owner._actionPending && (!recovering || _owner._retryRecovery != null);
                     _view.SetSecondaryVisible(_owner._canReturnToHub());
                     _view.Secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
-                    _view.Status.text = _owner._actionFailure ?? "";
+                    _view.Status.text = _owner._actionFailure ?? (recovering ? "복귀하지 못했습니다.\n재시도 시 안전장치 추가 차감 없음" : "");
                     _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);
                     return;
                 }

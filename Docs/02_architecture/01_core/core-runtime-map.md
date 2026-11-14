@@ -12,6 +12,7 @@
 |4|`InitialStageCompositionRoot.ComposeAuthority`|실제 CU/터렛·PlayerStart·환경·Enemy 참조를 검사하고 아래 Application 객체를 순서대로 연결한다.|
 |5|`MatchSession`/`MatchCoordinator`|Session은 판의 수명/자료를, Coordinator는 운영을 맡는다. 두 개의 GameManager를 두는 구조가 아니다.|
 |6|`InitialStageCompositionRoot.Update`|시각/예약→성장 저장→CU 패배→구조 실패→Stage 진행→위치·점유 표본을 진행한다. 복원 중에는 일반 표본을 멈춘다.|
+|7|`AppRoot.RetryPendingMissionRecoveryAsync` / `AppScreenPresenter`|기술 실패 메뉴에서 같은 복귀를 재시도한다. App이 Scene 수명을 골라 연결하며 실제 허브 귀환 성공 후 오류 표시를 닫는다.|
 
 `AppRoot`는 App 서비스와 Scene 교체를 소유한다. `InitialStageCompositionRoot`는 해당 Scene의 실제 객체를 연결하고 해제한다. 실제 공격/이동/HP를 이 두 클래스 안에 복제하지 않는다.
 

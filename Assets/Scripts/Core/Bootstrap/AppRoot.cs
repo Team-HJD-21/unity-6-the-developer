@@ -211,9 +211,10 @@ namespace TeamHJD.Game.Bootstrap
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
                     NavigateFromScreenAsync, GetSceneTravelRestriction,
                     () => GameFlow?.IsTransitioning == true, DisplaySettings,
-                    () => GameFlow == null ? !CurrentMatchId.IsEmpty :
+                    () => GameFlow == null ? !CurrentMatchId.IsEmpty || LastMissionRecoveryError != null :
                         GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted,
-                    Services.Alerts, AudioSettings);
+                    Services.Alerts, AudioSettings,
+                    () => LastMissionRecoveryError, RetryPendingMissionRecoveryAsync);
         }
 
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
@@ -482,10 +483,12 @@ namespace TeamHJD.Game.Bootstrap
         private Task NavigateFromScreenAsync(string scenePath)
         {
             if (GameFlow == null)
-                return ReplaceGameplaySceneAsync(scenePath);
+                return scenePath == AppScreenPresenter.HubScene
+                    ? ReturnToHubFromScreenAsync()
+                    : ReplaceGameplaySceneAsync(scenePath);
             if (scenePath == GameFlow.Routes.SpaceshipScene &&
                 (GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted))
-                return GameFlow.ReturnToSpaceshipAsync();
+                return ReturnToHubFromScreenAsync();
             if (scenePath == GameFlow.Routes.MainMenuScene)
                 return GameFlow.OpenMainMenuAsync();
             if (scenePath == AppScreenPresenter.StageScene)
@@ -496,6 +499,14 @@ namespace TeamHJD.Game.Bootstrap
                     return GameFlow.LaunchMissionAsync(scenePath);
             }
             throw new InvalidOperationException("Use the configured game-flow action for this screen.");
+        }
+
+        private async Task ReturnToHubFromScreenAsync()
+        {
+            if (GameFlow != null) await GameFlow.ReturnToSpaceshipAsync();
+            else await ReplaceGameplaySceneAsync(AppScreenPresenter.HubScene);
+            // 허브 도착에 성공한 명시 귀환만 이전 복귀 오류를 닫습니다. 실패한 이동은 재시도 의도를 보존합니다.
+            CompleteMissionRecovery();
         }
 
         private async void InitializePlatform()

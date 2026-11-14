@@ -288,3 +288,18 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 첫45초 관측은 늦은 소스 컴파일/domain reload로 중단됐다. MatchState/Snapshot 주석·줄바꿈 수정 뒤 import가 완료되기 전에 시작한 것이 잘못이었다. 로그의 Begin MonoManager ReloadAssembly 뒤 PlayerBomb.Update35의 _charges null과 중단 시 NGO 정리 예외가 있었다. b9c-reload-before-error.log / b9c-interrupted-console.json에 call stack을 보존했다. Player를 임의 null-check하지 않고 Edit Mode import·새 계약/실행 assembly 반영·컴파일 정상 확인 후 깨끗한 새 Play에서 위 결과를 얻었다. 정상 재실행/종료에서 재현되지 않았으므로 첫 결과를 제품 수정 완료 증거로 삼지 않는다.
 - 새 API 첫 컴파일에서 UnityEngine.EntityId/Domain.EntityId 이름 충돌이 나 명시 alias로 수정했다. 이 컴파일 실패도 최종 통과와 구분한다. 현재 컴파일 정상과 실제 실행 결과는 별도로 기록한다.
 - Core 실행 지도 신규 링크1개를08_encounter 위치로 정정했다. 팀원별 인계는 예정/구현 혼재 본문을 현재 수정 파일·이유·남은 접합 중심으로 다시 썼고 이전 초안은 ignored 실행 폴더에 보존했다.
+
+
+## B6d — 빌드용 복귀 실패 메뉴와 늦은 IO 경계 (2026-11-14)
+
+- 코드 조사에서 같은 복귀 재시도의 실제 호출부가 Game Debugger에만 있음을 확인했다. 기존 AppScreenPresenter/MenuPrefab의 제목·주 버튼·Status만 재사용해 기술 실패 때 자동으로 메뉴를 연다. 기존 폰트/레이아웃/설정/허브 버튼을 쓰고 새 UI 에셋/별도 HUD를 만들지 않았다. 메뉴의 Esc 닫기로 정지된 전장만 남기지 않으며 실제 재시도 동안 입력/로딩을 기존 수명에 맡긴다.
+- 외부 UI는 AppRoot.CanRetryMissionRecovery + RetryPendingMissionRecoveryAsync만 사용하면 된다. App이 살아있는 Scene의 실제 Restore와 Scene 종료 뒤 재입장을 선택한다. 같은 실패/실행/slot/CheckpointId를 유지하고 누락 저장을 새 전장으로 바꾸지 않는다. 직접 Stage 실행은 GameFlow가 없을 수 있어 기존 허브 귀환도 같은 성공 후 오류 닫힘 경계로 연결했다.
+- 자동 MissionEntry4/4·MatchRecovery11/11 통과. 실제 Direct Stage_1과 Startup→메인→허브의 실제 출구→Stage_1 두 경로에서 기존 메뉴 Button.onClick을 확인했다. Scene 생존/해제 뒤 재시도 모두 사용1/1/1·같은 실행·정지/누락 저장 거부를 유지하고, 실제 허브 도착 뒤 오류/메뉴가 닫혔다. Startup 경로 최종 Player1/Camera1이다. b6d-recovery-menu-fixed-result.json / b6d-startup-recovery-menu-result.json. 실제 OS 마우스 입력이나 전체 Weather 복원 인수는 아니다.
+- b6d-recovery-menu-fixed.png를 직접 보며 기존 메뉴 외형/문구/두 줄 안내가 표시되는 것을 확인했다. 세 문구의 font/fallback glyph 누락0이다. 처음 캡처는 메뉴 fade가 끝나기 전이어서 UI 검증 자료로 쓰지 않았다.
+- 첫 관측 스크립트가 GameFlow 없는 직접 Scene을 가정하지 못해 null 예외로 중단했고, 그 중단이 진행 중 Scene travel을 취소해 Host stopped 로그1개를 만들었다. 제품 오류로 덮어쓰지 않고 원본을 남겼다. 수정한 관측은 공개 Scene/오류 상태를 사용하며 보이지 않거나 비활성인 허브 버튼을 억지 호출하지 않는다. 추가 관측 스크립트의 internal Services 접근1회도 실행 전 컴파일 거절이므로 게임 컴파일 실패와 구분한다.
+- 별도 실제 BinaryCheckpointStore 검수에서 IO gate로 읽기를 잠깐 보류한 사이 NewMission 의도를 시작했다. 변경 전에는 늦은 실패가 새 LastMissionRecoveryError를 덮었다(actuallyPendingtrue/staleIgnoredfalse). App catch도 기존 실패ID 검증을 재사용하게 수정한 뒤 같은 순서에서 staleIgnoredtrue/LastErrornull/CanRetryfalse를 확인했다. 파일/새 게임/보스 콘텐츠를 생성하지 않았다. b6d-stale-recovery-before.json / b6d-stale-recovery-after.json.
+- 누락 저장을 의도적으로 주입한 실행의 Error 로그2개씩은 예상된 거부 증거이며 오류0이라고 쓰지 않는다. Console ErrorPause만 시험 중 잠깐 끄고 원래 값으로 복원했으며 설정/Scene을 저장하지 않았다. 전체 Weather writer·실제 보스 콘텐츠·실제 원격 Player 인수 대기는 그대로다.
+
+- B6d 최종 보완: 재시도 시도 ID를 두어 새 Mission 의도가 시작되면 이전 읽기를 Scene 이동 전에 OperationCanceledException으로 중단한다. 이전 finally도 새 시도의 실행 잠금을 해제하지 않는다. 이전 UI도 현재 복귀 오류가 없으면 실패 안내를 새 화면에 쓰지 않는다. 실제 BinaryCheckpointStore 재검수에서 pendingtrue/cancelledtrue/staleIgnoredtrue/LastErrornull을 확인했다(b6d-stale-recovery-owner-after.json).
+- 자동 회귀 MissionRecoveryEntryTests2/2는 이전 IO의 Scene/오류 침범 차단, 이전 완료 뒤 새 작업이 계속 pending·재시도 불가인 상태, 최신 작업의 실제 누락 오류/재시도 재개를 검증한다. 저장 쓰기와 Scene 이동이 발생하면 실패한다. 기존 규칙15개와 합쳐 이번 관련 검사는17개이며 앞선 배치 수를 중복 합산하지 않는다.
+- 최종 현재 소스의 직접 Stage 메뉴도 b6d-final-menu-result.json에서 사용1/1/1·같은실행·정지/누락거부·허브/오류닫힘을 다시 확인했다. Stage 열기 RPC1회는5초 응답 timeout이었으나 새 관측의 실제 Stage Root 준비와 최종 결과로 실제 로드를 확인했다. 같은 OpenScene을 중복 실행하지 않았다. CLI 세션89199는 완료 exit0을 확인했다. 이 응답 timeout은 제품 기능 통과와 별도로 남긴다.
