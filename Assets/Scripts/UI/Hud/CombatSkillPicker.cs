@@ -113,8 +113,9 @@ public sealed class CombatSkillPicker : MonoBehaviour
         Vector2 p = Local(GameInput.PointerPosition);
         bool near = p.y < -CanvasRect.rect.height * .5f + Mathf.Max(80, 130 * scale) && Mathf.Abs(p.x) < Mathf.Max(150, 255 * scale);
         bool overPicker = p.y < -CanvasRect.rect.height * .5f + 375 * scale && Mathf.Abs(p.x) < 370 * scale;
+        if (Hud.Owner.IsSelectingTurret) _rearm = true;
         if (!near) _rearm = false;
-        if (!_open && !IsOpen && !_rearm && near && Hud.Owner.CanPrepare) Hud.Open();
+        if (!_open && !IsOpen && !_rearm && near && Hud.Owner.CanPrepare && !Hud.Owner.IsSelectingTurret) Hud.Open();
         if (IsOpen && UIEscapeInput.TryConsume()) { Close(); return; }
         if (IsOpen && !Hud.Owner.CanPrepare) Close();
         if (_drag)

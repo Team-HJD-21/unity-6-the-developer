@@ -1,5 +1,7 @@
 # 플레이어 무기별 스프라이트·이펙트 API
 
+2026-11-14 해안 이동 제한: `PlayerMovement`는 현재 Scene의 설치 판정용 육지 Tilemap을 캐싱하고 `PlayerGroundMovement`로 다음 물리 이동을 제한한다. 활성 발 콜라이더의 영역 전체가 육지에 남도록 걷기와 대시의 경로를 셀보다 짧게 나누어 검사하며, 끝점이 육지여도 중간의 물 셀을 건너뛸 수 없다. 대각 이동이 막히면 육지인 축을 따라 이동할 수 있다. `PlayerControlState.IsInSpaceship`인 허브 이동과 육지 Tilemap이 없는 독립 시험 Scene은 기존 이동을 유지한다. Scene 전환 시 지면 참조를 다시 찾는다. 설치형 스킬은 기존 `PlayerTurretPlacementRules.IsOnGround`의 바닥 영역 검사를 공유한다. 아직 구현하지 않은 포털 이동이나 외부 강제 좌표 변경을 이 속도 제한이 검증하는 것은 아니다.
+
 2026-11-12 자유 조준 표시: 현재 Player는 기존 `space man` 시트에서 파생한 옆모습 5프레임을 좌우 반전한 몸체와 마우스를 따라 연속 회전하는 별도 무기를 사용한다. `PlayerSpriteMotion.SpaceMan`은 기존 Animator의 행동 타이밍을 유지하고 표시 Sprite만 교체한다. 원본·설정·총구 연결과 검증 범위는 [몸체·무기 분리 API](player-weapon-appearance-api.md#2026-11-12-space-man-몸체와-자유-조준)를 따른다. 아래 V2 8방향 자세 설명은 기존 표시 방식의 기록이다.
 
 2026-11-12 일반 이동 표시: `Player.prefab`의 Rigidbody2D Interpolate를 활성화했다. `PlayerMovement.FixedUpdate`는 기존 `linearVelocity` 적용을 유지한다. 물리 위치 갱신 사이의 렌더 위치를 보간해 카메라가 추적하는 Player 표시의 계단 현상을 줄인다. 이동 속도·대시·충돌·전역 Fixed Timestep·카메라 API는 변경하지 않는다. 프레임 지연이나 다른 렌더 원인까지 해결됐다는 뜻은 아니며 실제 Game View의 끊김 체감은 별도로 확인한다.

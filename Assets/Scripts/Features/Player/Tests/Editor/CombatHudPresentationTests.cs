@@ -33,6 +33,39 @@ public sealed class CombatHudPresentationTests
         if (Application.isPlaying) yield return new ExitPlayMode();
     }
 
+    [UnityTest]
+    public IEnumerator CryoMagazineDockUpdatesPercentageOnActualHudFrames()
+    {
+        yield return new EnterPlayMode();
+        _player = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab"),
+            new Vector3(10000, 10000), Quaternion.identity);
+        _player.GetComponent<PlayerInputHandler>().enabled = false;
+        _player.GetComponent<PlayerAttack>().enabled = false;
+        _hud = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab"));
+        _hud.GetComponent<PlayerSkillHudSceneBinding>().enabled = false;
+        var hud = _hud.GetComponent<PlayerSkillHud>();
+        Assert.That(_player.GetComponent<PlayerSkillController>().BindHud(hud), Is.True);
+        var selection = _player.GetComponent<PlayerWeaponSelection>();
+        var view = _hud.GetComponentInChildren<CombatPlayerIndicators>(true);
+        Assert.That(view.isActiveAndEnabled, Is.True);
+        Assert.That(_hud.GetComponentInChildren<PlayerWeaponAmmoView>(true).enabled, Is.False,
+            "HUD v6 uses CombatPlayerIndicators; the old ammo view must stay disabled.");
+        yield return Until(() => view.WeaponHud.Owner == selection);
+        Assert.That(selection.TrySelectWeapon(WeaponType.CryoBlaster), Is.True);
+        yield return Until(() => view.RoundCount.GetParsedText() == "100%");
+        Assert.That(view.AmmoGroup.alpha, Is.EqualTo(1));
+        Assert.That(view.RoundCount.gameObject.activeInHierarchy, Is.True);
+        Assert.That(selection.TrySelectWeapon(WeaponType.DefaultGun), Is.True);
+        yield return Until(() => view.RoundCount.GetParsedText() == "15 / 15");
+        Assert.That(selection.TrySelectWeapon(WeaponType.CryoBlaster), Is.True);
+        yield return Until(() => view.RoundCount.GetParsedText() == "100%");
+        var ammo = _player.GetComponent<PlayerWeaponAmmo>();
+        typeof(PlayerWeaponAmmo).GetMethod("TryConsumeRound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .Invoke(ammo, new object[] { WeaponType.CryoBlaster });
+        yield return Until(() => view.RoundCount.GetParsedText() == "94%");
+        Assert.That(view.DisplayedRounds, Is.EqualTo(14));
+    }
+
     [Test]
     public void RebuildingMagazinePreservesOneNumericTray()
     {

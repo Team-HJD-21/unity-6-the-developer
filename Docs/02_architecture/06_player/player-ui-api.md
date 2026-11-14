@@ -256,6 +256,16 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 15. 상태 View 참조를 임시로 제거해도 터렛 조작이 독립적으로 초기화되는지 확인한다.
     참조 복구 후 컴포넌트 재활성화 시 정상 초기화되고 이벤트가 중복되지 않는지 확인한다.
 
+## 2026-11-13 플레이어 피격 화면
+
+`PlayerInfo.ApplyDamage`가 실제로 줄인 체력만 `Damaged(int appliedDamage)`로 알립니다. 회복, 체력 표시 갱신, 초기 바인딩과 체크포인트 복원은 피격 이벤트를 발생시키지 않습니다. 치명타도 사망 통지 전에 한 번 전달하며, 피해 권한·일시정지 등 기존 피해 거부 조건을 유지합니다.
+
+`InitialStagePlayerHUD.prefab`의 `PlayerHitFeedback`은 `StagePlayerVitalsView.Player`에 연결된 로컬 actor만 구독합니다. actor 교체·HUD 비활성화 때 구독과 연출을 정리합니다. `PlayerDamageVignette`는 프리팹에 배치된 전체 화면 Graphic으로, 중앙을 비우고 가장자리만 붉게 표시합니다. 전용 Canvas의 sorting order는 -1로 HUD 아래에 표시합니다. 상위 HUD의 시작 연출에 가려지지 않게 CanvasGroup의 `ignoreParentGroups`를 켜고 Graphic의 `maskable`을 끕니다. Raycast와 CanvasGroup 입력 차단은 꺼져 있습니다. 별도 텍스처나 실행 중 UI 오브젝트 생성은 사용하지 않습니다.
+
+Inspector에서 기본 붉은 효과 시간 0.45초, 최대 알파 0.65, 흔들림 시간 0.2초, 거리 0.14를 조절합니다. 피해 비율에 따라 강도를 조절하고 연속 피격은 합산 대신 시간을 다시 시작합니다. 감쇠하는 고정 진동을 사용해 랜덤 스트림을 소비하지 않습니다. `CameraManager.OutputChanged`를 따라 출력 카메라만 흔들고 렌더 콜백 종료에 기존 위치를 복구합니다. 추적·컷씬이 쓰는 카메라 위치에 변위를 누적하지 않습니다. 연출 시간은 unscaled time으로 진행합니다.
+
+`PlayerHitFeedbackTests`는 실제 피해/회복/거부 구분, 사망 직전 이벤트, actor 해제, 카메라 위치 복구와 UI 입력 통과를 검사합니다. `PlayerAssassinAttackRuntimeTests`의 HUD 검사는 Play Mode에서 실제 카메라 렌더 결과의 붉은 가장자리·투명 중앙·효과 소멸을 확인합니다. 원격 Player 체력 복제 경로는 이번 변경에 추가하지 않았으며 Host/Client 피격 전달은 별도 검증이 필요합니다.
+
 ## 이후 갱신 기준
 
 ### Core 명령 연결 시 유의점 (2026-10-15)

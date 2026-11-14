@@ -136,7 +136,7 @@ PolygonCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 28673
+    m_Bits: 8417281
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -157,10 +157,10 @@ PolygonCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.05, y: 0.18}
+  m_Offset: {x: 0.05, y: -0.00059179217}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5162409, y: 0.25921094}
+    pivot: {x: 0.5162409, y: 0.5}
     oldSize: {x: 0.75, y: 0.75}
     newSize: {x: 0.46, y: 0.19}
     adaptiveTilingThreshold: 0.5
@@ -195,6 +195,7 @@ MonoBehaviour:
   _spriteRenderer: {fileID: 0}
   _speed: 45
   _lifetime: 1.3333334
+  _piercesEnemies: 0
   _damage: 13
   _targetTag: Enemy
 --- !u!95 &910202610210000020

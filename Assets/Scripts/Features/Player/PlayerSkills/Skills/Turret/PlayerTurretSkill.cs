@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
-/// <summary>플레이어 터렛 설치·회수와 손상 비율에 따른 재충전을 담당합니다.</summary>
+/// <summary>고정 슬롯 선택·설치·회수 체력과 파괴 후 복구를 담당합니다.</summary>
 public sealed partial class PlayerTurretSkill : PlayerSkillBase
 {
     private const float PreviewCheckInterval = .05f;
@@ -31,11 +31,16 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
     private int _placementStartFrame;
     private PlayerTurretPlacementResult _placementFeedback;
     private PlayerTurretInventory _inventory;
+    private bool _selecting;
+    private int _selectedSlot = -1;
     private readonly HashSet<PlayerTurret> _deployed = new();
     public override PlayerSkillId Id => PlayerSkillId.PlayerTurret;
     public override bool HasPrefab => turretPrefab != null && turretPrefab.GetComponent<PlayerTurret>() != null
         && _previewPrefab != null && _previewPrefab.IsConfigured;
     public bool IsPlacing => _preview != null;
+    public bool IsSelecting => _selecting;
+    public bool IsPending => IsSelecting || IsPlacing;
+    public int SelectedSlotIndex => _selectedSlot;
     public string PlacementHint => IsPlacing ? "왼쪽 클릭으로 설치 · 오른쪽 클릭 / Esc로 취소" : "";
     public override int AvailableCount => _inventory != null ? _inventory.Available : 0;
     public int CurrentTurretCount => AvailableCount;
@@ -46,7 +51,8 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
     public float RepairRemaining => _inventory != null ? _inventory.RepairRemaining : 0;
     public override float RemainingCooldown => AvailableCount > 0 ? _installationRemaining : Mathf.Max(_installationRemaining, RepairRemaining);
     public override float CooldownDuration => AvailableCount > 0 || RepairRemaining <= _installationRemaining ? SkillCooldown : Mathf.Max(.1f, _maximumRepairSeconds);
-    public override bool IsReady => HasPrefab && AvailableCount > 0 && _installationRemaining <= 0;
+    // 사용 입력은 수량·쿨다운 중에도 상태 창을 열 수 있습니다. 실제 설치는 슬롯 선택에서 검사합니다.
+    public override bool IsReady => HasPrefab;
     public PlayerTurret RecoverableTurret => FindRecoverableTurret();
     public PlayerTurretPlacementResult PlacementFeedback =>
         IsPlacing ? _placementFeedback : PlayerTurretPlacementResult.Allowed;
@@ -67,7 +73,21 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
     protected override bool TryActivate()
     {
         GameInput.ReservePrimaryPointerForPlacement();
-        if (IsPlacing) { CancelPlacement(); return true; }
+        if (IsPending) { CancelPlacement(); return true; }
+        _selecting = true;
+        return true;
+    }
+
+    public PlayerTurretInventory.Slot GetSlot(int index) => _inventory.GetSlot(index);
+    public bool CanSelectSlot(int index) => IsSelecting && CanContinueSelection() && _installationRemaining <= 0 &&
+        index >= 0 && index < MaxTurretCount && _inventory.GetSlot(index).Status == PlayerTurretInventory.SlotStatus.Available;
+
+    public bool TrySelectSlot(int index)
+    {
+        if (!CanSelectSlot(index)) return false;
+        GameInput.ReservePrimaryPointerForPlacement();
+        _selectedSlot = index;
+        _selecting = false;
         _preview = Instantiate(_previewPrefab, transform.position, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(_preview.gameObject, gameObject.scene);
         _preview.SetVisible(false);
@@ -79,6 +99,13 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
     // UI의 Update가 끝난 뒤 확정하여 같은 클릭이 기존 포탑 선택에도 쓰이지 않게 합니다.
     private void LateUpdate()
     {
+        if (IsSelecting)
+        {
+            GameInput.ReservePrimaryPointerForPlacement();
+            if (!CanContinueSelection() || GameInput.SecondaryPointerWasPressedThisFrame || GameInput.WasPressedThisFrame(GameKey.Escape))
+                CancelPlacement();
+            return;
+        }
         if (!IsPlacing) return;
         GameInput.ReservePrimaryPointerForPlacement();
         if (!CanContinuePlacement() || GameInput.SecondaryPointerWasPressedThisFrame || GameInput.WasPressedThisFrame(GameKey.Escape))
@@ -97,9 +124,12 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
             TryConfirmPlacement(position);
     }
 
-    private bool CanContinuePlacement() => isActiveAndEnabled && Time.timeScale > 0f && IsReady
+    private bool CanContinueSelection() => isActiveAndEnabled && Time.timeScale > 0f && HasPrefab
         && (ControlState == null || ControlState.CanAct)
         && (Controller == null || Controller.CanUse && Controller.Loadout.Contains(Id));
+    private bool CanContinuePlacement() => CanContinueSelection() && _installationRemaining <= 0 &&
+        _selectedSlot >= 0 && _selectedSlot < MaxTurretCount &&
+        _inventory.GetSlot(_selectedSlot).Status == PlayerTurretInventory.SlotStatus.Available;
 
     /// <summary>커서까지의 거리와 관계없이 플레이어 주변 8칸 중 조준 방향의 한 칸을 반환합니다.</summary>
     public Vector3 GetPlacementPosition(Vector2 pointerPosition)
@@ -128,15 +158,16 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
         Vector3 position = GetPlacementPosition(pointerPosition);
         _placementFeedback = EvaluatePlacement(position);
         _preview.Refresh(position, _placementFeedback == PlayerTurretPlacementResult.Allowed);
-        if (_placementFeedback != PlayerTurretPlacementResult.Allowed || !_inventory.TryDeploy())
+        if (_placementFeedback != PlayerTurretPlacementResult.Allowed || !_inventory.TryDeploy(_selectedSlot))
         {
             if (Controller != null) Controller.NotifyPlacementRejected(PlayerSkillDescriptions.TurretPlacementFailure(_placementFeedback));
             return false;
         }
 
         var turret = Instantiate(turretPrefab, position, Quaternion.identity).GetComponent<PlayerTurret>();
-        SceneManager.MoveGameObjectToScene(turret.gameObject, gameObject.scene);
-        turret.AssignOwner(this);
+        FieldSimulationTime.BindSpawned(turret.gameObject, this);
+        turret.Health.SetDeploymentHealth(_inventory.GetSlot(_selectedSlot).HealthRatio);
+        turret.AssignOwner(this, _selectedSlot);
         _deployed.Add(turret);
         _installationRemaining = SkillCooldown;
         CancelPlacement();
@@ -145,6 +176,8 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
 
     public void CancelPlacement()
     {
+        _selecting = false;
+        _selectedSlot = -1;
         if (_preview != null)
         {
             _preview.SetVisible(false);
@@ -156,13 +189,13 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
 
     public bool TryRecoverNearest()
     {
-        if (!isActiveAndEnabled || IsPlacing || (Controller != null && !Controller.CanRecover)) return false;
+        if (!isActiveAndEnabled || IsPending || (Controller != null && !Controller.CanRecover)) return false;
         var turret = FindRecoverableTurret();
         return turret != null && turret.TryRecover(this);
     }
     private PlayerTurret FindRecoverableTurret()
     {
-        if (!isActiveAndEnabled || IsPlacing || (Controller != null && !Controller.CanRecover)) return null;
+        if (!isActiveAndEnabled || IsPending || (Controller != null && !Controller.CanRecover)) return null;
         float distanceLimit = recoveryRange * recoveryRange;
         PlayerTurret nearest = null;
         foreach (var turret in _deployed)
@@ -177,9 +210,14 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
     }
     internal bool ReleaseTurret(PlayerTurret turret, float healthRatio)
     {
-        if (!_deployed.Remove(turret)) return false;
-        _inventory.Return(healthRatio);
+        if (!_deployed.Contains(turret) || !_inventory.Return(turret.SlotIndex, healthRatio)) return false;
+        _deployed.Remove(turret);
         return true;
+    }
+
+    internal void UpdateTurretHealth(PlayerTurret turret)
+    {
+        if (_deployed.Contains(turret)) _inventory.UpdateHealth(turret.SlotIndex, turret.Health.HealthRatio);
     }
 
     private void OnDisable() => CancelPlacement();

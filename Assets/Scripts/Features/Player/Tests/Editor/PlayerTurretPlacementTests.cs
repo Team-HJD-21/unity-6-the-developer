@@ -136,7 +136,7 @@ public sealed class PlayerTurretPlacementTests
     {
         PlayerTurretSkill skill = CreateSkill();
         GameObject actor = CreateActor(layer, skill.GetPlacementPosition(_origin));
-        Assert.That(skill.TryUseSkill(), Is.True);
+        Assert.That(BeginPlacement(skill), Is.True);
         Assert.That(skill.TryConfirmPlacement(_origin), Is.False);
         Assert.That(skill.IsPlacing, Is.True);
         Assert.That(skill.PlacementFeedback, Is.EqualTo(expected));
@@ -155,7 +155,7 @@ public sealed class PlayerTurretPlacementTests
         var body = _player.AddComponent<BoxCollider2D>();
         body.size = new Vector2(8f, 8f);
         PlayerTurretSkill skill = CreateSkill();
-        Assert.That(skill.TryUseSkill(), Is.True);
+        Assert.That(BeginPlacement(skill), Is.True);
         Assert.That(skill.AvailableCount, Is.EqualTo(3));
         Assert.That(skill.TryConfirmPlacement(_origin), Is.False);
         body.size = Vector2.one;
@@ -181,7 +181,7 @@ public sealed class PlayerTurretPlacementTests
         PlayerTurretSkill skill = CreateSkill();
         _player.transform.position = _origin + Vector3.right * 11f;
 
-        Assert.That(skill.TryUseSkill(), Is.True);
+        Assert.That(BeginPlacement(skill), Is.True);
         Assert.That(skill.TryConfirmPlacement(_player.transform.position), Is.False);
         Assert.That(skill.PlacementFeedback, Is.EqualTo(PlayerTurretPlacementResult.OutsideGround));
         Assert.That(skill.AvailableCount, Is.EqualTo(3));
@@ -193,7 +193,7 @@ public sealed class PlayerTurretPlacementTests
             "Successful placement must immediately clear the old warning.");
         Assert.That(skill.AvailableCount, Is.EqualTo(2));
         skill.Tick(skill.SkillCooldown);
-        Assert.That(skill.TryUseSkill(), Is.True);
+        Assert.That(BeginPlacement(skill), Is.True);
         Assert.That(skill.TryConfirmPlacement(_origin), Is.False, "The same base area is already occupied.");
         Assert.That(skill.AvailableCount, Is.EqualTo(2));
         Assert.That(skill.CurrentCooldownTimer, Is.Zero);
@@ -208,7 +208,7 @@ public sealed class PlayerTurretPlacementTests
     {
         PlayerTurretSkill skill = CreateSkill();
         Assert.That(skill.TryConfirmPlacement(_origin), Is.False, "Placement must start with the skill key.");
-        Assert.That(skill.TryUseSkill(), Is.True);
+        Assert.That(BeginPlacement(skill), Is.True);
         Assert.That(skill.IsPlacing, Is.True);
         Assert.That(skill.AvailableCount, Is.EqualTo(3));
         foreach (var turret in Object.FindObjectsByType<PlayerTurret>(FindObjectsSortMode.None))
@@ -218,7 +218,7 @@ public sealed class PlayerTurretPlacementTests
         Assert.That(skill.IsPlacing, Is.False);
         Assert.That(skill.AvailableCount, Is.EqualTo(3));
         Assert.That(skill.CurrentCooldownTimer, Is.Zero);
-        Assert.That(skill.TryUseSkill(), Is.True);
+        Assert.That(BeginPlacement(skill), Is.True);
         skill.enabled = false;
         Assert.That(skill.IsPlacing, Is.False);
     }
@@ -227,7 +227,7 @@ public sealed class PlayerTurretPlacementTests
     public void FarPointer_InstallsOnlyInAdjacentCell_AndConsumesOnce()
     {
         PlayerTurretSkill skill = CreateSkill();
-        Assert.That(skill.TryUseSkill(), Is.True);
+        Assert.That(BeginPlacement(skill), Is.True);
         Vector3 pointer = _origin + Vector3.right * 1000f;
         Vector3 expected = _origin + Vector3.right * 4f;
         Assert.That(skill.GetPlacementPosition(pointer), Is.EqualTo(expected));
@@ -315,6 +315,13 @@ public sealed class PlayerTurretPlacementTests
             Physics2D.IgnoreLayerCollision(deviceLayer, playerLayer, ignoredPlayer);
             Physics2D.IgnoreLayerCollision(deviceLayer, enemyLayer, ignoredEnemy);
         }
+    }
+
+    private static bool BeginPlacement(PlayerTurretSkill skill)
+    {
+        if (!skill.TryUseSkill()) return false;
+        for (int i = 0; i < skill.MaxTurretCount; i++) if (skill.CanSelectSlot(i)) return skill.TrySelectSlot(i);
+        return false;
     }
 
     private PlayerTurretPlacementResult Evaluate(Vector3 position) =>

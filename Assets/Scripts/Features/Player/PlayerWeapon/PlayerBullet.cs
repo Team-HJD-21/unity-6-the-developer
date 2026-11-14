@@ -1,5 +1,6 @@
 // Player 탄환의 비행·충돌·남은 수명을 관리하고 소유자의 Match 종료에 정리합니다.
 using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Enemy.Contracts;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -22,6 +23,7 @@ public sealed partial class PlayerBullet : MonoBehaviour
     [SerializeField, Min(0f)] private float _speed = 6f;
     [FormerlySerializedAs("lifeTime")]
     [SerializeField, Min(.01f)] private float _lifetime = 2f;
+    [SerializeField] private bool _piercesEnemies;
 
     [Header("Damage")]
     [FormerlySerializedAs("bulletDamage")]
@@ -39,6 +41,7 @@ public sealed partial class PlayerBullet : MonoBehaviour
     private readonly List<RaycastHit2D> _flightHits = new(8);
     private ContactFilter2D _hitFilter;
     private Vector2 _flightDirection;
+    private readonly HashSet<string> _piercedTargets = new();
     private static readonly Dictionary<int, Tilemap> SceneGrounds = new();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -96,6 +99,7 @@ public sealed partial class PlayerBullet : MonoBehaviour
         _cryogenic = cryogenic;
         _damage = damage;
         _hasHit = false;
+        _piercedTargets.Clear();
         if (_spriteRenderer != null) _spriteRenderer.color = color;
         if (_view != null) _view.Configure(cryogenic, color);
         Launch(direction.normalized);
@@ -106,13 +110,13 @@ public sealed partial class PlayerBullet : MonoBehaviour
     {
         _flightDirection = direction;
 #if UNITY_6000_0_OR_NEWER
-        _body.linearVelocity = direction * _speed;
+        _body.linearVelocity = direction * FlightSpeed;
 #else
-        _body.velocity = direction * _speed;
+        _body.velocity = direction * FlightSpeed;
 #endif
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
-        _expiresAt = GameSeconds + _lifetime;
+        _expiresAt = GameSeconds + FlightLifetime;
     }
 
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
@@ -127,20 +131,18 @@ public sealed partial class PlayerBullet : MonoBehaviour
         if (!FieldSimulationTime.CanAdvance(this)) return;
         if (_hasHit || _flightDirection == Vector2.zero || _body == null) return;
         // 빠른 Trigger 탄환은 한 물리 틱 안에 얇은 본체를 지나칠 수 있어 이동 경로를 먼저 검사합니다.
-        _body.Cast(_flightDirection, _hitFilter, _flightHits, _speed * Time.fixedDeltaTime);
-        RaycastHit2D nearest = default;
+        _body.Cast(_flightDirection, _hitFilter, _flightHits, FlightSpeed * Time.fixedDeltaTime);
+        _flightHits.Sort((a, b) => a.distance.CompareTo(b.distance));
         foreach (RaycastHit2D hit in _flightHits)
         {
             if (!TryGetHitTarget(hit.collider, out _, out _)) continue;
-            if (nearest.collider == null || hit.distance < nearest.distance) nearest = hit;
+            if (!TryProcessHit(hit.collider, _body.position + _flightDirection * hit.distance)) continue;
+            return;
         }
-        if (nearest.collider == null) return;
-        Vector2 stopPosition = _body.position + _flightDirection * nearest.distance;
-        transform.position = new Vector3(stopPosition.x, stopPosition.y, transform.position.z);
-        ProcessHit(nearest.collider);
     }
 
     private void OnTriggerEnter2D(Collider2D other) => ProcessHit(other);
+    private void ProcessHit(Collider2D other) => TryProcessHit(other);
 
     private bool TryGetHitTarget(Collider2D hitbox, out GameObject target, out bool isEnemy)
     {
@@ -159,7 +161,8 @@ public sealed partial class PlayerBullet : MonoBehaviour
             isEnemy |= ancestor.CompareTag(_targetTag);
         }
         // 적 피격 Trigger는 유지하고 포탑 사거리·상호작용 등 감지용 Trigger는 통과합니다.
-        return isEnemy || !hitbox.isTrigger;
+        if (isEnemy) return hitbox.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox");
+        return !hitbox.isTrigger;
     }
 
     private static bool IsSceneGround(Collider2D hitbox)
@@ -175,10 +178,22 @@ public sealed partial class PlayerBullet : MonoBehaviour
         return map == ground;
     }
 
-    private void ProcessHit(Collider2D other)
+    private bool TryProcessHit(Collider2D other, Vector2? contactPosition = null)
     {
-        if (!FieldSimulationTime.CanAdvance(this) || _hasHit || !TryGetHitTarget(other, out GameObject target, out bool isEnemy)) return;
+        if (!FieldSimulationTime.CanAdvance(this) || _hasHit || !TryGetHitTarget(other, out GameObject target, out bool isEnemy)) return false;
+        var health = isEnemy ? other.GetComponentInParent<EnemyHealth>() : null;
+        if (_piercesEnemies && isEnemy)
+        {
+            if (health == null) return false;
+            string identity = CheckpointActorFactory.EnsureIdentity(health.gameObject).Value;
+            if (!_piercedTargets.Add(identity)) return false;
+            bool damaged = health.TryTakeDamage(Mathf.RoundToInt(_damage), AttackSourceType.Player);
+            if (damaged && _view != null) _view.ShowImpact(contactPosition ?? (Vector2)transform.position);
+            return false;
+        }
         _hasHit = true;
+        if (contactPosition.HasValue)
+            transform.position = new Vector3(contactPosition.Value.x, contactPosition.Value.y, transform.position.z);
 #if UNITY_6000_0_OR_NEWER
         _body.linearVelocity = Vector2.zero;
 #else
@@ -188,10 +203,22 @@ public sealed partial class PlayerBullet : MonoBehaviour
             if (hitbox != null) hitbox.enabled = false;
         if (isEnemy)
         {
-            var health = target.GetComponentInParent<EnemyHealth>();
-            if (health != null) health.TakeDamage(Mathf.RoundToInt(_damage));
+            if (health != null) health.TryTakeDamage(Mathf.RoundToInt(_damage), AttackSourceType.Player);
         }
         if (_view != null) _view.ShowImpact();
         Destroy(gameObject);
+        return true;
+    }
+
+    /// <summary>분사와 탄환이 공통으로 제외하는 지면·감지 범위·아군/적 이동 본체입니다.</summary>
+    internal static bool IsWorldObstacle(Collider2D hitbox, GameObject owner)
+    {
+        if (hitbox == null || hitbox.isTrigger || hitbox.gameObject.scene != owner.scene || hitbox.transform.IsChildOf(owner.transform) ||
+            IsSceneGround(hitbox)) return false;
+        var device = hitbox.GetComponentInParent<PlayerFieldDevice>();
+        if (device != null && device.IsBarrierMembrane(hitbox)) return false;
+        for (Transform node = hitbox.transform; node != null; node = node.parent)
+            if (node.CompareTag("Ground") || node.CompareTag("Player") || node.CompareTag("Bullet") || node.CompareTag("Enemy")) return false;
+        return hitbox.GetComponentInParent<EnemyHealth>() == null;
     }
 }

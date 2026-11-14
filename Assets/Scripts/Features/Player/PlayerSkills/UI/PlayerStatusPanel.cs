@@ -176,7 +176,7 @@ public sealed class PlayerStatusPanel : MonoBehaviour
             _ => "—"
         };
         _ammoValue.text = _ammo == null ? "—" : _ammo.IsInfinite ? "∞" : _ammo.IsReloading
-            ? $"Reload · {_ammo.ReloadProgress:P0}" : $"{_ammo.CurrentRounds} / {_ammo.CurrentCapacity}";
+            ? $"Reload · {_ammo.ReloadProgress:P0}" : _ammo.UsesPercentage ? $"{_ammo.CurrentPercentage}%" : $"{_ammo.CurrentRounds} / {_ammo.CurrentCapacity}";
         _dashValue.text = _dash == null ? "—" : _dash.IsDashing ? "대시 중" : _dash.CooldownRemaining > 0
             ? $"{_dash.CooldownRemaining:0.0}초" : _dash.IsReady ? "준비 완료" : "사용 불가";
         _attackMultiplierValue.text = _baseStats != null ? $"{_baseStats.AttackMultiplier:P0}" : "100%";
@@ -209,8 +209,8 @@ public sealed class PlayerStatusPanel : MonoBehaviour
         }
         _damageValue.text = stats.Damage.ToString("0.#");
         _intervalValue.text = $"{stats.Interval:0.##}초";
-        _projectilesValue.text = stats.IsMelee ? "근접 타격" : $"{stats.ProjectileCount}발";
-        _projectileSpeedValue.text = stats.IsMelee ? "—" : stats.ProjectileSpeed.ToString("0.#");
+        _projectilesValue.text = stats.IsMelee ? "근접 타격" : stats.IsSpray ? "연속 분사" : $"{stats.ProjectileCount}발";
+        _projectileSpeedValue.text = stats.IsMelee || stats.IsSpray ? "—" : stats.ProjectileSpeed.ToString("0.#");
         _rangeValue.text = stats.Range.ToString("0.#");
         _reloadValue.text = stats.IsMelee ? "필요 없음" : _ammo != null && _selection != null
             ? $"{_ammo.GetReloadDuration(_selection.CurrentWeapon):0.##}초" : "—";

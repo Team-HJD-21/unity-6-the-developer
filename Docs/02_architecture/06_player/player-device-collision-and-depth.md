@@ -29,6 +29,8 @@ Collider와 탈출 처리 컴포넌트를 끈다. 0.8초 폭발 연출이 남아
 설치형 터렛 본체도 `PlayerFeetBox`와 `EnemyFeetBox`를 막는다. `PlayerTurretHealth.Awake()`에서
 프리팹의 `_blockingLayers`를 Collider에 적용한다.
 
+2026-11-14 플레이어 터렛은 `_incomingProjectileLayers`의 `EnemyProjectile`도 접촉 필터에 포함한다. Enemy 공통 `IDamageableTarget`·타깃 어댑터를 통해 근접과 투사체 피해를 받고 기존 Player 장치 우회 공격 Registry에는 등록하지 않는다. 방벽·비콘의 기존 이동 차단과 우회 어댑터는 유지한다. [슬롯·체력·수리 API](player-turret-api.md)를 참고한다.
+
 2026-10-29에는 폭탄 프리팹에 SortingGroup과 `PlayerDeviceSortingOrder`를 미리 배치했다.
 설치 시 `PlayerBombExplosion.BindOwner`로 설치자를 연결해 방벽·비콘과 같은 발밑 기준으로
 앞뒤 순서를 갱신한다. 타이머와 폭발 자식도 같은 그룹에 속하며, 폭발 시에는 접지 Collider를

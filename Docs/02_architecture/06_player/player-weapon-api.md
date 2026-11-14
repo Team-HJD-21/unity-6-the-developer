@@ -1,10 +1,10 @@
 # 플레이어 무기 API
 
-수정일: 2026-11-10. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
+수정일: 2026-11-14. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
 
 ## 상태창의 장착 무기 조회
 
-`PlayerAttack.TryGetCurrentWeaponStats(out PlayerWeaponStats)`는 실제 공격 설정에서 피해량·공격 간격·투사체 개수·탄속·최대 사거리를 읽습니다. 피해량은 산탄 전체 합계가 아닌 탄환 한 발 또는 근접 타격 한 번 기준입니다. `PlayerWeaponAmmo.GetReloadDuration(weapon)`은 실제 재장전과 UI가 공통으로 사용하는 시간 조회입니다. [I 상태창과 무기 화살표 동작](player-ui-api.md#2026-11-10-플레이어-상태창)을 참고합니다. 새로운 선택 상태나 별도 UI 밸런스 데이터는 만들지 않습니다.
+`PlayerAttack.TryGetCurrentWeaponStats(out PlayerWeaponStats)`는 실제 공격 설정에서 피해량·공격 간격·투사체 개수·탄속·최대 사거리를 읽습니다. 피해량은 탄환 한 발·냉기 분사 한 틱·근접 타격 한 번 기준입니다. `PlayerWeaponAmmo.GetReloadDuration(weapon)`은 실제 재장전과 UI가 공통으로 사용하는 시간 조회입니다. [I 상태창과 무기 화살표 동작](player-ui-api.md#2026-11-10-플레이어-상태창)을 참고합니다. 새로운 선택 상태나 별도 UI 밸런스 데이터는 만들지 않습니다.
 
 2026-10-25, Issue #554 작업에서는 전투·수리 계약을 유지하고 표시용 몸체·무기를 분리했습니다. Player 프리팹의 `PlayerWeaponVisual`과 무기별 외형 데이터 편집 방법은 [몸체·무기 분리 API](player-weapon-appearance-api.md)를 참고합니다. 기존 `PlayerSpanner`는 공격·수리 동작을 계속 담당합니다.
 
@@ -14,7 +14,26 @@
 
 ## 장착과 입력
 
-2026-11-12 발사 수: 한 번 발사할 때 기본총은 1발, 냉각총은 3발, 스나이퍼는 1발을 생성합니다. 냉각총의 전체 퍼짐각은 25도이며 기본총은 1발이라 조준 방향으로 곧게 발사합니다. 탄창에서는 발사 한 번에 한 발을 소비합니다.
+기본총과 스나이퍼는 조준 방향으로 탄환 1발을 생성합니다. 냉각총은 LMB를 유지하는 동안 짧은 냉기를 연속 분사하며 개별 탄환을 생성하지 않습니다. 탄창에서는 발사 또는 냉기 피해 틱마다 한 발을 소비합니다.
+
+### 2026-11-14 냉각 분사와 스나이퍼 관통
+
+진입점은 `PlayerAttack.LateUpdate` → `TryFire` → `PlayerCryoSpray.ApplyDamage`입니다. 같은 컴포넌트의 `Show`가 총구와 연속 조준 방향에 `CryoSprayVfx.prefab`을 연결합니다. Enemy·터렛의 API와 사운드는 변경하지 않습니다.
+
+- 임시 조정값은 피해 8/틱, 틱 간격 0.1초, 총구부터 사거리 4.5, 시작 반폭 0.12·끝 반폭 1.4입니다. 월드 단위이며 `PlayerAttack`과 `PlayerCryoSpray` Inspector에서 조절합니다. 여러 실제 `EnemyHitBox`가 있어도 하나의 `EnemyHealth`에는 틱당 한 번만 피해를 전달합니다. 한 틱의 공격력·치명타 결과는 범위 내 대상들이 공유합니다.
+- 적 몸체와 장애물에 가린 부분에는 피해를 주지 않습니다. 앞의 적 몸체는 같은 방향의 뒤쪽 적을 막지만, 옆으로 퍼진 냉기에 닿는 다른 적은 함께 맞습니다. 해당 틱의 후보를 먼저 확정해 앞의 적이 그 틱에 죽어도 뒤쪽으로 피해가 새지 않게 합니다. 총구가 본체 안에 들어간 경우도 시작점 겹침 검사로 처리하며, `EnemySensor`·이동용 콜라이더는 피해·가림 후보에서 제외합니다.
+- 분사 파티클에도 같은 범위·가림 규칙을 적용해 적 몸체나 벽 뒤로 흐르지 않게 합니다. `vfx/player-cryo-spray` Presentation 난수로 시작 seed만 받아 기존 난수 규칙을 따릅니다. 필드 시간으로 수동 재생하고, 연속 입력에는 인스턴스를 재사용합니다. 냉각 잔량은 HUD와 상태창에서 `100%`부터 표시하며 내부 15회 소모량의 잔여 비율을 올림합니다(첫 틱 후 `94%`). 기본총·스나이퍼는 기존 잔탄/용량 표시를 사용합니다. 모든 총기의 재장전은 기존 1.5초의 절반인 0.75초입니다. 버튼 해제/재장전/무기 전환 시 방출을 멈추고, 조작 차단/필드 정지/비활성/체크포인트 복원 시 잔여 표시를 비웁니다.
+- 이동 중 분사 표시는 현재 총구의 연속 공격 영역을 따릅니다. 월드 파티클 속도 13~15보다 플레이어 이동속도 17이 빨라 전진 시 파티클을 추월하던 문제를 수정했습니다. 파티클을 효과 루트의 Custom simulation space에서 진행하고, 범위·벽·적 차폐는 월드 좌표로 변환해서 검사합니다. 이동속도나 공격 판정 사거리를 바꾸지는 않습니다.
+- 현행 왼쪽 아래 무기 패널의 잔량 표시는 `CombatPlayerIndicators`가 담당합니다. 냉각총은 큰 잔량 숫자와 작은 `%`로 표시하고 기본총·스나이퍼는 기존 잔탄/용량을 표시합니다. 구형 `PlayerWeaponAmmoView`는 HUD v6 프리팹에서 비활성 상태를 유지하며, 새 패널과 상태창 모두 `PlayerWeaponAmmo.UsesPercentage`/`CurrentPercentage`를 읽습니다.
+  `CombatHudPresentationTests.CryoMagazineDockUpdatesPercentageOnActualHudFrames`는 제작 HUD를 실제 Player에 연결한 Play Mode 프레임에서 `100%` → 기본총 `15 / 15` → 냉각총 `100%` → 소비 후 `94%`를 확인했으며 통과했습니다. 갱신 메서드를 수동 호출하지 않습니다.
+- **현재는 대미지만 적용합니다.** `ISlowEffectReceiver` 호출과 실제 감속은 후속 작업입니다. Enemy 이동과 구형 `MonsterSlowDebuff`는 수정하지 않습니다.
+- `SniperBullet.prefab`의 `_piercesEnemies`는 적을 관통하게 합니다. 한 탄환은 같은 `EnemyHealth`의 여러 Collider를 한 번으로 합치고 논리 Entity ID로 피해 이력을 보관합니다. `EnemyHitBox`만 피격 후보이며 `EnemySensor`와 적의 이동용 본체는 통과합니다. 지형·나무·포탑·CU·플레이어 설치물의 유효 본체에서는 정지합니다.
+- 관통 Cast 결과를 거리순으로 처리하므로 같은 물리 틱에 여러 적이 있어도 가까운 적부터 적용하고, 벽 뒤의 적은 맞히지 않습니다. 각 적의 피해는 `TryTakeDamage(..., AttackSourceType.Player)`와 암살자의 감지 규칙을 따릅니다. 플레이어 터렛 탄환은 변경하지 않습니다.
+- 상태창은 냉각 공격을 `연속 분사`로 표시하고 `PlayerCryoSpray.Range`에서 사거리를 읽습니다. 피해량은 틱당 수치이며 탄환 수·탄속은 적용하지 않습니다. `/weapon` 체크포인트는 v3이며 관통 이력을 함께 저장합니다. v1/v2는 기존 탄창 마이그레이션을 유지하고 빈 관통 이력으로 읽습니다. 기존 저장에 남은 냉각탄의 속도·남은 수명은 보존합니다. 새 v3 관통탄은 복원 뒤 같은 적에게 피해를 반복하지 않습니다. 분사 파티클 자체는 저장하지 않습니다.
+
+검증: Unity CLI로 컴파일 오류 0건을 확인했습니다. `PlayerCryoSprayTests` 13건, `PlayerBulletRuntimeTests` 19건, `PlayerAssassinAttackRuntimeTests.ActualBlackWolfRevealsAndTakesDirectAttacksButRejectsTurret` 1건, `PlayerStatusPanelTests` 9건이 각각 통과했습니다. 범위·방향·몸체 가림·벽/시작점 차폐·센서 제외·Match 구분·피해만 적용·효과 중단, 탄약/재장전·관통 저장/구형 탄환 복원, 실제 BlackWolf 감지 규칙과 상태창 표시를 확인했습니다. 임시 Unity 장면에서 실제 분사 컴포넌트의 자유 분사/적 차폐를 캡처했으며 기존 게임 Scene은 저장하지 않았습니다. 실제 `Initial_Stage` 수동 플레이, Host/Client 통신, 빌드 및 성능 측정은 별도 확인 사항입니다.
+
+이동·잔량·재장전 후속 검증: `PlayerCryoSprayTests` 15건, `PlayerWeaponAmmoTests` 17건, `PlayerBulletRuntimeTests.Cryo_` 2건, 상태창 무기 표시 1건이 통과했습니다. 실제 Player 프리팹 이동속도 17로 전진·후진하는 물리 프레임, 이동·회전된 분사의 월드 차폐, HUD/상태창의 % 표시와 동일 용량 무기 전환 시 표시 갱신, 0.75초 재장전 경계를 확인했습니다. 잔량 표시 변경은 기존 내부 소모량과 저장 형식을 유지합니다. HUD 배치 검사는 부모 계층 가정 대신 실제 `_weaponHud` 직렬화 참조를 확인합니다.
 
 `Player.prefab`에 미리 배치한 `PlayerWeaponSelection._spannerPrefab`에 `Assets/Prefabs/Player/PlayerSpanner.prefab`을 연결합니다.
 플레이어가 생성되면 스패너 인스턴스를 자식으로 한 번 생성하고, 장착 상태에 따라 활성화합니다.
@@ -27,15 +46,17 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 ## 2026-11-12 암살자 감지 Trigger
 
-`Player.prefab / Assassin Detection Range`에 별도 CircleCollider2D Trigger와 `PlayerEnemyDetector`를 배치합니다. 반경은 조정용 임시값입니다. Collider의 로컬 radius 3.75는 현재 Player 배율 0.8에서 월드 반경 3이며, 중심은 발밑에 가까운 로컬 (0, 0.2)입니다. Inspector의 CircleCollider2D에서 조절합니다.
+`Player.prefab`의 `PlayerEnemyDetector` 자식에 별도 CircleCollider2D Trigger를 배치합니다. 반경은 조정용 임시값입니다. Collider의 로컬 radius 3.75는 현재 Player 배율 0.8에서 월드 반경 3이며, 중심은 발밑에 가까운 로컬 (0, 0.2)입니다. Inspector의 CircleCollider2D에서 조절합니다.
 
-진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. Enemy 레이어의 실제 몸체 Collider에서 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
+진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. 2026-11-13부터 `useTriggers = true`와 `EnemyHitBox` 레이어 마스크로 실제 피격 Trigger를 조회합니다. 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
 
-감지 Collider는 Player 레이어를 사용하며 Collider별 exclude 설정으로 Enemy 본체에만 접촉을 허용합니다. 적 탄환과 EnemySensor 레이어의 적 감지 Trigger는 제외하므로 새 범위가 플레이어의 피격 범위나 몬스터의 플레이어 탐지 범위로 쓰이지 않습니다. Enemy 근접 공격 거리 검사도 Trigger를 제외합니다. 전역 Layer Collision Matrix는 변경하지 않습니다. 벽 차폐·은신 시각 효과·감지 업그레이드는 이번 연결에 포함하지 않습니다.
+감지 Collider는 `PlayerFeetBox` 레이어를 사용하며 Collider별 exclude 설정으로 `EnemyHitBox`에만 접촉을 허용합니다. 적 탄환과 `EnemySensor` 레이어의 감지 Trigger는 제외하므로 새 범위가 플레이어의 피격 범위나 몬스터의 플레이어 탐지 범위로 쓰이지 않습니다. Enemy 근접 공격 거리 검사도 Trigger를 제외합니다. 전역 Layer Collision Matrix는 변경하지 않습니다. 벽 차폐·감지 업그레이드는 이번 연결에 포함하지 않습니다. 은신 표시는 기존 `EnemyStealthVisual`이 `EnemyDetection.DetectionChanged`를 받아 처리합니다.
+
+플레이어 탄환(`PlayerBullet`, 냉각·스나이퍼 포함), 스패너(`PlayerSpannerWeapon`), 폭탄(`PlayerBombAreaDamage`)은 `EnemyHealth.TryTakeDamage(damage, AttackSourceType.Player)`를 호출합니다. `EnemyAssassinDamageRule`은 감지된 동안의 직접 Player 공격만 허용합니다. `PlayerTurretProjectile`은 기존 출처를 유지하므로 감지된 암살자에게도 피해를 주지 않습니다.
 
 네트워크 Client와 보고권 없는 Player replica는 탐지 원본을 쓰지 않습니다. 서버의 적 상태는 기존 `EnemyNetworkDetection`이 복제합니다. 같은 Scene/Match만 감지하고 Match 정지 중에는 기존 감지를 유지합니다. 입력 메뉴 잠금은 수동 감지 해제 조건으로 사용하지 않습니다. 독립 로컬 시험은 Player/Enemy가 모두 Match 밖인 경우에 허용합니다. 실제 Host/Client 전송 검증과 감지 반경의 밸런스 확정은 별도입니다. Enemy 측의 탐지·피격 계약은 [Enemy 시스템 가이드](../08_encounter/enemy-system-guide.md)를 참고합니다.
 
-검증: Unity CLI 컴파일 오류 0개, EditMode `PlayerEnemyDetectorTests` 12개와 `PlayerContinuousAimTests` 19개를 통과했습니다. 분리된 EditMode Physics2D Scene에 실제 Player·BlackWolf 프리팹을 배치해 접근 시 감지·플레이어 공격 허용, 이탈 시 감지 해제, 터렛 공격 불허를 확인했습니다. 실제 게임 Scene의 PlayMode 및 Host/Client 통신은 미검증입니다.
+검증은 `PlayerEnemyDetectorTests`에서 실제 BlackWolf의 Trigger 감지·은신 표시 목표값·범위 이탈·복수 감지자·센서 제외·권한을 확인합니다. `PlayerAssassinAttackRuntimeTests`는 Play Mode에 BlackWolf와 `EnemySquadTester`를 임시 생성하고 기본/냉각 탄환·스패너·폭탄의 피해 및 터렛 피해 거부를 확인합니다. 고정된 시험 배치이며 사람의 실제 조작과 Host/Client 통신 검증을 대신하지 않습니다.
 
 ## 스크립트별 역할
 
@@ -81,7 +102,7 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 `Initial_Stage`의 실제 지면 `Initial_Overworld_Base`는 `Default/Untagged`이므로 태그와 레이어만으로 제외할 수 없다. 기존 `PlayerTurretPlacementRules.FindGround(scene)`으로 찾은 지면 Tilemap의 Collider도 제외한다. 씬별 조회 결과를 공유하며 지면이 제거·비활성화되면 다시 찾고, 씬 언로드와 플레이 초기화 때 캐시를 비운다. 별도 `Environment_Obj`·`Environment_Base` 장애물 Tilemap은 제외하지 않는다.
 
-`PlayerBullet.FixedUpdate`는 프리팹 Collider의 레이어 설정으로 이번 물리 틱의 이동 경로를 Cast하고 가장 가까운 유효 본체에서 정지시킨다. 이 경로와 기존 `OnTriggerEnter2D`는 같은 적중 함수를 사용해 얇은 장애물 관통과 중복 이펙트를 방지한다. 적 피해는 기존 `EnemyHealth.TakeDamage`의 서버 권한을 따르며 새로운 공격 RPC는 추가하지 않는다.
+`PlayerBullet.FixedUpdate`는 프리팹 Collider의 레이어 설정으로 이번 물리 틱의 이동 경로를 Cast하고 거리순으로 처리한다. 일반탄·냉기는 첫 유효 본체에서, 관통탄은 첫 유효 장애물에서 정지한다. 이 경로와 기존 `OnTriggerEnter2D`는 같은 적중 함수를 사용해 얇은 장애물 통과와 중복 이펙트를 방지한다. 적 피해는 `EnemyHealth.TryTakeDamage(..., AttackSourceType.Player)`의 서버 권한을 따르며 새로운 공격 RPC는 추가하지 않는다.
 
 플레이어 설치물의 본체는 Player/Enemy만 접촉시키도록 `Exclude Layers`에 Bullet을 포함해 접촉을 차단하고 있다. 이 설정은 유지하며 탄환의 명시적 `ContactFilter2D` Cast로 본체를 조회한다. 접촉용 제외 설정과 조회 필터의 역할은 [Unity Rigidbody2D.Cast](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody2D.Cast.html)와 [Collider2D.excludeLayers](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Collider2D-excludeLayers.html)를 따른다.
 
@@ -169,6 +190,8 @@ RuntimeState의 체력을 외부에서 직접 바꾸지 않습니다. 살아 있
 ## 2026-11-12 자유 조준 표시
 
 현재 Player는 `PlayerWeaponVisual.ContinuousAim`이 계산한 손잡이 기준 마우스 방향을 `PlayerWeaponRig.TryGetContinuousAimDirection`으로 전달한다. `PlayerAttack`은 이 방향을 우선 사용하고, `TryGetMuzzle`은 회전된 Sprite의 실제 총구 위치를 받는다. 기존 자세 방식은 이전 방향·총구 조회를 유지한다. 네 무기의 표시 설정과 검증 범위는 [몸체·무기 분리 API](player-weapon-appearance-api.md#2026-11-12-space-man-몸체와-자유-조준)를 참고한다.
+
+2026-11-13 스패너 피격 대상: `PlayerSpannerWeapon.ApplyMeleeDamage`는 `EnemyHitBox` 레이어만 Overlap 검색한다. `ContactFilter2D.useTriggers`로 피격용 Trigger를 포함하며 `EnemySensor`와 `EnemyFeetBox`는 피해 후보에 넣지 않는다. 현재 프로젝트처럼 Physics2D의 `Queries Hit Triggers`가 켜져 있어야 Trigger 피격을 검색할 수 있으며, 공격 코드에서 이 전역 설정을 변경하지 않는다. 실제 HitBox의 `ClosestPoint`로 전방·사거리·장애물을 확인하고 부모 `EnemyHealth`마다 타격당 한 번만 피해를 적용한다. 감지 센서가 플레이어를 포함해도 사거리 밖·뒤쪽·벽 뒤의 HitBox는 피해를 받지 않는다. 감지 컴포넌트와 적 피해 권한 경로는 기존 동작을 유지한다.
 
 ## 2026-11-09 탄창과 재장전
 

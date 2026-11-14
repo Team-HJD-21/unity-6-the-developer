@@ -48,6 +48,7 @@ flowchart TD
 - 필드 출입구의 `destinationName`을 실제 내부 표식인 `Capsule`로 수정했습니다. 이전 값 `SpacshipEnter`는 현행 우주선 Scene에 존재하지 않았습니다. 비활성 표식의 위치만 사용하며 표식 자체를 켜지 않습니다.
 - 기존 출구의 `returnSceneName: Initial_Stage`, 문 Animator와 애니메이션 이벤트 `ActivateDoorCollider(int)`는 유지합니다.
 - `EnterAsync(Collider2D)` / `ExitAsync(Collider2D)`는 같은 문 요청을 코드에서 검증할 때도 사용합니다. 실제 Player 접촉 이벤트가 같은 함수를 호출합니다.
+- `SpaceshipEnter`의 근접 애니메이션은 부모 `Animator`가 있을 때만 갱신합니다. `Initial_Stage`의 애니메이터 없는 출입구나 애니메이터 파괴 후 트리거 이탈에서도 접촉 목록은 정리하며, 우주선 이동 API 호출은 변경하지 않습니다.
 - 이동 중에는 Core가 자기 입력 lease만 잡습니다. 실시간 기준 0.3초에 걸쳐 검게 만든 후 이동을 시작하고, 완전 암전 상태를 최소 0.3초 유지한 뒤 0.3초에 걸쳐 화면을 돌립니다. 게임 정지·배속에 영향을 받지 않으며, Scene 준비가 길면 암전 구간을 연장합니다. 이동·실패 복구와 Camera 정렬은 모두 암전 안에서 끝냅니다.
 - 시작 우주선 Camera는 Initial_Stage 기준으로 orthographic size **18**, culling mask **4190711**, SolidColor/투명 검정 배경, depth **-1**, near/far **0.3/1000**, Z **-10**을 사용합니다. 배율·레이어는 `SpaceshipHubSettings`에서 관리합니다.
 - 도착 표식이 없으면 새로 로드한 방문 Scene을 정리하고 원래 Player 위치·필드 위치 보고·입력을 복구합니다. 처음부터 로드돼 있던 Scene은 실패했다고 임의 제거하지 않습니다.

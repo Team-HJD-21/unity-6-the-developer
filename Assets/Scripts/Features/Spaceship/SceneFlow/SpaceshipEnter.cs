@@ -30,12 +30,13 @@ public class SpaceshipEnter : MonoBehaviour, ISpaceshipTravelConsumer
     {
         if (other.GetComponentInParent<PlayerActorIdentity>() == null) return;
         _nearPlayer.Add(other);
-        _animator.SetBool("NearPlayer", true);
+        if (_animator != null) _animator.SetBool("NearPlayer", true);
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (_nearPlayer.Remove(other)) _animator.SetBool("NearPlayer", _nearPlayer.Count > 0);
+        if (_nearPlayer.Remove(other) && _animator != null)
+            _animator.SetBool("NearPlayer", _nearPlayer.Count > 0);
     }
 
     /// <summary>필드의 Player가 접촉했을 때 호출합니다. 중복 충돌은 같은 이동을 다시 시작하지 않습니다.</summary>

@@ -1,5 +1,6 @@
 // 렌치의 입력·예정 타격·수리 실행을 공용 시간과 Player 행동 조건에 연결합니다.
 using TeamHJD.Game.Presentation.Scene;
+using TeamHJD.Game.Enemy.Contracts;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -25,6 +26,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     [SerializeField] private ParticleSystem _impactPrefab;
     [SerializeField, Range(0f, .1f)] private float _impactPauseSeconds = .045f;
     private readonly HashSet<EnemyHealth> _hit = new();
+    private readonly List<Collider2D> _damageCandidates = new();
     private Transform _owner;
     private PlayerInputHandler _input;
     private PlayerWeaponRig _rig;
@@ -135,9 +137,13 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         int damage = _baseStats != null ? Mathf.RoundToInt(_baseStats.ResolveWeaponDamage(_damage)) : Mathf.Max(0, _damage);
         GetStrikeGeometry(out var origin, out var range, out var minimumForward);
         // Query again at the strike: moving away or stepping behind a wall must avoid the hit.
-        foreach (Collider2D collider in Physics2D.OverlapCircleAll(origin, range))
+        // EnemyHitBox is a Trigger; sensor and foot colliders are not damage shapes.
+        var filter = new ContactFilter2D { useTriggers = true };
+        filter.SetLayerMask(LayerMask.GetMask("EnemyHitBox"));
+        _damageCandidates.Clear();
+        Physics2D.OverlapCircle(origin, range, filter, _damageCandidates);
+        foreach (Collider2D collider in _damageCandidates)
         {
-            if (collider.isTrigger) continue;
             EnemyHealth enemy = collider.GetComponentInParent<EnemyHealth>();
             if (enemy == null || enemy.gameObject.scene != _owner.gameObject.scene ||
                 enemy.CurrentHealth <= 0 || _hit.Contains(enemy)) continue;
@@ -148,7 +154,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
             if (!PlayerSpannerTargeting.CanReach(_owner, enemy.transform, point, _swingDirection, range, AttackArc, origin)) continue;
             _hit.Add(enemy);
             int previousHealth = enemy.CurrentHealth;
-            enemy.TakeDamage(damage);
+            enemy.TryTakeDamage(damage, AttackSourceType.Player);
             // A client-side rejected request must not appear to be a confirmed hit.
             if (!feedbackShown && enemy.CurrentHealth < previousHealth)
             {
