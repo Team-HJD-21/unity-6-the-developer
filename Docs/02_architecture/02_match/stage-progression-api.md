@@ -9,7 +9,7 @@
 3.33%를 넘으면 `StageCheckpointGate`가 등장 전 저장을 요청한다. 같은 복원 epoch의 실제 디스크 저장이 완료된 뒤 `IFieldBossSpawnService.TrySpawnFieldBoss`에 실행별 안정된 사건 ID를 준다. true와 실제 EntityId를 모두 받아야 생성 확인이다.66%도 같은 경로이며 한 번에100%가 되어도33→66 순서다.
 4. 생성 실패는 같은 사건 ID로1 Field초 뒤 재시도한다. 미출현 취소·일반 적 대체·허위 성공은 없다. 이미 확인된 첫 사건은 다시 만들지 않는다.
 5. 현재 점유100%와 두 실제 생성 확인을 모두 만족하면 `StageProgress.CanEnterFinalBattle`이 true다. 두 중간보스의 처치는 진입 조건이 아니다.
-6. 실제 최종 Boss Scene/연출 조립부가 같은 Match에서 보스와 도착 준비를 마친 뒤 `ConfirmFinalBossReady(match, actor)`를 호출한다. 이전 Field만 보류하고 Player/공용 낮밤은 기존 공용 시계를 계속 사용한다.
+6. 실제 최종 Boss Scene/연출 소유자가 `PrepareFinalBossTransitionAsync`로 필수 저장을 마친 전환 범위를 받는다. 같은 Match의 Scene·전원 도착·보스·연출을 준비한 뒤 `ConfirmFinalBossReady(match, actor)`를 호출한다. 이전 Field만 보류하고 Player/공용 낮밤은 기존 공용 시계를 계속 사용한다.
 7. 공통 생성기는 실제 HP 사망을 `IEnemyCombatSource.DeathObserved`로 보내고 Root가 `ReportStageEnemyDeath(match, actor)`에 연결한다. 별도 Boss 생성기가 공통 경계를 쓰지 않으면 해당 권위 HP 원본에서 이 API를 호출해야 한다. 등록한 최종 보스의 실제 죽음만 Coordinator의 Victory로 이어진다. UI·Despawn·Scene 해제는 죽음으로 제출하지 않는다.
 
 ## Enemy 생성 구현자가 지킬 경계
@@ -45,7 +45,29 @@ HUD는 `InitialStageCompositionRoot.StageProgress`의 읽기 값을 사용할 �
 - 월드 복원의 epoch가 달라지거나 Match가 종료되면 임시 저장 작업 상태를 폐기한다. 이전 비동기 저장 완료가 새 월드의 등장 허가가 되지 않는다. Player 복귀가 진행 중이면 Stage 저장·생성을 보류한다.
 - `PendingStageCheckpoints`와 `StageCheckpointError`는 읽기 진단이며, Game Debugger Checkpoint 패널에서 대기·실패·재시도를 볼 수 있다. 필수 writer 누락도 우회하지 않는다.
 
-이 연결은 **Field 사건의 저장 순서**다. 최종 Boss Scene 이동 전 필수 저장·전원 도착·컷씬은 아직 별도 연결이 필요하며, `ConfirmFinalBossReady`를 호출하는 것만으로 대체되지 않는다.
+이 연결은 **Field 사건의 저장 순서**다. 최종 Boss Scene의 저장 선행·임대 경계는 아래 별도 API를 사용한다.
+
+### 최종 진입의 필수 저장·정지 범위
+
+최종 Scene 소유자는 다음 순서로 연결한다. `FinalBossTransition`은 콘텐츠나 이동을 만드는 클래스가 아니라 **저장이 끝난 현재 월드의 진입 허가와 임시 정지/로컬 입력 임대**다. `ConfirmFinalBossReady`만 직접 호출하는 경로는 거부한다.
+
+```csharp
+using var transition = await stageRoot.PrepareFinalBossTransitionAsync(matchId, cancellation);
+await app.SceneTransitions.LoadAsync(actualBossScenePath, transition.Cancellation);
+// 이 범위 안에서 실제 Scene 소유자가 참가자 도착, 공용 시간에 연결된 실제 보스,
+// 로컬 카메라/입력과 연출 완료를 확인한다. 아직 프로젝트에 해당 콘텐츠 조립부는 없다.
+stageRoot.ConfirmFinalBossReady(matchId, actualBossEntityId);
+```
+
+- 현재100% 점유·두 Field 사건 생성 확인·살아있는 참가자·복귀 미진행을 요구한다. 중간보스 처치는 추가 조건이 아니다.
+- 공용 시간 pause lease와 Host 로컬 입력 임대를 획득하고 `stage-<실행 ID>-before-final`의 실제 디스크 `Saved/IsCurrentScope`를 기다린다. writer 누락/Busy/기술 실패는 예외이며 Scene 이동을 시작하지 않는다. 원인을 해결한 뒤 새 전환 범위로 재시도한다.
+- 준비 범위가 살아 있는 동안 공용 시간과 기존 Field 시간이 모두 정지한다. Scene 로드·도착·연출을 끝내고 확정하면 Field만 held가 되고 공용 시간·Player·낮밤은 진행한다. 다른 pause 소유자의 임대는 해제하지 않는다.
+- 외부 취소·Match 종료·월드 복원의 epoch 변경·참가자 실패는 이전 허가를 무효화한다. Root Update/종료 정리가 소유 스레드에서 입력/정지 임대를 해제한다. 늦게 도착한 저장 성공도 새 월드의 진입 허가가 되지 않는다.
+- `transition.Cancellation`은 로드/도착/연출용이며 확정/Dispose 때 취소된다. 보스 전투를 여기에 바인딩하지 말고 현재 Match의 `MatchCoordinator.GameplayCancellation`과 **공용 MatchTime**을 사용한다. 기존 Field의 FieldTime과 구분한다.
+- 실제 Scene 소유자는 실패 시 참가자 원위치/카메라 lease/추가 Scene 정리를 이 범위 안에서 끝내고 Dispose한다. `AppRoot.ReplaceGameplaySceneAsync`는 Match를 종료하므로 사용하지 않는다. NGO의 `SceneTransitions.LoadAsync`는 기존 전원 로드 장벽을 사용하지만 실제 Player 이동·연출 완료를 대신하지 않는다.
+- Game Debugger Checkpoint 패널의 `FinalBossTransitionPending/Error`는 저장/준비 상태를 읽는다. 실제 Scene 소유자 없이 Debugger가 진입 성공을 만드는 버튼은 제공하지 않는다.
+
+현재 이 API·Root 연결과 순수 Core 검사7개를 구현했다. 미저장 Scene을 보존하려고 현재 Editor assembly의 NUnit 메서드를 직접 실행했으며7개가 통과했다. Unity TestRunner 실행과 구분한다. 실제 Stage_1 Root에서도 저장 우회 거부·실제 Weather 누락 거부 뒤 입력/정지 해제·같은 Match/Scene 유지를 확인했다. 여기서는 진입 경계를 시험하기 위해100%와 실제 일반 Enemy 두 개의 추적 ID를 임시 사용했으며 자연 진행 검수가 아니다. 실제 Boss Scene 조립·참가자 이동·연출과 그 성공 인수는 여전히 미연결이며, 허가/임대의 존재를 실제 최종 보스전 완료로 세지 않는다.
 
 ## 현재 구현/검증과 미연결
 

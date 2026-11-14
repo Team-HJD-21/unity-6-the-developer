@@ -37,16 +37,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void ReleaseStageCombatSources()
         {
+            var errors = new List<Exception>();
+            RunCleanup(() => _finalBossTransition?.Dispose(), errors);
+            _finalBossTransition = null;
             foreach (var source in _stageCombatSources)
-                source.DeathObserved -= ReportStageEnemyDeath;
+                RunCleanup(() => source.DeathObserved -= ReportStageEnemyDeath, errors);
             _stageCombatSources.Clear();
             if (_stageCheckpoints != null)
             {
                 if (_coordinator?.StageProgression != null)
                     _coordinator.StageProgression.FieldBossDefeated -= _stageCheckpoints.RecordFieldBossDefeated;
-                _stageCheckpoints.Dispose();
+                RunCleanup(_stageCheckpoints.Dispose, errors);
                 _stageCheckpoints = null;
             }
+            if (errors.Count > 0) throw new AggregateException("Stage 전환·전투 원본을 해제하는 중 오류가 발생했습니다.", errors);
         }
 
         private Task<CheckpointOperationResult> SaveStageCheckpointAsync(CheckpointSlot slot, CancellationToken cancellation)
@@ -62,12 +66,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (!HasCurrentMatch || Recovery?.IsRecoveryPending == true) return;
             _stageCheckpoints?.RetryFailed();
         }
-        /// <summary>같은 Match의 실제 Boss Scene 조립부가 보스와 도착·연출 준비를 마친 뒤 호출합니다. 예전 Field만 보류합니다.</summary>
+        /// <summary>실제 저장을 마친 전환 범위 안에서 Boss Scene 조립부가 보스·전원 도착·연출 완료 뒤 호출합니다.</summary>
         public void ConfirmFinalBossReady(MatchId match, EntityId actor)
         {
             if (!HasCurrentMatch || match != _ownedMatchId) throw new InvalidOperationException("Use the current Host Stage.");
-            _coordinator.StageProgression.ConfirmFinalBossReady(actor);
-            _matchTime.SetFieldHeld(true);
+            if (_finalBossTransition == null) throw new InvalidOperationException("PrepareFinalBossTransitionAsync의 저장 완료 범위가 필요합니다.");
+            _finalBossTransition.ConfirmReady(actor);
+            _finalBossTransition = null;
         }
         /// <summary>Enemy 권위 HP 원본에서 확인한 실제 죽음만 전달합니다. UI 요청·Despawn을 사망 사실로 제출하지 않습니다.</summary>
         public void ReportStageEnemyDeath(MatchId match, EntityId actor)

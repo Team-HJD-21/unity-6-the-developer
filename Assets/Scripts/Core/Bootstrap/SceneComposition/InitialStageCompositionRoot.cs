@@ -530,6 +530,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             // main의 기존 CU 읽기 Port를 사용합니다. Feature가 새 파괴 이벤트 계약을 구현할 필요는 없습니다.
             _coordinator?.EvaluateProgress();
             PumpRecovery();
+            PumpFinalBossTransition();
             if (Recovery?.IsRecoveryPending != true) _stageCheckpoints?.Pump();
             _coordinator?.StageProgression?.Pump(_matchSession?.Regions?.Snapshot);
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)

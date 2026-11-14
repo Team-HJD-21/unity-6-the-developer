@@ -340,3 +340,13 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 추가 기존 RegionSpawnPolicyTests 회귀는 dirty Scene의 Save 확인창 때문에 타임아웃됐다. Cancel로 취소했고 통과로 세지 않는다. Temp의 다른 옛 테스트6개 결과도 이번 증거가 아니다. 취소 뒤 지연된 Pipeline만 Window/Pipeline Stop/Start로 복구했으며 마지막 eval은 Play/컴파일/실패false였다. Computer Use는 종료했다.
 - 전체 Scene 재로드는 자동 승인 검토가 미저장 작업 유실 위험으로 거절했다. 우회하지 않고 이 검수가 만든 마커2개/추가 필드만 정확한 참조/좌표로 원복했다. Scene 파일 저장/변경 폐기/dirty 해제는 하지 않았다. 마지막 Scene dirty=true는 보존하며 임시 마커0, 원본 파일 변경 없음이다. QA의 기존 성장 슬롯3개만 복원해 저장33개 전체 해시 일치를 확인했다(b7d-save-cleanup.json).
 - Field 생성 서비스 자체는 더 이상 미구현이 아니다. 실제 Stage_1의 확정 보스 Definition/진입로 지정·Weather 전체 writer와 최종 Boss Scene/전환/도착/컷씬은 여전히 제공/연결이 필요하며 B7/B8 전체 완료로 표시하지 않는다.
+
+## B8b — 최종 진입 전 실제 저장·정지·입력 수명 (2026-11-14)
+
+- Core FinalBossTransition과 Root.PrepareFinalBossTransitionAsync를 연결했다.100%·두 Field 생성·생존 참가자/복귀 미진행을 확인하고 공용 시간/로컬 입력을 임대한 뒤 before-final 슬롯의 실제 Saved/현재 scope 완료를 기다린다. ConfirmFinalBossReady 직접 우회는 거부한다.
+- 준비 반환 뒤에도 호출자/Gameplay 취소를 전달하며, Root Update/종료에서 취소·월드 epoch 변경·실패 후 임대를 정리한다. 늦은 저장 성공은 무효다. 실제 도착/보스/연출 완료 확인 때 기존 Field만 보류하고 공용 시간·Player·낮밤은 진행한다. 다른 pause 소유자는 유지한다. Scene 로드/도착/컷씬 그 자체를 Core가 가짜로 수행하지 않는다.
+- 현재 Editor assembly의 NUnit 메서드7개를 직접 실행해7/7 통과했다(b8b-direct-tests-result.json). 미저장 Scene을 보존하는 순수 Core 검사이며 Unity TestRunner 실행이 아니다. 저장 대기/실패·Saved라도 과거 scope·외부 취소·복원 epoch·Player 실패·늦은 완료/다른 pause·잘못된 보스 ID의 Field held rollback을 검증한다. 마지막 컴파일에서 새 소스보다 최신 assembly와 failed=false를 확인했다.
+- 실제 Stage_1 Root/CheckpointService 관측은 b8b-root-runtime-result.json의 success=true·신규Runtime 오류0이다. 자연 진행이나 실제 Boss 콘텐츠 검수가 아니라, 실제 일반 Enemy 두 개의 ID와 시험용100%로 진입 경계에 도달했다. 저장 없이 확정하는 호출은 거부, 실제 world/weather 누락 뒤 pendingfalse·입력false→false·pauseOwners0·Field heldfalse·공용 시간 재진행·같은 Match/Scene 유지·추가 Scene 전환false·최종 ID 없음이었다. 가짜 writer는 넣지 않았다.
+- 첫 관측은 읽기 IRegionGridSource에 TryApply를 호출해 실행 전 컴파일 거절됐다. 기존 MatchSession.UpdateRegionCapture API로 바로잡았다. 다음 관측은 Scene의 두 Executor 중 독립 시험용 대상을 잡아 준비 대기에서 종료됐고, 실제 EncounterSceneConfiguration.SpawnExecutor를 쓰는 최종 관측이 통과했다. 두 관측 오류는 별도 원본으로 보존하며 제품 컴파일/동작 통과와 섞지 않는다.
+- Play/Pause/컴파일/실패false, 기존 저장33개 전체 해시 복구를 b8b-save-cleanup.json으로 확인했다. Scene dirty 표시는 보존했고 Scene 파일/외부 UI는 저장하지 않았다. Computer Use는 이번 배치에서 사용하지 않았다.
+- 남은 B8은 실제 Boss Scene/보스/전원 도착/로컬 연출 소유자가 이 범위 안에서 기존 SceneTransitions.LoadAsync를 연결하고 실패 시 이동·Scene·카메라를 복구하는 것이다. 실제 보스 사망/결과·허브까지의 성공 인수와 전체 Weather 저장·실제 원격 Player 인수도 남아 있다. 이 저장/임대 경계 구현을 B8 전체 완료로 표시하지 않는다.

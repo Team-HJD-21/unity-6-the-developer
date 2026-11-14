@@ -82,6 +82,10 @@ namespace TeamHJD.Game.Editor
                     _ => stage.PendingReason
                 }, MessageType.Warning);
             }
+            if (scene.FinalBossTransitionPending)
+                EditorGUILayout.HelpBox("최종 진입 준비 중 · 공용 시간/로컬 입력을 보류하고 실제 Scene·도착·연출 완료를 기다립니다.", MessageType.Info);
+            if (scene.FinalBossTransitionError != null)
+                EditorGUILayout.HelpBox(scene.FinalBossTransitionError, MessageType.Error);
             if (scene.PendingStageCheckpoints.Count > 0)
             {
                 EditorGUILayout.LabelField("Stage 사건 저장", string.Join(" / ", scene.PendingStageCheckpoints));
