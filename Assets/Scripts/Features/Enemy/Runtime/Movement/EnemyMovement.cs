@@ -14,10 +14,13 @@ public partial class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float moveSpeed = 1.5f;
     [SerializeField, Min(0f)] private float moveAcceleration = 10f;
     [SerializeField, Min(0f)] private float moveDeceleration = 20f;
+    [SerializeField, Min(1f)] private float pushSpeedLimitMultiplier = 1.1f;
     
     public float MoveSpeed => moveSpeed;
     public float CurrentSpeed => rigidbody2D != null ? rigidbody2D.linearVelocity.magnitude : 0f;
     public bool HasPath => _path != null && _currentPath < _path.Length;
+    private float PushSpeedLimit =>
+        Mathf.Max(0f, moveSpeed) * Mathf.Max(1f, pushSpeedLimitMultiplier);
 
     private void Awake()
     {
@@ -93,7 +96,7 @@ public partial class EnemyMovement : MonoBehaviour
             return;
         }
 
-        Vector2 currentVelocity = rigidbody2D.linearVelocity;
+        Vector2 currentVelocity = LimitPushSpeed();
         float deltaTime = Time.fixedDeltaTime;
 
         // 새 이동 방향의 속도와 옆으로 남은 속도를 분리한다.
@@ -130,16 +133,37 @@ public partial class EnemyMovement : MonoBehaviour
     /// </summary>
     public void Brake()
     {
+        Vector2 currentVelocity = LimitPushSpeed();
+
         if (moveDeceleration <= 0f)
             return;
 
-        Vector2 currentVelocity = rigidbody2D.linearVelocity;
         Vector2 nextVelocity = Vector2.MoveTowards(
             currentVelocity,
             Vector2.zero,
             moveDeceleration * Time.fixedDeltaTime);
 
         ApplyVelocityChange(currentVelocity, nextVelocity);
+    }
+
+    /// <summary>외부 충돌로 과속한 경우 허용 속도까지만 줄이고 밀린 방향은 유지한다.</summary>
+    private Vector2 LimitPushSpeed()
+    {
+        Vector2 velocity = rigidbody2D.linearVelocity;
+        float limit = PushSpeedLimit;
+
+        if (velocity.sqrMagnitude <= limit * limit ||
+            !rigidbody2D.simulated ||
+            rigidbody2D.bodyType != RigidbodyType2D.Dynamic ||
+            (rigidbody2D.constraints & RigidbodyConstraints2D.FreezePosition)
+            == RigidbodyConstraints2D.FreezePosition)
+        {
+            return velocity;
+        }
+
+        velocity = Vector2.ClampMagnitude(velocity, limit);
+        rigidbody2D.linearVelocity = velocity;
+        return velocity;
     }
 
     /// <summary>이번 물리 단계의 목표 속도에 필요한 힘을 적용한다.</summary>
@@ -162,6 +186,9 @@ public partial class EnemyMovement : MonoBehaviour
         {
             return;
         }
+
+        // 방향 전환 시 전진·옆 속도를 합친 결과도 허용 속도를 넘지 않게 한다.
+        nextVelocity = Vector2.ClampMagnitude(nextVelocity, PushSpeedLimit);
 
         // 물리 단계에서 적용될 감쇠를 보상해 목표 속도와 가감속을 유지한다.
         float dampingFactor =

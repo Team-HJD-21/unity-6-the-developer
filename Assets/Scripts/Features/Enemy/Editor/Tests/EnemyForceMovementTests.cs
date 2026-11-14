@@ -107,23 +107,27 @@ public sealed class EnemyForceMovementTests
         var settings = new UnityEditor.SerializedObject(_movement);
         settings.FindProperty("moveDeceleration").floatValue = deceleration;
         settings.ApplyModifiedPropertiesWithoutUndo();
-        _body.linearVelocity = Vector2.up * 3f;
+        float sidewaysSpeed = _movement.MoveSpeed;
+        _body.linearVelocity = Vector2.up * sidewaysSpeed;
 
         _movement.Move(Vector2.right);
-        Assert.That(_body.linearVelocity, Is.EqualTo(Vector2.up * 3f));
+        Assert.That(_body.linearVelocity, Is.EqualTo(Vector2.up * sidewaysSpeed));
         _physics.Simulate(Time.fixedDeltaTime);
 
         Assert.That(_body.linearVelocity.x,
             Is.EqualTo(Mathf.Min(10f * Time.fixedDeltaTime, _movement.MoveSpeed))
                 .Within(0.001f));
         Assert.That(_body.linearVelocity.y,
-            Is.EqualTo(Mathf.Max(0f, 3f - deceleration * Time.fixedDeltaTime))
+            Is.EqualTo(Mathf.Max(0f, sidewaysSpeed - deceleration * Time.fixedDeltaTime))
                 .Within(0.001f));
     }
 
     [Test]
     public void Brake_ReducesSpeedGraduallyAndStopsWithoutReversing()
     {
+        var settings = new UnityEditor.SerializedObject(_movement);
+        settings.FindProperty("moveSpeed").floatValue = 10f;
+        settings.ApplyModifiedPropertiesWithoutUndo();
         _body.linearVelocity = Vector2.right * 10f;
 
         _movement.Brake();
@@ -170,14 +174,46 @@ public sealed class EnemyForceMovementTests
     }
 
     [Test]
-    public void Move_DoesNotClampVelocityFromExternalPush()
+    public void Move_PreservesExternalPushBelowSpeedLimit()
     {
-        _body.linearVelocity = new Vector2(4f, 3f);
+        Vector2 velocity = Vector2.right * (_movement.MoveSpeed * 1.05f);
+        _body.linearVelocity = velocity;
         _movement.Move(Vector2.right);
-        Assert.That(_body.linearVelocity, Is.EqualTo(new Vector2(4f, 3f)));
+        Assert.That(_body.linearVelocity, Is.EqualTo(velocity));
+    }
+
+    [TestCase(1.1f)]
+    [TestCase(1.5f)]
+    public void Move_LimitsExcessivePushSpeedAndPreservesDirection(float multiplier)
+    {
+        var settings = new UnityEditor.SerializedObject(_movement);
+        settings.FindProperty("pushSpeedLimitMultiplier").floatValue = multiplier;
+        settings.ApplyModifiedPropertiesWithoutUndo();
+        Vector2 velocity = new Vector2(4f, 3f);
+        _body.linearVelocity = velocity;
+
+        _movement.Move(Vector2.right);
+
+        float limit = _movement.MoveSpeed * multiplier;
+        Assert.That(_body.linearVelocity.magnitude, Is.EqualTo(limit).Within(0.001f));
+        Assert.That(Vector2.Distance(_body.linearVelocity.normalized, velocity.normalized),
+            Is.LessThan(0.001f));
         _physics.Simulate(Time.fixedDeltaTime);
-        Assert.That(_body.linearVelocity.x, Is.GreaterThan(_movement.MoveSpeed));
-        Assert.That(_body.linearVelocity.y, Is.GreaterThan(0f));
+        Assert.That(_body.linearVelocity.magnitude, Is.LessThanOrEqualTo(limit + 0.001f));
+    }
+
+    [Test]
+    public void Brake_LimitsExcessivePushEvenWhenDecelerationIsZero()
+    {
+        var settings = new UnityEditor.SerializedObject(_movement);
+        settings.FindProperty("moveDeceleration").floatValue = 0f;
+        settings.ApplyModifiedPropertiesWithoutUndo();
+        _body.linearVelocity = Vector2.left * 20f;
+
+        _movement.Brake();
+
+        Assert.That(_body.linearVelocity.x,
+            Is.EqualTo(-_movement.MoveSpeed * 1.1f).Within(0.001f));
     }
 
     [Test]
