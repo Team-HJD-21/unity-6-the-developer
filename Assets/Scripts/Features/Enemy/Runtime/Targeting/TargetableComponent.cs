@@ -12,7 +12,7 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     [SerializeField] private TargetType targetType;
 
     [Header("공격 인원 제한")]
-    [SerializeField, Min(1)] private int maxAttackers = 50;
+    [SerializeField, Min(0)] private int maxAttackers = 50;
 
     [Header("체력")]
     [SerializeField] private float maxHealth;
@@ -62,7 +62,7 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     /// <summary>이동 중인 적을 포함해 이 타깃에 배정된 전체 집계 인원을 반환한다.</summary>
     public int AssignedAttackerCount => _assignedAttackerCount;
 
-    /// <summary>최대 공격 인원을 넘지 않으면 요청한 인원을 배정한다.</summary>
+    /// <summary>최대 공격 인원을 넘지 않으면 요청한 인원을 배정한다. 최대값 0은 무제한이다.</summary>
     /// <param name="count">새로 배정할 양수 인원.</param>
     /// <returns>요청 인원 전체를 배정했으면 true. 실패하면 현재 인원을 유지한다.</returns>
     public bool TryAssignAttackers(int count)
@@ -70,10 +70,14 @@ public class TargetableComponent : MonoBehaviour, ITargetable
         if (!CanBeTargeted || count <= 0)
             return false;
 
-        int remaining = MaxAttackers - _assignedAttackerCount;
+        // 최대값이 0이면 제한 없이 배정한다.
+        if (MaxAttackers > 0)
+        {
+            int remaining = MaxAttackers - _assignedAttackerCount;
 
-        if (count > remaining)
-            return false;
+            if (count > remaining)
+                return false;
+        }
 
         _assignedAttackerCount += count;
         return true;

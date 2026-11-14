@@ -20,7 +20,8 @@ public partial class EnemySpawnExecutor
         if (initialTarget != null && (!initialTarget.CanBeTargeted ||
             initialTarget.gameObject.scene != gameObject.scene ||
             (definition.TargetRule == EnemyTargetRule.PlayerOnly && initialTarget.TargetType != TargetType.Player) ||
-            (definition.IsIncludedInAttackerLimit && initialTarget.AssignedAttackerCount >= initialTarget.MaxAttackers)))
+            (definition.IsIncludedInAttackerLimit && initialTarget.MaxAttackers > 0 &&
+             initialTarget.AssignedAttackerCount >= initialTarget.MaxAttackers)))
         {
             result = "초기 타깃의 씬·타깃 가능 상태·유형·공격 인원 수용량을 확인하세요. PlayerOnly 몬스터는 플레이어만 지정할 수 있습니다.";
             return false;

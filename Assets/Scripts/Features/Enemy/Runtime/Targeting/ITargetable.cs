@@ -20,7 +20,7 @@ public interface ITargetable
     /// </summary>
     TargetType TargetType { get; }
 
-    /// <summary>이동 중인 적을 포함해 이 타깃에 배정할 수 있는 최대 집계 인원을 반환한다.</summary>
+    /// <summary>이동 중인 적을 포함해 이 타깃에 배정할 수 있는 최대 집계 인원을 반환한다. 0은 무제한이다.</summary>
     int MaxAttackers { get; }
 
     /// <summary>모든 분대가 이 타깃에 배정한 집계 대상 인원의 합을 반환한다.</summary>

@@ -112,7 +112,7 @@ classDiagram
 
 첫 반복 갱신 시점은 몬스터 InstanceID로 엇갈리게 배치하며 새 타깃의 첫 계산을 지연하지 않는다. 이는 프레임당 계산 수 제한이나 결정적인 재실행을 보장하는 스케줄러가 아니다. 타깃별 공격 인원 제한은 아래 배정 API와 분대 연결을 사용하며 별도 경로 계산 스케줄러는 후속 작업이다.
 
-`TargetableComponent`의 `Max Attackers`는 타깃별 최대 배정 인원 설정이며 `ITargetable.MaxAttackers`로 조회한다. 초기값 10은 임시 값이고 플레이어·터렛·CU마다 조절할 수 있다. 현재 배정 인원은 실행 중 값인 `AssignedAttackerCount`로 조회한다. `TryAssignAttackers(count)`는 타깃이 유효하고 요청 인원이 양수이며 남은 인원 안에 들어갈 때만 배정 수를 늘린다. `UnassignAttackers(count)`는 양수만 해제하고 결과를 0 이상으로 제한한다. 배정 인원은 주기적으로 집계하거나 비활성화 시 자동 초기화하지 않는다. 호출자는 자신이 배정한 인원을 관리하고 반환해야 한다.
+`TargetableComponent`의 `Max Attackers`는 타깃별 최대 배정 인원 설정이며 `ITargetable.MaxAttackers`로 조회한다. 0은 무제한이며, 양수는 해당 수를 상한으로 사용한다. 각 플레이어·터렛·CU의 값은 개별 설정할 수 있다. 현재 배정 인원은 실행 중 값인 `AssignedAttackerCount`로 조회한다. `TryAssignAttackers(count)`는 타깃이 유효하고 요청 인원이 양수이며, 상한이 0이거나 남은 인원 안에 들어갈 때 배정 수를 늘린다. `UnassignAttackers(count)`는 양수만 해제하고 결과를 0 이상으로 제한한다. 배정 인원은 주기적으로 집계하거나 비활성화 시 자동 초기화하지 않는다. 호출자는 자신이 배정한 인원을 관리하고 반환해야 한다. 현재 `Player.prefab`은 0으로 설정하고 터렛·CU는 기존 상한을 유지한다.
 
 `EnemyDefinition.IsIncludedInAttackerLimit`은 몬스터별 공격 인원 집계 설정이며 기본값은 true다. `BomberSlime` Definition만 false로 설정한다. 일반 스폰·소환 생성·저장 복원은 Definition의 값을 `EnemyController.JoinSquad()`에 전달한다. 설정은 최초 등록 시 적용하고 소속 중에는 바꾸지 않는다. 같은 분대의 중복 등록은 그대로 유지하고 다른 분대로의 자동 이동은 거부한다. `LeaveSquad()`는 사망·Despawn 시 소속과 배정을 정리하는 데 사용한다. 인자를 생략하는 테스트용 등록은 기본값 true를 사용한다.
 
@@ -120,7 +120,7 @@ classDiagram
 
 분대는 별도 누적 카운터 없이 검색·타깃 변경 시에만 집계 대상 구성원을 계산한다. `TryChangeTarget()`은 새 타깃에 집계 대상 수만큼 배정할 수 있을 때 이전 배정과 구독을 반환하고 전체 구성원의 목표를 바꾼다. 타깃 불가 이벤트에서는 이전 목표와 배정을 먼저 해제한 뒤 재검색하며 후보가 없으면 목표 없이 재시도한다. 감지한 플레이어로 우선 전환할 때는 집계 대상 수를 수용할 수 없으면 기존 유효 타깃을 유지한다. 합류·제거 시에는 해당 몬스터가 집계 대상인 경우에만 한 명을 추가·반환한다. 합류 인원을 수용하지 못하면 목록 추가 전에 기존 집계 대상의 배정을 반환하고 전체 분대가 재검색한다. 저장 복원은 같은 타깃에 중복 배정하지 않고 다른 타깃으로 교체할 때 이전 배정부터 반환한다. 집계 설정은 Definition에서 다시 읽으며 저장 형식은 변경하지 않는다.
 
-배정 API는 Test Runner의 EditMode에서 `EnemyTargetAttackerLimitTests`를 선택해 실행한다. 별도 Preview Scene에서 최대 인원을 10으로 설정하고 배정 한계·해제 후 재배정·0 및 음수 인원·과도한 인원·체력 0 및 비활성 상태·체력 회복 후 배정을 검사한다. 분대의 실제 배정이나 네트워크 동작을 검증하는 테스트는 아니다.
+배정 API는 Test Runner의 EditMode에서 `EnemyTargetAttackerLimitTests`를 선택해 실행한다. 별도 Preview Scene에서 최대 인원 10의 제한·해제 후 재배정·0 상한의 무제한 배정 및 타깃 검색·0 및 음수 요청·과도한 인원·체력 0 및 비활성 상태·체력 회복 후 배정을 검사한다. Player 프리팹의 무제한 설정도 확인한다. 분대의 실제 네트워크 동작을 검증하는 테스트는 아니다.
 
 `EnemyPlayerSensor`는 개체별 CircleCollider2D Trigger의 진입 이벤트로 플레이어를 전달한다. 이미 겹친 상태의 분대 합류나 기존 타깃 무효화는 Stay 이벤트로 보완한다. 센서는 `EnemyNetworkController.CanExecuteBehavior`로 서버/명시적 로컬 테스트 및 시뮬레이션 진행 권한을 검사한 뒤 `EnemyController.NotifyPlayerDetected()`에 전달한다. 공통 컨트롤러는 네트워크 컴포넌트를 직접 참조하지 않고 소속 분대에 전달한다. `EnemySquad.TryPrioritizePlayer()`는 검색 주기를 기다리지 않고 플레이어로 전환하며, 기존 플레이어가 유효하면 유지한다. 범위 이탈만으로 타깃을 해제하지 않는다.
 
