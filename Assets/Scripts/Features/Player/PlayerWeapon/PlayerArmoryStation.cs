@@ -11,6 +11,7 @@ public sealed class PlayerArmoryStation : MonoBehaviour
     [SerializeField, Min(.1f)] private float _interactionRange = 3f;
     private PlayerArmoryView _view;
     private PlayerArmory _owner;
+    private GameObject _ownedEvents;
     public PlayerArmoryView View => _view;
     public bool IsInRange(PlayerArmory player) => isActiveAndEnabled && player != null &&
         Vector2.SqrMagnitude((Vector2)player.transform.position - (Vector2)transform.position) <= _interactionRange * _interactionRange;
@@ -41,12 +42,26 @@ public sealed class PlayerArmoryStation : MonoBehaviour
     public bool TryOpen(PlayerArmory owner)
     {
         if (owner == null || _view == null || !_view.IsConfigured || _owner != null || !owner.TryOpen(this)) return false;
+        // Startup's menu EventSystem is unloaded before the first field visit.
+        // Reuse a scene system when present; otherwise own one only while this UI is open.
+        if (EventSystem.current == null)
+        {
+            _ownedEvents = new GameObject("Armory EventSystem", typeof(EventSystem),
+                typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
+            _ownedEvents.transform.SetParent(transform, false);
+        }
         _owner = owner; _view.Bind(owner, this); return true;
     }
     public void Close()
     {
         if (_owner != null) _owner.Close(); _owner = null;
         if (_view != null) _view.Hide();
+        if (_ownedEvents != null)
+        {
+            _ownedEvents.SetActive(false);
+            Destroy(_ownedEvents);
+            _ownedEvents = null;
+        }
     }
     private void OnDisable() => Close();
     private void OnDestroy() { if (_view != null) Destroy(_view.gameObject); }

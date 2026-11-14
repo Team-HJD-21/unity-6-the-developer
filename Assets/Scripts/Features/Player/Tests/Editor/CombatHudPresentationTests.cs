@@ -184,6 +184,14 @@ public sealed class CombatHudPresentationTests
         var alerts = _hud.GetComponent<CombatHudAlertLayout>();
         alerts.View = _appCanvas.GetComponent<AppScreenCanvasView>().Alerts;
         var owner = _player.GetComponent<PlayerSkillController>();
+        // Presentation exercises the four authored skills after normal research unlocks.
+        Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(300), Is.True);
+        var research = _player.GetComponent<PlayerSkillResearch>();
+        foreach(var id in new[]{PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon})
+        {
+            Assert.That(research.TryUnlock(id), Is.True);
+            Assert.That(research.TrySetCandidate((int)id-1,id), Is.True);
+        }
         Assert.That(owner.BindHud(hud), Is.True);
         Assert.That(owner.TryEquip(0, PlayerSkillId.Bomb), Is.True);
         Assert.That(owner.TryEquip(1, PlayerSkillId.EnergyBarrier), Is.True);

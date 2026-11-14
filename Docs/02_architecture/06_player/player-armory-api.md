@@ -4,6 +4,8 @@
 
 ## 진입·입력
 
+첫 출격 전 우주선처럼 `EventSystem.current`가 없는 경우에만 Station이 UI 입력 모듈을 생성한다. 닫을 때 자신이 만든 모듈만 제거하며, 필드 등에서 제공하는 기존 EventSystem은 재사용하고 유지한다.
+
 - `SpaceShipGrayBox.unity`의 기존 `WeaponChoice`에 `PlayerArmoryStation`을 연결한다. 오브젝트의 그림·위치·기존 GUID를 유지한다.
 - 시작 허브와 진행 중 우주선 방문 모두 `PlayerControlState.IsInSpaceship`인 로컬 생존 actor만 상호작용한다. 기존 `ILocalInputConsumer` 주입을 받은 `PlayerArmory`를 조회하고 거리(기본 3)를 검사한다.
 - 가까이 가면 `[F] 무기고`가 표시된다. F로 열고, F·Esc·닫기 버튼·거리 이탈·사망·전환·비활성화 시 닫는다. 입력 잠금은 자기 lease만 해제한다.
@@ -51,3 +53,5 @@
 `PlayerArmoryTests`, `PlayerArmoryRuntimeTests`, `PlayerBulletRuntimeTests`가 진입점이다. 독립 fixture의 실제 프레임 입력/UI/사격 검사와 실제 우주선·출격 왕복·Host/Client 인수는 구분한다. 결과는 실행 후 기록한다.
 
 2026-11-15 한글화 검증: 무기고 관련 테스트 12/12 통과. 독립 실행 환경의 Canvas 캡처에서 얇은물마루 한글 문구와 강화 비교가 겹침 없이 표시됨을 확인했다. 실제 우주선 Scene에서의 수동 F 조작과 원격 Client 검증은 별도다.
+
+2026-11-15 첫 출격 전 입력 수정: 무기고 테스트 13/13 통과. EventSystem이 없는 fixture에서 키 입력 처리와 실제 포인터 입력 모듈·레이캐스트·버튼 콜백을 검사했다. 실제 Startup → SpaceShipGrayBox 경로도 자동 실행해 필드 미진입 상태의 EventSystem 부재, 무기고 열기, 스나이퍼 장착 버튼 클릭, 닫기를 확인했다. 사람이 직접 조작한 인수와 원격 Client 검증은 별도다.

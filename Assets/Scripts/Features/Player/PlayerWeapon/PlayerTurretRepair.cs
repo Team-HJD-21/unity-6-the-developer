@@ -63,7 +63,7 @@ public sealed class PlayerTurretRepair : MonoBehaviour
     private bool CanInteract => isActiveAndEnabled && _input != null && _input.isActiveAndEnabled &&
         _controls != null && _controls.CanAct && FieldSimulationTime.CanAdvance(this) &&
         (Presence == null || Presence.CanReport) &&
-        (_skills == null || (_skills.CanUse && !_skills.IsPlacingSkill));
+        (_skills == null || (_skills.CanUse && !_skills.IsPlacingSkill && !_skills.PortalConsumesR));
 
     private void Awake()
     {

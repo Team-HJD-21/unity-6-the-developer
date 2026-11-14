@@ -45,6 +45,7 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
     public override int AvailableCount => _inventory != null ? _inventory.Available : 0;
     public int CurrentTurretCount => AvailableCount;
     public int MaxTurretCount => Mathf.Max(1, maxTurretCount);
+    public float EffectDamage => turretPrefab != null && turretPrefab.GetComponent<PlayerTurret>() is PlayerTurret turret ? turret.ShotDamage * UpgradeMultiplier : 0;
     public float CurrentCooldownTimer => RemainingCooldown;
     public float SkillCooldown => Mathf.Max(.1f, skillCooldown);
     public bool IsCooldown => _installationRemaining > 0;
@@ -168,6 +169,7 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
         FieldSimulationTime.BindSpawned(turret.gameObject, this);
         turret.Health.SetDeploymentHealth(_inventory.GetSlot(_selectedSlot).HealthRatio);
         turret.AssignOwner(this, _selectedSlot);
+        turret.GetComponent<PlayerPlacementPresentation>()?.Play();
         _deployed.Add(turret);
         _installationRemaining = SkillCooldown;
         CancelPlacement();

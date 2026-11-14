@@ -28,8 +28,10 @@ public sealed partial class PlayerBombExplosion : MonoBehaviour
     private bool _hasExplosionParameter;
     private bool _applyingExplosion;
     private PlayerTimeBombVisual _presentation;
+    private PlayerSkillResearch _research;
+    public float Damage => _damage * (_research?.Multiplier(PlayerSkillId.Bomb) ?? 1f);
 
-    public void BindOwner(Transform owner) => _depth?.Bind(owner);
+    public void BindOwner(Transform owner) { _depth?.Bind(owner); _research = owner != null ? owner.GetComponent<PlayerSkillResearch>() : null; }
 
     private void Awake()
     {
@@ -81,7 +83,7 @@ public sealed partial class PlayerBombExplosion : MonoBehaviour
         if (_hasExplosionParameter) _animator.SetBool(ExplosionHash, true);
         if (_presentation != null) _presentation.PlayExplosion(_radius, _effectSeconds);
         _applyingExplosion = true;
-        try { _areaDamage.Apply(transform.position, _radius, _damage); }
+        try { _areaDamage.Apply(transform.position, _radius, Damage); }
         finally { _applyingExplosion = false; }
         return true;
     }

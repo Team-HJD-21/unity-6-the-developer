@@ -46,6 +46,8 @@ public partial class PlayerAttack : MonoBehaviour
     private PlayerWeaponAmmo _ammo;
     private PlayerBaseStats _baseStats;
     private PlayerArmory _armory;
+    private PlayerWeaponVisual _visual;
+    private PlayerCryoSpray SecondarySpray => _visual != null ? _visual.SecondaryCryoSpray : null;
     private double _nextShotTime;
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     private PlayerMatchPresence Presence => GetComponent<PlayerMatchPresence>();
@@ -71,6 +73,7 @@ public partial class PlayerAttack : MonoBehaviour
         _ammo = GetComponent<PlayerWeaponAmmo>();
         _baseStats = GetComponent<PlayerBaseStats>();
         _armory = GetComponent<PlayerArmory>();
+        _visual = GetComponent<PlayerWeaponVisual>();
     }
 
     // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
@@ -83,12 +86,20 @@ public partial class PlayerAttack : MonoBehaviour
             (_ammo == null || _ammo.CanFire(WeaponType.CryoBlaster)) && TryGetMuzzle(out var muzzle) && TryGetAimDirection(out var direction))
             _cryoSpray.Show(muzzle.position, direction);
         else _cryoSpray.Stop(!CanAttack || !FieldSimulationTime.CanAdvance(this));
+        if (SecondarySpray != null)
+        {
+            if (held && CanAttack && FieldSimulationTime.CanAdvance(this) && _selection.CurrentWeapon == WeaponType.CryoBlaster &&
+                (_ammo == null || _ammo.CanFire(WeaponType.CryoBlaster)) &&
+                _visual.TryGetSecondaryMuzzle(out var second, out var secondDirection)) SecondarySpray.Show(second, secondDirection);
+            else SecondarySpray.Stop(true);
+        }
     }
 
     private void OnDisable()
     {
         if (_input != null) _input.CancelAttackGesture();
         if (_cryoSpray != null) _cryoSpray.Stop(true);
+        if (SecondarySpray != null) SecondarySpray.Stop(true);
     }
 
     public bool TryFire()
@@ -100,6 +111,8 @@ public partial class PlayerAttack : MonoBehaviour
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
         var shot = GetShotSettings();
+        if (_visual != null && _visual.IsDualWieldVisible)
+            shot.damage *= GetComponent<PlayerDualWieldSkill>()?.UpgradeMultiplier ?? 1f;
         bool fired;
         if (shot.cryogenic)
         {
@@ -110,6 +123,16 @@ public partial class PlayerAttack : MonoBehaviour
         else fired = FirePellets(muzzle.position, direction, shot.color, Mathf.Max(0f, shot.damage),
             false, shot.pelletCount, shot.spreadAngle);
         if (!fired) return false;
+        if (_visual != null && _visual.TryGetSecondaryMuzzle(out var secondary, out var secondaryDirection))
+        {
+            if (shot.cryogenic && SecondarySpray != null)
+            {
+                float damage = _baseStats != null ? _baseStats.ResolveWeaponDamage(shot.damage) : Mathf.Max(0, shot.damage);
+                SecondarySpray.ApplyDamage(secondary, secondaryDirection, Mathf.RoundToInt(damage));
+            }
+            else if (!shot.cryogenic) FirePellets(secondary, secondaryDirection, shot.color, Mathf.Max(0, shot.damage),
+                false, shot.pelletCount, shot.spreadAngle);
+        }
 
         // 한 번의 산탄 발사도 탄창에서는 한 발입니다. 생성 실패는 소비하지 않습니다.
         if (_ammo != null) _ammo.TryConsumeRound(_selection.CurrentWeapon);

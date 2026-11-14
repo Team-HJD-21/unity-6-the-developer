@@ -65,6 +65,7 @@ public sealed partial class PlayerPortalSkill : PlayerPlacementSkillBase
         if (!CanMutate || NextSlot < 0) return false;
         int slot = NextSlot;
         _endpoints[slot] = SpawnEndpoint(slot, position);
+        _endpoints[slot].GetComponent<PlayerPlacementPresentation>()?.Play();
         return true;
     }
 
@@ -72,11 +73,11 @@ public sealed partial class PlayerPortalSkill : PlayerPlacementSkillBase
     {
         var endpoint = Instantiate(_prefab, position, Quaternion.identity);
         MoveToOwnerScene(endpoint.gameObject);
-        endpoint.Initialize(slot);
+        endpoint.Initialize(slot, transform);
         return endpoint;
     }
 
-    /// <summary>후속 F 입력/안내 UI가 조회할 소유 포털입니다. 벽 너머의 포털은 후보가 되지 않습니다.</summary>
+    /// <summary>R 이동·F 회수/안내 UI가 조회할 소유 포털입니다. 벽 너머의 포털은 후보가 되지 않습니다.</summary>
     public PlayerPortalEndpoint NearestInteractable
     {
         get
@@ -91,7 +92,7 @@ public sealed partial class PlayerPortalSkill : PlayerPlacementSkillBase
                 if (!IsEndpointActive(slot)) continue;
                 var endpoint = _endpoints[slot];
                 float distance = ((Vector2)endpoint.FootprintAt(endpoint.transform.position).ClosestPoint(feet) - feet).sqrMagnitude;
-                if (distance > nearestDistance || HasInteractionObstacle(feet, endpoint.transform.position)) continue;
+                if (distance > nearestDistance || HasInteractionObstacle(feet, endpoint)) continue;
                 nearest = endpoint; nearestDistance = distance;
             }
             return nearest;
@@ -160,12 +161,14 @@ public sealed partial class PlayerPortalSkill : PlayerPlacementSkillBase
         return "";
     }
 
-    private bool HasInteractionObstacle(Vector2 from, Vector2 to)
+    private bool HasInteractionObstacle(Vector2 from, PlayerPortalEndpoint endpoint)
     {
-        Vector2 delta = to - from;
+        Vector2 delta = (Vector2)endpoint.transform.position - from;
         if (delta.sqrMagnitude < .000001f) return false;
         foreach (var hit in Physics2D.RaycastAll(from, delta.normalized, delta.magnitude))
-            if (BlocksPlayer(hit.collider)) return true;
+            // 상호작용하는 포털 자신의 받침은 접근을 막아도 R/F 대상 선택까지 가리지 않습니다.
+            // 다른 포털·벽은 계속 검사하고 도착 판정에서는 자기 받침도 그대로 검사합니다.
+            if (hit.collider != null && !hit.collider.transform.IsChildOf(endpoint.transform) && BlocksPlayer(hit.collider)) return true;
         return false;
     }
 

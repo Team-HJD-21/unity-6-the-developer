@@ -19,6 +19,7 @@ public sealed partial class PlayerBeaconSkill : PlayerPlacementSkillBase
     public override float CooldownDuration => Cooldown;
     public override float RemainingCooldown => _remainingCooldown;
     public bool CanDeploy => _remainingCooldown <= 0;
+    public float EffectRadius => _radius * UpgradeMultiplier;
     private void Update() => Tick(FieldSimulationTime.DeltaTime(this));
     public void Tick(float elapsed)
     {
@@ -39,7 +40,8 @@ public sealed partial class PlayerBeaconSkill : PlayerPlacementSkillBase
         if (_active != null) PlayerFieldDevice.Dispose(_active.gameObject);
         _active = Instantiate(_prefab, position, Quaternion.identity);
         MoveToOwnerScene(_active.gameObject);
-        _active.Initialize(PlayerFieldDeviceKind.Beacon, position, position, .3f, _health, _duration, _radius, transform);
+        _active.Initialize(PlayerFieldDeviceKind.Beacon, position, position, .3f, _health, _duration, EffectRadius, transform);
+        _active.GetComponent<PlayerPlacementPresentation>()?.Play();
         _remainingCooldown = Cooldown;
         return true;
     }

@@ -22,6 +22,9 @@ public sealed class PlayerSkillHud : MonoBehaviour
     [SerializeField] private Sprite _turretIcon;
     [SerializeField] private Sprite _barrierIcon;
     [SerializeField] private Sprite _beaconIcon;
+    [SerializeField] private Sprite _dualWieldIcon;
+    [SerializeField] private Sprite _portalIcon;
+    [SerializeField] private TMP_Text _portalPrompt;
     [Header("Approved combat presentation")]
     [SerializeField] private CombatSkillPicker _combatPicker;
     private Canvas _canvas;
@@ -43,6 +46,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
     {
         _scaleBinding = GetComponent<CombatHudScaleBinding>();
         SetVisible(false);
+        if (_portalPrompt != null) _portalPrompt.gameObject.SetActive(false);
         if (!IsConfigured) Debug.LogError("Player Skill HUD needs configured Q/E slots and a selection panel.", this);
         else WarnAboutOptionalReferences();
     }
@@ -103,6 +107,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
         if (_recovery != null) _recovery.Bind(null);
         if (_placementHint != null) _placementHint.gameObject.SetActive(false);
         if (_placementFailure != null) _placementFailure.gameObject.SetActive(false);
+        if (_portalPrompt != null) _portalPrompt.gameObject.SetActive(false);
         SetVisible(false);
         if (previousOwner != null) previousOwner.DetachHud(this);
     }
@@ -137,6 +142,8 @@ public sealed class PlayerSkillHud : MonoBehaviour
         PlayerSkillId.PlayerTurret => _turretIcon,
         PlayerSkillId.EnergyBarrier => _barrierIcon,
         PlayerSkillId.LureBeacon => _beaconIcon,
+        PlayerSkillId.DualWield => _dualWieldIcon,
+        PlayerSkillId.Portal => _portalIcon,
         _ => null
     };
     public void ShowTooltip(Object source, PlayerSkillId skill)
@@ -173,6 +180,20 @@ public sealed class PlayerSkillHud : MonoBehaviour
         }
         if (_recovery != null) _recovery.Refresh();
         RefreshPlacementFeedback();
+        RefreshPortalPrompt();
+    }
+
+    private void RefreshPortalPrompt()
+    {
+        if (_portalPrompt == null) return;
+        var portal = Owner != null ? Owner.GetComponent<PlayerPortalSkill>() : null;
+        bool visible = IsFieldVisible && portal != null && portal.NearestInteractable != null;
+        _portalPrompt.gameObject.SetActive(visible);
+        if (visible)
+        {
+            string action = portal.IsLinked ? "R  포털 이동" : "반대편 포털 설치 필요";
+            _portalPrompt.text = Owner.RecoverablePortal != null ? action + "   /   F  회수" : action;
+        }
     }
 
     private void OnLoadoutChanged()

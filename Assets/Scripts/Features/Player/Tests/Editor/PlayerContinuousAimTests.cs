@@ -479,7 +479,7 @@ public sealed class PlayerContinuousAimTests
         public int Draws { get; private set; }
         public TeamHJD.Game.Contracts.IRandomSource GetStream(string id)
         {
-            Assert.That(id, Is.EqualTo("vfx/player-repair-impact")); return this;
+            Assert.That(id, Is.EqualTo("vfx/player-repair-impact").Or.EqualTo("vfx/player-cryo-spray").Or.EqualTo("vfx/player-cryo-spray/secondary")); return this;
         }
         public int NextInt(int min, int max)
         {
@@ -649,6 +649,29 @@ public sealed class PlayerContinuousAimTests
             Assert.That(direction, Is.EqualTo(Vector2.right));
         }
         finally { Object.DestroyImmediate(spanner.gameObject); }
+    }
+
+    [TestCase(0f)] [TestCase(120f)] [TestCase(-150f)]
+    public void SpannerSwingWindsUpCrossesAimAtImpactAndRecoversWithoutMovingActor(float angle)
+    {
+        Set(_selection, "_currentWeapon", WeaponType.Spanner);
+        Vector2 direction = Quaternion.Euler(0, 0, angle) * Vector2.right;
+        Input("AimDirection", direction); Input("HasAimTarget", false);
+        _motion.RefreshSpaceManBody(); _visual.Refresh();
+        var restPosition = _visual.Renderer.transform.localPosition;
+        var actorPosition = _player.transform.position;
+        Assert.That(_motion.PlayToolAction(false), Is.True);
+        float duration = _motion.ToolImpactDelay(false) * 2f;
+        void Phase(float phase) { Set(_motion, "_elapsed", duration * phase); _visual.Refresh(); }
+        float Offset() => Vector2.SignedAngle(direction, _visual.Renderer.transform.right);
+        Phase(.2f); float windup = Offset();
+        Assert.That(Mathf.Abs(windup), Is.EqualTo(85f).Within(.01f));
+        Phase(.5f);
+        Assert.That(Mathf.Abs(Offset()), Is.LessThan(.01f), "Actual damage is scheduled halfway through the action.");
+        Assert.That(Vector3.Distance(restPosition, _visual.Renderer.transform.localPosition), Is.GreaterThan(.5f));
+        Phase(.68f); Assert.That(Offset() * windup, Is.LessThan(0), "Follow through past the aim line.");
+        Phase(1f); Assert.That(Vector3.Distance(restPosition, _visual.Renderer.transform.localPosition), Is.LessThan(.001f));
+        Assert.That(_player.transform.position, Is.EqualTo(actorPosition));
     }
 
     private PlayerSpannerWeapon CreateBoundSpanner()

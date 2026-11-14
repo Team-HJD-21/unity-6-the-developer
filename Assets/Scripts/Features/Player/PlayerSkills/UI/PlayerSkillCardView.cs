@@ -10,8 +10,9 @@ public sealed class PlayerSkillCardView : MonoBehaviour, IPointerEnterHandler, I
     [SerializeField] private Button _button;
     [SerializeField] private Image _icon;
     [SerializeField] private TMP_Text _state;
+    [SerializeField] private TMP_Text _title;
     private PlayerSkillHud _hud;
-    public bool IsConfigured => _skill != PlayerSkillId.None && _button != null && _icon != null && _state != null;
+    public bool IsConfigured => _button != null && _icon != null && _state != null;
     public void Bind(PlayerSkillHud hud)
     {
         Unbind();
@@ -27,14 +28,21 @@ public sealed class PlayerSkillCardView : MonoBehaviour, IPointerEnterHandler, I
         _hud = null;
     }
     private void Select() => _hud?.Select(_skill);
+    internal void SetSkill(PlayerSkillId id)
+    {
+        _skill = id;
+        if (_title != null) _title.text = id == PlayerSkillId.None ? "비어 있음" : PlayerSkillDescriptions.Name(id);
+        if (_hud == null) return;
+        _icon.sprite = _hud.Icon(id); _icon.enabled = _icon.sprite != null;
+    }
     public void Refresh()
     {
         if (_hud == null || _hud.Owner == null) return;
         var owner = _hud.Owner;
         bool chosen = owner.Loadout.Contains(_skill);
         bool available = owner.IsAvailable(_skill);
-        _button.interactable = owner.CanPrepare && owner.Loadout.E == PlayerSkillId.None && !chosen && available;
-        _state.text = chosen ? (owner.Loadout.Q == _skill ? "Q 등록됨" : "E 등록됨") : available ? "선택" : "준비되지 않음";
+        _button.interactable = owner.CanPrepare && owner.Loadout.E == PlayerSkillId.None && !chosen && available && owner.IsCandidate(_skill);
+        _state.text = _skill == PlayerSkillId.None ? "비어 있음" : chosen ? (owner.Loadout.Q == _skill ? "Q 등록됨" : "E 등록됨") : available ? "선택" : "준비되지 않음";
     }
     public void OnPointerEnter(PointerEventData eventData) => _hud?.ShowTooltip(this, _skill);
     public void OnPointerExit(PointerEventData eventData) => _hud?.HideTooltip(this);

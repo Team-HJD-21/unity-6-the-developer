@@ -26,6 +26,8 @@ public static class PlayerSkillDescriptions
         PlayerSkillId.PlayerTurret => "플레이어 터렛",
         PlayerSkillId.EnergyBarrier => "방벽 투사기",
         PlayerSkillId.LureBeacon => "유도 비콘",
+        PlayerSkillId.Portal => "순간이동 포털",
+        PlayerSkillId.DualWield => "양손 무기",
         _ => "미선택"
     };
 
@@ -36,6 +38,8 @@ public static class PlayerSkillDescriptions
         PlayerSkillId.PlayerTurret => "플레이어 주변 8방향에 설치해\n접근하는 적을 자동 공격합니다.",
         PlayerSkillId.EnergyBarrier => "두 본체를 연결해 장벽을 만듭니다.\n적의 이동을 막고 아군 탄환은 통과합니다.",
         PlayerSkillId.LureBeacon => "주변 적을 끌어들이는\n유도 비콘을 설치합니다.",
+        PlayerSkillId.Portal => "한 쌍의 포털을 설치합니다.\nR 이동 · F 회수",
+        PlayerSkillId.DualWield => "8초 동안 총을 두 개 듭니다.\n탄약 소비 유지 · 대기 20초",
         _ => ""
     };
 
@@ -47,6 +51,8 @@ public static class PlayerSkillDescriptions
             PlayerSkillId.PlayerTurret => "스킬 사용 후 1·2·3번 포탑 상태에서 선택\n플레이어 주변 8칸 중 마우스 방향에 설치\n왼쪽 클릭 확정 · 우클릭 / Esc / 같은 키로 취소\n설치 간격 3초 · 근처에서 F키로 회수\n체력 100 · R키 유지 수리 · 전력 사용 없음\n회수·재설치 시 해당 슬롯의 체력 유지\n파괴된 슬롯은 30초 후 최대 체력으로 복구",
             PlayerSkillId.EnergyBarrier => "플레이어 주변 반경 12 안에 첫 본체 설치\n두 번째는 첫 본체 중심 반경 13.5 안에서 클릭\n두 번째 설치 실패 시 첫 위치 유지 · 재시도 가능\n연결 거리 1~13.5 · 캐릭터·장애물 겹침 불가\n몬스터 이동 차단 · 아군 탄환 통과\n완성에만 1개 소모 · 18초마다 1개 충전\n우클릭 / Esc / 같은 키로 전체 취소",
             PlayerSkillId.LureBeacon => "플레이어 주변 원 안의 커서 위치에 비콘 설치\n왼쪽 클릭 확정 · 우클릭 / Esc / 같은 키로 취소\n유인 반경 12 · 유지 8초\n체력 80 · 재사용 14초",
+            PlayerSkillId.DualWield => "8초 동안 같은 총을 양손에 장착\n기본총 · 냉각총 · 스나이퍼에 적용\n두 총 모두 마우스 커서를 조준\n탄약 소비와 공격 간격 유지 · 재사용 20초\n스패너는 적용하지 않음",
+            PlayerSkillId.Portal => "한 쌍의 포털 A/B 설치\n가까이서 R: 반대편 포털로 이동\nF: 가까운 설치물 회수 · 재설치 가능\n지면·장애물·도착 공간 검사 · 이동 후 0.75초 대기",
             _ => ""
         });
     }

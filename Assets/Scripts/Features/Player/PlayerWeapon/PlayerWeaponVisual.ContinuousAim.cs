@@ -34,6 +34,14 @@ public sealed partial class PlayerWeaponVisual
     private PlayerControlState _aimControls;
     private PlayerSkillController _aimSkills;
     private PlayerTurretRepair _aimRepair;
+    [SerializeField] private SpriteRenderer _secondaryWeapon;
+    [SerializeField] private PlayerCryoSpray _secondaryCryoSpray;
+    private PlayerDualWieldSkill _dualWield;
+    public bool IsDualWieldConfigured => _continuousAim && IsConfigured && _secondaryWeapon != null && _secondaryCryoSpray != null && _secondaryCryoSpray.IsConfigured;
+    public PlayerCryoSpray SecondaryCryoSpray => _secondaryCryoSpray;
+    public bool IsDualWieldVisible => IsDualWieldConfigured && _dualWield != null && _dualWield.IsActive &&
+        _selection.CurrentWeapon != WeaponType.Spanner && !_motion.IsHoldingRepair &&
+        (_aimControls == null || !_aimControls.IsInSpaceship) && _weapon.enabled;
 
     public bool UsesContinuousAim => _continuousAim;
     // The authored mount is for the left-facing body. Mirror its offset about
@@ -66,6 +74,7 @@ public sealed partial class PlayerWeaponVisual
         _aimControls = GetComponent<PlayerControlState>();
         _aimSkills = GetComponent<PlayerSkillController>();
         _aimRepair = GetComponent<PlayerTurretRepair>();
+        _dualWield = GetComponent<PlayerDualWieldSkill>();
     }
 
     public bool TryGetContinuousAimDirection(out Vector2 direction)
@@ -84,7 +93,12 @@ public sealed partial class PlayerWeaponVisual
             _selection.Spanner.TryGetSwingDirection(out var swing))
             direction = swing;
         else if (_aimInput.HasAimTarget)
-            direction = _aimInput.MouseWorldPosition - (Vector2)transform.TransformPoint(AimMount);
+        {
+            Vector2 hand = AimMount;
+            if (_dualWield != null && _dualWield.IsActive && _selection.CurrentWeapon != WeaponType.Spanner && !_motion.IsHoldingRepair)
+                hand.x = Mathf.Abs(hand.x) + .65f;
+            direction = _aimInput.MouseWorldPosition - (Vector2)transform.TransformPoint(hand);
+        }
         else direction = _aimInput.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = _aimInput.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = Vector2.down;
@@ -154,19 +168,34 @@ public sealed partial class PlayerWeaponVisual
         // A leftward gun rotates 180 degrees, then flips vertically to keep the
         // stock, sights and magazine upright. Body flip never rotates the gun.
         bool flipped = direction.x < 0f;
+        Vector2 gripPoint = art.grip;
         if ((_selection.CurrentWeapon == WeaponType.Spanner || _motion.IsHoldingRepair) && _motion.IsPlayingToolAction)
         {
             float phase = _motion.ToolActionProgress;
             float halfArc = (_selection.Spanner != null ? _selection.Spanner.AttackArc : 100f) * .5f;
-            float swing = _motion.IsHoldingRepair
-                ? (phase < .5f ? Mathf.Lerp(halfArc, 0f, phase * 2f) : Mathf.Lerp(0f, halfArc, (phase - .5f) * 2f))
-                : (phase < .5f ? Mathf.Lerp(-halfArc, halfArc, phase * 2f) : Mathf.Lerp(halfArc, 0f, (phase - .5f) * 2f));
+            float swing;
+            if (_motion.IsHoldingRepair)
+                swing = phase < .5f ? Mathf.Lerp(halfArc, 0f, phase * 2f) : Mathf.Lerp(0f, halfArc, (phase - .5f) * 2f);
+            else
+            {
+                // Wind up, cross the aim line exactly at impact (50%), follow
+                // through, then recover. Rotate about the handle, not the head.
+                float arc = Mathf.Max(halfArc, 85f);
+                if (phase < .2f) swing = Mathf.SmoothStep(0f, arc, phase / .2f);
+                else if (phase < .68f) swing = Mathf.Lerp(arc, -arc * .6f, (phase - .2f) / .48f);
+                else swing = Mathf.SmoothStep(-arc * .6f, 0f, (phase - .68f) / .32f);
+                float reach = phase < .2f ? Mathf.SmoothStep(0f, 1f, phase / .2f) :
+                    phase < .68f ? 1f : Mathf.SmoothStep(1f, 0f, (phase - .68f) / .32f);
+                gripPoint.x = Mathf.Lerp(art.grip.x, .22f, reach);
+            }
             angle += flipped ? -swing : swing;
         }
         var rotation = Quaternion.Euler(0f, 0f, angle);
         float scale = art.length / art.sprite.bounds.size.x;
-        Vector3 grip = SpritePoint(art.sprite, art.grip, flipped) * scale;
+        Vector3 grip = SpritePoint(art.sprite, gripPoint, flipped) * scale;
         Vector3 mount = AimMount + direction * _aimRadius;
+        if (_dualWield != null && _dualWield.IsActive && _selection.CurrentWeapon != WeaponType.Spanner && !_motion.IsHoldingRepair)
+            mount = new Vector3(Mathf.Abs(AimMount.x) + .65f, AimMount.y, 0);
         _weapon.sprite = art.sprite;
         _weapon.transform.localScale = new Vector3(scale, scale, 1f);
         _weapon.transform.localRotation = rotation;
@@ -180,9 +209,56 @@ public sealed partial class PlayerWeaponVisual
         _sortingGroup.sortingLayerID = _body.sortingLayerID;
         _sortingGroup.sortingOrder = _body.sortingOrder;
         _weapon.enabled = true;
+        RefreshSecondaryWeapon(direction, art, rotation, grip, mount, flipped);
         if (_foregroundHands != null) { _foregroundHands.enabled = false; _foregroundHands.sprite = null; }
         RefreshRepairSorting();
         RefreshRepairImpact();
+    }
+
+    private void RefreshSecondaryWeapon(Vector2 direction, AimWeapon art, Quaternion rotation, Vector3 grip, Vector3 mount, bool flipped)
+    {
+        if (_secondaryWeapon == null) return;
+        _secondaryWeapon.enabled = IsDualWieldVisible;
+        if (!_secondaryWeapon.enabled) return;
+        // The opposite hand sits across the aim line. Both barrels converge
+        // on the same pointer instead of using quantized firing directions.
+        Vector3 offset = new Vector3(-2f * (Mathf.Abs(AimMount.x) + .65f), 0, 0);
+        _secondaryWeapon.sprite = art.sprite;
+        _secondaryWeapon.transform.localScale = _weapon.transform.localScale;
+        _secondaryWeapon.transform.localRotation = rotation;
+        _secondaryWeapon.transform.localPosition = mount + offset - rotation * grip;
+        _secondaryWeapon.flipX = false; _secondaryWeapon.flipY = flipped;
+        _secondaryWeapon.color = _weapon.color;
+        _secondaryWeapon.sortingLayerID = _body.sortingLayerID;
+        _secondaryWeapon.sortingOrder = _body.sortingOrder - 1;
+        if (_aimInput != null && _aimInput.HasAimTarget)
+        {
+            Vector2 hand = transform.TransformPoint(mount + offset);
+            Vector2 toTarget = _aimInput.MouseWorldPosition - hand;
+            if (PlayerAimUtility.IsValidDirection(toTarget))
+            {
+                Vector2 localDirection = transform.InverseTransformDirection(toTarget).normalized;
+                bool ownFlip = localDirection.x < 0f;
+                Vector3 ownGrip = SpritePoint(art.sprite, art.grip, ownFlip) * _weapon.transform.localScale.x;
+                var ownRotation = Quaternion.Euler(0, 0, Mathf.Atan2(localDirection.y, localDirection.x) * Mathf.Rad2Deg);
+                _secondaryWeapon.flipY = ownFlip;
+                _secondaryWeapon.transform.localRotation = ownRotation;
+                _secondaryWeapon.transform.localPosition = mount + offset - ownRotation * ownGrip;
+            }
+        }
+    }
+
+    public bool TryGetSecondaryMuzzle(out Vector3 position, out Vector2 direction)
+    {
+        position = default; direction = default;
+        if (!IsDualWieldConfigured) return false;
+        RefreshContinuousAim();
+        if (!IsDualWieldVisible || !_secondaryWeapon.enabled) return false;
+        var art = CurrentAimWeapon;
+        position = _secondaryWeapon.transform.TransformPoint(SpritePoint(art.sprite, art.muzzle, _secondaryWeapon.flipY));
+        direction = _aimInput != null && _aimInput.HasAimTarget ? _aimInput.MouseWorldPosition - (Vector2)position : (Vector2)_secondaryWeapon.transform.right;
+        if (!PlayerAimUtility.IsValidDirection(direction)) return false;
+        direction.Normalize(); return true;
     }
 
     private bool TryGetContinuousMuzzlePosition(out Vector3 position)

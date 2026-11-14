@@ -42,6 +42,7 @@ public partial class PlayerTurret : MonoBehaviour
     [SerializeField] private PlayerDeviceSortingOrder _depth;
     public PlayerTurretHealth Health => _health;
     public int SlotIndex { get; private set; } = -1;
+    public float ShotDamage => damagePerShot * (_owner != null ? _owner.UpgradeMultiplier : 1f);
     private void Awake()
     {
         _health = GetComponent<PlayerTurretHealth>();
@@ -118,7 +119,7 @@ public partial class PlayerTurret : MonoBehaviour
     /// </summary>
     private void Shoot()
     {
-        var bullet = PlayerTurretWeapon.Fire(bulletPrefab, targetEnemy, firePoint, turretHead, damagePerShot, bulletColor);
+        var bullet = PlayerTurretWeapon.Fire(bulletPrefab, targetEnemy, firePoint, turretHead, ShotDamage, bulletColor);
         if (bullet != null && _owner != null) _owner.TrackProjectile(bullet);
     }
 

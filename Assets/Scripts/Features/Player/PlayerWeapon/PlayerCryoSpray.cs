@@ -8,11 +8,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>총구 앞의 짧은 분사 영역과 연속 냉기 표시를 연결합니다. 감속은 적용하지 않습니다.</summary>
-[DisallowMultipleComponent]
 [DefaultExecutionOrder(350)]
 public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBinding
 {
     [SerializeField] private GameObject _vfxPrefab;
+    [SerializeField] private string _randomStream = "vfx/player-cryo-spray";
     [SerializeField, Min(.1f)] private float _range = 4.5f;
     [SerializeField, Min(0f)] private float _muzzleHalfWidth = .12f;
     [SerializeField, Min(.1f)] private float _endHalfWidth = 1.4f;
@@ -46,7 +46,7 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
     public void BindPresentationRandom(IRandomStreams streams)
     {
         _randomLease?.Dispose(); _randomLease = null; _random = null;
-        _randomLease = RandomBinding.Bind(streams, "vfx/player-cryo-spray", ref _random);
+        _randomLease = RandomBinding.Bind(streams, _randomStream, ref _random);
     }
 
     /// <summary>영역 안의 각 EnemyHealth에 한 번씩 피해를 전달합니다. 빗나가도 유효한 분사입니다.</summary>

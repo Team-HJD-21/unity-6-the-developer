@@ -81,8 +81,11 @@ public sealed class PlayerStatusPanelTests
         var back = (Button)typeof(PlayerSkillTreePanel).GetField("_backButton", Private).GetValue(tree);
         var scroll = (ScrollRect)typeof(PlayerSkillTreePanel).GetField("_scroll", Private).GetValue(tree);
         var sections = (GameObject[])typeof(PlayerSkillTreePanel).GetField("_statusSections", Private).GetValue(tree);
+        var window = (RectTransform)typeof(PlayerSkillTreePanel).GetField("_window", Private).GetValue(tree);
+        Vector2 originalWindowSize = window.sizeDelta;
         open.onClick.Invoke();
         Assert.That(tree.IsOpen, Is.True);
+        Assert.That(window.sizeDelta.y, Is.GreaterThan(originalWindowSize.y), "The skill view expands vertically.");
         Assert.That(_panel.IsOpen, Is.True);
         foreach (var section in sections) Assert.That(section.activeSelf, Is.False);
         var titles = scroll.content.GetComponentsInChildren<TMP_Text>();
@@ -107,6 +110,7 @@ public sealed class PlayerStatusPanelTests
         scroll.content.anchoredPosition = new Vector2(0, 1000);
         back.onClick.Invoke();
         Assert.That(tree.IsOpen, Is.False);
+        Assert.That(window.sizeDelta, Is.EqualTo(originalWindowSize), "Returning to status restores its original frame.");
         foreach (var section in sections) Assert.That(section.activeSelf, Is.True);
         open.onClick.Invoke();
         Assert.That(scroll.content.anchoredPosition.y, Is.EqualTo(0).Within(.01f));

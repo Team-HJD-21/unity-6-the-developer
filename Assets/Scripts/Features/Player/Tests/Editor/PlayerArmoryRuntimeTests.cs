@@ -55,8 +55,10 @@ public sealed class PlayerArmoryRuntimeTests
     private IEnumerator KeyFrame(Key key)
     {
         _keyboard.MakeCurrent();
-        InputSystem.QueueStateEvent(_keyboard,new KeyboardState(key)); yield return null;
-        InputSystem.QueueStateEvent(_keyboard,new KeyboardState()); yield return null; yield return null;
+        InputSystem.QueueStateEvent(_keyboard,new KeyboardState(key)); InputSystem.Update();
+        typeof(PlayerArmoryStation).GetMethod("Update", Private).Invoke(_station, null);
+        InputSystem.QueueStateEvent(_keyboard,new KeyboardState()); InputSystem.Update();
+        yield return null; yield return null;
     }
     [UnityTest]
     public IEnumerator FOpensAuthoredUiAndEscapeOrLeavingReleasesOnlyOwnInputLock()
@@ -70,9 +72,57 @@ public sealed class PlayerArmoryRuntimeTests
         Assert.That(_station.View.IsOpen, Is.False); Assert.That(_locks.Count, Is.EqualTo(1));
         other.Dispose(); Assert.That(_locks.Count, Is.Zero);
         yield return KeyFrame(Key.F); Assert.That(_station.View.IsOpen, Is.True);
-        _player.transform.position += Vector3.right*10; yield return null;
+        _player.transform.position += Vector3.right*10;
+        typeof(PlayerArmoryStation).GetMethod("Update", Private).Invoke(_station, null);
+        yield return null;
         Assert.That(_station.View.IsOpen, Is.False); Assert.That(_locks.Count, Is.Zero);
     }
+    [UnityTest]
+    public IEnumerator FirstHubWithoutEventSystemAcceptsRealPointerClicksAndCleansUpOwnedInput()
+    {
+        var previous = Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>(FindObjectsSortMode.None);
+        var previousEnabled = System.Array.ConvertAll(previous, events => events.enabled);
+        var mouseBefore = Mouse.current;
+        var mouse = InputSystem.AddDevice<Mouse>();
+        var cursorBefore = Cursor.lockState;
+        try
+        {
+            foreach (var events in previous) events.enabled = false;
+            Assert.That(UnityEngine.EventSystems.EventSystem.current, Is.Null);
+            Cursor.lockState = CursorLockMode.None;
+            yield return KeyFrame(Key.F);
+            Assert.That(_station.View.IsOpen, Is.True);
+            var created = UnityEngine.EventSystems.EventSystem.current;
+            Assert.That(created, Is.Not.Null);
+            Assert.That(created.transform.parent, Is.EqualTo(_station.transform));
+            Assert.That(created.currentInputModule, Is.TypeOf<UnityEngine.InputSystem.UI.InputSystemUIInputModule>());
+            _station.View.Select(WeaponType.Sniper);
+            Canvas.ForceUpdateCanvases();
+            var button = System.Array.Find(_station.View.GetComponentsInChildren<Button>(), b => b.name == "Equip Gun 1");
+            var rect = (RectTransform)button.transform;
+            Vector2 point = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center));
+            mouse.MakeCurrent();
+            void Pointer(MouseState state)
+            {
+                InputSystem.QueueStateEvent(mouse, state); InputSystem.Update();
+                typeof(UnityEngine.EventSystems.EventSystem).GetMethod("Update", Private).Invoke(created, null);
+            }
+            Pointer(new MouseState { position = point });
+            Pointer(new MouseState { position = point }.WithButton(MouseButton.Left));
+            Pointer(new MouseState { position = point });
+            Assert.That(_armory.State.First, Is.EqualTo(WeaponType.Sniper), "Exercise the real input module, raycast and button callback.");
+            _station.Close(); yield return null;
+            Assert.That(created == null, Is.True);
+            Assert.That(_locks.Count, Is.Zero);
+        }
+        finally
+        {
+            _station.Close(); Cursor.lockState = cursorBefore;
+            for (int i = 0; i < previous.Length; i++) if (previous[i] != null) previous[i].enabled = previousEnabled[i];
+            InputSystem.RemoveDevice(mouse); if (mouseBefore != null) mouseBefore.MakeCurrent();
+        }
+    }
+
     [UnityTest]
     public IEnumerator LevelUpPaysTokensAndButtonsUpgradeActualStatsWithoutChangingInterval()
     {
