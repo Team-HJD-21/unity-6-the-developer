@@ -332,6 +332,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7120489268976177164}
+    - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1514268252018624713}
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
 --- !u!70 &2825898501810572156 stripped
 CapsuleCollider2D:
@@ -428,6 +431,18 @@ MonoBehaviour:
   stealthDuration: 2
   detectedStealthAmount: 0.7
   undetectedStealthAmount: 0.95
+--- !u!114 &1514268252018624713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7542723251226543163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 264cf178b86b4c328cff658065c01ab2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::IgnoreFieldTurretTarget
 --- !u!212 &8680322642003066561 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}

@@ -67,7 +67,7 @@ PartyMushroom은 `EnemyHealAbility`에서 자신의 몸통을 기준으로 주�
 
 BlackWolf의 Definition은 `Individual + PlayerOnly`다. 여러 탐지자가 등록돼 있으면 한 명이 해제돼도 탐지 상태를 유지하고, 마지막 탐지자가 빠지면 다시 비탐지 상태가 된다. 서버 판정만 `EnemyNetworkDetection`으로 동기화한다.
 
-`EnemyAssassinDamageRule`은 탐지 중인 경우에만 `AttackSourceType.Player` 피해를 허용한다. 터렛의 실제 후보 검색에서 제외하려면 터렛 측이 `IAttackableEnemy.CanBeAttackedBy()`를 조회해야 한다. 탐지/피격 API 제공과 다른 파트의 실제 소비를 구분한다. 은신 셰이더는 포함하지 않는다.
+`EnemyAssassinDamageRule`은 탐지 중인 경우에만 `AttackSourceType.Player` 피해를 허용한다. BlackWolf 루트의 `IgnoreFieldTurretTarget`은 필드 터렛 타깃 제외 표시다. 같은 규칙이 필요한 다른 적에도 루트에 이 컴포넌트를 붙일 수 있다. 소비자는 후보 Collider의 부모에서 `GetComponentInParent<IgnoreFieldTurretTarget>()`을 조회해 표시가 있는 후보를 제외해야 한다. 이 표시는 물리 검색·피해 판정·플레이어 탐지를 직접 바꾸지 않는다. 현재 터렛 후보 검색은 이 표시를 소비하지 않으므로 실제 조준 제외 연결은 후속 작업이다. 탐지/피격 API 제공과 다른 파트의 실제 소비를 구분한다. 은신 셰이더는 포함하지 않는다.
 
 ## 프리셋과 비용
 
