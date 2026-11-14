@@ -36,11 +36,11 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
     private void Awake()
     {
         _enemies = new ContactFilter2D { useTriggers = true };
-        _enemies.SetLayerMask(LayerMask.GetMask("EnemyHitBox"));
+        _enemies.SetLayerMask(LayerMask.GetMask("EnemyHurtbox"));
         _obstacles = new ContactFilter2D { useTriggers = false };
         _obstacles.SetLayerMask(_obstacleLayers);
         _blockers = new ContactFilter2D { useTriggers = true };
-        _blockers.SetLayerMask(_obstacleLayers.value | LayerMask.GetMask("EnemyHitBox"));
+        _blockers.SetLayerMask(_obstacleLayers.value | LayerMask.GetMask("EnemyHurtbox"));
     }
 
     public void BindPresentationRandom(IRandomStreams streams)
@@ -172,7 +172,7 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
     private bool BlocksSpray(Collider2D hitbox, EnemyHealth target)
     {
         if (PlayerBullet.IsWorldObstacle(hitbox, gameObject)) return true;
-        if (hitbox == null || hitbox.gameObject.layer != LayerMask.NameToLayer("EnemyHitBox")) return false;
+        if (hitbox == null || hitbox.gameObject.layer != LayerMask.NameToLayer("EnemyHurtbox")) return false;
         var health = hitbox.GetComponentInParent<EnemyHealth>();
         var clock = GetComponent<PlayerMatchPresence>()?.TimeSource ?? GetComponent<FieldSimulationActor>()?.TimeSource;
         return health != null && health != target && health.CanBeAttackedBy(AttackSourceType.Player) &&

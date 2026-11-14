@@ -33,7 +33,7 @@ public sealed class PlayerAssassinAttackRuntimeTests
         rangeObject.SetActive(false); rangeObject.transform.SetParent(player.transform, false);
         rangeObject.layer = LayerMask.NameToLayer("PlayerFeetBox");
         var range = rangeObject.AddComponent<CircleCollider2D>(); range.isTrigger = true; range.radius = 3;
-        range.excludeLayers = ~LayerMask.GetMask("EnemyHitBox");
+        range.excludeLayers = ~LayerMask.GetMask("EnemyHurtbox");
         var detector = rangeObject.AddComponent<PlayerEnemyDetector>();
         var data = new SerializedObject(detector);
         data.FindProperty("_owner").objectReferenceValue = player.transform;
@@ -50,7 +50,7 @@ public sealed class PlayerAssassinAttackRuntimeTests
         var detection = wolf.GetComponent<EnemyDetection>();
         Assert.That(detection.IsDetected, Is.True, "The actual Trigger HitBox must reveal BlackWolf.");
         Assert.That(typeof(EnemyController).GetField("_squad", Private).GetValue(wolf.GetComponent<EnemyController>()), Is.Not.Null);
-        var hitbox = System.Array.Find(wolf.GetComponentsInChildren<Collider2D>(), c => c.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox"));
+        var hitbox = System.Array.Find(wolf.GetComponentsInChildren<Collider2D>(), c => c.gameObject.layer == LayerMask.NameToLayer("EnemyHurtbox"));
         Assert.That(hitbox, Is.Not.Null);
 
         foreach (bool detected in new[] { false, true })

@@ -91,7 +91,7 @@ public sealed class InitialStageEncounterIntegrationTests
         yield return new EnterPlayMode();
 
         EncounterSceneBinding launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
-        Assert.That(launcher, Is.Not.Null, "Initial_Stage의 EnemyNetworkTestLauncher가 로드되어야 합니다.");
+        Assert.That(launcher, Is.Not.Null, "Initial_Stage의 EncounterSceneBinding이 로드되어야 합니다.");
 
         float deadline = Time.realtimeSinceStartup + 20f;
         int spawnedEnemies = 0;

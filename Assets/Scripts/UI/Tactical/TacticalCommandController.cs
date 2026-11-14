@@ -21,6 +21,7 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     public bool IsOpen { get; private set; }
     public bool IsTransitioning=>View!=null && View.ModeEffect.Animating;
     public bool IsMapPresented { get; private set; }
+    public bool IsHudEntryComplete => _hudIntro == null || _hudIntro.Completed;
     public TacticalHudView View { get; private set; }
     public IReadOnlyList<TurretPresentationSnapshot> Turrets => _rows;
     public IReadOnlyList<Vector2> Enemies => _enemies;
@@ -40,6 +41,7 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     private PlayerControlState _control;
     private PlayerAttack _attack;
     private AppRoot _app;
+    private CombatHudIntro _hudIntro;
     private CameraManager _camera;
     private Transform _rig;
     private IDisposable _cameraLease, _controlLease;
@@ -65,6 +67,7 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     {
         if (Source == null) Source = GetComponent<InitialStagePlayerHUD>();
         if (Source == null || Style == null || Style.ViewPrefab == null) { enabled = false; return; }
+        _hudIntro = Source.GetComponent<CombatHudIntro>();
         View = Instantiate(Style.ViewPrefab, transform, false); View.name = "Tactical HUD (Local)"; View.Bind(this);
         var viewRect = (RectTransform)View.transform;
         viewRect.pivot = new Vector2(.5f, .5f);
@@ -103,7 +106,7 @@ public sealed partial class TacticalCommandController : MonoBehaviour
             _selected = default; _hasGoal = false; _damage.Clear(); _fieldCaptureRegion=-1; _fieldExitAt=-100; _playerVitality=new(); _cuVitality=new(); _nextSample = 0;
         }
         bool field = Source.HasFieldActor && _player != null && _player.curHp > 0;
-        bool available = field && _control != null && _control.CanIssueTurretCommands &&
+        bool available = IsHudEntryComplete && field && _control != null && _control.CanIssueTurretCommands &&
             !(_app != null && _app.IsInitialized && _app.LocalInput.IsBlocked);
         View.ToggleMap.gameObject.SetActive(available && !IsOpen && !IsTransitioning);
         if (IsOpen && (!available || _camera == null || (!IsTransitioning && _camera.ActiveTarget != _rig))) CloseImmediate();
@@ -138,6 +141,8 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     public void Toggle() { if (IsOpen && (!IsTransitioning || View.ModeEffect.Opened)) Close(); else Open(); }
     public bool Open()
     {
+        // 숨겨진 버튼의 오래된 이벤트·M 입력·외부 호출이 진입 연출을 건너뛰지 못하게 같은 경계를 사용합니다.
+        if (!IsHudEntryComplete) return false;
         if (IsOpen && IsTransitioning && !View.ModeEffect.Opened)
         { View.ModeEffect.SetOpen(true,CommitMapView,FinishMapOpen);return true; }
         if (IsOpen || Source == null || !Source.HasFieldActor || _control == null || !_control.CanIssueTurretCommands ||

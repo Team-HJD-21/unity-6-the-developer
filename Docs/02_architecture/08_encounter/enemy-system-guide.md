@@ -135,7 +135,7 @@ classDiagram
 
 `MovingEnemyController`는 행동 실행마다 전투 타깃의 사거리를 한 번 계산해 `CheckCondition(bool isInTargetRange)`와 `MoveToTarget(bool isInTargetRange)`에 전달한다. 근접·원거리·폭발 능력은 이 결과를 재사용한다. 조건 통과 직후의 내부 실행 경로는 `TryUse(true)`로 조건 재검색을 생략하지만 권한·시뮬레이션 진행·쿨타임·실제 발동 검사는 유지한다. 인자 없는 `TryUse()`는 기존처럼 조건을 직접 검사한다. 힐 능력은 별도 아군 조건을 검사하고, 소환사는 이동 상태에서 계산한 거리 결과를 변태와 이동 판단에 함께 사용한다. 거리 결과는 해당 행동 실행 안에서만 사용하며, 지연 공격·명중 시점의 검사는 재사용하지 않는다.
 
-공통 범위 필드는 `activationRange`다. 몸통과 대상의 활성 비트리거 Collider 사이 표면 거리를 비교한다. 몸통은 명시적으로 연결한 Trigger도 사용할 수 있으며 Bomber는 CapsuleCollider2D를 사용한다. 발동 거리와 폭발 피해 반경은 별개다.
+공통 범위 필드는 `activationRange`다. 몸통과 대상의 활성 비트리거 Collider 사이 표면 거리를 비교한다. 몸통은 명시적으로 연결한 Trigger도 사용할 수 있으며 Bomber는 HitBox의 CapsuleCollider2D를 사용한다. 몸통 참조가 비어 있으면 이름이 `HitBox`인 자식의 Collider를 Trigger 여부와 관계없이 우선 사용하고, 없을 때만 루트의 비트리거 Collider를 찾는다. 대상 측 감지 Trigger를 제외하는 규칙과 본인 몸통 참조 탐색을 구분한다. 발동 거리와 폭발 피해 반경은 별개다.
 
 `EnemyHealAbility`는 `allyHitboxLayers`에 지정한 아군 피격 레이어만 후보로 조회하고, 같은 아군의 여러 콜라이더는 한 번만 처리한다. 검색 시 가장 가까운 회복 가능한 아군을 선택한 뒤 체력·활성·사거리 조건이 유효한 동안 대상과 콜라이더 목록을 유지한다. 기존 대상을 잃으면 즉시 한 번 재검색하고, 대상이 없을 때는 `targetSearchInterval`(PartyMushroom 기본 0.2초)마다 다시 찾는다. 간격은 Match 시계를 사용하며 능력 쿨타임과 별개다. 유효한 치료 대상이 있으면 쿨타임 중에도 발동 조건을 유지해 정지·바라보기 판단을 보존한다. 프리팹에는 HitBox 자식의 실제 레이어를 연결하며, 새 몬스터 제작 시 이 마스크도 확인한다.
 
