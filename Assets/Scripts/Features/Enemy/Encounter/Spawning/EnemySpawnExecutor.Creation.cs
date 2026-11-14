@@ -1,4 +1,4 @@
-// 일반 Encounter와 Enemy 스킬 소환의 실제 생성·분대·NGO·관측 등록을 한곳에서 수행합니다.
+// 정규 Encounter·Enemy 스킬 소환·Stage 사건의 실제 생성·분대·NGO·관측 등록을 한곳에서 수행합니다.
 // 편성이나 예산은 다시 결정하지 않으며, 실패한 생성 객체는 분대와 네트워크에서 정리합니다.
 using System;
 using TeamHJD.Game.Application;
@@ -13,7 +13,8 @@ public partial class EnemySpawnExecutor
 {
     private bool TrySpawnActor(EnemyDefinition definition, Vector3 position, Quaternion rotation,
         EnemySquad squad, EncounterExecutionContext context, string pointId,
-        Action<SpawnDecisionSnapshot.Actual> observeSpawn = null, Action<string> observeFailure = null)
+        Action<SpawnDecisionSnapshot.Actual> observeSpawn = null, Action<string> observeFailure = null,
+        TeamHJD.Game.Domain.EntityId identity = default)
     {
         if (!CanSpawn || !CanSimulateField || context?.SpawnCancellation.IsCancellationRequested == true)
         {
@@ -21,7 +22,10 @@ public partial class EnemySpawnExecutor
             return false;
         }
 
-        GameObject actor = Instantiate(definition.Prefab, position, rotation);
+        // Stage 사건은 저장/복원 뒤에도 같은 ID를 사용합니다. Awake 전에 지정하고 일반 생성은 기존 경로를 유지합니다.
+        GameObject actor = identity.IsEmpty ? Instantiate(definition.Prefab, position, rotation) :
+            CheckpointActorFactory.Instantiate(definition.Prefab, gameObject.scene,
+                new CheckpointTransformState(position, rotation, definition.Prefab.transform.localScale), identity);
         EnemyController controller = actor.GetComponent<EnemyController>();
         NetworkObject network = actor.GetComponent<NetworkObject>();
         bool joined = false;

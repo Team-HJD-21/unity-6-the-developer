@@ -130,10 +130,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             counts.TryGetValue(region, out int count); counts[region] = count + 1;
         }
 
-        private static RegionGridDefinition WithWalkableMask(RegionGridDefinition definition)
+        private RegionGridDefinition WithWalkableMask(RegionGridDefinition definition)
         {
             // 편집기 단위 구성 검사는 NavMesh 없이도 값을 만들 수 있습니다. 실제 Match는 지형을 반드시 확인합니다.
-            if (!UnityEngine.Application.isPlaying) return definition;
+            if (!UnityEngine.Application.isPlaying) return WithCaptureExclusions(definition);
             var mesh = NavMesh.CalculateTriangulation();
             if (mesh.indices.Length == 0) throw new InvalidOperationException("Load the Stage NavMesh before preparing its capture grid.");
             var mask = new bool[definition.Geometry.TotalCellCount];
@@ -146,7 +146,30 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         new BattlefieldPoint(b.x, b.y), new BattlefieldPoint(c.x, c.y), definition.Geometry)) mask[cell] = true;
             }
             if (!mask.Any(value => value)) throw new InvalidOperationException("The Stage has no capturable land inside its grid.");
-            return new RegionGridDefinition(definition.Geometry, definition.RegionIds, mask);
+            return WithCaptureExclusions(new RegionGridDefinition(definition.Geometry, definition.RegionIds, mask));
+        }
+
+        // 지형의 통행 가능성과 별도로 지정 진입로 등을 점유 분모에서 뺍니다. 선/점 접촉만으로 이웃 셀을 제외하지 않습니다.
+        private RegionGridDefinition WithCaptureExclusions(RegionGridDefinition definition)
+        {
+            if (_captureExcludedAreas == null || _captureExcludedAreas.Length == 0) return definition;
+            var mask = definition.CapturableCells.ToArray();
+            var grid = definition.Geometry;
+            foreach (var area in _captureExcludedAreas)
+            {
+                if (!float.IsFinite(area.center.x) || !float.IsFinite(area.center.y) ||
+                    !float.IsFinite(area.size.x) || !float.IsFinite(area.size.y) || area.size.x <= 0 || area.size.y <= 0)
+                    throw new InvalidOperationException("Capture exclusion requires a finite positive world XY rectangle.");
+                for (int y = 0; y < grid.CellsY; y++)
+                    for (int x = 0; x < grid.CellsX; x++)
+                    {
+                        double left = grid.MinimumX + x * grid.CellWidth, bottom = grid.MinimumY + y * grid.CellHeight;
+                        if (area.max.x > left && area.min.x < left + grid.CellWidth &&
+                            area.max.y > bottom && area.min.y < bottom + grid.CellHeight) mask[y * grid.CellsX + x] = false;
+                    }
+            }
+            if (!mask.Any(value => value)) throw new InvalidOperationException("Capture exclusions removed every eligible cell.");
+            return new RegionGridDefinition(grid, definition.RegionIds, mask);
         }
     }
 }

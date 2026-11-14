@@ -26,6 +26,8 @@ flowchart TD
  Coordinator --> Progression[StageProgression / 33·66·100 조건]
  Progression --> SaveGate[StageCheckpointGate / 실제 저장 뒤 등장 허가]
  SaveGate --> Checkpoint[CheckpointService / 실제 Feature writer·디스크 저장]
+ SaveGate --> FieldEvent[EncounterSceneBinding.StageEvents / 지정 사건]
+ FieldEvent --> Actors
  Production --> Pipeline[Encounter Collector→Processor→Planner→Executor]
  Pipeline --> Actors[실제 Enemy 객체 / Feature 원본]
  Root --> Features[Player / FieldTurrets / World / UI 읽기·요청 경계]
@@ -60,7 +62,7 @@ flowchart TD
 ## 아직 실제 연결을 완료하지 못한 부분
 
 - 실제 `world/weather` writer가 없어 전체 월드 저장/복원은 실행을 거부한다. 일부 writer만 성공한 것을 전체 성공으로 바꾸지 않는다.
-- 33/66%의 확정 EnemyDefinition·점유 밖 보장 진입 위치와 실제 생성 서비스, 최종 Boss Scene/컷씬/실제 보스 등록이 필요하다. 공통 생성기의 실제 HP 사망은 Stage로 전달한다. Core 진행 조건/API만으로 실제 보스전이 완성된 것은 아니다.
+- Field 실제 생성 서비스는 기존 Encounter 연결부/Executor에 구현했다.33/66% 확정 EnemyDefinition·점유 밖 보장 진입 위치 지정과 최종 Boss Scene/컷씬/실제 보스 등록이 필요하다. 공통 생성기의 실제 HP 사망은 Stage로 전달한다. 임시 Slime 제작값으로 검수한 생성·복원 메커니즘을 실제 보스전 완성으로 세지 않는다.
 - 실제 원격 Player NetworkBehaviour/생명·구조 입력, 원격 추가 출현 예고는 아직 전체 인수되지 않았다. localhost SDK2개 전송 검수와 실제 두 게임 실행은 다르다.
 - 개인 저장은 현재 논리 PlayerId를 사용한다. 실제 Steam/Backend 계정에 귀속하는 인증·영속 ID 계약이 완성된 것으로 해석하지 않는다. 현재 스킬 트리 UI는 해금/강화 원본 자체를 만들지 않으며 실제 재화/스킬 강화 저장 writer도 별도 필요하다.
 

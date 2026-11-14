@@ -1,5 +1,7 @@
 # The Developer 문서 안내
 
+**11/13–14 Encounter/Stage1 로컬 구현:** [현재 Core 실행 지도](02_architecture/01_core/core-runtime-map.md)에서 실제 진입·원본·운영 흐름을, [통합 기록](01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)에서 기능별 검증과 미연결 범위를 확인한다. 지정 Field 사건 생성 서비스와 저장 선행 경계는 구현했으나, 확정 보스 제작값·Weather 전체 writer·최종 Scene 전환·실제 원격 Player 인수는 남아 있다. 이 로컬 결과를 main 반영이나 Stage1 전체 완료로 해석하지 않는다.
+
 **Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료다. 11/13 로컬 작업에는 Unity 기본 오디오를 사용하는 [GameAudioManager·믹서·설정과 연결 방법](02_architecture/01_core/game-audio-api.md)이 추가됐다. main 반영 여부, 실제 Scene 연결과 실행 검증 범위를 구분한다.
 
 **11/13 오디오 작업 인계:** [구현·검증 결과와 추후 PR의 Docs 반영 사항](01_planning/02_implementation-records/2026/11/2026-11-13-game-audio-handoff.md). 핵심 구현 완료·최종 검증 대기이며, 실제 전투 Scene·원격 Client·음원 콘텐츠 후속을 구분한다.
@@ -11,7 +13,7 @@
 **Core main 전달:** [복구 PR 검토 문서](03_team/00_reviews/602-core-main-recovery.md)에서 #624~#631의 기존 리뷰, 최신 main과의 통합 차이, 이번 검증과 남은 작업을 확인합니다. 기존 수동 인수 자료는 [확인7단계·구현 전체·팀원 전달](01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md)에 보존합니다.
 
 - 실제 수명/코드 읽기: [Core 지도](02_architecture/01_core/core-lifecycle-and-api-guide.md) · [Feature 통합](02_architecture/01_core/core-feature-integration-guide.md) · [구조 정리 판단](02_architecture/01_core/core-structure-review-2026-11-05.md).
-- 최신 플레이: [우주선 출격/왕복](02_architecture/03_scene-flow/spaceship-travel-api.md) · [낮밤5분](02_architecture/09_world/day-night-api.md) · [Day/Night·타이머·Reset](02_architecture/09_world/weather-debug-hud.md). 왕복은0.3초씩 총약0.9초이며 진행 바를 표시하지 않습니다.
+- 최신 플레이: [우주선 출격/허브 귀환](02_architecture/03_scene-flow/spaceship-travel-api.md) · [낮밤5분](02_architecture/09_world/day-night-api.md) · [Day/Night·타이머·Reset](02_architecture/09_world/weather-debug-hud.md). 현재 전투 중 임시 허브 자유 방문은 제공하지 않는다. 출격 전환은0.3초씩 총약0.9초이며 진행 바를 표시하지 않는다.
 - 공용 API: [Random](02_architecture/01_core/core-random-api.md) · [가중 선택·비 50% 예제](02_architecture/01_core/random-weighted-selection.md) · [시간/예약](02_architecture/02_match/match-time-api.md) · [저장 실행](02_architecture/05_checkpoints/checkpoint-execution-api.md) · [네트워크](02_architecture/04_networking/network-match-api.md) · [Steam](02_architecture/04_networking/steam-api.md).
 - 구현/증거: [Core 결과](01_planning/02_implementation-records/2026/11/2026-11-05-core-completion-results.md) · [낮밤/Steam 결과](01_planning/02_implementation-records/2026/11/2026-11-05-day-night-steam-results.md) · [요구/Issue 대응](01_planning/02_implementation-records/2026/11/2026-11-05-core-requirements-and-issue-map.md). 과거 시점의 한계는 최신 최종 안내와 구분해서 읽습니다.
 

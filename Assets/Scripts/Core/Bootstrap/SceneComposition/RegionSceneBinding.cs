@@ -17,6 +17,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private FieldTurretController _controller;
         [SerializeField] private Transform _controlUnit;
         [SerializeField] private RegionPolicyMode _initialMode = RegionPolicyMode.Static;
+        [Tooltip("점유율 분모에서 제외할 월드 XY 사각 영역. Field 사건 진입로 등이며 적용에는 명시적 Grid 재설정이 필요합니다.")]
+        [SerializeField] private Bounds[] _captureExcludedAreas = Array.Empty<Bounds>();
         private MatchSession _session;
         private IRegionGridSource _source;
         private ITurretEntityIdResolver _entityIds;

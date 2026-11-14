@@ -328,3 +328,15 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 처치 후 defeat-33 요청과 명시 재시도 모두 RequiredFeatureWritersUnavailable, 별도 누락 목록 world/weather, LastSavedData 없음이었다. 같은 실제 저장기를 사용한 Editor 전용 생성 호출 counter도0을 유지했다. 전체 월드 저장/실제 보스 생성 성공으로 세지 않는다.
 - 원본 관측 success=false는 오류 코드와 누락 키를 한 문자열로 가정한 판정식 문제다. 원본 b7c-actual-death-save-result.json을 유지하고 두 필드를 따로 검사한 b7c-actual-death-save-verdict.json에12개 조건의 통과 근거를 남겼다. 이 보완은 재실행하거나 제품 결과를 덮어쓴 것이 아니다.
 - Play/Pause/컴파일/dirty 모두false·Stage_1 Edit Mode, 기존 저장33개 해시 일치를 b7c-save-cleanup.json으로 확인했다. B7 실제 생성 서비스/Definition/점유 밖 진입 보장과 B8 최종 Scene 이전 필수 저장·도착/컷씬은 여전히 미연결이다.
+
+## B7d — 지정 Field 사건의 실제 생성·복원 연결 (2026-11-14)
+
+- 기존 EncounterSceneBinding이 IFieldBossSpawnService를 구현하고, Scene configuration의33/66 Definition·진입점을 EnemySpawnExecutor 공통 생성으로 전달한다. 일반 편성/예산을 다시 뽑지 않으며 AI/공격/스탯은 수정하지 않았다. Stage 사건 Source는 enum 끝에 추가해 기존 값의 번호를 보존했다.
+- 사건에서 만든 stage/<event ID>를 Awake 전에 부여한다. 별도 완료 캐시 없이 현재 실제 추적 개체를 조회하므로 Enemy 원본 복원 뒤 같은 ID를 재사용하고 등장 전 월드로 되돌리면 실제로 다시 만든다. 정규 첫 생산 전 사건도 기존 생명/소환/통계 구독을 먼저 연결한다.
+- Level의 월드 XY 점유 제외 Bounds를 RegionSceneBinding에 추가했다. 양의 면적 접촉 셀만 제외하고 Region ID/기존 지형 마스크를 보존한다. 진입점은 같은 Scene·NavMesh·Grid 안의 점유 불가 셀·주변 적 비겹침을 확인한다. 제작값 없이 임의 일반 몬스터/위치로 대체하지 않는다. 일반 SpawnPoint는 이런 셀을 NonCapturableCell로 제외한다.
+- 새 영역 경계4/4 통과(b7d-region-exclusion-tests-fixed.json). 최초 CLI 인자 순서 오류는 실행 전 거절 결과로 보존했다. 실제 Stage_1 검수는 미저장 Slime 제작값과 실제 NavMesh 진입점2개만 사용했고, Player/CU 검수 보호를 사용했다. 실제33/66 사건2개 생성, 재요청2→2, Enemy 원본 복원 뒤 사건2개/동일ID, 등장 이전 원본 복귀0→같은 사건1개 재생성에 성공했다. 복원 도중 정상 생산12개가 추가돼 총14개였으며 재요청 전후14→14로 구분했다. 첫 관측의 총개체 수 가정 오류는 b7d-runtime-before-count-scope-fix.json에 보존했다.
+- b7d-runtime-result.json은 success=true/신규Runtime 오류0이다. 전체 월드 저장이 아니라 실제 Enemy CaptureWorld/ApplyWorld의 한 Feature 검수다. 같은 실제 CheckpointService를 사용하는 Gate는 world/weather 누락으로 거부·개체 수1 유지를 확인했다. Weather writer를 가짜로 채우지 않았다.
+- 기존 Game Debugger는 Source StageProgression의 실제 생성 요청3개를 계획1/실제1·EntityId/위치·CauseEventId와 함께 보관했다(b7d-debugger-record.json). 반복 응답은 새 생성 요청으로 세지 않았다.
+- 추가 기존 RegionSpawnPolicyTests 회귀는 dirty Scene의 Save 확인창 때문에 타임아웃됐다. Cancel로 취소했고 통과로 세지 않는다. Temp의 다른 옛 테스트6개 결과도 이번 증거가 아니다. 취소 뒤 지연된 Pipeline만 Window/Pipeline Stop/Start로 복구했으며 마지막 eval은 Play/컴파일/실패false였다. Computer Use는 종료했다.
+- 전체 Scene 재로드는 자동 승인 검토가 미저장 작업 유실 위험으로 거절했다. 우회하지 않고 이 검수가 만든 마커2개/추가 필드만 정확한 참조/좌표로 원복했다. Scene 파일 저장/변경 폐기/dirty 해제는 하지 않았다. 마지막 Scene dirty=true는 보존하며 임시 마커0, 원본 파일 변경 없음이다. QA의 기존 성장 슬롯3개만 복원해 저장33개 전체 해시 일치를 확인했다(b7d-save-cleanup.json).
+- Field 생성 서비스 자체는 더 이상 미구현이 아니다. 실제 Stage_1의 확정 보스 Definition/진입로 지정·Weather 전체 writer와 최종 Boss Scene/전환/도착/컷씬은 여전히 제공/연결이 필요하며 B7/B8 전체 완료로 표시하지 않는다.

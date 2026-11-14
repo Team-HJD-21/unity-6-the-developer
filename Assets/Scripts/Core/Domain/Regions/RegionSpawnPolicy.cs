@@ -41,7 +41,7 @@ namespace TeamHJD.Game.Domain
             RequireNonNegativeFinite(spawnRadius, nameof(spawnRadius));
             var definition = _snapshot.Definition;
             if (!definition.TryGetCellIndex(position, out int cell)) return "OutsideGrid";
-            if (!definition.CapturableCells[cell]) return "NonWalkableCell";
+            if (!definition.CapturableCells[cell]) return "NonCapturableCell";
             if (IsRegionCaptured(definition.RegionIds[cell])) return "CapturedRegion";
             if (_snapshot.CapturedCellCount == 0) return string.Empty;
 

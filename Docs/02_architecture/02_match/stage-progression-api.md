@@ -14,9 +14,20 @@
 
 ## Enemy 생성 구현자가 지킬 경계
 
-`IFieldBossSpawnService`는 현재 Scene에 정확히 하나이거나 실제 Encounter consumer가 구현한다. 동일 사건의 응답을 재사용하되 true는 실제 생성 사실이 확인될 때만 반환한다. 월드 rollback으로 사라진 개체의 오래된 응답을 재사용하면 안 된다. 실제 공통 Enemy 생성/NGO·식별자·관측·저장 경계를 사용하며 편성을 다시 무작위로 뽑거나 정규 예산을 임의 소비하지 않는다.
+`IFieldBossSpawnService`는 현재 Scene에 정확히 하나이거나 실제 Encounter consumer가 구현한다. 현재 구현은 `EncounterSceneBinding.StageEvents`이며, `EnemySpawnExecutor.StageEvents`에서 실제 공통 생성/NGO·분대·위치·HP 관측·저장 경계를 사용한다. 편성을 다시 무작위로 뽑거나 정규 예산을 임의 소비하지 않는다.
+
+사건 ID에서 `stage/<event ID>` EntityId를 만든다. 같은 사건을 다시 요청하면 **현재 Executor가 추적하는 실제 개체**를 찾아 ID를 반환한다. 별도 완료 캐시는 없으며, 기존 Enemy 저장이 이 ID를 보존한다. 등장 후 상태를 복원하면 새 NGO 개체에서도 같은 ID를 재사용하고, 등장 전 월드로 복귀해 개체가 없어지면 같은 사건을 다시 실제 생성한다. 과거 생성 성공 응답만 재사용하지 않는다.
 
 33/66 개체 Definition과 유효 진입 위치는 제작 데이터로 필요하다. 해당 시점에도 점유 밖에서 생성 가능한 NavMesh 지점을 미리 보장해야 한다. 모든 후보를 점유한 뒤 일반 포인트 중 하나를 임의 선택하는 방식은 불가하다. 생성 실패를 최종 진입이 추월하지 않지만, 이 방어 자체가 콘텐츠/위치 보장을 대신하지는 않는다.
+
+### Level/Enemy 제작 설정
+
+1. 현재 Scene의 `EncounterSceneConfiguration`에 `fieldBoss33`·`fieldBoss66`를 지정한다. 해당 Executor의 EnemyCatalog에 등록된 **같은 Definition 에셋**과 실제 HP·NGO·Controller 컴포넌트가 필요하다. 새 Prefab은 NGO 등록도 함께 확인한다. 미지정 상태를 일반 Slime 등으로 자동 대체하지 않는다.
+2. `RegionSceneBinding._captureExcludedAreas`에 월드 XY Bounds를 지정해 출현용 진입 셀을 점유 분모에서 제외한다. 양의 면적으로 겹친 셀만 제외하고 선/점 접촉은 제외하지 않는다. 기존 통행 불가 셀은 계속 제외되며 Region ID는 바뀌지 않는다. CU 시작 셀·목표 전체를 제거하면 초기화가 거부된다. 실행 중 값만 바꾸지 말고 기존 명시적 Grid 재설정 절차를 사용한다.
+3. `EncounterSceneConfiguration.fieldBossEntrances`에 **같은 Scene의 활성 Transform을 복수 지정**한다. 위치는 Grid 안의 점유 불가 셀이고 NavMesh 위여야 한다. 탐색은 해당 위치에서0.5 이내이며 다른 임의 위치로 우회하지 않는다. 현재 추적 적과1월드 단위 미만으로 겹치는 지점은 건너뛰므로 두 사건의 동시 출현과 실제 Prefab 크기에 충분한 진입로를 제작한다.
+4. 필수 Weather writer 등 전체 저장 연결을 완료한다. 준비하지 않은 진입로·카탈로그·콘텐츠는 실패 이유를 반환하며 최종 진입을 통과시키지 않는다. 기본 Scene에 보스 콘텐츠나 제외 영역을 임의 지정하지 않았다.
+
+`Game Debugger`의 Statistics/Timeline에는 `StageProgression` Source, 사건 CauseEventId, 별도 요청 번호, 지정 편성과 실제 EntityId/위치를 기록한다. 중복 응답은 새 요청/생성을 기록하지 않는다. 정규 첫 생산보다 먼저 호출돼도 기존 생명·소환·통계 구독을 먼저 연결한다.
 
 ## 저장과 표시
 
@@ -38,9 +49,11 @@ HUD는 `InitialStageCompositionRoot.StageProgress`의 읽기 값을 사용할 �
 
 ## 현재 구현/검증과 미연결
 
-정책·world codec·Coordinator/Root 연결과 자동6개를 검증했다. 실제 Stage_1 진입에서 CU1/201셀(0.4975%)·Player1·게임 진행 정상·`FieldBossContentNotConnected`를 확인했다.
+최초 정책·world codec·Coordinator/Root 연결과 자동6개를 검증했다. 당시 실제 Stage_1 진입에서 CU1/201셀(0.4975%)·Player1·게임 진행 정상·`FieldBossContentNotConnected`를 확인했다. 아래 생성 구현 보강 전의 기록이다.
 
-현재 카탈로그에는19종의 적이 있으나33/66에 사용할 확정 Definition이 지정되어 있지 않다. 실제 Boss Scene도 제공되지 않았다. 따라서 실제 Field Boss 생성 서비스·최종 Scene/컷씬·실제 보스의 등록은 아직 없다. 공통 생성기의 실제 HP 사망→Stage 전달/Match 종료 시 해제는 연결해 검증했다. 위 API의 존재를 실제 보스 플레이 완료로 해석하지 않는다. Reference의 과거 보스 Prefab은 현행 콘텐츠로 임의 승격하지 않았다.
+현재 카탈로그에는19종의 적이 있으나33/66에 사용할 확정 Definition이 지정되어 있지 않다. 실제 Boss Scene도 제공되지 않았다. Field 생성 서비스 자체는 구현했으며, 지정 콘텐츠·보장 진입로·최종 Scene/컷씬·실제 보스 등록은 미연결이다. 공통 생성기의 실제 HP 사망→Stage 전달/Match 종료 시 해제는 연결해 검증했다. 위 API의 존재를 실제 보스 플레이 완료로 해석하지 않는다. Reference의 과거 보스 Prefab은 현행 콘텐츠로 임의 승격하지 않았다.
+
+11/14 실제 Stage_1에서 **미저장 시험용 Slime 지정**과 점유 제외 진입 셀2개로 생성 구현을 검증했다. 서로 다른 사건2개 생성, 재요청2→2, Enemy 원본 복원 뒤 사건 개체2 유지, 등장 이전 원본 복귀0→같은 사건1개 재생성을 확인했다. 복원 도중 정상 생산12개도 실행되어 총14개였으며 사건 개체 수와 구분했다. 기존 Game Debugger에 세 실제 생성 요청의 계획1/생성1·위치/ID가 남았다. 제외 영역4개 검사와 기존 스폰 제한 회귀를 별도로 기록하며, 시험값은 Scene에 저장하지 않았다. 이는 전체 Weather 월드 저장/실제 보스 콘텐츠 플레이 성공을 대신하지 않는다.
 
 
 ### 실제 사망 전달 검증 (11/14)

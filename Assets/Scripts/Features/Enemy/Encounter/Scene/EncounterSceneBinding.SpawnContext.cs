@@ -179,6 +179,7 @@ public sealed partial class EncounterSceneBinding : IEncounterEnvironmentConsume
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         if (_pipeline?.Executor != null) _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
         _pipeline = null; _sceneExecutor = executor; _spawnExecutor = executor; environmentProfile = profile; _warningSprite = warningSprite;
+        ConfigureFieldBosses(null, null, null); // 이전 Scene의 제작 참조를 다음 Match에 재사용하지 않습니다.
         regionBinding = null;
         foreach (var root in executor.gameObject.scene.GetRootGameObjects())
         {

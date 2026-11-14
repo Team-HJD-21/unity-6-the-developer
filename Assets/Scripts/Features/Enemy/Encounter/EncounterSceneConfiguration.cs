@@ -11,6 +11,11 @@ public sealed class EncounterSceneConfiguration : MonoBehaviour, IEncounterScene
     [SerializeField] private EnemySpawnExecutor spawnExecutor;
     [SerializeField] private EncounterEnvironmentProfile environmentProfile;
     [SerializeField] private Sprite additionalSpawnWarning;
+    [Header("Stage Field 사건 · 실제 콘텐츠 지정 필요")]
+    [SerializeField] private EnemyDefinition fieldBoss33;
+    [SerializeField] private EnemyDefinition fieldBoss66;
+    [Tooltip("같은 Scene의 복수 진입점. RegionSceneBinding의 점유 제외 영역 안에 배치합니다.")]
+    [SerializeField] private Transform[] fieldBossEntrances = Array.Empty<Transform>();
     public EnemySpawnExecutor SpawnExecutor => spawnExecutor;
     /// <summary>
     /// 현재 씬의 제작 참조를 이를 소비할 수 있는 Encounter 연결부에 전달한다.
@@ -22,5 +27,6 @@ public sealed class EncounterSceneConfiguration : MonoBehaviour, IEncounterScene
         if (!(consumer is EncounterSceneBinding launcher))
             throw new ArgumentException("The current Enemy consumer does not support this configuration.", nameof(consumer));
         launcher.ConfigureScene(spawnExecutor, environmentProfile, additionalSpawnWarning);
+        launcher.ConfigureFieldBosses(fieldBoss33, fieldBoss66, fieldBossEntrances);
     }
 }
