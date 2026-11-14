@@ -8,7 +8,7 @@ namespace TeamHJD.Game.FieldTurrets
     {
         public const string TerrainObstacleTag = "FieldTurretBulletObstacle";
         public static readonly int TerrainObstacleMask = LayerMask.GetMask("Default", "Forest");
-        public static readonly int EnemyHitBoxMask = LayerMask.GetMask("EnemyHitBox");
+        public static readonly int EnemyHitBoxMask = LayerMask.GetMask("EnemyHurtbox");
 
         private static readonly int StructureSightObstacleMask = LayerMask.GetMask("CU", "TurretBase");
         private static readonly ContactFilter2D SightFilter = new()

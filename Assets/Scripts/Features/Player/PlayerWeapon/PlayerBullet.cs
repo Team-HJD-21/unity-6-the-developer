@@ -161,7 +161,7 @@ public sealed partial class PlayerBullet : MonoBehaviour
             isEnemy |= ancestor.CompareTag(_targetTag);
         }
         // 적 피격 Trigger는 유지하고 포탑 사거리·상호작용 등 감지용 Trigger는 통과합니다.
-        if (isEnemy) return hitbox.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox");
+        if (isEnemy) return hitbox.gameObject.layer == LayerMask.NameToLayer("EnemyHurtbox");
         return !hitbox.isTrigger;
     }
 
