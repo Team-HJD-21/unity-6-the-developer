@@ -1,5 +1,5 @@
-// 필드 출입구의 Player 접촉을 Core 우주선 이동 API에 전달합니다.
-// Scene 로드·로딩 화면·위치 보고·카메라 전환은 Core가 소유합니다.
+// 필드 출입구의 Player 접촉을 Core 진입 제한 API에 전달합니다.
+// 문 연출과 접촉 추적을 담당하며 Scene을 직접 생성하거나 Player를 이동시키지 않습니다.
 
 using System;
 using System.Collections.Generic;
@@ -9,8 +9,6 @@ using UnityEngine;
 
 public class SpaceshipEnter : MonoBehaviour, ISpaceshipTravelConsumer
 {
-    [SerializeField] private string sceneToLoadName;
-    [SerializeField] private string destinationName = "Capsule";
     private bool isTransitioning;
     private Animator _animator;
     private BoxCollider2D _blockingCollider;
@@ -39,7 +37,7 @@ public class SpaceshipEnter : MonoBehaviour, ISpaceshipTravelConsumer
         if (_nearPlayer.Remove(other) && _animator != null) _animator.SetBool("NearPlayer", _nearPlayer.Count > 0);
     }
 
-    /// <summary>필드의 Player가 접촉했을 때 호출합니다. 중복 충돌은 같은 이동을 다시 시작하지 않습니다.</summary>
+    /// <summary>필드 Player의 접촉을 Core에 전달합니다. 출격 중 내부 진입은 공통 Alert로 안내합니다.</summary>
     public async Task EnterAsync(Collider2D other)
     {
         if (isTransitioning || _travel?.IsTransitioning == true) return;
@@ -51,7 +49,7 @@ public class SpaceshipEnter : MonoBehaviour, ISpaceshipTravelConsumer
             var identity = other.GetComponentInParent<PlayerActorIdentity>();
             if (identity == null) throw new ArgumentException("Core Player actor가 아닙니다.", nameof(other));
             Transform player = identity.transform;
-            await _travel.EnterAsync(player, GetComponent<Collider2D>(), sceneToLoadName, destinationName);
+            await _travel.EnterAsync(player);
         }
         finally
         {

@@ -1,63 +1,35 @@
-# 우주선 출격과 필드 왕복
+# 우주선 출격과 결과 귀환
 
-수정일: 2026-11-05. 시작 순서가 바뀌어도 허브 Player와 Match Player를 중복 생성하지 않도록 연결한 경로입니다. 최신 후속은 [카메라·페이드·첫 출격 위치 결과](../../01_planning/02_implementation-records/2026/11/2026-11-05-spaceship-fade-results.md)를 참고합니다.
-
-## 실제 이동 경로
+현행 기준은 `PROJECT_PLAN.md`의 Spaceship Hub 규칙이다. 우주선은 출격 전 준비와 결과 뒤 귀환을 연결하며, 전투 중 필드에서 내부로 자유롭게 왕복하지 않는다. 과거 임시 Additive 방문과 모두 입장 시 필드 정지를 실제 출입 경로로 사용하지 않는다.
 
 ```mermaid
 flowchart TD
-    Start[Startup 시작 버튼] --> Hub[시작 우주선: 로컬 Player + Camera]
-    Hub --> Door[SpaceshipExit 문 충돌]
-    Door --> First{진행 중 Match가 있는가?}
-    First -->|없음| Launch[GameFlow.LaunchMissionAsync]
-    Launch --> Replace[우주선 교체 / 허브 Player·Camera 정리]
-    Replace --> Field[Initial_Stage 정식 Match·Player 생성]
-    Field --> Enter[SpaceshipEnter 접촉]
-    Enter --> Visit[우주선 Additive 로드 / 기존 Player 순간이동]
-    Visit --> Report[Spaceship 위치 보고 / 모두 도착 시 필드 시간 정지]
-    Report --> Return[SpaceshipExit 문 충돌]
-    First -->|있음| Back[기존 Player를 필드 입구 밖으로 복귀]
-    Return --> Back
-    Back --> Resume[Field 위치 보고 / 필드 시간 재개]
-    Resume --> Cleanup[방문 우주선 정리 / Match·Player 유지]
+  A[Startup / 시작 화면] --> B[GameFlow.EnterSpaceshipAsync]
+  B --> C[허브 Player와 Camera 각 1개]
+  C --> D[SpaceshipExit.ExitAsync / 실제 문]
+  D --> E[SpaceshipTravelService.ExitAsync]
+  E --> F[0.3초 암전 / 최소0.3초 이동 / 0.3초 복귀]
+  F --> G[GameFlow.LaunchMissionAsync]
+  G --> H[Stage_1 / PlayerStart에서 새 Match actor]
+  H --> I[SpaceshipEnter 접촉]
+  I --> J[Core 진입 제한 안내 / 이동 없음]
+  H --> K[실제 승패 / 결과 인수]
+  K --> L[GameFlow.ReturnToSpaceshipAsync]
+  L --> M[Match 정리 / 새 허브 Player와 Camera]
 ```
 
-첫 출격은 `Initial_Stage`가 이미 로드돼 있다고 가정하지 않습니다. 필드의 `PlayerStart_Local`을 기존 우주선 문 밖 복귀 위치로 옮겼고, `PlayerStart_Peer`도 옆으로 3칸 띄워 배치했습니다. 시작 우주선에 들어올 때 필드와 Match를 미리 켜는 방식으로 바꾸지는 않았습니다. `GameFlow.LaunchMissionAsync`로 Scene을 교체하고 실제 Match 준비가 끝날 때까지 기다립니다. 시작 허브의 이동용 Player와 Camera는 정리하고, 필드 조립부가 정식 Player와 Camera를 연결합니다.
+## 호출과 제작 연결
 
-전투 중 방문은 다릅니다. 필드 Scene과 Match는 계속 유지합니다. Player의 위치만 우주선 내부로 옮기며 actor의 Scene 소유권도 필드에 남습니다. 돌아올 때 새 Match·Player를 만들지 않고 기존 위치 등록을 Field로 돌립니다. 필드 입구 Collider 바깥으로 배치하므로 즉시 재입장하는 루프를 피합니다.
+- `ISpaceshipTravel.ExitAsync(player, fieldScene)`은 시작 우주선에서 Mission을 출격하는 경계다. 처음 도착 위치는 전장의 `PlayerStart`가 정한다. 기존 방문 actor를 순간이동하거나 옛 귀환 Marker를 찾아 이동하지 않는다.
+- `ISpaceshipTravel.EnterAsync(player)`는 필드 출입구의 의도를 전달한다. 현재는 진입을 막고 공통 Alert로 안내한다. Player/Match/Scene 수와 위치를 바꾸지 않는다.
+- `SpaceshipExit`의 `missionSceneName`은 제작된 Mission 경로다. `FormerlySerializedAs("returnSceneName")`로 기존 Scene 값을 보존한다. 현재 우주선의 두 출구 모두 `Assets/Scenes/Gameplay/Stage_1.unity`로 읽힌다.
+- `SpaceshipEnter`의 내부 목적 Scene/Marker, `SpaceshipExit`의 origin/귀환 Trigger/padding은 현행 흐름에서 쓰지 않아 제거했다. Scene/Prefab GUID와 오브젝트 참조는 변경하지 않았다.
+- 결과 뒤 허브 이동은 문 API가 아니라 `GameFlow.ReturnToSpaceshipAsync`로 Match를 명시 종료한다. 새 Mission/Retry/Resume의 저장 규칙은 [복귀 API](../02_match/match-recovery-api.md)를 참고한다.
 
-## 파일과 책임
+공용 `SpaceshipTravelService`는68행 수준의 출격/제한 경계로 줄였다. 옛 임시 방문의 Scene 로드·순간이동·복귀 위치 계산·방문자 추적은 제거했다. 필드 외부 정비·상호작용 UI가 이 변경만으로 구현된 것은 아니다.
 
-| 파일 | 역할 |
-| --- | --- |
-| `SpaceshipEnter.cs` | 기존 필드 트리거. Player 접촉을 `EnterAsync` 요청으로 전달 |
-| `SpaceshipExit.cs` | 기존 문 애니메이션·문 Collider 유지. 충돌을 `ExitAsync` 요청으로 전달 |
-| `DoorOperation.cs` | 우주선 내부 자동문. `PlayerFeetBox`가 감지 트리거에 닿으면 열림 |
-| `ISpaceshipTravel` / `ISpaceshipTravelConsumer` | Unity 출입문과 Core 사이의 작은 이동 계약. AppRoot가 Scene 로드 때 주입 |
-| `SpaceshipTravelService.cs` | 첫 출격/임시 방문 구분, 이동 입력 잠금, Additive 로드·정리, 위치 보고, 카메라 즉시 정렬 |
-| `MatchCameraFollow.cs` | 최초 Bind와 포털 이동 때 `SnapToTarget()`. 평소 이동의 SmoothDamp는 유지 |
-| `SceneFadePresenter.cs` | 우주선 출입 전용. 0.3초 암전 → 최소 0.3초 실제 이동/대기 → 0.3초 화면 복귀. 문구·진행 바 없음 |
-| `LoadingScreenPresenter.cs` | Startup 등 일반 진입의 검은 배경, `임시 로딩 화면`, 하단 진행 바. 우주선↔필드에서는 표시하지 않음 |
+## 검증 범위
 
-`ISpaceshipTravel`은 Transform/Collider를 받는 Unity Presentation 경계이므로 엔진에 의존하지 않는 Contracts/Application에 넣지 않았습니다. 문에서 AppRoot를 전역 검색하거나 새 GameManager를 만들지 않습니다.
+실제 Startup→우주선→실제 SpaceshipExit 호출→Stage_1을 실행해 Hub/Stage 각각 Player1·활성 Camera1, Stage 새 actor·Mission 준비를 확인했다. 실제 필드 출입구 API 호출은 위치·Match·Scene 수를 유지했다. CU 파괴로 Defeat를 확정한 뒤 명시 허브 귀환을 실행해 Match없음/새 허브 actor1·Camera1을 확인했다.
 
-## 제작 설정
-
-- 필드 Scene: `Assets/Scenes/Gameplay/Initial_Stage.unity`.
-- 우주선 Scene: `Assets/Scenes/Spaceship/SpaceShipGrayBox.unity`.
-- 필드 출입구의 `destinationName`을 실제 내부 표식인 `Capsule`로 수정했습니다. 이전 값 `SpacshipEnter`는 현행 우주선 Scene에 존재하지 않았습니다. 비활성 표식의 위치만 사용하며 표식 자체를 켜지 않습니다.
-- 기존 출구의 `returnSceneName: Initial_Stage`, 문 Animator와 애니메이션 이벤트 `ActivateDoorCollider(int)`는 유지합니다.
-- `EnterAsync(Collider2D)` / `ExitAsync(Collider2D)`는 같은 문 요청을 코드에서 검증할 때도 사용합니다. 실제 Player 접촉 이벤트가 같은 함수를 호출합니다.
-- 이동 중에는 Core가 자기 입력 lease만 잡습니다. 실시간 기준 0.3초에 걸쳐 검게 만든 후 이동을 시작하고, 완전 암전 상태를 최소 0.3초 유지한 뒤 0.3초에 걸쳐 화면을 돌립니다. 게임 정지·배속에 영향을 받지 않으며, Scene 준비가 길면 암전 구간을 연장합니다. 이동·실패 복구와 Camera 정렬은 모두 암전 안에서 끝냅니다.
-- 시작 우주선 Camera는 Initial_Stage 기준으로 orthographic size **18**, culling mask **4190711**, SolidColor/투명 검정 배경, depth **-1**, near/far **0.3/1000**, Z **-10**을 사용합니다. 배율·레이어는 `SpaceshipHubSettings`에서 관리합니다.
-- 도착 표식이 없으면 새로 로드한 방문 Scene을 정리하고 원래 Player 위치·필드 위치 보고·입력을 복구합니다. 처음부터 로드돼 있던 Scene은 실패했다고 임의 제거하지 않습니다.
-
-## 네트워크 경계
-
-첫 출격은 기존 Host GameFlow/NGO Scene 진입 정책을 따릅니다. 진행 중 방문은 전체 Match의 Scene을 교체하는 동작이 아니므로 로컬 Additive 경로를 사용합니다. Host 권위 actor의 도착 사실을 `PlayerMatchPresence.TryReportLocation`으로 보고합니다. 다른 권위 actor가 우주선에 남아 있으면 우주선을 먼저 내리지 않습니다.
-
-Client actor의 출입 요청을 Host가 검증하는 별도 RPC는 이번 패치에 추가하지 않았습니다. 보고권 없는 actor를 이동시킨 뒤 시간 상태가 틀어지도록 두지 않고 이동 전에 명확히 거부합니다. 이 패치의 왕복 검증은 로컬/Host actor 기준이며 2인 Client 출입 완료로 확대하지 않습니다. 실제 원격 Player 생성·위치 보고 연결과 함께 후속 통합해야 합니다.
-
-## 확인 결과
-
-실제 검사 결과는 [이번 패치 결과](../../01_planning/02_implementation-records/2026/11/2026-11-05-spaceship-travel-results.md)에 기록합니다. 필드의 저장·날씨 추첨·콘솔 상호작용 설계를 대신 변경하는 패치가 아닙니다.
+출구 필드 이름 변경 뒤 실제 우주선 Scene을 읽어 두 경로가 유지됨을 검사했다. Scene을 저장/덮어쓰지 않고 clean Stage_1 편집 상태로 복귀했다. 실제 키보드·물리 문 접촉 연출의 인수와 실제2인 왕복 검증은 별개다. 이전 [11/5 검수 기록](../../01_planning/02_implementation-records/2026/11/2026-11-05-spaceship-fade-results.md)은 당시 동작 기록이며 현행 자유 출입 정책으로 읽지 않는다.

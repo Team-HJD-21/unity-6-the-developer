@@ -75,7 +75,12 @@ namespace TeamHJD.Game.Editor
                 EditorGUILayout.LabelField("33% / 66% 생성", (stage.FirstFieldBoss.IsEmpty ? "미확인" : stage.FirstFieldBoss.Value) + " / " +
                     (stage.SecondFieldBoss.IsEmpty ? "미확인" : stage.SecondFieldBoss.Value));
                 EditorGUILayout.LabelField("최종 진입 조건", stage.CanEnterFinalBattle ? "준비됨 · 실제 Boss Scene 연결 필요" : "미충족");
-                if (stage.PendingReason != null) EditorGUILayout.HelpBox(stage.PendingReason, MessageType.Warning);
+                if (stage.PendingReason != null) EditorGUILayout.HelpBox(stage.PendingReason switch
+                {
+                    "FieldBossContentNotConnected" => "33%·66% Field 중간보스의 실제 생성 원본이 연결되지 않았습니다.",
+                    "FinalBossSceneAndPresentationRequired" => "점유와 두 Field 생성 조건은 충족했습니다. 실제 최종 Boss Scene·연출 연결이 필요합니다.",
+                    _ => stage.PendingReason
+                }, MessageType.Warning);
             }
             _restoreCurrency = EditorGUILayout.Toggle("재화도 체크포인트로 복원", _restoreCurrency);
             EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. 자동 실행 사건은 등록하지 않았습니다.", EditorStyles.wordWrappedMiniLabel);

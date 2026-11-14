@@ -258,3 +258,13 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 자동 MissionEntry4/4와 MatchRecovery11/11. 실제 Stage_1에서 존재하지 않는 slot을 마지막 유효 저장 링크로 주입하고 사망: 안전장치1/같은실행/정지·캡처금지·누락사유가 관측됐다. 같은 Root 재시도 후에도 사용1이다.
 - 실제 App.EndCurrentMatch로 Scene 소유권 종료 경계를 별도 주입한 뒤 App.CanRetrytrue와 재시도 누락사유·NoMatch를 확인했다. 실제 Weather rollback 실패를 재현했다고 쓰지 않는다. 전체 writer 복원은 여전히 world/weather 연결 대기다. b6c-missing-checkpoint-result.json.
 - 새 Play의 무저장 사망 회귀는 실제 새 Player/같은run/사용1/HP400/App미완료false·오류null이다. b6c-no-save-recovery-result.json. 의도적으로 주입한 누락 오류2건은 b6c-errors-including-deliberate-missing-slot.json에 stack과 보존했고 성공0오류로 지우지 않았다. 저장33개 해시 복구 완료.
+
+
+## B9a — 현행 출격 정책과 Core 임시 방문 제거 (2026-11-14)
+
+- Product Plan4.4와 대조해 SpaceshipTravelService의 과거 Additive 임시 방문·방문자/귀환좌표·직접 순간이동/카메라 보정·위치 보고 경로를 제거했다.199→68행 수준으로 줄였고 필드 내부 진입은 공통 Alert로 안내한다. 결과 귀환은 GameFlow가 Match를 명시 종료한다.
+- Scene 소비자 두 곳의 호출을 새 간단한 경계에 맞췄다. Enter 내부Scene/목적Marker, Exit origin/귀환Trigger/padding을 제거했다. Exit 목적지 이름은 missionSceneName이며 FormerlySerializedAs로 기존 두 출구의 Stage_1 경로가 실제 유지됨을 확인했다. 기존 UI Animator null-check는 별도 미커밋 변경으로 보존한다.
+- 실제 Startup→Hub→문 ExitAsync→Stage_1: Hub actor1/camera1, 새 Stage actor/정상Mission/actor1/camera1. 실제 필드 문 EnterAsync 호출 뒤 이동0·동일Match/Scene수. b9a-startup-launch-guard-result.json.
+- 같은 실제 실행에서 CU 파괴→Defeat→명시 ReturnToSpaceshipAsync: Spaceship/Match없음/actor1/camera1. b9a-defeat-to-hub-result.json. 실제 키보드나 물리 문 연출 인수로 확대하지 않는다.
+- 관측 스크립트의 첫 PlayerActorIdentity namespace 누락은 실행 전 거절됐고 수정 후 실행했다. 제품 컴파일 오류는 아니다. 원본 실패도 b9a-observer-before-namespace-fix.json으로 보존했다.
+- Stage Progress의 알려진 대기 이유는 Debugger에서 한국어 안내로 보여주며 원본 진단 키/실제 미연결 상태는 유지했다.
