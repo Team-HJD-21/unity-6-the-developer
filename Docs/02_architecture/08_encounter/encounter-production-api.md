@@ -50,7 +50,7 @@ Core의 단계 소유자는 `MatchTimeService.SetFieldHeld(bool)`로 기존 Fiel
 
 `Tools → TeamHJD → Game Debugger`의 Encounter 패널에 Match 정규 생산 상태, 다음 요청/간격, 회차/마지막 결과, 공용/Field 시각을 표시한다. Statistics/요청 표의 `MatchProduction` 계획/실제 수량을 함께 확인한다. Debugger 버튼은 추가 수동 요청이며 정규 생산의 시작 버튼이 아니다.
 
-이번 단계는 **지속 생산·자동 환경 조건·Field 시각·공통 예산 내 추가 출현과 저장 경계**를 연결했다. 33·66·100% 사건과 실제 Boss 콘텐츠 연결은 후속 배치다.
+이번 단계는 **지속 생산·자동 환경 조건·Field 시각·공통 예산 내 추가 출현과 저장 경계**를 연결했다. 33·66·100% 진행 규칙·저장/실제 사망 전달은 [Stage 진행 API](../02_match/stage-progression-api.md)에 연결했다. 실제 Boss 콘텐츠/생성 서비스·최종 Scene은 아직 미연결이다.
 
 검사 조건과 실제 관측은 [통합 실행 기록](../../01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 따른다.
 
@@ -66,3 +66,10 @@ Planner의 마지막 정책이 이미 편성된 완성 분대 하나를 **같은
 점유 내부에는 기존 주황 원 Sprite를 그린다. 예고는 Source `SituationEvent`와 부모 요청 ID로 Statistics/Timeline에 기록되며, 예정 수량은 실제 생성·생존으로 세지 않는다. Field 보류/복원은 남은 대기를 보존하고 Grid 교체/종료는 예약과 표시를 제거한다. 재개 후 공통 요청 서비스→Executor가 최신 권한/배치를 확인한다. 자동 편성에 명시 origin을 붙이는 조합은 `UnsupportedOrigin`이며 고정 또는 준비 편성을 사용한다.
 
 **현재 원격 예고 전송이 없어 내부 추가 출현은1인 Host만 지원한다.** 멀티에서는 예고 없는 내부 생성을 하지 않고 일반 계획을 유지한다. Ground/Air 연출도 별도 adapter 없이는 Unsupported다.
+
+
+## 실제 공간 입력 확인
+
+`EnemySpawnExecutor.CaptureEnemyPositions`를 Root가0.1 unscaled초마다 읽고, 개체/셀 점유가 바뀌면 App/MatchSession을 거쳐 Grid revision을 갱신한다. 셀 안에서만 이동한 것으로는 불필요한 revision을 만들지 않는다. 다음 정규 요청은 이 snapshot을 Collector/Planner에 그대로 전달한다.
+
+실제 Stage_1 요청3회에서 직전 실제 적/Grid/계획 기록은0/0/0 →12/12/12 →24/24/24, 입력/계획 revision은4/4 →25/25 →54/54였다. 분배 후보41개씩의 밀도 수치123개가 같은 Grid와 일치했고 각 요청은12/12를 생성했다. 같은 자료를 Game Debugger의 요청별 Spawn Decision에서도 확인했다. 이는 실제 입력 연결의 증거이며 보스/멀티/밸런스 전체 완료를 의미하지 않는다.

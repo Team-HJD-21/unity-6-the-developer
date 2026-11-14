@@ -303,3 +303,19 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - B6d 최종 보완: 재시도 시도 ID를 두어 새 Mission 의도가 시작되면 이전 읽기를 Scene 이동 전에 OperationCanceledException으로 중단한다. 이전 finally도 새 시도의 실행 잠금을 해제하지 않는다. 이전 UI도 현재 복귀 오류가 없으면 실패 안내를 새 화면에 쓰지 않는다. 실제 BinaryCheckpointStore 재검수에서 pendingtrue/cancelledtrue/staleIgnoredtrue/LastErrornull을 확인했다(b6d-stale-recovery-owner-after.json).
 - 자동 회귀 MissionRecoveryEntryTests2/2는 이전 IO의 Scene/오류 침범 차단, 이전 완료 뒤 새 작업이 계속 pending·재시도 불가인 상태, 최신 작업의 실제 누락 오류/재시도 재개를 검증한다. 저장 쓰기와 Scene 이동이 발생하면 실패한다. 기존 규칙15개와 합쳐 이번 관련 검사는17개이며 앞선 배치 수를 중복 합산하지 않는다.
 - 최종 현재 소스의 직접 Stage 메뉴도 b6d-final-menu-result.json에서 사용1/1/1·같은실행·정지/누락거부·허브/오류닫힘을 다시 확인했다. Stage 열기 RPC1회는5초 응답 timeout이었으나 새 관측의 실제 Stage Root 준비와 최종 결과로 실제 로드를 확인했다. 같은 OpenScene을 중복 실행하지 않았다. CLI 세션89199는 완료 exit0을 확인했다. 이 응답 timeout은 제품 기능 통과와 별도로 남긴다.
+
+
+## B9d — 실제 actor → Grid → 다음 요청의 공간 자료 대조 (2026-11-14)
+
+- 실제 Stage_1 기본 배속·정규 생산을 관측했다. 밀도/점유/스폰 수를 직접 주입하지 않았다. Player/CU 보호와 CU 근처 이동·실제 HUD 자동 활성화만 검수 전제로 사용했다.
+
+|요청|Field 초|입력/계획 revision|직전 실제 적|Grid 적|계획에 기록된 적|계획/실제 생성|후보 수치 불일치|
+|---|---:|---:|---:|---:|---:|---|---:|
+|1|0.505|4/4|0|0|0|12/12|0|
+|2|15.513|25/25|12|12|12|12/12|0|
+|3|30.516|54/54|24|24|24|12/12|0|
+
+- 3회 모두44후보(수동OFF1/터렛 셀2 제외, 실제 분배 후보41)를 기록했다. 분배 수치123개·Grid 셀 기록이 입력과 모두 일치했고 범위 밖 적0·새 오류0이었다. 세 번째 요청의 후보 SpawnPoint-ad839fc0d4f0488fa47d05b01915fbd1은 적3/CellScore3/할당0으로 남았다. 이 하나의 기록만으로 전체 편성 변화의 원인을 단정하지 않는다.
+- EnemySpawnExecutor.CaptureEnemyPositions → Root.RefreshDynamicInput(0.1 unscaled초 표본, 셀/개체 집합 변화 때만 revision) → AppRoot/MatchSession → BattlefieldSpatialRuntime → Collector/Planner의 같은 snapshot → 실제 실행과 기록 경로를 대조했다. 셀 내 소폭 이동만으로 revision을 늘리는 API는 아니다.
+- 기존 Game Debugger가 같은3요청·동일 revision/시각·밀도/후보/계획을 보관함도 확인했다. 근거: b9d-spatial-feedback-result.json/CSV와 b9d-recorded-spawn-decisions.json. 최소 후보/정책 단위 검사 소스도 확인했으며 이번 관측 때문에 전체 검사를 다시 돌리지 않았다.
+- Play 종료/Scene clean·컴파일 정상, 시험 전 저장33개 해시 복구를 b9d-save-cleanup.json으로 확인했다. 이 측정은 완성된 보스 한 사이클·실제2인·밸런스 검증을 대신하지 않는다.
