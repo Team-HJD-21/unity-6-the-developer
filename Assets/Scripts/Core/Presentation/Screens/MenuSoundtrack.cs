@@ -26,6 +26,7 @@ namespace TeamHJD.Game.Presentation
         {
             if (_flow.Phase != GameFlowPhase.MainMenu) { Stop(); return; }
             if (_active) return;
+            GameAudioManager.Current?.StopGameplayMusic();
             _active = true; _introPending = Intro != null && Intro.clip != null;
             _introSample = _ambientSample = 0; _gain = 1; Schedule();
         }

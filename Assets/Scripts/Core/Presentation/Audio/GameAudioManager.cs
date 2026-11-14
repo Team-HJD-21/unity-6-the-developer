@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 namespace TeamHJD.Game.Presentation
 {
     /// <summary>표준 AudioSource의 풀·분류·동시 재생 수·수명만 소유합니다. 공간 처리는 Unity가 수행합니다.</summary>
-    public sealed class GameAudioManager : MonoBehaviour
+    public sealed partial class GameAudioManager : MonoBehaviour
     {
         public readonly struct VoiceHandle
         {
@@ -77,7 +77,7 @@ namespace TeamHJD.Game.Presentation
             CameraManager.OutputChanged += OutputChanged;
             SceneManager.sceneUnloaded += SceneUnloaded;
             SceneManager.sceneLoaded += SceneLoaded;
-            FindListener();
+            FindListener(); InitializeMusic();
         }
         // Mixer exposed parameters must be applied after Awake/OnEnable, when the native mixer is ready.
         private void Start() { if (_settings != null) ApplyVolumes(_settings.Values); }
@@ -170,7 +170,7 @@ namespace TeamHJD.Game.Presentation
         private void LateUpdate()
         {
             if (Configuration == null) return;
-            double now = AudioSettings.dspTime; float elapsed = (float)Math.Max(0, now - _lastDsp); _lastDsp = now;
+            double now = AudioSettings.dspTime; TickMusic(now); float elapsed = (float)Math.Max(0, now - _lastDsp); _lastDsp = now;
             foreach (var v in _voices)
             {
                 if (v.Cue == null) continue;
@@ -228,7 +228,7 @@ namespace TeamHJD.Game.Presentation
         }
         public void Shutdown()
         {
-            if (_shutdown) return; _shutdown = true;
+            if (_shutdown) return; _shutdown = true; ShutdownMusic();
             if (_settings != null) _settings.Changed -= ApplyVolumes;
             CameraManager.OutputChanged -= OutputChanged; SceneManager.sceneUnloaded -= SceneUnloaded; SceneManager.sceneLoaded -= SceneLoaded;
             foreach (var voice in _voices) if (voice.Source != null) Clear(voice);
@@ -237,6 +237,6 @@ namespace TeamHJD.Game.Presentation
         }
         private void OnDestroy() => Shutdown();
         private void OnDisable()
-        { foreach (var voice in _voices) if (voice.Source != null) Clear(voice); }
+        { StopGameplayMusic(); foreach (var voice in _voices) if (voice.Source != null) Clear(voice); }
     }
 }

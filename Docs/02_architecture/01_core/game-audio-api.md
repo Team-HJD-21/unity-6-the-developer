@@ -82,3 +82,30 @@ voice.Stop();
 - Main 실제 Music 출력과 단일 Listener 확인. 같은 Wolf 효과음을 Listener 기준 좌/우 6, 우 18에서 재생해 AudioListener PCM peak를 계측했다. 좌 6은 L .23999 / R 0, 우 6은 L 0 / R .23999, 우 18은 L 0 / R .06000이었다. 이는 기본 3D 출력의 방향·거리 검증이며 모든 스피커의 청감 인수는 아니다.
 - Startup→Stage1에서 터렛 entity ID 누락, Initial_Stage에서 기존 SpaceshipEnter 트리거 NullReference가 관측돼 전체 실제 전투 경로 검수는 완료하지 않았다. 이번 오디오 변경으로 해당 Scene/ID/트리거를 수정하지 않았다. 검증 원본은 공유 제외 `Docs/Local/Validation/Audio20261113`에 있다.
 - 모든 무기의 개별 음색, 모든 Enemy, Laser 지속음, UI 클릭음, 원격 Client의 Turret 발사·폭발 전달, 여러 기기에서의 최종 음량과 Standalone 빌드는 후속 확인이다. Enemy 능력음은 기존 Attack RPC를 사용하지만 새 원격 오디오 RPC는 추가하지 않았다.
+
+## 낮·밤·우주선 OST
+
+11/14 실제 재생 검수는 [OST 연결 기록](../../01_planning/02_implementation-records/2026/11/2026-11-13-day-night-soundtrack.md)을 따른다. Startup→허브→Field, Main/Credits 왕복과 원곡 종료→같은 시간대 다음 곡→자연 낮밤 전환을 확인했다. 앞 절의11/13 Scene 진입 실패는 당시 기록이며 최신 경로 확인과 구분한다. 원격 Client·Standalone·스피커 청감은 인수하지 않았다.
+
+`GameAudioConfiguration.GameplayMusic`에 연결한 `Assets/Audio/Configuration/GameplayMusic.asset`에서 Day 4곡, Night 4곡, Spaceship 1곡과 기본 gain·전환 길이·다음 곡 예약 여유를 편집한다. 재생자는 `GameAudioManager`가 앱 수명에 한 번 만든 고정 Music voice 둘을 사용한다. SFX 24개 풀을 늘리거나 Scene마다 재생자를 추가하지 않는다. 기존 Main Intro/Ambient와 Credits Source는 보존하며 Main/Credits 진입에서는 gameplay 음악을 정리한다.
+
+### 선택·시간·수명 규칙
+
+- `AppRoot.RenderGameplaySoundtrack`은 현재 `CameraManager`의 **기본 MatchCameraFollow.Target**에서 실제 로컬 PlayerMatchPresence를 읽는다. 전술 카메라 marker를 플레이어로 해석하지 않는다. 실제 clock Snapshot.MatchId와 `CurrentEnvironment`의 MatchId가 일치하고 TimeOfDayId가 day/night일 때만 해당 목록을 요청한다. Host/Client replica 모두 같은 읽기 규칙이다. 음악 전용 5분 타이머나 임의의 낮 기본값은 없다.
+- Day와 Night는 독립 shuffle bag이다. 중복·null 후보를 제거하고 모든 서로 다른 곡을 한 번씩 뽑은 뒤 새 묶음을 섞는다. 가능한 경우 묶음 경계의 직전 곡도 연속 반복하지 않는다. 중단/예약 취소된 곡은 이미 뽑은 것으로 간주한다. 목록 변경은 다음 앱 시작 때 반영한다.
+- 곡이 먼저 끝나면 **같은 목록의 다음 곡**을 두 번째 Source에 DSP 시각으로 미리 예약한다. 종료는 `samples / (double)frequency`로 계산한다. 곡이 300초보다 길어도 실제 낮밤이 바뀌면 곡 끝을 기다리지 않는다. 프레임 정지가 예약 곡 전체 길이를 넘어간 경우 과거 시각으로 예약하지 않고 현재 같은 시간대의 새 곡으로 복구한다.
+- 시간대/우주선 전환 때 기본 0.8초 동안 현재 gain에서 이어서 fade-out/in한다. **이 짧은 전환 구간에만 이전 시간대와 다음 시간대가 겹칠 수 있다.** 전환 완료 후에는 현재 시간대 목록만 남는다. 아주 짧은 검사 clip은 clip 끝 이전에 voice를 반납하도록 fade 길이를 줄인다. 빠른 연속 전환에서는 마지막 요청이 이기며, 아직 시작하지 않은 다른 시간대 예약을 취소한다. 되돌아갈 곡이 아직 재생 중이면 해당 위치를 유지해 역방향 fade한다.
+- 첫 허브는 authored SpaceshipHubCompositionRoot의 실제 Player를, Match 중 우주선 방문은 PlayerMatchPresence.Location을 따른다. 우주선 곡은 native loop한다. 원본 WAV 안의 편곡·무음·fade는 변경하지 않는다. 필드 복귀 때 현재 낮밤 목록으로 바뀐다. 개인 메뉴·설정은 음악 context가 아니므로 열고 닫아도 곡을 다시 시작하지 않는다.
+- actor/clock/환경이 없으면 미확정 음악을 새로 시작하지 않고 현재 gameplay 음악을 fade-out한다. Main/Startup/Faulted와 App 종료는 gameplay 음악을 즉시 정리한다. 종료·비활성화에서 두 Source의 clip과 미래 예약을 비워 과거 전환이 뒤늦게 살아나지 않게 한다. 기존 Main 1→2와 Credits 3의 재생·복귀·컷씬 시간표는 유지한다.
+
+### 믹스·입고
+
+Source gain은 library.Volume(기본0.55)×fade다. 로컬 Master/Music은 기존 AudioMixer에서 한 번만 적용하며 0%는 실제 mute한다. 음악 Source gain에 Music 설정을 중복 곱하지 않는다. 설정 preview/cancel/apply는 기존 GameAudioSettings를 사용한다.
+
+신규 9곡만 Streaming/Vorbis 품질0.9, 원본48kHz/stereo 유지, Preload Audio Data=false, Load In Background=true로 입고한다. 선택한 곡과 곧 이어질 곡에만 LoadAudioData를 요청한다. 기존 Main/Credits clip을 재입고하거나 shared clip을 임의 Unload하지 않는다. Unity API의 [DSP 예약](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityengine/audiosource/playscheduled), [명시적 데이터 로드](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityengine/audioclip/loadaudiodata), [Preload 설정](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityeditor/audioimportersamplesettings/preloadaudiodata)을 따른다.
+
+비동기 데이터 로드가 끝난 clip만 PlayScheduled에 전달해 실제 시작이 늦어졌는데 종료 예약은 앞서는 문제를 피한다. 다음 곡은 기본1.25초 전에 준비한다. 디스크 로드가 그 여유보다 늦으면 같은 시간대의 준비된 곡을 현재 시각으로 복구하며, 로딩을 기다리려고 다른 시간대 음악을 계속 유지하지 않는다. old fade는 로딩 완료로 다시 연장하지 않고, incoming fade는 실제 예약 시작에서 진행한다. 원본 편곡의 앞뒤 무음과 저장장치 지연은 별도 청감/기기 검증 범위다.
+
+`Tools > TeamHJD > The Developer > Audio > Configure gameplay soundtrack`는 원본 파일 복사 후 제작된 라이브러리/Configuration 연결만 작성한다. dirty Scene이나 Play Mode에서는 실행하지 않는다. 기존 비어 있지 않은 곡 목록과 수동 mix 값을 보존하며, 일반 편집은 Inspector로 한다. 전체 `Configure native audio`/Main/Credits 재생성 도구를 다시 실행할 필요가 없다.
+
+새 음원과 `.meta`는 기존 `Assets/Audio/Music/OriginalSoundtrack/`에 한 번만 복사한다. 원본 WAV의 SHA256을 대조하고 변경하지 않는다. 현재 effective WAV filter/diff/merge는 unspecified이며 별도 WAV/LFS 규칙은 없다. 전역 Git/LFS 설정을 추가하지 않는다. 실제 재생·성능·Client·청감 인수는 구현 및 오프라인 컴파일과 구분해서 기록한다.

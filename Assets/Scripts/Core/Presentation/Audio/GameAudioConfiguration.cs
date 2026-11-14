@@ -9,6 +9,7 @@ namespace TeamHJD.Game.Presentation
         public AudioMixer Mixer;
         public AudioMixerGroup MusicOutput, CinematicOutput;
         public AudioSource VoicePrefab;
+        public GameplayMusicLibrary GameplayMusic;
         public GameAudioCue[] Cues = System.Array.Empty<GameAudioCue>();
         [Range(4, 30)] public int PoolSize = 24;
         [Range(1, 4)] public int ReservedUIVoices = 2;

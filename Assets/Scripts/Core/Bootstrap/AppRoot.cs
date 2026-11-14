@@ -157,6 +157,7 @@ namespace TeamHJD.Game.Bootstrap
             {
                 (Services.Platform as IPlatformRuntime)?.Pump();
                 Services.PumpNetwork();
+                RenderGameplaySoundtrack();
                 _screenPresenter?.Render();
             }
         }

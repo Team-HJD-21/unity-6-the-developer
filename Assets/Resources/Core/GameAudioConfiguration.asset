@@ -16,6 +16,7 @@ MonoBehaviour:
   MusicOutput: {fileID: -4235304903784085534, guid: 725e0cde0819d1c4898fccae3c858235, type: 2}
   CinematicOutput: {fileID: -1087567734226990013, guid: 725e0cde0819d1c4898fccae3c858235, type: 2}
   VoicePrefab: {fileID: 3861305597327150917, guid: 13ab119c21127994b824683b0eebac3a, type: 3}
+  GameplayMusic: {fileID: 11400000, guid: 5d655e35c3856a341a1775ef95ae46dd, type: 2}
   Cues:
   - {fileID: 11400000, guid: 4b690099ce4d2c4468715f430ce76df3, type: 2}
   - {fileID: 11400000, guid: cda4dbf4aca038b4a833f58e97bab3a4, type: 2}
