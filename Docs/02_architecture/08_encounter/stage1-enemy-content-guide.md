@@ -82,18 +82,23 @@ Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSli
 
 ## 새 몬스터 추가 순서
 
-### 방향별 피격 윤곽 설정
+### 방향별 피격 콜라이더 설정
 
-`SpritePhysicsShapeSync`는 Animator의 `MoveX`·`MoveY`를 읽고 `downSprite`, `upSprite`, `leftSprite`, `rightSprite` 중 하나를 대표 윤곽으로 사용한다. 런타임 Variant마다 해당 몬스터의 각 방향 Idle 스프라이트를 연결하고, `targetCollider`에는 자식 HitBox의 PolygonCollider2D를 연결한다. 각 대표 스프라이트에는 Physics Shape가 필요하다. Animator 파라미터 이름이 다르면 `directionXParameter`·`directionYParameter`도 맞춘다.
+현재 [EnemyRoot](../../../Assets/Prefabs/Enemies/Base/EnemyRoot.prefab)의 기본 피격 구성은 `SpritePhysicsShapeSync`와 `PolygonCollider2D`가 아니다. EnemyRoot에는 루트의 [DirectionalCapsuleCollider2D](../../../Assets/Scripts/Shared/Physics/DirectionalCapsuleCollider2D.cs)가 있고, 이 컴포넌트가 자식 `HitBox`의 `CapsuleCollider2D`를 참조한다. 새 일반 몬스터 Variant는 이 Base 구성을 상속해 사용한다.
 
-방향이나 형태의 대표 스프라이트가 바뀔 때만 콜라이더 경로를 갱신한다. 같은 방향의 걷기·공격 프레임별 세부 윤곽은 따라가지 않는다. 방향 값이 모두 0이면 마지막 방향을 유지하며, 최초에는 아래쪽 윤곽을 사용한다.
+1. Variant의 `DirectionalCapsuleCollider2D`에서 Animator와 `Target Collider` 참조가 EnemyRoot의 Animator 및 자식 HitBox `CapsuleCollider2D`를 가리키는지 확인한다. 보통 Base 참조를 그대로 상속한다.
+2. 몬스터 크기와 각 방향 스프라이트에 맞춰 `Down Shape`, `Up Shape`, `Left Shape`, `Right Shape`의 `offset`, `size`, `direction`을 Inspector에서 조정한다. 이 값은 HitBox 로컬 좌표 기준이다. 세로형 캡슐은 `Vertical`, 가로로 긴 캡슐은 `Horizontal`을 선택한다.
+3. Animator의 이동 방향 파라미터가 `MoveX`·`MoveY`가 아니면 `Direction X Parameter`와 `Direction Y Parameter`를 Animator와 맞춘다. 컴포넌트는 파라미터로 방향을 판단하고, 방향별로 미리 설정한 캡슐 값을 적용한다. 스프라이트 Physics Shape를 읽거나 스프라이트 윤곽을 자동 복사하지 않는다.
+4. 변태 후 고정된 피격 모양이 필요한 몬스터만 `Use Fixed Shape`를 켜고, 고정형 Animator State에 `FixedShape` Tag를 지정한 뒤 `Fixed Shape`의 `offset`, `size`, `direction`을 맞춘다. 일반 몬스터는 끈 상태로 둔다.
 
-SpawnerMushroom은 `fixedShapeSprite`에 시설 Idle 스프라이트를 연결하고, Animator의 `FacilityIdle`·`FacilitySpawn` State Tag를 `FixedShape`로 지정한다. 변태 중에는 이동형 윤곽을 유지하며 시설 상태에 진입하면 고정 윤곽으로 바뀐다. 일반 몬스터는 `fixedShapeSprite`를 비워 둔다. 이 설정은 각 인스턴스에 실제 적용된 Animator 상태를 따르며, 별도의 네트워크 상태를 추가하지 않는다.
+컴포넌트는 방향·형태가 바뀔 때만 캡슐 속성을 적용하고, 멈춰 Animator 방향 값이 0이 되면 마지막 방향을 유지한다. 따라서 걷기·공격의 매 프레임 윤곽을 따라가는 방식은 아니다. SpawnerMushroom은 `Use Fixed Shape`를 켜고 시설 모양의 `Fixed Shape` 값을 사용한다. 시설 Idle/소환 Animator State에는 `FixedShape` Tag가 있어야 하며, 변태 중에는 이동형 방향 캡슐을 쓰다가 시설 상태에 들어가면 고정형 값으로 전환된다.
+
+`SpritePhysicsShapeSync`는 [PolygonCollider2D의 경로를 대표 Sprite Physics Shape로 바꾸는 별도 스크립트](../../../Assets/Scripts/Shared/Physics/SpritePhysicsShapeSync.cs)다. 현재 EnemyRoot 기반 새 몬스터 제작 절차에는 사용하지 않는다. 프로젝트에서 별도로 Polygon 피격 형태를 선택한 경우에만 해당 스크립트와 PolygonCollider2D를 함께 구성하고, 캡슐 방식과 혼용하지 않는다.
 
 ### 제작·등록
 
 1. [Base 프리팹](../../../Assets/Prefabs/Enemies/Base)에서 행동에 맞는 Variant를 만들고 `Runtime/<유형>/`에 둔다. 고유 능력이 필요할 때 Ability를 추가하고, 행동 전이가 다를 때 Controller를 확장한다.
-2. SpriteRenderer, Collider 크기·offset, Rigidbody2D, Animator Controller/Override와 방향별 클립을 맞춘다. `activationRange` 기즈모로 접촉 거리와 효과 반경을 따로 확인한다.
+2. SpriteRenderer와 방향별 클립을 연결하고, HitBox 자식의 `CapsuleCollider2D` 및 루트 `DirectionalCapsuleCollider2D`의 방향별 `offset`·`size`·캡슐 방향을 맞춘다. Rigidbody2D와 Animator Controller/Override도 확인한다. `activationRange` 기즈모로 접촉 거리와 효과 반경을 따로 확인한다.
 3. 능력·Movement·Animation·Health·네트워크 컴포넌트 참조와 필요한 Animation Event를 연결한다. 런타임 Variant에는 임시 로컬 테스트 플래그를 남기지 않는다.
 4. 투사체·FX는 별도 프리팹에 구성한다. 현재 캐넌 투사체 파일명은 `CannonPorjectile.prefab`이므로 참조 확인 시 실제 철자를 따른다. 이 문서 작업에서 에셋 이름을 변경하지 않는다.
 5. EnemyDefinition의 고유 ID·Prefab·비용·SquadMode·TargetRule을 지정하고 EnemyCatalog에 등록한다. 체력·공격력·이동속도·거리 등 실제 값은 프리팹의 해당 컴포넌트에서 조정한다.

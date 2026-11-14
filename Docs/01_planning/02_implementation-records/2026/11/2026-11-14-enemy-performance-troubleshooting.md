@@ -10,7 +10,7 @@
 조사 중 확인한 핵심은 다음과 같다.
 
 - 느린 프레임 하나에 물리 `FixedUpdate`가 여러 번 실행되면 물리와 몬스터 행동 비용이 함께 누적된다. 총 프레임 시간만 비교하지 않고 FixedUpdate 횟수와 메서드 호출 수도 함께 봐야 했다.
-- 애니메이션 프레임이 바뀔 때마다 PolygonCollider 모양을 다시 만들던 경로를 방향·형태가 변할 때만 갱신하도록 바꿨다.
+- PolygonCollider 경로를 방향·형태 전환 때만 갱신하는 중간 개선을 측정한 뒤, 최종 EnemyRoot 피격 구성은 방향별 Capsule로 전환했다. Polygon 측정값은 당시의 이력이고 현재 기본 프리팹의 적용 상태가 아니다.
 - 분대의 실제 타깃 검색은 분대 단위였지만 모든 구성원이 갱신을 요청했다. 대표 구성원만 요청하도록 바꿔, 관측 캡처에서 갱신 1회당 요청을 710회에서 303회로 줄였다.
 - Trigger 감지를 개체별 거리 탐색으로 대체한 실험은 물리 작업을 스크립트 작업으로 옮겼고 총비용 이득이 확인되지 않아 되돌렸다.
 - 마지막 캡처에서 CPU 표본은 36.41ms였고, 계층 표에는 `PlayerLoop` 19.00ms/3회와 `EditorLoop` 17.21ms/4회가 기록됐다. 이 캡처는 여러 호출을 합산한 표본이라 19ms를 단일 게임 프레임 시간으로 단정할 수 없다. 따라서 60FPS 달성 여부나 해결된 프레임 수를 이 캡처만으로 결론내리지 않았다.
@@ -78,13 +78,15 @@
 
 **결론 및 범위:** 일반 몬스터와 빠른 투사체에 같은 충돌 모드를 일괄 적용할 필요가 없다는 방향으로 정리했다. 모든 속도·지형에서 투사체 관통이 없는지까지 검증한 것은 아니다.
 
-### 4. 애니메이션마다 PolygonCollider 모양이 재생성되는 문제
+### 4. 중간 구현: 애니메이션마다 PolygonCollider 모양이 재생성되는 문제
 
 **증상 및 원인:** `SpritePhysicsShapeSync.LateUpdate` 아래에서 `Physics2D.Collider2D.CreateShapes`와 `PolygonColliderPrepareShapes`가 반복됐다. 약 415개체 캡처에서 동기화 4.02ms, Shape 생성 300회·3.03ms가 관측됐다. 스프라이트가 애니메이션 프레임마다 바뀔 때 피격 윤곽도 함께 매번 재적용하고 있었다.
 
 **조치:** 방향별 대표 Sprite를 두고 방향 또는 충돌 형태가 달라진 경우에만 Polygon 경로를 적용했다. 이동 파라미터가 0이 된 뒤에도 마지막 방향을 기억한다. 소환사는 변태 후 형태가 바뀌므로 `FixedShape` 태그와 고정 형태 경로를 별도로 처리했다.
 
 **확인:** 사용자가 소환사의 변태 후 윤곽 변경을 실제 실행에서 확인했다. 이후 700개체 캡처에는 Shape 동기화 0.25ms, 생성 2회·0.07ms가 기록됐다. 서로 다른 부하·상태이므로 개선율로 비교하지 않고, 대량의 프레임별 재생성을 상태 전환 시점으로 옮긴 것으로 기록한다.
+
+**최종 구성과의 관계:** 이 Polygon 경로는 조사 중 사용한 중간 구현이다. 이후 방향별 크기와 피격 모양을 Inspector에서 조정할 수 있도록 `DirectionalCapsuleCollider2D`와 자식 HitBox의 `CapsuleCollider2D` 방식으로 전환했다. 따라서 이 절의 측정값은 Polygon 경로를 사용하던 시점의 유효한 프로파일링 이력이며, 현재 EnemyRoot 기본 구성을 설명하지 않는다. 현재 콘텐츠 제작 절차는 [Stage 1 Enemy 가이드](../../../../02_architecture/08_encounter/stage1-enemy-content-guide.md)를 따른다.
 
 증거: [변경 전](2026-11-14-enemy-performance-evidence/01-shape-before.png) · [700개체 캡처](2026-11-14-enemy-performance-evidence/02-shape-after-700.png)
 
@@ -193,8 +195,8 @@
 | 상태 | 내용 |
 | --- | --- |
 | 적용 | 일반 몬스터 Continuous → Discrete 충돌 설정 조정 |
-| 적용 | 방향·형태가 바뀔 때만 Polygon 모양 갱신, 소환사 고정 변태 형태 처리 |
-| 적용 | 방향별 Capsule 설정과 프리팹의 방향별 크기·오프셋 조정 |
+| 과거 중간 적용, 현행 기본 구성에서는 대체됨 | 방향·형태가 바뀔 때만 Polygon 모양 갱신, 소환사 고정 변태 형태 처리. 해당 시점의 Profiler 기록은 위 이력 절 참고 |
+| 현행 적용 | `DirectionalCapsuleCollider2D`와 HitBox `CapsuleCollider2D`, 프리팹별 방향 크기·오프셋 설정 |
 | 적용 | 타깃 참조 저장과 상실 이벤트 무효화, 행동 내 사거리 결과 재사용 |
 | 적용 | 회복 대상 필터·중복 제거·검색 간격, Animator 쓰기 캐시, 이동 계산 중복 제거 |
 | 적용 | 대표 구성원만 분대 타깃 재검색 요청, 비활성 Collider Bounds 접근 생략 |
@@ -209,7 +211,7 @@ AddForce 이동, 타깃 상실 이벤트, 기존 분대 우선 타깃 동작 전
 1. 같은 빌드 모드와 같은 부하 조건에서 400·700개체를 각각 기록한다. Editor Profiler와 Development Build 결과를 섞지 않는다.
 2. 캡처별 `PlayerLoop`, `EditorLoop`, 물리 FixedUpdate 횟수, `Physics2D.Simulate`, `EnemyNetworkController.FixedUpdate`를 기록한다.
 3. `Calls`와 `Time ms`를 같이 보고, 대표 구성원 조정은 `RefreshTarget calls ÷ 물리 갱신 횟수`로 비교한다.
-4. Sprite shape 변경은 동일 개체 수·애니메이션 상태에서 `SpritePhysicsShapeSync.LateUpdate`, `CreateShapes` 호출 수를 비교한다.
+4. 현행 Capsule 구성은 동일 개체 수·방향 전환 조건에서 `DirectionalCapsuleCollider2D`의 형태 적용과 Physics2D 비용을 확인한다. Polygon 경로를 별도 시험하는 경우에만 `SpritePhysicsShapeSync.LateUpdate`와 `CreateShapes` 수치를 사용하고, Capsule 결과와 혼용하지 않는다.
 5. Collider나 물리 레이어를 바꾸는 시험에서는 몬스터 밀침, 플레이어 접촉, 투사체 관통 등 게임 동작 회귀를 별도로 확인한다.
 6. 테스트 통과, Unity Editor 플레이, Development Build, 실제 네트워크 플레이는 각기 다른 검증으로 기록한다.
 
