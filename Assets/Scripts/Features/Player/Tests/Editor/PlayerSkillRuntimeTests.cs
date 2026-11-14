@@ -395,12 +395,14 @@ public sealed class PlayerSkillRuntimeTests
         Assert.That(skill.CurrentTurretCount, Is.EqualTo(2));
         Assert.That(skill.TryRecoverNearest(), Is.True);
         Assert.That(skill.CurrentTurretCount, Is.EqualTo(3));
-        Assert.That(_controller.TryUse(PlayerSkillId.PlayerTurret), Is.False);
+        Assert.That(_controller.TryUse(PlayerSkillId.PlayerTurret), Is.True);
+        Assert.That(skill.IsSelecting, Is.True);
+        Assert.That(skill.TrySelectSlot(0), Is.False, "Opening status must not bypass the installation cooldown.");
         yield break;
     }
 
     [UnityTest]
-    public IEnumerator Turret_DamagedRecoveryRequiresRepair()
+    public IEnumerator Turret_DamagedRecoveryKeepsItsHealthForRedeployment()
     {
         _controller.TrySelect(PlayerSkillId.PlayerTurret);
         Assert.That(DeployTurret(), Is.True);
@@ -412,10 +414,12 @@ public sealed class PlayerSkillRuntimeTests
         Assert.That(blocker.isTrigger, Is.False);
         health.TakeDamage(50);
         Assert.That(skill.TryRecoverNearest(), Is.True);
-        Assert.That(skill.CurrentTurretCount, Is.EqualTo(2));
-        Assert.That(skill.RepairRemaining, Is.EqualTo(15).Within(.001f));
-        skill.Tick(15);
         Assert.That(skill.CurrentTurretCount, Is.EqualTo(3));
+        Assert.That(skill.RepairRemaining, Is.Zero);
+        Assert.That(skill.GetSlot(0).HealthRatio, Is.EqualTo(.5f));
+        skill.Tick(skill.SkillCooldown);
+        Assert.That(DeployTurret(), Is.True);
+        Assert.That(skill.RecoverableTurret.Health.Health, Is.EqualTo(50).Within(.001f));
         yield break;
     }
 
@@ -461,6 +465,8 @@ public sealed class PlayerSkillRuntimeTests
         Assert.That(_controller.TrySelect(PlayerSkillId.PlayerTurret), Is.True);
         Assert.That(_controller.TryUse(PlayerSkillId.PlayerTurret), Is.True);
         var skill = _player.GetComponent<PlayerTurretSkill>();
+        Assert.That(skill.IsSelecting, Is.True);
+        Assert.That(skill.TrySelectSlot(0), Is.True);
         Assert.That(_controller.IsPlacingTurret, Is.True);
         Assert.That(_controller.CanRecover, Is.False);
         _hud.Open();
@@ -657,6 +663,7 @@ public sealed class PlayerSkillRuntimeTests
     }
 
     private bool DeployTurret() => _controller.TryUse(PlayerSkillId.PlayerTurret)
+        && _player.GetComponent<PlayerTurretSkill>().TrySelectSlot(0)
         && _player.GetComponent<PlayerTurretSkill>().TryConfirmPlacement(_player.transform.position + Vector3.down);
 
     [UnityTest]

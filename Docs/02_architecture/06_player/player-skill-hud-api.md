@@ -135,6 +135,8 @@ Unity Test Runner 실행 및 실제 화면·마우스 조작 확인은 별도로
 
 ## 포탑 설치 위치 선택
 
+2026-11-14: 포탑 스킬 사용은 먼저 `PlayerTurretSlotPanel`의 세 포탑 상태 카드를 연다. 사용 가능한 번호를 누르면 해당 슬롯의 기존 월드 설치 미리보기를 시작한다. 설치·복구 중 상태와 HP, 회수 체력 유지·R 수리·체크포인트 경계는 [플레이어 터렛 API](player-turret-api.md)를 따른다. `IsPlacingTurret`는 실제 월드 프리뷰만 의미하며 `IsPlacingSkill`은 포탑 슬롯 선택 중에도 true여서 같은 클릭으로 공격·다른 월드 상호작용을 실행하지 않는다.
+
 `PlayerSkillController.IsPlacingTurret`는 현재 설치 미리보기 여부이며,
 `PlacementHint`는 포탑 또는 방벽 안내를 반환한다. `BarrierPlacementHint`는 기존 호출을 위해 유지한다.
 포탑의 설치 불가 위치는 월드 미리보기 색으로 표시하고, 실제 확정이 거부되면 `TurretPlacementFeedback`의 실패 사유를 공통 Alert로 표시한다. 미리보기 이동만으로 반복 송출하지 않는다.

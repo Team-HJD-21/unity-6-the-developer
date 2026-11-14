@@ -357,9 +357,11 @@ public sealed class PlayerContinuousAimTests
             body.sortingOrder = -15;
             _player.transform.position = turret.transform.position + new Vector3(x, y);
             var repair = _player.GetComponent<PlayerTurretRepair>();
-            typeof(PlayerTurretRepair).GetProperty("Target").GetSetMethod(true).Invoke(repair, new object[]{turret});
+            var targetState = System.Activator.CreateInstance(typeof(PlayerTurretRepair).GetField("_heldTarget", Private).FieldType,
+                new object[] { turret });
+            Set(repair, "_target", targetState);
             typeof(PlayerTurretRepair).GetProperty("IsRepairing").GetSetMethod(true).Invoke(repair, new object[]{true});
-            Set(repair, "_heldTarget", turret);
+            Set(repair, "_heldTarget", targetState);
             _motion.SetHeldRepair(true);
             _visual.Refresh();
             var toolSorting = _visual.Renderer.GetComponent<UnityEngine.Rendering.SortingGroup>();

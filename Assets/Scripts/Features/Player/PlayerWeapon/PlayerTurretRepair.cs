@@ -3,7 +3,7 @@ using TeamHJD.Game.FieldTurrets.Contracts;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
-/// <summary>가까운 필드 터렛을 R 키 유지로 수리·복구합니다. 이동하면 취소하고 키를 다시 눌러야 합니다.</summary>
+/// <summary>가까운 필드·플레이어 터렛을 R 키 유지로 수리합니다. 필드 터렛의 파괴 복구도 지원합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInputHandler), typeof(PlayerControlState))]
 // 입력(-200)·스킬(100)·무기 선택(200) 뒤에 수리 여부를 확정하고,
@@ -24,23 +24,26 @@ public sealed class PlayerTurretRepair : MonoBehaviour
     private PlayerMatchPresence _presence;
     private Rigidbody2D _body;
     private PlayerDash _dash;
-    private FieldTurretBase _heldTarget;
+    private PlayerTurretRepairTarget _heldTarget, _target;
     private bool _restoringHeldTarget;
     private Vector2 _lastPosition;
     private bool _waitingForRelease;
     private bool _moving;
 
-    public FieldTurretBase Target { get; private set; }
+    public FieldTurretBase Target => _target.Field;
+    public PlayerTurretHealth PlayerTarget => _target.Player;
+    public Transform TargetTransform => _target.Transform;
+    public bool TargetNeedsRepair => _target.Exists && _target.CurrentHealth < _target.MaxHealth;
     public bool IsRepairing { get; private set; }
-    public bool IsRestoring => Target != null && Target.IsDestroyed;
-    public float Progress => Target == null ? 0f : IsRestoring
+    public bool IsRestoring => _target.Exists && _target.IsDestroyed;
+    public float Progress => !_target.Exists ? 0f : IsRestoring
         ? PlayerTurretRestoreProgress.GetProgress(Target)
-        : Target.MaxHealth > 0 ? Mathf.Clamp01((float)Target.CurrentHealth / Target.MaxHealth) : 0f;
+        : _target.MaxHealth > 0 ? Mathf.Clamp01(_target.CurrentHealth / _target.MaxHealth) : 0f;
     public bool RequiresRelease => _waitingForRelease;
     /// <summary>이번 R 누름을 수리에 사용했으면 놓을 때까지 재장전으로 재사용하지 않습니다.</summary>
     public bool ConsumesRepairInput { get; private set; }
     public bool CanRepair => CanInteract && !_moving && !_waitingForRelease &&
-        IsEligible(Target) && (Target.IsDestroyed || Target.CanRepair);
+        IsEligible(_target) && (_target.IsDestroyed || _target.CanRepair);
     private Vector2 InteractionPosition => _colliders != null && _colliders.isActiveAndEnabled
         ? _colliders.GroundPosition : (Vector2)transform.position;
 
@@ -48,8 +51,8 @@ public sealed class PlayerTurretRepair : MonoBehaviour
     public bool TryGetFacingDirection(out Vector2 direction)
     {
         direction = Vector2.zero;
-        if (!IsRepairing || _heldTarget == null) return false;
-        direction = (Vector2)_heldTarget.transform.position - InteractionPosition;
+        if (!IsRepairing || !_heldTarget.Exists) return false;
+        direction = (Vector2)_heldTarget.Transform.position - InteractionPosition;
         direction = PlayerAimUtility.IsValidDirection(direction) ? direction.normalized : Vector2.down;
         return true;
     }
@@ -92,16 +95,16 @@ public sealed class PlayerTurretRepair : MonoBehaviour
         if (!CanInteract)
         {
             StopRepair(held);
-            Target = null;
+            _target = default;
             return;
         }
 
         // 입력을 유지하는 동안 대상이 바뀌어 다른 터렛까지 연속 수리되지 않게 고정합니다.
-        if (_heldTarget != null && (!IsReachable(_heldTarget) ||
+        if (_heldTarget.Exists && (!IsReachable(_heldTarget) ||
             _heldTarget.IsDestroyed != _restoringHeldTarget ||
             (!_heldTarget.IsDestroyed && !_heldTarget.CanRepair))) StopRepair(held);
-        Target = _heldTarget != null ? _heldTarget : FindNearest();
-        if (held && IsEligible(Target) && (Target.IsDestroyed || Target.CanRepair))
+        _target = _heldTarget.Exists ? _heldTarget : FindNearest();
+        if (held && IsEligible(_target) && (_target.IsDestroyed || _target.CanRepair))
             ConsumesRepairInput = true;
 
         if (!held)
@@ -120,17 +123,17 @@ public sealed class PlayerTurretRepair : MonoBehaviour
             return;
         }
 
-        if (_heldTarget == null)
+        if (!_heldTarget.Exists)
         {
-            _heldTarget = Target;
-            _restoringHeldTarget = Target.IsDestroyed;
+            _heldTarget = _target;
+            _restoringHeldTarget = _target.IsDestroyed;
             // 이미 예약된 근접 공격은 수리 진입 시 취소합니다.
             if (_spanner == null) _spanner = GetComponent<PlayerWeaponSelection>()?.Spanner;
             if (_spanner != null) _spanner.CancelPendingAttack();
         }
         bool progressed;
         if (_restoringHeldTarget)
-            progressed = PlayerTurretRestoreProgress.TryAdvance(_heldTarget, _maximumHealthFractionPerSecond, deltaTime);
+            progressed = PlayerTurretRestoreProgress.TryAdvance(_heldTarget.Field, _maximumHealthFractionPerSecond, deltaTime);
         else
         {
             FieldTurretRepairResult result = _heldTarget.Repair(
@@ -138,44 +141,51 @@ public sealed class PlayerTurretRepair : MonoBehaviour
             progressed = result == FieldTurretRepairResult.Repaired || result == FieldTurretRepairResult.Accumulating;
         }
         SetRepairing(progressed);
-        if (!progressed || _heldTarget == null || _heldTarget.IsDestroyed != _restoringHeldTarget ||
+        if (!progressed || !_heldTarget.Exists || _heldTarget.IsDestroyed != _restoringHeldTarget ||
             _heldTarget.CurrentHealth >= _heldTarget.MaxHealth)
             StopRepair(true);
     }
 
-    private FieldTurretBase FindNearest()
+    private PlayerTurretRepairTarget FindNearest()
     {
-        FieldTurretBase nearest = null, full = null;
+        PlayerTurretRepairTarget nearest = default, full = default;
         float distance = float.PositiveInfinity, fullDistance = float.PositiveInfinity;
-        foreach (FieldTurretBase turret in FieldTurretInstanceRegistry.RegisteredInstances.Values)
+        foreach (var field in FieldTurretInstanceRegistry.RegisteredInstances.Values)
+            Consider(new PlayerTurretRepairTarget(field));
+        foreach (var player in PlayerTurretHealth.ActiveInstances)
+            Consider(new PlayerTurretRepairTarget(player));
+        return nearest.Exists ? nearest : full;
+
+        void Consider(PlayerTurretRepairTarget turret)
         {
-            if (!IsEligible(turret)) continue;
-            float candidate = ((Vector2)turret.transform.position - InteractionPosition).sqrMagnitude;
+            if (!IsEligible(turret)) return;
+            float candidate = ((Vector2)turret.Transform.position - InteractionPosition).sqrMagnitude;
             bool needsRepair = turret.CurrentHealth < turret.MaxHealth;
-            if (candidate >= (needsRepair ? distance : fullDistance) || !IsReachable(turret)) continue;
+            if (candidate >= (needsRepair ? distance : fullDistance) || !IsReachable(turret)) return;
             if (needsRepair) { nearest = turret; distance = candidate; }
             else { full = turret; fullDistance = candidate; }
         }
-        return nearest != null ? nearest : full;
     }
 
-    private bool IsEligible(FieldTurretBase turret)
+    private bool IsEligible(PlayerTurretRepairTarget turret)
     {
-        if (turret == null || !turret.IsInitialized || !turret.isActiveAndEnabled || !turret.HasStateAuthority ||
-            turret.IsLocked || turret.IsManualOperationBlocked || turret.MaxHealth <= 0 ||
-            turret.gameObject.scene != gameObject.scene) return false;
+        if (!turret.Exists || !turret.Source.isActiveAndEnabled || turret.MaxHealth <= 0 ||
+            turret.Source.gameObject.scene != gameObject.scene) return false;
+        if (turret.Field != null && (!turret.Field.IsInitialized || !turret.Field.HasStateAuthority ||
+            turret.Field.IsLocked || turret.Field.IsManualOperationBlocked)) return false;
+        if (turret.Player != null && (!turret.Player.IsAlive || !turret.Player.HasStateAuthority)) return false;
         var ownerTime = Presence?.TimeSource ?? GetComponent<FieldSimulationActor>()?.TimeSource;
-        return ReferenceEquals(turret.GetComponent<FieldSimulationActor>()?.TimeSource, ownerTime);
+        return ReferenceEquals(turret.Source.GetComponent<FieldSimulationActor>()?.TimeSource, ownerTime);
     }
 
-    private bool IsReachable(FieldTurretBase turret)
+    private bool IsReachable(PlayerTurretRepairTarget turret)
     {
         if (!IsEligible(turret)) return false;
-        Vector2 point = turret.transform.position;
+        Vector2 point = turret.Player != null ? turret.Player.ApproachPoint(InteractionPosition) : (Vector2)turret.Transform.position;
         Vector2 direction = point - InteractionPosition;
         if (direction.sqrMagnitude < .0001f) direction = Vector2.down;
         // 마우스 조준과 무관하게 주변에서 고르되 기존 같은 씬·거리·장애물 도달 판정은 사용합니다.
-        return PlayerSpannerTargeting.CanReach(transform, turret.transform, point, direction, _repairRange, 180f, InteractionPosition);
+        return PlayerSpannerTargeting.CanReach(transform, turret.Transform, point, direction, _repairRange, 180f, InteractionPosition);
     }
 
     private void SetRepairing(bool value)
@@ -189,7 +199,7 @@ public sealed class PlayerTurretRepair : MonoBehaviour
 
     private void StopRepair(bool requireRelease)
     {
-        _heldTarget = null;
+        _heldTarget = default;
         _waitingForRelease |= requireRelease;
         SetRepairing(false);
     }
@@ -197,7 +207,7 @@ public sealed class PlayerTurretRepair : MonoBehaviour
     private void OnDisable()
     {
         StopRepair(true);
-        Target = null;
+        _target = default;
         ConsumesRepairInput = false;
     }
 }
