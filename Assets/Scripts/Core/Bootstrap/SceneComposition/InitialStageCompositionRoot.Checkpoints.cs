@@ -58,6 +58,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 participants.Add(new EncounterProductionCheckpointParticipant(match, coordinator.EncounterProduction));
             }
             required.Add("world/field-time");
+            required.Add("world/stage-progress");
+            participants.Add(new StageProgressCheckpointParticipant(coordinator.StageProgression));
             participants.Add(new FieldTimeCheckpointParticipant(_matchTime.FieldClock));
             participants.Add(new CampaignCheckpointParticipant(app.CampaignSlot, _recoveryLedger.RunId));
             participants.Add(session.CreateRandomCheckpointParticipant());

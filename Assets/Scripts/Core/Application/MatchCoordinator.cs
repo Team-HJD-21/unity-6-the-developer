@@ -24,6 +24,7 @@ namespace TeamHJD.Game.Application
         private bool _started, _disposed, _evaluating, _completionObserved;
         private long _sequence;
         public MatchRecovery Recovery { get; private set; }
+        public StageProgression StageProgression { get; private set; }
         public MatchEncounterProduction EncounterProduction { get; private set; }
         public MatchId MatchId => _session.Config.MatchId;
         public MatchCompletion Completion => _session.Completion;
@@ -64,6 +65,15 @@ namespace TeamHJD.Game.Application
             Recovery = new MatchRecovery(ledger, _clock, () => IsGameplayRunning,
                 _session.Config.Players.Select(player => player.PlayerId), settings);
         }
+
+        /// <summary>Scene이 영속 실행 ID를 읽은 뒤 실제 Field 사건 원본을 연결합니다. 콘텐츠 미연결은 Snapshot에 남깁니다.</summary>
+        public void ConfigureStageProgression(Guid run, IMatchClock fieldClock, IFieldBossSpawnService spawns)
+        {
+            if (_disposed || StageProgression != null) throw new InvalidOperationException("Configure Stage progression once.");
+            StageProgression = new StageProgression(MatchId, run, fieldClock, () => IsGameplayRunning, spawns);
+            StageProgression.Victory += CompleteStageVictory;
+        }
+        private void CompleteStageVictory() => CompleteMatch(MatchOutcome.Victory);
 
         /// <summary>모드/Stage 소유자가 확정한 승패를 한 번만 완료합니다. 비환급 기록은 쓰기 권한이 닫히기 전에 확정합니다.</summary>
         public void CompleteMatch(MatchOutcome outcome)
@@ -134,6 +144,7 @@ namespace TeamHJD.Game.Application
         {
             if (_disposed) return;
             _disposed = true;
+            if (StageProgression != null) StageProgression.Victory -= CompleteStageVictory;
             if (_destructionEvents != null)
                 _destructionEvents.Destroyed -= EvaluateProgress;
             _session.Disposing -= Dispose;

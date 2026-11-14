@@ -44,7 +44,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 recovery.Load(); _growthSaves.Add(recovery);
                 app.BindMissionRecovery(this, _recoveryLedger);
                 // 초기 실행 ID도 디스크에 확정해야 저장 없는 복귀가 같은 실행을 인수할 수 있습니다.
-                _recoveryLedger.FlushChanges(); recovery.Flush();
+                recovery.Flush();
             }
             catch { if (!_growthSaves.Contains(recovery)) recovery.Dispose(); throw; }
         }

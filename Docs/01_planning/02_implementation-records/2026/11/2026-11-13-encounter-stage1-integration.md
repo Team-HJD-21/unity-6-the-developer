@@ -228,3 +228,12 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - UI 준비본8개+신규Camera partial/meta, 실제Scene marker2참조와 terrain-only bake를 별도 UI 변경으로 보존했다. Iteration5b zoom-out 중심 보간 수정은 baseline2개가 정확히 일치한 뒤 적용했다.
 - 처음 Stage HUD6개 중2개는 옛 Initial_Stage에 NavMesh가 없어 실패했다. 테스트의 Scene 경로2개만 현행 Stage_1로 옮겼다. 실제 재검사6/6 (71.63초), Tactical8/8은 직전 근거다. UI Source/Asset은 Core 커밋에 섞지 않는다.
 - 동기 run_tests는 RPC30초 timeout 뒤에도 계속 실행됐다. 실패 XML을 읽고 async 실행+완료 결과를 별도 확인했다. stale Temp 결과를 최신 결과로 쓰지 않았다.
+
+
+## B7a — Stage 진행 정책/접점과 실제 콘텐츠 대기 (2026-11-14)
+
+- Coordinator 소유 StageProgression, Root의 실제 점유 표본, world/stage-progress writer, Debugger 읽기 표시를 추가했다.33/66 생성 확인·고유 사건 ID·기술 재시도·동시 임계값 통과·점유 상실 뒤 사건 유지·두 실제 생성 후100% 최종 진입·등록 최종 보스 사망만 Victory로 이어진다. 중간보스 죽음은 최종 진입 조건이 아니다.
+- 실제 source 계약 IFieldBossSpawnService, 최종 Scene의 ConfirmFinalBossReady, 권위 HP의 ReportStageEnemyDeath 접점을 명시했다. 구현 원본이 없으면 FieldBossContentNotConnected이며 생성/승리를 가짜로 확정하지 않는다.
+- StageProgressionTests6/6:100% 동시통과 순서·실패66 동일ID 재시도/33중복금지·콘텐츠누락·현재점유와최종죽음·상실후미취소·world왕복/rollback. 실제 Scene은 Player1/기본CU1셀/정상진행·연결대기명시를 확인했다. b7a-progression-tests.json / b7a-live-stage-status.json.
+- EnemyCatalog19종(개별ID는 b7a-enemy-content-audit.json), 확정 중간보스 Definition 지정 없음, Assets/Scenes 내 실제 Boss Scene 없음. 과거 Reference Boss를 실제로 대체하지 않았다. 따라서 B7 전체/보스 실제 생성·B8 Boss Scene/연출/사망 통합은 미완이다. 생성 포트 구현과 점유 밖 진입 위치를 제작 자료와 함께 연결해야 한다.
+- B6b 추가: 같은 호출에서 Player/CU HP를 모두0으로 만든 실제 검수에서 Defeat·안전장치0·구조60초를 확인했다(b6b-simultaneous-defeat-result.json). UI 카메라 관측은743행/중간중심59/이탈0이며 CSV/Hmc 파일을 UI에 인계했다. 새 Mission 실행 기록의 같은 payload 중복쓰기1회를 제거했다.

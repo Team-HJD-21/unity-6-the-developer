@@ -66,6 +66,17 @@ namespace TeamHJD.Game.Editor
                     if (GUILayout.Button("같은 복귀 재시도 · 추가 차감 없음")) _ = scene.RetryRecoveryAsync();
             }
             _slot = EditorGUILayout.TextField("슬롯", _slot);
+            if (scene.StageProgress != null)
+            {
+                var stage = scene.StageProgress;
+                using var stageBox = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                EditorGUILayout.LabelField("STAGE · 실제 점유 / 사건", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("점유 / 최고 도달", stage.CaptureRatio.ToString("P1") + " / " + stage.HighestCaptureRatio.ToString("P1"));
+                EditorGUILayout.LabelField("33% / 66% 생성", (stage.FirstFieldBoss.IsEmpty ? "미확인" : stage.FirstFieldBoss.Value) + " / " +
+                    (stage.SecondFieldBoss.IsEmpty ? "미확인" : stage.SecondFieldBoss.Value));
+                EditorGUILayout.LabelField("최종 진입 조건", stage.CanEnterFinalBattle ? "준비됨 · 실제 Boss Scene 연결 필요" : "미충족");
+                if (stage.PendingReason != null) EditorGUILayout.HelpBox(stage.PendingReason, MessageType.Warning);
+            }
             _restoreCurrency = EditorGUILayout.Toggle("재화도 체크포인트로 복원", _restoreCurrency);
             EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. 자동 실행 사건은 등록하지 않았습니다.", EditorStyles.wordWrappedMiniLabel);
             bool validSlot = TrySlot(out _);
