@@ -1,5 +1,7 @@
 # The Developer 문서 안내
 
+**11/15 Encounter 책임 분리:** [정식 연결·명시 시험 도구 사용법](02_architecture/08_encounter/encounter-runtime-and-testing.md)과 [코드 검토·실제 검증](03_team/00_reviews/encounter-runtime-separation-20261115.md). Stage_1 제작 변경은 [#727](https://github.com/Team-HJD-21/unity-6-the-developer/pull/727)에서 원복했으며 이 분리에는 Scene 변경이 없다.
+
 **11/14 Core·UI 통합 PR 준비:** [검토 순서·실제 데이터 흐름·검증 경계](03_team/00_reviews/core-ui-integration-20261114.md). `feature/core`에 최신 main #722와 전술 HUD·공용 UI·OST 변경을 함께 포함했다. 원격 PR은 생성 전이며 전체 Stage1 완료를 뜻하지 않는다. [UI 구현·사용법과 남은 실제 입력 인수](01_planning/02_implementation-records/2026/11/2026-11-13-tactical-command-view.md)를 함께 확인한다.
 
 **11/13–14 Encounter/Stage1 로컬 구현:** [현재 Core 실행 지도](02_architecture/01_core/core-runtime-map.md)와 [통합 기록](01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 확인한다. [11/14 범위 정정](01_planning/02_implementation-records/2026/11/2026-11-14-explicit-stage-transition-scope.md)에 따라 자동 최종 진입·승리·결과 저장 연결은 제외하고 명시 API만 유지한다. 실제 보스전/결과 설계·확정 콘텐츠·Weather 필수 writer·원격 Player 인수는 남아 있다. 전체 Stage1 완료나 main 반영으로 해석하지 않는다.
