@@ -8,7 +8,6 @@ using UnityEngine;
 public class EnemyAnimation : MonoBehaviour
 {
     [SerializeField] private Animator animator;
-    [SerializeField] private float animationReferenceSpeed = 2f;
     private EnemyNetworkAnimator _networkAnimator;
     public TeamHJD.Game.Presentation.GameAudioCue AbilitySound;
     
@@ -62,13 +61,15 @@ public class EnemyAnimation : MonoBehaviour
     }
 
     /// <summary>
-    /// 이동 모션을 켜고 실제 이동 속도에 맞춰 애니메이션 재생 속도를 보정한다.
+    /// 이동 모션을 켜고 실제 속도를 최대 이동 속도에 대한 비율로 적용한다.
     /// </summary>
-    public void PlayMovementAnimation(float moveSpeed)
+    public void PlayMovementAnimation(float currentSpeed, float maxMoveSpeed)
     {
         SetMoving(true);
 
-        float animationSpeed = moveSpeed / animationReferenceSpeed;
+        float animationSpeed = maxMoveSpeed > 0f
+            ? Mathf.Clamp01(currentSpeed / maxMoveSpeed)
+            : 0f;
 
         if (_lastAnimationSpeed.Equals(animationSpeed))
             return;

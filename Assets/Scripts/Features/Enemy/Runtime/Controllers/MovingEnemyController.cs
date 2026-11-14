@@ -217,7 +217,9 @@ public class MovingEnemyController : EnemyController
     /// <param name="moveDirection">정규화된 이동 방향.</param>
     protected void MoveTowardsTarget(Vector2 moveDirection)
     {
-        enemyAnimation.PlayMovementAnimation(enemyMovement.MoveSpeed);
+        enemyAnimation.PlayMovementAnimation(
+            enemyMovement.CurrentSpeed,
+            enemyMovement.MoveSpeed);
         enemyMovement.Move(moveDirection);
     }
 

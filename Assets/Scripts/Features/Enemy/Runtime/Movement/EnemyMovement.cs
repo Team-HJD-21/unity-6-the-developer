@@ -15,6 +15,7 @@ public partial class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float moveAcceleration = 10f;
     
     public float MoveSpeed => moveSpeed;
+    public float CurrentSpeed => rigidbody2D != null ? rigidbody2D.linearVelocity.magnitude : 0f;
     public bool HasPath => _path != null && _currentPath < _path.Length;
 
     private void Awake()
