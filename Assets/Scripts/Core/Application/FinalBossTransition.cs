@@ -85,6 +85,12 @@ namespace TeamHJD.Game.Application
             if (!IsDisposed && !IsCurrent) Dispose();
         }
 
+        /// <summary>자동 Scene 조율부가 원복을 시작할 때 호출합니다. 로드/연출은 취소하되 정지·입력은 원복 후 Dispose까지 유지합니다.</summary>
+        public void CancelPreparation()
+        {
+            if (!IsDisposed) _lifetime.Cancel();
+        }
+
         private void RequireCurrent()
         {
             if (!IsCurrent) throw new OperationCanceledException("이전 최종 진입 허가는 현재 월드에서 사용할 수 없습니다.", Cancellation);

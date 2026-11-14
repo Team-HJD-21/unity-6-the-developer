@@ -108,6 +108,39 @@ namespace TeamHJD.Game.Tests.EditMode
             public int MaxHealth => 100;
         }
 
+        private sealed class MutableControlUnit : IControlUnitVitals
+        {
+            public int CurrentHealth { get; set; } = 100;
+            public int MaxHealth => 100;
+        }
+
+        [Test]
+        public void FinalDeathCannotOvertakeAnAlreadyDestroyedControlUnitBeforeItsUpdateObservation()
+        {
+            foreach (bool destroyed in new[] { false, true })
+            {
+                var config = new MatchConfig(Match, MatchMode.Story, new StageId("stage-1"), new DefinitionId("normal"), "v1", 1,
+                    new[] { new PlayerLoadoutSnapshot(new PlayerId("host"), null) });
+                using var session = new MatchSessionFactory().Create(config, new MatchState(Match, MatchPhase.Preparing), new StoryModeRules());
+                var cu = new MutableControlUnit();
+                using var coordinator = new MatchCoordinator(session, cu, () => true, new Clock());
+                coordinator.ConfigureStageProgression(Guid.NewGuid(), new Clock(), new Spawns());
+                session.Start(); coordinator.Start();
+                var stage = coordinator.StageProgression;
+                stage.Pump(Region(100));
+                var final = new EntityId("final-real-actor");
+                stage.ConfirmFinalBossReady(final);
+                int completions = 0;
+                coordinator.Completed += _ => completions++;
+                // 파괴 이벤트를 구현하지 않은 HP 원본입니다. Root Update가 아직 읽지 않은 실제 0을 재현합니다.
+                if (destroyed) cu.CurrentHealth = 0;
+                stage.ObserveEnemyDeath(final);
+                stage.ObserveEnemyDeath(final);
+                Assert.That(session.Completion.Result.Outcome, Is.EqualTo(destroyed ? MatchOutcome.Defeat : MatchOutcome.Victory));
+                Assert.That(completions, Is.EqualTo(1));
+            }
+        }
+
         [Test]
         public void PendingPlayerRecoveryTakesPriorityOverFieldSpawn()
         {

@@ -40,6 +40,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var errors = new List<Exception>();
             RunCleanup(() => _finalBossTransition?.Dispose(), errors);
             _finalBossTransition = null;
+            RunCleanup(StopFinalBattleBindings, errors);
             foreach (var source in _stageCombatSources)
                 RunCleanup(() => source.DeathObserved -= ReportStageEnemyDeath, errors);
             _stageCombatSources.Clear();

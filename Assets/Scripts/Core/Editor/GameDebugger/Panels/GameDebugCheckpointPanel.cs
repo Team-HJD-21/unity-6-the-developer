@@ -84,8 +84,14 @@ namespace TeamHJD.Game.Editor
             }
             if (scene.FinalBossTransitionPending)
                 EditorGUILayout.HelpBox("최종 진입 준비 중 · 공용 시간/로컬 입력을 보류하고 실제 Scene·도착·연출 완료를 기다립니다.", MessageType.Info);
+            if (scene.FinalBattleEntryAttempts > 0)
+                EditorGUILayout.LabelField("최종 진입 시도", scene.FinalBattleEntryAttempts.ToString());
             if (scene.FinalBossTransitionError != null)
+            {
                 EditorGUILayout.HelpBox(scene.FinalBossTransitionError, MessageType.Error);
+                using (new EditorGUI.DisabledScope(scene.FinalBattleFlowBusy || scene.FinalBossTransitionPending))
+                    if (GUILayout.Button("원인 해결 후 최종 Scene 진입 재시도")) scene.RetryFinalBattleScene();
+            }
             if (scene.PendingStageCheckpoints.Count > 0)
             {
                 EditorGUILayout.LabelField("Stage 사건 저장", string.Join(" / ", scene.PendingStageCheckpoints));

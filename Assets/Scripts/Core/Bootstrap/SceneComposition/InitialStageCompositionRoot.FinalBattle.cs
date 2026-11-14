@@ -50,7 +50,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void PumpFinalBossTransition()
         {
-            _finalBossTransition?.InvalidateIfStale();
+            // 자동 전환은 실제 참가자 원복/Scene 정리가 끝날 때까지 using 범위의 정지를 유지합니다.
+            if (!FinalBattleFlowBusy) _finalBossTransition?.InvalidateIfStale();
+            else if (_finalBossTransition != null && !_finalBossTransition.IsCurrent) _finalBossTransition.CancelPreparation();
             if (_finalBossTransition?.IsDisposed == true) _finalBossTransition = null;
         }
     }

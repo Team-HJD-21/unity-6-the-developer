@@ -1,4 +1,4 @@
-// Initial_Stage에서 Match·Player를 조립하고 Encounter에 공간 조회 경로를 연결합니다.
+// 현재 Stage Scene에서 Match·Player를 조립하고 Encounter에 공간 조회 경로를 연결합니다.
 // Scene 수명에 맞춰 actor와 Match, Encounter 바인딩을 정리합니다.
 
 using System;
@@ -533,6 +533,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             PumpFinalBossTransition();
             if (Recovery?.IsRecoveryPending != true) _stageCheckpoints?.Pump();
             _coordinator?.StageProgression?.Pump(_matchSession?.Regions?.Snapshot);
+            PumpFinalBattleScene();
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
             if (!_matchSession.IsGameplayRunning) return;

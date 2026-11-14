@@ -157,6 +157,21 @@ namespace TeamHJD.Game.Tests.EditMode
         }
 
         [Test]
+        public async Task CancelPreparationKeepsPauseAndInputUntilSceneCleanupFinishes()
+        {
+            using var f = new Harness();
+            using var transition = f.Begin();
+            await transition.PrepareAsync(new CheckpointSlot("before-final"), Save);
+            transition.CancelPreparation();
+            Assert.That(transition.Cancellation.IsCancellationRequested, Is.True);
+            Assert.That(f.Input.IsBlocked, Is.True);
+            Assert.That(f.Time.Clock.Snapshot.IsPaused, Is.True);
+            transition.Dispose();
+            Assert.That(f.Input.IsBlocked, Is.False);
+            Assert.That(f.Time.Clock.Snapshot.IsPaused, Is.False);
+        }
+
+        [Test]
         public async Task InvalidFinalIdentityDoesNotLeaveTheFieldHeldAndCanBeCorrected()
         {
             using var f = new Harness();

@@ -80,6 +80,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 FlushGrowthSaves();
+                await LeaveFinalBattleForRecoveryAsync();
                 if (!service.Ledger.LastCheckpoint.IsEmpty)
                 {
                     if (app == null) throw new InvalidOperationException("Checkpoint recovery requires its App store owner.");

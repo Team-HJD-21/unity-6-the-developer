@@ -350,3 +350,11 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 첫 관측은 읽기 IRegionGridSource에 TryApply를 호출해 실행 전 컴파일 거절됐다. 기존 MatchSession.UpdateRegionCapture API로 바로잡았다. 다음 관측은 Scene의 두 Executor 중 독립 시험용 대상을 잡아 준비 대기에서 종료됐고, 실제 EncounterSceneConfiguration.SpawnExecutor를 쓰는 최종 관측이 통과했다. 두 관측 오류는 별도 원본으로 보존하며 제품 컴파일/동작 통과와 섞지 않는다.
 - Play/Pause/컴파일/실패false, 기존 저장33개 전체 해시 복구를 b8b-save-cleanup.json으로 확인했다. Scene dirty 표시는 보존했고 Scene 파일/외부 UI는 저장하지 않았다. Computer Use는 이번 배치에서 사용하지 않았다.
 - 남은 B8은 실제 Boss Scene/보스/전원 도착/로컬 연출 소유자가 이 범위 안에서 기존 SceneTransitions.LoadAsync를 연결하고 실패 시 이동·Scene·카메라를 복구하는 것이다. 실제 보스 사망/결과·허브까지의 성공 인수와 전체 Weather 저장·실제 원격 Player 인수도 남아 있다. 이 저장/임대 경계 구현을 B8 전체 완료로 표시하지 않는다.
+
+## B8c 자동 최종 진입과 실제 Scene 원복
+
+Root Update의 단일 진입 시도, 필수 저장 후 additive 전환, 실제 참가자/생존 보스/사망 원본 검증, 실패 시 참가자 원위치와 소유 Scene 정리를 연결했다. 보스전 중 Field-only 저장을 차단하고 안전장치 복귀는 Scene 정리부터 한다. 최종 사망과 CU 파괴가 같은 프레임이면 CU 패배를 먼저 확인한다.
+
+현재 assembly의 순수 NUnit 메서드10개·CU 우선 검사1개 직접 실행, 실제 Stage_1 Player의 Native Scene/부모/위치 원복과 Grid1→0→1, 미지정 driver의 최초 시도/재확보/명시 재시도·입력/정지 해제를 확인했다. 최종 컴파일 오류와 실제 검수의 신규 Runtime 오류는 없었다. 자연 진행이나 실제 Boss Scene 성공 검수가 아니며 formal Play coroutine은 이번 TestRunner로 실행하지 않았다. 실패한 초기 Editor-native 검사와 정리 기록은 로컬 실행 로그에 구분했다.
+
+**실제 IFinalBattleSceneDriver 구현·보스 Scene/제작값·최종 결과 저장/허브 성공 인수는 남아 있다.** Core 기본 driver/Feature 어댑터는 Core 구현 잔여이며 단순 콘텐츠 대기로 분류하지 않는다. Weather 필수 writer와 원격 Player 인수 역시 별도다. [공개 API와 책임](../../../../02_architecture/02_match/stage-progression-api.md)을 따른다.

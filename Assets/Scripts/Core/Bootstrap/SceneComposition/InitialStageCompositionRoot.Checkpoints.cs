@@ -78,7 +78,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     Debug.LogException(error, this);
                     if (!app.TryEndMatch(match))
                         throw new InvalidOperationException("The faulted Match could not be released.", error);
-                }, () => Recovery?.CanCaptureWorld == true);
+                }, () => Recovery?.CanCaptureWorld == true && AllowsFieldCheckpointWorld, () => AllowsFieldCheckpointWorld);
             _checkpointScope = app.CreateCheckpointScope(runtime, participants, required);
         }
 

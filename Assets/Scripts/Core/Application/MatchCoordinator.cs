@@ -74,7 +74,12 @@ namespace TeamHJD.Game.Application
                 () => IsGameplayRunning && Recovery?.IsRecoveryPending != true, spawns);
             StageProgression.Victory += CompleteStageVictory;
         }
-        private void CompleteStageVictory() => CompleteMatch(MatchOutcome.Victory);
+        private void CompleteStageVictory()
+        {
+            // HP의 파괴 사실이 Update 관측보다 먼저 도착해도 이미 0인 CU의 패배를 승리가 추월하지 않습니다.
+            EvaluateProgress();
+            if (IsGameplayRunning) CompleteMatch(MatchOutcome.Victory);
+        }
 
         /// <summary>모드/Stage 소유자가 확정한 승패를 한 번만 완료합니다. 비환급 기록은 쓰기 권한이 닫히기 전에 확정합니다.</summary>
         public void CompleteMatch(MatchOutcome outcome)

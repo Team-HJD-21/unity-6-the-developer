@@ -9,7 +9,7 @@
 3.33%를 넘으면 `StageCheckpointGate`가 등장 전 저장을 요청한다. 같은 복원 epoch의 실제 디스크 저장이 완료된 뒤 `IFieldBossSpawnService.TrySpawnFieldBoss`에 실행별 안정된 사건 ID를 준다. true와 실제 EntityId를 모두 받아야 생성 확인이다.66%도 같은 경로이며 한 번에100%가 되어도33→66 순서다.
 4. 생성 실패는 같은 사건 ID로1 Field초 뒤 재시도한다. 미출현 취소·일반 적 대체·허위 성공은 없다. 이미 확인된 첫 사건은 다시 만들지 않는다.
 5. 현재 점유100%와 두 실제 생성 확인을 모두 만족하면 `StageProgress.CanEnterFinalBattle`이 true다. 두 중간보스의 처치는 진입 조건이 아니다.
-6. 실제 최종 Boss Scene/연출 소유자가 `PrepareFinalBossTransitionAsync`로 필수 저장을 마친 전환 범위를 받는다. 같은 Match의 Scene·전원 도착·보스·연출을 준비한 뒤 `ConfirmFinalBossReady(match, actor)`를 호출한다. 이전 Field만 보류하고 Player/공용 낮밤은 기존 공용 시계를 계속 사용한다.
+6. Root Update가100%·두 Field 생성·생존 조건을 확인해 최종 Scene 진입을 한 번 시작한다. 지정된 Scene driver와 경로 검사→필수 저장→같은 Match의 additive 로드→실제 도착·보스·연출 확인→확정 순서다. 이전 Field만 보류하고 Player/공용 낮밤은 기존 공용 시계를 계속 사용한다.
 7. 공통 생성기는 실제 HP 사망을 `IEnemyCombatSource.DeathObserved`로 보내고 Root가 `ReportStageEnemyDeath(match, actor)`에 연결한다. 별도 Boss 생성기가 공통 경계를 쓰지 않으면 해당 권위 HP 원본에서 이 API를 호출해야 한다. 등록한 최종 보스의 실제 죽음만 Coordinator의 Victory로 이어진다. UI·Despawn·Scene 해제는 죽음으로 제출하지 않는다.
 
 ## Enemy 생성 구현자가 지킬 경계
@@ -49,25 +49,46 @@ HUD는 `InitialStageCompositionRoot.StageProgress`의 읽기 값을 사용할 �
 
 ### 최종 진입의 필수 저장·정지 범위
 
-최종 Scene 소유자는 다음 순서로 연결한다. `FinalBossTransition`은 콘텐츠나 이동을 만드는 클래스가 아니라 **저장이 끝난 현재 월드의 진입 허가와 임시 정지/로컬 입력 임대**다. `ConfirmFinalBossReady`만 직접 호출하는 경로는 거부한다.
+기본 게임 경로는 `InitialStageCompositionRoot.FinalScene`의 자동 조율이다. Stage의 `_finalBattleSceneDriver`에 **같은 Scene의 활성 MonoBehaviour인 `IFinalBattleSceneDriver` 구현**을 지정한다. 실제 구현·보스 Scene·콘텐츠는 현재 없다. 이 연결은 앞으로 Core의 기본 driver와 Feature 어댑터를 실제 제작 자료에 맞춰 구현할 부분이며, Level 담당자에게 Core 전환 조율 전체를 떠넘기는 계약이 아니다.
 
-```csharp
-using var transition = await stageRoot.PrepareFinalBossTransitionAsync(matchId, cancellation);
-await app.SceneTransitions.LoadAsync(actualBossScenePath, transition.Cancellation);
-// 이 범위 안에서 실제 Scene 소유자가 참가자 도착, 공용 시간에 연결된 실제 보스,
-// 로컬 카메라/입력과 연출 완료를 확인한다. 아직 프로젝트에 해당 콘텐츠 조립부는 없다.
-stageRoot.ConfirmFinalBossReady(matchId, actualBossEntityId);
+```mermaid
+flowchart TD
+ Progress[Stage 점유100% + 두 Field 생성 확인] --> Root[Root 자동 시도 / 실패 후 매 프레임 반복 안 함]
+ Root --> Validate[driver · 실제 Build Scene 검사]
+ Validate --> Save[필수 디스크 저장 / FinalBossTransition]
+ Save --> Load[SceneTransitions.LoadAsync / 같은 Match · NGO 전원 로드]
+ Load --> Driver[driver.PrepareAsync / 실제 보스·참가자 도착·연출]
+ Driver --> Verify[같은 Match · 도착 명단 · 실제 Scene의 참가자/생존 보스/사망 원본 검사]
+ Verify --> Commit[확정 / 공용 시간 재개 · 기존 Field만 보류]
+ Driver --> Failure[실패·취소]
+ Failure --> Rollback[driver 자원 정리 + Core 참가자 원위치 + 소유 Scene 해제]
 ```
+
+`PrepareFinalBossTransitionAsync`는 이 조율부가 사용하는 저수준 범위 API다. `FinalBossTransition`은 **저장이 끝난 현재 월드의 진입 허가와 임시 정지/로컬 입력 임대**이며, 저장 없는 `ConfirmFinalBossReady` 직접 호출은 거부한다.
+
+#### 실제 Scene driver가 제공할 것
+
+- `ScenePath`: 실제 Build Settings의 Boss Scene 경로. 현재 Field 자신을 대상으로 지정할 수 없다.
+- `PrepareAsync(stage, cancellation)`: `stage.AuthorityActors`의 실제 참가자를 같은 Match로 로드된 목적 Scene에 배치하고, 실제 보스/연출을 준비한 뒤 `FinalBattleSceneReady`의 MatchId·Boss ID·도착 PlayerId 명단을 반환한다. 현재 코어는 호스트의 실제 Scene 소속과 명단을 확인하며 실제2인에서는 Player 담당의 원격 이동/도착 응답 연결이 별도로 필요하다.
+- Boss Scene은 실제 보스 `IEntityIdentity`, 살아있는 적을 보고하는 `IBattlefieldEnemyPositionSource`, 실제 HP 죽음을 보고하는 `IEnemyCombatSource`를 제공한다. 기본 Enemy Executor의 공통 생성·위치·사망 경계를 재사용한다. 보고 ID만으로는 준비 완료가 아니다.
+- `RollbackAsync`: 소유한 보스/카메라/연출 자원을 정리한다. Core가 기록한 실제 참가자 Scene·부모·위치를 되돌리고, 자신이 추가한 Scene만 참가자가 돌아온 뒤 해제한다. 원래 로드되어 있던 Scene은 빌려 쓰며 임의 해제하지 않는다.
+- `StopMatch`: Match 종료 때 Feature 바인딩을 동기적으로 닫는다. Scene 로드/해제는 Core가 맡으므로 여기서 실행하지 않는다. 준비 전/부분 실패/반복 정리에 안전해야 한다.
+
+준비 제한은 `_finalBattlePreparationTimeout`(기본120 실시간 초)이며 원복은30 실시간 초다. 게임 pause/배속에 묶이지 않는다. 원복 전에 정지/입력 임대를 해제하지 않으며, 늦은 완료는 이전 시도의 실제 참조로만 정리한다. `_finalBattleFlow`는 실패를 기록하고 끝나며, 제작/기술 오류는 `RetryFinalBattleScene()`로 재시도한다. 점유를 잃었다가 다시100%를 확보하거나 복원 epoch가 바뀌면 자동 시도를 다시 허용한다. 읽기 진단 `FinalBattleEntryAttempts`를 Debugger에 표시한다.
 
 - 현재100% 점유·두 Field 사건 생성 확인·살아있는 참가자·복귀 미진행을 요구한다. 중간보스 처치는 추가 조건이 아니다.
 - 공용 시간 pause lease와 Host 로컬 입력 임대를 획득하고 `stage-<실행 ID>-before-final`의 실제 디스크 `Saved/IsCurrentScope`를 기다린다. writer 누락/Busy/기술 실패는 예외이며 Scene 이동을 시작하지 않는다. 원인을 해결한 뒤 새 전환 범위로 재시도한다.
 - 준비 범위가 살아 있는 동안 공용 시간과 기존 Field 시간이 모두 정지한다. Scene 로드·도착·연출을 끝내고 확정하면 Field만 held가 되고 공용 시간·Player·낮밤은 진행한다. 다른 pause 소유자의 임대는 해제하지 않는다.
 - 외부 취소·Match 종료·월드 복원의 epoch 변경·참가자 실패는 이전 허가를 무효화한다. Root Update/종료 정리가 소유 스레드에서 입력/정지 임대를 해제한다. 늦게 도착한 저장 성공도 새 월드의 진입 허가가 되지 않는다.
 - `transition.Cancellation`은 로드/도착/연출용이며 확정/Dispose 때 취소된다. 보스 전투를 여기에 바인딩하지 말고 현재 Match의 `MatchCoordinator.GameplayCancellation`과 **공용 MatchTime**을 사용한다. 기존 Field의 FieldTime과 구분한다.
-- 실제 Scene 소유자는 실패 시 참가자 원위치/카메라 lease/추가 Scene 정리를 이 범위 안에서 끝내고 Dispose한다. `AppRoot.ReplaceGameplaySceneAsync`는 Match를 종료하므로 사용하지 않는다. NGO의 `SceneTransitions.LoadAsync`는 기존 전원 로드 장벽을 사용하지만 실제 Player 이동·연출 완료를 대신하지 않는다.
+- Core 자동 조율부는 실패 시 참가자 원위치/추가 Scene 정리를 이 범위 안에서 끝내고 Dispose한다. driver는 자신의 카메라/연출/보스 바인딩을 정리한다. `AppRoot.ReplaceGameplaySceneAsync`는 Match를 종료하므로 사용하지 않는다. NGO의 `SceneTransitions.LoadAsync`는 기존 전원 로드 장벽을 사용하지만 실제 Player 이동·연출 완료를 대신하지 않는다.
 - Game Debugger Checkpoint 패널의 `FinalBossTransitionPending/Error`는 저장/준비 상태를 읽는다. 실제 Scene 소유자 없이 Debugger가 진입 성공을 만드는 버튼은 제공하지 않는다.
 
 현재 이 API·Root 연결과 순수 Core 검사7개를 구현했다. 미저장 Scene을 보존하려고 현재 Editor assembly의 NUnit 메서드를 직접 실행했으며7개가 통과했다. Unity TestRunner 실행과 구분한다. 실제 Stage_1 Root에서도 저장 우회 거부·실제 Weather 누락 거부 뒤 입력/정지 해제·같은 Match/Scene 유지를 확인했다. 여기서는 진입 경계를 시험하기 위해100%와 실제 일반 Enemy 두 개의 추적 ID를 임시 사용했으며 자연 진행 검수가 아니다. 실제 Boss Scene 조립·참가자 이동·연출과 그 성공 인수는 여전히 미연결이며, 허가/임대의 존재를 실제 최종 보스전 완료로 세지 않는다.
+
+자동 조율 보강 후에는 순수 메서드10개와 CU 승패 우선 검사1개를 직접 확인했다. 실제 Player의 Runtime Scene 이동→원래 Scene/부모/위치 복구, Field Grid의 Player 수1→0→1도 확인했다. 실제 Scene driver 미지정 상태의 최초 시도1·재확보2·명시 재시도3, 매 프레임 반복 없음·입력/정지 누락 없음·신규 Runtime 오류0이다. 시험용100%와 실제 일반 Enemy 두 ID를 사용했으며 자연 진행/실제 Boss Scene 성공 검수가 아니다. 형식적인 Native 원복 UnityTest는 Play coroutine으로 분리했으나 이번에는 TestRunner로 실행하지 않았다.
+
+보스 Scene 준비/전투 중에는 Field writer만으로 다른 Scene의 Player·보스를 저장/복원하지 않도록 Field checkpoint 실행을 차단한다. 안전장치 복귀는 먼저 실제 Scene 자원/참가자를 정리한 뒤 등장 전 Field 체크포인트를 복원하며, 그 새 epoch에서 자동 진입을 재평가한다. 실제 Boss Scene writer/콘텐츠가 완성된 범위는 아니다. 최종 HP 사망이 도착했을 때 CU HP가 이미0이면 기존 패배 판정을 먼저 확정하고, 생존 CU에서는 Victory를 한 번만 확정한다.
 
 ## 현재 구현/검증과 미연결
 

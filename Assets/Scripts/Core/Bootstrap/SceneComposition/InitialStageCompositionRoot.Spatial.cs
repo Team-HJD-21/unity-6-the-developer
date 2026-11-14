@@ -41,7 +41,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var players = new List<PlayerSpatialInput>(_playerActors.Actors.Count);
             foreach (KeyValuePair<PlayerId, GameObject> actor in _playerActors.Actors)
             {
-                if (actor.Value == null) continue;
+                if (actor.Value == null || actor.Value.scene != gameObject.scene) continue;
                 var participant = actor.Value.GetComponents<MonoBehaviour>().OfType<IPlayerInteractionActor>().FirstOrDefault();
                 if (participant == null || !participant.TryCaptureInteraction(out var status) || !status.IsAlive) continue;
                 Vector3 position = actor.Value.transform.position;
