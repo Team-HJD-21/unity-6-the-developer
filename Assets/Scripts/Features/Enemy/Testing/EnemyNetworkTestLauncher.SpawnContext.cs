@@ -15,6 +15,8 @@ using UnityEngine;
 public sealed partial class EnemyNetworkTestLauncher : IEncounterEnvironmentConsumer, IEncounterSpawnContextConsumer, IEncounterOriginRequestTarget
 {
     [SerializeField] private EncounterEnvironmentProfile environmentProfile;
+    [SerializeField, InspectorName("씬 스폰 실행기")]
+    [Tooltip("테스트 씬에서 실행기를 명시합니다. 운영 연결의 ConfigureScene에서도 같은 참조를 설정합니다.")]
     private EnemySpawnExecutor _sceneExecutor;
     private MatchId _spawnContextMatch;
     private IEncounterSpawnSourceRegistry _spawnSources;

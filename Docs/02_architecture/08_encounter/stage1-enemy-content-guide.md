@@ -106,6 +106,20 @@ Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSli
 7. 자연 등장시키려면 SquadPreset 구성과 SquadPresetCatalog에 등록한다. 일반 편성에 BomberSlime을 추가하지 않는다.
 8. 로컬 한 마리, Host 생성·피해, Client 표현, 타깃 무효화·제거까지 확인한다. GUID·Prefab 참조와 `.meta`를 함께 보존한다.
 
+## EnemyTest 조작 창
+
+`Assets/Scenes/Tests/EnemyTest.unity`를 열고 `Tools > TeamHJD > The Developer > Enemy Test`를 실행한다. Play 후 창에서 `Start Host`를 누른다. 현재 테스트 씬의 런처는 `Encounter Debug Spawner`를 명시적으로 참조하며 `시작 시 초기 편성 생성`은 꺼져 있다. 기존 `EnemySpawnRoot`도 씬에 남아 있지만 이 창의 요청은 런처에 연결된 실행기로 전달된다.
+
+- **선택한 편성 요청**: 카탈로그의 Squad Order를 선택하고 기존 Core 요청 서비스에 전달한다.
+- **현재 상황으로 편성 선택·요청**: 최신 전장·Region Snapshot과 Core 난수로 `EncounterRuntime`에서 예산을 계산하고 Planner가 상황별 편성을 선택한다.
+- 두 경로 모두 `EncounterRuntime → SpawnCompositionPlanner → EnemySpawnExecutor`를 거쳐 실제 생성한다. 생성 상한은 요청당 최대 수이며, 정확한 생성 수나 전역 생존 수 제한이 아니다. 예산·완전한 편성·셀 수용량에 따라 적게 나올 수 있다.
+- 창에는 실행기, Match, 실행기가 추적하는 생존 적 수, 지정 편성의 구성·비용, 최근 버튼 요청의 계획 수·실제 생성 수 또는 거부 사유를 표시한다. 상세 상황별 선택 기록은 Game Debugger와 Console을 함께 확인한다.
+- **현재 Match의 요청 생성 적 정리**는 `DespawnForMatch()`를 사용한다. 소환사의 별도 생성 경로로 나온 봄버와 씬에 직접 배치한 적은 정리·생존 수에 포함하지 않는다. 다른 도구의 반복 요청도 별도로 중지해야 한다.
+
+이 창은 요청부터 실제 생성까지 확인하는 첫 단계다. 표적 체력 초기화, 개별 몬스터 소환, 선택한 적의 타깃·능력 상태 표시와 전용 전투 구역 배치는 후속 단계다. 생성 성공만으로 피해·재탐색·능력·클라이언트 동작까지 검증됐다고 판단하지 않는다.
+
+2026-11-14 Editor Host 확인: 초기 자동 생성 0마리, 카탈로그 8개 표시, 지정 편성과 상황별 요청에서 각각 계획 6마리·실제 생성 6마리, 요청 생성 적 정리 후 추적 수 0을 확인했다. 창의 버튼 처리 메서드를 실행해 같은 결과 표시도 확인했다. Client와 실제 전투 동작은 이번 확인에 포함하지 않았다.
+
 ## 검증과 남은 작업
 
 이번 통합 기준 커밋은 `57c364e65`다. 해당 시점의 검증을 모든 이후 에셋 변경에 대한 보장으로 확대하지 않는다.

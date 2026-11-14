@@ -28,6 +28,10 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
     [Tooltip("끄면 Start Host / Start Client 버튼에서 실행 방식을 직접 선택합니다.")]
     private bool autoStartHost = true;
 
+    [SerializeField, InspectorName("시작 시 초기 편성 생성")]
+    [Tooltip("끄면 연결 준비 후 테스트 창에서 직접 생성 요청을 보냅니다.")]
+    private bool spawnInitialEncounter = true;
+
     [SerializeField] private string initialSquadOrder = "Normal";
     [SerializeField, Min(1)] private int initialEnemyLimit = 500;
 
@@ -285,6 +289,13 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
             yield break;
         }
 
+        if (!spawnInitialEncounter)
+        {
+            _initialEncounterPending = false;
+            _initialEncounterRoutine = null;
+            yield break;
+        }
+
         if (!CanRequestEncounter(out string reason))
         {
             Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: reason);
@@ -380,7 +391,7 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
     /// <summary>
     /// 네트워크 호스트만 시작한다. Encounter 요청은 Battlefield Debug Window 명령으로 분리한다.
     /// </summary>
-    private void StartHost()
+    public void StartHost()
     {
         if (!ResolveSpawnSetup())
         {
@@ -425,7 +436,16 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
 
     /// <summary>현재 전장 상황과 지역 점유율로 산출한 예산으로 분대 생성을 요청한다.</summary>
     public bool RequestSpawn(out string result)
+        => RequestSpawn(initialEnemyLimit, out result);
+
+    /// <summary>테스트 창의 요청 상한으로 실제 상황별 Encounter 경로를 실행한다.</summary>
+    public bool RequestSpawn(int maximumEnemyCount, out string result)
     {
+        if (maximumEnemyCount < 1)
+        {
+            result = "요청당 생성 상한은 1 이상이어야 합니다.";
+            return false;
+        }
         if (!CanRequestEncounter(out result))
             return false;
         if (!FieldCanAdvance)
@@ -472,10 +492,10 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
             requestGuid: Guid.NewGuid(), spawnCancellation: _spawnGameplay);
 
         Emit(GameDiagnosticKind.RequestStarted, context,
-            message: $"maxCount={initialEnemyLimit}");
+            message: $"maxCount={maximumEnemyCount}");
 
         bool succeeded = _encounterRuntime.RequestSpawn(
-            snapshot, region, initialEnemyLimit, selectionSettings, _squadRandom, context,
+            snapshot, region, maximumEnemyCount, selectionSettings, _squadRandom, context,
             out result, out EncounterExecutionSummary summary);
 
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
@@ -486,6 +506,21 @@ public sealed partial class EnemyNetworkTestLauncher : MonoBehaviour, IEncounter
             CancelPendingInitialEncounter();
 
         return succeeded;
+    }
+
+    /// <summary>현재 Match에서 실행기가 추적하는 적을 서버에서 정리한다. 소환사의 별도 소환물은 포함하지 않는다.</summary>
+    public bool TryClearSpawnedEnemies(out string result)
+    {
+        if (!IsServer || _boundMatchId.IsEmpty || ExecutionTarget == null)
+        {
+            result = "Host와 현재 Match의 실행기가 준비되어야 합니다.";
+            return false;
+        }
+
+        CancelPendingInitialEncounter();
+        int count = ExecutionTarget.DespawnForMatch(_boundMatchId);
+        result = $"현재 Match의 요청 생성 적 {count}마리를 정리했습니다. 별도 소환물은 제외됩니다.";
+        return true;
     }
 
     /// <summary>
