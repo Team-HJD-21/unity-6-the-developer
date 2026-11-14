@@ -1,6 +1,6 @@
 # Encounter 정식 연결·테스트 런처 분리 검토
 
-PR: 생성 후 번호 기록. base main. #727의 Scene 원복 이후를 기준으로 하며 이 PR은 Scene을 변경하지 않는다.
+PR: [#728](https://github.com/Team-HJD-21/unity-6-the-developer/pull/728). base main. #727의 Scene 원복 이후를 기준으로 하며 이 PR은 Scene을 변경하지 않는다.
 
 ## 왜 바꾸는가
 
