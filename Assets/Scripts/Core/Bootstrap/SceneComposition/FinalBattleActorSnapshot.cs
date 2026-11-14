@@ -14,10 +14,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private readonly Transform _parent;
         private readonly Scene _scene;
         private readonly CheckpointTransformState _pose;
+        private readonly Vector2 _velocity;
+        private readonly float _angularVelocity;
         public FinalBattleActorSnapshot(GameObject actor)
         {
             _actor = actor != null ? actor : throw new ArgumentNullException(nameof(actor));
             _parent = actor.transform.parent; _scene = actor.scene; _pose = CheckpointTransformState.Capture(actor.transform);
+            if (actor.TryGetComponent<Rigidbody2D>(out var body))
+            { _velocity = body.linearVelocity; _angularVelocity = body.angularVelocity; }
         }
         public void Restore()
         {
@@ -27,7 +31,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (_actor.scene != _scene) SceneManager.MoveGameObjectToScene(_actor, _scene);
             if (_parent != null && _parent.gameObject.scene == _scene) _actor.transform.SetParent(_parent, true);
             _pose.Apply(_actor.transform);
-            if (_actor.TryGetComponent<Rigidbody2D>(out var body)) body.position = _pose.Position;
+            if (_actor.TryGetComponent<Rigidbody2D>(out var body))
+            {
+                body.position = _pose.Position; body.rotation = _pose.Rotation.eulerAngles.z;
+                body.linearVelocity = _velocity; body.angularVelocity = _angularVelocity;
+            }
         }
         public bool IsInScene(Scene scene) => _actor != null && _actor.scene == scene;
     }

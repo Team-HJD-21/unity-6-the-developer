@@ -13,6 +13,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private FinalBossTransition _finalBossTransition;
         public bool FinalBossTransitionPending => _finalBossTransition != null && !_finalBossTransition.IsDisposed;
         public string FinalBossTransitionError { get; private set; }
+        internal bool CanPrepareFinalBossScene => _finalBossTransition?.IsPrepared == true && _finalBossTransition.IsCurrent;
 
         /// <summary>Host의 실제 Scene 전환 소유자가 호출합니다. 반환 뒤 기존 SceneTransitions.LoadAsync로 같은 Match의 보스 Scene을 준비합니다.</summary>
         /// <remarks>반환 범위는 using으로 유지합니다. 전체 저장 실패 시 예외이며 Scene 이동/연출을 시작하면 안 됩니다.</remarks>

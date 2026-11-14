@@ -49,7 +49,7 @@ HUD는 `InitialStageCompositionRoot.StageProgress`의 읽기 값을 사용할 �
 
 ### 최종 진입의 필수 저장·정지 범위
 
-기본 게임 경로는 `InitialStageCompositionRoot.FinalScene`의 자동 조율이다. Stage의 `_finalBattleSceneDriver`에 **같은 Scene의 활성 MonoBehaviour인 `IFinalBattleSceneDriver` 구현**을 지정한다. 실제 구현·보스 Scene·콘텐츠는 현재 없다. 이 연결은 앞으로 Core의 기본 driver와 Feature 어댑터를 실제 제작 자료에 맞춰 구현할 부분이며, Level 담당자에게 Core 전환 조율 전체를 떠넘기는 계약이 아니다.
+기본 게임 경로는 `InitialStageCompositionRoot.FinalScene`의 자동 조율이다. Stage의 `_finalBattleSceneDriver`에 **같은 Scene의 활성 MonoBehaviour인 `IFinalBattleSceneDriver` 구현**을 지정한다. 기본 구현은 `FinalBattleSceneDriver`, 실제 Enemy 어댑터는 `FinalBattleBossSource`다. 실제 Boss Scene/콘텐츠와 Stage 설정은 아직 없다. Level은 아래 제작값을 지정하며 Core 전환 조율을 새로 구현하지 않는다.
 
 ```mermaid
 flowchart TD
@@ -65,6 +65,17 @@ flowchart TD
 ```
 
 `PrepareFinalBossTransitionAsync`는 이 조율부가 사용하는 저수준 범위 API다. `FinalBossTransition`은 **저장이 끝난 현재 월드의 진입 허가와 임시 정지/로컬 입력 임대**이며, 저장 없는 `ConfirmFinalBossReady` 직접 호출은 거부한다.
+
+#### 기본 driver의 실제 Scene 제작 순서
+
+1. Field Stage에 `FinalBattleSceneDriver`를 추가하고 `scenePath`에 실제 Boss Scene의 Build Settings 전체 경로를 지정한다. Root의 `_finalBattleSceneDriver`에 연결한다. 경로가 Field 자신이거나 Build 등록이 없으면 진입을 거부한다.
+2. Boss Scene에는 활성 `FinalBattleSceneLayout` 하나를 두고 `playerStarts`에 실제 이동 가능한 도착점을 지정한다. PlayerId 오름차순으로 배치하며 현재 살아있는 실제 참가자 수만큼 필요하다.
+3. 같은 Boss Scene의 전용 `EnemySpawnExecutor`와 `FinalBattleBossSource`를 연결한다. source에는 실제 카탈로그의 `EnemyDefinition`과 같은 Scene의 NavMesh 생성점을 지정하고, layout의 `bossSource`에 연결한다. Executor는 NGO Scene 객체 또는 실제 등록된 Executor prefab이어야 한다. Runtime에 NetworkObject를 AddComponent하여 hash0인 객체를 만들면 NGO가 생성을 거부한다.
+4. 선택적으로 layout의 `intro`에 유한 길이/비반복 `PlayableDirector`, `introView`에 로컬 시점을 지정한다. 연출이 없으면 즉시 실제 준비를 확정한다. 연출은 공용 게임 정지와 별개인 UnscaledGameTime으로 재생하고 기존 CameraManager의 view lease를 사용한다. 새 Camera/AudioListener를 만들지 않는다.
+5. Root가 필수 저장 완료 뒤 기본 driver를 호출한다. driver는 실제 참가자를 배치하고 source가 보스를 공통 Enemy 생성 경계로 만든 뒤 연출 종료를 기다린다. source는 **FieldClock이 아닌 공용 MatchTime**을 사용해 Field가 보류되어도 전투가 진행된다. 준비 중 공용 정지에서는 생성만 허용하며 AI/공격은 공용 시간 재개를 따른다.
+6. 실패/안전장치 복귀는 driver가 자기 보스·연출·시점 연결을 해제하고 Root가 참가자의 Scene/부모/위치·Rigidbody 속도를 되돌린다. source 연결 획득 실패로 기존 소유자의 개체를 제거하지 않는다. Match 종료에서도 같은 정리가 반복 가능하다.
+
+기본 driver와 Enemy 어댑터는 구현되어 있다. 실제 Boss Scene/Timeline·확정 Definition·제작값 연결은 미완이며, 원격 참가자의 실제 이동/로컬 연출 응답 인수와 최종 결과 저장/허브 성공 인수도 별도다. 이 제작 순서를 현재 완성된 보스전으로 읽으면 안 된다. Weather 필수 writer를 임의 대체하거나 건너뛰지 않는다.
 
 #### 실제 Scene driver가 제공할 것
 

@@ -14,9 +14,10 @@ public partial class EnemySpawnExecutor
     private bool TrySpawnActor(EnemyDefinition definition, Vector3 position, Quaternion rotation,
         EnemySquad squad, EncounterExecutionContext context, string pointId,
         Action<SpawnDecisionSnapshot.Actual> observeSpawn = null, Action<string> observeFailure = null,
-        TeamHJD.Game.Domain.EntityId identity = default)
+        TeamHJD.Game.Domain.EntityId identity = default, bool prepareWhilePaused = false)
     {
-        if (!CanSpawn || !CanSimulateField || context?.SpawnCancellation.IsCancellationRequested == true)
+        if (!CanSpawn || (!CanSimulateField && !prepareWhilePaused) || _gameplay.IsCancellationRequested ||
+            context?.SpawnCancellation.IsCancellationRequested == true)
         {
             Fail("Match/source is no longer running.", observeFailure);
             return false;

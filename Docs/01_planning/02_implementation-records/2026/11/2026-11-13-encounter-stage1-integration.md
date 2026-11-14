@@ -358,3 +358,9 @@ Root Update의 단일 진입 시도, 필수 저장 후 additive 전환, 실제 �
 현재 assembly의 순수 NUnit 메서드10개·CU 우선 검사1개 직접 실행, 실제 Stage_1 Player의 Native Scene/부모/위치 원복과 Grid1→0→1, 미지정 driver의 최초 시도/재확보/명시 재시도·입력/정지 해제를 확인했다. 최종 컴파일 오류와 실제 검수의 신규 Runtime 오류는 없었다. 자연 진행이나 실제 Boss Scene 성공 검수가 아니며 formal Play coroutine은 이번 TestRunner로 실행하지 않았다. 실패한 초기 Editor-native 검사와 정리 기록은 로컬 실행 로그에 구분했다.
 
 **실제 IFinalBattleSceneDriver 구현·보스 Scene/제작값·최종 결과 저장/허브 성공 인수는 남아 있다.** Core 기본 driver/Feature 어댑터는 Core 구현 잔여이며 단순 콘텐츠 대기로 분류하지 않는다. Weather 필수 writer와 원격 Player 인수 역시 별도다. [공개 API와 책임](../../../../02_architecture/02_match/stage-progression-api.md)을 따른다.
+
+## B8d 기본 Scene driver와 실제 Enemy 원본
+
+Core 기본 FinalBattleSceneDriver/SceneLayout과 Enemy FinalBattleBossSource를 추가했다. 실제 참가자 배치·공통 Enemy 생성·공용 MatchTime·선택적 Timeline/기존 CameraManager·실패 정리를 연결한다. 공통 생성기의 취소 검사는 유지하고 최종 준비에만 정지 중 생성을 허용한다. 실제 Boss 제작값을 지정한 것은 아니다.
+
+실제 Stage_1에서 등록된 Executor prefab과 임시 Slime으로 준비 정지 중 생성·동일 ID 재사용·공용 시간 재개·실제 HP 사망·정리/취소 거부·저장 전 driver 거부를 확인했다. 실제 최종 Scene/연출 성공은 아직 검증하지 못했으며 Boss Scene·확정 Definition·Weather 필수 writer·원격 Player/결과 저장 인수는 남았다. [제작 순서와 호출 책임](../../../../02_architecture/02_match/stage-progression-api.md)을 확인한다.

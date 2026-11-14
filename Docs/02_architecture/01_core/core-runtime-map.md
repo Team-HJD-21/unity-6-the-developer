@@ -13,7 +13,7 @@
 |5|`MatchSession`/`MatchCoordinator`|Session은 판의 수명/자료를, Coordinator는 운영을 맡는다. 두 개의 GameManager를 두는 구조가 아니다.|
 |6|`InitialStageCompositionRoot.Update`|시각/예약→성장 저장→CU 패배→구조 실패→Stage 사건 저장→Stage 진행→위치·점유 표본을 진행한다. 복원 중에는 일반 표본을 멈춘다.|
 |7|`AppRoot.RetryPendingMissionRecoveryAsync` / `AppScreenPresenter`|기술 실패 메뉴에서 같은 복귀를 재시도한다. App이 Scene 수명을 골라 연결하며 실제 허브 귀환 성공 후 오류 표시를 닫는다.|
-|8|`Root.Update` → `PumpFinalBattleScene` → `FinalBossTransition` → `IFinalBattleSceneDriver`|100%에서 Core가 저장·같은 Match의 Scene 로드·도착/보스 검사·실패 원복을 조율한다. 실제 driver 구현/콘텐츠는 아직 없다.|
+|8|`Root.Update` → `PumpFinalBattleScene` → `FinalBossTransition` → `IFinalBattleSceneDriver`|100%에서 Core가 저장·같은 Match의 Scene 로드·도착/보스 검사·실패 원복을 조율한다. 기본 FinalBattleSceneDriver/Enemy 어댑터 구현은 있으며 실제 Boss Scene/콘텐츠 설정은 남았다.|
 
 `AppRoot`는 App 서비스와 Scene 교체를 소유한다. `InitialStageCompositionRoot`는 해당 Scene의 실제 객체를 연결하고 해제한다. 실제 공격/이동/HP를 이 두 클래스 안에 복제하지 않는다.
 
@@ -64,7 +64,7 @@ flowchart TD
 
 - 실제 `world/weather` writer가 없어 전체 월드 저장/복원은 실행을 거부한다. 일부 writer만 성공한 것을 전체 성공으로 바꾸지 않는다.
 - Field 실제 생성 서비스는 기존 Encounter 연결부/Executor에 구현했다.33/66% 확정 EnemyDefinition·점유 밖 보장 진입 위치 지정과 최종 Boss Scene/컷씬/실제 보스 등록이 필요하다. 공통 생성기의 실제 HP 사망은 Stage로 전달한다. 임시 Slime 제작값으로 검수한 생성·복원 메커니즘을 실제 보스전 완성으로 세지 않는다.
-- 최종 Scene의 자동 조율·실패 참가자 원복은 Core에 연결했다. `IFinalBattleSceneDriver` 실제 구현과 보스/도착/연출 Feature 연결은 추가 Core/콘텐츠 통합 작업이며, 계약이 있다는 이유로 완료로 세지 않는다. 다른 Scene으로 이동한 Player는 옛 Field 밀도에 넣지 않는다.
+- 최종 Scene의 자동 조율·실패 참가자 원복은 Core에 연결했다. `FinalBattleSceneDriver`와 `FinalBattleBossSource`가 실제 도착/공통 Enemy 생성/선택적 연출 정리를 구현한다. 실제 제작값 연결·Boss Scene 성공/원격 Player 인수는 남았으며 코드 존재만으로 완료로 세지 않는다. 다른 Scene으로 이동한 Player는 옛 Field 밀도에 넣지 않는다.
 - 실제 원격 Player NetworkBehaviour/생명·구조 입력, 원격 추가 출현 예고는 아직 전체 인수되지 않았다. localhost SDK2개 전송 검수와 실제 두 게임 실행은 다르다.
 - 개인 저장은 현재 논리 PlayerId를 사용한다. 실제 Steam/Backend 계정에 귀속하는 인증·영속 ID 계약이 완성된 것으로 해석하지 않는다. 현재 스킬 트리 UI는 해금/강화 원본 자체를 만들지 않으며 실제 재화/스킬 강화 저장 writer도 별도 필요하다.
 
