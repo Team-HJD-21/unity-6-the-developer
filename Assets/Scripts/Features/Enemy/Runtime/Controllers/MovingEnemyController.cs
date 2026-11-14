@@ -224,12 +224,15 @@ public class MovingEnemyController : EnemyController
     }
 
     /// <summary>
-    /// 이동 힘을 추가하지 않는 분기에서 이동 애니메이션을 중단한다.
+    /// 이동 애니메이션을 중단하고 남아 있는 이동 속도를 제동한다.
     /// </summary>
     protected void StopMoving()
     {
         using (StopMovingMarker.Auto())
         {
+            if (enemyMovement != null)
+                enemyMovement.Brake();
+
             enemyAnimation.StopMovementAnimation();
         }
     }

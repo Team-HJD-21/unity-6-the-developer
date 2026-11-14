@@ -3,7 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>AddForce 이동과 이동 입력 중단 후 외부 힘·충돌의 보존을 검사한다.</summary>
+/// <summary>목표 속도·감쇠 보상·제동과 외부 충돌에 의한 밀림을 검사한다.</summary>
 public sealed class EnemyForceMovementTests
 {
     private Scene _scene;
@@ -47,7 +47,8 @@ public sealed class EnemyForceMovementTests
             _movement.Move(Vector2.right);
             _physics.Simulate(Time.fixedDeltaTime);
         }
-        Assert.That(_body.linearVelocity.x, Is.InRange(1f, _movement.MoveSpeed + 0.01f));
+        Assert.That(_body.linearVelocity.x,
+            Is.EqualTo(_movement.MoveSpeed).Within(0.01f));
 
         for (int i = 0; i < 100; i++)
         {
@@ -55,6 +56,101 @@ public sealed class EnemyForceMovementTests
             _physics.Simulate(Time.fixedDeltaTime);
         }
         Assert.That(_body.linearVelocity.x, Is.LessThan(0f));
+    }
+
+    [TestCase(0f, 1f)]
+    [TestCase(2.5f, 50f)]
+    [TestCase(5f, 1000f)]
+    public void Move_AccelerationAndTargetSpeedAreIndependentOfMassAndDamping(
+        float damping, float mass)
+    {
+        _body.linearDamping = damping;
+        _body.mass = mass;
+
+        _movement.Move(Vector2.right);
+        _physics.Simulate(Time.fixedDeltaTime);
+        Assert.That(_body.linearVelocity.x,
+            Is.EqualTo(Mathf.Min(10f * Time.fixedDeltaTime, _movement.MoveSpeed))
+                .Within(0.001f));
+
+        for (int i = 0; i < 120; i++)
+        {
+            _movement.Move(Vector2.right);
+            _physics.Simulate(Time.fixedDeltaTime);
+        }
+
+        Assert.That(_body.linearVelocity.x,
+            Is.EqualTo(_movement.MoveSpeed).Within(0.01f));
+    }
+
+    [Test]
+    public void Move_TurningRemovesVelocityInPreviousDirection()
+    {
+        _body.linearVelocity = Vector2.up * _movement.MoveSpeed;
+
+        for (int i = 0; i < 120; i++)
+        {
+            _movement.Move(Vector2.right);
+            _physics.Simulate(Time.fixedDeltaTime);
+        }
+
+        Assert.That(_body.linearVelocity.x,
+            Is.EqualTo(_movement.MoveSpeed).Within(0.01f));
+        Assert.That(_body.linearVelocity.y, Is.EqualTo(0f).Within(0.001f));
+    }
+
+    [TestCase(5f)]
+    [TestCase(40f)]
+    public void Move_RightAngleTurnBrakesSidewaysWithoutChangingForwardAcceleration(
+        float deceleration)
+    {
+        var settings = new UnityEditor.SerializedObject(_movement);
+        settings.FindProperty("moveDeceleration").floatValue = deceleration;
+        settings.ApplyModifiedPropertiesWithoutUndo();
+        _body.linearVelocity = Vector2.up * 3f;
+
+        _movement.Move(Vector2.right);
+        Assert.That(_body.linearVelocity, Is.EqualTo(Vector2.up * 3f));
+        _physics.Simulate(Time.fixedDeltaTime);
+
+        Assert.That(_body.linearVelocity.x,
+            Is.EqualTo(Mathf.Min(10f * Time.fixedDeltaTime, _movement.MoveSpeed))
+                .Within(0.001f));
+        Assert.That(_body.linearVelocity.y,
+            Is.EqualTo(Mathf.Max(0f, 3f - deceleration * Time.fixedDeltaTime))
+                .Within(0.001f));
+    }
+
+    [Test]
+    public void Brake_ReducesSpeedGraduallyAndStopsWithoutReversing()
+    {
+        _body.linearVelocity = Vector2.right * 10f;
+
+        _movement.Brake();
+        Assert.That(_body.linearVelocity.x, Is.EqualTo(10f));
+        _physics.Simulate(Time.fixedDeltaTime);
+        Assert.That(_body.linearVelocity.x,
+            Is.EqualTo(Mathf.Max(0f, 10f - 20f * Time.fixedDeltaTime))
+                .Within(0.001f));
+
+        int steps = Mathf.CeilToInt(0.5f / Time.fixedDeltaTime);
+        for (int i = 0; i < steps; i++)
+        {
+            _movement.Brake();
+            _physics.Simulate(Time.fixedDeltaTime);
+        }
+
+        Assert.That(_body.linearVelocity.magnitude, Is.LessThan(0.001f));
+    }
+
+    [Test]
+    public void FrozenEnemy_DoesNotAccumulateMovementOrBrakeForce()
+    {
+        _body.constraints |= RigidbodyConstraints2D.FreezePosition;
+        _movement.Move(Vector2.right);
+        _movement.Brake();
+
+        Assert.That(_body.totalForce, Is.EqualTo(Vector2.zero));
     }
 
     [Test]
@@ -88,10 +184,12 @@ public sealed class EnemyForceMovementTests
     public void StoppedEnemy_CanBePushedByAnotherBody()
     {
         Rigidbody2D pusher = CreateBody("Pusher", new Vector2(-1.1f, 0f));
-        pusher.AddForce(Vector2.right * 4f, ForceMode2D.Impulse);
         Physics2D.SyncTransforms();
         for (int i = 0; i < 50; i++)
         {
+            // 계속 전진하는 상대와 충돌하면 제동 중인 적도 이동할 수 있어야 한다.
+            pusher.linearVelocity = Vector2.right * 4f;
+            _movement.Brake();
             _physics.Simulate(Time.fixedDeltaTime);
         }
         Assert.That(_body.position.x, Is.GreaterThan(0.1f));
