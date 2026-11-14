@@ -66,8 +66,8 @@ Unity CPU Profiler의 선택한 표본 → 상세 패널 / 연관 객체 조회 
 
 1. `SpawnPointSpatialPolicy.Allocate(..., out observations)`: 실제 후보 판단과 배정 관측.
 2. `SpawnCompositionPlanner.LastCandidates`: disabled/누락 ID 및 공간 정책 관측 결합.
-3. `EncounterRuntime.TrySpawn`: 계획 → Executor 실제 위치 → 불변 snapshot.
-4. `EnemyNetworkTestLauncher.Emit` → `GameDebugRecorder.Accept`: 완료 이벤트와 Editor 보존.
+3. `EncounterPipeline.TrySpawn`: 계획 → Executor 실제 위치 → 불변 snapshot.
+4. `EncounterSceneBinding.Emit` → `GameDebugRecorder.Accept`: 완료 이벤트와 Editor 보존.
 5. `GameDebugSpawnInspector.SetRun / SelectRequest`: 요청 선택, 표/맵/Scene 연결.
 
 검증: 신규 EditMode 테스트는 보존 상한, replay 중복 제거, 독립 복사, JSON round-trip / invalid 좌표, 이전 기록, Inspector 요청 선택을 대상으로 한다. 실제 생성·사망은 NGO Scene 통합 검증에서 확인한다.

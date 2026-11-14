@@ -14,7 +14,8 @@ namespace TeamHJD.Game.Application
         {
             RegionGridSnapshot snapshot = Regions.Snapshot;
             if (snapshot.Mode == RegionPolicyMode.Dynamic) return true;
-            return snapshot.TryIsCapturedAt(position, out bool captured) && captured;
+            return snapshot.Definition.TryGetCellIndex(position, out int cell) &&
+                snapshot.IsRegionUnlocked(snapshot.Definition.RegionIds[cell]);
         }
     }
 }

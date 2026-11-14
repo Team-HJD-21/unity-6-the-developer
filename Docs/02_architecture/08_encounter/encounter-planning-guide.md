@@ -9,10 +9,10 @@
 
 ```mermaid
 flowchart TD
-    Core[Core: Match·전장·지역·환경·난수] --> Bridge[EnemyNetworkTestLauncher: 기존 계약 소비]
+    Core[Core: Match·전장·지역·환경·난수] --> Bridge[EncounterSceneBinding: 기존 계약 소비]
     Config[EncounterSceneConfiguration: 씬 실행기·환경 Profile] --> Bridge
     Region[RegionSceneBinding.Source.Snapshot] --> Bridge
-    Bridge -->|RequestSpawn| Runtime[EncounterRuntime: 검증·전체 예산 산출]
+    Bridge -->|RequestSpawn| Runtime[EncounterPipeline: 검증·전체 예산 산출]
     Runtime --> Mode{편성 요청 종류}
     Mode -->|고정 Order| Fixed[지정 프리셋의 완전한 세트]
     Mode -->|상황별 선택| Area[지점별 최근접 유효 Turret 선택]
@@ -26,7 +26,7 @@ flowchart TD
 ```
 
 - Core는 전장 원시 자료·지역 점유·날씨/시간·권한·난수/취소 수명을 제공한다. 구체 몬스터 편성과 Instantiate는 Enemy가 담당한다.
-- `EncounterRuntime`은 일반 C# 클래스다. Match ID·명시 Executor·SquadPresetCatalog·EncounterBudgetSettings를 생성자로 받는다. 씬에 컴포넌트로 붙이거나 Core가 이 구체 타입을 직접 참조한다고 설명하지 않는다.
+- `EncounterPipeline`은 일반 C# 클래스다. Match ID·명시 Executor·SquadPresetCatalog·EncounterBudgetSettings를 생성자로 받는다. 씬에 컴포넌트로 붙이거나 Core가 이 구체 타입을 직접 참조한다고 설명하지 않는다.
 - `SpawnCompositionPlanner`는 Definition 비용과 편성·상황·배치 제약으로 생성 명령을 만든다. NGO 객체를 만들지 않는다.
 - `EnemySpawnExecutor`는 실행 시점의 지점 상태·정의·서버 권한을 다시 확인하고 생성·분대 등록·사망/제거를 추적한다. 실제 생성 결과만 Planner 이력에 반영한다.
 - 현재 연결부는 테스트런처다. 새 운영용 Bridge/자동 주기 요청기는 이번 코드에 없다. 초기 1회 요청 또는 외부 요청/버튼이 있어야 생성한다.

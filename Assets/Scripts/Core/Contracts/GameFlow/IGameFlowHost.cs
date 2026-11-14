@@ -1,10 +1,12 @@
 // 게임 흐름이 Unity/네트워크 구현을 직접 참조하지 않고 App의 기존 전환·Match 조립을 호출하는 port입니다.
+using TeamHJD.Game.Domain;
 using System.Threading;
 using System.Threading.Tasks;
 namespace TeamHJD.Game.Contracts
 {
     public interface IGameFlowHost
     {
+        void PrepareMission(MissionEntryKind entry);
         string ActiveSceneKey { get; }
         string TravelRestriction { get; }
         bool CanLoad(string sceneKey);

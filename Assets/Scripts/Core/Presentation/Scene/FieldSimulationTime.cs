@@ -10,6 +10,9 @@ namespace TeamHJD.Game.Presentation.Scene
 {
     public static class FieldSimulationTime
     {
+        /// <summary>체력 원본이 피해 직전에 호출합니다. 시간 정지와 명시적인 개발용 보호를 함께 확인합니다.</summary>
+        public static bool CanReceiveDamage(Component owner) => CanAdvance(owner) && !DebugDamageProtection.IsProtected(owner);
+
         /// <summary>실행 주체가 매 프레임 확인합니다. Match 밖의 독립 Feature 시험은 기존 Unity 시간을 사용합니다.</summary>
         public static bool CanAdvance(Component owner)
         {

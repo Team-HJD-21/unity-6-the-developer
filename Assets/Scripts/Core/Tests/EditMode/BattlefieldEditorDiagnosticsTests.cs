@@ -31,9 +31,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var id = new MatchId("diagnostic-test");
             _root.StartMatch(new MatchConfig(id, MatchMode.Story, new StageId("test"),
                 new DefinitionId("test"), "test", 1, Array.Empty<PlayerLoadoutSnapshot>()),
-                new MatchState(id, MatchPhase.Preparing, Array.Empty<PlayerState>(),
-                    new ControlUnitState(1, 1, 1, 1), new WaveState(0, 1, 0, 0),
-                    Array.Empty<TurretState>(), Array.Empty<EnemyState>(), Array.Empty<SectorState>()),
+                new MatchState(id, MatchPhase.Preparing),
                 new TestModeRules());
             BattlefieldDebugSession.Bind(_root);
         }

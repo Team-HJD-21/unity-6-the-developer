@@ -19,6 +19,10 @@ public sealed class PlayerControlState : MonoBehaviour, IPlayerMatchBinding, IPl
     private bool _wasBound, _uiBlocked, _lifeBlocked, _hubOnly;
     private IInputBlocker _inputLocks;
     private PlayerMatchPresence _presence;
+    private int _tacticalViews;
+    private int _tacticalExitFrame = -1;
+    public bool IsInTacticalView => _tacticalViews > 0;
+    private bool TacticalInputBlocked => IsInTacticalView || _tacticalExitFrame == Time.frameCount;
     private PlayerMatchPresence Presence => _presence != null ? _presence : (_presence = GetComponent<PlayerMatchPresence>());
     public bool HasMatchBinding => _wasBound;
     /// <summary>시작 허브와 Match 진행 중 우주선 방문을 같은 표시 상태로 조회합니다.</summary>
@@ -33,12 +37,31 @@ public sealed class PlayerControlState : MonoBehaviour, IPlayerMatchBinding, IPl
     private bool IsRunning => _networkMatch != null
         ? _networkMatch.IsGameplayRunning
         : _session != null && !_session.IsDisposed && _session.State.Phase == MatchPhase.Running;
-    public bool CanPrepare => !_hubOnly && !IsBlocked && (!_wasBound || IsPreparing || (_allowSelectionDuringCombat && IsRunning));
+    public bool CanPrepare => !TacticalInputBlocked && !_hubOnly && !IsBlocked && (!_wasBound || IsPreparing || (_allowSelectionDuringCombat && IsRunning));
     /// <summary>이동은 허브에서도 허용합니다. 필드에 있는 Player만 필드 정지에 따라 멈춥니다.</summary>
-    public bool CanMove => !IsBlocked && (!_wasBound || IsRunning || IsPreparing) &&
+    public bool CanMove => !TacticalInputBlocked && !IsBlocked && (!_wasBound || IsRunning || IsPreparing) &&
         (Presence == null || Presence.Location == MatchPlayerLocation.Spaceship || Presence.CanSimulateField);
-    public bool CanAct => !_hubOnly && !IsBlocked && (!_wasBound || IsRunning || (_allowActionsDuringPreparation && IsPreparing)) &&
+    public bool CanAct => !TacticalInputBlocked && CanIssueTurretCommands;
+    /// <summary>전술 카메라의 이동/공격 제한만 제외합니다. 메뉴·사망·전환·필드 시간 잠금은 그대로 검사합니다.</summary>
+    public bool CanIssueTurretCommands => !_hubOnly && !IsBlocked && (!_wasBound || IsRunning || (_allowActionsDuringPreparation && IsPreparing)) &&
         (Presence == null || Presence.CanSimulateField);
+    public System.IDisposable EnterTacticalView()
+    {
+        _tacticalViews++;
+        return new TacticalLease(this);
+    }
+    private sealed class TacticalLease : System.IDisposable
+    {
+        private PlayerControlState _owner;
+        public TacticalLease(PlayerControlState owner) => _owner = owner;
+        public void Dispose()
+        {
+            var owner = _owner; _owner = null;
+            if (owner == null) return;
+            owner._tacticalViews = Mathf.Max(0, owner._tacticalViews - 1);
+            owner._tacticalExitFrame = Time.frameCount;
+        }
+    }
     public bool TryCaptureInteraction(out PlayerInteractionSnapshot snapshot)
     {
         snapshot = default;
@@ -46,7 +69,7 @@ public sealed class PlayerControlState : MonoBehaviour, IPlayerMatchBinding, IPl
         if (!HasMatchBinding || !isActiveAndEnabled || health == null || !health.isActiveAndEnabled) return false;
         Vector3 position = transform.position;
         if (float.IsNaN(position.x) || float.IsInfinity(position.x) || float.IsNaN(position.y) || float.IsInfinity(position.y)) return false;
-        snapshot = new PlayerInteractionSnapshot(new BattlefieldPoint(position.x, position.y), health.curHp > 0, CanAct);
+        snapshot = new PlayerInteractionSnapshot(new BattlefieldPoint(position.x, position.y), health.curHp > 0, CanIssueTurretCommands);
         return true;
     }
     /// <summary>Core의 시작 우주선 조립부가 이동과 UI만 연결합니다. 전투 Match 준비로 간주하지 않습니다.</summary>

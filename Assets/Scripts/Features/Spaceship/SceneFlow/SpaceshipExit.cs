@@ -1,23 +1,21 @@
-// 우주선 출구의 BoxCollider2D 충돌을 출격·필드 복귀 요청으로 Core에 전달합니다.
+// 우주선 출구의 BoxCollider2D 충돌을 제작된 Mission 출격 요청으로 Core에 전달합니다.
 // 시작 허브에서 필드가 아직 로드되지 않은 경우도 Core 게임 흐름으로 처리합니다.
 using System;
 using System.Threading.Tasks;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public class SpaceshipExit : MonoBehaviour, ISpaceshipTravelConsumer
 {
-    [SerializeField] private string returnSceneName;
-    [SerializeField] private string originName;
-    [SerializeField] private string returnTriggerName = "Enter";
-    [SerializeField] private float returnPadding = 0.5f;
+    [SerializeField, FormerlySerializedAs("returnSceneName")] private string missionSceneName;
     private bool isTransitioning;
     private ISpaceshipTravel _travel;
 
     public void BindSpaceshipTravel(ISpaceshipTravel travel) => _travel = travel;
 
-    /// <summary>출구에 닿은 Player의 출격/복귀를 요청합니다. Scene 교체 중 오브젝트가 파괴돼도 이동은 App이 마무리합니다.</summary>
+    /// <summary>출구에 닿은 Player의 출격을 요청합니다. Scene 교체 중 오브젝트가 파괴돼도 이동은 App이 마무리합니다.</summary>
     public async Task ExitAsync(Collider2D other)
     {
         if (isTransitioning || _travel?.IsTransitioning == true) return;
@@ -28,7 +26,7 @@ public class SpaceshipExit : MonoBehaviour, ISpaceshipTravelConsumer
             var identity = other.GetComponentInParent<PlayerActorIdentity>();
             if (identity == null) throw new ArgumentException("Core Player actor가 아닙니다.", nameof(other));
             Transform player = identity.transform;
-            await _travel.ExitAsync(player, returnSceneName, returnTriggerName, returnPadding);
+            await _travel.ExitAsync(player, missionSceneName);
         }
         finally { if (this != null) isTransitioning = false; }
     }

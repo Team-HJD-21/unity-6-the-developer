@@ -1,5 +1,6 @@
 // 현재 Host Match에 실제 writer·필수 목록·명시 저장 요청을 조립합니다.
-// 저장 시점은 선택하지 않으며 누락 writer가 있으면 전체 저장/복원을 거부합니다.
+// 범용 API는 저장 시점을 선택하지 않습니다. Stage 진행의 전용 관찰자는 명시 저장을 요청합니다.
+// 누락 writer가 있으면 전체 저장/복원을 거부합니다.
 // API/진단은 이 파일, Feature 원본 캡처와 적용은 각 Feature의 .Checkpoint에 있습니다.
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private bool _restoringCheckpoint;
         /// <summary>현재 Host의 실행 API입니다. Scene/Match 해제 후 이전 참조를 재사용하지 않습니다.</summary>
         public CheckpointService Checkpoints => _checkpointScope?.Service;
-        /// <summary>기획이 정한 사건의 관찰자가 저장/복원 의도를 Publish합니다. 이번 작업은 자동 사건을 등록하지 않습니다.</summary>
+        /// <summary>기획이 정한 사건의 관찰자가 저장/복원 의도를 Publish합니다. 범용 저장기는 발동 시점을 결정하지 않습니다.</summary>
         public CheckpointRequestChannel CheckpointRequests => _checkpointScope?.Requests;
         public IReadOnlyList<string> MissingCheckpointParticipants => Checkpoints?.MissingParticipantKeys ?? Array.Empty<string>();
 
@@ -46,18 +47,29 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 required.Add(prefix + "/loadout");
                 required.Add(prefix + "/movement-effects");
             }
+            required.Add("world/campaign");
             var participants = FindSceneBehaviours().OfType<ICheckpointParticipant>().ToList();
             if (_encounterConsumer is ICheckpointParticipantProvider provider)
                 foreach (var writer in provider.GetCheckpointParticipants())
                     if (!participants.Contains(writer))
                         participants.Add(writer);
+            if (coordinator.EncounterProduction != null)
+            {
+                required.Add("world/encounter-production");
+                participants.Add(new EncounterProductionCheckpointParticipant(match, coordinator.EncounterProduction));
+            }
+            required.Add("world/field-time");
+            required.Add("world/stage-progress");
+            participants.Add(new StageProgressCheckpointParticipant(coordinator.StageProgression));
+            participants.Add(new FieldTimeCheckpointParticipant(_matchTime.FieldClock));
+            participants.Add(new CampaignCheckpointParticipant(app.CampaignSlot, _recoveryLedger.RunId));
             participants.Add(session.CreateRandomCheckpointParticipant());
             participants.Add(new MatchSpatialCheckpointParticipant(session, _regionBinding.RestoreCheckpoint));
             var runtime = new MatchCheckpointRuntime(session, _matchTime,
                 () => HasCurrentMatch && _matchSession == session,
                 () => coordinator.IsGameplayRunning,
                 coordinator.GameplayCancellation,
-                () => _restoringCheckpoint = true,
+                () => { FlushGrowthSaves(); _restoringCheckpoint = true; },
                 FinishCheckpointRestore,
                 error =>
                 {
@@ -66,7 +78,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     Debug.LogException(error, this);
                     if (!app.TryEndMatch(match))
                         throw new InvalidOperationException("The faulted Match could not be released.", error);
-                });
+                }, () => Recovery?.CanCaptureWorld == true && AllowsFieldCheckpointWorld, () => AllowsFieldCheckpointWorld);
             _checkpointScope = app.CreateCheckpointScope(runtime, participants, required);
         }
 
@@ -81,6 +93,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var leases = new List<IDisposable> { _fieldScope.RegisterActor(player, actor) };
             try
             {
+                leases.Add(RegisterRescueActor(player, actor, false));
                 if (_checkpointScope != null)
                     foreach (var writer in actor.GetComponentsInChildren<MonoBehaviour>(true).OfType<ICheckpointParticipant>())
                         leases.Add(_checkpointScope.Register(writer));
@@ -101,6 +114,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RefreshDynamicInput();
             (_environmentScope as MatchEnvironmentSceneScope)?.PublishCurrent();
             _nextBattlefieldSampleTime = 0;
+            PublishGrowthRestoreWarnings();
+            Recovery?.OnWorldRestored();
         }
 
         private void ReleaseCheckpoints()

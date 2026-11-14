@@ -47,6 +47,18 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
     private bool _waitingForMatch;
     private StageTurretCommandBinding _commands;
     private bool _requiresCommands;
+    [Header("Tactical command view")]
+    public TacticalCommandController Tactical;
+    public PlayerInfo LocalPlayer => _hasLocalActor ? _player : null;
+    public FieldTurretController Turrets => _controller;
+    public FieldTurretLevelUpgradeCatalog LevelCatalog => levelCatalog;
+    public StageTurretCommandBinding Commands => _commands;
+    public bool RequiresCommands => _requiresCommands;
+    public float InteractionDistance => interactionDistance;
+    public bool CanOperateTurrets => CanInteract();
+    public bool IsAtControlUnit => CanInteractAtControlUnit();
+    public ControlUnitHealth ControlUnit => vitalsView != null ? vitalsView.ControlUnit : null;
+    public event Action<TurretCommandResult> TurretCommandCompleted;
     public MatchId BoundMatchId => _boundMatchId;
     public PlayerId BoundPlayerId => _boundPlayerId;
     public bool HasTurretCommandBinding => _commands != null;
@@ -79,6 +91,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
     /// <summary>튜토리얼/명시적 UI 입력도 클릭과 같은 Scene·거리 검증으로 대상을 선택합니다.</summary>
     public bool TrySelectTurret(TeamHJD.Game.Domain.EntityId targetId)
     {
+        if (Tactical != null) return Tactical.Select(targetId);
         if (!CanInteract() || _selection == null || targetId.IsEmpty) return false;
         foreach (var turret in FieldTurretInstanceRegistry.GetAll())
         {
@@ -101,7 +114,8 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
             if (controlUnitView != null) controlUnitView.SetFeedback(StageTurretUIText.Command(result));
             AutoActivationFeedback?.Invoke(result.WasAccepted ? "자동 활성화가 시작되었습니다." : "자동 활성화 요청이 거절되었습니다.");
         }
-        else _presenter?.OnCommandResult(result);
+        else if (Tactical == null) _presenter?.OnCommandResult(result);
+        TurretCommandCompleted?.Invoke(result);
     }
 
     public void PrepareLocalActor(MatchId matchId, PlayerId playerId)
@@ -143,7 +157,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
         if (controlUnitView != null) controlUnitView.Refresh(null, false);
     }
 
-    public bool IsTurretPanelOpen => isActiveAndEnabled && turretView != null && turretView.isActiveAndEnabled;
+    public bool IsTurretPanelOpen => Tactical == null && isActiveAndEnabled && turretView != null && turretView.isActiveAndEnabled;
 
     private void Awake()
     {
@@ -186,6 +200,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
     private bool TryInitializeTurretControls()
     {
         if (turretView != null) turretView.Hide();
+        if (Tactical != null) return true;
         if (turretView == null || levelCatalog == null)
         {
             string missing = turretView == null ? nameof(turretView) : nameof(levelCatalog);
@@ -208,6 +223,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
         if (vitalsView == null) Debug.LogWarning("[InitialStagePlayerHUD] Missing vitalsView.", this);
         else if (!vitalsView.IsConfigured)
             Debug.LogWarning($"[InitialStagePlayerHUD] Missing {vitalsView.MissingReferences}.", vitalsView);
+        if (Tactical != null) return;
         if (turretView == null) Debug.LogWarning("[InitialStagePlayerHUD] Missing turretView.", this);
         else if (!turretView.IsConfigured)
             Debug.LogWarning($"[InitialStagePlayerHUD] Missing {turretView.MissingReferences}.", turretView);
@@ -224,7 +240,7 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
             BindSceneSources();
         }
 
-        if (_turretControlsReady)
+        if (_turretControlsReady && Tactical == null)
         {
             if (CanInteract()) _selection.ProcessInput(_controller);
             else _selection.Clear();
@@ -238,13 +254,13 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
             {
                 var state = _commands?.Presentation.Snapshot?.Controller;
                 if (_vitalsReady) vitalsView.RefreshAuthority(state);
-                if (controlUnitView != null) controlUnitView.RefreshAuthority(state, _controller?.Regions?.Snapshot,
+                if (controlUnitView != null && Tactical == null) controlUnitView.RefreshAuthority(state, _controller?.Regions?.Snapshot,
                     CanInteractAtControlUnit(), _commands != null && _commands.HasPending(default));
             }
             else
             {
                 if (_vitalsReady) vitalsView.RefreshPower();
-                if (controlUnitView != null) controlUnitView.Refresh(_controller, CanInteractAtControlUnit());
+                if (controlUnitView != null && Tactical == null) controlUnitView.Refresh(_controller, CanInteractAtControlUnit());
             }
         }
 
@@ -258,10 +274,10 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
             player == null || !player.isActiveAndEnabled || player.curHp <= 0 ||
             _controller == null || !_controller.isActiveAndEnabled ||
             GameInput.PrimaryPointerReservedForPlacement ||
-            (_playerSkills != null && (!_playerSkills.CanUse || _playerSkills.IsPlacingSkill)))
+            (_playerSkills != null && ((_playerControl?.IsInTacticalView != true && !_playerSkills.CanUse) || _playerSkills.IsPlacingSkill)))
             return false;
 
-        return _playerControl == null || _playerControl.CanAct;
+        return _playerControl == null || _playerControl.CanIssueTurretCommands;
     }
 
     private bool CanInteractAtControlUnit()

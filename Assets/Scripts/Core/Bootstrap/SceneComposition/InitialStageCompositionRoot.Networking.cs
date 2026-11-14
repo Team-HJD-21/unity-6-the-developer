@@ -81,17 +81,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         }
 
         /// <summary>네트워크 Scene 어댑터가 준비 세대를 검증한 Client 시계를 연결/해제합니다. 권위 시계는 교체하지 않습니다.</summary>
-        public void BindTimeReplica(IMatchTime source)
+        public void BindTimeReplica(IMatchTime source, IMatchTime fieldSource)
         {
-            if (source != null && (_ownsMatch || _ownedMatchId.IsEmpty || source.Snapshot.MatchId != _ownedMatchId))
+            if ((source == null) != (fieldSource == null) || source != null &&
+                (_ownsMatch || _ownedMatchId.IsEmpty || source.Snapshot.MatchId != _ownedMatchId ||
+                    fieldSource.Snapshot.MatchId != _ownedMatchId || source.Snapshot.Epoch != fieldSource.Snapshot.Epoch))
                 throw new InvalidOperationException("Bind a time replica only to its composed Client Match.");
-            if (ReferenceEquals(_timeReplica, source)) return;
-            var previous = _replicaField; _replicaField = null; _timeReplica = null;
+            if (ReferenceEquals(_timeReplica, source) && ReferenceEquals(_fieldTimeReplica, fieldSource)) return;
+            var previous = _replicaField; _replicaField = null; _timeReplica = null; _fieldTimeReplica = null;
             previous?.Dispose();
             (_timeOfDaySource as MatchDayNightCycle)?.SetReplicaClock(null);
             if (source == null) return;
-            _replicaField = new MatchFieldReplicaScope(source, GetFieldSimulationConsumers(), _playerActors.Actors.Values.Single());
-            _timeReplica = source;
+            _replicaField = new MatchFieldReplicaScope(source, fieldSource, GetFieldSimulationConsumers(), _playerActors.Actors.Values.Single());
+            _timeReplica = source; _fieldTimeReplica = fieldSource;
             (_timeOfDaySource as MatchDayNightCycle)?.SetReplicaClock(source);
         }
         /// <summary>현재 descriptor의 로컬 슬롯 위치만 Client 필드 입력 경계에 반영합니다.</summary>

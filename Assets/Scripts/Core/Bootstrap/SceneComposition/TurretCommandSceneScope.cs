@@ -71,7 +71,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         TurretCommandKind.UpgradeLevel, TurretCommandKind.DowngradeLevel,
                         TurretCommandKind.ApplyUpgrade, TurretCommandKind.DowngradeUpgrade };
                     var policy = new TurretInteractionAuthorization(localPlayer, _actors, CaptureTurretPosition,
-                        CaptureControlPosition, interactionDistance, shared);
+                        CaptureControlPosition, interactionDistance, shared, CanOperateOccupiedTurret);
                     turrets.BindCommands(IsAuthority, IsRunning, IsParticipant, policy);
                 }
                 _gateway = new TurretCommandGateway(MatchId, DescriptorId, localPlayer, hostConnection, network,
@@ -111,6 +111,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private BattlefieldPoint? CaptureControlPosition() => IsAuthority() && _controlUnit != null &&
             _controlTargetBehaviour != null && _controlTargetBehaviour.isActiveAndEnabled &&
             _controlTarget.TryCaptureInteractionPosition(out var point) ? point : (BattlefieldPoint?)null;
+        private bool CanOperateOccupiedTurret(EntityId id)
+        {
+            var point = CaptureTurretPosition(id);
+            var regions = _turrets.Controller != null ? _turrets.Controller.Regions?.Snapshot : null;
+            return point.HasValue && regions != null && regions.MatchId == MatchId &&
+                regions.TryIsCapturedAt(point.Value, out bool captured) && captured;
+        }
         public void Pump()
         {
             if (_disposed) return;

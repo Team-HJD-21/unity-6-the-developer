@@ -35,8 +35,9 @@ public sealed partial class ControlUnitHealth : ICheckpointParticipant
             string definition = codec.ReadText(reader);
             int maxHealth = reader.ReadInt32(), health = reader.ReadInt32();
             var pose = CheckpointTransformState.Read(reader);
-            if (definition != _definition.Id || maxHealth != MaxHealth || health <= 0 || health > maxHealth)
+            if (definition != _definition.Id || maxHealth <= 0 || health <= 0 || health > maxHealth)
                 throw new InvalidDataException("The saved CU definition or health does not match this Scene.");
+            health = Math.Max(1, Math.Min(MaxHealth, (int)Math.Ceiling(health * (double)MaxHealth / maxHealth)));
             return (health, pose);
         });
         int previousHealth = _currentHealth;

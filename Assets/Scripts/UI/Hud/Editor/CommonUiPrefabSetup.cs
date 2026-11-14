@@ -41,14 +41,46 @@ public static class CommonUiPrefabSetup
         var canvas = Save("AppScreenCanvas", BuildCanvas).GetComponent<AppScreenCanvasView>();
         var menu = Save("MenuScreen", BuildMenu).GetComponent<AppPanelView>();
         var result = Save("ResultScreen", BuildResult).GetComponent<AppPanelView>();
+        var recovery = Save("RecoveryScreen", BuildRecovery).GetComponent<AppPanelView>();
         var settings = Save("SettingsScreen", BuildSettings).GetComponent<AppSettingsView>();
         var loading = Save("LoadingScreen", BuildLoading).GetComponent<AppLoadingView>();
         Save("StartupControls", BuildStartup);
         var style = AssetDatabase.LoadAssetAtPath<AppScreenStyle>("Assets/Resources/Core/AppScreenStyle.asset");
-        style.CanvasPrefab = canvas; style.MenuPrefab = menu; style.ResultPrefab = result;
+        style.CanvasPrefab = canvas; style.MenuPrefab = menu; style.ResultPrefab = result; style.RecoveryPrefab = recovery;
         style.SettingsPrefab = settings; style.LoadingPrefab = loading; EditorUtility.SetDirty(style);
         AssetDatabase.SaveAssets(); ConfigureStartupScene(); AssetDatabase.SaveAssets();
+        ConfigureMissionScreens();
         Debug.Log("COMMON_UI_PREFABS_CONFIGURED");
+    }
+
+    [MenuItem("Tools/TeamHJD/The Developer/Common UI/Update mission screens")]
+    public static void ConfigureMissionScreens()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Use Edit Mode.");
+        S = AssetDatabase.LoadAssetAtPath<CombatHudStyle>(HudV6AssetImport.StylePath);
+        ButtonAsset = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/CommonButton.prefab");
+        var style = AssetDatabase.LoadAssetAtPath<AppScreenStyle>("Assets/Resources/Core/AppScreenStyle.asset");
+        style.MenuPrefab = Save("MenuScreen", BuildMenu).GetComponent<AppPanelView>();
+        style.ResultPrefab = Save("ResultScreen", BuildResult).GetComponent<AppPanelView>();
+        style.RecoveryPrefab = Save("RecoveryScreen", BuildRecovery).GetComponent<AppPanelView>();
+        var loading = PrefabUtility.LoadPrefabContents(Folder + "/LoadingScreen.prefab");
+        try { UiProductPolishSetup.ApplyLoading(loading); PrefabUtility.SaveAsPrefabAsset(loading, Folder + "/LoadingScreen.prefab"); }
+        finally { PrefabUtility.UnloadPrefabContents(loading); }
+        var announcement = Save("FieldEntryAnnouncement", BuildAnnouncement).GetComponent<FieldEntryAnnouncement>();
+        foreach (string path in new[] { "Assets/Prefabs/UI/PlayerSkillHUD.prefab", "Assets/Prefabs/UI/InitialStagePlayerHUD.prefab" })
+        {
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var intro = root.GetComponent<CombatHudIntro>();
+                intro.AnnouncementPrefab = root.GetComponent<PlayerSkillHud>() != null ? announcement : null;
+                intro.MessageFadeSeconds = .22f; intro.MessageHoldSeconds = 3; intro.MessageEraseSeconds = .45f;
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+        }
+        EditorUtility.SetDirty(style); AssetDatabase.SaveAssets();
+        Debug.Log("MISSION_UI_AUTHORED");
     }
 
     private static GameObject Save(string name, Action<RectTransform> build)
@@ -86,29 +118,77 @@ public static class CommonUiPrefabSetup
     }
     private static void BuildMenu(RectTransform root)
     {
-        var view = Overlay<AppPanelView>(root, 510, 410);
+        var view = Overlay<AppPanelView>(root, 510, 490);
         view.SecondaryRowHeight = 80;
         view.Title = TopLabel("Title", view.Panel, "MENU", 42, 28, 426, 50, 32, S.HeaderFont);
         TopRule(view.Panel, 42, 89, 426);
         view.Primary = Button(view.Panel, "Resume", "계속하기", 52, 123, 406, 62);
         view.Settings = Button(view.Panel, "Settings", "설정", 52, 203, 406, 62);
         view.Secondary = Button(view.Panel, "Return", "우주선으로", 52, 283, 406, 62);
-        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 354, 426, 34, 16, S.BodyFont);
+        view.MainMenu = Button(view.Panel, "Main Menu", "메인 화면으로", 52, 363, 406, 62);
+        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 434, 426, 34, 16, S.BodyFont);
         view.Status.textWrappingMode = TextWrappingModes.Normal; view.Body = null;
-        Navigate(view.Primary, view.Settings, view.Secondary);
+        Navigate(view.Primary, view.Settings, view.Secondary, view.MainMenu);
     }
     private static void BuildResult(RectTransform root)
     {
-        var view = Overlay<AppPanelView>(root, 720, 480);
-        view.Title = TopLabel("Title", view.Panel, "MATCH COMPLETE", 42, 30, 636, 54, 32, S.HeaderFont);
-        TopRule(view.Panel, 42, 98, 636);
-        view.Body = TopLabel("Result", view.Panel, "", 42, 124, 636, 116, 24, S.BodyFont);
+        var view = Overlay<AppPanelView>(root, 720, 440);
+        view.Title = TopLabel("Title", view.Panel, "패배", 42, 58, 636, 66, 48, MissionTitleFont);
+        view.Title.alignment = TextAlignmentOptions.Center;
+        TopRule(view.Panel, 42, 144, 636);
+        view.OutcomeAccent = ImageFill("Outcome Accent", view.Panel, 108, 3, 0, 74, S.Cancel);
+        view.Body = TopLabel("Result", view.Panel, "", 48, 173, 624, 90, 23, S.BodyFont);
+        view.Body.alignment = TextAlignmentOptions.Center;
         view.Body.textWrappingMode = TextWrappingModes.Normal;
-        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 262, 636, 58, 18, S.BodyFont);
+        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 274, 636, 36, 17, S.BodyFont);
         view.Status.textWrappingMode = TextWrappingModes.Normal;
-        view.Primary = Button(view.Panel, "Restart", "다시 시작", 42, 362, 294, 62);
-        view.Secondary = Button(view.Panel, "Return", "우주선으로", 384, 362, 294, 62);
+        view.Primary = Button(view.Panel, "Restart", "처음부터 다시하기", 42, 330, 302, 62);
+        view.Secondary = Button(view.Panel, "Return", "우주선으로", 376, 330, 302, 62);
         view.Settings = null; Navigate(view.Primary, view.Secondary);
+    }
+    private static TMP_FontAsset MissionTitleFont => AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Art/Fonts/Mulmaru SDF.asset");
+    private static void BuildRecovery(RectTransform root)
+    {
+        var view = Overlay<AppPanelView>(root, 720, 500);
+        view.Title = TopLabel("Title", view.Panel, "전투 불능", 42, 43, 636, 64, 42, MissionTitleFont);
+        view.Title.alignment = TextAlignmentOptions.Center;
+        TopRule(view.Panel, 42, 127, 636);
+        view.Body = TopLabel("Reason", view.Panel, "모든 대원이 쓰러졌습니다.", 42, 150, 636, 42, 23, S.BodyFont);
+        view.Body.alignment = TextAlignmentOptions.Center;
+        for (int i = 0; i < 3; i++)
+        { var old = view.Panel.Find("Safety " + (i + 1)); if (old != null) Object.DestroyImmediate(old.gameObject); }
+        view.SafetyCount = TopLabel("Remaining Uses", view.Panel, "남은 안전장치  3 / 3", 42, 220, 636, 34, 23, S.BodyFont);
+        view.SafetyCount.alignment = TextAlignmentOptions.Center;
+        view.Primary = Button(view.Panel, "Use Safety", "안전장치 사용", 72, 294, 576, 62);
+        view.Secondary = Button(view.Panel, "Restart", "처음부터 다시하기", 72, 374, 576, 62);
+        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 450, 636, 30, 17, S.BodyFont);
+        view.Status.alignment = TextAlignmentOptions.Center;
+        view.SetSafetyUses(3); Navigate(view.Primary, view.Secondary);
+    }
+    private static void BuildAnnouncement(RectTransform root)
+    {
+        Canvas(root, 9500);
+        var view = Get<FieldEntryAnnouncement>(root); view.Group = Get<CanvasGroup>(root);
+        var raycaster = root.GetComponent<GraphicRaycaster>(); if (raycaster != null) Object.DestroyImmediate(raycaster);
+        var area = Rect("Scan Area", root, 1200, 116);
+        var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Art/UI/HudV6/HudBootReveal.mat");
+        view.RevealMaterial = material;
+        view.MaskGraphic = Get<Image>(area); view.MaskGraphic.sprite = null; view.MaskGraphic.raycastTarget = false; view.MaskGraphic.material = material;
+        var mask = Get<Mask>(area); mask.showMaskGraphic = false;
+        var title = Label("Message", area, "전장에 진입했습니다.", 1180, 74, 0, 0, 44, MissionTitleFont);
+        title.extraPadding = true;
+        const string letteringPath = "Assets/Art/UI/HudV6/FieldEntryLettering.mat";
+        var lettering = AssetDatabase.LoadAssetAtPath<Material>(letteringPath);
+        if (lettering == null) { lettering = new Material(title.font.material) { name = "FieldEntryLettering" }; AssetDatabase.CreateAsset(lettering, letteringPath); }
+        lettering.EnableKeyword("OUTLINE_ON"); lettering.SetFloat("_OutlineWidth", .16f);
+        lettering.SetColor("_OutlineColor", new Color(.025f, .04f, .04f, 1));
+        EditorUtility.SetDirty(lettering); title.fontSharedMaterial = lettering;
+        var shadow = Get<Shadow>(title); shadow.effectColor = new Color(.02f, .035f, .035f, .8f); shadow.effectDistance = new Vector2(2, -2);
+        ImageFill("Left Rule", area, 84, 1, -480, 0, new Color(S.Accent.r, S.Accent.g, S.Accent.b, .6f));
+        ImageFill("Right Rule", area, 84, 1, 480, 0, new Color(S.Accent.r, S.Accent.g, S.Accent.b, .6f));
+        var scan = Rect("Scan Light", area, 1200, 116);
+        view.ScanGraphic = Get<Image>(scan); view.ScanGraphic.sprite = null; view.ScanGraphic.material = material;
+        view.ScanGraphic.color = new Color(S.Text.r, S.Text.g, S.Text.b, .75f); view.ScanGraphic.raycastTarget = false;
     }
     private static void BuildSettings(RectTransform root)
     {
@@ -149,6 +229,8 @@ public static class CommonUiPrefabSetup
         view.Primary = view.Apply; view.Secondary = view.Back; view.Settings = null; view.Body = view.Status = null;
         Navigate(view.HudScale, view.Defaults, view.Back, view.Apply);
         HudUiReviewSetup.ApplySettingsPreview(root.gameObject, S);
+        if (AssetDatabase.LoadAssetAtPath<GameAudioConfiguration>(GameAudioSetup.ConfigPath) != null)
+            GameAudioSetup.ApplySettings(view);
     }
     private static void BuildLoading(RectTransform root)
     {
@@ -165,6 +247,7 @@ public static class CommonUiPrefabSetup
         Key(panel, "LMB", 710, 123, 78); TopLabel("Attack", panel, "공격", 816, 123, 250, 42, 22, S.BodyFont);
         Key(panel, "Q", 70, 224, 44); Key(panel, "E", 124, 224, 44); TopLabel("Skills", panel, "장착한 스킬", 205, 224, 300, 42, 22, S.BodyFont);
         Key(panel, "SPACE", 710, 224, 112); TopLabel("Dash", panel, "대시", 850, 224, 250, 42, 22, S.BodyFont);
+        UiProductPolishSetup.ApplyLoading(root.gameObject);
         var track = ImageFill("Progress Track", content, 1320, 4, 0, 0, new Color(.24f, .28f, .26f)); Top(track.rectTransform, 300, 902);
         var fill = ImageFill("Progress Fill", track.transform, 0, 0, 0, 0, S.Accent); Stretch(fill.rectTransform); view.ProgressFill = fill.rectTransform;
         view.ProgressLabel = TopLabel("Actual Progress", content, "", 1200, 850, 420, 42, 24, S.LabelFont); view.ProgressLabel.alignment = TextAlignmentOptions.MidlineRight;

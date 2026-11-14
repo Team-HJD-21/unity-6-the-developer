@@ -37,6 +37,32 @@ public sealed class SquadAutomaticPlanningTests
     }
 
     [Test]
+    public void AutomaticPlan_UsesEnvironmentCompositionAndCountWithoutMultiplyingCostBudget()
+    {
+        var planner = Planner(Preset("two", 2), Preset("three", 3));
+        var profile = Create<EncounterEnvironmentProfile>();
+        var serialized = new SerializedObject(profile); var rules = serialized.FindProperty("rules"); rules.arraySize = 1;
+        var rule = rules.GetArrayElementAtIndex(0);
+        rule.FindPropertyRelative("ruleId").stringValue = "night-test";
+        rule.FindPropertyRelative("timeOfDayId").stringValue = "night";
+        rule.FindPropertyRelative("presetOverride").stringValue = "two";
+        rule.FindPropertyRelative("budgetScale").floatValue = .5f;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        var snapshot = Snapshot(); var environment = new MatchEnvironmentSnapshot(snapshot.MatchId, 1, 30,
+            default, new DefinitionId("night"));
+        var points = new[] { Point("a", -3, 0), Point("b", 3, 0) };
+        var positions = points.ToDictionary(point => point.Id, point => point.Position);
+        Assert.That(planner.TryPlan(new AreaSpawnPlanRequest(10, 10), points, snapshot,
+            positions, new Dictionary<string, TargetAttackType>(), 0, Array.Empty<BattlefieldPoint>(),
+            new SquadSelectionSettings(), new FixedRandom(), out var plans,
+            environment: environment, environmentProfile: profile), Is.True);
+        Assert.That(plans.All(plan => plan.SquadOrder == "two"), Is.True);
+        Assert.That(plans.Sum(Count), Is.EqualTo(4)); // 상한5에서 편성을 쪼개지 않아4명, 비용 상한10 유지.
+        Assert.That(planner.LastEnvironment, Is.SameAs(environment));
+        Assert.That(planner.LastEnvironmentPolicy, Is.EqualTo("night-test"));
+    }
+
+    [Test]
     public void AutomaticPlan_SharesRequestBudgetAndRegionalBudgetAcrossPoints()
     {
         var planner = Planner(Preset("three", 3));

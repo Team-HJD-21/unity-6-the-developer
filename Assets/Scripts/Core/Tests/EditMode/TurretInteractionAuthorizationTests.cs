@@ -32,6 +32,23 @@ namespace TeamHJD.Game.Tests.EditMode
             actor.Dispose(); Assert.That(policy.Authorize(Request(), Client).Code, Is.EqualTo("AuthorityActorUnavailable"));
         }
         [Test]
+        public void OccupiedRemoteCommandsStillRequireLiveActorAndNeverGrantRemoteCuAuto()
+        {
+            using var actors = new PlayerInteractionRegistry(Match, new[] { Host, Client });
+            bool captured = true, alive = true, interactive = true, targetExists = true;
+            using var actor = actors.Register(Client, () => new PlayerInteractionSnapshot(new BattlefieldPoint(100, 100), alive, interactive));
+            var policy = new TurretInteractionAuthorization(Host, actors,
+                id => targetExists && id == Turret ? default(BattlefieldPoint) : (BattlefieldPoint?)null,
+                () => default(BattlefieldPoint), 10,
+                new[] { TurretCommandKind.SetActivation, TurretCommandKind.StartAutoActivation }, id => id == Turret && captured);
+            Assert.That(policy.Authorize(Request(), Client).IsAllowed, Is.True);
+            Assert.That(policy.Authorize(Request(TurretCommandKind.StartAutoActivation), Client).Code, Is.EqualTo("OutOfInteractionRange"));
+            captured = false; Assert.That(policy.Authorize(Request(), Client).Code, Is.EqualTo("OutOfInteractionRange"));
+            captured = true; interactive = false; Assert.That(policy.Authorize(Request(), Client).Code, Is.EqualTo("InteractionBlocked"));
+            interactive = true; alive = false; Assert.That(policy.Authorize(Request(), Client).Code, Is.EqualTo("PlayerDead"));
+            alive = true; targetExists = false; Assert.That(policy.Authorize(Request(), Client).Code, Is.EqualTo("InteractionTargetUnavailable"));
+        }
+        [Test]
         public void RegistryRejectsForeignMatchDuplicateActorAndStaleLease()
         {
             using var actors = new PlayerInteractionRegistry(Match, new[] { Host, Client });

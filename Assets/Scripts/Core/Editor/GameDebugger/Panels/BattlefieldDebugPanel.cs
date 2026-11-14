@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System;
 using TeamHJD.Game.Bootstrap;
+using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Content.Authoring;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
@@ -108,12 +109,27 @@ namespace TeamHJD.Game.Editor
 
             if (!EditorApplication.isPlaying)
             {
-                EditorGUILayout.HelpBox("Play Mode에서 Initial_Stage Match를 시작한 뒤 요청할 수 있습니다. 먼저 테스트 런타임을 Active Scene에 구성하세요.", MessageType.None);
+                EditorGUILayout.HelpBox("Stage_1의 정식 Match는 자동 생산을 시작합니다. 아래 설치는 별도 시험 Scene을 구성할 때만 사용하세요.", MessageType.None);
                 if (GUILayout.Button("Install Encounter Test Runtime in Active Scene"))
                     InstallEncounterTestRuntime();
                 return;
             }
 
+            var scene = UnityEngine.Object.FindFirstObjectByType<InitialStageCompositionRoot>();
+            var production = scene != null ? scene.MatchCoordinator?.EncounterProduction : null;
+            if (production != null)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    EditorGUILayout.LabelField("Match 정규 생산", production.IsRunning ? "RUNNING" : "STOPPED", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("다음 요청 / 간격", $"{production.RemainingSeconds:F1} / {production.IntervalSeconds:F1} 게임 초");
+                    EditorGUILayout.LabelField("요청 회차 / 마지막 결과", $"{production.AttemptedRequests} / {production.LastResult?.Status.ToString() ?? "대기"}");
+                    if (scene.CaptureTrend.HasHistory)
+                        EditorGUILayout.LabelField("관측 기간 / 점유 순변화", $"{scene.CaptureTrend.ObservedSeconds:F0}초 / {scene.CaptureTrend.NetRatio:P1} · 증가 {scene.CaptureTrend.PositiveChanges}회");
+                    if (scene.FieldTime != null)
+                        EditorGUILayout.LabelField("공용 / Field 시각", $"{scene.MatchTime.ElapsedSeconds:F1} / {scene.FieldTime.ElapsedSeconds:F1}초 · {(scene.FieldTime.Snapshot.IsPaused ? "Field 보류" : "진행")}");
+                }
+            }
             _encounterSquadOrder = EditorGUILayout.TextField("Squad Preset Order", _encounterSquadOrder);
             _encounterMaxEnemyCount = Mathf.Max(1, EditorGUILayout.IntField("Max Enemy Count", _encounterMaxEnemyCount));
 
@@ -129,7 +145,7 @@ namespace TeamHJD.Game.Editor
             }
 
             if (!hasSnapshot)
-                EditorGUILayout.HelpBox("활성 AppRoot/Match Battlefield snapshot이 없습니다. Initial_Stage에서 Match가 먼저 시작되어야 합니다.", MessageType.Warning);
+                EditorGUILayout.HelpBox("활성 AppRoot/Match Battlefield snapshot이 없습니다. Stage_1에서 Match가 먼저 시작되어야 합니다.", MessageType.Warning);
             else if (target == null)
                 EditorGUILayout.HelpBox("Active Scene에 IEncounterDebugCommandTarget 구현체가 없습니다. 테스트 런타임 설치 후 Play Mode를 다시 시작하세요.", MessageType.Warning);
             else if (!ready)
@@ -148,6 +164,20 @@ namespace TeamHJD.Game.Editor
             }
             EncounterRepeatDebugControls.Draw(this, _encounterSquadOrder, _encounterMaxEnemyCount, target);
             _originControls.Draw(target as IEncounterOriginRequestTarget, ready, _encounterSquadOrder, _encounterMaxEnemyCount);
+            if (target is UnityEngine.Object owner && target is IGameDiagnosticsSource diagnostics && diagnostics.IsServer)
+            {
+                var serialized = new SerializedObject(owner);
+                var policy = serialized.FindProperty("additionalSpawns");
+                if (policy != null)
+                {
+                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    {
+                        EditorGUILayout.PropertyField(policy, new GUIContent("상황 기반 추가 출현 · 현재 Match"), true);
+                        if (serialized.ApplyModifiedPropertiesWithoutUndo())
+                            EditorGUILayout.HelpBox("다음 자동 계획부터 적용됩니다. 이미 예고된 편성·시간은 바꾸지 않습니다.", MessageType.Info);
+                    }
+                }
+            }
         }
 
         private IEncounterDebugCommandTarget FindEncounterCommandTarget()
@@ -174,7 +204,7 @@ namespace TeamHJD.Game.Editor
             Type networkObjectType = FindLoadedComponentType("Unity.Netcode.NetworkObject");
             Type executorType = FindLoadedComponentType("EnemySpawnExecutor");
             Type spawnPointType = FindLoadedComponentType("SpawnPoint");
-            Type launcherType = FindLoadedComponentType("EnemyNetworkTestLauncher");
+            Type launcherType = FindLoadedComponentType("EncounterSceneBinding");
             if (networkManagerType == null || unityTransportType == null || networkObjectType == null ||
                 executorType == null || spawnPointType == null || launcherType == null)
             {

@@ -132,10 +132,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var config = new MatchConfig(matchId, MatchMode.Story, new StageId("test"),
                 new DefinitionId("test"), "test", 1,
                 new[] { new PlayerLoadoutSnapshot(playerId, null) });
-            var state = new MatchState(matchId, MatchPhase.Preparing,
-                new[] { new PlayerState(playerId, 1, 1, true) },
-                new ControlUnitState(1, 1, 1, 1), new WaveState(0, 1, 0, 0),
-                Array.Empty<TurretState>(), Array.Empty<EnemyState>(), Array.Empty<SectorState>());
+            var state = new MatchState(matchId, MatchPhase.Preparing);
             return _root.StartMatch(config, state, new TestModeRules());
         }
 

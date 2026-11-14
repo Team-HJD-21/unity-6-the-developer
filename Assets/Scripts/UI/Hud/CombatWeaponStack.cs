@@ -82,7 +82,7 @@ public sealed class CombatWeaponStack : MonoBehaviour
     private void UpdateName()
     {
         if (NameGroup == null) return;
-        bool usable = _owner != null && _owner.CanSelectWeapon && SkillHud != null && SkillHud.IsFieldVisible;
+        bool usable = _owner != null && _owner.CanSelectWeapon && SkillHud != null && SkillHud.AreCombatControlsVisible;
         int hovered = -1;
         if (usable)
         {

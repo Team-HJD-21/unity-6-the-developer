@@ -1,6 +1,6 @@
 # 체크포인트 바이너리 저장소 API
 
-갱신: 2026-11-02. **자료 형식·복원 정책 표현·실제 파일 저장소를 구현하고 8개 집중 검사를 통과했다.** [저장·복원 실행기와 요청 관찰자](checkpoint-execution-api.md)도 구현했으며 실제 Scene Feature 통합은 진행 중이다. 자동 저장·복원 사건은 선택하지 않는다.
+갱신: 2026-11-14. **자료 형식·복원 정책 표현·실제 파일 저장소를 구현하고 8개 집중 검사를 통과했다.** [저장·복원 실행기와 요청 관찰자](checkpoint-execution-api.md)도 구현했으며 실제 Scene Feature 통합은 진행 중이다. 저장소 자체는 자동 저장·복원 사건을 선택하지 않는다. 현재 Stage의 등장 전·실제 처치 후 저장 요청은 별도 [Stage 관찰자](../02_match/stage-progression-api.md#등장-전처치-후-자동-저장)에 있다.
 
 11월5일 실제 Feature 연결과 현재 writer/누락 상태는 [통합 안내](../01_core/core-feature-integration-guide.md)를 따른다. Core 담당 월드 writer는 연결했으며 실제 전체 저장은 김진태 Weather writer 제공 후 인수한다. `AppRoot.ResumeCheckpointAsync`로 새 1인 Mission 복원 조율을 제공한다.
 

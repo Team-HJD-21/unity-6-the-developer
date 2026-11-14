@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine.SceneManagement;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "TowerBullet")]
@@ -111,7 +112,7 @@ public partial class FieldTurretBullet : MonoBehaviour
     {
         _hasHit = true;
         if (enemy != null)
-            enemy.TakeDamage(Mathf.RoundToInt(_bulletDamage));
+            enemy.TryTakeDamage(Mathf.RoundToInt(_bulletDamage), AttackSourceType.Turret);
 
         if (_impactPrefab != null)
         {

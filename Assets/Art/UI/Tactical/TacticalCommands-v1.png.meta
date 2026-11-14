@@ -1,0 +1,1963 @@
+fileFormatVersion: 2
+guid: 76769359d9aee1545b4726ede73055bc
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8669962848570864663
+    second: TacticalCommands-v1_0
+  - first:
+      213: 3806555791745443609
+    second: TacticalCommands-v1_1
+  - first:
+      213: 606898631091708186
+    second: TacticalCommands-v1_2
+  - first:
+      213: 6432284255335884515
+    second: TacticalCommands-v1_3
+  - first:
+      213: 5454114180566679374
+    second: TacticalCommands-v1_4
+  - first:
+      213: -3268338275331250692
+    second: TacticalCommands-v1_5
+  - first:
+      213: 271470831708116455
+    second: TacticalCommands-v1_6
+  - first:
+      213: 8788867448636622569
+    second: TacticalCommands-v1_7
+  - first:
+      213: 8441450499264857061
+    second: TacticalCommands-v1_8
+  - first:
+      213: -9097311783102691745
+    second: TacticalCommands-v1_9
+  - first:
+      213: 6099199903789152270
+    second: TacticalCommands-v1_10
+  - first:
+      213: -2846050066022407217
+    second: TacticalCommands-v1_11
+  - first:
+      213: 6887069499423982682
+    second: TacticalCommands-v1_12
+  - first:
+      213: -1188370706802281048
+    second: TacticalCommands-v1_13
+  - first:
+      213: 5251496579541579359
+    second: TacticalCommands-v1_14
+  - first:
+      213: -3272493330631044334
+    second: TacticalCommands-v1_15
+  - first:
+      213: 4732280242090504654
+    second: TacticalCommands-v1_16
+  - first:
+      213: -1479165082807622094
+    second: TacticalCommands-v1_17
+  - first:
+      213: -990499490318197431
+    second: TacticalCommands-v1_18
+  - first:
+      213: -2549159917011160657
+    second: TacticalCommands-v1_19
+  - first:
+      213: 9055930345795334465
+    second: TacticalCommands-v1_20
+  - first:
+      213: 226712664743568014
+    second: TacticalCommands-v1_21
+  - first:
+      213: -1202952128627613956
+    second: TacticalCommands-v1_22
+  - first:
+      213: 2094270447720189626
+    second: TacticalCommands-v1_23
+  - first:
+      213: -2902705879302094042
+    second: TacticalCommands-v1_24
+  - first:
+      213: -1457373339744438660
+    second: TacticalCommands-v1_25
+  - first:
+      213: 426527769932197442
+    second: TacticalCommands-v1_26
+  - first:
+      213: -5160519489193453550
+    second: TacticalCommands-v1_27
+  - first:
+      213: -1121697027744734767
+    second: TacticalCommands-v1_28
+  - first:
+      213: 7745742026570035890
+    second: TacticalCommands-v1_29
+  - first:
+      213: 2516971160204649944
+    second: TacticalCommands-v1_30
+  - first:
+      213: -181945396362476039
+    second: TacticalCommands-v1_31
+  - first:
+      213: -6667987431728226312
+    second: TacticalCommands-v1_32
+  - first:
+      213: -2941920563120048861
+    second: TacticalCommands-v1_33
+  - first:
+      213: -3149957883340552102
+    second: TacticalCommands-v1_34
+  - first:
+      213: -2489960500805310565
+    second: TacticalCommands-v1_35
+  - first:
+      213: -1913452920729683814
+    second: TacticalCommands-v1_36
+  - first:
+      213: -2079744296479441543
+    second: TacticalCommands-v1_37
+  - first:
+      213: 3235133020848009816
+    second: TacticalCommands-v1_38
+  - first:
+      213: 1496003556155407557
+    second: TacticalCommands-v1_39
+  - first:
+      213: -2432021841928341348
+    second: TacticalCommands-v1_40
+  - first:
+      213: -1660947200248543961
+    second: TacticalCommands-v1_41
+  - first:
+      213: 8274096957197352641
+    second: TacticalCommands-v1_42
+  - first:
+      213: -1598182529241493070
+    second: TacticalCommands-v1_43
+  - first:
+      213: 4184780692256879621
+    second: TacticalCommands-v1_44
+  - first:
+      213: -6144957242736191388
+    second: TacticalCommands-v1_45
+  - first:
+      213: 5382900294358865620
+    second: TacticalCommands-v1_46
+  - first:
+      213: -6771292126585607001
+    second: TacticalCommands-v1_47
+  - first:
+      213: 490797897454100509
+    second: TacticalCommands-v1_48
+  - first:
+      213: 4897291944682275100
+    second: TacticalCommands-v1_49
+  - first:
+      213: 4588697552168313162
+    second: TacticalCommands-v1_50
+  - first:
+      213: -6766119156057089390
+    second: TacticalCommands-v1_51
+  - first:
+      213: -633691121197046749
+    second: TacticalCommands-v1_52
+  - first:
+      213: -377353696269253626
+    second: TacticalCommands-v1_53
+  - first:
+      213: -6545700108272942734
+    second: TacticalCommands-v1_54
+  - first:
+      213: 8863174633145963656
+    second: TacticalCommands-v1_55
+  - first:
+      213: 76633443039625568
+    second: TacticalCommands-v1_56
+  - first:
+      213: 8916781569570195780
+    second: TacticalCommands-v1_57
+  - first:
+      213: -8247598693090032093
+    second: TacticalCommands-v1_58
+  - first:
+      213: 3457702986387525553
+    second: TacticalCommands-v1_59
+  - first:
+      213: 5545878722718345763
+    second: TacticalCommands-v1_60
+  - first:
+      213: -2261330150439014799
+    second: TacticalCommands-v1_61
+  - first:
+      213: -6464404763647962908
+    second: TacticalCommands-v1_62
+  - first:
+      213: -1800119259808233595
+    second: TacticalCommands-v1_63
+  - first:
+      213: 4918375481719346513
+    second: TacticalCommands-v1_64
+  - first:
+      213: -8672155698845513054
+    second: TacticalCommands-v1_65
+  - first:
+      213: -5197502414795942870
+    second: TacticalCommands-v1_66
+  - first:
+      213: -6289630782502628309
+    second: TacticalCommands-v1_67
+  - first:
+      213: 5065941863897310023
+    second: TacticalCommands-v1_68
+  - first:
+      213: 2811994821054144197
+    second: TacticalCommands-v1_69
+  - first:
+      213: -1459195084775344446
+    second: TacticalCommands-v1_70
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TacticalCommands-v1_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 361
+        width: 540
+        height: 861
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9eb891389ba1ea780800000000000000
+      internalID: -8669962848570864663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_1
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 1153
+        width: 43
+        height: 69
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91761b8135a93d430800000000000000
+      internalID: 3806555791745443609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_2
+      rect:
+        serializedVersion: 2
+        x: 567
+        y: 328
+        width: 674
+        height: 870
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1164e8e6132c6800800000000000000
+      internalID: 606898631091708186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_3
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 1074
+        width: 27
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e622a55370144950800000000000000
+      internalID: 6432284255335884515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_4
+      rect:
+        serializedVersion: 2
+        x: 736
+        y: 1078
+        width: 27
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4ff81933f7e0bb40800000000000000
+      internalID: 5454114180566679374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_5
+      rect:
+        serializedVersion: 2
+        x: 1047
+        y: 1079
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf5611da7a784a2d0800000000000000
+      internalID: -3268338275331250692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_6
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 1015
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e597da784574c300800000000000000
+      internalID: 271470831708116455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_7
+      rect:
+        serializedVersion: 2
+        x: 597
+        y: 941
+        width: 41
+        height: 94
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e6cafd016458f970800000000000000
+      internalID: 8788867448636622569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_8
+      rect:
+        serializedVersion: 2
+        x: 1155
+        y: 1020
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e3c9bd118e062570800000000000000
+      internalID: 8441450499264857061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_9
+      rect:
+        serializedVersion: 2
+        x: 1160
+        y: 1020
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f564035022bdfb180800000000000000
+      internalID: -9097311783102691745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 875
+        width: 128
+        height: 138
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e08f27f5ff5b4a450800000000000000
+      internalID: 6099199903789152270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_11
+      rect:
+        serializedVersion: 2
+        x: 496
+        y: 843
+        width: 112
+        height: 172
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc3e1c14b8cc088d0800000000000000
+      internalID: -2846050066022407217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_12
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 972
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5408907839c39f50800000000000000
+      internalID: 6887069499423982682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_13
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 875
+        width: 84
+        height: 138
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a5f19f632f028fe0800000000000000
+      internalID: -1188370706802281048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_14
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 827
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5631c2c05011e840800000000000000
+      internalID: 5251496579541579359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_15
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 824
+        width: 27
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 213d6e977a4c592d0800000000000000
+      internalID: -3272493330631044334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_16
+      rect:
+        serializedVersion: 2
+        x: 631
+        y: 827
+        width: 13
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec17767becf6ca140800000000000000
+      internalID: 4732280242090504654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_17
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 739
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2362713b133f87be0800000000000000
+      internalID: -1479165082807622094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_18
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 755
+        width: 17
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94dd06126f90142f0800000000000000
+      internalID: -990499490318197431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_19
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 741
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa1b2eebf809f9cd0800000000000000
+      internalID: -2549159917011160657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_20
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 742
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 141bfcb4ba02dad70800000000000000
+      internalID: 9055930345795334465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_21
+      rect:
+        serializedVersion: 2
+        x: 677
+        y: 722
+        width: 18
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e826f18a7f1752300800000000000000
+      internalID: 226712664743568014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_22
+      rect:
+        serializedVersion: 2
+        x: 502
+        y: 726
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cfed95b99614e4fe0800000000000000
+      internalID: -1202952128627613956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_23
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 728
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abec5f350e7501d10800000000000000
+      internalID: 2094270447720189626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_24
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 730
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 623c2c8c16487b7d0800000000000000
+      internalID: -2902705879302094042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_25
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 724
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7678634bae56cbe0800000000000000
+      internalID: -1457373339744438660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_26
+      rect:
+        serializedVersion: 2
+        x: 135
+        y: 689
+        width: 57
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24ee5a53fb45be500800000000000000
+      internalID: 426527769932197442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_27
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 680
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 218d42ebdd62268b0800000000000000
+      internalID: -5160519489193453550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_28
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 674
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d1e9ab0f7eee60f0800000000000000
+      internalID: -1121697027744734767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_29
+      rect:
+        serializedVersion: 2
+        x: 818
+        y: 676
+        width: 37
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b2758f95576e7b60800000000000000
+      internalID: 7745742026570035890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_30
+      rect:
+        serializedVersion: 2
+        x: 948
+        y: 682
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d5a6e94fe31ee220800000000000000
+      internalID: 2516971160204649944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_31
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 676
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f50c4140a9997df0800000000000000
+      internalID: -181945396362476039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_32
+      rect:
+        serializedVersion: 2
+        x: 271
+        y: 658
+        width: 19
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ffd11562cc8673a0800000000000000
+      internalID: -6667987431728226312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_33
+      rect:
+        serializedVersion: 2
+        x: 426
+        y: 677
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 325ffc5b5d23c27d0800000000000000
+      internalID: -2941920563120048861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_34
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 666
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a588b0a8ef91944d0800000000000000
+      internalID: -3149957883340552102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_35
+      rect:
+        serializedVersion: 2
+        x: 1025
+        y: 644
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b97eebced12e17dd0800000000000000
+      internalID: -2489960500805310565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_36
+      rect:
+        serializedVersion: 2
+        x: 1067
+        y: 658
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a98397dd4bc0275e0800000000000000
+      internalID: -1913452920729683814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_37
+      rect:
+        serializedVersion: 2
+        x: 305
+        y: 644
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97db2b0d4934323e0800000000000000
+      internalID: -2079744296479441543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_38
+      rect:
+        serializedVersion: 2
+        x: 235
+        y: 593
+        width: 23
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85238cc875085ec20800000000000000
+      internalID: 3235133020848009816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_39
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 610
+        width: 23
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5cc3d53ee4fd2c410800000000000000
+      internalID: 1496003556155407557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_40
+      rect:
+        serializedVersion: 2
+        x: 926
+        y: 618
+        width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c98bed92509bf3ed0800000000000000
+      internalID: -2432021841928341348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_41
+      rect:
+        serializedVersion: 2
+        x: 313
+        y: 586
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 725818a425123f8e0800000000000000
+      internalID: -1660947200248543961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_42
+      rect:
+        serializedVersion: 2
+        x: 1131
+        y: 585
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ce73e2385f73d270800000000000000
+      internalID: 8274096957197352641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_43
+      rect:
+        serializedVersion: 2
+        x: 271
+        y: 550
+        width: 13
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b1535a057d12d9e0800000000000000
+      internalID: -1598182529241493070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_44
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 558
+        width: 23
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50472e02ed3531a30800000000000000
+      internalID: 4184780692256879621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_45
+      rect:
+        serializedVersion: 2
+        x: 506
+        y: 570
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 468deb2f1f9b8baa0800000000000000
+      internalID: -6144957242736191388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_46
+      rect:
+        serializedVersion: 2
+        x: 944
+        y: 573
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d61b924c47e3ba40800000000000000
+      internalID: 5382900294358865620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_47
+      rect:
+        serializedVersion: 2
+        x: 946
+        y: 570
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ac277ccfa98702a0800000000000000
+      internalID: -6771292126585607001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_48
+      rect:
+        serializedVersion: 2
+        x: 504
+        y: 546
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d10a24e561aafc600800000000000000
+      internalID: 490797897454100509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_49
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 548
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c114b24a31da6f340800000000000000
+      internalID: 4897291944682275100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_50
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 519
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4162ba9c145eaf30800000000000000
+      internalID: 4588697552168313162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_51
+      rect:
+        serializedVersion: 2
+        x: 535
+        y: 512
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29a504bd97ae912a0800000000000000
+      internalID: -6766119156057089390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_52
+      rect:
+        serializedVersion: 2
+        x: 621
+        y: 27
+        width: 566
+        height: 498
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3242bbf584da437f0800000000000000
+      internalID: -633691121197046749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_53
+      rect:
+        serializedVersion: 2
+        x: 142
+        y: 369
+        width: 134
+        height: 136
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 604c03300de53caf0800000000000000
+      internalID: -377353696269253626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_54
+      rect:
+        serializedVersion: 2
+        x: 375
+        y: 369
+        width: 140
+        height: 136
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 271c720ae600925a0800000000000000
+      internalID: -6545700108272942734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_55
+      rect:
+        serializedVersion: 2
+        x: 619
+        y: 497
+        width: 7
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8841be6ae52500b70800000000000000
+      internalID: 8863174633145963656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_56
+      rect:
+        serializedVersion: 2
+        x: 667
+        y: 440
+        width: 21
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 061ca4ed5b1401100800000000000000
+      internalID: 76633443039625568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_57
+      rect:
+        serializedVersion: 2
+        x: 219
+        y: 0
+        width: 337
+        height: 421
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4494bf92895cebb70800000000000000
+      internalID: 8916781569570195780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_58
+      rect:
+        serializedVersion: 2
+        x: 642
+        y: 420
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3268460bfa4aa8d80800000000000000
+      internalID: -8247598693090032093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_59
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 345
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1bf8f62eb8a3cff20800000000000000
+      internalID: 3457702986387525553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_60
+      rect:
+        serializedVersion: 2
+        x: 631
+        y: 339
+        width: 13
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32a2603a05be6fc40800000000000000
+      internalID: 5545878722718345763
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_61
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 250
+        width: 94
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17ea33f85342e90e0800000000000000
+      internalID: -2261330150439014799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_62
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 23
+        width: 188
+        height: 242
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e09b6a0e12d946a0800000000000000
+      internalID: -6464404763647962908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_63
+      rect:
+        serializedVersion: 2
+        x: 147
+        y: 128
+        width: 128
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5878ac51211b407e0800000000000000
+      internalID: -1800119259808233595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_64
+      rect:
+        serializedVersion: 2
+        x: 289
+        y: 109
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1555fd32174914440800000000000000
+      internalID: 4918375481719346513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_65
+      rect:
+        serializedVersion: 2
+        x: 311
+        y: 115
+        width: 12
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2aa0f65c65056a780800000000000000
+      internalID: -8672155698845513054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_66
+      rect:
+        serializedVersion: 2
+        x: 301
+        y: 97
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a245ade5713ced7b0800000000000000
+      internalID: -5197502414795942870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_67
+      rect:
+        serializedVersion: 2
+        x: 1049
+        y: 85
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b249190902eb6b8a0800000000000000
+      internalID: -6289630782502628309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_68
+      rect:
+        serializedVersion: 2
+        x: 1053
+        y: 79
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7432162e847dd4640800000000000000
+      internalID: 5065941863897310023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_69
+      rect:
+        serializedVersion: 2
+        x: 293
+        y: 75
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ce9b232466360720800000000000000
+      internalID: 2811994821054144197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TacticalCommands-v1_70
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 55
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c638f13dc5efbbe0800000000000000
+      internalID: -1459195084775344446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TacticalCommands-v1_0: -8669962848570864663
+      TacticalCommands-v1_1: 3806555791745443609
+      TacticalCommands-v1_10: 6099199903789152270
+      TacticalCommands-v1_11: -2846050066022407217
+      TacticalCommands-v1_12: 6887069499423982682
+      TacticalCommands-v1_13: -1188370706802281048
+      TacticalCommands-v1_14: 5251496579541579359
+      TacticalCommands-v1_15: -3272493330631044334
+      TacticalCommands-v1_16: 4732280242090504654
+      TacticalCommands-v1_17: -1479165082807622094
+      TacticalCommands-v1_18: -990499490318197431
+      TacticalCommands-v1_19: -2549159917011160657
+      TacticalCommands-v1_2: 606898631091708186
+      TacticalCommands-v1_20: 9055930345795334465
+      TacticalCommands-v1_21: 226712664743568014
+      TacticalCommands-v1_22: -1202952128627613956
+      TacticalCommands-v1_23: 2094270447720189626
+      TacticalCommands-v1_24: -2902705879302094042
+      TacticalCommands-v1_25: -1457373339744438660
+      TacticalCommands-v1_26: 426527769932197442
+      TacticalCommands-v1_27: -5160519489193453550
+      TacticalCommands-v1_28: -1121697027744734767
+      TacticalCommands-v1_29: 7745742026570035890
+      TacticalCommands-v1_3: 6432284255335884515
+      TacticalCommands-v1_30: 2516971160204649944
+      TacticalCommands-v1_31: -181945396362476039
+      TacticalCommands-v1_32: -6667987431728226312
+      TacticalCommands-v1_33: -2941920563120048861
+      TacticalCommands-v1_34: -3149957883340552102
+      TacticalCommands-v1_35: -2489960500805310565
+      TacticalCommands-v1_36: -1913452920729683814
+      TacticalCommands-v1_37: -2079744296479441543
+      TacticalCommands-v1_38: 3235133020848009816
+      TacticalCommands-v1_39: 1496003556155407557
+      TacticalCommands-v1_4: 5454114180566679374
+      TacticalCommands-v1_40: -2432021841928341348
+      TacticalCommands-v1_41: -1660947200248543961
+      TacticalCommands-v1_42: 8274096957197352641
+      TacticalCommands-v1_43: -1598182529241493070
+      TacticalCommands-v1_44: 4184780692256879621
+      TacticalCommands-v1_45: -6144957242736191388
+      TacticalCommands-v1_46: 5382900294358865620
+      TacticalCommands-v1_47: -6771292126585607001
+      TacticalCommands-v1_48: 490797897454100509
+      TacticalCommands-v1_49: 4897291944682275100
+      TacticalCommands-v1_5: -3268338275331250692
+      TacticalCommands-v1_50: 4588697552168313162
+      TacticalCommands-v1_51: -6766119156057089390
+      TacticalCommands-v1_52: -633691121197046749
+      TacticalCommands-v1_53: -377353696269253626
+      TacticalCommands-v1_54: -6545700108272942734
+      TacticalCommands-v1_55: 8863174633145963656
+      TacticalCommands-v1_56: 76633443039625568
+      TacticalCommands-v1_57: 8916781569570195780
+      TacticalCommands-v1_58: -8247598693090032093
+      TacticalCommands-v1_59: 3457702986387525553
+      TacticalCommands-v1_6: 271470831708116455
+      TacticalCommands-v1_60: 5545878722718345763
+      TacticalCommands-v1_61: -2261330150439014799
+      TacticalCommands-v1_62: -6464404763647962908
+      TacticalCommands-v1_63: -1800119259808233595
+      TacticalCommands-v1_64: 4918375481719346513
+      TacticalCommands-v1_65: -8672155698845513054
+      TacticalCommands-v1_66: -5197502414795942870
+      TacticalCommands-v1_67: -6289630782502628309
+      TacticalCommands-v1_68: 5065941863897310023
+      TacticalCommands-v1_69: 2811994821054144197
+      TacticalCommands-v1_7: 8788867448636622569
+      TacticalCommands-v1_70: -1459195084775344446
+      TacticalCommands-v1_8: 8441450499264857061
+      TacticalCommands-v1_9: -9097311783102691745
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

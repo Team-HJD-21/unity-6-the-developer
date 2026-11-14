@@ -93,6 +93,7 @@ public static class HudUiReviewSetup
         ApplyIntro(root, style, null, root.GetComponent<InitialStagePlayerHUD>());
         HudFeedbackReviewSetup.ApplyVitals(root, style);
         var turret = root.GetComponentInChildren<StageTurretControlView>(true);
+        if(turret==null)return;
         var serialized = new SerializedObject(turret);
         var activation = (Button)serialized.FindProperty("activationButton").objectReferenceValue;
         activation.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>().PreserveLabelColor = true;
@@ -132,12 +133,22 @@ public static class HudUiReviewSetup
     {
         var preview = root.GetComponent<TeamHJD.Game.Presentation.AppSettingsView>().Preview;
         var weapon = preview.Find("Weapon");
+        ((RectTransform)weapon).sizeDelta = new Vector2(270,70);
         var oldKey = weapon.Find("Key"); if (oldKey != null) oldKey.gameObject.SetActive(false);
-        weapon.Find("Original Weapon").GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+        var gun=weapon.Find("Original Weapon").GetComponent<RectTransform>();
+        gun.anchoredPosition = new Vector2(-33,0); gun.sizeDelta=new Vector2(170,58);
+        var authoredPlayer=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+        int capacity=authoredPlayer.GetComponent<PlayerWeaponAmmo>().GetCapacity(WeaponType.DefaultGun);
+        var current=Get<TextMeshProUGUI>(Rect("Ammo Current",weapon,62,32));
+        current.rectTransform.anchoredPosition=new Vector2(91,7);current.font=style.LabelFont;current.text=Mathf.Max(0,capacity-3).ToString();current.fontSize=25;current.color=style.Text;current.alignment=TextAlignmentOptions.Center;current.raycastTarget=false;
+        current.textWrappingMode=TextWrappingModes.NoWrap;current.overflowMode=TextOverflowModes.Overflow;current.enableAutoSizing=false;
+        var reserve=Get<TextMeshProUGUI>(Rect("Ammo Maximum",weapon,62,20));
+        reserve.rectTransform.anchoredPosition=new Vector2(91,-19);reserve.font=style.LabelFont;reserve.text="/ "+capacity;reserve.fontSize=13;reserve.color=new Color(style.Text.r,style.Text.g,style.Text.b,.55f);reserve.alignment=TextAlignmentOptions.Center;reserve.raycastTarget=false;
+        reserve.textWrappingMode=TextWrappingModes.NoWrap;reserve.overflowMode=TextOverflowModes.Overflow;reserve.enableAutoSizing=false;
         for (int i = 0; i < 4; i++)
         {
             var rect = Rect("Weapon Number " + (i + 1), preview, 24, 22);
-            rect.anchoredPosition = new Vector2(138, 95 - 20 * i);
+            rect.anchoredPosition = ((RectTransform)weapon).anchoredPosition + new Vector2(-154,30 - 20 * i);
             var label = Get<TextMeshProUGUI>(rect); label.text = (i + 1).ToString(); label.font = style.LabelFont;
             label.fontSize = i == 1 ? 20 : 13; label.color = i == 1 ? style.Accent : new Color(.46f, .49f, .46f, 1);
             label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false;

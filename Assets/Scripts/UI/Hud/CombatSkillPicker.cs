@@ -108,7 +108,8 @@ public sealed class CombatSkillPicker : MonoBehaviour
     private void Update()
     {
         if (Hud?.Owner == null) return;
-        if (!Hud.IsFieldVisible) { ResetView(); return; }
+        if (!Hud.AreCombatControlsVisible)
+        { ResetView(); CompactGroup.alpha = 0; CompactGroup.blocksRaycasts = false; return; }
         float scale = PickerRect.localScale.x;
         Vector2 p = Local(GameInput.PointerPosition);
         bool near = p.y < -CanvasRect.rect.height * .5f + Mathf.Max(80, 130 * scale) && Mathf.Abs(p.x) < Mathf.Max(150, 255 * scale);

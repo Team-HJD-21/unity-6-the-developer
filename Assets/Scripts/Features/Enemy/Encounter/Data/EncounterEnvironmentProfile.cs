@@ -25,8 +25,28 @@ public sealed class EncounterEnvironmentProfile : ScriptableObject
     [SerializeField] private Rule[] rules = Array.Empty<Rule>();
     public FixedPresetSpawnRequest Select(FixedPresetSpawnRequest original, MatchEnvironmentSnapshot environment, out string ruleId)
     {
+        Rule selected = SelectRule(environment, out ruleId);
+        if (selected == null) return original;
+        string preset = string.IsNullOrWhiteSpace(selected.presetOverride) ? original.SquadOrder : selected.presetOverride;
+        return new FixedPresetSpawnRequest(preset, ScaleCount(original.MaxCount, selected.budgetScale), original.SpawnBudget);
+    }
+
+    /// <summary>자동 편성에도 동일 환경 규칙을 적용합니다. 마릿수 상한만 조절하고 비용 예산은 중복 증액하지 않습니다.</summary>
+    public AreaSpawnPlanRequest Select(AreaSpawnPlanRequest original, MatchEnvironmentSnapshot environment,
+        out string presetOverride, out string ruleId)
+    {
+        Rule selected = SelectRule(environment, out ruleId);
+        presetOverride = selected?.presetOverride?.Trim();
+        return selected == null ? original : new AreaSpawnPlanRequest(original.SpawnBudget,
+            ScaleCount(original.MaxCount, selected.budgetScale), original.BudgetAllocations);
+    }
+
+    private static int ScaleCount(int maximum, float scale) => Math.Min(maximum, (int)Math.Floor(maximum * (double)scale));
+
+    private Rule SelectRule(MatchEnvironmentSnapshot environment, out string ruleId)
+    {
         ruleId = "neutral";
-        if (environment == null) return original;
+        if (environment == null) return null;
         Rule selected = null; int specificity = -1;
         if (rules.Length > 64) throw new InvalidOperationException("Too many Encounter environment rules.");
         foreach (Rule rule in rules)
@@ -41,9 +61,7 @@ public sealed class EncounterEnvironmentProfile : ScriptableObject
             int score = (weather ? 1 : 0) + (time ? 1 : 0);
             if (score > specificity) { selected = rule; specificity = score; }
         }
-        if (selected == null) return original;
-        ruleId = selected.ruleId;
-        string preset = string.IsNullOrWhiteSpace(selected.presetOverride) ? original.SquadOrder : selected.presetOverride;
-        return new FixedPresetSpawnRequest(preset, Math.Min(original.MaxCount, (int)Math.Floor(original.MaxCount * (double)selected.budgetScale)), original.SpawnBudget);
+        if (selected != null) ruleId = selected.ruleId;
+        return selected;
     }
 }

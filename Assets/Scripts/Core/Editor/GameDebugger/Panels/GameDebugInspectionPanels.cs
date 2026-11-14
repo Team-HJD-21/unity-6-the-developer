@@ -219,6 +219,8 @@ namespace TeamHJD.Game.Editor
         {
             if (string.IsNullOrEmpty(item.OriginKind)) return;
             EditorGUILayout.LabelField("Origin / Delivery", item.OriginKind + " / " + item.DeliveryMode);
+            if (item.HasOriginArea)
+                EditorGUILayout.LabelField("예고/요청 영역 XY · 크기", $"({item.OriginX:F1}, {item.OriginY:F1}) · {item.OriginWidth:F1} × {item.OriginHeight:F1}");
             EditorGUILayout.LabelField("Request GUID", string.IsNullOrEmpty(item.RequestGuid) ? "미계측" : item.RequestGuid);
             if (!string.IsNullOrEmpty(item.CauseEventId)) EditorGUILayout.LabelField("원인 사건", item.CauseEventId);
             if (!string.IsNullOrEmpty(item.SpawnSourceId))

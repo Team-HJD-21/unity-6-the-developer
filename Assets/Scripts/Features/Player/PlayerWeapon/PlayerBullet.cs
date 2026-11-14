@@ -3,6 +3,7 @@ using TeamHJD.Game.Presentation.Scene;
 using TeamHJD.Game.Enemy.Contracts;
 using System.Collections.Generic;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;

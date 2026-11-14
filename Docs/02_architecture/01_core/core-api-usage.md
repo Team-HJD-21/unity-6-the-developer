@@ -96,7 +96,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 ## PoC 요청과 Editor 경계
 
-`EnemyNetworkTestLauncher`는 현재 PoC adapter다. 자동 `MatchStart`, 게임 `RuntimeUI`, `SceneCollision`, 도구 `DebugWindow` 요청은 현재 Match snapshot을 사용하는 공통 Encounter 경로를 거친다.
+`EncounterSceneBinding`는 현재 PoC adapter다. 자동 `MatchStart`, 게임 `RuntimeUI`, `SceneCollision`, 도구 `DebugWindow` 요청은 현재 Match snapshot을 사용하는 공통 Encounter 경로를 거친다.
 
 `IEncounterDebugCommandTarget.TryRequestCurrentEncounter(preset, max, source, out result)`의 성공 여부와 결과를 확인한다. 수동/반복 Debugger 요청은 테스트 명령이며 출시용 Director·스테이지 진행 규칙이 아니다. `IGameDiagnosticsSource`는 조회/사실 이벤트 계약이다. 구독자는 `DiagnosticEmitted`에서 해제하고, bounded 기록의 손실·N/A를 실제 0으로 바꾸지 않는다.
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -210,7 +211,7 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
                 break;
             EnemyHealth health = hit != null ? hit.GetComponentInParent<EnemyHealth>() : null;
             if (health != null && _damagedEnemies.Add(health))
-                health.TakeDamage(damage);
+                health.TryTakeDamage(damage, AttackSourceType.Turret);
         }
         _hits.Clear();
         _damagedEnemies.Clear();

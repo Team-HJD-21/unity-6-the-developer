@@ -17,6 +17,7 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     private Func<bool> _canUse;
     private PlayerSkillHud _hud;
     private PlayerControlState _control;
+    private PlayerInfo _info;
     private readonly System.Collections.Generic.Dictionary<PlayerSkillId, PlayerSkillBase> _skills = new();
 
     public PlayerSkillLoadout Loadout { get; } = new PlayerSkillLoadout();
@@ -27,7 +28,7 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     public bool IsSelectionOpen => _hud != null && _hud.IsOpen;
     public bool CanPrepare => isActiveAndEnabled && (_control == null || _control.CanPrepare) && (_control != null && _control.HasMatchBinding || _canPrepare == null || _canPrepare());
     public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
-    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingSkill && (CanPrepare || CanUse);
+    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingSkill && (_info==null || !_info.HasRescueTarget) && (CanPrepare || CanUse);
     public bool IsPlacingTurret => _turret != null && _turret.IsPlacing;
     public bool IsSelectingTurret => _turret != null && _turret.IsSelecting;
     public bool IsPlacingSkill => (_turret != null && _turret.IsPending) || ActivePlacement != null;
@@ -43,6 +44,7 @@ public sealed partial class PlayerSkillController : MonoBehaviour
 
     private void Awake()
     {
+        _info=GetComponent<PlayerInfo>();
         _control = GetComponent<PlayerControlState>();
         if (_control == null) _control = gameObject.AddComponent<PlayerControlState>();
         foreach (var skill in GetComponents<PlayerSkillBase>()) _skills[skill.Id] = skill;

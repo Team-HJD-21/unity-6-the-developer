@@ -19,6 +19,7 @@ namespace TeamHJD.Game.Editor
         private static CheckpointService _displayedService;
         private static string _error;
         private static Vector2 _scroll;
+        private static bool _growthExpanded;
 
         public static void Draw(InitialStageCompositionRoot scene)
         {
@@ -40,9 +41,64 @@ namespace TeamHJD.Game.Editor
                 foreach (string key in service.MissingParticipantKeys) EditorGUILayout.LabelField(key, EditorStyles.miniLabel);
                 EditorGUILayout.EndScrollView();
             }
+            _growthExpanded = EditorGUILayout.Foldout(_growthExpanded, "개인 / Host 성장 저장 · " + scene.GrowthSaves.Count, true);
+            if (_growthExpanded)
+            {
+                foreach (var growth in scene.GrowthSaves)
+                {
+                    using var growthBox = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                    EditorGUILayout.LabelField(string.Join(" / ", growth.SourceKeys), EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("요청 / 디스크 완료", growth.IssuedRevision + " / " + growth.SavedRevision);
+                    EditorGUILayout.LabelField("상태", growth.LastError != null ? "실패" : growth.HasPendingChanges ? "저장 대기" : "동기화됨");
+                    if (growth.LastError != null) EditorGUILayout.HelpBox(growth.LastError.Message, MessageType.Error);
+                }
+            }
+            if (scene.Recovery != null)
+            {
+                using var recoveryBox = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                var ledger = scene.Recovery.Ledger;
+                EditorGUILayout.LabelField("구조 / 안전장치", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("실제 Player 원본", scene.Recovery.RegisteredPlayers + " / " + scene.Recovery.RequiredPlayers);
+                EditorGUILayout.LabelField("팀 구조 잔여 / 사용", ledger.RescueSeconds.ToString("F1") + "초 / " + ledger.SafetyUses + " / 3");
+                EditorGUILayout.LabelField("실행", ledger.RunId.ToString("N"), EditorStyles.miniLabel);
+                if (scene.RecoveryError != null) EditorGUILayout.HelpBox(scene.RecoveryError, MessageType.Error);
+                using (new EditorGUI.DisabledScope(scene.IsRecovering || !scene.Recovery.IsRecoveryPending))
+                    if (GUILayout.Button("같은 복귀 재시도 · 추가 차감 없음")) _ = scene.RetryRecoveryAsync();
+            }
             _slot = EditorGUILayout.TextField("슬롯", _slot);
+            if (scene.StageProgress != null)
+            {
+                var stage = scene.StageProgress;
+                using var stageBox = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                EditorGUILayout.LabelField("STAGE · 실제 점유 / 사건", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("점유 / 최고 도달", stage.CaptureRatio.ToString("P1") + " / " + stage.HighestCaptureRatio.ToString("P1"));
+                EditorGUILayout.LabelField("33% / 66% 생성", (stage.FirstFieldBoss.IsEmpty ? "미확인" : stage.FirstFieldBoss.Value) + " / " +
+                    (stage.SecondFieldBoss.IsEmpty ? "미확인" : stage.SecondFieldBoss.Value));
+                EditorGUILayout.LabelField("최종 진입 API 조건", stage.CanEnterFinalBattle ? "충족 · 자동 이동 없음" : "미충족 · 자동 이동 없음");
+                if (stage.PendingReason != null) EditorGUILayout.HelpBox(stage.PendingReason switch
+                {
+                    "FieldBossContentNotConnected" => "33%·66% Field 중간보스의 실제 생성 원본이 연결되지 않았습니다.",
+                    "FinalBossSceneAndPresentationRequired" => "점유와 두 Field 생성 조건은 충족했습니다. 실제 최종 Boss Scene·연출 연결이 필요합니다.",
+                    _ => stage.PendingReason
+                }, MessageType.Warning);
+            }
+            if (scene.FinalBossTransitionPending)
+                EditorGUILayout.HelpBox("최종 진입 준비 중 · 공용 시간/로컬 입력을 보류하고 실제 Scene·도착·연출 완료를 기다립니다.", MessageType.Info);
+            if (scene.FinalBossTransitionError != null)
+            {
+                EditorGUILayout.HelpBox(scene.FinalBossTransitionError, MessageType.Error);
+            }
+            if (scene.PendingStageCheckpoints.Count > 0)
+            {
+                EditorGUILayout.LabelField("Stage 사건 저장", string.Join(" / ", scene.PendingStageCheckpoints));
+                if (scene.StageCheckpointError != null)
+                {
+                    EditorGUILayout.HelpBox(scene.StageCheckpointError, MessageType.Error);
+                    if (GUILayout.Button("원인 해결 후 Stage 저장 재시도")) scene.RetryStageCheckpoints();
+                }
+            }
             _restoreCurrency = EditorGUILayout.Toggle("재화도 체크포인트로 복원", _restoreCurrency);
-            EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. 자동 실행 사건은 등록하지 않았습니다.", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. Stage 등장 전·처치 후 저장은 별도 관찰자가 요청합니다.", EditorStyles.wordWrappedMiniLabel);
             bool validSlot = TrySlot(out _);
             using (new EditorGUI.DisabledScope(_pending || service.IsBusy || !validSlot || service.MissingParticipantKeys.Count > 0))
             using (new EditorGUILayout.HorizontalScope())

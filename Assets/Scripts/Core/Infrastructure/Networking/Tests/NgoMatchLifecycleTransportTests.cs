@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Linq;
 using NUnit.Framework;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
@@ -59,6 +60,24 @@ namespace TeamHJD.Game.Infrastructure.Tests
             Array.Resize(ref bytes, bytes.Length - 1);
             Assert.Throws<FormatException>(() => MatchLifecycleCodec.Decode(bytes, out _, out _, out _));
             bytes = MatchLifecycleCodec.Encode(Descriptor()); Array.Resize(ref bytes, bytes.Length + 1);
+            Assert.Throws<FormatException>(() => MatchLifecycleCodec.Decode(bytes, out _, out _, out _));
+        }
+        [Test]
+        public void CompletionReasonRoundTripsAndOldPayloadHasUnspecifiedReason()
+        {
+            var match = new MatchId("reason-test");
+            var completion = new MatchCompletion(new MatchResult(match, MatchOutcome.Defeat, 0, DateTimeOffset.UtcNow, MatchEndReason.ControlUnitDestroyed),
+                new RewardReceipt(match, MatchOutcome.Defeat, Array.Empty<CurrencyDelta>()));
+            var signal = new MatchLifecycleSignal(match, Guid.NewGuid(), completion);
+            byte[] bytes = MatchLifecycleCodec.Encode(MatchLifecycleSignalKind.Completed, signal);
+            MatchLifecycleCodec.Decode(bytes, out _, out _, out var copy);
+            Assert.That(copy.Completion.Result.EndReason, Is.EqualTo(MatchEndReason.ControlUnitDestroyed));
+            byte[] old = bytes.Take(bytes.Length - 4).ToArray();
+            MatchLifecycleCodec.Decode(old, out _, out _, out copy);
+            Assert.That(copy.Completion.Result.EndReason, Is.EqualTo(MatchEndReason.None));
+            bytes[bytes.Length - 4] = 99;
+            Assert.Throws<FormatException>(() => MatchLifecycleCodec.Decode(bytes, out _, out _, out _));
+            Array.Resize(ref bytes, bytes.Length - 1);
             Assert.Throws<FormatException>(() => MatchLifecycleCodec.Decode(bytes, out _, out _, out _));
         }
         [Test]

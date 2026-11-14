@@ -58,6 +58,9 @@ TagManager:
   - name: Map
     uniqueID: 2025306083
     locked: 0
+  - name: Territory
+    uniqueID: 1894048017
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0

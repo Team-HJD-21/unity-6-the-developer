@@ -23,7 +23,7 @@ public sealed class InitialStageEncounterIntegrationTests
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity", OpenSceneMode.Single);
         yield return new EnterPlayMode();
-        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        var launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
         Assert.That(launcher, Is.Not.Null);
         float deadline = Time.realtimeSinceStartup + 20f;
         while (Time.realtimeSinceStartup < deadline && !launcher.RecentDiagnostics.Any(e => e.SpawnDecision != null))
@@ -90,7 +90,7 @@ public sealed class InitialStageEncounterIntegrationTests
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity", OpenSceneMode.Single);
         yield return new EnterPlayMode();
 
-        EnemyNetworkTestLauncher launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        EncounterSceneBinding launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
         Assert.That(launcher, Is.Not.Null, "Initial_Stage의 EnemyNetworkTestLauncher가 로드되어야 합니다.");
 
         float deadline = Time.realtimeSinceStartup + 20f;
@@ -178,7 +178,7 @@ public sealed class InitialStageEncounterIntegrationTests
     // EnterPlayMode의 domain reload를 넘는 coroutine에 closure를 보관하지 않습니다.
     private static bool RequestRepeat(out string result)
     {
-        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        var launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
         if (launcher == null) { result = "Encounter launcher missing"; return false; }
         return launcher.TryRequestCurrentEncounter("Normal", 10, EncounterRequestSource.DebugWindow, out result);
     }

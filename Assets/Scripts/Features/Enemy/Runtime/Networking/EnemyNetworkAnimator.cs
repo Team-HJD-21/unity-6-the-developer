@@ -71,6 +71,7 @@ public class EnemyNetworkAnimator : NetworkBehaviour
 
         // 서버에서도 종료 Animation Event가 실행되도록 직접 재생한다.
         _animator.SetTrigger(AttackHash);
+        GetComponent<EnemyAnimation>()?.PlayAbilitySound();
         PlayAttackRpc(
             _animator.GetFloat(MoveXHash),
             _animator.GetFloat(MoveYHash));
@@ -89,6 +90,7 @@ public class EnemyNetworkAnimator : NetworkBehaviour
         _animator.SetFloat(MoveXHash, moveX);
         _animator.SetFloat(MoveYHash, moveY);
         _animator.SetTrigger(AttackHash);
+        GetComponent<EnemyAnimation>()?.PlayAbilitySound();
     }
     /// <summary>
     /// Animator의 이동 값을 읽어 변경된 상태만 네트워크에 기록한다.

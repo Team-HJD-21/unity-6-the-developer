@@ -66,6 +66,8 @@ public static class AlertPrefabSetup
         var rect = (RectTransform)root.transform;
         rect.sizeDelta = new Vector2(720, 64);
         var view = Get<AlertStripView>(root); view.Group = Get<CanvasGroup>(root);
+        view.MinimumScreenScale = .8f; view.MinimumScreenWidth = 800;
+        view.ErrorColor = new Color(.98f, .72f, .66f);
         rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, 0);
         rect.anchoredPosition = new Vector2(0, view.DefaultBottom);
         var background = root.GetComponent<Image>();
@@ -100,6 +102,7 @@ public static class AlertPrefabSetup
         { material.shader = font.material.shader; material.CopyPropertiesFromMaterial(font.material); }
         material.SetColor(ShaderUtilities.ID_OutlineColor, new Color(.015f, .02f, .02f, 1));
         material.SetFloat(ShaderUtilities.ID_OutlineWidth, .14f);
+        material.SetFloat(ShaderUtilities.ID_FaceDilate, .08f);
         material.EnableKeyword("OUTLINE_ON");
         EditorUtility.SetDirty(material); AssetDatabase.SaveAssetIfDirty(material);
         return material;

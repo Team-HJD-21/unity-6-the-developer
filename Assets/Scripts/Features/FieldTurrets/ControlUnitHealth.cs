@@ -65,7 +65,8 @@ public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget
 
     public bool ApplyDamage(int damage)
     {
-        if (damage <= 0 || IsDestroyed || _definition == null)
+        if (damage <= 0 || IsDestroyed || _definition == null ||
+            !TeamHJD.Game.Presentation.Scene.FieldSimulationTime.CanReceiveDamage(this))
         {
             return false;
         }

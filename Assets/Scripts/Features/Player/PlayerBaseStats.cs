@@ -47,7 +47,11 @@ public sealed partial class PlayerBaseStats : MonoBehaviour, IPlayerMatchBinding
     public bool TryInvest(PlayerBaseStat stat) => Publish(CanModify && State.TryInvest(stat));
     public bool TryRefund(PlayerBaseStat stat) => Publish(CanModify && State.TryRefund(stat));
     public bool TryResetInvestments() => Publish(CanModify && State.ResetInvestments());
-    private bool Publish(bool changed) { if (changed) Changed?.Invoke(); return changed; }
+    private bool Publish(bool changed)
+    {
+        if (changed) { Changed?.Invoke(); GrowthChanged?.Invoke(GrowthSaveUrgency.Immediate); }
+        return changed;
+    }
 
     /// <summary>일반 피해는 표시/계산 공통, 치명타는 실제 공격에서만 권위 Match 난수를 사용합니다.</summary>
     public float ScaleWeaponDamage(float damage) => Mathf.Max(0, damage) * AttackMultiplier;

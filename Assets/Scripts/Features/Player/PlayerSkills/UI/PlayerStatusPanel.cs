@@ -100,7 +100,7 @@ public sealed class PlayerStatusPanel : MonoBehaviour
             if (_skillTree == null || !_skillTree.TryClose()) Close();
             return;
         }
-        if (_owner == null || (_controls != null && _controls.IsBlocked)) { Close(); return; }
+        if (_owner == null || (_controls != null && (_controls.IsBlocked || _controls.IsInTacticalView))) { Close(); return; }
         if (!GameInput.WasPressedThisFrame(GameKey.I) || IsEditingText()) return;
         if (IsOpen) Close();
         else TryOpen();
@@ -110,7 +110,7 @@ public sealed class PlayerStatusPanel : MonoBehaviour
     {
         RefreshOwner();
         if (!IsOpen) return;
-        if (_controls != null && _controls.IsBlocked) { Close(); return; }
+        if (_controls != null && (_controls.IsBlocked || _controls.IsInTacticalView)) { Close(); return; }
         RefreshValues();
     }
 
@@ -118,7 +118,7 @@ public sealed class PlayerStatusPanel : MonoBehaviour
     {
         RefreshOwner();
         if (!isActiveAndEnabled || !IsConfigured || _owner == null ||
-            (_controls != null && _controls.IsBlocked)) return false;
+            (_controls != null && (_controls.IsBlocked || _controls.IsInTacticalView))) return false;
         RefreshValues();
         _panelRoot.SetActive(true);
         return true;

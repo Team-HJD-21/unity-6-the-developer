@@ -31,6 +31,33 @@ namespace TeamHJD.Game.Tests.EditMode
         private static BattlefieldSpatialRuntime Spatial() => new BattlefieldSpatialRuntime(Match, BattlefieldSpatialInput.Empty,
             BattlefieldDynamicSpatialInput.Empty, BattlefieldGridConfiguration.Default);
         [Test]
+        public void AutomaticComposition_UsesTheSameAuthorityAndReplayLedger()
+        {
+            using var spatial = Spatial(); var executor = new Executor();
+            using var service = new EncounterRequestService(Match, () => spatial.Snapshot, () => true, p => p == Host, executor);
+            var request = EncounterRequest.Automatic(new MatchRequestContext(Match, Guid.NewGuid(), Host),
+                10, EncounterRequestSource.RuntimeUI);
+            Assert.That(request.UsesAutomaticComposition, Is.True);
+            Assert.That(request.PresetId.IsEmpty, Is.True);
+            Assert.That(service.Submit(request, Host).HasSpawned, Is.True);
+            Assert.That(service.Submit(request, Host).IsReplay, Is.True);
+            Assert.That(service.Submit(Request(request.Context.RequestId), Host).Status,
+                Is.EqualTo(EncounterRequestStatus.RequestConflict));
+            Assert.That(executor.Calls, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void AutomaticComposition_CannotBypassTheVerifiedIssuer()
+        {
+            using var spatial = Spatial(); var executor = new Executor();
+            using var service = new EncounterRequestService(Match, () => spatial.Snapshot, () => true, p => p == Host, executor);
+            var request = EncounterRequest.Automatic(new MatchRequestContext(Match, Guid.NewGuid(), Host),
+                10, EncounterRequestSource.RuntimeUI);
+            Assert.That(service.Submit(request, new PlayerId("forged")).Status, Is.EqualTo(EncounterRequestStatus.Unauthorized));
+            Assert.That(executor.Calls, Is.Zero);
+        }
+
+        [Test]
         public void UsesLatestSnapshot_AndCachesPartialResultWithoutExecutingAgain()
         {
             using var spatial = Spatial();
