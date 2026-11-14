@@ -216,7 +216,10 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     private void OnEnemyDied(ulong networkObjectId)
     {
         if (_spawnedEnemies.TryGetValue(networkObjectId, out TrackedEnemy enemy))
+        {
+            ReportConfirmedDeath(enemy);
             Observe(enemy, GameDiagnosticKind.EnemyDied, "EnemyHealth confirmed death");
+        }
     }
 
     /// <summary>

@@ -398,6 +398,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             bool ownedMatch = _ownsMatch;
             var errors = new List<Exception>();
             RunCleanup(FlushGrowthSaves, errors);
+            RunCleanup(ReleaseStageCombatSources, errors);
             RunCleanup(ReleaseRecovery, errors);
             // 콜백의 실패/재진입과 관계없이 이전 Scene 소유권은 먼저 닫습니다.
             _matchSession = null;

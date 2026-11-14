@@ -47,7 +47,7 @@ flowchart TD
 
 ## 기능별 연결 문서
 
-- [일반 생산과 추가 출현](../02_match/encounter-production-api.md): Coordinator가 요청하고 실제 생성은 Executor가 한다.
+- [일반 생산과 추가 출현](../08_encounter/encounter-production-api.md): Coordinator가 요청하고 실제 생성은 Executor가 한다.
 - [정적 확보·스폰 차단](../02_match/static-region-capture.md): CU1셀·전투 성과/유지·확보/상실과 Region 그룹 제한.
 - [개인/Host 성장 저장](growth-save-api.md), [구조·안전장치](../02_match/match-recovery-api.md): 저장 종류·실패/재시도 구분.
 - [Stage 진행과 보스 접점](../02_match/stage-progression-api.md): 생성 확인과 실제 사망만 진행 사실로 사용한다.
@@ -57,7 +57,7 @@ flowchart TD
 ## 아직 실제 연결을 완료하지 못한 부분
 
 - 실제 `world/weather` writer가 없어 전체 월드 저장/복원은 실행을 거부한다. 일부 writer만 성공한 것을 전체 성공으로 바꾸지 않는다.
-- 33/66%의 확정 EnemyDefinition·점유 밖 보장 진입 위치와 실제 생성 서비스, 최종 Boss Scene/컷씬/HP 사망 연결이 필요하다. Core 진행 조건/API만으로 실제 보스전이 완성된 것은 아니다.
+- 33/66%의 확정 EnemyDefinition·점유 밖 보장 진입 위치와 실제 생성 서비스, 최종 Boss Scene/컷씬/실제 보스 등록이 필요하다. 공통 생성기의 실제 HP 사망은 Stage로 전달한다. Core 진행 조건/API만으로 실제 보스전이 완성된 것은 아니다.
 - 실제 원격 Player NetworkBehaviour/생명·구조 입력, 원격 추가 출현 예고는 아직 전체 인수되지 않았다. localhost SDK2개 전송 검수와 실제 두 게임 실행은 다르다.
 - 개인 저장은 현재 논리 PlayerId를 사용한다. 실제 Steam/Backend 계정에 귀속하는 인증·영속 ID 계약이 완성된 것으로 해석하지 않는다. 현재 스킬 트리 UI는 해금/강화 원본 자체를 만들지 않으며 실제 재화/스킬 강화 저장 writer도 별도 필요하다.
 

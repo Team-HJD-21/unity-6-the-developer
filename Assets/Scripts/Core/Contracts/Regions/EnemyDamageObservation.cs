@@ -22,5 +22,8 @@ namespace TeamHJD.Game.Contracts
     public interface IEnemyCombatSource
     {
         event Action<EnemyDamageObservation> DamageObserved;
+
+        /// <summary>권위 HP 원본이 확인한 실제 사망입니다. Despawn/Scene 정리는 이 사건을 발행하지 않습니다.</summary>
+        event Action<MatchId, EntityId> DeathObserved;
     }
 }

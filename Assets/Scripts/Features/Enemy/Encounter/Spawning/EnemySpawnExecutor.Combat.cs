@@ -6,10 +6,26 @@ using TeamHJD.Game.Domain;
 using TeamHJD.Game.Enemy.Contracts;
 using Unity.Netcode;
 using UnityEngine;
+using EntityId = TeamHJD.Game.Domain.EntityId;
 
 public partial class EnemySpawnExecutor : IEnemyCombatSource
 {
     public event Action<EnemyDamageObservation> DamageObserved;
+    public event Action<MatchId, EntityId> DeathObserved;
+
+    // 진단 수집의 활성 여부와 무관하게 실제 게임 진행으로 사망 사실을 전달합니다.
+    private void ReportConfirmedDeath(TrackedEnemy enemy)
+    {
+        if (!IsServer || enemy.Context == null || enemy.Context.MatchId.IsEmpty ||
+            enemy.Health == null || enemy.Health.CurrentHealth > 0 || string.IsNullOrEmpty(enemy.EntityId) ||
+            DeathObserved == null)
+            return;
+
+        var actor = new EntityId(enemy.EntityId);
+        foreach (Action<MatchId, EntityId> observer in DeathObserved.GetInvocationList())
+            try { observer(enemy.Context.MatchId, actor); }
+            catch (Exception error) { Debug.LogException(error, this); }
+    }
 
     private void OnEnemyDamaged(EnemyHealth health, int damage, AttackSourceType source)
     {

@@ -277,3 +277,14 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 실제 Stage_1에서 Config 참가자1/실제 actor1, MatchState 공개 속성3개, 정규 생산 계획12/실제 생성12, 실제 HUD AutoActivation 호출 뒤 활성 터렛2개, Player HP400/CU HP1500/Running을 관측했다. Player·CU 보호와 CU 근처 위치 조정은 시험 중에만 적용하고 Play Stop으로 해제했다. b9b-live-model-smoke-fixed-result.json이 근거다.
 - 첫 관측 스크립트는 사용하지 않는 Debug Spawner의 Executor를 골랐고 CU와 먼 위치에서 활성화를 요청해 성공을 놓쳤다. 이후 모든 Executor의 해당 Match 수를 합산하고 실제 CU 거리·준비 장벽을 확인했다. 최초 결과를 제품 실패 또는 성공으로 바꾸지 않고 b9b-smoke-zero-diagnostics.json/b9b-observer-live-recheck.json에 남겼다.
 - core-runtime-map.md에 엔진 진입→Scene 조립→Coordinator→실제 Feature 원본과 읽기 순서를 정리했다. MatchResult.CompletedWave는 현재 항상0이지만 네트워크 codec/UI 사용이 있어 이번 삭제에 포함하지 않았다. 실제 Weather 전체 복원·Boss 콘텐츠·원격 Player 인수 대기는 유지한다.
+
+
+## B9c / B7b — 실제 이동·전투와 Stage 사망 접합 (2026-11-14)
+
+- 깨끗한 Stage_1의 기본 배속45.0166초에서 정규 요청4회·47개체·11개 스폰 지점·40개체 이동을 확인했다. 이 관측 구간에는 교전/피해/사망이0이므로 자연 전투·밸런스 통과라고 쓰지 않는다. b9c-natural-combat-stable-result.json.
+- 별도 검수에서 실제 정규 생산 Slime 하나를 유효 NavMesh의 실제 가동 터렛 사거리로 옮겼다. 실제 사격→피해50→사망1/제거1, 새 오류0을 확인했다. 피해/사망 사실이나 HP를 직접 주입하지 않았다. b9c-turret-contact-result.json. CU 근처 Player 이동과 Player/CU 보호는 시험 전제이며 기본 Scene/Prefab에 저장하지 않았다.
+- 실제 생명 경로에 IEnemyCombatSource.DeathObserved를 추가했다. EnemyHealth.Died→EnemyNetworkController.DeathConfirmed→EnemySpawnExecutor.ReportConfirmedDeath→Root.ReportStageEnemyDeath→StageProgression으로 연결한다. Game Debugger 진단이 게임 진행의 입력이 되지 않는다. Match 해제 때 구독을 먼저 제거한다. 일반 Despawn/Scene 해제는 사망을 발행하지 않는다.
+- StageProgression 규칙6/6 재통과. 실제 검수에서는 저장으로 인수한 추적 ID 상황을 시험하기 위해 실제 Slime ID만 Field 사건에 연결했다. 실제 탄환 사망 후 FirstFieldBossDefeatedtrue, 팀 전투 성과50, 실제 위치12→11, 구독2→0을 확인했다. 남은11개체를 Despawn한 뒤 사망 수는1로 유지됐다. b7b-death-forwarding-result.json. 이 시험은 보스 콘텐츠를 선정하거나 실제33/66 출현을 검증한 것이 아니다.
+- 첫45초 관측은 늦은 소스 컴파일/domain reload로 중단됐다. MatchState/Snapshot 주석·줄바꿈 수정 뒤 import가 완료되기 전에 시작한 것이 잘못이었다. 로그의 Begin MonoManager ReloadAssembly 뒤 PlayerBomb.Update35의 _charges null과 중단 시 NGO 정리 예외가 있었다. b9c-reload-before-error.log / b9c-interrupted-console.json에 call stack을 보존했다. Player를 임의 null-check하지 않고 Edit Mode import·새 계약/실행 assembly 반영·컴파일 정상 확인 후 깨끗한 새 Play에서 위 결과를 얻었다. 정상 재실행/종료에서 재현되지 않았으므로 첫 결과를 제품 수정 완료 증거로 삼지 않는다.
+- 새 API 첫 컴파일에서 UnityEngine.EntityId/Domain.EntityId 이름 충돌이 나 명시 alias로 수정했다. 이 컴파일 실패도 최종 통과와 구분한다. 현재 컴파일 정상과 실제 실행 결과는 별도로 기록한다.
+- Core 실행 지도 신규 링크1개를08_encounter 위치로 정정했다. 팀원별 인계는 예정/구현 혼재 본문을 현재 수정 파일·이유·남은 접합 중심으로 다시 썼고 이전 초안은 ignored 실행 폴더에 보존했다.
