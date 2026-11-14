@@ -14,9 +14,10 @@ namespace TeamHJD.Game.Application
         private readonly Func<BattlefieldPoint?> _controlUnitPosition;
         private readonly HashSet<TurretCommandKind> _sharedCommands;
         private readonly double _maximumDistance;
+        private readonly Func<EntityId, bool> _canOperateOccupiedTurret;
         public TurretInteractionAuthorization(PlayerId hostPlayer, IPlayerInteractionSource players,
             Func<EntityId, BattlefieldPoint?> turretPosition, Func<BattlefieldPoint?> controlUnitPosition,
-            double maximumDistance, IEnumerable<TurretCommandKind> sharedCommands)
+            double maximumDistance, IEnumerable<TurretCommandKind> sharedCommands, Func<EntityId, bool> canOperateOccupiedTurret = null)
         {
             if (hostPlayer.IsEmpty) throw new ArgumentException("A Host player is required.", nameof(hostPlayer));
             if (double.IsNaN(maximumDistance) || double.IsInfinity(maximumDistance) || maximumDistance <= 0)
@@ -32,6 +33,7 @@ namespace TeamHJD.Game.Application
                 _sharedCommands.Add(command);
             }
             _hostPlayer = hostPlayer; _maximumDistance = maximumDistance;
+            _canOperateOccupiedTurret = canOperateOccupiedTurret;
         }
         public TurretCommandPermission Authorize(TurretCommandRequest request, PlayerId verifiedIssuer)
         {
@@ -44,6 +46,10 @@ namespace TeamHJD.Game.Application
             if (!actor.CanInteract) return TurretCommandPermission.Denied("InteractionBlocked");
             BattlefieldPoint? target = request.Kind == TurretCommandKind.StartAutoActivation ? _controlUnitPosition() : _turretPosition(request.TargetId);
             if (!target.HasValue) return TurretCommandPermission.Denied("InteractionTargetUnavailable");
+            // 전술 원격 조작은 Host의 최신 점유 결과로만 허용합니다. CU 자동 명령은 계속 실제 CU 거리가 필요합니다.
+            if (request.Kind != TurretCommandKind.StartAutoActivation &&
+                _canOperateOccupiedTurret != null && _canOperateOccupiedTurret(request.TargetId))
+                return TurretCommandPermission.Allowed;
             double dx = Math.Abs(actor.Position.X - target.Value.X), dy = Math.Abs(actor.Position.Y - target.Value.Y);
             // 큰 유효 double 좌표의 제곱 오버플로도 거리 허용으로 바뀌지 않게 정규화합니다.
             if (dx > _maximumDistance || dy > _maximumDistance ||

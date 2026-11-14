@@ -32,7 +32,7 @@ public sealed class StageControlUnitView : MonoBehaviour
         regionText.text = snapshot == null ? "Region: waiting for Match" :
             (snapshot.Mode == RegionPolicyMode.Dynamic ? "DYNAMIC - no region locks\nActivate turrets to capture" :
                 "STATIC - unlock regions to activate") +
-            $" | {snapshot.CapturedCellCount}/{snapshot.CapturedCells.Count} cells";
+            $" | {snapshot.CapturedCellCount}/{snapshot.Definition.CapturableCellCount} cells";
         bool running = controller != null && controller.IsAutoActivationRunning;
         float remaining = controller != null ? controller.AutoActivationCooldownRemaining : 0;
         autoStatusText.text = controller == null ? "Waiting for CU power" : running ? "AUTO ACTIVATION - RUNNING" :
@@ -57,7 +57,7 @@ public sealed class StageControlUnitView : MonoBehaviour
         if (region != null && (region.Mode != controller.RegionMode || region.GridId != controller.RegionGridId ||
             region.Revision != controller.RegionRevision)) region = null;
         regionText.text = (controller.RegionMode == RegionPolicyMode.Dynamic ? "DYNAMIC - no region locks\nActivate turrets to capture" :
-            "STATIC - unlock regions to activate") + (region == null ? " | region snapshot pending" : $" | {region.CapturedCellCount}/{region.CapturedCells.Count} cells");
+            "STATIC - unlock regions to activate") + (region == null ? " | region snapshot pending" : $" | {region.CapturedCellCount}/{region.Definition.CapturableCellCount} cells");
         autoStatusText.text = !controller.IsControlUnitAvailable || controller.ControlUnitHealth <= 0 ? "Control unit unavailable" :
             pending ? "Waiting for Host confirmation/state" : controller.IsAutoActivationRunning ? "AUTO ACTIVATION - RUNNING" :
             controller.AutoActivationCooldown > 0 ? $"Auto activation cooldown: {controller.AutoActivationCooldown:0.0}s" :

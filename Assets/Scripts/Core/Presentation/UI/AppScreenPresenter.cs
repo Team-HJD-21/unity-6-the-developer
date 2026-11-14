@@ -184,9 +184,19 @@ namespace TeamHJD.Game.Presentation
                     return;
                 }
                 var result = _state.Completion.Result;
-                bool victory = result.Outcome == TeamHJD.Game.Domain.MatchOutcome.Victory;
-                _view.Title.text = victory ? "VICTORY" : "MATCH COMPLETE";
-                _view.Body.text = $"{(victory ? "승리" : "패배")}\n완료 웨이브  {result.CompletedWave}";
+                _view.Title.text = result.Outcome switch
+                {
+                    TeamHJD.Game.Domain.MatchOutcome.Victory => "VICTORY",
+                    TeamHJD.Game.Domain.MatchOutcome.Defeat => "DEFEAT",
+                    _ => "MISSION ENDED"
+                };
+                _view.Body.text = result.Outcome switch
+                {
+                    TeamHJD.Game.Domain.MatchOutcome.Victory => "승리",
+                    TeamHJD.Game.Domain.MatchOutcome.Defeat => "패배",
+                    _ => "임무 종료"
+                };
+                if(result.CompletedWave>0)_view.Body.text += $"\n완료 웨이브  {result.CompletedWave}";
                 _view.Primary.interactable = _view.Secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
                 _view.Status.text = _owner._actionFailure ?? (!string.IsNullOrEmpty(restriction) ? "결과를 확인하고 있습니다." : "");
                 _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);

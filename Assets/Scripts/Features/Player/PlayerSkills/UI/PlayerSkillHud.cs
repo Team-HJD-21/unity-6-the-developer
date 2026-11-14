@@ -30,6 +30,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
     public float DisplayScale => _scaleBinding != null ? _scaleBinding.CurrentScale : 1;
     public PlayerSkillController Owner { get; private set; }
     public bool IsFieldVisible => CombatHudContext.IsFieldActor(Owner);
+    public bool AreCombatControlsVisible => IsFieldVisible && Owner.GetComponent<PlayerControlState>()?.IsInTacticalView != true;
     public bool IsOpen => Owner != null && (_combatPicker != null ? _combatPicker.IsOpen : _panel != null && _panel.IsOpen);
     public CombatSkillPicker CombatPicker => _combatPicker;
     public bool IsConfigured => _qSlot != null && _qSlot.IsConfigured
@@ -157,7 +158,8 @@ public sealed class PlayerSkillHud : MonoBehaviour
             return;
         }
         SetVisible(IsFieldVisible);
-        if (!IsFieldVisible)
+        if (_recovery != null) _recovery.Refresh();
+        if (!AreCombatControlsVisible)
         {
             if (IsOpen) Close();
             if (_tooltip != null) _tooltip.Hide();
@@ -171,7 +173,6 @@ public sealed class PlayerSkillHud : MonoBehaviour
             if (HasTooltip) _tooltip.Refresh();
             else _tooltip.Hide();
         }
-        if (_recovery != null) _recovery.Refresh();
         RefreshPlacementFeedback();
     }
 

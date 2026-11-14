@@ -78,6 +78,10 @@ public static class HudFeedbackReviewSetup
         shape.Face = new Color(.035f, .045f, .05f, .82f); shape.Stroke = 1;
         plate.SetAsFirstSibling();
         var rule = header.transform.Find("Rule"); if (rule != null) rule.gameObject.SetActive(false);
+        header.OccupancyTitle=header.transform.Find("Territory Lettering")?.gameObject;
+        header.OccupancyDivider=header.transform.Find("Separator")?.gameObject;
+        header.HeaderBackplate=plate;
+        header.SetConfirmedOccupancy(-1,0);
     }
     public static void ApplyVitals(GameObject root, CombatHudStyle style)
     {

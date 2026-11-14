@@ -55,7 +55,7 @@ public sealed class PlayerWeaponHud : MonoBehaviour
     private void Refresh()
     {
         if (_group == null) return;
-        bool visible = _owner != null && _owner.isActiveAndEnabled;
+        bool visible = _owner != null && _owner.isActiveAndEnabled && _skillHud.AreCombatControlsVisible;
         bool canSelect = visible && _owner.CanSelectWeapon;
         _group.alpha = visible ? 1f : 0f;
         _group.interactable = canSelect;

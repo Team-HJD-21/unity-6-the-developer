@@ -1127421,6 +1127421,14 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: CameraLeftTop
+      value: 
+      objectReference: {fileID: 627262321}
+    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: CameraRightBottom
+      value: 
+      objectReference: {fileID: 542229218}
     - target: {fileID: 1609201713903355411, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901

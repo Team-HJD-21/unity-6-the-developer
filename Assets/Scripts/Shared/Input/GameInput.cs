@@ -34,7 +34,12 @@ public enum GameKey
     PageUp,
     PageDown,
     R,
-    I
+    I,
+    M,
+    G,
+    U,
+    Return,
+    Home
 }
 
 public static class GameInput
@@ -152,6 +157,11 @@ public static class GameInput
             GameKey.F => keyboard.fKey,
             GameKey.R => keyboard.rKey,
             GameKey.I => keyboard.iKey,
+            GameKey.M => keyboard.mKey,
+            GameKey.G => keyboard.gKey,
+            GameKey.U => keyboard.uKey,
+            GameKey.Return => keyboard.enterKey,
+            GameKey.Home => keyboard.homeKey,
             GameKey.Tab => keyboard.tabKey,
             GameKey.Digit1 => keyboard.digit1Key,
             GameKey.Digit2 => keyboard.digit2Key,

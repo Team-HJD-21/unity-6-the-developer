@@ -1,7 +1,34 @@
 # Initial Stage Player HUD API
 
-최종 갱신: 2026-11-12
-상태: HUD v6와 공통 프레임 적용, Editor의 실제 Scene·단계별 입력·시각 확인 완료. [검증 범위·한계](../../94_art/ui-validation-2026-11-12.md)에서 자동 검사와 직접 입력 관측을 구분한다.
+최종 갱신: 2026-11-14. 전술 화면의 구현과 URP 재검수 범위는 다음 절을 따른다. 기존 HUD v6 인수와 새 전술 UI 인수는 구분한다.
+
+## 2026-11-13 전술 화면
+
+`InitialStagePlayerHUD.prefab`의 기존 `StageTurretControlView`를 제거하고 `TacticalCommandController`로 연결했다. 아래 과거 기록의 일반 클릭 선택·상세 패널보다 이 절을 우선한다. 실제 검증 결과와 제한은 [전술 화면 구현 기록](../../01_planning/02_implementation-records/2026/11/2026-11-13-tactical-command-view.md)을 확인한다.
+
+- 필드에서 **M / 전술 버튼**으로 열고 M·Esc·닫기 버튼으로 복귀한다. 플레이어 중심에서 실제 점유 셀을 최대한 담는 배율로 시작한다. 맵 가장자리에서는 플레이어가 보이도록 중심을 보정하고 실제 카메라 사각형을 맵 안에 제한한다. 화면비보다 맵이 좁아지면 무광 여백과 임시 viewport로 분리해 맵 밖의 월드를 그리지 않는다.
+- 카메라 경계는 Scene instance에 연결한 `CameraLeftTop`/`CameraRightBottom`을 우선한다. PR #722의 Stage_1은 LeftTop(-138,120), RightBottom(138,-120)인276×240이다. 참조가 없거나 좌표가 비정상/역전이면 기존 지역 geometry를 사용한다. 지역 정의·점유·권한의 원본은 바꾸지 않는다.
+- 플레이어 이동·발사·스킬 준비를 막고, WASD/방향키·마우스 가운데 드래그는 카메라 이동에 사용한다. 휠은 확대·축소, Home은 플레이어 복귀다. 게임 시간은 정지하지 않는다.
+- 터렛을 선택하면 좌측 하단 도크에 HP·전력·사거리 내 적 수와 켜기/끄기·강화를 표시한다. Enter는 선택 터렛 토글, U는 강화창이다. 성공을 미리 표시하지 않고 기존 Host 명령 결과·확정 스냅샷을 따른다.
+- 근처 터렛은 기존 거리 규칙으로 조작한다. 멀리 있는 개별 터렛은 Host의 **최신 점유 셀**에 있을 때만 허용한다. 사망·메뉴·전환 잠금·전력·냉각·잠금·강화 제약은 유지한다. CU 자동 활성화는 원격 허용에서 제외한다.
+- CU 근처에서 자동 활성화와 다중 선택 버튼·Shift+클릭/Shift+드래그 후 선택 켜기/끄기를 표시한다. 다중 선택 도크에는 가동 수와 사용 전력을 집계한다. 일괄 변경은 개별 명령들의 모음이며 원자적 트랜잭션이 아니다. 각 결과를 기존 권한 처리기가 검증한다.
+- 전체도는 전술 화면 안에만 있다. 클릭/드래그로 카메라를 옮기며 현재 시야 사각형·점유 셀·터렛·CU·플레이어·적을 표시한다. 우클릭 목표 지정은 필드 복귀 후 방향·거리를 표시하고 가까워지면 해제한다.
+- 적 정보는 현재 같은 전장 Scene의 활성·생존 `EnemyHealth` 위치를 집계한다. 숨은 적을 제외하는 별도 탐지 규칙은 적용하지 않는다. 현재 전장에 생성되지 않은 적이나 스폰 계획을 추정하지 않는다.
+- 일반 필드 클릭은 터렛 패널을 열지 않는다. 플레이어의 성공한 발사/근접 공격 뒤 2초가 지나야 Hover 정보가 보이고 다음 공격에 숨는다. 근접 **G** 토글은 시험 배치이며 기존 F의 플레이어 터렛 회수를 보존한다.
+
+편집 원본은 `Assets/Prefabs/UI/Tactical/TacticalHud.prefab`, 설정은 `Assets/Resources/Core/TacticalHudStyle.asset`이다. 같은 `CombatHudStyle`의 패널·프레임·폰트를 사용한다. `TacticalHudSetup.Configure`는 명시적으로만 프리팹을 다시 작성하므로 수동 편집 후 무심코 실행하지 않는다. 런타임에는 작성된 UI를 복제하고 실제 점유 셀 텍스처/월드 표식만 갱신한다. 카메라와 AudioListener를 추가하지 않는다.
+
+Stage Scene의 두 marker는 `TacticalHudSetup.BindActiveSceneCameraBounds`로 해당 HUD instance에 명시 연결하고 Scene diff를 확인한 뒤 저장한다. 참조를 prefab asset에 Scene 참조로 굽지 않는다. 이후 지형만 갱신하려면 `TacticalArtSetup.BakeOverviewTerrain`을 사용하며 전체 HUD/atlas를 다시 만들지 않는다.
+
+Focus·이전 위치·전체도 이동과 zoom은 Smoothstep을 사용한다. `TacticalHudStyle.CameraMoveSeconds` 기본0.18초, `CameraZoomSeconds` 기본0.16초이며0이면 즉시 적용한다. 연속 이동/drag는 gesture 시작 때만 easing을 시작하고, 모서리 zoom-out의 재중앙화도 실제 현재 위치부터 보간한다. 실제 viewport는 보간 중에도 매 프레임 제한한다. 처음 열 때 framing과 닫을 때 플레이어 시점 복원은 즉시다.
+
+멀어지면 Cannon/Missile 심볼과 적 무리·수량으로 읽는다. 진입/복귀 배율2.5/2.2의 히스테리시스와 짧은 알파 전환을 사용하고, 터렛은 작은 Game View에서도32 화면 픽셀을 유지한다. Player/CU는 기존 심볼을 재사용한다. 상세 이미지는 실제 게임 프리팹의 베이스/헤드 정지 상태를 렌더한 Sprite이며, 전체도 지형도 authored Stage_1을 bake한다. Scene/geometry가 다르면 지형 이미지를 숨긴다. `TacticalArtSetup`은 Edit Mode의 명시 제작 도구다. [생성·입고·검수 기록](../../94_art/tactical-ui-assets-2026-11-14.md)을 따른다.
+
+전술 조작 파츠의 `CombatHudScaleBinding.MinimumScreenScale`는0.8이다. 800px 이상 창에서는16pt 정보가 최소12.8 화면 픽셀로 유지되며, 더 좁은 창에서는 폭에 비례해 줄어든다. 기존 전투 HUD 배율 설정은 유지한다. 적 수량 라벨은 도크·전체도·CU 명령·사건·표시 중인 Alert와 겹치는 위치를 피한다.
+
+`PlayerControlState.EnterTacticalView()`의 lease는 전술 이동/전투 제한만 소유한다. `CanIssueTurretCommands`는 이 제한만 제외하고 다른 입력·생존·Match·Presence 잠금을 검사한다. lease를 닫은 프레임의 클릭은 발사로 전달하지 않는다. 카메라는 Canvas 밖의 Scene marker와 `CameraManager.PushView` lease를 사용하며 `TrySetViewSize`/`TrySetViewViewport`는 현재 최상위 target 소유자만 갱신한다. 닫을 때 원래 플레이어 시점·배율·viewport로 즉시 복귀한다.
+
+2026-11-12 기록: HUD v6와 공통 프레임 적용, Editor의 실제 Scene·단계별 입력·시각 확인 완료. [당시 검증 범위·한계](../../94_art/ui-validation-2026-11-12.md)에서 자동 검사와 직접 입력 관측을 구분한다.
 
 2026-11-12: 상태창의 공격력·이동속도·치명률 행은 왼쪽 `+` 투자, 오른쪽 `-` 회수 순서로 배치한다. 두 버튼의 위치만 교환하고 기존 이벤트와 수치 계산은 유지한다.
 
@@ -19,7 +46,7 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 `StagePlayerVitalsView`가 같은 로컬 actor와 CU의 실제 값을 새 `CombatVitalsGroup`으로 전달한다. Player HP는 좌측 헬멧, CU HP/전력은 우측 릴레이 심볼로 구분한다. 각 그룹은 독립적으로 자동 숨김·가장자리 접근·실제 값 변경·클릭 고정을 처리한다. 호버한 바 위에서만 정수 현재/최대 값을 표시한다. 소유자 대기·해제 또는 CU 데이터 부재 시 표시를 지운다. 상시 레벨·XP는 감추며 실제 XP 획득만 월드 팝업으로 표시한다.
 
-`CombatHudHeader`는 같은 씬의 실제 낮밤 시계와 현재 감속 효과를 표시한다. 점유율은 유효 분모가 없는 현재 `--%`이며 `SetConfirmedOccupancy(captured, eligible)`는 실제 분모를 주입할 후속 접점이다. 보스 표시는 `CombatBossView.Bind(EnemyHealth, name)`의 실제 보스 소스가 있을 때만 사용한다. 일반 적을 보스로 지정하지 않으며 현재는 숨긴다.
+`CombatHudHeader`는 같은 씬의 실제 낮밤 시계와 현재 감속 효과를 표시한다. 점유율의 유효 분모가 없으면 점유 제목·수치·분리선을 숨기고 타이머와 배경을 중앙에 맞춘다. `SetConfirmedOccupancy(captured, eligible)`는 유효한 확정 분모/분자를 전달하는 접점이다. Header는 같은 actor·Match의 전술 지역 투영에서 `CapturedCellCount`와 `Definition.CapturableCellCount`를 읽는다. 전체 Grid 셀 수를 분모로 쓰지 않는다. 작은 양수는 소수 또는 `<0.1%`로 표시하며 Stage_1의 시작1/201은0.5%다. 보스 표시는 `CombatBossView.Bind(EnemyHealth, name)`의 실제 보스 소스가 있을 때만 사용한다. 일반 적을 보스로 지정하지 않으며 현재는 숨긴다.
 
 `CombatHudDebugPanel`은 로컬 actor가 있고 Core 개인 Menu가 최상위일 때만 우측에 나타난다. `WeatherDebugHud.CanChangePhase`를 따르며 기존 `ResetTimerAndWeather`/`AdvanceDayNight`로 요청한다. 기존 관리 버튼의 표시만 숨긴다. 자동 활성화는 해당 Menu의 정확한 ID만 닫고 한 프레임 뒤 `InitialStagePlayerHUD.TryRequestAutoActivation()`을 호출한다. 생존·다른 입력 잠금·CU 거리·Host 명령 Port 검사는 원본 경로를 유지한다. `true`는 요청 제출을 뜻하며 Host 확정은 `AutoActivationFeedback` 이벤트로 별도 표시한다. 공유 월드를 정지하거나 다른 입력 lease를 해제하지 않는다.
 
@@ -277,7 +304,7 @@ Host는 FieldTurret 원본을 최대 0.1초 주기로 조회해 표시 복사본
 
 CU의 점령 수치는 모드뿐 아니라 표시 Frame의 RegionGridId/RegionRevision이 현재 지역 Snapshot과 일치할 때만 결합한다. 독립 채널이 서로 다른 시점의 상태를 전달하면 대기 안내를 표시한다.
 
-실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../../99_archive/planning-links/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
+실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../../99_archive/2026-11-05/planning/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
 
 플레이어 연동 스크립트를 추가·수정하면 같은 변경에서 책임·호출 조건·연동 API를
 갱신한다. CU 자동 활성화 시작 버튼은 현재 정식 명령 경계에 연결돼 있으며 최종 UI 연출/제품 밸런스 확정은 이번 기반 작업과 구분한다.

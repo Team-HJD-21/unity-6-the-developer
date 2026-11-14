@@ -57,6 +57,8 @@ public partial class PlayerAttack : MonoBehaviour
     private bool _reportedConfigurationError;
     /// <summary>실제 탄환 생성에 성공한 한 발입니다. 산탄의 각 pellet이나 막힌 입력에는 발생하지 않습니다.</summary>
     public event System.Action<WeaponType> ShotFired;
+    /// <summary>실제 발사 또는 근접 휘두르기에 성공했을 때 발생합니다. 비전투 Hover 표시의 기준입니다.</summary>
+    public event System.Action AttackPerformed;
     private bool CanAttack => isActiveAndEnabled && _selection != null && _selection.transform == transform &&
         _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill) &&
         (_repair == null || !_repair.IsRepairing);
@@ -107,6 +109,7 @@ public partial class PlayerAttack : MonoBehaviour
         _weaponRig.ShowShotFlash(shot.color);
         if (_motion != null) _motion.PlayRangedShot();
         ShotFired?.Invoke(_selection.CurrentWeapon);
+        AttackPerformed?.Invoke();
         TeamHJD.Game.Presentation.GameAudioManager.Play(TeamHJD.Game.Presentation.GameSound.PlayerShot, this);
         return true;
     }
@@ -181,6 +184,7 @@ public partial class PlayerAttack : MonoBehaviour
         var spanner = _selection.Spanner;
         if (spanner == null || !TryGetAimDirection(out Vector2 direction) || !spanner.TryAttack(direction)) return false;
         _nextShotTime = GameSeconds + spanner.AttackInterval;
+        AttackPerformed?.Invoke();
         return true;
     }
 }

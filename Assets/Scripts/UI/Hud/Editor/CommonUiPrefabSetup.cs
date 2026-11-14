@@ -167,6 +167,7 @@ public static class CommonUiPrefabSetup
         Key(panel, "LMB", 710, 123, 78); TopLabel("Attack", panel, "공격", 816, 123, 250, 42, 22, S.BodyFont);
         Key(panel, "Q", 70, 224, 44); Key(panel, "E", 124, 224, 44); TopLabel("Skills", panel, "장착한 스킬", 205, 224, 300, 42, 22, S.BodyFont);
         Key(panel, "SPACE", 710, 224, 112); TopLabel("Dash", panel, "대시", 850, 224, 250, 42, 22, S.BodyFont);
+        UiProductPolishSetup.ApplyLoading(root.gameObject);
         var track = ImageFill("Progress Track", content, 1320, 4, 0, 0, new Color(.24f, .28f, .26f)); Top(track.rectTransform, 300, 902);
         var fill = ImageFill("Progress Fill", track.transform, 0, 0, 0, 0, S.Accent); Stretch(fill.rectTransform); view.ProgressFill = fill.rectTransform;
         view.ProgressLabel = TopLabel("Actual Progress", content, "", 1200, 850, 420, 42, 24, S.LabelFont); view.ProgressLabel.alignment = TextAlignmentOptions.MidlineRight;
