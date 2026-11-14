@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: BasicPatrolSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: Normal
-  role: 0
-  selectionWeight: 4
   _composition:
   - _enemyId: GoblinSpear
     _weight: 1
   - _enemyId: Slime
     _weight: 2
+  _targetRule: 0
+  role: 0
+  selectionWeight: 4

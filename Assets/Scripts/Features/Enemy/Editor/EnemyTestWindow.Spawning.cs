@@ -8,6 +8,7 @@ public sealed partial class EnemyTestWindow
 {
     [SerializeField] private SpawnPoint individualSpawnPoint;
     [SerializeField] private TargetableComponent individualInitialTarget;
+    [SerializeField] private EnemyTargetRule individualTargetRule = EnemyTargetRule.PlayerOrTurret;
     private readonly List<EnemyDefinition> _individualDefinitions = new();
     private readonly List<EnemyTestArea> _testAreas = new();
     private DropdownField _individualDefinitionField;
@@ -22,6 +23,9 @@ public sealed partial class EnemyTestWindow
         parent.Add(new HelpBox("예산·편성 선택을 생략하고 지정 몬스터를 1마리 생성합니다. Encounter 전체 경로는 위의 편성 요청 버튼으로 검사하세요.", HelpBoxMessageType.Info));
         _individualDefinitionField = new DropdownField("몬스터 종류");
         parent.Add(_individualDefinitionField);
+        var targetRuleField = new EnumField("타깃 규칙", individualTargetRule);
+        targetRuleField.RegisterValueChangedCallback(evt => individualTargetRule = (EnemyTargetRule)evt.newValue);
+        parent.Add(targetRuleField);
         _testAreaField = new DropdownField("시험 구역");
         _testAreaField.RegisterValueChangedCallback(_ => SelectTestArea());
         parent.Add(_testAreaField);
@@ -103,7 +107,7 @@ public sealed partial class EnemyTestWindow
         {
             var definition = _individualDefinitions.Find(item => item != null && item.EnemyId == _individualDefinitionField.value);
             bool success = EnemyTestSceneTools.TrySpawnTestEnemy(binding, definition, individualSpawnPoint, individualInitialTarget,
-                out EnemyController enemy, out string message);
+                out EnemyController enemy, out string message, individualTargetRule);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
             if (success)

@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: RushAssaultSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: RushAssault
-  role: 1
-  selectionWeight: 2
   _composition:
   - _enemyId: GoblinDual
     _weight: 4
   - _enemyId: Slime
     _weight: 2
+  _targetRule: 0
+  role: 1
+  selectionWeight: 2

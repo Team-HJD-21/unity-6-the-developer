@@ -319,7 +319,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
             definitions.Add(enemy);
         }
 
-        Dictionary<EnemyTargetRule, EnemySquad> sharedSquads = new();
+        EnemySquad sharedSquad = null;
         List<EnemySquad> createdSquads = new();
 
         if (_spawnRandom != null && !_spawnRandom.IsAvailable)
@@ -373,15 +373,17 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                 EnemySquad memberSquad;
                 if (enemy.SquadMode == EnemySquadMode.Individual)
                 {
-                    memberSquad = new EnemySquad(enemy.SquadMode, enemy.TargetRule);
+                    memberSquad = new EnemySquad(enemy.SquadMode, spawnInstruction.TargetRule);
                     createdSquads.Add(memberSquad);
                 }
-                else if (!sharedSquads.TryGetValue(enemy.TargetRule, out memberSquad))
+                else
                 {
-                    // 공동 분대도 타깃 규칙이 같은 구성원끼리 묶는다.
-                    memberSquad = new EnemySquad(enemy.SquadMode, enemy.TargetRule);
-                    sharedSquads.Add(enemy.TargetRule, memberSquad);
-                    createdSquads.Add(memberSquad);
+                    if (sharedSquad == null)
+                    {
+                        sharedSquad = new EnemySquad(EnemySquadMode.Shared, spawnInstruction.TargetRule);
+                        createdSquads.Add(sharedSquad);
+                    }
+                    memberSquad = sharedSquad;
                 }
 
                 if (!TrySpawnActor(enemy, spawnPosition, world ? Quaternion.identity : spawnPoint.Rotation,

@@ -22,7 +22,7 @@ public sealed class EnemyDefinition : ScriptableObject
     [Header("분대 설정")]
     [SerializeField] private EnemySquadMode _squadMode;
 
-    // 생성·소환·복원 경로를 프리셋 규칙으로 이전할 때까지 기존 직렬화 값을 보존한다.
+    // 단독 Stage·보스 생성과 이전 체크포인트 호환에 필요한 직렬화 값을 보존한다.
     [SerializeField, HideInInspector] private EnemyTargetRule _targetRule;
 
     [Header("공격 인원 제한")]
@@ -46,7 +46,7 @@ public sealed class EnemyDefinition : ScriptableObject
     /// <summary>공동 분대 또는 한 마리씩 독립 분대를 구성할지 반환한다.</summary>
     public EnemySquadMode SquadMode => _squadMode;
 
-    /// <summary>프리셋 규칙 연결 전 기존 생성·복원 경로에서 사용하는 타깃 규칙이다.</summary>
+    /// <summary>단독 Stage·보스 생성과 이전 저장의 호환에 사용하는 기존 타깃 규칙이다.</summary>
     public EnemyTargetRule TargetRule => _targetRule;
 
     /// <summary>최초 분대 등록 때 전달할 공격 인원 집계 여부를 반환한다.</summary>

@@ -93,7 +93,8 @@ public static class EnemyTestSceneTools
 
     /// <summary>Core의 최신 Snapshot·환경·종료 토큰을 사용해 한 마리 기능 시험을 실행한다.</summary>
     public static bool TrySpawnTestEnemy(EncounterSceneBinding binding, EnemyDefinition definition,
-        SpawnPoint point, TargetableComponent initialTarget, out EnemyController controller, out string result)
+        SpawnPoint point, TargetableComponent initialTarget, out EnemyController controller, out string result,
+        EnemyTargetRule targetRule = EnemyTargetRule.PlayerOrTurret)
     {
         var composition = RequireMatch(binding);
         var snapshot = composition.TacticalBattlefield;
@@ -104,6 +105,6 @@ public static class EnemyTestSceneTools
             environment: composition.EnvironmentSource?.Snapshot, requestGuid: Guid.NewGuid(),
             spawnCancellation: composition.MatchCoordinator.GameplayCancellation);
         return binding.ExecutionTarget.TrySpawnTestEnemy(definition, point, initialTarget, context,
-            out controller, out result);
+            out controller, out result, targetRule);
     }
 }

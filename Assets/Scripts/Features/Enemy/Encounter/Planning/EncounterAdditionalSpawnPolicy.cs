@@ -58,7 +58,7 @@ namespace TeamHJD.Game.Enemies.Encounter
                 for (int j = 0; j < instructions.Count; j++) if (j != i) remaining.Add(instructions[j]);
                 var origin = EncounterSpawnOrigin.AtWorld(internalArea);
                 var moved = new SpawnInstruction(instructions[i].SquadOrder, "", instructions[i].Enemies,
-                    new EncounterSpawnPlacement(origin, internalArea));
+                    new EncounterSpawnPlacement(origin, internalArea), instructions[i].TargetRule);
                 regular = remaining.AsReadOnly();
                 reason = $"최근 점유 순증가 {trend.NetRatio:P0}, 확장 {trend.PositiveChanges}회: 기존 예산 중 비용 {selectedCost}/{totalBudget} 내부 출현";
                 return new EncounterDeferredSpawn(moved, selectedCost, settings.warningSeconds, reason);

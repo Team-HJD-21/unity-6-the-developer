@@ -104,9 +104,17 @@ classDiagram
 
 `EnemySquad`는 합류·제거와 `EnemyController` 활성 상태 변경 시 대표를 선택한다. `EnemyNetworkController`는 `IsSquadRepresentative`인 구성원만 `RefreshTarget()`을 호출하며, 반복 갱신 중 대표를 찾기 위한 구성원 순회를 하지 않는다. 대표가 제거되거나 비활성화되면 남은 활성 구성원이 갱신을 이어받는다. 대표 교체는 분대의 목표·배정 인원·다음 재검색 시각을 초기화하지 않으며, 타깃 상실 이벤트의 즉시 재검색은 대표 여부와 관계없이 실행한다. 1인 분대는 호출 수가 줄지 않는다.
 
-`EnemyDefinition.SquadMode`는 공동 분대/개별 분대, `TargetRule`은 PlayerOrTurret/PlayerOnly를 선택한다. `PlayerOrTurret` 분대의 자동 검색은 시설만 대상으로 하고 플레이어는 감지 이벤트로 전환한다. `PlayerOnly`는 자동 검색에서도 플레이어만 대상으로 한다. 일반 스폰도 타깃 규칙이 다른 구성원은 같은 분대에 섞지 않는다. BlackWolf는 개별 PlayerOnly 분대다.
+`EnemyDefinition.SquadMode`는 공동 분대/개별 분대를 지정하고, 정규 편성의 타깃 규칙은 `EnemySquadPreset.TargetRule` → `SpawnInstruction.TargetRule` → `EnemySquad`로 전달한다. 공동 구성원은 명령 하나당 같은 규칙의 분대를 공유하고 Individual 구성원은 같은 규칙으로 개별 분대를 만든다. 동일 몬스터도 편성에 따라 다른 규칙을 사용할 수 있다. 현재 AssassinSquad는 `PlayerOnly`, SummonEscort는 `TurretOnly`, 나머지 6개 편성은 `PlayerOrTurret`다. BlackWolf의 개별 분대 구성 방식은 Definition에서 유지한다.
 
-2026-11-15 데이터 설정 이전 단계: `EnemySquadPreset.TargetRule`에 `PlayerOrTurret`·`PlayerOnly`·`TurretOnly` 설정을 추가했다. `TurretOnly`는 시설만 검색·배정하고 플레이어 감지 전환을 거절할 규칙이다. 현재 생성·소환·복원 경로는 아직 Definition의 이전 규칙을 읽으므로 `EnemyDefinition.TargetRule`과 직렬화 값은 Inspector에서 숨겨 임시 보존한다. 프리셋 에셋의 값 설정, `SpawnInstruction` 전달 및 분대의 `TurretOnly` 배정 검증 연결은 다음 단계이며, 새 프리셋 설정이 실제 행동에 반영된 상태로 해석하지 않는다. 기존 enum 값 0·1은 유지하고 `TurretOnly`는 2로 추가했다.
+| 규칙 | 자동 탐색·재탐색 | 플레이어 감지·직접 배정 |
+| --- | --- | --- |
+| `PlayerOrTurret = 0` | 시설만 | 플레이어·시설 허용 |
+| `PlayerOnly = 1` | 플레이어만 | 플레이어만 허용 |
+| `TurretOnly = 2` | 시설만 | 시설만 허용, 플레이어 전환 거절 |
+
+`IsValidTarget()`의 공통 검증을 거치므로 `TurretOnly`는 감지 전환뿐 아니라 생성자와 복원 경로의 플레이어 지정도 거절한다. 소환 몬스터는 부모 분대의 규칙을 이어받는다. 프리셋이 없는 단일 몬스터 테스트는 테스트 창의 `타깃 규칙`을 명시적으로 사용한다. 숨겨진 `EnemyDefinition.TargetRule`은 아직 단독 Stage·보스 생성과 이전 저장의 호환에 사용하므로 제거하지 않는다.
+
+Enemy 체크포인트 `world/enemies` v3는 분대별 실제 규칙을 저장하고, Encounter 체크포인트 `world/encounter` v4는 확정된 지연 출현 명령의 규칙을 저장한다. 새 저장은 이후 프리셋 설정을 바꿔도 저장 당시 규칙을 복원한다. 이전 Enemy v1·v2는 기존 Definition 규칙으로 복원하고, 이전 Encounter v3의 확정 지연 명령은 현재 동일 Order 프리셋의 규칙을 사용한다. 후자의 프리셋이 사라졌으면 복원을 거절한다. 이 저장·복원 경로의 실제 플레이 검증은 별도로 수행해야 한다.
 
 `EnemySquad.SetTarget(preferredTarget, candidates)`는 이미 배정된 목표를 유지한다. 목표가 없으면 전달받은 후보의 유형·유효성과 실제 집계 인원 수용 여부를 확인하고 배정한다. 성공하면 거리 검색을 생략하며, 실패하면 전달받은 목록에서 규칙에 맞는 가장 가까운 후보를 검색한다. 두 인자를 생략한 기존 호출도 사용할 수 있으며, 검색이 필요할 때 최신 목록을 조회한다. 후보 참조와 목록을 보관하는 새 상태나 별도 갱신 루프는 추가하지 않는다.
 

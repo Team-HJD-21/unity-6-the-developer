@@ -24,6 +24,9 @@ public class EnemySquad
     /// </summary>
     public bool IsEmpty => _members.Count == 0;
 
+    /// <summary>생성 명령에서 전달받아 소환과 저장·복원에도 유지할 분대 규칙이다.</summary>
+    public EnemyTargetRule TargetRule => _targetRule;
+
     // 프로파일링
     private static readonly ProfilerMarker SelectTargetMarker =
         new("TeamHJD.Enemy.SelectTarget");
@@ -349,7 +352,7 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// Unity 오브젝트 수명과 타깃 유효성을 확인하고 분대의 PlayerOnly 규칙을 적용한다.
+    /// 타깃의 수명·공격 가능 상태와 분대 규칙에 따른 배정 허용 여부를 확인한다.
     /// </summary>
     private bool IsValidTarget(ITargetable target)
     {
@@ -360,7 +363,13 @@ public class EnemySquad
             return false;
         }
 
-        return _targetRule != EnemyTargetRule.PlayerOnly ||
-               target.TargetType == TargetType.Player;
+        return _targetRule switch
+        {
+            EnemyTargetRule.PlayerOrTurret =>
+                target.TargetType == TargetType.Player || target.TargetType == TargetType.Turret,
+            EnemyTargetRule.PlayerOnly => target.TargetType == TargetType.Player,
+            EnemyTargetRule.TurretOnly => target.TargetType == TargetType.Turret,
+            _ => false
+        };
     }
 }

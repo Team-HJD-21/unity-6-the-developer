@@ -38,8 +38,10 @@ public partial class EnemySpawnExecutor
         var context = requests.BeginSummon(source.Context, definition.EnemyId, positions.Count);
         if (context == null) return 0;
         var squads = new List<EnemySquad>();
+        // 소환된 적은 자신의 이전 Definition 규칙 대신 부모 분대의 규칙을 이어받는다.
+        EnemyTargetRule targetRule = source.Squad.TargetRule;
         EnemySquad shared = definition.SquadMode == EnemySquadMode.Shared
-            ? new EnemySquad(definition.SquadMode, definition.TargetRule, initialTarget) : null;
+            ? new EnemySquad(definition.SquadMode, targetRule, initialTarget) : null;
         if (shared != null) squads.Add(shared);
         int actual = 0;
         bool countsKnown = true;
@@ -54,7 +56,7 @@ public partial class EnemySpawnExecutor
                     reason = "Requested summon location has no nearby NavMesh surface.";
                     continue;
                 }
-                var squad = shared ?? new EnemySquad(definition.SquadMode, definition.TargetRule, initialTarget);
+                var squad = shared ?? new EnemySquad(definition.SquadMode, targetRule, initialTarget);
                 if (shared == null) squads.Add(squad);
                 if (TrySpawnActor(definition, resolved, Quaternion.identity, squad, context,
                         "summon/" + source.EntityId, observeFailure: failure => reason = failure))
