@@ -24,6 +24,8 @@ namespace TeamHJD.Game.Application
         public string LastRescueFailure { get; private set; }
         public bool IsRecoveryPending => _failed;
         public bool IsReady => !_disposed && !_failed && _available() && !_ledger.IsEnded && _actors.Count == _roster.Count;
+        /// <summary>안전장치 후보 저장은 모든 실제 참가자의 생존이 확인된 시점만 허용합니다.</summary>
+        public bool CanCaptureWorld => IsReady && _roster.All(id => Read(id, out var actor) && actor.IsAlive);
         public int RegisteredPlayers => _actors.Count;
         public int RequiredPlayers => _roster.Count;
         public MissionRecoveryLedger Ledger => _ledger;

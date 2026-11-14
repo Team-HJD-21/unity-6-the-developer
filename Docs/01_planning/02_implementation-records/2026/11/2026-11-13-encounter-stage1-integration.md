@@ -248,3 +248,13 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - 실제 Prefab+localhost UTP SDK2개에서 CoreProtocolVersion1·공용/Field NetworkVariable 전달·공용unpaused/Fieldpaused·Field만 revision14→15재개를 확인했다. NetworkFieldAnchorTests1/1. 실제2프로세스 Player/Steam 인수는 아니다.
 - 실제 Stage_1 Host공용1.202269초/Field0초,서버시간anchorcommonpausedfalse/Fieldpausedtrue,해제후Fieldpausedfalse. b8a-live-anchor-held/resumed.json. commonGameSeconds0은 경과가 아니라 과거 공용 anchor값으로 보존된 정상 상태다.
 - 검수 종료는 Playfalse/Scene clean이며 사용한 저장3슬롯만 백업·복구해 기존33개 checkpoint 해시 일치를 유지했다. 추가 출현 원격 경고와 실제 원격 구조 입력/생명은 아직 후속이다.
+
+
+## B6c — 저장 누락·기술 재시도의 실패 경계 보강 (2026-11-14)
+
+- 사망 알림과 Root Update 사이에도 다운된 원본을 안전장치 후보로 저장하지 않도록 CanCaptureWorld가 실제 roster 전체 생존을 검사한다. 정책 유효 저장과 개별 Feature의 HP0 codec은 구분한다.
+- 같은 실패의 checkpoint slot/ID·run을 App에 기억한다. 파일 누락/다른 저장으로 교체는 정확히 거부하며 초기 전장으로 조용히 대체하지 않는다. Scene 소유권이 닫혀도 App 재시도 API는 같은 저장을 다시 읽고, 실제 준비 장벽까지30초/App 수명 토큰으로 제한한다. 저장이 처음부터 없을 때에만 초기 전장 재진입이다.
+- 허용되지 않거나 취소된 GameFlow 이동이 기존 실행 의도를 먼저 초기화하지 않게 PrepareMission을 실제 전환 검증 뒤로 옮겼다. 이전 Scene의 늦은 오류가 새 Mission 상태를 덮지 않도록 실패ID도 확인한다.
+- 자동 MissionEntry4/4와 MatchRecovery11/11. 실제 Stage_1에서 존재하지 않는 slot을 마지막 유효 저장 링크로 주입하고 사망: 안전장치1/같은실행/정지·캡처금지·누락사유가 관측됐다. 같은 Root 재시도 후에도 사용1이다.
+- 실제 App.EndCurrentMatch로 Scene 소유권 종료 경계를 별도 주입한 뒤 App.CanRetrytrue와 재시도 누락사유·NoMatch를 확인했다. 실제 Weather rollback 실패를 재현했다고 쓰지 않는다. 전체 writer 복원은 여전히 world/weather 연결 대기다. b6c-missing-checkpoint-result.json.
+- 새 Play의 무저장 사망 회귀는 실제 새 Player/같은run/사용1/HP400/App미완료false·오류null이다. b6c-no-save-recovery-result.json. 의도적으로 주입한 누락 오류2건은 b6c-errors-including-deliberate-missing-slot.json에 stack과 보존했고 성공0오류로 지우지 않았다. 저장33개 해시 복구 완료.

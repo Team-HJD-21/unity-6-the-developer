@@ -47,6 +47,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             Recovery.AdoptPendingRecovery(failure);
             Recovery.CompleteRecovery(failure);
             FlushGrowthSaves();
+            (_matchHost as AppRoot)?.CompleteMissionRecovery();
         }
         private void PumpRecovery()
         {
@@ -71,7 +72,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             if (_recoveryBusy || Recovery?.IsRecoveryPending != true) return;
             var service = Recovery;
+            var app = _matchHost as AppRoot;
             Guid run = service.Ledger.RunId, failure = service.Ledger.PendingFailure;
+            app?.RememberMissionRecovery(gameObject.scene.path, service.Ledger);
             _recoveryBusy = true; RecoveryError = null;
             _recoveryPause ??= _matchTime.AcquirePause("MissionRecovery");
             try
@@ -79,16 +82,26 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 FlushGrowthSaves();
                 if (!service.Ledger.LastCheckpoint.IsEmpty)
                 {
-                    var result = await Checkpoints.RestoreAsync(service.Ledger.LastCheckpoint);
+                    if (app == null) throw new InvalidOperationException("Checkpoint recovery requires its App store owner.");
+                    var checkpoints = Checkpoints;
+                    var gameplay = _coordinator.GameplayCancellation;
+                    var data = await app.ReadCheckpointAsync(service.Ledger.LastCheckpoint, gameplay);
+                    gameplay.ThrowIfCancellationRequested();
+                    if (this == null || !HasCurrentMatch || Checkpoints != checkpoints)
+                        throw new OperationCanceledException("The recovery Scene ended while reading its checkpoint.");
+                    if (data == null || data.CheckpointId != service.Ledger.LastCheckpointId)
+                        throw new InvalidOperationException("The committed safety checkpoint is missing or was replaced.");
+                    var result = checkpoints.Restore(data, cancellation: gameplay);
                     if (result.Status != CheckpointOperationStatus.Restored)
                         throw new InvalidOperationException("Recovery restore failed: " + result.Reason, result.Error);
                     service.CompleteRecovery(failure);
                     FlushGrowthSaves();
+                    app?.CompleteMissionRecovery();
                     _recoveryPause.Dispose(); _recoveryPause = null;
                 }
                 else
                 {
-                    var app = _matchHost as AppRoot ?? throw new InvalidOperationException("Scene retry requires its App owner.");
+                    if (app == null) throw new InvalidOperationException("Scene retry requires its App owner.");
                     await app.RetryMissionForRecoveryAsync(gameObject.scene.path, run, failure);
                 }
             }
@@ -96,6 +109,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 // 기술 오류를 새 전멸이나 성공으로 바꾸지 않습니다. 원본과 정지를 유지하고 재시도 이유를 노출합니다.
                 if (this != null) RecoveryError = error.Message;
+                app?.ReportMissionRecoveryError(failure, error);
                 Debug.LogError("안전장치 복귀 중단: " + error.Message);
             }
             finally { if (this != null) _recoveryBusy = false; }

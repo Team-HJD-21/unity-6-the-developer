@@ -26,10 +26,12 @@ namespace TeamHJD.Game.Tests.EditMode
         {
             var ledger = new MissionRecoveryLedger(); var clock = new Clock(); var living = new Actor(); var down = new Actor { Alive = false };
             using var recovery = Create(ledger, clock, A, B); recovery.Register(A, living); recovery.Register(B, down);
+            Assert.That(recovery.CanCaptureWorld, Is.False);
             recovery.SetRescueHeld(A, B, true); recovery.Pump();
             for (int i = 1; i <= 30; i++)
             { clock.Now = i / 10d; recovery.SetRescueHeld(A, B, true); recovery.Pump(); }
             Assert.That(down.Revived, Is.EqualTo(1)); Assert.That(down.Ratio, Is.EqualTo(.3));
+            Assert.That(recovery.CanCaptureWorld, Is.True);
             Assert.That(ledger.RescueSeconds, Is.EqualTo(57).Within(.00001));
             clock.Now = 10; recovery.Pump(); Assert.That(down.Revived, Is.EqualTo(1));
             Assert.That(ledger.RescueSeconds, Is.EqualTo(57).Within(.00001));
@@ -92,6 +94,7 @@ namespace TeamHJD.Game.Tests.EditMode
             using var recovery = Create(ledger, clock, A, B); recovery.Register(A, new Actor { Alive = false });
             recovery.Pump(); clock.Now = 30; recovery.Pump();
             Assert.That(recovery.IsReady, Is.False); Assert.That(ledger.SafetyUses, Is.Zero); Assert.That(ledger.RescueSeconds, Is.EqualTo(60));
+            Assert.That(recovery.CanCaptureWorld, Is.False);
             Assert.Throws<InvalidOperationException>(() => recovery.Register(C, new Actor()));
         }
 
