@@ -26,8 +26,12 @@ public static class EnemyTestAreaSetup
         }
         if (template == null) throw new InvalidOperationException("복제할 기존 테스트 표적이 필요합니다.");
 
-        string[] names = { "01_CloseCombat", "02_Support", "03_Movement" };
-        float[] centers = { -50f, -10f, 30f };
+        string[] names = { "01_Turret", "02_Player" };
+        float[] centers = { -50f, 30f };
+        TargetType[] targetTypes = { TargetType.Turret, TargetType.Player };
+        int[] targetLayers = { LayerMask.NameToLayer("Turret"), LayerMask.NameToLayer("PlayerFeetBox") };
+        if (Array.Exists(targetLayers, layer => layer < 0))
+            throw new InvalidOperationException("Turret과 PlayerFeetBox 레이어가 필요합니다.");
         // 제작 전 모든 출현/표적 위치와 연결이 NavMesh 위인지 확인한다.
         foreach (float x in centers)
         {
@@ -65,7 +69,9 @@ public static class EnemyTestAreaSetup
             target.name = "Target";
             Undo.RegisterCreatedObjectUndo(target.gameObject, "Create test target");
             target.transform.localPosition = Vector3.right * 8f;
+            target.gameObject.layer = targetLayers[i];
             var targetData = new SerializedObject(target);
+            targetData.FindProperty("targetType").intValue = (int)targetTypes[i];
             targetData.FindProperty("maxHealth").intValue = 1000;
             targetData.ApplyModifiedProperties();
             target.ResetHealth();

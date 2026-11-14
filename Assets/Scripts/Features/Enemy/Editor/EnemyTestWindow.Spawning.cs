@@ -73,7 +73,8 @@ public sealed partial class EnemyTestWindow
         foreach (var area in _testAreas) areaNames.Add(area.name);
         _testAreaField.choices = areaNames;
         _testAreaField.SetValueWithoutNotify(areaNames.Contains(selectedArea) ? selectedArea : areaNames.Count > 0 ? areaNames[0] : "");
-        if (individualSpawnPoint == null) SelectTestArea();
+        // 구역 구성 변경으로 선택한 이름이 사라지면 새 구역의 지점·표적을 함께 연결한다.
+        if (individualSpawnPoint == null || !areaNames.Contains(selectedArea)) SelectTestArea();
     }
 
     private void SelectTestArea()

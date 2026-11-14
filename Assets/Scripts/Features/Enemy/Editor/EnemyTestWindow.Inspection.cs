@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -9,6 +10,8 @@ public sealed partial class EnemyTestWindow
 {
     [SerializeField] private EnemyDamageTestTarget selectedTestTarget;
     [SerializeField] private EnemyController selectedEnemy;
+    [SerializeField] private int testDamage = 10;
+    [SerializeField] private AttackSourceType testAttackSource = AttackSourceType.Player;
     private EnemyController _observedEnemy;
     private EnemyHealth _observedHealth;
     private EnemyTargeting _observedTargeting;
@@ -23,6 +26,8 @@ public sealed partial class EnemyTestWindow
     private Label _enemyStatus;
     private Button _resetTargetButton;
     private Button _resetAllTargetsButton;
+    private Button _damageEnemyButton;
+    private Button _lethalDamageButton;
 
     private void OnEnable() => Selection.selectionChanged += OnSelectionChanged;
 
@@ -64,6 +69,21 @@ public sealed partial class EnemyTestWindow
         _enemyStatus = new Label();
         _enemyStatus.style.whiteSpace = WhiteSpace.Normal;
         parent.Add(_enemyStatus);
+        var damageField = new IntegerField("테스트 피해량") { value = testDamage };
+        damageField.RegisterValueChangedCallback(evt =>
+        {
+            testDamage = Mathf.Max(1, evt.newValue);
+            damageField.SetValueWithoutNotify(testDamage);
+        });
+        parent.Add(damageField);
+        var sourceField = new EnumField("공격자 종류", testAttackSource);
+        sourceField.RegisterValueChangedCallback(evt => testAttackSource = (AttackSourceType)evt.newValue);
+        parent.Add(sourceField);
+        _damageEnemyButton = new Button(() => DamageSelectedEnemy(false)) { text = "선택 몬스터에 피해 적용" };
+        _lethalDamageButton = new Button(() => DamageSelectedEnemy(true)) { text = "현재 체력만큼 피해 · 사망 시험" };
+        parent.Add(_damageEnemyButton);
+        parent.Add(_lethalDamageButton);
+        parent.Add(new HelpBox("실제 피격 규칙을 따릅니다. 은신·공격자 종류 등으로 거부될 수 있으며, 사망하면 소환사의 사망 소환도 실행됩니다.", HelpBoxMessageType.Info));
         OnSelectionChanged();
     }
 
@@ -89,6 +109,22 @@ public sealed partial class EnemyTestWindow
 
     private bool CanResetTestTargets => EditorApplication.isPlaying && launcher != null &&
         launcher.IsServer && launcher.ExecutionTarget != null;
+
+    private void DamageSelectedEnemy(bool lethal)
+    {
+        try
+        {
+            if (launcher == null || selectedEnemy == null)
+                throw new InvalidOperationException("Host의 관찰 몬스터를 선택하세요.");
+            var health = selectedEnemy.GetComponent<EnemyHealth>();
+            int damage = lethal && health != null ? health.CurrentHealth : testDamage;
+            bool success = launcher.TryDamageTestEnemy(selectedEnemy, damage, testAttackSource, out string message);
+            _result.text = message;
+            _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
+        }
+        catch (Exception error) { ShowError(error); }
+        UpdateStatus();
+    }
 
     /// <summary>선택 초기화도 전체 초기화도 현재 실행기의 씬과 Host 권한을 확인한다.</summary>
     private void ResetTestTargets(bool resetAll)
@@ -126,6 +162,12 @@ public sealed partial class EnemyTestWindow
     private void UpdateInspection()
     {
         if (_testTargetStatus == null || _enemyStatus == null) return;
+        bool canDamage = CanResetTestTargets && selectedEnemy != null &&
+            selectedEnemy.gameObject.scene == launcher.ExecutionTarget.gameObject.scene &&
+            selectedEnemy.TryGetComponent<EnemyNetworkController>(out var network) && network.IsSpawned &&
+            network.IsServer && selectedEnemy.TryGetComponent<EnemyHealth>(out var health) && health.CurrentHealth > 0;
+        _damageEnemyButton.SetEnabled(canDamage);
+        _lethalDamageButton.SetEnabled(canDamage);
         bool sameScene = selectedTestTarget != null && launcher != null && launcher.ExecutionTarget != null &&
             selectedTestTarget.gameObject.scene == launcher.ExecutionTarget.gameObject.scene;
         _resetTargetButton.SetEnabled(CanResetTestTargets && sameScene);

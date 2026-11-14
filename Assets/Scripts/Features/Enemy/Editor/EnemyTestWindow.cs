@@ -71,9 +71,9 @@ public sealed partial class EnemyTestWindow : EditorWindow
         scroll.Add(_fixedButton);
         scroll.Add(_planButton);
         scroll.Add(new HelpBox("상한은 정확한 생성 수가 아닙니다. 점유율 예산·완전한 편성·출현 셀 수용량을 적용합니다.", HelpBoxMessageType.Info));
-        _clearButton = new Button(ClearEnemies) { text = "현재 Match의 요청 생성 적 정리" };
+        _clearButton = new Button(ClearEnemies) { text = "시험 씬 몬스터 전체 정리 · 소환물 포함" };
         scroll.Add(_clearButton);
-        scroll.Add(new HelpBox("정리는 실행기가 추적하는 적만 대상으로 합니다. 소환사가 별도로 만든 봄버는 제외됩니다.", HelpBoxMessageType.Info));
+        scroll.Add(new HelpBox("같은 씬·같은 서버의 네트워크 몬스터를 모두 제거합니다. 사망 효과는 실행하지 않습니다. 다른 도구의 반복 요청은 별도로 중지하세요.", HelpBoxMessageType.Info));
         _result = new HelpBox("Play → Start Host → 생성 요청 순서로 실행하세요.", HelpBoxMessageType.Info);
         scroll.Add(_result);
         CreateSingleSpawn(scroll);
@@ -177,7 +177,7 @@ public sealed partial class EnemyTestWindow : EditorWindow
     {
         try
         {
-            bool success = launcher.TryClearSpawnedEnemies(out string message);
+            bool success = launcher.TryClearTestSceneEnemies(out string message);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
         }
