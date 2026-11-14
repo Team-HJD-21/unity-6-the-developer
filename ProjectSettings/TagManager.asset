@@ -31,7 +31,7 @@ TagManager:
   - Ground_1
   - Enemy
   - Bullet
-  - 
+  - Missile
   - 
   - MiniMap
   - CU
@@ -48,7 +48,7 @@ TagManager:
   - EnemyHurtbox
   - EnemyFeetBox
   - TurretBase
-  - 
+  - TurretSightBlocker
   - 
   - 
   - 

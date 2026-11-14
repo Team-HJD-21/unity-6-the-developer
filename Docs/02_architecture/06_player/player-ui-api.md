@@ -134,7 +134,7 @@ InitialStageCompositionRoot가 이 수명을 연결한다. standalone Feature Sc
 
 ## 적용 위치와 편집 방법
 
-`Assets/Scenes/Gameplay/Initial_Stage.unity`에서
+`Assets/Scenes/Gameplay/Stage_1.unity`에서
 `Assets/Prefabs/UI/InitialStagePlayerHUD.prefab`을 사용한다.
 원본 Stage 1 씬과 프리팹 배치는 유지한다. #564에서는 `TurretInteractionUI`의 클릭 처리에도 동일한 UI 검사·클릭 소비 계약을 적용했다.
 

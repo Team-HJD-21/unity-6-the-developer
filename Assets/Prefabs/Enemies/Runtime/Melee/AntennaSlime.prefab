@@ -12,6 +12,22 @@ PrefabInstance:
       propertyPath: attackDamage
       value: 12
       objectReference: {fileID: 0}
+    - target: {fileID: 184536568083418583, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.x
+      value: 0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 184536568083418583, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.y
+      value: 0.0001
+      objectReference: {fileID: 0}
+    - target: {fileID: 184536568083418583, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 184536568083418583, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_CallbackLayers.m_Bits
+      value: 4294967295
+      objectReference: {fileID: 0}
     - target: {fileID: 315227106075295535, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 0.15809534

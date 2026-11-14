@@ -77,7 +77,7 @@ public abstract partial class DefaultFieldMissileTurret : IFieldTurretCombatChec
             if (source == null || source.missilePrefab == null) throw new InvalidDataException("Missing original projectile prefab.");
             var created = Instantiate(source.missilePrefab, saved.Pose.Position, saved.Pose.Rotation);
             BindProjectileSimulation(created);
-            var missile = created.GetComponent<FieldTurretMissile>(); missile.RestoreCheckpoint(saved);
+            var missile = created.GetComponent<FieldTurretMissile>(); missile.RestoreCheckpoint(saved, turret.position.z);
             _restoredMissiles.Add((missile, saved));
         }
     }
