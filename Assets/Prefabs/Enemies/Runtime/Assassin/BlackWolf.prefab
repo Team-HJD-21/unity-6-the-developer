@@ -150,7 +150,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: moveSpeed
-      value: 5
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: moveAcceleration
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 4829987614306498064, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: enemyAbility
