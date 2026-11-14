@@ -27,7 +27,7 @@ public sealed partial class EncounterSceneBinding : IFieldBossSpawnService
         actor = default;
         reason = "FieldBossMatchUnavailable";
         if (eventId == Guid.Empty || regions == null || regions.MatchId != _boundMatchId ||
-            _networkManager == null || !_networkManager.IsServer || !FieldCanAdvance ||
+            !IsServer || !FieldCanAdvance ||
             _spawnGameplay.IsCancellationRequested || _sceneExecutor == null || !_sceneExecutor.CanSpawn ||
             !ReferenceEquals(regions, regionBinding?.Source?.Snapshot)) return false;
         if (thresholdPercent != 33 && thresholdPercent != 66) throw new ArgumentOutOfRangeException(nameof(thresholdPercent));

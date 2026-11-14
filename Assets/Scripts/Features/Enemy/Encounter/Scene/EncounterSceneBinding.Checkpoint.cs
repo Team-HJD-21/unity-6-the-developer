@@ -1,4 +1,4 @@
-// 현재 Encounter의 첫 요청·예약 요청·실제 분산 이력을 저장합니다.
+// 현재 Encounter의 예약 요청·실제 분산 이력을 저장합니다. 정규 생산 예약은 Core가 별도로 저장합니다.
 // 진단 기록과 이미 처리한 요청 장부는 실행 세대의 관측/중복 방지 자료로 유지합니다.
 // 동적 source의 개체 복원은 해당 Feature writer가 제공되어야 합니다.
 using System;
@@ -11,7 +11,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 
 /// <summary>
-/// 초기 Encounter와 지연 요청, 분산 이력의 저장·복원 연결을 제공한다.
+/// 지연 요청과 분산 이력의 저장·복원 연결을 제공한다.
 /// </summary>
 public sealed partial class EncounterSceneBinding : ICheckpointParticipant, ICheckpointParticipantProvider
 {
@@ -49,7 +49,7 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     }
 
     /// <summary>
-    /// 초기 요청과 대기 중인 예약의 남은 시간, 생성 분산 이력을 저장한다.
+    /// 대기 중인 예약의 남은 시간과 생성 분산 이력을 저장한다.
     /// </summary>
     private SavedEncounter CaptureEncounter()
     {
@@ -60,7 +60,8 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
             return new SavedPending(p.Request.PresetId.Value, p.Request.MaximumEnemyCount, p.Request.Source, p.Request.Origin,
                 p.Request.CauseEventId, Math.Max(0, p.Reservation.DueGameSeconds - GameSeconds), p.Request.UsesAutomaticComposition, p.Prepared);
         }).ToArray();
-        return new SavedEncounter(_initialEncounterPending, Math.Max(0, _initialEncounterDue - GameSeconds), requests,
+        // v1~v3 payload의 옛 테스트 첫 요청 슬롯은 형식 호환을 위해 false/0으로 유지합니다.
+        return new SavedEncounter(requests,
             _pipeline.CaptureCheckpoint(), _pipeline.CapturedBudget, _pipeline.AdditionalCooldownRemaining(GameSeconds));
     }
 
@@ -69,13 +70,12 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     /// </summary>
     private void ApplyEncounter(SavedEncounter saved)
     {
-        CancelPendingInitialEncounter(); CancelScheduledEncounters();
+        CancelScheduledEncounters();
         _pipeline.RestoreCheckpoint(saved.History, _boundMatchId);
         _pipeline.RestoreBudget(saved.Budget);
         _pipeline.RestoreAdditionalCooldown(GameSeconds, saved.AdditionalCooldown,
             (_spawnClock as IMatchTime)?.Snapshot.Epoch ?? Guid.Empty, regionBinding.Source.Snapshot.GridId);
-        _initialEncounterPending = saved.InitialPending; _initialEncounterDue = GameSeconds + saved.InitialRemaining;
-        if (_initialEncounterPending) StartInitialEncounterIfBound();
+        // 과거 테스트 첫 요청은 재시작하지 않습니다. 정규 예약은 world/encounter-production이 복원합니다.
         foreach (var pending in saved.Pending)
         {
             // 복원 뒤에는 새 실행 의도입니다. 과거에 이미 소비된 요청 ID를 재사용하지 않습니다.
@@ -90,11 +90,12 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     }
 
     /// <summary>
-    /// Encounter의 초기 요청·예약·분산 이력을 저장 payload에 기록한다.
+    /// 기존 형식의 예약·분산 이력을 기록한다. 첫 두 값은 옛 테스트 슬롯이다.
     /// </summary>
     private static void WriteEncounter(BinaryWriter w, SavedEncounter saved, ICheckpointPayloadCodec codec)
     {
-        w.Write(saved.InitialPending); w.Write(saved.InitialRemaining); saved.History.Write(w, codec); w.Write(saved.Budget); w.Write(saved.AdditionalCooldown);
+        // 옛 테스트 첫 요청 bool/double 슬롯은 유지하지만 실행 상태로 복원하지 않습니다.
+        w.Write(false); w.Write(0d); saved.History.Write(w, codec); w.Write(saved.Budget); w.Write(saved.AdditionalCooldown);
         w.Write(saved.Pending.Length);
         foreach (var p in saved.Pending)
         {
@@ -121,7 +122,7 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     /// </summary>
     private static SavedEncounter ReadEncounter(BinaryReader r, ICheckpointPayloadCodec codec, int version)
     {
-        bool initial = r.ReadBoolean(); double remaining = r.ReadDouble();
+        r.ReadBoolean(); double remaining = r.ReadDouble(); // v1~v3의 옛 테스트 첫 요청 슬롯을 소비합니다.
         if (!double.IsFinite(remaining) || remaining < 0) throw new InvalidDataException("Invalid initial Encounter delay.");
         var history = SpawnDistributionHistory.State.Read(r, codec);
         int budget = version >= 2 ? r.ReadInt32() : 0;
@@ -165,15 +166,15 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
             }
             pending[i] = new SavedPending(preset, maximum, source, origin, new Guid(cause), delay, automatic, prepared);
         }
-        return new SavedEncounter(initial, remaining, pending, history, budget, additionalCooldown);
+        return new SavedEncounter(pending, history, budget, additionalCooldown);
     }
 
     private sealed class SavedEncounter
     {
-        public readonly bool InitialPending; public readonly double InitialRemaining; public readonly int Budget; public readonly double AdditionalCooldown;
+        public readonly int Budget; public readonly double AdditionalCooldown;
         public readonly SavedPending[] Pending; public readonly SpawnDistributionHistory.State History;
-        public SavedEncounter(bool initial, double remaining, SavedPending[] pending, SpawnDistributionHistory.State history, int budget, double additionalCooldown)
-        { InitialPending = initial; InitialRemaining = remaining; Pending = pending; History = history; Budget = budget; AdditionalCooldown = additionalCooldown; }
+        public SavedEncounter(SavedPending[] pending, SpawnDistributionHistory.State history, int budget, double additionalCooldown)
+        { Pending = pending; History = history; Budget = budget; AdditionalCooldown = additionalCooldown; }
     }
     private sealed class SavedPending
     {

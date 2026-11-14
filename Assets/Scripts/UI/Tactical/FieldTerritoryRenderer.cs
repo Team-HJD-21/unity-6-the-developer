@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
@@ -37,7 +38,7 @@ public sealed class FieldTerritoryRenderer : MonoBehaviour
     {
         var snapshot = _owner != null ? _owner.Regions : null;
         bool visible = _owner != null && _owner.isActiveAndEnabled && _owner.Source != null &&
-            _owner.Source.HasFieldActor && !_owner.IsMapPresented && snapshot != null && snapshot.CapturedCellCount > 0;
+            _owner.Source.HasFieldActor && !_owner.IsMapPresented && !HudPresentationVisibility.IsSuppressed && snapshot != null && snapshot.CapturedCellCount > 0;
         if (!visible)
         {
             if (_renderer != null) _renderer.enabled = false;

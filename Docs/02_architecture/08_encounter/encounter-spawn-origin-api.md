@@ -15,7 +15,7 @@
 - 같은 논리 ID를 다시 등록해도 새 generation을 받는다. 삭제 source 또는 이전 Match를 참조하는 늦은 요청은 새 source로 바뀌지 않는다.
 - 공통 `EncounterRequestService`는 명시적 origin을 지원하는 `IOriginAwareEncounterExecutor`와 권위 resolver를 요구한다. 없는 연결을 자동 지점 생성으로 대체하지 않고 UnsupportedOrigin/OriginUnavailable로 거부한다. resolver가 원래 의도를 교체하거나 수명 종료 후 실행할 수도 없다.
 - `EncounterSceneConfiguration`은 실제 Enemy 생성기를 제작 참조로 지정한다. 현재 Initial_Stage는 EnemySpawnRoot prefab 인스턴스를 사용한다. 기존 다른 제작 Executor는 제거하지 않았다. 재로드 뒤 App의 persistent consumer에 새 Scene 참조를 전달한다.
-- `EncounterPipeline`은 `MatchId`, 명시적인 `EnemySpawnExecutor`, `EnemySquadPresetCatalog`, `EncounterBudgetSettings`를 받는 생성자로 만든다. Runtime 내부의 기본 생성자/씬 자동 검색 경로는 제거됐다. 씬 제작 연결은 `EncounterSceneConfiguration`과 런처가 담당하며, standalone 런처에는 기존 검색 fallback이 남아 있어 다중 실행기 씬은 명시적으로 연결한다.
+- `EncounterPipeline`은 `MatchId`, 명시적인 `EnemySpawnExecutor`, `EnemySquadPresetCatalog`, `EncounterBudgetSettings`를 받는 생성자로 만든다. Runtime 내부의 기본 생성자/씬 자동 검색 경로는 제거됐다. 씬 제작 연결은 정식 `EncounterSceneConfiguration`과 `EncounterSceneBinding`이 담당한다. 실제 게임 Scene은 실행기를 명시적으로 연결한다. 독립 시험 버튼은 별도 `EnemyNetworkTestControls`에서만 사용한다.
 
 ## 조립과 호출
 

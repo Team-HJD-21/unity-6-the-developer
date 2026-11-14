@@ -150,7 +150,7 @@ App 정리는 Match의 Feature 바인딩과 자원을 먼저 해제하고 네트
 
 Host는 Descriptor의 전체 참가자 상태를 가지되 **현재 각 인스턴스에는 자기 로컬 Player actor만 생성한다**. `MatchPlayerActorScope.SpawnLocalPlayer`와 `IPlayerNetworkMatchBinding`은 Client의 로컬 actor를 권한 MatchSession 없이 연결한다. 상대 actor 이동/공격 복제와 Host의 원격 Player 위치 수집은 Player/UI의 후속 Feature 연결이 필요하다. 가짜 원격 좌표를 Battlefield에 채우지 않는다.
 
-`IAppOwnedEncounterMatchConsumer.UseAppNetworkOwnership()`는 Match 바인딩 전에 호출한다. 이어서 `BindAuthorityMatch(matchId, verifiedHostPlayerId, latestProvider)`로 Host 요청을 연결한다. Enemy/Encounter의 자동 Spawn/UI는 연결을 개설하지 않으며 테스트 OnGUI도 표시하지 않는다. Unbind 시 Enemy/Encounter의 `EnemySpawnExecutor.DespawnForMatch`가 해당 Match의 적만 제거한다. 실제 Spawn/Despawn 구현은 계속 Enemy/Encounter 파트가 소유한다.
+`IAppOwnedEncounterMatchConsumer.UseAppNetworkOwnership(connectionStatus)`는 Match 바인딩 전에 호출한다. Core가 기존 NGO 세션의 `INetworkConnectionStatus`를 전달하므로 Feature는 실제 연결 상태만 읽고 SDK 관리자를 직접 찾거나 시작/종료하지 않는다. 이어서 `BindAuthorityMatch(matchId, verifiedHostPlayerId, latestProvider)`로 Host 요청을 연결한다. Enemy/Encounter의 자동 Spawn/UI는 연결을 개설하지 않으며 테스트 OnGUI도 표시하지 않는다. Unbind 시 Enemy/Encounter의 `EnemySpawnExecutor.DespawnForMatch`가 해당 Match의 적만 제거한다. 실제 Spawn/Despawn 구현은 계속 Enemy/Encounter 파트가 소유한다.
 
 NGO 연결을 종료했다가 다시 시작할 때도 같은 Port를 유지할 수 있다. 공용 채널은 새 SDK 메시지 관리자에 재등록하고 옛 연결의 큐/조립 버퍼를 폐기한다. Match 재시작과 실제 연결 재시작은 각각 별도로 검사했다. Runtime App 종료는 OnApplicationQuit/OnDestroy, Editor 재생 종료는 ExitingPlayMode의 선행 Dispose를 사용한다.
 
