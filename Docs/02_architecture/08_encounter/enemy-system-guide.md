@@ -96,6 +96,8 @@ classDiagram
 
 `EnemyRoot`의 `footCollider`에는 발 충돌용 BoxCollider2D를 연결한다. Variant는 이 참조를 상속하며, 발 콜라이더를 교체한 경우 정렬 참조도 다시 연결한다. 각 몬스터의 발 중심을 같은 바닥 기준으로 맞춰 몸통 높이에 따라 앞뒤 순서가 달라지지 않게 한다.
 
+네트워크 스폰 시 `EnemyNetworkController`는 Foot 콜라이더만 서버 시각 기준 1.5초 동안 비활성화한다. 프리팹의 Foot은 켜 두고, 참조가 비어 있으면 Awake에서 `Foot` 자식의 Collider2D만 찾는다. HitBox와 감지 센서는 이 유예로 끄지 않는다. 복구 시각은 NetworkVariable로 공유하여 늦게 수신한 클라이언트도 남은 시간만 적용한다. 기존 Update에서 유예 종료를 확인하고 살아 있는 개체의 Foot을 켜며, 사망·Despawn된 개체는 다시 켜지 않는다. 서버 시각 기준이므로 Match 일시정지와 무관하게 유예 시간은 흐른다. Foot이 담당하는 지형 충돌도 유예 중에는 비활성화된다. 저장 복원으로 다시 네트워크 스폰하는 개체에도 새 1.5초 유예를 적용하며, 유예 잔여 시간을 체크포인트에 따로 저장하지 않는다. 네트워크 없는 임시 로컬 실행에는 적용하지 않는다.
+
 ## 타깃·분대·이동
 
 `ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.TryChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.

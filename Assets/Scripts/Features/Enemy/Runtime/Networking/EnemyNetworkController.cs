@@ -16,6 +16,13 @@ public partial class EnemyNetworkController : NetworkBehaviour
     [SerializeField] private EnemyController enemyController;
     [SerializeField] private EnemyHealth enemyHealth;
     [SerializeField] private EnemyHitDeathVisual hitDeathVisual;
+
+    [Header("스폰 충돌 유예")]
+    [SerializeField] private Collider2D footCollider;
+    private const double SpawnFootDelay = 1.5d;
+    private readonly NetworkVariable<double> _footEnableAt = new(-1d);
+    private bool _isWaitingForFootEnable;
+
     private EnemyExplosionAbility _explosionAbility;
     private FieldSimulationActor _simulationActor;
     private readonly NetworkVariable<double> _deathStartedAt = new(-1d);
@@ -85,6 +92,13 @@ public partial class EnemyNetworkController : NetworkBehaviour
             hitDeathVisual = GetComponent<EnemyHitDeathVisual>();
 
         _explosionAbility = GetComponent<EnemyExplosionAbility>();
+
+        if (footCollider == null)
+        {
+            Transform foot = transform.Find("Foot");
+            if (foot != null)
+                footCollider = foot.GetComponent<Collider2D>();
+        }
     }
 
     /// <summary>
@@ -124,6 +138,8 @@ public partial class EnemyNetworkController : NetworkBehaviour
 
     private void Update()
     {
+        UpdateSpawnFootDelay();
+
         if (!IsSpawned || !IsServer || _deathStartedAt.Value < 0d || _deathDespawnRequested)
             return;
 
@@ -147,13 +163,17 @@ public partial class EnemyNetworkController : NetworkBehaviour
         _deathDespawnRequested = false;
         hitDeathVisual?.ResetPresentation();
         if (IsServer)
+        {
             _deathStartedAt.Value = -1d;
+            _footEnableAt.Value = NetworkManager.ServerTime.Time + SpawnFootDelay;
+        }
 
         _deathStartedAt.OnValueChanged += OnDeathStartedAtChanged;
         if (_deathStartedAt.Value >= 0d)
             BeginDeathPresentation(_deathStartedAt.Value);
 
         NotifySpawned();
+        BeginSpawnFootDelay();
         if (!IsServer || !enemyHealth)
             return;
 
@@ -161,6 +181,34 @@ public partial class EnemyNetworkController : NetworkBehaviour
         enemyHealth.Died += OnHealthDied;
         enemyHealth.DamageApplied += OnHealthDamageApplied;
         SubscribeExplosionAbility();
+    }
+
+    /// <summary>서버가 지정한 유예 시각까지 Foot만 끈다. 늦게 수신한 개체는 남은 시간만 적용한다.</summary>
+    private void BeginSpawnFootDelay()
+    {
+        _isWaitingForFootEnable = false;
+        if (footCollider == null || _deathPresentationStarted)
+            return;
+
+        _isWaitingForFootEnable = NetworkManager.ServerTime.Time < _footEnableAt.Value;
+        footCollider.enabled = !_isWaitingForFootEnable;
+    }
+
+    /// <summary>유예가 끝나면 살아 있는 개체의 Foot을 켜고 대기를 종료한다.</summary>
+    private void UpdateSpawnFootDelay()
+    {
+        if (!_isWaitingForFootEnable || !IsSpawned)
+            return;
+
+        if (NetworkManager.ServerTime.Time < _footEnableAt.Value)
+            return;
+
+        _isWaitingForFootEnable = false;
+        if (footCollider == null || _deathPresentationStarted ||
+            (enemyHealth != null && enemyHealth.IsDead))
+            return;
+
+        footCollider.enabled = true;
     }
 
     /// <summary>
@@ -282,6 +330,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        _isWaitingForFootEnable = false;
         _deathStartedAt.OnValueChanged -= OnDeathStartedAtChanged;
         NotifyDespawned();
         if (_explosionAbility != null)
