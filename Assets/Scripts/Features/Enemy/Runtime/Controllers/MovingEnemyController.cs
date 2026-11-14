@@ -21,10 +21,32 @@ public class MovingEnemyController : EnemyController
     private Vector2 _lastPathTargetPosition;
     private double _nextPathRefreshTime;
     private float _pathRefreshPhase;
+    private FieldSimulationActor _simulationActor;
 
-    //프로파일링
+    // 프로파일링
     private static readonly ProfilerMarker CheckConditionMarker =
         new("TeamHJD.Enemy.CheckCondition");
+
+    private static readonly ProfilerMarker TargetRangeMarker =
+        new("TeamHJD.Enemy.IsInRange");
+
+    private static readonly ProfilerMarker AbilityConditionMarker =
+        new("TeamHJD.Enemy.AbilityCondition");
+
+    private static readonly ProfilerMarker AttackMarker =
+        new("TeamHJD.Enemy.Attack");
+
+    private static readonly ProfilerMarker PathRefreshMarker =
+        new("TeamHJD.Enemy.RefreshPlayerPath");
+
+    private static readonly ProfilerMarker PathDirectionMarker =
+        new("TeamHJD.Enemy.PathDirection");
+
+    private static readonly ProfilerMarker MovementMarker =
+        new("TeamHJD.Enemy.Movement");
+
+    private static readonly ProfilerMarker StopMovingMarker =
+        new("TeamHJD.Enemy.StopMoving");
     
     protected override void Awake()
     {
@@ -55,73 +77,93 @@ public class MovingEnemyController : EnemyController
             return;
         }
 
-        // if (enemyAbility.CheckCondition())
-        // {
-        //     StopMoving();
-        //
-        //     Transform facingTarget = enemyAbility.FacingTarget;
-        //     if (facingTarget == null)
-        //         facingTarget = enemyTargeting.Target;
-        //
-        //     if (facingTarget != null)
-        //     {
-        //         Vector2 abilityDirection =
-        //             (Vector2)facingTarget.position - (Vector2)transform.position;
-        //
-        //         if (abilityDirection.sqrMagnitude > 0.0001f)
-        //             enemyAnimation.SetFacingDirection(abilityDirection);
-        //     }
+        bool isInTargetRange;
         bool conditionMet;
 
         using (CheckConditionMarker.Auto())
         {
-            conditionMet = enemyAbility.CheckCondition();
+            // 전투 타깃의 사거리 계산.
+            using (TargetRangeMarker.Auto())
+            {
+                isInTargetRange =
+                    enemyTargeting.Target != null &&
+                    enemyAbility.IsInRange(enemyTargeting.TargetColliders);
+            }
+
+            // 사거리 결과를 받은 능력별 조건 검사.
+            using (AbilityConditionMarker.Auto())
+            {
+                conditionMet = enemyAbility.CheckCondition(isInTargetRange);
+            }
         }
 
         if (conditionMet)
         {
-            StopMoving();
-
-            Transform facingTarget = enemyAbility.FacingTarget;
-            if (facingTarget == null)
-                facingTarget = enemyTargeting.Target;
-
-            if (facingTarget != null)
+            // 정지·공격 방향 설정·능력 사용 시도.
+            using (AttackMarker.Auto())
             {
-                Vector2 abilityDirection =
-                    (Vector2)facingTarget.position - (Vector2)transform.position;
+                StopMoving();
 
-                if (abilityDirection.sqrMagnitude > 0.0001f)
-                    enemyAnimation.SetFacingDirection(abilityDirection);
+                Transform facingTarget = enemyAbility.FacingTarget;
+                if (facingTarget == null)
+                    facingTarget = enemyTargeting.Target;
+
+                if (facingTarget != null)
+                {
+                    Vector2 abilityDirection =
+                        (Vector2)facingTarget.position -
+                        (Vector2)transform.position;
+
+                    if (abilityDirection.sqrMagnitude > 0.0001f)
+                        enemyAnimation.SetFacingDirection(abilityDirection);
+                }
+
+                TryUseAbility(conditionAlreadyChecked: true);
             }
 
-            TryUseAbility();
             return;
         }
 
-        MoveToTarget();
+        MoveToTarget(isInTargetRange);
     }
 
-    /// <summary>배정된 타깃으로 이동하고 범위에 도착하면 멈춘다.</summary>
-    protected void MoveToTarget()
+    /// <summary>이번 행동에서 계산한 거리 결과로 정지 또는 이동을 결정한다.</summary>
+    protected void MoveToTarget(bool isInTargetRange)
     {
-        if (enemyTargeting.Target == null ||
-            enemyAbility.IsInRange(enemyTargeting.TargetColliders))
+        if (enemyTargeting.Target == null || isInTargetRange)
         {
             StopMoving();
             return;
         }
 
-        RefreshPlayerPath();
+        // 감지 범위 확인·갱신 시점 판단·필요한 경우 경로 계산.
+        using (PathRefreshMarker.Auto())
+        {
+            RefreshPlayerPath();
+        }
 
-        if (!enemyMovement.TryGetNextPathDirection(out Vector2 moveDirection))
+        bool hasPathDirection;
+        Vector2 moveDirection;
+
+        // 경유점 도착 확인·다음 이동 방향 계산.
+        using (PathDirectionMarker.Auto())
+        {
+            hasPathDirection =
+                enemyMovement.TryGetNextPathDirection(out moveDirection);
+        }
+
+        if (!hasPathDirection)
         {
             StopMoving();
             return;
         }
 
-        enemyAnimation.SetFacingDirection(moveDirection);
-        MoveTowardsTarget(moveDirection);
+        // 이동 방향·애니메이션 갱신·Rigidbody2D 이동 힘 적용.
+        using (MovementMarker.Auto())
+        {
+            enemyAnimation.SetFacingDirection(moveDirection);
+            MoveTowardsTarget(moveDirection);
+        }
     }
 
     /// <summary>플레이어의 이동량과 감지 상태에 따라 경로를 갱신한다.</summary>
@@ -131,10 +173,11 @@ public class MovingEnemyController : EnemyController
             return;
 
         Transform target = enemyTargeting.Target;
-        double now = FieldSimulationTime.Seconds(this);
+        double now = GetPathTime();
 
+        // 감지 콜라이더가 꺼져 있어도 거리로 근거리·원거리 갱신을 구분한다.
         bool isInside = _playerSensor != null &&
-            _playerSensor.IsTargetInside(enemyTargeting.TargetColliders);
+                        _playerSensor.IsTargetInside(target);
 
         float interval = isInside
             ? nearPathRefreshInterval
@@ -144,7 +187,8 @@ public class MovingEnemyController : EnemyController
         if (isInside)
         {
             _nextPathRefreshTime = System.Math.Min(
-                _nextPathRefreshTime, now + interval);
+                _nextPathRefreshTime,
+                now + interval);
         }
 
         if (now < _nextPathRefreshTime)
@@ -182,7 +226,10 @@ public class MovingEnemyController : EnemyController
     /// </summary>
     protected void StopMoving()
     {
-        enemyAnimation.StopMovementAnimation();
+        using (StopMovingMarker.Auto())
+        {
+            enemyAnimation.StopMovementAnimation();
+        }
     }
 
     /// <summary>
@@ -206,7 +253,21 @@ public class MovingEnemyController : EnemyController
             : Vector2.zero;
 
         _nextPathRefreshTime =
-            FieldSimulationTime.Seconds(this) +
+            GetPathTime() +
             nearPathRefreshInterval * (0.5f + _pathRefreshPhase * 0.5f);
+    }
+    
+    /// <summary>연결된 Match 시간 참조를 재사용한다.</summary>
+    private double GetPathTime()
+    {
+        // 스폰 과정에서 나중에 추가되는 컴포넌트도 연결한다.
+        if (_simulationActor == null)
+            _simulationActor = GetComponentInParent<FieldSimulationActor>();
+
+        if (_simulationActor != null)
+            return _simulationActor.Seconds;
+
+        // Match에 연결되지 않은 테스트는 기존 시간 조회를 사용한다.
+        return FieldSimulationTime.Seconds(this);
     }
 }

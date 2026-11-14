@@ -27,8 +27,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
 
     private static readonly ProfilerMarker ExecuteBehaviorMarker =
         new("TeamHJD.Enemy.ExecuteBehavior");
-    
-    
+
     public event Action<ulong> DeathConfirmed;
 
     /// <summary>
@@ -101,9 +100,13 @@ public partial class EnemyNetworkController : NetworkBehaviour
                 return;
         }
 
-        using (RefreshTargetMarker.Auto())
+        // 분대 대표만 타깃 재검색 갱신을 요청한다.
+        if (enemyController.IsSquadRepresentative)
         {
-            enemyController.RefreshTarget();
+            using (RefreshTargetMarker.Auto())
+            {
+                enemyController.RefreshTarget();
+            }
         }
 
         using (ExecuteBehaviorMarker.Auto())

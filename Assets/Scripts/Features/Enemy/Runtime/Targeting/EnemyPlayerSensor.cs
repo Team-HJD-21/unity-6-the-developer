@@ -7,6 +7,7 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
 {
     [SerializeField] private EnemyController enemyController;
     private CircleCollider2D _sensorCollider;
+    private Transform _sensorTransform;
     private EnemyNetworkController _networkController;
     private EnemyTargeting _enemyTargeting;
 
@@ -19,6 +20,7 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
     private void Awake()
     {
         _sensorCollider = GetComponent<CircleCollider2D>();
+        _sensorTransform = transform;
         _networkController = GetComponentInParent<EnemyNetworkController>();
         _enemyTargeting = GetComponentInParent<EnemyTargeting>();
 
@@ -26,72 +28,48 @@ public sealed class EnemyPlayerSensor : MonoBehaviour
             enemyController = GetComponentInParent<EnemyController>();
     }
 
-    /// <summary>현재 선택한 타깃이 감지 영역과 접촉 중인지 확인한다.</summary>
-    public bool IsTargetInside(Collider2D[] targetColliders)
+    /// <summary>현재 선택한 타깃의 위치가 감지 영역 안인지 확인한다.</summary>
+    public bool IsTargetInside(Transform target)
     {
-        if (!isActiveAndEnabled ||
-            _sensorCollider == null ||
-            !_sensorCollider.enabled ||
-            targetColliders == null)
-        {
+        if (!isActiveAndEnabled || _sensorCollider == null || target == null)
             return false;
-        }
 
-        foreach (Collider2D targetCollider in targetColliders)
-        {
-            if (targetCollider == null ||
-                !targetCollider.enabled ||
-                !targetCollider.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
+        GetDetectionArea(out Vector2 center, out float radiusSquared);
+        Vector2 difference = (Vector2)target.position - center;
 
-            if (_sensorCollider.IsTouching(targetCollider))
-                return true;
-        }
-
-        return false;
+        return difference.sqrMagnitude <= radiusSquared;
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        NotifyPlayer(other);
-    }
+    private void OnTriggerEnter2D(Collider2D other) => NotifyPlayer(other);
 
-    private void OnTriggerStay2D(Collider2D other)
-    {
-        // 영역 안에서 분대에 합류하거나 기존 플레이어가 무효화된 경우에도 전달한다.
-        NotifyPlayer(other);
-    }
+    private void OnTriggerStay2D(Collider2D other) => NotifyPlayer(other);
 
     private void NotifyPlayer(Collider2D other)
     {
         TargetableComponent currentTarget = _enemyTargeting != null
             ? _enemyTargeting.TargetComponent
             : null;
-        
-        // 이미 플레이어를 추적 중이면 반복 검색과 전달을 생략한다.
-        if (currentTarget != null &&
-            currentTarget.TargetType == TargetType.Player)
-        {
+        if (currentTarget != null && currentTarget.TargetType == TargetType.Player)
             return;
-        }
-        
-        if (enemyController == null ||
-            _networkController == null ||
+
+        if (enemyController == null || _networkController == null ||
             !_networkController.CanExecuteBehavior)
-        {
             return;
-        }
-        
+
         ITargetable player = other.GetComponentInParent<ITargetable>();
-        if (player == null ||
-            !player.CanBeTargeted ||
-            player.TargetTransform == null)
-        {
+        if (player == null || !player.CanBeTargeted || player.TargetTransform == null)
             return;
-        }
 
         enemyController.NotifyPlayerDetected(player);
+    }
+
+    /// <summary>기존 Offset과 스케일을 반영한 월드 감지 범위를 구한다.</summary>
+    private void GetDetectionArea(out Vector2 center, out float radiusSquared)
+    {
+        center = _sensorTransform.TransformPoint(_sensorCollider.offset);
+        Vector3 scale = _sensorTransform.lossyScale;
+        float radius = _sensorCollider.radius *
+            Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
+        radiusSquared = radius * radius;
     }
 }

@@ -99,24 +99,24 @@ public abstract partial class EnemyAbility : MonoBehaviour
     public abstract bool CheckCondition();
 
     /// <summary>
-    /// 발동에 성공한 경우에만 쿨타임을 시작한다.
+    /// 컨트롤러가 계산한 전투 타깃의 거리 결과를 받아 조건을 검사한다.
+    /// 별도 대상을 사용하는 능력은 기존 검사를 수행한다.
     /// </summary>
-    // public bool TryUse()
-    // {
-    //     if (!CanAdvanceAbility ||
-    //         IsExecuting ||
-    //         FieldSimulationTime.Seconds(this) < _nextUseTime ||
-    //         !CheckCondition() ||
-    //         !Activate())
-    //     {
-    //         return false;
-    //     }
-    //
-    //     _nextUseTime = FieldSimulationTime.Seconds(this) + cooldown;
-    //     return true;
-    // }
+    public virtual bool CheckCondition(bool isInTargetRange)
+    {
+        return CheckCondition();
+    }
 
     public bool TryUse()
+    {
+        return TryUse(false);
+    }
+
+    /// <summary>
+    /// 같은 행동 실행에서 조건을 통과했다면 중복 검사를 생략한다.
+    /// 권한·실행 상태·쿨타임은 계속 확인한다.
+    /// </summary>
+    internal bool TryUse(bool conditionAlreadyChecked)
     {
         if (!CanAdvanceAbility ||
             IsExecuting ||
@@ -125,14 +125,16 @@ public abstract partial class EnemyAbility : MonoBehaviour
             return false;
         }
 
-        bool conditionMet;
-
-        using (UseConditionMarker.Auto())
+        if (!conditionAlreadyChecked)
         {
-            conditionMet = CheckCondition();
+            using (UseConditionMarker.Auto())
+            {
+                if (!CheckCondition())
+                    return false;
+            }
         }
 
-        if (!conditionMet || !Activate())
+        if (!Activate())
             return false;
 
         _nextUseTime = FieldSimulationTime.Seconds(this) + cooldown;
@@ -160,42 +162,54 @@ public abstract partial class EnemyAbility : MonoBehaviour
         float range)
     {
         if (_bodyCollider == null ||
-            !_bodyCollider.enabled ||
-            !_bodyCollider.gameObject.activeInHierarchy ||
             targetColliders == null ||
+            targetColliders.Length == 0 ||
             range < 0f)
         {
             return false;
         }
 
         Bounds bodyBounds = _bodyCollider.bounds;
-        float rangeSquared = range * range;
+        Vector3 bodyExtents = bodyBounds.extents;
 
+        // 비활성 상태이거나 유효한 영역이 없는 본인 콜라이더는 제외한다.
+        if (bodyExtents.sqrMagnitude == 0f)
+            return false;
+        
+        Vector3 bodyCenter = bodyBounds.center;
+        float rangeSquared = range * range;
+        
         foreach (Collider2D targetCollider in targetColliders)
         {
+            // Trigger와 비활성 Collider는 Bounds를 읽기 전에 제외한다.
             if (targetCollider == null ||
-                !targetCollider.enabled ||
-                !targetCollider.gameObject.activeInHierarchy ||
-                targetCollider.isTrigger)
+                targetCollider.isTrigger ||
+                !targetCollider.enabled)
             {
                 continue;
             }
-
+            
             Bounds targetBounds = targetCollider.bounds;
+            Vector3 targetExtents = targetBounds.extents;
 
+            if (targetExtents.sqrMagnitude == 0f)
+                continue;
+            
+            Vector3 targetCenter = targetBounds.center;
+            
             // 두 Bounds 사이의 X·Y 간격을 구한다.
             // 해당 축에서 겹치면 간격은 0이다.
             float gapX = Mathf.Max(
                 0f,
-                Mathf.Abs(bodyBounds.center.x - targetBounds.center.x) -
-                bodyBounds.extents.x -
-                targetBounds.extents.x);
+                Mathf.Abs(bodyCenter.x - targetCenter.x) -
+                bodyExtents.x -
+                targetExtents.x);
 
             float gapY = Mathf.Max(
                 0f,
-                Mathf.Abs(bodyBounds.center.y - targetBounds.center.y) -
-                bodyBounds.extents.y -
-                targetBounds.extents.y);
+                Mathf.Abs(bodyCenter.y - targetCenter.y) -
+                bodyExtents.y -
+                targetExtents.y);
 
             // Bounds부터 사거리 밖이면 실제 콜라이더도 사거리 밖이다.
             if (gapX * gapX + gapY * gapY > rangeSquared)

@@ -17,6 +17,7 @@ public class EnemySquad
     private readonly EnemySquadMode _squadMode;
     private readonly EnemyTargetRule _targetRule;
     private float _nextSearchTime;
+    private EnemyController _representative;
 
     /// <summary>
     /// 등록된 분대원이 모두 제거되었는지 반환한다.
@@ -81,6 +82,7 @@ public class EnemySquad
 
         _members.Add(enemy);
         enemy.AssignTarget(_target?.TargetTransform);
+        RefreshRepresentative();
         return true;
     }
 
@@ -93,9 +95,13 @@ public class EnemySquad
         if (ReferenceEquals(enemy, null) || !_members.Remove(enemy))
             return;
 
+        enemy.IsSquadRepresentative = false;
+
         // 목록에서 제거된 경우에만 반환해 중복 제거 요청의 이중 차감을 막는다.
         if (enemy.IsIncludedInAttackerLimit)
             _target?.UnassignAttackers(1);
+
+        RefreshRepresentative();
 
         if (IsEmpty)
             TryChangeTarget(null);
@@ -232,21 +238,40 @@ public class EnemySquad
         return TryChangeTarget(player);
     }
 
-    /// <summary>목표가 없고 재검색 시점일 때 대표 활성 구성원만 검색한다.</summary>
-    public void RefreshTarget(EnemyController requester)
+    /// <summary>구성원 상태가 바뀌었을 때 활성 구성원 한 명을 대표로 지정한다.</summary>
+    internal void RefreshRepresentative(EnemyController unavailableMember = null)
     {
-        if (_target != null || Time.time < _nextSearchTime)
-            return;
+        if (_representative != null)
+            _representative.IsSquadRepresentative = false;
+
+        _representative = null;
 
         foreach (EnemyController member in _members)
         {
-            if (member == null || !member.isActiveAndEnabled)
+            if (member == null ||
+                ReferenceEquals(member, unavailableMember) ||
+                !member.isActiveAndEnabled)
+            {
                 continue;
+            }
 
-            if (member == requester)
-                SetTarget();
+            _representative = member;
+            member.IsSquadRepresentative = true;
+            break;
+        }
+    }
+
+    /// <summary>대표 구성원이 목표가 없을 때 재검색을 요청한다.</summary>
+    public void RefreshTarget(EnemyController requester)
+    {
+        if (!ReferenceEquals(_representative, requester) ||
+            _target != null ||
+            Time.time < _nextSearchTime)
+        {
             return;
         }
+
+        SetTarget();
     }
 
     /// <summary>검색·타깃 변경 시에만 집계 대상 구성원 수를 계산한다.</summary>

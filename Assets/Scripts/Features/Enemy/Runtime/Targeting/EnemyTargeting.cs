@@ -13,6 +13,9 @@ public class EnemyTargeting : MonoBehaviour
     public TargetableComponent TargetComponent => _targetComponent;
     public Collider2D[] TargetColliders => _targetColliders;
 
+    /// <summary>타깃 참조와 콜라이더 목록 갱신이 끝나면 알린다.</summary>
+    public event System.Action TargetChanged;
+    
     /// <summary>
     /// 타깃 지정 시 필요한 참조를 저장하고 상실 이벤트를 연결한다.
     /// </summary>
@@ -26,14 +29,20 @@ public class EnemyTargeting : MonoBehaviour
         _targetColliders = null;
 
         if (target == null)
+        {
+            TargetChanged?.Invoke();
             return;
+        }
 
         TargetableComponent targetComponent =
             target.GetComponent<TargetableComponent>();
 
         // 공격 불가 대상은 저장하지 않는다.
         if (targetComponent != null && !targetComponent.CanBeTargeted)
+        {
+            TargetChanged?.Invoke();
             return;
+        }
 
         _target = target;
         _targetComponent = targetComponent;
@@ -41,6 +50,8 @@ public class EnemyTargeting : MonoBehaviour
 
         if (_targetComponent != null)
             _targetComponent.TargetabilityLost += OnTargetabilityLost;
+        
+        TargetChanged?.Invoke();
     }
 
     private void OnTargetabilityLost(ITargetable target)
