@@ -41,7 +41,11 @@ namespace TeamHJD.Game.Enemies.Encounter
                     throw new InvalidOperationException("The active region belongs to another Match.");
                 collection.Points.ApplyRegionSnapshot(latestRegion, margin);
                 string failure = "";
-                int instructionSpawned = _spawnExecutor.Execute(instruction, context, actuals.Add,reason=>failure=reason, snapshot, _region, margin);
+                ITargetable preferredTarget = null;
+                if (plan.Targets != null && !string.IsNullOrEmpty(instruction.SpawnPointId))
+                    plan.Targets.TryGetValue(instruction.SpawnPointId, out preferredTarget);
+                int instructionSpawned = _spawnExecutor.Execute(instruction, context, actuals.Add,
+                    reason => failure = reason, snapshot, _region, margin, preferredTarget, collection.Targets);
                 foreach(EnemySpawnEntry entry in instruction.Enemies)
                     plans.Add(new SpawnDecisionSnapshot.Plan(instruction.SpawnPointId,entry.EnemyId,entry.Count,failure));
                 spawnedCount += instructionSpawned;

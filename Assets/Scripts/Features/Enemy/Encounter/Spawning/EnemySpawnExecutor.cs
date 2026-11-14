@@ -263,7 +263,8 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
     /// </summary>
     public int Execute(SpawnInstruction spawnInstruction, EncounterExecutionContext context,
         Action<SpawnDecisionSnapshot.Actual> observeSpawn, Action<string> observeFailure = null, BattlefieldSpatialSnapshot battlefield = null,
-        Func<RegionGridSnapshot> currentRegion = null, double captureMargin = 0)
+        Func<RegionGridSnapshot> currentRegion = null, double captureMargin = 0,
+        ITargetable preferredTarget = null, IReadOnlyList<TargetableComponent> targetCandidates = null)
     {
         // NGO 스폰은 서버에서만 수행하며, 적 구성 항목이 없는 명령은 무시한다.
         if (!IsServer || !CanSimulateField || spawnInstruction.Enemies == null ||
@@ -395,8 +396,8 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
             if (createdSquad.IsEmpty)
                 continue;
 
-            // 최초 후보가 없어도 보관해 이후 Update에서 다시 찾는다.
-            bool hasTarget = createdSquad.SetTarget();
+            // 실제 구성원 등록 후 분대가 기존 후보의 수용 인원을 검사하고 필요할 때만 재검색한다.
+            bool hasTarget = createdSquad.SetTarget(preferredTarget, targetCandidates);
             _squads.Add(createdSquad);
             if (!hasTarget)
                 Debug.LogWarning($"No eligible target found for squad at {spawnInstruction.SpawnPointId}.");

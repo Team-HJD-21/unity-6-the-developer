@@ -163,38 +163,42 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// 배정된 목표는 유지하고, 목표가 없을 때 분대 중심에서 새 목표를 찾는다.
-    /// 타깃 불가 전환은 이벤트로 처리하며 후보가 없을 때만 검색 간격을 둔다.
+    /// 전달받은 목표에 우선 배정하고, 실패하면 분대 중심에서 허용 대상을 검색한다.
+    /// 일반 분대는 시설을 검색하며 플레이어 전환은 감지 이벤트로 처리한다.
     /// </summary>
     /// <returns>선택되거나 유지된 공동 목표가 있으면 true.</returns>
-    public bool SetTarget()
+    public bool SetTarget(
+        ITargetable preferredTarget = null,
+        IReadOnlyList<TargetableComponent> candidates = null)
     {
         if (_target != null)
             return true;
 
-        if (Time.time < _nextSearchTime)
+        if (IsEmpty || Time.time < _nextSearchTime)
             return false;
 
         _nextSearchTime = Time.time + RetargetInterval;
 
+        TargetType requiredType = _targetRule == EnemyTargetRule.PlayerOnly
+            ? TargetType.Player
+            : TargetType.Turret;
+
+        // 기존 후보에 실제 인원을 배정할 수 있으면 거리 검색을 생략한다.
+        if (IsValidTarget(preferredTarget) && preferredTarget.TargetType == requiredType)
+        {
+            using (AssignTargetMarker.Auto())
+            {
+                if (TryChangeTarget(preferredTarget))
+                    return true;
+            }
+        }
+
         if (!TryGetCenterPosition(out Vector3 center))
             return false;
 
-        TargetType? requiredType = _targetRule == EnemyTargetRule.PlayerOnly
-            ? TargetType.Player
-            : null;
+        // 스폰 시에는 인카운터가 수집한 목록을 재사용하고 이후 검색에서는 최신 목록을 조회한다.
+        candidates ??= Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
 
-        TargetableComponent[] candidates =
-            Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
-
-        // bool found = RuntimeTargetSelector.TryFindNearest(
-        //     center, candidates, requiredType, out ITargetable nextTarget, GetAttackerCount());
-        //
-        // if (!found)
-        //     return false;
-        //
-        // return TryChangeTarget(nextTarget);
-        
         bool found;
         ITargetable nextTarget;
 
