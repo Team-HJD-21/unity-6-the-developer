@@ -15,8 +15,12 @@ public partial class EnemyNetworkController : NetworkBehaviour
 {
     [SerializeField] private EnemyController enemyController;
     [SerializeField] private EnemyHealth enemyHealth;
+    [SerializeField] private EnemyHitDeathVisual hitDeathVisual;
     private EnemyExplosionAbility _explosionAbility;
     private FieldSimulationActor _simulationActor;
+    private readonly NetworkVariable<double> _deathStartedAt = new(-1d);
+    private bool _deathPresentationStarted;
+    private bool _deathDespawnRequested;
 
     // 프로파일링
     private static readonly ProfilerMarker CanExecuteMarker =
@@ -63,7 +67,8 @@ public partial class EnemyNetworkController : NetworkBehaviour
             if (_simulationActor == null)
                 TryGetComponent(out _simulationActor);
 
-            return _simulationActor == null || _simulationActor.CanAdvance;
+            return !(_deathPresentationStarted || (enemyHealth != null && enemyHealth.IsDead)) &&
+                   (_simulationActor == null || _simulationActor.CanAdvance);
         }
     }
 
@@ -76,6 +81,8 @@ public partial class EnemyNetworkController : NetworkBehaviour
             enemyController = GetComponent<EnemyController>();
         if (enemyHealth == null)
             enemyHealth = GetComponent<EnemyHealth>();
+        if (hitDeathVisual == null)
+            hitDeathVisual = GetComponent<EnemyHitDeathVisual>();
 
         _explosionAbility = GetComponent<EnemyExplosionAbility>();
     }
@@ -114,18 +121,45 @@ public partial class EnemyNetworkController : NetworkBehaviour
             enemyController.ExecuteBehavior();
         }
     }
+
+    private void Update()
+    {
+        if (!IsSpawned || !IsServer || _deathStartedAt.Value < 0d || _deathDespawnRequested)
+            return;
+
+        double fadeDuration = hitDeathVisual != null
+            ? hitDeathVisual.DeathFadeDuration
+            : 0d;
+
+        if (NetworkManager.ServerTime.Time - _deathStartedAt.Value < fadeDuration)
+            return;
+
+        _deathDespawnRequested = true;
+        NetworkObject.Despawn();
+    }
     
     /// <summary>
     /// 적이 네트워크에 스폰되면 서버에서 현재 체력과 사망 상태를 초기화한다.
     /// </summary>
     public override void OnNetworkSpawn()
     {
+        _deathPresentationStarted = false;
+        _deathDespawnRequested = false;
+        hitDeathVisual?.ResetPresentation();
+        if (IsServer)
+            _deathStartedAt.Value = -1d;
+
+        _deathStartedAt.OnValueChanged += OnDeathStartedAtChanged;
+        if (_deathStartedAt.Value >= 0d)
+            BeginDeathPresentation(_deathStartedAt.Value);
+
         NotifySpawned();
         if (!IsServer || !enemyHealth)
             return;
 
         enemyHealth.Initialize();
         enemyHealth.Died += OnHealthDied;
+        enemyHealth.DamageApplied += OnHealthDamageApplied;
         SubscribeExplosionAbility();
     }
 
@@ -162,7 +196,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     private void OnHealthDied(EnemyHealth health)
     {
-        if (health != enemyHealth || !IsServer)
+        if (health != enemyHealth || !IsServer || _deathStartedAt.Value >= 0d)
             return;
 
         // 고유 사망 반응이 실패해도 사망 기록과 네트워크 제거는 계속 처리한다.
@@ -176,6 +210,10 @@ public partial class EnemyNetworkController : NetworkBehaviour
             Debug.LogException(exception, this);
         }
 
+        double deathTime = NetworkManager.ServerTime.Time;
+        _deathStartedAt.Value = deathTime;
+        BeginDeathPresentation(deathTime);
+
         if (DeathConfirmed != null)
             foreach (Action<ulong> observer in DeathConfirmed.GetInvocationList())
                 try
@@ -187,8 +225,56 @@ public partial class EnemyNetworkController : NetworkBehaviour
                     Debug.LogException(exception, this);
                 }
 
-        if (IsSpawned)
-            NetworkObject.Despawn();
+        if (hitDeathVisual == null || hitDeathVisual.DeathFadeDuration <= 0f)
+        {
+            _deathDespawnRequested = true;
+            if (IsSpawned)
+                NetworkObject.Despawn();
+        }
+    }
+
+    private void OnHealthDamageApplied(
+        EnemyHealth health,
+        int damage,
+        TeamHJD.Game.Enemy.Contracts.AttackSourceType source)
+    {
+        if (health != enemyHealth || !IsServer || health.IsDead)
+            return;
+
+        hitDeathVisual?.PlayHitFlash();
+        PlayHitFlashRpc();
+    }
+
+    [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
+    private void PlayHitFlashRpc()
+    {
+        if (IsServer)
+            return;
+
+        hitDeathVisual?.PlayHitFlash();
+    }
+
+    private void OnDeathStartedAtChanged(double previous, double current)
+    {
+        if (current >= 0d)
+            BeginDeathPresentation(current);
+    }
+
+    private void BeginDeathPresentation(double deathTime)
+    {
+        if (_deathPresentationStarted)
+            return;
+
+        _deathPresentationStarted = true;
+        enemyHealth?.Deactivate();
+        enemyController?.LeaveSquad();
+        GetComponent<EnemyAnimation>()?.StopMovementAnimation();
+
+        // 고유 사망 처리를 마친 뒤 일반 능력 이벤트와 추가 발동을 막는다.
+        foreach (EnemyAbility ability in GetComponents<EnemyAbility>())
+            ability.enabled = false;
+
+        hitDeathVisual?.BeginDeathFade(deathTime, NetworkManager.ServerTime.Time);
     }
 
     /// <summary>
@@ -196,6 +282,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        _deathStartedAt.OnValueChanged -= OnDeathStartedAtChanged;
         NotifyDespawned();
         if (_explosionAbility != null)
             _explosionAbility.RemovalRequested -= OnExplosionRemovalRequested;
@@ -203,6 +290,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
         if (enemyHealth != null)
         {
             enemyHealth.Died -= OnHealthDied;
+            enemyHealth.DamageApplied -= OnHealthDamageApplied;
             enemyHealth.Deactivate();
         }
 

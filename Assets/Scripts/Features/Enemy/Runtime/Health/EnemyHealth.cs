@@ -28,6 +28,7 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
 
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
+    public bool IsDead => _isDead;
 
     /// <summary>
     /// 현재 체력을 최대값으로 초기화한다.

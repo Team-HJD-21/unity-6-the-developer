@@ -79,7 +79,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 97d122491a9e4dd7a8855eb43f16d1bc, type: 3}
-  m_Name: 
+  m_Name: EnemyHitDeathVisual
   m_EditorClassIdentifier: Assembly-CSharp::EnemyPlayerSensor
   enemyController: {fileID: 0}
 --- !u!1 &6725114028751190915
@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 1104968200444958007}
   - component: {fileID: 9411200}
   - component: {fileID: 1463413711868865263}
+  - component: {fileID: 4495588093417712201}
   m_Layer: 7
   m_Name: EnemyRoot
   m_TagString: Enemy
@@ -275,6 +276,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   enemyController: {fileID: 0}
   enemyHealth: {fileID: 709624304880594385}
+  hitDeathVisual: {fileID: 4495588093417712201}
   runOffline: 0
   testTarget: {fileID: 0}
 --- !u!114 &5028725621733964846
@@ -596,3 +598,18 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &4495588093417712201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6725114028751190915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2afad482149f6994db77d314aa172b15, type: 3}
+  m_Name: EnemyHitDeathVisual
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHitDeathVisual
+  hitColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  hitFlashDuration: 0.12
+  deathFadeDuration: 0.55
