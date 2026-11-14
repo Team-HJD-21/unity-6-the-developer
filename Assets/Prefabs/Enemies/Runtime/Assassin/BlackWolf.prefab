@@ -324,14 +324,16 @@ PrefabInstance:
       addedObject: {fileID: 6908116440502637120}
     - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 969102101754766042}
-    - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 8095137201846823201}
     - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7120489268976177164}
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+--- !u!70 &2825898501810572156 stripped
+CapsuleCollider2D:
+  m_CorrespondingSourceObject: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+  m_PrefabInstance: {fileID: 931854335210630480}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3576063234121525837 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4417510083731572509, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
@@ -361,7 +363,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAssassinAbility
   cooldown: 1
-  _bodyCollider: {fileID: 0}
+  _bodyCollider: {fileID: 2825898501810572156}
   activationRange: 0.5
   enemyTargeting: {fileID: 3576063234121525837}
   attackDamage: 12
@@ -391,19 +393,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkDetection
   ShowTopMostFoldoutHeaderGroup: 1
-  enemyDetection: {fileID: 4592527766516815806}
---- !u!114 &969102101754766042
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7542723251226543163}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8de9e450c71746eca0c59adf331e4fa1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyDetectionTester
   enemyDetection: {fileID: 4592527766516815806}
 --- !u!114 &8095137201846823201
 MonoBehaviour:
