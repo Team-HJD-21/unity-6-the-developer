@@ -29,6 +29,7 @@ public sealed partial class TacticalCommandController
         { MultipleSelection = false; _batch.Clear(); if (row != null) _batch.Add(row.EntityId); }
         View.SelectMultiple.gameObject.SetActive(atCU);
         View.SelectionLabel.color = MultipleSelection ? Style.Common.Accent : Style.Common.Text;
+        View.SelectMultiple.GetComponent<UiButtonFeedback>().Icon.color=View.SelectionLabel.color;
         View.AutoActivate.gameObject.SetActive(atCU); View.BatchActivate.gameObject.SetActive(atCU && _batch.Count > 1);
         View.BatchDeactivate.gameObject.SetActive(atCU && _batch.Count > 1);
         var controller = Source.Commands?.Presentation.Snapshot?.Controller;
@@ -41,15 +42,24 @@ public sealed partial class TacticalCommandController
         bool can = CanOperate(row), pending = Pending(row);
         View.Title.text = _batch.Count > 1 ? $"선택 {_batch.Count}" : Caption(row);
         int count = EnemyCount(row);
-        View.Stats.text = $"{row.CurrentHealth} / {row.MaxHealth}    전력 {row.Power}" + (count > 0 ? $"    적 {count}" : "");
+        View.PowerValue.text=row.Power.ToString();View.ThreatValue.text=count.ToString();
+        View.ThreatIcon.gameObject.SetActive(count>0);View.ThreatValue.gameObject.SetActive(count>0);
+        View.DockState.Set(TacticalSymbolGraphic.ForState(StateOf(row)),StateColor(StateOf(row)));
+        SetHealth(View.DockHealth,row);
         Sprite sprite = SpriteFor(row); View.TurretIcon.sprite = sprite; View.TurretIcon.enabled = sprite != null;
-        View.ToggleLabel.text = row.IsActivated ? "끄기" : "켜기";
-        View.ToggleLabel.color = pending ? Style.Inactive : row.IsActivated ? Style.Common.Health : Style.Active;
+        bool territoryLocked=TerritoryLocked(row);
+        View.ToggleLabel.text = Regions==null?"확인 중":TacticalPresentationRules.ToggleCaption(row,AvailablePower,pending,territoryLocked);
+        View.ToggleLabel.color = pending || territoryLocked || row.IsLocked ? Style.Inactive : row.IsActivated ? Style.Common.Health : StageTurretInteractionRules.CanToggle(row) && AvailablePower>=row.Power?Style.Active:StateColor(StateOf(row));
+        var toggleIcon=View.ToggleTurret.GetComponent<UiButtonFeedback>().Icon as TacticalSymbolGraphic;
+        if(toggleIcon!=null)toggleIcon.Set(territoryLocked || row.IsLocked?TacticalSymbolGraphic.Symbol.Locked:TacticalSymbolGraphic.Symbol.Active,View.ToggleLabel.color);
         View.ToggleTurret.interactable = can && !pending && StageTurretInteractionRules.CanToggle(row) && (row.IsActivated || AvailablePower >= row.Power);
         View.Upgrade.interactable = can && !pending && row.CanModifyUpgrades;
-        View.Restriction.text = pending ? "처리 중" : row.IsDestroyed ? "파괴됨" : row.IsLocked ? "잠김" : !can ? "가까이에서 조작" : row.IsManualOperationBlocked ? "자동 활성화 중" :
+        View.Restriction.text = pending ? "처리 중" : row.IsDestroyed ? "파괴됨" : row.IsLocked || territoryLocked ? "잠김" : !can ? "상태 확인 중" : row.IsManualOperationBlocked ? "자동 활성화 중" :
             row.IsCoolingDown ? $"냉각 {row.CoolingRemaining:0.0}s" :
             !row.IsActivated && AvailablePower < row.Power ? "전력 부족" : "";
+        View.Restriction.color=StateColor(StateOf(row));
+        View.Restriction.gameObject.SetActive(false);
+        View.DockStateHint.Caption=territoryLocked && !row.IsLocked && !row.IsDestroyed?TacticalPresentationRules.Caption(StateOf(row))+" · 미점유/원격 잠김":string.IsNullOrEmpty(View.Restriction.text)?TacticalPresentationRules.Caption(StateOf(row)):View.Restriction.text;
         bool modify = can && !pending && row.CanModifyUpgrades;
         View.LevelUp.interactable = modify && LevelTarget(row, true, out _); View.LevelDown.interactable = modify && LevelTarget(row, false, out _);
         var low = Branch(true, row); var fire = Branch(false, row);
@@ -60,14 +70,21 @@ public sealed partial class TacticalCommandController
         View.FirePlus.interactable = modify && StageTurretInteractionRules.CanChangeUpgrade(row, fire, true);
         View.FireMinus.interactable = modify && StageTurretInteractionRules.CanChangeUpgrade(row, fire, false);
         if (!View.Upgrade.interactable) View.UpgradeDrawer.gameObject.SetActive(false);
-        View.Restriction.rectTransform.anchoredPosition = new Vector2(0, View.UpgradeDrawer.gameObject.activeSelf ? 230 : 108);
+        View.Restriction.rectTransform.anchoredPosition = new Vector2(0, View.UpgradeDrawer.gameObject.activeSelf ? 242 : 126);
+        View.DockStateHint.Card.anchoredPosition=new Vector2(104,View.UpgradeDrawer.gameObject.activeSelf?242:126);
         bool multiple = _batch.Count > 1;
         View.ToggleTurret.gameObject.SetActive(!multiple); View.Upgrade.gameObject.SetActive(!multiple);
         if (multiple)
         {
             var rows = _batch.Where(id => _byId.ContainsKey(id)).Select(id => _byId[id]).ToArray();
             int active = rows.Count(r => r.IsActivated), eligible = rows.Count(r => CanOperate(r) && StageTurretInteractionRules.CanToggle(r));
-            View.Stats.text = $"가동 {active}/{rows.Length}    전력 {rows.Where(r=>r.IsActivated).Sum(r=>r.Power)}";
+            View.PowerValue.text=rows.Where(r=>r.IsActivated).Sum(r=>r.Power).ToString();
+            float fraction=rows.Sum(r=>r.CurrentHealth)/(float)System.Math.Max(1,rows.Sum(r=>(long)r.MaxHealth));
+            View.DockHealth.Set(fraction,fraction,HealthColor(fraction));
+            int threats=_enemies.Count(e=>rows.Any(r=>(e-Point(r)).sqrMagnitude<=r.Range*r.Range));
+            View.ThreatIcon.gameObject.SetActive(threats>0);View.ThreatValue.gameObject.SetActive(threats>0);View.ThreatValue.text=threats.ToString();
+            View.DockState.Set(active==rows.Length?TacticalSymbolGraphic.Symbol.Active:TacticalSymbolGraphic.Symbol.Busy,Style.Common.Text);
+            View.TurretIcon.rectTransform.anchoredPosition=new Vector2(8,-12);View.DockState.rectTransform.anchoredPosition=new Vector2(104,-75);
             View.TurretIcon.sprite = Style.Common.Get("owner_cu"); View.TurretIcon.enabled = View.TurretIcon.sprite != null;
             View.Restriction.text = rows.Any(Pending) ? "처리 중" : eligible < rows.Length ? $"조작 가능 {eligible}/{rows.Length}" : "";
             View.UpgradeDrawer.gameObject.SetActive(false);

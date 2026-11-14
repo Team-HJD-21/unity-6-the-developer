@@ -76,11 +76,11 @@ namespace TeamHJD.Game.Application
         }
 
         /// <summary>모드/Stage 소유자가 확정한 승패를 한 번만 완료합니다. 비환급 기록은 쓰기 권한이 닫히기 전에 확정합니다.</summary>
-        public void CompleteMatch(MatchOutcome outcome)
+        public void CompleteMatch(MatchOutcome outcome, MatchEndReason reason = MatchEndReason.None)
         {
             if (!IsGameplayRunning) throw new InvalidOperationException("Complete only the current authority Match.");
             Recovery?.Ledger.EndMission();
-            _session.Complete(outcome, checked(++_sequence));
+            _session.Complete(outcome, checked(++_sequence), reason);
         }
 
         public void Start()
@@ -119,7 +119,8 @@ namespace TeamHJD.Game.Application
                 var progress = new MatchProgressSnapshot(MatchId, _controlUnit.CurrentHealth,
                     _controlUnit.MaxHealth, ElapsedSeconds);
                 MatchOutcome? outcome = _session.EvaluateProgress(progress);
-                if (outcome.HasValue) CompleteMatch(outcome.Value);
+                if (outcome.HasValue) CompleteMatch(outcome.Value, outcome == MatchOutcome.Defeat && _controlUnit.CurrentHealth == 0
+                    ? MatchEndReason.ControlUnitDestroyed : MatchEndReason.None);
             }
             finally { _evaluating = false; }
         }

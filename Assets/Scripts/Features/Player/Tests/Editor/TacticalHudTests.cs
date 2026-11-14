@@ -97,7 +97,7 @@ public sealed class TacticalHudTests
     [Test]
     public void TacticalLeasesBlockCombatButKeepTurretCommandsSubjectToMenuLock()
     {
-        var go=new GameObject("Control test");
+        var go=EditorUtility.CreateGameObjectWithHideFlags("Control test",HideFlags.HideAndDontSave);
         try
         {
             var control=go.AddComponent<PlayerControlState>();
@@ -124,5 +124,16 @@ public sealed class TacticalHudTests
         Assert.That(v.GetComponentsInChildren<Camera>(true),Is.Empty); Assert.That(v.GetComponentsInChildren<AudioListener>(true),Is.Empty);
         Assert.That(v.ToggleTurret.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>().PreserveLabelColor,Is.True);
         Assert.That(controller.Style.LowPower.Length,Is.GreaterThan(0)); Assert.That(controller.Style.Firepower.Length,Is.GreaterThan(0));
+        Assert.That(((RectTransform)v.ToggleMap.transform).anchorMin,Is.EqualTo(new Vector2(1,0)));
+        Assert.That(v.ToggleMap.GetComponentInChildren<TacticalSymbolGraphic>(),Is.Not.Null);
+        Assert.That(v.ToggleMap.GetComponentInChildren<TMPro.TMP_Text>().text,Is.EqualTo("전술 지도"));
+        Assert.That(v.SettingsDrawer,Is.Not.Null);Assert.That(v.Ranges,Is.Not.Null);Assert.That(v.Scenery,Is.Not.Null);
+        Assert.That(v.DockHealth,Is.Not.Null);Assert.That(v.TooltipHealth,Is.Not.Null);
+        Assert.That(v.FocusPlayer.GetComponentInChildren<TMPro.TMP_Text>().text,Is.Empty);
+        Assert.That(v.Close.GetComponent<TacticalActionHint>(),Is.Not.Null);
+        var corners=new Vector3[4];v.Overview.parent.GetComponent<RectTransform>().GetWorldCorners(corners);
+        Assert.That(((RectTransform)v.Close.transform).sizeDelta.x,Is.EqualTo(48));
+        Assert.That(v.Ranges.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>().PreserveLabelColor,Is.True);
+        Assert.That(v.Scenery.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>().PreserveLabelColor,Is.True);
     }
 }

@@ -21,14 +21,14 @@ namespace TeamHJD.Game.Tests
 
         [TestCase(1)]
         [TestCase(2)]
-        public void ClearedAreaAfterTeamCombatCompletesInSixtySeconds(int participants)
+        public void ClearedAreaAfterTeamCombatCompletesInThirtySeconds(int participants)
         {
             var state = new StaticRegionCapture(1);
             state.RecordDamage(20);
             state.Tick(0, true, participants, 0, Settings);
-            Assert.That(state.Tick(59, true, participants, 0, Settings), Is.False);
-            Assert.That(state.Tick(60, true, participants, 0, Settings), Is.True);
-            Assert.That(state.HoldSeconds, Is.EqualTo(60));
+            Assert.That(state.Tick(29, true, participants, 0, Settings), Is.False);
+            Assert.That(state.Tick(30, true, participants, 0, Settings), Is.True);
+            Assert.That(state.HoldSeconds, Is.EqualTo(30));
             Assert.That(state.IsSecured, Is.True);
         }
 
@@ -52,11 +52,11 @@ namespace TeamHJD.Game.Tests
             var state = new StaticRegionCapture(1);
             state.RecordDamage(20);
             state.Tick(0, true, 1, 0, Settings);
-            state.Tick(30, true, 1, 0, Settings);
-            state.Tick(30, true, 0, 0, Settings);
-            state.Tick(209, true, 0, 0, Settings);
-            Assert.That(state.HoldSeconds, Is.EqualTo(30));
-            state.Tick(210, true, 0, 0, Settings);
+            state.Tick(15, true, 1, 0, Settings);
+            state.Tick(15, true, 0, 0, Settings);
+            state.Tick(194, true, 0, 0, Settings);
+            Assert.That(state.HoldSeconds, Is.EqualTo(15));
+            state.Tick(195, true, 0, 0, Settings);
             Assert.That(state.HoldSeconds, Is.Zero);
             Assert.That(state.TeamDamage, Is.Zero);
             Assert.That(state.Reason, Is.EqualTo(StaticRegionCaptureReason.Abandoned));
@@ -66,7 +66,7 @@ namespace TeamHJD.Game.Tests
         public void EmptySecuredRegionStaysSecuredButThirtySecondsOfSuperiorityLosesIt()
         {
             var state = new StaticRegionCapture(1);
-            state.Restore(60, 20, 0, 0, true);
+            state.Restore(30, 20, 0, 0, true);
             state.Tick(0, true, 0, 0, Settings);
             state.Tick(200, true, 0, 0, Settings);
             Assert.That(state.IsSecured, Is.True);
@@ -81,10 +81,10 @@ namespace TeamHJD.Game.Tests
         public void RestoringProgressDoesNotAccumulatePreviousClockGap()
         {
             var state = new StaticRegionCapture(1);
-            state.Restore(35, 20, 0, 0, false);
+            state.Restore(15, 20, 0, 0, false);
             state.Tick(1000, true, 1, 0, Settings);
-            Assert.That(state.HoldSeconds, Is.EqualTo(35));
-            state.Tick(1025, true, 1, 0, Settings);
+            Assert.That(state.HoldSeconds, Is.EqualTo(15));
+            state.Tick(1015, true, 1, 0, Settings);
             Assert.That(state.IsSecured, Is.True);
         }
 
@@ -96,7 +96,8 @@ namespace TeamHJD.Game.Tests
             state.RecordDamage(20);
             state.Tick(300, true, 1, 0, Settings);
             Assert.That(state.HoldSeconds, Is.Zero);
-            Assert.That(state.Tick(360, true, 1, 0, Settings), Is.True);
+            Assert.That(state.Tick(329, true, 1, 0, Settings), Is.False);
+            Assert.That(state.Tick(330, true, 1, 0, Settings), Is.True);
         }
 
         [Test]
@@ -106,7 +107,7 @@ namespace TeamHJD.Game.Tests
             var before = state.Snapshot;
             state.RecordDamage(20);
             state.Tick(0, true, 1, 0, Settings);
-            state.Tick(60, true, 1, 0, Settings);
+            state.Tick(30, true, 1, 0, Settings);
             Assert.That(before.TeamDamage, Is.Zero);
             Assert.That(before.HoldSeconds, Is.Zero);
             Assert.That(before.IsSecured, Is.False);

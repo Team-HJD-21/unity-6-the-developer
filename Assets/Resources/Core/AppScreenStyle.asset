@@ -20,5 +20,6 @@ MonoBehaviour:
   CanvasPrefab: {fileID: 7998942265738456835, guid: 1c0f49b818ecb804c958ef54412f2aef, type: 3}
   MenuPrefab: {fileID: 6996203533140654553, guid: b59fb83b451896e4281affac1e72dba5, type: 3}
   ResultPrefab: {fileID: 2989178334829339287, guid: d203d7e464ddc0b4fbade3f045e70de1, type: 3}
+  RecoveryPrefab: {fileID: 7362729854781486414, guid: 0659ca42333f28c418730e8a39d06626, type: 3}
   SettingsPrefab: {fileID: 4476319987068881976, guid: e6fad11d8fd2a324d8a631ae92eb77dc, type: 3}
   LoadingPrefab: {fileID: 2173820242857921020, guid: f6232e4510154654ea00e53cee92b029, type: 3}

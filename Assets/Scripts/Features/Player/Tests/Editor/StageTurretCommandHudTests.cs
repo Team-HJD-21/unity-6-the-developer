@@ -25,6 +25,94 @@ public sealed class StageTurretCommandHudTests
         if (Application.isPlaying) yield return new ExitPlayMode();
     }
     [UnityTest]
+    public IEnumerator MapLocksNearbyUnoccupiedTurretsUntilTheirCellIsCaptured()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>();var t=hud.Tactical;
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        var turret=FindInactive(hud.Turrets,default);turret.TryGetEntityId(out var id);
+        hud.LocalPlayer.transform.position=turret.transform.position;yield return new WaitForSecondsRealtime(.2f);
+        Assert.That(t.Open(),Is.True);yield return FinishTransition(t);Assert.That(t.Select(id),Is.True);
+        Assert.That(t.CanOperate(t.Selected),Is.False);Assert.That(t.View.ToggleLabel.text,Is.EqualTo("잠김"));
+        Assert.That(t.View.ToggleTurret.interactable,Is.False);Assert.That(t.View.DockState.Shape,Is.EqualTo(TacticalSymbolGraphic.Symbol.Off),"원격 잠금이 실제 해금/전원 상태를 덮지 않습니다.");
+        Assert.That(t.View.ToggleTurret.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>().Icon,Is.InstanceOf<TacticalSymbolGraphic>());
+        Assert.That(((TacticalSymbolGraphic)t.View.ToggleTurret.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>().Icon).Shape,Is.EqualTo(TacticalSymbolGraphic.Symbol.Locked));
+        t.View.ToggleTurret.onClick.Invoke();Assert.That(turret.IsActivated,Is.False,"오래된 UI 이벤트도 미점유 조작을 통과시키지 않습니다.");
+        CaptureCellForMap(Object.FindAnyObjectByType<RegionSceneBinding>(),turret);
+        yield return new WaitForSecondsRealtime(.25f);
+        Assert.That(t.CanOperate(t.Selected),Is.True);Assert.That(t.View.ToggleLabel.text,Is.EqualTo("켜기"));
+        Click(t.View.ToggleTurret);yield return new WaitForSecondsRealtime(.2f);
+        Assert.That(turret.IsActivated,Is.True);Assert.That(t.View.ToggleLabel.text,Is.EqualTo("끄기"));
+        t.Close();yield return FinishTransition(t);yield return new ExitPlayMode();
+    }
+    [UnityTest]
+    public IEnumerator FullMembraneHandsOffUiOnlyAfterTheCenterWaveAndCancelsWithoutLeakingInput()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>();var t=hud.Tactical;
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        var control=hud.LocalPlayer.GetComponent<PlayerControlState>();
+        Assert.That(t.Open(),Is.True);Assert.That(t.IsTransitioning,Is.True);
+        Assert.That(t.View.CommandGroup.alpha,Is.Zero);Assert.That(t.IsMapPresented,Is.False);
+        Assert.That(control.CanMove||control.CanAct,Is.False);
+        bool covered=false;float deadline=Time.realtimeSinceStartup+2;
+        while(t.IsTransitioning && Time.realtimeSinceStartup<deadline)
+        {
+            if(t.View.ModeEffect.Cover>.99f && t.View.ModeEffect.Reveal<.01f)covered=true;
+            Assert.That(t.View.CommandGroup.alpha,Is.Zero);Assert.That(t.IsMapPresented,Is.False);
+            yield return null;
+        }
+        Assert.That(covered,Is.True);Assert.That(t.IsMapPresented,Is.True);Assert.That(t.View.CommandGroup.alpha,Is.EqualTo(1));
+        t.Close();yield return new WaitForSecondsRealtime(.04f);
+        Assert.That(t.Open(),Is.True,"닫는 도중 재요청은 현재 막에서 이어집니다.");
+        yield return FinishTransition(t);Assert.That(t.IsOpen,Is.True);
+        control.SetInputBlocked(true);yield return null;yield return null;
+        Assert.That(t.IsOpen||t.IsTransitioning,Is.False);Assert.That(t.View.ModeEffect.Surface.enabled,Is.False);
+        control.SetInputBlocked(false);yield return new WaitForSecondsRealtime(.06f);
+        Assert.That(control.CanMove,Is.True,$"종료 프레임 뒤 이동 복구: tactical={control.IsInTacticalView}, blocked={control.IsBlocked}, act={control.CanAct}, frame={Time.frameCount}");
+        yield return new ExitPlayMode();
+    }
+    [UnityTest]
+    public IEnumerator RealTurretDamageShakesIconsAndLeavesAHealthTrailWithoutChangingTheCamera()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var tactical=Object.FindAnyObjectByType<InitialStagePlayerHUD>().Tactical;
+        tactical.Source.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        var turret=FindInactive(Object.FindAnyObjectByType<FieldTurretController>(),default);
+        tactical.Source.LocalPlayer.transform.position=turret.transform.position+Vector3.down*2;
+        yield return new WaitForSecondsRealtime(.2f);Assert.That(tactical.Open(),Is.True);yield return FinishTransition(tactical);
+        turret.TryGetEntityId(out var id);tactical.Select(id);
+        yield return new WaitForSecondsRealtime(.25f);
+        var center=tactical.CameraPosition;int before=turret.CurrentHealth;
+        Assert.That(turret.ApplyDamage(System.Math.Max(1,before/4)),Is.True);
+        float deadline=Time.realtimeSinceStartup+1;
+        while(!tactical.WasHit(id) && Time.realtimeSinceStartup<deadline)yield return null;
+        Assert.That(tactical.WasHit(id),Is.True,"실제 Host 피해가 presentation까지 전달되어야 합니다.");
+        yield return null;tactical.RenderVisuals();
+        Assert.That(tactical.View.DockHealth.Fraction,Is.LessThan(1));
+        Assert.That(tactical.View.DockHealth.Trail,Is.GreaterThan(tactical.View.DockHealth.Fraction));
+        Assert.That(tactical.View.Incidents.Any(b=>b.gameObject.activeSelf),Is.True);
+        bool moved=false;deadline=Time.realtimeSinceStartup+.2f;
+        while(Time.realtimeSinceStartup<deadline){yield return null;if(tactical.HitOffset(id).sqrMagnitude>.01f)moved=true;}
+        Assert.That(moved,Is.True);Assert.That(Vector2.Distance(center,tactical.CameraPosition),Is.LessThan(.01f));
+        yield return new WaitForSecondsRealtime(.75f);
+        Assert.That(tactical.View.DockHealth.Trail,Is.EqualTo(tactical.View.DockHealth.Fraction).Within(.001f));
+        Assert.That(tactical.HitOffset(id),Is.EqualTo(Vector2.zero));
+        Canvas.ForceUpdateCanvases();
+        Rect ScreenRect(RectTransform r){var c=new Vector3[4];r.GetWorldCorners(c);return Rect.MinMaxRect(c[0].x,c[0].y,c[2].x,c[2].y);}
+        var navigator=ScreenRect((RectTransform)tactical.View.Overview.parent);
+        Assert.That(navigator.Overlaps(ScreenRect((RectTransform)tactical.View.Close.transform)),Is.False);
+        Assert.That(navigator.Overlaps(ScreenRect((RectTransform)tactical.View.MapSettings.transform)),Is.False);
+        Assert.That(ScreenRect((RectTransform)tactical.View.FocusPlayer.transform).Overlaps(ScreenRect(tactical.View.Overview)),Is.False);
+        tactical.Close();yield return FinishTransition(tactical);yield return new ExitPlayMode();
+    }
+    [UnityTest]
     public IEnumerator AuthoredSceneCornersAndSmoothCameraNeverExposeOutsideTheMap()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
@@ -36,8 +124,13 @@ public sealed class StageTurretCommandHudTests
         Assert.That(tactical.CameraLeftTop.name,Is.EqualTo("LeftTop"));
         Assert.That(tactical.CameraRightBottom.name,Is.EqualTo("RightBottom"));
         Assert.That(tactical.TryGetAuthoredCameraBounds(out var expectedBounds),Is.True);
-        Assert.That(tactical.Open(),Is.True);yield return null;
+        Assert.That(tactical.Open(),Is.True);yield return FinishTransition(tactical);yield return null;
         Assert.That(tactical.WorldBounds,Is.EqualTo(expectedBounds));
+        Assert.That(tactical.View.ModeEffect.Surface.raycastTarget,Is.False);
+        float firstReveal=tactical.View.ModeEffect.Progress;
+        Assert.That(firstReveal,Is.EqualTo(1));
+        yield return null;
+        Assert.That(tactical.View.ModeEffect.Progress,Is.EqualTo(1).Within(.001f));
         var definition=tactical.Regions.Definition;
         tactical.Zoom(1);yield return new WaitForSecondsRealtime(tactical.Style.CameraZoomSeconds+.12f);
         var initial=tactical.CameraPosition;
@@ -73,7 +166,12 @@ public sealed class StageTurretCommandHudTests
         deadline=Time.realtimeSinceStartup+tactical.Style.CameraZoomSeconds+.12f;
         while(Time.realtimeSinceStartup<deadline){yield return null;AssertInside();}
         Assert.That(tactical.Regions.Definition,Is.SameAs(definition),"카메라 marker가 점유/명령 권한 원본을 변경하지 않습니다.");
-        tactical.Close();yield return new ExitPlayMode();
+        tactical.Close();yield return FinishTransition(tactical);
+        Assert.That(tactical.IsOpen,Is.False);
+        yield return new WaitForSecondsRealtime(.2f);
+        Assert.That(tactical.View.ModeEffect.Surface.enabled,Is.False);
+        Assert.That(tactical.View.ModeEffect.Progress,Is.Zero);
+        yield return new ExitPlayMode();
         void AssertInside()
         {
             var view=tactical.CurrentCameraRect;
@@ -84,7 +182,7 @@ public sealed class StageTurretCommandHudTests
         }
     }
     [UnityTest]
-    public IEnumerator FieldHoverWaitsForPlayerAttackQuietAndGUsesTheHostCommand()
+    public IEnumerator FieldHoverWaitsForPlayerAttackQuietAndFUsesTheHostCommand()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
         yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
@@ -122,11 +220,11 @@ public sealed class StageTurretCommandHudTests
             yield return HoverFor(1.1f);
             Assert.That(tactical.View.Tooltip.gameObject.activeSelf,Is.True);
             bool before=turret.IsActivated;
-            UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.G));
+            UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.F));
             yield return new WaitForSecondsRealtime(.06f);
             UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState());
             yield return new WaitForSecondsRealtime(.15f);
-            Assert.That(turret.IsActivated,Is.EqualTo(!before),"근접 G도 실제 Host 명령 경로로 실행합니다.");
+            Assert.That(turret.IsActivated,Is.EqualTo(!before),"근접 F도 실제 Host 명령 경로로 실행합니다.");
             Assert.That(tactical.IsOpen||hud.IsTurretPanelOpen,Is.False);
         }
         finally
@@ -175,6 +273,8 @@ public sealed class StageTurretCommandHudTests
         yield return new EnterPlayMode(); yield return null;
         yield return EnterFieldThroughTheSpaceshipExit();
         var hud=Object.FindAnyObjectByType<InitialStagePlayerHUD>(); var t=hud.Tactical;
+        hud.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
         var control=hud.LocalPlayer.GetComponent<PlayerControlState>();
         var player=t.PlayerPosition; float original=t.OutputCamera.orthographicSize;
         var clock=Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IMatchDayNightCycle>().First();
@@ -186,7 +286,8 @@ public sealed class StageTurretCommandHudTests
         yield return new WaitForSecondsRealtime(.05f);
         UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState());
         yield return new WaitForSecondsRealtime(.05f);
-        Assert.That(t.IsOpen,Is.True);
+        Assert.That(t.IsOpen,Is.True,$"Field={hud.HasFieldActor}, HP={hud.LocalPlayer.curHp}, commands={control.CanIssueTurretCommands}, blocked={control.IsBlocked}");
+        yield return FinishTransition(t);
         var status=hud.GetComponent<PlayerStatusPanel>();
         Assert.That(status.TryOpen(),Is.False,"전술 화면 위에 상태/스킬 트리 패널을 겹쳐 열지 않습니다.");
         Assert.That(t.CurrentCameraRect.Contains(player),Is.True,"맵 경계에서는 중심을 보정하되 플레이어를 계속 보여줍니다.");
@@ -233,8 +334,9 @@ public sealed class StageTurretCommandHudTests
         yield return new WaitForSecondsRealtime(.05f);
         UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState());
         yield return new WaitForSecondsRealtime(.05f);
+        yield return FinishTransition(t);
         Assert.That(t.IsOpen,Is.False); Assert.That(Object.FindAnyObjectByType<AppRoot>().Screens.Top,Is.Null,"전술 닫기의 Esc는 메뉴 열기로 다시 처리하지 않습니다.");
-        Assert.That(t.OutputCamera.orthographicSize,Is.EqualTo(original)); Assert.That(control.CanMove&&control.CanAct,Is.True);
+        Assert.That(t.OutputCamera.orthographicSize,Is.EqualTo(original)); Assert.That(control.CanMove&&control.CanAct,Is.True,$"move={control.CanMove}, act={control.CanAct}, tactical={control.IsInTacticalView}, blocked={control.IsBlocked}, frame={Time.frameCount}");
         Assert.That(t.OutputCamera.rect,Is.EqualTo(new Rect(0,0,1,1)));
         Assert.That(t.View.Goal.gameObject.activeInHierarchy,Is.True);
         Assert.That(hud.IsTurretPanelOpen,Is.False);
@@ -243,6 +345,53 @@ public sealed class StageTurretCommandHudTests
         status.Close();
         }
         finally { if(keyboard.added) UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard); }
+        yield return new ExitPlayMode();
+    }
+    [UnityTest]
+    public IEnumerator RightDragSettingsAndFieldWaypointPreserveWorldAndRendererState()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
+        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        var t=Object.FindAnyObjectByType<InitialStagePlayerHUD>().Tactical;
+        t.Source.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Assert.That(t.Open(),Is.True);yield return FinishTransition(t);yield return null;
+        var player=t.PlayerPosition;var original=t.SceneryRenderers.ToDictionary(r=>r,r=>r.forceRenderingOff);
+        Assert.That(original.Count,Is.EqualTo(1));Assert.That(original.Keys.First().name,Is.EqualTo("Environment_Obj"));
+        var physics=original.Keys.First().GetComponent<Collider2D>();bool collider=physics!=null && physics.enabled;
+        bool ranges=t.ShowAllRanges,scenery=t.ShowScenery;
+        try
+        {
+            t.View.MapSettings.onClick.Invoke();Assert.That(t.View.SettingsDrawer.gameObject.activeSelf,Is.True);
+            t.SetMapVisibility(false,false,false);
+            Assert.That(t.ShowAllRanges||t.ShowScenery,Is.False);
+            Assert.That(original.Keys.All(r=>r.forceRenderingOff),Is.True);
+            Assert.That(physics!=null && physics.enabled,Is.EqualTo(collider));
+            t.View.MapSettings.onClick.Invoke();
+            var start=(Vector2)t.OutputCamera.pixelRect.center;var delta=new Vector2(100,-50);var before=t.CameraPosition;
+            var e=new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+            {button=UnityEngine.EventSystems.PointerEventData.InputButton.Right,position=start,pressPosition=start};
+            var target=t.View.WorldGraphic.gameObject;
+            UnityEngine.EventSystems.ExecuteEvents.Execute(target,e,UnityEngine.EventSystems.ExecuteEvents.pointerDownHandler);
+            UnityEngine.EventSystems.ExecuteEvents.Execute(target,e,UnityEngine.EventSystems.ExecuteEvents.beginDragHandler);
+            e.position=start+delta;e.delta=delta;
+            UnityEngine.EventSystems.ExecuteEvents.Execute(target,e,UnityEngine.EventSystems.ExecuteEvents.dragHandler);
+            UnityEngine.EventSystems.ExecuteEvents.Execute(target,e,UnityEngine.EventSystems.ExecuteEvents.endDragHandler);
+            UnityEngine.EventSystems.ExecuteEvents.Execute(target,e,UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+            yield return new WaitForSecondsRealtime(t.Style.CameraMoveSeconds+.15f);
+            Assert.That(t.HasGoal,Is.False,"우클릭 드래그가 핑으로도 처리되지 않습니다.");
+            Assert.That(Vector2.Distance(t.CameraPosition,before),Is.GreaterThan(.5f));
+            Assert.That(Vector2.Distance(t.PlayerPosition,player),Is.LessThan(.01f));
+            t.SetGoal(t.WorldBounds.max);t.Close();yield return FinishTransition(t);
+            float goalDeadline=Time.realtimeSinceStartup+1;
+            while(!t.View.Goal.gameObject.activeSelf && Time.realtimeSinceStartup<goalDeadline)yield return null;
+            Assert.That(t.HasGoal,Is.True,$"field={t.Source.HasFieldActor}, goal={t.GoalPosition}, player={t.PlayerPosition}");
+            Assert.That(t.View.Goal.gameObject.activeSelf,Is.True,$"field={t.Source.HasFieldActor}, open={t.IsOpen}");
+            Assert.That(t.View.GoalPin.enabled||t.View.GoalArrow.enabled,Is.True);
+            Assert.That(original.All(pair=>pair.Key.forceRenderingOff==pair.Value),Is.True,"필드 복귀 시 원래 장식 렌더 상태로 복원합니다.");
+            Assert.That(t.Open(),Is.True);yield return FinishTransition(t);t.ClearGoal();Assert.That(t.HasGoal,Is.False);
+        }
+        finally{t.SetMapVisibility(ranges,scenery,false);t.Close();}
         yield return new ExitPlayMode();
     }
     [UnityTest]
@@ -260,13 +409,16 @@ public sealed class StageTurretCommandHudTests
         var regions = Object.FindAnyObjectByType<RegionSceneBinding>();
         var tactical = hud.Tactical;
         var view = tactical.View;
-        Assert.That(tactical.Open(), Is.True);
+        player.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
+        Assert.That(tactical.Open(), Is.True);yield return FinishTransition(tactical);
         Assert.That(player.GetComponent<PlayerControlState>().CanAct, Is.False);
         Assert.That(hud.HasTurretCommandBinding, Is.True);
         hud.BindTurretCommands(hud.BoundMatchId, hud.BoundPlayerId, network.TurretCommands, network.TurretPresentation);
         Assert.That(network.TurretPresentation.Snapshot, Is.Not.Null);
-        Assert.That(regions.ResetPolicy(RegionPolicyMode.Dynamic, true), Is.True);
+        Assert.That(regions.ResetPolicy(RegionPolicyMode.Static, true), Is.True);
         FieldTurretBase turret = FindInactive(controller, default);
+        CaptureCellForMap(regions,turret);
         Assert.That(turret.TryGetEntityId(out EntityId firstId), Is.True);
         player.transform.position = turret.transform.position;
         yield return new WaitForSecondsRealtime(.2f);
@@ -284,6 +436,7 @@ public sealed class StageTurretCommandHudTests
         Click(view.ToggleTurret); Assert.That(turret.IsActivated, Is.False); yield return new WaitForSecondsRealtime(.2f);
 
         turret = FindInactive(controller, firstId); Assert.That(turret.TryGetEntityId(out EntityId id), Is.True);
+        CaptureCellForMap(regions,turret);
         player.transform.position = turret.transform.position;
         Assert.That(hud.TrySelectTurret(id), Is.True);
         yield return new WaitForSecondsRealtime(.2f);
@@ -303,7 +456,7 @@ public sealed class StageTurretCommandHudTests
         Assert.That(turret.IsActivated, Is.False);
         hud.gameObject.SetActive(false); hud.gameObject.SetActive(true);
         yield return new WaitForSecondsRealtime(.2f);
-        Assert.That(hud.HasTurretCommandBinding, Is.True); Assert.That(tactical.Open(), Is.True); Assert.That(hud.TrySelectTurret(id), Is.True);
+        Assert.That(hud.HasTurretCommandBinding, Is.True); Assert.That(tactical.Open(), Is.True);yield return FinishTransition(tactical); Assert.That(hud.TrySelectTurret(id), Is.True);
         sequence = network.TurretPresentation.Snapshot.ConfirmedCommandSequence;
         Click(view.ToggleTurret); Assert.That(turret.IsActivated, Is.True);
         Assert.That(network.TurretPresentation.Snapshot.ConfirmedCommandSequence, Is.EqualTo(sequence + 1));
@@ -423,6 +576,25 @@ public sealed class StageTurretCommandHudTests
             otherLease?.Dispose();
             if (mouse.added) UnityEngine.InputSystem.InputSystem.RemoveDevice(mouse);
         }
+    }
+
+    private static IEnumerator FinishTransition(TacticalCommandController t)
+    {
+        float deadline=Time.realtimeSinceStartup+2;
+        while(t.IsTransitioning && Time.realtimeSinceStartup<deadline)yield return null;
+        Assert.That(t.IsTransitioning,Is.False,"전체 막과 중앙 파동 뒤 UI 전환이 완료되어야 합니다.");
+        // 닫기를 확정한 프레임의 입력 누출 방지까지 지난 정상 Player 업데이트를 기다립니다.
+        yield return new WaitForSecondsRealtime(.06f);
+    }
+
+    private static void CaptureCellForMap(RegionSceneBinding regions,FieldTurretBase turret)
+    {
+        var snapshot=regions.Source.Snapshot;var p=turret.transform.position;
+        Assert.That(snapshot.Definition.TryGetCellIndex(new BattlefieldPoint(p.x,p.y),out int cell),Is.True);
+        // 점유 완료 뒤의 명령 경로를 검사하는 명시적 Host 복원 fixture입니다.
+        regions.RestoreCheckpoint(snapshot.Definition,RegionPolicyMode.Static,
+            snapshot.CapturedCells.Select((c,i)=>(c,i)).Where(x=>x.c).Select(x=>x.i).Append(cell).Distinct().ToArray(),
+            snapshot.Definition.RegionIds.Where(x=>x>0).Distinct().ToArray());
     }
 
     private static IEnumerator EnterFieldThroughTheSpaceshipExit()

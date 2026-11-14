@@ -158,7 +158,7 @@ public sealed class CombatHudPresentationTests
         var selection = _player.GetComponent<PlayerWeaponSelection>();
         var weapons = _hud.GetComponentInChildren<PlayerWeaponHud>();
         yield return Until(() => weapons.Owner == selection);
-        yield return Until(() => _hud.GetComponent<CombatHudIntro>().Completed);
+        yield return Until(() => _hud.GetComponent<CombatHudIntro>().Completed, timeout: 6);
         var magazine = _hud.GetComponentInChildren<CombatPlayerIndicators>(true);
         yield return Until(() => magazine.DisplayedRounds == 15);
         Vector2 magazineHome = magazine.AmmoRoot.anchoredPosition;
@@ -334,10 +334,10 @@ public sealed class CombatHudPresentationTests
         EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = point }, hits);
         return hits.Count > 0 ? hits[0].gameObject.GetComponentInParent<CombatSkillWedge>() : null;
     }
-    private static IEnumerator Until(System.Func<bool> condition, [System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
+    private static IEnumerator Until(System.Func<bool> condition, [System.Runtime.CompilerServices.CallerLineNumber] int line = 0, float timeout = 2)
     {
-        float deadline = Time.realtimeSinceStartup + 2;
+        float deadline = Time.realtimeSinceStartup + timeout;
         while (!condition() && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within two seconds.");
+        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within {timeout} seconds.");
     }
 }

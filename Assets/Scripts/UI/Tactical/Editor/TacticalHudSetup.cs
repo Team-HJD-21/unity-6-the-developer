@@ -14,6 +14,22 @@ public static class TacticalHudSetup
     public const string StylePath = "Assets/Resources/Core/TacticalHudStyle.asset";
     private const string HudPath = "Assets/Prefabs/UI/InitialStagePlayerHUD.prefab";
     private static CombatHudStyle _common;
+    [MenuItem("Tools/TeamHJD/The Developer/Tactical/Bind active scene scenery")]
+    public static void BindActiveSceneScenery()
+    {
+        var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        if(EditorApplication.isPlayingOrWillChangePlaymode || !scene.IsValid() || !scene.isLoaded)
+            throw new InvalidOperationException("Bind authored scenery in Edit Mode.");
+        var all=scene.GetRootGameObjects();
+        var controller=all.SelectMany(g=>g.GetComponentsInChildren<TacticalCommandController>(true)).Single();
+        // Stage의 실제 장식 Tilemap을 authoring 때 한 번 명시 연결합니다. 지면/물/충돌/터렛은 바꾸지 않습니다.
+        var scenery=all.SelectMany(g=>g.GetComponentsInChildren<UnityEngine.Tilemaps.TilemapRenderer>(true))
+            .Where(r=>r.name=="Environment_Obj" && r.sortingLayerName=="Entities").Cast<Renderer>().ToArray();
+        if(scenery.Length==0)throw new InvalidOperationException("Select the authored Environment_Obj scenery renderer for this Scene.");
+        Undo.RecordObject(controller,"Bind tactical scenery");controller.SceneryRenderers=scenery;
+        PrefabUtility.RecordPrefabInstancePropertyModifications(controller);EditorUtility.SetDirty(controller);
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+    }
     [MenuItem("Tools/TeamHJD/The Developer/Tactical/Bind active scene camera bounds")]
     public static void BindActiveSceneCameraBounds()
     {
@@ -49,6 +65,19 @@ public static class TacticalHudSetup
         var style = AssetDatabase.LoadAssetAtPath<TacticalHudStyle>(StylePath);
         if (style == null) { style = ScriptableObject.CreateInstance<TacticalHudStyle>(); AssetDatabase.CreateAsset(style, StylePath); }
         style.Common = _common;
+        const string modePath="Assets/Art/UI/Tactical/TacticalModeFrame.mat";
+        var modeMaterial=AssetDatabase.LoadAssetAtPath<Material>(modePath);
+        var modeShader=Shader.Find("The Developer/UI/TacticalModeFrame");
+        if(modeShader==null)throw new InvalidOperationException("Tactical frame shader is missing.");
+        if(modeMaterial==null){modeMaterial=new Material(modeShader){name="TacticalModeFrame"};AssetDatabase.CreateAsset(modeMaterial,modePath);}
+        modeMaterial.shader=modeShader;modeMaterial.SetColor("_Color",new Color(.63f,.75f,.71f,1));modeMaterial.SetFloat("_CellSize",48);modeMaterial.SetFloat("_Cover",0);modeMaterial.SetFloat("_Reveal",0);
+        EditorUtility.SetDirty(modeMaterial);AssetDatabase.SaveAssetIfDirty(modeMaterial);
+        const string territoryPath="Assets/Art/UI/Tactical/TacticalTerritory.mat";
+        var territory=AssetDatabase.LoadAssetAtPath<Material>(territoryPath);
+        var territoryShader=Shader.Find("The Developer/UI/TacticalTerritory");
+        if(territoryShader==null)throw new InvalidOperationException("Territory shader is missing.");
+        if(territory==null){territory=new Material(territoryShader){name="TacticalTerritory"};AssetDatabase.CreateAsset(territory,territoryPath);}
+        territory.shader=territoryShader;EditorUtility.SetDirty(territory);AssetDatabase.SaveAssetIfDirty(territory);
         var root = Rect("Tactical HUD", null, Vector2.zero, Vector2.zero, new Vector2(.5f,.5f));
         try
         {
@@ -60,10 +89,16 @@ public static class TacticalHudSetup
             var field = Stretch("Field hover marker", root); var fg = field.gameObject.AddComponent<TacticalMapGraphic>(); fg.View = v; fg.Field = true; fg.raycastTarget = false;
             var command = Stretch("Command view", root); v.CommandRoot = command;
             v.CommandGroup = command.gameObject.AddComponent<CanvasGroup>();
+            var mode=Stretch("Tactical mode frame",root);mode.SetSiblingIndex(1);
+            var modeCanvas=mode.gameObject.AddComponent<Canvas>();modeCanvas.overrideSorting=true;modeCanvas.sortingOrder=-900;mode.gameObject.AddComponent<GraphicRaycaster>();
+            var surface=Img(Stretch("Hex edge and transition",mode),null,Color.white);surface.material=modeMaterial;
+            v.ModeEffect=mode.gameObject.AddComponent<TacticalModeEffect>();v.ModeEffect.Surface=surface;v.ModeEffect.Commands=v.CommandGroup;
             var matte = Stretch("Map margins",command); var matteCanvas=matte.gameObject.AddComponent<Canvas>(); matteCanvas.overrideSorting=true; matteCanvas.sortingOrder=-1000;
             v.ViewportMatte=new RectTransform[4];
             for(int i=0;i<4;i++) { var pane=Rect("Margin "+i,matte,Vector2.zero,Vector2.zero,new Vector2(.5f,.5f)); Img(pane,null,new Color(.055f,.07f,.065f,1)); v.ViewportMatte[i]=pane; }
             v.WorldClip=Rect("Map viewport",command,new Vector2(1920,1080),Vector2.zero,new Vector2(.5f,.5f)); v.WorldClip.gameObject.AddComponent<RectMask2D>();
+            var area=Rect("Continuous territory",v.WorldClip,new Vector2(1,1),Vector2.zero,new Vector2(.5f,.5f));
+            v.TerritoryFill=area.gameObject.AddComponent<RawImage>();v.TerritoryFill.material=territory;v.TerritoryFill.raycastTarget=false;
             var world = Stretch("World commands", v.WorldClip); v.WorldGraphic = world.gameObject.AddComponent<TacticalMapGraphic>(); v.WorldGraphic.View = v;
             var wp = world.gameObject.AddComponent<TacticalMapPointer>(); wp.View = v;
             v.TurretGlyphs=new Image[64];
@@ -82,18 +117,40 @@ public static class TacticalHudSetup
                 var icon=Img(Rect("Enemy glyph "+i,v.WorldClip,new Vector2(20,20),Vector2.zero,new Vector2(.5f,.5f)),null,new Color(.94f,.76f,.65f)); icon.sprite=style.EnemyGlyph; icon.preserveAspect=true; v.EnemyIcons[i]=icon;
             }
             v.Incidents = new Button[3]; v.IncidentLabels = new TMP_Text[3];
-            for (int i=0;i<3;i++) { v.Incidents[i] = Button("Incident " + i, command, new Vector2(24,-140-i*39), new Vector2(240,33), "", out var label, new Vector2(0,1)); v.IncidentLabels[i] = label; }
+            v.IncidentIcons=new Image[3];v.IncidentHealth=new TacticalHealthGraphic[3];v.IncidentStates=new TacticalSymbolGraphic[3];
+            for (int i=0;i<3;i++)
+            {
+                var button=Button("Incident "+i,command,new Vector2(24,-108-i*66),new Vector2(104,58),"",out var label,new Vector2(0,1));
+                v.Incidents[i]=button;v.IncidentLabels[i]=label;label.gameObject.SetActive(false);
+                var icon=Img(Rect("Facility",button.transform,new Vector2(38,34),new Vector2(10,-5),new Vector2(0,1)),null,Color.white);icon.preserveAspect=true;v.IncidentIcons[i]=icon;
+                v.IncidentStates[i]=Symbol("Threat",button.transform,new Vector2(26,26),new Vector2(-12,-9),new Vector2(1,1),TacticalSymbolGraphic.Symbol.Impact);
+                v.IncidentHealth[i]=Health("Health",button.transform,new Vector2(84,6),new Vector2(10,-44));
+            }
 
-            v.Dock = Panel("Facility dock", command, new Vector2(24,24), new Vector2(576,100), Vector2.zero, "weapon_surface");
-            v.TurretIcon = Img(Rect("Facility sprite",v.Dock,new Vector2(76,76),new Vector2(12,-12),new Vector2(0,1)),null,Color.white); v.TurretIcon.preserveAspect=true;
-            v.Title = Text("Facility",v.Dock,new Vector2(104,-12),new Vector2(256,28),20,new Vector2(0,1));
-            v.Stats = Text("State",v.Dock,new Vector2(104,-49),new Vector2(256,38),16,new Vector2(0,1));
-            v.ToggleTurret = Button("Toggle",v.Dock,new Vector2(-12,-12),new Vector2(94,32),"켜기",out var toggle,new Vector2(1,1)); v.ToggleLabel=toggle;
+            v.Dock = Panel("Facility dock", command, new Vector2(24,24), new Vector2(576,118), Vector2.zero, "weapon_surface");
+            v.Dock.GetComponent<Image>().raycastTarget=true;
+            v.TurretIcon = Img(Rect("Facility sprite",v.Dock,new Vector2(82,86),new Vector2(8,-12),new Vector2(0,1)),null,Color.white); v.TurretIcon.preserveAspect=true;
+            v.Title = Text("Facility",v.Dock,new Vector2(104,-10),new Vector2(256,28),18,new Vector2(0,1));
+            v.Stats = Text("Legacy state",v.Dock,Vector2.zero,Vector2.zero,16,new Vector2(0,1));v.Stats.gameObject.SetActive(false);
+            v.DockHealth=Health("Health",v.Dock,new Vector2(254,11),new Vector2(104,-47));
+            var hpIcon=Img(Rect("Health glyph",v.Dock,new Vector2(18,18),new Vector2(78,-45),new Vector2(0,1)),"stat_health",_common.Text);
+            v.DockState=Symbol("Facility state",v.Dock,new Vector2(26,26),new Vector2(104,-75),new Vector2(0,1),TacticalSymbolGraphic.Symbol.Off);
+            v.DockState.raycastTarget=true;
+            v.DockStateHint=v.DockState.gameObject.AddComponent<TacticalActionHint>();
+            v.DockStateHint.Card=Panel("State hover",v.Dock,new Vector2(104,126),new Vector2(260,30),new Vector2(0,0));
+            v.DockStateHint.Label=Text("Meaning",v.DockStateHint.Card,Vector2.zero,new Vector2(250,28),16,new Vector2(.5f,.5f));v.DockStateHint.Label.alignment=TextAlignmentOptions.Center;
+            v.DockStateHint.Card.gameObject.SetActive(false);
+            Img(Rect("Power glyph",v.Dock,new Vector2(20,20),new Vector2(148,-77),new Vector2(0,1)),"stat_power",_common.Power);
+            v.PowerValue=Text("Power value",v.Dock,new Vector2(176,-74),new Vector2(66,26),18,new Vector2(0,1));
+            v.ThreatIcon=Img(Rect("Enemy glyph",v.Dock,new Vector2(22,22),new Vector2(264,-76),new Vector2(0,1)),null,style.Enemy);v.ThreatIcon.sprite=style.EnemyGlyph;v.ThreatIcon.preserveAspect=true;
+            v.ThreatValue=Text("Threat count",v.Dock,new Vector2(294,-74),new Vector2(60,26),18,new Vector2(0,1));v.ThreatValue.color=style.Enemy;
+            v.ToggleTurret = Button("Toggle",v.Dock,new Vector2(-12,-12),new Vector2(124,32),"켜기",out var toggle,new Vector2(1,1)); v.ToggleLabel=toggle;
             v.ToggleTurret.GetComponent<UiButtonFeedback>().PreserveLabelColor = true;
-            v.Upgrade = Button("Upgrade",v.Dock,new Vector2(-12,-54),new Vector2(94,32),"강화",out _,new Vector2(1,1));
-            ButtonIcon(v.ToggleTurret,style.PowerGlyph); ButtonIcon(v.Upgrade,style.UpgradeGlyph);
-            v.Restriction = Text("Restriction",v.Dock,new Vector2(0,108),new Vector2(576,24),15,new Vector2(0,0)); v.Restriction.color = _common.Power;
-            v.UpgradeDrawer = Panel("Upgrade drawer",command,new Vector2(24,152),new Vector2(576,94),Vector2.zero);
+            v.Upgrade = Button("Upgrade",v.Dock,new Vector2(-12,-68),new Vector2(124,32),"강화",out _,new Vector2(1,1));
+            ButtonIcon(v.ToggleTurret,style.PowerGlyph,true); ButtonIcon(v.Upgrade,style.UpgradeGlyph);
+            v.Restriction = Text("Restriction",v.Dock,new Vector2(0,126),new Vector2(576,24),15,new Vector2(0,0)); v.Restriction.color = _common.Power;v.Restriction.gameObject.SetActive(false);
+            v.UpgradeDrawer = Panel("Upgrade drawer",command,new Vector2(24,166),new Vector2(576,94),Vector2.zero);
+            v.UpgradeDrawer.GetComponent<Image>().raycastTarget=true;
             v.LowLabel=Text("Low power",v.UpgradeDrawer,new Vector2(16,-12),new Vector2(138,26),16,new Vector2(0,1));
             v.FireLabel=Text("Firepower",v.UpgradeDrawer,new Vector2(16,-53),new Vector2(138,26),16,new Vector2(0,1));
             v.LowMinus=Button("Low minus",v.UpgradeDrawer,new Vector2(162,-10),new Vector2(34,30),"−",out _,new Vector2(0,1));
@@ -103,42 +160,70 @@ public static class TacticalHudSetup
             v.LevelUp=Button("Level up",v.UpgradeDrawer,new Vector2(-16,-10),new Vector2(140,30),"레벨 상승",out _,new Vector2(1,1));
             v.LevelDown=Button("Level down",v.UpgradeDrawer,new Vector2(-16,-51),new Vector2(140,30),"레벨 하강",out _,new Vector2(1,1));
 
-            var nav = Panel("Navigator",command,new Vector2(-98,24),new Vector2(290,184),new Vector2(1,0));
-            v.Overview=Rect("Overview",nav,new Vector2(270,164),new Vector2(10,-10),new Vector2(0,1)); v.Overview.pivot=new Vector2(.5f,.5f); v.Overview.anchoredPosition=new Vector2(145,-92);
+            var nav = Panel("Navigator",command,new Vector2(-98,24),new Vector2(290,230),new Vector2(1,0));
+            v.Overview=Rect("Overview",nav,new Vector2(270,164),new Vector2(10,-10),new Vector2(0,1)); v.Overview.pivot=new Vector2(.5f,.5f); v.Overview.anchoredPosition=new Vector2(145,-138);
             v.Overview.gameObject.AddComponent<RectMask2D>();
             Img(v.Overview,null,new Color(.045f,.055f,.05f,.95f)).raycastTarget=true;
             var terrain=Rect("Authored terrain",v.Overview,new Vector2(270,164),Vector2.zero,new Vector2(.5f,.5f)); v.OverviewTerrain=terrain.gameObject.AddComponent<RawImage>(); v.OverviewTerrain.raycastTarget=false; v.OverviewTerrain.color=new Color(.75f,.78f,.73f,.85f);
-            var raster=Rect("Captured cells",v.Overview,new Vector2(270,164),Vector2.zero,new Vector2(.5f,.5f)); v.OverviewFill=raster.gameObject.AddComponent<RawImage>(); v.OverviewFill.raycastTarget=false; v.OverviewFill.color=new Color(1,1,1,.4f);
+            var raster=Rect("Captured cells",v.Overview,new Vector2(270,164),Vector2.zero,new Vector2(.5f,.5f)); v.OverviewFill=raster.gameObject.AddComponent<RawImage>(); v.OverviewFill.raycastTarget=false; v.OverviewFill.color=Color.white;v.OverviewFill.material=territory;
             var map=Stretch("Entities and viewport",v.Overview); v.OverviewGraphic=map.gameObject.AddComponent<TacticalMapGraphic>(); v.OverviewGraphic.View=v; v.OverviewGraphic.Overview=true; v.OverviewGraphic.raycastTarget=false;
             var pointer=v.Overview.gameObject.AddComponent<TacticalMapPointer>(); pointer.View=v; pointer.IsOverview=true;
-            v.FocusPlayer=Button("Focus player",command,new Vector2(-292,216),new Vector2(96,32),"플레이어",out _,new Vector2(1,0));
-            v.FocusCU=Button("Focus CU",command,new Vector2(-190,216),new Vector2(88,32),"CU",out _,new Vector2(1,0));
-            v.Back=Button("Previous view",command,new Vector2(-98,216),new Vector2(84,32),"이전",out _,new Vector2(1,0));
-            v.AutoActivate=Button("Auto activation",command,new Vector2(-98,268),new Vector2(190,34),"자동 활성화",out _,new Vector2(1,0));
-            v.BatchActivate=Button("Batch activation",command,new Vector2(-420,268),new Vector2(116,34),"선택 켜기",out _,new Vector2(1,0));
-            v.BatchDeactivate=Button("Batch deactivation",command,new Vector2(-296,268),new Vector2(116,34),"선택 끄기",out _,new Vector2(1,0));
-            v.SelectMultiple=Button("Multiple selection",command,new Vector2(-544,268),new Vector2(130,34),"다중 선택",out var selection,new Vector2(1,0));
-            v.SelectionLabel=selection; v.SelectMultiple.GetComponent<UiButtonFeedback>().PreserveLabelColor=true;
-            ButtonIcon(v.AutoActivate,style.AutomaticGlyph); ButtonIcon(v.BatchActivate,style.PowerGlyph); ButtonIcon(v.BatchDeactivate,style.PowerGlyph); ButtonIcon(v.SelectMultiple,style.SelectionGlyph);
-            v.Close=Button("Close command",command,new Vector2(24,-92),new Vector2(156,34),"전술 닫기  M",out _,new Vector2(0,1));
-            v.ToggleMap=Button("Open command",root,new Vector2(24,-92),new Vector2(118,34),"전술  M",out _,new Vector2(0,1));
-            v.Tooltip=Panel("Turret hover",root,Vector2.zero,new Vector2(320,88),new Vector2(.5f,.5f));
-            v.TooltipLabel=Text("Information",v.Tooltip,new Vector2(80,-10),new Vector2(226,66),17,new Vector2(0,1));
-            v.TooltipIcon=Img(Rect("Icon",v.Tooltip,new Vector2(54,64),new Vector2(14,-12),new Vector2(0,1)),null,Color.white); v.TooltipIcon.preserveAspect=true;
+            v.FocusPlayer=IconButton("Focus player",nav,new Vector2(12,-8),new Vector2(38,34),"플레이어",_common.Get("owner_player"));
+            v.FocusCU=IconButton("Focus CU",nav,new Vector2(58,-8),new Vector2(38,34),"CU",_common.Get("owner_cu"));
+            v.Back=IconButton("Previous view",nav,new Vector2(104,-8),new Vector2(38,34),"이전 시야",null,TacticalSymbolGraphic.Symbol.Previous);
+            v.ClearGoal=IconButton("Clear waypoint",nav,new Vector2(240,-8),new Vector2(38,34),"목표 해제",null,TacticalSymbolGraphic.Symbol.ClearGoal);
+            v.AutoActivate=IconButton("Auto activation",command,new Vector2(-98,268),new Vector2(48,40),"자동 활성화",style.AutomaticGlyph,anchor:new Vector2(1,0));
+            v.BatchActivate=IconButton("Batch activation",command,new Vector2(-154,268),new Vector2(48,40),"선택 켜기",null,TacticalSymbolGraphic.Symbol.Active,new Vector2(1,0));
+            v.BatchDeactivate=IconButton("Batch deactivation",command,new Vector2(-210,268),new Vector2(48,40),"선택 끄기",null,TacticalSymbolGraphic.Symbol.Off,new Vector2(1,0));
+            v.SelectMultiple=IconButton("Multiple selection",command,new Vector2(-266,268),new Vector2(48,40),"다중 선택",style.SelectionGlyph,anchor:new Vector2(1,0));
+            v.SelectionLabel=v.SelectMultiple.GetComponent<UiButtonFeedback>().Label;v.SelectMultiple.GetComponent<UiButtonFeedback>().PreserveLabelColor=true;
+            v.Close=IconButton("Close command",command,new Vector2(-24,24),new Vector2(48,40),"지도 닫기",null,TacticalSymbolGraphic.Symbol.Close,new Vector2(1,0));
+            v.ToggleMap=Button("Open command",root,new Vector2(-24,24),new Vector2(192,42),"전술 지도",out _,new Vector2(1,0));
+            SymbolButton(v.ToggleMap,TacticalSymbolGraphic.Symbol.Map);
+            v.MapSettings=IconButton("Map settings",command,new Vector2(-24,78),new Vector2(48,40),"지도 설정",null,TacticalSymbolGraphic.Symbol.Settings,new Vector2(1,0));
+            v.SettingsDrawer=Rect("Map settings drawer",nav,new Vector2(270,164),new Vector2(10,-56),new Vector2(0,1));
+            Img(v.SettingsDrawer,null,new Color(.045f,.055f,.05f,.98f)).raycastTarget=true;
+            var settingsTitle=Text("Settings heading",v.SettingsDrawer,new Vector2(12,-4),new Vector2(246,26),18,new Vector2(0,1));settingsTitle.text="지도 설정";
+            v.Ranges=Button("Range visibility",v.SettingsDrawer,new Vector2(8,-38),new Vector2(254,34),"",out var rangeLabel,new Vector2(0,1));v.RangeLabel=rangeLabel;
+            v.Scenery=Button("Scenery visibility",v.SettingsDrawer,new Vector2(8,-80),new Vector2(254,34),"",out var sceneryLabel,new Vector2(0,1));v.SceneryLabel=sceneryLabel;
+            v.Ranges.GetComponent<UiButtonFeedback>().PreserveLabelColor=true;v.Scenery.GetComponent<UiButtonFeedback>().PreserveLabelColor=true;
+            foreach(var button in new[]{v.Ranges,v.Scenery})
+            {
+                var label=button.GetComponent<UiButtonFeedback>().Label;
+                label.rectTransform.sizeDelta=new Vector2(224,34);label.rectTransform.anchoredPosition=new Vector2(12,0);
+            }
+            v.RangeState=Symbol("Range mode",v.Ranges.transform,new Vector2(24,24),new Vector2(-106,0),new Vector2(.5f,.5f),TacticalSymbolGraphic.Symbol.RangeAll);
+            v.SceneryState=Symbol("Scenery mode",v.Scenery.transform,new Vector2(24,24),new Vector2(-106,0),new Vector2(.5f,.5f),TacticalSymbolGraphic.Symbol.TerrainVisible);
+            v.Ranges.GetComponent<UiButtonFeedback>().Icon=v.RangeState;v.Scenery.GetComponent<UiButtonFeedback>().Icon=v.SceneryState;
+            v.SettingsDrawer.gameObject.SetActive(false);
+            v.Tooltip=Panel("Turret hover",root,Vector2.zero,new Vector2(320,106),new Vector2(.5f,.5f));
+            v.TooltipLabel=Text("Information",v.Tooltip,new Vector2(80,-8),new Vector2(226,27),17,new Vector2(0,1));
+            v.TooltipHealth=Health("Health",v.Tooltip,new Vector2(212,9),new Vector2(80,-46));
+            v.TooltipState=Symbol("State",v.Tooltip,new Vector2(24,24),new Vector2(80,-67),new Vector2(0,1),TacticalSymbolGraphic.Symbol.Off);
+            Img(Rect("Power",v.Tooltip,new Vector2(20,20),new Vector2(130,-69),new Vector2(0,1)),"stat_power",_common.Power);
+            v.TooltipPower=Text("Power value",v.Tooltip,new Vector2(158,-67),new Vector2(132,26),17,new Vector2(0,1));
+            v.TooltipIcon=Img(Rect("Icon",v.Tooltip,new Vector2(54,64),new Vector2(14,-12),new Vector2(0,1)),null,Color.white);v.TooltipIcon.preserveAspect=true;
+            var fieldStatus=Rect("Field region status",root,new Vector2(440,42),new Vector2(0,-82),new Vector2(.5f,1));fieldStatus.pivot=new Vector2(.5f,.5f);
+            v.FieldStatusGroup=fieldStatus.gameObject.AddComponent<CanvasGroup>();v.FieldStatusGroup.alpha=0;v.FieldStatusGroup.blocksRaycasts=false;
+            v.FieldStatusContent=Stretch("State pulse",fieldStatus);
+            v.FieldStatusLabel=Text("State",v.FieldStatusContent,new Vector2(16,0),new Vector2(400,36),22,new Vector2(.5f,.5f));v.FieldStatusLabel.alignment=TextAlignmentOptions.Center;
+            v.FieldStatusLabel.fontSharedMaterial=AssetDatabase.LoadAssetAtPath<Material>("Assets/Prefabs/UI/Common/AlertText.mat");
+            v.FieldStatusIcon=Symbol("Region symbol",v.FieldStatusContent,new Vector2(26,26),new Vector2(-120,0),new Vector2(.5f,.5f),TacticalSymbolGraphic.Symbol.OutsideTerritory);
             v.Prompt=Panel("Quick interaction",root,Vector2.zero,new Vector2(68,32),new Vector2(.5f,.5f));
             v.PromptLabel=Text("Key",v.Prompt,new Vector2(-16,0),new Vector2(28,30),18,new Vector2(.5f,.5f)); v.PromptLabel.font=_common.LabelFont; v.PromptLabel.alignment=TextAlignmentOptions.Center;
             v.PromptAction=Img(Rect("Power action",v.Prompt,new Vector2(22,22),new Vector2(16,0),new Vector2(.5f,.5f)),null,_common.Text); v.PromptAction.sprite=style.PowerGlyph;
             v.Goal=Rect("Pinned goal",root,new Vector2(80,54),Vector2.zero,new Vector2(.5f,.5f));
             v.GoalArrow=Rect("Direction",v.Goal,new Vector2(14,18),new Vector2(0,10),new Vector2(.5f,.5f)).gameObject.AddComponent<TacticalGoalArrow>(); v.GoalArrow.color=_common.Accent; v.GoalArrow.raycastTarget=false;
             v.GoalPin=Img(Rect("Beacon",v.Goal,new Vector2(28,28),new Vector2(0,10),new Vector2(.5f,.5f)),null,_common.Accent); v.GoalPin.sprite=style.GoalGlyph; v.GoalPin.preserveAspect=true;
-            v.GoalLabel=Text("Distance",v.Goal,new Vector2(0,-15),new Vector2(80,24),16,new Vector2(.5f,.5f)); v.GoalLabel.alignment=TextAlignmentOptions.Center;
+            v.GoalLabel=Text("Distance",v.Goal,new Vector2(0,-15),new Vector2(90,26),18,new Vector2(.5f,.5f)); v.GoalLabel.alignment=TextAlignmentOptions.Center;
+            v.GoalLabel.font=_common.LabelFont;v.GoalLabel.fontSharedMaterial=worldLabel;
             v.SelectionBox.gameObject.SetActive(false); v.ShowCommand(false); v.Tooltip.gameObject.SetActive(false); v.Prompt.gameObject.SetActive(false); v.Goal.gameObject.SetActive(false); v.ToggleMap.gameObject.SetActive(false);
             var scale=root.gameObject.AddComponent<CombatHudScaleBinding>();
             scale.MinimumScreenScale=.8f;
             var parts=new System.Collections.Generic.List<CombatHudScaleBinding.Element>();
             void Scale(RectTransform rect,bool offset=true,float minimum=.85f) => parts.Add(new CombatHudScaleBinding.Element{Target=rect,ScaleOffset=offset,BaseOffset=rect.anchoredPosition,MinimumScale=minimum});
-            Scale(v.Dock); Scale(v.UpgradeDrawer); Scale(nav); Scale(v.Tooltip,false); Scale(v.Prompt,false);
-            foreach(var button in new[]{v.ToggleMap,v.Close,v.FocusPlayer,v.FocusCU,v.Back,v.AutoActivate,v.BatchActivate,v.BatchDeactivate,v.SelectMultiple}) Scale((RectTransform)button.transform);
+            Scale(v.Dock); Scale(v.UpgradeDrawer); Scale(nav);Scale(fieldStatus); Scale(v.Tooltip,false); Scale(v.Prompt,false);
+            foreach(var button in new[]{v.ToggleMap,v.Close,v.MapSettings,v.AutoActivate,v.BatchActivate,v.BatchDeactivate,v.SelectMultiple}) Scale((RectTransform)button.transform);
             foreach(var button in v.Incidents) Scale((RectTransform)button.transform);
             scale.Elements=parts.ToArray();
             root.localScale=Vector3.one;
@@ -165,13 +250,36 @@ public static class TacticalHudSetup
     }
     private static FieldTurretUpgradeDefinition[] Definitions(SerializedObject so,string name)
     { var p=so.FindProperty(name); return Enumerable.Range(0,p.arraySize).Select(i=>p.GetArrayElementAtIndex(i).objectReferenceValue as FieldTurretUpgradeDefinition).ToArray(); }
-    private static void ButtonIcon(Button button,Sprite sprite)
+    private static TacticalHealthGraphic Health(string name,Transform parent,Vector2 size,Vector2 pos)
+    {var h=Rect(name,parent,size,pos,new Vector2(0,1)).gameObject.AddComponent<TacticalHealthGraphic>();h.color=_common.Text;h.raycastTarget=false;return h;}
+    private static TacticalSymbolGraphic Symbol(string name,Transform parent,Vector2 size,Vector2 pos,Vector2 anchor,TacticalSymbolGraphic.Symbol shape)
+    {var g=Rect(name,parent,size,pos,anchor).gameObject.AddComponent<TacticalSymbolGraphic>();g.Set(shape,_common.Text);g.raycastTarget=false;return g;}
+    private static Button IconButton(string name,Transform parent,Vector2 pos,Vector2 size,string caption,Sprite sprite,TacticalSymbolGraphic.Symbol shape=TacticalSymbolGraphic.Symbol.Map,Vector2? anchor=null)
+    {
+        var button=Button(name,parent,pos,size,"",out _,anchor??new Vector2(0,1));var feedback=button.GetComponent<UiButtonFeedback>();
+        if(sprite!=null){var icon=Img(Rect("Action",button.transform,new Vector2(24,24),Vector2.zero,new Vector2(.5f,.5f)),null,_common.Text);icon.sprite=sprite;icon.preserveAspect=true;feedback.Icon=icon;}
+        else feedback.Icon=Symbol("Action",button.transform,new Vector2(24,24),Vector2.zero,new Vector2(.5f,.5f),shape);
+        var hint=button.gameObject.AddComponent<TacticalActionHint>();hint.Caption=caption;
+        hint.Card=Panel("Hover name",button.transform,new Vector2(0,8),new Vector2(144,30),new Vector2(1,1));hint.Card.pivot=new Vector2(1,0);
+        hint.Label=Text("Name",hint.Card,Vector2.zero,new Vector2(134,28),16,new Vector2(.5f,.5f));hint.Label.alignment=TextAlignmentOptions.Center;
+        hint.Card.gameObject.SetActive(false);return button;
+    }
+    private static void ButtonIcon(Button button,Sprite sprite,bool toggleState=false)
     {
         var r=(RectTransform)button.transform;
-        var image=Img(Rect("Command glyph",r,new Vector2(20,20),new Vector2(-r.sizeDelta.x*.5f+17,0),new Vector2(.5f,.5f)),null,_common.Text);
-        image.sprite=sprite; image.preserveAspect=true;
-        var feedback=button.GetComponent<UiButtonFeedback>(); feedback.Icon=image;
+        var rect=Rect("Command glyph",r,new Vector2(20,20),new Vector2(-r.sizeDelta.x*.5f+17,0),new Vector2(.5f,.5f));
+        Graphic icon;
+        if(toggleState){var symbol=rect.gameObject.AddComponent<TacticalSymbolGraphic>();symbol.Set(TacticalSymbolGraphic.Symbol.Active,_common.Text);symbol.raycastTarget=false;icon=symbol;}
+        else{var image=Img(rect,null,_common.Text);image.sprite=sprite;image.preserveAspect=true;icon=image;}
+        var feedback=button.GetComponent<UiButtonFeedback>(); feedback.Icon=icon;
         var label=feedback.Label; label.rectTransform.sizeDelta=new Vector2(r.sizeDelta.x-30,r.sizeDelta.y); label.rectTransform.anchoredPosition=new Vector2(12,0);
+    }
+    private static void SymbolButton(Button button,TacticalSymbolGraphic.Symbol shape)
+    {
+        var r=Rect("Map symbol",button.transform,new Vector2(26,26),new Vector2(-66,0),new Vector2(.5f,.5f));
+        var g=r.gameObject.AddComponent<TacticalSymbolGraphic>();g.Shape=shape;g.color=_common.Text;g.raycastTarget=false;
+        var f=button.GetComponent<UiButtonFeedback>();f.Icon=g;f.Label.fontSize=18;
+        f.Label.rectTransform.anchoredPosition=new Vector2(14,0);f.Label.rectTransform.sizeDelta=new Vector2(142,42);
     }
     private static RectTransform Rect(string name,Transform parent,Vector2 size,Vector2 pos,Vector2 anchor)
     {

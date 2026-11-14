@@ -58,6 +58,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         /// <summary>기존 Field의 냉각·이동·생산이 읽는 권위 시각입니다. Player/낮밤의 공용 MatchTime과 구분합니다.</summary>
         public IMatchTime FieldTime => _matchTime?.FieldClock ?? _fieldTimeReplica;
         public RegionCaptureTrend CaptureTrend => _matchSession?.CaptureTrend ?? default;
+        /// <summary>같은 Scene의 전술 UI가 읽는 권위 전선입니다. Client 미수신을 빈 권위 결과로 위장하지 않습니다.</summary>
+        public BattlefieldSpatialSnapshot TacticalBattlefield => HasCurrentMatch ? _matchSession?.Battlefield : null;
         /// <summary>바인딩된 Feature에 전달할 게임 시간 예약 API입니다. 완료 후 새 예약은 거부합니다.</summary>
         public IMatchScheduler MatchTimers => _matchTime?.Scheduler;
         /// <summary>Game Debugger와 통합 검사가 조회하는 현재 권위 Match의 유효 예약 수입니다.</summary>

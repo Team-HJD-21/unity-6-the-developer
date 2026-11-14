@@ -123,6 +123,8 @@ namespace TeamHJD.Game.Infrastructure
                 WriteText(writer, delta.CurrencyId.Value);
                 writer.Write(delta.Amount);
             }
+            // Optional tail: old completions decode with an unspecified reason; new peers keep the Host reason.
+            writer.Write((int)completion.Result.EndReason);
         }
 
         private static MatchCompletion ReadCompletion(BinaryReader reader, MatchId match)
@@ -134,7 +136,8 @@ namespace TeamHJD.Game.Infrastructure
             var deltas = new CurrencyDelta[count];
             for (int i = 0; i < count; i++)
                 deltas[i] = new CurrencyDelta(new CurrencyId(ReadText(reader)), reader.ReadInt64());
-            return new MatchCompletion(new MatchResult(match, outcome, wave, completedAt),
+            var reason = reader.BaseStream.Position == reader.BaseStream.Length ? MatchEndReason.None : (MatchEndReason)reader.ReadInt32();
+            return new MatchCompletion(new MatchResult(match, outcome, wave, completedAt, reason),
                 new RewardReceipt(match, outcome, deltas));
         }
 

@@ -6315,7 +6315,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 2025306083
-  m_SortingLayer: -1
+  m_SortingLayer: -2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -523380,7 +523380,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 2025306083
-  m_SortingLayer: -1
+  m_SortingLayer: -2
   m_SortingOrder: -1
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -1124164,7 +1124164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a518c49703f37de4f99e89bc37b9f58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.RegionSceneBinding
-  captureHoldSeconds: 60
+  captureHoldSeconds: 30
   captureAbandonSeconds: 180
   captureLossSeconds: 30
   captureMinimumDamage: 20
@@ -1127457,6 +1127457,14 @@ PrefabInstance:
       propertyPath: CameraRightBottom
       value: 
       objectReference: {fileID: 542229218}
+    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: SceneryRenderers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: 'SceneryRenderers.Array.data[0]'
+      value:
+      objectReference: {fileID: 300471859}
     - target: {fileID: 1609201713903355411, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901

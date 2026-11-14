@@ -70,3 +70,8 @@ MonoBehaviour:
   Inactive: {r: 0.62, g: 0.65, b: 0.61, a: 1}
   Territory: {r: 0.72, g: 0.75, b: 0.67, a: 0.55}
   Enemy: {r: 0.84, g: 0.38, b: 0.31, a: 1}
+  Frontline: {r: 0.73, g: 0.85, b: 0.84, a: 0.92}
+  CapturedFill: {r: 0.44, g: 0.65, b: 0.41, a: 0.18}
+  CapturingFill: {r: 0.91, g: 0.68, b: 0.3, a: 0.22}
+  AvailableFill: {r: 0.68, g: 0.73, b: 0.66, a: 0.07}
+  UnoccupiedFill: {r: 0.07, g: 0.09, b: 0.09, a: 0.25}

@@ -1,4 +1,6 @@
 using TeamHJD.Game.Domain;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +13,8 @@ public sealed class TacticalMapGraphic : MaskableGraphic
     public bool Overview, Field;
     private TacticalCommandController Owner => View != null ? View.Owner : null;
     private VertexHelper _mesh;
+    private RegionGridSnapshot _boundarySnapshot;
+    private IReadOnlyList<RegionBoundarySegment> _boundary = Array.Empty<RegionBoundarySegment>();
     private void LateUpdate()
     {
         if (!Overview && !Field && Owner != null) Owner.RenderVisuals();
@@ -28,47 +32,45 @@ public sealed class TacticalMapGraphic : MaskableGraphic
             return;
         }
         var regions = owner.Regions;
-        if (regions != null && !Overview)
+
+        DrawCaptureProgress();
+        if(!Overview) DrawRanges();
+        if (regions != null)
         {
-            var g = regions.Definition.Geometry;
-            // 채움과 권한은 확정 셀을 사용합니다. 삼각형 외곽을 점유 경계로 대체하지 않습니다.
-            for (int y = 0; y < g.CellsY; y++) for (int x = 0; x < g.CellsX; x++)
+            if (_boundarySnapshot == null || _boundarySnapshot.MatchId != regions.MatchId ||
+                _boundarySnapshot.GridId != regions.GridId || _boundarySnapshot.Revision != regions.Revision ||
+                !ReferenceEquals(_boundarySnapshot.Definition, regions.Definition))
             {
-                if (!regions.IsCaptured(x, y)) continue;
-                var a = new Vector2((float)(g.MinimumX + x * g.CellWidth), (float)(g.MinimumY + y * g.CellHeight));
-                var b = a + new Vector2((float)g.CellWidth, (float)g.CellHeight);
-                var bounds = owner.CurrentCameraRect;
-                if (b.x < bounds.xMin || a.x > bounds.xMax || b.y < bounds.yMin || a.y > bounds.yMax) continue;
-                if (x == 0 || !regions.IsCaptured(x - 1, y)) Line(Project(a), Project(new Vector2(a.x, b.y)), 1.1f, owner.Style.Territory);
-                if (y == 0 || !regions.IsCaptured(x, y - 1)) Line(Project(a), Project(new Vector2(b.x, a.y)), 1.1f, owner.Style.Territory);
-                if (x == g.CellsX - 1 || !regions.IsCaptured(x + 1, y)) Line(Project(new Vector2(b.x, a.y)), Project(b), 1.1f, owner.Style.Territory);
-                if (y == g.CellsY - 1 || !regions.IsCaptured(x, y + 1)) Line(Project(new Vector2(a.x, b.y)), Project(b), 1.1f, owner.Style.Territory);
+                _boundary = RegionBoundaryGeometry.Build(regions);
+                _boundarySnapshot = regions;
             }
+            // Field와 전체도 모두 동일한 확정 셀 외곽 좌표를 그대로 투영합니다.
+            foreach (var edge in _boundary)
+                Line(Project(edge.Start), Project(edge.End), Overview ? .8f : 1.1f, owner.Style.Territory);
         }
         foreach (var row in owner.Turrets)
         {
             Vector2 p = Project(TacticalCommandController.Point(row)); if (!rectTransform.rect.Overlaps(new Rect(p - Vector2.one * 25, Vector2.one * 50))) continue;
-            Color state = row.IsDestroyed ? owner.Style.Common.Health : row.IsOperational ? owner.Style.Active : owner.Style.Inactive;
-            float radius = Overview ? 3 : 4;
+            p+=owner.HitOffset(row.EntityId)*(Overview?.38f:PixelScale);
+            var status=owner.StateOf(row);
+            Color state = owner.StateColor(status);
             float glyphScale=Overview?1:1/Mathf.Min(1,Mathf.Max(.1f,View.Canvas.rootCanvas.scaleFactor));
             if (!Overview && owner.HasTurretGlyph(row.EntityId))
             {
-                Vector2 status = p + Vector2.down * (21*glyphScale);
-                if (row.IsDestroyed) { Line(status + new Vector2(-3,-3),status + new Vector2(3,3),1.2f,state); Line(status + new Vector2(-3,3),status + new Vector2(3,-3),1.2f,state); }
-                else if (row.IsLocked) { Frame(status - new Vector2(3,2),status + new Vector2(3,2),1.2f,state); Circle(status + Vector2.up * 3,2,1.2f,state,8); }
-                else if (row.IsOperational) Quad(status - new Vector2(4,1.5f),status + new Vector2(4,1.5f),state);
-                else Frame(status - new Vector2(4,1.5f),status + new Vector2(4,1.5f),1,state);
+                DrawStatus(p + Vector2.down * (24*glyphScale),status,state,glyphScale);
             }
-            else if (row.IsOperational) Quad(p - Vector2.one * radius, p + Vector2.one * radius, state);
-            else Circle(p, radius + 1, 1.2f, state, 8);
+            else if(Overview) DrawStatus(p,status,state,.52f);
+            else DrawStatus(p+Vector2.down*24*glyphScale,status,state,glyphScale);
             if (owner.IsSelected(row.EntityId)) Brackets(p, Overview ? 7 : owner.HasTurretGlyph(row.EntityId)?19*glyphScale:18, owner.Style.Common.Accent);
             else if(!Overview && owner.Hovered?.EntityId==row.EntityId)Brackets(p,owner.HasTurretGlyph(row.EntityId)?19*glyphScale:18,owner.Style.Common.Text);
-            if (!Overview && owner.WasHit(row.EntityId))
+            if (!Overview && (row.CurrentHealth<row.MaxHealth || owner.IsSelected(row.EntityId) || owner.WasHit(row.EntityId)))
             {
-                Vector2 hp = p + Vector2.down * (owner.HasTurretGlyph(row.EntityId) ? 36*glyphScale : 25);
-                Quad(hp - new Vector2(23, 2), hp + new Vector2(23, 2), new Color(.08f, .1f, .1f, .8f));
-                Quad(hp - new Vector2(23, 2), hp + new Vector2(-23 + 46f * row.CurrentHealth / Mathf.Max(1, row.MaxHealth), 2), owner.Style.Common.Health);
+                Vector2 hp=p+Vector2.down*(38*glyphScale);
+                Health(hp,42*glyphScale,4*glyphScale,row.CurrentHealth/(float)Mathf.Max(1,row.MaxHealth),owner.HealthTrail(row));
             }
+            float impact=owner.HitImpact(row.EntityId);
+            if(impact>0){var flash=owner.Style.Enemy;flash.a=impact;Brackets(p,Overview?10:24*glyphScale,flash);}
+
         }
         if (Overview)
         {
@@ -80,12 +82,91 @@ public sealed class TacticalMapGraphic : MaskableGraphic
             Frame(a, b, 1.5f, owner.Style.Common.Text);
             if (owner.HasGoal) Brackets(Project(owner.GoalPosition), 5, owner.Style.Common.Accent);
         }
-        else if (owner.SelectionCount==1 && owner.Selected != null)
+        else
         {
-            var row = owner.Selected; Vector2 p = Project(TacticalCommandController.Point(row));
-            Vector2 edge = Project(TacticalCommandController.Point(row) + Vector2.right * (float)row.Range);
-            var c = owner.Style.Common.Accent; c.a = .38f; Circle(p, Vector2.Distance(p, edge), 1.1f, c, 96);
+            if(owner.ShowEnemyGlyphs)
+                foreach(var enemy in owner.Enemies)
+                {var p=Project(enemy);if(rectTransform.rect.Contains(p))Disc(p,3*PixelScale,owner.Style.Enemy);}
+            if(owner.HasGoal) Brackets(Project(owner.GoalPosition),12*PixelScale,owner.Style.Common.Accent);
+            var player=owner.PlayerVitality;var playerPoint=Project(owner.PlayerPosition)+player.Offset(Time.unscaledTime)*PixelScale;
+            if(player.Maximum>0)Health(playerPoint+Vector2.down*20*PixelScale,36*PixelScale,4*PixelScale,player.Fraction,player.Trail(Time.unscaledTime));
+            if(owner.TryControlPosition(out var cu))
+            {
+                var vitality=owner.ControlVitality;var p=Project(cu)+vitality.Offset(Time.unscaledTime)*PixelScale;
+                if(vitality.Maximum>0)Health(p+Vector2.down*20*PixelScale,48*PixelScale,5*PixelScale,vitality.Fraction,vitality.Trail(Time.unscaledTime));
+                if(vitality.Impact(Time.unscaledTime)>0)Brackets(p,24*PixelScale,owner.Style.Enemy);
+            }
         }
+    }
+    private float PixelScale => 1/Mathf.Min(1,Mathf.Max(.1f,View.Canvas.rootCanvas.scaleFactor));
+    private void Health(Vector2 p,float width,float height,float fraction,float trail)
+    {
+        var half=new Vector2(width*.5f,height*.5f);
+        Quad(p-half-Vector2.one*PixelScale,p+half+Vector2.one*PixelScale,new Color(.025f,.04f,.035f,.98f));
+        Quad(p-half,p+half,new Color(.18f,.22f,.19f,.98f));
+        Quad(p-half,p+new Vector2(-half.x+width*Mathf.Clamp01(trail),half.y),Owner.Style.Enemy);
+        var tone=fraction<.3f?Owner.Style.Enemy:fraction<.6f?Owner.Style.Common.Power:Owner.Style.Active;
+        Quad(p-half,p+new Vector2(-half.x+width*Mathf.Clamp01(fraction),half.y),tone);
+        for(int n=1;n<4;n++){float x=p.x-half.x+width*n/4;Line(new Vector2(x,p.y-half.y),new Vector2(x,p.y+half.y),PixelScale,new Color(.025f,.04f,.035f,.75f));}
+    }
+    private void DrawCaptureProgress()
+    {
+        foreach(var capture in Owner.CaptureMarkers)
+        {
+            Vector2 p=Project(capture.Position);float radius=Overview?7:18*PixelScale,w=Overview?2:3*PixelScale;
+            Circle(p,radius,w+2*PixelScale,new Color(.025f,.04f,.035f,.94f),32);
+            Arc(p,radius,w,Owner.Style.Common.Power,-90,-90+360*capture.Progress,40);
+            if(!capture.Holding){Line(p+new Vector2(-3,-4)*PixelScale,p+new Vector2(-3,4)*PixelScale,2*PixelScale,Owner.Style.Common.Power);Line(p+new Vector2(3,-4)*PixelScale,p+new Vector2(3,4)*PixelScale,2*PixelScale,Owner.Style.Common.Power);}
+            else if(!Overview)Brackets(p,8*PixelScale,Owner.Style.Common.Power);
+        }
+    }
+    private void Arc(Vector2 p,float radius,float width,Color c,float from,float to,int steps)
+    {
+        for(int i=0;i<steps;i++){float a=Mathf.Lerp(from,to,i/(float)steps)*Mathf.Deg2Rad,b=Mathf.Lerp(from,to,(i+1)/(float)steps)*Mathf.Deg2Rad;Line(p+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,p+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius,width,c);}
+    }
+    private void DrawRanges()
+    {
+        foreach(var row in Owner.Turrets)
+        {
+            bool selected=Owner.IsSelected(row.EntityId);
+            if(!(selected || Owner.ShowAllRanges && row.IsActivated && !row.IsDestroyed))continue;
+            var p=Project(TacticalCommandController.Point(row));
+            var edge=Project(TacticalCommandController.Point(row)+Vector2.right*(float)row.Range);
+            float radius=Vector2.Distance(p,edge);if(radius<=0 || !rectTransform.rect.Overlaps(new Rect(p-Vector2.one*radius,Vector2.one*radius*2)))continue;
+            var c=selected?Owner.Style.Common.Accent:Owner.StateColor(Owner.StateOf(row));c.a=selected?.85f:.4f;
+            Circle(p,radius,(selected?3.4f:2.6f)*PixelScale,new Color(.03f,.045f,.04f,.62f),64);
+            Circle(p,radius,(selected?1.8f:1.1f)*PixelScale,c,64);
+        }
+    }
+    private void DrawStatus(Vector2 p,TacticalPresentationRules.TurretState status,Color c,float scale)
+    {
+        Vector2 S(float x,float y)=>p+new Vector2(x,y)*scale;
+        Quad(S(-9,-8),S(9,8),new Color(.035f,.05f,.045f,.94f));
+        float w=1.7f*scale;
+        switch(status)
+        {
+            case TacticalPresentationRules.TurretState.Active:
+                Circle(p,5*scale,w,c,12);Line(S(0,1),S(0,7),w,c);Disc(S(6,5),2*scale,c);break;
+            case TacticalPresentationRules.TurretState.Off:
+                Circle(p,5*scale,w,c,12);Line(S(-3,0),S(3,0),w,c);break;
+            case TacticalPresentationRules.TurretState.Locked:
+                Frame(S(-5,-6),S(5,1),w,c);Line(S(-3,1),S(-3,5),w,c);Line(S(-3,5),S(3,5),w,c);Line(S(3,5),S(3,1),w,c);break;
+            case TacticalPresentationRules.TurretState.Cooling:
+                Circle(p,6*scale,w,c,12);Line(p,S(0,4),w,c);Line(p,S(3,-2),w,c);break;
+            case TacticalPresentationRules.TurretState.NoPower:
+                Line(S(2,6),S(-3,0),w,c);Line(S(-3,0),S(3,0),w,c);Line(S(3,0),S(-2,-6),w,c);
+                Line(S(-7,6),S(-7,-2),w,c);Disc(S(-7,-5),scale,c);break;
+            case TacticalPresentationRules.TurretState.Destroyed:
+                Line(S(-5,-5),S(5,5),w,c);Line(S(-5,5),S(5,-5),w,c);break;
+            default:
+                Quad(S(-4,-4),S(-1,4),c);Quad(S(1,-4),S(4,4),c);break;
+        }
+    }
+    private void Disc(Vector2 p,float radius,Color c)
+    {
+        if(_mesh.currentVertCount>59940)return;
+        int first=_mesh.currentVertCount;_mesh.AddVert(p,c,Vector2.zero);
+        for(int n=0;n<=12;n++){float t=n*Mathf.PI*2/12;_mesh.AddVert(p+new Vector2(Mathf.Cos(t),Mathf.Sin(t))*radius,c,Vector2.zero);if(n>0)_mesh.AddTriangle(first,first+n,first+n+1);}
     }
     private Vector2 Project(Vector2 p)
     {

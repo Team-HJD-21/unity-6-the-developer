@@ -11,7 +11,7 @@ namespace TeamHJD.Game.Domain
         public double MinimumTeamDamage { get; }
         public int EnemiesPerParticipant { get; }
 
-        public StaticRegionCaptureSettings(double holdSeconds = 60, double abandonSeconds = 180,
+        public StaticRegionCaptureSettings(double holdSeconds = 30, double abandonSeconds = 180,
             double lossSeconds = 30, double minimumTeamDamage = 20, int enemiesPerParticipant = 2)
         {
             foreach (double value in new[] { holdSeconds, abandonSeconds, lossSeconds, minimumTeamDamage })

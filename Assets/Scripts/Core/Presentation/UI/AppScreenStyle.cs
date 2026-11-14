@@ -19,10 +19,11 @@ namespace TeamHJD.Game.Presentation
         public Color TitleColor => titleColor;
         [Header("Authored common UI prefabs")]
         public AppScreenCanvasView CanvasPrefab;
-        public AppPanelView MenuPrefab, ResultPrefab;
+        public AppPanelView MenuPrefab, ResultPrefab, RecoveryPrefab;
         public AppSettingsView SettingsPrefab;
         public AppLoadingView LoadingPrefab;
         public bool HasAuthoredViews => CanvasPrefab != null && CanvasPrefab.IsConfigured && MenuPrefab != null &&
-            MenuPrefab.IsConfigured && ResultPrefab != null && ResultPrefab.IsConfigured && SettingsPrefab != null && LoadingPrefab != null;
+            MenuPrefab.IsConfigured && ResultPrefab != null && ResultPrefab.IsConfigured && RecoveryPrefab != null &&
+            RecoveryPrefab.IsConfigured && SettingsPrefab != null && LoadingPrefab != null;
     }
 }

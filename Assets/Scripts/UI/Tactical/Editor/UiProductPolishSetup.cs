@@ -30,7 +30,8 @@ public static class UiProductPolishSetup
         if(panel==null)throw new InvalidOperationException("The authored loading controls are missing.");
         panel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,490);
         Key("M",new Vector2(70,-325)); Caption("Tactical","전술 화면",new Vector2(150,-325));
-        Key("G",new Vector2(710,-325)); Caption("Turret interaction","터렛 조작",new Vector2(790,-325));
+        var previous=panel.Find("Key G"); if(previous!=null && panel.Find("Key F")==null)previous.name="Key F";
+        Key("F",new Vector2(710,-325)); Caption("Turret interaction","터렛 조작",new Vector2(790,-325));
         void Key(string letter,Vector2 position)
         {
             var rect=panel.Find("Key "+letter) as RectTransform;

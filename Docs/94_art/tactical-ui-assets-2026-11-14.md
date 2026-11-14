@@ -41,6 +41,16 @@ marker만 바꾼 경우 Scene instance 참조를 저장한 뒤 terrain-only 제�
 
 키보드·held drag는 11-14 사용자 지시에 따라 사용자가 직접 확인한다. 이 에셋 검수 기록은 해당 입력의 통과 판정을 포함하지 않는다. 후속 PR에는 이 규칙과 실제 구현·검증 기록을 함께 포함한다.
 
+## 11-14 가독성 후속
+
+지도/설정/상태는 `TacticalSymbolGraphic`의 24단위 벡터 원본이다. 기존 UGUI 메시 심볼 계열을 확장하며 폰트 문자를 아이콘으로 사용하지 않는다. 단색 얇은 선과 큰 빈 공간을 유지한다. 터렛 상태 배지는 전원·잠금·시계·전력·X·일시정지 형태로 구분하고, 색만으로 활성 여부를 전달하지 않는다. 기존 터렛 원본·공용 프레임·8종 심볼 atlas·지형 PNG와 GUID를 보존한다. 상태색은 UI에만 적용하고 월드 본체 tint를 덮어쓰지 않는다.
+
+상시 문장 범례를 제거하고 점유 영역 자체에 채움·열린 테두리·사선·실제 진행 링을 사용하며 전선은 옅은 청록색으로 분리한다. 먼 적의 붉은 점은 개체의 실제 위치, 옆 묶음 수량은 실제 합계다. 지도 설정은 별도 큰 창을 늘리지 않고 기존 전체도 패널 안에서 표시한다. [후속 구현·검증 기록](../01_planning/02_implementation-records/2026/11/2026-11-14-tactical-readability.md)을 함께 확인한다.
+
+아이콘 버튼은 기존 owner_player/owner_cu와 명령 atlas를 재사용하고 이전/닫기/설정/상태 등 단순 도형만 UGUI 벡터로 확장한다. 체력은 `TacticalHealthGraphic`의 얇은 분할 게이지이며 숫자만으로 대신하지 않는다. `TacticalActionHint`의 제작된 공통 hover 카드에만 행동 이름을 표시한다. 실제 피격의 잔상/흔들림은 Controller가 같은 최대 HP의 감소 표본으로 구동한다. 첫 연결이나 최대값 변경에 연출을 재생하지 않는다. 이 수정에는 새 생성형 bitmap이나 폰트 문자 아이콘이 필요하지 않았다.
+
+사용자의 육각 격자 전환 참고는 후속 구현 승인을 받아 `TacticalModeFrame.shader/.mat`로 제작했다. 새 bitmap을 겹치는 대신 기존 UGUI shader 경로로 선을 그려 화면 해상도에서 일정한 굵기·셀 간격을 유지한다. 최초 구현은 진입0.22초/종료0.14초의 얇은 띠와 가장자리 잔상만 사용했으며(현재 규칙은 아래 11-14 재요청 항목을 따른다), 전면 색수차/왜곡/블러는 없다. 기존 HUD·전술 패널보다 먼저 그리는 Overlay Canvas(-900), `raycastTarget=false`, 로컬 Material 복제/해제로 구성한다. 정상 모드 중앙 alpha0과 실제 테두리 출력을 GPU 읽기 검사로 구분한다. .meta GUID와 Material/Prefab 연결을 함께 관리한다.
+
 ## 선택 atlas 후속 수정 프롬프트
 
 ```text
@@ -52,3 +62,11 @@ Use case: style-transfer. Image 1 is the edit target: a transparent 2x2 tactical
 ```text
 Use case: stylized-concept. Asset type: ONE cohesive transparent 2D pixel-game COMMAND GLYPH ATLAS, a square image in a precise 2x2 equal-cell grid, no visible cell grid, one centered glyph in each cell with large transparent margins. This is the second atlas for an existing sci-fi action tower-defense UI. Image 1 is the exact current game's crisp two-tone HUD symbol style. Image 2 establishes the already selected tactical symbol family; match its silhouette readability and warm ivory/charcoal palette but use flat fills, not material texture. Top left: universal POWER TOGGLE glyph, a broken circular ring with one vertical stem, distinctly open at top. Top right: UPGRADE MODULE glyph, a short rectangular industrial microchip with three stout contact tabs on each side and ONE upward chevron cut out of its center. Bottom left: MULTIPLE SELECTION glyph, two small offset solid squares enclosed by four thin separate corner brackets, no enclosing full panel. Bottom right: AUTOMATIC POWER glyph, a small power-toggle ring surrounded by TWO short blocky curved arrow segments, clearly distinct from the plain power-toggle glyph. All four must read at 22-28 screen pixels, with a similar visual weight to the provided 64px native HUD symbol. Pixel steps and large clear negative space, a thin dark charcoal outline so ivory interiors remain visible against bright grass, no tiny details. Almost all pixels inside glyph bodies fully opaque. True alpha transparency everywhere else. Limited opaque warm ivory #eeeadd and charcoal #202826 only, at most one muted gray edge highlight. No lettering, digits, captions, labels, keyboard keys, color state, checkmarks, decorative circuits, radar grids, gears, realistic metal, soft gradients, glow, 3D perspective, background plate, drop shadows, or watermark. These will become separate cropped sprites by importer metadata; preserve equal cells and avoid bleed between glyphs.
 ```
+
+## 11-14 전환/영역 재요청
+
+사용자 후속 요청으로 전환을 전체 육각막과 중앙 파동으로 확대했다. `TacticalModeFrame` Material의 `_Cover`/`_Reveal`/`_Progress`,48px 셀 간격을 사용한다. 파동 가장자리의 작은 색 분리/육각 패턴 굴절만 있고 게임 장면 자체를 굴절시킨다고 보고하지 않는다. 전환 중800/정상-900 Canvas 순서와 입력 차단은 제작된 ModeEffect가 관리한다.
+
+새 `TacticalTerritory.shader/.mat`는 기존 실제 지역 mask의 연속 채움 전용이다. 점유 외곽선의 월드 XY와 내부 공유 변 제거 규칙은 Field와 동일하며, 곡선화나 전선 삼각형으로 영역을 대체하지 않는다. 새 bitmap 없이 기존 UGUI shader/심볼 계열을 확장했다. Field 상태 글자는 기존 BodyFont/AlertText 외곽선 재질을 재사용하고, 문자는 사용자 요청으로 명시 허용된 짧은 상태만 사용한다. 새 이미지에 한글을 구워 넣지 않는다.
+
+11-14 최종 사용자 조정: 전환 shader에서 검은 면을 제거하고 셀 내부는 투명하게 두며 전면 육각선만 중앙부터 걷힌다. 미점유 심볼은 끊긴 빈 영역 테두리로 변경하고 이탈만 별도 방향 화살표를 더했다. 기존 enum 순서는 보존하고 RegionExit만 마지막에 추가했다. 조작 버튼의 잠김/전원 아이콘은 기존 TacticalSymbolGraphic의 실제 자물쇠/전원 벡터를 재사용한다. action124×32, hover260×30 사각형은 기존 Prefab 객체만 조정했다. 상세는 [최신 수정 기록](../01_planning/02_implementation-records/2026/11/2026-11-14-tactical-refinement.md)을 따른다.

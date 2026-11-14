@@ -11,10 +11,11 @@ public sealed class TacticalMapPointer : MonoBehaviour, IPointerDownHandler, IPo
     public void OnPointerEnter(PointerEventData e) { if(!IsOverview)View.Owner?.SetMapPointerInside(true); }
     public void OnPointerExit(PointerEventData e) { if(!IsOverview)View.Owner?.SetMapPointerInside(false); }
     public void OnPointerDown(PointerEventData e)
-    { _start = e.position; _dragged = false; GameInput.TryConsumePrimaryPointerPress(); }
+    { _start = e.position; _dragged = false; if(e.button==PointerEventData.InputButton.Left)GameInput.TryConsumePrimaryPointerPress(); }
     public void OnPointerClick(PointerEventData e)
     {
-        if (!_dragged && View.Owner != null) View.Owner.PointerClick(e.position, IsOverview, e.button == PointerEventData.InputButton.Right);
+        if (!_dragged && View.Owner != null && e.button!=PointerEventData.InputButton.Middle)
+            View.Owner.PointerClick(e.position, IsOverview, e.button == PointerEventData.InputButton.Right);
     }
     public void OnBeginDrag(PointerEventData e)
     { _dragged = true; View.Owner?.BeginPointerDrag(_start, IsOverview); }

@@ -19,6 +19,8 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     [Header("Scene camera limits")]
     public Transform CameraLeftTop, CameraRightBottom;
     public bool IsOpen { get; private set; }
+    public bool IsTransitioning=>View!=null && View.ModeEffect.Animating;
+    public bool IsMapPresented { get; private set; }
     public TacticalHudView View { get; private set; }
     public IReadOnlyList<TurretPresentationSnapshot> Turrets => _rows;
     public IReadOnlyList<Vector2> Enemies => _enemies;
@@ -85,6 +87,8 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         View.Back.onClick.AddListener(PreviousView);
         for (int i = 0; i < View.Incidents.Length; i++) { int index = i; View.Incidents[i].onClick.AddListener(() => FocusIncident(index)); }
         Source.TurretCommandCompleted += OnCommandResult;
+        InitializeMapSettings();
+        FieldTerritoryRenderer.Attach(this);
     }
     private void Update()
     {
@@ -93,29 +97,27 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         var player = Source.LocalPlayer;
         if (_player != player || _match != Source.BoundMatchId)
         {
-            Close(); if (_attack != null) _attack.AttackPerformed -= OnAttack;
+            CloseImmediate(); if (_attack != null) _attack.AttackPerformed -= OnAttack;
             _player = player; _match = Source.BoundMatchId; _control = player != null ? player.GetComponent<PlayerControlState>() : null;
             _attack = player != null ? player.GetComponent<PlayerAttack>() : null; if (_attack != null) _attack.AttackPerformed += OnAttack;
-            _selected = default; _hasGoal = false; _damage.Clear(); _nextSample = 0;
+            _selected = default; _hasGoal = false; _damage.Clear(); _fieldCaptureRegion=-1; _fieldExitAt=-100; _playerVitality=new(); _cuVitality=new(); _nextSample = 0;
         }
         bool field = Source.HasFieldActor && _player != null && _player.curHp > 0;
         bool available = field && _control != null && _control.CanIssueTurretCommands &&
             !(_app != null && _app.IsInitialized && _app.LocalInput.IsBlocked);
-        View.ToggleMap.gameObject.SetActive(available && !IsOpen);
-        if (IsOpen && (!available || _camera == null || _camera.ActiveTarget != _rig)) Close();
+        View.ToggleMap.gameObject.SetActive(available && !IsOpen && !IsTransitioning);
+        if (IsOpen && (!available || _camera == null || (!IsTransitioning && _camera.ActiveTarget != _rig))) CloseImmediate();
         if (available && GameInput.WasPressedThisFrame(GameKey.M)) Toggle();
         if (IsOpen && UIEscapeInput.TryConsume()) Close();
         if (Time.unscaledTime >= _nextSample)
         {
             _nextSample = Time.unscaledTime + .15f; CaptureData(); RefreshDock();
         }
-        if (IsOpen)
+        if (IsOpen && !IsTransitioning)
         {
             var hovered=_mapPointerInside && IsInMapViewport(GameInput.PointerPosition)?Pick(GameInput.PointerPosition,34):null;
             _hovered=hovered!=null?hovered.EntityId:default;
             Vector2 pan = GameInput.Move * (_size * Style.PanSpeed * Time.unscaledDeltaTime);
-            if (Mouse.current?.middleButton.isPressed == true && IsInMapViewport(GameInput.PointerPosition))
-                pan -= Mouse.current.delta.ReadValue() * (_size * 2 / Mathf.Max(1, Screen.height));
             if (pan.sqrMagnitude > 0)
             {
                 if (!_axisPanning) BeginCameraPan();
@@ -128,13 +130,16 @@ public sealed partial class TacticalCommandController : MonoBehaviour
             if (GameInput.WasPressedThisFrame(GameKey.Home)) Focus(PlayerPosition);
             View.Tooltip.gameObject.SetActive(false); View.Prompt.gameObject.SetActive(false);
         }
-        else if (available) RefreshHover();
+        else if (available && !IsOpen && !IsTransitioning) RefreshHover();
         else { View.Tooltip.gameObject.SetActive(false); View.Prompt.gameObject.SetActive(false); }
         RefreshGoal(field);
+        RefreshFieldStatus(field);
     }
-    public void Toggle() { if (IsOpen) Close(); else Open(); }
+    public void Toggle() { if (IsOpen && (!IsTransitioning || View.ModeEffect.Opened)) Close(); else Open(); }
     public bool Open()
     {
+        if (IsOpen && IsTransitioning && !View.ModeEffect.Opened)
+        { View.ModeEffect.SetOpen(true,CommitMapView,FinishMapOpen);return true; }
         if (IsOpen || Source == null || !Source.HasFieldActor || _control == null || !_control.CanIssueTurretCommands ||
             _player.curHp <= 0 || (_app != null && _app.IsInitialized && _app.LocalInput.IsBlocked)) return false;
         var skills = _player.GetComponent<PlayerSkillController>(); if (skills != null && skills.IsPlacingSkill) return false;
@@ -149,25 +154,46 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         var frame = Frame; _viewAspect = frame.Aspect;
         _rig.position = TacticalMapMath.ClampViewCenter(PlayerPosition, WorldBounds, frame.Size, frame.Aspect); _rig.rotation = Quaternion.identity;
         ResetCameraMotion();
-        _cameraLease = _camera.PushView(_rig, 0, frame.Size, frame.Viewport); _controlLease = _control.EnterTacticalView();
+        _controlLease = _control.EnterTacticalView();
         _player.GetComponent<PlayerMovement>()?.StopImmediately(); _player.GetComponent<PlayerInputHandler>()?.CancelAttackGesture();
-        IsOpen = true; MultipleSelection = false; View.ShowCommand(true); View.CommandGroup.alpha = 1;
-        View.UpgradeDrawer.gameObject.SetActive(false); View.SelectionBox.gameObject.SetActive(false);
-        Cursor.visible = true; EventSystem.current?.SetSelectedGameObject(null); RefreshDock(); return true;
+        IsOpen=true;MultipleSelection=false;
+        View.Tooltip.gameObject.SetActive(false);View.Prompt.gameObject.SetActive(false);
+        View.ModeEffect.SetOpen(true,CommitMapView,FinishMapOpen);
+        Cursor.visible=true;EventSystem.current?.SetSelectedGameObject(null);return true;
     }
+    private void CommitMapView()
+    {
+        if(!IsOpen || _camera==null)return;
+        if(_cameraLease==null && _camera.HasOverride){CloseImmediate();return;}
+        if(_cameraLease==null){var frame=Frame;_cameraLease=_camera.PushView(_rig,0,frame.Size,frame.Viewport);}
+        View.ShowCommand(true);View.CommandGroup.alpha=0;
+        ApplySceneryVisibility();RefreshMapSettings();RefreshDock();
+    }
+    private void FinishMapOpen(){if(!IsOpen)return;IsMapPresented=true;View.ShowCommand(true);RefreshDock();}
     public void Close()
     {
-        if (!IsOpen && _cameraLease == null && _controlLease == null) return;
-        IsOpen = false; _cameraLease?.Dispose(); _cameraLease = null; _controlLease?.Dispose(); _controlLease = null;
-        _batch.Clear(); _boxSelecting = false; MultipleSelection = false;
-        _mapPointerInside=false; _hovered=default;
-        _axisPanning=false;
-        if (View != null) { View.ShowCommand(false); View.SelectionBox.gameObject.SetActive(false); }
-        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+        if(!IsOpen)return;
+        if(IsTransitioning && !View.ModeEffect.Opened)return;
+        View.ModeEffect.SetOpen(false,ReleaseMapCamera,FinishMapClose);
+    }
+    private void ReleaseMapCamera()
+    {
+        _cameraLease?.Dispose();_cameraLease=null;RestoreScenery();
+        if(View!=null){View.ShowCommand(false);View.SelectionBox.gameObject.SetActive(false);}
+    }
+    private void FinishMapClose()
+    {
+        IsOpen=false;IsMapPresented=false;_controlLease?.Dispose();_controlLease=null;
+        _batch.Clear();_boxSelecting=false;MultipleSelection=false;_mapPointerInside=false;_hovered=default;_axisPanning=false;
+        EventSystem.current?.SetSelectedGameObject(null);
+    }
+    private void CloseImmediate()
+    {
+        ReleaseMapCamera();FinishMapClose();if(View!=null)View.ModeEffect.Reset(false);
     }
     public void Zoom(float wheel)
     {
-        if (!IsOpen || Mathf.Approximately(wheel, 0)) return;
+        if (!IsOpen || IsTransitioning || Mathf.Approximately(wheel, 0)) return;
         _zoomFrom = _size; _zoomAt = Time.unscaledTime;
         _zoomGoal = TacticalMapMath.ClampViewSize(Mathf.Clamp(_zoomGoal / Mathf.Pow(Style.ZoomStep, Mathf.Sign(wheel)),
             _baseSize * Style.MinimumZoom, _baseSize * Style.MaximumZoom), WorldBounds, FullAspect, _baseSize * Style.MinimumZoom);
@@ -207,10 +233,10 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     }
     public void PointerClick(Vector2 screen, bool overview, bool secondary)
     {
-        if (!IsOpen) return;
+        if (!IsOpen || IsTransitioning) return;
         if (!overview && !IsInMapViewport(screen)) return;
         Vector2 position = overview ? OverviewToWorld(screen) : ScreenToWorld(screen);
-        if (secondary) { _goal = position; _hasGoal = true; return; }
+        if (secondary) { SetGoal(position); return; }
         if (overview) { Focus(position); return; }
         var target = Pick(screen, 34);
         if (target == null) { _selected = default; _batch.Clear(); RefreshDock(); return; }
@@ -218,8 +244,14 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     }
     public void PointerDrag(Vector2 start, Vector2 screen, Vector2 delta, bool overview, bool left)
     {
-        if (!IsOpen) return;
+        if (!IsOpen || IsTransitioning) return;
         if (overview) { _cameraGoal = ClampCameraGoal(OverviewToWorld(screen) + _overviewDragOffset); return; }
+        if (!left)
+        {
+            var camera=OutputCamera;
+            if(camera!=null)Pan(TacticalPresentationRules.DragPan(delta,camera.orthographicSize,camera.pixelHeight));
+            return;
+        }
         if (left && Source.IsAtControlUnit && (MultipleSelection || GameInput.IsPressed(GameKey.LeftShift) || GameInput.IsPressed(GameKey.RightShift)))
         {
             _boxSelecting = true; var a = CanvasPoint(start); var b = CanvasPoint(ClampMapPoint(screen));
@@ -229,7 +261,8 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     }
     public void BeginPointerDrag(Vector2 start, bool overview)
     {
-        if (!IsOpen || !overview) return;
+        if (!IsOpen || IsTransitioning) return;
+        if (!overview) { BeginCameraPan(); return; }
         Vector2 point = OverviewToWorld(start);
         _overviewDragOffset = CurrentCameraRect.Contains(point) ? CameraPosition - point : Vector2.zero;
         BeginCameraPan();
@@ -283,12 +316,13 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     }
     private void OnDisable()
     {
-        Close(); if (View != null) View.gameObject.SetActive(false);
+        CloseImmediate(); if (View != null) View.gameObject.SetActive(false);
     }
     private void OnEnable() { if (View != null) View.gameObject.SetActive(true); }
     private void OnDestroy()
     {
-        Close(); if (_attack != null) _attack.AttackPerformed -= OnAttack;
+        RestoreScenery();
+        CloseImmediate(); if (_attack != null) _attack.AttackPerformed -= OnAttack;
         if (Source != null) Source.TurretCommandCompleted -= OnCommandResult;
         if (_regionTexture != null) Destroy(_regionTexture);
         if (_rig != null) Destroy(_rig.gameObject);

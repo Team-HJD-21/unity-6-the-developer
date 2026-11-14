@@ -36,6 +36,8 @@ flowchart LR
 
 `FieldTurretController.CreateGrowthParticipant()`는 실제 터렛의 논리 ID별 제작 Definition(승급 레벨), 강화 종류/단계·DamageBonus, CU 전력 용량을 한 원본으로 캡처한다. 실제 강화/승급·용량 변경 사건만 즉시 저장한다. 일반 피해·냉각·ON/OFF는 성장 쓰기를 발생시키지 않는다.
 
+성장 로드는 현재 전투 상태를 보존해 실제 터렛을 재구성한다. 이때 Cannon/Missile도 일반 실행과 같은 과열 표현을 사용하고, 식은 OFF 포신은 기존 회색으로 복원한다. 색상이 실제 해금/가동 상태의 원본은 아니므로 호출부는 `IsLocked`/`IsActivated`를 읽는다. 별도의 잠금 색상이나 새로운 Shader 정책은 추가하지 않았다.
+
 공용 파일 귀속은 `field/<Host PlayerId>/<CampaignSlot>/<StageId>`다. `AppRoot.CampaignSlot`의 기본은 `campaign-1`이고 시작/허브 흐름이 Mission 입장 전 `SelectCampaign(new CheckpointSlot("campaign-2"))`로 다른 캠페인을 고를 수 있다. 활성 Match 중 변경은 거절하며 기존 파일을 삭제하지 않는다. 개인 성장 파일은 이 캠페인 선택과 별개다.
 
 `world/campaign`은 월드가 참조하는 캠페인 ID다. 이어하기의 `ConfigureCheckpointArrival`가 이를 먼저 읽고 최신 공용 성장→새 actor→월드 순서로 조립한다. ID가 없는 옛 전체 월드 파일은 명시 이관이 필요하다고 반환하며 현재 파일을 임의 삭제하거나 다른 성장 파일을 붙이지 않는다.

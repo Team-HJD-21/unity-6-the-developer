@@ -58,20 +58,29 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _recoveryLedger.RecordCheckpoint(Checkpoints.LastSavedSlot, saved.CheckpointId);
             service.Pump();
         }
-        private async void OnRecoveryFailure(Guid failure, bool allowed, string reason)
+        private void OnRecoveryFailure(Guid failure, bool allowed, string reason)
         {
             if (!allowed)
             {
-                _coordinator.CompleteMatch(MatchOutcome.Defeat);
+                _coordinator.CompleteMatch(MatchOutcome.Defeat, reason == "RescueBudgetExhausted"
+                    ? MatchEndReason.RescueBudgetExhausted : MatchEndReason.AllPlayersDown);
                 return;
             }
-            await RetryRecoveryAsync();
+            _recoveryPause ??= _matchTime.AcquirePause("MissionRecoveryChoice");
         }
         /// <summary>Game Debugger/실패 UI가 기술 실패 후 같은 복귀를 재시도합니다. 안전장치를 추가 차감하지 않습니다.</summary>
+        public async Task UseSafetyAsync()
+        {
+            if (_recoveryBusy || Recovery?.IsAwaitingSafetyChoice != true || !Recovery.AcceptSafety())
+                throw new InvalidOperationException("No authority safety choice is available.");
+            await RetryRecoveryAsync();
+        }
         public async Task RetryRecoveryAsync()
         {
             if (_recoveryBusy || Recovery?.IsRecoveryPending != true) return;
             var service = Recovery;
+            if (service.IsAwaitingSafetyChoice)
+                throw new InvalidOperationException("Confirm safety use before retrying recovery.");
             var app = _matchHost as AppRoot;
             Guid run = service.Ledger.RunId, failure = service.Ledger.PendingFailure;
             app?.RememberMissionRecovery(gameObject.scene.path, service.Ledger);

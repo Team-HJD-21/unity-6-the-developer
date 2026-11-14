@@ -164,7 +164,7 @@ namespace TeamHJD.Game.Application
             State.Start();
         }
 
-        public MatchCompletion Complete(MatchOutcome outcome, long eventSequence)
+        public MatchCompletion Complete(MatchOutcome outcome, long eventSequence, MatchEndReason reason = MatchEndReason.None)
         {
             ThrowIfDisposed();
             if (eventSequence < 0) throw new ArgumentOutOfRangeException(nameof(eventSequence));
@@ -182,6 +182,8 @@ namespace TeamHJD.Game.Application
                 if (result == null) throw new InvalidOperationException("Mode rules must provide a match result.");
                 if (result.MatchId != State.MatchId) throw new InvalidOperationException("Mode rules returned a result for another match.");
                 if (result.Outcome != outcome) throw new InvalidOperationException("Mode rules changed the requested final outcome.");
+                if (reason != MatchEndReason.None)
+                    result = new MatchResult(result.MatchId, result.Outcome, result.CompletedWave, result.CompletedAt, reason);
                 var rewardReceipt = _modeRules.CreateRewardReceipt(result);
                 if (rewardReceipt == null) throw new InvalidOperationException("Mode rules must provide a reward receipt.");
                 var completion = new MatchCompletion(result, rewardReceipt);

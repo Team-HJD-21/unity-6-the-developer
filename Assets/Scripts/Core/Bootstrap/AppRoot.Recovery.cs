@@ -22,8 +22,22 @@ namespace TeamHJD.Game.Bootstrap
         /// <summary>같은 실패를 재시도할 수 있는지 표시합니다. 실제 저장 유효성은 실행할 때 다시 검사합니다.</summary>
         public bool CanRetryMissionRecovery => _recoveryAttempt == Guid.Empty &&
             (_activeMission != null
-                ? !_activeMission.IsRecovering && _activeMission.Recovery?.IsRecoveryPending == true
+                ? !_activeMission.IsRecovering && _activeMission.Recovery?.IsRecoveryPending == true &&
+                  _activeMission.Recovery.Ledger.PendingFailure != Guid.Empty
                 : !string.IsNullOrEmpty(_recoveryScene) && _expectedRecoveryFailure != Guid.Empty);
+
+        public bool CanUseMissionSafety => _recoveryAttempt == Guid.Empty && _activeMission != null &&
+            !_activeMission.IsRecovering && _activeMission.Recovery?.IsAwaitingSafetyChoice == true &&
+            _activeMission.Recovery.RemainingSafetyUses > 0 && string.IsNullOrEmpty(GetSceneTravelRestriction());
+
+        /// <summary>선택 대기 중 Host가 처음 사용을 확정합니다. 기술 오류 재시도와 구분합니다.</summary>
+        public async Task UseMissionSafetyAsync()
+        {
+            ThrowIfUnavailable();
+            if (!CanUseMissionSafety) throw new InvalidOperationException("No authority safety choice is available.");
+            await _activeMission.UseSafetyAsync();
+            if (LastMissionRecoveryError != null) throw new InvalidOperationException(LastMissionRecoveryError);
+        }
 
         internal void PrepareMissionEntry(MissionEntryKind entry)
         {

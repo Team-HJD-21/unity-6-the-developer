@@ -8,6 +8,8 @@ public partial class PlayerInfo : IPlayerRescueActor, IPlayerRescueConsumer
 {
     private PlayerId _rescuePlayer;
     private IPlayerRescueService _rescueRequests;
+    /// <summary>F 상호작용 중재용 실제 구조 대상입니다. UI가 새 구조 자격을 만들지 않습니다.</summary>
+    public bool HasRescueTarget => _rescueRequests?.IsReady == true && _rescueRequests.TryFindTarget(_rescuePlayer, out _);
     private bool HasHeldRescueTarget => _rescueRequests?.IsReady == true && GameInput.IsPressed(GameKey.F) &&
         _rescueRequests.TryFindTarget(_rescuePlayer, out _);
 

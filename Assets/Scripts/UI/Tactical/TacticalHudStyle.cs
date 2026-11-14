@@ -47,4 +47,9 @@ public sealed class TacticalHudStyle : ScriptableObject
     public Color Active = new(.48f, .68f, .39f), Inactive = new(.62f, .65f, .61f);
     public Color Territory = new(.72f, .75f, .67f, .55f);
     public Color Enemy = new(.84f, .38f, .31f);
+    public Color Frontline = new(.73f,.85f,.84f,.92f);
+    public Color CapturedFill = new(.44f,.65f,.41f,.18f);
+    public Color CapturingFill = new(.91f,.68f,.30f,.22f);
+    public Color AvailableFill = new(.68f,.73f,.66f,.07f);
+    public Color UnoccupiedFill = new(.07f,.09f,.09f,.25f);
 }

@@ -31025,6 +31025,8 @@ MonoBehaviour:
     ScaleOffset: 1
     BaseOffset: {x: 0, y: 338}
     MinimumScale: 0
+  MinimumScreenScale: 0
+  MinimumScreenWidth: 800
 --- !u!222 &858098549657919011
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31095,6 +31097,10 @@ MonoBehaviour:
   MaterialTemplate: {fileID: 2100000, guid: 12d028fa9b419a5418b308922660c55f, type: 2}
   SkillHud: {fileID: 0}
   Stage: {fileID: 900050100}
+  AnnouncementPrefab: {fileID: 0}
+  MessageFadeSeconds: 0.22
+  MessageHoldSeconds: 3
+  MessageEraseSeconds: 0.45
   Duration: 0.6
 --- !u!225 &2222867974730719196
 CanvasGroup:
@@ -36797,5 +36803,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b85b921da62f64b43b5ac0bcd3320b0f, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::TacticalCommandController
+  SceneryRenderers: []
   Source: {fileID: 900050100}
   Style: {fileID: 11400000, guid: 4983d78b638885242a10836379b9cff1, type: 2}
+  CameraLeftTop: {fileID: 0}
+  CameraRightBottom: {fileID: 0}

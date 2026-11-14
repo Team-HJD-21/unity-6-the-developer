@@ -23,6 +23,10 @@ namespace TeamHJD.Game.Application
         public event Action<PlayerId, PlayerId> Rescued;
         public string LastRescueFailure { get; private set; }
         public bool IsRecoveryPending => _failed;
+        public bool IsAwaitingSafetyChoice => _failed && _ledger.PendingFailure == Guid.Empty && !_ledger.IsEnded;
+        public string FailureReason { get; private set; }
+        public Guid FailureId { get; private set; }
+        public int RemainingSafetyUses => Math.Max(0, MissionRecoveryLedger.MaximumSafetyUses - _ledger.SafetyUses);
         public bool IsReady => !_disposed && !_failed && _available() && !_ledger.IsEnded && _actors.Count == _roster.Count;
         /// <summary>안전장치 후보 저장은 모든 실제 참가자의 생존이 확인된 시점만 허용합니다.</summary>
         public bool CanCaptureWorld => IsReady && _roster.All(id => Read(id, out var actor) && actor.IsAlive);
@@ -149,9 +153,17 @@ namespace TeamHJD.Game.Application
             if (_failed) return;
             _failed = true;
             _holds.Clear();
-            Guid failure = _ledger.PendingFailure != Guid.Empty ? _ledger.PendingFailure : Guid.NewGuid();
-            bool allowed = _ledger.TryBeginFailure(failure);
-            Failure?.Invoke(failure, allowed, reason);
+            FailureId = _ledger.PendingFailure != Guid.Empty ? _ledger.PendingFailure : Guid.NewGuid();
+            FailureReason = reason;
+            bool allowed = !_ledger.IsEnded && (_ledger.PendingFailure != Guid.Empty || RemainingSafetyUses > 0);
+            Failure?.Invoke(FailureId, allowed, reason);
+        }
+
+        /// <summary>현재 Host의 명시 선택만 차감합니다. 같은 실패의 기술 재시도는 기존 기록을 유지합니다.</summary>
+        public bool AcceptSafety()
+        {
+            if (_disposed || !_failed || !_available() || FailureId == Guid.Empty) return false;
+            return _ledger.TryBeginFailure(FailureId);
         }
 
         /// <summary>새 Scene이 같은 실행의 미완료 복귀를 인수할 때만 호출합니다. 추가 차감/실패 이벤트는 없습니다.</summary>
@@ -160,6 +172,7 @@ namespace TeamHJD.Game.Application
             if (_disposed || failure == Guid.Empty || _ledger.PendingFailure != failure)
                 throw new InvalidOperationException("No matching pending recovery exists.");
             _failed = true;
+            FailureId = failure;
             OnWorldRestored();
         }
         /// <summary>시간/actor 복원 뒤 옛 입력 채널만 버립니다. 구조 잔여와 안전장치는 변경하지 않습니다.</summary>
@@ -176,6 +189,7 @@ namespace TeamHJD.Game.Application
                     throw new InvalidOperationException("Every actual participant must be alive after recovery.");
             _ledger.CompleteRecovery(failure);
             _failed = false; _waiting = false; _lastTime = _clock.ElapsedSeconds;
+            FailureId = Guid.Empty; FailureReason = null;
             _holds.Clear();
         }
         public void Dispose()

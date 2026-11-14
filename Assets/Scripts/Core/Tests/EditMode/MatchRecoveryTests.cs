@@ -71,7 +71,13 @@ namespace TeamHJD.Game.Tests.EditMode
             int failures = 0; Guid pending = Guid.Empty;
             recovery.Failure += (id, allowed, reason) => { failures++; pending = id; Assert.That(allowed, Is.True); };
             recovery.Pump(); clock.Now = 100; recovery.Pump();
-            Assert.That(failures, Is.EqualTo(1)); Assert.That(ledger.SafetyUses, Is.EqualTo(1));
+            Assert.That(failures, Is.EqualTo(1)); Assert.That(ledger.SafetyUses, Is.Zero);
+            Assert.That(recovery.IsAwaitingSafetyChoice, Is.True);
+            Assert.That(recovery.RemainingSafetyUses, Is.EqualTo(3));
+            Assert.That(ledger.PendingFailure, Is.EqualTo(Guid.Empty));
+            Assert.That(recovery.AcceptSafety(), Is.True);
+            Assert.That(recovery.IsAwaitingSafetyChoice, Is.False);
+            Assert.That(recovery.FailureReason, Is.EqualTo("AllPlayersDown"));
             Assert.That(ledger.TryBeginFailure(pending), Is.True); Assert.That(ledger.SafetyUses, Is.EqualTo(1));
             down.Alive = true; recovery.CompleteRecovery(pending);
             Assert.That(ledger.SafetyUses, Is.EqualTo(1)); Assert.That(ledger.RescueSeconds, Is.EqualTo(60));
@@ -105,7 +111,9 @@ namespace TeamHJD.Game.Tests.EditMode
             using var recovery = Create(ledger, clock, A, B); recovery.Register(A, new Actor()); recovery.Register(B, new Actor { Alive = false });
             recovery.Pump(); clock.Now = 40; recovery.Pump(); clock.Now = 10; recovery.Pump();
             Assert.That(ledger.RescueSeconds, Is.EqualTo(20));
-            clock.Now = 30; recovery.Pump(); Assert.That(recovery.IsRecoveryPending, Is.True); Assert.That(ledger.SafetyUses, Is.EqualTo(1));
+            clock.Now = 30; recovery.Pump(); Assert.That(recovery.IsRecoveryPending, Is.True); Assert.That(ledger.SafetyUses, Is.Zero);
+            Assert.That(recovery.FailureReason, Is.EqualTo("RescueBudgetExhausted"));
+            Assert.That(recovery.AcceptSafety(), Is.True); Assert.That(ledger.SafetyUses, Is.EqualTo(1));
         }
 
         [Test]
@@ -119,10 +127,33 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.Throws<InvalidOperationException>(() => recovery.CompleteRecovery(failure));
             Assert.That(ledger.PendingFailure, Is.EqualTo(failure));
             Assert.That(ledger.SafetyUses, Is.EqualTo(1));
+            Assert.That(recovery.AcceptSafety(), Is.True);
+            Assert.That(ledger.SafetyUses, Is.EqualTo(1));
             player.Alive = true; recovery.CompleteRecovery(failure);
             Assert.That(ledger.RescueSeconds, Is.EqualTo(45));
             Assert.That(ledger.SafetyUses, Is.EqualTo(1));
             Assert.That(ledger.PendingFailure, Is.EqualTo(Guid.Empty));
+        }
+
+        [Test]
+        public void ThreeExplicitUsesAreAllowedAndFourthFailureOffersNone()
+        {
+            var ledger = new MissionRecoveryLedger(); var clock = new Clock(); var player = new Actor();
+            using var recovery = Create(ledger, clock, A); recovery.Register(A, player);
+            int failures = 0; bool allowed = false;
+            recovery.Failure += (_, available, _) => { failures++; allowed = available; };
+            for (int i = 0; i < 3; i++)
+            {
+                player.Alive = false; recovery.Pump();
+                Assert.That(allowed, Is.True); Assert.That(ledger.SafetyUses, Is.EqualTo(i));
+                var id = recovery.FailureId;
+                Assert.That(recovery.AcceptSafety(), Is.True); Assert.That(recovery.AcceptSafety(), Is.True);
+                Assert.That(ledger.SafetyUses, Is.EqualTo(i + 1));
+                player.Alive = true; recovery.CompleteRecovery(id);
+            }
+            player.Alive = false; recovery.Pump();
+            Assert.That(failures, Is.EqualTo(4)); Assert.That(allowed, Is.False);
+            Assert.That(recovery.AcceptSafety(), Is.False); Assert.That(ledger.SafetyUses, Is.EqualTo(3));
         }
 
         [Test]

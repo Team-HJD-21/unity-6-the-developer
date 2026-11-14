@@ -23,6 +23,9 @@ namespace TeamHJD.Game.Presentation
         private readonly Func<bool> _canReturnToHub;
         private readonly Func<string> _recoveryError;
         private readonly Func<Task> _retryRecovery;
+        private readonly Func<Task> _useSafety;
+        private readonly Func<MatchRecovery> _missionRecovery;
+        private readonly Func<string> _mainScene;
         private readonly Dictionary<long, IScreenPresenter> _views = new();
         private readonly AppScreenCanvasView _canvas;
         private readonly AppScreenStyle _style;
@@ -33,13 +36,16 @@ namespace TeamHJD.Game.Presentation
         private readonly IDisposable _alertBinding;
         private readonly bool _ownsAlerts;
         private long _loadingId;
+        private long _recoveryScreenId;
+        private TeamHJD.Game.Domain.MatchId _recoveryMatch;
         private bool _disposed, _actionPending;
         private string _actionFailure;
 
         public AppScreenPresenter(Transform parent, ScreenManager screens, SceneFlowController scenes,
             Func<string, Task> replace, Func<string> travelRestriction, Func<bool> isGameFlowTransitioning = null,
             UiDisplaySettings display = null, Func<bool> canReturnToHub = null, AlertService alerts = null, GameAudioSettings audio = null,
-            Func<string> recoveryError = null, Func<Task> retryRecovery = null)
+            Func<string> recoveryError = null, Func<Task> retryRecovery = null,
+            Func<MatchRecovery> missionRecovery = null, Func<string> mainScene = null, Func<Task> useSafety = null)
         {
             _screens = screens ?? throw new ArgumentNullException(nameof(screens));
             _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
@@ -49,6 +55,9 @@ namespace TeamHJD.Game.Presentation
             _canReturnToHub = canReturnToHub ?? (() => true);
             _recoveryError = recoveryError;
             _retryRecovery = retryRecovery;
+            _useSafety = useSafety;
+            _missionRecovery = missionRecovery;
+            _mainScene = mainScene ?? (() => "Assets/Scenes/Bootstrap/Startup.unity");
             _display = display ?? new UiDisplaySettings();
             _audio = audio ?? new GameAudioSettings();
             _style = Resources.Load<AppScreenStyle>("Core/AppScreenStyle");
@@ -86,8 +95,16 @@ namespace TeamHJD.Game.Presentation
         public void Render()
         {
             if (_disposed) return;
+            if (_recoveryMatch != _screens.BoundMatchId)
+            { _recoveryScreenId = 0; _recoveryMatch = _screens.BoundMatchId; }
+            var recovery = _missionRecovery?.Invoke();
+            bool needsRecovery = recovery?.IsRecoveryPending == true && !recovery.Ledger.IsEnded && _screens.LastCompletion == null;
+            if (needsRecovery && _recoveryScreenId == 0)
+                _recoveryScreenId = _screens.ShowRecovery()?.Id ?? 0;
+            else if (!needsRecovery && _recoveryScreenId != 0)
+            { _screens.Close(_recoveryScreenId); _recoveryScreenId = 0; }
             // 빌드에서도 기술 실패를 재시도할 수 있게 기존 메뉴를 엽니다. 별도 전투 결과/새 게임으로 바꾸지 않습니다.
-            if (HasRecoveryFailure && !_actionPending && !_scenes.IsTransitioning && !_isGameFlowTransitioning() && _screens.Top == null)
+            if (HasRecoveryFailure && !needsRecovery && !_actionPending && !_scenes.IsTransitioning && !_isGameFlowTransitioning() && _screens.Top == null)
                 _screens.ShowMenu();
             if (!_sceneFade.IsVisible && (_scenes.IsTransitioning || _isGameFlowTransitioning() || _actionPending))
             {
@@ -143,19 +160,19 @@ namespace TeamHJD.Game.Presentation
 
         private async void RetryRecovery(long menuId)
         {
-            if (_disposed || _actionPending || _retryRecovery == null) return;
+            var action = _missionRecovery?.Invoke()?.IsAwaitingSafetyChoice == true ? _useSafety : _retryRecovery;
+            if (_disposed || _actionPending || action == null) return;
             _actionFailure = null;
             _actionPending = true;
             try
             {
-                await _retryRecovery();
-                if (!_disposed && !HasRecoveryFailure) _screens.Close(menuId);
+                await action();
+                if (!_disposed && !HasRecoveryFailure) { _screens.Close(menuId); if (_recoveryScreenId == menuId) _recoveryScreenId = 0; }
             }
             catch (Exception)
             {
                 // 원본 예외는 App/Scene이 보존합니다. 메뉴에는 짧은 안내만 표시합니다.
-                if (!_disposed && HasRecoveryFailure)
-                    _actionFailure = "복귀하지 못했습니다. 저장 파일을 확인한 뒤 다시 시도해 주세요.";
+                if (!_disposed) _actionFailure = "복귀하지 못했습니다. 다시 시도해 주세요.";
             }
             finally { _actionPending = false; }
         }
@@ -183,7 +200,8 @@ namespace TeamHJD.Game.Presentation
                 _owner = owner; _state = state;
                 _previousSelection = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
                 bool menu = state.Kind == ScreenKind.Menu;
-                _view = UnityEngine.Object.Instantiate(menu ? owner._style.MenuPrefab : owner._style.ResultPrefab, owner._canvas.Screens, false);
+                bool recovery = state.Kind == ScreenKind.MissionRecovery;
+                _view = UnityEngine.Object.Instantiate(menu ? owner._style.MenuPrefab : recovery ? owner._style.RecoveryPrefab : owner._style.ResultPrefab, owner._canvas.Screens, false);
                 _view.name = "Screen:" + state.Kind;
                 _primaryLabel = _view.Primary.GetComponentInChildren<TMPro.TMP_Text>(true);
                 if (menu)
@@ -194,11 +212,17 @@ namespace TeamHJD.Game.Presentation
                     _view.Settings.onClick.AddListener(Settings);
                     _view.Secondary.onClick.AddListener(ReturnToHub);
                 }
+                else if (recovery)
+                {
+                    _view.Primary.onClick.AddListener(UseSafety);
+                    _view.Secondary.onClick.AddListener(Restart);
+                }
                 else
                 {
                     _view.Primary.onClick.AddListener(Restart);
                     _view.Secondary.onClick.AddListener(ReturnToHub);
                 }
+                if (_view.MainMenu != null) _view.MainMenu.onClick.AddListener(ReturnToMain);
                 Refresh();
             }
             private void Resume()
@@ -209,10 +233,13 @@ namespace TeamHJD.Game.Presentation
             private void Settings() => _owner._screens.ShowSettings();
             private void Restart() => _owner.Travel(StageScene);
             private void ReturnToHub() => _owner.Travel(HubScene);
+            private void ReturnToMain() => _owner.Travel(_owner._mainScene());
+            private void UseSafety() => _owner.RetryRecovery(_state.Id);
             public void Refresh()
             {
                 if (_disposed) return;
                 string restriction = _owner._travelRestriction();
+                if (_view.MainMenu != null) _view.MainMenu.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
                 if (_state.Kind == ScreenKind.Menu)
                 {
                     bool recovering = _owner.HasRecoveryFailure;
@@ -225,24 +252,51 @@ namespace TeamHJD.Game.Presentation
                     _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);
                     return;
                 }
+                if (_state.Kind == ScreenKind.MissionRecovery)
+                {
+                    var recovery = _owner._missionRecovery?.Invoke();
+                    bool pending = recovery?.IsRecoveryPending == true && !recovery.Ledger.IsEnded;
+                    _view.Body.text = FailureCaption(recovery?.FailureReason);
+                    _view.SetSafetyUses(recovery?.RemainingSafetyUses ?? 0);
+                    _primaryLabel.text = _owner.HasRecoveryFailure ? "복귀 재시도" : "안전장치 사용";
+                    bool hasAction = recovery?.IsAwaitingSafetyChoice == true ? _owner._useSafety != null : _owner._retryRecovery != null;
+                    _view.Primary.interactable = pending && !_owner._actionPending && string.IsNullOrEmpty(restriction) && hasAction;
+                    _view.Secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
+                    _view.Status.text = _owner._actionFailure ?? (_owner.HasRecoveryFailure ? "복귀하지 못했습니다." : "");
+                    _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);
+                    return;
+                }
                 var result = _state.Completion.Result;
                 _view.Title.text = result.Outcome switch
-                {
-                    TeamHJD.Game.Domain.MatchOutcome.Victory => "VICTORY",
-                    TeamHJD.Game.Domain.MatchOutcome.Defeat => "DEFEAT",
-                    _ => "MISSION ENDED"
-                };
-                _view.Body.text = result.Outcome switch
                 {
                     TeamHJD.Game.Domain.MatchOutcome.Victory => "승리",
                     TeamHJD.Game.Domain.MatchOutcome.Defeat => "패배",
                     _ => "임무 종료"
                 };
+                _view.Body.text = result.Outcome switch
+                {
+                    TeamHJD.Game.Domain.MatchOutcome.Victory => "임무를 완수했습니다.",
+                    TeamHJD.Game.Domain.MatchOutcome.Defeat => result.EndReason switch
+                    {
+                        TeamHJD.Game.Domain.MatchEndReason.ControlUnitDestroyed => "CU가 파괴되었습니다.",
+                        TeamHJD.Game.Domain.MatchEndReason.AllPlayersDown => "모든 대원이 쓰러졌습니다.\n안전장치를 모두 사용했습니다.",
+                        TeamHJD.Game.Domain.MatchEndReason.RescueBudgetExhausted => "구조 시간이 소진되었습니다.\n안전장치를 모두 사용했습니다.",
+                        _ => "임무를 계속할 수 없습니다."
+                    },
+                    _ => "임무가 종료되었습니다."
+                };
+                if (_view.OutcomeAccent != null) _view.OutcomeAccent.color = result.Outcome == TeamHJD.Game.Domain.MatchOutcome.Victory ? _view.VictoryColor : _view.DefeatColor;
                 if(result.CompletedWave>0)_view.Body.text += $"\n완료 웨이브  {result.CompletedWave}";
                 _view.Primary.interactable = _view.Secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
                 _view.Status.text = _owner._actionFailure ?? (!string.IsNullOrEmpty(restriction) ? "결과를 확인하고 있습니다." : "");
                 _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);
             }
+            private static string FailureCaption(string reason) => reason switch
+            {
+                "RescueBudgetExhausted" => "구조 시간이 소진되었습니다.",
+                "AllPlayersDown" => "모든 대원이 쓰러졌습니다.",
+                _ => "전투가 중단되었습니다."
+            };
             public void SetFocused(bool focused)
             {
                 if (_disposed) return;
@@ -271,7 +325,10 @@ namespace TeamHJD.Game.Presentation
             {
                 if (_disposed) return; _disposed = true;
                 _view.Primary.onClick.RemoveListener(Resume); _view.Primary.onClick.RemoveListener(Restart);
+                _view.Primary.onClick.RemoveListener(UseSafety);
                 if (_view.Secondary != null) _view.Secondary.onClick.RemoveListener(ReturnToHub);
+                if (_view.Secondary != null) _view.Secondary.onClick.RemoveListener(Restart);
+                if (_view.MainMenu != null) _view.MainMenu.onClick.RemoveListener(ReturnToMain);
                 if (_view.Settings != null) _view.Settings.onClick.RemoveListener(Settings);
                 ClearSelection(true); _owner._views.Remove(_state.Id); _view.CloseAndDestroy();
             }

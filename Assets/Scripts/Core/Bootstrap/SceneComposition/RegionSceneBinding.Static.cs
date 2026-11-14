@@ -12,7 +12,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 {
     public sealed partial class RegionSceneBinding
     {
-        [SerializeField, Min(1)] private float captureHoldSeconds = 60;
+        [SerializeField, Min(1)] private float captureHoldSeconds = 30;
         [SerializeField, Min(1)] private float captureAbandonSeconds = 180;
         [SerializeField, Min(1)] private float captureLossSeconds = 30;
         [SerializeField, Min(1)] private float captureMinimumDamage = 20;
