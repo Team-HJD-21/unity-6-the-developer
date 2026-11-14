@@ -1124135,11 +1124135,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed390eac10fa41c09d4ecf09f0cc3253, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.InitialStageCompositionRoot
+  _finalBattleSceneDriver: {fileID: 0}
+  _finalBattlePreparationTimeout: 120
+  rescueSettings:
+    holdSeconds: 3
+    healthRatio: 0.3
+    distance: 3
+    inputExpirySeconds: 0.5
   playerPrefab: {fileID: 5369298898549314971, guid: db66c7594231c4a33a505e1f7d0b1356, type: 3}
   actorParent: {fileID: 0}
   battlefieldGridSettings: {fileID: 11400000, guid: 414e8db3e6ce4f86ad48b9d060045120, type: 2}
   _encounterConsumerBehaviour: {fileID: 1735068340}
   _networkBinding: {fileID: 877435135}
+  encounterProduction:
+    Enabled: 1
+    FirstDelaySeconds: 0.5
+    IntervalSeconds: 15
+    MaximumEnemiesPerRequest: 500
 --- !u!114 &877435134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1124152,9 +1124164,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a518c49703f37de4f99e89bc37b9f58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.RegionSceneBinding
+  captureHoldSeconds: 60
+  captureAbandonSeconds: 180
+  captureLossSeconds: 30
+  captureMinimumDamage: 20
+  captureEnemiesPerParticipant: 2
   _controller: {fileID: 393497335}
   _controlUnit: {fileID: 52902671}
   _initialMode: 0
+  _captureExcludedAreas: []
 --- !u!114 &877435135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1124206,6 +1124224,9 @@ MonoBehaviour:
   spawnExecutor: {fileID: 1836352305}
   environmentProfile: {fileID: 0}
   additionalSpawnWarning: {fileID: 1912597012450007017, guid: 238fc1c055e54191a1c4e522e27a22a8, type: 3}
+  fieldBoss33: {fileID: 0}
+  fieldBoss66: {fileID: 0}
+  fieldBossEntrances: []
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -1124667,8 +1124688,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b2b072bb5fa4231b1e7a71fa411644, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceshipEnter
-  sceneToLoadName: SpaceShipGrayBox
-  destinationName: Capsule
 --- !u!1001 &1055701130
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1126578,6 +1126597,15 @@ MonoBehaviour:
     sparseBudgetBonus: 1
     playerBudgetBonus: 2
     logSelectionDecisions: 1
+  additionalSpawns:
+    enabled: 1
+    maximumBudgetShare: 0.5
+    minimumNetCaptureRatio: 0.15
+    minimumPositiveChanges: 2
+    minimumObservedSeconds: 30
+    cooldownSeconds: 90
+    warningSeconds: 3
+    minimumPlayerDistance: 8
 --- !u!1 &1749657957
 GameObject:
   m_ObjectHideFlags: 0
