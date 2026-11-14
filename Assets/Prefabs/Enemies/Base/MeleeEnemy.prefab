@@ -56,6 +56,10 @@ PrefabInstance:
       propertyPath: enemyController
       value: 
       objectReference: {fileID: 4829987614306498064}
+    - target: {fileID: 7406884212227793675, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7652877528939522271, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: m_Name
       value: MeleeEnemy

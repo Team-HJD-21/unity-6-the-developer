@@ -156,6 +156,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: c69eeaa3aad784f4696c38b39b47443c, type: 2}
+    - target: {fileID: 3515489568824358183, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: moveAcceleration
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 5876089001264189014, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.6

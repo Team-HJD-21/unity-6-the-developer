@@ -136,5 +136,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
   arrivalDistance: 0.4
   rigidbody2D: {fileID: 7406884212227793675}
-  moveSpeed: 3.5
-  moveAcceleration: 8
+  moveSpeed: 6
+  moveAcceleration: 9
+  moveDeceleration: 100
