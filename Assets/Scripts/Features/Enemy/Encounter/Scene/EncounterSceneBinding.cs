@@ -1,10 +1,9 @@
 // Scene의 실제 Enemy 구성과 Core Match·요청·진단·저장 연결을 조립합니다.
-// 네 Step의 실행은 EncounterPipeline이 맡고 수동 테스트 UI는 별도 도구로 분리합니다.
+// 네 Step의 실행은 EncounterPipeline, 정규 생산 예약은 Core MatchCoordinator가 맡습니다.
 // App 소유 연결을 직접 개설·종료하지 않으며 Match 해제 때 구독과 요청을 정리합니다.
 
 using TeamHJD.Game.Enemies.Encounter;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Contracts;
@@ -12,24 +11,19 @@ using TeamHJD.Game.Application;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// 현재 Scene의 Match 바인딩과 검증된 요청을 EncounterPipeline에 전달한다.
-/// 정식 생산은 Core MatchCoordinator가 소유하고 독립 시험 Scene만 첫 자동 요청을 사용한다.
+/// 연결 개설·자동 생산·테스트 UI를 직접 시작하지 않는 정식 Scene 어댑터다.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkManager))]
-public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IRandomConsumer, IEncounterProductionConsumer
+public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDebugCommandTarget, IAppOwnedEncounterMatchConsumer, IGameDiagnosticsSource, IOriginAwareEncounterExecutor, IEncounterRequestService, IRandomConsumer
 {
-    private const float HostReadyTimeout = 10f;
-
-    [SerializeField, InspectorName("자동 Host 시작")]
-    [Tooltip("끄면 Start Host / Start Client 버튼에서 실행 방식을 직접 선택합니다.")]
-    private bool autoStartHost = true;
-
-    [SerializeField] private string initialSquadOrder = "Normal";
-    [SerializeField, Min(1)] private int initialEnemyLimit = 500;
+    [SerializeField, Min(1), FormerlySerializedAs("initialEnemyLimit")]
+    [Tooltip("수동 진단 요청의 마릿수 상한입니다. 정규 생산은 Core의 encounterProduction 설정을 사용합니다.")]
+    private int manualEnemyLimit = 500;
 
     [Header("전체 스폰 예산")]
     [SerializeField] private RegionSceneBinding regionBinding;
@@ -39,7 +33,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     [SerializeField, Min(1)]
     [Tooltip("Static 모드에서 스폰 요청 1회당 증가할 수 있는 최대 예산")]
     private int staticBudgetIncreasePerRequest = 5;
-    [SerializeField, Min(0f)] private float initialEncounterDelay = 0.5f;
 
     [Header("편성 선택 규칙")]
     [SerializeField] private SquadSelectionSettings selectionSettings = new();
@@ -58,12 +51,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
     private PlayerId _authorityIssuer = LocalIssuer;
     private bool _appOwnedNetwork;
-    private EnemyNetworkTestLauncher _standalone;
-    private Coroutine _initialEncounterRoutine;
-    private bool _started;
-    private bool _initialEncounterPending;
-    private bool _matchOwnsProduction;
-    private double _initialEncounterDue;
     private readonly Queue<GameDiagnosticEvent> _diagnostics = new Queue<GameDiagnosticEvent>();
     private int _retainedDecisionCount;
     private long _diagnosticSequence;
@@ -78,6 +65,8 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     public double RealSeconds => _snapshotProvider == null ? 0d : Math.Max(0d, Time.realtimeSinceStartupAsDouble - _realStartTime);
     public int ActiveEnemyCount => _pipeline?.Executor != null ? _pipeline.Executor.CountForMatch(_boundMatchId) : 0;
     public int UnattributedEnemyCount => _pipeline?.Executor != null ? _pipeline.Executor.SpawnedEnemyCount - ActiveEnemyCount : 0;
+    /// <summary>명시 테스트 도구가 App의 연결 소유권을 침범하지 않도록 조회합니다.</summary>
+    public bool IsAppNetworkOwned => _appOwnedNetwork;
     public bool IsServer => _networkManager != null && _networkManager.IsServer;
     public bool IsClient => _networkManager != null && _networkManager.IsClient;
     public bool IsListening => _networkManager != null && _networkManager.IsListening;
@@ -88,56 +77,23 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         return RandomBinding.Bind(random, "enemy/squad-selection", ref _squadRandom);
     }
 
-    /// <summary>
-    /// 네트워크 관리자와 테스트 실행 환경을 초기화한다.
-    /// Encounter가 사용할 분대 프리셋 카탈로그는 생성 시 한 번 로드한다.
-    /// </summary>
-    private void Awake()
-    {
-        _networkManager = GetComponent<NetworkManager>();
-        _pipeline = null;
+    /// <summary>현재 객체에 제작된 NetworkManager 참조만 읽습니다. 연결을 시작하지 않습니다.</summary>
+    private void Awake() => _networkManager = GetComponent<NetworkManager>();
 
-        _standalone = new EnemyNetworkTestLauncher(this, _networkManager);
-    }
+    private void OnDisable() => CancelScheduledEncounters();
 
-    private void OnGUI() { if (!_appOwnedNetwork) _standalone?.Draw(); }
-
-    private void Start()
-    {
-        _started = true;
-        EnsureStandaloneConnection();
-        StartInitialEncounterIfBound();
-    }
-
-    private void OnEnable()
-    {
-        if (_networkManager != null)
-        {
-            if (_started) EnsureStandaloneConnection();
-            StartInitialEncounterIfBound();
-        }
-    }
-
-    private void OnDisable()
-    {
-        CancelScheduledEncounters();
-        if (_initialEncounterRoutine != null) StopCoroutine(_initialEncounterRoutine);
-        _initialEncounterRoutine = null;
-    }
-
-    /// <summary>Scene의 Match 수명에 묶인 첫 Encounter를 예약합니다.</summary>
+    /// <summary>호출자가 소유한 Match의 최신 전장 조회 경로를 연결합니다. 연결만으로 스폰하지 않습니다.</summary>
     public void BindMatch(MatchId matchId, Func<BattlefieldSpatialSnapshot> snapshotProvider)
         => BindAuthorityMatch(matchId, LocalIssuer, snapshotProvider);
 
     /// <summary>
-    /// App이 네트워크 시작과 Match 수명을 관리하도록 런처의 독립 실행 경로를 전환한다.
+    /// Core 조립부가 연결 소유권을 명시합니다. 이 어댑터는 연결을 열거나 닫지 않습니다.
     /// </summary>
     public void UseAppNetworkOwnership()
     {
         if (_snapshotProvider != null && !_appOwnedNetwork)
             throw new InvalidOperationException("Transfer connection ownership before binding a Match.");
         _appOwnedNetwork = true;
-        _standalone?.Dispose();
     }
 
     /// <summary>
@@ -167,32 +123,20 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
         EnsurePipeline();
-        if (!_appOwnedNetwork && _pipeline?.Executor != null)
-            _standalone.BindOwner(_pipeline.Executor.gameObject.scene);
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
-        _initialEncounterPending = !_matchOwnsProduction;
-        _initialEncounterDue = GameSeconds + Math.Max(0, initialEncounterDelay);
-        if (_networkManager != null)
-        {
-            if (_started) EnsureStandaloneConnection();
-            StartInitialEncounterIfBound();
-        }
     }
 
     /// <summary>Match 종료 시 자동 요청과 이전 snapshot 조회 경로를 해제합니다.</summary>
     public void UnbindMatch(MatchId matchId)
     {
         if (_snapshotProvider == null || _boundMatchId != matchId) return;
-        CancelPendingInitialEncounter();
         CancelScheduledEncounters();
         _requests?.Dispose();
         _requests = null;
         try
         {
-            if (_appOwnedNetwork) _pipeline?.Executor?.DespawnForMatch(matchId);
-            // standalone 테스트만 연결을 닫습니다. App의 연결은 다음 Match에서도 유지됩니다.
-            else if (_standalone != null && _standalone.HasOwner && _networkManager != null)
-                _networkManager.Shutdown();
+            // Match가 소유한 적만 정리합니다. NGO 연결의 종료는 Core 또는 명시 테스트 소유자가 결정합니다.
+            _pipeline?.Executor?.DespawnForMatch(matchId);
             Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Feature actors released");
         }
         finally
@@ -214,104 +158,8 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     private void OnDestroy()
     {
         if (_snapshotProvider != null) UnbindMatch(_boundMatchId);
-        _standalone?.Dispose();
         if (_pipeline?.Executor != null)
             _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
-    }
-
-    /// <inheritdoc />
-    public void UseMatchProduction()
-    {
-        if (_snapshotProvider != null) throw new InvalidOperationException("Select the production owner before binding a Match.");
-        _matchOwnsProduction = true;
-        CancelPendingInitialEncounter();
-    }
-
-    // 독립 시험의 연결 개설과 정규 생산 소유권은 다릅니다. 첫 요청을 꺼도 기존 Host 시험은 유지합니다.
-    private void EnsureStandaloneConnection()
-    {
-        if (!_matchOwnsProduction || _appOwnedNetwork || !autoStartHost || _snapshotProvider == null ||
-            !isActiveAndEnabled || _networkManager == null || _networkManager.IsListening) return;
-        _standalone.StartHost();
-    }
-
-    private void StartInitialEncounterIfBound()
-    {
-        if (_matchOwnsProduction || !_initialEncounterPending || _initialEncounterRoutine != null || !isActiveAndEnabled) return;
-        _initialEncounterRoutine = StartCoroutine(RunInitialEncounter());
-    }
-
-    private void CancelPendingInitialEncounter()
-    {
-        _initialEncounterPending = false;
-        if (_initialEncounterRoutine != null) StopCoroutine(_initialEncounterRoutine);
-        _initialEncounterRoutine = null;
-    }
-
-    /// <summary>
-    /// Match와 씬 실행 구성이 준비될 때까지 기다린 뒤 초기 고정 편성을 한 번 요청한다.
-    /// </summary>
-    private IEnumerator RunInitialEncounter()
-    {
-        // Scene Awake와 첫 동적 Grid 샘플이 끝난 뒤 최신 Match snapshot을 읽는다.
-        while (_initialEncounterPending && (!FieldCanAdvance || GameSeconds < _initialEncounterDue)) yield return null;
-        if (!_initialEncounterPending) yield break;
-
-        // 임시 Scene 시작 정책만 연결을 명시적으로 엽니다. 개별 Spawn 요청은 연결을 열지 않습니다.
-        if (!_appOwnedNetwork && _networkManager != null && !_networkManager.IsListening)
-        {
-            if (autoStartHost)
-                _standalone.StartHost();
-            else
-            {
-                // 기존 시작 버튼에서 연결 방식을 선택할 때까지 기다린다.
-                while (_initialEncounterPending && !_networkManager.IsListening)
-                    yield return null;
-
-                if (!_initialEncounterPending)
-                    yield break;
-            }
-        }
-
-        // Client로 시작한 창은 서버의 스폰 결과를 수신한다.
-        if (!_appOwnedNetwork && _networkManager != null &&
-            _networkManager.IsListening && !_networkManager.IsServer)
-        {
-            _initialEncounterPending = false;
-            _initialEncounterRoutine = null;
-            yield break;
-        }
-
-        if (!CanRequestEncounter(out string reason))
-        {
-            Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: reason);
-            Debug.LogError($"Initial Encounter cannot start: {reason}", this);
-            _initialEncounterPending = false;
-            _initialEncounterRoutine = null;
-            yield break;
-        }
-
-        float deadline = Time.unscaledTime + HostReadyTimeout;
-        while (_initialEncounterPending && !_pipeline.CanExecute && Time.unscaledTime < deadline)
-            yield return null;
-
-        if (_initialEncounterPending)
-        {
-            BattlefieldSpatialSnapshot snapshot = null;
-            try { snapshot = _snapshotProvider?.Invoke(); }
-            catch (ObjectDisposedException) { Debug.LogWarning("Initial Encounter Match was already disposed.", this); }
-            if (snapshot == null || snapshot.MatchId != _boundMatchId || !_pipeline.CanExecute)
-            {
-                Emit(GameDiagnosticKind.RequestFailed, new EncounterExecutionContext(_boundMatchId, ++_requestSequence, snapshot?.Revision ?? 0, EncounterRequestSource.MatchStart, GetInitialSquadOrder()), message: "Initial snapshot/Executor readiness failed");
-                Debug.LogError("Initial Encounter has no current Match snapshot or server Spawn Executor.", this);
-            }
-            else if (!TryRequestEncounter(snapshot, GetInitialSquadOrder(),
-                         Mathf.Max(1, initialEnemyLimit), EncounterRequestSource.MatchStart, out string result))
-                Debug.LogWarning($"Initial Encounter failed: {result}", this);
-        }
-
-        _initialEncounterPending = false;
-        _initialEncounterRoutine = null;
     }
 
     /// <summary>Debug Window가 현재 Match snapshot을 전달하고 Encounter 요청을 시작합니다.</summary>
@@ -341,7 +189,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         return true;
     }
 
-    /// <summary>현재 전장 상황과 지역 점유율로 산출한 예산으로 분대 생성을 요청한다.</summary>
+    /// <summary>수동 UI·테스트 호출이 공통 자동 계획을 한 번 요청합니다. 정규 생산 예약은 변경하지 않습니다.</summary>
     public bool RequestSpawn(out string result)
     {
         if (!CanRequestEncounter(out result)) return false;
@@ -349,7 +197,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         { result = "현재 Match 요청 서비스가 준비되지 않았습니다."; return false; }
         var request = EncounterRequest.Automatic(
             new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
-            initialEnemyLimit, EncounterRequestSource.RuntimeUI);
+            manualEnemyLimit, EncounterRequestSource.RuntimeUI);
         EncounterRequestResult response = Submit(request, _authorityIssuer);
         result = response.Reason;
         return response.HasSpawned;
@@ -518,9 +366,7 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         Emit(succeeded ? GameDiagnosticKind.RequestCompleted : GameDiagnosticKind.RequestFailed, context,
             planned: summary.PlannedCount, actual: summary.SpawnedCount, message: summary.ResultCode + ": " + result,
             spawnDecision: summary.SpawnDecision);
-        if (succeeded && request.Source != EncounterRequestSource.MatchStart)
-            CancelPendingInitialEncounter();
-        EncounterRequestStatus status = summary.PlannedCount > 0 && summary.SpawnedCount == summary.PlannedCount
+            EncounterRequestStatus status = summary.PlannedCount > 0 && summary.SpawnedCount == summary.PlannedCount
             ? EncounterRequestStatus.Spawned : summary.SpawnedCount > 0 ? EncounterRequestStatus.PartialSpawn :
             summary.ResultCode == "UnsupportedDelivery" ? EncounterRequestStatus.UnsupportedDelivery :
             summary.ResultCode == "UnsupportedOrigin" ? EncounterRequestStatus.UnsupportedOrigin :
@@ -611,6 +457,4 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
             try { observer(observation); } catch (Exception exception) { Debug.LogException(exception, this); }
     }
 
-    private string GetInitialSquadOrder() =>
-        string.IsNullOrWhiteSpace(initialSquadOrder) ? "Normal" : initialSquadOrder.Trim();
 }
