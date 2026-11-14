@@ -88,6 +88,48 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(progress.Snapshot.HighestCaptureRatio, Is.EqualTo(.7));
         }
         [Test]
+        public void FieldDeathNotificationIsOncePerActualTrackedActor()
+        {
+            var progress = new StageProgression(Match, Guid.NewGuid(), new Clock(), () => true, new Spawns());
+            progress.Pump(Region(100));
+            var observed = new List<int>();
+            progress.FieldBossDefeated += observed.Add;
+            progress.ObserveEnemyDeath(new EntityId("ordinary"));
+            progress.ObserveEnemyDeath(progress.Snapshot.FirstFieldBoss);
+            progress.ObserveEnemyDeath(progress.Snapshot.FirstFieldBoss);
+            progress.ObserveEnemyDeath(progress.Snapshot.SecondFieldBoss);
+            progress.ObserveEnemyDeath(progress.Snapshot.SecondFieldBoss);
+            Assert.That(observed, Is.EqualTo(new[] { 33, 66 }));
+        }
+
+        private sealed class LivingControlUnit : IControlUnitVitals
+        {
+            public int CurrentHealth => 100;
+            public int MaxHealth => 100;
+        }
+
+        [Test]
+        public void PendingPlayerRecoveryTakesPriorityOverFieldSpawn()
+        {
+            var config = new MatchConfig(Match, MatchMode.Story, new StageId("stage-1"), new DefinitionId("normal"), "v1", 1,
+                new[] { new PlayerLoadoutSnapshot(new PlayerId("host"), null) });
+            using var session = new MatchSessionFactory().Create(config, new MatchState(Match, MatchPhase.Preparing), new StoryModeRules());
+            using var coordinator = new MatchCoordinator(session, new LivingControlUnit(), () => true, new Clock());
+            var ledger = new MissionRecoveryLedger();
+            Guid failure = Guid.NewGuid();
+            ledger.TryBeginFailure(failure);
+            coordinator.ConfigureRecovery(ledger, new MissionRecoverySettings());
+            var spawns = new Spawns();
+            coordinator.ConfigureStageProgression(ledger.RunId, new Clock(), spawns);
+            session.Start();
+            coordinator.Start();
+            coordinator.Recovery.AdoptPendingRecovery(failure);
+            coordinator.StageProgression.Pump(Region(100));
+            Assert.That(coordinator.Recovery.IsRecoveryPending, Is.True);
+            Assert.That(spawns.Attempts, Is.Empty);
+        }
+
+        [Test]
         public void WorldRoundtripPreservesSpawnConfirmationWithoutReplayingAnEvent()
         {
             var run = Guid.NewGuid(); var clock = new Clock(); var codec = new BinaryCheckpointPayloadCodec();

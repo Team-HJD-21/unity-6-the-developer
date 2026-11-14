@@ -6,7 +6,7 @@
 
 1. `InitialStageCompositionRoot.BindStageProgression`이 성장/비환급 기록을 읽은 뒤 Mission 실행 ID와 Field 시계를 연결한다.
 2. Root Update가 CU 패배·구조 실패를 먼저 처리하고 현재 점유 스냅샷을 `Pump`한다.
-3.33%를 넘으면 `IFieldBossSpawnService.TrySpawnFieldBoss`에 실행별 안정된 사건 ID를 준다. true와 실제 EntityId를 모두 받아야 생성 확인이다.66%도 같은 경로이며 한 번에100%가 되어도33→66 순서다.
+3.33%를 넘으면 `StageCheckpointGate`가 등장 전 저장을 요청한다. 같은 복원 epoch의 실제 디스크 저장이 완료된 뒤 `IFieldBossSpawnService.TrySpawnFieldBoss`에 실행별 안정된 사건 ID를 준다. true와 실제 EntityId를 모두 받아야 생성 확인이다.66%도 같은 경로이며 한 번에100%가 되어도33→66 순서다.
 4. 생성 실패는 같은 사건 ID로1 Field초 뒤 재시도한다. 미출현 취소·일반 적 대체·허위 성공은 없다. 이미 확인된 첫 사건은 다시 만들지 않는다.
 5. 현재 점유100%와 두 실제 생성 확인을 모두 만족하면 `StageProgress.CanEnterFinalBattle`이 true다. 두 중간보스의 처치는 진입 조건이 아니다.
 6. 실제 최종 Boss Scene/연출 조립부가 같은 Match에서 보스와 도착 준비를 마친 뒤 `ConfirmFinalBossReady(match, actor)`를 호출한다. 이전 Field만 보류하고 Player/공용 낮밤은 기존 공용 시계를 계속 사용한다.
@@ -24,6 +24,18 @@
 
 HUD는 `InitialStageCompositionRoot.StageProgress`의 읽기 값을 사용할 수 있다. Game Debugger의 Checkpoint 패널은 현재/최고 점유·33/66 실제 생성·최종 진입 조건·연결 대기 이유를 표시한다. Debugger가 별도 점유율이나 생성 성공을 만들지 않는다.
 
+### 등장 전·처치 후 자동 저장
+
+`InitialStageCompositionRoot`가 `StageCheckpointGate`를 연결하고 해제한다. 저장기는 기존 `CheckpointService.SaveAsync`를 그대로 사용한다. 별도 관찰자가 요청 시점을 정하며 저장소가 Stage 규칙을 판단하지 않는다.
+
+- 등장 전에는 `stage-<Mission 실행 ID>-before-33` 또는 `before-66` 슬롯을 저장한다. `Saved`와 `IsCurrentScope`를 모두 확인하기 전에는 실제 생성기를 호출하지 않는다.
+- 권위 HP 원본의 실제 죽음이 `StageProgression.ObserveEnemyDeath`에 도달하면 `FieldBossDefeated`가 `defeat-33` 또는 `defeat-66` 저장을 예약한다. 같은 사망 호출 스택의 Despawn·위치 등록 해제가 끝난 뒤 **다음 Root Update**에서 캡처한다. 단순 Despawn은 이 저장을 만들지 않는다.
+- 저장은 한 번에 하나씩 처리한다. `Busy`는 다음 Update에서 시도하고, 기술 실패는 매 프레임 파일 쓰기를 반복하지 않는다. 원인을 해결한 뒤 `RetryStageCheckpoints()`를 명시 호출한다. 이 호출은 안전장치 횟수를 소비하지 않는다.
+- 월드 복원의 epoch가 달라지거나 Match가 종료되면 임시 저장 작업 상태를 폐기한다. 이전 비동기 저장 완료가 새 월드의 등장 허가가 되지 않는다. Player 복귀가 진행 중이면 Stage 저장·생성을 보류한다.
+- `PendingStageCheckpoints`와 `StageCheckpointError`는 읽기 진단이며, Game Debugger Checkpoint 패널에서 대기·실패·재시도를 볼 수 있다. 필수 writer 누락도 우회하지 않는다.
+
+이 연결은 **Field 사건의 저장 순서**다. 최종 Boss Scene 이동 전 필수 저장·전원 도착·컷씬은 아직 별도 연결이 필요하며, `ConfirmFinalBossReady`를 호출하는 것만으로 대체되지 않는다.
+
 ## 현재 구현/검증과 미연결
 
 정책·world codec·Coordinator/Root 연결과 자동6개를 검증했다. 실제 Stage_1 진입에서 CU1/201셀(0.4975%)·Player1·게임 진행 정상·`FieldBossContentNotConnected`를 확인했다.
@@ -34,3 +46,5 @@ HUD는 `InitialStageCompositionRoot.StageProgress`의 읽기 값을 사용할 �
 ### 실제 사망 전달 검증 (11/14)
 
 Stage 규칙6개와 실제 Stage_1의 터렛 사격→Enemy HP 사망→Stage 추적 완료를 확인했다. 추적 ID에는 시험용으로 실제 Slime ID를 넣었으며 보스 Definition을 대신 지정한 것이 아니다. 위치 원본12→11·팀 성과50·구독2→0, 나머지11개 Despawn 후 사망 수1 유지를 확인했다. 실제 보스 생성·최종 Scene 플레이 완료와 구분한다.
+
+저장 순서 보강 후 Gate6개·Stage8개 검사를 통과했다. 실제 Stage_1에서도 같은 사격·사망 경로로 `defeat-33` 요청을 확인했다. 실제 저장기는 `RequiredFeatureWritersUnavailable`, 누락 목록은 `world/weather`였으며 전체 월드 성공은 없었다. 같은 실제 저장기를 사용한 생성 전 검사는 생성 호출0을 유지했다. 이 검사의 생성기는 Editor 전용 호출 횟수 fixture이며 실제 보스 콘텐츠가 아니다. 검수의 판정 스크립트가 오류 코드에 누락 키가 포함된다고 잘못 가정한 첫 결과는 보존하고, 코드·별도 누락 목록을 함께 대조한 판정을 기록했다.

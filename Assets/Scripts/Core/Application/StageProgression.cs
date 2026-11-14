@@ -21,6 +21,7 @@ namespace TeamHJD.Game.Application
         private bool _firstDead, _secondDead, _finalDead;
         private string _pending;
         public event Action Victory;
+        public event Action<int> FieldBossDefeated;
         public StageProgressSnapshot Snapshot => new(_match, _run, _current, _highest, _first, _second, _final,
             _firstDead, _secondDead, _finalDead, _pending);
 
@@ -69,8 +70,16 @@ namespace TeamHJD.Game.Application
         public void ObserveEnemyDeath(EntityId actor)
         {
             if (!_available() || actor.IsEmpty) return;
-            if (actor == _first) _firstDead = true;
-            if (actor == _second) _secondDead = true;
+            if (actor == _first && !_firstDead)
+            {
+                _firstDead = true;
+                FieldBossDefeated?.Invoke(33);
+            }
+            if (actor == _second && !_secondDead)
+            {
+                _secondDead = true;
+                FieldBossDefeated?.Invoke(66);
+            }
             if (actor == _final && !_finalDead) { _finalDead = true; Victory?.Invoke(); }
         }
 

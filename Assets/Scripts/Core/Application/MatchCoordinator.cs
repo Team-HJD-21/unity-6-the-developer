@@ -70,7 +70,8 @@ namespace TeamHJD.Game.Application
         public void ConfigureStageProgression(Guid run, IMatchClock fieldClock, IFieldBossSpawnService spawns)
         {
             if (_disposed || StageProgression != null) throw new InvalidOperationException("Configure Stage progression once.");
-            StageProgression = new StageProgression(MatchId, run, fieldClock, () => IsGameplayRunning, spawns);
+            StageProgression = new StageProgression(MatchId, run, fieldClock,
+                () => IsGameplayRunning && Recovery?.IsRecoveryPending != true, spawns);
             StageProgression.Victory += CompleteStageVictory;
         }
         private void CompleteStageVictory() => CompleteMatch(MatchOutcome.Victory);

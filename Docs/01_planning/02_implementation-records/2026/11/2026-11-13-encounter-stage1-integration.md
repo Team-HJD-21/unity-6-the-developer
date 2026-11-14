@@ -319,3 +319,12 @@ Host 세부 확보 타이머 표는 실제 원격 Player 입력·Client 표 복�
 - EnemySpawnExecutor.CaptureEnemyPositions → Root.RefreshDynamicInput(0.1 unscaled초 표본, 셀/개체 집합 변화 때만 revision) → AppRoot/MatchSession → BattlefieldSpatialRuntime → Collector/Planner의 같은 snapshot → 실제 실행과 기록 경로를 대조했다. 셀 내 소폭 이동만으로 revision을 늘리는 API는 아니다.
 - 기존 Game Debugger가 같은3요청·동일 revision/시각·밀도/후보/계획을 보관함도 확인했다. 근거: b9d-spatial-feedback-result.json/CSV와 b9d-recorded-spawn-decisions.json. 최소 후보/정책 단위 검사 소스도 확인했으며 이번 관측 때문에 전체 검사를 다시 돌리지 않았다.
 - Play 종료/Scene clean·컴파일 정상, 시험 전 저장33개 해시 복구를 b9d-save-cleanup.json으로 확인했다. 이 측정은 완성된 보스 한 사이클·실제2인·밸런스 검증을 대신하지 않는다.
+
+## B7c — 등장 전·실제 처치 후 저장 순서 (2026-11-14)
+
+- StageCheckpointGate를 Root에 연결했다. 33/66 등장 전에는 실제 CheckpointService의 Saved/IsCurrentScope 완료를 기다리고, 실제 HP 처치 후에는 다음 Update에서 저장해 같은 사망 스택의 Despawn 완료를 반영한다. Busy 직렬화·명시 재시도·epoch/종료 뒤 늦은 완료 무효화·Player 복귀 우선도 포함한다. 실제 보스 콘텐츠나 Weather writer를 대신 구현하지 않았다.
+- Gate6/6·Stage8/8 자동 검사 통과. Stage 검사의 첫 실패는 테스트가 Session.Start보다 Coordinator.Start를 먼저 호출했기 때문이며 실제 App 순서에 맞춘 테스트 수정 전 원본도 보존했다(b7c-stage-before-start-order-fix.json).
+- 실제 Stage_1에서 정규12개 생성/12개 이동, 실제 터렛 사격 피해50·HP 사망1, Stage 처치 확인·위치12→11·팀 성과50·구독2→0을 관측했다. 추적 사건에는 시험용 실제 Slime ID를 사용했으며 보스 제작 자료로 저장하지 않았다. 나머지11개 Despawn은 죽음 수를 늘리지 않았다.
+- 처치 후 defeat-33 요청과 명시 재시도 모두 RequiredFeatureWritersUnavailable, 별도 누락 목록 world/weather, LastSavedData 없음이었다. 같은 실제 저장기를 사용한 Editor 전용 생성 호출 counter도0을 유지했다. 전체 월드 저장/실제 보스 생성 성공으로 세지 않는다.
+- 원본 관측 success=false는 오류 코드와 누락 키를 한 문자열로 가정한 판정식 문제다. 원본 b7c-actual-death-save-result.json을 유지하고 두 필드를 따로 검사한 b7c-actual-death-save-verdict.json에12개 조건의 통과 근거를 남겼다. 이 보완은 재실행하거나 제품 결과를 덮어쓴 것이 아니다.
+- Play/Pause/컴파일/dirty 모두false·Stage_1 Edit Mode, 기존 저장33개 해시 일치를 b7c-save-cleanup.json으로 확인했다. B7 실제 생성 서비스/Definition/점유 밖 진입 보장과 B8 최종 Scene 이전 필수 저장·도착/컷씬은 여전히 미연결이다.

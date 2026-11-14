@@ -82,8 +82,17 @@ namespace TeamHJD.Game.Editor
                     _ => stage.PendingReason
                 }, MessageType.Warning);
             }
+            if (scene.PendingStageCheckpoints.Count > 0)
+            {
+                EditorGUILayout.LabelField("Stage 사건 저장", string.Join(" / ", scene.PendingStageCheckpoints));
+                if (scene.StageCheckpointError != null)
+                {
+                    EditorGUILayout.HelpBox(scene.StageCheckpointError, MessageType.Error);
+                    if (GUILayout.Button("원인 해결 후 Stage 저장 재시도")) scene.RetryStageCheckpoints();
+                }
+            }
             _restoreCurrency = EditorGUILayout.Toggle("재화도 체크포인트로 복원", _restoreCurrency);
-            EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. 자동 실행 사건은 등록하지 않았습니다.", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField("기본: 현재 경험치/재화 유지. Stage 등장 전·처치 후 저장은 별도 관찰자가 요청합니다.", EditorStyles.wordWrappedMiniLabel);
             bool validSlot = TrySlot(out _);
             using (new EditorGUI.DisabledScope(_pending || service.IsBusy || !validSlot || service.MissingParticipantKeys.Count > 0))
             using (new EditorGUILayout.HorizontalScope())

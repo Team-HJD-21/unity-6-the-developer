@@ -1,5 +1,6 @@
 // 현재 Host Match에 실제 writer·필수 목록·명시 저장 요청을 조립합니다.
-// 저장 시점은 선택하지 않으며 누락 writer가 있으면 전체 저장/복원을 거부합니다.
+// 범용 API는 저장 시점을 선택하지 않습니다. Stage 진행의 전용 관찰자는 명시 저장을 요청합니다.
+// 누락 writer가 있으면 전체 저장/복원을 거부합니다.
 // API/진단은 이 파일, Feature 원본 캡처와 적용은 각 Feature의 .Checkpoint에 있습니다.
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private bool _restoringCheckpoint;
         /// <summary>현재 Host의 실행 API입니다. Scene/Match 해제 후 이전 참조를 재사용하지 않습니다.</summary>
         public CheckpointService Checkpoints => _checkpointScope?.Service;
-        /// <summary>기획이 정한 사건의 관찰자가 저장/복원 의도를 Publish합니다. 이번 작업은 자동 사건을 등록하지 않습니다.</summary>
+        /// <summary>기획이 정한 사건의 관찰자가 저장/복원 의도를 Publish합니다. 범용 저장기는 발동 시점을 결정하지 않습니다.</summary>
         public CheckpointRequestChannel CheckpointRequests => _checkpointScope?.Requests;
         public IReadOnlyList<string> MissingCheckpointParticipants => Checkpoints?.MissingParticipantKeys ?? Array.Empty<string>();
 
