@@ -31,7 +31,12 @@ public sealed partial class EnemyTestWindow
 
     private void OnEnable() => Selection.selectionChanged += OnSelectionChanged;
 
-    private void OnDisable() => Selection.selectionChanged -= OnSelectionChanged;
+    private void OnDisable()
+    {
+        Selection.selectionChanged -= OnSelectionChanged;
+        _testSession?.Dispose();
+        _testSession = null;
+    }
 
     /// <summary>테스트 표적 초기화와 선택한 몬스터 관찰 영역을 구성한다.</summary>
     private void CreateInspection(VisualElement parent)
@@ -107,18 +112,18 @@ public sealed partial class EnemyTestWindow
         UpdateInspection();
     }
 
-    private bool CanResetTestTargets => EditorApplication.isPlaying && launcher != null &&
-        launcher.IsServer && launcher.ExecutionTarget != null;
+    private bool CanResetTestTargets => EditorApplication.isPlaying && binding != null &&
+        binding.IsServer && binding.ExecutionTarget != null;
 
     private void DamageSelectedEnemy(bool lethal)
     {
         try
         {
-            if (launcher == null || selectedEnemy == null)
+            if (binding == null || selectedEnemy == null)
                 throw new InvalidOperationException("Host의 관찰 몬스터를 선택하세요.");
             var health = selectedEnemy.GetComponent<EnemyHealth>();
             int damage = lethal && health != null ? health.CurrentHealth : testDamage;
-            bool success = launcher.TryDamageTestEnemy(selectedEnemy, damage, testAttackSource, out string message);
+            bool success = binding.TryDamageTestEnemy(selectedEnemy, damage, testAttackSource, out string message);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
         }
@@ -126,14 +131,14 @@ public sealed partial class EnemyTestWindow
         UpdateStatus();
     }
 
-    /// <summary>선택 초기화도 전체 초기화도 현재 실행기의 씬과 Host 권한을 확인한다.</summary>
+    /// <summary>선택 초기화도 전체 초기화도 현재 Encounter 씬과 Host 권한을 확인한다.</summary>
     private void ResetTestTargets(bool resetAll)
     {
         try
         {
             if (!CanResetTestTargets)
-                throw new InvalidOperationException("테스트 표적 초기화는 실행기가 준비된 Host의 Play Mode에서만 가능합니다.");
-            var scene = launcher.ExecutionTarget.gameObject.scene;
+                throw new InvalidOperationException("테스트 표적 초기화는 Encounter 실행기가 준비된 Host Play Mode에서만 가능합니다.");
+            var scene = binding.ExecutionTarget.gameObject.scene;
             int count = 0;
             if (resetAll)
             {
@@ -147,7 +152,7 @@ public sealed partial class EnemyTestWindow
             else
             {
                 if (selectedTestTarget == null || selectedTestTarget.gameObject.scene != scene)
-                    throw new InvalidOperationException("현재 실행기와 같은 씬의 테스트 표적을 선택하세요.");
+                    throw new InvalidOperationException("현재 Encounter와 같은 씬의 테스트 표적을 선택하세요.");
                 selectedTestTarget.ResetHealth();
                 count = 1;
             }
@@ -163,13 +168,13 @@ public sealed partial class EnemyTestWindow
     {
         if (_testTargetStatus == null || _enemyStatus == null) return;
         bool canDamage = CanResetTestTargets && selectedEnemy != null &&
-            selectedEnemy.gameObject.scene == launcher.ExecutionTarget.gameObject.scene &&
+            selectedEnemy.gameObject.scene == binding.ExecutionTarget.gameObject.scene &&
             selectedEnemy.TryGetComponent<EnemyNetworkController>(out var network) && network.IsSpawned &&
             network.IsServer && selectedEnemy.TryGetComponent<EnemyHealth>(out var health) && health.CurrentHealth > 0;
         _damageEnemyButton.SetEnabled(canDamage);
         _lethalDamageButton.SetEnabled(canDamage);
-        bool sameScene = selectedTestTarget != null && launcher != null && launcher.ExecutionTarget != null &&
-            selectedTestTarget.gameObject.scene == launcher.ExecutionTarget.gameObject.scene;
+        bool sameScene = selectedTestTarget != null && binding != null && binding.ExecutionTarget != null &&
+            selectedTestTarget.gameObject.scene == binding.ExecutionTarget.gameObject.scene;
         _resetTargetButton.SetEnabled(CanResetTestTargets && sameScene);
         _resetAllTargetsButton.SetEnabled(CanResetTestTargets);
         _testTargetStatus.text = selectedTestTarget == null ? "Hierarchy에서 테스트 표적을 선택하거나 위 필드에 연결하세요." :

@@ -110,7 +110,7 @@ Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSli
 
 현재 씬에서 창을 여는 순서와 각 버튼의 의미는 [Enemy 테스트 씬 사용법](enemy-test-scene-guide.md)을 참고한다.
 
-`Assets/Scenes/Tests/EnemyTest.unity`를 열고 `Tools > TeamHJD > The Developer > Enemy Test`를 실행한다. Play 후 창에서 `Start Host`를 누른다. 현재 테스트 씬의 런처는 `Encounter Debug Spawner`를 명시적으로 참조하며 `시작 시 초기 편성 생성`은 꺼져 있다. 기존 `EnemySpawnRoot`도 씬에 남아 있지만 이 창의 요청은 런처에 연결된 실행기로 전달된다.
+`Assets/Scenes/Tests/EnemyTest.unity`를 열고 `Tools > TeamHJD > The Developer > Enemy Test`를 실행한다. `Encounter 연결`에 씬의 `EncounterSceneBinding`이 지정됐는지 확인하고 Play 후 `Start Host`를 누른다. 이 독립 시험 씬에는 `InitialStageNetworkBinding`이 없으므로 창이 Core `NgoNetworkSession`으로 연결을 시작한다. 운영 씬에서 열면 창은 `InitialStageNetworkBinding`에 Host/Client 시작을 요청한다. `EncounterSceneBinding`은 `Encounter Debug Spawner`를 사용하며 시작 시 초기 편성 생성은 꺼져 있다. 창의 편성 요청은 기존 Core 요청에서 Binding의 Runtime·Planner·Executor 경로로 전달된다.
 
 - **선택한 편성 요청**: 카탈로그의 Squad Order를 선택하고 기존 Core 요청 서비스에 전달한다.
 - **현재 상황으로 편성 선택·요청**: 최신 전장·Region Snapshot과 Core 난수로 `EncounterRuntime`에서 예산을 계산하고 Planner가 상황별 편성을 선택한다.
@@ -121,7 +121,7 @@ Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSli
 - **몬스터 관찰**: Hierarchy에서 몬스터나 자식 HitBox를 선택하거나 창의 몬스터 필드에 연결한다. 체력·네트워크 생성 여부·배정 타깃·타깃 가능 여부·배정 인원·분대 대표 여부·남은 경로·속력·실제 연결된 능력의 활성/실행 여부·능력의 별도 방향 대상·탐지 상태를 0.5초마다 읽는다. 상태를 보기 위해 `CheckCondition()`·능력 실행·경로 계산을 호출하지 않는다. Client 표시가 Host와 같은 권위 상태를 보장하는 것은 아니다.
 - **선택 몬스터에 피해 적용**: 관찰 몬스터를 선택하고 양수 피해량·공격자 종류를 지정한다. `현재 체력만큼 피해 · 사망 시험`은 현재 체력만큼 같은 피해 API를 요청한다. 두 버튼 모두 Host에서 같은 시험 씬의 생성된 몬스터에만 사용할 수 있고 `EnemyHealth.TryTakeDamage()`의 탐지·피격 허용·필드 정지 규칙을 따른다. 사망 시험도 규칙상 거부될 수 있으며, 허용되면 실제 사망 이벤트와 소환사의 사망 소환을 실행한다. 힐러 시험에서는 치료받을 아군을 선택해 일부 피해를 준 뒤 회복을 관찰한다.
 - **개별 몬스터 기능 시험**: 카탈로그에 등록된 19개 정의 중 하나와 시험 구역을 선택한 뒤 `지정 지점에 1마리 생성·관찰`을 누른다. 출현 지점과 초기 타깃은 직접 바꿀 수 있으며, 타깃을 비우면 분대가 자동 선택한다. 생성 성공 시 해당 몬스터를 Hierarchy에서 선택해 관찰 영역에 연결한다.
-- 개별 시험은 Editor 전용 `EnemyNetworkTestLauncher.Testing → EnemySpawnExecutor.Testing → Execute` 경로다. 프리셋·예산 계산을 생략하지만 기존 네트워크 생성·Match 시계 연결·Definition의 분대/집계 설정·생성 추적·정리는 그대로 사용한다. 타깃 유형과 포화도, 지점의 활성/Region 제한도 따른다. BlackWolf 같은 PlayerOnly 정의에는 터렛형 시험 표적을 지정할 수 없다. 실제 플레이어의 TargetableComponent를 연결하거나 초기 타깃을 비운다. 전체 Encounter 경로는 기존 두 편성 요청 버튼으로 검사한다.
+- 개별 시험은 Editor 전용 `EncounterSceneBinding.Testing → EnemySpawnExecutor.Testing → Execute` 경로다. 프리셋·예산 계산을 생략하지만 기존 네트워크 생성·Match 시계 연결·Definition의 분대/집계 설정·생성 추적·정리는 그대로 사용한다. 타깃 유형과 포화도, 지점의 활성/Region 제한도 따른다. BlackWolf 같은 PlayerOnly 정의에는 터렛형 시험 표적을 지정할 수 없다. 실제 플레이어의 TargetableComponent를 연결하거나 초기 타깃을 비운다. 전체 Encounter 경로는 기존 두 편성 요청 버튼으로 검사한다.
 
 `EnemyTestAreas` 아래에는 `01_Turret`, `02_Player` 관찰 구역이 있다. 각 구역은 반경 0인 SpawnPoint와 체력 1000의 박스 표적을 16유닛 간격으로 배치한다. Turret 표적은 `TargetType.Turret`·`Turret` 레이어, Player 표적은 `TargetType.Player`·`PlayerFeetBox` 레이어를 사용한다. Player 구역에서는 BlackWolf 같은 PlayerOnly 몬스터도 지정 표적을 공격할 수 있다. `선택 구역을 Scene 뷰에서 보기`로 이동하고 Gizmos를 켜면 구역 경계와 출현 지점→표적 연결을 확인할 수 있다. 벽으로 격리한 공간이 아니므로 다른 몬스터·플레이어의 접근은 기존 감지와 타깃 정책을 따른다. 두 출현 지점도 같은 씬의 일반 Encounter 후보에 포함된다.
 

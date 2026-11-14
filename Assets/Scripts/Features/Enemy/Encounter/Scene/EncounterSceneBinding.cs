@@ -24,10 +24,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
 {
     private const float HostReadyTimeout = 10f;
 
-    [SerializeField, InspectorName("자동 Host 시작")]
-    [Tooltip("끄면 Start Host / Start Client 버튼에서 실행 방식을 직접 선택합니다.")]
-    private bool autoStartHost = true;
-
     [SerializeField] private string initialSquadOrder = "Normal";
     [SerializeField, Min(1)] private int initialEnemyLimit = 500;
 
@@ -58,7 +54,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     private static readonly PlayerId LocalIssuer = new PlayerId("local-player");
     private PlayerId _authorityIssuer = LocalIssuer;
     private bool _appOwnedNetwork;
-    private EnemyNetworkTestLauncher _standalone;
     private Coroutine _initialEncounterRoutine;
     private bool _started;
     private bool _initialEncounterPending;
@@ -97,15 +92,11 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         _networkManager = GetComponent<NetworkManager>();
         _pipeline = null;
 
-        _standalone = new EnemyNetworkTestLauncher(this, _networkManager);
     }
-
-    private void OnGUI() { if (!_appOwnedNetwork) _standalone?.Draw(); }
 
     private void Start()
     {
         _started = true;
-        EnsureStandaloneConnection();
         StartInitialEncounterIfBound();
     }
 
@@ -113,7 +104,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     {
         if (_networkManager != null)
         {
-            if (_started) EnsureStandaloneConnection();
             StartInitialEncounterIfBound();
         }
     }
@@ -137,7 +127,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         if (_snapshotProvider != null && !_appOwnedNetwork)
             throw new InvalidOperationException("Transfer connection ownership before binding a Match.");
         _appOwnedNetwork = true;
-        _standalone?.Dispose();
     }
 
     /// <summary>
@@ -167,14 +156,11 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         _realStartTime = Time.realtimeSinceStartupAsDouble;
         _requestSequence = 0;
         EnsurePipeline();
-        if (!_appOwnedNetwork && _pipeline?.Executor != null)
-            _standalone.BindOwner(_pipeline.Executor.gameObject.scene);
         Emit(GameDiagnosticKind.MatchStarted, null, message: "Match bound");
         _initialEncounterPending = !_matchOwnsProduction;
         _initialEncounterDue = GameSeconds + Math.Max(0, initialEncounterDelay);
         if (_networkManager != null)
         {
-            if (_started) EnsureStandaloneConnection();
             StartInitialEncounterIfBound();
         }
     }
@@ -190,9 +176,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         try
         {
             if (_appOwnedNetwork) _pipeline?.Executor?.DespawnForMatch(matchId);
-            // standalone 테스트만 연결을 닫습니다. App의 연결은 다음 Match에서도 유지됩니다.
-            else if (_standalone != null && _standalone.HasOwner && _networkManager != null)
-                _networkManager.Shutdown();
             Emit(GameDiagnosticKind.MatchEnded, null, message: "Match unbound; Feature actors released");
         }
         finally
@@ -214,7 +197,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
     private void OnDestroy()
     {
         if (_snapshotProvider != null) UnbindMatch(_boundMatchId);
-        _standalone?.Dispose();
         if (_pipeline?.Executor != null)
             _pipeline.Executor.LifecycleObserved -= OnEnemyLifecycleObserved;
     }
@@ -225,14 +207,6 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         if (_snapshotProvider != null) throw new InvalidOperationException("Select the production owner before binding a Match.");
         _matchOwnsProduction = true;
         CancelPendingInitialEncounter();
-    }
-
-    // 독립 시험의 연결 개설과 정규 생산 소유권은 다릅니다. 첫 요청을 꺼도 기존 Host 시험은 유지합니다.
-    private void EnsureStandaloneConnection()
-    {
-        if (!_matchOwnsProduction || _appOwnedNetwork || !autoStartHost || _snapshotProvider == null ||
-            !isActiveAndEnabled || _networkManager == null || _networkManager.IsListening) return;
-        _standalone.StartHost();
     }
 
     private void StartInitialEncounterIfBound()
@@ -257,20 +231,14 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
         while (_initialEncounterPending && (!FieldCanAdvance || GameSeconds < _initialEncounterDue)) yield return null;
         if (!_initialEncounterPending) yield break;
 
-        // 임시 Scene 시작 정책만 연결을 명시적으로 엽니다. 개별 Spawn 요청은 연결을 열지 않습니다.
+        // 연결은 Core의 Scene binding 또는 Enemy Test 창에서 먼저 엽니다.
         if (!_appOwnedNetwork && _networkManager != null && !_networkManager.IsListening)
         {
-            if (autoStartHost)
-                _standalone.StartHost();
-            else
-            {
-                // 기존 시작 버튼에서 연결 방식을 선택할 때까지 기다린다.
-                while (_initialEncounterPending && !_networkManager.IsListening)
-                    yield return null;
+            while (_initialEncounterPending && !_networkManager.IsListening)
+                yield return null;
 
-                if (!_initialEncounterPending)
-                    yield break;
-            }
+            if (!_initialEncounterPending)
+                yield break;
         }
 
         // Client로 시작한 창은 서버의 스폰 결과를 수신한다.
@@ -343,13 +311,22 @@ public sealed partial class EncounterSceneBinding : MonoBehaviour, IEncounterDeb
 
     /// <summary>현재 전장 상황과 지역 점유율로 산출한 예산으로 분대 생성을 요청한다.</summary>
     public bool RequestSpawn(out string result)
+        => RequestSpawn(initialEnemyLimit, out result);
+
+    /// <summary>현재 전장 상황과 지정 요청 상한으로 분대 생성을 요청합니다.</summary>
+    public bool RequestSpawn(int maxEnemyCount, out string result)
     {
         if (!CanRequestEncounter(out result)) return false;
+        if (maxEnemyCount < 1)
+        {
+            result = "요청당 생성 상한은 1 이상이어야 합니다.";
+            return false;
+        }
         if (_requests == null || _boundMatchId.IsEmpty || _authorityIssuer.IsEmpty)
         { result = "현재 Match 요청 서비스가 준비되지 않았습니다."; return false; }
         var request = EncounterRequest.Automatic(
             new MatchRequestContext(_boundMatchId, Guid.NewGuid(), _authorityIssuer),
-            initialEnemyLimit, EncounterRequestSource.RuntimeUI);
+            maxEnemyCount, EncounterRequestSource.RuntimeUI);
         EncounterRequestResult response = Submit(request, _authorityIssuer);
         result = response.Reason;
         return response.HasSpawned;

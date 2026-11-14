@@ -5,8 +5,8 @@
 ## 준비
 
 1. Unity에서 `Assets/Scenes/Tests/EnemyTest.unity`를 연다.
-2. `Tools > TeamHJD > The Developer > Enemy Test`를 열고 테스트 런처가 `Encounter Debug Network`에 연결됐는지 확인한다. 생성 실행기는 런처에 지정된 `Encounter Debug Spawner`를 사용한다.
-3. Play Mode에 들어간 뒤 창에서 `Start Host`를 누른다. Match와 실행기 상태가 표시되고 버튼들이 활성화될 때까지 기다린다. 씬은 시작할 때 편성을 자동 생성하지 않는다.
+2. `Tools > TeamHJD > The Developer > Enemy Test`를 열고 `Encounter 연결`에 씬의 `EncounterSceneBinding`이 지정됐는지 확인한다. 실행기는 이 Binding에 연결된 `Encounter Debug Spawner`를 사용한다.
+3. Play Mode에서 `Start Host`를 누르고 Match와 실행기 상태가 표시될 때까지 기다린다. `EnemyTest`처럼 `InitialStageNetworkBinding`이 없는 독립 시험 씬에서는 창이 Core `NgoNetworkSession`으로 연결을 시작한다. 운영 씬에 Core Binding이 있으면 연결 요청을 `InitialStageNetworkBinding`에 전달한다. 씬은 시작할 때 편성을 자동 생성하지 않는다.
 
 씬에는 `EnemyTestAreas` 아래 `01_Turret`과 `02_Player` 구역이 있다. 두 구역 모두 SpawnPoint와 체력 1000인 시험 표적을 포함한다. Scene 뷰에서 보기 어렵다면 해당 구역을 선택하고 `선택 구역을 Scene 뷰에서 보기`를 누른다.
 
@@ -55,5 +55,5 @@ Player 구역의 박스는 `EnemyDamageTestTarget`으로 만든 정지 더미다
 - `Assets/Scripts/Features/Enemy/Editor/EnemyTestWindow.Spawning.cs`
 - `Assets/Scripts/Features/Enemy/Editor/EnemyTestWindow.Inspection.cs`
 - `Assets/Scripts/Features/Enemy/Testing/EnemyTestArea.cs`
-- `Assets/Scripts/Features/Enemy/Testing/EnemyNetworkTestLauncher.Testing.cs`
+- `Assets/Scripts/Features/Enemy/Testing/EncounterSceneBinding.Testing.cs`
 - `Assets/Scripts/Features/Enemy/Testing/EnemySpawnExecutor.Testing.cs`

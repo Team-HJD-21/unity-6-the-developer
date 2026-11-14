@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Bootstrap.SceneComposition;
+using TeamHJD.Game.Infrastructure;
+using Unity.Netcode;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -10,18 +13,20 @@ using UnityEngine.UIElements;
 /// <summary>Enemy 테스트 씬에서 실제 Encounter 요청과 생성 결과를 반복 확인하는 창이다.</summary>
 public sealed partial class EnemyTestWindow : EditorWindow
 {
-    [SerializeField] private EnemyNetworkTestLauncher launcher;
+    [SerializeField] private EncounterSceneBinding binding;
     [SerializeField] private int maximumEnemyCount = 6;
     private readonly List<EnemySquadPreset> _presets = new();
-    private ObjectField _launcherField;
+    private ObjectField _bindingField;
     private DropdownField _presetField;
     private Label _status;
     private Label _composition;
     private HelpBox _result;
     private Button _hostButton;
+    private Button _clientButton;
     private Button _fixedButton;
     private Button _planButton;
     private Button _clearButton;
+    private NgoNetworkSession _testSession;
 
     [MenuItem("Tools/TeamHJD/The Developer/Enemy Test")]
     public static void Open()
@@ -36,23 +41,25 @@ public sealed partial class EnemyTestWindow : EditorWindow
         var scroll = new ScrollView();
         rootVisualElement.Add(scroll);
         scroll.Add(new Label("Core Match → EncounterRuntime → Planner → Executor"));
-        _launcherField = new ObjectField("테스트 런처")
+        _bindingField = new ObjectField("Encounter 연결")
         {
-            objectType = typeof(EnemyNetworkTestLauncher), allowSceneObjects = true, value = launcher
+            objectType = typeof(EncounterSceneBinding), allowSceneObjects = true, value = binding
         };
-        _launcherField.RegisterValueChangedCallback(evt =>
+        _bindingField.RegisterValueChangedCallback(evt =>
         {
-            launcher = evt.newValue as EnemyNetworkTestLauncher;
+            binding = evt.newValue as EncounterSceneBinding;
             UpdateStatus();
             ShowComposition();
         });
-        scroll.Add(_launcherField);
+        scroll.Add(_bindingField);
         scroll.Add(new Button(RefreshReferences) { text = "현재 씬 연결·카탈로그 새로고침" });
         _status = new Label();
         _status.style.whiteSpace = WhiteSpace.Normal;
         scroll.Add(_status);
-        _hostButton = new Button(() => { launcher.StartHost(); UpdateStatus(); }) { text = "Start Host" };
+        _hostButton = new Button(() => StartNetwork(true)) { text = "Start Host" };
         scroll.Add(_hostButton);
+        _clientButton = new Button(() => StartNetwork(false)) { text = "Start Client" };
+        scroll.Add(_clientButton);
         var countField = new IntegerField("요청당 생성 상한") { value = maximumEnemyCount };
         countField.RegisterValueChangedCallback(evt =>
         {
@@ -74,7 +81,7 @@ public sealed partial class EnemyTestWindow : EditorWindow
         _clearButton = new Button(ClearEnemies) { text = "시험 씬 몬스터 전체 정리 · 소환물 포함" };
         scroll.Add(_clearButton);
         scroll.Add(new HelpBox("같은 씬·같은 서버의 네트워크 몬스터를 모두 제거합니다. 사망 효과는 실행하지 않습니다. 다른 도구의 반복 요청은 별도로 중지하세요.", HelpBoxMessageType.Info));
-        _result = new HelpBox("Play → Start Host → 생성 요청 순서로 실행하세요.", HelpBoxMessageType.Info);
+        _result = new HelpBox("Play → Core Host/Client 시작 → 생성 요청 순서로 실행하세요.", HelpBoxMessageType.Info);
         scroll.Add(_result);
         CreateSingleSpawn(scroll);
         CreateInspection(scroll);
@@ -83,15 +90,15 @@ public sealed partial class EnemyTestWindow : EditorWindow
         rootVisualElement.schedule.Execute(UpdateStatus).Every(500);
     }
 
-    /// <summary>사용자가 요청할 때만 씬의 런처와 등록된 편성 목록을 다시 찾는다.</summary>
+    /// <summary>사용자가 요청할 때만 씬의 Encounter 연결과 등록 편성을 다시 찾는다.</summary>
     private void RefreshReferences()
     {
-        if (launcher == null)
+        if (binding == null)
         {
-            var candidates = UnityEngine.Object.FindObjectsByType<EnemyNetworkTestLauncher>(FindObjectsSortMode.None);
-            if (candidates.Length == 1) launcher = candidates[0];
+            var candidates = UnityEngine.Object.FindObjectsByType<EncounterSceneBinding>(FindObjectsSortMode.None);
+            if (candidates.Length == 1) binding = candidates[0];
         }
-        _launcherField.SetValueWithoutNotify(launcher);
+        _bindingField.SetValueWithoutNotify(binding);
         string selected = _presetField.value;
         _presets.Clear();
         var choices = new List<string>();
@@ -121,8 +128,8 @@ public sealed partial class EnemyTestWindow : EditorWindow
         foreach (var entry in preset.Composition)
             if (entry != null) text.Append(entry.EnemyId).Append(" × ").Append(entry.Weight).Append("  ");
         text.Append("\n한 편성 ").Append(preset.TotalWeight).Append("마리");
-        if (launcher != null && launcher.ExecutionTarget != null)
-            text.Append(" / 비용 ").Append(preset.CalculateCost(launcher.ExecutionTarget.Catalog));
+        if (binding != null && binding.ExecutionTarget != null)
+            text.Append(" / 비용 ").Append(preset.CalculateCost(binding.ExecutionTarget.Catalog));
         _composition.text = text.ToString();
     }
 
@@ -132,16 +139,49 @@ public sealed partial class EnemyTestWindow : EditorWindow
     private void UpdateStatus()
     {
         if (_status == null) return;
-        bool ready = EditorApplication.isPlaying && launcher != null && launcher.IsServer && !launcher.BoundMatchId.IsEmpty;
-        _hostButton.SetEnabled(EditorApplication.isPlaying && launcher != null && !launcher.IsListening);
+        bool ready = EditorApplication.isPlaying && binding != null && binding.IsServer && !binding.BoundMatchId.IsEmpty;
+        _hostButton.SetEnabled(EditorApplication.isPlaying && binding != null && !binding.IsListening);
+        _clientButton.SetEnabled(EditorApplication.isPlaying && binding != null && !binding.IsListening);
         _fixedButton.SetEnabled(ready && SelectedPreset() != null);
         _planButton.SetEnabled(ready);
-        _clearButton.SetEnabled(ready && launcher.ExecutionTarget != null);
-        _individualSpawnButton?.SetEnabled(ready && launcher.ExecutionTarget != null && launcher.ExecutionTarget.CanSpawn &&
+        _clearButton.SetEnabled(ready && binding.ExecutionTarget != null);
+        _individualSpawnButton?.SetEnabled(ready && binding.ExecutionTarget != null && binding.ExecutionTarget.CanSpawn &&
             individualSpawnPoint != null && _individualDefinitions.Count > 0);
-        _status.text = launcher == null ? "현재 씬의 런처를 지정하세요." :
-            $"Match: {launcher.BoundMatchId}\nHost: {launcher.IsServer} / 실행기: {(launcher.ExecutionTarget != null ? launcher.ExecutionTarget.name : "미연결")}\n요청 생성 생존 적: {launcher.ActiveEnemyCount}마리 · 별도 소환물 제외";
+        _status.text = binding == null ? "현재 씬의 EncounterSceneBinding을 지정하세요." :
+            $"Match: {binding.BoundMatchId}\nHost: {binding.IsServer} / 실행기: {(binding.ExecutionTarget != null ? binding.ExecutionTarget.name : "미연결")}\n요청 생성 생존 적: {binding.ActiveEnemyCount}마리 · 별도 소환물 제외";
         UpdateInspection();
+    }
+
+    private void StartNetwork(bool host)
+    {
+        try
+        {
+            if (binding == null) throw new InvalidOperationException("EncounterSceneBinding을 먼저 연결하세요.");
+
+            var coreBindings = UnityEngine.Object.FindObjectsByType<InitialStageNetworkBinding>(FindObjectsSortMode.None);
+            if (coreBindings.Length == 1)
+            {
+                bool started = host ? coreBindings[0].TryStartHost() : coreBindings[0].TryStartClient();
+                _result.text = started ? (host ? "Core Host 연결을 시작했습니다." : "Core Client 연결을 시작했습니다.") : "Core가 연결 시작을 거부했습니다. 현재 연결 상태를 확인하세요.";
+                _result.messageType = started ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
+            }
+            else if (coreBindings.Length > 1)
+            {
+                throw new InvalidOperationException("현재 씬에 InitialStageNetworkBinding이 여러 개 있습니다.");
+            }
+            else
+            {
+                NetworkManager manager = binding.GetComponent<NetworkManager>();
+                if (manager == null) throw new InvalidOperationException("EncounterSceneBinding에 NetworkManager가 없습니다.");
+                if (manager.IsListening) throw new InvalidOperationException("현재 NetworkManager는 이미 연결되어 있습니다.");
+                _testSession ??= new NgoNetworkSession(manager);
+                bool started = host ? _testSession.TryStartHost() : _testSession.TryStartClient();
+                _result.text = started ? (host ? "테스트 씬의 Core NgoNetworkSession으로 Host를 시작했습니다." : "테스트 씬의 Core NgoNetworkSession으로 Client를 시작했습니다.") : "Core NgoNetworkSession이 연결 시작을 거부했습니다.";
+                _result.messageType = started ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
+            }
+        }
+        catch (Exception error) { ShowError(error); }
+        UpdateStatus();
     }
 
     /// <summary>직접 생성하지 않고 기존 런처의 실제 Runtime 경로에 요청한다.</summary>
@@ -149,14 +189,14 @@ public sealed partial class EnemyTestWindow : EditorWindow
     {
         try
         {
-            var previous = launcher.RecentDiagnostics;
+            var previous = binding.RecentDiagnostics;
             long lastSequence = previous.Count > 0 ? previous[previous.Count - 1].Sequence : 0;
             string message;
             bool success = selectBySituation
-                ? launcher.RequestSpawn(maximumEnemyCount, out message)
-                : launcher.TryRequestCurrentEncounter(SelectedPreset().SquadOrder, maximumEnemyCount,
+                ? binding.RequestSpawn(maximumEnemyCount, out message)
+                : binding.TryRequestCurrentEncounter(SelectedPreset().SquadOrder, maximumEnemyCount,
                     EncounterRequestSource.DebugWindow, out message);
-            var diagnostics = launcher.RecentDiagnostics;
+            var diagnostics = binding.RecentDiagnostics;
             for (int i = diagnostics.Count - 1; i >= 0; i--)
             {
                 var item = diagnostics[i];
@@ -177,7 +217,7 @@ public sealed partial class EnemyTestWindow : EditorWindow
     {
         try
         {
-            bool success = launcher.TryClearTestSceneEnemies(out string message);
+            bool success = binding.TryClearTestSceneEnemies(out string message);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
         }

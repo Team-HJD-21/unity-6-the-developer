@@ -1338413,10 +1338413,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: afee2fd02998d994f8f62eda64603f11, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkTestLauncher
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneBinding
   environmentProfile: {fileID: 0}
   _sceneExecutor: {fileID: 19620794}
-  autoStartHost: 0
   spawnInitialEncounter: 0
   initialSquadOrder: Normal
   initialEnemyLimit: 500

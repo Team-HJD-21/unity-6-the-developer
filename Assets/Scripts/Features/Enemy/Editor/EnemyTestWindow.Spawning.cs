@@ -49,9 +49,9 @@ public sealed partial class EnemyTestWindow
         string selectedDefinition = _individualDefinitionField.value;
         _individualDefinitions.Clear();
         var names = new List<string>();
-        if (launcher != null && launcher.ExecutionTarget != null && launcher.ExecutionTarget.Catalog != null)
+        if (binding != null && binding.ExecutionTarget != null && binding.ExecutionTarget.Catalog != null)
         {
-            var catalog = new SerializedObject(launcher.ExecutionTarget.Catalog);
+            var catalog = new SerializedObject(binding.ExecutionTarget.Catalog);
             var entries = catalog.FindProperty("enemyDefinitions");
             for (int i = 0; i < entries.arraySize; i++)
             {
@@ -66,8 +66,8 @@ public sealed partial class EnemyTestWindow
         string selectedArea = _testAreaField.value;
         _testAreas.Clear();
         var areaNames = new List<string>();
-        if (launcher != null && launcher.ExecutionTarget != null)
-            foreach (var root in launcher.ExecutionTarget.gameObject.scene.GetRootGameObjects())
+        if (binding != null && binding.ExecutionTarget != null)
+            foreach (var root in binding.ExecutionTarget.gameObject.scene.GetRootGameObjects())
                 _testAreas.AddRange(root.GetComponentsInChildren<EnemyTestArea>());
         _testAreas.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
         foreach (var area in _testAreas) areaNames.Add(area.name);
@@ -102,7 +102,7 @@ public sealed partial class EnemyTestWindow
         try
         {
             var definition = _individualDefinitions.Find(item => item != null && item.EnemyId == _individualDefinitionField.value);
-            bool success = launcher.TrySpawnTestEnemy(definition, individualSpawnPoint, individualInitialTarget,
+            bool success = binding.TrySpawnTestEnemy(definition, individualSpawnPoint, individualInitialTarget,
                 out EnemyController enemy, out string message);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
