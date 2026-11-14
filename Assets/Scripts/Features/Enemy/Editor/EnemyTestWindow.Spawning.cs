@@ -102,7 +102,7 @@ public sealed partial class EnemyTestWindow
         try
         {
             var definition = _individualDefinitions.Find(item => item != null && item.EnemyId == _individualDefinitionField.value);
-            bool success = binding.TrySpawnTestEnemy(definition, individualSpawnPoint, individualInitialTarget,
+            bool success = EnemyTestSceneTools.TrySpawnTestEnemy(binding, definition, individualSpawnPoint, individualInitialTarget,
                 out EnemyController enemy, out string message);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;

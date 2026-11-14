@@ -34,8 +34,6 @@ public sealed partial class EnemyTestWindow
     private void OnDisable()
     {
         Selection.selectionChanged -= OnSelectionChanged;
-        _testSession?.Dispose();
-        _testSession = null;
     }
 
     /// <summary>테스트 표적 초기화와 선택한 몬스터 관찰 영역을 구성한다.</summary>
@@ -112,7 +110,7 @@ public sealed partial class EnemyTestWindow
         UpdateInspection();
     }
 
-    private bool CanResetTestTargets => EditorApplication.isPlaying && binding != null &&
+    private bool CanResetTestTargets => EditorApplication.isPlaying && EnemyTestSceneTools.IsTestScene(binding) &&
         binding.IsServer && binding.ExecutionTarget != null;
 
     private void DamageSelectedEnemy(bool lethal)
@@ -123,7 +121,7 @@ public sealed partial class EnemyTestWindow
                 throw new InvalidOperationException("Host의 관찰 몬스터를 선택하세요.");
             var health = selectedEnemy.GetComponent<EnemyHealth>();
             int damage = lethal && health != null ? health.CurrentHealth : testDamage;
-            bool success = binding.TryDamageTestEnemy(selectedEnemy, damage, testAttackSource, out string message);
+            bool success = EnemyTestSceneTools.TryDamageTestEnemy(binding, selectedEnemy, damage, testAttackSource, out string message);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
         }

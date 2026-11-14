@@ -6,7 +6,7 @@
 
 1. Unity에서 `Assets/Scenes/Tests/EnemyTest.unity`를 연다.
 2. `Tools > TeamHJD > The Developer > Enemy Test`를 열고 `Encounter 연결`에 씬의 `EncounterSceneBinding`이 지정됐는지 확인한다. 실행기는 이 Binding에 연결된 `Encounter Debug Spawner`를 사용한다.
-3. Play Mode에서 `Start Host`를 누르고 Match와 실행기 상태가 표시될 때까지 기다린다. `EnemyTest`처럼 `InitialStageNetworkBinding`이 없는 독립 시험 씬에서는 창이 Core `NgoNetworkSession`으로 연결을 시작한다. 운영 씬에 Core Binding이 있으면 연결 요청을 `InitialStageNetworkBinding`에 전달한다. 씬은 시작할 때 편성을 자동 생성하지 않는다.
+3. Play Mode에 들어가면 씬의 Core `InitialStageNetworkBinding`이 `SinglePlayerHost` 진입으로 네트워크 연결·Match 준비·시작을 진행한다. 테스트 창에서 Host/Client를 따로 시작하지 않는다. Match와 실행기 상태가 표시되면 연결·카탈로그 새로고침을 누른다. 시험 조건을 직접 구성할 수 있도록 이 씬의 Core 반복 편성 생성은 꺼 두었다.
 
 씬에는 `EnemyTestAreas` 아래 `01_Turret`과 `02_Player` 구역이 있다. 두 구역 모두 SpawnPoint와 체력 1000인 시험 표적을 포함한다. Scene 뷰에서 보기 어렵다면 해당 구역을 선택하고 `선택 구역을 Scene 뷰에서 보기`를 누른다.
 
@@ -55,5 +55,11 @@ Player 구역의 박스는 `EnemyDamageTestTarget`으로 만든 정지 더미다
 - `Assets/Scripts/Features/Enemy/Editor/EnemyTestWindow.Spawning.cs`
 - `Assets/Scripts/Features/Enemy/Editor/EnemyTestWindow.Inspection.cs`
 - `Assets/Scripts/Features/Enemy/Testing/EnemyTestArea.cs`
-- `Assets/Scripts/Features/Enemy/Testing/EncounterSceneBinding.Testing.cs`
+- `Assets/Scripts/Features/Enemy/Editor/EnemyTestSceneTools.cs`
 - `Assets/Scripts/Features/Enemy/Testing/EnemySpawnExecutor.Testing.cs`
+
+## 테스트 도구와 운영 연결의 경계
+
+`EnemyTestSceneTools`는 Editor 전용 스크립트이며 `EnemyTest` 경로의 실행기만 조작한다. 개별 생성·피해·전체 정리 기능을 운영용 `EncounterSceneBinding`의 partial에 추가하지 않는다. 상황별 편성 요청은 Core가 확정한 Host 참가자로 기존 `Submit()` API를 호출한다. 개별 생성은 Core 조립부의 현재 전장·환경 Snapshot과 Match 종료 토큰을 사용한다. 전체 정리는 현재 생성된 몬스터를 제거하며 다른 도구의 예약·반복 요청을 취소하지 않는다.
+
+운영용 `EncounterSceneBinding`과 기존 `EnemyNetworkTestLauncher` 및 다른 씬은 `main` 구성을 유지한다. EnemyTest의 `EncounterSceneConfiguration`이 기존 `ConfigureScene()` API로 시험 실행기를 연결한다. Core 스크립트는 수정하지 않고 EnemyTest의 참조와 진입 설정만 구성한다.

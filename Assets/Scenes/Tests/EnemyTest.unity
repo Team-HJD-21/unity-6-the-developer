@@ -223,6 +223,7 @@ GameObject:
   - component: {fileID: 19620793}
   - component: {fileID: 19620792}
   - component: {fileID: 19620794}
+  - component: {fileID: 19620795}
   m_Layer: 0
   m_Name: Encounter Debug Spawner
   m_TagString: Untagged
@@ -322,6 +323,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnExecutor
   ShowTopMostFoldoutHeaderGroup: 1
   enemyList: {fileID: 11400000, guid: 88948902b3d6e24488d5e338c2ccff02, type: 2}
+--- !u!114 &19620795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 19620791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a15db43653964f2895d37508f43ab042, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneConfiguration
+  spawnExecutor: {fileID: 19620794}
+  environmentProfile: {fileID: 0}
+  additionalSpawnWarning: {fileID: 0}
+  fieldBoss33: {fileID: 0}
+  fieldBoss66: {fileID: 0}
+  fieldBossEntrances: []
 --- !u!1001 &52902670
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1336025,6 +1336044,7 @@ GameObject:
   - component: {fileID: 877435133}
   - component: {fileID: 877435134}
   - component: {fileID: 877435136}
+  - component: {fileID: 877435137}
   m_Layer: 0
   m_Name: InitialStageCompositionRoot
   m_TagString: Untagged
@@ -1336063,7 +1336083,12 @@ MonoBehaviour:
   actorParent: {fileID: 0}
   battlefieldGridSettings: {fileID: 11400000, guid: 414e8db3e6ce4f86ad48b9d060045120, type: 2}
   _encounterConsumerBehaviour: {fileID: 1735068340}
-  _networkBinding: {fileID: 0}
+  _networkBinding: {fileID: 877435137}
+  encounterProduction:
+    Enabled: 0
+    FirstDelaySeconds: 0.5
+    IntervalSeconds: 15
+    MaximumEnemiesPerRequest: 500
 --- !u!114 &877435134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1336099,6 +1336124,22 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c06e3f4b14b64fc59f64b72cb642cd93, type: 2}
   - {fileID: 11400000, guid: a710a35a5d3c49b794d2f387d53dce10, type: 2}
   - {fileID: 11400000, guid: b28a795f5a364f249b632692a760317c, type: 2}
+--- !u!114 &877435137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877435131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74fd1e727ceb4ef2b24f3fa7e96cb337, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.InitialStageNetworkBinding
+  _manager: {fileID: 1735068337}
+  _matchAnchorPrefab: {fileID: 4380366090066215120, guid: 21b016e9a8ba90446b7c53c9cabf4676, type: 3}
+  _entry: 1
+  _turretInteractionDistance: 10
 --- !u!1 &894255431
 GameObject:
   m_ObjectHideFlags: 0
@@ -1338415,8 +1338456,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EncounterSceneBinding
   environmentProfile: {fileID: 0}
-  _sceneExecutor: {fileID: 19620794}
-  spawnInitialEncounter: 0
+  autoStartHost: 0
   initialSquadOrder: Normal
   initialEnemyLimit: 500
   regionBinding: {fileID: 877435134}
