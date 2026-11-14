@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>Enemy 테스트 씬에서 실제 Encounter 요청과 생성 결과를 반복 확인하는 창이다.</summary>
-public sealed class EnemyTestWindow : EditorWindow
+public sealed partial class EnemyTestWindow : EditorWindow
 {
     [SerializeField] private EnemyNetworkTestLauncher launcher;
     [SerializeField] private int maximumEnemyCount = 6;
@@ -76,6 +76,8 @@ public sealed class EnemyTestWindow : EditorWindow
         scroll.Add(new HelpBox("정리는 실행기가 추적하는 적만 대상으로 합니다. 소환사가 별도로 만든 봄버는 제외됩니다.", HelpBoxMessageType.Info));
         _result = new HelpBox("Play → Start Host → 생성 요청 순서로 실행하세요.", HelpBoxMessageType.Info);
         scroll.Add(_result);
+        CreateSingleSpawn(scroll);
+        CreateInspection(scroll);
         RefreshReferences();
         // 창이 열린 동안에만 상태를 갱신한다. 프레임마다 씬을 검색하지 않는다.
         rootVisualElement.schedule.Execute(UpdateStatus).Every(500);
@@ -105,6 +107,7 @@ public sealed class EnemyTestWindow : EditorWindow
         }
         _presetField.choices = choices;
         _presetField.SetValueWithoutNotify(choices.Contains(selected) ? selected : choices.Count > 0 ? choices[0] : "");
+        RefreshSingleSpawnOptions();
         ShowComposition();
         UpdateStatus();
     }
@@ -134,8 +137,11 @@ public sealed class EnemyTestWindow : EditorWindow
         _fixedButton.SetEnabled(ready && SelectedPreset() != null);
         _planButton.SetEnabled(ready);
         _clearButton.SetEnabled(ready && launcher.ExecutionTarget != null);
+        _individualSpawnButton?.SetEnabled(ready && launcher.ExecutionTarget != null && launcher.ExecutionTarget.CanSpawn &&
+            individualSpawnPoint != null && _individualDefinitions.Count > 0);
         _status.text = launcher == null ? "현재 씬의 런처를 지정하세요." :
             $"Match: {launcher.BoundMatchId}\nHost: {launcher.IsServer} / 실행기: {(launcher.ExecutionTarget != null ? launcher.ExecutionTarget.name : "미연결")}\n요청 생성 생존 적: {launcher.ActiveEnemyCount}마리 · 별도 소환물 제외";
+        UpdateInspection();
     }
 
     /// <summary>직접 생성하지 않고 기존 런처의 실제 Runtime 경로에 요청한다.</summary>
