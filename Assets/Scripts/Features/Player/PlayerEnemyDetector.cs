@@ -9,7 +9,7 @@ public sealed class PlayerEnemyDetector : MonoBehaviour
 {
     [SerializeField] private Transform _owner;
     [SerializeField] private CircleCollider2D _range;
-    [SerializeField] private LayerMask _enemyLayers = 1 << 7;
+    [SerializeField] private LayerMask _enemyLayers = 1 << 23; // EnemyHitBox
     private PlayerInfo _health;
     private PlayerMatchPresence _presence;
     private int _detectorId;
@@ -61,7 +61,7 @@ public sealed class PlayerEnemyDetector : MonoBehaviour
         if (!CanDetect) { ClearRegistrations(); return; }
         // Match 정지로 Rigidbody가 잠깐 빠질 때는 기존 탐지 상태를 유지합니다.
         if (!FieldSimulationTime.CanAdvance(this)) return;
-        var filter = new ContactFilter2D { useTriggers = false };
+        var filter = new ContactFilter2D { useTriggers = true };
         filter.SetLayerMask(_enemyLayers);
         _hits.Clear();
         _range.Overlap(filter, _hits);

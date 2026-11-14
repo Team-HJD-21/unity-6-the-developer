@@ -121,6 +121,59 @@ public sealed class PlayerWeaponAmmoTests
     }
 
 #if UNITY_EDITOR
+    [Test]
+    public void CryoHudShowsPercentageAndRefreshesWhenEqualCapacityWeaponsSwitch()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var player = new GameObject("Cryo percentage test player");
+        GameObject hud = null;
+        try
+        {
+            var ammo = player.AddComponent<PlayerWeaponAmmo>();
+            var selection = player.GetComponent<PlayerWeaponSelection>();
+            typeof(PlayerWeaponSelection).GetMethod("Awake", flags).Invoke(selection, null);
+            typeof(PlayerWeaponAmmo).GetMethod("Awake", flags).Invoke(ammo, null);
+            hud = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab"));
+            var weaponHud = hud.GetComponentInChildren<PlayerWeaponHud>(true);
+            typeof(PlayerWeaponHud).GetField("_owner", flags).SetValue(weaponHud, selection);
+            var view = hud.GetComponentInChildren<PlayerWeaponAmmoView>(true);
+            var label = (TMPro.TMP_Text)new SerializedObject(view).FindProperty("_ammoLabel").objectReferenceValue;
+            var refresh = typeof(PlayerWeaponAmmoView).GetMethod("LateUpdate", flags);
+            var consume = typeof(PlayerWeaponAmmo).GetMethod("TryConsumeRound", flags);
+            var weapon = typeof(PlayerWeaponSelection).GetField("_currentWeapon", flags);
+            refresh.Invoke(view, null); Assert.That(label.text, Is.EqualTo("15/15"));
+            weapon.SetValue(selection, WeaponType.CryoBlaster);
+            refresh.Invoke(view, null); Assert.That(label.text, Is.EqualTo("100%"));
+            consume.Invoke(ammo, new object[] { WeaponType.CryoBlaster });
+            refresh.Invoke(view, null); Assert.That(label.text, Is.EqualTo("94%"));
+            weapon.SetValue(selection, WeaponType.DefaultGun);
+            consume.Invoke(ammo, new object[] { WeaponType.DefaultGun });
+            refresh.Invoke(view, null); Assert.That(label.text, Is.EqualTo("14/15"));
+            weapon.SetValue(selection, WeaponType.CryoBlaster);
+            refresh.Invoke(view, null); Assert.That(label.text, Is.EqualTo("94%"));
+            for (int i = 0; i < 14; i++) consume.Invoke(ammo, new object[] { WeaponType.CryoBlaster });
+            Assert.That(ammo.CurrentPercentage, Is.Zero);
+        }
+        finally
+        {
+            if (hud != null) UnityEngine.Object.DestroyImmediate(hud);
+            UnityEngine.Object.DestroyImmediate(player);
+        }
+    }
+
+    [TestCase(WeaponType.DefaultGun)] [TestCase(WeaponType.CryoBlaster)] [TestCase(WeaponType.Sniper)]
+    public void AuthoredAndNewPlayerReloadInHalfThePreviousTime(WeaponType weapon)
+    {
+        var player = new GameObject("Reload duration test player");
+        try
+        {
+            Assert.That(player.AddComponent<PlayerWeaponAmmo>().GetReloadDuration(weapon), Is.EqualTo(.75f));
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+            Assert.That(prefab.GetComponent<PlayerWeaponAmmo>().GetReloadDuration(weapon), Is.EqualTo(.75f));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(player); }
+    }
+
     [TestCase(WeaponType.DefaultGun, 15)]
     [TestCase(WeaponType.CryoBlaster, 15)]
     [TestCase(WeaponType.Sniper, 5)]
@@ -163,8 +216,9 @@ public sealed class PlayerWeaponAmmoTests
         var hud = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
         var view = hud.GetComponentInChildren<PlayerWeaponAmmoView>(true);
         Assert.That(view, Is.Not.Null);
-        Assert.That(view.GetComponentInParent<PlayerWeaponHud>(), Is.Not.Null);
         var serialized = new SerializedObject(view);
+        Assert.That(serialized.FindProperty("_weaponHud").objectReferenceValue,
+            Is.EqualTo(hud.GetComponentInChildren<PlayerWeaponHud>(true)));
         foreach (string property in new[] { "_weaponHud", "_ammoLabel", "_reloadIndicator", "_reloadArrows", "_reloadLabel" })
             Assert.That(serialized.FindProperty(property).objectReferenceValue, Is.Not.Null, property);
     }

@@ -180,14 +180,14 @@ public sealed partial class PlayerWeaponVisual : MonoBehaviour, IPlayerPresentat
         bool struck = sequence != _lastRepairImpactSequence;
         _lastRepairImpactSequence = sequence;
         if (!struck || _repairImpactPrefab == null || _aimRepair == null || !_aimRepair.isActiveAndEnabled ||
-            !_aimRepair.IsRepairing || _aimRepair.Target == null || !_motion.IsHoldingRepair ||
+            !_aimRepair.IsRepairing || _aimRepair.TargetTransform == null || !_motion.IsHoldingRepair ||
             _repairImpactRandom == null || !_repairImpactRandom.IsAvailable ||
             (_aimControls != null && !_aimControls.CanAct) ||
             !TeamHJD.Game.Presentation.Scene.FieldSimulationTime.CanAdvance(this)) return;
 
         Vector3 point = _continuousAim
             ? _weapon.transform.TransformPoint(SpritePoint(_aimSpanner.sprite, _aimSpanner.muzzle, _weapon.flipY))
-            : _weapon.bounds.ClosestPoint(_aimRepair.Target.transform.position);
+            : _weapon.bounds.ClosestPoint(_aimRepair.TargetTransform.position);
         point.z = transform.position.z;
         uint seed = (uint)_repairImpactRandom.NextInt(1, int.MaxValue);
         var effect = Instantiate(_repairImpactPrefab, point, Quaternion.identity);
@@ -209,7 +209,7 @@ public sealed partial class PlayerWeaponVisual : MonoBehaviour, IPlayerPresentat
     {
         if (_repairSortingGroup == null) return;
         bool repairing = _aimRepair != null && _aimRepair.isActiveAndEnabled && _aimRepair.IsRepairing &&
-            _aimRepair.Target != null && _motion.IsHoldingRepair;
+            _aimRepair.TargetTransform != null && _motion.IsHoldingRepair;
         _repairSortingGroup.enabled = repairing;
         if (!repairing) return;
 
@@ -217,9 +217,9 @@ public sealed partial class PlayerWeaponVisual : MonoBehaviour, IPlayerPresentat
         // its normal world depth, even when the turret is in front of it.
         int layer = _sortingGroup.sortingLayerID;
         int order = _sortingGroup.sortingOrder;
-        if (_repairSortingTarget != _aimRepair.Target.transform)
+        if (_repairSortingTarget != _aimRepair.TargetTransform)
         {
-            _repairSortingTarget = _aimRepair.Target.transform;
+            _repairSortingTarget = _aimRepair.TargetTransform;
             _repairTargetParts = _repairSortingTarget.GetComponentsInChildren<SortingGroup>(true);
             _repairTargetGroup = _repairSortingTarget.GetComponentInParent<SortingGroup>();
             while (_repairTargetGroup != null && !_repairTargetGroup.sortAtRoot)

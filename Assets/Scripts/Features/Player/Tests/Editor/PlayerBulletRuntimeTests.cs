@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.IO;
+using System.Reflection;
+using TeamHJD.Game.Infrastructure;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -21,11 +24,14 @@ public sealed class PlayerBulletRuntimeTests
     private readonly List<GameObject> _targets = new();
     private readonly List<Object> _runtimeAssets = new();
     private readonly List<Scene> _testScenes = new();
+    private float _previousMaximumDelta, _previousTimeScale;
 
     [UnitySetUp]
     public IEnumerator SetUp()
     {
         yield return new EnterPlayMode();
+        _previousMaximumDelta = Time.maximumDeltaTime; _previousTimeScale = Time.timeScale;
+        Time.maximumDeltaTime = .02f; Time.timeScale = 1;
         _bulletPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerBullet.prefab");
         _shooter = new GameObject("Bullet speed test shooter");
         _shooter.SetActive(false);
@@ -56,6 +62,8 @@ public sealed class PlayerBulletRuntimeTests
         SetReference(_selection, "_bulletPrefab", _bulletPrefab);
         SetReference(_selection, "_sniperBulletPrefab",
             AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/SniperBullet.prefab"));
+        var spray = _shooter.AddComponent<PlayerCryoSpray>();
+        SetReference(spray, "_vfxPrefab", AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/CryoSprayVfx.prefab"));
         _attack = _shooter.AddComponent<PlayerAttack>();
         _shooter.SetActive(true);
     }
@@ -79,6 +87,7 @@ public sealed class PlayerBulletRuntimeTests
         }
         _testScenes.Clear();
         if (_shooter != null) Object.DestroyImmediate(_shooter);
+        Time.maximumDeltaTime = _previousMaximumDelta; Time.timeScale = _previousTimeScale;
         if (Application.isPlaying) yield return new ExitPlayMode();
     }
 
@@ -94,7 +103,7 @@ public sealed class PlayerBulletRuntimeTests
             _shooterBody.linearVelocity = velocity;
             Assert.That(_attack.TryFire(), Is.True);
             CaptureBullets();
-            Assert.That(_bullets.Count, Is.EqualTo(5));
+            Assert.That(_bullets.Count, Is.EqualTo(1));
             var bullet = _bullets.OrderBy(candidate => Vector2.Angle(Vector2.down,
                 candidate.GetComponent<Rigidbody2D>().linearVelocity)).First();
             var body = bullet.GetComponent<Rigidbody2D>();
@@ -111,48 +120,74 @@ public sealed class PlayerBulletRuntimeTests
             Assert.That(Vector2.Distance(body.position, expectedPosition), Is.LessThan(.02f));
             Assert.That(body.linearVelocity.magnitude, Is.EqualTo(speed).Within(.001f));
             ClearBullets();
-            yield return new WaitForSeconds(.21f);
+            yield return WaitGameTime(.21f);
         }
     }
 
     [UnityTest]
-    public IEnumerator DefaultGun_FiresFivePelletsFromMuzzleAndRespectsFireInterval()
+    public IEnumerator DefaultGun_FiresOneRoundFromMuzzleAndRespectsFireInterval()
     {
         Assert.That(_attack.TryFire(), Is.True);
         Assert.That(_attack.TryFire(), Is.False);
         CaptureBullets();
-        Assert.That(_bullets.Count, Is.EqualTo(5));
+        Assert.That(_bullets.Count, Is.EqualTo(1));
         float[] angles = _bullets.Select(bullet => Vector2.SignedAngle(Vector2.down,
             bullet.GetComponent<Rigidbody2D>().linearVelocity)).OrderBy(angle => angle).ToArray();
         foreach (PlayerBullet bullet in _bullets)
             Assert.That(Vector3.Distance(bullet.transform.position, _muzzle.position), Is.LessThan(.001f));
         for (int i = 0; i < angles.Length; i++)
-            Assert.That(angles[i], Is.EqualTo(-12.5f + 6.25f * i).Within(.001f));
+            Assert.That(angles[i], Is.EqualTo(0).Within(.001f));
         ClearBullets();
 
-        yield return new WaitForSeconds(.21f);
+        yield return WaitGameTime(.21f);
         Assert.That(_attack.TryFire(), Is.True);
         CaptureBullets();
-        Assert.That(_bullets.Count, Is.EqualTo(5));
+        Assert.That(_bullets.Count, Is.EqualTo(1));
     }
 
     [UnityTest]
-    public IEnumerator CryoBlaster_PreservesMuzzlePositionPelletCountAndSpread()
+    public IEnumerator CryoBlaster_UsesAreaDamageWithoutCreatingBullets()
     {
-        _selection.SelectNextWeapon();
-        Assert.That(_selection.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
-        _shooterBody.linearVelocity = Vector2.right * 5f;
+        Assert.That(_selection.TrySelectWeapon(WeaponType.CryoBlaster), Is.True);
+        var enemy = CreateEnemy(1);
         Assert.That(_attack.TryFire(), Is.True);
         CaptureBullets();
-        Assert.That(_bullets.Count, Is.EqualTo(5));
-        var angles = _bullets.Select(bullet =>
-            Vector2.SignedAngle(Vector2.down, bullet.GetComponent<Rigidbody2D>().linearVelocity)).OrderBy(value => value).ToArray();
-        for (int i = 0; i < _bullets.Count; i++)
-        {
-            Assert.That(Vector3.Distance(_bullets[i].transform.position, _muzzle.position), Is.LessThan(.001f));
-            Assert.That(angles[i], Is.EqualTo(-12.5f + 6.25f * i).Within(.001f));
-        }
+        Assert.That(_bullets, Is.Empty);
+        Assert.That(enemy.CurrentHealth, Is.EqualTo(enemy.MaxHealth - 8));
+        Assert.That(_attack.TryGetCurrentWeaponStats(out var stats), Is.True);
+        Assert.That(stats.IsSpray, Is.True);
+        Assert.That(stats.ProjectileCount, Is.Zero);
+        Assert.That(stats.Range, Is.EqualTo(4.5f).Within(.001f));
+        Assert.That(stats.Interval, Is.EqualTo(.1f).Within(.001f));
+        Assert.That(_attack.TryFire(), Is.False);
         yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Cryo_MovingForwardAndBackwardKeepsEmittingAcrossNativeFrames()
+    {
+        _attack.enabled = false;
+        var spray = _shooter.GetComponent<PlayerCryoSpray>();
+        using var random = new TeamHJD.Game.Application.RandomService(17);
+        spray.BindPresentationRandom(random);
+        var particlesField = typeof(PlayerCryoSpray).GetField("_particles", BindingFlags.Instance | BindingFlags.NonPublic);
+        float moveSpeed = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab")
+            .GetComponent<PlayerMovement>().BaseMoveSpeed;
+        foreach (float sign in new[] { -1f, 1f })
+        {
+            spray.Stop(true);
+            _shooterBody.linearVelocity = Vector2.down * sign * moveSpeed;
+            for (int frame = 0; frame < 20; frame++)
+            {
+                spray.Show(_muzzle.position, Vector2.down);
+                yield return new WaitForFixedUpdate();
+                yield return null;
+                if (frame < 5) continue;
+                var systems = (ParticleSystem[])particlesField.GetValue(spray);
+                Assert.That(spray.IsEmitting, Is.True);
+                Assert.That(systems.Sum(ps => ps.particleCount), Is.GreaterThan(0), $"movement={sign}, frame={frame}");
+            }
+        }
     }
 
     [UnityTest]
@@ -170,7 +205,7 @@ public sealed class PlayerBulletRuntimeTests
         Assert.That(Vector3.Distance(bullet.transform.position, _muzzle.position), Is.LessThan(.001f));
         Assert.That(Vector2.Distance(bullet.GetComponent<Rigidbody2D>().linearVelocity, Vector2.down * 70f), Is.LessThan(.001f));
         Assert.That(new SerializedObject(bullet).FindProperty("_damage").floatValue, Is.EqualTo(45f));
-        yield return new WaitForSeconds(.25f);
+        yield return WaitGameTime(.25f);
         Assert.That(_attack.TryFire(), Is.False, "The slower sniper interval must not reuse the default gun interval.");
     }
 
@@ -215,6 +250,8 @@ public sealed class PlayerBulletRuntimeTests
         ClearBullets();
 
         target.gameObject.tag = "Untagged";
+        target.gameObject.layer = LayerMask.NameToLayer("Default");
+        target.GetComponentInChildren<Collider2D>().gameObject.layer = LayerMask.NameToLayer("Default");
         target.bodyType = RigidbodyType2D.Static;
         bullet = SpawnBullet(1f);
         for (int step = 0; step < 20 && bullet != null; step++) yield return new WaitForFixedUpdate();
@@ -301,7 +338,7 @@ public sealed class PlayerBulletRuntimeTests
             (name: "PlayerBullet", cryogenic: true), (name: "SniperBullet", cryogenic: false) })
         {
             var devicePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/EnergyBarrier.prefab");
-            Vector3 center = _muzzle.position + Vector3.down * 2f;
+            Vector3 center = _muzzle.position + Vector3.down;
             var device = Object.Instantiate(devicePrefab);
             _targets.Add(device);
             var field = device.GetComponent<PlayerFieldDevice>();
@@ -436,6 +473,142 @@ public sealed class PlayerBulletRuntimeTests
         Assert.That(health.CurrentHealth, Is.EqualTo(initialHealth - 1));
     }
 
+    [UnityTest]
+    public IEnumerator Sniper_PiercesDistinctEnemiesOnceButStopsBeforeEnemiesBehindAWall()
+    {
+        var first = CreateEnemy(.45f);
+        var second = CreateEnemy(1.1f);
+        var hidden = CreateEnemy(2.3f);
+        var sensor = new GameObject("Large detection sensor"); _targets.Add(sensor);
+        sensor.tag = "Enemy"; sensor.layer = LayerMask.NameToLayer("EnemySensor"); sensor.transform.position = _muzzle.position;
+        var trigger = sensor.AddComponent<CircleCollider2D>(); trigger.isTrigger = true; trigger.radius = 3;
+        var wall = CreateWorldObstacle("Forest", "Untagged", false);
+        wall.transform.position = _muzzle.position + Vector3.down * 1.8f;
+        var bullet = CreateSniper();
+        Physics2D.SyncTransforms();
+        for (int step = 0; step < 8 && bullet != null; step++) yield return new WaitForFixedUpdate();
+        Assert.That(bullet == null, Is.True, "A forest body must stop a penetrating round.");
+        Assert.That(first.CurrentHealth, Is.EqualTo(first.MaxHealth - 1));
+        Assert.That(second.CurrentHealth, Is.EqualTo(second.MaxHealth - 1));
+        Assert.That(hidden.CurrentHealth, Is.EqualTo(hidden.MaxHealth));
+        yield return null;
+        Assert.That(FindImpactEffects().Length, Is.EqualTo(3), "Two enemy impacts and one wall impact; no sensor/duplicate impact.");
+    }
+
+    [UnityTest]
+    public IEnumerator Sniper_CheckpointRoundTripPreservesPiercedHealthIdentities()
+    {
+        var enemy = CreateEnemy(1);
+        var hitbox = enemy.GetComponentInChildren<Collider2D>();
+        var bullet = CreateSniper();
+        CallPrivate(bullet, "ProcessHit", hitbox); CallPrivate(bullet, "ProcessHit", hitbox);
+        Assert.That(enemy.CurrentHealth, Is.EqualTo(enemy.MaxHealth - 1));
+        object state = CallPrivate(bullet, "CaptureCheckpoint");
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
+            state.GetType().GetMethod("Write").Invoke(state, new object[] { writer });
+        stream.Position = 0;
+        using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
+        var saved = state.GetType().GetMethod("Read", BindingFlags.Public | BindingFlags.Static)
+            .Invoke(null, new object[] { reader, 3, new BinaryCheckpointPayloadCodec() });
+        Object.DestroyImmediate(bullet.gameObject);
+        var restored = CreateSniper(); CallPrivate(restored, "RestoreCheckpoint", saved);
+        CallPrivate(restored, "ProcessHit", hitbox);
+        Assert.That(enemy.CurrentHealth, Is.EqualTo(enemy.MaxHealth - 1), "Loading must not deal damage twice to the same logical enemy.");
+        var other = CreateEnemy(2);
+        CallPrivate(restored, "ProcessHit", other.GetComponentInChildren<Collider2D>());
+        Assert.That(other.CurrentHealth, Is.EqualTo(other.MaxHealth - 1));
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyCryoCheckpointLoadsWithoutHistoryAndPreservesFlight()
+    {
+        var bullet = Object.Instantiate(_bulletPrefab, _muzzle.position, Quaternion.identity).GetComponent<PlayerBullet>(); _bullets.Add(bullet);
+        Assert.That(bullet.Initialize(Color.cyan, 1, Vector2.down, true), Is.True);
+        bullet.GetComponent<Rigidbody2D>().linearVelocity = Vector2.down * 45;
+        typeof(PlayerBullet).GetField("_expiresAt", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(bullet, Time.timeAsDouble + 1.3);
+        object state = CallPrivate(bullet, "CaptureCheckpoint");
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
+            state.GetType().GetMethod("Write").Invoke(state, new object[] { writer });
+        stream.SetLength(stream.Length - sizeof(int)); // v1/v2 has no trailing hit-history count.
+        stream.Position = 0;
+        using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
+        var saved = state.GetType().GetMethod("Read", BindingFlags.Public | BindingFlags.Static)
+            .Invoke(null, new object[] { reader, 2, new BinaryCheckpointPayloadCodec() });
+        Assert.That(stream.Position, Is.EqualTo(stream.Length));
+        CallPrivate(bullet, "RestoreCheckpoint", saved);
+        Assert.That(bullet.GetComponent<Rigidbody2D>().linearVelocity.magnitude, Is.EqualTo(45).Within(.001f));
+        Assert.That((double)typeof(PlayerBullet).GetField("_expiresAt", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(bullet),
+            Is.EqualTo(Time.timeAsDouble + 1.3).Within(.001));
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator Cryo_EmissionsConsumeOneRoundAndStopForAutomaticReload()
+    {
+        var clock = new WeaponTestClock { ElapsedSeconds = Time.timeAsDouble + 10 };
+        TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(_shooter, clock);
+        _shooter.GetComponent<PlayerInputHandler>().enabled = true;
+        var ammo = _shooter.AddComponent<PlayerWeaponAmmo>();
+        typeof(PlayerAttack).GetField("_ammo", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(_attack, ammo);
+        Assert.That(_selection.TrySelectWeapon(WeaponType.CryoBlaster), Is.True);
+        for (int emitted = 0; emitted < 15; emitted++)
+        {
+            Assert.That(_attack.TryFire(), Is.True, "Emission " + emitted);
+            Assert.That(ammo.CurrentRounds, Is.EqualTo(14 - emitted));
+            ClearLiveBullets();
+            clock.ElapsedSeconds += .11;
+        }
+        Assert.That(ammo.IsReloading, Is.True);
+        Assert.That(_attack.TryFire(), Is.False);
+        clock.ElapsedSeconds += .62;
+        CallPrivate(ammo, "Update");
+        Assert.That(ammo.IsReloading, Is.True, "Reload must still be in progress at 0.73 seconds.");
+        clock.ElapsedSeconds += .03;
+        CallPrivate(ammo, "Update");
+        Assert.That(ammo.IsReloading, Is.False);
+        Assert.That(_attack.TryFire(), Is.True);
+        ClearLiveBullets();
+        yield break;
+    }
+
+    private sealed class WeaponTestClock : TeamHJD.Game.Contracts.IMatchTime
+    {
+        public double ElapsedSeconds { get; set; }
+        public bool IsAvailable => true;
+        public TeamHJD.Game.Domain.MatchTimeSnapshot Snapshot { get; } = new(
+            new TeamHJD.Game.Domain.MatchId("cryo-reload-test"), System.Guid.NewGuid(), 0, 0, 0, 1, false, true);
+    }
+
+    private void ClearLiveBullets() { CaptureBullets(); ClearBullets(); }
+    private static IEnumerator WaitGameTime(float seconds)
+    {
+        double end = Time.timeAsDouble + seconds;
+        double deadline = Time.realtimeSinceStartupAsDouble + 20;
+        while (Time.timeAsDouble < end && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+        Assert.That(Time.timeAsDouble, Is.GreaterThanOrEqualTo(end), "The Play Mode clock did not advance.");
+    }
+    private static object CallPrivate(object source, string method, params object[] args) => source.GetType()
+        .GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance).Invoke(source, args);
+    private PlayerBullet CreateSniper()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/SniperBullet.prefab");
+        var bullet = Object.Instantiate(prefab, _muzzle.position, Quaternion.identity).GetComponent<PlayerBullet>(); _bullets.Add(bullet);
+        Assert.That(bullet.Initialize(Color.white, 1, Vector2.down), Is.True);
+        return bullet;
+    }
+    private EnemyHealth CreateEnemy(float distance)
+    {
+        var body = CreateTarget("Enemy"); body.bodyType = RigidbodyType2D.Kinematic;
+        body.transform.position = _muzzle.position + Vector3.down * distance;
+        var hitbox = body.GetComponentInChildren<CircleCollider2D>(); hitbox.radius = .1f; hitbox.isTrigger = true;
+        // Two shapes owned by the same EnemyHealth must not cause two penetrating hits.
+        var duplicate = hitbox.gameObject.AddComponent<CircleCollider2D>(); duplicate.radius = .09f; duplicate.isTrigger = true;
+        var health = body.gameObject.AddComponent<EnemyHealth>(); health.Initialize();
+        return health;
+    }
     private Rigidbody2D CreateTarget(string tag)
     {
         var target = new GameObject("Bullet hit test target");
@@ -446,7 +619,7 @@ public sealed class PlayerBulletRuntimeTests
         var body = target.AddComponent<Rigidbody2D>();
         body.gravityScale = 0f;
         var hitbox = new GameObject("Untagged child hitbox");
-        hitbox.layer = target.layer;
+        hitbox.layer = tag == "Enemy" ? LayerMask.NameToLayer("EnemyHitBox") : target.layer;
         hitbox.transform.SetParent(target.transform, false);
         hitbox.AddComponent<CircleCollider2D>().radius = .6f;
         return body;
@@ -464,7 +637,7 @@ public sealed class PlayerBulletRuntimeTests
     {
         var obstacle = new GameObject($"Bullet obstacle {layer} {tag}");
         _targets.Add(obstacle);
-        obstacle.layer = LayerMask.NameToLayer(layer);
+        obstacle.layer = LayerMask.NameToLayer(tag == "Enemy" ? "EnemyHitBox" : layer);
         obstacle.tag = tag;
         obstacle.transform.position = _muzzle.position + Vector3.down * .55f;
         var hitbox = obstacle.AddComponent<BoxCollider2D>();

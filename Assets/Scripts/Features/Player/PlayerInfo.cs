@@ -17,6 +17,8 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     
     public UnityEvent onDeath = new UnityEvent();
     public UnityEvent<int,int> onHpChange = new UnityEvent<int, int>();
+    /// <summary>실제로 적용된 피해량만 알립니다. 초기 바인딩·회복·체크포인트 복원은 피격 연출을 만들지 않습니다.</summary>
+    public event Action<int> Damaged;
     private bool _isDead;
     private const double RecoveryInterval = 0.02;
     private bool _recovering;
@@ -76,7 +78,12 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     public bool ApplyDamage(int damage)
     {
         if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanReceiveDamage(this)) return false;
+        int previousHealth = curHp;
         curHp = (int)Math.Max(0L, (long)curHp - damage);
+        int applied = previousHealth - curHp;
+        if (applied > 0 && Damaged != null)
+            foreach (Action<int> observer in Damaged.GetInvocationList())
+                try { observer(applied); } catch (Exception error) { Debug.LogException(error); }
         if (curHp <= 0) Die();
         return true;
     }

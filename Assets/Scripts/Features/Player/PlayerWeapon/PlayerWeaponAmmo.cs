@@ -11,9 +11,9 @@ public sealed class PlayerWeaponAmmo : MonoBehaviour
     [SerializeField, Min(1)] private int _defaultGunCapacity = 15;
     [SerializeField, Min(1)] private int _cryoCapacity = 15;
     [SerializeField, Min(1)] private int _sniperCapacity = 5;
-    [SerializeField, Min(.01f)] private float _defaultGunReloadSeconds = 1.5f;
-    [SerializeField, Min(.01f)] private float _cryoReloadSeconds = 1.5f;
-    [SerializeField, Min(.01f)] private float _sniperReloadSeconds = 1.5f;
+    [SerializeField, Min(.01f)] private float _defaultGunReloadSeconds = .75f;
+    [SerializeField, Min(.01f)] private float _cryoReloadSeconds = .75f;
+    [SerializeField, Min(.01f)] private float _sniperReloadSeconds = .75f;
     private PlayerWeaponAmmoState _state;
     private PlayerWeaponSelection _selection;
     private PlayerInputHandler _input;
@@ -33,6 +33,8 @@ public sealed class PlayerWeaponAmmo : MonoBehaviour
     public float ReloadProgress => State.ReloadProgress;
     public int CurrentRounds => _selection != null ? GetRounds(_selection.CurrentWeapon) : 0;
     public int CurrentCapacity => _selection != null ? GetCapacity(_selection.CurrentWeapon) : 0;
+    public bool UsesPercentage => _selection != null && _selection.CurrentWeapon == WeaponType.CryoBlaster;
+    public int CurrentPercentage => CurrentCapacity > 0 ? Mathf.CeilToInt(100f * CurrentRounds / CurrentCapacity) : 0;
     public int GetRounds(WeaponType weapon) => State.GetRounds(weapon);
     public int GetCapacity(WeaponType weapon) => State.GetCapacity(weapon);
     public float GetReloadDuration(WeaponType weapon) => weapon switch

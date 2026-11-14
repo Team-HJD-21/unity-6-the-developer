@@ -72,6 +72,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: -5420480671651155543}
   m_SourcePrefab: {fileID: 100100000, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+--- !u!70 &3159564463621367340 stripped
+CapsuleCollider2D:
+  m_CorrespondingSourceObject: {fileID: 2715321972971546520, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+  m_PrefabInstance: {fileID: 1042519340379881908}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &4417510083731572509 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3691231874351859369, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
@@ -112,12 +117,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCloseRangeAbility
   cooldown: 1
-  _bodyCollider: {fileID: 7934924057311380628}
+  _bodyCollider: {fileID: 3159564463621367340}
   activationRange: 0.4
   enemyTargeting: {fileID: 4417510083731572509}
   attackDamage: 5
---- !u!60 &7934924057311380628 stripped
-PolygonCollider2D:
-  m_CorrespondingSourceObject: {fileID: 6947161632953746720, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
-  m_PrefabInstance: {fileID: 1042519340379881908}
-  m_PrefabAsset: {fileID: 0}

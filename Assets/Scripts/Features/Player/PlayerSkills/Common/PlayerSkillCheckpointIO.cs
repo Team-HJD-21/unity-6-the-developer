@@ -20,15 +20,16 @@ internal static class PlayerSkillCheckpointIO
     public static PlayerSkillCharges.State ReadCharges(BinaryReader reader) => new(reader.ReadInt32(), reader.ReadSingle(), reader.ReadInt32(), reader.ReadSingle());
     public static void Write(BinaryWriter writer, PlayerTurretInventory.State state)
     {
-        writer.Write(state.Capacity); writer.Write(state.MaximumRepairSeconds); writer.Write(state.Deployed); writer.Write(state.Repairs.Count);
-        foreach (float value in state.Repairs) writer.Write(value);
+        writer.Write(state.Capacity); writer.Write(state.MaximumRepairSeconds); writer.Write(state.Slots.Count);
+        foreach (var slot in state.Slots) { writer.Write((int)slot.Status); writer.Write(slot.HealthRatio); writer.Write(slot.Remaining); }
     }
     public static PlayerTurretInventory.State ReadInventory(BinaryReader reader, ICheckpointPayloadCodec codec)
     {
-        int capacity = reader.ReadInt32(); float duration = reader.ReadSingle(); int deployed = reader.ReadInt32();
-        var repairs = new float[codec.ReadCount(reader, MaximumOwnedActors)];
-        for (int i = 0; i < repairs.Length; i++) repairs[i] = reader.ReadSingle();
-        return new PlayerTurretInventory.State(capacity, duration, deployed, repairs);
+        int capacity = reader.ReadInt32(); float duration = reader.ReadSingle();
+        var slots = new PlayerTurretInventory.Slot[codec.ReadCount(reader, MaximumOwnedActors)];
+        for (int i = 0; i < slots.Length; i++) slots[i] = new PlayerTurretInventory.Slot(
+            (PlayerTurretInventory.SlotStatus)reader.ReadInt32(), reader.ReadSingle(), reader.ReadSingle());
+        return new PlayerTurretInventory.State(capacity, duration, slots);
     }
     public static float ReadDuration(BinaryReader reader)
     {

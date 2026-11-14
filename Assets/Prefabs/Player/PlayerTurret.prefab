@@ -46,6 +46,8 @@ GameObject:
   - component: {fileID: 910222610090000002}
   - component: {fileID: 933000001}
   - component: {fileID: 933000010}
+  - component: {fileID: 2493598305443031704}
+  - component: {fileID: 5224976065001499969}
   m_Layer: 21
   m_Name: PlayerTurret
   m_TagString: Untagged
@@ -198,6 +200,9 @@ MonoBehaviour:
   _blockingLayers:
     serializedVersion: 2
     m_Bits: 17039360
+  _incomingProjectileLayers:
+    serializedVersion: 2
+    m_Bits: 65536
 --- !u!1 &5112776578772971927
 GameObject:
   m_ObjectHideFlags: 0
@@ -303,10 +308,10 @@ BoxCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 17039360
+    m_Bits: 17104896
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 4277927935
+    m_Bits: 4277862399
   m_LayerOverridePriority: 10
   m_ForceSendLayers:
     serializedVersion: 2
@@ -363,3 +368,33 @@ MonoBehaviour:
   _parts:
   - sorting: {fileID: 933000010}
     ground: {fileID: 910222610090000002}
+--- !u!114 &2493598305443031704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5037733788499361552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45e53f8f01ed56d409b2482938458d6b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TargetableComponent
+  targetType: 1
+  maxAttackers: 50
+  maxHealth: 0
+  currentHealth: 0
+  firepowerEfficiency: 0
+--- !u!114 &5224976065001499969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5037733788499361552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f52a29d5e2e4832a13e80d597e26764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DamageableTargetAdapter
+  _damageableSource: {fileID: 910202610090000001}

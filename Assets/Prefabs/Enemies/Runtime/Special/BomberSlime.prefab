@@ -28,10 +28,118 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: 0.05
       objectReference: {fileID: 0}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: -979096660, guid: ae1fff72fa6122640ad2f5c9d3461128, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: -1380545356, guid: ae1fff72fa6122640ad2f5c9d3461128, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 127921992, guid: ae1fff72fa6122640ad2f5c9d3461128, type: 3}
+    - target: {fileID: 1618517418616975801, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: -1821146884, guid: ae1fff72fa6122640ad2f5c9d3461128, type: 3}
     - target: {fileID: 2670870722600736654, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 22100000, guid: 7045e8e75f71a9f42b1bae6d850c32f0, type: 2}
+    - target: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.x
+      value: 0.16257153
+      objectReference: {fileID: 0}
+    - target: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Size.y
+      value: 0.13277668
+      objectReference: {fileID: 0}
+    - target: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.0010758591
+      objectReference: {fileID: 0}
+    - target: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.04115333
+      objectReference: {fileID: 0}
+    - target: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Direction
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upShape.size.x
+      value: 0.1625715
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upShape.size.y
+      value: 0.1327767
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: downShape.size.x
+      value: 0.16
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: downShape.size.y
+      value: 0.17
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftShape.size.x
+      value: 0.1625715
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftShape.size.y
+      value: 0.1155872
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upShape.offset.x
+      value: -0.001075859
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upShape.offset.y
+      value: 0.04115333
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightShape.size.x
+      value: 0.1625715
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightShape.size.y
+      value: 0.1155872
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: upShape.direction
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: downShape.offset.y
+      value: 0.058599852
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftShape.offset.x
+      value: -0.001075858
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftShape.offset.y
+      value: 0.049748
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: leftShape.direction
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightShape.offset.x
+      value: -0.001075858
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightShape.offset.y
+      value: 0.049748
+      objectReference: {fileID: 0}
+    - target: {fileID: 3267588949618980871, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: rightShape.direction
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3516975242969022265, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: maxHealth
       value: 40
@@ -214,13 +322,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyExplosionAbility
   cooldown: 0.1
-  _bodyCollider: {fileID: 8989135342126580219}
+  _bodyCollider: {fileID: 0}
   activationRange: 0.3
   enemyTargeting: {fileID: 3454110900219576946}
   explosionDamage: 20
   explosionRadius: 1
---- !u!60 &8989135342126580219 stripped
-PolygonCollider2D:
-  m_CorrespondingSourceObject: {fileID: 7934924057311380628, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-  m_PrefabInstance: {fileID: 1342443860078511471}
-  m_PrefabAsset: {fileID: 0}

@@ -4,6 +4,21 @@ using UnityEngine;
 
 public sealed class PlayerSkillPrefabTests
 {
+    [TestCase("PlayerTurretPreview")]
+    [TestCase("PlayerBarrierPreview")]
+    [TestCase("PlayerBeaconPreview")]
+    [TestCase("PlayerBombPreview")]
+    public void PlacementPreview_AllSpritesAndLinesRenderAboveEntities(string name)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/" + name + ".prefab");
+        int entityLayer = SortingLayer.GetLayerValueFromName("Entities");
+        foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true))
+        {
+            Assert.That(renderer.sortingLayerName, Is.EqualTo("PlayerSkillPreview"), renderer.name);
+            Assert.That(SortingLayer.GetLayerValueFromID(renderer.sortingLayerID), Is.GreaterThan(entityLayer));
+        }
+    }
+
     [Test]
     public void SkillHudPrefab_HasConnectedCanvasAndRedBoldFailureText()
     {

@@ -18,6 +18,10 @@ public class EnemyAnimation : MonoBehaviour
     private static readonly int MoveAnimSpeedHash = Animator.StringToHash("MoveAnimSpeed");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
     
+    private Vector2 _lastDirection;
+    private bool _lastIsMoving;
+    private float _lastAnimationSpeed;
+    
     private void Awake()
     {
         _networkAnimator = GetComponent<EnemyNetworkAnimator>();
@@ -33,9 +37,14 @@ public class EnemyAnimation : MonoBehaviour
     public void SetFacingDirection(Vector2 moveDirection)
     {
         Vector2 animationDirection = GetAnimationDirection(moveDirection);
-        
+
+        if (_lastDirection == animationDirection)
+            return;
+
         animator.SetFloat(MoveXHash, animationDirection.x);
         animator.SetFloat(MoveYHash, animationDirection.y);
+
+        _lastDirection = animationDirection;
     }
     
     /// <summary>
@@ -57,11 +66,15 @@ public class EnemyAnimation : MonoBehaviour
     /// </summary>
     public void PlayMovementAnimation(float moveSpeed)
     {
-        // 실제 이동 속도를 기준으로 이동 애니메이션 재생 속도를 보정한다.
-        animator.SetBool(IsMovingHash, true);
+        SetMoving(true);
 
         float animationSpeed = moveSpeed / animationReferenceSpeed;
+
+        if (_lastAnimationSpeed.Equals(animationSpeed))
+            return;
+
         animator.SetFloat(MoveAnimSpeedHash, animationSpeed);
+        _lastAnimationSpeed = animationSpeed;
     }
 
     /// <summary>
@@ -69,7 +82,17 @@ public class EnemyAnimation : MonoBehaviour
     /// </summary>
     public void StopMovementAnimation()
     {
-        animator.SetBool(IsMovingHash, false);
+        SetMoving(false);
+    }
+
+    /// <summary>이동 상태가 바뀐 경우만 Animator에 전달한다.</summary>
+    private void SetMoving(bool isMoving)
+    {
+        if (_lastIsMoving == isMoving)
+            return;
+
+        animator.SetBool(IsMovingHash, isMoving);
+        _lastIsMoving = isMoving;
     }
 
     /// <summary>
@@ -87,4 +110,23 @@ public class EnemyAnimation : MonoBehaviour
     }
     /// <summary>기존 로컬/수신 애니메이션 경로에서 한 번 호출합니다. 공간 처리는 표준 AudioSource가 담당합니다.</summary>
     public void PlayAbilitySound() => TeamHJD.Game.Presentation.GameAudioManager.Play(AbilitySound, this);
+    
+    private void OnEnable()
+    {
+        RefreshStateCache();
+    }
+
+    /// <summary>
+    /// 실제 Animator 값과 캐시를 맞춘다.
+    /// 초기화와 저장 복원 직후 호출한다.
+    /// </summary>
+    internal void RefreshStateCache()
+    {
+        _lastDirection = new Vector2(
+            animator.GetFloat(MoveXHash),
+            animator.GetFloat(MoveYHash));
+
+        _lastIsMoving = animator.GetBool(IsMovingHash);
+        _lastAnimationSpeed = animator.GetFloat(MoveAnimSpeedHash);
+    }
 }

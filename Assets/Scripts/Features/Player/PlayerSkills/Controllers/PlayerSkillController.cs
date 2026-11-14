@@ -30,7 +30,8 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
     public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingSkill && (_info==null || !_info.HasRescueTarget) && (CanPrepare || CanUse);
     public bool IsPlacingTurret => _turret != null && _turret.IsPlacing;
-    public bool IsPlacingSkill => IsPlacingTurret || ActivePlacement != null;
+    public bool IsSelectingTurret => _turret != null && _turret.IsSelecting;
+    public bool IsPlacingSkill => (_turret != null && _turret.IsPending) || ActivePlacement != null;
     private PlayerPlacementSkillBase ActivePlacement
     {
         get

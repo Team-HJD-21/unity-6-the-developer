@@ -1,51 +1,92 @@
-// 임시 포탑의 설치 수와 손상 회수 후 개별 재충전 시간을 소유합니다.
-// 가장 짧은 남은 시간만 저장하지 않고 모든 수리 진행을 복사해 복원합니다.
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
+/// <summary>한 판 안의 고정 포탑 슬롯과 회수 체력·파괴 후 복구 시간을 소유합니다.</summary>
 public sealed class PlayerTurretInventory
 {
-    private readonly int _capacity;
-    private readonly float _maximumRepairSeconds;
-    private readonly List<float> _repairs = new();
-    public int Deployed { get; private set; }
-    public int Available => Math.Max(0, _capacity - Deployed - _repairs.Count);
+    public enum SlotStatus { Available, Deployed, Rebuilding }
+    public readonly struct Slot
+    {
+        public SlotStatus Status { get; }
+        public float HealthRatio { get; }
+        public float Remaining { get; }
+        public Slot(SlotStatus status, float healthRatio, float remaining = 0)
+        { Status = status; HealthRatio = healthRatio; Remaining = remaining; }
+    }
+    private readonly Slot[] _slots;
+    public int Capacity => _slots.Length;
+    public float MaximumRepairSeconds { get; }
+    public int Available => Count(SlotStatus.Available);
+    public int Deployed => Count(SlotStatus.Deployed);
     public float RepairRemaining
     {
-        get { float result = float.PositiveInfinity; foreach (float repair in _repairs) result = Math.Min(result, repair); return _repairs.Count > 0 ? result : 0; }
+        get
+        {
+            float result = float.PositiveInfinity;
+            foreach (var slot in _slots) if (slot.Status == SlotStatus.Rebuilding) result = Math.Min(result, slot.Remaining);
+            return float.IsPositiveInfinity(result) ? 0 : result;
+        }
     }
-    public float MaximumRepairSeconds => _maximumRepairSeconds;
     public PlayerTurretInventory(int capacity, float maximumRepairSeconds)
     {
-        _capacity = Math.Max(1, capacity);
-        _maximumRepairSeconds = float.IsNaN(maximumRepairSeconds) || float.IsInfinity(maximumRepairSeconds) ? 30 : Math.Max(0, maximumRepairSeconds);
+        _slots = new Slot[Math.Max(1, capacity)];
+        MaximumRepairSeconds = !float.IsFinite(maximumRepairSeconds) ? 30 : Math.Max(0, maximumRepairSeconds);
+        for (int i = 0; i < _slots.Length; i++) _slots[i] = new Slot(SlotStatus.Available, 1);
     }
-    public bool TryDeploy() { if (Available <= 0) return false; Deployed++; return true; }
+    public Slot GetSlot(int index) => _slots[index];
+    public bool TryDeploy(int index)
+    {
+        if (index < 0 || index >= Capacity || _slots[index].Status != SlotStatus.Available) return false;
+        _slots[index] = new Slot(SlotStatus.Deployed, _slots[index].HealthRatio);
+        return true;
+    }
+    public bool TryDeploy()
+    {
+        for (int i = 0; i < Capacity; i++) if (TryDeploy(i)) return true;
+        return false;
+    }
+    public bool UpdateHealth(int index, float healthRatio)
+    {
+        if (index < 0 || index >= Capacity || _slots[index].Status != SlotStatus.Deployed ||
+            !float.IsFinite(healthRatio) || healthRatio <= 0 || healthRatio > 1) return false;
+        _slots[index] = new Slot(SlotStatus.Deployed, healthRatio);
+        return true;
+    }
+    public bool Return(int index, float healthRatio)
+    {
+        if (index < 0 || index >= Capacity || _slots[index].Status != SlotStatus.Deployed ||
+            !float.IsFinite(healthRatio) || healthRatio < 0 || healthRatio > 1) return false;
+        _slots[index] = healthRatio > 0 ? new Slot(SlotStatus.Available, healthRatio)
+            : MaximumRepairSeconds > 0 ? new Slot(SlotStatus.Rebuilding, 0, MaximumRepairSeconds)
+            : new Slot(SlotStatus.Available, 1);
+        return true;
+    }
     public bool Return(float healthRatio)
     {
-        if (Deployed <= 0) return false;
-        Deployed--;
-        if (float.IsNaN(healthRatio) || float.IsInfinity(healthRatio)) healthRatio = 0;
-        float repair = (1 - Math.Max(0, Math.Min(1, healthRatio))) * _maximumRepairSeconds;
-        if (repair > 0) _repairs.Add(repair);
-        return true;
+        for (int i = 0; i < Capacity; i++) if (_slots[i].Status == SlotStatus.Deployed) return Return(i, healthRatio);
+        return false;
     }
     public void Tick(float elapsed)
     {
-        if (elapsed <= 0 || float.IsNaN(elapsed) || float.IsInfinity(elapsed)) return;
-        for (int i = _repairs.Count - 1; i >= 0; i--) { _repairs[i] -= elapsed; if (_repairs[i] <= 0) _repairs.RemoveAt(i); }
+        if (!float.IsFinite(elapsed) || elapsed <= 0) return;
+        for (int i = 0; i < Capacity; i++)
+        {
+            if (_slots[i].Status != SlotStatus.Rebuilding) continue;
+            float remaining = Math.Max(0, _slots[i].Remaining - elapsed);
+            _slots[i] = remaining > 0 ? new Slot(SlotStatus.Rebuilding, 0, remaining) : new Slot(SlotStatus.Available, 1);
+        }
     }
+    private int Count(SlotStatus status)
+    { int count = 0; foreach (var slot in _slots) if (slot.Status == status) count++; return count; }
 
-    /// <summary>임시 포탑 스킬 writer가 실제 설치 수·모든 재충전 진행을 복사합니다. 배치 actor는 스킬이 별도 캡처합니다.</summary>
-    public State CaptureState() => new(_capacity, _maximumRepairSeconds, Deployed, _repairs);
-    /// <summary>소유 스킬이 같은 정의와 저장된 설치 actor 수를 검증한 뒤 적용합니다. 회수 사건을 다시 발생시키지 않습니다.</summary>
+    public State CaptureState() => new(Capacity, MaximumRepairSeconds, _slots);
     public void RestoreState(State state)
     {
         if (state == null) throw new ArgumentNullException(nameof(state));
-        if (state.Capacity != _capacity || state.MaximumRepairSeconds != _maximumRepairSeconds)
+        if (state.Capacity != Capacity || state.MaximumRepairSeconds != MaximumRepairSeconds)
             throw new ArgumentException("The saved inventory definition does not match this skill.", nameof(state));
-        _repairs.Clear(); _repairs.AddRange(state.Repairs); Deployed = state.Deployed;
+        for (int i = 0; i < Capacity; i++) _slots[i] = state.Slots[i];
     }
 
     public sealed class State
@@ -53,23 +94,27 @@ public sealed class PlayerTurretInventory
         public int Capacity { get; }
         public float MaximumRepairSeconds { get; }
         public int Deployed { get; }
-        public IReadOnlyList<float> Repairs { get; }
-        public State(int capacity, float maximumRepairSeconds, int deployed, IEnumerable<float> repairs)
+        public IReadOnlyList<Slot> Slots { get; }
+        public State(int capacity, float maximumRepairSeconds, IEnumerable<Slot> slots)
         {
-            if (capacity < 1 || deployed < 0 || deployed > capacity || float.IsNaN(maximumRepairSeconds) ||
-                float.IsInfinity(maximumRepairSeconds) || maximumRepairSeconds < 0)
+            if (capacity < 1 || !float.IsFinite(maximumRepairSeconds) || maximumRepairSeconds < 0)
                 throw new ArgumentException("Invalid saved turret inventory definition.");
-            if (repairs == null) throw new ArgumentNullException(nameof(repairs));
-            var copy = new List<float>();
-            foreach (float remaining in repairs)
+            if (slots == null) throw new ArgumentNullException(nameof(slots));
+            var copy = new List<Slot>();
+            foreach (var slot in slots)
             {
-                if (copy.Count >= capacity - deployed || float.IsNaN(remaining) || float.IsInfinity(remaining) ||
-                    remaining <= 0 || remaining > maximumRepairSeconds)
-                    throw new ArgumentException("Invalid saved turret repair queue.");
-                copy.Add(remaining);
+                if (copy.Count >= capacity || !Enum.IsDefined(typeof(SlotStatus), slot.Status) ||
+                    !float.IsFinite(slot.HealthRatio) || !float.IsFinite(slot.Remaining) ||
+                    slot.HealthRatio < 0 || slot.HealthRatio > 1 || slot.Remaining < 0 ||
+                    (slot.Status == SlotStatus.Rebuilding
+                        ? slot.HealthRatio != 0 || slot.Remaining <= 0 || slot.Remaining > maximumRepairSeconds
+                        : slot.HealthRatio <= 0 || slot.Remaining != 0))
+                    throw new ArgumentException("Invalid saved turret slot.");
+                if (slot.Status == SlotStatus.Deployed) Deployed++;
+                copy.Add(slot);
             }
-            Capacity = capacity; MaximumRepairSeconds = maximumRepairSeconds; Deployed = deployed;
-            Repairs = new ReadOnlyCollection<float>(copy);
+            if (copy.Count != capacity) throw new ArgumentException("Missing saved turret slots.");
+            Capacity = capacity; MaximumRepairSeconds = maximumRepairSeconds; Slots = new ReadOnlyCollection<Slot>(copy);
         }
     }
 }

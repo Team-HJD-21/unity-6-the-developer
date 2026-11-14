@@ -17,17 +17,19 @@ public sealed class PlayerDirectionalColliders : MonoBehaviour
     [SerializeField] private DirectionColliders[] _directions;
     private int _activeFacing = -1;
 
-    public Vector2 GroundPosition
+    public Bounds GroundBounds
     {
         get
         {
             if (_directions != null)
                 foreach (var pair in _directions)
                     if (pair != null && pair.body != null && pair.body.enabled)
-                        return pair.body.bounds.center;
-            return transform.position;
+                        return pair.body.bounds;
+            return new Bounds(transform.position, Vector3.zero);
         }
     }
+
+    public Vector2 GroundPosition => GroundBounds.center;
 
     public bool IsConfigured
     {

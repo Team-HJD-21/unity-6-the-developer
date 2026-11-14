@@ -54,8 +54,7 @@ public sealed class PlayerTurretRepairPromptView : MonoBehaviour
             _repair = owner != null ? owner.GetComponent<PlayerTurretRepair>() : null;
             _worldCamera = null;
         }
-        var turret = _repair != null && _repair.isActiveAndEnabled ? _repair.Target : null;
-        Transform target = turret != null ? turret.transform : null;
+        Transform target = _repair != null && _repair.isActiveAndEnabled ? _repair.TargetTransform : null;
         if (_target != target)
         {
             _target = target;
@@ -68,7 +67,7 @@ public sealed class PlayerTurretRepairPromptView : MonoBehaviour
             !_worldCamera.CompareTag("MainCamera")))
             _worldCamera = CameraManager.Current != null ? CameraManager.Current.OutputCamera : Camera.main;
         bool visible = target != null && _worldCamera != null && !_hud.IsOpen &&
-            (turret.CurrentHealth < turret.MaxHealth || _repair.IsRepairing);
+            (_repair.TargetNeedsRepair || _repair.IsRepairing);
         _panel.gameObject.SetActive(visible);
         if (!visible) return;
 

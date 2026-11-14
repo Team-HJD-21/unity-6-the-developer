@@ -38,14 +38,19 @@ public sealed class EnemySummonController : MovingEnemyController
         switch (_state)
         {
             case SummonState.Mobile:
-                if (TryTransform())
+                bool isInTargetRange =
+                    enemyTargeting != null &&
+                    enemyTargeting.Target != null &&
+                    enemyAbility.IsInRange(enemyTargeting.TargetColliders);
+
+                if (TryTransform(isInTargetRange))
                 {
                     StopMoving();
                     enemyAnimation.PlayAbilityAnimation();
                 }
                 else
                 {
-                    MoveToTarget();
+                    MoveToTarget(isInTargetRange);
                 }
                 break;
 
@@ -63,17 +68,15 @@ public sealed class EnemySummonController : MovingEnemyController
     /// <summary>
     /// 유효한 타깃이 범위에 들어오면 소환 쿨타임을 소비하지 않고 변태를 시작한다.
     /// </summary>
-    private bool TryTransform()
+    private bool TryTransform(bool isInTargetRange)
     {
-        if (enemyTargeting == null || enemyTargeting.Target == null)
+        if (!isInTargetRange || enemyTargeting == null || enemyTargeting.Target == null)
             return false;
 
         ITargetable target =
             enemyTargeting.Target.GetComponent<ITargetable>();
 
-        if (target == null ||
-            !target.CanBeTargeted ||
-            !enemyAbility.IsInRange(enemyTargeting.TargetColliders))
+        if (target == null || !target.CanBeTargeted)
         {
             return false;
         }

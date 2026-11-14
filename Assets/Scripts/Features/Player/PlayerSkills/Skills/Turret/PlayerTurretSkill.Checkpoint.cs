@@ -1,4 +1,4 @@
-// 임시 포탑 스킬의 수량·모든 수리 큐·설치 미리보기·실제 포탑·비행 중 탄환을 복원합니다.
+// 포탑별 슬롯·체력·파괴 복구 시간·설치 선택·실제 포탑·비행 중 탄환을 복원합니다.
 // 교체 정리는 Owner를 먼저 해제해 파괴 통지가 수량을 다시 변경하지 않도록 합니다.
 using System;
 using System.Collections.Generic;
@@ -11,6 +11,7 @@ using UnityEngine;
 
 public sealed partial class PlayerTurretSkill
 {
+    protected override int CheckpointVersion => 2;
     private readonly HashSet<PlayerTurretProjectile> _projectiles = new();
     internal void TrackProjectile(PlayerTurretProjectile projectile) { _projectiles.Add(projectile); projectile.Retired += OnProjectileRetired; }
     private void OnProjectileRetired(PlayerTurretProjectile projectile) { _projectiles.Remove(projectile); projectile.Retired -= OnProjectileRetired; }
@@ -25,6 +26,7 @@ public sealed partial class PlayerTurretSkill
         return writer =>
         {
             PlayerSkillCheckpointIO.Write(writer, state.Inventory); writer.Write(state.Cooldown); writer.Write(state.Placing);
+            writer.Write(state.Selecting); writer.Write(state.SelectedSlot);
             writer.Write((int)state.Feedback); state.PreviewPose.Write(writer); writer.Write(state.PreviewVisible);
             writer.Write(state.Turrets.Length); foreach (var turret in state.Turrets) turret.Write(writer, codec);
             writer.Write(state.Projectiles.Length); foreach (var projectile in state.Projectiles) projectile.Write(writer);
@@ -33,7 +35,8 @@ public sealed partial class PlayerTurretSkill
     protected override ICheckpointRestoreStep PrepareCheckpointState(BinaryReader reader, ICheckpointPayloadCodec codec)
     {
         var inventory = PlayerSkillCheckpointIO.ReadInventory(reader, codec); float cooldown = PlayerSkillCheckpointIO.ReadDuration(reader);
-        bool placing = reader.ReadBoolean(); var feedback = (PlayerTurretPlacementResult)reader.ReadInt32();
+        bool placing = reader.ReadBoolean(), selecting = reader.ReadBoolean(); int selectedSlot = reader.ReadInt32();
+        var feedback = (PlayerTurretPlacementResult)reader.ReadInt32();
         var previewPose = CheckpointTransformState.Read(reader); bool visible = reader.ReadBoolean();
         var turrets = new PlayerTurret.State[codec.ReadCount(reader, PlayerSkillCheckpointIO.MaximumOwnedActors)];
         var ids = new HashSet<TeamHJD.Game.Domain.EntityId>();
@@ -42,14 +45,22 @@ public sealed partial class PlayerTurretSkill
         for (int i = 0; i < projectiles.Length; i++) projectiles[i] = PlayerTurretProjectile.State.Read(reader);
         var template = turretPrefab != null ? turretPrefab.GetComponent<PlayerTurret>() : null;
         if (inventory.Capacity != MaxTurretCount || inventory.MaximumRepairSeconds != _inventory.MaximumRepairSeconds || inventory.Deployed != turrets.Length ||
+            (placing && selecting) || (placing ? selectedSlot < 0 || selectedSlot >= MaxTurretCount ||
+                inventory.Slots[selectedSlot].Status != PlayerTurretInventory.SlotStatus.Available : selectedSlot != -1) ||
             !Enum.IsDefined(typeof(PlayerTurretPlacementResult), feedback) || (placing && (_previewPrefab == null || !_previewPrefab.IsConfigured)) ||
             ((turrets.Length > 0 || projectiles.Length > 0) && template == null) ||
             (projectiles.Length > 0 && (template.CheckpointProjectilePrefab == null || template.CheckpointProjectilePrefab.GetComponent<PlayerTurretProjectile>() == null)))
             throw new InvalidDataException("The saved temporary turret definition or inventory differs.");
         if (turrets.Length > 0 && turrets.Any(t => t.MaximumHealth != template.GetComponent<PlayerTurretHealth>().MaxHealth))
             throw new InvalidDataException("The temporary turret HP definition differs.");
+        var occupied = new HashSet<int>();
+        foreach (var turret in turrets)
+            if (turret.SlotIndex >= inventory.Capacity || !occupied.Add(turret.SlotIndex) ||
+                inventory.Slots[turret.SlotIndex].Status != PlayerTurretInventory.SlotStatus.Deployed ||
+                !Mathf.Approximately(inventory.Slots[turret.SlotIndex].HealthRatio, turret.Health / turret.MaximumHealth))
+                throw new InvalidDataException("The saved turret slot and actor differ.");
         foreach (var turret in turrets) CheckpointActorFactory.ValidatePrefab(turretPrefab, turret.Id);
-        var target = new Saved(inventory, cooldown, placing, feedback, previewPose, visible, turrets, projectiles); Saved backup = CaptureTurrets();
+        var target = new Saved(inventory, cooldown, placing, selecting, selectedSlot, feedback, previewPose, visible, turrets, projectiles); Saved backup = CaptureTurrets();
         return new CheckpointRestoreStep(() => Apply(target), () => Apply(backup));
     }
     private Saved CaptureTurrets()
@@ -57,10 +68,11 @@ public sealed partial class PlayerTurretSkill
         foreach (var projectile in _projectiles.Where(p => p == null || !p.IsCheckpointAlive).ToArray())
         { _projectiles.Remove(projectile); if (projectile != null) projectile.Retired -= OnProjectileRetired; }
         var turrets = _deployed.Where(t => t != null && t.Health != null && t.Health.IsAlive).Select(t => t.CaptureCheckpoint()).ToArray();
+        foreach (var turret in _deployed) if (turret != null && turret.Health != null && turret.Health.IsAlive) UpdateTurretHealth(turret);
         var inventory = _inventory.CaptureState();
         if (turrets.Length > PlayerSkillCheckpointIO.MaximumOwnedActors || _projectiles.Count > PlayerSkillCheckpointIO.MaximumOwnedActors || inventory.Deployed != turrets.Length)
             throw new InvalidOperationException("The owned turret actors and inventory are not at a consistent capture boundary.");
-        return new Saved(inventory, _installationRemaining, IsPlacing, _placementFeedback,
+        return new Saved(inventory, _installationRemaining, IsPlacing, IsSelecting, _selectedSlot, _placementFeedback,
             CheckpointTransformState.Capture(IsPlacing ? _preview.transform : transform), IsPlacing && _preview.gameObject.activeSelf,
             turrets, _projectiles.Select(p => p.CaptureCheckpoint()).ToArray());
     }
@@ -73,7 +85,7 @@ public sealed partial class PlayerTurretSkill
         foreach (var turret in state.Turrets)
         {
             var actor = CheckpointActorFactory.Instantiate(turretPrefab, gameObject.scene, turret.Pose, turret.Id);
-            try { var source = actor.GetComponent<PlayerTurret>(); source.RestoreCheckpoint(turret); FieldSimulationTime.BindSpawned(actor, this); source.AssignOwner(this); _deployed.Add(source); }
+            try { var source = actor.GetComponent<PlayerTurret>(); source.RestoreCheckpoint(turret); FieldSimulationTime.BindSpawned(actor, this); source.AssignOwner(this, turret.SlotIndex); _deployed.Add(source); }
             catch { CheckpointActorFactory.Retire(actor); throw; }
         }
         if (state.Projectiles.Length > 0)
@@ -87,6 +99,7 @@ public sealed partial class PlayerTurretSkill
             }
         }
         _placementFeedback = state.Feedback;
+        _selecting = state.Selecting; _selectedSlot = state.SelectedSlot;
         if (state.Placing)
         {
             _preview = UnityEngine.Object.Instantiate(_previewPrefab, state.PreviewPose.Position, state.PreviewPose.Rotation);
@@ -99,10 +112,11 @@ public sealed partial class PlayerTurretSkill
     private sealed class Saved
     {
         public readonly PlayerTurretInventory.State Inventory; public readonly float Cooldown; public readonly bool Placing, PreviewVisible;
+        public readonly bool Selecting; public readonly int SelectedSlot;
         public readonly PlayerTurretPlacementResult Feedback; public readonly CheckpointTransformState PreviewPose;
         public readonly PlayerTurret.State[] Turrets; public readonly PlayerTurretProjectile.State[] Projectiles;
-        public Saved(PlayerTurretInventory.State inventory, float cooldown, bool placing, PlayerTurretPlacementResult feedback,
+        public Saved(PlayerTurretInventory.State inventory, float cooldown, bool placing, bool selecting, int selectedSlot, PlayerTurretPlacementResult feedback,
             CheckpointTransformState pose, bool visible, PlayerTurret.State[] turrets, PlayerTurretProjectile.State[] projectiles)
-        { Inventory = inventory; Cooldown = cooldown; Placing = placing; Feedback = feedback; PreviewPose = pose; PreviewVisible = visible; Turrets = turrets; Projectiles = projectiles; }
+        { Inventory = inventory; Cooldown = cooldown; Placing = placing; Selecting = selecting; SelectedSlot = selectedSlot; Feedback = feedback; PreviewPose = pose; PreviewVisible = visible; Turrets = turrets; Projectiles = projectiles; }
     }
 }

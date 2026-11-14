@@ -41,16 +41,21 @@ public partial class PlayerTurret : MonoBehaviour
     private PlayerTurretHealth _health;
     [SerializeField] private PlayerDeviceSortingOrder _depth;
     public PlayerTurretHealth Health => _health;
+    public int SlotIndex { get; private set; } = -1;
     private void Awake()
     {
         _health = GetComponent<PlayerTurretHealth>();
     }
 
-    public void AssignOwner(PlayerTurretSkill owner)
+    public void AssignOwner(PlayerTurretSkill owner, int slotIndex = -1)
     {
         _owner = owner;
+        if (slotIndex >= 0) SlotIndex = slotIndex;
         _depth?.Bind(owner != null ? owner.transform : null);
     }
+
+    internal void NotifyHealthChanged()
+    { if (_owner != null && _health != null && _health.IsAlive) _owner.UpdateTurretHealth(this); }
 
     public bool TryRecover(PlayerTurretSkill owner)
     {

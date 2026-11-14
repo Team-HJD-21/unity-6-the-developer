@@ -78,6 +78,53 @@ public sealed class PlayerContinuousAimTests
         Assert.That(Vector3.Distance(muzzle.position, before), Is.LessThan(.0001f), "First-shot body state changes must not move the continuous gun's muzzle.");
     }
 
+    [TestCase(WeaponType.DefaultGun)] [TestCase(WeaponType.CryoBlaster)]
+    [TestCase(WeaponType.Sniper)] [TestCase(WeaponType.Spanner)]
+    public void WeaponGripKeepsItsBodyAnchorAfterFootAlignedTurns(WeaponType weapon)
+    {
+        Set(_selection, "_currentWeapon", weapon);
+        Input("HasAimTarget", false);
+        foreach (Vector2 direction in new[] { Vector2.left, Vector2.right, Vector2.up })
+        {
+            Input("AimDirection", direction);
+            _motion.RefreshSpaceManBody(); _visual.Refresh();
+            var body = _player.GetComponent<SpriteRenderer>();
+            // This is the previous mount's point in the source body image:
+            // (80, 41.6) pivot + (0, .8) local units at 32 PPU.
+            Vector2 hand = (new Vector2(80, 67.2f) - body.sprite.pivot) / body.sprite.pixelsPerUnit;
+            if (body.flipX) hand.x = -hand.x;
+            var settings = new SerializedObject(_visual).FindProperty("_aim" + weapon);
+            Vector2 grip = settings.FindPropertyRelative("grip").vector2Value;
+            var displayed = _visual.Renderer;
+            Vector2 localGrip = (grip * displayed.sprite.rect.size - displayed.sprite.pivot) / displayed.sprite.pixelsPerUnit;
+            if (displayed.flipY) localGrip.y = -localGrip.y;
+            Vector3 expected = _player.transform.TransformPoint(hand + direction * .35f);
+            Assert.That(Vector3.Distance(displayed.transform.TransformPoint(localGrip), expected), Is.LessThan(.0001f),
+                "The weapon grip must follow the shifted body without moving the physics root.");
+        }
+    }
+
+    [TestCase(WeaponType.DefaultGun)] [TestCase(WeaponType.CryoBlaster)] [TestCase(WeaponType.Sniper)]
+    public void TurningAndFiringBeforeBodyLateUpdateKeepsTheDisplayedMuzzle(WeaponType weapon)
+    {
+        Set(_selection, "_currentWeapon", weapon);
+        Input("HasAimTarget", false); Input("AimDirection", Vector2.left);
+        _motion.RefreshSpaceManBody(); _visual.Refresh();
+        foreach (Vector2 direction in new[] { Vector2.right, Vector2.left })
+        {
+            Input("AimDirection", direction);
+            Input("MouseWorldPosition", (Vector2)_player.transform.position + direction * 8f + Vector2.up * 3f);
+            Input("HasAimTarget", true);
+            Assert.That(_rig.TryGetMuzzle(out var muzzle, forShot: true), Is.True);
+            Vector3 shot = muzzle.position;
+            _motion.PlayRangedShot();
+            _motion.RefreshSpaceManBody(); _visual.Refresh();
+            Assert.That(_rig.TryGetMuzzle(out muzzle, forShot: false), Is.True);
+            Assert.That(Vector3.Distance(muzzle.position, shot), Is.LessThan(.0001f),
+                "A first shot queried before body LateUpdate must match that frame's displayed muzzle.");
+        }
+    }
+
     [Test]
     public void SpaceshipHidesWeaponWhileBodyStillTurnsAndFieldReturnRestoresIt()
     {
@@ -123,9 +170,11 @@ public sealed class PlayerContinuousAimTests
         var colliders = _player.GetComponentsInChildren<Collider2D>(true);
         var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Art/Animations/Player/WeaponPosesV2/Idle_Down.anim");
         foreach (var direction in new[] { Vector2.left, Vector2.up, Vector2.right, Vector2.down })
+        for (int frame = 0; frame < 5; frame++)
         {
             Input("AimDirection", direction); Input("HasAimTarget", false);
             clip.SampleAnimation(_player, .4f);
+            Set(_motion, "_spaceManPhase", (float)frame);
             _motion.RefreshSpaceManBody();
             Physics2D.SyncTransforms();
             Collider2D body = null, bullet = null, solidBody = null;
@@ -148,7 +197,14 @@ public sealed class PlayerContinuousAimTests
             Vector3 center = body.bounds.center;
             Vector3 ellipse = shadow.transform.position;
             Assert.That(Vector2.Distance(center, ellipse), Is.LessThan(.0001f));
+            Assert.That(_player.transform.InverseTransformPoint(center).x, Is.EqualTo(0f).Within(.0001f),
+                "Turning must keep the foot contact point fixed under the actor.");
             Assert.That(_player.transform.InverseTransformPoint(center).y, Is.EqualTo(.10625f).Within(.0001f));
+            var displayed = _player.GetComponent<SpriteRenderer>();
+            Vector2 spriteFoot = (new Vector2(89, 45) - displayed.sprite.pivot) / displayed.sprite.pixelsPerUnit;
+            if (displayed.flipX) spriteFoot.x = -spriteFoot.x;
+            Assert.That(Vector2.Distance(center, displayed.transform.TransformPoint(spriteFoot)), Is.LessThan(.0001f),
+                "The sprite's authored foot anchor must meet the fixed movement collider.");
             Assert.That(bullet.OverlapPoint(_player.transform.TransformPoint(new Vector3(0, 2.1f))), Is.True);
             Assert.That(bullet.OverlapPoint(_player.transform.TransformPoint(new Vector3(2.5f, .65f))), Is.False);
             Assert.That(bullet.OverlapPoint(_player.transform.TransformPoint(new Vector3(1.55f, .1f))), Is.False,
@@ -156,6 +212,49 @@ public sealed class PlayerContinuousAimTests
             CollectionAssert.AreEqual(((PolygonCollider2D)bullet).points, ((PolygonCollider2D)solidBody).points);
             Assert.That(shadow.sortingOrder, Is.LessThan(_player.GetComponent<SpriteRenderer>().sortingOrder));
         }
+    }
+
+    [TestCase(false)] [TestCase(true)]
+    public void TurningBesideForestDoesNotPushTheActorWithoutMovement(bool startRight)
+    {
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
+        try
+        {
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(_player, scene);
+            _player.transform.position = Vector3.zero;
+            _player.GetComponent<Animator>().enabled = false;
+            var rigidbody = _player.GetComponent<Rigidbody2D>();
+            rigidbody.bodyType = RigidbodyType2D.Dynamic;
+            rigidbody.gravityScale = 0;
+            rigidbody.linearVelocity = Vector2.zero;
+            Input("MoveInput", Vector2.zero); Input("HasAimTarget", false);
+            Input("AimDirection", startRight ? Vector2.right : Vector2.left);
+            _motion.RefreshSpaceManBody();
+            Physics2D.SyncTransforms();
+            var foot = _player.GetComponentsInChildren<CapsuleCollider2D>(true)
+                .Single(collider => collider.name == (startRight ? "Right" : "Left"));
+            var wall = new GameObject("Foot-level forest obstacle");
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(wall, scene);
+            wall.layer = LayerMask.NameToLayer("Forest");
+            wall.transform.position = new Vector3(startRight ? foot.bounds.max.x + .035f : foot.bounds.min.x - .035f,
+                foot.bounds.center.y);
+            wall.AddComponent<BoxCollider2D>().size = new Vector2(.05f, 1f);
+            var physics = scene.GetPhysicsScene2D();
+            for (int step = 0; step < 30; step++) physics.Simulate(.02f);
+            Vector2 before = rigidbody.position;
+            Vector2 ground = _player.GetComponent<PlayerDirectionalColliders>().GroundPosition;
+            for (int turn = 0; turn < 20; turn++)
+            {
+                Input("AimDirection", ((turn % 2 == 0) != startRight) ? Vector2.right : Vector2.left);
+                _motion.RefreshSpaceManBody(); _visual.Refresh();
+                for (int step = 0; step < 3; step++) physics.Simulate(.02f);
+                Assert.That(Vector2.Distance(rigidbody.position, before), Is.LessThan(.001f),
+                    "Facing changes beside a wall must not displace the Rigidbody.");
+                Assert.That(Vector2.Distance(_player.GetComponent<PlayerDirectionalColliders>().GroundPosition, ground),
+                    Is.LessThan(.001f), "The foot collider must keep the same world contact point.");
+            }
+        }
+        finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene); }
     }
 
     [TestCase(WeaponType.DefaultGun)] [TestCase(WeaponType.CryoBlaster)] [TestCase(WeaponType.Sniper)]
@@ -235,7 +334,7 @@ public sealed class PlayerContinuousAimTests
             Assert.That(sprite, Is.Not.Null);
             Assert.That(sprite.rect.size, Is.EqualTo(new Vector2(160,160)));
             Assert.That(sprite.pixelsPerUnit, Is.EqualTo(32));
-            Assert.That(Vector2.Distance(sprite.pivot, new Vector2(80,41.6f)), Is.LessThan(.001f));
+            Assert.That(Vector2.Distance(sprite.pivot, new Vector2(name == "Side" ? 89 : 80,41.6f)), Is.LessThan(.001f));
         }
     }
 
@@ -258,9 +357,11 @@ public sealed class PlayerContinuousAimTests
             body.sortingOrder = -15;
             _player.transform.position = turret.transform.position + new Vector3(x, y);
             var repair = _player.GetComponent<PlayerTurretRepair>();
-            typeof(PlayerTurretRepair).GetProperty("Target").GetSetMethod(true).Invoke(repair, new object[]{turret});
+            var targetState = System.Activator.CreateInstance(typeof(PlayerTurretRepair).GetField("_heldTarget", Private).FieldType,
+                new object[] { turret });
+            Set(repair, "_target", targetState);
             typeof(PlayerTurretRepair).GetProperty("IsRepairing").GetSetMethod(true).Invoke(repair, new object[]{true});
-            Set(repair, "_heldTarget", turret);
+            Set(repair, "_heldTarget", targetState);
             _motion.SetHeldRepair(true);
             _visual.Refresh();
             var toolSorting = _visual.Renderer.GetComponent<UnityEngine.Rendering.SortingGroup>();
@@ -453,15 +554,16 @@ public sealed class PlayerContinuousAimTests
             Set(spanner, "_swingDirection", Vector2.right);
             Set(spanner, "_damage", 5); Set(spanner, "_impactPrefab", null);
             _visual.TryGetSpannerStrikeGeometry(Vector2.right, out var origin, out var range);
-            EnemyHealth Enemy(Vector2 position, bool trigger = false)
+            EnemyHealth Enemy(Vector2 position, bool sensor = false)
             {
                 var go = new GameObject("Spanner range target"); objects.Add(go);
-                go.transform.position = position; go.layer = LayerMask.NameToLayer("Enemy");
-                var collider = go.AddComponent<CircleCollider2D>(); collider.radius = .03f; collider.isTrigger = trigger;
+                go.transform.position = position; go.layer = LayerMask.NameToLayer(sensor ? "EnemySensor" : "EnemyHitBox");
+                var collider = go.AddComponent<CircleCollider2D>(); collider.radius = .03f; collider.isTrigger = true;
                 var health = go.AddComponent<EnemyHealth>(); health.Initialize(); return health;
             }
             var front = Enemy(origin + Vector2.right * (range - .1f));
-            front.gameObject.AddComponent<CircleCollider2D>().radius = .02f;
+            var secondHitBox = front.gameObject.AddComponent<CircleCollider2D>();
+            secondHitBox.radius = .02f; secondHitBox.isTrigger = true;
             var rear = Enemy(origin - Vector2.right * .6f);
             var distant = Enemy(origin + Vector2.right * (range + .2f));
             var sensor = Enemy(origin + new Vector2(.5f, .2f), true);
@@ -475,6 +577,60 @@ public sealed class PlayerContinuousAimTests
             Assert.That(spanner.AttackRange, Is.EqualTo(range).Within(.001f), "Status UI must report the actual range.");
         }
         finally { foreach(var go in objects) Object.DestroyImmediate(go); Object.DestroyImmediate(spanner.gameObject); }
+    }
+
+    [TestCase("near", false)] [TestCase("near", true)]
+    [TestCase("distant", false)] [TestCase("distant", true)]
+    [TestCase("behind-wall", false)] [TestCase("behind-wall", true)]
+    [TestCase("rear", false)] [TestCase("rear", true)]
+    public void SpannerUsesOnlyChildHitBoxWhenSensorContainsTheStrike(string condition, bool queryTriggers)
+    {
+        _player.transform.position = new Vector3(50000, 50000);
+        var spanner = CreateBoundSpanner();
+        var enemy = new GameObject("Enemy with sensor, feet and hitbox");
+        var wall = new GameObject("Forest wall between spanner and hitbox");
+        bool previousQueries = Physics2D.queriesHitTriggers;
+        try
+        {
+            Set(spanner, "_swingDirection", Vector2.right);
+            Set(spanner, "_damage", 5); Set(spanner, "_impactPrefab", null);
+            _visual.TryGetSpannerStrikeGeometry(Vector2.right, out var origin, out var range);
+            Vector2 nearPoint = origin + Vector2.right * (range * .8f);
+            enemy.transform.position = condition == "distant" ? origin + Vector2.right * (range * 3f)
+                : condition == "rear" ? origin - Vector2.right * (range * .8f) : nearPoint;
+            enemy.layer = LayerMask.NameToLayer("Enemy");
+            var health = enemy.AddComponent<EnemyHealth>(); health.Initialize();
+            CircleCollider2D Child(string name, string layer, bool trigger, float radius, Vector2 position)
+            {
+                var child = new GameObject(name); child.transform.SetParent(enemy.transform, false);
+                child.transform.position = position; child.layer = LayerMask.NameToLayer(layer);
+                var collider = child.AddComponent<CircleCollider2D>();
+                collider.isTrigger = trigger; collider.radius = radius; return collider;
+            }
+            var sensor = Child("EnemySensor", "EnemySensor", true, range * 4f, enemy.transform.position);
+            var hitbox = Child("HitBox", "EnemyHitBox", true, .03f, enemy.transform.position);
+            var secondHitBox = hitbox.gameObject.AddComponent<CircleCollider2D>();
+            secondHitBox.radius = .02f; secondHitBox.isTrigger = true;
+            // A nearby foot must not substitute for a distant or rear-facing hitbox.
+            Child("Foot", "EnemyFeetBox", false, .03f,
+                condition == "near" ? origin - Vector2.right * (range * 2f) : nearPoint);
+            wall.layer = LayerMask.NameToLayer("Forest");
+            wall.transform.position = origin + Vector2.right * (range * .65f);
+            wall.AddComponent<BoxCollider2D>().size = new Vector2(.1f, range * 2f);
+            wall.SetActive(condition == "behind-wall");
+            Physics2D.SyncTransforms();
+            Assert.That(sensor.OverlapPoint(origin), Is.True, "Reproduce the player/strike inside a large sensor.");
+            Physics2D.queriesHitTriggers = queryTriggers;
+            typeof(PlayerSpannerWeapon).GetMethod("ApplyMeleeDamage", Private).Invoke(spanner, null);
+            Assert.That(health.CurrentHealth, Is.EqualTo(health.MaxHealth - (condition == "near" && queryTriggers ? 5 : 0)),
+                "With Trigger queries enabled, only an unobstructed, forward EnemyHitBox in range may take one hit; " +
+                "sensor and feet are never damage shapes. The existing global Trigger query setting is preserved.");
+        }
+        finally
+        {
+            Physics2D.queriesHitTriggers = previousQueries;
+            Object.DestroyImmediate(enemy); Object.DestroyImmediate(wall); Object.DestroyImmediate(spanner.gameObject);
+        }
     }
 
     [Test]

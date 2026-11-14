@@ -19,10 +19,11 @@ public sealed class PlayerProjectileView : MonoBehaviour
         GetComponent<Animator>().Play(cryogenic ? "Base Layer.Cryo" : "Base Layer.Warm", 0, 0f);
     }
 
-    public void ShowImpact()
+    public void ShowImpact(Vector2? position = null)
     {
         if (_impactPrefab == null) return;
-        var effect = Instantiate(_impactPrefab, transform.position, Quaternion.identity);
+        var point = position.HasValue ? new Vector3(position.Value.x, position.Value.y, transform.position.z) : transform.position;
+        var effect = Instantiate(_impactPrefab, point, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(effect.gameObject, gameObject.scene);
         effect.SetTint(_tint, _renderer);
     }

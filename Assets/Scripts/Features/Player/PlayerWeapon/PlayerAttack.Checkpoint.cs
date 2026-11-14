@@ -16,7 +16,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     private readonly HashSet<PlayerBullet> _projectiles = new();
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ?? throw new InvalidOperationException("Bind the Player actor before weapon checkpoints.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/weapon";
-    int ICheckpointParticipant.Version => 2;
+    int ICheckpointParticipant.Version => 3;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 220;
 
@@ -38,7 +38,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     CheckpointSection ICheckpointParticipant.Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context); SavedWeapon state = CaptureWeapon();
-        return codec.Write(((ICheckpointParticipant)this).Key, 2, CheckpointSectionKind.World, writer =>
+        return codec.Write(((ICheckpointParticipant)this).Key, 3, CheckpointSectionKind.World, writer =>
         {
             codec.WriteText(writer, CheckpointIdentity.PlayerId.Value);
             writer.Write((int)state.Weapon); writer.Write(state.ShotRemaining);
@@ -52,7 +52,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context.Current);
-        if (section.Version != 1 && section.Version != 2)
+        if (section.Version < 1 || section.Version > 3)
             throw new NotSupportedException("Unsupported Player weapon checkpoint version: " + section.Version);
         SavedWeapon target = codec.Read(section, section.Version, reader =>
         {
@@ -61,7 +61,7 @@ public partial class PlayerAttack : ICheckpointParticipant
             var spanner = reader.ReadBoolean() ? PlayerSpannerWeapon.CheckpointState.Read(reader) : null;
             int count = codec.ReadCount(reader, MaximumSavedProjectiles);
             var projectiles = new PlayerBullet.CheckpointState[count];
-            for (int i = 0; i < count; i++) projectiles[i] = PlayerBullet.CheckpointState.Read(reader);
+            for (int i = 0; i < count; i++) projectiles[i] = PlayerBullet.CheckpointState.Read(reader, section.Version, codec);
             var ammo = section.Version >= 2 && reader.ReadBoolean()
                 ? PlayerWeaponAmmoState.CheckpointState.Read(reader) : null;
             if (!_selection.IsWeaponAvailable(weapon) || !Enum.IsDefined(typeof(WeaponType), weapon) || double.IsNaN(remaining) || double.IsInfinity(remaining) || remaining < 0 ||
@@ -104,6 +104,7 @@ public partial class PlayerAttack : ICheckpointParticipant
 
     private void ApplyWeapon(SavedWeapon state)
     {
+        if (_cryoSpray != null) _cryoSpray.Stop(true);
         RemoveProjectiles();
         _selection.RestoreWeapon(state.Weapon);
         // 무기 변경 알림의 재장전 취소 뒤에 탄창과 남은 재장전 시간을 적용합니다.
