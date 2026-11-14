@@ -1,4 +1,5 @@
 using TMPro;
+using TeamHJD.Game.Presentation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -41,6 +42,14 @@ public sealed class TacticalHudView : MonoBehaviour
     public TacticalMapGraphic WorldGraphic, OverviewGraphic;
     public TacticalCommandController Owner { get; private set; }
     public void Bind(TacticalCommandController owner) => Owner = owner;
+    private void LateUpdate()
+    {
+        // EventSystem의 클릭이 Controller.Update 뒤에 와도 첫 전환 프레임에 필드 UI를 남기지 않습니다.
+        if(!HudPresentationVisibility.IsSuppressed)return;
+        ToggleMap.gameObject.SetActive(false);
+        Tooltip.gameObject.SetActive(false);Prompt.gameObject.SetActive(false);Goal.gameObject.SetActive(false);
+        FieldStatusGroup.alpha=0;FieldStatusGroup.gameObject.SetActive(false);
+    }
     public void ShowCommand(bool show)
     {
         CommandRoot.gameObject.SetActive(show);

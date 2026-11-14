@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using TeamHJD.Game.Application;
+using TeamHJD.Game.Presentation;
 
 /// <summary>씬이 소유한 스킬 UI에 연결된 플레이어의 상태를 표시합니다.</summary>
 [DisallowMultipleComponent]
@@ -36,7 +37,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
     {
         get
         {
-            if(!IsFieldVisible)return false;
+            if(!IsFieldVisible || HudPresentationVisibility.IsSuppressed)return false;
             if(_tactical==null && (Time.unscaledTime>=_nextTacticalLookup || Owner.GetComponent<PlayerControlState>()?.IsInTacticalView==true))
             {
                 _nextTacticalLookup=Time.unscaledTime+.5f;
@@ -235,6 +236,7 @@ public sealed class PlayerSkillHud : MonoBehaviour
 
     private void SetVisible(bool visible)
     {
+        visible &= !HudPresentationVisibility.IsSuppressed;
         if (_canvas == null) _canvas = GetComponent<Canvas>();
         if (_raycaster == null) _raycaster = GetComponent<GraphicRaycaster>();
         _canvas.enabled = visible;

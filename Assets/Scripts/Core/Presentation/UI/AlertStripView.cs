@@ -36,7 +36,7 @@ namespace TeamHJD.Game.Presentation
             // TMP의 이 값은 프리팹 직렬화 대상이 아니므로 실제 표시 시에도 보장합니다.
             Message.maxVisibleLines = 2;
             Message.color = alert.Tone == AlertTone.Error ? ErrorColor : alert.Tone == AlertTone.Success ? SuccessColor : InfoColor;
-            Group.alpha = UiMotion.Sigmoid(Mathf.Clamp01(Mathf.Min((float)service.CurrentAge / Mathf.Max(.01f, EnterSeconds),
+            Group.alpha = HudPresentationVisibility.IsSuppressed ? 0 : UiMotion.Sigmoid(Mathf.Clamp01(Mathf.Min((float)service.CurrentAge / Mathf.Max(.01f, EnterSeconds),
                 (DisplaySeconds - (float)service.CurrentAge) / Mathf.Max(.01f, ExitSeconds))));
             Group.interactable = Group.blocksRaycasts = false;
         }
@@ -89,5 +89,8 @@ namespace TeamHJD.Game.Presentation
             if (Group != null) { Group.alpha = 0; Group.interactable = Group.blocksRaycasts = false; }
             if (Message != null) Message.text = "";
         }
+
+        // 버튼 이벤트는 App의 Render 뒤에도 발생할 수 있으므로 같은 렌더 프레임의 잔상을 막습니다.
+        private void LateUpdate() { if (HudPresentationVisibility.IsSuppressed && Group != null) Group.alpha = 0; }
     }
 }
