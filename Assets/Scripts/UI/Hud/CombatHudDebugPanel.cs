@@ -2,6 +2,7 @@
 // 다른 생존/전환 잠금과 Host 검증을 제거하지 않으며, 전장의 pause 정책을 바꾸지 않습니다.
 using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Application;
+using TeamHJD.Game.Presentation;
 using TeamHJD.Game.UI;
 using TMPro;
 using UnityEngine;
@@ -41,8 +42,8 @@ public sealed class CombatHudDebugPanel : MonoBehaviour
         }
         if (_weather != null) _weather.SuppressLegacyControls();
         bool appReady = _app != null && _app.IsInitialized;
-        bool menu = Stage.HasFieldActor && appReady && _app.Screens.Top?.Kind == ScreenKind.Menu;
-        bool covered = !appReady || (_app.Screens.Top != null && _app.Screens.Top.Kind != ScreenKind.Menu);
+        bool menu = !HudPresentationVisibility.IsSuppressed && Stage.HasFieldActor && appReady && _app.Screens.Top?.Kind == ScreenKind.Menu;
+        bool covered = HudPresentationVisibility.IsSuppressed || !appReady || (_app.Screens.Top != null && _app.Screens.Top.Kind != ScreenKind.Menu);
         if (!Stage.HasFieldActor || covered) _panel.Snap(0);
         _panel.Set(menu ? 1 : 0, Style.SlideSeconds);
         float amount = _panel.Tick(Time.unscaledDeltaTime);

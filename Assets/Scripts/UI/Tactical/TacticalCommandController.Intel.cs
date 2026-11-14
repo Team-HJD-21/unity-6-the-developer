@@ -132,6 +132,12 @@ public sealed partial class TacticalCommandController
     private TacticalPresentationRules.FieldState _fieldStatus;
     private void RefreshFieldStatus(bool field)
     {
+        if(IsTransitioning)
+        {
+            View.FieldStatusGroup.alpha=0;
+            View.FieldStatusGroup.gameObject.SetActive(false);
+            return;
+        }
         var state=TacticalPresentationRules.FieldState.Hidden;
         if(_fieldCaptureRegion>=0 && (!_captureProgress.TryGetValue(_fieldCaptureRegion,out var previous) || previous.IsSecured || previous.HoldSeconds<=0 && previous.Reason!=StaticRegionCaptureReason.Holding))_fieldCaptureRegion=-1;
         if(field && !IsOpen && !IsTransitioning && Regions!=null && !(_app!=null && _app.IsInitialized && _app.LocalInput.IsBlocked))
