@@ -60,9 +60,14 @@ public partial class EnemyMovement : MonoBehaviour
         if (_path == null)
             return false;
 
+        Vector2 position = transform.position;
+        float arrivalDistanceSquared = arrivalDistance * arrivalDistance;
+        
         // 이미 도착한 지점은 건너뛴다.
         while (_currentPath < _path.Length &&
-               Vector2.Distance(transform.position, _path[_currentPath]) <= arrivalDistance)
+               arrivalDistance >= 0f &&
+               ((Vector2)_path[_currentPath] - position).sqrMagnitude
+               <= arrivalDistanceSquared)
         {
             _currentPath++;
         }
@@ -70,23 +75,27 @@ public partial class EnemyMovement : MonoBehaviour
         if (_currentPath >= _path.Length)
             return false;
 
-        direction = ((Vector2)_path[_currentPath] -
-                     (Vector2)transform.position).normalized;
-        return true;
+        direction = ((Vector2)_path[_currentPath] - position).normalized;
+    return true;
     }
 
     /// <summary>
     /// 이동 방향의 속도가 목표보다 느릴 때 이동 힘을 더한다.
     /// </summary>
+    /// <param name="moveDirection">정규화된 이동 방향.</param>
     public void Move(Vector2 moveDirection)
     {
-        Vector2 direction = moveDirection.normalized;
-        float forwardSpeed = Vector2.Dot(rigidbody2D.linearVelocity, direction);
-        float acceleration = Mathf.Min(moveAcceleration,
+        float forwardSpeed =
+            Vector2.Dot(rigidbody2D.linearVelocity, moveDirection);
+
+        float acceleration = Mathf.Min(
+            moveAcceleration,
             Mathf.Max(0f, moveSpeed - forwardSpeed) / Time.fixedDeltaTime);
 
         // 외부에서 밀린 속도는 잘라내지 않고, 스스로 더하는 이동 힘만 제한한다.
-        rigidbody2D.AddForce(direction * acceleration * rigidbody2D.mass, ForceMode2D.Force);
+        rigidbody2D.AddForce(
+            moveDirection * (acceleration * rigidbody2D.mass),
+            ForceMode2D.Force);
     }
 
     /// <summary>

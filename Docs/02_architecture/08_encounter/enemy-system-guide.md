@@ -100,13 +100,15 @@ classDiagram
 
 `ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.TryChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.
 
-목표 선택은 `EnemySquad`가 담당한다. 배정된 목표가 있으면 주기적으로 `CanBeTargeted`를 검사하거나 구성원을 순회하지 않는다. 타깃 불가 이벤트를 받으면 기존 목표와 구독을 해제하고 분대 중심에서 가장 가까운 유효 후보를 즉시 한 번 검색한다. 후보가 없을 때만 기존 행동 갱신 경로의 대표 활성 구성원이 `RefreshTarget()`으로 0.5초마다 재시도하며 새 Update나 코루틴을 추가하지 않는다. 여러 분대가 같은 목표를 잃으면 해당 이벤트 시점에 각 분대의 검색이 발생하며 프레임별 검색량을 분산하는 스케줄러는 아니다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
+목표 선택은 `EnemySquad`가 담당한다. 배정된 목표가 있으면 주기적으로 `CanBeTargeted`를 검사하거나 구성원을 순회하지 않는다. 타깃 불가 이벤트를 받으면 기존 목표와 구독을 해제하고 분대 중심에서 가장 가까운 유효 후보를 즉시 한 번 검색한다. 후보가 없을 때만 기존 행동 갱신 경로의 대표 활성 구성원이 `RefreshTarget()`으로 현재 코드의 간격인 1초마다 재시도하며 새 Update나 코루틴을 추가하지 않는다. 여러 분대가 같은 목표를 잃으면 해당 이벤트 시점에 각 분대의 검색이 발생하며 프레임별 검색량을 분산하는 스케줄러는 아니다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
+
+`EnemySquad`는 합류·제거와 `EnemyController` 활성 상태 변경 시 대표를 선택한다. `EnemyNetworkController`는 `IsSquadRepresentative`인 구성원만 `RefreshTarget()`을 호출하며, 반복 갱신 중 대표를 찾기 위한 구성원 순회를 하지 않는다. 대표가 제거되거나 비활성화되면 남은 활성 구성원이 갱신을 이어받는다. 대표 교체는 분대의 목표·배정 인원·다음 재검색 시각을 초기화하지 않으며, 타깃 상실 이벤트의 즉시 재검색은 대표 여부와 관계없이 실행한다. 1인 분대는 호출 수가 줄지 않는다.
 
 `EnemyDefinition.SquadMode`는 공동 분대/개별 분대, `TargetRule`은 PlayerOrTurret/PlayerOnly를 선택한다. 일반 스폰도 타깃 규칙이 다른 구성원은 같은 분대에 섞지 않는다. BlackWolf는 개별 PlayerOnly 분대다.
 
 현재 분대 선택 경로는 최단거리 조회를 사용한다. `EnemyAIProfile`과 점수 평가용 옛 클래스 파일이 남아 있다는 사실을 현재 분대가 점수식을 사용한다는 뜻으로 해석하지 않는다.
 
-재검색은 **타깃 교체**다. `AssignTarget()`은 `SetDestination()`으로 이전 경로를 비우고 새 타깃의 첫 경로를 즉시 계산한다. 같은 플레이어를 추적하는 동안에는 `MovingEnemyController`가 이동 중에만 경로를 갱신한다. 센서와 현재 타깃 콜라이더가 접촉하면 짧은 주기, 밖이면 긴 주기를 적용한다. 인스펙터 초기값은 범위 안 0.25초, 밖 1초, 타깃 최소 이동 거리 0.2이며 밸런스 확정값이 아니다. 경로가 없으면 이동량과 관계없이 재시도한다. 같은 타깃의 갱신 실패는 기존 경로를 유지한다. 실제 게임 실행에서는 기존 FieldSimulationTime을 사용한다.
+재검색은 **타깃 교체**다. `AssignTarget()`은 `SetDestination()`으로 이전 경로를 비우고 새 타깃의 첫 경로를 즉시 계산한다. 같은 플레이어를 추적하는 동안에는 `MovingEnemyController`가 이동 중에만 경로를 갱신한다. 감지 중심에서 현재 타깃 위치까지의 거리가 센서 반경 안이면 짧은 주기, 밖이면 긴 주기를 적용한다. 인스펙터 초기값은 범위 안 0.25초, 밖 1초, 타깃 최소 이동 거리 0.2이며 밸런스 확정값이 아니다. 경로가 없으면 이동량과 관계없이 재시도한다. 같은 타깃의 갱신 실패는 기존 경로를 유지한다. 실제 게임 실행에서는 기존 FieldSimulationTime을 사용한다.
 
 첫 반복 갱신 시점은 몬스터 InstanceID로 엇갈리게 배치하며 새 타깃의 첫 계산을 지연하지 않는다. 이는 프레임당 계산 수 제한이나 결정적인 재실행을 보장하는 스케줄러가 아니다. 타깃별 공격 인원 제한은 아래 배정 API와 분대 연결을 사용하며 별도 경로 계산 스케줄러는 후속 작업이다.
 
@@ -122,7 +124,6 @@ classDiagram
 
 `EnemyPlayerSensor`는 개체별 CircleCollider2D Trigger의 진입 이벤트로 플레이어를 전달한다. 이미 겹친 상태의 분대 합류나 기존 타깃 무효화는 Stay 이벤트로 보완한다. 센서는 `EnemyNetworkController.CanExecuteBehavior`로 서버/명시적 로컬 테스트 및 시뮬레이션 진행 권한을 검사한 뒤 `EnemyController.NotifyPlayerDetected()`에 전달한다. 공통 컨트롤러는 네트워크 컴포넌트를 직접 참조하지 않고 소속 분대에 전달한다. `EnemySquad.TryPrioritizePlayer()`는 검색 주기를 기다리지 않고 플레이어로 전환하며, 기존 플레이어가 유효하면 유지한다. 범위 이탈만으로 타깃을 해제하지 않는다.
 
-센서는 EnemyRoot의 자식으로 배치했다. 센서 자식의 EnemySensor 레이어 적용, 위치·반경과 몬스터별 스케일에 따른 실제 범위는 프리팹 조정 단계에서 확인한다. 감지 접촉은 EnemySensor와 Player 사이로 제한하며 최종 플레이어 종류 검사는 분대에서 수행한다. 현재 타깃과의 접촉 여부만 확인하므로 다른 플레이어가 센서 안에 있다는 이유로 빠른 경로 갱신을 적용하지 않는다. 공격 측의 Cast/Overlap 검색은 별도로 EnemySensor를 제외해야 한다. 힐의 최종 사거리 검사는 기존대로 Trigger를 제외한다. Host/Client 플레이 검증은 아직 완료하지 않았다.
 
 이동은 XY NavMesh 경로를 구하고 서버의 FixedUpdate에서 `AddForce`로 가속한다. `moveSpeed`는 이동 방향의 목표 속도, `moveAcceleration`은 최대 이동 가속도다. 목표 속도에 도달하면 이동 힘을 더하지 않으며 외부에서 밀린 속도를 강제로 잘라내지 않는다. 사거리에서는 컨트롤러가 `Move()`를 호출하지 않아 이동 힘이 추가되지 않으며, 다른 적의 충돌에는 밀릴 수 있다. 남은 속도는 EnemyRoot의 Rigidbody2D `Linear Damping`으로 줄인다(초기 조정값 5). 실제 이동 속도와 정지 거리는 감쇠 및 충돌의 영향을 받는다. `CheckCondition()`은 쿨타임과 독립적이므로, 사거리에 도착한 적은 쿨타임 중에도 이동 입력을 멈춘다. 변태를 완료한 소환형은 기존대로 위치를 고정한다.
 
@@ -132,7 +133,11 @@ classDiagram
 
 `CheckCondition()`은 효과를 쓸 상황인지 판단하고, `Activate()`는 실행 성공 여부를 반환한다. `TryUse()`가 성공했을 때 공통 쿨타임을 시작하며 컨트롤러가 능력 모션을 재생한다. `IsExecuting`은 진행 중인 공격·소환 등을 기다리는 데 사용한다. `FacingTarget`은 회복할 아군처럼 이동 목표와 다른 대상을 바라볼 때 사용한다.
 
+`MovingEnemyController`는 행동 실행마다 전투 타깃의 사거리를 한 번 계산해 `CheckCondition(bool isInTargetRange)`와 `MoveToTarget(bool isInTargetRange)`에 전달한다. 근접·원거리·폭발 능력은 이 결과를 재사용한다. 조건 통과 직후의 내부 실행 경로는 `TryUse(true)`로 조건 재검색을 생략하지만 권한·시뮬레이션 진행·쿨타임·실제 발동 검사는 유지한다. 인자 없는 `TryUse()`는 기존처럼 조건을 직접 검사한다. 힐 능력은 별도 아군 조건을 검사하고, 소환사는 이동 상태에서 계산한 거리 결과를 변태와 이동 판단에 함께 사용한다. 거리 결과는 해당 행동 실행 안에서만 사용하며, 지연 공격·명중 시점의 검사는 재사용하지 않는다.
+
 공통 범위 필드는 `activationRange`다. 몸통과 대상의 활성 비트리거 Collider 사이 표면 거리를 비교한다. 몸통은 명시적으로 연결한 Trigger도 사용할 수 있으며 Bomber는 CapsuleCollider2D를 사용한다. 발동 거리와 폭발 피해 반경은 별개다.
+
+`EnemyHealAbility`는 `allyHitboxLayers`에 지정한 아군 피격 레이어만 후보로 조회하고, 같은 아군의 여러 콜라이더는 한 번만 처리한다. 검색 시 가장 가까운 회복 가능한 아군을 선택한 뒤 체력·활성·사거리 조건이 유효한 동안 대상과 콜라이더 목록을 유지한다. 기존 대상을 잃으면 즉시 한 번 재검색하고, 대상이 없을 때는 `targetSearchInterval`(PartyMushroom 기본 0.2초)마다 다시 찾는다. 간격은 Match 시계를 사용하며 능력 쿨타임과 별개다. 유효한 치료 대상이 있으면 쿨타임 중에도 발동 조건을 유지해 정지·바라보기 판단을 보존한다. 프리팹에는 HitBox 자식의 실제 레이어를 연결하며, 새 몬스터 제작 시 이 마스크도 확인한다.
 
 `EnemyProjectileAbility`는 발사 위치·방향·피해량을 정하고 `EnemyProjectileGenerator`에 생성을 요청한다. 생성 후 이동·명중·수명은 투사체가 담당한다. 애니메이션 이벤트 발사를 사용하는 프리팹은 `OnProjectileFireAnimationEvent()`와 `OnProjectileAttackAnimationFinished()`를 연결한다.
 

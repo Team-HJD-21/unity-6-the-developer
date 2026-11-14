@@ -386,6 +386,80 @@ public sealed class EnemyAutoRetargetTests
         Assert.That(controller.AssignedTarget, Is.EqualTo(player.transform));
     }
 
+    /// <summary>대표가 분대를 떠나면 남은 구성원이 갱신을 넘겨받고 배정도 한 번만 반환한다.</summary>
+    [Test]
+    public void Representative_LeavingTransfersOwnershipAndPreservesAssignments()
+    {
+        TargetableComponent target = CreateTarget("Assigned", 1f);
+        var leader = CreateEnemy();
+        var follower = CreateEnemy();
+        var squad = new EnemySquad(
+            EnemySquadMode.Shared, EnemyTargetRule.PlayerOrTurret, target.transform);
+        leader.JoinSquad(squad);
+        follower.JoinSquad(squad);
+
+        Assert.That(leader.IsSquadRepresentative, Is.True);
+        Assert.That(follower.IsSquadRepresentative, Is.False);
+
+        leader.LeaveSquad();
+        leader.LeaveSquad();
+
+        Assert.That(leader.IsSquadRepresentative, Is.False);
+        Assert.That(follower.IsSquadRepresentative, Is.True);
+        Assert.That(follower.AssignedTarget, Is.SameAs(target.transform));
+        Assert.That(target.AssignedAttackerCount, Is.EqualTo(1));
+
+        follower.LeaveSquad();
+        Assert.That(follower.IsSquadRepresentative, Is.False);
+        Assert.That(target.AssignedAttackerCount, Is.Zero);
+    }
+
+    /// <summary>대표 비활성화와 재활성화에도 공유된 재검색 간격과 재시도 동작을 유지한다.</summary>
+    [Test]
+    public void Representative_DisableAndReenablePreserveSharedRetry()
+    {
+        var leader = CreateEnemy();
+        var follower = CreateEnemy();
+        var squad = new EnemySquad();
+        leader.JoinSquad(squad);
+        follower.JoinSquad(squad);
+        SetSearchTime(squad, Time.time + 10f);
+        TargetableComponent target = CreateTarget("RetryTarget", 1f);
+
+        SetControllerEnabled(leader, false);
+        Assert.That(leader.IsSquadRepresentative, Is.False);
+        Assert.That(follower.IsSquadRepresentative, Is.True);
+
+        // 대표 교체가 기존 재검색 대기 시간을 초기화하면 안 된다.
+        follower.RefreshTarget();
+        Assert.That(follower.AssignedTarget, Is.Null);
+
+        SetControllerEnabled(follower, false);
+        Assert.That(follower.IsSquadRepresentative, Is.False);
+        SetControllerEnabled(leader, true);
+        Assert.That(leader.IsSquadRepresentative, Is.True);
+        SetControllerEnabled(follower, true);
+        Assert.That(follower.IsSquadRepresentative, Is.False);
+
+        SetSearchTime(squad, 0f);
+        follower.RefreshTarget();
+        Assert.That(follower.AssignedTarget, Is.Null);
+        leader.RefreshTarget();
+
+        Assert.That(leader.AssignedTarget, Is.SameAs(target.transform));
+        Assert.That(follower.AssignedTarget, Is.SameAs(target.transform));
+        Assert.That(target.AssignedAttackerCount, Is.EqualTo(2));
+    }
+
+    /// <summary>EditMode에서 행동 컴포넌트의 활성화 생명주기도 명시적으로 재현한다.</summary>
+    private static void SetControllerEnabled(EnemyController controller, bool enabled)
+    {
+        controller.enabled = enabled;
+        typeof(EnemyController).GetMethod(
+            enabled ? "OnEnable" : "OnDisable",
+            BindingFlags.Instance | BindingFlags.NonPublic).Invoke(controller, null);
+    }
+
     private EnemyAutoRetargetTestController CreateEnemy()
     {
         GameObject enemy = Create("Enemy");
@@ -401,6 +475,10 @@ public sealed class EnemyAutoRetargetTests
         target.transform.position = _origin + Vector3.right * distance;
         target.AddComponent<BoxCollider2D>();
         var targetable = target.AddComponent<TargetableComponent>();
+        // 포화 테스트의 기준을 게임 밸런스 기본값과 분리한다.
+        typeof(TargetableComponent).GetField(
+            "maxAttackers", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(targetable, 10);
         targetable.SetTargetType(TargetType.Turret);
         targetable.SetHealth(100, 100);
         return targetable;
