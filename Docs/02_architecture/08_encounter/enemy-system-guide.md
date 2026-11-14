@@ -104,7 +104,11 @@ classDiagram
 
 `EnemySquad`는 합류·제거와 `EnemyController` 활성 상태 변경 시 대표를 선택한다. `EnemyNetworkController`는 `IsSquadRepresentative`인 구성원만 `RefreshTarget()`을 호출하며, 반복 갱신 중 대표를 찾기 위한 구성원 순회를 하지 않는다. 대표가 제거되거나 비활성화되면 남은 활성 구성원이 갱신을 이어받는다. 대표 교체는 분대의 목표·배정 인원·다음 재검색 시각을 초기화하지 않으며, 타깃 상실 이벤트의 즉시 재검색은 대표 여부와 관계없이 실행한다. 1인 분대는 호출 수가 줄지 않는다.
 
-`EnemyDefinition.SquadMode`는 공동 분대/개별 분대, `TargetRule`은 PlayerOrTurret/PlayerOnly를 선택한다. 일반 스폰도 타깃 규칙이 다른 구성원은 같은 분대에 섞지 않는다. BlackWolf는 개별 PlayerOnly 분대다.
+`EnemyDefinition.SquadMode`는 공동 분대/개별 분대, `TargetRule`은 PlayerOrTurret/PlayerOnly를 선택한다. `PlayerOrTurret` 분대의 자동 검색은 시설만 대상으로 하고 플레이어는 감지 이벤트로 전환한다. `PlayerOnly`는 자동 검색에서도 플레이어만 대상으로 한다. 일반 스폰도 타깃 규칙이 다른 구성원은 같은 분대에 섞지 않는다. BlackWolf는 개별 PlayerOnly 분대다.
+
+2026-11-15 데이터 설정 이전 단계: `EnemySquadPreset.TargetRule`에 `PlayerOrTurret`·`PlayerOnly`·`TurretOnly` 설정을 추가했다. `TurretOnly`는 시설만 검색·배정하고 플레이어 감지 전환을 거절할 규칙이다. 현재 생성·소환·복원 경로는 아직 Definition의 이전 규칙을 읽으므로 `EnemyDefinition.TargetRule`과 직렬화 값은 Inspector에서 숨겨 임시 보존한다. 프리셋 에셋의 값 설정, `SpawnInstruction` 전달 및 분대의 `TurretOnly` 배정 검증 연결은 다음 단계이며, 새 프리셋 설정이 실제 행동에 반영된 상태로 해석하지 않는다. 기존 enum 값 0·1은 유지하고 `TurretOnly`는 2로 추가했다.
+
+`EnemySquad.SetTarget(preferredTarget, candidates)`는 이미 배정된 목표를 유지한다. 목표가 없으면 전달받은 후보의 유형·유효성과 실제 집계 인원 수용 여부를 확인하고 배정한다. 성공하면 거리 검색을 생략하며, 실패하면 전달받은 목록에서 규칙에 맞는 가장 가까운 후보를 검색한다. 두 인자를 생략한 기존 호출도 사용할 수 있으며, 검색이 필요할 때 최신 목록을 조회한다. 후보 참조와 목록을 보관하는 새 상태나 별도 갱신 루프는 추가하지 않는다.
 
 현재 분대 선택 경로는 최단거리 조회를 사용한다. `EnemyAIProfile`과 점수 평가용 옛 클래스 파일이 남아 있다는 사실을 현재 분대가 점수식을 사용한다는 뜻으로 해석하지 않는다.
 

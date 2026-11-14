@@ -3,6 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
+/// 분대의 자동 검색 대상과 플레이어 감지 시 전환 허용 여부를 지정한다.
+/// </summary>
+public enum EnemyTargetRule
+{
+    /// <summary>자동 검색은 시설만 대상으로 하며 감지한 플레이어로 전환할 수 있다.</summary>
+    PlayerOrTurret = 0,
+
+    /// <summary>검색과 타깃 배정 모두 플레이어만 허용한다.</summary>
+    PlayerOnly = 1,
+
+    /// <summary>검색과 타깃 배정 모두 시설만 허용한다.</summary>
+    TurretOnly = 2
+}
+
+/// <summary>
 /// 주변 상황에 따라 선택 비중을 높일 분대의 전투 역할을 구분한다.
 /// </summary>
 public enum EnemySquadRole
@@ -51,6 +66,9 @@ public sealed class EnemySquadPreset : ScriptableObject
     [SerializeField] private string _squadOrder;
     [SerializeField] private List<EnemySquadCompositionEntry> _composition = new();
 
+    [Header("타깃 규칙")]
+    [SerializeField] private EnemyTargetRule _targetRule = EnemyTargetRule.PlayerOrTurret;
+
     [Header("자동 편성")]
     [SerializeField] private EnemySquadRole role;
     [Tooltip("자동 선택의 기본 가중치입니다. 0이면 자동 선택에서 제외됩니다.")]
@@ -63,6 +81,9 @@ public sealed class EnemySquadPreset : ScriptableObject
     /// <see cref="FixedPresetSpawnRequest.SquadOrder"/>와 비교해 이 프리셋을 선택할 명령 값을 반환한다.
     /// </summary>
     public string SquadOrder => _squadOrder;
+
+    /// <summary>이 편성의 분대에 적용할 타깃 검색·배정 규칙을 반환한다.</summary>
+    public EnemyTargetRule TargetRule => _targetRule;
 
     /// <summary>
     /// 한 구성 세트에 포함할 적 종류와 종류별 가중치 목록을 반환한다.
