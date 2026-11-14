@@ -1,6 +1,6 @@
 # Unity 기본 오디오와 GameAudioManager
 
-기준일: 2026-11-13. 상태: 구현 완료·최종 검증 대기, main 미반영. [이번 작업 정리와 추후 PR의 Docs 반영 사항](../../01_planning/02_implementation-records/2026/11/2026-11-13-game-audio-handoff.md)을 함께 읽는다.
+기준일: 2026-11-14. 상태: feature/core 구현·기능별 자동/Editor 검수 완료, 통합 PR 생성 전. 장치 청감·Standalone·실제 Client 인수는 별도다. 초기 구현은 [오디오 작업 정리](../../01_planning/02_implementation-records/2026/11/2026-11-13-game-audio-handoff.md), 후속 재생 검수는 [실제 OST 연결 기록](../../01_planning/02_implementation-records/2026/11/2026-11-13-day-night-soundtrack.md), 통합 범위는 [PR 검토 문서](../../03_team/00_reviews/core-ui-integration-20261114.md)를 따른다.
 
 추가 오디오 패키지나 자체 공간 음향 엔진 없이 Unity의 AudioSource, AudioListener, AudioMixer를 사용한다. 공용 코드는 재생 요청·풀·동시 재생 수·분류·수명과 로컬 설정을 관리한다.
 

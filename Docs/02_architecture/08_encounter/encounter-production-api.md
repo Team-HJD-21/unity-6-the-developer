@@ -34,7 +34,7 @@ flowchart TD
 | 기존 Field Enemy·터렛·자식 투사체, 정규 생산·지연 출현, 정적 확보 | `MatchTimeService.FieldClock` |
 | 표현/진단 | Scene의 `MatchTime`과 `FieldTime`을 구분해 읽음 |
 
-Core의 단계 소유자는 `MatchTimeService.SetFieldHeld(bool)`로 기존 Field만 보류한다. `CanAdvance`만 끄는 것과 달리 Field 절대 시각도 멈추므로 냉각·투사체 수명·예약 deadline이 재개 순간 만료되지 않는다. 보스전에서 어느 Scene을 보류할지는 후속 Stage 단계 연결에서 결정한다. **현재 원격 Client에는 공용 시간만 복제되며 이 Field 보류의 네트워크 인수는 후속 범위다.**
+Core의 단계 소유자는 `MatchTimeService.SetFieldHeld(bool)`로 기존 Field만 보류한다. `CanAdvance`만 끄는 것과 달리 Field 절대 시각도 멈추므로 냉각·투사체 수명·예약 deadline이 재개 순간 만료되지 않는다. 보스전에서 어느 Scene을 보류할지는 후속 Stage 단계 연결에서 결정한다. **공용 시간과 Field 시간은 서로 다른 anchor로 Client에 전달하는 기반을 구현했다. 실제 원격 Player를 포함한 두 게임 실행의 Field 보류 인수는 후속 범위다.**
 
 ## 환경과 저장
 

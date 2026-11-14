@@ -1,5 +1,7 @@
 # The Developer 문서 안내
 
+**11/14 Core·UI 통합 PR 준비:** [검토 순서·실제 데이터 흐름·검증 경계](03_team/00_reviews/core-ui-integration-20261114.md). `feature/core`에 최신 main #722와 전술 HUD·공용 UI·OST 변경을 함께 포함했다. 원격 PR은 생성 전이며 전체 Stage1 완료를 뜻하지 않는다. [UI 구현·사용법과 남은 실제 입력 인수](01_planning/02_implementation-records/2026/11/2026-11-13-tactical-command-view.md)를 함께 확인한다.
+
 **11/13–14 Encounter/Stage1 로컬 구현:** [현재 Core 실행 지도](02_architecture/01_core/core-runtime-map.md)와 [통합 기록](01_planning/02_implementation-records/2026/11/2026-11-13-encounter-stage1-integration.md)을 확인한다. [11/14 범위 정정](01_planning/02_implementation-records/2026/11/2026-11-14-explicit-stage-transition-scope.md)에 따라 자동 최종 진입·승리·결과 저장 연결은 제외하고 명시 API만 유지한다. 실제 보스전/결과 설계·확정 콘텐츠·Weather 필수 writer·원격 Player 인수는 남아 있다. 전체 Stage1 완료나 main 반영으로 해석하지 않는다.
 
 배치별 구현 근거와 실제 Scene의 미지정 원본은 [11/14 준비 상태·남은 접합](01_planning/02_implementation-records/2026/11/2026-11-14-encounter-stage1-readiness.md)에 모았다. API/개별 Feature 검수와 전체 게임 인수를 구분한다.
