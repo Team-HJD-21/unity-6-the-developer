@@ -4,10 +4,6 @@ using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
 using TeamHJD.Game.Enemy.Contracts;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "LaserTurret")]
 public partial class FieldLaserTurret : DefaultFieldLaserTurret
 {
@@ -216,15 +212,4 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
         _hits.Clear();
         _damagedEnemies.Clear();
     }
-
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        if (Definition == null)
-            return;
-
-        Handles.color = Color.magenta;
-        Handles.DrawWireDisc(transform.position, transform.forward, Range);
-    }
-#endif
 }

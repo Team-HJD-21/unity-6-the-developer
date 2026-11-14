@@ -96,6 +96,8 @@ public sealed class FieldTurretRestoreVisualTests
             Assert.That(wave, Is.Not.Null);
             Assert.That(wave.enabled, Is.True);
             Assert.That(wave.color.a, Is.EqualTo(.5f));
+            Assert.That(wave.sortingLayerID, Is.EqualTo(Gun(actor).sortingLayerID));
+            Assert.That(wave.sortingOrder, Is.LessThan(Gun(actor).sortingOrder));
             Assert.That(Gun(actor).color.a, Is.EqualTo(1f));
         }
     }

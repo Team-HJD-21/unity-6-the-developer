@@ -6,10 +6,6 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "CanonTurretLv1")]
 public class FieldCanonTurretLv1 : DefaultFieldCanonTurret
 {   
@@ -38,13 +34,5 @@ public class FieldCanonTurretLv1 : DefaultFieldCanonTurret
         // {
         //     AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire);
         // } 
-    }
-    private void OnDrawGizmosSelected()//타워의 반경 그려줌(디버깅용, 인게임에는 안나옴)
-    {
-#if UNITY_EDITOR
-        Handles.color = Color.magenta;
-        if (Definition != null)
-            Handles.DrawWireDisc(transform.position, transform.forward, Range);
-#endif
     }
 }

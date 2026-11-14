@@ -1,5 +1,4 @@
 // 기존 공격·과열 규칙을 유지하며 진행과 생성 자식을 공용 필드 시간에 연결합니다.
-using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.FieldTurrets.Contracts;
@@ -19,8 +18,10 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
 
     private readonly List<Collider2D> _targetCandidates = new();
     private MissileTargetReservation[] _targetReservations;
+    private double _shootAnimationEndsAt;
     private float _currentMissileCount;   //과열시 중지 위한 변수
     protected override bool UsesMinimumRange => true;
+    protected override bool RequiresClearLineOfSight => false;
 
     private float CurMissileCount
     {
@@ -54,6 +55,11 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         base.Update();
         if (!CanSimulateField) return;
         UpdateRangeVisibility();
+        if (_shootAnimationEndsAt > 0d && FieldSeconds >= _shootAnimationEndsAt)
+        {
+            _shootAnimationEndsAt = 0d;
+            Animator.SetBool("isShoot", false);
+        }
         TowerIsActivatedNow();//사용자에 의해 타워가 가동 됐다면 역할 수행
     }
     private void TowerIsActivatedNow()//사용자에 의해 타워가 가동 됐다면 역할 수행(Update에서 수행)
@@ -61,7 +67,7 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         if (IsOperational)
         {
             if (TryBeginOverheatCooling()) return;
-            NoTargetInRange(); // 기존 표적의 사거리와 가림을 확인하고 필요하면 다시 탐색
+            NoTargetInRange(); // 기존 표적의 사거리와 공격 가능 여부를 확인
             RotateTowardsTarget();//적 발견시 적을 향해 타워 돌리기
             FireRateController();//총알 객체화 후 발사 동작 수행
             OverHeatAnimationController();//설정시간 도달 시 과열
@@ -158,17 +164,14 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
                 if (reservation == null || !reservation.IsValid)
                     continue;
 
-                GameObject missileObject = Instantiate(
-                    missilePrefab, spawnPoints[index].position, turretRotationPoint.rotation);
+                Vector3 position = spawnPoints[index].position;
+                position.z = turret.position.z;
+                GameObject missileObject = Instantiate(missilePrefab, position, turretRotationPoint.rotation);
                 try
                 {
                     BindProjectileSimulation(missileObject);
                     missileObject.GetComponent<FieldTurretMissile>().Initialize(reservation, Damage);
-                    if (!launched)
-                    {
-                        launched = true;
-                        StartCoroutine(ShootAnimation());
-                    }
+                    launched = true;
                 }
                 catch
                 {
@@ -184,12 +187,16 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
             {
                 RecordMissileLaunch(); // 미사일 개수와 관계없이 일제 발사 한 번을 누적한다.
                 TryBeginOverheatCooling();
+                _shootAnimationEndsAt = FieldSeconds + 0.6d;
+                Animator.SetBool("isShoot", true);
             }
         }
     }
 
     protected override void OnDisable()
     {
+        _shootAnimationEndsAt = 0d;
+        if (Animator != null && Animator.isInitialized) Animator.SetBool("isShoot", false);
         ReleaseUnlaunchedTargets();
         base.OnDisable();
     }
@@ -242,7 +249,6 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
     {
         if (IsCoolingDown || CurMissileCount < OverHeatMissileCount) return false;
         ReleaseUnlaunchedTargets(); // 냉각 중에는 새 적을 독점 예약하지 않는다.
-        StopAllCoroutines();
         BeginCooling(CoolTime);
         return true;
     }
@@ -263,13 +269,6 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
     protected override void ApplyCoolingHeat(float heatRatio)
         => CurMissileCount = heatRatio * Mathf.Max(0, OverHeatMissileCount);
 
-    protected IEnumerator ShootAnimation()
-    {
-        Animator.SetBool("isShoot",true);
-        double end = FieldSeconds + 0.6;
-        while (FieldSeconds < end) yield return null;
-        Animator.SetBool("isShoot",false);
-    }
     protected override void OnActivationChanged(bool isActivated)
     {
         if (isActivated)
@@ -282,7 +281,7 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
         float heatRatio = OverHeatMissileCount > 0
             ? Mathf.Clamp01(CurMissileCount / OverHeatMissileCount)
             : 0f;
-        StopAllCoroutines();
+        _shootAnimationEndsAt = 0d;
         // AudioManager.Instance.PlaySfx(AudioManager.Sfx.TurretOff);
         BeginCooling(heatRatio * Mathf.Max(0f, CoolTime), heatRatio);
     }

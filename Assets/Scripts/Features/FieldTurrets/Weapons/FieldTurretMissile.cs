@@ -2,6 +2,7 @@
 using TeamHJD.Game.Presentation.Scene;
 using System;
 using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -131,7 +132,8 @@ public partial class FieldTurretMissile : MonoBehaviour
     private void SearchForNewTarget()//목표하던 목표가 사라지면 호출
     {
         if (_target != null && _targetReservation != null && _targetReservation.IsValid &&
-            (!_target.TryGetComponent(out EnemyController currentEnemy) || currentEnemy.isActiveAndEnabled))
+            _target.TryGetComponent(out EnemyController currentEnemy) && currentEnemy.isActiveAndEnabled &&
+            FieldTurretTargetingUtility.CanAttackEnemy(_target))
             return;
 
         ReleaseTargetReservation();
@@ -139,7 +141,7 @@ public partial class FieldTurretMissile : MonoBehaviour
         foreach (Collider2D candidate in hits)
         {
             EnemyController enemy = candidate.GetComponentInParent<EnemyController>();
-            if (enemy == null || !enemy.isActiveAndEnabled)
+            if (enemy == null || !enemy.isActiveAndEnabled || !FieldTurretTargetingUtility.CanAttackEnemy(enemy.transform))
                 continue;
 
             if (!MissileTargetReservation.TryAcquire(enemy.transform, out var reservation))
@@ -208,6 +210,14 @@ public partial class FieldTurretMissile : MonoBehaviour
         BeginExplosion();
     }
 
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!_isInitialized || !isActiveAndEnabled || !FieldSimulationTime.CanAdvance(this)) return;
+        if (!FieldTurretTargetingUtility.IsEnemyHitBox(other)) return;
+
+        BeginExplosion();
+    }
+
     private void BeginExplosion()
     {
         if (_isExploding)
@@ -250,7 +260,7 @@ public partial class FieldTurretMissile : MonoBehaviour
             {
                 EnemyHealth enemyHealth = candidate.GetComponentInParent<EnemyHealth>();
                 if (enemyHealth != null && damagedEnemies.Add(enemyHealth))
-                    enemyHealth.TakeDamage(Mathf.RoundToInt(_bulletDamage));
+                    enemyHealth.TryTakeDamage(Mathf.RoundToInt(_bulletDamage), AttackSourceType.Turret);
             }
         }
         finally
