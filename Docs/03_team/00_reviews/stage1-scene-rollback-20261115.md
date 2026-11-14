@@ -1,6 +1,6 @@
 # Stage_1 제작 변경 적용 보류
 
-PR: 생성 직후 번호 기록. 대상 main.
+PR: [#727](https://github.com/Team-HJD-21/unity-6-the-developer/pull/727). 대상 main.
 
 ## 이유와 범위
 
