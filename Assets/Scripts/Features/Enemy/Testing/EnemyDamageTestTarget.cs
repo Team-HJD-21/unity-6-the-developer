@@ -6,6 +6,9 @@ using UnityEngine;
 [RequireComponent(typeof(TargetableComponent))]
 public sealed class EnemyDamageTestTarget : MonoBehaviour, IDamageableTarget
 {
+    [Header("시험 대상")]
+    [Tooltip("타깃 유형의 원본입니다. Player를 감지하려면 표적 콜라이더의 레이어도 PlayerFeetBox로 설정하세요.")]
+    [SerializeField] private TargetType targetType = TargetType.Turret;
     [SerializeField, Min(1)] private int maxHealth = 100;
 
     [Header("피해 확인")]
@@ -68,8 +71,8 @@ public sealed class EnemyDamageTestTarget : MonoBehaviour, IDamageableTarget
         if (_targetable == null)
             _targetable = GetComponent<TargetableComponent>();
 
-        // 투사체가 IDamageableTarget 경로로 피해를 전달하도록 터렛 유형을 사용한다.
-        _targetable.SetTargetType(TargetType.Turret);
+        // 초기화와 피격 후에도 선택한 시험 대상 유형을 유지한다.
+        _targetable.SetTargetType(targetType);
         _targetable.SetHealth(currentHealth, maxHealth);
     }
 
@@ -78,7 +81,7 @@ public sealed class EnemyDamageTestTarget : MonoBehaviour, IDamageableTarget
 #if UNITY_EDITOR
         UnityEditor.Handles.Label(
             transform.position + Vector3.up * 0.6f,
-            name + "\nHP " + currentHealth + "/" + maxHealth +
+            name + " [" + targetType + "]\nHP " + currentHealth + "/" + maxHealth +
             " | Hits " + hitCount + " | Last " + lastDamage);
 #endif
     }

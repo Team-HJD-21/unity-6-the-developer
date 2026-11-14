@@ -167,7 +167,7 @@ public sealed class PlayerCryoSprayTests
         var item = new GameObject(name); SceneManager.MoveGameObjectToScene(item, _scene);
         item.transform.position = position; return item;
     }
-    private EnemyHealth Enemy(Vector2 position, float radius = .1f, string layer = "EnemyHitBox")
+    private EnemyHealth Enemy(Vector2 position, float radius = .1f, string layer = "EnemyHurtbox")
     {
         var item = Create("Spray enemy", position); item.tag = "Enemy"; item.layer = LayerMask.NameToLayer(layer);
         var collider = item.AddComponent<CircleCollider2D>(); collider.isTrigger = true; collider.radius = radius;

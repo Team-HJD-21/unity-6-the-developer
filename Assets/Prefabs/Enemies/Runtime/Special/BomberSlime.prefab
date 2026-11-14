@@ -304,6 +304,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27cb5d51b727da041a2d9d72dda05ebd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTargeting
+--- !u!70 &4141155204466418499 stripped
+CapsuleCollider2D:
+  m_CorrespondingSourceObject: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+  m_PrefabInstance: {fileID: 1342443860078511471}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8566673142912740356 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
@@ -322,7 +327,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyExplosionAbility
   cooldown: 0.1
-  _bodyCollider: {fileID: 0}
+  _bodyCollider: {fileID: 4141155204466418499}
   activationRange: 0.3
   enemyTargeting: {fileID: 3454110900219576946}
   explosionDamage: 20

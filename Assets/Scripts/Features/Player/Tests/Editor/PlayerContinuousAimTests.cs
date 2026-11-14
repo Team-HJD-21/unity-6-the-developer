@@ -557,7 +557,7 @@ public sealed class PlayerContinuousAimTests
             EnemyHealth Enemy(Vector2 position, bool sensor = false)
             {
                 var go = new GameObject("Spanner range target"); objects.Add(go);
-                go.transform.position = position; go.layer = LayerMask.NameToLayer(sensor ? "EnemySensor" : "EnemyHitBox");
+                go.transform.position = position; go.layer = LayerMask.NameToLayer(sensor ? "EnemySensor" : "EnemyHurtbox");
                 var collider = go.AddComponent<CircleCollider2D>(); collider.radius = .03f; collider.isTrigger = true;
                 var health = go.AddComponent<EnemyHealth>(); health.Initialize(); return health;
             }
@@ -608,7 +608,7 @@ public sealed class PlayerContinuousAimTests
                 collider.isTrigger = trigger; collider.radius = radius; return collider;
             }
             var sensor = Child("EnemySensor", "EnemySensor", true, range * 4f, enemy.transform.position);
-            var hitbox = Child("HitBox", "EnemyHitBox", true, .03f, enemy.transform.position);
+            var hitbox = Child("HitBox", "EnemyHurtbox", true, .03f, enemy.transform.position);
             var secondHitBox = hitbox.gameObject.AddComponent<CircleCollider2D>();
             secondHitBox.radius = .02f; secondHitBox.isTrigger = true;
             // A nearby foot must not substitute for a distant or rear-facing hitbox.
@@ -623,7 +623,7 @@ public sealed class PlayerContinuousAimTests
             Physics2D.queriesHitTriggers = queryTriggers;
             typeof(PlayerSpannerWeapon).GetMethod("ApplyMeleeDamage", Private).Invoke(spanner, null);
             Assert.That(health.CurrentHealth, Is.EqualTo(health.MaxHealth - (condition == "near" && queryTriggers ? 5 : 0)),
-                "With Trigger queries enabled, only an unobstructed, forward EnemyHitBox in range may take one hit; " +
+                "With Trigger queries enabled, only an unobstructed, forward EnemyHurtbox in range may take one hit; " +
                 "sensor and feet are never damage shapes. The existing global Trigger query setting is preserved.");
         }
         finally

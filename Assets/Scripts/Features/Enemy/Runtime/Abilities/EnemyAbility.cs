@@ -68,15 +68,14 @@ public abstract partial class EnemyAbility : MonoBehaviour
     }
 
     /// <summary>
-    /// Inspector 참조가 없으면 HitBox 자식의 콜라이더를 찾고,
+    /// Inspector 참조가 없으면 Trigger 여부와 관계없이 HitBox 자식의 콜라이더를 찾고,
     /// 구형 프리팹을 위해 루트의 비-Trigger 콜라이더도 확인한다.
     /// </summary>
     protected Collider2D FindBodyCollider()
     {
         Transform hitBox = transform.Find("HitBox");
         if (hitBox != null &&
-            hitBox.TryGetComponent(out Collider2D hitBoxCollider) &&
-            !hitBoxCollider.isTrigger)
+            hitBox.TryGetComponent(out Collider2D hitBoxCollider))
         {
             return hitBoxCollider;
         }

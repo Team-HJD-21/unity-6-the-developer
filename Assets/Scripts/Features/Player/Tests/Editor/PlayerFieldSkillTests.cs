@@ -60,7 +60,7 @@ public sealed class PlayerFieldSkillTests
     [TestCase("PlayerFeetBox", true)]
     [TestCase("Bullet", true)]
     [TestCase("PlayerHitBox", true)]
-    [TestCase("EnemyHitBox", true)]
+    [TestCase("EnemyHurtbox", true)]
     [TestCase("EnemyFeetBox", false)]
     public void Collision_OnlyBlocksEnemies(string layerName, bool passes)
     {
