@@ -136,6 +136,10 @@ public sealed class PlayerHitFeedbackTests
         Assert.That(graphic.raycastTarget || _overlay.blocksRaycasts || _overlay.interactable, Is.False);
         Assert.That(_overlay.ignoreParentGroups, Is.True, "HUD intro fading must not hide damage feedback.");
         Assert.That(graphic.maskable, Is.False, "HUD reveal masks must not clip the screen effect.");
+        var canvas = graphic.GetComponent<Canvas>();
+        Assert.That(canvas.overrideSorting, Is.True);
+        Assert.That(canvas.sortingOrder, Is.LessThan(_hud.GetComponent<Canvas>().sortingOrder),
+            "Damage feedback must render below the HUD.");
         Assert.That(graphic.rectTransform.anchorMin, Is.EqualTo(Vector2.zero));
         Assert.That(graphic.rectTransform.anchorMax, Is.EqualTo(Vector2.one));
         graphic.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 640);

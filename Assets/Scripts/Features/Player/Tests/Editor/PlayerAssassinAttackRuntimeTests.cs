@@ -113,6 +113,17 @@ public sealed class PlayerAssassinAttackRuntimeTests
         // Nested canvases inherit the root render mode, so redirect that root for capture.
         var canvas = hud.GetComponent<Canvas>(); canvas.enabled = true;
         canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 1;
+        // A HUD panel at a red edge must keep its original color after damage.
+        var panel = Track(new GameObject("Foreground HUD canvas", typeof(RectTransform), typeof(Canvas)));
+        var panelCanvas = panel.GetComponent<Canvas>();
+        panelCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+        panelCanvas.worldCamera = camera; panelCanvas.planeDistance = .5f; panelCanvas.sortingOrder = 0;
+        var imageObject = new GameObject("HUD edge panel", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+        imageObject.transform.SetParent(panel.transform, false);
+        var image = imageObject.GetComponent<UnityEngine.UI.Image>(); image.color = Color.blue; image.raycastTarget = false;
+        image.rectTransform.anchorMin = image.rectTransform.anchorMax = Vector2.zero;
+        image.rectTransform.pivot = Vector2.zero;
+        image.rectTransform.anchoredPosition = new Vector2(32, 32); image.rectTransform.sizeDelta = new Vector2(48, 48);
         var target = new RenderTexture(640, 360, 24);
         var before = new Texture2D(640, 360, TextureFormat.RGBA32, false);
         var after = new Texture2D(640, 360, TextureFormat.RGBA32, false);
@@ -143,6 +154,10 @@ public sealed class PlayerAssassinAttackRuntimeTests
             string diagnostic = "rect=" + graphic.rectTransform.rect + ", alpha=" + overlay.alpha + ", inherited=" + graphic.canvasRenderer.GetInheritedAlpha() + ", culled=" + graphic.canvasRenderer.cull + ", vertices=" + (mesh != null ? mesh.vertexCount : 0);
             Assert.That(after.GetPixel(4, 4).r, Is.GreaterThan(before.GetPixel(4, 4).r + .03f), "Damage must actually render a red screen edge. " + diagnostic);
             Assert.That(after.GetPixel(320, 180).r, Is.EqualTo(before.GetPixel(320, 180).r).Within(.02f), "The center must remain clear.");
+            Assert.That(before.GetPixel(48, 48).b, Is.GreaterThan(.9f), "The foreground HUD panel must be visible.");
+            Assert.That(after.GetPixel(48, 48).r, Is.EqualTo(before.GetPixel(48, 48).r).Within(.02f),
+                "The red vignette must not tint the HUD above it.");
+            Assert.That(after.GetPixel(48, 48).b, Is.EqualTo(before.GetPixel(48, 48).b).Within(.02f));
             Set(feedback, "_flashSeconds", .45f); Set(feedback, "_shakeSeconds", .2f);
             yield return new WaitForSecondsRealtime(.6f);
             Assert.That(overlay.alpha, Is.Zero);

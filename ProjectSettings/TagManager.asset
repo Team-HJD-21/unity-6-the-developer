@@ -64,5 +64,8 @@ TagManager:
   - name: Entities
     uniqueID: 3414641295
     locked: 0
+  - name: PlayerSkillPreview
+    uniqueID: 329469221
+    locked: 0
   m_RenderingLayers:
   - Default

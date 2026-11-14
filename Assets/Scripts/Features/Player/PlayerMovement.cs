@@ -1,6 +1,7 @@
 // Player의 이동/대시 속도를 적용하고 입력·생존·필드 정지 경계를 반영합니다.
 // 허브 이동은 필드 행동과 분리하며 Rigidbody 속도는 이 컴포넌트만 변경합니다.
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using TeamHJD.Game.Presentation.Scene;
 
 /// <summary>일반 이동과 대시의 물리 속도를 한 곳에서 적용하고 조작 차단 시 즉시 정지합니다.</summary>
@@ -18,6 +19,10 @@ public class PlayerMovement : MonoBehaviour
     private PlayerDash _dash;
     private PlayerSlowEffects _slowEffects;
     private PlayerBaseStats _baseStats;
+    private PlayerDirectionalColliders _colliders;
+    private Tilemap _fieldGround;
+    private int _groundScene = -1;
+    private float _nextGroundSearch;
 
     public float BaseMoveSpeed => float.IsNaN(moveSpeed) || float.IsInfinity(moveSpeed) ? 0 : Mathf.Max(0, moveSpeed);
     public float MoveSpeed => BaseMoveSpeed * (_baseStats != null ? _baseStats.MovementMultiplier : 1);
@@ -40,6 +45,7 @@ public class PlayerMovement : MonoBehaviour
         _controls = GetComponent<PlayerControlState>();
         _dash = GetComponent<PlayerDash>();
         _baseStats = GetComponent<PlayerBaseStats>();
+        _colliders = GetComponent<PlayerDirectionalColliders>();
         // 기존 제작 prefab도 같은 감속 수신/저장 원본을 빠짐없이 갖게 합니다.
         _slowEffects = GetComponent<PlayerSlowEffects>() ?? gameObject.AddComponent<PlayerSlowEffects>();
         // 인스펙터 할당을 깜빡했을 때를 대비한 널 세이프 방어 코드
@@ -76,7 +82,21 @@ public class PlayerMovement : MonoBehaviour
             step = FieldSimulationTime.FixedDeltaTime(this);
         Vector2 velocity = _dash != null && step > 0 && _dash.TryGetVelocity(step, out var dashVelocity)
             ? dashVelocity : inputHandler.MoveInput * MoveSpeed;
-        rb.linearVelocity = velocity * _slowEffects.SpeedMultiplier * (Time.fixedDeltaTime > 0 ? step / Time.fixedDeltaTime : 0f);
+        velocity *= _slowEffects.SpeedMultiplier * (Time.fixedDeltaTime > 0 ? step / Time.fixedDeltaTime : 0f);
+        if (_controls == null || !_controls.IsInSpaceship)
+        {
+            // 필드 바닥만 조회하며, 허브 이동에는 필드 해안 제한을 적용하지 않습니다.
+            if (_groundScene != gameObject.scene.handle || (_fieldGround == null && Time.unscaledTime >= _nextGroundSearch))
+            {
+                _groundScene = gameObject.scene.handle;
+                _fieldGround = PlayerTurretPlacementRules.FindGround(gameObject.scene);
+                _nextGroundSearch = Time.unscaledTime + .5f;
+            }
+            Bounds feet = _colliders != null && _colliders.isActiveAndEnabled
+                ? _colliders.GroundBounds : new Bounds(transform.position, Vector3.zero);
+            velocity = PlayerGroundMovement.ConstrainVelocity(_fieldGround, feet, velocity, Time.fixedDeltaTime);
+        }
+        rb.linearVelocity = velocity;
     }
 
     private void HoldOrStop()

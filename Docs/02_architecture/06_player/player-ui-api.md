@@ -260,7 +260,7 @@ main에 병합된 PR #525의 냉각·조작 제한 변경을 사용한다.
 
 `PlayerInfo.ApplyDamage`가 실제로 줄인 체력만 `Damaged(int appliedDamage)`로 알립니다. 회복, 체력 표시 갱신, 초기 바인딩과 체크포인트 복원은 피격 이벤트를 발생시키지 않습니다. 치명타도 사망 통지 전에 한 번 전달하며, 피해 권한·일시정지 등 기존 피해 거부 조건을 유지합니다.
 
-`InitialStagePlayerHUD.prefab`의 `PlayerHitFeedback`은 `StagePlayerVitalsView.Player`에 연결된 로컬 actor만 구독합니다. actor 교체·HUD 비활성화 때 구독과 연출을 정리합니다. `PlayerDamageVignette`는 프리팹에 배치된 전체 화면 Graphic으로, 중앙을 비우고 가장자리만 붉게 표시합니다. 전용 Canvas의 sorting order는 10020이며, 상위 HUD의 시작 연출에 가려지지 않게 CanvasGroup의 `ignoreParentGroups`를 켜고 Graphic의 `maskable`을 끕니다. Raycast와 CanvasGroup 입력 차단은 꺼져 있습니다. 별도 텍스처나 실행 중 UI 오브젝트 생성은 사용하지 않습니다.
+`InitialStagePlayerHUD.prefab`의 `PlayerHitFeedback`은 `StagePlayerVitalsView.Player`에 연결된 로컬 actor만 구독합니다. actor 교체·HUD 비활성화 때 구독과 연출을 정리합니다. `PlayerDamageVignette`는 프리팹에 배치된 전체 화면 Graphic으로, 중앙을 비우고 가장자리만 붉게 표시합니다. 전용 Canvas의 sorting order는 -1로 HUD 아래에 표시합니다. 상위 HUD의 시작 연출에 가려지지 않게 CanvasGroup의 `ignoreParentGroups`를 켜고 Graphic의 `maskable`을 끕니다. Raycast와 CanvasGroup 입력 차단은 꺼져 있습니다. 별도 텍스처나 실행 중 UI 오브젝트 생성은 사용하지 않습니다.
 
 Inspector에서 기본 붉은 효과 시간 0.45초, 최대 알파 0.65, 흔들림 시간 0.2초, 거리 0.14를 조절합니다. 피해 비율에 따라 강도를 조절하고 연속 피격은 합산 대신 시간을 다시 시작합니다. 감쇠하는 고정 진동을 사용해 랜덤 스트림을 소비하지 않습니다. `CameraManager.OutputChanged`를 따라 출력 카메라만 흔들고 렌더 콜백 종료에 기존 위치를 복구합니다. 추적·컷씬이 쓰는 카메라 위치에 변위를 누적하지 않습니다. 연출 시간은 unscaled time으로 진행합니다.
 
