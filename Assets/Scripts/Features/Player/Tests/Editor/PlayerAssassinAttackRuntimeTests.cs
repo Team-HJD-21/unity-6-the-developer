@@ -57,12 +57,19 @@ public sealed class PlayerAssassinAttackRuntimeTests
         {
             range.enabled = detected; detector.RefreshDetection();
             Assert.That(detection.IsDetected, Is.EqualTo(detected));
-            foreach (string attack in new[] { "bullet", "cryo", "spanner", "bomb", "turret" })
+            foreach (string attack in new[] { "bullet", "cryo", "sniper", "spanner", "bomb", "turret" })
             {
                 health.Initialize();
-                if (attack == "bullet" || attack == "cryo")
+                if (attack == "cryo")
                 {
-                    var bulletObject = Track(Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerBullet.prefab"), origin, Quaternion.identity));
+                    var spray = player.GetComponent<PlayerCryoSpray>() ?? player.AddComponent<PlayerCryoSpray>();
+                    Set(spray, "_vfxPrefab", AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/CryoSprayVfx.prefab"));
+                    Assert.That(spray.ApplyDamage(origin, Vector2.right, 1), Is.True);
+                }
+                else if (attack == "bullet" || attack == "sniper")
+                {
+                    var bulletObject = Track(Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(attack == "sniper"
+                        ? "Assets/Prefabs/Player/SniperBullet.prefab" : "Assets/Prefabs/Player/PlayerBullet.prefab"), origin, Quaternion.identity));
                     var bullet = bulletObject.GetComponent<PlayerBullet>();
                     Assert.That(bullet.Initialize(Color.white, 1, Vector2.right, attack == "cryo"), Is.True);
                     Call(bullet, "ProcessHit", hitbox);

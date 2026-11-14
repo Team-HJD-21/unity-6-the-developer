@@ -229,7 +229,7 @@ PolygonCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 28673
+    m_Bits: 8417281
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -288,6 +288,7 @@ MonoBehaviour:
   _spriteRenderer: {fileID: 0}
   _speed: 70
   _lifetime: 1.2
+  _piercesEnemies: 1
   _damage: 13
   _targetTag: Enemy
 --- !u!95 &910202610210000020

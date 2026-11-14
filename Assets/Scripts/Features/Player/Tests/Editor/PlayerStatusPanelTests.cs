@@ -142,18 +142,27 @@ public sealed class PlayerStatusPanelTests
     [UnityTest]
     public IEnumerator WeaponArrowsChangeEquipmentAndShowItsActualSettingsAndMagazine()
     {
+        // 이 시험은 무기 표시를 검사합니다. 실제 마우스 유지 입력의 사격은 분리합니다.
+        _player.GetComponent<PlayerAttack>().enabled = false;
+        var ammo = _player.GetComponent<PlayerWeaponAmmo>();
+        typeof(PlayerWeaponAmmo).GetMethod("RestoreCheckpoint", Private).Invoke(ammo, new object[] { null });
         var selection = _player.GetComponent<PlayerWeaponSelection>();
         Assert.That(selection.TrySelectWeapon(WeaponType.DefaultGun), Is.True);
         Assert.That(_panel.TryOpen(), Is.True);
-        var ammo = _player.GetComponent<PlayerWeaponAmmo>();
         typeof(PlayerWeaponAmmo).GetMethod("TryConsumeRound", Private).Invoke(ammo, new object[] { WeaponType.DefaultGun });
         Invoke("LateUpdate");
         Assert.That(Field<TMP_Text>("_ammoValue").text, Is.EqualTo("14 / 15"));
         Field<Button>("_nextWeaponButton").onClick.Invoke();
         Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
+        Assert.That(Field<TMP_Text>("_ammoValue").text, Is.EqualTo("100%"));
+        typeof(PlayerWeaponAmmo).GetMethod("TryConsumeRound", Private).Invoke(ammo, new object[] { WeaponType.CryoBlaster });
+        Invoke("LateUpdate");
+        Assert.That(Field<TMP_Text>("_ammoValue").text, Is.EqualTo("94%"));
+        Assert.That(Field<TMP_Text>("_reloadValue").text, Is.EqualTo("0.75초"));
         Assert.That(_player.GetComponent<PlayerAttack>().TryGetCurrentWeaponStats(out var stats), Is.True);
         Assert.That(Field<TMP_Text>("_damageValue").text, Is.EqualTo(stats.Damage.ToString("0.#")));
-        Assert.That(Field<TMP_Text>("_projectilesValue").text, Is.EqualTo($"{stats.ProjectileCount}발"));
+        Assert.That(stats.IsSpray, Is.True);
+        Assert.That(Field<TMP_Text>("_projectilesValue").text, Is.EqualTo("연속 분사"));
         Assert.That(Field<TMP_Text>("_weaponTitle").text, Is.EqualTo("냉각총"));
         Field<Button>("_previousWeaponButton").onClick.Invoke();
         Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.DefaultGun));

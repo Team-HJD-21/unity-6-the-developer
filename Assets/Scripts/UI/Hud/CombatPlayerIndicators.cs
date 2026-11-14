@@ -54,7 +54,9 @@ public sealed class CombatPlayerIndicators : MonoBehaviour
         if (rounds != _lastRounds || capacity != _lastCapacity)
         {
             _lastRounds = rounds; _lastCapacity = capacity;
-            RoundCount.text = $"{rounds}<size=65%><color=#9AA39B> / {capacity}</color></size>";
+            RoundCount.text = _ammo.UsesPercentage
+                ? $"{_ammo.CurrentPercentage}<size=65%>%</size>"
+                : $"{rounds}<size=65%><color=#9AA39B> / {capacity}</color></size>";
         }
         AmmoGroup.alpha = 1; // The magazine belongs to the selected weapon and stays visible with its panel.
         InfiniteLabel.gameObject.SetActive(infinite);

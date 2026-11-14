@@ -17,7 +17,7 @@ public sealed class PlayerWeaponAmmoView : MonoBehaviour
     private PlayerWeaponSelection _owner;
     private PlayerWeaponAmmo _ammo;
     private int _lastRounds = -1, _lastCapacity = -1;
-    private bool _wasInfinite;
+    private bool _wasInfinite, _wasPercentage;
 
     private void LateUpdate()
     {
@@ -31,11 +31,12 @@ public sealed class PlayerWeaponAmmoView : MonoBehaviour
         if (_ammoLabel == null) return;
         if (_ammo == null) { _ammoLabel.text = ""; SetReloadVisible(false); return; }
         int rounds = _ammo.CurrentRounds, capacity = _ammo.CurrentCapacity;
-        if (rounds != _lastRounds || capacity != _lastCapacity || _wasInfinite != _ammo.IsInfinite)
+        if (rounds != _lastRounds || capacity != _lastCapacity || _wasInfinite != _ammo.IsInfinite || _wasPercentage != _ammo.UsesPercentage)
         {
-            _ammoLabel.text = _ammo.IsInfinite ? "∞" : $"{rounds}/{capacity}";
+            _ammoLabel.text = _ammo.IsInfinite ? "∞" : _ammo.UsesPercentage ? $"{_ammo.CurrentPercentage}%" : $"{rounds}/{capacity}";
             _ammoLabel.color = !_ammo.IsInfinite && rounds == 0 ? _emptyColor : _normalColor;
             _lastRounds = rounds; _lastCapacity = capacity; _wasInfinite = _ammo.IsInfinite;
+            _wasPercentage = _ammo.UsesPercentage;
         }
         SetReloadVisible(_ammo.IsReloading);
         if (_ammo.IsReloading && _reloadArrows != null)
