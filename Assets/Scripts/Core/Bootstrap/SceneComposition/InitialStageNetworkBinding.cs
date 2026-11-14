@@ -96,6 +96,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private bool _disposed;
         public NetworkMatchCoordinator Matches => _matches;
         public INetworkSession Connection => _session;
+        /// <summary>Feature에는 연결을 열거나 닫을 수 없는 실제 상태만 전달합니다.</summary>
+        public INetworkConnectionStatus ConnectionStatus => _session;
         public string LastFailure { get; private set; } = string.Empty;
 
         public void Initialize(AppRoot app, InitialStageCompositionRoot scene)
@@ -108,6 +110,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 throw new InvalidOperationException("Assign the Scene NetworkManager.");
             _app = app;
             _scene = scene;
+            GameObject discardedNetworkRoot = null;
             bool createdConnection = app.NetworkSession == null;
             if (app.NetworkSession == null)
             {
@@ -125,6 +128,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     NetworkManager duplicate = _manager;
                     if (duplicate.IsListening)
                         throw new InvalidOperationException("A second live Scene connection exists.");
+                    discardedNetworkRoot = duplicate.gameObject;
                     duplicate.gameObject.SetActive(false);
                     Destroy(duplicate.gameObject);
                     _manager = _session.Manager;
@@ -137,12 +141,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 throw new InvalidOperationException("Assign the registered Match anchor prefab.");
             if (!_manager.NetworkConfig.Prefabs.Contains(_matchAnchorPrefab))
                 _manager.AddNetworkPrefab(_matchAnchorPrefab);
-            MonoBehaviour[] consumers = _manager.GetComponents<MonoBehaviour>()
-                .Where(behaviour => behaviour is IAppOwnedEncounterMatchConsumer && behaviour.isActiveAndEnabled).ToArray();
-            if (consumers.Length != 1)
-                throw new InvalidOperationException("The App manager requires one explicit Encounter consumer.");
-            ((IAppOwnedEncounterMatchConsumer)consumers[0]).UseAppNetworkOwnership();
-            _scene.SetNetworkEncounterConsumer(consumers[0]);
+            MonoBehaviour consumer = SelectEncounterConsumer(_scene.AuthoredEncounterConsumer,
+                _manager, discardedNetworkRoot);
+            ((IAppOwnedEncounterMatchConsumer)consumer).UseAppNetworkOwnership(_session);
+            _scene.SetNetworkEncounterConsumer(consumer);
             _session.StateChanged += OnConnectionState;
             _session.PeerConnected += OnPeerConnected;
             EnsureTransports();
@@ -152,6 +154,25 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _entryPending = _session.State == NetworkConnectionState.Disconnected ||
                 (_entry == InitialStageNetworkEntry.SinglePlayerHost && _session.IsServer &&
                  _session.ConnectedPeerIds.Count == 1 && _matches.Descriptor == null);
+        }
+
+        /// <summary>Scene의 명시 소비자를 우선합니다. 이전 Scene 형식만 기존 App 루트 소비자를 사용합니다.</summary>
+        private static MonoBehaviour SelectEncounterConsumer(MonoBehaviour authored, NetworkManager manager,
+            GameObject discardedNetworkRoot)
+        {
+            // NGO 재로드로 폐기하는 옛 형식의 복제 객체는 현재 App 소유자를 대신할 수 없습니다.
+            if (authored != null && authored.gameObject != discardedNetworkRoot)
+            {
+                if (!authored.isActiveAndEnabled || authored is not IAppOwnedEncounterMatchConsumer)
+                    throw new InvalidOperationException("The authored Encounter consumer must be active and App-owned.");
+                return authored;
+            }
+
+            var legacy = manager.GetComponents<MonoBehaviour>()
+                .Where(item => item.isActiveAndEnabled && item is IAppOwnedEncounterMatchConsumer).ToArray();
+            if (legacy.Length != 1)
+                throw new InvalidOperationException("Assign one explicit Scene Encounter consumer.");
+            return legacy[0];
         }
 
         public bool TryStartHost()

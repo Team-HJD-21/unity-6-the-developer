@@ -13,7 +13,7 @@ public sealed partial class EncounterSceneBinding : IEncounterDeferredSpawnSink
 {
     private Sprite _warningSprite;
     private bool CanShowInternalWarning => _warningSprite != null && _spawnClock != null &&
-        _networkManager != null && _networkManager.IsHost && _networkManager.ConnectedClientsList.Count == 1 &&
+        _network != null && _network.IsHost && _network.ConnectedClientCount == 1 &&
         _warningSprite.bounds.size.x > 0 && _warningSprite.bounds.size.y > 0 && regionBinding?.Source != null &&
         !_spawnGameplay.IsCancellationRequested;
     bool IEncounterDeferredSpawnSink.CanShowWarning => CanShowInternalWarning;
