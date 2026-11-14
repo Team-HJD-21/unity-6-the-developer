@@ -147,6 +147,14 @@ classDiagram
 
 ## 피격 계약과 사망
 
+### 플레이어 접촉 피해
+
+`EnemyRoot/HitBox`의 `EnemyContactDamage`는 몸통끼리 닿을 때 플레이어의 `PlayerInfo.ApplyDamage()`로 피해를 전달한다. Enemy 쪽에서 서버/로컬 테스트 실행 권한과 생존 여부를 확인하고, Player의 기존 피해 API가 권한·시간 정지·피해 보호를 최종 검사한다. 기존 근접 능력과 독립적으로 동작한다.
+
+Physics 2D 매트릭스에서 `EnemyHurtbox`와 `PlayerHurtbox`의 접촉을 허용한다. HitBox의 CapsuleCollider2D는 Trigger이며 `Callback Layers`에 `PlayerHurtbox`가 포함되어야 한다. Foot·센서 접촉은 피해 대상으로 사용하지 않는다.
+
+`OnTriggerEnter2D`에서만 처리하므로 계속 겹쳐 있는 동안 주기적으로 피해를 주지는 않는다. 방향별 플레이어 Hurtbox 교체나 동시 진입의 중복 피해를 줄이기 위해 몬스터별·플레이어별 재피격 간격을 확인한다. 기본 피해량은 10, 간격은 0.5초이며 HitBox Inspector에서 조절한다. 부모 참조와 레이어 번호는 Awake에 저장하고, 접촉할 때만 플레이어를 조회한다. Update·FixedUpdate·Stay·주변 Overlap 검색은 추가하지 않는다.
+
 다른 파트가 적을 공격할 때는 [IAttackableEnemy](../../../Assets/Scripts/Features/Enemy/Contracts/IAttackableEnemy.cs)의 `CanBeAttackedBy(AttackSourceType)`와 `TryTakeDamage()`를 사용한다. 공격자 종류를 잃는 기존 `TakeDamage(int)`는 Unknown으로 전달되므로, 암살자의 Player 전용 피격 정책을 통과하지 못한다. 새 호출자는 공격자 종류를 정확히 전달한다.
 
 `EnemyHealth`는 공통 활성/사망 상태를 검사하고 `EnemyDamageRule`에 정책을 위임한다. 암살자 규칙은 `EnemyAssassinDamageRule`이 담당한다. 탐지자 등록은 `IDetectableTarget.RegisterDetector/UnregisterDetector`로 제공하고, 서버 결과는 `EnemyNetworkDetection`의 NetworkVariable로 전달한다. 플레이어 반경 검출과 터렛의 후보 제외는 해당 파트가 이 계약을 소비해야 한다. 은신 셰이더는 후속 작업이다.
