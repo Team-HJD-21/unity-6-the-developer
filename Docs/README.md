@@ -99,7 +99,7 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](05_tooling/UNITY_T
 
 ## 읽는 순서
 
-Enemy 컨트롤러·능력 상속, 네트워크 행동·피격 계약은 [Enemy 시스템 가이드](02_architecture/08_encounter/enemy-system-guide.md), #540 몬스터·Variant·등록·검증/후속 작업은 [Stage 1 Enemy 콘텐츠](02_architecture/08_encounter/stage1-enemy-content-guide.md)를 참고한다. 스폰 요청부터 점유율 예산·지역 배분·상황별 편성 선택까지는 [Encounter 편성·예산 가이드](02_architecture/08_encounter/encounter-planning-guide.md)를 따른다. Game Debugger의 지정 Order 요청과 런처의 상황별 선택 요청을 구분한다.
+Enemy 컨트롤러·능력 상속, 네트워크 행동·피격 계약은 [Enemy 시스템 가이드](02_architecture/08_encounter/enemy-system-guide.md), #540 몬스터·Variant·등록·검증/후속 작업은 [Stage 1 Enemy 콘텐츠](02_architecture/08_encounter/stage1-enemy-content-guide.md)를 참고한다. 테스트 씬을 열고 조작하는 방법은 [Enemy 테스트 씬 사용법](02_architecture/08_encounter/enemy-test-scene-guide.md)에 정리했다. 스폰 요청부터 점유율 예산·지역 배분·상황별 편성 선택까지는 [Encounter 편성·예산 가이드](02_architecture/08_encounter/encounter-planning-guide.md)를 따른다. Game Debugger의 지정 Order 요청과 런처의 상황별 선택 요청을 구분한다.
 
 터렛을 사용하는 다른 영역은 [터렛 연동 가이드](02_architecture/07_turrets/index.md)에서 빠른 시작과 API 및 스냅샷을 따로 확인할 수 있다. 내부 실행 흐름은 기존 Turret System Guide의 Mermaid를 유지한다.
 
