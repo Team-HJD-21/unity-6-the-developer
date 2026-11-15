@@ -11,6 +11,8 @@
 
 `unity test`와 `unity run`은 별도의 batch Editor를 실행한다. 이 명령이 Unity Licensing Client 연결 오류로 끝난 경우 테스트는 **실행되지 않은 것**이다. 테스트 성공으로 기록하지 말고 라이선스 연결을 복구한 뒤 다시 실행한다.
 
+Unity에서 Scene·Prefab·Project Settings를 편집하기 전에 [Git LFS 에셋 잠금](unity-asset-locks.md)에서 팀 사용 절차를 확인한다.
+
 ## 저장소에 포함하지 않는 것
 
 AI Assistant의 개인별 Editor 설정인 `ProjectSettings/Packages/com.unity.ai.assistant/Settings.json`과 계정 인증정보, 토큰, 사용자별 CLI 설정은 커밋하지 않는다. 패키지 버전과 팀 공통 절차만 공유한다.
