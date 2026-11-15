@@ -211,6 +211,27 @@ public sealed partial class PlayerWeaponVisual
         RefreshRepairImpact();
     }
 
+    // 시전 연출의 마지막 단계에서만 덮어씁니다. 사격 시작은 연출을 먼저 취소합니다.
+    internal void ApplySkillCastPose(float blend, Vector2 gripPosition)
+    {
+        if (!_continuousAim || !IsConfigured || !_weapon.enabled) return;
+        var art = CurrentAimWeapon;
+        float currentAngle = _weapon.transform.localEulerAngles.z;
+        float restingAngle = _body.flipX ? -40f : -140f;
+        // 살짝 내리는 동작입니다. 긴 총의 개머리판이 얼굴을 가리지 않도록 회전은 18도로 제한합니다.
+        float targetAngle = currentAngle + Mathf.Clamp(Mathf.DeltaAngle(currentAngle, restingAngle), -18f, 18f);
+        var rotation = Quaternion.Euler(0, 0, Mathf.LerpAngle(currentAngle, targetAngle, blend));
+        Vector3 grip = SpritePoint(art.sprite, art.grip, _weapon.flipY) * _weapon.transform.localScale.x;
+        Vector3 currentGrip = _weapon.transform.localPosition + _weapon.transform.localRotation * grip;
+        _weapon.transform.localRotation = rotation;
+        _weapon.transform.localPosition = Vector3.Lerp(currentGrip, gripPosition, blend) - rotation * grip;
+        if (_secondaryWeapon != null && _secondaryWeapon.enabled)
+        {
+            _secondaryWeapon.transform.localRotation = rotation;
+            _secondaryWeapon.transform.localPosition = _weapon.transform.localPosition + Vector3.left * _dualWieldSpacing;
+        }
+    }
+
     private void RefreshSecondaryWeapon(Vector2 direction, AimWeapon art, Quaternion rotation, Vector3 grip, Vector3 mount, bool flipped)
     {
         if (_secondaryWeapon == null) return;

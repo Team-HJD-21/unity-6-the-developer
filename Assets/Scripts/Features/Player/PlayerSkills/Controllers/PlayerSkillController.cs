@@ -71,6 +71,9 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     public PlayerSkillLoadout Loadout { get; } = new PlayerSkillLoadout();
     public event Action<int, PlayerSkillId, bool> SlotUseAttempted;
     public event Action<string> PlacementRejected;
+    /// <summary>설치 지점 확정 또는 즉시 스킬 성공 뒤에만 발생하는 로컬 연출 이벤트입니다.</summary>
+    public event Action<PlayerSkillId, Vector3> CastPerformed;
+    internal void NotifyCastPerformed(PlayerSkillId id, Vector3 target) => CastPerformed?.Invoke(id, target);
     internal void NotifyPlacementRejected(string reason)
     { PlacementRejected?.Invoke(string.IsNullOrEmpty(reason) ? "이 위치에 설치할 수 없습니다." : reason); }
     public bool IsSelectionOpen => _hud != null && _hud.IsOpen;
@@ -248,6 +251,7 @@ public sealed partial class PlayerSkillController : MonoBehaviour
 
     private void OnDisable()
     {
+        ReleaseSessionSubscriptions();
         CancelPlacements();
         if (_hud != null) _hud.Unbind();
     }

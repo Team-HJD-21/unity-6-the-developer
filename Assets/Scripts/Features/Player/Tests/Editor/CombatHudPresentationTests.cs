@@ -222,7 +222,7 @@ public sealed class CombatHudPresentationTests
         foreach(var id in new[]{PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon})
         {
             Assert.That(research.TryUnlock(id), Is.True);
-            Assert.That(research.TrySetCandidate((int)id-1,id), Is.True);
+            Assert.That(PlayerSkillResearchTestHub.Assign(research,(int)id-1,id), Is.True);
         }
         Assert.That(owner.BindHud(hud), Is.True);
         Assert.That(owner.TryEquip(0, PlayerSkillId.Bomb), Is.True);

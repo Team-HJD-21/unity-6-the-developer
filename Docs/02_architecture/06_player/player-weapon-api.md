@@ -260,3 +260,13 @@ Unity Test Runner에서 실행할 테스트이며 작성만으로 통과를 의�
 후속 사격 수정에서는 팔을 앞으로 뻗는 두 손 자세와 방향성이 있는 총구 섬광을 적용했다. PlayerWeaponRig의 `_usePoseMuzzles`가 켜져 있으면 `_firingMuzzles`/`_leftLeanMuzzles`/`_rightLeanMuzzles`의 방향별 로컬 좌표로 총구를 맞춘다. 발사 전에 `TryGetMuzzle`이 최신 자세 위치를 반영하므로 기존 PlayerAttack은 같은 호출 흐름을 사용한다. 좌우 이동 사격은 여전히 몸체 그림 한 장을 고정하고 섬광으로 발사를 표현한다. 피해량·산탄 수·탄환 속도·발사 간격과 콜라이더는 그대로다.
 
 에셋과 표시 API는 [Player Motion API](player-motion-api.md)를 참고한다. 현재 몸체 224장·56클립, 이펙트 16장·4클립이다. 런타임·Editor 빌드와 부유 공격·기울임 에셋의 정적 검사는 통과했다. 이동 전환·타격 시점의 실제 Unity Test Runner 및 플레이 확인은 남아 있다.
+
+## 플레이어/필드 시계 분리 후 수리 (2026-11-15)
+
+현재 Scene 조립은 플레이어 `PlayerMatchPresence`에 `MatchTimeService.Clock`, 필드 터렛에 `FieldSimulationClock`을 연결한다. 객체 참조가 다르다는 이유로 같은 판의 수리를 거부하지 않도록 `PlayerSpannerTargeting.SharesMatchExecution`이 현재 판 ID와 실행 Epoch를 확인한다. 양쪽 모두 시계가 없는 독립 시험은 기존처럼 허용한다. 한쪽만 바인딩됐거나 판/세대가 다르면 거부한다.
+
+`PlayerTurretRepair`의 R 유지 수리와 `PlayerSpannerRepair`의 타격 수리는 같은 실행 검사를 사용한다. 대상 자체의 필드 시뮬레이션도 진행 중이어야 하므로 Player 시계만 진행되는 필드 보류 중에는 수리하지 않는다. 같은 Scene, Host 권한, 거리·장애물, 잠금·활성화 진행, R 놓기 조건과 회복량은 유지한다. Core 시계나 터렛 원본 API는 수정하지 않는다.
+
+수리 회귀 `PlayerTurretRepairTests` 40/40 통과. 실제 `FieldSimulationClock` 투영 조합으로 수정 전 대상 거절을 재현하고 수정 뒤 R 수리·기존 스패너 수리, 필드 보류 중 거절, 다른 판/실행 세대 거절을 확인했다. 제작된 PlayerTurret 프리팹의 실제 체력 API를 통한 회복도 검사했다. 기존 장애물 fixture 두 개는 현재 전역 Default 레이어 충돌 설정에 의존하던 부분을 PlayerFeetBox/WorldGeometry로 명시하고 시험 중 변경한 충돌 쌍은 반드시 복구하도록 보완했다. 프로젝트 물리 설정을 이 수정에서 바꾸지 않는다.
+
+실제 Startup → 우주선 → Stage1 경로에서도 자동 입력으로 확인했다. 해제된 FieldCanonTurret의 체력을 70으로 만든 뒤 `HudPlayInput`의 InputSystem R 유지 입력을 정상 프레임으로 전달해 100까지 회복했다. 플레이어 MatchClock과 터렛 FieldSimulationClock이 다른 상태 그대로 수행했다. 사용한 입력 장치와 시험 중 이동/피해는 정리했다. 사람의 수동 조작·원격 Client·빌드는 별도다.

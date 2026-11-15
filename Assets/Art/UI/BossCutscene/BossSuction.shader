@@ -37,7 +37,8 @@ Shader "The Developer/UI/BossSuction"
                 float strength=_Amount*_Amount;
                 float twist=_Amount*3.4*exp(-r*1.8);
                 float ripple=sin(r*28-_Clock*8)*.018*_Amount;
-                float scale=exp(strength*(2.4+r*.7));
+                // Sample closer to the player so the image grows toward the viewer.
+                float scale=exp(-strength*(2.4+r*.7));
                 float2 warped=float2(cos(a+twist),sin(a+twist))*(r+ripple)*scale;
                 warped.x/=_Aspect;
                 float2 uv=warped+.5;

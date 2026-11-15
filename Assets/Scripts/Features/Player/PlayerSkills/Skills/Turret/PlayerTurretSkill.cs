@@ -174,6 +174,7 @@ public sealed partial class PlayerTurretSkill : PlayerSkillBase
         _deployed.Add(turret);
         _installationRemaining = SkillCooldown;
         CancelPlacement();
+        Controller?.NotifyCastPerformed(Id, position);
         return true;
     }
 

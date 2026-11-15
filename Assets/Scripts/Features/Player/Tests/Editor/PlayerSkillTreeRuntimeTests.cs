@@ -51,6 +51,68 @@ public sealed class PlayerSkillTreeRuntimeTests
         typeof(PlayerInputHandler).GetProperty("MouseWorldPosition").SetValue(input,(Vector2)_player.transform.position+offset);
     }
     private void Reward() => Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(400),Is.True);
+
+    private PlayerSkillController SpawnResearchReplacement(InputLockService scope, bool hub, int experience)
+    {
+        var actor=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab"),_player.transform.position+Vector3.up*20,Quaternion.identity);
+        SceneManager.MoveGameObjectToScene(actor,_scene);
+        actor.GetComponent<PlayerInputHandler>().enabled=false;actor.GetComponent<PlayerMovement>().enabled=false;actor.GetComponent<Rigidbody2D>().simulated=false;
+        if(experience>0)Assert.That(actor.GetComponent<PlayerExperience>().AddExperience(experience),Is.True);
+        var skills=actor.GetComponent<PlayerSkillController>();
+        if(hub){actor.GetComponent<PlayerControlState>().BindHub(scope);skills.BindHub(scope);}
+        else skills.BindInputBlocker(scope);
+        return skills;
+    }
+
+    [UnityTest]
+    public IEnumerator HubUpgradesCandidatesAndSpentTokensSurviveFieldAndHubActorReplacement()
+    {
+        using var scope=new InputLockService();
+        _player.GetComponent<PlayerExperience>().AddExperience(500);
+        _player.GetComponent<PlayerControlState>().BindHub(scope);_controller.BindHub(scope);
+        Assert.That(_research.TryUnlock(PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(_research.TryUpgrade(PlayerSkillId.Bomb),Is.True);
+        Assert.That(_research.TryUpgrade(PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.PlayerTurret),Is.True);
+        // 허브는 전투 준비 대신 연구 화면만 허용하므로 사용 슬롯은 복원 진입점으로 기존 장착을 준비합니다.
+        _controller.Loadout.Restore(PlayerSkillId.PlayerTurret,PlayerSkillId.Bomb);
+        Assert.That(_research.Tokens,Is.EqualTo(3));
+        var field=SpawnResearchReplacement(scope,false,500);var fieldResearch=field.Research;
+        Assert.That(fieldResearch.Level(PlayerSkillId.Bomb),Is.EqualTo(2));
+        Assert.That(fieldResearch.Level(PlayerSkillId.PlayerTurret),Is.EqualTo(2));
+        Assert.That(fieldResearch.Candidate(1),Is.EqualTo(PlayerSkillId.PlayerTurret));
+        Assert.That(field.Loadout.Q,Is.EqualTo(PlayerSkillId.PlayerTurret));Assert.That(field.Loadout.E,Is.EqualTo(PlayerSkillId.Bomb));
+        Assert.That(fieldResearch.Tokens,Is.EqualTo(3));
+        field.BindInputBlocker(scope);Assert.That(fieldResearch.Tokens,Is.EqualTo(3));
+        field.GetComponent<PlayerExperience>().AddExperience(100);
+        Assert.That(fieldResearch.Tokens,Is.EqualTo(4));Assert.That(fieldResearch.TryUpgrade(PlayerSkillId.Bomb),Is.True);
+        // 이전 허브가 새 필드보다 늦게 정리돼도 예전 강화와 잔액을 저장하지 않아야 합니다.
+        _player.SetActive(false);
+        var returned=SpawnResearchReplacement(scope,true,600);
+        Assert.That(returned.Research.Level(PlayerSkillId.Bomb),Is.EqualTo(3));Assert.That(returned.Research.Level(PlayerSkillId.PlayerTurret),Is.EqualTo(2));
+        Assert.That(returned.Research.Tokens,Is.EqualTo(3));Assert.That(returned.Loadout.Q,Is.EqualTo(PlayerSkillId.PlayerTurret));
+        Assert.That(returned.Research.TryUpgrade(PlayerSkillId.PlayerTurret),Is.True);
+        field.gameObject.SetActive(false);
+        returned.BindHub(scope);Assert.That(returned.Research.Tokens,Is.EqualTo(2));
+        returned.UnbindHub();returned.gameObject.SetActive(false);
+        var next=SpawnResearchReplacement(scope,false,600);
+        Assert.That(next.Research.Level(PlayerSkillId.Bomb),Is.EqualTo(3));Assert.That(next.Research.Level(PlayerSkillId.PlayerTurret),Is.EqualTo(3));
+        Assert.That(next.Research.Tokens,Is.EqualTo(2));Assert.That(next.Loadout.E,Is.EqualTo(PlayerSkillId.Bomb));
+        yield return null;
+        Assert.That(next.Research.Tokens,Is.EqualTo(2),"Restored XP must not pay the same level rewards twice.");
+    }
+
+    [UnityTest]
+    public IEnumerator ResearchDoesNotCopyAcrossDifferentLocalInputScopes()
+    {
+        using var firstScope=new InputLockService();using var anotherScope=new InputLockService();
+        _controller.BindInputBlocker(firstScope);Assert.That(_research.TryUpgrade(PlayerSkillId.Bomb),Is.True);
+        var independent=SpawnResearchReplacement(anotherScope,true,0);
+        Assert.That(independent.Research.Level(PlayerSkillId.Bomb),Is.EqualTo(1));Assert.That(independent.Research.Tokens,Is.EqualTo(1));
+        var same=SpawnResearchReplacement(firstScope,false,0);
+        Assert.That(same.Research.Level(PlayerSkillId.Bomb),Is.EqualTo(2));Assert.That(same.Research.Tokens,Is.Zero);
+        yield break;
+    }
     private void UnlockAll()
     {
         Reward();
@@ -60,7 +122,7 @@ public sealed class PlayerSkillTreeRuntimeTests
     private void ActivateDual(WeaponType weapon)
     {
         Reward();Assert.That(_research.TryUnlock(PlayerSkillId.DualWield),Is.True);
-        Assert.That(_research.TrySetCandidate(1,PlayerSkillId.DualWield),Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.DualWield),Is.True);
         Assert.That(_controller.TryEquip(0,PlayerSkillId.DualWield),Is.True);
         var selection=_player.GetComponent<PlayerWeaponSelection>();
         if(weapon==WeaponType.Sniper)_player.GetComponent<PlayerArmory>().State.Equip(0,WeaponType.Sniper);
@@ -85,26 +147,62 @@ public sealed class PlayerSkillTreeRuntimeTests
         Assert.That(_research.TryUnlock(PlayerSkillId.Portal),Is.False,"Portal still requires the beacon prerequisite.");
         yield break;
     }
+
+    [UnityTest]
+    public IEnumerator CandidatesCanOnlyChangeInSpaceshipButFieldQEUseAndUpgradesStillWork()
+    {
+        Reward();
+        Assert.That(_research.TryUnlock(PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(_research.TryUpgrade(PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(_research.CanChangeCandidates,Is.False);
+        Assert.That(_research.TrySetCandidate(1,PlayerSkillId.PlayerTurret),Is.False);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(_controller.TryEquip(0,PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(_controller.TryEquip(1,PlayerSkillId.Bomb),Is.True);
+        int tokens=_research.Tokens;
+        _hud=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/InitialStagePlayerHUD.prefab"));SceneManager.MoveGameObjectToScene(_hud,_scene);
+        _hud.GetComponent<InitialStagePlayerHUD>().enabled=false;
+        _hud.GetComponent<StagePlayerVitalsView>().BindPlayer(_player.GetComponent<PlayerInfo>());
+        var status=_hud.GetComponent<PlayerStatusPanel>();Assert.That(status.TryOpen(),Is.True);
+        var tree=_hud.GetComponentInChildren<PlayerSkillTreePanel>(true);tree.Open();tree.Select(PlayerSkillId.PlayerTurret);
+        var buttons=(Button[])typeof(PlayerSkillTreePanel).GetField("_candidateButtons",Private).GetValue(tree);
+        var labels=(TMPro.TMP_Text[])typeof(PlayerSkillTreePanel).GetField("_candidateStates",Private).GetValue(tree);
+        foreach(var button in buttons)Assert.That(button.interactable,Is.False);
+        foreach(var label in labels)
+        {
+            Assert.That(label.text,Is.EqualTo("우주선에서 변경"));
+            Assert.That(label.font.HasCharacters(label.text),Is.True,"The field guidance needs authored Korean glyphs.");
+        }
+        Assert.That(tree.Assign(0),Is.False);
+        Assert.That(_research.Candidate(0),Is.EqualTo(PlayerSkillId.Bomb));Assert.That(_research.Tokens,Is.EqualTo(tokens));
+        tree.Close();status.Close();
+        Assert.That(_controller.TryEquip(1,PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.Bomb));
+        Assert.That(_controller.Loadout.E,Is.EqualTo(PlayerSkillId.PlayerTurret));
+        Assert.That(_controller.TryUseSlot(0),Is.True,"The field can still use a previously configured skill.");
+        yield break;
+    }
     [UnityTest]
     public IEnumerator FourCandidatesSwapAndReplacingAnEquippedSkillClearsOnlyItsSlot()
     {
         UnlockAll();Assert.That(_controller.TryEquip(0,PlayerSkillId.Bomb),Is.True);
-        Assert.That(_research.TrySetCandidate(1,PlayerSkillId.DualWield),Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.DualWield),Is.True);
         Assert.That(_controller.TryEquip(1,PlayerSkillId.DualWield),Is.True);
-        Assert.That(_research.TrySetCandidate(0,PlayerSkillId.DualWield),Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,0,PlayerSkillId.DualWield),Is.True);
         Assert.That(_research.Candidate(1),Is.EqualTo(PlayerSkillId.Bomb));
         Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.Bomb));
-        Assert.That(_research.TrySetCandidate(1,PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.PlayerTurret),Is.True);
         Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.None));
         Assert.That(_controller.Loadout.E,Is.EqualTo(PlayerSkillId.DualWield));
         Assert.That(_controller.TryUse(PlayerSkillId.Bomb),Is.False);
-        Assert.That(_research.TrySetCandidate(4,PlayerSkillId.Bomb),Is.False);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,4,PlayerSkillId.Bomb),Is.False);
         yield break;
     }
     [UnityTest]
     public IEnumerator TreeButtonsUnlockAndPopulateRealBottomWedgesWithoutChangingQE()
     {
         Reward();
+        using var hub=new PlayerSkillResearchTestHub(_research);
         _hud=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/InitialStagePlayerHUD.prefab"));SceneManager.MoveGameObjectToScene(_hud,_scene);
         _hud.GetComponent<InitialStagePlayerHUD>().enabled=false;
         _hud.GetComponent<Canvas>().enabled=true;
@@ -132,7 +230,7 @@ public sealed class PlayerSkillTreeRuntimeTests
         statusCanvas.sortingOrder=30000;
         Canvas.ForceUpdateCanvases();ScreenCapture.CaptureScreenshot("Docs/Local/PlayerArmory/skill-tree.png");yield return null;yield return null;
         statusCanvas.sortingOrder=order;
-        tree.Close();status.Close();hud.CombatPicker.Open();yield return null;
+        tree.Close();status.Close();hub.Dispose();hud.CombatPicker.Open();yield return null;
         var destination=new Vector2(Screen.width*.25f,Screen.height*.55f);
         Assert.That(hud.CombatPicker.BeginDrag(PlayerSkillId.DualWield,Vector2.zero),Is.True);
         Assert.That(hud.CombatPicker.Release(destination),Is.True);
@@ -214,7 +312,7 @@ public sealed class PlayerSkillTreeRuntimeTests
         Assert.That(_research.TryUpgrade(PlayerSkillId.DualWield),Is.True);
         var context=new CheckpointCaptureContext(config,0,Guid.NewGuid());var codec=new BinaryCheckpointPayloadCodec();
         var writer=(ICheckpointParticipant)_controller;var section=writer.Capture(context,codec);
-        Assert.That(_research.TryUnlock(PlayerSkillId.PlayerTurret),Is.True);Assert.That(_research.TrySetCandidate(1,PlayerSkillId.PlayerTurret),Is.True);
+        Assert.That(_research.TryUnlock(PlayerSkillId.PlayerTurret),Is.True);Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.PlayerTurret),Is.True);
         var target=new CheckpointData(Guid.NewGuid(),DateTimeOffset.UtcNow,config.MatchId,config.StageId,config.DifficultyProfileId,config.Mode,config.RandomSeed,config.ContentVersion,0,1,new[]{section});
         using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,target,CheckpointRestorePolicy.Default),section,codec))
         {
@@ -248,7 +346,7 @@ public sealed class PlayerSkillTreeRuntimeTests
         var turret=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab"));SceneManager.MoveGameObjectToScene(turret,_scene);
         turret.GetComponent<PlayerTurret>().AssignOwner(_player.GetComponent<PlayerTurretSkill>());
         Assert.That(turret.GetComponent<PlayerTurret>().ShotDamage,Is.EqualTo(_controller.UpgradeStatValue(PlayerSkillId.PlayerTurret)).Within(.001));
-        Assert.That(_research.TrySetCandidate(1,PlayerSkillId.DualWield),Is.True);Assert.That(_controller.TryEquip(0,PlayerSkillId.DualWield),Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.DualWield),Is.True);Assert.That(_controller.TryEquip(0,PlayerSkillId.DualWield),Is.True);
         _player.GetComponent<PlayerWeaponSelection>().TrySelectWeapon(WeaponType.DefaultGun);Assert.That(_controller.TryUseSlot(0),Is.True);
         Assert.That(_player.GetComponent<PlayerDualWieldSkill>().ActiveRemaining,Is.EqualTo(10.4f).Within(.001));
         Assert.That(_player.GetComponent<PlayerAttack>().TryFire(),Is.True);
@@ -333,7 +431,7 @@ public sealed class PlayerSkillTreeRuntimeTests
     {
         Reward();foreach(var id in new[]{PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon,PlayerSkillId.Portal})Assert.That(_research.TryUnlock(id),Is.True);
         Reward();Assert.That(_research.TryUpgrade(PlayerSkillId.Portal),Is.True);Assert.That(_research.TryUpgrade(PlayerSkillId.Portal),Is.True);
-        Assert.That(_research.TrySetCandidate(1,PlayerSkillId.Portal),Is.True);Assert.That(_controller.TryEquip(0,PlayerSkillId.Portal),Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.Portal),Is.True);Assert.That(_controller.TryEquip(0,PlayerSkillId.Portal),Is.True);
         var grid=new GameObject("Portal ground",typeof(Grid));SceneManager.MoveGameObjectToScene(grid,_scene);grid.transform.position=_player.transform.position;
         var mapObject=new GameObject("Ground",typeof(UnityEngine.Tilemaps.Tilemap),typeof(UnityEngine.Tilemaps.TilemapCollider2D));mapObject.transform.SetParent(grid.transform,false);
         var map=mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();var tile=ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();tile.colliderType=UnityEngine.Tilemaps.Tile.ColliderType.None;
@@ -405,7 +503,7 @@ public sealed class PlayerSkillTreeRuntimeTests
     {
         Reward();
         foreach(var id in new[]{PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon,PlayerSkillId.Portal})Assert.That(_research.TryUnlock(id),Is.True);
-        _research.TrySetCandidate(1,PlayerSkillId.Portal);_research.TrySetCandidate(2,PlayerSkillId.PlayerTurret);
+        PlayerSkillResearchTestHub.Assign(_research,1,PlayerSkillId.Portal);PlayerSkillResearchTestHub.Assign(_research,2,PlayerSkillId.PlayerTurret);
         Assert.That(_controller.TryEquip(0,PlayerSkillId.Portal),Is.True);Assert.That(_controller.TryEquip(1,PlayerSkillId.PlayerTurret),Is.True);
         var grid=new GameObject("Recovery ground",typeof(Grid));SceneManager.MoveGameObjectToScene(grid,_scene);grid.transform.position=_player.transform.position;
         var mapObject=new GameObject("Ground",typeof(UnityEngine.Tilemaps.Tilemap),typeof(UnityEngine.Tilemaps.TilemapCollider2D));mapObject.transform.SetParent(grid.transform,false);

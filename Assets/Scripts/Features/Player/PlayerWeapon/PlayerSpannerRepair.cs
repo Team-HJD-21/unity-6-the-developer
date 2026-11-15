@@ -41,7 +41,8 @@ public sealed class PlayerSpannerRepair : MonoBehaviour
                 turret.CurrentHealth >= turret.MaxHealth) continue;
             if (turret.gameObject.scene != owner.gameObject.scene || !turret.HasStateAuthority) continue;
             var targetTime = turret.GetComponent<FieldSimulationActor>()?.TimeSource;
-            if (!ReferenceEquals(targetTime, presence?.TimeSource)) continue;
+            var ownerTime = presence?.TimeSource ?? owner.GetComponentInParent<FieldSimulationActor>()?.TimeSource;
+            if (!FieldSimulationTime.CanAdvance(turret) || !PlayerSpannerTargeting.SharesMatchExecution(ownerTime, targetTime)) continue;
             Vector2 position = turret.transform.position;
             float distance = (position - (Vector2)owner.position).sqrMagnitude;
             if (distance >= nearestDistance || !PlayerSpannerTargeting.CanReach(owner, turret.transform,

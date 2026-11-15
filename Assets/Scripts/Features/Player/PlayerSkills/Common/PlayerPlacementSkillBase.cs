@@ -97,6 +97,7 @@ public abstract class PlayerPlacementSkillBase : PlayerSkillBase
             if (Controller != null) Controller.NotifyPlacementRejected(PlacementFailure);
             return false;
         }
+        Controller?.NotifyCastPerformed(Id, position);
         if (complete) CancelPlacement();
         else
         {

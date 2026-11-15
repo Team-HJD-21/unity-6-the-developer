@@ -17,6 +17,7 @@ public sealed partial class PlayerSpriteMotion : MonoBehaviour
     private PlayerWeaponSelection _selection;
     private PlayerSkillController _skills;
     private PlayerTurretRepair _repair;
+    private PlayerSkillCastPresentation _skillCast;
     private PlayerMotion _motion;
     private PlayerAimFacing _facing;
     private float _elapsed;
@@ -62,6 +63,7 @@ public sealed partial class PlayerSpriteMotion : MonoBehaviour
         _selection = GetComponent<PlayerWeaponSelection>();
         _skills = GetComponent<PlayerSkillController>();
         _repair = GetComponent<PlayerTurretRepair>();
+        _skillCast = GetComponent<PlayerSkillCastPresentation>();
         _spaceManColliders = GetComponent<PlayerDirectionalColliders>();
         if (_spaceManShadow != null)
             _spaceManShadowRenderer = _spaceManShadow.GetComponentInChildren<SpriteRenderer>(true);
@@ -90,6 +92,7 @@ public sealed partial class PlayerSpriteMotion : MonoBehaviour
 
     private void OnWeaponChanged(WeaponType weapon)
     {
+        _skillCast?.Cancel();
         bool tool = _heldRepair || weapon == WeaponType.Spanner;
         if (!_ownsDisplay || !isActiveAndEnabled || tool == _usesToolPoses) return;
         _usesToolPoses = tool;
@@ -105,6 +108,7 @@ public sealed partial class PlayerSpriteMotion : MonoBehaviour
     public bool PlayToolAction(bool repairing)
     {
         if (!_ownsDisplay || !isActiveAndEnabled) return false;
+        _skillCast?.Cancel();
         StartMotion(repairing ? PlayerMotion.Repair : PlayerMotion.Attack);
         return true;
     }
@@ -113,6 +117,7 @@ public sealed partial class PlayerSpriteMotion : MonoBehaviour
     public void SetHeldRepair(bool repairing)
     {
         if (_heldRepair == repairing) return;
+        if (repairing) _skillCast?.Cancel();
         _heldRepair = repairing;
         if (!_ownsDisplay || !isActiveAndEnabled) return;
         _usesToolPoses = HasSpanner;
@@ -126,6 +131,7 @@ public sealed partial class PlayerSpriteMotion : MonoBehaviour
 
     public void PlayRangedShot()
     {
+        _skillCast?.Cancel();
         if (_ownsDisplay && !HasSpanner) StartMotion(PlayerMotion.Fire);
     }
 
@@ -137,6 +143,7 @@ public sealed partial class PlayerSpriteMotion : MonoBehaviour
             (_skills != null && !_skills.CanUse) || IsAction || IsPlayingDashAnimation)
             return false;
 
+        _skillCast?.Cancel();
         StartMotion(HasSpanner ? PlayerMotion.ToolDash : PlayerMotion.Dash);
         UpdateAnimatorState();
         return true;

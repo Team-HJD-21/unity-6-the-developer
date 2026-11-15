@@ -29,8 +29,10 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
     [SerializeField] private GameObject _cameraRig;
     [SerializeField] private CinemachineCamera _wideCamera, _closeCamera;
     [SerializeField, Range(.2f, 1)] private float _zoomRatio = .52f;
+    [SerializeField, Range(.05f, 1)] private float _endingZoomRatio = .22f;
     [Header("Animated by BossEntrance Timeline")]
     [SerializeField, Range(0, 1)] private float _letterbox, _captionOpacity, _suction, _black, _captureFrame;
+    [SerializeField, Range(0, 1)] private float _endingZoom;
     [SerializeField] private float _captionCharacters;
     private IInputBlocker _input;
     private IDisposable _inputLease;
@@ -116,7 +118,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
             _elapsed = 0; IsPlaying = true;
             _presentation.SetActive(true); _previewButton.gameObject.SetActive(false);
             _director.timeUpdateMode = DirectorUpdateMode.Manual;
-            _director.Play(); _director.time = 0; _director.Evaluate(); _brain.ManualUpdate();
+            _director.Play(); _director.time = 0; _director.Evaluate(); ApplyCameraZoom(); _brain.ManualUpdate();
             ApplyPresentation();
             return true;
         }
@@ -148,6 +150,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         {
             PositionCameras();
             _director.time = Math.Min(_elapsed, Duration); _director.Evaluate();
+            ApplyCameraZoom();
             _brain.ManualUpdate();
             if (_captureFrame > .5f && _snapshot == null) CaptureWorld();
             ApplyPresentation();
@@ -160,6 +163,12 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         Vector3 focus = FocusPoint(_player); focus.z = _originalPosition.z;
         _wideCamera.transform.SetPositionAndRotation(focus, _originalRotation);
         _closeCamera.transform.SetPositionAndRotation(focus, _originalRotation);
+    }
+    private void ApplyCameraZoom()
+    {
+        float approach = Mathf.Max(1, _originalSize * _zoomRatio);
+        float ending = Mathf.Min(approach, Mathf.Max(.5f, _originalSize * _endingZoomRatio));
+        _closeCamera.Lens.OrthographicSize = Mathf.Lerp(approach, ending, _endingZoom);
     }
     private void CaptureWorld()
     {

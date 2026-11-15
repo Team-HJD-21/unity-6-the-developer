@@ -32,7 +32,12 @@ public sealed class PlayerDualWieldSkill : PlayerSkillBase
     {
         if (!CurrentWeaponIsGun || !HasPrefab || (Unity.Netcode.NetworkManager.Singleton != null &&
             Unity.Netcode.NetworkManager.Singleton.IsListening && !Unity.Netcode.NetworkManager.Singleton.IsServer)) return false;
-        _activeUntil = Now + EffectDuration; _readyAt = Now + _cooldown; return true;
+        _activeUntil = Now + EffectDuration; _readyAt = Now + _cooldown;
+        var input = GetComponent<PlayerInputHandler>();
+        Vector3 target = input != null && input.HasAimTarget ? (Vector3)input.MouseWorldPosition :
+            transform.position + (Vector3)(input != null ? input.AimDirection : Vector2.down);
+        Controller?.NotifyCastPerformed(Id, target);
+        return true;
     }
     private void Update()
     { if (GetComponent<PlayerInfo>() is PlayerInfo info && (info.IsDestroyed || info.curHp <= 0)) _activeUntil = 0; }

@@ -1,6 +1,6 @@
 # 플레이어 스킬 트리와 하단 후보
 
-2026-11-15 사용자 요청 기준. `I → 스킬 트리`에서 해금과 하단 후보 네 칸을 편집한다. 실제 사용 슬롯은 기존 Q/E 두 칸이며, 하단 원형 선택창에서 후보를 Q/E로 드래그하는 방식은 유지한다.
+2026-11-15 사용자 요청 기준. `I → 스킬 트리`에서 해금과 하단 후보 네 칸을 관리한다. 후보 네 칸의 변경은 우주선 내부에서만 허용한다. 실제 사용 슬롯은 기존 Q/E 두 칸이며, 필드의 원형 선택창에서 준비된 후보를 Q/E로 드래그하는 방식과 스킬 사용은 유지한다.
 
 ## 트리와 임시 재화
 
@@ -8,10 +8,11 @@
 - 폭탄 아래에서 공격 업그레이드 / 설치형으로 갈라진다. 공격형 첫 노드는 양손 무기, 설치형은 터렛 → 방벽 → 유도 비콘 → 포털 순이다. 이 배치는 임시다.
 - 포털은 플레이어 프리팹·설치 미리보기·이동 입력까지 연결한다. 전용 세로형 A/B 이미지와 좌우 발판 콜라이더를 사용하며 자세한 외형·충돌·입력은 [포털 API](player-portal-api.md)를 따른다.
 - 스킬 토큰은 1레벨부터 1개이며 총 지급량이 플레이어 레벨과 같다. 남은 토큰은 총 지급량에서 해금·강화 비용을 뺀 값이다. `PlayerSkillResearch`는 실제 `LevelChanged`에서 즉시 지급하고, 경험치 `Changed` 복원 알림은 같은 프레임의 Apply/Rollback이 끝난 `LateUpdate`에서 정산한다. 비활성화 중 놓친 레벨도 다시 활성화할 때 보충하며 이미 지급한 레벨은 중복 지급하지 않는다. 무기고 강화 토큰·스탯 포인트와 별도 잔액이다.
-- 폭탄을 제외한 노드는 선행 노드 해금 후 토큰 1개로 해금한다. 선택한 노드를 해금한 다음 원하는 후보 버튼을 눌러 배치한다. 이미 다른 후보에 있는 스킬은 두 후보 위치를 교환한다.
+- 폭탄을 제외한 노드는 선행 노드 해금 후 토큰 1개로 해금한다. 선택한 노드를 해금한 다음 우주선에서 원하는 후보 버튼을 눌러 배치한다. 이미 다른 후보에 있는 스킬은 두 후보 위치를 교환한다. `PlayerSkillResearch.CanChangeCandidates/TrySetCandidate`는 현재 actor의 `PlayerControlState.IsInSpaceship`도 검사하며 필드의 직접 API 요청도 거부한다. 필드에서는 후보 버튼을 비활성화하고 `우주선에서 변경`을 표시한다. 해금·강화 조건은 기존대로다.
 - 같은 화면에서 해금된 각 스킬을 최대 3레벨까지 강화한다. 강화당 같은 스킬 토큰 1개를 소비하며 각 단계는 원본 대비 +15%다. 폭탄·터렛·양손 무기는 피해량, 방벽은 최대 연결 거리, 비콘은 유인 반경, 포털은 설치 반경을 늘린다. UI의 현재/다음 값은 실제 스킬 값에서 조회한다. 이미 배치된 비콘의 반경은 배치 당시 값을 유지하며 다음 설치에 강화가 적용된다. 이미 설치된 폭탄·터렛의 다음 피해는 소유자의 현재 강화 배율을 따른다.
 - 후보에서 빠진 스킬이 Q/E에 있으면 해당 사용 슬롯만 비운다. 설치 프리뷰는 취소하며 이미 설치된 본체를 없애거나 쿨다운을 초기화하지 않는다.
-- 연구는 현재 actor의 상태이며 별도 영구 저장을 추가하지 않는다. XP·스탯은 첫 허브와 필드에서 같은 개인 성장 슬롯을 읽지만 연구는 World의 `/loadout`에 포함된다. 허브와 출격 필드는 별도 actor를 만들며 새 연구 상태는 복원된 XP 레벨까지의 스킬 토큰을 정산한다. 허브 연구·해금 상태 전체를 필드로 전달하는 기능은 이번 변경에 포함하지 않는다.
+- 연구는 World의 `/loadout`에 포함되며 별도 영구 저장을 추가하지 않는다. XP·스탯은 첫 허브와 필드에서 같은 개인 성장 슬롯을 읽는다. 허브와 출격 필드가 별도 actor를 만들 때 `PlayerSkillController.Session`이 같은 로컬 입력 scope에서 연구 레벨·해금·후보 네 칸·Q/E·남은 토큰과 이미 보상한 레벨을 함께 전달한다. 새 actor의 XP가 더 높으면 아직 지급하지 않은 차이만 보충한다. 입력 scope가 다르거나 원격 Client이면 복사하지 않는다.
+- 연구/장착 변경과 비활성화·허브 해제 때 최신 상태를 보관한다. 새 actor로 소유권이 넘어간 뒤 이전 actor가 늦게 정리되어도 이전 레벨·잔액으로 덮어쓰지 않는다. 바인딩을 반복해도 토큰을 다시 지급하지 않는다. 이 전달은 현재 Play 실행 수명이며 Play 종료/새 실행에서 비운다. 설치물·남은 수명·쿨타임은 복사하지 않고 기존 Match/체크포인트 원본에 둔다. `/loadout` v4의 저장 형식과 명시적 복원/롤백은 유지한다.
 
 ## 호출과 표시
 
@@ -88,3 +89,19 @@
 생성 경로는 내장 `image_gen` (`host_image`)이다. 원본 생성 프롬프트:
 
 > A game-ready 2D pixel-art explosion animation sprite sheet, transparent background. Exactly 8 frames in a perfectly regular 4 columns by 2 rows grid, read left to right then top to bottom. Each equal cell holds one centered top-down radial explosion sharing exactly the same center; no frame touches cell edges, 15 percent padding per cell. Frames: 1 compact brilliant pale yellow star flash; 2 yellow-orange fire burst expands; 3 large orange fire lobes; 4 peak broad irregular orange fire and dark amber outline with tiny hot fragments; 5 fire breaks into muted brown smoke lobes; 6 smoke expands into loose fragments with embers; 7 sparse smaller fading smoke flecks; 8 almost gone tiny flecks. Crisp stepped pixel-game contours and few flat shades, no smooth vectors, no gradient blur, no glow bloom. Top-down flat radial shape, no mushroom cloud or rising plume. Warm cream, yellow, burnt orange, warm charcoal palette. No text, no labels, no grid lines, no ground, no checkerboard. Entire sheet landscape 2:1 aspect. Consistent scale across frames: small start, peak fills 70 percent cell, smoke then fades.
+
+## 우주선 출격 시 연구 전달 검증 (2026-11-15)
+
+`PlayerSkillTreeRuntimeTests` 15/15 통과. 새 회귀에서는 허브 강화·해금·후보·Q/E·잔액을 새 필드 actor와 복귀 허브 actor로 전달하고, 필드 레벨업의 차액만 지급하는지 확인했다. 이전 actor의 지연 비활성화, 반복 Bind, 허브 해제, 별도 로컬 입력 scope도 검사했다. 기존 연구/체크포인트·실제 강화 수치·후보/UI 검사도 함께 통과했다.
+
+실제 Startup 왕복 추가 확인: 저장된 29레벨의 첫 우주선에서 폭탄을 3레벨로 강화해 토큰 29→27을 소비한 뒤 Stage1 출격과 우주선 복귀 모두 3레벨/27개를 유지했다. 이어 우주선에서 터렛·방벽을 해금해 27→25개, 후보를 폭탄/터렛/방벽/빈 칸으로 배치한 뒤 다시 출격했다. 필드에서 실제 Q 터렛 장착 요청이 허용됐고, 귀환한 새 허브 actor에서도 해금·후보·Q·폭탄 3레벨·25개가 유지됐다. 해금하지 않은 비콘·양손 무기는 잠금 상태였다. API/자동 입력을 이용한 실제 Scene 확인이며 사람의 수동 인수와 구분한다. 검증 후 재생과 임시 Play 시작 Scene 설정은 정리했다.
+
+## 후보 변경 위치 제한 (2026-11-15)
+
+새 `CandidatesCanOnlyChangeInSpaceshipButFieldQEUseAndUpgradesStillWork` 실행 검사가 통과했다. 필드의 직접 후보 API와 트리 버튼 요청은 후보/토큰을 변경하지 않으며, 버튼 네 개 비활성화·안내 문구의 Static 한글 글리프·준비된 후보의 Q/E 교환과 사용·기존 해금/강화를 확인했다. 기존 트리 UI 배치 검사는 우주선 위치에서 배치하고 필드로 돌아와 Q/E로 드래그하는 순서로 맞췄다. 전투·시전 fixture의 후보 준비도 같은 우주선 조건으로 수행한다.
+
+스킬 트리 묶음 16개 중 15개는 통과했다. 기존 `AuthoredPortalPairTravelsWithRReservesReloadAndFRecoversOneEndpoint`의 포털 중앙 물리 통과 assertion은 전체 실행과 단독 재실행 모두 실패했다(기대: 포털 Y+0.2 초과). 후보 위치 제한 이외의 포털/콜라이더/물리 설정을 이번 변경에서 수정하지 않았으며 별도 확인이 필요하다. 물리 이동 입력을 매 step 유지하는 시험도 실패하여 해당 시도는 제거했다. 실제 원형 HUD의 후보→Q/E 드래그/교환/취소 검사는 별도 재실행해 통과했다.
+
+후보 준비 위치를 바꾼 시전 회귀는 6개 중 5개가 먼저 통과했다. 기존 표시 검사 1개는 Update 중 코루틴이 총구 동기화 직후 값을 읽는 문제로, 최종 LateUpdate 표시 단계를 명시적으로 평가한 뒤 단독 재실행해 통과했다. 실제 렌더 순서를 새로 검증했다고 합산하지 않는다. 시전의 게임 동작 코드는 이 후보 위치 제한에서 수정하지 않았다.
+
+우주선의 실제 포인터 경로 `FirstHubWithoutEventSystemAcceptsSkillUnlockUpgradeAssignmentAndClosePointerClicks`도 단독 재실행해 통과했다. 첫 허브의 스킬 해금·강화·후보 배치·뒤로·닫기가 기존 입력 모듈을 통해 동작하며, 후보 위치 제한이 허브 버튼까지 막지 않는 것을 확인했다. 새 필드 제한 안내의 글리프와 변경 파일 diff/추가 에셋 .meta 검사도 통과했다.

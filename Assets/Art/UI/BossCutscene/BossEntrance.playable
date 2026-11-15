@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90fb794a295e73545af71bcdb7375791, type: 3}
   m_Name: CinemachineShot
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineShot
-  DisplayName: Return to gameplay
+  DisplayName: Finish close on player
   VirtualCamera:
-    exposedName: BossReturn
+    exposedName: BossClose
     defaultValue: {fileID: 0}
 --- !u!114 &-5821320552951352363
 MonoBehaviour:
@@ -26,7 +26,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05acc715f855ced458d76ee6f8ac6c61, type: 3}
-  m_Name: Camera / approach and return
+  m_Name: Camera / approach and close finish
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineTrack
   m_Version: 3
   m_AnimClip: {fileID: 0}
@@ -171,7 +171,7 @@ MonoBehaviour:
     m_PreExtrapolationMode: 0
     m_PostExtrapolationTime: 0
     m_PreExtrapolationTime: 0
-    m_DisplayName: Return to gameplay
+    m_DisplayName: Finish close on player
   m_Markers:
     m_Objects: []
   TrackPriority: 0

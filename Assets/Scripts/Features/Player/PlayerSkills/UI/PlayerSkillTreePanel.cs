@@ -164,16 +164,17 @@ public sealed class PlayerSkillTreePanel : MonoBehaviour
         _upgradeStats.text = PlayerSkillDescriptions.UpgradeStats(_selected, _owner);
         _upgrade.interactable = research.CanUpgrade(_selected);
         _upgrade.GetComponentInChildren<TMP_Text>().text = level >= PlayerSkillResearch.MaximumLevel ? "최고 레벨" : "강화 · 토큰 1개";
+        bool inSpaceship = _owner.GetComponent<PlayerControlState>()?.IsInSpaceship == true;
         for (int i=0;i<4;i++)
         {
             var id=research.Candidate(i);
             bool assigned = id != PlayerSkillId.None, selected = assigned && id == _selected;
-            bool canAssign = research.CanModify && research.IsUnlocked(_selected) && _owner.IsConfiguredSkill(_selected);
+            bool canAssign = research.CanChangeCandidates && research.IsUnlocked(_selected) && _owner.IsConfiguredSkill(_selected);
             _candidateNames[i].text = assigned ? PlayerSkillDescriptions.Name(id) : "빈 슬롯";
             _candidateNames[i].rectTransform.anchoredPosition = new Vector2(0, assigned ? -20 : 4);
             _candidateIcons[i].sprite = System.Array.Find(_cards, card => card.Skill == id)?.Icon.sprite;
             _candidateIcons[i].enabled = assigned && _candidateIcons[i].sprite != null;
-            _candidateStates[i].text = selected ? "배치됨" : !canAssign ? "해금한 스킬을 선택" : assigned ? "클릭하여 교체" : "클릭하여 배치";
+            _candidateStates[i].text = !inSpaceship ? "우주선에서 변경" : selected ? "배치됨" : !canAssign ? "해금한 스킬을 선택" : assigned ? "클릭하여 교체" : "클릭하여 배치";
             _candidateButtons[i].interactable = canAssign && !selected;
             _candidateButtons[i].image.color = selected ? new Color(.25f,.24f,.15f) : assigned ? new Color(.10f,.20f,.22f) : new Color(.065f,.09f,.115f);
             if (_candidateButtons[i].TryGetComponent<Outline>(out var border)) border.effectColor = selected ? new Color(.92f,.79f,.43f) : canAssign ? new Color(.40f,.64f,.64f) : new Color(.24f,.29f,.31f);

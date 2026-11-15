@@ -772,6 +772,8 @@ MonoBehaviour:
   _wideCamera: {fileID: 6110166868820842466}
   _closeCamera: {fileID: 5714608984685741570}
   _zoomRatio: 0.52
+  _endingZoomRatio: 0.22
+  _endingZoom: 0
   _letterbox: 0
   _captionOpacity: 0
   _suction: 0

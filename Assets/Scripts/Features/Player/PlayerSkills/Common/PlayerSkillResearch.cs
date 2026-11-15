@@ -41,6 +41,7 @@ public sealed class PlayerSkillResearch : MonoBehaviour
         GetComponent<PlayerInfo>() is PlayerInfo health && !health.IsDestroyed && health.curHp > 0 &&
         (Unity.Netcode.NetworkManager.Singleton == null || !Unity.Netcode.NetworkManager.Singleton.IsListening ||
             Unity.Netcode.NetworkManager.Singleton.IsServer);
+    public bool CanChangeCandidates => CanModify && _controls != null && _controls.IsInSpaceship;
     private void Awake()
     { _experience = GetComponent<PlayerExperience>(); _controller = GetComponent<PlayerSkillController>(); _controls = GetComponent<PlayerControlState>(); }
     private void OnEnable()
@@ -77,7 +78,7 @@ public sealed class PlayerSkillResearch : MonoBehaviour
     }
     public bool TrySetCandidate(int slot, PlayerSkillId id)
     {
-        if (!CanModify || slot < 0 || slot >= 4 || !IsUnlocked(id) || !_controller.IsConfiguredSkill(id) || _candidates[slot] == id) return false;
+        if (!CanChangeCandidates || slot < 0 || slot >= 4 || !IsUnlocked(id) || !_controller.IsConfiguredSkill(id) || _candidates[slot] == id) return false;
         int previous = Array.IndexOf(_candidates, id);
         if (previous >= 0) _candidates[previous] = _candidates[slot];
         _candidates[slot] = id;
