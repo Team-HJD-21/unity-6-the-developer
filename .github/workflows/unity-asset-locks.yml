@@ -1,0 +1,31 @@
+name: Release merged Unity asset locks
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      before:
+        description: Main commit before the change to recheck
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
+      BEFORE: ${{ github.event.before || inputs.before }}
+      AFTER: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          sparse-checkout: .github/scripts
+          token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
+      - name: Release submitted versions on main
+        run: python3 .github/scripts/release_unity_asset_locks.py
