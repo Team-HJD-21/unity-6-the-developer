@@ -92,7 +92,7 @@ flowchart TD
 
 [FieldTurretTreeMask](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretTreeMask.cs)는 같은 씬의 `Entities / 0` Individual 타일맵에서 `Overworld_Trees_` 스프라이트를 검색한다. 나무 접지점이 터렛보다 앞에 있고 실루엣의 범위가 포신과 겹칠 때 포신 그룹에 마스크를 적용한다. 겹침이 사라지면 평소의 마스크 설정을 복구한다. 과열 아지랑이도 포신과 같은 마스크를 사용한다. 재검증할 때는 실제로 양쪽 포신이 나무에 가려진 상태에서 캐논과 미사일을 같은 화면에 놓고 줌 아웃해 스프라이트와 가림을 함께 확인한다.
 
-`PlayerBullet`·`SniperBullet`·`PlayerTurretProjectile`·`bullet`·`Missile`의 비행 스프라이트는 `Entities / 1`을 사용한다. 플레이어 탄환의 명중 효과는 Order 2로 표시하며, 미사일 폭발 프리팹은 `Entities / 100`을 사용한다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
+`PlayerBullet`·`SniperBullet`의 비행 스프라이트는 `Entities / 0`을 사용한다. `PlayerTurretProjectile`·`bullet`·`Missile`은 `Entities / 1`을 사용한다. 플레이어 탄환의 명중 효과는 Order 2로 표시하며, 미사일 폭발 프리팹은 `Entities / 100`을 사용한다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
 
 현재 Enemy 타깃 선정은 등록된 `TargetableComponent`의 상태를 사용한다. 근접 공격의 사거리 판정은 대상의 활성 비트리거 콜라이더까지의 거리를 사용하며, 원거리 투사체의 피격은 Physics 2D 충돌 설정을 따른다.
 
@@ -318,6 +318,8 @@ Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드�
 Canon·Missile·Laser의 과열 아지랑이는 `GunRenderer`의 현재 스프라이트를 중앙 기준으로 1.1배 확대하고, 그 윤곽 안에서 URP 2D의 Map Sorting Layer까지 캡처한 배경을 굴절시킨다. 굴절 효과는 포신 뒤에 그려서 포신의 과열 틴트가 그대로 보인다. 열이 쌓이기 시작할 때부터 강해지고, 열이 0%가 되면 사라진다. 프리팹의 `Heat Wave Scale`로 윤곽 크기, 공용 머티리얼의 `Distortion (pixels)`로 최대 굴절 강도를 조절한다.
 
 Laser는 사거리 안의 적을 향해 회전하고, 포신이 조준 허용각에 들어오면 얇은 빔을 포구에서 사거리 끝까지 펼친다. 발사 순간 빔이 굵어지고 포구 위치와 방향이 고정된다. 빔 스프라이트는 길이 방향으로 늘어나며, 전용 재질이 포구에서 끝까지 알파를 낮춘다. 시각적 페이드는 사거리와 피해 판정에 영향을 주지 않는다. 발사가 끝나거나 터렛을 끄면 빔이 얇아지면서 동시에 포구 쪽으로 짧아진다. 조준하던 적을 놓쳤을 때도 빔이 포구로 돌아온 뒤에 다시 회전한다. 빔이 완전히 접히면 `Beam Restart Delay`가 지난 뒤에 다시 펼칠 수 있다. 피해는 발사 중에만 적용하며, 포구부터 사거리 경계까지 회전된 박스로 적을 조회한다. 같은 적의 여러 Collider는 틱마다 한 번만 집계한다. Stage 1의 초기 설정은 폭 0.8 유닛, 발사 3초, 피해 간격 0.25초, 빔 길이 전환 0.2초, 폭 축소 0.1초, 재전개 대기 0.3초다. 폭·시간·간격은 프리팹의 Laser Settings, 틱당 피해량과 조준 시간에 사용하는 발사율은 Definition에서 조절한다.
+
+레이저 포신의 Animator는 시작과 전원 OFF에 `Off` 상태로 첫 프레임을 고정한다. 전원이 켜지면 `Active`, 발사 중에는 `Firing`이 재생된다. 발사 중 전원을 끄면 포신은 즉시 정지 자세로 돌아가며, 빔은 기존 전환 시간에 맞춰 포구 쪽으로 접힌다.
 
 ### 4.1 생성과 등록
 
