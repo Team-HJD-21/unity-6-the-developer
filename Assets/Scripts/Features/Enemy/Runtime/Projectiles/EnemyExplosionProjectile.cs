@@ -8,13 +8,17 @@ using UnityEngine;
 /// </summary>
 public class EnemyExplosionProjectile : EnemyProjectileWithImpactEffect
 {
+    // Inspector 설정과 제작 참조
+
     [Header("폭발 설정")]
     [SerializeField, Min(0.01f)] private float explosionRadius = 1f;
-    
 
+    // 실행 중 참조와 상태
     private readonly List<Collider2D> _overlapResults = new(32);
     private readonly HashSet<ITargetable> _damagedTargets = new();
-    
+
+    // 파생 클래스 공통 처리
+
     /// <summary>
     /// 직격 위치를 중심으로 직격 대상과 주변 대상에게 폭발 피해를 준다.
     /// </summary>
@@ -22,7 +26,9 @@ public class EnemyExplosionProjectile : EnemyProjectileWithImpactEffect
     {
         ApplyExplosionDamage(target, transform.position);
     }
-    
+
+    // 내부 처리
+
     /// <summary>
     /// 직격 대상을 포함한 주변 후보에 피해를 주고 여러 콜라이더로 인한 중복 적용을 막는다.
     /// </summary>
@@ -72,6 +78,9 @@ public class EnemyExplosionProjectile : EnemyProjectileWithImpactEffect
         }
     }
 
+    // 에디터 표시
+
+    /// <summary>투사체의 폭발 피해 반경을 표시한다.</summary>
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

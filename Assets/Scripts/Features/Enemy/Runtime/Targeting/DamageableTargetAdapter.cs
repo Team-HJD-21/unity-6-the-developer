@@ -8,9 +8,11 @@ using UnityEngine.Serialization;
 [RequireComponent(typeof(TargetableComponent))]
 public sealed class DamageableTargetAdapter : MonoBehaviour
 {
+    // Inspector 설정과 제작 참조
     [FormerlySerializedAs("_turret")]
     [SerializeField] private MonoBehaviour _damageableSource;
 
+    // 실행 중 참조와 상태
     private TargetableComponent _targetable;
     private IDamageableTarget _damageable;
     private FieldTurretBase _weaponTurret;
@@ -39,6 +41,9 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
         }
     }
 
+    // Unity 생명주기
+
+    /// <summary>피해 수신 원본을 찾고 시설의 현재 상태를 타깃 정보에 반영한다.</summary>
     private void Awake()
     {
         _targetable = GetComponent<TargetableComponent>();
@@ -47,15 +52,20 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
         Synchronize();
     }
 
+    /// <summary>터렛 상태 변경을 구독하고 활성화 직후 상태를 동기화한다.</summary>
     private void OnEnable()
     {
         FieldTurretInstanceRegistry.SnapshotChanged += OnSnapshotChanged;
         Synchronize();
     }
 
+    /// <summary>다른 컴포넌트 초기화가 끝난 뒤 시설 상태를 다시 읽는다.</summary>
     private void Start() => Synchronize();
+
+    /// <summary>이벤트 외 경로로 바뀐 시설 상태도 타깃 정보에 반영한다.</summary>
     private void LateUpdate() => Synchronize();
 
+    /// <summary>터렛 상태 구독을 해제하고 타깃 후보에서 제외한다.</summary>
     private void OnDisable()
     {
         FieldTurretInstanceRegistry.SnapshotChanged -= OnSnapshotChanged;
@@ -64,6 +74,8 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
             _targetable.enabled = false;
         }
     }
+
+    // 내부 처리
 
     /// <summary>
     /// 연결된 터렛의 상태가 바뀐 경우에만 Enemy 타깃 정보를 갱신한다.

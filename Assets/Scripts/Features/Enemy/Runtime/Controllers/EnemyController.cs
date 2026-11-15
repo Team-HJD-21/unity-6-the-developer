@@ -6,15 +6,19 @@ using UnityEngine.Serialization;
 /// </summary>
 public abstract class EnemyController : MonoBehaviour
 {
+    // Inspector 설정과 제작 참조
+
     [Header("참조")]
-    [SerializeField] protected EnemyTargeting  enemyTargeting;
+    [SerializeField] protected EnemyTargeting enemyTargeting;
     [SerializeField] protected EnemyAnimation enemyAnimation;
 
     [Header("능력")]
     [FormerlySerializedAs("enemyCombat")]
     [SerializeField] protected EnemyAbility enemyAbility;
+
+    // 실행 중 참조와 상태
     private EnemySquad _squad;
-    
+
     /// <summary>
     /// 다른 미사일이 이미 이 적을 목표로 삼았는지 나타낸다.
     /// 미사일 시스템은 중복 목표 배정을 막기 위해 이 값을 확인하고 설정한다.
@@ -30,17 +34,8 @@ public abstract class EnemyController : MonoBehaviour
     /// <summary>분대의 거리 검사에서 재조회 없이 사용할 개체별 플레이어 감지 센서다.</summary>
     internal EnemyPlayerSensor PlayerSensor { get; private set; }
 
-    protected virtual void OnEnable()
-    {
-        _squad?.RefreshRepresentative();
-    }
+    // Unity 생명주기
 
-    protected virtual void OnDisable()
-    {
-        // 비활성화되는 자신을 제외하고 다음 대표를 정한다.
-        _squad?.RefreshRepresentative(this);
-    }
-    
     /// <summary>
     /// 자식 클래스가 공유하는 타깃·애니메이션·능력 참조를 초기화한다.
     /// </summary>
@@ -54,6 +49,21 @@ public abstract class EnemyController : MonoBehaviour
             enemyAbility = GetComponent<EnemyAbility>();
         PlayerSensor = GetComponentInChildren<EnemyPlayerSensor>(true);
     }
+
+    /// <summary>활성 구성원 중에서 분대 대표를 다시 정한다.</summary>
+    protected virtual void OnEnable()
+    {
+        _squad?.RefreshRepresentative();
+    }
+
+    /// <summary>비활성화되는 자신을 제외해 분대 갱신을 이어갈 대표를 정한다.</summary>
+    protected virtual void OnDisable()
+    {
+        // 비활성화되는 자신을 제외하고 다음 대표를 정한다.
+        _squad?.RefreshRepresentative(this);
+    }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 몬스터 유형에 맞는 행동을 실행한다.
@@ -110,6 +120,18 @@ public abstract class EnemyController : MonoBehaviour
     }
 
     /// <summary>
+    /// 타깃을 지정하고 자식 클래스의 후속 처리를 호출한다.
+    /// </summary>
+    /// <param name="target">배정할 타깃. null이면 기존 타깃을 해제한다.</param>
+    public void AssignTarget(Transform target)
+    {
+        enemyTargeting.SetTarget(target);
+        OnTargetChanged(enemyTargeting.Target);
+    }
+
+    // 파생 클래스 공통 처리
+
+    /// <summary>
     /// 능력 발동에 성공하면 애니메이션을 재생한다.
     /// 같은 행동 실행에서 조건을 통과한 경우 중복 검사를 생략한다.
     /// </summary>
@@ -120,16 +142,6 @@ public abstract class EnemyController : MonoBehaviour
 
         enemyAnimation.PlayAbilityAnimation();
         return true;
-    }
-
-    /// <summary>
-    /// 타깃을 지정하고 자식 클래스의 후속 처리를 호출한다.
-    /// </summary>
-    /// <param name="target">배정할 타깃. null이면 기존 타깃을 해제한다.</param>
-    public void AssignTarget(Transform target)
-    {
-        enemyTargeting.SetTarget(target);
-        OnTargetChanged(enemyTargeting.Target);
     }
 
     /// <summary>

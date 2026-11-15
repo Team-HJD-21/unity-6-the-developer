@@ -8,6 +8,8 @@ using TeamHJD.Game.FieldTurrets.Contracts;
 /// </summary>
 public class TargetableComponent : MonoBehaviour, ITargetable
 {
+    // Inspector 설정과 제작 참조
+
     [Header("타깃 설정")]
     [SerializeField] private TargetType targetType;
 
@@ -21,6 +23,7 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     [Header("화력")]
     [SerializeField, Min(0f)] private float firepowerEfficiency;
 
+    // 실행 중 참조와 상태
     private bool _wasTargetable;
     // 사거리 안에 도착한 수가 아니라 분대가 목표로 배정한 집계 대상의 합이다.
     private int _assignedAttackerCount;
@@ -28,39 +31,57 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     /// <summary>타깃 가능한 상태에서 불가능한 상태로 전환되면 발생한다.</summary>
     public event Action<ITargetable> TargetabilityLost;
 
-    private void OnEnable()
-    {
-        RefreshTargetability();
-    }
-
-    private void OnDisable()
-    {
-        RefreshTargetability();
-    }
-
-    /// <summary>타깃 불가 상태로 전환되었을 때 한 번 알린다.</summary>
-    private void RefreshTargetability()
-    {
-        bool canBeTargeted = CanBeTargeted;
-        bool lostTargetability = _wasTargetable && !canBeTargeted;
-
-        _wasTargetable = canBeTargeted;
-
-        if (lostTargetability)
-            TargetabilityLost?.Invoke(this);
-    }
-
-
     /// <summary>
     /// 플레이어 또는 터렛으로 구분하는 타깃 종류를 반환한다.
     /// </summary>
     public TargetType TargetType => targetType;
 
-    /// <summary>이 타깃에 배정할 수 있는 최대 적 인원을 반환한다.</summary>
+    /// <summary>이 타깃에 배정할 수 있는 최대 적 인원을 반환한다. 0이면 무제한이다.</summary>
     public int MaxAttackers => maxAttackers;
 
     /// <summary>이동 중인 적을 포함해 이 타깃에 배정된 전체 집계 인원을 반환한다.</summary>
     public int AssignedAttackerCount => _assignedAttackerCount;
+
+    /// <summary>
+    /// AI가 추적할 현재 오브젝트의 위치를 반환한다.
+    /// </summary>
+    public Transform TargetTransform => transform;
+
+    /// <summary>
+    /// 최대 체력을 기준으로 정규화한 현재 체력 비율을 반환한다.
+    /// </summary>
+    public float HealthRatio =>
+        maxHealth <= 0f
+            ? 0f
+            : Mathf.Clamp01(currentHealth / maxHealth);
+
+    // 기존 API 이름을 유지한다. 정규화 비율이 아닌 원본 전력당 화력 값이다.
+    public float FirepowerRatio => firepowerEfficiency;
+
+    /// <summary>원본 시설의 전력당 화력을 반환한다.</summary>
+    public float FirepowerEfficiency => firepowerEfficiency;
+
+    /// <summary>
+    /// 오브젝트가 활성화되어 있고 체력이 남아 있는지 반환한다.
+    /// </summary>
+    public bool CanBeTargeted =>
+        isActiveAndEnabled && maxHealth > 0f && currentHealth > 0f;
+
+    // Unity 생명주기
+
+    /// <summary>활성화 이후 타깃 가능 상태를 갱신한다.</summary>
+    private void OnEnable()
+    {
+        RefreshTargetability();
+    }
+
+    /// <summary>비활성화로 타깃을 잃는 경우 구독자에게 알린다.</summary>
+    private void OnDisable()
+    {
+        RefreshTargetability();
+    }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>최대 공격 인원을 넘지 않으면 요청한 인원을 배정한다. 최대값 0은 무제한이다.</summary>
     /// <param name="count">새로 배정할 양수 인원.</param>
@@ -105,11 +126,6 @@ public class TargetableComponent : MonoBehaviour, ITargetable
     }
 
     /// <summary>
-    /// AI가 추적할 현재 오브젝트의 위치를 반환한다.
-    /// </summary>
-    public Transform TargetTransform => transform;
-
-    /// <summary>
     /// 실제 상태 시스템에서 전달받은 현재 체력과 최대 체력을 저장한다.
     /// </summary>
     /// <param name="currentHealth">현재 체력.</param>
@@ -122,28 +138,11 @@ public class TargetableComponent : MonoBehaviour, ITargetable
         RefreshTargetability();
     }
 
-    /// <summary>
-    /// 최대 체력을 기준으로 정규화한 현재 체력 비율을 반환한다.
-    /// </summary>
-    public float HealthRatio =>
-        maxHealth <= 0f
-            ? 0f
-            : Mathf.Clamp01(currentHealth / maxHealth);
-
+    /// <summary>전달받은 전력당 화력을 유효한 양수 또는 0으로 저장한다.</summary>
     public void SetFirepowerEfficiency(float dpsPerPower)
     {
         firepowerEfficiency = float.IsNaN(dpsPerPower) || float.IsInfinity(dpsPerPower) ? 0f : Mathf.Max(0f, dpsPerPower);
     }
-
-    // Compatibility name: this is raw DPS per power, not a normalized ratio.
-    public float FirepowerRatio => firepowerEfficiency;
-    public float FirepowerEfficiency => firepowerEfficiency;
-
-    /// <summary>
-    /// 오브젝트가 활성화되어 있고 체력이 남아 있는지 반환한다.
-    /// </summary>
-    public bool CanBeTargeted =>
-        isActiveAndEnabled && maxHealth > 0f && currentHealth > 0f;
 
     /// <summary>
     /// 연결된 피해 수신자로 피해를 전달하고 수신자가 없으면 적용하지 않는다.
@@ -160,5 +159,19 @@ public class TargetableComponent : MonoBehaviour, ITargetable
         }
 
         return false;
+    }
+
+    // 내부 처리
+
+    /// <summary>타깃 불가 상태로 전환되었을 때 한 번 알린다.</summary>
+    private void RefreshTargetability()
+    {
+        bool canBeTargeted = CanBeTargeted;
+        bool lostTargetability = _wasTargetable && !canBeTargeted;
+
+        _wasTargetable = canBeTargeted;
+
+        if (lostTargetability)
+            TargetabilityLost?.Invoke(this);
     }
 }

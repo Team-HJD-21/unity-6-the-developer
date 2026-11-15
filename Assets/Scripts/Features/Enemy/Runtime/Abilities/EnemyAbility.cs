@@ -1,12 +1,13 @@
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.Serialization;
-using Unity.Profiling;
 /// <summary>
 /// 능력의 공통 쿨타임과 실행 조건, 거리 판정을 제공한다.
 /// </summary>
 public abstract partial class EnemyAbility : MonoBehaviour
 {
+    // Inspector 설정과 제작 참조
+
     [Header("능력 설정")]
     [FormerlySerializedAs("attackCooldown")]
     [SerializeField, Min(0f)] private float cooldown = 1f;
@@ -16,22 +17,18 @@ public abstract partial class EnemyAbility : MonoBehaviour
     [FormerlySerializedAs("attackRange")]
     [SerializeField] protected float activationRange = 0.4f;
 
+    // 실행 중 참조와 상태
     private EnemyNetworkController _networkController;
-    
     private double _nextUseTime;
 
+    /// <summary>능력 모션이나 지연 실행으로 행동이 잠겨 있는지 반환한다.</summary>
     public virtual bool IsExecuting => false;
-    
+
     /// <summary>
     /// 능력 사용 시 바라볼 대상. 없으면 컨트롤러에 배정된 타깃을 사용한다.
     /// </summary>
     public virtual Transform FacingTarget => null;
 
-    // 프로파일링
-    private static readonly ProfilerMarker UseConditionMarker =
-        new("TeamHJD.Enemy.TryUse.CheckCondition");
-    
-    
     /// <summary>
     /// 네트워크 실행 중에는 서버만 능력을 사용하도록 확인한다.
     /// </summary>
@@ -54,8 +51,12 @@ public abstract partial class EnemyAbility : MonoBehaviour
         }
     }
 
+    /// <summary>컴포넌트 활성 상태·실행 권한·필드 시계가 능력 실행을 허용하는지 반환한다.</summary>
     protected bool CanAdvanceAbility => isActiveAndEnabled && HasAbilityAuthority && FieldSimulationTime.CanAdvance(this);
 
+    // Unity 생명주기
+
+    /// <summary>능력 실행 권한과 몸통 콜라이더 참조를 초기화한다.</summary>
     protected virtual void Awake()
     {
         _networkController = GetComponent<EnemyNetworkController>();
@@ -66,6 +67,64 @@ public abstract partial class EnemyAbility : MonoBehaviour
 
         _bodyCollider = FindBodyCollider();
     }
+
+    // 외부 호출과 상태 변경
+
+    /// <summary>
+    /// 능력별 발동 조건을 확인한다. 쿨타임은 포함하지 않는다.
+    /// </summary>
+    public abstract bool CheckCondition();
+
+    /// <summary>
+    /// 컨트롤러가 계산한 전투 타깃의 거리 결과를 받아 조건을 검사한다.
+    /// 별도 대상을 사용하는 능력은 기존 검사를 수행한다.
+    /// </summary>
+    public virtual bool CheckCondition(bool isInTargetRange)
+    {
+        return CheckCondition();
+    }
+
+    /// <summary>발동 조건과 공통 쿨타임을 검사한 뒤 능력 사용을 시도한다.</summary>
+    public bool TryUse()
+    {
+        return TryUse(false);
+    }
+
+    /// <summary>
+    /// 같은 행동 실행에서 조건을 통과했다면 중복 검사를 생략한다.
+    /// 권한·실행 상태·쿨타임은 계속 확인한다.
+    /// </summary>
+    internal bool TryUse(bool conditionAlreadyChecked)
+    {
+        if (!CanAdvanceAbility ||
+            IsExecuting ||
+            FieldSimulationTime.Seconds(this) < _nextUseTime)
+        {
+            return false;
+        }
+
+        if (!conditionAlreadyChecked)
+        {
+            if (!CheckCondition())
+                return false;
+        }
+
+        if (!Activate())
+            return false;
+
+        _nextUseTime = FieldSimulationTime.Seconds(this) + cooldown;
+        return true;
+    }
+
+    /// <summary>
+    /// 현재 능력의 범위 안에 대상 콜라이더가 있는지 확인한다.
+    /// </summary>
+    public bool IsInRange(Collider2D[] targetColliders)
+    {
+        return IsInRange(targetColliders, activationRange);
+    }
+
+    // 파생 클래스 공통 처리
 
     /// <summary>
     /// Inspector 참조가 없으면 Trigger 여부와 관계없이 HitBox 자식의 콜라이더를 찾고,
@@ -93,65 +152,9 @@ public abstract partial class EnemyAbility : MonoBehaviour
     }
 
     /// <summary>
-    /// 능력별 발동 조건을 확인한다. 쿨타임은 포함하지 않는다.
-    /// </summary>
-    public abstract bool CheckCondition();
-
-    /// <summary>
-    /// 컨트롤러가 계산한 전투 타깃의 거리 결과를 받아 조건을 검사한다.
-    /// 별도 대상을 사용하는 능력은 기존 검사를 수행한다.
-    /// </summary>
-    public virtual bool CheckCondition(bool isInTargetRange)
-    {
-        return CheckCondition();
-    }
-
-    public bool TryUse()
-    {
-        return TryUse(false);
-    }
-
-    /// <summary>
-    /// 같은 행동 실행에서 조건을 통과했다면 중복 검사를 생략한다.
-    /// 권한·실행 상태·쿨타임은 계속 확인한다.
-    /// </summary>
-    internal bool TryUse(bool conditionAlreadyChecked)
-    {
-        if (!CanAdvanceAbility ||
-            IsExecuting ||
-            FieldSimulationTime.Seconds(this) < _nextUseTime)
-        {
-            return false;
-        }
-
-        if (!conditionAlreadyChecked)
-        {
-            using (UseConditionMarker.Auto())
-            {
-                if (!CheckCondition())
-                    return false;
-            }
-        }
-
-        if (!Activate())
-            return false;
-
-        _nextUseTime = FieldSimulationTime.Seconds(this) + cooldown;
-        return true;
-    }
-    
-    /// <summary>
     /// 실제 능력을 실행하고 성공 여부를 반환한다. 성공 시에만 공통 쿨타임을 소비한다.
     /// </summary>
     protected abstract bool Activate();
-
-    /// <summary>
-    /// 현재 능력의 범위 안에 대상 콜라이더가 있는지 확인한다.
-    /// </summary>
-    public bool IsInRange(Collider2D[] targetColliders)
-    {
-        return IsInRange(targetColliders, activationRange);
-    }
 
     /// <summary>
     /// 먼 대상은 Bounds 간격으로 제외하고, 가까운 대상만 실제 콜라이더 간격을 확인한다.
@@ -174,10 +177,10 @@ public abstract partial class EnemyAbility : MonoBehaviour
         // 비활성 상태이거나 유효한 영역이 없는 본인 콜라이더는 제외한다.
         if (bodyExtents.sqrMagnitude == 0f)
             return false;
-        
+
         Vector3 bodyCenter = bodyBounds.center;
         float rangeSquared = range * range;
-        
+
         foreach (Collider2D targetCollider in targetColliders)
         {
             // Trigger와 비활성 Collider는 Bounds를 읽기 전에 제외한다.
@@ -187,15 +190,15 @@ public abstract partial class EnemyAbility : MonoBehaviour
             {
                 continue;
             }
-            
+
             Bounds targetBounds = targetCollider.bounds;
             Vector3 targetExtents = targetBounds.extents;
 
             if (targetExtents.sqrMagnitude == 0f)
                 continue;
-            
+
             Vector3 targetCenter = targetBounds.center;
-            
+
             // 두 Bounds 사이의 X·Y 간격을 구한다.
             // 해당 축에서 겹치면 간격은 0이다.
             float gapX = Mathf.Max(
@@ -224,6 +227,9 @@ public abstract partial class EnemyAbility : MonoBehaviour
         return false;
     }
 
+    // 에디터 표시
+
+    /// <summary>몸통 크기와 발동 거리를 합친 참고 범위를 표시한다.</summary>
     private void OnDrawGizmosSelected()
     {
         Collider2D bodyCollider =

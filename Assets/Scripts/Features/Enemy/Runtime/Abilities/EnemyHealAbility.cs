@@ -5,12 +5,14 @@ using UnityEngine;
 /// <summary>
 /// 자신을 제외한 회복 가능한 아군을 찾아 회복 구슬 생성을 요청한다.
 /// </summary>
-public class EnemyHealAbility : EnemyAbility 
+public class EnemyHealAbility : EnemyAbility
 {
+    // Inspector 설정과 제작 참조
+
     [Header("참조")]
     [SerializeField] private HealingOrbProjectile projectilePrefab;
     [SerializeField] private EnemyProjectileGenerator projectileSpawner;
-    
+
     [Header("회복 설정")]
     [SerializeField, Min(1)] private int healAmount = 10;
 
@@ -18,26 +20,41 @@ public class EnemyHealAbility : EnemyAbility
     [SerializeField] private LayerMask allyHitboxLayers;
     [SerializeField, Min(0f)] private float targetSearchInterval = 0.2f;
 
+    // 실행 중 참조와 상태
     private Collider2D[] _healTargetColliders;
     private double _nextSearchTime;
     private readonly HashSet<EnemyHealth> _checkedTargets = new();
-    
     private EnemyHealth _selfHealth;
     private EnemyHealth _healTarget;
     private readonly List<Collider2D> _overlapResults = new(32);
 
     public override Transform FacingTarget =>
         _healTarget != null ? _healTarget.transform : null;
-    
+
+    // Unity 생명주기
+
+    /// <summary>자신을 치료 후보에서 제외할 체력 참조와 회복 구슬 생성기를 연결한다.</summary>
     protected override void Awake()
     {
         base.Awake();
-        
+
         _selfHealth = GetComponent<EnemyHealth>();
-        
+
         if (projectileSpawner == null)
             projectileSpawner = GetComponent<EnemyProjectileGenerator>();
     }
+
+    /// <summary>치료 대상과 검색 기록을 비워 다음 활성화 때 다시 선택한다.</summary>
+    private void OnDisable()
+    {
+        ClearHealTarget();
+
+        _nextSearchTime = 0;
+        _overlapResults.Clear();
+        _checkedTargets.Clear();
+    }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 유효한 치료 대상은 유지하고, 필요할 때만 새 대상을 검색한다.
@@ -82,6 +99,8 @@ public class EnemyHealAbility : EnemyAbility
             out _healTargetColliders);
     }
 
+    // 파생 클래스 공통 처리
+
     /// <summary>
     /// 선택한 아군이 여전히 회복 가능하면 회복 구슬 생성을 요청한다.
     /// </summary>
@@ -101,6 +120,8 @@ public class EnemyHealAbility : EnemyAbility
             healAmount);
     }
 
+    // 내부 처리
+
     /// <summary>
     /// 피격 레이어에서 회복 가능한 아군을 찾고 가장 가까운 대상을 선택한다.
     /// 선택한 대상의 콜라이더 목록은 다음 검사에서도 재사용한다.
@@ -114,7 +135,7 @@ public class EnemyHealAbility : EnemyAbility
 
         _overlapResults.Clear();
         _checkedTargets.Clear();
-        
+
         ContactFilter2D filter = new ContactFilter2D
         {
             useLayerMask = true,
@@ -122,9 +143,9 @@ public class EnemyHealAbility : EnemyAbility
             useDepth = false,
             useTriggers = true
         };
-        
+
         Bounds bounds = _bodyCollider.bounds;
-        
+
         // 원형 조회는 후보만 모으고, 실제 발동 범위는 아래 콜라이더 간격으로 다시 확인한다.
         float searchRadius = bounds.extents.magnitude + activationRange;
 
@@ -136,7 +157,7 @@ public class EnemyHealAbility : EnemyAbility
 
         Vector2 selfPosition = transform.position;
         float closestDistance = float.PositiveInfinity;
-        
+
         foreach (Collider2D hit in _overlapResults)
         {
             if (hit == null)
@@ -163,7 +184,7 @@ public class EnemyHealAbility : EnemyAbility
 
             if (!IsInRange(colliders, activationRange))
                 continue;
-            
+
             closestDistance = distance;
             target = health;
             targetColliders = colliders;
@@ -177,14 +198,5 @@ public class EnemyHealAbility : EnemyAbility
     {
         _healTarget = null;
         _healTargetColliders = null;
-    }
-
-    private void OnDisable()
-    {
-        ClearHealTarget();
-
-        _nextSearchTime = 0;
-        _overlapResults.Clear();
-        _checkedTargets.Clear();
     }
 }

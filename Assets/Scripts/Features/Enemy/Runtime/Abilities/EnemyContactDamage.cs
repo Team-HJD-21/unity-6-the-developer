@@ -6,6 +6,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class EnemyContactDamage : MonoBehaviour
 {
+    // Inspector 설정과 제작 참조
+
     [Header("참조")]
     [SerializeField] private EnemyNetworkController networkController;
     [SerializeField] private EnemyHealth enemyHealth;
@@ -14,9 +16,13 @@ public sealed class EnemyContactDamage : MonoBehaviour
     [SerializeField, Min(0)] private int contactDamage = 10;
     [SerializeField, Min(0.01f)] private float contactDamageInterval = 0.5f;
 
+    // 실행 중 참조와 상태
     private int _playerHurtboxLayer;
     private Dictionary<PlayerInfo, double> _nextDamageTimes;
 
+    // Unity 생명주기
+
+    /// <summary>부모 몬스터의 실행 권한·체력과 플레이어 몸통 레이어를 연결한다.</summary>
     private void Awake()
     {
         if (networkController == null)
@@ -27,10 +33,13 @@ public sealed class EnemyContactDamage : MonoBehaviour
         _playerHurtboxLayer = LayerMask.NameToLayer("PlayerHurtbox");
     }
 
+    /// <summary>비활성화 전 접촉한 플레이어의 피해 간격 기록을 비운다.</summary>
     private void OnDisable()
     {
         _nextDamageTimes?.Clear();
     }
+
+    // 내부 처리
 
     /// <summary>진입 시에만 처리하며, Stay나 주기적인 주변 물리 검색은 수행하지 않는다.</summary>
     private void OnTriggerEnter2D(Collider2D other)

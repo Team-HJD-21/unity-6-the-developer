@@ -7,17 +7,22 @@ using UnityEngine;
 /// </summary>
 public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
 {
+    // Inspector 설정과 제작 참조
     [SerializeField] private int currentHealth;
     [SerializeField, Min(1)] private int maxHealth = 20;
+
+    // 실행 중 참조와 상태
     private bool _isDead;
     private bool _isActive;
     private EnemyDamageRule _damageRule;
+
+    /// <summary>활성 생존 상태이며 최대 체력보다 낮아 회복할 수 있는지 반환한다.</summary>
     public bool CanBeHealed =>
         isActiveAndEnabled &&
         _isActive &&
         !_isDead &&
         currentHealth < maxHealth;
-    
+
     /// <summary>
     /// 체력이 0이 되었을 때 한 번 발생한다.
     /// </summary>
@@ -26,9 +31,16 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
     /// <summary>권한·공격 규칙을 통과해 실제 줄어든 HP입니다. 사망/Despawn보다 먼저 전달합니다.</summary>
     public event Action<EnemyHealth, int, AttackSourceType> DamageApplied;
 
+    /// <summary>현재 남은 체력을 반환한다.</summary>
     public int CurrentHealth => currentHealth;
+
+    /// <summary>최대 체력을 반환한다.</summary>
     public int MaxHealth => maxHealth;
+
+    /// <summary>사망 처리가 시작되어 추가 전투에서 제외되었는지 반환한다.</summary>
     public bool IsDead => _isDead;
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 현재 체력을 최대값으로 초기화한다.
@@ -97,9 +109,11 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
     {
         if (!CanBeHealed || healAmount <= 0)
             return;
-        
+
         currentHealth = Mathf.Clamp(currentHealth + healAmount, 0, maxHealth);
     }
+
+    // 내부 처리
 
     /// <summary>
     /// 사망 상태를 확정하고 구독자별 예외를 분리해 사망 알림을 전달한다.

@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 /// <summary>
@@ -7,20 +6,26 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class EnemyAnimation : MonoBehaviour
 {
-    [SerializeField] private Animator animator;
-    private EnemyNetworkAnimator _networkAnimator;
-    public TeamHJD.Game.Presentation.GameAudioCue AbilitySound;
-    
+    // 상수와 공통 식별자
     private static readonly int MoveXHash = Animator.StringToHash("MoveX");
     private static readonly int MoveYHash = Animator.StringToHash("MoveY");
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
     private static readonly int MoveAnimSpeedHash = Animator.StringToHash("MoveAnimSpeed");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
-    
+
+    // Inspector 설정과 제작 참조
+    [SerializeField] private Animator animator;
+    public TeamHJD.Game.Presentation.GameAudioCue AbilitySound;
+
+    // 실행 중 참조와 상태
+    private EnemyNetworkAnimator _networkAnimator;
     private Vector2 _lastDirection;
     private bool _lastIsMoving;
     private float _lastAnimationSpeed;
-    
+
+    // Unity 생명주기
+
+    /// <summary>로컬 Animator와 네트워크 능력 모션 전달 경로를 연결한다.</summary>
     private void Awake()
     {
         _networkAnimator = GetComponent<EnemyNetworkAnimator>();
@@ -28,6 +33,14 @@ public class EnemyAnimation : MonoBehaviour
         if (animator == null)
             animator = GetComponent<Animator>();
     }
+
+    /// <summary>활성화 시 실제 Animator 값으로 중복 갱신 방지 캐시를 맞춘다.</summary>
+    private void OnEnable()
+    {
+        RefreshStateCache();
+    }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 이동 방향을 상하좌우 애니메이션 방향으로 변환해 적용한다.
@@ -44,20 +57,6 @@ public class EnemyAnimation : MonoBehaviour
         animator.SetFloat(MoveYHash, animationDirection.y);
 
         _lastDirection = animationDirection;
-    }
-    
-    /// <summary>
-    /// 연속적인 이동 방향을 상하좌우 네 방향 중 하나로 변환한다.
-    /// </summary>
-    /// <param name="direction">변환할 이동 방향.</param>
-    /// <returns>상하좌우 중 하나로 정규화된 애니메이션 방향.</returns>
-    private static Vector2 GetAnimationDirection(Vector2 direction)
-    {
-        // 대각선 방향은 더 큰 축을 기준으로 상하좌우 네 방향으로 변환한다.
-        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-            return new Vector2(Mathf.Sign(direction.x), 0f);
-
-        return new Vector2(0f, Mathf.Sign(direction.y));
     }
 
     /// <summary>
@@ -86,16 +85,6 @@ public class EnemyAnimation : MonoBehaviour
         SetMoving(false);
     }
 
-    /// <summary>이동 상태가 바뀐 경우만 Animator에 전달한다.</summary>
-    private void SetMoving(bool isMoving)
-    {
-        if (_lastIsMoving == isMoving)
-            return;
-
-        animator.SetBool(IsMovingHash, isMoving);
-        _lastIsMoving = isMoving;
-    }
-
     /// <summary>
     /// 기존 Animator의 Attack 슬롯으로 능력 발동 애니메이션을 재생한다.
     /// </summary>
@@ -109,13 +98,9 @@ public class EnemyAnimation : MonoBehaviour
             PlayAbilitySound();
         }
     }
+
     /// <summary>기존 로컬/수신 애니메이션 경로에서 한 번 호출합니다. 공간 처리는 표준 AudioSource가 담당합니다.</summary>
     public void PlayAbilitySound() => TeamHJD.Game.Presentation.GameAudioManager.Play(AbilitySound, this);
-    
-    private void OnEnable()
-    {
-        RefreshStateCache();
-    }
 
     /// <summary>
     /// 실제 Animator 값과 캐시를 맞춘다.
@@ -129,5 +114,31 @@ public class EnemyAnimation : MonoBehaviour
 
         _lastIsMoving = animator.GetBool(IsMovingHash);
         _lastAnimationSpeed = animator.GetFloat(MoveAnimSpeedHash);
+    }
+
+    // 내부 처리
+
+    /// <summary>
+    /// 연속적인 이동 방향을 상하좌우 네 방향 중 하나로 변환한다.
+    /// </summary>
+    /// <param name="direction">변환할 이동 방향.</param>
+    /// <returns>상하좌우 중 하나로 정규화된 애니메이션 방향.</returns>
+    private static Vector2 GetAnimationDirection(Vector2 direction)
+    {
+        // 대각선 방향은 더 큰 축을 기준으로 상하좌우 네 방향으로 변환한다.
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            return new Vector2(Mathf.Sign(direction.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(direction.y));
+    }
+
+    /// <summary>이동 상태가 바뀐 경우만 Animator에 전달한다.</summary>
+    private void SetMoving(bool isMoving)
+    {
+        if (_lastIsMoving == isMoving)
+            return;
+
+        animator.SetBool(IsMovingHash, isMoving);
+        _lastIsMoving = isMoving;
     }
 }

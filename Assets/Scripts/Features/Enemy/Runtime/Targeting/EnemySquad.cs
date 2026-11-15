@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
-using Unity.Profiling;
 using TeamHJD.Game.Presentation.Scene;
 
 /// <summary>
@@ -11,9 +10,11 @@ using TeamHJD.Game.Presentation.Scene;
 /// </summary>
 public class EnemySquad
 {
+    // 상수와 공통 식별자
     private const float RetargetInterval = 1.0f;
     private const double AggroCheckInterval = 0.2d;
 
+    // 실행 중 참조와 상태
     private readonly List<EnemyController> _members;
     private ITargetable _target;
     private readonly EnemySquadMode _squadMode;
@@ -30,13 +31,9 @@ public class EnemySquad
     /// <summary>생성 명령에서 전달받아 소환과 저장·복원에도 유지할 분대 규칙이다.</summary>
     public EnemyTargetRule TargetRule => _targetRule;
 
-    // 프로파일링
-    private static readonly ProfilerMarker SelectTargetMarker =
-        new("TeamHJD.Enemy.SelectTarget");
+    /// <summary>저장할 분대의 현재 목표 Transform을 반환한다.</summary>
+    internal Transform CheckpointTarget => _target?.TargetTransform;
 
-    private static readonly ProfilerMarker AssignTargetMarker =
-        new("TeamHJD.Enemy.AssignSquadTarget");
-    
     /// <summary>
     /// 생성 직후 적을 등록할 빈 분대를 만든다.
     /// </summary>
@@ -59,6 +56,8 @@ public class EnemySquad
             : null;
         TryChangeTarget(IsValidTarget(target) ? target : null);
     }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 구성원을 등록하고 집계 대상이면 기존 타깃에 한 명을 추가 배정한다.
@@ -139,8 +138,6 @@ public class EnemySquad
         return true;
     }
 
-    internal Transform CheckpointTarget => _target?.TargetTransform;
-
     /// <summary>
     /// 저장된 목표를 다시 연결한다. 다른 목표이면 기존 배정부터 반환한다.
     /// </summary>
@@ -192,11 +189,8 @@ public class EnemySquad
         // 기존 후보에 실제 인원을 배정할 수 있으면 거리 검색을 생략한다.
         if (IsValidTarget(preferredTarget) && preferredTarget.TargetType == requiredType)
         {
-            using (AssignTargetMarker.Auto())
-            {
-                if (TryChangeTarget(preferredTarget))
-                    return true;
-            }
+            if (TryChangeTarget(preferredTarget))
+                return true;
         }
 
         if (!TryGetCenterPosition(out Vector3 center))
@@ -205,26 +199,17 @@ public class EnemySquad
         // 스폰 시에는 인카운터가 수집한 목록을 재사용하고 이후 검색에서는 최신 목록을 조회한다.
         candidates ??= Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
 
-        bool found;
-        ITargetable nextTarget;
-
-        using (SelectTargetMarker.Auto())
-        {
-            found = RuntimeTargetSelector.TryFindNearest(
-                center,
-                candidates,
-                requiredType,
-                out nextTarget,
-                GetAttackerCount());
-        }
+        bool found = RuntimeTargetSelector.TryFindNearest(
+            center,
+            candidates,
+            requiredType,
+            out ITargetable nextTarget,
+            GetAttackerCount());
 
         if (!found)
             return false;
 
-        using (AssignTargetMarker.Auto())
-        {
-            return TryChangeTarget(nextTarget);
-        }
+        return TryChangeTarget(nextTarget);
     }
 
     /// <summary>플레이어 우선 전환 규칙을 확인하고 공통 타깃 변경을 요청한다.</summary>
@@ -301,6 +286,8 @@ public class EnemySquad
         if (Time.time >= _nextSearchTime)
             SetTarget();
     }
+
+    // 내부 처리
 
     /// <summary>확인 가능한 모든 활성 구성원의 어그로 유지 범위를 플레이어가 벗어났는지 반환한다.</summary>
     private bool IsPlayerOutsideAggroRange()

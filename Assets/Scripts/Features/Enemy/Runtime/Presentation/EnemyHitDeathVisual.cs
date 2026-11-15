@@ -5,6 +5,8 @@ using UnityEngine;
 /// </summary>
 public sealed class EnemyHitDeathVisual : MonoBehaviour
 {
+    // Inspector 설정과 제작 참조
+
     [Header("피격 연출")]
     [SerializeField] private Color hitColor = new(1f, 0.25f, 0.25f, 1f);
     [SerializeField, Min(0f)] private float hitFlashDuration = 0.12f;
@@ -12,6 +14,7 @@ public sealed class EnemyHitDeathVisual : MonoBehaviour
     [Header("사망 연출")]
     [SerializeField, Min(0f)] private float deathFadeDuration = 0.55f;
 
+    // 실행 중 참조와 상태
     private SpriteRenderer[] _spriteRenderers;
     private Color[] _originalColors;
     private Collider2D[] _colliders;
@@ -22,8 +25,12 @@ public sealed class EnemyHitDeathVisual : MonoBehaviour
     private float _deathElapsed;
     private bool _isDying;
 
+    /// <summary>서버가 네트워크 제거까지 기다릴 사망 페이드 시간을 반환한다.</summary>
     public float DeathFadeDuration => deathFadeDuration;
 
+    // Unity 생명주기
+
+    /// <summary>재사용 시 복원할 원래 색상과 충돌·물리 상태를 저장한다.</summary>
     private void Awake()
     {
         _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
@@ -41,24 +48,7 @@ public sealed class EnemyHitDeathVisual : MonoBehaviour
             _originalRigidbodySimulation = _rigidbody2D.simulated;
     }
 
-    /// <summary>재사용되는 몬스터의 연출과 충돌 상태를 초기화한다.</summary>
-    public void ResetPresentation()
-    {
-        _isDying = false;
-        _hitFlashElapsed = -1f;
-        _deathElapsed = 0f;
-        RestoreOriginalColors();
-
-        for (int i = 0; i < _colliders.Length; i++)
-        {
-            if (_colliders[i] != null)
-                _colliders[i].enabled = _originalColliderStates[i];
-        }
-
-        if (_rigidbody2D != null)
-            _rigidbody2D.simulated = _originalRigidbodySimulation;
-    }
-
+    /// <summary>사망 페이드를 우선 갱신하고 생존 중에는 피격 색을 원래 색으로 되돌린다.</summary>
     private void Update()
     {
         if (_isDying)
@@ -79,6 +69,26 @@ public sealed class EnemyHitDeathVisual : MonoBehaviour
         ApplyHitFlash(1f - progress);
         if (progress >= 1f)
             _hitFlashElapsed = -1f;
+    }
+
+    // 외부 호출과 상태 변경
+
+    /// <summary>재사용되는 몬스터의 연출과 충돌 상태를 초기화한다.</summary>
+    public void ResetPresentation()
+    {
+        _isDying = false;
+        _hitFlashElapsed = -1f;
+        _deathElapsed = 0f;
+        RestoreOriginalColors();
+
+        for (int i = 0; i < _colliders.Length; i++)
+        {
+            if (_colliders[i] != null)
+                _colliders[i].enabled = _originalColliderStates[i];
+        }
+
+        if (_rigidbody2D != null)
+            _rigidbody2D.simulated = _originalRigidbodySimulation;
     }
 
     /// <summary>피격 색을 즉시 적용한 뒤 짧게 원래 색으로 되돌린다.</summary>
@@ -124,6 +134,9 @@ public sealed class EnemyHitDeathVisual : MonoBehaviour
         ApplyDeathFade();
     }
 
+    // 내부 처리
+
+    /// <summary>원래 투명도를 유지하면서 피격 색의 혼합 비율을 적용한다.</summary>
     private void ApplyHitFlash(float amount)
     {
         for (int i = 0; i < _spriteRenderers.Length; i++)
@@ -138,6 +151,7 @@ public sealed class EnemyHitDeathVisual : MonoBehaviour
         }
     }
 
+    /// <summary>사망 경과 시간에 따라 모든 자식 스프라이트의 투명도를 낮춘다.</summary>
     private void ApplyDeathFade()
     {
         float progress = deathFadeDuration <= 0f
@@ -156,6 +170,7 @@ public sealed class EnemyHitDeathVisual : MonoBehaviour
         }
     }
 
+    /// <summary>피격과 사망 연출 이전에 저장한 색상을 복원한다.</summary>
     private void RestoreOriginalColors()
     {
         for (int i = 0; i < _spriteRenderers.Length; i++)

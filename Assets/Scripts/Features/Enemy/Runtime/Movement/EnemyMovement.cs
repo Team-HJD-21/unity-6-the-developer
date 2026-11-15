@@ -5,9 +5,8 @@ using UnityEngine;
 /// </summary>
 public partial class EnemyMovement : MonoBehaviour
 {
+    // Inspector 설정과 제작 참조
     [SerializeField] private float arrivalDistance = 0.4f;
-    private Vector3[] _path;
-    private int _currentPath = 0;
 
     [Header("이동 설정")]
     [SerializeField] private Rigidbody2D rigidbody2D;
@@ -15,18 +14,34 @@ public partial class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float moveAcceleration = 10f;
     [SerializeField, Min(0f)] private float moveDeceleration = 20f;
     [SerializeField, Min(1f)] private float pushSpeedLimitMultiplier = 1.1f;
-    
+
+    // 실행 중 참조와 상태
+    private Vector3[] _path;
+    private int _currentPath = 0;
+
+    /// <summary>스스로 이동할 때 목표로 하는 최대 속도를 반환한다.</summary>
     public float MoveSpeed => moveSpeed;
+
+    /// <summary>외부 밀림을 포함한 물리 본체의 현재 속력을 반환한다.</summary>
     public float CurrentSpeed => rigidbody2D != null ? rigidbody2D.linearVelocity.magnitude : 0f;
+
+    /// <summary>아직 도착하지 않은 경유점이 남아 있는지 반환한다.</summary>
     public bool HasPath => _path != null && _currentPath < _path.Length;
+
+    /// <summary>외부 충돌로 허용할 최대 속력을 계산한다.</summary>
     private float PushSpeedLimit =>
         Mathf.Max(0f, moveSpeed) * Mathf.Max(1f, pushSpeedLimitMultiplier);
 
+    // Unity 생명주기
+
+    /// <summary>이동 힘을 적용할 물리 본체의 누락된 참조를 연결한다.</summary>
     private void Awake()
     {
-        if(rigidbody2D == null)
+        if (rigidbody2D == null)
             rigidbody2D = GetComponent<Rigidbody2D>();
     }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 타깃 변경 시 이전 경로를 비우고 새 경로를 계산한다.
@@ -52,9 +67,9 @@ public partial class EnemyMovement : MonoBehaviour
 
         _path = newPath;
         _currentPath = 0;
-        return true;
+            return true;
     }
-    
+
     /// <summary>
     /// 도착한 경유점을 건너뛰고 다음 경유점으로 향하는 정규화된 방향을 반환한다.
     /// </summary>
@@ -67,7 +82,7 @@ public partial class EnemyMovement : MonoBehaviour
 
         Vector2 position = transform.position;
         float arrivalDistanceSquared = arrivalDistance * arrivalDistance;
-        
+
         // 이미 도착한 지점은 건너뛴다.
         while (_currentPath < _path.Length &&
                arrivalDistance >= 0f &&
@@ -81,7 +96,7 @@ public partial class EnemyMovement : MonoBehaviour
             return false;
 
         direction = ((Vector2)_path[_currentPath] - position).normalized;
-    return true;
+        return true;
     }
 
     /// <summary>
@@ -146,6 +161,8 @@ public partial class EnemyMovement : MonoBehaviour
         ApplyVelocityChange(currentVelocity, nextVelocity);
     }
 
+    // 내부 처리
+
     /// <summary>외부 충돌로 과속한 경우 허용 속도까지만 줄이고 밀린 방향은 유지한다.</summary>
     private Vector2 LimitPushSpeed()
     {
@@ -201,6 +218,8 @@ public partial class EnemyMovement : MonoBehaviour
             velocityChange * (rigidbody2D.mass / deltaTime),
             ForceMode2D.Force);
     }
+
+    // 에디터 표시
 
     /// <summary>
     /// 저장된 경로의 경유점과 연결선을 현재 표현 깊이에서 표시한다.
