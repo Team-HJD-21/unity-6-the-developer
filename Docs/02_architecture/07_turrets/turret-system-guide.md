@@ -539,6 +539,20 @@ Canon/Missile의 과열 냉각과 비활성화 후 냉각은 `FieldTurretBase.Be
 
 일반 OFF는 즉시 `IsActivated`를 false로 바꾸고 예약 전력을 반환 대기로 옮긴다. 전력은 기존 `Tick`의 0.1초당 1 회복 경로로 반환하며, 남은 열의 냉각과 동시에 진행한다. 꺼질 때는 현재 열 비율에 비례한 냉각 시간이 적용된다. 이미 과열 냉각 중이면 끄더라도 기존 종료 시각을 유지해 남은 시간만 냉각한다. 냉각 중 꺼진 터렛의 켜기 요청은 `CoolingDown`으로 거부하고, 켜진 터렛은 예약 전력을 유지한 채 공격만 중지한다. 냉각 완료 시 켜져 있으면 공격을 재개하며, 꺼져 있으면 자동으로 켜지지 않는다. UI의 켜기 버튼은 `IsCoolingDown`을 차단 조건으로 사용할 수 있고, 끄기 버튼은 냉각 중에도 허용한다(자동 활성화 중의 수동 조작 차단은 별도다).
 
+### Stage1 LV1 전원 LED
+
+Stage1 Canon·Missile LV1의 포신 아래에는 Turret_LED_Indicator가 있다. [FieldTurretLedIndicator.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretLedIndicator.cs)는 초기 표시와 프레임 후반에 상위 터렛의 상태를 읽고, 색이 바뀔 때 LED SpriteRenderer의 스프라이트를 교체한다.
+
+| 조건 | LED |
+| --- | --- |
+| 미해금 구역 | 검정 |
+| 해금 구역, 전원 꺼짐 | 빨강 |
+| 해금 구역, 전원 켜짐 | 초록 |
+
+미해금 판정은 IsLocked를 먼저 읽는다. 해금된 터렛은 IsActivated로 전원 상태를 표시하므로, 전원이 켜진 채 냉각 중이면 LED는 초록이다. 두 프리팹의 Disable Inactive Gun Tint 설정은 포신의 비활성 회색을 제거한다. 과열 중에는 포신이 붉고 냉각이 끝나면 기본 색으로 돌아온다. 월드·성장 복원도 해당 프리팹 설정을 사용한다.
+
+Prefab에서 LED 위치를 조절하려면 포신 자식 Turret_LED_Indicator의 Transform을 편집한다. 세 색은 [Fire_Totem 에셋 폴더](../../../Assets/ThirdParty/Tileset%20Topdown%20-%20Monster%20Architect%20Overworld/0_Overworld/Fire_Totem/)에 있다. Sprite-0004_0.controller, Turret_LED_Indicator.anim, Turret_LED_Stand1~3은 제작 에셋이며 두 프리팹의 상태 연동에는 연결하지 않는다.
+
 ## 5. Prefab과 Definition 설정 방법
 
 ### 기존 수치 조정

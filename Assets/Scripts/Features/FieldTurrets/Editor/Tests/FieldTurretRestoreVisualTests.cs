@@ -155,7 +155,7 @@ public sealed class FieldTurretRestoreVisualTests
     }
 
     [UnityTest]
-    public IEnumerator WorldAndGrowthRestoreKeepColdOffGunsGrayAndLocksUnchanged()
+    public IEnumerator WorldAndGrowthRestoreKeepColdOffGunsUntintedAndLocksUnchanged()
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         yield return new EnterPlayMode();
@@ -242,7 +242,7 @@ public sealed class FieldTurretRestoreVisualTests
         foreach (var actor in actors)
         {
             Assert.That(actor.IsActivated, Is.False);
-            Assert.That(Gun(actor).color, Is.EqualTo(Color.gray), actor.GetType().Name);
+            Assert.That(Gun(actor).color, Is.EqualTo(Color.white), actor.GetType().Name);
             Assert.That((float)typeof(FieldTurretBase).GetField("_gunHeatStrength", Fields).GetValue(actor), Is.Zero);
         }
     }

@@ -25,6 +25,9 @@ namespace TeamHJD.Game.FieldTurrets
         [SerializeField] protected SpriteRenderer rangeRenderer;
         [SerializeField] protected Transform rangeTransform;
 
+        [Header("Gun Visuals")]
+        [SerializeField] private bool disableInactiveGunTint;
+
         [Header("Heat Wave")]
         [SerializeField] private Material heatWaveMaterial;
         [SerializeField, Min(1f)] private float heatWaveScale = 1.1f;
@@ -455,9 +458,11 @@ namespace TeamHJD.Game.FieldTurrets
             _coolingEndsAt = 0f;
             _coolingDuration = 0f;
             if (GunRenderer != null)
-                GunRenderer.color = IsActivated ? Color.white : new Color(0.5f, 0.5f, 0.5f);
+                GunRenderer.color = IsActivated ? Color.white : InactiveGunColor;
             SetTemporarilySuspended(false);
         }
+
+        protected Color InactiveGunColor => disableInactiveGunTint ? Color.white : Color.gray;
 
         protected virtual void ApplyCoolingHeat(float heatRatio) { }
 
