@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true, Position = 0)]
-    [ValidateSet('Sync', 'Acquire', 'AcquireFolder', 'Submit')]
+    [ValidateSet('Sync', 'ReadLocks', 'Acquire', 'AcquireFolder', 'Submit', 'WatchDiscard')]
     [string]$Command,
     [string]$AssetPath,
     [string]$InputPath
@@ -44,6 +44,15 @@ function Get-Locks {
     return Invoke-Git lfs locks --verify --json --remote=origin | ConvertFrom-Json
 }
 
+function Get-RemoteLockEntries($locks) {
+    foreach ($lock in $locks.ours) {
+        if ($lock.path) { @{ path = $lock.path; id = [string]$lock.id; owner = [string]$lock.owner.name; owned = $true } }
+    }
+    foreach ($lock in $locks.theirs) {
+        if ($lock.path) { @{ path = $lock.path; id = [string]$lock.id; owner = [string]$lock.owner.name; owned = $false } }
+    }
+}
+
 function Get-LockKey([string]$id) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return [BitConverter]::ToString($sha.ComputeHash($utf8.GetBytes($id))).Replace('-', '').ToLowerInvariant() }
@@ -78,7 +87,7 @@ function Save-Record($record) {
 
 function Get-EditableAsset($path, $id = '') {
     $record = if ($id) { Get-RecordPath $id } else { '' }
-    return @{ path = $path; record = $record }
+    return @{ path = $path; id = $id; record = $record }
 }
 
 function Install-Hook {
@@ -116,13 +125,15 @@ function Initialize-Repository {
 function Sync-Assets {
     Initialize-Repository
     $records = @(Get-Records)
-    $owned = @()
-    if ($records.Count) {
-        try { $owned = @((Get-Locks).ours | ForEach-Object { [string]$_.id }) }
-        catch {
-            # Preserve the local records when GitHub is unreachable.
-            $owned = $null
-        }
+    $owned = $null
+    $remoteLocks = $null
+    try {
+        $locks = Get-Locks
+        $owned = @($locks.ours | ForEach-Object { [string]$_.id })
+        $remoteLocks = @(Get-RemoteLockEntries $locks)
+    }
+    catch {
+        # Preserve the local records and let the editor keep its last lock list.
     }
     $editable = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
     foreach ($record in $records) {
@@ -135,7 +146,152 @@ function Sync-Assets {
     $paths = (Invoke-Git ls-files -z) -split "`0" | Where-Object { Test-ManagedPath $_ }
     foreach ($path in $paths) { Set-ReadOnly $path (!$editable.ContainsKey($path)) }
     $openAssets = @($editable.GetEnumerator() | ForEach-Object { Get-EditableAsset $_.Key $_.Value })
-    ConvertTo-Json -Compress -Depth 4 -InputObject @{ tracked = @($paths); editable = $openAssets }
+    ConvertTo-Json -Compress -Depth 4 -InputObject @{ tracked = @($paths); editable = $openAssets; remoteLocks = $remoteLocks }
+}
+
+function Get-CheckoutRef {
+    $reference = & git symbolic-ref --quiet HEAD
+    if ($LASTEXITCODE -eq 1) { return 'HEAD' }
+    if ($LASTEXITCODE -ne 0) { throw 'Could not read the current checkout.' }
+    return $reference
+}
+
+function Test-AssetChanges($path) {
+    return [bool](Invoke-Git --no-optional-locks status --porcelain --no-renames --untracked-files=all -- $path)
+}
+
+function Get-DiscardRecords {
+    Get-Records | Where-Object { $_.discardHead -and !$_.submitted }
+}
+
+function Test-AssetCommittedSinceLock($record) {
+    $head = Invoke-Git rev-parse HEAD
+    if ((Get-Blob $head $record.path) -cne $record.base) { return $true }
+
+    # Check the ref log as well as HEAD so a commit followed by a reset still counts.
+    & git reflog exists $record.discardRef
+    if ($LASTEXITCODE -ne 0) { return $true }
+    $tips = @(Invoke-Git reflog show --format=%H "--since=@$($record.discardSince)" $record.discardRef |
+        Sort-Object -Unique)
+    return [bool](Invoke-Git log -1 --full-history --format=%H $head @tips "^$($record.discardHead)" -- $record.path)
+}
+
+function Release-DiscardedAssets {
+    $records = @(Get-DiscardRecords)
+    if (!$records.Count) { return $false }
+
+    $reference = Get-CheckoutRef
+    foreach ($record in $records) {
+        if ($record.discardRef -cne $reference) { continue }
+        if (Test-AssetChanges $record.path) {
+            if (!$record.discardSeenDirty) {
+                $record.discardSeenDirty = $true
+                Save-Record $record
+            }
+            continue
+        }
+        if (!$record.discardSeenDirty) { continue }
+
+        $file = [IO.FileInfo]::new((Join-Path $root $record.path))
+        $wasReadOnly = $file.Exists -and $file.IsReadOnly
+        Set-ReadOnly $record.path $true
+        $released = $false
+        try {
+            if ((Get-CheckoutRef) -cne $record.discardRef -or (Test-AssetChanges $record.path)) { continue }
+            if (Test-AssetCommittedSinceLock $record) {
+                $record.discardHead = ''
+                Save-Record $record
+                continue
+            }
+
+            try { $null = Invoke-Git lfs unlock "--id=$($record.id)" --remote=origin }
+            catch {
+                $failure = $_
+                $owned = (Get-Locks).ours
+                if ($owned | Where-Object { $_.id -ceq $record.id -and $_.path -ceq $record.path }) {
+                    throw $failure
+                }
+            }
+            $released = $true
+            Remove-Item -LiteralPath (Get-RecordPath $record.id)
+        }
+        finally {
+            if (!$released) { Set-ReadOnly $record.path $wasReadOnly }
+        }
+    }
+
+    return $true
+}
+
+function Enter-OperationGate {
+    $path = Join-Path $state 'mutex'
+    for ($attempt = 0; $attempt -lt 40; $attempt++) {
+        try { return [IO.File]::Open($path, 'OpenOrCreate', 'ReadWrite', 'None') }
+        catch [IO.IOException] { Start-Sleep -Milliseconds 250 }
+    }
+    throw 'Another Unity asset lock operation is still running.'
+}
+
+function Write-DiscardWatcherError([string]$message) {
+    $log = Join-Path $state 'discard-watcher.error.log'
+    [IO.File]::AppendAllText($log, $message + [Environment]::NewLine, $utf8)
+}
+
+function Start-DiscardWatcher {
+    if (!(Get-DiscardRecords | Select-Object -First 1)) { return }
+    try { $probe = [IO.File]::Open((Join-Path $state 'discard-watcher'), 'OpenOrCreate', 'ReadWrite', 'None') }
+    catch [IO.IOException] { return }
+
+    try {
+        $shell = (Get-Process -Id $PID).Path
+        $arguments = @('-NoProfile', '-NonInteractive')
+        if ($env:OS -eq 'Windows_NT') { $arguments += @('-ExecutionPolicy', 'RemoteSigned') }
+        $arguments += @('-File', 'tools/UnityAssetLocks/AssetLocks.ps1', 'WatchDiscard')
+        $options = @{
+            FilePath = $shell
+            ArgumentList = $arguments
+            WorkingDirectory = $root
+        }
+        if ($env:OS -eq 'Windows_NT') {
+            $options.WindowStyle = 'Hidden'
+        }
+        else {
+            $options.FilePath = (Get-Command nohup -CommandType Application -ErrorAction Stop).Source
+            $options.ArgumentList = @('"' + $shell + '"') + $arguments
+            $options.RedirectStandardOutput = Join-Path $state 'discard-watcher.log'
+            $options.RedirectStandardError = Join-Path $state 'discard-watcher-launch.error.log'
+        }
+        Start-Process @options
+    }
+    catch { Write-DiscardWatcherError "Could not start the discard watcher: $($_.Exception.Message)" }
+    finally { $probe.Dispose() }
+}
+
+function Watch-DiscardedAssets {
+    # The launching process briefly holds this file while starting the watcher.
+    $watch = $null
+    for ($attempt = 0; $attempt -lt 10 -and $null -eq $watch; $attempt++) {
+        try { $watch = [IO.File]::Open((Join-Path $state 'discard-watcher'), 'OpenOrCreate', 'ReadWrite', 'None') }
+        catch [IO.IOException] { Start-Sleep -Milliseconds 100 }
+    }
+    if ($null -eq $watch) { return }
+
+    try {
+        while ($true) {
+            $delay = 2
+            try {
+                $gate = Enter-OperationGate
+                try { if (!(Release-DiscardedAssets)) { return } }
+                finally { $gate.Dispose() }
+            }
+            catch {
+                Write-DiscardWatcherError $_.Exception.Message
+                $delay = 15
+            }
+            Start-Sleep -Seconds $delay
+        }
+    }
+    finally { $watch.Dispose() }
 }
 
 function Open-Asset($path) {
@@ -159,32 +315,39 @@ function Open-TrackedAssets([string[]]$paths) {
     if (!$paths.Count) { return }
     Initialize-Repository
 
-    $locks = Get-Locks
-    $serverByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
-    foreach ($lock in (@($locks.ours) + @($locks.theirs))) {
-        if ($null -ne $lock) { $serverByPath[$lock.path] = $lock }
-    }
-    $ownedIds = @($locks.ours | ForEach-Object { [string]$_.id })
     $localByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
     foreach ($record in Get-Records) { $localByPath[$record.path] = $record }
     $editable = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
 
-    foreach ($path in $paths) {
-        if (!$serverByPath.ContainsKey($path)) { continue }
-        $lock = $serverByPath[$path]
-        $id = [string]$lock.id
-        if ($ownedIds -cnotcontains $id -or !$localByPath.ContainsKey($path) -or $localByPath[$path].id -cne $id) {
-            Set-ReadOnly $path $true
-            $owner = $lock.owner.name
-            if ($owner) { throw "$path is locked by $owner in another account or checkout." }
-            throw "$path is already locked in another checkout."
+    # The server rejects a duplicate lock. Preflight multiple paths and verify any existing local lock.
+    if ($paths.Count -gt 1 -or $localByPath.ContainsKey($paths[0])) {
+        $locks = Get-Locks
+        $serverByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
+        foreach ($lock in (@($locks.ours) + @($locks.theirs))) {
+            if ($null -ne $lock) { $serverByPath[$lock.path] = $lock }
         }
-        if ($localByPath[$path].submitted) {
-            throw "$path has been submitted. It will unlock when that version reaches main."
+        $ownedIds = @($locks.ours | ForEach-Object { [string]$_.id })
+
+        foreach ($path in $paths) {
+            if (!$serverByPath.ContainsKey($path)) { continue }
+            $lock = $serverByPath[$path]
+            $id = [string]$lock.id
+            if ($ownedIds -cnotcontains $id -or !$localByPath.ContainsKey($path) -or $localByPath[$path].id -cne $id) {
+                Set-ReadOnly $path $true
+                $owner = $lock.owner.name
+                if ($owner) { throw "$path is locked by $owner in another account or checkout." }
+                throw "$path is already locked in another checkout."
+            }
+            if ($localByPath[$path].submitted) {
+                throw "$path has been submitted. It will unlock when that version reaches main."
+            }
+            $editable[$path] = $id
         }
-        $editable[$path] = $id
     }
 
+    $checkout = Get-CheckoutRef
+    $startHead = Invoke-Git rev-parse HEAD
+    $lockStartedAt = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
     $newLocks = [Collections.Generic.List[object]]::new()
     try {
         foreach ($path in $paths) {
@@ -226,7 +389,13 @@ function Open-TrackedAssets([string[]]$paths) {
                         throw "$($lock.path) changed on main since this branch diverged. Update your branch before editing it."
                     }
                 }
-                Save-Record ([pscustomobject]@{ id = $lock.id; path = $lock.path; main = $main; base = $published; submitted = '' })
+                $discardHead = if ($base -ceq $published -and $head -ceq $startHead -and
+                    (Get-CheckoutRef) -ceq $checkout) { $head } else { '' }
+                Save-Record ([pscustomobject]@{
+                    id = $lock.id; path = $lock.path; main = $main; base = $published; submitted = ''
+                    discardHead = $discardHead; discardRef = $checkout; discardSince = $lockStartedAt
+                    discardSeenDirty = [bool]$discardHead -and (Test-AssetChanges $lock.path)
+                })
             }
         }
         foreach ($path in $paths) {
@@ -299,14 +468,19 @@ function Submit-Assets {
 try {
     $root = Invoke-Git rev-parse --show-toplevel
     Set-Location -LiteralPath $root
+    if ($Command -eq 'ReadLocks') {
+        ConvertTo-Json -Compress -InputObject @{ remoteLocks = @(Get-RemoteLockEntries (Get-Locks)) }
+        return
+    }
+
     $state = Join-Path (Invoke-Git rev-parse --absolute-git-dir) 'unity-asset-locks'
     [IO.Directory]::CreateDirectory($state) | Out-Null
-    $gate = $null
-    for ($attempt = 0; $attempt -lt 40 -and $null -eq $gate; $attempt++) {
-        try { $gate = [IO.File]::Open((Join-Path $state 'mutex'), 'OpenOrCreate', 'ReadWrite', 'None') }
-        catch [IO.IOException] { Start-Sleep -Milliseconds 250 }
+    if ($Command -eq 'WatchDiscard') {
+        Watch-DiscardedAssets
+        return
     }
-    if ($null -eq $gate) { throw 'Another Unity asset lock operation is still running.' }
+
+    $gate = Enter-OperationGate
     try {
         switch ($Command) {
             'Sync' { Sync-Assets }
@@ -314,6 +488,7 @@ try {
             'AcquireFolder' { Open-AssetFolder $AssetPath }
             'Submit' { Submit-Assets }
         }
+        if ($Command -ne 'Submit') { Start-DiscardWatcher }
     }
     finally { $gate.Dispose() }
 }

@@ -17,12 +17,23 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
     {
         public string[] tracked = Array.Empty<string>();
         public EditableAsset[] editable = Array.Empty<EditableAsset>();
+        public RemoteLock[] remoteLocks = null;
+    }
+
+    [Serializable]
+    private sealed class RemoteLock
+    {
+        public string path = "";
+        public string id = "";
+        public string owner = "";
+        public bool owned = false;
     }
 
     [Serializable]
     private sealed class EditableAsset
     {
         public string path = "";
+        public string id = "";
         public string record = "";
     }
 
@@ -116,15 +127,38 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
     private static readonly bool Windows = Application.platform == RuntimePlatform.WindowsEditor;
     private static readonly bool Mac = Application.platform == RuntimePlatform.OSXEditor;
     private static HashSet<string> _tracked = new HashSet<string>(StringComparer.Ordinal);
-    private static Dictionary<string, string> _editable = new Dictionary<string, string>(StringComparer.Ordinal);
+    private static Dictionary<string, EditableAsset> _editable = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, RemoteLock> RemoteLocks = new(StringComparer.Ordinal);
+    private static readonly Color OtherLockColor = new(1f, .58f, .22f);
+    private static readonly Color EditableLockColor = new(.35f, .85f, .48f);
+    private static readonly Color ReadOnlyLockColor = new(.72f, .74f, .77f);
+    private static Texture2D _closedLockIcon;
+    private static Texture2D _openLockIcon;
+    private static bool _remoteLocksCurrent;
+    private const double LockRefreshSeconds = 15;
+    private const double FullSyncSeconds = 45;
     private static Task<string> _refresh;
     private static double _nextRefresh;
+    private static double _nextFullSync;
+    private static bool _refreshIncludesFiles;
+    private static int _refreshGeneration;
+    private static int _editGeneration;
     private static bool _refreshFailed;
 
     static UnityAssetLocks()
     {
-        if (!Application.isBatchMode)
-            EditorApplication.update += Update;
+        if (Application.isBatchMode)
+            return;
+
+        EditorApplication.update += Update;
+        EditorApplication.focusChanged += OnFocusChanged;
+        EditorApplication.projectWindowItemOnGUI += DrawProjectLock;
+    }
+
+    private static void OnFocusChanged(bool hasFocus)
+    {
+        if (hasFocus && (_refresh == null || _refreshIncludesFiles || _refresh.IsCompleted))
+            _nextRefresh = 0;
     }
 
     private static void Update()
@@ -141,30 +175,98 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
             {
                 string json = _refresh.GetAwaiter().GetResult();
                 LockStatus status = JsonUtility.FromJson<LockStatus>(json);
-                _tracked = new HashSet<string>(status.tracked, StringComparer.Ordinal);
-                _editable = status.editable.ToDictionary(asset => asset.path, asset => asset.record, StringComparer.Ordinal);
-                _refreshFailed = false;
+                if (_refreshIncludesFiles)
+                    _tracked = new HashSet<string>(status.tracked, StringComparer.Ordinal);
+
+                // An acquisition can finish while a background snapshot is waiting to be applied.
+                if (_refreshGeneration == _editGeneration)
+                {
+                    if (_refreshIncludesFiles)
+                        _editable = status.editable.ToDictionary(asset => asset.path, StringComparer.Ordinal);
+
+                    ApplyRemoteLocks(status.remoteLocks);
+                    _refreshFailed = false;
+                }
             }
             catch (Exception exception)
             {
                 if (!_refreshFailed)
                     Debug.LogWarning($"Unity asset locks: {exception.Message}");
                 _refreshFailed = true;
+                if (_refreshGeneration == _editGeneration)
+                    _remoteLocksCurrent = false;
             }
             _refresh = null;
+            EditorApplication.RepaintProjectWindow();
         }
 
-        if (EditorApplication.timeSinceStartup >= _nextRefresh)
+        double now = EditorApplication.timeSinceStartup;
+        bool fullSync = now >= _nextFullSync;
+        if (!fullSync && now < _nextRefresh)
+            return;
+
+        if (fullSync)
+            _nextFullSync = now + FullSyncSeconds;
+        _nextRefresh = now + LockRefreshSeconds;
+        _refreshIncludesFiles = fullSync;
+        _refreshGeneration = _editGeneration;
+        _refresh = Task.Run(() => Run(fullSync ? "Sync" : "ReadLocks"));
+    }
+
+    private static void ApplyRemoteLocks(RemoteLock[] locks)
+    {
+        _remoteLocksCurrent = locks != null;
+        if (!_remoteLocksCurrent)
+            return;
+
+        RemoteLocks.Clear();
+        foreach (RemoteLock entry in locks)
+            RemoteLocks[entry.path] = entry;
+
+        foreach (EditableAsset asset in _editable.Values.ToArray())
         {
-            _nextRefresh = EditorApplication.timeSinceStartup + 45;
-            _refresh = Task.Run(() => Run("Sync"));
+            if (string.IsNullOrEmpty(asset.id))
+                continue;
+
+            if (!RemoteLocks.TryGetValue(asset.path, out RemoteLock entry) || !entry.owned || entry.id != asset.id)
+                _editable.Remove(asset.path);
         }
     }
 
-    private static void IsOpenForEdit(string[] paths, List<string> notEditable, StatusQueryOptions options)
+    private static void DrawProjectLock(string guid, Rect row)
+    {
+        if (Event.current.type != EventType.Repaint || RemoteLocks.Count == 0)
+            return;
+
+        string path = GetLockPath(AssetDatabase.GUIDToAssetPath(guid));
+        if (path == null || !RemoteLocks.TryGetValue(path, out RemoteLock entry))
+            return;
+
+        bool editable = entry.owned && CanWrite(path);
+        Texture2D icon = editable
+            ? (_openLockIcon ??= EditorGUIUtility.FindTexture("LockIcon"))
+            : (_closedLockIcon ??= EditorGUIUtility.FindTexture("LockIcon-On"));
+        if (icon == null)
+            return;
+
+        Color color = editable ? EditableLockColor : entry.owned ? ReadOnlyLockColor : OtherLockColor;
+        string owner = string.IsNullOrEmpty(entry.owner) ? "확인 불가" : entry.owner;
+        string status = editable ? "현재 작업 폴더에서 편집 가능" : "현재 작업 폴더에서 읽기 전용";
+        string tooltip = $"잠금 소유자: {owner}\n{status}";
+        if (!_remoteLocksCurrent)
+            tooltip += "\n마지막 GitHub 조회 기준";
+
+        const float size = 14f;
+        float y = row.y + (row.height > 24f ? 2f : (row.height - size) * .5f);
+        var badge = new Rect(row.xMax - size - 2f, y, size, size);
+        GUI.DrawTexture(badge, icon, ScaleMode.ScaleToFit, true, 0f, color, 0f, 0f);
+        GUI.Label(badge, new GUIContent(string.Empty, tooltip), GUIStyle.none);
+    }
+
+    private static bool IsOpenForEdit(string[] paths, List<string> notEditable, StatusQueryOptions options)
     {
         if (Application.isBatchMode)
-            return;
+            return true;
 
         foreach (string path in paths)
         {
@@ -175,6 +277,8 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
             if (lockPath != null && _tracked.Contains(lockPath) && !CanWrite(lockPath))
                 notEditable.Add(path);
         }
+
+        return notEditable.Count == 0;
     }
 
     private static bool MakeEditable(string[] paths, string prompt, List<string> notEditable)
@@ -239,7 +343,9 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         try
         {
             EditableAsset asset = JsonUtility.FromJson<EditableAsset>(Run("Acquire", lockPath));
-            _editable[lockPath] = asset.record;
+            _editable[lockPath] = asset;
+            ++_editGeneration;
+            _nextRefresh = 0;
             return true;
         }
         catch (Exception exception)
@@ -259,7 +365,9 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         {
             LockStatus status = JsonUtility.FromJson<LockStatus>(Run("AcquireFolder", path));
             foreach (EditableAsset asset in status.editable)
-                _editable[asset.path] = asset.record;
+                _editable[asset.path] = asset;
+            ++_editGeneration;
+            _nextRefresh = 0;
             return true;
         }
         catch (Exception exception)
@@ -275,7 +383,7 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
     private static bool CanWrite(string path)
     {
-        if (!_editable.TryGetValue(path, out string record))
+        if (!_editable.TryGetValue(path, out EditableAsset asset))
             return false;
 
         try
@@ -284,8 +392,8 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
             if (file.Exists && file.IsReadOnly)
                 return false;
 
-            return string.IsNullOrEmpty(record) ||
-                   string.IsNullOrEmpty(JsonUtility.FromJson<LockRecord>(File.ReadAllText(record)).submitted);
+            return string.IsNullOrEmpty(asset.record) ||
+                   string.IsNullOrEmpty(JsonUtility.FromJson<LockRecord>(File.ReadAllText(asset.record)).submitted);
         }
         catch (IOException)
         {
@@ -339,7 +447,7 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         {
             Task<string> output = process.StandardOutput.ReadToEndAsync();
             Task<string> errors = process.StandardError.ReadToEndAsync();
-            if (command != "Sync")
+            if (command == "Acquire" || command == "AcquireFolder")
             {
                 process.WaitForExit(); // Let lock acquisition roll back if any path fails.
             }
