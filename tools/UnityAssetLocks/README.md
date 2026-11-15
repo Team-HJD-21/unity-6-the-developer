@@ -15,7 +15,7 @@ macOS에서는 `brew install powershell`로 설치하고 `pwsh --version`으로 
 
 편집과 커밋, 푸시는 평소대로 한다. Unity가 앱 내부에서 직접 편집 요청을 보내지 않는 화면에서는 Project 창에서 **Assets → Open for Edit (Git LFS)**를 사용할 수 있다. 런타임 게임 코드에는 적용되지 않는다.
 
-Physics 2D와 Tags and Layers를 수정할 때는 **Tools → Git LFS → Edit Physics 2D** 또는 **Edit Tags and Layers**로 연다. 메뉴에서 해당 Project Settings 파일의 잠금을 먼저 얻는다. 받아온 `main` 이후 내 브랜치에서 커밋한 변경도, `main`에서 그 파일의 버전이 더 바뀌기 전에는 잠금을 얻어 이어서 편집할 수 있다.
+기존 **Edit → Project Settings**에서 **Physics 2D** 또는 **Tags and Layers**의 값을 변경하면 자동으로 잠금을 얻는다. 이미 잠긴 파일의 값을 바꾸면 현재 화면의 변경이 되돌아가고 Console에 잠금 소유자가 표시된다. 받아온 `main` 이후 내 브랜치에서 커밋한 변경도, `main`에서 그 파일의 버전이 더 바뀌기 전에는 잠금을 얻어 이어서 편집할 수 있다.
 
 폴더를 이동하거나 이름을 바꾸거나 삭제할 때는 Git에 등록된 하위 에셋의 잠금도 확인한다. 하나라도 편집할 수 없으면 작업이 차단된다.
 
