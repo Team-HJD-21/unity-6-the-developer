@@ -199,6 +199,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3030534019369004712, guid: 611f977a7d3154f5b8734640fe264315, type: 3}
+      propertyPath: m_Layer
+      value: 27
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -485,7 +489,7 @@ GameObject:
   - component: {fileID: 280278401}
   - component: {fileID: 280278403}
   - component: {fileID: 280278402}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: DetectCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -758,7 +762,7 @@ GameObject:
   - component: {fileID: 483776960}
   - component: {fileID: 483776961}
   - component: {fileID: 483776962}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: DetectCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -940,7 +944,7 @@ GameObject:
   - component: {fileID: 692487953}
   - component: {fileID: 692487955}
   - component: {fileID: 900000000000000001}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: LeftDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1023,7 +1027,7 @@ GameObject:
   - component: {fileID: 773648763}
   - component: {fileID: 773648762}
   - component: {fileID: 773648761}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: UnderWallLeftBottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1767,7 +1771,7 @@ GameObject:
   - component: {fileID: 806088964}
   - component: {fileID: 806088963}
   - component: {fileID: 806088962}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: UnderWallRightBottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2598,7 +2602,7 @@ GameObject:
   - component: {fileID: 905236858}
   - component: {fileID: 905236860}
   - component: {fileID: 905236859}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: DetectCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2780,7 +2784,7 @@ GameObject:
   - component: {fileID: 1097820859}
   - component: {fileID: 1097820861}
   - component: {fileID: 1097820860}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: DetectCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2870,7 +2874,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1427728675}
   - component: {fileID: 1427728676}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: ControlScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2957,7 +2961,7 @@ GameObject:
   - component: {fileID: 1461037047}
   - component: {fileID: 1461037046}
   - component: {fileID: 1461037045}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: UnderWallLeftTop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3838,7 +3842,7 @@ GameObject:
   - component: {fileID: 1670418510}
   - component: {fileID: 1670418509}
   - component: {fileID: 1670418508}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: SideWall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13577,7 +13581,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1868480732}
   - component: {fileID: 1868480734}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: RightDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13660,7 +13664,7 @@ GameObject:
   - component: {fileID: 1898079814}
   - component: {fileID: 1898079813}
   - component: {fileID: 1898079812}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: 'UnderWallRightTop '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14400,7 +14404,7 @@ GameObject:
   - component: {fileID: 1918492939}
   - component: {fileID: 1918492940}
   - component: {fileID: 1918492941}
-  m_Layer: 0
+  m_Layer: 27
   m_Name: enter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
