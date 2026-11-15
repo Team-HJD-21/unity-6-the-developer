@@ -25,6 +25,14 @@ public sealed partial class PlayerBullet : MonoBehaviour
     [FormerlySerializedAs("lifeTime")]
     [SerializeField, Min(.01f)] private float _lifetime = 2f;
     [SerializeField] private bool _piercesEnemies;
+    // 0은 기존 프리팹/체크포인트의 무제한 관통입니다. 무기고 발사에서 실제 한도를 주입합니다.
+    private int _maximumEnemyTargets;
+    public int MaximumEnemyTargets => _maximumEnemyTargets;
+    internal void ConfigurePenetration(int maximumTargets)
+    {
+        if (maximumTargets < 1 || maximumTargets > 4096) throw new System.ArgumentOutOfRangeException(nameof(maximumTargets));
+        _maximumEnemyTargets = maximumTargets;
+    }
 
     [Header("Damage")]
     [FormerlySerializedAs("bulletDamage")]
@@ -190,6 +198,14 @@ public sealed partial class PlayerBullet : MonoBehaviour
             if (!_piercedTargets.Add(identity)) return false;
             bool damaged = health.TryTakeDamage(Mathf.RoundToInt(_damage), AttackSourceType.Player);
             if (damaged && _view != null) _view.ShowImpact(contactPosition ?? (Vector2)transform.position);
+            if (_maximumEnemyTargets > 0 && _piercedTargets.Count >= _maximumEnemyTargets)
+            {
+                _hasHit = true;
+                _body.linearVelocity = Vector2.zero;
+                foreach (var hitbox in _hitboxes) if (hitbox != null) hitbox.enabled = false;
+                Destroy(gameObject);
+                return true;
+            }
             return false;
         }
         _hasHit = true;

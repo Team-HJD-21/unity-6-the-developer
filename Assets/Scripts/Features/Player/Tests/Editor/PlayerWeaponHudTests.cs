@@ -68,7 +68,8 @@ public sealed class PlayerWeaponHudTests
             Assert.That(marker.activeSelf, Is.True);
 
             Assert.That(selection.SelectAdjacentWeapon(-1), Is.True);
-            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Sniper));
+            Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.CryoBlaster));
+            Assert.That(selection.TrySelectWeaponSlot(4), Is.False, "An authored but unequipped sniper must remain unavailable.");
             Assert.That(selection.SelectAdjacentWeapon(1), Is.True);
             Assert.That(selection.CurrentWeapon, Is.EqualTo(WeaponType.Spanner));
             Assert.That(selection.TrySelectWeaponSlot(0), Is.False);

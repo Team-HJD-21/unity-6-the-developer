@@ -11,7 +11,7 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
     [SerializeField, Min(1)] private int _maxCharges = 3;
     [SerializeField, Min(.1f)] private float _rechargeSeconds = 18;
     [SerializeField, Min(1)] private float _health = 300;
-    [SerializeField, Min(.1f)] private float _duration = 8;
+    [SerializeField, Min(20f)] private float _duration = 20;
     [Header("Two-click placement")]
     [SerializeField, Min(.1f)] private float _minDistance = 1;
     [SerializeField, Min(.1f)] private float _maxDistance = 13.5f;
@@ -34,7 +34,10 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
     public bool HasFirstEmitter => _hasFirst;
     public Vector3 FirstEmitterPosition => _first;
     public override Vector3 PlacementCenter => _hasFirst ? _first : base.PlacementCenter;
-    public override float PlacementRadius => _hasFirst ? Mathf.Max(_minDistance, _maxDistance) : base.PlacementRadius;
+    public float ConnectionRange => Mathf.Max(_minDistance, _maxDistance) * UpgradeMultiplier;
+    public float EffectHealth => _health * UpgradeMultiplier;
+    public float EffectDuration => Mathf.Max(20f, _duration) * UpgradeMultiplier;
+    public override float PlacementRadius => _hasFirst ? ConnectionRange : base.PlacementRadius;
     protected override Vector3? PlacementAnchor => _hasFirst ? _first : null;
     public override string PlacementHint => !IsPlacing ? "" : _hasFirst
         ? "두 번째 본체를 왼쪽 클릭으로 설치 · 오른쪽 클릭 / Esc / 같은 스킬 키로 취소"
@@ -79,7 +82,8 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
         if (!_charges.TryConsume()) return false;
         var barrier = Instantiate(_prefab, (_first + position) * .5f, Quaternion.identity);
         MoveToOwnerScene(barrier.gameObject);
-        barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, position, _width, _health, _duration, owner: transform);
+        barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, position, _width, EffectHealth, EffectDuration, owner: transform);
+        barrier.GetComponent<PlayerPlacementPresentation>()?.Play();
         _deployed.Add(barrier);
         complete = true;
         return true;
@@ -90,7 +94,7 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
         { reason = "유효하지 않은 설치 위치입니다."; return false; }
         float distance = Vector2.Distance(start, end);
         if (distance < Mathf.Max(.1f, _minDistance)) { reason = "본체 사이 간격이 너무 짧습니다."; return false; }
-        if (distance > Mathf.Max(_minDistance, _maxDistance)) { reason = "방벽 연결 거리를 초과했습니다."; return false; }
+        if (distance > ConnectionRange) { reason = "방벽 연결 거리를 초과했습니다."; return false; }
         reason = CheckEmitter(start, 0);
         if (reason.Length > 0) return false;
         reason = CheckEmitter(end, 1);

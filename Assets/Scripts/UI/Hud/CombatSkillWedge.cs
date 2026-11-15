@@ -10,6 +10,7 @@ public sealed class CombatSkillWedge : MonoBehaviour, ICanvasRaycastFilter,
     public CombatHudStyle Style;
     public PlayerSkillId Skill;
     public int Index;
+    public TMPro.TMP_Text Name;
     public Image Edge, Surface;
     public RectTransform Art;
     public CanvasGroup LiftShadow, Grip;

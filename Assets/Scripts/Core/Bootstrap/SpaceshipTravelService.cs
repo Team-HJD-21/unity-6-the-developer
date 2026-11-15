@@ -22,7 +22,7 @@ namespace TeamHJD.Game.Bootstrap
         public Task EnterAsync(Transform player)
         {
             RequireIdle(player);
-            GameAlerts.Show("출격 중에는 우주선 내부로 진입할 수 없습니다. 미션 결과 화면에서 귀환하세요.",
+            GameAlerts.Show("출격 중에는 우주선에 진입할 수 없습니다.\n미션 종료 후 귀환할 수 있습니다.",
                 AlertTone.Info, "spaceship/mission-entry-blocked");
             return Task.CompletedTask;
         }

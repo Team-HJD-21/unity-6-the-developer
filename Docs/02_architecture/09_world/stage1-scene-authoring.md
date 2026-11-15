@@ -1,5 +1,7 @@
 # Stage1 씬 제작과 검증
 
+2026-11-15 진입 경로: 제품 Build Settings의 인덱스 0은 Startup, 첫 전장 항목(인덱스 1)은 Stage_1이며 `Initial_Stage`는 빌드 목록에서 제외한다. 우주선 출구·재시작·네트워크 검증 빌드는 Stage_1을 사용한다. 과거 `playModeStartScene`이 Initial_Stage로 지정돼 있으면 Play 시작 전에 Stage_1으로 교체하며 현재 편집 씬은 저장하거나 덮어쓰지 않는다. Core의 조립 로그는 실제 씬 이름을 출력한다. `Initial_Stage` 자산은 명시적 Editor 검사·참고용으로만 보존한다.
+
 ## 편집 위치
 
 - 게임 시작 시 로드하는 제작본은 [Stage_1.unity](../../../Assets/Scenes/Gameplay/Stage_1.unity)다. 우주선 출구의 `missionSceneName`과 Build Settings도 이 경로를 사용한다. `Assets/Scenes/Reference/Stages` 아래에는 참고용 씬이 있고 [InitialStageTurretTest](../../../Assets/Scenes/Tests/InitialStageTurretTest.unity)는 독립 터렛 시험용이다.

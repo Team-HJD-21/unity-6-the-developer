@@ -1,0 +1,51 @@
+{
+  "date": "2026-11-15",
+  "unity": "6000.3.23f1",
+  "scope": "FieldTurret fixed capacity, existing real prefab growth/world restore",
+  "tests": {
+    "result": "Passed",
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 8.9164945,
+    "cases": [
+      {
+        "name": "FieldTurretRestoreVisualTests.ChangedAuthoring_PreservesKnownGrowthAndRetainsRemovedIds",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.CombatRestoreKeepsActiveAndCoolingOffHeatInTheSharedVisualPath",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.FixedCapacityOverridesSerializedDefaultAndRejectsChanges(100)",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.FixedCapacityOverridesSerializedDefaultAndRejectsChanges(1000)",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.FixedCapacitySurvivesLegacyGrowthAndWorldRestore",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.UnfixedCapacityStillRestoresSavedGrowthCapacity",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.WorldAndGrowthRestoreKeepColdOffGunsGrayAndLocksUnchanged",
+        "result": "Passed"
+      }
+    ]
+  },
+  "sceneConfiguration": {
+    "Stage_1": 500,
+    "Initial_Stage": 500
+  },
+  "limitations": [
+    "Full Stage combat balance not evaluated",
+    "No Windows Player build"
+  ]
+}

@@ -28,6 +28,8 @@ namespace TeamHJD.Game.FieldTurrets
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (!HasWriteAuthority || !isActiveAndEnabled) throw new InvalidOperationException("A current authority turret owner is required.");
+            if (fixedMaximumPower > 0 && state.Budget.Maximum != fixedMaximumPower)
+                throw new ArgumentException("Saved power must be reconciled with the fixed Scene capacity before applying.", nameof(state));
             var actors = ReadCheckpointActors(); long reserved = 0;
             foreach (var actor in actors.Values)
             { _ = actor.CaptureActorState(); reserved += actor.CheckpointReservedPower; }

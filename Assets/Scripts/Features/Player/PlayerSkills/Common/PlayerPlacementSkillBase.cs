@@ -16,7 +16,8 @@ public abstract class PlayerPlacementSkillBase : PlayerSkillBase
     private float _nextCheck;
     private int _startFrame;
     public bool IsPlacing => _preview != null;
-    public virtual float PlacementRadius => Mathf.Max(.1f, _placementRadius);
+    public virtual float PlacementRadius => Mathf.Max(.1f, _placementRadius) *
+        (Id == PlayerSkillId.Portal ? UpgradeMultiplier : 1f);
     public virtual Vector3 PlacementCenter => transform.position;
     protected bool HasPlacementPreview => _previewPrefab != null && _previewPrefab.IsConfigured;
     protected virtual Vector3? PlacementAnchor => null;
@@ -96,6 +97,7 @@ public abstract class PlayerPlacementSkillBase : PlayerSkillBase
             if (Controller != null) Controller.NotifyPlacementRejected(PlacementFailure);
             return false;
         }
+        Controller?.NotifyCastPerformed(Id, position);
         if (complete) CancelPlacement();
         else
         {

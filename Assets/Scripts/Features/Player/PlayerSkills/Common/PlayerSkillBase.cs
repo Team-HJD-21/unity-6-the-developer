@@ -15,6 +15,7 @@ public abstract partial class PlayerSkillBase : MonoBehaviour
     public virtual bool IsReady => HasPrefab && AvailableCount > 0 && RemainingCooldown <= 0;
     protected PlayerSkillController Controller => _controller != null ? _controller : _controller = GetComponent<PlayerSkillController>();
     protected PlayerControlState ControlState => _control != null ? _control : _control = GetComponent<PlayerControlState>();
+    public float UpgradeMultiplier => GetComponent<PlayerSkillResearch>()?.Multiplier(Id) ?? 1f;
     protected virtual void Awake() { _controller = GetComponent<PlayerSkillController>(); _control = GetComponent<PlayerControlState>(); }
     public bool TryUseSkill()
     {
@@ -22,6 +23,7 @@ public abstract partial class PlayerSkillBase : MonoBehaviour
         if (Controller != null)
         {
             if (!Controller.CanUse || !Controller.Loadout.Contains(Id)) return false;
+            if (Controller.Research != null && (!Controller.IsAvailable(Id) || !Controller.IsCandidate(Id))) return false;
         }
         else if (ControlState != null && !ControlState.CanAct) return false;
         return TryActivate();

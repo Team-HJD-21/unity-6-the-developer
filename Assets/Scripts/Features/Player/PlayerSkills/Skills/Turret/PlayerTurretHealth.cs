@@ -18,13 +18,14 @@ public sealed partial class PlayerTurretHealth : MonoBehaviour, IDamageableTarge
     [SerializeField] private LayerMask _blockingLayers = (1 << 18) | (1 << 24);
     [Tooltip("몬스터 투사체가 공통 피해 계약에 도달하도록 허용합니다.")]
     [SerializeField] private LayerMask _incomingProjectileLayers = 1 << 16;
-    private float _health, _hitRemaining;
+    private float _health, _hitRemaining, _deploymentMaximum;
     private bool _initialized;
     private SpriteRenderer[] _renderers;
     private Color[] _originalColors;
     private PlayerDeviceContactQuery _collision;
     public float Health => _health;
-    public float MaxHealth => Mathf.Max(1, _maxHealth);
+    public float BaseMaxHealth => Mathf.Max(1, _maxHealth);
+    public float MaxHealth => _deploymentMaximum > 0 ? _deploymentMaximum : BaseMaxHealth;
     public float HealthRatio => Mathf.Clamp01(_health / MaxHealth);
     // 회수 비율을 HP로 복원할 때 생기는 미세 오차를 새 1 HP로 올림하지 않습니다.
     public int CurrentHealth => Mathf.Max(_health > 0 ? 1 : 0, Mathf.CeilToInt(_health - .0001f));
@@ -93,10 +94,19 @@ public sealed partial class PlayerTurretHealth : MonoBehaviour, IDamageableTarge
         return FieldTurretRepairResult.Repaired;
     }
 
-    internal void SetDeploymentHealth(float healthRatio)
+    internal bool IsValidMaximumHealth(float maximum)
+    {
+        for (int level = 1; level <= PlayerSkillResearch.MaximumLevel; level++)
+            if (Mathf.Approximately(maximum, BaseMaxHealth * PlayerSkillResearch.MultiplierAtLevel(level))) return true;
+        return false;
+    }
+    internal void SetDeploymentHealth(float healthRatio, float multiplier = 1f)
     {
         if (!float.IsFinite(healthRatio) || healthRatio <= 0 || healthRatio > 1)
             throw new System.ArgumentOutOfRangeException(nameof(healthRatio));
+        float maximum = BaseMaxHealth * multiplier;
+        if (!IsValidMaximumHealth(maximum)) throw new System.ArgumentOutOfRangeException(nameof(multiplier));
+        _deploymentMaximum = maximum;
         _health = MaxHealth * healthRatio;
     }
     public Vector2 ApproachPoint(Vector2 origin) => _blocker != null ? _blocker.ClosestPoint(origin) : (Vector2)transform.position;

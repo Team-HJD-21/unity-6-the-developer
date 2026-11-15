@@ -19,6 +19,7 @@ public sealed partial class PlayerBomb : PlayerPlacementSkillBase
     public override int AvailableCount => _charges != null ? _charges.Current : 0;
     public int CurrentBombCount => AvailableCount;
     public int MaxBombCount => Mathf.Max(1, maxBombCount);
+    public float EffectDamage => bombPrefab != null && bombPrefab.GetComponent<PlayerBombExplosion>() is PlayerBombExplosion explosion ? explosion.Damage * UpgradeMultiplier : 0;
     public override float RemainingCooldown => _remainingCooldown;
     public override float CooldownDuration => Mathf.Max(.1f, bombCooldown);
     public PlayerBombPlacementResult PlacementFeedback => IsPlacing || Time.unscaledTime < _feedbackUntil
@@ -54,6 +55,7 @@ public sealed partial class PlayerBomb : PlayerPlacementSkillBase
         MoveToOwnerScene(bomb);
         TrackBomb(bomb);
         if (bomb.TryGetComponent(out PlayerBombExplosion explosion)) explosion.BindOwner(transform);
+        bomb.GetComponent<PlayerPlacementPresentation>()?.Play();
         _remainingCooldown = CooldownDuration;
         _feedbackUntil = 0;
         return true;

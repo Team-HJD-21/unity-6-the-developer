@@ -41,6 +41,7 @@ public sealed class CombatSkillPicker : MonoBehaviour
     {
         ResetView(); Hud = hud;
         foreach (var wedge in Wedges) wedge.Picker = this;
+        RefreshCandidates();
     }
     public void Unbind() { ResetView(); Hud = null; }
     public void Open()
@@ -63,7 +64,7 @@ public sealed class CombatSkillPicker : MonoBehaviour
     }
     public bool BeginDrag(PlayerSkillId skill, Vector2 screen)
     {
-        if (!_open || Hud?.Owner == null || !Hud.Owner.CanPrepare || !Hud.Owner.IsAvailable(skill)) return false;
+        if (!_open || Hud?.Owner == null || !Hud.Owner.CanPrepare || !Hud.Owner.IsAvailable(skill) || !Hud.Owner.IsCandidate(skill)) return false;
         _drag = true; _success = false; _dragSkill = skill; _hover = null;
         foreach (var wedge in Wedges) wedge.ResetMotion();
         DiskArt.Show(skill); DiskBase.color = Color.white; DiskGroup.alpha = 1;
@@ -108,6 +109,7 @@ public sealed class CombatSkillPicker : MonoBehaviour
     private void Update()
     {
         if (Hud?.Owner == null) return;
+        RefreshCandidates();
         if (!Hud.AreCombatControlsVisible)
         { ResetView(); CompactGroup.alpha = 0; CompactGroup.blocksRaycasts = false; return; }
         float scale = PickerRect.localScale.x;
@@ -162,7 +164,7 @@ public sealed class CombatSkillPicker : MonoBehaviour
         if (_drag) pos = DiskRect.anchoredPosition + new Vector2(0, -205 * scale);
         else
         {
-            Vector2 point = CombatHudGeometry.Radial(262 * scale, CombatHudGeometry.SkillAngle(skill));
+            Vector2 point = CombatHudGeometry.Radial(262 * scale, CandidateAngle(skill));
             pos = new Vector2(point.x - 30 * scale, -CanvasRect.rect.height * .5f + 440 * scale);
         }
         Vector2 half = CanvasRect.rect.size * .5f;
@@ -194,8 +196,8 @@ public sealed class CombatSkillPicker : MonoBehaviour
             _oldQ = loadout.Q; _oldE = loadout.E;
         }
         float t = CombatHudMotion.Sigmoid((Time.unscaledTime - _needleAt) / Style.SlideSeconds);
-        _qAngle = Mathf.LerpAngle(_fromQ, CombatHudGeometry.SkillAngle(loadout.Q), t);
-        _eAngle = Mathf.LerpAngle(_fromE, CombatHudGeometry.SkillAngle(loadout.E), t);
+        _qAngle = Mathf.LerpAngle(_fromQ, CandidateAngle(loadout.Q), t);
+        _eAngle = Mathf.LerpAngle(_fromE, CandidateAngle(loadout.E), t);
         Needle(QNeedle, QKeyBadge, QNeedleLabel, loadout.Q, _qAngle, 100);
         Needle(ENeedle, EKeyBadge, ENeedleLabel, loadout.E, _eAngle, 142);
     }
@@ -225,6 +227,27 @@ public sealed class CombatSkillPicker : MonoBehaviour
         if (PickerRect != null) PickerRect.anchoredPosition = new Vector2(0, -360);
         if (CompactRect != null) CompactRect.anchoredPosition = Vector2.zero;
         foreach (var wedge in Wedges) if (wedge != null) wedge.ResetMotion();
+    }
+    private float CandidateAngle(PlayerSkillId id)
+    {
+        foreach (var wedge in Wedges) if (id != PlayerSkillId.None && wedge.Skill == id)
+            return CombatHudGeometry.SkillAngle((PlayerSkillId)(wedge.Index + 1));
+        return 90f;
+    }
+    private void RefreshCandidates()
+    {
+        if (Hud?.Owner == null) return;
+        foreach (var wedge in Wedges)
+        {
+            var next = Hud.Owner.Candidate(wedge.Index);
+            if (wedge.Skill != next)
+            {
+                if (_drag || _hover == wedge) Close();
+                wedge.Skill = next;
+            }
+            if (wedge.Art != null) wedge.Art.GetComponent<CombatHudArt>()?.Show(next);
+            if (wedge.Name != null) wedge.Name.text = next == PlayerSkillId.None ? "비어 있음" : PlayerSkillDescriptions.Name(next);
+        }
     }
     private void OnApplicationFocus(bool focus) { if (!focus && (_drag || _success)) Close(); }
     private void OnApplicationPause(bool paused) { if (paused && (_drag || _success)) Close(); }

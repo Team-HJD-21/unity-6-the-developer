@@ -20,6 +20,7 @@ flowchart TD
 
 ## 호출과 제작 연결
 
+- `SpaceshipHubCompositionRoot`는 필드와 같은 기본 로컬 Player ID로 허브 actor를 만들고, 입력/UI 바인딩 전에 기존 개인 성장 슬롯의 XP·스탯을 읽는다. 높은 저장 레벨이 처음 허브에서 1로 보이거나 강화 토큰 계산에서 누락되는 것을 막는다. Match를 시작하거나 월드 저장을 복원하지 않으며 개인 성장 원본과 파일 형식을 유지한다. 허브의 성장 변경은 기존 `GrowthSaveService`로 저장하고 actor 제거 전에 대기 중인 저장을 마친다.
 - `ISpaceshipTravel.ExitAsync(player, fieldScene)`은 시작 우주선에서 Mission을 출격하는 경계다. 처음 도착 위치는 전장의 `PlayerStart`가 정한다. 기존 방문 actor를 순간이동하거나 옛 귀환 Marker를 찾아 이동하지 않는다.
 - `ISpaceshipTravel.EnterAsync(player)`는 필드 출입구의 의도를 전달한다. 현재는 진입을 막고 공통 Alert로 안내한다. Player/Match/Scene 수와 위치를 바꾸지 않는다.
 - `SpaceshipExit`의 `missionSceneName`은 제작된 Mission 경로다. `FormerlySerializedAs("returnSceneName")`로 기존 Scene 값을 보존한다. 현재 우주선의 두 출구 모두 `Assets/Scenes/Gameplay/Stage_1.unity`로 읽힌다.

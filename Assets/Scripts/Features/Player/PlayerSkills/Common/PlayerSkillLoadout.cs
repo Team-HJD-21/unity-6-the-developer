@@ -1,7 +1,7 @@
 // Q/E 준비 데이터를 소유합니다. 기존 순차 선택과 명시적 슬롯 교체/교환을 함께 제공합니다.
 using System;
 
-public enum PlayerSkillId { None = 0, Bomb = 1, PlayerTurret = 2, EnergyBarrier = 3, LureBeacon = 4 }
+public enum PlayerSkillId { None = 0, Bomb = 1, PlayerTurret = 2, EnergyBarrier = 3, LureBeacon = 4, Portal = 5, DualWield = 6 }
 
 public sealed class PlayerSkillLoadout
 {
@@ -13,7 +13,7 @@ public sealed class PlayerSkillLoadout
 
     public bool TrySelect(PlayerSkillId skill)
     {
-        if ((int)skill < (int)PlayerSkillId.Bomb || (int)skill > (int)PlayerSkillId.LureBeacon || Contains(skill)) return false;
+        if (!PlayerSkillResearch.IsKnown(skill) || Contains(skill)) return false;
         if (Q == PlayerSkillId.None) Q = skill;
         else if (E == PlayerSkillId.None) E = skill;
         else return false;
@@ -24,7 +24,7 @@ public sealed class PlayerSkillLoadout
     /// <summary>0=Q, 1=E. 다른 슬롯의 스킬은 교환하고 새 스킬은 대상만 교체합니다. 같은 슬롯은 변경하지 않습니다.</summary>
     public bool TryEquip(int slot, PlayerSkillId skill)
     {
-        if (slot < 0 || slot > 1 || (int)skill < (int)PlayerSkillId.Bomb || (int)skill > (int)PlayerSkillId.LureBeacon) return false;
+        if (slot < 0 || slot > 1 || !PlayerSkillResearch.IsKnown(skill)) return false;
         var current = slot == 0 ? Q : E;
         if (current == skill) return false;
         if (slot == 0)

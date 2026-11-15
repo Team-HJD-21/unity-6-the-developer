@@ -306,14 +306,19 @@ public sealed class PlayerTurretRepairTests
         var obstacle = Track(new GameObject("Repair line of sight obstacle")).AddComponent<BoxCollider2D>();
         obstacle.transform.position = Origin + Vector3.right;
         obstacle.size = new Vector2(.2f, 1f);
-        Physics2D.SyncTransforms();
-        Tick(true, 1f);
-        Assert.That(turret.CurrentHealth, Is.EqualTo(50));
-        obstacle.isTrigger = true;
-        Physics2D.SyncTransforms();
-        Tick(false, .1f);
-        Tick(true, 1f);
-        Assert.That(turret.CurrentHealth, Is.EqualTo(60));
+        int ownerLayer=LayerMask.NameToLayer("PlayerFeetBox"), wallLayer=LayerMask.NameToLayer("WorldGeometry");
+        _repair.gameObject.layer=ownerLayer;obstacle.gameObject.layer=wallLayer;
+        bool ignored=Physics2D.GetIgnoreLayerCollision(ownerLayer,wallLayer);
+        try
+        {
+            Physics2D.IgnoreLayerCollision(ownerLayer,wallLayer,false);Physics2D.SyncTransforms();
+            Tick(true, 1f);
+            Assert.That(turret.CurrentHealth, Is.EqualTo(50));
+            obstacle.isTrigger = true;Physics2D.SyncTransforms();
+            Tick(false, .1f);Tick(true, 1f);
+            Assert.That(turret.CurrentHealth, Is.EqualTo(60));
+        }
+        finally{Physics2D.IgnoreLayerCollision(ownerLayer,wallLayer,ignored);}
     }
 
     [Test]
@@ -329,6 +334,73 @@ public sealed class PlayerTurretRepairTests
         var panel = (RectTransform)serialized.FindProperty("_panel").objectReferenceValue;
         foreach (var graphic in panel.GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
             Assert.That(graphic.raycastTarget, Is.False, graphic.name + " must not consume attack clicks.");
+    }
+
+    [Test]
+    public void PlayerAndFieldClocksInTheSameExecutionAllowBothRepairPathsUntilFieldHold()
+    {
+        var turret = CreateTurret(50);
+        var playerClock = new RepairClock("shared-repair-match", Guid.NewGuid());
+        var fieldClock = new TeamHJD.Game.Application.FieldSimulationClock(playerClock);
+        FieldSimulationActor.Attach(_repair.gameObject, playerClock);
+        FieldSimulationActor.Attach(turret.gameObject, fieldClock);
+        Tick(false, .1f);
+        Assert.That(_repair.Target, Is.SameAs(turret), "A projected field clock is still part of the player's Match execution.");
+        Tick(true, .5f);
+        Assert.That(turret.CurrentHealth, Is.EqualTo(55));
+        Tick(false, .1f);
+        var spanner = _repair.gameObject.AddComponent<PlayerSpannerRepair>();
+        Assert.That(spanner.TryRepair(_repair.transform, Vector2.right), Is.True);
+        Assert.That(turret.CurrentHealth, Is.EqualTo(65));
+        fieldClock.SetHeld(true);
+        Tick(true, 1f);
+        Assert.That(_repair.IsRepairing, Is.False);
+        Assert.That(spanner.TryRepair(_repair.transform, Vector2.right), Is.False);
+        Assert.That(turret.CurrentHealth, Is.EqualTo(65));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void RepairRejectsDifferentMatchesAndPreviousExecutionsOfTheSameMatch(bool differentMatch)
+    {
+        var turret = CreateTurret(50);
+        Guid epoch = Guid.NewGuid();
+        FieldSimulationActor.Attach(_repair.gameObject, new RepairClock("current-repair-match", epoch));
+        FieldSimulationActor.Attach(turret.gameObject, new RepairClock(
+            differentMatch ? "another-repair-match" : "current-repair-match", differentMatch ? epoch : Guid.NewGuid()));
+        Tick(false, .1f); Tick(true, 1f);
+        Assert.That(_repair.Target, Is.Null);
+        Assert.That(turret.CurrentHealth, Is.EqualTo(50));
+        var spanner = _repair.gameObject.AddComponent<PlayerSpannerRepair>();
+        Assert.That(spanner.TryRepair(_repair.transform, Vector2.right), Is.False);
+    }
+
+    private sealed class RepairClock : TeamHJD.Game.Contracts.IMatchTime
+    {
+        private readonly TeamHJD.Game.Domain.MatchTimeSnapshot _snapshot;
+        public RepairClock(string match, Guid epoch) => _snapshot = new(new TeamHJD.Game.Domain.MatchId(match), epoch, 0, 0, 0, 1, false, true);
+        public bool IsAvailable => true;
+        public double ElapsedSeconds => 0;
+        public TeamHJD.Game.Domain.MatchTimeSnapshot Snapshot => _snapshot;
+    }
+
+    [Test]
+    public void HoldingRRepairsTheAuthoredPlayerTurretThroughItsHealthApi()
+    {
+        var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab");
+        var root=Track(Object.Instantiate(prefab,Origin+Vector3.right*2,Quaternion.identity));
+        var health=root.GetComponent<PlayerTurretHealth>();
+        Invoke(health,"Awake");Invoke(health,"OnEnable");
+        try
+        {
+            var clock=new RepairClock("player-turret-repair",Guid.NewGuid());
+            FieldSimulationActor.Attach(_repair.gameObject,clock);FieldSimulationActor.Attach(root,clock);
+            health.TakeDamage(25);Physics2D.SyncTransforms();
+            Tick(false,.1f);Assert.That(_repair.PlayerTarget,Is.SameAs(health));
+            Tick(true,1);
+            Assert.That(health.Health,Is.EqualTo(85).Within(.001f));Assert.That(_repair.IsRepairing,Is.True);
+        }
+        finally{Invoke(health,"OnDisable");}
     }
 
     [Test]
@@ -404,13 +476,19 @@ public sealed class PlayerTurretRepairTests
         _repair.transform.position = Origin + Vector3.up;
         wall.transform.position = Origin + Vector3.right;
         wall.size = new Vector2(.2f, .2f);
-        Physics2D.SyncTransforms();
-        Assert.That(PlayerSpannerTargeting.CanReach(_repair.transform, turret.transform, turret.transform.position,
-            Vector2.right, 3f, 180f, (Vector2)Origin), Is.False);
-        wall.isTrigger = true;
-        Physics2D.SyncTransforms();
-        Assert.That(PlayerSpannerTargeting.CanReach(_repair.transform, turret.transform, turret.transform.position,
-            Vector2.right, 3f, 180f, (Vector2)Origin), Is.True);
+        int ownerLayer=LayerMask.NameToLayer("PlayerFeetBox"),wallLayer=LayerMask.NameToLayer("WorldGeometry");
+        _repair.gameObject.layer=ownerLayer;wall.gameObject.layer=wallLayer;
+        bool ignored=Physics2D.GetIgnoreLayerCollision(ownerLayer,wallLayer);
+        try
+        {
+            Physics2D.IgnoreLayerCollision(ownerLayer,wallLayer,false);Physics2D.SyncTransforms();
+            Assert.That(PlayerSpannerTargeting.CanReach(_repair.transform, turret.transform, turret.transform.position,
+                Vector2.right, 3f, 180f, (Vector2)Origin), Is.False);
+            wall.isTrigger = true;Physics2D.SyncTransforms();
+            Assert.That(PlayerSpannerTargeting.CanReach(_repair.transform, turret.transform, turret.transform.position,
+                Vector2.right, 3f, 180f, (Vector2)Origin), Is.True);
+        }
+        finally{Physics2D.IgnoreLayerCollision(ownerLayer,wallLayer,ignored);}
     }
 
     [TestCase(1f, 0f, PlayerAimFacing.Right)]

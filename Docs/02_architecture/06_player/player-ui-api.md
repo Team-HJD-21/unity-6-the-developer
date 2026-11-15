@@ -94,7 +94,13 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 감소 피드백은 `PlayerAttack.ShotFired`의 실제 성공 이벤트에만 연결한다. 수량이 짧게 밝아지며 작게 확대·복귀하고 탄약 영역에 작은 반동을 준다. `ShotFeedbackSeconds`는 Inspector에서 조정한다. 무기 변경으로 수량이 작아지거나 actor를 새로 연결해도 발사 효과를 만들지 않는다. actor 교체/비활성화 때 발사·무기 변경·XP 이벤트를 해제하며 현재 무기와 탄약의 원본 상태는 변경하지 않는다. XP는 계속 Player 주변 World Space 팝업이다.
 
-### 스킬 트리 UI 틀
+### 스킬 트리 (2026-11-15)
+
+현재 트리는 기본 해금 폭탄에서 공격 업그레이드 / 설치형으로 나뉜다. 레벨업 임시 토큰으로 노드를 해금하고 선택한 노드를 하단 원형 선택창의 후보 네 칸에 배치한다. Q/E 사용 슬롯은 두 칸을 유지한다. 제작 참조·호출·양손 무기와 저장 범위는 [스킬 트리 API](player-skill-tree-api.md)를 따른다.
+
+스킬 화면을 열면 창 높이를 960으로 늘리고 520 높이의 트리 스크롤 아래에 선택/강화 정보와 후보 배치 영역을 따로 둔다. 후보 네 칸은 번호·아이콘·이름·배치/교체 안내를 표시한다. 선택은 금색, 해금은 청록색, 잠김은 어두운 색과 문구로 구분한다. 스테이터스 복귀 시 기존 창 크기를 복원하며 Q/E 두 사용 슬롯의 조작 방식은 유지한다.
+
+### 이전 스킬 회로 UI 틀 (2026-11-10 기록)
 
 네 섹터 Image의 색을 `(0.065, 0.125, 0.16)`으로 올렸다. 기존보다 밝고 캐릭터 미리보기 사각형 `(0.1, 0.18, 0.23)`보다 어두워 각 영역을 구분한다. 무기 하단 안내와 레벨 보상 제목 사이 우측 `(530, 50)`에 `스킬 트리` 버튼을 프리팹으로 배치했다.
 
@@ -350,3 +356,25 @@ HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후
 `TacticalCommandController.TerritoryFeedback`는 기존 지역 Source.Changed를 구독하여 상단/지도에는 최신 Snapshot을 즉시 제공하고 바닥만 `TerritoryExpansionState`로 전환한다. 실제 완료 식별은 Snapshot.Revision이 아닌 Change.Revision이며 StaticSecured의 SecuredRegionIds만 기존 Alert의 `점유 완료` 근거로 사용한다. `GameAlerts.TryShowIfIdle`로 현재 알림을 밀어내거나 큐 뒤에 오래된 성공을 쌓지 않는다.
 
 FieldTerritoryRenderer의 기존 Territory 정렬·공통 RegionBoundaryGeometry는 유지한다. TacticalHudStyle에서 Sweep0.65/Glow0.12/Settle0.28, Loss0.16, Merge0.18, ToastFresh1초와 기존 색에 가까운 CaptureGlow를 조정한다. Baseline/첫 구독/Grid 교체는 즉시 정착하며 Actor/Source 해제 시 구독과 성공 대기를 정리한다. 지도·전환 중에도 타임라인을 소비하며 논리 Grid와 스폰 제외를 애니메이션으로 지연하지 않는다. [구현·검증 경계](../../01_planning/02_implementation-records/2026/11/2026-11-15-territory-expansion-ui.md)를 따른다. 현재는 독립 관리형17개 검사 통과이며 통합 Editor/Play/GPU 검수는 담당 세션 대기다.
+
+## 2026-11-15 텍스트 가독성
+
+`AppPanelView.MinimumScreenScale`(0.8)과 `ScreenPadding`(24)은 메뉴·설정·결과·안전장치의 작은 창 가독성을 조절한다. `RefreshReadableScale`은 실제 root Canvas viewport에 패널을 맞추며 기존 패널 크기·안내 접힘·입력·Fade 수명을 유지한다.
+
+`CombatHudScaleBinding.Element.MinimumScreenScale`은 특정 툴팁만 별도 화면 최소 크기를 지정한다. 기존 `MinimumScale`은 HUD 단위 하한이다. 실제 Canvas와 부모 파츠 배율을 함께 계산하며 해상도 변경과 HUD 설정 변경 때 재적용한다. 선택 설명0.8, 상세 스킬 설명·무기 이름0.75이며 전투 도크 전체를 확대하지 않는다. `PlayerSkillTooltipView`는 확대 크기로 위치를 제한하고 `CombatWeaponStack`은 이름 카드의 실제 경계를 화면8px 안에 유지한다.
+
+명시 제작 메뉴 `Tools/TeamHJD/The Developer/Common UI/Apply text readability`는 확인된 텍스트 영역과 공용 Alert 재질·TMP 한글 줄바꿈 설정만 보정한다. Scene·원본 폰트·Main 배경/로고·다른 제작물을 저장하지 않는다. `CommonUiPrefabSetup`/`HudV6PrefabSetup`/`HudAmmoDockSetup`/`UiProductPolishSetup.ApplyLoading`의 관련 생성값도 반영했다. [검증 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-ui-readability-polish.md)을 참고한다.
+
+## 시작 우주선의 I 상태창 (2026-11-15)
+
+`PlayerHubStatusBinding`은 `IHubPlayerBinding.BindHub`로 명시적으로 받은 로컬 Player에 `PlayerHubStatusHUD.prefab`을 연결한다. 임의로 다른 Scene의 플레이어를 검색하지 않는다. 허브는 필드와 같은 기본 `local-player`의 개인 성장 저장을 읽지만 UI 소유자는 명시적으로 주입한 actor만 따른다. I는 상태창과 스킬 트리를 열고 Esc는 기존 닫기 흐름을 따른다. 우주선 무기고·개인 메뉴 등 다른 입력 lease가 있으면 열지 않는다.
+
+허브 HUD는 공통 상태창을 재사용하며 전투 HUD·전술지도·필드 등장 효과를 실행하지 않는다. 허브 해제·Player 비활성화·파괴는 창을 닫고 해당 HUD를 제거한다. 재활성화는 아직 허브에 바인딩된 동안만 다시 연결한다. 이 UI 바인딩은 Match 권한을 만들거나 바꾸지 않는다.
+
+첫 허브에 활성 EventSystem이 없으면 HUD 아래에 `EventSystem`과 `InputSystemUIInputModule`을 만든다. 이전 메뉴의 시스템이 바인딩 뒤 사라지는 경우도 Update에서 보충한다. 기존 시스템이 있으면 그대로 재사용하고, 자신이 만든 시스템만 허브 해제/비활성화 때 정리한다. I 창을 닫을 때는 시스템을 유지해 무기고 등 다른 허브 UI가 이어서 사용할 수 있게 한다. 버튼 처리에는 실제 UI 입력 모듈과 GraphicRaycaster를 사용하며 `Button.onClick.Invoke()`로 입력 실패를 우회하지 않는다.
+
+필드의 공통 상태창에도 독립 Canvas(정렬 45)와 CanvasGroup의 ignoreParentGroups를 제작했다. 전투 HUD 등장 효과는 우주선에서 정지/숨김을 유지하지만 I 창은 그 스캔 마스크·그룹 알파의 영향을 받지 않는다. 따라서 첫 필드 진입 전과 필드에서 우주선 방문 중의 상태창을 구분해 처리한다.
+
+검증: 상태창 묶음 11개 중 기존 8개가 먼저 통과했다. 창 활성화 후 Canvas 분리와 입력 fixture를 보완한 뒤 시작 허브 I/Esc, 귀환 우주선, 기존 I/Esc 재검사 각 1개가 통과했다. 전체 묶음 재실행 결과로 합산하지 않는다. 공통 상태창의 TMP 최초 SubMesh 생성은 중복 창 생성으로 계산하지 않도록 첫 활성화 후 오브젝트 수를 비교한다. 실제 Startup 메뉴부터 사람의 조작 인수·멀티플레이·빌드는 별도다.
+
+첫 허브 버튼 입력 추가 검증: EventSystem 부재를 회귀 검사로 재현했다. 수정 뒤 상태창 묶음 13개 중 기존 검사와 입력 시스템 재사용·복구 검사 12개가 통과했다. 나머지 포인터 검사는 UI 첫 렌더 전에 클릭하던 fixture를 보완한 뒤 단독 재실행하여 통과했다. 실제 입력 모듈과 GraphicRaycaster를 거쳐 스킬 해금·강화·후보 배치·뒤로·닫기를 확인했다. 별도로 실제 Startup→첫 우주선 경로에서 저장된 레벨 28 상태로 창 열기와 스킬 화면·뒤로·닫기 포인터 입력을 확인했다. 자동 입력을 이용한 Unity 실행 확인이며 사람의 수동 인수·멀티플레이·빌드는 수행하지 않았다.

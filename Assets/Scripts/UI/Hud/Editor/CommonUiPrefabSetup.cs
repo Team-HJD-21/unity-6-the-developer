@@ -118,7 +118,7 @@ public static class CommonUiPrefabSetup
     }
     private static void BuildMenu(RectTransform root)
     {
-        var view = Overlay<AppPanelView>(root, 510, 490);
+        var view = Overlay<AppPanelView>(root, 510, 508);
         view.SecondaryRowHeight = 80;
         view.Title = TopLabel("Title", view.Panel, "MENU", 42, 28, 426, 50, 32, S.HeaderFont);
         TopRule(view.Panel, 42, 89, 426);
@@ -126,7 +126,7 @@ public static class CommonUiPrefabSetup
         view.Settings = Button(view.Panel, "Settings", "설정", 52, 203, 406, 62);
         view.Secondary = Button(view.Panel, "Return", "우주선으로", 52, 283, 406, 62);
         view.MainMenu = Button(view.Panel, "Main Menu", "메인 화면으로", 52, 363, 406, 62);
-        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 434, 426, 34, 16, S.BodyFont);
+        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 434, 426, 52, 20, S.BodyFont);
         view.Status.textWrappingMode = TextWrappingModes.Normal; view.Body = null;
         Navigate(view.Primary, view.Settings, view.Secondary, view.MainMenu);
     }
@@ -140,7 +140,7 @@ public static class CommonUiPrefabSetup
         view.Body = TopLabel("Result", view.Panel, "", 48, 173, 624, 90, 23, S.BodyFont);
         view.Body.alignment = TextAlignmentOptions.Center;
         view.Body.textWrappingMode = TextWrappingModes.Normal;
-        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 274, 636, 36, 17, S.BodyFont);
+        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 274, 636, 48, 20, S.BodyFont);
         view.Status.textWrappingMode = TextWrappingModes.Normal;
         view.Primary = Button(view.Panel, "Restart", "처음부터 다시하기", 42, 330, 302, 62);
         view.Secondary = Button(view.Panel, "Return", "우주선으로", 376, 330, 302, 62);
@@ -149,7 +149,7 @@ public static class CommonUiPrefabSetup
     private static TMP_FontAsset MissionTitleFont => AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Art/Fonts/Mulmaru SDF.asset");
     private static void BuildRecovery(RectTransform root)
     {
-        var view = Overlay<AppPanelView>(root, 720, 500);
+        var view = Overlay<AppPanelView>(root, 720, 520);
         view.Title = TopLabel("Title", view.Panel, "전투 불능", 42, 43, 636, 64, 42, MissionTitleFont);
         view.Title.alignment = TextAlignmentOptions.Center;
         TopRule(view.Panel, 42, 127, 636);
@@ -161,8 +161,9 @@ public static class CommonUiPrefabSetup
         view.SafetyCount.alignment = TextAlignmentOptions.Center;
         view.Primary = Button(view.Panel, "Use Safety", "안전장치 사용", 72, 294, 576, 62);
         view.Secondary = Button(view.Panel, "Restart", "처음부터 다시하기", 72, 374, 576, 62);
-        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 450, 636, 30, 17, S.BodyFont);
+        view.Status = TopLabel("Action Feedback", view.Panel, "", 42, 450, 636, 48, 20, S.BodyFont);
         view.Status.alignment = TextAlignmentOptions.Center;
+        view.Status.textWrappingMode = TextWrappingModes.Normal;
         view.SetSafetyUses(3); Navigate(view.Primary, view.Secondary);
     }
     private static void BuildAnnouncement(RectTransform root)

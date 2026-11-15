@@ -22,12 +22,13 @@ public sealed partial class PlayerBullet
         var field = GetComponent<FieldSimulationActor>();
         return new CheckpointState(_damage, _launchColor, _cryogenic, Math.Max(0, _expiresAt - GameSeconds),
             CheckpointTransformState.Capture(transform), field != null ? field.CaptureBody(_body) : CheckpointRigidbody2DState.Capture(_body), SourceWeapon,
-            _piercedTargets.OrderBy(id => id, StringComparer.Ordinal).ToArray());
+            _piercedTargets.OrderBy(id => id, StringComparer.Ordinal).ToArray(), _maximumEnemyTargets);
     }
     internal void RestoreCheckpoint(CheckpointState state)
     {
         if (_body == null || _hitboxes.Count == 0) throw new InvalidOperationException("The authored Player projectile has no valid physics shape.");
         SourceWeapon = state.SourceWeapon;
+        _maximumEnemyTargets = state.MaximumEnemyTargets;
         _flightDirection = state.Body.Velocity.normalized;
         _damage = state.Damage; _launchColor = state.Color; _cryogenic = state.Cryogenic; _hasHit = false;
         _piercedTargets.Clear(); foreach (string id in state.PiercedTargets) _piercedTargets.Add(id);
@@ -51,8 +52,9 @@ public sealed partial class PlayerBullet
         public readonly CheckpointTransformState Pose;
         public readonly CheckpointRigidbody2DState Body;
         public readonly string[] PiercedTargets;
+        public readonly int MaximumEnemyTargets;
         public CheckpointState(float damage, Color color, bool cryogenic, double remaining, CheckpointTransformState pose, CheckpointRigidbody2DState body,
-            WeaponType sourceWeapon = WeaponType.DefaultGun, string[] piercedTargets = null)
+            WeaponType sourceWeapon = WeaponType.DefaultGun, string[] piercedTargets = null, int maximumEnemyTargets = 0)
         {
             if (float.IsNaN(damage) || float.IsInfinity(damage) || damage < 0 ||
                 !Finite(color.r) || !Finite(color.g) || !Finite(color.b) || !Finite(color.a) ||
@@ -61,9 +63,12 @@ public sealed partial class PlayerBullet
             if (!Enum.IsDefined(typeof(WeaponType), sourceWeapon) || sourceWeapon == WeaponType.Spanner)
                 throw new InvalidDataException("Invalid saved projectile source weapon.");
             SourceWeapon = sourceWeapon;
+            if (maximumEnemyTargets < 0 || maximumEnemyTargets > 4096) throw new InvalidDataException("Invalid sniper penetration limit.");
+            MaximumEnemyTargets = maximumEnemyTargets;
             PiercedTargets = piercedTargets == null ? Array.Empty<string>() : (string[])piercedTargets.Clone();
             if (PiercedTargets.Length > 4096 || PiercedTargets.Any(id => string.IsNullOrWhiteSpace(id) || Encoding.UTF8.GetByteCount(id) > 128) ||
-                PiercedTargets.Distinct(StringComparer.Ordinal).Count() != PiercedTargets.Length)
+                PiercedTargets.Distinct(StringComparer.Ordinal).Count() != PiercedTargets.Length ||
+                (maximumEnemyTargets > 0 && (sourceWeapon != WeaponType.Sniper || PiercedTargets.Length >= maximumEnemyTargets)))
                 throw new InvalidDataException("Invalid saved sniper hit history.");
             Damage = damage; Color = color; Cryogenic = cryogenic; Remaining = remaining; Pose = pose; Body = body;
         }
@@ -73,6 +78,7 @@ public sealed partial class PlayerBullet
             writer.Write(Cryogenic); writer.Write(Remaining); Pose.Write(writer); Body.Write(writer); writer.Write((int)SourceWeapon);
             writer.Write(PiercedTargets.Length);
             foreach (string id in PiercedTargets) { byte[] bytes = Encoding.UTF8.GetBytes(id); writer.Write(bytes.Length); writer.Write(bytes); }
+            writer.Write(MaximumEnemyTargets);
         }
         public static CheckpointState Read(BinaryReader reader, int version, ICheckpointPayloadCodec codec)
         {
@@ -82,7 +88,8 @@ public sealed partial class PlayerBullet
             int count = version >= 3 ? reader.ReadInt32() : 0;
             if (count < 0 || count > 4096) throw new InvalidDataException("Invalid saved sniper hit count.");
             var hits = new string[count]; for (int i = 0; i < count; i++) hits[i] = codec.ReadText(reader, 128);
-            return new(damage, color, cryogenic, remaining, pose, body, weapon, hits);
+            int limit = version >= 4 ? reader.ReadInt32() : 0;
+            return new(damage, color, cryogenic, remaining, pose, body, weapon, hits, limit);
         }
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
     }

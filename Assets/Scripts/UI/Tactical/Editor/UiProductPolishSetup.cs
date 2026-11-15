@@ -32,6 +32,26 @@ public static class UiProductPolishSetup
         Key("M",new Vector2(70,-325)); Caption("Tactical","전술 화면",new Vector2(150,-325));
         var previous=panel.Find("Key G"); if(previous!=null && panel.Find("Key F")==null)previous.name="Key F";
         Key("F",new Vector2(710,-325)); Caption("Turret interaction","터렛 조작",new Vector2(790,-325));
+        var content=root.transform.Find("Content") as RectTransform;
+        content.anchorMin=new Vector2(0,.5f);content.anchorMax=new Vector2(1,.5f);
+        content.sizeDelta=new Vector2(0,1080);content.anchoredPosition=Vector2.zero;
+        foreach(string name in new[]{"Controls","Loading","Progress Track"})
+        {
+            var rect=content.Find(name) as RectTransform;
+            rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,1);
+            rect.anchoredPosition=new Vector2(0,rect.anchoredPosition.y);
+        }
+        var progress=root.GetComponent<TeamHJD.Game.Presentation.AppLoadingView>().ProgressLabel.rectTransform;
+        progress.anchorMin=progress.anchorMax=new Vector2(.5f,1);progress.pivot=Vector2.one;
+        progress.anchoredPosition=new Vector2(660,progress.anchoredPosition.y);
+        foreach(var text in panel.GetComponentsInChildren<TMP_Text>(true))
+        {
+            bool key=text.transform.parent.name.StartsWith("Key ",StringComparison.Ordinal);
+            text.fontSize=key?(text.text.Length==1?26:22):28;
+            text.textWrappingMode=TextWrappingModes.NoWrap;
+            float width=text.GetPreferredValues(text.text).x;
+            if(width>text.rectTransform.rect.width)text.fontSize*=text.rectTransform.rect.width/width;
+        }
         void Key(string letter,Vector2 position)
         {
             var rect=panel.Find("Key "+letter) as RectTransform;

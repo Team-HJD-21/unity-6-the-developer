@@ -1,0 +1,1339 @@
+fileFormatVersion: 2
+guid: 8335d687c979ad5428de9737beb68fdd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5933044770644150609
+    second: HoverWake_0
+  - first:
+      213: 6720283426949370331
+    second: HoverWake_1
+  - first:
+      213: -7972391120961720346
+    second: HoverWake_2
+  - first:
+      213: -6493994841411036871
+    second: HoverWake_3
+  - first:
+      213: 7320076702550227474
+    second: HoverWake_4
+  - first:
+      213: 697920580037191504
+    second: HoverWake_5
+  - first:
+      213: -5802100985846690043
+    second: HoverWake_6
+  - first:
+      213: 3361095091416297737
+    second: HoverWake_7
+  - first:
+      213: 4204638071093250990
+    second: HoverWake_8
+  - first:
+      213: 5087051511768520087
+    second: HoverWake_9
+  - first:
+      213: 1674377897634302752
+    second: HoverWake_10
+  - first:
+      213: -5190242340634527125
+    second: HoverWake_11
+  - first:
+      213: 2128406481408604305
+    second: HoverWake_12
+  - first:
+      213: 8504144234833364313
+    second: HoverWake_13
+  - first:
+      213: -3938120369420545248
+    second: HoverWake_14
+  - first:
+      213: 5811030757691316850
+    second: HoverWake_15
+  - first:
+      213: -8158196255756508981
+    second: HoverWake_16
+  - first:
+      213: -4861833399980564600
+    second: HoverWake_17
+  - first:
+      213: 3032957096943937246
+    second: HoverWake_18
+  - first:
+      213: 8777190544834803409
+    second: HoverWake_19
+  - first:
+      213: 5378323987324923957
+    second: HoverWake_20
+  - first:
+      213: -2041066714782159640
+    second: HoverWake_21
+  - first:
+      213: -4589528527841133401
+    second: HoverWake_22
+  - first:
+      213: -8740204751415139401
+    second: HoverWake_23
+  - first:
+      213: -1273444322019430069
+    second: HoverWake_24
+  - first:
+      213: -9001450326455382656
+    second: HoverWake_25
+  - first:
+      213: -2973795395892986672
+    second: HoverWake_26
+  - first:
+      213: 3268155273354444964
+    second: HoverWake_27
+  - first:
+      213: 2107043932338914101
+    second: HoverWake_28
+  - first:
+      213: 8822115722080896063
+    second: HoverWake_29
+  - first:
+      213: -6216806305104801424
+    second: HoverWake_30
+  - first:
+      213: 3421928686411293057
+    second: HoverWake_31
+  - first:
+      213: -967160779168467108
+    second: HoverWake_32
+  - first:
+      213: 4329128986183302560
+    second: HoverWake_33
+  - first:
+      213: -9220681230139752039
+    second: HoverWake_34
+  - first:
+      213: -6724957088364525044
+    second: HoverWake_35
+  - first:
+      213: 5167342493380831759
+    second: HoverWake_36
+  - first:
+      213: 801576166663442789
+    second: HoverWake_37
+  - first:
+      213: -5652226883751605693
+    second: HoverWake_38
+  - first:
+      213: 7069988451735844555
+    second: HoverWake_39
+  - first:
+      213: -2806643342270874990
+    second: HoverWake_40
+  - first:
+      213: -4491785675257068532
+    second: HoverWake_41
+  - first:
+      213: -8850619299039231920
+    second: HoverWake_42
+  - first:
+      213: 864269019110127068
+    second: HoverWake_43
+  - first:
+      213: 448201152348003350
+    second: HoverWake_44
+  - first:
+      213: 4487128520471098468
+    second: HoverWake_45
+  - first:
+      213: 2353896484332522544
+    second: HoverWake_46
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 256
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: HoverWake_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 342
+        width: 236
+        height: 304
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 159cbb6c8c8665250800000000000000
+      internalID: 5933044770644150609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_1
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 407
+        width: 667
+        height: 289
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd11345db2e334d50800000000000000
+      internalID: 6720283426949370331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_2
+      rect:
+        serializedVersion: 2
+        x: 901
+        y: 514
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ef2998d3806c5190800000000000000
+      internalID: -7972391120961720346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_3
+      rect:
+        serializedVersion: 2
+        x: 955
+        y: 409
+        width: 283
+        height: 245
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 939d9703912b0e5a0800000000000000
+      internalID: -6493994841411036871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_4
+      rect:
+        serializedVersion: 2
+        x: 1182
+        y: 530
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21a7e104af2269560800000000000000
+      internalID: 7320076702550227474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_5
+      rect:
+        serializedVersion: 2
+        x: 1219
+        y: 536
+        width: 256
+        height: 168
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0572d8ed1138fa900800000000000000
+      internalID: 697920580037191504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_6
+      rect:
+        serializedVersion: 2
+        x: 1255
+        y: 449
+        width: 108
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50f0aabe4ebca7fa0800000000000000
+      internalID: -5802100985846690043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_7
+      rect:
+        serializedVersion: 2
+        x: 1359
+        y: 528
+        width: 13
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9017d248d2205ae20800000000000000
+      internalID: 3361095091416297737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_8
+      rect:
+        serializedVersion: 2
+        x: 1581
+        y: 516
+        width: 393
+        height: 186
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eabc89c6c00e95a30800000000000000
+      internalID: 4204638071093250990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_9
+      rect:
+        serializedVersion: 2
+        x: 2025
+        y: 490
+        width: 116
+        height: 75
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7959319c566d89640800000000000000
+      internalID: 5087051511768520087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_10
+      rect:
+        serializedVersion: 2
+        x: 1327
+        y: 514
+        width: 23
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02b0240a3d59c3710800000000000000
+      internalID: 1674377897634302752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_11
+      rect:
+        serializedVersion: 2
+        x: 1349
+        y: 516
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6a794c171e88f7b0800000000000000
+      internalID: -5190242340634527125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_12
+      rect:
+        serializedVersion: 2
+        x: 1357
+        y: 518
+        width: 10
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 198bff50b6e998d10800000000000000
+      internalID: 2128406481408604305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_13
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 425
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 955cdebef1ac40670800000000000000
+      internalID: 8504144234833364313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_14
+      rect:
+        serializedVersion: 2
+        x: 1376
+        y: 31
+        width: 761
+        height: 455
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02355f9936cf859c0800000000000000
+      internalID: -3938120369420545248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_15
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 367
+        width: 33
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27a5f0b9fade4a050800000000000000
+      internalID: 5811030757691316850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_16
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 240
+        width: 79
+        height: 133
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc026b7bab348ce80800000000000000
+      internalID: -8158196255756508981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_17
+      rect:
+        serializedVersion: 2
+        x: 485
+        y: 337
+        width: 121
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88f5705284c478cb0800000000000000
+      internalID: -4861833399980564600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_18
+      rect:
+        serializedVersion: 2
+        x: 627
+        y: 353
+        width: 25
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed6e75e096a371a20800000000000000
+      internalID: 3032957096943937246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_19
+      rect:
+        serializedVersion: 2
+        x: 692
+        y: 339
+        width: 164
+        height: 67
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d6bbc60c48dec970800000000000000
+      internalID: 8777190544834803409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_20
+      rect:
+        serializedVersion: 2
+        x: 867
+        y: 352
+        width: 38
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 530f67fbb25a3aa40800000000000000
+      internalID: 5378323987324923957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_21
+      rect:
+        serializedVersion: 2
+        x: 879
+        y: 289
+        width: 218
+        height: 115
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ec298e03acaca3e0800000000000000
+      internalID: -2041066714782159640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_22
+      rect:
+        serializedVersion: 2
+        x: 1054
+        y: 81
+        width: 398
+        height: 338
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7acf18bce18be40c0800000000000000
+      internalID: -4589528527841133401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_23
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 240
+        width: 96
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b328bf061e84b680800000000000000
+      internalID: -8740204751415139401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_24
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 55
+        width: 223
+        height: 280
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b413bc8d221d35ee0800000000000000
+      internalID: -1273444322019430069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_25
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 166
+        width: 41
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08d8d4cae9c641380800000000000000
+      internalID: -9001450326455382656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_26
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 23
+        width: 81
+        height: 196
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0dc3b11e7d4fab6d0800000000000000
+      internalID: -2973795395892986672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_27
+      rect:
+        serializedVersion: 2
+        x: 414
+        y: 184
+        width: 68
+        height: 165
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a08c1bd7e1da5d20800000000000000
+      internalID: 3268155273354444964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_28
+      rect:
+        serializedVersion: 2
+        x: 499
+        y: 57
+        width: 45
+        height: 130
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5330439fa49bd3d10800000000000000
+      internalID: 2107043932338914101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_29
+      rect:
+        serializedVersion: 2
+        x: 531
+        y: 302
+        width: 35
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f344506f1837e6a70800000000000000
+      internalID: 8822115722080896063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_30
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 282
+        width: 27
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 071d1d28a9779b9a0800000000000000
+      internalID: -6216806305104801424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_31
+      rect:
+        serializedVersion: 2
+        x: 625
+        y: 302
+        width: 100
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 181a34892022d7f20800000000000000
+      internalID: 3421928686411293057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_32
+      rect:
+        serializedVersion: 2
+        x: 734
+        y: 98
+        width: 154
+        height: 105
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5739f44564f392f0800000000000000
+      internalID: -967160779168467108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_33
+      rect:
+        serializedVersion: 2
+        x: 756
+        y: 258
+        width: 82
+        height: 70
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ad7d4050e7241c30800000000000000
+      internalID: 4329128986183302560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_34
+      rect:
+        serializedVersion: 2
+        x: 247
+        y: 158
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9918862464f890080800000000000000
+      internalID: -9220681230139752039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_35
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 150
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0a894298272ca2a0800000000000000
+      internalID: -6724957088364525044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_36
+      rect:
+        serializedVersion: 2
+        x: 432
+        y: 160
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0aeeb6be9616b740800000000000000
+      internalID: 5167342493380831759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_37
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 161
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 561d462d645cf1b00800000000000000
+      internalID: 801576166663442789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_38
+      rect:
+        serializedVersion: 2
+        x: 1713
+        y: 168
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34a821498914f81b0800000000000000
+      internalID: -5652226883751605693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_39
+      rect:
+        serializedVersion: 2
+        x: 406
+        y: 144
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc634d7d905ad1260800000000000000
+      internalID: 7069988451735844555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_40
+      rect:
+        serializedVersion: 2
+        x: 1363
+        y: 134
+        width: 10
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29ababc10cccc09d0800000000000000
+      internalID: -2806643342270874990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_41
+      rect:
+        serializedVersion: 2
+        x: 1370
+        y: 134
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c044d131ab8f9a1c0800000000000000
+      internalID: -4491785675257068532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_42
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 128
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 050cc8ed3a84c2580800000000000000
+      internalID: -8850619299039231920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_43
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 95
+        width: 62
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd53f6208108efb00800000000000000
+      internalID: 864269019110127068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_44
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 79
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61c9f99c294583600800000000000000
+      internalID: 448201152348003350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_45
+      rect:
+        serializedVersion: 2
+        x: 1319
+        y: 112
+        width: 50
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46434349d9b754e30800000000000000
+      internalID: 4487128520471098468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HoverWake_46
+      rect:
+        serializedVersion: 2
+        x: 1713
+        y: 82
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03c4eaa8168baa020800000000000000
+      internalID: 2353896484332522544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      HoverWake_0: 5933044770644150609
+      HoverWake_1: 6720283426949370331
+      HoverWake_10: 1674377897634302752
+      HoverWake_11: -5190242340634527125
+      HoverWake_12: 2128406481408604305
+      HoverWake_13: 8504144234833364313
+      HoverWake_14: -3938120369420545248
+      HoverWake_15: 5811030757691316850
+      HoverWake_16: -8158196255756508981
+      HoverWake_17: -4861833399980564600
+      HoverWake_18: 3032957096943937246
+      HoverWake_19: 8777190544834803409
+      HoverWake_2: -7972391120961720346
+      HoverWake_20: 5378323987324923957
+      HoverWake_21: -2041066714782159640
+      HoverWake_22: -4589528527841133401
+      HoverWake_23: -8740204751415139401
+      HoverWake_24: -1273444322019430069
+      HoverWake_25: -9001450326455382656
+      HoverWake_26: -2973795395892986672
+      HoverWake_27: 3268155273354444964
+      HoverWake_28: 2107043932338914101
+      HoverWake_29: 8822115722080896063
+      HoverWake_3: -6493994841411036871
+      HoverWake_30: -6216806305104801424
+      HoverWake_31: 3421928686411293057
+      HoverWake_32: -967160779168467108
+      HoverWake_33: 4329128986183302560
+      HoverWake_34: -9220681230139752039
+      HoverWake_35: -6724957088364525044
+      HoverWake_36: 5167342493380831759
+      HoverWake_37: 801576166663442789
+      HoverWake_38: -5652226883751605693
+      HoverWake_39: 7069988451735844555
+      HoverWake_4: 7320076702550227474
+      HoverWake_40: -2806643342270874990
+      HoverWake_41: -4491785675257068532
+      HoverWake_42: -8850619299039231920
+      HoverWake_43: 864269019110127068
+      HoverWake_44: 448201152348003350
+      HoverWake_45: 4487128520471098468
+      HoverWake_46: 2353896484332522544
+      HoverWake_5: 697920580037191504
+      HoverWake_6: -5802100985846690043
+      HoverWake_7: 3361095091416297737
+      HoverWake_8: 4204638071093250990
+      HoverWake_9: 5087051511768520087
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

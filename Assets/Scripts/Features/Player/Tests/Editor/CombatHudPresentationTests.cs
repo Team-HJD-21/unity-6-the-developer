@@ -34,6 +34,38 @@ public sealed class CombatHudPresentationTests
     }
 
     [UnityTest]
+    public IEnumerator PortalShieldUsesBlueHealthBarSegmentAndUpdatesWithoutHealthLoss()
+    {
+        yield return new EnterPlayMode();
+        _player=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab"),new Vector3(10000,10000),Quaternion.identity);
+        _player.GetComponent<PlayerInputHandler>().enabled=false;
+        var clock=new PlayerAutomaticRecoveryTests.Clock();
+        TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(_player,clock);
+        _hud=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/InitialStagePlayerHUD.prefab"));
+        _hud.GetComponent<InitialStagePlayerHUD>().enabled=false;
+        _hud.GetComponent<Canvas>().enabled=true;
+        var vitals=_hud.GetComponent<StagePlayerVitalsView>();var health=_player.GetComponent<PlayerInfo>();vitals.BindPlayer(health);
+        var bar=_hud.GetComponentsInChildren<CombatVitalsGroup>(true).Single(group=>!group.RightEdge).Primary;
+        var portal=_player.GetComponent<PlayerPortalSkill>();
+        var grant=typeof(PlayerPortalSkill).GetMethod("GrantArrivalShield",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+        Assert.That(bar.ShieldFill,Is.Not.Null);Assert.That(_player.transform.Find("Portal Arrival Shield"),Is.Null);
+        grant.Invoke(portal,null);
+        yield return Until(()=>bar.Shield==20);
+        Assert.That(bar.Current,Is.EqualTo(400));Assert.That(bar.Maximum,Is.EqualTo(400));
+        Assert.That(bar.ShieldFill.enabled,Is.True);Assert.That(bar.ShieldFill.color.b,Is.GreaterThan(bar.ShieldFill.color.r));
+        Assert.That(bar.Fill.fillAmount,Is.EqualTo(400f/420).Within(.001));Assert.That(bar.ShieldFill.fillAmount,Is.EqualTo(1));
+        Assert.That(bar.ShieldFill.transform.GetSiblingIndex(),Is.LessThan(bar.Fill.transform.GetSiblingIndex()));
+        health.ApplyDamage(7);yield return Until(()=>bar.Shield==13);
+        Assert.That(bar.Current,Is.EqualTo(400));
+        health.ApplyDamage(20);yield return Until(()=>bar.Shield==0&&bar.Current==393);
+        Assert.That(bar.ShieldFill.enabled,Is.False);
+        grant.Invoke(portal,null);Assert.That(portal.ShieldHealth,Is.Zero);
+        clock.Now=15;grant.Invoke(portal,null);yield return Until(()=>bar.Shield==20);
+        clock.Now=17.01;yield return Until(()=>bar.Shield==0);
+        Assert.That(bar.ShieldFill.enabled,Is.False);vitals.Unbind();Assert.That(bar.Shield,Is.Zero);
+    }
+
+    [UnityTest]
     public IEnumerator CryoMagazineDockUpdatesPercentageOnActualHudFrames()
     {
         yield return new EnterPlayMode();
@@ -115,7 +147,8 @@ public sealed class CombatHudPresentationTests
         Assert.That(magazine.RoundCount.raycastTarget, Is.False);
         Assert.That(magazine.ReloadArrows.GetComponentsInChildren<CombatHudSymbol>(true).Length, Is.EqualTo(1));
         Assert.That(strip.NameGroup.blocksRaycasts, Is.False);
-        Assert.That(string.Concat(strip.WeaponNames).All(c => strip.NameLabel.font.HasCharacter(c)), Is.True);
+        // 동적 폰트는 앞선 검사에서 생성된 atlas 캐시 대신 실제 글리프 생성 가능성을 확인합니다.
+        Assert.That(string.Concat(strip.WeaponNames).All(c => strip.NameLabel.font.HasCharacter(c, true, true)), Is.True);
         var cursor = root.GetComponent<CombatFieldCursor>().ViewPrefab;
         Assert.That(cursor.GetComponent<GraphicRaycaster>(), Is.Null, "The cursor cannot intercept field clicks.");
         Assert.That(cursor.GetComponentsInChildren<Graphic>(true).All(g => !g.raycastTarget), Is.True);
@@ -184,6 +217,14 @@ public sealed class CombatHudPresentationTests
         var alerts = _hud.GetComponent<CombatHudAlertLayout>();
         alerts.View = _appCanvas.GetComponent<AppScreenCanvasView>().Alerts;
         var owner = _player.GetComponent<PlayerSkillController>();
+        // Presentation exercises the four authored skills after normal research unlocks.
+        Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(300), Is.True);
+        var research = _player.GetComponent<PlayerSkillResearch>();
+        foreach(var id in new[]{PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon})
+        {
+            Assert.That(research.TryUnlock(id), Is.True);
+            Assert.That(PlayerSkillResearchTestHub.Assign(research,(int)id-1,id), Is.True);
+        }
         Assert.That(owner.BindHud(hud), Is.True);
         Assert.That(owner.TryEquip(0, PlayerSkillId.Bomb), Is.True);
         Assert.That(owner.TryEquip(1, PlayerSkillId.EnergyBarrier), Is.True);
@@ -201,6 +242,8 @@ public sealed class CombatHudPresentationTests
         Assert.That(attack.TryFire(), Is.False, "A second request during shot cooldown is not another shot.");
         yield return Until(() => magazine.DisplayedRounds == 14);
         Assert.That(magazine.RoundCount.text, Does.StartWith("14<size="));
+        // 이 탄약 표시 fixture는 기본총·스나이퍼 장착 상태를 사용합니다.
+        _player.GetComponent<PlayerArmory>().State.Equip(1, WeaponType.Sniper);
         Assert.That(selection.TrySelectWeapon(WeaponType.Sniper), Is.True);
         Assert.That(magazine.ShotPulse, Is.Zero, "Switching 14→5 rounds must not simulate firing.");
         yield return Until(() => magazine.DisplayedRounds == 5);
@@ -371,6 +414,13 @@ public sealed class CombatHudPresentationTests
     {
         float deadline = Time.realtimeSinceStartup + timeout;
         while (!condition() && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within {timeout} seconds.");
+        var picker = Object.FindAnyObjectByType<CombatSkillPicker>();
+        Vector2 local = default;
+        if (picker != null)
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(picker.CanvasRect, GameInput.PointerPosition, null, out local);
+        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within {timeout} seconds. " +
+            $"Screen={Screen.width}x{Screen.height}, pointer={GameInput.PointerPosition}, reveal={picker?.Reveal}, " +
+            $"visible={picker?.Hud?.AreCombatControlsVisible}, prepare={picker?.Hud?.Owner?.CanPrepare}, selectingTurret={picker?.Hud?.Owner?.IsSelectingTurret}, " +
+            $"canvas={picker?.CanvasRect.rect}, localPointer={local}, pickerScale={picker?.PickerRect.localScale}.");
     }
 }
