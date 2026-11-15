@@ -37,10 +37,15 @@ public sealed class Stage1GroundRuleTile : RuleTile
             if (m_DefaultSprite == null)
                 return 0;
 
-            if (IsPeachFamily)
-                return m_DefaultSprite.rect.y < 160f ? 2 : 1;
-
             float x = m_DefaultSprite.rect.x;
+            if (IsPeachFamily)
+            {
+                if (m_DefaultSprite.rect.y >= 160f)
+                    return 1;
+
+                return x >= 192f ? 4 : x >= 96f ? 3 : 2;
+            }
+
             return x >= 192f ? 3 : x >= 96f ? 2 : 1;
         }
     }
