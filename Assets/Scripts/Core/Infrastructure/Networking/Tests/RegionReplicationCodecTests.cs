@@ -8,6 +8,20 @@ namespace TeamHJD.Game.Infrastructure.Tests
 {
     public sealed class RegionReplicationCodecTests
     {
+        [Test]
+        public void RoundTripKeepsCompletionAfterTheFollowingUnlockRevision()
+        {
+            var definition = new RegionGridDefinition(new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 4, 1, 4, 1), new[] { 1, 1, 2, 2 });
+            var change = new RegionGridChange(RegionChangeKind.StaticSecured, 0, 1, new[] { 1 });
+            var snapshot = RegionGridSnapshot.FromCapturedCells(new MatchId("feedback"), Guid.NewGuid(), 2,
+                RegionPolicyMode.Static, definition, new[] { 0, 1 }, new[] { 1, 2 }, change);
+            var copy = RegionReplicationCodec.Decode(RegionReplicationCodec.Encode(new RegionReplicationFrame(Guid.NewGuid(), 1, snapshot))).Snapshot;
+            Assert.That(copy.Change.Kind, Is.EqualTo(RegionChangeKind.StaticSecured));
+            Assert.That(copy.Change.Revision, Is.EqualTo(1));
+            Assert.That(copy.Revision, Is.EqualTo(2));
+            Assert.That(copy.Change.SecuredRegionIds, Is.EqualTo(new[] { 1 }));
+        }
+
         private static RegionReplicationFrame Frame(int x = 3, int y = 3)
         {
             var grid = new BattlefieldGridConfiguration(new BattlefieldPoint(40, -12), 2, 21, 35, x, y);

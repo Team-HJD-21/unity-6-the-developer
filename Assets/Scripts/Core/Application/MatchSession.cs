@@ -97,11 +97,12 @@ namespace TeamHJD.Game.Application
         public RegionCaptureTrend CaptureTrend => _regions?.CaptureHistory.Current ?? default;
 
         public RegionUpdateStatus UpdateRegionCapture(RegionGridSnapshot basis, IEnumerable<int> cells,
-            RegionCaptureUpdateMode updateMode)
+            RegionCaptureUpdateMode updateMode, RegionChangeKind reason = RegionChangeKind.StateChanged,
+            IEnumerable<int> securedRegionIds = null)
         {
             ThrowIfDisposed();
             if (_regions == null) throw new InvalidOperationException("Regions are not initialized.");
-            return _regions.TryApply(basis, cells, updateMode);
+            return _regions.TryApply(basis, cells, updateMode, reason, securedRegionIds);
         }
 
         /// <summary>권한을 가진 Scene 조립부가 정적 구역을 엽니다. 확보 진행/점유 셀은 바꾸지 않습니다.</summary>

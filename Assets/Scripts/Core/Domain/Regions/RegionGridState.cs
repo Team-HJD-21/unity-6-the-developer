@@ -20,11 +20,13 @@ namespace TeamHJD.Game.Domain
                 new bool[definition.Geometry.TotalCellCount], unlockedRegionIds);
         }
 
-        public bool Apply(IEnumerable<int> capturedCellIndices, RegionCaptureUpdateMode updateMode)
+        public bool Apply(IEnumerable<int> capturedCellIndices, RegionCaptureUpdateMode updateMode,
+            RegionChangeKind reason = RegionChangeKind.StateChanged, IEnumerable<int> securedRegionIds = null)
         {
             if (capturedCellIndices == null) throw new ArgumentNullException(nameof(capturedCellIndices));
             if (!Enum.IsDefined(typeof(RegionCaptureUpdateMode), updateMode))
                 throw new ArgumentOutOfRangeException(nameof(updateMode));
+            if (!Enum.IsDefined(typeof(RegionChangeKind), reason)) throw new ArgumentOutOfRangeException(nameof(reason));
 
             RegionGridSnapshot previous = Snapshot;
             var next = new bool[previous.CapturedCells.Count];
@@ -43,11 +45,14 @@ namespace TeamHJD.Game.Domain
             bool changed = false;
             for (int index = 0; index < next.Length; index++)
                 if (next[index] != previous.CapturedCells[index]) { changed = true; break; }
-            if (!changed) return false;
+            // CU 한 셀로 이미 채워진 작은 구역도 실제 전투 확보 사실은 별도로 확정할 수 있습니다.
+            if (!changed && reason != RegionChangeKind.StaticSecured && reason != RegionChangeKind.StaticLost) return false;
 
             long revision = checked(previous.Revision + 1);
+            var change = reason == RegionChangeKind.Baseline ? RegionGridChange.Baseline(revision) :
+                new RegionGridChange(reason, previous.Revision, revision, securedRegionIds);
             Snapshot = new RegionGridSnapshot(previous.MatchId, previous.GridId, revision,
-                previous.Mode, previous.Definition, next, previous.UnlockedRegionIds);
+                previous.Mode, previous.Definition, next, previous.UnlockedRegionIds, change);
             return true;
         }
         /// <summary>정적 구역을 열 뿐 점유 셀은 늘리지 않습니다. 같은 revision에서 원자적으로 확정합니다.</summary>
@@ -60,8 +65,12 @@ namespace TeamHJD.Game.Domain
             if (unlocked.Count == Snapshot.UnlockedRegionIds.Count) return false;
             var cells = new bool[Snapshot.CapturedCells.Count];
             for (int i = 0; i < cells.Length; i++) cells[i] = Snapshot.CapturedCells[i];
-            Snapshot = new RegionGridSnapshot(Snapshot.MatchId, Snapshot.GridId, checked(Snapshot.Revision + 1),
-                Snapshot.Mode, Snapshot.Definition, cells, unlocked);
+            long revision = checked(Snapshot.Revision + 1);
+            // 전송이 최신 전체 상태 하나로 합쳐져도 같은 Tick의 확보 사실을 해금으로 덮어쓰지 않습니다.
+            var change = Snapshot.Change.IsCaptureChange ? Snapshot.Change :
+                new RegionGridChange(RegionChangeKind.Unlock, Snapshot.Revision, revision);
+            Snapshot = new RegionGridSnapshot(Snapshot.MatchId, Snapshot.GridId, revision,
+                Snapshot.Mode, Snapshot.Definition, cells, unlocked, change);
             return true;
         }
 

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
@@ -94,6 +95,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             foreach (var player in livingPlayers) CountRegion(player.Position, participants);
             foreach (var enemy in livingEnemies) CountRegion(enemy.Position, enemies);
             var settings = CaptureSettings;
+            var basis = _source.Snapshot;
+            var cells = new HashSet<int>(Enumerable.Range(0, basis.CapturedCells.Count).Where(i => basis.CapturedCells[i]));
+            var secured = new List<int>();
+            bool captureChanged = false;
+            int unlockThrough = 0;
             foreach (var progress in _staticCapture.Values)
             {
                 participants.TryGetValue(progress.RegionId, out int allies);
@@ -101,25 +107,32 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 bool changed = progress.Tick(gameSeconds, _source.Snapshot.IsRegionUnlocked(progress.RegionId), allies, pressure, settings);
                 if (changed)
                 {
-                    var snapshot = _source.Snapshot;
-                    var cells = new HashSet<int>(Enumerable.Range(0, snapshot.CapturedCells.Count).Where(i => snapshot.CapturedCells[i]));
+                    captureChanged = true;
+                    if (progress.IsSecured) secured.Add(progress.RegionId);
                     for (int i = 0; i < _definition.RegionIds.Count; i++)
                         if (_definition.RegionIds[i] == progress.RegionId && _definition.CapturableCells[i])
                         {
                             if (progress.IsSecured) cells.Add(i);
                             else cells.Remove(i);
                         }
-                    foreach (int cu in InitialControlUnitCells(_definition)) cells.Add(cu);
-                    _session.UpdateRegionCapture(_source.Snapshot, cells, RegionCaptureUpdateMode.Replace);
                 }
                 if (progress.IsSecured)
                 {
                     // 물만 있는 빈 구역은 건너뛰고 다음 실제 점유 대상 구역을 엽니다.
                     int next = _staticCapture.Keys.FirstOrDefault(id => id > progress.RegionId);
-                    if (next > 0 && !_source.Snapshot.IsRegionUnlocked(next))
-                        _session.UnlockRegionsThrough(_source.Snapshot, next);
+                    if (next > 0 && !basis.IsRegionUnlocked(next)) unlockThrough = Math.Max(unlockThrough, next);
                 }
             }
+            if (captureChanged)
+            {
+                foreach (int cu in InitialControlUnitCells(_definition)) cells.Add(cu);
+                // 같은 표본의 여러 구역을 한 번에 확정해 UI/전송이 중간 상태를 소비하지 않습니다.
+                var result = _session.UpdateRegionCapture(basis, cells, RegionCaptureUpdateMode.Replace,
+                    secured.Count > 0 ? RegionChangeKind.StaticSecured : RegionChangeKind.StaticLost, secured);
+                if (result != RegionUpdateStatus.Applied)
+                    throw new InvalidOperationException("The capture observation no longer belongs to this Region revision.");
+            }
+            if (unlockThrough > 0) _session.UnlockRegionsThrough(_source.Snapshot, unlockThrough);
         }
 
         private void CountRegion(BattlefieldPoint position, Dictionary<int, int> counts)

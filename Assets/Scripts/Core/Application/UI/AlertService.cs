@@ -15,6 +15,10 @@ namespace TeamHJD.Game.Application
         public double CurrentAge => Current == null ? 0 : Math.Max(0, _now - _startedAt);
         public int PendingCount => _pending.Count;
 
+        /// <summary>점유 성공처럼 늦게 표시할 필요가 없는 피드백용입니다. 표시/대기 중이면 큐에 넣지 않습니다.</summary>
+        public bool TryShowIfIdle(string message, AlertTone tone = AlertTone.Info, string key = null)
+            => Current == null && _pending.Count == 0 && Show(message, tone, key);
+
         /// <summary>실제 입력/요청 결과에서 호출합니다. false는 표시를 수락하지 않았다는 뜻이며 게임 실패가 아닙니다.</summary>
         public bool Show(string message, AlertTone tone = AlertTone.Error, string key = null)
         {
