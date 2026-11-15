@@ -80,6 +80,45 @@ public sealed class EnemyTargetAttackerLimitTests
         Assert.That(_target.AssignedAttackerCount, Is.EqualTo(10));
     }
 
+    /// <summary>최대 인원이 0인 타깃은 배정 인원과 무관하게 계속 수용한다.</summary>
+    [Test]
+    public void Assign_ZeroMaximumMeansUnlimited()
+    {
+        SetMaxAttackers(0);
+
+        Assert.That(_target.TryAssignAttackers(10), Is.True);
+        Assert.That(_target.TryAssignAttackers(10), Is.True);
+        Assert.That(_target.AssignedAttackerCount, Is.EqualTo(20));
+    }
+
+    /// <summary>타깃 선택도 최대 인원 0을 무제한으로 취급한다.</summary>
+    [Test]
+    public void Selector_DoesNotRejectTargetWithUnlimitedCapacity()
+    {
+        SetMaxAttackers(0);
+        Assert.That(_target.TryAssignAttackers(10), Is.True);
+
+        Assert.That(TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector.TryFindNearest(
+            Vector3.zero,
+            new[] { _component },
+            null,
+            out var selected,
+            attackerCount: 10), Is.True);
+        Assert.That(selected, Is.SameAs(_target));
+    }
+
+    /// <summary>Player 프리팹은 몬스터 타깃 인원 제한 없이 설정되어 있다.</summary>
+    [Test]
+    public void PlayerPrefab_HasUnlimitedAttackerCapacity()
+    {
+        var playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/Player/Player.prefab");
+
+        Assert.That(playerPrefab, Is.Not.Null);
+        Assert.That(playerPrefab.GetComponent<TargetableComponent>(), Is.Not.Null);
+        Assert.That(playerPrefab.GetComponent<TargetableComponent>().MaxAttackers, Is.Zero);
+    }
+
     /// <summary>0이나 음수의 배정 요청은 기존 인원을 변경하지 않는다.</summary>
     [TestCase(0)]
     [TestCase(-1)]
@@ -161,5 +200,12 @@ public sealed class EnemyTargetAttackerLimitTests
         _component.SetHealth(100, 100);
         Assert.That(_target.TryAssignAttackers(10), Is.True);
         Assert.That(_target.AssignedAttackerCount, Is.EqualTo(10));
+    }
+
+    private void SetMaxAttackers(int value)
+    {
+        var settings = new SerializedObject(_component);
+        settings.FindProperty("maxAttackers").intValue = value;
+        settings.ApplyModifiedPropertiesWithoutUndo();
     }
 }

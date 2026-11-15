@@ -17,6 +17,9 @@ public sealed class PlayerEnemyDetector : MonoBehaviour
     private readonly HashSet<EnemyDetection> _registered = new();
     private readonly HashSet<EnemyDetection> _current = new();
     private readonly List<EnemyDetection> _stale = new();
+    // Core는 Player prefab의 Awake 이후에 Match presence를 추가할 수 있습니다.
+    private PlayerMatchPresence Presence => _presence != null ? _presence :
+        _presence = _owner != null ? _owner.GetComponent<PlayerMatchPresence>() : null;
 
     private void Awake()
     {
@@ -46,9 +49,10 @@ public sealed class PlayerEnemyDetector : MonoBehaviour
                 (_health != null && (!_health.isActiveAndEnabled || _health.IsDestroyed))) return false;
             var manager = NetworkManager.Singleton;
             if (manager != null && manager.IsListening && !manager.IsServer) return false;
-            if (_presence != null && (_presence.GameplayCancellation.IsCancellationRequested ||
-                (_presence.TimeSource != null && (!_presence.CanReport ||
-                    _presence.Location != TeamHJD.Game.Domain.MatchPlayerLocation.Field)))) return false;
+            var presence = Presence;
+            if (presence != null && (presence.GameplayCancellation.IsCancellationRequested ||
+                (presence.TimeSource != null && (!presence.CanReport ||
+                    presence.Location != TeamHJD.Game.Domain.MatchPlayerLocation.Field)))) return false;
             return true;
         }
     }
@@ -97,7 +101,7 @@ public sealed class PlayerEnemyDetector : MonoBehaviour
         var network = target.GetComponent<EnemyNetworkDetection>();
         if (network != null && network.NetworkManager != null && network.NetworkManager.IsListening &&
             (!network.IsSpawned || !network.IsServer)) return false;
-        var playerTime = _presence != null ? _presence.TimeSource : null;
+        var playerTime = Presence != null ? Presence.TimeSource : null;
         var enemyTime = target.GetComponent<FieldSimulationActor>()?.TimeSource;
         if (playerTime == null) return enemyTime == null;
         if (enemyTime != null) return playerTime.Snapshot.MatchId.Equals(enemyTime.Snapshot.MatchId);

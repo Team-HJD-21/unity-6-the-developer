@@ -63,7 +63,7 @@ public sealed class PlayerTurretRepair : MonoBehaviour
     private bool CanInteract => isActiveAndEnabled && _input != null && _input.isActiveAndEnabled &&
         _controls != null && _controls.CanAct && FieldSimulationTime.CanAdvance(this) &&
         (Presence == null || Presence.CanReport) &&
-        (_skills == null || (_skills.CanUse && !_skills.IsPlacingSkill));
+        (_skills == null || (_skills.CanUse && !_skills.IsPlacingSkill && !_skills.PortalConsumesR));
 
     private void Awake()
     {
@@ -170,12 +170,13 @@ public sealed class PlayerTurretRepair : MonoBehaviour
     private bool IsEligible(PlayerTurretRepairTarget turret)
     {
         if (!turret.Exists || !turret.Source.isActiveAndEnabled || turret.MaxHealth <= 0 ||
-            turret.Source.gameObject.scene != gameObject.scene) return false;
+            turret.Source.gameObject.scene != gameObject.scene || !FieldSimulationTime.CanAdvance(turret.Source)) return false;
         if (turret.Field != null && (!turret.Field.IsInitialized || !turret.Field.HasStateAuthority ||
             turret.Field.IsLocked || turret.Field.IsManualOperationBlocked)) return false;
         if (turret.Player != null && (!turret.Player.IsAlive || !turret.Player.HasStateAuthority)) return false;
         var ownerTime = Presence?.TimeSource ?? GetComponent<FieldSimulationActor>()?.TimeSource;
-        return ReferenceEquals(turret.Source.GetComponent<FieldSimulationActor>()?.TimeSource, ownerTime);
+        return PlayerSpannerTargeting.SharesMatchExecution(ownerTime,
+            turret.Source.GetComponent<FieldSimulationActor>()?.TimeSource);
     }
 
     private bool IsReachable(PlayerTurretRepairTarget turret)

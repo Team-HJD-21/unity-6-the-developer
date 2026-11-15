@@ -5,10 +5,11 @@ using UnityEngine;
 /// </summary>
 public sealed partial class EnemyProjectileAbility : EnemyAbility
 {
+    // Inspector 설정과 제작 참조
+
     [Header("참조")]
     [SerializeField] private EnemyTargeting enemyTargeting;
     [SerializeField] private EnemyDamageProjectile projectilePrefab;
-    internal EnemyDamageProjectile CheckpointProjectilePrefab => projectilePrefab;
     [SerializeField] private EnemyProjectileGenerator projectileSpawner;
 
     [Header("공격 설정")]
@@ -19,14 +20,20 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
     [Tooltip("공격 클립의 발사·종료 Animation Event를 사용하는 프리팹에서만 켠다.")]
     [SerializeField] private bool fireOnAnimationEvent;
 
+    // 실행 중 참조와 상태
     private bool _isExecuting;
     private bool _shotPending;
     private Vector2 _pendingDirection;
     private bool _fireEventDeferred;
     private bool _finishEventDeferred;
 
+    internal EnemyDamageProjectile CheckpointProjectilePrefab => projectilePrefab;
+
     public override bool IsExecuting => _isExecuting;
 
+    // Unity 생명주기
+
+    /// <summary>배정 타깃과 투사체 생성기 참조를 연결한다.</summary>
     protected override void Awake()
     {
         base.Awake();
@@ -36,6 +43,25 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
         if (projectileSpawner == null)
             projectileSpawner = GetComponent<EnemyProjectileGenerator>();
     }
+
+    /// <summary>필드가 재개되면 보류한 발사와 공격 종료 이벤트를 순서대로 처리한다.</summary>
+    private void Update()
+    {
+        if (!CanAdvanceAbility)
+            return;
+        if (_fireEventDeferred)
+            OnProjectileFireAnimationEvent();
+        if (_finishEventDeferred)
+            OnProjectileAttackAnimationFinished();
+    }
+
+    /// <summary>아직 실행하지 않은 발사 요청과 공격 잠금을 해제한다.</summary>
+    private void OnDisable()
+    {
+        CancelPendingAttack();
+    }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 발사 구성이 유효하고 현재 타깃이 발동 범위 안에 있는지 확인한다.
@@ -54,34 +80,6 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
                projectilePrefab != null &&
                attackDamage > 0 &&
                TryGetTarget(out _);
-    }
-
-    /// <summary>
-    /// 타깃 방향을 정해 즉시 발사하거나 공격 애니메이션의 발사 이벤트를 예약한다.
-    /// </summary>
-    protected override bool Activate()
-    {
-        if (projectilePrefab == null ||
-            !TryGetTarget(out TargetableComponent target) ||
-            !target.CanBeTargeted)
-        {
-            return false;
-        }
-        
-
-        Vector2 direction =
-            ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
-
-        if (fireOnAnimationEvent)
-        {
-            // 공격 방향을 고정하고, 실제 생성은 공격 모션의 발사 프레임에 맡긴다.
-            _pendingDirection = direction;
-            _shotPending = true;
-            _isExecuting = true;
-            return true;
-        }
-
-        return FireProjectile(direction);
     }
 
     /// <summary>공격 모션의 발사 프레임에서 예약된 투사체를 한 번 생성한다.</summary>
@@ -119,20 +117,36 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
         CancelPendingAttack();
     }
 
-    private void Update()
+    // 파생 클래스 공통 처리
+
+    /// <summary>
+    /// 타깃 방향을 정해 즉시 발사하거나 공격 애니메이션의 발사 이벤트를 예약한다.
+    /// </summary>
+    protected override bool Activate()
     {
-        if (!CanAdvanceAbility)
-            return;
-        if (_fireEventDeferred)
-            OnProjectileFireAnimationEvent();
-        if (_finishEventDeferred)
-            OnProjectileAttackAnimationFinished();
+        if (projectilePrefab == null ||
+            !TryGetTarget(out TargetableComponent target) ||
+            !target.CanBeTargeted)
+        {
+            return false;
+        }
+
+        Vector2 direction =
+            ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
+
+        if (fireOnAnimationEvent)
+        {
+            // 공격 방향을 고정하고, 실제 생성은 공격 모션의 발사 프레임에 맡긴다.
+            _pendingDirection = direction;
+            _shotPending = true;
+            _isExecuting = true;
+            return true;
+        }
+
+        return FireProjectile(direction);
     }
 
-    private void OnDisable()
-    {
-        CancelPendingAttack();
-    }
+    // 내부 처리
 
     /// <summary>
     /// 예약된 발사와 정지 중 지연된 이벤트를 비우고 다음 행동을 허용한다.
@@ -163,6 +177,7 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
             attackDamage, this);
     }
 
+    /// <summary>타깃 지정 시 저장한 컴포넌트 참조를 반환한다.</summary>
     private bool TryGetTarget(out TargetableComponent target)
     {
         target = enemyTargeting != null

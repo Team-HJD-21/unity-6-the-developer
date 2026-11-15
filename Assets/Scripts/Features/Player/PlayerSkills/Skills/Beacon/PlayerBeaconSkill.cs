@@ -7,7 +7,7 @@ public sealed partial class PlayerBeaconSkill : PlayerPlacementSkillBase
 {
     [SerializeField] private PlayerFieldDevice _prefab;
     [SerializeField, Min(.1f)] private float _cooldown = 14;
-    [SerializeField, Min(.1f)] private float _duration = 8;
+    [SerializeField, Min(20f)] private float _duration = 20;
     [SerializeField, Min(.1f)] private float _radius = 12;
     [SerializeField, Min(1)] private float _health = 80;
     private PlayerFieldDevice _active;
@@ -19,6 +19,9 @@ public sealed partial class PlayerBeaconSkill : PlayerPlacementSkillBase
     public override float CooldownDuration => Cooldown;
     public override float RemainingCooldown => _remainingCooldown;
     public bool CanDeploy => _remainingCooldown <= 0;
+    public float EffectRadius => _radius * UpgradeMultiplier;
+    public float EffectHealth => _health * UpgradeMultiplier;
+    public float EffectDuration => Mathf.Max(20f, _duration) * UpgradeMultiplier;
     private void Update() => Tick(FieldSimulationTime.DeltaTime(this));
     public void Tick(float elapsed)
     {
@@ -39,7 +42,8 @@ public sealed partial class PlayerBeaconSkill : PlayerPlacementSkillBase
         if (_active != null) PlayerFieldDevice.Dispose(_active.gameObject);
         _active = Instantiate(_prefab, position, Quaternion.identity);
         MoveToOwnerScene(_active.gameObject);
-        _active.Initialize(PlayerFieldDeviceKind.Beacon, position, position, .3f, _health, _duration, _radius, transform);
+        _active.Initialize(PlayerFieldDeviceKind.Beacon, position, position, .3f, EffectHealth, EffectDuration, EffectRadius, transform);
+        _active.GetComponent<PlayerPlacementPresentation>()?.Play();
         _remainingCooldown = Cooldown;
         return true;
     }

@@ -291,6 +291,13 @@ public static class HudV6PrefabSetup
         var bg = Picture("Track", r, "meter_track", 27, 372, 0, 0); Stretch(bg.rectTransform); bg.type = Image.Type.Sliced; bg.raycastTarget = true;
         var fill = Picture("Fill", r, "fill_white", 15, 360, 0, 0); fill.type = Image.Type.Filled; fill.fillMethod = Image.FillMethod.Vertical; fill.fillOrigin = 0; fill.color = color;
         var view = Get<CombatVitalsBar>(r); view.Owner = owner; view.Fill = fill;
+        if (!right && name == "Health")
+        {
+            var shield = Picture("Shield", r, "fill_white", 15, 360, 0, 0);
+            shield.type = Image.Type.Filled; shield.fillMethod = Image.FillMethod.Vertical; shield.fillOrigin = 0;
+            shield.color = new Color(.25f, .65f, 1f); shield.raycastTarget = false; shield.enabled = false;
+            shield.transform.SetSiblingIndex(fill.transform.GetSiblingIndex()); view.ShieldFill = shield;
+        }
         return view;
     }
     private static Image Gradient(RectTransform parent, string name, bool right)

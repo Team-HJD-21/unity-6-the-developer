@@ -18,7 +18,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     [DefaultExecutionOrder(-300)]
     public sealed partial class InitialStageCompositionRoot : MonoBehaviour, ISceneCompositionRoot
     {
-        private static readonly PlayerId LocalPlayerId = new PlayerId("local-player");
+        internal static readonly PlayerId LocalPlayerId = new PlayerId("local-player");
         private const float BattlefieldSampleInterval = 0.1f;
 
         [SerializeField] private GameObject playerPrefab;

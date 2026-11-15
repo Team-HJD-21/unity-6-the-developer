@@ -163,6 +163,10 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: f4eb0e1cd5ec78f46895f76469941234, type: 2}
   - Id: drag_disk_base
     Sprite: {fileID: 21300000, guid: 0fbc3678fc669674a8fc4ec55617882e, type: 3}
+  - Id: skill_dual_wield
+    Sprite: {fileID: 21300000, guid: 18b3f7626ee75b90b387ba254c556723, type: 3}
+  - Id: skill_portal
+    Sprite: {fileID: 21300000, guid: a1e70ad723c5fd148b3f81f7d0247faf, type: 3}
   HeaderFont: {fileID: 11400000, guid: 3739164d2b75c084eb84a11172cc2ce8, type: 2}
   LabelFont: {fileID: 11400000, guid: 4356f820aacffd74da6b043603f598fc, type: 2}
   BodyFont: {fileID: 11400000, guid: f425d3be4914f4a4280a6e0b49f79db8, type: 2}

@@ -1,0 +1,36 @@
+{
+  "art_source": "existing + code",
+  "route": "codeart2d fallback after video no-route; code-drawn, no image model",
+  "source": "Assets/Art/Sprites/Player/SpaceManBody/Side_0.png",
+  "source_sha256": "dc89894b734dd3c498edfd69f59e8bf92390fda67c187ba4ce97004c2e62aaa2",
+  "duration_seconds": 0.36,
+  "preview": "Docs/94_art/player-skill-cast-preview.gif",
+  "preview_capture": "isolated Editor render of the actual Player prefab and runtime pose method; idle holds added for inspection; not live gameplay capture",
+  "runtime": "PlayerSkillCastPresentation: articulated upper arms/forearms, wrist panel, existing weapon rotation",
+  "registration": {
+    "body_canvas": [
+      160,
+      160
+    ],
+    "body_pivot": [
+      0.55625,
+      0.26
+    ],
+    "pixels_per_unit": 32,
+    "facing": "left; runtime mirror"
+  },
+  "qa": {
+    "outside_sleeve_mask_pixel_identical": true,
+    "binary_alpha": true
+  },
+  "limits": [
+    "No generated video or character sprite sheet. Motion is a runtime sprite rig.",
+    "Human visual acceptance remains separate from automated runtime checks."
+  ],
+  "files": [
+    "Assets/Art/Sprites/Player/SpaceManBody/Casting/CastBody.png",
+    "Assets/Art/Sprites/Player/SpaceManBody/Casting/CastForearm.png",
+    "Assets/Art/Sprites/Player/SpaceManBody/Casting/CastUpperArm.png",
+    "Assets/Art/Sprites/Player/SpaceManBody/Casting/WristPanel.png"
+  ]
+}

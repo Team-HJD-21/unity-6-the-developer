@@ -86,7 +86,7 @@ namespace TeamHJD.Game.Enemies.Encounter
             var observations = situation.ExcludedPoints.Concat(_composition.LastCandidates)
                 .GroupBy(candidate => candidate.Id, StringComparer.Ordinal).Select(group => group.First()).ToArray();
             plan = new EncounterPlan(snapshot, instructions, observations, policy,
-                _composition.LastEnvironmentPolicy, timer.Elapsed.TotalMilliseconds, deferred);
+                _composition.LastEnvironmentPolicy, timer.Elapsed.TotalMilliseconds, deferred, situation.Targets);
             reason = planned ? null : "No spawn plan satisfies eligible regions, spatial limits, composition and budget.";
             return planned;
         }

@@ -14,8 +14,8 @@ public sealed partial class PlayerTurretHealth
     }
     internal void RestoreCheckpoint(float maximum, float health, float hit, float scan)
     {
-        if (maximum != MaxHealth || !PlayerSkillCheckpointIO.Finite(health) || health <= 0 || health > maximum ||
+        if (!IsValidMaximumHealth(maximum) || !PlayerSkillCheckpointIO.Finite(health) || health <= 0 || health > maximum ||
             !PlayerSkillCheckpointIO.Finite(hit) || hit < 0) throw new InvalidDataException("The saved temporary turret health is invalid.");
-        _health = health; _hitRemaining = hit;
+        _deploymentMaximum = maximum; _health = health; _hitRemaining = hit;
     }
 }

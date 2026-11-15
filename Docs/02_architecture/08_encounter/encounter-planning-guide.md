@@ -1,6 +1,6 @@
 # Encounter 편성·예산 가이드
 
-수정일: 2026-11-08
+수정일: 2026-11-15
 상태: #540 통합 브랜치의 현재 구현과 조정 지점. 최종 난이도 Director 또는 반복 요청 주기 확정 문서가 아니다.
 
 [문서 목차](../../README.md) · [Enemy 구조](enemy-system-guide.md) · [콘텐츠·편성 목록](stage1-enemy-content-guide.md) · [공간 분산](spatial-spawn-distribution.md) · [명시적 생성 origin](encounter-spawn-origin-api.md)
@@ -70,6 +70,12 @@ Core의 `EncounterRequest.PresetId`는 현재 필수다. Game Debugger의 고정
 각 사용 가능한 스폰 지점에서 `EnemyTargetSelector.TryFindNearest(..., TargetType.Turret)`를 호출한다. `CanBeTargeted`가 참이고 Transform이 유효한 후보만 선택한다. CU도 어댑터에서 Turret으로 분류하므로 이 최근접 후보에 함께 들어간다. 일반 터렛 우선 후 CU fallback 순서를 따로 강제하지 않는다.
 
 외곽 전선 상위 3개, 타깃 포화도, 위험도 점수로 기준 타깃을 고르지 않는다. 유효한 타깃 또는 Grid 안 타깃 위치가 없는 스폰 지점은 이 계획에서 제외된다.
+
+기준 시설의 객체 참조는 `EncounterSituation.Targets` → `EncounterPlan.Targets` → `EncounterExecutorStep` → `EnemySpawnExecutor` 순서로 전달한다. 실행기는 몬스터 생성과 분대원 등록을 마친 뒤 기준 시설과 요청에서 수집한 타깃 목록을 `EnemySquad.SetTarget()`에 전달한다. 분대가 기준 시설에 실제 집계 인원을 배정할 수 있으면 거리 검색을 생략한다. 시설이 무효화되거나 포화 상태이면 전달받은 목록에서 가장 가까운 수용 가능한 시설을 검색한다. 실제 배정은 분대가 수행하므로 앞 분대가 사용한 인원은 다음 분대의 검사에 반영된다. 요청의 출현 셀 수용량과 시설의 공격 인원 제한은 별개다.
+
+일반 분대의 자동 검색은 시설만 대상으로 하며, 플레이어는 감지 이벤트로 우선 전환한다. `PlayerOnly` 분대는 자동 검색에서도 플레이어만 선택한다. 후보가 없으면 별도 대기 목록 없이 기존 분대의 1초 재검색을 사용한다. 고정 요청이나 World origin처럼 지점별 기준 시설이 없는 경우에는 후보 목록으로 바로 검색하며, 이 목록을 전달하지 않는 직접 호출은 분대가 최신 목록을 조회한다. 전달된 목록은 첫 배정 호출에서만 사용하고 보관하지 않는다. 시설 선택은 타깃 유효성·인원 수용 여부 기준이며 NavMesh 도달 가능성을 보장하지 않는다.
+
+분대 규칙은 몬스터 Definition 대신 선택한 `EnemySquadPreset.TargetRule`에서 읽어 `SpawnInstruction.TargetRule`로 전달한다. 상황별·고정·명시 origin 계획과 추가 출현 위치 변경에서 같은 규칙을 유지한다. `PlayerOrTurret`은 시설 자동 검색과 플레이어 감지 전환, `PlayerOnly`는 플레이어 전용, `TurretOnly`는 시설 전용이다. 실제 배정 시 분대가 이 규칙을 공통 검증한다. 현재 암살자 편성은 `PlayerOnly`, 소환사 호위 편성은 `TurretOnly`로 설정되어 있다.
 
 | 자료 | 집계 기준 |
 | --- | --- |

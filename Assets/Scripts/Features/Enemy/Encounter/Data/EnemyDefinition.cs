@@ -10,15 +10,6 @@ public enum EnemySquadMode
 }
 
 /// <summary>
-/// 분대가 새 목표를 고를 때 허용할 타깃 종류를 지정한다.
-/// </summary>
-public enum EnemyTargetRule
-{
-    PlayerOrTurret,
-    PlayerOnly
-}
-
-/// <summary>
 /// 적 한 종류의 식별 정보와 생성에 필요한 제작 데이터를 정의한다.
 /// </summary>
 [CreateAssetMenu(menuName = "The Developer/Enemy/Definition")]
@@ -30,7 +21,9 @@ public sealed class EnemyDefinition : ScriptableObject
 
     [Header("분대 설정")]
     [SerializeField] private EnemySquadMode _squadMode;
-    [SerializeField] private EnemyTargetRule _targetRule;
+
+    // 단독 Stage·보스 생성과 이전 체크포인트 호환에 필요한 직렬화 값을 보존한다.
+    [SerializeField, HideInInspector] private EnemyTargetRule _targetRule;
 
     [Header("공격 인원 제한")]
     [SerializeField] private bool _isIncludedInAttackerLimit = true;
@@ -53,7 +46,7 @@ public sealed class EnemyDefinition : ScriptableObject
     /// <summary>공동 분대 또는 한 마리씩 독립 분대를 구성할지 반환한다.</summary>
     public EnemySquadMode SquadMode => _squadMode;
 
-    /// <summary>분대가 선택할 수 있는 타깃 유형을 반환한다.</summary>
+    /// <summary>단독 Stage·보스 생성과 이전 저장의 호환에 사용하는 기존 타깃 규칙이다.</summary>
     public EnemyTargetRule TargetRule => _targetRule;
 
     /// <summary>최초 분대 등록 때 전달할 공격 인원 집계 여부를 반환한다.</summary>

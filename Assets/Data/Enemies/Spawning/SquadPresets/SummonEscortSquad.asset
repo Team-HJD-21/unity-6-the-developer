@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: SummonEscortSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: SummonEscort
-  role: 3
-  selectionWeight: 2
   _composition:
   - _enemyId: GreenGolem
     _weight: 1
@@ -24,3 +22,6 @@ MonoBehaviour:
     _weight: 1
   - _enemyId: Slime
     _weight: 3
+  _targetRule: 2
+  role: 3
+  selectionWeight: 2

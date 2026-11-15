@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using RuntimeTargetSelector = TeamHJD.Game.Enemies.Targeting.EnemyTargetSelector;
-using Unity.Profiling;
+using TeamHJD.Game.Presentation.Scene;
 
 /// <summary>
 /// 함께 행동하는 적의 소속과 공동 목표를 보관한다.
@@ -10,13 +10,17 @@ using Unity.Profiling;
 /// </summary>
 public class EnemySquad
 {
+    // 상수와 공통 식별자
     private const float RetargetInterval = 1.0f;
+    private const double AggroCheckInterval = 0.2d;
 
+    // 실행 중 참조와 상태
     private readonly List<EnemyController> _members;
     private ITargetable _target;
     private readonly EnemySquadMode _squadMode;
     private readonly EnemyTargetRule _targetRule;
     private float _nextSearchTime;
+    private double _nextAggroCheckTime;
     private EnemyController _representative;
 
     /// <summary>
@@ -24,13 +28,12 @@ public class EnemySquad
     /// </summary>
     public bool IsEmpty => _members.Count == 0;
 
-    // 프로파일링
-    private static readonly ProfilerMarker SelectTargetMarker =
-        new("TeamHJD.Enemy.SelectTarget");
+    /// <summary>생성 명령에서 전달받아 소환과 저장·복원에도 유지할 분대 규칙이다.</summary>
+    public EnemyTargetRule TargetRule => _targetRule;
 
-    private static readonly ProfilerMarker AssignTargetMarker =
-        new("TeamHJD.Enemy.AssignSquadTarget");
-    
+    /// <summary>저장할 분대의 현재 목표 Transform을 반환한다.</summary>
+    internal Transform CheckpointTarget => _target?.TargetTransform;
+
     /// <summary>
     /// 생성 직후 적을 등록할 빈 분대를 만든다.
     /// </summary>
@@ -53,6 +56,8 @@ public class EnemySquad
             : null;
         TryChangeTarget(IsValidTarget(target) ? target : null);
     }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 구성원을 등록하고 집계 대상이면 기존 타깃에 한 명을 추가 배정한다.
@@ -133,8 +138,6 @@ public class EnemySquad
         return true;
     }
 
-    internal Transform CheckpointTarget => _target?.TargetTransform;
-
     /// <summary>
     /// 저장된 목표를 다시 연결한다. 다른 목표이면 기존 배정부터 반환한다.
     /// </summary>
@@ -163,58 +166,50 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// 배정된 목표는 유지하고, 목표가 없을 때 분대 중심에서 새 목표를 찾는다.
-    /// 타깃 불가 전환은 이벤트로 처리하며 후보가 없을 때만 검색 간격을 둔다.
+    /// 전달받은 목표에 우선 배정하고, 실패하면 분대 중심에서 허용 대상을 검색한다.
+    /// 일반 분대는 시설을 검색하며 플레이어 전환은 감지 이벤트로 처리한다.
     /// </summary>
     /// <returns>선택되거나 유지된 공동 목표가 있으면 true.</returns>
-    public bool SetTarget()
+    public bool SetTarget(
+        ITargetable preferredTarget = null,
+        IReadOnlyList<TargetableComponent> candidates = null)
     {
         if (_target != null)
             return true;
 
-        if (Time.time < _nextSearchTime)
+        if (IsEmpty || Time.time < _nextSearchTime)
             return false;
 
         _nextSearchTime = Time.time + RetargetInterval;
 
+        TargetType requiredType = _targetRule == EnemyTargetRule.PlayerOnly
+            ? TargetType.Player
+            : TargetType.Turret;
+
+        // 기존 후보에 실제 인원을 배정할 수 있으면 거리 검색을 생략한다.
+        if (IsValidTarget(preferredTarget) && preferredTarget.TargetType == requiredType)
+        {
+            if (TryChangeTarget(preferredTarget))
+                return true;
+        }
+
         if (!TryGetCenterPosition(out Vector3 center))
             return false;
 
-        TargetType? requiredType = _targetRule == EnemyTargetRule.PlayerOnly
-            ? TargetType.Player
-            : null;
+        // 스폰 시에는 인카운터가 수집한 목록을 재사용하고 이후 검색에서는 최신 목록을 조회한다.
+        candidates ??= Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
 
-        TargetableComponent[] candidates =
-            Object.FindObjectsByType<TargetableComponent>(FindObjectsSortMode.None);
-
-        // bool found = RuntimeTargetSelector.TryFindNearest(
-        //     center, candidates, requiredType, out ITargetable nextTarget, GetAttackerCount());
-        //
-        // if (!found)
-        //     return false;
-        //
-        // return TryChangeTarget(nextTarget);
-        
-        bool found;
-        ITargetable nextTarget;
-
-        using (SelectTargetMarker.Auto())
-        {
-            found = RuntimeTargetSelector.TryFindNearest(
-                center,
-                candidates,
-                requiredType,
-                out nextTarget,
-                GetAttackerCount());
-        }
+        bool found = RuntimeTargetSelector.TryFindNearest(
+            center,
+            candidates,
+            requiredType,
+            out ITargetable nextTarget,
+            GetAttackerCount());
 
         if (!found)
             return false;
 
-        using (AssignTargetMarker.Auto())
-        {
-            return TryChangeTarget(nextTarget);
-        }
+        return TryChangeTarget(nextTarget);
     }
 
     /// <summary>플레이어 우선 전환 규칙을 확인하고 공통 타깃 변경을 요청한다.</summary>
@@ -223,7 +218,7 @@ public class EnemySquad
     /// <returns>플레이어로 전환했으면 true. 이미 플레이어를 추적 중이면 false.</returns>
     public bool TryPrioritizePlayer(EnemyController requester, ITargetable player)
     {
-        // 이미 선택한 플레이어는 타깃 불가 이벤트가 발생할 때까지 유지한다.
+        // 선택한 플레이어는 유지한다. 일반 분대의 거리 이탈은 대표의 갱신에서 처리한다.
         if (_target != null && _target.TargetType == TargetType.Player)
             return false;
 
@@ -261,17 +256,61 @@ public class EnemySquad
         }
     }
 
-    /// <summary>대표 구성원이 목표가 없을 때 재검색을 요청한다.</summary>
+    /// <summary>대표 구성원이 플레이어 어그로의 거리 해제와 목표가 없을 때의 재검색을 처리한다.</summary>
     public void RefreshTarget(EnemyController requester)
     {
-        if (!ReferenceEquals(_representative, requester) ||
-            _target != null ||
-            Time.time < _nextSearchTime)
+        if (!ReferenceEquals(_representative, requester))
+            return;
+
+        if (_target != null)
         {
+            // 일반 분대만 거리로 어그로를 해제한다. 암살자는 플레이어 추적을 유지한다.
+            if (_targetRule != EnemyTargetRule.PlayerOrTurret || _target.TargetType != TargetType.Player)
+                return;
+
+            double now = FieldSimulationTime.Seconds(requester);
+            if (now < _nextAggroCheckTime)
+                return;
+
+            _nextAggroCheckTime = now + AggroCheckInterval;
+            if (!IsPlayerOutsideAggroRange())
+                return;
+
+            // 이전 플레이어의 배정을 반환한 뒤 검색 대기 없이 가장 가까운 시설을 선택한다.
+            TryChangeTarget(null);
+            _nextSearchTime = 0f;
+            SetTarget();
             return;
         }
 
-        SetTarget();
+        if (Time.time >= _nextSearchTime)
+            SetTarget();
+    }
+
+    // 내부 처리
+
+    /// <summary>확인 가능한 모든 활성 구성원의 어그로 유지 범위를 플레이어가 벗어났는지 반환한다.</summary>
+    private bool IsPlayerOutsideAggroRange()
+    {
+        Transform targetTransform = _target.TargetTransform;
+        bool hasSensor = false;
+
+        foreach (EnemyController member in _members)
+        {
+            if (member == null || !member.isActiveAndEnabled)
+                continue;
+
+            EnemyPlayerSensor sensor = member.PlayerSensor;
+            if (sensor == null || !sensor.isActiveAndEnabled)
+                continue;
+
+            hasSensor = true;
+            if (sensor.IsTargetInsideAggroRange(targetTransform))
+                return false;
+        }
+
+        // 센서가 없는 직접 배치·시험 개체는 거리 기준을 알 수 없으므로 임의로 해제하지 않는다.
+        return hasSensor;
     }
 
     /// <summary>검색·타깃 변경 시에만 집계 대상 구성원 수를 계산한다.</summary>
@@ -316,6 +355,7 @@ public class EnemySquad
         }
 
         _target = target;
+        _nextAggroCheckTime = 0d;
 
         if (!ReferenceEquals(_target, null))
             _target.TargetabilityLost += OnTargetabilityLost;
@@ -345,7 +385,7 @@ public class EnemySquad
     }
 
     /// <summary>
-    /// Unity 오브젝트 수명과 타깃 유효성을 확인하고 분대의 PlayerOnly 규칙을 적용한다.
+    /// 타깃의 수명·공격 가능 상태와 분대 규칙에 따른 배정 허용 여부를 확인한다.
     /// </summary>
     private bool IsValidTarget(ITargetable target)
     {
@@ -356,7 +396,13 @@ public class EnemySquad
             return false;
         }
 
-        return _targetRule != EnemyTargetRule.PlayerOnly ||
-               target.TargetType == TargetType.Player;
+        return _targetRule switch
+        {
+            EnemyTargetRule.PlayerOrTurret =>
+                target.TargetType == TargetType.Player || target.TargetType == TargetType.Turret,
+            EnemyTargetRule.PlayerOnly => target.TargetType == TargetType.Player,
+            EnemyTargetRule.TurretOnly => target.TargetType == TargetType.Turret,
+            _ => false
+        };
     }
 }

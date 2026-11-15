@@ -16,7 +16,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     private readonly HashSet<PlayerBullet> _projectiles = new();
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ?? throw new InvalidOperationException("Bind the Player actor before weapon checkpoints.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/weapon";
-    int ICheckpointParticipant.Version => 3;
+    int ICheckpointParticipant.Version => 4;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 220;
 
@@ -38,7 +38,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     CheckpointSection ICheckpointParticipant.Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context); SavedWeapon state = CaptureWeapon();
-        return codec.Write(((ICheckpointParticipant)this).Key, 3, CheckpointSectionKind.World, writer =>
+        return codec.Write(((ICheckpointParticipant)this).Key, 4, CheckpointSectionKind.World, writer =>
         {
             codec.WriteText(writer, CheckpointIdentity.PlayerId.Value);
             writer.Write((int)state.Weapon); writer.Write(state.ShotRemaining);
@@ -52,7 +52,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context.Current);
-        if (section.Version < 1 || section.Version > 3)
+        if (section.Version < 1 || section.Version > 4)
             throw new NotSupportedException("Unsupported Player weapon checkpoint version: " + section.Version);
         SavedWeapon target = codec.Read(section, section.Version, reader =>
         {
@@ -64,7 +64,7 @@ public partial class PlayerAttack : ICheckpointParticipant
             for (int i = 0; i < count; i++) projectiles[i] = PlayerBullet.CheckpointState.Read(reader, section.Version, codec);
             var ammo = section.Version >= 2 && reader.ReadBoolean()
                 ? PlayerWeaponAmmoState.CheckpointState.Read(reader) : null;
-            if (!_selection.IsWeaponAvailable(weapon) || !Enum.IsDefined(typeof(WeaponType), weapon) || double.IsNaN(remaining) || double.IsInfinity(remaining) || remaining < 0 ||
+            if (!_selection.IsWeaponAuthored(weapon) || !Enum.IsDefined(typeof(WeaponType), weapon) || double.IsNaN(remaining) || double.IsInfinity(remaining) || remaining < 0 ||
                 (spanner != null) != (_selection.Spanner != null) || (spanner?.Pending == true && weapon != WeaponType.Spanner) ||
                 (weapon == WeaponType.Spanner && spanner == null)) throw new InvalidDataException("The saved weapon state does not match this Player configuration.");
             if (projectiles.Any(saved => !HasCheckpointPrefab(saved.SourceWeapon)))
@@ -126,7 +126,7 @@ public partial class PlayerAttack : ICheckpointParticipant
     private bool HasCheckpointPrefab(WeaponType weapon)
     {
         var prefab = _selection.ResolveBulletPrefab(weapon);
-        return weapon != WeaponType.Spanner && _selection.IsWeaponAvailable(weapon) && prefab != null &&
+        return weapon != WeaponType.Spanner && _selection.IsWeaponAuthored(weapon) && prefab != null &&
             prefab.GetComponent<PlayerBullet>() != null && prefab.GetComponent<Rigidbody2D>() != null &&
             prefab.GetComponentsInChildren<Collider2D>(true).Any();
     }

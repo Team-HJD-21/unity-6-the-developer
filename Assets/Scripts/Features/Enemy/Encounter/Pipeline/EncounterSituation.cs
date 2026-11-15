@@ -12,6 +12,7 @@ namespace TeamHJD.Game.Enemies.Encounter
         public List<SpatialSpawnCandidate> Candidates { get; } = new List<SpatialSpawnCandidate>();
         public List<BattlefieldPoint> PlayerPositions { get; } = new List<BattlefieldPoint>();
         public Dictionary<string, BattlefieldPoint> TargetPositions { get; } = new Dictionary<string, BattlefieldPoint>();
+        public Dictionary<string, ITargetable> Targets { get; } = new Dictionary<string, ITargetable>();
         public Dictionary<string, TargetAttackType> TargetAttackTypes { get; } = new Dictionary<string, TargetAttackType>();
         public Dictionary<string, string> TargetNames { get; } = new Dictionary<string, string>();
         public List<SpawnDecisionSnapshot.Candidate> ExcludedPoints { get; } = new List<SpawnDecisionSnapshot.Candidate>();

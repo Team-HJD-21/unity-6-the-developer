@@ -144,13 +144,17 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 40
       objectReference: {fileID: 0}
-    - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: moveSpeed
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 4829987614306498064, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: enemyAbility
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x

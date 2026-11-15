@@ -37,6 +37,11 @@ public sealed class CombatVitalsGroup : MonoBehaviour
     private void Awake() { IsPinned = StartPinned; _motion.Snap(0); Apply(0); }
     public void SetPrimary(int current, int maximum) => Set(Primary, current, maximum);
     public void SetSecondary(int current, int maximum) { if (Secondary != null) Set(Secondary, current, maximum); }
+    public void SetPrimaryShield(int shield)
+    {
+        if (Primary.Shield != shield) _visibleUntil = Time.unscaledTime + Style.AutoHideSeconds;
+        Primary.SetShield(shield);
+    }
     private void Set(CombatVitalsBar bar, int current, int maximum)
     {
         if (bar.Current != current || bar.Maximum != maximum) _visibleUntil = Time.unscaledTime + Style.AutoHideSeconds;
@@ -57,7 +62,7 @@ public sealed class CombatVitalsGroup : MonoBehaviour
     {
         IsPinned = StartPinned; _hover = null; _visibleUntil = 0;
         _hitAt = float.NegativeInfinity;
-        Primary.Set(0, 0); if (Secondary != null) Secondary.Set(0, 0);
+        Primary.SetShield(0); Primary.Set(0, 0); if (Secondary != null) Secondary.Set(0, 0);
         _motion.Snap(0); Apply(0);
     }
     private void LateUpdate()
@@ -67,7 +72,8 @@ public sealed class CombatVitalsGroup : MonoBehaviour
         Apply(_motion.Tick(Time.unscaledDeltaTime));
         Pin.SetActive(!HudPresentationVisibility.IsSuppressed && _contextVisible && HasSource && IsPinned);
         Details.enabled = !HudPresentationVisibility.IsSuppressed && _hover != null && _hover.Maximum > 0 && _motion.Value > .1f;
-        if (Details.enabled) Details.text = $"{_hover.Current} / {_hover.Maximum}";
+        if (Details.enabled) Details.text = $"{_hover.Current} / {_hover.Maximum}" +
+            (_hover.Shield > 0 ? $"  <color=#6EC9FF>+{_hover.Shield}</color>" : "");
     }
     private void Apply(float progress)
     {

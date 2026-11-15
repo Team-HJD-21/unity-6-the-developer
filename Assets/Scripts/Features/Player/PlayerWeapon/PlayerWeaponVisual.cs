@@ -169,6 +169,7 @@ public sealed partial class PlayerWeaponVisual : MonoBehaviour, IPlayerPresentat
         _lastRepairImpactSequence = _motion != null ? _motion.HeldRepairImpactSequence : 0;
         if (_repairSortingGroup != null) _repairSortingGroup.enabled = false;
         if (_weapon != null) _weapon.enabled = false;
+        if (_secondaryWeapon != null) _secondaryWeapon.enabled = false;
         if (_foregroundHands != null) _foregroundHands.enabled = false;
     }
 

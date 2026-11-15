@@ -16,7 +16,7 @@ using TeamHJD.Game.Domain;
 public sealed partial class EncounterSceneBinding : ICheckpointParticipant, ICheckpointParticipantProvider
 {
     string ICheckpointParticipant.Key => "world/encounter";
-    int ICheckpointParticipant.Version => 3;
+    int ICheckpointParticipant.Version => 4;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 300;
 
@@ -30,13 +30,13 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     {
         RequireCheckpointMatch(context.Config.MatchId);
         var saved = CaptureEncounter();
-        return codec.Write("world/encounter", 3, CheckpointSectionKind.World, w => WriteEncounter(w, saved, codec));
+        return codec.Write("world/encounter", 4, CheckpointSectionKind.World, w => WriteEncounter(w, saved, codec));
     }
 
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointMatch(context.Current.Config.MatchId);
-        if (section.Version is not (1 or 2 or 3)) throw new InvalidDataException("Unsupported Encounter checkpoint version.");
+        if (section.Version is not (1 or 2 or 3 or 4)) throw new InvalidDataException("Unsupported Encounter checkpoint version.");
         var target = codec.Read(section, section.Version, r => ReadEncounter(r, codec, section.Version));
         var backup = CaptureEncounter();
         return new CheckpointRestoreStep(() => ApplyEncounter(target), () => ApplyEncounter(backup));
@@ -113,6 +113,7 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
                 w.Write(p.Prepared.Cost); w.Write(p.Prepared.WarningSeconds); codec.WriteText(w, p.Prepared.Reason);
                 w.Write(p.Prepared.Instruction.Enemies.Count);
                 foreach (var entry in p.Prepared.Instruction.Enemies) { codec.WriteText(w, entry.EnemyId, 128); w.Write(entry.Count); }
+                w.Write((int)p.Prepared.Instruction.TargetRule);
             }
         }
     }
@@ -120,7 +121,7 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
     /// <summary>
     /// 저장 payload에서 Encounter의 요청 대기 상태와 분산 이력을 읽는다.
     /// </summary>
-    private static SavedEncounter ReadEncounter(BinaryReader r, ICheckpointPayloadCodec codec, int version)
+    private SavedEncounter ReadEncounter(BinaryReader r, ICheckpointPayloadCodec codec, int version)
     {
         r.ReadBoolean(); double remaining = r.ReadDouble(); // v1~v3의 옛 테스트 첫 요청 슬롯을 소비합니다.
         if (!double.IsFinite(remaining) || remaining < 0) throw new InvalidDataException("Invalid initial Encounter delay.");
@@ -158,11 +159,25 @@ public sealed partial class EncounterSceneBinding : ICheckpointParticipant, IChe
                     if (string.IsNullOrWhiteSpace(id) || amount < 1) throw new InvalidDataException("Invalid prepared enemy entry.");
                     entries[j] = new EnemySpawnEntry(id, amount); enemies += amount;
                 }
+                EnemyTargetRule targetRule;
+                if (version >= 4)
+                {
+                    targetRule = (EnemyTargetRule)r.ReadInt32();
+                }
+                else
+                {
+                    // 이전 지연 명령에는 규칙이 없으므로 현재 편성의 명시 설정을 사용한다.
+                    if (_squadCatalog == null || !_squadCatalog.TryGetPreset(preset, out var legacyPreset))
+                        throw new InvalidDataException("Missing squad preset for a legacy prepared spawn.");
+                    targetRule = legacyPreset.TargetRule;
+                }
+                if (!Enum.IsDefined(typeof(EnemyTargetRule), targetRule))
+                    throw new InvalidDataException("Invalid prepared squad target rule.");
                 if (automatic || origin.Area == null || origin.Delivery != SpawnDeliveryMode.Immediate ||
                     source != EncounterRequestSource.SituationEvent || count == 0 || enemies != maximum)
                     throw new InvalidDataException("Invalid prepared additional spawn.");
                 prepared = new EncounterDeferredSpawn(new SpawnInstruction(preset, "", entries,
-                    new EncounterSpawnPlacement(origin, origin.Area)), cost, warning, reason);
+                    new EncounterSpawnPlacement(origin, origin.Area), targetRule), cost, warning, reason);
             }
             pending[i] = new SavedPending(preset, maximum, source, origin, new Guid(cause), delay, automatic, prepared);
         }
