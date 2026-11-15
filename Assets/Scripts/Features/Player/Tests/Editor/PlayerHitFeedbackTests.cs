@@ -1,6 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -14,6 +15,7 @@ public sealed class PlayerHitFeedbackTests
     private PlayerHitFeedback _feedback;
     private CanvasGroup _overlay;
     private Camera _camera;
+    private PlayerAutomaticRecoveryTests.Clock _clock;
 
     [SetUp]
     public void SetUp()
@@ -25,6 +27,7 @@ public sealed class PlayerHitFeedbackTests
         _overlay = _hud.GetComponentInChildren<PlayerDamageVignette>(true).GetComponent<CanvasGroup>();
         _actor = new GameObject("Feedback local actor");
         _health = _actor.AddComponent<PlayerInfo>(); Call(_health, "Awake");
+        _clock = new PlayerAutomaticRecoveryTests.Clock(); FieldSimulationActor.Attach(_actor, _clock);
         Set(_vitals, "_player", _health);
         Call(_feedback, "OnEnable");
         _cameraObject = new GameObject("Feedback camera");
@@ -61,12 +64,16 @@ public sealed class PlayerHitFeedbackTests
     }
 
     [Test]
-    public void RepeatedHitsStayBoundedAndFadeWithUnscaledElapsedTime()
+    public void HitsDuringInvulnerabilityDoNotRestartFeedbackAndTheNextAcceptedHitDoes()
     {
         _health.ApplyDamage(20); float peak = _overlay.alpha;
         Call(_feedback, "Advance", .1f);
         Assert.That(_overlay.alpha, Is.LessThan(peak));
-        _health.ApplyDamage(20);
+        float fading = _overlay.alpha;
+        Assert.That(_health.ApplyDamage(20), Is.False);
+        Assert.That(_overlay.alpha, Is.EqualTo(fading));
+        _clock.Now = 3;
+        Assert.That(_health.ApplyDamage(20), Is.True);
         Assert.That(_overlay.alpha, Is.EqualTo(peak).Within(.0001f));
         Assert.That(_overlay.alpha, Is.LessThanOrEqualTo(.65f));
         Call(_feedback, "Advance", 1f);
@@ -100,7 +107,8 @@ public sealed class PlayerHitFeedbackTests
         Call(_feedback, "OnDisable");
         Assert.That(_camera.transform.position, Is.EqualTo(position));
         Assert.That(_overlay.alpha, Is.Zero);
-        _health.ApplyDamage(10);
+        _clock.Now = 3;
+        Assert.That(_health.ApplyDamage(10), Is.True);
         Assert.That(_overlay.alpha, Is.Zero);
     }
 
@@ -111,7 +119,8 @@ public sealed class PlayerHitFeedbackTests
         Set(_vitals, "_player", null);
         Call(_feedback, "RefreshBinding");
         Assert.That(_overlay.alpha, Is.Zero);
-        _health.ApplyDamage(10);
+        _clock.Now = 3;
+        Assert.That(_health.ApplyDamage(10), Is.True);
         Assert.That(_overlay.alpha, Is.Zero);
     }
 

@@ -21,6 +21,12 @@
 
 ## 피해·물리·권한
 
+포탑의 적 탐색은 해당 Scene 물리 공간의 `EnemyHurtbox`만 조회한다. 건강 원본 `EnemyHealth`의 공격 허용 출처를 `Turret`으로 확인하고, 같은 MatchId·Epoch의 공용/필드 투영 시계만 허용한다. 계층의 최상위 Scene 그룹에 Enemy 태그가 없어도 건강 원본의 태그로 식별하며, 센서 범위나 이동 Collider가 실제 피격 몸 대신 사거리를 확장하지 않는다. 조준·발사는 선택한 Hurtbox의 bounds 중심을 사용한다. 터렛별 조회 목록을 재사용한다.
+
+전용 실탄은 센서·적 이동 Collider·다른 실행·사망/공격 불허 적을 통과하고, 살아 있는 유효 `EnemyHurtbox`에서 `AttackSourceType.Turret` 피해를 한 번 적용한다. 기존 아군 Player/터렛/설치물 통과와 월드 장애물 정지는 유지한다. 연속 Cast는 `EnemyHurtbox`를 명시적으로 포함하므로 전역 Bullet 레이어 조합만으로 피격 몸이 빠지지 않는다. 플레이어 터렛 공격을 Player 출처로 바꾸지 않으며, 감지된 암살자도 기존 Turret 면역 규칙을 따른다.
+
+몬스터가 플레이어 터렛을 선택하는 진입점은 `EnemySquad.SetTarget` → `TargetableComponent` → `EnemyTargeting`이고, 근접/원거리 피해는 기존 공통 체력 어댑터를 사용한다. 이미 유효한 시설 목표를 가진 분대는 더 가까운 플레이어 터렛이 설치돼도 기존 목표를 유지한다. 기존 목표 상실 후 재검색하는 Enemy 정책은 변경하지 않는다.
+
 공통 피해 API는 정수 피해를 받으며 기존 Player 터렛의 실제 체력 원본은 float를 유지한다. `CurrentHealth`는 남은 HP를 올림하여 계약에 제공한다. 수리는 실제 float 체력을 회복하고 최대 체력을 넘지 않는다. 슬롯 UI는 이 원본의 비율을 표시한다.
 
 본체는 `PlayerFeetBox`·`EnemyFeetBox`를 막고, `EnemyProjectile` 접촉도 허용해 투사체의 공통 피해 수신자로 연결한다. 나머지 접촉 제외 설정과 아군 탄환 통과를 유지한다. 기존 Player 장치 우회 공격 Registry에 중복 등록하지 않아 Enemy 기본 공격과 임시 공격이 겹치지 않게 한다.

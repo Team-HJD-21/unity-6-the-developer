@@ -152,13 +152,67 @@ public sealed class PlayerCryoSprayTests
     }
 
     [Test]
-    public void DamageDoesNotInvokeAnAvailableSlowReceiver()
+    public void DamageCallsAttackAwareSlowReceiverOnceWithPlayerSource()
     {
         var target = Enemy(Vector2.right);
         var receiver = target.gameObject.AddComponent<SlowProbe>();
+        target.gameObject.AddComponent<CircleCollider2D>().isTrigger = true;
         _spray.ApplyDamage(Vector2.zero, Vector2.right, 3);
         Assert.That(target.CurrentHealth, Is.EqualTo(target.MaxHealth - 3));
-        Assert.That(receiver.Calls, Is.Zero);
+        Assert.That(receiver.Calls, Is.EqualTo(1)); Assert.That(receiver.Source, Is.EqualTo(AttackSourceType.Player));
+        Assert.That(receiver.Multiplier, Is.EqualTo(.8f)); Assert.That(receiver.Duration, Is.EqualTo(1.5f));
+    }
+
+    [TestCase(1, .8f)] [TestCase(2, .65f)] [TestCase(3, .5f)]
+    public void ActualEnemyMovementUsesTheWeaponUpgradeSlowAndRecoversAfterRefreshedExpiry(int level, float expected)
+    {
+        var settings = ScriptableObject.CreateInstance<PlayerArmorySettings>();
+        try
+        {
+            var armory = _spray.gameObject.AddComponent<PlayerArmory>();
+            typeof(PlayerArmory).GetField("_settings", Private).SetValue(armory, settings);
+            armory.State.GrantLevelRewards(level, 1);
+            for (int i = 1; i < level; i++) Assert.That(armory.State.Upgrade(WeaponType.CryoBlaster), Is.True);
+            var clock = new Clock(); FieldSimulationActor.Attach(_spray.gameObject, clock);
+            var target = Enemy(Vector2.right * 2); FieldSimulationActor.Attach(target.gameObject, clock);
+            var body = target.gameObject.AddComponent<Rigidbody2D>(); body.gravityScale = 0;
+            var movement = target.gameObject.AddComponent<EnemyMovement>();
+            typeof(EnemyMovement).GetMethod("Awake", Private).Invoke(movement, null);
+            Assert.That(_spray.ApplyDamage(Vector2.zero, Vector2.right, 1), Is.True);
+            Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(expected));
+            Assert.That(movement.MoveSpeed, Is.EqualTo(movement.BaseMoveSpeed * expected).Within(.001));
+            for (int i = 0; i < 100; i++) { movement.Move(Vector2.right); _scene.GetPhysicsScene2D().Simulate(.01f); }
+            Assert.That(body.linearVelocity.x, Is.EqualTo(movement.MoveSpeed).Within(.01));
+            clock.Now = .3; Assert.That(_spray.ApplyDamage(Vector2.zero, Vector2.right, 1), Is.True);
+            clock.Now = 1.6; Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(expected), "Held spray refreshes the same effect.");
+            clock.Now = 1.81; Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(1));
+        }
+        finally { Object.DestroyImmediate(settings); }
+    }
+
+    [Test]
+    public void DeadOccludedAndOutsideTargetsDoNotReceiveSlow()
+    {
+        var front = Enemy(new Vector2(1.3f, 0), .3f); var behind = Enemy(new Vector2(2.7f, 0)); var outside = Enemy(new Vector2(2, 2));
+        var killed = front.gameObject.AddComponent<SlowProbe>(); var blocked = behind.gameObject.AddComponent<SlowProbe>();
+        var missed = outside.gameObject.AddComponent<SlowProbe>();
+        Assert.That(_spray.ApplyDamage(Vector2.zero, Vector2.right, 20), Is.True);
+        Assert.That(killed.Calls, Is.Zero); Assert.That(blocked.Calls, Is.Zero); Assert.That(missed.Calls, Is.Zero);
+    }
+
+    [Test]
+    public void AssassinDamageRuleAllowsSlowOnlyAfterPlayerDetection()
+    {
+        var target = Enemy(Vector2.right * 2);
+        var rule = target.gameObject.AddComponent<EnemyAssassinDamageRule>();
+        typeof(EnemyAssassinDamageRule).GetMethod("Awake", Private).Invoke(rule, null); target.Initialize();
+        var movement = target.gameObject.AddComponent<EnemyMovement>();
+        typeof(EnemyMovement).GetMethod("Awake", Private).Invoke(movement, null);
+        _spray.ApplyDamage(Vector2.zero, Vector2.right, 1);
+        Assert.That(target.CurrentHealth, Is.EqualTo(20)); Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(1));
+        target.GetComponent<EnemyDetection>().RegisterDetector(999);
+        _spray.ApplyDamage(Vector2.zero, Vector2.right, 1);
+        Assert.That(target.CurrentHealth, Is.EqualTo(19)); Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(.8f));
     }
 
     [TestCase(0f)] [TestCase(90f)] [TestCase(-135f)]
@@ -204,9 +258,12 @@ public sealed class PlayerCryoSprayTests
         var health = item.AddComponent<EnemyHealth>(); health.Initialize(); return health;
     }
     private void Call(string method, params object[] args) => typeof(PlayerCryoSpray).GetMethod(method, Private).Invoke(_spray, args);
-    public sealed class SlowProbe : MonoBehaviour, ISlowEffectReceiver
+    public sealed class SlowProbe : MonoBehaviour, IAttackSlowEffectReceiver
     {
-        public int Calls; public void ApplySlow(float multiplier, float duration) => Calls++;
+        public int Calls; public float Multiplier, Duration; public AttackSourceType Source;
+        public void ApplySlow(float multiplier, float duration) => Assert.Fail("Player attacks must specify their source.");
+        public bool TryApplySlow(float multiplier, float duration, AttackSourceType source)
+        { Calls++; Multiplier = multiplier; Duration = duration; Source = source; return true; }
     }
     private sealed class Clock : IMatchTime
     {
@@ -215,9 +272,10 @@ public sealed class PlayerCryoSprayTests
         public Clock(string match = "spray-test", Guid? epoch = null)
         { _epoch = epoch ?? Guid.NewGuid(); _match = new MatchId(match); }
         public bool Paused;
+        public double Now;
         public bool IsAvailable => true;
-        public double ElapsedSeconds => 0;
-        public MatchTimeSnapshot Snapshot => new(_match, _epoch, 0, 0, 0, Paused ? 0 : 1, Paused, true);
+        public double ElapsedSeconds => Now;
+        public MatchTimeSnapshot Snapshot => new(_match, _epoch, 0, Now, Now, Paused ? 0 : 1, Paused, true);
     }
     private sealed class PresentationRandom : IRandomStreams, IRandomSource
     {

@@ -46,6 +46,9 @@ public sealed class PlayerTurretSlotRuntimeTests
         _player = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab"), Origin, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(_player, _scene);
         _controller = _player.GetComponent<PlayerSkillController>(); _skill = _player.GetComponent<PlayerTurretSkill>();
+        Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(100), Is.True);
+        Assert.That(_controller.Research.TryUnlock(PlayerSkillId.PlayerTurret), Is.True);
+        Assert.That(PlayerSkillResearchTestHub.Assign(_controller.Research, 1, PlayerSkillId.PlayerTurret), Is.True);
         var data = new SerializedObject(_skill); data.FindProperty("_placementGround").objectReferenceValue = map; data.ApplyModifiedPropertiesWithoutUndo();
         var hudObject = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/PlayerSkillHUD.prefab"));
         SceneManager.MoveGameObjectToScene(hudObject, _scene); _hud = hudObject.GetComponent<PlayerSkillHud>();
@@ -72,7 +75,8 @@ public sealed class PlayerTurretSlotRuntimeTests
         Assert.That(_controller.TryUse(PlayerSkillId.PlayerTurret), Is.True);
         Assert.That(_skill.IsSelecting && !_skill.IsPlacing, Is.True);
         Assert.That(_skill.TrySelectSlot(slot), Is.True);
-        Assert.That(_skill.TryConfirmPlacement(Origin + (Vector3)direction * 4), Is.True);
+        bool placed = _skill.TryConfirmPlacement(Origin + (Vector3)direction * 4);
+        Assert.That(placed, Is.True, "slot=" + slot + ", direction=" + direction + ", placement=" + _skill.PlacementFeedback);
         return Find(slot);
     }
     private PlayerTurret Find(int slot) => Object.FindObjectsByType<PlayerTurret>(FindObjectsSortMode.None)
@@ -99,7 +103,7 @@ public sealed class PlayerTurretSlotRuntimeTests
         var recovered = Deploy(2, Vector2.right); recovered.Health.TakeDamage(50);
         Assert.That(recovered.TryRecover(_skill), Is.True);
         var deployed = Deploy(0, Vector2.down);
-        var destroyed = Deploy(1, Vector2.up); destroyed.Health.TakeDamage(100);
+        var destroyed = Deploy(1, Vector2.left); destroyed.Health.TakeDamage(100);
         _skill.Tick(_skill.SkillCooldown);
         Assert.That(_controller.TryUse(PlayerSkillId.PlayerTurret), Is.True); panel.Refresh();
         Assert.That(panel.Select(0), Is.False); Assert.That(panel.Select(1), Is.False);
@@ -128,7 +132,10 @@ public sealed class PlayerTurretSlotRuntimeTests
         Assert.That(chosen.TargetTransform, Is.EqualTo(turret.transform));
         var enemy = Create("Melee attacker"); enemy.transform.position = turret.Health.ApproachPoint(Origin) + Vector2.left * .1f;
         enemy.AddComponent<BoxCollider2D>().size = Vector2.one * .3f;
-        enemy.AddComponent<EnemyTargeting>().SetTarget(turret.transform);
+        var targeting = enemy.AddComponent<EnemyTargeting>();
+        var member = enemy.AddComponent<SquadMember>(); var squad = new EnemySquad();
+        Assert.That(member.JoinSquad(squad), Is.True); Assert.That(squad.SetTarget(candidates: new[] { target }), Is.True);
+        Assert.That(targeting.Target, Is.EqualTo(turret.transform));
         var ability = enemy.AddComponent<EnemyCloseRangeAbility>();
         Physics2D.SyncTransforms();
         Assert.That(ability.TryUse(), Is.True); Assert.That(turret.Health.Health, Is.EqualTo(95));
@@ -187,14 +194,16 @@ public sealed class PlayerTurretSlotRuntimeTests
     {
         var recovered = Deploy(0, Vector2.down); recovered.Health.TakeDamage(60); recovered.TryRecover(_skill);
         var deployed = Deploy(1, Vector2.right); deployed.Health.TakeDamage(25);
-        var destroyed = Deploy(2, Vector2.up); destroyed.Health.TakeDamage(100);
+        var destroyed = Deploy(2, Vector2.left); destroyed.Health.TakeDamage(100);
         _skill.Tick(3); _controller.TryUse(PlayerSkillId.PlayerTurret);
         var codec = new BinaryCheckpointPayloadCodec();
         var write = (Action<BinaryWriter>)Call(_skill, "CaptureCheckpointState", codec);
         var section = codec.Write("slot-test", 2, CheckpointSectionKind.World, write);
         Assert.That(((ICheckpointParticipant)_skill).Version, Is.EqualTo(2));
         deployed.Health.TakeDamage(10); _skill.Tick(30); _skill.CancelPlacement();
-        using var step = codec.Read(section, 2, reader => (ICheckpointRestoreStep)Call(_skill, "PrepareCheckpointState", reader, codec));
+        var prepare = _skill.GetType().GetMethod("PrepareCheckpointState", Private, null,
+            new[] { typeof(BinaryReader), typeof(ICheckpointPayloadCodec) }, null);
+        using var step = codec.Read(section, 2, reader => (ICheckpointRestoreStep)prepare.Invoke(_skill, new object[] { reader, codec }));
         step.Apply();
         Assert.That(_skill.IsSelecting, Is.True);
         Assert.That(_skill.GetSlot(0).HealthRatio, Is.EqualTo(.4f).Within(.0001f));
@@ -206,6 +215,118 @@ public sealed class PlayerTurretSlotRuntimeTests
         Assert.That(Find(1).Health.Health, Is.EqualTo(65).Within(.001f));
         Assert.That(_skill.GetSlot(2).Status, Is.EqualTo(PlayerTurretInventory.SlotStatus.Available));
         yield break;
+    }
+
+    private (EnemyHealth health, Collider2D feet, Collider2D sensor, Collider2D hitbox) Enemy(Vector3 position)
+    {
+        var group = Create("Untagged encounter parent"); var actor = Create("Enemy health root");
+        actor.transform.SetParent(group.transform); actor.transform.position = position;
+        actor.tag = "Enemy"; actor.layer = LayerMask.NameToLayer("EnemyFeetBox");
+        var health = actor.AddComponent<EnemyHealth>(); health.Initialize();
+        var feet = actor.AddComponent<BoxCollider2D>(); feet.size = Vector2.one * .3f;
+        var sensing = Create("Sensor"); sensing.transform.SetParent(actor.transform, false); sensing.layer = LayerMask.NameToLayer("EnemySensor");
+        var sensor = sensing.AddComponent<CircleCollider2D>(); sensor.isTrigger = true; sensor.radius = 12;
+        var hurt = Create("HitBox"); hurt.transform.SetParent(actor.transform, false); hurt.layer = LayerMask.NameToLayer("EnemyHurtbox");
+        var hitbox = hurt.AddComponent<BoxCollider2D>(); hitbox.isTrigger = true; hitbox.size = Vector2.one * .6f; hitbox.offset = Vector2.up;
+        return (health, feet, sensor, hitbox);
+    }
+
+    [UnityTest]
+    public IEnumerator TurretTargetsTheNestedHurtboxAndAimsAtItsBoundsInsteadOfTheSensorOrFeet()
+    {
+        var turret = Deploy(0, Vector2.right); turret.enabled = false;
+        var enemy = Enemy(Origin + Vector3.right * 13); Physics2D.SyncTransforms();
+        var target = PlayerTurretTargeting.FindClosest(turret.transform.position, 21, "Enemy", turret);
+        Assert.That(target, Is.EqualTo(enemy.hitbox.transform));
+        typeof(PlayerTurret).GetField("targetEnemy", Private).SetValue(turret, target); Call(turret, "AimAtTarget");
+        var data = new SerializedObject(turret);
+        var head = (Transform)data.FindProperty("turretHead").objectReferenceValue;
+        var muzzle = (Transform)data.FindProperty("firePoint").objectReferenceValue;
+        var bullet = PlayerTurretWeapon.Fire(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurretProjectile.prefab"),
+            target, muzzle, head, 6, Color.white);
+        Assert.That(bullet, Is.Not.Null);
+        Assert.That(Vector2.Angle(bullet.GetComponent<Rigidbody2D>().linearVelocity,
+            (Vector2)(enemy.hitbox.bounds.center - muzzle.position)), Is.LessThan(.01f));
+        int hits = 0; TeamHJD.Game.Enemy.Contracts.AttackSourceType source = default;
+        enemy.health.DamageApplied += (_, _, kind) => { hits++; source = kind; };
+        Call(bullet, "ProcessHit", enemy.sensor); Call(bullet, "ProcessHit", enemy.feet);
+        Assert.That(enemy.health.CurrentHealth, Is.EqualTo(20)); Assert.That(bullet.gameObject.activeSelf, Is.True);
+        Call(bullet, "ProcessHit", enemy.hitbox); Call(bullet, "ProcessHit", enemy.hitbox);
+        Assert.That(enemy.health.CurrentHealth, Is.EqualTo(14)); Assert.That(hits, Is.EqualTo(1));
+        Assert.That(source, Is.EqualTo(TeamHJD.Game.Enemy.Contracts.AttackSourceType.Turret));
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator TurretAutomaticallyAcquiresAndFiresThroughSensorAndMovementBodyToHitTheHurtbox()
+    {
+        var turret = Deploy(0, Vector2.right);
+        var enemy = Enemy(Origin + Vector3.right * 13);
+        var movement = Create("Movement body before hurtbox"); movement.transform.SetParent(enemy.health.transform, false);
+        movement.layer = LayerMask.NameToLayer("EnemyFeetBox"); movement.transform.localPosition = new Vector3(-3, 1);
+        var collider = movement.AddComponent<BoxCollider2D>(); collider.size = Vector2.one * .5f;
+        Vector3 impact = Vector3.zero; int hits = 0; TeamHJD.Game.Enemy.Contracts.AttackSourceType source = default;
+        enemy.health.DamageApplied += (_, _, kind) =>
+        {
+            hits++; source = kind;
+            impact = Object.FindObjectsByType<PlayerTurretProjectile>(FindObjectsSortMode.None)
+                .Single(b => b.gameObject.scene == _scene).transform.position;
+        };
+        Physics2D.SyncTransforms();
+        float until = Time.realtimeSinceStartup + 1.5f;
+        while (Time.realtimeSinceStartup < until && enemy.health.CurrentHealth == 20) yield return new WaitForFixedUpdate();
+        Assert.That(enemy.health.CurrentHealth, Is.EqualTo(14));
+        Assert.That(typeof(PlayerTurret).GetField("targetEnemy", Private).GetValue(turret), Is.EqualTo(enemy.hitbox.transform));
+        Assert.That(hits, Is.EqualTo(1));
+        Assert.That(source, Is.EqualTo(TeamHJD.Game.Enemy.Contracts.AttackSourceType.Turret));
+        Assert.That(impact.x, Is.GreaterThan(collider.bounds.max.x + 1), "Sensor/feet must not consume the bullet before it reaches the hurtbox.");
+    }
+
+    [UnityTest]
+    public IEnumerator AValidFacilityTargetIsKeptAndItsLossAllowsTheSquadToAcquireThePlayerTurret()
+    {
+        var turret = Deploy(0, Vector2.right); turret.enabled = false; yield return null;
+        var facility = Create("Existing facility target").AddComponent<TargetableComponent>();
+        facility.transform.position = Origin + Vector3.right * 30; facility.SetTargetType(TargetType.Turret); facility.SetHealth(100, 100);
+        var enemy = Create("Assigned squad member"); enemy.transform.position = Origin;
+        var targeting = enemy.AddComponent<EnemyTargeting>(); var member = enemy.AddComponent<SquadMember>();
+        var squad = new EnemySquad(EnemySquadMode.Shared, EnemyTargetRule.TurretOnly, facility.transform);
+        Assert.That(member.JoinSquad(squad), Is.True);
+        Assert.That(squad.SetTarget(candidates: new[] { turret.GetComponent<TargetableComponent>() }), Is.True);
+        Assert.That(targeting.Target, Is.EqualTo(facility.transform), "A newly placed turret does not override an existing valid squad goal.");
+        facility.SetHealth(0, 100);
+        Assert.That(targeting.Target, Is.EqualTo(turret.transform));
+        Assert.That(targeting.TargetColliders, Does.Contain(turret.GetComponent<BoxCollider2D>()));
+        Assert.That(turret.GetComponent<TargetableComponent>().AssignedAttackerCount, Is.EqualTo(1));
+        member.LeaveSquad();
+    }
+
+    [UnityTest]
+    public IEnumerator TurretRejectsOtherExecutionBodiesAndAssassinsWhileAcceptingTheSameFieldsClock()
+    {
+        var turret = Deploy(0, Vector2.right); turret.enabled = false;
+        var clock = new CombatClock(); TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(turret.gameObject, clock);
+        var valid = Enemy(Origin + Vector3.right * 15); var other = Enemy(Origin + Vector3.right * 10);
+        TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(valid.health.gameObject, new TeamHJD.Game.Application.FieldSimulationClock(clock));
+        TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(other.health.gameObject, new CombatClock());
+        Physics2D.SyncTransforms();
+        Assert.That(PlayerTurretTargeting.FindClosest(turret.transform.position, 21, "Enemy", turret), Is.EqualTo(valid.hitbox.transform));
+        var rule = valid.health.gameObject.AddComponent<EnemyAssassinDamageRule>(); valid.health.Initialize();
+        valid.health.GetComponent<EnemyDetection>().RegisterDetector(999);
+        Assert.That(PlayerTurretTargeting.FindClosest(turret.transform.position, 21, "Enemy", turret), Is.Null,
+            "Revealing an assassin must not change Turret damage into Player damage.");
+        yield break;
+    }
+
+    public sealed class SquadMember : EnemyController
+    {
+        public override void ExecuteBehavior() { }
+        protected override void OnTargetChanged(Transform target) { }
+    }
+    private sealed class CombatClock : IMatchTime
+    {
+        private readonly Guid _epoch = Guid.NewGuid(); public bool IsAvailable => true; public double ElapsedSeconds => 0;
+        public MatchTimeSnapshot Snapshot => new(new MatchId("turret-combat"), _epoch, 0, 0, 0, 1, false, true);
     }
 
     private static object Call(object target, string method, params object[] args) => target.GetType().GetMethod(method, Private).Invoke(target, args);

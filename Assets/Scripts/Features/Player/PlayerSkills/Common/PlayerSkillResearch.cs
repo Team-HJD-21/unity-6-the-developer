@@ -11,6 +11,7 @@ public sealed class PlayerSkillResearch : MonoBehaviour
     private PlayerSkillController _controller;
     private PlayerControlState _controls;
     private int _rewardedLevel = 1, _tokens = 1, _unlocked = 1 << (int)PlayerSkillId.Bomb;
+    private int _legacyUnlocks;
     private bool _levelRewardsPending;
     private readonly PlayerSkillId[] _candidates = { PlayerSkillId.Bomb, PlayerSkillId.None, PlayerSkillId.None, PlayerSkillId.None };
     private readonly int[] _upgrades = new int[7];
@@ -84,10 +85,28 @@ public sealed class PlayerSkillResearch : MonoBehaviour
         _candidates[slot] = id;
         _controller.OnCandidatesChanged(); Changed?.Invoke(); return true;
     }
-    internal Snapshot Capture() => new(_tokens, _rewardedLevel, _unlocked, (PlayerSkillId[])_candidates.Clone(), _upgrades);
+    internal Snapshot Capture() => new(_tokens, _rewardedLevel, _unlocked, (PlayerSkillId[])_candidates.Clone(), _upgrades, legacyUnlocks: _legacyUnlocks);
+    // v1에는 연구 비용이 없었습니다. 과거 장착과 그 선행만 무료로 승계하고
+    // 실제 XP/레벨이나 이후 레벨 보상 기준을 올리지 않습니다. Prepare 전용이며 원본을 바꾸지 않습니다.
+    internal Snapshot MigrateLegacyLoadout(PlayerSkillId q, PlayerSkillId e)
+    {
+        int unlocked = 1 << (int)PlayerSkillId.Bomb;
+        var candidates = new[] { PlayerSkillId.Bomb, PlayerSkillId.None, PlayerSkillId.None, PlayerSkillId.None };
+        int slot = 1;
+        foreach (var selected in new[] { q, e })
+        {
+            if (selected == PlayerSkillId.None) continue;
+            for (var id = selected; id != PlayerSkillId.None; id = Prerequisite(id)) unlocked |= 1 << (int)id;
+            if (Array.IndexOf(candidates, selected) < 0) candidates[slot++] = selected;
+        }
+        int level = _experience != null ? _experience.Level : GetComponent<PlayerExperience>().Level;
+        return new Snapshot(level, level, unlocked, candidates, new int[7],
+            legacyUnlocks: unlocked & ~(1 << (int)PlayerSkillId.Bomb));
+    }
     internal void Restore(Snapshot state)
     {
         _tokens = state.Tokens; _rewardedLevel = state.RewardedLevel; _unlocked = state.Unlocked;
+        _legacyUnlocks = state.LegacyUnlocks;
         Array.Copy(state.Candidates, _candidates, 4);
         Array.Copy(state.Upgrades, _upgrades, 7);
         QueueLevelRewards();
@@ -95,21 +114,26 @@ public sealed class PlayerSkillResearch : MonoBehaviour
     }
     internal sealed class Snapshot
     {
-        public readonly int Tokens, RewardedLevel, Unlocked;
+        public readonly int Tokens, RewardedLevel, Unlocked, LegacyUnlocks;
         public readonly PlayerSkillId[] Candidates;
         public readonly int[] Upgrades;
-        public Snapshot(int tokens, int rewarded, int unlocked, PlayerSkillId[] candidates, int[] upgrades, bool legacy = false)
+        public Snapshot(int tokens, int rewarded, int unlocked, PlayerSkillId[] candidates, int[] upgrades, bool legacy = false, int legacyUnlocks = 0)
         {
             int knownMask = 0; for (int i=1;i<=(int)PlayerSkillId.DualWield;i++) knownMask |= 1<<i;
+            int legacyMask = (1 << (int)PlayerSkillId.PlayerTurret) | (1 << (int)PlayerSkillId.EnergyBarrier) | (1 << (int)PlayerSkillId.LureBeacon);
             if (tokens < 0 || rewarded < 1 || rewarded > 1000 || tokens > rewarded - (legacy ? 1 : 0) ||
+                (legacyUnlocks & ~legacyMask) != 0 || (legacyUnlocks & ~unlocked) != 0 ||
                 (unlocked & ~knownMask) != 0 || (unlocked & (1 << (int)PlayerSkillId.Bomb)) == 0 || candidates == null || candidates.Length != 4 || upgrades == null || upgrades.Length != 7 || upgrades[0] != 0)
                 throw new InvalidDataException("Invalid skill research state.");
             int spent = 0;
             for (int i=2;i<=(int)PlayerSkillId.DualWield;i++)
                 if ((unlocked & (1<<i)) != 0)
                 {
-                    spent++;
-                    if ((unlocked & (1 << (int)Prerequisite((PlayerSkillId)i))) == 0) throw new InvalidDataException("Missing skill prerequisite.");
+                    var prerequisite = Prerequisite((PlayerSkillId)i);
+                    if ((unlocked & (1 << (int)prerequisite)) == 0) throw new InvalidDataException("Missing skill prerequisite.");
+                    if ((legacyUnlocks & (1 << i)) == 0) spent++;
+                    else if (prerequisite != PlayerSkillId.Bomb && (legacyUnlocks & (1 << (int)prerequisite)) == 0)
+                        throw new InvalidDataException("Missing legacy skill prerequisite.");
                 }
             for(int i=1;i<7;i++)
             {
@@ -126,13 +150,14 @@ public sealed class PlayerSkillResearch : MonoBehaviour
                     throw new InvalidDataException("Invalid skill candidates.");
                 seen |= 1 << (int)id;
             }
-            Tokens=tokens+(legacy ? 1 : 0); RewardedLevel=rewarded; Unlocked=unlocked; Candidates=(PlayerSkillId[])candidates.Clone();
+            Tokens=tokens+(legacy ? 1 : 0); RewardedLevel=rewarded; Unlocked=unlocked; LegacyUnlocks=legacyUnlocks; Candidates=(PlayerSkillId[])candidates.Clone();
             Upgrades=(int[])upgrades.Clone();
         }
         public void Write(BinaryWriter writer)
-        { writer.Write(Tokens); writer.Write(RewardedLevel); writer.Write(Unlocked); foreach(var id in Candidates)writer.Write((int)id); foreach(var value in Upgrades)writer.Write(value); }
-        public static Snapshot Read(BinaryReader reader, bool legacy = false) => new(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(),
+        { writer.Write(Tokens); writer.Write(RewardedLevel); writer.Write(Unlocked); foreach(var id in Candidates)writer.Write((int)id); foreach(var value in Upgrades)writer.Write(value); writer.Write(LegacyUnlocks); }
+        public static Snapshot Read(BinaryReader reader, bool legacy = false, bool hasLegacyUnlocks = false) => new(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(),
             new[]{(PlayerSkillId)reader.ReadInt32(),(PlayerSkillId)reader.ReadInt32(),(PlayerSkillId)reader.ReadInt32(),(PlayerSkillId)reader.ReadInt32()},
-            new[]{reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32()}, legacy);
+            new[]{reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32()}, legacy,
+            hasLegacyUnlocks ? reader.ReadInt32() : 0);
     }
 }

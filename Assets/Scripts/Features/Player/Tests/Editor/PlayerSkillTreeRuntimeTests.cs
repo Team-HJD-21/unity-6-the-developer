@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
@@ -275,11 +278,14 @@ public sealed class PlayerSkillTreeRuntimeTests
         var hitbox=enemyObject.AddComponent<CircleCollider2D>();hitbox.isTrigger=true;hitbox.radius=.55f;
         var enemy=enemyObject.AddComponent<EnemyHealth>();
         typeof(EnemyHealth).GetField("maxHealth",Private).SetValue(enemy,100);enemy.Initialize();FieldSimulationActor.Attach(enemyObject,_clock);
+        var movement = enemyObject.AddComponent<EnemyMovement>();
         int before=_player.GetComponent<PlayerWeaponAmmo>().CurrentRounds;
         Assert.That(_player.GetComponent<PlayerAttack>().TryFire(),Is.True);
         Assert.That(_player.GetComponent<PlayerWeaponAmmo>().CurrentRounds,Is.EqualTo(before-1));
         Assert.That(enemy.CurrentHealth,Is.EqualTo(84),"Each independent spray must damage the target once.");
+        Assert.That(movement.SlowSpeedMultiplier,Is.EqualTo(.8f),"Both hands must use the same Player-source slow without multiplying the debuff.");
         Assert.That(_player.GetComponents<PlayerCryoSpray>().Length,Is.EqualTo(2));
+        Assert.That(_player.GetComponents<PlayerCryoSpray>().All(s=>Mathf.Approximately(s.SlowDuration,1.5f)),Is.True);
         Assert.That(visual.SecondaryCryoSpray.IsConfigured,Is.True);
         Assert.That(Object.FindObjectsByType<PlayerBullet>(FindObjectsSortMode.None).Any(b=>b.gameObject.scene==_scene),Is.False);
         yield break;
@@ -323,6 +329,198 @@ public sealed class PlayerSkillTreeRuntimeTests
             Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.None));
         }
         yield break;
+    }
+
+    private (ICheckpointParticipant writer, CheckpointCaptureContext context, BinaryCheckpointPayloadCodec codec) LoadoutCheckpoint()
+    {
+        (_player.GetComponent<PlayerActorIdentity>() ?? _player.AddComponent<PlayerActorIdentity>()).Bind(new PlayerId("tree-player"),0);
+        var config=new MatchConfig(new MatchId("skill-tree-test"),MatchMode.Story,new StageId("stage"),new DefinitionId("normal"),"test",1,
+            new[]{new PlayerLoadoutSnapshot(new PlayerId("tree-player"),null)});
+        return ((ICheckpointParticipant)_controller,new CheckpointCaptureContext(config,0,Guid.NewGuid()),new BinaryCheckpointPayloadCodec());
+    }
+    private static CheckpointData LoadoutData(CheckpointCaptureContext context, params CheckpointSection[] sections)
+    {
+        var config=context.Config;
+        return new CheckpointData(Guid.NewGuid(),DateTimeOffset.UtcNow,config.MatchId,config.StageId,config.DifficultyProfileId,
+            config.Mode,config.RandomSeed,config.ContentVersion,0,1,sections);
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyLoadoutPreservesEveryVersionOneQESelectionAndResavesWithoutChargingTokens()
+    {
+        var (writer,context,codec)=LoadoutCheckpoint();
+        for(int q=0;q<=4;q++)for(int e=0;e<=4;e++)
+        {
+            if(q!=0&&q==e)continue;
+            var section=codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>
+            {codec.WriteText(w,"tree-player");w.Write(q);w.Write(e);});
+            var before=writer.Capture(context,codec).CopyPayload();
+            using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,section),CheckpointRestorePolicy.Default),section,codec))
+            {
+                Assert.That(writer.Capture(context,codec).CopyPayload(),Is.EqualTo(before),"Prepare must not mutate live research or Q/E.");
+                step.Apply();step.Apply();
+                Assert.That(_controller.Loadout.Q,Is.EqualTo((PlayerSkillId)q));Assert.That(_controller.Loadout.E,Is.EqualTo((PlayerSkillId)e));
+                Assert.That(_research.Tokens,Is.EqualTo(1),$"Legacy Q={q}, E={e} must not consume new research tokens.");
+                Assert.That(_player.GetComponent<PlayerExperience>().Level,Is.EqualTo(1));
+                int highest=Math.Max(q,e);
+                for(int id=1;id<=6;id++)
+                    Assert.That(_research.Level((PlayerSkillId)id),Is.EqualTo(id<=Math.Max(1,highest)?1:0));
+                var candidates=Enumerable.Range(0,4).Select(_research.Candidate).Where(id=>id!=PlayerSkillId.None).ToArray();
+                Assert.That(candidates.Distinct().Count(),Is.EqualTo(candidates.Length));
+                Assert.That(candidates,Does.Contain(PlayerSkillId.Bomb));
+                if(q!=0){Assert.That(candidates,Does.Contain((PlayerSkillId)q));Assert.That(_controller.IsAvailable((PlayerSkillId)q),Is.True);}
+                if(e!=0){Assert.That(candidates,Does.Contain((PlayerSkillId)e));Assert.That(_controller.IsAvailable((PlayerSkillId)e),Is.True);}
+                Assert.That(_research.IsUnlocked(PlayerSkillId.Portal),Is.False);Assert.That(_research.IsUnlocked(PlayerSkillId.DualWield),Is.False);
+                var migrated=writer.Capture(context,codec);Assert.That(migrated.Version,Is.EqualTo(5));
+                using(var resaved=writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,migrated),CheckpointRestorePolicy.Default),migrated,codec))
+                    resaved.Apply();
+                Assert.That(_research.Tokens,Is.EqualTo(1));Assert.That(_controller.Loadout.Q,Is.EqualTo((PlayerSkillId)q));
+                step.Rollback();Assert.That(writer.Capture(context,codec).CopyPayload(),Is.EqualTo(before));
+            }
+        }
+        yield return null;Assert.That(_research.Tokens,Is.EqualTo(1));
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyLoadoutAtLevelFiveKeepsPaidUpgradesAndRewardsAcrossResaveAndActorReplacement()
+    {
+        Reward();var (writer,context,codec)=LoadoutCheckpoint();
+        using var scope=new InputLockService();_controller.BindInputBlocker(scope);
+        var section=codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>
+        {codec.WriteText(w,"tree-player");w.Write((int)PlayerSkillId.LureBeacon);w.Write((int)PlayerSkillId.EnergyBarrier);});
+        using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,section),CheckpointRestorePolicy.Default),section,codec))step.Apply();
+        Assert.That(_research.Tokens,Is.EqualTo(5));Assert.That(_research.TryUpgrade(PlayerSkillId.LureBeacon),Is.True);
+        Assert.That(_research.TryUnlock(PlayerSkillId.Portal),Is.True);Assert.That(_research.Tokens,Is.EqualTo(3));
+        var saved=writer.Capture(context,codec);
+        using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,saved),CheckpointRestorePolicy.Default),saved,codec))step.Apply();
+        var replacement=SpawnResearchReplacement(scope,false,400);
+        Assert.That(replacement.Research.Level(PlayerSkillId.LureBeacon),Is.EqualTo(2));Assert.That(replacement.Research.Tokens,Is.EqualTo(3));
+        Assert.That(replacement.Loadout.Q,Is.EqualTo(PlayerSkillId.LureBeacon));Assert.That(replacement.Loadout.E,Is.EqualTo(PlayerSkillId.EnergyBarrier));
+        replacement.GetComponent<PlayerExperience>().AddExperience(100);
+        Assert.That(replacement.Research.Tokens,Is.EqualTo(4));
+        yield return null;Assert.That(replacement.Research.Tokens,Is.EqualTo(4));
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyLoadoutRejectsInvalidOldPayloadsBeforeChangingLiveState()
+    {
+        var (writer,context,codec)=LoadoutCheckpoint();var before=writer.Capture(context,codec).CopyPayload();
+        foreach(var invalid in new[]{(-1,0),(99,0),(1,1),(5,0),(0,6)})
+            Reject(codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>{codec.WriteText(w,"tree-player");w.Write(invalid.Item1);w.Write(invalid.Item2);}));
+        Reject(codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>{codec.WriteText(w,"another-player");w.Write(1);w.Write(0);}));
+        Reject(codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>{codec.WriteText(w,"tree-player");w.Write(1);}));
+        Reject(codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>{codec.WriteText(w,"tree-player");w.Write(1);w.Write(0);w.Write(true);}));
+        Reject(codec.Write(writer.Key,99,CheckpointSectionKind.World,w=>{}));
+        void Reject(CheckpointSection section)
+        {
+            Assert.Throws<InvalidDataException>(()=>writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,section),CheckpointRestorePolicy.Default),section,codec));
+            Assert.That(writer.Capture(context,codec).CopyPayload(),Is.EqualTo(before));
+        }
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyLoadoutRejectsAnUnconfiguredOldSkillWithoutChangingResearch()
+    {
+        var (writer,context,codec)=LoadoutCheckpoint();var before=writer.Capture(context,codec).CopyPayload();
+        var beacon=new SerializedObject(_player.GetComponent<PlayerBeaconSkill>());
+        beacon.FindProperty("_prefab").objectReferenceValue=null;beacon.ApplyModifiedPropertiesWithoutUndo();
+        var section=codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>
+        {codec.WriteText(w,"tree-player");w.Write((int)PlayerSkillId.LureBeacon);w.Write((int)PlayerSkillId.None);});
+        Assert.Throws<InvalidDataException>(()=>writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,section),CheckpointRestorePolicy.Default),section,codec));
+        Assert.That(writer.Capture(context,codec).CopyPayload(),Is.EqualTo(before));
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyLoadoutWithoutResearchKeepsTheOriginalQEOnlyConfiguration()
+    {
+        var (writer,context,codec)=LoadoutCheckpoint();
+        Object.Destroy(_research);yield return null;Assert.That(_controller.Research,Is.Null);
+        var section=codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>
+        {codec.WriteText(w,"tree-player");w.Write((int)PlayerSkillId.EnergyBarrier);w.Write((int)PlayerSkillId.Bomb);});
+        using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,section),CheckpointRestorePolicy.Default),section,codec))
+        {
+            step.Apply();Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.EnergyBarrier));Assert.That(_controller.Loadout.E,Is.EqualTo(PlayerSkillId.Bomb));
+            var saved=writer.Capture(context,codec);
+            using(var resaved=writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,saved),CheckpointRestorePolicy.Default),saved,codec))resaved.Apply();
+            Assert.That(_controller.Research,Is.Null);step.Rollback();Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.None));
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyLoadoutResearchVersionsThreeAndFourStillRestoreAndRejectInvalidGrantAccounting()
+    {
+        var (writer,context,codec)=LoadoutCheckpoint();
+        foreach(int version in new[]{3,4,5})
+        {
+            var section=ResearchSection(version,version==3?2:3,0);
+            using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,section),CheckpointRestorePolicy.Default),section,codec))
+            {
+                step.Apply();Assert.That(_research.Tokens,Is.EqualTo(3));Assert.That(_research.Level(PlayerSkillId.Bomb),Is.EqualTo(2));
+                Assert.That(_research.Level(PlayerSkillId.PlayerTurret),Is.EqualTo(1));Assert.That(_controller.Loadout.E,Is.EqualTo(PlayerSkillId.PlayerTurret));
+                step.Rollback();
+            }
+        }
+        foreach(int grants in new[]{1<<1,1<<3,1<<5,1<<2})
+        {
+            // Bomb/new skills/not-unlocked skills cannot be legacy grants; even valid grant bits must balance the ledger.
+            var section=ResearchSection(5,3,grants);
+            Assert.Throws<InvalidDataException>(()=>writer.PrepareRestore(new CheckpointRestoreContext(context,LoadoutData(context,section),CheckpointRestorePolicy.Default),section,codec));
+        }
+        CheckpointSection ResearchSection(int version,int tokens,int grants)=>codec.Write(writer.Key,version,CheckpointSectionKind.World,w=>
+        {
+            codec.WriteText(w,"tree-player");w.Write((int)PlayerSkillId.Bomb);w.Write((int)PlayerSkillId.PlayerTurret);w.Write(true);
+            w.Write(tokens);w.Write(5);w.Write((1<<1)|(1<<2));
+            foreach(int id in new[]{1,2,0,0})w.Write(id);foreach(int upgrade in new[]{0,1,0,0,0,0,0})w.Write(upgrade);
+            if(version==5)w.Write(grants);
+        });
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator LegacyLoadoutPassesCheckpointServiceAndRollsBackWhenAnotherWorldFeatureFails()
+    {
+        var (writer,context,codec)=LoadoutCheckpoint();
+        Assert.That(_research.TryUpgrade(PlayerSkillId.Bomb),Is.True);Assert.That(_controller.TryEquip(0,PlayerSkillId.Bomb),Is.True);
+        var before=writer.Capture(context,codec).CopyPayload();var runtime=new LoadoutCheckpointRuntime(context.Config,_clock);
+        using var service=new CheckpointService(runtime,new LoadoutCheckpointStore(),codec);using var registration=service.Register(writer);
+        var section=codec.Write(writer.Key,1,CheckpointSectionKind.World,w=>
+        {codec.WriteText(w,"tree-player");w.Write((int)PlayerSkillId.LureBeacon);w.Write((int)PlayerSkillId.PlayerTurret);});
+        var later=new LaterWorldFeature();using var laterRegistration=service.Register(later);
+        var data=LoadoutData(context,section,later.Capture(context,codec));
+        var failed=service.Restore(data);
+        Assert.That(failed.Status,Is.EqualTo(CheckpointOperationStatus.Failed),failed.Reason);
+        Assert.That(failed.Reason,Is.EqualTo("RestoreRolledBack"));Assert.That(runtime.Faulted,Is.False);
+        Assert.That(writer.Capture(context,codec).CopyPayload(),Is.EqualTo(before));
+        later.Fail=false;var restored=service.Restore(data);
+        Assert.That(restored.Status,Is.EqualTo(CheckpointOperationStatus.Restored),restored.Reason);
+        Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.LureBeacon));Assert.That(_controller.Loadout.E,Is.EqualTo(PlayerSkillId.PlayerTurret));
+        Assert.That(_research.Tokens,Is.EqualTo(1));Assert.That(_research.Level(PlayerSkillId.Bomb),Is.EqualTo(1));
+        yield return null;Assert.That(_research.Tokens,Is.EqualTo(1));
+    }
+
+    private sealed class LoadoutCheckpointRuntime : ICheckpointRuntime
+    {
+        public LoadoutCheckpointRuntime(MatchConfig config,IMatchTime time){Config=config;Time=time;}
+        public MatchConfig Config {get;}public IMatchTime Time {get;}
+        public bool IsCurrent=>true;public bool IsAuthority=>true;public bool CanCapture=>true;public bool CanRestore=>true;
+        public CancellationToken Lifetime=>default;public bool Faulted;
+        public IDisposable AcquirePause(string owner)=>new CheckpointRestoreStep(()=>{},()=>{});
+        public void BeginRestore(double seconds){}public void FinishRestore(){}public void Fault(Exception error)=>Faulted=true;
+    }
+    private sealed class LoadoutCheckpointStore : ICheckpointStore
+    {
+        public Task SaveAsync(CheckpointSlot slot,CheckpointData data,CancellationToken cancellationToken=default)=>throw new NotSupportedException();
+        public Task<CheckpointData> LoadAsync(CheckpointSlot slot,CancellationToken cancellationToken=default)=>throw new NotSupportedException();
+    }
+    private sealed class LaterWorldFeature : ICheckpointParticipant
+    {
+        public bool Fail=true;public string Key=>"world/after-loadout";public int Version=>1;
+        public CheckpointSectionKind Kind=>CheckpointSectionKind.World;public int RestoreOrder=>240;
+        public CheckpointSection Capture(CheckpointCaptureContext context,ICheckpointPayloadCodec codec)=>codec.Write(Key,Version,Kind,w=>{});
+        public ICheckpointRestoreStep PrepareRestore(CheckpointRestoreContext context,CheckpointSection section,ICheckpointPayloadCodec codec)
+            =>new CheckpointRestoreStep(()=>{if(Fail)throw new InvalidOperationException("Deliberate later Feature failure.");},()=>{});
     }
     [UnityTest]
     public IEnumerator UpgradesConsumeTheSameTokensCapAtThreeAndChangeActualSkillStats()

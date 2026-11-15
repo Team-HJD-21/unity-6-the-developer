@@ -76,8 +76,7 @@ public sealed class PlayerArmoryView : MonoBehaviour
         if (_selected == WeaponType.DefaultGun) _comparison.text += row("발사 탄환 수", before.ProjectileCount.ToString(), after.ProjectileCount.ToString());
         if (_selected == WeaponType.Sniper) _comparison.text += row("최대 적중 적 수", _owner.Settings.SniperTargets(level).ToString(), _owner.Settings.SniperTargets(nextLevel).ToString());
         if (_selected == WeaponType.CryoBlaster)
-            _comparison.text += row("둔화율 (예정)", $"{(1 - _owner.Settings.SlowMultiplier(level)) * 100:0}%", $"{(1 - _owner.Settings.SlowMultiplier(nextLevel)) * 100:0}%") +
-                "\n<size=20>둔화 효과는 추후 적용됩니다.\n현재는 피해만 적용됩니다.</size>";
+            _comparison.text += row("둔화율", $"{(1 - _owner.Settings.SlowMultiplier(level)) * 100:0}%", $"{(1 - _owner.Settings.SlowMultiplier(nextLevel)) * 100:0}%");
         if (max) _comparison.text += "\n<size=20>최고 무기 레벨에 도달했습니다.</size>";
         else if (state.Tokens == 0) _comparison.text += "\n<size=20>레벨을 올리면 강화 토큰을 받을 수 있습니다.</size>";
     }

@@ -2282,6 +2282,7 @@ MonoBehaviour:
   _range: 4.5
   _muzzleHalfWidth: 0.12
   _endHalfWidth: 1.4
+  _slowDuration: 1.5
   _obstacleLayers:
     serializedVersion: 2
     m_Bits: 35680257
@@ -2419,6 +2420,7 @@ MonoBehaviour:
   _range: 4.5
   _muzzleHalfWidth: 0.12
   _endHalfWidth: 1.4
+  _slowDuration: 1.5
   _obstacleLayers:
     serializedVersion: 2
     m_Bits: 35680257

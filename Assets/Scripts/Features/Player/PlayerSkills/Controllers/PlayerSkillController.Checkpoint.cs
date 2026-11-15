@@ -9,33 +9,38 @@ using TeamHJD.Game.Presentation.Scene;
 
 public sealed partial class PlayerSkillController : ICheckpointParticipant
 {
+    private const int LoadoutCheckpointVersion = 5;
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ?? throw new InvalidOperationException("Bind the Player actor before loadout checkpoints.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/loadout";
-    int ICheckpointParticipant.Version => 4;
+    int ICheckpointParticipant.Version => LoadoutCheckpointVersion;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 230;
     CheckpointSection ICheckpointParticipant.Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context); PlayerSkillId q = Loadout.Q, e = Loadout.E;
         var research = Research != null ? Research.Capture() : null;
-        return codec.Write(((ICheckpointParticipant)this).Key, 4, CheckpointSectionKind.World, writer =>
+        return codec.Write(((ICheckpointParticipant)this).Key, LoadoutCheckpointVersion, CheckpointSectionKind.World, writer =>
         { codec.WriteText(writer, CheckpointIdentity.PlayerId.Value); writer.Write((int)q); writer.Write((int)e);
             writer.Write(research != null); research?.Write(writer); });
     }
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context.Current);
-        if (section.Version != 3 && section.Version != 4) throw new InvalidDataException("Unsupported skill research version.");
+        if (section.Version != 1 && section.Version != 3 && section.Version != 4 && section.Version != LoadoutCheckpointVersion)
+            throw new InvalidDataException("Unsupported skill research version.");
         var target = codec.Read(section, section.Version, reader =>
         {
             if (codec.ReadText(reader) != CheckpointIdentity.PlayerId.Value) throw new InvalidDataException("The loadout belongs to a different Player.");
             var q = (PlayerSkillId)reader.ReadInt32(); var e = (PlayerSkillId)reader.ReadInt32();
-            var research = reader.ReadBoolean() ? PlayerSkillResearch.Snapshot.Read(reader, section.Version == 3) : null;
-            if ((Research != null) != (research != null)) throw new InvalidDataException("Skill research configuration differs.");
             try { new PlayerSkillLoadout().Restore(q, e); }
             catch (ArgumentException error) { throw new InvalidDataException("Invalid saved skill selection.", error); }
+            if (section.Version == 1 && (q > PlayerSkillId.LureBeacon || e > PlayerSkillId.LureBeacon))
+                throw new InvalidDataException("Invalid legacy skill selection.");
             if ((q != PlayerSkillId.None && !IsConfiguredSkill(q)) || (e != PlayerSkillId.None && !IsConfiguredSkill(e)))
                 throw new InvalidDataException("The saved skill is not configured on this Player.");
+            var research = section.Version == 1 ? Research?.MigrateLegacyLoadout(q, e) :
+                reader.ReadBoolean() ? PlayerSkillResearch.Snapshot.Read(reader, section.Version == 3, section.Version >= 5) : null;
+            if ((Research != null) != (research != null)) throw new InvalidDataException("Skill research configuration differs.");
             if (research != null)
             {
                 foreach(var id in research.Candidates) if (id != PlayerSkillId.None && !IsConfiguredSkill(id))
