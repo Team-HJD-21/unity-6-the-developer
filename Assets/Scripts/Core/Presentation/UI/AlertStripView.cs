@@ -11,9 +11,9 @@ namespace TeamHJD.Game.Presentation
     {
         public CanvasGroup Group;
         public TMP_Text Message;
-        public Color InfoColor = new(.839f, .749f, .486f);
-        public Color SuccessColor = new(.36f, .8f, .48f);
-        public Color ErrorColor = new(.98f, .72f, .66f);
+        public Color InfoColor = new(.93f, .84f, .62f);
+        public Color SuccessColor = new(.52f, .85f, .59f);
+        public Color ErrorColor = new(.99f, .76f, .7f);
         [Min(.5f)] public float DisplaySeconds = 2.2f;
         [Min(.01f)] public float EnterSeconds = .12f, ExitSeconds = .18f;
         [Min(0)] public float DefaultBottom = 166, ClearanceGap = 12, TopPadding = 16;

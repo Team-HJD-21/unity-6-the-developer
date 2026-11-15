@@ -97,6 +97,7 @@ public static class HudAmmoDockSetup
         // The whole magazine now inherits the weapon's scale, fold animation, input block and first-HUD scan.
         var scale = root.GetComponent<CombatHudScaleBinding>();
         scale.Elements = scale.Elements.Where(e => e.Target != ammo.AmmoRoot).ToArray();
+        UiReadabilitySetup.ApplyHud(root, style);
     }
     private static TMP_Text Label(string name, Transform parent, TMP_FontAsset font, Color color, float size, Vector2 position)
     {

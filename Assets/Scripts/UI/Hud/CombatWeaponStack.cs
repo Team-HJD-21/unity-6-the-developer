@@ -30,6 +30,7 @@ public sealed class CombatWeaponStack : MonoBehaviour
     private float _changeAt;
     private int _selected = -1;
     private float _nameUntil, _nameAlpha, _nameFrom, _nameTarget, _nameElapsed;
+    private readonly Vector3[] _nameCorners = new Vector3[4];
     public int SelectedIndex => _selected;
     private void OnEnable()
     {
@@ -103,8 +104,23 @@ public sealed class CombatWeaponStack : MonoBehaviour
         _nameAlpha = Mathf.Lerp(_nameFrom, _nameTarget, Mathf.SmoothStep(0, 1, _nameElapsed / NameFadeSeconds));
         NameGroup.alpha = _nameAlpha;
         NameRect.anchoredPosition = NamePosition + Vector2.down * (4 * (1 - _nameAlpha));
+        if (_nameAlpha > .001f) ClampNameToScreen();
         int shown = hovered >= 0 ? hovered : _selected;
         if (shown >= 0 && shown < WeaponNames.Length) NameLabel.text = WeaponNames[shown];
+    }
+    private void ClampNameToScreen()
+    {
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas == null) return;
+        var root = (RectTransform)canvas.rootCanvas.transform;
+        NameRect.GetWorldCorners(_nameCorners);
+        Vector2 min = Vector2.positiveInfinity, max = Vector2.negativeInfinity;
+        foreach (var corner in _nameCorners)
+        { Vector2 p = root.InverseTransformPoint(corner); min = Vector2.Min(min, p); max = Vector2.Max(max, p); }
+        float margin = 8 / Mathf.Max(.001f, canvas.rootCanvas.scaleFactor);
+        Vector2 shift = new(Mathf.Max(0, root.rect.xMin + margin - min.x) + Mathf.Min(0, root.rect.xMax - margin - max.x),
+            Mathf.Max(0, root.rect.yMin + margin - min.y) + Mathf.Min(0, root.rect.yMax - margin - max.y));
+        NameRect.position += root.TransformVector(new Vector3(shift.x, shift.y, 0));
     }
     private void Changed(WeaponType weapon)
     {

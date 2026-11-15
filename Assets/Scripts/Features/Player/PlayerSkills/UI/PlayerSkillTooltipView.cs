@@ -45,7 +45,7 @@ public sealed class PlayerSkillTooltipView : MonoBehaviour
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, GameInput.PointerPosition, null, out var point)) return;
         var rect = (RectTransform)transform;
         var bounds = canvas.rect;
-        var size = rect.rect.size;
+        var size = Vector2.Scale(rect.rect.size, new Vector2(rect.localScale.x, rect.localScale.y));
         rect.anchoredPosition = new Vector2(
             Mathf.Clamp(point.x + _pointerOffset.x, bounds.xMin + _edgeMargin, Mathf.Max(bounds.xMin + _edgeMargin, bounds.xMax - size.x - _edgeMargin)),
             Mathf.Clamp(point.y + _pointerOffset.y, Mathf.Min(bounds.yMax - _edgeMargin, bounds.yMin + size.y + _edgeMargin), bounds.yMax - _edgeMargin));
