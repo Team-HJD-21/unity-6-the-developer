@@ -212,12 +212,35 @@ public partial class EnemySpawnExecutor
 
     private void ResolveCheckpointReferences()
     {
+        RestoreCheckpointSummons();
         foreach (var group in _restoredSquads)
             group.squad.RestoreCheckpointTarget(CheckpointSceneReferences.Resolve(gameObject.scene, group.target));
         foreach (var enemy in _restoredEnemies)
             enemy.actor.RestoreCheckpointReferences(enemy.state);
         _restoredSquads.Clear();
         _restoredEnemies.Clear();
+    }
+
+    /// <summary>전 개체 생성 후 저장된 summon/부모 논리 ID로 생존 집계와 이벤트 구독을 복구한다. 롤백도 같은 경로를 사용한다.</summary>
+    private void RestoreCheckpointSummons()
+    {
+        const string prefix = "summon/";
+        var parents = _spawnedEnemies.Values.ToDictionary(enemy => enemy.EntityId, StringComparer.Ordinal);
+        foreach (var enemy in _spawnedEnemies.Values)
+        {
+            if (enemy.SpawnPointId == null || !enemy.SpawnPointId.StartsWith(prefix, StringComparison.Ordinal))
+                continue;
+
+            string parentId = enemy.SpawnPointId.Substring(prefix.Length);
+            // 소환 주체가 이미 죽거나 제거된 경우 소환수만 독립적으로 유지한다.
+            if (!parents.TryGetValue(parentId, out var parent))
+                continue;
+            if (parent.EntityId == enemy.EntityId ||
+                !parent.NetworkController.TryGetComponent<EnemySummonGenerator>(out var generator))
+                throw new InvalidDataException("Saved summon parent is invalid: " + parentId);
+
+            generator.RegisterSummon(enemy.NetworkController);
+        }
     }
 
     /// <summary>

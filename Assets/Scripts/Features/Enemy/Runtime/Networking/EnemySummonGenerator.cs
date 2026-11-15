@@ -64,8 +64,8 @@ public sealed class EnemySummonGenerator : NetworkBehaviour
         return executor.SpawnSummoned(parent, definition, positions, target, RegisterSummon);
     }
 
-    /// <summary>실제 생성에 성공한 소환수를 등록하고 사망·제거 알림을 구독한다.</summary>
-    private void RegisterSummon(EnemyNetworkController summoned)
+    /// <summary>생성 또는 복원된 소환수를 등록한다. 중복 등록 없이 사망·제거 알림도 다시 연결한다.</summary>
+    internal void RegisterSummon(EnemyNetworkController summoned)
     {
         if (summoned == null || !summoned.IsSpawned ||
             !_aliveSummons.TryAdd(summoned.NetworkObjectId, summoned))
