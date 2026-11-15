@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true, Position = 0)]
-    [ValidateSet('Sync', 'Acquire', 'Submit')]
+    [ValidateSet('Sync', 'Acquire', 'AcquireFolder', 'Submit')]
     [string]$Command,
     [string]$AssetPath,
     [string]$InputPath
@@ -25,8 +25,13 @@ function Get-Blob($revision, $path) {
     return 'deleted'
 }
 
+function Test-AssetPath($path) {
+    return $path -cmatch '^Assets/[^\\\r\n]+$' -and ($path -split '/') -cnotcontains '..' -and
+        ($path -split '/') -cnotcontains '.'
+}
+
 function Test-ManagedPath($path) {
-    return $path -cmatch '^Assets/(?!\.{1,2}/)(?!.*\/\.{1,2}/)[^\\\r\n]+(?:\.unity|\.prefab|\.png\.meta)$'
+    return (Test-AssetPath $path) -and $path -cmatch '(?:\.unity|\.prefab|\.png\.meta)$'
 }
 
 function Set-ReadOnly($path, [bool]$readOnly) {
@@ -134,55 +139,114 @@ function Sync-Assets {
 
 function Open-Asset($path) {
     if (!(Test-ManagedPath $path)) { throw "Unsupported Unity asset path: $path" }
-    $base = Get-Blob HEAD $path
-    if ($base -eq 'deleted') {
+    if ((Get-Blob HEAD $path) -eq 'deleted') {
         Set-ReadOnly $path $false
         return Get-EditableAsset $path
     }
+    Open-TrackedAssets @($path)
+}
+
+function Open-AssetFolder($path) {
+    if (!(Test-AssetPath $path)) { throw "Unsupported Unity asset folder: $path" }
+    $paths = @((Invoke-Git ls-tree -r --name-only -z HEAD -- "$path/") -split "`0" |
+        Where-Object { Test-ManagedPath $_ })
+    $editable = @(Open-TrackedAssets $paths)
+    ConvertTo-Json -Compress -Depth 4 -InputObject @{ editable = $editable }
+}
+
+function Open-TrackedAssets([string[]]$paths) {
+    if (!$paths.Count) { return }
     Initialize-Repository
-    $existing = @(Get-Records | Where-Object { $_.path -ceq $path }) | Select-Object -First 1
-    if ($null -ne $existing) {
-        if (@((Get-Locks).ours | ForEach-Object { [string]$_.id }) -ccontains $existing.id) {
-            if ($existing.submitted) { throw "$path has been submitted. It will unlock when that version reaches main." }
-            Set-ReadOnly $path $false
-            return Get-EditableAsset $path $existing.id
+
+    $locks = Get-Locks
+    $serverByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
+    foreach ($lock in (@($locks.ours) + @($locks.theirs))) {
+        if ($null -ne $lock) { $serverByPath[$lock.path] = $lock }
+    }
+    $ownedIds = @($locks.ours | ForEach-Object { [string]$_.id })
+    $localByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
+    foreach ($record in Get-Records) { $localByPath[$record.path] = $record }
+    $editable = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
+
+    foreach ($path in $paths) {
+        if (!$serverByPath.ContainsKey($path)) { continue }
+        $lock = $serverByPath[$path]
+        $id = [string]$lock.id
+        if ($ownedIds -cnotcontains $id -or !$localByPath.ContainsKey($path) -or $localByPath[$path].id -cne $id) {
+            Set-ReadOnly $path $true
+            $owner = $lock.owner.name
+            if ($owner) { throw "$path is locked by $owner in another account or checkout." }
+            throw "$path is already locked in another checkout."
         }
-        Set-ReadOnly $path $true
-        Remove-Item -LiteralPath (Get-RecordPath $existing.id)
+        if ($localByPath[$path].submitted) {
+            throw "$path has been submitted. It will unlock when that version reaches main."
+        }
+        $editable[$path] = $id
     }
 
+    $newLocks = [Collections.Generic.List[object]]::new()
     try {
-        $lock = @(Invoke-Git lfs lock --json --remote=origin -- $path | ConvertFrom-Json) | Select-Object -First 1
+        foreach ($path in $paths) {
+            if ($editable.ContainsKey($path)) { continue }
+            if ($localByPath.ContainsKey($path)) {
+                Set-ReadOnly $path $true
+                Remove-Item -LiteralPath (Get-RecordPath $localByPath[$path].id)
+            }
+            try {
+                $lock = @(Invoke-Git lfs lock --json --remote=origin -- $path | ConvertFrom-Json) | Select-Object -First 1
+            }
+            catch {
+                Set-ReadOnly $path $true
+                $failure = $_
+                $reported = & git lfs locks --json --remote=origin "--path=$path"
+                if ($LASTEXITCODE -eq 0) {
+                    $owner = $reported | ConvertFrom-Json | ForEach-Object { $_.owner.name } | Select-Object -First 1
+                    if ($owner) { throw "$path is locked by $owner." }
+                }
+                throw $failure
+            }
+            $id = [string]$lock.id
+            if (!$id) { throw "No LFS lock ID returned for $path." }
+            $newLocks.Add([pscustomobject]@{ id = $id; path = $path })
+            $editable[$path] = $id
+        }
+
+        if ($newLocks.Count) {
+            $null = Invoke-Git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'
+            $main = Invoke-Git rev-parse refs/remotes/origin/main
+            $head = Invoke-Git rev-parse HEAD
+            $mergeBase = $null
+            foreach ($lock in $newLocks) {
+                $published = Get-Blob $main $lock.path
+                $base = Get-Blob $head $lock.path
+                if ($published -cne $base) {
+                    if ($published -ne 'deleted') { throw "$($lock.path) differs from main. Update your branch before editing it." }
+                    if (!$mergeBase) { $mergeBase = Invoke-Git merge-base $head $main }
+                    if ((Get-Blob $mergeBase $lock.path) -ne 'deleted') {
+                        throw "$($lock.path) was deleted from main. Update your branch before editing it."
+                    }
+                }
+                Save-Record ([pscustomobject]@{ id = $lock.id; path = $lock.path; main = $main; base = $published; submitted = '' })
+            }
+        }
+        foreach ($path in $paths) {
+            Set-ReadOnly $path $false
+            Get-EditableAsset $path $editable[$path]
+        }
     }
     catch {
-        Set-ReadOnly $path $true
         $failure = $_
-        $reported = & git lfs locks --json --remote=origin "--path=$path"
-        if ($LASTEXITCODE -eq 0) {
-            $owner = $reported | ConvertFrom-Json | ForEach-Object { $_.owner.name } | Select-Object -First 1
-            if ($owner) { throw "$path is locked by $owner." }
+        foreach ($lock in $newLocks) {
+            try { Set-ReadOnly $lock.path $true }
+            catch { [Console]::Error.WriteLine($_.Exception.Message) }
+            try {
+                $null = Invoke-Git lfs unlock "--id=$($lock.id)" --remote=origin
+                $recordPath = Get-RecordPath $lock.id
+                if (Test-Path -LiteralPath $recordPath) { Remove-Item -LiteralPath $recordPath }
+            }
+            catch { [Console]::Error.WriteLine("Could not roll back lock $($lock.id) on $($lock.path): $($_.Exception.Message)") }
         }
         throw $failure
-    }
-    $id = [string]$lock.id
-    if (!$id) { throw "No LFS lock ID returned for $path." }
-    try {
-        $null = Invoke-Git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'
-        $main = Invoke-Git rev-parse refs/remotes/origin/main
-        $published = Get-Blob $main $path
-        $newOnBranch = $published -eq 'deleted' -and
-            (Get-Blob (Invoke-Git merge-base HEAD $main) $path) -eq 'deleted'
-        if ($published -cne $base -and !$newOnBranch) {
-            throw "$path differs from main. Update your branch before editing it."
-        }
-        Save-Record ([pscustomobject]@{ id = $id; path = $path; main = $main; base = $published; submitted = '' })
-        Set-ReadOnly $path $false
-        return Get-EditableAsset $path $id
-    }
-    catch {
-        Set-ReadOnly $path $true
-        $null = Invoke-Git lfs unlock "--id=$id" --remote=origin
-        throw
     }
 }
 
@@ -193,7 +257,8 @@ function Submit-Assets {
         $parts = $_ -split ' '
         if ($parts.Count -eq 4 -and $parts[2].StartsWith('refs/heads/') -and $parts[1] -match '^[0-9a-f]{40}$' -and
             $parts[1] -ne ('0' * 40)) {
-            [pscustomobject]@{ commit = $parts[1]; previous = $parts[3] }
+            $previous = & git rev-parse --verify --quiet "$($parts[3])^{commit}"
+            [pscustomobject]@{ commit = $parts[1]; previous = $previous }
         }
     })
     if (!$updates.Count) { return }
@@ -202,7 +267,8 @@ function Submit-Assets {
     foreach ($record in $records) {
         $versions = @(foreach ($update in $updates) {
             $version = Get-Blob $update.commit $record.path
-            if ($version -cne $record.base -and $version -cne (Get-Blob $update.previous $record.path)) { $version }
+            if ($version -cne $record.base -and (!$update.previous -or
+                $version -cne (Get-Blob $update.previous $record.path))) { $version }
         })
         $versions = @($versions | Sort-Object -Unique)
         if (!$versions.Count) { continue }
@@ -245,6 +311,7 @@ try {
         switch ($Command) {
             'Sync' { Sync-Assets }
             'Acquire' { ConvertTo-Json -Compress -InputObject (Open-Asset $AssetPath) }
+            'AcquireFolder' { Open-AssetFolder $AssetPath }
             'Submit' { Submit-Assets }
         }
     }

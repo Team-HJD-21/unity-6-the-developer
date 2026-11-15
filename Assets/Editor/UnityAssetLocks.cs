@@ -110,14 +110,14 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
     private static AssetMoveResult OnWillMoveAsset(string from, string to)
     {
-        return Application.isBatchMode || TryOpen(from)
+        return Application.isBatchMode || TryOpenForPathChange(from)
             ? AssetMoveResult.DidNotMove
             : AssetMoveResult.FailedMove;
     }
 
     private static AssetDeleteResult OnWillDeleteAsset(string path, RemoveAssetOptions options)
     {
-        return Application.isBatchMode || TryOpen(path)
+        return Application.isBatchMode || TryOpenForPathChange(path)
             ? AssetDeleteResult.DidNotDelete
             : AssetDeleteResult.FailedDelete;
     }
@@ -151,6 +151,30 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         {
             Debug.LogWarning($"Unity asset locks: {lockPath}\n{exception.Message}");
             return false;
+        }
+    }
+
+    private static bool TryOpenForPathChange(string path)
+    {
+        if (!path.StartsWith("Assets/", StringComparison.Ordinal) || !AssetDatabase.IsValidFolder(path))
+            return TryOpen(path);
+
+        EditorUtility.DisplayProgressBar("Git LFS", $"Checking asset locks in {path}", 0f);
+        try
+        {
+            LockStatus status = JsonUtility.FromJson<LockStatus>(Run("AcquireFolder", path));
+            foreach (EditableAsset asset in status.editable)
+                _editable[asset.path] = asset.record;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Unity asset locks: {path}\n{exception.Message}");
+            return false;
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
         }
     }
 
@@ -210,7 +234,11 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         {
             Task<string> output = process.StandardOutput.ReadToEndAsync();
             Task<string> errors = process.StandardError.ReadToEndAsync();
-            if (!process.WaitForExit(25000))
+            if (command != "Sync")
+            {
+                process.WaitForExit(); // Let lock acquisition roll back if any path fails.
+            }
+            else if (!process.WaitForExit(25000))
             {
                 process.Kill();
                 throw new TimeoutException("Git LFS did not respond in time.");
