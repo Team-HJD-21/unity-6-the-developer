@@ -9,6 +9,8 @@
 - `Environment_Obj`는 나무와 기물을 그린다. Tilemap Renderer는 `Individual`, `Entities / 0`을 사용하며 스프라이트의 지면 접점과 월드 Y축으로 플레이어와 정렬한다. `Tile Ground Shadows`의 시간대별 길이와 X·Y 오프셋은 [그림자 설정](weather-system-guide.md#46-stage1-태양과-타일맵-기물-그림자)에서 조절한다.
 - `Navmesh2D`의 NavMeshSurface는 [Stage1 전용 NavMesh 데이터](../../../Assets/Scenes/Gameplay/Stage_1/NavMesh-Navmesh2D.asset)를 참조한다. 이동 가능한 높이·경계·장애물이 바뀌면 Surface를 베이크하고 Scene과 NavMesh 에셋을 함께 확인한다. 경계 자동 갱신과 NavMesh 베이크는 별개다.
 
+- Physics 2D에서 WorldGeometry와 Bullet, Missile, EnemyProjectile, PlayerFieldDevice, EnemyFeetBox 사이의 직접 충돌을 비활성화한다. PlayerFeetBox의 WorldGeometry 접촉은 허용한다. 각 무기의 Raycast·Cast와 레이어 마스크는 해당 코드의 조회 규칙을 따른다.
+
 ### 나무·돌·터렛·Spaceship의 NavMesh 입력
 
 - `Navmesh2D`는 **Render Meshes**와 `NavMeshObstacleFootprints2D`를 함께 사용한다. 바닥은 타일 렌더 형상을 유지한다. 바닥의 CompositeCollider2D가 Outlines이므로 전체를 Physics Colliders로 바꾸면 일부 지면이 누락될 수 있다.
