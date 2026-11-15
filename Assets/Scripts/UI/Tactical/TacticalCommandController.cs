@@ -178,6 +178,7 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         if(!IsOpen || _camera==null)return;
         if(_cameraLease==null && _camera.HasOverride){CloseImmediate();return;}
         if(_cameraLease==null){var frame=Frame;_cameraLease=_camera.PushView(_rig,0,frame.Size,frame.Viewport);}
+        View.ModeEffect.SetRevealViewport(Frame.Viewport);
         View.ShowCommand(true);View.CommandGroup.alpha=0;
         ApplySceneryVisibility();RefreshMapSettings();RefreshDock();
     }

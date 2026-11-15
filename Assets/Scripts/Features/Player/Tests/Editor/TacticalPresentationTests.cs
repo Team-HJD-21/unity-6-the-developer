@@ -15,6 +15,8 @@ public sealed class TacticalPresentationTests
         Assert.That(TacticalModeEffect.TransitionEase(.5f),Is.EqualTo(.5f).Within(.00001f));
         Assert.That(TacticalModeEffect.TransitionEase(.1f),Is.LessThan(.02f));
         Assert.That(TacticalModeEffect.TransitionEase(.9f),Is.GreaterThan(.98f));
+        Assert.That(TacticalModeEffect.TransitionEase(.25f),Is.LessThan(.02f),"파동 초반은 기존 5차 보간보다 분명히 느려야 합니다.");
+        Assert.That(TacticalModeEffect.TransitionEase(.75f),Is.GreaterThan(.98f));
         float previous=0;
         for(int i=0;i<=100;i++)
         {
@@ -93,7 +95,7 @@ public sealed class TacticalPresentationTests
         Assert.That(TacticalPresentationRules.ToggleCaption(active,99,false,true),Is.EqualTo("잠김"));
     }
     [Test]
-    public void AuthoredModeShaderKeepsTheSettledCenterTransparentAndDrawsOnlyTheRim()
+    public void AuthoredModeShaderOccludesUnrevealedWorldAndKeepsTheSettledCenterTransparent()
     {
         if(SystemInfo.graphicsDeviceType==UnityEngine.Rendering.GraphicsDeviceType.Null)Assert.Ignore("Requires a graphics device.");
         var source=UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Art/UI/Tactical/TacticalModeFrame.mat");
@@ -112,17 +114,23 @@ public sealed class TacticalPresentationTests
             material.SetFloat("_Progress",0);material.SetFloat("_Cover",1);
             RenderTexture.active=rt;GL.Clear(false,true,Color.clear);Graphics.Blit(Texture2D.whiteTexture,rt,material);
             RenderTexture.active=rt;pixels.ReadPixels(new Rect(0,0,320,180),0,0);pixels.Apply();
-            int transparent=0;float maxAlpha=0;float minVisibleGreen=1;
-            foreach(var pixel in pixels.GetPixels()){if(pixel.a<.01f)transparent++;maxAlpha=Mathf.Max(maxAlpha,pixel.a);if(pixel.a>.2f)minVisibleGreen=Mathf.Min(minVisibleGreen,pixel.g);}
-            Assert.That(transparent,Is.GreaterThan(320*180*.7f),"전면 전환도 셀 내부의 게임 배경을 그대로 보여야 합니다.");
-            Assert.That(maxAlpha,Is.InRange(.3f,.7f),"육각선은 보이되 불투명 검은 면을 만들지 않습니다.");
-            Assert.That(minVisibleGreen,Is.GreaterThan(.2f));
+            foreach(var pixel in pixels.GetPixels())
+            {
+                Assert.That(pixel.a,Is.GreaterThan(.99f),"미공개 셀 내부에도 이전 필드가 비치면 안 됩니다.");
+                Assert.That(pixel.g,Is.GreaterThan(.025f),"차단 표면은 기존 지도 여백의 저채도 색이며 순수 검정이 아닙니다.");
+            }
             material.SetFloat("_Reveal",.5f);
             RenderTexture.active=rt;GL.Clear(false,true,Color.clear);Graphics.Blit(Texture2D.whiteTexture,rt,material);
             RenderTexture.active=rt;pixels.ReadPixels(new Rect(0,0,320,180),0,0);pixels.Apply();
             Assert.That(pixels.GetPixel(160,90).a,Is.LessThan(.001f));
             float outer=0;for(int y=0;y<180;y++)for(int x=0;x<320;x++)if(x<24 || x>=296 || y<24 || y>=156)outer=Mathf.Max(outer,pixels.GetPixel(x,y).a);
             Assert.That(outer,Is.GreaterThan(.2f),"중앙이 걷혀도 바깥 육각선은 아직 남아야 합니다.");
+            Assert.That(pixels.GetPixel(4,90).a,Is.GreaterThan(.99f));
+            material.SetFloat("_Reveal",1);material.SetVector("_RevealViewport",new Vector4(.2f,.1f,.8f,.9f));
+            RenderTexture.active=rt;GL.Clear(false,true,Color.clear);Graphics.Blit(Texture2D.whiteTexture,rt,material);
+            RenderTexture.active=rt;pixels.ReadPixels(new Rect(0,0,320,180),0,0);pixels.Apply();
+            Assert.That(pixels.GetPixel(160,90).a,Is.LessThan(.001f));
+            Assert.That(pixels.GetPixel(16,90).a,Is.GreaterThan(.99f),"지도 viewport 밖의 과거 카메라 화면도 차단합니다.");
         }
         finally{RenderTexture.active=previous;RenderTexture.ReleaseTemporary(rt);UnityEngine.Object.DestroyImmediate(material);UnityEngine.Object.DestroyImmediate(pixels);}
     }

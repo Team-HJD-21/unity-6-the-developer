@@ -137,6 +137,7 @@ public sealed class StageTurretCommandHudTests
         {
             popup.Show(hud.LocalPlayer.transform,t.OutputCamera,10);
             if(direction==0)Assert.That(t.Open(),Is.True);else t.Close();
+            Assert.That(t.View.ModeEffect.Cover,Is.EqualTo(1),"첫 전환 프레임부터 배경을 차단합니다.");
             Assert.That(HudPresentationVisibility.IsSuppressed,Is.True);
             int samples=0;float deadline=Time.realtimeSinceStartup+2;
             while(t.IsTransitioning && Time.realtimeSinceStartup<deadline)
@@ -236,7 +237,10 @@ public sealed class StageTurretCommandHudTests
         }
         Assert.That(covered,Is.True);Assert.That(t.IsMapPresented,Is.True);Assert.That(t.View.CommandGroup.alpha,Is.EqualTo(1));
         t.Close();yield return new WaitForSecondsRealtime(.04f);
+        float reversingRadius=t.View.ModeEffect.Reveal;
         Assert.That(t.Open(),Is.True,"닫는 도중 재요청은 현재 막에서 이어집니다.");
+        Assert.That(t.View.ModeEffect.Reveal,Is.EqualTo(reversingRadius).Within(.0001f));
+        Assert.That(t.View.ModeEffect.ContentIsMap,Is.True);
         yield return FinishTransition(t);Assert.That(t.IsOpen,Is.True);
         using(var blocked=Object.FindAnyObjectByType<AppRoot>().LocalInput.Acquire("Tactical test menu"))
         {
