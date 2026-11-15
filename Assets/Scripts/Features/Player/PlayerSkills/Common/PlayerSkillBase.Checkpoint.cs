@@ -11,6 +11,7 @@ public abstract partial class PlayerSkillBase : ICheckpointParticipant
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ?? throw new InvalidOperationException("Bind the Player actor before skill checkpoints.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/skill/" + (int)Id;
     protected virtual int CheckpointVersion => 1;
+    protected virtual bool SupportsCheckpointVersion(int version) => version == CheckpointVersion;
     int ICheckpointParticipant.Version => CheckpointVersion;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 240 + (int)Id;
@@ -25,15 +26,17 @@ public abstract partial class PlayerSkillBase : ICheckpointParticipant
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context.Current);
-        return codec.Read(section, CheckpointVersion, reader =>
+        if (!SupportsCheckpointVersion(section.Version)) throw new NotSupportedException("Unsupported Player skill checkpoint version.");
+        return codec.Read(section, section.Version, reader =>
         {
             if (codec.ReadText(reader) != CheckpointIdentity.PlayerId.Value) throw new InvalidDataException("The skill belongs to a different logical Player.");
-            try { return PrepareCheckpointState(reader, codec); }
+            try { return PrepareCheckpointState(reader, codec, section.Version); }
             catch (ArgumentException error) { throw new InvalidDataException("Invalid saved skill state or definition.", error); }
         });
     }
     protected abstract Action<BinaryWriter> CaptureCheckpointState(ICheckpointPayloadCodec codec);
     protected abstract ICheckpointRestoreStep PrepareCheckpointState(BinaryReader reader, ICheckpointPayloadCodec codec);
+    protected virtual ICheckpointRestoreStep PrepareCheckpointState(BinaryReader reader, ICheckpointPayloadCodec codec, int version) => PrepareCheckpointState(reader, codec);
 
     private void RequireCheckpointPlayer(CheckpointCaptureContext context)
     {

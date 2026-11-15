@@ -51,7 +51,7 @@ public sealed partial class PlayerTurretSkill
             ((turrets.Length > 0 || projectiles.Length > 0) && template == null) ||
             (projectiles.Length > 0 && (template.CheckpointProjectilePrefab == null || template.CheckpointProjectilePrefab.GetComponent<PlayerTurretProjectile>() == null)))
             throw new InvalidDataException("The saved temporary turret definition or inventory differs.");
-        if (turrets.Length > 0 && turrets.Any(t => t.MaximumHealth != template.GetComponent<PlayerTurretHealth>().MaxHealth))
+        if (turrets.Length > 0 && turrets.Any(t => !template.GetComponent<PlayerTurretHealth>().IsValidMaximumHealth(t.MaximumHealth)))
             throw new InvalidDataException("The temporary turret HP definition differs.");
         var occupied = new HashSet<int>();
         foreach (var turret in turrets)

@@ -42,6 +42,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     {
         PumpRescueInput();
         AdvanceRecovery();
+        AdvanceAutomaticRecovery();
         onHpChange.Invoke(curHp, maxHp);
         if (curHp <= 0) Die();
     }
@@ -62,7 +63,9 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     {
         if (_isDead) return;
         _isDead = true;
+        GetComponent<PlayerPortalSkill>()?.ClearArrivalShield();
         _recovering = false;
+        ClearAutomaticRecovery();
         GetComponent<PlayerControlState>()?.SetLifeBlocked(true);
         GetComponent<PlayerMovement>()?.StopImmediately();
         GetComponent<PlayerSkillController>()?.CloseSelection();
@@ -78,9 +81,14 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     public bool ApplyDamage(int damage)
     {
         if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanReceiveDamage(this)) return false;
+        var portal = GetComponent<PlayerPortalSkill>();
+        if (portal != null) damage = portal.AbsorbArrivalDamage(damage);
+        // 보호막만 소모한 공격은 체력 피해/피격 연출/자동 회복 대기시간을 발생시키지 않습니다.
+        if (damage == 0) return true;
         int previousHealth = curHp;
         curHp = (int)Math.Max(0L, (long)curHp - damage);
         int applied = previousHealth - curHp;
+        if (applied > 0) ScheduleAutomaticRecovery();
         if (applied > 0 && Damaged != null)
             foreach (Action<int> observer in Damaged.GetInvocationList())
                 try { observer(applied); } catch (Exception error) { Debug.LogException(error); }
@@ -91,6 +99,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     public void RecoverHp()
     {
         if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp || HasHeldRescueTarget) return;
+        ClearAutomaticRecovery();
         _recovering = true;
         _nextRecoveryAt = FieldSimulationTime.Seconds(this);
         AdvanceRecovery();
@@ -110,6 +119,6 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         _healthAuthority = false;
     }
 
-    public void UnbindMatch() { UnbindRescue(); _healthAuthority = false; _recovering = false; }
+    public void UnbindMatch() { UnbindRescue(); _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); GetComponent<PlayerPortalSkill>()?.ResetArrivalShield(); }
     public void UnbindNetworkMatch() => UnbindMatch();
 }

@@ -12,7 +12,7 @@ public partial class PlayerInfo : ICheckpointParticipant
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ??
         throw new InvalidOperationException("Bind the actual Player actor identity before checkpoint registration.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/actor";
-    int ICheckpointParticipant.Version => 1;
+    int ICheckpointParticipant.Version => 3;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
     int ICheckpointParticipant.RestoreOrder => 200;
 
@@ -20,7 +20,7 @@ public partial class PlayerInfo : ICheckpointParticipant
     {
         RequireCheckpointPlayer(context);
         SavedPlayer state = CapturePlayerState();
-        return codec.Write(((ICheckpointParticipant)this).Key, 1, CheckpointSectionKind.World, writer =>
+        return codec.Write(((ICheckpointParticipant)this).Key, 3, CheckpointSectionKind.World, writer =>
         {
             codec.WriteText(writer, CheckpointIdentity.PlayerId.Value);
             writer.Write(state.Health); writer.Write(state.MaximumHealth); writer.Write(state.Dead);
@@ -29,6 +29,8 @@ public partial class PlayerInfo : ICheckpointParticipant
             writer.Write(state.CanMove); state.Pose.Write(writer);
             writer.Write(state.Body.HasValue); if (state.Body.HasValue) state.Body.Value.Write(writer);
             writer.Write(state.Dash != null); state.Dash?.Write(writer);
+            writer.Write(state.AutomaticRecovery); writer.Write(state.AutomaticDelayRemaining); writer.Write(state.AutomaticPartialHealth);
+            writer.Write(_automaticRecoveryDelay); writer.Write(_automaticRecoveryFractionPerPulse); writer.Write(_automaticRecoveryInterval);
         });
     }
 
@@ -36,7 +38,8 @@ public partial class PlayerInfo : ICheckpointParticipant
         CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequireCheckpointPlayer(context.Current);
-        SavedPlayer target = codec.Read(section, 1, reader =>
+        if (section.Version < 1 || section.Version > 3) throw new NotSupportedException("Unsupported Player actor checkpoint version.");
+        SavedPlayer target = codec.Read(section, section.Version, reader =>
         {
             if (codec.ReadText(reader) != CheckpointIdentity.PlayerId.Value)
                 throw new InvalidDataException("The checkpoint belongs to a different logical Player in this slot.");
@@ -46,20 +49,37 @@ public partial class PlayerInfo : ICheckpointParticipant
             bool canMove = reader.ReadBoolean(); var pose = CheckpointTransformState.Read(reader);
             CheckpointRigidbody2DState? body = reader.ReadBoolean() ? CheckpointRigidbody2DState.Read(reader) : null;
             var dash = reader.ReadBoolean() ? PlayerDash.CheckpointState.Read(reader) : null;
+            bool automatic = section.Version >= 2 ? reader.ReadBoolean() : !dead && !recovering && health > 0 && health < maximum;
+            double automaticDelay = section.Version >= 2 ? reader.ReadDouble() : automatic ? AutomaticRecoveryDelay : 0;
+            double automaticPartial = section.Version >= 2 ? reader.ReadDouble() : 0;
+            if (section.Version >= 2 && (reader.ReadSingle() != _automaticRecoveryDelay || reader.ReadSingle() != _automaticRecoveryFractionPerPulse))
+                throw new InvalidDataException("Saved automatic recovery configuration differs from this Player.");
+            if (section.Version >= 3 && reader.ReadSingle() != _automaticRecoveryInterval)
+                throw new InvalidDataException("Saved automatic recovery interval differs from this Player.");
             if (maximum <= 0 || health < 0 || health > maximum || (dead && recovering) ||
                 double.IsNaN(remaining) || double.IsInfinity(remaining) || remaining < 0 || remaining > RecoveryInterval ||
                 !Enum.IsDefined(typeof(MatchPlayerLocation), location))
                 throw new InvalidDataException("Invalid saved Player vitals or location.");
+            if (!double.IsFinite(automaticDelay) || automaticDelay < 0 || automaticDelay > (section.Version >= 3 ? Math.Max(AutomaticRecoveryDelay, AutomaticRecoveryInterval) : AutomaticRecoveryDelay) ||
+                !double.IsFinite(automaticPartial) || automaticPartial < 0 || automaticPartial > maximum || (section.Version >= 3 && automaticPartial >= 1) ||
+                (automatic && (dead || health <= 0 || health >= maximum)) || (!automatic && (automaticDelay != 0 || automaticPartial != 0)))
+                throw new InvalidDataException("Invalid saved automatic health recovery.");
             if (body.HasValue != (GetComponent<UnityEngine.Rigidbody2D>() != null))
                 throw new InvalidDataException("The target Player physics configuration differs from the saved actor.");
             if ((dash != null) != (GetComponent<PlayerDash>() != null))
                 throw new InvalidDataException("The target Player dash configuration differs from the saved actor.");
             if (presence && GetComponent<PlayerMatchPresence>()?.CanReport != true)
                 throw new InvalidOperationException("Bind Host presence before restoring the Player location.");
-            // 성장으로 최대 체력이 바뀌어도 과거 전투 비율만 복원합니다. 사망 상태는 유지합니다.
+            // 연속 회복(v1/v2)의 누적 HP는 새 펄스 회복에 이월하지 않습니다.
+            if (section.Version < 3) automaticPartial = 0;
+            // main의 현재 성장 체력과 저장 당시 전투 비율을 유지하며 자동 회복 상태도 복원합니다.
             int currentMaximum = maxHp;
-            health = dead ? 0 : Math.Max(1, Math.Min(currentMaximum, (int)Math.Ceiling(health * (double)currentMaximum / maximum)));
-            return new SavedPlayer(health, currentMaximum, dead, recovering, remaining, location, presence, canMove, pose, body, dash);
+            double healthScale = (double)currentMaximum / maximum;
+            health = dead ? 0 : Math.Max(1, Math.Min(currentMaximum, (int)Math.Ceiling(health * healthScale)));
+            automaticPartial = Math.Min(.999999, automaticPartial * healthScale);
+            if (health >= currentMaximum) { automatic = false; automaticDelay = automaticPartial = 0; }
+            return new SavedPlayer(health, currentMaximum, dead, recovering, remaining, location, presence, canMove, pose, body, dash,
+                automatic, automaticDelay, automaticPartial);
         });
         SavedPlayer backup = CapturePlayerState();
         return new CheckpointRestoreStep(() => ApplyPlayerState(target), () => ApplyPlayerState(backup));
@@ -82,11 +102,15 @@ public partial class PlayerInfo : ICheckpointParticipant
         var body = GetComponent<UnityEngine.Rigidbody2D>(); var field = GetComponent<FieldSimulationActor>();
         CheckpointRigidbody2DState? physics = body == null ? null : field != null ? field.CaptureBody(body) : CheckpointRigidbody2DState.Capture(body);
         var presence = GetComponent<PlayerMatchPresence>();
+        double now = FieldSimulationTime.Seconds(this);
+        bool automatic = _automaticRecoveryPending && !_isDead && curHp > 0 && curHp < maxHp;
+        double automaticDelay = automatic ? Math.Max(0, _automaticRecoverySampleAt - now) : 0;
+        double automaticPartial = automatic ? _automaticRecoveryPartialHealth : 0;
         return new SavedPlayer(curHp, maxHp, _isDead, _recovering,
             _recovering ? Math.Min(RecoveryInterval, Math.Max(0, _nextRecoveryAt - FieldSimulationTime.Seconds(this))) : 0,
             presence != null ? presence.Location : MatchPlayerLocation.Field, presence?.TimeSource != null,
             GetComponent<PlayerMovement>()?.CanMove ?? true, CheckpointTransformState.Capture(transform), physics,
-            GetComponent<PlayerDash>()?.CaptureCheckpoint());
+            GetComponent<PlayerDash>()?.CaptureCheckpoint(), automatic, automaticDelay, automaticPartial);
     }
 
     private void ApplyPlayerState(SavedPlayer state)
@@ -100,6 +124,9 @@ public partial class PlayerInfo : ICheckpointParticipant
         }
         curHp = state.Health; maxHp = state.MaximumHealth; _isDead = state.Dead;
         _recovering = state.Recovering; _nextRecoveryAt = FieldSimulationTime.Seconds(this) + state.RecoveryRemaining;
+        _automaticRecoveryPending = state.AutomaticRecovery;
+        _automaticRecoverySampleAt = FieldSimulationTime.Seconds(this) + state.AutomaticDelayRemaining;
+        _automaticRecoveryPartialHealth = state.AutomaticPartialHealth;
         GetComponent<PlayerControlState>()?.SetLifeBlocked(state.Dead);
         var movement = GetComponent<PlayerMovement>(); if (movement != null) movement.CanMove = state.CanMove;
         if (state.Dash != null) GetComponent<PlayerDash>().RestoreCheckpoint(state.Dash);
@@ -116,12 +143,16 @@ public partial class PlayerInfo : ICheckpointParticipant
         public readonly CheckpointTransformState Pose;
         public readonly CheckpointRigidbody2DState? Body;
         public readonly PlayerDash.CheckpointState Dash;
+        public readonly bool AutomaticRecovery;
+        public readonly double AutomaticDelayRemaining, AutomaticPartialHealth;
         public SavedPlayer(int health, int maximumHealth, bool dead, bool recovering, double remaining,
-            MatchPlayerLocation location, bool hasPresence, bool canMove, CheckpointTransformState pose, CheckpointRigidbody2DState? body, PlayerDash.CheckpointState dash)
+            MatchPlayerLocation location, bool hasPresence, bool canMove, CheckpointTransformState pose, CheckpointRigidbody2DState? body, PlayerDash.CheckpointState dash,
+            bool automaticRecovery, double automaticDelayRemaining, double automaticPartialHealth)
         {
             Health = health; MaximumHealth = maximumHealth; Dead = dead; Recovering = recovering; RecoveryRemaining = remaining;
             Location = location; HasPresence = hasPresence; CanMove = canMove; Pose = pose; Body = body;
             Dash = dash;
+            AutomaticRecovery = automaticRecovery; AutomaticDelayRemaining = automaticDelayRemaining; AutomaticPartialHealth = automaticPartialHealth;
         }
     }
 }

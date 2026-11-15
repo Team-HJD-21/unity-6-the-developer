@@ -11,6 +11,7 @@ public sealed class PlayerTimeBombVisual : MonoBehaviour
     [SerializeField, Min(.01f)] private float _explosionDiameterAtScaleOne = 11.521f;
     [SerializeField] private TMP_FontAsset _displayFont;
     [SerializeField] private Vector2 _displayOffset = new Vector2(0, .06f);
+    [SerializeField] private Transform _displayAnchor;
     private TextMeshPro _countdown;
     private bool _detonated;
     private static readonly int EffectState = Animator.StringToHash("Base Layer.effect");
@@ -21,7 +22,7 @@ public sealed class PlayerTimeBombVisual : MonoBehaviour
         if (_countdown == null && _displayFont != null)
         {
             _countdown = new GameObject("Live Timer").AddComponent<TextMeshPro>();
-            _countdown.transform.SetParent(transform, false);
+            _countdown.transform.SetParent(_displayAnchor != null ? _displayAnchor : transform, false);
             _countdown.transform.localPosition = _displayOffset;
             _countdown.font = _displayFont;
             _countdown.rectTransform.sizeDelta = new Vector2(.27f, .13f);

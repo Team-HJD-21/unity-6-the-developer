@@ -501,6 +501,7 @@ public sealed class PlayerBulletRuntimeTests
         var enemy = CreateEnemy(1);
         var hitbox = enemy.GetComponentInChildren<Collider2D>();
         var bullet = CreateSniper();
+        CallPrivate(bullet, "ConfigurePenetration", 2);
         CallPrivate(bullet, "ProcessHit", hitbox); CallPrivate(bullet, "ProcessHit", hitbox);
         Assert.That(enemy.CurrentHealth, Is.EqualTo(enemy.MaxHealth - 1));
         object state = CallPrivate(bullet, "CaptureCheckpoint");
@@ -510,14 +511,19 @@ public sealed class PlayerBulletRuntimeTests
         stream.Position = 0;
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
         var saved = state.GetType().GetMethod("Read", BindingFlags.Public | BindingFlags.Static)
-            .Invoke(null, new object[] { reader, 3, new BinaryCheckpointPayloadCodec() });
+            .Invoke(null, new object[] { reader, 4, new BinaryCheckpointPayloadCodec() });
+        Assert.That(stream.Position, Is.EqualTo(stream.Length));
         Object.DestroyImmediate(bullet.gameObject);
         var restored = CreateSniper(); CallPrivate(restored, "RestoreCheckpoint", saved);
+        Assert.That(restored.MaximumEnemyTargets, Is.EqualTo(2));
         CallPrivate(restored, "ProcessHit", hitbox);
         Assert.That(enemy.CurrentHealth, Is.EqualTo(enemy.MaxHealth - 1), "Loading must not deal damage twice to the same logical enemy.");
         var other = CreateEnemy(2);
         CallPrivate(restored, "ProcessHit", other.GetComponentInChildren<Collider2D>());
         Assert.That(other.CurrentHealth, Is.EqualTo(other.MaxHealth - 1));
+        var third = CreateEnemy(3);
+        CallPrivate(restored, "ProcessHit", third.GetComponentInChildren<Collider2D>());
+        Assert.That(third.CurrentHealth, Is.EqualTo(third.MaxHealth), "The saved limit stops the bullet after its second distinct enemy.");
         yield break;
     }
 
@@ -532,7 +538,7 @@ public sealed class PlayerBulletRuntimeTests
         using var stream = new MemoryStream();
         using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
             state.GetType().GetMethod("Write").Invoke(state, new object[] { writer });
-        stream.SetLength(stream.Length - sizeof(int)); // v1/v2 has no trailing hit-history count.
+        stream.SetLength(stream.Length - sizeof(int) * 2); // v1/v2 has neither the history count nor the v4 penetration limit.
         stream.Position = 0;
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
         var saved = state.GetType().GetMethod("Read", BindingFlags.Public | BindingFlags.Static)
@@ -596,6 +602,7 @@ public sealed class PlayerBulletRuntimeTests
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/SniperBullet.prefab");
         var bullet = Object.Instantiate(prefab, _muzzle.position, Quaternion.identity).GetComponent<PlayerBullet>(); _bullets.Add(bullet);
+        typeof(PlayerBullet).GetProperty("SourceWeapon", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(bullet, WeaponType.Sniper);
         Assert.That(bullet.Initialize(Color.white, 1, Vector2.down), Is.True);
         return bullet;
     }

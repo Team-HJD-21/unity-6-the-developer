@@ -18,10 +18,14 @@ public partial class PlayerAttack
 {
     /// <summary>Inspector 수치를 UI에 복제하지 않고 현재 무기의 실제 공격 설정과 탄환 프리팹을 조회합니다.</summary>
     public bool TryGetCurrentWeaponStats(out PlayerWeaponStats stats)
+        => TryGetWeaponStats(_selection != null ? _selection.CurrentWeapon : WeaponType.DefaultGun, 0, out stats);
+
+    public bool TryGetWeaponStats(WeaponType weapon, int level, out PlayerWeaponStats stats)
     {
         stats = default;
         if (_selection == null) return false;
-        if (_selection.CurrentWeapon == WeaponType.Spanner)
+        if (!_selection.IsWeaponAuthored(weapon)) return false;
+        if (weapon == WeaponType.Spanner)
         {
             var spanner = _selection.Spanner;
             if (spanner == null) return false;
@@ -29,7 +33,7 @@ public partial class PlayerAttack
                 spanner.AttackInterval, 0, 0, spanner.AttackRange);
             return true;
         }
-        var shot = GetShotSettings();
+        var shot = GetShotSettings(weapon, level);
         if (shot.cryogenic)
         {
             if (_cryoSpray == null || !_cryoSpray.IsConfigured) return false;
@@ -37,7 +41,8 @@ public partial class PlayerAttack
                 Mathf.Max(.01f, shot.interval), 0, 0, _cryoSpray.Range, true);
             return true;
         }
-        var bullet = CurrentBulletPrefab != null ? CurrentBulletPrefab.GetComponent<PlayerBullet>() : null;
+        var prefab = _selection.ResolveBulletPrefab(weapon);
+        var bullet = prefab != null ? prefab.GetComponent<PlayerBullet>() : null;
         if (bullet == null) return false;
         stats = new PlayerWeaponStats(false, _baseStats != null ? _baseStats.ScaleWeaponDamage(shot.damage) : Mathf.Max(0, shot.damage), Mathf.Max(.01f, shot.interval),
             Mathf.Clamp(shot.pelletCount, 1, 32), bullet.FlightSpeed,

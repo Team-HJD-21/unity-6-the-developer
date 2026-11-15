@@ -1,5 +1,7 @@
 # Player Combat API
 
+플레이어 피해·자동 체력 회복의 현재 계약은 [Player Health API](player-health-api.md)를 참고한다.
+
 최종 갱신: 2026-10-15
 범위: 기본 무기 사격과 플레이어 탄환. #509 속도 가산 / #510 충돌 밀림 수정 기준.
 

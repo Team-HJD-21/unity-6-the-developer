@@ -80,7 +80,7 @@ public sealed class PlayerWeaponAmmo : MonoBehaviour
     private bool IsInterrupted => _selection == null || !_selection.isActiveAndEnabled ||
         _input == null || !_input.isActiveAndEnabled ||
         (_controls != null && _controls.IsBlocked) ||
-        (_skills != null && _skills.IsPlacingSkill) ||
+        (_skills != null && (_skills.IsPlacingSkill || _skills.PortalConsumesR)) ||
         (_repair != null && (_repair.IsRepairing || _repair.ConsumesRepairInput));
 
     private bool CanOperate => isActiveAndEnabled && !IsInterrupted && _selection.CanSelectWeapon &&

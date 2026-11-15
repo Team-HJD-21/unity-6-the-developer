@@ -23,7 +23,6 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     [SerializeField] private PlayerSpannerView _view;
     [SerializeField] private PlayerSpannerRepair _repair;
     [Header("Impact Feedback")]
-    [SerializeField] private PlayerSpannerSlash _slashPrefab;
     [SerializeField] private ParticleSystem _impactPrefab;
     [SerializeField, Range(0f, .1f)] private float _impactPauseSeconds = .045f;
     private readonly HashSet<EnemyHealth> _hit = new();
@@ -116,19 +115,8 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
             return;
         }
         _applyingStrike = true;
-        try { ShowAttackSlash(); ApplyMeleeDamage(); }
+        try { ApplyMeleeDamage(); }
         finally { _applyingStrike = false; }
-    }
-
-    private void ShowAttackSlash()
-    {
-        if (_slashPrefab == null) return;
-        PlayerSpannerSlash slash = Instantiate(_slashPrefab);
-        SceneManager.MoveGameObjectToScene(slash.gameObject, _owner.gameObject.scene);
-        GetStrikeGeometry(out var origin, out var range, out _);
-        bool mirrored = _weaponVisual != null && _weaponVisual.UsesContinuousAim &&
-            _owner.InverseTransformDirection(_swingDirection).x < 0f;
-        if (!slash.Show(_owner, _swingDirection, range, origin, mirrored)) Destroy(slash.gameObject);
     }
 
     private void ApplyMeleeDamage()
@@ -168,7 +156,7 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
     private void ShowImpact(Vector3 position, bool repairing)
     {
         if (_motion != null) _motion.PauseAtImpact(_impactPauseSeconds);
-        if (_impactPrefab == null) return;
+        if (!repairing || _impactPrefab == null) return;
         position.z = _owner.position.z;
         ParticleSystem effect = Instantiate(_impactPrefab, position, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(effect.gameObject, _owner.gameObject.scene);

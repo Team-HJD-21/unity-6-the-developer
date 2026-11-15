@@ -45,6 +45,9 @@ public partial class PlayerAttack : MonoBehaviour
     private PlayerTurretRepair _repair;
     private PlayerWeaponAmmo _ammo;
     private PlayerBaseStats _baseStats;
+    private PlayerArmory _armory;
+    private PlayerWeaponVisual _visual;
+    private PlayerCryoSpray SecondarySpray => _visual != null ? _visual.SecondaryCryoSpray : null;
     private double _nextShotTime;
     private double GameSeconds => FieldSimulationTime.Seconds(this);
     private PlayerMatchPresence Presence => GetComponent<PlayerMatchPresence>();
@@ -54,6 +57,7 @@ public partial class PlayerAttack : MonoBehaviour
     /// <summary>실제 발사 또는 근접 휘두르기에 성공했을 때 발생합니다. 비전투 Hover 표시의 기준입니다.</summary>
     public event System.Action AttackPerformed;
     private bool CanAttack => isActiveAndEnabled && _selection != null && _selection.transform == transform &&
+        _selection.IsWeaponAvailable(_selection.CurrentWeapon) &&
         _selection.CanSelectWeapon && (_skills == null || !_skills.IsPlacingSkill) &&
         (_repair == null || !_repair.IsRepairing);
     private GameObject CurrentBulletPrefab => _selection != null ? _selection.CurrentBulletPrefab : null;
@@ -70,6 +74,8 @@ public partial class PlayerAttack : MonoBehaviour
         _repair = GetComponent<PlayerTurretRepair>();
         _ammo = GetComponent<PlayerWeaponAmmo>();
         _baseStats = GetComponent<PlayerBaseStats>();
+        _armory = GetComponent<PlayerArmory>();
+        _visual = GetComponent<PlayerWeaponVisual>();
     }
 
     // 모든 UI Update와 설치 LateUpdate가 클릭을 처리한 뒤에만 공격합니다.
@@ -82,12 +88,20 @@ public partial class PlayerAttack : MonoBehaviour
             (_ammo == null || _ammo.CanFire(WeaponType.CryoBlaster)) && TryGetMuzzle(out var muzzle) && TryGetAimDirection(out var direction))
             _cryoSpray.Show(muzzle.position, direction);
         else _cryoSpray.Stop(!CanAttack || !FieldSimulationTime.CanAdvance(this));
+        if (SecondarySpray != null)
+        {
+            if (held && CanAttack && FieldSimulationTime.CanAdvance(this) && _selection.CurrentWeapon == WeaponType.CryoBlaster &&
+                (_ammo == null || _ammo.CanFire(WeaponType.CryoBlaster)) &&
+                _visual.TryGetSecondaryMuzzle(out var second, out var secondDirection)) SecondarySpray.Show(second, secondDirection);
+            else SecondarySpray.Stop(true);
+        }
     }
 
     private void OnDisable()
     {
         if (_input != null) _input.CancelAttackGesture();
         if (_cryoSpray != null) _cryoSpray.Stop(true);
+        if (SecondarySpray != null) SecondarySpray.Stop(true);
     }
 
     public bool TryFire()
@@ -99,6 +113,8 @@ public partial class PlayerAttack : MonoBehaviour
         if (!TryGetMuzzle(out Transform muzzle) || !TryGetAimDirection(out Vector2 direction)) return false;
 
         var shot = GetShotSettings();
+        if (_visual != null && _visual.IsDualWieldVisible)
+            shot.damage *= GetComponent<PlayerDualWieldSkill>()?.UpgradeMultiplier ?? 1f;
         bool fired;
         if (shot.cryogenic)
         {
@@ -109,6 +125,16 @@ public partial class PlayerAttack : MonoBehaviour
         else fired = FirePellets(muzzle.position, direction, shot.color, Mathf.Max(0f, shot.damage),
             false, shot.pelletCount, shot.spreadAngle);
         if (!fired) return false;
+        if (_visual != null && _visual.TryGetSecondaryMuzzle(out var secondary, out var secondaryDirection))
+        {
+            if (shot.cryogenic && SecondarySpray != null)
+            {
+                float damage = _baseStats != null ? _baseStats.ResolveWeaponDamage(shot.damage) : Mathf.Max(0, shot.damage);
+                SecondarySpray.ApplyDamage(secondary, secondaryDirection, Mathf.RoundToInt(damage));
+            }
+            else if (!shot.cryogenic) FirePellets(secondary, secondaryDirection, shot.color, Mathf.Max(0, shot.damage),
+                false, shot.pelletCount, shot.spreadAngle);
+        }
 
         // 한 번의 산탄 발사도 탄창에서는 한 발입니다. 생성 실패는 소비하지 않습니다.
         if (_ammo != null) _ammo.TryConsumeRound(_selection.CurrentWeapon);
@@ -123,7 +149,21 @@ public partial class PlayerAttack : MonoBehaviour
     }
 
     private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
-        GetShotSettings() => _selection.CurrentWeapon switch
+        GetShotSettings() => GetShotSettings(_selection.CurrentWeapon);
+
+    private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
+        GetShotSettings(WeaponType weapon, int level = 0)
+    {
+        var shot = GetBaseShotSettings(weapon);
+        if (_armory == null || !_armory.IsConfigured) return shot;
+        int actualLevel = level > 0 ? level : _armory.Level(weapon);
+        shot.damage *= _armory.DamageMultiplier(weapon, actualLevel);
+        if (weapon == WeaponType.DefaultGun) shot.pelletCount = _armory.Settings.PelletCount(actualLevel);
+        return shot;
+    }
+
+    private (Color color, float damage, float interval, int pelletCount, float spreadAngle, bool cryogenic)
+        GetBaseShotSettings(WeaponType weapon) => weapon switch
         {
             WeaponType.CryoBlaster => (_cryoColor, _cryoDamage, _cryoInterval, 0, 0f, true),
             WeaponType.Sniper => (_sniperColor, _sniperDamage, _sniperInterval, 1, 0f, false),
@@ -166,6 +206,8 @@ public partial class PlayerAttack : MonoBehaviour
         var bullet = Instantiate(CurrentBulletPrefab, spawnPosition, Quaternion.identity).GetComponent<PlayerBullet>();
         FieldSimulationTime.BindSpawned(bullet.gameObject, this);
         bullet.SourceWeapon = _selection.CurrentWeapon;
+        if (_selection.CurrentWeapon == WeaponType.Sniper && _armory != null && _armory.IsConfigured)
+            bullet.ConfigurePenetration(_armory.Settings.SniperTargets(_armory.Level(WeaponType.Sniper)));
         if (bullet.Initialize(color, damage, direction, cryogenic)) { TrackProjectile(bullet); return true; }
         Destroy(bullet.gameObject);
         return false;

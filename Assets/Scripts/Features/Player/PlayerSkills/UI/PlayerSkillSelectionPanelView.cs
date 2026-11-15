@@ -62,7 +62,7 @@ public sealed class PlayerSkillSelectionPanelView : MonoBehaviour
         bool full = owner.Loadout.E != PlayerSkillId.None;
         _instruction.text = full ? "Q / E 등록 완료 · 변경하려면 선택을 초기화하세요" :
             owner.Loadout.Q == PlayerSkillId.None ? "먼저 선택한 스킬 → Q   /   다음 스킬 → E" : "Q 등록 완료 · 다음 스킬은 E에 등록됩니다";
-        foreach (var card in _cards) card.Refresh();
+        for(int i=0;i<_cards.Length;i++) { _cards[i].SetSkill(owner.Candidate(i)); _cards[i].Refresh(); }
         _reset.interactable = owner.CanPrepare && owner.Loadout.Q != PlayerSkillId.None;
     }
 

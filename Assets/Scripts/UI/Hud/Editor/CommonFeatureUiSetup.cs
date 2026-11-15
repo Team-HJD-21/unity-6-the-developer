@@ -53,6 +53,8 @@ public static class CommonFeatureUiSetup
     private static void HideUnassignedSkillNodes(PlayerSkillTreePanel tree)
     {
         var cards = new SerializedObject(tree).FindProperty("_cards");
+        // The research tree owns its authored branching layout and controls.
+        if (new SerializedObject(tree).FindProperty("_tokens").objectReferenceValue != null) return;
         var scroll = tree.GetComponentsInChildren<ScrollRect>(true).Single(s => s.name == "Skill Circuit Scroll");
         float bottom = 0; int last = 0;
         for (int i = 0; i < cards.arraySize; i++)

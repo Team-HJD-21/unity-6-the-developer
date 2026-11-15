@@ -271,3 +271,13 @@ Sprite 참조·기존 클립 길이·반복 설정도 유지한다. 원형 원�
 - 실제 원본·프롬프트·등록 배율·클립 키와 검증 결과는 `Docs/94_art/player-diagonal-polish.json`에 보관한다.
   `player-diagonal-recoil-preview.gif`와 `player-integrated-hover-preview.png`는 에셋 미리보기이며 Unity 실행 캡처는 아니다.
   `StationaryDiagonalShot_HasRecoilAndRecoveryThenReturnsToIdle`는 정지 반동과 준비 자세 복귀를 검사한다.
+
+## 공통 스킬 시전 표시 (2026-11-15)
+
+`PlayerSkillCastPresentation`은 `PlayerSkillController.CastPerformed`를 구독해 약 0.36초 동안 총 내리기 → 반대 손으로 손목 패널 조작 → 확정한 목표 방향으로 팔 뻗기 → 대기 자세 복귀를 표시한다. 설치형은 `PlayerPlacementSkillBase.TryConfirmPlacement`의 성공한 지점 확정, 포탑은 실제 배치 성공, 양손 무기는 즉시 스킬 성공에서만 이벤트를 보낸다. 방벽의 첫 연결 지점과 포털의 각 끝점도 성공한 지점 확정이다. 프리뷰 열기·취소·설치 거절·쿨다운 거절은 재생하지 않는다.
+
+표시는 기존 Space Man 몸체의 팔 영역만 분리한 `SpaceManBody/Casting/CastBody.png`, 상완·장갑을 포함한 전완·손목 화면 Sprite를 조합한다. 머리·몸통·발·추진기는 원본 픽셀, 캔버스 160×160, 32 PPU와 기존 피벗을 유지한다. 좌우는 기존 몸체 반전을 따르고 뻗는 팔은 확정한 월드 목표를 향한다. 영상 생성 경로가 없어 기존 그림과 코드로 만든 부위를 사용하는 런타임 관절 애니메이션이다. 제작 경로·원본 해시·검사는 [제작 기록](../../94_art/player-skill-cast.json)에 보존한다.
+
+기존 몸체·총구 동기화 뒤 실행 순서 300에서 최종 표시 자세를 적용한다. 생성·피해·스킬 수량·쿨다운·활성 시간·이동·루트·콜라이더는 시전 표시가 변경하지 않는다. 필드 시각을 따라 진행하며 새 사격·스패너 공격·수리·대시·무기 교체는 즉시 시전 표시를 취소한다. UI 잠금·사망·비활성화도 팔과 패널을 숨기고 원래 표시로 복귀한다. 새 플레이어 프리팹에 연출 컴포넌트와 렌더러 다섯 개를 연결했다. Match/저장 데이터나 네트워크 메시지는 추가하지 않는다.
+
+검증: `PlayerSkillCastPresentationTests`의 Unity 실행 검사 6개가 통과했다. 프리뷰·거절·취소, 폭탄·포탑·양손 무기의 성공 경로, 패널/뻗기/복귀, 루트·콜라이더 보존, 사격·UI 잠금의 취소와 기존 활성 시간·쿨다운을 확인한다. 이후 긴 총이 얼굴을 가리지 않도록 내림 회전을 18도로 제한하고 자세·복귀 검사를 단독 재실행해 통과했다. `.meta` 전체 검사와 변경 파일 diff 검사도 통과했다. [좌우 미리보기](../../94_art/player-skill-cast-preview.gif)는 실제 프리팹·표시 메서드를 고립 Editor Scene에서 렌더한 것으로, 실제 게임 Scene의 플레이 캡처와 구분한다. 사람의 조작 인수·멀티플레이·빌드는 수행하지 않았다.

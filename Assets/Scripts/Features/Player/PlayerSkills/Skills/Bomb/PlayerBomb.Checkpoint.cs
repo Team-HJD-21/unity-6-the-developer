@@ -60,7 +60,7 @@ public sealed partial class PlayerBomb
         foreach (var bomb in state.Bombs)
         {
             var actor = CheckpointActorFactory.Instantiate(bombPrefab, gameObject.scene, bomb.Pose, bomb.Id);
-            try { actor.GetComponent<PlayerBombExplosion>().RestoreCheckpoint(bomb); FieldSimulationTime.BindSpawned(actor, this); TrackBomb(actor); }
+            try { var explosion=actor.GetComponent<PlayerBombExplosion>(); explosion.BindOwner(transform); explosion.RestoreCheckpoint(bomb); FieldSimulationTime.BindSpawned(actor, this); TrackBomb(actor); }
             catch { CheckpointActorFactory.Retire(actor); throw; }
         }
     }

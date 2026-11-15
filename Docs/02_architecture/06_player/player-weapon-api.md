@@ -1,5 +1,7 @@
 # 플레이어 무기 API
 
+무기고 장착·강화·토큰과 단계별 스나이퍼 적중 한도는 [플레이어 무기고](player-armory-api.md)를 함께 확인합니다. 무기고가 연결된 Player는 스패너와 장착한 두 총만 전환할 수 있습니다.
+
 수정일: 2026-11-14. 담당: 이영빈. 스패너 구현은 PR #549로 main에 반영됐으며, 실행 검증 범위는 아래 검증 절에서 구분합니다.
 
 ## 상태창의 장착 무기 조회
@@ -22,6 +24,8 @@
 
 - 임시 조정값은 피해 8/틱, 틱 간격 0.1초, 총구부터 사거리 4.5, 시작 반폭 0.12·끝 반폭 1.4입니다. 월드 단위이며 `PlayerAttack`과 `PlayerCryoSpray` Inspector에서 조절합니다. 여러 실제 `EnemyHurtbox`가 있어도 하나의 `EnemyHealth`에는 틱당 한 번만 피해를 전달합니다. 한 틱의 공격력·치명타 결과는 범위 내 대상들이 공유합니다.
 - 적 몸체와 장애물에 가린 부분에는 피해를 주지 않습니다. 앞의 적 몸체는 같은 방향의 뒤쪽 적을 막지만, 옆으로 퍼진 냉기에 닿는 다른 적은 함께 맞습니다. 해당 틱의 후보를 먼저 확정해 앞의 적이 그 틱에 죽어도 뒤쪽으로 피해가 새지 않게 합니다. 총구가 본체 안에 들어간 경우도 시작점 겹침 검사로 처리하며, `EnemySensor`·이동용 콜라이더는 피해·가림 후보에서 제외합니다.
+- main의 공용 `Clock`/기존 필드 `FieldClock` 분리 이후에는 시계 객체 참조 대신 `Snapshot.MatchId`와 실행 세대 `Epoch`로 동일 판을 확인합니다. 피해와 냉기 가림이 같은 검사를 사용하며, 필드가 보류된 적·다른 판·이전 실행 세대·시간 원본 미준비 대상은 제외합니다. 양쪽 모두 Match 바인딩이 없는 독립 시험은 허용합니다.
+  2026-11-15 후속: 실제 `FieldSimulationClock`을 사용하는 회귀 시험에서 수정 전 HP가 줄지 않는 현상을 재현했고 수정 후 `PlayerCryoSprayTests` 16/16이 통과했습니다. 같은 판의 분리된 시계, 앞 몸체 차폐, 옆 분사 피해, 다른 Match/실행 세대 제외, Field 보류·재개를 검사했습니다. 실제 Field Scene 수동 사격과 네트워크 인수는 별도입니다.
 - 분사 파티클에도 같은 범위·가림 규칙을 적용해 적 몸체나 벽 뒤로 흐르지 않게 합니다. `vfx/player-cryo-spray` Presentation 난수로 시작 seed만 받아 기존 난수 규칙을 따릅니다. 필드 시간으로 수동 재생하고, 연속 입력에는 인스턴스를 재사용합니다. 냉각 잔량은 HUD와 상태창에서 `100%`부터 표시하며 내부 15회 소모량의 잔여 비율을 올림합니다(첫 틱 후 `94%`). 기본총·스나이퍼는 기존 잔탄/용량 표시를 사용합니다. 모든 총기의 재장전은 기존 1.5초의 절반인 0.75초입니다. 버튼 해제/재장전/무기 전환 시 방출을 멈추고, 조작 차단/필드 정지/비활성/체크포인트 복원 시 잔여 표시를 비웁니다.
 - 이동 중 분사 표시는 현재 총구의 연속 공격 영역을 따릅니다. 월드 파티클 속도 13~15보다 플레이어 이동속도 17이 빨라 전진 시 파티클을 추월하던 문제를 수정했습니다. 파티클을 효과 루트의 Custom simulation space에서 진행하고, 범위·벽·적 차폐는 월드 좌표로 변환해서 검사합니다. 이동속도나 공격 판정 사거리를 바꾸지는 않습니다.
 - 현행 왼쪽 아래 무기 패널의 잔량 표시는 `CombatPlayerIndicators`가 담당합니다. 냉각총은 큰 잔량 숫자와 작은 `%`로 표시하고 기본총·스나이퍼는 기존 잔탄/용량을 표시합니다. 구형 `PlayerWeaponAmmoView`는 HUD v6 프리팹에서 비활성 상태를 유지하며, 새 패널과 상태창 모두 `PlayerWeaponAmmo.UsesPercentage`/`CurrentPercentage`를 읽습니다.
@@ -46,7 +50,7 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 ## 2026-11-12 암살자 감지 Trigger
 
-`Player.prefab`의 `PlayerEnemyDetector` 자식에 별도 CircleCollider2D Trigger를 배치합니다. 반경은 조정용 임시값입니다. Collider의 로컬 radius 3.75는 현재 Player 배율 0.8에서 월드 반경 3이며, 중심은 발밑에 가까운 로컬 (0, 0.2)입니다. Inspector의 CircleCollider2D에서 조절합니다.
+`Player.prefab`의 `PlayerEnemyDetector` 자식에 별도 CircleCollider2D Trigger를 배치합니다. 반경은 조정용 임시값입니다. 2026-11-15에 탐지 반경을 1.5배로 확대하여, Collider의 로컬 radius 5.625는 현재 Player 배율 0.8에서 월드 반경 4.5입니다. 중심은 발밑에 가까운 로컬 (0, 0.2)이며 Inspector의 CircleCollider2D에서 조절합니다.
 
 진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. 2026-11-13부터 `useTriggers = true`와 `EnemyHurtbox` 레이어 마스크로 실제 피격 Trigger를 조회합니다. 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
 
@@ -57,6 +61,8 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 네트워크 Client와 보고권 없는 Player replica는 탐지 원본을 쓰지 않습니다. 서버의 적 상태는 기존 `EnemyNetworkDetection`이 복제합니다. 같은 Scene/Match만 감지하고 Match 정지 중에는 기존 감지를 유지합니다. 입력 메뉴 잠금은 수동 감지 해제 조건으로 사용하지 않습니다. 독립 로컬 시험은 Player/Enemy가 모두 Match 밖인 경우에 허용합니다. 실제 Host/Client 전송 검증과 감지 반경의 밸런스 확정은 별도입니다. Enemy 측의 탐지·피격 계약은 [Enemy 시스템 가이드](../08_encounter/enemy-system-guide.md)를 참고합니다.
 
 검증은 `PlayerEnemyDetectorTests`에서 실제 BlackWolf의 Trigger 감지·은신 표시 목표값·범위 이탈·복수 감지자·센서 제외·권한을 확인합니다. `PlayerAssassinAttackRuntimeTests`는 Play Mode에 BlackWolf와 `EnemySquadTester`를 임시 생성하고 기본/냉각 탄환·스패너·폭탄의 피해 및 터렛 피해 거부를 확인합니다. 고정된 시험 배치이며 사람의 실제 조작과 Host/Client 통신 검증을 대신하지 않습니다.
+
+2026-11-15: 실제 Player 생성 경로에서는 `Awake` 이후 `PlayerMatchPresence`가 추가될 수 있습니다. 감지기는 초기 참조가 비어 있으면 소유자에서 다시 조회하여 같은 Match 여부와 보고권·우주선 이동 상태를 검사합니다. 초기 `null`을 계속 사용해 같은 Match의 암살자를 제외하던 경우를 수정했으며, 늦게 연결되는 Host/Client presence 회귀 테스트를 추가했습니다.
 
 ## 스크립트별 역할
 
@@ -139,7 +145,11 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 물리 힘은 가하지 않습니다. 타격 시점에 한 번 조회하며 휘두르는 동안 연속 판정하지 않습니다.
 기존 원거리 탄환의 속도와 충돌 처리는 현재 main 동작을 유지합니다.
 
-2026-10-31: 일반 스패너 공격은 적중 여부와 관계없이 실제 타격 시점에 초승달 검기를 한 번 재생한다. `PlayerSpannerWeapon._slashPrefab`에 제작된 SpriteRenderer·Animator·`PlayerSpriteEffect` 프리팹을 연결한다. 검기는 타격 순간의 플레이어 중심과 예약된 조준 방향을 사용하고 공격 반경 `_range`에 맞춰 균일 확대한다. 플레이어가 이후 이동해도 손이나 몸을 따라가지 않는다. 수리 의도의 타격은 검기를 재생하지 않으며 기존 수리 파티클을 유지한다. 타격 전 무기 전환·비활성화·조작 차단으로 예약이 취소되면 검기도 생기지 않는다.
+2026-11-15 현재: 일반 스패너 공격의 검기와 적중 파티클을 제거했다. 공격은 무기 자체의 회전으로 표시하며 타격 순간의 짧은 멈춤과 R 수리 불꽃은 유지한다. 아래 검기 설명은 과거 구현 기록이며 현재 공격에서 생성하지 않는다.
+
+연속 조준 공격은 처음 20% 동안 뒤로 85도 젖히고, 행동 중간(50%)에 예약된 조준선을 지나며, 68%까지 반대편 51도로 휘두른 뒤 복귀한다. 공격 중 표시상 손잡이를 정규화 X 0.22로 옮겨 헤드가 큰 호를 그리게 하고, 복귀 시 원래 그립으로 되돌린다. 좌측 조준은 회전을 반전한다. R 수리에는 기존 접촉 모션을 사용한다. 피해량·공격 간격·타격 시점·사거리·EnemyHitBox 판정과 R 수리 범위는 유지한다.
+
+이전 구현 (2026-10-31): 일반 스패너 공격은 실제 타격 시점에 초승달 검기를 재생했다.
 
 `PlayerSpannerSlash._authoredRadius`는 Sprite 피벗에서 검기의 바깥쪽 끝까지의 로컬 거리다. `SpannerSlash.prefab`은 256×256 그림 4장, PPU 128, 공통 피벗 `(74,128)` 픽셀(정규화 `(0.2890625,0.5)`)을 사용한다. 네 프레임의 알파 32 이상인 픽셀로 측정한 바깥 반경 178픽셀을 기준으로 `_authoredRadius=1.390625`를 지정한다. 원본 그림·피벗 또는 Pixels Per Unit을 변경하면 함께 맞춘다. 검기는 기본 공격의 100도 부채꼴 안에 놓는 장식용 표시이며 실제 충돌 판정은 기존 코드를 따른다. `_arc`를 바꿀 때에는 그림도 함께 조정해야 한다. 수명은 프리팹 `PlayerSpriteEffect._duration` 0.18초로, 몸체와의 순서는 `_sortingOrderOffset`으로 편집한다. Collider·메쉬·런타임 그림을 추가하지 않으며 피해량·반경·재사용 시간·수리 API는 변경하지 않는다.
 
@@ -250,3 +260,13 @@ Unity Test Runner에서 실행할 테스트이며 작성만으로 통과를 의�
 후속 사격 수정에서는 팔을 앞으로 뻗는 두 손 자세와 방향성이 있는 총구 섬광을 적용했다. PlayerWeaponRig의 `_usePoseMuzzles`가 켜져 있으면 `_firingMuzzles`/`_leftLeanMuzzles`/`_rightLeanMuzzles`의 방향별 로컬 좌표로 총구를 맞춘다. 발사 전에 `TryGetMuzzle`이 최신 자세 위치를 반영하므로 기존 PlayerAttack은 같은 호출 흐름을 사용한다. 좌우 이동 사격은 여전히 몸체 그림 한 장을 고정하고 섬광으로 발사를 표현한다. 피해량·산탄 수·탄환 속도·발사 간격과 콜라이더는 그대로다.
 
 에셋과 표시 API는 [Player Motion API](player-motion-api.md)를 참고한다. 현재 몸체 224장·56클립, 이펙트 16장·4클립이다. 런타임·Editor 빌드와 부유 공격·기울임 에셋의 정적 검사는 통과했다. 이동 전환·타격 시점의 실제 Unity Test Runner 및 플레이 확인은 남아 있다.
+
+## 플레이어/필드 시계 분리 후 수리 (2026-11-15)
+
+현재 Scene 조립은 플레이어 `PlayerMatchPresence`에 `MatchTimeService.Clock`, 필드 터렛에 `FieldSimulationClock`을 연결한다. 객체 참조가 다르다는 이유로 같은 판의 수리를 거부하지 않도록 `PlayerSpannerTargeting.SharesMatchExecution`이 현재 판 ID와 실행 Epoch를 확인한다. 양쪽 모두 시계가 없는 독립 시험은 기존처럼 허용한다. 한쪽만 바인딩됐거나 판/세대가 다르면 거부한다.
+
+`PlayerTurretRepair`의 R 유지 수리와 `PlayerSpannerRepair`의 타격 수리는 같은 실행 검사를 사용한다. 대상 자체의 필드 시뮬레이션도 진행 중이어야 하므로 Player 시계만 진행되는 필드 보류 중에는 수리하지 않는다. 같은 Scene, Host 권한, 거리·장애물, 잠금·활성화 진행, R 놓기 조건과 회복량은 유지한다. Core 시계나 터렛 원본 API는 수정하지 않는다.
+
+수리 회귀 `PlayerTurretRepairTests` 40/40 통과. 실제 `FieldSimulationClock` 투영 조합으로 수정 전 대상 거절을 재현하고 수정 뒤 R 수리·기존 스패너 수리, 필드 보류 중 거절, 다른 판/실행 세대 거절을 확인했다. 제작된 PlayerTurret 프리팹의 실제 체력 API를 통한 회복도 검사했다. 기존 장애물 fixture 두 개는 현재 전역 Default 레이어 충돌 설정에 의존하던 부분을 PlayerFeetBox/WorldGeometry로 명시하고 시험 중 변경한 충돌 쌍은 반드시 복구하도록 보완했다. 프로젝트 물리 설정을 이 수정에서 바꾸지 않는다.
+
+실제 Startup → 우주선 → Stage1 경로에서도 자동 입력으로 확인했다. 해제된 FieldCanonTurret의 체력을 70으로 만든 뒤 `HudPlayInput`의 InputSystem R 유지 입력을 정상 프레임으로 전달해 100까지 회복했다. 플레이어 MatchClock과 터렛 FieldSimulationClock이 다른 상태 그대로 수행했다. 사용한 입력 장치와 시험 중 이동/피해는 정리했다. 사람의 수동 조작·원격 Client·빌드는 별도다.
