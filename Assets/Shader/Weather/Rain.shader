@@ -40,6 +40,7 @@ Shader "Weather/Rain"
             // 좌표 변환 함수와 Unity의 _Time, _ScreenParams 같은 공통 값을 사용한다.
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "WeatherCoordinates.hlsl"
 
             half4 _RainTint;
             half4 _StreakColor;
@@ -124,10 +125,7 @@ Shader "Weather/Rain"
             half4 frag(Varyings i) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-                float2 effectUV = i.texcoord;
-                #if UNITY_UV_STARTS_AT_TOP
-                    effectUV.y = 1.0 - effectUV.y;
-                #endif
+                float2 effectUV = StageCameraViewportUV(i.positionCS);
                 // 카메라가 그린 원래 색을 읽는다. saturate는 강도를 0~1로 제한한다.
                 half4 col = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, i.texcoord);
                 half strength = saturate(_RainStrength);
@@ -142,9 +140,7 @@ Shader "Weather/Rain"
                 float aspect = _ScreenParams.x / _ScreenParams.y;
                 // 직교 카메라의 픽셀을 월드 XY에 대응시켜 격자를 지면에 고정한다.
                 // 카메라가 움직여도 같은 월드 위치의 빗줄기·파문은 같은 격자에 남는다.
-                float2 worldPosition = _WorldSpaceCameraPos.xy
-                    + (effectUV - 0.5) * (2.0 * unity_OrthoParams.y)
-                    * float2(aspect, 1.0);
+                float2 worldPosition = StageCameraWorldXY(i.positionCS);
                 float2 worldGridPoint = worldPosition / max(_PatternWorldHeight, 0.001);
                 // 가까운 빗줄기는 굵고 빠르게, 먼 빗줄기는 촘촘하고 약하게 그린다.
                 half nearStreaks = RainStreak(worldGridPoint, float2(38, 10),

@@ -79,6 +79,9 @@ public sealed class FieldTerritoryTests
         var material = Resources.Load<Material>("Core/FieldTerritory");
         Assert.That(material, Is.Not.Null);
         Assert.That(ShaderUtil.ShaderHasError(material.shader), Is.False);
+        Assert.That(material.HasProperty("_ExpansionField"), Is.True);
+        Assert.That(material.HasProperty("_BoundaryBlend"), Is.True);
+        Assert.That(material.HasProperty("_ExpansionColor"), Is.True);
         var inside = material.GetColor("_InsideColor");
         var outside = material.GetColor("_OutsideColor");
         Assert.That(inside.g, Is.GreaterThan(inside.r));

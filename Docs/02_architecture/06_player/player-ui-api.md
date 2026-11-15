@@ -30,7 +30,7 @@
 
 플레이어/CU/이전 시야/목표 해제는 전체도 헤더의 아이콘이다. 닫기·설정은 화면 오른쪽의 별도48×40 열이며 상시 문장 범례를 두지 않는다. 시설 도크/필드 hover/위협 카드는 체력 분할 게이지와 실제 감소 잔상을 사용하고 전력·적 수량은 의미 심볼 옆에 표시한다. 실제 HP 감소만0.42초 아이콘·상태 배지를 흔들고 카메라·사거리 좌표는 움직이지 않는다. 첫 연결·최대 HP 변경·회복은 피격을 새로 재생하지 않는다.
 
-`TacticalModeEffect`의 진입은 전면 육각선0.12초 → 카메라 교체/유지0.06초 → 중앙에서 바깥으로 소거0.42초다. 종료는 가장자리에서 중앙으로 육각막 채우기0.30초 → 카메라 복구/유지0.06초 → 전체 육각선 소거0.12초로 역순이다. `IsOpen`은 입력 lease의 전체 수명, `IsTransitioning`은 조작 대기, `IsMapPresented`는 완료한 UI 표시 상태다. 육각선이 전면에 펼쳐진 시점에 카메라만 교체하고 완료 시 지도/필드 UI를 공개한다. ModeEffect.Update(-300)는 Controller.Update(-250)와 일반 HUD 갱신보다 앞서 handoff하여 한 프레임의 중복 UI도 피한다. 양방향 전환은 `HudPresentationVisibility` scope로 모든 HUD 표시를 보류한다. 별도 Canvas인 체력/자물쇠·Alert/XP·조준선과 지역 상태/목표/호버도 포함하며 전환막과 게임 배경만 남긴다. 종료·취소 시 표시 scope를 해제하고 기존 고정/알림 상태를 복원한다. 파동/소거는 5차 SmoothStep으로 가감속하며 구간 시간은 유지한다. 전환 Canvas800의 전용 GraphicRaycaster가 표식을 가로채며 완료 시-900/raycast false로 돌아간다. 중앙 alpha0/가장자리 잔상은 유지한다. 연속 취소/재요청은 현재 막에서 이어지며 메뉴/사망/씬 해제는 CloseImmediate로 카메라·입력·renderer 상태를 정리한다.
+`TacticalModeEffect`는 첫 전환 프레임의 Cover1 불투명 표면 아래에서 카메라를 교체한다. 진입은 짧은 Hold 후 중앙→외곽으로 지도 viewport만 공개하며, 바깥에는 이전 필드가 비치지 않는다. 종료는 외곽→중앙으로 지도를 덮은 뒤 카메라 복구/Hold/표면 소거다. WaveTimeScale 기본1.25로 EnterSeconds/ExitSeconds 파동 시간을 조정하고 5차 SmoothStep을 두 번 적용한다. 이미 지도 카메라를 소유한 재열기는 현재 Reveal에서 바로 이어가며 아직 공개 전의 닫기 취소는 불필요한 안쪽 파동을 생략한다. `ContentIsMap`은 전환의 카메라 handoff 상태이고, `IsOpen`은 입력 lease 전체 수명, `IsMapPresented`는 완료한 지도 UI 상태다. Controller의 CommitMapView가 ModeEffect.SetRevealViewport(Frame.Viewport)를 전달한다. 기존 HudPresentationVisibility·전환 Canvas800/유지-900·GraphicRaycaster와 즉시 정리를 유지한다. 상세 변경과 검수 경계는 [지도 파동 공개 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-tactical-wave-reveal.md)을 따른다.
 
 `TerritoryFill`/`OverviewFill`은 확정 셀 상태의8배 샘플 mask와 `TacticalTerritory.mat`를 사용한다. 내부 셀 선은 없고 실제 점유 외곽선은 동일 월드 선분이다. 포인트/조작 권한은 여전히 원래 CapturedCells로 판정하며 feather를 점유로 읽지 않는다. 도크 위 `가까이에서 조작` 표시를 없앴다. 점유 완료 지역이면 플레이어 거리와 무관하게 지도에서 개별 조작하고, 미점유 지도 대상은 근접해도 잠김으로 표시하고 조작을 차단한다. Field F는 기존 해금·근접 규칙을 유지한다. Host가 허용하는 범위 안에서 지도 UI를 더 좁히며 Host의 권한을 확대하지 않는다.
 
@@ -343,3 +343,10 @@ HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후
 
 
 2026-11-15: `TacticalCommandController.IsHudEntryComplete`는 연결된 `CombatHudIntro.Completed`를 읽는다. 첫 전장 문구·소거·HUD 스캔 완료 전에는 지도 버튼을 숨기고 M 입력과 직접 `Open()` 호출도 거부한다. 전투 이동/공격의 공용 입력 lease를 추가하지 않는다. 자세한 검수는 [진입 차단·종료 반전 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-tactical-entry-exit.md)을 따른다.
+
+
+## 확정 점유의 표시 전환
+
+`TacticalCommandController.TerritoryFeedback`는 기존 지역 Source.Changed를 구독하여 상단/지도에는 최신 Snapshot을 즉시 제공하고 바닥만 `TerritoryExpansionState`로 전환한다. 실제 완료 식별은 Snapshot.Revision이 아닌 Change.Revision이며 StaticSecured의 SecuredRegionIds만 기존 Alert의 `점유 완료` 근거로 사용한다. `GameAlerts.TryShowIfIdle`로 현재 알림을 밀어내거나 큐 뒤에 오래된 성공을 쌓지 않는다.
+
+FieldTerritoryRenderer의 기존 Territory 정렬·공통 RegionBoundaryGeometry는 유지한다. TacticalHudStyle에서 Sweep0.65/Glow0.12/Settle0.28, Loss0.16, Merge0.18, ToastFresh1초와 기존 색에 가까운 CaptureGlow를 조정한다. Baseline/첫 구독/Grid 교체는 즉시 정착하며 Actor/Source 해제 시 구독과 성공 대기를 정리한다. 지도·전환 중에도 타임라인을 소비하며 논리 Grid와 스폰 제외를 애니메이션으로 지연하지 않는다. [구현·검증 경계](../../01_planning/02_implementation-records/2026/11/2026-11-15-territory-expansion-ui.md)를 따른다. 현재는 독립 관리형17개 검사 통과이며 통합 Editor/Play/GPU 검수는 담당 세션 대기다.

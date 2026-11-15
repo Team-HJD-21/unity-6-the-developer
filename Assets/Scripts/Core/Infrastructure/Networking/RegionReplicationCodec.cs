@@ -10,7 +10,7 @@ namespace TeamHJD.Game.Infrastructure
 {
     public static class RegionReplicationCodec
     {
-        private const int Magic = 0x32524A48;
+        private const int Magic = 0x33524A48;
         public static byte[] Encode(RegionReplicationFrame frame)
         {
             if (frame == null) throw new ArgumentNullException(nameof(frame));
@@ -21,6 +21,12 @@ namespace TeamHJD.Game.Infrastructure
             writer.Write(snapshot.Revision); writer.Write((int)snapshot.Mode); WriteRegionDefinition(writer, snapshot.Definition);
             writer.Write(snapshot.UnlockedRegionIds.Count);
             foreach (int region in snapshot.UnlockedRegionIds) writer.Write(region);
+            // 원인도 전체 상태와 함께 보내야 전송 합치기/초기 동기화에서 성공 연출을 오인하지 않습니다.
+            writer.Write((int)snapshot.Change.Kind);
+            writer.Write(snapshot.Change.PreviousRevision);
+            writer.Write(snapshot.Change.Revision);
+            writer.Write(snapshot.Change.SecuredRegionIds.Count);
+            foreach (int region in snapshot.Change.SecuredRegionIds) writer.Write(region);
             byte[] capture = new byte[(snapshot.CapturedCells.Count + 7) / 8];
             for (int i = 0; i < snapshot.CapturedCells.Count; i++)
                 if (snapshot.CapturedCells[i]) capture[i / 8] |= (byte)(1 << (i % 8));
@@ -47,6 +53,17 @@ namespace TeamHJD.Game.Infrastructure
                     if (unlocked[i] <= 0 || (i > 0 && unlocked[i] <= unlocked[i - 1]))
                         throw new FormatException("Invalid or duplicate unlocked region.");
                 }
+                var kind = (RegionChangeKind)reader.ReadInt32();
+                long previousRevision = reader.ReadInt64(), changeRevision = reader.ReadInt64();
+                int securedCount = ReadCount(reader, count);
+                var secured = new int[securedCount];
+                for (int i = 0; i < securedCount; i++)
+                {
+                    secured[i] = reader.ReadInt32();
+                    if (secured[i] <= 0 || i > 0 && secured[i] <= secured[i - 1])
+                        throw new FormatException("Invalid completed Region IDs.");
+                }
+                var change = new RegionGridChange(kind, previousRevision, changeRevision, secured);
                 int byteCount = (count + 7) / 8; byte[] capture = reader.ReadBytes(byteCount);
                 if (capture.Length != byteCount || stream.Position != stream.Length) throw new FormatException("Invalid capture bitset length.");
                 int remaining = count % 8;
@@ -54,7 +71,7 @@ namespace TeamHJD.Game.Infrastructure
                 var cells = new List<int>();
                 for (int i = 0; i < count; i++) if ((capture[i / 8] & (1 << (i % 8))) != 0) cells.Add(i);
                 return new RegionReplicationFrame(descriptor, generation,
-                    RegionGridSnapshot.FromCapturedCells(match, grid, revision, mode, definition, cells, unlocked));
+                    RegionGridSnapshot.FromCapturedCells(match, grid, revision, mode, definition, cells, unlocked, change));
             }
             catch (Exception error) when (error is EndOfStreamException || error is ArgumentException || error is OverflowException)
             { throw new FormatException("Invalid region payload.", error); }

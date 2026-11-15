@@ -31,8 +31,10 @@ Material:
     - _LineOpacity: 0.16
     - _FlowIntensity: 0.12
     - _FlowSpeed: 0.12
+    - _BoundaryBlend: 1
     m_Colors:
     - _InsideColor: {r: 0.25, g: 0.7, b: 0.41, a: 0.24}
     - _OutsideColor: {r: 0.76, g: 0.36, b: 0.35, a: 0.2}
+    - _ExpansionColor: {r: 0.4, g: 0.76, b: 0.5, a: 0.16}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -45,6 +45,8 @@ public sealed class StageCameraEffectsFeature : ScriptableRendererFeature
         {
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.Color);
+            // 재입장 등으로 후처리용 중간 색상이 없어도 활성 화면을 샘플링할 수 있어야 합니다.
+            requiresIntermediateTexture = true;
         }
 
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)

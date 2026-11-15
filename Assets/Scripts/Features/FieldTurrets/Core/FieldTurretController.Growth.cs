@@ -23,6 +23,19 @@ namespace TeamHJD.Game.FieldTurrets
         private Dictionary<EntityId, TurretGrowth> CaptureGrowth()
             => ReadCheckpointActors().ToDictionary(pair => pair.Key, pair => new TurretGrowth(pair.Value.CaptureActorState().Runtime));
 
+        // 같은 논리 ID라도 다른 종류로 재사용됐다면 성장 자료를 임의로 옮기지 않습니다.
+        private string GrowthFamily(string definitionId)
+        {
+            var definition = ResolvePrefab(definitionId).Definition;
+            var visited = new HashSet<string>(StringComparer.Ordinal);
+            while (_checkpointCatalog.TryGetPrevious(definition, out var previous))
+            {
+                if (!visited.Add(definition.Id)) throw new InvalidDataException("Cyclic turret level catalog.");
+                definition = previous.Definition;
+            }
+            return definition.Id;
+        }
+
         // World는 과거 전투 상태, growth는 최신 영구 상태입니다. 읽기/검증 후 새 불변 계획을 만듭니다.
         private SavedWorld MergeGrowth(SavedWorld world, IReadOnlyDictionary<EntityId, TurretGrowth> growth,
             int capacity, out string[] warnings)
@@ -104,6 +117,8 @@ namespace TeamHJD.Game.FieldTurrets
             private readonly FieldTurretController _owner;
             private event Action<GrowthSaveUrgency> _changed;
             private int _capacity;
+            // 제작본에서 빠진 ID도 다음 저장에 보존합니다. 다른 터렛에 재분배하거나 생성하지 않습니다.
+            private Dictionary<EntityId, TurretGrowth> _unmapped = new();
             public GrowthParticipant(FieldTurretController owner) { _owner = owner; _capacity = owner.MaximumPower; }
             public string Key => "growth/field-turrets";
             public string PersistenceKey => "field-turrets";
@@ -143,7 +158,9 @@ namespace TeamHJD.Game.FieldTurrets
             public CheckpointSection Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
             {
                 _owner.RequireCheckpointMatch(context);
-                var growth = _owner.CaptureGrowth();
+                var growth = new Dictionary<EntityId, TurretGrowth>(_unmapped);
+                foreach (var pair in _owner.CaptureGrowth()) growth[pair.Key] = pair.Value;
+                if (growth.Count > 4096) throw new InvalidDataException("Retained turret growth exceeds the supported limit; explicit migration is required.");
                 return codec.Write(Key, 1, Kind, w =>
                 {
                     w.Write(_owner.MaximumPower); w.Write(growth.Count);
@@ -170,17 +187,36 @@ namespace TeamHJD.Game.FieldTurrets
                     return (capacity, states);
                 });
                 var backup = _owner.CaptureWorld(codec);
-                if (backup.Actors.Length != saved.states.Count) throw new InvalidDataException("The authored turret set changed; growth migration is required.");
-                var target = _owner.MergeGrowth(backup, saved.states, saved.capacity, out var warnings);
+                var current = _owner.CaptureGrowth();
+                var retained = new Dictionary<EntityId, TurretGrowth>();
+                int added = current.Keys.Count(id => !saved.states.ContainsKey(id));
+                foreach (var pair in saved.states)
+                {
+                    if (!current.TryGetValue(pair.Key, out var authored))
+                    {
+                        retained.Add(pair.Key, pair.Value);
+                        continue;
+                    }
+                    if (_owner.GrowthFamily(authored.Definition) != _owner.GrowthFamily(pair.Value.Definition))
+                        throw new InvalidDataException("Turret identity was reused for a different definition family: " + pair.Key);
+                    current[pair.Key] = pair.Value;
+                }
+                var target = _owner.MergeGrowth(backup, current, saved.capacity, out var powerWarnings);
                 _owner.ValidateWorld(target, codec);
+                var warnings = new List<string>(powerWarnings);
+                if (added > 0) warnings.Add("새로 배치된 터렛 " + added + "개는 제작 기본값으로 시작합니다.");
+                if (retained.Count > 0) warnings.Add("현재 배치에 없는 터렛 " + retained.Count + "개의 성장 기록은 저장에 보존했습니다.");
                 var previousWarnings = _owner._growthRestoreWarnings;
+                var previousUnmapped = _unmapped;
                 return new CheckpointRestoreStep(() =>
                 {
                     _owner.ApplyWorld(target, codec); _owner.ResolveWorldReferences();
-                    _owner._growthRestoreWarnings = warnings; _capacity = saved.capacity;
+                    _unmapped = retained;
+                    _owner._growthRestoreWarnings = warnings.ToArray(); _capacity = saved.capacity;
                 }, () =>
                 {
                     _owner.ApplyWorld(backup, codec); _owner.ResolveWorldReferences();
+                    _unmapped = previousUnmapped;
                     _owner._growthRestoreWarnings = previousWarnings; _capacity = backup.Controller.Budget.Maximum;
                 });
             }

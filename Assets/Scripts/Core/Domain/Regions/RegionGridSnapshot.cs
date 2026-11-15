@@ -16,12 +16,14 @@ namespace TeamHJD.Game.Domain
         public IReadOnlyList<bool> CapturedCells { get; }
         public int CapturedCellCount { get; }
         public IReadOnlyList<int> UnlockedRegionIds { get; }
+        /// <summary>마지막 확정 변경 맥락입니다. 초기 바인딩/새 Grid에서는 연출 없이 현재 상태를 기준선으로 사용합니다.</summary>
+        public RegionGridChange Change { get; }
         public double CaptureRatio => Definition.CapturableCellCount == 0 ? 0 :
             (double)CapturedCellCount / Definition.CapturableCellCount;
 
         internal RegionGridSnapshot(MatchId matchId, Guid gridId, long revision,
             RegionPolicyMode mode, RegionGridDefinition definition, bool[] capturedCells,
-            IEnumerable<int> unlockedRegionIds = null)
+            IEnumerable<int> unlockedRegionIds = null, RegionGridChange change = null)
         {
             if (matchId.IsEmpty) throw new ArgumentException("A match id is required.", nameof(matchId));
             if (gridId == Guid.Empty) throw new ArgumentException("A grid id is required.", nameof(gridId));
@@ -55,12 +57,26 @@ namespace TeamHJD.Game.Domain
             UnlockedRegionIds = new ReadOnlyCollection<int>(new List<int>(unlocked));
             CapturedCellCount = count;
             CapturedCells = new ReadOnlyCollection<bool>(copied);
+            Change = change ?? RegionGridChange.Baseline(revision);
+            if (Change.Revision > revision) throw new ArgumentException("A change cannot be newer than its snapshot.", nameof(change));
+            if ((Change.Kind == RegionChangeKind.StaticSecured || Change.Kind == RegionChangeKind.StaticLost) && mode != RegionPolicyMode.Static ||
+                Change.Kind == RegionChangeKind.DynamicCapture && mode != RegionPolicyMode.Dynamic)
+                throw new ArgumentException("The change does not belong to this Region mode.", nameof(change));
+            var completed = new HashSet<int>(Change.SecuredRegionIds);
+            var eligible = new HashSet<int>();
+            for (int i = 0; i < copied.Length && completed.Count > 0; i++)
+                if (completed.Contains(definition.RegionIds[i]) && definition.CapturableCells[i])
+                {
+                    if (!copied[i]) throw new ArgumentException("A completed Region still contains uncaptured land.", nameof(change));
+                    eligible.Add(definition.RegionIds[i]);
+                }
+            if (!completed.SetEquals(eligible)) throw new ArgumentException("A completed Region has no eligible cells.", nameof(change));
         }
 
         /// <summary>저장/복제 어댑터의 전체 Snapshot을 검증하여 복원합니다. 부분 갱신 명령이 아닙니다.</summary>
         public static RegionGridSnapshot FromCapturedCells(MatchId matchId, Guid gridId, long revision,
             RegionPolicyMode mode, RegionGridDefinition definition, IEnumerable<int> capturedCells,
-            IEnumerable<int> unlockedRegionIds = null)
+            IEnumerable<int> unlockedRegionIds = null, RegionGridChange change = null)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (capturedCells == null) throw new ArgumentNullException(nameof(capturedCells));
@@ -70,7 +86,7 @@ namespace TeamHJD.Game.Domain
                 if (index < 0 || index >= cells.Length) throw new ArgumentOutOfRangeException(nameof(capturedCells));
                 cells[index] = true;
             }
-            return new RegionGridSnapshot(matchId, gridId, revision, mode, definition, cells, unlockedRegionIds);
+            return new RegionGridSnapshot(matchId, gridId, revision, mode, definition, cells, unlockedRegionIds, change);
         }
 
         /// <summary>정적 터렛 사용 자격입니다. 점유와 별개이며 확보를 잃어도 해금은 유지합니다.</summary>
