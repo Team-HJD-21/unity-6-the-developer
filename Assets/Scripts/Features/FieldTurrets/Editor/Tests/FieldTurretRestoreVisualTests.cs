@@ -231,6 +231,48 @@ public sealed class FieldTurretRestoreVisualTests
         }
     }
 
+
+    [UnityTest]
+    public IEnumerator LaserAnimatorReturnsToItsOffPoseAfterFiring()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        yield return new EnterPlayMode();
+        using var fixture = new Fixture();
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/FieldTurrets/FieldTurrets/FieldLaserTurret/Stage1/FieldLaserTurret(Green).prefab")
+            .GetComponent<FieldLaserTurret>();
+        var laser = (FieldLaserTurret)FieldTurretFactory.Create(prefab,
+            FieldTurretInitializationData.CreateDefault(prefab.Definition, false),
+            fixture.Controller, Vector3.zero, Quaternion.identity);
+        yield return null;
+
+        var gun = Gun(laser);
+        var animator = gun.GetComponent<Animator>();
+        var offSprite = Gun(prefab).sprite;
+        animator.Update(.5f);
+        Assert.That(animator.GetCurrentAnimatorStateInfo(0).shortNameHash, Is.EqualTo(Animator.StringToHash("Off")));
+        Assert.That(gun.sprite, Is.EqualTo(offSprite));
+
+        laser.ActivateTurret();
+        Assert.That(laser.IsActivated, Is.True);
+        animator.Update(.1f);
+        animator.Update(.1f);
+        Assert.That(animator.GetCurrentAnimatorStateInfo(0).shortNameHash, Is.EqualTo(Animator.StringToHash("Active")));
+
+        typeof(FieldLaserTurret).GetMethod("Shoot", Fields).Invoke(laser, null);
+        animator.Update(.1f);
+        animator.Update(.1f);
+        Assert.That(animator.GetCurrentAnimatorStateInfo(0).shortNameHash, Is.EqualTo(Animator.StringToHash("Firing")));
+        Assert.That(gun.sprite, Is.Not.EqualTo(offSprite));
+
+        laser.DeactivateTurret();
+        Assert.That(laser.IsActivated, Is.False);
+        animator.Update(.1f);
+        animator.Update(.5f);
+        Assert.That(animator.GetCurrentAnimatorStateInfo(0).shortNameHash, Is.EqualTo(Animator.StringToHash("Off")));
+        Assert.That(gun.sprite, Is.EqualTo(offSprite));
+    }
+
     private static SpriteRenderer Gun(FieldTurretBase actor)
         => (SpriteRenderer)typeof(FieldTurretBase).GetField("gunRenderer", Fields).GetValue(actor);
 
