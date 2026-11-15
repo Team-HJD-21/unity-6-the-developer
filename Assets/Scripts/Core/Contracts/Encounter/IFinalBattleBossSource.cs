@@ -9,6 +9,8 @@ namespace TeamHJD.Game.Contracts
     {
         /// <summary>Core driver가 전투용 공용 시각을 전달합니다. 준비 정지 중 생성하되 실제 전투는 같은 시각의 재개를 따릅니다.</summary>
         EntityId PrepareFinalBoss(IMatchTime time, CancellationToken gameplay);
+        /// <summary>안전장치 사용이 확정되고 시간이 정지된 뒤, 포기한 보스전의 적·공격을 정리합니다. 이후 시작 저장을 복원합니다.</summary>
+        void AbandonAttemptForRecovery();
         /// <summary>실패/복귀/Match 종료 때 이 원본이 만든 개체와 시간 연결만 정리합니다. 반복 호출할 수 있습니다.</summary>
         void ReleaseFinalBoss();
     }

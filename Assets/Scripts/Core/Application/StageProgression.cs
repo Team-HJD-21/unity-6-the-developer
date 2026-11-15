@@ -64,7 +64,7 @@ namespace TeamHJD.Game.Application
         public void ConfirmFinalBossReady(EntityId actor)
         {
             if (!_available() || actor.IsEmpty || !Snapshot.CanEnterFinalBattle || actor == _first || actor == _second)
-                throw new InvalidOperationException("Confirm one real final boss after both Field spawns and full capture.");
+                throw new InvalidOperationException("Confirm one real final boss after full capture.");
             _final = actor; _pending = null;
         }
         /// <summary>권위 Enemy 생명 관찰자가 실제 HP 사망 사실을 전달합니다. Despawn/Scene 해제는 이 API로 보내지 않습니다.</summary>
@@ -97,7 +97,6 @@ namespace TeamHJD.Game.Application
             if (saved == null || saved.RunId != _run || !double.IsFinite(saved.CaptureRatio) ||
                 !double.IsFinite(saved.HighestCaptureRatio) || saved.CaptureRatio < 0 || saved.HighestCaptureRatio > 1 ||
                 saved.HighestCaptureRatio < saved.CaptureRatio || (saved.FirstFieldBoss.IsEmpty && !saved.SecondFieldBoss.IsEmpty) ||
-                (!saved.FinalBoss.IsEmpty && (saved.FirstFieldBoss.IsEmpty || saved.SecondFieldBoss.IsEmpty)) ||
                 (!saved.FirstFieldBoss.IsEmpty && (saved.HighestCaptureRatio < .33 || saved.FirstFieldBoss == saved.SecondFieldBoss || saved.FirstFieldBoss == saved.FinalBoss)) ||
                 (!saved.SecondFieldBoss.IsEmpty && (saved.HighestCaptureRatio < .66 || saved.SecondFieldBoss == saved.FinalBoss)) ||
                 (!saved.FinalBoss.IsEmpty && saved.HighestCaptureRatio < 1) ||

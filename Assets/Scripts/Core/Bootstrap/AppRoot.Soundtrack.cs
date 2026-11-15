@@ -45,6 +45,8 @@ namespace TeamHJD.Game.Bootstrap
                 {
                     scope = clock.MatchId.Value;
                     context = GameplayMusicContextQueries.ReadMatch(clock.MatchId, time.IsAvailable, _musicPresence.Location, CurrentEnvironment);
+                    if (_activeMission != null && _activeMission.IsBossMusicActive)
+                        context = GameplayMusicContext.Boss;
                 }
                 else if (_musicHubActor && (GameFlow == null || GameFlow.Phase == GameFlowPhase.Spaceship))
                 { context = GameplayMusicContext.Spaceship; scope = "hub/" + actor.gameObject.scene.handle; }

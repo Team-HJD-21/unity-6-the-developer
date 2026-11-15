@@ -2,13 +2,14 @@
 // Field 정지와 별개인 공용 MatchTime에 연결하며 일반 편성/예산을 다시 뽑지 않습니다.
 using System;
 using System.Threading;
+using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
 [DisallowMultipleComponent]
-public sealed class FinalBattleBossSource : MonoBehaviour, IFinalBattleBossSource
+public sealed class FinalBattleBossSource : MonoBehaviour, IFinalBattleBossSource, ICheckpointParticipantProvider
 {
     [SerializeField] private EnemySpawnExecutor executor;
     [SerializeField] private EnemyDefinition definition;
@@ -16,6 +17,13 @@ public sealed class FinalBattleBossSource : MonoBehaviour, IFinalBattleBossSourc
     private IDisposable _simulation;
     private MatchId _match;
     private EntityId _identity;
+
+    /// <summary>보스전 시작 안전장치만 이 Scene의 실제 Enemy writer를 사용합니다. Field 저장과 섞지 않습니다.</summary>
+    public IEnumerable<ICheckpointParticipant> GetCheckpointParticipants()
+    {
+        if (executor == null) throw new InvalidOperationException("Boss Executor가 필요합니다.");
+        yield return executor.CheckpointWriter;
+    }
 
     /// <summary>Core 기본 Scene driver가 호출합니다. 제작값 누락/다른 Scene/다른 Match는 실제 생성 전에 거부합니다.</summary>
     public EntityId PrepareFinalBoss(IMatchTime time, CancellationToken gameplay)
@@ -41,6 +49,14 @@ public sealed class FinalBattleBossSource : MonoBehaviour, IFinalBattleBossSourc
     }
 
     /// <summary>이 Scene의 전용 Executor가 만든 현재 Match 개체와 시간 연결만 정리합니다. 다른 Field Executor는 건드리지 않습니다.</summary>
+    public void AbandonAttemptForRecovery()
+    {
+        if (_simulation == null || executor == null || _match.IsEmpty)
+            throw new InvalidOperationException("현재 보스전 시작 범위가 없습니다.");
+        executor.AbandonFinalBossAttempt(_match);
+    }
+
+    /// <summary>실패/귀환 시 개체와 시각 연결을 모두 해제합니다. 재도전 준비와는 달리 소유 범위 자체를 닫습니다.</summary>
     public void ReleaseFinalBoss()
     {
         var simulation = _simulation;

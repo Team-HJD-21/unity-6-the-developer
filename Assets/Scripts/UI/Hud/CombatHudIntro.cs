@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-/// <summary>첫 필드 표시 때만 수평 스캔으로 켭니다. 입력 lease나 게임 시간은 변경하지 않습니다.</summary>
+/// <summary>첫 필드 표시와 명시적 보스전 재생에 기존 수평 스캔을 사용합니다. 입력과 게임 시간은 변경하지 않습니다.</summary>
 [DefaultExecutionOrder(900)]
 public sealed class CombatHudIntro : MonoBehaviour
 {
@@ -24,12 +24,31 @@ public sealed class CombatHudIntro : MonoBehaviour
     private AppRoot _app;
     private float _readyAt = -1, _elapsed;
     private bool _started;
+    private bool _battleReplay;
+    private float _replayStartedAt;
     private sealed class Entry { public int Users; public float Start = -1; }
     private static readonly Dictionary<int, Entry> Entries = new();
     private Entry _entry;
     private int _scene;
     private FieldEntryAnnouncement _announcement;
     public float AnnouncementSeconds => MessageFadeSeconds + MessageHoldSeconds + MessageEraseSeconds;
+    /// <summary>Core가 이미 잠근 보스전 준비 중에도 동일한 문구·스캔 순서를 명시 재생합니다.</summary>
+    public void ReplayForBattle(string message)
+    {
+        _battleReplay = true; _replayStartedAt = Time.unscaledTime;
+        _started = true; _elapsed = 0; Completed = false;
+        Group.alpha = 0; Group.blocksRaycasts = Group.interactable = false;
+        MaskGraphic.enabled = RevealMask.enabled = true; ScanGraphic.enabled = false; SetProgress(0);
+        if (_announcement != null) { _announcement.SetMessage(message); _announcement.Render(0, MessageFadeSeconds, MessageHoldSeconds, MessageEraseSeconds); }
+    }
+    public void CancelBattleReplay()
+    {
+        if (!_battleReplay) return;
+        _battleReplay = false; Completed = true; SetProgress(1);
+        Group.alpha = 1; Group.blocksRaycasts = Group.interactable = true;
+        RevealMask.enabled = MaskGraphic.enabled = ScanGraphic.enabled = false;
+        if (_announcement != null) _announcement.Render(AnnouncementSeconds + 1, MessageFadeSeconds, MessageHoldSeconds, MessageEraseSeconds);
+    }
     private void Awake()
     {
         _scene = gameObject.scene.handle;
@@ -52,7 +71,7 @@ public sealed class CombatHudIntro : MonoBehaviour
         if (Completed) return;
         if (_app == null) _app = FindFirstObjectByType<AppRoot>();
         bool field = SkillHud != null ? SkillHud.IsFieldVisible : Stage != null && Stage.HasFieldActor;
-        bool ready = field && (_app == null || (_app.IsInitialized && !_app.LocalInput.IsBlocked));
+        bool ready = field && (_battleReplay || _app == null || (_app.IsInitialized && !_app.LocalInput.IsBlocked));
         if (!field)
         {
             _readyAt = -1; _elapsed = 0; _started = false; Group.alpha = 0; ScanGraphic.enabled = false; SetProgress(0); return;
@@ -65,14 +84,14 @@ public sealed class CombatHudIntro : MonoBehaviour
             _started = true;
             if (_entry.Start < 0) _entry.Start = Time.unscaledTime;
         }
-        _elapsed = Mathf.Max(0, Time.unscaledTime - _entry.Start);
+        _elapsed = Mathf.Max(0, Time.unscaledTime - (_battleReplay ? _replayStartedAt : _entry.Start));
         if (_announcement != null) _announcement.Render(_elapsed, MessageFadeSeconds, MessageHoldSeconds, MessageEraseSeconds);
         if (_elapsed < AnnouncementSeconds) { Group.alpha = 0; return; }
         ScanGraphic.enabled = true;
         SetProgress(Mathf.Clamp01((_elapsed - AnnouncementSeconds) / Duration));
         Group.alpha = Mathf.Lerp(.45f, 1, CombatHudMotion.Sigmoid(Progress));
         if (Progress < 1) return;
-        Completed = true; Group.alpha = 1; Group.blocksRaycasts = Group.interactable = true;
+        Completed = true; _battleReplay = false; Group.alpha = 1; Group.blocksRaycasts = Group.interactable = true;
         RevealMask.enabled = MaskGraphic.enabled = ScanGraphic.enabled = false;
     }
     private void SetProgress(float progress)

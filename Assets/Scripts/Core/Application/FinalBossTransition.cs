@@ -35,7 +35,7 @@ namespace TeamHJD.Game.Application
             if (_stage.Snapshot.MatchId != _time.Clock.Snapshot.MatchId)
                 throw new ArgumentException("Stage 진행과 시간은 같은 Match에 속해야 합니다.");
             if (!_time.IsGameplayRunning || !_available() || !_stage.Snapshot.CanEnterFinalBattle)
-                throw new InvalidOperationException("최종 진입은 현재 100% 점유·두 Field 생성 확인·생존 참가자가 필요합니다.");
+                throw new InvalidOperationException("최종 진입은 현재 100% 점유와 생존 참가자가 필요합니다.");
             _epoch = time.Clock.Snapshot.Epoch;
             _lifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime, cancellation);
             Cancellation = _lifetime.Token;
@@ -48,7 +48,16 @@ namespace TeamHJD.Game.Application
             catch { Dispose(); throw; }
         }
 
-        /// <summary>Scene 소유자가 한 번 호출합니다. 실제 Saved/현재 scope 완료 뒤에만 Scene 준비를 시작할 수 있습니다.</summary>
+        /// <summary>컷씬 이후 보스전 시작점을 저장하는 진행 정책이 Scene 준비를 시작합니다. 저장 성공을 가장하지 않습니다.</summary>
+        public void PrepareScene()
+        {
+            if (_started) throw new InvalidOperationException("최종 진입 준비는 한 번만 시작합니다.");
+            RequireCurrent();
+            _started = true;
+            IsPrepared = true;
+        }
+
+        /// <summary>진입 전에 별도 월드 저장이 필요한 호출자가 사용합니다.</summary>
         public async Task PrepareAsync(CheckpointSlot slot,
             Func<CheckpointSlot, CancellationToken, Task<CheckpointOperationResult>> save)
         {

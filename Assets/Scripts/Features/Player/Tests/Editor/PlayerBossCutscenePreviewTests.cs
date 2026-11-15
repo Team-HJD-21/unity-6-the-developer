@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using System.Threading;
 using NUnit.Framework;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Presentation.Scene;
@@ -146,6 +147,31 @@ public sealed class PlayerBossCutscenePreviewTests
             Assert.That(typeof(PlayerBossCutscenePreview).GetField("_snapshot", Private).GetValue(_preview), Is.Null);
         }
         Assert.That(_input.IsBlocked, Is.False);
+    }
+    [UnityTest]
+    public IEnumerator ScriptedEntranceAcceptsTheCoreLeaseAndRetainsItsFinalFrameUntilExplicitRelease()
+    {
+        using var core = _input.Acquire("Core preparation");
+        Assert.That(_preview.TryPlay(), Is.False, "The ordinary preview still rejects blocked input.");
+        var task = _preview.PlayScriptedAsync(CancellationToken.None);
+        Assert.That(_preview.IsPlaying, Is.True);
+        double deadline = Time.realtimeSinceStartupAsDouble + 15;
+        while (!task.IsCompleted && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+        Assert.That(task.IsCompletedSuccessfully, Is.True, task.Exception?.ToString());
+        Assert.That(_input.Count, Is.EqualTo(1));
+        var presentation = (GameObject)typeof(PlayerBossCutscenePreview).GetField("_presentation", Private).GetValue(_preview);
+        Assert.That(presentation.activeSelf, Is.True, "The final frame must bridge the Core Fade without exposing the field.");
+        Assert.That(_preview.TryPlay(), Is.False);
+        _preview.StopPreview();
+        Assert.That(presentation.activeSelf, Is.False);
+        Assert.That(typeof(PlayerBossCutscenePreview).GetField("_snapshot", Private).GetValue(_preview), Is.Null);
+        using var cancel = new CancellationTokenSource();
+        task = _preview.PlayScriptedAsync(cancel.Token); cancel.Cancel();
+        deadline = Time.realtimeSinceStartupAsDouble + 2;
+        while (!task.IsCompleted && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+        Assert.That(task.IsCanceled, Is.True);
+        Assert.That(_preview.IsPlaying, Is.False);
+        Assert.That(_input.Count, Is.EqualTo(1));
     }
     [UnityTest]
     public IEnumerator DamageCancelsPreviewAndBlockedOrHubPlayerCannotStart()

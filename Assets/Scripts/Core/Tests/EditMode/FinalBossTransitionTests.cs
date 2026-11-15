@@ -84,6 +84,20 @@ namespace TeamHJD.Game.Tests.EditMode
         }
 
         [Test]
+        public void ScenePreparationKeepsPauseUntilRealBossCheckpointAndReadyConfirmation()
+        {
+            using var f = new Harness();
+            using var transition = f.Begin();
+            transition.PrepareScene();
+            Assert.That(transition.IsPrepared, Is.True);
+            Assert.That(f.Input.IsBlocked, Is.True);
+            Assert.That(f.Stage.Snapshot.FinalBoss.IsEmpty, Is.True);
+            transition.ConfirmReady(new EntityId("actual-boss"));
+            Assert.That(f.Input.IsBlocked, Is.False);
+            Assert.That(f.Time.FieldClock.IsHeld, Is.True);
+        }
+
+        [Test]
         public async Task RejectedOrOldScopeSaveReleasesResourcesWithoutCommittingBattle()
         {
             foreach (var result in new[] { new CheckpointOperationResult(Guid.NewGuid(), CheckpointOperationStatus.Rejected, "writer missing", true), Saved(false) })

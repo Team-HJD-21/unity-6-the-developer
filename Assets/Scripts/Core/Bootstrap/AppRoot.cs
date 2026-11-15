@@ -495,6 +495,7 @@ namespace TeamHJD.Game.Bootstrap
         private void OnNetworkMatchStarted(NetworkMatchDescriptor descriptor) => Services?.Screens.BindMatch(descriptor.Config.MatchId);
         private void OnNetworkMatchCompleted(MatchCompletion completion)
         {
+            if (_activeMission != null && _activeMission.PresentsBossVictory(completion)) return;
             if (!_isDisposed && _screenPresenter != null)
                 Services.Screens.ShowResult(completion);
         }

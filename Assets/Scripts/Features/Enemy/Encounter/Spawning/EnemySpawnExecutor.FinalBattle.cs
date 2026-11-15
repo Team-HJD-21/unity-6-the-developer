@@ -2,6 +2,7 @@
 // 전환의 공용 정지 중에도 준비만 허용하며, 생성된 AI/공격은 공용 시각이 재개될 때 진행합니다.
 using System;
 using System.Threading;
+using System.Linq;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
@@ -11,6 +12,17 @@ using EntityId = TeamHJD.Game.Domain.EntityId;
 
 public partial class EnemySpawnExecutor
 {
+    internal void AbandonFinalBossAttempt(MatchId match)
+    {
+        RequireCheckpointMatch(match);
+        if (CanSimulateField) throw new InvalidOperationException("보스전 재도전은 정지된 상태에서만 준비합니다.");
+        // 재도전은 이전 공격의 중간 프레임을 이어가지 않습니다. 전용 Executor의 소환·투사체까지 버린 뒤 시작 저장을 적용합니다.
+        foreach (var projectile in CheckpointProjectiles().ToArray())
+            if (projectile.NetworkObject.IsSpawned) projectile.NetworkObject.Despawn(true);
+        DespawnForMatch(match);
+        _squads.Clear();
+    }
+
     internal bool TrySpawnFinalBoss(EnemyDefinition definition, Transform spawn, MatchId match, CancellationToken gameplay,
         out EntityId identity, out string reason)
     {
@@ -26,7 +38,9 @@ public partial class EnemySpawnExecutor
         { reason = "FinalBossRequiresAuthoredNavMeshSpawn"; return false; }
         if (SpawnedEnemyCount != 0) { reason = "FinalBossRequiresDedicatedEmptyExecutor"; return false; }
 
-        var squad = new EnemySquad(definition.SquadMode, definition.TargetRule);
+        // 독립 BossRoom에는 시설이 없습니다. Additive로 보류한 Field의 터렛을 추적하지 않습니다.
+        // 소환 분대도 이 원본 규칙을 상속하므로 보스·소환체가 같은 참가자를 상대합니다.
+        var squad = new EnemySquad(definition.SquadMode, EnemyTargetRule.PlayerOnly);
         var expected = new EntityId("final/" + match.Value);
         var context = new EncounterExecutionContext(match, 1, 0, EncounterRequestSource.StageProgression,
             "FinalBattle", requestGuid: Guid.NewGuid(), spawnCancellation: gameplay);

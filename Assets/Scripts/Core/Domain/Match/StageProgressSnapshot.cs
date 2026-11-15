@@ -16,7 +16,7 @@ namespace TeamHJD.Game.Domain
         public bool SecondFieldBossDefeated { get; }
         public bool FinalBossDefeated { get; }
         public string PendingReason { get; }
-        public bool CanEnterFinalBattle => CaptureRatio >= 1 && !FirstFieldBoss.IsEmpty && !SecondFieldBoss.IsEmpty && FinalBoss.IsEmpty;
+        public bool CanEnterFinalBattle => CaptureRatio >= 1 && FinalBoss.IsEmpty;
         public StageProgressSnapshot(MatchId match, Guid run, double current, double highest, EntityId first, EntityId second,
             EntityId final, bool firstDead, bool secondDead, bool finalDead, string pending)
         {

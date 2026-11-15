@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Presentation;
@@ -49,6 +51,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
     private RenderTexture _snapshot;
     private readonly List<Canvas> _hiddenCanvases = new();
     private float _elapsed;
+    private bool _scripted, _completedScripted, _heldScriptedFrame;
     public bool IsPlaying { get; private set; }
     public float Elapsed => _elapsed;
     public float Duration => _director != null && _director.playableAsset != null ? (float)_director.duration : 0;
@@ -72,7 +75,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         var app = FindFirstObjectByType<AppRoot>();
         if (app != null && app.IsInitialized) _input = app.LocalInput;
     }
-    private PlayerInfo AvailablePlayer()
+    private PlayerInfo AvailablePlayer(bool scripted = false)
     {
         var manager = CameraManager.Current;
         if (manager == null || manager.HasOverride || manager.OutputCamera == null) return null;
@@ -81,14 +84,29 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         var follow = manager.GetComponent<MatchCameraFollow>();
         var player = follow != null && follow.Target != null ? follow.Target.GetComponent<PlayerInfo>() : null;
         var control = player != null ? player.GetComponent<PlayerControlState>() : null;
-        return player != null && !player.IsDestroyed && control != null && control.CanMove &&
+        return player != null && !player.IsDestroyed && control != null && (scripted || control.CanMove) &&
             !control.IsInSpaceship && player.gameObject.scene == gameObject.scene ? player : null;
     }
     public bool TryPlay()
+        => TryPlay(false);
+    /// <summary>진행 소유자의 기존 입력 잠금을 허용합니다. 마지막 화면은 Fade 인계 뒤 StopPreview/Reset에서 해제합니다.</summary>
+    public async Task PlayScriptedAsync(CancellationToken cancellation)
+    {
+        cancellation.ThrowIfCancellationRequested();
+        if (!TryPlay(true)) throw new InvalidOperationException("The authored boss entrance is unavailable.");
+        try
+        {
+            while (IsPlaying) { cancellation.ThrowIfCancellationRequested(); await Task.Yield(); }
+            cancellation.ThrowIfCancellationRequested();
+            if (!_completedScripted) throw new OperationCanceledException("Boss entrance was interrupted.", cancellation);
+        }
+        catch { StopPreview(); throw; }
+    }
+    private bool TryPlay(bool scripted)
     {
         ResolveInput();
-        var player = AvailablePlayer();
-        if (!isActiveAndEnabled || !IsConfigured || IsPlaying || player == null || _input == null || _input.IsBlocked) return false;
+        var player = AvailablePlayer(scripted);
+        if (!isActiveAndEnabled || !IsConfigured || IsPlaying || _heldScriptedFrame || player == null || _input == null || (!scripted && _input.IsBlocked)) return false;
         GameInput.TryConsumePrimaryPointerPress();
         try
         {
@@ -115,7 +133,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
                         if (canvas.enabled) { _hiddenCanvases.Add(canvas); canvas.enabled = false; }
             _material = new Material(_distortionTemplate);
             _distortion.material = _material; _distortion.enabled = false;
-            _elapsed = 0; IsPlaying = true;
+            _scripted = scripted; _completedScripted = false; _elapsed = 0; IsPlaying = true;
             _presentation.SetActive(true); _previewButton.gameObject.SetActive(false);
             _director.timeUpdateMode = DirectorUpdateMode.Manual;
             _director.Play(); _director.time = 0; _director.Evaluate(); ApplyCameraZoom(); _brain.ManualUpdate();
@@ -133,6 +151,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
     {
         if (!IsPlaying)
         {
+            if (_heldScriptedFrame) return;
             ResolveInput();
             if (_previewButton != null)
             {
@@ -141,7 +160,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
             }
             return;
         }
-        if (UIEscapeInput.TryConsume() || _player == null || _player.IsDestroyed ||
+        if ((!_scripted && UIEscapeInput.TryConsume()) || _player == null || _player.IsDestroyed ||
             _manager != CameraManager.Current || _manager.OutputCamera == null ||
             _player.GetComponent<PlayerControlState>().IsInSpaceship || _follow == null || _follow.Target != _player.transform || _manager.HasOverride)
         { StopPreview(); return; }
@@ -154,7 +173,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
             _brain.ManualUpdate();
             if (_captureFrame > .5f && _snapshot == null) CaptureWorld();
             ApplyPresentation();
-            if (_elapsed >= Duration) StopPreview();
+            if (_elapsed >= Duration) { _completedScripted = _scripted; StopPreview(_scripted); }
         }
         catch (Exception error) { StopPreview(); Debug.LogException(error, this); }
     }
@@ -200,8 +219,12 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         _distortion.enabled = _snapshot != null && _captureFrame > .5f;
     }
     public void StopPreview()
+        => StopPreview(false);
+    private void StopPreview(bool preserveFinalFrame)
     {
+        bool wasScripted = _scripted || _heldScriptedFrame;
         IsPlaying = false;
+        _heldScriptedFrame = preserveFinalFrame;
         if (_player != null) _player.Damaged -= OnPlayerDamaged;
         if (_director != null) _director.Stop();
         if (_cameraRig != null) _cameraRig.SetActive(false);
@@ -220,12 +243,16 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         _inputLease?.Dispose(); _inputLease = null;
         foreach (var canvas in _hiddenCanvases) if (canvas != null) canvas.enabled = true;
         _hiddenCanvases.Clear();
-        if (_presentation != null) _presentation.SetActive(false);
-        if (_distortion != null) { _distortion.texture = null; _distortion.material = _distortionTemplate; }
-        if (_snapshot != null) { _snapshot.Release(); Destroy(_snapshot); _snapshot = null; }
-        if (_material != null) { Destroy(_material); _material = null; }
+        if (_presentation != null) _presentation.SetActive(preserveFinalFrame);
+        if (!preserveFinalFrame)
+        {
+            if (_distortion != null) { _distortion.texture = null; _distortion.material = _distortionTemplate; }
+            if (_snapshot != null) { _snapshot.Release(); Destroy(_snapshot); _snapshot = null; }
+            if (_material != null) { Destroy(_material); _material = null; }
+        }
         _player = null; _manager = null;
-        if (_previewButton != null) _previewButton.gameObject.SetActive(true);
+        _scripted = false;
+        if (_previewButton != null) _previewButton.gameObject.SetActive(!preserveFinalFrame && !wasScripted);
     }
     private void OnPlayerDamaged(int damage) => StopPreview();
     private void OnOutputChanged(Camera camera) { if (IsPlaying && (_manager == null || _manager.OutputCamera != camera)) StopPreview(); }
