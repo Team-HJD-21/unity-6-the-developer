@@ -1,5 +1,7 @@
 # Player 구조와 Mission 복귀
 
+Editor에서는 현재 Play 안에서만 성장·안전장치 파일을 유지한다. Play 종료 시 App이 대기 쓰기를 마친 후 프로젝트별 임시 저장을 삭제한다. 다음 Play는 새 시험이며 빌드의 기존 저장은 읽지 않는다. [Editor 저장 위치와 수명](../01_core/growth-save-api.md)을 참고한다. 빌드의 영구 저장·안전장치 정책은 바꾸지 않는다.
+
 2026-11-15 재검수: 선택/비환급/재시도와 터렛 성장·생성 직후 저장 경계를 검사했다. 실제 Weather writer가 없는 전체 월드 복원과 첫 저장 없는 재입장을 구분한다. [최신 검수 기록](../../03_team/00_reviews/mission-safety-audit-20261115.md)을 함께 확인한다.
 
 `MissionRecoveryLedger`는 한 Mission의 팀 구조 시간·안전장치 사용 기록이다. `MatchRecovery`가 Host 원본을 관측해 구조 유지와 실패를 판단한다. Player HP/이동/Scene을 Core에서 복제하지 않고 실제 `IPlayerRescueActor`에 복귀를 요청한다.
