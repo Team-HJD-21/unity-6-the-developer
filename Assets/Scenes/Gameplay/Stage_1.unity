@@ -5978,6 +5978,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 111675983}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 111675985}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &111675981 stripped
 Transform:
@@ -6002,6 +6005,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/eaec9e56c0c24f88b9181aa7f9162c1c
+--- !u!1 &111675984 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 111675980}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &111675985
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111675984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &119359604
 GameObject:
   m_ObjectHideFlags: 0
@@ -503701,6 +503725,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 208993857}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 208993859}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &208993855 stripped
 Transform:
@@ -503725,6 +503752,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/b1fc234ac25344c1846a5a1c5a55655f
+--- !u!1 &208993858 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 208993854}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &208993859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208993858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1001 &246053812
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -503788,6 +503836,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 246053815}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 246053817}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &246053813 stripped
 Transform:
@@ -503812,6 +503863,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/98b068576210414187927d2aeda41c57
+--- !u!1 &246053816 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 246053812}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &246053817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 246053816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &267169717
 GameObject:
   m_ObjectHideFlags: 0
@@ -504100,6 +504172,7 @@ GameObject:
   - component: {fileID: 300471858}
   - component: {fileID: 300471857}
   - component: {fileID: 300471856}
+  - component: {fileID: 300471861}
   m_Layer: 14
   m_Name: Environment_Obj
   m_TagString: Untagged
@@ -566396,6 +566469,22 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!114 &300471861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300471854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &356791353
 GameObject:
   m_ObjectHideFlags: 0
@@ -566688,6 +566777,7 @@ GameObject:
   - component: {fileID: 534875115}
   - component: {fileID: 534875114}
   - component: {fileID: 534875116}
+  - component: {fileID: 534875117}
   m_Layer: 0
   m_Name: Navmesh2D
   m_TagString: Untagged
@@ -566757,6 +566847,18 @@ MonoBehaviour:
   m_UseMeshPrefab: {fileID: 0}
   m_CompressBounds: 0
   m_OverrideVector: {x: 1, y: 1, z: 0}
+--- !u!114 &534875117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 534875112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bca67946933043e1878832f946051a08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeamHJD.Game.Navigation.NavMeshObstacleFootprints2D
 --- !u!1 &543890342
 GameObject:
   m_ObjectHideFlags: 0
@@ -566911,7 +567013,31 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 29793233}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 589976484}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+--- !u!1 &589976483 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 589976482}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &589976484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 589976483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &609300336
 GameObject:
   m_ObjectHideFlags: 0
@@ -567094,7 +567220,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 909354653455416701, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: _turretController
-      value:
+      value: 
       objectReference: {fileID: 393497335}
     - target: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       propertyPath: m_LocalPosition.x
@@ -567143,6 +567269,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 656082605}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 656082607}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &656082604 stripped
 GameObject:
@@ -567162,6 +567291,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/33006bb4caec4536ada648d42cc5d94c
+--- !u!1 &656082606 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 656082603}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &656082607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 656082606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &656082611 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -567230,6 +567380,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 692790081}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 692790083}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &692790080 stripped
 GameObject:
@@ -567249,6 +567402,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/91dac58642c542588384d0f52bc6b10f
+--- !u!1 &692790082 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 692790079}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &692790083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692790082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &692790087 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -567317,6 +567491,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 725607057}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 725607059}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &725607055 stripped
 Transform:
@@ -567341,6 +567518,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/89662e79bded463a972f06a0be543901
+--- !u!1 &725607058 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 725607054}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &725607059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 725607058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &750224954
 GameObject:
   m_ObjectHideFlags: 0
@@ -1748621,6 +1748819,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 927415036}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 927415038}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &927415034 stripped
 Transform:
@@ -1748645,6 +1748846,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/2b3234ae0eb44fbe8749b5fb631c8bfe
+--- !u!1 &927415037 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 927415033}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &927415038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 927415037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1001 &939141673
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1748708,6 +1748930,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 939141676}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 939141678}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &939141674 stripped
 Transform:
@@ -1748732,6 +1748957,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/cda712e53c984a8587bb50cef9f89fa6
+--- !u!1 &939141677 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 939141673}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &939141678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 939141677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1001 &953425779
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1749159,6 +1749405,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1015874251}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1015874253}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &1015874249 stripped
 Transform:
@@ -1749183,6 +1749432,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/6db22cb570e1442e8a00284b2410182d
+--- !u!1 &1015874252 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1015874248}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1015874253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1015874252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &1022740323
 GameObject:
   m_ObjectHideFlags: 0
@@ -1749374,12 +1749644,36 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1055701139}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1055701133}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1055701131 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
   m_PrefabInstance: {fileID: 1055701130}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1055701132 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1055701130}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1055701133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1055701132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1055701138 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -1749411,6 +1749705,7 @@ GameObject:
   - component: {fileID: 1058705464}
   - component: {fileID: 1058705465}
   - component: {fileID: 1058705466}
+  - component: {fileID: 1058705467}
   m_Layer: 14
   m_Name: Spaceship
   m_TagString: Untagged
@@ -1749603,6 +1749898,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fbc2c3a074b4b84a722e402951c6038, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoC.Spaceship.Scripts.MutiScene.SpaceshipAnimationEventAdapter
+--- !u!114 &1058705467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1058705461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1001 &1118932011
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1749666,6 +1749977,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1118932013}
+    - targetCorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1118932015}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!1 &1118932012 stripped
 GameObject:
@@ -1749685,6 +1749999,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/6bec533ee29a402f83c841ab26b4c26c
+--- !u!1 &1118932014 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 1118932011}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1118932015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1118932014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1118932019 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 845453686062864816, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
@@ -1749935,6 +1750270,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1175837653}
+    - targetCorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1175837655}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!1 &1175837652 stripped
 GameObject:
@@ -1749954,6 +1750292,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/4770cf3c040f4910bec1e433341f268b
+--- !u!1 &1175837654 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 1175837651}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1175837655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1175837654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1175837659 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 845453686062864816, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
@@ -1750022,12 +1750381,36 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1176227397}
+    - targetCorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1176227391}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!1 &1176227389 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
   m_PrefabInstance: {fileID: 1176227388}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1176227390 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 1176227388}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1176227391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1176227390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1176227396 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 845453686062864816, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
@@ -1750292,6 +1750675,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1243624062}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1243624064}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1243624061 stripped
 GameObject:
@@ -1750311,6 +1750697,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/8de1f9e0754f4bd9b533e534ea3222ad
+--- !u!1 &1243624063 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1243624060}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1243624064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1243624063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1243624068 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -1750571,6 +1750978,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1423877460}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1423877462}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &1423877458 stripped
 Transform:
@@ -1750595,6 +1751005,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/706a27ac425c4f18a4e541d8556fc8ce
+--- !u!1 &1423877461 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1423877457}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1423877462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1423877461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &1428657862
 GameObject:
   m_ObjectHideFlags: 0
@@ -1750749,6 +1751180,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1451596774}
+    - targetCorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1451596776}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!1 &1451596773 stripped
 GameObject:
@@ -1750768,6 +1751202,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/4bb69caf562247ad8fc97a8d0cb11134
+--- !u!1 &1451596775 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 1451596772}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1451596776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451596775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1451596780 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 845453686062864816, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
@@ -1750880,6 +1751335,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1514195989}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1514195991}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &1514195987 stripped
 Transform:
@@ -1750904,6 +1751362,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/a2f3907de30946fbb54ff3b20c0d5902
+--- !u!1 &1514195990 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1514195986}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1514195991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1514195990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &1529827606
 GameObject:
   m_ObjectHideFlags: 0
@@ -1751391,6 +1751870,19 @@ MonoBehaviour:
   maximumSpawnBudget: 100
   staticBudgetIncreasePerRequest: 5
   selectionSettings:
+    roleWeights:
+    - role: 0
+      weight: 4
+    - role: 1
+      weight: 2
+    - role: 2
+      weight: 2
+    - role: 3
+      weight: 2
+    - role: 4
+      weight: 2
+    - role: 7
+      weight: 1
     nearbyCellRadius: 1
     sparseEnemyPercentage: 20
     preferredMultiplier: 3
@@ -1751471,6 +1751963,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1761941177}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1761941179}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1761941176 stripped
 GameObject:
@@ -1751490,6 +1751985,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/4e3a5a0aa29a4a12a025778bb8d57e02
+--- !u!1 &1761941178 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1761941175}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1761941179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1761941178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1761941183 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -1751558,6 +1752074,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1785418831}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1785418833}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &1785418829 stripped
 Transform:
@@ -1751582,6 +1752101,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/3f31b6d43fef42dba3f8c9d8746d628b
+--- !u!1 &1785418832 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1785418828}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1785418833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1785418832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &1804844892
 GameObject:
   m_ObjectHideFlags: 0
@@ -1751748,6 +1752288,18 @@ PrefabInstance:
     - target: {fileID: 1369968075042297331, guid: ced1835ef7bc3904091e3517b3c7ee94, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3577628612098365137, guid: ced1835ef7bc3904091e3517b3c7ee94, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4292144112
+      objectReference: {fileID: 0}
+    - target: {fileID: 3577628612098365137, guid: ced1835ef7bc3904091e3517b3c7ee94, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 4712349227296150836, guid: ced1835ef7bc3904091e3517b3c7ee94, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 4834069615919922514, guid: ced1835ef7bc3904091e3517b3c7ee94, type: 3}
       propertyPath: m_Name
@@ -1755172,6 +1755724,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1912037255}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1912037257}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1912037254 stripped
 GameObject:
@@ -1755191,6 +1755746,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/dcb9e44d6dc24fc29f692a54483644cb
+--- !u!1 &1912037256 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1912037253}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1912037257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1912037256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1912037261 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -1755434,6 +1756010,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1969123296}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1969123298}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1969123295 stripped
 GameObject:
@@ -1755453,6 +1756032,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/949ef37462c24061b13459f12efbf6c3
+--- !u!1 &1969123297 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1969123294}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1969123298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969123297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1969123302 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -1755521,6 +1756121,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1982005336}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1982005338}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!1 &1982005335 stripped
 GameObject:
@@ -1755540,6 +1756143,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/ae6d50603bd4467b894d3ffdea8bf738
+--- !u!1 &1982005337 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 1982005334}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1982005338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982005337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &1982005342 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1659131349136534652, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
@@ -1755741,6 +1756365,14 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: SceneryRenderers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
+      propertyPath: 'SceneryRenderers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 300471859}
     - target: {fileID: 1609201713903355411, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
@@ -1755809,14 +1756441,6 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
-    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
-      propertyPath: SceneryRenderers.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1024445463336039796, guid: c0214f24878a4fe1b4a16ab04ec28bd4, type: 3}
-      propertyPath: SceneryRenderers.Array.data[0]
-      value:
-      objectReference: {fileID: 300471859}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1756095,6 +1756719,102 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d8d1722f2d4e428bb3336bf91942845c, type: 3}
+--- !u!1 &2000610000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2000610001}
+  - component: {fileID: 1735068340}
+  m_Layer: 0
+  m_Name: Encounter Runtime
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2000610001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000610000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2000610010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 267169717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6df207e26e848978941b13dd1ddde61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Map.DayNightShaderApply
+  _weatherManager: {fileID: 1250254886}
+  _dayNightMaterial: {fileID: 2100000, guid: b3a6fa38abc7d40a489c8623c141a440, type: 2}
+  _playerLightRadius: 5
+  _playerLightFalloff: 4
+--- !u!1 &2000622000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2000622001}
+  - component: {fileID: 2000622002}
+  m_Layer: 0
+  m_Name: Spawn_Outer_01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2000622001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000622000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -111.490524, y: 59.912506, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1836352304}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2000622002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000622000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a706a0437709ae8478a97081b61dd731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
+  spawnPointId: Outer_01
+  areaId: OuterRing
+  spawnRadius: 1
+  canSpawnEnemies: 1
 --- !u!1001 &2000915367
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1756158,6 +1756878,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7051758743884136471, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2000915370}
+    - targetCorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2000915372}
   m_SourcePrefab: {fileID: 100100000, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
 --- !u!4 &2000915368 stripped
 Transform:
@@ -1756182,6 +1756905,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/5a65ee63ce92485bb67cfc866b37e401
+--- !u!1 &2000915371 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5571972955794653218, guid: 672d7da11a502314f9009e886e94fdd5, type: 3}
+  m_PrefabInstance: {fileID: 2000915367}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2000915372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000915371}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &2056049648
 GameObject:
   m_ObjectHideFlags: 0
@@ -1756594,6 +1757338,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 769347541509622616, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2146444541}
+    - targetCorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2146444543}
   m_SourcePrefab: {fileID: 100100000, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
 --- !u!4 &2146444539 stripped
 Transform:
@@ -1756618,100 +1757365,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.Scene.SceneEntityIdentity
   _entityId: turret/29c618e4d15746738ac95cb6c1795ba1
---- !u!1 &2000610000
+--- !u!1 &2146444542 stripped
 GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 8345819450356093735, guid: 24db787c82d15e647bc4d38af804fbf7, type: 3}
+  m_PrefabInstance: {fileID: 2146444538}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2000610001}
-  - component: {fileID: 1735068340}
-  m_Layer: 0
-  m_Name: Encounter Runtime
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2000610001
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2000610000}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2000610010
+--- !u!114 &2146444543
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 267169717}
+  m_GameObject: {fileID: 2146444542}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6df207e26e848978941b13dd1ddde61, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Map.DayNightShaderApply
-  _weatherManager: {fileID: 1250254886}
-  _dayNightMaterial: {fileID: 2100000, guid: b3a6fa38abc7d40a489c8623c141a440, type: 2}
---- !u!1 &2000622000
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2000622001}
-  - component: {fileID: 2000622002}
-  m_Layer: 0
-  m_Name: Spawn_Outer_01
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2000622001
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2000622000}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -111.4905272, y: 59.912505, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1836352304}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2000622002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2000622000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a706a0437709ae8478a97081b61dd731, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  spawnPointId: Outer_01
-  areaId: OuterRing
-  spawnRadius: 1
-  canSpawnEnemies: 1
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1756734,12 +1757408,6 @@ SceneRoots:
   - {fileID: 2000502100}
   - {fileID: 765547578}
   - {fileID: 1058705463}
-  - {fileID: 1055701130}
-  - {fileID: 1451596772}
-  - {fileID: 1969123294}
-  - {fileID: 1982005334}
-  - {fileID: 1243624060}
-  - {fileID: 1175837651}
   - {fileID: 1806864263}
   - {fileID: 791064100}
   - {fileID: 849057230}

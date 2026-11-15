@@ -68,6 +68,29 @@ public sealed class TacticalPresentationTests
         Assert.That(TacticalPresentationRules.Field(null,outside,null,false),Is.EqualTo(TacticalPresentationRules.FieldState.Hidden));
     }
     [Test]
+    public void FieldCapturePercentageUsesActualHoldAndKeepsPausedProgressWithoutAnnouncingCompletionEarly()
+    {
+        var settings=new StaticRegionCaptureSettings(30);
+        var capture=new StaticRegionCapture(1);capture.RecordDamage(20);
+        capture.Tick(0,true,1,0,settings);
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Capturing,capture.Snapshot,30),Is.EqualTo("구역 확보 중  0%"));
+        capture.Tick(15,true,1,0,settings);
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Capturing,capture.Snapshot,30),Is.EqualTo("구역 확보 중  50%"));
+        capture.Tick(16,true,1,3,settings);
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Contested,capture.Snapshot,30),Is.EqualTo("적 우세 · 확보 중단  50%"));
+        capture.Tick(18,true,0,0,settings);
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Paused,capture.Snapshot,30),Is.EqualTo("확보 일시 중단  50%"));
+        foreach(var state in new[]{TacticalPresentationRules.FieldState.Outside,TacticalPresentationRules.FieldState.LeftCapture,TacticalPresentationRules.FieldState.Locked,TacticalPresentationRules.FieldState.Hidden})
+            Assert.That(TacticalPresentationRules.FieldCaption(state,capture.Snapshot,30),Does.Not.Contain("%"));
+        capture.Tick(19,true,1,0,settings);capture.Tick(33.999,true,1,0,settings);
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Capturing,capture.Snapshot,30),Is.EqualTo("구역 확보 중  99%"));
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Capturing,capture.Snapshot,60),Is.EqualTo("구역 확보 중  49%"),"표시는 현재 Host의 확보 설정을 따릅니다.");
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Capturing,null,30),Does.Not.Contain("%"));
+        capture.Tick(34,true,1,0,settings);
+        Assert.That(capture.IsSecured,Is.True);
+        Assert.That(TacticalPresentationRules.FieldCaption(TacticalPresentationRules.FieldState.Hidden,capture.Snapshot,30),Is.Empty);
+    }
+    [Test]
     public void ZeroHoldEnemyPressureAndUnopenedRegionsExplainWhyCaptureDoesNotStart()
     {
         var g=new BattlefieldGridConfiguration(new BattlefieldPoint(0,0),0,20,10,2,1);
