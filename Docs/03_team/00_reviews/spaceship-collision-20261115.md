@@ -1,6 +1,6 @@
 # 우주선 충돌 회귀 수정
 
-PR: 게시 후 번호 기입. 원인 기준 #731, 팀원 우주선 #732를 유지한 수정이다.
+PR: [#733](https://github.com/Team-HJD-21/unity-6-the-developer/pull/733). 원인 기준 #731, 팀원 우주선 #732를 유지한 수정이다.
 
 최근 Physics2D 조합 변경으로 Default–PlayerFeetBox, PocInteractArea–PlayerFeetBox 접촉이 차단되어 있었다. 우주선 벽/문은 Default였고 출구는 `SpaceshipExit.OnCollisionEnter2D`, 문 열림은 `DoorOperation.OnTriggerStay2D`에 의존한다. 이동 함수를 직접 부르는 검수만으로는 이 문제를 확인할 수 없다.
 
