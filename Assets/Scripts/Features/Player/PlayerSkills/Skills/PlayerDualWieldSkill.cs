@@ -19,6 +19,7 @@ public sealed class PlayerDualWieldSkill : PlayerSkillBase
     public override bool HasPrefab => Visual != null && Visual.IsDualWieldConfigured;
     private PlayerWeaponVisual Visual => _visual != null ? _visual : (_visual = GetComponent<PlayerWeaponVisual>());
     public float ActiveRemaining => (float)Math.Max(0, _activeUntil - Now);
+    public float EffectDuration => _duration * UpgradeMultiplier;
     public bool IsActive => isActiveAndEnabled && ActiveRemaining > 0 && HasPrefab &&
         GetComponent<PlayerInfo>() is PlayerInfo info && !info.IsDestroyed && info.curHp > 0;
     public override int AvailableCount => RemainingCooldown <= 0 ? 1 : 0;
@@ -31,7 +32,7 @@ public sealed class PlayerDualWieldSkill : PlayerSkillBase
     {
         if (!CurrentWeaponIsGun || !HasPrefab || (Unity.Netcode.NetworkManager.Singleton != null &&
             Unity.Netcode.NetworkManager.Singleton.IsListening && !Unity.Netcode.NetworkManager.Singleton.IsServer)) return false;
-        _activeUntil = Now + _duration; _readyAt = Now + _cooldown; return true;
+        _activeUntil = Now + EffectDuration; _readyAt = Now + _cooldown; return true;
     }
     private void Update()
     { if (GetComponent<PlayerInfo>() is PlayerInfo info && (info.IsDestroyed || info.curHp <= 0)) _activeUntil = 0; }
@@ -44,7 +45,8 @@ public sealed class PlayerDualWieldSkill : PlayerSkillBase
     protected override ICheckpointRestoreStep PrepareCheckpointState(BinaryReader reader, ICheckpointPayloadCodec codec)
     {
         float active = reader.ReadSingle(), cooldown = reader.ReadSingle();
-        if (!float.IsFinite(active) || !float.IsFinite(cooldown) || active < 0 || active > _duration || cooldown < active || cooldown > _cooldown)
+        // Prepare 시점에는 저장된 연구 레벨이 아직 적용되지 않았습니다.
+        if (!float.IsFinite(active) || !float.IsFinite(cooldown) || active < 0 || active > _duration * PlayerSkillResearch.MultiplierAtLevel(PlayerSkillResearch.MaximumLevel) || cooldown < active || cooldown > _cooldown)
             throw new InvalidDataException("Invalid dual-wield timers.");
         float beforeActive = ActiveRemaining, beforeCooldown = RemainingCooldown;
         return new CheckpointRestoreStep(() => { _activeUntil=Now+active; _readyAt=Now+cooldown; },

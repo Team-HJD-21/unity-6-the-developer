@@ -42,6 +42,22 @@ public sealed partial class PlayerSkillController : MonoBehaviour
         PlayerSkillId.DualWield => 100f * (Research?.Multiplier(id) ?? 1),
         _ => 0
     };
+    public float UpgradeHealthValue(PlayerSkillId id) => id switch
+    {
+        PlayerSkillId.PlayerTurret => _turret != null ? _turret.EffectHealth : 0,
+        PlayerSkillId.EnergyBarrier => _barrier != null ? _barrier.EffectHealth : 0,
+        PlayerSkillId.LureBeacon => _beacon != null ? _beacon.EffectHealth : 0,
+        _ => 0
+    };
+    public float UpgradeDurationValue(PlayerSkillId id) => id switch
+    {
+        PlayerSkillId.EnergyBarrier => _barrier != null ? _barrier.EffectDuration : 0,
+        PlayerSkillId.LureBeacon => _beacon != null ? _beacon.EffectDuration : 0,
+        PlayerSkillId.DualWield => FindSkill(id) is PlayerDualWieldSkill dual ? dual.EffectDuration : 0,
+        PlayerSkillId.Portal => _portal != null ? _portal.ShieldDuration : 0,
+        _ => 0
+    };
+    public float PortalShieldHealthPercent => _portal != null ? _portal.ShieldHealthFraction * 100 : 0;
     internal void OnCandidatesChanged()
     {
         CancelPlacements();

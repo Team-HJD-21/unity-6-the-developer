@@ -232,10 +232,12 @@ public sealed class PlayerSkillTreeRuntimeTests
             Assert.That(_research.TryUnlock(id),Is.True);
         foreach(var id in new[]{PlayerSkillId.Bomb,PlayerSkillId.DualWield,PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon,PlayerSkillId.Portal})
         {
-            float before=_controller.UpgradeStatValue(id);int tokens=_research.Tokens;
+            float before=_controller.UpgradeStatValue(id), hp=_controller.UpgradeHealthValue(id), duration=_controller.UpgradeDurationValue(id);int tokens=_research.Tokens;
             Assert.That(_research.TryUpgrade(id),Is.True);Assert.That(_research.TryUpgrade(id),Is.True);
             Assert.That(_research.Tokens,Is.EqualTo(tokens-2));Assert.That(_research.Level(id),Is.EqualTo(3));
             Assert.That(_controller.UpgradeStatValue(id),Is.EqualTo(before*1.3f).Within(.001f));
+            Assert.That(_controller.UpgradeHealthValue(id),Is.EqualTo(hp*1.3f).Within(.001f));
+            Assert.That(_controller.UpgradeDurationValue(id),Is.EqualTo(duration*1.3f).Within(.001f));
             Assert.That(_research.TryUpgrade(id),Is.False);
         }
         var bomb=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/bomb.prefab"));SceneManager.MoveGameObjectToScene(bomb,_scene);
@@ -246,12 +248,49 @@ public sealed class PlayerSkillTreeRuntimeTests
         Assert.That(turret.GetComponent<PlayerTurret>().ShotDamage,Is.EqualTo(_controller.UpgradeStatValue(PlayerSkillId.PlayerTurret)).Within(.001));
         Assert.That(_research.TrySetCandidate(1,PlayerSkillId.DualWield),Is.True);Assert.That(_controller.TryEquip(0,PlayerSkillId.DualWield),Is.True);
         _player.GetComponent<PlayerWeaponSelection>().TrySelectWeapon(WeaponType.DefaultGun);Assert.That(_controller.TryUseSlot(0),Is.True);
+        Assert.That(_player.GetComponent<PlayerDualWieldSkill>().ActiveRemaining,Is.EqualTo(10.4f).Within(.001));
         Assert.That(_player.GetComponent<PlayerAttack>().TryFire(),Is.True);
         var bullets=Object.FindObjectsByType<PlayerBullet>(FindObjectsSortMode.None).Where(b=>b.gameObject.scene==_scene).ToArray();
         Assert.That(bullets.Length,Is.EqualTo(2));foreach(var bullet in bullets)
             Assert.That((float)typeof(PlayerBullet).GetField("_damage",Private).GetValue(bullet),Is.EqualTo(13*1.3f).Within(.001f));
         yield break;
     }
+    [UnityTest]
+    public IEnumerator UpgradedDevicesKeepTheirSpawnedHealthLifetimeAndCheckpointValues()
+    {
+        _player.GetComponent<PlayerExperience>().AddExperience(2000);
+        foreach(var id in new[]{PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon})
+        { Assert.That(_research.TryUnlock(id),Is.True);Assert.That(_research.TryUpgrade(id),Is.True);Assert.That(_research.TryUpgrade(id),Is.True); }
+        var identity=_player.GetComponent<PlayerActorIdentity>();if(identity==null)identity=_player.AddComponent<PlayerActorIdentity>();identity.Bind(new PlayerId("tree-player"),0);
+        var config=new MatchConfig(new MatchId("skill-tree-test"),MatchMode.Story,new StageId("stage"),new DefinitionId("normal"),"test",1,new[]{new PlayerLoadoutSnapshot(new PlayerId("tree-player"),null)});
+        var context=new CheckpointCaptureContext(config,0,Guid.NewGuid());var codec=new BinaryCheckpointPayloadCodec();
+        var beacon=_player.GetComponent<PlayerBeaconSkill>();var barrier=_player.GetComponent<PlayerBarrierSkill>();
+        typeof(PlayerBeaconSkill).GetMethod("TryPlace",Private).Invoke(beacon,new object[]{_player.transform.position+Vector3.right*5,false});
+        typeof(PlayerBarrierSkill).GetMethod("TryPlace",Private).Invoke(barrier,new object[]{_player.transform.position+Vector3.up*5,false});
+        typeof(PlayerBarrierSkill).GetMethod("TryPlace",Private).Invoke(barrier,new object[]{_player.transform.position+new Vector3(5,5),false});
+        barrier.CancelPlacement(); // 실제 배치 확정 경로처럼 첫 지점 선택 상태를 종료합니다.
+        foreach(var skill in new PlayerSkillBase[]{beacon,barrier})
+        {
+            var kind=skill==beacon?PlayerFieldDeviceKind.Beacon:PlayerFieldDeviceKind.Barrier;
+            PlayerFieldDevice Device()=>Object.FindObjectsByType<PlayerFieldDevice>(FindObjectsSortMode.None).Single(d=>d.gameObject.scene==_scene&&d.Kind==kind&&d.IsAlive);
+            Assert.That(Device().Health,Is.EqualTo(kind==PlayerFieldDeviceKind.Beacon?104:390).Within(.001));
+            Assert.That((float)typeof(PlayerFieldDevice).GetField("_remaining",Private).GetValue(Device()),Is.EqualTo(10.4f).Within(.001));
+            var writer=(ICheckpointParticipant)skill;var saved=writer.Capture(context,codec);Device().TakeDamage(10);
+            var checkpoint=new CheckpointData(Guid.NewGuid(),DateTimeOffset.UtcNow,config.MatchId,config.StageId,config.DifficultyProfileId,config.Mode,1,"test",0,1,new[]{saved});
+            using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,checkpoint,CheckpointRestorePolicy.Default),saved,codec))
+            {step.Apply();Assert.That(Device().Health,Is.EqualTo(kind==PlayerFieldDeviceKind.Beacon?104:390).Within(.001));step.Rollback();Assert.That(Device().Health,Is.EqualTo(kind==PlayerFieldDeviceKind.Beacon?94:380).Within(.001));}
+        }
+        var turret=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/PlayerTurret.prefab"));SceneManager.MoveGameObjectToScene(turret,_scene);
+        var health=turret.GetComponent<PlayerTurretHealth>();typeof(PlayerTurretHealth).GetMethod("SetDeploymentHealth",Private).Invoke(health,new object[]{.5f,1.3f});
+        Assert.That(health.MaxHealth,Is.EqualTo(130).Within(.001));Assert.That(health.Health,Is.EqualTo(65).Within(.001));
+        var savedHealth=typeof(PlayerTurretHealth).GetMethod("CaptureCheckpoint",Private).Invoke(health,null);
+        health.TakeDamage(10);
+        typeof(PlayerTurretHealth).GetMethod("RestoreCheckpoint",Private).Invoke(health,new object[]{130f,65f,0f,0f});
+        Assert.That(health.HealthRatio,Is.EqualTo(.5f).Within(.001));
+        Assert.That(PlayerSkillDescriptions.UpgradeStats(PlayerSkillId.EnergyBarrier,_controller),Does.Contain("체력").And.Contain("지속시간").And.Contain("10.4"));
+        yield break;
+    }
+
     [UnityTest]
     public IEnumerator BothGunsSitOnOppositeBodySidesAtTheSameHeightForEveryAim()
     {
@@ -278,6 +317,7 @@ public sealed class PlayerSkillTreeRuntimeTests
     public IEnumerator AuthoredPortalPairTravelsWithRReservesReloadAndFRecoversOneEndpoint()
     {
         Reward();foreach(var id in new[]{PlayerSkillId.PlayerTurret,PlayerSkillId.EnergyBarrier,PlayerSkillId.LureBeacon,PlayerSkillId.Portal})Assert.That(_research.TryUnlock(id),Is.True);
+        Reward();Assert.That(_research.TryUpgrade(PlayerSkillId.Portal),Is.True);Assert.That(_research.TryUpgrade(PlayerSkillId.Portal),Is.True);
         Assert.That(_research.TrySetCandidate(1,PlayerSkillId.Portal),Is.True);Assert.That(_controller.TryEquip(0,PlayerSkillId.Portal),Is.True);
         var grid=new GameObject("Portal ground",typeof(Grid));SceneManager.MoveGameObjectToScene(grid,_scene);grid.transform.position=_player.transform.position;
         var mapObject=new GameObject("Ground",typeof(UnityEngine.Tilemaps.Tilemap),typeof(UnityEngine.Tilemaps.TilemapCollider2D));mapObject.transform.SetParent(grid.transform,false);
@@ -327,6 +367,7 @@ public sealed class PlayerSkillTreeRuntimeTests
                 typeof(PlayerSkillController).GetMethod("Update",Private).Invoke(_controller,null);
             }
             Press(UnityEngine.InputSystem.Key.R,UnityEngine.InputSystem.Key.F);Assert.That(_controller.PortalConsumesR,Is.True);
+            Assert.That(portal.ShieldHealth,Is.EqualTo(52));Assert.That(portal.ShieldRemaining,Is.EqualTo(2.6f).Within(.001));
             Assert.That(portal.IsLinked,Is.True,"One frame cannot travel and recover the destination.");
             Assert.That(Vector2.Distance(_player.GetComponent<PlayerDirectionalColliders>().GroundPosition,portal.GetEndpoint(1).transform.position),Is.LessThan(.01));
             typeof(PlayerWeaponAmmo).GetMethod("Update",Private).Invoke(_player.GetComponent<PlayerWeaponAmmo>(),null);

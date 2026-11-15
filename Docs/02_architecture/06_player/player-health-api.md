@@ -5,6 +5,7 @@
 ## 실행과 조정
 
 - `PlayerInfo.ApplyDamage`가 실제 감소한 HP를 계산한 뒤 자동 회복을 예약한다. 0 이하·권한 없음·필드 정지 등으로 거부된 피해는 대기 시간을 변경하지 않는다.
+- 포털 도착 보호막이 있으면 검증된 피해를 먼저 흡수한다. 전부 흡수한 공격도 처리 성공을 반환하지만 HP 변경·`Damaged` 이벤트·자동 회복 대기 갱신은 발생하지 않는다. 보호량을 넘은 피해만 기존 HP 감소 경로를 따른다. 보호막 상태는 [포털 체크포인트](player-portal-api.md)에 저장한다.
 - `PlayerInfo.FixedUpdate` → `AdvanceAutomaticRecovery`가 공용 `FieldSimulationTime.Seconds`의 절대 Match 시각을 읽는다. FixedUpdate 횟수나 실제 벽시계로 회복 속도를 계산하지 않는다.
 - 기본 최대 체력 400에서는 초당 8 HP다. 정수 HP에 반영하지 못한 소수점은 누적하며, 최대 체력을 넘기지 않는다. 회복 중 다시 맞으면 소수점 누적과 대기를 다시 시작한다.
 - `PlayerInfo` Inspector의 `_automaticRecoveryDelay`(5), `_automaticRecoveryFractionPerSecond`(0.02)로 조절한다. 기존 Player 프리팹은 새 필드의 기본값을 사용한다.

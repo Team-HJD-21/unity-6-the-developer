@@ -62,6 +62,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     {
         if (_isDead) return;
         _isDead = true;
+        GetComponent<PlayerPortalSkill>()?.ClearArrivalShield();
         _recovering = false;
         ClearAutomaticRecovery();
         GetComponent<PlayerControlState>()?.SetLifeBlocked(true);
@@ -79,6 +80,10 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     public bool ApplyDamage(int damage)
     {
         if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanAdvance(this)) return false;
+        var portal = GetComponent<PlayerPortalSkill>();
+        if (portal != null) damage = portal.AbsorbArrivalDamage(damage);
+        // 보호막만 소모한 공격은 체력 피해/피격 연출/자동 회복 대기시간을 발생시키지 않습니다.
+        if (damage == 0) return true;
         int previousHealth = curHp;
         curHp = (int)Math.Max(0L, (long)curHp - damage);
         int applied = previousHealth - curHp;
@@ -113,6 +118,6 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         _healthAuthority = false;
     }
 
-    public void UnbindMatch() { _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); }
+    public void UnbindMatch() { _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); GetComponent<PlayerPortalSkill>()?.ClearArrivalShield(); }
     public void UnbindNetworkMatch() => UnbindMatch();
 }

@@ -14,8 +14,9 @@ public sealed class PlayerSkillResearch : MonoBehaviour
     private readonly PlayerSkillId[] _candidates = { PlayerSkillId.Bomb, PlayerSkillId.None, PlayerSkillId.None, PlayerSkillId.None };
     private readonly int[] _upgrades = new int[7];
     public const int MaximumLevel = 3;
+    public static float MultiplierAtLevel(int level) => 1f + .15f * Mathf.Clamp(level - 1, 0, MaximumLevel - 1);
     public int Level(PlayerSkillId id) => IsUnlocked(id) ? 1 + _upgrades[(int)id] : 0;
-    public float Multiplier(PlayerSkillId id) => 1f + .15f * Mathf.Max(0, Level(id) - 1);
+    public float Multiplier(PlayerSkillId id) => MultiplierAtLevel(Level(id));
     public bool CanUpgrade(PlayerSkillId id) => CanModify && IsUnlocked(id) && Level(id) < MaximumLevel && _tokens > 0 && _controller.IsConfiguredSkill(id);
     public bool TryUpgrade(PlayerSkillId id)
     { if (!CanUpgrade(id)) return false; _tokens--; _upgrades[(int)id]++; Changed?.Invoke(); return true; }

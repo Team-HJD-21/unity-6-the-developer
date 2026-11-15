@@ -31,19 +31,25 @@ public sealed class PlayerBombRuntimeTests
         Assert.That(bodyCollider.enabled, Is.True);
         Assert.That(bodyCollider.isTrigger, Is.False);
         Assert.That(_bomb.GetComponent<Rigidbody2D>().bodyType, Is.EqualTo(RigidbodyType2D.Static));
-        Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.True);
+        var timer=_bomb.GetComponentInChildren<TMPro.TextMeshPro>(true);
+        Assert.That(timer.gameObject.activeSelf, Is.True);
         _explosion.Explode();
         Assert.That(bodyCollider.enabled, Is.False, "The explosion effect must not leave an invisible obstacle.");
         Assert.That(_bomb.GetComponent<PlayerDeviceBodyCollision>().enabled, Is.False);
         Assert.That(_bomb.GetComponent<SpriteRenderer>().enabled, Is.False);
-        Assert.That(_bomb.transform.Find("Live Timer").gameObject.activeSelf, Is.False);
+        Assert.That(timer.gameObject.activeSelf, Is.False);
         yield break;
     }
     [UnityTest]
-    public IEnumerator Detonation_ActivatesLegacyExplosionWithoutRangeRing()
+    public IEnumerator Detonation_ActivatesPixelExplosionWithoutRangeRing()
     {
         _explosion.Explode();
         Assert.That(_bomb.transform.Find("Legacy Explosion").gameObject.activeSelf, Is.True);
+        var animator=_bomb.transform.Find("Legacy Explosion").GetComponent<Animator>();
+        Assert.That(animator.runtimeAnimatorController.name,Is.EqualTo("TimeBombExplosion"));
+        Assert.That(animator.GetComponent<SpriteRenderer>().sprite.name,Is.EqualTo("BombBurst_0"));
+        animator.Play("Base Layer.effect",0,.5f);animator.Update(0);
+        Assert.That(animator.GetComponent<SpriteRenderer>().sprite.name,Is.EqualTo("BombBurst_4"));
         Assert.That(_bomb.GetComponentsInChildren<LineRenderer>(true), Is.Empty);
         yield break;
     }

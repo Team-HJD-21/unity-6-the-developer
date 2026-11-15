@@ -195,9 +195,35 @@ public sealed class PlayerPortalSkillTests
     }
 
     [UnityTest]
+    public IEnumerator ArrivalShieldAbsorbsDamageRefreshesWithoutStackingAndExpires()
+    {
+        Pair(); StandAt(At(4)); var health = _actor.GetComponent<PlayerInfo>();
+        var blocker = Block(At(11));
+        Assert.That(_skill.TryTravel(), Is.False); Assert.That(_skill.ShieldHealth, Is.Zero);
+        Object.DestroyImmediate(blocker);
+        Assert.That(_skill.TryTravel(), Is.True);
+        Assert.That(_skill.ShieldHealth, Is.EqualTo(40)); Assert.That(_skill.ShieldRemaining, Is.EqualTo(2).Within(.001));
+        int reported = 0; health.Damaged += amount => reported += amount;
+        Assert.That(health.ApplyDamage(15), Is.True);
+        Assert.That(health.curHp, Is.EqualTo(400)); Assert.That(_skill.ShieldHealth, Is.EqualTo(25)); Assert.That(reported, Is.Zero);
+        Assert.That(_skill.TryTravel(), Is.False); Assert.That(_skill.ShieldHealth, Is.EqualTo(25));
+        _clock.Paused = true; Assert.That(health.ApplyDamage(100), Is.False); yield return null;
+        Assert.That(_skill.ShieldHealth, Is.EqualTo(25)); _clock.Paused = false; yield return null; yield return new WaitForFixedUpdate();
+        _clock.Now = 1; Assert.That(_skill.TryTravel(), Is.True); Assert.That(_skill.ShieldHealth, Is.EqualTo(40));
+        health.ApplyDamage(55); Assert.That(health.curHp, Is.EqualTo(385)); Assert.That(reported, Is.EqualTo(15));
+        Assert.That(_skill.ShieldHealth, Is.Zero);
+        _clock.Now = 2; Assert.That(_skill.TryTravel(), Is.True);
+        _clock.Now = 4.01; Assert.That(_skill.ShieldHealth, Is.Zero); health.ApplyDamage(5); Assert.That(health.curHp, Is.EqualTo(380));
+        _clock.Now = 5; Assert.That(_skill.TryTravel(), Is.True);
+        _skill.enabled = false; _skill.enabled = true; Assert.That(_skill.ShieldHealth, Is.Zero);
+        _clock.Now = 6; Assert.That(_skill.TryTravel(), Is.True); health.Die(); Assert.That(_skill.ShieldHealth, Is.Zero);
+    }
+
+    [UnityTest]
     public IEnumerator CheckpointRestoresPairRemainingTravelDelayAndRollbackWithoutTeleportingPlayer()
     {
         Pair(); StandAt(At(4)); Assert.That(_skill.TryTravel(), Is.True);
+        _actor.GetComponent<PlayerInfo>().ApplyDamage(10);
         var codec = new BinaryCheckpointPayloadCodec(); var writer = (ICheckpointParticipant)_skill;
         var saved = writer.Capture(Context(), codec);
         _clock.Now = 2; Assert.That(_skill.TryRecoverNearest(), Is.True);
@@ -205,12 +231,20 @@ public sealed class PlayerPortalSkillTests
         using (var step = writer.PrepareRestore(Restore(saved), saved, codec))
         {
             step.Apply(); Assert.That(_skill.IsLinked, Is.True); Assert.That(_skill.TravelRemaining, Is.EqualTo(.75f).Within(.001));
+            Assert.That(_skill.ShieldHealth, Is.EqualTo(30)); Assert.That(_skill.ShieldRemaining, Is.EqualTo(2).Within(.001));
             Assert.That(_actor.transform.position, Is.EqualTo(before));
-            step.Rollback(); Assert.That(_skill.IsLinked, Is.False); Assert.That(_skill.GetEndpoint(0), Is.Not.Null);
+            step.Rollback(); Assert.That(_skill.IsLinked, Is.False); Assert.That(_skill.GetEndpoint(0), Is.Not.Null); Assert.That(_skill.ShieldHealth, Is.Zero);
         }
         var corrupt = codec.Write(saved.Key, 1, CheckpointSectionKind.World, w =>
         { codec.WriteText(w, "portal-player"); w.Write(false); w.Write(float.NaN); w.Write(false); w.Write(false); });
         Assert.Throws<InvalidDataException>(() => writer.PrepareRestore(Restore(corrupt), corrupt, codec));
+        var legacy = codec.Write(saved.Key, 1, CheckpointSectionKind.World, w =>
+        { codec.WriteText(w, "portal-player"); w.Write(false); w.Write(0f); w.Write(false); w.Write(false); });
+        using (var step = writer.PrepareRestore(Restore(legacy), legacy, codec))
+        { step.Apply(); Assert.That(_skill.ShieldHealth, Is.Zero); Assert.That(_skill.IsLinked, Is.False); }
+        var badShield = codec.Write(saved.Key, 2, CheckpointSectionKind.World, w =>
+        { codec.WriteText(w, "portal-player"); w.Write(false); w.Write(0f); w.Write(false); w.Write(false); w.Write(50); w.Write(40); w.Write(1f); });
+        Assert.Throws<InvalidDataException>(() => writer.PrepareRestore(Restore(badShield), badShield, codec));
         yield break;
     }
 

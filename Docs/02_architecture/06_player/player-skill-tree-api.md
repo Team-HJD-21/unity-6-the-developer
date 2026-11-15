@@ -51,10 +51,30 @@
 
 2026-11-15 세로 확장/배치 슬롯 후속: `PlayerSkillTreeRuntimeTests` 12/12, `PlayerPortalSkillTests` 7/7, `PlayerStatusPanelTests` 9/9 통과. 후보의 이름·아이콘·배치 상태와 실제 원형 선택창 반영, 스킬 창 확대/복귀, 포털 받침 충돌과 중앙 통과를 검사했다. 1920×1080 독립 Unity UI 렌더의 위/아래 화면, 텍스트 넘침 없음, 전용 Static 폰트의 319개 요청 글리프를 확인했다. 컴파일·`.meta` 오류 0개. 실제 Scene 수동 조작·멀티플레이·빌드 검증은 별도다.
 
-## 설치 표시 연출
+## 체력·지속시간 강화 후속
+
+강화당 원본 대비 15%, 최대 3레벨, 토큰 1개를 유지한다. 터렛은 피해량과 최대 체력(100/115/130), 방벽은 연결 거리·체력(300/345/390)·지속시간(8/9.2/10.4초), 비콘은 유인 범위·체력(80/92/104)·지속시간(8/9.2/10.4초), 양손 무기는 피해 배율·지속시간(8/9.2/10.4초)을 늘린다. 폭탄 폭발 대기시간과 공격 간격·재사용 시간은 유지한다.
+
+체력·지속시간은 다음 설치/사용 때 확정한다. 기존 설치물을 강화로 즉시 회복시키거나 수명을 늘리지 않는다. 터렛은 회수 시 체력 비율을 보존하고 재설치 시 강화된 최대 체력에 같은 비율을 적용한다. 저장된 터렛은 설치 당시 최대 체력과 실제 체력으로 복원한다. 강화 UI와 상세 설명은 실제 스킬 수치를 조회한다.
+
+포털은 기존 설치 범위와 함께 이동 후 보호량·보호 시간을 강화한다. 기본 최대 체력의 10%/2초, 2레벨 11.5%/2.3초, 3레벨 13%/2.6초다. 이동 성공 시 현재 최대 체력 기준 정수 올림 보호량으로 갱신하며 중첩하지 않는다. PlayerInfo 피해 권한 검사 후 보호량을 차감하고 초과분만 HP에 적용한다. 보호막만 소모하면 HP 피격 연출·자동 회복 대기시간을 발생시키지 않는다. 만료·사망·비활성화·Match 해제 시 보호는 끝난다. 청록색 테두리는 표시 전용이며 충돌체나 소리는 추가하지 않는다.
+
+포털 체크포인트 `/skill/5`는 v2에서 보호량/초기 보호량/남은 시간을 함께 저장하고 롤백한다. 기존 v1은 보호막 없는 상태로 읽는다. Prepare 단계가 연구 레벨 복원보다 먼저 실행되므로 터렛 최대 체력과 양손 유지시간 검증은 지원 강화 범위 안의 저장 값을 허용한다.
+
+이번 후속 검증: 트리 통합 13개 중 12개가 먼저 통과했고, 새 설치물 테스트의 actor identity/직접 배치 완료 처리를 바로잡은 뒤 해당 1개 재검사가 통과했다. 포털 8개 중 7개가 먼저 통과했고, 정지 해제 후 물리 복귀를 기다리도록 새 보호막 fixture를 수정한 뒤 해당 1개가 통과했다. 전체 묶음 재실행 결과로 합산하지 않는다. 자동 회복 회귀 10/10과 폭발 런타임 7/7은 각각 실행해 통과했다. 강화 전후 3줄 UI를 Unity 렌더로 확인했으며 실제 Scene 수동 조작·멀티플레이·빌드는 실행하지 않았다.
+
+## 설치 표시 연출 상세
 
 설치 성공 후 본체 초기화·Scene/Match 시간 연결을 마친 호출부가 `PlayerPlacementPresentation.Play()`를 호출한다. 터렛은 0.34초 착지/포신 전개, 방벽은 0.36초 본체 전개와 에너지 표시, 비콘은 0.32초 전개, 폭탄은 0.24초 착지/작은 반동, 포털은 0.44초 세로 상승이다. 기존 그림을 프리팹의 표시 전용 SpriteRenderer로 잠시 그린다. 원본 Transform·총구·충돌 위치·설치 판정·효과 시작 시점은 바꾸지 않는다.
 
-표시 복사본은 각 원본 아래에 제작하고 같은 Sprite/Material/정렬/피격색을 따른다. 방벽/비콘의 에너지 선은 선 두께로 전개한다. 완료·비활성화 때 원래 표시를 복구하고 재활성화·체크포인트 복원에는 설치를 다시 재생하지 않는다. 필드 정지를 따르며 사운드와 새 입력 잠금은 추가하지 않았다. 폭탄 타이머는 움직이는 표시를 따라가고 폭발 기능/효과는 그대로다.
+표시 복사본은 각 원본 아래에 제작하고 같은 Sprite/Material/정렬/피격색을 따른다. 방벽/비콘의 에너지 선은 선 두께로 전개한다. 완료·비활성화 때 원래 표시를 복구하고 재활성화·체크포인트 복원에는 설치를 다시 재생하지 않는다. 필드 정지를 따르며 사운드와 새 입력 잠금은 추가하지 않았다. 폭탄 타이머는 움직이는 표시를 따라간다.
 
 `PlayerPlacementPresentationTests` 6/6 통과: 제작 프리팹 5종의 표시 이동 중 원본·콜라이더 bounds 보존, 비활성화/재활성화, 완료 시 복구, 필드 정지/재개를 확인했다. Unity 카메라 연속 30프레임으로 각 연출을 별도 렌더했다. 실제 Field Scene 사람의 조작 인수는 별도다.
+
+## 폭탄 폭발 표시 교체
+
+`bomb.prefab`의 기존 폭발 표시 자식에 전용 `TimeBombExplosion.controller`/`.anim`을 연결했다. `Assets/Art/Sprites/Player/Skills/TimeBombExplosion.png`의 4×2, 8프레임을 0.8초 동안 섬광→주황 화염→연기·파편 순서로 재생하고 마지막에는 Sprite를 비운다. Point 필터·압축 없음·최대 512로 가져온다. 기존 피해량·피해 반경·폭발 대기시간·사운드는 변경하지 않았다. `PlayerTimeBombVisual`의 보이는 외곽 지름을 새 그림에 맞춰 피해 반경과 표시 크기를 연결한다.
+
+생성 경로는 내장 `image_gen` (`host_image`)이다. 원본 생성 프롬프트:
+
+> A game-ready 2D pixel-art explosion animation sprite sheet, transparent background. Exactly 8 frames in a perfectly regular 4 columns by 2 rows grid, read left to right then top to bottom. Each equal cell holds one centered top-down radial explosion sharing exactly the same center; no frame touches cell edges, 15 percent padding per cell. Frames: 1 compact brilliant pale yellow star flash; 2 yellow-orange fire burst expands; 3 large orange fire lobes; 4 peak broad irregular orange fire and dark amber outline with tiny hot fragments; 5 fire breaks into muted brown smoke lobes; 6 smoke expands into loose fragments with embers; 7 sparse smaller fading smoke flecks; 8 almost gone tiny flecks. Crisp stepped pixel-game contours and few flat shades, no smooth vectors, no gradient blur, no glow bloom. Top-down flat radial shape, no mushroom cloud or rising plume. Warm cream, yellow, burnt orange, warm charcoal palette. No text, no labels, no grid lines, no ground, no checkerboard. Entire sheet landscape 2:1 aspect. Consistent scale across frames: small start, peak fills 70 percent cell, smoke then fades.

@@ -143,7 +143,7 @@ public sealed class PlayerSkillTreePanel : MonoBehaviour
             bool unlocked = research.IsUnlocked(card.Skill);
             bool configured = _owner.IsConfiguredSkill(card.Skill);
             card.Title.text = PlayerSkillDescriptions.Name(card.Skill);
-            card.Summary.text = PlayerSkillDescriptions.Summary(card.Skill);
+            card.Summary.text = PlayerSkillDescriptions.Summary(card.Skill, _owner);
             card.Icon.enabled = card.Icon.sprite != null;
             bool selected = card.Skill == _selected;
             card.State.text = (!configured ? "준비 중" : unlocked ? $"{research.Level(card.Skill)}레벨 / {PlayerSkillResearch.MaximumLevel}" :
@@ -161,12 +161,7 @@ public sealed class PlayerSkillTreePanel : MonoBehaviour
         _unlock.interactable = research.CanUnlock(_selected);
         _unlock.GetComponentInChildren<TMP_Text>().text = research.IsUnlocked(_selected) ? "해금 완료" : "해금 · 토큰 1개";
         int level = research.Level(_selected);
-        float current = _owner.UpgradeStatValue(_selected);
-        float next = level > 0 && level < PlayerSkillResearch.MaximumLevel ? current / research.Multiplier(_selected) * (1 + .15f * level) : current;
-        string suffix = _selected == PlayerSkillId.DualWield ? "%" : "";
-        _upgradeStats.text = level == 0 ? "해금 후 강화할 수 있습니다." : level >= PlayerSkillResearch.MaximumLevel ?
-            $"{_owner.UpgradeStatName(_selected)}  {current:0.#}{suffix}  ·  최고 레벨" :
-            $"{_owner.UpgradeStatName(_selected)}  {current:0.#}{suffix}  >  {next:0.#}{suffix}";
+        _upgradeStats.text = PlayerSkillDescriptions.UpgradeStats(_selected, _owner);
         _upgrade.interactable = research.CanUpgrade(_selected);
         _upgrade.GetComponentInChildren<TMP_Text>().text = level >= PlayerSkillResearch.MaximumLevel ? "최고 레벨" : "강화 · 토큰 1개";
         for (int i=0;i<4;i++)

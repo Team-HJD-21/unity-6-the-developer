@@ -35,6 +35,8 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
     public Vector3 FirstEmitterPosition => _first;
     public override Vector3 PlacementCenter => _hasFirst ? _first : base.PlacementCenter;
     public float ConnectionRange => Mathf.Max(_minDistance, _maxDistance) * UpgradeMultiplier;
+    public float EffectHealth => _health * UpgradeMultiplier;
+    public float EffectDuration => _duration * UpgradeMultiplier;
     public override float PlacementRadius => _hasFirst ? ConnectionRange : base.PlacementRadius;
     protected override Vector3? PlacementAnchor => _hasFirst ? _first : null;
     public override string PlacementHint => !IsPlacing ? "" : _hasFirst
@@ -80,7 +82,7 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
         if (!_charges.TryConsume()) return false;
         var barrier = Instantiate(_prefab, (_first + position) * .5f, Quaternion.identity);
         MoveToOwnerScene(barrier.gameObject);
-        barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, position, _width, _health, _duration, owner: transform);
+        barrier.Initialize(PlayerFieldDeviceKind.Barrier, _first, position, _width, EffectHealth, EffectDuration, owner: transform);
         barrier.GetComponent<PlayerPlacementPresentation>()?.Play();
         _deployed.Add(barrier);
         complete = true;

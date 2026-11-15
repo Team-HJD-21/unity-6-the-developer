@@ -122,6 +122,7 @@ public sealed partial class PlayerPortalSkill : PlayerPlacementSkillBase
         transform.position = position;
         Physics2D.SyncTransforms();
         _travelReadyAt = FieldSimulationTime.Seconds(this) + Mathf.Max(.1f, _travelCooldown);
+        GrantArrivalShield();
         return true;
     }
 
