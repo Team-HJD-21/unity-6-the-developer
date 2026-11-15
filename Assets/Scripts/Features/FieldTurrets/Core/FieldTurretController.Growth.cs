@@ -201,9 +201,13 @@ namespace TeamHJD.Game.FieldTurrets
                         throw new InvalidDataException("Turret identity was reused for a different definition family: " + pair.Key);
                     current[pair.Key] = pair.Value;
                 }
-                var target = _owner.MergeGrowth(backup, current, saved.capacity, out var powerWarnings);
+                // Scene에서 시험 용량을 고정했으면 과거 저장의 100/1000 같은 값으로 되돌리지 않습니다.
+                int capacity = _owner.fixedMaximumPower > 0 ? _owner.fixedMaximumPower : saved.capacity;
+                var target = _owner.MergeGrowth(backup, current, capacity, out var powerWarnings);
                 _owner.ValidateWorld(target, codec);
                 var warnings = new List<string>(powerWarnings);
+                if (capacity != saved.capacity)
+                    warnings.Add($"저장 전력 {saved.capacity} 대신 Scene의 고정 전력 {capacity}을 적용했습니다.");
                 if (added > 0) warnings.Add("새로 배치된 터렛 " + added + "개는 제작 기본값으로 시작합니다.");
                 if (retained.Count > 0) warnings.Add("현재 배치에 없는 터렛 " + retained.Count + "개의 성장 기록은 저장에 보존했습니다.");
                 var previousWarnings = _owner._growthRestoreWarnings;
@@ -212,7 +216,7 @@ namespace TeamHJD.Game.FieldTurrets
                 {
                     _owner.ApplyWorld(target, codec); _owner.ResolveWorldReferences();
                     _unmapped = retained;
-                    _owner._growthRestoreWarnings = warnings.ToArray(); _capacity = saved.capacity;
+                    _owner._growthRestoreWarnings = warnings.ToArray(); _capacity = capacity;
                 }, () =>
                 {
                     _owner.ApplyWorld(backup, codec); _owner.ResolveWorldReferences();

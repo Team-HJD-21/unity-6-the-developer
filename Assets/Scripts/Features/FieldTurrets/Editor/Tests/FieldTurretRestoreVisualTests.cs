@@ -20,6 +20,96 @@ public sealed class FieldTurretRestoreVisualTests
 {
     private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    [TestCase(100)]
+    [TestCase(1000)]
+    public void FixedCapacityOverridesSerializedDefaultAndRejectsChanges(int serializedCapacity)
+    {
+        var owner = new GameObject("Fixed power test");
+        owner.SetActive(false);
+        try
+        {
+            var controller = owner.AddComponent<FieldTurretController>();
+            typeof(FieldTurretController).GetField("maximumPower", Fields).SetValue(controller, serializedCapacity);
+            typeof(FieldTurretController).GetField("fixedMaximumPower", Fields).SetValue(controller, 500);
+            Assert.That(controller.MaximumPower, Is.EqualTo(500));
+            Assert.That(controller.CurrentPower, Is.EqualTo(500));
+            Assert.That(controller.TrySetMaximumPower(serializedCapacity), Is.False);
+            Assert.That(controller.TrySetMaximumPower(500), Is.True);
+            Assert.That(controller.MaximumPower, Is.EqualTo(500));
+        }
+        finally { Object.DestroyImmediate(owner); }
+    }
+
+    [UnityTest]
+    public IEnumerator FixedCapacitySurvivesLegacyGrowthAndWorldRestore()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        yield return new EnterPlayMode();
+        using var fixture = new Fixture(fixedCapacity: 500);
+        var actors = fixture.CreateActors(false);
+        actors[0].SetDamageBonus(17);
+        foreach (var actor in actors) Assert.That(actor.RequestActivation(true), Is.EqualTo(
+            TeamHJD.Game.FieldTurrets.Contracts.FieldTurretActivationResult.Activated));
+        yield return null;
+        var codec = new BinaryCheckpointPayloadCodec();
+        var growth = fixture.Controller.CreateGrowthParticipant();
+        ICheckpointParticipant world = fixture.Controller;
+        var growthSection = growth.Capture(fixture.Context, codec);
+        var worldSection = world.Capture(fixture.Context, codec);
+        int reserved = fixture.Controller.Budget.ReservedPower;
+        foreach (int oldCapacity in new[] { 100, 1000 })
+        {
+            // 실제 writer의 나머지 내용은 유지하고, 과거 저장의 용량/잔여 전력만 재현합니다.
+            var oldGrowth = WithLegacyCapacity(growthSection, oldCapacity);
+            using (var step = growth.PrepareRestore(fixture.Restore(oldGrowth), oldGrowth, codec)) step.Apply();
+            Assert.That(fixture.Controller.MaximumPower, Is.EqualTo(500));
+            Assert.That(fixture.Controller.CurrentPower, Is.EqualTo(500 - reserved));
+            Assert.That(fixture.Controller.GrowthRestoreWarnings.Any(w => w.Contains("고정 전력 500")), Is.True);
+            var oldWorld = WithLegacyCapacity(worldSection, oldCapacity, reserved);
+            using (var step = world.PrepareRestore(fixture.Restore(oldWorld), oldWorld, codec))
+            {
+                step.Apply();
+                ((ICheckpointReferenceRestoreStep)step).ResolveReferences();
+            }
+            Assert.That(fixture.Controller.MaximumPower, Is.EqualTo(500));
+            Assert.That(fixture.Controller.Budget.ReservedPower, Is.EqualTo(reserved));
+            var cannon = fixture.Actors.Single(a => a.Definition.Id.StartsWith("canon_"));
+            Assert.That(cannon.EffectiveDamage, Is.EqualTo(cannon.Definition.Damage + 17));
+            yield return null;
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator UnfixedCapacityStillRestoresSavedGrowthCapacity()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        yield return new EnterPlayMode();
+        using var fixture = new Fixture();
+        fixture.CreateActors(false);
+        yield return null;
+        var codec = new BinaryCheckpointPayloadCodec();
+        var growth = fixture.Controller.CreateGrowthParticipant();
+        var section = growth.Capture(fixture.Context, codec);
+        foreach (int capacity in new[] { 100, 1000 })
+        {
+            var old = WithLegacyCapacity(section, capacity);
+            using var step = growth.PrepareRestore(fixture.Restore(old), old, codec);
+            step.Apply();
+            Assert.That(fixture.Controller.MaximumPower, Is.EqualTo(capacity));
+        }
+    }
+
+    private static CheckpointSection WithLegacyCapacity(CheckpointSection section, int capacity, int? reserved = null)
+    {
+        byte[] payload = section.CopyPayload();
+        using var stream = new System.IO.MemoryStream(payload, writable: true);
+        using var writer = new System.IO.BinaryWriter(stream);
+        writer.Write(capacity);
+        if (reserved.HasValue) writer.Write(capacity - reserved.Value);
+        writer.Flush();
+        return new CheckpointSection(section.Key, section.Version, section.Kind, payload);
+    }
+
     [UnityTest]
     public IEnumerator ChangedAuthoring_PreservesKnownGrowthAndRetainsRemovedIds()
     {
@@ -165,9 +255,13 @@ public sealed class FieldTurretRestoreVisualTests
         private readonly IDisposable _scope, _simulation;
         public FieldTurretBase[] Actors => FieldTurretInstanceRegistry.GetAll().Where(Controller.OwnsTurret).ToArray();
 
-        public Fixture()
+        public Fixture(int fixedCapacity = 0)
         {
-            Controller = new GameObject("Turret restore visual owner").AddComponent<FieldTurretController>();
+            var owner = new GameObject("Turret restore visual owner");
+            owner.SetActive(false);
+            Controller = owner.AddComponent<FieldTurretController>();
+            typeof(FieldTurretController).GetField("fixedMaximumPower", Fields).SetValue(Controller, fixedCapacity);
+            owner.SetActive(true);
             _scope = Controller.BindMatchScope(_match, () => true);
             Controller.ConfigureCheckpointContent(AssetDatabase.LoadAssetAtPath<FieldTurretLevelUpgradeCatalog>(
                 "Assets/Data/FieldTurrets/FieldTurretLevelUpgrade_Stage1.asset"), null);
