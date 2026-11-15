@@ -1,6 +1,6 @@
 # Stage1 NavMesh 발밑 장애물과 점유율 UI
 
-PR: 생성 후 같은 문서에 번호를 반영한다.
+PR: [#745](https://github.com/Team-HJD-21/unity-6-the-developer/pull/745), base `main`.
 
 ## 먼저 볼 곳
 
