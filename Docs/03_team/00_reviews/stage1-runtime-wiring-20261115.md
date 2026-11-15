@@ -87,3 +87,5 @@ InitialStageCompositionRoot.ComposeAuthority
 ![확보 완료와 HUD](media/territory-secured-20261115.png)
 
 원격2인·보스/중간보스 콘텐츠·전체 Weather 월드 복원·자연 플레이 난이도는 이 PR의 완료 주장에 포함하지 않는다.
+
+최종 통합 트리의 전술 GPU10·Stage 제작6·충돌4·점유 표시17·실제 지도 연동3과 실제 터렛 writer3개를 확인했다. 별도 검수 Editor에서 나온 SearchDatabase 초기화 예외1개는 같은 소스의 원본 Editor3/3 결과와 구분해 원본 기록에 남겼다. Runtime 게임 예외나 저장 실패를 무시하도록 테스트를 바꾸지 않았다. 기존 저장35개는 SHA256으로 원복 일치를 확인했다.
