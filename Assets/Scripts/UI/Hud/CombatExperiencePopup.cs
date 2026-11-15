@@ -1,5 +1,6 @@
 // 실제 경험치 획득 이벤트가 재사용하는 World Space UI입니다. 게임 수치나 별도 XP 원본을 소유하지 않습니다.
 using TMPro;
+using TeamHJD.Game.Presentation;
 using UnityEngine;
 
 public sealed class CombatExperiencePopup : MonoBehaviour
@@ -27,6 +28,7 @@ public sealed class CombatExperiencePopup : MonoBehaviour
         transform.localScale = Vector3.one * units;
         transform.rotation = _camera.transform.rotation;
         transform.position = _target.position + _camera.transform.right * (-65 * units) + _camera.transform.up * ((85 + 30 * CombatHudMotion.Sigmoid(t / 1.1f)) * units);
-        Group.alpha = t < .12f ? CombatHudMotion.Sigmoid(t / .12f) : t < .65f ? 1 : 1 - CombatHudMotion.Sigmoid((t - .65f) / .45f);
+        Group.alpha = HudPresentationVisibility.IsSuppressed ? 0 : t < .12f ? CombatHudMotion.Sigmoid(t / .12f) : t < .65f ? 1 : 1 - CombatHudMotion.Sigmoid((t - .65f) / .45f);
     }
+    private void LateUpdate() { if (HudPresentationVisibility.IsSuppressed) Group.alpha = 0; }
 }

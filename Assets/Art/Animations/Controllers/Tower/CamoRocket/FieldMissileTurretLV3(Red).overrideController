@@ -9,5 +9,5 @@ AnimatorOverrideController:
   m_Name: FieldMissileTurretLV3(Red)
   m_Controller: {fileID: 9100000, guid: a69dd5145d5e24da6b8610d7f8cc0c99, type: 2}
   m_Clips:
-  - m_OriginalClip: {fileID: 7400000, guid: 5a5554ae27cd54c80844d3f3384313c1, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 23b33e79ad6e5734babbb7ec7638f59d, type: 2}
     m_OverrideClip: {fileID: 7400000, guid: 3b9a50d8d7898498eb64091f8f5cd4de, type: 2}

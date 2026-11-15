@@ -4,6 +4,8 @@
 
 2026-11-12 자유 조준 표시: 현재 Player는 기존 `space man` 시트에서 파생한 옆모습 5프레임을 좌우 반전한 몸체와 마우스를 따라 연속 회전하는 별도 무기를 사용한다. `PlayerSpriteMotion.SpaceMan`은 기존 Animator의 행동 타이밍을 유지하고 표시 Sprite만 교체한다. 원본·설정·총구 연결과 검증 범위는 [몸체·무기 분리 API](player-weapon-appearance-api.md#2026-11-12-space-man-몸체와-자유-조준)를 따른다. 아래 V2 8방향 자세 설명은 기존 표시 방식의 기록이다.
 
+필드 Y 정렬은 [TheDeveloper2DRenderer](../../../Assets/Settings/Rendering/TheDeveloper2DRenderer.asset)의 Custom Axis `(0, 1, 0)`을 사용한다. Player는 `Entities / 0` Sorting Group의 루트 위치로 나무와 정렬하고, 내부 몸체·무기·손은 그룹 안의 Order로 정렬한다. V2 모션의 공통 발 피벗은 정규화 `(0.5, 0.26)`이다. V2 스프라이트나 무기 연결을 편집한 뒤에는 두 Player 프리팹에서 발 위치·손 도구·총구를 함께 확인한다.
+
 2026-11-12 일반 이동 표시: `Player.prefab`의 Rigidbody2D Interpolate를 활성화했다. `PlayerMovement.FixedUpdate`는 기존 `linearVelocity` 적용을 유지한다. 물리 위치 갱신 사이의 렌더 위치를 보간해 카메라가 추적하는 Player 표시의 계단 현상을 줄인다. 이동 속도·대시·충돌·전역 Fixed Timestep·카메라 API는 변경하지 않는다. 프레임 지연이나 다른 렌더 원인까지 해결됐다는 뜻은 아니며 실제 Game View의 끊김 체감은 별도로 확인한다.
 
 2026-11-12: `PlayerSpriteMotion`의 이동 자세와 `PlayerWeaponRig`의 방향 표시는 `PlayerControlState.CanMove`를 따른다. 시작 허브와 진행 중 우주선 방문에서 전투가 막혀도 이동·방향 전환 애니메이션은 동작한다. 메뉴·사망·필드 정지로 이동이 막히면 이동 자세도 멈춘다. Rig 없는 `PlayerVisual`도 같은 기준을 사용하며, 공격·수리·스킬의 기존 사용 조건과 최신 main의 피벗·Y 정렬은 유지한다.

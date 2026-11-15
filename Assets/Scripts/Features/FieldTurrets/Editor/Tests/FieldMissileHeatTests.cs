@@ -48,6 +48,7 @@ public sealed class FieldMissileHeatTests
             var enemy = Track(new GameObject("Missile heat target " + index));
             enemy.transform.position = _turret.transform.position + new Vector3(index * 3, 15, 0);
             enemy.AddComponent<MovingEnemyController>();
+            enemy.AddComponent<EnemyHealth>().Initialize();
             enemy.AddComponent<CircleCollider2D>();
             _enemies.Add(enemy.transform);
         }
@@ -67,13 +68,54 @@ public sealed class FieldMissileHeatTests
     }
 
     [Test]
+    public void AcquiresAndKeepsTargetsBehindTerrainAndStructures()
+    {
+        string[] layers = { "Forest", "TurretBase", "CU" };
+        for (int index = 0; index < layers.Length; index++)
+        {
+            var obstacle = Track(new GameObject(layers[index]));
+            obstacle.layer = LayerMask.NameToLayer(layers[index]);
+            obstacle.transform.position = _turret.transform.position + Vector3.up * (4 + index * 3);
+            obstacle.AddComponent<BoxCollider2D>().size = new Vector2(24f, 1f);
+            if (index == 0) obstacle.tag = FieldTurretTargetingUtility.TerrainObstacleTag;
+        }
+        Physics2D.SyncTransforms();
+
+        Invoke(_turret, "NoTargetInRange");
+        Assert.That(GetField<Transform[]>(_turret, "Targets"), Is.EquivalentTo(_enemies));
+        SetField(_turret, "TimeTilFire", 0.1f);
+        Invoke(_turret, "NoTargetInRange");
+        Assert.That(GetField<float>(_turret, "TimeTilFire"), Is.EqualTo(0.1f));
+    }
+
+    [Test]
+    public void LeavesPlayerOnlyAssassinOutOfTargetSlots()
+    {
+        GameObject assassin = _enemies[0].gameObject;
+        assassin.AddComponent<EnemyDetection>();
+        assassin.AddComponent<EnemyAssassinDamageRule>();
+        assassin.GetComponent<EnemyHealth>().Initialize();
+
+        Assert.That(_turret.CountEnemiesInAttackRange(), Is.EqualTo(3));
+        Invoke(_turret, "NoTargetInRange");
+        var targets = GetField<Transform[]>(_turret, "Targets");
+        Assert.That(targets, Has.No.Member(assassin.transform));
+        Assert.That(targets, Has.Member(_enemies[1]));
+    }
+
+    [Test]
     public void FinalSalvoFiresAllFourMissilesThenCoolsImmediately()
     {
         SetField(_turret, "_currentMissileCount", _definition.OverHeatMissileCount - 1f);
         Invoke(_turret, "NoTargetInRange");
         Invoke(_turret, "Shoot");
 
-        Assert.That(FindMissiles().Length, Is.EqualTo(4));
+        FieldTurretMissile[] launched = FindMissiles();
+        Assert.That(launched.Length, Is.EqualTo(4));
+        float fieldDepth = GetField<Transform>(_turret, "turret").position.z;
+        foreach (FieldTurretMissile missile in launched)
+            Assert.That(missile.transform.position.z, Is.EqualTo(fieldDepth));
+        Assert.That(GetField<Animator>(_turret, "animator").GetBool("isShoot"), Is.True);
         Assert.That(_turret.IsActivated, Is.True);
         Assert.That(_turret.IsCoolingDown, Is.True);
         Assert.That(_turret.IsOperational, Is.False);

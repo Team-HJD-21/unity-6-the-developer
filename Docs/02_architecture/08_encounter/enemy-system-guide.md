@@ -54,7 +54,7 @@ flowchart TD
     Network -->|고유 OnDeath → DeathConfirmed → Despawn| Removed[생성 주체의 추적·분대 정리]
 ```
 
-단일 플레이도 Host로 실행하는 현재 게임 흐름을 따른다. 로컬/네트워크 Driver와 운영 프리팹을 별도로 완성한 구조가 아니다. Core 연결은 여전히 `EncounterSceneBinding`가 기존 계약을 구현해 담당한다. 운영용 연결 컴포넌트 분리는 후속 작업이다.
+단일 플레이도 Host로 실행하는 현재 게임 흐름을 따른다. 로컬/네트워크 Driver와 운영 프리팹을 별도로 완성한 구조가 아니다. 정식 Core 연결은 `EncounterSceneBinding`가 담당한다. 네트워크 개설/종료는 Core `InitialStageNetworkBinding`·App session, 자동 생산은 `MatchCoordinator`가 소유한다. 수동 네트워크 시험 버튼은 별도 `EnemyNetworkTestControls`이며 정식 연결부에서 생성하지 않는다. [연결·시험 책임](encounter-runtime-and-testing.md)을 참고한다.
 
 ## 스크립트와 프리팹 상속
 

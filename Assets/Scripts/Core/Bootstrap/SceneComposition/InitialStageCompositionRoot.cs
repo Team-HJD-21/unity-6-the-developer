@@ -231,13 +231,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                             () => session.ObserveRegionCapture(_matchTime.FieldClock.Snapshot.Epoch, _matchTime.FieldClock.ElapsedSeconds));
                     Func<BattlefieldSpatialSnapshot> latest = () => HasCurrentMatch && _matchSession != null &&
                         !_matchSession.IsDisposed && _matchSession.State.Phase == MatchPhase.Running ? _matchSession.Battlefield : null;
-                    if (_encounterConsumer is IEncounterProductionConsumer productionConsumer)
-                        productionConsumer.UseMatchProduction();
                     if (network != null)
                     {
                         if (!(_encounterConsumer is IAppOwnedEncounterMatchConsumer managed))
                             throw new InvalidOperationException("Network Encounter consumer must support App connection ownership.");
-                        managed.UseAppNetworkOwnership();
+                        managed.UseAppNetworkOwnership(_networkBinding.ConnectionStatus);
                         managed.BindAuthorityMatch(matchId, localPlayerId, latest);
                     }
                     else _encounterConsumer.BindMatch(matchId, latest);

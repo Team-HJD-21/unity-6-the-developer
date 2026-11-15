@@ -20,7 +20,8 @@ flowchart TD
 - 요청당 `MaximumEnemiesPerRequest=500`은 요청 마릿수의 최댓값이다. 500마리를 반드시 만들거나 전체 생존 적을 500마리로 제한하는 값이 아니다. 실제 생성은 기존 비용 예산·편성 단위·공간/셀 수용량을 모두 만족해야 한다.
 - 기존 비용 예산 20~100, 정적 요청당 최대 +5의 접근 방식은 유지한다. 점유율에 따른 이 난이도 곡선의 분모는 기존 전체 Grid이며, 진행 HUD의 **점유 가능한 셀 분모**와 다르다.
 - 요청의 Source는 `MatchProduction`이다. 수동 요청·Debugger 연속 요청은 별도 Source로 같은 권한·최신 공간·환경·실행 경계를 이용한다. 수동 요청이 정규 예약을 새로 시작하거나 취소하지 않는다.
-- Scene의 옛 첫 요청은 `IEncounterProductionConsumer.UseMatchProduction()`으로 끈다. 독립 시험 Scene의 첫 요청과 네트워크 테스트 UI는 여전히 독립 시험 용도로 사용할 수 있다.
+- `EncounterSceneBinding`에는 독립 첫 요청/Host 자동 시작 루프가 없다. 정규 예약의 유일한 소유자는 `MatchCoordinator`다. 별도 루프를 끄던 `IEncounterProductionConsumer` 계약은 제거했다.
+- 시험용 Host/Client·수동 요청 버튼은 사용자가 `EnemyNetworkTestControls`를 명시적으로 붙였을 때만 제공한다. Stage_1에는 자동 추가하지 않는다. 기존 `EnemyNetworkTestLauncher.cs`는 수정하지 않았다. [정식 연결과 시험 도구 분리](encounter-runtime-and-testing.md).
 
 ## 정지·긴 프레임·완료
 

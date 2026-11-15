@@ -103,6 +103,10 @@ Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSli
 
 `SpritePhysicsShapeSync`는 [PolygonCollider2D의 경로를 대표 Sprite Physics Shape로 바꾸는 별도 스크립트](../../../Assets/Scripts/Shared/Physics/SpritePhysicsShapeSync.cs)다. 현재 EnemyRoot 기반 새 몬스터 제작 절차에는 사용하지 않는다. 프로젝트에서 별도로 Polygon 피격 형태를 선택한 경우에만 해당 스크립트와 PolygonCollider2D를 함께 구성하고, 캡슐 방식과 혼용하지 않는다.
 
+### 터렛 접촉용 몸체
+
+[MeleeEnemy](../../../Assets/Prefabs/Enemies/Base/MeleeEnemy.prefab)의 `TurretBodyCollider`는 `EnemyHurtbox` 레이어의 비트리거 CapsuleCollider2D다. 기존 방향별 피격용 `HitBox`와 함께 사용한다. 근접 Variant에서 몸체 크기와 오프셋을 그림에 맞추고 이동용 발 콜라이더는 `EnemyFeetBox`에 둔다. 터렛 표적 탐색에는 발 콜라이더를 사용하며, 미사일 접촉과 폭발 피해에는 `EnemyHurtbox`를 사용한다. 여러 콜라이더가 폭발에 겹쳐도 같은 Enemy는 한 번만 계산한다.
+
 ### 제작·등록
 
 1. [Base 프리팹](../../../Assets/Prefabs/Enemies/Base)에서 행동에 맞는 Variant를 만들고 `Runtime/<유형>/`에 둔다. 고유 능력이 필요할 때 Ability를 추가하고, 행동 전이가 다를 때 Controller를 확장한다.

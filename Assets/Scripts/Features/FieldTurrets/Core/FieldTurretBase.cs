@@ -6,6 +6,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace TeamHJD.Game.FieldTurrets
 {
@@ -49,6 +50,7 @@ namespace TeamHJD.Game.FieldTurrets
         private float _coolingInitialHeatRatio;
         private float _gunHeatStrength;
         private SpriteRenderer _gunHeatWave;
+        private FieldTurretTreeMask _treeMask;
         private bool _isResolvingDestruction;
         public bool IsInitialized => _activationController != null;
         // Shared by active overheat recovery and cooling after switching off.
@@ -100,6 +102,7 @@ namespace TeamHJD.Game.FieldTurrets
             ? Mathf.Clamp(minimumRange, 0f, EffectiveRange)
             : 0f;
         protected virtual bool UsesMinimumRange => false;
+        protected virtual bool RequiresClearLineOfSight => true;
 
         protected Transform TurretRotationPoint => turretRotationPoint;
         protected LayerMask EnemyDetectionMask => enemyMask;
@@ -120,9 +123,9 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected bool CanSeeTarget(Transform target)
         {
-            return target != null && target.gameObject.activeInHierarchy &&
-                   FieldTurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range) &&
-                   FieldTurretTargetingUtility.HasClearLineOfSight(turret.position, target.position, transform);
+            return FieldTurretTargetingUtility.IsInAttackRange(turret, target, MinimumRange, Range) &&
+                   FieldTurretTargetingUtility.CanAttackEnemy(target) &&
+                   (!RequiresClearLineOfSight || FieldTurretTargetingUtility.HasClearLineOfSight(turret.position, target.position, transform));
         }
 
         protected Transform FindNearestVisibleTarget(List<Collider2D> candidates)
@@ -148,7 +151,8 @@ namespace TeamHJD.Game.FieldTurrets
             {
                 if (hit == null || !hit.gameObject.activeInHierarchy) continue;
                 Transform target = hit.attachedRigidbody != null ? hit.attachedRigidbody.transform : hit.transform;
-                if (FieldTurretTargetingUtility.IsInAttackRange(origin, hit.transform.position, MinimumRange, EffectiveRange))
+                if (FieldTurretTargetingUtility.IsInAttackRange(origin, hit.transform.position, MinimumRange, EffectiveRange) &&
+                    FieldTurretTargetingUtility.CanAttackEnemy(target))
                     enemies.Add(target.GetInstanceID());
             }
             return enemies.Count;
@@ -282,6 +286,24 @@ namespace TeamHJD.Game.FieldTurrets
             if (_minimumRangeRenderer != null)
                 _minimumRangeRenderer.enabled = ShowRange && MinimumRange > 0f;
         }
+
+#if UNITY_EDITOR
+        protected void OnDrawGizmos()
+        {
+            float radius = EffectiveRange;
+            if (radius <= 0f) return;
+
+            Vector3 center = turret != null ? turret.position : transform.position;
+            using var drawing = new UnityEditor.Handles.DrawingScope(Color.magenta);
+            UnityEditor.Handles.DrawWireDisc(center, Vector3.forward, radius);
+
+            float minimum = MinimumRange;
+            if (minimum <= 0f || minimum >= radius) return;
+
+            UnityEditor.Handles.color = new Color(1f, 0.35f, 0.25f);
+            UnityEditor.Handles.DrawWireDisc(center, Vector3.forward, minimum);
+        }
+#endif
 
         public bool IsManualOperationBlocked =>
             _configuredPowerSource is FieldTurretController controller && controller.IsAutoActivationRunning;
@@ -448,6 +470,18 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected virtual void LateUpdate()
         {
+            UpdateHeatWave();
+            if (_treeMask == null) return;
+
+            Bounds bounds = GunRenderer.bounds;
+            if (_gunHeatWave != null && _gunHeatWave.enabled) bounds.Encapsulate(_gunHeatWave.bounds);
+            _treeMask.Update(bounds);
+            if (_gunHeatWave != null && _gunHeatWave.maskInteraction != GunRenderer.maskInteraction)
+                _gunHeatWave.maskInteraction = GunRenderer.maskInteraction;
+        }
+
+        private void UpdateHeatWave()
+        {
             SpriteRenderer source = GunRenderer;
             if (_gunHeatStrength <= 0f || IsLocked || IsDestroyed || heatWaveMaterial == null || source == null ||
                 !source.enabled || !source.gameObject.activeInHierarchy || source.forceRenderingOff || source.sprite == null)
@@ -473,8 +507,9 @@ namespace TeamHJD.Game.FieldTurrets
             _gunHeatWave.sprite = source.sprite;
             _gunHeatWave.flipX = source.flipX;
             _gunHeatWave.flipY = source.flipY;
+            _gunHeatWave.maskInteraction = source.maskInteraction;
             _gunHeatWave.sortingLayerID = source.sortingLayerID;
-            _gunHeatWave.sortingOrder = source.sortingOrder + 1;
+            _gunHeatWave.sortingOrder = source.sortingOrder - 1; // The distortion samples the map, so draw it behind the gun.
             _gunHeatWave.color = new Color(1f, 1f, 1f, _gunHeatStrength);
             _gunHeatWave.enabled = true;
         }
@@ -499,12 +534,16 @@ namespace TeamHJD.Game.FieldTurrets
                 enabled = false;
                 return;
             }
+            if (GunRenderer != null && GunRenderer.TryGetComponent(out SortingGroup gunGroup) && gunGroup.sortAtRoot)
+                _treeMask = new FieldTurretTreeMask(transform, GunRenderer);
             if (_initialActivationPending)
                 _initialActivationRoutine = StartCoroutine(RequestInitialActivation());
         }
 
         protected virtual void OnDisable()
         {
+            _treeMask?.Dispose();
+            _treeMask = null;
             if (_gunHeatWave != null) _gunHeatWave.enabled = false;
             ReleaseMatchOperations();
             FieldTurretInstanceRegistry.Unregister(this);

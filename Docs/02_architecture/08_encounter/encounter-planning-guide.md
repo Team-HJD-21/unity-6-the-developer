@@ -145,7 +145,7 @@ radius 1이면 타깃 셀과 상하좌우/대각선 최대 9개 셀을 조사하
 
 ## Initial_Stage 연결과 확인
 
-`Encounter Debug Network`의 런처에 `InitialStageCompositionRoot` 오브젝트의 `RegionSceneBinding`을 연결한다. `EncounterSceneConfiguration`이 지정한 현재 씬 Executor/환경 Profile은 Match 바인딩 전에 런처로 전달된다. persistent consumer는 씬 재진입 때 현재 참조로 갱신한다. Region 자료는 해당 binding의 `Source.Snapshot`으로 읽는다.
+Scene의 정식 `EncounterSceneBinding`에 `InitialStageCompositionRoot` 오브젝트의 `RegionSceneBinding`을 연결한다. `EncounterSceneConfiguration`이 지정한 현재 씬 Executor/환경 Profile은 Match 바인딩 전에 정식 연결부로 전달된다. persistent consumer는 씬 재진입 때 현재 참조로 갱신한다. Region 자료는 해당 binding의 `Source.Snapshot`으로 읽는다.
 
 실제 호스트 연결과 Match 시작은 기존 App 흐름을 따른다. Core의 Match 바인딩과 Scene의 제작 참조 연결이 있어야 하며, Runtime 클래스 하나를 씬에 추가하는 방식이 아니다. 최신 전장·지역·요청의 Match ID가 다르면 생성하지 않는다.
 

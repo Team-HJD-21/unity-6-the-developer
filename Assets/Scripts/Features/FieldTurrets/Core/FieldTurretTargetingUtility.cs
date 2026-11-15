@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,11 +11,11 @@ namespace TeamHJD.Game.FieldTurrets
         public static readonly int TerrainObstacleMask = LayerMask.GetMask("Default", "Forest");
         public static readonly int EnemyHitBoxMask = LayerMask.GetMask("EnemyHurtbox");
 
-        private static readonly int StructureSightObstacleMask = LayerMask.GetMask("CU", "TurretBase");
+        private static readonly int SightBlockerMask = LayerMask.GetMask("CU", "TurretBase", "TurretSightBlocker");
         private static readonly ContactFilter2D SightFilter = new()
         {
             useLayerMask = true,
-            layerMask = TerrainObstacleMask | StructureSightObstacleMask,
+            layerMask = LayerMask.GetMask("Default") | SightBlockerMask,
             useTriggers = false
         };
         private static readonly List<RaycastHit2D> SightHits = new();
@@ -30,11 +31,20 @@ namespace TeamHJD.Game.FieldTurrets
                     continue;
 
                 int layer = 1 << obstacle.gameObject.layer;
-                if ((StructureSightObstacleMask & layer) != 0 || obstacle.CompareTag(TerrainObstacleTag))
+                if ((SightBlockerMask & layer) != 0 || obstacle.CompareTag(TerrainObstacleTag))
                     return false;
             }
 
             return true;
+        }
+
+        public static bool CanAttackEnemy(Transform target)
+        {
+            if (target == null)
+                return false;
+
+            IAttackableEnemy enemy = target.GetComponentInParent<IAttackableEnemy>();
+            return enemy != null && enemy.CanBeAttackedBy(AttackSourceType.Turret);
         }
 
         public static bool IsEnemyHitBox(Collider2D collider)

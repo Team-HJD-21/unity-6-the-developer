@@ -19,6 +19,7 @@ public sealed class EncounterSceneBindingTests
 {
     private GameObject _root;
     private EncounterSceneBinding _launcher;
+    private readonly NetworkStatus _network = new NetworkStatus();
 
     [SetUp]
     public void SetUp()
@@ -26,6 +27,7 @@ public sealed class EncounterSceneBindingTests
         _root = new GameObject("Launcher test");
         _root.SetActive(false);
         _launcher = _root.AddComponent<EncounterSceneBinding>();
+        _launcher.SetNetworkConnection(_network);
     }
 
     [TearDown]
@@ -51,7 +53,6 @@ public sealed class EncounterSceneBindingTests
     [Test]
     public void RequestSpawn_WithoutHostDoesNotReadSnapshotOrConsumeRandom()
     {
-        Set("_networkManager", _root.GetComponent<NetworkManager>());
         Set("_snapshotProvider", (Func<BattlefieldSpatialSnapshot>)(() =>
             throw new InvalidOperationException("A rejected request must not capture a snapshot.")));
         using (_launcher.BindRandom(new TestStreams()))
@@ -118,7 +119,7 @@ public sealed class EncounterSceneBindingTests
                 .Invoke(_launcher, null);
             Assert.That(Get<EncounterPipeline>("_pipeline"), Is.Null);
 
-            _launcher.UseAppNetworkOwnership();
+            _launcher.UseAppNetworkOwnership(_network);
             var firstMatch = new MatchId("first");
             _launcher.BindAuthorityMatch(firstMatch, new PlayerId("test"), () => null);
             var first = Get<EncounterPipeline>("_pipeline");
@@ -160,7 +161,7 @@ public sealed class EncounterSceneBindingTests
                 .SetValue(executor, enemies);
             Set("_spawnExecutor", executor);
             Set("_squadCatalog", squads);
-            _launcher.UseAppNetworkOwnership();
+            _launcher.UseAppNetworkOwnership(_network);
             _launcher.BindAuthorityMatch(match, new PlayerId("test"), () => null);
 
             var registry = executor.SpawnPointList;
@@ -317,5 +318,13 @@ public sealed class EncounterSceneBindingTests
         public float NextFloat(float minInclusive, float maxExclusive) => throw new InvalidOperationException("Unexpected random consumption.");
         public double NextDouble() => throw new InvalidOperationException("Unexpected random consumption.");
         public double NextDouble(double minInclusive, double maxExclusive) => throw new InvalidOperationException("Unexpected random consumption.");
+    }
+    private sealed class NetworkStatus : INetworkConnectionStatus
+    {
+        public bool IsListening => false;
+        public bool IsServer => false;
+        public bool IsClient => false;
+        public bool IsHost => false;
+        public int ConnectedClientCount => 0;
     }
 }

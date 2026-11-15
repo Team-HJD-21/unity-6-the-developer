@@ -6,7 +6,8 @@ namespace TeamHJD.Game.Contracts
 {
     public interface IAppOwnedEncounterMatchConsumer : IEncounterMatchConsumer
     {
-        void UseAppNetworkOwnership();
+        /// <summary>App 소유 연결의 읽기 상태를 Match 바인딩 전에 전달합니다. 연결 수명은 넘기지 않습니다.</summary>
+        void UseAppNetworkOwnership(INetworkConnectionStatus connection);
         void BindAuthorityMatch(MatchId matchId, PlayerId authorityPlayerId,
             Func<BattlefieldSpatialSnapshot> snapshotProvider);
     }
