@@ -84,7 +84,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -880326001
   m_SortingLayer: 1
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 576607ae21835c1697fa97b839e59a0c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -169,15 +169,20 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: -0.14089122, y: 0.07370582}
+    - - {x: -0.10069157, y: 0.08483252}
+      - {x: -0.14693245, y: 0.062003404}
+      - {x: -0.1849129, y: 0.03768184}
       - {x: -0.21692517, y: -0.00048613548}
-      - {x: -0.16843864, y: -0.064325884}
-      - {x: 0.07199445, y: -0.090547696}
-      - {x: 0.14750685, y: -0.052506834}
-      - {x: 0.1566665, y: -0.037364528}
-      - {x: 0.17068885, y: -0.0012014657}
-      - {x: 0.16077869, y: 0.04108596}
-      - {x: 0.05116332, y: 0.09173128}
+      - {x: -0.18554167, y: -0.046167124}
+      - {x: -0.14660813, y: -0.06833946}
+      - {x: -0.099166036, y: -0.087656066}
+      - {x: 0.06840518, y: -0.083728135}
+      - {x: 0.09992626, y: -0.06914507}
+      - {x: 0.12022859, y: -0.051788986}
+      - {x: 0.13800237, y: -0.028391412}
+      - {x: 0.14018019, y: 0.022487596}
+      - {x: 0.09940241, y: 0.06226256}
+      - {x: 0.06982744, y: 0.08419384}
   m_UseDelaunayMesh: 0
 --- !u!114 &5823638767377678441
 MonoBehaviour:
@@ -189,8 +194,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4804cc54a6fe41988b65e715fe1ab955, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _body: {fileID: 8235949267977876978}
   _spriteRenderer: {fileID: 0}
   _speed: 45
