@@ -21,6 +21,8 @@ public sealed class CombatHudDebugPanel : MonoBehaviour
     private readonly CombatHudTransition _panel = new();
     private float _nextSearch;
     private Coroutine _autoRequest;
+    private AppPanelView _menuView;
+    private readonly Vector3[] _menuCorners = new Vector3[4];
 
     private void OnEnable()
     {
@@ -49,10 +51,26 @@ public sealed class CombatHudDebugPanel : MonoBehaviour
         float amount = _panel.Tick(Time.unscaledDeltaTime);
         Panel.alpha = amount; Panel.blocksRaycasts = Panel.interactable = menu;
         float outside = ((RectTransform)PanelRect.parent).rect.width * .5f + PanelRect.rect.width * .5f;
-        PanelRect.anchoredPosition = new Vector2(Mathf.Lerp(outside, 492, amount), 0);
+        float dock = menu || amount > .001f ? MenuSidePosition() : 492;
+        PanelRect.anchoredPosition = new Vector2(Mathf.Lerp(outside, dock, amount), 0);
         Reset.interactable = Advance.interactable = _weather != null && _weather.CanChangePhase;
         Auto.interactable = menu && Stage.isActiveAndEnabled;
         if (Toast != null) Toast.alpha = 0;
+    }
+    private float MenuSidePosition()
+    {
+        if (_menuView == null)
+            foreach (var view in FindObjectsByType<AppPanelView>(FindObjectsSortMode.None))
+                if (view is not AppSettingsView && view.Panel != null) { _menuView = view; break; }
+        if (_menuView == null) return 492;
+        var parent = (RectTransform)PanelRect.parent;
+        _menuView.Panel.GetWorldCorners(_menuCorners);
+        float right = float.NegativeInfinity;
+        foreach (var corner in _menuCorners) right = Mathf.Max(right, parent.InverseTransformPoint(corner).x);
+        var canvas = GetComponentInParent<Canvas>();
+        float gap = 12 / Mathf.Max(.001f, canvas != null ? canvas.rootCanvas.scaleFactor : 1);
+        float half = PanelRect.rect.width * PanelRect.localScale.x * .5f;
+        return Mathf.Min(right + gap + half, parent.rect.xMax - gap - half);
     }
     private void ResetWeather()
     {

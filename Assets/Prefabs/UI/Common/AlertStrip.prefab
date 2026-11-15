@@ -36,7 +36,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 166}
-  m_SizeDelta: {x: 720, y: 64}
+  m_SizeDelta: {x: 720, y: 76}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &619258913382491735
 MonoBehaviour:
@@ -52,9 +52,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.AlertStripView
   Group: {fileID: 8684011978898661815}
   Message: {fileID: 2643702717825738058}
-  InfoColor: {r: 0.839, g: 0.749, b: 0.486, a: 1}
-  SuccessColor: {r: 0.36, g: 0.8, b: 0.48, a: 1}
-  ErrorColor: {r: 0.98, g: 0.72, b: 0.66, a: 1}
+  InfoColor: {r: 0.93, g: 0.84, b: 0.62, a: 1}
+  SuccessColor: {r: 0.52, g: 0.85, b: 0.59, a: 1}
+  ErrorColor: {r: 0.99, g: 0.76, b: 0.7, a: 1}
   DisplaySeconds: 2.2
   EnterSeconds: 0.12
   ExitSeconds: 0.18
@@ -167,12 +167,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 26
+  m_fontSize: 28
   m_fontSizeBase: 22
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 22
-  m_fontSizeMax: 26
+  m_fontSizeMin: 24
+  m_fontSizeMax: 28
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -191,7 +191,7 @@ MonoBehaviour:
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
   m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
+  m_enableExtraPadding: 1
   checkPaddingRequired: 0
   m_isRichText: 0
   m_EmojiFallbackSupport: 1

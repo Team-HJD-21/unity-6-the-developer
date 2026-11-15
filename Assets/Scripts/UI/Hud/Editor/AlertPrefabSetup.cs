@@ -60,14 +60,18 @@ public static class AlertPrefabSetup
         Debug.Log("COMMON_ALERT_CONFIGURED");
     }
 
+    public static void ApplyReadability(GameObject root, CombatHudStyle style) => Build(root, style);
+
     private static void Build(GameObject root, CombatHudStyle style)
     {
         root.layer = LayerMask.NameToLayer("UI");
         var rect = (RectTransform)root.transform;
-        rect.sizeDelta = new Vector2(720, 64);
+        rect.sizeDelta = new Vector2(720, 76);
         var view = Get<AlertStripView>(root); view.Group = Get<CanvasGroup>(root);
         view.MinimumScreenScale = .8f; view.MinimumScreenWidth = 800;
-        view.ErrorColor = new Color(.98f, .72f, .66f);
+        view.InfoColor = new Color(.93f, .84f, .62f);
+        view.SuccessColor = new Color(.52f, .85f, .59f);
+        view.ErrorColor = new Color(.99f, .76f, .7f);
         rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, 0);
         rect.anchoredPosition = new Vector2(0, view.DefaultBottom);
         var background = root.GetComponent<Image>();
@@ -80,8 +84,9 @@ public static class AlertPrefabSetup
         view.Message = Get<TextMeshProUGUI>(textRect.gameObject);
         view.Message.font = style.BodyFont; view.Message.color = style.Text;
         view.Message.fontSharedMaterial = PrepareMaterial(style.BodyFont);
-        view.Message.fontSize = 26; view.Message.enableAutoSizing = true;
-        view.Message.fontSizeMin = 22; view.Message.fontSizeMax = 26;
+        view.Message.fontSize = 28; view.Message.enableAutoSizing = true;
+        view.Message.fontSizeMin = 24; view.Message.fontSizeMax = 28;
+        view.Message.extraPadding = true;
         view.Message.maxVisibleLines = 2;
         view.Message.textWrappingMode = TextWrappingModes.Normal;
         view.Message.overflowMode = TextOverflowModes.Ellipsis;
@@ -101,9 +106,12 @@ public static class AlertPrefabSetup
         else
         { material.shader = font.material.shader; material.CopyPropertiesFromMaterial(font.material); }
         material.SetColor(ShaderUtilities.ID_OutlineColor, new Color(.015f, .02f, .02f, 1));
-        material.SetFloat(ShaderUtilities.ID_OutlineWidth, .14f);
+        material.SetFloat(ShaderUtilities.ID_OutlineWidth, .18f);
         material.SetFloat(ShaderUtilities.ID_FaceDilate, .08f);
         material.EnableKeyword("OUTLINE_ON");
+        material.SetColor("_UnderlayColor", new Color(.01f, .018f, .015f, .85f));
+        material.SetFloat("_UnderlayOffsetX", .6f); material.SetFloat("_UnderlayOffsetY", -.6f);
+        material.SetFloat("_UnderlaySoftness", .08f); material.EnableKeyword("UNDERLAY_ON");
         EditorUtility.SetDirty(material); AssetDatabase.SaveAssetIfDirty(material);
         return material;
     }

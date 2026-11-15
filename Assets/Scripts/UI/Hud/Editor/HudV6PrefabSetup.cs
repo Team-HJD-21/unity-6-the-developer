@@ -113,10 +113,11 @@ public static class HudV6PrefabSetup
             var badge = Rect("Destination", picker.DiskRect, 45, 45, new(.5f, .5f), new(.5f, .5f)); badge.anchoredPosition = new Vector2(86, 87); Panel(badge, "effect");
             picker.DestinationBadge = badge.gameObject; picker.DestinationText = Text("Key", badge, "E", 40, 40, 0, 0, 24, S.LabelFont);
             picker.CancelBadge = Picture("Cancel Preview", picker.DiskRect, "drag_cancel", 44, 44, 86, 87).gameObject;
-            picker.TooltipRect = Rect("Description", picker.transform, 310, 123, new(.5f, .5f), new(.5f, .5f)); Panel(picker.TooltipRect, "panel");
+            picker.TooltipRect = Rect("Description", picker.transform, 368, 148, new(.5f, .5f), new(.5f, .5f)); Panel(picker.TooltipRect, "panel");
             picker.TooltipGroup = Get<CanvasGroup>(picker.TooltipRect);
-            picker.TooltipTitle = Text("Title", picker.TooltipRect, "", 274, 32, 0, 35, 24, S.BodyFont);
-            picker.TooltipBody = Text("Body", picker.TooltipRect, "", 274, 64, 0, -25, 20, S.BodyFont);
+            picker.TooltipTitle = Text("Title", picker.TooltipRect, "", 332, 32, 0, 48, 24, S.BodyFont);
+            picker.TooltipBody = Text("Body", picker.TooltipRect, "", 332, 88, 0, -18, 20, S.BodyFont);
+            picker.TooltipBody.textWrappingMode = TextWrappingModes.Normal;
             picker.TooltipTitle.alignment = picker.TooltipBody.alignment = TextAlignmentOptions.Left;
             picker.PickerGroup.alpha = picker.DiskGroup.alpha = picker.TooltipGroup.alpha = 0;
             picker.PickerGroup.blocksRaycasts = picker.DiskGroup.blocksRaycasts = picker.TooltipGroup.blocksRaycasts = false;

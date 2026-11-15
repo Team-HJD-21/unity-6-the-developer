@@ -147,7 +147,8 @@ public sealed class CombatHudPresentationTests
         Assert.That(magazine.RoundCount.raycastTarget, Is.False);
         Assert.That(magazine.ReloadArrows.GetComponentsInChildren<CombatHudSymbol>(true).Length, Is.EqualTo(1));
         Assert.That(strip.NameGroup.blocksRaycasts, Is.False);
-        Assert.That(string.Concat(strip.WeaponNames).All(c => strip.NameLabel.font.HasCharacter(c)), Is.True);
+        // 동적 폰트는 앞선 검사에서 생성된 atlas 캐시 대신 실제 글리프 생성 가능성을 확인합니다.
+        Assert.That(string.Concat(strip.WeaponNames).All(c => strip.NameLabel.font.HasCharacter(c, true, true)), Is.True);
         var cursor = root.GetComponent<CombatFieldCursor>().ViewPrefab;
         Assert.That(cursor.GetComponent<GraphicRaycaster>(), Is.Null, "The cursor cannot intercept field clicks.");
         Assert.That(cursor.GetComponentsInChildren<Graphic>(true).All(g => !g.raycastTarget), Is.True);
@@ -413,6 +414,13 @@ public sealed class CombatHudPresentationTests
     {
         float deadline = Time.realtimeSinceStartup + timeout;
         while (!condition() && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within {timeout} seconds.");
+        var picker = Object.FindAnyObjectByType<CombatSkillPicker>();
+        Vector2 local = default;
+        if (picker != null)
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(picker.CanvasRect, GameInput.PointerPosition, null, out local);
+        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within {timeout} seconds. " +
+            $"Screen={Screen.width}x{Screen.height}, pointer={GameInput.PointerPosition}, reveal={picker?.Reveal}, " +
+            $"visible={picker?.Hud?.AreCombatControlsVisible}, prepare={picker?.Hud?.Owner?.CanPrepare}, selectingTurret={picker?.Hud?.Owner?.IsSelectingTurret}, " +
+            $"canvas={picker?.CanvasRect.rect}, localPointer={local}, pickerScale={picker?.PickerRect.localScale}.");
     }
 }

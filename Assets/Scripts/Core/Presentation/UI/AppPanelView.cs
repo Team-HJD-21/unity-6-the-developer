@@ -21,7 +21,11 @@ namespace TeamHJD.Game.Presentation
         }
         [Min(.01f)] public float TransitionSeconds = .18f;
         [Min(0)] public float SecondaryRowHeight;
+        [Min(0)] public float MinimumScreenScale = .8f;
+        [Min(0)] public float ScreenPadding = 24;
         private Vector2 _home;
+        private Vector3 _authoredScale;
+        private Canvas _canvas;
         private Vector2 _fullSize, _statusHome, _mainHome;
         private float _value, _from, _target, _elapsed;
         private bool _initialized, _closing;
@@ -32,6 +36,7 @@ namespace TeamHJD.Game.Presentation
         {
             if (_initialized) return;
             _home = Panel.anchoredPosition; _fullSize = Panel.sizeDelta;
+            _authoredScale = Panel.localScale; _canvas = GetComponentInParent<Canvas>();
             if (Status != null) _statusHome = Status.rectTransform.anchoredPosition;
             if (MainMenu != null) _mainHome = ((RectTransform)MainMenu.transform).anchoredPosition;
             _initialized = true;
@@ -76,11 +81,28 @@ namespace TeamHJD.Game.Presentation
         }
         private void Update()
         {
+            RefreshReadableScale();
             _elapsed = Mathf.Min(TransitionSeconds, _elapsed + Time.unscaledDeltaTime);
             _value = Mathf.LerpUnclamped(_from, _target, UiMotion.Sigmoid(_elapsed / Mathf.Max(.001f, TransitionSeconds)));
             Group.alpha = _value;
             Panel.anchoredPosition = _home + Vector2.down * (12 * (1 - _value));
             if (_closing && _elapsed >= TransitionSeconds) Destroy(gameObject);
+        }
+        /// <summary>작은 창에서도 본문 크기를 확보하되 버튼과 패널 전체를 화면 여백 안에 유지합니다.</summary>
+        public void RefreshReadableScale()
+        {
+            EnsureInitialized();
+            if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
+            if (_canvas == null) return;
+            var canvas = _canvas.rootCanvas;
+            float factor = Mathf.Max(.001f, canvas.scaleFactor);
+            Vector2 viewport = canvas.pixelRect.size;
+            if (viewport.x <= 0 || viewport.y <= 0) return;
+            Vector2 size = Vector2.Scale(Panel.rect.size, new Vector2(Mathf.Abs(_authoredScale.x), Mathf.Abs(_authoredScale.y))) * factor;
+            float desired = Mathf.Max(1, MinimumScreenScale * Mathf.Min(1, viewport.x / 800) / factor);
+            float fit = Mathf.Min(Mathf.Max(1, viewport.x - ScreenPadding * 2) / Mathf.Max(1, size.x),
+                Mathf.Max(1, viewport.y - ScreenPadding * 2) / Mathf.Max(1, size.y));
+            Panel.localScale = _authoredScale * Mathf.Min(desired, fit);
         }
     }
 }

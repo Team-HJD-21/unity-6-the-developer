@@ -357,6 +357,13 @@ HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후
 
 FieldTerritoryRenderer의 기존 Territory 정렬·공통 RegionBoundaryGeometry는 유지한다. TacticalHudStyle에서 Sweep0.65/Glow0.12/Settle0.28, Loss0.16, Merge0.18, ToastFresh1초와 기존 색에 가까운 CaptureGlow를 조정한다. Baseline/첫 구독/Grid 교체는 즉시 정착하며 Actor/Source 해제 시 구독과 성공 대기를 정리한다. 지도·전환 중에도 타임라인을 소비하며 논리 Grid와 스폰 제외를 애니메이션으로 지연하지 않는다. [구현·검증 경계](../../01_planning/02_implementation-records/2026/11/2026-11-15-territory-expansion-ui.md)를 따른다. 현재는 독립 관리형17개 검사 통과이며 통합 Editor/Play/GPU 검수는 담당 세션 대기다.
 
+## 2026-11-15 텍스트 가독성
+
+`AppPanelView.MinimumScreenScale`(0.8)과 `ScreenPadding`(24)은 메뉴·설정·결과·안전장치의 작은 창 가독성을 조절한다. `RefreshReadableScale`은 실제 root Canvas viewport에 패널을 맞추며 기존 패널 크기·안내 접힘·입력·Fade 수명을 유지한다.
+
+`CombatHudScaleBinding.Element.MinimumScreenScale`은 특정 툴팁만 별도 화면 최소 크기를 지정한다. 기존 `MinimumScale`은 HUD 단위 하한이다. 실제 Canvas와 부모 파츠 배율을 함께 계산하며 해상도 변경과 HUD 설정 변경 때 재적용한다. 선택 설명0.8, 상세 스킬 설명·무기 이름0.75이며 전투 도크 전체를 확대하지 않는다. `PlayerSkillTooltipView`는 확대 크기로 위치를 제한하고 `CombatWeaponStack`은 이름 카드의 실제 경계를 화면8px 안에 유지한다.
+
+명시 제작 메뉴 `Tools/TeamHJD/The Developer/Common UI/Apply text readability`는 확인된 텍스트 영역과 공용 Alert 재질·TMP 한글 줄바꿈 설정만 보정한다. Scene·원본 폰트·Main 배경/로고·다른 제작물을 저장하지 않는다. `CommonUiPrefabSetup`/`HudV6PrefabSetup`/`HudAmmoDockSetup`/`UiProductPolishSetup.ApplyLoading`의 관련 생성값도 반영했다. [검증 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-ui-readability-polish.md)을 참고한다.
 
 ## 시작 우주선의 I 상태창 (2026-11-15)
 

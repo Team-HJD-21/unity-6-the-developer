@@ -36,7 +36,7 @@ public static class PlayerSkillDescriptions
     {
         PlayerSkillId.Bomb => "설치 후 잠시 뒤 폭발하여\n주변 적에게 범위 피해를 줍니다.",
         PlayerSkillId.PlayerTurret => "플레이어 주변 8방향에 설치해\n접근하는 적을 자동 공격합니다.",
-        PlayerSkillId.EnergyBarrier => "두 본체를 연결해 장벽을 만듭니다.\n적의 이동을 막고 아군 탄환은 통과합니다.",
+        PlayerSkillId.EnergyBarrier => "두 본체 사이에 장벽을 설치합니다.\n적 이동 차단 · 아군 탄환 통과",
         PlayerSkillId.LureBeacon => "주변 적을 끌어들이는\n유도 비콘을 설치합니다.",
         PlayerSkillId.Portal => "한 쌍의 포털을 설치합니다.\nR 이동 · F 회수",
         PlayerSkillId.DualWield => $"{(owner != null ? owner.UpgradeDurationValue(skill) : 8):0.#}초 동안 총을 두 개 듭니다.\n탄약 소비 유지 · 대기 20초",
