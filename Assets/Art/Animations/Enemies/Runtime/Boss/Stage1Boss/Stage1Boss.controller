@@ -129,7 +129,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Roar
-  m_Speed: 1
+  m_Speed: 0.38888887
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -1307090887434733095}
@@ -618,7 +618,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Stomp
-  m_Speed: 1
+  m_Speed: 0.48611107
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -235225045530058997}

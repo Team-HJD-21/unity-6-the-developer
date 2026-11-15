@@ -47,6 +47,13 @@ public class EnemySummonAbility : EnemyAbility
 
     // 외부 호출과 상태 변경
 
+    /// <summary>다음 소환 모션의 수량을 지정한다. 진행 중인 소환의 수량은 바꾸지 않는다.</summary>
+    public void SetSummonCount(int count)
+    {
+        if (!_isSummoning)
+            summonCount = Mathf.Max(1, count);
+    }
+
     /// <summary>
     /// 생성기와 소환 정의가 준비되어 있는지 확인한다. 변태와 거리 판단은 컨트롤러가 담당한다.
     /// </summary>

@@ -14,7 +14,8 @@ public partial class EnemySpawnExecutor
     private bool TrySpawnActor(EnemyDefinition definition, Vector3 position, Quaternion rotation,
         EnemySquad squad, EncounterExecutionContext context, string pointId,
         Action<SpawnDecisionSnapshot.Actual> observeSpawn = null, Action<string> observeFailure = null,
-        TeamHJD.Game.Domain.EntityId identity = default, bool prepareWhilePaused = false)
+        TeamHJD.Game.Domain.EntityId identity = default, bool prepareWhilePaused = false,
+        Action<EnemyNetworkController> onSpawned = null)
     {
         if (!CanSpawn || (!CanSimulateField && !prepareWhilePaused) || _gameplay.IsCancellationRequested ||
             context?.SpawnCancellation.IsCancellationRequested == true)
@@ -52,6 +53,8 @@ public partial class EnemySpawnExecutor
             simulation.DeathConfirmed += OnEnemyDied;
             var health = actor.GetComponent<EnemyHealth>();
             if (health != null) health.DamageApplied += OnEnemyDamaged;
+            // 생성과 추적 등록이 끝난 실제 소환 개체만 소환 주체에게 전달한다.
+            onSpawned?.Invoke(simulation);
             if (observeSpawn != null)
                 try
                 {

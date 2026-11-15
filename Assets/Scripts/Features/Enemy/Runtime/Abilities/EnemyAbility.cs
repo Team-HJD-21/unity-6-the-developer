@@ -24,6 +24,9 @@ public abstract partial class EnemyAbility : MonoBehaviour
     /// <summary>능력 모션이나 지연 실행으로 행동이 잠겨 있는지 반환한다.</summary>
     public virtual bool IsExecuting => false;
 
+    /// <summary>능력이 실행 중 이동·제동을 직접 처리하는지 반환한다.</summary>
+    public virtual bool ControlsMovement => false;
+
     /// <summary>
     /// 능력 사용 시 바라볼 대상. 없으면 컨트롤러에 배정된 타깃을 사용한다.
     /// </summary>

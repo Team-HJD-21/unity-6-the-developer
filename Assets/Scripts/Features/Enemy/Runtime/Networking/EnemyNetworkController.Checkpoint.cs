@@ -23,6 +23,9 @@ public partial class EnemyNetworkController
     {
         if (!IsSpawned || !IsServer || enemyHealth.CurrentHealth <= 0)
             throw new InvalidOperationException("Capture a living authority enemy.");
+        // 보스 근접 공격의 대기 타깃과 타격 소비 여부는 아직 저장하지 않으므로 종료 후 다시 시도한다.
+        if (GetComponent<BossEnemyController>()?.IsExecutingAbility == true)
+            throw new InvalidOperationException("Retry after the boss ability animation finishes.");
         var ability = GetComponent<EnemyAbility>();
         var movement = GetComponent<EnemyMovement>();
         var body = GetComponent<Rigidbody2D>();
