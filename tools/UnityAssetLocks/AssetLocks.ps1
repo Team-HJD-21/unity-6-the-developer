@@ -31,6 +31,7 @@ function Test-AssetPath($path) {
 }
 
 function Test-ManagedPath($path) {
+    if ($path -cin @('ProjectSettings/Physics2DSettings.asset', 'ProjectSettings/TagManager.asset')) { return $true }
     return (Test-AssetPath $path) -and $path -cmatch '(?:\.unity|\.prefab|\.png\.meta)$'
 }
 
@@ -220,10 +221,9 @@ function Open-TrackedAssets([string[]]$paths) {
                 $published = Get-Blob $main $lock.path
                 $base = Get-Blob $head $lock.path
                 if ($published -cne $base) {
-                    if ($published -ne 'deleted') { throw "$($lock.path) differs from main. Update your branch before editing it." }
                     if (!$mergeBase) { $mergeBase = Invoke-Git merge-base $head $main }
-                    if ((Get-Blob $mergeBase $lock.path) -ne 'deleted') {
-                        throw "$($lock.path) was deleted from main. Update your branch before editing it."
+                    if ((Get-Blob $mergeBase $lock.path) -cne $published) {
+                        throw "$($lock.path) changed on main since this branch diverged. Update your branch before editing it."
                     }
                 }
                 Save-Record ([pscustomobject]@{ id = $lock.id; path = $lock.path; main = $main; base = $published; submitted = '' })

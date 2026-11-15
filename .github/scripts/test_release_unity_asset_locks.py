@@ -12,16 +12,17 @@ class ReleaseUnityAssetLocksTests(unittest.TestCase):
     submitted = "d" * 40
     path = "Assets/Example Prefab.prefab"
 
-    def run_release(self, tag_id, tag_version, new_version, *, changed=True, active_id="lock-1"):
+    def run_release(self, tag_id, tag_version, new_version, *, changed=True, active_id="lock-1", path=None):
         tag = release.submission_tag(tag_id, tag_version)
+        path = path or self.path
         calls = []
 
         def git(*args, **_):
             calls.append(args)
             if args[0] == "diff":
-                return (self.path + "\0").encode() if changed else b""
+                return (path + "\0").encode() if changed else b""
             if args[:2] == ("lfs", "locks"):
-                return json.dumps([{"id": active_id, "path": self.path}]).encode()
+                return json.dumps([{"id": active_id, "path": path}]).encode()
             if args[0] == "ls-remote":
                 return f"{self.before}\t{tag}\n".encode()
             if args[0] == "rev-parse":
@@ -55,6 +56,16 @@ class ReleaseUnityAssetLocksTests(unittest.TestCase):
     def test_submitted_deletion_unlocks(self):
         calls = self.run_release("lock-1", "deleted", "deleted")
         self.assertIn(("lfs", "unlock", "--force", "--id=lock-1", "--remote=origin"), calls)
+
+    def test_physics_and_tag_manager_unlock_after_merge(self):
+        for path in ("ProjectSettings/Physics2DSettings.asset", "ProjectSettings/TagManager.asset"):
+            with self.subTest(path=path):
+                calls = self.run_release("lock-1", self.submitted, self.submitted, path=path)
+                self.assertIn(("lfs", "unlock", "--force", "--id=lock-1", "--remote=origin"), calls)
+
+    def test_other_project_settings_are_ignored(self):
+        calls = self.run_release("lock-1", self.submitted, self.submitted, path="ProjectSettings/ProjectSettings.asset")
+        self.assertEqual([call[0] for call in calls], ["diff"])
 
 
 if __name__ == "__main__":

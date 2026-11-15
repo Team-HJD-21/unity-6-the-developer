@@ -1,3 +1,5 @@
 *.png.meta lockable
 *.unity lockable
 *.prefab lockable
+ProjectSettings/Physics2DSettings.asset lockable
+ProjectSettings/TagManager.asset lockable

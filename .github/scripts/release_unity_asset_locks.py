@@ -8,6 +8,10 @@ import sys
 
 TAG_PREFIX = "refs/tags/unity-asset-locks/"
 SHA = re.compile(r"[0-9a-f]{40}")
+LOCKABLE_PROJECT_SETTINGS = {
+    "ProjectSettings/Physics2DSettings.asset",
+    "ProjectSettings/TagManager.asset",
+}
 
 
 def submission_tag(lock_id, version):
@@ -42,7 +46,8 @@ def release_merged_locks(before, after):
     paths = git("diff", "--name-only", "--no-renames", "-z", before, after, "--").decode("utf-8").split("\0")
     changed = {
         path for path in paths
-        if path.startswith("Assets/") and path.endswith((".unity", ".prefab", ".png.meta"))
+        if path in LOCKABLE_PROJECT_SETTINGS
+        or (path.startswith("Assets/") and path.endswith((".unity", ".prefab", ".png.meta")))
     }
     if not changed:
         return

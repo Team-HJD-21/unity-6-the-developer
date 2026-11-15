@@ -33,6 +33,8 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
     }
 
     private static readonly string ProjectRoot = Path.GetDirectoryName(Application.dataPath);
+    private const string Physics2DSettingsPath = "ProjectSettings/Physics2DSettings.asset";
+    private const string TagManagerPath = "ProjectSettings/TagManager.asset";
     private static readonly bool Windows = Application.platform == RuntimePlatform.WindowsEditor;
     private static readonly bool Mac = Application.platform == RuntimePlatform.OSXEditor;
     private static HashSet<string> _tracked = new HashSet<string>(StringComparer.Ordinal);
@@ -136,6 +138,20 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         return Selection.objects.Any(asset => GetLockPath(AssetDatabase.GetAssetPath(asset)) != null);
     }
 
+    [MenuItem("Tools/Git LFS/Edit Physics 2D")]
+    private static void EditPhysics2D()
+    {
+        if (TryOpen(Physics2DSettingsPath))
+            SettingsService.OpenProjectSettings("Project/Physics 2D");
+    }
+
+    [MenuItem("Tools/Git LFS/Edit Tags and Layers")]
+    private static void EditTagsAndLayers()
+    {
+        if (TryOpen(TagManagerPath))
+            SettingsService.OpenProjectSettings("Project/Tags and Layers");
+    }
+
     private static bool TryOpen(string path)
     {
         string lockPath = GetLockPath(path);
@@ -201,6 +217,9 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
     private static string GetLockPath(string path)
     {
+        if (path == Physics2DSettingsPath || path == TagManagerPath)
+            return path;
+
         if (!path.StartsWith("Assets/", StringComparison.Ordinal))
             return null;
 
