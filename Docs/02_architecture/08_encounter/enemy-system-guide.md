@@ -116,7 +116,7 @@ classDiagram
 
 `IsValidTarget()`의 공통 검증을 거치므로 `TurretOnly`는 감지 전환뿐 아니라 생성자와 복원 경로의 플레이어 지정도 거절한다. 소환 몬스터는 부모 분대의 규칙을 이어받는다. 프리셋이 없는 단일 몬스터 테스트는 테스트 창의 `타깃 규칙`을 명시적으로 사용한다. 숨겨진 `EnemyDefinition.TargetRule`은 아직 단독 Stage·보스 생성과 이전 저장의 호환에 사용하므로 제거하지 않는다.
 
-Enemy 체크포인트 `world/enemies` v3는 분대별 실제 규칙을 저장하고, Encounter 체크포인트 `world/encounter` v4는 확정된 지연 출현 명령의 규칙을 저장한다. 새 저장은 이후 프리셋 설정을 바꿔도 저장 당시 규칙을 복원한다. 이전 Enemy v1·v2는 기존 Definition 규칙으로 복원하고, 이전 Encounter v3의 확정 지연 명령은 현재 동일 Order 프리셋의 규칙을 사용한다. 후자의 프리셋이 사라졌으면 복원을 거절한다. 이 저장·복원 경로의 실제 플레이 검증은 별도로 수행해야 한다.
+Enemy 체크포인트 `world/enemies`는 v3부터 분대별 실제 규칙을 저장하고, Encounter 체크포인트 `world/encounter` v4는 확정된 지연 출현 명령의 규칙을 저장한다. 새 저장은 이후 프리셋 설정을 바꿔도 저장 당시 규칙을 복원한다. 이전 Enemy v1·v2는 기존 Definition 규칙으로 복원하고, 이전 Encounter v3의 확정 지연 명령은 현재 동일 Order 프리셋의 규칙을 사용한다. 후자의 프리셋이 사라졌으면 복원을 거절한다. 이 저장·복원 경로의 실제 플레이 검증은 별도로 수행해야 한다.
 
 `EnemySquad.SetTarget(preferredTarget, candidates)`는 이미 배정된 목표를 유지한다. 목표가 없으면 전달받은 후보의 유형·유효성과 실제 집계 인원 수용 여부를 확인하고 배정한다. 성공하면 거리 검색을 생략하며, 실패하면 전달받은 목록에서 규칙에 맞는 가장 가까운 후보를 검색한다. 두 인자를 생략한 기존 호출도 사용할 수 있으며, 검색이 필요할 때 최신 목록을 조회한다. 후보 참조와 목록을 보관하는 새 상태나 별도 갱신 루프는 추가하지 않는다.
 
@@ -180,6 +180,27 @@ Physics 2D 매트릭스에서 `EnemyHurtbox`와 `PlayerHurtbox`의 접촉을 허
 적이 Player/Turret에 주는 피해는 `TargetableComponent.TryApplyDamage()` 또는 `IDamageableTarget` 공통 수신 계약으로 전달한다. 현재 근접 코드는 PlayerInfo 직접 호출 방식이 아니다. Mage 감속은 `ISlowEffectReceiver.ApplySlow()`를 호출하며, 실제 이동/공격속도 변경은 대상 수신자가 담당한다. Enemy에서 API를 호출한다는 사실을 모든 터렛 수신 구현 완료로 해석하지 않는다.
 
 일반 사망은 `EnemyHealth.Died → EnemyNetworkController → controller.OnDeath → DeathConfirmed → Despawn` 순서다. 고유 사망 반응 또는 관측자의 예외가 나머지 제거를 막지 않도록 처리한다. `Despawned`는 사망 외 제거도 알린다. Bomber는 폭발 피해를 먼저 적용하고, 모션 종료 시 `RemovalRequested`로 제거하므로 일반 체력 사망과 구분한다.
+
+### 외부 공격의 적 감속 API
+
+`EnemyMovement`는 `ISlowEffectReceiver`를 상속한 `IAttackSlowEffectReceiver`를 구현한다. 냉각 스프레이처럼 공격 출처와 적용 결과가 필요한 호출은 이 인터페이스의 `TryApplySlow(float speedMultiplier, float duration, AttackSourceType source)`를 사용한다. 호출자는 `EnemyMovement` 구체 타입을 참조할 필요가 없다. 서버에서 영역·차폐·동일 Match·피격 가능 여부를 확정한 뒤 호출한다. 기존 Player·메이지의 `ISlowEffectReceiver.ApplySlow()` 계약은 유지하며 모든 기존 수신자가 새 인터페이스를 제공하는 것은 아니다.
+
+```csharp
+using TeamHJD.Game.Enemy.Contracts;
+
+// hitCollider는 서버에서 이미 확정한 피격 Collider2D다.
+var receiver = hitCollider.GetComponentInParent<IAttackSlowEffectReceiver>();
+bool applied = receiver != null &&
+    receiver.TryApplySlow(0.5f, 2f, AttackSourceType.Player);
+```
+
+예시의 `0.5`는 속도 50%, `2`는 지속시간 2 게임 초이며 무기 밸런스 확정값이 아니다. 배율은 0 초과 1 미만, 지속시간은 양수여야 한다. Client·사망·비활성·피격 불가·필드 정지 중 호출과 유효하지 않은 인자는 `false`로 거절한다. HP 피해를 따로 요구하지 않아 피해량 0인 냉기도 감속할 수 있다. 탐지되지 않은 암살자 등 기존 공격 출처 규칙은 유지한다. 공통 `ApplySlow(multiplier, duration)`는 출처를 `Unknown`으로 전달하므로 플레이어 공격에는 명시적인 `TryApplySlow`를 사용한다.
+
+동일 배율의 재적중은 기존 기한을 줄이지 않고 갱신한다. 다른 배율은 각각 만료하며 활성 효과 중 가장 강한 감속만 적용한다. 서로 다른 활성 배율은 최대 64개이고 상한에 도달하면 새로운 배율만 거절한다. `BaseMoveSpeed`는 설정 원속도, `MoveSpeed`는 감속을 반영한 목표 속도, `SlowSpeedMultiplier`는 현재 배율이다. 실제 Rigidbody2D 이동과 밀림 속도 상한에 적용되며, 컴포넌트를 비활성화하면 효과를 해제한다. 새 프리팹 컴포넌트 추가는 필요 없다.
+
+감속 기한은 `FieldSimulationTime`을 사용한다. 적 체크포인트 `world/enemies` v4는 배율과 남은 시간을 저장하며 v1~v3는 감속 없는 상태로 읽는다. 서버의 실제 이동은 기존 위치 동기화를 통해 Client에 전달하고, 별도 냉기 시각 효과는 추가하지 않는다.
+
+현재 `PlayerCryoSpray`의 피해 루프에는 이 API를 연결하지 않았다. Player 담당자가 기존 확정 피격 경로에서 호출해야 실제 냉각 무기에 적용된다.
 
 ## 실행 권한과 시간
 

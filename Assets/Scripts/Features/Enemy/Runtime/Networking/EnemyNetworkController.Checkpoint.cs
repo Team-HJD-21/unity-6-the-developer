@@ -141,7 +141,7 @@ public partial class EnemyNetworkController
             w.Write(RemovalPending);
         }
         public static State Read(BinaryReader r, ICheckpointPayloadCodec codec, int version) => new(CheckpointTransformState.Read(r), CheckpointRigidbody2DState.Read(r),
-            r.ReadInt32(), r.ReadInt32(), r.ReadBoolean(), r.ReadDouble(), r.ReadBoolean(), r.ReadBoolean() ? EnemyMovement.State.Read(r, codec) : null,
+            r.ReadInt32(), r.ReadInt32(), r.ReadBoolean(), r.ReadDouble(), r.ReadBoolean(), r.ReadBoolean() ? EnemyMovement.State.Read(r, codec, version >= 4) : null,
             CheckpointAnimatorState.Read(r, codec),
             version >= 2 && r.ReadBoolean() ? EnemyProjectileAbility.AttackState.Read(r) : null, version >= 2 && r.ReadBoolean());
     }

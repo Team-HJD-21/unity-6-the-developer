@@ -28,7 +28,7 @@ public partial class EnemySpawnExecutor
         private readonly EnemySpawnExecutor _owner;
         public EnemyCheckpointWriter(EnemySpawnExecutor owner) => _owner = owner;
         public string Key => "world/enemies";
-        public int Version => 3;
+        public int Version => 4;
         public CheckpointSectionKind Kind => CheckpointSectionKind.World;
         public int RestoreOrder => 160;
         public CheckpointSection Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
