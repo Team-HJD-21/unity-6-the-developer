@@ -1,6 +1,6 @@
 # Editor 저장 초기화와 Stage 1 진입 검토
 
-PR: 생성 후 기록
+PR: [#737](https://github.com/Team-HJD-21/unity-6-the-developer/pull/737)
 
 ## 바뀐 동작
 
