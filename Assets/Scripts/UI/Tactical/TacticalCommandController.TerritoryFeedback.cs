@@ -1,3 +1,5 @@
+// 확정 점유 변경을 Field 연출과 기존 완료 Alert에 연결합니다.
+// 지도와 게임 판정은 최신 Snapshot을 유지하며 표시 구독만 관리합니다.
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;

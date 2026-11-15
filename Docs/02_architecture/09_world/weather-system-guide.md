@@ -262,3 +262,17 @@ Core 환경·시간·난수 문서에는 별도 통합 단계의 설명이 포�
 ## 7. 문서 확인 범위
 
 위 소스의 공개 멤버, 초기화 순서, 호출 지점과 데이터 소유권을 대조했다. 설명용 API 예제는 현재 선언에 맞춰 작성했다. 이번 문서 갱신에서 Unity PlayMode·원격 Host/Client 실행·화면 효과 검증은 수행하지 않았다. 다른 브랜치에서 구조가 바뀌면 해당 소스를 확인해 기준 버전과 이 문서를 함께 갱신한다.
+
+## 재입장과 화면 색상 대상
+
+StageCameraEffectsFeature는 활성 색상을 읽는 Blit이므로 requiresIntermediateTexture를 명시한다. URP가 Backbuffer로 직접 렌더링하는 경로에서는 source 시간대와 DayNightShaderApply.IsNight가 올바르더라도 기존 RecordRenderGraph의 Backbuffer 보호 조건에 의해 전체 효과가 생략될 수 있었다. 숨긴 Editor에서는 카메라 렌더 자체가 멈출 수 있어 runtime material0만으로 제품 결함을 판정하지 않는다. 실제 카메라 렌더에서 Night blend0.4719를 확인했다. 자동 source 경계300/600초와 화면 렌더 검수를 구분한다. 날씨 선택 정책이나 Weather 저장 writer를 바꾼 수정이 아니다.
+
+## 비 방향과 플레이어 야간 조명 (2026-11-15)
+
+날씨 무늬의 좌표는 Blit 입력 텍스처의 UV가 아닌 출력 픽셀과 역 ViewProjection으로 실제 월드 XY를 복원한다. 화면 버퍼가 뒤집혀도 비는 월드 -Y로 낙하한다. Rain/Thunder/Thunder1/HeatWave/DayNight가 WeatherCoordinates.hlsl을 공유하며 원본 화면 샘플링 UV는 그대로 유지한다.
+
+DayNightShaderApply는 기존 ILocalPlayerActorConsumer로 현재 로컬 Player만 주입받는다. 별도 Find/전역 Player 목록이나 Scene 배치가 필요 없다. Inspector의 `야간 Player 조명`에서 안쪽 반경5·감쇠 폭4 월드 단위를 조절한다. 안쪽은 밤의 색상/비네트 감광을0으로 만들고, 바깥쪽9까지 smoothstep으로 기존 밤과 이어진다. 우주선 내부·사망·actor 해제에는 꺼진다. 줌을 바꿔도 월드 반경은 같다.
+
+이 프로젝트는 전체 화면의 밤 셰이더로 감광한다. 따라서 PointLight2D만 추가해도 마지막 감광을 상쇄하지 못하고 Unlit sprite에는 조명이 닿지 않는다. 별도 Light 오브젝트를 중복 생성하지 않고 현재 밤 패스에 로컬 조명을 넣었다. 중심은 같은 날씨의 낮 밝기이며 비/폭염의 색감까지 지우지는 않는다. 게임 시간·점유·전투/스폰·저장 규칙을 변경하지 않는다.
+
+[GPU 계측·화면 및 검증 한계](../../03_team/00_reviews/weather-lighting-20261115.md)를 함께 확인한다.

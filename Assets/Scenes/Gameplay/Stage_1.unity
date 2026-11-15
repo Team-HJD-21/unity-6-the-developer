@@ -1751868,6 +1751868,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2697276060320991427, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1860060680}
+    - targetCorrespondingSourceObject: {fileID: 2697276060320991427, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2000622001}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ca0f4d24c7e74684bb65cad0fafa14cd, type: 3}
 --- !u!4 &1836352304 stripped
@@ -1756563,6 +1756566,54 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Map.DayNightShaderApply
   _weatherManager: {fileID: 1250254886}
   _dayNightMaterial: {fileID: 2100000, guid: b3a6fa38abc7d40a489c8623c141a440, type: 2}
+--- !u!1 &2000622000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2000622001}
+  - component: {fileID: 2000622002}
+  m_Layer: 0
+  m_Name: Spawn_Outer_01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2000622001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000622000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -111.4905272, y: 59.912505, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1836352304}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2000622002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000622000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a706a0437709ae8478a97081b61dd731, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
+  spawnPointId: Outer_01
+  areaId: OuterRing
+  spawnRadius: 1
+  canSpawnEnemies: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

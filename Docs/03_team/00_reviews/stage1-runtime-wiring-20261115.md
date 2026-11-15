@@ -1,6 +1,6 @@
 # Stage_1 정식 스폰·낮밤·필드 표시 재접합
 
-기준: main #731 `49ee14dc3`. PR은 아직 생성하지 않았다. 사용자 승인으로 팀원 Scene을 인수한 뒤 진행한 후속 변경이다.
+초기 기준: main #731 `49ee14dc3`. 후속 검수는 #732 `8ccd60401`을 병합한 트리다. 아래 첫 검사와 성장 오류는 당시 기록이며 후속 수정/추가 검수와 구분한다. PR 번호는 게시 후 연결한다.
 
 ## 먼저 볼 곳과 실제 흐름
 
@@ -10,7 +10,7 @@
 4. `InitialStageCompositionRoot.PrepareEnvironmentSources` → WeatherManager 옆 MatchDayNightCycle → Main Camera의 DayNightShaderApply → StageCameraEffectsFeature → DayNight 재질의 `_EffectBlend`.
 5. `TacticalCommandController` → 같은 Region Grid snapshot → 지도/FieldTerritoryRenderer. 점유 원본은 바꾸지 않고 표현만 연결한다.
 
-기존 Pipeline·시간·난수·지역 정책 코드는 다시 작성하지 않았다. 삭제 파일 두 개는 더 이상 참조하지 않는 옛 네트워크 시험 helper와 Controls다. AI 이동·공격·터렛 전투 규칙, UI 프리팹·폰트는 이번 변경에서 수정하지 않았다.
+삭제 파일 두 개는 더 이상 참조하지 않는 옛 네트워크 시험 helper와 Controls다. 후속에는 점유 사유/표시, 터렛 성장 및 생성 직후 저장 writer, 우주선 접촉 레이어가 추가되었다. AI 이동·공격·터렛 전투 규칙, UI 프리팹·폰트는 변경하지 않았다.
 
 ## 변경 내용
 
@@ -58,7 +58,7 @@ InitialStageCompositionRoot.ComposeAuthority
 
 새 제작 Scene의 터렛 목록과 예전 Host 전장 성장 저장의 대상 목록이 달라 기존 검증이 복원을 거부한다. 데이터 손실을 막기 위해 이 검증을 우회하거나 기존 저장을 지우지 않았다. 실제 실행 검수는 공개 API `AppRoot.SelectCampaign`으로 별도 `qa-stage1-wiring-20261115` 슬롯을 선택해 진행했다. 기존 저장을 사용하는 정상 시작 경로까지 해결되었다고 읽으면 안 된다.
 
-후속에는 기존 ID가 유지된 터렛의 성장을 어떻게 옮길지와 삭제·추가·정의 변경된 터렛의 복원 정책을 확인해야 한다. 임의 초기화나 자동 환급을 이번 패치에 섞지 않는다.
+후속에서는 공통 ID·무기 계열을 검사해 성장을 적용하고, 새 배치는 기본값을 사용하며 빠진 ID의 기록은 보존하도록 수정했다. 임의 초기화나 자동 환급은 하지 않는다. [안전장치/저장 재검수](mission-safety-audit-20261115.md)에서 정책과 검사 결과를 확인한다.
 
 또한 첫 Startup의 MenuSoundtrack.PlayScheduled에서 기존 FMOD 출력 장치 초기화 오류가 1회 발생했다. 씬 진입을 막은 성장 저장 오류와 구분한다. QA 캠페인 실행·복귀·재진입에서는 새 게임 예외가 발생하지 않았다.
 
@@ -73,3 +73,17 @@ InitialStageCompositionRoot.ComposeAuthority
 - `stage1-day.png`, `stage1-night.png`, `stage1-map.png`
 
 로컬 검수 자료와 원본 저장 백업은 커밋 대상이 아니다. PR 작성 시 필요한 캡처만 첨부하고 이 문서에 PR 번호를 추가한다.
+
+## 후속 실제 확보·안전장치·렌더 검수
+
+- 원래 캠페인으로 Startup→허브→물리 출구 접촉→Stage_1 진입. 터렛20개 신규 기본값/7개 보존 경고를 확인했다. 저장 삭제로 회피하지 않았다.
+- 정기 요청8회 후 실제 터렛 피해100이 정적 성과에 기록됐다. 현지 적30일 때 확보 시간0으로 정지했다. 보호한 Player/CU·생산 중단 및 실제 적의 외곽 이동/고정을 사용한 **통제 시험**에서 적 압력0·기본30초 후 점유1→30/201셀, Region2 해금·StaticSecured 후 Unlock의 변경 사유 보존·추가 요청10마리 생성을 확인했다. 자연 플레이 밸런스 검수는 아니다.
+- 화면에서 바닥 확장→정착과 기존 Alert 위치의 `점유 완료`를 촬영했다. 지도/상단 점유15%는 확정값을 즉시 읽는다.
+- 후반 후보 부족: 기존 지점의 실제 Region은1~4뿐이었다. 실제 NavMesh 경로가 확인된 Outer_01(5번 구역)을 추가했다. 실제 Pipeline 요청에서 Outer_01의 BlackWolf2마리가 생성됐다. 복사 Snapshot으로 구역1~4 확보를 조회하면 Outer_01만 남고,5번까지 조회하면0이었다. 이 통제 조회는 실제 후반 지역 확보 완료가 아니다.
+- 안전장치 실제 선택/재입장·성장 유지와 미연결 Weather writer는 [별도 기록](mission-safety-audit-20261115.md)에 구분했다. #599/#640/#641을 전체 완료로 닫지 않는다.
+- 자동 낮밤 경계의 source 전환은 확인했지만 재입장에서 화면 효과가 생략되는 사례를 찾았다. active color를 읽는 RenderGraph pass가 `requiresIntermediateTexture`를 명시하도록 수정했다. 숨긴 창의 material0은 렌더 미실행과 구분했다. source 자동 전환은 약300/600초, 실제 카메라 렌더의 Night blend0.4719를 별도로 확인했다. 추가 비 방향·야간 조명은 [별도 GPU 검수](weather-lighting-20261115.md)를 따른다.
+
+![확장 중인 실제 Field](media/territory-expanding-20261115.png)
+![확보 완료와 HUD](media/territory-secured-20261115.png)
+
+원격2인·보스/중간보스 콘텐츠·전체 Weather 월드 복원·자연 플레이 난이도는 이 PR의 완료 주장에 포함하지 않는다.

@@ -56,6 +56,34 @@ public sealed class Stage1EncounterAuthoringTests
     }
 
     [Test]
+    public void SpawnPoints_CoverTheLastAuthoredRegionBeforeItIsSecured()
+    {
+        var binding = _components.OfType<RegionSceneBinding>().Single();
+        var definition = binding.CaptureInitialDefinition();
+        int last = definition.RegionIds.Max();
+        var available = _components.OfType<SpawnPoint>().Where(point => point.CanSpawnEnemies);
+        Assert.That(available.Any(point => definition.TryGetCellIndex(
+            new TeamHJD.Game.Domain.BattlefieldPoint(point.Position.x, point.Position.y), out int cell) &&
+            definition.RegionIds[cell] == last), Is.True,
+            "이전 구역을 모두 확보해도 마지막 구역에 정규 스폰 후보가 남아야 합니다.");
+    }
+
+    [Test]
+    public void CameraEffects_KeepAnIntermediateColorTargetAcrossReentry()
+    {
+        var feature = ScriptableObject.CreateInstance<StageCameraEffectsFeature>();
+        try
+        {
+            feature.Create();
+            var pass = typeof(StageCameraEffectsFeature).GetField("_pass",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(feature);
+            Assert.That(pass.GetType().GetProperty("requiresIntermediateTexture").GetValue(pass), Is.True,
+                "Backbuffer 직접 렌더링으로 바뀌어도 날씨/낮밤 Blit이 생략되면 안 됩니다.");
+        }
+        finally { Object.DestroyImmediate(feature); }
+    }
+
+    [Test]
     public void Camera_HasTheDayNightConsumerAndItsRealSourceMaterial()
     {
         var dayNight = _components.OfType<DayNightShaderApply>().Single();
