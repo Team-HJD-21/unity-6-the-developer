@@ -343,3 +343,10 @@ HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후
 
 
 2026-11-15: `TacticalCommandController.IsHudEntryComplete`는 연결된 `CombatHudIntro.Completed`를 읽는다. 첫 전장 문구·소거·HUD 스캔 완료 전에는 지도 버튼을 숨기고 M 입력과 직접 `Open()` 호출도 거부한다. 전투 이동/공격의 공용 입력 lease를 추가하지 않는다. 자세한 검수는 [진입 차단·종료 반전 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-tactical-entry-exit.md)을 따른다.
+
+
+## 확정 점유의 표시 전환
+
+`TacticalCommandController.TerritoryFeedback`는 기존 지역 Source.Changed를 구독하여 상단/지도에는 최신 Snapshot을 즉시 제공하고 바닥만 `TerritoryExpansionState`로 전환한다. 실제 완료 식별은 Snapshot.Revision이 아닌 Change.Revision이며 StaticSecured의 SecuredRegionIds만 기존 Alert의 `점유 완료` 근거로 사용한다. `GameAlerts.TryShowIfIdle`로 현재 알림을 밀어내거나 큐 뒤에 오래된 성공을 쌓지 않는다.
+
+FieldTerritoryRenderer의 기존 Territory 정렬·공통 RegionBoundaryGeometry는 유지한다. TacticalHudStyle에서 Sweep0.65/Glow0.12/Settle0.28, Loss0.16, Merge0.18, ToastFresh1초와 기존 색에 가까운 CaptureGlow를 조정한다. Baseline/첫 구독/Grid 교체는 즉시 정착하며 Actor/Source 해제 시 구독과 성공 대기를 정리한다. 지도·전환 중에도 타임라인을 소비하며 논리 Grid와 스폰 제외를 애니메이션으로 지연하지 않는다. [구현·검증 경계](../../01_planning/02_implementation-records/2026/11/2026-11-15-territory-expansion-ui.md)를 따른다. 현재는 독립 관리형17개 검사 통과이며 통합 Editor/Play/GPU 검수는 담당 세션 대기다.

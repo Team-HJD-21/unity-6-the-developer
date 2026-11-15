@@ -52,4 +52,12 @@ public sealed class TacticalHudStyle : ScriptableObject
     public Color CapturingFill = new(.91f,.68f,.30f,.22f);
     public Color AvailableFill = new(.68f,.73f,.66f,.07f);
     public Color UnoccupiedFill = new(.07f,.09f,.09f,.25f);
+    [Header("Confirmed territory feedback (presentation only)")]
+    [Min(.01f)] public float CaptureSweepSeconds = .65f;
+    [Min(0)] public float CaptureGlowSeconds = .12f;
+    [Min(.01f)] public float CaptureSettleSeconds = .28f;
+    [Min(.01f)] public float CaptureLossSeconds = .16f;
+    [Min(0)] public float CaptureMergeSeconds = .18f;
+    [Min(0)] public float CaptureToastFreshSeconds = 1;
+    public Color CaptureGlow = new(.40f,.76f,.50f,.16f);
 }
