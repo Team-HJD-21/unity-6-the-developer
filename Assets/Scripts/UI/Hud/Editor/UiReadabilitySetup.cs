@@ -54,6 +54,15 @@ public static class UiReadabilitySetup
             picker.TooltipBody.rectTransform.anchoredPosition = new Vector2(0, -18);
             picker.TooltipBody.textWrappingMode = TextWrappingModes.Normal;
         }
+        var detail = root.GetComponentInChildren<PlayerSkillTooltipView>(true);
+        if (detail != null)
+        {
+            ((RectTransform)detail.transform).sizeDelta = new Vector2(460, 260);
+            var title = detail.transform.Find("Title") as RectTransform;
+            var description = detail.transform.Find("Description") as RectTransform;
+            if (title != null) title.anchoredPosition = new Vector2(0, 98);
+            if (description != null) description.sizeDelta = new Vector2(420, 190);
+        }
         foreach (string key in new[] { "Q", "E" })
         {
             var label = root.transform.Find("V6 Compact Dock/V6 Compact/" + key + " Skill Slot/Key")?.GetComponent<TMP_Text>();

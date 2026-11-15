@@ -1,6 +1,7 @@
 // 실제 UI 프리팹의 줄바꿈·가독성 하한·viewport 경계와 버튼 간격을 검사합니다.
 // 원본 프리팹과 폰트 에셋은 저장하지 않습니다.
 using System;
+using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using TeamHJD.Game.Presentation;
@@ -10,13 +11,19 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 public sealed class UiReadabilityTests
 {
-    [Test]
-    public void SkillSummariesAndLongestCompactDescriptionsFitTheirAuthoredFrames()
+    [UnityTest]
+    public IEnumerator SkillSummariesAndLongestCompactDescriptionsFitTheirAuthoredFrames()
     {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        yield return new EnterPlayMode();
+        var player = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab"));
+        var owner = player.GetComponent<PlayerSkillController>();
+        player.GetComponent<PlayerInputHandler>().enabled = false;
         var root = PrefabUtility.LoadPrefabContents("Assets/Prefabs/UI/PlayerSkillHUD.prefab");
         try
         {
@@ -24,17 +31,24 @@ public sealed class UiReadabilityTests
             foreach (PlayerSkillId skill in Enum.GetValues(typeof(PlayerSkillId)))
             {
                 if (skill == PlayerSkillId.None) continue;
-                Fits(picker.TooltipBody, PlayerSkillDescriptions.Summary(skill));
+                Fits(picker.TooltipBody, PlayerSkillDescriptions.Summary(skill, owner));
                 if (skill == PlayerSkillId.EnergyBarrier)
                     Assert.That(picker.TooltipBody.GetPreferredValues(PlayerSkillDescriptions.Summary(skill), picker.TooltipBody.rectTransform.rect.width, float.PositiveInfinity).y,
                         Is.LessThanOrEqualTo(picker.TooltipBody.GetPreferredValues("한 줄\n두 줄").y + 1), "핵심 효과가 동사 한 줄을 남기지 않고 두 줄 안에 읽혀야 합니다.");
             }
             var compact = root.GetComponentInChildren<PlayerSkillTooltipView>(true);
             var description = (TMP_Text)new SerializedObject(compact).FindProperty("_description").objectReferenceValue;
-            foreach (var skill in new[] { PlayerSkillId.PlayerTurret, PlayerSkillId.EnergyBarrier, PlayerSkillId.LureBeacon })
-                Fits(description, "Q · " + PlayerSkillDescriptions.Description(skill, null));
+            foreach (PlayerSkillId skill in Enum.GetValues(typeof(PlayerSkillId)))
+                if (skill != PlayerSkillId.None) Fits(description, "Q · " + PlayerSkillDescriptions.Description(skill, owner));
         }
-        finally { PrefabUtility.UnloadPrefabContents(root); }
+        finally { PrefabUtility.UnloadPrefabContents(root); Object.DestroyImmediate(player); }
+        yield return new ExitPlayMode();
+    }
+
+    [UnityTearDown]
+    public IEnumerator LeavePlayModeOnFailure()
+    {
+        if (Application.isPlaying) yield return new ExitPlayMode();
     }
 
     [Test]
