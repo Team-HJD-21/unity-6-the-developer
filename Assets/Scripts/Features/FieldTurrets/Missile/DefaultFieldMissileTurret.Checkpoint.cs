@@ -97,9 +97,8 @@ public abstract partial class DefaultFieldMissileTurret : IFieldTurretCombatChec
         }
         foreach (var pair in _restoredMissiles) pair.actor.ResolveCheckpointTarget(pair.state);
         _restoredMissiles.Clear(); _restoredTargets = null;
-        // 복원도 실제 과열 표현을 사용하며, 식은 OFF 터렛의 기존 회색을 유지합니다.
         SetGunHeatTint(OverHeatMissileCount > 0 ? _currentMissileCount / OverHeatMissileCount : 0f);
         if (!IsActivated && _currentMissileCount <= 0f && GunRenderer != null)
-            GunRenderer.color = Color.gray;
+            GunRenderer.color = InactiveGunColor;
     }
 }

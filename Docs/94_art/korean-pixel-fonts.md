@@ -11,4 +11,6 @@ Unity의 TMP 컴포넌트에서 영문과 한글을 함께 표시할 때 `Assets
 
 - [GravityBold8 설정](../../Assets/Art/Fonts/GravityBold8%20SDF.asset)
 - [GravityRegular5 설정](../../Assets/Art/Fonts/GravityRegular5%20SDF.asset)
+공용 전투 HUD의 [CombatHudBodySDF](../../Assets/Art/UI/HudV6/CombatHudBodySDF.asset)도 Dynamic이다. 소스 폰트·폴백 참조가 그대로여도 TMP가 글리프 간격 보정 정보를 저장하면 Glyph Pair Adjustment Records가 바뀔 수 있다. 물마루 폴백의 캐시를 비운 경우에는 한글 문구를 다시 표시할 때 글리프와 아틀라스가 채워진다.
+
 - 물마루 원본과 OFL은 [폰트 에셋 폴더](../../Assets/Art/Fonts/)에 함께 있다.

@@ -16,7 +16,7 @@ public class FieldCanonTurretLv1 : DefaultFieldCanonTurret
     
     private void Start()
     {
-        if (!WasCheckpointRestored) GunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
+        if (!WasCheckpointRestored) GunRenderer.color = InactiveGunColor;
     }
     override 
     protected void Shoot()//총알 객체화 후 목표로 발사(FireRateController에서 수행)
