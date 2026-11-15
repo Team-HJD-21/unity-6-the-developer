@@ -9,17 +9,24 @@ using TeamHJD.Game.Domain;
 
 namespace TeamHJD.Game.Infrastructure
 {
-    public sealed class BinaryCheckpointStore : ICheckpointStore
+    public sealed class BinaryCheckpointStore : ICheckpointStore, IDisposable
     {
         private readonly string _directory, _prefix;
         private readonly object _gate = new();
         private readonly StringComparison _pathComparison;
-        public BinaryCheckpointStore(string directory)
+        private readonly bool _deleteOnDispose;
+        private bool _disposed;
+
+        /// <summary>Editor 임시 저장만 종료 시 삭제합니다. 기본값은 빌드와 같은 영구 저장입니다.</summary>
+        public BinaryCheckpointStore(string directory, bool deleteOnDispose = false)
         {
             if (string.IsNullOrWhiteSpace(directory)) throw new ArgumentException("A storage directory is required.", nameof(directory));
             _directory = Path.GetFullPath(directory);
             _prefix = _directory.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) ? _directory : _directory + Path.DirectorySeparatorChar;
             _pathComparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+            _deleteOnDispose = deleteOnDispose;
+            // 비정상 Editor 종료로 남은 임시 파일도 다음 Play의 성장/안전장치에 섞지 않습니다.
+            if (_deleteOnDispose) DeleteSessionFiles();
         }
         /// <inheritdoc />
         public Task SaveAsync(CheckpointSlot slot, CheckpointData data, CancellationToken cancellationToken = default)
@@ -36,6 +43,7 @@ namespace TeamHJD.Game.Infrastructure
             {
                 lock (_gate)
                 {
+                    ThrowIfDisposed();
                     cancellationToken.ThrowIfCancellationRequested();
                     byte[] bytes;
                     try
@@ -62,6 +70,7 @@ namespace TeamHJD.Game.Infrastructure
         {
             lock (_gate)
             {
+                ThrowIfDisposed();
                 cancellation.ThrowIfCancellationRequested(); byte[] bytes = CheckpointBinaryCodec.Encode(data);
                 cancellation.ThrowIfCancellationRequested(); Directory.CreateDirectory(_directory);
                 string temporary = Path.Combine(_directory, "." + Guid.NewGuid().ToString("N") + ".tmp");
@@ -89,6 +98,35 @@ namespace TeamHJD.Game.Infrastructure
             string path = Path.GetFullPath(Path.Combine(_directory, slot.Value + ".checkpoint"));
             if (!path.StartsWith(_prefix, _pathComparison)) throw new ArgumentException("The slot resolves outside its storage directory.", nameof(slot));
             return path;
+        }
+
+        /// <summary>진행 중인 파일 교체가 끝난 뒤 닫습니다. 종료 뒤 대기 쓰기가 파일을 다시 만들지 못합니다.</summary>
+        public void Dispose()
+        {
+            lock (_gate)
+            {
+                if (_disposed) return;
+                _disposed = true;
+                if (_deleteOnDispose) DeleteSessionFiles();
+            }
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed) throw new ObjectDisposedException(nameof(BinaryCheckpointStore));
+        }
+
+        // 지정 폴더의 직접 자식인 저장 파일/이 Store의 임시 파일만 지웁니다. 재귀 삭제는 하지 않습니다.
+        private void DeleteSessionFiles()
+        {
+            if (!Directory.Exists(_directory)) return;
+            foreach (string path in Directory.EnumerateFiles(_directory, "*.checkpoint", SearchOption.TopDirectoryOnly))
+                File.Delete(path);
+            foreach (string path in Directory.EnumerateFiles(_directory, ".*.tmp", SearchOption.TopDirectoryOnly))
+            {
+                string name = Path.GetFileNameWithoutExtension(path).Substring(1);
+                if (Guid.TryParseExact(name, "N", out _)) File.Delete(path);
+            }
         }
     }
 }

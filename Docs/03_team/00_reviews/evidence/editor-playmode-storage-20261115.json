@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-15",
+  "unity": "6000.3.23f1",
+  "tests": {
+    "result": "Passed",
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 9.5392414,
+    "cases": [
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.PlayModeStorageTests.LegacyPlayStartOverrideMovesToStageOneWithoutChangingTheEditingScene",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.PlayModeStorageTests.PermanentStoreKeepsTheSaveAfterDisposal",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.PlayModeStorageTests.ProductionBuildRoutesUseStageOneInsteadOfTheOldInitialStage",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.PlayModeStorageTests.QueuedWritesCannotRecreateFilesAfterTheStoreCloses",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.PlayModeStorageTests.StartupHubExitLoadsStageOneWithFiveHundredPower",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.PlayModeStorageTests.StoppingActualAppPlayDeletesItsEditorSave",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.PlayModeStorageTests.TemporaryStoreClearsOnlyItsSavedFilesAndOwnTemporaryFiles",
+        "result": "Passed"
+      }
+    ]
+  },
+  "regression": {
+    "result": "Passed",
+    "total": 15,
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 8.7994441,
+    "cases": [
+      {
+        "name": "FieldTurretRestoreVisualTests.ChangedAuthoring_PreservesKnownGrowthAndRetainsRemovedIds",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.CombatRestoreKeepsActiveAndCoolingOffHeatInTheSharedVisualPath",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.FixedCapacityOverridesSerializedDefaultAndRejectsChanges(100)",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.FixedCapacityOverridesSerializedDefaultAndRejectsChanges(1000)",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.FixedCapacitySurvivesLegacyGrowthAndWorldRestore",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.UnfixedCapacityStillRestoresSavedGrowthCapacity",
+        "result": "Passed"
+      },
+      {
+        "name": "FieldTurretRestoreVisualTests.WorldAndGrowthRestoreKeepColdOffGunsGrayAndLocksUnchanged",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.AppShutdownTests.Dispose_CleansRemainingServicesAndIsIdempotent(False)",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.EditMode.AppShutdownTests.Dispose_CleansRemainingServicesAndIsIdempotent(True)",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.GrowthSaveServiceTests.ApplyFailureRollsBackEarlierSources",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.GrowthSaveServiceTests.CorruptSourceDoesNotApplyOrOverwriteOriginalFile",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.GrowthSaveServiceTests.DelayedEarlierWriteCannotOverwriteTheLaterRevision",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.GrowthSaveServiceTests.DiskFailureIsVisibleAndFlushDoesNotClaimItSaved",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.GrowthSaveServiceTests.FrequentXpCoalescesAndImportantChangesCaptureAllRelatedSourcesTogether",
+        "result": "Passed"
+      },
+      {
+        "name": "TeamHJD.Game.Tests.GrowthSaveServiceTests.PersonalGrowthSurvivesRosterSlotChangeAndIsNotAnEmptyWorldCheckpoint",
+        "result": "Passed"
+      }
+    ]
+  },
+  "runtime": [
+    "Startup -> Hub authored SpaceshipExit -> Stage_1, Match ready, MaximumPower=500",
+    "Actual App Play save exists before ExitPlayMode and is absent afterwards"
+  ],
+  "preservation": {
+    "legacyCheckpointFiles": 35,
+    "changed": 0
+  },
+  "earlierAttempts": [
+    "Initial test compilation errors fixed in test code",
+    "Combined attempt timed out without a result; replaced async exception assertion with a synchronous Task boundary; not counted as passed"
+  ],
+  "limitations": [
+    "No Windows Player build",
+    "No new gameplay/HUD design or balancing",
+    "Full world/weather writer remains unavailable"
+  ]
+}

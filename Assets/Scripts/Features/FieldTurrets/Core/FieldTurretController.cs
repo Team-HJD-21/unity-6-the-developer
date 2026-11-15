@@ -16,6 +16,8 @@ namespace TeamHJD.Game.FieldTurrets
     public sealed partial class FieldTurretController : MonoBehaviour, IFieldTurretPowerSource
     {
         [SerializeField, Min(0)] private int maximumPower = 250;
+        [Tooltip("0이면 기존 용량·성장 저장을 사용합니다. 양수이면 해당 Scene의 최대 전력을 고정합니다.")]
+        [SerializeField, Min(0)] private int fixedMaximumPower;
         public const float DefaultDestructionPowerReturnPercent = 50f;
         [SerializeField, Range(0f, 100f)] private float destructionPowerReturnPercent = DefaultDestructionPowerReturnPercent;
         public float DestructionPowerReturnPercent => IsValidReturnPercent(destructionPowerReturnPercent)
@@ -93,7 +95,8 @@ namespace TeamHJD.Game.FieldTurrets
             }
             if (errors != null) throw new AggregateException("D Match control cleanup failed.", errors);
         }
-        public FieldTurretPowerBudget Budget => _budget ??= new FieldTurretPowerBudget(Mathf.Max(0, maximumPower));
+        public FieldTurretPowerBudget Budget => _budget ??= new FieldTurretPowerBudget(
+            fixedMaximumPower > 0 ? fixedMaximumPower : Mathf.Max(0, maximumPower));
         public int CurrentPower => Budget.CurrentPower;
         public int MaximumPower => Budget.MaximumPower;
         public IRegionGridSource Regions => _regionAccess?.Regions;
@@ -235,6 +238,7 @@ namespace TeamHJD.Game.FieldTurrets
         public bool TrySetMaximumPower(int power)
         {
             if (!HasWriteAuthority) return false;
+            if (fixedMaximumPower > 0 && power != fixedMaximumPower) return false;
             if (!Budget.TrySetMaximumPower(power)) return false;
             maximumPower = power;
             return true;
