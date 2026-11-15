@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true, Position = 0)]
-    [ValidateSet('Sync', 'Acquire', 'AcquireFolder', 'Submit', 'WatchDiscard')]
+    [ValidateSet('Sync', 'ReadLocks', 'Acquire', 'AcquireFolder', 'Submit', 'WatchDiscard')]
     [string]$Command,
     [string]$AssetPath,
     [string]$InputPath
@@ -44,6 +44,15 @@ function Get-Locks {
     return Invoke-Git lfs locks --verify --json --remote=origin | ConvertFrom-Json
 }
 
+function Get-RemoteLockEntries($locks) {
+    foreach ($lock in $locks.ours) {
+        if ($lock.path) { @{ path = $lock.path; id = [string]$lock.id; owner = [string]$lock.owner.name; owned = $true } }
+    }
+    foreach ($lock in $locks.theirs) {
+        if ($lock.path) { @{ path = $lock.path; id = [string]$lock.id; owner = [string]$lock.owner.name; owned = $false } }
+    }
+}
+
 function Get-LockKey([string]$id) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return [BitConverter]::ToString($sha.ComputeHash($utf8.GetBytes($id))).Replace('-', '').ToLowerInvariant() }
@@ -78,7 +87,7 @@ function Save-Record($record) {
 
 function Get-EditableAsset($path, $id = '') {
     $record = if ($id) { Get-RecordPath $id } else { '' }
-    return @{ path = $path; record = $record }
+    return @{ path = $path; id = $id; record = $record }
 }
 
 function Install-Hook {
@@ -121,14 +130,7 @@ function Sync-Assets {
     try {
         $locks = Get-Locks
         $owned = @($locks.ours | ForEach-Object { [string]$_.id })
-        $remoteLocks = @(
-            foreach ($lock in $locks.ours) {
-                if ($lock.path) { @{ path = $lock.path; owner = [string]$lock.owner.name; owned = $true } }
-            }
-            foreach ($lock in $locks.theirs) {
-                if ($lock.path) { @{ path = $lock.path; owner = [string]$lock.owner.name; owned = $false } }
-            }
-        )
+        $remoteLocks = @(Get-RemoteLockEntries $locks)
     }
     catch {
         # Preserve the local records and let the editor keep its last lock list.
@@ -313,30 +315,34 @@ function Open-TrackedAssets([string[]]$paths) {
     if (!$paths.Count) { return }
     Initialize-Repository
 
-    $locks = Get-Locks
-    $serverByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
-    foreach ($lock in (@($locks.ours) + @($locks.theirs))) {
-        if ($null -ne $lock) { $serverByPath[$lock.path] = $lock }
-    }
-    $ownedIds = @($locks.ours | ForEach-Object { [string]$_.id })
     $localByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
     foreach ($record in Get-Records) { $localByPath[$record.path] = $record }
     $editable = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
 
-    foreach ($path in $paths) {
-        if (!$serverByPath.ContainsKey($path)) { continue }
-        $lock = $serverByPath[$path]
-        $id = [string]$lock.id
-        if ($ownedIds -cnotcontains $id -or !$localByPath.ContainsKey($path) -or $localByPath[$path].id -cne $id) {
-            Set-ReadOnly $path $true
-            $owner = $lock.owner.name
-            if ($owner) { throw "$path is locked by $owner in another account or checkout." }
-            throw "$path is already locked in another checkout."
+    # The server rejects a duplicate lock. Preflight multiple paths and verify any existing local lock.
+    if ($paths.Count -gt 1 -or $localByPath.ContainsKey($paths[0])) {
+        $locks = Get-Locks
+        $serverByPath = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
+        foreach ($lock in (@($locks.ours) + @($locks.theirs))) {
+            if ($null -ne $lock) { $serverByPath[$lock.path] = $lock }
         }
-        if ($localByPath[$path].submitted) {
-            throw "$path has been submitted. It will unlock when that version reaches main."
+        $ownedIds = @($locks.ours | ForEach-Object { [string]$_.id })
+
+        foreach ($path in $paths) {
+            if (!$serverByPath.ContainsKey($path)) { continue }
+            $lock = $serverByPath[$path]
+            $id = [string]$lock.id
+            if ($ownedIds -cnotcontains $id -or !$localByPath.ContainsKey($path) -or $localByPath[$path].id -cne $id) {
+                Set-ReadOnly $path $true
+                $owner = $lock.owner.name
+                if ($owner) { throw "$path is locked by $owner in another account or checkout." }
+                throw "$path is already locked in another checkout."
+            }
+            if ($localByPath[$path].submitted) {
+                throw "$path has been submitted. It will unlock when that version reaches main."
+            }
+            $editable[$path] = $id
         }
-        $editable[$path] = $id
     }
 
     $checkout = Get-CheckoutRef
@@ -462,6 +468,11 @@ function Submit-Assets {
 try {
     $root = Invoke-Git rev-parse --show-toplevel
     Set-Location -LiteralPath $root
+    if ($Command -eq 'ReadLocks') {
+        ConvertTo-Json -Compress -InputObject @{ remoteLocks = @(Get-RemoteLockEntries (Get-Locks)) }
+        return
+    }
+
     $state = Join-Path (Invoke-Git rev-parse --absolute-git-dir) 'unity-asset-locks'
     [IO.Directory]::CreateDirectory($state) | Out-Null
     if ($Command -eq 'WatchDiscard') {
