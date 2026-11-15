@@ -2,7 +2,7 @@
 
 상태: UI 가독성 구현·검수 완료. 실제 병합 여부는 연결된 PR에서 확인한다.
 
-PR: 생성 후 기록
+PR: [#740](https://github.com/Team-HJD-21/unity-6-the-developer/pull/740)
 
 ## 확인하고 바꾼 부분
 
