@@ -92,7 +92,7 @@ flowchart TD
 
 [FieldTurretTreeMask](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretTreeMask.cs)는 같은 씬의 `Entities / 0` Individual 타일맵에서 `Overworld_Trees_` 스프라이트를 검색한다. 나무 접지점이 터렛보다 앞에 있고 실루엣의 범위가 포신과 겹칠 때 포신 그룹에 마스크를 적용한다. 겹침이 사라지면 평소의 마스크 설정을 복구한다. 과열 아지랑이도 포신과 같은 마스크를 사용한다. 재검증할 때는 실제로 양쪽 포신이 나무에 가려진 상태에서 캐논과 미사일을 같은 화면에 놓고 줌 아웃해 스프라이트와 가림을 함께 확인한다.
 
-`PlayerBullet`·`SniperBullet`·`PlayerTurretProjectile`·`bullet`·`Missile`의 비행 스프라이트는 `Entities / 1`을 사용한다. 플레이어 탄환의 명중 효과는 Order 2로 표시하며, 미사일 폭발 프리팹은 `Entities / 100`을 사용한다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
+`PlayerBullet`·`SniperBullet`의 비행 스프라이트는 `Entities / 0`을 사용한다. `PlayerTurretProjectile`·`bullet`·`Missile`은 `Entities / 1`을 사용한다. 플레이어 탄환의 명중 효과는 Order 2로 표시하며, 미사일 폭발 프리팹은 `Entities / 100`을 사용한다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
 
 현재 Enemy 타깃 선정은 등록된 `TargetableComponent`의 상태를 사용한다. 근접 공격의 사거리 판정은 대상의 활성 비트리거 콜라이더까지의 거리를 사용하며, 원거리 투사체의 피격은 Physics 2D 충돌 설정을 따른다.
 
