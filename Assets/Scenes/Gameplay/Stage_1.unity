@@ -566515,7 +566515,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d63b0634f6034d23a6e314a837dd21ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.FieldTurrets::TeamHJD.Game.FieldTurrets.FieldTurretController
-  maximumPower: 1000
+  maximumPower: 500
+  fixedMaximumPower: 500
   destructionPowerReturnPercent: 50
   unlockGridOrigin: {x: 0, y: 0}
   unlockGridOriginZ: 0
