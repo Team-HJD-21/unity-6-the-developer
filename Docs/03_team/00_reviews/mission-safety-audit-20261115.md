@@ -1,6 +1,6 @@
 # 안전장치 재검수 — 2026-11-15
 
-PR: 게시 후 번호 기입. 기준: main #732와 이번 Stage_1 재접합.
+PR: [#734](https://github.com/Team-HJD-21/unity-6-the-developer/pull/734). 기준: main #732와 이번 Stage_1 재접합.
 
 ## 실제 연결
 

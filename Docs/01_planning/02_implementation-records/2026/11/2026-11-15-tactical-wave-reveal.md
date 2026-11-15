@@ -1,5 +1,7 @@
 # 전술 지도 파동 공개·회수 — 2026-11-15
 
+관련 PR: [#734](https://github.com/Team-HJD-21/unity-6-the-developer/pull/734)
+
 상태: 로컬 구현·검수 완료. Core 통합 PR에 전달하며 이 기록 자체는 main 반영을 뜻하지 않는다.
 
 ## 바뀐 화면

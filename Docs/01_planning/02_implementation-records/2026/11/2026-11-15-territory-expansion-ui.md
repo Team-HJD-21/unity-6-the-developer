@@ -1,5 +1,7 @@
 # 확정 점유 확장과 완료 HUD
 
+관련 PR: [#734](https://github.com/Team-HJD-21/unity-6-the-developer/pull/734)
+
 상태: UI 소스 구현·독립 관리형 검사 완료, 통합 Editor/Play·GPU·Client 검수 대기. Core 통합 담당자가 Editor와 Git 작업을 소유하며 이 UI 작업에서 실행하거나 저장하지 않았다.
 
 ## 실행 경로

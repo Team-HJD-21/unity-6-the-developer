@@ -1,6 +1,6 @@
 # 날씨 방향과 플레이어 야간 조명 — 2026-11-15
 
-PR: 게시 후 번호 기입. 실제 Unity6000.3.23f1/URP/Windows DX11 GPU 출력 기준이다.
+PR: [#734](https://github.com/Team-HJD-21/unity-6-the-developer/pull/734). 실제 Unity6000.3.23f1/URP/Windows DX11 GPU 출력 기준이다.
 
 ## 먼저 볼 파일
 
