@@ -11,7 +11,7 @@
 | 로컬 카메라 | `CameraManager.Current`, `PushView`, 반환 lease의 `Dispose`, 출력/시점 알림 | 제품 컷씬·자막 콘텐츠, 실제 조준/Weather 표현 인수 |
 | 오디오 | 11/13 로컬: 단일 Listener, GameAudioManager, Music/Effects 믹서, 전체·음악·효과음 설정, Main/Credits 및 일부 전투 효과음 연결 | 모든 Enemy·무기의 음원 제작/음향 인수, 원격 전투음과 전체 Scene 경로 검증. Legacy 호출 재활성화 금지 |
 | App/Scene 흐름 | Startup·우주선 허브·Mission 출격/귀환, 소유 Scene 정리와 전환 실패 전달 | 추가 방/전장·제품별 도착점과 전체 Scene 인수 |
-| Match 관리 | Scene 조립·Player/터렛·CU 바인딩, 완료/해제 수명과 모드 규칙 경계 | 최종 전투 진행·컷씬·결과 UI 등 실제 콘텐츠 연결 |
+| Match 관리 | Scene 조립·Player/터렛·CU 바인딩, 완료/해제 수명과 모드 규칙 경계. 11/15 Stage1의100%·컷씬·실제 보스·시작 안전장치·승리 귀환 연결 | 원격2인 연출 인수, 캠페인 영속 클리어·별도 결과 디자인 |
 | 공용 시간·낮밤 | Host 게임 시간/정지/배속, 낮밤 기준과 Client 잔여시간 읽기 | 실제 Weather writer·표현 소유자와의 최종 인수 |
 | Random | Host Match 난수, 범용/가중 선택과 소유권 헬퍼 | 각 Feature의 기존 난수 호출을 사용할 수명에 맞게 연결 |
 | Battlefield | 터렛 topology·전선·Player/Enemy 밀도 Grid snapshot | 밀도·법선을 자동으로 실제 전투 우세 판정으로 쓰는 기능 |
