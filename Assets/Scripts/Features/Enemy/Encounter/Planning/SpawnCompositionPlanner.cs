@@ -109,7 +109,8 @@ public sealed class SpawnCompositionPlanner
         {
             if (!string.IsNullOrWhiteSpace(requiredPreset) && preset.SquadOrder != requiredPreset) continue;
             if (string.IsNullOrWhiteSpace(preset.SquadOrder) || preset.SelectionWeight <= 0 ||
-                !Enum.IsDefined(typeof(EnemySquadRole), preset.Role) || !orders.Add(preset.SquadOrder))
+                !Enum.IsDefined(typeof(EnemySquadRole), preset.Role) || settings.GetRoleWeight(preset.Role) <= 0 ||
+                !orders.Add(preset.SquadOrder))
                 continue;
             presets.Add(preset);
             costs.Add(preset, preset.CalculateCost(_enemyCatalog));

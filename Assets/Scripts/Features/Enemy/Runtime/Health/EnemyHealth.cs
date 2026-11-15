@@ -88,6 +88,11 @@ public partial class EnemyHealth : MonoBehaviour, IAttackableEnemy
         if (damage <= 0 || !CanBeAttackedBy(source))
             return false;
 
+        if (_damageRule != null)
+            damage = _damageRule.ModifyDamage(damage, source);
+        if (damage <= 0)
+            return false;
+
         int actual = Math.Min(damage, currentHealth);
         currentHealth -= actual;
         bool died = currentHealth == 0;

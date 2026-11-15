@@ -10,20 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30437a8f5d608ee4083dfd6b5e53a923, type: 3}
-  m_Name: BalancedFormationSquad
+  m_Name: AntennaPatrolSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
-  _squadOrder: BalancedFormation
+  _squadOrder: AntennaPatrol
   _composition:
-  - _enemyId: GreenGolem
-    _weight: 1
+  - _enemyId: AntennaSlime
+    _weight: 2
   - _enemyId: GoblinSpear
     _weight: 1
-  - _enemyId: GoblinMage
-    _weight: 1
-  - _enemyId: PartyMushroom
-    _weight: 1
-  - _enemyId: Slime
-    _weight: 2
   _targetRule: 0
-  role: 6
-  selectionWeight: 6
+  role: 0
+  selectionWeight: 1

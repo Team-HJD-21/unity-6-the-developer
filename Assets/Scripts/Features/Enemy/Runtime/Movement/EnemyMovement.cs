@@ -19,8 +19,11 @@ public partial class EnemyMovement : MonoBehaviour
     private Vector3[] _path;
     private int _currentPath = 0;
 
-    /// <summary>스스로 이동할 때 목표로 하는 최대 속도를 반환한다.</summary>
-    public float MoveSpeed => moveSpeed;
+    /// <summary>감속 효과를 적용하기 전의 설정 이동속도다.</summary>
+    public float BaseMoveSpeed => Mathf.Max(0f, moveSpeed);
+
+    /// <summary>현재 감속을 반영한 최대 이동속도다.</summary>
+    public float MoveSpeed => BaseMoveSpeed * SlowSpeedMultiplier;
 
     /// <summary>외부 밀림을 포함한 물리 본체의 현재 속력을 반환한다.</summary>
     public float CurrentSpeed => rigidbody2D != null ? rigidbody2D.linearVelocity.magnitude : 0f;
@@ -30,7 +33,7 @@ public partial class EnemyMovement : MonoBehaviour
 
     /// <summary>외부 충돌로 허용할 최대 속력을 계산한다.</summary>
     private float PushSpeedLimit =>
-        Mathf.Max(0f, moveSpeed) * Mathf.Max(1f, pushSpeedLimitMultiplier);
+        MoveSpeed * Mathf.Max(1f, pushSpeedLimitMultiplier);
 
     // Unity 생명주기
 
@@ -39,6 +42,8 @@ public partial class EnemyMovement : MonoBehaviour
     {
         if (rigidbody2D == null)
             rigidbody2D = GetComponent<Rigidbody2D>();
+        _slowHealth = GetComponent<EnemyHealth>();
+        _slowNetwork = GetComponent<EnemyNetworkController>();
     }
 
     // 외부 호출과 상태 변경
@@ -120,8 +125,9 @@ public partial class EnemyMovement : MonoBehaviour
             currentVelocity - moveDirection * forwardSpeed;
 
         // 역방향 속도는 먼저 제동하고, 이후 목표 속도까지 가속한다.
-        float targetForwardSpeed = forwardSpeed < 0f ? 0f : moveSpeed;
-        float forwardAcceleration = forwardSpeed < 0f || forwardSpeed > moveSpeed
+        float effectiveSpeed = MoveSpeed;
+        float targetForwardSpeed = forwardSpeed < 0f ? 0f : effectiveSpeed;
+        float forwardAcceleration = forwardSpeed < 0f || forwardSpeed > effectiveSpeed
             ? moveDeceleration
             : moveAcceleration;
 

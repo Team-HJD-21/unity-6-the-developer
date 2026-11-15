@@ -27,8 +27,6 @@ public enum EnemySquadRole
     Backline = 2,
     Summon = 3,
     Sustain = 4,
-    Elite = 5,
-    Balanced = 6,
     Ambush = 7
 }
 

@@ -18,7 +18,8 @@ public partial class EnemySpawnExecutor
 
     /// <summary>EnemySummonGenerator가 호출합니다. 부모의 소속을 확인하고 지정된 위치 근처의 NavMesh에 소환합니다.</summary>
     public int SpawnSummoned(EnemyNetworkController parent, EnemyDefinition definition,
-        IReadOnlyList<Vector3> positions, Transform initialTarget)
+        IReadOnlyList<Vector3> positions, Transform initialTarget,
+        Action<EnemyNetworkController> onSpawned = null)
     {
         if (!CanSpawn || !CanSimulateField || parent == null || !parent.IsSpawned ||
             parent.NetworkManager != NetworkManager || !_spawnedEnemies.TryGetValue(parent.NetworkObjectId, out var source) ||
@@ -59,7 +60,8 @@ public partial class EnemySpawnExecutor
                 var squad = shared ?? new EnemySquad(definition.SquadMode, targetRule, initialTarget);
                 if (shared == null) squads.Add(squad);
                 if (TrySpawnActor(definition, resolved, Quaternion.identity, squad, context,
-                        "summon/" + source.EntityId, observeFailure: failure => reason = failure))
+                        "summon/" + source.EntityId, observeFailure: failure => reason = failure,
+                        onSpawned: onSpawned))
                     actual++;
             }
             return actual;

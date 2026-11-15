@@ -10,20 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30437a8f5d608ee4083dfd6b5e53a923, type: 3}
-  m_Name: EliteEscortSquad
+  m_Name: ArtilleryBacklineSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
-  _squadOrder: EliteEscort
+  _squadOrder: ArtilleryBackline
   _composition:
   - _enemyId: GreenGolem
     _weight: 1
-  - _enemyId: BattleTroll
-    _weight: 1
-  - _enemyId: GoblinWarrior
+  - _enemyId: PlantLeafer
     _weight: 1
   - _enemyId: CannonSlime
     _weight: 1
-  - _enemyId: GoblinDual
-    _weight: 2
   _targetRule: 0
-  role: 5
+  role: 2
   selectionWeight: 1

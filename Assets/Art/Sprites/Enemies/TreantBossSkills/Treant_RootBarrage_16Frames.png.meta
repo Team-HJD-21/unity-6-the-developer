@@ -1,0 +1,680 @@
+fileFormatVersion: 2
+guid: e8ea55ee2cb937a468979e35cad492b3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7851998736803476776
+    second: Treant_RootBarrage_16Frames_0
+  - first:
+      213: -523331105824351858
+    second: Treant_RootBarrage_16Frames_1
+  - first:
+      213: -8248458629187935115
+    second: Treant_RootBarrage_16Frames_2
+  - first:
+      213: -7396726754889966128
+    second: Treant_RootBarrage_16Frames_3
+  - first:
+      213: -4605113805836482314
+    second: Treant_RootBarrage_16Frames_4
+  - first:
+      213: 7627518303135567286
+    second: Treant_RootBarrage_16Frames_5
+  - first:
+      213: -8408367342127821559
+    second: Treant_RootBarrage_16Frames_6
+  - first:
+      213: -226645430834334676
+    second: Treant_RootBarrage_16Frames_7
+  - first:
+      213: 2288135138161893652
+    second: Treant_RootBarrage_16Frames_8
+  - first:
+      213: -4185371237706653588
+    second: Treant_RootBarrage_16Frames_9
+  - first:
+      213: 6703420949021517039
+    second: Treant_RootBarrage_16Frames_10
+  - first:
+      213: -4274753203695260991
+    second: Treant_RootBarrage_16Frames_11
+  - first:
+      213: 1046068796506051136
+    second: Treant_RootBarrage_16Frames_12
+  - first:
+      213: -114653436168409036
+    second: Treant_RootBarrage_16Frames_13
+  - first:
+      213: -2895733205808016747
+    second: Treant_RootBarrage_16Frames_14
+  - first:
+      213: -7502518578815969956
+    second: Treant_RootBarrage_16Frames_15
+  - first:
+      213: -6140955724982124310
+    second: Treant_RootBarrage_16Frames_16
+  - first:
+      213: -6617801709134497453
+    second: Treant_RootBarrage_16Frames_17
+  - first:
+      213: 138009273451871920
+    second: Treant_RootBarrage_16Frames_18
+  - first:
+      213: -7621495126392479794
+    second: Treant_RootBarrage_16Frames_19
+  - first:
+      213: 8833890987831101273
+    second: Treant_RootBarrage_16Frames_20
+  - first:
+      213: -4312304172753238054
+    second: Treant_RootBarrage_16Frames_21
+  - first:
+      213: 8860509224570077632
+    second: Treant_RootBarrage_16Frames_22
+  - first:
+      213: 6951657195824246227
+    second: Treant_RootBarrage_16Frames_23
+  - first:
+      213: 1609957756877880607
+    second: Treant_RootBarrage_16Frames_24
+  - first:
+      213: 5137005253142850777
+    second: Treant_RootBarrage_16Frames_25
+  - first:
+      213: -1967592133770465010
+    second: Treant_RootBarrage_16Frames_26
+  - first:
+      213: -4509704235595427105
+    second: Treant_RootBarrage_16Frames_27
+  - first:
+      213: 9005398886668366689
+    second: Treant_RootBarrage_16Frames_28
+  - first:
+      213: 8753131592855990702
+    second: Treant_RootBarrage_16Frames_29
+  - first:
+      213: -5320118485769477145
+    second: Treant_RootBarrage_16Frames_30
+  - first:
+      213: -1167607555929196156
+    second: Treant_RootBarrage_16Frames_31
+  - first:
+      213: 3755698468080791923
+    second: Treant_RootBarrage_16Frames_32
+  - first:
+      213: 7107648202951778886
+    second: Treant_RootBarrage_16Frames_33
+  - first:
+      213: -7031687059354671318
+    second: Treant_RootBarrage_16Frames_34
+  - first:
+      213: 983286010249933250
+    second: Treant_RootBarrage_16Frames_35
+  - first:
+      213: -887892378482599665
+    second: Treant_RootBarrage_16Frames_36
+  - first:
+      213: 4391019318673398208
+    second: Treant_RootBarrage_16Frames_37
+  - first:
+      213: -8787085640983170982
+    second: Treant_RootBarrage_16Frames_38
+  - first:
+      213: -4469508561677589473
+    second: Treant_RootBarrage_16Frames_39
+  - first:
+      213: -1447299079572319872
+    second: Treant_RootBarrage_16Frames_40
+  - first:
+      213: 4529058685809756017
+    second: Treant_RootBarrage_16Frames_41
+  - first:
+      213: 7102568658801635180
+    second: Treant_RootBarrage_16Frames_42
+  - first:
+      213: 5392546465697460111
+    second: Treant_RootBarrage_16Frames_43
+  - first:
+      213: 1441915125761156346
+    second: Treant_RootBarrage_16Frames_44
+  - first:
+      213: -4326376373978039786
+    second: Treant_RootBarrage_16Frames_45
+  - first:
+      213: -7535022687298409861
+    second: Treant_RootBarrage_16Frames_46
+  - first:
+      213: -8947729460986120488
+    second: Treant_RootBarrage_16Frames_47
+  - first:
+      213: 8711258749892815722
+    second: Treant_RootBarrage_16Frames_48
+  - first:
+      213: 8633628995919569998
+    second: Treant_RootBarrage_16Frames_49
+  - first:
+      213: -3753649400097402690
+    second: Treant_RootBarrage_16Frames_50
+  - first:
+      213: 6731384993309350599
+    second: Treant_RootBarrage_16Frames_51
+  - first:
+      213: 7835840581753382398
+    second: Treant_RootBarrage_16Frames_52
+  - first:
+      213: 6618715248268639826
+    second: Treant_RootBarrage_16Frames_53
+  - first:
+      213: 6177829044322480429
+    second: Treant_RootBarrage_16Frames_54
+  - first:
+      213: 3180863998794582960
+    second: Treant_RootBarrage_16Frames_55
+  - first:
+      213: -8575097798725053698
+    second: Treant_RootBarrage_16Frames_56
+  - first:
+      213: 2289713032159340799
+    second: Treant_RootBarrage_16Frames_57
+  - first:
+      213: -3611301625537054915
+    second: Treant_RootBarrage_16Frames_58
+  - first:
+      213: 8344476743512150885
+    second: Treant_RootBarrage_16Frames_59
+  - first:
+      213: 6846846716318459398
+    second: Treant_RootBarrage_16Frames_60
+  - first:
+      213: 8423930426420782501
+    second: Treant_RootBarrage_16Frames_61
+  - first:
+      213: -8003616516718870202
+    second: Treant_RootBarrage_16Frames_62
+  - first:
+      213: -2315772330829320017
+    second: Treant_RootBarrage_16Frames_63
+  - first:
+      213: -2734053043952381036
+    second: Treant_RootBarrage_16Frames_64
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Treant_RootBarrage_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 576
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 336126fc5319a174fb1a0afb6ca7d71c
+      internalID: -367538681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_01
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 576
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d226416886bb7154cb5cba9fc9e544dd
+      internalID: 434650305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_02
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 576
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d476b10951d291a44a86a4627501fda5
+      internalID: 1928885919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_03
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 576
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c9a571a9c40b1cf4ca8da405c34c2ec5
+      internalID: 81821728
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1767bbca4e256524aac7c0b653fe798b
+      internalID: 455054550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_05
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 384
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 608ad813db1f0c540afb268264e8990d
+      internalID: -618234419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_06
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 384
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f1f8f049d89133249bbdb85ad0e675bf
+      internalID: 348105278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_07
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 384
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f53e57b1f748e51498adde7696e90991
+      internalID: 538277592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_08
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 192
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ea9498f8020667d4b945d90807637632
+      internalID: 280484945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_09
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 192
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 28ce2b26ba570b343b73ff9d39eeb4a9
+      internalID: -278201755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_10
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 192
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9f97d55b10258a441ad7cd52cc866db2
+      internalID: 697331389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_11
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 192
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5e21bd17eac4c0843b4f2888f91b6213
+      internalID: 528679471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e04b1e040a8344349a0ec6c61effdf01
+      internalID: -424058582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_13
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d2641b231755bb41bbd9ae27bc67f64
+      internalID: 819058392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_14
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e45384c4de4567346bb209eb3249ee7b
+      internalID: -1438374922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_RootBarrage_15
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 0
+        width: 192
+        height: 192
+      alignment: 9
+      pivot: {x: 0.5, y: 0.21875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a99a52fd5c3f7e4a9f89db52b1cf449
+      internalID: 354670106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 13e58469d710b8d448e6f0e27ddb20b6
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Treant_RootBarrage_00: -367538681
+      Treant_RootBarrage_01: 434650305
+      Treant_RootBarrage_02: 1928885919
+      Treant_RootBarrage_03: 81821728
+      Treant_RootBarrage_04: 455054550
+      Treant_RootBarrage_05: -618234419
+      Treant_RootBarrage_06: 348105278
+      Treant_RootBarrage_07: 538277592
+      Treant_RootBarrage_08: 280484945
+      Treant_RootBarrage_09: -278201755
+      Treant_RootBarrage_10: 697331389
+      Treant_RootBarrage_11: 528679471
+      Treant_RootBarrage_12: -424058582
+      Treant_RootBarrage_13: 819058392
+      Treant_RootBarrage_14: -1438374922
+      Treant_RootBarrage_15: 354670106
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

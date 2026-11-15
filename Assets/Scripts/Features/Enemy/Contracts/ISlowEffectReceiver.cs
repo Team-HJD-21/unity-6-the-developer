@@ -1,6 +1,6 @@
 namespace TeamHJD.Game.Enemy.Contracts
 {
-    /// <summary>적 공격의 감속 효과를 받을 수 있는 대상의 계약이다.</summary>
+    /// <summary>플레이어나 적의 공통 감속 계약. 공격 출처와 결과가 필요하면 IAttackSlowEffectReceiver를 사용한다.</summary>
     public interface ISlowEffectReceiver
     {
         /// <summary>대상에 맞는 속도를 지정한 시간 동안 낮춘다.</summary>

@@ -164,10 +164,23 @@ namespace TeamHJD.Game.Enemies.Encounter
             IReadOnlyList<EnemySquadPreset> presets, EnemySquadPreset selected, SquadSelectionSettings settings)
         {
             int capacity = settings.maxEnemiesPerCell - area.CellEnemyCount;
-            double totalWeight = 0d;
+            var presetWeightByRole = new Dictionary<EnemySquadRole, double>();
+            var roleWeightByRole = new Dictionary<EnemySquadRole, double>();
+            double totalRoleWeight = 0d;
             foreach (EnemySquadPreset preset in presets)
-                if (preset.TotalWeight > 0 && preset.TotalWeight <= capacity)
-                    totalWeight += SquadSelectionPolicy.CalculateWeight(preset, area, settings);
+            {
+                if (preset.TotalWeight <= 0 || preset.TotalWeight > capacity || preset.SelectionWeight <= 0)
+                    continue;
+                presetWeightByRole.TryGetValue(preset.Role, out double presetWeight);
+                presetWeightByRole[preset.Role] = presetWeight + preset.SelectionWeight;
+            }
+            foreach (var pair in presetWeightByRole)
+            {
+                double roleWeight = SquadSelectionPolicy.CalculateRoleWeight(pair.Key, area, settings);
+                if (roleWeight <= 0d) continue;
+                roleWeightByRole.Add(pair.Key, roleWeight);
+                totalRoleWeight += roleWeight;
+            }
 
             var weights = new StringBuilder();
             foreach (EnemySquadPreset preset in presets)
@@ -180,8 +193,17 @@ namespace TeamHJD.Game.Enemies.Encounter
                     continue;
                 }
 
-                double weight = SquadSelectionPolicy.CalculateWeight(preset, area, settings);
-                weights.Append($": {preset.SelectionWeight} → {weight:0.##} ({weight / totalWeight:P1})");
+                if (!roleWeightByRole.TryGetValue(preset.Role, out double roleWeight) ||
+                    !presetWeightByRole.TryGetValue(preset.Role, out double rolePresetWeight))
+                {
+                    weights.Append(": 제외(Role 가중치 0)");
+                    continue;
+                }
+
+                double roleChance = totalRoleWeight > 0d ? roleWeight / totalRoleWeight : 0d;
+                double presetChance = rolePresetWeight > 0 ? (double)preset.SelectionWeight / rolePresetWeight : 0d;
+                weights.Append($": Role {roleWeight:0.##} ({roleChance:P1}) × 프리셋 {preset.SelectionWeight}/{rolePresetWeight} " +
+                    $"({presetChance:P1}) = {roleChance * presetChance:P1}");
             }
 
             Debug.Log($"[SquadSelection] Match {snapshot.MatchId} r{snapshot.Revision} @ {pointId}\n" +
@@ -190,7 +212,7 @@ namespace TeamHJD.Game.Enemies.Encounter
                 $"판정: {(area.NearbyEnemyPercentage <= settings.sparseEnemyPercentage ? "적음" : "많음")} " +
                 $"(기준 ≤ {settings.sparseEnemyPercentage:0.##}%), 주변 플레이어: {area.HasNearbyPlayer}, " +
                 $"출현 셀 잔여 수용량: {capacity}\n" +
-                $"후보 가중치(기본 → 최종 / 선택 확률): {weights}\n" +
+                $"Role 추첨 후 해당 Role 내 프리셋 추첨(각 단계 비중 / 최종 비중): {weights}\n" +
                 $"예산·마릿수 제한을 통과한 후보만 표시. 선택: {selected.SquadOrder}");
         }
     }

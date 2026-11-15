@@ -1,0 +1,1479 @@
+fileFormatVersion: 2
+guid: ecd8ca3600e2b8440a492038a6ff579c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 734340032943414546
+    second: Treant_GroundRupture_SpikesOnly_24Frames_0
+  - first:
+      213: 3383329837924827017
+    second: Treant_GroundRupture_SpikesOnly_24Frames_1
+  - first:
+      213: -7300375933998147505
+    second: Treant_GroundRupture_SpikesOnly_24Frames_2
+  - first:
+      213: -2431523654293365110
+    second: Treant_GroundRupture_SpikesOnly_24Frames_3
+  - first:
+      213: 779340438661750463
+    second: Treant_GroundRupture_SpikesOnly_24Frames_4
+  - first:
+      213: -1527409776135284223
+    second: Treant_GroundRupture_SpikesOnly_24Frames_5
+  - first:
+      213: -71110072174746902
+    second: Treant_GroundRupture_SpikesOnly_24Frames_6
+  - first:
+      213: 1432278226717820990
+    second: Treant_GroundRupture_SpikesOnly_24Frames_7
+  - first:
+      213: 8734470989458470926
+    second: Treant_GroundRupture_SpikesOnly_24Frames_8
+  - first:
+      213: 8174843260272855426
+    second: Treant_GroundRupture_SpikesOnly_24Frames_9
+  - first:
+      213: 7384745863287762625
+    second: Treant_GroundRupture_SpikesOnly_24Frames_10
+  - first:
+      213: 320308742664148375
+    second: Treant_GroundRupture_SpikesOnly_24Frames_11
+  - first:
+      213: -8718192514672235752
+    second: Treant_GroundRupture_SpikesOnly_24Frames_12
+  - first:
+      213: -6917786756777156535
+    second: Treant_GroundRupture_SpikesOnly_24Frames_13
+  - first:
+      213: 8230743635673243385
+    second: Treant_GroundRupture_SpikesOnly_24Frames_14
+  - first:
+      213: 8826793494358577899
+    second: Treant_GroundRupture_SpikesOnly_24Frames_15
+  - first:
+      213: -2817972628325037681
+    second: Treant_GroundRupture_SpikesOnly_24Frames_16
+  - first:
+      213: 5697551430581804556
+    second: Treant_GroundRupture_SpikesOnly_24Frames_17
+  - first:
+      213: 7352272236577935287
+    second: Treant_GroundRupture_SpikesOnly_24Frames_18
+  - first:
+      213: -6539369455943279587
+    second: Treant_GroundRupture_SpikesOnly_24Frames_19
+  - first:
+      213: -5736369690674940631
+    second: Treant_GroundRupture_SpikesOnly_24Frames_20
+  - first:
+      213: 3910527637606968728
+    second: Treant_GroundRupture_SpikesOnly_24Frames_21
+  - first:
+      213: -3977684005713933873
+    second: Treant_GroundRupture_SpikesOnly_24Frames_22
+  - first:
+      213: 8224226441002594764
+    second: Treant_GroundRupture_SpikesOnly_24Frames_23
+  - first:
+      213: -2387230634933182229
+    second: Treant_GroundRupture_SpikesOnly_24Frames_24
+  - first:
+      213: -3312741858689530320
+    second: Treant_GroundRupture_SpikesOnly_24Frames_25
+  - first:
+      213: 8677420097723240178
+    second: Treant_GroundRupture_SpikesOnly_24Frames_26
+  - first:
+      213: -7837258348889573635
+    second: Treant_GroundRupture_SpikesOnly_24Frames_27
+  - first:
+      213: -7927794486929197943
+    second: Treant_GroundRupture_SpikesOnly_24Frames_28
+  - first:
+      213: -875025530102263765
+    second: Treant_GroundRupture_SpikesOnly_24Frames_29
+  - first:
+      213: 6841347191316275503
+    second: Treant_GroundRupture_SpikesOnly_24Frames_30
+  - first:
+      213: -8128592817113724702
+    second: Treant_GroundRupture_SpikesOnly_24Frames_31
+  - first:
+      213: 5468855164638258867
+    second: Treant_GroundRupture_SpikesOnly_24Frames_32
+  - first:
+      213: 2408207384770982692
+    second: Treant_GroundRupture_SpikesOnly_24Frames_33
+  - first:
+      213: -502895287887837410
+    second: Treant_GroundRupture_SpikesOnly_24Frames_34
+  - first:
+      213: -4600817611511694676
+    second: Treant_GroundRupture_SpikesOnly_24Frames_35
+  - first:
+      213: 7652077155373287309
+    second: Treant_GroundRupture_SpikesOnly_24Frames_36
+  - first:
+      213: -1813020973393569097
+    second: Treant_GroundRupture_SpikesOnly_24Frames_37
+  - first:
+      213: -5104907117863240540
+    second: Treant_GroundRupture_SpikesOnly_24Frames_38
+  - first:
+      213: -6936603442571370660
+    second: Treant_GroundRupture_SpikesOnly_24Frames_39
+  - first:
+      213: -7757994855367509649
+    second: Treant_GroundRupture_SpikesOnly_24Frames_40
+  - first:
+      213: -5111330003494425102
+    second: Treant_GroundRupture_SpikesOnly_24Frames_41
+  - first:
+      213: 8466181055922749770
+    second: Treant_GroundRupture_SpikesOnly_24Frames_42
+  - first:
+      213: 6128369133153140251
+    second: Treant_GroundRupture_SpikesOnly_24Frames_43
+  - first:
+      213: 7083941806214884316
+    second: Treant_GroundRupture_SpikesOnly_24Frames_44
+  - first:
+      213: 5186251731511420132
+    second: Treant_GroundRupture_SpikesOnly_24Frames_45
+  - first:
+      213: 3002753532119912157
+    second: Treant_GroundRupture_SpikesOnly_24Frames_46
+  - first:
+      213: 6098746860028750962
+    second: Treant_GroundRupture_SpikesOnly_24Frames_47
+  - first:
+      213: 131111076227026823
+    second: Treant_GroundRupture_SpikesOnly_24Frames_48
+  - first:
+      213: 7944970431101208773
+    second: Treant_GroundRupture_SpikesOnly_24Frames_49
+  - first:
+      213: -2596678386141651775
+    second: Treant_GroundRupture_SpikesOnly_24Frames_50
+  - first:
+      213: -4357396547079817011
+    second: Treant_GroundRupture_SpikesOnly_24Frames_51
+  - first:
+      213: 3466847179451378352
+    second: Treant_GroundRupture_SpikesOnly_24Frames_52
+  - first:
+      213: 8045327397503896404
+    second: Treant_GroundRupture_SpikesOnly_24Frames_53
+  - first:
+      213: 5853189549023565884
+    second: Treant_GroundRupture_SpikesOnly_24Frames_54
+  - first:
+      213: 2721694741712499262
+    second: Treant_GroundRupture_SpikesOnly_24Frames_55
+  - first:
+      213: -6708235067191094502
+    second: Treant_GroundRupture_SpikesOnly_24Frames_56
+  - first:
+      213: -2864873208488448403
+    second: Treant_GroundRupture_SpikesOnly_24Frames_57
+  - first:
+      213: 5949061090476250134
+    second: Treant_GroundRupture_SpikesOnly_24Frames_58
+  - first:
+      213: -6351288800592924674
+    second: Treant_GroundRupture_SpikesOnly_24Frames_59
+  - first:
+      213: -1060360608788151454
+    second: Treant_GroundRupture_SpikesOnly_24Frames_60
+  - first:
+      213: 5406623511417209609
+    second: Treant_GroundRupture_SpikesOnly_24Frames_61
+  - first:
+      213: 4911166900496509473
+    second: Treant_GroundRupture_SpikesOnly_24Frames_62
+  - first:
+      213: -2243447875231002444
+    second: Treant_GroundRupture_SpikesOnly_24Frames_63
+  - first:
+      213: -1117529650698553050
+    second: Treant_GroundRupture_SpikesOnly_24Frames_64
+  - first:
+      213: 6520049977908236646
+    second: Treant_GroundRupture_SpikesOnly_24Frames_65
+  - first:
+      213: -6207821640612381561
+    second: Treant_GroundRupture_SpikesOnly_24Frames_66
+  - first:
+      213: 1204980654356154909
+    second: Treant_GroundRupture_SpikesOnly_24Frames_67
+  - first:
+      213: 3230758776640383202
+    second: Treant_GroundRupture_SpikesOnly_24Frames_68
+  - first:
+      213: -6503633047694266228
+    second: Treant_GroundRupture_SpikesOnly_24Frames_69
+  - first:
+      213: 1005408521234172464
+    second: Treant_GroundRupture_SpikesOnly_24Frames_70
+  - first:
+      213: 6794936496179425691
+    second: Treant_GroundRupture_SpikesOnly_24Frames_71
+  - first:
+      213: 2046036751775219846
+    second: Treant_GroundRupture_SpikesOnly_24Frames_72
+  - first:
+      213: 4976949870842538304
+    second: Treant_GroundRupture_SpikesOnly_24Frames_73
+  - first:
+      213: -4090560199118473086
+    second: Treant_GroundRupture_SpikesOnly_24Frames_74
+  - first:
+      213: 5003266352045970567
+    second: Treant_GroundRupture_SpikesOnly_24Frames_75
+  - first:
+      213: 1277544322148139071
+    second: Treant_GroundRupture_SpikesOnly_24Frames_76
+  - first:
+      213: -3318144219270876556
+    second: Treant_GroundRupture_SpikesOnly_24Frames_77
+  - first:
+      213: 8396929060180155016
+    second: Treant_GroundRupture_SpikesOnly_24Frames_78
+  - first:
+      213: 8710915063187525407
+    second: Treant_GroundRupture_SpikesOnly_24Frames_79
+  - first:
+      213: -4011375813566310955
+    second: Treant_GroundRupture_SpikesOnly_24Frames_80
+  - first:
+      213: -6179778766903102297
+    second: Treant_GroundRupture_SpikesOnly_24Frames_81
+  - first:
+      213: 2149650054631678794
+    second: Treant_GroundRupture_SpikesOnly_24Frames_82
+  - first:
+      213: 6346304446890238023
+    second: Treant_GroundRupture_SpikesOnly_24Frames_83
+  - first:
+      213: -7481793077496054598
+    second: Treant_GroundRupture_SpikesOnly_24Frames_84
+  - first:
+      213: 5771016276955878348
+    second: Treant_GroundRupture_SpikesOnly_24Frames_85
+  - first:
+      213: 4870209440957540606
+    second: Treant_GroundRupture_SpikesOnly_24Frames_86
+  - first:
+      213: 4864922677078449773
+    second: Treant_GroundRupture_SpikesOnly_24Frames_87
+  - first:
+      213: -3244211832944574165
+    second: Treant_GroundRupture_SpikesOnly_24Frames_88
+  - first:
+      213: 7368823670827857125
+    second: Treant_GroundRupture_SpikesOnly_24Frames_89
+  - first:
+      213: 2556212248118089044
+    second: Treant_GroundRupture_SpikesOnly_24Frames_90
+  - first:
+      213: -4387725202355828765
+    second: Treant_GroundRupture_SpikesOnly_24Frames_91
+  - first:
+      213: -8742170873501906594
+    second: Treant_GroundRupture_SpikesOnly_24Frames_92
+  - first:
+      213: -1463564650143428005
+    second: Treant_GroundRupture_SpikesOnly_24Frames_93
+  - first:
+      213: 5863785748722176529
+    second: Treant_GroundRupture_SpikesOnly_24Frames_94
+  - first:
+      213: 6968248568269791622
+    second: Treant_GroundRupture_SpikesOnly_24Frames_95
+  - first:
+      213: -444635833412441575
+    second: Treant_GroundRupture_SpikesOnly_24Frames_96
+  - first:
+      213: -1212427739934407939
+    second: Treant_GroundRupture_SpikesOnly_24Frames_97
+  - first:
+      213: -4204919071256930917
+    second: Treant_GroundRupture_SpikesOnly_24Frames_98
+  - first:
+      213: -2579643236676730950
+    second: Treant_GroundRupture_SpikesOnly_24Frames_99
+  - first:
+      213: 8179546511046713964
+    second: Treant_GroundRupture_SpikesOnly_24Frames_100
+  - first:
+      213: -8167966652962391082
+    second: Treant_GroundRupture_SpikesOnly_24Frames_101
+  - first:
+      213: -8972149123294876490
+    second: Treant_GroundRupture_SpikesOnly_24Frames_102
+  - first:
+      213: 106929831335560780
+    second: Treant_GroundRupture_SpikesOnly_24Frames_103
+  - first:
+      213: -1807713866289111900
+    second: Treant_GroundRupture_SpikesOnly_24Frames_104
+  - first:
+      213: 8689497378711396743
+    second: Treant_GroundRupture_SpikesOnly_24Frames_105
+  - first:
+      213: 6452833295519455137
+    second: Treant_GroundRupture_SpikesOnly_24Frames_106
+  - first:
+      213: 8333430624782907231
+    second: Treant_GroundRupture_SpikesOnly_24Frames_107
+  - first:
+      213: 2728779543815509063
+    second: Treant_GroundRupture_SpikesOnly_24Frames_108
+  - first:
+      213: -8826948751034946033
+    second: Treant_GroundRupture_SpikesOnly_24Frames_109
+  - first:
+      213: -8672194138683516468
+    second: Treant_GroundRupture_SpikesOnly_24Frames_110
+  - first:
+      213: 5553216551940655105
+    second: Treant_GroundRupture_SpikesOnly_24Frames_111
+  - first:
+      213: 1089466748578625442
+    second: Treant_GroundRupture_SpikesOnly_24Frames_112
+  - first:
+      213: 5633139154760405889
+    second: Treant_GroundRupture_SpikesOnly_24Frames_113
+  - first:
+      213: 5270145357201371019
+    second: Treant_GroundRupture_SpikesOnly_24Frames_114
+  - first:
+      213: -3687726001073338292
+    second: Treant_GroundRupture_SpikesOnly_24Frames_115
+  - first:
+      213: -2483204107217565632
+    second: Treant_GroundRupture_SpikesOnly_24Frames_116
+  - first:
+      213: -6835040507858190278
+    second: Treant_GroundRupture_SpikesOnly_24Frames_117
+  - first:
+      213: -2393557424471378439
+    second: Treant_GroundRupture_SpikesOnly_24Frames_118
+  - first:
+      213: -7385826800515086544
+    second: Treant_GroundRupture_SpikesOnly_24Frames_119
+  - first:
+      213: 2554556634022770507
+    second: Treant_GroundRupture_SpikesOnly_24Frames_120
+  - first:
+      213: -1626023261666123713
+    second: Treant_GroundRupture_SpikesOnly_24Frames_121
+  - first:
+      213: 5614344694514044554
+    second: Treant_GroundRupture_SpikesOnly_24Frames_122
+  - first:
+      213: 265591736196685126
+    second: Treant_GroundRupture_SpikesOnly_24Frames_123
+  - first:
+      213: 3149513624129613132
+    second: Treant_GroundRupture_SpikesOnly_24Frames_124
+  - first:
+      213: 5622106280015011136
+    second: Treant_GroundRupture_SpikesOnly_24Frames_125
+  - first:
+      213: -1428304273215410112
+    second: Treant_GroundRupture_SpikesOnly_24Frames_126
+  - first:
+      213: 436221592833027448
+    second: Treant_GroundRupture_SpikesOnly_24Frames_127
+  - first:
+      213: -7251891820817548712
+    second: Treant_GroundRupture_SpikesOnly_24Frames_128
+  - first:
+      213: 8880439588979251853
+    second: Treant_GroundRupture_SpikesOnly_24Frames_129
+  - first:
+      213: 3000640802195614234
+    second: Treant_GroundRupture_SpikesOnly_24Frames_130
+  - first:
+      213: -2782188724109508241
+    second: Treant_GroundRupture_SpikesOnly_24Frames_131
+  - first:
+      213: -3923273281686500622
+    second: Treant_GroundRupture_SpikesOnly_24Frames_132
+  - first:
+      213: 972605040783202957
+    second: Treant_GroundRupture_SpikesOnly_24Frames_133
+  - first:
+      213: 877720888674936892
+    second: Treant_GroundRupture_SpikesOnly_24Frames_134
+  - first:
+      213: 4757492585716094000
+    second: Treant_GroundRupture_SpikesOnly_24Frames_135
+  - first:
+      213: 5277450077765131813
+    second: Treant_GroundRupture_SpikesOnly_24Frames_136
+  - first:
+      213: 6234228289949827771
+    second: Treant_GroundRupture_SpikesOnly_24Frames_137
+  - first:
+      213: -5179373479231799780
+    second: Treant_GroundRupture_SpikesOnly_24Frames_138
+  - first:
+      213: 1060740222435444194
+    second: Treant_GroundRupture_SpikesOnly_24Frames_139
+  - first:
+      213: 1556321126360877288
+    second: Treant_GroundRupture_SpikesOnly_24Frames_140
+  - first:
+      213: -8851230265769264036
+    second: Treant_GroundRupture_SpikesOnly_24Frames_141
+  - first:
+      213: 8005359841557222527
+    second: Treant_GroundRupture_SpikesOnly_24Frames_142
+  - first:
+      213: 6968732731343538481
+    second: Treant_GroundRupture_SpikesOnly_24Frames_143
+  - first:
+      213: 2788006139572705533
+    second: Treant_GroundRupture_SpikesOnly_24Frames_144
+  - first:
+      213: -789339512059253024
+    second: Treant_GroundRupture_SpikesOnly_24Frames_145
+  - first:
+      213: 5312497580704291516
+    second: Treant_GroundRupture_SpikesOnly_24Frames_146
+  - first:
+      213: -5905156301413856970
+    second: Treant_GroundRupture_SpikesOnly_24Frames_147
+  - first:
+      213: -3591833821702037092
+    second: Treant_GroundRupture_SpikesOnly_24Frames_148
+  - first:
+      213: -6199484501021876516
+    second: Treant_GroundRupture_SpikesOnly_24Frames_149
+  - first:
+      213: 8255825834430525263
+    second: Treant_GroundRupture_SpikesOnly_24Frames_150
+  - first:
+      213: -8602021666067137237
+    second: Treant_GroundRupture_SpikesOnly_24Frames_151
+  - first:
+      213: -1069094939452987035
+    second: Treant_GroundRupture_SpikesOnly_24Frames_152
+  - first:
+      213: 7341483729014903247
+    second: Treant_GroundRupture_SpikesOnly_24Frames_153
+  - first:
+      213: 8745662281225568494
+    second: Treant_GroundRupture_SpikesOnly_24Frames_154
+  - first:
+      213: -3971623122190660977
+    second: Treant_GroundRupture_SpikesOnly_24Frames_155
+  - first:
+      213: 5475696247119090232
+    second: Treant_GroundRupture_SpikesOnly_24Frames_156
+  - first:
+      213: -6631101264169450661
+    second: Treant_GroundRupture_SpikesOnly_24Frames_157
+  - first:
+      213: 1173284908660275765
+    second: Treant_GroundRupture_SpikesOnly_24Frames_158
+  - first:
+      213: 699592104353673485
+    second: Treant_GroundRupture_SpikesOnly_24Frames_159
+  - first:
+      213: -4103468176497959356
+    second: Treant_GroundRupture_SpikesOnly_24Frames_160
+  - first:
+      213: 3381329068822794525
+    second: Treant_GroundRupture_SpikesOnly_24Frames_161
+  - first:
+      213: -3971374422254167022
+    second: Treant_GroundRupture_SpikesOnly_24Frames_162
+  - first:
+      213: -832162311391128875
+    second: Treant_GroundRupture_SpikesOnly_24Frames_163
+  - first:
+      213: -5376270471264378663
+    second: Treant_GroundRupture_SpikesOnly_24Frames_164
+  - first:
+      213: -2845362871721765030
+    second: Treant_GroundRupture_SpikesOnly_24Frames_165
+  - first:
+      213: 4120431586470453307
+    second: Treant_GroundRupture_SpikesOnly_24Frames_166
+  - first:
+      213: 6809697492771896124
+    second: Treant_GroundRupture_SpikesOnly_24Frames_167
+  - first:
+      213: -7163622072037334832
+    second: Treant_GroundRupture_SpikesOnly_24Frames_168
+  - first:
+      213: -3772448027587163088
+    second: Treant_GroundRupture_SpikesOnly_24Frames_169
+  - first:
+      213: 5101927176159743503
+    second: Treant_GroundRupture_SpikesOnly_24Frames_170
+  - first:
+      213: 5603064858501278091
+    second: Treant_GroundRupture_SpikesOnly_24Frames_171
+  - first:
+      213: -365981648620574482
+    second: Treant_GroundRupture_SpikesOnly_24Frames_172
+  - first:
+      213: 8786161842656214717
+    second: Treant_GroundRupture_SpikesOnly_24Frames_173
+  - first:
+      213: 2016129736978696089
+    second: Treant_GroundRupture_SpikesOnly_24Frames_174
+  - first:
+      213: -4326409085177585365
+    second: Treant_GroundRupture_SpikesOnly_24Frames_175
+  - first:
+      213: 6868990771168834208
+    second: Treant_GroundRupture_SpikesOnly_24Frames_176
+  - first:
+      213: -8832052712588530904
+    second: Treant_GroundRupture_SpikesOnly_24Frames_177
+  - first:
+      213: 7858252248157418212
+    second: Treant_GroundRupture_SpikesOnly_24Frames_178
+  - first:
+      213: 3658960340500601606
+    second: Treant_GroundRupture_SpikesOnly_24Frames_179
+  - first:
+      213: 3757217943059384106
+    second: Treant_GroundRupture_SpikesOnly_24Frames_180
+  - first:
+      213: 3383204667568684499
+    second: Treant_GroundRupture_SpikesOnly_24Frames_181
+  - first:
+      213: 8608521239103657027
+    second: Treant_GroundRupture_SpikesOnly_24Frames_182
+  - first:
+      213: 4765705063862151080
+    second: Treant_GroundRupture_SpikesOnly_24Frames_183
+  - first:
+      213: 7798672620142757105
+    second: Treant_GroundRupture_SpikesOnly_24Frames_184
+  - first:
+      213: -7032857151883378836
+    second: Treant_GroundRupture_SpikesOnly_24Frames_185
+  - first:
+      213: 2064937466389808203
+    second: Treant_GroundRupture_SpikesOnly_24Frames_186
+  - first:
+      213: -2149424189934192757
+    second: Treant_GroundRupture_SpikesOnly_24Frames_187
+  - first:
+      213: -5537664916054308246
+    second: Treant_GroundRupture_SpikesOnly_24Frames_188
+  - first:
+      213: 7893220343102240163
+    second: Treant_GroundRupture_SpikesOnly_24Frames_189
+  - first:
+      213: 4771048723387615086
+    second: Treant_GroundRupture_SpikesOnly_24Frames_190
+  - first:
+      213: -3507271744036529194
+    second: Treant_GroundRupture_SpikesOnly_24Frames_191
+  - first:
+      213: -4670123631675716177
+    second: Treant_GroundRupture_SpikesOnly_24Frames_192
+  - first:
+      213: -2603923289251567492
+    second: Treant_GroundRupture_SpikesOnly_24Frames_193
+  - first:
+      213: -7353119319245913021
+    second: Treant_GroundRupture_SpikesOnly_24Frames_194
+  - first:
+      213: 762744291661591758
+    second: Treant_GroundRupture_SpikesOnly_24Frames_195
+  - first:
+      213: 7892406402850752018
+    second: Treant_GroundRupture_SpikesOnly_24Frames_196
+  - first:
+      213: 2216139136685334169
+    second: Treant_GroundRupture_SpikesOnly_24Frames_197
+  - first:
+      213: -4902885623038298988
+    second: Treant_GroundRupture_SpikesOnly_24Frames_198
+  - first:
+      213: 300123259911426866
+    second: Treant_GroundRupture_SpikesOnly_24Frames_199
+  - first:
+      213: 7866549452484891848
+    second: Treant_GroundRupture_SpikesOnly_24Frames_200
+  - first:
+      213: -5828288115702186158
+    second: Treant_GroundRupture_SpikesOnly_24Frames_201
+  - first:
+      213: 7695221192791204209
+    second: Treant_GroundRupture_SpikesOnly_24Frames_202
+  - first:
+      213: -8991394535805828948
+    second: Treant_GroundRupture_SpikesOnly_24Frames_203
+  - first:
+      213: -1886276199197252488
+    second: Treant_GroundRupture_SpikesOnly_24Frames_204
+  - first:
+      213: -2753701581205979053
+    second: Treant_GroundRupture_SpikesOnly_24Frames_205
+  - first:
+      213: 412608054517469125
+    second: Treant_GroundRupture_SpikesOnly_24Frames_206
+  - first:
+      213: 58092964963192321
+    second: Treant_GroundRupture_SpikesOnly_24Frames_207
+  - first:
+      213: 3274477019108056611
+    second: Treant_GroundRupture_SpikesOnly_24Frames_208
+  - first:
+      213: -8136427938291915222
+    second: Treant_GroundRupture_SpikesOnly_24Frames_209
+  - first:
+      213: -7982695309813673425
+    second: Treant_GroundRupture_SpikesOnly_24Frames_210
+  - first:
+      213: -1999521265895517980
+    second: Treant_GroundRupture_SpikesOnly_24Frames_211
+  - first:
+      213: -8702824238190048180
+    second: Treant_GroundRupture_SpikesOnly_24Frames_212
+  - first:
+      213: -6183317416739493946
+    second: Treant_GroundRupture_SpikesOnly_24Frames_213
+  - first:
+      213: 1913768726113543529
+    second: Treant_GroundRupture_SpikesOnly_24Frames_214
+  - first:
+      213: 5369238252938301619
+    second: Treant_GroundRupture_SpikesOnly_24Frames_215
+  - first:
+      213: -3935773842433159203
+    second: Treant_GroundRupture_SpikesOnly_24Frames_216
+  - first:
+      213: 1985085316113457311
+    second: Treant_GroundRupture_SpikesOnly_24Frames_217
+  - first:
+      213: 4577940489532206635
+    second: Treant_GroundRupture_SpikesOnly_24Frames_218
+  - first:
+      213: -6263288470207834972
+    second: Treant_GroundRupture_SpikesOnly_24Frames_219
+  - first:
+      213: -9121319883997049676
+    second: Treant_GroundRupture_SpikesOnly_24Frames_220
+  - first:
+      213: 7210834220602687312
+    second: Treant_GroundRupture_SpikesOnly_24Frames_221
+  - first:
+      213: -7403178625093705986
+    second: Treant_GroundRupture_SpikesOnly_24Frames_222
+  - first:
+      213: 6863802703098757527
+    second: Treant_GroundRupture_SpikesOnly_24Frames_223
+  - first:
+      213: 9033386677309548759
+    second: Treant_GroundRupture_SpikesOnly_24Frames_224
+  - first:
+      213: 6859705582203838687
+    second: Treant_GroundRupture_SpikesOnly_24Frames_225
+  - first:
+      213: -4051737584143094120
+    second: Treant_GroundRupture_SpikesOnly_24Frames_226
+  - first:
+      213: 5169911884250198617
+    second: Treant_GroundRupture_SpikesOnly_24Frames_227
+  - first:
+      213: 195278058568477668
+    second: Treant_GroundRupture_SpikesOnly_24Frames_228
+  - first:
+      213: -4240075473275063494
+    second: Treant_GroundRupture_SpikesOnly_24Frames_229
+  - first:
+      213: -8132787362435838204
+    second: Treant_GroundRupture_SpikesOnly_24Frames_230
+  - first:
+      213: 2485945758269104123
+    second: Treant_GroundRupture_SpikesOnly_24Frames_231
+  - first:
+      213: 2999276982639174915
+    second: Treant_GroundRupture_SpikesOnly_24Frames_232
+  - first:
+      213: -4603924428154747865
+    second: Treant_GroundRupture_SpikesOnly_24Frames_233
+  - first:
+      213: 508749218865734174
+    second: Treant_GroundRupture_SpikesOnly_24Frames_234
+  - first:
+      213: 4685099784762991113
+    second: Treant_GroundRupture_SpikesOnly_24Frames_235
+  - first:
+      213: 3365726682728468272
+    second: Treant_GroundRupture_SpikesOnly_24Frames_236
+  - first:
+      213: 1067279775833378044
+    second: Treant_GroundRupture_SpikesOnly_24Frames_237
+  - first:
+      213: -9106376050476192639
+    second: Treant_GroundRupture_SpikesOnly_24Frames_238
+  - first:
+      213: 3317254756521716496
+    second: Treant_GroundRupture_SpikesOnly_24Frames_239
+  - first:
+      213: 1355447107351050123
+    second: Treant_GroundRupture_SpikesOnly_24Frames_240
+  - first:
+      213: 7875963367246810988
+    second: Treant_GroundRupture_SpikesOnly_24Frames_241
+  - first:
+      213: -1355315627660276953
+    second: Treant_GroundRupture_SpikesOnly_24Frames_242
+  - first:
+      213: 6777022618426541017
+    second: Treant_GroundRupture_SpikesOnly_24Frames_243
+  - first:
+      213: 5059492837696980535
+    second: Treant_GroundRupture_SpikesOnly_24Frames_244
+  - first:
+      213: -4935129857552407408
+    second: Treant_GroundRupture_SpikesOnly_24Frames_245
+  - first:
+      213: 4592414857038555001
+    second: Treant_GroundRupture_SpikesOnly_24Frames_246
+  - first:
+      213: 5603529049217134879
+    second: Treant_GroundRupture_SpikesOnly_24Frames_247
+  - first:
+      213: -8734565581986896447
+    second: Treant_GroundRupture_SpikesOnly_24Frames_248
+  - first:
+      213: 1702059779481865684
+    second: Treant_GroundRupture_SpikesOnly_24Frames_249
+  - first:
+      213: -3774120839872345804
+    second: Treant_GroundRupture_SpikesOnly_24Frames_250
+  - first:
+      213: -1695773431162200746
+    second: Treant_GroundRupture_SpikesOnly_24Frames_251
+  - first:
+      213: 7362050962531520237
+    second: Treant_GroundRupture_SpikesOnly_24Frames_252
+  - first:
+      213: -6468082392241989642
+    second: Treant_GroundRupture_SpikesOnly_24Frames_253
+  - first:
+      213: -5460589314512240218
+    second: Treant_GroundRupture_SpikesOnly_24Frames_254
+  - first:
+      213: -963146233325610046
+    second: Treant_GroundRupture_SpikesOnly_24Frames_255
+  - first:
+      213: 1497474049931891868
+    second: Treant_GroundRupture_SpikesOnly_24Frames_256
+  - first:
+      213: 7248439247158430293
+    second: Treant_GroundRupture_SpikesOnly_24Frames_257
+  - first:
+      213: 6960609752142870252
+    second: Treant_GroundRupture_SpikesOnly_24Frames_258
+  - first:
+      213: 6617365635139429152
+    second: Treant_GroundRupture_SpikesOnly_24Frames_259
+  - first:
+      213: -1792225250828237912
+    second: Treant_GroundRupture_SpikesOnly_24Frames_260
+  - first:
+      213: 2493668280526620344
+    second: Treant_GroundRupture_SpikesOnly_24Frames_261
+  - first:
+      213: -5960949463257253210
+    second: Treant_GroundRupture_SpikesOnly_24Frames_262
+  - first:
+      213: 4036554046160851984
+    second: Treant_GroundRupture_SpikesOnly_24Frames_263
+  - first:
+      213: -1449098381395302708
+    second: Treant_GroundRupture_SpikesOnly_24Frames_264
+  - first:
+      213: -3969531118392918958
+    second: Treant_GroundRupture_SpikesOnly_24Frames_265
+  - first:
+      213: -1563635652971630603
+    second: Treant_GroundRupture_SpikesOnly_24Frames_266
+  - first:
+      213: 6137591543856007249
+    second: Treant_GroundRupture_SpikesOnly_24Frames_267
+  - first:
+      213: -6607896148939873445
+    second: Treant_GroundRupture_SpikesOnly_24Frames_268
+  - first:
+      213: -2644176070985662626
+    second: Treant_GroundRupture_SpikesOnly_24Frames_269
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be9beb2d26fe52a43acf140f265ea81d
+      internalID: -966557344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_01
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 98ad0beb246b0214197c396290d84344
+      internalID: -2027355877
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_02
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3acc3900db4f3a2438b513739148fcf2
+      internalID: 132073572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_03
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3347af339a91d984ab0d09a37671c6f9
+      internalID: 1982133259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_04
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8172cb087e1881945b9dd11c7d1653bb
+      internalID: -919760647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_05
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 768
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2eb382bb82160f24d8dc1d564236f499
+      internalID: -778669089
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_06
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2ff8859bb1a84704d88c4090a627a275
+      internalID: 344034234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_07
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 40abd79767cfd9b43b9fe7c918a90422
+      internalID: 1689578196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_08
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee436caab6edcc74bb6e28f01013452d
+      internalID: 981247227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_09
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a074f408d628d7542a4e0d25b0331f28
+      internalID: 1243264134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_10
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a38eff746df003c4c821e2e566703cdd
+      internalID: -261350370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_11
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 512
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf72c9d5c54eeff4ab5f3bab308e356c
+      internalID: -1171013990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8aaff9a55d475c14ab1cdcbe11d74a90
+      internalID: 117409590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_13
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e8a4b4755bd3854b89db80dc1fc47ea
+      internalID: 269665080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_14
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: db502ba457fdfda459e70f088a1656c9
+      internalID: 718885629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_15
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d7a63ed7e57156840bce2cca26968492
+      internalID: -1666525171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_16
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eeb26e0c21a984b488fff85b4e5d900b
+      internalID: 1522707304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_17
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 256
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b89d01179b18fb43bb97454a08cf747
+      internalID: 1075633821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_18
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de674a351fc83dc4494ad6e72d756630
+      internalID: -463939634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_19
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 029571bd121b2084fade795434381473
+      internalID: -1073483143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_20
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b896a12cf129be84d8e9f369f2bc3a64
+      internalID: 994737814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_21
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f72f6403595578447b8e4b129df0bb3c
+      internalID: -2057195108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_22
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b22015df08b5a214e9ea7b8893d0495d
+      internalID: 1138321376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treant_GroundRupture_SpikesOnly_23
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 0
+        width: 256
+        height: 256
+      alignment: 9
+      pivot: {x: 0.5, y: 0.34375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4e24b7be377b46843a1a5cbf6659595c
+      internalID: -390518818
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 651fd813427692b469e26366353f15e0
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Treant_GroundRupture_SpikesOnly_00: -966557344
+      Treant_GroundRupture_SpikesOnly_01: -2027355877
+      Treant_GroundRupture_SpikesOnly_02: 132073572
+      Treant_GroundRupture_SpikesOnly_03: 1982133259
+      Treant_GroundRupture_SpikesOnly_04: -919760647
+      Treant_GroundRupture_SpikesOnly_05: -778669089
+      Treant_GroundRupture_SpikesOnly_06: 344034234
+      Treant_GroundRupture_SpikesOnly_07: 1689578196
+      Treant_GroundRupture_SpikesOnly_08: 981247227
+      Treant_GroundRupture_SpikesOnly_09: 1243264134
+      Treant_GroundRupture_SpikesOnly_10: -261350370
+      Treant_GroundRupture_SpikesOnly_11: -1171013990
+      Treant_GroundRupture_SpikesOnly_12: 117409590
+      Treant_GroundRupture_SpikesOnly_13: 269665080
+      Treant_GroundRupture_SpikesOnly_14: 718885629
+      Treant_GroundRupture_SpikesOnly_15: -1666525171
+      Treant_GroundRupture_SpikesOnly_16: 1522707304
+      Treant_GroundRupture_SpikesOnly_17: 1075633821
+      Treant_GroundRupture_SpikesOnly_18: -463939634
+      Treant_GroundRupture_SpikesOnly_19: -1073483143
+      Treant_GroundRupture_SpikesOnly_20: 994737814
+      Treant_GroundRupture_SpikesOnly_21: -2057195108
+      Treant_GroundRupture_SpikesOnly_22: 1138321376
+      Treant_GroundRupture_SpikesOnly_23: -390518818
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
