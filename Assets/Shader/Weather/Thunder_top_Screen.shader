@@ -29,6 +29,7 @@ Shader "Weather/Thunder"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "WeatherCoordinates.hlsl"
 
             half4 _RainTint;
             half4 _LightningColor;
@@ -103,10 +104,7 @@ Shader "Weather/Thunder"
             half4 frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                float2 effectUV = input.texcoord;
-                #if UNITY_UV_STARTS_AT_TOP
-                    effectUV.y = 1.0 - effectUV.y;
-                #endif
+                float2 effectUV = StageCameraViewportUV(input.positionCS);
                 half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
                 half strength = saturate(_RainStrength);
 
