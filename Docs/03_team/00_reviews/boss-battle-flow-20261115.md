@@ -4,6 +4,10 @@ PR: [#750](https://github.com/Team-HJD-21/unity-6-the-developer/pull/750), base 
 
 ## 이번 변경
 
+**11/16 보완:** 정식 게임에서 수동 컷씬 미리보기 Button/Label을 제거했다. `IsConfigured`와 재생·정리에서 버튼 의존도 없앴다. 실제100% 경로는 기존 `PlayScriptedAsync`를 그대로 사용하며 Scene 자체는 수정하지 않는다.
+
+제거 후 컷씬 회귀5/5와 실제 Startup→우주선→Stage1→100%→컷씬→보스전→사망·시작 복원→승리→우주선까지 다시 통과했다. 각 단계의 미리보기 버튼 수0, 새 Runtime Error0, 최종 GameFlow=Spaceship·Music gain1을 확인했다. 점유는201개 유효 셀을 시험 API로 채운 통합 QA다. 원본은 공유 제외 `Docs/Local/Review/BossBattle-20261116/`에 보존한다.
+
 현재 점유100% → 기존 입장 컷씬 → BossRoom Additive → 보스전 시작 저장 → 전투 → 실제 보스 사망 → 성공 연출5초 → 우주선 귀환을 연결한다. 사용자 확정에 따라33/66% 중간보스는 이번 최종 진입을 막지 않는다. 보상 수치·새 결과 화면·중간보스 콘텐츠를 추가하지 않는다.
 
 ## 읽는 순서와 실행 흐름

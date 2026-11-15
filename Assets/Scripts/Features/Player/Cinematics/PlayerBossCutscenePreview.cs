@@ -1,3 +1,5 @@
+// Stage1 진행 소유자가 호출하는 기존 Timeline·카메라·왜곡 연출입니다.
+// 정식 입장에서는 마지막 화면을 Core 암전에 인계하며, 수동 재생 버튼은 제공하지 않습니다.
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,11 +17,10 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
-/// <summary>버튼으로 재생하는 로컬 보스 진입 연출 시안. Scene/Match 진행은 변경하지 않습니다.</summary>
+/// <summary>보스 진입의 로컬 연출을 재생합니다. Scene/Match 진행은 호출하는 Core가 소유합니다.</summary>
 [DefaultExecutionOrder(-400)]
 public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsumer
 {
-    [SerializeField] private Button _previewButton;
     [SerializeField] private GameObject _presentation;
     [SerializeField] private RawImage _distortion;
     [SerializeField] private Material _distortionTemplate;
@@ -55,7 +56,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
     public bool IsPlaying { get; private set; }
     public float Elapsed => _elapsed;
     public float Duration => _director != null && _director.playableAsset != null ? (float)_director.duration : 0;
-    public bool IsConfigured => _previewButton != null && _presentation != null && _distortion != null &&
+    public bool IsConfigured => _presentation != null && _distortion != null &&
         _distortionTemplate != null && _blackout != null && _caption != null && _captionGroup != null &&
         _topBar != null && _bottomBar != null && _director != null && _director.playableAsset is TimelineAsset &&
         _cameraRig != null && _wideCamera != null && _closeCamera != null;
@@ -63,12 +64,10 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
     public void BindInputBlocker(IInputBlocker input) => _input = input ?? throw new ArgumentNullException(nameof(input));
     private void OnEnable()
     {
-        if (_previewButton != null) _previewButton.onClick.AddListener(PreviewFromButton);
         CameraManager.OutputChanged += OnOutputChanged;
         if (_presentation != null) _presentation.SetActive(false);
         if (_cameraRig != null) _cameraRig.SetActive(false);
     }
-    private void PreviewFromButton() { TryPlay(); }
     private void ResolveInput()
     {
         if (_input != null) return;
@@ -134,7 +133,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
             _material = new Material(_distortionTemplate);
             _distortion.material = _material; _distortion.enabled = false;
             _scripted = scripted; _completedScripted = false; _elapsed = 0; IsPlaying = true;
-            _presentation.SetActive(true); _previewButton.gameObject.SetActive(false);
+            _presentation.SetActive(true);
             _director.timeUpdateMode = DirectorUpdateMode.Manual;
             _director.Play(); _director.time = 0; _director.Evaluate(); ApplyCameraZoom(); _brain.ManualUpdate();
             ApplyPresentation();
@@ -149,17 +148,7 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
     }
     private void Update()
     {
-        if (!IsPlaying)
-        {
-            if (_heldScriptedFrame) return;
-            ResolveInput();
-            if (_previewButton != null)
-            {
-                _previewButton.gameObject.SetActive(AvailablePlayer() != null);
-                _previewButton.interactable = IsConfigured && _input != null && !_input.IsBlocked;
-            }
-            return;
-        }
+        if (!IsPlaying) return;
         if ((!_scripted && UIEscapeInput.TryConsume()) || _player == null || _player.IsDestroyed ||
             _manager != CameraManager.Current || _manager.OutputCamera == null ||
             _player.GetComponent<PlayerControlState>().IsInSpaceship || _follow == null || _follow.Target != _player.transform || _manager.HasOverride)
@@ -222,7 +211,6 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         => StopPreview(false);
     private void StopPreview(bool preserveFinalFrame)
     {
-        bool wasScripted = _scripted || _heldScriptedFrame;
         IsPlaying = false;
         _heldScriptedFrame = preserveFinalFrame;
         if (_player != null) _player.Damaged -= OnPlayerDamaged;
@@ -252,13 +240,11 @@ public sealed class PlayerBossCutscenePreview : MonoBehaviour, ILocalInputConsum
         }
         _player = null; _manager = null;
         _scripted = false;
-        if (_previewButton != null) _previewButton.gameObject.SetActive(!preserveFinalFrame && !wasScripted);
     }
     private void OnPlayerDamaged(int damage) => StopPreview();
     private void OnOutputChanged(Camera camera) { if (IsPlaying && (_manager == null || _manager.OutputCamera != camera)) StopPreview(); }
     private void OnDisable()
     {
-        if (_previewButton != null) _previewButton.onClick.RemoveListener(PreviewFromButton);
         CameraManager.OutputChanged -= OnOutputChanged; StopPreview();
     }
     private void OnDestroy() { if (_ownedBrain != null) Destroy(_ownedBrain); }

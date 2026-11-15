@@ -57,18 +57,18 @@ public sealed class PlayerBossCutscenePreviewTests
         yield return new ExitPlayMode();
     }
     [UnityTest]
-    public IEnumerator AuthoredButtonCapturesWorldAndRestoresViewInputWithoutMovingPlayerOrScene()
+    public IEnumerator AuthoredEntranceHasNoManualButtonAndRestoresViewInputWithoutMovingPlayerOrScene()
     {
         Assert.That(_preview.IsConfigured, Is.True);
         Vector3 position = _actor.transform.position;
         int scenes = SceneManager.sceneCount;
-        var button = (Button)typeof(PlayerBossCutscenePreview).GetField("_previewButton", Private).GetValue(_preview);
-        button.onClick.Invoke();
+        Assert.That(_preview.GetComponentsInChildren<Button>(true), Is.Empty, "정식 컷씬 Prefab에 수동 미리보기 버튼을 남기지 않습니다.");
+        Assert.That(_preview.TryPlay(), Is.True);
         Assert.That(_preview.IsPlaying, Is.True);
         Assert.That(_input.IsBlocked, Is.True);
         Assert.That(_camera.GetComponent<CinemachineBrain>().enabled, Is.True);
         Assert.That(_cameraObject.GetComponent<MatchCameraFollow>().enabled, Is.False);
-        Assert.That(_preview.TryPlay(), Is.False, "Double click cannot start a second playback.");
+        Assert.That(_preview.TryPlay(), Is.False, "중복 요청이 두 번째 재생을 시작하지 않습니다.");
         bool captured = false; float closestSize = 10, approachSize = 10, endingSize = 10, maximumCaption = 0, maximumSuction = 0;
         double deadline = Time.realtimeSinceStartupAsDouble + 15;
         while (_preview.IsPlaying && Time.realtimeSinceStartupAsDouble < deadline)
