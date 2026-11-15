@@ -1,6 +1,6 @@
 # Stage1 보스전·음악 전환 통합 검토
 
-PR 링크와 최종 검수 결과는 게시 시 갱신한다. 이 문서는 코드와 실제 Scene의 연결을 확인하는 자료다.
+PR: [#750](https://github.com/Team-HJD-21/unity-6-the-developer/pull/750), base `main`. 이 문서는 코드와 실제 Scene의 연결을 확인하는 자료다.
 
 ## 이번 변경
 
