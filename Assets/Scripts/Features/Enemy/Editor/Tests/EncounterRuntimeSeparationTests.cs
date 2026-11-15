@@ -95,8 +95,9 @@ public sealed class EncounterRuntimeSeparationTests
         Assert.That(typeof(EncounterSceneBinding).GetMethod("OnGUI", flags), Is.Null);
         Assert.That(typeof(EncounterSceneBinding).GetMethod("Start", flags), Is.Null);
         Assert.That(typeof(EncounterSceneBinding).GetMethod("Awake", flags), Is.Null);
-        Assert.That(_root.GetComponent<EnemyNetworkTestControls>(), Is.Null,
-            "테스트 조작은 사용자가 명시적으로 추가했을 때만 존재해야 합니다.");
+        Assert.That(_root.GetComponents<MonoBehaviour>().Any(component =>
+            component.GetType().Name == "EnemyNetworkTestControls"), Is.False,
+            "정식 바인딩에 옛 테스트 조작기가 추가되면 안 됩니다.");
     }
 
     [Test]

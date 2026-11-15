@@ -14,10 +14,49 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
 
 public sealed class FieldTurretRestoreVisualTests
 {
     private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    [UnityTest]
+    public IEnumerator ChangedAuthoring_PreservesKnownGrowthAndRetainsRemovedIds()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        yield return new EnterPlayMode();
+        using var fixture = new Fixture();
+        var original = fixture.CreateActors(false);
+        original[0].SetDamageBonus(17);
+        original[1].SetDamageBonus(23);
+        yield return null;
+        var codec = new BinaryCheckpointPayloadCodec();
+        var growth = fixture.Controller.CreateGrowthParticipant();
+        var saved = growth.Capture(fixture.Context, codec);
+        string removedId = original[1].CaptureActorState().EntityId.Value;
+        string keptId = original[0].CaptureActorState().EntityId.Value;
+        Object.DestroyImmediate(original[1].gameObject);
+        original[0].SetDamageBonus(0);
+        fixture.CreateActors(false);
+        using (var step = growth.PrepareRestore(fixture.Restore(saved), saved, codec)) step.Apply();
+        var restored = fixture.Actors.Single(actor => actor.CaptureActorState().EntityId.Value == keptId);
+        Assert.That(restored.EffectiveDamage, Is.EqualTo(restored.Definition.Damage + 17));
+        Assert.That(fixture.Controller.GrowthRestoreWarnings.Count, Is.GreaterThan(0));
+        var roundTrip = growth.Capture(fixture.Context, codec);
+        var records = codec.Read(roundTrip, 1, reader =>
+        {
+            _ = reader.ReadInt32(); int count = reader.ReadInt32();
+            var result = new System.Collections.Generic.Dictionary<string, int>();
+            for (int i = 0; i < count; i++)
+            {
+                string id = codec.ReadText(reader); _ = codec.ReadText(reader); _ = codec.ReadText(reader);
+                _ = reader.ReadInt32(); result.Add(id, reader.ReadInt32());
+            }
+            return result;
+        });
+        Assert.That(records[removedId], Is.EqualTo(23), "사라진 제작 ID도 저장에서 유실되면 안 됩니다.");
+        Assert.That(records.Count, Is.EqualTo(fixture.Actors.Length + 1));
+    }
 
     [UnityTearDown]
     public IEnumerator LeavePlayMode()

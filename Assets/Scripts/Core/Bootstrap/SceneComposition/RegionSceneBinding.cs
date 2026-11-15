@@ -209,7 +209,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             RegionGridSnapshot basis = _source.Snapshot;
             RegionCaptureEvaluation evaluation = _dynamicPolicy.EvaluateConnected(_definition, inputs,
                 controlUnit, _dynamicInitialCells);
-            RegionUpdateStatus result = _session.UpdateRegionCapture(basis, evaluation.CellIndices, RegionCaptureUpdateMode.Replace);
+            RegionUpdateStatus result = _session.UpdateRegionCapture(basis, evaluation.CellIndices, RegionCaptureUpdateMode.Replace,
+                RegionChangeKind.DynamicCapture);
             if (result != RegionUpdateStatus.Applied && result != RegionUpdateStatus.Unchanged)
                 throw new InvalidOperationException("Region input no longer belongs to the current grid revision.");
             _lastInputs = inputs;

@@ -7,6 +7,8 @@ Shader "The Developer/UI/TacticalModeFrame"
         _Progress ("Mode amount", Range(0,1)) = 0
         _Cover ("Full screen membrane", Range(0,1)) = 0
         _Reveal ("Center wave", Range(0,1)) = 0
+        _TransitionTone ("Covered transition surface", Color) = (.055,.07,.065,1)
+        _RevealViewport ("Revealed map viewport", Vector) = (0,0,1,1)
         _Resolution ("Screen pixels", Vector) = (1920,1080,0,0)
         _CellSize ("Hex spacing in pixels", Float) = 28
         _EdgeWidth ("Edge fade in pixels", Float) = 64
@@ -36,7 +38,7 @@ Shader "The Developer/UI/TacticalModeFrame"
             #include "UnityUI.cginc"
             struct appdata { float4 vertex:POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct v2f { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float4 world:TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
-            fixed4 _Color; float4 _ClipRect,_Resolution; float _Progress,_Cover,_Reveal,_CellSize,_EdgeWidth;
+            fixed4 _Color,_TransitionTone; float4 _ClipRect,_Resolution,_RevealViewport; float _Progress,_Cover,_Reveal,_CellSize,_EdgeWidth;
             v2f vert(appdata v)
             {
                 v2f o;UNITY_SETUP_INSTANCE_ID(v);UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
@@ -48,7 +50,7 @@ Shader "The Developer/UI/TacticalModeFrame"
                 float2 opposite=(1-i.uv)*_Resolution.xy;
                 float edge=min(min(pixels.x,pixels.y),min(opposite.x,opposite.y));
                 float2 radial=(pixels-_Resolution.xy*.5)/max(1,length(_Resolution.xy*.5));
-                float radius=length(radial),front=_Reveal*1.08;
+                float radius=length(radial),front=lerp(-.012,1.012,_Reveal);
                 float band=(1-smoothstep(.008,.045,abs(radius-front)))*step(.001,_Reveal)*step(_Reveal,.99);
                 // 파동 경계의 패턴만 굴절시키고 UI/장면 텍스처는 왜곡하지 않습니다.
                 float2 wave=normalize(radial+float2(.0001,.0001))*sin((radius-front)*130)*band*3.2;
@@ -61,16 +63,19 @@ Shader "The Developer/UI/TacticalModeFrame"
                 float hex=1-smoothstep(aa*.4,aa*1.4,abs(d-.5));
                 float rim=1-smoothstep(12,max(24,_EdgeWidth),edge);
                 float frame=1-smoothstep(.5,1.5,abs(edge-9));
-                float cleared=(1-smoothstep(front-.018,front+.018,radius))*smoothstep(0,.015,_Reveal);
+                float inViewport=step(_RevealViewport.x,i.uv.x)*step(i.uv.x,_RevealViewport.z)*
+                    step(_RevealViewport.y,i.uv.y)*step(i.uv.y,_RevealViewport.w);
+                float cleared=(1-smoothstep(front-.012,front+.012,radius))*inViewport;
                 float membrane=_Cover*(1-cleared);
                 float residue=_Progress*(rim*(.03+hex*.20)+frame*.30);
                 float fringe=band*_Cover*.32;
                 fixed4 c;
-                c.rgb=i.color.rgb;
+                float3 plate=lerp(_TransitionTone.rgb,i.color.rgb,hex*.20);
+                c.rgb=lerp(i.color.rgb,plate,membrane);
                 // 색 분리는 얇은 파동 가장자리에서만 사용합니다.
                 c.rgb+=fringe*float3(sin(radius*210)*.10,.03,cos(radius*210)*.12);
-                // 셀 내부는 투명하게 두고 육각선만 올려 실제 게임 배경을 유지합니다.
-                c.a=saturate(membrane*hex*.58+residue+fringe)*i.color.a;
+                // 미공개 영역은 불투명하게 차단합니다. 지도 viewport 밖의 이전 필드도 비치지 않습니다.
+                c.a=saturate(membrane+residue+fringe)*i.color.a;
                 #ifdef UNITY_UI_CLIP_RECT
                     c.a*=UnityGet2DClipping(i.world.xy,_ClipRect);
                 #endif

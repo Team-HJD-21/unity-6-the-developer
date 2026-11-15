@@ -1,6 +1,6 @@
 // 일반 Field의 점유 경계를 지형 타일 위·다른 월드 객체 아래에 표시합니다.
 // 지도와 같은 RegionBoundaryGeometry를 읽고, 점유 안쪽은 초록·바깥쪽은 적색으로 표현합니다.
-// Snapshot 변경 때만 메시를 갱신하며 점유·전투·네트워크 상태를 변경하지 않습니다.
+// 확정 경계와 표시용 거리장을 분리하며 점유·전투·네트워크 상태를 변경하지 않습니다.
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Domain;
@@ -20,6 +20,11 @@ public sealed class FieldTerritoryRenderer : MonoBehaviour
     private Material _material;
     private RegionGridSnapshot _snapshot;
     private float _innerWidth, _outerWidth;
+    private Texture2D _expansionTexture;
+    private int _textureVersion = -1, _meshVersion = -1;
+    private bool _meshExpansion;
+    public TerritoryExpansionState Presentation { get; } = new();
+    public Texture2D ExpansionTexture => _expansionTexture;
     public MeshRenderer SurfaceRenderer => _renderer;
     public RegionGridSnapshot Snapshot => _snapshot;
     public IReadOnlyList<RegionBoundarySegment> BoundarySegments { get; private set; } = Array.Empty<RegionBoundarySegment>();
@@ -34,34 +39,85 @@ public sealed class FieldTerritoryRenderer : MonoBehaviour
         return view;
     }
 
+    public TerritoryExpansionState.Receipt Present(RegionGridSnapshot snapshot, double now)
+    {
+        var style = _owner != null ? _owner.Style : null;
+        if (style != null)
+        {
+            Presentation.SweepSeconds = style.CaptureSweepSeconds; Presentation.HoldSeconds = style.CaptureGlowSeconds;
+            Presentation.SettleSeconds = style.CaptureSettleSeconds; Presentation.LossSeconds = style.CaptureLossSeconds;
+            Presentation.MergeSeconds = style.CaptureMergeSeconds;
+        }
+        return Presentation.Accept(snapshot, now);
+    }
+
     private void LateUpdate()
     {
-        var snapshot = _owner != null ? _owner.Regions : null;
+        double now = Time.unscaledTimeAsDouble;
+        Presentation.Tick(now);
+        var snapshot = Presentation.Snapshot;
+        bool expanding = Presentation.Animating(now);
         bool visible = _owner != null && _owner.isActiveAndEnabled && _owner.Source != null &&
-            _owner.Source.HasFieldActor && !_owner.IsMapPresented && !HudPresentationVisibility.IsSuppressed && snapshot != null && snapshot.CapturedCellCount > 0;
-        if (!visible)
-        {
-            if (_renderer != null) _renderer.enabled = false;
-            return;
-        }
+            _owner.Source.HasFieldActor && !_owner.IsMapPresented && !HudPresentationVisibility.IsSuppressed && snapshot != null && (snapshot.CapturedCellCount > 0 || expanding);
+        // 숨김/지도 중에도 timeline과 Texture를 갱신하여 복귀 때 과거 점유를 재생하지 않습니다.
+        if (snapshot == null) { if (_renderer != null) _renderer.enabled = false; RefreshExpansionTexture(); return; }
         if (_surface == null && !CreateSurface()) return;
+        RefreshExpansionTexture();
 
         // 작은 셀에서도 안팎 띠가 반대편 경계를 넘지 않도록 폭을 제한합니다.
         var grid = snapshot.Definition.Geometry;
         float limit = (float)Math.Min(grid.CellWidth, grid.CellHeight) * .45f;
         float inner = Mathf.Min(limit, Mathf.Max(.001f, _material.GetFloat("_InnerWidth")));
         float outer = Mathf.Min(limit, Mathf.Max(.001f, _material.GetFloat("_OuterWidth")));
+        Presentation.BandWidth = Mathf.Max(inner, outer);
         if (_snapshot == null || _snapshot.MatchId != snapshot.MatchId || _snapshot.GridId != snapshot.GridId ||
             _snapshot.Revision != snapshot.Revision || !ReferenceEquals(_snapshot.Definition, snapshot.Definition) ||
-            !Mathf.Approximately(inner, _innerWidth) || !Mathf.Approximately(outer, _outerWidth))
+            !Mathf.Approximately(inner, _innerWidth) || !Mathf.Approximately(outer, _outerWidth) ||
+            _meshExpansion != expanding || _meshVersion != Presentation.Version)
         {
             BoundarySegments = RegionBoundaryGeometry.Build(snapshot);
-            RebuildMesh(BoundarySegments, inner, outer, (float)grid.OriginZ);
+            RebuildMesh(BoundarySegments, inner, outer, (float)grid.OriginZ, expanding);
             _snapshot = snapshot;
             _innerWidth = inner;
             _outerWidth = outer;
+            _meshVersion = Presentation.Version; _meshExpansion = expanding;
         }
-        _renderer.enabled = true;
+        _material.SetFloat("_BoundaryBlend", expanding ? Presentation.Blend(now) : 1);
+        _material.SetFloat("_ExpansionTravel", Presentation.Travel(now));
+        _material.SetFloat("_ExpansionLoss", Presentation.IsLoss ? 1 : 0);
+        _material.SetFloat("_ExpansionGlow", Presentation.Glow(now));
+        _material.SetFloat("_ExpansionCarryFade", Presentation.CarryFade(now));
+        _material.SetFloat("_WaveWidth", Mathf.Max(.001f, Mathf.Min(limit, Mathf.Max(inner, outer))));
+        _material.SetColor("_ExpansionColor", _owner.Style.CaptureGlow);
+        if (_expansionTexture != null) _material.SetVector("_ExpansionPixelSize", new Vector4(
+            Presentation.Bounds.width / _expansionTexture.width, Presentation.Bounds.height / _expansionTexture.height, inner, outer));
+        _renderer.enabled = visible;
+    }
+
+    private void RefreshExpansionTexture()
+    {
+        if (_textureVersion == Presentation.Version) return;
+        _textureVersion = Presentation.Version;
+        if (Presentation.Pixels == null)
+        {
+            if (_expansionTexture != null) Destroy(_expansionTexture);
+            _expansionTexture = null;
+            if (_material != null) _material.SetTexture("_ExpansionField", Texture2D.blackTexture);
+            return;
+        }
+        if (_expansionTexture == null || _expansionTexture.width != Presentation.Width || _expansionTexture.height != Presentation.Height)
+        {
+            if (_expansionTexture != null) Destroy(_expansionTexture);
+            var format = SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat) ? TextureFormat.RGBAFloat : TextureFormat.RGBAHalf;
+            bool halfOverflow = format == TextureFormat.RGBAHalf &&
+                (Presentation.MaximumArrival > 55000 || (Presentation.Bounds.width + Presentation.Bounds.height) * 2 > 55000);
+            if (!SystemInfo.SupportsTextureFormat(format) || halfOverflow)
+            { Presentation.Reset(Presentation.Snapshot); _expansionTexture = null; return; }
+            _expansionTexture = new Texture2D(Presentation.Width, Presentation.Height, format, false, true)
+            { name = "Territory display distances (local)", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+        }
+        _expansionTexture.SetPixels(Presentation.Pixels); _expansionTexture.Apply(false, false);
+        if (_material != null) _material.SetTexture("_ExpansionField", _expansionTexture);
     }
 
     private bool CreateSurface()
@@ -90,13 +146,14 @@ public sealed class FieldTerritoryRenderer : MonoBehaviour
         _renderer.lightProbeUsage = LightProbeUsage.Off;
         _renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         _snapshot = null;
+        _textureVersion = -1;
         return true;
     }
 
-    private void RebuildMesh(IReadOnlyList<RegionBoundarySegment> edges, float inner, float outer, float z)
+    private void RebuildMesh(IReadOnlyList<RegionBoundarySegment> edges, float inner, float outer, float z, bool expansion)
     {
         var vertices = new List<Vector3>(edges.Count * 8);
-        var uv = new List<Vector2>(edges.Count * 8);
+        var uv = new List<Vector4>(edges.Count * 8);
         var triangles = new List<int>(edges.Count * 12);
         int first = 0;
         while (first < edges.Count)
@@ -128,6 +185,16 @@ public sealed class FieldTerritoryRenderer : MonoBehaviour
             }
             first = last + 1;
         }
+        if (expansion)
+        {
+            var area = Presentation.Bounds; int index = vertices.Count;
+            vertices.Add(new Vector3(area.xMin, area.yMin, z)); vertices.Add(new Vector3(area.xMax, area.yMin, z));
+            vertices.Add(new Vector3(area.xMax, area.yMax, z)); vertices.Add(new Vector3(area.xMin, area.yMax, z));
+            uv.Add(new Vector4(0, 0, 1, 0)); uv.Add(new Vector4(1, 0, 1, 0));
+            uv.Add(new Vector4(1, 1, 1, 0)); uv.Add(new Vector4(0, 1, 1, 0));
+            triangles.Add(index); triangles.Add(index + 1); triangles.Add(index + 2);
+            triangles.Add(index); triangles.Add(index + 2); triangles.Add(index + 3);
+        }
         _mesh.Clear();
         _mesh.indexFormat = vertices.Count > ushort.MaxValue ? IndexFormat.UInt32 : IndexFormat.UInt16;
         _mesh.SetVertices(vertices);
@@ -142,8 +209,8 @@ public sealed class FieldTerritoryRenderer : MonoBehaviour
             vertices.Add(new Vector3(edge.End.x, edge.End.y, z));
             vertices.Add(new Vector3(edge.End.x + offsetB.x, edge.End.y + offsetB.y, z));
             vertices.Add(new Vector3(edge.Start.x + offsetA.x, edge.Start.y + offsetA.y, z));
-            uv.Add(new Vector2(0, from)); uv.Add(new Vector2(0, to));
-            uv.Add(new Vector2(side, to)); uv.Add(new Vector2(side, from));
+            uv.Add(new Vector4(0, from, 0, 0)); uv.Add(new Vector4(0, to, 0, 0));
+            uv.Add(new Vector4(side, to, 0, 0)); uv.Add(new Vector4(side, from, 0, 0));
             triangles.Add(index); triangles.Add(index + 1); triangles.Add(index + 2);
             triangles.Add(index); triangles.Add(index + 2); triangles.Add(index + 3);
         }
@@ -161,5 +228,6 @@ public sealed class FieldTerritoryRenderer : MonoBehaviour
         if (_surface != null) Destroy(_surface);
         if (_mesh != null) Destroy(_mesh);
         if (_material != null) Destroy(_material);
+        if (_expansionTexture != null) Destroy(_expansionTexture);
     }
 }

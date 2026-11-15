@@ -27,7 +27,8 @@ namespace TeamHJD.Game.Application
         }
 
         public RegionUpdateStatus TryApply(RegionGridSnapshot basis, IEnumerable<int> cells,
-            RegionCaptureUpdateMode updateMode)
+            RegionCaptureUpdateMode updateMode, RegionChangeKind reason = RegionChangeKind.StateChanged,
+            IEnumerable<int> securedRegionIds = null)
         {
             ThrowIfDisposed();
             if (_isNotifying) throw new InvalidOperationException("Do not mutate regions inside a change notification.");
@@ -36,7 +37,7 @@ namespace TeamHJD.Game.Application
             if (basis.MatchId != current.MatchId) return RegionUpdateStatus.DifferentMatch;
             if (basis.GridId != current.GridId) return RegionUpdateStatus.DifferentGrid;
             if (basis.Revision != current.Revision) return RegionUpdateStatus.StaleRevision;
-            if (!_state.Apply(cells, updateMode)) return RegionUpdateStatus.Unchanged;
+            if (!_state.Apply(cells, updateMode, reason, securedRegionIds)) return RegionUpdateStatus.Unchanged;
             Notify();
             return RegionUpdateStatus.Applied;
         }
@@ -48,7 +49,7 @@ namespace TeamHJD.Game.Application
             ThrowIfDisposed();
             if (_isNotifying) throw new InvalidOperationException("Do not reset regions inside a change notification.");
             var next = new RegionGridState(_state.Snapshot.MatchId, Guid.NewGuid(), definition, mode, unlockedRegionIds);
-            if (initialCells != null) next.Apply(initialCells, RegionCaptureUpdateMode.Replace);
+            if (initialCells != null) next.Apply(initialCells, RegionCaptureUpdateMode.Replace, RegionChangeKind.Baseline);
             _state = next;
             CaptureHistory.Clear();
             Notify();

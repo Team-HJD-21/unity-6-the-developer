@@ -25,7 +25,12 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     public TacticalHudView View { get; private set; }
     public IReadOnlyList<TurretPresentationSnapshot> Turrets => _rows;
     public IReadOnlyList<Vector2> Enemies => _enemies;
-    public RegionGridSnapshot Regions { get; private set; }
+    private RegionGridSnapshot _sampledRegions;
+    public RegionGridSnapshot Regions
+    {
+        get => _territoryRenderer != null ? _territoryRenderer.Presentation.Snapshot ?? _sampledRegions : _sampledRegions;
+        private set => _sampledRegions = value;
+    }
     public Rect WorldBounds { get; private set; } = new(-40, -40, 80, 80);
     public Vector2 PlayerPosition => _player != null ? (Vector2)_player.transform.position : Vector2.zero;
     public Vector2 CameraPosition => _rig != null ? (Vector2)_rig.position : PlayerPosition;
@@ -91,7 +96,7 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         for (int i = 0; i < View.Incidents.Length; i++) { int index = i; View.Incidents[i].onClick.AddListener(() => FocusIncident(index)); }
         Source.TurretCommandCompleted += OnCommandResult;
         InitializeMapSettings();
-        FieldTerritoryRenderer.Attach(this);
+        _territoryRenderer = FieldTerritoryRenderer.Attach(this);
     }
     private void Update()
     {
@@ -100,11 +105,13 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         var player = Source.LocalPlayer;
         if (_player != player || _match != Source.BoundMatchId)
         {
+            StopTerritoryFeedback();
             CloseImmediate(); if (_attack != null) _attack.AttackPerformed -= OnAttack;
             _player = player; _match = Source.BoundMatchId; _control = player != null ? player.GetComponent<PlayerControlState>() : null;
             _attack = player != null ? player.GetComponent<PlayerAttack>() : null; if (_attack != null) _attack.AttackPerformed += OnAttack;
             _selected = default; _hasGoal = false; _damage.Clear(); _fieldCaptureRegion=-1; _fieldExitAt=-100; _playerVitality=new(); _cuVitality=new(); _nextSample = 0;
         }
+        RefreshTerritoryFeedback();
         bool field = Source.HasFieldActor && _player != null && _player.curHp > 0;
         bool available = IsHudEntryComplete && field && _control != null && _control.CanIssueTurretCommands &&
             !(_app != null && _app.IsInitialized && _app.LocalInput.IsBlocked);
@@ -171,6 +178,7 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         if(!IsOpen || _camera==null)return;
         if(_cameraLease==null && _camera.HasOverride){CloseImmediate();return;}
         if(_cameraLease==null){var frame=Frame;_cameraLease=_camera.PushView(_rig,0,frame.Size,frame.Viewport);}
+        View.ModeEffect.SetRevealViewport(Frame.Viewport);
         View.ShowCommand(true);View.CommandGroup.alpha=0;
         ApplySceneryVisibility();RefreshMapSettings();RefreshDock();
     }
@@ -321,11 +329,13 @@ public sealed partial class TacticalCommandController : MonoBehaviour
     }
     private void OnDisable()
     {
+        StopTerritoryFeedback();
         CloseImmediate(); if (View != null) View.gameObject.SetActive(false);
     }
     private void OnEnable() { if (View != null) View.gameObject.SetActive(true); }
     private void OnDestroy()
     {
+        StopTerritoryFeedback();
         RestoreScenery();
         CloseImmediate(); if (_attack != null) _attack.AttackPerformed -= OnAttack;
         if (Source != null) Source.TurretCommandCompleted -= OnCommandResult;

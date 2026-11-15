@@ -190,6 +190,10 @@ weatherEffects.SetEffectsEnabled(true);  // 현재 보관 중인 날씨 효과 �
 
 첫 적용은 즉시 반영하고 이후 서로 다른 날씨 사이를 보간한다. 효과를 다시 켜면 맑음 화면에서 현재 날씨로 전환한다. 해당 날씨 Material이 없으면 원본 화면을 그대로 출력한다. URP 2D의 [StageCameraEffectsFeature](../../../Assets/Scripts/Map/StageCameraEffectsFeature.cs)가 카메라에 연결된 날씨 효과를 Render Graph 패스로 그린다. 같은 카메라에 DayNightShaderApply가 연결되어 있으면 날씨 합성 후 낮밤 효과를 적용한다.
 
+**낮밤 타이머와 화면 효과는 별도 연결이다.** Core는 WeatherManager 옆에 `MatchDayNightCycle`을 확보하지만 카메라 효과를 자동 추가하지 않는다. Stage_1의 Main Camera에는 `DayNightShaderApply`를 붙이고 `_weatherManager`에 같은 Scene의 WeatherManager, `_dayNightMaterial`에 `Assets/Shader/DayNight/DayNight.mat`을 지정한다. 이 연결이 없으면 타이머와 환경 snapshot은 갱신되어도 밤의 색조·비네트가 화면에 나오지 않는다. `DayNightShaderApply`는 공용 주기를 읽어 `_EffectBlend`만 계산하며 별도 시간을 누적하지 않는다.
+
+낮밤과 날씨는 다른 축이다. 가중치 추첨에서 같은 날씨가 다시 나오는 것은 허용되며, 그때 비·폭염 효과가 그대로여도 낮밤 효과는 독립적으로 진행해야 한다. 밝기 변화는 구간 전체에서 보간되므로 Night 레이블이 바뀌는 순간 최대 어둠으로 전환되는 구조는 아니다.
+
 `MainCamera` 태그가 아닌 객체에 붙이면 `Awake()`에서 해당 Camera와 컴포넌트를 비활성화한다. 뇌우의 번개 위치 계산은 카메라의 `orthographicSize`를 사용한다. 이 번개는 화면 연출이며 피격·데미지 판정 API가 아니다.
 
 ### 4.5 우주선 내부에서 로컬 효과 숨기기
@@ -258,3 +262,17 @@ Core 환경·시간·난수 문서에는 별도 통합 단계의 설명이 포�
 ## 7. 문서 확인 범위
 
 위 소스의 공개 멤버, 초기화 순서, 호출 지점과 데이터 소유권을 대조했다. 설명용 API 예제는 현재 선언에 맞춰 작성했다. 이번 문서 갱신에서 Unity PlayMode·원격 Host/Client 실행·화면 효과 검증은 수행하지 않았다. 다른 브랜치에서 구조가 바뀌면 해당 소스를 확인해 기준 버전과 이 문서를 함께 갱신한다.
+
+## 재입장과 화면 색상 대상
+
+StageCameraEffectsFeature는 활성 색상을 읽는 Blit이므로 requiresIntermediateTexture를 명시한다. URP가 Backbuffer로 직접 렌더링하는 경로에서는 source 시간대와 DayNightShaderApply.IsNight가 올바르더라도 기존 RecordRenderGraph의 Backbuffer 보호 조건에 의해 전체 효과가 생략될 수 있었다. 숨긴 Editor에서는 카메라 렌더 자체가 멈출 수 있어 runtime material0만으로 제품 결함을 판정하지 않는다. 실제 카메라 렌더에서 Night blend0.4719를 확인했다. 자동 source 경계300/600초와 화면 렌더 검수를 구분한다. 날씨 선택 정책이나 Weather 저장 writer를 바꾼 수정이 아니다.
+
+## 비 방향과 플레이어 야간 조명 (2026-11-15)
+
+날씨 무늬의 좌표는 Blit 입력 텍스처의 UV가 아닌 출력 픽셀과 역 ViewProjection으로 실제 월드 XY를 복원한다. 화면 버퍼가 뒤집혀도 비는 월드 -Y로 낙하한다. Rain/Thunder/Thunder1/HeatWave/DayNight가 WeatherCoordinates.hlsl을 공유하며 원본 화면 샘플링 UV는 그대로 유지한다.
+
+DayNightShaderApply는 기존 ILocalPlayerActorConsumer로 현재 로컬 Player만 주입받는다. 별도 Find/전역 Player 목록이나 Scene 배치가 필요 없다. Inspector의 `야간 Player 조명`에서 안쪽 반경5·감쇠 폭4 월드 단위를 조절한다. 안쪽은 밤의 색상/비네트 감광을0으로 만들고, 바깥쪽9까지 smoothstep으로 기존 밤과 이어진다. 우주선 내부·사망·actor 해제에는 꺼진다. 줌을 바꿔도 월드 반경은 같다.
+
+이 프로젝트는 전체 화면의 밤 셰이더로 감광한다. 따라서 PointLight2D만 추가해도 마지막 감광을 상쇄하지 못하고 Unlit sprite에는 조명이 닿지 않는다. 별도 Light 오브젝트를 중복 생성하지 않고 현재 밤 패스에 로컬 조명을 넣었다. 중심은 같은 날씨의 낮 밝기이며 비/폭염의 색감까지 지우지는 않는다. 게임 시간·점유·전투/스폰·저장 규칙을 변경하지 않는다.
+
+[GPU 계측·화면 및 검증 한계](../../03_team/00_reviews/weather-lighting-20261115.md)를 함께 확인한다.

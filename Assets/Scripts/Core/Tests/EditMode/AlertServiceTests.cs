@@ -8,6 +8,23 @@ namespace TeamHJD.Game.Tests.EditMode
     public sealed class AlertServiceTests
     {
         [Test]
+        public void IdleSuccess_DoesNotQueueBehindCurrentOrPendingErrors()
+        {
+            using var alerts = new AlertService();
+            alerts.Show("중요 오류");
+            Assert.That(alerts.TryShowIfIdle("점유 완료", AlertTone.Success), Is.False);
+            alerts.Tick(0);
+            Assert.That(alerts.TryShowIfIdle("점유 완료", AlertTone.Success), Is.False);
+            Assert.That(alerts.PendingCount, Is.Zero);
+            alerts.Tick(3);
+            using var binding = GameAlerts.Bind(alerts);
+            Assert.That(GameAlerts.TryShowIfIdle("점유 완료", AlertTone.Success), Is.True);
+            alerts.Tick(3.1);
+            Assert.That(alerts.Current.Text, Is.EqualTo("점유 완료"));
+            Assert.That(alerts.PendingCount, Is.Zero);
+        }
+
+        [Test]
         public void RepeatedInputDoesNotExtendTheCurrentAlert()
         {
             using var alerts = new AlertService();

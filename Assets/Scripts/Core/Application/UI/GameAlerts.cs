@@ -12,6 +12,10 @@ namespace TeamHJD.Game.Application
         public static bool Show(string message, AlertTone tone = AlertTone.Error, string key = null)
             => _current != null && _current.Show(message, tone, key);
 
+        /// <summary>UI 연출이 끝날 때 한 번 시도합니다. 다른 알림이 있으면 false이며 대기열에 성공을 남기지 않습니다.</summary>
+        public static bool TryShowIfIdle(string message, AlertTone tone = AlertTone.Info, string key = null)
+            => _current != null && _current.TryShowIfIdle(message, tone, key);
+
         /// <summary>App 조립부 전용입니다. 반환 scope만 해제하며 이전 App의 정리가 새 바인딩을 지우지 않습니다.</summary>
         public static IDisposable Bind(AlertService service)
         {

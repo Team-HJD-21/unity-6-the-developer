@@ -1,0 +1,461 @@
+{
+  "capturedSourceCommit": "2cc5ec16d",
+  "platform": "Unity 6000.3.23f1 / Windows DX11",
+  "checks": [
+    {
+      "filter": "TacticalPresentationTests",
+      "summary": {
+        "Total": 10,
+        "Passed": 10,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    },
+    {
+      "filter": "Stage1EncounterAuthoringTests",
+      "summary": {
+        "Total": 6,
+        "Passed": 6,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    },
+    {
+      "filter": "SpaceshipCollisionRegressionTests",
+      "summary": {
+        "Total": 4,
+        "Passed": 4,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    },
+    {
+      "filter": "TerritoryExpansionTests",
+      "summary": {
+        "Total": 17,
+        "Passed": 17,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    },
+    {
+      "filter": "FieldTurretRestoreVisualTests-primary-editor",
+      "summary": {
+        "Total": 3,
+        "Passed": 3,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    },
+    {
+      "filter": "FullMembraneHandsOffUiOnlyAfterTheCenterWaveAndCancelsWithoutLeakingInput",
+      "summary": {
+        "Total": 1,
+        "Passed": 1,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    },
+    {
+      "filter": "ClosingMapFillsFromTheRimBeforeReleasingCameraThenFadesTheMembrane",
+      "summary": {
+        "Total": 1,
+        "Passed": 1,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    },
+    {
+      "filter": "MapTransitionsHideAllHudLayersThenRestoreTheirExistingState",
+      "summary": {
+        "Total": 1,
+        "Passed": 1,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      }
+    }
+  ],
+  "checksNote": "Turret fixture is byte-identical in both projects. One validation-editor attempt failed on UnityEditor.Search.SearchDatabase startup indexing; original editor rerun passed 3/3. No game/test log suppression was added.",
+  "capture": {
+    "actualTurretDamage": 100,
+    "holdSeconds": 30,
+    "cellsBefore": 1,
+    "cellsAfter": 30,
+    "capturableCells": 201,
+    "nextUnlockedRegion": 2,
+    "controlledConditions": [
+      "Player/CU protection",
+      "periodic production stopped after 8 requests",
+      "living enemies moved outside first region and immobilized; health/capture mask not edited"
+    ],
+    "postCaptureRequestActual": 10
+  },
+  "spawns": {
+    "authoredPoints": 9,
+    "manuallyDisabled": 1,
+    "outerPoint": "Outer_01",
+    "outerPosition": [
+      -110,
+      79.06
+    ],
+    "pathComplete": true,
+    "outerActualBlackWolfCount": 2,
+    "coveragePolicy": {
+      "kind": "controlled policy query with copies; canonical capture unchanged",
+      "canonicalCells": 1,
+      "results": [
+        {
+          "securedThrough": 0,
+          "allowed": [
+            "LaneC_02",
+            "LaneB_03",
+            "LaneA_01",
+            "LaneC_01",
+            "LaneA_03",
+            "LaneB_01",
+            "LaneB_02",
+            "Outer_01"
+          ],
+          "excluded": [
+            {
+              "SpawnPointId": "LaneA_02",
+              "SpawnExclusionReason": "ManuallyDisabled"
+            }
+          ]
+        },
+        {
+          "securedThrough": 1,
+          "allowed": [
+            "LaneC_02",
+            "LaneB_03",
+            "LaneA_01",
+            "LaneC_01",
+            "LaneA_03",
+            "LaneB_01",
+            "LaneB_02",
+            "Outer_01"
+          ],
+          "excluded": [
+            {
+              "SpawnPointId": "LaneA_02",
+              "SpawnExclusionReason": "ManuallyDisabled"
+            }
+          ]
+        },
+        {
+          "securedThrough": 2,
+          "allowed": [
+            "LaneC_02",
+            "LaneB_03",
+            "LaneC_01",
+            "LaneB_01",
+            "Outer_01"
+          ],
+          "excluded": [
+            {
+              "SpawnPointId": "LaneA_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_03",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_02",
+              "SpawnExclusionReason": "ManuallyDisabled"
+            },
+            {
+              "SpawnPointId": "LaneB_02",
+              "SpawnExclusionReason": "CapturedRegion"
+            }
+          ]
+        },
+        {
+          "securedThrough": 3,
+          "allowed": [
+            "LaneB_03",
+            "LaneC_01",
+            "LaneB_01",
+            "Outer_01"
+          ],
+          "excluded": [
+            {
+              "SpawnPointId": "LaneC_02",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_03",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_02",
+              "SpawnExclusionReason": "ManuallyDisabled"
+            },
+            {
+              "SpawnPointId": "LaneB_02",
+              "SpawnExclusionReason": "CapturedRegion"
+            }
+          ]
+        },
+        {
+          "securedThrough": 4,
+          "allowed": [
+            "Outer_01"
+          ],
+          "excluded": [
+            {
+              "SpawnPointId": "LaneC_02",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneB_03",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneC_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_03",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneB_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_02",
+              "SpawnExclusionReason": "ManuallyDisabled"
+            },
+            {
+              "SpawnPointId": "LaneB_02",
+              "SpawnExclusionReason": "CapturedRegion"
+            }
+          ]
+        },
+        {
+          "securedThrough": 5,
+          "allowed": [],
+          "excluded": [
+            {
+              "SpawnPointId": "LaneC_02",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneB_03",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneC_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_03",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneB_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "LaneA_02",
+              "SpawnExclusionReason": "ManuallyDisabled"
+            },
+            {
+              "SpawnPointId": "LaneB_02",
+              "SpawnExclusionReason": "CapturedRegion"
+            },
+            {
+              "SpawnPointId": "Outer_01",
+              "SpawnExclusionReason": "CapturedRegion"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "safety": {
+    "before": {
+      "run": "76710360-35d6-47a3-90e9-f62b20197d58",
+      "used": 0,
+      "xp": 1890,
+      "level": 19,
+      "checkpoint": null,
+      "match": "fadfe5e7419d477cbe82b7abd0a11f3d"
+    },
+    "choice": {
+      "damaged": true,
+      "awaiting": true,
+      "used": 0,
+      "CanUseMissionSafety": true,
+      "clockBefore": 500.1217550620274,
+      "clockAfter": 500.1217550620274
+    },
+    "after": {
+      "sameRun": true,
+      "used": 1,
+      "expectedUses": 1,
+      "xp": 1890,
+      "level": 19,
+      "growthKept": true,
+      "curHp": 400,
+      "grid": 1,
+      "pending": "00000000-0000-0000-0000-000000000000",
+      "missing": [
+        "world/weather"
+      ],
+      "LastMissionRecoveryError": null,
+      "newMatch": "e586dbd648d94e78aa06ed1f3a0d2502"
+    },
+    "finished": true
+  },
+  "fullSave": {
+    "status": "Rejected",
+    "Reason": "RequiredFeatureWritersUnavailable",
+    "missing": [
+      "world/weather"
+    ]
+  },
+  "weatherGPU": {
+    "light": {
+      "inner_day_error": 0.0,
+      "inner_brightness_gain": 17.193432059353846,
+      "outer_light_difference": 0.0,
+      "night_darkening_outside": 25.013773520146938
+    },
+    "rain": [
+      {
+        "frames": [
+          1,
+          2
+        ],
+        "dt": 0.08335759637188289,
+        "downward_pixels": 18,
+        "correlation": 0.8390803541490106
+      },
+      {
+        "frames": [
+          2,
+          3
+        ],
+        "dt": 0.08310670351474059,
+        "downward_pixels": 18,
+        "correlation": 0.8240392716255515
+      },
+      {
+        "frames": [
+          3,
+          4
+        ],
+        "dt": 0.08335050311791292,
+        "downward_pixels": 18,
+        "correlation": 0.8418153132344169
+      },
+      {
+        "frames": [
+          4,
+          5
+        ],
+        "dt": 0.08294849773242774,
+        "downward_pixels": 18,
+        "correlation": 0.8227137457411634
+      },
+      {
+        "frames": [
+          5,
+          6
+        ],
+        "dt": 0.08372099631518992,
+        "downward_pixels": 18,
+        "correlation": 0.8448180603975077
+      },
+      {
+        "frames": [
+          6,
+          7
+        ],
+        "dt": 0.08305730583900228,
+        "downward_pixels": 18,
+        "correlation": 0.8257174715527776
+      },
+      {
+        "frames": [
+          7,
+          8
+        ],
+        "dt": 0.08894409722222463,
+        "downward_pixels": 19,
+        "correlation": 0.8381096826966155
+      },
+      {
+        "frames": [
+          8,
+          9
+        ],
+        "dt": 0.08363820153061141,
+        "downward_pixels": 18,
+        "correlation": 0.8261929215924828
+      },
+      {
+        "frames": [
+          9,
+          10
+        ],
+        "dt": 0.08317500000000067,
+        "downward_pixels": 18,
+        "correlation": 0.8297427152145386
+      }
+    ]
+  },
+  "thunderGPU": [
+    {
+      "name": "ThunderScreen",
+      "maximum": 886,
+      "minY": 249,
+      "maxY": 359,
+      "shader": "Weather/Thunder",
+      "error": false
+    },
+    {
+      "name": "Thunder1Screen",
+      "maximum": 959,
+      "minY": 211,
+      "maxY": 359,
+      "shader": "Weather/Thunder1",
+      "error": false
+    }
+  ],
+  "storageRestoration": {
+    "originals": 35,
+    "restored": 2,
+    "newFiles": [],
+    "allHashesMatch": true
+  },
+  "limits": [
+    "Full weather world writer missing",
+    "Remote two-player unverified",
+    "Standalone build not run",
+    "Natural full-stage balance not validated",
+    "Hidden Game View update differs from explicit Camera.Render capture"
+  ]
+}

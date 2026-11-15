@@ -45,6 +45,8 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _Color: {r: 0.63, g: 0.75, b: 0.71, a: 1}
+    - _TransitionTone: {r: 0.055, g: 0.07, b: 0.065, a: 1}
+    - _RevealViewport: {r: 0, g: 0, b: 1, a: 1}
     - _Resolution: {r: 1920, g: 1080, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -579,7 +579,7 @@ TextureImporter:
       name: Cyberpunk_Interiors_Walls_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 1
         y: 240
         width: 16
         height: 16
