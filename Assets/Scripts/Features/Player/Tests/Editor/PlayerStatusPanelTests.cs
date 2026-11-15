@@ -45,8 +45,140 @@ public sealed class PlayerStatusPanelTests
     }
 
     [UnityTest]
+    public IEnumerator StartingHubBindsItsOwnStatusWindowAndIWorksBeforeFirstFieldEntry()
+    {
+        _hud.SetActive(false);
+        using(var locks=new TeamHJD.Game.Application.InputLockService())
+        {
+            var controls=_player.GetComponent<PlayerControlState>();controls.BindHub(locks);
+            var binding=_player.GetComponent<PlayerHubStatusBinding>();Assert.That(binding,Is.Not.Null);
+            binding.BindHub(locks);yield return null;
+            var panel=binding.Panel;Assert.That(panel,Is.Not.Null);Assert.That(panel.Owner,Is.SameAs(_player.GetComponent<PlayerInfo>()));
+            Press(Key.I);typeof(PlayerStatusPanel).GetMethod("Update",Private).Invoke(panel,null);
+            Assert.That(panel.IsOpen,Is.True);
+            Press();yield return null;
+            var canvas=panel.GetComponent<Canvas>();Assert.That(canvas.enabled,Is.True);
+            var statusRoot=(GameObject)typeof(PlayerStatusPanel).GetField("_panelRoot",Private).GetValue(panel);
+            Assert.That(statusRoot.activeInHierarchy,Is.True);Assert.That(statusRoot.GetComponent<CanvasGroup>().ignoreParentGroups,Is.True);
+            Assert.That(panel.GetComponent<CombatHudIntro>(),Is.Null);
+            Assert.That(panel.GetComponent<TacticalCommandController>(),Is.Null);
+            Press(Key.Escape);typeof(PlayerStatusPanel).GetMethod("Update",Private).Invoke(panel,null);Assert.That(panel.IsOpen,Is.False);
+            binding.UnbindHub();Assert.That(binding.Panel,Is.Null);Assert.That(locks.Count,Is.Zero);
+        }
+    }
+
+    private static void ClickThroughInput(Button button,UnityEngine.EventSystems.EventSystem events,Mouse mouse)
+    {
+        Canvas.ForceUpdateCanvases();var rect=(RectTransform)button.transform;
+        Vector2 point=RectTransformUtility.WorldToScreenPoint(null,rect.TransformPoint(rect.rect.center));
+        var hits=new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+        events.RaycastAll(new UnityEngine.EventSystems.PointerEventData(events){position=point},hits);
+        Assert.That(hits.Count,Is.GreaterThan(0),button.name+" must receive a UI raycast.");
+        Assert.That(hits[0].gameObject.GetComponentInParent<Button>(),Is.SameAs(button),button.name+" must be the top raycast target; actual: "+hits[0].gameObject.name+" / "+hits[0].sortingOrder);
+        mouse.MakeCurrent();
+        foreach(bool down in new[]{false,true,false})
+        {
+            var state=new MouseState{position=point};if(down)state=state.WithButton(MouseButton.Left);
+            InputSystem.QueueStateEvent(mouse,state);InputSystem.Update();
+            typeof(UnityEngine.EventSystems.EventSystem).GetMethod("Update",Private).Invoke(events,null);
+        }
+    }
+    [UnityTest]
+    public IEnumerator FirstHubWithoutEventSystemAcceptsSkillUnlockUpgradeAssignmentAndClosePointerClicks()
+    {
+        _hud.SetActive(false);_player.GetComponent<PlayerMovement>().enabled=false;_player.GetComponent<Rigidbody2D>().simulated=false;
+        var previous=Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>(FindObjectsSortMode.None);
+        var enabled=System.Array.ConvertAll(previous,item=>item.enabled);var mouseBefore=Mouse.current;var mouse=InputSystem.AddDevice<Mouse>();var cursorBefore=Cursor.lockState;
+        var binding=_player.GetComponent<PlayerHubStatusBinding>();
+        using(var locks=new TeamHJD.Game.Application.InputLockService())
+        try
+        {
+            foreach(var events in previous)events.enabled=false;
+            Assert.That(UnityEngine.EventSystems.EventSystem.current,Is.Null);Cursor.lockState=CursorLockMode.None;
+            _player.GetComponent<PlayerControlState>().BindHub(locks);binding.BindHub(locks);yield return null;
+            var created=UnityEngine.EventSystems.EventSystem.current;
+            Assert.That(created,Is.Not.Null,"The first hub needs a UI input system before the armory or field has been opened.");
+            Assert.That(created.currentInputModule,Is.TypeOf<UnityEngine.InputSystem.UI.InputSystemUIInputModule>());
+            var panel=binding.Panel;Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(400),Is.True);Assert.That(panel.TryOpen(),Is.True);
+            yield return null; // Graphic.depth becomes raycastable after its first rendered frame.
+            var tree=panel.GetComponentInChildren<PlayerSkillTreePanel>(true);
+            ClickThroughInput((Button)typeof(PlayerSkillTreePanel).GetField("_openButton",Private).GetValue(tree),created,mouse);Assert.That(tree.IsOpen,Is.True);
+            yield return null;
+            tree.Select(PlayerSkillId.DualWield);
+            var research=_player.GetComponent<PlayerSkillResearch>();int tokens=research.Tokens;
+            ClickThroughInput((Button)typeof(PlayerSkillTreePanel).GetField("_unlock",Private).GetValue(tree),created,mouse);Assert.That(research.IsUnlocked(PlayerSkillId.DualWield),Is.True);
+            yield return null;
+            ClickThroughInput((Button)typeof(PlayerSkillTreePanel).GetField("_upgrade",Private).GetValue(tree),created,mouse);Assert.That(research.Level(PlayerSkillId.DualWield),Is.EqualTo(2));Assert.That(research.Tokens,Is.EqualTo(tokens-2));
+            yield return null;
+            var candidates=(Button[])typeof(PlayerSkillTreePanel).GetField("_candidateButtons",Private).GetValue(tree);
+            ClickThroughInput(candidates[3],created,mouse);Assert.That(research.Candidate(3),Is.EqualTo(PlayerSkillId.DualWield));
+            yield return null;
+            ClickThroughInput((Button)typeof(PlayerSkillTreePanel).GetField("_backButton",Private).GetValue(tree),created,mouse);Assert.That(tree.IsOpen,Is.False);
+            yield return null;
+            ClickThroughInput((Button)typeof(PlayerStatusPanel).GetField("_closeButton",Private).GetValue(panel),created,mouse);Assert.That(panel.IsOpen,Is.False);
+            Assert.That(UnityEngine.EventSystems.EventSystem.current,Is.SameAs(created),"Closing I must leave hub input available for other facilities.");
+            binding.UnbindHub();yield return null;Assert.That(created==null,Is.True);Assert.That(locks.Count,Is.Zero);
+        }
+        finally
+        {
+            binding.UnbindHub();Cursor.lockState=cursorBefore;
+            for(int i=0;i<previous.Length;i++)if(previous[i]!=null)previous[i].enabled=enabled[i];
+            InputSystem.RemoveDevice(mouse);if(mouseBefore!=null&&mouseBefore.added)mouseBefore.MakeCurrent();
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator HubStatusReusesExternalInputAndRecoversWhenThePreviousMenuSystemDisappears()
+    {
+        _hud.SetActive(false);
+        var previous=Object.FindObjectsByType<UnityEngine.EventSystems.EventSystem>(FindObjectsSortMode.None);
+        var enabled=System.Array.ConvertAll(previous,item=>item.enabled);
+        GameObject provided=null;var binding=_player.GetComponent<PlayerHubStatusBinding>();
+        using(var locks=new TeamHJD.Game.Application.InputLockService())
+        try
+        {
+            foreach(var events in previous)events.enabled=false;
+            provided=new GameObject("Existing menu EventSystem",typeof(UnityEngine.EventSystems.EventSystem),typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
+            var existing=provided.GetComponent<UnityEngine.EventSystems.EventSystem>();
+            _player.GetComponent<PlayerControlState>().BindHub(locks);binding.BindHub(locks);yield return null;
+            Assert.That(UnityEngine.EventSystems.EventSystem.current,Is.SameAs(existing));
+            binding.UnbindHub();yield return null;
+            Assert.That(existing!=null&&existing.isActiveAndEnabled,Is.True,"Hub cleanup must preserve a system it did not create.");
+            binding.BindHub(locks);yield return null;Object.Destroy(provided);provided=null;
+            yield return null;yield return null;
+            var created=UnityEngine.EventSystems.EventSystem.current;
+            Assert.That(created,Is.Not.Null);Assert.That(created.transform.IsChildOf(binding.Panel.transform),Is.True);
+            Assert.That(created.currentInputModule,Is.TypeOf<UnityEngine.InputSystem.UI.InputSystemUIInputModule>());
+            binding.UnbindHub();yield return null;Assert.That(created==null,Is.True);
+        }
+        finally
+        {
+            binding.UnbindHub();if(provided!=null)Object.DestroyImmediate(provided);
+            for(int i=0;i<previous.Length;i++)if(previous[i]!=null)previous[i].enabled=enabled[i];
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator ReturningSpaceshipStatusPanelRendersOutsideFieldIntroMask()
+    {
+        using(var locks=new TeamHJD.Game.Application.InputLockService())
+        {
+            _player.GetComponent<PlayerControlState>().BindHub(locks);
+            Press();Assert.That(_panel.TryOpen(),Is.True);
+            var root=Field<GameObject>("_panelRoot");var canvas=root.GetComponent<Canvas>();
+            Assert.That(_panel.IsOpen,Is.True);Assert.That(canvas.overrideSorting,Is.True);
+            Assert.That(root.GetComponent<CanvasGroup>().ignoreParentGroups,Is.True);
+            var intro=_hud.GetComponent<CombatHudIntro>();Assert.That(intro.Group.alpha,Is.Zero);
+            Assert.That(root.activeInHierarchy,Is.True);
+        }
+        yield break;
+    }
+
+    [UnityTest]
     public IEnumerator IOpensAndEscapeClosesWithoutPassingTheSamePressToCore()
     {
+        // TMP가 첫 활성화에 만드는 SubMesh UI는 상태창의 중복 생성으로 취급하지 않습니다.
+        Assert.That(_panel.TryOpen(), Is.True);yield return null;_panel.Close();
         int count = _hud.GetComponentsInChildren<Transform>(true).Length;
         Assert.That(_panel.IsOpen, Is.False);
         Press(Key.I);

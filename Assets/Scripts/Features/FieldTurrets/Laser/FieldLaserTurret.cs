@@ -2,10 +2,7 @@ using System;
 using System.Collections.Generic;
 using TeamHJD.Game.FieldTurrets;
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
+using TeamHJD.Game.Enemy.Contracts;
 
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: null, sourceAssembly: "Assembly-CSharp", sourceClassName: "LaserTurret")]
 public partial class FieldLaserTurret : DefaultFieldLaserTurret
@@ -210,20 +207,9 @@ public partial class FieldLaserTurret : DefaultFieldLaserTurret
                 break;
             EnemyHealth health = hit != null ? hit.GetComponentInParent<EnemyHealth>() : null;
             if (health != null && _damagedEnemies.Add(health))
-                health.TakeDamage(damage);
+                health.TryTakeDamage(damage, AttackSourceType.Turret);
         }
         _hits.Clear();
         _damagedEnemies.Clear();
     }
-
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        if (Definition == null)
-            return;
-
-        Handles.color = Color.magenta;
-        Handles.DrawWireDisc(transform.position, transform.forward, Range);
-    }
-#endif
 }

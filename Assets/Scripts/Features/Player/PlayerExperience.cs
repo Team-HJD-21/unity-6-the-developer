@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TeamHJD.Game.Application;
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
@@ -61,6 +62,8 @@ public sealed partial class PlayerExperience : MonoBehaviour, IPlayerMatchBindin
         if (!State.AddExperience(amount)) return false;
         Changed?.Invoke();
         if (previousLevel != Level) LevelChanged?.Invoke(previousLevel, Level);
+        // 실제 보상 적용 후 개인 성장 저장을 알립니다. 단순 복원은 새 획득/저장을 만들지 않습니다.
+        GrowthChanged?.Invoke(previousLevel != Level ? GrowthSaveUrgency.Immediate : GrowthSaveUrgency.Coalesced);
         ExperienceGranted?.Invoke(amount);
         return true;
     }

@@ -7,7 +7,7 @@
 
 ## #540에서 추가된 단계
 
-고정 편성은 지정된 세트를 아래 공간 정책으로 분산한다. 상황별 선택은 Runtime이 스폰 지점별 최근접 유효 Turret을 고른 뒤, **그 타깃 셀 주변**의 병력/Player/공격 유형을 보고 지역 예산과 편성을 선택한다. 출현 셀의 현재·예정 병력은 아래 분산/수용량 검사에 사용한다.
+고정 편성은 지정된 세트를 아래 공간 정책으로 분산한다. 상황별 선택은 Pipeline의 Planner가 스폰 지점별 최근접 유효 Turret을 고른 뒤, **그 타깃 셀 주변**의 병력/Player/공격 유형을 보고 지역 예산과 편성을 선택한다. 출현 셀의 현재·예정 병력은 아래 분산/수용량 검사에 사용한다.
 
 타깃 셀별 예산 그룹과 출현 셀별 공간 공유는 서로 다르다. 같은 타깃 셀을 향하는 여러 지점은 지역 예산을 공유하고, 같은 출현 셀의 여러 지점은 수용량·서비스 부하를 공유한다. 조건·비용·가중치·Static/Dynamic 예산은 [Encounter 가이드](encounter-planning-guide.md)를 기준으로 읽는다.
 
@@ -33,7 +33,7 @@ flowchart LR
   Actual --> Diagnostics
 ```
 
-- `EnemyNetworkTestLauncher`의 Match Bind/Unbind가 `EncounterRuntime`을 생성/해제한다.
+- `EncounterSceneBinding`의 Match Bind/Unbind가 `EncounterPipeline`을 생성/해제한다.
 - Runtime의 Planner 한 개가 Policy와 History를 소유한다. 정적 서비스나 Editor 기록에 의존하지 않는다.
 - 다른 Match ID 또는 XY Grid 설정 변경(중심·폭·높이·셀 수)이면 이력을 초기화한다. 표시용 Z 변경, revision/전선 모양 변경만으로 이력을 지우지 않는다.
 - 제거·비활성·공간 제외된 후보는 이력에서 정리한다. 새로 추가/재활성된 셀은 현재 적합 셀의 최소 service부터 시작한다. 같은 셀의 신규 지점도 해당 셀의 기존 지점 최소 service부터 시작한다. 과거 미참여 기간을 보상하는 catch-up 스폰은 하지 않는다.
@@ -44,7 +44,7 @@ flowchart LR
 
 Core가 점령 상태를 판단한 뒤 `SetRegionSpawnEnabled(regionId, enabled)`를 호출하면 해당 그룹의 모든 지점에 Region 스폰 허용 상태를 적용한다. 그룹이 없으면 `false`를 반환한다. 지점의 GameObject와 개별 스폰 설정은 유지하며, 기존 Planner/Executor의 `CanSpawnEnemies` 검사로 생성을 제한한다. Region을 켜도 개별적으로 차단된 지점은 스폰 불가 상태를 유지한다.
 
-`EnemyNetworkTestLauncher`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 Registry에 전달한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화한다. Registry가 초기화 상태를 소유하며, 같은 Region 정의를 다시 전달하면 재구성하지 않는다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
+`EncounterSceneBinding`는 기존 `regionBinding`과 `TryReadRegion()`으로 현재 Match의 Static Region 자료를 Registry에 전달한다. Runtime 생성 시 자료가 아직 없으면 이후 읽기에 성공했을 때 초기화한다. Registry가 초기화 상태를 소유하며, 같은 Region 정의를 다시 전달하면 재구성하지 않는다. 점유 Snapshot의 revision 갱신만으로 그룹을 다시 만들지는 않는다.
 
 현재 Match의 정책이 Dynamic으로 전환된 Snapshot을 읽으면 기존 Static Region 그룹과 제한을 해제한다. 개별 지점의 스폰 설정은 유지하며, 다른 Match의 Snapshot으로 현재 그룹을 해제하지 않는다. 이후 Static으로 돌아오면 전달받은 정의로 그룹을 새로 구성한다.
 
@@ -92,3 +92,9 @@ Statistics → Spawn decisions / distribution → Candidates에서 다음을 확
 동일 조건의 반복 실험에서는 **지점별 합계만 아니라 셀별 합계**를 비교한다. 한 셀에 지점 4개, 다른 셀에 1개라면 셀 합계는 비슷하되 앞의 네 지점은 셀 비중을 나눠 갖는 것이 정상이다. 따라서 모든 지점의 개별 생성 수가 같은 것은 목표가 아니다.
 
 검증 및 회귀 기록: [2026-10-08 수정 결과](../../99_archive/planning-links/2026-10-08-spawn-distribution-fix.md).
+
+## 확보한 Region 제외
+
+[정적 지역 확보](../02_match/static-region-capture.md)에서 확정한 점유를 사용한다. 같은 Region ID의 유효 셀이 모두 확보되면 그룹을 **할당 후보에서 먼저 제외**한다. 점유 셀과 스폰 반경+월드 여유 거리가 닿는 개별 지점도 제외한다. `ManuallyDisabled`는 별도 상태로 유지하고, 확보를 잃으면 다른 조건이 가능한 그룹만 다시 후보가 된다.
+
+실행 단계에서도 개체마다 최신 점유를 읽으며, 같은 불변 Snapshot이면 제한을 다시 계산하지 않는다. 생성 중 점유가 바뀌면 나머지를 멈추고 부분 생성 수를 보고한다. 후보가 없을 때 점유 내부로 우회하거나 부분 생성한 분대를 재시도하지 않는다. 게임 진행률은 유효 지형 분모, 기존 생산 예산은 전체 Grid 분모라는 차이를 유지한다.

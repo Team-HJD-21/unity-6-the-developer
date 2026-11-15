@@ -23,6 +23,20 @@ public abstract class EnemyController : MonoBehaviour
 
     /// <summary>Definition에서 최초 등록 시 전달받은 공격 인원 집계 여부를 반환한다.</summary>
     public bool IsIncludedInAttackerLimit { get; private set; } = true;
+
+    /// <summary>분대의 타깃 재검색 갱신을 담당하는 구성원인지 반환한다.</summary>
+    public bool IsSquadRepresentative { get; internal set; }
+
+    protected virtual void OnEnable()
+    {
+        _squad?.RefreshRepresentative();
+    }
+
+    protected virtual void OnDisable()
+    {
+        // 비활성화되는 자신을 제외하고 다음 대표를 정한다.
+        _squad?.RefreshRepresentative(this);
+    }
     
     /// <summary>
     /// 자식 클래스가 공유하는 타깃·애니메이션·능력 참조를 초기화한다.
@@ -93,10 +107,11 @@ public abstract class EnemyController : MonoBehaviour
 
     /// <summary>
     /// 능력 발동에 성공하면 애니메이션을 재생한다.
+    /// 같은 행동 실행에서 조건을 통과한 경우 중복 검사를 생략한다.
     /// </summary>
-    protected bool TryUseAbility()
+    protected bool TryUseAbility(bool conditionAlreadyChecked = false)
     {
-        if (enemyAbility == null || !enemyAbility.TryUse())
+        if (enemyAbility == null || !enemyAbility.TryUse(conditionAlreadyChecked))
             return false;
 
         enemyAnimation.PlayAbilityAnimation();
@@ -110,7 +125,7 @@ public abstract class EnemyController : MonoBehaviour
     public void AssignTarget(Transform target)
     {
         enemyTargeting.SetTarget(target);
-        OnTargetChanged(target);
+        OnTargetChanged(enemyTargeting.Target);
     }
 
     /// <summary>

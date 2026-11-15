@@ -9,7 +9,7 @@ public sealed class PlayerEnemyDetector : MonoBehaviour
 {
     [SerializeField] private Transform _owner;
     [SerializeField] private CircleCollider2D _range;
-    [SerializeField] private LayerMask _enemyLayers = 1 << 23; // EnemyHitBox
+    [SerializeField] private LayerMask _enemyLayers = 1 << 23; // EnemyHurtbox
     private PlayerInfo _health;
     private PlayerMatchPresence _presence;
     private int _detectorId;

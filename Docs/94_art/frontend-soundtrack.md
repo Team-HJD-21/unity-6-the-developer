@@ -22,6 +22,12 @@
 
 실제 검증 범위는 후속 기록에 명시한다. 원본 파일 안의 음량 변화와 반복 경계의 편곡은 재생 예약의 무간격 여부와 별도로 판단한다.
 
+## 11/13 공용 오디오 출력 연결
+
+로컬 구현에 `GameAudioManager`와 `GameAudio.mixer`를 추가했다. Main의 Intro/Ambient와 Credits Music은 Music으로, Credits FlightAudio와 파트별 효과음은 Effects/Cinematic으로 출력한다. 기존 Source gain 0.55와 음악·컷신의 시각/예약 규칙은 유지한다. 전체·음악·효과음 설정은 즉시 미리듣기, 적용 저장, 취소 복원을 지원하며 음악 위치를 다시 시작하지 않는다.
+
+Inspector 편집 위치, Unity 기본 3D AudioSource/Listener 구성과 실제 검증·미확인 범위는 [공용 오디오 API](../02_architecture/01_core/game-audio-api.md)를 따른다. 기존 Legacy 믹서 gain을 사용하거나 원본 WAV를 변경하지 않는다.
+
 ## 적용 확인 범위
 
 Unity recompile 오류/경고 0, 저장된 세 clip의 길이·48kHz/stereo·Streaming 설정, 반복 false/true/false를 확인했다. 이전 컷신의 파트 길이·이름/역할·효과음 cue·Fade·로고 길이는 동일하며 정적 명단 시작은 55초다. Startup Scene diff는 음악 Prefab과 참조 추가로 제한했다.

@@ -70,17 +70,17 @@ public sealed class PlayerSkillTreeRuntimeTests
     [UnityTest]
     public IEnumerator BombIsTheOnlyFreeRootAndLevelRewardsUnlockPrerequisitesOnce()
     {
-        Assert.That(_research.Tokens,Is.Zero);Assert.That(_research.IsUnlocked(PlayerSkillId.Bomb),Is.True);
+        Assert.That(_research.Tokens,Is.EqualTo(1));Assert.That(_research.IsUnlocked(PlayerSkillId.Bomb),Is.True);
         Assert.That(_research.Candidate(0),Is.EqualTo(PlayerSkillId.Bomb));Assert.That(_research.Candidate(1),Is.EqualTo(PlayerSkillId.None));
         Assert.That(_controller.TryEquip(0,PlayerSkillId.PlayerTurret),Is.False);
-        Assert.That(_research.TryUnlock(PlayerSkillId.PlayerTurret),Is.False);
-        Reward();Assert.That(_research.Tokens,Is.EqualTo(4));
+        Assert.That(_research.CanUnlock(PlayerSkillId.PlayerTurret),Is.True);
+        Reward();Assert.That(_research.Tokens,Is.EqualTo(5));
         Assert.That(_research.TryUnlock(PlayerSkillId.EnergyBarrier),Is.False);
         Assert.That(_research.TryUnlock(PlayerSkillId.PlayerTurret),Is.True);
         Assert.That(_research.TryUnlock(PlayerSkillId.PlayerTurret),Is.False);
-        Assert.That(_research.Tokens,Is.EqualTo(3));
+        Assert.That(_research.Tokens,Is.EqualTo(4));
         _research.enabled=false;_research.enabled=true;
-        Assert.That(_research.Tokens,Is.EqualTo(3));
+        Assert.That(_research.Tokens,Is.EqualTo(4));
         Assert.That(_research.TryUnlock(PlayerSkillId.EnergyBarrier),Is.True);
         Assert.That(_research.TryUnlock(PlayerSkillId.Portal),Is.False,"Portal still requires the beacon prerequisite.");
         yield break;
@@ -152,12 +152,14 @@ public sealed class PlayerSkillTreeRuntimeTests
         var target=_player.GetComponent<PlayerInputHandler>().MouseWorldPosition;
         Assert.That(Mathf.Abs(Vector2.SignedAngle(direction,target-(Vector2)muzzle)),Is.LessThan(.01f));
         Assert.That(visual.TryGetMuzzlePosition(out var primary),Is.True);
-        Assert.That(Vector2.Distance(primary,muzzle),Is.GreaterThan(.5f));
+        Assert.That(Vector2.Distance(primary,muzzle),Is.InRange(.05f,.65f));
         int before=_player.GetComponent<PlayerWeaponAmmo>().CurrentRounds;
         Assert.That(_player.GetComponent<PlayerAttack>().TryFire(),Is.True);
         var bullets=Object.FindObjectsByType<PlayerBullet>(FindObjectsSortMode.None).Where(b=>b.gameObject.scene==_scene).ToArray();
         Assert.That(bullets.Length,Is.EqualTo(2));
         Assert.That(bullets.Select(b=>b.transform.position).Distinct().Count(),Is.EqualTo(2));
+        foreach(var origin in new[]{primary,muzzle})
+            Assert.That(bullets.Any(b=>Vector2.Distance(b.transform.position,origin)<.01f),Is.True,"A bullet must start at each displayed muzzle.");
         Assert.That(_player.GetComponent<PlayerWeaponAmmo>().CurrentRounds,Is.EqualTo(before-1));
         if(weapon==WeaponType.Sniper)foreach(var b in bullets)Assert.That(b.MaximumEnemyTargets,Is.EqualTo(2));
         yield break;
@@ -171,7 +173,7 @@ public sealed class PlayerSkillTreeRuntimeTests
         Assert.That(visual.TryGetMuzzlePosition(out var first),Is.True);
         var enemyObject=new GameObject("Dual spray target");SceneManager.MoveGameObjectToScene(enemyObject,_scene);
         enemyObject.transform.position=(first+second)*.5f+(Vector3)direction*2f;
-        enemyObject.layer=LayerMask.NameToLayer("EnemyHitBox");
+        enemyObject.layer=LayerMask.NameToLayer("EnemyHurtbox");
         var hitbox=enemyObject.AddComponent<CircleCollider2D>();hitbox.isTrigger=true;hitbox.radius=.55f;
         var enemy=enemyObject.AddComponent<EnemyHealth>();
         typeof(EnemyHealth).GetField("maxHealth",Private).SetValue(enemy,100);enemy.Initialize();FieldSimulationActor.Attach(enemyObject,_clock);
@@ -216,7 +218,7 @@ public sealed class PlayerSkillTreeRuntimeTests
         var target=new CheckpointData(Guid.NewGuid(),DateTimeOffset.UtcNow,config.MatchId,config.StageId,config.DifficultyProfileId,config.Mode,config.RandomSeed,config.ContentVersion,0,1,new[]{section});
         using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,target,CheckpointRestorePolicy.Default),section,codec))
         {
-            step.Apply();Assert.That(_research.IsUnlocked(PlayerSkillId.PlayerTurret),Is.False);Assert.That(_research.Tokens,Is.EqualTo(2));
+            step.Apply();Assert.That(_research.IsUnlocked(PlayerSkillId.PlayerTurret),Is.False);Assert.That(_research.Tokens,Is.EqualTo(3));
             Assert.That(_research.Level(PlayerSkillId.DualWield),Is.EqualTo(2));
             Assert.That(_research.Candidate(1),Is.EqualTo(PlayerSkillId.DualWield));Assert.That(_controller.Loadout.Q,Is.EqualTo(PlayerSkillId.DualWield));
             step.Rollback();Assert.That(_research.IsUnlocked(PlayerSkillId.PlayerTurret),Is.True);Assert.That(_research.Candidate(1),Is.EqualTo(PlayerSkillId.PlayerTurret));
@@ -274,7 +276,7 @@ public sealed class PlayerSkillTreeRuntimeTests
             var kind=skill==beacon?PlayerFieldDeviceKind.Beacon:PlayerFieldDeviceKind.Barrier;
             PlayerFieldDevice Device()=>Object.FindObjectsByType<PlayerFieldDevice>(FindObjectsSortMode.None).Single(d=>d.gameObject.scene==_scene&&d.Kind==kind&&d.IsAlive);
             Assert.That(Device().Health,Is.EqualTo(kind==PlayerFieldDeviceKind.Beacon?104:390).Within(.001));
-            Assert.That((float)typeof(PlayerFieldDevice).GetField("_remaining",Private).GetValue(Device()),Is.EqualTo(10.4f).Within(.001));
+            Assert.That((float)typeof(PlayerFieldDevice).GetField("_remaining",Private).GetValue(Device()),Is.EqualTo(26f).Within(.001));
             var writer=(ICheckpointParticipant)skill;var saved=writer.Capture(context,codec);Device().TakeDamage(10);
             var checkpoint=new CheckpointData(Guid.NewGuid(),DateTimeOffset.UtcNow,config.MatchId,config.StageId,config.DifficultyProfileId,config.Mode,1,"test",0,1,new[]{saved});
             using(var step=writer.PrepareRestore(new CheckpointRestoreContext(context,checkpoint,CheckpointRestorePolicy.Default),saved,codec))
@@ -287,26 +289,39 @@ public sealed class PlayerSkillTreeRuntimeTests
         health.TakeDamage(10);
         typeof(PlayerTurretHealth).GetMethod("RestoreCheckpoint",Private).Invoke(health,new object[]{130f,65f,0f,0f});
         Assert.That(health.HealthRatio,Is.EqualTo(.5f).Within(.001));
-        Assert.That(PlayerSkillDescriptions.UpgradeStats(PlayerSkillId.EnergyBarrier,_controller),Does.Contain("체력").And.Contain("지속시간").And.Contain("10.4"));
+        Assert.That(PlayerSkillDescriptions.UpgradeStats(PlayerSkillId.EnergyBarrier,_controller),Does.Contain("체력").And.Contain("지속시간").And.Contain("26"));
         yield break;
     }
 
     [UnityTest]
-    public IEnumerator BothGunsSitOnOppositeBodySidesAtTheSameHeightForEveryAim()
+    public IEnumerator DualWieldKeepsOriginalGunPoseAndPlacesSecondHandJustToItsLeftForEveryAim()
     {
-        ActivateDual(WeaponType.DefaultGun);var visual=_player.GetComponent<PlayerWeaponVisual>();
+        var visual=_player.GetComponent<PlayerWeaponVisual>();
+        var aims=new[]{Vector2.right*8,Vector2.left*8,Vector2.up*8,Vector2.down*8,new Vector2(-7,5)};
+        var positions=new Vector3[aims.Length];var rotations=new Quaternion[aims.Length];var muzzles=new Vector3[aims.Length];
+        for(int i=0;i<aims.Length;i++)
+        {
+            Aim(aims[i]);visual.Refresh();
+            positions[i]=visual.Renderer.transform.localPosition;rotations[i]=visual.Renderer.transform.localRotation;
+            Assert.That(visual.TryGetMuzzlePosition(out muzzles[i]),Is.True);
+        }
+        ActivateDual(WeaponType.DefaultGun);
         var secondary=(SpriteRenderer)typeof(PlayerWeaponVisual).GetField("_secondaryWeapon",Private).GetValue(visual);
         var authoredGrip=new SerializedObject(visual).FindProperty("_aimDefaultGun").FindPropertyRelative("grip").vector2Value;
-        foreach(var offset in new[]{Vector2.right*8,Vector2.left*8,Vector2.up*8,Vector2.down*8,new Vector2(-7,5)})
+        for(int i=0;i<aims.Length;i++)
         {
-            Aim(offset);visual.Refresh();
+            Aim(aims[i]);visual.Refresh();
+            Assert.That(Vector3.Distance(visual.Renderer.transform.localPosition,positions[i]),Is.LessThan(.001f),"Activating dual wield must keep the original gun in place.");
+            Assert.That(Quaternion.Angle(visual.Renderer.transform.localRotation,rotations[i]),Is.LessThan(.01f));
+            Assert.That(visual.TryGetMuzzlePosition(out var primary),Is.True);
+            Assert.That(Vector3.Distance(primary,muzzles[i]),Is.LessThan(.01f));
             Vector3 Grip(SpriteRenderer renderer)
             {
                 Vector2 p=(renderer.sprite.rect.size*authoredGrip-renderer.sprite.pivot)/renderer.sprite.pixelsPerUnit;
                 if(renderer.flipY)p.y=-p.y;return _player.transform.InverseTransformPoint(renderer.transform.TransformPoint(p));
             }
             var first=Grip(visual.Renderer);var second=Grip(secondary);
-            Assert.That(first.x,Is.GreaterThan(.6f));Assert.That(second.x,Is.LessThan(-.6f));
+            Assert.That(second.x,Is.EqualTo(first.x-.45f).Within(.01f));
             Assert.That(first.y,Is.EqualTo(second.y).Within(.01f));
             Assert.That(visual.TryGetSecondaryMuzzle(out var muzzle,out var direction),Is.True);
             Assert.That(Vector2.Angle(direction,_player.GetComponent<PlayerInputHandler>().MouseWorldPosition-(Vector2)muzzle),Is.LessThan(.01));
@@ -367,7 +382,7 @@ public sealed class PlayerSkillTreeRuntimeTests
                 typeof(PlayerSkillController).GetMethod("Update",Private).Invoke(_controller,null);
             }
             Press(UnityEngine.InputSystem.Key.R,UnityEngine.InputSystem.Key.F);Assert.That(_controller.PortalConsumesR,Is.True);
-            Assert.That(portal.ShieldHealth,Is.EqualTo(52));Assert.That(portal.ShieldRemaining,Is.EqualTo(2.6f).Within(.001));
+            Assert.That(portal.ShieldHealth,Is.EqualTo(26));Assert.That(portal.ShieldRemaining,Is.EqualTo(2.6f).Within(.001));
             Assert.That(portal.IsLinked,Is.True,"One frame cannot travel and recover the destination.");
             Assert.That(Vector2.Distance(_player.GetComponent<PlayerDirectionalColliders>().GroundPosition,portal.GetEndpoint(1).transform.position),Is.LessThan(.01));
             typeof(PlayerWeaponAmmo).GetMethod("Update",Private).Invoke(_player.GetComponent<PlayerWeaponAmmo>(),null);

@@ -8,6 +8,20 @@ namespace TeamHJD.Game.Infrastructure.Tests
 {
     public sealed class RegionReplicationCodecTests
     {
+        [Test]
+        public void RoundTripKeepsCompletionAfterTheFollowingUnlockRevision()
+        {
+            var definition = new RegionGridDefinition(new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 4, 1, 4, 1), new[] { 1, 1, 2, 2 });
+            var change = new RegionGridChange(RegionChangeKind.StaticSecured, 0, 1, new[] { 1 });
+            var snapshot = RegionGridSnapshot.FromCapturedCells(new MatchId("feedback"), Guid.NewGuid(), 2,
+                RegionPolicyMode.Static, definition, new[] { 0, 1 }, new[] { 1, 2 }, change);
+            var copy = RegionReplicationCodec.Decode(RegionReplicationCodec.Encode(new RegionReplicationFrame(Guid.NewGuid(), 1, snapshot))).Snapshot;
+            Assert.That(copy.Change.Kind, Is.EqualTo(RegionChangeKind.StaticSecured));
+            Assert.That(copy.Change.Revision, Is.EqualTo(1));
+            Assert.That(copy.Revision, Is.EqualTo(2));
+            Assert.That(copy.Change.SecuredRegionIds, Is.EqualTo(new[] { 1 }));
+        }
+
         private static RegionReplicationFrame Frame(int x = 3, int y = 3)
         {
             var grid = new BattlefieldGridConfiguration(new BattlefieldPoint(40, -12), 2, 21, 35, x, y);
@@ -16,6 +30,22 @@ namespace TeamHJD.Game.Infrastructure.Tests
                 RegionGridSnapshot.FromCapturedCells(new MatchId("match"), Guid.NewGuid(), 11, RegionPolicyMode.Dynamic,
                     definition, new[] { 0, x * y - 1 }));
         }
+        [Test]
+        public void RoundTripKeepsEligibleMaskAndUnlockSeparateFromCapture()
+        {
+            var geometry = new BattlefieldGridConfiguration(new BattlefieldPoint(0, 0), 0, 2, 2, 2, 2);
+            var definition = new RegionGridDefinition(geometry, new[] { 1, 1, 2, 2 }, new[] { true, false, true, true });
+            var snapshot = RegionGridSnapshot.FromCapturedCells(new MatchId("static"), Guid.NewGuid(), 4,
+                RegionPolicyMode.Static, definition, new[] { 0 }, new[] { 1, 2 });
+            var frame = new RegionReplicationFrame(Guid.NewGuid(), 1, snapshot);
+            var copy = RegionReplicationCodec.Decode(RegionReplicationCodec.Encode(frame)).Snapshot;
+            Assert.That(copy.UnlockedRegionIds, Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(copy.Definition.CapturableCells, Is.EqualTo(definition.CapturableCells));
+            Assert.That(copy.CapturedCellCount, Is.EqualTo(1));
+            Assert.That(copy.CaptureRatio, Is.EqualTo(1d / 3));
+            Assert.That(copy.CapturedCells[2], Is.False);
+        }
+
         [Test]
         public void RoundTripPreservesFullDefinitionCaptureAndEpoch()
         {

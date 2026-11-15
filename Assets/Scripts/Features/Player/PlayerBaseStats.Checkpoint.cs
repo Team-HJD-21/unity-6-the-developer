@@ -5,8 +5,11 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Presentation.Scene;
 
-public sealed partial class PlayerBaseStats : ICheckpointParticipant
+public sealed partial class PlayerBaseStats : IGrowthCheckpointParticipant
 {
+    string IGrowthCheckpointParticipant.PersistenceKey => "base-stats";
+    public event Action<GrowthSaveUrgency> GrowthChanged;
+
     private PlayerActorIdentity CheckpointIdentity => GetComponent<PlayerActorIdentity>() ??
         throw new InvalidOperationException("Bind the Player identity before base stats checkpoints.");
     string ICheckpointParticipant.Key => CheckpointIdentity.CheckpointKeyPrefix + "/base-stats";

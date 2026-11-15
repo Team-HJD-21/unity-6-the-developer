@@ -5,6 +5,7 @@ using TeamHJD.Game.Presentation.Scene;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using Unity.Profiling;
 
 /// <summary>
 /// 네트워크에 스폰된 적의 행동을 서버에서 실행한다.
@@ -15,6 +16,17 @@ public partial class EnemyNetworkController : NetworkBehaviour
     [SerializeField] private EnemyController enemyController;
     [SerializeField] private EnemyHealth enemyHealth;
     private EnemyExplosionAbility _explosionAbility;
+    private FieldSimulationActor _simulationActor;
+
+    // 프로파일링
+    private static readonly ProfilerMarker CanExecuteMarker =
+        new("TeamHJD.Enemy.CanExecuteBehavior");
+
+    private static readonly ProfilerMarker RefreshTargetMarker =
+        new("TeamHJD.Enemy.RefreshTarget");
+
+    private static readonly ProfilerMarker ExecuteBehaviorMarker =
+        new("TeamHJD.Enemy.ExecuteBehavior");
 
     public event Action<ulong> DeathConfirmed;
 
@@ -24,7 +36,9 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public event Action<ulong> Despawned;
 
-    /// <summary>서버 또는 로컬 테스트에서 현재 행동을 실행할 수 있는지 반환한다.</summary>
+    /// <summary>
+    /// 서버 또는 로컬 테스트에서 현재 행동을 실행할 수 있는지 반환한다.
+    /// </summary>
     public bool CanExecuteBehavior
     {
         get
@@ -32,8 +46,9 @@ public partial class EnemyNetworkController : NetworkBehaviour
             if (!isActiveAndEnabled)
                 return false;
 
-            // TEMP: 로컬 테스트 제거 시 기존 IsSpawned / IsServer 검사로 복원한다.
-            if (IsNetworkRunning)
+            var manager = Unity.Netcode.NetworkManager.Singleton;
+
+            if (manager != null && manager.IsListening)
             {
                 if (!IsSpawned || !IsServer)
                     return false;
@@ -43,8 +58,12 @@ public partial class EnemyNetworkController : NetworkBehaviour
                 return false;
             }
 
-            var simulation = GetComponent<FieldSimulationActor>();
-            return simulation == null || simulation.CanAdvance;
+            // 생성 이후 연결되는 시뮬레이션 컴포넌트도 찾을 수 있게 한다.
+            // 한 번 찾으면 이후 검사에서는 저장된 참조를 사용한다.
+            if (_simulationActor == null)
+                TryGetComponent(out _simulationActor);
+
+            return _simulationActor == null || _simulationActor.CanAdvance;
         }
     }
 
@@ -64,15 +83,38 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// <summary>
     /// 서버 또는 명시적으로 켠 임시 로컬 테스트에서 적의 행동을 실행한다.
     /// </summary>
+    // private void FixedUpdate()
+    // {
+    //     if (!CanExecuteBehavior)
+    //         return;
+    //
+    //     enemyController.RefreshTarget();
+    //     enemyController.ExecuteBehavior();
+    // }
+
     private void FixedUpdate()
     {
-        if (!CanExecuteBehavior)
-            return;
+        using (CanExecuteMarker.Auto())
+        {
+            if (!CanExecuteBehavior)
+                return;
+        }
 
-        enemyController.RefreshTarget();
-        enemyController.ExecuteBehavior();
+        // 분대 대표만 타깃 재검색 갱신을 요청한다.
+        if (enemyController.IsSquadRepresentative)
+        {
+            using (RefreshTargetMarker.Auto())
+            {
+                enemyController.RefreshTarget();
+            }
+        }
+
+        using (ExecuteBehaviorMarker.Auto())
+        {
+            enemyController.ExecuteBehavior();
+        }
     }
-
+    
     /// <summary>
     /// 적이 네트워크에 스폰되면 서버에서 현재 체력과 사망 상태를 초기화한다.
     /// </summary>

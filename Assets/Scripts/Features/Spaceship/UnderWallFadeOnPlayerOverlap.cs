@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
@@ -6,63 +5,53 @@ using UnityEngine.Tilemaps;
 
 public class UnderWallFadeOnPlayerOverlap : MonoBehaviour
 {
-    private const float FadeDuration = 1f;
-    private const float OverlapAlpha = 0.6f;
+    private const float MinimumAlpha = 0.3f;
     private readonly HashSet<Collider2D> _playerColliders = new();
     private Tilemap _tilemap;
-    private Coroutine _fadeCoroutine;
+    private BoxCollider2D _fadeTrigger;
+    private Transform _player;
 
     private void Awake()
     {
         _tilemap = GetComponentInParent<Tilemap>();
+        _fadeTrigger = GetComponent<BoxCollider2D>();
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerStay2D(Collider2D other)
     {
-        if (other.GetComponentInParent<PlayerActorIdentity>() == null || !_playerColliders.Add(other)) return;
-        FadeTo(OverlapAlpha);
+        if (!_playerColliders.Contains(other))
+        {
+            var identity = other.GetComponentInParent<PlayerActorIdentity>();
+            if (identity == null) return;
+            _playerColliders.Add(other);
+            _player = identity.transform;
+        }
+        UpdateAlpha();
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
         if (!_playerColliders.Remove(other) || _playerColliders.Count > 0) return;
-        FadeTo(1f);
+        _player = null;
+        UpdateAlpha();
     }
 
-    private void FadeTo(float targetAlpha)
+    private void UpdateAlpha()
     {
-        if (_tilemap == null) return;
-        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
-        _fadeCoroutine = StartCoroutine(FadeAlpha(targetAlpha));
-    }
+        if (_tilemap == null || _fadeTrigger == null) return;
 
-    private IEnumerator FadeAlpha(float targetAlpha)
-    {
-        float startAlpha = _tilemap.color.a;
-        float elapsed = 0f;
-
-        while (elapsed < FadeDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / FadeDuration);
-            float smoothT = t * t * (3f - 2f * t);
-            Color color = _tilemap.color;
-            color.a = Mathf.Lerp(startAlpha, targetAlpha, smoothT);
-            _tilemap.color = color;
-            yield return null;
-        }
-
-        Color finalColor = _tilemap.color;
-        finalColor.a = targetAlpha;
-        _tilemap.color = finalColor;
-        _fadeCoroutine = null;
+        Bounds bounds = _fadeTrigger.bounds;
+        float proximity = _player == null ? 0f : 1f - Mathf.InverseLerp(bounds.min.y, bounds.max.y, _player.position.y);
+        float smoothProximity = proximity * proximity * (3f - 2f * proximity);
+        Color color = _tilemap.color;
+        color.a = Mathf.Lerp(1f, MinimumAlpha, smoothProximity);
+        _tilemap.color = color;
     }
 
     private void OnDisable()
     {
         _playerColliders.Clear();
-        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
-        _fadeCoroutine = null;
+        _player = null;
         if (_tilemap == null) return;
         Color color = _tilemap.color;
         color.a = 1f;

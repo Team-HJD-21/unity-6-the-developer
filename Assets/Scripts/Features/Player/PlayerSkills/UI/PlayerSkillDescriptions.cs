@@ -57,7 +57,7 @@ public static class PlayerSkillDescriptions
         if (maximum) text += "  ·  최고 레벨";
         float health = owner.UpgradeHealthValue(skill), duration = owner.UpgradeDurationValue(skill);
         if (health > 0) text += "\n" + Row("체력", health);
-        if (skill == PlayerSkillId.Portal) text += "\n" + Row("보호량 · 최대 체력", owner.PortalShieldHealthPercent, "%");
+        if (skill == PlayerSkillId.Portal) text += "\n" + Row("보호량", owner.PortalShieldCapacity, " HP");
         if (duration > 0) text += "\n" + Row(skill == PlayerSkillId.Portal ? "보호 시간" : "지속시간", duration, "초");
         return text;
     }
@@ -71,7 +71,7 @@ public static class PlayerSkillDescriptions
             PlayerSkillId.EnergyBarrier => $"플레이어 주변 반경 12 안에 첫 본체 설치\n두 번째는 첫 본체 중심 반경 {owner.UpgradeStatValue(skill):0.#} 안에서 클릭\n두 번째 설치 실패 시 첫 위치 유지 · 재시도 가능\n캐릭터·장애물 겹침 불가 · 아군 탄환 통과\n체력 {owner.UpgradeHealthValue(skill):0.#} · 유지 {owner.UpgradeDurationValue(skill):0.#}초\n완성에만 1개 소모 · 18초마다 1개 충전\n우클릭 / Esc / 같은 키로 전체 취소",
             PlayerSkillId.LureBeacon => $"플레이어 주변 원 안의 커서 위치에 비콘 설치\n왼쪽 클릭 확정 · 우클릭 / Esc / 같은 키로 취소\n유인 반경 {owner.UpgradeStatValue(skill):0.#} · 유지 {owner.UpgradeDurationValue(skill):0.#}초\n체력 {owner.UpgradeHealthValue(skill):0.#} · 재사용 14초",
             PlayerSkillId.DualWield => $"{owner.UpgradeDurationValue(skill):0.#}초 동안 같은 총을 양손에 장착\n기본총 · 냉각총 · 스나이퍼에 적용\n두 총 모두 마우스 커서를 조준\n탄약 소비와 공격 간격 유지 · 재사용 20초\n스패너는 적용하지 않음",
-            PlayerSkillId.Portal => $"한 쌍의 포털 A/B 설치\n가까이서 R: 반대편 포털로 이동\nF: 가까운 설치물 회수 · 재설치 가능\n이동 후 보호막: 최대 체력의 {owner.PortalShieldHealthPercent:0.#}% · {owner.UpgradeDurationValue(skill):0.#}초\n중첩 없이 갱신 · 이동 후 0.75초 대기",
+            PlayerSkillId.Portal => $"한 쌍의 포털 A/B 설치\n가까이서 R: 반대편 포털로 이동\nF: 가까운 설치물 회수 · 재설치 가능\n이동 후 보호막: {owner.PortalShieldCapacity:0.#} HP · {owner.UpgradeDurationValue(skill):0.#}초\n보호막 생성 대기 {owner.PortalShieldCooldown:0.#}초 · 중첩 없음",
             _ => ""
         });
     }

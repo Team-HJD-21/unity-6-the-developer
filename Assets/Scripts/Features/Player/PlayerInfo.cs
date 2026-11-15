@@ -40,6 +40,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
 
     private void FixedUpdate()
     {
+        PumpRescueInput();
         AdvanceRecovery();
         AdvanceAutomaticRecovery();
         onHpChange.Invoke(curHp, maxHp);
@@ -79,7 +80,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     /// <summary>서버 전투가 터렛과 동일한 피해 계약으로 호출합니다. Client 원본 변경은 거부합니다.</summary>
     public bool ApplyDamage(int damage)
     {
-        if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanAdvance(this)) return false;
+        if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanReceiveDamage(this)) return false;
         var portal = GetComponent<PlayerPortalSkill>();
         if (portal != null) damage = portal.AbsorbArrivalDamage(damage);
         // 보호막만 소모한 공격은 체력 피해/피격 연출/자동 회복 대기시간을 발생시키지 않습니다.
@@ -97,7 +98,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
 
     public void RecoverHp()
     {
-        if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp) return;
+        if (!CanWriteHealth || _isDead || _recovering || curHp >= maxHp || HasHeldRescueTarget) return;
         ClearAutomaticRecovery();
         _recovering = true;
         _nextRecoveryAt = FieldSimulationTime.Seconds(this);
@@ -118,6 +119,6 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         _healthAuthority = false;
     }
 
-    public void UnbindMatch() { _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); GetComponent<PlayerPortalSkill>()?.ClearArrivalShield(); }
+    public void UnbindMatch() { UnbindRescue(); _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); GetComponent<PlayerPortalSkill>()?.ResetArrivalShield(); }
     public void UnbindNetworkMatch() => UnbindMatch();
 }

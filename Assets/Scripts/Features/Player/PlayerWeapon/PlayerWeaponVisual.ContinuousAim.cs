@@ -36,6 +36,7 @@ public sealed partial class PlayerWeaponVisual
     private PlayerTurretRepair _aimRepair;
     [SerializeField] private SpriteRenderer _secondaryWeapon;
     [SerializeField] private PlayerCryoSpray _secondaryCryoSpray;
+    [SerializeField, Min(0f)] private float _dualWieldSpacing = .45f;
     private PlayerDualWieldSkill _dualWield;
     public bool IsDualWieldConfigured => _continuousAim && IsConfigured && _secondaryWeapon != null && _secondaryCryoSpray != null && _secondaryCryoSpray.IsConfigured;
     public PlayerCryoSpray SecondaryCryoSpray => _secondaryCryoSpray;
@@ -94,10 +95,7 @@ public sealed partial class PlayerWeaponVisual
             direction = swing;
         else if (_aimInput.HasAimTarget)
         {
-            Vector2 hand = AimMount;
-            if (_dualWield != null && _dualWield.IsActive && _selection.CurrentWeapon != WeaponType.Spanner && !_motion.IsHoldingRepair)
-                hand.x = Mathf.Abs(hand.x) + .65f;
-            direction = _aimInput.MouseWorldPosition - (Vector2)transform.TransformPoint(hand);
+            direction = _aimInput.MouseWorldPosition - (Vector2)transform.TransformPoint(AimMount);
         }
         else direction = _aimInput.AimDirection;
         if (!PlayerAimUtility.IsValidDirection(direction)) direction = _aimInput.AimDirection;
@@ -194,8 +192,6 @@ public sealed partial class PlayerWeaponVisual
         float scale = art.length / art.sprite.bounds.size.x;
         Vector3 grip = SpritePoint(art.sprite, gripPoint, flipped) * scale;
         Vector3 mount = AimMount + direction * _aimRadius;
-        if (_dualWield != null && _dualWield.IsActive && _selection.CurrentWeapon != WeaponType.Spanner && !_motion.IsHoldingRepair)
-            mount = new Vector3(Mathf.Abs(AimMount.x) + .65f, AimMount.y, 0);
         _weapon.sprite = art.sprite;
         _weapon.transform.localScale = new Vector3(scale, scale, 1f);
         _weapon.transform.localRotation = rotation;
@@ -220,9 +216,9 @@ public sealed partial class PlayerWeaponVisual
         if (_secondaryWeapon == null) return;
         _secondaryWeapon.enabled = IsDualWieldVisible;
         if (!_secondaryWeapon.enabled) return;
-        // The opposite hand sits across the aim line. Both barrels converge
-        // on the same pointer instead of using quantized firing directions.
-        Vector3 offset = new Vector3(-2f * (Mathf.Abs(AimMount.x) + .65f), 0, 0);
+        // Keep the original gun in its normal pose and tuck the second hand
+        // just to its left. Both barrels still converge on the same pointer.
+        Vector3 offset = Vector3.left * _dualWieldSpacing;
         _secondaryWeapon.sprite = art.sprite;
         _secondaryWeapon.transform.localScale = _weapon.transform.localScale;
         _secondaryWeapon.transform.localRotation = rotation;

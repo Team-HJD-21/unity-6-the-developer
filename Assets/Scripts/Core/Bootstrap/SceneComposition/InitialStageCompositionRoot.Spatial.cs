@@ -41,7 +41,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var players = new List<PlayerSpatialInput>(_playerActors.Actors.Count);
             foreach (KeyValuePair<PlayerId, GameObject> actor in _playerActors.Actors)
             {
-                if (actor.Value == null) continue;
+                if (actor.Value == null || actor.Value.scene != gameObject.scene) continue;
+                var participant = actor.Value.GetComponents<MonoBehaviour>().OfType<IPlayerInteractionActor>().FirstOrDefault();
+                if (participant == null || !participant.TryCaptureInteraction(out var status) || !status.IsAlive) continue;
                 Vector3 position = actor.Value.transform.position;
                 players.Add(new PlayerSpatialInput(
                     new TeamHJD.Game.Domain.EntityId(actor.Key.Value),
@@ -57,6 +59,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     if (captured[index] != null) enemies.Add(captured[index]);
             }
 
+            if (_matchTime?.FieldClock != null && !_matchTime.FieldClock.Snapshot.IsPaused)
+                _regionBinding?.TickStaticCapture(_matchTime.FieldClock.ElapsedSeconds, players, enemies);
+            if (_matchTime?.FieldClock != null)
+                _matchSession.ObserveRegionCapture(_matchTime.FieldClock.Snapshot.Epoch, _matchTime.FieldClock.ElapsedSeconds);
             var nextInput = new BattlefieldDynamicSpatialInput(players, enemies);
             Dictionary<TeamHJD.Game.Domain.EntityId, int> nextCells = GetOccupiedCellByEntity(nextInput);
             if (HaveSameCellOccupancy(_lastEntityCells, nextCells)) return;

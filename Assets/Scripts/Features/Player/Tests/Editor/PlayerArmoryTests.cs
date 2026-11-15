@@ -41,26 +41,29 @@ public sealed class PlayerArmoryTests
         var state = new PlayerArmoryState();
         Assert.That(state.Upgrade(WeaponType.DefaultGun), Is.False);
         Assert.That(state.GrantLevelRewards(4, 1), Is.True);
-        Assert.That(state.Tokens, Is.EqualTo(3));
+        Assert.That(state.Tokens, Is.EqualTo(4));
         Assert.That(state.GrantLevelRewards(4, 1), Is.False);
         Assert.That(state.GrantLevelRewards(2, 1), Is.False);
         Assert.That(state.Upgrade(WeaponType.DefaultGun), Is.True);
         Assert.That(state.Upgrade(WeaponType.DefaultGun), Is.True);
         Assert.That(state.Upgrade(WeaponType.DefaultGun), Is.False);
-        Assert.That(state.Tokens, Is.EqualTo(1));
+        Assert.That(state.Tokens, Is.EqualTo(2));
         Assert.That(state.Level(WeaponType.DefaultGun), Is.EqualTo(3));
         Assert.That(state.Upgrade(WeaponType.Spanner), Is.False);
         Assert.That(state.Upgrade((WeaponType)99), Is.False);
         Assert.That(state.Upgrade(WeaponType.Sniper), Is.True);
+        Assert.That(state.Upgrade(WeaponType.CryoBlaster), Is.True);
         Assert.That(state.Upgrade(WeaponType.CryoBlaster), Is.False);
     }
 
     [Test]
-    public void NewActorStartsAtLevelOneWithNoTokens()
+    public void IndependentStateReceivesItsFirstLevelTokenOnlyOnce()
     {
         var old = new PlayerArmoryState(); old.GrantLevelRewards(10, 1); old.Upgrade(WeaponType.Sniper);
         var fresh = new PlayerArmoryState();
-        Assert.That(fresh.Level(WeaponType.Sniper), Is.EqualTo(1)); Assert.That(fresh.Tokens, Is.Zero);
+        Assert.That(fresh.GrantLevelRewards(1,1),Is.True);
+        Assert.That(fresh.Level(WeaponType.Sniper), Is.EqualTo(1)); Assert.That(fresh.Tokens, Is.EqualTo(1));
+        Assert.That(fresh.GrantLevelRewards(1,1),Is.False);Assert.That(fresh.Tokens,Is.EqualTo(1));
     }
 
     [TestCase(1, 1, 2, .8f)] [TestCase(2, 3, 3, .65f)] [TestCase(3, 5, 4, .5f)]

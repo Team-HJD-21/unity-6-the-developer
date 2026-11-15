@@ -87,7 +87,7 @@ Scene/Prefab에서 구형 MonoBehaviour와 해당 PersistentCall을 먼저 정�
 
 활성 Build Scene은 Initial_Stage → SpaceShipGrayBox다. EnemySandbox는 등록하되 비활성이다. 과거 Main부터 시작하던 Build와 참고 Scene은 현행 진입점이 아니다. 완성된 제품 진입 화면이나 Windows Build 검증을 의미하지 않는다.
 
-재진입 검사에서 발견한 이전 NGO 루트 잔존을 보완했다. InitialStageCompositionRoot의 Encounter 소비자를 Scene에서 명시적으로 연결하고, `EnemyNetworkTestLauncher.BindTestHostToExecutorScene()`이 **임시 테스트 Host만** Executor Scene에 귀속시킨다. Scene 종료 시 SDK가 이 Host를 정리하고 새 Scene은 새 Host로 스폰한다. AppRoot는 계속 App 수명을 유지한다. 정식 App 네트워크 연결/Match 전환 정책은 #442에서 별도로 설계하며 이번 임시 정책을 그대로 멀티플레이 요구로 확정하지 않는다.
+재진입 검사에서 발견한 이전 NGO 루트 잔존을 보완했다. InitialStageCompositionRoot의 Encounter 소비자를 Scene에서 명시적으로 연결하고, `EncounterSceneBinding.BindTestHostToExecutorScene()`이 **임시 테스트 Host만** Executor Scene에 귀속시킨다. Scene 종료 시 SDK가 이 Host를 정리하고 새 Scene은 새 Host로 스폰한다. AppRoot는 계속 App 수명을 유지한다. 정식 App 네트워크 연결/Match 전환 정책은 #442에서 별도로 설계하며 이번 임시 정책을 그대로 멀티플레이 요구로 확정하지 않는다.
 
 팀원은 로컬 도구·테스트의 문자열 경로를 새 위치에 맞춘다. GUID 기반 serialized 참조는 유지하므로 Prefab/Scene을 임의 재연결하지 않는다. Player 폴더 migration은 자동 실행을 제거하고 수동 메뉴만 유지한다. 오래된 브랜치가 구형 폴더를 다시 만들지 않도록 이관 변경을 먼저 받아야 한다.
 

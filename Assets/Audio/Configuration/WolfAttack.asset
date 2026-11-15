@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cada5a7711cdbd8479b9104f0928cf1a, type: 3}
+  m_Name: WolfAttack
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.GameAudioCue
+  Id: 6
+  Class: {fileID: 11400000, guid: 31d6cf25ec3847646b7d7fb4d08cf6c4, type: 2}
+  Clips:
+  - {fileID: 8300000, guid: 7c372885b26c64f54833e538e04b4a9d, type: 3}
+  Volume: 0.3
+  Pitch: {x: 1, y: 1}
+  Loop: 0
+  StartSeconds: 0.38
+  DurationSeconds: 0.95
+  MaximumInstances: 6

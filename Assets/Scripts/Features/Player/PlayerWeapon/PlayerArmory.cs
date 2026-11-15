@@ -4,7 +4,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
-/// <summary>로컬 무기고 요청을 검증하고 같은 PlayerExperience actor의 무기 성장 상태를 소유합니다.</summary>
+/// <summary>로컬 무기고 요청을 검증하고 같은 플레이 세션에서 무기 성장 상태를 전달합니다.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerWeaponSelection), typeof(PlayerExperience))]
 public sealed partial class PlayerArmory : MonoBehaviour, ILocalInputConsumer, IHubPlayerBinding
@@ -17,12 +17,13 @@ public sealed partial class PlayerArmory : MonoBehaviour, ILocalInputConsumer, I
     private IInputBlocker _input;
     private IDisposable _menuLock;
     private PlayerArmoryStation _station;
-    private bool _hub;
-    // 시작 허브 -> 첫 출격에서 장착 선택만 한 번 전달합니다. 레벨·토큰·XP를 전역으로 보관하지 않습니다.
-    private static readonly Dictionary<IInputBlocker, (WeaponType first, WeaponType second)> DepartureLoadouts = new();
+    private bool _levelRewardsPending;
+    // App의 같은 로컬 입력 scope에서 새 허브/필드 actor로 무기고 상태를 전달합니다.
+    // 이전 actor가 늦게 정리되어도 새 소유자의 잔액을 덮어쓰지 않습니다.
+    private static readonly Dictionary<IInputBlocker, (PlayerArmory owner, PlayerArmoryState state)> SessionStates = new();
     internal static readonly HashSet<PlayerArmory> LocalActors = new();
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetRuntime() { DepartureLoadouts.Clear(); LocalActors.Clear(); }
+    private static void ResetRuntime() { SessionStates.Clear(); LocalActors.Clear(); }
     public event Action Changed;
     public PlayerArmorySettings Settings => _settings;
     public PlayerArmoryState State => _state;
@@ -42,21 +43,45 @@ public sealed partial class PlayerArmory : MonoBehaviour, ILocalInputConsumer, I
         _controls = GetComponent<PlayerControlState>();
     }
     private void OnEnable()
-    { if (_experience != null) _experience.LevelChanged += OnLevelChanged; if (_input != null) LocalActors.Add(this); }
-    private void OnLevelChanged(int before, int after)
     {
-        if (IsConfigured && !IsRemoteClient && _state.GrantLevelRewards(after, _settings.TokensPerLevel)) Changed?.Invoke();
+        if (_experience != null)
+        { _experience.LevelChanged += OnLevelChanged; _experience.Changed += QueueLevelRewards; ReconcileLevelRewards(); }
+        if (_input != null) LocalActors.Add(this);
+    }
+    private void QueueLevelRewards() => _levelRewardsPending = true;
+    private void LateUpdate() { if (_levelRewardsPending) ReconcileLevelRewards(); }
+    private void OnLevelChanged(int before, int after) => ReconcileLevelRewards();
+    private void ReconcileLevelRewards()
+    {
+        _levelRewardsPending = false;
+        if (_experience != null && IsConfigured && !IsRemoteClient &&
+            _state.GrantLevelRewards(_experience.Level, _settings.TokensPerLevel))
+        { SaveSession(); Changed?.Invoke(); }
     }
     public void BindInputBlocker(IInputBlocker input)
     {
-        Close(); _input = input ?? throw new ArgumentNullException(nameof(input)); LocalActors.Add(this);
-        if (!_hub && DepartureLoadouts.Remove(input, out var loadout))
-        { _state.Equip(0, loadout.first); _state.Equip(1, loadout.second); NotifyLoadout(); }
+        if (input == null) throw new ArgumentNullException(nameof(input));
+        Close();
+        if (!ReferenceEquals(_input, input) || !SessionStates.TryGetValue(input, out var current) || !ReferenceEquals(current.owner, this))
+        {
+            SaveSession(); _input = input;
+            if (!IsRemoteClient)
+            {
+                if (SessionStates.TryGetValue(input, out var saved))
+                { _state = saved.state.Clone(); NotifyLoadout(); }
+                SessionStates[input] = (this, _state.Clone());
+            }
+        }
+        LocalActors.Add(this); ReconcileLevelRewards(); SaveSession();
     }
     public void BindHub(IInputBlocker input)
-    { _hub = true; BindInputBlocker(input); SaveDeparture(); }
-    public void UnbindHub() { Close(); _hub = false; LocalActors.Remove(this); _input = null; }
-    private void SaveDeparture() { if (_hub && _input != null) DepartureLoadouts[_input] = (_state.First, _state.Second); }
+    { BindInputBlocker(input); }
+    public void UnbindHub() { Close(); SaveSession(); LocalActors.Remove(this); _input = null; }
+    private void SaveSession()
+    {
+        if (_input != null && !IsRemoteClient && SessionStates.TryGetValue(_input, out var current) && ReferenceEquals(current.owner, this))
+            SessionStates[_input] = (this, _state.Clone());
+    }
     public bool TryOpen(PlayerArmoryStation station)
     {
         if (station == null || !CanOpen || !station.IsInRange(this)) return false;
@@ -72,7 +97,7 @@ public sealed partial class PlayerArmory : MonoBehaviour, ILocalInputConsumer, I
     public bool TryEquip(int slot, WeaponType weapon)
     {
         if (!CanModify || !_selection.IsWeaponAuthored(weapon) || !_state.Equip(slot, weapon)) return false;
-        NotifyLoadout(); SaveDeparture(); return true;
+        SaveSession(); NotifyLoadout(); return true;
     }
     private void NotifyLoadout()
     { _selection.RefreshLoadout(); Changed?.Invoke(); }
@@ -80,7 +105,7 @@ public sealed partial class PlayerArmory : MonoBehaviour, ILocalInputConsumer, I
     public bool TryUpgrade(WeaponType weapon)
     {
         if (!CanUpgrade(weapon) || !_state.Upgrade(weapon)) return false;
-        Changed?.Invoke(); return true;
+        SaveSession(); Changed?.Invoke(); return true;
     }
     public int Level(WeaponType weapon) => _state.Level(weapon);
     public float DamageMultiplier(WeaponType weapon, int level = 0) => IsConfigured && PlayerArmoryState.IsGun(weapon)
@@ -93,7 +118,8 @@ public sealed partial class PlayerArmory : MonoBehaviour, ILocalInputConsumer, I
     }
     private void OnDisable()
     {
-        Close(); LocalActors.Remove(this);
-        if (_experience != null) _experience.LevelChanged -= OnLevelChanged;
+        Close(); SaveSession(); LocalActors.Remove(this);
+        if (_experience != null)
+        { _experience.LevelChanged -= OnLevelChanged; _experience.Changed -= QueueLevelRewards; }
     }
 }

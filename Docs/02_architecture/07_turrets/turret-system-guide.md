@@ -86,7 +86,11 @@ flowchart TD
 
 필드 터렛 프리팹의 `Base` 자식은 `TurretBase` 레이어를 사용한다. 최상위 오브젝트와 사거리 표시는 `Ignore Raycast` 레이어를, 포신과 발사대는 `Turret` 레이어를 사용한다. 기존 미니맵 표시는 `MiniMap`을 사용한다. 본편 HUD의 `StageTurretSelection`은 `Physics2D.AllLayers`로 몸체 콜라이더를 찾은 뒤 부모의 `FieldTurretBase`를 확인한다.
 
-`Entities` Sorting Layer에서 필드 터렛의 루트 그룹(`Base`)은 Order 0, `PlayerBullet`·`SniperBullet`·`PlayerTurretProjectile`·`bullet`·`Missile`의 비행 스프라이트는 Order 1, 포신과 발사대의 루트 정렬 그룹은 Order 3을 사용한다. 플레이어 탄환의 명중 효과는 탄환보다 한 단계 앞인 Order 2에 표시된다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
+필드 터렛의 베이스 그룹은 바닥(`Map / 0`) 위의 `Map / 1`을 사용한다. 포신과 발사대는 `Sort At Root`인 `Entities / 3`으로 그린다. 플레이어와 나무는 `Entities / 0`에서 월드 Y축으로 정렬한다. 레이저 빔은 별도 `Entities / 1` 그룹을 사용해 포신 앞을 덮지 않는다.
+
+[FieldTurretTreeMask](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretTreeMask.cs)는 같은 씬의 `Entities / 0` Individual 타일맵에서 `Overworld_Trees_` 스프라이트를 검색한다. 나무 접지점이 터렛보다 앞에 있고 실루엣의 범위가 포신과 겹칠 때 포신 그룹에 마스크를 적용한다. 겹침이 사라지면 평소의 마스크 설정을 복구한다. 과열 아지랑이도 포신과 같은 마스크를 사용한다. 재검증할 때는 실제로 양쪽 포신이 나무에 가려진 상태에서 캐논과 미사일을 같은 화면에 놓고 줌 아웃해 스프라이트와 가림을 함께 확인한다.
+
+`PlayerBullet`·`SniperBullet`·`PlayerTurretProjectile`·`bullet`·`Missile`의 비행 스프라이트는 `Entities / 1`을 사용한다. 플레이어 탄환의 명중 효과는 Order 2로 표시하며, 미사일 폭발 프리팹은 `Entities / 100`을 사용한다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
 
 현재 Enemy 타깃 선정은 등록된 `TargetableComponent`의 상태를 사용한다. 근접 공격의 사거리 판정은 대상의 활성 비트리거 콜라이더까지의 거리를 사용하며, 원거리 투사체의 피격은 Physics 2D 충돌 설정을 따른다.
 
@@ -309,7 +313,7 @@ Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드�
 
 아래 흐름도는 **현재 Canon/Missile 구현의 실제 호출 경로**다. 상자는 클래스의 메서드 또는 변경되는 상태를 뜻한다. 실패 조건과 생략된 연출은 본문에서 따로 설명한다. Stage 1 Laser도 공통 활성화·전력·냉각 경로를 사용한다.
 
-Canon·Missile·Laser의 과열 아지랑이는 `GunRenderer`의 현재 스프라이트를 중앙 기준으로 1.1배 확대하고, 그 윤곽 안에서 URP 2D의 Map Sorting Layer까지 캡처한 배경을 굴절시킨다. 열이 쌓이기 시작할 때부터 강해지고, 열이 0%가 되면 사라진다. 프리팹의 `Heat Wave Scale`로 윤곽 크기, 공용 머티리얼의 `Distortion (pixels)`로 최대 굴절 강도를 조절한다.
+Canon·Missile·Laser의 과열 아지랑이는 `GunRenderer`의 현재 스프라이트를 중앙 기준으로 1.1배 확대하고, 그 윤곽 안에서 URP 2D의 Map Sorting Layer까지 캡처한 배경을 굴절시킨다. 굴절 효과는 포신 뒤에 그려서 포신의 과열 틴트가 그대로 보인다. 열이 쌓이기 시작할 때부터 강해지고, 열이 0%가 되면 사라진다. 프리팹의 `Heat Wave Scale`로 윤곽 크기, 공용 머티리얼의 `Distortion (pixels)`로 최대 굴절 강도를 조절한다.
 
 Laser는 사거리 안의 적을 향해 회전하고, 포신이 조준 허용각에 들어오면 얇은 빔을 포구에서 사거리 끝까지 펼친다. 발사 순간 빔이 굵어지고 포구 위치와 방향이 고정된다. 빔 스프라이트는 길이 방향으로 늘어나며, 전용 재질이 포구에서 끝까지 알파를 낮춘다. 시각적 페이드는 사거리와 피해 판정에 영향을 주지 않는다. 발사가 끝나거나 터렛을 끄면 빔이 얇아지면서 동시에 포구 쪽으로 짧아진다. 조준하던 적을 놓쳤을 때도 빔이 포구로 돌아온 뒤에 다시 회전한다. 빔이 완전히 접히면 `Beam Restart Delay`가 지난 뒤에 다시 펼칠 수 있다. 피해는 발사 중에만 적용하며, 포구부터 사거리 경계까지 회전된 박스로 적을 조회한다. 같은 적의 여러 Collider는 틱마다 한 번만 집계한다. Stage 1의 초기 설정은 폭 0.8 유닛, 발사 3초, 피해 간격 0.25초, 빔 길이 전환 0.2초, 폭 축소 0.1초, 재전개 대기 0.3초다. 폭·시간·간격은 프리팹의 Laser Settings, 틱당 피해량과 조준 시간에 사용하는 발사율은 Definition에서 조절한다.
 
@@ -452,18 +456,20 @@ flowchart TD
     Init --> Move["FieldTurretBullet.Update()<br>정해진 방향으로 직진"]
     Move --> Collision["이동 구간 Cast 또는<br>OnCollisionEnter2D()"]
     Collision --> Hit["FieldTurretBullet.Hit()<br>명중 처리"]
-    Hit -->|적 명중| Damage["EnemyHealth.TakeDamage(int)<br>서버에서 피해 확정"]
+    Hit -->|적 명중| Damage["EnemyHealth.TryTakeDamage(int, Turret)<br>서버에서 피해 확정"]
     Hit --> Impact["접촉 위치에 ProjectileImpact 재생<br>탄환 제거"]
     Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
-Canon 포신은 Target을 향해 돌지만, **발사된 `FieldTurretBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TakeDamage()`는 서버에서 Network Spawn된 적에 대해서만 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
+Canon 포신은 Target을 향해 돌지만, **발사된 `FieldTurretBullet`은 몬스터를 추적하지 않는다.** `Initialize()` 때 발사 방향점으로 방향을 정한 뒤 직진하며 충돌한 Collider와 그 부모에서 `EnemyHealth`를 찾아 피해를 전달한다. `EnemyHealth.TryTakeDamage(..., AttackSourceType.Turret)`는 서버에서 Network Spawn된 적의 공격 허용 여부를 확인하고 피해를 적용한다. 발사체의 float 피해량은 `Mathf.RoundToInt()`로 변환한다. 현재 터렛 Damage는 int에서 전달하므로 기존 정수 공격력은 유지된다. 같은 탄환의 중복 충돌 피해를 차단한다. Target이 죽거나 사거리를 벗어나면 다음 탐색에서 새 대상을 찾는다.
 
-캐논 탄환은 이동 구간에서 탄환 콜라이더 모양으로 검사한다. 캐논 탄환을 막을 지형의 활성 비트리거 Collider2D 오브젝트에는 `FieldTurretBulletObstacle` 태그를 지정한다. 현재 `Default`와 `Forest` 물리 레이어의 지형을 검사하며, `Initial_Stage`와 `InitialStageTurretTest`의 나무·기물 타일맵에 태그가 지정되어 있다. 바닥은 태그 없이 둔다.
+캐논 탄환은 이동 구간에서 탄환 콜라이더 모양으로 검사한다. 캐논 탄환을 막을 지형의 활성 비트리거 Collider2D 오브젝트에는 `FieldTurretBulletObstacle` 태그를 지정한다. 현재 `Default`와 `Forest` 물리 레이어의 지형을 검사하며, `Stage_1`과 `InitialStageTurretTest`의 나무·기물 타일맵에 태그가 지정되어 있다. 바닥은 태그 없이 둔다.
 
-Canon·Missile·Laser의 새 표적 탐색과 자동 활성화용 적 수 집계는 `EnemyFeetBox` 콜라이더를 사용한다. 발사된 미사일의 재탐색도 같은 레이어를 조회한다. 캐논 탄환·미사일 폭발·레이저 빔은 `EnemyHitBox`에 닿았을 때 부모 `EnemyHealth`로 피해를 전달한다.
+Canon·Missile·Laser의 새 표적 탐색과 자동 활성화용 적 수 집계는 `EnemyFeetBox` 콜라이더를 사용한다. 발사된 미사일의 재탐색도 같은 레이어를 조회한다. 캐논 탄환·미사일 폭발·레이저 빔은 `EnemyHurtbox`에 닿았을 때 부모 `EnemyHealth`로 피해를 전달한다.
 
-Canon·Missile·Laser는 포신을 돌리기 전에 터렛 중심부터 목표 위치까지 같은 씬의 지형과 구조물을 `PhysicsScene2D.Linecast()`로 검사한다. 태그가 지정된 지형과 `CU`·`TurretBase` 레이어의 비트리거 콜라이더가 시야를 막으며, 자기 프리팹의 콜라이더는 검사에서 제외한다. 조준 중인 적이 가려지면 표적을 해제하고, 보이는 적이 있을 때만 포신을 돌린다. Missile은 가려진 적의 미발사 예약을 반환한다. 자동 활성화 순위는 버튼 시점의 사거리 내 적 수를 사용한다. 이미 발사된 미사일과 재생 중인 레이저 빔은 각 발사체와 빔의 규칙을 따른다.
+Canon과 Laser는 포신을 돌리기 전에 터렛 중심부터 목표 위치까지 같은 씬의 지형과 구조물을 `PhysicsScene2D.Linecast()`로 검사한다. `TurretSightBlocker`·`CU`·`TurretBase` 레이어 또는 `FieldTurretBulletObstacle` 태그가 있는 `Default` 레이어의 비트리거 콜라이더가 시야를 막는다. `Forest`와 자기 프리팹의 콜라이더는 시야 검사에서 제외한다. Missile은 장애물 뒤의 적도 사거리 내에서 조준한다. 이미 발사된 미사일의 충돌과 재생 중인 레이저 빔은 각자의 규칙을 따른다.
+
+표적 선택과 자동 활성화용 적 수 집계, 발사된 미사일의 재탐색은 `IAttackableEnemy.CanBeAttackedBy(AttackSourceType.Turret)`로 공격 허용 여부도 확인한다. Black Wolf는 플레이어만 공격할 수 있는 암살자이므로 터렛의 표적에서 제외된다.
 
 캐논 탄환은 적이나 장애물에 닿으면 플레이어 기본탄과 공유하는 `ProjectileImpact`를 접촉 지점에서 한 번 재생한다. 효과는 탄환과 같은 씬의 Sorting Layer에서 탄환보다 한 단계 앞에 그려진다.
 
@@ -474,14 +480,14 @@ flowchart TD
     Update["DefaultFieldMissileTurret<br>Update()"] --> Search["NoTargetInRange()<br>FindTarget()"]
     Search --> Collect["FieldTurretTargetingUtility<br>CollectByDistance()"]
     Collect --> RangeCheck["IsInAttackRange()<br>내부 범위 후보 제외"]
-    RangeCheck --> Filter["활성 EnemyController·지형 가림 확인<br>MissileTargetReservation.TryAcquire()"]
+    RangeCheck --> Filter["활성 EnemyController·터렛 공격 허용 확인<br>MissileTargetReservation.TryAcquire()"]
     Filter --> Targets["발사구별 예약 토큰과 Targets 지정<br>같은 목표의 추가 발은 Retain()"]
     Targets --> Rotate["RotateTowardsTarget()<br>포신 회전"]
     Rotate --> Fire["FireRateController()<br>최소·최대 거리 확인<br>발사 간격 확인"]
     Fire --> Shoot["FieldMissileTurretLV1~3<br>Shoot()"]
-    Shoot --> Init["LaunchMissiles()<br>FieldTurretMissile.Initialize(예약, Damage)"]
+    Shoot --> Init["LaunchMissiles()<br>발사구 XY와 터렛 중심 Z 사용<br>FieldTurretMissile.Initialize(예약, Damage)"]
     Init --> Transfer["Transfer()로 미사일에 소유권 이전<br>터렛 슬롯 정리는 이전된 예약에 영향 없음"]
-    Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈·지형 가림"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약 토큰만 Dispose()"]
+    Change["승급·강등·비활성화<br>또는 내부 진입·사거리 이탈·공격 불가"] --> Release["ReleaseUnlaunchedTargets()<br>발사 전 예약 토큰만 Dispose()"]
     Release --> Search
     Transfer --> Straight["잠시 직진 후<br>FixedUpdate()에서 추적"]
     Straight -->|목표 소실·비활성화| Retarget["SearchForNewTarget()<br>기존 토큰 반환 후 새 목표 예약"]
@@ -491,7 +497,7 @@ flowchart TD
     Unreserve --> Explosion["폭발 이펙트 생성"]
     Explosion --> Area["FixedUpdate()에서 0.1초 후<br>ApplyExplosionDamage()"]
     Area --> Health["EnemyHealth 조회<br>동일 적 콜라이더 중복 제거"]
-    Health --> Damage["EnemyHealth.TakeDamage(int)<br>서버에서 피해 확정"]
+    Health --> Damage["EnemyHealth.TryTakeDamage(int, Turret)<br>서버에서 피해 확정"]
     Damage -->|체력 0| Die["NetworkObject.Despawn()<br>네트워크 적 제거"]
 ```
 
@@ -499,11 +505,13 @@ Missile은 적 수가 부족하면 첫 Target을 두 번째 발사 슬롯에서�
 
 예약은 터렛 영역의 `MissileTargetReservation`이 관리하며 `EnemyController.IsTargeted`를 읽거나 변경하지 않는다. 발사 전에는 터렛이 토큰을 소유하고 `Initialize(예약, Damage)`가 `Transfer()`로 소유권을 가져간다. 발사 실패 시 미발사 토큰을 반환하고, 이미 이전된 토큰은 터렛 비활성화·승급으로 해제하지 않는다. `Initialize(Transform, Damage)`도 유지하며 직접 호출할 때는 미예약 목표를 새로 예약한다. 같은 목표에 여러 발을 의도적으로 발사할 때는 기존 토큰의 `Retain()`을 사용한다.
 
-미사일의 초기 직진 시간, 10초 수명과 0.1초 폭발 피해 지연은 `Time.time`을 `FixedUpdate()`에서 확인한다. 예약 반환을 코루틴 완료에 의존하지 않으며 폭발 시작·비활성화·파괴에서 자기 토큰만 반환한다. 미사일을 비활성화했다가 재활성화하면 기존 예약은 되살리지 않고 다음 물리 갱신에서 새 목표를 탐색한다. 수명은 최초 발사 시각을 기준으로 유지한다. 이 예약은 로컬 프로세스 안에서만 유효하며 네트워크 복제를 제공하지 않는다.
+미사일의 초기 직진 시간, 10초 수명과 0.1초 폭발 피해 지연은 `FieldSimulationTime.Seconds(this)`를 `FixedUpdate()`에서 확인한다. 예약 반환을 코루틴 완료에 의존하지 않으며 폭발 시작·비활성화·파괴에서 자기 토큰만 반환한다. 미사일을 비활성화했다가 재활성화하면 기존 예약은 되살리지 않고 다음 물리 갱신에서 새 목표를 탐색한다. 수명은 최초 발사 시각을 기준으로 유지한다. 이 예약은 로컬 프로세스 안에서만 유효하며 네트워크 복제를 제공하지 않는다.
 
 미사일의 최초 탐색과 비행 중 재탐색은 Collider와 그 부모의 활성 `EnemyController`를 기준으로 한다. 최초 탐색은 EnemyController Transform의 최소 및 최대 사거리도 검사한다. 선택된 EnemyController의 Transform을 기존 유도 이동이 추적한다. 같은 Enemy의 여러 Collider가 최초 탐색 슬롯에 중복 등록되지 않도록 한다. 비행 중 재탐색은 기존 300 단위 탐색 반경을 유지하며 터렛의 최소 사거리를 다시 적용하지 않는다.
 
-폭발 피해는 범위에 겹치는 `EnemyHitBox`의 부모 `EnemyHealth`에 전달하고, 동일 적은 한 번만 피해를 적용한다. 충돌 및 수명 종료가 겹쳐도 동일 미사일의 폭발 처리는 한 번만 수행한다. 발사체 이동과 서버 전용 피해 API를 연결한 PoC이며 터렛 및 발사체 전체의 네트워크 동기화나 권한 구조를 완성한 것은 아니다. Host에서 Network Spawn된 적을 대상으로 추적과 HP 감소 및 사망 Despawn을 검증해야 한다. 기존 Monster만 있는 적은 더 이상 이 피해 API로 체력이 감소하지 않는다.
+미사일은 `Missile` 물리 레이어를 사용하고, Stage1에서 쓰는 충돌 매트릭스의 `Missile × EnemyHurtbox` 쌍이 켜져 있어야 접촉 콜백을 받는다. 피격 Trigger는 `OnTriggerEnter2D`, 비트리거 접촉은 `OnCollisionEnter2D`를 거쳐 폭발한다. 지형 뒤의 적 추적을 위해 현재 매트릭스의 미사일과 지형 충돌 쌍은 꺼져 있다. 발사체 Z는 터렛 중심에 맞추고 실제 발사 성공 후 `isShoot`을 필드 시간 0.6초 동안 켠다.
+
+폭발 피해는 범위에 겹치는 `EnemyHurtbox`의 부모 `EnemyHealth.TryTakeDamage(..., AttackSourceType.Turret)`에 전달한다. 같은 적에 콜라이더가 여러 개 있어도 한 번만 처리하고, 접촉과 수명 종료가 겹쳐도 한 번만 폭발한다. 권한과 공격 허용 정책은 Enemy 측 API를 따른다. Host에서 Network Spawn된 적을 기준으로 추적·접촉·HP 감소·사망 Despawn을 확인한다.
 
 ### 4.5 과열과 냉각
 
@@ -521,7 +529,7 @@ flowchart TD
     Complete -->|false| Ready["꺼진 상태 유지<br>재활성화 허용"]
 ```
 
-과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile은 실제로 한 발 이상 발사한 일제 사격마다 카운트가 1씩 증가하므로 한 번에 여러 발을 쏴도 발사 1회로 센다. 과열까지 1회가 남았다면 해당 묶음을 모두 발사한 직후 타깃·시야각과 무관하게 냉각에 진입한다. 유효한 예약이 없어 한 발도 발사하지 못하면 카운트를 올리지 않는다. 과열 기준은 `OverHeatMissileCount`, 과열 후 냉각 시간은 `CoolTime`이 정한다.
+과열 중에는 `IsActivated`와 예약 전력을 유지하지만 `IsOperational`만 `false`다. 따라서 수동 비활성화와 과열을 같은 상태로 취급하지 않는다. Missile은 실제로 한 발 이상 발사한 일제 사격마다 카운트가 1씩 증가하므로 한 번에 여러 발을 쏴도 발사 1회로 센다. 과열까지 1회가 남았다면 해당 묶음을 모두 발사한 직후 타깃·시야각과 무관하게 냉각에 진입한다. 유효한 예약이 없어 한 발도 발사하지 못하면 카운트를 올리지 않는다. 실제 발사에 성공하면 각 레벨의 `CamoRocketLV1~3` Animator가 발사 클립을 재생한다. 과열을 일으킨 마지막 일제 사격도 발사 동작을 재생한다. 과열 기준은 `OverHeatMissileCount`, 과열 후 냉각 시간은 `CoolTime`이 정한다.
 
 냉각 시작 시 미발사 타깃 예약은 즉시 반환하며 이미 비행 중인 미사일의 예약은 유지한다. 발사 후 유효한 타깃을 다시 확보하는 과정에서는 열을 줄이지 않고, 탐색해도 타깃이 없을 때만 기존 자연 냉각을 적용한다.
 
@@ -554,6 +562,8 @@ Canon/Missile의 과열 냉각과 비활성화 후 냉각은 `FieldTurretBase.Be
 ### 사거리 표시
 
 실제 탐지와 원형 Sprite는 모두 `EffectiveRange`를 사용한다. `FieldTurretBase.RefreshRangeVisual()`은 Sprite의 월드 크기와 부모 Scale을 고려해 표시 원의 지름을 `EffectiveRange × 2`로 맞춘다. 세부 업그레이드로 사거리가 변하면 바로 다시 계산한다.
+
+Unity 에디터에서는 터렛을 선택하지 않아도 탐지 중심에 최대·최소 사거리 Gizmo가 표시된다. Scene 또는 Game 뷰의 Gizmos 토글로 숨기거나, 드롭다운에서 터렛 스크립트 항목만 끌 수 있다. 플레이 중 선택 UI와 테스트 씬 패널의 사거리 Sprite는 각각 기존 표시 설정을 따른다.
 
 ## 6. 업그레이드와 밸런스 규칙
 

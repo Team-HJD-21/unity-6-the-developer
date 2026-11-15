@@ -49,6 +49,7 @@ GameObject:
   - component: {fileID: 2493598305443031704}
   - component: {fileID: 5224976065001499969}
   - component: {fileID: 389050713438690386}
+  - component: {fileID: 3560560915207390308}
   m_Layer: 21
   m_Name: PlayerTurret
   m_TagString: Untagged
@@ -610,3 +611,15 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &3560560915207390308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5037733788499361552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdc83368982bc2d428eb44f3d09cdbdb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInstallationHealthTarget

@@ -27,14 +27,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private CancellationToken _gameplay;
         private MatchId _match;
         private IDisposable _timer;
-        private bool _bound, _authority;
+        [NonSerialized] private bool _bound, _authority;
         private long _transition;
         public event Action Changed;
         public event Action PhaseAdvanced;
         public DayNightPhase Phase { get; private set; }
         public DefinitionId TimeOfDayId => !_bound ? default : new DefinitionId(Phase == DayNightPhase.Day ? "day" : "night");
         public bool IsAuthority => _bound && _authority;
-        public double RemainingSeconds => IsAuthority ? _cycle.GetRemainingSeconds(_clock.ElapsedSeconds) : ReadReplicaRemainingSeconds();
+        public double RemainingSeconds => IsAuthority && _cycle != null && _clock != null
+            ? _cycle.GetRemainingSeconds(_clock.ElapsedSeconds) : ReadReplicaRemainingSeconds();
         public bool CanRestartCurrentPhase => MayAdvance;
 
         /// <summary>Host 디버그 HUD가 사용합니다. 현재 구간을 재시작하고 기존 경계 예약을 교체하며, 날씨 자체는 선택하지 않습니다.</summary>
@@ -107,6 +108,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void OnEnable()
         {
+            // 스크립트 재로드로 소유권 플래그만 남은 경우 이전 Match의 반쪽 바인딩을 재개하지 않습니다.
+            if (_bound && _authority && (_clock == null || _cycle == null || _mayWrite == null)) Release();
             if (!MayAdvance)
                 return;
             ApplyCurrentTime(true);
@@ -119,7 +122,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 ApplyCurrentTime(true);
         }
 
-        private bool MayAdvance => IsAuthority && isActiveAndEnabled && !_gameplay.IsCancellationRequested && _mayWrite();
+        private bool MayAdvance => IsAuthority && _clock != null && _cycle != null && _mayWrite != null &&
+            isActiveAndEnabled && !_gameplay.IsCancellationRequested && _mayWrite();
 
         private void ScheduleNext()
         {

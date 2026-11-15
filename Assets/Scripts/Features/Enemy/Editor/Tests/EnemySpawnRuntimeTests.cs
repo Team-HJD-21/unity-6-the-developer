@@ -34,11 +34,11 @@ public sealed class EnemySpawnRuntimeTests
 
     private static IEnumerator VerifyCurrentStage()
     {
-        EnemyNetworkTestLauncher launcher = null;
+        EncounterSceneBinding launcher = null;
         float deadline = Time.realtimeSinceStartup + 25;
         while (Time.realtimeSinceStartup < deadline)
         {
-            launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+            launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
             if (launcher != null && !launcher.BoundMatchId.IsEmpty && launcher.ExecutionTarget != null &&
                 launcher.ExecutionTarget.CountForMatch(launcher.BoundMatchId) > 0) break;
             yield return null;

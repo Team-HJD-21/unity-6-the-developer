@@ -22,14 +22,16 @@
 
 진입점은 `PlayerAttack.LateUpdate` → `TryFire` → `PlayerCryoSpray.ApplyDamage`입니다. 같은 컴포넌트의 `Show`가 총구와 연속 조준 방향에 `CryoSprayVfx.prefab`을 연결합니다. Enemy·터렛의 API와 사운드는 변경하지 않습니다.
 
-- 임시 조정값은 피해 8/틱, 틱 간격 0.1초, 총구부터 사거리 4.5, 시작 반폭 0.12·끝 반폭 1.4입니다. 월드 단위이며 `PlayerAttack`과 `PlayerCryoSpray` Inspector에서 조절합니다. 여러 실제 `EnemyHitBox`가 있어도 하나의 `EnemyHealth`에는 틱당 한 번만 피해를 전달합니다. 한 틱의 공격력·치명타 결과는 범위 내 대상들이 공유합니다.
+- 임시 조정값은 피해 8/틱, 틱 간격 0.1초, 총구부터 사거리 4.5, 시작 반폭 0.12·끝 반폭 1.4입니다. 월드 단위이며 `PlayerAttack`과 `PlayerCryoSpray` Inspector에서 조절합니다. 여러 실제 `EnemyHurtbox`가 있어도 하나의 `EnemyHealth`에는 틱당 한 번만 피해를 전달합니다. 한 틱의 공격력·치명타 결과는 범위 내 대상들이 공유합니다.
 - 적 몸체와 장애물에 가린 부분에는 피해를 주지 않습니다. 앞의 적 몸체는 같은 방향의 뒤쪽 적을 막지만, 옆으로 퍼진 냉기에 닿는 다른 적은 함께 맞습니다. 해당 틱의 후보를 먼저 확정해 앞의 적이 그 틱에 죽어도 뒤쪽으로 피해가 새지 않게 합니다. 총구가 본체 안에 들어간 경우도 시작점 겹침 검사로 처리하며, `EnemySensor`·이동용 콜라이더는 피해·가림 후보에서 제외합니다.
+- main의 공용 `Clock`/기존 필드 `FieldClock` 분리 이후에는 시계 객체 참조 대신 `Snapshot.MatchId`와 실행 세대 `Epoch`로 동일 판을 확인합니다. 피해와 냉기 가림이 같은 검사를 사용하며, 필드가 보류된 적·다른 판·이전 실행 세대·시간 원본 미준비 대상은 제외합니다. 양쪽 모두 Match 바인딩이 없는 독립 시험은 허용합니다.
+  2026-11-15 후속: 실제 `FieldSimulationClock`을 사용하는 회귀 시험에서 수정 전 HP가 줄지 않는 현상을 재현했고 수정 후 `PlayerCryoSprayTests` 16/16이 통과했습니다. 같은 판의 분리된 시계, 앞 몸체 차폐, 옆 분사 피해, 다른 Match/실행 세대 제외, Field 보류·재개를 검사했습니다. 실제 Field Scene 수동 사격과 네트워크 인수는 별도입니다.
 - 분사 파티클에도 같은 범위·가림 규칙을 적용해 적 몸체나 벽 뒤로 흐르지 않게 합니다. `vfx/player-cryo-spray` Presentation 난수로 시작 seed만 받아 기존 난수 규칙을 따릅니다. 필드 시간으로 수동 재생하고, 연속 입력에는 인스턴스를 재사용합니다. 냉각 잔량은 HUD와 상태창에서 `100%`부터 표시하며 내부 15회 소모량의 잔여 비율을 올림합니다(첫 틱 후 `94%`). 기본총·스나이퍼는 기존 잔탄/용량 표시를 사용합니다. 모든 총기의 재장전은 기존 1.5초의 절반인 0.75초입니다. 버튼 해제/재장전/무기 전환 시 방출을 멈추고, 조작 차단/필드 정지/비활성/체크포인트 복원 시 잔여 표시를 비웁니다.
 - 이동 중 분사 표시는 현재 총구의 연속 공격 영역을 따릅니다. 월드 파티클 속도 13~15보다 플레이어 이동속도 17이 빨라 전진 시 파티클을 추월하던 문제를 수정했습니다. 파티클을 효과 루트의 Custom simulation space에서 진행하고, 범위·벽·적 차폐는 월드 좌표로 변환해서 검사합니다. 이동속도나 공격 판정 사거리를 바꾸지는 않습니다.
 - 현행 왼쪽 아래 무기 패널의 잔량 표시는 `CombatPlayerIndicators`가 담당합니다. 냉각총은 큰 잔량 숫자와 작은 `%`로 표시하고 기본총·스나이퍼는 기존 잔탄/용량을 표시합니다. 구형 `PlayerWeaponAmmoView`는 HUD v6 프리팹에서 비활성 상태를 유지하며, 새 패널과 상태창 모두 `PlayerWeaponAmmo.UsesPercentage`/`CurrentPercentage`를 읽습니다.
   `CombatHudPresentationTests.CryoMagazineDockUpdatesPercentageOnActualHudFrames`는 제작 HUD를 실제 Player에 연결한 Play Mode 프레임에서 `100%` → 기본총 `15 / 15` → 냉각총 `100%` → 소비 후 `94%`를 확인했으며 통과했습니다. 갱신 메서드를 수동 호출하지 않습니다.
 - **현재는 대미지만 적용합니다.** `ISlowEffectReceiver` 호출과 실제 감속은 후속 작업입니다. Enemy 이동과 구형 `MonsterSlowDebuff`는 수정하지 않습니다.
-- `SniperBullet.prefab`의 `_piercesEnemies`는 적을 관통하게 합니다. 한 탄환은 같은 `EnemyHealth`의 여러 Collider를 한 번으로 합치고 논리 Entity ID로 피해 이력을 보관합니다. `EnemyHitBox`만 피격 후보이며 `EnemySensor`와 적의 이동용 본체는 통과합니다. 지형·나무·포탑·CU·플레이어 설치물의 유효 본체에서는 정지합니다.
+- `SniperBullet.prefab`의 `_piercesEnemies`는 적을 관통하게 합니다. 한 탄환은 같은 `EnemyHealth`의 여러 Collider를 한 번으로 합치고 논리 Entity ID로 피해 이력을 보관합니다. `EnemyHurtbox`만 피격 후보이며 `EnemySensor`와 적의 이동용 본체는 통과합니다. 지형·나무·포탑·CU·플레이어 설치물의 유효 본체에서는 정지합니다.
 - 관통 Cast 결과를 거리순으로 처리하므로 같은 물리 틱에 여러 적이 있어도 가까운 적부터 적용하고, 벽 뒤의 적은 맞히지 않습니다. 각 적의 피해는 `TryTakeDamage(..., AttackSourceType.Player)`와 암살자의 감지 규칙을 따릅니다. 플레이어 터렛 탄환은 변경하지 않습니다.
 - 상태창은 냉각 공격을 `연속 분사`로 표시하고 `PlayerCryoSpray.Range`에서 사거리를 읽습니다. 피해량은 틱당 수치이며 탄환 수·탄속은 적용하지 않습니다. `/weapon` 체크포인트는 v3이며 관통 이력을 함께 저장합니다. v1/v2는 기존 탄창 마이그레이션을 유지하고 빈 관통 이력으로 읽습니다. 기존 저장에 남은 냉각탄의 속도·남은 수명은 보존합니다. 새 v3 관통탄은 복원 뒤 같은 적에게 피해를 반복하지 않습니다. 분사 파티클 자체는 저장하지 않습니다.
 
@@ -50,9 +52,9 @@ UI 위의 휠과 Shift+휠은 무기 전환에서 제외합니다. 테스트 카
 
 `Player.prefab`의 `PlayerEnemyDetector` 자식에 별도 CircleCollider2D Trigger를 배치합니다. 반경은 조정용 임시값입니다. 2026-11-15에 탐지 반경을 1.5배로 확대하여, Collider의 로컬 radius 5.625는 현재 Player 배율 0.8에서 월드 반경 4.5입니다. 중심은 발밑에 가까운 로컬 (0, 0.2)이며 Inspector의 CircleCollider2D에서 조절합니다.
 
-진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. 2026-11-13부터 `useTriggers = true`와 `EnemyHitBox` 레이어 마스크로 실제 피격 Trigger를 조회합니다. 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
+진입점은 `PlayerEnemyDetector.FixedUpdate` → `RefreshDetection` → `CircleCollider2D.Overlap`입니다. 2026-11-13부터 `useTriggers = true`와 `EnemyHurtbox` 레이어 마스크로 실제 피격 Trigger를 조회합니다. 부모 `EnemyDetection`을 찾아 자신의 컴포넌트 `GetInstanceID()`로 `RegisterDetector`를 호출합니다. EnemyDetection의 중복 없는 등록 계약을 사용하며, 적 하나의 여러 Collider를 합쳐 처리합니다. 범위에서 완전히 벗어나거나 대상이 비활성화되면 해당 ID만 `UnregisterDetector`합니다. 플레이어 사망·감지 컴포넌트/Collider 비활성화·권한 상실·우주선 이동·Match 취소 시에도 정리합니다. 적의 풀 재활성화나 범위 안에서 감지가 켜지는 경우를 놓치지 않도록 매 물리 스텝에 현재 겹침을 재조정합니다.
 
-감지 Collider는 `PlayerFeetBox` 레이어를 사용하며 Collider별 exclude 설정으로 `EnemyHitBox`에만 접촉을 허용합니다. 적 탄환과 `EnemySensor` 레이어의 감지 Trigger는 제외하므로 새 범위가 플레이어의 피격 범위나 몬스터의 플레이어 탐지 범위로 쓰이지 않습니다. Enemy 근접 공격 거리 검사도 Trigger를 제외합니다. 전역 Layer Collision Matrix는 변경하지 않습니다. 벽 차폐·감지 업그레이드는 이번 연결에 포함하지 않습니다. 은신 표시는 기존 `EnemyStealthVisual`이 `EnemyDetection.DetectionChanged`를 받아 처리합니다.
+감지 Collider는 `PlayerFeetBox` 레이어를 사용하며 Collider별 exclude 설정으로 `EnemyHurtbox`에만 접촉을 허용합니다. 적 탄환과 `EnemySensor` 레이어의 감지 Trigger는 제외하므로 새 범위가 플레이어의 피격 범위나 몬스터의 플레이어 탐지 범위로 쓰이지 않습니다. Enemy 근접 공격 거리 검사도 Trigger를 제외합니다. 전역 Layer Collision Matrix는 변경하지 않습니다. 벽 차폐·감지 업그레이드는 이번 연결에 포함하지 않습니다. 은신 표시는 기존 `EnemyStealthVisual`이 `EnemyDetection.DetectionChanged`를 받아 처리합니다.
 
 플레이어 탄환(`PlayerBullet`, 냉각·스나이퍼 포함), 스패너(`PlayerSpannerWeapon`), 폭탄(`PlayerBombAreaDamage`)은 `EnemyHealth.TryTakeDamage(damage, AttackSourceType.Player)`를 호출합니다. `EnemyAssassinDamageRule`은 감지된 동안의 직접 Player 공격만 허용합니다. `PlayerTurretProjectile`은 기존 출처를 유지하므로 감지된 암살자에게도 피해를 주지 않습니다.
 
@@ -199,7 +201,7 @@ RuntimeState의 체력을 외부에서 직접 바꾸지 않습니다. 살아 있
 
 현재 Player는 `PlayerWeaponVisual.ContinuousAim`이 계산한 손잡이 기준 마우스 방향을 `PlayerWeaponRig.TryGetContinuousAimDirection`으로 전달한다. `PlayerAttack`은 이 방향을 우선 사용하고, `TryGetMuzzle`은 회전된 Sprite의 실제 총구 위치를 받는다. 기존 자세 방식은 이전 방향·총구 조회를 유지한다. 네 무기의 표시 설정과 검증 범위는 [몸체·무기 분리 API](player-weapon-appearance-api.md#2026-11-12-space-man-몸체와-자유-조준)를 참고한다.
 
-2026-11-13 스패너 피격 대상: `PlayerSpannerWeapon.ApplyMeleeDamage`는 `EnemyHitBox` 레이어만 Overlap 검색한다. `ContactFilter2D.useTriggers`로 피격용 Trigger를 포함하며 `EnemySensor`와 `EnemyFeetBox`는 피해 후보에 넣지 않는다. 현재 프로젝트처럼 Physics2D의 `Queries Hit Triggers`가 켜져 있어야 Trigger 피격을 검색할 수 있으며, 공격 코드에서 이 전역 설정을 변경하지 않는다. 실제 HitBox의 `ClosestPoint`로 전방·사거리·장애물을 확인하고 부모 `EnemyHealth`마다 타격당 한 번만 피해를 적용한다. 감지 센서가 플레이어를 포함해도 사거리 밖·뒤쪽·벽 뒤의 HitBox는 피해를 받지 않는다. 감지 컴포넌트와 적 피해 권한 경로는 기존 동작을 유지한다.
+2026-11-13 스패너 피격 대상: `PlayerSpannerWeapon.ApplyMeleeDamage`는 `EnemyHurtbox` 레이어만 Overlap 검색한다. `ContactFilter2D.useTriggers`로 피격용 Trigger를 포함하며 `EnemySensor`와 `EnemyFeetBox`는 피해 후보에 넣지 않는다. 현재 프로젝트처럼 Physics2D의 `Queries Hit Triggers`가 켜져 있어야 Trigger 피격을 검색할 수 있으며, 공격 코드에서 이 전역 설정을 변경하지 않는다. 실제 HitBox의 `ClosestPoint`로 전방·사거리·장애물을 확인하고 부모 `EnemyHealth`마다 타격당 한 번만 피해를 적용한다. 감지 센서가 플레이어를 포함해도 사거리 밖·뒤쪽·벽 뒤의 HitBox는 피해를 받지 않는다. 감지 컴포넌트와 적 피해 권한 경로는 기존 동작을 유지한다.
 
 ## 2026-11-09 탄창과 재장전
 

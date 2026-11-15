@@ -9,8 +9,10 @@ using UnityEngine;
 
 namespace TeamHJD.Game.Infrastructure
 {
-    public sealed class NgoNetworkSession : INetworkSession
+    public sealed class NgoNetworkSession : INetworkSession, INetworkConnectionStatus
     {
+        // Anchor에 공용/Field 시간 변수를 함께 사용하는 첫 wire 버전입니다. 옛 Build와 접속을 섞지 않습니다.
+        public const ushort CoreProtocolVersion = 1;
         private readonly NetworkManager _manager;
         private bool _ownsConnection;
         private bool _isDisposed;
@@ -21,6 +23,10 @@ namespace TeamHJD.Game.Infrastructure
         public IReadOnlyCollection<ulong> ConnectedPeerIds => new List<ulong>(_readyPeers).AsReadOnly();
         public NetworkConnectionState State { get; private set; }
         public bool IsServer => !_isDisposed && _manager != null && _manager.IsServer && _manager.IsListening;
+        public bool IsListening => !_isDisposed && _manager != null && _manager.IsListening;
+        public bool IsClient => IsListening && _manager.IsClient;
+        public bool IsHost => IsListening && _manager.IsHost;
+        public int ConnectedClientCount => IsServer ? _manager.ConnectedClientsIds.Count : 0;
         public ulong LocalConnectionId => !_isDisposed && _manager != null ? _manager.LocalClientId : 0;
         public event Action<NetworkConnectionState> StateChanged;
         public event Action<ulong> PeerConnected;
@@ -49,6 +55,7 @@ namespace TeamHJD.Game.Infrastructure
             if (_manager.IsListening || _manager.ShutdownInProgress ||
                 State == NetworkConnectionState.StartingHost || State == NetworkConnectionState.StartingClient)
                 return false;
+            _manager.NetworkConfig.ProtocolVersion = CoreProtocolVersion;
             SetState(host ? NetworkConnectionState.StartingHost : NetworkConnectionState.StartingClient);
             if (_isDisposed) return false;
             // SDK 콜백은 Start 호출 중에도 발생합니다. 소유권은 호출 전에 설정합니다.

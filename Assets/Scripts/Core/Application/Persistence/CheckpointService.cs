@@ -27,6 +27,8 @@ namespace TeamHJD.Game.Application
         public MatchId MatchId => _runtime.Config.MatchId;
         public Guid Epoch => !_disposed && _runtime.IsCurrent && _runtime.Time.IsAvailable ? _runtime.Time.Snapshot.Epoch : Guid.Empty;
         public bool IsBusy => Volatile.Read(ref _busy) != 0;
+        public CheckpointSlot LastSavedSlot { get; private set; }
+        public CheckpointData LastSavedData { get; private set; }
         public int ParticipantCount => _participants.Count;
         /// <summary>조립부가 요구했지만 아직 등록되지 않은 writer 키입니다. UI/진단은 이 목록으로 연결 대기를 설명합니다.</summary>
         public IReadOnlyList<string> MissingParticipantKeys => Array.AsReadOnly(_requiredKeys.Where(key => !_participants.ContainsKey(key)).ToArray());
@@ -91,6 +93,7 @@ namespace TeamHJD.Game.Application
                     finally { _mutating = false; }
                 }
                 await _store.SaveAsync(slot, data, linked.Token);
+                LastSavedSlot = slot; LastSavedData = data;
                 return Result(id, CheckpointOperationStatus.Saved, "Saved", data, epoch: epoch);
             }
             catch (Exception error) { return Failure(id, error, data, epoch); }
@@ -150,7 +153,13 @@ namespace TeamHJD.Game.Application
                 if (steps.Count == 0) throw new InvalidDataException("No restorable world state was supplied.");
                 cancellation.ThrowIfCancellationRequested(); RequireReady(capture: false);
                 started = true; _runtime.BeginRestore(data.GameSeconds);
-                foreach (var step in steps) { cancellation.ThrowIfCancellationRequested(); RequireReady(capture: false); step.Apply(); }
+                // Field 시각은 냉각/수명/예약을 복원하는 모든 Feature보다 먼저 적용합니다.
+                foreach (var step in steps.OfType<ICheckpointClockRestoreStep>()) step.Apply();
+                foreach (var step in steps)
+                {
+                    if (step is ICheckpointClockRestoreStep) continue;
+                    cancellation.ThrowIfCancellationRequested(); RequireReady(capture: false); step.Apply();
+                }
                 // 단순 적용 순서만으로는 뒤에 재생성될 다른 Feature의 과거 instance를 참조할 수 있습니다.
                 foreach (var step in steps)
                 {
@@ -168,7 +177,9 @@ namespace TeamHJD.Game.Application
                     var rollbackErrors = new List<Exception>();
                     Try(() => _runtime.BeginRestore(before.GameSeconds), rollbackErrors);
                     // 예약은 전역 시간 복원으로 취소됐으므로 아직 Apply하지 않은 Feature의 백업도 다시 연결합니다.
-                    for (int i = steps.Count - 1; i >= 0; i--) Try(steps[i].Rollback, rollbackErrors);
+                    foreach (var step in steps.OfType<ICheckpointClockRestoreStep>()) Try(step.Rollback, rollbackErrors);
+                    for (int i = steps.Count - 1; i >= 0; i--)
+                        if (steps[i] is not ICheckpointClockRestoreStep) Try(steps[i].Rollback, rollbackErrors);
                     // 역순 백업 복구가 끝나야 최종 대상 instance가 확정됩니다. 복구 중에는 취소를 다시 적용하지 않습니다.
                     foreach (var step in steps)
                         if (step is ICheckpointReferenceRestoreStep references) Try(references.ResolveRollbackReferences, rollbackErrors);

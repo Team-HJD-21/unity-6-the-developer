@@ -205,6 +205,7 @@ public sealed class StagePlayerVitalsView : MonoBehaviour
 
     private void ShowPlayerHealth(int current, int maximum)
     {
+        if (combatPlayer != null) combatPlayer.SetPrimaryShield(_player != null ? _player.GetComponent<PlayerPortalSkill>()?.ShieldHealth ?? 0 : 0);
         if (_lastHealth == current && _lastMaxHealth == maximum) return;
         _lastHealth = current;
         _lastMaxHealth = maximum;

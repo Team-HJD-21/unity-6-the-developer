@@ -626,7 +626,7 @@ public sealed class PlayerBulletRuntimeTests
         var body = target.AddComponent<Rigidbody2D>();
         body.gravityScale = 0f;
         var hitbox = new GameObject("Untagged child hitbox");
-        hitbox.layer = tag == "Enemy" ? LayerMask.NameToLayer("EnemyHitBox") : target.layer;
+        hitbox.layer = tag == "Enemy" ? LayerMask.NameToLayer("EnemyHurtbox") : target.layer;
         hitbox.transform.SetParent(target.transform, false);
         hitbox.AddComponent<CircleCollider2D>().radius = .6f;
         return body;
@@ -644,7 +644,7 @@ public sealed class PlayerBulletRuntimeTests
     {
         var obstacle = new GameObject($"Bullet obstacle {layer} {tag}");
         _targets.Add(obstacle);
-        obstacle.layer = LayerMask.NameToLayer(tag == "Enemy" ? "EnemyHitBox" : layer);
+        obstacle.layer = LayerMask.NameToLayer(tag == "Enemy" ? "EnemyHurtbox" : layer);
         obstacle.tag = tag;
         obstacle.transform.position = _muzzle.position + Vector3.down * .55f;
         var hitbox = obstacle.AddComponent<BoxCollider2D>();

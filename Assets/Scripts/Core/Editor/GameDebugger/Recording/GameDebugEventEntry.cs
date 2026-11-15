@@ -14,12 +14,19 @@ namespace TeamHJD.Game.Editor
         public double GameSeconds, RealSeconds;
         public int PlannedCount, ActualCount;
         public bool IsExecutionCountUnknown;
+        public bool HasOriginArea;
+        public double OriginX, OriginY, OriginWidth, OriginHeight;
         public static GameDebugEventEntry Copy(GameDiagnosticEvent item) => new GameDebugEventEntry {
             Sequence=item.Sequence, MatchId=item.MatchId.ToString(), Revision=item.Revision, RequestId=item.RequestId,
             EnemyType=item.EnemyType, SpawnPointId=item.SpawnPointId, EntityId=item.EntityId, Message=item.Message,
             Source=item.Source, Kind=item.Kind, GameSeconds=item.GameSeconds, RealSeconds=item.RealSeconds,
             PlannedCount=item.PlannedCount, ActualCount=item.ActualCount, SquadOrder=item.SquadOrder,
             IsExecutionCountUnknown=item.IsExecutionCountUnknown,
+            HasOriginArea=item.ExecutionContext?.Origin.Area != null,
+            OriginX=item.ExecutionContext?.Origin.Area?.Center.X ?? 0,
+            OriginY=item.ExecutionContext?.Origin.Area?.Center.Y ?? 0,
+            OriginWidth=item.ExecutionContext?.Origin.Area?.Width ?? 0,
+            OriginHeight=item.ExecutionContext?.Origin.Area?.Height ?? 0,
             RequestGuid=item.ExecutionContext?.RequestGuid==Guid.Empty?null:item.ExecutionContext?.RequestGuid.ToString("N"),
             CauseEventId=item.ExecutionContext?.CauseEventId==Guid.Empty?null:item.ExecutionContext?.CauseEventId.ToString("N"),
             OriginKind=item.ExecutionContext?.Origin.Kind.ToString(),DeliveryMode=item.ExecutionContext?.Origin.Delivery.ToString(),

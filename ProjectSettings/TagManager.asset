@@ -31,7 +31,7 @@ TagManager:
   - Ground_1
   - Enemy
   - Bullet
-  - 
+  - Missile
   - 
   - MiniMap
   - CU
@@ -41,15 +41,15 @@ TagManager:
   - EnemyProjectile
   - Camera
   - PlayerFeetBox
-  - PlayerHitBox
+  - PlayerHurtbox
   - PocInteractArea
   - PlayerFieldDevice
   - EnemySensor
-  - EnemyHitBox
+  - EnemyHurtbox
   - EnemyFeetBox
   - TurretBase
-  - 
-  - 
+  - TurretSightBlocker
+  - WorldGeometry
   - 
   - 
   - 
@@ -57,6 +57,9 @@ TagManager:
   m_SortingLayers:
   - name: Map
     uniqueID: 2025306083
+    locked: 0
+  - name: Territory
+    uniqueID: 1894048017
     locked: 0
   - name: Default
     uniqueID: 0

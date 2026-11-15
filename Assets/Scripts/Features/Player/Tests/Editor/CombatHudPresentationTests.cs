@@ -34,6 +34,38 @@ public sealed class CombatHudPresentationTests
     }
 
     [UnityTest]
+    public IEnumerator PortalShieldUsesBlueHealthBarSegmentAndUpdatesWithoutHealthLoss()
+    {
+        yield return new EnterPlayMode();
+        _player=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab"),new Vector3(10000,10000),Quaternion.identity);
+        _player.GetComponent<PlayerInputHandler>().enabled=false;
+        var clock=new PlayerAutomaticRecoveryTests.Clock();
+        TeamHJD.Game.Presentation.Scene.FieldSimulationActor.Attach(_player,clock);
+        _hud=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/InitialStagePlayerHUD.prefab"));
+        _hud.GetComponent<InitialStagePlayerHUD>().enabled=false;
+        _hud.GetComponent<Canvas>().enabled=true;
+        var vitals=_hud.GetComponent<StagePlayerVitalsView>();var health=_player.GetComponent<PlayerInfo>();vitals.BindPlayer(health);
+        var bar=_hud.GetComponentsInChildren<CombatVitalsGroup>(true).Single(group=>!group.RightEdge).Primary;
+        var portal=_player.GetComponent<PlayerPortalSkill>();
+        var grant=typeof(PlayerPortalSkill).GetMethod("GrantArrivalShield",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+        Assert.That(bar.ShieldFill,Is.Not.Null);Assert.That(_player.transform.Find("Portal Arrival Shield"),Is.Null);
+        grant.Invoke(portal,null);
+        yield return Until(()=>bar.Shield==20);
+        Assert.That(bar.Current,Is.EqualTo(400));Assert.That(bar.Maximum,Is.EqualTo(400));
+        Assert.That(bar.ShieldFill.enabled,Is.True);Assert.That(bar.ShieldFill.color.b,Is.GreaterThan(bar.ShieldFill.color.r));
+        Assert.That(bar.Fill.fillAmount,Is.EqualTo(400f/420).Within(.001));Assert.That(bar.ShieldFill.fillAmount,Is.EqualTo(1));
+        Assert.That(bar.ShieldFill.transform.GetSiblingIndex(),Is.LessThan(bar.Fill.transform.GetSiblingIndex()));
+        health.ApplyDamage(7);yield return Until(()=>bar.Shield==13);
+        Assert.That(bar.Current,Is.EqualTo(400));
+        health.ApplyDamage(20);yield return Until(()=>bar.Shield==0&&bar.Current==393);
+        Assert.That(bar.ShieldFill.enabled,Is.False);
+        grant.Invoke(portal,null);Assert.That(portal.ShieldHealth,Is.Zero);
+        clock.Now=15;grant.Invoke(portal,null);yield return Until(()=>bar.Shield==20);
+        clock.Now=17.01;yield return Until(()=>bar.Shield==0);
+        Assert.That(bar.ShieldFill.enabled,Is.False);vitals.Unbind();Assert.That(bar.Shield,Is.Zero);
+    }
+
+    [UnityTest]
     public IEnumerator CryoMagazineDockUpdatesPercentageOnActualHudFrames()
     {
         yield return new EnterPlayMode();
@@ -199,7 +231,7 @@ public sealed class CombatHudPresentationTests
         var selection = _player.GetComponent<PlayerWeaponSelection>();
         var weapons = _hud.GetComponentInChildren<PlayerWeaponHud>();
         yield return Until(() => weapons.Owner == selection);
-        yield return Until(() => _hud.GetComponent<CombatHudIntro>().Completed);
+        yield return Until(() => _hud.GetComponent<CombatHudIntro>().Completed, timeout: 6);
         var magazine = _hud.GetComponentInChildren<CombatPlayerIndicators>(true);
         yield return Until(() => magazine.DisplayedRounds == 15);
         Vector2 magazineHome = magazine.AmmoRoot.anchoredPosition;
@@ -377,10 +409,10 @@ public sealed class CombatHudPresentationTests
         EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = point }, hits);
         return hits.Count > 0 ? hits[0].gameObject.GetComponentInParent<CombatSkillWedge>() : null;
     }
-    private static IEnumerator Until(System.Func<bool> condition, [System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
+    private static IEnumerator Until(System.Func<bool> condition, [System.Runtime.CompilerServices.CallerLineNumber] int line = 0, float timeout = 2)
     {
-        float deadline = Time.realtimeSinceStartup + 2;
+        float deadline = Time.realtimeSinceStartup + timeout;
         while (!condition() && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within two seconds.");
+        Assert.That(condition(), Is.True, $"HUD transition/source at line {line} did not settle within {timeout} seconds.");
     }
 }

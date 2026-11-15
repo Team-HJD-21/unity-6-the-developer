@@ -13,6 +13,8 @@ public sealed class CombatHudAlertLayout : MonoBehaviour
     private Canvas _canvas;
     private float _nextSearch;
     private bool _reserved;
+    private TacticalCommandController _tactical;
+    private float _nextTacticalSearch;
     private readonly Vector3[] _corners = new Vector3[4];
 
     private void LateUpdate() => RefreshLayout();
@@ -22,7 +24,28 @@ public sealed class CombatHudAlertLayout : MonoBehaviour
         { _nextSearch = Time.unscaledTime + .5f; View = FindFirstObjectByType<AlertStripView>(); }
         if (View == null || Hud == null || Picker == null) return;
         if (_canvas == null) _canvas = Hud.GetComponent<Canvas>();
-        if (!Hud.IsFieldVisible || !_canvas.enabled)
+        if(_tactical==null && Time.unscaledTime>=_nextTacticalSearch)
+        {
+            _nextTacticalSearch=Time.unscaledTime+.5f;
+            foreach(var tactical in FindObjectsByType<TacticalCommandController>(FindObjectsSortMode.None))
+                if(tactical.gameObject.scene==Hud.gameObject.scene){_tactical=tactical;break;}
+        }
+        if(_tactical!=null && _tactical.IsOpen)
+        {
+            View.ResetBottomClearance(); _reserved=true;
+            var tactical=_tactical.View;
+            for(int pass=0;pass<3;pass++)
+            {
+                Avoid(tactical.Dock,true); Avoid(tactical.UpgradeDrawer,true);
+                Avoid(tactical.Overview.parent as RectTransform,true);
+                Avoid(tactical.AutoActivate.transform as RectTransform,true);
+                Avoid(tactical.BatchActivate.transform as RectTransform,true);
+                Avoid(tactical.BatchDeactivate.transform as RectTransform,true);
+                Avoid(tactical.SelectMultiple.transform as RectTransform,true);
+            }
+            return;
+        }
+        if (!Hud.AreCombatControlsVisible || !_canvas.enabled)
         { ResetReservation(); return; }
 
         Rect compact = ScreenRect(Picker.CompactRect);

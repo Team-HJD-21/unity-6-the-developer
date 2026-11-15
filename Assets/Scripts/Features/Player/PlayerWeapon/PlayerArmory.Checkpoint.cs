@@ -9,7 +9,7 @@ public sealed partial class PlayerArmory : ICheckpointParticipant
 {
     private PlayerActorIdentity Identity => GetComponent<PlayerActorIdentity>();
     string ICheckpointParticipant.Key => Identity.CheckpointKeyPrefix + "/armory";
-    int ICheckpointParticipant.Version => 1;
+    int ICheckpointParticipant.Version => 2;
     CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.Progression;
     // 선택 무기 writer(220)가 복원되기 전에 장착 가능 목록을 복원합니다.
     int ICheckpointParticipant.RestoreOrder => 210;
@@ -25,7 +25,7 @@ public sealed partial class PlayerArmory : ICheckpointParticipant
     CheckpointSection ICheckpointParticipant.Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
     {
         RequirePlayer(context);
-        return codec.Write(((ICheckpointParticipant)this).Key, 1, CheckpointSectionKind.Progression, writer =>
+        return codec.Write(((ICheckpointParticipant)this).Key, 2, CheckpointSectionKind.Progression, writer =>
         {
             codec.WriteText(writer, Identity.PlayerId.Value); writer.Write(_settings.TokensPerLevel); _state.Write(writer);
         });
@@ -33,11 +33,12 @@ public sealed partial class PlayerArmory : ICheckpointParticipant
     ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
     {
         RequirePlayer(context.Current);
-        var target = codec.Read(section, 1, reader =>
+        if (section.Version != 1 && section.Version != 2) throw new InvalidDataException("Unsupported armory version.");
+        var target = codec.Read(section, section.Version, reader =>
         {
             if (codec.ReadText(reader) != Identity.PlayerId.Value || reader.ReadInt32() != _settings.TokensPerLevel)
                 throw new InvalidDataException("Armory owner or reward configuration differs.");
-            var state = PlayerArmoryState.Read(reader, _settings.TokensPerLevel);
+            var state = PlayerArmoryState.Read(reader, _settings.TokensPerLevel, section.Version == 1);
             if (state.RewardedLevel > _experience.MaximumLevel || !_selection.IsWeaponAuthored(state.First) || !_selection.IsWeaponAuthored(state.Second))
                 throw new InvalidDataException("Saved loadout requires missing weapons.");
             return state;
@@ -46,5 +47,5 @@ public sealed partial class PlayerArmory : ICheckpointParticipant
         return new CheckpointRestoreStep(() => ApplyState(target), () => ApplyState(backup));
     }
     private void ApplyState(PlayerArmoryState state)
-    { Close(); _state = state.Clone(); NotifyLoadout(); }
+    { Close(); _state = state.Clone(); QueueLevelRewards(); SaveSession(); NotifyLoadout(); }
 }

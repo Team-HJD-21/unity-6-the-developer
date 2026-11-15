@@ -57,13 +57,15 @@ public sealed partial class PlayerSkillController : MonoBehaviour
         PlayerSkillId.Portal => _portal != null ? _portal.ShieldDuration : 0,
         _ => 0
     };
-    public float PortalShieldHealthPercent => _portal != null ? _portal.ShieldHealthFraction * 100 : 0;
+    public float PortalShieldCapacity => _portal != null ? _portal.ShieldCapacity : 0;
+    public float PortalShieldCooldown => _portal != null ? _portal.ShieldCooldown : 0;
     internal void OnCandidatesChanged()
     {
         CancelPlacements();
         Loadout.Restore(IsCandidate(Loadout.Q) ? Loadout.Q : PlayerSkillId.None,
             IsCandidate(Loadout.E) ? Loadout.E : PlayerSkillId.None);
     }
+    private PlayerInfo _info;
     private readonly System.Collections.Generic.Dictionary<PlayerSkillId, PlayerSkillBase> _skills = new();
 
     public PlayerSkillLoadout Loadout { get; } = new PlayerSkillLoadout();
@@ -74,7 +76,7 @@ public sealed partial class PlayerSkillController : MonoBehaviour
     public bool IsSelectionOpen => _hud != null && _hud.IsOpen;
     public bool CanPrepare => isActiveAndEnabled && (_control == null || _control.CanPrepare) && (_control != null && _control.HasMatchBinding || _canPrepare == null || _canPrepare());
     public bool CanUse => isActiveAndEnabled && !IsSelectionOpen && (_control == null || _control.CanAct) && (_control != null && _control.HasMatchBinding || _canUse == null || _canUse());
-    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingSkill && (CanPrepare || CanUse);
+    public bool CanRecover => isActiveAndEnabled && !IsSelectionOpen && !IsPlacingSkill && (_info==null || !_info.HasRescueTarget) && (CanPrepare || CanUse);
     public bool IsPlacingTurret => _turret != null && _turret.IsPlacing;
     public bool IsSelectingTurret => _turret != null && _turret.IsSelecting;
     public bool IsPlacingSkill => (_turret != null && _turret.IsPending) || ActivePlacement != null;
@@ -90,6 +92,7 @@ public sealed partial class PlayerSkillController : MonoBehaviour
 
     private void Awake()
     {
+        _info=GetComponent<PlayerInfo>();
         _control = GetComponent<PlayerControlState>();
         if (_control == null) _control = gameObject.AddComponent<PlayerControlState>();
         foreach (var skill in GetComponents<PlayerSkillBase>()) _skills[skill.Id] = skill;

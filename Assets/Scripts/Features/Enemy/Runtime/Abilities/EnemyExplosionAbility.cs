@@ -57,7 +57,15 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
     /// </summary>
     public override bool CheckCondition()
     {
-        if (_hasExploded ||
+        return enemyTargeting != null &&
+               CheckCondition(IsInRange(enemyTargeting.TargetColliders));
+    }
+
+    /// <summary>이번 행동에서 계산한 거리 결과로 폭발 조건을 확인한다.</summary>
+    public override bool CheckCondition(bool isInTargetRange)
+    {
+        if (!isInTargetRange ||
+            _hasExploded ||
             enemyTargeting == null ||
             enemyTargeting.Target == null)
         {
@@ -67,12 +75,7 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
         ITargetable target =
             enemyTargeting.Target.GetComponent<ITargetable>();
 
-        if (!IsValidTarget(target))
-            return false;
-
-        return IsInRange(
-            enemyTargeting.TargetColliders,
-            activationRange);
+        return IsValidTarget(target);
     }
 
     /// <summary>

@@ -100,6 +100,26 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.Throws<ArgumentException>(()=>GameDebugExport.FromJson(GameDebugExport.ToJson(run)));
         }
         [Test]
+        public void ScheduledWorldWarning_PreservesCauseAndAreaInJsonAndCsv()
+        {
+            var area = new SpawnArea(new BattlefieldPoint(10, -5), 6, 4);
+            var cause = Guid.NewGuid();
+            var context = new EncounterExecutionContext(new MatchId("A"), 1, 2, EncounterRequestSource.SituationEvent,
+                "Normal", requestGuid: Guid.NewGuid(), causeEventId: cause, origin: EncounterSpawnOrigin.AtWorld(area));
+            var fact = new GameDiagnosticEvent(1, new MatchId("A"), 2, 1, EncounterRequestSource.SituationEvent,
+                GameDiagnosticKind.RequestScheduled, 10, 10, executionContext: context);
+            var run = Add(new GameDebugRecorder(), fact);
+            var copy = GameDebugExport.FromJson(GameDebugExport.ToJson(run)).Events[0];
+            Assert.That(copy.HasOriginArea, Is.True); Assert.That(copy.OriginX, Is.EqualTo(10));
+            Assert.That(copy.OriginY, Is.EqualTo(-5)); Assert.That(copy.OriginWidth, Is.EqualTo(6));
+            Assert.That(copy.OriginHeight, Is.EqualTo(4)); Assert.That(copy.CauseEventId, Is.EqualTo(cause.ToString("N")));
+            StringAssert.Contains("origin_width,origin_height", GameDebugExport.EventsCsv(run));
+            StringAssert.Contains(",10,-5,6,4", GameDebugExport.EventsCsv(run));
+            run.Events[0].OriginWidth = -1;
+            Assert.Throws<ArgumentException>(() => GameDebugExport.FromJson(GameDebugExport.ToJson(run)));
+        }
+
+        [Test]
         public void Window_BuildsAllPages_AndClosesWithoutChangingTime()
         {
             float scale=Time.timeScale;

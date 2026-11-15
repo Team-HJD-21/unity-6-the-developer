@@ -8,6 +8,7 @@ public sealed class CombatVitalsBar : MonoBehaviour, IPointerEnterHandler, IPoin
     public CombatVitalsGroup Owner;
     public Image Fill;
     public Image DamageTrail;
+    public Image ShieldFill;
     public bool DamageFeedback;
     public Color HitColor = new(.98f, .77f, .59f, 1);
     private Color _restColor;
@@ -15,6 +16,27 @@ public sealed class CombatVitalsBar : MonoBehaviour, IPointerEnterHandler, IPoin
     private float _hitAt = float.NegativeInfinity, _trailStart;
     public int Current { get; private set; }
     public int Maximum { get; private set; }
+    public int Shield { get; private set; }
+    public void SetShield(int shield)
+    {
+        shield = Mathf.Max(0, shield);
+        if (Shield == shield) return;
+        Shield = shield;
+        UpdateFills();
+        _hitAt = float.NegativeInfinity;
+        _trailStart = Fill.fillAmount;
+        if (DamageTrail != null) DamageTrail.fillAmount = Fill.fillAmount;
+    }
+    private void UpdateFills()
+    {
+        float capacity = Mathf.Max(Maximum, (float)Current + Shield);
+        Fill.fillAmount = capacity > 0 ? Current / capacity : 0;
+        if (ShieldFill != null)
+        {
+            ShieldFill.enabled = Maximum > 0 && Shield > 0;
+            ShieldFill.fillAmount = capacity > 0 ? (Current + Shield) / capacity : 0;
+        }
+    }
     public void Set(int current, int maximum)
     {
         int nextMaximum = Mathf.Max(0, maximum), next = Mathf.Clamp(current, 0, nextMaximum);
@@ -28,7 +50,7 @@ public sealed class CombatVitalsBar : MonoBehaviour, IPointerEnterHandler, IPoin
             Owner.NotifyDamage();
         }
         Maximum = Mathf.Max(0, maximum); Current = Mathf.Clamp(current, 0, Maximum);
-        Fill.fillAmount = Maximum > 0 ? (float)Current / Maximum : 0;
+        UpdateFills();
         if (!hit && (!sameMaximum || Maximum == 0 || (DamageTrail != null && DamageTrail.fillAmount < Fill.fillAmount)))
         {
             _hitAt = float.NegativeInfinity;

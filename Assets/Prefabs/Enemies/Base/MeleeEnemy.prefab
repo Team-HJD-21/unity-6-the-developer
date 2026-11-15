@@ -1,5 +1,74 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3594355122848995672
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4117843554437823517}
+  - component: {fileID: 184536568083418583}
+  m_Layer: 23
+  m_Name: TurretBodyCollider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4117843554437823517
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3594355122848995672}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6916343759982546914}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!70 &184536568083418583
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3594355122848995672}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Size: {x: 0.5, y: 1}
+  m_Direction: 0
 --- !u!1001 &1042519340379881908
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -66,12 +135,20 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 5876089001264189014, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 4117843554437823517}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 7652877528939522271, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       insertIndex: -1
       addedObject: {fileID: -5420480671651155543}
   m_SourcePrefab: {fileID: 100100000, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+--- !u!70 &3159564463621367340 stripped
+CapsuleCollider2D:
+  m_CorrespondingSourceObject: {fileID: 2715321972971546520, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+  m_PrefabInstance: {fileID: 1042519340379881908}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &4417510083731572509 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3691231874351859369, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
@@ -94,6 +171,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4053dc58dd85bf4390dc692d0f6fc94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovingEnemyController
+--- !u!4 &6916343759982546914 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5876089001264189014, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+  m_PrefabInstance: {fileID: 1042519340379881908}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7224827417185167723 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7652877528939522271, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
@@ -112,12 +194,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCloseRangeAbility
   cooldown: 1
-  _bodyCollider: {fileID: 7934924057311380628}
+  _bodyCollider: {fileID: 3159564463621367340}
   activationRange: 0.4
   enemyTargeting: {fileID: 4417510083731572509}
   attackDamage: 5
---- !u!60 &7934924057311380628 stripped
-PolygonCollider2D:
-  m_CorrespondingSourceObject: {fileID: 6947161632953746720, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
-  m_PrefabInstance: {fileID: 1042519340379881908}
-  m_PrefabAsset: {fileID: 0}

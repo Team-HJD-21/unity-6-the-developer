@@ -36,11 +36,11 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
     private void Awake()
     {
         _enemies = new ContactFilter2D { useTriggers = true };
-        _enemies.SetLayerMask(LayerMask.GetMask("EnemyHitBox"));
+        _enemies.SetLayerMask(LayerMask.GetMask("EnemyHurtbox"));
         _obstacles = new ContactFilter2D { useTriggers = false };
         _obstacles.SetLayerMask(_obstacleLayers);
         _blockers = new ContactFilter2D { useTriggers = true };
-        _blockers.SetLayerMask(_obstacleLayers.value | LayerMask.GetMask("EnemyHitBox"));
+        _blockers.SetLayerMask(_obstacleLayers.value | LayerMask.GetMask("EnemyHurtbox"));
     }
 
     public void BindPresentationRandom(IRandomStreams streams)
@@ -58,13 +58,11 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
         Physics2D.SyncTransforms();
         if (IsOriginBlocked(origin)) return true;
         gameObject.scene.GetPhysicsScene2D().OverlapCircle(origin, Mathf.Sqrt(_range * _range + _endHalfWidth * _endHalfWidth), _enemies, _targets);
-        var clock = GetComponent<PlayerMatchPresence>()?.TimeSource ?? GetComponent<FieldSimulationActor>()?.TimeSource;
         foreach (var hitbox in _targets)
         {
             if (hitbox == null || hitbox.gameObject.scene != gameObject.scene) continue;
             var health = hitbox.GetComponentInParent<EnemyHealth>();
-            if (health == null || _damaged.Contains(health) || !health.CanBeAttackedBy(AttackSourceType.Player) ||
-                !ReferenceEquals(clock, health.GetComponentInParent<FieldSimulationActor>()?.TimeSource)) continue;
+            if (health == null || _damaged.Contains(health) || !IsCurrentMatchTarget(health)) continue;
             float along = Mathf.Clamp(Vector2.Dot((Vector2)hitbox.bounds.center - origin, direction), 0, _range);
             Vector2 point = hitbox.ClosestPoint(origin + direction * along);
             if (!Contains(point, origin, direction) || IsObstructed(origin, point, health)) continue;
@@ -172,11 +170,21 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
     private bool BlocksSpray(Collider2D hitbox, EnemyHealth target)
     {
         if (PlayerBullet.IsWorldObstacle(hitbox, gameObject)) return true;
-        if (hitbox == null || hitbox.gameObject.layer != LayerMask.NameToLayer("EnemyHitBox")) return false;
+        if (hitbox == null || hitbox.gameObject.layer != LayerMask.NameToLayer("EnemyHurtbox")) return false;
         var health = hitbox.GetComponentInParent<EnemyHealth>();
-        var clock = GetComponent<PlayerMatchPresence>()?.TimeSource ?? GetComponent<FieldSimulationActor>()?.TimeSource;
-        return health != null && health != target && health.CanBeAttackedBy(AttackSourceType.Player) &&
-            ReferenceEquals(clock, health.GetComponentInParent<FieldSimulationActor>()?.TimeSource);
+        return health != null && health != target && IsCurrentMatchTarget(health);
+    }
+    private bool IsCurrentMatchTarget(EnemyHealth health)
+    {
+        if (!health.CanBeAttackedBy(AttackSourceType.Player) || !FieldSimulationTime.CanAdvance(health)) return false;
+        var playerTime = GetComponentInParent<PlayerMatchPresence>()?.TimeSource ?? GetComponentInParent<FieldSimulationActor>()?.TimeSource;
+        var enemyTime = health.GetComponentInParent<FieldSimulationActor>()?.TimeSource;
+        if (playerTime == null || enemyTime == null) return playerTime == null && enemyTime == null;
+        if (!playerTime.IsAvailable || !enemyTime.IsAvailable) return false;
+        // Player는 공용 Clock, 기존 필드 적은 FieldClock을 사용하므로 객체 참조는 서로 다릅니다.
+        var player = playerTime.Snapshot;
+        var enemy = enemyTime.Snapshot;
+        return player.MatchId == enemy.MatchId && player.Epoch == enemy.Epoch;
     }
     private static bool Finite(Vector2 value) => float.IsFinite(value.x) && float.IsFinite(value.y);
     private void OnDisable() => Stop(true);

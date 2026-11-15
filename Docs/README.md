@@ -1,15 +1,27 @@
 # The Developer 문서 안내
 
-**11/12 Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료, 공용 AudioManager는 미구현이다. 코드 존재·실제 Scene 연결·실행 검증 범위를 나눠 적었다.
+**11/15 Encounter 책임 분리:** [정식 연결·명시 시험 도구 사용법](02_architecture/08_encounter/encounter-runtime-and-testing.md)과 [코드 검토·실제 검증](03_team/00_reviews/encounter-runtime-separation-20261115.md). Stage_1 제작 변경은 [#727](https://github.com/Team-HJD-21/unity-6-the-developer/pull/727)에서 원복했으며 이 분리에는 Scene 변경이 없다.
+
+**11/14–15 Core·UI 통합:** [#726](https://github.com/Team-HJD-21/unity-6-the-developer/pull/726)에 Core·전술 HUD·공용 UI·오디오 변경을 반영했고 [#730](https://github.com/Team-HJD-21/unity-6-the-developer/pull/730)에서 전술 진입·종료와 HUD 정렬을 보완했다. [Player UI API](02_architecture/06_player/player-ui-api.md)와 [Core·UI 검토 기록](03_team/00_reviews/core-ui-integration-20261114.md)을 함께 확인한다.
+
+**Stage1 제작과 연동:** [Stage1 씬 제작 가이드](02_architecture/09_world/stage1-scene-authoring.md)에서 씬 경로·타일 경계·NavMesh·그림자·터렛 가림을 확인한다. [Core 실행 지도](02_architecture/01_core/core-runtime-map.md)와 [11/14 범위 정정](01_planning/02_implementation-records/2026/11/2026-11-14-explicit-stage-transition-scope.md)은 명시적 전환 API와 실제 게임 승패 연결의 범위를 설명한다.
+
+배치별 구현 근거와 실제 Scene의 미지정 원본은 [11/14 준비 상태·남은 접합](01_planning/02_implementation-records/2026/11/2026-11-14-encounter-stage1-readiness.md)에 모았다. API/개별 Feature 검수와 전체 게임 인수를 구분한다.
+
+**Core 구현 현황:** [사용 가능한 API와 남은 연결](02_architecture/01_core/core-implementation-status.md). CameraManager는 기반 구현/검증 완료다. 11/13 로컬 작업에는 Unity 기본 오디오를 사용하는 [GameAudioManager·믹서·설정과 연결 방법](02_architecture/01_core/game-audio-api.md)이 추가됐다. main 반영 여부, 실제 Scene 연결과 실행 검증 범위를 구분한다.
+
+**11/13 오디오 작업 인계:** [구현·검증 결과와 추후 PR의 Docs 반영 사항](01_planning/02_implementation-records/2026/11/2026-11-13-game-audio-handoff.md). 핵심 구현 완료·최종 검증 대기이며, 실제 전투 Scene·원격 Client·음원 콘텐츠 후속을 구분한다.
 
 **11/12 Core 후속 결정:** [지역·스폰·보스·협동 복구 배치](01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md). 정적 확보/상실·CU 시작 셀·33/66% 중간보스·100% 최종 전이·협동 구조를 사용자 승인 정책으로 기록했다. 이 중 **CU 시작 셀·동적 4방향 점유 연결·Host 설정은 로컬 구현/QA 완료**이며 [결과·검증 경계](01_planning/02_implementation-records/2026/11/2026-11-12-cu-connected-regions-results.md)와 [코드 검토 순서](03_team/00_reviews/cu-connected-regions-20261112.md)를 참고한다. 나머지 배치와 실제 2인·전체 저장 인수는 별도다.
 
-최근 정기회의: [11월 7일 결정 근거](99_archive/2026-11-07/regular-meeting.md). 미션 HUD Alert와 Enemy 규칙은 [Product Plan](00_product/PROJECT_PLAN.md), PR 리뷰 흐름은 [팀 협업 규칙](03_team/TEAM_WORKFLOW.md#review와-approval), 담당별 후속은 [현재 실행 계획](01_planning/current-execution-plan.md)을 따른다.
+**11/14 Enemy 성능 트러블슈팅:** [대규모 몬스터 성능 조사·조치 기록](01_planning/02_implementation-records/2026/11/2026-11-14-enemy-performance-troubleshooting.md). Profiler 조사, 적용·되돌린 시도, 측정 한계와 팀원이 이어서 검증할 절차를 확인한다. Editor 관측을 빌드 성능 보장으로 해석하지 않는다.
+
+최근 회의는 [11월 13일 중간점검](99_archive/2026-11-13/second-progress-review.md)과 [11월 14일 정기회의](99_archive/2026-11-14/regular-meeting.md)를 확인한다. 운영 기준은 [Product Plan](00_product/PROJECT_PLAN.md), 검토 절차는 [팀 협업 규칙](03_team/TEAM_WORKFLOW.md#review와-approval), 담당별 후속은 [현재 실행 계획](01_planning/current-execution-plan.md)을 따른다.
 
 **Core main 전달:** [복구 PR 검토 문서](03_team/00_reviews/602-core-main-recovery.md)에서 #624~#631의 기존 리뷰, 최신 main과의 통합 차이, 이번 검증과 남은 작업을 확인합니다. 기존 수동 인수 자료는 [확인7단계·구현 전체·팀원 전달](01_planning/02_implementation-records/2026/11/2026-11-05-core-local-review.md)에 보존합니다.
 
 - 실제 수명/코드 읽기: [Core 지도](02_architecture/01_core/core-lifecycle-and-api-guide.md) · [Feature 통합](02_architecture/01_core/core-feature-integration-guide.md) · [구조 정리 판단](02_architecture/01_core/core-structure-review-2026-11-05.md).
-- 최신 플레이: [우주선 출격/왕복](02_architecture/03_scene-flow/spaceship-travel-api.md) · [낮밤5분](02_architecture/09_world/day-night-api.md) · [Day/Night·타이머·Reset](02_architecture/09_world/weather-debug-hud.md). 왕복은0.3초씩 총약0.9초이며 진행 바를 표시하지 않습니다.
+- 최신 플레이: [우주선 출격/허브 귀환](02_architecture/03_scene-flow/spaceship-travel-api.md) · [낮밤5분](02_architecture/09_world/day-night-api.md) · [Day/Night·타이머·Reset](02_architecture/09_world/weather-debug-hud.md). 현재 전투 중 임시 허브 자유 방문은 제공하지 않는다. 출격 전환은0.3초씩 총약0.9초이며 진행 바를 표시하지 않는다.
 - 공용 API: [Random](02_architecture/01_core/core-random-api.md) · [가중 선택·비 50% 예제](02_architecture/01_core/random-weighted-selection.md) · [시간/예약](02_architecture/02_match/match-time-api.md) · [저장 실행](02_architecture/05_checkpoints/checkpoint-execution-api.md) · [네트워크](02_architecture/04_networking/network-match-api.md) · [Steam](02_architecture/04_networking/steam-api.md).
 - 구현/증거: [Core 결과](01_planning/02_implementation-records/2026/11/2026-11-05-core-completion-results.md) · [낮밤/Steam 결과](01_planning/02_implementation-records/2026/11/2026-11-05-day-night-steam-results.md) · [요구/Issue 대응](01_planning/02_implementation-records/2026/11/2026-11-05-core-requirements-and-issue-map.md). 과거 시점의 한계는 최신 최종 안내와 구분해서 읽습니다.
 
@@ -49,7 +61,7 @@
 
 2026-10-23 몬스터 비정기회의에서는 최단거리와 주변 밀집도를 우선 사용한 터렛 목표 배정, 목표 유지, 플레이어 감지 시 추적 동작을 먼저 시험하기로 했다. 초기 Stage의 `ConfigureUnlockZones` 호출 연결도 양현석이 맡기로 했으며, main 정적 검색에서는 호출을 찾지 못했다. 세부 규칙과 실제 구현·실행 결과는 [회의 검토 기록](01_planning/01_meetings/2026/10/2026-10-23-monster-meeting.md)을 따른다.
 
-2026-10-09 Legacy 실행 코드와 PoC 경로를 정리했다. [Assets 구조와 Legacy 교체 기준](02_architecture/00_foundations/asset-layout-and-migration.md) 및 [이관 결과](99_archive/planning-links/2026-10-09-asset-migration-results.md)를 따른다. 현재 실행 Scene은 `Assets/Scenes/Gameplay/Initial_Stage.unity`다. 과거 분석의 경로는 당시 위치이며 현재 경로와 구분한다.
+2026-10-09 Legacy 실행 코드와 PoC 경로를 정리했다. [Assets 구조와 Legacy 교체 기준](02_architecture/00_foundations/asset-layout-and-migration.md) 및 [이관 결과](99_archive/planning-links/2026-10-09-asset-migration-results.md)를 따른다. 현재 실행 Scene은 `Assets/Scenes/Gameplay/Stage_1.unity`다. 과거 분석의 경로는 당시 위치이며 현재 경로와 구분한다.
 
 2026-10-08 PL이 실제 런타임을 확인해 양현석의 Core 공간 분석·스폰 통합·Game Debugger 기술 PoC를 인수했다. 현재 완료 범위와 Issue/PR 인수는 [PoC 마감 기록](99_archive/planning-links/2026-10-08-poc-closeout-and-pr-handoff.md)을 따른다. 아래의 10월 3일 내용은 당시 검토 배경이며 최신 실행 상태로 읽지 않는다. 정식 승패·성장·멀티플레이 완성과 팀 공통 Windows Build 검증은 별도다.
 
@@ -87,7 +99,7 @@
 - [`03_team/`](03_team/) — 담당 영역, 협업 절차, 이슈 분류
 - [`04_development/`](04_development/) — 개발·런타임 검증 지침
 - [`05_tooling/`](05_tooling/) — Unity·CLI 설치와 디버깅 도구
-- `94_art/` — 아트 검토 자료 · [승인된 공통 UI 규칙 / HUD v6](94_art/common-ui-rules.md) · [Credits 컷신 제작·편집 지점](94_art/credits-cinematic.md)
+- `94_art/` — 아트 검토 자료 · [승인된 공통 UI 규칙 / HUD v6](94_art/common-ui-rules.md) · [한글 픽셀 폰트](94_art/korean-pixel-fonts.md) · [Credits 컷신 제작·편집 지점](94_art/credits-cinematic.md)
 - [`95_licenses/`](95_licenses/), `96_images/`, `97_screenshots/`, `98_videos/` — 라이선스와 참고 자료
 - [`99_archive/`](99_archive/) — 현행 기준에 반영한 회의 요약, 종료된 스프린트, 레거시 기록
   - [계획·구현 보관 안내](99_archive/planning-links/) — 보관 원문과 현행 기준으로 연결
@@ -97,7 +109,7 @@ Unity 패키지 복원과 CLI 연결은 [Unity Tooling Setup](05_tooling/UNITY_T
 
 ## 읽는 순서
 
-Enemy 컨트롤러·능력 상속, 네트워크 행동·피격 계약은 [Enemy 시스템 가이드](02_architecture/08_encounter/enemy-system-guide.md), #540 몬스터·Variant·등록·검증/후속 작업은 [Stage 1 Enemy 콘텐츠](02_architecture/08_encounter/stage1-enemy-content-guide.md)를 참고한다. 스폰 요청부터 점유율 예산·지역 배분·상황별 편성 선택까지는 [Encounter 편성·예산 가이드](02_architecture/08_encounter/encounter-planning-guide.md)를 따른다. Game Debugger의 지정 Order 요청과 런처의 상황별 선택 요청을 구분한다.
+Enemy 컨트롤러·능력 상속, 네트워크 행동·피격 계약은 [Enemy 시스템 가이드](02_architecture/08_encounter/enemy-system-guide.md), #540 몬스터·Variant·등록·검증/후속 작업은 [Stage 1 Enemy 콘텐츠](02_architecture/08_encounter/stage1-enemy-content-guide.md)를 참고한다. 테스트 씬을 열고 조작하는 방법은 [Enemy 테스트 씬 사용법](02_architecture/08_encounter/enemy-test-scene-guide.md)에 정리했다. 스폰 요청부터 점유율 예산·지역 배분·상황별 편성 선택까지는 [Encounter 편성·예산 가이드](02_architecture/08_encounter/encounter-planning-guide.md)를 따른다. Game Debugger의 지정 Order 요청과 런처의 상황별 선택 요청을 구분한다.
 
 터렛을 사용하는 다른 영역은 [터렛 연동 가이드](02_architecture/07_turrets/index.md)에서 빠른 시작과 API 및 스냅샷을 따로 확인할 수 있다. 내부 실행 흐름은 기존 Turret System Guide의 Mermaid를 유지한다.
 
@@ -131,7 +143,7 @@ Player 클래스 이름과 책임 구분은 [Player 클래스 이름과 역할](
 2. [system-rearchitecture-charter.md](02_architecture/00_foundations/system-rearchitecture-charter.md) — 레거시 교체 원칙과 변경할 수 없는 시스템 경계
 3. [milestones-and-core-design.md](01_planning/milestones-and-core-design.md) — M0~M5, Priority별 역할, 통과 기준
 4. [naming-and-architecture-conventions.md](02_architecture/00_foundations/naming-and-architecture-conventions.md) — 계층, asmdef 의존성, 타입 명명
-5. [turret-system-guide.md](02_architecture/07_turrets/turret-system-guide.md) — Canon·Missile 터렛의 상태·전력·Enemy 연동, 세부 업그레이드·레벨 승급 및 검증 방법
+5. [turret-system-guide.md](02_architecture/07_turrets/turret-system-guide.md) — Canon·Missile·Laser 터렛의 상태·전력·Enemy 연동, 세부 업그레이드·레벨 승급 및 검증 방법
 6. [TEAM_ROLE_OWNERSHIP.md](03_team/TEAM_ROLE_OWNERSHIP.md) — 양현석~조수빈 제품 영역과 협업 경계
 7. [TEAM_WORKFLOW.md](03_team/TEAM_WORKFLOW.md) — Sprint, Git, Review, Ready/Done 규칙
 8. [DEVELOPMENT_FLOW.md](01_planning/DEVELOPMENT_FLOW.md) — Milestone 안에서 실제 작업이 흘러가는 순서

@@ -1,7 +1,54 @@
 # Initial Stage Player HUD API
 
-최종 갱신: 2026-11-12
-상태: HUD v6와 공통 프레임 적용, Editor의 실제 Scene·단계별 입력·시각 확인 완료. [검증 범위·한계](../../94_art/ui-validation-2026-11-12.md)에서 자동 검사와 직접 입력 관측을 구분한다.
+2026-11-14 결과·안전장치 선택·Pause 메인 복귀·전장 진입 순서는 [Mission 복귀 API](../02_match/match-recovery-api.md#2026-11-14-선택형-안전장치와-결과-ui)와 [구현/검수 기록](../../01_planning/02_implementation-records/2026/11/2026-11-14-mission-outcome-ui.md)을 따른다. `CombatHudIntro`의 MessageFadeSeconds/MessageHoldSeconds/MessageEraseSeconds/Duration과 `AnnouncementPrefab`이 편집 접점이다. 문구 프리팹은 Skill HUD 하나만 참조한다.
+
+최종 갱신: 2026-11-14. 전술 화면의 구현과 URP 재검수 범위는 다음 절을 따른다. 기존 HUD v6 인수와 새 전술 UI 인수는 구분한다.
+
+## 2026-11-13 전술 화면
+
+`InitialStagePlayerHUD.prefab`의 기존 `StageTurretControlView`를 제거하고 `TacticalCommandController`로 연결했다. 아래 과거 기록의 일반 클릭 선택·상세 패널보다 이 절을 우선한다. 실제 검증 결과와 제한은 [전술 화면 구현 기록](../../01_planning/02_implementation-records/2026/11/2026-11-13-tactical-command-view.md)을 확인한다.
+
+우클릭 이동·F·지도 설정·상태/점유 표시의 11-14 변경은 [후속 가독성 기록](../../01_planning/02_implementation-records/2026/11/2026-11-14-tactical-readability.md)에서 이번 실행 결과와 남은 인수를 구분한다.
+
+- 필드에서 **M / 전술 버튼**으로 열고 M·Esc·닫기 버튼으로 복귀한다. 플레이어 중심에서 실제 점유 셀을 최대한 담는 배율로 시작한다. 맵 가장자리에서는 플레이어가 보이도록 중심을 보정하고 실제 카메라 사각형을 맵 안에 제한한다. 화면비보다 맵이 좁아지면 무광 여백과 임시 viewport로 분리해 맵 밖의 월드를 그리지 않는다.
+- 카메라 경계는 Scene instance에 연결한 `CameraLeftTop`/`CameraRightBottom`을 우선한다. PR #722의 Stage_1은 LeftTop(-138,120), RightBottom(138,-120)인276×240이다. 참조가 없거나 좌표가 비정상/역전이면 기존 지역 geometry를 사용한다. 지역 정의·점유·권한의 원본은 바꾸지 않는다.
+- 플레이어 이동·발사·스킬 준비를 막고, WASD/방향키·우클릭 드래그·마우스 가운데 드래그는 카메라 이동에 사용한다. 우클릭은 drag threshold를 넘으면 이동만 수행하며 짧은 클릭만 핑을 지정한다. 실제 viewport 픽셀 높이로 이동량을 환산한다. 휠은 확대·축소, Home은 플레이어 복귀다. 게임 시간은 정지하지 않는다.
+- 터렛을 선택하면 좌측 하단 도크에 HP·전력·사거리 내 적 수와 켜기/끄기·강화를 표시한다. Enter는 선택 터렛 토글, U는 강화창이다. 성공을 미리 표시하지 않고 기존 Host 명령 결과·확정 스냅샷을 따른다.
+- 근처 터렛은 기존 거리 규칙으로 조작한다. 멀리 있는 개별 터렛은 Host의 **최신 점유 셀**에 있을 때만 허용한다. 사망·메뉴·전환 잠금·전력·냉각·잠금·강화 제약은 유지한다. CU 자동 활성화는 원격 허용에서 제외한다.
+- CU 근처에서 자동 활성화와 다중 선택 버튼·Shift+클릭/Shift+드래그 후 선택 켜기/끄기를 표시한다. 다중 선택 도크에는 합산 체력·사용 전력·사거리 합집합 안의 적 수량을 집계한다. 일괄 변경은 개별 명령들의 모음이며 원자적 트랜잭션이 아니다. 각 결과를 기존 권한 처리기가 검증한다.
+- 전체도는 전술 화면 안에만 있다. 클릭/드래그로 카메라를 옮기며 현재 시야 사각형·점유 셀·터렛·CU·플레이어·적을 표시한다. 우클릭 목표 지정은 필드 복귀 후 방향·거리를 표시하고 가까워지면 해제한다.
+- 적 정보는 현재 같은 전장 Scene의 활성·생존 `EnemyHealth` 위치를 집계한다. 숨은 적을 제외하는 별도 탐지 규칙은 적용하지 않는다. 현재 전장에 생성되지 않은 적이나 스폰 계획을 추정하지 않는다.
+- 일반 필드 클릭은 터렛 패널을 열지 않는다. 플레이어의 성공한 발사/근접 공격 뒤 2초가 지나야 Hover 정보가 보이고 다음 공격에 숨는다. 근접 **F**는 가까운 필드 터렛을 토글한다. 실제 구조 대상과 회수 가능한 플레이어 설치 포탑이 있으면 각각 기존 구조·회수를 우선하고 같은 F로 필드 토글을 실행하지 않는다. G 시험 배치는 폐기했다.
+
+11-14 수정에서 지도 버튼은 우하단의 전용 지도 심볼과 `전술 지도`로 표시한다. M은 계속 입력으로 지원하지만 버튼에 중복 표기하지 않는다. 전체도 패널 안의 `지도 설정`에서 사거리를 가동 중 전체/선택한 터렛만으로 전환하고 지형지물 표시를 바꾼다. 두 선택은 별도 PlayerPrefs 키로 저장한다. 사거리는 기본 가동 중 전체이며 선택한 비가동 터렛의 사거리도 미리 볼 수 있다. `IsActivated`와 `IsOperational`을 구분하고 냉각 중인 활성 터렛을 OFF로 표시하지 않는다.
+
+`TacticalPresentationRules`는 가동·대기·잠금·냉각·전력 부족·파괴·조작 대기·미준비를 분리한다. 금색 선택 테두리와 별개로 전원/잠금/시계/전력/X/일시정지 형태를 그려 색만으로 구분하지 않는다. 선택 도크·필드 tooltip에도 같은 의미를 사용한다. 터렛 본체 SpriteRenderer의 색이나 알파는 변경하지 않는다.
+
+지역은 확정 점유 셀, 해금된 점유 가능 셀, 실제 확보 진행이 남아 있는 셀, 미점유/미해금 셀을 구분한다. 점유 중은 사선 패턴과 실제 확보 시간 비율의 진행 링을 사용하며, UI가 별도 시간이나 점유 완료를 추정하지 않는다. 터렛 연결 전선/삼각형 외곽은 지도와 전체도에서 표시하지 않는다. Core의 전선 계산이나 점유 계산은 유지한다. **현재 정적 확보 진행의 읽기 원본은 Host에만 있다. Client에는 그 복제 계약이 없어 미수신 상태에서 임의 타이머를 표시하지 않는다.** Client 확정 점유·해금·터렛 상태는 기존 replica를 계속 읽는다.
+
+지형 숨김 대상은 Scene의 `SceneryRenderers` 명시 참조다. Stage_1은 `Environment_Obj` TilemapRenderer 한 개만 연결한다. 전술 화면 동안 `forceRenderingOff`만 바꾸고 원래 값을 닫기/disable/파괴 때 복원한다. 물·지면·충돌·오브젝트 활성 상태·터렛/Player/Enemy renderer는 변경하지 않는다. Editor의 `BindActiveSceneScenery`는 실제 장식 대상이 있는 Scene에서만 실행하고 저장 diff를 확인한다.
+
+플레이어/CU/이전 시야/목표 해제는 전체도 헤더의 아이콘이다. 닫기·설정은 화면 오른쪽의 별도48×40 열이며 상시 문장 범례를 두지 않는다. 시설 도크/필드 hover/위협 카드는 체력 분할 게이지와 실제 감소 잔상을 사용하고 전력·적 수량은 의미 심볼 옆에 표시한다. 실제 HP 감소만0.42초 아이콘·상태 배지를 흔들고 카메라·사거리 좌표는 움직이지 않는다. 첫 연결·최대 HP 변경·회복은 피격을 새로 재생하지 않는다.
+
+`TacticalModeEffect`는 첫 전환 프레임의 Cover1 불투명 표면 아래에서 카메라를 교체한다. 진입은 짧은 Hold 후 중앙→외곽으로 지도 viewport만 공개하며, 바깥에는 이전 필드가 비치지 않는다. 종료는 외곽→중앙으로 지도를 덮은 뒤 카메라 복구/Hold/표면 소거다. WaveTimeScale 기본1.25로 EnterSeconds/ExitSeconds 파동 시간을 조정하고 5차 SmoothStep을 두 번 적용한다. 이미 지도 카메라를 소유한 재열기는 현재 Reveal에서 바로 이어가며 아직 공개 전의 닫기 취소는 불필요한 안쪽 파동을 생략한다. `ContentIsMap`은 전환의 카메라 handoff 상태이고, `IsOpen`은 입력 lease 전체 수명, `IsMapPresented`는 완료한 지도 UI 상태다. Controller의 CommitMapView가 ModeEffect.SetRevealViewport(Frame.Viewport)를 전달한다. 기존 HudPresentationVisibility·전환 Canvas800/유지-900·GraphicRaycaster와 즉시 정리를 유지한다. 상세 변경과 검수 경계는 [지도 파동 공개 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-tactical-wave-reveal.md)을 따른다.
+
+`TerritoryFill`/`OverviewFill`은 확정 셀 상태의8배 샘플 mask와 `TacticalTerritory.mat`를 사용한다. 내부 셀 선은 없고 실제 점유 외곽선은 동일 월드 선분이다. 포인트/조작 권한은 여전히 원래 CapturedCells로 판정하며 feather를 점유로 읽지 않는다. 도크 위 `가까이에서 조작` 표시를 없앴다. 점유 완료 지역이면 플레이어 거리와 무관하게 지도에서 개별 조작하고, 미점유 지도 대상은 근접해도 잠김으로 표시하고 조작을 차단한다. Field F는 기존 해금·근접 규칙을 유지한다. Host가 허용하는 범위 안에서 지도 UI를 더 좁히며 Host의 권한을 확대하지 않는다.
+
+필드 타이머 아래 `FieldStatusGroup`은 실제 Region/StaticRegionCaptureSnapshot과 플레이어 현재 셀로 `구역 확보 중`/`확보 일시 중단`/`확보 구역 이탈`/`미점유 지역`을 표시한다. 정적 미해금 구역은 `잠긴 구역`, 실제 적 압박은 누적0초여도 `적 우세 · 확보 중단`으로 구분한다. 진행 구역에서 실제로 나왔을 때 이탈 문구2.4초, 그 후 현재 영역 상태로 복귀한다. 진행 원본이 없으면 진행을 추정하지 않는다. FieldStatusContent만 상태 변경 때0.5초 확대/복귀하고 HUD 배율 root는 보존한다.
+
+편집 원본은 `Assets/Prefabs/UI/Tactical/TacticalHud.prefab`, 설정은 `Assets/Resources/Core/TacticalHudStyle.asset`이다. 같은 `CombatHudStyle`의 패널·프레임·폰트를 사용한다. `TacticalHudSetup.Configure`는 명시적으로만 프리팹을 다시 작성하므로 수동 편집 후 무심코 실행하지 않는다. 런타임에는 작성된 UI를 복제하고 실제 점유 셀 텍스처/월드 표식만 갱신한다. 카메라와 AudioListener를 추가하지 않는다.
+
+Stage Scene의 두 marker는 `TacticalHudSetup.BindActiveSceneCameraBounds`로 해당 HUD instance에 명시 연결하고 Scene diff를 확인한 뒤 저장한다. 참조를 prefab asset에 Scene 참조로 굽지 않는다. 이후 지형만 갱신하려면 `TacticalArtSetup.BakeOverviewTerrain`을 사용하며 전체 HUD/atlas를 다시 만들지 않는다.
+
+Focus·이전 위치·전체도 이동과 zoom은 Smoothstep을 사용한다. `TacticalHudStyle.CameraMoveSeconds` 기본0.18초, `CameraZoomSeconds` 기본0.16초이며0이면 즉시 적용한다. 연속 이동/drag는 gesture 시작 때만 easing을 시작하고, 모서리 zoom-out의 재중앙화도 실제 현재 위치부터 보간한다. 실제 viewport는 보간 중에도 매 프레임 제한한다. 처음 열 때 framing과 닫을 때 플레이어 시점 복원은 즉시다.
+
+멀어지면 Cannon/Missile 심볼과 적 무리·수량으로 읽는다. 진입/복귀 배율2.5/2.2의 히스테리시스와 짧은 알파 전환을 사용하고, 터렛은 작은 Game View에서도32 화면 픽셀을 유지한다. Player/CU는 기존 심볼을 재사용한다. 상세 이미지는 실제 게임 프리팹의 베이스/헤드 정지 상태를 렌더한 Sprite이며, 전체도 지형도 authored Stage_1을 bake한다. Scene/geometry가 다르면 지형 이미지를 숨긴다. `TacticalArtSetup`은 Edit Mode의 명시 제작 도구다. [생성·입고·검수 기록](../../94_art/tactical-ui-assets-2026-11-14.md)을 따른다.
+
+전술 조작 파츠의 `CombatHudScaleBinding.MinimumScreenScale`는0.8이다. 800px 이상 창에서는16pt 정보가 최소12.8 화면 픽셀로 유지되며, 더 좁은 창에서는 폭에 비례해 줄어든다. 기존 전투 HUD 배율 설정은 유지한다. 적 수량 라벨은 도크·전체도·CU 명령·사건·표시 중인 Alert와 터렛 도상/상태/HP·Player/CU를 피한다. 가까운 빈 위치에도 놓을 수 없으면 수량 카드를 생략하고 실제 적 점은 유지한다.
+
+`PlayerControlState.EnterTacticalView()`의 lease는 전술 이동/전투 제한만 소유한다. `CanIssueTurretCommands`는 이 제한만 제외하고 다른 입력·생존·Match·Presence 잠금을 검사한다. lease를 닫은 프레임의 클릭은 발사로 전달하지 않는다. 카메라는 Canvas 밖의 Scene marker와 `CameraManager.PushView` lease를 사용하며 `TrySetViewSize`/`TrySetViewViewport`는 현재 최상위 target 소유자만 갱신한다. 닫을 때 원래 플레이어 시점·배율·viewport로 즉시 복귀한다.
+
+2026-11-12 기록: HUD v6와 공통 프레임 적용, Editor의 실제 Scene·단계별 입력·시각 확인 완료. [당시 검증 범위·한계](../../94_art/ui-validation-2026-11-12.md)에서 자동 검사와 직접 입력 관측을 구분한다.
 
 2026-11-12: 상태창의 공격력·이동속도·치명률 행은 왼쪽 `+` 투자, 오른쪽 `-` 회수 순서로 배치한다. 두 버튼의 위치만 교환하고 기존 이벤트와 수치 계산은 유지한다.
 
@@ -19,7 +66,7 @@ PR #522 리뷰에 맞춰 HUD를 연결했다. 스크립트와 프리팹은
 
 `StagePlayerVitalsView`가 같은 로컬 actor와 CU의 실제 값을 새 `CombatVitalsGroup`으로 전달한다. Player HP는 좌측 헬멧, CU HP/전력은 우측 릴레이 심볼로 구분한다. 각 그룹은 독립적으로 자동 숨김·가장자리 접근·실제 값 변경·클릭 고정을 처리한다. 호버한 바 위에서만 정수 현재/최대 값을 표시한다. 소유자 대기·해제 또는 CU 데이터 부재 시 표시를 지운다. 상시 레벨·XP는 감추며 실제 XP 획득만 월드 팝업으로 표시한다.
 
-`CombatHudHeader`는 같은 씬의 실제 낮밤 시계와 현재 감속 효과를 표시한다. 점유율은 유효 분모가 없는 현재 `--%`이며 `SetConfirmedOccupancy(captured, eligible)`는 실제 분모를 주입할 후속 접점이다. 보스 표시는 `CombatBossView.Bind(EnemyHealth, name)`의 실제 보스 소스가 있을 때만 사용한다. 일반 적을 보스로 지정하지 않으며 현재는 숨긴다.
+`CombatHudHeader`는 같은 씬의 실제 낮밤 시계와 현재 감속 효과를 표시한다. 점유율의 유효 분모가 없으면 점유 제목·수치·분리선을 숨기고 타이머와 배경을 중앙에 맞춘다. `SetConfirmedOccupancy(captured, eligible)`는 유효한 확정 분모/분자를 전달하는 접점이다. Header는 같은 actor·Match의 전술 지역 투영에서 `CapturedCellCount`와 `Definition.CapturableCellCount`를 읽는다. 전체 Grid 셀 수를 분모로 쓰지 않는다. 작은 양수는 소수 또는 `<0.1%`로 표시하며 Stage_1의 시작1/201은0.5%다. 보스 표시는 `CombatBossView.Bind(EnemyHealth, name)`의 실제 보스 소스가 있을 때만 사용한다. 일반 적을 보스로 지정하지 않으며 현재는 숨긴다.
 
 `CombatHudDebugPanel`은 로컬 actor가 있고 Core 개인 Menu가 최상위일 때만 우측에 나타난다. `WeatherDebugHud.CanChangePhase`를 따르며 기존 `ResetTimerAndWeather`/`AdvanceDayNight`로 요청한다. 기존 관리 버튼의 표시만 숨긴다. 자동 활성화는 해당 Menu의 정확한 ID만 닫고 한 프레임 뒤 `InitialStagePlayerHUD.TryRequestAutoActivation()`을 호출한다. 생존·다른 입력 잠금·CU 거리·Host 명령 Port 검사는 원본 경로를 유지한다. `true`는 요청 제출을 뜻하며 Host 확정은 `AutoActivationFeedback` 이벤트로 별도 표시한다. 공유 월드를 정지하거나 다른 입력 lease를 해제하지 않는다.
 
@@ -93,7 +140,7 @@ InitialStageCompositionRoot가 이 수명을 연결한다. standalone Feature Sc
 
 ## 적용 위치와 편집 방법
 
-`Assets/Scenes/Gameplay/Initial_Stage.unity`에서
+`Assets/Scenes/Gameplay/Stage_1.unity`에서
 `Assets/Prefabs/UI/InitialStagePlayerHUD.prefab`을 사용한다.
 원본 Stage 1 씬과 프리팹 배치는 유지한다. #564에서는 `TurretInteractionUI`의 클릭 처리에도 동일한 UI 검사·클릭 소비 계약을 적용했다.
 
@@ -293,9 +340,34 @@ Host는 FieldTurret 원본을 최대 0.1초 주기로 조회해 표시 복사본
 
 CU의 점령 수치는 모드뿐 아니라 표시 Frame의 RegionGridId/RegionRevision이 현재 지역 Snapshot과 일치할 때만 결합한다. 독립 채널이 서로 다른 시점의 상태를 전달하면 대기 안내를 표시한다.
 
-실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../../99_archive/planning-links/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
+실제 HUD 버튼의 ON/OFF·승급/강등·강화·CU·입력 잠금·재활성화, 응답/표시 도착 순서·부분 실패·멱등 주입·구독 해제 검사를 통과했다. 검사 파일/횟수는 [배치 기록](../../99_archive/2026-11-05/planning/2026-10-15-core-sprint-implementation.md#hud-정식-명령표시-투영-연결)을 따른다. 자동 Button 호출 검사이며 사람의 마우스/해상도별 시각 인수를 대신하지 않는다.
 
 플레이어 연동 스크립트를 추가·수정하면 같은 변경에서 책임·호출 조건·연동 API를
 갱신한다. CU 자동 활성화 시작 버튼은 현재 정식 명령 경계에 연결돼 있으며 최종 UI 연출/제품 밸런스 확정은 이번 기반 작업과 구분한다.
 HUD 요소를 각각 별도 프리팹으로 관리하는 구성은 리뷰의 후속 제안이며,
 현재는 상태 View·터렛 View의 책임과 초기화를 분리한 단일 HUD 프리팹을 사용한다.
+
+
+2026-11-15: `TacticalCommandController.IsHudEntryComplete`는 연결된 `CombatHudIntro.Completed`를 읽는다. 첫 전장 문구·소거·HUD 스캔 완료 전에는 지도 버튼을 숨기고 M 입력과 직접 `Open()` 호출도 거부한다. 전투 이동/공격의 공용 입력 lease를 추가하지 않는다. 자세한 검수는 [진입 차단·종료 반전 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-tactical-entry-exit.md)을 따른다.
+
+
+## 확정 점유의 표시 전환
+
+`TacticalCommandController.TerritoryFeedback`는 기존 지역 Source.Changed를 구독하여 상단/지도에는 최신 Snapshot을 즉시 제공하고 바닥만 `TerritoryExpansionState`로 전환한다. 실제 완료 식별은 Snapshot.Revision이 아닌 Change.Revision이며 StaticSecured의 SecuredRegionIds만 기존 Alert의 `점유 완료` 근거로 사용한다. `GameAlerts.TryShowIfIdle`로 현재 알림을 밀어내거나 큐 뒤에 오래된 성공을 쌓지 않는다.
+
+FieldTerritoryRenderer의 기존 Territory 정렬·공통 RegionBoundaryGeometry는 유지한다. TacticalHudStyle에서 Sweep0.65/Glow0.12/Settle0.28, Loss0.16, Merge0.18, ToastFresh1초와 기존 색에 가까운 CaptureGlow를 조정한다. Baseline/첫 구독/Grid 교체는 즉시 정착하며 Actor/Source 해제 시 구독과 성공 대기를 정리한다. 지도·전환 중에도 타임라인을 소비하며 논리 Grid와 스폰 제외를 애니메이션으로 지연하지 않는다. [구현·검증 경계](../../01_planning/02_implementation-records/2026/11/2026-11-15-territory-expansion-ui.md)를 따른다. 현재는 독립 관리형17개 검사 통과이며 통합 Editor/Play/GPU 검수는 담당 세션 대기다.
+
+
+## 시작 우주선의 I 상태창 (2026-11-15)
+
+`PlayerHubStatusBinding`은 `IHubPlayerBinding.BindHub`로 명시적으로 받은 로컬 Player에 `PlayerHubStatusHUD.prefab`을 연결한다. 임의로 다른 Scene의 플레이어를 검색하지 않는다. 허브는 필드와 같은 기본 `local-player`의 개인 성장 저장을 읽지만 UI 소유자는 명시적으로 주입한 actor만 따른다. I는 상태창과 스킬 트리를 열고 Esc는 기존 닫기 흐름을 따른다. 우주선 무기고·개인 메뉴 등 다른 입력 lease가 있으면 열지 않는다.
+
+허브 HUD는 공통 상태창을 재사용하며 전투 HUD·전술지도·필드 등장 효과를 실행하지 않는다. 허브 해제·Player 비활성화·파괴는 창을 닫고 해당 HUD를 제거한다. 재활성화는 아직 허브에 바인딩된 동안만 다시 연결한다. 이 UI 바인딩은 Match 권한을 만들거나 바꾸지 않는다.
+
+첫 허브에 활성 EventSystem이 없으면 HUD 아래에 `EventSystem`과 `InputSystemUIInputModule`을 만든다. 이전 메뉴의 시스템이 바인딩 뒤 사라지는 경우도 Update에서 보충한다. 기존 시스템이 있으면 그대로 재사용하고, 자신이 만든 시스템만 허브 해제/비활성화 때 정리한다. I 창을 닫을 때는 시스템을 유지해 무기고 등 다른 허브 UI가 이어서 사용할 수 있게 한다. 버튼 처리에는 실제 UI 입력 모듈과 GraphicRaycaster를 사용하며 `Button.onClick.Invoke()`로 입력 실패를 우회하지 않는다.
+
+필드의 공통 상태창에도 독립 Canvas(정렬 45)와 CanvasGroup의 ignoreParentGroups를 제작했다. 전투 HUD 등장 효과는 우주선에서 정지/숨김을 유지하지만 I 창은 그 스캔 마스크·그룹 알파의 영향을 받지 않는다. 따라서 첫 필드 진입 전과 필드에서 우주선 방문 중의 상태창을 구분해 처리한다.
+
+검증: 상태창 묶음 11개 중 기존 8개가 먼저 통과했다. 창 활성화 후 Canvas 분리와 입력 fixture를 보완한 뒤 시작 허브 I/Esc, 귀환 우주선, 기존 I/Esc 재검사 각 1개가 통과했다. 전체 묶음 재실행 결과로 합산하지 않는다. 공통 상태창의 TMP 최초 SubMesh 생성은 중복 창 생성으로 계산하지 않도록 첫 활성화 후 오브젝트 수를 비교한다. 실제 Startup 메뉴부터 사람의 조작 인수·멀티플레이·빌드는 별도다.
+
+첫 허브 버튼 입력 추가 검증: EventSystem 부재를 회귀 검사로 재현했다. 수정 뒤 상태창 묶음 13개 중 기존 검사와 입력 시스템 재사용·복구 검사 12개가 통과했다. 나머지 포인터 검사는 UI 첫 렌더 전에 클릭하던 fixture를 보완한 뒤 단독 재실행하여 통과했다. 실제 입력 모듈과 GraphicRaycaster를 거쳐 스킬 해금·강화·후보 배치·뒤로·닫기를 확인했다. 별도로 실제 Startup→첫 우주선 경로에서 저장된 레벨 28 상태로 창 열기와 스킬 화면·뒤로·닫기 포인터 입력을 확인했다. 자동 입력을 이용한 Unity 실행 확인이며 사람의 수동 인수·멀티플레이·빌드는 수행하지 않았다.

@@ -42,11 +42,18 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
     /// </summary>
     public override bool CheckCondition()
     {
-        return projectileSpawner != null &&
+        return enemyTargeting != null &&
+               CheckCondition(IsInRange(enemyTargeting.TargetColliders));
+    }
+
+    /// <summary>이번 행동에서 계산한 거리 결과로 발사 조건을 확인한다.</summary>
+    public override bool CheckCondition(bool isInTargetRange)
+    {
+        return isInTargetRange &&
+               projectileSpawner != null &&
                projectilePrefab != null &&
                attackDamage > 0 &&
-               TryGetTarget(out _) &&
-               IsInRange(enemyTargeting.TargetColliders, activationRange);
+               TryGetTarget(out _);
     }
 
     /// <summary>
@@ -55,10 +62,12 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
     protected override bool Activate()
     {
         if (projectilePrefab == null ||
-            !TryGetTarget(out TargetableComponent target))
+            !TryGetTarget(out TargetableComponent target) ||
+            !target.CanBeTargeted)
         {
             return false;
         }
+        
 
         Vector2 direction =
             ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
@@ -156,13 +165,10 @@ public sealed partial class EnemyProjectileAbility : EnemyAbility
 
     private bool TryGetTarget(out TargetableComponent target)
     {
-        target = null;
+        target = enemyTargeting != null
+            ? enemyTargeting.TargetComponent
+            : null;
 
-        if (enemyTargeting == null || enemyTargeting.Target == null)
-            return false;
-
-        target = enemyTargeting.Target.GetComponent<TargetableComponent>();
-
-        return target != null && target.CanBeTargeted;
+        return target != null;
     }
 }

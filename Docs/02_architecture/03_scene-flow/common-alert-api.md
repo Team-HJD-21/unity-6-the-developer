@@ -23,7 +23,8 @@ Unity 메인 스레드의 UI/Feature 결과에서 사용한다. 백그라운드 
 
 - `Assets/Prefabs/UI/Common/AlertStrip.prefab`: 중앙 정렬 텍스트. `AlertStripView`에서 노출/진입/퇴장 시간·글자색과 TMP 표시를 편집한다. fade는 공통 `UiMotion.Sigmoid`를 사용한다.
 - 제작 기본 크기는 720×64이며 아래에서 166 reference 단위에 둔다. 기본 위치의 중심은 약 198이며 스킬 슬롯 바로 위다. 글자는 26px, 긴 문구는 최소 22px까지 축소하며 최대 두 줄이다.
-- `Assets/Prefabs/UI/Common/AlertText.mat`: Alert 전용 얇은 어두운 outline이다. 원본 폰트 material을 변경하지 않는다.
+- `MinimumScreenScale=0.8`, `MinimumScreenWidth=800`으로 작은 창의 물리 글자 크기를 보강한다. 800px 이상 창에서22pt는 최소17.6 화면 픽셀이며, 더 좁으면 창 폭에 비례한다. 위쪽 경계 계산도 이 로컬 배율을 반영한다. 기존 전투 HUD의 사용자 배율 설정과 별개다.
+- `Assets/Prefabs/UI/Common/AlertText.mat`: Alert 전용 FaceDilate0.08/어두운 outline0.14다. Error 의미색은 밝은 coral(0.98,0.72,0.66)이며 Success의 초록과 Info의 금색은 유지한다. 원본 폰트 material을 변경하지 않는다.
 - `Assets/Prefabs/UI/Common/AppScreenCanvas.prefab`: Screen Stack 밖의 형제로 AlertStrip을 둔다. Scene Travel Fade가 가장 위다. Screen Stack 안에 넣으면 필드 커서가 전체 화면 UI로 오인할 수 있다.
 - 제작 도구: `Tools > TeamHJD > The Developer > Common UI > Configure alerts` (`AlertPrefabSetup.Configure`). Common UI 제작 후 Edit Mode에서 한 번 실행한다. 두 전투 HUD나 Scene은 저장하지 않는다. 다시 실행하면 Alert 모양을 제작 기본값으로 적용하므로 Inspector로 조정한 뒤에는 무작정 재실행하지 않는다.
 - 글꼴은 전용 `CombatHudBodySDF`를 재사용한다. setup은 이 전용 에셋에만 공통 문구·미배정·설치 실패 글리프를 준비한다. 원본 NEXON SDF를 저장하지 않는다. 미리보기 기본 문구는 비우며 실행 중 UI 계층을 조립하지 않는다.

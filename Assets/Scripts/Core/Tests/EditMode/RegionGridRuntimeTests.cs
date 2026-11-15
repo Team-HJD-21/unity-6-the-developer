@@ -13,6 +13,23 @@ namespace TeamHJD.Game.Tests.EditMode
             new BattlefieldGridConfiguration(new BattlefieldPoint(10, 20), 0, 8, 4, 4, 2));
 
         [Test]
+        public void UnlockIsIndependentFromCaptureAndUsesRevisionValidation()
+        {
+            var definition = new RegionGridDefinition(Definition().Geometry, new[] { 1, 1, 1, 1, 2, 2, 2, 2 });
+            using var runtime = new RegionRuntime(new MatchId("one"), definition);
+            runtime.TryApply(runtime.Snapshot, new[] { 0 }, RegionCaptureUpdateMode.Replace);
+            var before = runtime.Snapshot;
+            Assert.That(runtime.TryUnlockThrough(before, 1), Is.EqualTo(RegionUpdateStatus.Applied));
+            Assert.That(before.UnlockedRegionIds, Is.Empty);
+            Assert.That(runtime.Snapshot.CapturedCellCount, Is.EqualTo(1));
+            Assert.That(runtime.Snapshot.CapturedCells[1], Is.False);
+            Assert.That(new RegionAccessPolicy(runtime).CanUseAt(new BattlefieldPoint(9, 19)), Is.True);
+            Assert.That(runtime.TryUnlockThrough(before, 2), Is.EqualTo(RegionUpdateStatus.StaleRevision));
+            runtime.TryApply(runtime.Snapshot, Array.Empty<int>(), RegionCaptureUpdateMode.Replace);
+            Assert.That(runtime.Snapshot.IsRegionUnlocked(1), Is.True);
+        }
+
+        [Test]
         public void Definition_CopiesMembership_AndMapsCenteredNonSquareGrid()
         {
             int[] membership = { 1, 1, 2, 2, 1, 1, 2, 2 };

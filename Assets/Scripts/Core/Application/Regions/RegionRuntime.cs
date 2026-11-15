@@ -10,6 +10,7 @@ namespace TeamHJD.Game.Application
     public sealed class RegionRuntime : IRegionGridSource, IDisposable
     {
         private RegionGridState _state;
+        internal RegionCaptureHistory CaptureHistory { get; } = new RegionCaptureHistory();
         private bool _isDisposed;
         private bool _isNotifying;
         public event Action<RegionGridSnapshot> Changed;
@@ -26,7 +27,8 @@ namespace TeamHJD.Game.Application
         }
 
         public RegionUpdateStatus TryApply(RegionGridSnapshot basis, IEnumerable<int> cells,
-            RegionCaptureUpdateMode updateMode)
+            RegionCaptureUpdateMode updateMode, RegionChangeKind reason = RegionChangeKind.StateChanged,
+            IEnumerable<int> securedRegionIds = null)
         {
             ThrowIfDisposed();
             if (_isNotifying) throw new InvalidOperationException("Do not mutate regions inside a change notification.");
@@ -35,20 +37,37 @@ namespace TeamHJD.Game.Application
             if (basis.MatchId != current.MatchId) return RegionUpdateStatus.DifferentMatch;
             if (basis.GridId != current.GridId) return RegionUpdateStatus.DifferentGrid;
             if (basis.Revision != current.Revision) return RegionUpdateStatus.StaleRevision;
-            if (!_state.Apply(cells, updateMode)) return RegionUpdateStatus.Unchanged;
+            if (!_state.Apply(cells, updateMode, reason, securedRegionIds)) return RegionUpdateStatus.Unchanged;
             Notify();
             return RegionUpdateStatus.Applied;
         }
 
         /// <summary>명시적 초기화입니다. 기존 점령을 비우고 새 Grid 세대를 발급합니다.</summary>
-        public void Reset(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells = null)
+        public void Reset(RegionGridDefinition definition, RegionPolicyMode mode, IEnumerable<int> initialCells = null,
+            IEnumerable<int> unlockedRegionIds = null)
         {
             ThrowIfDisposed();
             if (_isNotifying) throw new InvalidOperationException("Do not reset regions inside a change notification.");
-            var next = new RegionGridState(_state.Snapshot.MatchId, Guid.NewGuid(), definition, mode);
-            if (initialCells != null) next.Apply(initialCells, RegionCaptureUpdateMode.Replace);
+            var next = new RegionGridState(_state.Snapshot.MatchId, Guid.NewGuid(), definition, mode, unlockedRegionIds);
+            if (initialCells != null) next.Apply(initialCells, RegionCaptureUpdateMode.Replace, RegionChangeKind.Baseline);
             _state = next;
+            CaptureHistory.Clear();
             Notify();
+        }
+
+        /// <summary>Scene의 CU/확보 진행이 호출합니다. 해금은 점유와 별개의 확정 상태입니다.</summary>
+        public RegionUpdateStatus TryUnlockThrough(RegionGridSnapshot basis, int zone)
+        {
+            ThrowIfDisposed();
+            if (_isNotifying) throw new InvalidOperationException("Do not mutate regions inside a change notification.");
+            if (basis == null) throw new ArgumentNullException(nameof(basis));
+            var current = _state.Snapshot;
+            if (basis.MatchId != current.MatchId) return RegionUpdateStatus.DifferentMatch;
+            if (basis.GridId != current.GridId) return RegionUpdateStatus.DifferentGrid;
+            if (basis.Revision != current.Revision) return RegionUpdateStatus.StaleRevision;
+            if (!_state.UnlockThrough(zone)) return RegionUpdateStatus.Unchanged;
+            Notify();
+            return RegionUpdateStatus.Applied;
         }
 
         private void Notify()

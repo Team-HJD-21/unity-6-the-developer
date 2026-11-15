@@ -26,6 +26,7 @@ public sealed partial class PlayerFieldDevice : MonoBehaviour, IPlayerFieldTarge
     private readonly PlayerFieldEnemyScanner _scanner = new();
     public PlayerFieldDeviceKind Kind => _kind;
     public float Health => _health;
+    public float MaxHealth => _maxHealth;
     public float Radius => _radius;
     public Vector3 Position => transform.position;
     public bool IsAlive => this != null && _initialized && isActiveAndEnabled && _health > 0 && _remaining > 0;

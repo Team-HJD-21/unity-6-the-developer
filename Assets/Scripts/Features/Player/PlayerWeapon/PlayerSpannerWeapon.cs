@@ -3,6 +3,7 @@ using TeamHJD.Game.Presentation.Scene;
 using TeamHJD.Game.Enemy.Contracts;
 using System.Collections.Generic;
 using UnityEngine;
+using TeamHJD.Game.Enemy.Contracts;
 using UnityEngine.SceneManagement;
 
 /// <summary>렌치 타격을 Match 시간으로 예약하고 명중 순간 대상을 검증해 제작된 피드백을 재생합니다.</summary>
@@ -125,9 +126,9 @@ public sealed partial class PlayerSpannerWeapon : MonoBehaviour
         int damage = _baseStats != null ? Mathf.RoundToInt(_baseStats.ResolveWeaponDamage(_damage)) : Mathf.Max(0, _damage);
         GetStrikeGeometry(out var origin, out var range, out var minimumForward);
         // Query again at the strike: moving away or stepping behind a wall must avoid the hit.
-        // EnemyHitBox is a Trigger; sensor and foot colliders are not damage shapes.
+        // EnemyHurtbox is a Trigger; sensor and foot colliders are not damage shapes.
         var filter = new ContactFilter2D { useTriggers = true };
-        filter.SetLayerMask(LayerMask.GetMask("EnemyHitBox"));
+        filter.SetLayerMask(LayerMask.GetMask("EnemyHurtbox"));
         _damageCandidates.Clear();
         Physics2D.OverlapCircle(origin, range, filter, _damageCandidates);
         foreach (Collider2D collider in _damageCandidates)

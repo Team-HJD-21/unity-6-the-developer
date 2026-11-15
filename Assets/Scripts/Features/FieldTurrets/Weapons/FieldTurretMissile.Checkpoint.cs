@@ -22,10 +22,14 @@ public partial class FieldTurretMissile
             Math.Max(0, _explosionDamageAt - FieldSimulationTime.Seconds(this)));
     }
 
-    internal void RestoreCheckpoint(State state)
+    internal void RestoreCheckpoint(State state, float fieldDepth)
     {
         CheckpointSourceDefinition = state.SourceDefinition;
-        state.Pose.Apply(transform); _bulletDamage = state.Damage; _currentSpeed = state.Speed;
+        state.Pose.Apply(transform);
+        Vector3 position = transform.position;
+        position.z = fieldDepth;
+        transform.position = position;
+        _bulletDamage = state.Damage; _currentSpeed = state.Speed;
         _initialDirection = state.Direction; _isHoming = state.Homing; _isExploding = state.Exploding;
         double now = FieldSimulationTime.Seconds(this);
         _homingStartsAt = now + state.HomingRemaining; _expiresAt = now + state.LifeRemaining; _explosionDamageAt = now + state.ExplosionRemaining;

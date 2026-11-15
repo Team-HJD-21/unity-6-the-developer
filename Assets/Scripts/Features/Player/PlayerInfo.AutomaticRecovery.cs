@@ -1,24 +1,28 @@
 using System;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public partial class PlayerInfo
 {
     [Header("Automatic health recovery")]
     [SerializeField, Min(0)] private float _automaticRecoveryDelay = 5f;
-    [SerializeField, Range(0, 1)] private float _automaticRecoveryFractionPerSecond = .02f;
+    [FormerlySerializedAs("_automaticRecoveryFractionPerSecond")]
+    [SerializeField, Range(0, 1)] private float _automaticRecoveryFractionPerPulse = .02f;
+    [SerializeField, Min(.1f)] private float _automaticRecoveryInterval = 3f;
     private bool _automaticRecoveryPending;
     private double _automaticRecoverySampleAt, _automaticRecoveryPartialHealth;
     public float AutomaticRecoveryDelay => Mathf.Max(0, _automaticRecoveryDelay);
-    public float AutomaticRecoveryFractionPerSecond => Mathf.Clamp01(_automaticRecoveryFractionPerSecond);
+    public float AutomaticRecoveryFractionPerPulse => Mathf.Clamp01(_automaticRecoveryFractionPerPulse);
+    public float AutomaticRecoveryInterval => Mathf.Max(.1f, _automaticRecoveryInterval);
 
     private void ScheduleAutomaticRecovery()
     {
         ClearAutomaticRecovery();
         if (curHp <= 0 || curHp >= maxHp || !float.IsFinite(_automaticRecoveryDelay) ||
-            !float.IsFinite(_automaticRecoveryFractionPerSecond) || AutomaticRecoveryFractionPerSecond <= 0) return;
+            !float.IsFinite(_automaticRecoveryFractionPerPulse) || !float.IsFinite(_automaticRecoveryInterval) ||
+            AutomaticRecoveryFractionPerPulse <= 0) return;
         _automaticRecoveryPending = true;
-        // Match 절대 시각을 사용하므로 배속을 중복 적용하거나 FixedUpdate 횟수로 회복 속도를 정하지 않습니다.
         _automaticRecoverySampleAt = FieldSimulationTime.Seconds(this) + AutomaticRecoveryDelay;
     }
 
@@ -34,15 +38,14 @@ public partial class PlayerInfo
         if (curHp <= 0 || curHp >= maxHp) { ClearAutomaticRecovery(); return; }
         double now = FieldSimulationTime.Seconds(this);
         if (!double.IsFinite(now) || now < _automaticRecoverySampleAt) return;
-        // 명시적 RecoverHp()의 기존 회복과 자동 회복이 중복되지 않습니다.
-        if (_recovering) { _automaticRecoverySampleAt = now; return; }
-        double elapsed = now - _automaticRecoverySampleAt;
-        _automaticRecoverySampleAt = now;
-        double earned = _automaticRecoveryPartialHealth + elapsed * maxHp * AutomaticRecoveryFractionPerSecond;
+        // 놓친 횟수를 몰아서 지급하지 않고 실제 처리 시점에 한 번만 회복합니다.
+        _automaticRecoverySampleAt = now + AutomaticRecoveryInterval;
+        if (_recovering) return;
+        double earned = _automaticRecoveryPartialHealth + maxHp * AutomaticRecoveryFractionPerPulse;
         int healed = (int)Math.Min(maxHp - curHp, Math.Floor(earned + .000001));
         curHp += healed;
-        _automaticRecoveryPartialHealth = Math.Max(0, earned - healed);
+        _automaticRecoveryPartialHealth = Math.Max(0, earned - Math.Floor(earned + .000001));
         if (curHp >= maxHp) ClearAutomaticRecovery();
-        // FixedUpdate의 기존 onHpChange가 HUD를 갱신합니다. Damaged/onDeath는 재발행하지 않습니다.
+        // FixedUpdate의 기존 onHpChange가 회복된 HP를 HUD에 전달합니다.
     }
 }

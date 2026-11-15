@@ -50,10 +50,14 @@ public sealed class LocalShotExample : MonoBehaviour
 | `ActiveTarget` | 현재 선택한 임시 marker 또는 기본 로컬 Player |
 | `HasOverride / IsBlending` | 디버그/연출 UI에서 현재 상태 조회 |
 | `PushView(...) → IDisposable` | 컷씬 소유자가 임시 시점을 요청하고 종료·취소·OnDisable에서 해제 |
+| `TrySetViewSize(target, size) → bool` | 현재 최상위 임시 target의 유한 양수 orthographic 배율만 변경. 전술 화면 휠 확대에 사용하며 다른 target·끝난 lease·잘못된 값은 false |
+| `TrySetViewViewport(target, rect) → bool` | 현재 최상위 target의 임시 정규화 화면 영역만 변경. 양수 크기·유한 값·0~1 내부를 검사하며 lease 종료/actor 교체/비활성화 때 기본 영역으로 복귀 |
 | `ViewChanged` | 같은 출력 안에서 시점이 바뀐 통지. 구독자는 자기 수명 종료 때 해제 |
 | `OutputChanged` | Scene 교체 등으로 실제 출력 Camera가 바뀐 통지. 임시 컷씬마다 발생시키지 않음 |
 
 알림을 받을 때는 먼저 현재 값을 읽고 구독하며, OnDisable/Dispose에서 같은 delegate를 해제합니다. 구독자의 예외는 기록하되 다른 표현 구독자·시점 lease 반환·카메라 정리를 중단하지 않습니다.
+
+`PushView`의 마지막 선택 인수 `viewport`는 전술 지도의 맵 경계 보존에 사용합니다. 미지정한 기존 컷씬은 기본 화면 영역을 유지합니다. Unity는 [부분 rect에서도 기본 aspect를 화면 비율로 계산](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityengine/camera/aspect)하므로 임시 viewport 소유 중에는 `pixelRect.width/height`의 연속 비율을 지정하고 종료 때 `ResetAspect`합니다. 정수 `pixelWidth`를 사용하면 중간 줌에서 반올림으로 맵 밖을 조금 그릴 수 있습니다. 임시 viewport 없이 기존에 수동 지정한 aspect를 사용하는 특수 출력은 별도 설계/검증 범위입니다.
 
 ## 기존 Scene과 어떻게 연결되나
 

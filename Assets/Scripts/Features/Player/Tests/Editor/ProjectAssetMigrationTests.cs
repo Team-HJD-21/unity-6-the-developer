@@ -116,7 +116,7 @@ public sealed class ProjectAssetMigrationTests
         Assert.That(snapshot.Triangles, Is.Not.Empty);
         Assert.That(snapshot.FrontlineEdges, Is.Not.Empty);
         Assert.That(snapshot.Grid.OccupiedCells, Is.Not.Empty);
-        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        var launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
         Assert.That(launcher, Is.Not.Null);
         float deadline = Time.realtimeSinceStartup + 20;
         while (launcher.ActiveEnemyCount == 0 && Time.realtimeSinceStartup < deadline) yield return null;
@@ -135,7 +135,7 @@ public sealed class ProjectAssetMigrationTests
         Assert.That(root.CurrentMatchId, Is.Not.EqualTo(firstMatch));
         Assert.That(Object.FindObjectsByType<PlayerInfo>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
         Assert.That(Object.FindObjectsByType<Unity.Netcode.NetworkManager>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
-        launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
         deadline = Time.realtimeSinceStartup + 20;
         while (launcher.ActiveEnemyCount == 0 && Time.realtimeSinceStartup < deadline) yield return null;
         Assert.That(launcher.ActiveEnemyCount, Is.GreaterThan(0), "Scene 재진입 후에도 첫 자동 스폰이 동작해야 합니다.");

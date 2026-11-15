@@ -43,12 +43,12 @@ namespace TeamHJD.Game.Presentation.Scene
                         throw new ArgumentException($"Duplicate PlayerStart slot '{start.SlotIndex}'.", nameof(playerStarts));
                 }
 
-                if (session.State.Players.Count > startsBySlot.Count)
+                if (session.Config.Players.Count > startsBySlot.Count)
                     throw new InvalidOperationException(
-                        $"Match has {session.State.Players.Count} players but only {startsBySlot.Count} active PlayerStart slots.");
+                        $"Match has {session.Config.Players.Count} players but only {startsBySlot.Count} active PlayerStart slots.");
 
                 int slot = 0;
-                foreach (PlayerState player in session.State.Players)
+                foreach (PlayerLoadoutSnapshot player in session.Config.Players)
                 {
                     if (!startsBySlot.TryGetValue(slot, out PlayerStart playerStart))
                         throw new InvalidOperationException(

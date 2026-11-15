@@ -1,6 +1,6 @@
 # 아키텍처 문서
 
-최종 갱신일 2026-11-11
+최종 갱신일 2026-11-14
 상태 · 문서 탐색용 목차
 
 ## 공통 아키텍처와 규칙
@@ -13,12 +13,14 @@
 ## Core와 난수
 
 - [Core API 구현 현황과 남은 연결](01_core/core-implementation-status.md)
+- [Unity 기본 오디오·GameAudioManager 사용법](01_core/game-audio-api.md)
 - [core-api-usage](01_core/core-api-usage.md)
 - [core-feature-integration-guide](01_core/core-feature-integration-guide.md)
 - [core-lifecycle-and-api-guide](01_core/core-lifecycle-and-api-guide.md)
 - [core-presence-report-api](01_core/core-presence-report-api.md)
 - [core-random-api](01_core/core-random-api.md)
 - [core-sprint-region-and-request-api](01_core/core-sprint-region-and-request-api.md)
+- [정적 지역 확보·해금·스폰 제한](02_match/static-region-capture.md)
 - [core-structure-review-2026-11-05](01_core/core-structure-review-2026-11-05.md)
 - [random-weighted-selection](01_core/random-weighted-selection.md)
 
@@ -75,6 +77,7 @@
 ## Enemy와 Encounter
 
 - [encounter-planning-guide](08_encounter/encounter-planning-guide.md)
+- [Match 정규 생산·Field 시간·저장 API](08_encounter/encounter-production-api.md)
 - [encounter-spawn-origin-api](08_encounter/encounter-spawn-origin-api.md)
 - [enemy-system-guide](08_encounter/enemy-system-guide.md)
 - [spatial-spawn-distribution](08_encounter/spatial-spawn-distribution.md)
@@ -85,3 +88,11 @@
 - [day-night-api](09_world/day-night-api.md)
 - [weather-debug-hud](09_world/weather-debug-hud.md)
 - [weather-system-guide](09_world/weather-system-guide.md)
+
+- [개인 성장 저장과 월드 복귀 구분](01_core/growth-save-api.md)
+
+- [Player 구조와 Mission 복귀](02_match/match-recovery-api.md)
+
+- [Stage 점유·33/66% 사건·최종 보스 연결](02_match/stage-progression-api.md)
+
+- [Core 실행 지도·상태 원본·읽는 순서](01_core/core-runtime-map.md)

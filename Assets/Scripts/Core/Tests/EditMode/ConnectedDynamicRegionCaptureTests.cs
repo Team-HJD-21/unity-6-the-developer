@@ -15,6 +15,17 @@ namespace TeamHJD.Game.Tests.EditMode
             => new RegionTurretInput(new EntityId(id), new BattlefieldPoint(x, y), active, false);
 
         [Test]
+        public void WaterMaskStopsCaptureFromConnectingAcrossTheGap()
+        {
+            var original = Definition();
+            var mask = Enumerable.Range(0, original.Geometry.TotalCellCount).Select(i => i % 4 != 1).ToArray();
+            var definition = new RegionGridDefinition(original.Geometry, original.RegionIds, mask);
+            var result = new DynamicRegionCapturePolicy().EvaluateConnected(definition,
+                new[] { Turret("a", 3.5, .5), Turret("b", .5, 3.5) }, new BattlefieldPoint(.5, .5));
+            Assert.That(result.CellIndices.All(i => mask[i] && i % 4 == 0), Is.True);
+        }
+
+        [Test]
         public void EmptyLayoutKeepsOneCuCellWithoutInventingTriangle()
         {
             var result = new DynamicRegionCapturePolicy().EvaluateConnected(Definition(),

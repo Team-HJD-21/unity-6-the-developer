@@ -137,7 +137,7 @@ public sealed class PlayerSkillTreePanel : MonoBehaviour
     {
         if (!IsOpen || _owner == null || _owner.Research == null) return;
         var research = _owner.Research;
-        _tokens.text = $"스킬 토큰  {research.Tokens}개   /   레벨업마다 1개";
+        _tokens.text = $"스킬 토큰  {research.Tokens}개   /   플레이어 레벨당 1개";
         foreach(var card in _cards)
         {
             bool unlocked = research.IsUnlocked(card.Skill);

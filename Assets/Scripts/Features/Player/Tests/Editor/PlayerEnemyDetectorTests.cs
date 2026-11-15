@@ -55,10 +55,10 @@ public sealed class PlayerEnemyDetectorTests
         Assert.That(circle.attachedRigidbody, Is.EqualTo(prefab.GetComponent<Rigidbody2D>()));
         Assert.That(circle.radius * detector.transform.lossyScale.x, Is.EqualTo(4.5f).Within(.001f));
         Assert.That(detector.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("PlayerFeetBox")));
-        Assert.That(circle.excludeLayers.value & LayerMask.GetMask("EnemyHitBox"), Is.Zero);
+        Assert.That(circle.excludeLayers.value & LayerMask.GetMask("EnemyHurtbox"), Is.Zero);
         Assert.That(circle.excludeLayers.value & (1 << 16), Is.Not.Zero, "Enemy projectiles must not hit the detection range.");
         var data = new SerializedObject(detector);
-        Assert.That(data.FindProperty("_enemyLayers").intValue, Is.EqualTo(LayerMask.GetMask("EnemyHitBox")));
+        Assert.That(data.FindProperty("_enemyLayers").intValue, Is.EqualTo(LayerMask.GetMask("EnemyHurtbox")));
         Assert.That(data.FindProperty("_owner").objectReferenceValue, Is.EqualTo(prefab.transform));
         Assert.That(data.FindProperty("_range").objectReferenceValue, Is.EqualTo(circle));
     }
@@ -179,7 +179,7 @@ public sealed class PlayerEnemyDetectorTests
         var visual = enemy.GetComponent<EnemyStealthVisual>(); Invoke(visual, "Awake"); Invoke(visual, "OnEnable");
         var health = enemy.GetComponent<EnemyHealth>(); health.Initialize();
         Assert.That(Array.Exists(enemy.GetComponentsInChildren<Collider2D>(),
-            c => c.isTrigger && c.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox")), Is.True);
+            c => c.isTrigger && c.gameObject.layer == LayerMask.NameToLayer("EnemyHurtbox")), Is.True);
         Assert.That(health.TryTakeDamage(1, AttackSourceType.Player), Is.False);
         Step(detector);
         Assert.That(target.IsDetected, Is.True);
@@ -241,13 +241,13 @@ public sealed class PlayerEnemyDetectorTests
         var go = new GameObject("Assassin Detection Range"); go.transform.SetParent(owner.transform, false);
         go.layer = LayerMask.NameToLayer("PlayerFeetBox");
         var circle = go.AddComponent<CircleCollider2D>(); circle.isTrigger = true; circle.radius = 3;
-        circle.excludeLayers = ~LayerMask.GetMask("EnemyHitBox"); circle.layerOverridePriority = 1;
+        circle.excludeLayers = ~LayerMask.GetMask("EnemyHurtbox"); circle.layerOverridePriority = 1;
         var detector = go.AddComponent<PlayerEnemyDetector>(); Invoke(detector, "Awake"); Invoke(detector, "OnEnable");
         return detector;
     }
     private EnemyDetection Enemy(Vector2 position)
     {
-        var go = Root("Assassin", position); go.layer = LayerMask.NameToLayer("EnemyHitBox");
+        var go = Root("Assassin", position); go.layer = LayerMask.NameToLayer("EnemyHurtbox");
         go.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
         var hitbox = go.AddComponent<BoxCollider2D>(); hitbox.size = Vector2.one * .5f; hitbox.isTrigger = true;
         return go.AddComponent<EnemyDetection>();

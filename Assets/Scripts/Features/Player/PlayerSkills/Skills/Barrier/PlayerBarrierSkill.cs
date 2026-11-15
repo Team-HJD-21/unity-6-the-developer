@@ -11,7 +11,7 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
     [SerializeField, Min(1)] private int _maxCharges = 3;
     [SerializeField, Min(.1f)] private float _rechargeSeconds = 18;
     [SerializeField, Min(1)] private float _health = 300;
-    [SerializeField, Min(.1f)] private float _duration = 8;
+    [SerializeField, Min(20f)] private float _duration = 20;
     [Header("Two-click placement")]
     [SerializeField, Min(.1f)] private float _minDistance = 1;
     [SerializeField, Min(.1f)] private float _maxDistance = 13.5f;
@@ -36,7 +36,7 @@ public sealed partial class PlayerBarrierSkill : PlayerPlacementSkillBase
     public override Vector3 PlacementCenter => _hasFirst ? _first : base.PlacementCenter;
     public float ConnectionRange => Mathf.Max(_minDistance, _maxDistance) * UpgradeMultiplier;
     public float EffectHealth => _health * UpgradeMultiplier;
-    public float EffectDuration => _duration * UpgradeMultiplier;
+    public float EffectDuration => Mathf.Max(20f, _duration) * UpgradeMultiplier;
     public override float PlacementRadius => _hasFirst ? ConnectionRange : base.PlacementRadius;
     protected override Vector3? PlacementAnchor => _hasFirst ? _first : null;
     public override string PlacementHint => !IsPlacing ? "" : _hasFirst

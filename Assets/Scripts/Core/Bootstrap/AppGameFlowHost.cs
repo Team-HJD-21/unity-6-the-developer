@@ -16,6 +16,7 @@ namespace TeamHJD.Game.Bootstrap
         {
             _app = app != null ? app : throw new ArgumentNullException(nameof(app));
         }
+        public void PrepareMission(TeamHJD.Game.Domain.MissionEntryKind entry) => _app.PrepareMissionEntry(entry);
         public string ActiveSceneKey => SceneManager.GetActiveScene().path;
         public string TravelRestriction => _app.GameFlowTravelRestriction;
         public bool CanLoad(string sceneKey) => _app.Services.SceneFlow.CanLoad(sceneKey);

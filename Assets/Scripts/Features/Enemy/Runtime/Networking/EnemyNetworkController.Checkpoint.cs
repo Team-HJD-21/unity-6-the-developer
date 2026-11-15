@@ -84,7 +84,12 @@ public partial class EnemyNetworkController
     {
         if (state.Movement != null)
             GetComponent<EnemyMovement>().RestoreCheckpoint(state.Movement);
+
         state.Animation.Apply(GetComponent<Animator>());
+
+        var enemyAnimation = GetComponent<EnemyAnimation>();
+        if (enemyAnimation != null)
+            enemyAnimation.RefreshStateCache();
     }
 
     internal sealed class State

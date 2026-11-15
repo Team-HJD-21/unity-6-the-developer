@@ -23,6 +23,7 @@ Shader "Weather/HeatWave"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "WeatherCoordinates.hlsl"
 
             half4 _HeatTint;
             half _HeatTintStrength;
@@ -36,9 +37,8 @@ Shader "Weather/HeatWave"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float yDirection = 1.0;
-                float2 effectUV = input.texcoord;
+                float2 effectUV = StageCameraViewportUV(input.positionCS);
                 #if UNITY_UV_STARTS_AT_TOP
-                    effectUV.y = 1.0 - effectUV.y;
                     yDirection = -1.0;
                 #endif
                 float2 uv = effectUV;

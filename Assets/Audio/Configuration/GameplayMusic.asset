@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eb92bd06df44465a5fd46cda05cb9a1, type: 3}
+  m_Name: GameplayMusic
+  m_EditorClassIdentifier: TeamHJD.Game.Presentation::TeamHJD.Game.Presentation.GameplayMusicLibrary
+  Day:
+  - {fileID: 8300000, guid: 97bcc05fc60046fba0f2da6df90be23e, type: 3}
+  - {fileID: 8300000, guid: aca4356361e548e4b33774329e3e2242, type: 3}
+  - {fileID: 8300000, guid: 18442a90a8a641128194bf47bf51620e, type: 3}
+  - {fileID: 8300000, guid: d3e94be8fe20414f986a91ca30aa4375, type: 3}
+  Night:
+  - {fileID: 8300000, guid: 65a575fccdd74f7bbdaf0204155ce986, type: 3}
+  - {fileID: 8300000, guid: 6e9adb2e4d684c7d9d058281eb29642d, type: 3}
+  - {fileID: 8300000, guid: 9e49385416ee46e8b2cc089353ae6482, type: 3}
+  - {fileID: 8300000, guid: 7450805fb4b74f29901cd026b618c85b, type: 3}
+  Spaceship: {fileID: 8300000, guid: 102d11e15a524aff88055c3ab9db240a, type: 3}
+  Volume: 0.55
+  TransitionSeconds: 0.8
+  ScheduleAheadSeconds: 1.25
+  StartDelaySeconds: 0.1

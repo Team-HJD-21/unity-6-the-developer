@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using TeamHJD.Game.Application;
+using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure;
@@ -127,19 +129,19 @@ public sealed class PlayerArmoryRuntimeTests
     public IEnumerator LevelUpPaysTokensAndButtonsUpgradeActualStatsWithoutChangingInterval()
     {
         Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(300), Is.True);
-        Assert.That(_armory.State.Tokens, Is.EqualTo(3));
+        Assert.That(_armory.State.Tokens, Is.EqualTo(4));
         yield return KeyFrame(Key.F);
         Assert.That(_armory.TryGetStats(WeaponType.DefaultGun,false,out var before), Is.True);
         Assert.That(_armory.TryGetStats(WeaponType.DefaultGun,true,out var preview), Is.True);
         Assert.That(preview.ProjectileCount, Is.EqualTo(3)); Assert.That(preview.Interval, Is.EqualTo(before.Interval));
         var upgrade = System.Array.Find(_station.View.GetComponentsInChildren<Button>(true),b=>b.name=="Upgrade");
         upgrade.onClick.Invoke();
-        Assert.That(_armory.State.Level(WeaponType.DefaultGun), Is.EqualTo(2)); Assert.That(_armory.State.Tokens, Is.EqualTo(2));
+        Assert.That(_armory.State.Level(WeaponType.DefaultGun), Is.EqualTo(2)); Assert.That(_armory.State.Tokens, Is.EqualTo(3));
         Assert.That(_armory.TryGetStats(WeaponType.DefaultGun,false,out var actual), Is.True);
         Assert.That(actual.Damage, Is.EqualTo(preview.Damage).Within(.001f)); Assert.That(actual.ProjectileCount, Is.EqualTo(3));
         Assert.That(actual.Interval, Is.EqualTo(before.Interval));
         upgrade.onClick.Invoke(); upgrade.onClick.Invoke();
-        Assert.That(_armory.State.Level(WeaponType.DefaultGun), Is.EqualTo(3)); Assert.That(_armory.State.Tokens, Is.EqualTo(1));
+        Assert.That(_armory.State.Level(WeaponType.DefaultGun), Is.EqualTo(3)); Assert.That(_armory.State.Tokens, Is.EqualTo(2));
         Assert.That(upgrade.interactable, Is.False); Assert.That(_station.View.ComparisonText, Does.Contain("최고"));
         _station.Close(); Assert.That(_armory.TryUpgrade(WeaponType.Sniper), Is.False);
     }
@@ -209,9 +211,127 @@ public sealed class PlayerArmoryRuntimeTests
         using var step=writer.PrepareRestore(new CheckpointRestoreContext(context,target,CheckpointRestorePolicy.Default),saved,codec);
         step.Apply();
         Assert.That(_armory.State.First,Is.EqualTo(WeaponType.DefaultGun));Assert.That(_armory.Level(WeaponType.DefaultGun),Is.EqualTo(2));
-        Assert.That(_armory.State.Tokens,Is.EqualTo(2));Assert.That(_armory.IsOpen,Is.False);
+        Assert.That(_armory.State.Tokens,Is.EqualTo(3));Assert.That(_armory.IsOpen,Is.False);
         step.Rollback();
         Assert.That(_armory.State.First,Is.EqualTo(WeaponType.Sniper));Assert.That(_armory.Level(WeaponType.DefaultGun),Is.EqualTo(3));
-        Assert.That(_armory.State.Tokens,Is.EqualTo(1));
+        Assert.That(_armory.State.Tokens,Is.EqualTo(2));
+    }
+
+    private PlayerArmory SpawnReplacement(bool hub, InputLockService input)
+    {
+        var actor=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab"),_station.transform.position,Quaternion.identity);
+        SceneManager.MoveGameObjectToScene(actor,_scene);
+        actor.GetComponent<PlayerInputHandler>().enabled=false;actor.GetComponent<PlayerMovement>().enabled=false;actor.GetComponent<Rigidbody2D>().simulated=false;
+        var armory=actor.GetComponent<PlayerArmory>();
+        if(hub){actor.GetComponent<PlayerControlState>().BindHub(input);armory.BindHub(input);}
+        else armory.BindInputBlocker(input);
+        return armory;
+    }
+    private void AssertDisplayedTokens(int tokens)
+    {
+        var label=(TMPro.TMP_Text)typeof(PlayerArmoryView).GetField("_tokens",Private).GetValue(_station.View);
+        Assert.That(label.text,Is.EqualTo($"강화 토큰  {tokens}개"));
+    }
+    [UnityTest]
+    public IEnumerator FirstHubAtRestoredLevelFiveKeepsSpentTokensAcrossActorReplacement()
+    {yield return FirstOpenAtRestoredLevel(5);}
+    [UnityTest]
+    public IEnumerator FirstHubAtRestoredLevelTenKeepsSpentTokensAcrossActorReplacement()
+    {yield return FirstOpenAtRestoredLevel(10);}
+    private IEnumerator FirstOpenAtRestoredLevel(int level)
+    {
+        var id=new PlayerId("local-player");(_player.GetComponent<PlayerActorIdentity>()??_player.AddComponent<PlayerActorIdentity>()).Bind(id,0);
+        var config=new MatchConfig(new MatchId("first-hub-restored"),MatchMode.Story,new StageId("stage"),new DefinitionId("normal"),"test",1,new[]{new PlayerLoadoutSnapshot(id,null)});
+        var context=new CheckpointCaptureContext(config,0,System.Guid.NewGuid());var codec=new BinaryCheckpointPayloadCodec();
+        var store=new HubGrowthStore();var slot=GrowthSaveService.SlotForOwner("player/"+id.Value);
+        using(var saved=new GrowthSaveService(store,codec,slot,()=>context,_player.GetComponentsInChildren<MonoBehaviour>(true).OfType<IGrowthCheckpointParticipant>()))
+        {
+            saved.Load();Assert.That(_player.GetComponent<PlayerExperience>().AddExperience((level-1)*100),Is.True);
+            Assert.That(_player.GetComponent<PlayerBaseStats>().TryClaimReward(2),Is.True);
+            Assert.That(_player.GetComponent<PlayerBaseStats>().TryInvest(PlayerBaseStat.Attack),Is.True);saved.Flush();
+        }
+        var freshInput=new InputLockService();var first=SpawnReplacement(true,freshInput);RestoreHubGrowth(first,store,codec,id);_player.SetActive(false);
+        yield return null;
+        Assert.That(first.GetComponent<PlayerExperience>().Level,Is.EqualTo(level));Assert.That(_station.TryOpen(first),Is.True);AssertDisplayedTokens(level);
+        Assert.That(first.GetComponent<PlayerBaseStats>().Invested(PlayerBaseStat.Attack),Is.EqualTo(1));Assert.That(first.GetComponent<PlayerBaseStats>().IsRewardClaimed(2),Is.True);
+        Assert.That(first.GetComponent<PlayerSkillResearch>().Tokens,Is.EqualTo(level));
+        Assert.That(first.TryUpgrade(WeaponType.DefaultGun),Is.True);Assert.That(first.TryUpgrade(WeaponType.DefaultGun),Is.True);AssertDisplayedTokens(level-2);_station.Close();
+        var returned=SpawnReplacement(true,freshInput);RestoreHubGrowth(returned,store,codec,id);first.gameObject.SetActive(false);
+        yield return null;
+        Assert.That(returned.GetComponent<PlayerExperience>().Level,Is.EqualTo(level));
+        Assert.That(_station.TryOpen(returned),Is.True);AssertDisplayedTokens(level-2);Assert.That(returned.Level(WeaponType.DefaultGun),Is.EqualTo(3));_station.Close();
+        var field=SpawnReplacement(false,freshInput);returned.gameObject.SetActive(false);
+        Assert.That(field.GetComponent<PlayerExperience>().AddExperience((level-1)*100),Is.True);
+        Assert.That(field.State.Tokens,Is.EqualTo(level-2),"Restoring the same achieved level cannot refund upgrades or pay it again.");
+    }
+    private void RestoreHubGrowth(PlayerArmory owner,ICheckpointStore store,ICheckpointPayloadCodec codec,PlayerId id)
+    {
+        (owner.GetComponent<PlayerActorIdentity>()??owner.gameObject.AddComponent<PlayerActorIdentity>()).Bind(id,0);
+        var root=new GameObject("Hub growth composition",typeof(SpaceshipHubCompositionRoot));SceneManager.MoveGameObjectToScene(root,_scene);
+        var hub=root.GetComponent<SpaceshipHubCompositionRoot>();typeof(SpaceshipHubCompositionRoot).GetProperty("Player").SetValue(hub,owner.gameObject);
+        typeof(SpaceshipHubCompositionRoot).GetMethod("BindPersonalGrowth",Private).Invoke(hub,new object[]{store,codec,id});
+    }
+    private sealed class HubGrowthStore : ICheckpointStore
+    {
+        private readonly System.Collections.Generic.Dictionary<CheckpointSlot,CheckpointData> _data=new();
+        public System.Threading.Tasks.Task SaveAsync(CheckpointSlot slot,CheckpointData data,System.Threading.CancellationToken cancellationToken=default)
+        {_data[slot]=data;return System.Threading.Tasks.Task.CompletedTask;}
+        public System.Threading.Tasks.Task<CheckpointData> LoadAsync(CheckpointSlot slot,System.Threading.CancellationToken cancellationToken=default)
+        {return System.Threading.Tasks.Task.FromResult(_data.TryGetValue(slot,out var data)?data:null);}
+    }
+    [UnityTest]
+    public IEnumerator FirstHubDepartureAndReturnKeepTokensUpgradesAndLoadoutAcrossNewActors()
+    {
+        Assert.That(_station.TryOpen(_armory),Is.True);AssertDisplayedTokens(1);
+        Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(300),Is.True);AssertDisplayedTokens(4);
+        Assert.That(_armory.TryUpgrade(WeaponType.DefaultGun),Is.True);AssertDisplayedTokens(3);
+        Assert.That(_armory.TryEquip(0,WeaponType.Sniper),Is.True);_station.Close();
+        var field=SpawnReplacement(false,_locks);
+        Assert.That(field.State.Tokens,Is.EqualTo(3));Assert.That(field.Level(WeaponType.DefaultGun),Is.EqualTo(2));Assert.That(field.State.First,Is.EqualTo(WeaponType.Sniper));
+        Assert.That(field.GetComponent<PlayerExperience>().AddExperience(400),Is.True);
+        Assert.That(field.State.Tokens,Is.EqualTo(4));
+        field.BindInputBlocker(_locks);Assert.That(field.State.Tokens,Is.EqualTo(4));
+        // The old scene may unload after its replacement has already earned rewards.
+        _player.SetActive(false);
+        var returned=SpawnReplacement(true,_locks);
+        Assert.That(_station.TryOpen(returned),Is.True);AssertDisplayedTokens(4);
+        Assert.That(returned.Level(WeaponType.DefaultGun),Is.EqualTo(2));Assert.That(returned.State.First,Is.EqualTo(WeaponType.Sniper));
+        Assert.That(returned.TryUpgrade(WeaponType.DefaultGun),Is.True);AssertDisplayedTokens(3);_station.Close();
+        field.gameObject.SetActive(false);
+        returned.BindHub(_locks);Assert.That(returned.State.Tokens,Is.EqualTo(3));
+        returned.UnbindHub();returned.gameObject.SetActive(false);
+        var next=SpawnReplacement(false,_locks);
+        Assert.That(next.State.Tokens,Is.EqualTo(3));Assert.That(next.Level(WeaponType.DefaultGun),Is.EqualTo(3));Assert.That(next.State.First,Is.EqualTo(WeaponType.Sniper));
+        yield break;
+    }
+    [UnityTest]
+    public IEnumerator DifferentLocalScopeStartsWithOneTokenAndDoesNotCopyTheOtherArmory()
+    {
+        Assert.That(_player.GetComponent<PlayerExperience>().AddExperience(500),Is.True);
+        Assert.That(_station.TryOpen(_armory),Is.True);Assert.That(_armory.TryUpgrade(WeaponType.DefaultGun),Is.True);_station.Close();
+        var independent=SpawnReplacement(true,new InputLockService());
+        Assert.That(independent.State.Tokens,Is.EqualTo(1));Assert.That(independent.Level(WeaponType.DefaultGun),Is.EqualTo(1));
+        var returned=SpawnReplacement(true,_locks);
+        Assert.That(returned.State.Tokens,Is.EqualTo(5));Assert.That(returned.Level(WeaponType.DefaultGun),Is.EqualTo(2));
+        yield break;
+    }
+    [UnityTest]
+    public IEnumerator LegacyArmoryCheckpointGrantsTheInitialTokenOnceAndPreservesSpentUpgrades()
+    {
+        var id=new PlayerId("legacy-armory");(_player.GetComponent<PlayerActorIdentity>()??_player.AddComponent<PlayerActorIdentity>()).Bind(id,0);
+        var config=new MatchConfig(new MatchId("legacy-armory"),MatchMode.Story,new StageId("stage"),new DefinitionId("normal"),"test",1,new[]{new PlayerLoadoutSnapshot(id,null)});
+        var context=new CheckpointCaptureContext(config,0,System.Guid.NewGuid());var codec=new BinaryCheckpointPayloadCodec();var writer=(ICheckpointParticipant)_armory;
+        CheckpointSection Section(int tokens)=>codec.Write(writer.Key,1,CheckpointSectionKind.Progression,w=>
+        {codec.WriteText(w,id.Value);w.Write(1);w.Write((int)WeaponType.DefaultGun);w.Write((int)WeaponType.CryoBlaster);w.Write(4);w.Write(tokens);w.Write(2);w.Write(1);w.Write(2);});
+        CheckpointRestoreContext Restore(CheckpointSection section)=>new(context,new CheckpointData(System.Guid.NewGuid(),System.DateTimeOffset.UtcNow,config.MatchId,config.StageId,config.DifficultyProfileId,config.Mode,1,"test",0,1,new[]{section}),CheckpointRestorePolicy.Default);
+        var saved=Section(1);
+        using(var step=writer.PrepareRestore(Restore(saved),saved,codec))
+        {
+            step.Apply();Assert.That(_armory.State.Tokens,Is.EqualTo(2));Assert.That(_armory.Level(WeaponType.Sniper),Is.EqualTo(2));
+            step.Apply();Assert.That(_armory.State.Tokens,Is.EqualTo(2));step.Rollback();Assert.That(_armory.State.Tokens,Is.EqualTo(1));
+        }
+        var invalid=Section(2);Assert.Throws<System.IO.InvalidDataException>(()=>writer.PrepareRestore(Restore(invalid),invalid,codec));
+        Assert.That(writer.Capture(context,codec).Version,Is.EqualTo(2));
+        yield break;
     }
 }

@@ -35,10 +35,13 @@ public abstract partial class DefaultFieldMissileTurret : IFieldTurretCombatChec
     {
         var missiles = ReadCheckpointProjectiles().Where(m => m != null && m.isActiveAndEnabled).ToArray();
         if (missiles.Length > 4096) throw new InvalidOperationException("Too many missiles for one checkpoint.");
+        // Match 조립/성장 복원은 Start보다 먼저 저장할 수 있습니다. 아직 없는 배열도 제작된 발사 슬롯 수로 기록합니다.
+        int targetCount = Targets?.Length ?? ProjectilesPerShot;
         return codec.Write("turret/missile", 1, CheckpointSectionKind.World, w =>
         {
-            w.Write(_currentMissileCount); w.Write(Targets?.Length ?? 0);
-            foreach (var target in Targets ?? Array.Empty<Transform>()) codec.WriteText(w, CheckpointSceneReferences.Capture(target));
+            w.Write(_currentMissileCount); w.Write(targetCount);
+            for (int i = 0; i < targetCount; i++)
+                codec.WriteText(w, CheckpointSceneReferences.Capture(Targets?[i]));
             w.Write(missiles.Length);
             foreach (var missile in missiles) missile.CaptureCheckpoint().Write(w, codec);
         });
@@ -53,7 +56,7 @@ public abstract partial class DefaultFieldMissileTurret : IFieldTurretCombatChec
             float heat = r.ReadSingle(); var targets = new string[codec.ReadCount(r, 16)];
             for (int i = 0; i < targets.Length; i++) targets[i] = codec.ReadText(r);
             if (targets.Length != ProjectilesPerShot || !float.IsFinite(heat) || heat < 0 || missilePrefab == null || missilePrefab.GetComponent<FieldTurretMissile>() == null)
-                throw new InvalidDataException("Invalid missile heat or prefab.");
+                throw new InvalidDataException($"Invalid missile checkpoint: target slots {targets.Length}/{ProjectilesPerShot}, heat {heat}, projectile component {missilePrefab != null && missilePrefab.GetComponent<FieldTurretMissile>() != null}.");
             var missiles = new FieldTurretMissile.State[codec.ReadCount(r, 4096)];
             for (int i = 0; i < missiles.Length; i++) missiles[i] = FieldTurretMissile.State.Read(r, codec);
             return (heat, targets, missiles);
@@ -77,7 +80,7 @@ public abstract partial class DefaultFieldMissileTurret : IFieldTurretCombatChec
             if (source == null || source.missilePrefab == null) throw new InvalidDataException("Missing original projectile prefab.");
             var created = Instantiate(source.missilePrefab, saved.Pose.Position, saved.Pose.Rotation);
             BindProjectileSimulation(created);
-            var missile = created.GetComponent<FieldTurretMissile>(); missile.RestoreCheckpoint(saved);
+            var missile = created.GetComponent<FieldTurretMissile>(); missile.RestoreCheckpoint(saved, turret.position.z);
             _restoredMissiles.Add((missile, saved));
         }
     }
@@ -94,7 +97,9 @@ public abstract partial class DefaultFieldMissileTurret : IFieldTurretCombatChec
         }
         foreach (var pair in _restoredMissiles) pair.actor.ResolveCheckpointTarget(pair.state);
         _restoredMissiles.Clear(); _restoredTargets = null;
-        float ratio = _currentMissileCount / OverHeatMissileCount;
-        GunRenderer.color = new Color(1, 1 - ratio, 1 - ratio);
+        // 복원도 실제 과열 표현을 사용하며, 식은 OFF 터렛의 기존 회색을 유지합니다.
+        SetGunHeatTint(OverHeatMissileCount > 0 ? _currentMissileCount / OverHeatMissileCount : 0f);
+        if (!IsActivated && _currentMissileCount <= 0f && GunRenderer != null)
+            GunRenderer.color = Color.gray;
     }
 }

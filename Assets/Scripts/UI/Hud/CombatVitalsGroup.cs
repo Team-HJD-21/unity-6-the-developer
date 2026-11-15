@@ -1,5 +1,6 @@
 // Player와 CU의 독립 자동/고정 표시를 처리합니다. CU의 두 바는 같은 이 인스턴스에 속합니다.
 using TMPro;
+using TeamHJD.Game.Presentation;
 using UnityEngine;
 
 public sealed class CombatVitalsGroup : MonoBehaviour
@@ -36,6 +37,11 @@ public sealed class CombatVitalsGroup : MonoBehaviour
     private void Awake() { IsPinned = StartPinned; _motion.Snap(0); Apply(0); }
     public void SetPrimary(int current, int maximum) => Set(Primary, current, maximum);
     public void SetSecondary(int current, int maximum) { if (Secondary != null) Set(Secondary, current, maximum); }
+    public void SetPrimaryShield(int shield)
+    {
+        if (Primary.Shield != shield) _visibleUntil = Time.unscaledTime + Style.AutoHideSeconds;
+        Primary.SetShield(shield);
+    }
     private void Set(CombatVitalsBar bar, int current, int maximum)
     {
         if (bar.Current != current || bar.Maximum != maximum) _visibleUntil = Time.unscaledTime + Style.AutoHideSeconds;
@@ -56,7 +62,7 @@ public sealed class CombatVitalsGroup : MonoBehaviour
     {
         IsPinned = StartPinned; _hover = null; _visibleUntil = 0;
         _hitAt = float.NegativeInfinity;
-        Primary.Set(0, 0); if (Secondary != null) Secondary.Set(0, 0);
+        Primary.SetShield(0); Primary.Set(0, 0); if (Secondary != null) Secondary.Set(0, 0);
         _motion.Snap(0); Apply(0);
     }
     private void LateUpdate()
@@ -64,9 +70,10 @@ public sealed class CombatVitalsGroup : MonoBehaviour
         bool edge = RightEdge ? GameInput.PointerPosition.x >= Screen.width - Screen.width * .052f : GameInput.PointerPosition.x <= Screen.width * .052f;
         _motion.Set(_contextVisible && HasSource && (IsPinned || edge || _hover != null || Time.unscaledTime < _visibleUntil) ? 1 : 0, Style.SlideSeconds);
         Apply(_motion.Tick(Time.unscaledDeltaTime));
-        Pin.SetActive(_contextVisible && HasSource && IsPinned);
-        Details.enabled = _hover != null && _hover.Maximum > 0 && _motion.Value > .1f;
-        if (Details.enabled) Details.text = $"{_hover.Current} / {_hover.Maximum}";
+        Pin.SetActive(!HudPresentationVisibility.IsSuppressed && _contextVisible && HasSource && IsPinned);
+        Details.enabled = !HudPresentationVisibility.IsSuppressed && _hover != null && _hover.Maximum > 0 && _motion.Value > .1f;
+        if (Details.enabled) Details.text = $"{_hover.Current} / {_hover.Maximum}" +
+            (_hover.Shield > 0 ? $"  <color=#6EC9FF>+{_hover.Shield}</color>" : "");
     }
     private void Apply(float progress)
     {
@@ -76,8 +83,8 @@ public sealed class CombatVitalsGroup : MonoBehaviour
             ? new Vector2(Mathf.Sin(elapsed * 81) * 5 * shake, Mathf.Sin(elapsed * 57) * 2.5f * shake)
             : Vector2.zero;
         Slide.anchoredPosition = new Vector2((RightEdge ? 120 : -120) * (1 - progress), 0) + offset;
-        Group.alpha = progress;
-        Group.blocksRaycasts = progress > .05f;
+        Group.alpha = HudPresentationVisibility.IsSuppressed ? 0 : progress;
+        Group.blocksRaycasts = !HudPresentationVisibility.IsSuppressed && progress > .05f;
     }
     private void OnDisable() => Clear();
 }

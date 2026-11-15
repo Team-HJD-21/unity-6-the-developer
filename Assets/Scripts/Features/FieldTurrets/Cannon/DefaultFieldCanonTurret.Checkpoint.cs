@@ -81,6 +81,9 @@ public abstract partial class DefaultFieldCanonTurret : IFieldTurretCombatCheckp
     {
         Target = CheckpointSceneReferences.Resolve(gameObject.scene, _restoredTarget);
         _restoredTarget = null;
-        GunRenderer.color = new Color(1, 1 - _fireTime / OverHeatTime, 1 - _fireTime / OverHeatTime);
+        // 복원도 실제 과열 표현을 사용하며, 식은 OFF 터렛의 기존 회색을 유지합니다.
+        SetGunHeatTint(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
+        if (!IsActivated && _fireTime <= 0f && GunRenderer != null)
+            GunRenderer.color = Color.gray;
     }
 }

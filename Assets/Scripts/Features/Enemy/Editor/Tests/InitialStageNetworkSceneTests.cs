@@ -62,7 +62,7 @@ public sealed class InitialStageNetworkSceneTests
         Assert.That(anchor.State.RegionGridId.ToString(), Is.EqualTo(region.Source.Snapshot.GridId.ToString("N")));
         Assert.That(anchor.State.RegionMode, Is.EqualTo((int)RegionPolicyMode.Dynamic));
         Assert.That(Object.FindObjectsByType<PlayerActorIdentity>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
-        var launcher = Object.FindAnyObjectByType<EnemyNetworkTestLauncher>();
+        var launcher = Object.FindAnyObjectByType<EncounterSceneBinding>();
         float deadline = Time.realtimeSinceStartup + 15;
         while (!launcher.RecentDiagnostics.Any(item => item.Kind == GameDiagnosticKind.RequestCompleted) &&
             Time.realtimeSinceStartup < deadline) yield return null;

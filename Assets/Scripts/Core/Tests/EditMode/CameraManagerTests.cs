@@ -36,6 +36,58 @@ namespace TeamHJD.Game.Tests.EditMode
         }
 
         [Test]
+        public void TacticalZoomChangesOnlyOwnedTopViewAndReturnsOriginalFraming()
+        {
+            var manager = _follow.Manager; var target = Target("Tactical", Vector3.one);
+            var other = Target("Other", Vector3.up);
+            using (manager.PushView(target, 0, 40))
+            {
+                Assert.That(manager.TrySetViewSize(other, 20), Is.False);
+                Assert.That(manager.TrySetViewSize(target, float.NaN), Is.False);
+                Assert.That(manager.TrySetViewSize(target, 0), Is.False);
+                Assert.That(manager.TrySetViewSize(target, 30), Is.True);
+                Invoke(manager, "LateUpdate"); Assert.That(manager.OutputCamera.orthographicSize, Is.EqualTo(30));
+                using (manager.PushView(other, 0, 12)) Assert.That(manager.TrySetViewSize(target, 50), Is.False);
+                Assert.That(manager.OutputCamera.orthographicSize, Is.EqualTo(30));
+            }
+            Assert.That(manager.OutputCamera.orthographicSize, Is.EqualTo(18));
+            Assert.That(manager.TrySetViewSize(target, 20), Is.False);
+        }
+        [Test]
+        public void TacticalViewportHasOwnerValidationPixelAspectAndRestoresDefaultOnEveryExit()
+        {
+            var manager = _follow.Manager; var camera = manager.OutputCamera;
+            var target = Target("Tactical viewport", Vector3.one);
+            var other = Target("Nested viewport", Vector3.up);
+            Rect original = camera.rect;
+            float originalAspect = camera.aspect;
+            var narrow = new Rect(.2f, 0, .6f, 1);
+            var lease = manager.PushView(target, 0, 40, narrow);
+            Assert.That(camera.rect, Is.EqualTo(narrow));
+            Assert.That(camera.aspect, Is.EqualTo(camera.pixelRect.width / camera.pixelRect.height).Within(.0001));
+            Assert.That(manager.TrySetViewViewport(other, original), Is.False);
+            Assert.That(manager.TrySetViewViewport(target, new Rect(0, 0, 0, 1)), Is.False);
+            Assert.That(manager.TrySetViewViewport(target, new Rect(float.NaN, 0, 1, 1)), Is.False);
+            using (manager.PushView(other, 0, 12))
+            {
+                Assert.That(camera.rect, Is.EqualTo(original));
+                Assert.That(camera.aspect, Is.EqualTo(originalAspect).Within(.0001));
+                Assert.That(manager.TrySetViewViewport(target, original), Is.False);
+            }
+            Assert.That(camera.rect, Is.EqualTo(narrow));
+            Assert.That(manager.TrySetViewViewport(target, new Rect(0, .1f, 1, .8f)), Is.True);
+            Invoke(manager, "LateUpdate");
+            Assert.That(camera.rect, Is.EqualTo(new Rect(0, .1f, 1, .8f)));
+            lease.Dispose();
+            Assert.That(camera.rect, Is.EqualTo(original));
+            Assert.That(camera.aspect, Is.EqualTo(originalAspect).Within(.0001));
+            using var disabledLease = manager.PushView(target, 0, 40, narrow);
+            Invoke(manager, "OnDisable");
+            Assert.That(camera.rect, Is.EqualTo(original));
+            Assert.That(camera.aspect, Is.EqualTo(originalAspect).Within(.0001));
+        }
+
+        [Test]
         public void ImmediateViewRestoresSameCameraDepthAndPlayerFraming()
         {
             var manager = _follow.Manager;

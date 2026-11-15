@@ -10,6 +10,7 @@ namespace TeamHJD.Game.Presentation
     {
         public TMP_Text Label;
         public Image Edge;
+        public Graphic Icon;
         public Sprite IdleEdge, HoverEdge;
         public CanvasGroup FocusMark;
         public bool PreserveLabelColor;
@@ -34,6 +35,7 @@ namespace TeamHJD.Game.Presentation
         private void Apply(float value)
         {
             if (Label != null && !PreserveLabelColor) Label.color = _button != null && !_button.IsInteractable() ? Disabled : Color.Lerp(Text, Accent, value);
+            if (Icon != null) Icon.color = _button != null && !_button.IsInteractable() ? Disabled : PreserveLabelColor && Label != null ? Label.color : Color.Lerp(Text,Accent,value);
             if (FocusMark != null) FocusMark.alpha = value;
         }
         private void OnDisable() { _hover = _selected = false; _amount = 0; Apply(0); }

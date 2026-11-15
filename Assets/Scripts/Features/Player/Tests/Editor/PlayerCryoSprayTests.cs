@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using NUnit.Framework;
+using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Enemy.Contracts;
@@ -122,6 +123,35 @@ public sealed class PlayerCryoSprayTests
     }
 
     [Test]
+    public void SharedMatchAndFieldClocksAllowDamageAndOcclusionButRejectOtherMatchesAndEpochs()
+    {
+        var clock = new Clock();
+        var field = new FieldSimulationClock(clock);
+        FieldSimulationActor.Attach(_spray.gameObject, clock);
+        var front = Enemy(new Vector2(1.3f, 0), .3f);
+        var behind = Enemy(new Vector2(2.7f, 0));
+        var beside = Enemy(new Vector2(2.7f, .75f));
+        foreach (var enemy in new[] { front, behind, beside }) FieldSimulationActor.Attach(enemy.gameObject, field);
+        var otherEpoch = Enemy(new Vector2(.6f, 0), .2f);
+        FieldSimulationActor.Attach(otherEpoch.gameObject, new Clock());
+        var otherMatch = Enemy(new Vector2(.9f, 0), .2f);
+        FieldSimulationActor.Attach(otherMatch.gameObject, new Clock("other-match", clock.Snapshot.Epoch));
+
+        Assert.That(_spray.ApplyDamage(Vector2.zero, Vector2.right, 3), Is.True);
+        Assert.That(front.CurrentHealth, Is.EqualTo(front.MaxHealth - 3));
+        Assert.That(behind.CurrentHealth, Is.EqualTo(behind.MaxHealth), "The field-clock front body must still block its lane.");
+        Assert.That(beside.CurrentHealth, Is.EqualTo(beside.MaxHealth - 3));
+        Assert.That(otherEpoch.CurrentHealth, Is.EqualTo(otherEpoch.MaxHealth));
+        Assert.That(otherMatch.CurrentHealth, Is.EqualTo(otherMatch.MaxHealth));
+        field.SetHeld(true);
+        _spray.ApplyDamage(Vector2.zero, Vector2.right, 3);
+        Assert.That(front.CurrentHealth, Is.EqualTo(front.MaxHealth - 3), "A held field cannot receive player damage.");
+        field.SetHeld(false);
+        _spray.ApplyDamage(Vector2.zero, Vector2.right, 3);
+        Assert.That(front.CurrentHealth, Is.EqualTo(front.MaxHealth - 6));
+    }
+
+    [Test]
     public void DamageDoesNotInvokeAnAvailableSlowReceiver()
     {
         var target = Enemy(Vector2.right);
@@ -167,7 +197,7 @@ public sealed class PlayerCryoSprayTests
         var item = new GameObject(name); SceneManager.MoveGameObjectToScene(item, _scene);
         item.transform.position = position; return item;
     }
-    private EnemyHealth Enemy(Vector2 position, float radius = .1f, string layer = "EnemyHitBox")
+    private EnemyHealth Enemy(Vector2 position, float radius = .1f, string layer = "EnemyHurtbox")
     {
         var item = Create("Spray enemy", position); item.tag = "Enemy"; item.layer = LayerMask.NameToLayer(layer);
         var collider = item.AddComponent<CircleCollider2D>(); collider.isTrigger = true; collider.radius = radius;
@@ -180,11 +210,14 @@ public sealed class PlayerCryoSprayTests
     }
     private sealed class Clock : IMatchTime
     {
-        private readonly Guid _epoch = Guid.NewGuid();
+        private readonly Guid _epoch;
+        private readonly MatchId _match;
+        public Clock(string match = "spray-test", Guid? epoch = null)
+        { _epoch = epoch ?? Guid.NewGuid(); _match = new MatchId(match); }
         public bool Paused;
         public bool IsAvailable => true;
         public double ElapsedSeconds => 0;
-        public MatchTimeSnapshot Snapshot => new(new MatchId("spray-test"), _epoch, 0, 0, 0, Paused ? 0 : 1, Paused, true);
+        public MatchTimeSnapshot Snapshot => new(_match, _epoch, 0, 0, 0, Paused ? 0 : 1, Paused, true);
     }
     private sealed class PresentationRandom : IRandomStreams, IRandomSource
     {
