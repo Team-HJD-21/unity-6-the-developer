@@ -139,12 +139,14 @@ public sealed partial class TacticalCommandController
             return;
         }
         var state=TacticalPresentationRules.FieldState.Hidden;
+        StaticRegionCaptureSnapshot statusProgress=null;
         if(_fieldCaptureRegion>=0 && (!_captureProgress.TryGetValue(_fieldCaptureRegion,out var previous) || previous.IsSecured || previous.HoldSeconds<=0 && previous.Reason!=StaticRegionCaptureReason.Holding))_fieldCaptureRegion=-1;
         if(field && !IsOpen && !IsTransitioning && Regions!=null && !(_app!=null && _app.IsInitialized && _app.LocalInput.IsBlocked))
         {
             var position=new BattlefieldPoint(PlayerPosition.x,PlayerPosition.y);
             int region=-1;if(Regions.Definition.TryGetCellIndex(position,out int index))region=Regions.Definition.RegionIds[index];
             _captureProgress.TryGetValue(region,out var progress);
+            statusProgress=progress;
             if(_fieldCaptureRegion>=0 && region!=_fieldCaptureRegion){_fieldExitAt=Time.unscaledTime;_fieldCaptureRegion=-1;}
             if(progress!=null && !progress.IsSecured && progress.Reason==StaticRegionCaptureReason.Holding)_fieldCaptureRegion=region;
             state=TacticalPresentationRules.Field(Regions,position,progress,Time.unscaledTime-_fieldExitAt<2.4f);
@@ -154,10 +156,18 @@ public sealed partial class TacticalCommandController
             _fieldStatus=state;_fieldStatusChanged=Time.unscaledTime;
             if(state!=TacticalPresentationRules.FieldState.Hidden)
             {
-                View.FieldStatusLabel.text=TacticalPresentationRules.FieldCaption(state);
                 Color tone=state==TacticalPresentationRules.FieldState.LeftCapture || state==TacticalPresentationRules.FieldState.Contested?Color.Lerp(Style.Enemy,Style.Common.Text,.55f):state==TacticalPresentationRules.FieldState.Outside || state==TacticalPresentationRules.FieldState.Locked?Style.Common.Text:Color.Lerp(Style.Common.Power,Style.Common.Text,.55f);
                 View.FieldStatusLabel.color=tone;
                 View.FieldStatusIcon.Set(state switch{TacticalPresentationRules.FieldState.Capturing=>TacticalSymbolGraphic.Symbol.Capturing,TacticalPresentationRules.FieldState.Paused=>TacticalSymbolGraphic.Symbol.Busy,TacticalPresentationRules.FieldState.LeftCapture=>TacticalSymbolGraphic.Symbol.RegionExit,TacticalPresentationRules.FieldState.Locked=>TacticalSymbolGraphic.Symbol.Locked,TacticalPresentationRules.FieldState.Contested=>TacticalSymbolGraphic.Symbol.Threat,_=>TacticalSymbolGraphic.Symbol.OutsideTerritory},tone);
+            }
+        }
+        if(state!=TacticalPresentationRules.FieldState.Hidden)
+        {
+            string caption=TacticalPresentationRules.FieldCaption(state,statusProgress,
+                statusProgress!=null && _regionBinding!=null?_regionBinding.CaptureSettings.HoldSeconds:0);
+            if(View.FieldStatusLabel.text!=caption)
+            {
+                View.FieldStatusLabel.text=caption;
                 View.FieldStatusIcon.rectTransform.anchoredPosition=new Vector2(-View.FieldStatusLabel.preferredWidth*.5f-22,0);
             }
         }

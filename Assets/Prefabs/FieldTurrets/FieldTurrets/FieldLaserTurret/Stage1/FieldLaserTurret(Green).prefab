@@ -713,6 +713,7 @@ GameObject:
   - component: {fileID: 6310550066737809830}
   - component: {fileID: 6972111793082303585}
   - component: {fileID: 2539432041391064708}
+  - component: {fileID: 3194160898426722019}
   m_Layer: 25
   m_Name: Base
   m_TagString: Untagged
@@ -878,6 +879,22 @@ PolygonCollider2D:
       - {x: 2.5473661, y: 2.1399148}
       - {x: 2.3662837, y: 2.342069}
   m_UseDelaunayMesh: 0
+--- !u!114 &3194160898426722019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6801219885218266297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifier
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &9015287965005128192
 GameObject:
   m_ObjectHideFlags: 0

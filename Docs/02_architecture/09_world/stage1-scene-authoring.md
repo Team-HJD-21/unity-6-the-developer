@@ -9,6 +9,17 @@
 - `Environment_Obj`는 나무와 기물을 그린다. Tilemap Renderer는 `Individual`, `Entities / 0`을 사용하며 스프라이트의 지면 접점과 월드 Y축으로 플레이어와 정렬한다. `Tile Ground Shadows`의 시간대별 길이와 X·Y 오프셋은 [그림자 설정](weather-system-guide.md#46-stage1-태양과-타일맵-기물-그림자)에서 조절한다.
 - `Navmesh2D`의 NavMeshSurface는 [Stage1 전용 NavMesh 데이터](../../../Assets/Scenes/Gameplay/Stage_1/NavMesh-Navmesh2D.asset)를 참조한다. 이동 가능한 높이·경계·장애물이 바뀌면 Surface를 베이크하고 Scene과 NavMesh 에셋을 함께 확인한다. 경계 자동 갱신과 NavMesh 베이크는 별개다.
 
+### 나무·돌·터렛·Spaceship의 NavMesh 입력
+
+- `Navmesh2D`는 **Render Meshes**와 `NavMeshObstacleFootprints2D`를 함께 사용한다. 바닥은 타일 렌더 형상을 유지한다. 바닥의 CompositeCollider2D가 Outlines이므로 전체를 Physics Colliders로 바꾸면 일부 지면이 누락될 수 있다.
+- `Environment_Obj`에 Not Walkable Navigation Modifier를 둔다. 확장은 수관 그림 대신 기존 Tilemap/CompositeCollider2D의 밑동·돌 형상을 Bake에 넣는다. `Environment_Obj_No_Collision`의 장식은 막지 않는다.
+- 터렛은 **Base**에만 Not Walkable Modifier를 둔다. 포신·Launcher에는 추가하지 않는다. Stage1 강화 프리팹 5개에 반영했고, 담당자가 잠근 Canon/Missile LV1 원본 2개는 수정하지 않았다. 현재 Scene의 LV1 터렛 25개에는 인스턴스 override로 적용했다.
+- Stage_1의 `Spaceship`은 기존 PolygonCollider2D를 사용한다. 자식 `Enter`의 감지 Trigger·이동 로직은 바꾸지 않는다.
+- 공유 프리팹 원본 수정은 동일 프리팹을 쓰는 다른 Scene에도 반영된다. 인스턴스 override는 해당 배치에만 적용된다. 타일의 Physics Shape는 같은 Sprite/Tile을 공유하는 배치에 반영되지만, 타일맵 오브젝트의 Modifier와 Surface 설정은 Scene마다 필요하다. **이미 저장한 NavMesh는 자동으로 다시 구워지지 않으므로 각 Scene을 재Bake한다.**
+- 현재 Agent Radius 0.5, Voxel 약 0.167을 유지했다. 보행 영역은 몸통 여유만큼 장애물에서 떨어져 있고 삼각형으로 단순화된다. 시각적 각짐만을 이유로 반경을 줄이지 않는다.
+
+적용·검증 범위는 [Stage1 NavMesh와 점유율 UI 검토 기록](../../03_team/00_reviews/stage1-navigation-ui-20261115.md)을 참고한다.
+
 ## 런타임 연동 확인
 
 1. Startup에서 우주선을 거쳐 Stage1에 들어가 플레이어 생성과 이동을 확인한다.

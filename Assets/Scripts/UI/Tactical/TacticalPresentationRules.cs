@@ -52,8 +52,16 @@ public static class TacticalPresentationRules
         }
         return FieldState.Outside;
     }
-    public static string FieldCaption(FieldState state)=>state switch
-    {FieldState.Capturing=>"구역 확보 중",FieldState.Paused=>"확보 일시 중단",FieldState.LeftCapture=>"확보 구역 이탈",FieldState.Locked=>"잠긴 구역",FieldState.Contested=>"적 우세 · 확보 중단",FieldState.Outside=>"미점유 지역",_=>""};
+    public static string FieldCaption(FieldState state, StaticRegionCaptureSnapshot progress = null, double requiredHoldSeconds = 0)
+    {
+        string caption=state switch
+        {FieldState.Capturing=>"구역 확보 중",FieldState.Paused=>"확보 일시 중단",FieldState.LeftCapture=>"확보 구역 이탈",FieldState.Locked=>"잠긴 구역",FieldState.Contested=>"적 우세 · 확보 중단",FieldState.Outside=>"미점유 지역",_=>""};
+        if(progress==null || progress.IsSecured || requiredHoldSeconds<=0 || double.IsNaN(requiredHoldSeconds) || double.IsInfinity(requiredHoldSeconds) ||
+            (state!=FieldState.Capturing && state!=FieldState.Paused && state!=FieldState.Contested))return caption;
+        // 실제 누적만 표시하며 확보 확정 전 반올림으로 100%를 먼저 보여주지 않습니다.
+        int percent=Mathf.Clamp(Mathf.FloorToInt((float)(progress.HoldSeconds/requiredHoldSeconds*100)),0,99);
+        return $"{caption}  {percent}%";
+    }
 
     public static TurretState State(TurretPresentationSnapshot row, int availablePower, bool pending = false)
     {
