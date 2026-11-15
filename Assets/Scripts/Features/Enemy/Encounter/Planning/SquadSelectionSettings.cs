@@ -7,6 +7,25 @@ using UnityEngine;
 [Serializable]
 public sealed class SquadSelectionSettings
 {
+    [Serializable]
+    public sealed class RoleWeightEntry
+    {
+        public EnemySquadRole role;
+        [Min(0)] public int weight = 1;
+    }
+
+    [Header("역할 기본 가중치")]
+    [Tooltip("Role 추첨 비중입니다. 항목이 없으면 역할별 기본값을 사용하고, 0이면 해당 역할을 자동 편성에서 제외합니다.")]
+    public RoleWeightEntry[] roleWeights =
+    {
+        new RoleWeightEntry { role = EnemySquadRole.Patrol, weight = 4 },
+        new RoleWeightEntry { role = EnemySquadRole.Assault, weight = 2 },
+        new RoleWeightEntry { role = EnemySquadRole.Backline, weight = 2 },
+        new RoleWeightEntry { role = EnemySquadRole.Summon, weight = 2 },
+        new RoleWeightEntry { role = EnemySquadRole.Sustain, weight = 2 },
+        new RoleWeightEntry { role = EnemySquadRole.Ambush, weight = 1 }
+    };
+
     [Header("주변 조사")]
     [Min(0)] public int nearbyCellRadius = 1;
 
@@ -29,25 +48,81 @@ public sealed class SquadSelectionSettings
 
     public bool IsValid => nearbyCellRadius >= 0 && sparseEnemyPercentage >= 0f &&
         sparseEnemyPercentage <= 100f && preferredMultiplier > 0 && maxEnemiesPerCell > 0 &&
-        baseBudgetWeight >= 1 && sparseBudgetBonus >= 0 && playerBudgetBonus >= 0;
+        baseBudgetWeight >= 1 && sparseBudgetBonus >= 0 && playerBudgetBonus >= 0 && AreRoleWeightsValid();
+
+    public int GetRoleWeight(EnemySquadRole role)
+    {
+        if (roleWeights != null)
+        {
+            foreach (RoleWeightEntry entry in roleWeights)
+            {
+                if (entry != null && entry.role == role)
+                    return entry.weight;
+            }
+        }
+
+        return role switch
+        {
+            EnemySquadRole.Patrol => 4,
+            EnemySquadRole.Assault => 2,
+            EnemySquadRole.Backline => 2,
+            EnemySquadRole.Summon => 2,
+            EnemySquadRole.Sustain => 2,
+            EnemySquadRole.Ambush => 1,
+            _ => 0
+        };
+    }
+
+    private bool AreRoleWeightsValid()
+    {
+        // 기존 Scene에 설정이 없으면 GetRoleWeight의 역할별 기본값을 사용한다.
+        if (roleWeights == null) return true;
+        for (int i = 0; i < roleWeights.Length; i++)
+        {
+            RoleWeightEntry entry = roleWeights[i];
+            if (entry == null || entry.weight < 0 || !Enum.IsDefined(typeof(EnemySquadRole), entry.role))
+                return false;
+            for (int j = i + 1; j < roleWeights.Length; j++)
+                if (roleWeights[j] != null && roleWeights[j].role == entry.role)
+                    return false;
+        }
+        return true;
+    }
 }
 
 /// <summary>상황에 맞는 편성의 비중을 높이고 Core 난수로 하나를 선택한다.</summary>
 public static class SquadSelectionPolicy
 {
+    private static readonly EnemySquadRole[] SelectableRoles =
+    {
+        EnemySquadRole.Patrol,
+        EnemySquadRole.Assault,
+        EnemySquadRole.Backline,
+        EnemySquadRole.Summon,
+        EnemySquadRole.Sustain,
+        EnemySquadRole.Ambush
+    };
+
     /// <summary>
-    /// 편성 역할이 현재 상황의 우대 조건을 만족하면 기본 선택 비중에 배율을 적용한다.
+    /// 역할이 현재 상황의 우대 조건을 만족하면 역할 기본 가중치에 배율을 적용한다.
     /// </summary>
-    public static double CalculateWeight(EnemySquadPreset preset, SpawnAreaContext area,
+    public static double CalculateRoleWeight(EnemySquadRole role, SpawnAreaContext area,
         SquadSelectionSettings settings)
     {
-        if (preset == null || preset.SelectionWeight <= 0 || settings == null || !settings.IsValid)
+        if (settings == null || !settings.IsValid)
             return 0d;
+
+        return CalculateRoleWeightUnchecked(role, area, settings);
+    }
+
+    private static double CalculateRoleWeightUnchecked(EnemySquadRole role, SpawnAreaContext area,
+        SquadSelectionSettings settings)
+    {
 
         bool sparse = area.NearbyEnemyPercentage <= settings.sparseEnemyPercentage;
         bool crowded = !sparse;
         bool preferred;
-        switch (preset.Role)
+        switch (role)
         {
             case EnemySquadRole.Patrol:
                 preferred = sparse && !area.HasNearbyPlayer && area.AttackType == TargetAttackType.None;
@@ -71,13 +146,13 @@ public static class SquadSelectionPolicy
                 return 0d;
         }
 
-        double weight = preset.SelectionWeight;
-        // 우대 조건이 맞지 않아도 기본 비중을 유지해 다른 편성이 선택될 수 있게 한다.
+        double weight = settings.GetRoleWeight(role);
+        // 우대 조건이 맞지 않아도 기본 비중을 유지해 다른 역할이 선택될 수 있게 한다.
         return preferred ? weight * settings.preferredMultiplier : weight;
     }
 
     /// <summary>
-    /// 출현 셀에 들어갈 수 있는 편성 중 상황별 비중에 따라 Core 난수로 하나를 선택한다.
+    /// 먼저 역할을 상황별 가중치로 고른 뒤, 해당 역할 안에서 프리셋 가중치로 하나를 선택한다.
     /// </summary>
     public static bool TrySelect(IReadOnlyList<EnemySquadPreset> candidates, SpawnAreaContext area,
         SquadSelectionSettings settings, IRandomSource random, out EnemySquadPreset selected)
@@ -88,22 +163,58 @@ public static class SquadSelectionPolicy
 
         int capacity = settings.maxEnemiesPerCell - area.CellEnemyCount;
         if (capacity <= 0) return false;
-        double total = 0d;
-        foreach (EnemySquadPreset preset in candidates)
-            if (preset != null && preset.TotalWeight > 0 && preset.TotalWeight <= capacity)
-                total += CalculateWeight(preset, area, settings);
-        if (total <= 0d) return false;
+        double totalRoleWeight = 0d;
+        foreach (EnemySquadRole role in SelectableRoles)
+        {
+            if (!HasCandidate(candidates, role, capacity)) continue;
+            totalRoleWeight += CalculateRoleWeightUnchecked(role, area, settings);
+        }
+        if (totalRoleWeight <= 0d) return false;
 
-        double remaining = random.NextDouble(0d, total);
+        double roleRoll = random.NextDouble(0d, totalRoleWeight);
+        EnemySquadRole selectedRole = default;
+        bool hasSelectedRole = false;
+        foreach (EnemySquadRole role in SelectableRoles)
+        {
+            if (!HasCandidate(candidates, role, capacity)) continue;
+            double roleWeight = CalculateRoleWeightUnchecked(role, area, settings);
+            if (roleWeight <= 0d) continue;
+            selectedRole = role;
+            hasSelectedRole = true;
+            if (roleRoll < roleWeight) break;
+            roleRoll -= roleWeight;
+        }
+        if (!hasSelectedRole) return false;
+
+        double totalPresetWeight = 0d;
+        foreach (EnemySquadPreset preset in candidates)
+            if (IsCandidateForRole(preset, selectedRole, capacity))
+                totalPresetWeight += preset.SelectionWeight;
+        if (totalPresetWeight <= 0) return false;
+
+        double presetRoll = random.NextDouble(0d, totalPresetWeight);
         foreach (EnemySquadPreset preset in candidates)
         {
-            if (preset == null || preset.TotalWeight <= 0 || preset.TotalWeight > capacity) continue;
-            double weight = CalculateWeight(preset, area, settings);
-            if (weight <= 0d) continue;
-            selected = preset;
-            if (remaining < weight) return true;
-            remaining -= weight;
+            if (!IsCandidateForRole(preset, selectedRole, capacity)) continue;
+            if (presetRoll < preset.SelectionWeight)
+            {
+                selected = preset;
+                return true;
+            }
+            presetRoll -= preset.SelectionWeight;
         }
-        return selected != null;
+        return false;
     }
+
+    private static bool HasCandidate(IReadOnlyList<EnemySquadPreset> candidates,
+        EnemySquadRole role, int capacity)
+    {
+        foreach (EnemySquadPreset preset in candidates)
+            if (IsCandidateForRole(preset, role, capacity)) return true;
+        return false;
+    }
+
+    private static bool IsCandidateForRole(EnemySquadPreset preset, EnemySquadRole role, int capacity)
+        => preset != null && preset.Role == role && preset.SelectionWeight > 0 &&
+           preset.TotalWeight > 0 && preset.TotalWeight <= capacity;
 }

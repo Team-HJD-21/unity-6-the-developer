@@ -22,4 +22,4 @@ MonoBehaviour:
     _weight: 3
   _targetRule: 0
   role: 2
-  selectionWeight: 2
+  selectionWeight: 1

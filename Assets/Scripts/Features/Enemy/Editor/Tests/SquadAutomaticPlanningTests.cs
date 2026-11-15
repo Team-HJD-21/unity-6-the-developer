@@ -319,13 +319,10 @@ public sealed class SquadAutomaticPlanningTests
     {
         var settings = new SquadSelectionSettings { sparseEnemyPercentage = threshold };
         var area = new SpawnAreaContext(0, nearby, total, false, TargetAttackType.None);
-        var patrol = Preset("patrol", 2, EnemySquadRole.Patrol);
-        var sustain = Preset("sustain", 2, EnemySquadRole.Sustain);
-
-        Assert.That(SquadSelectionPolicy.CalculateWeight(patrol, area, settings),
-            Is.EqualTo(expectedSparse ? 3d : 1d));
-        Assert.That(SquadSelectionPolicy.CalculateWeight(sustain, area, settings),
-            Is.EqualTo(expectedSparse ? 1d : 3d));
+        Assert.That(SquadSelectionPolicy.CalculateRoleWeight(EnemySquadRole.Patrol, area, settings),
+            Is.EqualTo(expectedSparse ? 12d : 4d));
+        Assert.That(SquadSelectionPolicy.CalculateRoleWeight(EnemySquadRole.Sustain, area, settings),
+            Is.EqualTo(expectedSparse ? 2d : 6d));
         Assert.That(area.NearbyEnemyPercentage,
             Is.EqualTo(total == 0 ? 0d : (double)nearby / total * 100d));
     }
@@ -395,7 +392,7 @@ public sealed class SquadAutomaticPlanningTests
         var session = new SpawnPointSpatialPolicy().BeginPlanning(snapshot, new[] { point }, settings);
         var area = session.GetAreaContext(point, new BattlefieldPoint(0, 0), 0, players);
         var ambush = Preset("ambush", 2, EnemySquadRole.Ambush);
-        Assert.That(SquadSelectionPolicy.CalculateWeight(ambush, area, settings), Is.EqualTo(expectedWeight));
+        Assert.That(SquadSelectionPolicy.CalculateRoleWeight(EnemySquadRole.Ambush, area, settings), Is.EqualTo(expectedWeight));
         Assert.That(Planner(ambush).TryPlan(new AreaSpawnPlanRequest(2, 2), new[] { point }, snapshot,
             new Dictionary<string, BattlefieldPoint> { [point.Id] = new BattlefieldPoint(0, 0) },
             new Dictionary<string, TargetAttackType>(), 0, players, settings, new FixedRandom(), out var plans), Is.True);
@@ -451,26 +448,25 @@ public sealed class SquadAutomaticPlanningTests
         Assert.That(go.AddComponent<DamageableTargetAdapter>().AttackType, Is.EqualTo(TargetAttackType.Unknown));
     }
 
-    [TestCase(EnemySquadRole.Patrol, TargetAttackType.None, 200, false, 3d)]
-    [TestCase(EnemySquadRole.Patrol, TargetAttackType.None, 200, true, 1d)]
-    [TestCase(EnemySquadRole.Patrol, TargetAttackType.Unknown, 200, false, 1d)]
-    [TestCase(EnemySquadRole.Assault, TargetAttackType.SingleTarget, 200, false, 3d)]
-    [TestCase(EnemySquadRole.Assault, TargetAttackType.SingleTarget, 201, false, 1d)]
-    [TestCase(EnemySquadRole.Assault, TargetAttackType.Area, 200, false, 1d)]
-    [TestCase(EnemySquadRole.Backline, TargetAttackType.Area, 200, false, 3d)]
-    [TestCase(EnemySquadRole.Backline, TargetAttackType.SingleTarget, 200, false, 1d)]
-    [TestCase(EnemySquadRole.Summon, TargetAttackType.SingleTarget, 200, false, 3d)]
-    [TestCase(EnemySquadRole.Summon, TargetAttackType.Area, 200, false, 1d)]
-    [TestCase(EnemySquadRole.Sustain, TargetAttackType.Unknown, 201, false, 3d)]
-    [TestCase(EnemySquadRole.Sustain, TargetAttackType.Unknown, 200, false, 1d)]
+    [TestCase(EnemySquadRole.Patrol, TargetAttackType.None, 200, false, 12d)]
+    [TestCase(EnemySquadRole.Patrol, TargetAttackType.None, 200, true, 4d)]
+    [TestCase(EnemySquadRole.Patrol, TargetAttackType.Unknown, 200, false, 4d)]
+    [TestCase(EnemySquadRole.Assault, TargetAttackType.SingleTarget, 200, false, 6d)]
+    [TestCase(EnemySquadRole.Assault, TargetAttackType.SingleTarget, 201, false, 2d)]
+    [TestCase(EnemySquadRole.Assault, TargetAttackType.Area, 200, false, 2d)]
+    [TestCase(EnemySquadRole.Backline, TargetAttackType.Area, 200, false, 6d)]
+    [TestCase(EnemySquadRole.Backline, TargetAttackType.SingleTarget, 200, false, 2d)]
+    [TestCase(EnemySquadRole.Summon, TargetAttackType.SingleTarget, 200, false, 6d)]
+    [TestCase(EnemySquadRole.Summon, TargetAttackType.Area, 200, false, 2d)]
+    [TestCase(EnemySquadRole.Sustain, TargetAttackType.Unknown, 201, false, 6d)]
+    [TestCase(EnemySquadRole.Sustain, TargetAttackType.Unknown, 200, false, 2d)]
     [TestCase(EnemySquadRole.Ambush, TargetAttackType.Unknown, 200, true, 3d)]
-    public void Policy_UsesAttackPatternPopulationAndPlayer(
+    public void Policy_UsesRoleWeightAndAttackPatternPopulationAndPlayer(
         EnemySquadRole role, TargetAttackType attackType, int nearby, bool player, double expectedWeight)
     {
-        var preset = Preset("rule", 2, role);
         var settings = new SquadSelectionSettings();
         var area = new SpawnAreaContext(0, nearby, 1000, player, attackType);
-        Assert.That(SquadSelectionPolicy.CalculateWeight(preset, area, settings), Is.EqualTo(expectedWeight));
+        Assert.That(SquadSelectionPolicy.CalculateRoleWeight(role, area, settings), Is.EqualTo(expectedWeight));
     }
 
     [Test]

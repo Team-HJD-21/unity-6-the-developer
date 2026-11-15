@@ -14,7 +14,7 @@
 | 공통 구조 | AIBrain 호출 계층 제거, 컨트롤러·타깃·이동·능력·애니메이션·체력 책임 분리 |
 | 제작 계층 | EnemyRoot → MovingEnemy → MeleeEnemy/RangedEnemy, 런타임 Variant와 Animator Override/클립 구성 |
 | 전투 다양화 | 근접·원거리 외에 Bomber, 아군 회복, 변태 소환, Player 전용 암살자 구현 |
-| 편성·생성 | Definition 비용·분대 규칙, 6개 프리셋, 타깃 주변 상황에 따른 선택과 지역 예산 배분 |
+| 편성·생성 | Definition 비용·분대 규칙, 9개 프리셋, 타깃 주변 상황에 따른 선택과 지역 예산 배분 |
 | 연결 | Initial_Stage의 Region Binding, 기존 Core 요청/환경/origin/시간 계약과 충돌 병합 |
 
 지원·소환·암살자와 상황별 편성은 원래 이슈 설명의 근접/원거리보다 확장된 구현 범위다. BattleTroll의 이름을 별도 보스 시스템·전용 엘리트 패턴 구현 완료로 해석하지 않는다. Stage 2 이후, 전체 난이도 확정, 운영용 소비자 분리는 별도 작업이다.
@@ -71,20 +71,23 @@ BlackWolf의 Definition은 `Individual + PlayerOnly`다. 여러 탐지자가 등
 
 ## 프리셋과 비용
 
-[SquadPresetCatalog](../../../Assets/Resources/Spawning/EnemySquadPresetCatalog.asset)의 현재 등록 편성이다. `Composition.Weight`는 한 세트의 마릿수이고 `SelectionWeight`는 추첨 비중이다. 둘은 다른 값이다. 총 비용은 `Σ(Definition.SpawnCost × Composition.Weight)`로 계산한다.
+[SquadPresetCatalog](../../../Assets/Resources/Spawning/EnemySquadPresetCatalog.asset)의 현재 등록 편성이다. `Composition.Weight`는 한 세트의 마릿수이고 `SelectionWeight`는 같은 Role 안에서의 프리셋 추첨 비중이다. Role 기본 추첨 비중은 Scene의 `SquadSelectionSettings.roleWeights`에서 설정하며, 기본값은 Patrol 4, Assault 2, Backline 2, Summon 2, Sustain 2, Ambush 1이다. 설정이 누락된 Role에도 이 기본값을 사용한다. 총 비용은 `Σ(Definition.SpawnCost × Composition.Weight)`로 계산한다.
 
-| Squad Order | 구성 | 마릿수 | 세트 비용 | 기본 선택 가중치 |
-| --- | --- | ---: | ---: | ---: |
-| AssassinSquad | BlackWolf ×2 | 2 | 6 | 1 |
-| BacklineGuard | GreenGolem ×1, GoblinMage ×1, Slime ×3 | 5 | 10 | 2 |
-| Normal | GoblinSpear ×1, Slime ×2 | 3 | 4 | 4 |
-| RushAssault | GoblinDual ×4, Slime ×2 | 6 | 10 | 2 |
-| SummonEscort | GreenGolem ×1, GoblinWarrior ×1, SpawnerMushroom ×1, Slime ×3 | 6 | 13 | 2 |
-| SustainLine | Troll ×1, PartyMushroom ×1, GoblinMage ×1, Slime ×2 | 5 | 11 | 2 |
+| Role | Squad Order | 구성 | 마릿수 | 세트 비용 | Role 내 프리셋 선택 가중치 |
+| --- | --- | --- | ---: | ---: | ---: |
+| Patrol | Normal | GoblinSpear ×1, Slime ×2 | 3 | 4 | 1 |
+| Patrol | AntennaPatrol | AntennaSlime ×2, GoblinSpear ×1 | 3 | 4 | 1 |
+| Assault | RushAssault | GoblinDual ×4, Slime ×2 | 6 | 10 | 1 |
+| Assault | HeavyAssault | BattleTroll ×1, Treant ×1, InfectiousMushroom ×2 | 4 | 9 | 1 |
+| Backline | BacklineGuard | GreenGolem ×1, GoblinMage ×1, Slime ×3 | 5 | 10 | 1 |
+| Backline | ArtilleryBackline | GreenGolem ×1, PlantLeafer ×1, CannonSlime ×1 | 3 | 9 | 1 |
+| Summon | SummonEscort | GreenGolem ×1, GoblinWarrior ×1, SpawnerMushroom ×1, Slime ×3 | 6 | 13 | 2 |
+| Sustain | SustainLine | Troll ×1, PartyMushroom ×1, GoblinMage ×1, Slime ×2 | 5 | 11 | 2 |
+| Ambush | AssassinSquad | BlackWolf ×2 | 2 | 6 | 1 |
 
-표는 2026-11-08 에셋 기준이다. 수치 변경 시 원본을 우선하고 표도 갱신한다. BomberSlime의 현재 Definition 비용 필드는 1이지만 일반 편성에는 넣지 않으며, 소환 시 Encounter 예산을 차감하지 않는다. 이를 비용 0으로 설정했다고 설명하지 않는다.
+표는 2026-11-15 에셋 기준이다. Patrol·Assault·Backline은 두 후보가 모두 예산·마릿수·셀 수용량을 통과하면 Role 내부에서 1:1로 선택한다. Summon·Sustain·Ambush는 Role별 후보가 하나이므로 내부 가중치와 관계없이 그 후보를 선택한다. 수치 변경 시 원본을 우선하고 표도 갱신한다. BomberSlime의 현재 Definition 비용 필드는 1이지만 일반 편성에는 넣지 않으며, 소환 시 Encounter 예산을 차감하지 않는다. 이를 비용 0으로 설정했다고 설명하지 않는다.
 
-Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSlime, InfectiousMushroom, Mushroom, MushroomTreant, PlantLeafer, Treant는 등록돼 있으나 위 6개 편성에 포함되지 않는다. Bomber는 소환형 전용이다. 해당 몬스터도 시험하려면 고유 동작 시험 또는 편성 데이터 구성이 필요하다.
+Definition·카탈로그 등록과 편성 포함은 별개다. 위 9개 편성은 일반 편성 대상으로 정한 16종을 포함한다. Mushroom은 미사용, MushroomTreant와 Stage1Boss는 보스 관련 정의이므로 일반 편성에서 제외한다. BomberSlime은 소환형 전용이다. Role은 선택 비중을 위한 분류이며, 후열 정렬이나 별도 호위 행동을 자동으로 추가하지는 않는다.
 
 ## 새 몬스터 추가 순서
 

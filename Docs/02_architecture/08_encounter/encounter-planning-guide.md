@@ -116,20 +116,22 @@ radius 1이면 타깃 셀과 상하좌우/대각선 최대 9개 셀을 조사하
 
 ## 편성 선택 규칙
 
-현재 `SquadSelectionPolicy`는 조건에 맞는 편성의 기본 `SelectionWeight`에 `preferredMultiplier`(기본 3)를 곱한다. 조건 미충족 편성도 예산·수량·공간 조건을 통과하고 기본 가중치가 양수면 후보로 남는다. 이는 확률적 우대이며 특정 상황의 편성을 강제하는 규칙이 아니다.
+자동 편성은 **Role을 먼저 선택한 다음, 해당 Role 안에서 프리셋을 선택**한다. 요청 예산·요청 잔여 마릿수·지역 잔여 예산을 감당하는 프리셋이 하나 이상 있는 Role만 후보가 된다. Role 기본 가중치는 Scene의 `SquadSelectionSettings.roleWeights`에서 읽고, 상황 우대 조건을 만족하면 `preferredMultiplier`(기본 3)를 곱한다. 조건 미충족 Role도 기본 가중치가 양수면 후보로 남으므로 확률적 우대이지 강제 규칙은 아니다.
+
+선택한 Role 안에서는 각 프리셋의 `SelectionWeight`로 다시 추첨한다. 따라서 같은 Role에 프리셋을 추가해도 Role 자체의 출현 비중은 증가하지 않는다. `SelectionWeight = 0`인 프리셋은 후보에서 제외한다. 코스트는 후보 가능 여부와 선택 후 예산 차감에 쓰이며, 코스트가 높다는 이유만으로 선택 확률을 낮추지는 않는다.
 
 | Role / 현재 편성 | 우대 조건 |
 | --- | --- |
-| Patrol / Normal | 병력 적음 + 주변 Player 없음 + 기준 타깃 공격 유형 None |
-| Assault / RushAssault | 병력 적음 + SingleTarget |
-| Backline / BacklineGuard | 병력 적음 + Area |
+| Patrol / Normal, AntennaPatrol | 병력 적음 + 주변 Player 없음 + 기준 타깃 공격 유형 None |
+| Assault / RushAssault, HeavyAssault | 병력 적음 + SingleTarget |
+| Backline / BacklineGuard, ArtilleryBackline | 병력 적음 + Area |
 | Summon / SummonEscort | 병력 적음 + SingleTarget |
 | Sustain / SustainLine | 병력 많음 |
 | Ambush / AssassinSquad | 주변 Player 있음 |
 
-먼저 비용·수량·셀 수용량을 통과한 완전 편성만 남기고 Core `enemy/squad-selection` 난수로 추첨한다. `Composition.Weight`는 수량, `SelectionWeight`는 확률 비중이다. 카탈로그 순서와 독립적인 Order 정렬 후 추첨하며 0 가중치는 제외한다.
+비용·수량 제한으로 후보 프리셋을 추린 뒤 출현 셀 수용량을 적용해 Role을 추첨하고, 선택된 Role의 후보 프리셋을 추첨한다. 두 단계 모두 Core `enemy/squad-selection` 난수를 사용한다. `Composition.Weight`는 수량, `SelectionWeight`는 Role 내부 프리셋의 확률 비중이다. Role 순서와 프리셋 Order 정렬은 카탈로그 순서에 영향을 받지 않는다.
 
-[현재 비용 표](stage1-enemy-content-guide.md#프리셋과-비용)에서 Normal은 4, Assassin은 6, 나머지는 10~13이다. 작은 전체 예산을 여러 타깃 셀에 나누면 저비용 편성만 지역 후보에 남을 수 있다. 특정 적만 반복 등장할 때는 가중치를 바꾸기 전에 실제 지역 예산·후보 목록을 확인한다.
+[현재 비용 표](stage1-enemy-content-guide.md#프리셋과-비용)에서 Normal·AntennaPatrol은 4, AssassinSquad는 6, HeavyAssault·ArtilleryBackline은 9, 나머지는 10~13이다. 작은 전체 예산을 여러 타깃 셀에 나누면 저비용 편성만 지역 후보에 남을 수 있다. 특정 적만 반복 등장할 때는 가중치를 바꾸기 전에 실제 지역 예산·후보 목록을 확인한다.
 
 ## 배치와 제한의 의미
 
