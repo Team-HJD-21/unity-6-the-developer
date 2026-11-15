@@ -180,6 +180,18 @@ PrefabInstance:
       propertyPath: enemyController
       value: 
       objectReference: {fileID: 7401284964919904431}
+    - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.0007
+      objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
       value: 5
@@ -279,22 +291,6 @@ PrefabInstance:
     - target: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Name
       value: Slime
-      objectReference: {fileID: 0}
-    - target: {fileID: 7547272266176275135, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: m_Mass
-      value: 50
-      objectReference: {fileID: 0}
-    - target: {fileID: 7547272266176275135, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: m_LinearDamping
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7547272266176275135, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: m_AngularDamping
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7547272266176275135, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: m_CollisionDetection
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x

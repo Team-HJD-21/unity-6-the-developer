@@ -28,7 +28,7 @@ public partial class EnemySpawnExecutor
         private readonly EnemySpawnExecutor _owner;
         public EnemyCheckpointWriter(EnemySpawnExecutor owner) => _owner = owner;
         public string Key => "world/enemies";
-        public int Version => 2;
+        public int Version => 3;
         public CheckpointSectionKind Kind => CheckpointSectionKind.World;
         public int RestoreOrder => 160;
         public CheckpointSection Capture(CheckpointCaptureContext context, ICheckpointPayloadCodec codec)
@@ -75,18 +75,20 @@ public partial class EnemySpawnExecutor
         var groups = new Dictionary<EnemySquad, int>();
         var actors = new List<SavedEnemy>();
         var targets = new List<string>();
+        var targetRules = new List<EnemyTargetRule>();
         foreach (var enemy in _spawnedEnemies.Values.OrderBy(item => item.NetworkController.GetComponent<SceneEntityIdentity>().EntityId.Value, StringComparer.Ordinal))
         {
             if (!groups.TryGetValue(enemy.Squad, out int group))
             {
                 groups.Add(enemy.Squad, group = groups.Count);
                 targets.Add(CheckpointSceneReferences.Capture(enemy.Squad.CheckpointTarget));
+                targetRules.Add(enemy.Squad.TargetRule);
             }
             actors.Add(new SavedEnemy(enemy.NetworkController.GetComponent<SceneEntityIdentity>().EntityId, enemy.EnemyType,
                 enemy.SpawnPointId, group, enemy.NetworkController.CaptureCheckpoint()));
         }
         var projectiles = CheckpointProjectiles().Select(p => new SavedProjectile(p.CheckpointEnemyType, p.CaptureCheckpoint())).ToArray();
-        var world = new SavedWorld(actors.ToArray(), targets.ToArray(), projectiles);
+        var world = new SavedWorld(actors.ToArray(), targets.ToArray(), projectiles, targetRules.ToArray());
         ValidateWorld(world);
         return world;
     }
@@ -110,6 +112,12 @@ public partial class EnemySpawnExecutor
         var ids = new HashSet<EntityId>();
         if (world.Enemies.Length > 16384 || world.Projectiles.Length > 16384 || world.Targets.Length > world.Enemies.Length)
             throw new InvalidDataException("Enemy checkpoint exceeds its storage bounds.");
+        if (world.TargetRules != null)
+        {
+            if (world.TargetRules.Length != world.Targets.Length ||
+                world.TargetRules.Any(rule => !Enum.IsDefined(typeof(EnemyTargetRule), rule)))
+                throw new InvalidDataException("Invalid saved squad target rules.");
+        }
         foreach (var saved in world.Enemies)
         {
             var prefab = ResolveCheckpointEnemy(saved.Type).Prefab;
@@ -157,9 +165,13 @@ public partial class EnemySpawnExecutor
         {
             var savedMember = world.Enemies.FirstOrDefault(enemy => enemy.Group == i);
             var definition = savedMember != null ? ResolveCheckpointEnemy(savedMember.Type) : null;
+            // 이전 저장은 규칙을 기록하지 않았으므로 기존 Definition 값으로 복원한다.
+            EnemyTargetRule targetRule = world.TargetRules != null
+                ? world.TargetRules[i]
+                : definition != null ? definition.TargetRule : EnemyTargetRule.PlayerOrTurret;
             var squad = definition != null
-                ? new EnemySquad(definition.SquadMode, definition.TargetRule)
-                : new EnemySquad();
+                ? new EnemySquad(definition.SquadMode, targetRule)
+                : new EnemySquad(EnemySquadMode.Shared, targetRule);
             _squads.Add(squad);
             _restoredSquads.Add((squad, world.Targets[i]));
         }
@@ -231,6 +243,9 @@ public partial class EnemySpawnExecutor
             codec.WriteText(w, projectile.Type);
             projectile.State.Write(w);
         }
+        // 분대별 실제 규칙을 저장해 프리셋 변경과 무관하게 동일한 행동으로 복원한다.
+        for (int i = 0; i < state.Targets.Length; i++)
+            w.Write((int)state.TargetRules[i]);
     }
 
     /// <summary>
@@ -248,16 +263,26 @@ public partial class EnemySpawnExecutor
         var projectiles = new SavedProjectile[codec.ReadCount(r, 16384)];
         for (int i = 0; i < projectiles.Length; i++)
             projectiles[i] = new SavedProjectile(codec.ReadText(r), EnemyDamageProjectile.State.Read(r));
-        return new SavedWorld(enemies, targets, projectiles);
+        EnemyTargetRule[] targetRules = null;
+        if (version >= 3)
+        {
+            targetRules = new EnemyTargetRule[targets.Length];
+            for (int i = 0; i < targetRules.Length; i++)
+                targetRules[i] = (EnemyTargetRule)r.ReadInt32();
+        }
+        return new SavedWorld(enemies, targets, projectiles, targetRules);
     }
     private sealed class SavedWorld
     {
         public readonly SavedEnemy[] Enemies; public readonly string[] Targets; public readonly SavedProjectile[] Projectiles;
-        public SavedWorld(SavedEnemy[] enemies, string[] targets, SavedProjectile[] projectiles)
+        public readonly EnemyTargetRule[] TargetRules;
+        public SavedWorld(SavedEnemy[] enemies, string[] targets, SavedProjectile[] projectiles,
+            EnemyTargetRule[] targetRules = null)
         {
             Enemies = enemies;
             Targets = targets;
             Projectiles = projectiles;
+            TargetRules = targetRules;
         }
     }
     private sealed class SavedEnemy

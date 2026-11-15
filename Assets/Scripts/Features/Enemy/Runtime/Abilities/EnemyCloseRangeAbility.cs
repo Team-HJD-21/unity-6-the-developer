@@ -7,9 +7,13 @@ using UnityEngine;
 public class EnemyCloseRangeAbility : EnemyAbility
 {
     [SerializeField] private EnemyTargeting enemyTargeting;
+
     [Header("공격 설정")]
     [SerializeField] private int attackDamage = 5;
 
+    // Unity 생명주기
+
+    /// <summary>공통 능력 초기화 후 배정 타깃을 읽을 참조를 연결한다.</summary>
     protected override void Awake()
     {
         base.Awake();
@@ -17,6 +21,8 @@ public class EnemyCloseRangeAbility : EnemyAbility
         if (enemyTargeting == null)
             enemyTargeting = GetComponent<EnemyTargeting>();
     }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 유효한 타깃의 콜라이더가 근접 범위 안에 있는지 확인한다.
@@ -34,6 +40,8 @@ public class EnemyCloseRangeAbility : EnemyAbility
                attackDamage > 0 &&
                TryGetTarget(out _);
     }
+
+    // 파생 클래스 공통 처리
 
     /// <summary>
     /// 현재 타깃에 공통 피해 수신 계약으로 근접 피해를 전달한다.

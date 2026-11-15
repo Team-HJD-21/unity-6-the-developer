@@ -13,7 +13,18 @@ public class EnemyDetection : MonoBehaviour, IDetectableTarget
 
     /// <summary>탐지 여부가 바뀌었을 때 변경된 상태를 전달한다.</summary>
     public event Action<bool> DetectionChanged;
-    
+
+    // Unity 생명주기
+
+    /// <summary>감지 등록을 비우고 탐지 상태를 해제한다.</summary>
+    private void OnDisable()
+    {
+        _detectorIds.Clear();
+        ApplyDetectionState(false);
+    }
+
+    // 외부 호출과 상태 변경
+
     /// <summary>
     /// 감지자를 중복 없이 등록하고 한 명 이상 감지 중이면 탐지 상태를 유지한다.
     /// </summary>
@@ -40,11 +51,5 @@ public class EnemyDetection : MonoBehaviour, IDetectableTarget
 
         _isDetected = detected;
         DetectionChanged?.Invoke(detected);
-    }
-    
-    private void OnDisable()
-    {
-        _detectorIds.Clear();
-        ApplyDetectionState(false);
     }
 }

@@ -5,15 +5,23 @@ using System.Collections.Generic;
 using System.Text;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
+
 namespace TeamHJD.Game.Enemies.Encounter
 {
     internal sealed class EncounterExecutorStep
     {
         private readonly EnemySpawnExecutor _spawnExecutor;
         private readonly Func<RegionGridSnapshot> _region;
-        private static readonly Unity.Profiling.ProfilerMarker SpawnMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Encounter.SpawnAndCommit");
+
         public EncounterExecutorStep(EnemySpawnExecutor executor, Func<RegionGridSnapshot> region)
-        { _spawnExecutor = executor; _region = region; }
+        {
+            _spawnExecutor = executor;
+            _region = region;
+        }
+
+        // 외부 호출과 상태 변경
+
+        /// <summary>생성 직전 점유 상태를 다시 확인하고 명령별 계획과 실제 생성 결과를 모은다.</summary>
         public bool Execute(EncounterCollection collection, EncounterPlan plan, EncounterExecutionContext context,
             double margin, out string result, out EncounterExecutionSummary summary,
             out IReadOnlyList<SpawnDecisionSnapshot.Actual> executed)
@@ -27,8 +35,6 @@ namespace TeamHJD.Game.Enemies.Encounter
             var actuals = new List<SpawnDecisionSnapshot.Actual>();
             executed = actuals.AsReadOnly();
             var spawnClock = System.Diagnostics.Stopwatch.StartNew();
-            using (SpawnMarker.Auto())
-            {
             foreach (SpawnInstruction instruction in instructions)
             {
                 foreach (EnemySpawnEntry entry in instruction.Enemies)
@@ -41,9 +47,13 @@ namespace TeamHJD.Game.Enemies.Encounter
                     throw new InvalidOperationException("The active region belongs to another Match.");
                 collection.Points.ApplyRegionSnapshot(latestRegion, margin);
                 string failure = "";
-                int instructionSpawned = _spawnExecutor.Execute(instruction, context, actuals.Add,reason=>failure=reason, snapshot, _region, margin);
-                foreach(EnemySpawnEntry entry in instruction.Enemies)
-                    plans.Add(new SpawnDecisionSnapshot.Plan(instruction.SpawnPointId,entry.EnemyId,entry.Count,failure));
+                ITargetable preferredTarget = null;
+                if (plan.Targets != null && !string.IsNullOrEmpty(instruction.SpawnPointId))
+                    plan.Targets.TryGetValue(instruction.SpawnPointId, out preferredTarget);
+                int instructionSpawned = _spawnExecutor.Execute(instruction, context, actuals.Add,
+                    reason => failure = reason, snapshot, _region, margin, preferredTarget, collection.Targets);
+                foreach (EnemySpawnEntry entry in instruction.Enemies)
+                    plans.Add(new SpawnDecisionSnapshot.Plan(instruction.SpawnPointId, entry.EnemyId, entry.Count, failure));
                 spawnedCount += instructionSpawned;
                 if (executionSummary.Length > 0) executionSummary.Append(" | ");
                 executionSummary.Append(instruction.SquadOrder).Append(" @ ").Append(instruction.SpawnPointId).Append(": ");
@@ -56,8 +66,6 @@ namespace TeamHJD.Game.Enemies.Encounter
                 executionSummary.Append(" / spawned ").Append(instructionSpawned);
             }
 
-
-            }
             spawnClock.Stop();
             result = $"Match {snapshot.MatchId} r{snapshot.Revision} → Encounter: " +
                      $"{snapshot.Triangles.Count} triangles, {snapshot.FrontlineEdges.Count} frontline edges, " +
@@ -66,7 +74,7 @@ namespace TeamHJD.Game.Enemies.Encounter
                      $"Environment r{context?.Environment?.Revision ?? 0}, policy={plan.EnvironmentPolicy}";
             summary = new EncounterExecutionSummary(plannedCount, spawnedCount,
                 spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
-                new SpawnDecisionSnapshot(snapshot,plan.Candidates,plans,actuals,
+                new SpawnDecisionSnapshot(snapshot, plan.Candidates, plans, actuals,
                     spawnedCount == plannedCount ? "Spawned" : spawnedCount > 0 ? "PartialSpawn" : "NoSpawn",
                     plan.Policy, context?.Environment, plan.EnvironmentPolicy, context?.Placement,
                     plan.PlanningMilliseconds, spawnClock.Elapsed.TotalMilliseconds));

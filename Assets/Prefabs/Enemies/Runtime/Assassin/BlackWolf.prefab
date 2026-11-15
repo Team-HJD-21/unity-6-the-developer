@@ -144,18 +144,30 @@ PrefabInstance:
       propertyPath: AbilitySound
       value: 
       objectReference: {fileID: 11400000, guid: 9f871ce56599bc64fbd32967a4d6d278, type: 2}
-    - target: {fileID: 3909823127931652063, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: animationReferenceSpeed
-      value: 5
-      objectReference: {fileID: 0}
     - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: moveSpeed
-      value: 5
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: moveAcceleration
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: moveDeceleration
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 4829987614306498064, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: enemyAbility
       value: 
       objectReference: {fileID: 6073907430881206776}
+    - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.1
+      objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
       value: 4
@@ -248,6 +260,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BlackWolf
       objectReference: {fileID: 0}
+    - target: {fileID: 7547272266176275135, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7683198337395935888, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -320,14 +336,19 @@ PrefabInstance:
       addedObject: {fileID: 6908116440502637120}
     - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 969102101754766042}
-    - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 8095137201846823201}
     - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7120489268976177164}
+    - targetCorrespondingSourceObject: {fileID: 7224827417185167723, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1514268252018624713}
   m_SourcePrefab: {fileID: 100100000, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+--- !u!70 &2825898501810572156 stripped
+CapsuleCollider2D:
+  m_CorrespondingSourceObject: {fileID: 3159564463621367340, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+  m_PrefabInstance: {fileID: 931854335210630480}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3576063234121525837 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4417510083731572509, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
@@ -357,7 +378,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAssassinAbility
   cooldown: 1
-  _bodyCollider: {fileID: 0}
+  _bodyCollider: {fileID: 2825898501810572156}
   activationRange: 0.5
   enemyTargeting: {fileID: 3576063234121525837}
   attackDamage: 12
@@ -387,19 +408,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkDetection
   ShowTopMostFoldoutHeaderGroup: 1
-  enemyDetection: {fileID: 4592527766516815806}
---- !u!114 &969102101754766042
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7542723251226543163}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8de9e450c71746eca0c59adf331e4fa1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyDetectionTester
   enemyDetection: {fileID: 4592527766516815806}
 --- !u!114 &8095137201846823201
 MonoBehaviour:
@@ -431,6 +439,18 @@ MonoBehaviour:
   stealthDuration: 2
   detectedStealthAmount: 0.7
   undetectedStealthAmount: 0.95
+--- !u!114 &1514268252018624713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7542723251226543163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 264cf178b86b4c328cff658065c01ab2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IgnoreFieldTurretTarget
 --- !u!212 &8680322642003066561 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}

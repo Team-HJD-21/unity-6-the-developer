@@ -183,7 +183,8 @@ public sealed class SpawnCompositionPlanner
             var enemies = new List<EnemySpawnEntry>(selected.Composition.Count);
             foreach (EnemySquadCompositionEntry entry in selected.Composition)
                 enemies.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight));
-            planned.Add(new SpawnInstruction(selected.SquadOrder, point.Id, enemies));
+            planned.Add(new SpawnInstruction(selected.SquadOrder, point.Id, enemies,
+                targetRule: selected.TargetRule));
 
             remainingBudget -= costs[selected];
             remainingCount -= selected.TotalWeight;
@@ -281,7 +282,8 @@ public sealed class SpawnCompositionPlanner
             var entries = new List<EnemySpawnEntry>();
             foreach (var entry in preset.Composition) entries.Add(new EnemySpawnEntry(entry.EnemyId, entry.Weight * allocation.Sets));
             plans.Add(new SpawnInstruction(request.SquadOrder, authored ? allocation.SpawnPointId : "",
-                entries, authored ? placement : new EncounterSpawnPlacement(placement.Origin, areas[allocation.SpawnPointId])));
+                entries, authored ? placement : new EncounterSpawnPlacement(placement.Origin, areas[allocation.SpawnPointId]),
+                preset.TargetRule));
         }
         instructions = plans.AsReadOnly(); return plans.Count > 0;
     }
@@ -398,7 +400,8 @@ public sealed class SpawnCompositionPlanner
             planned.Add(new SpawnInstruction(
                 spawnRequest.SquadOrder,
                 allocation.SpawnPointId,
-                enemies));
+                enemies,
+                targetRule: squadPreset.TargetRule));
         }
 
         instructions = planned.AsReadOnly();

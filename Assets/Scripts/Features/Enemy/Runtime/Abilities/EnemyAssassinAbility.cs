@@ -6,12 +6,23 @@ using UnityEngine;
 /// </summary>
 public sealed class EnemyAssassinAbility : EnemyCloseRangeAbility
 {
+
     [Header("공격 준비")]
     [SerializeField, Min(0f)] private float attackWindupDuration = 0.3f;
-
     private bool _isExecuting;
 
     public override bool IsExecuting => _isExecuting;
+
+    // Unity 생명주기
+
+    /// <summary>공격 준비 대기를 취소하고 실행 잠금을 해제한다.</summary>
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        _isExecuting = false;
+    }
+
+    // 파생 클래스 공통 처리
 
     /// <summary>
     /// 현재 타깃을 고정해 공격 준비를 시작하고 완료될 때까지 행동을 잠근다.
@@ -25,6 +36,8 @@ public sealed class EnemyAssassinAbility : EnemyCloseRangeAbility
         StartCoroutine(AttackAfterWindup(target));
         return true;
     }
+
+    // 내부 처리
 
     /// <summary>
     /// 준비 시간이 끝난 시점에 타깃 유효성과 사거리를 다시 확인해 피해를 준다.
@@ -43,12 +56,6 @@ public sealed class EnemyAssassinAbility : EnemyCloseRangeAbility
                 ApplyDamage(target);
         }
 
-        _isExecuting = false;
-    }
-
-    private void OnDisable()
-    {
-        StopAllCoroutines();
         _isExecuting = false;
     }
 }

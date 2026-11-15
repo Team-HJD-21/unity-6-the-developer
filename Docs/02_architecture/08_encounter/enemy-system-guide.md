@@ -96,15 +96,29 @@ classDiagram
 
 `EnemyRoot`의 `footCollider`에는 발 충돌용 BoxCollider2D를 연결한다. Variant는 이 참조를 상속하며, 발 콜라이더를 교체한 경우 정렬 참조도 다시 연결한다. 각 몬스터의 발 중심을 같은 바닥 기준으로 맞춰 몸통 높이에 따라 앞뒤 순서가 달라지지 않게 한다.
 
+네트워크 스폰 시 `EnemyNetworkController`는 Foot 콜라이더만 서버 시각 기준 1.5초 동안 비활성화한다. 프리팹의 Foot은 켜 두고, 참조가 비어 있으면 Awake에서 `Foot` 자식의 Collider2D만 찾는다. HitBox와 감지 센서는 이 유예로 끄지 않는다. 복구 시각은 NetworkVariable로 공유하여 늦게 수신한 클라이언트도 남은 시간만 적용한다. 기존 Update에서 유예 종료를 확인하고 살아 있는 개체의 Foot을 켜며, 사망·Despawn된 개체는 다시 켜지 않는다. 서버 시각 기준이므로 Match 일시정지와 무관하게 유예 시간은 흐른다. Foot이 담당하는 지형 충돌도 유예 중에는 비활성화된다. 저장 복원으로 다시 네트워크 스폰하는 개체에도 새 1.5초 유예를 적용하며, 유예 잔여 시간을 체크포인트에 따로 저장하지 않는다. 네트워크 없는 임시 로컬 실행에는 적용하지 않는다.
+
 ## 타깃·분대·이동
 
 `ITargetable.TargetabilityLost`는 `TargetableComponent.CanBeTargeted`가 true에서 false로 바뀔 때 해당 타깃을 인자로 한 번 알린다. `SetHealth()`와 `OnEnable()`·`OnDisable()`에서 전환을 확인하므로 체력 0, 비활성화, 활성 대상 파괴를 처리하고 같은 불가 상태의 반복 갱신은 중복 통지하지 않는다. 타깃 가능 상태로 회복한 뒤 다시 불가능해지면 새 전환으로 알린다. 구독자는 `target.TargetabilityLost += OnTargetabilityLost`로 연결하고 타깃 교체·구독자 종료 시 같은 핸들러를 `-=`로 해제한다. `EnemySquad.TryChangeTarget()`은 최초 지정·플레이어 전환·저장 복원에서 구독과 구성원 전달을 함께 처리하고 마지막 구성원이 제거되면 구독을 해제한다.
 
-목표 선택은 `EnemySquad`가 담당한다. 배정된 목표가 있으면 주기적으로 `CanBeTargeted`를 검사하거나 구성원을 순회하지 않는다. 타깃 불가 이벤트를 받으면 기존 목표와 구독을 해제하고 분대 중심에서 가장 가까운 유효 후보를 즉시 한 번 검색한다. 후보가 없을 때만 기존 행동 갱신 경로의 대표 활성 구성원이 `RefreshTarget()`으로 현재 코드의 간격인 1초마다 재시도하며 새 Update나 코루틴을 추가하지 않는다. 여러 분대가 같은 목표를 잃으면 해당 이벤트 시점에 각 분대의 검색이 발생하며 프레임별 검색량을 분산하는 스케줄러는 아니다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
+목표 선택은 `EnemySquad`가 담당한다. 시설 타깃은 타깃 불가 이벤트까지 유지하며 반복적인 구성원 순회나 유효성 검사를 하지 않는다. 일반 분대가 플레이어를 추적할 때만 아래 거리 해제 검사를 수행한다. 타깃 불가 이벤트를 받으면 기존 목표와 구독을 해제하고 분대 중심에서 가장 가까운 허용 후보를 즉시 한 번 검색한다. 후보가 없으면 기존 행동 갱신 경로의 대표 활성 구성원이 `RefreshTarget()`으로 현재 코드의 간격인 1초마다 재시도하며 새 Update나 코루틴을 추가하지 않는다. 여러 분대가 같은 목표를 잃으면 해당 이벤트 시점에 각 분대의 검색이 발생하며 프레임별 검색량을 분산하는 스케줄러는 아니다. 일반 스폰·소환 적·테스트 적 모두 `JoinSquad`로 연결한다. Executor는 생성 직후 최초 목표를 지정하고 분대 목록을 보관하지만, 별도의 Update에서 분대 목표를 반복 갱신하지 않는다.
 
 `EnemySquad`는 합류·제거와 `EnemyController` 활성 상태 변경 시 대표를 선택한다. `EnemyNetworkController`는 `IsSquadRepresentative`인 구성원만 `RefreshTarget()`을 호출하며, 반복 갱신 중 대표를 찾기 위한 구성원 순회를 하지 않는다. 대표가 제거되거나 비활성화되면 남은 활성 구성원이 갱신을 이어받는다. 대표 교체는 분대의 목표·배정 인원·다음 재검색 시각을 초기화하지 않으며, 타깃 상실 이벤트의 즉시 재검색은 대표 여부와 관계없이 실행한다. 1인 분대는 호출 수가 줄지 않는다.
 
-`EnemyDefinition.SquadMode`는 공동 분대/개별 분대, `TargetRule`은 PlayerOrTurret/PlayerOnly를 선택한다. 일반 스폰도 타깃 규칙이 다른 구성원은 같은 분대에 섞지 않는다. BlackWolf는 개별 PlayerOnly 분대다.
+`EnemyDefinition.SquadMode`는 공동 분대/개별 분대를 지정하고, 정규 편성의 타깃 규칙은 `EnemySquadPreset.TargetRule` → `SpawnInstruction.TargetRule` → `EnemySquad`로 전달한다. 공동 구성원은 명령 하나당 같은 규칙의 분대를 공유하고 Individual 구성원은 같은 규칙으로 개별 분대를 만든다. 동일 몬스터도 편성에 따라 다른 규칙을 사용할 수 있다. 현재 AssassinSquad는 `PlayerOnly`, SummonEscort는 `TurretOnly`, 나머지 6개 편성은 `PlayerOrTurret`다. BlackWolf의 개별 분대 구성 방식은 Definition에서 유지한다.
+
+| 규칙 | 자동 탐색·재탐색 | 플레이어 감지·직접 배정 |
+| --- | --- | --- |
+| `PlayerOrTurret = 0` | 시설만 | 플레이어·시설 허용 |
+| `PlayerOnly = 1` | 플레이어만 | 플레이어만 허용 |
+| `TurretOnly = 2` | 시설만 | 시설만 허용, 플레이어 전환 거절 |
+
+`IsValidTarget()`의 공통 검증을 거치므로 `TurretOnly`는 감지 전환뿐 아니라 생성자와 복원 경로의 플레이어 지정도 거절한다. 소환 몬스터는 부모 분대의 규칙을 이어받는다. 프리셋이 없는 단일 몬스터 테스트는 테스트 창의 `타깃 규칙`을 명시적으로 사용한다. 숨겨진 `EnemyDefinition.TargetRule`은 아직 단독 Stage·보스 생성과 이전 저장의 호환에 사용하므로 제거하지 않는다.
+
+Enemy 체크포인트 `world/enemies` v3는 분대별 실제 규칙을 저장하고, Encounter 체크포인트 `world/encounter` v4는 확정된 지연 출현 명령의 규칙을 저장한다. 새 저장은 이후 프리셋 설정을 바꿔도 저장 당시 규칙을 복원한다. 이전 Enemy v1·v2는 기존 Definition 규칙으로 복원하고, 이전 Encounter v3의 확정 지연 명령은 현재 동일 Order 프리셋의 규칙을 사용한다. 후자의 프리셋이 사라졌으면 복원을 거절한다. 이 저장·복원 경로의 실제 플레이 검증은 별도로 수행해야 한다.
+
+`EnemySquad.SetTarget(preferredTarget, candidates)`는 이미 배정된 목표를 유지한다. 목표가 없으면 전달받은 후보의 유형·유효성과 실제 집계 인원 수용 여부를 확인하고 배정한다. 성공하면 거리 검색을 생략하며, 실패하면 전달받은 목록에서 규칙에 맞는 가장 가까운 후보를 검색한다. 두 인자를 생략한 기존 호출도 사용할 수 있으며, 검색이 필요할 때 최신 목록을 조회한다. 후보 참조와 목록을 보관하는 새 상태나 별도 갱신 루프는 추가하지 않는다.
 
 현재 분대 선택 경로는 최단거리 조회를 사용한다. `EnemyAIProfile`과 점수 평가용 옛 클래스 파일이 남아 있다는 사실을 현재 분대가 점수식을 사용한다는 뜻으로 해석하지 않는다.
 
@@ -112,7 +126,7 @@ classDiagram
 
 첫 반복 갱신 시점은 몬스터 InstanceID로 엇갈리게 배치하며 새 타깃의 첫 계산을 지연하지 않는다. 이는 프레임당 계산 수 제한이나 결정적인 재실행을 보장하는 스케줄러가 아니다. 타깃별 공격 인원 제한은 아래 배정 API와 분대 연결을 사용하며 별도 경로 계산 스케줄러는 후속 작업이다.
 
-`TargetableComponent`의 `Max Attackers`는 타깃별 최대 배정 인원 설정이며 `ITargetable.MaxAttackers`로 조회한다. 초기값 10은 임시 값이고 플레이어·터렛·CU마다 조절할 수 있다. 현재 배정 인원은 실행 중 값인 `AssignedAttackerCount`로 조회한다. `TryAssignAttackers(count)`는 타깃이 유효하고 요청 인원이 양수이며 남은 인원 안에 들어갈 때만 배정 수를 늘린다. `UnassignAttackers(count)`는 양수만 해제하고 결과를 0 이상으로 제한한다. 배정 인원은 주기적으로 집계하거나 비활성화 시 자동 초기화하지 않는다. 호출자는 자신이 배정한 인원을 관리하고 반환해야 한다.
+`TargetableComponent`의 `Max Attackers`는 타깃별 최대 배정 인원 설정이며 `ITargetable.MaxAttackers`로 조회한다. 0은 무제한이며, 양수는 해당 수를 상한으로 사용한다. 각 플레이어·터렛·CU의 값은 개별 설정할 수 있다. 현재 배정 인원은 실행 중 값인 `AssignedAttackerCount`로 조회한다. `TryAssignAttackers(count)`는 타깃이 유효하고 요청 인원이 양수이며, 상한이 0이거나 남은 인원 안에 들어갈 때 배정 수를 늘린다. `UnassignAttackers(count)`는 양수만 해제하고 결과를 0 이상으로 제한한다. 배정 인원은 주기적으로 집계하거나 비활성화 시 자동 초기화하지 않는다. 호출자는 자신이 배정한 인원을 관리하고 반환해야 한다. 현재 `Player.prefab`은 0으로 설정하고 터렛·CU는 기존 상한을 유지한다.
 
 `EnemyDefinition.IsIncludedInAttackerLimit`은 몬스터별 공격 인원 집계 설정이며 기본값은 true다. `BomberSlime` Definition만 false로 설정한다. 일반 스폰·소환 생성·저장 복원은 Definition의 값을 `EnemyController.JoinSquad()`에 전달한다. 설정은 최초 등록 시 적용하고 소속 중에는 바꾸지 않는다. 같은 분대의 중복 등록은 그대로 유지하고 다른 분대로의 자동 이동은 거부한다. `LeaveSquad()`는 사망·Despawn 시 소속과 배정을 정리하는 데 사용한다. 인자를 생략하는 테스트용 등록은 기본값 true를 사용한다.
 
@@ -120,12 +134,16 @@ classDiagram
 
 분대는 별도 누적 카운터 없이 검색·타깃 변경 시에만 집계 대상 구성원을 계산한다. `TryChangeTarget()`은 새 타깃에 집계 대상 수만큼 배정할 수 있을 때 이전 배정과 구독을 반환하고 전체 구성원의 목표를 바꾼다. 타깃 불가 이벤트에서는 이전 목표와 배정을 먼저 해제한 뒤 재검색하며 후보가 없으면 목표 없이 재시도한다. 감지한 플레이어로 우선 전환할 때는 집계 대상 수를 수용할 수 없으면 기존 유효 타깃을 유지한다. 합류·제거 시에는 해당 몬스터가 집계 대상인 경우에만 한 명을 추가·반환한다. 합류 인원을 수용하지 못하면 목록 추가 전에 기존 집계 대상의 배정을 반환하고 전체 분대가 재검색한다. 저장 복원은 같은 타깃에 중복 배정하지 않고 다른 타깃으로 교체할 때 이전 배정부터 반환한다. 집계 설정은 Definition에서 다시 읽으며 저장 형식은 변경하지 않는다.
 
-배정 API는 Test Runner의 EditMode에서 `EnemyTargetAttackerLimitTests`를 선택해 실행한다. 별도 Preview Scene에서 최대 인원을 10으로 설정하고 배정 한계·해제 후 재배정·0 및 음수 인원·과도한 인원·체력 0 및 비활성 상태·체력 회복 후 배정을 검사한다. 분대의 실제 배정이나 네트워크 동작을 검증하는 테스트는 아니다.
+배정 API는 Test Runner의 EditMode에서 `EnemyTargetAttackerLimitTests`를 선택해 실행한다. 별도 Preview Scene에서 최대 인원 10의 제한·해제 후 재배정·0 상한의 무제한 배정 및 타깃 검색·0 및 음수 요청·과도한 인원·체력 0 및 비활성 상태·체력 회복 후 배정을 검사한다. Player 프리팹의 무제한 설정도 확인한다. 분대의 실제 네트워크 동작을 검증하는 테스트는 아니다.
 
-`EnemyPlayerSensor`는 개체별 CircleCollider2D Trigger의 진입 이벤트로 플레이어를 전달한다. 이미 겹친 상태의 분대 합류나 기존 타깃 무효화는 Stay 이벤트로 보완한다. 센서는 `EnemyNetworkController.CanExecuteBehavior`로 서버/명시적 로컬 테스트 및 시뮬레이션 진행 권한을 검사한 뒤 `EnemyController.NotifyPlayerDetected()`에 전달한다. 공통 컨트롤러는 네트워크 컴포넌트를 직접 참조하지 않고 소속 분대에 전달한다. `EnemySquad.TryPrioritizePlayer()`는 검색 주기를 기다리지 않고 플레이어로 전환하며, 기존 플레이어가 유효하면 유지한다. 범위 이탈만으로 타깃을 해제하지 않는다.
+`EnemyPlayerSensor`는 개체별 CircleCollider2D Trigger의 진입 이벤트로 플레이어를 전달한다. 이미 겹친 상태의 분대 합류나 기존 타깃 무효화는 Stay 이벤트로 보완한다. 센서는 `EnemyNetworkController.CanExecuteBehavior`로 서버/명시적 로컬 테스트 및 시뮬레이션 진행 권한을 검사한 뒤 `EnemyController.NotifyPlayerDetected()`에 전달한다. 공통 컨트롤러는 네트워크 컴포넌트를 직접 참조하지 않고 소속 분대에 전달한다. `EnemySquad.TryPrioritizePlayer()`는 검색 주기를 기다리지 않고 플레이어로 전환한다.
+
+일반 `PlayerOrTurret` 분대는 플레이어가 모든 활성 구성원의 감지 반경 1.5배 밖으로 벗어나면 공동 어그로를 해제한다. 센서의 Offset과 월드 스케일을 반영하고 XY 제곱 거리로 판정한다. 한 구성원이라도 1.5배 범위 안이면 추적을 유지하며, 감지 반경 밖에서 1.5배 반경 안까지는 유지 구간이다. 분대 대표만 기존 갱신 경로에서 Match 시간 기준 0.2초마다 확인하며 새로운 Trigger·Update·코루틴·물리 검색은 추가하지 않는다. 센서는 Awake에서 캐시하고 해당 검사 때 활성 구성원을 필요한 만큼 순회한다. 해제 시 플레이어 배정 인원을 반환하고 검색 대기를 초기화한 뒤 분대 중심에서 가장 가까운 수용 가능한 시설을 즉시 검색한다. 시설이 없으면 기존 1초 재검색을 사용한다. `PlayerOnly` 암살자는 거리로 해제하지 않으며 타깃 불가 이벤트까지 추적한다. 센서가 없는 분대는 거리 기준을 알 수 없어 거리 해제를 적용하지 않는다.
 
 
-이동은 XY NavMesh 경로를 구하고 서버의 FixedUpdate에서 `AddForce`로 가속한다. `moveSpeed`는 이동 방향의 목표 속도, `moveAcceleration`은 최대 이동 가속도다. 목표 속도에 도달하면 이동 힘을 더하지 않으며 외부에서 밀린 속도를 강제로 잘라내지 않는다. 사거리에서는 컨트롤러가 `Move()`를 호출하지 않아 이동 힘이 추가되지 않으며, 다른 적의 충돌에는 밀릴 수 있다. 남은 속도는 EnemyRoot의 Rigidbody2D `Linear Damping`으로 줄인다(초기 조정값 5). 실제 이동 속도와 정지 거리는 감쇠 및 충돌의 영향을 받는다. `CheckCondition()`은 쿨타임과 독립적이므로, 사거리에 도착한 적은 쿨타임 중에도 이동 입력을 멈춘다. 변태를 완료한 소환형은 기존대로 위치를 고정한다.
+이동은 XY NavMesh 경로를 구하고 서버의 FixedUpdate에서 `AddForce`로 속도를 조절한다. `moveSpeed`는 목표 속도, `moveAcceleration`은 목표 속도로 접근하는 가속도, `moveDeceleration`은 정지·역방향 속도·진행 방향의 초과 속도·옆으로 남은 속도에 사용하는 감속도다. 현재 속도를 새 이동 방향의 성분과 그에 수직인 성분으로 나눈다. 진행 방향은 목표 속도까지 가속하고, 옆 속도는 감속도로 줄이므로 90도 전환에서도 감속도를 높이면 미끄러짐이 빨리 줄어든다. 역방향 속도는 먼저 0까지 제동한 뒤 다음 물리 단계부터 새 방향으로 가속한다. Rigidbody2D `Linear Damping`으로 손실될 속도를 힘 계산에서 보상하므로, 장애물·외력이 없을 때 설정한 목표 속도와 가감속에 접근한다. 사거리 진입·능력 실행·타깃 또는 경로 부재 시 `StopMoving()`에서 `Brake()`를 호출한다. 충돌로 밀리는 움직임은 유지하되, 허용 상한을 넘은 속도만 제한하고 나머지는 제동하므로 감속도가 클수록 밀림도 빨리 줄어든다. `moveDeceleration`의 초기값은 20이며 기존 프리팹의 속도·가속도·감쇠는 그대로 유지한다. `CheckCondition()`은 쿨타임과 독립적이므로, 사거리에 도착한 적은 쿨타임 중에도 제동한다. 변태를 완료한 소환형은 기존대로 위치를 고정하며 고정 상태에는 이동·제동 힘을 추가하지 않는다. 실제 충돌 중의 속도·밀림·정지 거리는 별도 플레이 검증이 필요하다.
+
+`pushSpeedLimitMultiplier`는 외부 충돌로 밀릴 때 허용할 속도 배율이며 초기값은 1.1이다. 행동을 수행하는 서버의 기존 이동·제동 처리에서 속력 상한을 `moveSpeed × 배율`로 적용한다. 상한을 넘으면 방향을 유지하면서 속력만 제한하고, 방향 전환에서 전진·옆 속도를 합친 결과에도 같은 상한을 적용한다. 별도 Update·물리 조회·코루틴은 추가하지 않는다. 충돌 직후 속도는 다음 이동·제동 처리에서 제한되므로 물리 솔버 내부의 순간 속도나 겹침 분리 이동까지 제한하는 기능은 아니다. 감속도가 0이어도 과속 상한은 적용된다.
 
 이동에 사용하지 않던 정지 플래그와 `EnemyMovement.Stop()`은 제거했다. 체크포인트는 경로와 경유점 진행도를 복원한다. 기존 저장 데이터와의 바이트 배열 형식을 유지하기 위해 과거 정지 플래그 자리는 쓰기 시 `false`로 채우고 읽기 시 소비한 뒤 버린다.
 
@@ -146,6 +164,14 @@ classDiagram
 본체 Animator는 `MoveX`, `MoveY`, `IsMoving`, `MoveAnimSpeed`, `Attack`을 사용한다. `EnemyAnimation`은 네트워크 애니메이터가 스폰돼 있으면 서버 경로로 재생하고, 로컬 테스트에서는 Animator Trigger를 직접 재생한다. 서로 완전히 독립된 컴포넌트라고 가정하지 않는다.
 
 ## 피격 계약과 사망
+
+### 플레이어 접촉 피해
+
+`EnemyRoot/HitBox`의 `EnemyContactDamage`는 몸통끼리 닿을 때 플레이어의 `PlayerInfo.ApplyDamage()`로 피해를 전달한다. Enemy 쪽에서 서버/로컬 테스트 실행 권한과 생존 여부를 확인하고, Player의 기존 피해 API가 권한·시간 정지·피해 보호를 최종 검사한다. 기존 근접 능력과 독립적으로 동작한다.
+
+Physics 2D 매트릭스에서 `EnemyHurtbox`와 `PlayerHurtbox`의 접촉을 허용한다. HitBox의 CapsuleCollider2D는 Trigger이며 `Callback Layers`에 `PlayerHurtbox`가 포함되어야 한다. Foot·센서 접촉은 피해 대상으로 사용하지 않는다.
+
+`OnTriggerEnter2D`에서만 처리하므로 계속 겹쳐 있는 동안 주기적으로 피해를 주지는 않는다. 방향별 플레이어 Hurtbox 교체나 동시 진입의 중복 피해를 줄이기 위해 몬스터별·플레이어별 재피격 간격을 확인한다. 기본 피해량은 10, 간격은 0.5초이며 HitBox Inspector에서 조절한다. 부모 참조와 레이어 번호는 Awake에 저장하고, 접촉할 때만 플레이어를 조회한다. Update·FixedUpdate·Stay·주변 Overlap 검색은 추가하지 않는다.
 
 다른 파트가 적을 공격할 때는 [IAttackableEnemy](../../../Assets/Scripts/Features/Enemy/Contracts/IAttackableEnemy.cs)의 `CanBeAttackedBy(AttackSourceType)`와 `TryTakeDamage()`를 사용한다. 공격자 종류를 잃는 기존 `TakeDamage(int)`는 Unknown으로 전달되므로, 암살자의 Player 전용 피격 정책을 통과하지 못한다. 새 호출자는 공격자 종류를 정확히 전달한다.
 

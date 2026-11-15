@@ -32,8 +32,9 @@ namespace TeamHJD.Game.Enemies.Targeting
                     (requiredType.HasValue && candidate.TargetType != requiredType.Value))
                     continue;
 
-                // 봄버 전용 분대와 Encounter 판단용 조회는 인원 0으로 이 검사를 생략한다.
+                // 검색 요청 인원이 0이면 검사하지 않고, 타깃 상한이 0이어도 무제한으로 취급한다.
                 if (attackerCount > 0 &&
+                    candidate.MaxAttackers > 0 &&
                     attackerCount > candidate.MaxAttackers - candidate.AssignedAttackerCount)
                     continue;
 

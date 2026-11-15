@@ -10,6 +10,8 @@ using UnityEngine;
 /// </summary>
 public sealed partial class EnemyExplosionAbility : EnemyAbility
 {
+    // Inspector 설정과 제작 참조
+
     [Header("참조")]
     [SerializeField] private EnemyTargeting enemyTargeting;
 
@@ -17,12 +19,11 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
     [SerializeField, Min(1)] private int explosionDamage = 20;
     [SerializeField, Min(0.01f)] private float explosionRadius = 1f;
 
+    // 실행 중 참조와 상태
     private readonly List<Collider2D> _overlapResults = new(32);
     private readonly HashSet<ITargetable> _damagedTargets = new();
-
     private ContactFilter2D _contactFilter;
     private EnemyHealth _enemyHealth;
-
     private bool _hasExploded;
     private bool _completionReported;
     private bool _removalDeferred;
@@ -34,6 +35,9 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
     /// </summary>
     public event Action RemovalRequested;
 
+    // Unity 생명주기
+
+    /// <summary>폭발 타깃·체력 참조와 재사용할 물리 검색 필터를 준비한다.</summary>
     protected override void Awake()
     {
         base.Awake();
@@ -51,6 +55,15 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
             useTriggers = true
         };
     }
+
+    /// <summary>필드 정지 중 보류한 폭발 종료 이벤트를 재개 시 처리한다.</summary>
+    private void Update()
+    {
+        if (_removalDeferred && CanAdvanceAbility)
+            OnExplosionAnimationFinished();
+    }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 아직 폭발하지 않았고 유효한 Player·Turret이 몸통 기준 발동 범위 안에 있는지 확인한다.
@@ -79,6 +92,27 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
     }
 
     /// <summary>
+    /// Bomber 폭발 클립 마지막의 Animation Event에서 호출한다.
+    /// </summary>
+    public void OnExplosionAnimationFinished()
+    {
+        if (!_hasExploded || _completionReported || !isActiveAndEnabled || !HasAbilityAuthority)
+            return;
+
+        if (!CanAdvanceAbility)
+        {
+            _removalDeferred = true;
+            return;
+        }
+
+        _removalDeferred = false;
+        _completionReported = true;
+        RemovalRequested?.Invoke();
+    }
+
+    // 파생 클래스 공통 처리
+
+    /// <summary>
     /// 폭발 상태를 고정하고 추가 피격을 차단한 뒤 범위 피해를 적용한다.
     /// </summary>
     protected override bool Activate()
@@ -97,6 +131,8 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
         // 기존 컨트롤러가 발동 성공 후 Attack 애니메이션을 재생한다.
         return true;
     }
+
+    // 내부 처리
 
     /// <summary>
     /// 몸통 중심 주변에서 Player·Turret을 찾아 대상별로 한 번만 피해를 준다.
@@ -131,6 +167,7 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
         }
     }
 
+    /// <summary>파괴되지 않았고 타깃 가능한 플레이어 또는 시설인지 확인한다.</summary>
     private static bool IsValidTarget(ITargetable target)
     {
         // 인터페이스로 참조한 Unity 오브젝트의 파괴 여부도 확인한다.
@@ -145,6 +182,7 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
                target.TargetType == TargetType.Turret;
     }
 
+    /// <summary>선택한 대상의 공통 피해 수신 계약으로 폭발 피해를 전달한다.</summary>
     private void ApplyDamage(ITargetable target)
     {
         Transform targetTransform = target.TargetTransform;
@@ -155,31 +193,6 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
         // 피해 수신자의 원본 계약만 사용합니다. Player 전용 분기를 두지 않습니다.
         IDamageableTarget damageable = targetTransform.GetComponentInParent<IDamageableTarget>();
         damageable?.ApplyDamage(explosionDamage);
-    }
-
-    /// <summary>
-    /// Bomber 폭발 클립 마지막의 Animation Event에서 호출한다.
-    /// </summary>
-    public void OnExplosionAnimationFinished()
-    {
-        if (!_hasExploded || _completionReported || !isActiveAndEnabled || !HasAbilityAuthority)
-            return;
-
-        if (!CanAdvanceAbility)
-        {
-            _removalDeferred = true;
-            return;
-        }
-
-        _removalDeferred = false;
-        _completionReported = true;
-        RemovalRequested?.Invoke();
-    }
-
-    private void Update()
-    {
-        if (_removalDeferred && CanAdvanceAbility)
-            OnExplosionAnimationFinished();
     }
 
     /// <summary>
@@ -196,6 +209,9 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
         return transform.position;
     }
 
+    // 에디터 표시
+
+    /// <summary>실제 폭발 중심과 피해 반경을 표시한다.</summary>
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

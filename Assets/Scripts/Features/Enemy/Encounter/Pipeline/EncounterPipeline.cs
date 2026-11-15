@@ -16,16 +16,18 @@ namespace TeamHJD.Game.Enemies.Encounter
         private readonly EncounterProcessor _processor = new EncounterProcessor();
         private readonly EncounterPlanner _planner;
         private readonly EncounterExecutorStep _execution;
-        private static readonly Unity.Profiling.ProfilerMarker CollectMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Encounter.Collect");
-        private static readonly Unity.Profiling.ProfilerMarker PlanMarker = new Unity.Profiling.ProfilerMarker("TeamHJD.Encounter.Plan");
         private double _capturedSpawnMargin;
         private readonly IEncounterDeferredSpawnSink _deferred;
         private readonly EncounterBudgetSettings _settings;
 
         public bool HasCatalog => _planner.HasCatalog;
+
         public bool HasExecutor => _executor != null;
+
         public bool CanExecute => HasExecutor && _executor.CanSpawn;
+
         public EnemySpawnExecutor Executor => _executor;
+
         /// <summary>점유 셀에서 일반 스폰을 떨어뜨리는 추가 거리입니다. 월드 XY 단위입니다.</summary>
         public double CapturedSpawnMargin
         {
@@ -36,13 +38,8 @@ namespace TeamHJD.Game.Enemies.Encounter
                 _capturedSpawnMargin = value;
             }
         }
+
         internal int CapturedBudget => _planner.CapturedBudget;
-        internal double AdditionalCooldownRemaining(double now) => _planner.AdditionalCooldownRemaining(now);
-        internal void RestoreAdditionalCooldown(double now, double remaining, Guid epoch, Guid grid)
-            => _planner.RestoreAdditionalCooldown(now, remaining, epoch, grid);
-        internal void RestoreBudget(int budget) => _planner.RestoreBudget(budget);
-        internal SpawnDistributionHistory.State CaptureCheckpoint() => _planner.CaptureCheckpoint();
-        internal void RestoreCheckpoint(SpawnDistributionHistory.State state, MatchId match) => _planner.RestoreCheckpoint(state, match);
 
         public EncounterPipeline(MatchId matchId, EnemySpawnExecutor executor, EnemySquadPresetCatalog squads,
             EncounterBudgetSettings settings, Func<RegionGridSnapshot> currentRegion = null)
@@ -61,6 +58,19 @@ namespace TeamHJD.Game.Enemies.Encounter
             _execution = new EncounterExecutorStep(executor, currentRegion);
         }
 
+        // 외부 호출과 상태 변경
+
+        internal double AdditionalCooldownRemaining(double now) => _planner.AdditionalCooldownRemaining(now);
+
+        internal void RestoreAdditionalCooldown(double now, double remaining, Guid epoch, Guid grid)
+            => _planner.RestoreAdditionalCooldown(now, remaining, epoch, grid);
+
+        internal void RestoreBudget(int budget) => _planner.RestoreBudget(budget);
+
+        internal SpawnDistributionHistory.State CaptureCheckpoint() => _planner.CaptureCheckpoint();
+
+        internal void RestoreCheckpoint(SpawnDistributionHistory.State state, MatchId match) => _planner.RestoreCheckpoint(state, match);
+
         /// <summary>Core 요청 서비스가 승인한 자동 편성 요청을 현재 전장·공용 난수로 처리합니다.</summary>
         public bool SpawnRequest(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
             int maximumEnemyCount, SquadSelectionSettings settings, IRandomSource random,
@@ -77,6 +87,7 @@ namespace TeamHJD.Game.Enemies.Encounter
                 new SquadSelectionSettings { logSelectionDecisions = logBudgetDecisions }, null,
                 context, environmentProfile, out result, out summary);
 
+        /// <summary>예고한 편성의 비용과 실행 조건을 재확인하고 실제 생성 이력을 기록한다.</summary>
         internal bool ExecutePrepared(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region,
             EncounterDeferredSpawn deferred, EncounterExecutionContext context, out string result, out EncounterExecutionSummary summary)
         {
@@ -98,6 +109,9 @@ namespace TeamHJD.Game.Enemies.Encounter
             finally { _planner.RecordExecuted(battlefield, actuals); }
         }
 
+        // 내부 처리
+
+        /// <summary>요청 권한과 자료를 검증한 뒤 수집·가공·계획·실행을 순서대로 연결한다.</summary>
         private bool Run(BattlefieldSpatialSnapshot battlefield, RegionGridSnapshot region, string preset, int maximum,
             SquadSelectionSettings settings, IRandomSource random, EncounterExecutionContext context,
             EncounterEnvironmentProfile environmentProfile, out string result, out EncounterExecutionSummary summary)
@@ -132,15 +146,13 @@ namespace TeamHJD.Game.Enemies.Encounter
             bool canDefer = preset == null && _deferred?.CanShowWarning == true;
             bool collectInternal = canDefer && _planner.ShouldCollectAdditional(region, context.CaptureTrend);
             EncounterCollection collected;
-            using (CollectMarker.Auto())
-                collected = _collector.Collect(battlefield, region, CapturedSpawnMargin,
-                    collectInternal, _settings.additionalSpawns?.minimumPlayerDistance ?? 8);
+            collected = _collector.Collect(battlefield, region, CapturedSpawnMargin,
+                collectInternal, _settings.additionalSpawns?.minimumPlayerDistance ?? 8);
             EncounterSituation situation = _processor.Process(collected);
             EncounterPlan plan;
             bool planned;
-            using (PlanMarker.Auto())
-                planned = _planner.TryPlan(situation, preset, maximum, settings, random, context,
-                    environmentProfile, out plan, out result, canDefer);
+            planned = _planner.TryPlan(situation, preset, maximum, settings, random, context,
+                environmentProfile, out plan, out result, canDefer);
             if (!planned)
             {
                 summary = new EncounterExecutionSummary(0, 0, "PlanRejected", plan == null ? null :

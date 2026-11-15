@@ -1,6 +1,6 @@
 # Stage 1 Enemy 콘텐츠와 등록 가이드
 
-수정일: 2026-11-14
+수정일: 2026-11-15
 상태: #540 통합 브랜치의 현재 에셋·구현·검증 기록. 수치는 밸런스 초안이다.
 
 [문서 목차](../../README.md) · [시스템 구조](enemy-system-guide.md) · [Encounter 편성·예산](encounter-planning-guide.md)
@@ -39,6 +39,14 @@
 
 ## 고유 동작과 연결 조건
 
+### 피격과 사망 연출
+
+`EnemyHealth.DamageApplied`에서 사망하지 않은 피해만 `EnemyHitDeathVisual`의 짧은 붉은 점멸로 표시한다. 서버가 피해를 확정하고 RPC로 각 클라이언트에 전달하므로 피해 판정은 클라이언트에서 하지 않는다.
+
+체력이 0이 되면 서버가 `EnemyController.OnDeath()`를 먼저 호출해 소환형의 사망 소환 등 고유 반응을 처리한다. 그 다음 공유 사망 시각을 전송하고 이동 애니메이션·피격·콜라이더·Rigidbody 시뮬레이션을 멈춘 채 스프라이트를 페이드아웃한다. 페이드 시간 뒤 서버가 NetworkObject를 Despawn한다. 효과는 EnemyRoot에 붙어 파생 Variant가 상속한다.
+
+현재 적용은 코드와 EnemyRoot 프리팹 연결 기준이다. Host/Client에서 비치명 피격 점멸, 사망 정지·페이드·Despawn, 소환사의 사망 소환 순서는 Play Mode에서 별도 확인해야 한다.
+
 ### 회복
 
 PartyMushroom은 `EnemyHealAbility`에서 자신의 몸통을 기준으로 주변 Collider를 찾고, 자기 자신·비활성/사망·최대 체력인 대상을 제외한다. 표면 거리 검사를 통과한 가장 가까운 아군 한 마리를 선택한다. 이동 타깃은 전투 목표, `FacingTarget`은 치료할 아군으로 구분한다. 치료할 아군이 없더라도 전투 목표의 능력 범위에 닿으면 정지한다.
@@ -59,7 +67,7 @@ PartyMushroom은 `EnemyHealAbility`에서 자신의 몸통을 기준으로 주�
 
 BlackWolf의 Definition은 `Individual + PlayerOnly`다. 여러 탐지자가 등록돼 있으면 한 명이 해제돼도 탐지 상태를 유지하고, 마지막 탐지자가 빠지면 다시 비탐지 상태가 된다. 서버 판정만 `EnemyNetworkDetection`으로 동기화한다.
 
-`EnemyAssassinDamageRule`은 탐지 중인 경우에만 `AttackSourceType.Player` 피해를 허용한다. 터렛의 실제 후보 검색에서 제외하려면 터렛 측이 `IAttackableEnemy.CanBeAttackedBy()`를 조회해야 한다. 탐지/피격 API 제공과 다른 파트의 실제 소비를 구분한다. 은신 셰이더는 포함하지 않는다.
+`EnemyAssassinDamageRule`은 탐지 중인 경우에만 `AttackSourceType.Player` 피해를 허용한다. BlackWolf 루트의 `IgnoreFieldTurretTarget`은 필드 터렛 타깃 제외 표시다. 같은 규칙이 필요한 다른 적에도 루트에 이 컴포넌트를 붙일 수 있다. 소비자는 후보 Collider의 부모에서 `GetComponentInParent<IgnoreFieldTurretTarget>()`을 조회해 표시가 있는 후보를 제외해야 한다. 이 표시는 물리 검색·피해 판정·플레이어 탐지를 직접 바꾸지 않는다. 현재 터렛 후보 검색은 이 표시를 소비하지 않으므로 실제 조준 제외 연결은 후속 작업이다. 탐지/피격 API 제공과 다른 파트의 실제 소비를 구분한다. 은신 셰이더는 포함하지 않는다.
 
 ## 프리셋과 비용
 

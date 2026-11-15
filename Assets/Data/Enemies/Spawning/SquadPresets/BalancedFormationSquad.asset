@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: BalancedFormationSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: BalancedFormation
-  role: 6
-  selectionWeight: 6
   _composition:
   - _enemyId: GreenGolem
     _weight: 1
@@ -26,3 +24,6 @@ MonoBehaviour:
     _weight: 1
   - _enemyId: Slime
     _weight: 2
+  _targetRule: 0
+  role: 6
+  selectionWeight: 6

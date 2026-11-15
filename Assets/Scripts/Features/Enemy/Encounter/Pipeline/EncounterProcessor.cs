@@ -1,5 +1,5 @@
 // 수집된 자료를 일반 스폰 후보와 지점별 전투 상황으로 가공합니다.
-// 점유 그룹은 예산 배분 전에 제외하며 AI의 실제 공격 타깃을 변경하지 않습니다.
+// 점유 그룹은 예산 배분 전에 제외하고 기준 시설을 분대의 첫 배정 후보로 전달합니다.
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
@@ -38,6 +38,7 @@ namespace TeamHJD.Game.Enemies.Encounter
 
                 situation.Candidates.Add(new SpatialSpawnCandidate(point.SpawnPointId, xy));
                 situation.TargetPositions.Add(point.SpawnPointId, targetXY);
+                situation.Targets.Add(point.SpawnPointId, target);
                 situation.TargetNames.Add(point.SpawnPointId, target.TargetTransform.name);
                 DamageableTargetAdapter adapter = target.TargetTransform.GetComponent<DamageableTargetAdapter>();
                 situation.TargetAttackTypes.Add(point.SpawnPointId, adapter != null ? adapter.AttackType : TargetAttackType.Unknown);

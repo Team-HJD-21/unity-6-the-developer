@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: EliteEscortSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: EliteEscort
-  role: 5
-  selectionWeight: 1
   _composition:
   - _enemyId: GreenGolem
     _weight: 1
@@ -26,3 +24,6 @@ MonoBehaviour:
     _weight: 1
   - _enemyId: GoblinDual
     _weight: 2
+  _targetRule: 0
+  role: 5
+  selectionWeight: 1

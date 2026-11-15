@@ -39,6 +39,8 @@ public readonly struct EnemySpawnEntry
 public readonly struct SpawnInstruction
 {
     public EncounterSpawnPlacement Placement { get; }
+    /// <summary>생성할 분대에 적용할 타깃 검색·배정 규칙이다.</summary>
+    public EnemyTargetRule TargetRule { get; }
     /// <summary>
     /// 이 분대에 적용된 프리셋의 명령 값을 반환한다.
     /// 이후 분대 행동을 연결할 때도 같은 명령을 참조할 수 있다.
@@ -66,10 +68,15 @@ public readonly struct SpawnInstruction
     public SpawnInstruction(
         string squadOrder,
         string spawnPointId,
-        IReadOnlyList<EnemySpawnEntry> enemies, EncounterSpawnPlacement placement = null)
+        IReadOnlyList<EnemySpawnEntry> enemies, EncounterSpawnPlacement placement = null,
+        EnemyTargetRule targetRule = EnemyTargetRule.PlayerOrTurret)
     {
+        if (!Enum.IsDefined(typeof(EnemyTargetRule), targetRule))
+            throw new ArgumentOutOfRangeException(nameof(targetRule));
+
         SquadOrder = squadOrder;
         SpawnPointId = spawnPointId;
+        TargetRule = targetRule;
         if (placement?.Area != null && !string.IsNullOrEmpty(spawnPointId))
             throw new ArgumentException("World origins cannot masquerade as authored point IDs.", nameof(spawnPointId));
         Placement = placement;

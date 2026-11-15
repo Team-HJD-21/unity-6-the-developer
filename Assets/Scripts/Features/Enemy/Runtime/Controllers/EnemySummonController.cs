@@ -11,11 +11,16 @@ public sealed class EnemySummonController : MovingEnemyController
         Transformed
     }
 
+    // Inspector 설정과 제작 참조
     [SerializeField] private Rigidbody2D rigidbody2D;
 
+    // 실행 중 참조와 상태
     private SummonState _state = SummonState.Mobile;
     private bool _deathHandled;
 
+    // Unity 생명주기
+
+    /// <summary>공통 이동 초기화 후 변태 시 고정할 물리 본체를 연결한다.</summary>
     protected override void Awake()
     {
         base.Awake();
@@ -23,6 +28,8 @@ public sealed class EnemySummonController : MovingEnemyController
         if (rigidbody2D == null)
             rigidbody2D = GetComponent<Rigidbody2D>();
     }
+
+    // 외부 호출과 상태 변경
 
     /// <summary>
     /// 이동·변태 대기·위치 고정 상태에 따라 추적 또는 소환 능력을 실행한다.
@@ -65,26 +72,6 @@ public sealed class EnemySummonController : MovingEnemyController
         }
     }
 
-    /// <summary>
-    /// 유효한 타깃이 범위에 들어오면 소환 쿨타임을 소비하지 않고 변태를 시작한다.
-    /// </summary>
-    private bool TryTransform(bool isInTargetRange)
-    {
-        if (!isInTargetRange || enemyTargeting == null || enemyTargeting.Target == null)
-            return false;
-
-        ITargetable target =
-            enemyTargeting.Target.GetComponent<ITargetable>();
-
-        if (target == null || !target.CanBeTargeted)
-        {
-            return false;
-        }
-
-        _state = SummonState.Transforming;
-        return true;
-    }
-
     /// <summary>변태가 끝나면 위치를 고정하고 소환 상태로 전환한다.</summary>
     public void OnTransformationAnimationFinished()
     {
@@ -113,5 +100,27 @@ public sealed class EnemySummonController : MovingEnemyController
         EnemySummonAbility summonAbility = enemyAbility as EnemySummonAbility;
         if (summonAbility != null)
             summonAbility.SummonOnDeath();
+    }
+
+    // 내부 처리
+
+    /// <summary>
+    /// 유효한 타깃이 범위에 들어오면 소환 쿨타임을 소비하지 않고 변태를 시작한다.
+    /// </summary>
+    private bool TryTransform(bool isInTargetRange)
+    {
+        if (!isInTargetRange || enemyTargeting == null || enemyTargeting.Target == null)
+            return false;
+
+        ITargetable target =
+            enemyTargeting.Target.GetComponent<ITargetable>();
+
+        if (target == null || !target.CanBeTargeted)
+        {
+            return false;
+        }
+
+        _state = SummonState.Transforming;
+        return true;
     }
 }

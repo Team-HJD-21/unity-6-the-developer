@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: BacklineGuardSquad
   m_EditorClassIdentifier: Assembly-CSharp::EnemySquadPreset
   _squadOrder: BacklineGuard
-  role: 2
-  selectionWeight: 2
   _composition:
   - _enemyId: GreenGolem
     _weight: 1
@@ -22,3 +20,6 @@ MonoBehaviour:
     _weight: 1
   - _enemyId: Slime
     _weight: 3
+  _targetRule: 0
+  role: 2
+  selectionWeight: 2
