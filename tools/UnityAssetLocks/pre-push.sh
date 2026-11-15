@@ -2,6 +2,10 @@
 # Unity asset locks (managed by tools/UnityAssetLocks/AssetLocks.ps1)
 set -eu
 
+if [ "$(uname -s)" = Darwin ]; then
+  export PATH="${PATH:+$PATH:}/opt/homebrew/bin:/usr/local/bin"
+fi
+
 case "$0" in
   */*) hook_dir=${0%/*} ;;
   *) hook_dir=. ;;

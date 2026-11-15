@@ -34,6 +34,7 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
     private static readonly string ProjectRoot = Path.GetDirectoryName(Application.dataPath);
     private static readonly bool Windows = Application.platform == RuntimePlatform.WindowsEditor;
+    private static readonly bool Mac = Application.platform == RuntimePlatform.OSXEditor;
     private static HashSet<string> _tracked = new HashSet<string>(StringComparer.Ordinal);
     private static Dictionary<string, string> _editable = new Dictionary<string, string>(StringComparer.Ordinal);
     private static Task<string> _refresh;
@@ -229,6 +230,8 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         };
         if (path != null)
             start.Arguments += " -AssetPath \"" + path.Replace("\"", "\\\"") + "\"";
+        if (Mac)
+            ConfigureMacToolPath(start);
 
         using (Process process = Process.Start(start))
         {
@@ -247,5 +250,20 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
                 throw new InvalidOperationException(errors.GetAwaiter().GetResult().Trim());
             return output.GetAwaiter().GetResult();
         }
+    }
+
+    private static void ConfigureMacToolPath(ProcessStartInfo start)
+    {
+        char separator = Path.PathSeparator;
+        string[] directories = (start.EnvironmentVariables["PATH"] ?? "")
+            .Split(new[] { separator }, StringSplitOptions.RemoveEmptyEntries)
+            .Concat(new[] { "/opt/homebrew/bin", "/usr/local/bin" })
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        start.EnvironmentVariables["PATH"] = string.Join(separator.ToString(), directories);
+        start.FileName = directories
+            .Select(directory => Path.Combine(directory, "pwsh"))
+            .FirstOrDefault(File.Exists)
+            ?? throw new FileNotFoundException("PowerShell 7 (pwsh) is required. Install it with 'brew install powershell'.");
     }
 }

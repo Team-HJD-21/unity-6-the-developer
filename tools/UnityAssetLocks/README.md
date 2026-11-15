@@ -11,6 +11,8 @@
 
 프로젝트를 업데이트한 뒤 Unity에서 한 번 열면 현재 복제본의 Git 설정과 `pre-push` 훅이 자동으로 등록된다. Git과 Git LFS는 설치되어 있어야 하며, Unity 프로세스에서 `origin`에 로그인할 수 있어야 한다. Windows는 기본 PowerShell을 사용한다. macOS·Linux는 `pwsh`가 필요하다. 별도 `core.hooksPath`를 직접 지정한 복제본은 훅을 합쳐야 한다는 메시지가 뜬다.
 
+macOS에서는 `brew install powershell`로 설치하고 `pwsh --version`으로 확인한다. Unity와 푸시 훅은 기존 `PATH`에 이어 Apple Silicon과 Intel의 Homebrew 기본 경로를 확인한다.
+
 편집과 커밋, 푸시는 평소대로 한다. Unity가 앱 내부에서 직접 편집 요청을 보내지 않는 화면에서는 Project 창에서 **Assets → Open for Edit (Git LFS)**를 사용할 수 있다. 런타임 게임 코드에는 적용되지 않는다.
 
 폴더를 이동하거나 이름을 바꾸거나 삭제할 때는 Git에 등록된 하위 에셋의 잠금도 확인한다. 하나라도 편집할 수 없으면 작업이 차단된다.
