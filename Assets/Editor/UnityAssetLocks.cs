@@ -32,7 +32,87 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         public string submitted = "";
     }
 
+    private sealed class ProjectSettingsEdit
+    {
+        public readonly string Path;
+        private UnityEngine.Object _asset;
+        private string _acceptedJson;
+        private int _dirtyCount;
+        private bool _acceptedDirty;
+        private bool _restoring;
+
+        public ProjectSettingsEdit(string path)
+        {
+            Path = path;
+        }
+
+        public bool Check(bool saving)
+        {
+            if (_restoring)
+                return false;
+
+            if (_asset == null)
+            {
+                _asset = AssetDatabase.LoadAllAssetsAtPath(Path).FirstOrDefault();
+                if (_asset != null)
+                    Remember(EditorJsonUtility.ToJson(_asset), EditorUtility.IsDirty(_asset));
+                return !saving || TryOpen(Path);
+            }
+
+            bool dirty = EditorUtility.IsDirty(_asset);
+            if (!dirty)
+                _acceptedDirty = false;
+            if (!saving && _dirtyCount == EditorUtility.GetDirtyCount(_asset))
+                return true;
+
+            string json = EditorJsonUtility.ToJson(_asset);
+            if (!dirty || string.Equals(json, _acceptedJson, StringComparison.Ordinal))
+            {
+                Remember(json, dirty);
+                return !saving || CanWrite(Path);
+            }
+
+            if (TryOpen(Path))
+            {
+                Remember(json, true);
+                return true;
+            }
+
+            _restoring = true;
+            try
+            {
+                EditorJsonUtility.FromJsonOverwrite(_acceptedJson, _asset);
+                if (!_acceptedDirty)
+                    EditorUtility.ClearDirty(_asset);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"Unity asset locks: could not restore {Path}\n{exception.Message}");
+            }
+            finally
+            {
+                _dirtyCount = EditorUtility.GetDirtyCount(_asset);
+                _restoring = false;
+            }
+            return false;
+        }
+
+        private void Remember(string json, bool dirty)
+        {
+            _acceptedJson = json;
+            _acceptedDirty = dirty;
+            _dirtyCount = EditorUtility.GetDirtyCount(_asset);
+        }
+    }
+
     private static readonly string ProjectRoot = Path.GetDirectoryName(Application.dataPath);
+    private const string Physics2DSettingsPath = "ProjectSettings/Physics2DSettings.asset";
+    private const string TagManagerPath = "ProjectSettings/TagManager.asset";
+    private static readonly ProjectSettingsEdit[] ProjectSettingsEdits =
+    {
+        new ProjectSettingsEdit(Physics2DSettingsPath),
+        new ProjectSettingsEdit(TagManagerPath)
+    };
     private static readonly bool Windows = Application.platform == RuntimePlatform.WindowsEditor;
     private static readonly bool Mac = Application.platform == RuntimePlatform.OSXEditor;
     private static HashSet<string> _tracked = new HashSet<string>(StringComparer.Ordinal);
@@ -49,6 +129,9 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
     private static void Update()
     {
+        foreach (ProjectSettingsEdit setting in ProjectSettingsEdits)
+            setting.Check(saving: false);
+
         if (_refresh != null)
         {
             if (!_refresh.IsCompleted)
@@ -85,6 +168,9 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
         foreach (string path in paths)
         {
+            if (IsProjectSettingsPath(path))
+                continue; // The settings UI stays interactive while edits and writes require a lock.
+
             string lockPath = GetLockPath(path);
             if (lockPath != null && _tracked.Contains(lockPath) && !CanWrite(lockPath))
                 notEditable.Add(path);
@@ -106,7 +192,15 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
     private static string[] OnWillSaveAssets(string[] paths)
     {
-        return Application.isBatchMode ? paths : paths.Where(TryOpen).ToArray();
+        return Application.isBatchMode ? paths : paths.Where(CanSave).ToArray();
+    }
+
+    private static bool CanSave(string path)
+    {
+        if (!IsProjectSettingsPath(path))
+            return TryOpen(path);
+
+        return Array.Find(ProjectSettingsEdits, setting => setting.Path == path).Check(saving: true);
     }
 
     private static AssetMoveResult OnWillMoveAsset(string from, string to)
@@ -201,6 +295,9 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
 
     private static string GetLockPath(string path)
     {
+        if (IsProjectSettingsPath(path))
+            return path;
+
         if (!path.StartsWith("Assets/", StringComparison.Ordinal))
             return null;
 
@@ -211,6 +308,11 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
             path.EndsWith(".png.meta", StringComparison.Ordinal))
             return path;
         return null;
+    }
+
+    private static bool IsProjectSettingsPath(string path)
+    {
+        return path == Physics2DSettingsPath || path == TagManagerPath;
     }
 
     private static string Run(string command, string path = null)
