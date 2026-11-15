@@ -11,7 +11,7 @@ public static class PlayerTurretWeapon
             turretHead == null || !firePoint.IsChildOf(turretHead) ||
             bulletPrefab.GetComponent<PlayerTurretProjectile>() == null) return null;
 
-        Vector2 dir = (targetEnemy.position - firePoint.position).normalized;
+        Vector2 dir = (PlayerTurretTargeting.AimPoint(targetEnemy) - firePoint.position).normalized;
         if (!PlayerAimUtility.IsValidDirection(dir)) return null;
         GameObject bulletObj = Object.Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 

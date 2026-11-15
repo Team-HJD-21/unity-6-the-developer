@@ -61,7 +61,7 @@ public sealed partial class PlayerTurretProjectile : MonoBehaviour
         {
             useTriggers = true,
             useLayerMask = true,
-            layerMask = Physics2D.GetLayerCollisionMask(gameObject.layer)
+            layerMask = Physics2D.GetLayerCollisionMask(gameObject.layer) | LayerMask.GetMask("EnemyHurtbox")
         };
         _castResults.Clear();
         _body.Cast(velocity.normalized, filter, _castResults, velocity.magnitude * FieldSimulationTime.FixedDeltaTime(this));
@@ -76,7 +76,7 @@ public sealed partial class PlayerTurretProjectile : MonoBehaviour
         if (nearest.collider != null) ProcessHit(nearest.collider);
     }
 
-    private static bool IsPassThrough(Collider2D other)
+    private bool IsPassThrough(Collider2D other)
     {
         if (other.GetComponentInParent<PlayerInputHandler>() != null ||
             other.GetComponentInParent<PlayerTurret>() != null ||
@@ -84,9 +84,10 @@ public sealed partial class PlayerTurretProjectile : MonoBehaviour
             other.GetComponentInParent<FieldTurretBase>() != null ||
             other.GetComponentInParent<PlayerFieldDevice>() != null ||
             other.CompareTag("Bullet") || other.CompareTag("Tower") || other.CompareTag("CU")) return true;
-        // Legacy 제거로 인해 로직 무효화: 통과 조건의 구형 Monster 제외 검사.
-        // && other.GetComponentInParent<Monster>() == null
-        return other.isTrigger && other.GetComponentInParent<EnemyHealth>() == null;
+        var health = other.GetComponentInParent<EnemyHealth>();
+        if (health != null) return other.gameObject.layer != LayerMask.NameToLayer("EnemyHurtbox") ||
+            !PlayerTurretTargeting.IsCurrentTarget(health, this);
+        return other.isTrigger;
     }
 
     private void ProcessHit(Collider2D other)
@@ -94,10 +95,7 @@ public sealed partial class PlayerTurretProjectile : MonoBehaviour
         if (!FieldSimulationTime.CanAdvance(this) || !_initialized || _hit || other == null) return;
         if (IsPassThrough(other)) return;
         var health = other.GetComponentInParent<EnemyHealth>();
-        // Legacy 제거로 인해 로직 무효화: 구형 Monster 피해 폴백.
-        // var monster = other.GetComponentInParent<Monster>();
         if (health != null) health.TryTakeDamage(Mathf.RoundToInt(_damage), AttackSourceType.Turret);
-        // else if (monster != null && !monster.isDead) monster.TakeDamage(_damage);
         else if (other.isTrigger) return; // 탐색·상호작용 영역은 통과합니다.
         Retire();
     }

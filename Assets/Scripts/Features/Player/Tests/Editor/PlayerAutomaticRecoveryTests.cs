@@ -96,7 +96,7 @@ public sealed class PlayerAutomaticRecoveryTests
     {
         var codec=new BinaryCheckpointPayloadCodec();var writer=(ICheckpointParticipant)_health;
         _health.ApplyDamage(100);Tick(5);Tick(6);var saved=writer.Capture(Context(),codec);
-        Assert.That(saved.Version,Is.EqualTo(3));Tick(8);Assert.That(_health.curHp,Is.EqualTo(316));
+        Assert.That(saved.Version,Is.EqualTo(4));Tick(8);Assert.That(_health.curHp,Is.EqualTo(316));
         using(var step=writer.PrepareRestore(Restore(Context(),saved),saved,codec))
         {
             int damage=0;_health.Damaged+=_=>damage++;step.Apply();
@@ -122,11 +122,11 @@ public sealed class PlayerAutomaticRecoveryTests
     {
         var codec=new BinaryCheckpointPayloadCodec();var writer=(ICheckpointParticipant)_health;
         _health.ApplyDamage(100);var current=writer.Capture(Context(),codec);
-        var legacy=codec.Write(current.Key,version,CheckpointSectionKind.World,w=>w.Write(current.CopyPayload(),0,current.PayloadLength-(version==1?29:4)));
+        var legacy=codec.Write(current.Key,version,CheckpointSectionKind.World,w=>w.Write(current.CopyPayload(),0,current.PayloadLength-8-(version==1?29:4)));
         using(var step=writer.PrepareRestore(Restore(Context(),legacy),legacy,codec))
         {step.Apply();Tick(4.99);Assert.That(_health.curHp,Is.EqualTo(300));Tick(5);Assert.That(_health.curHp,Is.EqualTo(308));}
-        var bytes=current.CopyPayload();Buffer.BlockCopy(BitConverter.GetBytes(double.NaN),0,bytes,bytes.Length-28,8);
-        var invalid=codec.Write(current.Key,3,CheckpointSectionKind.World,w=>w.Write(bytes));
+        var bytes=current.CopyPayload();Buffer.BlockCopy(BitConverter.GetBytes(double.NaN),0,bytes,bytes.Length-36,8);
+        var invalid=codec.Write(current.Key,4,CheckpointSectionKind.World,w=>w.Write(bytes));
         Assert.Throws<InvalidDataException>(()=>writer.PrepareRestore(Restore(Context(),invalid),invalid,codec));
         Assert.That(_health.curHp,Is.EqualTo(308));
     }

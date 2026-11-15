@@ -40,6 +40,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
 
     private void FixedUpdate()
     {
+        AdvanceHitProtection();
         PumpRescueInput();
         AdvanceRecovery();
         AdvanceAutomaticRecovery();
@@ -63,6 +64,7 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     {
         if (_isDead) return;
         _isDead = true;
+        ClearHitProtection();
         GetComponent<PlayerPortalSkill>()?.ClearArrivalShield();
         _recovering = false;
         ClearAutomaticRecovery();
@@ -80,7 +82,9 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
     /// <summary>서버 전투가 터렛과 동일한 피해 계약으로 호출합니다. Client 원본 변경은 거부합니다.</summary>
     public bool ApplyDamage(int damage)
     {
+        AdvanceHitProtection();
         if (!CanWriteHealth || _isDead || damage <= 0 || !FieldSimulationTime.CanReceiveDamage(this)) return false;
+        if (IsHitInvulnerable) return false;
         var portal = GetComponent<PlayerPortalSkill>();
         if (portal != null) damage = portal.AbsorbArrivalDamage(damage);
         // 보호막만 소모한 공격은 체력 피해/피격 연출/자동 회복 대기시간을 발생시키지 않습니다.
@@ -88,7 +92,11 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         int previousHealth = curHp;
         curHp = (int)Math.Max(0L, (long)curHp - damage);
         int applied = previousHealth - curHp;
-        if (applied > 0) ScheduleAutomaticRecovery();
+        if (applied > 0)
+        {
+            ScheduleAutomaticRecovery();
+            if (curHp > 0) StartHitProtection();
+        }
         if (applied > 0 && Damaged != null)
             foreach (Action<int> observer in Damaged.GetInvocationList())
                 try { observer(applied); } catch (Exception error) { Debug.LogException(error); }
@@ -119,6 +127,6 @@ public partial class PlayerInfo : MonoBehaviour, IDamageableTarget, IPlayerMatch
         _healthAuthority = false;
     }
 
-    public void UnbindMatch() { UnbindRescue(); _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); GetComponent<PlayerPortalSkill>()?.ResetArrivalShield(); }
+    public void UnbindMatch() { UnbindRescue(); _healthAuthority = false; _recovering = false; ClearAutomaticRecovery(); ClearHitProtection(); GetComponent<PlayerPortalSkill>()?.ResetArrivalShield(); }
     public void UnbindNetworkMatch() => UnbindMatch();
 }

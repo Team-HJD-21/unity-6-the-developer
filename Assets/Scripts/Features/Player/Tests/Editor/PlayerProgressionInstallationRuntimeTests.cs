@@ -119,7 +119,7 @@ public sealed class PlayerProgressionInstallationRuntimeTests
         }
         yield return null;
         Assert.That(_research.Tokens,Is.EqualTo(1));Assert.Throws<InvalidDataException>(()=>LegacySkillStep(1));
-        var writer=(ICheckpointParticipant)_player.GetComponent<PlayerSkillController>();Assert.That(writer.Capture(_context,_codec).Version,Is.EqualTo(4));
+        var writer=(ICheckpointParticipant)_player.GetComponent<PlayerSkillController>();Assert.That(writer.Capture(_context,_codec).Version,Is.EqualTo(5));
     }
     [UnityTest]
     public IEnumerator TimedInstallationsStartAtTwentySecondsAndUpgradeToTwentySix()

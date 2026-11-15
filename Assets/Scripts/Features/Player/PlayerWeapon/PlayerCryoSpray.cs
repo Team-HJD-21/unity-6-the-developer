@@ -7,7 +7,7 @@ using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>총구 앞의 짧은 분사 영역과 연속 냉기 표시를 연결합니다. 감속은 적용하지 않습니다.</summary>
+/// <summary>총구 앞의 짧은 분사 영역에 Player 출처의 피해·감속과 연속 냉기 표시를 연결합니다.</summary>
 [DefaultExecutionOrder(350)]
 public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBinding
 {
@@ -16,6 +16,7 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
     [SerializeField, Min(.1f)] private float _range = 4.5f;
     [SerializeField, Min(0f)] private float _muzzleHalfWidth = .12f;
     [SerializeField, Min(.1f)] private float _endHalfWidth = 1.4f;
+    [SerializeField, Min(.01f)] private float _slowDuration = 1.5f;
     [SerializeField] private LayerMask _obstacleLayers = 1 | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 21) | (1 << 25);
     private readonly List<Collider2D> _targets = new(32), _overlaps = new(8);
     private readonly List<RaycastHit2D> _walls = new(8);
@@ -29,6 +30,16 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
     private Vector3 _origin;
     private Vector2 _direction;
     public float Range => _range;
+    public float SlowDuration => _slowDuration;
+    public float SlowMultiplier
+    {
+        get
+        {
+            var armory = GetComponentInParent<PlayerArmory>();
+            return armory != null && armory.IsConfigured
+                ? armory.Settings.SlowMultiplier(armory.Level(WeaponType.CryoBlaster)) : .8f;
+        }
+    }
     public bool IsConfigured => _vfxPrefab != null && float.IsFinite(_range) && _range > 0 &&
         float.IsFinite(_muzzleHalfWidth) && _muzzleHalfWidth >= 0 && float.IsFinite(_endHalfWidth) && _endHalfWidth > 0;
     public bool IsEmitting { get; private set; }
@@ -69,7 +80,13 @@ public sealed class PlayerCryoSpray : MonoBehaviour, IPlayerPresentationRandomBi
             _damaged.Add(health);
         }
         // 앞의 적이 이번 틱에 죽어도 같은 틱의 뒤쪽 적에게 판정이 새지 않게 먼저 후보를 확정합니다.
-        foreach (var health in _damaged) if (health != null) health.TryTakeDamage(damage, AttackSourceType.Player);
+        float slow = SlowMultiplier;
+        foreach (var health in _damaged)
+        {
+            if (health == null || !health.TryTakeDamage(damage, AttackSourceType.Player)) continue;
+            if (health != null && health.CanBeAttackedBy(AttackSourceType.Player) && health.TryGetComponent<IAttackSlowEffectReceiver>(out var receiver))
+                receiver.TryApplySlow(slow, _slowDuration, AttackSourceType.Player);
+        }
         return true;
     }
 

@@ -35,6 +35,7 @@ public partial class PlayerTurret : MonoBehaviour
     [SerializeField] private string enemyTag = "Enemy";
 
     private Transform targetEnemy;
+    private readonly System.Collections.Generic.List<Collider2D> _targetHits = new(32);
     private float fireTimer = 0f;
     private PlayerTurretSkill _owner;
     private bool _recovered;
@@ -100,16 +101,16 @@ public partial class PlayerTurret : MonoBehaviour
     }
 
     /// <summary>
-    /// 사거리 내에서 가장 가까운 적을 탐색 (EnemyHealth 우선, Monster 폴백)
+    /// 같은 전장의 공격 가능한 EnemyHurtbox만 탐색합니다.
     /// </summary>
-    private void FindClosestTarget() => targetEnemy = PlayerTurretTargeting.FindClosest(transform.position, attackRange, enemyTag);
+    private void FindClosestTarget() => targetEnemy = PlayerTurretTargeting.FindClosest(transform.position, attackRange, enemyTag, this, _targetHits);
 
     /// <summary>
     /// 타겟 적을 향해 포탑 헤드 각도 회전
     /// </summary>
     private void AimAtTarget()
     {
-        Vector2 dir = (targetEnemy.position - turretHead.position).normalized;
+        Vector2 dir = (PlayerTurretTargeting.AimPoint(targetEnemy) - turretHead.position).normalized;
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         turretHead.rotation = Quaternion.Euler(0f, 0f, angle);
     }
