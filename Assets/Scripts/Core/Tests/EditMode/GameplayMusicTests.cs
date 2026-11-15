@@ -208,6 +208,56 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(music.Sources.All(s=>s.clip==null&&!s.isPlaying), Is.True);
             CleanupFixture(); yield return new ExitPlayMode();
         }
+        [UnityTest]
+        public IEnumerator SceneBusFadeUsesDspTimeAndPreservesUserVolumeAndPlayback()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            yield return new EnterPlayMode(); CreateFixture(4, 4.2f);
+            _manager.SetGameplayMusic(GameplayMusicContext.Day, "scene-fade");
+            yield return new WaitForSecondsRealtime(.16f);
+            var clip = _manager.GameplayMusic.CurrentClip;
+            var voice = _manager.GameplayMusic.Sources.Single(s => s.clip == clip);
+            int sample = voice.timeSamples;
+            Time.timeScale = 0;
+            var fade = _manager.FadeSceneMusicAsync(0, .2f, System.Threading.CancellationToken.None);
+            yield return new WaitForSecondsRealtime(.08f);
+            Assert.That(_manager.SceneMusicGain, Is.InRange(.01f, .99f));
+            _settings.Set(1, .4f, 1);
+            while (!fade.IsCompleted) yield return null;
+            Assert.That(fade.IsCompletedSuccessfully, Is.True);
+            Assert.That(_manager.SceneMusicGain, Is.Zero);
+            _config.Mixer.GetFloat(_config.MusicParameter, out float muted);
+            Assert.That(muted, Is.EqualTo(-80).Within(.01));
+            var restore = _manager.FadeSceneMusicAsync(1, .1f, System.Threading.CancellationToken.None);
+            while (!restore.IsCompleted) yield return null;
+            Assert.That(restore.IsCompletedSuccessfully, Is.True);
+            _config.Mixer.GetFloat(_config.MusicParameter, out float restored);
+            Assert.That(restored, Is.EqualTo(GameAudioSettings.Decibels(.4f)).Within(.01));
+            Assert.That(_manager.GameplayMusic.CurrentClip, Is.SameAs(clip));
+            Assert.That(voice.timeSamples, Is.GreaterThan(sample));
+            CleanupFixture(); yield return new ExitPlayMode();
+        }
+
+        [UnityTest]
+        public IEnumerator BossLoopAndSupersededFadeKeepLatestSceneRequest()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            yield return new EnterPlayMode(); CreateFixture(3, 3.2f);
+            _library.Boss = _clips[4];
+            _manager.SetGameplayMusic(GameplayMusicContext.Boss, "boss-match");
+            yield return new WaitForSecondsRealtime(.15f);
+            Assert.That(_manager.GameplayMusic.CurrentClip, Is.SameAs(_library.Boss));
+            Assert.That(_manager.GameplayMusic.Sources.Single(s => s.clip != null).loop, Is.True);
+            var old = _manager.FadeSceneMusicAsync(0, .5f, System.Threading.CancellationToken.None);
+            yield return new WaitForSecondsRealtime(.05f);
+            var latest = _manager.FadeSceneMusicAsync(1, .1f, System.Threading.CancellationToken.None);
+            while (!latest.IsCompleted || !old.IsCompleted) yield return null;
+            Assert.That(old.IsCanceled, Is.True);
+            Assert.That(latest.IsCompletedSuccessfully, Is.True);
+            Assert.That(_manager.SceneMusicGain, Is.EqualTo(1));
+            CleanupFixture(); yield return new ExitPlayMode();
+        }
+
         private void CreateFixture(float first, float second, bool missingNight=false, bool manualMusic=false)
         {
             _timeScaleBefore=Time.timeScale;

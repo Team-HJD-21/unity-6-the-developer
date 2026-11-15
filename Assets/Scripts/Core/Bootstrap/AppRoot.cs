@@ -221,10 +221,44 @@ namespace TeamHJD.Game.Bootstrap
 
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
         internal Task FadeSpaceshipTravelAsync(Func<Task> move)
+            => FadeSceneTravelAsync(move, destroyCancellationToken);
+
+        private bool _sceneTravelMusicActive;
+
+        /// <summary>Scene 이동 소유자가 BGM과 화면을 암전한 동안 이동합니다. 실패·취소 뒤에도 자기 음량을 복구합니다.</summary>
+        public async Task FadeSceneTravelAsync(Func<Task> move, CancellationToken cancellation = default)
         {
             ThrowIfUnavailable();
             if (_screenPresenter == null) throw new InvalidOperationException("Scene fade requires the App screen presenter.");
-            return _screenPresenter.FadeSceneAsync(move, destroyCancellationToken);
+            if (_sceneTravelMusicActive) throw new InvalidOperationException("Scene travel is already in progress.");
+            using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation, destroyCancellationToken);
+            _sceneTravelMusicActive = true;
+            Task fadeIn = null;
+            try
+            {
+                // 화면0.3/0.3/0.3초에 음악을 겹칩니다. 음악 때문에 기존 이동 시간이 더 길어지지 않습니다.
+                Task fadeOut = Audio != null ? Audio.FadeSceneMusicAsync(0, .3f, lifetime.Token) : Task.CompletedTask;
+                await _screenPresenter.FadeSceneAsync(async () =>
+                {
+                    await fadeOut;
+                    try { await move(); }
+                    finally
+                    {
+                        if (Audio != null && !destroyCancellationToken.IsCancellationRequested)
+                            fadeIn = Audio.FadeSceneMusicAsync(1, .3f, destroyCancellationToken);
+                    }
+                }, lifetime.Token);
+            }
+            finally
+            {
+                try
+                {
+                    if (fadeIn != null) await fadeIn;
+                    else if (Audio != null && !destroyCancellationToken.IsCancellationRequested)
+                        await Audio.FadeSceneMusicAsync(1, .3f, destroyCancellationToken);
+                }
+                finally { _sceneTravelMusicActive = false; }
+            }
         }
 
         public MatchSession StartMatch(MatchConfig config, MatchState initialState, IModeRules modeRules)
@@ -475,10 +509,20 @@ namespace TeamHJD.Game.Bootstrap
             string restriction = GetSceneTravelRestriction();
             if (!string.IsNullOrEmpty(restriction))
                 throw new InvalidOperationException(restriction);
-            if (NetworkMatches?.Descriptor != null && !NetworkMatches.TryEnd())
-                throw new InvalidOperationException("Final result transmission is pending; wait before leaving.");
-            EndCurrentMatch();
-            await Services.SceneTransitions.ReplaceAsync(scenePath, token);
+            bool fadeMusic = !_sceneTravelMusicActive;
+            try
+            {
+                if (fadeMusic && Audio != null) await Audio.FadeSceneMusicAsync(0, .3f, token);
+                if (NetworkMatches?.Descriptor != null && !NetworkMatches.TryEnd())
+                    throw new InvalidOperationException("Final result transmission is pending; wait before leaving.");
+                EndCurrentMatch();
+                await Services.SceneTransitions.ReplaceAsync(scenePath, token);
+            }
+            finally
+            {
+                if (fadeMusic && Audio != null && !destroyCancellationToken.IsCancellationRequested)
+                    await Audio.FadeSceneMusicAsync(1, .3f, destroyCancellationToken);
+            }
         }
 
         // 기존 공용 메뉴/결과 버튼도 같은 App 흐름으로 전달해 Scene과 표시 위치가 어긋나지 않게 합니다.

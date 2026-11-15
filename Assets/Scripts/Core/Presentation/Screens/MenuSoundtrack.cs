@@ -24,7 +24,9 @@ namespace TeamHJD.Game.Presentation
         }
         private void Render()
         {
-            if (_flow.Phase != GameFlowPhase.MainMenu) { Stop(); return; }
+            // 다음 Scene을 불러오는 동안에는 App의 Music bus fade가 끝날 때까지 곡을 유지합니다.
+            if (_flow.Phase != GameFlowPhase.MainMenu)
+            { if (!_flow.IsTransitioning) Stop(); return; }
             if (_active) return;
             GameAudioManager.Current?.StopGameplayMusic();
             _active = true; _introPending = Intro != null && Intro.clip != null;
