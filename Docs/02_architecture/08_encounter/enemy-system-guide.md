@@ -106,7 +106,7 @@ classDiagram
 
 `EnemySquad`는 합류·제거와 `EnemyController` 활성 상태 변경 시 대표를 선택한다. `EnemyNetworkController`는 `IsSquadRepresentative`인 구성원만 `RefreshTarget()`을 호출하며, 반복 갱신 중 대표를 찾기 위한 구성원 순회를 하지 않는다. 대표가 제거되거나 비활성화되면 남은 활성 구성원이 갱신을 이어받는다. 대표 교체는 분대의 목표·배정 인원·다음 재검색 시각을 초기화하지 않으며, 타깃 상실 이벤트의 즉시 재검색은 대표 여부와 관계없이 실행한다. 1인 분대는 호출 수가 줄지 않는다.
 
-`EnemyDefinition.SquadMode`는 공동 분대/개별 분대를 지정하고, 정규 편성의 타깃 규칙은 `EnemySquadPreset.TargetRule` → `SpawnInstruction.TargetRule` → `EnemySquad`로 전달한다. 공동 구성원은 명령 하나당 같은 규칙의 분대를 공유하고 Individual 구성원은 같은 규칙으로 개별 분대를 만든다. 동일 몬스터도 편성에 따라 다른 규칙을 사용할 수 있다. 현재 AssassinSquad는 `PlayerOnly`, SummonEscort는 `TurretOnly`, 나머지 6개 편성은 `PlayerOrTurret`다. BlackWolf의 개별 분대 구성 방식은 Definition에서 유지한다.
+`EnemyDefinition.SquadMode`는 공동 분대/개별 분대를 지정하고, 정규 편성의 타깃 규칙은 `EnemySquadPreset.TargetRule` → `SpawnInstruction.TargetRule` → `EnemySquad`로 전달한다. 공동 구성원은 명령 하나당 같은 규칙의 분대를 공유하고 Individual 구성원은 같은 규칙으로 개별 분대를 만든다. 동일 몬스터도 편성에 따라 다른 규칙을 사용할 수 있다. 현재 AssassinSquad는 `PlayerOnly`, SummonEscort는 `TurretOnly`, 나머지 4개 편성은 `PlayerOrTurret`다. BlackWolf의 개별 분대 구성 방식은 Definition에서 유지한다.
 
 | 규칙 | 자동 탐색·재탐색 | 플레이어 감지·직접 배정 |
 | --- | --- | --- |

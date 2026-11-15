@@ -64,12 +64,6 @@ public static class SquadSelectionPolicy
             case EnemySquadRole.Sustain:
                 preferred = crowded;
                 break;
-            case EnemySquadRole.Elite:
-                preferred = sparse && area.AttackType == TargetAttackType.Area;
-                break;
-            case EnemySquadRole.Balanced:
-                preferred = false;
-                break;
             case EnemySquadRole.Ambush:
                 preferred = area.HasNearbyPlayer;
                 break;

@@ -14,10 +14,10 @@
 | 공통 구조 | AIBrain 호출 계층 제거, 컨트롤러·타깃·이동·능력·애니메이션·체력 책임 분리 |
 | 제작 계층 | EnemyRoot → MovingEnemy → MeleeEnemy/RangedEnemy, 런타임 Variant와 Animator Override/클립 구성 |
 | 전투 다양화 | 근접·원거리 외에 Bomber, 아군 회복, 변태 소환, Player 전용 암살자 구현 |
-| 편성·생성 | Definition 비용·분대 규칙, 8개 프리셋, 타깃 주변 상황에 따른 선택과 지역 예산 배분 |
+| 편성·생성 | Definition 비용·분대 규칙, 6개 프리셋, 타깃 주변 상황에 따른 선택과 지역 예산 배분 |
 | 연결 | Initial_Stage의 Region Binding, 기존 Core 요청/환경/origin/시간 계약과 충돌 병합 |
 
-지원·소환·암살자와 상황별 편성은 원래 이슈 설명의 근접/원거리보다 확장된 구현 범위다. `EliteEscort`나 BattleTroll의 이름을 별도 보스 시스템·전용 엘리트 패턴 구현 완료로 해석하지 않는다. Stage 2 이후, 전체 난이도 확정, 운영용 소비자 분리는 별도 작업이다.
+지원·소환·암살자와 상황별 편성은 원래 이슈 설명의 근접/원거리보다 확장된 구현 범위다. BattleTroll의 이름을 별도 보스 시스템·전용 엘리트 패턴 구현 완료로 해석하지 않는다. Stage 2 이후, 전체 난이도 확정, 운영용 소비자 분리는 별도 작업이다.
 
 ## 현재 런타임 콘텐츠
 
@@ -77,16 +77,14 @@ BlackWolf의 Definition은 `Individual + PlayerOnly`다. 여러 탐지자가 등
 | --- | --- | ---: | ---: | ---: |
 | AssassinSquad | BlackWolf ×2 | 2 | 6 | 1 |
 | BacklineGuard | GreenGolem ×1, GoblinMage ×1, Slime ×3 | 5 | 10 | 2 |
-| BalancedFormation | GreenGolem ×1, GoblinSpear ×1, GoblinMage ×1, PartyMushroom ×1, Slime ×2 | 6 | 14 | 6 |
 | Normal | GoblinSpear ×1, Slime ×2 | 3 | 4 | 4 |
-| EliteEscort | GreenGolem ×1, BattleTroll ×1, GoblinWarrior ×1, CannonSlime ×1, GoblinDual ×2 | 6 | 17 | 1 |
 | RushAssault | GoblinDual ×4, Slime ×2 | 6 | 10 | 2 |
 | SummonEscort | GreenGolem ×1, GoblinWarrior ×1, SpawnerMushroom ×1, Slime ×3 | 6 | 13 | 2 |
 | SustainLine | Troll ×1, PartyMushroom ×1, GoblinMage ×1, Slime ×2 | 5 | 11 | 2 |
 
 표는 2026-11-08 에셋 기준이다. 수치 변경 시 원본을 우선하고 표도 갱신한다. BomberSlime의 현재 Definition 비용 필드는 1이지만 일반 편성에는 넣지 않으며, 소환 시 Encounter 예산을 차감하지 않는다. 이를 비용 0으로 설정했다고 설명하지 않는다.
 
-Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSlime, InfectiousMushroom, Mushroom, MushroomTreant, PlantLeafer, Treant는 등록돼 있으나 위 8개 편성에 포함되지 않는다. Bomber는 소환형 전용이다. 해당 몬스터도 시험하려면 고유 동작 시험 또는 편성 데이터 구성이 필요하다.
+Definition·카탈로그 등록과 편성 포함은 별개다. 현재 AntennaSlime, InfectiousMushroom, Mushroom, MushroomTreant, PlantLeafer, Treant는 등록돼 있으나 위 6개 편성에 포함되지 않는다. Bomber는 소환형 전용이다. 해당 몬스터도 시험하려면 고유 동작 시험 또는 편성 데이터 구성이 필요하다.
 
 ## 새 몬스터 추가 순서
 

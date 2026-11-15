@@ -125,13 +125,11 @@ radius 1이면 타깃 셀과 상하좌우/대각선 최대 9개 셀을 조사하
 | Backline / BacklineGuard | 병력 적음 + Area |
 | Summon / SummonEscort | 병력 적음 + SingleTarget |
 | Sustain / SustainLine | 병력 많음 |
-| Elite / EliteEscort | 병력 적음 + Area |
-| Balanced / BalancedFormation | 추가 배율 없이 기본 가중치 |
 | Ambush / AssassinSquad | 주변 Player 있음 |
 
 먼저 비용·수량·셀 수용량을 통과한 완전 편성만 남기고 Core `enemy/squad-selection` 난수로 추첨한다. `Composition.Weight`는 수량, `SelectionWeight`는 확률 비중이다. 카탈로그 순서와 독립적인 Order 정렬 후 추첨하며 0 가중치는 제외한다.
 
-[현재 비용 표](stage1-enemy-content-guide.md#프리셋과-비용)에서 Normal은 4, Assassin은 6, 나머지는 10~17이다. 작은 전체 예산을 여러 타깃 셀에 나누면 저비용 편성만 지역 후보에 남을 수 있다. 특정 적만 반복 등장할 때는 가중치를 바꾸기 전에 실제 지역 예산·후보 목록을 확인한다.
+[현재 비용 표](stage1-enemy-content-guide.md#프리셋과-비용)에서 Normal은 4, Assassin은 6, 나머지는 10~13이다. 작은 전체 예산을 여러 타깃 셀에 나누면 저비용 편성만 지역 후보에 남을 수 있다. 특정 적만 반복 등장할 때는 가중치를 바꾸기 전에 실제 지역 예산·후보 목록을 확인한다.
 
 ## 배치와 제한의 의미
 
