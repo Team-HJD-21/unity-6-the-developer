@@ -1,5 +1,6 @@
 # 개인 성장 저장
 
+2026-11-15 Editor 시험 정책: Play Mode의 성장은 현재 Play 안에서만 유지한다. Editor는 `persistentDataPath/EditorPlayMode/<프로젝트 경로 Hash>/Checkpoints`에 저장하며, 종료 시 성장 쓰기 완료 → App/Store 정리 → 해당 임시 저장 파일 삭제 순서로 처리한다. 중단된 이전 Play의 임시 파일도 다음 시작 전에 비운다. 기존 `persistentDataPath/Checkpoints`는 Editor에서 읽지 않으며 빌드의 영구 저장으로 보존한다. 저장·복원 자체의 테스트는 한 Play 안에서 진행하고, Play 종료 후 이어하기는 현재 Editor 정책에서 지원하지 않는다.
 
 2026-11-15 전력 시험 설정: `Stage_1`과 `Initial_Stage`의 FieldTurretController는 `maximumPower = 500`, `fixedMaximumPower = 500`으로 둔다. 최대 전력은 새 시작·성장 로드·월드 복원 모두 500이다. 과거 성장 저장의 100/1000 용량은 이 설정을 덮어쓰지 않으며, 터렛 레벨·강화는 보존한다. 가동 예약은 기존 복원 우선순위로 다시 계산하고 한도를 넘는 터렛은 OFF로 복원해 이유를 표시한다. 가용 전력은 사용량에 따라 줄어들며 HUD의 100%는 최대 용량 숫자와 구분한다.
 

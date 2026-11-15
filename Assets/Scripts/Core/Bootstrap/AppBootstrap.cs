@@ -70,8 +70,21 @@ namespace TeamHJD.Game.Bootstrap
                 content,
                 platform,
                 new UnitySceneFlow(),
-                checkpointStore: new BinaryCheckpointStore(Path.Combine(UnityEngine.Application.persistentDataPath, "Checkpoints")),
+                checkpointStore: CreateCheckpointStore(),
                 checkpointPayloads: new BinaryCheckpointPayloadCodec());
+        }
+
+        // Editor는 프로젝트별 임시 저장을 사용합니다. 빌드의 기존 저장은 읽거나 지우지 않습니다.
+        private static BinaryCheckpointStore CreateCheckpointStore()
+        {
+            string directory = Path.Combine(UnityEngine.Application.persistentDataPath, "Checkpoints");
+#if UNITY_EDITOR
+            string project = Hash128.Compute(Path.GetFullPath(UnityEngine.Application.dataPath)).ToString();
+            directory = Path.Combine(UnityEngine.Application.persistentDataPath, "EditorPlayMode", project, "Checkpoints");
+            return new BinaryCheckpointStore(directory, deleteOnDispose: true);
+#else
+            return new BinaryCheckpointStore(directory);
+#endif
         }
     }
 }

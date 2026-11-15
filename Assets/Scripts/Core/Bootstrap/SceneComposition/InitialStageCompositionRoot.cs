@@ -109,9 +109,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (battlefieldGridSettings == null) throw new InvalidOperationException("Assign shared BattlefieldGridSettings before entering Play Mode.");
 
             PlayerStart[] starts = FindPlayerStarts();
-            if (starts.Length == 0) throw new InvalidOperationException("Initial_Stage requires at least one active PlayerStart.");
+            if (starts.Length == 0) throw new InvalidOperationException($"{gameObject.scene.name} requires at least one active PlayerStart.");
             MatchCameraFollow cameraFollow = FindSceneCameraFollow();
-            if (cameraFollow == null) throw new InvalidOperationException("Initial_Stage requires a MatchCameraFollow on its Main Camera.");
+            if (cameraFollow == null) throw new InvalidOperationException($"{gameObject.scene.name} requires a MatchCameraFollow on its Main Camera.");
             RegionSceneBinding regionBinding = ValidateRegionAuthoring();
 
             MatchId matchId = network?.Descriptor.Config.MatchId ?? new MatchId(Guid.NewGuid().ToString("N"));
@@ -139,7 +139,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 ? turretInputSource.CaptureTurretLayout()
                 : BattlefieldSpatialInput.Empty;
             if (turretInputSource == null)
-                Debug.LogError("Initial_Stage has no IBattlefieldTurretInputSource; Territory/Frontline will be empty.", this);
+                Debug.LogError($"{gameObject.scene.name} has no IBattlefieldTurretInputSource; Territory/Frontline will be empty.", this);
             _enemyPositionSources = FindEnemyPositionSources();
             var dynamicBattlefieldInput = new BattlefieldDynamicSpatialInput(
                 new[]
@@ -244,7 +244,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                             encounterProduction, () => !_restoringCheckpoint);
                 }
                 else
-                    Debug.LogWarning("Initial_Stage has no IEncounterMatchConsumer; automatic Encounter is unavailable.", this);
+                    Debug.LogWarning($"{gameObject.scene.name} has no IEncounterMatchConsumer; automatic Encounter is unavailable.", this);
                 _lastEntityCells.Clear();
                 _nextBattlefieldSampleTime = 0f;
                 cameraFollow.Bind(_playerActors.Actors[localPlayerId].transform);
@@ -267,7 +267,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 FinishRecoveryArrival();
                 BattlefieldSpatialSnapshot battlefield = session.Battlefield;
                 Debug.Log(
-                    $"Initial_Stage Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
+                    $"{gameObject.scene.name} Match started ({matchId}); spawned {_playerActors.Actors.Count} Player actor(s). " +
                     $"Battlefield: {battlefield.Vertices.Count} turret point(s), {battlefield.Triangles.Count} triangle(s), " +
                     $"{battlefield.FrontlineEdges.Count} frontline edge(s), {battlefield.Grid.OccupiedCells.Count} occupied grid cell(s).",
                     this);
@@ -292,7 +292,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             RegionSceneBinding[] bindings = FindObjectsByType<RegionSceneBinding>(FindObjectsSortMode.None)
                 .Where(binding => binding.gameObject.scene == gameObject.scene && binding.isActiveAndEnabled).ToArray();
-            if (bindings.Length != 1) throw new InvalidOperationException("Initial_Stage requires exactly one active RegionSceneBinding.");
+            if (bindings.Length != 1) throw new InvalidOperationException($"{gameObject.scene.name} requires exactly one active RegionSceneBinding.");
             RegionSceneBinding region = bindings[0];
             TurretMatchBinding turrets = GetComponent<TurretMatchBinding>();
             if (turrets == null || !turrets.isActiveAndEnabled || turrets.Controller == null ||
