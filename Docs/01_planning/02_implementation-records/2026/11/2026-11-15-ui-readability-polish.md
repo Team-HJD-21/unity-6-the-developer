@@ -54,3 +54,15 @@ HUD 회귀 검사와 최종 포함 파일은 ignored `Docs/Local/Validation/UiRe
 인계 후 동일 제품 소스를 별도 QA 프로젝트의 원본 폰트 atlas로 검사했다. 가독성·공용 UI와 HUD 나머지 항목은21/22 통과했지만, batch640×480의 자동 hover 진입 검사1개는 timeout으로 남았다. 같은 hover 검사를 실제 일반 Editor에서 비동기 Test Runner로 다시 실행해1/1 통과했다(10.55초). 이 차이를 제품 입력 조건을 완화하거나 timeout을 늘려 숨기지 않았다. headless 실패의 정확한 내부 원인은 확정하지 않았으며 batch 전체22/22 통과로 보고하지 않는다. 별도 hover 실패 시 화면·Canvas·포인터·가시성·선택 상태를 표시하도록 검사 메시지만 보강했다.
 
 실제 Editor 인수22/22와 네이티브 마우스 검수는 위 기록을 따른다. 통합 확인 후 Startup 편집 상태(Play=false, dirty=false)로 복귀했고, 폰트3개 diff와 기존 staged cache8개의 patch가 인계 전과 같음을 재확인했다. 원본 UI 자산34개만 게시하며 Scene·폰트 atlas·캐시를 포함하지 않는다.
+
+## 최신 main 통합 후 상세 설명 보완
+
+후속 PR: [#741](https://github.com/Team-HJD-21/unity-6-the-developer/pull/741)
+
+#739의 Player 연구/성장·Portal/DualWield와 #735의 Enemy 변경을 보존해 통합했다. 기존 가독성 검사에서 null owner로 상세 설명을 만들던 부분은 실제 Play의 초기화된 Player prefab을 사용하도록 수정했다. 현재 enum의 모든 스킬 요약과 상세 설명을 확인한다. 제품 스킬/연구 규칙은 바꾸지 않는다.
+
+터렛의 새7줄 설명은 기존 본문160px에서171.01px가 필요해 잘렸다. 실제 상세 hover 카드의 높이를230→260, 본문160→190, 제목y83→98로 함께 조정했다. 폭460/420, 본문19pt·제목24pt, 제목/본문6px·바닥15px 여백을 보존하고 화면 clamping은 실제 카드 크기를 계속 사용한다. Editor 제작 도구에도 같은 치수를 반영했다.
+
+보완 후 최신 Player를 사용하는 UiReadabilityTests6/6이 독립 QA worktree에서 통과했다. batch640×480의 기존 자동 hover 제한과 일반 Editor 인수 결과는 앞 절과 구분한다. 초기 상태에서의 실제4장 캡처는 UI 폴리싱 참고이며 새 Portal 연출·전체 플레이 인수를 뜻하지 않는다. Scene·원본 폰트·게임 스킬/연구 원본을 변경하지 않았다.
+
+일반 root Editor의 최신 main hover 재검사는 Cinemachine 의존성 갱신 중 CS0234가 관측돼 완료로 세지 않았다. 별도 QA 프로젝트는 동일 main의 의존성을 복원해 컴파일과 가독성6개 검사를 통과했다. 패키지/게임 코드 수정은 이 후속 PR에 포함하지 않는다.
