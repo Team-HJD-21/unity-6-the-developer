@@ -26,27 +26,28 @@ flowchart LR
 - Match 바인딩 중에는 다른 연결로 교체할 수 없다. 해제 후 새 App 연결을 선택할 때도 App 소유권 API를 사용해야 하며 시험 도구의 상태 교체는 거부한다.
 - 내부 추가 출현의 1인 Host 조건은 실제 SDK 접속 수로 계속 검사한다. 준비 완료 인원 수로 바꾸지 않는다.
 
-새 Scene을 인수한 뒤에는 다음처럼 분리 배치할 수 있다. **현재 Scene/Prefab을 이렇게 옮겨 저장한 상태는 아니다.**
+Stage_1은 #731의 지형·터렛 제작본을 인수한 뒤 다음처럼 분리한다. NetworkManager와 Transport의 기존 참조는 보존한다.
 
 ```text
-App Network Root       NetworkManager + Transport
+Stage Network          NetworkManager + Transport
 Encounter Runtime      EncounterSceneBinding
-Stage Composition      InitialStageCompositionRoot + InitialStageNetworkBinding
-                       ├─ _manager → App Network Root
+InitialStageCompositionRoot + InitialStageNetworkBinding
+                       ├─ _manager → Stage Network
                        └─ _encounterConsumerBehaviour → Encounter Runtime
+EnemySpawnRoot         EnemySpawnExecutor + 실제 SpawnPoint
 ```
 
-Core는 Scene의 명시 소비자를 우선하고, 미지정된 이전 Scene/NGO 재로드에서만 기존 App 네트워크 루트의 소비자 하나를 사용한다. 잘못되거나 비활성인 명시 참조를 다른 객체로 조용히 대체하지 않는다. Scene 오브젝트 삭제·이동과 참조 재연결은 팀원 Scene 인수 후 수행한다.
+Core는 Scene의 명시 소비자를 우선하고, 미지정된 이전 Scene/NGO 재로드에서만 기존 App 네트워크 루트의 소비자 하나를 사용한다. 잘못되거나 비활성인 명시 참조를 다른 객체로 조용히 대체하지 않는다. Encounter consumer의 기존 Script GUID와 컴포넌트 참조를 유지하면서 네트워크 객체에서 분리했다.
 
-## 독립 시험 버튼이 필요할 때
+## 수동 시험과 실제 스폰 지점
 
-시험 Scene에서 현재 `EncounterSceneBinding`이 붙은 객체에 **Enemy Network Test Controls**를 명시적으로 추가한다. Add Component 경로는 `TeamHJD → Testing → Enemy Network Test Controls`다. 게임 Scene/Prefab에는 자동 설치하지 않는다.
+옛 `EnemyNetworkTestLauncher`와 이를 감싸던 `EnemyNetworkTestControls`는 제거한다. App의 연결은 기존 Core 네트워크 API로 시작하고, 수동 스폰은 **Game Debugger → Encounter**의 공통 요청을 사용한다. Enemy 전용 시험은 기존 `Tools → TeamHJD → The Developer → Enemy Test` 창을 사용한다. 게임 Scene에 IMGUI Host/Client 버튼이나 자동 첫 고정 출현을 다시 추가하지 않는다.
 
-- `EnemyNetworkTestControls`만 기존 `EnemyNetworkTestLauncher`를 생성하고 GUI를 표시한다.
-- Start Host/Start Client는 수동 시험 연결이다. Plan & Spawn은 이미 바인딩된 Match의 공통 자동 계획 API로 1회 요청한다. Match나 전장 자료를 가짜로 만들지 않는다.
-- Core가 App 연결 소유권을 지정했다면 시험 GUI·종료 동작을 실행하지 않는다.
-- 독립 시험의 자동 첫 고정 분대 출현은 제거했다. 자동 생산을 검증하려면 실제 MatchCoordinator를 사용한다.
-- 기존 `EnemyNetworkTestLauncher.cs`와 `.meta`는 수정·복원하지 않았다. 최신 사용자 결정에 따라 실제 런처 파일/객체 삭제는 새 Scene 인수 후 진행할 예정이다. 현재 코드는 이전 시험 도구를 유지하는 과도기다.
+- Stage_1의 제작 지점은 `EnemySpawnRoot/Spawn_LaneA_01`처럼 표시한다. 고유 `spawnPointId`는 기존 `LaneA_01`을 유지하므로 이름 변경으로 저장·진단의 식별자가 달라지지 않는다.
+- 종전 `Encounter Debug Spawner`의 Executor와 36개 지점을 제거한다. 그 지점들은 이름만 Debug였고, 기존에는 같은 Scene 수집 규칙 때문에 정식 계획에도 들어갈 수 있었다.
+- 같은 Scene의 모든 SpawnPoint를 자동 발견하는 규칙은 유지한다. 앞으로 지점을 복제해도 등록되며, 8개 고정 목록이나 이름 필터를 사용하지 않는다.
+- 등록과 사용 가능 여부는 다르다. 비활성·수동 금지·점유 Region·점유 셀 반경 제한은 최신 정책으로 거른다. 기존 `LaneA_02`의 수동 비활성은 보존한다.
+- 정적 Region 그룹은 지점의 XY를 실제 Region Grid에 대입해 정한다. `AreaId` 문자열이나 Hierarchy 이름을 실제 그룹 원본으로 사용하지 않는다.
 
 수동 기본 상한은 `EncounterSceneBinding.manualEnemyLimit`이다. 예전 `initialEnemyLimit`은 `FormerlySerializedAs`로 읽어 기존 수동 상한을 보존한다. 정규 생산 상한은 별도 Core `encounterProduction` 설정이다.
 
@@ -56,4 +57,4 @@ Core는 Scene의 명시 소비자를 우선하고, 미지정된 이전 Scene/NGO
 
 ## Scene 제작 경계
 
-이 분리는 Scene·Prefab·Script GUID를 변경하지 않는다. Stage_1 제작 변경은 #727에서 #726 이전으로 되돌렸으며 팀원 제작이 끝나기 전 자동 저장·재직렬화하지 않는다.
+초기 코드 분리 #728은 Scene을 변경하지 않았다. 이번 재접합은 팀원 #731을 먼저 병합한 뒤 Stage_1의 연결 객체만 수정한다. 지형·타일·NavMesh·터렛 배치와 원본 프리팹을 재작성하지 않는다. 필드 점유 경계는 기존 `FieldTerritoryRenderer.Attach`가 지도와 같은 Grid 경계를 사용해 생성한다. 새 씬에 없는 옛 카메라 마커는 복원하지 않고 기존 Grid bounds fallback을 사용하며 `SceneryRenderers`만 실제 `Environment_Obj`로 연결한다.

@@ -15,3 +15,10 @@
 4. 낮 시간에 태양 위치와 그림자 방향이 함께 바뀌는지 확인한다. Inspector에서 양축 오프셋을 바꿔 그림자 위치를 확인한다.
 
 Core·Encounter의 참조 구조와 재접합 범위는 [Encounter 런타임 가이드](../08_encounter/encounter-runtime-and-testing.md)와 [Stage1 제작 연결 원복 기록](../../03_team/00_reviews/stage1-scene-rollback-20261115.md)을 함께 본다. 씬·NavMesh 파일의 변경, 코드 컴파일, 플레이 확인은 각각 기록한다.
+
+## Core 재접합
+
+- `Stage Network`는 기존 NetworkManager·Transport, `Encounter Runtime`은 정식 EncounterSceneBinding이다. InitialStageCompositionRoot의 명시 참조로 연결한다. 이름만 바꾼 테스트 런처를 게임 관리자로 사용하지 않는다.
+- `EnemySpawnRoot` 아래 `Spawn_Lane*`가 실제 제작 지점이다. 표시 이름과 기존 ID를 구분하며, 테스트 생성기 36개를 별도로 남기지 않는다. 신규 지점은 같은 Scene에서 자동 발견된다.
+- Main Camera의 `DayNightShaderApply`에 Scene WeatherManager와 DayNight 재질을 연결한다. 타이머가 흐르는 것만으로 화면 효과 연결이 검증된 것은 아니다.
+- 필드 경계는 기존 HUD의 런타임 연결을 사용한다. 전술 지도의 Scenery는 이 씬의 Environment_Obj를 지정한다. 삭제된 예전 카메라 마커의 fileID를 다시 사용하지 않는다.
