@@ -13,7 +13,7 @@
 |5|`MatchSession`/`MatchCoordinator`|Session은 판의 수명/자료를, Coordinator는 운영을 맡는다. 두 개의 GameManager를 두는 구조가 아니다.|
 |6|`InitialStageCompositionRoot.Update`|시각/예약→성장 저장→CU 패배→구조 실패→Stage 사건 저장→Stage 진행→위치·점유 표본을 진행한다. 복원 중에는 일반 표본을 멈춘다.|
 |7|`AppRoot.RetryPendingMissionRecoveryAsync` / `AppScreenPresenter`|기술 실패 메뉴에서 같은 복귀를 재시도한다. App이 Scene 수명을 골라 연결하며 실제 허브 귀환 성공 후 오류 표시를 닫는다.|
-|8|`Root.EnterFinalBattleSceneAsync` / `FinalBossTransition` / Scene driver|명시 호출용 연결 API다. Root Update 자동 진입·최종 사망 자동 승리·결과 저장 연결은 제외했다. 실제 보스전/결과 설계는 미완이다.|
+|8|`Root.EnterFinalBattleSceneAsync` / `FinalBossTransition` / Scene driver|Stage1은 현재100% → 기존 컷씬·BossRoom·시작 저장 → 전투 → 실제 사망·성공5초·허브 귀환이다. 일반 결과 화면과 별개이며 전체 월드 이어하기는 포함하지 않는다.|
 
 `AppRoot`는 App 서비스와 Scene 교체를 소유한다. `InitialStageCompositionRoot`는 해당 Scene의 실제 객체를 연결하고 해제한다. 실제 공격/이동/HP를 이 두 클래스 안에 복제하지 않는다.
 
@@ -63,8 +63,8 @@ flowchart TD
 ## 아직 실제 연결을 완료하지 못한 부분
 
 - 실제 `world/weather` writer가 없어 전체 월드 저장/복원은 실행을 거부한다. 일부 writer만 성공한 것을 전체 성공으로 바꾸지 않는다.
-- Field 실제 생성 서비스는 기존 Encounter 연결부/Executor에 구현했다.33/66% 확정 EnemyDefinition·점유 밖 보장 진입 위치 지정과 최종 Boss Scene/컷씬/실제 보스 등록이 필요하다. 공통 생성기의 실제 HP 사망은 Stage로 전달한다. 임시 Slime 제작값으로 검수한 생성·복원 메커니즘을 실제 보스전 완성으로 세지 않는다.
-- 최종 Scene의 명시 호출용 준비·실패 참가자 원복 API를 유지한다. 자동 진입/승리와 별도 결과 저장은 연결하지 않는다. `FinalBattleSceneDriver`와 `FinalBattleBossSource`가 실제 도착/공통 Enemy 생성/선택적 연출 정리를 구현한다. 실제 제작값 연결·Boss Scene 성공/원격 Player 인수는 남았으며 코드 존재만으로 완료로 세지 않는다. 다른 Scene으로 이동한 Player는 옛 Field 밀도에 넣지 않는다.
+- Field 실제 생성 서비스는 기존 Encounter 연결부/Executor에 구현했다.33/66% 확정 EnemyDefinition·점유 밖 보장 진입 위치 지정은 콘텐츠 후속이다. 최종 BossRoom·실제 Stage1Boss·컷씬은11/15 연결했다. 공통 생성기의 실제 HP 사망은 Stage로 전달한다. 임시 Slime 제작값으로 검수한 생성·복원 메커니즘을 실제 보스전 완성으로 세지 않는다.
+- 최종 Scene은11/15에 Stage1 자동 진행과 연결했다. Host에서 실제 도착·보스 생성·보스 시작 안전장치·사망 복원·승리 귀환을 확인했다. [정확한 인수 범위](../../03_team/00_reviews/boss-battle-flow-20261115.md)를 따른다. 원격 Player별 연출·전체 월드 새 실행 복원은 별도다. 다른 Scene으로 이동한 Player는 옛 Field 밀도에 넣지 않는다.
 - 실제 원격 Player NetworkBehaviour/생명·구조 입력, 원격 추가 출현 예고는 아직 전체 인수되지 않았다. localhost SDK2개 전송 검수와 실제 두 게임 실행은 다르다.
 - 개인 저장은 현재 논리 PlayerId를 사용한다. 실제 Steam/Backend 계정에 귀속하는 인증·영속 ID 계약이 완성된 것으로 해석하지 않는다. 현재 스킬 트리 UI는 해금/강화 원본 자체를 만들지 않으며 실제 재화/스킬 강화 저장 writer도 별도 필요하다.
 

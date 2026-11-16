@@ -109,3 +109,11 @@ Source gain은 library.Volume(기본0.55)×fade다. 로컬 Master/Music은 기�
 `Tools > TeamHJD > The Developer > Audio > Configure gameplay soundtrack`는 원본 파일 복사 후 제작된 라이브러리/Configuration 연결만 작성한다. dirty Scene이나 Play Mode에서는 실행하지 않는다. 기존 비어 있지 않은 곡 목록과 수동 mix 값을 보존하며, 일반 편집은 Inspector로 한다. 전체 `Configure native audio`/Main/Credits 재생성 도구를 다시 실행할 필요가 없다.
 
 새 음원과 `.meta`는 기존 `Assets/Audio/Music/OriginalSoundtrack/`에 한 번만 복사한다. 원본 WAV의 SHA256을 대조하고 변경하지 않는다. 현재 effective WAV filter/diff/merge는 unspecified이며 별도 WAV/LFS 규칙은 없다. 전역 Git/LFS 설정을 추가하지 않는다. 실제 재생·성능·Client·청감 인수는 구현 및 오프라인 컴파일과 구분해서 기록한다.
+
+## Scene 이동과 보스 음악
+
+`AppRoot.ReplaceGameplaySceneAsync`와 `FadeSceneTravelAsync`가 Scene 이동 직전 Music bus를0.3초간 내리고, 이동 후0.3초간 올린다. 기존 GameplayMusic의 두 voice crossfade도 유지한다. Main의 기존 곡은 전환이 시작됐다는 이유만으로 즉시 끊지 않고 실제 Scene 교체까지 유지한다.
+
+`GameAudioManager.FadeSceneMusicAsync(gain, seconds, cancellation)`는 Scene 이동 소유자용 API다. `AudioSettings.dspTime`을 사용하므로 게임 정지·배속과 별개로 진행한다. 사용자 Music 설정에 별도의 전환 gain을 곱하며 설정값·clip·timeSamples를 수정하지 않는다. 새 요청은 이전 fade를 취소하고, App 이동 소유자는 실패·취소에도 gain을 복구한다. SFX/Cinematic bus는 이 페이드에 포함하지 않는다.
+
+`GameplayMusicLibrary.Boss`는 `Boss1FirstLineOfDefense.wav`다. Stage1 보스 Intro/Battle/Victory에서 같은 고정 voice로 반복 재생한다. 원본은 Streaming·스테레오·background load이며 Startup preload는 끈다. BossRoom별 AudioSource를 추가하지 않는다. [실제 보스 진행과 검증](../../03_team/00_reviews/boss-battle-flow-20261115.md)을 함께 확인한다.

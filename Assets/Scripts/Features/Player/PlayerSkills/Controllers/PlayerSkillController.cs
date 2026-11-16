@@ -109,11 +109,16 @@ public sealed partial class PlayerSkillController : MonoBehaviour
 
     /// <summary>씬에 미리 배치한 HUD를 연결합니다. 로컬 플레이어 선택은 씬 바인더가 담당합니다.</summary>
     public bool BindHud(PlayerSkillHud hud)
+        => BindHud(hud, false);
+    /// <summary>기존 로컬 actor를 additive 보스룸으로 이동한 뒤 표시 소유자가 명시 연결합니다.</summary>
+    public bool BindBattleHud(PlayerSkillHud hud)
+        => BindHud(hud, true);
+    private bool BindHud(PlayerSkillHud hud, bool additiveBattle)
     {
         if (!isActiveAndEnabled || hud == null || !hud.isActiveAndEnabled
-            || hud.gameObject.scene != gameObject.scene || !hud.IsConfigured) return false;
+            || (hud.gameObject.scene != gameObject.scene && !(additiveBattle && hud.gameObject.scene.isLoaded && gameObject.scene.isLoaded)) || !hud.IsConfigured) return false;
         if (_hud != null && _hud != hud) _hud.Unbind();
-        if (!hud.Bind(this)) return false;
+        if (!hud.Bind(this, additiveBattle)) return false;
         _hud = hud;
         return true;
     }

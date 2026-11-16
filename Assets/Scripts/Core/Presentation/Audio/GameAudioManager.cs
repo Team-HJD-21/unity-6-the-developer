@@ -85,7 +85,7 @@ namespace TeamHJD.Game.Presentation
         {
             if (Configuration.Mixer == null) return;
             Configuration.Mixer.SetFloat(Configuration.MasterParameter, GameAudioSettings.Decibels(state.Master));
-            Configuration.Mixer.SetFloat(Configuration.MusicParameter, GameAudioSettings.Decibels(state.Music));
+            ApplyMusicBusGain();
             Configuration.Mixer.SetFloat(Configuration.EffectsParameter, GameAudioSettings.Decibels(state.Effects));
             foreach (var voice in _voices) voice.Source.mute = state.Master <= 0 || state.Effects <= 0;
             foreach (var source in _musicSources) if (source != null) source.mute = state.Master <= 0 || state.Music <= 0;

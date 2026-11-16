@@ -2,6 +2,7 @@
 // 저장/NGO Scene 로드·실패 참가자 원복은 Root가 맡고, 이 클래스는 자기 보스/연출/카메라만 정리합니다.
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using TeamHJD.Game.Contracts;
@@ -19,6 +20,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     {
         [SerializeField, Tooltip("Build Settings의 실제 최종 Boss Scene 전체 경로입니다.")]
         private string scenePath;
+        [SerializeField, Tooltip("보스전 동안만 정지할 Field의 NavMesh Surface입니다. 물리·그림은 같은 Scene에서 자동 보류합니다.")]
+        private Behaviour[] fieldNavigationSources = Array.Empty<Behaviour>();
+        private readonly List<Action> _restoreWorld = new();
         private IFinalBattleBossSource _boss;
         private PlayableDirector _intro;
         private DirectorUpdateMode _originalUpdateMode;
@@ -26,12 +30,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private bool _prepared;
         public string ScenePath => scenePath;
 
-        /// <summary>Root만 저장/로드 완료 뒤 호출합니다. 실제 도착점·보스 준비와 선택적 Timeline 종료까지 기다립니다.</summary>
+        /// <summary>Root가 Scene 로드와 전환 범위 준비 뒤 호출합니다. 실제 도착점·보스 준비와 선택적 Timeline 종료를 기다립니다.</summary>
         public async Task<FinalBattleSceneReady> PrepareAsync(InitialStageCompositionRoot stage, CancellationToken cancellation)
         {
             if (stage == null || !stage.CanPrepareFinalBossScene || _prepared ||
                 stage.MatchCoordinator?.IsGameplayRunning != true)
-                throw new InvalidOperationException("저장 완료된 현재 Host의 최종 진입 범위가 필요합니다.");
+                throw new InvalidOperationException("준비된 현재 Host의 최종 진입 범위가 필요합니다.");
             cancellation.ThrowIfCancellationRequested();
             var destination = SceneManager.GetSceneByPath(scenePath);
             if (!destination.IsValid() || !destination.isLoaded || destination == stage.gameObject.scene)
@@ -71,6 +75,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     { body.position = actor.transform.position; body.linearVelocity = Vector2.zero; body.angularVelocity = 0; }
                 }
                 Physics2D.SyncTransforms();
+                SuspendFieldPresentation(stage.gameObject.scene, destination);
                 var identity = source.PrepareFinalBoss(stage.MatchTime, stage.MatchCoordinator.GameplayCancellation);
                 if (identity.IsEmpty) throw new InvalidOperationException("실제 보스 생성 ID가 없습니다.");
                 SnapLocalCamera();
@@ -110,7 +115,35 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 var boss = _boss;
                 _boss = null; _prepared = false;
-                boss?.ReleaseFinalBoss();
+                try { boss?.ReleaseFinalBoss(); }
+                finally
+                {
+                    for (int i = _restoreWorld.Count - 1; i >= 0; i--) _restoreWorld[i]();
+                    _restoreWorld.Clear();
+                }
+            }
+        }
+
+        private void SuspendFieldPresentation(UnityEngine.SceneManagement.Scene field, UnityEngine.SceneManagement.Scene arena)
+        {
+            // 두 Additive 맵의 좌표가 겹쳐도 옛 Field의 충돌체/NavMesh가 새 전투에 섞이면 안 됩니다.
+            foreach (var root in field.GetRootGameObjects())
+            {
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                    if (renderer.enabled) { renderer.enabled = false; _restoreWorld.Add(() => { if (renderer != null) renderer.enabled = true; }); }
+                foreach (var collider in root.GetComponentsInChildren<Collider2D>(true))
+                    if (collider.enabled) { collider.enabled = false; _restoreWorld.Add(() => { if (collider != null) collider.enabled = true; }); }
+            }
+            foreach (var navigation in fieldNavigationSources)
+                if (navigation != null && navigation.enabled)
+                { navigation.enabled = false; _restoreWorld.Add(() => { if (navigation != null) navigation.enabled = true; }); }
+            // 출력은 기존 Player CameraManager 하나를 유지합니다.
+            foreach (var root in arena.GetRootGameObjects())
+            {
+                foreach (var camera in root.GetComponentsInChildren<Camera>(true))
+                    if (camera.enabled) { camera.enabled = false; _restoreWorld.Add(() => { if (camera != null) camera.enabled = true; }); }
+                foreach (var listener in root.GetComponentsInChildren<AudioListener>(true))
+                    if (listener.enabled) { listener.enabled = false; _restoreWorld.Add(() => { if (listener != null) listener.enabled = true; }); }
             }
         }
 

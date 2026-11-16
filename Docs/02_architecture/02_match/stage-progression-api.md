@@ -1,6 +1,6 @@
 # Stage 점유와 보스 진행 연결
 
-> **11/14 범위 확정:** 승패·보스·결과는 연결 API까지만 준비한다. 이번에 추가했던 자동 최종 진입/승리 확정과 결과 저장 연결은 제외했다. 실제 보스전·승리 조건·결과/사망 화면의 제품 설계가 확정된 것으로 읽지 않는다. 기존 main의 UI·사망 처리는 유지한다.
+> **11/15 확정:** 현재 점유 100%에서 Stage1 입장 컷씬·실제 보스전·시작 안전장치·승리 귀환을 연결한다. 33/66% 중간보스 생성·처치는 최종 진입의 선행 조건이 아니다. 자세한 제작·호출·검수 범위는 [보스 진행 통합 기록](../../03_team/00_reviews/boss-battle-flow-20261115.md)을 따른다.
 
 `StageProgression`은 `MatchCoordinator`가 소유하고, 실제 Scene의 `RegionGridSnapshot.CaptureRatio`를 읽는다. 현재 셀 점유와 최고 도달률은 구분한다. 최고 도달률은 이미 발생한33/66 사건을 점유 상실로 취소하지 않기 위한 값이며, 일반 스폰 난이도 정책을 대체하지 않는다.
 
@@ -10,9 +10,9 @@
 2. Root Update가 CU 패배·구조 실패를 먼저 처리하고 현재 점유 스냅샷을 `Pump`한다.
 3.33%를 넘으면 `StageCheckpointGate`가 등장 전 저장을 요청한다. 같은 복원 epoch의 실제 디스크 저장이 완료된 뒤 `IFieldBossSpawnService.TrySpawnFieldBoss`에 실행별 안정된 사건 ID를 준다. true와 실제 EntityId를 모두 받아야 생성 확인이다.66%도 같은 경로이며 한 번에100%가 되어도33→66 순서다.
 4. 생성 실패는 같은 사건 ID로1 Field초 뒤 재시도한다. 미출현 취소·일반 적 대체·허위 성공은 없다. 이미 확인된 첫 사건은 다시 만들지 않는다.
-5. 현재 점유100%와 두 실제 생성 확인을 모두 만족하면 `StageProgress.CanEnterFinalBattle`이 true다. 두 중간보스의 처치는 진입 조건이 아니다.
-6. 100%·두 Field 생성 등은 최종 진입 API의 현재 준비 조건으로만 읽는다. Root Update는 Boss Scene으로 자동 이동하지 않는다. 실제 진입 호출자는 게임 진행 설계가 정해진 뒤 연결한다.
-7. 실제 HP 사망은 IEnemyCombatSource.DeathObserved → Root.ReportStageEnemyDeath → StageProgression에 전달한다. 등록된 최종 개체가 죽어도 MatchCoordinator의 자동 승리/결과 화면으로 연결하지 않는다. UI·Despawn·Scene 해제는 사망 사실로 제출하지 않는다.
+5. 현재 점유100%를 만족하면 `StageProgress.CanEnterFinalBattle`이 true다. 두 중간보스의 처치는 진입 조건이 아니다.
+6. Stage_1의 `enableStage1BossFlow`가 켜진 Root Update는 100%에서 기존 입장 컷씬을 시작하고, 같은 Match의 BossRoom Additive 준비·HUD 등장·시작 저장이 끝나면 전투를 재개한다.
+7. 실제 HP 사망은 IEnemyCombatSource.DeathObserved → Root.ReportStageEnemyDeath → StageProgression에 전달한다. Stage1 Root는 등록된 최종 개체 사망을 확인한 뒤 성공 연출5초·암전·승리 확정·우주선 귀환을 실행한다. 다른 Scene의 일반 결과 경로는 유지한다. UI·Despawn·Scene 해제는 사망 사실로 제출하지 않는다.
 
 ## Enemy 생성 구현자가 지킬 경계
 
@@ -20,7 +20,7 @@
 
 사건 ID에서 `stage/<event ID>` EntityId를 만든다. 같은 사건을 다시 요청하면 **현재 Executor가 추적하는 실제 개체**를 찾아 ID를 반환한다. 별도 완료 캐시는 없으며, 기존 Enemy 저장이 이 ID를 보존한다. 등장 후 상태를 복원하면 새 NGO 개체에서도 같은 ID를 재사용하고, 등장 전 월드로 복귀해 개체가 없어지면 같은 사건을 다시 실제 생성한다. 과거 생성 성공 응답만 재사용하지 않는다.
 
-33/66 개체 Definition과 유효 진입 위치는 제작 데이터로 필요하다. 해당 시점에도 점유 밖에서 생성 가능한 NavMesh 지점을 미리 보장해야 한다. 모든 후보를 점유한 뒤 일반 포인트 중 하나를 임의 선택하는 방식은 불가하다. 생성 실패를 최종 진입이 추월하지 않지만, 이 방어 자체가 콘텐츠/위치 보장을 대신하지는 않는다.
+33/66 개체 Definition과 유효 진입 위치는 제작 데이터로 필요하다. 해당 시점에도 점유 밖에서 생성 가능한 NavMesh 지점을 미리 보장해야 한다. 모든 후보를 점유한 뒤 일반 포인트 중 하나를 임의 선택하는 방식은 불가하다. 중간보스의 생성 실패는 진단에 남긴다. 11/15 확정에 따라 최종 진입은 현재100%로 판단하며 미연결 중간보스 콘텐츠를 대신 생성하지 않는다.
 
 ### Level/Enemy 제작 설정
 
@@ -49,47 +49,8 @@ HUD는 `InitialStageCompositionRoot.StageProgress`의 읽기 값을 사용할 �
 
 이 연결은 **Field 사건의 저장 순서**다. 최종 Boss Scene의 저장 선행·임대 경계는 아래 별도 API를 사용한다.
 
-### 명시적인 최종 Scene 연결 API
+### 최종 Scene 연결
 
-현재 게임 루프에는 호출자가 없다. `Update`·100% 점유·최종 개체 사망이 Scene 이동이나 승리를 자동 실행하지 않는다. 실제 게임 진행 정책이 정해진 뒤 Host 조립부가 다음 API를 호출한다.
+`InitialStageCompositionRoot.BossBattle.cs`가 현재 Stage1의 진행 정책이다. 기존 `EnterFinalBattleSceneAsync` API는 같은 Match의 실제 로드·도착·보스·HP 사망 원본 검증과 실패 원복을 유지한다. Stage1은 입장 컷씬 이후 도착한 실제 보스전 상태를 저장한 뒤 Confirm하며, 다른 명시 호출자는 기존 저장 선행 경로를 유지한다.
 
-```csharp
-// 실제 진입 시점을 정한 정책 소유자가 호출할 연결 지점입니다.
-await stageRoot.EnterFinalBattleSceneAsync(currentMatchId, cancellation);
-```
-
-이 API는 현재 Host/Match·생존·복귀 미진행·Stage 준비 조건을 확인한다. 저장→동일 Match의 additive Scene 로드→실제 도착·생존 보스·HP 사망 원본 검사→전투 준비 확정 순서다. 미지정 driver/Build 경로·필수 저장 실패·도착/생성 실패는 Task 예외로 호출자에게 전달하고 `FinalBossTransitionError`에도 남긴다. 자동 재시도 버튼/시도 카운터는 제거했으며 재호출도 호출자가 명시적으로 정한다.
-
-```mermaid
-flowchart TD
- Policy[향후 확정할 실제 진입 정책] --> API[EnterFinalBattleSceneAsync]
- API --> Save[필수 저장 / FinalBossTransition]
- Save --> Load[같은 Match / NGO additive 로드]
- Load --> Driver[실제 참가자 배치 · 보스 · 선택적 연출]
- Driver --> Ready[실제 준비 확인 / 기존 Field만 보류]
- Driver --> Failure[실패 · 취소]
- Failure --> Rollback[자기 자원 정리 · 참가자 원위치 · 소유 Scene 해제]
- Death[실제 등록 개체 사망] --> Fact[StageProgression 사망 사실]
- Fact --> Future[향후 승패 정책이 해석 / 현재 자동 완료 연결 없음]
-```
-
-#### 유지한 기본 구현과 제작 접점
-
-- Field Stage의 `FinalBattleSceneDriver.scenePath`는 실제 Build Settings의 Boss Scene 경로다. Root의 `_finalBattleSceneDriver`에 같은 Scene의 활성 구현을 지정한다. 실제 경로/콘텐츠는 현재 미지정이다.
-- Boss Scene은 활성 `FinalBattleSceneLayout` 하나와 실제 참가자 도착점을 제공한다. PlayerId 오름차순으로 배치한다. 전용 NGO `EnemySpawnExecutor`·실제 카탈로그 Definition·NavMesh 생성점을 가진 `FinalBattleBossSource`를 layout의 `bossSource`에 지정한다. hash0인 Runtime AddComponent NetworkObject를 사용하지 않는다.
-- 선택적 `PlayableDirector`는 유한한 단발 연출이며 공용 게임 정지와 별개인 UnscaledGameTime으로 재생한다. 기존 `CameraManager`의 view lease를 사용하고 Camera/AudioListener를 새로 만들지 않는다.
-- 보스 source는 FieldClock 대신 공용 MatchTime을 쓴다. 준비 정지 중 생성만 허용하고 AI/공격은 공용 시간 재개를 따른다. 실제 모델/AI/스탯/보스전·컷씬 콘텐츠를 구현했다는 뜻은 아니다.
-- Root가 실제 참가자의 Scene/부모/위치·Rigidbody 속도를 보관하고 실패 시 원복한다. driver의 보스/시점/연출 정리가 끝난 뒤 Core가 자신이 추가한 Scene만 해제한다. 대여한 Scene은 임의 해제하지 않는다. 준비 제한120/원복30 실시간 초이며 원복 전에 정지/입력 임대를 풀지 않는다.
-- `PrepareFinalBossTransitionAsync` / `ConfirmFinalBossReady`는 저수준 연결 API로 유지한다. 저장 없는 Confirm은 거부한다. `IFinalBattleSceneDriver`의 Prepare/Rollback/StopMatch 수명 계약도 유지한다. 다른 Scene으로 이동한 Player는 옛 Field Grid 밀도에 넣지 않는다.
-
-#### 사망 사실과 게임 완료의 구분
-
-`StageProgression.Victory`는 기존 API 이름이며 현재 의미는 등록된 최종 개체의 사망 알림이다. `MatchCoordinator`는 이 이벤트를 구독해 자동 승리시키지 않는다. 진행 사실은 `StageProgressSnapshot.FinalBossDefeated`로 읽는다. `MatchCoordinator.CompleteMatch(outcome)`은 향후 실제 정책 소유자가 확정 결과를 전달할 명시 API로 유지한다.
-
-기존 CU 파괴/Player 사망·구조/안전장치와 main의 임시 결과 UI는 이번 제외 작업에서 제거하지 않았다. 새 결과 화면을 디자인하지 않았으며 기존 UI를 최종 디자인으로 확정하지 않는다. 별도 캠페인 클리어/결과 저장 연결은 Assets에서 제외해 로컬 보관했다. 보상 제안은 실제 재화 지급 원본과 구분한다.
-
-#### 검증과 남은 범위
-
-현재 Editor assembly의 순수 NUnit17개를 직접 실행했다(Unity TestRunner 실행 아님). 실제 Stage_1에서 시험용100%·실제 일반 Enemy 추적 ID를 주입해 자동 진입 없음, 명시 API의 미지정 driver 거부와 입력/정지 정리, 실제 HP 사망 뒤에도 Match Running·결과 화면 없음·동일 Match 유지를 확인했다. 신규 Runtime 오류0이다. 자연 진행·실제 보스전·결과 디자인·전체 Weather 복원은 검증하지 않았다.
-
-실제 보스 Scene/Definition/연출·제품 승패/결과 설계·Weather 필수 writer·원격 Player 도착/연출 응답은 남아 있다. 과거 자동 진입 실험의 통과 기록은 현재 자동 동작의 근거가 아니다.
+제작 지점, 보스전 전용 저장 범위, UI·카메라·BGM 연결과 실패 처리, 검증 결과는 [보스 진행 통합 기록](../../03_team/00_reviews/boss-battle-flow-20261115.md)을 확인한다. 기존 Field 전체 저장과 같은 Match 보스전 재도전 저장을 혼동하지 않는다. 준비되지 않은 Weather writer나 앱 재시작 전체 월드 이어하기를 이 연결이 대신하지 않는다.

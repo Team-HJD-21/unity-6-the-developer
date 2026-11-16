@@ -53,9 +53,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         {
             var service = Recovery;
             if (service == null) return;
-            var saved = Checkpoints?.LastSavedData;
+            var checkpoint = BossStartCheckpoint ?? Checkpoints;
+            var saved = checkpoint?.LastSavedData;
             if (saved != null && !service.IsRecoveryPending)
-                _recoveryLedger.RecordCheckpoint(Checkpoints.LastSavedSlot, saved.CheckpointId);
+                _recoveryLedger.RecordCheckpoint(checkpoint.LastSavedSlot, saved.CheckpointId);
             service.Pump();
         }
         private void OnRecoveryFailure(Guid failure, bool allowed, string reason)
@@ -89,6 +90,27 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 FlushGrowthSaves();
+                if (BossStartCheckpoint != null && BossBattlePhase == StageBossBattlePhase.Battle)
+                {
+                    var gameplay = _coordinator.GameplayCancellation;
+                    var data = await app.ReadCheckpointAsync(service.Ledger.LastCheckpoint, gameplay);
+                    gameplay.ThrowIfCancellationRequested();
+                    if (data == null || data.CheckpointId != service.Ledger.LastCheckpointId)
+                        throw new InvalidOperationException("보스전 시작 안전장치가 없거나 교체되었습니다.");
+                    _finalSceneOperation.Scene.GetRootGameObjects()
+                        .SelectMany(r => r.GetComponentsInChildren<MonoBehaviour>(true))
+                        .OfType<IFinalBattleBossSource>().Single().AbandonAttemptForRecovery();
+                    var restored = BossStartCheckpoint.Restore(data, cancellation: gameplay);
+                    if (restored.Status != CheckpointOperationStatus.Restored)
+                        throw new InvalidOperationException("보스전 복원 실패: " + restored.Reason, restored.Error);
+                    _bossActor = FindPreparedBossActor();
+                    service.CompleteRecovery(failure);
+                    FlushGrowthSaves(); app.CompleteMissionRecovery();
+                    using var introPause = _matchTime.AcquirePause("BossRecoveryIntro");
+                    _recoveryPause.Dispose(); _recoveryPause = null;
+                    await _bossPresentation.ShowBattleIntroAsync(_bossActor, "감염된 트리언트", gameplay);
+                    return;
+                }
                 await LeaveFinalBattleForRecoveryAsync();
                 if (!service.Ledger.LastCheckpoint.IsEmpty)
                 {

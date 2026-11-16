@@ -4,7 +4,7 @@ using Object = UnityEngine.Object;
 
 namespace TeamHJD.Game.Presentation
 {
-    public enum GameplayMusicContext { None, Day, Night, Spaceship }
+    public enum GameplayMusicContext { None, Day, Night, Spaceship, Boss }
 
     /// <summary>비동기 clip 데이터 준비만 분리합니다. 게임 시간대나 실제 AudioSource 재생을 대체하지 않습니다.</summary>
     public interface IGameplayMusicData
@@ -223,7 +223,8 @@ namespace TeamHJD.Game.Presentation
             int attempts = (context == GameplayMusicContext.Day ? _day.Count : context == GameplayMusicContext.Night ? _night.Count : 1) * 2;
             for (int i = 0; i < attempts; i++)
             {
-                AudioClip clip = context == GameplayMusicContext.Day ? _day.Next() : context == GameplayMusicContext.Night ? _night.Next() : _library.Spaceship;
+                AudioClip clip = context == GameplayMusicContext.Day ? _day.Next() : context == GameplayMusicContext.Night ? _night.Next() :
+                    context == GameplayMusicContext.Boss ? _library.Boss : _library.Spaceship;
                 if (clip == null || _failed.Contains(clip)) continue;
                 if (clip.samples <= 0 || clip.frequency <= 0 || _data.GetState(clip) == AudioDataLoadState.Failed)
                 { _failed.Add(clip); Debug.LogWarning("[GameplayMusic] Cannot load track: " + clip.name); continue; }
@@ -239,8 +240,9 @@ namespace TeamHJD.Game.Presentation
         {
             Clear(index); var slot = _slots[index];
             slot.Context = context; slot.Scope = scope; slot.StartsAt = startsAt;
-            slot.EndsAt = context == GameplayMusicContext.Spaceship ? double.PositiveInfinity : startsAt + Duration(clip);
-            slot.Source.clip = clip; slot.Source.loop = context == GameplayMusicContext.Spaceship;
+            bool loop = context == GameplayMusicContext.Spaceship || context == GameplayMusicContext.Boss;
+            slot.EndsAt = loop ? double.PositiveInfinity : startsAt + Duration(clip);
+            slot.Source.clip = clip; slot.Source.loop = loop;
             slot.Source.timeSamples = 0; slot.Source.PlayScheduled(startsAt);
         }
         private static double Duration(AudioClip clip) => clip.samples / (double)clip.frequency;

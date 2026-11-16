@@ -23,6 +23,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 9e49385416ee46e8b2cc089353ae6482, type: 3}
   - {fileID: 8300000, guid: 7450805fb4b74f29901cd026b618c85b, type: 3}
   Spaceship: {fileID: 8300000, guid: 102d11e15a524aff88055c3ab9db240a, type: 3}
+  Boss: {fileID: 8300000, guid: f398cae82ff39bd4cb494c1037d690ff, type: 3}
   Volume: 0.55
   TransitionSeconds: 0.8
   ScheduleAheadSeconds: 1.25

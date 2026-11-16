@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>HUD와 독립된 제작 Canvas입니다. 입력과 게임 시간을 소유하지 않습니다.</summary>
 public sealed class FieldEntryAnnouncement : MonoBehaviour
@@ -9,6 +10,21 @@ public sealed class FieldEntryAnnouncement : MonoBehaviour
     public Material RevealMaterial;
     [Range(.001f, .05f)] public float ScanWidth = .014f;
     private Material _mask, _scan;
+    private TMP_Text _message;
+    private float _messageSize;
+    /// <summary>기존 스캔 문구의 내용만 바꿉니다. 폰트·재질·Canvas는 재사용합니다.</summary>
+    public void SetMessage(string message)
+    {
+        if (_message == null)
+        {
+            _message = GetComponentInChildren<TMP_Text>(true);
+            if (_message == null) throw new System.InvalidOperationException("Field announcement requires its authored message.");
+            _messageSize = _message.fontSize;
+        }
+        _message.text = message;
+        _message.textWrappingMode = TextWrappingModes.NoWrap;
+        _message.enableAutoSizing = true; _message.fontSizeMax = _messageSize; _message.fontSizeMin = Mathf.Min(32, _messageSize);
+    }
     private void Awake()
     {
         _mask = new Material(RevealMaterial); _scan = new Material(RevealMaterial);

@@ -157,6 +157,16 @@ public sealed class InitialStagePlayerHUD : MonoBehaviour, ILocalPlayerActorCons
         if (controlUnitView != null) controlUnitView.Refresh(null, false);
     }
 
+    /// <summary>이미 연결된 로컬 참가자만 additive 보스룸으로 이동한 뒤 다시 표시합니다.</summary>
+    public void BindBattleActor(GameObject actor)
+    {
+        if (!_hasExplicitBinding || actor == null || actor != _boundActor || !actor.scene.isLoaded ||
+            actor.GetComponent<PlayerActorIdentity>()?.PlayerId != _boundPlayerId)
+            throw new ArgumentException("Retain the HUD's existing local participant for the additive battle.", nameof(actor));
+        _player = null; _hasLocalActor = false;
+        BindSceneSources();
+    }
+
     public bool IsTurretPanelOpen => Tactical == null && isActiveAndEnabled && turretView != null && turretView.isActiveAndEnabled;
 
     private void Awake()

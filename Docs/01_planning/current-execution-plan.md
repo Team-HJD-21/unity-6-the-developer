@@ -1,5 +1,7 @@
 # 현재 실행 계획 — Stage 1 검증
 
+**11/15 갱신:** [Stage1 보스전·BGM 연결과 실제 검수](../03_team/00_reviews/boss-battle-flow-20261115.md). 현재100% → 기존 컷씬 → 보스 시작 저장·재도전 → 승리5초·허브 귀환을 Host에서 연결·검수했다. 아래 과거 점검의 미연결 목록과 구분한다. 전체 Weather/world 이어하기·원격2인·중간보스 콘텐츠는 별도다.
+
 기준일: 2026-11-14 · 상태: 현행 작업·미결정·검증 경계.
 
 **11/12 구현 상태 대조:** [Core API 구현 현황](../02_architecture/01_core/core-implementation-status.md)을 먼저 확인한다. CameraManager 기반은 #694, CU 동적 시작 영역은 #701로 main에 반영됐다. AudioManager/BGM/SFX와 실제 보스·컷씬·대사·Pool·전체 저장은 별도 미완료다. 아래 담당 표를 완료 표시로 읽지 않는다.
