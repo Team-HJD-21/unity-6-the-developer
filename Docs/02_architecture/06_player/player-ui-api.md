@@ -365,6 +365,10 @@ FieldTerritoryRenderer의 기존 Territory 정렬·공통 RegionBoundaryGeometry
 
 명시 제작 메뉴 `Tools/TeamHJD/The Developer/Common UI/Apply text readability`는 확인된 텍스트 영역과 공용 Alert 재질·TMP 한글 줄바꿈 설정만 보정한다. Scene·원본 폰트·Main 배경/로고·다른 제작물을 저장하지 않는다. `CommonUiPrefabSetup`/`HudV6PrefabSetup`/`HudAmmoDockSetup`/`UiProductPolishSetup.ApplyLoading`의 관련 생성값도 반영했다. [검증 기록](../../01_planning/02_implementation-records/2026/11/2026-11-15-ui-readability-polish.md)을 참고한다.
 
+## 보스전 표시 요청 (2026-11-15)
+
+`StageBossBattlePresentation`은 Core의 `IStageBossBattlePresentation`을 구현한다. 기존 입장 Preview와 HUD 스캔, FieldEntryAnnouncement, CombatBossView 및 CameraManager를 재사용한다. 일반 HUD/Preview의 로컬·씬·입력 조건을 완화하지 않고 명시적인 배틀 API에서만 additive actor와 보스를 연결한다. Core는 시간·입력과 Scene/스폰을 소유하며, 승리 문구5초와 확대는 Fade 뒤 `ResetBattle`까지 유지한다. [연결 순서·수명·검증 경계](../../01_planning/02_implementation-records/2026/11/2026-11-15-boss-battle-presentation.md)를 따른다.
+
 ## 시작 우주선의 I 상태창 (2026-11-15)
 
 `PlayerHubStatusBinding`은 `IHubPlayerBinding.BindHub`로 명시적으로 받은 로컬 Player에 `PlayerHubStatusHUD.prefab`을 연결한다. 임의로 다른 Scene의 플레이어를 검색하지 않는다. 허브는 필드와 같은 기본 `local-player`의 개인 성장 저장을 읽지만 UI 소유자는 명시적으로 주입한 actor만 따른다. I는 상태창과 스킬 트리를 열고 Esc는 기존 닫기 흐름을 따른다. 우주선 무기고·개인 메뉴 등 다른 입력 lease가 있으면 열지 않는다.

@@ -42,12 +42,12 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(progress.Snapshot.FirstFieldBossDefeated || progress.Snapshot.SecondFieldBossDefeated, Is.False);
         }
         [Test]
-        public void UnconfirmedSecondSpawnBlocksFinalAndRetriesTheSameEventWithoutRepeatingTheFirst()
+        public void UnconfirmedSecondSpawnRetriesWithoutBlockingFullyCapturedFinalEntry()
         {
             var clock = new Clock(); var spawns = new Spawns { BlockSecond = true };
             var progress = new StageProgression(Match, Guid.NewGuid(), clock, () => true, spawns);
             progress.Pump(Region(100)); progress.Pump(Region(100));
-            Assert.That(progress.Snapshot.CanEnterFinalBattle, Is.False);
+            Assert.That(progress.Snapshot.CanEnterFinalBattle, Is.True);
             Assert.That(progress.Snapshot.PendingReason, Is.EqualTo("ReservedEntranceNotReady"));
             Assert.That(spawns.Attempts.Count, Is.EqualTo(2));
             clock.Now = 1; spawns.BlockSecond = false; progress.Pump(Region(100));
@@ -56,14 +56,15 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(progress.Snapshot.CanEnterFinalBattle, Is.True);
         }
         [Test]
-        public void MissingContentCannotProduceFakeBossesOrFinalReadiness()
+        public void MissingFieldContentDoesNotFakeActorsOrBlockFullyCapturedFinalEntry()
         {
             var progress = new StageProgression(Match, Guid.NewGuid(), new Clock(), () => true, null);
             progress.Pump(Region(100));
             Assert.That(progress.Snapshot.PendingReason, Is.EqualTo("FieldBossContentNotConnected"));
             Assert.That(progress.Snapshot.FirstFieldBoss.IsEmpty, Is.True);
-            Assert.That(progress.Snapshot.CanEnterFinalBattle, Is.False);
-            Assert.Throws<InvalidOperationException>(() => progress.ConfirmFinalBossReady(new EntityId("final")));
+            Assert.That(progress.Snapshot.CanEnterFinalBattle, Is.True);
+            progress.ConfirmFinalBossReady(new EntityId("final"));
+            Assert.That(progress.Snapshot.FinalBoss, Is.EqualTo(new EntityId("final")));
         }
         [Test]
         public void FinalReadinessUsesCurrentCaptureAndVictoryNeedsTheRegisteredFinalDeath()

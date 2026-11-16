@@ -29,5 +29,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Presentation/Credits.unity
     guid: c684aaca1b10f1a459ff679fbc834646
+  - enabled: 1
+    path: Assets/Scenes/Gameplay/BossRoom/Stage_1_BossRoom.unity
+    guid: 8c7592c07da314a20a678b029d75fb37
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

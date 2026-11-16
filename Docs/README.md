@@ -1,5 +1,7 @@
 # The Developer 문서 안내
 
+**11/15 Stage1 보스전·BGM:** [진행·제작·안전장치·실제 검수](03_team/00_reviews/boss-battle-flow-20261115.md). 현재 점유100%에서 기존 컷씬 → 실제 BossRoom → 사망 재도전 → 승리5초 → 우주선 귀환을 연결했다. [Stage 진행 API](02_architecture/02_match/stage-progression-api.md)와 [오디오 API](02_architecture/01_core/game-audio-api.md)를 함께 확인한다. 과거11/14의 자동 연결 제외 기록은 당시 범위다.
+
 **11/15 Encounter 책임 분리:** [정식 연결·명시 시험 도구 사용법](02_architecture/08_encounter/encounter-runtime-and-testing.md)과 [코드 검토·실제 검증](03_team/00_reviews/encounter-runtime-separation-20261115.md). Stage_1 제작 변경은 [#727](https://github.com/Team-HJD-21/unity-6-the-developer/pull/727)에서 원복했으며 이 분리에는 Scene 변경이 없다.
 
 **11/14–15 Core·UI 통합:** [#726](https://github.com/Team-HJD-21/unity-6-the-developer/pull/726)에 Core·전술 HUD·공용 UI·오디오 변경을 반영했고 [#730](https://github.com/Team-HJD-21/unity-6-the-developer/pull/730)에서 전술 진입·종료와 HUD 정렬을 보완했다. [Player UI API](02_architecture/06_player/player-ui-api.md)와 [Core·UI 검토 기록](03_team/00_reviews/core-ui-integration-20261114.md)을 함께 확인한다.

@@ -8,6 +8,10 @@ using UnityEngine.AI;
 /// </summary>
 public static class EnemyNavMeshPathfinder
 {
+    private const float StartProjectionDistance = 3f;
+    // 큰 시설의 중심은 본체 장애물 안에 있습니다. 목표만 주변 보행면을 조금 더 넓게 찾습니다.
+    private const float TargetProjectionDistance = 4f;
+
     /// <summary>
     /// 표현용 Z를 제외한 XY 위치에서 완전한 NavMesh 경로를 구한다.
     /// </summary>
@@ -18,13 +22,14 @@ public static class EnemyNavMeshPathfinder
         Vector3 navTarget = new(target.x, target.y, 0f);
         
         bool hasStart = NavMesh.SamplePosition(
-            navStart, out NavMeshHit startPoint, 3f, NavMesh.AllAreas);
+            navStart, out NavMeshHit startPoint, StartProjectionDistance, NavMesh.AllAreas);
         bool hasGoal = NavMesh.SamplePosition(
-            navTarget, out NavMeshHit targetPoint, 3f, NavMesh.AllAreas);
+            navTarget, out NavMeshHit targetPoint, TargetProjectionDistance, NavMesh.AllAreas);
 
         if (!hasStart|| !hasGoal)
         {
-            Debug.LogError($"NavMesh 위치를 찾지 못했습니다. 시작: {hasStart}, 목표: {hasGoal}");
+            Debug.LogError($"NavMesh 위치를 찾지 못했습니다. 시작: {hasStart} {navStart} (거리 {StartProjectionDistance}), " +
+                $"목표: {hasGoal} {navTarget} (거리 {TargetProjectionDistance})");
             corners = null;
             return false;
         }

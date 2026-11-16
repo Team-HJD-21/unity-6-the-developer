@@ -12,8 +12,19 @@ public sealed class CombatBossView : MonoBehaviour
     public EnemyHealth Source { get; private set; }
     private readonly CombatHudTransition _visible = new();
     public void Bind(EnemyHealth source, string displayName)
+        => Bind(source, displayName, false);
+    /// <summary>진행 소유자가 지정한 additive 보스룸의 실제 체력만 연결합니다.</summary>
+    public void BindBattle(EnemyHealth source, string displayName)
+        => Bind(source, displayName, true);
+    private void Bind(EnemyHealth source, string displayName, bool additiveBattle)
     {
-        Source = source != null && source.gameObject.scene == gameObject.scene && !string.IsNullOrWhiteSpace(displayName) ? source : null;
+        Source = source != null && (source.gameObject.scene == gameObject.scene ||
+            additiveBattle && source.gameObject.scene.isLoaded && gameObject.scene.isLoaded) && !string.IsNullOrWhiteSpace(displayName) ? source : null;
+        if (Source != null && Style != null && Style.BodyFont != null)
+        {
+            // 연구창용 제한 atlas 대신 기존 한국어 본문 폰트와 그 재질을 함께 사용합니다.
+            Name.font = Style.BodyFont; Name.fontSharedMaterial = Style.BodyFont.material;
+        }
         Name.text = Source != null ? displayName : "";
     }
     private void LateUpdate()

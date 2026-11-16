@@ -84,10 +84,10 @@ public sealed class PlayerSkillHud : MonoBehaviour
     }
 
     // PlayerSkillController.BindHud가 양방향 참조를 연결합니다.
-    internal bool Bind(PlayerSkillController owner)
+    internal bool Bind(PlayerSkillController owner, bool additiveBattle = false)
     {
         if (!IsConfigured || !isActiveAndEnabled || owner == null || !owner.isActiveAndEnabled
-            || owner.gameObject.scene != gameObject.scene) return false;
+            || (owner.gameObject.scene != gameObject.scene && !(additiveBattle && owner.gameObject.scene.isLoaded && gameObject.scene.isLoaded))) return false;
         if (Owner == owner) return true;
         Unbind();
         Owner = owner;

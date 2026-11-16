@@ -1,4 +1,4 @@
-// 실제 최종 Boss Scene 소유자에게 저장이 끝난 현재 Match의 전환 범위를 제공합니다.
+// 실제 최종 Boss Scene 소유자에게 현재 Match의 정지·입력 전환 범위를 제공합니다.
 // Scene 교체나 콘텐츠를 임의 생성하지 않으며 같은 Match의 additive 준비·도착·연출은 호출자가 연결합니다.
 using System;
 using System.Threading;
@@ -16,11 +16,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         internal bool CanPrepareFinalBossScene => _finalBossTransition?.IsPrepared == true && _finalBossTransition.IsCurrent;
 
         /// <summary>Host의 실제 Scene 전환 소유자가 호출합니다. 반환 뒤 기존 SceneTransitions.LoadAsync로 같은 Match의 보스 Scene을 준비합니다.</summary>
-        /// <remarks>반환 범위는 using으로 유지합니다. 전체 저장 실패 시 예외이며 Scene 이동/연출을 시작하면 안 됩니다.</remarks>
+        /// <remarks>완료/원복까지 범위를 유지합니다. Stage1은 도착 후 시작 저장, 다른 호출자는 기존 전체 저장 선행을 사용합니다.</remarks>
         public async Task<FinalBossTransition> PrepareFinalBossTransitionAsync(MatchId match, CancellationToken cancellation = default)
         {
             if (match != _ownedMatchId || !CanPrepareFinalBattle() || !(_matchHost is AppRoot app))
-                throw new InvalidOperationException("현재 Host의 생존·점유·Field 사건 준비를 먼저 확인해야 합니다.");
+                throw new InvalidOperationException("현재 Host의 생존·100% 점유·복귀 미진행 상태를 먼저 확인해야 합니다.");
             if (FinalBossTransitionPending) throw new InvalidOperationException("최종 보스 전환이 이미 준비 중입니다.");
             var transition = new FinalBossTransition(_coordinator.StageProgression, _matchTime, app.LocalInput,
                 CanPrepareFinalBattle, _coordinator.GameplayCancellation, cancellation);
@@ -29,7 +29,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             FinalBossTransitionError = null;
             try
             {
-                await transition.PrepareAsync(new CheckpointSlot("stage-" + _recoveryLedger.RunId.ToString("N") + "-before-final"),
+                if (enableStage1BossFlow) transition.PrepareScene();
+                else await transition.PrepareAsync(new CheckpointSlot("stage-" + _recoveryLedger.RunId.ToString("N") + "-before-final"),
                     SaveStageCheckpointAsync);
                 return transition;
             }

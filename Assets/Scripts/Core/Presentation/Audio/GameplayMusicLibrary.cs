@@ -9,6 +9,7 @@ namespace TeamHJD.Game.Presentation
         public AudioClip[] Day = System.Array.Empty<AudioClip>();
         public AudioClip[] Night = System.Array.Empty<AudioClip>();
         public AudioClip Spaceship;
+        public AudioClip Boss;
         [Range(0, 1)] public float Volume = .55f;
         [Min(.01f)] public float TransitionSeconds = .8f;
         [Min(.1f)] public float ScheduleAheadSeconds = 1.25f;

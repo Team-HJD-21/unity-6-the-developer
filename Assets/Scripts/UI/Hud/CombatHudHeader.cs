@@ -12,6 +12,8 @@ public sealed class CombatHudHeader : MonoBehaviour
     public GameObject OccupancyTitle, OccupancyDivider;
     public RectTransform HeaderBackplate;
     private bool _hasConfirmedOccupancy;
+    private bool _battleMode;
+    public void SetBattleMode(bool active) { _battleMode = active; ApplyOccupancyLayout(); }
     private InitialStagePlayerHUD _regionSource;
     private float _nextRegionSearch;
     private int _lastCaptured=int.MinValue,_lastEligible=int.MinValue;
@@ -37,16 +39,17 @@ public sealed class CombatHudHeader : MonoBehaviour
     }
     private void ApplyOccupancyLayout()
     {
-        OccupancyLabel.gameObject.SetActive(_hasConfirmedOccupancy);
-        if(OccupancyTitle!=null)OccupancyTitle.SetActive(_hasConfirmedOccupancy);
-        if(OccupancyDivider!=null)OccupancyDivider.SetActive(_hasConfirmedOccupancy);
-        ClockLabel.rectTransform.anchoredPosition = new Vector2(_hasConfirmedOccupancy ? -88 : 0,-28);
+        bool visible = _hasConfirmedOccupancy && !_battleMode;
+        OccupancyLabel.gameObject.SetActive(visible);
+        if(OccupancyTitle!=null)OccupancyTitle.SetActive(visible);
+        if(OccupancyDivider!=null)OccupancyDivider.SetActive(visible);
+        ClockLabel.rectTransform.anchoredPosition = new Vector2(visible ? -88 : 0,-28);
         OccupancyLabel.rectTransform.sizeDelta=new Vector2(132,40);
         OccupancyLabel.rectTransform.anchoredPosition=new Vector2(174,-28);
         OccupancyLabel.enableAutoSizing=true;OccupancyLabel.fontSizeMin=20;OccupancyLabel.fontSizeMax=24;
         OccupancyLabel.textWrappingMode=TextWrappingModes.NoWrap;
-        ((RectTransform)transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,_hasConfirmedOccupancy?520:300);
-        if(HeaderBackplate!=null)HeaderBackplate.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,_hasConfirmedOccupancy?520:300);
+        ((RectTransform)transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,visible?520:300);
+        if(HeaderBackplate!=null)HeaderBackplate.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,visible?520:300);
     }
     private void OnEnable()
     {

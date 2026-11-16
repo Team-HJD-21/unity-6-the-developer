@@ -531,8 +531,12 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             _coordinator?.EvaluateProgress();
             PumpRecovery();
             PumpFinalBossTransition();
-            if (Recovery?.IsRecoveryPending != true) _stageCheckpoints?.Pump();
-            _coordinator?.StageProgression?.Pump(_matchSession?.Regions?.Snapshot);
+            if (BossBattlePhase == StageBossBattlePhase.Field)
+            {
+                if (Recovery?.IsRecoveryPending != true) _stageCheckpoints?.Pump();
+                _coordinator?.StageProgression?.Pump(_matchSession?.Regions?.Snapshot);
+            }
+            PumpStageBossBattle();
             if (!HasCurrentMatch || _matchSession == null || _playerActors == null || Time.unscaledTime < _nextBattlefieldSampleTime)
                 return;
             if (!_matchSession.IsGameplayRunning) return;
