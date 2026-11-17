@@ -83,6 +83,7 @@ namespace TeamHJD.Game.FieldTurrets
         public FieldTurretDefinition Definition => _definition;
         public virtual FieldTurretKind Kind => FieldTurretKind.Unknown;
         public FieldTurretRuntimeState RuntimeState => _runtimeState;
+        public bool HasEverActivated => _runtimeState.HasEverActivated;
         public int InstanceId => _runtimeState.InstanceId;
         public bool TryGetEntityId(out TeamHJD.Game.Domain.EntityId entityId)
         {
