@@ -67,6 +67,8 @@ Canon과 Missile은 CU를 직접 찾지 않는다. 전력은 `FieldTurretControl
 
 `ControlUnitHealth`는 CU 체력, 피격, 접근 지점과 상태 이벤트만 담당한다. 최대 체력은 `ControlUnit.asset`의 `FieldTurretDefinition`에서 읽으며 `DataManager`의 CU 수치를 사용하지 않는다. CU와 `FieldTurretBase`는 모두 `IDamageableTarget`을 구현하므로 Enemy는 구체 타입이나 Registry를 확인하지 않고 같은 `ApplyDamage(int)` 계약으로 피해를 준다. Definition의 `FieldTurretRole.ControlUnit`은 CU를 무기 터렛과 구분한다.
 
+CU 피해 연출은 터렛과 같은 `FieldTurretStatusFx.png`·`FieldTurretStatusFxFrames.json`을 사용한다. 체력 80% 이하부터 연기 1개가 나오고, 체력 40% 이하부터 불꽃도 1개가 나온다. 각 효과는 체력이 5%p 내려갈 때마다 1개씩 늘어 체력 0%에서 검은 연기 17개와 불꽃 9개가 된다. 연기와 불꽃은 각각 스프라이트 배율 1.08배와 1.7배로 그린다. 발생 지점은 `STATION2_DOWN_RIGHT`를 제외한 CU 파츠의 스프라이트 메시에서 무작위로 고른다. 매치에서는 Host가 확정한 CU 체력을 읽는다.
+
 CU는 Enemy의 `TargetType.Turret` 후보에는 포함되지만 `FieldTurretBase`를 상속하거나 `FieldTurretInstanceRegistry`에 등록되지 않는다. 따라서 터렛 등록 수, 전력 예약, 자동 활성화, 개별 터렛 UI에는 포함되지 않는다. 터렛 전력은 `DataManager`와 CU 컴포넌트를 거치지 않고 `FieldTurretController`가 직접 소유한다. CU 파괴 시 `Destroyed` 이벤트를 한 번 발행한다. `HealthChanged`는 체력 변경을 전달한다. 레거시 `InGameManager`와 `AlertManager`를 조회하거나 호출하지 않는다. 현재 PoC 승패 정책은 패배 판정을 구현하지 않았으므로 파괴 이벤트를 게임 오버에 연결하는 소비자는 후속 연동 대상이다.
 
 ```mermaid

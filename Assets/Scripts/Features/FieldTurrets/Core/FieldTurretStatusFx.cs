@@ -67,10 +67,12 @@ namespace TeamHJD.Game.FieldTurrets
             _visualRandom = new System.Random(gun.GetInstanceID());
         }
 
+        internal static Atlas GetSharedAtlas() => _sharedAtlas ??= Atlas.Load();
+
         public static FieldTurretStatusFx Create(SpriteRenderer gun, FieldTurretKind kind, FieldTurretDefinition definition)
         {
-            _sharedAtlas ??= Atlas.Load();
-            return _sharedAtlas == null ? null : new FieldTurretStatusFx(_sharedAtlas, gun, kind, definition);
+            var atlas = GetSharedAtlas();
+            return atlas == null ? null : new FieldTurretStatusFx(atlas, gun, kind, definition);
         }
 
         public void Update(double now, bool destroyed, int damagedSmokeCount, float heatRatio, double overheatStartedAt)
@@ -95,14 +97,14 @@ namespace TeamHJD.Game.FieldTurrets
 
             if (_recovering)
             {
-                int frame = FrameIndex(_atlas.Recovery[0], now - _recoveryStartedAt);
+                int frame = _atlas.GetFrameIndex(_atlas.Recovery[0], now - _recoveryStartedAt);
                 if (frame >= 0)
                 {
                     for (int i = 0; i < _smokeCount; i++)
                     {
                         var clip = _atlas.Recovery[_smoke[i].WreckFrame];
                         double durationScale = 1d - .17d * i;
-                        DrawSmoke(i, clip, FrameIndex(clip, (now - _recoveryStartedAt) / durationScale));
+                        DrawSmoke(i, clip, _atlas.GetFrameIndex(clip, (now - _recoveryStartedAt) / durationScale));
                     }
                     return;
                 }
@@ -112,7 +114,7 @@ namespace TeamHJD.Game.FieldTurrets
 
             SetSmokeCount(damagedSmokeCount, now);
             for (int i = 0; i < _smokeCount; i++)
-                DrawSmoke(i, _atlas.Damaged, FrameIndex(_atlas.Damaged, now - _smoke[i].StartedAt));
+                DrawSmoke(i, _atlas.Damaged, _atlas.GetFrameIndex(_atlas.Damaged, now - _smoke[i].StartedAt));
         }
 
         private void UpdateWreck(double now)
@@ -128,13 +130,13 @@ namespace TeamHJD.Game.FieldTurrets
             double elapsed = now - _wreckStartedAt;
             for (int i = 0; i < _smokeCount; i++)
             {
-                int frame = FrameIndex(_atlas.WreckSmoke, elapsed + 5d * i / _atlas.Fps);
+                int frame = _atlas.GetFrameIndex(_atlas.WreckSmoke, elapsed + 5d * i / _atlas.Fps);
                 _smoke[i].WreckFrame = Mathf.Max(0, frame);
                 DrawSmoke(i, _atlas.WreckSmoke, frame);
             }
             for (int i = 0; i < FireCount; i++)
             {
-                int frame = FrameIndex(_atlas.WreckFlame, elapsed + 7d * i / _atlas.Fps);
+                int frame = _atlas.GetFrameIndex(_atlas.WreckFlame, elapsed + 7d * i / _atlas.Fps);
                 Draw(ref _fire[i], FireNames[i], _atlas.WreckFlame, frame, 3, _fireOrigins[i], .85f);
             }
         }
@@ -286,14 +288,6 @@ namespace TeamHJD.Game.FieldTurrets
                 renderer.maskInteraction = _gun.maskInteraction;
         }
 
-        private int FrameIndex(Clip clip, double elapsed)
-        {
-            if (elapsed < 0 || double.IsInfinity(elapsed)) return -1;
-            double frame = Math.Floor(elapsed * _atlas.Fps);
-            if (clip.loop) return (int)(frame % clip.Count);
-            return frame < clip.Count ? (int)frame : -1;
-        }
-
         private void Draw(ref SpriteRenderer renderer, string name, Clip clip, int frame, int orderOffset,
             Vector3 origin, float scale)
         {
@@ -333,7 +327,7 @@ namespace TeamHJD.Game.FieldTurrets
             renderer.enabled = true;
         }
 
-        private sealed class Atlas
+        internal sealed class Atlas
         {
             private readonly AtlasData _data;
             private readonly Texture2D _texture;
@@ -428,6 +422,14 @@ namespace TeamHJD.Game.FieldTurrets
                 level >= 1 && level <= _missileHeatParts.GetLength(0) && frame >= 0 && frame < MissileFrameCount
                     ? _missileHeatParts[level - 1, frame] : null;
 
+            public int GetFrameIndex(Clip clip, double elapsed)
+            {
+                if (elapsed < 0 || double.IsInfinity(elapsed)) return -1;
+                double frame = Math.Floor(elapsed * Fps);
+                if (clip.loop) return (int)(frame % clip.Count);
+                return frame < clip.Count ? (int)frame : -1;
+            }
+
             public Sprite GetSprite(int index)
             {
                 if (_sprites[index] != null) return _sprites[index];
@@ -449,7 +451,7 @@ namespace TeamHJD.Game.FieldTurrets
         [Serializable] private sealed class PixelFx { public int fps; public int[] pivot; }
         [Serializable] private sealed class Frame { public string filename; public FrameRect frame; }
         [Serializable] private struct FrameRect { public int x, y, w, h; }
-        [Serializable] private sealed class Clip
+        [Serializable] internal sealed class Clip
         {
             public string name;
             public int from, to;
