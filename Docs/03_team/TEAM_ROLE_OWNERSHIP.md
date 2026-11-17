@@ -1,7 +1,7 @@
 # Team Role Ownership — 5개 제품 영역
 
-기준일: 2026-09-20
-상태: 역할·AI·협업 경계의 현행 기준 / Sprint 1 역할 확정
+기준일: 2026-11-17
+상태: 역할·AI·협업 경계의 현행 기준
 
 ## 1. 팀 구성
 
@@ -14,6 +14,18 @@
 | 조수빈 | Enemy, Encounter & AI Platform Engineer | 확정 |
 
 김진태와 황재동의 역할은 각각 확정됐다. 제품 영역은 다른 역할에 자동 합치지 않으며, 각 Task에는 지원자와 가용 시간을 명시한다.
+
+### 11/17 담당 조정
+
+| 범위 | 최종 담당 |
+| --- | --- |
+| Core 및 통합 | 양현석 |
+| Player 및 스토리 | 이영빈 |
+| 날씨 및 우주선 | 김진태 |
+| 터렛·성장 및 맵·스포너 배치 | 황재동 |
+| Enemy·Encounter 구현 | 조수빈 |
+
+스포너의 맵 배치는 황재동이 맡는다. 스폰 정책과 런타임 연계는 Core가 주도하고 Enemy와 협업한다. [11/17 주간 진행상황 보고](../99_archive/2026-11-17/weekly-progress.md)
 
 ## 2. 공통 운영 원칙
 
@@ -42,7 +54,7 @@
 **직접 Owner가 아님**
 
 - Player 조작감·Combat HUD 세부 구현(이영빈)
-- Planet/Hub authored Scene와 Mission Content(김진태)
+- Planet 맵·스포너 배치(황재동), 우주선 공간·날씨(김진태), 스토리(이영빈)
 - Turret/Power 실제 기능과 Balance(황재동)
 - Enemy/Boss/Encounter와 AI runtime(조수빈)
 
@@ -50,6 +62,7 @@
 
 **Owner**
 
+- 스토리 기획과 제작 방향
 - Player 이동·조준·사격·능력·피격·회복·상호작용 Presentation
 - Input, Camera, Targeting feedback, Combat HUD, 접근성, Tutorial
 - Hub Console의 player-facing interaction pattern
@@ -60,14 +73,13 @@
 **경계**
 
 - Match State·Reward·Currency를 직접 변경하지 않고 양현석의 Command/Use Case를 사용한다.
-- 환경과 공간은 김진태, Turret/Progression 의미는 황재동, Enemy/Boss 행동은 조수빈과 협업한다.
+- 맵과 Turret/Progression은 황재동, 우주선 공간과 날씨는 김진태, Enemy/Boss 행동은 조수빈과 협업한다.
 
 ### 김진태 — World, Mission & Agent Experience Designer
 
 **Owner**
 
-- Planet topology, Sector/Expansion, 방어 거점, Collision, Spawn 접근로, Boss arena
-- 환경 기믹, 위험 지형, 상호작용 오브젝트, Dynamic Mission/Event
+- 날씨와 우주선 공간
 - Hub Interior, 공간 동선, 다이아제틱 UI의 월드 배치
 - `PlanetDefinition`, `MissionDefinition`, `SectorDefinition`, `EnvironmentModifier`
 - `AllyPlayerAgent`의 목표·지원·생존·Mission 우선순위와 구체 구현
@@ -83,6 +95,7 @@
 
 **Owner**
 
+- 맵 설계·배치, 맵에 놓는 스포너 배치
 - Cannon/Missile/Laser 터렛, Control Unit, Power 소비·회수, Targeting과 방어 전술
 - `설치`는 Scene/Prefab authoring을 의미하며 플레이어의 건설 기능을 의미하지 않는다.
 - Engineering/Research, 해금·강화와 Resource 소비 경험
@@ -99,7 +112,7 @@
 **Owner**
 
 - 기본/탱커/원거리/암살자/Elite/Boss의 행동, Targeting, Skill과 Boss phase
-- `EncounterDirector`: Wave, Spawn 위치·타이밍, 조합, 압박 곡선과 Boss 투입
+- `EncounterDirector`: Wave, Spawn 타이밍·조합, 압박 곡선과 Boss 투입. 맵의 스포너 배치는 황재동과 협업
 - AI framework, behavior/state runtime, 감지·경로·타게팅·action executor
 - `EnemyArchetype`, `BossDefinition`의 행동 구현과 Data 연결
 - AI 관련 성능 Test와 공통 Debug 도구
@@ -114,8 +127,8 @@
 
 | AI | 최종 Owner | 협업 |
 | --- | --- | --- |
-| Enemy Actor AI | 조수빈 | 황재동: 수치/상성, 김진태: 공간, 양현석: Command |
-| Encounter/Horde Director | 조수빈 | 황재동: 난이도, 김진태: Spawn layout, 양현석: ModeRules |
+| Enemy Actor AI | 조수빈 | 황재동: 수치/상성·맵 공간, 양현석: Command |
+| Encounter/Horde Director | 조수빈 | 황재동: 난이도·스포너 배치, 양현석: ModeRules |
 | Ally Player Agent | 김진태 | 조수빈: runtime, 이영빈: Player Action, 황재동: profile, 양현석: authority |
 | Rival Player Agent | 김진태, Deferred | 조수빈/이영빈/황재동/양현석 |
 
@@ -129,9 +142,9 @@ AI의 실행 의도는 각 Feature의 명시 요청 API로 전달한다. Core/Ho
 | --- | --- | --- | --- |
 | Spaceship → Planet Launch/Return | 양현석 | 이영빈, 김진태 | Mission/Match/Result/Profile이 정확히 왕복 |
 | Player Action → Match Command | 이영빈 | 양현석, 조수빈 | 인간/AI/향후 Network 입력이 같은 계약 사용 |
-| Expansion → Mission/UI | 김진태 | 양현석, 이영빈 | Sector 상태와 World/Minimap/Mission UI 일치 |
+| Expansion → Mission/UI | 황재동 | 양현석, 이영빈 | Sector 상태와 World/Minimap/Mission UI 일치 |
 | Upgrade → Turret/Power | 황재동 | 양현석, 이영빈 | 다음 MatchConfig와 전투 수치에 반영 |
-| Enemy/Director → World/Balance | 조수빈 | 김진태, 황재동, 양현석 | Spawn·행동·수치·권한이 각 Owner 경계 준수 |
+| Enemy/Director → World/Balance | 조수빈 | 황재동, 양현석 | Spawn·행동·수치·권한이 각 Owner 경계 준수 |
 | 이탈 Player → Ally AI → 복귀 | 김진태 | 양현석, 이영빈, 조수빈 | Slot·권한·표현·Agent 행동이 끊기지 않음 |
 | 통합 Build/Playtest | Sprint Release Captain | 전체 팀 | 같은 Build로 Core Flow 완주 |
 
@@ -143,7 +156,7 @@ AI의 실행 의도는 각 Feature의 명시 요청 API로 전달한다. Core/Ho
 | --- | --- | --- |
 | 양현석 | 황재동 또는 조수빈 | 계약이 Feature 구현을 과도하게 제한하지 않는가 |
 | 이영빈 | 양현석 또는 황재동 | State/Command와 UI·전투 의미가 일치하는가 |
-| 김진태 | 양현석 또는 조수빈 | World Data, Spawn, AI 경계가 맞는가 |
+| 김진태 | 양현석 또는 조수빈 | 날씨·우주선·AI 경계가 맞는가 |
 | 황재동 | 양현석 또는 조수빈 | State/Reward 계약과 Enemy 난이도가 맞는가 |
 | 조수빈 | 양현석 또는 황재동 | Authority와 Balance Data를 우회하지 않는가 |
 
@@ -163,7 +176,7 @@ Sprint 1의 연결 순서는 `황재동 터렛 데이터 → 조수빈 목표 �
 
 ## 7. Milestone 적용
 
-Milestone별 P0/P1/P2/P3 업무는 [milestones-and-core-design.md](../01_planning/milestones-and-core-design.md)가 기준이다. 역할 자체는 Milestone마다 바뀌지 않으며, 작업량만 달라진다.
+Milestone별 P0/P1/P2/P3 업무는 [milestones-and-core-design.md](../01_planning/milestones-and-core-design.md)가 기준이다. Milestone별 작업량을 조정하고, 역할 변경은 위 현행 기준에 반영한다.
 
 - M0/M1: 양현석의 Core 부담이 가장 크고 이영빈·김진태·황재동·조수빈이 각 Feature의 계약·최소 Slice를 병렬 제공한다.
 - M2: 김진태·황재동·조수빈의 Content·Gameplay 비중이 커지고 이영빈이 Player/UX, 양현석이 왕복 통합을 책임진다.
