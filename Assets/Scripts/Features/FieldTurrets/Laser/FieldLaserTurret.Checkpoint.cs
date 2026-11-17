@@ -112,7 +112,7 @@ public partial class FieldLaserTurret : IFieldTurretCombatCheckpoint
         _restoredTarget = null;
 
         float overHeatTime = Definition.OverHeatTime;
-        SetGunHeatTint(overHeatTime > 0f ? FireTime / overHeatTime : 0f);
+        SetGunHeatVisual(overHeatTime > 0f ? FireTime / overHeatTime : 0f);
         if (!IsActivated && FireTime <= 0f && GunRenderer != null)
             GunRenderer.color = Color.gray;
 

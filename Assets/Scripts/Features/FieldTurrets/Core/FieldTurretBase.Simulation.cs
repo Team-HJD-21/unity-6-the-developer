@@ -26,6 +26,8 @@ namespace TeamHJD.Game.FieldTurrets
                 _coolingEndsAt = current + System.Math.Max(0, _coolingEndsAt - previous);
             else
                 _coolingEndsAt = current;
+            _overheatFlashStartedAt += current - previous;
+            _statusFx?.RebaseTime(current - previous);
             OnSimulationTimeRebased(previous, current);
         }
 

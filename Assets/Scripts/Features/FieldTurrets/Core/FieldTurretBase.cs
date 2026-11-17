@@ -53,7 +53,25 @@ namespace TeamHJD.Game.FieldTurrets
         private float _coolingInitialHeatRatio;
         private float _gunHeatStrength;
         private SpriteRenderer _gunHeatWave;
+        private Material _gunHeatWaveMaterial;
+        private Sprite _heatWaveGunSprite;
+        private static readonly int HeatWaveTex = Shader.PropertyToID("_HeatWaveTex");
+        private static readonly int HeatWaveAlphaTex = Shader.PropertyToID("_HeatWaveAlphaTex");
+        private static readonly int HeatWaveUseSplitAlpha = Shader.PropertyToID("_HeatWaveUseSplitAlpha");
+        private static readonly int HeatWaveUvRect = Shader.PropertyToID("_HeatWaveUvRect");
+        private static readonly int HeatWaveScaleId = Shader.PropertyToID("_HeatWaveUvScale");
+        private static readonly int HeatWaveLocalized = Shader.PropertyToID("_HeatWaveLocalized");
+        private static readonly int HeatWaveGunTexture = Shader.PropertyToID("_HeatWaveGunTexture");
+        private static readonly int HeatWaveGunU = Shader.PropertyToID("_HeatWaveGunU");
+        private static readonly int HeatWaveGunV = Shader.PropertyToID("_HeatWaveGunV");
+        private static readonly int HeatWaveGunTransform = Shader.PropertyToID("_HeatWaveGunTransform");
+        private static readonly int HeatWaveGunBounds = Shader.PropertyToID("_HeatWaveGunBounds");
+        private static readonly int HeatWaveGunTint = Shader.PropertyToID("_HeatWaveGunTint");
+        private static readonly int HeatWavePartOpacity = Shader.PropertyToID("_HeatWavePartOpacity");
+        private const float HeatWavePartPadding = 7f;
         private FieldTurretTreeMask _treeMask;
+        private FieldTurretStatusFx _statusFx;
+        private double _overheatFlashStartedAt = double.NegativeInfinity;
         private bool _isResolvingDestruction;
         public bool IsInitialized => _activationController != null;
         // Shared by active overheat recovery and cooling after switching off.
@@ -368,6 +386,7 @@ namespace TeamHJD.Game.FieldTurrets
             if (result is FieldTurretActivationResult.Activated or
                 FieldTurretActivationResult.Deactivated)
             {
+                if (shouldActivate && GunRenderer != null) GunRenderer.color = Color.white;
                 OnActivationChanged(shouldActivate);
                 TeamHJD.Game.Presentation.GameAudioManager.Play(shouldActivate ? TeamHJD.Game.Presentation.GameSound.TurretOn
                     : TeamHJD.Game.Presentation.GameSound.TurretOff, this);
@@ -430,7 +449,10 @@ namespace TeamHJD.Game.FieldTurrets
             {
                 _coolingDuration = Mathf.Max(0f, duration);
                 _coolingInitialHeatRatio = Mathf.Clamp01(initialHeatRatio);
-                _coolingEndsAt = FieldSeconds + _coolingDuration;
+                double now = FieldSeconds;
+                _coolingEndsAt = now + _coolingDuration;
+                if (IsActivated && _coolingDuration > 0f && _coolingInitialHeatRatio >= 1f)
+                    _overheatFlashStartedAt = now;
             }
 
             TimeTilFire = 0f;
@@ -452,7 +474,7 @@ namespace TeamHJD.Game.FieldTurrets
                 ? _coolingInitialHeatRatio * remaining / _coolingDuration
                 : 0f;
             ApplyCoolingHeat(heatRatio);
-            SetGunHeatTint(heatRatio);
+            SetGunHeatVisual(heatRatio);
             if (remaining > 0f) return;
 
             _coolingEndsAt = 0f;
@@ -466,29 +488,45 @@ namespace TeamHJD.Game.FieldTurrets
 
         protected virtual void ApplyCoolingHeat(float heatRatio) { }
 
-        protected void SetGunHeatTint(float heatRatio)
+        protected void SetGunHeatVisual(float heatRatio)
         {
             _gunHeatStrength = Mathf.Clamp01(heatRatio);
             if (GunRenderer != null)
-                GunRenderer.color = Color.Lerp(Color.white, new Color(1f, 0.25f, 0.25f), _gunHeatStrength);
+                GunRenderer.color = IsActivated ? Color.white : InactiveGunColor;
         }
 
         protected virtual void LateUpdate()
         {
-            UpdateHeatWave();
-            if (_treeMask == null) return;
+            if (GunRenderer == null || !IsInitialized) return;
 
-            Bounds bounds = GunRenderer.bounds;
-            if (_gunHeatWave != null && _gunHeatWave.enabled) bounds.Encapsulate(_gunHeatWave.bounds);
-            _treeMask.Update(bounds);
+            double now = FieldSeconds;
+            int maxHealth = MaxHealth;
+            int smokeCount = maxHealth > 0 ? Mathf.Clamp((int)(4L * (maxHealth - CurrentHealth) / maxHealth), 0, 3) : 0;
+            if (_statusFx == null && (IsDestroyed || smokeCount > 0 || _gunHeatStrength > 0f || _overheatFlashStartedAt != double.NegativeInfinity))
+                _statusFx = FieldTurretStatusFx.Create(GunRenderer, Kind, Definition);
+            _statusFx?.Update(now, IsDestroyed, smokeCount, _gunHeatStrength, _overheatFlashStartedAt);
+            UpdateHeatWave();
+
+            if (_treeMask != null)
+            {
+                Bounds bounds = GunRenderer.bounds;
+                if (_gunHeatWave != null && _gunHeatWave.enabled) bounds.Encapsulate(_gunHeatWave.bounds);
+                _statusFx?.Encapsulate(ref bounds);
+                _treeMask.Update(bounds);
+            }
+
             if (_gunHeatWave != null && _gunHeatWave.maskInteraction != GunRenderer.maskInteraction)
                 _gunHeatWave.maskInteraction = GunRenderer.maskInteraction;
+            _statusFx?.ApplyGunMask();
         }
 
         private void UpdateHeatWave()
         {
             SpriteRenderer source = GunRenderer;
-            if (_gunHeatStrength <= 0f || IsLocked || IsDestroyed || heatWaveMaterial == null || source == null ||
+            SpriteRenderer hotParts = _statusFx?.HeatPartsRenderer;
+            bool localized = hotParts != null;
+            bool showHeat = IsCoolingDown || (localized && IsActivated);
+            if (!showHeat || _gunHeatStrength <= 0f || IsLocked || IsDestroyed || heatWaveMaterial == null || source == null ||
                 !source.enabled || !source.gameObject.activeInHierarchy || source.forceRenderingOff || source.sprite == null)
             {
                 if (_gunHeatWave != null) _gunHeatWave.enabled = false;
@@ -500,23 +538,87 @@ namespace TeamHJD.Game.FieldTurrets
                 var overlay = new GameObject("Heat Wave") { layer = source.gameObject.layer };
                 overlay.transform.SetParent(source.transform, false);
                 _gunHeatWave = overlay.AddComponent<SpriteRenderer>();
-                _gunHeatWave.sharedMaterial = heatWaveMaterial;
+                _gunHeatWaveMaterial = new Material(heatWaveMaterial) { hideFlags = HideFlags.DontSave };
+                _gunHeatWave.sharedMaterial = _gunHeatWaveMaterial;
             }
 
-            float scale = Mathf.Max(1f, heatWaveScale);
-            Vector3 center = source.sprite.bounds.center;
-            center.x *= source.flipX ? -1f : 1f;
-            center.y *= source.flipY ? -1f : 1f;
-            _gunHeatWave.transform.localPosition = center * (1f - scale);
-            _gunHeatWave.transform.localScale = new Vector3(scale, scale, 1f);
-            _gunHeatWave.sprite = source.sprite;
-            _gunHeatWave.flipX = source.flipX;
-            _gunHeatWave.flipY = source.flipY;
+            SpriteRenderer footprint = localized ? hotParts : source;
+            Sprite sprite = footprint.sprite;
+            Vector3 expansion = localized
+                ? new Vector3(1f + 2f * HeatWavePartPadding / sprite.rect.width, 1f + 2f * HeatWavePartPadding / sprite.rect.height, 1f)
+                : new Vector3(Mathf.Max(1f, heatWaveScale), Mathf.Max(1f, heatWaveScale), 1f);
+            bool spriteChanged = _gunHeatWave.sprite != sprite;
+            if (spriteChanged)
+            {
+                _gunHeatWave.sprite = sprite;
+                Vector2 min = Vector2.one, max = Vector2.zero;
+                foreach (Vector2 uv in sprite.uv)
+                {
+                    min = Vector2.Min(min, uv);
+                    max = Vector2.Max(max, uv);
+                }
+
+                Texture2D splitAlpha = sprite.associatedAlphaSplitTexture;
+                _gunHeatWaveMaterial.SetTexture(HeatWaveTex, sprite.texture);
+                _gunHeatWaveMaterial.SetTexture(HeatWaveAlphaTex, splitAlpha);
+                _gunHeatWaveMaterial.SetFloat(HeatWaveUseSplitAlpha, splitAlpha != null ? 1f : 0f);
+                _gunHeatWaveMaterial.SetVector(HeatWaveUvRect, new Vector4(min.x, min.y, max.x, max.y));
+                _gunHeatWaveMaterial.SetFloat(HeatWaveLocalized, localized ? 1f : 0f);
+            }
+
+            Vector3 footprintScale = localized ? footprint.transform.localScale : Vector3.one;
+            Vector3 scale = Vector3.Scale(footprintScale, expansion);
+            if (spriteChanged || _gunHeatWave.transform.localScale != scale)
+                _gunHeatWaveMaterial.SetVector(HeatWaveScaleId, new Vector4(expansion.x, expansion.y, 0f, 0f));
+
+            Vector3 center = sprite.bounds.center;
+            center.x *= footprint.flipX ? -1f : 1f;
+            center.y *= footprint.flipY ? -1f : 1f;
+            Vector3 origin = localized ? footprint.transform.localPosition : Vector3.zero;
+            Vector3 position = origin + Vector3.Scale(center, footprintScale - scale);
+            _gunHeatWave.transform.localPosition = position;
+            _gunHeatWave.transform.localScale = scale;
+            if (localized)
+            {
+                if (_heatWaveGunSprite != source.sprite) BindHeatWaveGunSprite(source.sprite);
+                _gunHeatWaveMaterial.SetVector(HeatWaveGunTransform, new Vector4(scale.x, scale.y,
+                    footprint.flipX ? -position.x : position.x, footprint.flipY ? -position.y : position.y));
+                _gunHeatWaveMaterial.SetColor(HeatWaveGunTint, source.color);
+                _gunHeatWaveMaterial.SetFloat(HeatWavePartOpacity, footprint.color.a);
+            }
+            _gunHeatWave.flipX = footprint.flipX;
+            _gunHeatWave.flipY = footprint.flipY;
             _gunHeatWave.maskInteraction = source.maskInteraction;
             _gunHeatWave.sortingLayerID = source.sortingLayerID;
-            _gunHeatWave.sortingOrder = source.sortingOrder - 1; // The distortion samples the map, so draw it behind the gun.
-            _gunHeatWave.color = new Color(1f, 1f, 1f, _gunHeatStrength);
+            _gunHeatWave.sortingOrder = source.sortingOrder + 6; // 과열 발광과 같은 나무 마스크 안에서 그 위에 그린다.
+            float intensity = localized ? _statusFx.HeatPartsStrength : _gunHeatStrength;
+            _gunHeatWave.color = new Color(1f, 1f, 1f, intensity);
             _gunHeatWave.enabled = true;
+        }
+
+        private void BindHeatWaveGunSprite(Sprite sprite)
+        {
+            // The UV basis follows cropped frames and packed atlas rotations.
+            Vector2[] vertices = sprite.vertices;
+            Vector2[] uv = sprite.uv;
+            ushort[] triangle = sprite.triangles;
+            int a = triangle[0], b = triangle[1], c = triangle[2];
+            Vector2 first = vertices[b] - vertices[a];
+            Vector2 second = vertices[c] - vertices[a];
+            Vector2 firstUv = uv[b] - uv[a];
+            Vector2 secondUv = uv[c] - uv[a];
+            float determinant = first.x * second.y - first.y * second.x;
+            Vector2 dx = (firstUv * second.y - secondUv * first.y) / determinant;
+            Vector2 dy = (secondUv * first.x - firstUv * second.x) / determinant;
+            Vector2 origin = uv[a] - dx * vertices[a].x - dy * vertices[a].y;
+
+            Bounds bounds = sprite.bounds;
+            Vector3 min = bounds.min, max = bounds.max;
+            _gunHeatWaveMaterial.SetTexture(HeatWaveGunTexture, sprite.texture);
+            _gunHeatWaveMaterial.SetVector(HeatWaveGunU, new Vector4(dx.x, dy.x, origin.x, 0f));
+            _gunHeatWaveMaterial.SetVector(HeatWaveGunV, new Vector4(dx.y, dy.y, origin.y, 0f));
+            _gunHeatWaveMaterial.SetVector(HeatWaveGunBounds, new Vector4(min.x, min.y, max.x, max.y));
+            _heatWaveGunSprite = sprite;
         }
 
         protected virtual void OnActivationChanged(bool isActivated)
@@ -550,6 +652,8 @@ namespace TeamHJD.Game.FieldTurrets
             _treeMask?.Dispose();
             _treeMask = null;
             if (_gunHeatWave != null) _gunHeatWave.enabled = false;
+            _statusFx?.Reset();
+            _overheatFlashStartedAt = double.NegativeInfinity;
             ReleaseMatchOperations();
             FieldTurretInstanceRegistry.Unregister(this);
         }
@@ -582,6 +686,7 @@ namespace TeamHJD.Game.FieldTurrets
         protected virtual void OnDestroy()
         {
             _activationController?.ReleaseForRemoval();
+            if (_gunHeatWaveMaterial != null) Destroy(_gunHeatWaveMaterial);
         }
 
         private IEnumerator RequestInitialActivation()
@@ -825,6 +930,7 @@ namespace TeamHJD.Game.FieldTurrets
             {
                 CancelInitialActivation();
                 _runtimeState.MarkDestroyed();
+                _overheatFlashStartedAt = double.NegativeInfinity;
                 float returnPercent = _configuredPowerSource is FieldTurretController controller
                     ? controller.DestructionPowerReturnPercent
                     : FieldTurretController.DefaultDestructionPowerReturnPercent;
@@ -891,6 +997,7 @@ namespace TeamHJD.Game.FieldTurrets
             }
 
             _activationController?.ReleaseAfterRestore();
+            _statusFx?.HideFire();
             OnRestored();
             FieldTurretInstanceRegistry.NotifyHealthChanged(this, CurrentHealth, MaxHealth);
             FieldTurretInstanceRegistry.NotifyRestored(this);
