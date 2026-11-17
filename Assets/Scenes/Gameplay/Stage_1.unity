@@ -566683,12 +566683,12 @@ MonoBehaviour:
   maximumPower: 500
   fixedMaximumPower: 500
   destructionPowerReturnPercent: 50
-  unlockGridOrigin: {x: 0, y: 0}
+  unlockGridOrigin: {x: 11.24, y: -19.76}
   unlockGridOriginZ: 0
-  unlockGridMapWidth: 275
-  unlockGridMapHeight: 275
-  unlockGridCellsX: 16
-  unlockGridCellsY: 16
+  unlockGridMapWidth: 220
+  unlockGridMapHeight: 170
+  unlockGridCellsX: 22
+  unlockGridCellsY: 17
   unlockZoneCount: 5
 --- !u!4 &393497336
 Transform:

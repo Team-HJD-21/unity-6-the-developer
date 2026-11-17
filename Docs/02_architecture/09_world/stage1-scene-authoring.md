@@ -5,6 +5,7 @@
 ## 편집 위치
 
 - 게임 시작 시 로드하는 제작본은 [Stage_1.unity](../../../Assets/Scenes/Gameplay/Stage_1.unity)다. 우주선 출구의 `missionSceneName`과 Build Settings도 이 경로를 사용한다. `Assets/Scenes/Reference/Stages` 아래에는 참고용 씬이 있고 [InitialStageTurretTest](../../../Assets/Scenes/Tests/InitialStageTurretTest.unity)는 독립 터렛 시험용이다.
+- Edit Mode에서 `FieldTurretController`를 선택하고 Scene 뷰의 **Gizmos**를 켜면 `Unlock Grid`의 점유·해금 셀 경계가 주황색으로 보인다. 같은 인스펙터에서 중심, 월드 크기, 칸 수를 조절하면 선도 바로 갱신된다. [점유·해금 규칙](../02_match/static-region-capture.md#정적-진행-규칙)
 - `Initial_Overworld_Base`는 육지 타일맵이다. `TilemapOuterBoundary`는 그 타일맵의 합성 윤곽에서 바깥 고리만 사용해 `MapBoundary`의 EdgeCollider2D를 만든다. 타일 편집이나 Undo·Redo 후 씬을 저장하고 안쪽 구멍에 경계가 생기는지 확인한다. [바닥·설치 판정 연결](../06_player/player-skill-review.md)
 - `Environment_Obj`는 나무와 기물을 그린다. Tilemap Renderer는 `Individual`, `Entities / 0`을 사용하며 스프라이트의 지면 접점과 월드 Y축으로 플레이어와 정렬한다. `Tile Ground Shadows`의 시간대별 길이와 X·Y 오프셋은 [그림자 설정](weather-system-guide.md#46-stage1-태양과-타일맵-기물-그림자)에서 조절한다.
 - 플레이 중 `Environment_Obj`의 `Stage Player Occlusion`이 로컬 카메라가 추적하는 플레이어를 가리기 시작한 앞쪽 나무와 바위의 스프라이트 전체를 약 0.18초에 걸쳐 반투명하게 만든다. 가림이 끝나면 약 0.24초에 걸쳐 타일의 원래 불투명도로 돌아온다. 인스펙터의 Occluded Alpha로 가려질 때 적용할 불투명도 비율을 조절할 수 있다.
