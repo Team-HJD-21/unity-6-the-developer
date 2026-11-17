@@ -96,7 +96,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
     }
     private void OverHeatAnimationController()//설정시간 도달 시 과열(TowerIsActivatedNow에서 수행)
     {
-        SetGunHeatTint(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
+        SetGunHeatVisual(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
 
         if (IsTargetInSight())//적이 사격 시야에 있음
         {

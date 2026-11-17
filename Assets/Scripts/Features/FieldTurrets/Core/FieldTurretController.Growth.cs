@@ -75,7 +75,8 @@ namespace TeamHJD.Game.FieldTurrets
                 if (active) { available -= cost; reserved += cost; }
                 var runtime = new FieldTurretRuntimeState.State(latest.Definition, definition.MaxHealth, health, r.IsDestroyed,
                     active, r.IsLocked, r.IsTemporarilySuspended && active, latest.DamageBonus, latest.Upgrade, latest.Rank,
-                    damage, power, range, health > 0 && health < definition.MaxHealth ? r.PendingRepairHealth : 0);
+                    damage, power, range, health > 0 && health < definition.MaxHealth ? r.PendingRepairHealth : 0,
+                    r.HasEverActivated);
                 runtime.ValidateFor(definition, upgrade);
                 var common = new FieldTurretActorState(old.EntityId, runtime, old.Pose, old.HasHead, old.HeadLocalRotation,
                     old.FireElapsed, old.CoolingRemaining, old.CoolingDuration, old.CoolingInitialHeatRatio,
