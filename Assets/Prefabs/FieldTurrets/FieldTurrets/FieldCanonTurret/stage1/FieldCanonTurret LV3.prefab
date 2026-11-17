@@ -167,7 +167,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetType: 1
-  maxAttackers: 10
+  maxAttackers: 20
   maxHealth: 0
   currentHealth: 0
   firepowerEfficiency: 0
@@ -644,7 +644,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: -880326001
   m_SortingLayer: 1
-  m_SortingOrder: 3
+  m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
 --- !u!60 &5206600541424506413

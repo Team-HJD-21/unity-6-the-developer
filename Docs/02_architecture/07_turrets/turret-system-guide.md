@@ -90,7 +90,7 @@ flowchart TD
 
 필드 터렛 프리팹의 `Base` 자식은 `TurretBase` 레이어를 사용한다. 최상위 오브젝트와 사거리 표시는 `Ignore Raycast` 레이어를, 포신과 발사대는 `Turret` 레이어를 사용한다. 기존 미니맵 표시는 `MiniMap`을 사용한다. 본편 HUD의 `StageTurretSelection`은 `Physics2D.AllLayers`로 몸체 콜라이더를 찾은 뒤 부모의 `FieldTurretBase`를 확인한다.
 
-필드 터렛의 베이스 그룹은 바닥(`Map / 0`) 위의 `Map / 1`을 사용한다. 포신과 발사대는 `Sort At Root`인 `Entities / 3`으로 그린다. 플레이어와 나무는 `Entities / 0`에서 월드 Y축으로 정렬한다. 레이저 빔은 별도 `Entities / 1` 그룹을 사용해 포신 앞을 덮지 않는다.
+필드 터렛의 베이스 그룹은 바닥(`Map / 0`) 위의 `Map / 1`을 사용한다. 포신과 발사대의 `Sort At Root` 그룹은 `Entities / 0`에서 몬스터·플레이어·나무와 월드 Y축으로 정렬한다. 포신 그룹 안의 SpriteRenderer 순서는 기존 값을 사용한다. 레이저 빔은 별도 `Entities / 1` 그룹을 사용한다. 포구에서 빔이 포신을 덮는지는 Game 카메라에서 조준 방향을 바꿔 확인한다.
 
 [FieldTurretTreeMask](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretTreeMask.cs)는 같은 씬의 `Entities / 0` Individual 타일맵에서 `Overworld_Trees_` 스프라이트를 검색한다. 나무 접지점이 터렛보다 앞에 있고 실루엣이 포신, 과열 아지랑이 또는 포신에 달린 LED와 겹치면 포신 그룹에 마스크를 적용한다. 과열 아지랑이는 포신 그룹 안에서 포신과 LED 위에 그린다. 달아오르는 부품이 있는 터렛은 붉은 발광 영역 주변에 아지랑이를 그린다. 아지랑이와 LED도 같은 나무 실루엣에 가려진다. 겹침이 사라지면 포신과 LED의 기존 마스크 설정을 복구한다. 재검증할 때는 실제로 양쪽 포신이 나무에 가려진 상태에서 캐논과 미사일을 같은 화면에 놓고 줌 아웃해 스프라이트와 가림을 함께 확인한다.
 
@@ -146,6 +146,8 @@ Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. Canon/Missi
 | `OverHeatTime` | Canon 연속 사격 과열 기준 | 초 단위 |
 | `OverHeatMissileCount` | Missile 과열 기준 발사 횟수 | Canon에서는 0 |
 | `CoolTime` | Canon/Missile 과열 후 냉각 시간 | 초 단위 |
+
+Stage1의 캐논 LV1~3은 최대 체력 500, 미사일 LV1~3은 최대 체력 1000을 사용한다.
 
 예시 ID는 `canon_stage1_lv1`, `missile_stage3_lv2`다. `Id`는 저장·조회용이고 `DisplayName`은 UI용이므로 서로 대신 사용하지 않는다.
 
