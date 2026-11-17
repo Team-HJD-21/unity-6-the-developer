@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using NavMeshPlus.Components;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 계산한 경로를 따라 Rigidbody2D에 이동 힘을 적용한다.
@@ -7,6 +10,8 @@ public partial class EnemyMovement : MonoBehaviour
 {
     // Inspector 설정과 제작 참조
     [SerializeField] private float arrivalDistance = 0.4f;
+    [SerializeField] private int navMeshAgentTypeId;
+    [SerializeField, Min(0f)] private float pathCornerOffset = 0.75f;
 
     [Header("이동 설정")]
     [SerializeField] private Rigidbody2D rigidbody2D;
@@ -16,8 +21,18 @@ public partial class EnemyMovement : MonoBehaviour
     [SerializeField, Min(1f)] private float pushSpeedLimitMultiplier = 1.1f;
 
     // 실행 중 참조와 상태
+    private readonly List<RaycastHit2D> _movementHits = new();
+    private BoxCollider2D _footCollider;
     private Vector3[] _path;
     private int _currentPath = 0;
+    private Vector3[] _shortcutPath;
+    private int _shortcutCorner;
+    private float _shortcutRefreshIn;
+    private int _routeVariant = -1;
+    private uint _cornerOffsetSeed;
+    private static readonly Unity.Profiling.ProfilerMarker DirectionMarker = new("EnemyMovement.PathDirection");
+    private static readonly Unity.Profiling.ProfilerMarker MoveMarker = new("EnemyMovement.Move");
+    private static readonly Unity.Profiling.ProfilerMarker BrakeMarker = new("EnemyMovement.Brake");
 
     /// <summary>감속 효과를 적용하기 전의 설정 이동속도다.</summary>
     public float BaseMoveSpeed => Mathf.Max(0f, moveSpeed);
@@ -42,8 +57,22 @@ public partial class EnemyMovement : MonoBehaviour
     {
         if (rigidbody2D == null)
             rigidbody2D = GetComponent<Rigidbody2D>();
+        _footCollider = transform.Find("Foot")?.GetComponent<BoxCollider2D>();
+        _steeringTargeting = GetComponent<EnemyTargeting>();
+        _avoidanceRefreshIn = Mathf.Abs(GetInstanceID() % 101) * 0.001f;
         _slowHealth = GetComponent<EnemyHealth>();
         _slowNetwork = GetComponent<EnemyNetworkController>();
+    }
+
+    internal int GetNavMeshAgentTypeId(Scene scene)
+    {
+        if (navMeshAgentTypeId != 0)
+        {
+            foreach (var surface in NavMeshSurface.activeSurfaces)
+                if (surface.gameObject.scene == scene && surface.agentTypeID == navMeshAgentTypeId)
+                    return navMeshAgentTypeId;
+        }
+        return 0;
     }
 
     // 외부 호출과 상태 변경
@@ -64,15 +93,110 @@ public partial class EnemyMovement : MonoBehaviour
         if (target == null)
             return false;
 
+        if (_routeVariant < 0)
+        {
+            var identity = GetComponent<TeamHJD.Game.Presentation.Scene.SceneEntityIdentity>();
+            string id = identity != null ? identity.EntityId.Value : null;
+            uint hash = (uint)GetInstanceID();
+            if (!string.IsNullOrEmpty(id))
+            {
+                hash = 2166136261;
+                foreach (char character in id) hash = unchecked((hash ^ character) * 16777619);
+            }
+            _routeVariant = (int)(hash % 8);
+            _cornerOffsetSeed = hash;
+        }
+
         if (!EnemyNavMeshPathfinder.TryCalculatePath(
-                transform.position, target.position, out Vector3[] newPath))
+                transform.position, target.position, GetNavMeshAgentTypeId(gameObject.scene), out Vector3[] newPath,
+                _routeVariant, gameObject.scene.handle))
         {
             return false;
         }
 
-        _path = newPath;
+        _path = AddFacilityApproach(target, SpreadPathCorners(newPath));
         _currentPath = 0;
-            return true;
+        return true;
+    }
+
+    private Vector3[] SpreadPathCorners(Vector3[] path)
+    {
+        int type = GetNavMeshAgentTypeId(gameObject.scene);
+        float maximum = Mathf.Min(pathCornerOffset, UnityEngine.AI.NavMesh.GetSettingsByID(type).agentRadius * 0.75f);
+        if (path.Length < 3 || maximum <= 0f)
+            return path;
+
+        var query = new UnityEngine.AI.NavMeshQueryFilter
+        {
+            agentTypeID = type,
+            areaMask = UnityEngine.AI.NavMesh.AllAreas
+        };
+        Vector3[] spread = null;
+        for (int i = 1; i < path.Length - 1; i++)
+        {
+            uint hash = _cornerOffsetSeed ^
+                unchecked((uint)Mathf.RoundToInt(path[i].x * 100f) * 73856093u) ^
+                unchecked((uint)Mathf.RoundToInt(path[i].y * 100f) * 19349663u);
+            hash ^= hash << 13;
+            hash ^= hash >> 17;
+            hash ^= hash << 5;
+            float angle = (hash & 65535u) / 65536f * Mathf.PI * 2f;
+            float distance = maximum * (0.4f + ((hash >> 16) & 65535u) / 65535f * 0.6f);
+            Vector3 previous = spread != null ? spread[i - 1] : path[i - 1];
+            for (int attempt = 0; attempt < 4; attempt++)
+            {
+                float turn = angle + attempt * Mathf.PI * 0.5f;
+                Vector3 probe = path[i] + new Vector3(Mathf.Cos(turn), Mathf.Sin(turn), 0f) * distance;
+                if (!UnityEngine.AI.NavMesh.SamplePosition(probe, out var point, 0.1f, query) ||
+                    Vector2.Distance(point.position, path[i]) < 0.1f ||
+                    UnityEngine.AI.NavMesh.Raycast(previous, point.position, out _, query) ||
+                    UnityEngine.AI.NavMesh.Raycast(point.position, path[i + 1], out _, query))
+                    continue;
+
+                spread ??= (Vector3[])path.Clone();
+                spread[i] = point.position;
+                break;
+            }
+        }
+        return spread ?? path;
+    }
+    private Vector3[] AddFacilityApproach(Transform target, Vector3[] path, Vector2? contactPoint = null)
+    {
+        if (_footCollider == null || path.Length == 0 ||
+            !target.TryGetComponent(out TargetableComponent targetable) ||
+            targetable.TargetType != TargetType.Turret)
+        {
+            return path;
+        }
+
+        Vector2 start = path[path.Length - 1];
+        Vector2 end = contactPoint ?? (Vector2)target.position;
+        Vector2 offset = (Vector2)_footCollider.transform.TransformPoint(_footCollider.offset) -
+            (Vector2)transform.position;
+        Vector3 scale = _footCollider.transform.lossyScale;
+        Vector2 size = Vector2.Scale(_footCollider.size, new Vector2(Mathf.Abs(scale.x), Mathf.Abs(scale.y)));
+        Vector2 direction = end - start;
+        if (direction.sqrMagnitude <= arrivalDistance * arrivalDistance)
+            return path;
+
+        var filter = new ContactFilter2D { useTriggers = false };
+        int layers = Physics2D.GetLayerCollisionMask(_footCollider.gameObject.layer) | _footCollider.includeLayers;
+        filter.SetLayerMask(layers & ~_footCollider.excludeLayers);
+        gameObject.scene.GetPhysicsScene2D().BoxCast(start + offset, size, _footCollider.transform.eulerAngles.z,
+            direction.normalized, direction.magnitude, filter, _movementHits);
+        foreach (RaycastHit2D hit in _movementHits)
+        {
+            if (hit.rigidbody == rigidbody2D || hit.collider.transform.IsChildOf(target))
+                continue;
+            if (hit.rigidbody == null || hit.rigidbody.bodyType != RigidbodyType2D.Dynamic)
+                return path;
+        }
+
+        // 마지막 접근에서는 목적 시설과의 물리 접촉과 기존 공격 사거리 판정에 맡긴다.
+        var completedPath = new Vector3[path.Length + 1];
+        System.Array.Copy(path, completedPath, path.Length);
+        completedPath[path.Length] = new Vector3(end.x, end.y, 0f);
+        return completedPath;
     }
 
     /// <summary>
@@ -80,20 +204,22 @@ public partial class EnemyMovement : MonoBehaviour
     /// </summary>
     public bool TryGetNextPathDirection(out Vector2 direction)
     {
+        using var profile = DirectionMarker.Auto();
         direction = Vector2.zero;
 
         if (_path == null)
             return false;
 
         Vector2 position = transform.position;
-        float arrivalDistanceSquared = arrivalDistance * arrivalDistance;
-
-        // 이미 도착한 지점은 건너뛴다.
-        while (_currentPath < _path.Length &&
-               arrivalDistance >= 0f &&
-               ((Vector2)_path[_currentPath] - position).sqrMagnitude
-               <= arrivalDistanceSquared)
+        while (_currentPath < _path.Length && arrivalDistance >= 0f)
         {
+            float tolerance = _currentPath < _path.Length - 1
+                ? Mathf.Min(arrivalDistance, 0.1f)
+                : arrivalDistance;
+            if (((Vector2)_path[_currentPath] - position).sqrMagnitude > tolerance * tolerance &&
+                !CanSkipPathCorner(position))
+                break;
+
             _currentPath++;
         }
 
@@ -104,18 +230,70 @@ public partial class EnemyMovement : MonoBehaviour
         return true;
     }
 
+    private bool CanSkipPathCorner(Vector2 position)
+    {
+        if (_currentPath >= _path.Length - 1 || _footCollider == null)
+            return false;
+
+        Vector2 offset = position - (Vector2)_path[_currentPath];
+        if (_currentPath == 0 && offset.sqrMagnitude > 9f)
+            return false;
+
+
+        if (_shortcutPath != _path || _shortcutCorner != _currentPath)
+        {
+            _shortcutPath = _path;
+            _shortcutCorner = _currentPath;
+            _shortcutRefreshIn = 0f;
+        }
+        _shortcutRefreshIn -= Time.fixedDeltaTime;
+        if (_shortcutRefreshIn > 0f)
+            return false;
+        _shortcutRefreshIn = 0.2f;
+
+        Vector2 next = (Vector2)_path[_currentPath + 1] - position;
+        var filter = new ContactFilter2D { useTriggers = false };
+        int layers = Physics2D.GetLayerCollisionMask(_footCollider.gameObject.layer) | _footCollider.includeLayers;
+        filter.SetLayerMask(layers & ~_footCollider.excludeLayers);
+        _footCollider.Cast(next.normalized, filter, _movementHits, next.magnitude);
+        foreach (RaycastHit2D hit in _movementHits)
+        {
+            if (hit.rigidbody == rigidbody2D ||
+                (hit.rigidbody != null && hit.rigidbody.bodyType == RigidbodyType2D.Dynamic))
+                continue;
+            return false;
+        }
+
+        foreach (var surface in NavMeshSurface.activeSurfaces)
+        {
+            if (surface.gameObject.scene != gameObject.scene)
+                continue;
+            var query = new UnityEngine.AI.NavMeshQueryFilter
+            {
+                agentTypeID = GetNavMeshAgentTypeId(gameObject.scene),
+                areaMask = UnityEngine.AI.NavMesh.AllAreas
+            };
+            return UnityEngine.AI.NavMesh.SamplePosition(position, out var origin, 3f, query) &&
+                !UnityEngine.AI.NavMesh.Raycast(origin.position, _path[_currentPath + 1], out _, query);
+        }
+
+        return true;
+    }
+
     /// <summary>
     /// 목표 속도를 향해 가속하고, 방향 전환과 초과 속도를 보정한다.
     /// </summary>
     /// <param name="moveDirection">정규화된 이동 방향.</param>
     public void Move(Vector2 moveDirection)
     {
+        using var profile = MoveMarker.Auto();
         if (moveDirection.sqrMagnitude <= 0.0001f)
         {
             Brake();
             return;
         }
 
+        moveDirection = AvoidBlockedMovement(moveDirection);
         Vector2 currentVelocity = LimitPushSpeed();
         float deltaTime = Time.fixedDeltaTime;
 
@@ -154,6 +332,9 @@ public partial class EnemyMovement : MonoBehaviour
     /// </summary>
     public void Brake()
     {
+        using var profile = BrakeMarker.Auto();
+        _avoidanceRefreshIn = 0f;
+        _progressPath = null;
         Vector2 currentVelocity = LimitPushSpeed();
 
         if (moveDeceleration <= 0f)
