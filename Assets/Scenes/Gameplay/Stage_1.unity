@@ -5847,11 +5847,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 96.5
+      value: 109.73
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -35.8
+      value: -19.92
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1748635,7 +1748635,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0b94252a3ba24a4ab4eb58dc81ea009b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageBossBattlePresentation
   StageHud: {fileID: 2000501901}
   SkillHud: {fileID: 2000502101}
@@ -1748654,7 +1748654,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5ae30c70222743d1908474e61d7dc04e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: TeamHJD.Game.Bootstrap::TeamHJD.Game.Bootstrap.SceneComposition.FinalBattleSceneDriver
   scenePath: Assets/Scenes/Gameplay/BossRoom/Stage_1_BossRoom.unity
   fieldNavigationSources:
@@ -1749025,11 +1749025,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -34.54
+      value: -38.43
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -92.94
+      value: -99.2
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1749217,11 +1749217,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -102.98
+      value: -105
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -5.6
+      value: 2.97
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1751636,11 +1751636,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 52.1
+      value: 69.46
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -37.7
+      value: -23.41
       objectReference: {fileID: 0}
     - target: {fileID: 4467702849932078065, guid: 54672b8b43fd9c3429d2a750bdef1970, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1752356,7 +1752356,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 926010e7e77558345a8cd4ff84dd237a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBossCutscenePreview
 --- !u!1 &1807941967
 GameObject:
@@ -1756503,8 +1756503,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 35cfa078266d49a9855dab351d21d607, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2000502100
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1756787,7 +1756787,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 12390ed66be84615b11f88cf1192f8cb, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillHud
 --- !u!1 &2000610000
 GameObject:
@@ -1756863,7 +1756863,7 @@ Transform:
   m_GameObject: {fileID: 2000622000}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -111.490524, y: 59.912506, z: 0}
+  m_LocalPosition: {x: -88.58, y: 47.32, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
