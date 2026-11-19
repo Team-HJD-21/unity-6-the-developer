@@ -428,7 +428,7 @@ flowchart TD
 
 ### 4.4 탐색과 공격
 
-`IsOperational`이 `true`일 때만 각 터렛의 `Update()`가 탐색·회전·발사·과열 확인을 수행한다. 실제 탐색은 `FieldTurretTargetingUtility.CollectByDistance()`가 사거리 안의 `enemyMask` Collider를 거리순으로 모으는 방식이다.
+`IsOperational`이 `true`일 때만 각 터렛의 `Update()`가 탐색·회전·발사·과열 확인을 수행한다. 실제 탐색은 `FieldTurretTargetingUtility.CollectByDistance()`가 사거리 안의 `enemyMask` Collider를 거리순으로 모으는 방식이다. 각 후보의 위치와 거리는 한 번 읽고, 물리 조회 목록과 거리 정렬 버퍼는 재사용한다.
 
 Canon의 산포는 매 발사마다 기준 조준점의 월드 X에 ±0.5를 더한 임시 위치로 계산한다. `bulletFirePoint`·`bulletFireDirection` Transform은 이동시키지 않아 연속 사격해도 조준점이 한쪽으로 누적 이동하지 않는다. 발사체의 기존 `Initialize(Transform, damage)` 호출도 유지한다.
 

@@ -233,7 +233,6 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
             TimeTilFire += TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
             if (TimeTilFire >= 1f / FireRate)//적이 타워의 시야각에 있고 RPS만큼 발사
             {
-                FireSound();
                 Shoot();
                 TimeTilFire = 0f;
             }
@@ -255,16 +254,6 @@ public abstract partial class DefaultFieldMissileTurret : FieldTurretBase
     private bool CheckTargetIsInRange()//적이 사거리에 있는지 확인(FireRateController에서 수행)
     {
         return FieldTurretTargetingUtility.IsInAttackRange(turret, Targets[0], MinimumRange, Range);
-    }
-    private void FireSound()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
-    {
-        // yield return new WaitForSeconds(0.2f);
-        Collider2D player = Physics2D.OverlapCircle(turret.position, 70, playerMask);
-        if (player != null)
-        {
-            float distance = Vector2.Distance(turret.position, player.transform.position);
-            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileLaunch, distance, 70);
-        }
     }
     protected override void ApplyCoolingHeat(float heatRatio)
         => CurMissileCount = heatRatio * Mathf.Max(0, OverHeatMissileCount);
