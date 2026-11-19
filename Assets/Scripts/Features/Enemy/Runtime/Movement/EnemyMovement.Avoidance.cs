@@ -42,7 +42,7 @@ public partial class EnemyMovement
         if (_steeringTargeting == null || _steeringTargeting.Target == null)
             return;
         if (!TryAlternativeFacilityPath())
-            TryUpdatePath(_steeringTargeting.Target);
+            TryUpdatePath(_steeringTargeting.Target, allowSharedRoute: false);
     }
 
     private bool TryAlternativeFacilityPath()
@@ -171,6 +171,7 @@ public partial class EnemyMovement
             return false;
         _path = best;
         _currentPath = 0;
+        _facilitySpreadEnd = 0;
         return true;
     }
 
@@ -196,32 +197,47 @@ public partial class EnemyMovement
         _avoidanceRefreshIn = 0.1f;
         _avoidanceRequested = requested;
 
-        float lookAhead = Mathf.Max(0.25f, MoveSpeed * 0.15f);
-        float forwardClearance = GetMovementClearance(requested, lookAhead);
+        float speed = MoveSpeed;
+        float lookAhead = Mathf.Max(0.25f, speed * 0.15f);
+        float contactOffset = Physics2D.defaultContactOffset;
+        ContactFilter2D filter = GetFootCastFilter();
+        Vector2 center = _footCollider.bounds.center;
+        float forwardClearance = GetMovementClearance(requested, lookAhead, filter, center, contactOffset);
         if (forwardClearance >= lookAhead)
         {
             _avoidanceDirection = requested;
             return requested;
         }
 
-        float stepDistance = MoveSpeed * Time.fixedDeltaTime + Physics2D.defaultContactOffset;
+        float stepDistance = speed * Time.fixedDeltaTime + contactOffset;
         Vector2 best = requested;
         float bestScore = forwardClearance >= stepDistance
             ? 1f + 2f * forwardClearance / lookAhead
             : float.NegativeInfinity;
 
+        SteeringOrigin steeringOrigin = default;
         foreach (float angle in AvoidanceAngles)
         {
             Vector2 candidate = Quaternion.Euler(0f, 0f, angle) * requested;
-            float clearance = GetMovementClearance(candidate, lookAhead);
-            if (clearance < stepDistance || !CanSteerOnNavMesh(candidate, lookAhead))
-                continue;
-
             float side = Mathf.Sign(requested.x * candidate.y - requested.y * candidate.x);
             float sidePenalty = _avoidanceSideRemaining > 0f && side != _avoidanceSide ? 2f : 0f;
-            float score = Vector2.Dot(requested, candidate) + 2f * clearance / lookAhead +
-                0.4f * Vector2.Dot(_avoidanceDirection, candidate) - sidePenalty;
+            float forward = Vector2.Dot(requested, candidate);
+            float continuity = 0.4f * Vector2.Dot(_avoidanceDirection, candidate);
+            float maximumScore = forward + 2f * lookAhead / lookAhead + continuity - sidePenalty;
+            if (maximumScore <= bestScore)
+                continue;
+
+            float clearance = GetMovementClearance(candidate, lookAhead, filter, center, contactOffset);
+            if (clearance < stepDistance)
+                continue;
+
+            float score = forward + 2f * clearance / lookAhead + continuity - sidePenalty;
             if (score <= bestScore)
+                continue;
+
+            if (!steeringOrigin.IsInitialized)
+                steeringOrigin = GetSteeringOrigin();
+            if (!steeringOrigin.CanSteer(candidate, lookAhead))
                 continue;
 
             bestScore = score;
@@ -237,43 +253,38 @@ public partial class EnemyMovement
         return best;
     }
 
-    private float GetMovementClearance(Vector2 direction, float distance)
+    private ContactFilter2D GetFootCastFilter()
     {
         var filter = new ContactFilter2D { useTriggers = false };
         int layers = Physics2D.GetLayerCollisionMask(_footCollider.gameObject.layer) | _footCollider.includeLayers;
         filter.SetLayerMask(layers & ~_footCollider.excludeLayers);
-        _footCollider.Cast(direction, filter, _movementHits, distance);
+        return filter;
+    }
 
+    private float GetMovementClearance(Vector2 direction, float distance, ContactFilter2D filter,
+        Vector2 center, float contactOffset)
+    {
+        _footCollider.Cast(direction, filter, _movementHits, distance);
         float clearance = distance;
-        Vector2 center = _footCollider.bounds.center;
         foreach (RaycastHit2D hit in _movementHits)
         {
-            if (hit.rigidbody == rigidbody2D)
+            if (hit.distance >= clearance || hit.rigidbody == rigidbody2D)
                 continue;
-            Vector2 towardObstacle = (Vector2)hit.collider.bounds.center - center;
-            if (hit.distance <= 2f * Physics2D.defaultContactOffset &&
-                Vector2.Dot(direction, towardObstacle) <= 0f)
-            {
+            if (hit.distance <= 2f * contactOffset &&
+                Vector2.Dot(direction, (Vector2)hit.collider.bounds.center - center) <= 0f)
                 continue;
-            }
 
-            clearance = Mathf.Min(clearance, hit.distance);
+            clearance = hit.distance;
         }
-
         return clearance;
     }
 
-    private bool CanSteerOnNavMesh(Vector2 direction, float distance)
+    private SteeringOrigin GetSteeringOrigin()
     {
-        if (!HasPath)
-            return true;
-
         var target = _steeringTargeting;
-        if (_currentPath == _path.Length - 1 && target != null &&
-            target.TargetComponent != null && target.TargetComponent.TargetType == TargetType.Turret)
-        {
-            return true;
-        }
+        if (!HasPath || (_currentPath == _path.Length - 1 && target != null &&
+            target.TargetComponent != null && target.TargetComponent.TargetType == TargetType.Turret))
+            return new SteeringOrigin(SteeringMode.Unrestricted);
 
         var filter = new NavMeshQueryFilter
         {
@@ -281,18 +292,50 @@ public partial class EnemyMovement
             areaMask = NavMesh.AllAreas
         };
         Vector2 position = transform.position;
-        if (!NavMesh.SamplePosition(position, out NavMeshHit recovery, 0.5f, filter))
+        if (NavMesh.SamplePosition(position, out NavMeshHit origin, 0.5f, filter))
+            return new SteeringOrigin(SteeringMode.OnMesh, position, origin.position, filter);
+
+        float radius = 3f + NavMesh.GetSettingsByID(filter.agentTypeID).agentRadius * 2f;
+        if (NavMesh.SamplePosition(position, out NavMeshHit recovery, radius, filter))
+            return new SteeringOrigin(SteeringMode.Recovering, position, recovery.position, filter);
+
+        return new SteeringOrigin(SteeringMode.Blocked);
+    }
+
+    private enum SteeringMode { NotChecked, Unrestricted, OnMesh, Recovering, Blocked }
+
+    private readonly struct SteeringOrigin
+    {
+        private readonly SteeringMode _mode;
+        private readonly Vector2 _position;
+        private readonly Vector3 _origin;
+        private readonly NavMeshQueryFilter _filter;
+
+        public SteeringOrigin(SteeringMode mode, Vector2 position = default, Vector3 origin = default,
+            NavMeshQueryFilter filter = default)
         {
-            float radius = 3f + NavMesh.GetSettingsByID(filter.agentTypeID).agentRadius * 2f;
-            return NavMesh.SamplePosition(position, out recovery, radius, filter) &&
-                Vector2.Dot(direction, ((Vector2)recovery.position - position).normalized) >= -0.1f;
-        }
-        if (!NavMesh.SamplePosition(position, out NavMeshHit origin, 0.5f, filter) ||
-            !NavMesh.SamplePosition(position + direction * distance, out NavMeshHit destination, 0.1f, filter))
-        {
-            return false;
+            _mode = mode;
+            _position = position;
+            _origin = origin;
+            _filter = filter;
         }
 
-        return !NavMesh.Raycast(origin.position, destination.position, out _, filter);
+        public bool IsInitialized => _mode != SteeringMode.NotChecked;
+
+        public bool CanSteer(Vector2 direction, float distance)
+        {
+            switch (_mode)
+            {
+                case SteeringMode.Unrestricted:
+                    return true;
+                case SteeringMode.Recovering:
+                    return Vector2.Dot(direction, ((Vector2)_origin - _position).normalized) >= -0.1f;
+                case SteeringMode.OnMesh:
+                    return NavMesh.SamplePosition(_position + direction * distance, out var destination, 0.1f, _filter) &&
+                        !NavMesh.Raycast(_origin, destination.position, out _, _filter);
+                default:
+                    return false;
+            }
+        }
     }
 }

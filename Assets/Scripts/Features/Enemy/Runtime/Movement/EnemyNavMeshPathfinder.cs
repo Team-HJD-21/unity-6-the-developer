@@ -12,14 +12,30 @@ public static class EnemyNavMeshPathfinder
     private const float StartProjectionDistance = 3f;
     // 큰 시설의 중심은 본체 장애물 안에 있습니다. 목표만 주변 보행면을 조금 더 넓게 찾습니다.
     private const float TargetProjectionDistance = 4f;
+    private const float FacilityRouteCellSize = 12f;
+    private const float MinimumSharedRouteDistance = 16f;
+    private const int RouteCacheLimit = 512;
     private static readonly Dictionary<(int Agent, int Scene, int X, int Y, Vector3 Goal, int Variant), (Vector3[] Corners, double Expires)> Routes = new();
+    private static readonly Dictionary<(int Agent, int Scene, int X, int Y, Vector3 Goal, int Lane), (Vector3[] Corners, double Expires)> FacilityRoutes = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ClearRouteCaches()
+    {
+        Routes.Clear();
+        FacilityRoutes.Clear();
+    }
 
     /// <summary>
     /// 표현용 Z를 제외한 XY 위치에서 완전한 NavMesh 경로를 구한다.
     /// </summary>
     public static bool TryCalculatePath(
         Vector3 start, Vector3 target, int agentTypeId, out Vector3[] corners, int variant = 0, int scene = 0)
+        => TryCalculatePath(start, target, agentTypeId, variant, scene, false, out corners, out _);
+
+    internal static bool TryCalculatePath(Vector3 start, Vector3 target, int agentTypeId, int variant, int scene,
+        bool facilityTarget, out Vector3[] corners, out bool sharedFacilityRoute)
     {
+        sharedFacilityRoute = false;
         Vector3 navStart = new(start.x, start.y, 0f);
         Vector3 navTarget = new(target.x, target.y, 0f);
         
@@ -42,11 +58,31 @@ public static class EnemyNavMeshPathfinder
         }
 
         variant = (int)((uint)variant % 8);
-        var key = (agentTypeId, scene, Mathf.FloorToInt(startPoint.position.x / 4f),
-            Mathf.FloorToInt(startPoint.position.y / 4f), targetPoint.position, variant);
         double now = Time.realtimeSinceStartupAsDouble;
-        if (Routes.TryGetValue(key, out var cached) && cached.Expires > now &&
-            TryReuseRoute(startPoint.position, cached.Corners, filter, out corners))
+        Vector3 origin = startPoint.position;
+        Vector3 goal = targetPoint.position;
+        bool useFacilityCache = facilityTarget &&
+            (goal - origin).sqrMagnitude >= MinimumSharedRouteDistance * MinimumSharedRouteDistance;
+        int lane = variant % 2;
+        var facilityKey = (agentTypeId, scene, Mathf.FloorToInt(origin.x / FacilityRouteCellSize),
+            Mathf.FloorToInt(origin.y / FacilityRouteCellSize), goal, lane);
+        if (useFacilityCache && FacilityRoutes.TryGetValue(facilityKey, out var facilityRoute) &&
+            facilityRoute.Expires > now)
+        {
+            if (TryJoinRoute(origin, facilityRoute.Corners, filter, out int join))
+            {
+                corners = CopyJoinedRoute(origin, facilityRoute.Corners, join);
+                sharedFacilityRoute = true;
+                return true;
+            }
+
+            // 다른 지형 편에서 접근하면 자신의 기존 경로 규칙으로 돌아간다.
+            useFacilityCache = false;
+        }
+
+        var key = (agentTypeId, scene, Mathf.FloorToInt(origin.x / 4f), Mathf.FloorToInt(origin.y / 4f), goal, variant);
+        if (!useFacilityCache && Routes.TryGetValue(key, out var cached) && cached.Expires > now &&
+            TryReuseRoute(origin, cached.Corners, filter, out corners))
             return true;
 
         var path = new NavMeshPath();
@@ -59,27 +95,53 @@ public static class EnemyNavMeshPathfinder
             return false;
         }
         
-        corners = CreateVariant(path.corners, filter, variant);
-        if (Routes.Count >= 512) Routes.Clear();
-        Routes[key] = ((Vector3[])corners.Clone(), now + 2d);
+        if (useFacilityCache)
+        {
+            corners = CreateVariant(path.corners, filter, lane);
+            if (FacilityRoutes.Count >= RouteCacheLimit) FacilityRoutes.Clear();
+            FacilityRoutes[facilityKey] = ((Vector3[])corners.Clone(), now + 8d);
+            sharedFacilityRoute = true;
+        }
+        else
+        {
+            corners = CreateVariant(path.corners, filter, variant);
+            if (Routes.Count >= RouteCacheLimit) Routes.Clear();
+            Routes[key] = ((Vector3[])corners.Clone(), now + 2d);
+        }
         return true;
     }
 
     private static bool TryReuseRoute(Vector3 start, Vector3[] route, NavMeshQueryFilter filter, out Vector3[] corners)
     {
         corners = null;
-        if (route.Length < 2) return false;
-        int join;
-        if (!NavMesh.Raycast(start, route[1], out _, filter)) join = 1;
-        else if (!NavMesh.Raycast(start, route[0], out _, filter)) join = 0;
-        else return false;
+        if (!TryJoinRoute(start, route, filter, out int join))
+            return false;
         for (int i = join; i < route.Length - 1; i++)
             if (NavMesh.Raycast(route[i], route[i + 1], out _, filter)) return false;
 
-        corners = new Vector3[route.Length - join + 1];
+        corners = CopyJoinedRoute(start, route, join);
+        return true;
+    }
+
+    private static bool TryJoinRoute(Vector3 start, Vector3[] route, NavMeshQueryFilter filter, out int join)
+    {
+        join = -1;
+        if (route.Length < 2)
+            return false;
+
+        if (!NavMesh.Raycast(start, route[1], out _, filter))
+            join = 1;
+        else if (!NavMesh.Raycast(start, route[0], out _, filter))
+            join = 0;
+        return join >= 0;
+    }
+
+    private static Vector3[] CopyJoinedRoute(Vector3 start, Vector3[] route, int join)
+    {
+        var corners = new Vector3[route.Length - join + 1];
         corners[0] = start;
         System.Array.Copy(route, join, corners, 1, route.Length - join);
-        return true;
+        return corners;
     }
 
     private static Vector3[] CreateVariant(Vector3[] direct, NavMeshQueryFilter filter, int variant)

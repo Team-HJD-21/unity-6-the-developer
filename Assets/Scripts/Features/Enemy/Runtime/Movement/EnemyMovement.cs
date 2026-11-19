@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NavMeshPlus.Components;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -30,6 +31,9 @@ public partial class EnemyMovement : MonoBehaviour
     private float _shortcutRefreshIn;
     private int _routeVariant = -1;
     private uint _cornerOffsetSeed;
+    private int _facilityRouteAgent;
+    private int _facilitySpreadEnd;
+    private int _lastFacilitySpreadCorner;
     private static readonly Unity.Profiling.ProfilerMarker DirectionMarker = new("EnemyMovement.PathDirection");
     private static readonly Unity.Profiling.ProfilerMarker MoveMarker = new("EnemyMovement.Move");
     private static readonly Unity.Profiling.ProfilerMarker BrakeMarker = new("EnemyMovement.Brake");
@@ -84,11 +88,14 @@ public partial class EnemyMovement : MonoBehaviour
     {
         _path = null;
         _currentPath = 0;
+        _facilitySpreadEnd = 0;
         TryUpdatePath(target);
     }
 
     /// <summary>계산에 성공한 경우에만 기존 경로를 교체한다.</summary>
-    public bool TryUpdatePath(Transform target)
+    public bool TryUpdatePath(Transform target) => TryUpdatePath(target, allowSharedRoute: true);
+
+    private bool TryUpdatePath(Transform target, bool allowSharedRoute)
     {
         if (target == null)
             return false;
@@ -107,58 +114,84 @@ public partial class EnemyMovement : MonoBehaviour
             _cornerOffsetSeed = hash;
         }
 
-        if (!EnemyNavMeshPathfinder.TryCalculatePath(
-                transform.position, target.position, GetNavMeshAgentTypeId(gameObject.scene), out Vector3[] newPath,
-                _routeVariant, gameObject.scene.handle))
-        {
+        Scene scene = gameObject.scene;
+        int agent = GetNavMeshAgentTypeId(scene);
+        bool facilityTarget = allowSharedRoute && target.TryGetComponent(out TargetableComponent targetable) &&
+            targetable.TargetType == TargetType.Turret;
+        if (!EnemyNavMeshPathfinder.TryCalculatePath(transform.position, target.position, agent,
+                _routeVariant, scene.handle, facilityTarget, out Vector3[] newPath, out bool sharedFacilityRoute))
             return false;
-        }
 
-        _path = AddFacilityApproach(target, SpreadPathCorners(newPath));
+        _facilityRouteAgent = agent;
+        _facilitySpreadEnd = sharedFacilityRoute ? newPath.Length - 1 : 0;
+        _lastFacilitySpreadCorner = -1;
+        _path = AddFacilityApproach(target, sharedFacilityRoute ? newPath : SpreadPathCorners(newPath, agent));
         _currentPath = 0;
         return true;
     }
 
-    private Vector3[] SpreadPathCorners(Vector3[] path)
+    private Vector3[] SpreadPathCorners(Vector3[] path, int agent)
     {
-        int type = GetNavMeshAgentTypeId(gameObject.scene);
-        float maximum = Mathf.Min(pathCornerOffset, UnityEngine.AI.NavMesh.GetSettingsByID(type).agentRadius * 0.75f);
-        if (path.Length < 3 || maximum <= 0f)
+        if (path.Length < 3)
             return path;
 
-        var query = new UnityEngine.AI.NavMeshQueryFilter
-        {
-            agentTypeID = type,
-            areaMask = UnityEngine.AI.NavMesh.AllAreas
-        };
-        Vector3[] spread = null;
-        for (int i = 1; i < path.Length - 1; i++)
-        {
-            uint hash = _cornerOffsetSeed ^
-                unchecked((uint)Mathf.RoundToInt(path[i].x * 100f) * 73856093u) ^
-                unchecked((uint)Mathf.RoundToInt(path[i].y * 100f) * 19349663u);
-            hash ^= hash << 13;
-            hash ^= hash >> 17;
-            hash ^= hash << 5;
-            float angle = (hash & 65535u) / 65536f * Mathf.PI * 2f;
-            float distance = maximum * (0.4f + ((hash >> 16) & 65535u) / 65535f * 0.6f);
-            Vector3 previous = spread != null ? spread[i - 1] : path[i - 1];
-            for (int attempt = 0; attempt < 4; attempt++)
-            {
-                float turn = angle + attempt * Mathf.PI * 0.5f;
-                Vector3 probe = path[i] + new Vector3(Mathf.Cos(turn), Mathf.Sin(turn), 0f) * distance;
-                if (!UnityEngine.AI.NavMesh.SamplePosition(probe, out var point, 0.1f, query) ||
-                    Vector2.Distance(point.position, path[i]) < 0.1f ||
-                    UnityEngine.AI.NavMesh.Raycast(previous, point.position, out _, query) ||
-                    UnityEngine.AI.NavMesh.Raycast(point.position, path[i + 1], out _, query))
-                    continue;
+        float maximum = Mathf.Min(pathCornerOffset, NavMesh.GetSettingsByID(agent).agentRadius * 0.75f);
+        if (maximum <= 0f)
+            return path;
 
-                spread ??= (Vector3[])path.Clone();
-                spread[i] = point.position;
-                break;
-            }
+        var query = new NavMeshQueryFilter { agentTypeID = agent, areaMask = NavMesh.AllAreas };
+        for (int index = 1; index < path.Length - 1; index++)
+            if (TrySpreadCorner(path[index - 1], path[index], path[index + 1], maximum, query, out var point))
+                path[index] = point;
+        return path;
+    }
+
+    private void SpreadFacilityCorner(Vector2 position, float distanceSquared)
+    {
+        // 먼 코너와 마지막 시설 접근점은 공유 경로의 원래 좌표를 사용한다.
+        if (_currentPath <= 0 || _currentPath >= _facilitySpreadEnd ||
+            _currentPath == _lastFacilitySpreadCorner || distanceSquared > 9f || pathCornerOffset <= 0f)
+            return;
+
+        _lastFacilitySpreadCorner = _currentPath;
+        int agent = _facilityRouteAgent;
+        float maximum = Mathf.Min(pathCornerOffset, NavMesh.GetSettingsByID(agent).agentRadius * 0.75f);
+        var query = new NavMeshQueryFilter { agentTypeID = agent, areaMask = NavMesh.AllAreas };
+        if (maximum > 0f && NavMesh.SamplePosition(position, out var from, 0.5f, query) &&
+            TrySpreadCorner(from.position, _path[_currentPath], _path[_currentPath + 1], maximum, query, out var point))
+        {
+            _path[_currentPath] = point;
+            _progressPath = null;
         }
-        return spread ?? path;
+    }
+
+    private bool TrySpreadCorner(Vector3 previous, Vector3 corner, Vector3 next, float maximum,
+        NavMeshQueryFilter query, out Vector3 point)
+    {
+        uint hash = _cornerOffsetSeed ^
+            unchecked((uint)Mathf.RoundToInt(corner.x * 100f) * 73856093u) ^
+            unchecked((uint)Mathf.RoundToInt(corner.y * 100f) * 19349663u);
+        hash ^= hash << 13;
+        hash ^= hash >> 17;
+        hash ^= hash << 5;
+        float angle = (hash & 65535u) / 65536f * Mathf.PI * 2f;
+        float distance = maximum * (0.4f + ((hash >> 16) & 65535u) / 65535f * 0.6f);
+        for (int attempt = 0; attempt < 4; attempt++)
+        {
+            float turn = angle + attempt * Mathf.PI * 0.5f;
+            Vector3 probe = corner + new Vector3(Mathf.Cos(turn), Mathf.Sin(turn), 0f) * distance;
+            if (!NavMesh.SamplePosition(probe, out var hit, 0.1f, query) ||
+                Vector2.Distance(hit.position, corner) < 0.1f ||
+                NavMesh.Raycast(previous, hit.position, out _, query) ||
+                NavMesh.Raycast(hit.position, next, out _, query))
+                continue;
+
+            point = hit.position;
+            return true;
+        }
+
+        point = default;
+        return false;
     }
     private Vector3[] AddFacilityApproach(Transform target, Vector3[] path, Vector2? contactPoint = null)
     {
@@ -179,11 +212,8 @@ public partial class EnemyMovement : MonoBehaviour
         if (direction.sqrMagnitude <= arrivalDistance * arrivalDistance)
             return path;
 
-        var filter = new ContactFilter2D { useTriggers = false };
-        int layers = Physics2D.GetLayerCollisionMask(_footCollider.gameObject.layer) | _footCollider.includeLayers;
-        filter.SetLayerMask(layers & ~_footCollider.excludeLayers);
         gameObject.scene.GetPhysicsScene2D().BoxCast(start + offset, size, _footCollider.transform.eulerAngles.z,
-            direction.normalized, direction.magnitude, filter, _movementHits);
+            direction.normalized, direction.magnitude, GetFootCastFilter(), _movementHits);
         foreach (RaycastHit2D hit in _movementHits)
         {
             if (hit.rigidbody == rigidbody2D || hit.collider.transform.IsChildOf(target))
@@ -216,9 +246,15 @@ public partial class EnemyMovement : MonoBehaviour
             float tolerance = _currentPath < _path.Length - 1
                 ? Mathf.Min(arrivalDistance, 0.1f)
                 : arrivalDistance;
-            if (((Vector2)_path[_currentPath] - position).sqrMagnitude > tolerance * tolerance &&
-                !CanSkipPathCorner(position))
-                break;
+            float distanceSquared = ((Vector2)_path[_currentPath] - position).sqrMagnitude;
+            if (distanceSquared > tolerance * tolerance)
+            {
+                if (!CanSkipPathCorner(position))
+                {
+                    SpreadFacilityCorner(position, distanceSquared);
+                    break;
+                }
+            }
 
             _currentPath++;
         }
@@ -251,32 +287,33 @@ public partial class EnemyMovement : MonoBehaviour
             return false;
         _shortcutRefreshIn = 0.2f;
 
-        Vector2 next = (Vector2)_path[_currentPath + 1] - position;
-        var filter = new ContactFilter2D { useTriggers = false };
-        int layers = Physics2D.GetLayerCollisionMask(_footCollider.gameObject.layer) | _footCollider.includeLayers;
-        filter.SetLayerMask(layers & ~_footCollider.excludeLayers);
-        _footCollider.Cast(next.normalized, filter, _movementHits, next.magnitude);
+        Scene scene = gameObject.scene;
+        Vector3 nextCorner = _path[_currentPath + 1];
+        foreach (var surface in NavMeshSurface.activeSurfaces)
+        {
+            if (surface.gameObject.scene != scene)
+                continue;
+
+            var query = new UnityEngine.AI.NavMeshQueryFilter
+            {
+                agentTypeID = GetNavMeshAgentTypeId(scene),
+                areaMask = UnityEngine.AI.NavMesh.AllAreas
+            };
+            if (!UnityEngine.AI.NavMesh.SamplePosition(position, out var origin, 3f, query) ||
+                UnityEngine.AI.NavMesh.Raycast(origin.position, nextCorner, out _, query))
+                return false;
+            break;
+        }
+
+        Vector2 next = (Vector2)nextCorner - position;
+        _footCollider.Cast(next.normalized, GetFootCastFilter(), _movementHits, next.magnitude);
         foreach (RaycastHit2D hit in _movementHits)
         {
-            if (hit.rigidbody == rigidbody2D ||
-                (hit.rigidbody != null && hit.rigidbody.bodyType == RigidbodyType2D.Dynamic))
+            Rigidbody2D body = hit.rigidbody;
+            if (body == rigidbody2D || (body != null && body.bodyType == RigidbodyType2D.Dynamic))
                 continue;
             return false;
         }
-
-        foreach (var surface in NavMeshSurface.activeSurfaces)
-        {
-            if (surface.gameObject.scene != gameObject.scene)
-                continue;
-            var query = new UnityEngine.AI.NavMeshQueryFilter
-            {
-                agentTypeID = GetNavMeshAgentTypeId(gameObject.scene),
-                areaMask = UnityEngine.AI.NavMesh.AllAreas
-            };
-            return UnityEngine.AI.NavMesh.SamplePosition(position, out var origin, 3f, query) &&
-                !UnityEngine.AI.NavMesh.Raycast(origin.position, _path[_currentPath + 1], out _, query);
-        }
-
         return true;
     }
 
