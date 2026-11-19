@@ -106,7 +106,7 @@ public abstract class DefaultFieldLaserTurret : FieldTurretBase, IActivateTower
         float overHeatTime = Definition.OverHeatTime;
         FireTime = Mathf.Clamp(FireTime + (firing ? deltaTime : -deltaTime), 0f, overHeatTime);
         float heatRatio = overHeatTime > 0f ? FireTime / overHeatTime : 0f;
-        SetGunHeatTint(heatRatio);
+        SetGunHeatVisual(heatRatio);
 
         if (firing && overHeatTime > 0f && FireTime >= overHeatTime)
         {

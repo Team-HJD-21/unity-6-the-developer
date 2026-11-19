@@ -87,7 +87,6 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
             TimeTilFire += TeamHJD.Game.Presentation.Scene.FieldSimulationTime.DeltaTime(this);
             if (TimeTilFire >= (1f / FireRate) && IsTargetInSight())//적이 타워의 시야각에 있고 RPS만큼 발사
             {
-                FireSound();
                 Shoot();
                 TimeTilFire = 0f;
 
@@ -96,7 +95,7 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
     }
     private void OverHeatAnimationController()//설정시간 도달 시 과열(TowerIsActivatedNow에서 수행)
     {
-        SetGunHeatTint(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
+        SetGunHeatVisual(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
 
         if (IsTargetInSight())//적이 사격 시야에 있음
         {
@@ -131,16 +130,6 @@ public abstract partial class DefaultFieldCanonTurret : FieldTurretBase
     }
     protected override void ApplyCoolingHeat(float heatRatio)
         => _fireTime = heatRatio * Mathf.Max(0f, OverHeatTime);
-    private void FireSound()//코루틴 함수 냉각 역할 수행(OverHeatAnimationController에서 수행)
-    {
-        // yield return new WaitForSeconds(0.2f);
-        Collider2D player = Physics2D.OverlapCircle(turret.position, 50, playerMask);
-        if(player is not null)
-        {
-            float distance = Vector2.Distance(turret.position, player.transform.position);
-            // AudioManager.Instance.PlaySfx(AudioManager.Sfx.Fire, distance, 50);
-        }
-    }
     protected override void OnActivationChanged(bool isActivated)
     {
         if (isActivated)

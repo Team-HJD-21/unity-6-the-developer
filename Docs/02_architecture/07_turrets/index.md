@@ -83,16 +83,19 @@ flowchart TD
 
 ## 상태별 타기팅·수리 기준
 
-Enemy는 기존 `TargetableComponent.CanBeTargeted`를 읽는다. 이 속성은 컴포넌트 활성 여부와 체력으로 계산된다. `DamageableTargetAdapter`가 터렛의 체력과 대상 허용 여부를 이 컴포넌트에 반영한다. `FieldTurretBase`에 동명 속성을 추가하지 않는다.
+Enemy는 `TargetableComponent.CanBeTargeted`를 읽는다. `DamageableTargetAdapter`가 터렛의 체력과 대상 허용 여부를 이 컴포넌트에 반영한다.
 
-아래 타기팅 표는 요구 동작이며 실제 Enemy 반영 완료를 뜻하지 않는다. 사용자 요청에 따라 Enemy 코드는 이번에 수정하지 않았다. `DamageableTargetAdapter`의 `IsActivated` 제한을 해금 조건(`!IsLocked`)으로 교체하고 기존 생존·활성 조건을 유지하도록 조수빈에게 요청한다. CU의 기존 생존 판정과 몬스터가 조회하는 공통 API는 유지한다.
+필드 터렛은 전력 예약이 성공해 처음 ON이 될 때 `HasEverActivated`를 기록한다. 수동 및 자동 가동 모두 해당하며, OFF, 파괴 후 복구, 레벨 교체 및 체크포인트에서 기록을 유지한다. 이전 체크포인트는 저장 당시 ON 상태를 근거로 가동 이력을 복원한다.
+
+Enemy 연동 시 `DamageableTargetAdapter`의 필드 터렛 조건에 `!IsLocked && HasEverActivated`를 적용한다. 아래 표는 연동 후 기준이다.
 
 | 터렛 상태 | Enemy 타기팅 | 일반 수리 `CanRepair` |
 | --- | --- | --- |
-| 해금된 ON / OFF / 냉각 중 | 가능 | 체력이 부족하면 가능 |
+| 해금, 최초 가동 전 | 불가 | 체력이 부족하면 가능 |
+| 해금, 최초 가동 후 ON / OFF / 냉각 중 | 가능 | 체력이 부족하면 가능 |
 | 잠금 | 불가 | 불가 |
 | 파괴 / 복구 진행 중 | 불가 | 일반 수리 불가, 별도 복구 경로 |
-| 자동 활성화 진행 중 | 정상 상태라면 가능 | 수동 조작 차단으로 불가 |
+| 자동 활성화 진행 중 | 정상 상태이며 최초 가동 기록이 있으면 가능 | 수동 조작 차단으로 불가 |
 | 초기화 전 / 비활성 컴포넌트 | 불가 | 불가 |
 
 타기팅은 [10월 10일 회의](../../01_planning/01_meetings/2026/10/2026-10-10-regular-meeting.md)의 OFF와 잠금 구분, 복구 중 제외는 [10월 24일 회의](../../01_planning/01_meetings/2026/10/2026-10-24-regular-meeting.md)를 따른다. **일반 수리를 ON/OFF/냉각 중 모두 허용하는 것은 기존 구현 기준이며, 회의에서 이 상태별 허용 표까지 확정한 기록은 확인하지 못했다.** 수리 도구·키·거리 판정은 Player 요청 경계에서 별도로 확인한다.

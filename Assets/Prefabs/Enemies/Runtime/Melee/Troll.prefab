@@ -156,6 +156,10 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 150
       objectReference: {fileID: 0}
+    - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: navMeshAgentTypeId
+      value: -887442656
+      objectReference: {fileID: 0}
     - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.25
@@ -174,11 +178,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.y
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 6916343759982546914, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalPosition.x
@@ -270,19 +274,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
-      value: 0.17206633
+      value: 0.10027893
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.y
-      value: 0.091541134
+      value: 0.04322268
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.x
-      value: -0.034978196
+      value: -0.04165075
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.y
-      value: 0.037756484
+      value: 0.013597257
       objectReference: {fileID: 0}
     - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x

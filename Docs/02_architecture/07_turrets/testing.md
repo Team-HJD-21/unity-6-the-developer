@@ -12,8 +12,8 @@ Initial 플레이어 UI의 조작 검증 목록은 [Player UI API](../06_player/
 
 | Hierarchy 이름 | 위치 | 시작 상태 | 확인할 동작 |
 | --- | --- | --- | --- |
-| `FieldCanonTurret LV1 - Destroyed (Repair Test)` | `(12, -9, 1)` | HP 0/100, 파괴 | 일반 Repair는 거부하고 Restore 후 최대 체력·OFF로 복구 |
-| `FieldCanonTurret LV1 - Damaged (Repair Test)` | `(20, -9, 1)` | HP 50/100 | Player 수리로 체력이 증가하며 최대 체력을 넘지 않음 |
+| `FieldCanonTurret LV1 - Destroyed (Repair Test)` | `(12, -9, 1)` | HP 0/500, 파괴 | 일반 Repair는 거부하고 Restore 후 최대 체력·OFF로 복구 |
+| `FieldCanonTurret LV1 - Damaged (Repair Test)` | `(20, -9, 1)` | HP 50/500 | Player 수리로 체력이 증가하며 최대 체력을 넘지 않음 |
 
 `FieldTurretRepairTestSetup`은 비활성으로 제작된 두 프리팹에 `PrepareInitialization`으로 시작 상태를 전달한 뒤 Awake·등록을 진행한다. 각 터렛은 고유 Scene Entity ID를 가지며 기존 Scene 컨트롤러와 지역 정책에 참여한다. 손상 터렛의 시작 체력은 그룹의 `_damagedHealth`에서 조정한다. 그룹이나 터렛을 껐다 켜도 수리·복구 결과를 다시 초기화하지 않는다.
 
