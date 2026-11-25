@@ -175,17 +175,14 @@ public sealed class PlayerCryoSprayTests
             for (int i = 1; i < level; i++) Assert.That(armory.State.Upgrade(WeaponType.CryoBlaster), Is.True);
             var clock = new Clock(); FieldSimulationActor.Attach(_spray.gameObject, clock);
             var target = Enemy(Vector2.right * 2); FieldSimulationActor.Attach(target.gameObject, clock);
-            var body = target.gameObject.AddComponent<Rigidbody2D>(); body.gravityScale = 0;
             var movement = target.gameObject.AddComponent<EnemyMovement>();
             typeof(EnemyMovement).GetMethod("Awake", Private).Invoke(movement, null);
             Assert.That(_spray.ApplyDamage(Vector2.zero, Vector2.right, 1), Is.True);
             Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(expected));
             Assert.That(movement.MoveSpeed, Is.EqualTo(movement.BaseMoveSpeed * expected).Within(.001));
-            for (int i = 0; i < 100; i++) { movement.Move(Vector2.right); _scene.GetPhysicsScene2D().Simulate(.01f); }
-            Assert.That(body.linearVelocity.x, Is.EqualTo(movement.MoveSpeed).Within(.01));
             clock.Now = .3; Assert.That(_spray.ApplyDamage(Vector2.zero, Vector2.right, 1), Is.True);
             clock.Now = 1.6; Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(expected), "Held spray refreshes the same effect.");
-            clock.Now = 1.81; Assert.That(movement.SlowSpeedMultiplier, Is.EqualTo(1));
+            clock.Now = 1.81; Assert.That(movement.MoveSpeed, Is.EqualTo(movement.BaseMoveSpeed));
         }
         finally { Object.DestroyImmediate(settings); }
     }

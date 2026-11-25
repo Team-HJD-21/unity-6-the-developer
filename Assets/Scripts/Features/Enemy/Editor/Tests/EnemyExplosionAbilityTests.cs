@@ -4,6 +4,7 @@ using NUnit.Framework;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AI;
 
 /// <summary>
 /// 폭발 능력의 발동·범위 피해와 중복 적용 방지를 검사한다.
@@ -161,12 +162,12 @@ public sealed class EnemyExplosionAbilityTests
 
         // 폭발 후 타깃이 멀어져도 이동을 다시 시작하지 않아야 한다.
         target.transform.position = Origin + Vector3.right * 10f;
-        typeof(EnemyMovement).GetField("_path", BindingFlags.Instance | BindingFlags.NonPublic)
-            .SetValue(movement, new[] { target.transform.position });
-        movement.Move(Vector2.right);
+        Physics2D.SyncTransforms();
+        var agent = enemy.GetComponent<NavMeshAgent>();
+        using var navigation = new EnemyTestNavMesh(agent, target.transform.position);
+        agent.isStopped = false;
         controller.ExecuteBehavior();
-        Assert.That(enemy.GetComponent<Rigidbody2D>().linearVelocity,
-            Is.EqualTo(Vector2.zero));
+        Assert.That(agent.isStopped, Is.True);
     }
 
     private GameObject Create(string name, Vector3 position)

@@ -107,35 +107,20 @@ public class MovingEnemyController : EnemyController
         // 감지 범위 확인·갱신 시점 판단·필요한 경우 경로 계산.
         RefreshTargetPath();
 
-        // 경유점 도착을 확인하고 다음 이동 방향을 계산한다.
-        bool hasPathDirection =
-            enemyMovement.TryGetNextPathDirection(out Vector2 moveDirection);
-
-        if (!hasPathDirection)
+        Vector2 velocity = enemyMovement.FollowAgentPath();
+        if (velocity.sqrMagnitude > 0.0001f)
         {
-            StopMoving();
-            return;
+            enemyAnimation.SetFacingDirection(velocity.normalized);
+            enemyAnimation.PlayMovementAnimation(velocity.magnitude, enemyMovement.MoveSpeed);
         }
-
-        // 이동 방향·애니메이션 갱신·Rigidbody2D 이동 힘 적용.
-        enemyAnimation.SetFacingDirection(moveDirection);
-        MoveTowardsTarget(moveDirection);
+        else
+        {
+            enemyAnimation.StopMovementAnimation();
+        }
     }
 
     /// <summary>
-    /// 지정된 방향으로 이동하고 이동 애니메이션 속도를 갱신한다.
-    /// </summary>
-    /// <param name="moveDirection">정규화된 이동 방향.</param>
-    protected void MoveTowardsTarget(Vector2 moveDirection)
-    {
-        enemyAnimation.PlayMovementAnimation(
-            enemyMovement.CurrentSpeed,
-            enemyMovement.MoveSpeed);
-        enemyMovement.Move(moveDirection);
-    }
-
-    /// <summary>
-    /// 이동 애니메이션을 중단하고 남아 있는 이동 속도를 제동한다.
+    /// 이동과 이동 애니메이션을 멈춘다.
     /// </summary>
     protected void StopMoving()
     {

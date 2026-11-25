@@ -22,7 +22,7 @@
 - 공유 프리팹 원본 수정은 동일 프리팹을 쓰는 다른 Scene에도 반영된다. 인스턴스 override는 해당 배치에만 적용된다. 타일의 Physics Shape는 같은 Sprite/Tile을 공유하는 배치에 반영되지만, 타일맵 오브젝트의 Modifier와 Surface 설정은 Scene마다 필요하다. **이미 저장한 NavMesh는 자동으로 다시 구워지지 않으므로 각 Scene을 재Bake한다.**
 - Slime은 소형 `Humanoid` 타입(반경 0.5)을 쓴다. BattleTroll, GreenGolem, Treant, MushroomTreant, Troll과 Stage1Boss는 대형 `LargeEnemy` 타입(반경 1.8)과 [대형 Bake 데이터](../../../Assets/Scenes/Gameplay/Stage_1/NavMesh-Navmesh2D%20LargeEnemy.asset)를 공유한다. Voxel 크기는 두 타입 모두 약 0.167이다. Stage1Boss는 대형 Surface가 있는 씬에서 대형 경로를 사용하며, 기본 Surface만 있는 BossRoom에서는 그 기본 경로를 사용한다.
 - Stage1에는 소형 `Navmesh2D`와 대형 `Navmesh2D LargeEnemy`를 연결한다. 두 Surface는 동일한 XY 위치·회전·수집 설정을 사용하고 Agent Type과 Bake 데이터를 각각 지정한다. 지형·장애물을 변경하면 두 Surface를 함께 베이크한다.
-- `EnemyMovement.navMeshAgentTypeId`는 해당 타입의 데이터가 현재 Scene에 연결되면 시작점·목표 투영, 경로 계산, 일반 Encounter 스폰 위치에 쓰인다. 실제 이동은 `Rigidbody2D`가 담당한다.
+- `EnemyMovement.navMeshAgentTypeId`는 해당 타입의 데이터가 현재 Scene에 연결되면 목표 투영, 경로 계산, 스폰 위치에 쓰인다. 평상시 추적은 같은 타입의 `NavMeshAgent`가 맡고, 보스 돌진 중에는 `Rigidbody2D`가 이동을 맡는다.
 
 적용·검증 범위는 [Stage1 NavMesh와 점유율 UI 검토 기록](../../03_team/00_reviews/stage1-navigation-ui-20261115.md)을 참고한다.
 

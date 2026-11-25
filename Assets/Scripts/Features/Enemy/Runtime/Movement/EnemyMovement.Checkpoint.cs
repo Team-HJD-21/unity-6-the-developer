@@ -1,13 +1,12 @@
-// 실제 계산된 경로·현재 waypoint와 감속의 남은 게임 초를 저장합니다.
-// 타깃 재연결이 새 경로를 만들더라도 그 뒤 저장된 진행을 명시 적용합니다.
+// 감속의 남은 게임 초를 저장합니다.
+// 추적 경로는 복원한 위치와 타깃에서 Agent가 다시 계산합니다.
 using System.IO;
 using System.Collections.Generic;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Presentation.Scene;
-using UnityEngine;
 
 /// <summary>
-/// 저장된 경로와 경유점 진행도를 복원한다.
+/// 저장된 감속을 복원한다.
 /// </summary>
 public partial class EnemyMovement
 {
@@ -21,13 +20,10 @@ public partial class EnemyMovement
                 if (effect.EndsAt > now)
                     slows.Add(new SavedSlow(effect.Multiplier, effect.EndsAt - now));
         }
-        return new State(_path == null ? null : (Vector3[])_path.Clone(), _currentPath, slows.ToArray());
+        return new State(slows.ToArray());
     }
     internal void RestoreCheckpoint(State state)
     {
-        _path = state.Path == null ? null : (Vector3[])state.Path.Clone();
-        _currentPath = state.Current;
-        _facilitySpreadEnd = 0;
         _slowEffects?.Clear();
         if (state.Slows.Length == 0) return;
         _slowEffects ??= new List<SlowEffect>();
@@ -52,16 +48,10 @@ public partial class EnemyMovement
 
     internal sealed class State
     {
-        public readonly Vector3[] Path;
-        public readonly int Current;
         public readonly SavedSlow[] Slows;
-        public State(Vector3[] path, int current, SavedSlow[] slows = null)
+        public State(SavedSlow[] slows)
         {
-            if (current < 0 || current > (path?.Length ?? 0) || (path?.Length ?? 0) > 4096) throw new InvalidDataException("Invalid saved enemy path.");
-            foreach (var p in path ?? System.Array.Empty<Vector3>())
-                if (!float.IsFinite(p.x) || !float.IsFinite(p.y) || !float.IsFinite(p.z)) throw new InvalidDataException("Non-finite enemy path.");
-            Path = path; Current = current;
-            Slows = slows ?? System.Array.Empty<SavedSlow>();
+            Slows = slows;
             if (Slows.Length > MaximumSlowEffects) throw new InvalidDataException("Too many enemy slow effects.");
             var multipliers = new HashSet<float>();
             foreach (SavedSlow effect in Slows)
@@ -72,10 +62,10 @@ public partial class EnemyMovement
         }
         public void Write(BinaryWriter w)
         {
-            w.Write(Path != null); w.Write(Path?.Length ?? 0);
-            foreach (var p in Path ?? System.Array.Empty<Vector3>()) { w.Write(p.x); w.Write(p.y); w.Write(p.z); }
-            w.Write(Current);
-            // 기존 저장 형식의 정지 플래그 자리를 유지한다. 현재 이동 제어에는 사용하지 않는다.
+            // 이전 형식에서 경로 존재 여부, 경유점 수, 진행 인덱스, 정지 여부를 기록하던 자리다.
+            w.Write(false);
+            w.Write(0);
+            w.Write(0);
             w.Write(false);
             w.Write(Slows.Length);
             foreach (SavedSlow effect in Slows)
@@ -83,15 +73,24 @@ public partial class EnemyMovement
         }
         public static State Read(BinaryReader r, ICheckpointPayloadCodec codec, bool includesSlows)
         {
-            bool exists = r.ReadBoolean(); var path = new Vector3[codec.ReadCount(r, 4096)];
-            for (int i = 0; i < path.Length; i++) path[i] = new Vector3(r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
-            if (!exists && path.Length != 0) throw new InvalidDataException("Invalid null enemy path.");
+            bool exists = r.ReadBoolean();
+            int cornerCount = codec.ReadCount(r, 4096);
+            if (!exists && cornerCount != 0) throw new InvalidDataException("Invalid null enemy path.");
+            for (int i = 0; i < cornerCount; i++)
+            {
+                float x = r.ReadSingle();
+                float y = r.ReadSingle();
+                float z = r.ReadSingle();
+                if (!float.IsFinite(x) || !float.IsFinite(y) || !float.IsFinite(z))
+                    throw new InvalidDataException("Non-finite enemy path.");
+            }
             int current = r.ReadInt32();
+            if (current < 0 || current > cornerCount) throw new InvalidDataException("Invalid saved enemy path.");
             r.ReadBoolean(); // 이전 형식의 정지 플래그를 소비해 뒤따르는 데이터 위치를 보존한다.
             var slows = includesSlows ? new SavedSlow[codec.ReadCount(r, MaximumSlowEffects)] : System.Array.Empty<SavedSlow>();
             for (int i = 0; i < slows.Length; i++)
                 slows[i] = new SavedSlow(r.ReadSingle(), r.ReadDouble());
-            return new(exists ? path : null, current, slows);
+            return new(slows);
         }
     }
 }
