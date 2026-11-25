@@ -4,6 +4,7 @@ using TeamHJD.Game.Enemy.Contracts;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.UIElements;
 
 public sealed partial class EnemyTestWindow
@@ -20,6 +21,7 @@ public sealed partial class EnemyTestWindow
     private EnemyNetworkController _observedNetwork;
     private EnemyDetection _observedDetection;
     private Rigidbody2D _observedBody;
+    private NavMeshAgent _observedAgent;
     private ObjectField _testTargetField;
     private ObjectField _enemyField;
     private Label _testTargetStatus;
@@ -203,7 +205,14 @@ public sealed partial class EnemyTestWindow
             .Append(" / 공격 인원 집계 포함: ").Append(selectedEnemy.IsIncludedInAttackerLimit);
         if (_observedMovement != null)
             text.Append("\n남은 경로: ").Append(_observedMovement.HasPath).Append(" / 설정 이동속도: ").Append(_observedMovement.MoveSpeed.ToString("0.##"));
-        if (_observedBody != null)
+        if (_observedAgent != null && _observedAgent.isActiveAndEnabled)
+        {
+            text.Append("\nNavMesh 연결: ").Append(_observedAgent.isOnNavMesh);
+            if (_observedAgent.isOnNavMesh)
+                text.Append(" / 경로: ").Append(_observedAgent.pathPending ? "계산 중" : _observedAgent.pathStatus.ToString())
+                    .Append(" / 실제 속력: ").Append(_observedAgent.velocity.magnitude.ToString("0.##"));
+        }
+        else if (_observedBody != null)
             text.Append(" / 실제 속력: ").Append(_observedBody.linearVelocity.magnitude.ToString("0.##"));
         if (_observedAbility == null) text.Append("\n연결된 능력 없음");
         else
@@ -227,6 +236,7 @@ public sealed partial class EnemyTestWindow
         _observedNetwork = selectedEnemy.GetComponent<EnemyNetworkController>();
         _observedDetection = selectedEnemy.GetComponent<EnemyDetection>();
         _observedBody = selectedEnemy.GetComponent<Rigidbody2D>();
+        _observedAgent = selectedEnemy.GetComponent<NavMeshAgent>();
         // 여러 능력 컴포넌트가 있어도 Controller가 실제 사용하는 참조를 읽는다.
         var controller = new SerializedObject(selectedEnemy);
         _observedAbility = controller.FindProperty("enemyAbility")?.objectReferenceValue as EnemyAbility;

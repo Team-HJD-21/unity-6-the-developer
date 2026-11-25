@@ -154,7 +154,7 @@ public class TargetableComponent : MonoBehaviour, ITargetable
         {
             if (candidates[i] is IDamageableTarget damageable)
             {
-                return damageable.ApplyDamage(damage);
+                return EnemyDamage.TryApply(damageable, damage);
             }
         }
 
