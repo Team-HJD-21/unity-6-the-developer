@@ -75,8 +75,7 @@ public sealed class EnemyMovementHotfixTests
             Transform target = pair.Key.GetComponent<EnemyTargeting>().Target;
             Rigidbody2D body = pair.Key.GetComponent<Rigidbody2D>();
             Debug.Log($"Enemy movement sample: target={(target == null ? "null" : target.name)}, " +
-                $"positionDelta={Vector2.Distance(pair.Value, pair.Key.transform.position):F3}, rigidbodyVelocity={body.linearVelocity}. " +
-                "이 AI는 NavMesh가 아니라 Transform XY 직접 이동을 사용합니다.");
+                $"positionDelta={Vector2.Distance(pair.Value, pair.Key.transform.position):F3}, rigidbodyVelocity={body.linearVelocity}.");
         }
 
         // 터렛이 모두 꺼진 경우를 재현해 Player 연결 자체가 정지/이동을 좌우하는지 확인합니다.

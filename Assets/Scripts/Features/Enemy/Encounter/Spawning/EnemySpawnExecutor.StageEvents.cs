@@ -50,10 +50,11 @@ public partial class EnemySpawnExecutor
             return false;
         }
         if (entrances == null) { reason = "FieldBossEntrancesNotAssigned"; return false; }
+        var spawnFilter = GetAgentSpawnFilter(definition);
         foreach (var entrance in entrances)
         {
             if (entrance == null || !entrance.gameObject.activeInHierarchy || entrance.gameObject.scene != gameObject.scene ||
-                !TryResolveStageEntrance(entrance.position, regions, out var position)) continue;
+                !TryResolveStageEntrance(entrance.position, regions, out var position, spawnFilter)) continue;
             // 서로 다른 사건을 같은 실제 위치에 겹쳐 만들지 않습니다. 제작자는 복수의 안전한 진입점을 제공합니다.
             bool occupied = false;
             foreach (var enemy in _spawnedEnemies.Values)
@@ -80,11 +81,12 @@ public partial class EnemySpawnExecutor
     }
 
     /// <summary>Level의 지정 진입점은 Grid 안의 점유 불가 셀·NavMesh 위에 있어야 합니다. 전체 확보 뒤에도 출현 가능해야 합니다.</summary>
-    internal static bool TryResolveStageEntrance(Vector3 requested, RegionGridSnapshot regions, out Vector3 position)
+    internal static bool TryResolveStageEntrance(Vector3 requested, RegionGridSnapshot regions, out Vector3 position,
+        NavMeshQueryFilter? filter = null)
     {
         position = default;
         if (regions == null || !float.IsFinite(requested.x) || !float.IsFinite(requested.y) || !float.IsFinite(requested.z) ||
-            !NavMesh.SamplePosition(new Vector3(requested.x, requested.y, 0), out var hit, .5f, NavMesh.AllAreas) ||
+            !TrySampleAuthoredNavMesh(requested, filter, out var hit) ||
             !regions.Definition.TryGetCellIndex(new BattlefieldPoint(hit.position.x, hit.position.y), out int cell) ||
             regions.Definition.CapturableCells[cell] || regions.CapturedCells[cell]) return false;
         position = new Vector3(hit.position.x, hit.position.y, requested.z);

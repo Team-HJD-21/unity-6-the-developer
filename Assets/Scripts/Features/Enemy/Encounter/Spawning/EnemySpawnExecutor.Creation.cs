@@ -7,10 +7,27 @@ using TeamHJD.Game.Domain;
 using TeamHJD.Game.Presentation.Scene;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 public partial class EnemySpawnExecutor
 {
+    private NavMeshQueryFilter? GetAgentSpawnFilter(EnemyDefinition definition)
+    {
+        var movement = definition.Prefab.GetComponent<EnemyMovement>();
+        return movement != null && movement.UsesNavMeshAgent
+            ? movement.GetNavigationFilter(gameObject.scene)
+            : null;
+    }
+
+    private static bool TrySampleAuthoredNavMesh(Vector3 position, NavMeshQueryFilter? filter, out NavMeshHit hit)
+    {
+        position.z = 0f;
+        return filter is NavMeshQueryFilter agentFilter
+            ? NavMesh.SamplePosition(position, out hit, .5f, agentFilter)
+            : NavMesh.SamplePosition(position, out hit, .5f, NavMesh.AllAreas);
+    }
+
     private bool TrySpawnActor(EnemyDefinition definition, Vector3 position, Quaternion rotation,
         EnemySquad squad, EncounterExecutionContext context, string pointId,
         Action<SpawnDecisionSnapshot.Actual> observeSpawn = null, Action<string> observeFailure = null,

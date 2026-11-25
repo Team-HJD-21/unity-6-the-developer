@@ -13,12 +13,12 @@ public static class EnemySpawnPlacementPolicy
 {
     /// <summary>일반 SpawnPoint도 반경 안의 NavMesh 위치만 사용합니다. 물·장애물 쪽 추첨은 최대 16회 안에서 재시도합니다.</summary>
     public static bool TryResolvePoint(SpawnPoint point, IRandomSource random, BattlefieldSpatialSnapshot battlefield,
-        out Vector3 position, out string reason, int agentTypeId = 0)
+        out Vector3 position, out string reason, int agentTypeId = 0, int areaMask = NavMesh.AllAreas)
     {
         position = default;
         reason = "No valid NavMesh location inside the SpawnPoint radius after 16 attempts.";
         if (point == null || !point.CanSpawnEnemies || (random != null && !random.IsAvailable)) return false;
-        var filter = new NavMeshQueryFilter { agentTypeID = agentTypeId, areaMask = NavMesh.AllAreas };
+        var filter = new NavMeshQueryFilter { agentTypeID = agentTypeId, areaMask = areaMask };
         for (int attempt = 0; attempt < 16; attempt++)
         {
             var sample = random?.InsideUnitCircle();
@@ -41,11 +41,11 @@ public static class EnemySpawnPlacementPolicy
     /// 요청 영역 안에서 제한된 횟수만 시도해 점유와 NavMesh 조건을 만족하는 위치를 찾는다.
     /// </summary>
     public static bool TryResolve(SpawnArea area, BattlefieldSpatialSnapshot battlefield, IRandomSource random,
-        out Vector3 position, out string reason, int agentTypeId = 0)
+        out Vector3 position, out string reason, int agentTypeId = 0, int areaMask = NavMesh.AllAreas)
     {
         position = default; reason = "No valid location inside the requested area/grid/NavMesh after 16 attempts.";
         if (area == null || battlefield == null || random == null || Math.Abs(area.VisualZ) > float.MaxValue) return false;
-        var filter = new NavMeshQueryFilter { agentTypeID = agentTypeId, areaMask = NavMesh.AllAreas };
+        var filter = new NavMeshQueryFilter { agentTypeID = agentTypeId, areaMask = areaMask };
         for (int attempt = 0; attempt < 16; attempt++)
         {
             double x = area.Center.X + (random.NextDouble() - .5) * area.Width;

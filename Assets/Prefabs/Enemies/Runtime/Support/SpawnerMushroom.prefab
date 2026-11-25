@@ -288,6 +288,10 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 1422852138
       objectReference: {fileID: 0}
+    - target: {fileID: 8802063807249954029, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
+      propertyPath: m_Radius
+      value: 0.1
+      objectReference: {fileID: 0}
     - target: {fileID: 8858556511827071525, guid: cc330eaf9dac4f4db48739c3f47eec57, type: 3}
       propertyPath: m_Size.x
       value: 3.62
