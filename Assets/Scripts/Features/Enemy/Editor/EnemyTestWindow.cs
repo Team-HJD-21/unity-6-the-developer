@@ -17,6 +17,7 @@ public sealed partial class EnemyTestWindow : EditorWindow
     private ObjectField _bindingField;
     private DropdownField _presetField;
     private Label _status;
+    private Toggle _targetProtection;
     private Label _composition;
     private HelpBox _result;
     private Button _fixedButton;
@@ -52,6 +53,12 @@ public sealed partial class EnemyTestWindow : EditorWindow
         _status = new Label();
         _status.style.whiteSpace = WhiteSpace.Normal;
         scroll.Add(_status);
+        _targetProtection = new Toggle("테스트 피해 보호 · CU / 터렛 / 플레이어")
+        {
+            tooltip = "현재 Play에서 에너미가 주는 피해를 막습니다. Stage1과 EnemyTest에서 사용할 수 있습니다."
+        };
+        _targetProtection.RegisterValueChangedCallback(evt => EnemyDamage.ProtectTestTargets = evt.newValue);
+        scroll.Add(_targetProtection);
         var countField = new IntegerField("요청당 생성 상한") { value = maximumEnemyCount };
         countField.RegisterValueChangedCallback(evt =>
         {
@@ -75,7 +82,7 @@ public sealed partial class EnemyTestWindow : EditorWindow
         scroll.Add(new HelpBox("같은 씬·같은 서버의 네트워크 몬스터를 모두 제거합니다. 사망 효과는 실행하지 않습니다. 다른 도구의 반복 요청은 별도로 중지하세요.", HelpBoxMessageType.Info));
         _result = new HelpBox("EnemyTest에서 Play하면 Core가 네트워크와 Match를 시작합니다. 준비 후 생성 요청을 실행하세요.", HelpBoxMessageType.Info);
         scroll.Add(_result);
-        CreateSingleSpawn(scroll);
+        CreateSpawnByType(scroll);
         CreateInspection(scroll);
         RefreshReferences();
         // 창이 열린 동안에만 상태를 갱신한다. 프레임마다 씬을 검색하지 않는다.
@@ -132,7 +139,10 @@ public sealed partial class EnemyTestWindow : EditorWindow
     private void UpdateStatus()
     {
         if (_status == null) return;
-        bool ready = EditorApplication.isPlaying && EnemyTestSceneTools.IsTestScene(binding) && binding.IsServer && !binding.BoundMatchId.IsEmpty;
+        bool playing = EditorApplication.isPlaying;
+        _targetProtection.SetEnabled(playing);
+        _targetProtection.SetValueWithoutNotify(playing && EnemyDamage.ProtectTestTargets);
+        bool ready = playing && EnemyTestSceneTools.IsTestScene(binding) && binding.IsServer && !binding.BoundMatchId.IsEmpty;
         // Core가 Match를 연결한 뒤 카탈로그와 시험 구역을 한 번 갱신한다.
         bool becameReady = ready && !_wasReady;
         _wasReady = ready;
@@ -140,8 +150,7 @@ public sealed partial class EnemyTestWindow : EditorWindow
         _fixedButton.SetEnabled(ready && SelectedPreset() != null);
         _planButton.SetEnabled(ready);
         _clearButton.SetEnabled(ready && binding.ExecutionTarget != null);
-        _individualSpawnButton?.SetEnabled(ready && binding.ExecutionTarget != null && binding.ExecutionTarget.CanSpawn &&
-            individualSpawnPoint != null && _individualDefinitions.Count > 0);
+        UpdateSpawnAvailability(ready);
         _status.text = binding == null ? "현재 씬의 EncounterSceneBinding을 지정하세요." :
             $"Match: {binding.BoundMatchId}\nHost: {binding.IsServer} / 실행기: {(binding.ExecutionTarget != null ? binding.ExecutionTarget.name : "미연결")}\n요청 생성 생존 적: {binding.ActiveEnemyCount}마리 · 별도 소환물 제외";
         UpdateInspection();

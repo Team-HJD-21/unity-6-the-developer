@@ -102,7 +102,7 @@ public partial class EnemyDamageProjectile : EnemyProjectile
             return;
 
         IDamageableTarget damageable = targetTransform.GetComponentInParent<IDamageableTarget>();
-        damageable?.ApplyDamage(_projectileDamage);
+        EnemyDamage.TryApply(damageable, _projectileDamage);
     }
 
     // 내부 처리
