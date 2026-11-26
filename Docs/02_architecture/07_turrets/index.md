@@ -85,7 +85,7 @@ flowchart TD
 
 Enemy는 `TargetableComponent.CanBeTargeted`를 읽는다. `DamageableTargetAdapter`가 터렛의 체력과 대상 허용 여부를 이 컴포넌트에 반영한다.
 
-필드 터렛은 전력 예약이 성공해 처음 ON이 될 때 `HasEverActivated`를 기록한다. 수동 및 자동 가동 모두 해당하며, OFF, 파괴 후 복구, 레벨 교체 및 체크포인트에서 기록을 유지한다. 이전 체크포인트는 저장 당시 ON 상태를 근거로 가동 이력을 복원한다.
+필드 터렛은 전력 예약이 성공해 처음 ON이 될 때 `HasEverActivated`를 기록한다. 수동 및 자동 가동 모두 해당하며, OFF, 파괴 후 복구, 레벨 교체 및 체크포인트에서 기록을 유지한다. `world/field-turrets` v2는 저장된 가동 이력을 복원한다. 가동 이력이 없는 v1은 당시의 표적 규칙에 맞춰 해금된 터렛을 가동 이력이 있는 것으로 복원한다. 해금만 하고 한 번도 켜지 않은 터렛도 이 경우에 포함된다. 잠긴 v1 터렛은 가동 이력 없이 복원한다.
 
 Enemy 연동 시 `DamageableTargetAdapter`의 필드 터렛 조건에 `!IsLocked && HasEverActivated`를 적용한다. 아래 표는 연동 후 기준이다.
 

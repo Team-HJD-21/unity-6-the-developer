@@ -183,9 +183,15 @@ namespace TeamHJD.Game.FieldTurrets
         private static FieldTurretActorState ReadActor(BinaryReader r, ICheckpointPayloadCodec codec, int version)
         {
             var id = new EntityId(codec.ReadText(r));
-            var state = new FieldTurretRuntimeState.State(codec.ReadText(r), r.ReadInt32(), r.ReadInt32(), r.ReadBoolean(), r.ReadBoolean(),
-                r.ReadBoolean(), r.ReadBoolean(), r.ReadInt32(), codec.ReadText(r), r.ReadInt32(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadDouble(),
-                version >= 2 && r.ReadBoolean());
+            string definitionId = codec.ReadText(r);
+            int maximumHealth = r.ReadInt32();
+            int currentHealth = r.ReadInt32();
+            bool isDestroyed = r.ReadBoolean();
+            bool isActivated = r.ReadBoolean();
+            bool isLocked = r.ReadBoolean();
+            var state = new FieldTurretRuntimeState.State(definitionId, maximumHealth, currentHealth, isDestroyed, isActivated, isLocked,
+                r.ReadBoolean(), r.ReadInt32(), codec.ReadText(r), r.ReadInt32(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadDouble(),
+                version == 1 ? !isLocked : r.ReadBoolean()); // v1에서는 해금된 터렛이 표적이 될 수 있었다.
             var pose = CheckpointTransformState.Read(r); bool head = r.ReadBoolean();
             var rotation = new Quaternion(r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
             return new FieldTurretActorState(id, state, pose, head, rotation, r.ReadSingle(), r.ReadDouble(), r.ReadSingle(),
