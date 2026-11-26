@@ -33,8 +33,10 @@ public sealed class CombatHudHeader : MonoBehaviour
         if(_hasConfirmedOccupancy==confirmed && _lastCaptured==capturedEligibleCells && _lastEligible==eligibleCells)return;
         _lastCaptured=capturedEligibleCells;_lastEligible=eligibleCells;_hasConfirmedOccupancy=confirmed;
         double percent=confirmed?100.0*capturedEligibleCells/eligibleCells:0;
+        // 100%는 보스 진입과 같은 실제 완료를 뜻합니다. 마지막 셀이 남아 있으면 반올림으로 완료를 표시하지 않습니다.
+        int wholePercent=confirmed && capturedEligibleCells==eligibleCells?100:Mathf.Min(99,Mathf.RoundToInt((float)percent));
         OccupancyLabel.text = !confirmed?"":percent>0 && percent<.1?"<0.1%":percent>0 && percent<1?
-            percent.ToString("0.0",System.Globalization.CultureInfo.InvariantCulture)+"%":$"{Mathf.RoundToInt((float)percent)}%";
+            percent.ToString("0.0",System.Globalization.CultureInfo.InvariantCulture)+"%":$"{wholePercent}%";
         ApplyOccupancyLayout();
     }
     private void ApplyOccupancyLayout()
