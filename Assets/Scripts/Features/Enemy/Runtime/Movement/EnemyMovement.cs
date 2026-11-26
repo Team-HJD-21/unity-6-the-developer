@@ -18,7 +18,7 @@ public partial class EnemyMovement : MonoBehaviour
 
     // 실행 중 참조와 상태
     private NavMeshAgent _agent;
-    private bool _agentResolved;
+    private bool _isAgentInitialized;
     private int _configuredAgentTypeId;
     private bool _physicsOwnsMovement;
     private static readonly Unity.Profiling.ProfilerMarker BrakeMarker = new("EnemyMovement.Brake");
@@ -29,13 +29,13 @@ public partial class EnemyMovement : MonoBehaviour
     /// <summary>현재 감속을 반영한 최대 이동속도다.</summary>
     public float MoveSpeed => BaseMoveSpeed * SlowSpeedMultiplier;
 
-    internal bool UsesNavMeshAgent => ResolveAgent() != null;
+    internal bool UsesNavMeshAgent => GetOrEnsureNavMeshAgent() != null;
 
-    private NavMeshAgent ResolveAgent()
+    private NavMeshAgent GetOrEnsureNavMeshAgent()
     {
-        if (!_agentResolved)
+        if (!_isAgentInitialized)
         {
-            _agentResolved = true;
+            _isAgentInitialized = true;
             if (TryGetComponent(out _agent))
                 _configuredAgentTypeId = _agent.agentTypeID;
         }
