@@ -82,7 +82,11 @@ public partial class EnemyMovement : IAttackSlowEffectReceiver
         return true;
     }
 
-    private void OnDisable() => _slowEffects?.Clear();
+    private void OnDisable()
+    {
+        DisableAgentMovement();
+        _slowEffects?.Clear();
+    }
 
     private readonly struct SlowEffect
     {

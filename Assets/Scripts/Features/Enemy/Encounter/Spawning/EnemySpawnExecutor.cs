@@ -9,6 +9,7 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 using Random = UnityEngine.Random;
 using TeamHJD.Game.Application;
 
@@ -330,7 +331,10 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
         {
             EnemyDefinition enemy = definitions[entryIndex];
             int count = spawnInstruction.Enemies[entryIndex].Count;
-            int agentTypeId = enemy.Prefab.GetComponent<EnemyMovement>()?.GetNavMeshAgentTypeId(gameObject.scene) ?? 0;
+            var movement = enemy.Prefab.GetComponent<EnemyMovement>();
+            var filter = movement != null
+                ? movement.GetNavigationFilter(gameObject.scene)
+                : new NavMeshQueryFilter { agentTypeID = 0, areaMask = NavMesh.AllAreas };
 
             for (int i = 0; i < count; i++)
             {
@@ -355,7 +359,8 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                 Vector3 spawnPosition;
                 if (world)
                 {
-                    if (!EnemySpawnPlacementPolicy.TryResolve(spawnInstruction.Placement.Area, battlefield, _spawnRandom, out spawnPosition, out string reason, agentTypeId))
+                    if (!EnemySpawnPlacementPolicy.TryResolve(spawnInstruction.Placement.Area, battlefield, _spawnRandom,
+                            out spawnPosition, out string reason, filter.agentTypeID, filter.areaMask))
                     {
                         Fail(reason, observeFailure);
                         continue;
@@ -364,7 +369,7 @@ public partial class EnemySpawnExecutor : NetworkBehaviour, IBattlefieldEnemyPos
                 else
                 {
                     if (!EnemySpawnPlacementPolicy.TryResolvePoint(spawnPoint, _spawnRandom, battlefield,
-                            out spawnPosition, out string reason, agentTypeId))
+                            out spawnPosition, out string reason, filter.agentTypeID, filter.areaMask))
                     {
                         Fail(reason, observeFailure);
                         continue;

@@ -1,9 +1,11 @@
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Reflection;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -86,6 +88,7 @@ public sealed class EnemyAbilityTests
         var movement = enemy.GetComponent<EnemyMovement>();
         var animation = enemy.GetComponent<EnemyAnimation>();
         var body = enemy.GetComponent<Rigidbody2D>();
+        var agent = enemy.GetComponent<NavMeshAgent>();
         var ability = enemy.AddComponent<EnemyAbilityTestProbe>();
 
         typeof(MovingEnemyController).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -114,11 +117,10 @@ public sealed class EnemyAbilityTests
         GameObject target = Create("Target");
         target.transform.position = enemy.transform.position + Vector3.right * 5f;
         enemy.GetComponent<EnemyTargeting>().SetTarget(target.transform);
-        typeof(EnemyMovement).GetField("_path", BindingFlags.Instance | BindingFlags.NonPublic)
-            .SetValue(movement, new[] { target.transform.position });
+        using var navigation = new EnemyTestNavMesh(agent, target.transform.position);
+        agent.isStopped = true;
         controller.ExecuteBehavior();
-        _scene.GetPhysicsScene2D().Simulate(Time.fixedDeltaTime);
-        Assert.That(body.linearVelocity.x, Is.GreaterThan(0f));
+        Assert.That(agent.isStopped, Is.False);
         Assert.That(ability.Activations, Is.EqualTo(1));
     }
 
@@ -188,6 +190,54 @@ public sealed class EnemyAbilityTests
         var gameObject = new GameObject(name);
         SceneManager.MoveGameObjectToScene(gameObject, _scene);
         return gameObject;
+    }
+}
+
+internal sealed class EnemyTestNavMesh : System.IDisposable
+{
+    private readonly NavMeshAgent _agent;
+    private readonly NavMeshData _data;
+    private readonly NavMeshDataInstance _instance;
+
+    public EnemyTestNavMesh(NavMeshAgent agent, Vector3 destination)
+    {
+        _agent = agent;
+        Vector3 origin = agent.transform.position;
+        Quaternion rotation = Quaternion.Euler(-90f, 0f, 0f);
+        var sources = new List<NavMeshBuildSource>
+        {
+            new()
+            {
+                shape = NavMeshBuildSourceShape.Box,
+                transform = Matrix4x4.TRS(origin + Vector3.forward * 0.5f, rotation, Vector3.one),
+                size = new Vector3(30f, 1f, 30f)
+            }
+        };
+        _data = NavMeshBuilder.BuildNavMeshData(NavMesh.GetSettingsByID(agent.agentTypeID), sources,
+            new Bounds(Vector3.zero, new Vector3(32f, 4f, 32f)), origin, rotation);
+        Assert.That(_data, Is.Not.Null);
+        _instance = NavMesh.AddNavMeshData(_data);
+        try
+        {
+            agent.enabled = true;
+            Assert.That(agent.isOnNavMesh, Is.True);
+            var path = new NavMeshPath();
+            Assert.That(agent.CalculatePath(destination, path), Is.True);
+            Assert.That(path.status, Is.EqualTo(NavMeshPathStatus.PathComplete));
+            Assert.That(agent.SetPath(path), Is.True);
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
+    }
+
+    public void Dispose()
+    {
+        _agent.enabled = false;
+        _instance.Remove();
+        Object.DestroyImmediate(_data);
     }
 }
 

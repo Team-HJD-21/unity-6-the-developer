@@ -45,7 +45,7 @@ public sealed class EnemyContactDamage : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!isActiveAndEnabled || other.gameObject.layer != _playerHurtboxLayer ||
-            contactDamage <= 0 || networkController == null ||
+            contactDamage <= 0 || EnemyDamage.IsTestProtectionActive || networkController == null ||
             !networkController.CanExecuteBehavior || enemyHealth == null ||
             !enemyHealth.isActiveAndEnabled || enemyHealth.CurrentHealth <= 0)
             return;
@@ -62,7 +62,7 @@ public sealed class EnemyContactDamage : MonoBehaviour
             return;
 
         // 방향별 Hurtbox 교체와 여러 콜라이더의 동시 진입으로 인한 연속 피해를 제한한다.
-        if (player.ApplyDamage(contactDamage))
+        if (EnemyDamage.TryApply(player, contactDamage))
         {
             _nextDamageTimes ??= new Dictionary<PlayerInfo, double>();
             _nextDamageTimes[player] = now + Mathf.Max(0.01f, contactDamageInterval);

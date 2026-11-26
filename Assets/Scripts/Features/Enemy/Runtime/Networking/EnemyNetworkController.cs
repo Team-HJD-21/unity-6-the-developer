@@ -35,6 +35,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
     private readonly NetworkVariable<double> _footEnableAt = new(-1d);
     private bool _isWaitingForFootEnable;
     private EnemyExplosionAbility _explosionAbility;
+    private EnemyMovement _agentMovement;
     private FieldSimulationActor _simulationActor;
     private readonly NetworkVariable<double> _deathStartedAt = new(-1d);
     private bool _deathPresentationStarted;
@@ -100,6 +101,8 @@ public partial class EnemyNetworkController : NetworkBehaviour
             hitDeathVisual = GetComponent<EnemyHitDeathVisual>();
 
         _explosionAbility = GetComponent<EnemyExplosionAbility>();
+        if (TryGetComponent(out EnemyMovement movement) && movement.UsesNavMeshAgent)
+            _agentMovement = movement;
 
         if (footCollider == null)
         {
@@ -160,7 +163,13 @@ public partial class EnemyNetworkController : NetworkBehaviour
     private void FixedUpdate()
     {
         if (!CanExecuteBehavior)
+        {
+            if (_agentMovement != null && enemyHealth != null && enemyHealth.IsDead)
+                _agentMovement.DisableAgentMovement();
             return;
+        }
+
+        _agentMovement?.EnableAgentMovement();
 
         // 분대 대표만 타깃 재검색 갱신을 요청한다.
         if (enemyController.IsSquadRepresentative)
@@ -195,6 +204,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
     /// </summary>
     public override void OnNetworkDespawn()
     {
+        _agentMovement?.DisableAgentMovement();
         _isWaitingForFootEnable = false;
         _deathStartedAt.OnValueChanged -= OnDeathStartedAtChanged;
         NotifyDespawned();
@@ -352,6 +362,7 @@ public partial class EnemyNetworkController : NetworkBehaviour
             return;
 
         _deathPresentationStarted = true;
+        _agentMovement?.DisableAgentMovement();
         enemyHealth?.Deactivate();
         enemyController?.LeaveSquad();
         GetComponent<EnemyAnimation>()?.StopMovementAnimation();

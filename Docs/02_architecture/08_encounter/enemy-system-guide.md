@@ -46,7 +46,7 @@ flowchart TD
     Squad -->|AssignTarget| Controller[EnemyController]
     Network[EnemyNetworkController: 서버 FixedUpdate] -->|RefreshTarget / ExecuteBehavior| Controller
     Controller --> Target[EnemyTargeting: 목표·콜라이더]
-    Controller --> Move[EnemyMovement: 경로·이동 힘]
+    Controller --> Move[EnemyMovement: NavMeshAgent 추적]
     Controller --> Ability[EnemyAbility: 발동·쿨타임]
     Controller --> Anim[EnemyAnimation: 방향·모션]
     Anim --> Sync[EnemyNetworkAnimator: 상태·공격 동기화]
@@ -85,7 +85,7 @@ classDiagram
 | `MovingEnemyController` | 실행 중 능력은 정지 대기. 발동 조건을 충족하면 능력을 시도하고, 아니면 목표로 이동 |
 | `EnemySummonController` | 이동 → 변태 → 위치 고정 상태 전이. 변태 완료 후 소환 능력 실행 |
 | `EnemyTargeting` | 목표 Transform과 대상 Collider 목록·유효성 관리 |
-| `EnemyMovement` | NavMesh 경로 요청, waypoint 방향, Rigidbody2D 이동 힘 적용 |
+| `EnemyMovement` | NavMeshAgent 경로 요청·이동·정지, 보스 돌진 중 물리 이동 전환 |
 | `EnemyAbility` | `CheckCondition`, `Activate`, 쿨타임, 실행 권한, 공통 Collider 거리 검사·기즈모 |
 | `EnemyAnimation` | 네 방향 선택, 이동 속도 파라미터, 능력 모션 재생 |
 | `EnemyNetworkController` | 서버 행동 실행, Match 시간·수명 연결, 체력 사망 및 폭발 제거 처리 |
@@ -141,21 +141,17 @@ Enemy 체크포인트 `world/enemies`는 v3부터 분대별 실제 규칙을 저
 일반 `PlayerOrTurret` 분대는 플레이어가 모든 활성 구성원의 감지 반경 1.5배 밖으로 벗어나면 공동 어그로를 해제한다. 센서의 Offset과 월드 스케일을 반영하고 XY 제곱 거리로 판정한다. 한 구성원이라도 1.5배 범위 안이면 추적을 유지하며, 감지 반경 밖에서 1.5배 반경 안까지는 유지 구간이다. 분대 대표만 기존 갱신 경로에서 Match 시간 기준 0.2초마다 확인하며 새로운 Trigger·Update·코루틴·물리 검색은 추가하지 않는다. 센서는 Awake에서 캐시하고 해당 검사 때 활성 구성원을 필요한 만큼 순회한다. 해제 시 플레이어 배정 인원을 반환하고 검색 대기를 초기화한 뒤 분대 중심에서 가장 가까운 수용 가능한 시설을 즉시 검색한다. 시설이 없으면 기존 1초 재검색을 사용한다. `PlayerOnly` 암살자는 거리로 해제하지 않으며 타깃 불가 이벤트까지 추적한다. 센서가 없는 분대는 거리 기준을 알 수 없어 거리 해제를 적용하지 않는다.
 
 
-이동은 XY NavMesh 경로를 구하고 서버의 FixedUpdate에서 `AddForce`로 속도를 조절한다. `moveSpeed`는 목표 속도, `moveAcceleration`은 목표 속도로 접근하는 가속도, `moveDeceleration`은 정지·역방향 속도·진행 방향의 초과 속도·옆으로 남은 속도에 사용하는 감속도다. 현재 속도를 새 이동 방향의 성분과 그에 수직인 성분으로 나눈다. 진행 방향은 목표 속도까지 가속하고, 옆 속도는 감속도로 줄이므로 90도 전환에서도 감속도를 높이면 미끄러짐이 빨리 줄어든다. 역방향 속도는 먼저 0까지 제동한 뒤 다음 물리 단계부터 새 방향으로 가속한다. Rigidbody2D `Linear Damping`으로 손실될 속도를 힘 계산에서 보상하므로, 장애물·외력이 없을 때 설정한 목표 속도와 가감속에 접근한다. 사거리 진입·능력 실행·타깃 또는 경로 부재 시 `StopMoving()`에서 `Brake()`를 호출한다. 충돌로 밀리는 움직임은 유지하되, 허용 상한을 넘은 속도만 제한하고 나머지는 제동하므로 감속도가 클수록 밀림도 빨리 줄어든다. `moveDeceleration`의 초기값은 20이며 기존 프리팹의 속도·가속도·감쇠는 그대로 유지한다. `CheckCondition()`은 쿨타임과 독립적이므로, 사거리에 도착한 적은 쿨타임 중에도 제동한다. 변태를 완료한 소환형은 기존대로 위치를 고정하며 고정 상태에는 이동·제동 힘을 추가하지 않는다. 실제 충돌 중의 속도·밀림·정지 거리는 별도 플레이 검증이 필요하다.
+### 이동형 몬스터의 NavMeshAgent
 
-`pushSpeedLimitMultiplier`는 외부 충돌로 밀릴 때 허용할 속도 배율이며 초기값은 1.1이다. 행동을 수행하는 서버의 기존 이동·제동 처리에서 속력 상한을 `moveSpeed × 배율`로 적용한다. 상한을 넘으면 방향을 유지하면서 속력만 제한하고, 방향 전환에서 전진·옆 속도를 합친 결과에도 같은 상한을 적용한다. 별도 Update·물리 조회·코루틴은 추가하지 않는다. 충돌 직후 속도는 다음 이동·제동 처리에서 제한되므로 물리 솔버 내부의 순간 속도나 겹침 분리 이동까지 제한하는 기능은 아니다. 감속도가 0이어도 과속 상한은 적용된다.
+서버의 행동 루프에서 `EnemyMovement`가 XY NavMesh에 목표를 투영하고 `NavMeshAgent`에 경로 계산과 이동, 지역 회피를 맡긴다. 일반 이동 중 Rigidbody2D는 Kinematic이고, 클라이언트는 `NetworkTransform`으로 위치를 받는다. `moveSpeed`에 감속 배율을 적용해 Agent의 속도를 정하고, `moveAcceleration`은 Agent 가속도에 사용한다. 공격 사거리는 콜라이더 간 거리로 판정한다. 사거리 진입·능력 실행·타깃 부재 시 `Brake()`로 Agent를 멈춘다.
 
-이동에 사용하지 않던 정지 플래그와 `EnemyMovement.Stop()`은 제거했다. 체크포인트는 경로와 경유점 진행도를 복원한다. 기존 저장 데이터와의 바이트 배열 형식을 유지하기 위해 과거 정지 플래그 자리는 쓰기 시 `false`로 채우고 읽기 시 소비한 뒤 버린다.
+생성 위치와 Agent 이동은 씬에 베이크 데이터가 있는 타입을 같이 사용한다. 대형 데이터가 없는 씬에서는 기본 타입으로 생성하고 추적한다. 보스 돌진은 시작할 때 Agent를 끄고 Dynamic Rigidbody2D에 이동을 맡긴다. 돌진과 후딜이 끝나면 현재 위치에서 Agent 추적을 재개한다.
 
-### NavMesh 출발점·목표 투영
+### NavMesh 목표 투영과 체크포인트
 
-`EnemyNavMeshPathfinder.TryCalculatePath`는 XY 좌표를 사용하며 출발점은 3에 해당 Agent Radius의 두 배를 더한 거리 안에서 보행면을 찾는다. 충돌로 밀려난 개체는 발 크기로 장애물을 확인하며 보행면으로 돌아간다. 목표 탐색 거리는 기본 4에 해당 Agent Radius와 소형 Radius의 차이만큼 더한다. 현재 소형은 4, 대형은 5.3을 사용한다. 시설 중심은 Base 장애물 내부에 있고, 큰 Agent Radius로 Bake하면 중심에서 보행면까지의 거리도 늘어난다. Stage1 미사일 터렛 (7)의 대형 보행면은 중심에서 약 4.55 떨어져 있어 고정 거리 4로는 목표 투영이 실패했다. 투영 성공 후에도 `PathComplete` 검사를 유지하고 실패 로그에는 좌표와 실제 탐색 한도를 남긴다. 시설 타깃의 경로가 비어 있으면 기존 경로 갱신 타이머로 다시 시도한다. 보행면의 끝에서 시설 중심까지 발 크기로 BoxCast해 다른 정적 장애물이 없는 경우 마지막 접근점을 추가한다. 목적 시설의 콜라이더와 실제 공격 사거리 판정이 최종 정지 위치를 결정한다. 중간 경유점은 0.1 월드 단위 이내에서 넘긴다. 다음 구간이 발 콜라이더와 NavMesh 검사에서 안전하면 해당 경유점을 미리 넘길 수 있다. NavMesh가 지름길을 거부하면 발 Cast를 생략한다. 측면 회피는 최대 점수로도 현재 후보를 이길 수 없는 방향을 제외하고, 한 번의 회피 갱신 동안 출발점의 NavMesh 투영을 재사용한다. 최종 도착점은 기존 arrivalDistance를 사용한다. 시설까지 16 월드 단위 이상이면 출발점이 속한 12×12 구역, Scene, NavMesh 타입, 목표 투영점별로 기본·우회 경로를 최대 8초 재사용한다. 합류 구간을 NavMesh로 검사하고, 합류할 수 없거나 이동이 막히면 개체별 경로를 다시 구한다. 공유 경로의 중간 경유점은 개체가 3 월드 단위 안에 도달하면 두 연결 구간을 NavMesh로 검사하고 이동할 수 있는 위치로 분산한다. 마지막 시설 접근과 혼잡 회피는 매 개체의 발 콜라이더로 검사한다. 발 콜라이더의 전방 Cast로 다른 개체나 지형이 막는지 0.1초 간격으로 확인한다. 통과 가능한 측면 방향을 고를 때 NavMesh 연결과 발 크기를 검사하고 기존 Rigidbody2D 힘 계산으로 이동한다. 경로를 다시 계산했을 때 투영된 출발점보다 이미 앞에 있고 다음 경유점까지 정적 장애물이 없으면 출발점을 생략해 밀려난 개체가 뒤로 돌아가지 않게 한다. 같은 경유점에 1.5초 동안 가까워지지 못하면 경로를 다시 계산한다. 사거리 진입·능력 실행·사망·시뮬레이션 일시정지는 기존 행동 규칙을 따른다.
+`EnemyMovement.GetTargetProjectionDistance()`가 런타임 추적과 EnemyTest 분산 스폰의 목표 투영 거리를 정한다. 기본 거리는 4이고, 대형 Agent는 소형과의 반지름 차이만큼 탐색 거리를 늘린다. 현재 대형 거리는 5.3이다. Stage1 미사일 터렛 (7)은 시설 중심에서 대형 보행면까지 약 4.55가 떨어져 있어 거리 4로는 투영이 실패했다. `PathComplete` 경로를 따라 이동하며, 시설 타깃의 경로가 없으면 경로 갱신 타이머에서 다시 시도한다.
 
-### 경로 분산과 시설 접근 우회
-
-몬스터의 영속 식별자를 기준으로 최대 8가지 경로 변형 중 하나를 고른다. 유효한 중간 경유지를 사용하고, 전체 경로는 기본 경로 길이의 1.35배에 3유닛을 더한 범위로 제한한다. 같은 출발 셀·목표·Agent Type·변형의 경로는 최대 2초 동안 재사용하며 합류 구간과 나머지 구간의 NavMesh 연결을 확인한다. 중간 경유점에는 몬스터별로 고정된 작은 오프셋을 더한다. 최대값은 pathCornerOffset(기본 0.75)과 Agent Radius의 75% 중 작은 값이다. 이동한 점과 앞뒤 구간이 NavMesh에 연결될 때만 적용한다. 각 몬스터의 실제 경로와 진행도는 기존 체크포인트에 저장한다.
-
-시설 가까이에서 접근이 멈추면 활성 비트리거 콜라이더의 경계를 기준으로 터렛 16곳, CU 32곳의 후보를 비교한다. NavMesh와 정적 장애물을 검사한 뒤 공격 자리와 마지막 접근로의 발 콜라이더 점유, 경로 길이를 비교해 덜 붐비는 쪽을 고른다. CU의 최대 배정 인원은 0(무제한)이다.
+체크포인트는 감속 효과와 남은 시간을 저장하고, 복원 위치와 타깃에서 Agent 경로를 다시 계산한다. 이전 저장 파일의 경유점과 정지 플래그 필드는 형식 호환을 위해 읽어서 소비한다.
 
 ## 능력·투사체·애니메이션
 
@@ -206,7 +202,7 @@ bool applied = receiver != null &&
 
 예시의 `0.5`는 속도 50%, `2`는 지속시간 2 게임 초이며 무기 밸런스 확정값이 아니다. 배율은 0 초과 1 미만, 지속시간은 양수여야 한다. Client·사망·비활성·피격 불가·필드 정지 중 호출과 유효하지 않은 인자는 `false`로 거절한다. HP 피해를 따로 요구하지 않아 피해량 0인 냉기도 감속할 수 있다. 탐지되지 않은 암살자 등 기존 공격 출처 규칙은 유지한다. 공통 `ApplySlow(multiplier, duration)`는 출처를 `Unknown`으로 전달하므로 플레이어 공격에는 명시적인 `TryApplySlow`를 사용한다.
 
-동일 배율의 재적중은 기존 기한을 줄이지 않고 갱신한다. 다른 배율은 각각 만료하며 활성 효과 중 가장 강한 감속만 적용한다. 서로 다른 활성 배율은 최대 64개이고 상한에 도달하면 새로운 배율만 거절한다. `BaseMoveSpeed`는 설정 원속도, `MoveSpeed`는 감속을 반영한 목표 속도, `SlowSpeedMultiplier`는 현재 배율이다. 실제 Rigidbody2D 이동과 밀림 속도 상한에 적용되며, 컴포넌트를 비활성화하면 효과를 해제한다. 새 프리팹 컴포넌트 추가는 필요 없다.
+동일 배율의 재적중은 기존 기한을 줄이지 않고 갱신한다. 다른 배율은 각각 만료하며 활성 효과 중 가장 강한 감속만 적용한다. 서로 다른 활성 배율은 최대 64개이고 상한에 도달하면 새로운 배율만 거절한다. `BaseMoveSpeed`는 설정 원속도, `MoveSpeed`는 감속을 반영한 목표 속도, `SlowSpeedMultiplier`는 현재 배율이다. Agent의 이동 속도에 적용되며, 컴포넌트를 비활성화하면 효과를 해제한다. 새 프리팹 컴포넌트 추가는 필요 없다.
 
 감속 기한은 `FieldSimulationTime`을 사용한다. 적 체크포인트 `world/enemies` v4는 배율과 남은 시간을 저장하며 v1~v3는 감속 없는 상태로 읽는다. 서버의 실제 이동은 기존 위치 동기화를 통해 Client에 전달하고, 별도 냉기 시각 효과는 추가하지 않는다.
 
@@ -223,6 +219,9 @@ bool applied = receiver != null &&
 - `EnemyNetworkController.runOffline`과 `testTarget`: 몬스터 하나를 배치해 이동·모션을 확인하는 임시 로컬 경로. 네트워크가 실행 중이면 서버 경로를 따른다.
 - `EnemySquadTester`: 배치한 몬스터를 각각 1인 분대에 등록한다. `initialTarget`이 없으면 규칙에 맞는 타깃을 찾고, 목표 무효화 후 재검색도 확인할 수 있다.
 - `EnemyTestDriver`: 기존 별도 로컬 행동 실행기. `runOffline` 실행과 중복 사용하지 않는다.
+- Stage1 또는 EnemyTest를 Play한 뒤 Enemy Test 창의 **테스트 피해 보호 · CU / 터렛 / 플레이어**를 켜면 해당 Play에서 에너미가 주는 체력 피해를 막는다. 타깃 추적·공격 모션·명중 효과는 계속 실행된다. Play를 다시 시작하면 보호는 꺼진다.
+- `EnemyTest` 씬을 Play한 뒤 `Tools > TeamHJD > The Developer > Enemy Test`의 **몬스터 종류별 생성**에서 카탈로그의 적을 고르고 `1 / 5 / 10 / 50 / 100 / 500` 버튼을 누른다. **여러 지점에 분산**을 켜면 현재 생성이 가능한 지점만 목록에 표시된다. 두 곳 이상 체크하면 요청 수를 최대한 균등하게 나눈다. 각 지점에서는 한 요청에 최대 100마리씩 기존 NavMesh 위치 탐색과 적 정의의 공유·개별 분대 규칙으로 생성한다. 500마리를 한 지점에 생성하는 경우와 다섯 지점으로 분산하는 경우 모두 100마리 생성 요청을 다섯 번 실행한다. 지정한 초기 타깃은 전체 요청 인원을 추가로 받을 수 있어야 한다. 결과에는 각 지점에서 실제로 생성한 수와 실패 사유가 표시된다.
+- 분산 생성은 선택한 적의 Agent Type으로 각 출현 지점에서 타깃까지 완전한 NavMesh 경로를 확인한다. 초기 타깃을 지정하면 해당 타깃까지 경로가 있는 지점을 사용하고, 비워 두면 지점마다 도달 가능한 타깃을 고른다. 경로가 없는 지점을 제외한 뒤 두 곳 이상이 남아야 분산할 수 있다. 결과에 지점별 타깃과 제외 사유를 표시한다.
 - `EnemyDetectionTester`: 탐지자 A/B 등록·해제로 여러 플레이어의 탐지 해제 조건을 확인한다.
 
 Host/Client 검증에서는 로컬 실행 플래그를 끄고 실제 NetworkObject Spawn·Network Prefab 등록·효과 동기화를 확인한다. 상세 순서와 이번 브랜치 검증 기록은 [콘텐츠 가이드](stage1-enemy-content-guide.md#검증과-남은-작업)를 따른다.
@@ -231,6 +230,6 @@ Host/Client 검증에서는 로컬 실행 플래그를 끄고 실제 NetworkObje
 
 서버의 일반 생성/Checkpoint 재생성은 `SetSimulationMatch → NetworkObject.Spawn` 순서를 유지한다. `SetSimulationMatch`는 Match ID와 Executor ID를 일반 필드에 준비한다. NGO가 NetworkVariable을 초기화한 뒤 `OnNetworkSpawn → NotifySpawned`에서 서버가 두 값을 반영하고, 그 다음 Match 시간 등록 구독자에게 알린다. Client는 최초 Spawn 패킷의 값을 읽고 덮어쓰지 않는다. 이미 Spawn된 적의 귀속 변경은 거절한다.
 
-`EnemyNavMeshPathfinder`는 경로 성공을 반환값/경로로 전달한다. 개체별 성공 로그와 `EncounterPipeline.ExecutePlan`의 장문 정상 결과 복사 로그는 출력하지 않는다. NavMesh 실패 경고/오류, 요청 반환 문자열과 구조화된 SpawnPlan/Actual·통계·Timeline은 유지한다. 편성/예산의 선택적 진단은 기존 설정을 따른다.
+`EnemyMovement`는 Agent의 경로 상태로 이동 여부를 판단한다. `EncounterPipeline.ExecutePlan`의 정상 생성 결과는 스폰 요청 반환값과 구조화된 SpawnPlan/Actual·통계·Timeline으로 전달한다. 편성/예산의 선택적 진단은 기존 설정을 따른다.
 
 이 초기화/로그 수정은 물리·AI 최적화나 실제 Enemy Pool 구현을 포함하지 않는다. 검증 범위와 코드 읽는 순서는 [PR 설명 문서](../../team/reviews/ngo-spawn-initialization-20261111.md)를 따른다.
