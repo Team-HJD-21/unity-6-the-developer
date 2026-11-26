@@ -2,7 +2,7 @@ name: Release merged Unity asset locks
 
 on:
   push:
-    branches: [main, diagnostic/unity-lfs-actions-auth]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -14,9 +14,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/diagnostic/unity-lfs-actions-auth'
-    permissions:
-      contents: write
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/diagnostic/unity-lfs-actions-auth'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -25,8 +23,10 @@ jobs:
           ref: diagnostic/unity-lfs-actions-auth
           fetch-depth: 0
           sparse-checkout: .github/scripts
+          token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
       - name: Release submitted versions on main
         env:
+          LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
           GIT_TERMINAL_PROMPT: '0'
         run: |
           PYTHONPATH=.github/scripts python3 -u - <<'PY'
@@ -51,6 +51,11 @@ jobs:
                   super().unlock(requested_id)
 
           release.git = isolate_test_branch
+          import os
+          import subprocess
+          probe = subprocess.run(["git", "push", "--dry-run", "--no-verify", "origin", "HEAD:refs/heads/diagnostic/unity-lfs-actions-auth"], capture_output=True, timeout=30)
+          print(f"Repository Git write transport check: exit={probe.returncode}.", flush=True)
+          assert os.environ.get("LOCKS_CONFIGURED") == "true", "Configure the existing repository secret before running this fixture."
           api = FixtureOnly()
           before = api.list_locks()
           assert len(before) == 1 and before[0].get("owner", {}).get("name") == "hjd5031", "Fixture lock was not visible with the original owner."
