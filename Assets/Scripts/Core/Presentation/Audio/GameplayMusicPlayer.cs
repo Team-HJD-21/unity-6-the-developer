@@ -252,8 +252,15 @@ namespace TeamHJD.Game.Presentation
         private void Clear(int index)
         {
             var slot = _slots[index];
-            slot.Source.Stop(); slot.Source.clip = null; slot.Context = GameplayMusicContext.None; slot.Scope = "";
-            slot.Gain = slot.From = slot.Target = 0; slot.Source.volume = 0;
+            // App 종료 시 Unity가 자식 소스를 먼저 제거했어도 슬롯의 상태와 다른 소스를 정리합니다.
+            if (slot.Source != null)
+            {
+                slot.Source.Stop();
+                slot.Source.clip = null;
+                slot.Source.volume = 0;
+            }
+            slot.Context = GameplayMusicContext.None; slot.Scope = "";
+            slot.Gain = slot.From = slot.Target = 0;
             slot.FadeAt = 0; slot.FadeSeconds = 0;
         }
         public void StopImmediately()

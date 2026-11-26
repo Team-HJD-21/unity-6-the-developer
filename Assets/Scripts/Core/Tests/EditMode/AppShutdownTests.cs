@@ -8,6 +8,7 @@ using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure.Fakes;
+using TeamHJD.Game.Presentation;
 using UnityEngine;
 
 namespace TeamHJD.Game.Tests.EditMode
@@ -62,6 +63,41 @@ namespace TeamHJD.Game.Tests.EditMode
                 Assert.Throws<ObjectDisposedException>(() => root.ReconfigureBattlefieldGrid(BattlefieldGridConfiguration.Default));
             }
             finally { UnityEngine.Object.DestroyImmediate(owner); }
+        }
+
+        [Test]
+        public void Dispose_CleansServicesWhenAGameplayMusicSourceWasDestroyed()
+        {
+            var owner = new GameObject("App and music shutdown");
+            var root = owner.AddComponent<AppRoot>();
+            var audio = owner.AddComponent<GameAudioManager>();
+            audio.enabled = false;
+            var library = ScriptableObject.CreateInstance<GameplayMusicLibrary>();
+            var music = new GameplayMusicPlayer(library, owner.transform, null, new System.Random(1));
+            var scenes = new ProbeScenes();
+            var network = new ProbeNetwork();
+            var services = new AppServices(
+                new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")), scenes, network);
+            root.Initialize(services);
+            var gameplayMusic = typeof(GameAudioManager).GetProperty(nameof(GameAudioManager.GameplayMusic));
+            gameplayMusic.SetValue(audio, music);
+            typeof(AppRoot).GetProperty(nameof(AppRoot.Audio)).SetValue(root, audio);
+            UnityEngine.Object.DestroyImmediate(music.Sources[0].gameObject);
+            try
+            {
+                Assert.DoesNotThrow(root.Dispose);
+                Assert.That(scenes.DisposedCount, Is.EqualTo(1));
+                Assert.That(network.DisposedCount, Is.EqualTo(1));
+                Assert.That(root.Audio, Is.Null);
+                Assert.DoesNotThrow(root.Dispose);
+            }
+            finally
+            {
+                gameplayMusic.SetValue(audio, null);
+                services.Dispose();
+                UnityEngine.Object.DestroyImmediate(owner);
+                UnityEngine.Object.DestroyImmediate(library);
+            }
         }
 
         private sealed class ProbeScenes : ISceneFlow, IDisposable
