@@ -15,6 +15,7 @@ concurrency:
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
+    environment: unity-asset-lock-release
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,9 +24,26 @@ jobs:
           ref: main
           fetch-depth: 0
           sparse-checkout: .github/scripts
-          token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
+          persist-credentials: false
       - name: Release submitted versions on main
         env:
-          LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
+          LOCKS_DEPLOY_KEY: ${{ secrets.UNITY_ASSET_LOCKS_SSH_KEY }}
           GIT_TERMINAL_PROMPT: '0'
-        run: python3 .github/scripts/release_unity_asset_locks.py
+        shell: bash
+        run: |
+          if [ -z "$LOCKS_DEPLOY_KEY" ]; then
+            echo '::error::UNITY_ASSET_LOCKS_SSH_KEY is missing from the unity-asset-lock-release environment.'
+            exit 1
+          fi
+          umask 077
+          auth_dir=$(mktemp -d "$RUNNER_TEMP/unity-lock-ssh.XXXXXX")
+          trap 'rm -f -- "$auth_dir/key" "$auth_dir/known_hosts"; rmdir -- "$auth_dir"' EXIT
+          printf '%s\n' "$LOCKS_DEPLOY_KEY" > "$auth_dir/key"
+          unset LOCKS_DEPLOY_KEY
+          # GitHub's published ED25519 host key.
+          printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$auth_dir/known_hosts"
+          export GIT_SSH_COMMAND="ssh -F none -i \"$auth_dir/key\" -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=\"$auth_dir/known_hosts\""
+          git remote set-url origin "git@github.com:${GITHUB_REPOSITORY}.git"
+          # Use SSH to authenticate the HTTPS lock API, which sends the force flag.
+          git config --local lfs.sshtransfer never
+          python3 -u .github/scripts/release_unity_asset_locks.py
