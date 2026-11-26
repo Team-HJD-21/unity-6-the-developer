@@ -8,7 +8,7 @@
 - Edit Mode에서 `FieldTurretController`를 선택하고 Scene 뷰의 **Gizmos**를 켜면 `Unlock Grid`의 점유·해금 셀 경계가 주황색으로 보인다. 같은 인스펙터에서 중심, 월드 크기, 칸 수를 조절하면 선도 바로 갱신된다. [점유·해금 규칙](../02_match/static-region-capture.md#정적-진행-규칙)
 - `Initial_Overworld_Base`는 육지 타일맵이다. `TilemapOuterBoundary`는 그 타일맵의 합성 윤곽에서 바깥 고리만 사용해 `MapBoundary`의 EdgeCollider2D를 만든다. 타일 편집이나 Undo·Redo 후 씬을 저장하고 안쪽 구멍에 경계가 생기는지 확인한다. [바닥·설치 판정 연결](../06_player/player-skill-review.md)
 - `Environment_Obj`는 나무와 기물을 그린다. Tilemap Renderer는 `Individual`, `Entities / 0`을 사용하며 스프라이트의 지면 접점과 월드 Y축으로 플레이어와 정렬한다. `Tile Ground Shadows`의 시간대별 길이와 X·Y 오프셋은 [그림자 설정](weather-system-guide.md#46-stage1-태양과-타일맵-기물-그림자)에서 조절한다.
-- 플레이 중 `Environment_Obj`의 `Field Player Occlusion`이 로컬 카메라가 추적하는 플레이어를 가리기 시작한 앞쪽 나무와 바위의 스프라이트 전체를 약 0.18초에 걸쳐 반투명하게 만든다. 가림이 끝나면 약 0.24초에 걸쳐 타일의 원래 불투명도로 돌아온다. 인스펙터의 Occluded Alpha로 가릴 때의 불투명도를 조절한다. 새 기물을 같은 방식으로 처리하려면 Additional Occluders에 해당 Sprite를 등록한다.
+- 플레이 중 `Environment_Obj`의 `Field Player Occlusion`이 로컬 카메라가 추적하는 플레이어를 가리기 시작한 앞쪽 나무와 바위의 스프라이트 전체를 약 0.18초에 걸쳐 반투명하게 만든다. 가림이 끝나면 약 0.24초에 걸쳐 타일의 원래 불투명도로 돌아온다. 인스펙터의 Occluded Alpha로 가릴 때의 불투명도를 조절한다. `Default Occluders`를 펼치면 기본으로 적용되는 나무·바위 스프라이트 목록을 확인할 수 있다. 새 기물은 `Additional Occluders`에 해당 Sprite를 등록한다.
 - `Navmesh2D`의 NavMeshSurface는 [Stage1 전용 NavMesh 데이터](../../../Assets/Scenes/Gameplay/Stage_1/NavMesh-Navmesh2D.asset)를 참조한다. 이동 가능한 높이·경계·장애물이 바뀌면 Surface를 베이크하고 Scene과 NavMesh 에셋을 함께 확인한다. 경계 자동 갱신과 NavMesh 베이크는 별개다.
 
 - Physics 2D에서 WorldGeometry와 Bullet, Missile, EnemyProjectile, PlayerFieldDevice, EnemyFeetBox 사이의 직접 충돌을 비활성화한다. PlayerFeetBox의 WorldGeometry 접촉은 허용한다. 각 무기의 Raycast·Cast와 레이어 마스크는 해당 코드의 조회 규칙을 따른다.

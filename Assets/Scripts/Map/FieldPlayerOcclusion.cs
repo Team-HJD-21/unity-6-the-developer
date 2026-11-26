@@ -161,9 +161,12 @@ namespace Map
                 Mathf.Abs(worldCenter.y - center.y) < bodyHalfSize.y + Mathf.Abs(right.y) + Mathf.Abs(up.y);
         }
 
-        private bool IsOccluder(Sprite sprite)
+        public static bool IsDefaultOccluder(Sprite sprite)
             => sprite != null && (sprite.name.StartsWith("Overworld_Trees_", StringComparison.Ordinal) ||
-                RockSprites.Contains(sprite.name) || _additionalOccluderSprites.Contains(sprite));
+                RockSprites.Contains(sprite.name));
+
+        private bool IsOccluder(Sprite sprite)
+            => IsDefaultOccluder(sprite) || (sprite != null && _additionalOccluderSprites.Contains(sprite));
 
         private void SetTileColor(Vector3Int cell, Color color)
         {

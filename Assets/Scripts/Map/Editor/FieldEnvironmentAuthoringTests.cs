@@ -36,6 +36,19 @@ public sealed class FieldEnvironmentAuthoringTests
     }
 
     [Test]
+    public void InspectorShowsBuiltinSpritesFromBothSheets()
+    {
+        var defaults = FieldPlayerOcclusionEditor.LoadDefaultSprites();
+        var names = defaults.Select(sprite => sprite.name).ToArray();
+        Assert.That(names, Does.Contain("Overworld_Trees_0"));
+        Assert.That(names, Does.Contain("Overworld_Trees_16"));
+        Assert.That(names, Does.Contain("Overworld_Objects_22"));
+        Assert.That(names, Does.Contain("Overworld_Objects_51"));
+        Assert.That(names, Does.Not.Contain("Overworld_Objects_32"));
+        Assert.That(defaults, Is.Unique);
+    }
+
+    [Test]
     public void AdditionalOccluderAndBuiltinTilesFadeWhileOtherSpritesStayOpaque()
     {
         var scene = EditorSceneManager.NewPreviewScene();
