@@ -81,7 +81,7 @@ public abstract partial class DefaultFieldCanonTurret : IFieldTurretCombatCheckp
     {
         Target = CheckpointSceneReferences.Resolve(gameObject.scene, _restoredTarget);
         _restoredTarget = null;
-        SetGunHeatVisual(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
+        SetGunHeatTint(OverHeatTime > 0f ? _fireTime / OverHeatTime : 0f);
         if (!IsActivated && _fireTime <= 0f && GunRenderer != null)
             GunRenderer.color = InactiveGunColor;
     }

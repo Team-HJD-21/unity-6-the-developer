@@ -152,7 +152,7 @@ public sealed class DamageableTargetAdapter : MonoBehaviour
             _damageable != null ? _damageable.MaxHealth : 0);
         _targetable.SetFirepowerEfficiency(_weaponTurret != null ? _weaponTurret.DpsPerPower : 0f);
 
-        bool unlockAllowsTargeting = _weaponTurret == null || (!_weaponTurret.IsLocked && _weaponTurret.HasEverActivated);
+        bool unlockAllowsTargeting = _weaponTurret == null || !_weaponTurret.IsLocked;
         _targetable.enabled = isActiveAndEnabled && hasTarget && unlockAllowsTargeting;
     }
 }

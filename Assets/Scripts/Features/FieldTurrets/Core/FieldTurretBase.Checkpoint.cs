@@ -45,8 +45,6 @@ namespace TeamHJD.Game.FieldTurrets
                 throw new InvalidOperationException("Restore requires the current authority actor and the saved logical ID.");
             DetachCheckpointReservation();
             WasCheckpointRestored = true;
-            _statusFx?.Reset();
-            _overheatFlashStartedAt = double.NegativeInfinity;
             _runtimeState.RestoreState(state.Runtime, _definition, upgrade);
             _activationController.RestoreReservation(state.ReservedPower);
             state.Pose.Apply(transform);

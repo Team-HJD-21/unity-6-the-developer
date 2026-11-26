@@ -1,7 +1,4 @@
 using System.Collections.Generic;
-using Unity.Burst;
-using Unity.Collections;
-using Unity.Jobs;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
@@ -12,10 +9,9 @@ using UnityEngine.Tilemaps;
 
 namespace Map
 {
-    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "Map", sourceAssembly: "Assembly-CSharp", sourceClassName: "StageTileShadows")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-    public sealed class FieldTileShadows : MonoBehaviour
+    public sealed class StageTileShadows : MonoBehaviour
     {
         private const float NightTwilightFraction = 0.05f;
         private const float ShadowStep = 0.025f;
@@ -29,9 +25,9 @@ namespace Map
         [SerializeField] private float _horizontalOffsetPixels;
         [SerializeField] private float _verticalOffsetPixels;
 
-        private NativeArray<ShadowVertex> _projection;
-        private NativeArray<Vector3> _vertices;
-        private NativeArray<Color32> _colors;
+        private ShadowVertex[] _projection;
+        private Vector3[] _vertices;
+        private Color32[] _colors;
         private Material[] _materials;
         private Matrix4x4 _tilemapToShadow;
 
@@ -166,9 +162,9 @@ namespace Map
                     submeshes[submesh].Add(firstVertex + index);
             }
 
-            _projection = new NativeArray<ShadowVertex>(projection.ToArray(), Allocator.Persistent);
-            _vertices = new NativeArray<Vector3>(_projection.Length, Allocator.Persistent);
-            _colors = new NativeArray<Color32>(_projection.Length, Allocator.Persistent);
+            _projection = projection.ToArray();
+            _vertices = new Vector3[_projection.Length];
+            _colors = new Color32[_projection.Length];
             _materials = materials.ToArray();
 
             if (_vertices.Length > ushort.MaxValue) _mesh.indexFormat = IndexFormat.UInt32;
@@ -182,43 +178,17 @@ namespace Map
 
         private void DrawShadows(Vector2 projectionOffset, Vector3 positionOffset, float strength)
         {
-            var job = new ProjectShadowsJob
+            for (int i = 0; i < _projection.Length; i++)
             {
-                Projection = _projection,
-                Vertices = _vertices,
-                Colors = _colors,
-                ProjectionOffset = projectionOffset,
-                PositionOffset = positionOffset,
-                Strength = strength
-            };
-            if (_projection.Length >= 4096)
-                job.Schedule(_projection.Length, 128).Complete();
-            else
-                for (int index = 0; index < _projection.Length; index++)
-                    job.Execute(index);
+                ShadowVertex point = _projection[i];
+                _vertices[i] = point.Ground + (Vector3)projectionOffset * point.Height + positionOffset * point.UnitsPerPixel;
+                byte alpha = (byte)Mathf.RoundToInt(Mathf.Lerp(92f, 26f, point.Height) * strength);
+                _colors[i] = new Color32(0, 0, 0, alpha); // Sprite-Unlit-Default에 원본 텍스처 알파로 실루엣을 그린다.
+            }
 
-            _mesh.SetVertices(_vertices, 0, _vertices.Length, MeshUpdateFlags.DontRecalculateBounds);
+            _mesh.SetVertices(_vertices);
             _mesh.SetColors(_colors);
             _mesh.RecalculateBounds();
-        }
-
-        [BurstCompile(FloatMode = FloatMode.Strict)]
-        private struct ProjectShadowsJob : IJobParallelFor
-        {
-            [ReadOnly] public NativeArray<ShadowVertex> Projection;
-            [WriteOnly] public NativeArray<Vector3> Vertices;
-            [WriteOnly] public NativeArray<Color32> Colors;
-            public Vector3 ProjectionOffset;
-            public Vector3 PositionOffset;
-            public float Strength;
-
-            public void Execute(int index)
-            {
-                ShadowVertex point = Projection[index];
-                Vertices[index] = point.Ground + ProjectionOffset * point.Height + PositionOffset * point.UnitsPerPixel;
-                byte alpha = (byte)Mathf.RoundToInt(Mathf.Lerp(92f, 26f, point.Height) * Strength);
-                Colors[index] = new Color32(0, 0, 0, alpha);
-            }
         }
 
         private readonly struct ShadowVertex
@@ -266,9 +236,6 @@ namespace Map
 
         private void OnDestroy()
         {
-            if (_projection.IsCreated) _projection.Dispose();
-            if (_vertices.IsCreated) _vertices.Dispose();
-            if (_colors.IsCreated) _colors.Dispose();
             if (_mesh != null) Destroy(_mesh);
             if (_materials == null) return;
             foreach (Material material in _materials)

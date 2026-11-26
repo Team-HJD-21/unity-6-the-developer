@@ -367,50 +367,6 @@ namespace TeamHJD.Game.FieldTurrets
         public FieldTurretGridConfiguration CreateUnlockGridConfiguration() => new FieldTurretGridConfiguration(
             unlockGridOrigin, unlockGridMapWidth, unlockGridMapHeight, unlockGridCellsX, unlockGridCellsY, unlockGridOriginZ);
 
-#if UNITY_EDITOR
-        private const int MaximumLinesPerAxis = 256;
-
-        private void OnDrawGizmosSelected()
-        {
-            if (UnityEngine.Application.isPlaying) return;
-
-            FieldTurretGridConfiguration grid;
-            try
-            {
-                grid = CreateUnlockGridConfiguration();
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                return; // Inspector edits can temporarily leave an invalid grid.
-            }
-
-            float z = grid.OriginZ;
-            int stepX = Mathf.CeilToInt((float)grid.CellsX / MaximumLinesPerAxis);
-            int stepY = Mathf.CeilToInt((float)grid.CellsY / MaximumLinesPerAxis);
-            Color previousColor = Gizmos.color;
-            Matrix4x4 previousMatrix = Gizmos.matrix;
-            Gizmos.color = new Color(1f, 0.58f, 0.12f, 0.9f);
-            Gizmos.matrix = Matrix4x4.identity;
-
-            for (int x = 0; x < grid.CellsX; x += stepX)
-            {
-                float lineX = grid.MinimumX + x * grid.CellWidth;
-                Gizmos.DrawLine(new Vector3(lineX, grid.MinimumY, z), new Vector3(lineX, grid.MaximumY, z));
-            }
-            for (int y = 0; y < grid.CellsY; y += stepY)
-            {
-                float lineY = grid.MinimumY + y * grid.CellHeight;
-                Gizmos.DrawLine(new Vector3(grid.MinimumX, lineY, z), new Vector3(grid.MaximumX, lineY, z));
-            }
-
-            var upperRight = new Vector3(grid.MaximumX, grid.MaximumY, z);
-            Gizmos.DrawLine(new Vector3(grid.MaximumX, grid.MinimumY, z), upperRight);
-            Gizmos.DrawLine(new Vector3(grid.MinimumX, grid.MaximumY, z), upperRight);
-            Gizmos.color = previousColor;
-            Gizmos.matrix = previousMatrix;
-        }
-#endif
-
         /// <summary>Core의 읽기 정책을 연결합니다. null 해제는 기존 터렛 상태를 다시 쓰지 않습니다.</summary>
         public void SetRegionAccessPolicy(IRegionAccessPolicy policy)
         {

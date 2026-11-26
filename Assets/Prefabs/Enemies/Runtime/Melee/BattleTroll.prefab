@@ -164,10 +164,6 @@ PrefabInstance:
       propertyPath: m_LocalScale.y
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: navMeshAgentTypeId
-      value: -887442656
-      objectReference: {fileID: 0}
     - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.2
@@ -282,7 +278,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
-      value: 0.12466752
+      value: 0.16791663
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.y
@@ -290,7 +286,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.x
-      value: -0.03
+      value: -0.035109527
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.y

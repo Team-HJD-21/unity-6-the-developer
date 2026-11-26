@@ -21,7 +21,6 @@ namespace TeamHJD.Game.FieldTurrets
         [NonSerialized] private float _upgradeRangeModifierRatio;
         [NonSerialized] private int _currentHealth;
         [NonSerialized] private bool _isDestroyed;
-        [NonSerialized] private bool _hasEverActivated;
         [NonSerialized] private bool _healthInitialized;
         [NonSerialized] private double _pendingRepairHealth;
         private bool _isTemporarilySuspended;
@@ -29,7 +28,6 @@ namespace TeamHJD.Game.FieldTurrets
         public int InstanceId => _instanceId;
         public bool HasInstanceId => _instanceId > 0;
         public bool IsActivated => _isActivated;
-        public bool HasEverActivated => _hasEverActivated;
         public bool IsOperational => _isActivated && !_isTemporarilySuspended && !_isDestroyed && !_isLocked;
         public bool IsLocked => _isLocked;
         public bool IsTemporarilySuspended => _isTemporarilySuspended;
@@ -92,7 +90,6 @@ namespace TeamHJD.Game.FieldTurrets
         {
             target._instanceId = _instanceId;
             target._isActivated = false;
-            target._hasEverActivated = _hasEverActivated;
             target._damageBonus = _damageBonus;
             target._upgradeDamageModifierRatio = _upgradeDamageModifierRatio;
             target._upgradePowerModifierRatio = _upgradePowerModifierRatio;
@@ -117,7 +114,6 @@ namespace TeamHJD.Game.FieldTurrets
             data.Validate();
             _instanceId = 0; // A fresh runtime identity; not a persistent save ID.
             _isActivated = false; // Activation always needs a real power reservation.
-            _hasEverActivated = false;
             _damageBonus = data.DamageBonus;
             _isLocked = data.IsLocked;
             _currentHealth = data.CurrentHealth;
@@ -134,7 +130,6 @@ namespace TeamHJD.Game.FieldTurrets
         internal void SetActivated(bool isActivated)
         {
             _isActivated = isActivated;
-            _hasEverActivated |= isActivated;
         }
 
         internal void SetLocked(bool isLocked)

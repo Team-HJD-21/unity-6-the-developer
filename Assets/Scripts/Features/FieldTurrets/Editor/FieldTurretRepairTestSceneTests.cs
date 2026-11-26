@@ -37,7 +37,7 @@ public sealed class FieldTurretRepairTestSceneTests
         {
             Assert.That(turret, Is.TypeOf<FieldCanonTurretLv1>());
             Assert.That(turret.Definition.Level, Is.EqualTo(1));
-            Assert.That(turret.MaxHealth, Is.EqualTo(500));
+            Assert.That(turret.MaxHealth, Is.EqualTo(100));
             Assert.That(turret.IsLocked || turret.IsActivated, Is.False);
             Assert.That(controller.OwnsTurret(turret), Is.True);
             Assert.That(turret.TryGetEntityId(out var id) && !id.IsEmpty, Is.True);

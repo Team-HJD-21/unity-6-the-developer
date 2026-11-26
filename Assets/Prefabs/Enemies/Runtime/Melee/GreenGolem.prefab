@@ -152,10 +152,6 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 220
       objectReference: {fileID: 0}
-    - target: {fileID: 4521124683538281619, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
-      propertyPath: navMeshAgentTypeId
-      value: -887442656
-      objectReference: {fileID: 0}
     - target: {fileID: 6911654934964883086, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.3
@@ -270,19 +266,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
-      value: 0.11746648
+      value: 0.2101317
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.y
-      value: 0.0628697
+      value: 0.11964725
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.x
-      value: 0.0037260652
+      value: 0.005600795
       objectReference: {fileID: 0}
     - target: {fileID: 7879816871737277720, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Offset.y
-      value: 0.026360946
+      value: 0.05474972
       objectReference: {fileID: 0}
     - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x

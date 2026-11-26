@@ -215,7 +215,7 @@ public sealed class FieldTurretRestoreVisualTests
         foreach (var actor in actors)
         {
             Assert.That(actor.IsCoolingDown, Is.True);
-            Assert.That(Gun(actor).color, Is.EqualTo(Color.white));
+            Assert.That(Gun(actor).color, Is.EqualTo(Color.Lerp(Color.white, new Color(1f, .25f, .25f), .5f)));
             Assert.That((float)typeof(FieldTurretBase).GetField("_gunHeatStrength", Fields).GetValue(actor), Is.EqualTo(.5f));
         }
         yield return null; // 기존 LateUpdate가 복원된 열 비율로 실제 Heat Wave를 그리는지 확인한다.
@@ -226,110 +226,11 @@ public sealed class FieldTurretRestoreVisualTests
             Assert.That(wave.enabled, Is.True);
             Assert.That(wave.color.a, Is.EqualTo(.5f));
             Assert.That(wave.sortingLayerID, Is.EqualTo(Gun(actor).sortingLayerID));
-            Assert.That(wave.sortingOrder, Is.GreaterThan(Gun(actor).sortingOrder));
-            var led = Gun(actor).GetComponentInChildren<FieldTurretLedIndicator>().GetComponent<SpriteRenderer>();
-            Assert.That(wave.sortingOrder, Is.GreaterThan(led.sortingOrder));
-            var glow = Gun(actor).transform.Find("Turret Overheat").GetComponent<SpriteRenderer>();
-            Assert.That(wave.sprite, Is.SameAs(glow.sprite));
-            Assert.That(wave.sharedMaterial.GetTexture("_HeatWaveTex"), Is.SameAs(glow.sprite.texture));
-            Assert.That(wave.sharedMaterial.GetFloat("_HeatWaveLocalized"), Is.EqualTo(1f));
+            Assert.That(wave.sortingOrder, Is.LessThan(Gun(actor).sortingOrder));
             Assert.That(Gun(actor).color.a, Is.EqualTo(1f));
         }
     }
 
-
-    [UnityTest]
-    public IEnumerator TurretStatusEffectsFollowHeatDamageDestructionAndRestore()
-    {
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-        yield return new EnterPlayMode();
-        using var fixture = new Fixture();
-        var actors = fixture.CreateActors(locked: false);
-        yield return null;
-        foreach (var actor in actors)
-        {
-            actor.RequestActivation(true);
-            Assert.That(actor.IsActivated, Is.True);
-            var setHeat = typeof(FieldTurretBase).GetMethod("SetGunHeatVisual", Fields);
-            setHeat.Invoke(actor, new object[] { .25f });
-            actor.SendMessage("LateUpdate");
-            var gun = Gun(actor);
-            var wave = gun.transform.Find("Heat Wave").GetComponent<SpriteRenderer>();
-            Assert.That(actor.IsCoolingDown, Is.False);
-            Assert.That(wave.enabled, Is.True);
-            Assert.That(wave.color.a, Is.EqualTo(.25f).Within(.001f));
-
-            fixture.Clock.ElapsedSeconds += .25d;
-            setHeat.Invoke(actor, new object[] { .6f });
-            actor.SendMessage("LateUpdate");
-            Assert.That(wave.color.a, Is.EqualTo(.6f).Within(.001f));
-
-            typeof(FieldTurretBase).GetMethod("BeginCooling", Fields).Invoke(actor, new object[] { 10f, 1f });
-            actor.SendMessage("LateUpdate");
-            var glow = gun.transform.Find("Turret Overheat").GetComponent<SpriteRenderer>();
-            Assert.That(gun.transform.Find("Turret Status Smoke"), Is.Null);
-            Assert.That(glow.sprite.name, Is.EqualTo(actor is FieldCanonTurretLv1 ? "canonHeat_Lv1" : $"missileHeat_Lv1_{(int)(gun.sprite.rect.x / 128f)}"));
-            Assert.That(glow.sharedMaterial.shader.name, Is.EqualTo("FieldTurrets/HeatEmission"));
-            Assert.That(glow.sharedMaterial.GetTexture("_EmissionTex"), Is.SameAs(glow.sprite.texture));
-            Assert.That(gun.color, Is.EqualTo(Color.white));
-            Assert.That(wave.sortingOrder, Is.GreaterThan(glow.sortingOrder));
-
-            for (int step = 1; step <= 3; step++)
-            {
-                int threshold = actor.MaxHealth * (4 - step) / 4;
-                Assert.That(actor.ApplyDamage(actor.CurrentHealth - threshold), Is.True);
-                actor.SendMessage("LateUpdate");
-                Assert.That(gun.GetComponentsInChildren<SpriteRenderer>().Count(renderer =>
-                    renderer.enabled && renderer.name.StartsWith("Turret Status Smoke")), Is.EqualTo(step));
-            }
-            var smoke = gun.transform.Find("Turret Status Smoke").GetComponent<SpriteRenderer>();
-            Assert.That(smoke.sprite.name, Is.EqualTo("damaged_0"));
-            Assert.That(smoke.sharedMaterial.GetTexture("_LedTexture"), Is.SameAs(smoke.sprite.texture));
-
-            Assert.That(actor.ApplyDamage(actor.CurrentHealth), Is.True);
-            actor.SendMessage("LateUpdate");
-            var flame = gun.transform.Find("Turret Status Flame").GetComponent<SpriteRenderer>();
-            Assert.That(smoke.sprite.name, Is.EqualTo("wreckSmoke_0"));
-            Assert.That(flame.sprite.name, Is.EqualTo("wreckFlame_0"));
-            Assert.That(glow.enabled, Is.False);
-            Assert.That(wave.enabled, Is.False);
-            var wreck = gun.GetComponentsInChildren<SpriteRenderer>().Where(renderer => renderer.enabled &&
-                (renderer.name.StartsWith("Turret Status Smoke") || renderer.name.StartsWith("Turret Status Flame"))).ToArray();
-            Assert.That(wreck.Count(renderer => renderer.sprite.name.StartsWith("wreckSmoke_")), Is.EqualTo(4));
-            Assert.That(wreck.Count(renderer => renderer.sprite.name.StartsWith("wreckFlame_")), Is.EqualTo(2));
-            Assert.That(wreck.Select(renderer => renderer.transform.localPosition).Distinct().Count(), Is.EqualTo(6));
-
-            Vector3 smokeOrigin = smoke.transform.localPosition;
-            Vector3 flameOrigin = flame.transform.localPosition;
-            Assert.That(smoke.transform.parent, Is.SameAs(gun.transform));
-            Assert.That(flame.transform.parent, Is.SameAs(gun.transform));
-            Assert.That(Vector3.Distance(smokeOrigin, flameOrigin), Is.GreaterThanOrEqualTo(.4f));
-            Vector3 smokePosition = smoke.transform.position;
-            gun.transform.Rotate(0f, 0f, 90f, Space.Self);
-            actor.SendMessage("LateUpdate");
-            Assert.That(smoke.transform.localPosition, Is.EqualTo(smokeOrigin));
-            Assert.That(flame.transform.localPosition, Is.EqualTo(flameOrigin));
-            Assert.That(Vector3.Distance(smoke.transform.position, smokePosition),
-                Is.EqualTo(Mathf.Sqrt(2f) * Vector3.Distance(smokePosition, gun.transform.position)).Within(.001f));
-
-            Assert.That(actor.Restore(), Is.True);
-            Assert.That(flame.enabled, Is.False);
-            actor.SendMessage("LateUpdate");
-            Assert.That(smoke.enabled, Is.True);
-            Assert.That(smoke.sprite.name, Is.EqualTo("recovery0_0"));
-            Assert.That(smoke.transform.localPosition, Is.EqualTo(smokeOrigin));
-            Assert.That(wreck.Count(renderer => renderer.enabled && renderer.sprite.name.StartsWith("recovery")), Is.EqualTo(4));
-            Assert.That(wreck.Count(renderer => renderer.enabled && renderer.sprite.name.StartsWith("wreckFlame_")), Is.Zero);
-        }
-
-        fixture.Clock.ElapsedSeconds += 1.2d;
-        foreach (var actor in actors)
-        {
-            actor.SendMessage("LateUpdate");
-            var smoke = Gun(actor).transform.Find("Turret Status Smoke").GetComponent<SpriteRenderer>();
-            Assert.That(smoke.enabled, Is.False);
-        }
-    }
 
     [UnityTest]
     public IEnumerator LaserAnimatorReturnsToItsOffPoseAfterFiring()
@@ -392,7 +293,6 @@ public sealed class FieldTurretRestoreVisualTests
     {
         public readonly FieldTurretController Controller;
         public readonly CheckpointCaptureContext Context;
-        public readonly FieldClock Clock;
         private readonly MatchId _match = new MatchId("restore-visual-" + Guid.NewGuid().ToString("N"));
         private readonly IDisposable _scope, _simulation;
         public FieldTurretBase[] Actors => FieldTurretInstanceRegistry.GetAll().Where(Controller.OwnsTurret).ToArray();
@@ -407,8 +307,7 @@ public sealed class FieldTurretRestoreVisualTests
             _scope = Controller.BindMatchScope(_match, () => true);
             Controller.ConfigureCheckpointContent(AssetDatabase.LoadAssetAtPath<FieldTurretLevelUpgradeCatalog>(
                 "Assets/Data/FieldTurrets/FieldTurretLevelUpgrade_Stage1.asset"), null);
-            Clock = new FieldClock(_match);
-            _simulation = Controller.BindFieldSimulation(Clock, default);
+            _simulation = Controller.BindFieldSimulation(new FieldClock(_match), default);
             var config = new MatchConfig(_match, MatchMode.Story, new StageId("visual-test"), new DefinitionId("test"),
                 "test", 1, Array.Empty<PlayerLoadoutSnapshot>());
             Context = new CheckpointCaptureContext(config, 0, Guid.NewGuid());
@@ -447,7 +346,7 @@ public sealed class FieldTurretRestoreVisualTests
         private readonly Guid _epoch = Guid.NewGuid();
         public FieldClock(MatchId match) => _match = match;
         public bool IsAvailable => true;
-        public double ElapsedSeconds { get; set; } = 1000d;
+        public double ElapsedSeconds => 1000d;
         public MatchTimeSnapshot Snapshot => new(_match, _epoch, 0, ElapsedSeconds, 0, 1, false, true);
     }
 }
