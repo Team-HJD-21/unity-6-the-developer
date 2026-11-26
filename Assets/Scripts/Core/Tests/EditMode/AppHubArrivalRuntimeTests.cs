@@ -23,7 +23,7 @@ namespace TeamHJD.Game.Tests.EditMode
         [UnityTest]
         public IEnumerator DirectHubArrivalCreatesPlayerAndCameraWithoutCreatingGameFlow()
         {
-            EditorSceneManager.OpenScene(AppScreenPresenter.HubScene);
+            EditorSceneManager.OpenScene(AppRoot.DefaultHubScene);
             yield return new EnterPlayMode();
             yield return VerifyDirectHub();
             yield return new ExitPlayMode();
@@ -72,7 +72,7 @@ namespace TeamHJD.Game.Tests.EditMode
 
         private static void AssertHub(AppRoot app)
         {
-            var scene = SceneManager.GetSceneByPath(AppScreenPresenter.HubScene);
+            var scene = SceneManager.GetSceneByPath(AppRoot.DefaultHubScene);
             Assert.That(scene.isLoaded, Is.True);
             var hub = scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpaceshipHubCompositionRoot>()).Single();
             Assert.That(hub.Player, Is.Not.Null);
@@ -83,7 +83,8 @@ namespace TeamHJD.Game.Tests.EditMode
             var follow = hub.Camera.GetComponent<MatchCameraFollow>();
             Assert.That(follow.Manager, Is.Not.Null, "실제 Awake에서 카메라 관리자가 연결돼야 합니다.");
             Assert.That(follow.Target, Is.SameAs(hub.Player.transform));
-            typeof(AppRoot).GetMethod("ComposeScene", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(app, new object[] { scene });
+            typeof(AppRoot).GetMethod("ComposeScene", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(app, new object[] { scene, false });
             Assert.That(scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpaceshipHubCompositionRoot>()).Count(), Is.EqualTo(1));
             Assert.That(app.CurrentMatchId.IsEmpty, Is.True);
         }

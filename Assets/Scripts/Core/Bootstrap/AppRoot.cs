@@ -17,6 +17,10 @@ namespace TeamHJD.Game.Bootstrap
 {
     public sealed partial class AppRoot : MonoBehaviour, IAppMatchHost, IDisposable
     {
+        public const string DefaultStage1Scene = "Assets/Scenes/Gameplay/Stage_1.unity";
+        public const string DefaultHubScene = "Assets/Scenes/Spaceship/SpaceShipGrayBox.unity";
+        private const string DefaultMainMenuScene = "Assets/Scenes/Bootstrap/Startup.unity";
+
         /// <summary>UI 조립부가 로컬 연출 소비자에게 주입하는 App 수명 난수입니다. 게임 판정에 사용하지 않습니다.</summary>
         public IRandomStreams PresentationRandom => Services?.PresentationRandom;
         /// <summary>앱 화면/접속 흐름이 사용하는 플랫폼 Port입니다. SDK 구체 타입이나 AppServices 전체를 노출하지 않습니다.</summary>
@@ -209,14 +213,13 @@ namespace TeamHJD.Game.Bootstrap
             if (Services.Platform is IPlatformRuntime) InitializePlatform();
             if (UnityEngine.Application.isPlaying)
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
-                    NavigateFromScreenAsync, GetSceneTravelRestriction,
+                    RestartMissionFromScreenAsync, ReturnToHubFromScreenAsync, ReturnToMainMenuFromScreenAsync, GetSceneTravelRestriction,
                     () => GameFlow?.IsTransitioning == true, DisplaySettings,
                     () => GameFlow == null ? !CurrentMatchId.IsEmpty || LastMissionRecoveryError != null :
                         GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted,
                     Services.Alerts, AudioSettings,
                     () => LastMissionRecoveryError, RetryPendingMissionRecoveryAsync,
-                    () => _activeMission?.Recovery,
-                    () => GameFlow?.Routes.MainMenuScene ?? "Assets/Scenes/Bootstrap/Startup.unity", UseMissionSafetyAsync);
+                    () => _activeMission?.Recovery, UseMissionSafetyAsync);
         }
 
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
@@ -530,40 +533,31 @@ namespace TeamHJD.Game.Bootstrap
             }
         }
 
-        // 기존 공용 메뉴/결과 버튼도 같은 App 흐름으로 전달해 Scene과 표시 위치가 어긋나지 않게 합니다.
-        private async Task NavigateFromScreenAsync(string scenePath)
+        // 버튼의 의도를 같은 GameFlow로 전달합니다. Startup 없이 직접 실행한 경우에는 기본 Scene을 사용합니다.
+        private Task RestartMissionFromScreenAsync()
         {
             if (GameFlow == null)
             {
-                if (scenePath == AppScreenPresenter.HubScene) await ReturnToHubFromScreenAsync();
-                else
-                {
-                    if (scenePath == AppScreenPresenter.StageScene) PrepareMissionEntry(MissionEntryKind.NewMission);
-                    await ReplaceGameplaySceneAsync(scenePath);
-                    if (scenePath == "Assets/Scenes/Bootstrap/Startup.unity") CompleteMissionRecovery();
-                }
-                return;
+                PrepareMissionEntry(MissionEntryKind.NewMission);
+                return ReplaceGameplaySceneAsync(DefaultStage1Scene);
             }
-            if (scenePath == GameFlow.Routes.SpaceshipScene &&
-                (GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted))
-            { await ReturnToHubFromScreenAsync(); return; }
-            if (scenePath == GameFlow.Routes.MainMenuScene)
-            { await GameFlow.OpenMainMenuAsync(); CompleteMissionRecovery(); return; }
-            if (scenePath == AppScreenPresenter.StageScene)
-            {
-                if (GameFlow.Phase == GameFlowPhase.Mission)
-                { await GameFlow.RestartMissionAsync(); return; }
-                if (GameFlow.Phase == GameFlowPhase.Spaceship)
-                { await GameFlow.LaunchMissionAsync(scenePath); return; }
-            }
-            throw new InvalidOperationException("Use the configured game-flow action for this screen.");
+            return GameFlow.Phase == GameFlowPhase.Spaceship
+                ? GameFlow.LaunchMissionAsync(DefaultStage1Scene)
+                : GameFlow.RestartMissionAsync();
         }
 
         private async Task ReturnToHubFromScreenAsync()
         {
             if (GameFlow != null) await GameFlow.ReturnToSpaceshipAsync();
-            else await ReplaceGameplaySceneAsync(AppScreenPresenter.HubScene);
+            else await ReplaceGameplaySceneAsync(DefaultHubScene);
             // 허브 도착에 성공한 명시 귀환만 이전 복귀 오류를 닫습니다. 실패한 이동은 재시도 의도를 보존합니다.
+            CompleteMissionRecovery();
+        }
+
+        private async Task ReturnToMainMenuFromScreenAsync()
+        {
+            if (GameFlow != null) await GameFlow.OpenMainMenuAsync();
+            else await ReplaceGameplaySceneAsync(DefaultMainMenuScene);
             CompleteMissionRecovery();
         }
 
@@ -615,7 +609,7 @@ namespace TeamHJD.Game.Bootstrap
                     return true;
 
                 // 직접 Scene 실행의 메뉴 귀환도 기존 Hub 조립을 사용합니다. 진행 Match의 Additive 방문은 제외합니다.
-                string hubScene = GameFlow?.Routes.SpaceshipScene ?? AppScreenPresenter.HubScene;
+                string hubScene = GameFlow?.Routes.SpaceshipScene ?? DefaultHubScene;
                 if (scene.path == hubScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
                     !scene.GetRootGameObjects().Any(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true) != null))
                 {

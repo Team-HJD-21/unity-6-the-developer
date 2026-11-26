@@ -132,7 +132,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     while (app.NetworkMatches?.HasPendingCompletion == true)
                     { deadline.Token.ThrowIfCancellationRequested(); await Task.Yield(); }
                     if (app.GameFlow != null) await app.GameFlow.ReturnToSpaceshipAsync(deadline.Token);
-                    else await app.ReplaceGameplaySceneAsync(AppScreenPresenter.HubScene, deadline.Token);
+                    else await app.ReplaceGameplaySceneAsync(AppRoot.DefaultHubScene, deadline.Token);
                 }, app.destroyCancellationToken);
             }
             catch (Exception error)

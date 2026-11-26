@@ -103,7 +103,7 @@ namespace TeamHJD.Game.Tests.EditMode
         public void ActiveMatchHubVisitDoesNotCreateAnotherPlayerOrCamera()
         {
             var match = Start("hub-visit");
-            var scene = EditorSceneManager.OpenPreviewScene(AppScreenPresenter.HubScene);
+            var scene = EditorSceneManager.OpenPreviewScene(AppRoot.DefaultHubScene);
             try
             {
                 Compose(scene);
@@ -117,7 +117,7 @@ namespace TeamHJD.Game.Tests.EditMode
         public void ConfiguredHubRouteTakesPrecedenceOverTheStandaloneDefault()
         {
             _root.ConfigureGameFlow(new GameFlowRoutes("startup", "another-hub"));
-            var scene = EditorSceneManager.OpenPreviewScene(AppScreenPresenter.HubScene);
+            var scene = EditorSceneManager.OpenPreviewScene(AppRoot.DefaultHubScene);
             try
             {
                 Compose(scene);

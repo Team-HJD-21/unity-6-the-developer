@@ -29,7 +29,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             Assert.That(scene.isDirty, Is.False, "미저장 Scene은 검사하지 않습니다.");
             // Test Runner는 빈 Scene에서 시작하므로 실제 검사 대상을 명시적으로 엽니다.
-            EditorSceneManager.OpenScene(AppScreenPresenter.StageScene);
+            EditorSceneManager.OpenScene(AppRoot.DefaultStage1Scene);
             yield return new EnterPlayMode();
             float deadline = Time.realtimeSinceStartup + 25;
             RegionSceneBinding binding;

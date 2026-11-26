@@ -12,12 +12,11 @@ namespace TeamHJD.Game.Presentation
 {
     public sealed class AppScreenPresenter : IDisposable
     {
-        /// <summary>출격·재시작이 공통으로 사용하는 실제 Stage 1의 Build Settings 경로입니다.</summary>
-        public const string StageScene = "Assets/Scenes/Gameplay/Stage_1.unity";
-        public const string HubScene = "Assets/Scenes/Spaceship/SpaceShipGrayBox.unity";
         private readonly ScreenManager _screens;
         private readonly SceneFlowController _scenes;
-        private readonly Func<string, Task> _replace;
+        private readonly Func<Task> _restartMission;
+        private readonly Func<Task> _returnToHub;
+        private readonly Func<Task> _returnToMainMenu;
         private readonly Func<string> _travelRestriction;
         private readonly Func<bool> _isGameFlowTransitioning;
         private readonly Func<bool> _canReturnToHub;
@@ -25,7 +24,6 @@ namespace TeamHJD.Game.Presentation
         private readonly Func<Task> _retryRecovery;
         private readonly Func<Task> _useSafety;
         private readonly Func<MatchRecovery> _missionRecovery;
-        private readonly Func<string> _mainScene;
         private readonly Dictionary<long, IScreenPresenter> _views = new();
         private readonly AppScreenCanvasView _canvas;
         private readonly AppScreenStyle _style;
@@ -42,14 +40,17 @@ namespace TeamHJD.Game.Presentation
         private string _actionFailure;
 
         public AppScreenPresenter(Transform parent, ScreenManager screens, SceneFlowController scenes,
-            Func<string, Task> replace, Func<string> travelRestriction, Func<bool> isGameFlowTransitioning = null,
+            Func<Task> restartMission, Func<Task> returnToHub, Func<Task> returnToMainMenu, Func<string> travelRestriction,
+            Func<bool> isGameFlowTransitioning = null,
             UiDisplaySettings display = null, Func<bool> canReturnToHub = null, AlertService alerts = null, GameAudioSettings audio = null,
             Func<string> recoveryError = null, Func<Task> retryRecovery = null,
-            Func<MatchRecovery> missionRecovery = null, Func<string> mainScene = null, Func<Task> useSafety = null)
+            Func<MatchRecovery> missionRecovery = null, Func<Task> useSafety = null)
         {
             _screens = screens ?? throw new ArgumentNullException(nameof(screens));
             _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
-            _replace = replace ?? throw new ArgumentNullException(nameof(replace));
+            _restartMission = restartMission ?? throw new ArgumentNullException(nameof(restartMission));
+            _returnToHub = returnToHub ?? throw new ArgumentNullException(nameof(returnToHub));
+            _returnToMainMenu = returnToMainMenu ?? throw new ArgumentNullException(nameof(returnToMainMenu));
             _travelRestriction = travelRestriction ?? throw new ArgumentNullException(nameof(travelRestriction));
             _isGameFlowTransitioning = isGameFlowTransitioning ?? (() => false);
             _canReturnToHub = canReturnToHub ?? (() => true);
@@ -57,7 +58,6 @@ namespace TeamHJD.Game.Presentation
             _retryRecovery = retryRecovery;
             _useSafety = useSafety;
             _missionRecovery = missionRecovery;
-            _mainScene = mainScene ?? (() => "Assets/Scenes/Bootstrap/Startup.unity");
             _display = display ?? new UiDisplaySettings();
             _audio = audio ?? new GameAudioSettings();
             _style = Resources.Load<AppScreenStyle>("Core/AppScreenStyle");
@@ -137,14 +137,14 @@ namespace TeamHJD.Game.Presentation
             // Scene에 UI가 없는 격리 경로만 준비합니다. 제품 Scene에는 제작된 입력 모듈을 사용합니다.
             new GameObject("Core UI EventSystem", typeof(EventSystem), typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
         }
-        private async void Travel(string scene)
+        private async void Travel(Func<Task> move)
         {
             if (_disposed || _actionPending) return;
             _actionFailure = null; _actionPending = true;
             try
             {
                 if (_loadingId == 0) _loadingId = _screens.ShowLoading().Id;
-                await _replace(scene);
+                await move();
             }
             catch (OperationCanceledException) { }
             catch (Exception error) { _actionFailure = "이동하지 못했습니다. 다시 시도해 주세요."; Debug.LogException(error); }
@@ -231,9 +231,9 @@ namespace TeamHJD.Game.Presentation
                 else _owner._screens.Close(_state.Id);
             }
             private void Settings() => _owner._screens.ShowSettings();
-            private void Restart() => _owner.Travel(StageScene);
-            private void ReturnToHub() => _owner.Travel(HubScene);
-            private void ReturnToMain() => _owner.Travel(_owner._mainScene());
+            private void Restart() => _owner.Travel(_owner._restartMission);
+            private void ReturnToHub() => _owner.Travel(_owner._returnToHub);
+            private void ReturnToMain() => _owner.Travel(_owner._returnToMainMenu);
             private void UseSafety() => _owner.RetryRecovery(_state.Id);
             public void Refresh()
             {

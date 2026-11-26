@@ -12,8 +12,8 @@ flowchart LR
     AppRoot --> AppScreenPresenter
     ScreenManager --> InputLockService
     ScreenManager --> IScreenPresenter
-    AppScreenPresenter --> Intent[재시작 / Hub 복귀 의도]
-    Intent --> End[Match 명시 종료]
+    AppScreenPresenter --> Intent[재시작 / Hub 복귀 / 타이틀 의도]
+    Intent --> End[AppRoot / GameFlowController]
     End --> SceneFlowController
 ```
 
@@ -36,7 +36,7 @@ AppServices가 화면/입력 수명을 소유하고 AppRoot가 실제 Presenter 
 
 Host Session의 MatchCompleted와 NetworkMatchCoordinator.Completed를 같은 화면 경계에 연결한다. Client는 결과 표시를 위해 로컬 MatchSession을 만들지 않는다. 다른 Match/이미 확정된 다른 결과는 적용하지 않는다. actor/Session 폐기 후에도 불변 결과를 읽을 수 있으며 Backend 재화 지급 승인이나 자동 저장은 포함하지 않는다.
 
-Restart / Return to spaceship 버튼 → `AppRoot.ReplaceGameplaySceneAsync` → Scene 유효성·권한·전송 대기 검사 → 현재 Match 명시 종료 → SceneFlowController 실제 교체 순서다. Client/다중 참가자 이동은 아직 공동 준비 계약이 없으므로 이유와 함께 버튼을 비활성화한다. 실패는 화면에 표시하고 파괴된 actor에서 결과를 재구성하지 않는다.
+화면 버튼은 재시작·우주선 귀환·타이틀 복귀 의도를 AppRoot에 전달한다. 초기화된 GameFlow는 활성 Mission을 다시 시작하고, Startup에서 설정한 허브·타이틀 경로를 사용한다. Scene 유효성·권한·전송 대기 확인 후 Match를 종료하고 실제 Scene을 교체한다. Startup을 거치지 않은 직접 실행은 AppRoot의 기본 경로를 사용한다. 이동 제한은 버튼에 반영하고 실패는 화면에 표시한다.
 
 ## 입력과 표시
 
