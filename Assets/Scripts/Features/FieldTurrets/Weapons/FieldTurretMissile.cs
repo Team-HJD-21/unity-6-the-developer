@@ -40,6 +40,9 @@ public partial class FieldTurretMissile : MonoBehaviour
     private int _maxReassign;
     private float _currentSpeed;
     private bool _isHoming = false;
+    private float _distanceToTarget;
+    private string _missileSoundId; // MissileFlying SFX ID 저장
+    private string _missileDetectId; // MissileDetect SFX ID 저장
     private bool _isInitialized;
     private bool _isExploding;
     private bool _hasAppliedExplosion;
@@ -87,10 +90,17 @@ public partial class FieldTurretMissile : MonoBehaviour
         _initialDirection = transform.up;
         _currentSpeed = initialSpeed;
         rb.linearVelocity = _initialDirection * _currentSpeed;
-        double now = FieldSimulationTime.Seconds(this);
-        _homingStartsAt = now + initialStraightTime;
-        _expiresAt = now + 10f;
+        _homingStartsAt = FieldSimulationTime.Seconds(this) + initialStraightTime;
+        _expiresAt = FieldSimulationTime.Seconds(this) + 10f;
         _isInitialized = true;
+
+        // MissileFlying SFX 재생 및 ID 저장
+        Collider2D hits = Physics2D.OverlapCircle(transform.position, 80, layerMask);
+        if (hits != null)
+        {
+            float distance = Vector2.Distance(transform.position, hits.transform.position);
+            // _missileSoundId = AudioManager.Instance.PlaySfx(AudioManager.Sfx.MissileFlying, distance, 80);
+        }
     }
 
     private void Awake()
@@ -101,22 +111,23 @@ public partial class FieldTurretMissile : MonoBehaviour
     {
         if (!FieldSimulationTime.CanAdvance(this)) return;
         if (!_isInitialized) return;
-        double now = FieldSimulationTime.Seconds(this);
         if (_isExploding)
         {
-            if (!_hasAppliedExplosion && now >= _explosionDamageAt)
+            if (!_hasAppliedExplosion && FieldSimulationTime.Seconds(this) >= _explosionDamageAt)
                 ApplyExplosionDamage();
             return;
         }
-        if (now >= _expiresAt)
+        if (FieldSimulationTime.Seconds(this) >= _expiresAt)
         {
             BeginExplosion();
             return;
         }
 
-        _isHoming = now >= _homingStartsAt;
+        _isHoming = FieldSimulationTime.Seconds(this) >= _homingStartsAt;
+        DrawTargetLineToTarget();
         SearchForNewTarget();
         AccelerateToTarget();
+        FlyingSoundMove();
     }
     private void SearchForNewTarget()//목표하던 목표가 사라지면 호출
     {
@@ -162,23 +173,32 @@ public partial class FieldTurretMissile : MonoBehaviour
         float angleToTarget = Vector2.SignedAngle(currentDirection, directionToTarget);
         
         // 한 프레임당 최대 회전 각도 제한
-        float deltaTime = FieldSimulationTime.FixedDeltaTime(this);
-        float maxTurn = turnSpeed * deltaTime;
-        float rotationThisFrame = Mathf.Clamp(angleToTarget, -maxTurn, maxTurn);
+        float rotationThisFrame = Mathf.Clamp(angleToTarget, -turnSpeed * FieldSimulationTime.FixedDeltaTime(this), turnSpeed * FieldSimulationTime.FixedDeltaTime(this));
         
         // 현재 속도 벡터를 회전
         Vector2 newDirection = Quaternion.Euler(0, 0, rotationThisFrame) * currentDirection;
         
         // 가속도 적용
-        _currentSpeed = Mathf.MoveTowards(_currentSpeed, maxSpeed, acceleration * deltaTime);
+        _currentSpeed = Mathf.MoveTowards(_currentSpeed, maxSpeed, acceleration * FieldSimulationTime.FixedDeltaTime(this));
         
         // 새로운 속도 적용
         rb.linearVelocity = newDirection * _currentSpeed;
         
-        // 물리 제약이 적용된 실제 속도로 미사일 스프라이트를 회전한다.
-        Vector2 velocity = rb.linearVelocity;
-        float angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg - 90f;
+        // 미사일 스프라이트 회전
+        float angle = Mathf.Atan2(rb.linearVelocity.y, rb.linearVelocity.x) * Mathf.Rad2Deg - 90f;
         transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+
+    private void FlyingSoundMove()
+    {
+        Collider2D hits = Physics2D.OverlapCircle(transform.position, 80, layerMask);
+        if (hits != null&&_missileSoundId!=null)
+        {
+            float distance = Vector2.Distance(transform.position, hits.transform.position);
+            // Debug.Log("Distance with player" + distance);
+            // AudioManager.Instance.ChangeVolume(_missileSoundId,distance,80);
+        }
+
     }
 
     private void OnCollisionEnter2D(Collision2D other)
@@ -221,6 +241,17 @@ public partial class FieldTurretMissile : MonoBehaviour
     private void ApplyExplosionDamage()
     {
         _hasAppliedExplosion = true;
+        // MissileFlying SFX 중단
+        // if (!string.IsNullOrEmpty(_missileDetectId))
+        // {
+        //     AudioManager.Instance.StopSfx(_missileDetectId); 
+        //     Debug.Log("missiledetect delete");
+        // }
+        if (!string.IsNullOrEmpty(_missileSoundId))
+        {
+            // AudioManager.Instance.StopSfx(_missileSoundId);
+            // Debug.Log("missilesound delete");
+        }
         try
         {
             Collider2D[] monsters = Physics2D.OverlapCircleAll(rb.position, explosionRange, FieldTurretTargetingUtility.EnemyHitBoxMask);
@@ -245,5 +276,13 @@ public partial class FieldTurretMissile : MonoBehaviour
         Handles.DrawWireDisc(transform.position, transform.forward, explosionRange);
 #endif
 
+    }
+    private void DrawTargetLineToTarget()
+    {
+        if (_target != null)
+        {
+            
+        }
+            // Debug.DrawLine(transform.position, _target.position, Color.blue, 0.1f);
     }
 }

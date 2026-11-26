@@ -18,10 +18,9 @@ namespace TeamHJD.Game.FieldTurrets
     public sealed partial class FieldTurretController : ICheckpointParticipant
     {
         private FieldTurretLevelUpgradeCatalog _checkpointCatalog;
-        private const int WorldCheckpointVersion = 2;
         private FieldTurretUpgradeDefinition[] _checkpointUpgrades = Array.Empty<FieldTurretUpgradeDefinition>();
         string ICheckpointParticipant.Key => "world/field-turrets";
-        int ICheckpointParticipant.Version => WorldCheckpointVersion;
+        int ICheckpointParticipant.Version => 1;
         CheckpointSectionKind ICheckpointParticipant.Kind => CheckpointSectionKind.World;
         int ICheckpointParticipant.RestoreOrder => 150;
 
@@ -36,15 +35,13 @@ namespace TeamHJD.Game.FieldTurrets
         {
             RequireCheckpointMatch(context);
             var state = CaptureWorld(codec);
-            return codec.Write("world/field-turrets", WorldCheckpointVersion, CheckpointSectionKind.World, writer => WriteWorld(writer, state, codec));
+            return codec.Write("world/field-turrets", 1, CheckpointSectionKind.World, writer => WriteWorld(writer, state, codec));
         }
 
         ICheckpointRestoreStep ICheckpointParticipant.PrepareRestore(CheckpointRestoreContext context, CheckpointSection section, ICheckpointPayloadCodec codec)
         {
             RequireCheckpointMatch(context.Current);
-            if (section.Version < 1 || section.Version > WorldCheckpointVersion)
-                throw new InvalidDataException("Unsupported field turret checkpoint version.");
-            var target = codec.Read(section, section.Version, reader => ReadWorld(reader, codec, section.Version));
+            var target = codec.Read(section, 1, reader => ReadWorld(reader, codec));
             ValidateWorld(target, codec);
             var backup = CaptureWorld(codec);
             // 최신 강화/용량은 유지하고 과거 위치·전투 상태만 복원합니다.
@@ -147,7 +144,7 @@ namespace TeamHJD.Game.FieldTurrets
             }
         }
 
-        private static SavedWorld ReadWorld(BinaryReader reader, ICheckpointPayloadCodec codec, int version)
+        private static SavedWorld ReadWorld(BinaryReader reader, ICheckpointPayloadCodec codec)
         {
             var budget = new FieldTurretPowerBudget.State(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadDouble());
             double remaining = reader.ReadDouble(); bool running = reader.ReadBoolean();
@@ -159,10 +156,10 @@ namespace TeamHJD.Game.FieldTurrets
             count = codec.ReadCount(reader, 4096); var actors = new SavedActor[count];
             for (int i = 0; i < count; i++)
             {
-                var common = ReadActor(reader, codec, version); string key = codec.ReadText(reader); int combatVersion = reader.ReadInt32();
+                var common = ReadActor(reader, codec); string key = codec.ReadText(reader); int version = reader.ReadInt32();
                 int size = codec.ReadCount(reader, CheckpointSection.MaximumPayloadBytes); byte[] bytes = reader.ReadBytes(size);
                 if (bytes.Length != size) throw new EndOfStreamException();
-                actors[i] = new SavedActor(common, new CheckpointSection(key, combatVersion, CheckpointSectionKind.World, bytes));
+                actors[i] = new SavedActor(common, new CheckpointSection(key, version, CheckpointSectionKind.World, bytes));
             }
             return new SavedWorld(controller, actors);
         }
@@ -174,24 +171,17 @@ namespace TeamHJD.Game.FieldTurrets
             w.Write(r.MaximumHealth); w.Write(r.CurrentHealth); w.Write(r.IsDestroyed); w.Write(r.IsActivated);
             w.Write(r.IsLocked); w.Write(r.IsTemporarilySuspended); w.Write(r.DamageBonus); codec.WriteText(w, r.UpgradeId);
             w.Write(r.UpgradeLevel); w.Write(r.DamageModifierRatio); w.Write(r.PowerModifierRatio); w.Write(r.RangeModifierRatio);
-            w.Write(r.PendingRepairHealth); w.Write(r.HasEverActivated); actor.Pose.Write(w); w.Write(actor.HasHead);
+            w.Write(r.PendingRepairHealth); actor.Pose.Write(w); w.Write(actor.HasHead);
             var q = actor.HeadLocalRotation; w.Write(q.x); w.Write(q.y); w.Write(q.z); w.Write(q.w);
             w.Write(actor.FireElapsed); w.Write(actor.CoolingRemaining); w.Write(actor.CoolingDuration);
             w.Write(actor.CoolingInitialHeatRatio); w.Write(actor.PendingInitialActivation); w.Write(actor.ReservedPower);
         }
 
-        private static FieldTurretActorState ReadActor(BinaryReader r, ICheckpointPayloadCodec codec, int version)
+        private static FieldTurretActorState ReadActor(BinaryReader r, ICheckpointPayloadCodec codec)
         {
             var id = new EntityId(codec.ReadText(r));
-            string definitionId = codec.ReadText(r);
-            int maximumHealth = r.ReadInt32();
-            int currentHealth = r.ReadInt32();
-            bool isDestroyed = r.ReadBoolean();
-            bool isActivated = r.ReadBoolean();
-            bool isLocked = r.ReadBoolean();
-            var state = new FieldTurretRuntimeState.State(definitionId, maximumHealth, currentHealth, isDestroyed, isActivated, isLocked,
-                r.ReadBoolean(), r.ReadInt32(), codec.ReadText(r), r.ReadInt32(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadDouble(),
-                version == 1 ? !isLocked : r.ReadBoolean()); // v1에서는 해금된 터렛이 표적이 될 수 있었다.
+            var state = new FieldTurretRuntimeState.State(codec.ReadText(r), r.ReadInt32(), r.ReadInt32(), r.ReadBoolean(), r.ReadBoolean(),
+                r.ReadBoolean(), r.ReadBoolean(), r.ReadInt32(), codec.ReadText(r), r.ReadInt32(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadDouble());
             var pose = CheckpointTransformState.Read(r); bool head = r.ReadBoolean();
             var rotation = new Quaternion(r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
             return new FieldTurretActorState(id, state, pose, head, rotation, r.ReadSingle(), r.ReadDouble(), r.ReadSingle(),

@@ -305,7 +305,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoCTargetable
   targetType: 1
-  maxAttackers: 0
+  maxAttackers: 10
   maxHealth: 0
   currentHealth: 0
   firepowerEfficiency: 0

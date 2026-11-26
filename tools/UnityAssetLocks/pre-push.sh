@@ -23,8 +23,7 @@ fi
 helper=tools/UnityAssetLocks/AssetLocks.ps1
 if [ "$1" = origin ] && [ -f "$helper" ]; then
   if command -v powershell.exe >/dev/null 2>&1; then
-    input_windows_dir=$(cd -- "${input%/*}" && pwd -W)
-    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File "$helper" Submit -InputPath "$input_windows_dir/${input##*/}"
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File "$helper" Submit -InputPath "$(cygpath -w "$input")"
   else
     pwsh -NoProfile -NonInteractive -File "$helper" Submit -InputPath "$input"
   fi

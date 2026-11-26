@@ -20,7 +20,7 @@ public class FieldMissileTurretLV2 : DefaultFieldMissileTurret
     public override int ProjectilesPerShot => missileSpawnPoint != null ? missileSpawnPoint.Length : 0;
     private void Start()
     {
-        if (!WasCheckpointRestored) gunRenderer.color = InactiveGunColor;
+        if (!WasCheckpointRestored) gunRenderer.color = new Color(0.5f, 0.5f, 0.5f);
         Targets ??= new Transform[missileSpawnPoint.Length];
     }
     protected override void Shoot() => LaunchMissiles(missileSpawnPoint);

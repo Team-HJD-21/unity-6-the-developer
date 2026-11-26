@@ -897,10 +897,6 @@ PrefabInstance:
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 4459148650083726757, guid: 60c1ad4d0d0084e44a188337ee940774, type: 3}
-      propertyPath: navMeshAgentTypeId
-      value: -887442656
-      objectReference: {fileID: 0}
-    - target: {fileID: 4459148650083726757, guid: 60c1ad4d0d0084e44a188337ee940774, type: 3}
       propertyPath: moveSpeed
       value: 3
       objectReference: {fileID: 0}

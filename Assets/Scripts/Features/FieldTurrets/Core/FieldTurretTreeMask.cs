@@ -11,13 +11,11 @@ namespace TeamHJD.Game.FieldTurrets
     {
         private readonly Transform _turret;
         private readonly SpriteRenderer _gun;
-        private readonly SpriteRenderer _ledRenderer;
         private readonly List<TilemapRenderer> _tilemaps = new();
         private readonly List<float> _tileMargins = new();
         private readonly List<(Sprite Sprite, Matrix4x4 ToWorld, Bounds Bounds)> _trees = new();
         private readonly List<SpriteMask> _masks = new();
         private readonly SpriteMaskInteraction _previousMaskInteraction;
-        private readonly SpriteMaskInteraction _previousLedMaskInteraction;
         private Bounds _searchBounds;
         private Bounds _lastGunBounds;
         private Matrix4x4 _lastGunToWorld;
@@ -29,13 +27,6 @@ namespace TeamHJD.Game.FieldTurrets
         {
             _turret = turret;
             _gun = gun;
-            FieldTurretLedIndicator indicator = gun.GetComponentInChildren<FieldTurretLedIndicator>(true);
-            if (indicator != null && indicator.TryGetComponent(out SpriteRenderer ledRenderer))
-            {
-                _ledRenderer = ledRenderer;
-                _previousLedMaskInteraction = ledRenderer.maskInteraction;
-            }
-
             foreach (TilemapRenderer renderer in Object.FindObjectsByType<TilemapRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (renderer.gameObject.scene != turret.gameObject.scene ||
@@ -63,10 +54,6 @@ namespace TeamHJD.Game.FieldTurrets
                 _masksPositioned = false;
                 return;
             }
-
-            if (_ledRenderer != null && _ledRenderer.enabled && _ledRenderer.gameObject.activeInHierarchy &&
-                !_ledRenderer.forceRenderingOff && _ledRenderer.sprite != null)
-                bounds.Encapsulate(_ledRenderer.bounds);
 
             float turretY = _turret.position.y;
             bool refresh = _needsRefresh || turretY != _lastTreeSortY ||
@@ -108,13 +95,6 @@ namespace TeamHJD.Game.FieldTurrets
                 ? SpriteMaskInteraction.VisibleOutsideMask
                 : _previousMaskInteraction;
             if (_gun.maskInteraction != interaction) _gun.maskInteraction = interaction;
-            if (_ledRenderer == null) return;
-
-            SpriteMaskInteraction ledInteraction = hasTreeOverlap
-                ? SpriteMaskInteraction.VisibleOutsideMask
-                : _previousLedMaskInteraction;
-            if (_ledRenderer.maskInteraction != ledInteraction)
-                _ledRenderer.maskInteraction = ledInteraction;
         }
 
         private void RefreshTrees(Bounds bounds, float turretY)
@@ -223,7 +203,6 @@ namespace TeamHJD.Game.FieldTurrets
                 Object.Destroy(mask.gameObject);
             }
             if (_gun != null) _gun.maskInteraction = _previousMaskInteraction;
-            if (_ledRenderer != null) _ledRenderer.maskInteraction = _previousLedMaskInteraction;
         }
     }
 }

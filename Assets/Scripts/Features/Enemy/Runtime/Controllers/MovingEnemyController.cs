@@ -105,7 +105,7 @@ public class MovingEnemyController : EnemyController
         }
 
         // 감지 범위 확인·갱신 시점 판단·필요한 경우 경로 계산.
-        RefreshTargetPath();
+        RefreshPlayerPath();
 
         // 경유점 도착을 확인하고 다음 이동 방향을 계산한다.
         bool hasPathDirection =
@@ -172,10 +172,10 @@ public class MovingEnemyController : EnemyController
 
     // 내부 처리
 
-    // 플레이어 이동을 반영하고 시설 타깃의 누락된 경로를 재시도한다.
-    private void RefreshTargetPath()
+    /// <summary>플레이어의 이동량과 감지 상태에 따라 경로를 갱신한다.</summary>
+    private void RefreshPlayerPath()
     {
-        if (!_isPlayerTarget && enemyMovement.HasPath)
+        if (!_isPlayerTarget)
             return;
 
         Transform target = enemyTargeting.Target;

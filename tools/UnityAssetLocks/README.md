@@ -24,6 +24,5 @@ macOS에서는 `brew install powershell`로 설치하고 `pwsh --version`으로 
 ## 동작
 
 - GitHub Desktop과 CLI의 `pre-push`는 저장된 파일 버전을 잠금 ID와 연결하는 임시 `unity-asset-locks/*` 태그를 원격에 기록한다. 태그는 이미 GitHub에 올라간 커밋을 가리킨다.
-- `main`을 갱신할 때 Actions가 현재 잠금 ID와 제출 태그를 조회한다. 태그가 가리키는 편집 시작 당시의 파일과 최신 `main`의 파일이 달라졌고, 최신 파일이 제출 버전과 일치하면 잠금을 해제하고 태그를 지운다. 스쿼시 병합과 이전 실행에서 누락된 잠금에도 이 기준을 적용한다.
-- GitHub에서 **Actions → Release merged Unity asset locks → Run workflow**를 열어 `main`의 잠금을 다시 검사할 수 있다. 실행 로그에 조회한 잠금, 제출 태그, 해제 대상 개수가 출력된다. GitHub 잠금 API가 권한 오류를 반환하면 실행도 실패로 표시된다.
+- `main` push에서 Actions가 실제로 바뀐 경로와 제출된 버전을 대조한다. 일치할 때만 같은 ID의 잠금을 풀고 태그를 지운다. 파일 버전이 같으면 스쿼시 병합도 동작한다.
 - Unity가 프로젝트를 열 때와 이후 45초마다 로컬 파일 상태를 맞춘다. Project 창의 잠금 목록은 15초마다 갱신하며 Unity로 돌아오면 바로 다시 조회한다. 작성자의 PC 전원과 관계없이 서버 잠금은 해제된다. 로컬 파일의 동기화에는 Unity가 다시 열려 있어야 한다.

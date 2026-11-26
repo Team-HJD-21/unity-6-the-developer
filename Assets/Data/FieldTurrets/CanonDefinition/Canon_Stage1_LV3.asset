@@ -20,7 +20,6 @@ MonoBehaviour:
   _range: 35
   _rotationSpeed: 500
   _fireRate: 8
-  _maxHealth: 500
   _power: 35
   _overHeatTime: 10
   _overHeatMissileCount: 0

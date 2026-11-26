@@ -19,7 +19,6 @@ namespace TeamHJD.Game.FieldTurrets
             useTriggers = false
         };
         private static readonly List<RaycastHit2D> SightHits = new();
-        private static readonly List<(Collider2D Collider, float Distance)> TargetDistances = new();
 
         internal static bool HasClearLineOfSight(Vector2 origin, Vector2 target, Transform observer)
         {
@@ -59,32 +58,12 @@ namespace TeamHJD.Game.FieldTurrets
             float minimumRange = 0f)
         {
             results.Clear();
-            if (range <= 0f)
-                return;
-
-            var filter = new ContactFilter2D { useTriggers = Physics2D.queriesHitTriggers };
-            filter.SetLayerMask(targetMask);
-            int count = Physics2D.OverlapCircle(origin, range, filter, results);
-            float minimum = Mathf.Max(0f, minimumRange);
-            float minSquared = minimum * minimum;
-            float maxSquared = range * range;
-            for (int index = 0; index < count; index++)
-            {
-                Collider2D candidate = results[index];
-                if (candidate == null)
-                    continue;
-
-                Vector2 offset = (Vector2)candidate.transform.position - origin;
-                float distanceSquared = offset.sqrMagnitude;
-                if (distanceSquared >= minSquared && distanceSquared <= maxSquared)
-                    TargetDistances.Add((candidate, Mathf.Sqrt(distanceSquared)));
-            }
-
-            TargetDistances.Sort(static (left, right) => left.Distance.CompareTo(right.Distance));
-            results.Clear();
-            foreach (var target in TargetDistances)
-                results.Add(target.Collider);
-            TargetDistances.Clear();
+            results.AddRange(Physics2D.OverlapCircleAll(origin, range, targetMask));
+            results.RemoveAll(candidate => candidate == null ||
+                !IsInAttackRange(origin, candidate.transform.position, minimumRange, range));
+            results.Sort((left, right) =>
+                Vector2.Distance(origin, left.transform.position)
+                    .CompareTo(Vector2.Distance(origin, right.transform.position)));
         }
 
         public static void RotateTowards(

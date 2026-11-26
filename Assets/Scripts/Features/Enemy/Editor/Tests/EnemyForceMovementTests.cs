@@ -231,81 +231,6 @@ public sealed class EnemyForceMovementTests
         Assert.That(_body.position.x, Is.GreaterThan(0.1f));
     }
 
-    [Test]
-    public void PathCorners_RequireCloseApproachAndPreserveFinalArrivalDistance()
-    {
-        typeof(EnemyMovement).GetField("_path", BindingFlags.Instance | BindingFlags.NonPublic)
-            .SetValue(_movement, new[] { new Vector3(0.15f, 0f), new Vector3(0.15f, 1f) });
-
-        Assert.That(_movement.TryGetNextPathDirection(out Vector2 direction), Is.True);
-        Assert.That(direction, Is.EqualTo(Vector2.right));
-
-        _movement.transform.position = new Vector3(0.1f, 0f);
-        Physics2D.SyncTransforms();
-        Assert.That(_movement.TryGetNextPathDirection(out direction), Is.True);
-        Assert.That(direction.y, Is.GreaterThan(0.99f));
-
-        _movement.transform.position = new Vector3(0.15f, 0.8f);
-        Physics2D.SyncTransforms();
-        Assert.That(_movement.TryGetNextPathDirection(out _), Is.False);
-    }
-
-    [Test]
-    public void Move_SteersAroundStationaryBodyUsingFootCollider()
-    {
-        BoxCollider2D foot = _body.GetComponent<BoxCollider2D>();
-        typeof(EnemyMovement).GetField("_footCollider", BindingFlags.Instance | BindingFlags.NonPublic)
-            .SetValue(_movement, foot);
-        Rigidbody2D blocker = CreateBody("Blocker", new Vector2(1.1f, 0f));
-        blocker.constraints = RigidbodyConstraints2D.FreezeAll;
-        Physics2D.SyncTransforms();
-
-        float largestSideStep = 0f;
-        for (int i = 0; i < 600; i++)
-        {
-            _movement.Move((new Vector2(5f, 0f) - _body.position).normalized);
-            _physics.Simulate(Time.fixedDeltaTime);
-            largestSideStep = Mathf.Max(largestSideStep, Mathf.Abs(_body.position.y));
-        }
-
-        Assert.That(largestSideStep, Is.GreaterThan(1f));
-        Assert.That(_body.position.x, Is.GreaterThan(3f));
-    }
-
-    [TestCase(false)]
-    [TestCase(true)]
-    public void PathStart_AdvancesPastProjectionOnlyWithClearPhysicalRoute(bool blocked)
-    {
-        typeof(EnemyMovement).GetField("_footCollider", BindingFlags.Instance | BindingFlags.NonPublic)
-            .SetValue(_movement, _body.GetComponent<BoxCollider2D>());
-        typeof(EnemyMovement).GetField("_path", BindingFlags.Instance | BindingFlags.NonPublic)
-            .SetValue(_movement, new[] { Vector3.zero, Vector3.right * 4f });
-        _body.transform.position = Vector3.right * 0.5f;
-        if (blocked)
-            CreateBody("Terrain", Vector2.right * 2f).bodyType = RigidbodyType2D.Static;
-        Physics2D.SyncTransforms();
-
-        Assert.That(_movement.TryGetNextPathDirection(out Vector2 direction), Is.True);
-        Assert.That(direction.x, blocked ? Is.LessThan(0f) : Is.GreaterThan(0f));
-    }
-    [TestCase(false)]
-    [TestCase(true)]
-    public void PathCorner_SkipsExactCornerWhenNextSegmentIsPhysicallyClear(bool blocked)
-    {
-        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        typeof(EnemyMovement).GetField("_footCollider", flags)
-            .SetValue(_movement, _body.GetComponent<BoxCollider2D>());
-        typeof(EnemyMovement).GetField("_path", flags)
-            .SetValue(_movement, new[] { Vector3.zero, new Vector3(3f, 0f), new Vector3(3f, 4f) });
-        typeof(EnemyMovement).GetField("_currentPath", flags).SetValue(_movement, 1);
-        _body.transform.position = new Vector2(2f, 1f);
-        if (blocked)
-            CreateBody("Terrain", new Vector2(2.5f, 2.5f)).bodyType = RigidbodyType2D.Static;
-        Physics2D.SyncTransforms();
-
-        Assert.That(_movement.TryGetNextPathDirection(out Vector2 direction), Is.True);
-        Assert.That(direction.y, blocked ? Is.LessThan(0f) : Is.GreaterThan(0f));
-    }
     private Rigidbody2D CreateBody(string name, Vector2 position)
     {
         var root = new GameObject(name);
@@ -314,7 +239,7 @@ public sealed class EnemyForceMovementTests
         body.gravityScale = 0f;
         body.constraints = RigidbodyConstraints2D.FreezeRotation;
         body.position = position;
-        root.AddComponent<BoxCollider2D>().includeLayers = 1 << root.layer;
+        root.AddComponent<BoxCollider2D>();
         return body;
     }
 }

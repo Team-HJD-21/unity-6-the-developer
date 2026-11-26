@@ -15,7 +15,7 @@ namespace TeamHJD.Game.FieldTurrets
             return new State(definition.Id, definition.MaxHealth, _currentHealth, _isDestroyed,
                 _isActivated, _isLocked, _isTemporarilySuspended, _damageBonus,
                 SelectedUpgradeId, _upgradeLevel, _upgradeDamageModifierRatio, _upgradePowerModifierRatio,
-                _upgradeRangeModifierRatio, _pendingRepairHealth, _hasEverActivated);
+                _upgradeRangeModifierRatio, _pendingRepairHealth);
         }
 
         // 개별 공개 복원은 전력 예산과 활성 예약을 분리시킬 수 있어 동일 Feature 내부에만 허용합니다.
@@ -25,7 +25,6 @@ namespace TeamHJD.Game.FieldTurrets
             state.ValidateFor(definition, upgrade);
             _currentHealth = state.CurrentHealth; _healthInitialized = true;
             _isDestroyed = state.IsDestroyed; _isActivated = state.IsActivated;
-            _hasEverActivated = state.HasEverActivated;
             _isLocked = state.IsLocked; _isTemporarilySuspended = state.IsTemporarilySuspended;
             _damageBonus = state.DamageBonus; _selectedUpgradeId = state.UpgradeId;
             _upgradeLevel = state.UpgradeLevel; _upgradeDamageModifierRatio = state.DamageModifierRatio;
@@ -41,7 +40,6 @@ namespace TeamHJD.Game.FieldTurrets
             public int CurrentHealth { get; }
             public bool IsDestroyed { get; }
             public bool IsActivated { get; }
-            public bool HasEverActivated { get; }
             public bool IsLocked { get; }
             public bool IsTemporarilySuspended { get; }
             public int DamageBonus { get; }
@@ -55,7 +53,7 @@ namespace TeamHJD.Game.FieldTurrets
             public State(string definitionId, int maximumHealth, int currentHealth, bool isDestroyed,
                 bool isActivated, bool isLocked, bool isTemporarilySuspended, int damageBonus,
                 string upgradeId, int upgradeLevel, float damageModifierRatio, float powerModifierRatio,
-                float rangeModifierRatio, double pendingRepairHealth, bool hasEverActivated = false)
+                float rangeModifierRatio, double pendingRepairHealth)
             {
                 if (string.IsNullOrWhiteSpace(definitionId) || maximumHealth < 1 || currentHealth < 0 || currentHealth > maximumHealth ||
                     isDestroyed != (currentHealth == 0) || (isActivated && (isDestroyed || isLocked)) ||
@@ -68,7 +66,6 @@ namespace TeamHJD.Game.FieldTurrets
                     throw new ArgumentException("Invalid saved turret runtime state.");
                 DefinitionId = definitionId; MaximumHealth = maximumHealth; CurrentHealth = currentHealth;
                 IsDestroyed = isDestroyed; IsActivated = isActivated; IsLocked = isLocked;
-                HasEverActivated = hasEverActivated || isActivated;
                 IsTemporarilySuspended = isTemporarilySuspended; DamageBonus = damageBonus;
                 UpgradeId = upgradeId ?? string.Empty; UpgradeLevel = upgradeLevel;
                 DamageModifierRatio = damageModifierRatio; PowerModifierRatio = powerModifierRatio;
