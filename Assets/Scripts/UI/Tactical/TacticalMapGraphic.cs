@@ -15,7 +15,7 @@ public sealed class TacticalMapGraphic : MaskableGraphic
     public TacticalHudView View;
     public bool Overview, Field;
     private TacticalCommandController Owner => View != null ? View.Owner : null;
-    private const float HoverRangeSeconds = .18f;
+    private const float HoverRangeSeconds = 0.8f;
     private readonly List<(TurretPresentationSnapshot Turret, float Progress)> _hoverRanges = new();
     private Sprite _hoverRangeSprite;
     private Vector4 _hoverRangeUv;
