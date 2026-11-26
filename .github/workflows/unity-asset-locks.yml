@@ -15,7 +15,7 @@ concurrency:
 jobs:
   release:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/diagnostic/unity-lfs-actions-auth'
-    environment: unity-asset-lock-release
+    environment: unity-asset-lock-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           if [ -z "$LOCKS_DEPLOY_KEY" ]; then
-            echo '::error::UNITY_ASSET_LOCKS_SSH_KEY is missing from the unity-asset-lock-release environment.'
+            echo '::error::UNITY_ASSET_LOCKS_SSH_KEY is missing from the unity-asset-lock-smoke environment.'
             exit 1
           fi
           umask 077
