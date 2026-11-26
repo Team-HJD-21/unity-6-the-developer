@@ -214,9 +214,9 @@ weatherEffects.SetEffectsEnabled(true);  // 현재 보관 중인 날씨 효과 �
 
 ### 4.6 Stage1 태양과 타일맵 기물 그림자
 
-[StageTileShadows](../../../Assets/Scripts/Map/StageTileShadows.cs)는 `WeatherManager`와 같은 GameObject의 `IMatchDayNightCycle`을 읽어 `Sunlight 2D`의 위치와 `Environment_Obj` 기물의 그림자를 갱신한다. 씬 시작 때 타일의 스프라이트 메시를 읽어 같은 텍스처를 서브메시로 묶는다. 런타임에는 바닥 접점을 기준으로 빛의 반대 방향에 실루엣을 투영한다. 낮에 방향과 길이가 변하고 밤에는 빛과 그림자가 서서히 사라진다.
+[FieldTileShadows](../../../Assets/Scripts/Map/FieldTileShadows.cs)는 `WeatherManager`와 같은 GameObject의 `IMatchDayNightCycle`을 읽어 `Sunlight 2D`의 위치와 `Environment_Obj` 기물의 그림자를 갱신한다. 씬 시작 때 타일의 스프라이트 메시를 읽어 같은 텍스처를 서브메시로 묶는다. 런타임에는 바닥 접점을 기준으로 빛의 반대 방향에 실루엣을 투영한다. 낮에 방향과 길이가 변하고 밤에는 빛과 그림자가 서서히 사라진다.
 
-Stage1 Hierarchy의 `Tile Ground Shadows`에서 `Stage Tile Shadows (Script)`를 확인한다.
+Stage1 Hierarchy의 `Tile Ground Shadows`에서 `Field Tile Shadows (Script)`를 확인한다.
 
 | Inspector 필드 | Stage1 저장값 | 단위와 동작 |
 | --- | ---: | --- |

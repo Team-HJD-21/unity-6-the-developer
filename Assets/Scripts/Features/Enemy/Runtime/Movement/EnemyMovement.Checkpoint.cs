@@ -27,6 +27,7 @@ public partial class EnemyMovement
     {
         _path = state.Path == null ? null : (Vector3[])state.Path.Clone();
         _currentPath = state.Current;
+        _facilitySpreadEnd = 0;
         _slowEffects?.Clear();
         if (state.Slows.Length == 0) return;
         _slowEffects ??= new List<SlowEffect>();

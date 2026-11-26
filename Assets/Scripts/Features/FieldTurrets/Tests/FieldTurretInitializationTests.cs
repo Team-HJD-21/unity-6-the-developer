@@ -52,6 +52,29 @@ namespace TeamHJD.Game.FieldTurrets.Tests
         }
 
         [Test]
+        public void FirstSuccessfulActivationPersistsAfterShutdownAndStateRestore()
+        {
+            var state = new FieldTurretRuntimeState();
+            state.Initialize(FieldTurretInitializationData.CreateDefault(_definition));
+            var power = new FakePower { AllowConsume = false };
+            var activation = new FieldTurretActivationController(state, power, _definition.Power);
+
+            Assert.That(state.HasEverActivated, Is.False);
+            Assert.That(activation.RequestActivation(true), Is.EqualTo(FieldTurretActivationResult.InsufficientPower));
+            Assert.That(state.HasEverActivated, Is.False);
+
+            power.AllowConsume = true;
+            Assert.That(activation.RequestActivation(true), Is.EqualTo(FieldTurretActivationResult.Activated));
+            Assert.That(activation.RequestActivation(false), Is.EqualTo(FieldTurretActivationResult.Deactivated));
+            Assert.That(state.HasEverActivated, Is.True);
+
+            var restored = new FieldTurretRuntimeState();
+            restored.RestoreState(state.CaptureState(_definition), _definition, null);
+            Assert.That(restored.IsActivated, Is.False);
+            Assert.That(restored.HasEverActivated, Is.True);
+        }
+
+        [Test]
         public void PartialRepairCapsHealthAndPreservesActivationAndReservation()
         {
             var power = new FakePower();
@@ -567,6 +590,7 @@ namespace TeamHJD.Game.FieldTurrets.Tests
             Assert.That(downgraded.CurrentHealth, Is.EqualTo(70));
             Assert.That(downgraded.RuntimeState.UpgradeLevel, Is.EqualTo(1));
             Assert.That(downgraded.IsActivated, Is.False);
+            Assert.That(downgraded.HasEverActivated, Is.True);
             Assert.That(downgraded.IsCoolingDown, Is.False);
             Assert.That(power.ConsumeCalls, Is.EqualTo(1), "Upgrade changes must not reserve power.");
         }
