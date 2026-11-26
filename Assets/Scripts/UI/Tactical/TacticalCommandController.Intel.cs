@@ -37,13 +37,6 @@ public sealed partial class TacticalCommandController
         TacticalPresentationRules.TurretState.Busy => Style.Common.Accent,
         _ => new Color(.66f,.68f,.66f)
     };
-    public Color CellColor(TacticalPresentationRules.CellState state) => state switch
-    {
-        TacticalPresentationRules.CellState.Captured => Style.CapturedFill,
-        TacticalPresentationRules.CellState.Capturing => Style.CapturingFill,
-        TacticalPresentationRules.CellState.Available => Style.AvailableFill,
-        _ => Style.UnoccupiedFill
-    };
     private void InitializeMapSettings()
     {
         ShowAllRanges = PlayerPrefs.GetInt(RangesKey,1) != 0;

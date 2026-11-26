@@ -16,7 +16,7 @@ Unity community 저장소에는 Steamworks.NET 기반 SteamNetworkingSockets tra
 
 | 현재 경계 | 향후 변경 |
 | --- | --- |
-| `AppBootstrap.CreateServices`의 FakePlatformService/FakeProfileService | 제품 구성에서 실제 플랫폼·Backend 어댑터 선택. 개발 Fake는 명시적 개발 구성에서 제공 |
+| `AppBootstrap.CreateServices` | Steam 설정에 따라 실제 플랫폼 또는 개발용 플랫폼을 선택한다. Backend 프로필은 실제 조회·저장 흐름을 구현할 때 조립한다. |
 | `IPlatformService.SignInAsync` | 현재 Steam 사용자의 식별·플랫폼 준비 결과 제공. SDK 타입은 Infrastructure 내부로 제한 |
 | `AppRoot.Update` / App 서비스 pump | App 소유 callback 처리를 게임 정지와 무관하게 계속 수행 |
 | `INetworkSession` / `InitialStageNetworkBinding` | 로비의 선택 결과와 검증된 연결 정보를 받아 명시적인 연결·준비·시작 API 호출 |

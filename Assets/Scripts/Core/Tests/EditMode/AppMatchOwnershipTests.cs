@@ -26,7 +26,7 @@ namespace TeamHJD.Game.Tests.EditMode
         {
             _rootObject = new GameObject("Ownership Test App");
             _root = _rootObject.AddComponent<AppRoot>();
-            _root.Initialize(new AppServices(new FakeProfileService(), new FakeContentCatalog(),
+            _root.Initialize(new AppServices(new FakeContentCatalog(),
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
                 new FakeSceneFlow()));
         }

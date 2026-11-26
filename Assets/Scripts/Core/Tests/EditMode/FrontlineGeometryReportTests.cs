@@ -79,7 +79,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var root = gameObject.AddComponent<AppRoot>();
             try
             {
-                root.Initialize(new AppServices(new FakeProfileService(), new FakeContentCatalog(),
+                root.Initialize(new AppServices(new FakeContentCatalog(),
                     new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
                     new FakeSceneFlow()));
                 var id = new MatchId("frontline-test");

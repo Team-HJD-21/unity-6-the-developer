@@ -76,15 +76,17 @@ playerAdapter.Unbind();
 
 `IAppMatchHost.CurrentMatchId`와 자신이 생성한 ID를 대조한다. Scene 소유자는 `TryEndMatch(ownedMatchId)`를 사용하며, false는 현재 Match가 달라 종료하지 않았다는 뜻이다. `EndCurrentMatch()`는 App의 무조건 종료 경로다.
 
-정리 순서는 현재 composition의 Encounter unbind·Player actor 정리·소유 Match 종료를 따른다. 한 소비자의 Unbind 실패가 나머지 정리를 중단하지 않도록 한다. `MatchSession.Dispose`는 이벤트 버스와 공간 Runtime을 정리하고 재호출을 허용한다. 종료 뒤 변경·명령 메서드 호출은 `ObjectDisposedException`이다. `HudPresenter.Dispose()`는 자신이 가진 구독을 해제한다. 오래된 session/provider를 새 Match에 연결하지 않는다.
+정리 순서는 현재 composition의 Encounter unbind·Player actor 정리·소유 Match 종료를 따른다. 한 소비자의 Unbind 실패가 나머지 정리를 중단하지 않도록 한다. `MatchSession.Dispose`는 이벤트 버스와 공간 Runtime을 정리하고 재호출을 허용한다. 종료 뒤 변경·명령 메서드 호출은 `ObjectDisposedException`이다. UI는 실제 바인딩의 수명에 맞춰 구독과 입력을 해제한다. 오래된 session/provider를 새 Match에 연결하지 않는다.
+
+필드 HUD는 [Player UI API](../06_player/player-ui-api.md)의 연결을 따른다. 전술 지도의 `TacticalCommandController.Data`는 현재 Match의 터렛 프레임과 확인된 점유 셀을 읽는다. `TacticalCommandController.View`는 카메라 좌표에 표식·툴팁을 배치하고 같은 셀 상태를 지도에 그린다. 점유 색은 `TacticalTerritory.mat`에서 조정한다. 터렛 요청은 기존 `TurretCommandGateway`에서 검증한다.
 
 Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 닫고, 여러 기능·actor·지역·FieldTurret 자원 정리를 끝까지 시도한 뒤 오류를 합쳐 전달한다. `Dispose`/`TryEndMatch`가 정리 오류를 던졌다고 이전 입력이 여전히 유효한 것으로 해석하지 않는다. 설정 실패도 rollback하며 설정 오류와 해제 오류를 함께 보존한다. 해제 중 새 Match를 재바인딩하지 않는다. Unity actor/NGO 객체의 실제 파괴는 프레임 끝에 확정되므로 참조 해제와 GameObject 제거 시점을 구분한다.
 
 ## 비동기와 실패 처리
 
-`IProfileService.LoadAsync(playerId, cancellationToken)`과 `SaveAsync(profile, cancellationToken)`은 취소 토큰을 명시적으로 받는다. 호출자가 자신의 Scene·화면·App 수명에 맞는 토큰을 소유하고 종료 때 취소한다. 취소 후 완료된 응답을 다른 사용자나 새 Match에 적용하지 않는다. `OperationCanceledException`은 취소 흐름으로, 다른 예외는 실패로 처리한다. 프로필이 없을 때 Load 결과의 null과 통신 실패를 동일시하지 않는다.
+`IProfileService`는 추후 Backend 프로필 연동을 위한 계약이다. 실제 플레이어 성장과 토큰은 현재 [성장 저장 API](growth-save-api.md)의 로컬 저장 경로를 사용한다. Backend를 연결할 때 `LoadAsync(playerId, cancellationToken)`과 `SaveAsync(profile, cancellationToken)`의 호출자는 Scene·화면·App 수명에 맞춰 취소 토큰을 소유한다. 화면이 닫혔거나 Match가 바뀐 뒤 완료된 응답은 버린다. 조회 결과가 없는 경우와 통신 오류를 구분한다.
 
-현재 Bootstrap의 `FakeProfileService`, `FakePlatformService`, `FakeSceneFlow`는 개발용이며 실 Backend·저장·로그인을 보장하지 않는다. ContentCatalog 에셋이 없으면 Fake fallback을 쓴다. 전체 서비스 구현은 #444에서 선정한다.
+Bootstrap은 `UnitySceneFlow`와 `BinaryCheckpointStore`를 구성한다. 플랫폼은 Steam 설정에 따라 `SteamPlatformService` 또는 개발용 `FakePlatformService`를 선택한다. ContentCatalog 에셋이 없으면 개발용 카탈로그로 동작한다. Backend 프로필 어댑터는 추후 실제 조회·저장 기능을 조립할 때 추가한다.
 
 ## 현재 Network 경계
 

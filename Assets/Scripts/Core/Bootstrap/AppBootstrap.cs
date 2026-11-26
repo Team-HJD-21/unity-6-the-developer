@@ -64,9 +64,7 @@ namespace TeamHJD.Game.Bootstrap
                 ? new SteamPlatformService(steam != null ? steam.AppId : throw new System.InvalidOperationException("Configure the Steam AppID first."))
                 : new FakePlatformService(localUser);
 
-            //  FakeProfileService()도 마찬가지로 PoC 단계에서 사용되는 임시 클래스입니다.
             return new AppServices(
-                new FakeProfileService(),
                 content,
                 platform,
                 new UnitySceneFlow(),

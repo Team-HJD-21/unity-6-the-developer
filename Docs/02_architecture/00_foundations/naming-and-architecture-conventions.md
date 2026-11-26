@@ -24,7 +24,7 @@
 | `Contracts` | 외부 기능의 추상 Port | Domain BCL | `IProfileService`, `IContentCatalog` |
 | `Infrastructure` | 외부 SDK/저장/HTTP의 구현 | Contracts, Domain, Unity/SDK | `SteamPlatformAdapter`, `BinaryProfileCache` |
 | `Content` | authoring 정의값과 Runtime 해석 | Domain, Unity authoring API | `StageDefinition`, `ContentCatalog` |
-| `Presentation` | Unity Scene/UI/입력/오디오 표현 | Application, Contracts, Unity | `HudPresenter`, `PlayerSceneAdapter` |
+| `Presentation` | Unity Scene/UI/입력/오디오 표현 | Application, Contracts, Unity | `AppScreenPresenter`, `PlayerSceneAdapter` |
 | `Legacy` | 이전 코드 레퍼런스 | 신규 의존성 금지 | 기존 `UI & Manager` |
 
 `Domain`과 `Application`은 Unity API를 참조하지 않는다. SDK와 MonoBehaviour는 반드시
@@ -47,7 +47,7 @@
 | `Repository` | 데이터 읽기/쓰기 추상화 | `ProfileRepository` | HTTP 규칙/게임 규칙 |
 | `Gateway` / `Client` | 원격 API 통신 경계 | `BackendGateway`, `SteamWebApiClient` | 로컬 게임 규칙 |
 | `Adapter` | Unity/SDK와 Core 계약 변환 | `PlayerSceneAdapter`, `SteamPlatformAdapter` | Domain 모델 |
-| `Presenter` | State/Event를 View에 표시 | `HudPresenter`, `DialoguePresenter` | 직접 게임 규칙 실행 |
+| `Presenter` | State/Event를 View에 표시 | `AppScreenPresenter`, `StartMenuPresenter` | 직접 게임 규칙 실행 |
 | `Controller` | 입력 또는 화면 흐름 조정 | `SceneFlowController`, `InputController` | 전역 상태 저장 |
 | `Factory` | 복잡한 객체 생성 | `MatchSessionFactory` | 싱글턴 접근 래퍼 |
 | `Rules` | 모드별 규칙 차이 | `StoryModeRules`, `CoopModeRules` | Unity 화면 로직 |
@@ -65,7 +65,7 @@ MatchState              단계/확정 결과와 초기 자료; 실제 Feature �
 PlayerProfile           계정 진행도
 ContentCatalog          Definition을 검색/해석하는 API
 SceneFlowController     Hub/Lobby/Match 씬 흐름
-HudPresenter             HUD 표시 갱신
+AppScreenPresenter       게임 흐름에 맞춰 앱 화면 갱신
 ```
 
 새 코드의 기본 이름은 `MatchSession`과 `MatchState`다. `GameSession`, `StageSession`,
@@ -91,7 +91,7 @@ Presentation은 서로 직접 참조하지 않고 Bootstrap에서 조립한다.
 Port는 소비자가 필요한 동작 중심으로 `I` 접두사를 쓴다. 구현체는 구현 기술을 이름에 넣는다.
 
 ```text
-IProfileService                 # Application이 사용하는 Profile Use Case
+IProfileService                 # Backend 프로필 연동 예정 포트
 ProfileService
   ├─ IBackendGateway            # 최종 권한 원본
   └─ IProfileCache

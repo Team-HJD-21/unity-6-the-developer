@@ -16,14 +16,13 @@ namespace TeamHJD.Game.Tests.EditMode
     {
         [TestCase(false)]
         [TestCase(true)]
-        public void Dispose_CleansRemainingServicesAndIsIdempotent(bool failProfile)
+        public void Dispose_CleansRemainingServicesAndIsIdempotent(bool failSceneFlow)
         {
             var owner = new GameObject("Shutdown Test");
             var root = owner.AddComponent<AppRoot>();
-            var profiles = new ProbeProfiles { Fail = failProfile };
-            var scenes = new ProbeScenes();
+            var scenes = new ProbeScenes { FailOnDispose = failSceneFlow };
             var network = new ProbeNetwork();
-            var services = new AppServices(profiles, new FakeContentCatalog(),
+            var services = new AppServices(new FakeContentCatalog(),
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
                 scenes, network);
             root.Initialize(services);
@@ -40,9 +39,8 @@ namespace TeamHJD.Game.Tests.EditMode
             services.PumpNetwork();
             try
             {
-                if (failProfile) Assert.Throws<AggregateException>(() => root.Dispose());
+                if (failSceneFlow) Assert.Throws<AggregateException>(() => root.Dispose());
                 else Assert.DoesNotThrow(() => root.Dispose());
-                Assert.That(profiles.DisposedCount, Is.EqualTo(1));
                 Assert.That(scenes.DisposedCount, Is.EqualTo(1));
                 Assert.That(network.DisposedCount, Is.EqualTo(1));
                 Assert.That(root.NetworkSession, Is.Null);
@@ -66,23 +64,9 @@ namespace TeamHJD.Game.Tests.EditMode
             finally { UnityEngine.Object.DestroyImmediate(owner); }
         }
 
-        private sealed class ProbeProfiles : IProfileService, IDisposable
-        {
-            public bool Fail;
-            public int DisposedCount;
-            public Task<PlayerProfileSnapshot> LoadAsync(PlayerId id, CancellationToken cancellationToken)
-                => Task.FromResult<PlayerProfileSnapshot>(null);
-            public Task SaveAsync(PlayerProfileSnapshot profile, CancellationToken cancellationToken)
-                => Task.CompletedTask;
-            public void Dispose()
-            {
-                DisposedCount++;
-                if (Fail) throw new InvalidOperationException("profile cleanup");
-            }
-        }
-
         private sealed class ProbeScenes : ISceneFlow, IDisposable
         {
+            public bool FailOnDispose;
             public bool CanLoad(string key) => true;
             public bool IsLoaded(string key) => false;
             public float Progress => 1f;
@@ -90,7 +74,11 @@ namespace TeamHJD.Game.Tests.EditMode
             public int DisposedCount;
             public Task LoadAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;
             public Task UnloadAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;
-            public void Dispose() => DisposedCount++;
+            public void Dispose()
+            {
+                DisposedCount++;
+                if (FailOnDispose) throw new InvalidOperationException("scene flow cleanup");
+            }
         }
 
         private sealed class ProbeNetwork : INetworkSession

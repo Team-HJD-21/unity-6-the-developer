@@ -157,7 +157,8 @@ public sealed partial class TacticalCommandController : MonoBehaviour
         var skills = _player.GetComponent<PlayerSkillController>(); if (skills != null && skills.IsPlacingSkill) return false;
         var status=Source.GetComponent<PlayerStatusPanel>(); if(status!=null && status.IsOpen)return false;
         _camera = CameraManager.Current; if (_camera == null || _camera.HasOverride) return false;
-        skills?.CloseSelection(); CaptureData(); UpdateBounds();
+        skills?.CloseSelection();
+        if (!CaptureData()) UpdateBounds();
         _baseSize = _camera.OutputCamera.orthographicSize;
         _defaultViewport = _camera.OutputCamera.rect;
         _size = Mathf.Clamp(TacticalMapMath.FitAround(PlayerPosition, OccupiedBounds(), _camera.OutputCamera.aspect, _baseSize * Style.EntryZoom) * 1.08f,
