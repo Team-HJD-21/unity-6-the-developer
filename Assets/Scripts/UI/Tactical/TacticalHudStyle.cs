@@ -12,6 +12,8 @@ public sealed class TacticalHudStyle : ScriptableObject
     [Header("Authored tactical art")]
     public Sprite CannonGlyph, MissileGlyph, EnemyGlyph, GoalGlyph;
     public Sprite PowerGlyph, UpgradeGlyph, SelectionGlyph, AutomaticGlyph;
+    public Sprite HoverRangeSprite;
+    public Color HoverRangeTint = new(0f, 0f, 0f, 90f / 255f);
     public TurretArtEntry[] TurretArt;
     public Texture2D OverviewTerrain;
     public string TerrainScene;

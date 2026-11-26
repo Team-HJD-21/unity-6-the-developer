@@ -1,7 +1,10 @@
+using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.Presentation;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Sprites;
 using UnityEngine.UI;
 
 /// <summary>전체도는 공용 좌표를 그리며 별도 Camera/AudioListener/게임 원본을 만들지 않습니다.</summary>
@@ -12,14 +15,83 @@ public sealed class TacticalMapGraphic : MaskableGraphic
     public TacticalHudView View;
     public bool Overview, Field;
     private TacticalCommandController Owner => View != null ? View.Owner : null;
+    private const float HoverRangeSeconds = .18f;
+    private readonly List<(TurretPresentationSnapshot Turret, float Progress)> _hoverRanges = new();
+    private Sprite _hoverRangeSprite;
+    private Vector4 _hoverRangeUv;
+    private Vector2 _solidUv;
     private VertexHelper _mesh;
     private RegionGridSnapshot _boundarySnapshot;
     private IReadOnlyList<RegionBoundarySegment> _boundary = Array.Empty<RegionBoundarySegment>();
+    public override Texture mainTexture =>
+        Field && _hoverRangeSprite != null ? _hoverRangeSprite.texture : base.mainTexture;
+
     private void LateUpdate()
     {
         if (!Overview && !Field && Owner != null) Owner.RenderVisuals();
-        if (Field) SetVerticesDirty();
+        if (Field)
+        {
+            RefreshHoverRangeSprite();
+            UpdateHoverRanges();
+            SetVerticesDirty();
+        }
     }
+
+    protected override void OnDisable()
+    {
+        _hoverRanges.Clear();
+        base.OnDisable();
+    }
+
+    private void RefreshHoverRangeSprite()
+    {
+        var owner = Owner;
+        Sprite sprite = owner != null && owner.Style != null ? owner.Style.HoverRangeSprite : null;
+        if (_hoverRangeSprite == sprite) return;
+
+        _hoverRangeSprite = sprite;
+        _hoverRangeUv = sprite != null ? DataUtility.GetOuterUV(sprite) : default;
+        _solidUv = new Vector2(
+            (_hoverRangeUv.x + _hoverRangeUv.z) * .5f, (_hoverRangeUv.y + _hoverRangeUv.w) * .5f); // 원의 중앙 흰색 픽셀을 괄호에 사용합니다.
+        SetMaterialDirty();
+    }
+
+    private void UpdateHoverRanges()
+    {
+        var owner = Owner;
+        if (_hoverRangeSprite == null || owner == null || !owner.isActiveAndEnabled || owner.IsOpen ||
+            owner.IsTransitioning || HudPresentationVisibility.IsSuppressed)
+        {
+            _hoverRanges.Clear();
+            return;
+        }
+
+        var hovered = View.Tooltip.gameObject.activeInHierarchy ? owner.Hovered : null;
+        float step = Time.unscaledDeltaTime / HoverRangeSeconds;
+        bool hasHoveredRange = false;
+        for (int i = _hoverRanges.Count - 1; i >= 0; i--)
+        {
+            var range = _hoverRanges[i];
+            bool isHovered = hovered != null && range.Turret.EntityId == hovered.EntityId;
+            float progress = Mathf.MoveTowards(range.Progress, isHovered ? 1f : 0f, step);
+            if (isHovered)
+            {
+                _hoverRanges[i] = (hovered, progress);
+                hasHoveredRange = true;
+            }
+            else if (progress > 0f)
+            {
+                _hoverRanges[i] = (range.Turret, progress);
+            }
+            else
+            {
+                _hoverRanges.RemoveAt(i);
+            }
+        }
+        if (hovered != null && !hasHoveredRange)
+            _hoverRanges.Add((hovered, Mathf.Min(1f, step)));
+    }
+
     protected override void OnPopulateMesh(VertexHelper mesh)
     {
         mesh.Clear(); _mesh = mesh; var owner = Owner;
@@ -27,6 +99,7 @@ public sealed class TacticalMapGraphic : MaskableGraphic
         if (Field)
         {
             if (owner.IsOpen) return;
+            DrawHoverRanges();
             var hover = owner.Hovered;
             if (hover != null && View.ToggleMap.gameObject.activeSelf) Brackets(Project(TacticalCommandController.Point(hover)), 20, owner.Style.Common.Accent);
             return;
@@ -138,6 +211,23 @@ public sealed class TacticalMapGraphic : MaskableGraphic
             Circle(p,radius,(selected?1.8f:1.1f)*PixelScale,c,64);
         }
     }
+
+    private void DrawHoverRanges()
+    {
+        foreach (var range in _hoverRanges)
+        {
+            Vector2 position = TacticalCommandController.Point(range.Turret);
+            Vector2 center = Project(position);
+            Vector2 edge = Project(position + Vector2.right * (float)range.Turret.Range);
+            float radius = Vector2.Distance(center, edge) * Mathf.SmoothStep(0f, 1f, range.Progress);
+            Vector2 halfSize = Vector2.one * radius;
+            if (radius <= 0f ||
+                !rectTransform.rect.Overlaps(new Rect(center - halfSize, halfSize * 2f))) continue;
+
+            Quad(center - halfSize, center + halfSize, Owner.Style.HoverRangeTint, _hoverRangeUv);
+        }
+    }
+
     private void DrawStatus(Vector2 p,TacticalPresentationRules.TurretState status,Color c,float scale)
     {
         Vector2 S(float x,float y)=>p+new Vector2(x,y)*scale;
@@ -178,15 +268,20 @@ public sealed class TacticalMapGraphic : MaskableGraphic
     {
         if (_mesh.currentVertCount > 59990 || !float.IsFinite(a.x + a.y + b.x + b.y)) return;
         Vector2 normal = (b - a).normalized; normal = new Vector2(-normal.y, normal.x) * width * .5f;
-        int i = _mesh.currentVertCount; _mesh.AddVert(a - normal, c, Vector2.zero); _mesh.AddVert(a + normal, c, Vector2.zero);
-        _mesh.AddVert(b + normal, c, Vector2.zero); _mesh.AddVert(b - normal, c, Vector2.zero);
+        int i = _mesh.currentVertCount;
+        Vector2 uv = Field ? _solidUv : Vector2.zero;
+        _mesh.AddVert(a - normal, c, uv); _mesh.AddVert(a + normal, c, uv);
+        _mesh.AddVert(b + normal, c, uv); _mesh.AddVert(b - normal, c, uv);
         _mesh.AddTriangle(i, i + 1, i + 2); _mesh.AddTriangle(i, i + 2, i + 3);
     }
-    private void Quad(Vector2 a, Vector2 b, Color c)
+    private void Quad(Vector2 a, Vector2 b, Color c, Vector4 uv = default)
     {
         if (_mesh.currentVertCount > 59990) return;
-        int i = _mesh.currentVertCount; _mesh.AddVert(a, c, Vector2.zero); _mesh.AddVert(new Vector2(a.x, b.y), c, Vector2.zero);
-        _mesh.AddVert(b, c, Vector2.zero); _mesh.AddVert(new Vector2(b.x, a.y), c, Vector2.zero);
+        int i = _mesh.currentVertCount;
+        _mesh.AddVert(a, c, new Vector2(uv.x, uv.y));
+        _mesh.AddVert(new Vector2(a.x, b.y), c, new Vector2(uv.x, uv.w));
+        _mesh.AddVert(b, c, new Vector2(uv.z, uv.w));
+        _mesh.AddVert(new Vector2(b.x, a.y), c, new Vector2(uv.z, uv.y));
         _mesh.AddTriangle(i, i + 1, i + 2); _mesh.AddTriangle(i, i + 2, i + 3);
     }
     private void Frame(Vector2 a, Vector2 b, float w, Color c)

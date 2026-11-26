@@ -593,7 +593,9 @@ LED는 나무 가림에 사용하는 SpriteMask를 그대로 받는다. [FieldTu
 
 실제 탐지와 원형 Sprite는 모두 `EffectiveRange`를 사용한다. `FieldTurretBase.RefreshRangeVisual()`은 Sprite의 월드 크기와 부모 Scale을 고려해 표시 원의 지름을 `EffectiveRange × 2`로 맞춘다. 세부 업그레이드로 사거리가 변하면 바로 다시 계산한다.
 
-Unity 에디터에서는 터렛을 선택하지 않아도 탐지 중심에 최대·최소 사거리 Gizmo가 표시된다. Scene 또는 Game 뷰의 Gizmos 토글로 숨기거나, 드롭다운에서 터렛 스크립트 항목만 끌 수 있다. 플레이 중 선택 UI와 테스트 씬 패널의 사거리 Sprite는 각각 기존 표시 설정을 따른다.
+Unity 에디터에서는 터렛을 선택하지 않아도 탐지 중심에 최대·최소 사거리 Gizmo가 표시된다. Scene 또는 Game 뷰의 Gizmos 토글로 숨기거나, 드롭다운에서 터렛 스크립트 항목만 끌 수 있다. 테스트 씬의 사거리 Sprite는 테스트 패널의 표시 설정을 따른다.
+
+본편 필드에서는 터렛 정보창이 열릴 때 해당 터렛의 최대 사거리 원이 중심에서 약 0.18초에 걸쳐 펼쳐진다. 정보창이 닫히면 원이 중심으로 줄어든다. 예전 사거리 스프라이트인 `TurretRangeCircleSmooth`를 검정 반투명으로 표시하고, 원의 최종 반경은 터렛 표시 스냅샷의 `Range`를 사용한다.
 
 ## 6. 업그레이드와 밸런스 규칙
 
