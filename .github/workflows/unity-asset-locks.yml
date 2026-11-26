@@ -2,7 +2,7 @@ name: Release merged Unity asset locks
 
 on:
   push:
-    branches: [main]
+    branches: [main, diagnostic/unity-lfs-actions-auth]
   workflow_dispatch:
 
 permissions:
@@ -14,124 +14,51 @@ concurrency:
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/diagnostic/unity-lfs-actions-auth'
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: main
+          ref: diagnostic/unity-lfs-actions-auth
           fetch-depth: 0
           sparse-checkout: .github/scripts
-          token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
       - name: Release submitted versions on main
         env:
-          LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
           GIT_TERMINAL_PROMPT: '0'
-        run: python3 .github/scripts/release_unity_asset_locks.py
-
-  verify_auth:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/diagnostic/unity-lfs-actions-auth'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-          sparse-checkout: .github/scripts
-          token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
-      - name: Compare repository and Git LFS authentication
-        env:
-          RELEASE_CREDENTIAL: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN }}
-          RUNNER_CREDENTIAL: ${{ github.token }}
-          GIT_TERMINAL_PROMPT: '0'
-        shell: bash
         run: |
-          python3 - <<'PY'
-          import base64
-          import json
-          import os
-          import subprocess
-          from urllib.error import HTTPError, URLError
-          from urllib.request import Request, urlopen
+          PYTHONPATH=.github/scripts python3 -u - <<'PY'
+          import release_unity_asset_locks as release
 
-          repo = "Team-HJD-21/unity-6-the-developer"
-          endpoint = f"https://github.com/{repo}.git/info/lfs/locks"
-          header_key = "http.https://github.com/.extraheader"
-          helper = '!f() { if [ "$1" = get ]; then printf "username=%s\\npassword=%s\\n" "$PROBE_USER" "$PROBE_SECRET"; fi; }; f'
-          env = os.environ.copy()
+          fixture = "Assets/Diagnostics/__CodexUnityLockSmoke_45867295374.prefab"
+          lock_id = "65307884"
+          ref = "refs/heads/diagnostic/unity-lfs-actions-auth"
+          implementation = release.git
 
-          def request(url, headers):
-              req = Request(url, headers={"User-Agent": "workspace-lock-auth-probe"})
-              for key, value in headers.items():
-                  req.add_unredirected_header(key, value)
-              try:
-                  with urlopen(req, timeout=10) as response:
-                      return response.status, response.headers, response.read()
-              except HTTPError as error:
-                  return error.code, error.headers, error.read()
-              except (URLError, TimeoutError):
-                  return 0, {}, b""
+          def isolate_test_branch(*args, **kwargs):
+              if args[0] == "ls-remote":
+                  return implementation("ls-remote", "--refs", "origin", ref, args[-1]).replace(ref, "refs/heads/main")
+              return implementation(*args, **kwargs)
 
-          def api(label, secret):
-              headers = {"Authorization": f"Bearer {secret}", "Accept": "application/vnd.github+json"}
-              user_status, user_headers, user_body = request("https://api.github.com/user", headers)
-              repo_status, repo_headers, repo_body = request(f"https://api.github.com/repos/{repo}", headers)
-              user = json.loads(user_body).get("login") if user_status == 200 else None
-              permissions = json.loads(repo_body).get("permissions", {}) if repo_status == 200 else {}
-              scope = user_headers.get("X-OAuth-Scopes") or repo_headers.get("X-OAuth-Scopes") or ""
-              scopes = {item.strip() for item in scope.split(",")}
-              kind = ("fine-grained-pat" if secret.startswith("github_pat_") else
-                      "classic-pat" if secret.startswith("ghp_") else
-                      "installation" if secret.startswith("ghs_") else "other")
-              print(f"{label}: kind={kind}, GitHub user={user_status}, repo={repo_status}, pull={permissions.get('pull')}, "
-                    f"push={permissions.get('push')}, repo_scope={'repo' in scopes}, public_repo_scope={'public_repo' in scopes}, "
-                    f"sso_notice={bool(repo_headers.get('X-GitHub-SSO'))}", flush=True)
-              return user or "x-access-token"
+          class FixtureOnly(release.GitLfsLocks):
+              def list_locks(self):
+                  return [lock for lock in super().list_locks() if str(lock["id"]) == lock_id and lock["path"] == fixture]
 
-          def direct(label, username, token):
-              auth = base64.b64encode(f"{username}:{token}".encode()).decode()
-              status, _, _ = request(endpoint + "?limit=1", {
-                  "Authorization": "Basic " + auth, "Accept": "application/vnd.git-lfs+json"
-              })
-              print(f"{label}: Git LFS lock list HTTP {status}", flush=True)
+              def unlock(self, requested_id):
+                  assert requested_id == lock_id, "The smoke test may only release its own fixture lock."
+                  super().unlock(requested_id)
 
-          def cli(label, extra_env=None):
-              child = env.copy()
-              if extra_env is not None:
-                  child.update(extra_env)
-              result = subprocess.run(["git", "lfs", "locks", "--remote=origin"], env=child, capture_output=True,
-                                      text=True, timeout=25)
-              category = "authorization" if "Authorization error" in result.stderr else "other" if result.returncode else "none"
-              print(f"{label}: git-lfs list exit={result.returncode}, category={category}, "
-                    f"locks={len(result.stdout.splitlines()) if result.returncode == 0 else '-'}", flush=True)
-
-          def credential_env(user, secret):
-              return {"GIT_CONFIG_COUNT": "3", "GIT_CONFIG_KEY_0": header_key, "GIT_CONFIG_VALUE_0": "",
-                      "GIT_CONFIG_KEY_1": "credential.helper", "GIT_CONFIG_VALUE_1": "",
-                      "GIT_CONFIG_KEY_2": "credential.https://github.com.helper", "GIT_CONFIG_VALUE_2": helper,
-                      "PROBE_USER": user, "PROBE_SECRET": secret}
-
-          dedicated = os.environ.get("RELEASE_CREDENTIAL", "")
-          runner = os.environ.get("RUNNER_CREDENTIAL", "")
-          if dedicated:
-              username = api("Dedicated token", dedicated)
-              found = subprocess.run(["git", "config", "--includes", "--get-urlmatch", "http.extraheader", endpoint],
-                                     capture_output=True, text=True)
-              expected = "authorization: basic " + base64.b64encode(f"x-access-token:{dedicated}".encode()).decode()
-              actual = found.stdout.strip()
-              print("Checkout extraheader present=" + str(found.returncode == 0) +
-                    ", matches dedicated token=" + str(actual[:21].lower() + actual[21:] == expected), flush=True)
-              cli("Dedicated checkout")
-              direct("Dedicated Basic", username, dedicated)
-              cli("Dedicated credential helper", credential_env(username, dedicated))
-          else:
-              print("Dedicated token is empty.", flush=True)
-
-          if runner:
-              username = api("Workflow token", runner)
-              direct("Workflow Basic", username, runner)
-              cli("Workflow credential helper", credential_env(username, runner))
+          release.git = isolate_test_branch
+          api = FixtureOnly()
+          before = api.list_locks()
+          assert len(before) == 1 and before[0].get("owner", {}).get("name") == "hjd5031", "Fixture lock was not visible with the original owner."
+          print(f"BEFORE: remote lock {lock_id} is present, owned by hjd5031.", flush=True)
+          tag = release.submission_tag(lock_id, release.blob(implementation("rev-parse", "HEAD"), fixture))
+          assert implementation("ls-remote", "--refs", "origin", tag), "Fixture submission tag must exist before release."
+          release.release_merged_locks(api)
+          assert not api.list_locks(), "The remote still reports the fixture lock."
+          assert not implementation("ls-remote", "--refs", "origin", tag), "The remote still reports the fixture tag."
+          print(f"AFTER: remote lock {lock_id} and its submission tag are both gone.", flush=True)
           PY
