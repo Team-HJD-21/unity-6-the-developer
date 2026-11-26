@@ -24,45 +24,31 @@ jobs:
           fetch-depth: 0
           sparse-checkout: .github/scripts
           token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
-      - name: Use the production token to release only the fixture
+      - name: Compare effective token identity and repository role
         env:
-          LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
+          GH_TOKEN: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN }}
           GIT_TERMINAL_PROMPT: '0'
         run: |
-          PYTHONPATH=.github/scripts python3 -u - <<'PY'
-          import release_unity_asset_locks as release
-
-          fixture = "Assets/Diagnostics/__CodexUnityLockSmoke_45867295374.prefab"
-          lock_id = "65307884"
-          test_ref = "refs/heads/diagnostic/unity-lfs-actions-auth"
-          implementation = release.git
-
-          def isolate_test_ref(*args, **kwargs):
-              if args[0] == "ls-remote":
-                  return implementation("ls-remote", "--refs", "origin", test_ref, args[-1]).replace(test_ref, "refs/heads/main")
-              return implementation(*args, **kwargs)
-
-          class FixtureOnly(release.GitLfsLocks):
-              def list_locks(self):
-                  return [lock for lock in super().list_locks() if str(lock["id"]) == lock_id and lock["path"] == fixture]
-
-              def unlock(self, requested_id):
-                  assert requested_id == lock_id, "The smoke test may only release its own fixture lock."
-                  super().unlock(requested_id)
-
+          python3 -u - <<'PY'
+          import json
           import os
-          if os.environ.get("LOCKS_CONFIGURED") != "true":
-              raise SystemExit("The production repository secret is missing.")
-          release.git = isolate_test_ref
-          api = FixtureOnly()
-          before = api.list_locks()
-          assert len(before) == 1 and before[0].get("owner", {}).get("name") == "hjd5031", "The fixture lock must be present and owned by hjd5031."
-          print(f"BEFORE: LFS lock {lock_id} is present and owned by hjd5031.")
-          tag = release.submission_tag(lock_id, release.blob(implementation("rev-parse", "HEAD"), fixture))
-          assert implementation("ls-remote", "--refs", "origin", tag), "The fixture's exact submission tag must be present."
-          print("BEFORE: the fixture submission tag exists.")
-          release.release_merged_locks(api)
-          assert not api.list_locks(), "LFS still reports the fixture lock."
-          assert not implementation("ls-remote", "--refs", "origin", tag), "Git still reports the fixture tag."
-          print(f"AFTER: LFS lock {lock_id} and its submission tag are both absent from the remote.")
+          import subprocess
+
+          def github(path):
+              run = subprocess.run(["gh", "api", path], capture_output=True, text=True, timeout=15)
+              return json.loads(run.stdout) if run.returncode == 0 else None
+
+          token = os.environ["GH_TOKEN"]
+          kind = "fine-grained" if token.startswith("github_pat_") else "classic" if token.startswith("ghp_") else "other"
+          user = github("user")
+          repository = github("repos/" + os.environ["GITHUB_REPOSITORY"])
+          rights = repository.get("permissions", {}) if repository else {}
+          print(f"TOKEN: type={kind}, actorIsFixtureOwner={user is not None and user.get('login') == 'hjd5031'}, repoAdmin={rights.get('admin')}, repoPush={rights.get('push')}.")
+          id_match = "65307884"
+          result = subprocess.run(["git", "lfs", "locks", "--remote=origin"], capture_output=True, text=True, timeout=25)
+          print(f"LFS list: exit={result.returncode}, fixtureFound={id_match in result.stdout}.")
+          tag = "refs/tags/unity-asset-locks/9d7f29eb9f960ed526408f0787c6980f358e7be42382d19abf2294019cbb9936/725cda97312acc447eeacd6744c3a3073fc122cd"
+          anchor = "eeb4e6b6ff8d7038a0eed3e1847bffa299da3b3b"
+          push = subprocess.run(["git", "push", "--dry-run", "--no-verify", f"--force-with-lease={tag}:{anchor}", "origin", f":{tag}"], capture_output=True, text=True, timeout=25)
+          print(f"Git tag transport dry run: exit={push.returncode}.")
           PY
