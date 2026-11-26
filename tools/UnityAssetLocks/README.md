@@ -4,7 +4,7 @@
 
 ## 저장소 관리자
 
-1. GitHub 저장소의 **Settings → Secrets and variables → Actions**에 `UNITY_ASSET_LOCKS_TOKEN`을 등록한다. 이 토큰을 쓰는 계정은 이 저장소에서 다른 사용자의 LFS 잠금을 ID로 강제 해제하고, `unity-asset-locks/*` 태그를 삭제할 수 있어야 한다. 저장소 접근 범위를 제한한 전용 계정을 사용한다. 실제 GitHub 환경의 토큰 유형, 조직 승인, 강제 해제 권한은 서로 다른 두 계정으로 확인한다.
+1. 잠금 해제용 SSH 키의 공개 부분을 이 저장소의 관리자 GitHub 사용자 계정에 인증 키로 등록한다. 비공개 키는 저장소의 **Settings → Environments → unity-asset-lock-release**에 환경 시크릿 `UNITY_ASSET_LOCKS_SSH_KEY`로 등록한다. 환경은 `main` 브랜치만 허용한다. 이 사용자 인증 키는 해당 계정이 Git으로 접근할 수 있는 저장소에도 유효하므로 비공개 키는 이 환경에서만 사용한다.
 2. 배포 후 두 계정으로 같은 프리팹을 편집한다. A만 저장할 수 있고 B는 저장이 차단되어야 한다. A가 GitHub Desktop에서 커밋과 푸시를 한 뒤 Unity를 종료한다. A의 PR을 `main`에 병합하고 **Release merged Unity asset locks**가 잠금을 풀면 B가 최신 코드를 받은 뒤 편집할 수 있어야 한다.
 
 ## 팀원
@@ -25,5 +25,5 @@ macOS에서는 `brew install powershell`로 설치하고 `pwsh --version`으로 
 
 - GitHub Desktop과 CLI의 `pre-push`는 저장된 파일 버전을 잠금 ID와 연결하는 임시 `unity-asset-locks/*` 태그를 원격에 기록한다. 태그는 이미 GitHub에 올라간 커밋을 가리킨다.
 - `main`을 갱신할 때 Actions가 현재 잠금 ID와 제출 태그를 조회한다. 태그가 가리키는 편집 시작 당시의 파일과 최신 `main`의 파일이 달라졌고, 최신 파일이 제출 버전과 일치하면 잠금을 해제하고 태그를 지운다. 스쿼시 병합과 이전 실행에서 누락된 잠금에도 이 기준을 적용한다.
-- GitHub에서 **Actions → Release merged Unity asset locks → Run workflow**를 열어 `main`의 잠금을 다시 검사할 수 있다. 실행 로그에 조회한 잠금, 제출 태그, 해제 대상 개수가 출력된다. Actions의 저장소 인증을 Git LFS CLI가 사용한다. 조회 권한 오류나 잠금 목록 불일치가 발생하면 실행이 실패로 표시된다.
+- GitHub에서 **Actions → Release merged Unity asset locks → Run workflow**를 열어 `main`의 잠금을 다시 검사할 수 있다. 실행 로그에 조회한 잠금, 제출 태그, 해제 대상 개수가 출력된다. GitHub 호스팅 러너가 사용자 SSH 키로 Git과 Git LFS를 인증한다. 조회 권한 오류나 잠금 목록 불일치가 발생하면 실행이 실패로 표시된다.
 - Unity가 프로젝트를 열 때와 이후 45초마다 로컬 파일 상태를 맞춘다. Project 창의 잠금 목록은 15초마다 갱신하며 Unity로 돌아오면 바로 다시 조회한다. 작성자의 PC 전원과 관계없이 서버 잠금은 해제된다. 로컬 파일의 동기화에는 Unity가 다시 열려 있어야 한다.
