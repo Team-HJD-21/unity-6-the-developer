@@ -19,6 +19,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
     public sealed partial class InitialStageCompositionRoot : MonoBehaviour, ISceneCompositionRoot
     {
         internal static readonly PlayerId LocalPlayerId = new PlayerId("local-player");
+        private static readonly StageId Stage = new StageId("initial-stage");
+        private static readonly DefinitionId DefaultDifficulty = new DefinitionId("poc-default-difficulty");
+        private const string StageContentVersion = "poc";
         private const float BattlefieldSampleInterval = 0.1f;
 
         [SerializeField] private GameObject playerPrefab;
@@ -85,6 +88,10 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         private bool HasCurrentMatch => _ownsMatch && _matchHost != null &&
             _matchHost.CurrentMatchId == _ownedMatchId;
 
+        /// <summary>직접 실행과 NGO Host가 저장·동기화에 쓰는 동일한 Stage 기본값을 구성합니다.</summary>
+        internal static MatchConfig CreateStageMatchConfig(MatchId matchId, MatchMode mode, IEnumerable<PlayerLoadoutSnapshot> players)
+            => new MatchConfig(matchId, mode, Stage, DefaultDifficulty, StageContentVersion, 1, players);
+
         public void Compose(IAppMatchHost appMatchHost)
         {
             if (_matchHost != null) throw new InvalidOperationException("Initial Stage has already been composed.");
@@ -120,15 +127,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (network != null && (!network.TryResolveParticipant(connectionId, out localPlayerId) ||
                 !network.Descriptor.TryGetSlot(connectionId, out localSlot)))
                 throw new InvalidOperationException("Local connection is outside the prepared Match.");
-            var loadout = new PlayerLoadoutSnapshot(LocalPlayerId, new Dictionary<DefinitionId, int>());
-            MatchConfig config = network?.Descriptor.Config ?? new MatchConfig(
-                matchId,
-                MatchMode.Story,
-                new StageId("initial-stage"),
-                new DefinitionId("poc-default-difficulty"),
-                "poc",
-                1,
-                new[] { loadout });
+            MatchConfig config = network?.Descriptor.Config ?? CreateStageMatchConfig(matchId, MatchMode.Story,
+                new[] { new PlayerLoadoutSnapshot(LocalPlayerId, null) });
             if (network == null && appMatchHost is AppRoot appArrival)
                 config = appArrival.ConfigureCheckpointArrival(gameObject.scene.path, config);
             var initialState = new MatchState(matchId, MatchPhase.Preparing);

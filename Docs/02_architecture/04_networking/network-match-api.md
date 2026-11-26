@@ -46,6 +46,8 @@ sequenceDiagram
 
 정확한 공개 Scene 진입점은 `InitialStageNetworkBinding.TryStartHost()`, `TryStartClient()`, `TryPrepareMatch()`, `TryStartMatch()`, `TryEndMatch()`, `ShutdownConnection()`이다. 내부 준비 신호와 Feature 조립은 바인딩이 처리한다. SinglePlayerHost 진입 정책은 같은 API를 순서대로 호출하며, 참가자 수만 보고 임의의 협동 Match를 시작하지 않는다. 현재 준비 시 접속한 1~2명을 고정한다.
 
+Stage 조립부는 직접 실행과 NGO Host에 같은 Stage ID, 콘텐츠 버전, 기본 난이도와 난수 시드를 제공한다. Host는 실제 참가자를 고정하고 Stage 제작 연결을 확인한 뒤 Grid를 읽는다. 전송용 `NetworkMatchDescriptor`의 ID와 준비 세대는 `NetworkMatchCoordinator`에서 생성한다. Client는 수신한 설정을 같은 Stage 제작 검사로 대조한 뒤 준비를 알린다.
+
 ## 식별자와 요청
 
 | 식별자 | 유효 범위 |
