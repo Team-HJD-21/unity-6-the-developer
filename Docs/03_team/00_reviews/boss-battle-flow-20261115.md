@@ -4,7 +4,7 @@ PR: [#750](https://github.com/Team-HJD-21/unity-6-the-developer/pull/750), base 
 
 ## 11/17 점유 100% 표시와 자동 진입 재확인
 
-실제 Startup → 우주선 → Stage1 Host Play에서 HUD가 완료를 먼저 표시하는 문제를 재현했다. 아래 HUD·Debugger 보완은 11/17 로컬 수정이며, #750의 최종 진입 조건을 낮추거나 Scene 연결을 바꾼 변경은 아니다.
+실제 Startup → 우주선 → Stage1 Host Play에서 HUD가 완료를 먼저 표시하는 문제를 재현했다. 아래 HUD·Debugger 보완은 [#761](https://github.com/Team-HJD-21/unity-6-the-developer/pull/761)에서 검토하며, #750의 최종 진입 조건을 낮추거나 Scene 연결을 바꾼 변경은 아니다.
 
 | 실제 점유 셀 | 실제 점유율 | 수정 전 HUD / 자동 진입 | 수정 후 HUD / 자동 진입 |
 | --- | --- | --- | --- |
