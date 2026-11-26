@@ -6,9 +6,10 @@ using UnityEngine.Tilemaps;
 
 namespace Map
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "Map", sourceAssembly: "Assembly-CSharp", sourceClassName: "StagePlayerOcclusion")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Tilemap), typeof(TilemapRenderer))]
-    public sealed class StagePlayerOcclusion : MonoBehaviour
+    public sealed class FieldPlayerOcclusion : MonoBehaviour
     {
         private const float FadeOutSeconds = .18f;
         private const float RestoreSeconds = .24f;
@@ -25,6 +26,9 @@ namespace Map
         [SerializeField] private MatchCameraFollow _cameraFollow;
         [SerializeField, Range(0f, 1f)] private float _occludedAlpha = .23f;
 
+        [SerializeField] private Sprite[] _additionalOccluders = Array.Empty<Sprite>();
+
+        private readonly HashSet<Sprite> _additionalOccluderSprites = new();
         private Tilemap _tilemap;
         private Transform _player;
         private SpriteRenderer _body;
@@ -42,6 +46,7 @@ namespace Map
 
         private void Awake()
         {
+            _additionalOccluderSprites.UnionWith(_additionalOccluders);
             _tilemap = GetComponent<Tilemap>();
             var sprites = new Sprite[_tilemap.GetUsedSpritesCount()];
             int count = _tilemap.GetUsedSpritesNonAlloc(sprites);
@@ -156,9 +161,9 @@ namespace Map
                 Mathf.Abs(worldCenter.y - center.y) < bodyHalfSize.y + Mathf.Abs(right.y) + Mathf.Abs(up.y);
         }
 
-        private static bool IsOccluder(Sprite sprite)
+        private bool IsOccluder(Sprite sprite)
             => sprite != null && (sprite.name.StartsWith("Overworld_Trees_", StringComparison.Ordinal) ||
-                RockSprites.Contains(sprite.name));
+                RockSprites.Contains(sprite.name) || _additionalOccluderSprites.Contains(sprite));
 
         private void SetTileColor(Vector3Int cell, Color color)
         {

@@ -8,7 +8,7 @@
 - Edit Mode에서 `FieldTurretController`를 선택하고 Scene 뷰의 **Gizmos**를 켜면 `Unlock Grid`의 점유·해금 셀 경계가 주황색으로 보인다. 같은 인스펙터에서 중심, 월드 크기, 칸 수를 조절하면 선도 바로 갱신된다. [점유·해금 규칙](../02_match/static-region-capture.md#정적-진행-규칙)
 - `Initial_Overworld_Base`는 육지 타일맵이다. `TilemapOuterBoundary`는 그 타일맵의 합성 윤곽에서 바깥 고리만 사용해 `MapBoundary`의 EdgeCollider2D를 만든다. 타일 편집이나 Undo·Redo 후 씬을 저장하고 안쪽 구멍에 경계가 생기는지 확인한다. [바닥·설치 판정 연결](../06_player/player-skill-review.md)
 - `Environment_Obj`는 나무와 기물을 그린다. Tilemap Renderer는 `Individual`, `Entities / 0`을 사용하며 스프라이트의 지면 접점과 월드 Y축으로 플레이어와 정렬한다. `Tile Ground Shadows`의 시간대별 길이와 X·Y 오프셋은 [그림자 설정](weather-system-guide.md#46-stage1-태양과-타일맵-기물-그림자)에서 조절한다.
-- 플레이 중 `Environment_Obj`의 `Stage Player Occlusion`이 로컬 카메라가 추적하는 플레이어를 가리기 시작한 앞쪽 나무와 바위의 스프라이트 전체를 약 0.18초에 걸쳐 반투명하게 만든다. 가림이 끝나면 약 0.24초에 걸쳐 타일의 원래 불투명도로 돌아온다. 인스펙터의 Occluded Alpha로 가려질 때 적용할 불투명도 비율을 조절할 수 있다.
+- 플레이 중 `Environment_Obj`의 `Field Player Occlusion`이 로컬 카메라가 추적하는 플레이어를 가리기 시작한 앞쪽 나무와 바위의 스프라이트 전체를 약 0.18초에 걸쳐 반투명하게 만든다. 가림이 끝나면 약 0.24초에 걸쳐 타일의 원래 불투명도로 돌아온다. 인스펙터의 Occluded Alpha로 가릴 때의 불투명도를 조절한다. 새 기물을 같은 방식으로 처리하려면 Additional Occluders에 해당 Sprite를 등록한다.
 - `Navmesh2D`의 NavMeshSurface는 [Stage1 전용 NavMesh 데이터](../../../Assets/Scenes/Gameplay/Stage_1/NavMesh-Navmesh2D.asset)를 참조한다. 이동 가능한 높이·경계·장애물이 바뀌면 Surface를 베이크하고 Scene과 NavMesh 에셋을 함께 확인한다. 경계 자동 갱신과 NavMesh 베이크는 별개다.
 
 - Physics 2D에서 WorldGeometry와 Bullet, Missile, EnemyProjectile, PlayerFieldDevice, EnemyFeetBox 사이의 직접 충돌을 비활성화한다. PlayerFeetBox의 WorldGeometry 접촉은 허용한다. 각 무기의 Raycast·Cast와 레이어 마스크는 해당 코드의 조회 규칙을 따른다.
@@ -31,7 +31,7 @@
 1. Startup에서 우주선을 거쳐 Stage1에 들어가 플레이어 생성과 이동을 확인한다.
 2. 해안과 기물 주변에서 발 충돌과 NavMesh 이동을 확인한다. `MapBoundary`가 외곽을 일관되게 따라가는지도 확인한다.
 3. 나무 앞뒤에서 플레이어를 움직여 Y 정렬을 확인한다. 나무에 가려진 캐논과 미사일을 같은 화면에 두고 줌을 바꿔 스프라이트와 가림을 확인한다. [정렬·표적 판정](../07_turrets/turret-system-guide.md)
-4. 낮 시간에 태양 위치와 그림자 방향이 함께 바뀌는지 확인한다. Inspector에서 양축 오프셋을 바꿔 그림자 위치를 확인한다. 정점 4,096개 이상이면 `StageTileShadows`가 위치·알파 계산을 Burst Job으로 병렬 실행한 뒤 같은 프레임에 메시를 갱신한다.
+4. 낮 시간에 태양 위치와 그림자 방향이 함께 바뀌는지 확인한다. Inspector에서 양축 오프셋을 바꿔 그림자 위치를 확인한다. 정점 4,096개 이상이면 `FieldTileShadows`가 위치·알파 계산을 Burst Job으로 병렬 실행한 뒤 같은 프레임에 메시를 갱신한다.
 
 Core·Encounter의 참조 구조와 재접합 범위는 [Encounter 런타임 가이드](../08_encounter/encounter-runtime-and-testing.md)와 [Stage1 제작 연결 원복 기록](../../03_team/00_reviews/stage1-scene-rollback-20261115.md)을 함께 본다. 씬·NavMesh 파일의 변경, 코드 컴파일, 플레이 확인은 각각 기록한다.
 

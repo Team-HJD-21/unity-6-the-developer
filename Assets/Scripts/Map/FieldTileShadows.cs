@@ -12,9 +12,10 @@ using UnityEngine.Tilemaps;
 
 namespace Map
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "Map", sourceAssembly: "Assembly-CSharp", sourceClassName: "StageTileShadows")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-    public sealed class StageTileShadows : MonoBehaviour
+    public sealed class FieldTileShadows : MonoBehaviour
     {
         private const float NightTwilightFraction = 0.05f;
         private const float ShadowStep = 0.025f;
