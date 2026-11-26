@@ -1,12 +1,8 @@
-import base64
 import hashlib
 import json
 import os
 import re
 import subprocess
-from urllib.error import HTTPError
-from urllib.parse import quote, urlencode
-from urllib.request import Request, urlopen
 
 
 TAG_PREFIX = "refs/tags/unity-asset-locks/"
@@ -40,37 +36,32 @@ def is_lockable(path):
     )
 
 
-class LockApi:
-    def __init__(self, server, repository, token):
-        self.url = f"{server.rstrip('/')}/{repository}.git/info/lfs/locks"
-        self.authorization = "Basic " + base64.b64encode(f"x-access-token:{token}".encode()).decode()
+def lfs_json(*args):
+    output = git("lfs", *args, "--json", "--remote=origin")
+    try:
+        result = json.loads(output)
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"Git LFS {args[0]} returned invalid JSON.") from error
+    if result is None:
+        return []
+    if not isinstance(result, list) or not all(isinstance(item, dict) for item in result):
+        raise RuntimeError(f"Git LFS {args[0]} returned an unexpected response.")
+    return result
 
-    def request(self, suffix="", body=None):
-        media_type = "application/vnd.git-lfs+json"
-        request = Request(self.url + suffix, data=None if body is None else json.dumps(body).encode(),
-                          headers={"Accept": media_type, "Content-Type": media_type})
-        request.add_unredirected_header("Authorization", self.authorization)
-        try:
-            with urlopen(request, timeout=20) as response:
-                return json.load(response)
-        except HTTPError as error:
-            raise RuntimeError(f"Git LFS {request.get_method()} {suffix or '/locks'} returned HTTP {error.code}") from None
 
+class GitLfsLocks:
     def list_locks(self):
-        locks = []
-        cursor = None
-        while True:
-            suffix = "?" + urlencode({"cursor": cursor}) if cursor else ""
-            page = self.request(suffix)
-            locks.extend(page["locks"])
-            cursor = page.get("next_cursor")
-            if not cursor:
-                return locks
+        # Git LFS's JSON mode can hide request errors, including errors during pagination.
+        checked = git("lfs", "locks", "--remote=origin")
+        locks = lfs_json("locks")
+        if len(locks) != len(checked.splitlines()):
+            raise RuntimeError("Git LFS lock listings differed. Rerun against the latest main.")
+        return locks
 
     def unlock(self, lock_id):
-        result = self.request(f"/{quote(lock_id, safe='')}/unlock", {"force": True})
-        if str(result.get("lock", {}).get("id")) != lock_id:
-            raise RuntimeError(f"Git LFS did not confirm release of lock {lock_id}")
+        result = lfs_json("unlock", "--force", f"--id={lock_id}")
+        if len(result) != 1 or str(result[0].get("id")) != lock_id or result[0].get("unlocked") is not True:
+            raise RuntimeError(f"Git LFS did not confirm release of lock {lock_id}.")
 
 
 def plan_release(locks, main, tags):
@@ -129,7 +120,6 @@ def release_merged_locks(api):
 
 
 if __name__ == "__main__":
-    token = os.environ.get("LOCKS_TOKEN")
-    if not token:
+    if os.environ.get("LOCKS_CONFIGURED") != "true":
         raise SystemExit("UNITY_ASSET_LOCKS_TOKEN is missing. No locks released.")
-    release_merged_locks(LockApi(os.environ["GITHUB_SERVER_URL"], os.environ["GITHUB_REPOSITORY"], token))
+    release_merged_locks(GitLfsLocks())

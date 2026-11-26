@@ -26,5 +26,6 @@ jobs:
           token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
       - name: Release submitted versions on main
         env:
-          LOCKS_TOKEN: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN }}
+          LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
+          GIT_TERMINAL_PROMPT: '0'
         run: python3 .github/scripts/release_unity_asset_locks.py

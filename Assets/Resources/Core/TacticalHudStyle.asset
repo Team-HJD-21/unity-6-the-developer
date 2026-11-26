@@ -28,6 +28,8 @@ MonoBehaviour:
   UpgradeGlyph: {fileID: 21300000, guid: 061c4ed9a5ee88243848c53b9c364af7, type: 2}
   SelectionGlyph: {fileID: 21300000, guid: aab8a00834e765447984c34f1085084a, type: 2}
   AutomaticGlyph: {fileID: 21300000, guid: 28b6fa3a56e3e1d4fbf872f8775cc651, type: 2}
+  HoverRangeSprite: {fileID: 1912597012450007017, guid: 238fc1c055e54191a1c4e522e27a22a8, type: 3}
+  HoverRangeTint: {r: 0, g: 0, b: 0, a: 0.3529412}
   TurretArt:
   - DefinitionId: canon_stage1_lv1
     Detail: {fileID: 21300000, guid: 0a8e75af5552ab142be0c0d983c3ffcb, type: 3}
