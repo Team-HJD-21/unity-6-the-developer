@@ -2,6 +2,7 @@
 // 보스 전투는 기존 Enemy 원본, 표시는 IStageBossBattlePresentation에 위임합니다.
 // 보스전 저장은 정지된 Field와 분리하여 보스·참가자의 실제 writer만 사용합니다.
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -94,11 +95,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 participants.AddRange(actor.GetComponentsInChildren<MonoBehaviour>(true).OfType<ICheckpointParticipant>()
                     .Where(p => p.Kind == CheckpointSectionKind.World));
             participants.Add(_matchSession.CreateRandomCheckpointParticipant());
-            var required = new[] { "world/enemies", "core/random" }.Concat(Enumerable.Range(0, _matchSession.Config.Players.Count)
-                .SelectMany(slot => new[] { "actor", "weapon", "loadout", "movement-effects" }.Select(part => $"world/player/{slot}/{part}"))).ToArray();
+            var required = new HashSet<string>(StringComparer.Ordinal) { "world/enemies", "core/random" };
+            AddRequiredPlayerWorldWriters(required);
             var runtime = new MatchCheckpointRuntime(_matchSession, _matchTime, () => HasCurrentMatch,
                 () => _coordinator.IsGameplayRunning, _coordinator.GameplayCancellation,
-                () => { FlushGrowthSaves(); _restoringCheckpoint = true; },
+                BeginCheckpointRestore,
                 () => { _restoringCheckpoint = false; },
                 error => { BossBattleError = error.Message; BossBattlePhase = StageBossBattlePhase.Faulted; },
                 () => BossBattlePhase is StageBossBattlePhase.Intro or StageBossBattlePhase.Battle,

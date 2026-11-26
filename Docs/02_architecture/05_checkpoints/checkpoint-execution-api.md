@@ -1,8 +1,6 @@
 # 체크포인트 실행·요청 API
 
-11월5일 낮밤 후속: [낮300초/밤300초와 Weather 연결](../09_world/day-night-api.md)을 구현했다. 실제 시간대 source·world/time-of-day 저장이 추가됐으며, 운영 Weather writer는 김진태 담당으로 유지한다. 아래 초기 단계에서 source가 없었다는 설명은 당시 기록이다.
-
-갱신: 2026-11-05 / 실제 통합 작업 브랜치 기준. 전체 파일 형식·손상/원자 교체는 [저장소 API](checkpoint-storage-api.md), 실제 writer 목록과 수동 확인은 [Feature 통합 안내](../01_core/core-feature-integration-guide.md)를 본다.
+2026-11-27 기준으로 Stage_1 필드와 보스전의 저장을 설명한다. 파일 형식과 손상·교체 절차는 [저장소 API](checkpoint-storage-api.md), 실제 writer 목록과 수동 검사는 [Feature 통합 안내](../01_core/core-feature-integration-guide.md)에 있다.
 
 ## 책임과 호출 순서
 
@@ -35,6 +33,8 @@ sequenceDiagram
 
 `InitialStageCompositionRoot.BindCheckpoints`가 현재 Scene의 실제 writer, 공용 Random/공간 writer, 현재 Encounter consumer가 제공하는 명시 Executor writer를 조립한다. 같은 Scene의 이전 Debug 생성기를 writer로 선택하지 않는다. 필수 section이 빠지면 저장/복원을 거부한다.
 
+보스 시작 안전장치는 `InitialStageCompositionRoot.SaveBossStartAsync`에서 별도 저장 범위로 조립한다. 보스 Scene의 Enemy, Match 난수, 참가자별 `actor`·`weapon`·`loadout`·`movement-effects`를 필수로 요구한다. 참가자 키 생성은 필드에서도 같은 코드를 사용한다. 필드 및 보스 복원은 현재 성장을 먼저 저장한 뒤 월드 상태 적용을 시작한다.
+
 동적으로 만든 실제 writer는 `scene.RegisterCheckpointParticipant(writer)`로 연결하고 반환 lease를 actor/Feature 종료 시 해제한다. 원격 Player도 Host actor 등록 후 실제 writer가 필요하다. 중복 키·실행 중 메타데이터 변경은 오류다. Scene은 저장 scope부터 해제한 뒤 나머지 시간/Feature 바인딩을 정리한다.
 
 ## 호출 예
@@ -50,7 +50,7 @@ var rollbackCurrency = await scene.Checkpoints.RestoreAsync(slot, policy);
 
 // 허브/재실행: 새 Match 구성과 실제 복원까지 조율한다. 현재는 1인 Story 경로다.
 var resumed = await app.ResumeCheckpointAsync(slot,
-    "Assets/Scenes/Gameplay/Initial_Stage.unity");
+    "Assets/Scenes/Gameplay/Stage_1.unity");
 ```
 
 `Status`, `Reason`, `IsCurrentScope`를 확인한다. 이미 파일 교체가 끝난 저장을 Scene 종료만으로 실패라고 바꾸지 않는다. 이전 실행의 결과로 현재 UI를 갱신하지 않는다. 슬롯 이름은 경로가 아니라 1~64자 ASCII 논리 이름이다.
@@ -67,7 +67,7 @@ World는 저장 값으로 복원한다. Progression과 Currency는 기본적으�
 
 Prepare는 실제 원본을 바꾸지 않는다. 적용 실패 시 준비한 모든 백업을 역순 복구하고 참조를 다시 연결한다. 백업 복구/정리에 실패하면 Fault로 잘못된 월드를 계속 실행하지 않는다. 기술적 복원 실패를 게임 패배/보상으로 만들지 않는다.
 
-현재 실제 Initial_Stage에는 **world/weather가 없다**. 진태가 실제 날씨·예고 큐·CountTick 남은 예약 writer를 등록해야 전체 저장을 사용할 수 있다. `CountTick.CaptureTimerState` / `RestoreTimerState`를 제공했다. 시간 복원으로 과거 예약이 취소되므로 적용 단계에서 다시 연결한다.
+현재 Stage_1 필드는 `world/weather`가 빠져 전체 저장을 거부한다. 운영 저장에는 실제 날씨·예고 큐와 해당 모드의 예약을 복원할 Weather writer가 필요하다. 시간 복원으로 과거 예약이 취소되므로 적용 단계에서 다시 연결한다. 현재 낮밤과 Weather writer의 책임은 [낮밤 API](../09_world/day-night-api.md)에 정리했다.
 
 실제 Scene의 Core writer는 외부 Weather 검증 대역을 두고 HP/배치·탄환/미사일·예약을 저장한 뒤 두 번 복원했다. 이 결과와 실제 Weather 통합은 별개다. 2인 재접속, 제품 프로필/경제 원본과 자동 저장 사건은 후속이다. 과거 제외/실험 기록은 [11월2일 HOLD](../../99_archive/planning-links/2026-11-02-feature-integration-hold.md)에 보존한다.
 

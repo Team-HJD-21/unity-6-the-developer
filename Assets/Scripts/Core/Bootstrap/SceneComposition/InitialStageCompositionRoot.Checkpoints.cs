@@ -39,14 +39,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 required.Add("world/weather");
             if (_timeOfDaySource != null)
                 required.Add("world/time-of-day");
-            for (int slot = 0; slot < session.Config.Players.Count; slot++)
-            {
-                string prefix = "world/player/" + slot;
-                required.Add(prefix + "/actor");
-                required.Add(prefix + "/weapon");
-                required.Add(prefix + "/loadout");
-                required.Add(prefix + "/movement-effects");
-            }
+            AddRequiredPlayerWorldWriters(required);
             required.Add("world/campaign");
             var participants = FindSceneBehaviours().OfType<ICheckpointParticipant>().ToList();
             if (_encounterConsumer is ICheckpointParticipantProvider provider)
@@ -69,7 +62,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 () => HasCurrentMatch && _matchSession == session,
                 () => coordinator.IsGameplayRunning,
                 coordinator.GameplayCancellation,
-                () => { FlushGrowthSaves(); _restoringCheckpoint = true; },
+                BeginCheckpointRestore,
                 FinishCheckpointRestore,
                 error =>
                 {
@@ -80,6 +73,26 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                         throw new InvalidOperationException("The faulted Match could not be released.", error);
                 }, () => Recovery?.CanCaptureWorld == true && AllowsFieldCheckpointWorld, () => AllowsFieldCheckpointWorld);
             _checkpointScope = app.CreateCheckpointScope(runtime, participants, required);
+        }
+
+        // 필드와 보스는 각각 저장 범위를 정하고, 참가자마다 같은 Player 월드 원본을 요구합니다.
+        private void AddRequiredPlayerWorldWriters(HashSet<string> required)
+        {
+            for (int slot = 0; slot < _matchSession.Config.Players.Count; slot++)
+            {
+                string prefix = "world/player/" + slot;
+                required.Add(prefix + "/actor");
+                required.Add(prefix + "/weapon");
+                required.Add(prefix + "/loadout");
+                required.Add(prefix + "/movement-effects");
+            }
+        }
+
+        private void BeginCheckpointRestore()
+        {
+            // 월드를 되감기 전에 현재 성장을 저장합니다. 저장에 실패하면 복원을 시작하지 않습니다.
+            FlushGrowthSaves();
+            _restoringCheckpoint = true;
         }
 
         /// <summary>런타임 Feature writer 생성자가 원본 등록 후 호출합니다. 교체/Despawn 시 반환 lease를 해제합니다.</summary>
