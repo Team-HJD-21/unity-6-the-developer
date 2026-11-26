@@ -9,7 +9,8 @@ public sealed class TreeLeafBurstFx : MonoBehaviour
 {
     private const int PoolSize = 16;
     private const float PixelsPerUnit = 16f;
-    private static Atlas _atlas;
+    private static readonly int FourLeaves = Animator.StringToHash("Base Layer.FourLeaves");
+    private static readonly int FiveLeaves = Animator.StringToHash("Base Layer.FiveLeaves");
     private readonly Dictionary<Vector3, double> _lastEmission = new();
     private Burst[] _bursts;
     private System.Random _random;
@@ -22,8 +23,14 @@ public sealed class TreeLeafBurstFx : MonoBehaviour
         public SpriteRenderer Display;
         public SortingGroup Group;
         public Vector3 Position;
-        public float Age, Speed;
-        public Clip Clip;
+        public Animator Animator;
+        public float Speed;
+
+        public void Stop()
+        {
+            Display.enabled = false;
+            Animator.enabled = false;
+        }
     }
 
     public static bool Emit(Behaviour owner, SpriteRenderer tree, Matrix4x4 pose)
@@ -41,8 +48,9 @@ public sealed class TreeLeafBurstFx : MonoBehaviour
     {
         if (_bursts != null)
             return true;
-        _atlas ??= Atlas.Load();
-        if (_atlas == null)
+        var controller = Resources.Load<RuntimeAnimatorController>("TreeLeaves/TreeLeafFallController");
+        var material = Resources.Load<Material>("TreeLeafFallMaterial");
+        if (controller == null || material == null)
             return false;
         _random = new System.Random(GetInstanceID());
         _bursts = new Burst[PoolSize];
@@ -50,40 +58,63 @@ public sealed class TreeLeafBurstFx : MonoBehaviour
         {
             var root = new GameObject("Tree leaf burst", typeof(SortingGroup));
             root.transform.SetParent(transform, false);
-            var leaf = new GameObject("Leaves", typeof(SpriteRenderer));
+            var leaf = new GameObject("Leaves", typeof(SpriteRenderer), typeof(Animator));
             leaf.transform.SetParent(root.transform, false);
             var display = leaf.GetComponent<SpriteRenderer>();
-            display.sharedMaterial = _atlas.Material;
+            display.sharedMaterial = material;
             display.maskInteraction = SpriteMaskInteraction.None;
             display.spriteSortPoint = SpriteSortPoint.Pivot;
             display.enabled = false;
+            var animator = leaf.GetComponent<Animator>();
+            animator.runtimeAnimatorController = controller;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            animator.speed = 0f; // Tick advances the animation with field simulation time.
+            animator.enabled = false;
             var group = root.GetComponent<SortingGroup>();
             group.sortAtRoot = true;
-            _bursts[i] = new Burst { Root = root.transform, Display = display, Group = group };
+            _bursts[i] = new Burst { Root = root.transform, Display = display, Group = group, Animator = animator };
         }
         return true;
     }
 
     private bool Play(SpriteRenderer tree, Matrix4x4 pose)
     {
-        if (!Initialize())
-            return false;
         Vector3 anchor = pose.GetColumn(3);
+        if (!Initialize() || !TryReserveTree(anchor))
+            return false;
+
+        int index = Array.FindIndex(_bursts, b => !b.Display.enabled);
+        if (index < 0)
+            index = _next++ % _bursts.Length;
+        Burst burst = _bursts[index];
+        bool fourLeaves = _random.Next(2) == 0;
+        burst.Speed = Mathf.Lerp(.9f, 1.1f, (float)_random.NextDouble());
+        burst.Position = anchor + Vector3.down * .002f;
+        ApplyTreeAppearance(burst, tree);
+        PlaceAtTree(burst, tree.sprite, pose);
+        burst.Root.name = fourLeaves ? "Tree leaves (4)" : "Tree leaves (5)";
+        burst.Display.enabled = true;
+        burst.Animator.enabled = true;
+        if (!burst.Animator.isInitialized)
+            burst.Animator.Rebind();
+        burst.Animator.Play(fourLeaves ? FourLeaves : FiveLeaves, 0, 0f);
+        burst.Animator.Update(0f);
+        return true;
+    }
+
+    private bool TryReserveTree(Vector3 anchor)
+    {
         double now = FieldSimulationTime.Seconds(this);
         if (_lastEmission.TryGetValue(anchor, out double previous) && now - previous < 2f)
             return false;
         if (_lastEmission.Count >= 128)
             _lastEmission.Clear();
         _lastEmission[anchor] = now;
+        return true;
+    }
 
-        int index = Array.FindIndex(_bursts, b => !b.Display.enabled);
-        if (index < 0)
-            index = _next++ % _bursts.Length;
-        var burst = _bursts[index];
-        burst.Clip = _atlas.Clips[_random.Next(2)];
-        burst.Age = 0f;
-        burst.Speed = Mathf.Lerp(.9f, 1.1f, (float)_random.NextDouble());
-        burst.Position = anchor + Vector3.down * .002f;
+    private void ApplyTreeAppearance(Burst burst, SpriteRenderer tree)
+    {
         var treeGroup = tree.GetComponent<SortingGroup>();
         burst.Group.sortingLayerID = treeGroup != null ? treeGroup.sortingLayerID : tree.sortingLayerID;
         burst.Group.sortingOrder = treeGroup != null ? treeGroup.sortingOrder : tree.sortingOrder;
@@ -91,19 +122,19 @@ public sealed class TreeLeafBurstFx : MonoBehaviour
         burst.Display.sortingOrder = 1;
         burst.Display.color = tree.color;
         burst.Display.flipX = _random.Next(2) == 0;
-        burst.Root.name = burst.Clip.name == "four" ? "Tree leaves (4)" : "Tree leaves (5)";
+    }
+
+    private void PlaceAtTree(Burst burst, Sprite tree, Matrix4x4 pose)
+    {
         SetWorldPose(burst);
-        Vector3 bottom = pose.MultiplyPoint3x4(new Vector3(tree.sprite.bounds.center.x, tree.sprite.bounds.min.y));
+        Vector3 bottom = pose.MultiplyPoint3x4(new Vector3(tree.bounds.center.x, tree.bounds.min.y));
         burst.Display.transform.position = bottom;
         Vector3 scale = pose.lossyScale;
-        float height = tree.sprite.bounds.size.y * Mathf.Abs(scale.y);
-        float width = tree.sprite.bounds.size.x * Mathf.Abs(scale.x);
+        float height = tree.bounds.size.y * Mathf.Abs(scale.y);
+        float width = tree.bounds.size.x * Mathf.Abs(scale.x);
         float size = Mathf.Min(height / (84f / PixelsPerUnit), width / (76f / PixelsPerUnit));
         burst.Display.transform.localScale = Vector3.one * size;
         burst.Display.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-3f, 3f, (float)_random.NextDouble()));
-        burst.Display.sprite = _atlas.GetSprite(burst.Clip.from);
-        burst.Display.enabled = true;
-        return true;
     }
 
     private void LateUpdate()
@@ -124,15 +155,12 @@ public sealed class TreeLeafBurstFx : MonoBehaviour
         {
             if (!burst.Display.enabled)
                 continue;
-            burst.Age += seconds * burst.Speed;
-            int frame = Mathf.FloorToInt(burst.Age * _atlas.Fps);
-            if (frame > burst.Clip.to - burst.Clip.from)
-            {
-                burst.Display.enabled = false;
-                continue;
-            }
             SetWorldPose(burst);
-            burst.Display.sprite = _atlas.GetSprite(burst.Clip.from + frame);
+            burst.Animator.speed = 1f;
+            burst.Animator.Update(seconds * burst.Speed);
+            burst.Animator.speed = 0f;
+            if (burst.Animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f)
+                burst.Stop();
         }
     }
 
@@ -151,56 +179,9 @@ public sealed class TreeLeafBurstFx : MonoBehaviour
         if (_bursts != null)
             foreach (Burst burst in _bursts)
                 if (burst.Display != null)
-                    burst.Display.enabled = false;
+                    burst.Stop();
         _lastEmission.Clear();
     }
 
     private void OnDisable() => Clear();
-
-    private sealed class Atlas
-    {
-        public Material Material;
-        public Clip[] Clips;
-        public int Fps;
-        private Texture2D _texture;
-        private AtlasData _data;
-        private Sprite[] _sprites;
-
-        public static Atlas Load()
-        {
-            var texture = Resources.Load<Texture2D>("TreeLeafFall");
-            var frames = Resources.Load<TextAsset>("TreeLeafFallFrames");
-            var material = Resources.Load<Material>("TreeLeafFallMaterial");
-            if (texture == null || frames == null || material == null)
-                return null;
-            var data = JsonUtility.FromJson<AtlasData>(frames.text);
-            return new Atlas
-            {
-                _texture = texture, _data = data, _sprites = new Sprite[data.frames.Length],
-                Material = material, Clips = data.meta.frameTags, Fps = data.meta.pixelfx.fps
-            };
-        }
-
-        public Sprite GetSprite(int index)
-        {
-            if (_sprites[index] != null)
-                return _sprites[index];
-            var rect = _data.frames[index].frame;
-            int[] pivot = _data.meta.pixelfx.pivot;
-            var sprite = Sprite.Create(_texture,
-                new Rect(rect.x, _texture.height - rect.y - rect.h, rect.w, rect.h),
-                new Vector2((float)pivot[0] / rect.w, 1f - (float)pivot[1] / rect.h),
-                PixelsPerUnit, 0, SpriteMeshType.FullRect);
-            sprite.name = _data.frames[index].filename;
-            sprite.hideFlags = HideFlags.DontSave;
-            return _sprites[index] = sprite;
-        }
-    }
-
-    [Serializable] private sealed class AtlasData { public Frame[] frames; public Meta meta; }
-    [Serializable] private sealed class Meta { public Clip[] frameTags; public Settings pixelfx; }
-    [Serializable] private sealed class Settings { public int fps; public int[] pivot; }
-    [Serializable] private sealed class Frame { public string filename; public FrameRect frame; }
-    [Serializable] private sealed class FrameRect { public int x, y, w, h; }
-    [Serializable] private sealed class Clip { public string name; public int from, to; }
 }

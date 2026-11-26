@@ -15,8 +15,8 @@ node Library/PixelFxAuthoring/tools/check.mjs nature/tree-leaf-fall
 
 이미 받아둔 다른 checkout을 쓰려면 내보내기 명령 끝에 경로를 전달한다. 내보내기는 그 checkout의 `src/fx/nature/tree-leaf-fall.js`에 이 폴더의 제작 소스를 복사한다.
 
-산출물은 `Assets/Resources/TreeLeafFall.png`와 `TreeLeafFallFrames.json`이다. 864×864 투명 시트, 96×96 프레임 74개, `four`와 `five` 태그를 갖는다. Unity 가져오기 설정은 Point, Mipmap 끔, 압축 없음, NPOT 크기 보존이다. 기존 meta를 유지하면 가져오기 설정과 GUID가 보존된다.
+내보내기는 [864×864 PNG](../../Assets/Resources/TreeLeafFall.png)를 갱신하고, 제작용 [프레임 JSON](TreeLeafFallFrames.json)은 이 폴더에 저장한다. Unity는 PNG를 Sprite (2D and UI) / Multiple로 가져온다. 96×96 고정 그리드의 처음 74칸을 왼쪽 위부터 행 순서대로 사용하며, 0–36번은 잎 4장, 37–73번은 잎 5장이다. 두 묶음 모두 15fps, 16 PPU, Custom Pivot (0.5, 0.125)을 사용한다. Point 필터, Mipmap 끔, 압축 없음, NPOT 크기 보존 설정은 PNG의 기존 meta에 있다.
 
-`records/nature/tree-leaf-fall/four-contact.png`, `five-contact.png`로 프레임을 확인한다. 실제 게임은 `TreeLeafBurstFx`에서 재생한다.
+`records/nature/tree-leaf-fall/four-contact.png`, `five-contact.png`로 프레임을 확인한다. Unity의 Animation 창에서 [4잎 클립](../../Assets/Art/Animations/World/Resources/TreeLeaves/TreeLeafFallFour.anim)과 [5잎 클립](../../Assets/Art/Animations/World/Resources/TreeLeaves/TreeLeafFallFive.anim)의 프레임 순서와 타이밍을 편집한다. [TreeLeafFallController](../../Assets/Art/Animations/World/Resources/TreeLeaves/TreeLeafFallController.controller)는 두 클립을 FourLeaves와 FiveLeaves 상태로 연결한다.
 
 PixelFX와 잎 모양의 기반인 Sprite Fusion falling leaves에 대한 저작권·허가문은 [LICENSE.txt](LICENSE.txt)에 있다.

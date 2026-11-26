@@ -19,7 +19,7 @@ sheet.json.meta.pixelfx.sourceCommit = "5294518ce7c72e48b6100a744596e0acf57f2826
 sheet.json.meta.pixelfx.leafCounts = [4, 5];
 mkdirSync(output, { recursive: true });
 writeFileSync(join(output, "TreeLeafFall.png"), sheet.png);
-writeFileSync(join(output, "TreeLeafFallFrames.json"), JSON.stringify(sheet.json, null, 2) + "\n");
+writeFileSync(join(here, "TreeLeafFallFrames.json"), JSON.stringify(sheet.json, null, 2) + "\n");
 const preview = join(checkout, "records/nature/tree-leaf-fall");
 mkdirSync(preview, { recursive: true });
 writeFileSync(join(preview, "four-contact.png"), contactSheet(fx, four, { max: 10, zoom: 3 }));
