@@ -18,6 +18,8 @@ public sealed partial class EnemyTestWindow : EditorWindow
     private DropdownField _presetField;
     private Label _status;
     private Toggle _targetProtection;
+    private Button _enableTurretsButton;
+    private Button _disableTurretsButton;
     private Label _composition;
     private HelpBox _result;
     private Button _fixedButton;
@@ -59,6 +61,14 @@ public sealed partial class EnemyTestWindow : EditorWindow
         };
         _targetProtection.RegisterValueChangedCallback(evt => EnemyDamage.ProtectTestTargets = evt.newValue);
         scroll.Add(_targetProtection);
+        _enableTurretsButton = new Button(() => SetTurretsActive(true))
+        {
+            text = "포탑 전체 가동",
+            tooltip = "현재 EnemyTest의 포탑에 필요한 정적 구역을 해금하고, 전력 한도를 올린 뒤 켭니다."
+        };
+        _disableTurretsButton = new Button(() => SetTurretsActive(false)) { text = "포탑 전체 끄기" };
+        scroll.Add(_enableTurretsButton);
+        scroll.Add(_disableTurretsButton);
         var countField = new IntegerField("요청당 생성 상한") { value = maximumEnemyCount };
         countField.RegisterValueChangedCallback(evt =>
         {
@@ -147,6 +157,8 @@ public sealed partial class EnemyTestWindow : EditorWindow
         bool becameReady = ready && !_wasReady;
         _wasReady = ready;
         if (becameReady) RefreshReferences();
+        _enableTurretsButton.SetEnabled(ready);
+        _disableTurretsButton.SetEnabled(ready);
         _fixedButton.SetEnabled(ready && SelectedPreset() != null);
         _planButton.SetEnabled(ready);
         _clearButton.SetEnabled(ready && binding.ExecutionTarget != null);
@@ -191,6 +203,18 @@ public sealed partial class EnemyTestWindow : EditorWindow
         try
         {
             bool success = EnemyTestSceneTools.TryClearTestSceneEnemies(binding, out string message);
+            _result.text = message;
+            _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
+        }
+        catch (Exception error) { ShowError(error); }
+        UpdateStatus();
+    }
+
+    private void SetTurretsActive(bool active)
+    {
+        try
+        {
+            bool success = EnemyTestSceneTools.TrySetTestTurretsActive(binding, active, out string message);
             _result.text = message;
             _result.messageType = success ? HelpBoxMessageType.Info : HelpBoxMessageType.Warning;
         }

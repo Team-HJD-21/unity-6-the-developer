@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -32,6 +35,83 @@ public static class EnemyTestSceneTools
             !composition.MatchCoordinator.IsGameplayRunning || composition.TacticalBattlefield == null)
             throw new InvalidOperationException("현재 EnemyTest의 권위 Match가 실행 중이어야 합니다.");
         return composition;
+    }
+
+    public static bool TrySetTestTurretsActive(EncounterSceneBinding binding, bool active, out string result)
+    {
+        var composition = RequireMatch(binding);
+        var scene = binding.ExecutionTarget.gameObject.scene;
+        var turretBinding = composition.GetComponent<TurretMatchBinding>();
+        var controller = turretBinding != null ? turretBinding.Controller : null;
+        if (controller == null || controller.gameObject.scene != scene || !controller.HasWriteAuthority ||
+            controller.BoundMatchId != binding.BoundMatchId)
+        {
+            result = "현재 시험 Match의 포탑 컨트롤러가 준비되어야 합니다.";
+            return false;
+        }
+        if (controller.IsAutoActivationRunning)
+        {
+            result = "포탑 자동 가동이 끝난 뒤 다시 시도하세요.";
+            return false;
+        }
+
+        var turrets = FieldTurretInstanceRegistry.GetAll()
+            .Where(turret => controller.OwnsTurret(turret) && turret.isActiveAndEnabled && turret.IsInitialized)
+            .ToArray();
+        if (turrets.Length == 0)
+        {
+            result = "현재 시험 씬에 등록된 포탑이 없습니다.";
+            return false;
+        }
+
+        var details = new StringBuilder();
+        if (active)
+        {
+            var regions = composition.RegionBinding;
+            var snapshot = regions != null && regions.Controller == controller ? regions.Source?.Snapshot : null;
+            if (snapshot != null && snapshot.Mode == RegionPolicyMode.Static)
+            {
+                int lastRequiredZone = 0;
+                foreach (var turret in turrets)
+                {
+                    if (!turret.IsLocked || turret.IsDestroyed) continue;
+                    Vector3 position = turret.transform.position;
+                    if (snapshot.Definition.TryGetCellIndex(new BattlefieldPoint(position.x, position.y), out int cell))
+                        lastRequiredZone = Math.Max(lastRequiredZone, snapshot.Definition.RegionIds[cell]);
+                }
+                if (lastRequiredZone > 0)
+                    details.AppendLine(regions.TryUnlockThroughZone(lastRequiredZone)
+                        ? $"시험 구역 {lastRequiredZone}까지 해금했습니다."
+                        : "포탑이 있는 시험 구역을 해금하지 못했습니다.");
+            }
+
+            long requiredPower = turrets.Where(turret => !turret.IsDestroyed && !turret.IsLocked)
+                .Sum(turret => (long)turret.EffectivePower);
+            int previousMaximum = controller.MaximumPower;
+            if (requiredPower > previousMaximum)
+                details.AppendLine(requiredPower <= int.MaxValue && controller.TrySetMaximumPower((int)requiredPower)
+                    ? $"시험 전력 한도 {previousMaximum} → {controller.MaximumPower}"
+                    : $"시험 전력 한도를 {requiredPower}까지 올리지 못했습니다.");
+        }
+
+        int reached = 0;
+        foreach (var turret in turrets)
+        {
+            FieldTurretActivationResult request = controller.RequestActivation(turret.InstanceId, active);
+            if (turret.IsActivated == active)
+                reached++;
+            else
+                details.AppendLine($"{turret.name} · {request}");
+        }
+        if (active && reached < turrets.Length && controller.Budget.PendingRecovery > 0)
+            details.AppendLine("반환 대기 중인 전력이 있습니다. 전력이 회복되면 다시 시도하세요.");
+
+        string state = active ? "가동 상태" : "꺼짐";
+        int firingReady = turrets.Count(turret => turret.IsOperational);
+        result = $"포탑 {reached}/{turrets.Length}기 {state} · 공격 가능 {firingReady}기 · 가용 전력 {controller.CurrentPower}/{controller.MaximumPower}";
+        if (details.Length > 0)
+            result += "\n" + details.ToString().TrimEnd();
+        return reached == turrets.Length;
     }
 
     /// <summary>Core가 확정한 Host 참가자를 요청자로 사용한다.</summary>
