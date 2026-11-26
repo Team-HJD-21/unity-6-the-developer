@@ -15,6 +15,7 @@ concurrency:
 jobs:
   release:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/diagnostic/unity-lfs-actions-auth'
+    environment: unity-asset-lock-release
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,23 +24,39 @@ jobs:
           ref: diagnostic/unity-lfs-actions-auth
           fetch-depth: 0
           sparse-checkout: .github/scripts
-          token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
-      - name: Release submitted versions on main
+          persist-credentials: false
+      - name: Release only the verified smoke fixture
         env:
-          LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
+          LOCKS_DEPLOY_KEY: ${{ secrets.UNITY_ASSET_LOCKS_SSH_KEY }}
           GIT_TERMINAL_PROMPT: '0'
+        shell: bash
         run: |
+          if [ -z "$LOCKS_DEPLOY_KEY" ]; then
+            echo '::error::UNITY_ASSET_LOCKS_SSH_KEY is missing from the unity-asset-lock-release environment.'
+            exit 1
+          fi
+          umask 077
+          auth_dir=$(mktemp -d "$RUNNER_TEMP/unity-lock-ssh.XXXXXX")
+          trap 'rm -f -- "$auth_dir/key" "$auth_dir/known_hosts"; rmdir -- "$auth_dir"' EXIT
+          printf '%s\n' "$LOCKS_DEPLOY_KEY" > "$auth_dir/key"
+          unset LOCKS_DEPLOY_KEY
+          # GitHub's published ED25519 host key.
+          printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$auth_dir/known_hosts"
+          export GIT_SSH_COMMAND="ssh -F none -i \"$auth_dir/key\" -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=\"$auth_dir/known_hosts\""
+          git remote set-url origin "git@github.com:${GITHUB_REPOSITORY}.git"
+          # Use SSH to authenticate the HTTPS lock API, which sends the force flag.
+          git config --local lfs.sshtransfer never
           PYTHONPATH=.github/scripts python3 -u - <<'PY'
           import release_unity_asset_locks as release
 
           fixture = "Assets/Diagnostics/__CodexUnityLockSmoke_45867295374.prefab"
           lock_id = "65307884"
-          ref = "refs/heads/diagnostic/unity-lfs-actions-auth"
+          test_ref = "refs/heads/diagnostic/unity-lfs-actions-auth"
           implementation = release.git
 
-          def isolate_test_branch(*args, **kwargs):
+          def isolate_test_ref(*args, **kwargs):
               if args[0] == "ls-remote":
-                  return implementation("ls-remote", "--refs", "origin", ref, args[-1]).replace(ref, "refs/heads/main")
+                  return implementation("ls-remote", "--refs", "origin", test_ref, args[-1]).replace(test_ref, "refs/heads/main")
               return implementation(*args, **kwargs)
 
           class FixtureOnly(release.GitLfsLocks):
@@ -50,20 +67,16 @@ jobs:
                   assert requested_id == lock_id, "The smoke test may only release its own fixture lock."
                   super().unlock(requested_id)
 
-          release.git = isolate_test_branch
-          import os
-          import subprocess
-          probe = subprocess.run(["git", "push", "--dry-run", "--no-verify", "origin", "HEAD:refs/heads/diagnostic/unity-lfs-actions-auth"], capture_output=True, timeout=30)
-          print(f"Repository Git write transport check: exit={probe.returncode}.", flush=True)
-          assert os.environ.get("LOCKS_CONFIGURED") == "true", "Configure the existing repository secret before running this fixture."
+          release.git = isolate_test_ref
           api = FixtureOnly()
           before = api.list_locks()
-          assert len(before) == 1 and before[0].get("owner", {}).get("name") == "hjd5031", "Fixture lock was not visible with the original owner."
-          print(f"BEFORE: remote lock {lock_id} is present, owned by hjd5031.", flush=True)
+          assert len(before) == 1 and before[0].get("owner", {}).get("name") == "hjd5031", "The fixture lock must be present and owned by hjd5031."
+          print(f"BEFORE: LFS lock {lock_id} is present and owned by hjd5031.")
           tag = release.submission_tag(lock_id, release.blob(implementation("rev-parse", "HEAD"), fixture))
-          assert implementation("ls-remote", "--refs", "origin", tag), "Fixture submission tag must exist before release."
+          assert implementation("ls-remote", "--refs", "origin", tag), "The fixture's exact submission tag must be present."
+          print("BEFORE: the fixture submission tag exists.")
           release.release_merged_locks(api)
-          assert not api.list_locks(), "The remote still reports the fixture lock."
-          assert not implementation("ls-remote", "--refs", "origin", tag), "The remote still reports the fixture tag."
-          print(f"AFTER: remote lock {lock_id} and its submission tag are both gone.", flush=True)
+          assert not api.list_locks(), "LFS still reports the fixture lock."
+          assert not implementation("ls-remote", "--refs", "origin", tag), "Git still reports the fixture tag."
+          print(f"AFTER: LFS lock {lock_id} and its submission tag are both absent from the remote.")
           PY
