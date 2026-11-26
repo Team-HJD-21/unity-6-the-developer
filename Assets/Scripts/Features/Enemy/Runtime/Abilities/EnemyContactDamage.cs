@@ -45,7 +45,7 @@ public sealed class EnemyContactDamage : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!isActiveAndEnabled || other.gameObject.layer != _playerHurtboxLayer ||
-            contactDamage <= 0 || networkController == null ||
+            contactDamage <= 0 || EnemyDamage.IsTestProtectionActive || networkController == null ||
             !networkController.CanExecuteBehavior || enemyHealth == null ||
             !enemyHealth.isActiveAndEnabled || enemyHealth.CurrentHealth <= 0)
             return;

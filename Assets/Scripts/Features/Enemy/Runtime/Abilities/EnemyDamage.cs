@@ -10,15 +10,25 @@ public static class EnemyDamage
     private static void ResetTestProtection() => ProtectTestTargets = false;
 #endif
 
+    internal static bool IsTestProtectionActive
+    {
+        get
+        {
+#if UNITY_EDITOR
+            return ProtectTestTargets && Application.isPlaying;
+#else
+            return false;
+#endif
+        }
+    }
+
     internal static bool TryApply(IDamageableTarget target, int damage)
     {
         if (target == null)
             return false;
 
-#if UNITY_EDITOR
-        if (ProtectTestTargets && Application.isPlaying)
+        if (IsTestProtectionActive)
             return damage > 0 && !target.IsDestroyed;
-#endif
 
         return target.ApplyDamage(damage);
     }
