@@ -10,7 +10,8 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [DisallowMultipleComponent]
-public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitVitals, ITurretCommandConsumer
+public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitVitals,
+    IControlUnitArmorConsumer, ITurretCommandConsumer
 {
     [Header("Definition")]
     [SerializeField] private FieldTurretDefinition _definition;
@@ -24,6 +25,7 @@ public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget
     public event Action Destroyed;
 
     private int _currentHealth;
+    private bool _hasCampaignArmor;
     private ControlUnitDamageFx _damageFx;
     private MatchId _damagePresentationMatch;
     private ITurretPresentationSource _damagePresentation;
@@ -31,8 +33,33 @@ public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget
 
     public FieldTurretDefinition Definition => _definition;
     public int CurrentHealth => _currentHealth;
-    public int MaxHealth => _definition != null ? _definition.MaxHealth : 0;
+    public int MaxHealth
+    {
+        get
+        {
+            int baseHealth = _definition != null ? _definition.MaxHealth : 0;
+            return _hasCampaignArmor ? (int)Math.Min(int.MaxValue, baseHealth + (baseHealth + 9L) / 10) : baseHealth;
+        }
+    }
     public bool IsDestroyed => _currentHealth <= 0;
+
+    /// <summary>Host의 전장 조립부가 체크포인트 복원 전에 캠페인 연구를 적용합니다.</summary>
+    public void ApplyCampaignArmor(bool researched)
+    {
+        if (_definition == null || _hasCampaignArmor == researched) return;
+        int previousMax = MaxHealth;
+        float previousRatio = previousMax > 0 ? _currentHealth / (float)previousMax : 0;
+        _hasCampaignArmor = researched;
+        if (previousMax > 0 && _currentHealth > 0)
+        {
+            int currentMax = MaxHealth;
+            long scaled = ((long)_currentHealth * currentMax + previousMax - 1) / previousMax;
+            _currentHealth = (int)Math.Min(currentMax, scaled);
+        }
+        onCUHpChange.Invoke(_currentHealth, MaxHealth, previousRatio);
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
+    }
+
     public bool TryCaptureInteractionPosition(out BattlefieldPoint position)
     {
         position = default; Vector3 current = transform.position;

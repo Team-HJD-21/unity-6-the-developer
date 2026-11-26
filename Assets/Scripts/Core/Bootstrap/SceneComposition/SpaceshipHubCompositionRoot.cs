@@ -57,6 +57,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 var playerId = InitialStageCompositionRoot.LocalPlayerId;
                 Player = _spawner.Spawn(playerId, start);
                 BindPersonalGrowth(app.Services.CheckpointStore, app.Services.CheckpointPayloads, playerId);
+                app.Stage1Tokens?.LoadAsync(destroyCancellationToken).GetAwaiter().GetResult();
                 foreach (var component in Player.GetComponents<MonoBehaviour>())
                 {
                     if (component is ILocalInputConsumer input)

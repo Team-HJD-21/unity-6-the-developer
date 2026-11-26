@@ -185,6 +185,7 @@ namespace TeamHJD.Game.Bootstrap
         public UiDisplaySettings DisplaySettings { get; private set; }
         public GameAudioSettings AudioSettings { get; private set; }
         public GameAudioManager Audio { get; private set; }
+        internal Stage1TokenProgress Stage1Tokens { get; private set; }
 
         public void Initialize(AppServices services)
         {
@@ -194,6 +195,9 @@ namespace TeamHJD.Game.Bootstrap
                 throw new InvalidOperationException("AppRoot has already been initialized.");
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
+            if (Services.CheckpointStore != null && Services.CheckpointPayloads != null)
+                Stage1Tokens = new Stage1TokenProgress(Services.CheckpointStore, Services.CheckpointPayloads,
+                    SceneComposition.InitialStageCompositionRoot.LocalPlayerId);
             DisplaySettings = new UiDisplaySettings();
             AudioSettings = new GameAudioSettings();
             if (UnityEngine.Application.isPlaying)

@@ -10,6 +10,14 @@
 
 월드 체크포인트로 과거 전투에 돌아가도 최신 경험치·성장은 남긴다. 현재 실제 원본은 `PlayerExperience`, `PlayerBaseStats`, Host 전장의 `FieldTurretController` 성장 writer다. 실제 스킬 강화·재화 소비 원본이 없는 기능을 저장 완료로 표시하지 않는다.
 
+### Stage 1 토큰과 CU 장갑
+
+Stage 1 최종 보스의 권위 승리 경로는 로컬 프로필에 첫 처치 토큰을 한 번만 지급한다. 단독 또는 Host의 출격 전 우주선에서는 `AppRoot.Stage1TokenBalance`, `HasStage1CuArmor`, `CanBuyStage1CuArmor`를 읽고 `BuyStage1CuArmorAsync`로 선택한 Host 캠페인의 장갑을 요청한다. 연결 중인 원격 참가자나 Match가 준비·진행 중인 우주선에서는 구매할 수 없다. 지급량과 가격은 첫 검증용 1토큰이다.
+
+`Stage1TokenProgress`는 잔액, 최초 지급 여부, 연구를 구매한 캠페인 ID를 로컬 프로필의 별도 파일에 원자적으로 쓴다. 저장이 실패하면 이전 상태를 보여주며 같은 요청을 다시 시도할 수 있다. 월드 스냅샷 복원은 이 파일에 적용하지 않는다. Editor Play 종료 시 임시 저장 수명은 기존과 같다.
+
+출격 조립부는 체크포인트를 적용하기 전에 구매한 캠페인의 연구를 CU에 전달한다. `ControlUnitHealth`는 제작 Definition을 유지하면서 최대 체력에 10%를 올림 적용하며 기존 체력 비율과 파괴 상태를 유지한다. 현재 Host의 전력 한도와 터렛 강화 상태는 기존 설정을 따른다.
+
 ```mermaid
 flowchart LR
     XP[PlayerExperience 실제 획득] --> Change[GrowthChanged]

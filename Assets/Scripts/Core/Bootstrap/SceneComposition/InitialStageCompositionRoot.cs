@@ -10,6 +10,7 @@ using TeamHJD.Game.Content.Authoring;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure;
+using TeamHJD.Game.Presentation;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
@@ -172,6 +173,14 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
                 var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
                     .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitVitals>().Single();
+                if (appMatchHost is AppRoot stageApp && stageApp.Stage1Tokens != null &&
+                    gameObject.scene.path == AppScreenPresenter.StageScene)
+                {
+                    stageApp.Stage1Tokens.LoadAsync().GetAwaiter().GetResult();
+                    bool hasArmor = stageApp.Stage1Tokens.HasCuArmor(stageApp.CampaignSlot);
+                    if (controlUnitHealth is IControlUnitArmorConsumer cu) cu.ApplyCampaignArmor(hasArmor);
+                    else if (hasArmor) throw new InvalidOperationException("Stage 1 CU cannot apply purchased campaign armor.");
+                }
                 ITimestampSource timestamp = network == null ? (ITimestampSource)new UnityTimestampSource() :
                     new NgoTimestampSource((_networkBinding.Connection as NgoNetworkSession)?.Manager ??
                         throw new InvalidOperationException("The authority Match requires its composed NGO connection."));
