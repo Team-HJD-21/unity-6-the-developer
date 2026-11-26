@@ -9,13 +9,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: unity-asset-lock-release-main
+  group: unity-asset-lock-smoke-pat
   cancel-in-progress: false
 
 jobs:
   release:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/diagnostic/unity-lfs-actions-auth'
-    environment: unity-asset-lock-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -24,28 +23,12 @@ jobs:
           ref: diagnostic/unity-lfs-actions-auth
           fetch-depth: 0
           sparse-checkout: .github/scripts
-          persist-credentials: false
-      - name: Release only the verified smoke fixture
+          token: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN || github.token }}
+      - name: Use the production token to release only the fixture
         env:
-          LOCKS_DEPLOY_KEY: ${{ secrets.UNITY_ASSET_LOCKS_SSH_KEY }}
+          LOCKS_CONFIGURED: ${{ secrets.UNITY_ASSET_LOCKS_TOKEN != '' }}
           GIT_TERMINAL_PROMPT: '0'
-        shell: bash
         run: |
-          if [ -z "$LOCKS_DEPLOY_KEY" ]; then
-            echo '::error::UNITY_ASSET_LOCKS_SSH_KEY is missing from the unity-asset-lock-smoke environment.'
-            exit 1
-          fi
-          umask 077
-          auth_dir=$(mktemp -d "$RUNNER_TEMP/unity-lock-ssh.XXXXXX")
-          trap 'rm -f -- "$auth_dir/key" "$auth_dir/known_hosts"; rmdir -- "$auth_dir"' EXIT
-          printf '%s\n' "$LOCKS_DEPLOY_KEY" > "$auth_dir/key"
-          unset LOCKS_DEPLOY_KEY
-          # GitHub's published ED25519 host key.
-          printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$auth_dir/known_hosts"
-          export GIT_SSH_COMMAND="ssh -F none -i \"$auth_dir/key\" -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=\"$auth_dir/known_hosts\""
-          git remote set-url origin "git@github.com:${GITHUB_REPOSITORY}.git"
-          # Use SSH to authenticate the HTTPS lock API, which sends the force flag.
-          git config --local lfs.sshtransfer never
           PYTHONPATH=.github/scripts python3 -u - <<'PY'
           import release_unity_asset_locks as release
 
@@ -67,6 +50,9 @@ jobs:
                   assert requested_id == lock_id, "The smoke test may only release its own fixture lock."
                   super().unlock(requested_id)
 
+          import os
+          if os.environ.get("LOCKS_CONFIGURED") != "true":
+              raise SystemExit("The production repository secret is missing.")
           release.git = isolate_test_ref
           api = FixtureOnly()
           before = api.list_locks()
