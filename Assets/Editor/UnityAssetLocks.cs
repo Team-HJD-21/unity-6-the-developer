@@ -37,12 +37,6 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
         public string record = "";
     }
 
-    [Serializable]
-    private sealed class LockRecord
-    {
-        public string submitted = "";
-    }
-
     private sealed class ProjectSettingsEdit
     {
         public readonly string Path;
@@ -392,8 +386,7 @@ internal sealed class UnityAssetLocks : AssetModificationProcessor
             if (file.Exists && file.IsReadOnly)
                 return false;
 
-            return string.IsNullOrEmpty(asset.record) ||
-                   string.IsNullOrEmpty(JsonUtility.FromJson<LockRecord>(File.ReadAllText(asset.record)).submitted);
+            return string.IsNullOrEmpty(asset.record) || File.Exists(asset.record);
         }
         catch (IOException)
         {
