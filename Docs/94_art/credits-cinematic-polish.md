@@ -42,4 +42,4 @@ Unity VideoPlayer로 0..1559 전체 1,560프레임과 끝 도달을 확인했다
 
 ## 편집과 원화
 
-[편집 지점](credits-cinematic.md)과 [원화·참조·최종 생성 프롬프트](credits-cinematic-generation.md)를 따른다. 신규 PNG 네 개는 `Assets/Art/Cinematics/Credits/AstronautFront.png`, `AstronautLookRight.png`, `AstronautWelding.png`, `HullWorkPanel.png`이며 내장 image_gen을 사용했다. 원본 생성 PNG의 alpha를 유지한 채 Sprite rect를 importer에 저장했다. 컷신만 재작성할 때는 `Rebuild cinematic only` 메뉴로 Main 연결을 보존한다.
+[편집 지점](credits-cinematic.md)과 [원화·참조·최종 생성 프롬프트](credits-cinematic-generation.md)를 따른다. 신규 PNG 네 개는 `Assets/Art/Cinematics/Credits/AstronautFront.png`, `AstronautLookRight.png`, `AstronautWelding.png`, `HullWorkPanel.png`이며 내장 image_gen을 사용했다. 원본 생성 PNG의 alpha를 유지한 채 Sprite rect를 importer에 저장했다. 위 폴리싱 기록은 당시 제작 방식이고, 현재 카메라와 전환 편집은 Credits Timeline에서 진행한다.

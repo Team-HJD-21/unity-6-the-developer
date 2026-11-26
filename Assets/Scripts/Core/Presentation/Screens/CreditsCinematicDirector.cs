@@ -1,6 +1,9 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 using UnityEngine.UI;
 
 namespace TeamHJD.Game.Presentation
@@ -10,8 +13,7 @@ namespace TeamHJD.Game.Presentation
     {
         public Camera Camera;
         public CreditsCinematicChapter[] Chapters;
-        public CanvasGroup Black, Logo, FinalCredits;
-        public RectTransform LogoContent;
+        public CanvasGroup Black, FinalCredits;
         public AudioSource FlightAudio;
         public AudioSource Music;
         [Range(0, 1)] public float MusicVolume = .55f;
@@ -19,15 +21,22 @@ namespace TeamHJD.Game.Presentation
         public RawImage Display;
         [Range(360, 1440)] public int RenderHeight = 1080;
         public RenderTexture RenderTarget { get; private set; }
-        [Min(.1f)] public float ChapterFade = .7f;
-        [Min(1)] public float LogoSeconds = 5;
         public bool AutoPlay = true;
+        [SerializeField] private PlayableDirector _timeline;
+        private TimelineClip[] _chapterClips;
+        private TimelineClip _creditsClip;
         public event Action ExitRequested;
         public bool IsPlaying { get; private set; }
         public float TimePosition { get; private set; }
         public int ChapterIndex { get; private set; } = -1;
-        public float ChaptersDuration { get { float t = 0; foreach (var c in Chapters) t += c.Duration; return t; } }
-        public float FinalCreditsStart => ChaptersDuration + LogoSeconds;
+        public float FinalCreditsStart
+        {
+            get
+            {
+                BindTimeline();
+                return (float)_creditsClip.start;
+            }
+        }
         private void OnEnable()
         {
             if (!UnityEngine.Application.isPlaying || Camera == null || Display == null) return;
@@ -37,7 +46,12 @@ namespace TeamHJD.Game.Presentation
             Camera.targetTexture = RenderTarget; Camera.aspect = 16f/9;
             Display.texture = RenderTarget; Display.enabled = true;
         }
-        private void Start() { if (AutoPlay) Play(); else EvaluateAt(0, true); }
+        private void Start()
+        {
+            if (IsPlaying) return; // 메인에서 Additive 로드 후 이미 시작한 재생을 처음으로 되돌리지 않습니다.
+            if (AutoPlay) Play();
+            else EvaluateAt(0);
+        }
         public void Play()
         {
             GameAudioManager.RouteMusic(Music); GameAudioManager.RouteCinematic(FlightAudio);
@@ -54,6 +68,7 @@ namespace TeamHJD.Game.Presentation
         public void Pause()
         {
             IsPlaying = false;
+            if (_timeline != null) _timeline.Stop();
             if (Music != null) Music.Stop();
             if (FlightAudio != null) FlightAudio.Stop();
             foreach (var chapter in Chapters) if (chapter != null) chapter.StopAudio();
@@ -68,40 +83,66 @@ namespace TeamHJD.Game.Presentation
         /// <summary>Scene/Prefab의 같은 트랙을 실제 재생과 프레임 검수에서 함께 사용합니다.</summary>
         public void EvaluateAt(float seconds, bool seek = true)
         {
-            TimePosition = Mathf.Max(0, seconds); float offset = 0; int active = -1;
+            TimePosition = Mathf.Max(0, seconds);
             if (Music != null)
             {
                 if (seek) Music.Stop();
                 SetMusicGain(_musicGain);
             }
-            for (int i = 0; i < Chapters.Length; i++)
-            {
-                bool show = TimePosition >= offset && TimePosition < offset + Chapters[i].Duration;
-                Chapters[i].gameObject.SetActive(show);
-                if (show)
-                {
-                    active = i; float local = TimePosition - offset;
-                    Chapters[i].Evaluate(local, Camera, seek, IsPlaying && !seek);
-                    Camera.orthographicSize *= Mathf.Max(1, (16f/9) / Camera.aspect);
-                    Black.alpha = Mathf.Max(1 - Ease(local / ChapterFade), Ease((local - Chapters[i].Duration + ChapterFade) / ChapterFade));
-                    Black.alpha = Mathf.Max(Black.alpha, Chapters[i].InternalFade);
-                }
-                offset += Chapters[i].Duration;
-            }
-            ChapterIndex = active;
-            float end = TimePosition - offset;
-            Logo.alpha = end >= 0 && end < LogoSeconds ? Ease(end / .9f) * (1 - Ease((end - LogoSeconds + .9f) / .9f)) : 0;
-            if (LogoContent != null) LogoContent.localScale = Vector3.one * Mathf.Lerp(.96f, 1.02f, Ease(end / LogoSeconds));
-            FinalCredits.alpha = Ease((end - LogoSeconds) / 1.1f);
-            if (active < 0) Black.alpha = 1;
+            ChapterIndex = EvaluateTimeline(seek);
             if (FlightAudio != null)
             {
-                bool fly = active == 1 && IsPlaying && !seek;
+                bool fly = ChapterIndex >= 0 && Chapters[ChapterIndex].Kind == CreditsChapterKind.Flight && IsPlaying && !seek;
                 if (fly && !FlightAudio.isPlaying) FlightAudio.Play();
                 if (!fly && FlightAudio.isPlaying) FlightAudio.Stop();
                 FlightAudio.volume = fly ? .16f * (1 - Black.alpha) : 0;
             }
         }
+
+        private int EvaluateTimeline(bool seek)
+        {
+            BindTimeline();
+            // 한 시각으로 카메라·암전·로고·명단과 챕터 효과를 평가해 Seek에서도 같은 장면을 보여 줍니다.
+            _timeline.time = Math.Min(TimePosition, _timeline.duration - .00001);
+            _timeline.Evaluate();
+            for (int i = 0; i < _chapterClips.Length; i++)
+            {
+                var clip = _chapterClips[i];
+                if (TimePosition < clip.start || TimePosition >= clip.end) continue;
+                Chapters[i].Evaluate((float)(TimePosition - clip.start), (float)clip.duration, seek, IsPlaying && !seek);
+                return i;
+            }
+            return -1;
+        }
+
+        private void BindTimeline()
+        {
+            if (_chapterClips != null) return;
+            if (_timeline == null || !(_timeline.playableAsset is TimelineAsset asset) ||
+                !double.IsFinite(asset.duration) || asset.duration <= 0)
+                throw new InvalidOperationException("Credits requires a finite Timeline asset.");
+
+            // Activation 트랙의 실제 바인딩으로 컷을 찾으므로 Timeline 트랙 이름은 자유롭게 편집할 수 있습니다.
+            var activationTracks = asset.GetOutputTracks().OfType<ActivationTrack>().ToArray();
+            var chapters = Chapters.Select(chapter => FindActivationClip(chapter.gameObject)).ToArray();
+            _creditsClip = FindActivationClip(FinalCredits.gameObject);
+            var ordered = chapters.OrderBy(clip => clip.start).Append(_creditsClip).ToArray();
+            for (int i = 1; i < ordered.Length; i++)
+                if (ordered[i].start + .00001 < ordered[i - 1].end)
+                    throw new InvalidOperationException("Credits chapter and final credits activation clips cannot overlap.");
+            _timeline.timeUpdateMode = DirectorUpdateMode.Manual;
+            _chapterClips = chapters;
+
+            TimelineClip FindActivationClip(GameObject target)
+            {
+                var clips = activationTracks.Where(track => !track.mutedInHierarchy && _timeline.GetGenericBinding(track) == target)
+                    .SelectMany(track => track.GetClips()).ToArray();
+                if (clips.Length != 1)
+                    throw new InvalidOperationException($"Credits Timeline requires one activation clip for '{target.name}'.");
+                return clips[0];
+            }
+        }
+
         public static float Ease(float t) => Mathf.SmoothStep(0, 1, Mathf.Clamp01(t));
         private void OnDisable()
         {
