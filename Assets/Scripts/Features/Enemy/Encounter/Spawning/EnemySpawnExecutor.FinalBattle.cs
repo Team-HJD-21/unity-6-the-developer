@@ -6,7 +6,6 @@ using System.Linq;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using UnityEngine;
-using UnityEngine.AI;
 using Unity.Netcode;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
@@ -34,7 +33,7 @@ public partial class EnemySpawnExecutor
             definition.Prefab == null || !definition.Prefab.TryGetComponent<NetworkObject>(out _) ||
             !definition.Prefab.TryGetComponent<EnemyController>(out _) || !definition.Prefab.TryGetComponent<EnemyHealth>(out _) ||
             !definition.Prefab.TryGetComponent<EnemyNetworkController>(out _)) return false;
-        if (!NavMesh.SamplePosition(new Vector3(spawn.position.x, spawn.position.y, 0), out var hit, .5f, NavMesh.AllAreas))
+        if (!TrySampleAuthoredNavMesh(spawn.position, GetAgentSpawnFilter(definition), out var hit))
         { reason = "FinalBossRequiresAuthoredNavMeshSpawn"; return false; }
         if (SpawnedEnemyCount != 0) { reason = "FinalBossRequiresDedicatedEmptyExecutor"; return false; }
 

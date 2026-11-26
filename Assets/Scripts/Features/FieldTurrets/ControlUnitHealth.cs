@@ -4,12 +4,13 @@ using System;
 using TeamHJD.Game.Content;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
+using TeamHJD.Game.FieldTurrets;
 using TeamHJD.Game.FieldTurrets.Contracts;
 using UnityEngine;
 using UnityEngine.Events;
 
 [DisallowMultipleComponent]
-public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitVitals
+public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget, IControlUnitInteractionTarget, IControlUnitVitals, ITurretCommandConsumer
 {
     [Header("Definition")]
     [SerializeField] private FieldTurretDefinition _definition;
@@ -23,6 +24,10 @@ public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget
     public event Action Destroyed;
 
     private int _currentHealth;
+    private ControlUnitDamageFx _damageFx;
+    private MatchId _damagePresentationMatch;
+    private ITurretPresentationSource _damagePresentation;
+    private bool _useDamagePresentation;
 
     public FieldTurretDefinition Definition => _definition;
     public int CurrentHealth => _currentHealth;
@@ -56,12 +61,49 @@ public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget
             gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.SceneEntityIdentity>();
         if (identity.EntityId.IsEmpty) identity.Initialize(new TeamHJD.Game.Domain.EntityId("world/control-unit"));
         _currentHealth = MaxHealth;
+        _damageFx = new ControlUnitDamageFx(this);
     }
 
     private void Start()
     {
         onCUHpChange.Invoke(_currentHealth, MaxHealth, 1f);
     }
+
+    void ITurretCommandConsumer.BindTurretCommands(MatchId matchId, PlayerId playerId,
+        ITurretCommandRequester requester, ITurretPresentationSource presentation)
+    {
+        _useDamagePresentation = true;
+        _damagePresentationMatch = matchId;
+        _damagePresentation = presentation;
+    }
+
+    void ITurretCommandConsumer.UnbindTurretCommands(MatchId matchId)
+    {
+        if (_damagePresentationMatch != matchId) return;
+        _damagePresentationMatch = default;
+        _damagePresentation = null;
+        _damageFx?.Clear();
+    }
+
+    private void LateUpdate()
+    {
+        if (_damageFx == null) return;
+        if (!_useDamagePresentation)
+        {
+            _damageFx.Update(CurrentHealth, MaxHealth);
+            return;
+        }
+
+        var state = _damagePresentation?.Snapshot?.Controller;
+        if (state == null || !state.IsControlUnitAvailable)
+        {
+            _damageFx.Clear();
+            return;
+        }
+        _damageFx.Update(state.ControlUnitHealth, state.ControlUnitMaxHealth);
+    }
+
+    private void OnDisable() => _damageFx?.Clear();
 
     public bool ApplyDamage(int damage)
     {

@@ -67,6 +67,8 @@ Canon과 Missile은 CU를 직접 찾지 않는다. 전력은 `FieldTurretControl
 
 `ControlUnitHealth`는 CU 체력, 피격, 접근 지점과 상태 이벤트만 담당한다. 최대 체력은 `ControlUnit.asset`의 `FieldTurretDefinition`에서 읽으며 `DataManager`의 CU 수치를 사용하지 않는다. CU와 `FieldTurretBase`는 모두 `IDamageableTarget`을 구현하므로 Enemy는 구체 타입이나 Registry를 확인하지 않고 같은 `ApplyDamage(int)` 계약으로 피해를 준다. Definition의 `FieldTurretRole.ControlUnit`은 CU를 무기 터렛과 구분한다.
 
+CU 피해 연출은 터렛과 같은 `FieldTurretStatusFx.png`·`FieldTurretStatusFxFrames.json`을 사용한다. 체력 80% 이하부터 연기 1개가 나오고, 체력 40% 이하부터 불꽃도 1개가 나온다. 각 효과는 체력이 5%p 내려갈 때마다 1개씩 늘어 체력 0%에서 검은 연기 17개와 불꽃 9개가 된다. 연기와 불꽃은 각각 스프라이트 배율 1.08배와 1.7배로 그린다. 발생 지점은 `STATION2_DOWN_RIGHT`를 제외한 CU 파츠의 스프라이트 메시에서 무작위로 고른다. 매치에서는 Host가 확정한 CU 체력을 읽는다.
+
 CU는 Enemy의 `TargetType.Turret` 후보에는 포함되지만 `FieldTurretBase`를 상속하거나 `FieldTurretInstanceRegistry`에 등록되지 않는다. 따라서 터렛 등록 수, 전력 예약, 자동 활성화, 개별 터렛 UI에는 포함되지 않는다. 터렛 전력은 `DataManager`와 CU 컴포넌트를 거치지 않고 `FieldTurretController`가 직접 소유한다. CU 파괴 시 `Destroyed` 이벤트를 한 번 발행한다. `HealthChanged`는 체력 변경을 전달한다. 레거시 `InGameManager`와 `AlertManager`를 조회하거나 호출하지 않는다. 현재 PoC 승패 정책은 패배 판정을 구현하지 않았으므로 파괴 이벤트를 게임 오버에 연결하는 소비자는 후속 연동 대상이다.
 
 ```mermaid
@@ -88,9 +90,9 @@ flowchart TD
 
 필드 터렛 프리팹의 `Base` 자식은 `TurretBase` 레이어를 사용한다. 최상위 오브젝트와 사거리 표시는 `Ignore Raycast` 레이어를, 포신과 발사대는 `Turret` 레이어를 사용한다. 기존 미니맵 표시는 `MiniMap`을 사용한다. 본편 HUD의 `StageTurretSelection`은 `Physics2D.AllLayers`로 몸체 콜라이더를 찾은 뒤 부모의 `FieldTurretBase`를 확인한다.
 
-필드 터렛의 베이스 그룹은 바닥(`Map / 0`) 위의 `Map / 1`을 사용한다. 포신과 발사대는 `Sort At Root`인 `Entities / 3`으로 그린다. 플레이어와 나무는 `Entities / 0`에서 월드 Y축으로 정렬한다. 레이저 빔은 별도 `Entities / 1` 그룹을 사용해 포신 앞을 덮지 않는다.
+필드 터렛의 베이스 그룹은 바닥(`Map / 0`) 위의 `Map / 1`을 사용한다. 포신과 발사대의 `Sort At Root` 그룹은 `Entities / 0`에서 몬스터·플레이어·나무와 월드 Y축으로 정렬한다. 포신 그룹 안의 SpriteRenderer 순서는 기존 값을 사용한다. 레이저 빔은 별도 `Entities / 1` 그룹을 사용한다. 포구에서 빔이 포신을 덮는지는 Game 카메라에서 조준 방향을 바꿔 확인한다.
 
-[FieldTurretTreeMask](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretTreeMask.cs)는 같은 씬의 `Entities / 0` Individual 타일맵에서 `Overworld_Trees_` 스프라이트를 검색한다. 나무 접지점이 터렛보다 앞에 있고 실루엣의 범위가 포신과 겹칠 때 포신 그룹에 마스크를 적용한다. 겹침이 사라지면 평소의 마스크 설정을 복구한다. 과열 아지랑이도 포신과 같은 마스크를 사용한다. 재검증할 때는 실제로 양쪽 포신이 나무에 가려진 상태에서 캐논과 미사일을 같은 화면에 놓고 줌 아웃해 스프라이트와 가림을 함께 확인한다.
+[FieldTurretTreeMask](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretTreeMask.cs)는 같은 씬의 `Entities / 0` Individual 타일맵에서 `Overworld_Trees_` 스프라이트를 검색한다. 나무 접지점이 터렛보다 앞에 있고 실루엣이 포신, 과열 아지랑이 또는 포신에 달린 LED와 겹치면 포신 그룹에 마스크를 적용한다. 과열 아지랑이는 포신 그룹 안에서 포신과 LED 위에 그린다. 달아오르는 부품이 있는 터렛은 붉은 발광 영역 주변에 아지랑이를 그린다. 아지랑이와 LED도 같은 나무 실루엣에 가려진다. 겹침이 사라지면 포신과 LED의 기존 마스크 설정을 복구한다. 재검증할 때는 실제로 양쪽 포신이 나무에 가려진 상태에서 캐논과 미사일을 같은 화면에 놓고 줌 아웃해 스프라이트와 가림을 함께 확인한다.
 
 `PlayerBullet`·`SniperBullet`의 비행 스프라이트는 `Entities / 0`을 사용한다. `PlayerTurretProjectile`·`bullet`·`Missile`은 `Entities / 1`을 사용한다. 플레이어 탄환의 명중 효과는 Order 2로 표시하며, 미사일 폭발 프리팹은 `Entities / 100`을 사용한다. `SniperBullet`은 `Tracer Glow`와 탄환 본체를 하나의 Sorting Group으로 정렬한다.
 
@@ -144,6 +146,8 @@ Stage와 Level별 터렛 Prefab이 참조하는 ScriptableObject다. Canon/Missi
 | `OverHeatTime` | Canon 연속 사격 과열 기준 | 초 단위 |
 | `OverHeatMissileCount` | Missile 과열 기준 발사 횟수 | Canon에서는 0 |
 | `CoolTime` | Canon/Missile 과열 후 냉각 시간 | 초 단위 |
+
+Stage1의 캐논 LV1~3은 최대 체력 500, 미사일 LV1~3은 최대 체력 1000을 사용한다.
 
 예시 ID는 `canon_stage1_lv1`, `missile_stage3_lv2`다. `Id`는 저장·조회용이고 `DisplayName`은 UI용이므로 서로 대신 사용하지 않는다.
 
@@ -315,7 +319,7 @@ Level 스크립트에서 `Damage = 10`처럼 밸런스 수치를 다시 하드�
 
 아래 흐름도는 **현재 Canon/Missile 구현의 실제 호출 경로**다. 상자는 클래스의 메서드 또는 변경되는 상태를 뜻한다. 실패 조건과 생략된 연출은 본문에서 따로 설명한다. Stage 1 Laser도 공통 활성화·전력·냉각 경로를 사용한다.
 
-Canon·Missile·Laser의 과열 아지랑이는 `GunRenderer`의 현재 스프라이트를 중앙 기준으로 1.1배 확대하고, 그 윤곽 안에서 URP 2D의 Map Sorting Layer까지 캡처한 배경을 굴절시킨다. 굴절 효과는 포신 뒤에 그려서 포신의 과열 틴트가 그대로 보인다. 열이 쌓이기 시작할 때부터 강해지고, 열이 0%가 되면 사라진다. 프리팹의 `Heat Wave Scale`로 윤곽 크기, 공용 머티리얼의 `Distortion (pixels)`로 최대 굴절 강도를 조절한다.
+캐논과 Stage1 미사일은 사격 중 열이 쌓이면 붉게 달아오르는 부품의 외곽부터 아지랑이가 약하게 시작되고, 열이 더 오르면 `Weather/HeatWave`와 같은 파형으로 주변 포신과 배경의 화면 굴절이 커진다. 아지랑이는 원본 스프라이트와 배경 색을 샘플링해 투명하게 합성한다. 미사일 포신이 발사 프레임을 바꿔도 같은 부품을 따라간다. 발열 부품 스프라이트가 없는 터렛은 확대된 포신 윤곽에서 배경을 굴절시킨다. 아지랑이는 포신, LED, 연기, 불꽃, 과열 발광 위에 그리며 포신과 같은 나무 마스크를 사용한다. 냉각이 진행될수록 약해지고 종료 시 사라진다. 공용 머티리얼의 `Hot Part Refraction Strength`로 부품 주변 굴절의 강도를 조절한다.
 
 Laser는 사거리 안의 적을 향해 회전하고, 포신이 조준 허용각에 들어오면 얇은 빔을 포구에서 사거리 끝까지 펼친다. 발사 순간 빔이 굵어지고 포구 위치와 방향이 고정된다. 빔 스프라이트는 길이 방향으로 늘어나며, 전용 재질이 포구에서 끝까지 알파를 낮춘다. 시각적 페이드는 사거리와 피해 판정에 영향을 주지 않는다. 발사가 끝나거나 터렛을 끄면 빔이 얇아지면서 동시에 포구 쪽으로 짧아진다. 조준하던 적을 놓쳤을 때도 빔이 포구로 돌아온 뒤에 다시 회전한다. 빔이 완전히 접히면 `Beam Restart Delay`가 지난 뒤에 다시 펼칠 수 있다. 피해는 발사 중에만 적용하며, 포구부터 사거리 경계까지 회전된 박스로 적을 조회한다. 같은 적의 여러 Collider는 틱마다 한 번만 집계한다. Stage 1의 초기 설정은 폭 0.8 유닛, 발사 3초, 피해 간격 0.25초, 빔 길이 전환 0.2초, 폭 축소 0.1초, 재전개 대기 0.3초다. 폭·시간·간격은 프리팹의 Laser Settings, 틱당 피해량과 조준 시간에 사용하는 발사율은 Definition에서 조절한다.
 
@@ -424,7 +428,7 @@ flowchart TD
 
 ### 4.4 탐색과 공격
 
-`IsOperational`이 `true`일 때만 각 터렛의 `Update()`가 탐색·회전·발사·과열 확인을 수행한다. 실제 탐색은 `FieldTurretTargetingUtility.CollectByDistance()`가 사거리 안의 `enemyMask` Collider를 거리순으로 모으는 방식이다.
+`IsOperational`이 `true`일 때만 각 터렛의 `Update()`가 탐색·회전·발사·과열 확인을 수행한다. 실제 탐색은 `FieldTurretTargetingUtility.CollectByDistance()`가 사거리 안의 `enemyMask` Collider를 거리순으로 모으는 방식이다. 각 후보의 위치와 거리는 한 번 읽고, 물리 조회 목록과 거리 정렬 버퍼는 재사용한다.
 
 Canon의 산포는 매 발사마다 기준 조준점의 월드 X에 ±0.5를 더한 임시 위치로 계산한다. `bulletFirePoint`·`bulletFireDirection` Transform은 이동시키지 않아 연속 사격해도 조준점이 한쪽으로 누적 이동하지 않는다. 발사체의 기존 `Initialize(Transform, damage)` 호출도 유지한다.
 
@@ -541,9 +545,15 @@ Canon/Missile의 과열 냉각과 비활성화 후 냉각은 `FieldTurretBase.Be
 
 일반 OFF는 즉시 `IsActivated`를 false로 바꾸고 예약 전력을 반환 대기로 옮긴다. 전력은 기존 `Tick`의 0.1초당 1 회복 경로로 반환하며, 남은 열의 냉각과 동시에 진행한다. 꺼질 때는 현재 열 비율에 비례한 냉각 시간이 적용된다. 이미 과열 냉각 중이면 끄더라도 기존 종료 시각을 유지해 남은 시간만 냉각한다. 냉각 중 꺼진 터렛의 켜기 요청은 `CoolingDown`으로 거부하고, 켜진 터렛은 예약 전력을 유지한 채 공격만 중지한다. 냉각 완료 시 켜져 있으면 공격을 재개하며, 꺼져 있으면 자동으로 켜지지 않는다. UI의 켜기 버튼은 `IsCoolingDown`을 차단 조건으로 사용할 수 있고, 끄기 버튼은 냉각 중에도 허용한다(자동 활성화 중의 수동 조작 차단은 별도다).
 
-### Stage1 LV1 전원 LED
+### 공통 상태 효과
 
-Stage1 Canon·Missile LV1의 포신 아래에는 Turret_LED_Indicator가 있다. [FieldTurretLedIndicator.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretLedIndicator.cs)는 초기 표시와 프레임 후반에 상위 터렛의 상태를 읽고, 색이 바뀔 때 LED SpriteRenderer의 스프라이트를 교체한다.
+사격 중 열이 쌓이면 캐논 포신의 통풍구 또는 상부 금속 구조, 아래쪽 덮개, 양옆 금속이 점점 붉어진다. Stage1 미사일 Lv.1~3은 일제 발사마다 열이 높아져 발사관 상하 금속 띠와 통풍구가 단계적으로 달아오른다. 부품의 붉은빛은 과열에 가까워질수록 강해지고 남은 열이 줄어들면 서서히 사라진다. 발사 스프라이트가 바뀔 때는 해당 프레임의 발열 텍스처와 피벗을 맞춘다. 레이저와 Stage2·3 미사일은 포신 뒤쪽 중앙의 주황빛으로 표시한다. 과열 표시에는 조명 밝기와 별도로 그리는 재질을 사용한다. 아지랑이는 축적된 열을 따라 강해지고 냉각하면서 약해진다. 체력이 75%, 50%, 25%에 도달할 때마다 포신에서 짙은 회색 연기가 한 줄씩 늘어난다. 파괴되면 총 네 줄의 검은 연기와 두 곳의 작은 불꽃이 보인다. 수리로 체력이 기준보다 올라가면 연기 개수도 줄어든다. 복구 즉시 불꽃이 꺼지고, 복구 직전에 그린 프레임을 이어 잔연기가 약 1초 동안 한 줄씩 사라진다.
+
+[FieldTurretStatusFx.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretStatusFx.cs)가 [PNG 스프라이트 시트](../../../Assets/Resources/FieldTurretStatusFx.png)와 [프레임 JSON](../../../Assets/Resources/FieldTurretStatusFxFrames.json)을 공용으로 로드한다. 연기와 불꽃은 포신 몸체 안의 서로 다른 위치에서 난다. 피해를 입은 동안 이미 나온 연기의 위치를 유지한다. 연기, 불꽃, 주황빛은 포신과 함께 회전하고 앞쪽 나무에 가려진다. 복구 잔연기는 파괴 상태의 위치를 이어받는다.
+
+### Stage1 Lv.1~3 전원 LED
+
+Stage1 Canon·Missile Lv.1~3의 포신 아래에는 Turret_LED_Indicator가 있다. [FieldTurretLedIndicator.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretLedIndicator.cs)는 초기 표시와 프레임 후반에 상위 터렛의 상태를 읽고, 색이 바뀔 때 LED SpriteRenderer의 스프라이트를 교체한다.
 
 | 조건 | LED |
 | --- | --- |
@@ -551,9 +561,11 @@ Stage1 Canon·Missile LV1의 포신 아래에는 Turret_LED_Indicator가 있다.
 | 해금 구역, 전원 꺼짐 | 빨강 |
 | 해금 구역, 전원 켜짐 | 초록 |
 
-미해금 판정은 IsLocked를 먼저 읽는다. 해금된 터렛은 IsActivated로 전원 상태를 표시하므로, 전원이 켜진 채 냉각 중이면 LED는 초록이다. 두 프리팹의 Disable Inactive Gun Tint 설정은 포신의 비활성 회색을 제거한다. 과열 중에는 포신이 붉고 냉각이 끝나면 기본 색으로 돌아온다. 월드·성장 복원도 해당 프리팹 설정을 사용한다.
+미해금 판정은 IsLocked를 먼저 읽는다. 해금된 터렛은 IsActivated로 전원 상태를 표시하므로, 전원이 켜진 채 냉각 중이면 LED는 초록이다. 여섯 프리팹의 Disable Inactive Gun Tint 설정은 포신의 비활성 회색을 제거한다. 월드·성장 복원도 해당 프리팹 설정을 사용한다.
 
-Prefab에서 LED 위치를 조절하려면 포신 자식 Turret_LED_Indicator의 Transform을 편집한다. 세 색은 [Fire_Totem 에셋 폴더](../../../Assets/ThirdParty/Tileset%20Topdown%20-%20Monster%20Architect%20Overworld/0_Overworld/Fire_Totem/)에 있다. Sprite-0004_0.controller, Turret_LED_Indicator.anim, Turret_LED_Stand1~3은 제작 에셋이며 두 프리팹의 상태 연동에는 연결하지 않는다.
+Prefab에서 LED 위치를 조절하려면 포신 자식 Turret_LED_Indicator의 Transform을 편집한다. 세 색은 [Fire_Totem 에셋 폴더](../../../Assets/ThirdParty/Tileset%20Topdown%20-%20Monster%20Architect%20Overworld/0_Overworld/Fire_Totem/)에 있다. Sprite-0004_0.controller, Turret_LED_Indicator.anim, Turret_LED_Stand1~3은 제작 에셋이며 여섯 프리팹의 상태 연동에는 연결하지 않는다.
+
+LED는 나무 가림에 사용하는 SpriteMask를 그대로 받는다. [FieldTurretLed.shader](../../../Assets/Resources/FieldTurretLed.shader)는 현재 LED의 텍스처를 전용 속성으로 읽는다. 마스크가 켜질 때 캐논이나 미사일 포신의 스프라이트 시트가 LED 위치에 그려지는 현상을 막기 위한 처리다.
 
 ## 5. Prefab과 Definition 설정 방법
 

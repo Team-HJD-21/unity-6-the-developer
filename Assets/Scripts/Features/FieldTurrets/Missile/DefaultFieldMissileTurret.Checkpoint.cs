@@ -97,7 +97,7 @@ public abstract partial class DefaultFieldMissileTurret : IFieldTurretCombatChec
         }
         foreach (var pair in _restoredMissiles) pair.actor.ResolveCheckpointTarget(pair.state);
         _restoredMissiles.Clear(); _restoredTargets = null;
-        SetGunHeatTint(OverHeatMissileCount > 0 ? _currentMissileCount / OverHeatMissileCount : 0f);
+        SetGunHeatVisual(OverHeatMissileCount > 0 ? _currentMissileCount / OverHeatMissileCount : 0f);
         if (!IsActivated && _currentMissileCount <= 0f && GunRenderer != null)
             GunRenderer.color = InactiveGunColor;
     }

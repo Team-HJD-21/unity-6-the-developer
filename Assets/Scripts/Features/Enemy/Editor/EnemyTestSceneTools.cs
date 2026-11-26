@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
+using TeamHJD.Game.FieldTurrets;
+using TeamHJD.Game.FieldTurrets.Contracts;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -9,6 +14,7 @@ using UnityEngine;
 public static class EnemyTestSceneTools
 {
     public const string ScenePath = "Assets/Scenes/Tests/EnemyTest.unity";
+    private const int TestSpawnBatchSize = 100;
     private static long _individualSequence;
 
     /// <summary>운영 씬이나 다른 실행기를 테스트 조작 대상으로 사용하지 않는다.</summary>
@@ -29,6 +35,83 @@ public static class EnemyTestSceneTools
             !composition.MatchCoordinator.IsGameplayRunning || composition.TacticalBattlefield == null)
             throw new InvalidOperationException("현재 EnemyTest의 권위 Match가 실행 중이어야 합니다.");
         return composition;
+    }
+
+    public static bool TrySetTestTurretsActive(EncounterSceneBinding binding, bool active, out string result)
+    {
+        var composition = RequireMatch(binding);
+        var scene = binding.ExecutionTarget.gameObject.scene;
+        var turretBinding = composition.GetComponent<TurretMatchBinding>();
+        var controller = turretBinding != null ? turretBinding.Controller : null;
+        if (controller == null || controller.gameObject.scene != scene || !controller.HasWriteAuthority ||
+            controller.BoundMatchId != binding.BoundMatchId)
+        {
+            result = "현재 시험 Match의 포탑 컨트롤러가 준비되어야 합니다.";
+            return false;
+        }
+        if (controller.IsAutoActivationRunning)
+        {
+            result = "포탑 자동 가동이 끝난 뒤 다시 시도하세요.";
+            return false;
+        }
+
+        var turrets = FieldTurretInstanceRegistry.GetAll()
+            .Where(turret => controller.OwnsTurret(turret) && turret.isActiveAndEnabled && turret.IsInitialized)
+            .ToArray();
+        if (turrets.Length == 0)
+        {
+            result = "현재 시험 씬에 등록된 포탑이 없습니다.";
+            return false;
+        }
+
+        var details = new StringBuilder();
+        if (active)
+        {
+            var regions = composition.RegionBinding;
+            var snapshot = regions != null && regions.Controller == controller ? regions.Source?.Snapshot : null;
+            if (snapshot != null && snapshot.Mode == RegionPolicyMode.Static)
+            {
+                int lastRequiredZone = 0;
+                foreach (var turret in turrets)
+                {
+                    if (!turret.IsLocked || turret.IsDestroyed) continue;
+                    Vector3 position = turret.transform.position;
+                    if (snapshot.Definition.TryGetCellIndex(new BattlefieldPoint(position.x, position.y), out int cell))
+                        lastRequiredZone = Math.Max(lastRequiredZone, snapshot.Definition.RegionIds[cell]);
+                }
+                if (lastRequiredZone > 0)
+                    details.AppendLine(regions.TryUnlockThroughZone(lastRequiredZone)
+                        ? $"시험 구역 {lastRequiredZone}까지 해금했습니다."
+                        : "포탑이 있는 시험 구역을 해금하지 못했습니다.");
+            }
+
+            long requiredPower = turrets.Where(turret => !turret.IsDestroyed && !turret.IsLocked)
+                .Sum(turret => (long)turret.EffectivePower);
+            int previousMaximum = controller.MaximumPower;
+            if (requiredPower > previousMaximum)
+                details.AppendLine(requiredPower <= int.MaxValue && controller.TrySetMaximumPower((int)requiredPower)
+                    ? $"시험 전력 한도 {previousMaximum} → {controller.MaximumPower}"
+                    : $"시험 전력 한도를 {requiredPower}까지 올리지 못했습니다.");
+        }
+
+        int reached = 0;
+        foreach (var turret in turrets)
+        {
+            FieldTurretActivationResult request = controller.RequestActivation(turret.InstanceId, active);
+            if (turret.IsActivated == active)
+                reached++;
+            else
+                details.AppendLine($"{turret.name} · {request}");
+        }
+        if (active && reached < turrets.Length && controller.Budget.PendingRecovery > 0)
+            details.AppendLine("반환 대기 중인 전력이 있습니다. 전력이 회복되면 다시 시도하세요.");
+
+        string state = active ? "가동 상태" : "꺼짐";
+        int firingReady = turrets.Count(turret => turret.IsOperational);
+        result = $"포탑 {reached}/{turrets.Length}기 {state} · 공격 가능 {firingReady}기 · 가용 전력 {controller.CurrentPower}/{controller.MaximumPower}";
+        if (details.Length > 0)
+            result += "\n" + details.ToString().TrimEnd();
+        return reached == turrets.Length;
     }
 
     /// <summary>Core가 확정한 Host 참가자를 요청자로 사용한다.</summary>
@@ -91,20 +174,122 @@ public static class EnemyTestSceneTools
         return true;
     }
 
-    /// <summary>Core의 최신 Snapshot·환경·종료 토큰을 사용해 한 마리 기능 시험을 실행한다.</summary>
-    public static bool TrySpawnTestEnemy(EncounterSceneBinding binding, EnemyDefinition definition,
-        SpawnPoint point, TargetableComponent initialTarget, out EnemyController controller, out string result,
+    /// <summary>요청 수량을 선택한 지점에 나누고 기존 생성 요청을 지점별로 실행한다.</summary>
+    public static int SpawnTestEnemies(EncounterSceneBinding binding, EnemyDefinition definition,
+        IReadOnlyList<SpawnPoint> points, TargetableComponent initialTarget, int requestedCount,
+        out EnemyController controller, out string result,
         EnemyTargetRule targetRule = EnemyTargetRule.PlayerOrTurret)
     {
         var composition = RequireMatch(binding);
         var snapshot = composition.TacticalBattlefield;
         if (snapshot.MatchId != binding.BoundMatchId)
             throw new InvalidOperationException("현재 Match의 전장 Snapshot이 아닙니다.");
-        var context = new EncounterExecutionContext(binding.BoundMatchId, checked(++_individualSequence),
-            snapshot.Revision, EncounterRequestSource.DebugWindow, "IndividualTest",
-            environment: composition.EnvironmentSource?.Snapshot, requestGuid: Guid.NewGuid(),
-            spawnCancellation: composition.MatchCoordinator.GameplayCancellation);
-        return binding.ExecutionTarget.TrySpawnTestEnemy(definition, point, initialTarget, context,
-            out controller, out result, targetRule);
+
+        controller = null;
+        result = "등록된 몬스터와 출현 지점을 선택하고 수량을 1~500마리로 지정하세요.";
+        if (definition == null || points == null || points.Count == 0 || requestedCount < 1 || requestedCount > 500)
+            return 0;
+
+        var scene = binding.ExecutionTarget.gameObject.scene;
+        var pointIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (SpawnPoint point in points)
+        {
+            if (point == null || point.gameObject.scene != scene || !point.CanSpawnEnemies ||
+                string.IsNullOrWhiteSpace(point.SpawnPointId) || !pointIds.Add(point.SpawnPointId))
+            {
+                result = "현재 시험 씬에서 생성할 수 있는 서로 다른 출현 지점을 선택하세요.";
+                return 0;
+            }
+        }
+
+        if (initialTarget != null && definition.IsIncludedInAttackerLimit && initialTarget.MaxAttackers > 0)
+        {
+            int available = Math.Max(0, initialTarget.MaxAttackers - initialTarget.AssignedAttackerCount);
+            if (requestedCount > available)
+            {
+                result = $"초기 타깃 {initialTarget.name}에 {available}마리까지 추가 배정할 수 있습니다. 요청: {requestedCount}마리.";
+                return 0;
+            }
+        }
+
+        var details = new StringBuilder();
+        var spawnPlan = new List<(SpawnPoint Point, TargetableComponent Target)>();
+        if (points.Count == 1)
+            spawnPlan.Add((points[0], initialTarget));
+        else
+        {
+            IReadOnlyList<TargetableComponent> candidates = initialTarget != null
+                ? new[] { initialTarget }
+                : scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<TargetableComponent>())
+                    .ToArray();
+
+            foreach (SpawnPoint point in points)
+            {
+                var reachableTarget = binding.ExecutionTarget.FindReachableTestTarget(definition, point, candidates, targetRule);
+                if (reachableTarget != null)
+                    spawnPlan.Add((point, reachableTarget));
+                else
+                    details.AppendLine().Append($"{point.name}: 도달 가능한 타깃이 없어 제외");
+            }
+
+            if (spawnPlan.Count < 2)
+            {
+                result = $"타깃에 도달 가능한 출현 지점이 {spawnPlan.Count}곳입니다. 두 곳 이상 선택하세요.";
+                if (initialTarget != null)
+                    result += " 초기 타깃을 비우면 지점마다 도달 가능한 타깃을 찾습니다.";
+                result += details.ToString();
+                return 0;
+            }
+        }
+
+        int perPoint = requestedCount / spawnPlan.Count;
+        int remainder = requestedCount % spawnPlan.Count;
+        int totalSpawned = 0;
+        bool interrupted = false;
+        for (int i = 0; i < spawnPlan.Count && !interrupted; i++)
+        {
+            int pointCount = perPoint + (i < remainder ? 1 : 0);
+            if (pointCount == 0)
+                continue;
+
+            var (point, target) = spawnPlan[i];
+            int pointSpawned = 0;
+            string lastFailure = null;
+            for (int remaining = pointCount; remaining > 0; remaining -= TestSpawnBatchSize)
+            {
+                int batchCount = Math.Min(remaining, TestSpawnBatchSize);
+                var context = new EncounterExecutionContext(binding.BoundMatchId, checked(++_individualSequence),
+                    snapshot.Revision, EncounterRequestSource.DebugWindow, "IndividualTest",
+                    environment: composition.EnvironmentSource?.Snapshot, requestGuid: Guid.NewGuid(),
+                    spawnCancellation: composition.MatchCoordinator.GameplayCancellation);
+                try
+                {
+                    int spawned = binding.ExecutionTarget.SpawnTestEnemies(definition, point, target, context, batchCount,
+                        out EnemyController first, out string message, targetRule);
+                    if (controller == null)
+                        controller = first;
+                    pointSpawned += spawned;
+                    if (spawned < batchCount)
+                        lastFailure = message;
+                }
+                catch (Exception error)
+                {
+                    Debug.LogException(error);
+                    lastFailure = $"생성 중단: {error.Message}";
+                    interrupted = true;
+                    break;
+                }
+            }
+
+            totalSpawned += pointSpawned;
+            string targetName = target != null ? target.name : "분대 자동 선택";
+            details.AppendLine().Append($"{point.name}: {pointSpawned}/{pointCount}마리 · 타깃 {targetName}");
+            if (lastFailure != null)
+                details.AppendLine().Append(lastFailure);
+        }
+
+        result = $"{definition.EnemyId} {totalSpawned}/{requestedCount}마리 생성{details}";
+        return totalSpawned;
     }
 }

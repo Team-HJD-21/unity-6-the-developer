@@ -13,11 +13,12 @@ public static class EnemySpawnPlacementPolicy
 {
     /// <summary>일반 SpawnPoint도 반경 안의 NavMesh 위치만 사용합니다. 물·장애물 쪽 추첨은 최대 16회 안에서 재시도합니다.</summary>
     public static bool TryResolvePoint(SpawnPoint point, IRandomSource random, BattlefieldSpatialSnapshot battlefield,
-        out Vector3 position, out string reason)
+        out Vector3 position, out string reason, int agentTypeId = 0, int areaMask = NavMesh.AllAreas)
     {
         position = default;
         reason = "No valid NavMesh location inside the SpawnPoint radius after 16 attempts.";
         if (point == null || !point.CanSpawnEnemies || (random != null && !random.IsAvailable)) return false;
+        var filter = new NavMeshQueryFilter { agentTypeID = agentTypeId, areaMask = areaMask };
         for (int attempt = 0; attempt < 16; attempt++)
         {
             var sample = random?.InsideUnitCircle();
@@ -25,7 +26,7 @@ public static class EnemySpawnPlacementPolicy
             Vector2 offset = sample.HasValue ? new Vector2((float)sample.Value.X, (float)sample.Value.Y)
                 : UnityEngine.Random.insideUnitCircle;
             Vector3 candidate = point.Position + (Vector3)(offset * point.SpawnRadius);
-            if (!NavMesh.SamplePosition(new Vector3(candidate.x, candidate.y, 0), out var hit, .5f, NavMesh.AllAreas)) continue;
+            if (!NavMesh.SamplePosition(new Vector3(candidate.x, candidate.y, 0), out var hit, .5f, filter)) continue;
             if (Vector2.Distance(hit.position, point.Position) > point.SpawnRadius + .001f) continue;
             var xy = new BattlefieldPoint(hit.position.x, hit.position.y);
             if (battlefield != null && !battlefield.Grid.Configuration.TryMapPoint(xy, out _, out _)) continue;
@@ -40,17 +41,18 @@ public static class EnemySpawnPlacementPolicy
     /// 요청 영역 안에서 제한된 횟수만 시도해 점유와 NavMesh 조건을 만족하는 위치를 찾는다.
     /// </summary>
     public static bool TryResolve(SpawnArea area, BattlefieldSpatialSnapshot battlefield, IRandomSource random,
-        out Vector3 position, out string reason)
+        out Vector3 position, out string reason, int agentTypeId = 0, int areaMask = NavMesh.AllAreas)
     {
         position = default; reason = "No valid location inside the requested area/grid/NavMesh after 16 attempts.";
         if (area == null || battlefield == null || random == null || Math.Abs(area.VisualZ) > float.MaxValue) return false;
+        var filter = new NavMeshQueryFilter { agentTypeID = agentTypeId, areaMask = areaMask };
         for (int attempt = 0; attempt < 16; attempt++)
         {
             double x = area.Center.X + (random.NextDouble() - .5) * area.Width;
             double y = area.Center.Y + (random.NextDouble() - .5) * area.Height;
             if (Math.Abs(x) > float.MaxValue || Math.Abs(y) > float.MaxValue) continue;
             // 기존 Enemy 길찾기와 동일한 Unity 2D XY NavMesh 표현을 사용합니다.
-            if (!NavMesh.SamplePosition(new Vector3((float)x, (float)y, 0), out var hit, .5f, NavMesh.AllAreas)) continue;
+            if (!NavMesh.SamplePosition(new Vector3((float)x, (float)y, 0), out var hit, .5f, filter)) continue;
             if (Math.Abs(hit.position.x - area.Center.X) > area.Width / 2 + .001 ||
                 Math.Abs(hit.position.y - area.Center.Y) > area.Height / 2 + .001) continue;
             var xy = new BattlefieldPoint(hit.position.x, hit.position.y);

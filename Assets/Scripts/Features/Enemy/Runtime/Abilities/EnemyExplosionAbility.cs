@@ -192,7 +192,7 @@ public sealed partial class EnemyExplosionAbility : EnemyAbility
 
         // 피해 수신자의 원본 계약만 사용합니다. Player 전용 분기를 두지 않습니다.
         IDamageableTarget damageable = targetTransform.GetComponentInParent<IDamageableTarget>();
-        damageable?.ApplyDamage(explosionDamage);
+        EnemyDamage.TryApply(damageable, explosionDamage);
     }
 
     /// <summary>

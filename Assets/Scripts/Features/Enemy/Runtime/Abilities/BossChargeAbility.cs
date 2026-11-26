@@ -24,6 +24,8 @@ public sealed class BossChargeAbility : EnemyAbility
     [SerializeField] private LayerMask blockingLayers;
 
     private readonly RaycastHit2D[] _castHits = new RaycastHit2D[8];
+    private EnemyMovement _movement;
+    private NavMeshQueryFilter? _chargeNavigationFilter;
     private ContactFilter2D _blockingFilter;
     private ChargeState _state;
     private Vector2 _direction;
@@ -42,6 +44,7 @@ public sealed class BossChargeAbility : EnemyAbility
     {
         base.Awake();
         if (body == null) body = GetComponent<Rigidbody2D>();
+        _movement = GetComponent<EnemyMovement>();
         if (enemyTargeting == null) enemyTargeting = GetComponent<EnemyTargeting>();
         if (enemyAnimation == null) enemyAnimation = GetComponent<EnemyAnimation>();
         if (skillView == null) skillView = GetComponent<BossSkillNetworkView>();
@@ -70,9 +73,9 @@ public sealed class BossChargeAbility : EnemyAbility
         if (_state == ChargeState.Charging)
         {
             float distance = chargeSpeed * Time.fixedDeltaTime;
-            bool blocked = !NavMesh.SamplePosition(new Vector3(body.position.x, body.position.y, 0), out var start, .3f, NavMesh.AllAreas) ||
-                NavMesh.Raycast(start.position, start.position + (Vector3)(_direction * (distance + .05f)), out _, NavMesh.AllAreas) ||
-                footCollider.Cast(_direction, _blockingFilter, _castHits, distance + .05f) > 0;
+            float clearance = distance + .05f;
+            bool blocked = IsNavMeshBlocked(_direction * clearance) ||
+                footCollider.Cast(_direction, _blockingFilter, _castHits, clearance) > 0;
             if (blocked || now >= _stateEndsAt || (body.position - _origin).sqrMagnitude >= maxDistance * maxDistance || IsInStoppingRange)
             {
                 BeginRecovery();
@@ -90,14 +93,14 @@ public sealed class BossChargeAbility : EnemyAbility
             if (now < _stateEndsAt) return;
             if (_remainingCharges > 0 && CheckCondition() && !IsInStoppingRange)
                 BeginWindup(followupWindupDuration);
-            else _isExecuting = false;
+            else FinishCharge();
         }
     }
 
     private void OnDisable()
     {
         if (_isExecuting && body != null) body.linearVelocity = Vector2.zero;
-        _isExecuting = false;
+        FinishCharge();
         if (skillView != null) skillView.HideChargeWarning();
     }
 
@@ -106,7 +109,8 @@ public sealed class BossChargeAbility : EnemyAbility
         if (!_isExecuting) _chargeCount = Mathf.Clamp(count, 1, 2);
     }
 
-    public override bool CheckCondition() => body != null && body.simulated && body.bodyType == RigidbodyType2D.Dynamic &&
+    public override bool CheckCondition() => body != null && body.simulated &&
+        (body.bodyType == RigidbodyType2D.Dynamic || _movement?.CanHandMovementToPhysics(body) == true) &&
         (body.constraints & RigidbodyConstraints2D.FreezePosition) == 0 && footCollider != null && footCollider.enabled &&
         enemyTargeting != null && enemyTargeting.TargetComponent != null && enemyTargeting.TargetComponent.CanBeTargeted &&
         enemyAnimation != null && skillView != null && skillView.IsSpawned && skillView.IsChargeConfigured;
@@ -116,10 +120,33 @@ public sealed class BossChargeAbility : EnemyAbility
     protected override bool Activate()
     {
         if (!CheckCondition()) return false;
+        _chargeNavigationFilter = _movement != null && _movement.UsesNavMeshAgent
+            ? _movement.GetNavigationFilter(gameObject.scene)
+            : null;
+        _movement?.BeginPhysicsMovement(body);
         _isExecuting = true;
         _remainingCharges = _chargeCount;
         BeginWindup(windupDuration);
         return true;
+    }
+
+    private bool IsNavMeshBlocked(Vector2 offset)
+    {
+        Vector3 position = body.position;
+        if (_chargeNavigationFilter is NavMeshQueryFilter filter)
+        {
+            return !NavMesh.SamplePosition(position, out var origin, .3f, filter) ||
+                   NavMesh.Raycast(origin.position, origin.position + (Vector3)offset, out _, filter);
+        }
+
+        return !NavMesh.SamplePosition(position, out var start, .3f, NavMesh.AllAreas) ||
+               NavMesh.Raycast(start.position, start.position + (Vector3)offset, out _, NavMesh.AllAreas);
+    }
+
+    private void FinishCharge()
+    {
+        _isExecuting = false;
+        _movement?.EndPhysicsMovement();
     }
 
     private void BeginWindup(float duration)

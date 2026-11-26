@@ -212,6 +212,7 @@ public sealed class PlayerHoverFieldFeedback : MonoBehaviour
                 map.SetTileFlags(cell, sway.Flags & ~TileFlags.LockColor);
                 var hidden = sway.Color; hidden.a = 0; map.SetColor(cell, hidden);
                 display.enabled = true;
+                TreeLeafBurstFx.Emit(this, display, map.transform.localToWorldMatrix * sway.Matrix);
             }
         }
         AdvanceEffects(0);
@@ -236,6 +237,7 @@ public sealed class PlayerHoverFieldFeedback : MonoBehaviour
 
     private void Clear()
     {
+        GetComponent<TreeLeafBurstFx>()?.Clear();
         if (_sways != null) for (int i = 0; i < _sways.Length; i++) Release(i);
         if (_dustDisplays != null) foreach (var display in _dustDisplays) if (display != null) display.enabled = false;
         _hasPrevious = false; _distance = 0; _scanRemaining = 0;

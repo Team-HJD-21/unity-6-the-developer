@@ -276,6 +276,14 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: 0.029071655
       objectReference: {fileID: 0}
+    - target: {fileID: 8381466863970153817, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8381466863970153817, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
+      propertyPath: m_ObstacleAvoidanceType
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 8401517776006304657, guid: 0df03b7363f2f4e45836934de23ca230, type: 3}
       propertyPath: m_Size.x
       value: 1.28

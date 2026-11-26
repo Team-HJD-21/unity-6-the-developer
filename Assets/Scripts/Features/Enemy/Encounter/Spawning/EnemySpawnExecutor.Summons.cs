@@ -47,12 +47,13 @@ public partial class EnemySpawnExecutor
         int actual = 0;
         bool countsKnown = true;
         string reason = "";
+        var spawnFilter = GetAgentSpawnFilter(definition);
         try
         {
             foreach (var position in positions)
             {
                 if (context.SpawnCancellation.IsCancellationRequested || !CanSimulateField) break;
-                if (!TryResolveSummonPosition(position, out var resolved))
+                if (!TryResolveSummonPosition(position, out var resolved, spawnFilter))
                 {
                     reason = "Requested summon location has no nearby NavMesh surface.";
                     continue;
@@ -79,11 +80,11 @@ public partial class EnemySpawnExecutor
         }
     }
 
-    internal static bool TryResolveSummonPosition(Vector3 requested, out Vector3 resolved)
+    internal static bool TryResolveSummonPosition(Vector3 requested, out Vector3 resolved, NavMeshQueryFilter? filter = null)
     {
         resolved = default;
         if (!float.IsFinite(requested.x) || !float.IsFinite(requested.y) || !float.IsFinite(requested.z) ||
-            !NavMesh.SamplePosition(new Vector3(requested.x, requested.y, 0), out var hit, .5f, NavMesh.AllAreas))
+            !TrySampleAuthoredNavMesh(requested, filter, out var hit))
             return false;
         resolved = new Vector3(hit.position.x, hit.position.y, requested.z);
         return true;
