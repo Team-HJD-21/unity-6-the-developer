@@ -48,7 +48,7 @@ namespace TeamHJD.Game.Tests.EditMode
             _scenes = new FakeSceneFlow();
             _object = new GameObject("Mission recovery IO test");
             _app = _object.AddComponent<AppRoot>();
-            _app.Initialize(new AppServices(new FakeContentCatalog(),
+            _app.Initialize(new AppServices(
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")), _scenes,
                 checkpointStore: _store, checkpointPayloads: new BinaryCheckpointPayloadCodec()));
         }

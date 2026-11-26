@@ -22,7 +22,7 @@ namespace TeamHJD.Game.Tests.EditMode
             var root = owner.AddComponent<AppRoot>();
             var scenes = new ProbeScenes { FailOnDispose = failSceneFlow };
             var network = new ProbeNetwork();
-            var services = new AppServices(new FakeContentCatalog(),
+            var services = new AppServices(
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
                 scenes, network);
             root.Initialize(services);

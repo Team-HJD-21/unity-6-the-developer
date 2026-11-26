@@ -86,7 +86,7 @@ Player adapter와 Scene은 해제 콜백 전에 이전 소유/입력 참조를 �
 
 `IProfileService`는 추후 Backend 프로필 연동을 위한 계약이다. 실제 플레이어 성장과 토큰은 현재 [성장 저장 API](growth-save-api.md)의 로컬 저장 경로를 사용한다. Backend를 연결할 때 `LoadAsync(playerId, cancellationToken)`과 `SaveAsync(profile, cancellationToken)`의 호출자는 Scene·화면·App 수명에 맞춰 취소 토큰을 소유한다. 화면이 닫혔거나 Match가 바뀐 뒤 완료된 응답은 버린다. 조회 결과가 없는 경우와 통신 오류를 구분한다.
 
-Bootstrap은 `UnitySceneFlow`와 `BinaryCheckpointStore`를 구성한다. 플랫폼은 Steam 설정에 따라 `SteamPlatformService` 또는 개발용 `FakePlatformService`를 선택한다. ContentCatalog 에셋이 없으면 개발용 카탈로그로 동작한다. Backend 프로필 어댑터는 추후 실제 조회·저장 기능을 조립할 때 추가한다.
+Bootstrap은 `UnitySceneFlow`와 `BinaryCheckpointStore`를 구성한다. 플랫폼은 Steam 설정에 따라 `SteamPlatformService` 또는 개발용 `FakePlatformService`를 선택한다. 현재 Match 설정은 Scene 조립부의 참가자와 Stage 설정에서 구성한다. Backend 프로필 어댑터는 추후 실제 조회·저장 기능을 조립할 때 추가한다.
 
 ## 현재 Network 경계
 

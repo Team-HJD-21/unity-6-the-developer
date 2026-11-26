@@ -5,7 +5,6 @@
     "TeamHJD.Game.Bootstrap",
     "TeamHJD.Game.Editor",
     "TeamHJD.Game.Application",
-    "TeamHJD.Game.Content.Runtime",
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
     "TeamHJD.Game.Infrastructure.Fakes",

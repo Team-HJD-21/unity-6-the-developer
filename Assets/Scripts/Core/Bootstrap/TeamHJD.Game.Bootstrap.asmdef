@@ -4,7 +4,6 @@
   "references": [
     "TeamHJD.Game.Application",
     "TeamHJD.Game.Content.Authoring",
-    "TeamHJD.Game.Content.Runtime",
     "TeamHJD.Game.Contracts",
     "TeamHJD.Game.Domain",
     "TeamHJD.Game.Infrastructure",

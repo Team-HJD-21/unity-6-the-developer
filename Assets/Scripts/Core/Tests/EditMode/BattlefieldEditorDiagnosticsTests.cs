@@ -25,7 +25,7 @@ namespace TeamHJD.Game.Tests.EditMode
             _displayBefore = JsonUtility.ToJson(BattlefieldDebugSession.Display);
             _rootObject = new GameObject("Editor Diagnostic Test");
             _root = _rootObject.AddComponent<AppRoot>();
-            _root.Initialize(new AppServices(new FakeContentCatalog(),
+            _root.Initialize(new AppServices(
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
                 new FakeSceneFlow()));
             var id = new MatchId("diagnostic-test");
