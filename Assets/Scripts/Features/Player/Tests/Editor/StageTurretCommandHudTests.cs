@@ -736,6 +736,11 @@ public sealed class StageTurretCommandHudTests
             var previousSelection = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
             app.Screens.ShowMenu();
             var menuView = Object.FindObjectsByType<TeamHJD.Game.Presentation.AppPanelView>(FindObjectsSortMode.None).First(v => v.name == "Screen:Menu");
+            Assert.That(menuView.Secondary.gameObject.activeSelf, Is.False, "일반 Pause 메뉴에서는 우주선 귀환을 숨깁니다.");
+            Assert.That(menuView.Secondary.interactable, Is.False);
+            Assert.That(menuView.Settings.navigation.selectOnDown, Is.Not.SameAs(menuView.Secondary));
+            menuView.Secondary.onClick.Invoke();
+            Assert.That(app.Screens.Top.Kind, Is.EqualTo(ScreenKind.Menu), "숨겨진 버튼의 이벤트가 씬 이동을 시작하면 안 됩니다.");
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(menuView.Settings.gameObject);
             app.Screens.ShowSettings();
             // TestRunner can resume before this frame's LateUpdate, which projects the screen stack.
