@@ -69,6 +69,23 @@ public sealed class FieldTerritoryTests
     }
 
     [Test]
+    public void MapUnlockBoundarySeparatesEligibleUncapturedLandOnly()
+    {
+        var geometry = new BattlefieldGridConfiguration(new BattlefieldPoint(100, -20), 0, 60, 20, 3, 2);
+        var definition = new RegionGridDefinition(geometry, new[] { 1, 2, 2, 2, 2, 1 },
+            new[] { true, true, false, true, true, true });
+        var snapshot = RegionGridSnapshot.FromCapturedCells(new MatchId("unlock-boundary"), Guid.NewGuid(), 1,
+            RegionPolicyMode.Static, definition, new[] { 5 }, new[] { 1 });
+
+        var edges = RegionBoundaryGeometry.BuildUnlockBoundary(snapshot);
+        Assert.That(edges.Select(edge => (edge.Start, edge.End)), Is.EquivalentTo(new[]
+        {
+            (new Vector2(90, -30), new Vector2(90, -20)),
+            (new Vector2(70, -20), new Vector2(90, -20))
+        }));
+    }
+
+    [Test]
     public void AuthoredGroundMaterialAndSortingLayerKeepTerrainBelowAndWorldObjectsAbove()
     {
         Assert.That(SortingLayer.NameToID(FieldTerritoryRenderer.SortingLayerName), Is.Not.EqualTo(0));

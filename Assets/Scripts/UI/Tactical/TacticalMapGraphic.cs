@@ -23,6 +23,7 @@ public sealed class TacticalMapGraphic : MaskableGraphic
     private VertexHelper _mesh;
     private RegionGridSnapshot _boundarySnapshot;
     private IReadOnlyList<RegionBoundarySegment> _boundary = Array.Empty<RegionBoundarySegment>();
+    private IReadOnlyList<RegionBoundarySegment> _unlockBoundary = Array.Empty<RegionBoundarySegment>();
     public override Texture mainTexture =>
         Field && _hoverRangeSprite != null ? _hoverRangeSprite.texture : base.mainTexture;
 
@@ -115,8 +116,13 @@ public sealed class TacticalMapGraphic : MaskableGraphic
                 !ReferenceEquals(_boundarySnapshot.Definition, regions.Definition))
             {
                 _boundary = RegionBoundaryGeometry.Build(regions);
+                _unlockBoundary = RegionBoundaryGeometry.BuildUnlockBoundary(regions);
                 _boundarySnapshot = regions;
             }
+            Color unlockColor = owner.Style.Territory;
+            unlockColor.a *= .65f;
+            foreach (var edge in _unlockBoundary)
+                Line(Project(edge.Start), Project(edge.End), Overview ? .65f : .8f, unlockColor);
             // Field와 전체도 모두 동일한 확정 셀 외곽 좌표를 그대로 투영합니다.
             foreach (var edge in _boundary)
                 Line(Project(edge.Start), Project(edge.End), Overview ? .8f : 1.1f, owner.Style.Territory);
