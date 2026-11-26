@@ -1,6 +1,5 @@
 import hashlib
 import json
-import os
 import re
 import subprocess
 
@@ -120,6 +119,4 @@ def release_merged_locks(api):
 
 
 if __name__ == "__main__":
-    if os.environ.get("LOCKS_CONFIGURED") != "true":
-        raise SystemExit("UNITY_ASSET_LOCKS_TOKEN is missing. No locks released.")
     release_merged_locks(GitLfsLocks())
