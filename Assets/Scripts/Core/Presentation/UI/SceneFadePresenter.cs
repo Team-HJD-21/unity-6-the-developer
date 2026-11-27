@@ -40,9 +40,13 @@ namespace TeamHJD.Game.Presentation
 
         /// <summary>Core 이동 조율자가 호출합니다. 이동 함수는 화면이 완전히 검어졌을 때만 실행합니다.</summary>
         public async Task RunAsync(Func<Task> move, CancellationToken cancellation)
+            => await RunAsync(move, cancellation, PhaseSeconds);
+
+        public async Task RunAsync(Func<Task> move, CancellationToken cancellation, double phaseSeconds)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(SceneFadePresenter));
             if (move == null) throw new ArgumentNullException(nameof(move));
+            if (phaseSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(phaseSeconds));
             if (IsVisible) throw new InvalidOperationException("A Scene fade is already running.");
             cancellation.ThrowIfCancellationRequested();
             IsVisible = true;
@@ -50,8 +54,8 @@ namespace TeamHJD.Game.Presentation
             KeepOnTop();
             try
             {
-                await BlendAsync(0, 1, cancellation);
-                double coveredUntil = Time.realtimeSinceStartupAsDouble + PhaseSeconds;
+                await BlendAsync(0, 1, phaseSeconds, cancellation);
+                double coveredUntil = Time.realtimeSinceStartupAsDouble + phaseSeconds;
                 try { await move(); }
                 finally
                 {
@@ -59,7 +63,7 @@ namespace TeamHJD.Game.Presentation
                         await Awaitable.NextFrameAsync(cancellation);
                     // 도착 Camera의 LateUpdate/렌더 준비도 완전 암전 안에서 끝냅니다.
                     await Awaitable.NextFrameAsync(cancellation);
-                    await BlendAsync(1, 0, cancellation);
+                    await BlendAsync(1, 0, phaseSeconds, cancellation);
                 }
             }
             finally
@@ -78,14 +82,14 @@ namespace TeamHJD.Game.Presentation
             if (!_disposed && IsVisible) _overlay.transform.SetAsLastSibling();
         }
 
-        private async Task BlendAsync(float from, float to, CancellationToken cancellation)
+        private async Task BlendAsync(float from, float to, double duration, CancellationToken cancellation)
         {
             double start = Time.realtimeSinceStartupAsDouble;
             _group.alpha = from;
-            while (Time.realtimeSinceStartupAsDouble - start < PhaseSeconds)
+            while (Time.realtimeSinceStartupAsDouble - start < duration)
             {
                 cancellation.ThrowIfCancellationRequested();
-                _group.alpha = Mathf.Lerp(from, to, (float)((Time.realtimeSinceStartupAsDouble - start) / PhaseSeconds));
+                _group.alpha = Mathf.Lerp(from, to, (float)((Time.realtimeSinceStartupAsDouble - start) / duration));
                 await Awaitable.NextFrameAsync(cancellation);
             }
             _group.alpha = to;

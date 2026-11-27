@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using TeamHJD.Game.Bootstrap.SceneComposition;
+using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public class SpaceshipRoomDoor : MonoBehaviour
@@ -46,94 +46,74 @@ public class SpaceshipRoomDoor : MonoBehaviour
     {
         string room = roomOnRight ? rightSceneName : leftRoomSceneName;
         Scene spaceship = gameObject.scene;
-        await FadeRoomAsync(async () =>
+        bool roomWasLoaded = SceneManager.GetSceneByName(room).isLoaded;
+        await FadeRoomScreenAsync(async () =>
         {
-            await LoadRoomAsync(room);
-            Scene destination = SceneManager.GetSceneByName(room);
-            if (!destination.isLoaded)
-                throw new InvalidOperationException("로드된 방 Scene을 찾을 수 없습니다: " + room);
-
-            Transform returnDoor = null;
-            foreach (GameObject root in destination.GetRootGameObjects())
+            bool hubTransferred = false;
+            try
             {
-                if (root.name != "ToSpaceshipDoor") continue;
-                returnDoor = root.transform;
-                break;
-            }
-            if (returnDoor == null)
-                throw new InvalidOperationException("방의 ToSpaceshipDoor를 찾을 수 없습니다: " + room);
+                await LoadRoomAsync(room);
+                Scene destination = SceneManager.GetSceneByName(room);
+                if (!destination.isLoaded)
+                    throw new InvalidOperationException("로드된 방 Scene을 찾을 수 없습니다: " + room);
 
-            GameObject hubRoot = null;
-            foreach (GameObject root in spaceship.GetRootGameObjects())
+                Transform returnDoor = FindDoor(destination, "ToSpaceshipDoor");
+                if (returnDoor == null)
+                    throw new InvalidOperationException("방의 ToSpaceshipDoor를 찾을 수 없습니다: " + room);
+
+                GameObject hubRoot = null;
+                foreach (GameObject root in spaceship.GetRootGameObjects())
+                {
+                    if (!root.TryGetComponent<SpaceshipHubCompositionRoot>(out _)) continue;
+                    hubRoot = root;
+                    break;
+                }
+                if (hubRoot == null && playerBody != null && playerBody.gameObject.scene == spaceship)
+                    throw new InvalidOperationException("Player를 소유한 우주선 Hub를 찾지 못해 Scene을 언로드할 수 없습니다.");
+
+                float arrivalX = returnDoor.position.x + (roomOnRight ? 0.3f : -0.3f);
+                playerBody.position = new Vector2(arrivalX, returnDoor.position.y);
+                Physics2D.SyncTransforms();
+
+                if (hubRoot != null)
+                {
+                    SceneManager.MoveGameObjectToScene(hubRoot, destination);
+                    hubTransferred = true;
+                }
+
+                AsyncOperation unload = SceneManager.UnloadSceneAsync(spaceship);
+                if (unload == null) throw new InvalidOperationException("우주선 Scene 언로드를 시작하지 못했습니다.");
+                while (!unload.isDone) await Task.Yield();
+            }
+            catch
             {
-                if (!root.TryGetComponent<SpaceshipHubCompositionRoot>(out _)) continue;
-                hubRoot = root;
-                break;
+                if (!roomWasLoaded && !hubTransferred && SceneManager.GetSceneByName(room).isLoaded)
+                {
+                    try { await UnLoadRoomAsync(room); }
+                    catch (Exception cleanupError) { Debug.LogException(cleanupError, this); }
+                }
+                throw;
             }
-            if (hubRoot == null && playerBody != null && playerBody.gameObject.scene == spaceship)
-                throw new InvalidOperationException("Player를 소유한 우주선 Hub를 찾지 못해 Scene을 언로드할 수 없습니다.");
-
-            float arrivalX = returnDoor.position.x + (roomOnRight ? 0.3f : -0.3f);
-            playerBody.position = new Vector2(arrivalX, playerBody.position.y);
-            Physics2D.SyncTransforms();
-
-            if (hubRoot != null) SceneManager.MoveGameObjectToScene(hubRoot, destination);
-
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(spaceship);
-            if (unload == null) throw new InvalidOperationException("우주선 Scene 언로드를 시작하지 못했습니다.");
-            while (!unload.isDone) await Task.Yield();
         }, blackoutSeconds);
     }
 
-    public static async Task FadeRoomAsync(Func<Task> changeScene, float blackoutSeconds)
+    private static Transform FindDoor(Scene scene, string doorName)
     {
-        var fadeObject = new GameObject("Room Transition Fade", typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup));
-        UnityEngine.Object.DontDestroyOnLoad(fadeObject);
-        Canvas canvas = fadeObject.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = short.MaxValue;
-        CanvasGroup group = fadeObject.GetComponent<CanvasGroup>();
-        group.alpha = 0f;
-
-        var imageObject = new GameObject("Blackout", typeof(RectTransform), typeof(Image));
-        imageObject.transform.SetParent(fadeObject.transform, false);
-        RectTransform rect = imageObject.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        imageObject.GetComponent<Image>().color = Color.black;
-
-        float halfDuration = blackoutSeconds * 0.5f;
-        try
+        foreach (GameObject root in scene.GetRootGameObjects())
         {
-            await FadeAlphaAsync(group, 0f, 1f, halfDuration);
-            try
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
             {
-                await changeScene();
-                await Awaitable.NextFrameAsync();
-            }
-            finally
-            {
-                await FadeAlphaAsync(group, 1f, 0f, halfDuration);
+                if (child.name == doorName) return child;
             }
         }
-        finally
-        {
-            if (fadeObject != null) UnityEngine.Object.Destroy(fadeObject);
-        }
+        return null;
     }
 
-    private static async Task FadeAlphaAsync(CanvasGroup group, float from, float to, float duration)
+    private async Task FadeRoomScreenAsync(Func<Task> changeScene, float blackoutSeconds)
     {
-        double start = Time.realtimeSinceStartupAsDouble;
-        group.alpha = from;
-        while (Time.realtimeSinceStartupAsDouble - start < duration)
-        {
-            group.alpha = Mathf.Lerp(from, to, (float)((Time.realtimeSinceStartupAsDouble - start) / duration));
-            await Awaitable.NextFrameAsync();
-        }
-        group.alpha = to;
+        AppRoot app = FindFirstObjectByType<AppRoot>();
+        if (app == null) throw new InvalidOperationException("Scene 암전을 위한 AppRoot가 없습니다.");
+        await app.FadeRoomScreenAsync(changeScene, blackoutSeconds);
     }
 
     public static async Task LoadRoomAsync(string sceneName)

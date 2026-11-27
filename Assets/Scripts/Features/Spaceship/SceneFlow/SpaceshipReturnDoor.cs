@@ -1,4 +1,6 @@
 using System;
+using TeamHJD.Game.Bootstrap;
+using TeamHJD.Game.Bootstrap.SceneComposition;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,18 +21,25 @@ public class SpaceshipReturnDoor : MonoBehaviour
         if (isReturning || SpaceshipRoomDoor.IsTransitioning || !IsPlayerBody(other)) return;
         Rigidbody2D playerBody = other.attachedRigidbody;
         if (playerBody == null) return;
+        SpaceshipHubCompositionRoot hub = playerBody.GetComponentInParent<SpaceshipHubCompositionRoot>();
+        if (hub == null || hub.transform.parent != null) return;
+        AppRoot app = FindFirstObjectByType<AppRoot>();
+        if (app == null) return;
 
         isReturning = true;
         Scene room = gameObject.scene;
         try
         {
+            app.PrepareRoomHubReturn(hub.gameObject, spaceshipSceneName);
             // 암전 중 우주선을 먼저 로드하고, 복귀 위치를 정한 뒤 현재 방을 언로드합니다.
-            await SpaceshipRoomDoor.FadeRoomAsync(async () =>
+            await app.FadeRoomScreenAsync(async () =>
             {
                 await SpaceshipRoomDoor.LoadRoomAsync(spaceshipSceneName);
                 Scene spaceship = SceneManager.GetSceneByName(spaceshipSceneName);
                 if (!spaceship.isLoaded)
                     throw new InvalidOperationException("우주선 Scene 로드가 완료되지 않았습니다: " + spaceshipSceneName);
+                if (hub.gameObject.scene != spaceship)
+                    throw new InvalidOperationException("복귀 요청의 Hub가 우주선 Scene으로 이동되지 않았습니다.");
 
                 // 출발한 방과 같은 쪽의 우주선 문을 찾습니다.
                 string doorName = roomOnRight ? "RightDoor" : "LeftDoor";
@@ -48,15 +57,16 @@ public class SpaceshipReturnDoor : MonoBehaviour
                 if (destinationDoor == null)
                     throw new InvalidOperationException("우주선 목적지 문을 찾을 수 없습니다: " + doorName);
 
-                // 문의 우주선 안쪽으로 0.3 이동시키고 Y 위치는 유지합니다.
+                // 문의 우주선 안쪽으로 0.3 이동시키고 문 높이에 맞춥니다.
                 float arrivalX = destinationDoor.position.x + (roomOnRight ? -0.3f : 0.3f);
-                playerBody.position = new Vector2(arrivalX, playerBody.position.y);
+                playerBody.position = new Vector2(arrivalX, destinationDoor.position.y);
                 Physics2D.SyncTransforms();
                 await SpaceshipRoomDoor.UnLoadRoomAsync(room.name);
             }, blackoutSeconds);
         }
         catch (Exception error)
         {
+            app.CancelRoomHubReturn(hub.gameObject);
             if (this != null)
             {
                 Debug.LogException(error, this);
