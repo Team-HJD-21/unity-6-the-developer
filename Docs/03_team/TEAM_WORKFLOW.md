@@ -1,6 +1,6 @@
 # Team Workflow — 팀 협업 규칙
 
-기준일: 2026-09-28
+기준일: 2026-11-27
 상태: Sprint·Git·Review·Ready/Done의 Source of Truth
 
 역할 경계는 [TEAM_ROLE_OWNERSHIP.md](TEAM_ROLE_OWNERSHIP.md), Milestone별 Priority 업무는 [milestones-and-core-design.md](../01_planning/milestones-and-core-design.md)를 따른다.
@@ -12,6 +12,14 @@
 - 정기회의: 토요일 1시~3시 반.
 
 시각은 수기 원문 표기다. 전사 말미는 다음 주부터 화요일 11시를 확인했고 2시 질문을 정정했다. 양현석은 황재동에게 캘린더 등록을 요청했으나 완료는 미확인이다. 다음 주 목요일 대면/CU 논의와 금요일·토요일 운영표의 관계, 오전·오후와 정확한 시작·종료일은 별도 확인하며 임의로 캘린더 일정을 생성하지 않는다. 새로운 Sprint 번호나 Milestone 마감일 변경으로 해석하지 않는다. [회의 검토 기록](../01_planning/01_meetings/2026/10/2026-10-24-regular-meeting.md)
+
+## 11/27 작업 관리와 제출 품질
+
+- 작업 항목과 진행·PR 상태는 팀 명세서를 기준으로 갱신한다. 다른 팀원이 이해할 수 있도록 담당자가 내용을 확인하고 작성한다.
+- PR 제출 전 실제 플레이를 여러 차례 테스트하고 확인한 조건과 결과를 남긴다. AI 코드 생성과 별도로 담당자가 직접 동작을 확인한다.
+- 폴리싱은 기본 작업에 포함한다. 타격감·시각적 완성도를 직접 구현하고 피드백으로 조정하며 급한 작업은 예외적으로 조율한다.
+
+[11/27 기획 보강회의 근거](../99_archive/2026-11-27/planning-review.md)
 
 ## 1. PL 운영 원칙
 
@@ -178,7 +186,7 @@ Blocker: 필요한 결정·사람·선행 작업
 - 필수 CI 성공
 - 영향이 큰 변경은 요청된 Review 의견 해결
 - 필요한 Docs/Definition/Decision Log 갱신
-- Issue/PR에 Build, Test, Screenshot, Log 중 필요한 증거 첨부
+- 명세서 항목·PR에 Build, Test, Screenshot, Log 중 필요한 증거 첨부
 
 ## 10. 변경 관리
 
