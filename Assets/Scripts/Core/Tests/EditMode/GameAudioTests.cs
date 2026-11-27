@@ -134,16 +134,19 @@ namespace TeamHJD.Game.Tests.EditMode
             nearby.position = player.position + new Vector3(6, 0, 0);
             var distant = new GameObject("Distant turret").transform;
             distant.position = map.position;
+            var replacement = new GameObject("Replacement turret").transform;
 
             var profile = ScriptableObject.CreateInstance<SoundClassProfile>();
             profile.Bus = GameAudioBus.Turret;
             profile.WorldSpace = true;
             profile.MinimumDistance = 2;
             profile.MaximumDistance = 24;
+            profile.MaximumVoices = 2;
             profile.RetriggerSeconds = 0;
             var cue = ScriptableObject.CreateInstance<GameAudioCue>();
             cue.Class = profile;
             cue.Loop = true;
+            cue.MaximumInstances = 2;
             const int frequency = 44100;
             var tone = new float[frequency];
             for (int i = 0; i < tone.Length; i++) tone[i] = .05f * Mathf.Sin(2 * Mathf.PI * 440 * i / frequency);
@@ -188,13 +191,28 @@ namespace TeamHJD.Game.Tests.EditMode
                     Debug.Log($"Field audio QA peak · 6u {originalPeak:F5} · panned 6u {pannedPeak:F5} · 16u {distantPeak:F5}");
                     voice.Stop();
                     yield return new WaitForSecondsRealtime(.1f);
-                    Assert.That(manager.TryPlay(cue, nearby, nearby.position, out _), Is.True);
+                    Assert.That(voice.IsActive, Is.False);
+
+                    // 카메라 쪽에 가까운 동쪽 음원이 플레이어를 기준으로는 더 멉니다.
+                    cue.Loop = false;
+                    map.position = player.position + Vector3.right * 100;
+                    nearby.position = player.position - Vector3.right * 4;
+                    distant.position = player.position + Vector3.right * 16;
+                    replacement.position = player.position + Vector3.right * 8;
+                    yield return null;
+                    Assert.That((Vector2)output.transform.position, Is.EqualTo((Vector2)map.position));
+                    Assert.That(manager.TryPlay(cue, nearby, nearby.position, out var nearVoice), Is.True);
+                    Assert.That(manager.TryPlay(cue, distant, distant.position, out var farVoice), Is.True);
+                    Assert.That(manager.TryPlay(cue, replacement, replacement.position, out var replacementVoice), Is.True);
+                    Assert.That(nearVoice.IsActive, Is.True);
+                    Assert.That(farVoice.IsActive, Is.False, "The far voice must be selected using the player's position.");
+                    Assert.That(replacementVoice.IsActive, Is.True);
                 }
             }
             finally
             {
                 manager.Shutdown();
-                foreach (var item in new[] { manager.gameObject, output, player.gameObject, map.gameObject, nearby.gameObject, distant.gameObject })
+                foreach (var item in new[] { manager.gameObject, output, player.gameObject, map.gameObject, nearby.gameObject, distant.gameObject, replacement.gameObject })
                     Object.Destroy(item);
                 Object.Destroy(cue.Clips[0]); Object.Destroy(cue); Object.Destroy(profile); Object.Destroy(config);
             }
