@@ -14,6 +14,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using EntityId = TeamHJD.Game.Domain.EntityId;
 
 namespace TeamHJD.Game.Tests.EditMode
 {
@@ -94,6 +95,48 @@ namespace TeamHJD.Game.Tests.EditMode
         }
 
         [Test]
+        public void StaticCaptureRetainsBothOutcomesWhenSecuringAndLosingOnTheSameTick()
+        {
+            var grid = _binding.Source.Snapshot.Definition.Geometry;
+            var regionIds = Enumerable.Range(0, grid.TotalCellCount)
+                .Select(cell => Math.Max(1, cell % grid.CellsX)).ToArray();
+            var definition = new RegionGridDefinition(grid, regionIds);
+            _binding.RestoreCheckpoint(definition, RegionPolicyMode.Static, new[] { 0 }, new[] { 1 });
+            _binding.ConfigureCapture(new StaticRegionCaptureSettings(1, 180, 1, 20, 2));
+            var combat = new TestCombatSource();
+            _binding.BindCombatSources(new[] { combat });
+
+            var west = new BattlefieldPoint(.5, .5);
+            var east = new BattlefieldPoint(2.5, .5);
+            var playerId = new EntityId("capture-player");
+            var westernPlayers = new[] { new PlayerSpatialInput(playerId, west) };
+            var easternPlayers = new[] { new PlayerSpatialInput(playerId, east) };
+            var westernEnemies = new[] { new EnemySpatialInput(new EntityId("capture-enemy"), west) };
+
+            combat.Report(new EnemyDamageObservation(_session.Config.MatchId, west, 20, EnemyDamageContributor.Player));
+            _binding.TickStaticCapture(0, westernPlayers, Array.Empty<EnemySpatialInput>());
+            _binding.TickStaticCapture(1, westernPlayers, Array.Empty<EnemySpatialInput>());
+            Assert.That(_binding.Source.Snapshot.CapturedCellCount, Is.EqualTo(8));
+            Assert.That(_binding.Source.Snapshot.IsRegionUnlocked(2), Is.True);
+
+            combat.Report(new EnemyDamageObservation(_session.Config.MatchId, east, 20, EnemyDamageContributor.Player));
+            _binding.TickStaticCapture(2, easternPlayers, westernEnemies);
+            _binding.TickStaticCapture(3, easternPlayers, westernEnemies);
+
+            var current = _binding.Source.Snapshot;
+            Assert.That(current.CapturedCellCount, Is.EqualTo(5));
+            Assert.That(current.IsCaptured(0, 0), Is.True, "상실 후에도 CU 셀은 유지합니다.");
+            Assert.That(current.IsRegionUnlocked(1), Is.True);
+            Assert.That(current.IsRegionUnlocked(3), Is.True);
+            Assert.That(current.Revision, Is.EqualTo(current.Change.Revision + 1));
+            Assert.That(current.Change.SecuredRegionIds, Is.EqualTo(new[] { 2 }));
+            Assert.That(_binding.GetStaticLostRegions(current), Is.EqualTo(new[] { 1 }));
+
+            _binding.RestoreCheckpoint(definition, RegionPolicyMode.Static, new[] { 0 }, new[] { 1 });
+            Assert.That(_binding.GetStaticLostRegions(_binding.Source.Snapshot), Is.Empty);
+        }
+
+        [Test]
         public void StartSettingsRestoreAndRollbackDoNotLeakTheNewerOverride()
         {
             Assert.That(_binding.TrySetDynamicStartCells(new[] { 0, 1 }, true, out _), Is.True);
@@ -139,5 +182,12 @@ namespace TeamHJD.Game.Tests.EditMode
         private CheckpointData Target(CheckpointSection section) => new CheckpointData(Guid.NewGuid(), DateTimeOffset.UtcNow,
             _session.Config.MatchId, _session.Config.StageId, _session.Config.DifficultyProfileId,
             _session.Config.Mode, _session.Config.RandomSeed, _session.Config.ContentVersion, 10, 1, new[] { section });
+
+        private sealed class TestCombatSource : IEnemyCombatSource
+        {
+            public event Action<EnemyDamageObservation> DamageObserved;
+            public event Action<MatchId, EntityId> DeathObserved { add { } remove { } }
+            public void Report(EnemyDamageObservation damage) => DamageObserved?.Invoke(damage);
+        }
     }
 }

@@ -67,7 +67,7 @@ namespace TeamHJD.Game.Editor
                     : "CU 거리 구역은 해금만 합니다. 전투 성과·생존 참가자·적 압력으로 확보하며 확보 완료 시 다음 구역이 열립니다. 물/이동 불가 셀은 진행률에서 제외합니다.",
                     MessageType.None);
                 DrawValidationProtection(binding);
-                if (snapshot.Mode == RegionPolicyMode.Static) DrawStaticCapture(binding);
+                if (snapshot.Mode == RegionPolicyMode.Static) DrawStaticCapture(binding, snapshot);
                 DrawCapturedCells = EditorGUILayout.Toggle("Scene 점령 Grid", DrawCapturedCells);
                 DrawInputTriangles = EditorGUILayout.Toggle("임시 판정 삼각형", DrawInputTriangles);
                 if (snapshot.Mode == RegionPolicyMode.Dynamic)
@@ -107,9 +107,17 @@ namespace TeamHJD.Game.Editor
             if (protectedNow) EditorGUILayout.HelpBox("개발 검증용 피해 보호 중입니다. 피해/승패 검증과 구분하세요. Play 종료 시 해제됩니다.", MessageType.Warning);
         }
 
-        private static void DrawStaticCapture(RegionSceneBinding binding)
+        private static void DrawStaticCapture(RegionSceneBinding binding, RegionGridSnapshot snapshot)
         {
             EditorGUILayout.LabelField("정적 확보 · 실제 전투 관측", EditorStyles.boldLabel);
+            if (binding.HasWriteAuthority && snapshot.Change.IsCaptureChange)
+            {
+                EditorGUILayout.LabelField("최근 변경", $"r{snapshot.Change.Revision}");
+                var secured = snapshot.Change.SecuredRegionIds;
+                if (secured.Count > 0) EditorGUILayout.LabelField("확보 구역", string.Join(", ", secured));
+                var lost = binding.GetStaticLostRegions(snapshot);
+                if (lost.Count > 0) EditorGUILayout.LabelField("상실 구역", string.Join(", ", lost));
+            }
             var settings = binding.CaptureSettings;
             using (var scroll = new EditorGUILayout.ScrollViewScope(_captureScroll, GUILayout.MaxHeight(220)))
             {
