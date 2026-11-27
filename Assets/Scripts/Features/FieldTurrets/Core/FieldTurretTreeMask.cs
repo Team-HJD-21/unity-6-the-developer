@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.Tilemaps;
 using Object = UnityEngine.Object;
 
@@ -12,14 +13,19 @@ namespace TeamHJD.Game.FieldTurrets
         private readonly Transform _turret;
         private readonly SpriteRenderer _gun;
         private readonly SpriteRenderer _ledRenderer;
+        private readonly Light2D _ledLight;
+        private readonly float _ledLightLocalRadius;
         private readonly List<TilemapRenderer> _tilemaps = new();
         private readonly List<float> _tileMargins = new();
         private readonly List<(Sprite Sprite, Matrix4x4 ToWorld, Bounds Bounds)> _trees = new();
         private readonly List<SpriteMask> _masks = new();
+        private readonly List<SpriteRenderer> _ledShadows = new();
         private readonly SpriteMaskInteraction _previousMaskInteraction;
         private readonly SpriteMaskInteraction _previousLedMaskInteraction;
         private Bounds _searchBounds;
         private Bounds _lastGunBounds;
+        private Bounds _lastLedLightBounds;
+        private bool _lastLedShadowsEnabled;
         private Matrix4x4 _lastGunToWorld;
         private float _lastTreeSortY;
         private bool _masksPositioned;
@@ -34,6 +40,13 @@ namespace TeamHJD.Game.FieldTurrets
             {
                 _ledRenderer = ledRenderer;
                 _previousLedMaskInteraction = ledRenderer.maskInteraction;
+                _ledLight = indicator.Light;
+                if (_ledLight != null && _ledLight.lightType == Light2D.LightType.Freeform)
+                {
+                    foreach (Vector3 point in _ledLight.shapePath)
+                        _ledLightLocalRadius = Mathf.Max(_ledLightLocalRadius, point.magnitude);
+                    _ledLightLocalRadius += _ledLight.shapeLightFalloffSize;
+                }
             }
 
             foreach (TilemapRenderer renderer in Object.FindObjectsByType<TilemapRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -49,7 +62,7 @@ namespace TeamHJD.Game.FieldTurrets
 
             _previousMaskInteraction = gun.maskInteraction;
             if (_tilemaps.Count == 0) return;
-
+            if (_ledLightLocalRadius > 0f) _ledLight.shadowIntensity = 1f;
             Tilemap.tilemapTileChanged += OnTilemapChanged;
         }
 
@@ -59,6 +72,7 @@ namespace TeamHJD.Game.FieldTurrets
             if (!_gun.enabled || _gun.forceRenderingOff || _gun.sprite == null)
             {
                 DisableMasksFrom(0);
+                DisableLedShadowsFrom(0);
                 SetMaskInteraction(false);
                 _masksPositioned = false;
                 return;
@@ -68,38 +82,72 @@ namespace TeamHJD.Game.FieldTurrets
                 !_ledRenderer.forceRenderingOff && _ledRenderer.sprite != null)
                 bounds.Encapsulate(_ledRenderer.bounds);
 
+            bool ledShadowsEnabled = _ledLightLocalRadius > 0f && _ledLight != null && _ledLight.isActiveAndEnabled && _ledLight.shadowsEnabled;
+            Bounds ledLightBounds = default;
+            Bounds queryBounds = bounds;
+            if (ledShadowsEnabled)
+            {
+                Vector3 scale = _ledLight.transform.lossyScale;
+                float diameter = 2f * _ledLightLocalRadius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
+                ledLightBounds = new Bounds(_ledLight.transform.position, new Vector3(diameter, diameter, 0f));
+                queryBounds.Encapsulate(ledLightBounds);
+            }
+
             float turretY = _turret.position.y;
             bool refresh = _needsRefresh || turretY != _lastTreeSortY ||
-                !_searchBounds.Contains(bounds.min) || !_searchBounds.Contains(bounds.max);
+                !_searchBounds.Contains(queryBounds.min) || !_searchBounds.Contains(queryBounds.max);
             Matrix4x4 gunToWorld = _gun.transform.localToWorldMatrix;
-            if (!refresh && _masksPositioned && gunToWorld == _lastGunToWorld && bounds == _lastGunBounds) return;
-            if (refresh) RefreshTrees(bounds, turretY);
+            if (!refresh && _masksPositioned && gunToWorld == _lastGunToWorld && bounds == _lastGunBounds &&
+                ledShadowsEnabled == _lastLedShadowsEnabled && ledLightBounds == _lastLedLightBounds) return;
+            if (refresh) RefreshTrees(queryBounds, turretY);
 
             _lastGunToWorld = gunToWorld;
             _lastGunBounds = bounds;
+            _lastLedLightBounds = ledLightBounds;
+            _lastLedShadowsEnabled = ledShadowsEnabled;
             _masksPositioned = true;
             Matrix4x4 worldToGun = _gun.transform.worldToLocalMatrix;
             int used = 0;
+            int usedLedShadows = 0;
             foreach (var tree in _trees)
             {
-                if (!OverlapsInXY(bounds, tree.Bounds)) continue;
+                bool masksTurret = OverlapsInXY(bounds, tree.Bounds);
+                bool shadowsLed = ledShadowsEnabled && OverlapsInXY(ledLightBounds, tree.Bounds);
+                if (!masksTurret && !shadowsLed) continue;
 
-                SpriteMask mask = used < _masks.Count ? _masks[used] : AddMask();
                 Matrix4x4 local = worldToGun * tree.ToWorld;
-                Vector3 right = local.GetColumn(0);
-                Vector3 up = local.GetColumn(1);
-                Vector3 position = local.GetColumn(3);
-                float angle = Mathf.Atan2(right.y, right.x) * Mathf.Rad2Deg;
-                float scaleY = Vector3.Cross(right, up).z < 0f ? -up.magnitude : up.magnitude;
-                mask.transform.SetLocalPositionAndRotation(new Vector3(position.x, position.y, 0f), Quaternion.Euler(0f, 0f, angle));
-                mask.transform.localScale = new Vector3(right.magnitude, scaleY, 1f);
-                mask.sprite = tree.Sprite;
-                mask.enabled = true;
-                used++;
+                if (masksTurret)
+                {
+                    SpriteMask mask = used < _masks.Count ? _masks[used] : AddMask();
+                    SetTreePose(mask.transform, local);
+                    mask.sprite = tree.Sprite;
+                    mask.enabled = true;
+                    used++;
+                }
+                if (shadowsLed)
+                {
+                    SpriteRenderer shadow = usedLedShadows < _ledShadows.Count ? _ledShadows[usedLedShadows] : AddLedShadow();
+                    SetTreePose(shadow.transform, local);
+                    shadow.sprite = tree.Sprite;
+                    shadow.gameObject.SetActive(true);
+                    usedLedShadows++;
+                }
             }
 
             DisableMasksFrom(used);
+            DisableLedShadowsFrom(usedLedShadows);
             SetMaskInteraction(used > 0);
+        }
+
+        private static void SetTreePose(Transform target, Matrix4x4 local)
+        {
+            Vector3 right = local.GetColumn(0);
+            Vector3 up = local.GetColumn(1);
+            Vector3 position = local.GetColumn(3);
+            float angle = Mathf.Atan2(right.y, right.x) * Mathf.Rad2Deg;
+            float scaleY = Vector3.Cross(right, up).z < 0f ? -up.magnitude : up.magnitude;
+            target.SetLocalPositionAndRotation(new Vector3(position.x, position.y, 0f), Quaternion.Euler(0f, 0f, angle));
+            target.localScale = new Vector3(right.magnitude, scaleY, 1f);
         }
 
         private void SetMaskInteraction(bool hasTreeOverlap)
@@ -207,6 +255,27 @@ namespace TeamHJD.Game.FieldTurrets
             return mask;
         }
 
+        private SpriteRenderer AddLedShadow()
+        {
+            var root = new GameObject("LED Tree Shadow") { layer = _gun.gameObject.layer };
+            root.SetActive(false);
+            root.transform.SetParent(_gun.transform, false);
+            var renderer = root.AddComponent<SpriteRenderer>();
+            renderer.sharedMaterial = _gun.sharedMaterial;
+            renderer.forceRenderingOff = true;
+            var caster = root.AddComponent<ShadowCaster2D>();
+            caster.castingOption = ShadowCaster2D.ShadowCastingOptions.SelfShadow; // 잎 실루엣 내부만 가리고 포신 쪽으로 그림자를 늘리지 않습니다.
+            caster.alphaCutoff = 0.5f;
+            _ledShadows.Add(renderer);
+            return renderer;
+        }
+
+        private void DisableLedShadowsFrom(int index)
+        {
+            for (; index < _ledShadows.Count; index++)
+                _ledShadows[index].gameObject.SetActive(false);
+        }
+
         private void DisableMasksFrom(int index)
         {
             for (; index < _masks.Count; index++)
@@ -221,6 +290,12 @@ namespace TeamHJD.Game.FieldTurrets
                 if (mask == null) continue;
                 mask.enabled = false;
                 Object.Destroy(mask.gameObject);
+            }
+            foreach (SpriteRenderer shadow in _ledShadows)
+            {
+                if (shadow == null) continue;
+                shadow.gameObject.SetActive(false);
+                Object.Destroy(shadow.gameObject);
             }
             if (_gun != null) _gun.maskInteraction = _previousMaskInteraction;
             if (_ledRenderer != null) _ledRenderer.maskInteraction = _previousLedMaskInteraction;

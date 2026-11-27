@@ -7,7 +7,8 @@
         "TeamHJD.Game.Contracts",
         "TeamHJD.Game.Domain",
         "TeamHJD.Game.Presentation",
-        "TeamHJD.Game.Application"
+        "TeamHJD.Game.Application",
+        "Unity.RenderPipelines.Universal.2D.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
