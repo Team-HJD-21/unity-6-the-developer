@@ -157,6 +157,7 @@ namespace TeamHJD.Game.Presentation
         }
 
         private bool HasRecoveryFailure => !string.IsNullOrEmpty(_recoveryError?.Invoke());
+        private bool CanReturnToHubFromRecovery => HasRecoveryFailure && _canReturnToHub();
 
         private async void RetryRecovery(long menuId)
         {
@@ -232,7 +233,11 @@ namespace TeamHJD.Game.Presentation
             }
             private void Settings() => _owner._screens.ShowSettings();
             private void Restart() => _owner.Travel(StageScene);
-            private void ReturnToHub() => _owner.Travel(HubScene);
+            private void ReturnToHub()
+            {
+                if (_state.Kind == ScreenKind.Menu && !_owner.CanReturnToHubFromRecovery) return;
+                _owner.Travel(HubScene);
+            }
             private void ReturnToMain() => _owner.Travel(_owner._mainScene());
             private void UseSafety() => _owner.RetryRecovery(_state.Id);
             public void Refresh()
@@ -246,8 +251,9 @@ namespace TeamHJD.Game.Presentation
                     _view.Title.text = recovering ? "복귀 오류" : _menuTitle;
                     _primaryLabel.text = recovering ? "같은 복귀 재시도" : _menuPrimary;
                     _view.Primary.interactable = !_owner._actionPending && (!recovering || _owner._retryRecovery != null);
-                    _view.SetSecondaryVisible(_owner._canReturnToHub());
-                    _view.Secondary.interactable = !_owner._actionPending && string.IsNullOrEmpty(restriction);
+                    bool showHubReturn = _owner.CanReturnToHubFromRecovery;
+                    _view.SetSecondaryVisible(showHubReturn);
+                    _view.Secondary.interactable = showHubReturn && !_owner._actionPending && string.IsNullOrEmpty(restriction);
                     _view.Status.text = _owner._actionFailure ?? (recovering ? "복귀하지 못했습니다.\n재시도 시 안전장치 추가 차감 없음" : "");
                     _view.Status.gameObject.SetActive(_view.Status.text.Length > 0);
                     return;
