@@ -49,7 +49,7 @@ Host Session의 MatchCompleted와 NetworkMatchCoordinator.Completed를 같은 �
 
 ## 화면 형식
 
-실제 View는 `Assets/Prefabs/UI/Common`의 Canvas·Panel·Button 프리팹이다. `Core/AppScreenStyle`이 참조를 제공하고 `AppPanelView`, `AppSettingsView`, `AppLoadingView`의 직렬화 필드로 연결한다. 1920×1080 기준 Expand, 얇은 무광 프레임과 Gravity/NEXON을 사용한다. 실행 중 코드가 시각 계층을 다시 조립하지 않는다. 개인 메뉴는 계속하기/설정/기존 우주선 복귀를 표시하며 공유 월드 시간은 계속 흐른다. 우주선에서도 동일한 메뉴를 사용한다.
+실제 View는 `Assets/Prefabs/UI/Common`의 Canvas·Panel·Button 프리팹이다. `Core/AppScreenStyle`이 참조를 제공하고 `AppPanelView`, `AppSettingsView`, `AppLoadingView`의 직렬화 필드로 연결한다. 1920×1080 기준 Expand, 얇은 무광 프레임과 Gravity/NEXON을 사용한다. 실행 중 코드가 시각 계층을 다시 조립하지 않는다. 필드와 우주선은 같은 개인 메뉴를 사용하며 공유 월드 시간은 계속 흐른다. 필드에서 우주선으로 이동할 때는 출입구를 사용한다. 공용 메뉴 프리팹의 우주선 귀환 버튼은 [복귀 오류 화면](../02_match/match-recovery-api.md#실제-게임-메뉴에서-재시도-이전-ui-검수)에서만 표시한다.
 
 AppRoot가 소유하는 `UiDisplaySettings`를 `IUiDisplaySettingsConsumer`에 주입한다. `SettingsScreenPresenter`는 슬라이더 미리보기·적용 저장·취소 복원을 담당한다. 설정 화면을 닫을 때 자신의 input lease만 해제한다. App 수명이 끝난 객체를 읽어야 하는 표현 계층은 `AppRoot.IsInitialized`로 서비스 유효성을 먼저 확인한다.
 

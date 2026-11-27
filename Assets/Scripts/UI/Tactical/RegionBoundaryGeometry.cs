@@ -41,11 +41,11 @@ public static class RegionBoundaryGeometry
 
         bool IsUnlockEdge(int first, int second)
         {
-            // 이미 점유된 셀의 변은 공용 점유 외곽선이 표시합니다.
-            if (snapshot.CapturedCells[first] || snapshot.CapturedCells[second] ||
-                !definition.CapturableCells[first] || !definition.CapturableCells[second]) return false;
-            return snapshot.IsRegionUnlocked(definition.RegionIds[first]) !=
-                snapshot.IsRegionUnlocked(definition.RegionIds[second]);
+            // 점유 진행 표시는 빼고 채움과 같은 기본 셀 분류로 해금 경계를 찾습니다.
+            var a = TacticalPresentationRules.Cell(snapshot, first, null);
+            var b = TacticalPresentationRules.Cell(snapshot, second, null);
+            return (a == TacticalPresentationRules.CellState.Available && b == TacticalPresentationRules.CellState.Locked) ||
+                   (b == TacticalPresentationRules.CellState.Available && a == TacticalPresentationRules.CellState.Locked);
         }
 
         for (int y = 0; y < geometry.CellsY; y++)
