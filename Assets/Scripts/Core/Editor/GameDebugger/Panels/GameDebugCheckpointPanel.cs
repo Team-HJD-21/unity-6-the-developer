@@ -74,11 +74,16 @@ namespace TeamHJD.Game.Editor
                 EditorGUILayout.LabelField("점유 / 최고 도달", stage.CaptureRatio.ToString("P1") + " / " + stage.HighestCaptureRatio.ToString("P1"));
                 EditorGUILayout.LabelField("33% / 66% 생성", (stage.FirstFieldBoss.IsEmpty ? "미확인" : stage.FirstFieldBoss.Value) + " / " +
                     (stage.SecondFieldBoss.IsEmpty ? "미확인" : stage.SecondFieldBoss.Value));
-                EditorGUILayout.LabelField("최종 진입 API 조건", stage.CanEnterFinalBattle ? "충족 · 자동 이동 없음" : "미충족 · 자동 이동 없음");
+                var regions = scene.RegionBinding?.Source?.Snapshot;
+                if (regions != null && regions.MatchId == stage.MatchId)
+                    EditorGUILayout.LabelField("실제 점유 셀", regions.CapturedCellCount + " / " + regions.Definition.CapturableCellCount);
+                EditorGUILayout.LabelField("최종 진입 점유 조건", stage.CanEnterFinalBattle ? "충족" : stage.FinalBoss.IsEmpty ? "미충족" : "최종 보스 등록됨");
+                EditorGUILayout.LabelField("보스 진행 상태", scene.BossBattlePhase.ToString());
+                if (scene.BossBattleError != null) EditorGUILayout.HelpBox(scene.BossBattleError, MessageType.Error);
                 if (stage.PendingReason != null) EditorGUILayout.HelpBox(stage.PendingReason switch
                 {
                     "FieldBossContentNotConnected" => "33%·66% Field 중간보스의 실제 생성 원본이 연결되지 않았습니다.",
-                    "FinalBossSceneAndPresentationRequired" => "점유와 두 Field 생성 조건은 충족했습니다. 실제 최종 Boss Scene·연출 연결이 필요합니다.",
+                    "FinalBossSceneAndPresentationRequired" => "점유 조건을 충족했습니다. 현재 Scene의 최종 Boss Scene·연출 준비 상태를 확인하세요.",
                     _ => stage.PendingReason
                 }, MessageType.Warning);
             }

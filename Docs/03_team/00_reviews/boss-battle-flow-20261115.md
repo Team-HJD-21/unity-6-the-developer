@@ -2,6 +2,22 @@
 
 PR: [#750](https://github.com/Team-HJD-21/unity-6-the-developer/pull/750), base `main`. 이 문서는 코드와 실제 Scene의 연결을 확인하는 자료다.
 
+## 11/17 점유 100% 표시와 자동 진입 재확인
+
+실제 Startup → 우주선 → Stage1 Host Play에서 HUD가 완료를 먼저 표시하는 문제를 재현했다. 아래 HUD·Debugger 보완은 [#761](https://github.com/Team-HJD-21/unity-6-the-developer/pull/761)에서 검토하며, #750의 최종 진입 조건을 낮추거나 Scene 연결을 바꾼 변경은 아니다.
+
+| 실제 점유 셀 | 실제 점유율 | 수정 전 HUD / 자동 진입 | 수정 후 HUD / 자동 진입 |
+| --- | --- | --- | --- |
+| 200 / 201 | 99.502487…% | 100% / 대기 | 99% / 대기 |
+| 201 / 201 | 100% | 100% / 자동 진입 | 100% / 자동 진입 |
+
+- 원인: `CombatHudHeader.SetConfirmedOccupancy`는 정수 반올림으로 99.5% 이상을 100%로 표시했다. `StageProgressSnapshot.CanEnterFinalBattle`는 실제 점유율 1을 요구하므로 마지막 한 셀이 남으면 컷씬이 시작되지 않는 것이 맞다. HUD도 실제 전체 셀 완료 전에는 최대 99%로 표시하도록 맞췄다. 1% 미만의 기존 소수점 표시는 유지한다.
+- Debugger의 Checkpoint 패널에서 오래된 `자동 이동 없음` 안내를 제거하고, 실제 점유 셀 수·보스 진행 단계·진입 오류를 표시한다. 중간보스 생성 확인이 최종 진입 조건이라는 오래된 설명도 정정했다.
+- 수정 후 실제 `Entrance → Preparing → Intro → Battle` 순서를 관측했다. 컷씬 재생, BossRoom Additive 로드, Player 도착, HP 6000인 실제 Stage1Boss와 보스 시작 체크포인트까지 12.73초에 완료했다. 직접 보스 진입 메서드를 호출하지 않고 Root의 정상 Update가 자동 진행했다.
+- 점유는 동일한 런타임 Grid의 복원 API로 200개/201개를 구성한 **제어된 통합 QA**다. 자연 전투로 전 지역을 확보한 인수나 원격 Client·Standalone 검증은 아니다. Player/CU의 임시 디버그 무적은 이 Play에서만 사용했다.
+- 회귀 검사: 마지막 한 셀·전 셀 완료·초기/잘못된 분모 등 HUD 7/7, Stage 진행 9/9 통과. 수정 후 통합 검수 구간의 새 Console Error 0건, 컴파일 실패 없음. 앞선 Pipeline 명령 timeout 오류는 게임 Runtime 오류와 구분하고 Console에서 지우지 않았다.
+- Scene·Prefab·Bake·보스 콘텐츠는 이번 보완으로 수정하지 않았다. 로컬 증거는 공유 제외 `Docs/Local/Review/BossEntry-20261117/`의 `200-of-201-before.json`, `verification-after.json`, `header-tests.json`, `progression-tests.json`에 있다.
+
 ## 이번 변경
 
 **11/16 보완:** 정식 게임에서 수동 컷씬 미리보기 Button/Label을 제거했다. `IsConfigured`와 재생·정리에서 버튼 의존도 없앴다. 실제100% 경로는 기존 `PlayScriptedAsync`를 그대로 사용하며 Scene 자체는 수정하지 않는다.
