@@ -10,7 +10,6 @@ using TeamHJD.Game.Content.Authoring;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure;
-using TeamHJD.Game.Presentation;
 using TeamHJD.Game.Presentation.Scene;
 using UnityEngine;
 
@@ -174,7 +173,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
                     .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitVitals>().Single();
                 if (appMatchHost is AppRoot stageApp && stageApp.Stage1Tokens != null &&
-                    gameObject.scene.path == AppScreenPresenter.StageScene)
+                    gameObject.scene.path == AppRoot.DefaultStage1Scene)
                 {
                     stageApp.Stage1Tokens.LoadAsync().GetAwaiter().GetResult();
                     bool hasArmor = stageApp.Stage1Tokens.HasCuArmor(stageApp.CampaignSlot);

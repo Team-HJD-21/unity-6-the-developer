@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
-using TeamHJD.Game.Presentation;
 using UnityEngine.SceneManagement;
 namespace TeamHJD.Game.Bootstrap
 {
@@ -21,7 +20,7 @@ namespace TeamHJD.Game.Bootstrap
             Stage1TokenBalance >= Stage1TokenProgress.CuArmorCost && !HasStage1CuArmor &&
             (GameFlow != null
                 ? GameFlow.Phase == GameFlowPhase.Spaceship && !GameFlow.IsTransitioning
-                : SceneManager.GetActiveScene().path == AppScreenPresenter.HubScene);
+                : SceneManager.GetActiveScene().path == DefaultHubScene);
 
         /// <summary>우주선 연구 화면이 호출합니다. 구매가 저장된 뒤에만 true를 반환합니다.</summary>
         public Task<bool> BuyStage1CuArmorAsync() => CanBuyStage1CuArmor

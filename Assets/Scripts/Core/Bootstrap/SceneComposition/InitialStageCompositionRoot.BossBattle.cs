@@ -121,7 +121,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 using var pause = _matchTime.AcquirePause("BossVictory");
                 using var input = app.LocalInput.Acquire("BossVictory");
                 bool tokenGranted = false;
-                if (gameObject.scene.path == AppScreenPresenter.StageScene && app.Stage1Tokens != null)
+                if (gameObject.scene.path == AppRoot.DefaultStage1Scene && app.Stage1Tokens != null)
                     tokenGranted = await app.Stage1Tokens.GrantFirstBossRewardAsync(cancellation);
                 await _bossPresentation.PlayVictoryAsync("보스를 처치하는데에 성공했습니다", 5, cancellation);
                 BossBattlePhase = StageBossBattlePhase.Returning;
