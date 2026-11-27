@@ -194,7 +194,7 @@ public sealed class StageTurretCommandHudTests
         Assert.That(hud.LocalPlayer.GetComponent<PlayerControlState>().CanMove,Is.True);
     }
     [UnityTest]
-    public IEnumerator MapLocksNearbyUnoccupiedTurretsUntilTheirCellIsCaptured()
+    public IEnumerator MapLocksNearbyUnoccupiedTurretsAndAllowsRemoteCommandsAfterCapture()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
         yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
@@ -210,10 +210,18 @@ public sealed class StageTurretCommandHudTests
         Assert.That(((TacticalSymbolGraphic)t.View.ToggleTurret.GetComponent<TeamHJD.Game.Presentation.UiButtonFeedback>().Icon).Shape,Is.EqualTo(TacticalSymbolGraphic.Symbol.Locked));
         t.View.ToggleTurret.onClick.Invoke();Assert.That(turret.IsActivated,Is.False,"오래된 UI 이벤트도 미점유 조작을 통과시키지 않습니다.");
         CaptureCellForMap(Object.FindAnyObjectByType<RegionSceneBinding>(),turret);
+        // 근접 조작이 허용되는 거리를 벗어나야 Host의 점유 기반 원격 명령 허용을 검증할 수 있습니다.
+        var target = (Vector2)turret.transform.position;
+        var farTurret = t.Turrets.First(row => Vector2.Distance(TacticalCommandController.Point(row), target) > hud.InteractionDistance + 5);
+        var farPosition = TacticalCommandController.Point(farTurret);
+        hud.LocalPlayer.transform.position = new Vector3(farPosition.x, farPosition.y, hud.LocalPlayer.transform.position.z);
         yield return new WaitForSecondsRealtime(.25f);
+        Assert.That(Vector2.Distance(hud.LocalPlayer.transform.position, target), Is.GreaterThan(hud.InteractionDistance));
         Assert.That(t.CanOperate(t.Selected),Is.True);Assert.That(t.View.ToggleLabel.text,Is.EqualTo("켜기"));
         Click(t.View.ToggleTurret);yield return new WaitForSecondsRealtime(.2f);
         Assert.That(turret.IsActivated,Is.True);Assert.That(t.View.ToggleLabel.text,Is.EqualTo("끄기"));
+        Click(t.View.ToggleTurret);yield return new WaitForSecondsRealtime(.2f);
+        Assert.That(turret.IsActivated,Is.False);Assert.That(t.View.ToggleLabel.text,Is.EqualTo("켜기"));
         t.Close();yield return FinishTransition(t);yield return new ExitPlayMode();
     }
     [UnityTest]
@@ -736,6 +744,11 @@ public sealed class StageTurretCommandHudTests
             var previousSelection = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
             app.Screens.ShowMenu();
             var menuView = Object.FindObjectsByType<TeamHJD.Game.Presentation.AppPanelView>(FindObjectsSortMode.None).First(v => v.name == "Screen:Menu");
+            Assert.That(menuView.Secondary.gameObject.activeSelf, Is.False, "일반 Pause 메뉴에서는 우주선 귀환을 숨깁니다.");
+            Assert.That(menuView.Secondary.interactable, Is.False);
+            Assert.That(menuView.Settings.navigation.selectOnDown, Is.Not.SameAs(menuView.Secondary));
+            menuView.Secondary.onClick.Invoke();
+            Assert.That(app.Screens.Top.Kind, Is.EqualTo(ScreenKind.Menu), "숨겨진 버튼의 이벤트가 씬 이동을 시작하면 안 됩니다.");
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(menuView.Settings.gameObject);
             app.Screens.ShowSettings();
             // TestRunner can resume before this frame's LateUpdate, which projects the screen stack.

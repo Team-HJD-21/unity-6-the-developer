@@ -10,7 +10,9 @@ Unity 기본 구성은 소리가 나는 쪽의 **AudioSource**와 듣는 쪽의 
 
 이번 공용 효과음 경로는 `Assets/Prefabs/Audio/AudioVoice.prefab`의 **표준 AudioSource**를 풀에서 꺼내 쓴다. 따라서 연결된 Player·Turret에 AudioSource를 각각 추가할 필요가 없다. Enemy의 기존 `EnemyAnimation.AbilitySound`에 큐를 할당하면 기존 능력 애니메이션 호출에서 재생한다. 현재 음원을 할당한 Enemy는 BlackWolf다.
 
-2D 탑다운 화면에서는 음원 좌표의 Z만 Listener 평면에 맞춘다. 실제 Player/Enemy/Projectile Transform은 바꾸지 않는다. 기본 Rolloff는 Linear, Doppler는 0이며 XY 거리는 유지한다. 카메라의 촬영 높이 때문에 가까운 총소리가 멀게 계산되는 문제를 피한다. 반사·벽 차폐·HRTF 처리는 이번 범위에 없다.
+2D 탑다운 화면에서는 로컬 Player와 음원 사이의 XY 벡터를 출력 카메라의 Listener 평면으로 투영한다. 전술 지도를 패닝해도 필드 효과음의 거리 감쇠, 재생 거리 제한, 풀 우선순위는 플레이어 위치를 기준으로 한다. 로컬 Player가 연결되기 전에는 현재 Listener 위치를 사용한다. 기본 Rolloff는 Linear, Doppler는 0이다. 투영 대상은 풀의 AudioSource이며 Scene 객체의 위치는 유지한다.
+
+Unity PlayMode에서 같은 모노 시험음을 재생한 결과, 거리 6유닛의 PCM peak는 패닝 전후 모두 0.02045였다. 16유닛에서는 0.00909였으며 최대 거리 밖의 새 요청은 차단됐다. PlayerShot의 실제 임포트 클립은 한 채널로 확인했다.
 
 장식용 고정 환경음에 직접 AudioSource를 붙이는 것도 가능하다. 이때 Output을 GameAudio 믹서의 해당 그룹에 연결하고 Spatial Blend·Min/Max Distance를 설정한다. 직접 재생한 Source는 공용 풀의 동시 재생 제한에 포함되지 않는다. 반복 환경음도 공용 제한과 수명이 필요하면 아래 큐 API를 사용한다.
 

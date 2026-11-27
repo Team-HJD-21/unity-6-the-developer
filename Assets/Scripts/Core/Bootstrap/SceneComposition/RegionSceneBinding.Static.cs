@@ -20,8 +20,15 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField, Min(0)] private int captureEnemiesPerParticipant = 2;
         private readonly SortedDictionary<int, StaticRegionCapture> _staticCapture = new();
         private readonly List<IEnemyCombatSource> _combatSources = new();
+        private RegionGridChange _lastStaticLoss;
+        private IReadOnlyList<int> _lastStaticLostRegions = Array.Empty<int>();
         public IReadOnlyList<StaticRegionCaptureSnapshot> StaticCaptureProgress =>
             _staticCapture.Values.Select(state => state.Snapshot).ToArray();
+
+        /// <summary>Host 진단에서 같은 표본에 포함된 확보와 상실을 함께 표시할 때 사용합니다.</summary>
+        public IReadOnlyList<int> GetStaticLostRegions(RegionGridSnapshot snapshot) =>
+            snapshot != null && ReferenceEquals(snapshot.Change, _lastStaticLoss)
+                ? _lastStaticLostRegions : Array.Empty<int>();
 
         public StaticRegionCaptureSettings CaptureSettings => new StaticRegionCaptureSettings(captureHoldSeconds,
             captureAbandonSeconds, captureLossSeconds, captureMinimumDamage, captureEnemiesPerParticipant);
@@ -64,6 +71,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
 
         private void ResetStaticCapture(RegionGridDefinition definition)
         {
+            _lastStaticLoss = null;
+            _lastStaticLostRegions = Array.Empty<int>();
             _staticCapture.Clear();
             foreach (int id in definition.RegionIds.Distinct().Where(id => id > 0))
                 if (Enumerable.Range(0, definition.RegionIds.Count).Any(i => definition.RegionIds[i] == id && definition.CapturableCells[i]))
@@ -98,6 +107,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var basis = _source.Snapshot;
             var cells = new HashSet<int>(Enumerable.Range(0, basis.CapturedCells.Count).Where(i => basis.CapturedCells[i]));
             var secured = new List<int>();
+            List<int> lost = null;
             bool captureChanged = false;
             int unlockThrough = 0;
             foreach (var progress in _staticCapture.Values)
@@ -109,6 +119,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 {
                     captureChanged = true;
                     if (progress.IsSecured) secured.Add(progress.RegionId);
+                    else (lost ??= new List<int>()).Add(progress.RegionId);
                     for (int i = 0; i < _definition.RegionIds.Count; i++)
                         if (_definition.RegionIds[i] == progress.RegionId && _definition.CapturableCells[i])
                         {
@@ -131,6 +142,11 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     secured.Count > 0 ? RegionChangeKind.StaticSecured : RegionChangeKind.StaticLost, secured);
                 if (result != RegionUpdateStatus.Applied)
                     throw new InvalidOperationException("The capture observation no longer belongs to this Region revision.");
+                if (lost != null)
+                {
+                    _lastStaticLoss = _source.Snapshot.Change;
+                    _lastStaticLostRegions = lost.AsReadOnly();
+                }
             }
             if (unlockThrough > 0) _session.UnlockRegionsThrough(_source.Snapshot, unlockThrough);
         }
