@@ -17,8 +17,8 @@ namespace TeamHJD.Game.Bootstrap
 {
     public sealed partial class AppRoot : MonoBehaviour, IAppMatchHost, IDisposable
     {
-        public const string DefaultStage1Scene = "Assets/Scenes/Gameplay/Stage_1.unity";
-        public const string DefaultHubScene = "Assets/Scenes/Spaceship/SpaceShipGrayBox.unity";
+        public const string DefaultStage1Scene = GameFlowRoutes.DefaultStage1Scene;
+        public const string DefaultHubScene = GameFlowRoutes.DefaultHubScene;
 
         /// <summary>UI 조립부가 로컬 연출 소비자에게 주입하는 App 수명 난수입니다. 게임 판정에 사용하지 않습니다.</summary>
         public IRandomStreams PresentationRandom => Services?.PresentationRandom;
