@@ -423,7 +423,12 @@ function Submit-Assets {
         $parts = $_ -split ' '
         if ($parts.Count -eq 4 -and $parts[2].StartsWith('refs/heads/') -and $parts[1] -match '^[0-9a-f]{40}$' -and
             $parts[1] -ne ('0' * 40)) {
-            $previous = & git rev-parse --verify --quiet "$($parts[3])^{commit}"
+            if ($parts[3] -eq ('0' * 40)) {
+                $previous = Invoke-Git merge-base origin/main $parts[1]
+            }
+            else {
+                $previous = Invoke-Git rev-parse --verify "$($parts[3])^{commit}"
+            }
             [pscustomobject]@{ commit = $parts[1]; previous = $previous }
         }
     })
@@ -433,7 +438,7 @@ function Submit-Assets {
         $versions = @(foreach ($update in $updates) {
             $version = Get-Blob $update.commit $record.path
             if ($version -ceq $record.base -and !$record.submitted) { continue }
-            if (!$update.previous -or $version -cne (Get-Blob $update.previous $record.path)) { $version }
+            if ($version -cne (Get-Blob $update.previous $record.path)) { $version }
         })
         $versions = @($versions | Sort-Object -Unique)
         if (!$versions.Count) { continue }

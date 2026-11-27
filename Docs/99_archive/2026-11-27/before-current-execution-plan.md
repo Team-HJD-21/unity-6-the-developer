@@ -1,0 +1,77 @@
+# 기존 문서 스냅샷
+
+원본 커밋 daaa8edb255b6a0e42ef600d1e12e2fadce6eae9 · 원본 경로 Docs/01_planning/current-execution-plan.md
+
+# 현재 실행 계획 — Stage 1 검증
+
+**11/15 갱신:** [Stage1 보스전·BGM 연결과 실제 검수](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/03_team/00_reviews/boss-battle-flow-20261115.md). 현재100% → 기존 컷씬 → 보스 시작 저장·재도전 → 승리5초·허브 귀환을 Host에서 연결·검수했다. 아래 과거 점검의 미연결 목록과 구분한다. 전체 Weather/world 이어하기·원격2인·중간보스 콘텐츠는 별도다.
+
+기준일: 2026-11-17 · 상태: 현행 작업·미결정·검증 경계.
+
+**11/12 구현 상태 대조:** [Core API 구현 현황](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/02_architecture/01_core/core-implementation-status.md)을 먼저 확인한다. CameraManager 기반은 #694, CU 동적 시작 영역은 #701로 main에 반영됐다. AudioManager/BGM/SFX와 실제 보스·컷씬·대사·Pool·전체 저장은 별도 미완료다. 아래 담당 표를 완료 표시로 읽지 않는다.
+
+**11/12 사용자 결정 반영:** [Core 지역·스폰·보스·협동 복구 배치](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/01_planning/02_implementation-records/2026/11/2026-11-12-core-progression-batch-plan.md)에 정적 확보/상실, 동적 CU 초기 셀, 일반/추가 스폰 제한, 33%·66% Field 중간보스, 100% 최종 보스 전환, 협동 구조 예산·3초/30% 시험값을 확정 기록했다. 아래 회의 당시 작업과 새 정책의 구현 완료를 구분한다. 팀원 코드 변경은 파일/함수·이유를 양현석에게 먼저 보고하고 통보/승인 후 진행한다.
+
+## 11/17 주간 보고 · 안정화 계획
+
+- 11/18–24 휴가 후 9차 스프린트(11/25–27)는 요구사항 시트의 Stage 1 버그를 최우선으로 한다. 1차 크런치에서 남은 작업과 유지보수·에셋화 후보는 각자 가용 범위에서 고른다. 11/27 기획회의와 11/28 회의·스터디는 유지한다.
+- 10차 스프린트는 12/5까지 안정화와 기획에 집중한다. 2차 크런치는 기말고사 일정에 맞춰 시작일을 조정하며 약 2주를 계획한다. 이후 Beta 릴리스와 외부 QA를 추진한다.
+- [팀 역할](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/03_team/TEAM_ROLE_OWNERSHIP.md)에 따라 황재동이 맵·스포너 배치를, 김진태가 날씨·우주선을, 이영빈이 스토리와 기존 Player 영역을 맡는다. 스폰 연계는 Core가 주도하고 Enemy가 함께 확인한다.
+- 스테이지는 순차 확장하고 스토리 비중을 높인다. 전선을 강제하는 규칙을 추가하기보다 현재 방향에서 설정값을 조정하며 플레이 결과를 확인한다.
+
+[11/17 주간 진행상황 보고](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-17/weekly-progress.md)
+
+## 11/13–14 회의 당시 통합 후속
+
+- 11/13에는 우주선에서 무기를 교체하고 필드에서 스킬을 교체하는 방향을 논의했다. 우주선 무기고 UI, 스킬 슬롯, 전투 중 교체 조건, 쿨타임과 설치 상태는 Player·Core에서 확인한다.
+- 11/14 Core는 전술 지도 초안을 시연했다. 가까운 터렛의 직접 조작과 지도 사용 전환, 활성·비활성 및 점유 표시를 실제 플레이에서 확인한다.
+- Core는 BGM 작업 완료와 SFX 보강, Encounter 교체 후 검증을 보고했다. Core·Enemy가 반복 스폰·교전·프리셋 가중치와 대량 적 배치 시 프레임 비용을 확인한다. 사망 시 UI, 보스 전환과 클리어 화면은 통합 인수 범위에 남아 있다.
+- Player는 비전투 자동 회복을 시험한다. 대기 시간과 회복량은 시험에서 조정한다.
+
+[11/13 2차 중간 보고](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-13/second-progress-review.md) · [11/14 정기회의](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-14/regular-meeting.md)
+
+## 공통 목표
+
+크런치 중 각 파트 선행 작업을 연결해 Stage 1에서 스폰·전투·점유와 보스 씬 전환이 이어지는 플레이 가능한 빌드를 검증한다. 제품의 지역 규칙은 1–3 CU 거리 해금, 4–6 송전탑 해금, 7–8 동적 점유를 적용한다. 11월 11일 저녁 전까지 요구사항 시트를 확인하고 스프린트 작업을 갱신하라는 요청이 있었다. 개별 선행 납기는 확인이 필요하다.
+
+## 11/14 당시 담당 작업과 인수
+
+| 담당 | 현재 확인할 작업 | 남은 확인 |
+| --- | --- | --- |
+| 양현석 | Boot–종료 수명·씬·패키징·렌더 자원 점검, Audio Manager와 BGM/SFX, PR 검토·통합 지원 | 조수빈과 스폰·Pooling·Encounter 확인, 이영빈과 HUD·자막·컷씬 전환 및 Input/CameraManager 연결 |
+| 이영빈 | 우주선 이동·방향·전용 HUD, 필드 이동·사격·스패너 레이어 재현, 기본 총기 1발, 스킬·강화안 정리 | 보스 컷씬 초안과 전환 후 입력, 구조체 밀착 발사, 실제 수리·협동 확인 |
+| 황재동 | 탄환 Collision Layer·구조체 관통 수정, 정적 구조물의 탐지·추적 차단, 추가 터렛 통합과 피격·저체력 VFX 검토 | 해금 전후 수리·전력·자동 활성화 확인, 송전탑 후속, 도탄·성장 범위 확인 |
+| 조수빈 | Stage 1 몬스터 폴리싱, 터렛·분대 교전 테스트 씬, Stage 1 최종 보스 구현 | 피격·사망·그림자·정렬·소환형 검증, Core 스폰·Level 맵·Player 컷씬 연동 |
+| 김진태 | 우주선 복도·조종실 독립 씬, Stage 1 CU 모서리 배치와 타일·파도·정렬 점검, 별도 보스 맵 | 문 감지와 씬 전환 분리, 숲 충돌·점유 판정 및 실제 플레이 확인 |
+
+스폰 연계는 Core(양현석)가 주도하고 Enemy(조수빈)가 함께 담당한다.
+
+실제 담당·작업 상태는 GitHub Issue/Project, 병합은 PR이 기준이다. 위 표는 체크 완료나 납기를 생성하지 않는다. 11/3 회의 당시의 리뷰 대기·착수 예상은 그 날짜의 보고이며 현재 상태로 재사용하지 않는다.
+
+## 통합 검증
+
+1. 우주선 복도와 조종실을 오가며 이동·방향과 HUD 전환을 확인한다.
+2. Stage 1에서 적 스폰, 터렛 추적·피격, 구조체 차단과 적 사망을 확인한다.
+3. 점유 조건 충족 후 컷씬을 재생하고 별도 보스 씬에서 조작을 재개한다.
+
+각 담당자가 실제 씬에서 재현하고 수정 후 같은 조건으로 확인한다. 새 문제는 요구사항 시트에 추가한다.
+
+## 아직 결정·검증할 항목
+
+- 11/12 확정한 점유·상실·중간/최종 보스·구조 규칙의 실제 구현과 맵 시험. 상세 정책을 다시 미정으로 취급하지 않으며 실제 Prefab/Scene·writer·파트 접점 제공과 QA는 별도로 필요하다.
+- HUD 오른쪽 상단 미션 Alert의 상세 동작과 갱신 조건. 회복 방식, 암살자 셰이더·거리·알파, 소환시설과 기존 Spawn Executor 경계, 자폭병 피아·수량, 광부 편성, 분열 방벽 채택·탄환 API.
+- 점령/해금/활성화 구분과 지역별 스포너 영향, 후방 터렛 역할·실제 반복 배치 결과.
+- CU/터렛 성장 트리·재화/수치·제공 장소·저장/네트워크. 현재 반환 기본값을 최종 밸런스 확정으로 읽지 않는다.
+- 전체 정지·환경·Spawn·checkpoint 원본 writer·원격 Player·실제 협동 인수. 필수 writer 누락 시 전체 저장 성공으로 표시하지 않는다.
+
+터렛 성장 트리 4안은 문서에 추가됐다. 팀 채택·Stage ID·필드 사용 범위는 검토한다. [11/10 회의 근거](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-10/weekly-progress.md)
+
+## 근거와 현재 문서
+
+[11/11 긴급 대표 회의](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-11/integration-review.md)
+
+[11/7 정기회의 근거](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-07/regular-meeting.md) · [PR 리뷰 절차](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/03_team/TEAM_WORKFLOW.md#review%EC%99%80-approval)
+
+[Product Plan](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/00_product/PROJECT_PLAN.md) · [Core API 지도](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/02_architecture/01_core/core-lifecycle-and-api-guide.md) · [Player 입력](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/02_architecture/06_player/player-primary-input-api.md) · [터렛 API](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/02_architecture/07_turrets/api-reference.md) · [검증 실행 규칙](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/04_development/unity-runtime-test-guidelines.md)
+
+[11/3 회의 원문](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-05/planning/2026-11-03-weekly-progress.md) · [11/5 기반 통합 증거](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-05/planning/2026-11-05-foundation-main-integration.md) · [11/5 Random/출입 제공 기록](https://github.com/Team-HJD-21/unity-6-the-developer/blob/daaa8edb255b6a0e42ef600d1e12e2fadce6eae9/Docs/99_archive/2026-11-05/planning/2026-11-05-core-random-presence-api.md)
