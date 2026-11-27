@@ -30,6 +30,38 @@ public static class RegionBoundaryGeometry
         public GridEdge(Vector2Int start, Vector2Int end) { Start = start; End = end; }
     }
 
+    /// <summary>지도에서 미점유 유효 지형의 점유 가능/잠김 경계만 표시합니다.</summary>
+    public static IReadOnlyList<RegionBoundarySegment> BuildUnlockBoundary(RegionGridSnapshot snapshot)
+    {
+        if (snapshot == null || snapshot.Mode != RegionPolicyMode.Static)
+            return Array.Empty<RegionBoundarySegment>();
+        var definition = snapshot.Definition;
+        var geometry = definition.Geometry;
+        var edges = new List<RegionBoundarySegment>();
+
+        bool IsUnlockEdge(int first, int second)
+        {
+            // 점유 진행 표시는 빼고 채움과 같은 기본 셀 분류로 해금 경계를 찾습니다.
+            var a = TacticalPresentationRules.Cell(snapshot, first, null);
+            var b = TacticalPresentationRules.Cell(snapshot, second, null);
+            return (a == TacticalPresentationRules.CellState.Available && b == TacticalPresentationRules.CellState.Locked) ||
+                   (b == TacticalPresentationRules.CellState.Available && a == TacticalPresentationRules.CellState.Locked);
+        }
+
+        for (int y = 0; y < geometry.CellsY; y++)
+        for (int x = 0; x < geometry.CellsX; x++)
+        {
+            int index = definition.GetCellIndex(x, y);
+            if (x + 1 < geometry.CellsX && IsUnlockEdge(index, definition.GetCellIndex(x + 1, y)))
+                edges.Add(new RegionBoundarySegment(ToWorld(geometry, new Vector2Int(x + 1, y)),
+                    ToWorld(geometry, new Vector2Int(x + 1, y + 1))));
+            if (y + 1 < geometry.CellsY && IsUnlockEdge(index, definition.GetCellIndex(x, y + 1)))
+                edges.Add(new RegionBoundarySegment(ToWorld(geometry, new Vector2Int(x, y + 1)),
+                    ToWorld(geometry, new Vector2Int(x + 1, y + 1))));
+        }
+        return edges.AsReadOnly();
+    }
+
     /// <summary>지도/바닥 표시가 같은 Snapshot에서 호출합니다. 각 닫힌 경계는 연속된 선분으로 반환됩니다.</summary>
     public static IReadOnlyList<RegionBoundarySegment> Build(RegionGridSnapshot snapshot)
     {
@@ -54,9 +86,6 @@ public static class RegionBoundaryGeometry
         }
         var used = new bool[edges.Count];
         var result = new List<RegionBoundarySegment>(edges.Count);
-        Vector2 World(Vector2Int p) => new((float)(grid.MinimumX + p.x * grid.CellWidth),
-            (float)(grid.MinimumY + p.y * grid.CellHeight));
-
         for (int first = 0; first < edges.Count; first++)
         {
             if (used[first]) continue;
@@ -65,7 +94,7 @@ public static class RegionBoundaryGeometry
             {
                 var edge = edges[index];
                 used[index] = true;
-                result.Add(new RegionBoundarySegment(World(edge.Start), World(edge.End)));
+                result.Add(new RegionBoundarySegment(ToWorld(grid, edge.Start), ToWorld(grid, edge.End)));
                 if (edge.End == edges[first].Start) break;
                 int chosen = -1, bestTurn = int.MinValue;
                 var direction = edge.End - edge.Start;
@@ -83,4 +112,7 @@ public static class RegionBoundaryGeometry
         }
         return result.AsReadOnly();
     }
+
+    private static Vector2 ToWorld(BattlefieldGridConfiguration grid, Vector2Int point) =>
+        new((float)(grid.MinimumX + point.x * grid.CellWidth), (float)(grid.MinimumY + point.y * grid.CellHeight));
 }

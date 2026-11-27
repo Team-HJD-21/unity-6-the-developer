@@ -19,6 +19,31 @@ public sealed class CombatHudPresentationTests
     private Mouse _mouse;
     private readonly List<InputDevice> _mutedPointers = new();
 
+    [TestCase(200, 201, "99%")]
+    [TestCase(255, 256, "99%")]
+    [TestCase(100000, 100001, "99%")]
+    [TestCase(201, 201, "100%")]
+    [TestCase(1, 201, "0.5%")]
+    [TestCase(0, 201, "0%")]
+    [TestCase(0, 0, "")]
+    public void OccupancyDisplaysCompleteOnlyWhenAllEligibleCellsAreCaptured(int captured, int eligible, string expected)
+    {
+        _hud = new GameObject("Occupancy header QA", typeof(RectTransform));
+        _hud.SetActive(false);
+        var header = _hud.AddComponent<CombatHudHeader>();
+        var clock = new GameObject("Clock", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+        var occupancy = new GameObject("Occupancy", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+        clock.transform.SetParent(_hud.transform, false);
+        occupancy.transform.SetParent(_hud.transform, false);
+        header.ClockLabel = clock.GetComponent<TMPro.TMP_Text>();
+        header.OccupancyLabel = occupancy.GetComponent<TMPro.TMP_Text>();
+
+        header.SetConfirmedOccupancy(captured, eligible);
+
+        Assert.That(header.OccupancyLabel.text, Is.EqualTo(expected));
+        Assert.That(header.OccupancyLabel.gameObject.activeSelf, Is.EqualTo(eligible > 0));
+    }
+
     [UnityTearDown]
     public IEnumerator CleanUp()
     {
