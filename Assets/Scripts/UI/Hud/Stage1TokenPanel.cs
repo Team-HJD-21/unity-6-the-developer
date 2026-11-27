@@ -10,6 +10,7 @@ using UnityEngine.UI;
 public sealed class Stage1TokenPanel : MonoBehaviour
 {
     private static readonly string ArmorPrice = $"토큰 {Stage1TokenProgress.CuArmorCost}";
+    private const string RetryFailureMessage = "토큰을 확인할 수 없습니다.";
 
     [SerializeField] private TMP_Text _balance;
     [SerializeField] private Button _purchase;
@@ -69,6 +70,8 @@ public sealed class Stage1TokenPanel : MonoBehaviour
             {
                 if (await _app.RetryStage1TokenStorageAsync())
                     GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}");
+                else if (_app != null && _app.HasStage1TokenStorageError)
+                    GameAlerts.Show(RetryFailureMessage);
             }
             else if (await _app.BuyStage1CuArmorAsync())
                 GameAlerts.Show("CU 장갑 I 구매 완료 · 다음 출격부터 최대 체력 +10%");
@@ -77,7 +80,7 @@ public sealed class Stage1TokenPanel : MonoBehaviour
         catch (Exception error)
         {
             Debug.LogException(error, this);
-            GameAlerts.Show(retry ? "토큰을 확인할 수 없습니다." : "연구를 저장하지 못했습니다. 다시 시도해 주세요.");
+            GameAlerts.Show(retry ? RetryFailureMessage : "연구를 저장하지 못했습니다. 다시 시도해 주세요.");
         }
         finally
         {

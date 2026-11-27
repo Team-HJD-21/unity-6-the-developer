@@ -51,11 +51,7 @@ public sealed partial class ControlUnitHealth : MonoBehaviour, IDamageableTarget
         float previousRatio = previousMax > 0 ? _currentHealth / (float)previousMax : 0;
         _hasCampaignArmor = researched;
         if (previousMax > 0 && _currentHealth > 0)
-        {
-            int currentMax = MaxHealth;
-            long scaled = ((long)_currentHealth * currentMax + previousMax - 1) / previousMax;
-            _currentHealth = (int)Math.Min(currentMax, scaled);
-        }
+            _currentHealth = FieldTurretController.RestoreHealthRatio(_currentHealth, previousMax, MaxHealth, false);
         onCUHpChange.Invoke(_currentHealth, MaxHealth, previousRatio);
         HealthChanged?.Invoke(_currentHealth, MaxHealth);
     }
