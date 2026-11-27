@@ -13,11 +13,16 @@ namespace TeamHJD.Game.Bootstrap
         private CheckpointSlot _campaignSlot = new CheckpointSlot("campaign-1");
         public CheckpointSlot CampaignSlot => _campaignSlot;
         public int? Stage1TokenBalance => Stage1Tokens?.IsLoaded == true ? Stage1Tokens.Balance : null;
+        public bool HasStage1TokenStorageError => Stage1Tokens?.StorageError != null;
         public bool HasStage1CuArmor => Stage1Tokens?.HasCuArmor(CampaignSlot) == true;
         public bool CanBuyStage1CuArmor =>
+            CanUseStage1TokenShop && !HasStage1TokenStorageError &&
+            Stage1TokenBalance >= Stage1TokenProgress.CuArmorCost && !HasStage1CuArmor;
+        public bool CanRetryStage1TokenStorage => CanUseStage1TokenShop && HasStage1TokenStorageError;
+
+        private bool CanUseStage1TokenShop =>
             CurrentMatchId.IsEmpty && NetworkMatches?.Descriptor == null &&
             (NetworkSession == null || NetworkSession.State == NetworkConnectionState.Disconnected || NetworkSession.IsServer) &&
-            Stage1TokenBalance >= Stage1TokenProgress.CuArmorCost && !HasStage1CuArmor &&
             (GameFlow != null
                 ? GameFlow.Phase == GameFlowPhase.Spaceship && !GameFlow.IsTransitioning
                 : SceneManager.GetActiveScene().path == DefaultHubScene);
@@ -25,6 +30,11 @@ namespace TeamHJD.Game.Bootstrap
         /// <summary>우주선 연구 화면이 호출합니다. 구매가 저장된 뒤에만 true를 반환합니다.</summary>
         public Task<bool> BuyStage1CuArmorAsync() => CanBuyStage1CuArmor
             ? Stage1Tokens.BuyCuArmorAsync(CampaignSlot, destroyCancellationToken)
+            : Task.FromResult(false);
+
+        /// <summary>우주선 상태창이 실패한 토큰 불러오기나 처치 보상 저장을 다시 요청합니다.</summary>
+        public Task<bool> RetryStage1TokenStorageAsync() => CanRetryStage1TokenStorage
+            ? Stage1Tokens.LoadAsync(destroyCancellationToken)
             : Task.FromResult(false);
 
         /// <summary>시작/허브 흐름이 새 캠페인을 고를 때 Mission 입장 전에 호출합니다. 기존 파일을 삭제하지 않습니다.</summary>

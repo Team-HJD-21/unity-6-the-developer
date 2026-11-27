@@ -65,6 +65,48 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(progress.HasCuArmor(Campaign), Is.True);
         }
 
+        [Test]
+        public void FailedBossRewardIsRetriedOnceWhenStorageReturns()
+        {
+            var store = new MemoryStore { RejectWrites = true };
+            var progress = Progress(store, "host");
+            Assert.That(Complete(progress.GrantFirstBossRewardAsync()), Is.False);
+            Assert.That(progress.StorageError, Is.TypeOf<IOException>());
+            Assert.That(progress.FirstBossRewardReceived, Is.False);
+            Assert.That(Complete(progress.LoadAsync()), Is.False, "A hub should remain usable while the retry also fails.");
+            Assert.That(Complete(progress.BuyCuArmorAsync(Campaign)), Is.False);
+            Assert.That(store.Writes, Is.Zero);
+
+            store.RejectWrites = false;
+            var retries = Complete(Task.WhenAll(progress.LoadAsync(), progress.LoadAsync()));
+            Assert.That(retries.Count(granted => granted), Is.EqualTo(1));
+            Assert.That(progress.StorageError, Is.Null);
+            Assert.That(progress.Balance, Is.EqualTo(Stage1TokenProgress.FirstBossReward));
+            Assert.That(store.Writes, Is.EqualTo(1));
+            Assert.That(Complete(Progress(store, "host").GrantFirstBossRewardAsync()), Is.False);
+        }
+
+        [Test]
+        public void CorruptWalletDoesNotBecomeAnEmptyWalletOrGetOverwritten()
+        {
+            var store = new MemoryStore();
+            Assert.That(Complete(Progress(store, "host").GrantFirstBossRewardAsync()), Is.True);
+            store.ReadError = new InvalidDataException("The token file failed validation.");
+            var reopened = Progress(store, "host");
+
+            Assert.That(Complete(reopened.LoadAsync()), Is.False);
+            Assert.That(reopened.StorageError, Is.SameAs(store.ReadError));
+            Assert.That(reopened.IsLoaded, Is.False);
+            Assert.That(Complete(reopened.GrantFirstBossRewardAsync()), Is.False);
+            Assert.That(store.Writes, Is.EqualTo(1));
+
+            store.ReadError = null;
+            Assert.That(Complete(reopened.LoadAsync()), Is.False);
+            Assert.That(reopened.StorageError, Is.Null);
+            Assert.That(reopened.Balance, Is.EqualTo(Stage1TokenProgress.FirstBossReward));
+            Assert.That(store.Writes, Is.EqualTo(1));
+        }
+
         private static Stage1TokenProgress Progress(MemoryStore store, string owner) =>
             new(store, new BinaryCheckpointPayloadCodec(), new PlayerId(owner));
 
@@ -73,11 +115,13 @@ namespace TeamHJD.Game.Tests.EditMode
         private sealed class MemoryStore : ICheckpointStore
         {
             private readonly Dictionary<CheckpointSlot, CheckpointData> _slots = new();
+            public System.Exception ReadError { get; set; }
             public bool RejectWrites { get; set; }
             public int Writes { get; private set; }
 
             public Task<CheckpointData> LoadAsync(CheckpointSlot slot, CancellationToken cancellationToken = default) =>
-                Task.FromResult(_slots.TryGetValue(slot, out var data) ? data : null);
+                ReadError != null ? Task.FromException<CheckpointData>(ReadError) :
+                    Task.FromResult(_slots.TryGetValue(slot, out var data) ? data : null);
 
             public async Task SaveAsync(CheckpointSlot slot, CheckpointData data, CancellationToken cancellationToken = default)
             {

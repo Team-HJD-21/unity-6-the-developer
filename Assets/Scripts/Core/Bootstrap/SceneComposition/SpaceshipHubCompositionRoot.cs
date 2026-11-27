@@ -57,7 +57,8 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 var playerId = InitialStageCompositionRoot.LocalPlayerId;
                 Player = _spawner.Spawn(playerId, start);
                 BindPersonalGrowth(app.Services.CheckpointStore, app.Services.CheckpointPayloads, playerId);
-                app.Stage1Tokens?.LoadAsync(destroyCancellationToken).GetAwaiter().GetResult();
+                if (app.Stage1Tokens?.LoadAsync(destroyCancellationToken).GetAwaiter().GetResult() == true)
+                    GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}");
                 foreach (var component in Player.GetComponents<MonoBehaviour>())
                 {
                     if (component is ILocalInputConsumer input)

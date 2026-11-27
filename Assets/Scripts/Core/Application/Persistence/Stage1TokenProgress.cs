@@ -35,8 +35,11 @@ namespace TeamHJD.Game.Application
         private readonly CheckpointSlot _slot;
         private readonly SemaphoreSlim _transaction = new(1, 1);
         private volatile Snapshot _current;
+        private volatile Exception _storageError;
+        private bool _rewardPending;
 
         public bool IsLoaded => _current != null;
+        public Exception StorageError => _storageError;
         public int Balance => _current?.Balance ?? 0;
         public bool FirstBossRewardReceived => _current?.FirstBossRewardReceived == true;
         public bool HasCuArmor(CheckpointSlot campaign) =>
@@ -51,34 +54,56 @@ namespace TeamHJD.Game.Application
             _slot = GrowthSaveService.SlotForOwner("stage1-tokens/" + owner.Value);
         }
 
-        public Task LoadAsync(CancellationToken cancellation = default) => ApplyAsync(state => state, cancellation);
+        /// <summary>잔액을 불러오고 대기 중인 처치 보상을 재시도합니다. 재시도에서 새로 지급하면 true입니다.</summary>
+        public Task<bool> LoadAsync(CancellationToken cancellation = default) =>
+            ApplyAsync(default, false, cancellation);
 
         /// <summary>Stage 1 최종 보스의 권위 승리 경로가 호출합니다. 이미 받은 보상에는 false를 반환합니다.</summary>
         public Task<bool> GrantFirstBossRewardAsync(CancellationToken cancellation = default) =>
-            ApplyAsync(state => state.FirstBossRewardReceived ? state :
-                new Snapshot(checked(state.Balance + FirstBossReward), true, state.ArmorCampaign), cancellation);
+            ApplyAsync(default, true, cancellation);
 
         /// <summary>우주선의 구매 요청을 처리합니다. 잔액 부족과 이미 구매한 경우에는 false를 반환합니다.</summary>
         public Task<bool> BuyCuArmorAsync(CheckpointSlot campaign, CancellationToken cancellation = default)
         {
             if (campaign.IsEmpty) throw new ArgumentException("A Host campaign is required.", nameof(campaign));
-            return ApplyAsync(state => !state.ArmorCampaign.IsEmpty || state.Balance < CuArmorCost ? state :
-                new Snapshot(state.Balance - CuArmorCost, state.FirstBossRewardReceived, campaign), cancellation);
+            return ApplyAsync(campaign, false, cancellation);
         }
 
-        private async Task<bool> ApplyAsync(Func<Snapshot, Snapshot> propose, CancellationToken cancellation)
+        private async Task<bool> ApplyAsync(CheckpointSlot purchaseCampaign, bool recordVictory, CancellationToken cancellation)
         {
             await _transaction.WaitAsync(cancellation).ConfigureAwait(false);
             try
             {
+                // 이 기록은 저장에 성공하거나 이미 수령한 것이 확인될 때까지 App 수명에 남습니다.
+                if (recordVictory) _rewardPending = true;
                 if (_current == null) _current = Read(await _store.LoadAsync(_slot, cancellation).ConfigureAwait(false));
-                var next = propose(_current);
-                if (ReferenceEquals(next, _current)) return false;
+                Snapshot next = _current;
+                if (purchaseCampaign.IsEmpty)
+                {
+                    if (_rewardPending && !_current.FirstBossRewardReceived)
+                        next = new Snapshot(checked(_current.Balance + FirstBossReward), true, _current.ArmorCampaign);
+                }
+                else if (_storageError == null && _current.ArmorCampaign.IsEmpty && _current.Balance >= CuArmorCost)
+                {
+                    next = new Snapshot(_current.Balance - CuArmorCost, _current.FirstBossRewardReceived, purchaseCampaign);
+                }
 
-                // 잔액과 지급·구매 기록을 같은 파일에 확정한 뒤 UI와 다음 출격이 읽도록 공개합니다.
-                await _store.SaveAsync(_slot, Capture(next), cancellation).ConfigureAwait(false);
-                _current = next;
-                return true;
+                bool changed = !ReferenceEquals(next, _current);
+                if (changed)
+                {
+                    // 잔액과 지급·구매 기록을 같은 파일에 확정한 뒤 UI와 다음 출격이 읽도록 공개합니다.
+                    await _store.SaveAsync(_slot, Capture(next), cancellation).ConfigureAwait(false);
+                    _current = next;
+                }
+                if (_current.FirstBossRewardReceived) _rewardPending = false;
+                if (purchaseCampaign.IsEmpty) _storageError = null;
+                return changed;
+            }
+            catch (Exception error) when (purchaseCampaign.IsEmpty &&
+                error is IOException or InvalidDataException or UnauthorizedAccessException or NotSupportedException)
+            {
+                _storageError = error;
+                return false;
             }
             finally { _transaction.Release(); }
         }
@@ -96,7 +121,13 @@ namespace TeamHJD.Game.Application
                     throw new InvalidDataException("Token progress belongs to a different profile.");
                 int balance = reader.ReadInt32();
                 bool rewardReceived = reader.ReadBoolean();
-                var armorCampaign = reader.ReadBoolean() ? new CheckpointSlot(_codec.ReadText(reader)) : default;
+                CheckpointSlot armorCampaign = default;
+                if (reader.ReadBoolean())
+                {
+                    string savedCampaign = _codec.ReadText(reader);
+                    try { armorCampaign = new CheckpointSlot(savedCampaign); }
+                    catch (ArgumentException error) { throw new InvalidDataException("Invalid CU armor campaign.", error); }
+                }
                 if (balance < 0 || !armorCampaign.IsEmpty && !rewardReceived)
                     throw new InvalidDataException("Invalid Stage 1 token balance or research receipt.");
                 return new Snapshot(balance, rewardReceived, armorCampaign);
