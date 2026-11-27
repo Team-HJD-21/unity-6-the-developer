@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
+using TeamHJD.Game.Domain;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -12,6 +13,9 @@ namespace TeamHJD.Game.Presentation
 {
     public sealed class AppScreenPresenter : IDisposable
     {
+        /// <summary>기존 씬 경로 호출부가 사용하는 공용 기본 경로입니다.</summary>
+        public const string StageScene = GameFlowRoutes.DefaultStage1Scene;
+        public const string HubScene = GameFlowRoutes.DefaultHubScene;
         private readonly ScreenManager _screens;
         private readonly SceneFlowController _scenes;
         private readonly Func<Task> _restartMission;
