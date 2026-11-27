@@ -244,15 +244,19 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             var descriptor = _matches.Descriptor;
             try
             {
-                while (!_matches.CanStart)
+                while (true)
                 {
                     cancellation.ThrowIfCancellationRequested();
-                    if (_disposed || !_session.IsServer || _matches.Descriptor != descriptor ||
-                        _matches.Phase != NetworkMatchPhase.Preparing)
+                    if (_disposed || !_session.IsServer || _matches.Descriptor != descriptor)
                         throw new InvalidOperationException("The prepared Match changed before shared readiness.");
+                    if (_matches.IsGameplayRunning)
+                        return;
+                    if (_matches.Phase != NetworkMatchPhase.Preparing)
+                        throw new InvalidOperationException("The prepared Match changed before shared readiness.");
+                    if (_matches.CanStart)
+                        break;
                     await Task.Yield();
                 }
-                cancellation.ThrowIfCancellationRequested();
                 if (!TryStartMatch())
                     throw new InvalidOperationException("The prepared Host Match could not start.");
             }
@@ -364,9 +368,29 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             try
             {
                 _scene.ValidateNetworkPreparation(descriptor);
-                _matches.MarkLocalReady();
+                Task wallet = _session.IsServer ? _scene.PrepareStage1TokenWalletAsync(_app) : Task.CompletedTask;
+                if (wallet.IsCompletedSuccessfully)
+                    _matches.MarkLocalReady();
+                else
+                    _ = MarkReadyAfterTokenWalletAsync(descriptor, wallet);
             }
             catch (Exception error) { FailMatch(error); throw; }
+        }
+
+        private async Task MarkReadyAfterTokenWalletAsync(NetworkMatchDescriptor descriptor, Task wallet)
+        {
+            try
+            {
+                await wallet;
+                if (!_disposed && _matches.Descriptor == descriptor && _matches.Phase == NetworkMatchPhase.Preparing)
+                    _matches.MarkLocalReady();
+            }
+            catch (Exception error)
+            {
+                if (_disposed || _matches.Descriptor != descriptor || _matches.Phase != NetworkMatchPhase.Preparing) return;
+                FailMatch(error);
+                Debug.LogException(error, this);
+            }
         }
 
         private void OnStarted(NetworkMatchDescriptor descriptor)
@@ -507,12 +531,23 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 if (_entry == InitialStageNetworkEntry.Client)
                     TryStartClient();
                 else if (_entry == InitialStageNetworkEntry.SinglePlayerHost && (_session.IsServer || TryStartHost()))
-                {
-                    if (!TryPrepareMatch() || !TryStartMatch())
-                        throw new InvalidOperationException("Single-player Host could not prepare/start its Match.");
-                }
+                    _ = StartSinglePlayerHostAsync();
             }
             catch (Exception error) { FailMatch(error); Debug.LogException(error, this); }
+        }
+
+        private async Task StartSinglePlayerHostAsync()
+        {
+            var cancellation = destroyCancellationToken;
+            try { await StartAfterSceneTravelAsync(cancellation); }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+            catch (Exception error)
+            {
+                if (_disposed || cancellation.IsCancellationRequested) return;
+                LastFailure = error.Message;
+                _app?.RecordCompositionFailure(gameObject.scene.path, error);
+                Debug.LogException(error, this);
+            }
         }
 
         private void OnDestroy()

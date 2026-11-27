@@ -5,6 +5,7 @@ using System.Collections;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using TeamHJD.Game.Content;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.FieldTurrets;
@@ -19,6 +20,32 @@ using Object = UnityEngine.Object;
 public sealed class FieldTurretRestoreVisualTests
 {
     private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    [Test]
+    public void CuArmorAppliesTenPercentOnceWithoutChangingTheDefinitionOrRevivingTheCu()
+    {
+        var target = new GameObject("CU armor test");
+        target.SetActive(false);
+        var definition = ScriptableObject.CreateInstance<FieldTurretDefinition>();
+        try
+        {
+            var cu = target.AddComponent<ControlUnitHealth>();
+            typeof(ControlUnitHealth).GetField("_definition", Fields).SetValue(cu, definition);
+            Assert.That(cu.MaxHealth, Is.EqualTo(100));
+            cu.ApplyCampaignArmor(true);
+            cu.ApplyCampaignArmor(true);
+            Assert.That(cu.MaxHealth, Is.EqualTo(110));
+            Assert.That(definition.MaxHealth, Is.EqualTo(100));
+            Assert.That(cu.IsDestroyed, Is.True);
+            cu.ApplyCampaignArmor(false);
+            Assert.That(cu.MaxHealth, Is.EqualTo(100));
+        }
+        finally
+        {
+            Object.DestroyImmediate(target);
+            Object.DestroyImmediate(definition);
+        }
+    }
 
     [TestCase(100)]
     [TestCase(1000)]

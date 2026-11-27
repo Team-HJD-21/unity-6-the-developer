@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Bootstrap;
 using TeamHJD.Game.Content.Authoring;
@@ -98,7 +99,40 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 _networkBinding.Initialize(app, this);
                 return;
             }
+            if (appMatchHost is AppRoot localApp)
+            {
+                Task wallet = PrepareStage1TokenWalletAsync(localApp);
+                if (!wallet.IsCompletedSuccessfully)
+                {
+                    _matchHost = appMatchHost;
+                    _ = ComposeAfterTokenWalletAsync(localApp, wallet);
+                    return;
+                }
+            }
             ComposeAuthority(appMatchHost);
+        }
+
+        // 권위 조립과 체크포인트 복원이 시작되기 전에 장갑 소유를 읽습니다.
+        internal Task PrepareStage1TokenWalletAsync(AppRoot app) =>
+            gameObject.scene.path == AppRoot.DefaultStage1Scene && app.Stage1Tokens is { } wallet
+                ? wallet.LoadAsync(destroyCancellationToken) : Task.CompletedTask;
+
+        private async Task ComposeAfterTokenWalletAsync(AppRoot app, Task wallet)
+        {
+            var cancellation = destroyCancellationToken;
+            try
+            {
+                await wallet;
+                if (!cancellation.IsCancellationRequested && app != null && app.IsInitialized)
+                    ComposeAuthority(app);
+            }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+            catch (Exception error)
+            {
+                if (cancellation.IsCancellationRequested || app == null || !app.IsInitialized) return;
+                app.RecordCompositionFailure(gameObject.scene.path, error);
+                Debug.LogException(error, this);
+            }
         }
 
         private void ComposeAuthority(IAppMatchHost appMatchHost, NetworkMatchCoordinator network = null,
@@ -172,6 +206,13 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 ConfigureUnlockZones(regionBinding, network?.Descriptor.RegionMode ?? regionBinding.InitialMode);
                 var controlUnitHealth = regionBinding.ControlUnit.GetComponents<MonoBehaviour>()
                     .Where(component => component != null && component.isActiveAndEnabled).OfType<IControlUnitVitals>().Single();
+                if (appMatchHost is AppRoot stageApp && stageApp.Stage1Tokens != null &&
+                    gameObject.scene.path == AppRoot.DefaultStage1Scene)
+                {
+                    bool hasArmor = stageApp.Stage1Tokens.HasCuArmor(stageApp.CampaignSlot);
+                    if (controlUnitHealth is IControlUnitArmorConsumer cu) cu.ApplyCampaignArmor(hasArmor);
+                    else if (hasArmor) throw new InvalidOperationException("Stage 1 CU cannot apply purchased campaign armor.");
+                }
                 ITimestampSource timestamp = network == null ? (ITimestampSource)new UnityTimestampSource() :
                     new NgoTimestampSource((_networkBinding.Connection as NgoNetworkSession)?.Manager ??
                         throw new InvalidOperationException("The authority Match requires its composed NGO connection."));

@@ -17,6 +17,9 @@ namespace TeamHJD.Game.Bootstrap
 {
     public sealed partial class AppRoot : MonoBehaviour, IAppMatchHost, IDisposable
     {
+        public const string DefaultStage1Scene = GameFlowRoutes.DefaultStage1Scene;
+        public const string DefaultHubScene = GameFlowRoutes.DefaultHubScene;
+
         /// <summary>UI 조립부가 로컬 연출 소비자에게 주입하는 App 수명 난수입니다. 게임 판정에 사용하지 않습니다.</summary>
         public IRandomStreams PresentationRandom => Services?.PresentationRandom;
         /// <summary>앱 화면/접속 흐름이 사용하는 플랫폼 Port입니다. SDK 구체 타입이나 AppServices 전체를 노출하지 않습니다.</summary>
@@ -185,6 +188,7 @@ namespace TeamHJD.Game.Bootstrap
         public UiDisplaySettings DisplaySettings { get; private set; }
         public GameAudioSettings AudioSettings { get; private set; }
         public GameAudioManager Audio { get; private set; }
+        internal Stage1TokenProgress Stage1Tokens { get; private set; }
 
         public void Initialize(AppServices services)
         {
@@ -194,6 +198,9 @@ namespace TeamHJD.Game.Bootstrap
                 throw new InvalidOperationException("AppRoot has already been initialized.");
 
             Services = services ?? throw new ArgumentNullException(nameof(services));
+            if (Services.CheckpointStore != null && Services.CheckpointPayloads != null)
+                Stage1Tokens = new Stage1TokenProgress(Services.CheckpointStore, Services.CheckpointPayloads,
+                    SceneComposition.InitialStageCompositionRoot.LocalPlayerId);
             DisplaySettings = new UiDisplaySettings();
             AudioSettings = new GameAudioSettings();
             if (UnityEngine.Application.isPlaying)

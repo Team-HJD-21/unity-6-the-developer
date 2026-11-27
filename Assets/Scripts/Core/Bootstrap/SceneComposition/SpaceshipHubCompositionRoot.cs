@@ -3,6 +3,7 @@
 // 개인 성장 저장은 기존 원본에 연결하며 전투 Match·날씨·NGO 권위를 만들지 않습니다.
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
@@ -66,12 +67,26 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                 }
 
                 _follow.Bind(Player.transform);
+                _ = LoadTokenWalletAsync(app.Stage1Tokens);
             }
             catch
             {
                 Release();
                 throw;
             }
+        }
+
+        private async Task LoadTokenWalletAsync(Stage1TokenProgress wallet)
+        {
+            if (wallet == null) return;
+            var cancellation = destroyCancellationToken;
+            try
+            {
+                if (await wallet.LoadAsync(cancellation) && !cancellation.IsCancellationRequested)
+                    GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}", AlertTone.Success);
+            }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+            catch (Exception error) { Debug.LogException(error, this); }
         }
 
         private void BindPersonalGrowth(ICheckpointStore store, ICheckpointPayloadCodec codec, PlayerId playerId)

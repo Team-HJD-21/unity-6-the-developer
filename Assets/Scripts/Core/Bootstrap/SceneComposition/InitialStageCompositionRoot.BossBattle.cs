@@ -120,6 +120,9 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             {
                 using var pause = _matchTime.AcquirePause("BossVictory");
                 using var input = app.LocalInput.Acquire("BossVictory");
+                bool tokenGranted = false;
+                if (gameObject.scene.path == AppRoot.DefaultStage1Scene && app.Stage1Tokens != null)
+                    tokenGranted = await app.Stage1Tokens.GrantFirstBossRewardAsync(cancellation);
                 await _bossPresentation.PlayVictoryAsync("보스를 처치하는데에 성공했습니다", 5, cancellation);
                 BossBattlePhase = StageBossBattlePhase.Returning;
                 // 귀환은 Match를 종료하므로 그 Match의 취소 토큰으로 귀환 자체를 취소하지 않습니다.
@@ -133,6 +136,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     if (app.GameFlow != null) await app.GameFlow.ReturnToSpaceshipAsync(deadline.Token);
                     else await app.ReplaceGameplaySceneAsync(AppScreenPresenter.HubScene, deadline.Token);
                 }, app.destroyCancellationToken);
+                if (tokenGranted) GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}", AlertTone.Success);
             }
             catch (Exception error)
             {
