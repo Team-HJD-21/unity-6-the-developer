@@ -19,6 +19,11 @@ public sealed partial class TacticalCommandController
     private readonly List<TurretPresentationSnapshot> _rows = new();
     private readonly Dictionary<EntityId, TurretPresentationSnapshot> _byId = new();
     private readonly Dictionary<EntityId, FieldTurretBase> _locals = new();
+    private readonly Dictionary<FieldTurretBase, EntityId> _localIds = new();
+    private const float FieldHoverPaddingPixels = 8f;
+    private const float FieldHoverCenterPixels = 42f;
+    private readonly List<Collider2D> _fieldHoverHits = new();
+    private ContactFilter2D _fieldHoverFilter;
     private readonly Dictionary<EntityId, TacticalPresentationRules.Vitality> _damage = new();
     private readonly List<Vector2> _enemies = new();
     private readonly List<EnemyGroup> _groups = new();
@@ -49,7 +54,7 @@ public sealed partial class TacticalCommandController
     }
     private void CaptureData()
     {
-        _rows.Clear(); _byId.Clear(); _locals.Clear(); Regions = null; Battlefield=null; _captureProgress.Clear();
+        _rows.Clear(); _byId.Clear(); _locals.Clear(); _localIds.Clear(); Regions = null; Battlefield=null; _captureProgress.Clear();
         if (_player == null || Source.Turrets == null) { _enemies.Clear(); _groups.Clear(); return; }
         foreach (var turret in FieldTurretInstanceRegistry.GetAll())
         {
@@ -57,6 +62,7 @@ public sealed partial class TacticalCommandController
             if (turret.TryGetEntityId(out var id)) _locals[id] = turret;
             else if (!Source.RequiresCommands) _locals[new EntityId("local/" + turret.InstanceId)] = turret;
         }
+        foreach (var local in _locals) _localIds[local.Value] = local.Key;
         var frame = Source.Commands?.Presentation.Snapshot;
         if (Source.RequiresCommands)
         {
@@ -168,10 +174,47 @@ public sealed partial class TacticalCommandController
         }
         return best;
     }
+    private TurretPresentationSnapshot PickFieldHover(Vector2 pointer, TurretPresentationSnapshot centerTarget)
+    {
+        var camera = OutputCamera;
+        if (camera == null || !camera.pixelRect.Contains(pointer)) return null;
+
+        Vector2 position = ScreenToWorld(pointer);
+        float padding = Vector2.Distance(position, ScreenToWorld(pointer + Vector2.right * FieldHoverPaddingPixels));
+        if (padding <= 0f) return centerTarget;
+        if (!_fieldHoverFilter.useLayerMask)
+        {
+            _fieldHoverFilter.useTriggers = true;
+            _fieldHoverFilter.SetLayerMask(LayerMask.GetMask("Turret", "TurretBase"));
+        }
+
+        gameObject.scene.GetPhysicsScene2D().OverlapCircle(position, padding, _fieldHoverFilter, _fieldHoverHits);
+        TurretPresentationSnapshot best = null;
+        float bestEdgeDistance = float.PositiveInfinity;
+        float bestCenterDistance = float.PositiveInfinity;
+        foreach (var hit in _fieldHoverHits)
+        {
+            var turret = hit.GetComponentInParent<FieldTurretBase>();
+            if (turret == null || !_localIds.TryGetValue(turret, out var id) || !_byId.TryGetValue(id, out var row)) continue;
+
+            float edgeDistance = (hit.ClosestPoint(position) - position).sqrMagnitude;
+            float centerDistance = (Point(row) - position).sqrMagnitude;
+            if (edgeDistance > bestEdgeDistance ||
+                (edgeDistance == bestEdgeDistance && centerDistance >= bestCenterDistance)) continue;
+
+            best = row;
+            bestEdgeDistance = edgeDistance;
+            bestCenterDistance = centerDistance;
+        }
+        return best ?? centerTarget;
+    }
+
     private void RefreshHover()
     {
+        Vector2 pointer = GameInput.PointerPosition;
         bool overUi = GameInput.IsPointerOverUi();
-        var target = overUi ? null : Pick(GameInput.PointerPosition, 42);
+        var centerTarget = overUi ? null : Pick(pointer, FieldHoverCenterPixels);
+        var target = overUi ? null : PickFieldHover(pointer, centerTarget);
         var id = target != null ? target.EntityId : default;
         if (_hovered != id) { _hovered = id; _hoverSince = Time.unscaledTime; }
         bool quiet = Time.unscaledTime - _lastShot >= Style.ShotQuietSeconds && !GameInput.PrimaryPointerIsPressed;
@@ -184,12 +227,12 @@ public sealed partial class TacticalCommandController
             View.TooltipPower.text=target.Power.ToString();
             View.TooltipState.Set(TacticalSymbolGraphic.ForState(StateOf(target)),StateColor(StateOf(target)));
             SetHealth(View.TooltipHealth,target);
-            PlaceClamped(View.Tooltip, GameInput.PointerPosition + new Vector2(24, 28));
+            PlaceClamped(View.Tooltip, pointer + new Vector2(24, 28));
         }
         // 기존 F 구조와 플레이어가 설치한 포탑 회수를 먼저 처리합니다. 같은 입력으로 두 행동을 실행하지 않습니다.
         var skills=_player.GetComponent<PlayerSkillController>();
         bool reserved=_player.HasRescueTarget || (skills!=null && skills.CanRecover && skills.RecoverableTurret!=null);
-        var nearby=target!=null && Vector2.Distance(PlayerPosition,Point(target))<=Source.InteractionDistance?target:null;
+        var nearby=centerTarget!=null && Vector2.Distance(PlayerPosition,Point(centerTarget))<=Source.InteractionDistance?centerTarget:null;
         float nearest=Source.InteractionDistance;
         if(nearby==null)foreach(var row in _rows)
         {
