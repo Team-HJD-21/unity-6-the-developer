@@ -18,12 +18,14 @@ public sealed class Stage1TokenPanel : MonoBehaviour
 
     private AppRoot _app;
     private bool _purchasing;
+    private bool _retryFailed;
     private int? _shownBalance;
     private bool _shownStorageError;
 
     private void OnEnable()
     {
         _app = FindAnyObjectByType<AppRoot>();
+        _retryFailed = false;
         _shownBalance = int.MinValue;
         if (_purchase != null) _purchase.onClick.AddListener(HandlePress);
         Refresh();
@@ -52,7 +54,9 @@ public sealed class Stage1TokenPanel : MonoBehaviour
         _purchase.interactable = !_purchasing && _app != null && (_app.CanRetryStage1TokenStorage || _app.CanBuyStage1CuArmor);
         if (_purchaseLabel != null)
         {
-            string label = _purchasing ? "처리 중" : storageError ? "다시 시도" : owned ? "구매 완료" : ArmorPrice;
+            string label = _purchasing ? "처리 중" : storageError
+                ? (_retryFailed ? "재시도 실패" : "다시 시도")
+                : owned ? "구매 완료" : ArmorPrice;
             if (_purchaseLabel.text != label) _purchaseLabel.text = label;
         }
     }
@@ -63,6 +67,7 @@ public sealed class Stage1TokenPanel : MonoBehaviour
         bool retry = _app.CanRetryStage1TokenStorage;
         if (!retry && !_app.CanBuyStage1CuArmor) return;
         _purchasing = true;
+        _retryFailed = false;
         Refresh();
         try
         {
@@ -71,7 +76,10 @@ public sealed class Stage1TokenPanel : MonoBehaviour
                 if (await _app.RetryStage1TokenStorageAsync())
                     GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}");
                 else if (_app != null && _app.HasStage1TokenStorageError)
+                {
+                    _retryFailed = true;
                     GameAlerts.Show(RetryFailureMessage);
+                }
             }
             else if (await _app.BuyStage1CuArmorAsync())
                 GameAlerts.Show("CU 장갑 I 구매 완료 · 다음 출격부터 최대 체력 +10%");
@@ -79,6 +87,7 @@ public sealed class Stage1TokenPanel : MonoBehaviour
         catch (OperationCanceledException) { }
         catch (Exception error)
         {
+            if (retry) _retryFailed = true;
             Debug.LogException(error, this);
             GameAlerts.Show(retry ? RetryFailureMessage : "연구를 저장하지 못했습니다. 다시 시도해 주세요.");
         }
