@@ -24,6 +24,8 @@ namespace TeamHJD.Game.Bootstrap
         private readonly HashSet<int> _composedSceneHandles = new HashSet<int>();
         private MatchSession _currentMatch;
         private bool _isDisposed;
+        private GameObject _pendingRoomReturnHub;
+        private string _pendingRoomReturnSceneName;
         public bool IsInitialized => !_isDisposed && Services != null;
         private AppScreenPresenter _screenPresenter;
         private SpaceshipTravelService _spaceshipTravel;
@@ -222,6 +224,33 @@ namespace TeamHJD.Game.Bootstrap
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
         internal Task FadeSpaceshipTravelAsync(Func<Task> move)
             => FadeSceneTravelAsync(move, destroyCancellationToken);
+
+        public void PrepareRoomHubReturn(GameObject hubRoot, string destinationSceneName)
+        {
+            ThrowIfUnavailable();
+            if (hubRoot == null) throw new ArgumentNullException(nameof(hubRoot));
+            if (hubRoot.transform.parent != null) throw new ArgumentException("The Hub root must be a Scene root.", nameof(hubRoot));
+            if (_pendingRoomReturnHub != null)
+                throw new InvalidOperationException("A room Hub return is already pending.");
+            _pendingRoomReturnHub = hubRoot;
+            _pendingRoomReturnSceneName = destinationSceneName;
+        }
+
+        public void CancelRoomHubReturn(GameObject hubRoot)
+        {
+            if (_pendingRoomReturnHub != hubRoot) return;
+            _pendingRoomReturnHub = null;
+            _pendingRoomReturnSceneName = null;
+        }
+
+        public async Task FadeRoomScreenAsync(Func<Task> move, float totalDuration, CancellationToken cancellation = default)
+        {
+            ThrowIfUnavailable();
+            if (_screenPresenter == null) throw new InvalidOperationException("Scene fade requires the App screen presenter.");
+            using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation, destroyCancellationToken);
+            double phaseSeconds = Math.Max(0.005, totalDuration * 0.5);
+            await _screenPresenter.FadeSceneAsync(move, lifetime.Token, phaseSeconds);
+        }
 
         private bool _sceneTravelMusicActive;
 
@@ -605,12 +634,38 @@ namespace TeamHJD.Game.Bootstrap
 
             // 직접 Scene 실행의 메뉴 귀환도 기존 Hub 조립을 사용합니다. 진행 Match의 Additive 방문은 제외합니다.
             string hubScene = GameFlow?.Routes.SpaceshipScene ?? AppScreenPresenter.HubScene;
-            if (scene.path == hubScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
-                !scene.GetRootGameObjects().Any(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true) != null))
+            SceneComposition.SpaceshipHubCompositionRoot relocatedHub = null;
+            if (scene.path == hubScene && _currentMatch == null && NetworkMatches?.Descriptor == null)
             {
-                var hub = new GameObject("Core Starting Hub");
-                SceneManager.MoveGameObjectToScene(hub, scene);
-                hub.AddComponent<SceneComposition.SpaceshipHubCompositionRoot>();
+                relocatedHub = scene.GetRootGameObjects()
+                    .Select(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true))
+                    .FirstOrDefault(hub => hub != null);
+                bool requestedRoomReturn = _pendingRoomReturnHub != null &&
+                    scene.name == _pendingRoomReturnSceneName;
+
+                if (requestedRoomReturn)
+                {
+                    SceneComposition.SpaceshipHubCompositionRoot requestedHub =
+                        _pendingRoomReturnHub.GetComponent<SceneComposition.SpaceshipHubCompositionRoot>();
+                    if (requestedHub == null || requestedHub.transform.parent != null ||
+                        (relocatedHub != null && relocatedHub != requestedHub))
+                    {
+                        _compositionFailures[scene.path] = new InvalidOperationException(
+                            "The requested room Hub could not be matched to the loaded spaceship Scene.");
+                        return;
+                    }
+                    relocatedHub = requestedHub;
+                    if (relocatedHub.gameObject.scene != scene)
+                        SceneManager.MoveGameObjectToScene(relocatedHub.gameObject, scene);
+                    _pendingRoomReturnHub = null;
+                    _pendingRoomReturnSceneName = null;
+                }
+                else if (relocatedHub == null)
+                {
+                    var hub = new GameObject("Core Starting Hub");
+                    SceneManager.MoveGameObjectToScene(hub, scene);
+                    relocatedHub = hub.AddComponent<SceneComposition.SpaceshipHubCompositionRoot>();
+                }
             }
 
             var compositionRoots = new List<ISceneCompositionRoot>();
@@ -622,11 +677,14 @@ namespace TeamHJD.Game.Bootstrap
                         travelConsumer.BindSpaceshipTravel(_spaceshipTravel);
                     if (behaviour is TeamHJD.Game.Presentation.Scene.IUiDisplaySettingsConsumer displayConsumer)
                         displayConsumer.BindUiDisplaySettings(DisplaySettings);
-                    if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled)
+                    if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled &&
+                        !ReferenceEquals(behaviour, relocatedHub))
                         compositionRoots.Add(compositionRoot);
                 }
             }
 
+            if (relocatedHub != null && relocatedHub.gameObject.scene == scene)
+                _composedSceneHandles.Add(scene.handle);
             if (compositionRoots.Count == 0)
                 return;
             if (compositionRoots.Count > 1)

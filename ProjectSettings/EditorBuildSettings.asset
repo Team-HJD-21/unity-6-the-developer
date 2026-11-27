@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Spaceship/LeftRoom.unity
     guid: b6329cf45eb204a228397e88ad48b764
+  - enabled: 1
+    path: Assets/Scenes/Spaceship/RightRoom.unity
+    guid: ddb1bd7b3dbb1478f835bf46f26f02ed
   - enabled: 0
     path: Assets/Scenes/Tests/EnemySandbox.unity
     guid: 9ff428f7b35658f498d4c55cf13b5cc6

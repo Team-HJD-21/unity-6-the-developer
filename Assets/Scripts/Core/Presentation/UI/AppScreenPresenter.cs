@@ -78,6 +78,13 @@ namespace TeamHJD.Game.Presentation
             _canvas.Alerts.Hide();
             return _sceneFade.RunAsync(move, cancellation);
         }
+
+        public Task FadeSceneAsync(Func<Task> move, CancellationToken cancellation, double phaseSeconds)
+        {
+            _alerts.Tick(Time.unscaledTimeAsDouble, _canvas.Alerts.DisplaySeconds, suppressed: true);
+            _canvas.Alerts.Hide();
+            return _sceneFade.RunAsync(move, cancellation, phaseSeconds);
+        }
         private IScreenPresenter Create(ScreenState state)
         {
             EnsureEventSystem();
