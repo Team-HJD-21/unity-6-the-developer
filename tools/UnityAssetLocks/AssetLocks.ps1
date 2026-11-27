@@ -141,7 +141,7 @@ function Sync-Assets {
             Set-ReadOnly $record.path $true
             Remove-Item -LiteralPath (Get-RecordPath $record.id)
         }
-        elseif ($null -ne $owned -and !$record.submitted) { $editable.Add($record.path, $record.id) }
+        elseif ($null -ne $owned) { $editable.Add($record.path, $record.id) }
     }
     $paths = (Invoke-Git ls-files -z) -split "`0" | Where-Object { Test-ManagedPath $_ }
     foreach ($path in $paths) { Set-ReadOnly $path (!$editable.ContainsKey($path)) }
@@ -338,9 +338,6 @@ function Open-TrackedAssets([string[]]$paths) {
                 if ($owner) { throw "$path is locked by $owner in another account or checkout." }
                 throw "$path is already locked in another checkout."
             }
-            if ($localByPath[$path].submitted) {
-                throw "$path has been submitted. It will unlock when that version reaches main."
-            }
             $editable[$path] = $id
         }
     }
@@ -431,13 +428,12 @@ function Submit-Assets {
         }
     })
     if (!$updates.Count) { return }
-    $owned = @((Get-Locks).ours | ForEach-Object { [string]$_.id })
     $submissions = @()
     foreach ($record in $records) {
         $versions = @(foreach ($update in $updates) {
             $version = Get-Blob $update.commit $record.path
-            if ($version -cne $record.base -and (!$update.previous -or
-                $version -cne (Get-Blob $update.previous $record.path))) { $version }
+            if ($version -ceq $record.base -and !$record.submitted) { continue }
+            if (!$update.previous -or $version -cne (Get-Blob $update.previous $record.path)) { $version }
         })
         $versions = @($versions | Sort-Object -Unique)
         if (!$versions.Count) { continue }
@@ -446,22 +442,54 @@ function Submit-Assets {
         if ($versions.Count -gt 1 -or $dirty -or (Get-Blob HEAD $record.path) -cne $version) {
             throw "Save and commit the complete change before pushing $($record.path)."
         }
-        if ($owned -cnotcontains $record.id -or ($record.submitted -and $record.submitted -cne $version)) {
-            throw "The edit session for $($record.path) no longer owns this version."
+        $submissions += [pscustomobject]@{
+            record = $record
+            version = $version
+            prefix = "refs/tags/unity-asset-locks/$(Get-LockKey $record.id)/"
         }
-        $submissions += [pscustomobject]@{ record = $record; version = $version }
     }
-    $refspecs = @(foreach ($submission in $submissions) {
-        $record = $submission.record
-        $ref = "refs/tags/unity-asset-locks/$(Get-LockKey $record.id)/$($submission.version)"
-        $record.submitted = $submission.version
-        Save-Record $record
-        Set-ReadOnly $record.path $true
-        # Point to a commit already on GitHub. The tag name carries only the lock ID and version.
-        "$($record.main):$ref"
+    if (!$submissions.Count) { return }
+
+    $patterns = @($submissions | ForEach-Object { "$($_.prefix)*" })
+    $tags = @(Invoke-Git ls-remote --refs origin @patterns | ForEach-Object {
+        $anchor, $ref = $_ -csplit "`t", 2
+        [pscustomobject]@{ anchor = $anchor; ref = $ref }
     })
+    # Check ownership after reading tags so a completed release can't look like a first submission.
+    $owned = @((Get-Locks).ours | ForEach-Object { [string]$_.id })
+    $leases = [Collections.Generic.List[string]]::new()
+    $refspecs = [Collections.Generic.List[string]]::new()
+    foreach ($submission in $submissions) {
+        $record = $submission.record
+        if ($owned -cnotcontains $record.id) {
+            throw "The edit session for $($record.path) no longer owns its lock. Open the file for edit again."
+        }
+        $previousTags = @($tags | Where-Object { $_.ref.StartsWith($submission.prefix, [StringComparison]::Ordinal) })
+        if ($previousTags.Count -gt 1 -or ($previousTags.Count -eq 1 -and
+            ($previousTags[0].anchor -cne $record.main -or
+             $previousTags[0].ref.Substring($submission.prefix.Length) -cnotmatch '^(?:[0-9a-f]{40}|deleted)$'))) {
+            throw "The submission state for $($record.path) is changing or ambiguous. Check the asset lock before retrying."
+        }
+        $previousTag = if ($previousTags.Count) { $previousTags[0].ref } else { '' }
+        $nextTag = if ($submission.version -cne $record.base) { $submission.prefix + $submission.version } else { '' }
+        if ($previousTag -ceq $nextTag) { continue }
+        if ($previousTag) {
+            $leases.Add("--force-with-lease=${previousTag}:$($record.main)")
+            $refspecs.Add(":${previousTag}")
+        }
+        if ($nextTag) {
+            $leases.Add("--force-with-lease=${nextTag}:")
+            $refspecs.Add("$($record.main):$nextTag")
+        }
+    }
     if ($refspecs.Count) {
-        $null = Invoke-Git -c push.followTags=false -c remote.origin.mirror=false push --no-verify --no-follow-tags origin @refspecs
+        $null = Invoke-Git -c push.followTags=false -c remote.origin.mirror=false push --atomic --no-verify --no-follow-tags @leases origin @refspecs
+    }
+    foreach ($submission in $submissions) {
+        $record = $submission.record
+        $record.submitted = if ($submission.version -cne $record.base) { $submission.version } else { '' }
+        Save-Record $record
+        Set-ReadOnly $record.path $false
     }
 }
 
