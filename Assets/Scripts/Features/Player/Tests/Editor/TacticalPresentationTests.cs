@@ -194,7 +194,7 @@ public sealed class TacticalPresentationTests
         var snapshot=RegionGridSnapshot.FromCapturedCells(new MatchId("t"),Guid.NewGuid(),1,RegionPolicyMode.Static,definition,new[]{0},new[]{1});
         Assert.That(TacticalPresentationRules.Cell(snapshot,0,null),Is.EqualTo(TacticalPresentationRules.CellState.Captured));
         Assert.That(TacticalPresentationRules.Cell(snapshot,1,null),Is.EqualTo(TacticalPresentationRules.CellState.Available));
-        Assert.That(TacticalPresentationRules.Cell(snapshot,2,null),Is.EqualTo(TacticalPresentationRules.CellState.Unoccupied));
+        Assert.That(TacticalPresentationRules.Cell(snapshot,2,null),Is.EqualTo(TacticalPresentationRules.CellState.Locked));
         Assert.That(TacticalPresentationRules.Cell(snapshot,3,null),Is.EqualTo(TacticalPresentationRules.CellState.Unoccupied));
         var progress=new StaticRegionCapture(1);progress.RecordDamage(20);progress.Tick(0,true,1,0,new StaticRegionCaptureSettings());
         progress.Tick(10,true,1,0,new StaticRegionCaptureSettings());

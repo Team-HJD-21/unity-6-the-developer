@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 namespace TeamHJD.Game.Presentation
 {
     /// <summary>표준 AudioSource의 풀·분류·동시 재생 수·수명만 소유합니다. 공간 처리는 Unity가 수행합니다.</summary>
+    [DefaultExecutionOrder(1100)] // CameraManager가 현재 프레임의 출력 시점을 적용한 뒤 음원을 투영합니다.
     public sealed partial class GameAudioManager : MonoBehaviour
     {
         public readonly struct VoiceHandle
@@ -23,6 +24,7 @@ namespace TeamHJD.Game.Presentation
             public AudioSource Source;
             public GameAudioCue Cue;
             public Component Owner;
+            public Vector3 WorldPosition;
             public int OwnerId, Scene, Generation;
             public bool Paused, Releasing;
             public double EndsAt;
@@ -42,6 +44,7 @@ namespace TeamHJD.Game.Presentation
         private readonly HashSet<AudioSource> _musicSources = new(), _cinematicSources = new();
         private Voice[] _voices = Array.Empty<Voice>();
         private Transform _listener;
+        private MatchCameraFollow _listenerFollow;
         private GameAudioSettings _settings;
         private System.Random _random;
         private double _lastDsp, _nextPrune;
@@ -106,14 +109,18 @@ namespace TeamHJD.Game.Presentation
             if (!float.IsFinite(position.x) || !float.IsFinite(position.y) || !float.IsFinite(position.z)) return false;
             var profile = cue.Class;
             if (cue.Loop && (cue.StartSeconds > 0 || cue.DurationSeconds > 0)) return Drop();
+            Vector3 listenerPosition = _listener != null ? _listener.position : default;
+            Vector3 hearingPosition = GetHearingPosition(listenerPosition);
             if (profile.WorldSpace && (!FieldSimulationTime.CanAdvance(owner) || _listener == null ||
-                Vector2.Distance(position, _listener.position) >= profile.MaximumDistance)) return Drop();
+                Vector2.Distance(position, hearingPosition) >= profile.MaximumDistance)) return Drop();
             double now = AudioSettings.dspTime;
             int ownerId = owner.GetInstanceID(); var key = new TriggerKey(cue, ownerId);
             if (_retrigger.TryGetValue(key, out double until) && now < until) return Drop();
             int instances = 0, inClass = 0, sameOwner = 0, free = -1, replace = -1, oldestForOwner = -1;
             double earliestEnd = double.PositiveInfinity;
             float worst = float.NegativeInfinity;
+            float requestScore = profile.Priority * 1000 + (_listener != null
+                ? Vector2.Distance(position, profile.WorldSpace ? hearingPosition : listenerPosition) : 0);
             int first = profile.Bus == GameAudioBus.UI ? 0 : Mathf.Clamp(Configuration.ReservedUIVoices, 1, _voices.Length - 1);
             for (int i = 0; i < _voices.Length; i++)
             {
@@ -124,7 +131,7 @@ namespace TeamHJD.Game.Presentation
                 if (voice.Cue == cue && voice.OwnerId == ownerId)
                 { sameOwner++; if (voice.EndsAt < earliestEnd) { earliestEnd = voice.EndsAt; oldestForOwner = i; } }
                 if (i < first || voice.Cue.Class.Priority < profile.Priority || voice.Cue.Loop) continue;
-                float score = voice.Cue.Class.Priority * 1000 + (_listener != null ? Vector2.Distance(voice.Source.transform.position, _listener.position) : 0);
+                float score = VoiceScore(voice, listenerPosition, hearingPosition);
                 if (score > worst) { replace = i; worst = score; }
             }
             bool cueFull = instances >= Mathf.Max(1, cue.MaximumInstances), classFull = inClass >= Mathf.Max(1, profile.MaximumVoices);
@@ -137,18 +144,19 @@ namespace TeamHJD.Game.Presentation
                 {
                     var candidate = _voices[i];
                     if (candidate.Cue == null || candidate.Cue.Loop || candidate.Cue.Class != profile || (cueFull && candidate.Cue != cue)) continue;
-                    float score = candidate.Cue.Class.Priority * 1000 + (_listener != null ? Vector2.Distance(candidate.Source.transform.position, _listener.position) : 0);
+                    float score = VoiceScore(candidate, listenerPosition, hearingPosition);
                     if (score > worst) { replace = i; worst = score; }
                 }
-                if (worst < profile.Priority * 1000 + (_listener != null ? Vector2.Distance(position, _listener.position) : 0)) return Drop();
+                if (worst < requestScore) return Drop();
             }
-            else if (free < 0 && worst < profile.Priority * 1000 + (_listener != null ? Vector2.Distance(position, _listener.position) : 0)) return Drop();
+            else if (free < 0 && worst < requestScore) return Drop();
             int slot = free >= 0 ? free : replace;
             if (slot < 0) return Drop();
             var clip = cue.Clips[_random.Next(cue.Clips.Length)];
             if (clip == null) return Drop();
             var v = _voices[slot]; Clear(v);
             v.Cue = cue; v.Owner = owner; v.OwnerId = ownerId; v.Scene = owner.gameObject.scene.handle;
+            v.WorldPosition = position;
             v.Generation++; v.Gain = 0;
             var source = v.Source; source.clip = clip; source.loop = cue.Loop; source.volume = 0;
             source.mute = _settings.Values.Master <= 0 || _settings.Values.Effects <= 0;
@@ -156,7 +164,8 @@ namespace TeamHJD.Game.Presentation
             source.spatialBlend = profile.WorldSpace ? 1 : 0; source.dopplerLevel = 0; source.rolloffMode = AudioRolloffMode.Linear;
             source.minDistance = Mathf.Max(.01f, profile.MinimumDistance); source.maxDistance = Mathf.Max(source.minDistance + .01f, profile.MaximumDistance);
             source.pitch = Mathf.Clamp(Mathf.Lerp(cue.Pitch.x, cue.Pitch.y, (float)_random.NextDouble()), .25f, 3);
-            source.transform.position = ProjectToListeningPlane(position, profile.WorldSpace);
+            source.transform.position = profile.WorldSpace
+                ? ProjectToListeningPlane(position, listenerPosition, hearingPosition) : position;
             float start = Mathf.Clamp(cue.StartSeconds, 0, Mathf.Max(0, clip.length - .001f));
             source.timeSamples = Mathf.Min(clip.samples - 1, Mathf.RoundToInt(start * clip.frequency));
             float duration = cue.DurationSeconds > 0 ? Mathf.Min(cue.DurationSeconds, clip.length - start) : clip.length - start;
@@ -165,12 +174,33 @@ namespace TeamHJD.Game.Presentation
             ActiveVoices++; handle = new VoiceHandle(this, slot, v.Generation); return true;
         }
         private bool Drop() { DroppedRequests++; return false; }
-        private Vector3 ProjectToListeningPlane(Vector3 position, bool world)
-        { if (world && _listener != null) position.z = _listener.position.z; return position; }
+
+        private Vector3 GetHearingPosition(Vector3 listenerPosition)
+        {
+            var player = _listenerFollow != null ? _listenerFollow.Target : null;
+            return player != null && player.gameObject.activeInHierarchy ? player.position : listenerPosition;
+        }
+
+        private float VoiceScore(Voice voice, Vector3 listenerPosition, Vector3 hearingPosition)
+        {
+            float priority = voice.Cue.Class.Priority * 1000;
+            if (_listener == null) return priority;
+            float distance = voice.Cue.Class.WorldSpace
+                ? Vector2.Distance(voice.WorldPosition, hearingPosition)
+                : Vector2.Distance(voice.Source.transform.position, listenerPosition);
+            return priority + distance;
+        }
+
+        // 네이티브 Listener는 출력 카메라에 두고 음원만 플레이어와의 XY 상대 위치에 투영합니다.
+        private static Vector3 ProjectToListeningPlane(Vector3 position, Vector3 listener, Vector3 hearing) =>
+            new(listener.x + (position.x - hearing.x), listener.y + (position.y - hearing.y), listener.z);
+
         private void LateUpdate()
         {
             if (Configuration == null) return;
             double now = AudioSettings.dspTime; TickMusic(now); float elapsed = (float)Math.Max(0, now - _lastDsp); _lastDsp = now;
+            Vector3 listenerPosition = _listener != null ? _listener.position : default;
+            Vector3 hearingPosition = GetHearingPosition(listenerPosition);
             foreach (var v in _voices)
             {
                 if (v.Cue == null) continue;
@@ -183,7 +213,11 @@ namespace TeamHJD.Game.Presentation
                 v.Gain = Mathf.MoveTowards(v.Gain, v.Releasing ? 0 : 1, elapsed / (v.Releasing ? .04f : .008f));
                 v.Source.volume = Mathf.Clamp01(v.Cue.Volume) * v.Gain;
                 if (v.Releasing && v.Gain <= 0) { Clear(v); continue; }
-                if (v.Cue.Loop && v.Owner != null) v.Source.transform.position = ProjectToListeningPlane(v.Owner.transform.position, v.Cue.Class.WorldSpace);
+                if (v.Cue.Loop && v.Owner != null) v.WorldPosition = v.Owner.transform.position;
+                if (v.Cue.Class.WorldSpace && _listener != null)
+                    v.Source.transform.position = ProjectToListeningPlane(v.WorldPosition, listenerPosition, hearingPosition);
+                else if (v.Cue.Loop && v.Owner != null)
+                    v.Source.transform.position = v.WorldPosition;
             }
             if (now >= _nextPrune)
             {
@@ -205,13 +239,19 @@ namespace TeamHJD.Game.Presentation
         private void SceneUnloaded(UnityEngine.SceneManagement.Scene scene)
         { foreach (var voice in _voices) if (voice.Cue != null && voice.Scene == scene.handle) Clear(voice); FindListener(); }
         private void SceneLoaded(UnityEngine.SceneManagement.Scene scene, LoadSceneMode mode) => FindListener();
-        private void OutputChanged(Camera camera) => _listener = camera != null ? camera.transform : null;
+        private void OutputChanged(Camera camera) => SetListener(camera != null ? camera.transform : null);
+        private void SetListener(Transform listener)
+        {
+            _listener = listener;
+            _listenerFollow = listener != null ? listener.GetComponent<MatchCameraFollow>() : null;
+        }
+
         private void FindListener()
         {
-            _listener = CameraManager.Current != null ? CameraManager.Current.transform : null;
+            SetListener(CameraManager.Current != null ? CameraManager.Current.transform : null);
             if (_listener != null) return;
             foreach (var listener in FindObjectsByType<AudioListener>(FindObjectsSortMode.None))
-                if (listener.isActiveAndEnabled) { _listener = listener.transform; break; }
+                if (listener.isActiveAndEnabled) { SetListener(listener.transform); break; }
         }
         public static void RouteMusic(AudioSource source)
         {

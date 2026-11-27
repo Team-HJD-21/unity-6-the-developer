@@ -6,7 +6,7 @@ using UnityEngine;
 public static class TacticalPresentationRules
 {
     public enum TurretState { Active, Off, Locked, Cooling, NoPower, Destroyed, Busy, Unavailable }
-    public enum CellState { Unoccupied, Available, Capturing, Captured }
+    public enum CellState { Unoccupied, Available, Capturing, Captured, Locked }
 
     /// <summary>첫 연결/최대 체력 변경은 피격으로 오인하지 않고 실제 감소만 흔들림과 잔상으로 표시합니다.</summary>
     public sealed class Vitality
@@ -95,7 +95,7 @@ public static class TacticalPresentationRules
         if (regions.CapturedCells[index]) return CellState.Captured;
         if (!regions.Definition.CapturableCells[index]) return CellState.Unoccupied;
         bool available = regions.Mode == RegionPolicyMode.Dynamic || regions.IsRegionUnlocked(regions.Definition.RegionIds[index]);
-        if (!available) return CellState.Unoccupied;
+        if (!available) return CellState.Locked;
         // 진행 중 멈춘 시도도 유지 중인 실제 누적이 있으면 구분합니다. UI가 시간을 누적하지 않습니다.
         if (regions.Mode == RegionPolicyMode.Static && progress != null && !progress.IsSecured &&
             progress.RegionId == regions.Definition.RegionIds[index] && (progress.HoldSeconds > 0 || progress.Reason == StaticRegionCaptureReason.Holding))
