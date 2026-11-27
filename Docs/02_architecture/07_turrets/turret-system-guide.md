@@ -551,21 +551,21 @@ Canon/Missile의 과열 냉각과 비활성화 후 냉각은 `FieldTurretBase.Be
 
 [FieldTurretStatusFx.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretStatusFx.cs)가 [PNG 스프라이트 시트](../../../Assets/Resources/FieldTurretStatusFx.png)와 [프레임 JSON](../../../Assets/Resources/FieldTurretStatusFxFrames.json)을 공용으로 로드한다. 연기와 불꽃은 포신 몸체 안의 서로 다른 위치에서 난다. 피해를 입은 동안 이미 나온 연기의 위치를 유지한다. 연기, 불꽃, 주황빛은 포신과 함께 회전하고 앞쪽 나무에 가려진다. 복구 잔연기는 파괴 상태의 위치를 이어받는다.
 
-### Stage1 Lv.1~3 전원 LED
+### 터렛 전원 LED와 조명
 
-Stage1 Canon·Missile Lv.1~3의 포신 아래에는 Turret_LED_Indicator가 있다. [FieldTurretLedIndicator.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretLedIndicator.cs)는 초기 표시와 프레임 후반에 상위 터렛의 상태를 읽고, 색이 바뀔 때 LED SpriteRenderer의 스프라이트를 교체한다.
+Stage1~3의 Canon·Missile Lv.1~3과 Stage1 Laser Green, 총 19개 프리팹은 포신 또는 Launcher 아래에 Turret_LED_Indicator를 둔다. 자식 LED_Light의 로컬 위치는 (0, 0, 0)이다. LED 위치는 Turret_LED_Indicator의 Transform에서 조정한다.
 
-| 조건 | LED |
-| --- | --- |
-| 미해금 구역 | 검정 |
-| 해금 구역, 전원 꺼짐 | 빨강 |
-| 해금 구역, 전원 켜짐 | 초록 |
+| 조건 | LED 스프라이트 | Light2D |
+| --- | --- | --- |
+| 미해금 구역 | 빨강 | 빨강 |
+| 해금 구역, 전원 켜짐 | 초록 | 초록 |
+| 해금 구역, 전원 꺼짐 또는 파괴 | 검정 | 꺼짐 |
 
-미해금 판정은 IsLocked를 먼저 읽는다. 해금된 터렛은 IsActivated로 전원 상태를 표시하므로, 전원이 켜진 채 냉각 중이면 LED는 초록이다. 여섯 프리팹의 Disable Inactive Gun Tint 설정은 포신의 비활성 회색을 제거한다. 월드·성장 복원도 해당 프리팹 설정을 사용한다.
+[FieldTurretLedIndicator.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretLedIndicator.cs)는 프레임 후반에 IsLocked와 IsActivated를 읽어 스프라이트와 조명을 갱신한다. 전원이 켜진 채 과열 냉각 중에는 초록을 유지한다. 파괴 시 조명을 끈다. 세 색의 스프라이트는 [Fire_Totem 에셋 폴더](../../../Assets/ThirdParty/Tileset%20Topdown%20-%20Monster%20Architect%20Overworld/0_Overworld/Fire_Totem/)에 있다. Sprite-0004_0.controller, Turret_LED_Indicator.anim, Turret_LED_Stand1~3은 제작 에셋이다.
 
-Prefab에서 LED 위치를 조절하려면 포신 자식 Turret_LED_Indicator의 Transform을 편집한다. 세 색은 [Fire_Totem 에셋 폴더](../../../Assets/ThirdParty/Tileset%20Topdown%20-%20Monster%20Architect%20Overworld/0_Overworld/Fire_Totem/)에 있다. Sprite-0004_0.controller, Turret_LED_Indicator.anim, Turret_LED_Stand1~3은 제작 에셋이며 여섯 프리팹의 상태 연동에는 연결하지 않는다.
+[FieldTurretTreeMask.cs](../../../Assets/Scripts/Features/FieldTurrets/Core/FieldTurretTreeMask.cs)는 앞에 있는 나무의 SpriteMask를 포신과 LED에 적용한다. 켜진 LED의 범위에 같은 나무가 있으면 그 잎 실루엣에 맞춘 Self Shadow를 추가한다. LED가 Entities 레이어의 노출된 포신을 비추면서, 나뭇잎에 LED 빛이 새는 현상을 줄인다. [FieldTurretLed.shader](../../../Assets/Resources/FieldTurretLed.shader)는 마스크 사용 중에도 LED 스프라이트의 텍스처를 전용 속성으로 읽는다.
 
-LED는 나무 가림에 사용하는 SpriteMask를 그대로 받는다. [FieldTurretLed.shader](../../../Assets/Resources/FieldTurretLed.shader)는 현재 LED의 텍스처를 전용 속성으로 읽는다. 마스크가 켜질 때 캐논이나 미사일 포신의 스프라이트 시트가 LED 위치에 그려지는 현상을 막기 위한 처리다.
+Stage1 Canon·Missile Lv.1~3의 Disable Inactive Gun Tint 설정은 포신의 비활성 회색을 제거한다. 월드·성장 복원도 해당 프리팹 설정을 사용한다.
 
 ## 5. Prefab과 Definition 설정 방법
 

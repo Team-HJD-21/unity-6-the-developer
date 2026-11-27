@@ -17,8 +17,10 @@
 
 - `Navmesh2D`는 **Render Meshes**와 `NavMeshObstacleFootprints2D`를 함께 사용한다. 바닥은 타일 렌더 형상을 유지한다. 바닥의 CompositeCollider2D가 Outlines이므로 전체를 Physics Colliders로 바꾸면 일부 지면이 누락될 수 있다.
 - `Environment_Obj`에 Not Walkable Navigation Modifier를 둔다. 확장은 수관 그림 대신 기존 Tilemap/CompositeCollider2D의 밑동·돌 형상을 Bake에 넣는다. `Environment_Obj_No_Collision`의 장식은 막지 않는다.
-- 터렛은 **Base**에만 Not Walkable Modifier를 둔다. 포신·Launcher에는 추가하지 않는다. Stage1 강화 프리팹 5개에 반영했고, 담당자가 잠근 Canon/Missile LV1 원본 2개는 수정하지 않았다. 현재 Scene의 LV1 터렛 25개에는 인스턴스 override로 적용했다.
+- 터렛의 Not Walkable Modifier는 Base에 적용한다. Stage1의 LV1 배치는 인스턴스 설정을 확인한다. Stage1 Canon·Missile Lv.1~3과 Laser Green의 고정 Base는 Static Rigidbody2D를 사용한다. 회전부 콜라이더는 Kinematic 루트에 연결된다. [터렛 시스템 가이드](../07_turrets/turret-system-guide.md#터렛-전원-led와-조명)
 - Stage_1의 `Spaceship`은 기존 PolygonCollider2D를 사용한다. 자식 `Enter`의 감지 Trigger·이동 로직은 바꾸지 않는다.
+- 필드 우주선의 SpriteRenderer에는 Sprite-Lit-Default를 사용한다. Entities Sorting Layer에서 Stage1의 Ambient Light 2D와 Sunlight 2D를 받는다.
+- 현재 Stage1의 소형·대형 NavMesh는 CU 위치에서 Walkable이다. CU 몸체를 경로에서 제외하면 현재 정적 점유 로직이 시작 셀을 점유 불가로 판정할 수 있다. CU의 이동 경로 제외와 시작 점유 양립은 Core 담당 후속 작업이다. 완료 기준은 CU 몸체 위 경로가 제거된 상태에서 초기 점유와 경기 시작이 통과하는 것이다.
 - 공유 프리팹 원본 수정은 동일 프리팹을 쓰는 다른 Scene에도 반영된다. 인스턴스 override는 해당 배치에만 적용된다. 타일의 Physics Shape는 같은 Sprite/Tile을 공유하는 배치에 반영되지만, 타일맵 오브젝트의 Modifier와 Surface 설정은 Scene마다 필요하다. **이미 저장한 NavMesh는 자동으로 다시 구워지지 않으므로 각 Scene을 재Bake한다.**
 - Slime은 소형 `Humanoid` 타입(반경 0.5)을 쓴다. BattleTroll, GreenGolem, Treant, MushroomTreant, Troll과 Stage1Boss는 대형 `LargeEnemy` 타입(반경 1.8)과 [대형 Bake 데이터](../../../Assets/Scenes/Gameplay/Stage_1/NavMesh-Navmesh2D%20LargeEnemy.asset)를 공유한다. Voxel 크기는 두 타입 모두 약 0.167이다. Stage1Boss는 대형 Surface가 있는 씬에서 대형 경로를 사용하며, 기본 Surface만 있는 BossRoom에서는 그 기본 경로를 사용한다.
 - Stage1에는 소형 `Navmesh2D`와 대형 `Navmesh2D LargeEnemy`를 연결한다. 두 Surface는 동일한 XY 위치·회전·수집 설정을 사용하고 Agent Type과 Bake 데이터를 각각 지정한다. 지형·장애물을 변경하면 두 Surface를 함께 베이크한다.
@@ -31,6 +33,7 @@
 1. Startup에서 우주선을 거쳐 Stage1에 들어가 플레이어 생성과 이동을 확인한다.
 2. 해안과 기물 주변에서 발 충돌과 NavMesh 이동을 확인한다. `MapBoundary`가 외곽을 일관되게 따라가는지도 확인한다.
 3. 나무 앞뒤에서 플레이어를 움직여 Y 정렬을 확인한다. 나무에 가려진 캐논과 미사일을 같은 화면에 두고 줌을 바꿔 스프라이트와 가림을 확인한다. [정렬·표적 판정](../07_turrets/turret-system-guide.md)
+   나무가 포신을 일부 가릴 때 앞쪽 잎에 LED 색이 번지는지, 노출된 포신에는 LED 빛이 남는지 확인한다.
 4. 낮 시간에 태양 위치와 그림자 방향이 함께 바뀌는지 확인한다. Inspector에서 양축 오프셋을 바꿔 그림자 위치를 확인한다. 정점 4,096개 이상이면 `FieldTileShadows`가 위치·알파 계산을 Burst Job으로 병렬 실행한 뒤 같은 프레임에 메시를 갱신한다.
 
 Core·Encounter의 참조 구조와 재접합 범위는 [Encounter 런타임 가이드](../08_encounter/encounter-runtime-and-testing.md)와 [Stage1 제작 연결 원복 기록](../../03_team/00_reviews/stage1-scene-rollback-20261115.md)을 함께 본다. 씬·NavMesh 파일의 변경, 코드 컴파일, 플레이 확인은 각각 기록한다.
