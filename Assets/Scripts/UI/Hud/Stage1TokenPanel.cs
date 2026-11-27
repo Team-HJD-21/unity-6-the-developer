@@ -74,7 +74,7 @@ public sealed class Stage1TokenPanel : MonoBehaviour
             if (retry)
             {
                 if (await _app.RetryStage1TokenStorageAsync())
-                    GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}");
+                    GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}", AlertTone.Success);
                 else if (_app != null && _app.HasStage1TokenStorageError)
                 {
                     _retryFailed = true;
@@ -82,7 +82,7 @@ public sealed class Stage1TokenPanel : MonoBehaviour
                 }
             }
             else if (await _app.BuyStage1CuArmorAsync())
-                GameAlerts.Show("CU 장갑 I 구매 완료 · 다음 출격부터 최대 체력 +10%");
+                GameAlerts.Show("CU 장갑 I 구매 완료 · 다음 출격부터 최대 체력 +10%", AlertTone.Success);
         }
         catch (OperationCanceledException) { }
         catch (Exception error)

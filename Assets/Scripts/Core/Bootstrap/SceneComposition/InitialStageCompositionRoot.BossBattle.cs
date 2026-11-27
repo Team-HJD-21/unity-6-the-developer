@@ -136,7 +136,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
                     if (app.GameFlow != null) await app.GameFlow.ReturnToSpaceshipAsync(deadline.Token);
                     else await app.ReplaceGameplaySceneAsync(AppScreenPresenter.HubScene, deadline.Token);
                 }, app.destroyCancellationToken);
-                if (tokenGranted) GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}");
+                if (tokenGranted) GameAlerts.Show($"토큰 +{Stage1TokenProgress.FirstBossReward}", AlertTone.Success);
             }
             catch (Exception error)
             {
