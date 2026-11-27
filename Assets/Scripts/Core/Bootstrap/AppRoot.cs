@@ -19,7 +19,6 @@ namespace TeamHJD.Game.Bootstrap
     {
         public const string DefaultStage1Scene = "Assets/Scenes/Gameplay/Stage_1.unity";
         public const string DefaultHubScene = "Assets/Scenes/Spaceship/SpaceShipGrayBox.unity";
-        private const string DefaultMainMenuScene = "Assets/Scenes/Bootstrap/Startup.unity";
 
         /// <summary>UI 조립부가 로컬 연출 소비자에게 주입하는 App 수명 난수입니다. 게임 판정에 사용하지 않습니다.</summary>
         public IRandomStreams PresentationRandom => Services?.PresentationRandom;
@@ -553,6 +552,8 @@ namespace TeamHJD.Game.Bootstrap
             // 허브 도착에 성공한 명시 귀환만 이전 복귀 오류를 닫습니다. 실패한 이동은 재시도 의도를 보존합니다.
             CompleteMissionRecovery();
         }
+
+        private const string DefaultMainMenuScene = "Assets/Scenes/Bootstrap/Startup.unity";
 
         private async Task ReturnToMainMenuFromScreenAsync()
         {
