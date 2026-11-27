@@ -38,14 +38,20 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         public void ValidateNetworkPreparation(NetworkMatchDescriptor descriptor)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
-            if (descriptor.Config.StageId.Value != "initial-stage" || descriptor.Config.ContentVersion != "poc")
+            ValidateStageSetup(descriptor.Config);
+        }
+
+        // Host는 descriptor를 만들거나 보내기 전에 검사합니다. Client는 수신한 descriptor를 같은 기준으로 검사합니다.
+        internal void ValidateStageSetup(MatchConfig config)
+        {
+            if (config.StageId != Stage || config.ContentVersion != StageContentVersion)
                 throw new InvalidOperationException("The prepared Stage/content version is not supported by this Scene.");
             if (playerPrefab == null || battlefieldGridSettings == null || FindSceneCameraFollow() == null || RegionBinding == null ||
                 GetComponent<TurretMatchBinding>() == null)
                 throw new InvalidOperationException("Player, Grid, camera and region Scene references are required.");
             ValidateRegionAuthoring();
             PlayerStart[] starts = FindPlayerStarts();
-            for (int slot = 0; slot < descriptor.Config.Players.Count; slot++)
+            for (int slot = 0; slot < config.Players.Count; slot++)
                 if (starts.Count(start => start.SlotIndex == slot) != 1)
                     throw new InvalidOperationException($"Expected exactly one active PlayerStart for slot {slot}.");
         }

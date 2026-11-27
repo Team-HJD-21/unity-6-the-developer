@@ -297,17 +297,19 @@ public sealed class StageTurretCommandHudTests
         tactical.Close();yield return FinishTransition(tactical);yield return new ExitPlayMode();
     }
     [UnityTest]
-    public IEnumerator AuthoredSceneCornersAndSmoothCameraNeverExposeOutsideTheMap()
+    public IEnumerator SceneCameraBoundsAndSmoothMotionNeverExposeOutsideTheMap()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
         yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
         var tactical=Object.FindAnyObjectByType<InitialStagePlayerHUD>().Tactical;
         tactical.Source.LocalPlayer.gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
         Object.FindAnyObjectByType<ControlUnitHealth>().gameObject.AddComponent<TeamHJD.Game.Presentation.Scene.DebugDamageProtection>();
-        Assert.That(tactical.CameraLeftTop,Is.Not.Null);Assert.That(tactical.CameraRightBottom,Is.Not.Null);
-        Assert.That(tactical.CameraLeftTop.name,Is.EqualTo("LeftTop"));
-        Assert.That(tactical.CameraRightBottom.name,Is.EqualTo("RightBottom"));
-        Assert.That(tactical.TryGetAuthoredCameraBounds(out var expectedBounds),Is.True);
+        var definition = tactical.Regions.Definition;
+        var grid = definition.Geometry;
+        var gridBounds = Rect.MinMaxRect((float)grid.MinimumX, (float)grid.MinimumY, (float)grid.MaximumX, (float)grid.MaximumY);
+        bool hasAuthoredBounds = tactical.TryGetAuthoredCameraBounds(out var expectedBounds);
+        if (!hasAuthoredBounds)
+            expectedBounds = gridBounds;
         Assert.That(tactical.Open(),Is.True);yield return FinishTransition(tactical);yield return null;
         Assert.That(tactical.WorldBounds,Is.EqualTo(expectedBounds));
         Assert.That(tactical.View.ModeEffect.Surface.raycastTarget,Is.False);
@@ -315,7 +317,6 @@ public sealed class StageTurretCommandHudTests
         Assert.That(firstReveal,Is.EqualTo(1));
         yield return null;
         Assert.That(tactical.View.ModeEffect.Progress,Is.EqualTo(1).Within(.001f));
-        var definition=tactical.Regions.Definition;
         tactical.Zoom(1);yield return new WaitForSecondsRealtime(tactical.Style.CameraZoomSeconds+.12f);
         var initial=tactical.CameraPosition;
         var desired=initial.y>=expectedBounds.center.y?expectedBounds.min:expectedBounds.max;
@@ -355,6 +356,26 @@ public sealed class StageTurretCommandHudTests
         yield return new WaitForSecondsRealtime(.2f);
         Assert.That(tactical.View.ModeEffect.Surface.enabled,Is.False);
         Assert.That(tactical.View.ModeEffect.Progress,Is.Zero);
+        if (!hasAuthoredBounds)
+        {
+            // 제작 마커가 비어 있는 Stage에서도 명시 경계의 우선순위를 검사합니다. Play 인스턴스만 바꿉니다.
+            var leftTop = new GameObject("QA Camera LeftTop").transform;
+            var rightBottom = new GameObject("QA Camera RightBottom").transform;
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(leftTop.gameObject, tactical.gameObject.scene);
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(rightBottom.gameObject, tactical.gameObject.scene);
+            leftTop.position = new Vector3(gridBounds.xMin - 5, gridBounds.yMax + 5, 0);
+            rightBottom.position = new Vector3(gridBounds.xMax + 5, gridBounds.yMin - 5, 0);
+            tactical.CameraLeftTop = leftTop;
+            tactical.CameraRightBottom = rightBottom;
+            expectedBounds = Rect.MinMaxRect(leftTop.position.x, rightBottom.position.y, rightBottom.position.x, leftTop.position.y);
+            Assert.That(tactical.Open(), Is.True);
+            yield return FinishTransition(tactical);
+            Assert.That(tactical.WorldBounds, Is.EqualTo(expectedBounds));
+            Assert.That(tactical.Regions.Definition, Is.SameAs(definition));
+            AssertInside();
+            tactical.Close();
+            yield return FinishTransition(tactical);
+        }
         yield return new ExitPlayMode();
         void AssertInside()
         {
@@ -422,10 +443,27 @@ public sealed class StageTurretCommandHudTests
     [UnityTest]
     public IEnumerator SkillDragThroughRealUiModuleCommitsTheDisplayedDropTarget()
     {
-        EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Stage_1.unity");
-        yield return new EnterPlayMode();yield return EnterFieldThroughTheSpaceshipExit();
+        EditorSceneManager.OpenScene("Assets/Scenes/Bootstrap/Startup.unity");
+        yield return new EnterPlayMode();
+        var app = Object.FindAnyObjectByType<AppRoot>();
+        float readyBy = Time.realtimeSinceStartup + 15;
+        while (app?.GameFlow?.Phase != GameFlowPhase.MainMenu && Time.realtimeSinceStartup < readyBy)
+        { yield return null; app = Object.FindAnyObjectByType<AppRoot>(); }
+        Assert.That(app?.GameFlow?.Phase, Is.EqualTo(GameFlowPhase.MainMenu));
+        yield return WaitForTravel(app.GameFlow.EnterSpaceshipAsync());
+        readyBy = Time.realtimeSinceStartup + 6;
+        while (app.LocalInput.IsBlocked && Time.realtimeSinceStartup < readyBy)
+            yield return null;
+        var research = Object.FindObjectsByType<PlayerSkillResearch>(FindObjectsSortMode.None)
+            .Single(item => item.CanChangeCandidates);
+        const int candidateSlot = 2;
+        Assert.That(research.TryUnlock(PlayerSkillId.PlayerTurret), Is.True);
+        Assert.That(research.TrySetCandidate(candidateSlot, PlayerSkillId.PlayerTurret), Is.True);
+        yield return WaitForTravel(app.GameFlow.LaunchMissionAsync(AppRoot.DefaultStage1Scene));
+        yield return EnterFieldThroughTheSpaceshipExit();
         var hud=Object.FindAnyObjectByType<PlayerSkillHud>();
         var picker=hud.CombatPicker;
+        Assert.That(hud.Owner.Research.Candidate(candidateSlot), Is.EqualTo(PlayerSkillId.PlayerTurret));
         var mouse=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Mouse>();
         void Send(Vector2 position,bool down=false)=>UnityEngine.InputSystem.InputSystem.QueueStateEvent(mouse,
             new UnityEngine.InputSystem.LowLevel.MouseState{position=position,buttons=(ushort)(down?1:0)});
@@ -434,7 +472,8 @@ public sealed class StageTurretCommandHudTests
             Send(new Vector2(Screen.width*.5f,2));yield return new WaitForSecondsRealtime(.35f);
             Assert.That(picker.IsOpen,Is.True);
             var wedge=picker.Wedges.Single(w=>w.Skill==PlayerSkillId.PlayerTurret);
-            Vector2 local=CombatHudGeometry.Radial(262,CombatHudGeometry.SkillAngle(wedge.Skill));
+            // 획득한 스킬의 ID와 원형 UI에서 배치된 후보 슬롯은 서로 독립적입니다.
+            Vector2 local=CombatHudGeometry.Radial(262,CombatHudGeometry.SkillAngle((PlayerSkillId)(wedge.Index+1)));
             Vector2 start=RectTransformUtility.WorldToScreenPoint(null,wedge.transform.TransformPoint(local));
             Vector2 target=new(Screen.width*.3f,Screen.height*.55f);
             Send(start);yield return new WaitForSecondsRealtime(.06f);
@@ -449,6 +488,15 @@ public sealed class StageTurretCommandHudTests
         }
         finally{if(mouse.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(mouse);}
         yield return new ExitPlayMode();
+
+        static IEnumerator WaitForTravel(System.Threading.Tasks.Task travel)
+        {
+            float deadline = Time.realtimeSinceStartup + 20;
+            while (!travel.IsCompleted && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Assert.That(travel.IsCompleted, Is.True, "Startup/출격 이동 시간 초과");
+            travel.GetAwaiter().GetResult();
+        }
     }
     [UnityTest]
     public IEnumerator TacticalCameraPanZoomGoalAndClosePreservePlayerAndWorldTime()

@@ -14,7 +14,7 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
         [SerializeField] private CreditsSceneLauncher _credits;
         [SerializeField] private MenuSoundtrack _music;
         [SerializeField] private StartupAtmosphere _atmosphere;
-        [SerializeField] private string _spaceshipScene = "Assets/Scenes/Spaceship/SpaceShipGrayBox.unity";
+        [SerializeField] private string _spaceshipScene = AppRoot.DefaultHubScene;
         public void Configure(StartMenuPresenter view) => _view = view != null ? view : throw new ArgumentNullException(nameof(view));
         public void ConfigureCredits(CreditsSceneLauncher credits) => _credits = credits;
         public void ConfigureMusic(MenuSoundtrack music) => _music = music;

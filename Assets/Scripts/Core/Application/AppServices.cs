@@ -13,8 +13,6 @@ namespace TeamHJD.Game.Application
         /// <summary>HUD 흔들림 등 로컬 연출 전용 난수입니다. Match 판정/저장 흐름과 상태를 공유하지 않습니다.</summary>
         public IRandomStreams PresentationRandom => _presentationRandom;
 
-        public IProfileService Profiles { get; }
-        public IContentCatalog Content { get; }
         public IPlatformService Platform { get; }
         public ISceneFlow SceneFlow { get; }
         public InputLockService InputLocks { get; }
@@ -34,14 +32,12 @@ namespace TeamHJD.Game.Application
         public ITurretCommandTransport NetworkTurretCommands { get; private set; }
         public ITurretPresentationTransport NetworkTurretPresentation { get; private set; }
 
-        public AppServices(IProfileService profiles, IContentCatalog content, IPlatformService platform, ISceneFlow sceneFlow,
+        public AppServices(IPlatformService platform, ISceneFlow sceneFlow,
             INetworkSession networkSession = null, ICheckpointStore checkpointStore = null,
             ICheckpointPayloadCodec checkpointPayloads = null, int? presentationRandomSeed = null)
         {
             if ((checkpointStore == null) != (checkpointPayloads == null))
                 throw new ArgumentException("Provide checkpoint storage and payload codec together.");
-            Profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
-            Content = content ?? throw new ArgumentNullException(nameof(content));
             Platform = platform ?? throw new ArgumentNullException(nameof(platform));
             SceneFlow = sceneFlow ?? throw new ArgumentNullException(nameof(sceneFlow));
             InputLocks = new InputLockService();
@@ -171,8 +167,6 @@ namespace TeamHJD.Game.Application
             var presentationTransport = NetworkTurretPresentation; NetworkTurretPresentation = null;
             DisposeIfNeeded(presentationTransport, ref errors);
             DisposeIfNeeded(transport, ref errors);
-            DisposeIfNeeded(Profiles, ref errors);
-            DisposeIfNeeded(Content, ref errors);
             DisposeIfNeeded(Platform, ref errors);
             DisposeIfNeeded(SceneFlow, ref errors);
             DisposeIfNeeded(CheckpointStore, ref errors);

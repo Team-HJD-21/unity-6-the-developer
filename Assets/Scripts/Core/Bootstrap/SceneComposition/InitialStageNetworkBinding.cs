@@ -214,19 +214,17 @@ namespace TeamHJD.Game.Bootstrap.SceneComposition
             if (!connections.SequenceEqual(_manager.ConnectedClientsIds.OrderBy(id => id)))
                 return false;
             var participants = connections.Select(id => new MatchParticipantBinding(id,
-                new PlayerId(id == _session.LocalConnectionId ? "local-player" : "peer-" + id),
+                id == _session.LocalConnectionId ? InitialStageCompositionRoot.LocalPlayerId : new PlayerId("peer-" + id),
                 id == _session.LocalConnectionId)).ToArray();
-            var config = new MatchConfig(new MatchId(Guid.NewGuid().ToString("N")),
-                participants.Length == 1 ? MatchMode.Story : MatchMode.Cooperative, new StageId("initial-stage"),
-                new DefinitionId("poc-default-difficulty"), "poc", 1,
+            var mode = participants.Length == 1 ? MatchMode.Story : MatchMode.Cooperative;
+            var config = InitialStageCompositionRoot.CreateStageMatchConfig(new MatchId(Guid.NewGuid().ToString("N")), mode,
                 participants.Select(binding => new PlayerLoadoutSnapshot(binding.PlayerId, null)));
             config = _app.ConfigureCheckpointArrival(gameObject.scene.path, config);
             RegionSceneBinding region = _scene.RegionBinding;
             if (region == null)
                 throw new InvalidOperationException("The network Scene requires region authoring.");
+            _scene.ValidateStageSetup(config);
             RegionGridDefinition definition = region.CaptureInitialDefinition();
-            _scene.ValidateNetworkPreparation(new NetworkMatchDescriptor(Guid.NewGuid(), 1, config,
-                region.InitialMode, definition, participants));
             return _matches.TryPrepare(config, definition, region.InitialMode, participants);
         }
 

@@ -1,4 +1,4 @@
-// 실제 Initial_Stage의 Play 진입·동적 모드·CU 시작 셀과 writer 등록을 확인합니다.
+// 실제 Stage_1의 Play 진입·동적 모드·CU 시작 셀과 writer 등록을 확인합니다.
 // 제품 Scene을 저장하지 않으며 실패한 검사도 Play 종료로 정리합니다.
 using System;
 using System.Collections;
@@ -24,12 +24,12 @@ namespace TeamHJD.Game.Tests.EditMode
     public sealed class DynamicRegionRuntimeTests
     {
         [UnityTest, Explicit("실제 Stage의 CU·터렛 조립과 시작 셀 설정을 확인합니다.")]
-        public IEnumerator InitialStageUsesCuSeedAndRegistersItsCheckpointWriter()
+        public IEnumerator Stage1UsesCuSeedAndRegistersItsCheckpointWriter()
         {
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             Assert.That(scene.isDirty, Is.False, "미저장 Scene은 검사하지 않습니다.");
             // Test Runner는 빈 Scene에서 시작하므로 실제 검사 대상을 명시적으로 엽니다.
-            EditorSceneManager.OpenScene("Assets/Scenes/Gameplay/Initial_Stage.unity");
+            EditorSceneManager.OpenScene(AppRoot.DefaultStage1Scene);
             yield return new EnterPlayMode();
             float deadline = Time.realtimeSinceStartup + 25;
             RegionSceneBinding binding;
@@ -100,10 +100,13 @@ namespace TeamHJD.Game.Tests.EditMode
 
         private static IEnumerator VerifyFadeCancellation()
         {
-            var parent = new GameObject("Core fade cancellation QA");
+            var style = Resources.Load<AppScreenStyle>("Core/AppScreenStyle");
+            Assert.That(style, Is.Not.Null);
+            Assert.That(style.CanvasPrefab, Is.Not.Null);
+            var canvas = Object.Instantiate(style.CanvasPrefab);
             try
             {
-                using var fade = new SceneFadePresenter(parent.transform);
+                using var fade = new SceneFadePresenter(canvas.TravelFade);
                 using var cancellation = new CancellationTokenSource();
                 int moves = 0;
                 Task task = fade.RunAsync(() => { moves++; return Task.CompletedTask; }, cancellation.Token);
@@ -114,7 +117,7 @@ namespace TeamHJD.Game.Tests.EditMode
                 Assert.That(moves, Is.Zero);
                 Assert.That(fade.IsVisible, Is.False);
             }
-            finally { Object.Destroy(parent); }
+            finally { Object.Destroy(canvas.gameObject); }
         }
 
         [UnityTearDown]

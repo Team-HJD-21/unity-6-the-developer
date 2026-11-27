@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using TeamHJD.Game.Application;
 using TeamHJD.Game.Bootstrap;
@@ -10,8 +11,11 @@ using TeamHJD.Game.Contracts;
 using TeamHJD.Game.Domain;
 using TeamHJD.Game.Infrastructure.Fakes;
 using TeamHJD.Game.Presentation;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 using EntityId = TeamHJD.Game.Domain.EntityId;
 
 namespace TeamHJD.Game.Tests.EditMode
@@ -26,7 +30,7 @@ namespace TeamHJD.Game.Tests.EditMode
         {
             _rootObject = new GameObject("Ownership Test App");
             _root = _rootObject.AddComponent<AppRoot>();
-            _root.Initialize(new AppServices(new FakeProfileService(), new FakeContentCatalog(),
+            _root.Initialize(new AppServices(
                 new FakePlatformService(new PlatformUser(new PlayerId("test"), "Test")),
                 new FakeSceneFlow()));
         }
@@ -99,7 +103,7 @@ namespace TeamHJD.Game.Tests.EditMode
         public void ActiveMatchHubVisitDoesNotCreateAnotherPlayerOrCamera()
         {
             var match = Start("hub-visit");
-            var scene = EditorSceneManager.OpenPreviewScene(AppScreenPresenter.HubScene);
+            var scene = EditorSceneManager.OpenPreviewScene(AppRoot.DefaultHubScene);
             try
             {
                 Compose(scene);
@@ -113,7 +117,7 @@ namespace TeamHJD.Game.Tests.EditMode
         public void ConfiguredHubRouteTakesPrecedenceOverTheStandaloneDefault()
         {
             _root.ConfigureGameFlow(new GameFlowRoutes("startup", "another-hub"));
-            var scene = EditorSceneManager.OpenPreviewScene(AppScreenPresenter.HubScene);
+            var scene = EditorSceneManager.OpenPreviewScene(AppRoot.DefaultHubScene);
             try
             {
                 Compose(scene);
@@ -122,8 +126,35 @@ namespace TeamHJD.Game.Tests.EditMode
             finally { EditorSceneManager.ClosePreviewScene(scene); }
         }
 
-        private void Compose(UnityEngine.SceneManagement.Scene scene)
-            => typeof(AppRoot).GetMethod("ComposeScene", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(_root, new object[] { scene });
+        [Test]
+        public void SceneConsumerFailureReachesTheArrivalFailureRegistry()
+        {
+            var scene = EditorSceneManager.NewPreviewScene();
+            var consumer = new GameObject("Broken display binding");
+            SceneManager.MoveGameObjectToScene(consumer, scene);
+            consumer.AddComponent<ThrowingDisplayConsumer>();
+            try
+            {
+                LogAssert.Expect(LogType.Exception, new Regex("scene display binding failed"));
+                Assert.That(Compose(scene), Is.False);
+                var args = new object[] { scene.path, null };
+                var tracker = typeof(AppRoot).GetMethod("TryGetCompositionFailure", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(tracker.Invoke(_root, args), Is.EqualTo(true));
+                Assert.That(args[1], Is.TypeOf<InvalidOperationException>());
+                Assert.That(((Exception)args[1]).Message, Is.EqualTo("scene display binding failed"));
+            }
+            finally { EditorSceneManager.ClosePreviewScene(scene); }
+        }
+
+        private bool Compose(Scene scene)
+            => (bool)typeof(AppRoot).GetMethod("ComposeScene", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(_root, new object[] { scene, false });
+
+        private sealed class ThrowingDisplayConsumer : MonoBehaviour, IUiDisplaySettingsConsumer
+        {
+            public void BindUiDisplaySettings(UiDisplaySettings settings)
+                => throw new InvalidOperationException("scene display binding failed");
+        }
 
         private MatchSession Start(string id)
         {

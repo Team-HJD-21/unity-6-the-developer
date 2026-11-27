@@ -161,20 +161,20 @@ namespace TeamHJD.Game.Tests.EditMode
             Assert.That(app?.GameFlow?.Phase, Is.EqualTo(GameFlowPhase.MainMenu));
             var hubTravel = app.GameFlow.EnterSpaceshipAsync();
             yield return WaitForTravel(hubTravel);
-            var hubScene = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(AppScreenPresenter.HubScene);
+            var hubScene = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(AppRoot.DefaultHubScene);
             var objects = hubScene.GetRootGameObjects();
             var hub = objects.SelectMany(o => o.GetComponentsInChildren<SpaceshipHubCompositionRoot>()).Single();
             var exit = objects.SelectMany(o => o.GetComponentsInChildren<MonoBehaviour>())
                 .Single(o => o != null && o.GetType().Name == "SpaceshipExit");
             var destination = (string)exit.GetType().GetField("missionSceneName", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(exit);
-            Assert.That(destination, Is.EqualTo(AppScreenPresenter.StageScene));
+            Assert.That(destination, Is.EqualTo(AppRoot.DefaultStage1Scene));
             var playerCollider = hub.Player.GetComponentsInChildren<Collider2D>()
                 .First(c => c.GetComponentInParent<PlayerActorIdentity>() != null);
             var exitTravel = (Task)exit.GetType().GetMethod("ExitAsync").Invoke(exit, new object[] { playerCollider });
             yield return WaitForTravel(exitTravel);
-            Assert.That(app.GameFlow.CurrentSceneKey, Is.EqualTo(AppScreenPresenter.StageScene));
+            Assert.That(app.GameFlow.CurrentSceneKey, Is.EqualTo(AppRoot.DefaultStage1Scene));
             Assert.That(UnityEngine.SceneManagement.SceneManager.GetSceneByPath("Assets/Scenes/Gameplay/Initial_Stage.unity").isLoaded, Is.False);
-            var stage = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(AppScreenPresenter.StageScene);
+            var stage = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(AppRoot.DefaultStage1Scene);
             var controller = stage.GetRootGameObjects().SelectMany(o => o.GetComponentsInChildren<TeamHJD.Game.FieldTurrets.FieldTurretController>()).Single();
             Assert.That(controller.MaximumPower, Is.EqualTo(500));
             Assert.That(app.CurrentMatchId.IsEmpty, Is.False);

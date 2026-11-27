@@ -17,6 +17,8 @@
 
 `AppRoot`는 App 서비스와 Scene 교체를 소유한다. `InitialStageCompositionRoot`는 해당 Scene의 실제 객체를 연결하고 해제한다. 실제 공격/이동/HP를 이 두 클래스 안에 복제하지 않는다.
 
+Scene이 로드되면 `AppRoot`가 이전 화면 상태를 정리하고 Scene의 출입·표시 소비자와 조립부를 연결한다. 이 과정에서 실패하면 원래 예외를 해당 Scene 경로에 기록한다. `AppGameFlowHost`는 이 기록을 읽어 입장 실패를 알리고, Client의 메뉴·허브 위치도 성공한 조립까지만 반영한다. App 종료에서는 오디오·게임 흐름·Match·서비스·화면을 각각 해제하며 한 단계가 실패해도 나머지 정리를 실행한다.
+
 ```mermaid
 flowchart TD
  App[AppRoot / 연결·Scene·파일 저장소] --> Root[InitialStageCompositionRoot / 실제 객체 연결]

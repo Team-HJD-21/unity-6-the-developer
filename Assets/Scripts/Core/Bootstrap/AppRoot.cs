@@ -17,6 +17,9 @@ namespace TeamHJD.Game.Bootstrap
 {
     public sealed partial class AppRoot : MonoBehaviour, IAppMatchHost, IDisposable
     {
+        public const string DefaultStage1Scene = GameFlowRoutes.DefaultStage1Scene;
+        public const string DefaultHubScene = GameFlowRoutes.DefaultHubScene;
+
         /// <summary>UI 조립부가 로컬 연출 소비자에게 주입하는 App 수명 난수입니다. 게임 판정에 사용하지 않습니다.</summary>
         public IRandomStreams PresentationRandom => Services?.PresentationRandom;
         /// <summary>앱 화면/접속 흐름이 사용하는 플랫폼 Port입니다. SDK 구체 타입이나 AppServices 전체를 노출하지 않습니다.</summary>
@@ -209,14 +212,13 @@ namespace TeamHJD.Game.Bootstrap
             if (Services.Platform is IPlatformRuntime) InitializePlatform();
             if (UnityEngine.Application.isPlaying)
                 _screenPresenter = new AppScreenPresenter(transform, Services.Screens, Services.SceneTransitions,
-                    NavigateFromScreenAsync, GetSceneTravelRestriction,
+                    RestartMissionFromScreenAsync, ReturnToHubFromScreenAsync, ReturnToMainMenuFromScreenAsync, GetSceneTravelRestriction,
                     () => GameFlow?.IsTransitioning == true, DisplaySettings,
                     () => GameFlow == null ? !CurrentMatchId.IsEmpty || LastMissionRecoveryError != null :
                         GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted,
                     Services.Alerts, AudioSettings,
                     () => LastMissionRecoveryError, RetryPendingMissionRecoveryAsync,
-                    () => _activeMission?.Recovery,
-                    () => GameFlow?.Routes.MainMenuScene ?? "Assets/Scenes/Bootstrap/Startup.unity", UseMissionSafetyAsync);
+                    () => _activeMission?.Recovery, UseMissionSafetyAsync);
         }
 
         // 포털의 실제 Scene/actor 이동은 완전 암전 구간에서만 실행합니다.
@@ -430,8 +432,14 @@ namespace TeamHJD.Game.Bootstrap
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             _composedSceneHandles.Clear();
             _compositionFailures.Clear();
-            if (Audio != null) Audio.Shutdown();
-            Audio = null;
+            var errors = new List<Exception>();
+            try
+            {
+                if (Audio != null) Audio.Shutdown();
+            }
+            catch (Exception exception) { errors.Add(exception); }
+            finally { Audio = null; }
+
             AppServices services = Services;
             if (services?.NetworkMatches != null)
             {
@@ -439,13 +447,12 @@ namespace TeamHJD.Game.Bootstrap
                 services.NetworkMatches.Completed -= OnNetworkMatchCompleted;
             }
             Services = null;
-            var errors = new List<Exception>();
             try
             {
                 GameFlow?.Dispose();
-                GameFlow = null;
             }
             catch (Exception exception) { errors.Add(exception); }
+            finally { GameFlow = null; }
             try
             {
                 EndCurrentMatch();
@@ -459,9 +466,9 @@ namespace TeamHJD.Game.Bootstrap
             try
             {
                 _screenPresenter?.Dispose();
-                _screenPresenter = null;
             }
             catch (Exception exception) { errors.Add(exception); }
+            finally { _screenPresenter = null; }
             if (errors.Count > 0)
                 throw new AggregateException("App shutdown failed after cleanup.", errors);
         }
@@ -477,9 +484,8 @@ namespace TeamHJD.Game.Bootstrap
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             _compositionFailures.Remove(scene.path);
-            if (mode == LoadSceneMode.Single && Services != null)
-                Services.Screens.ResetContext();
-            ComposeScene(scene);
+            if (!ComposeScene(scene, resetScreenContext: mode == LoadSceneMode.Single))
+                return;
             if (NetworkSession?.State == NetworkConnectionState.ConnectedClient && GameFlow != null &&
                 (scene.path == GameFlow.Routes.MainMenuScene || scene.path == GameFlow.Routes.SpaceshipScene))
                 GameFlow.AdoptSynchronizedScene(scene.path, false);
@@ -526,40 +532,33 @@ namespace TeamHJD.Game.Bootstrap
             }
         }
 
-        // 기존 공용 메뉴/결과 버튼도 같은 App 흐름으로 전달해 Scene과 표시 위치가 어긋나지 않게 합니다.
-        private async Task NavigateFromScreenAsync(string scenePath)
+        // 버튼의 의도를 같은 GameFlow로 전달합니다. Startup 없이 직접 실행한 경우에는 기본 Scene을 사용합니다.
+        private Task RestartMissionFromScreenAsync()
         {
             if (GameFlow == null)
             {
-                if (scenePath == AppScreenPresenter.HubScene) await ReturnToHubFromScreenAsync();
-                else
-                {
-                    if (scenePath == AppScreenPresenter.StageScene) PrepareMissionEntry(MissionEntryKind.NewMission);
-                    await ReplaceGameplaySceneAsync(scenePath);
-                    if (scenePath == "Assets/Scenes/Bootstrap/Startup.unity") CompleteMissionRecovery();
-                }
-                return;
+                PrepareMissionEntry(MissionEntryKind.NewMission);
+                return ReplaceGameplaySceneAsync(DefaultStage1Scene);
             }
-            if (scenePath == GameFlow.Routes.SpaceshipScene &&
-                (GameFlow.Phase == GameFlowPhase.Mission || GameFlow.Phase == GameFlowPhase.Faulted))
-            { await ReturnToHubFromScreenAsync(); return; }
-            if (scenePath == GameFlow.Routes.MainMenuScene)
-            { await GameFlow.OpenMainMenuAsync(); CompleteMissionRecovery(); return; }
-            if (scenePath == AppScreenPresenter.StageScene)
-            {
-                if (GameFlow.Phase == GameFlowPhase.Mission)
-                { await GameFlow.RestartMissionAsync(); return; }
-                if (GameFlow.Phase == GameFlowPhase.Spaceship)
-                { await GameFlow.LaunchMissionAsync(scenePath); return; }
-            }
-            throw new InvalidOperationException("Use the configured game-flow action for this screen.");
+            return GameFlow.Phase == GameFlowPhase.Spaceship
+                ? GameFlow.LaunchMissionAsync(DefaultStage1Scene)
+                : GameFlow.RestartMissionAsync();
         }
 
         private async Task ReturnToHubFromScreenAsync()
         {
             if (GameFlow != null) await GameFlow.ReturnToSpaceshipAsync();
-            else await ReplaceGameplaySceneAsync(AppScreenPresenter.HubScene);
+            else await ReplaceGameplaySceneAsync(DefaultHubScene);
             // 허브 도착에 성공한 명시 귀환만 이전 복귀 오류를 닫습니다. 실패한 이동은 재시도 의도를 보존합니다.
+            CompleteMissionRecovery();
+        }
+
+        private const string DefaultMainMenuScene = "Assets/Scenes/Bootstrap/Startup.unity";
+
+        private async Task ReturnToMainMenuFromScreenAsync()
+        {
+            if (GameFlow != null) await GameFlow.OpenMainMenuAsync();
+            else await ReplaceGameplaySceneAsync(DefaultMainMenuScene);
             CompleteMissionRecovery();
         }
 
@@ -596,57 +595,61 @@ namespace TeamHJD.Game.Bootstrap
             _compositionFailures.Remove(scene.path);
         }
 
-        private void ComposeScene(Scene scene)
+        private bool ComposeScene(Scene scene, bool resetScreenContext = false)
         {
             if (Services == null || !scene.IsValid() || !scene.isLoaded)
-                return;
-            if (_composedSceneHandles.Contains(scene.handle))
-                return;
+                return false;
 
-            // 직접 Scene 실행의 메뉴 귀환도 기존 Hub 조립을 사용합니다. 진행 Match의 Additive 방문은 제외합니다.
-            string hubScene = GameFlow?.Routes.SpaceshipScene ?? AppScreenPresenter.HubScene;
-            if (scene.path == hubScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
-                !scene.GetRootGameObjects().Any(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true) != null))
-            {
-                var hub = new GameObject("Core Starting Hub");
-                SceneManager.MoveGameObjectToScene(hub, scene);
-                hub.AddComponent<SceneComposition.SpaceshipHubCompositionRoot>();
-            }
-
-            var compositionRoots = new List<ISceneCompositionRoot>();
-            foreach (GameObject rootObject in scene.GetRootGameObjects())
-            {
-                foreach (MonoBehaviour behaviour in rootObject.GetComponentsInChildren<MonoBehaviour>(true))
-                {
-                    if (behaviour is TeamHJD.Game.Presentation.Scene.ISpaceshipTravelConsumer travelConsumer)
-                        travelConsumer.BindSpaceshipTravel(_spaceshipTravel);
-                    if (behaviour is TeamHJD.Game.Presentation.Scene.IUiDisplaySettingsConsumer displayConsumer)
-                        displayConsumer.BindUiDisplaySettings(DisplaySettings);
-                    if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled)
-                        compositionRoots.Add(compositionRoot);
-                }
-            }
-
-            if (compositionRoots.Count == 0)
-                return;
-            if (compositionRoots.Count > 1)
-            {
-                _compositionFailures[scene.path] = new InvalidOperationException("A Mission Scene contains multiple active composition roots.");
-                Debug.LogError(
-                    $"Scene '{scene.name}' has {compositionRoots.Count} active scene composition roots. " +
-                    "Keep one composition root per scene to avoid duplicate Match ownership.");
-                return;
-            }
-
+            UnityEngine.Object context = this;
             try
             {
+                // 화면 정리와 Feature 연결도 입장 준비에 포함합니다. 실패하면 호출자가 즉시 원인을 읽습니다.
+                if (resetScreenContext)
+                    Services.Screens.ResetContext();
+                if (_composedSceneHandles.Contains(scene.handle))
+                    return true;
+
+                // 직접 Scene 실행의 메뉴 귀환도 기존 Hub 조립을 사용합니다. 진행 Match의 Additive 방문은 제외합니다.
+                string hubScene = GameFlow?.Routes.SpaceshipScene ?? DefaultHubScene;
+                if (scene.path == hubScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
+                    !scene.GetRootGameObjects().Any(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true) != null))
+                {
+                    var hub = new GameObject("Core Starting Hub");
+                    SceneManager.MoveGameObjectToScene(hub, scene);
+                    hub.AddComponent<SceneComposition.SpaceshipHubCompositionRoot>();
+                }
+
+                var compositionRoots = new List<ISceneCompositionRoot>();
+                foreach (GameObject rootObject in scene.GetRootGameObjects())
+                {
+                    foreach (MonoBehaviour behaviour in rootObject.GetComponentsInChildren<MonoBehaviour>(true))
+                    {
+                        context = behaviour;
+                        if (behaviour is TeamHJD.Game.Presentation.Scene.ISpaceshipTravelConsumer travelConsumer)
+                            travelConsumer.BindSpaceshipTravel(_spaceshipTravel);
+                        if (behaviour is TeamHJD.Game.Presentation.Scene.IUiDisplaySettingsConsumer displayConsumer)
+                            displayConsumer.BindUiDisplaySettings(DisplaySettings);
+                        if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled)
+                            compositionRoots.Add(compositionRoot);
+                    }
+                }
+                context = this;
+                if (compositionRoots.Count == 0)
+                    return true;
+                if (compositionRoots.Count > 1)
+                    throw new InvalidOperationException(
+                        $"Scene '{scene.name}' has {compositionRoots.Count} active composition roots. Keep one composition root per scene.");
+
+                context = compositionRoots[0] as MonoBehaviour;
                 compositionRoots[0].Compose(this);
                 _composedSceneHandles.Add(scene.handle);
+                return true;
             }
             catch (Exception exception)
             {
-                _compositionFailures[scene.path] = exception;
-                Debug.LogException(exception, compositionRoots[0] as MonoBehaviour);
+                RecordCompositionFailure(scene.path, exception);
+                Debug.LogException(exception, context);
+                return false;
             }
         }
 

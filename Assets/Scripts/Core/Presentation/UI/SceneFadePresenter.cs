@@ -5,7 +5,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace TeamHJD.Game.Presentation
 {
@@ -22,20 +21,6 @@ namespace TeamHJD.Game.Presentation
         {
             _group = authored != null ? authored : throw new ArgumentNullException(nameof(authored));
             _overlay = authored.gameObject; _group.alpha = 0; _overlay.SetActive(false);
-        }
-
-        public SceneFadePresenter(Transform parent)
-        {
-            _overlay = new GameObject("Scene Travel Fade", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
-            _overlay.transform.SetParent(parent, false);
-            var rect = (RectTransform)_overlay.transform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            _overlay.GetComponent<Image>().color = Color.black;
-            _group = _overlay.GetComponent<CanvasGroup>();
-            _group.alpha = 0;
-            _overlay.SetActive(false);
         }
 
         /// <summary>Core 이동 조율자가 호출합니다. 이동 함수는 화면이 완전히 검어졌을 때만 실행합니다.</summary>

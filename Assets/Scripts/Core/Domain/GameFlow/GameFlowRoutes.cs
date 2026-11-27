@@ -4,6 +4,10 @@ namespace TeamHJD.Game.Domain
 {
     public sealed class GameFlowRoutes
     {
+        // 직접 Scene 실행과 기본 출격이 공유하는 Build Settings 경로입니다.
+        public const string DefaultStage1Scene = "Assets/Scenes/Gameplay/Stage_1.unity";
+        public const string DefaultHubScene = "Assets/Scenes/Spaceship/SpaceShipGrayBox.unity";
+
         public string MainMenuScene { get; }
         public string SpaceshipScene { get; }
         public GameFlowRoutes(string mainMenuScene, string spaceshipScene)
