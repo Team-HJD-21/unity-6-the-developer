@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using TeamHJD.Game.Presentation;
+using TeamHJD.Game.Presentation.Scene;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -40,6 +41,13 @@ namespace TeamHJD.Game.Tests.EditMode
             {
                 Assert.That(cue.Class.Output, Is.Not.Null); Assert.That(cue.Class.WorldSpace, Is.True);
                 Assert.That(cue.Clips, Has.All.Not.Null); Assert.That(cue.Clips.Length, Is.GreaterThan(0));
+            }
+            var playerShot = config.Cues.Single(cue => cue.Id == GameSound.PlayerShot);
+            foreach (var clip in playerShot.Clips)
+            {
+                var importer = (AudioImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(clip));
+                Assert.That(importer.forceToMono, Is.True, clip.name);
+                Assert.That(clip.channels, Is.EqualTo(1), clip.name);
             }
             foreach (string path in new[] { "Assets/Prefabs/UI/Common/MenuSoundtrack.prefab", "Assets/Prefabs/UI/Cinematics/CreditsCinematic.prefab" })
             {
@@ -105,6 +113,119 @@ namespace TeamHJD.Game.Tests.EditMode
                 Object.Destroy(cue.Clips[0]); Object.Destroy(cue); Object.Destroy(profile); Object.Destroy(config);
             }
             yield return new ExitPlayMode();
+        }
+
+        [UnityTest]
+        public IEnumerator FieldVoicesKeepTheirPlayerRelativeDistanceWhileTheViewPans()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            yield return new EnterPlayMode();
+            if (GameAudioManager.Current != null) GameAudioManager.Current.Shutdown();
+
+            var player = new GameObject("Listening player").transform;
+            player.position = new Vector3(12, -5, 0);
+            var output = new GameObject("Test camera", typeof(Camera), typeof(AudioListener));
+            output.transform.position = new Vector3(0, 0, -50);
+            var follow = output.AddComponent<MatchCameraFollow>();
+            follow.Bind(player);
+            var map = new GameObject("Panned map target").transform;
+            map.position = new Vector3(110, 80, 0);
+            var nearby = new GameObject("Nearby turret").transform;
+            nearby.position = player.position + new Vector3(6, 0, 0);
+            var distant = new GameObject("Distant turret").transform;
+            distant.position = map.position;
+            var replacement = new GameObject("Replacement turret").transform;
+
+            var profile = ScriptableObject.CreateInstance<SoundClassProfile>();
+            profile.Bus = GameAudioBus.Turret;
+            profile.WorldSpace = true;
+            profile.MinimumDistance = 2;
+            profile.MaximumDistance = 24;
+            profile.MaximumVoices = 2;
+            profile.RetriggerSeconds = 0;
+            var cue = ScriptableObject.CreateInstance<GameAudioCue>();
+            cue.Class = profile;
+            cue.Loop = true;
+            cue.MaximumInstances = 2;
+            const int frequency = 44100;
+            var tone = new float[frequency];
+            for (int i = 0; i < tone.Length; i++) tone[i] = .05f * Mathf.Sin(2 * Mathf.PI * 440 * i / frequency);
+            var clip = AudioClip.Create("spatial test", tone.Length, 1, frequency, false);
+            clip.SetData(tone, 0);
+            cue.Clips = new[] { clip };
+            var config = ScriptableObject.CreateInstance<GameAudioConfiguration>();
+            var manager = new GameObject("Spatial audio").AddComponent<GameAudioManager>();
+            manager.Initialize(config, new GameAudioSettings(false));
+            try
+            {
+                Assert.That(manager.TryPlay(cue, nearby, nearby.position, out var voice), Is.True);
+                var source = manager.GetComponentsInChildren<AudioSource>().Single(audioSource => audioSource.clip != null);
+                Assert.That(source.transform.position - output.transform.position, Is.EqualTo(new Vector3(6, 0, 0)));
+                float originalPeak;
+                float audioDeadline = Time.realtimeSinceStartup + 1;
+                do
+                {
+                    yield return new WaitForSecondsRealtime(.05f);
+                    originalPeak = ReadListenerPeak();
+                } while (originalPeak <= .001f && Time.realtimeSinceStartup < audioDeadline);
+
+                using (follow.Manager.PushView(map, 0))
+                {
+                    yield return new WaitForSecondsRealtime(.2f);
+                    Assert.That((Vector2)output.transform.position, Is.EqualTo((Vector2)map.position));
+                    Assert.That(voice.IsActive, Is.True);
+                    Assert.That(source.transform.position - output.transform.position, Is.EqualTo(new Vector3(6, 0, 0)));
+                    float pannedPeak = ReadListenerPeak();
+                    Assert.That(manager.TryPlay(cue, distant, distant.position, out _), Is.False);
+
+                    nearby.position = player.position + new Vector3(16, 0, 0);
+                    yield return new WaitForSecondsRealtime(.2f);
+                    Assert.That(source.transform.position - output.transform.position, Is.EqualTo(new Vector3(16, 0, 0)));
+                    float distantPeak = ReadListenerPeak();
+                    // 장치 출력이 없는 자동화 환경도 위의 재생 범위와 좌표 계약은 검증할 수 있습니다.
+                    if (originalPeak > .001f)
+                    {
+                        Assert.That(pannedPeak / originalPeak, Is.InRange(.85f, 1.15f));
+                        Assert.That(distantPeak / pannedPeak, Is.InRange(.2f, .8f));
+                    }
+                    Debug.Log($"Field audio QA peak · 6u {originalPeak:F5} · panned 6u {pannedPeak:F5} · 16u {distantPeak:F5}");
+                    voice.Stop();
+                    yield return new WaitForSecondsRealtime(.1f);
+                    Assert.That(voice.IsActive, Is.False);
+
+                    // 카메라 쪽에 가까운 동쪽 음원이 플레이어를 기준으로는 더 멉니다.
+                    cue.Loop = false;
+                    map.position = player.position + Vector3.right * 100;
+                    nearby.position = player.position - Vector3.right * 4;
+                    distant.position = player.position + Vector3.right * 16;
+                    replacement.position = player.position + Vector3.right * 8;
+                    yield return null;
+                    Assert.That((Vector2)output.transform.position, Is.EqualTo((Vector2)map.position));
+                    Assert.That(manager.TryPlay(cue, nearby, nearby.position, out var nearVoice), Is.True);
+                    Assert.That(manager.TryPlay(cue, distant, distant.position, out var farVoice), Is.True);
+                    Assert.That(manager.TryPlay(cue, replacement, replacement.position, out var replacementVoice), Is.True);
+                    Assert.That(nearVoice.IsActive, Is.True);
+                    Assert.That(farVoice.IsActive, Is.False, "The far voice must be selected using the player's position.");
+                    Assert.That(replacementVoice.IsActive, Is.True);
+                }
+            }
+            finally
+            {
+                manager.Shutdown();
+                foreach (var item in new[] { manager.gameObject, output, player.gameObject, map.gameObject, nearby.gameObject, distant.gameObject, replacement.gameObject })
+                    Object.Destroy(item);
+                Object.Destroy(cue.Clips[0]); Object.Destroy(cue); Object.Destroy(profile); Object.Destroy(config);
+            }
+            yield return new ExitPlayMode();
+        }
+
+        private static float ReadListenerPeak()
+        {
+            var samples = new float[1024];
+            AudioListener.GetOutputData(samples, 0);
+            float left = samples.Max(Mathf.Abs);
+            AudioListener.GetOutputData(samples, 1);
+            return Mathf.Max(left, samples.Max(Mathf.Abs));
         }
 
         [UnityTest]
