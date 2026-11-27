@@ -605,12 +605,19 @@ namespace TeamHJD.Game.Bootstrap
 
             // 직접 Scene 실행의 메뉴 귀환도 기존 Hub 조립을 사용합니다. 진행 Match의 Additive 방문은 제외합니다.
             string hubScene = GameFlow?.Routes.SpaceshipScene ?? AppScreenPresenter.HubScene;
+            SceneComposition.SpaceshipHubCompositionRoot relocatedHub = null;
             if (scene.path == hubScene && _currentMatch == null && NetworkMatches?.Descriptor == null &&
                 !scene.GetRootGameObjects().Any(root => root.GetComponentInChildren<SceneComposition.SpaceshipHubCompositionRoot>(true) != null))
             {
-                var hub = new GameObject("Core Starting Hub");
-                SceneManager.MoveGameObjectToScene(hub, scene);
-                hub.AddComponent<SceneComposition.SpaceshipHubCompositionRoot>();
+                relocatedHub = UnityEngine.Object.FindFirstObjectByType<SceneComposition.SpaceshipHubCompositionRoot>();
+                if (relocatedHub != null && relocatedHub.transform.parent == null)
+                    SceneManager.MoveGameObjectToScene(relocatedHub.gameObject, scene);
+                else
+                {
+                    var hub = new GameObject("Core Starting Hub");
+                    SceneManager.MoveGameObjectToScene(hub, scene);
+                    hub.AddComponent<SceneComposition.SpaceshipHubCompositionRoot>();
+                }
             }
 
             var compositionRoots = new List<ISceneCompositionRoot>();
@@ -622,11 +629,14 @@ namespace TeamHJD.Game.Bootstrap
                         travelConsumer.BindSpaceshipTravel(_spaceshipTravel);
                     if (behaviour is TeamHJD.Game.Presentation.Scene.IUiDisplaySettingsConsumer displayConsumer)
                         displayConsumer.BindUiDisplaySettings(DisplaySettings);
-                    if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled)
+                    if (behaviour is ISceneCompositionRoot compositionRoot && behaviour.isActiveAndEnabled &&
+                        !ReferenceEquals(behaviour, relocatedHub))
                         compositionRoots.Add(compositionRoot);
                 }
             }
 
+            if (relocatedHub != null && relocatedHub.gameObject.scene == scene)
+                _composedSceneHandles.Add(scene.handle);
             if (compositionRoots.Count == 0)
                 return;
             if (compositionRoots.Count > 1)
