@@ -553,7 +553,15 @@ public sealed partial class TacticalCommandController
             for(int y=0;y<g.CellsY;y++)for(int x=0;x<g.CellsX;x++)
             {
                 var state=StateOfCell(Regions.Definition.GetCellIndex(x,y));
-                Color32 c=state switch {TacticalPresentationRules.CellState.Captured=>new Color32(255,0,0,0),TacticalPresentationRules.CellState.Available=>new Color32(0,255,0,0),TacticalPresentationRules.CellState.Capturing=>new Color32(0,0,255,0),_=>new Color32(0,0,0,255)};
+                // RGBA는 각각 점유·점유 가능·확보 중·잠김 마스크입니다. 점유 불가 지형은 모든 채널을 비웁니다.
+                Color32 c = state switch
+                {
+                    TacticalPresentationRules.CellState.Captured => new Color32(255, 0, 0, 0),
+                    TacticalPresentationRules.CellState.Available => new Color32(0, 255, 0, 0),
+                    TacticalPresentationRules.CellState.Capturing => new Color32(0, 0, 255, 0),
+                    TacticalPresentationRules.CellState.Locked => new Color32(0, 0, 0, 255),
+                    _ => default
+                };
                 for(int yy=0;yy<8;yy++)for(int xx=0;xx<8;xx++)pixels[(y*8+yy)*_regionTexture.width+x*8+xx]=c;
             }
             _regionMaskHash=stateHash;
