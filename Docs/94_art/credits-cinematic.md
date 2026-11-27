@@ -31,18 +31,21 @@
 
 - Scene: `Assets/Scenes/Presentation/Credits.unity`.
 - Prefab: `Assets/Prefabs/UI/Cinematics/CreditsCinematic.prefab`.
-- `CreditsCinematicDirector`: 장면 순서/재생 시간/페이드/로고/최종 텍스트. Update는 unscaled time을 사용한다.
+- Timeline: `Assets/Art/Cinematics/Credits/CreditsSequence.playable`. 챕터 활성화, 카메라 컷, 암전, 로고·최종 명단 등장을 관리한다.
+- `CreditsCinematicDirector`는 Timeline을 unscaled time으로 평가하고, 현재 챕터의 시각 효과와 기존 OST·효과음을 함께 재생한다.
 - 현재 파트 길이는 9.5 / 10 / 10 / 10 / 11.5초, 로고는 4초다. 정적 명단은 55초부터 Fade-in하며 자동 종료하지 않는다.
 - OST 제작 중인 타임라인은 유지한다. 비행 파트는 전체 13.25~13.75초에 짧게 후진하고 14초까지 자세를 잡는다. 기존과 같은 14초에 가속을 시작하며 14.85초에는 원래 궤적으로 복귀한다. 이름 공개(15.55초), 파트 전환, 로고와 최종 명단 시각은 변경하지 않는다.
 - 소행성 파트의 `BackgroundSlime`은 기존 Slime Idle 네 프레임을 사용하는 시각 오브젝트 한 개다. 게임 AI/Collider를 만들지 않는다. Inspector의 `SlimeFrom`, `SlimeTo`, `SlimePass`로 이동 경로와 파트 내부 통과 구간을 조절한다. sorting order 10으로 모든 소행성(15 이상) 뒤에 두며 이름 위쪽을 지난다.
-- 각 `CreditsCinematicChapter`: 카메라 시작/끝, 확대/회전, 담당 텍스트, 시각 rig, 파티클 시작/끝. 용접은 정면/결과 카메라, 비행은 엔진 기준 상대 오프셋/전체 카메라, 드론은 전체/얼굴 카메라로 Inspector 값을 사용한다. 실제 Player AI·Turret 전력·Match를 생성하지 않는다.
+- 카메라는 Credits 출력 카메라의 Cinemachine Brain과 6개 샷으로 구성한다. `Camera shots`에서 컷을 조정하고 이와 대응하는 Animation Track에서 위치·롤·직교 크기를 편집한다. 용접은 정면/선체 전환으로 두 샷을 쓴다. 비행·소행성·투하·드론은 한 샷씩이다.
+- 각 `CreditsCinematicChapter`는 담당 텍스트, 시각 rig, 파티클과 효과음의 시간 범위를 가진다. 챕터의 시작과 끝은 바인딩된 Activation Clip이 정한다. 카메라, 암전과 챕터 길이를 편집할 때 연결된 컷의 시각을 함께 맞춘다.
 - `CreditsNameReveal`: TMP 이름의 Fade와 선택적인 RectMask2D 공개를 담당한다. 글자 윤곽 추적이나 런타임 글꼴 아틀라스 수정은 하지 않는다.
 - `CreditsCinematicChapter.Sounds`: 기존 프로젝트 SFX의 시작/종료·볼륨·피치·루프와 짧은 등장/퇴장 envelope. Seek 검수 중에는 재생하지 않으며 Pause/파트 비활성화 때 정지한다. 메인 음악은 변경하지 않는다.
 - 사용자 제공 OST는 [Main·Credits 음악 규칙](frontend-soundtrack.md)을 따른다. `CreditsCinematicDirector.Music`에서 Another Journey를 한 번 재생하며 55초 정적 명단 이후에도 곡 끝까지 이어진다. 컷신의 기존 타임라인은 유지한다.
 - `CreditsSceneLauncher`: 원래 메인 Canvas·선택·입력 상태를 보존하고 App의 `SceneFlowController`로 Credits만 additive load/unload한다. 게임 진행 Phase나 Match를 변경하지 않는다.
 - Esc는 도중에도 복귀한다. 최종 정적 크레딧에서는 왼쪽 클릭도 복귀한다. 화면에 조작 설명이나 인디케이터를 추가하지 않는다.
-- 제작 메뉴: `Tools > TeamHJD > The Developer > Credits > Build cinematic scene and connect Main`. 이 명령은 해당 컷신 Prefab/Scene을 다시 작성하므로 직접 조정한 값은 별도 보존하고 실행한다. 보통 위치·시간·카메라 수정은 Prefab Inspector에서 한다.
-- 기존 Main 연결을 보존하며 컷신만 재생성할 때는 같은 메뉴의 `Rebuild cinematic only`를 사용한다. 이번 폴리싱은 이 경로로 수행했다.
+- `Credits.unity`를 열고 `CreditsCinematic`의 PlayableDirector에서 Timeline을 연다. `Camera shots`는 컷, `Fade, logo and credits`는 알파와 로고 크기를 다룬다. 장면의 시각 요소는 Prefab에서 편집한다.
+- 챕터와 마지막 명단의 Activation Track에는 오브젝트당 한 개의 클립을 둔다. 챕터·최종 명단 클립은 겹치지 않게 배치한다. 시간을 옮기면 카메라 컷·알파·효과음의 상대 시각이 맞는지 확인한다.
+- 예전 컷신 재생성 메뉴는 폐기했다. 팀 작업 시 에셋 잠금을 확보하고 Timeline 또는 Prefab을 직접 편집한다. Timeline 미리보기로 구도를 확인한 후 실제 메인 메뉴의 CREDITS 버튼에서 OST·입력·복귀를 검증한다.
 - Main 공통 UI 재생성 시에도 Credits 연결을 보존하도록 기존 Main authoring 경로에서 연결 도구를 호출한다. 원래 Main 배경과 로고 애니메이션은 변경하지 않는다.
 
 검증 결과와 실제 실행 자료는 작업별 기록에서 구분한다. 이 문서의 표현 의도만으로 실제 플레이/입력/빌드 검증 통과를 선언하지 않는다.

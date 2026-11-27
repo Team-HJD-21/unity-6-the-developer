@@ -6,7 +6,7 @@ namespace TeamHJD.Game.Presentation
 {
     public enum CreditsChapterKind { Welding, Flight, Asteroids, TurretDrop, Drone }
 
-    /// <summary>시각 에셋/카메라/효과 트랙만 소유하며 게임의 Player·Turret AI는 실행하지 않습니다.</summary>
+    /// <summary>Timeline이 선택한 챕터에서 캐릭터 표현, 파티클과 짧은 현장음을 재생합니다.</summary>
     public sealed class CreditsCinematicChapter : MonoBehaviour
     {
         [Serializable] public sealed class Effect
@@ -22,9 +22,6 @@ namespace TeamHJD.Game.Presentation
             [NonSerialized] public bool Active;
         }
         public CreditsChapterKind Kind;
-        [Min(3)] public float Duration = 11;
-        public Vector2 CameraFrom, CameraTo;
-        public float ZoomFrom = 6, ZoomTo = 5, RollFrom, RollTo;
         public SpriteRenderer Hero, Vehicle, Tool, Drone, Contact, Glow;
         public SpriteRenderer Ground;
         public SpriteRenderer[] GroundLayers = Array.Empty<SpriteRenderer>();
@@ -61,7 +58,6 @@ namespace TeamHJD.Game.Presentation
         public Sprite[] BackgroundSlimeFrames = Array.Empty<Sprite>();
         public Vector2 SlimeFrom = new Vector2(13, 1.8f), SlimeTo = new Vector2(-13, 3.2f);
         public Vector2 SlimePass = new Vector2(1.2f, 8.5f);
-        public float InternalFade { get; private set; }
         private MaterialPropertyBlock _property;
         private float _lastTime = -1;
         private static float Ease(float t) => CreditsCinematicDirector.Ease(t);
@@ -77,24 +73,18 @@ namespace TeamHJD.Game.Presentation
             sampling.SetVector("_UvClamp",new Vector4((rect.x+.5f)/texture.width,(rect.y+.5f)/texture.height,(rect.xMax-.5f)/texture.width,(rect.yMax-.5f)/texture.height));layer.SetPropertyBlock(sampling);
         }
 
-        public void Evaluate(float time, Camera camera, bool seek, bool playAudio = false)
+        public void Evaluate(float time, float duration, bool seek, bool playAudio)
         {
-            float u = Ease(time / Duration);
-            InternalFade = 0;
-            var focus = Vector2.Lerp(CameraFrom, CameraTo, u);
-            camera.transform.position = new Vector3(focus.x, focus.y, -50);
-            camera.transform.rotation = Quaternion.Euler(0, 0, Mathf.Lerp(RollFrom, RollTo, u));
-            camera.orthographicSize = Mathf.Lerp(ZoomFrom, ZoomTo, u);
-            if (RoleGroup != null) RoleGroup.alpha = Ease((time-CaptionStart)/.8f)*(1-Ease((time-Duration+1.1f)/.4f));
+            if (RoleGroup != null) RoleGroup.alpha = Ease((time-CaptionStart)/.8f)*(1-Ease((time-duration+1.1f)/.4f));
             if (NameGroup != null) NameGroup.alpha = 1;
             if (Hero != null && HeroFrames.Length > 0) Hero.sprite = HeroFrames[(int)(time*6)%HeroFrames.Length];
             switch (Kind)
             {
-                case CreditsChapterKind.Welding: Weld(time, camera); break;
-                case CreditsChapterKind.Flight: Fly(time, camera); break;
+                case CreditsChapterKind.Welding: Weld(time); break;
+                case CreditsChapterKind.Flight: Fly(time, duration); break;
                 case CreditsChapterKind.Asteroids: Rocks(time); break;
-                case CreditsChapterKind.TurretDrop: Drop(time, camera); break;
-                case CreditsChapterKind.Drone: Greet(time, camera); break;
+                case CreditsChapterKind.TurretDrop: Drop(time); break;
+                case CreditsChapterKind.Drone: Greet(time); break;
             }
             for (int i=0;i<Ambient.Length;i++)
             {
@@ -144,7 +134,7 @@ namespace TeamHJD.Game.Presentation
             _property.SetFloat("_ShineStrength", strength);
             Hero.SetPropertyBlock(_property);
         }
-        private void Weld(float time, Camera camera)
+        private void Weld(float time)
         {
             bool portrait=time<3.8f;
             HeroRig.gameObject.SetActive(portrait);Vehicle.gameObject.SetActive(!portrait);
@@ -153,9 +143,6 @@ namespace TeamHJD.Game.Presentation
             if(Contact!=null)Contact.enabled=false;
             HeroRig.localPosition=new Vector3(.008f*Mathf.Sin(time*3),-2.25f,0);
             HeroRig.localRotation=Quaternion.Euler(0,0,Mathf.Sin(time*3)*.25f);
-            if(portrait){camera.transform.position=new Vector3(CameraFrom.x,CameraFrom.y,-50);camera.orthographicSize=ZoomFrom*Mathf.Lerp(1,.96f,Ease(time/3.4f));camera.transform.rotation=Quaternion.Euler(0,0,RollFrom);}
-            else{camera.transform.position=new Vector3(CameraTo.x,CameraTo.y,-50);camera.orthographicSize=ZoomTo*Mathf.Lerp(1,.94f,Ease((time-4.2f)/5));camera.transform.rotation=Quaternion.Euler(0,0,RollTo+Ease((time-4.2f)/5)*.5f);}
-            InternalFade=portrait?Ease((time-3.45f)/.35f):1-Ease((time-3.8f)/.55f);
             NameReveal.Fade(portrait?0:Ease((time-4.5f)/.65f));
             bool work=time>.65f&&time<3.35f;
             float pulse=work ? .1f+.38f*Mathf.Pow(Mathf.Abs(Mathf.Sin(time*29)*Mathf.Sin(time*13)),2) : 0;
@@ -179,7 +166,7 @@ namespace TeamHJD.Game.Presentation
                 _plateProperty.SetFloat("_ContactGlow",work?.3f+pulse:0);Workplate.SetPropertyBlock(_plateProperty);
             }
         }
-        private void Fly(float time, Camera camera)
+        private void Fly(float time, float duration)
         {
             float enter = Ease(time/2.2f), leave = Ease((time-4.5f)/1.6f);
             // 기존 출발 시각 전에 짧게 후진하고 가속 중 원래 궤적으로 복귀한다. OST와 이름 cue는 유지한다.
@@ -189,9 +176,6 @@ namespace TeamHJD.Game.Presentation
             VehicleRig.localPosition = new Vector3(Mathf.Lerp(-11,1,enter)+leave*27-pullback*.55f,.7f+.12f*Mathf.Sin(time*1.3f)+leave*2,0);
             VehicleRig.localRotation = Quaternion.Euler(0,0,Mathf.Lerp(-3,8,leave)+Mathf.Sin(time)*1.2f);
             float ignition = Ease((time-.2f)/1.1f);
-            float wide=Ease((time-1.9f)/1.8f);
-            camera.transform.position=Vector3.Lerp(new Vector3(VehicleRig.position.x+CameraFrom.x,VehicleRig.position.y+CameraFrom.y,-50),new Vector3(CameraTo.x,CameraTo.y,-50),wide);
-            camera.orthographicSize=Mathf.Lerp(ZoomFrom,ZoomTo,wide);camera.transform.rotation=Quaternion.Euler(0,0,Mathf.Lerp(RollFrom,RollTo,wide));
             for (int i=0;i<Flames.Length;i++)
             {
                 var flame=Flames[i];
@@ -203,7 +187,7 @@ namespace TeamHJD.Game.Presentation
             NameReveal.Fade(Ease((time-6.05f)/.2f));
             NameReveal.Reveal(Ease((time-6.05f)/.95f));
             if(Effects.Length>3)Effects[3].System.transform.position=new Vector3(Mathf.Lerp(-5,5,Ease((time-5.95f)/1)),.2f,0);
-            if (NameGroup != null) NameGroup.alpha=1-Ease((time-Duration+1.2f)/.5f);
+            if (NameGroup != null) NameGroup.alpha=1-Ease((time-duration+1.2f)/.5f);
         }
         private void Rocks(float time)
         {
@@ -224,9 +208,8 @@ namespace TeamHJD.Game.Presentation
             }
             NameReveal.Fade(Ease((time-3.45f)/.6f));
         }
-        private void Drop(float time, Camera camera)
+        private void Drop(float time)
         {
-            float shake=0;
             for(int i=0;i<Props.Length;i++)
             {
                 float delay=1.05f+i*.85f, fall=Mathf.Clamp01((time-delay)/1.35f);
@@ -235,21 +218,15 @@ namespace TeamHJD.Game.Presentation
                 float bounce=landed>=0 ? Mathf.Sin(landed*20)*Mathf.Exp(-landed*9)*.11f : 0;
                 Props[i].localPosition+=Vector3.up*Mathf.Abs(bounce);
                 Props[i].localScale=Vector3.Scale(PropScale[i],new Vector3(1+bounce*.3f,1-bounce*.6f,1));
-                if(landed>=0 && landed<.5f)shake+=Mathf.Sin(landed*55)*Mathf.Exp(-landed*10)*.04f;
                 if(i<Effects.Length)Effects[i].System.transform.position=PropEnd[i];
                 if(i<Flames.Length){Flames[i].gameObject.SetActive(fall>.5f&&landed<.06f);Flames[i].transform.localScale=new Vector3((.42f+.04f*Mathf.Sin(time*43))*(1-Ease((fall-.8f)/.24f)),.38f,1);}
                 if(i<Shadows.Length){float near=Ease(fall);Shadows[i].transform.localScale=ShadowScale[i]*Mathf.Lerp(.25f,1,near);Shadows[i].color=new Color(0,0,0,Mathf.Lerp(.04f,.28f,near));}
             }
-            float approach=Ease((time-4.4f)/2);
-            var focus=Vector2.Lerp(CameraFrom,CameraTo,approach);camera.transform.position=new Vector3(focus.x,focus.y,-50);camera.orthographicSize=Mathf.Lerp(ZoomFrom,ZoomTo,approach);
-            camera.transform.position+=new Vector3(shake,shake*.5f,0);
             NameReveal.Fade(Ease((time-6)/.6f));
         }
-        private void Greet(float time, Camera camera)
+        private void Greet(float time)
         {
             float close=Ease((time-3.3f)/3.1f);
-            var focus=Vector2.Lerp(CameraFrom,CameraTo,close);camera.transform.position=new Vector3(focus.x,focus.y,-50);
-            camera.orthographicSize=Mathf.Lerp(ZoomFrom,ZoomTo,close);
             DroneRig.localPosition=new Vector3(2,.7f+Mathf.Sin(time*2)*.035f,0);
             DroneRig.localRotation=Quaternion.Euler(0,0,Mathf.Sin(time*1.4f)*1.8f*(1-close));
             HeroRig.localPosition=new Vector3(-1.8f,-1.55f+.008f*Mathf.Sin(time*3),0);
